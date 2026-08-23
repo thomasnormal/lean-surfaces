@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**222 entries across 16 lanes.** Regenerate with
+**223 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-24-sunfish-rtrack-11` | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
 | `2026-08-23-architecture-50` | The goal is COMPLETION, and a milestone is a waypoint | architecture |
 | `2026-08-23-architecture-49` | A full build is its own root; and 27 green rows that could not see the call site | architecture |
 | `2026-08-23-architecture-48` | A witness must fail for the reason it names; and INAPPLICABLE is not OPTIONAL | architecture |

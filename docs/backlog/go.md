@@ -2306,3 +2306,146 @@ a declared `lean_lib` root. The queued re-run was cancelled and its ticket
 removed — with seven lanes waiting, holding a slot for a verdict that
 could be settled by reading `lakefile.toml` is the expensive mistake, not
 the safe one.
+
+---
+
+## G20 — FIXED ARRAYS: the value model that needed no new constructor, and the frontier stops being a construct (2026-08-23)
+
+§G19's reproducible census called this rung: `[N]T` at **+76**, larger
+than switch, maps, interfaces and `FuncLit` combined. It measured 604 →
+**680**, which is +76 **exactly** — the first time this lane predicted a
+reach delta and hit it on the nose.
+
+### THE CENSUS, and how it moved the rung off the plan
+
+The sizing note was that copy-by-value is the discriminator: Go arrays
+copy where slices alias. That is true, and it is the value model's
+decider. It is **not** what the corpus mostly does:
+
+| operation on a local `[N]T` | stdlib uses |
+| --- | ---: |
+| `a[:]` slice-of-array | **1,911** |
+| `&a` address-of-array | 156 |
+| bare-identifier COPY (assign / pass / return) | **152** |
+
+`a[:]` outnumbers copying **12.6×**. And in the 76 files the rung
+unlocks, 1,407 `[N]T` occurrences yield only 23 possible copies and 12
+slice-of-array — the dominant use there is **declaration**: buffers and
+struct fields. The six in-reach candidate functions are all trivial
+delegating wrappers in `crypto/internal/fips140/aes`, and every one takes
+`*[N]byte` — **pointers precisely to avoid copying**. So the proposed
+discriminator has no witness among them.
+
+That does not retire the discriminator; it relocates it, exactly as §G17
+ruled. Copy-vs-alias decides the VALUE MODEL whether or not the corpus
+exercises it, so it belongs in the acceptance — in the CALL.
+
+### THE VALUE MODEL: no new constructor, because addressability does it
+
+A `[N]T` is a value; a slice is a header. The obvious way to get this
+wrong is to reuse `sliceV` for arrays, and then `b := a` aliases.
+
+The model needed **no new constructor**, and the reason is worth stating
+because it is the second time this tier got a semantic for free from a
+structure already present: **`bindLocal` stores a local's value at its
+own address.** Therefore
+
+* `b := a` evaluates `a` to an `arrayV` VALUE and binds it at a FRESH
+  address — a deep copy, with **no copy code to get wrong**; and
+* `a[:]` needs the ADDRESS the array lives at — which is precisely Go's
+  rule that only an **addressable** array may be sliced.
+
+So the arm resolves its operand to an `(addr, off, len, cap)` quadruple:
+a slice carries one already, an addressable array supplies its own with
+`off = 0` and `cap = len = N`, and anything else is refused — which is
+also `gc`'s answer. Addressability is not a special case bolted onto the
+model; **it is the shape of the implementation**, and the same resolution
+serves `a[i] = v`, for the same reason: the write must be visible through
+every slice that aliases it.
+
+The one new syntax node is `Expr.arrayLit n zero` — `[N]T`'s zero value.
+The size lives in the VALUE, not in a type annotation, because the size
+is what `len` reads and what `a[:]`'s capacity comes from.
+
+### THE ACCEPTANCE: `runtime.printuint`, plus the pair both wrong models fail
+
+Vendored verbatim from `src/runtime/print.go` — the direct sibling of
+§G18's `runtime.itoa`, which is why the walker needed only `[N]T` itself
+to reach it. `gwrite` is the one thing unmodelled, so the transcription
+returns `buf[i:]`; the array, the `len(buf)` seed, the decrementing
+three-clause loop, the indexed write and the slice-of-array are as
+vendored. `printuint` makes the fixed size load-bearing in a way a
+buffer usually does not: `i` is seeded from `len(buf)`, so `N` decides
+where the digits land and the returned `cap` is `N - i`. Five rows
+against `gc`, contents **and** len **and** cap.
+
+But `printuint`'s array never escapes and is never copied, so it cannot
+separate a value model from a header model. The discriminator is one
+array with two operations:
+
+    var a [4]byte ; a = "wxyz"
+    b := a  ; s := a[:] ; b[0] = 'B' ; s[1] = 'S'
+
+| model | `a` afterwards |
+| --- | --- |
+| **`gc`** | **`"wSyz"`** |
+| arrays-are-headers | `"BSyz"` — the copy leaked |
+| slices-are-copies | `"wxyz"` — the alias never landed |
+
+**Both wrong models fail the same row, in opposite directions.** That is
+strictly better than §G15's `Reverse8` and §G18's `out[:cap(out)]`, each
+of which killed one wrong model; this row is a two-sided vice. Flipping
+it to either wrong answer produces 3 errors — run, not asserted, along
+with four more flips (the copy's own row, `a[1:3]`'s cap 3 → 2, and two
+`printuint` rows).
+
+13 guards. Every expected value `printf`-ed from the compiled program
+(`go1.25.6 darwin/arm64`), never typed here.
+
+### THE FRONTIER STOPS BEING A CONSTRUCT
+
+Re-running `--reach` with the vocabulary widened in the same commit as
+the walker (the rule §G19 set):
+
+| construct | alone |
+| --- | ---: |
+| **`SelectorExpr`** | **+1,189** |
+| `Ellipsis` | +51 |
+| `MapType` | +15 |
+| `InterfaceType` | +7 |
+| `SwitchStmt`, `FuncLit` | +2 each |
+| the other nine | +0 |
+| ALL of the frontier | +3,087 |
+
+`SelectorExpr` is **23× the next construct**, and it is not a construct
+this lane can model: it is §G8's selector-resolution question — telling
+`pkg.F` from `x.field` needs `go/types`, and the brief for it has been
+ratified and unstarted since §G8.
+
+So the tier's ranking has changed shape. **For the first time the
+walker's vocabulary is not the bottleneck** — every remaining construct
+is worth at most +51, and one piece of extractor work is worth +1,189.
+Adding constructs from here is sharply diminishing; the next real move is
+the extractor.
+
+### A SECOND-TIME SLIP, so it gets a rule
+
+The guard count in this entry was written as 11 and is 13: I counted by
+eye. §G19 published 13 for a file holding 11, caught the same way. Twice
+is a pattern, not a slip, so the rule is the one this lane already
+applies to oracle columns (§G13): **the number comes from the file**, via
+`grep -c '#guard'`, and is pasted in — never estimated from the section
+headings, which do not correspond one-to-one to guards.
+
+Standing: `fallthrough` still deferred (4.0%) and now visibly minor;
+maps and interfaces small but NOT disqualified (§G19's retraction);
+MM-oracle untouched — Thomas's.
+
+### VERDICT
+
+`tools/triad.sh --lane go --classify --gates 'python3 tools/docs_check.py;
+python3 harness/diff_test.py; python3 harness/script_corpus.py'` —
+**green**. Build exit **0**. `docs_check` **91/91**. `diff_test` **1,427
+cases, 0 failed** (1,311 matched, 116 whitelisted-unsupported).
+`script_corpus` **65 scripts, 0 failed**. Queued **7,501 s** behind five
+lanes; held the machine **64 s**.

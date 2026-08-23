@@ -18,6 +18,7 @@ rung 1's figures after three inches had widened it; the current state:
 | 5 (§G15) | string indexing and conversions; strings became BYTES |
 | 6 (§G18) | **slices**: `a[i:j]`, `len`/`cap`, indexed assignment, the header value model |
 | 7 (§G19) | `range` over a slice — desugared to `forS`, not a second loop |
+| 8 (§G20) | **fixed arrays `[N]T`**: `arrayLit`, and addressability as the shape of `a[:]` and `a[i] = v` |
 
 **Do not quote a reach figure here.** Two earlier versions of this header
 carried one and both went stale, and §G19 found the second was not even
@@ -142,6 +143,15 @@ inductive Expr where
   `simp only [evalExpr]` carry it through every reduction and timed out
   four proofs. The frontend emits this. -/
   | builtin1 (name : String) (e : Expr)
+  /-- A **fixed-size array value**, `[N]T`'s zero value — `n` copies of
+  `zero`. Emitted by the frontend for `var buf [N]T`, which is how the
+  corpus overwhelmingly introduces one (§G20: 1,407 `[N]T` uses in the
+  files this unlocks, and the operation performed on them is `a[:]` at
+  1,911 stdlib uses against 152 value copies).
+
+  The SIZE is part of the value, not of a type annotation, because it is
+  what `len` reads and what `a[:]`'s capacity comes from. -/
+  | arrayLit (n : Nat) (zero : Expr)
   /-- `CallExpr` on a plain identifier. **The single biggest reach unlock
   in the census**: calls appear in 73.3% of the files rung 1 already
   reaches (`docs/backlog/go.md` §G6), so without them nothing with a
@@ -483,12 +493,39 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
       | "len", .sliceV _ _ l _   => pure (GoVal.mkInt IntKind.int64 (l : Int))
       | "cap", .sliceV _ _ _ c   => pure (GoVal.mkInt IntKind.int64 (c : Int))
       | "len", .stringV bs       => pure (GoVal.mkInt IntKind.int64 (bs.length : Int))
+      -- An ARRAY's length and capacity are both `N`, and both are
+      -- properties of the VALUE. Unlike a slice there is no header to
+      -- disagree with the object.
+      | "len", .arrayV elems     => pure (GoVal.mkInt IntKind.int64 (elems.length : Int))
+      | "cap", .arrayV elems     => pure (GoVal.mkInt IntKind.int64 (elems.length : Int))
       | _, _ =>
           refuseGo .unsupportedConstruct (SpecRef.spec "Length_and_capacity")
             s!"{name} of an operand outside this rung"
+  | f + 1, .arrayLit n zero => do
+      let z ← evalExpr prog f zero
+      pure (.arrayV (List.replicate n z))
   | f + 1, .slice x lo hi => do
-      match ← evalExpr prog f x with
-      | .sliceV b off l c => do
+      -- **ADDRESSABILITY IS THE IMPLEMENTATION, not a special case.**
+      -- Go permits slicing an array only when the array is addressable,
+      -- and the resulting slice ALIASES it. So the operand is resolved to
+      -- an (address, off, len, cap) quadruple: a slice already carries
+      -- one, and an addressable array supplies its own address with
+      -- `off = 0` and `cap = len = N`. A non-addressable array reaches
+      -- the `none` branch and is refused, which is also Go's answer.
+      let operand : Option (Addr × Nat × Nat × Nat) ← (
+        match x with
+        | .ident name => do
+            let a ← lookupLocal name
+            match ← loadAddr a with
+            | .arrayV elems  => pure (some (a, 0, elems.length, elems.length))
+            | .sliceV b o l c => pure (some (b, o, l, c))
+            | _ => pure none
+        | _ => do
+            match ← evalExpr prog f x with
+            | .sliceV b o l c => pure (some (b, o, l, c))
+            | _ => pure none)
+      match operand with
+      | some (b, off, l, c) => do
           -- Defaults: a missing low is 0, a missing high is the LENGTH
           -- (not the capacity) — the spec's rule, and the difference is
           -- exactly what the acceptance case's fourth row turns on.
@@ -509,15 +546,22 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
             pure (.sliceV b (off + lo') (hi' - lo') (c - lo'))
           else
             panicWith 0 (GoVal.runtimeErrorV "runtime error: slice bounds out of range")
-      | _ =>
+      | none =>
           refuseGo .unsupportedConstruct (SpecRef.spec "Slice_expressions")
-            "slice expression outside this rung (slices only)"
+            "slice expression on a non-addressable or unmodelled operand"
   | f + 1, .index x i => do
       match ← evalExpr prog f x, ← evalExpr prog f i with
       | .sliceV b off l _, .intV _ n =>
           if n < 0 || n.toNat ≥ l then
             panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
           else loadIdx b (off + n.toNat)
+      | .arrayV elems, .intV _ n =>
+          if n < 0 || n.toNat ≥ elems.length then
+            panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
+          else
+            match elems[n.toNat]? with
+            | some v => pure v
+            | none => panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
       | .stringV bytes, .intV _ n =>
           if n < 0 then
             -- "Index expressions": a negative or out-of-range index is a
@@ -648,8 +692,24 @@ def execStmt (prog : FuncTable) : Nat → Stmt → GoM Flow
           refuseGo .unsupportedConstruct (SpecRef.spec "IncDec_statements")
             "++/-- on a non-integer"
   | f + 1, .assignIndex x i e => do
-      match ← evalExpr prog f x, ← evalExpr prog f i with
-      | .sliceV b off l _, .intV _ n =>
+      -- Writing `a[i] = v` needs the array's ADDRESS, not its value, for
+      -- the same reason `a[:]` does: the write must be visible through
+      -- every slice that aliases it. So the target is resolved the same
+      -- way, and an array reached by value (not addressable) is refused.
+      let target : Option (Addr × Nat × Nat) ← (
+        match x with
+        | .ident name => do
+            let a ← lookupLocal name
+            match ← loadAddr a with
+            | .arrayV elems  => pure (some (a, 0, elems.length))
+            | .sliceV b o l _ => pure (some (b, o, l))
+            | _ => pure none
+        | _ => do
+            match ← evalExpr prog f x with
+            | .sliceV b o l _ => pure (some (b, o, l))
+            | _ => pure none)
+      match target, ← evalExpr prog f i with
+      | some (b, off, l), .intV _ n =>
           if n < 0 || n.toNat ≥ l then
             panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
           else do
@@ -657,7 +717,7 @@ def execStmt (prog : FuncTable) : Nat → Stmt → GoM Flow
             pure .normal
       | _, _ =>
           refuseGo .unsupportedConstruct (SpecRef.spec "Assignment_statements")
-            "indexed assignment outside this rung (slices only)"
+            "indexed assignment on a non-addressable or unmodelled operand"
   | _ + 1, .ret none => pure (.returned none)
   | f + 1, .ret (some e) => do pure (.returned (some (← evalExpr prog f e)))
   | f + 1, .ifS cond thenB elseB => do

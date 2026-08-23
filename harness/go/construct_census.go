@@ -905,11 +905,19 @@ var walkerVocab = []string{
 	// statements
 	"BlockStmt", "AssignStmt", "ExprStmt", "IfStmt", "ForStmt", "ReturnStmt",
 	"IncDecStmt", "BranchStmt", "LabeledStmt", "EmptyStmt",
+	// the slice family (§G17–§G19) and fixed arrays (§G20)
+	"SliceExpr", "RangeStmt", "ArrayType/slice", "ArrayType/fixed",
 }
 
-// sliceFamily is what §G17–§G19 landed: `a[i:j]`, `for … range`, and `[]T`.
-// `ArrayType/fixed` is DELIBERATELY ABSENT — see the vocabulary law above.
-var sliceFamily = []string{"SliceExpr", "RangeStmt", "ArrayType/slice"}
+// frontier is what the walker does NOT step, ranked by this instrument.
+// §G19's retraction of the +0 law applies to every row: a delta here is a
+// property of the CURRENT vocabulary and is not a ranking for any future
+// one, so re-run rather than quoting an old row.
+var frontier = []string{
+	"SelectorExpr", "SwitchStmt", "CaseClause", "FuncLit", "MapType",
+	"InterfaceType", "TypeAssertExpr", "TypeSwitchStmt", "DeferStmt",
+	"GoStmt", "ChanType", "SendStmt", "SelectStmt", "CommClause", "Ellipsis",
+}
 
 // fileKinds returns the kind set of one file, with ArrayType split.
 func fileKinds(path string) (map[string]bool, bool) {
@@ -1007,19 +1015,22 @@ func runReach(paths []string, root string) {
 	fmt.Printf("files parsed (non-test): %d\n\n", len(all))
 	fmt.Printf("%-34s %6d\n", "BASELINE walker vocabulary", b)
 	fmt.Printf("%-34s %6s %8s\n", "", "files", "delta")
-	for _, k := range sliceFamily {
-		n := count(setOf(walkerVocab, []string{k}))
-		fmt.Printf("  + %-30s %6d %+8d\n", k, n, n-b)
+	type row struct {
+		k string
+		n int
 	}
-	for _, drop := range sliceFamily {
-		var rest []string
-		for _, k := range sliceFamily { if k != drop { rest = append(rest, k) } }
-		n := count(setOf(walkerVocab, rest))
-		fmt.Printf("  %-32s %6d\n", "FAMILY minus "+drop, n)
+	var rows []row
+	for _, k := range frontier {
+		rows = append(rows, row{k, count(setOf(walkerVocab, []string{k}))})
 	}
-	fam := count(setOf(walkerVocab, sliceFamily))
-	fmt.Printf("  %-32s %6d %+8d\n", "+ THE FAMILY (all three)", fam, fam-b)
-	withFixed := count(setOf(walkerVocab, sliceFamily, []string{"ArrayType/fixed"}))
-	fmt.Printf("  %-32s %6d %+8d\n", "+ ArrayType/fixed too", withFixed, withFixed-fam)
-	fmt.Printf("\nthe fixed-array gap (excluded by the vocabulary law): %d files\n", withFixed-fam)
+	sort.Slice(rows, func(i, j int) bool { return rows[i].n > rows[j].n })
+	fmt.Println("\nTHE FRONTIER — what each unmodelled construct would add ALONE.")
+	fmt.Println("(§G19: a delta is a property of THIS vocabulary, never a ranking")
+	fmt.Println(" for a future one — RangeStmt measured +0 alone and was worth +9")
+	fmt.Println(" inside the family it shipped in.)")
+	for _, r := range rows {
+		fmt.Printf("  + %-30s %6d %+8d\n", r.k, r.n, r.n-b)
+	}
+	whole := count(setOf(walkerVocab, frontier))
+	fmt.Printf("  %-32s %6d %+8d\n", "+ ALL of the frontier", whole, whole-b)
 }

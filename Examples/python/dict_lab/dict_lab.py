@@ -349,3 +349,65 @@ def keys_for_live_cursor(a):
     for k in d:
         t = t + k
     return t
+
+
+# §3c-i-b: dict VIEWS in CONSUMING-ARGUMENT position. Every row below is
+# written in the REAL source spelling -- `d.keys()`, not the synthetic
+# `<dictkeys>(d)` that ingestion rewrites it to -- because CPython sees the
+# source text and the rewrite is exactly what is under test. A row spelled in
+# the lowered form would test the evaluator and skip the pass that produced it.
+
+
+def view_keys_tuple(a):
+    d = {3: "c", 1: "a", a: "z"}
+    return tuple(d.keys())
+
+
+def view_values_sorted(a):
+    d = {3: "c", 1: "a", a: "z"}
+    return tuple(sorted(d.values()))
+
+
+def view_items_first(a):
+    d = {3: "c", 1: a}
+    return list(d.items())[0]
+
+
+def view_items_len(a):
+    d = {3: "c", 1: "a", a: "z"}
+    return len(list(d.items()))
+
+
+def view_values_sum(a):
+    d = {3: 0, 1: 0, a: 5}
+    return sum(d.values())
+
+
+def view_keys_len(a):
+    d = {3: 0, 1: 0, a: 5}
+    return len(d.keys())
+
+
+def view_keys_any(a):
+    d = {0: "x", a: "y"}
+    return any(d.keys())
+
+
+def view_keys_max(a):
+    d = {3: 0, 1: 0, a: 0}
+    return max(d.keys())
+
+
+def view_escape_still_loud(a):
+    # THE BOUNDARY. Binding the view is not a consuming position, so ingestion
+    # does not rewrite it and the tier still refuses -- which is what keeps the
+    # rewrite's snapshot honest (CPython answers 1 here).
+    d = {1: a}
+    k = d.keys()
+    return len(list(k))
+
+
+def view_arg_not_alone_still_loud(a):
+    # a view beside another argument is not the recognised shape either
+    d = {1: a}
+    return len(list(d.keys())[0:1])

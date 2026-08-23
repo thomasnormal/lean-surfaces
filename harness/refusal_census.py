@@ -458,11 +458,11 @@ print(f())
 w("dict.values", """
 d = {2: 'b', 1: 'a'}
 print(sorted(d.values()))
-""", "REFUSE", "the VALUES view, consumed immediately — inch 3c-i")
+""", "MATCH", "the VALUES view, consumed immediately — inch 3c-i-b")
 w("dict.items-consumed", """
 d = {2: 'b', 1: 'a'}
 print(list(d.items()))
-""", "REFUSE", "the ITEMS view, consumed immediately — inch 3c-i")
+""", "MATCH", "the ITEMS view, consumed immediately — inch 3c-i-b")
 w("dict.view-escapes", """
 d = {1: 'a'}
 k = d.keys()
@@ -494,7 +494,10 @@ for i, k in enumerate(d):
 """, "REFUSE", "inch 3c")
 w("dict.keys", """
 print(list({2: 'b', 1: 'a'}.keys()))
-""", "REFUSE", "the view methods — inch 3c")
+""", "MATCH",
+  "a view method in CONSUMING position — landed by inch 3c-i-b's ingestion "
+  "rewrite, on a dict LITERAL receiver, which the rewrite handles like any "
+  "other receiver expression")
 w("dict.items", """
 d = {2: 'b', 1: 'a'}
 for k, v in d.items():
@@ -649,9 +652,15 @@ WHITELIST_CLASS = {
     "arith::powi": "op.Pow",
     "tut_06::true_div": "op.Div",
     "rsa_inverse::inverse": "exc.raise",
+    "bench_bisect::bisect_left": "exc.raise",
     "dict_lab::ret_dict": "boundary.heap-value",
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
+    # §3c-i-b: a view that ESCAPES its call, and one that is not the sole
+    # argument — neither is the recognised shape, so ingestion leaves both
+    # alone and the tier refuses. These are 3c-ii's territory.
+    "dict_lab::view_escape_still_loud": "dictview.first-class",
+    "dict_lab::view_arg_not_alone_still_loud": "dictview.first-class",
     "sf_hist::push": "boundary.list-mutation",
     "sf_hist::rotate_scores": "boundary.list-mutation",
     "cls_lab::attr_on_int": "attr.on-scalar",
@@ -884,14 +893,21 @@ def grammar_census(runner_cmd, keep, results):
 def print_grammar(results):
     width = max(len(r[0]) for r in results)
     print("=" * 72)
-    print("GRAMMAR CENSUS — one witness per CPython 3.9 `ast` production")
+    print("GRAMMAR CENSUS — a witness per CPython 3.9 `ast` production, plus"
+          " measured edge rows")
     print("=" * 72)
     for wid, got, detail, expect in results:
         flag = "" if got == expect else "   <<< DRIFT (recorded %s)" % expect
         print("%-*s  %-8s %s%s" % (width, wid, got, detail[:100], flag))
     live = sum(1 for r in results if r[1] == "MATCH")
     print("-" * 72)
-    print("%d productions: %d MATCH, %d REFUSE, %d other"
+    # AUDIT docs/quality-audit-2026-08-23.md §python: this printed the ROW
+    # count as a PRODUCTION count. They stopped being the same number the
+    # moment edge rows and per-construct witnesses were added (an edge row is
+    # a second witness for a production already counted), so the grammar's
+    # 81 productions were being reported as 113. Witnesses is what this
+    # actually counts, and witnesses is what it now says.
+    print("%d witnesses: %d MATCH, %d REFUSE, %d other"
           % (len(results), live,
              sum(1 for r in results if r[1] == "REFUSE"),
              sum(1 for r in results if r[1] not in ("MATCH", "REFUSE"))))

@@ -1875,6 +1875,22 @@ regimes the census measured (value update, size change, same-size key-set
 churn) can arise inside them — docs/memory-model.md §dict iteration. -/
 def dictKeys (es : Array (RVal × RVal)) : Array RVal := es.map Prod.fst
 
+/-- §3c-i-b: the ELEMENT SEQUENCE a dict view presents, by kind — the keys,
+the values, or the `(key, value)` pairs, all in insertion order. -/
+def dictViewElems (es : Array (RVal × RVal)) (kind : DictViewKind) : Array RVal :=
+  match kind with
+  | .keys => es.map Prod.fst
+  | .values => es.map Prod.snd
+  | .items => es.map (fun kv => .tuple #[kv.1, kv.2])
+
+/-- §3c-i-b: the kind a synthetic view builtin stands for (`Ast.lean`
+§the dict-view ingestion rewrite emits these names). -/
+def dictViewBuiltinKind : String → Option DictViewKind
+  | "<dictkeys>" => some .keys
+  | "<dictvalues>" => some .values
+  | "<dictitems>" => some .items
+  | _ => Option.none
+
 /-- §3a THE DICT CURSOR'S STEP DECISION, as a PURE PLAN.
 
 The free-scrutinee discipline is not decoration here: AGENTS.md records that

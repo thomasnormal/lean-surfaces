@@ -31,11 +31,21 @@ PROVENANCE OF THE PROOFS: benchmark cold-prover runs, 2026-07-30
 docs only; adapted here with statements only strengthened (deltas in
 docs/benchmark.md).
 
-Non-vacuity gap (recorded per AGENTS.md): `harness/cases.json` rows are
-inexpressible for these functions — `leanmodels-run` parses CLI args as
-ints only, and `a` is a list. Fallback: the concrete CPython-checked runs
-from the vendored docstring's authenticity block are stated as
-`#py_check` lines below.
+Differential coverage (corrected per docs/quality-audit-2026-08-23.md
+§python): this block used to claim `harness/cases.json` rows were
+"inexpressible … `leanmodels-run` parses CLI args as ints only". **That
+reason was false** — the runner has taken canonical typed values
+(`{"t":"list","v":[…]}`) for as long as the batch protocol has existed
+(Main.lean §batch mode), and the whole corpus uses them. The claim cost
+these two functions their live oracle.
+
+There are now `cases.json` rows: nine value rows across both functions,
+including every line of the vendored docstring's authenticity block, all
+answered by the model and checked against CPython 3.9 on every run. The
+ONE row the oracle cannot reach is `lo < 0`, whose `raise ValueError(…)`
+is outside the exception tier; it is whitelisted with that reason, which
+is the honest shape of the gap the blanket claim was hiding. The
+`#py_check` lines below stay as the non-vacuity check they always were.
 
 No `@[spec]` forms: the results are `takeWhile`-valued / relational, not
 conditional-simp shapes (cf. Examples/python/rsa_inverse/spec.lean).

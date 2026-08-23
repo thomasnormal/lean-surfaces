@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**210 entries across 16 lanes.** Regenerate with
+**214 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -90,15 +90,19 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-lean-tier-14` | CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING | lean-tier |
 | `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-pycomplete-13` | INCH 3c-i-c's CENSUS: `enumerate(d)` is a GENERATOR FRAME, so the Kont record is not touched at all | python-completeness |
 | `2026-08-23-lean-tier-13` | MILESTONE: 4 proved / 3 blocked, `weak'_inv` parked on an IMPORT CYCLE; and the arena re-measure moved a fact | lean-tier |
 | `2026-08-23-architecture-13` | The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface | architecture |
 | `2026-08-23-softfloat-12` | THE DECIMAL INCH'S CENSUS: 2 sites in tree, and the suite figure is a BOUND | softfloat |
+| `2026-08-23-pycomplete-12` | the audit's §python triage | python-completeness |
 | `2026-08-23-lean-tier-12` | `wf` GREEN and the hoisted `ProjSound` re-proved: 4 of 7; the remaining three are censused and none is ordinary work | lean-tier |
 | `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
 | `2026-08-23-softfloat-11` | THE PROBES WENT STALE IN SIX MINUTES, and correcting the text is not the fix | softfloat |
+| `2026-08-23-pycomplete-11` | 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named | python-completeness |
 | `2026-08-23-lean-tier-11` | `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition | lean-tier |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-softfloat-10` | STEP 3 SCOPED: the consumer census found a SECOND consumer, and the algorithm choice follows from the SPEC's own wording | softfloat |
+| `2026-08-23-pycomplete-10` | 3c-i-b hits a STRUCTURAL wall, and the fix is an ingestion rewrite, not a call-site fusion | python-completeness |
 | `2026-08-23-lean-tier-10` | DECISION BRIEF for Thomas: PR #43 does NOT unblock `TrProj.uniq`, and consuming it buys nothing this lane needs | lean-tier |
 | `2026-08-23-c-10` | THE ADOPTION'S TENURE CAME BACK RED, and the one defect was sitting in its own diff's CONTEXT | c |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |

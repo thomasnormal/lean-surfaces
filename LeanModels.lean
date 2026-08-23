@@ -27,6 +27,10 @@ import LeanModels.Sv.Regions
 -- the proof that `execSStmts` is RECOVERED as its non-suspending case, so the
 -- walker is subsumed rather than replaced by a second interpreter.
 import LeanModels.Sv.Step
+-- R1 inch 4a-0: the SV tier on the family substrate — W/rho/pi/sigma, the
+-- SvM abbrev, and the two `rfl` adoption facts (Res.le IS Core's FlatLe at
+-- timeout, adopted by iff so the monotonicity ladder transfers untouched).
+import LeanModels.Sv.World
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**194 entries across 16 lanes.** Regenerate with
+**195 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -114,10 +114,12 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-c-5` | **A GREEN BUILD IS NOT A TERMINATION ARGUMENT** | c |
 | `2026-08-23-architecture-5` | Re-founding needs a differ-on-purpose word; names asserting verdicts expire | architecture |
 | `2026-08-23-wasm-4` | THE PORT'S FIRST VERDICT: Mathlib's `Forall₂` is **not the model's `Forall₂`**, and the census's "no cost" conclusion needed the qualification | wasm |
+| `2026-08-23-sv-4` | LANDING B (4a-0): the SV tier joins the family substrate, and both adoptions are `rfl` | sv |
 | `2026-08-23-pyrebuild-4` | GREEN, and the spike's headline number is VOID | pyrebuild |
 | `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
 | `2026-08-23-c-4` | INCH 5 IS **RED**, and the diagnosis is the deliverable | c |
 | `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
+| `2026-08-23-sv-3` | LANDING A: the stepper enters the build, and the gate that armed a CI bomb validates its defusal | sv |
 | `2026-08-23-pyrebuild-3` | THE UNION FAILED, exactly where the full build was chosen to look | pyrebuild |
 | `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |
 | `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
@@ -188,7 +190,6 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
 | `INBOUND` | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
-| `INBOUND` | `2026-08-23-architecture-33` (SV lane's to renumber or close) | sv |
 | `INBOUND` | `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
@@ -215,4 +216,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**27 heading(s) do not use the §9.5 id scheme** and sort last.
+**26 heading(s) do not use the §9.5 id scheme** and sort last.

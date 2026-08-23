@@ -30,6 +30,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-28` | `--axioms` dropped the last name, and the absence was silent | qol |
 | `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
 | `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
+| `2026-08-23-architecture-26` | A transcription is a copy with a timestamp; and every gate was green while the file lied | architecture |
 | `2026-08-23-qol-25` | the attribution fix: the headline held, the DISPATCH was wrong | qol |
 | `2026-08-23-architecture-25` | The audit-response norm: the remedy for a provenance gap is provenance, never reconstruction | architecture |
 | `2026-08-23-qol-24` | gate DESIGNS for the two head homes, and one of the ten needs no gate at all | qol |

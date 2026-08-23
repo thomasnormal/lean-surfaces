@@ -110,6 +110,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-61 | sized from the pinned spec BEFORE being written | `docs/backlog/es.md 2026-08-22-es-1` |
 | MEAS-62 | CONFIDENCE, priced — HIGH only for what was read at the pin | `docs/backlog/wasm.md 2026-08-22-wasm-1` |
 | MEAS-63 | a decoder that matches must also cite; an honest miss is loud | `docs/backlog/qol.md 2026-08-22-qol-3` |
+| MEAS-64 | a cross-lane transcription carries a TRIPWIRE, or it is a lie with a fuse | `docs/family-architecture.md §5.4` |
+| MEAS-65 | stamp the copy — a stamped copy goes out of date, an unstamped one goes wrong | `docs/family-architecture.md §5.4` |
+| MEAS-66 | enumerate what each gate is pointed AT; an unpointed claim is ungated | `docs/family-architecture.md §5.4b` |
+| MEAS-67 | a gate set is audited by ENUMERATION, never by execution | `docs/family-architecture.md §5.4b` |
+| MEAS-68 | an expected-to-fail artifact is the weakest gate in any set — pin the COUNT | `docs/family-architecture.md §5.4b` |
+| MEAS-69 | present-tense prose is FIXED; a dated record is ANNOTATED | `docs/family-architecture.md §5.4b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

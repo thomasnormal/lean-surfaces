@@ -3423,6 +3423,11 @@ column already has — **written from CPython's measured behaviour** — and
 the two together make the rule general rather than a Python habit: **the
 oracle writes its own column, in every tier.**
 
+**AND THE SIBLING CASE IS IN §5.4** — transcribing another **lane's source**
+instead of an **oracle's answers**. Same defect, different remedy: an
+expectation is a **value** and can be **generated**; a source line is **text**
+and can only be **gated**. A lane that meets either should read the other.
+
 Both halves of §5.3 are the same law: **a check must not report sameness
 where there was no content.** Python's
 harness carries `"live"`; C's scoreboard carries the statement count. This
@@ -3482,6 +3487,102 @@ instrument copies it:
   belongs in the same category as a clause citation: **checked data, or
   else prose that will go stale silently.** Being corrected by the owning
   lane;
+* **A TRANSCRIPTION OF ANOTHER LANE'S FILE IS A COPY WITH A TIMESTAMP, AND
+  IT ROTS THE MOMENT THEY COMMIT.** The two laws above are about claims that
+  go stale when *you* change something. This one goes stale with **no local
+  event at all**: the text is true when written, false once somebody else
+  commits, and **nothing happens in your lane in between**.
+
+  **Measured half-life: SIX MINUTES.** SoftFloat's
+  `harness/softfloat/probe_es_unblock.lean` transcribed ES's `numberToString`
+  under the label *"`Convert.lean:219-226` as landed"* (`f255c03`,
+  `23:47:56`). ES committed the routing at `9dab312`, `23:54:26` — **six
+  minutes thirty** — and the probe went on presenting the **pre-unblock**
+  body as the landed one, its two expected-FAIL rows sitting under the
+  heading *"The landed version"*. **Anyone running it would have concluded
+  the unblock was UNLANDED** — the exact opposite of what that lane had just
+  measured, in the file whose whole purpose was to demonstrate it.
+
+  > **A cross-lane transcription must carry a TRIPWIRE in the gate set, or
+  > it is a lie with a fuse.**
+
+  Six minutes is short enough that **"be careful" is not a control**: nobody
+  re-reads a copy on a six-minute cadence, and no amount of care makes a copy
+  notice a commit. The lane's structural fix is the shape to copy —
+  `harness/softfloat_consumer_census.py --check-transcriptions` asserts that
+  **every text a probe assumes about another lane's file is still in that
+  file**, wired into the gate set so the next ES move turns the probe **red
+  instead of quietly lying**; its **own failure path is exercised in the
+  self-test** (a fixture whose cited text is absent must make the tripwire
+  FIRE); and a row **pins the probe's expected-error COUNT**, because a file
+  that is *expected to error* is green whatever it says, and the count is the
+  only part of an expected failure that can notice a change. *(State stamp,
+  §5.4a: that gate is on branch `softfloat-m1` at `046d9dc` and is **not on
+  master**, which is why it is described here rather than quoted as a checked
+  block.)*
+
+  **FOUR RIDERS — three CONVERGENCES and one sharpening, recorded rather than
+  re-minted: this law was already in the document, pointed elsewhere, three
+  separate times.**
+
+  1. **§5.3 ALREADY CARRIES A TRANSCRIPTION LAW, aimed at a different target,
+     and the PAIR is the statable thing.** There, *a transcription is a third
+     implementation nobody declared*: hand-copying an ORACLE's answers
+     destroys the **differential**. Here, hand-copying another LANE'S SOURCE
+     destroys the **citation**. **The remedies differ, and that difference is
+     the useful part** — an expectation is a **value**, so the fix is to
+     **GENERATE** it and let the oracle write its own column; a source line is
+     **text**, cannot be generated, and so must be **GATED**. Together:
+
+     > **A transcription is an undeclared copy of something you do not own.
+     > Make the owner PRODUCE it, or make the copy FAIL LOUDLY when the owner
+     > moves. If neither is available, do not transcribe.**
+
+  2. *A check that has never failed is a design, not a control* is §7.1a's
+     line about **amendments that have never fired**, re-derived here about
+     **gates**. The self-test exercising the tripwire's failure path is that
+     rule paying rent in a second place, which is the evidence that it was
+     measured rather than phrased.
+  3. **The rename is the identifier law below, not cosmetics.**
+     `numberStringPreUnblock` names the transcription's **vintage**; *"as
+     landed"* named its **status**, and a status is a verdict with a shelf
+     life. A copy named for what it is a copy *of* survives the other lane's
+     next commit; one named for what it currently *is* cannot.
+  4. **And the CHEAP half comes first, which the dispatch did not say and
+     which this document owes MEAS-10: STAMP THE COPY.** *"As landed"* is a
+     present-tense claim about a file you do not own; *"as landed at
+     `f255c03`"* stays true forever. A stamped copy goes **out of date**; an
+     unstamped one goes **wrong**. The control is two-part and the parts do
+     different jobs — **the stamp makes a stale copy READABLE, the tripwire
+     makes it LOUD** — and only the second is a gate. That is *the fix is the
+     stamp, not the refresh* (`docs/backlog/architecture.md`
+     `2026-08-23-architecture-24`, F2) arriving at a copy instead of at a
+     count.
+
+  **This document's own transcriptions are gated**, which is why the ES half
+  is quoted below as a marked block instead of paraphrased: `tools/docs_check.py`
+  *is* the tripwire this law demands, pointed at `.md`. The landed
+  `numberToString` routes through the bit model —
+
+  ```lean
+  -- LeanModels/Es/Convert.lean (excerpt — the LANDED numberToString, routed through the model)
+      let t := n.toModel.toInt64
+      if Float.ofModel (Float.Model.ofInt64 t) == n && n.abs < 1e15 then
+        some (ToString.toString t) else none
+  ```
+
+  — and the `%` arm the same probe cited is **WITHDRAWN**, a fact no
+  line-number citation could have carried:
+
+  ```lean
+  -- LeanModels/Es/Convert.lean (excerpt — the WITHDRAWN `%` arm)
+          SemM.refuseConstruct "`%` needs a non-clamping truncation (SoftFloat's toInt_eq_truncate); refusing rather than clamping"
+  ```
+
+  **The general form, and it is the one to carry away: A TRANSCRIPTION MUST
+  LIVE WHERE A GATE CAN REACH IT, OR BRING ITS OWN GATE.** A `.md` block has
+  `docs_check`; a comment in a `.lean` has nothing, which is the whole of why
+  this one rotted — and generalizes into §5.4b;
 * **ROWS AND WITNESSES ARE NAMED FOR THE CONSTRUCT, NEVER FOR THE
   VERDICT.**
 
@@ -3968,6 +4069,98 @@ CLEANER than the truth**, so the error is silent and flattering, and a lane
 that trusts them stops looking. This is the same instinct as §5.4's *every
 refusal path RUN, not admired*, pointed at the evidence instead of at the
 code.
+
+#### 5.4b GATE TOPOLOGY — a gate set is a set of POINTERS, and coverage is what they point AT
+
+The transcription incident above (§5.4) has a second half, and it is the more
+general one. The lane that shipped the rotted copy was **not** running without
+gates. It had four, they were all green throughout, and the file was saying the
+opposite of the truth the whole time.
+
+> **Every gate was green while the file said the opposite of the truth,
+> because none of them was pointed at the claim that had rotted.**
+
+The topology, enumerated — which is the only way it becomes visible:
+
+| gate | pointed AT | blind to |
+| --- | --- | --- |
+| `probe_es_unblock.lean` is **EXPECTED TO ERROR** | that the two pre-unblock rows still fail | **everything else the file says** — its verdict is invariant under the prose |
+| `probe_es_unblock_axioms.lean` is **expected CLEAN** | that the routed rows elaborate | the same |
+| `tools/docs_check.py` | **marked blocks in `.md`** | a transcription living in a `.lean` **comment** |
+| `harness/softfloat_consumer_census.py` | **call sites** | **citations** |
+
+Four gates, four elsewheres. Nothing failed, because nothing was asked.
+
+> **ENUMERATE WHAT EACH GATE IS POINTED AT. A CLAIM NO GATE POINTS AT IS
+> UNGATED, HOWEVER GREEN THE NEIGHBOURHOOD.**
+
+**The trap is that greenness reads as coverage**, and a DENSE gate set is worse
+than a sparse one here: the more gates surround a claim, the more gated the
+claim looks, and the inference runs from *neighbourhood* to *claim* without ever
+touching the pointer. That is §5.4a's flattering direction aimed at gates rather
+than at measurements — **a gate set's coverage is itself a claim about the
+world, and therefore itself needs measuring.**
+
+**And it is not measured by running the suite again.** Re-running re-answers the
+questions already asked; the missing question is not in the suite by
+construction. **A gate set is audited by ENUMERATION, never by execution.**
+
+**The practical form, and it is three lines of work.** For each gate write
+(a) what it would CATCH and (b) what it CANNOT SEE — **in the gate's own words
+wherever it states them**, since a gate that documents its scope has already
+done half the enumeration:
+
+```python
+# tools/docs_check.py (excerpt — the gate's own statement of what it is pointed AT)
+Scans README.md, AGENTS.md, and docs/**/*.md. Exit 0 when every checked
+block matches; exit 1 listing every drifted or broken block. Python >= 3.9,
+...
+A fenced code block is checked against the tree iff it carries a path
+marker, in one of two forms:
+```
+
+Then read the file's claims against that list. **The claims with no pointer are
+the exposure**, and they are found by reading the list — never by watching the
+lights.
+
+**COROLLARY — AN EXPECTED-TO-FAIL ARTIFACT IS THE WEAKEST GATE IN ANY SET**,
+because its verdict is invariant under everything the file says. A file expected
+to error is green while it errs, whatever it errs *about*, and whatever prose
+surrounds the failing rows. **So pin the COUNT** — SoftFloat now pins **two** on
+`probe_es_unblock` and **nine** on `probe_walls`, and the count is the only part
+of an expected failure that moves when the file does.
+
+**But the count BOUNDS the drift; it does not IDENTIFY it.** Two errors a probe
+was built to have and two it has acquired are the same number, so an
+expected-error file carrying a transcription still owes the transcription
+tripwire. Pinning the count is necessary and is not sufficient — and a control
+whose sufficiency is assumed is the §5.4a failure one level up.
+
+**RIDER — THE ANNOTATION NORM: A DATED RECORD IS ANNOTATED, NEVER REWRITTEN.**
+The lane's fix reached a dated backlog entry (`2026-08-22-softfloat-1`), and it
+**annotated** the entry instead of editing it:
+
+> **The measurement was right as taken; only its tense was wrong.**
+
+Rewriting would have destroyed the evidence for the very law being minted:
+**that the text was TRUE WHEN WRITTEN is the entire finding.** A rewritten entry
+reads as a lane that simply got it wrong, which is a different — and less
+useful — story than a lane whose correct measurement expired in six minutes. The
+split to carry:
+
+> **Present-tense prose is FIXED. A dated record of a past measurement is
+> ANNOTATED.**
+
+This is the stamp discipline (MEAS-10) applied to the record rather than to the
+number, and it is the same instinct that makes §7.1a's register carry two rows
+marked **LOST** rather than two plausible reconstructions: *the remedy for a
+provenance gap is provenance, never reconstruction* (§5.4a). A register, a
+backlog entry and a census row are all dated records, and all three are worth
+less the moment they can be silently improved.
+
+Incident and dispositions: `docs/backlog/softfloat.md` `2026-08-23-softfloat-11`;
+this lane's landing, `docs/backlog/architecture.md` `2026-08-23-architecture-26`.
+
 
 ### 5.5 Coverage by clause — the manifest
 

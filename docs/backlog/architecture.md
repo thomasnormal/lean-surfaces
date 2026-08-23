@@ -1639,3 +1639,97 @@ honest disposition keeps the gap **visible and closeable** — it names the acce
 that would reopen it. **Closing a finding is not the goal: the finding is closed
 when the claim is true**, and *"we cannot currently reproduce this"* is a true
 claim.
+
+## 2026-08-23-architecture-26 — A transcription is a copy with a timestamp; and every gate was green while the file lied
+
+Two landings from the SoftFloat lane's audit response (`046d9dc`, branch
+`softfloat-m1`; audit row `docs/quality-audit-2026-08-23.md` "## softfloat",
+HIGH). Incident and dispositions: `docs/backlog/softfloat.md`
+`2026-08-23-softfloat-11`.
+
+**(1) THE TRANSCRIPTION LAW — §5.4, a new bullet beside the two docstring
+laws.** `harness/softfloat/probe_es_unblock.lean` transcribed ES's
+`numberToString` under the label *"as landed"*; ES committed the routing
+**six minutes thirty later** (`f255c03` `23:47:56` → `9dab312` `23:54:26`,
+both verified here against the log), and the probe went on presenting the
+**pre-unblock** body as the landed one with its expected-FAIL rows under the
+heading *"The landed version"*. Anyone running it concluded the unblock was
+UNLANDED — the opposite of what the lane had just measured, in the file whose
+purpose was to demonstrate it.
+
+> **A cross-lane transcription must carry a TRIPWIRE in the gate set, or it is
+> a lie with a fuse.**
+
+The half-life is the argument: **six minutes is short enough that "be careful"
+is not a control**, because no amount of care makes a copy notice a commit. The
+lane's `--check-transcriptions` gate is the shape to copy, its own failure path
+exercised in the self-test.
+
+**FOUR CONVERGENCES, and the first is the one worth the landing.** §5.3 already
+carried a transcription law — *a transcription is a third implementation nobody
+declared* — aimed at hand-copied **oracle expectations**. This one is aimed at
+another **lane's source**. Stating the pair gives the general rule and the
+reason the remedies differ: **an expectation is a VALUE and can be GENERATED; a
+source line is TEXT, cannot be, and must be GATED.** A forward pointer now sits
+in §5.3 so a lane meeting either meets the other. The other three: *a check that
+has never failed is a design, not a control* is §7.1a's amendment line
+re-derived about gates; the lane's `numberStringPreUnblock` rename is §5.4's
+**construct-not-verdict** identifier law (*"as landed"* is a status, and a
+status has a shelf life; a **vintage** does not).
+
+**AND ONE SHARPENING THE DISPATCH DID NOT CARRY: STAMP THE COPY FIRST.** *"As
+landed"* is a present-tense claim about a file you do not own; *"as landed at
+`f255c03`"* stays true forever. **A stamped copy goes OUT OF DATE; an unstamped
+one goes WRONG.** So the control has two parts doing different jobs — **the
+stamp makes a stale copy READABLE, the tripwire makes it LOUD** — and only the
+second is a gate. That is `2026-08-23-architecture-24`'s *the fix is the stamp,
+not the refresh* arriving at a copy instead of at a count, and it is MEAS-10
+owed by this document.
+
+**This landing's own transcription is gated**, which is the law applied to
+itself: the ES half is quoted as two `docs_check`-marked blocks (the routed
+`numberToString`, and the `%` arm — **WITHDRAWN**, a fact no line-number
+citation could have carried). **State stamp:** the SoftFloat gate is on
+`softfloat-m1` and **not on master**, so it is described and not quoted; master
+still carries the rotted probe text as of this landing.
+
+**(2) GATE TOPOLOGY — new §5.4b.** The second half of the same incident, and
+the more general one. The lane had **four** gates, all green throughout:
+
+> **Every gate was green while the file said the opposite of the truth, because
+> none of them was pointed at the claim that had rotted.**
+
+`probe_es_unblock.lean` was **expected to error** and did; its sibling was
+expected clean and was; `docs_check` gates **marked blocks in `.md`** and this
+was a comment in a `.lean`; the census gated **call sites**, not **citations**.
+Four gates, four elsewheres.
+
+> **ENUMERATE WHAT EACH GATE IS POINTED AT. A claim no gate points at is
+> UNGATED, however green the neighbourhood.**
+
+Two things added to the dispatch. First, **a dense gate set is worse than a
+sparse one here** — the more gates surround a claim, the more gated it looks,
+and the inference runs neighbourhood → claim without touching a pointer; so
+**a gate set is audited by ENUMERATION, never by execution**, because
+re-running only re-answers the questions already asked. Second, the
+expected-error corollary is stated with its limit: pinning the COUNT is
+**necessary and not sufficient** — two errors a probe was built to have and two
+it acquired are the same number, so the count **bounds** the drift and does not
+**identify** it, and an expected-error file carrying a transcription still owes
+the tripwire. The §5.4b enumeration table is the practical form, and it takes
+each gate's scope **from the gate's own words** where it states them
+(`tools/docs_check.py`'s docstring, quoted as a checked block).
+
+**RIDER — THE ANNOTATION NORM, landed with it.** The lane annotated its dated
+entry `2026-08-22-softfloat-1` rather than rewriting it:
+
+> **The measurement was right as taken; only its tense was wrong.**
+
+Recorded because rewriting would have destroyed the evidence for the very law
+being minted: **that the text was TRUE WHEN WRITTEN is the entire finding**, and
+a rewritten entry reads as a lane that simply erred — a different and weaker
+story. **Present-tense prose is FIXED; a dated record of a past measurement is
+ANNOTATED.** Same instinct as §7.1a's register carrying two rows marked **LOST**
+instead of two plausible reconstructions.
+
+**Index:** MEAS-64 … MEAS-69 in `docs/law-index.md`.

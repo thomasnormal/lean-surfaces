@@ -1493,6 +1493,23 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         if all(isinstance(t, ast.Name) for t in node.targets):
             return {"kind": "Delete", "span": span(node),
                     "names": [t.id for t in node.targets]}
+        # CLAUSE 4, WIDENED (docs/backlog/python-completeness.md
+        # 2026-08-23-pycomplete-15): a SINGLE subscript target is admitted, and
+        # ingestion rewrites it to `<dictdel>(recv, key)` -- the third decision
+        # site, exactly as `list(d.keys())` becomes `list(<dictkeys>(d))`.
+        # This admission is SYNTACTIC: it accepts `del o[k]` for ANY receiver,
+        # and the receiver's TYPE is decided in the evaluator's arm, which
+        # refuses a non-dict there. A SLICE target (`del xs[1:]`) is excluded --
+        # it deletes a RANGE, a different operation on a different receiver.
+        # `del o.attr` and multi-target deletes mixing shapes stay Unsupported:
+        # the partial-effect semantics of a mixed `del` are a second table
+        # nobody has measured.
+        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Subscript):
+            t = node.targets[0]
+            if not isinstance(t.slice, ast.Slice):
+                return {"kind": "DeleteSubscript", "span": span(node),
+                        "recv": convert_expr(t.value),
+                        "key": convert_expr(t.slice)}
         return unsupported(node)
     if isinstance(node, ast.Raise):
         # Exceptions tier (docs/memory-model.md paragraph "exceptions"):

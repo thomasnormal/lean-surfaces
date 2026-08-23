@@ -1719,6 +1719,16 @@ than inventing an `AttributeError` for a receiver that may legitimately have
 def viewRecvMsg : String :=
   "'.keys()'/'.values()'/'.items()' on a non-dict receiver is outside the tier (docs/memory-model.md §dict iteration)"
 
+/-- §del: `del o[k]` where `o` is not a dict. The ingestion rewrite is
+SYNTACTIC — it lowers `del o[k]` for ANY receiver — so the receiver's type is
+decided HERE, exactly as it is for the view builtins. The refusal is honest
+rather than a guessed exception: for a LIST CPython SUCCEEDS (item deletion,
+a tier this model does not have), for a `str` it raises `TypeError`, and
+inventing either would be answering for a receiver whose behaviour has not
+been measured. `dict_lab::del_nondict_still_loud` is the witness. -/
+def delRecvMsg : String :=
+  "'del o[k]' on a non-dict receiver is outside the tier (dict item deletion only; docs/memory-model.md §the del statement)"
+
 /-- The loud report for a dangling address (unreachable from WF worlds). -/
 def danglingMsg : String :=
   "internal: dangling heap address (heap well-formedness violation — report this)"
@@ -1960,6 +1970,23 @@ def dictStore : List (RVal × RVal) → RVal → RVal → List (RVal × RVal) ×
       match dictStore rest k v with
       | (rest', grew) => ((k', v') :: rest', grew)
 
+/-- §del: remove the entry whose key is `keyEq`-equal to `k`, if present.
+Answers the remaining entries and whether a key was FOUND — the caller turns
+`false` into CPython's `KeyError`.
+
+Deletion does NOT hold the slot: a later reinsertion appends, which is
+`dictStore`'s existing behaviour and is what CPython measures
+(`d = {1:'a',2:'b',3:'c'}; del d[2]; d[2]='z'` lists `[1, 3, 2]`). So the
+entries array stays exactly "the insertion sequence", the invariant every
+cursor in this file reads. -/
+def dictDelete : List (RVal × RVal) → RVal → List (RVal × RVal) × Bool
+  | [], _ => ([], false)
+  | (k', v') :: rest, k =>
+    if keyEq k' k then (rest, true)
+    else
+      match dictDelete rest k with
+      | (rest', found) => ((k', v') :: rest', found)
+
 /-- Build a dict literal's entries: inserts left to right (duplicate equal
 keys: first key/position, last value), each key hashability-checked at its
 insertion — CPython's `BUILD_MAP` order (every element expression was
@@ -2000,6 +2027,33 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
   | some (.closure ..) => .exn (.typeError "'function' object is not subscriptable")
   | some (.pyset _) => .exn (.typeError "'set' object is not subscriptable")
   | Option.none => .unsupported danglingMsg
+
+/-- `del o[k]` on a heap object — the heap half of the `<dictdel>` rewrite.
+
+**THE `shapeVersion` BUMP IS THE LOAD-BEARING HALF, and it is unconditional
+here.** A removal is always a KEY-SET change, and the cursor's SIZE guard
+cannot see one on its own: `del d[x]` followed by `d[y] = v` in the same loop
+body leaves `es.size` exactly as it was, so size — the only guard that fires
+today — stays silent and the churn would be walked as if nothing happened.
+`shapeVersion` is what makes that regime detectable, so deletion increments it
+even though `heapStore` increments only on GROWTH. The two together are what
+`dictStep`'s `rekeyed` arm reads.
+
+A non-dict receiver is the caller's business, not this worker's: it answers
+`Option.none` and the arm decides, because the rewrite is SYNTACTIC and admits
+`del o[k]` for any `o`. -/
+def heapDelete (h : Heap) (a : Addr) (k : RVal) : Option (Res Heap) :=
+  match Heap.get? h a with
+  | some (.dict es ver) =>
+    some (if hashableKey k then
+      match dictDelete es.toList k with
+      | (_, false) => .exn .keyError
+      | (es', true) =>
+        match Heap.update h a (.dict es'.toArray (ver + 1)) with
+        | some h' => .ok h'
+        | Option.none => .unsupported danglingMsg
+    else keyRefusal h k)
+  | _ => Option.none
 
 /-- `o[k] = v` on a heap object. Dicts: value replacement keeps the shape
 version; insertion increments it (`dictStore`'s growth bit). Lists (H2):

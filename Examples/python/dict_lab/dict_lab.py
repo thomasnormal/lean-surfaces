@@ -468,3 +468,115 @@ def enum_dict_grow_then_step(a):
     e = enumerate(d)
     d[2] = 9
     return next(e)[0]
+
+
+# §del: `del d[k]`, which ingestion lowers to `<dictdel>(d, k)`. The four churn
+# rows below are the MEASURED shapes from
+# docs/backlog/python-completeness.md 2026-08-23-pycomplete-15: the same-size
+# key-set churn regime is NOT guessable (some shapes raise CPython's second
+# RuntimeError, some complete silently, and what separates them is the
+# entries-array layout), so the tier REFUSES it. Deletion is what makes that
+# regime reachable at all, which is why the rows land with this inch.
+
+
+def del_key(a):
+    d = {1: a, 2: 5}
+    del d[1]
+    return len(d)
+
+
+def del_then_reinsert_order(a):
+    # deletion does NOT hold the slot: reinsertion APPENDS
+    d = {1: a, 2: 5, 3: 6}
+    del d[2]
+    d[2] = 9
+    t = 0
+    for k in d:
+        t = t * 10 + k
+    return t
+
+
+def del_missing_key(a):
+    d = {1: a}
+    del d[9]
+    return 0
+
+
+def del_through_alias(a):
+    d = {1: a, 2: 5}
+    e = d
+    del e[1]
+    return len(d)
+
+
+def del_nondict_still_loud(a):
+    # THE SYNTACTIC BOUNDARY: ingestion rewrites `del o[k]` for ANY receiver,
+    # so the receiver's TYPE is decided in the evaluator's arm. CPython DELETES
+    # here (list item deletion), which this tier does not have, so it refuses
+    # rather than inventing an answer.
+    xs = [a, 5]
+    del xs[0]
+    return len(xs)
+
+
+def del_during_iteration(a):
+    # SIZE changes -> CPython's RuntimeError, which the tier reproduces
+    d = {1: a, 2: 5}
+    t = 0
+    for k in d:
+        del d[k]
+        t = t + k
+    return t
+
+
+def del_churn_then_break(a):
+    # the ONE churn shape that is a MATCH, and for a reason that is not
+    # "CPython was silent": the loop EXITS before the cursor re-reads, so the
+    # guard is never reached.
+    d = {1: a, 2: 5}
+    t = 0
+    for k in d:
+        del d[2]
+        d[3] = 6
+        t = k
+        break
+    return t
+
+
+def del_churn_first_key(a):
+    # CPython completes SILENTLY here (measured); the tier refuses, because
+    # the cursor re-reads and cannot know which layout it is in.
+    d = {1: a, 2: 5, 3: 6}
+    t = 0
+    for k in d:
+        if k == 1:
+            del d[3]
+            d[99] = 9
+        t = t + k
+    return t
+
+
+def del_churn_same_key_back(a):
+    # CPython completes SILENTLY (measured); same refusal, same reason.
+    d = {1: a, 2: 5}
+    t = 0
+    for k in d:
+        if k == 1:
+            del d[2]
+            d[2] = 9
+        t = t + k
+    return t
+
+
+def del_churn_middle_key(a):
+    # CPython RAISES its SECOND RuntimeError here (measured) -- a different
+    # message from the size one. The tier refuses rather than reproduce a
+    # message it cannot know it should emit.
+    d = {1: a, 2: 5, 3: 6}
+    t = 0
+    for k in d:
+        if k == 2:
+            del d[1]
+            d[99] = 9
+        t = t + k
+    return t

@@ -111,7 +111,9 @@ def double_del(n):
 
 
 def del_sub():
-    # shape refusal (clause 4): subscript target stays Unsupported
+    # LANDED (§del): clause 4 now admits a single subscript target and
+    # ingestion rewrites it to `<dictdel>(d, k)`. This row was the shape
+    # refusal; it is now the shape's acceptance.
     d = {1: 2}
     del d[1]
     return 0

@@ -487,6 +487,46 @@ print(sorted(d.keys() & {1, 9}))
 """, "REFUSE",
   "keys/items are SET-LIKE (`&`, `|`, `-`, `^` answer a set); values are "
   "NOT (`d.values() & {1}` is a TypeError). Two inventories, not one")
+w("del.dict-key", """
+d = {2: 'b', 1: 'a'}
+del d[2]
+print(d)
+""", "MATCH", "dict item deletion — the ingestion rewrite to `<dictdel>(d, k)`")
+w("del.dict-missing", """
+d = {1: 'a'}
+del d[9]
+print('unreachable')
+""", "MATCH", "CPython raises KeyError(9) and the tier reproduces it")
+w("del.dict-reinsert-order", """
+d = {1: 'a', 2: 'b', 3: 'c'}
+del d[2]
+d[2] = 'z'
+print(list(d))
+""", "MATCH",
+  "deletion does NOT hold the slot: reinsertion APPENDS, so the entries "
+  "array stays exactly the insertion sequence every cursor here reads")
+w("del.dict-churn", """
+d = {1: 1, 2: 2, 3: 3}
+for k in d:
+    if k == 2:
+        del d[1]
+        d[99] = 9
+print('unreachable')
+""", "REFUSE",
+  "THE REGIME DELETION MAKES REACHABLE. Same-size key-set churn is NOT "
+  "guessable: this shape raises CPython's SECOND RuntimeError ('dictionary "
+  "keys changed during iteration'), while churning at the FIRST key, or "
+  "putting the same key back, completes SILENTLY — the entries-array layout "
+  "is what separates them (2026-08-23-pycomplete-15 measured four shapes). "
+  "Permanently loud, and reachable for the first time because `del` landed")
+w("del.non-dict-receiver", """
+xs = [1, 2]
+del xs[0]
+print(xs)
+""", "REFUSE",
+  "CPython answers [2]. The rewrite is SYNTACTIC — it lowers `del o[k]` for "
+  "any receiver — so the type is decided in the evaluator's arm, and list "
+  "item deletion is a tier this model does not have")
 w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
@@ -800,8 +840,19 @@ WHITELIST_CLASS = {
     "del_lab::del_global": "del.name-set-census",
     "del_lab::del_never": "del.name-set-census",
     "del_lab::double_del": "del.name-set-census",
-    "del_lab::del_sub": "del.non-name-target",
+    # `del_lab::del_sub` LEFT this table with §del: clause 4 admits a single
+    # subscript target and ingestion rewrites it, so the row is now `match`.
     "del_lab::del_attr": "del.non-name-target",
+    # §del: the SYNTACTIC boundary of the rewrite. Ingestion lowers `del o[k]`
+    # for any receiver, so a non-dict is refused in the evaluator's arm.
+    "dict_lab::del_nondict_still_loud": "del.non-dict-receiver",
+    # §del: the same-size KEY-SET CHURN regime, REACHABLE for the first time
+    # because deletion landed (2026-08-23-pycomplete-15 measured it: some
+    # shapes raise CPython's second RuntimeError, some complete silently, and
+    # the entries-array layout is what separates them). Permanently loud.
+    "dict_lab::del_churn_first_key": "dict.keyset-churn",
+    "dict_lab::del_churn_same_key_back": "dict.keyset-churn",
+    "dict_lab::del_churn_middle_key": "dict.keyset-churn",
 }
 
 # The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused

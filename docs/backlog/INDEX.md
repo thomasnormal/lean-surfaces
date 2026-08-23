@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**157 entries across 16 lanes.** Regenerate with
+**159 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -102,8 +102,10 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |
 | `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
 | `2026-08-23-architecture-3` | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
+| `2026-08-23-sv-2` | THE STEPPER TENURE RAN AND CAME BACK RED ON ONE GOAL; the `Res` bind lemmas did their job | sv |
 | `2026-08-23-pyrebuild-2` | THE MERGE TO MASTER: one arm, 25 rows, and a dispatch discharged | pyrebuild |
 | `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |
+| `2026-08-23-sv-1` | THE OWED FULL-TREE TRIAD IS DISCHARGED BY SOMEONE ELSE'S GREEN, and the number carries the state it was measured in | sv |
 | `2026-08-23-es-1` | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
 | `2026-08-23-architecture-1` | AMENDMENT 17 (DRAFT): proof iteration is a different shape, and five conditions I would tighten | architecture |
 | `2026-08-22-architecture-14` | TWO FOLLOW-UPS RECORDED | architecture |

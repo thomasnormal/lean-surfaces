@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**255 entries across 16 lanes.** Regenerate with
+**257 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -31,6 +31,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-architecture-52` | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
 | `2026-08-24-qol-49` | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` | the stamp was watching the index while lake read the working tree | qol |
+| `2026-08-24-softfloat-14` | THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology | softfloat |
 | `2026-08-24-sunfish-rtrack-11` | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
 | `2026-08-24-wasm-8` | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
@@ -117,6 +118,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-pycomplete-14` | INCH 3c-i-c BUILT: `enumerate(d)` runs, and the census's price held exactly | python-completeness |
 | `2026-08-23-lean-tier-14` | CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING | lean-tier |
 | `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
+| `2026-08-23-softfloat-13` | PARSE INCH, STATEMENT-FIRST: `ofScientific`'s branches are NOT shape-uniform | softfloat |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-pycomplete-13` | INCH 3c-i-c's CENSUS: `enumerate(d)` is a GENERATOR FRAME, so the Kont record is not touched at all | python-completeness |
 | `2026-08-23-lean-tier-13` | MILESTONE: 4 proved / 3 blocked, `weak'_inv` parked on an IMPORT CYCLE; and the arena re-measure moved a fact | lean-tier |

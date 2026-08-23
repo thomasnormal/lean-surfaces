@@ -672,3 +672,162 @@ would have found nothing either.
 2. **Print second** (the Dragon4-style exact algorithm of
    `2026-08-23-softfloat-10`): greenfield, fuel-shaped, and it retires
    `Convert.lean:251` — the only site in the tree that no other lane can fix.
+
+---
+
+## 2026-08-23-softfloat-13 — PARSE INCH, STATEMENT-FIRST: `ofScientific`'s branches are NOT shape-uniform
+
+`harness/softfloat/probe_ofscientific.lean` (zero errors). Exploratory probe
+run **before** writing the theorem, to fix its statement. Two findings, and the
+first one changes the subject of the theorem.
+
+### THE THEOREM CANNOT BE ABOUT `ofScientific`'s UNPACKED RESULT
+
+`UnpackedFloat.ofScientific` has three branches: zero, two SAFETY CUTOFFS, and
+the computing path. **They do not return the same shape.**
+
+| branch | binary16 example | result |
+| --- | --- | --- |
+| cutoff, `e > 2 ^ exponentBits` | `1e33` | `.infinity .positive` — **directly**, computing nothing |
+| computing path, `e = 2 ^ exponentBits` | `1e32` | **`.finite`** — measured `.isInf = false`, `.isFinite = true` |
+| the same, after `pack` | `1e32` | `packedInfinity` |
+
+The reason is structural: `roundWithAccuracy` returns only `.zero` or
+`.finite`, **never `.infinity`** — overflow to infinity happens one layer up, in
+`pack`. Core states it in `UnpackedFloat`'s own docstring: *"an unpacked float
+in canonical form for a given format may not actually be representable in that
+format … the `pack` function will overflow the float to infinity."*
+
+> **So `op_correct` for the parse half must be stated AFTER `pack`, or must
+> carry a representability hypothesis.** A single statement about the unpacked
+> result would be comparing `.infinity` on one branch against an
+> unrepresentable `.finite` on another, and it would be false without either
+> having been wrong about the arithmetic.
+
+This is precisely why the inch was probed statement-first. The bug it prevents
+is not an arithmetic error; it is a theorem that is false for a reason having
+nothing to do with what it was meant to say.
+
+### THE KERNEL COST IS VALUE-DEPENDENT, NOT ONLY WIDTH-DEPENDENT
+
+§1.3 measured the width axis (binary16 → binary256, cost linear in the
+significand, priced in `maxRecDepth`). The parse probe found the other axis:
+
+* `ofScientific binary64 1 (-1)` — `0.1` — closes by `rfl` at `maxRecDepth 4000`;
+* `ofScientific binary64 3 (-1)` — `0.3` — does **not** close at **16000**.
+
+Same width, same operation, same denominator; only the numerator differs. And
+`1e32` at binary16 does not close at 16000 either, while `1e33` closes
+instantly — because the latter takes the cutoff and computes nothing.
+
+> **An instance row that closes for one literal may not close for its
+> neighbour.** So the parse theorem must be **parametric**, and the
+> `decide`-closed base cases must be **chosen and measured**, never assumed
+> from a nearby row that happened to work. That is the §0.1 II(a) ladder with a
+> sharper edge than the width axis gave it.
+
+### WHAT DID CLOSE, and it is the fragment ES parses
+
+Zero at every width and both cutoffs by `rfl`; exactness for `m * 10 ^ e` with
+`e ≥ 0` at **binary16, binary32, binary64 and binary128**; and the dyadic
+negative exponents (`5e-1 = 1/2`, `125e-3 = 1/8`) that are exact in binary.
+`ofsci_zero` — `∀ spec e, ofScientific spec 0 e = .zero .positive`, over a
+general `Format` — closes by `rfl`.
+
+### NEXT, and the statement is now fixed
+
+`ofScientific_correct` stated over `pack spec (ofScientific spec m e)`, against
+the correctly-rounded value of the exact rational `m * 10 ^ e`. It needs
+`roundQ`, which is the same prerequisite the arithmetic `op_correct` family
+needs — so the parse half and `roundQ` are one inch, not two.
+
+---
+
+## 2026-08-24-softfloat-14 — THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology
+
+`LeanModels/SoftFloat/Round.lean`. Zero errors, zero warnings, `check.sh`
+verdict **TRUSTWORTHY**; `nearest_of_exact` `[propext]`, `directed_of_exact`
+**no axioms at all**.
+
+### WHY DECLARATIVE FIRST, AND NOT THE COMPUTABLE `roundQ`
+
+The obvious next step was a computable `roundQ` so `op_correct` could be stated
+as `op fmt x y = roundQ fmt (exact …)`. **That would have been close to
+circular**, and charter §3.5.2 says why in advance: a proof must target
+round-of-exact and never our bit algorithm, because *"these output bits equal
+what `UnpackedFloat.div` computes"* is a tautology about an implementation.
+Any correct computable `roundQ` will structurally resemble core's rounding —
+they are both the same finite integer computation — so proving core against it
+proves little.
+
+**The escape is the split one level down**: predicates that mention **no
+algorithm at all**, core's or ours, and say only what §4.3 says. That is what
+landed:
+
+* `ReprQ fmt q` — IEEE §3.3: the finite values a format holds, `± m · 2 ^ e`
+  with the significand inside `2 ^ mantissaBits` and the exponent at or above
+  `minExponent`.
+* `IsNearest fmt q y tieOk` — §4.3.1: `y` is representable, **nothing
+  representable is strictly closer**, and when something is exactly as close the
+  tie rule decides. The tie rule is a **parameter**, which is what distinguishes
+  roundTiesToEven from roundTiesToAway instead of hard-coding one.
+* `IsDirected fmt q y side` — §4.3.2: representable, on the required side, and
+  **nothing representable strictly between**. One shape covers toward-zero,
+  toward-positive and toward-negative by instantiating `side`.
+
+`op_correct` will be stated against these. The computable `roundQ` is then
+proved to *satisfy* them, and its resemblance to core stops mattering — which
+is the whole point of the spec/interpreter split, applied to rounding itself.
+
+### ONE OMISSION STATED RATHER THAN HIDDEN
+
+`ReprQ` carries **no upper bound on the exponent**, so it describes the
+format's finite values as though the exponent range were unbounded above.
+That is deliberate: overflow is IEEE **§7.4**, a separate clause with a
+**mode-dependent** answer (the directed modes give the largest finite magnitude
+in one direction and ±∞ in the other — charter §3.5). Folding it in here would
+silently redefine "nearest representable" as "nearest representable or ±∞",
+which is a different theorem. Named now so §7.4 is designed rather than
+discovered.
+
+### NO PACKAGE DEPENDENCY, HELD
+
+The nonnegativity step in `nearest_of_exact` would be one `ring` call. This
+component depends on **no package**, so the cancellation is done by hand
+(`Int.neg_mul`, `Int.add_right_neg`, `Int.mul_nonneg`). The posture costs three
+lines here and is worth keeping: it is what lets this component be a dependency
+of tiers that claim core-only.
+
+### §9.0 — WHERE THE `op_correct` FAMILY ACTUALLY STANDS
+
+**1 of 12 proved.** The denominator is the charter's own plan (§3.5.5),
+enumerated so the fraction is auditable rather than flattering:
+
+| step | ops | proved |
+| --- | --- | --- |
+| 1 | `+` `−` `×` `÷` `√` | **0 of 5** |
+| 1 | the six comparison predicates (one statement) | 0 of 1 |
+| 2 | int→float, **float→int**, format→format | **1 of 3** — `toInt_eq_truncate` |
+| 3 | decimal parse, decimal print | 0 of 2 |
+| 4 | `fma` | 0 of 1 |
+
+The other **21** landed theorems are real but are **not** `op_correct`: 2
+working lemmas, 9 parametric IEEE special-value rows (§6.2, §6.3, §7.2, §7.3,
+§5.11), 7 packed transfers of those, 2 acid tests, and 1 packed transfer of the
+one `op_correct`. Counting those toward the family would be exactly the
+flattering direction this lane has already had to correct twice.
+
+### THE DECIMAL BLOCKER'S STATE
+
+**Both sites live and gated**, re-verified by `--decimal-demand` in every triad
+since it was added:
+
+* `Es/Convert.lean:251` — **print**, §6.1.6.1.20. Core ships no printer at all.
+  **The only item in the tree no other lane can fix.**
+* `Es/Convert.lean:168` — **parse**, §7.1.4.1. Core's `ofScientific` exists and
+  is reducible, so this is an `op_correct`, not an algorithm.
+
+Both are blocked on the same prerequisite, and **the parse half and `roundQ`
+are one inch** (2026-08-23-softfloat-13). The declarative half of that
+prerequisite is now landed; the computable `roundQ` and the equivalence are
+what remain before `ofScientific_correct` can be stated at all.

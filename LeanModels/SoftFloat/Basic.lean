@@ -95,6 +95,18 @@ instance : Ord Q := ⟨Q.compare⟩
 /-- Exact equality (not structural: `1/2` and `2/4` are equal here). -/
 protected def beq (a b : Q) : Bool := a.num * b.den == b.num * a.den
 
+/-- Exact equality as a PROP, by cross-multiplication: `1/2` and `2/4` are equal. -/
+protected def Eq (a b : Q) : Prop := a.num * b.den = b.num * a.den
+
+/-- Exact `≤` as a PROP, by cross-multiplication.  Both denominators are positive. -/
+protected def Le (a b : Q) : Prop := a.num * b.den ≤ b.num * a.den
+
+/-- The absolute value of an exact rational. -/
+def abs (a : Q) : Q := ⟨a.num.natAbs, a.den, a.den_pos⟩
+
+/-- `|a - b|` — the exact distance between two values.  What "nearest" means. -/
+def dist (a b : Q) : Q := Q.abs (a - b)
+
 /--
 Truncation toward zero: IEEE 754-2019 §5.8 `convertToIntegerTowardZero`.
 `Int.tdiv` is truncating division, which is what "toward zero" means.

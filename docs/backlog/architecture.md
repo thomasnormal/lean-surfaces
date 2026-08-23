@@ -2665,3 +2665,82 @@ checked half is a result; it is only a weakness when it is described in the
 vocabulary of the proved half.**
 
 **Index:** MEAS-109, STMT-106, PROOF-58, PROOF-59.
+
+## 2026-08-23-architecture-37 — The first vendored function-level theorem outside Python; and a proof demotes only the rows about the relation it proved
+
+Three from Go's completed exemplar (`4bda5af`, on master).
+
+**(1) §5.6 — THE MILESTONE, landed where the section that asked for it lives.**
+
+> **`bitLen_correct`: `callFunction … "bitLen" [v]` returns `bitLenSpec v` for
+> every `v < 2⁶⁴`** — the family's **first full function-level theorem about a
+> real vendored program** outside Python. 22 theorems, `propext` /
+> `Quot.sound` / `Classical.choice` at worst, no `sorry`, no `native_decide`.
+
+Read against §5.6's own rule it is the whole shape: a **suite** set the scope,
+**one exemplar** drove the proof library, and the exemplar was **chosen for its
+theorem**. **The property that makes it a milestone rather than a demonstration
+is that the subject is vendored** — the tier did not write it and cannot edit
+it, so nothing in the result can be arranged by choosing a friendlier program
+afterwards.
+
+**AND THE COMPOSITION FORCED A GENERALIZATION — the benign direction of the
+quantifier family.** `body_step`, `cond_eval` and `loop_computes` were stated
+with `[]` as the program table because the loop calls nothing; `callFunction`
+passes the real one, so they now range over an arbitrary `P : FuncTable`. *The
+loop genuinely does not care, and now says so.*
+
+> **GENERALIZATION BY COMPOSITION: when a consumer forces a lemma's quantifier
+> wider and the proof does not change, the narrow statement was an accident of
+> its first use.**
+
+Named explicitly because **the quantifier family's other members are
+failures** — a count under the wrong unit, a census naming a language where it
+measured a tier (`2026-08-23-architecture-35`). This is the same mechanism with
+the sign reversed, and a lane should read it as a **result, not churn**: a lemma
+widened by its consumer and re-proved with no new work has been **measured** to
+be more general, which is better evidence than being written general by an
+author who guessed.
+
+**(2) §5.4a — THE DEMOTION STANDARD, beside the proved/checked boundary.** With
+`bitLen_correct` proved, the 35 **SPEC** rows are demoted to corroboration —
+instances of `bitLen_eq_spec`. The 35 **ORACLE** rows are **not**:
+
+> **`bitLen_correct` proves the model computes `bitLenSpec`; it cannot prove
+> `gc` does.**
+
+> **A proof demotes the rows about the RELATION IT PROVED, and no others.**
+
+**My addition is why this is a trap and not a bookkeeping note.** A landed
+theorem creates pressure to retire the tests it "covers", and the covering feels
+**total** — it quantifies over all `v < 2⁶⁴` where the rows are 35 points. But
+**strength along one relation is not coverage of another**, and the two row sets
+are **indistinguishable in the table**: same inputs, same expected values, and
+**only their ADJUDICATOR differs** — precisely what a row's data does not show.
+So the decision is made by asking which relation each row adjudicates, never by
+comparing values. That makes it *the adjudicator is the ORACLE, never the TABLE*
+in its **second direction**: an adjudicator's retirement re-anchors its rows; a
+**theorem's arrival** may demote only the rows whose adjudicator it replaces.
+
+**(3) §9 — WHY CORPUS-DRIVEN SELECTION WORKS, recorded because it reads as
+luck.** `bigmod.bitLen` hand-rolls its loop **to avoid the lookup table**
+`bits.Len` uses — its own comment says so — and lookup tables need exactly the
+array types and indexing the tier lacks. **The census picked the one function in
+the neighbourhood that does not need the construct the tier lacks, without
+knowing that was why.**
+
+> **Corpus-driven selection finds the frontier's traversable point BY
+> CONSTRUCTION: a ranking over what the tier can EXECUTE is already filtering
+> for what the tier can PROVE about.**
+
+The constraint was satisfied **silently** — nobody identified it and searched
+for a program obeying it. That is the argument for ranking by **executability**
+rather than by interest: **a selection rule defined over the tier's own
+capability cannot pick an unreachable subject**, and a human choosing *"the
+interesting function"* routinely does. **And the honest limit is in the same
+census**, which is what makes it a strategy: the next inch (`math/bits`, 49
+exported, 26 plain-integer) is blocked on **exactly the eight table-driven
+ones**. Corpus selection finds the traversable point **and names the wall — in
+constructs rather than in effort.**
+
+**Index:** MEAS-110 … MEAS-112.

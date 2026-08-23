@@ -156,6 +156,9 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-107 | an unexercised gate is not a gate; it is a claim | `docs/family-architecture.md §5.4b` |
 | MEAS-108 | zero for a class the tier CAN emit is about the CORPUS; cannot build, about the TIER | `docs/family-architecture.md §5.2` |
 | MEAS-109 | a well-named blocker NARROWS each time it is re-stated | `docs/family-architecture.md §9.7` |
+| MEAS-110 | a proof demotes the rows about the RELATION IT PROVED, and no others | `docs/family-architecture.md §5.4a` |
+| MEAS-111 | generalization by composition — a consumer widening a quantifier for free is a measurement | `docs/family-architecture.md §5.6` |
+| MEAS-112 | corpus-driven selection finds the frontier's traversable point BY CONSTRUCTION | `docs/family-architecture.md §9` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

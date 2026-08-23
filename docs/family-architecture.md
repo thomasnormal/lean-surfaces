@@ -4088,6 +4088,34 @@ written afterwards is written by an author who now knows which side won, and it
 drifts in one direction only — the proved side quietly annexes whatever sits
 next to it, because at that moment the annexation feels like precision.
 
+**AND THE COMPANION RULE FOR WHEN THE PROOF FINALLY LANDS: ONLY THE ROWS IT
+SUBSUMES BECOME CORROBORATION.** Measured on the same exemplar (`4bda5af`).
+With `bitLen_correct` proved, the **35 SPEC rows are demoted** — they are
+instances of `bitLen_eq_spec` now. The **35 ORACLE rows are NOT**, and the
+reason is one sentence:
+
+> **`bitLen_correct` proves the model computes `bitLenSpec`; it cannot prove
+> `gc` does.**
+
+> **A PROOF DEMOTES THE ROWS ABOUT THE RELATION IT PROVED, AND NO OTHERS.**
+
+The oracle rows stay at full weight because they are **the only thing tying the
+model to what the compiled function actually printed**. A theorem about the
+model is **silent about the world**, however strong it is about the model.
+
+**The trap is that a landed theorem creates pressure to retire the tests it
+"covers", and the covering feels total** — the theorem quantifies over all
+`v < 2⁶⁴` where the rows are 35 points. But **strength along one relation is not
+coverage of another**, and the two row sets are indistinguishable in the table:
+same inputs, same expected values. **Only their ADJUDICATOR differs**, and the
+adjudicator is exactly what a row's data does not show.
+
+So the demotion decision is made by asking **which relation each row
+adjudicates** — never by comparing values, and never by counting. That is *the
+adjudicator is the ORACLE, never the TABLE* (below) in its second direction:
+**when a window's adjudicator retires, its rows must be re-anchored; when a
+THEOREM arrives, only the rows whose adjudicator it replaces may be demoted.**
+
 **This is §0.1 II(a)'s receipts rule at the granularity of a CLAIM rather than a
 tactic**: a theorem statement carries how it was established, and *"checked on
 35 inputs against two independent standards"* is a strictly better sentence than
@@ -5025,6 +5053,42 @@ tier's stated surface equal to its actual one.
 > proof library. The exemplar is chosen for its THEOREM — never for its
 > authorship — and no program is commissioned as a driver for its own
 > sake.**
+
+**AND THE RULE HAS ITS FIRST COMPLETED INSTANCE OUTSIDE PYTHON — the milestone
+this section existed to produce** (Go, `4bda5af`, on master):
+
+> **`bitLen_correct`: `callFunction … "bitLen" [v]` returns `bitLenSpec v` for
+> EVERY `v < 2⁶⁴`.** The family's **first full function-level theorem about a
+> real vendored program** outside the Python tier. **22 theorems**, axioms
+> `propext` / `Quot.sound` / `Classical.choice` at worst, no `sorry`, no
+> `native_decide`.
+
+Read against what this section asks for, it is the whole shape: a **suite** set
+the tier's scope, **one exemplar** drove the proof library, and the exemplar was
+**chosen for its theorem** — a function-level statement about a program the tier
+did not write and cannot edit. **The theorem is about the vendored source, which
+is the property that makes it a milestone rather than a demonstration**: nothing
+in it can be arranged by choosing a friendlier subject after the fact.
+
+**AND THE COMPOSITION FORCED A GENERALIZATION, which is the benign direction of
+the quantifier family (§5.4a).** `body_step`, `cond_eval` and `loop_computes`
+were stated with `[]` as the program table because the loop calls nothing;
+`callFunction` passes the **real** table, so they are now stated over an
+**arbitrary `P : FuncTable`**. *The loop genuinely does not care, and now says
+so.*
+
+> **GENERALIZATION BY COMPOSITION: when a consumer forces a lemma's quantifier
+> wider and the proof does not change, the narrow statement was an accident of
+> its first use.**
+
+The quantifier family's other members are failures — a count under the wrong
+unit, a census naming a language where it measured a tier. **This is the same
+mechanism with the sign reversed, and it is worth naming so a lane recognizes
+it as a result rather than as churn**: the composition is what discovered that
+the loop's independence from the table was a *fact* and not a *convenience*. A
+lemma widened by its consumer and re-proved with no new work has been **measured
+to be more general**, which is strictly better evidence than being written
+general by an author who guessed.
 
 Applied: **SystemVerilog's exemplar is the floating-point divider** (§3.5.2
 states its theorem, and it factors through the shared vertex rather than
@@ -6343,6 +6407,32 @@ prose, and each lane hand-implements it.* **Prose cannot be run**, so a
 lane's implementation is only as good as its reading, and a defect in one
 reading is invisible to every other lane. Every item below moves a rule
 from prose into something executable.
+
+**AND ONE OBSERVATION ABOUT WHY CORPUS-DRIVEN SELECTION WORKS, recorded because
+it reads as luck and is not** (Go, `4bda5af`). The exemplar was reachable at all
+because `bigmod.bitLen` **hand-rolls its loop to avoid the lookup table**
+`bits.Len` uses — the crypto source says so in its own comment — and lookup
+tables need exactly the array types and indexing the tier does not have.
+**The census picked the one function in the neighbourhood that does not need the
+construct the tier lacks, without knowing that was why.**
+
+> **Corpus-driven selection finds the frontier's traversable point BY
+> CONSTRUCTION: a ranking over what the tier can EXECUTE is already filtering
+> for what the tier can PROVE about.**
+
+The lane did not identify the constraint and then hunt for a program obeying it;
+it ranked the corpus by what the tier could run, and the constraint was
+satisfied **silently**. That is the argument for ranking by executability rather
+than by interest: **a selection rule defined over the tier's own capability
+cannot pick an unreachable subject**, and a human choosing *"the interesting
+function"* routinely does.
+
+**And the honest limit is in the same census, which is what makes it a strategy
+rather than a happy accident**: the next inch — `math/bits`, 49 exported
+functions, 26 with plain integer signatures — is blocked on **exactly the eight
+table-driven ones**. So corpus selection both finds the traversable point **and
+names the wall**: the census that picked `bitLen` also priced the next step, and
+it priced it in constructs rather than in effort.
 
 ### 9.0a CENSUS-FIRST APPLIES TO THE LEMMA, NOT ONLY THE OBLIGATION
 

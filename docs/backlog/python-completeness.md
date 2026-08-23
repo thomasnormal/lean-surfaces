@@ -198,3 +198,324 @@ and it passes identically whether the declaration reduces or is `opaque` with
 no body. Measured three ways in `harness/softfloat/probe_walls.lean`. If
 `#py_check` is `#guard`-shaped, its float rows will go green on facts the
 kernel cannot check. A reduction gate is `rfl` or `decide`.
+
+## 2026-08-23-pycomplete-3 — INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype
+
+Inch 3a is the live dict cursor — `for k in d` at function scope, and the
+bare-key form — on the MONADIC interpreter, per the no-backwards-compat
+ruling. **The census was taken before a line was written, and it says the
+ruling cannot be satisfied as stated at this inch.** Not because the monadic
+control is hard: because the thing that has to gain a case is not the
+interpreter, it is the CONTINUATION TYPE, and that type is shared.
+
+Branch: `pyc-3a` off `github/pyrebuild-monadic-gate-green` (98f8d9dc), both
+identity dimensions checked — remote is `github`, not the stale
+`origin` bundle (§2026-08-22-pycomplete-1), and the tip matches gate-green.
+
+### The static surface, measured
+
+The monadic interpreter refuses live dict iteration at exactly **four** sites
+— three for the cursor and one already covered by rung 3b on master:
+
+| site | what refuses |
+| --- | --- |
+| `Monadic/Eval.lean:1369` | the `for` dispatch's `.dict` arm — the loop never starts |
+| `Monadic/Eval.lean:1392` | the `.forList` cursor re-reading a dict address |
+| `Monadic/Script.lean:150` | the script shell's own `for` arm |
+| `Monadic/Eval.lean:237` | the draining consumers (rung 3b's territory; **not** on this branch — it landed on master after the branch was cut, and arrives by merge) |
+
+So the cursor itself is **one new `execGen` arm** in `Monadic/Eval.lean`, plus
+the script shell's. That half is small, and it is genuinely monadic-only.
+
+### THE FINDING: `GenFrame` is shared, so "monadic-only" does not reach this capability
+
+A faithful live cursor cannot reuse an existing frame. `GenFrame.forSeq`
+carries `remaining : List RVal` — **a snapshot**, which §L53 measured to be
+the wrong semantics (mutation during iteration must be observed);
+`GenFrame.forList` carries `(addr, i)` and re-reads, which is the right
+*shape* but the wrong object and carries no size/version to guard with. The
+cursor needs its own constructor, carrying the dict address, the index, the
+size at entry and the `shapeVersion` at entry.
+
+`GenFrame` is declared in **`LeanModels/Python/Runtime.lean`** — the SHARED
+runtime, not the monadic sibling. `Monadic/Substrate.lean` says so by design:
+the rebuild "re-presents the interpreter's CONTROL", reusing the trunk's types
+and pure workers verbatim, and the generator continuation is one of those
+types (it is reachable from `Obj.generator`, which lives in the shared heap).
+
+Seven files walk `GenFrame` exhaustively (measured by the `countFrom` arm,
+which every exhaustive walk must mention):
+
+| file | role | arms owed |
+| --- | --- | --- |
+| `Runtime.lean` | the declaration | 1 |
+| `Semantics.lean` | the TRUNK interpreter (`execGen`, `stepIter`, the frame walkers) | ~6 |
+| `VCGen.lean` | the VC layer's frame reasoning (26 `countFrom` mentions) | the bulk |
+| `ClockErase.lean`, `Obs.lean`, `PayloadBlind.lean` | the proof walkers | ~1 each, expected vacuous |
+| `Monadic/Eval.lean` | **the capability** | 1 |
+
+**So the split is roughly 1 arm of new capability to ~35 arms of shared-type
+maintenance, and all ~35 are in the legacy walker's files.** That is the
+§L49/§L53 law one level up: a constructor is not free, and the bill is paid by
+whoever exhaustively matches the type — here, the interpreter the ruling says
+not to touch.
+
+### The recommendation, and it is a scheduling one
+
+**Sequence inch 3a AFTER the monadic branch merges to master**, not before.
+The ~35 trunk arms are throwaway if the trunk is retired at the merge, and
+load-bearing if it is not — and which of those is true is exactly what the
+merge decides. Building them now spends the cost in the one window where it
+is guaranteed to be either wasted or immediately rewritten.
+
+Nothing else in the inch changes: the semantics are settled and already
+measured (§L53), the guards are known (size change → CPython's faithful
+`RuntimeError`, same-size key-set churn → permanently loud), and the
+`shapeVersion` field the guard needs already exists in `Obj.dict` and is
+already maintained by `dictStore`. **This is a census that moves a date, not
+a design.**
+
+### Owed
+
+The dynamic baseline — `harness/refusal_census.py` run against BOTH
+interpreters (`--runner "lake exe leanmodels-run --monadic"`) — is queued
+behind eight tickets at the time of writing. It is telemetry, not a gate for
+this entry's conclusion: the four refusal sites above are read off the
+monadic source, and the `GenFrame` count is read off the seven walkers. The
+run will additionally extend the acceptance gate's trunk/monadic parity claim
+from the 1394 differential rows to the census's 105 grammar witnesses, which
+is worth having on the record either way.
+
+## 2026-08-23-pycomplete-4 — THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES
+
+§2026-08-23-pycomplete-3 priced inch 3a's shared-datatype cost at "~35 arms"
+and recommended deferring the inch until after the monadic merge on that
+basis. **The number was wrong by roughly 4x, the error was mine, and it was
+the exact mistake this lane has now made twice.**
+
+### What went wrong
+
+The count came from `grep -c countFrom` per file — **mentions, not match
+arms.** `VCGen.lean`'s 26 mentions, which supplied "the bulk" of the estimate,
+are LEMMA NAMES and per-frame statements (`genSteps_countFrom`,
+`genYieldsPrefix_countFrom`), not exhaustive matches. VCGen proves facts about
+*particular* frames; a new frame simply has no lemma until someone wants one.
+
+Counting actual pattern positions
+(`grep -cE '(\| *\.?countFrom|case +\.?countFrom)'`) gives:
+
+| file | real arms | what they are |
+| --- | --- | --- |
+| `VCGen.lean` | **0** | per-frame lemmas, not a walk |
+| `Runtime.lean` | 2 | the constructor, and one `GenFrame` predicate arm |
+| `Semantics.lean` | 3 | two GROUPED catch arms (`\| .enumSeq .. :: _ \| .enumList .. :: _ \| .countFrom .. :: _`) and the trunk `execGen` arm |
+| `ClockErase.lean` / `Obs.lean` / `PayloadBlind.lean` | 1 each | one line each, of the shape `simp only [execGen]; exact …` |
+| `Monadic/Eval.lean` | 1 | **the capability** |
+
+**≈9 arms total**, of which one is the capability, three are one-line proof
+arms, and the rest is declaration and bookkeeping. Under the ruling the
+trunk's `execGen` arm is a `refuse` — the capability does not open there — so
+it is one line, not an implementation.
+
+### This is §L49's law, recurring, and the third time is not a coincidence
+
+* §L49: a `\.usub` grep found every `match` position and missed every
+  `cases op with \| usub =>` arm — **one character**.
+* §L53/§2026-08-22-pycomplete-1: the walker price was predicted from the
+  `.list` arms and came in at 19, because catch-alls were load-bearing.
+* Here: mention-count read as arm-count, **4x high**, and the inflated number
+  was about to move a date.
+
+The rule this lane now writes down for itself: **a count that prices a
+decision must come from the pattern position, never from the identifier.**
+`grep -c <ctor>` answers "who talks about it"; only `grep -cE '\| *\.?<ctor>'`
+answers "who must gain a case". The upstream commit title from the same day —
+*"a grep that agrees with you is the one to re-run"* — is the same finding
+arriving from another lane, and it should be read as a family law.
+
+### The recommendation, reversed
+
+**Inch 3a is affordable now and does not need to wait for the merge.** ~9
+arms, one of them the capability and three of them one-liners, is an inch, not
+a campaign. §2026-08-23-pycomplete-3's scheduling conclusion is WITHDRAWN;
+its static surface map (four refusal sites, the snapshot-vs-cursor argument
+for why a new constructor is unavoidable, and `shapeVersion` already existing
+in `Obj.dict`) stands unchanged, because those were read off pattern positions
+and source text rather than off a counter.
+
+The one substantive point that survives from the earlier entry: **`GenFrame`
+is shared, so this capability cannot be opened on the monadic definition
+alone** — the trunk gains a `refuse` arm and three walkers gain a line each.
+That is a fact about the type's home, and it is worth a ruling, but it is a
+9-line fact rather than a 35-line one.
+
+## 2026-08-23-pycomplete-5 — INCH 3a BUILT: the live dict cursor, on the monadic definition only
+
+`for k in d` runs on the monadic interpreter, at BOTH scopes, with the three
+regimes §L53 measured against CPython 3.9.19. The trunk gains a refuse arm and
+nothing else, per the ruling. **Queued for verification at the time of
+writing** (queue depth 9); this entry records what was built and why, and the
+triad's numbers land with the next push.
+
+### What the ruling bought, and what it cost
+
+| file | change | kind |
+| --- | --- | --- |
+| `Runtime.lean` | `GenFrame.forDict` + its `WF` arm | shared type grows (ruled) |
+| `Semantics.lean` | `genBreak`/`genContinue` arms + the trunk's `execGen` REFUSE arm | legacy contract: compiles, refuses, gains no consumers |
+| `ClockErase/Obs/PayloadBlind` | one line each | walker bookkeeping |
+| `Monadic/Eval.lean` | the dispatch builds the frame; the cursor arm | **the capability** |
+| `Monadic/Script.lean` | `SKont.forDict` + `scriptForDictAt` + wiring | **the capability**, module scope |
+| `Monadic/Prim.lean` | `dictStepM` | the new primitive |
+| `Monadic/Spec.lean` | `dictStepM_spec` | its `@[spec]` lemma |
+
+Measured at ~9 shared arms in §2026-08-23-pycomplete-4; that held.
+
+### `genBreak`/`genContinue` are the arms a mechanical patch gets WRONG
+
+`forDict` is a LOOP frame: `break` must pop it and `continue` must keep it, so
+it belongs with `forSeq`/`forList`/`forGen`/`whileLoop` and NOT with the
+builtin-iterator group (`enumSeq`/`enumList`/`countFrom`), which returns
+`Option.none` because those frames have no body and flow can never reach one.
+A patch that added `forDict` to the refusing group would have compiled and
+been silently wrong for every `break` in a dict loop.
+`dict.for-in-function` exercises exactly that — it `continue`s past a key and
+`break`s early — which is why the witness is written that way.
+
+### The step is a PURE PLAN, because the walker law says it must be
+
+AGENTS.md records that `execGen` MUST fork on a pure plan (`genPlan`'s
+precedent): with the match inline, the equation compiler splits the arm per
+constructor and `simp only [execGen]` never fires at a symbolic frame. So the
+three regimes are `DictStep` — `resized` / `rekeyed` / `yieldKey` / `done` —
+decided by the pure `dictStep`, and BOTH cursors fork on it. One decision, two
+consumers, no drift; and `dictStepM` lifts it to one action with one `@[spec]`
+lemma instead of a heap read plus a decision that `mvcgen` must re-split at
+each call site. `dictStepM_spec` says the step leaves the state UNCHANGED —
+a cursor must not disturb the dict it walks, and that is now a theorem.
+
+### THE GATE COULD NOT EXPRESS A RULED DIVERGENCE, and that is an instrument finding
+
+`harness/monadic_gate.py` asserts trunk/monadic PARITY and exits non-zero on
+any divergence whose monadic answer is not a `monadic-rebuild:` frontier
+refusal. **Inch 3a creates a legitimate divergence on purpose** —
+`dict_lab.iter_dict` refuses on the trunk and returns `1` on the rebuild — so
+the ruled inch could not have landed green, and the wrong fix would have been
+to switch the gate off.
+
+The gate now has an `OPENED` classification, and its design is what keeps it
+honest: **a row counts as OPENED only when the rebuild's answer MATCHES
+CPYTHON.** If the rebuild diverges from the oracle it is a FINDING no matter
+what the table says, because the adjudicator is CPython and never the table.
+This is the same shape as the two other instrument gaps this lane has hit —
+a check whose vocabulary cannot express a legitimate new state
+(§2026-08-22-pycomplete-2's `DIVERGE`/`DIVERGED`, and the census's own
+trunk-vs-monadic expectations below).
+
+### The census becomes a TWO-INTERPRETER scoreboard
+
+A witness may now carry `mono=` — the expectation under `--target monadic`,
+when it differs. Four do, all of them this inch: `dict.for`,
+`dict.for-in-function`, `dict.update-value-during-iter` and
+`dict.grow-during-iter` are REFUSE on the trunk and MATCH on the rebuild.
+`dict.churn-during-iter` stays REFUSE on both — `del d[k]` refuses first, so
+the same-size churn hazard remains unreachable, exactly as §L53 recorded.
+
+Encoding the divergence beats switching the parity check off: the census keeps
+gating BOTH interpreters, and the rows where they differ ON PURPOSE are
+written down rather than tolerated. 106 witnesses now.
+
+## 2026-08-23-pycomplete-6 — THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch
+
+Inch 3a's first verification came back **build green, gates RED**, on two
+independent counts. Neither was a proof failure and both were real.
+
+### RED 1 — the inch was HALF WIRED, and `dict.for-in-function` is what caught it
+
+`dict.for` (module scope) MATCHED. `dict.for-in-function` REFUSED against a
+recorded MATCH. The monadic interpreter has **THREE** `for` entry paths, not
+the two the static census named:
+
+| path | who takes it | wired in the first attempt? |
+| --- | --- | --- |
+| `execGen`'s `.forList`/`.forDict` frames | a GENERATOR body | yes |
+| `SKont.forList`/`.forDict` | module scope | yes |
+| **`Kont.forList`/`.forDict`** | an ORDINARY `def` — **the commonest path of all** | **NO** |
+
+The third is `Monadic/Prim.lean`'s `Kont`, a *different record* from the script
+shell's `SKont`, and its dict arm sat one screen below the one I patched. A
+census that had stopped at "grep the refusal messages" would have shipped a
+cursor that worked in generators and at module scope and refused in every
+ordinary function — and the diff_test battery would NOT have caught it,
+because the trunk refuses those rows too, so trunk/monadic parity holds while
+both are wrong.
+
+**The witness was written to exercise `break` and `continue` through the new
+frame, and it earned its place twice over: it caught a missing ENTRY PATH, not
+the flow control it was aimed at.** §L14's law again — a statement-level count
+is not an ingestion verdict; run the thing.
+
+### RED 2 — rung 3b never reached the rebuild, and the merge is where it was lost
+
+25 divergences, every one a `keys_*` or `star_dict` row: **the trunk
+implements the draining consumers and the rebuild does not.** Rung 3b landed
+on the trunk (2026-08-22-pycomplete-1) while the monadic branch was already
+cut, and the merge carried the trunk's arms without carrying the capability
+across the presentation boundary. That is a defect on master that predates
+this inch; the gate run is what surfaced it.
+
+**The fix is ONE line, and the reason is the rebuild's own factoring.** The
+trunk pays rung 3b seven times — one arm per consumer, each beside its own
+`.list` arm. The rebuild has `iterValues`, the single dispatch `sum`/`tuple`/
+`list`/`set`/`any`/`all` all share, so the same capability is one arm there.
+`sorted`/`max`/`min` needed nothing at all: they route through the SHARED
+trunk workers (`sortedValH`/`extremumValH`), which is `Monadic/Substrate.lean`'s
+"maximal trunk" claim paying off in a measurable way — those four rows were
+already green in the red run.
+
+### What did NOT need changing
+
+The census expectations were already right: the four `mono=` divergences and
+the trunk column both stated the intended end state, so the fixes made the
+recorded expectations true rather than the expectations being edited to match
+the code. **That is the direction a scoreboard has to move in**, and it is
+only possible because the expectations were written from CPython's measured
+behaviour (§L53) rather than from the model's.
+
+## 2026-08-23-pycomplete-7 — the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true
+
+Ticket 2: build green, `diff_test` 1427/0/118, both `script_corpus` runs
+65/0/50/15, trunk census 0 drifts, **monadic gate 1425/1427 parity with 1
+CAPABILITY OPENING** (`iter_dict` — the `OPENED` bucket firing exactly as
+designed: trunk refuses, rebuild runs, CPython agrees). The two fixes worked.
+
+Two remainders, and they were the same fact reaching two instruments:
+
+* the gate's last divergence — `keys_for_is_still_loud(7)`
+* the census's two whitelist drifts — `iter_dict` and
+  `keys_for_is_still_loud` "whitelisted but the model answered ok"
+
+**`keys_for_is_still_loud` is a row I wrote in rung 3b**, whose comment read
+*"the LIVE cursor is a separate inch (3a) and stays refused"*. Inch 3a landed
+it. The row did not break — **its NAME made a claim that stopped being true**,
+and the instruments correctly convicted the name.
+
+It is renamed `keys_for_live_cursor`: it names the CONSTRUCT rather than a
+verdict, which is the durable choice, and its comment now records that the
+trunk refuses it by the ruling while the rebuild runs it. A name that asserts
+a verdict has a shelf life; a name that asserts a construct does not.
+
+### The whitelist half of the census gains the column the grammar half had
+
+`MONO_OPENED` — whitelisted rows (the TRUNK refuses them) EXPECTED to answer
+under `--monadic`. The split that keeps it honest is explicit: **the census
+records intent and never adjudicates**, because it runs one interpreter and
+never sees CPython's answer for those rows; proving the rebuild RIGHT is
+`monadic_gate`'s job, whose `OPENED` bucket counts a row only when the rebuild
+matches the oracle. Census records, gate adjudicates.
+
+That is the fourth instrument this lane has had to teach a new legitimate
+state, after `DIVERGE`/`DIVERGED`, the census's grammar column and the gate's
+`OPENED`. The pattern is now unmistakable: **during a re-founding, every
+two-sided check needs a vocabulary for "these differ on purpose", and the
+default vocabulary never has one.**

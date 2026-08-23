@@ -197,8 +197,17 @@ structure GoWorld where
   deriving Repr, Inhabited
 
 /-- The Go tier's instantiation of the FAMILY monad: the world is
-`GoWorld`, and ρ is a panic. `SemM` is Core's. -/
-abbrev GoM := SemM GoWorld Panic
+`GoWorld`, ρ is a panic, and **the refusal payload π is a `SpecRef`** — the
+clause the refusal cites, carried as DATA. `SemMWith` is Core's.
+
+**Why π is no longer `Unit`.** This tier adopted Core when `Loud.unsupported`
+carried a bare `String`, so it encoded its cause and its clause into a PREFIX
+(`renderRefusal`) and told a scoreboard to parse it. Core's `RefusalCause π`
+landing removes the reason for that: the cause is a constructor and the clause
+is its payload, so `Loud.observable` buckets without reading prose. The prefix
+is kept in the MESSAGE, byte for byte, so nothing downstream of the text
+moves. -/
+abbrev GoM := SemMWith GoWorld Panic SpecRef Unit
 
 /-- **The zero-UB gate, as a TYPE rather than a convention.**
 
@@ -237,6 +246,20 @@ def RefusalCause.tag : RefusalCause → String
   | .environment => "environment"
   | .orderDependence => "order-dependence"
 
+/-- **The image of this tier's cause in the FAMILY's cause**, carrying the
+cited clause as the payload. The two taxonomies were already the same four
+classes under the same four names — `tag` above and Core's
+`RefusalCause.className` return byte-identical strings — because this tier
+re-derived §5.2 locally when Core could not hold it. This is that duplication
+collapsing in the only direction that loses nothing. -/
+def RefusalCause.toCore (c : RefusalCause) (π : SpecRef) :
+    LeanModels.RefusalCause SpecRef :=
+  match c with
+  | .unsupportedConstruct => .unsupported π
+  | .undefined            => .undefined π
+  | .environment          => .environment π
+  | .orderDependence      => .orderDependence π
+
 /-- Render a refusal into Core's `String` payload. Deterministic and
 prefix-tagged: the cause comes first, then the clause, then the prose, so
 a scoreboard buckets on a prefix rather than on a search. -/
@@ -245,8 +268,9 @@ def renderRefusal (c : RefusalCause) (π : SpecRef) (msg : String) : String :=
 
 /-- The Go tier's refusal, and the ONLY way this tier refuses. Narrower
 than Core's `refuse` on purpose — see `GoRefusal`. -/
-def refuseGo {W ρ α : Type} (r : GoRefusal) (π : SpecRef) (msg : String) : SemM W ρ α :=
-  LeanModels.refuse (renderRefusal r.toCause π msg)
+def refuseGo {W ρ α : Type} (r : GoRefusal) (π : SpecRef) (msg : String) :
+    SemMWith W ρ SpecRef Unit α :=
+  LeanModels.refuse (r.toCause.toCore π) (renderRefusal r.toCause π msg)
 
 /-- Start a panicking sequence with a fresh identity. State-RETAINING, per
 Core's ρ channel. -/

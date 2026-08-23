@@ -125,16 +125,20 @@ A refusal is not an error a program can catch: it is not in ρ, so no
 state-DISCARDING channel, while a panic lands in ρ, which is
 state-RETAINING — the distinction Core's layer order exists to keep.
 
-`SemM W ρ α` unfolds to `W → Except Loud (Except ρ α × W)`, so applying
-the computation to a world IS the run; Core exports no separate `run`. -/
+`SemMWith W ρ π σ α` unfolds to `W → Except (Loud π σ) (Except ρ α × W)`, so
+applying the computation to a world IS the run; Core exports no separate
+`run`. (This tier instantiates `π := SpecRef`, `σ := Unit`: it cites a clause
+and keeps no diagnostic snapshot.) -/
 
 @[go_spec] theorem refuseGo_run
     (W : Type) (w : W) (r : GoRefusal) (π : SpecRef) (m : String) :
     (refuseGo (W := W) (ρ := Panic) (α := Unit) r π m) w
-      = .error (.unsupported (renderRefusal r.toCause π m)) := rfl
+      = .error (.unsupported (r.toCause.toCore π) (renderRefusal r.toCause π m)
+          none) := rfl
 
 @[go_spec] theorem exhausted_is_not_catchable (W : Type) (w : W) :
-    (LeanModels.exhausted : SemM W Panic Unit) w = .error .timeout := rfl
+    (LeanModels.exhausted : SemMWith W Panic SpecRef Unit Unit) w
+      = .error .timeout := rfl
 
 /-- The interpreter-side corollary of §1.4, and it carries no content of
 its own — which is the point of having put the gate in the spec half.

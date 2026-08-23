@@ -110,8 +110,19 @@ ORACLE = os.environ.get("LEANPY_CPYTHON") or leanpy_survey.default_oracle()
 
 W = []
 
+# Which expectation column `--grammar` checks; set from --target in main().
+EXPECT_KEY = "expect"
+
 
 def w(wid, src, expect, note):
+    """`mono` is the expectation under `--target monadic`, when it DIFFERS.
+
+    The rebuild is not required to be a clone: inch 3a opens the live dict
+    cursor on the monadic definition ONLY (the trunk gains a refuse arm by
+    the no-backwards-compat ruling), so a witness may legitimately refuse on
+    one interpreter and run on the other. Encoding that here keeps the census
+    a scoreboard for BOTH rather than a parity check that has to be switched
+    off the moment the two diverge on purpose."""
     W.append({"id": wid, "src": src.lstrip("\n"), "expect": expect,
               "note": note})
 
@@ -379,7 +390,9 @@ w("dict.for", """
 d = {2: 'b', 1: 'a'}
 for k in d:
     print(k)
-""", "REFUSE", "the live cursor — inch 3a")
+""", "MATCH",
+  "the live cursor — inch 3a. Was REFUSE/mono=MATCH while there were two "
+  "interpreters; there is one now, so the opened answer is THE answer")
 w("dict.list", """
 print(list({2: 'b', 1: 'a'}))
 """, "MATCH", "a DRAINING consumer: no mutation window — landed by §L53 rung 3b")
@@ -399,6 +412,22 @@ w("dict.star", """
 d = {2: 'b', 1: 'a'}
 print([*d])
 """, "MATCH", "landed by §L53 rung 3b")
+w("dict.for-in-function", """
+def f():
+    d = {2: 'b', 1: 'a', 5: 'c'}
+    out = []
+    for k in d:
+        if k == 1:
+            continue
+        out.append(k)
+        if len(out) == 2:
+            break
+    return tuple(out)
+print(f())
+""", "MATCH",
+  "the cursor at FUNCTION scope — execGen's arm, and it exercises `break` "
+  "and `continue` through the new frame (which is why `genBreak`/"
+  "`genContinue` had to treat `forDict` as a LOOP frame, not bookkeeping)")
 w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
@@ -447,17 +476,17 @@ d = {1: 1, 2: 2}
 for k in d:
     d[k] = d[k] * 100
 print(d[1], d[2])
-""", "REFUSE",
+""", "MATCH",
   "MEASURED admissible: updating an EXISTING key's value during iteration "
-  "is fine in CPython — the regime inch 3a must reproduce exactly")
+  "is fine in CPython — the regime inch 3a reproduces exactly")
 w("dict.grow-during-iter", """
 d = {1: 1}
 for k in d:
     d[k + 10] = 0
 print('unreachable')
-""", "REFUSE",
+""", "MATCH",
   "MEASURED: CPython raises RuntimeError('dictionary changed size during "
-  "iteration') at the NEXT step — inch 3a must reproduce THAT, not refuse")
+  "iteration') at the NEXT step — inch 3a reproduces THAT, not refuses it")
 w("dict.churn-during-iter", """
 d = {1: 1, 2: 2, 3: 3}
 for k in d:
@@ -551,8 +580,6 @@ WHITELIST_CLASS = {
     "dict_lab::ret_dict": "boundary.heap-value",
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
-    "dict_lab::iter_dict": "iter.dict",
-    "dict_lab::keys_for_is_still_loud": "iter.dict",
     "sf_hist::push": "boundary.list-mutation",
     "sf_hist::rotate_scores": "boundary.list-mutation",
     "cls_lab::attr_on_int": "attr.on-scalar",
@@ -661,6 +688,16 @@ WHITELIST_CLASS = {
     "del_lab::del_attr": "del.non-name-target",
 }
 
+# The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused
+# and the rebuild answered, and it explicitly refused to adjudicate them --
+# `harness/monadic_gate.py` did, by checking the rebuild against the ORACLE.
+# That gate is deleted with the window, so leaving the table would turn it
+# into exactly the silencer its own comment disclaimed. Instead the two rows
+# were migrated in `harness/cases.json` from `expect: unsupported` to
+# `expect: match`: they leave the whitelist entirely and CPython adjudicates
+# them as ordinary differential rows. Records-vs-adjudicates is preserved --
+# the adjudicator is just diff_test now.
+
 SCRIPT_CLASS = {
     "call_before_def": "script.definition-order",
     "cls_effect_script": "class.creation-effect",
@@ -756,7 +793,7 @@ def grammar_census(runner_cmd, keep, results):
             f.write(item["src"])
         env = leanpy.envelope_for(p, cache)
         if env is None:
-            results.append((item["id"], "EXTRACT", "", item["expect"]))
+            results.append((item["id"], "EXTRACT", "", item[EXPECT_KEY]))
             continue
         paths.append(p)
         jobs.append(json.dumps({"path": env}, separators=(",", ":")))
@@ -765,8 +802,8 @@ def grammar_census(runner_cmd, keep, results):
     drift = 0
     for item, path, model in zip(live, paths, models):
         got, detail = verdict_of(oracle_run(path), model)
-        results.append((item["id"], got, detail, item["expect"]))
-        if got != item["expect"]:
+        results.append((item["id"], got, detail, item[EXPECT_KEY]))
+        if got != item[EXPECT_KEY]:
             drift += 1
     return drift, work
 

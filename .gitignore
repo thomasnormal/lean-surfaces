@@ -8,3 +8,4 @@ extractors/veriloga/openvaf_ast/
 target/
 tools/rv-oracle/sail-riscv-Linux-x86_64/
 tools/rv-oracle/sail-riscv-Linux-x86_64.tar.gz
+scratch/

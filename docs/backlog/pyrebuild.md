@@ -158,3 +158,85 @@ than by a prose paragraph that could rot silently (87 marked blocks, 87 ok).
   `msg`, so the cause must be plumbed the way `--observations` plumbs the
   world — call the inner API and keep what the public wrapper erases. It is
   not a one-line addition to `resJson`.
+
+---
+
+## 2026-08-23-pyrebuild-3 — THE UNION FAILED, exactly where the full build was chosen to look
+
+### Triad #2 at `527763b`: build **RED**, and the red is the finding
+
+Queued 1444 s; tenure 05:04:39–05:35:36. **One error in 839 targets**, and not
+in anything this lane wrote:
+
+```
+LeanModels/Go/Sem.lean:249:20: Application type mismatch: The argument
+  renderRefusal r.toCause π msg
+has type      String
+but is expected to have type   LeanModels.RefusalCause ?m.1
+```
+
+**Why no earlier green could have caught it.** Master builds Go because
+master's `Loud.unsupported` still took a bare `String`. This branch built Core
+because the branch had no Go tier. The defect exists **only in the union**, and
+the union had never been built by either side. This landing declined
+`--classify` for exactly that reason — the diff against master shows only this
+lane's commits, so classification would have narrowed the build, **skipped Go,
+and broken master.** The full build was chosen on that argument before the
+result was known, and the result is the argument's receipt.
+
+> **A scoped green is a claim about a scope. When two sides land payload
+> changes into a shared trunk, the union is a scope neither side has ever
+> built, and only the merging lane is positioned to build it.**
+
+### The fix is in the ADOPTER, and it collapses a duplicated taxonomy
+
+Go had re-derived §5.2 **locally** — its own `RefusalCause` with the same four
+classes, and a `tag` returning byte-identical strings to Core's `className` —
+then flattened cause and clause into a PREFIX (`renderRefusal`) so a scoreboard
+could parse them back out of prose. That is precisely the workaround the
+`RefusalCause` ruling exists to remove, and Go is the **third** tier found
+doing it independently, after C's snapshot and ES's cause.
+
+So `GoM` gains the payload it was already carrying in string form:
+`SemMWith GoWorld Panic SpecRef Unit`, and `refuseGo` passes
+`r.toCause.toCore π` as the cause with the rendered text unchanged as the
+message. **The message is byte-identical**, so nothing downstream of the text
+moves; what changes is that the cause is now DATA.
+
+**The "one error" claim did NOT hold, and checking it is why.** `lake` stops at
+the first failing module, so `Go.Sem`'s dependents were never reached.
+`Go/Spec.lean:134` pins the old single-`String` `Loud` shape **by `rfl`** and
+would have failed next. Two files, not one. A static census of every
+Core-substrate adopter then bounded the rest: exactly **two** non-Core files
+import `Core.Outcome` — Go (fixed) and Python's `Substrate.lean` (already on
+the new arity). C, ES and SV are untouched because they still carry their own
+`Halt`.
+
+### The two-model window closes, and one row had to move or become a silencer
+
+`harness/monadic_gate.py` is deleted (it compared two interpreters; there is
+one). Its vocabulary retires with it: the `expect_mono` column, the `--monadic`
+flag, the dead `--target trunk|monadic` option, and the `MONO_OPENED` table.
+
+**`MONO_OPENED` could not simply be deleted.** Its own comment said the table
+*"cannot become a silencer"* **because** `monadic_gate.py` adjudicated its rows
+against the oracle. Deleting the adjudicator and keeping the table is exactly
+how it becomes one. So its two rows were migrated in `cases.json` from
+`expect: unsupported` to `expect: match` — they leave the whitelist and
+`diff_test` adjudicates them against CPython. Records-vs-adjudicates is
+preserved; the adjudicator changed.
+
+Four census rows carrying `mono="MATCH"` (the inch-3a live-cursor witnesses)
+had `expect="REFUSE"`, the **trunk's** answer. With one interpreter the `mono`
+value is the only expectation, so they were carried over rather than dropped —
+dropping them would have checked the rebuild against a retired interpreter's
+expectation. Whitelist consistency after the migration is exact: **112
+whitelisted rows, 112 `WHITELIST_CLASS` keys, zero stale, zero drift.**
+
+### Owed
+
+* `tools/triad.sh` still pattern-matches `*monadic_gate*` in its
+  runner-prebuild case (lines 691/726). Harmless — it matches nothing — but it
+  names a deleted file in the SHARED build protocol. Left deliberately: a spine
+  edit mid-merge is worse than a dead pattern, and it is one word for whoever
+  touches that case next.

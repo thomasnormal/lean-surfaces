@@ -1297,6 +1297,27 @@ alternative is closed by the covenant rather than by preference.
 **The fix is in CORE, not in C or ES**: parameterize `Loud.unsupported`'s
 payload, exactly as the `Halt` ruling (cause + optional snapshot) and the
 `RefusalCause` ruling (four classes, tier payload `π`) already prescribe.
+
+**THE HOLD RELEASES ON LANDING — conditional, because master says
+otherwise today.** A Core-payload merge is queued whose
+`Loud.unsupported (cause : RefusalCause π) (message) (snapshot : Option σ)`
+**subsumes both tiers**: C at `σ := Mem` with its guards lifted, ES at
+`π := EsRefusal`. **On that landing both HOLDs release** — the two
+payload-bearing tiers converge by import like the other eleven sites, and
+this section's *"Core carries neither"* **goes false at that moment.**
+
+**Master truth as this is written: NOT YET MERGED.** Checked rather than
+assumed — `LeanModels/Core/Outcome.lean` still reads
+`| unsupported (msg : String)` and contains **zero** occurrences of
+`RefusalCause`. The release is therefore stated as a **condition on a
+landing**, not as a fact; the merge lands on green.
+
+**And the discharge is pinned by a docs_check-checked block against
+`Core/Outcome.lean` rather than by prose** — which is the right instinct
+and this document's own §9 thesis applied to itself: **a claim that a type
+now carries a field should be checked against the type, not asserted
+beside it.** When the block goes green, the paragraph above is retired by
+the gate rather than by an editor remembering to.
 Until that lands, **the eleven mechanical sites converge by import and the
 two payload-bearing tiers HOLD** — importing them now would trade two
 implemented rulings for a `String`.
@@ -1707,12 +1728,19 @@ standing rule with a named blocker.**
    the capability crossing the presentation boundary** — so the rebuild
    **refuses what the trunk runs, on 25 rows.**
 
-   **`diff_test` is STRUCTURALLY BLIND to this class, and the blindness is
-   not a bug.** A differential harness measures **agreement between the two
-   sides**; when both refuse, **parity holds while both are wrong.** The
-   instrument that sees it is the **refusal census's expectation column**,
-   because that column is written from **CPython's measured behaviour** —
-   the oracle — rather than from the model's.
+   **`diff_test` is blind to this class — but the blindness belongs to the
+   AIMING, not to the instrument.** An earlier revision of this section said
+   it was *"what a differential harness is"*; that was too strong, and the
+   rebuild successor measured why. A differential compares **its two
+   sides**, so when both sides are MODELS and both refuse, **parity holds
+   while both are wrong.** Point the *same unmodified* `diff_test` at
+   **CPython** — the branch with `--monadic` removed — and it **convicts**:
+   *predicted 25, came back 25.*
+
+   **So the law is not a limitation but a procedure.** *Agreement with the
+   ORACLE is the evidence* becomes **operational by REMOVING THE SECOND
+   MODEL**: with one model and one oracle, the ordinary harness already
+   sees this class.
 
    > **Agreement between two models is not evidence. Agreement with the
    > ORACLE is.**
@@ -1731,6 +1759,13 @@ standing rule with a named blocker.**
 
    Without it, erosion silently loses capability: the trunk arm retires
    because the rebuild "agrees", and the agreement was two refusals.
+
+   **AND THE AUDIT HAS AN END CONDITION, which is what makes it scaffolding
+   rather than a tax: it is the rule for THE WINDOW IN WHICH TWO MODELS
+   COEXIST.** When the second model goes away — when the presentation
+   boundary closes and the harness's other side is the oracle again — the
+   ordinary differential resumes covering this class on its own, and the
+   audit retires with the window.
 
    **THE COROLLARY, and it is the maximal-trunk design paying off
    measurably: the fix cost ONE LINE.** The rebuild's single `iterValues`
@@ -2747,12 +2782,16 @@ A run that executed **nothing** must never score as agreement.
 **And the same rule one level up, from a measured master defect (§3.4's
 erosion clause): TWO REFUSALS MUST NEVER SCORE AS AGREEMENT.** A
 differential harness compares the two sides to each other, so when both
-refuse it reports parity — **while both are wrong.** `diff_test` is
-structurally blind to this class, which is not a defect in `diff_test`: it
-is what a differential harness *is*. **Agreement between two models is not
-evidence; agreement with the ORACLE is** — which is why the refusal
-census's expectation column, written from CPython's measured behaviour
-rather than from the model's, is the instrument that sees it.
+refuse it reports parity — **while both are wrong.**
+
+**The blindness belongs to the AIMING, not the instrument** (§3.4): the
+same unmodified `diff_test`, pointed at **CPython** instead of at a second
+model, **convicts** — *predicted 25, came back 25*. **Agreement between two
+models is not evidence; agreement with the ORACLE is**, and that is made
+operational by **removing the second model**, not by building a new
+harness. While two models must coexist, the refusal census's expectation
+column — written from CPython's measured behaviour rather than the
+model's — is the instrument that covers the gap.
 
 Both halves of §5.3 are the same law: **a check must not report sameness
 where there was no content.** Python's

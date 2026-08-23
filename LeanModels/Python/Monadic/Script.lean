@@ -57,6 +57,9 @@ structure SKont where
   forSeq : Expr → List RVal → List Stmt → SemF RFlow
   /-- `for` over a heap list — the LIVE index cursor. -/
   forList : Expr → Addr → Nat → List Stmt → SemF RFlow
+  /-- `for k in d` — the LIVE dict cursor, carrying the size and
+  `shapeVersion` the loop started with (§3a). -/
+  forDict : Expr → Addr → Nat → Nat → Nat → List Stmt → SemF RFlow
   /-- `for` over a generator — the LAZY cursor. -/
   forGen : Expr → Addr → List Stmt → SemF RFlow
   /-- `while … else`. -/
@@ -69,6 +72,7 @@ def SKont.bottom : SKont where
   items   := fun _ _ _ _ _ => exhausted
   forSeq  := fun _ _ _ => exhausted
   forList := fun _ _ _ _ => exhausted
+  forDict := fun _ _ _ _ _ _ => exhausted
   forGen  := fun _ _ _ => exhausted
   whileL  := fun _ _ _ => exhausted
 
@@ -146,8 +150,7 @@ def scriptForListAt (S : SKont) (m : Module) (target : Expr) (a i : Nat)
         bindAndPublish m target (xs.getD i .none)
         loopFlow (S.forList target a (i + 1) body) (← S.stmts body)
       else pure .next
-  | some (.dict _ _) =>
-      refuse "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+  | some (.dict es sv) => S.forDict target a 0 es.size sv body
   | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
   | some (.generator ..) =>
       if moduleGenFree m then
@@ -156,6 +159,21 @@ def scriptForListAt (S : SKont) (m : Module) (target : Expr) (a i : Nat)
   | some (.closure ..) => refuse "internal: a list cursor over a function object (report this)"
   | some (.pyset _) => refuse "internal: a list cursor over a set (report this)"
   | Option.none => refuse "internal: a dangling heap address (report this)"
+
+/-- §3a THE LIVE DICT CURSOR at module scope — `scriptItemsAt`'s sibling for
+the BARE-KEY form. Same three regimes, same guards, same faithful
+`RuntimeError`; the only difference is that this one binds the KEY where
+`items` binds a `(key, value)` tuple (docs/memory-model.md §dict iteration). -/
+def scriptForDictAt (S : SKont) (m : Module) (target : Expr) (a i n sv : Nat)
+    (body : List Stmt) : SemF RFlow := do
+  match ← dictStepM a i n sv with
+  | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
+  | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
+  | some (.yieldKey kv) => do
+      bindAndPublish m target kv
+      loopFlow (S.forDict target a (i + 1) n sv body) (← S.stmts body)
+  | some .done => pure .next
+  | Option.none => refuse "internal: a dict cursor over a non-dict object (report this)"
 
 /-- The LAZY generator cursor: one `stepIter` per element, so the generator's own
 body effects interleave exactly as they do under the interpreter's loop. -/
@@ -285,6 +303,7 @@ def skont (m : Module) : Nat → SKont
       items   := fun a n i t b => scriptItemsAt (skont m fuel) m a n i t b
       forSeq  := fun t xs b => scriptForAt (skont m fuel) m t xs b
       forList := fun t a i b => scriptForListAt (skont m fuel) m t a i b
+      forDict := fun t a i n sv b => scriptForDictAt (skont m fuel) m t a i n sv b
       forGen  := fun t a b => scriptForGenAt (skont m fuel) (kont m fuel) m t a b
       whileL  := fun t b o => scriptWhileAt (skont m fuel) (kont m fuel) m t b o }
   termination_by structural fuel => fuel

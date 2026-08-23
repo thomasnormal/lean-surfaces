@@ -1868,6 +1868,39 @@ regimes the census measured (value update, size change, same-size key-set
 churn) can arise inside them — docs/memory-model.md §dict iteration. -/
 def dictKeys (es : Array (RVal × RVal)) : Array RVal := es.map Prod.fst
 
+/-- §3a THE DICT CURSOR'S STEP DECISION, as a PURE PLAN.
+
+The free-scrutinee discipline is not decoration here: AGENTS.md records that
+`execGen` MUST fork on a pure plan (`genPlan`'s precedent), because with the
+match inline the equation compiler splits the arm per constructor and
+`simp only [execGen]` never fires at a symbolic frame. The same reason gives
+the two cursors — `execGen`'s and the script shell's — ONE decision instead of
+two `if` chains that could drift.
+
+The three regimes are §L53's measurements against CPython 3.9.19:
+`resized` is the faithful `RuntimeError`, `rekeyed` is LOUD (CPython's answer
+depends on its entries-array layout), `yield` is the key at the cursor. -/
+inductive DictStep where
+  /-- The size changed: `RuntimeError: dictionary changed size during iteration`. -/
+  | resized
+  /-- Same size, different `shapeVersion` — a key-set change. Never guessed. -/
+  | rekeyed
+  /-- The key at the cursor. -/
+  | yieldKey (k : RVal)
+  /-- The cursor ran off the end. -/
+  | done
+deriving Repr, Inhabited, BEq
+
+/-- The plan, from what the step FINDS (`es`, `sv'`) against what the loop
+STARTED with (`n`, `sv`), at cursor `i`. A value update of an existing key
+bumps neither `size` nor `shapeVersion` (`dictStore` grows the version on
+insertion only), so it slips past both guards — exactly as CPython allows. -/
+def dictStep (es : Array (RVal × RVal)) (sv' i n sv : Nat) : DictStep :=
+  if es.size ≠ n then .resized
+  else if sv' ≠ sv then .rekeyed
+  else if h : i < es.size then .yieldKey es[i].1
+  else .done
+
 /-- Store `k ↦ v`: an equal key present replaces ONLY THE VALUE (stored key
 and insertion position retained — `{True: _}` updated through `1` still
 lists `[True]`); an absent key appends. The `Bool` reports growth (the
@@ -3816,6 +3849,7 @@ def genBreak : GenCont → Option GenCont
   | .block _ :: k => genBreak k
   | .forSeq .. :: k => some k
   | .forList .. :: k => some k
+  | .forDict .. :: k => some k
   | .forGen .. :: k => some k
   | .whileLoop .. :: k => some k
   -- a builtin-iterator frame is never a LOOP frame: it is the body of a
@@ -3831,6 +3865,7 @@ def genContinue : GenCont → Option GenCont
   | .block _ :: k => genContinue k
   | k@(.forSeq ..  :: _) => some k
   | k@(.forList .. :: _) => some k
+  | k@(.forDict .. :: _) => some k
   | k@(.forGen ..  :: _) => some k
   | k@(.whileLoop .. :: _) => some k
   | .enumSeq .. :: _ | .enumList .. :: _ | .countFrom .. :: _ => Option.none
@@ -6384,6 +6419,13 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
          else execGen m fuel st k'
        | some _ => .unsupported "internal: an enumerate cursor over a non-list object (report this)"
        | Option.none => .unsupported danglingMsg)
+    | .forDict .. :: _ =>
+      -- THE LEGACY INTERPRETER'S CONTRACT under no-backwards-compat: this
+      -- interpreter never CONSTRUCTS a `forDict` frame (only
+      -- `LeanModels/Python/Monadic/` does), so the arm exists to compile and
+      -- to refuse, and gains no consumers. The live dict cursor is inch 3a
+      -- and it opens on the monadic definition only.
+      .unsupported "'for' over a dict is outside this interpreter's tier — the live cursor is the monadic rebuild's (docs/memory-model.md §dict iteration)"
     | .countFrom cur step :: k' =>
       -- never exhausts: `count` is the infinite ray of sunfish's move
       -- generator, and a consumer's `break` is what ends it

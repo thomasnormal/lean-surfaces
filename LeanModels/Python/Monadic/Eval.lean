@@ -233,14 +233,13 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
             refuse s!"{fname}() over a generator DRAINS it (a stateful read) — outside the tier"
           else do
             inFrame (K.drainIter a)
-      -- §L53 rung 3b, carried across the presentation boundary. A DRAINING
-      -- consumer has no mutation window — it takes the keys with no user code
-      -- running in between — so it needs only the keys in insertion order, and
-      -- the hazard the old refusal cited could never be met here. The trunk
-      -- pays this SEVEN times, once per consumer; `iterValues` is the one
-      -- dispatch `sum`/`tuple`/`list`/`set`/`any`/`all` share, so here it is
-      -- ONE arm. `sorted`/`max`/`min` never reach this dispatch — they route
-      -- through the shared trunk workers, which is why they were never red.
+      -- §L53 rung 3b, for the rebuild: a DRAINING consumer has no mutation
+      -- window (it takes the keys with no user code running in between), so
+      -- it needs only the keys in insertion order. The trunk pays this seven
+      -- times, once per consumer; here `iterValues` is the one dispatch they
+      -- all share, so it is ONE arm — the rebuild's factoring earning its
+      -- keep. `sorted`/`max`/`min` never reach here: they go through the
+      -- shared trunk workers, which is why they were already green.
       | some (.dict es _) => pure (dictKeys es).toList
       | some (.pyset _) =>
           refuseOrder s!"{fname}() over a set is outside the tier (hash order; docs/memory-model.md)"
@@ -1372,8 +1371,11 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
               match Heap.get? (← frameHeap) ad with
               | some (.list _) => K.execGen (.forList target ad 0 body :: .block ss :: k')
               | some (.generator ..) => K.execGen (.forGen target ad body :: .block ss :: k')
-              | some (.dict _ _) =>
-                  refuse "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory; docs/memory-model.md)"
+              -- §3a: the LIVE dict cursor. The size and shapeVersion the loop
+              -- STARTS with ride in the frame, because that is what lets the
+              -- next step tell CPython's two mutation regimes apart.
+              | some (.dict es sv) =>
+                  K.execGen (.forDict target ad 0 es.size sv body :: .block ss :: k')
               | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
               | some (.cell _) => refuse cellInternal
               | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
@@ -1404,6 +1406,27 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
       | some (.closure ..) => refuse "internal: a list cursor over a function object (report this)"
       | some (.pyset _) => refuse "internal: a list cursor over a set (report this)"
       | Option.none => refuse danglingMsg
+  -- §3a THE LIVE DICT CURSOR (docs/memory-model.md §dict iteration). Three
+  -- regimes, measured against CPython 3.9.19 before this was written:
+  --   * no mutation, or a value UPDATE of an existing key -> exact;
+  --   * a SIZE change -> CPython's faithful RuntimeError, raised at the NEXT
+  --     step (including when the change happens on the last iteration, where
+  --     StopIteration would otherwise have ended the loop);
+  --   * a same-size KEY-SET change -> LOUD. CPython either raises a SECOND,
+  --     different RuntimeError ("dictionary keys changed during iteration")
+  --     or answers a sequence that depends on its entries-array layout and
+  --     compaction schedule, so neither answer is guessable. `shapeVersion`
+  --     is what detects it; it is bumped by `dictStore` on growth only, so a
+  --     value update slips past it exactly as it should.
+  | .forDict target ad i n sv body :: k' => do
+      match ← dictStepM ad i n sv with
+      | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
+      | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
+      | some (.yieldKey kv) => do
+          assignM target kv
+          K.execGen (.block body :: .forDict target ad (i + 1) n sv body :: k')
+      | some .done => K.execGen k'
+      | Option.none => refuse "internal: a dict cursor over a non-dict object (report this)"
   | .forGen target ad body :: k' => do
       match ← inFrame (K.stepIter ad) with
       | Option.none => K.execGen k'
@@ -1598,14 +1621,32 @@ def kont (m : Module) : Nat → Kont
                 | .brk => pure .next
                 | .ret v => pure (.ret v)
               else pure .next
-          | some (.dict _ _) =>
-              refuse "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+          -- §3a: the LIVE dict cursor in an ORDINARY function body. This is
+          -- the path a plain `def` takes (execGen's is the GENERATOR one and
+          -- the script shell's is module scope) — three entries, and the
+          -- `dict.for-in-function` witness is what proved the count.
+          | some (.dict es sv) => K.forDict target a 0 es.size sv body
           | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
           | some (.generator ..) => K.forGen target a body
           | some (.cell _) => refuse cellInternal
           | some (.closure ..) => refuse "internal: a list cursor over a function object (report this)"
           | some (.pyset _) => refuse "internal: a list cursor over a set (report this)"
           | Option.none => refuse danglingMsg
+      forDict := fun target a i n sv body => do
+          let K := kont m fuel
+          -- the same three regimes as the other two cursors, forked on the
+          -- same pure plan so they cannot drift apart
+          match ← dictStepM a i n sv with
+          | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
+          | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
+          | some (.yieldKey kv) => do
+              assignM target kv
+              match ← execOpenList K m body with
+              | .next | .cont => K.forDict target a (i + 1) n sv body
+              | .brk => pure .next
+              | .ret v => pure (.ret v)
+          | some .done => pure .next
+          | Option.none => refuse "internal: a dict cursor over a non-dict object (report this)"
       stepIter := fun a => stepIterAt (kont m fuel) a
       execGen := fun k => execGenAt (kont m fuel) m k
       forGen := fun t a b => forGenAt (kont m fuel) m t a b

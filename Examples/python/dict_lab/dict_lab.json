@@ -6,7 +6,7 @@
     "version": "3.9.19"
   },
   "source_file": "Examples/python/dict_lab/dict_lab.py",
-  "source_sha256": "455605179a4f9980b078c5ba81c4d207ba35fb41a97d31249ae37614405ebba5",
+  "source_sha256": "16163b28466dc2aec45194eb82fc731fe8397883a6ade72b6e752c5411d1fcdb",
   "module": {
     "kind": "Module",
     "body": [
@@ -9567,18 +9567,18 @@
         "span": {
           "lineno": 338,
           "col_offset": 0,
-          "end_lineno": 344,
+          "end_lineno": 351,
           "end_col_offset": 12
         },
-        "name": "keys_for_is_still_loud",
+        "name": "keys_for_live_cursor",
         "args": [
           {
             "arg": "a",
             "span": {
               "lineno": 338,
-              "col_offset": 27,
+              "col_offset": 25,
               "end_lineno": 338,
-              "end_col_offset": 28
+              "end_col_offset": 26
             }
           }
         ],
@@ -9588,18 +9588,18 @@
           {
             "kind": "Assign",
             "span": {
-              "lineno": 340,
+              "lineno": 347,
               "col_offset": 4,
-              "end_lineno": 340,
+              "end_lineno": 347,
               "end_col_offset": 14
             },
             "targets": [
               {
                 "kind": "Name",
                 "span": {
-                  "lineno": 340,
+                  "lineno": 347,
                   "col_offset": 4,
-                  "end_lineno": 340,
+                  "end_lineno": 347,
                   "end_col_offset": 5
                 },
                 "id": "d"
@@ -9608,18 +9608,18 @@
             "value": {
               "kind": "Dict",
               "span": {
-                "lineno": 340,
+                "lineno": 347,
                 "col_offset": 8,
-                "end_lineno": 340,
+                "end_lineno": 347,
                 "end_col_offset": 14
               },
               "keys": [
                 {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 340,
+                    "lineno": 347,
                     "col_offset": 9,
-                    "end_lineno": 340,
+                    "end_lineno": 347,
                     "end_col_offset": 10
                   },
                   "value": {
@@ -9632,9 +9632,9 @@
                 {
                   "kind": "Name",
                   "span": {
-                    "lineno": 340,
+                    "lineno": 347,
                     "col_offset": 12,
-                    "end_lineno": 340,
+                    "end_lineno": 347,
                     "end_col_offset": 13
                   },
                   "id": "a"
@@ -9645,18 +9645,18 @@
           {
             "kind": "Assign",
             "span": {
-              "lineno": 341,
+              "lineno": 348,
               "col_offset": 4,
-              "end_lineno": 341,
+              "end_lineno": 348,
               "end_col_offset": 9
             },
             "targets": [
               {
                 "kind": "Name",
                 "span": {
-                  "lineno": 341,
+                  "lineno": 348,
                   "col_offset": 4,
-                  "end_lineno": 341,
+                  "end_lineno": 348,
                   "end_col_offset": 5
                 },
                 "id": "t"
@@ -9665,9 +9665,9 @@
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 341,
+                "lineno": 348,
                 "col_offset": 8,
-                "end_lineno": 341,
+                "end_lineno": 348,
                 "end_col_offset": 9
               },
               "value": {
@@ -9679,17 +9679,17 @@
           {
             "kind": "For",
             "span": {
-              "lineno": 342,
+              "lineno": 349,
               "col_offset": 4,
-              "end_lineno": 343,
+              "end_lineno": 350,
               "end_col_offset": 17
             },
             "target": {
               "kind": "Name",
               "span": {
-                "lineno": 342,
+                "lineno": 349,
                 "col_offset": 8,
-                "end_lineno": 342,
+                "end_lineno": 349,
                 "end_col_offset": 9
               },
               "id": "k"
@@ -9697,9 +9697,9 @@
             "iter": {
               "kind": "Name",
               "span": {
-                "lineno": 342,
+                "lineno": 349,
                 "col_offset": 13,
-                "end_lineno": 342,
+                "end_lineno": 349,
                 "end_col_offset": 14
               },
               "id": "d"
@@ -9708,18 +9708,18 @@
               {
                 "kind": "Assign",
                 "span": {
-                  "lineno": 343,
+                  "lineno": 350,
                   "col_offset": 8,
-                  "end_lineno": 343,
+                  "end_lineno": 350,
                   "end_col_offset": 17
                 },
                 "targets": [
                   {
                     "kind": "Name",
                     "span": {
-                      "lineno": 343,
+                      "lineno": 350,
                       "col_offset": 8,
-                      "end_lineno": 343,
+                      "end_lineno": 350,
                       "end_col_offset": 9
                     },
                     "id": "t"
@@ -9728,17 +9728,17 @@
                 "value": {
                   "kind": "BinOp",
                   "span": {
-                    "lineno": 343,
+                    "lineno": 350,
                     "col_offset": 12,
-                    "end_lineno": 343,
+                    "end_lineno": 350,
                     "end_col_offset": 17
                   },
                   "left": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 343,
+                      "lineno": 350,
                       "col_offset": 12,
-                      "end_lineno": 343,
+                      "end_lineno": 350,
                       "end_col_offset": 13
                     },
                     "id": "t"
@@ -9747,9 +9747,9 @@
                   "right": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 343,
+                      "lineno": 350,
                       "col_offset": 16,
-                      "end_lineno": 343,
+                      "end_lineno": 350,
                       "end_col_offset": 17
                     },
                     "id": "k"
@@ -9762,17 +9762,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 344,
+              "lineno": 351,
               "col_offset": 4,
-              "end_lineno": 344,
+              "end_lineno": 351,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Name",
               "span": {
-                "lineno": 344,
+                "lineno": 351,
                 "col_offset": 11,
-                "end_lineno": 344,
+                "end_lineno": 351,
                 "end_col_offset": 12
               },
               "id": "t"

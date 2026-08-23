@@ -470,6 +470,24 @@ and **wrong for measuring the rebuild**: a `notYet` landing on a whitelisted row
 scores WHITELISTED. That is a **false pass**, and it can flatter the rebuild by
 up to the whole 118-row whitelist.
 
+> **THE FILE BELOW NO LONGER EXISTS (deleted 2026-08-23).** The command in
+> this section will not run. `monadic_gate.py` compared TWO interpreters to
+> each other, and there is one; its whole vocabulary — the `expect_mono`
+> column, the `--monadic` flag, the `MONO_OPENED` table — retires with the
+> window it measured. The section is kept because the acceptance numbers it
+> reports are the record of how the rebuild earned its place, and deleting
+> the method would leave those numbers unsourced.
+>
+> **Where its job went.** Its `OPENED` bucket was the only thing adjudicating
+> rows the trunk refused and the rebuild answered — it checked the rebuild
+> against CPython. With one interpreter that is just a differential row, so
+> the two `MONO_OPENED` rows were migrated in `harness/cases.json` from
+> `expect: unsupported` to `expect: match` and `diff_test` adjudicates them.
+> **That migration was mandatory, not tidying**: `MONO_OPENED`'s own comment
+> said the table "cannot become a silencer" *because* a gate adjudicated, so
+> deleting the gate without moving the rows is precisely what would have made
+> it one.
+
 So the gate proper is **`harness/monadic_gate.py`**, which runs the corpus
 through **both** interpreters and compares them to each other, message included:
 

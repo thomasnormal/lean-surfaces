@@ -529,3 +529,42 @@ converts a seven-arm capability gap into a one-line one.
 its branch) and a successor lane is spawned inheriting its ledger. The ledger
 surviving the transcript is the point — §7.1a's durability lesson holding up
 under its own test case.
+
+## 2026-08-23-architecture-4 — QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally
+
+**(1) A qualification to this lane's own framing.** Entry `-3` said `diff_test`'s
+blindness to mutual refusal *"is not a defect in `diff_test`: it is what a
+differential harness IS."* **Too strong**, and the rebuild successor measured
+why: the blindness belongs to **pointing a differential at TWO MODELS**, not to
+the instrument. On the branch with `--monadic` removed the harness's other side
+is **CPython**, and the **same unmodified `diff_test` CONVICTED** the 25 rows —
+*predicted 25, came back 25.*
+
+**So the law is a procedure, not a limitation**: *agreement with the ORACLE is
+the evidence* is made **operational by REMOVING THE SECOND MODEL**. With one
+model and one oracle the ordinary harness already covers this class.
+
+**And the capability-parity audit gains an END CONDITION**, which is what makes
+it scaffolding rather than a standing tax: **it is the rule for the WINDOW in
+which two models coexist.** When the presentation boundary closes and the other
+side is the oracle again, the ordinary differential resumes covering the class
+and the audit retires with the window. Corrected at both sites (§3.4's erosion
+clause and §5.3).
+
+**(2) THE CORE-PAYLOAD HOLD RELEASES ON LANDING — written as a CONDITION.** A
+queued merge's `Loud.unsupported (cause : RefusalCause π) (message)
+(snapshot : Option σ)` **subsumes both tiers** — C at `σ := Mem` with its guards
+lifted, ES at `π := EsRefusal`. On that landing **both HOLDs release**, the two
+payload-bearing tiers converge by import like the other eleven sites, and entry
+`-?`'s *"Core carries neither"* **goes false at that moment.**
+
+**MASTER TRUTH AS WRITTEN: NOT YET MERGED — checked, not assumed.**
+`LeanModels/Core/Outcome.lean` still reads `| unsupported (msg : String)` and
+contains **zero** occurrences of `RefusalCause`. So the doc states a **condition
+on a landing**, never a fact; the merge lands on green.
+
+**And the discharge is pinned by a docs_check-checked block against
+`Core/Outcome.lean` rather than prose** — this document's §9 thesis applied to
+itself: **a claim that a type now carries a field should be checked against the
+type, not asserted beside it.** When the block goes green the conditional
+paragraph is retired **by the gate**, not by an editor remembering to.

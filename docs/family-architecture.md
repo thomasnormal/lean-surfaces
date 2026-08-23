@@ -1444,6 +1444,36 @@ where somebody else's theorem enters, and an order with no congruence there
 cannot import a single shared proof. The tell is the same as the seam's: a
 goal that names a worker this tier never defined.
 
+**AND THE CENSUS THAT SHOULD HAVE COME FIRST: LEAN CORE ALREADY HAD THE
+ORDER.** `Lean.Order.FlatOrder b` (`Init/Internal/Order/Basic.lean:770`) IS
+`FlatLe`; the bridge `FlatOrder.rel x y ↔ (x = b ∨ x = y)` is proved green, and
+core ships `PartialOrder`/`CCPO`/`MonoBind` instances for `ExceptT`, `StateT`,
+`ReaderT`, `OptionT` — the whole `SemMWith` stack above its base. Full
+measurement, price and ruling: [docs/lean-order-census.md](lean-order-census.md)
+(2026-08-23).
+
+> **A shared abstraction is censused against the TOOLCHAIN before it is
+> censused against the tree.** The tree's three copies were the visible
+> duplication. Core's was the fourth, and it was invisible because nobody
+> looked one level up — §9.0a's blind spot, one level up.
+
+Two findings from it belong here rather than in the census, because they are
+about how this family builds proofs and not about one lemma:
+
+* **`@[partial_fixpoint_monotone]` IS A DOCUMENTED EXTENSION SEAM.** A tier's
+  own congruences — the state zoom, `tryCatch`, `liftRes` — can be *registered*
+  with core's dispatcher instead of being dispatched by hand. **Our seams stay
+  ours to PROVE; they need not stay ours to DISPATCH.** That is the shape any
+  future consolidation should take: keep the proofs, hand over the search.
+* **CORE'S DRIVER IS THE SAME SHAPE AS OURS, ARRIVED AT INDEPENDENTLY.**
+  `monotonicity`'s own docstring says it "performs one compositional step" —
+  it is not a walker, and `partial_fixpoint` drives it. The driver that works
+  is `repeat' first | <leaf> | monotonicity`, which is `mono_with` exactly:
+  one step per goal, kept, never a parent that re-plans. **A congruence walker
+  converged on by two independent designs is a design, not a workaround** —
+  and that is the strongest evidence the backtracking `first` was the defect
+  rather than the ambition.
+
 That is the same shape as C's routing law paying for itself at adoption: a
 decision taken for one reason turning out to buy a second. Here the
 **speaker split** (§3.4) is doing the work — because `Halt` is the model's

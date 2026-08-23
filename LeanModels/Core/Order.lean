@@ -23,6 +23,24 @@ arities. A parameter costs one explicit argument at each use site and buys
 nothing to keep in sync; an `OrderBot`-style class would need three instances
 whose only content is naming the bottom.
 
+**CENSUSED AGAINST THE TOOLCHAIN (2026-08-23), and core already had it.**
+`Lean.Order.FlatOrder b` (`Init/Internal/Order/Basic.lean:770`) is this order,
+under a different encoding: a wrapper type `def FlatOrder (b : α) := α` carrying
+an inductive `rel | bot | refl`, with `PartialOrder` and `CCPO` instances. The
+bridge is `FlatOrder.rel x y ↔ (x = b ∨ x = y)`, proved green.
+
+**The tree keeps its own anyway, and the reasons are recorded rather than
+assumed** — full measurement and price in
+`docs/lean-order-census.md`. In short: that module is `Init.Internal`, and every
+class in it says *"intended to be used in the construction of `partial_fixpoint`,
+and not meant to be used otherwise"*; core's base instances stop at `Option` and
+`IO`, never at our `Except (Loud π σ)`; and the monadic tier's pure-worker seam
+would additionally need a GLOBAL ORPHAN `Lean.Order.PartialOrder Nat`, because
+`Nat` is no CCPO and core will never ship one. The whole exchange is worth about
+35 lines. A later ticket may add the three base instances *beside* this
+definition — with a tripwire that fails loudly if `FlatOrder` moves — without
+restating a single tier theorem.
+
 **THE CONGRUENCES ARE NOT HERE, and that is the C-lane routing law.** `Sv.Res`
 and `Python.Res` are DIFFERENT TYPES — Python's carries the `.exn` raise arm —
 so `le_bind`/`le_ite` are each tier's own, over each tier's own `bind`. Lifting

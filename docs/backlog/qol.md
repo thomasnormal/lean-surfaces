@@ -2244,3 +2244,64 @@ uncatchability not counting as a statement, both spacing variants counted while
 prose is not, a nullary declaration counted, and a match arm **not**). The
 uncatchability fixture was a `def` and is now an `example`, because STMT-19
 asks for a **statement**. `docs_check` 87/87. No Lean executed.
+
+---
+
+## 2026-08-23-qol-33 — audit HIGH 4-5: a regex awk rejected outright, and a guard that failed open
+
+### HIGH — `analogues.sh:49`, and it was worse than the row said
+
+The shape regexes went to awk through `awk -v RE="$re"`, which **strips one
+backslash level** — the third time this tree has met that defect. The row says
+`\(` becomes a group-open; measured, it does not merely mis-match:
+
+```
+awk: syntax error in regular expression (F *:|∀ *F|fuel|Fuel
+```
+
+**awk exits.** So `analogues.sh fuel` returned *nothing*, and an empty result
+is indistinguishable from a small neighbourhood — the tool whose whole job is
+to say *"this shape has 26 proved analogues"* was reporting zero for one of its
+twelve shapes, and reporting it silently.
+
+The fix doubles the backslashes at the boundary. **The row that would have
+caught it now exists: every named shape must match a known instance**, driven
+against a fixture carrying one line per shape. All twelve pass; before the fix,
+`fuel` did not.
+
+### HIGH — `a6-guard.sh:35`, failing open on an unreadable machine
+
+The guard's own header carries the sentence **"a check that only prints is not
+a guard"**. The audit found the same defect's second half: with `lsof` absent,
+failing, or denied, every candidate went down `continue`, `found` stayed 0, and
+it exited **0 — "the tree may be rewritten"**.
+
+Now: **probes are checked up front**, an unreadable cwd on a live Lean process
+**refuses rather than skips**, and refusal has its own exit code (**2, CANNOT
+TELL**) distinct from "a build is here" (1). *Silence from a probe is not
+evidence of absence.*
+
+Both readers are mockable, so the **positive case is finally driven** — it
+never was. That is what the file's own history warned about: *"found by testing
+the POSITIVE case; the negative case passed throughout and proved nothing."*
+
+**One test defect of my own on the way:** `PATH=/nonexistent bash …` cannot
+find `bash` itself, so my first missing-probe row measured **127** while
+believing it had measured the guard. It uses `"$BASH"` now.
+
+### Not wired into `triad.sh`, and the reason is recorded
+
+The audit's fix suggests calling the guard from triad's rebase/merge
+preconditions. **`tools/triad.sh` never rewrites the tree** — it refuses to
+build *during* a rebase, which is the opposite direction — so calling A6's
+guard there would add a check that cannot fire, which is the audit's own
+`vacuous` category. The call site that matters is a lane's **rebase step**, and
+this lane now runs it there. Recorded rather than done, per the ruling that a
+won't-fix carries its reason.
+
+### Triad
+
+`bash -n` clean. `analogues.sh` **28 ok** (16 → 28, twelve of them the new
+per-shape rows). `a6-guard.sh` **8 ok** — its first self-test, covering the
+positive case, a build elsewhere, no builds, an unreadable cwd, and a missing
+probe. Live on this machine the guard exits 0 correctly. No Lean executed.

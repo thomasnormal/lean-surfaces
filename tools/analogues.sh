@@ -66,10 +66,17 @@ SHAPE_NAMES="determinism membership fuel frame fold triple spec inversion refusa
 # top-level construct.  That over-counts a decl followed by trailing comments
 # and under-counts nothing, which is the direction to err in for a COST
 # estimate.
+# `awk -v` STRIPS ONE BACKSLASH LEVEL before the string is used as a dynamic
+# regex — the third time this tree has met it (sites.sh's literal dot, the
+# declaration walk, now here).  Here it did not merely mis-match: `\(` became a
+# group-open and awk DIED with "syntax error in regular expression", so the
+# `fuel` shape returned nothing at all and looked like an empty neighbourhood.
+awk_re() { printf '%s' "$1" | sed 's/\\/\\\\/g'; }
+
 scan_tree() {                   # scan_tree <root> <ere>  -> "len<TAB>file:line<TAB>name"
   local root="$1" re="$2" f
   find "$root" -name '*.lean' -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
-    awk -v FN="${f#"$root"/}" -v RE="$re" '
+    awk -v FN="${f#"$root"/}" -v RE="$(awk_re "$re")" '
       # The block ENDS at its last non-blank line.  Counting to the next
       # construct instead adds the trailing blank lines to every entry — a
       # constant bias the self-test caught by predicting 2.5 and getting 3.5.
@@ -164,6 +171,29 @@ LEAN
 
   set -- $(scan_tree "$tmp/does-not-exist" 'PstAt' | stats)
   check "a missing tree yields 0, loudly upstream" "$1" "0"
+
+  # EVERY NAMED SHAPE MUST MATCH A KNOWN INSTANCE.  Without this row the
+  # `fuel` shape shipped a regex that made awk exit with a syntax error, and an
+  # empty result is indistinguishable from a small neighbourhood.
+  sh="$tmp/shapes"; mkdir -p "$sh"
+  cat > "$sh/S.lean" <<'LEAN'
+theorem d1 (d : Design) : Deterministic d := by trivial
+theorem m1 : obs r ∈ permitted site := by trivial
+theorem f1 (F : Nat) : execFuel F = x := by trivial
+theorem fr1 (w : W) : PstAt w := by trivial
+theorem fo1 (rs : List R) : FoldInv g v b rs := by trivial
+theorem t1 : ⦃P⦄ prog ⦃⇓ r => Q r⦄ := by trivial
+@[spec] theorem sp1 : True := by trivial
+theorem iv1 : Judgment.exhausts x := by trivial
+theorem rf1 : refuse c m = Halt.unsupported c m := by trivial
+theorem mo1 : fuelMono a b := by trivial
+theorem rn1 : (run d).map cycleOf = x := by trivial
+theorem th1 : ∃ t, ∀ F ≥ t, P F := by trivial
+LEAN
+  for shp in $SHAPE_NAMES; do
+    n="$(scan_tree "$sh" "$(shape_regex "$shp")" 2>/dev/null | grep -c . || true)"
+    check "shape '$shp' matches a known instance" "$( [ "$n" -ge 1 ] && echo yes )" "yes"
+  done
 
   check "a named shape resolves"      "$(shape_regex triple)" "⦃"
   check "an unknown name resolves to nothing" "$(shape_regex nope)" ""

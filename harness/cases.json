@@ -499,7 +499,7 @@
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_str_keys", "args": [[7]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_bool_int_collision", "args": [[7], [1]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_empty", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_for_is_still_loud", "args": [[7]], "expect": "unsupported", "note": "the LIVE cursor is inch 3a; the draining-consumer landing does not touch it"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "keys_for_live_cursor", "args": [[7]], "expect": "unsupported", "note": "the LIVE cursor is inch 3a; the draining-consumer landing does not touch it"},
   {"file": "Examples/python/opt_args/opt_args.py", "function": "clamp", "args": [[], [1, 2, 3, 4]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "fmt_spread", "args": [[1, 2], [0, -3]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "fmt_spread_arity", "args": [[1, 2]], "expect": "match"},

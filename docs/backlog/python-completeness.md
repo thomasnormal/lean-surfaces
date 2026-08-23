@@ -427,3 +427,41 @@ recorded expectations true rather than the expectations being edited to match
 the code. **That is the direction a scoreboard has to move in**, and it is
 only possible because the expectations were written from CPython's measured
 behaviour (§L53) rather than from the model's.
+
+## 2026-08-23-pycomplete-7 — the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true
+
+Ticket 2: build green, `diff_test` 1427/0/118, both `script_corpus` runs
+65/0/50/15, trunk census 0 drifts, **monadic gate 1425/1427 parity with 1
+CAPABILITY OPENING** (`iter_dict` — the `OPENED` bucket firing exactly as
+designed: trunk refuses, rebuild runs, CPython agrees). The two fixes worked.
+
+Two remainders, and they were the same fact reaching two instruments:
+
+* the gate's last divergence — `keys_for_is_still_loud(7)`
+* the census's two whitelist drifts — `iter_dict` and
+  `keys_for_is_still_loud` "whitelisted but the model answered ok"
+
+**`keys_for_is_still_loud` is a row I wrote in rung 3b**, whose comment read
+*"the LIVE cursor is a separate inch (3a) and stays refused"*. Inch 3a landed
+it. The row did not break — **its NAME made a claim that stopped being true**,
+and the instruments correctly convicted the name.
+
+It is renamed `keys_for_live_cursor`: it names the CONSTRUCT rather than a
+verdict, which is the durable choice, and its comment now records that the
+trunk refuses it by the ruling while the rebuild runs it. A name that asserts
+a verdict has a shelf life; a name that asserts a construct does not.
+
+### The whitelist half of the census gains the column the grammar half had
+
+`MONO_OPENED` — whitelisted rows (the TRUNK refuses them) EXPECTED to answer
+under `--monadic`. The split that keeps it honest is explicit: **the census
+records intent and never adjudicates**, because it runs one interpreter and
+never sees CPython's answer for those rows; proving the rebuild RIGHT is
+`monadic_gate`'s job, whose `OPENED` bucket counts a row only when the rebuild
+matches the oracle. Census records, gate adjudicates.
+
+That is the fourth instrument this lane has had to teach a new legitimate
+state, after `DIVERGE`/`DIVERGED`, the census's grammar column and the gate's
+`OPENED`. The pattern is now unmistakable: **during a re-founding, every
+two-sided check needs a vocabulary for "these differ on purpose", and the
+default vocabulary never has one.**

@@ -9,11 +9,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**42 entries across 13 lanes.** Regenerate with
+**44 entries across 13 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
+| `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
 | `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
 | `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
 | `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |

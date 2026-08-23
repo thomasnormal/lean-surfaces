@@ -144,6 +144,9 @@ def run_side(runner_cmd, jobs, label):
 # diverges from CPython the row is a FINDING no matter what is written here,
 # because the adjudicator is the oracle, never this dict.
 OPENED = {
+    "keys_for_live_cursor": "inch 3a — the live dict cursor opens on the "
+                            "monadic definition only; the trunk refuses by "
+                            "the no-backwards-compat ruling",
     "iter_dict": "inch 3a — the live dict cursor opens on the monadic "
                  "definition only (docs/backlog/python-completeness.md, "
                  "2026-08-23-pycomplete-5)",

@@ -794,6 +794,22 @@ because the typed field does not.
 > is paid for N times, in string-building and re-parsing, by lanes that
 > never see each other's version.**
 
+**RESOLVED — Go retired its local type, and reading the cause as DATA
+bought something a string could not.** With `Core`'s payload landed, Go
+dropped its own `RefusalCause` and its gate became
+`(r.toCore π).isUndefined = false`, proved by `cases r <;> rfl` against
+**`Core.isUndefined` — a predicate lifted from ES.** The division that
+emerged is the one this section argued for:
+
+> **The lane contributes the NARROWER TYPE; the PREDICATE is everyone's.**
+
+And the payoff is concrete rather than aesthetic: **two guard shapes a
+string could not express** — a **cited clause that is checkable**, and
+**`isUndefined` per refusal**. That retires the three-re-derivations entry
+as a diagnosis and settles it as a result: the string encodings were not
+merely inelegant duplication, they were **lossy**, and the loss is
+recoverable only by carrying the cause as data.
+
 **AND THE EXACT COUNTERPOINT, which is why the diagnosis is the trunk's
 PAYLOAD and not its CLASSES.** SV's own §2.4 taxonomy predicted it would
 need a class for scheduling nondeterminism — and found
@@ -1400,7 +1416,22 @@ A tier takes a non-trivial `σ` only when it has **both** a consumer for the
 snapshot **and** the never-an-observable guard to keep it out of verdicts.
 Absent a consumer, the parameter is a field nobody reads, carried through
 every refusal, and it is exactly the kind of speculative generality §2.4's
-census-gated placement rejects one level up. ES takes `Unit`; C takes `Mem`
+census-gated placement rejects one level up.
+
+**AND THE RIGHT WAY TO HOLD A FUTURE `σ`, from Ada: accept `Unit` now and
+REGISTER the consumer.** Ada took `Unit` while naming a **predicted**
+consumer — a partial trace on a mid-test refusal — and **dating it to inch
+5**.
+
+> **Predicting a consumer is not having one.**
+
+So the anticipated need is **named, dated to an inch, and not built** —
+which keeps the default honest (no field nobody reads) without losing the
+design intent (the inch that will need it knows it is coming). A
+prediction held this way is a scheduled decision; a prediction held in the
+type is speculative generality wearing a plan's clothes.
+
+ES takes `Unit`; C takes `Mem`
 **because it has both**.
 
 **It SUBSUMES both payload-bearing tiers, and the subsumption is checked
@@ -4113,6 +4144,38 @@ real until an instrument re-derives it.**
     leaves the syntax — an opaque callee, a closure — **say the measure out
     loud** so the argument lives in the file rather than in the
     elaborator's mood.
+
+    **AND ITS SHARPER SIBLING — a definition that COMPILED and was
+    UNSOUND.** The Lean tier's first definition required the structure's
+    sort to be **`IsAlwaysZero`**. That is unsound: `instL` turns `Type u`
+    into `Prop` at `u := 0`, so a **projected data field yields `False`** —
+    the arena's proj-of-imax-prop family, which **the official kernel
+    itself failed at v4.28.0**. The kernel's own test is **`!isNeverZero`**
+    — *maybe* zero, not *always*.
+
+    **What caught it was the validation lemma.** `TrProjP.instL` was
+    **unprovable** against the wrong definition, and that is the entire
+    detection mechanism:
+
+    > **A definition that merely compiled would have shipped the
+    > unsoundness. The proof is what refused it.**
+
+    This is §0.1's trust boundary as a *work order*: **write the validation
+    lemma before declaring a definition done.** A definition is a claim,
+    and compiling is not how a claim is checked — the same relation step 10
+    draws between a green build and a termination argument, one level more
+    dangerous because the artifact was not merely unproven but wrong.
+
+    **The polarity rule that falls out, worth carrying wherever universe
+    levels are modelled:**
+
+    * **`MaybeZero` REFLECTS along instantiation** — it *discharges
+      hypotheses*;
+    * **`IsAlwaysZero` TRANSPORTS forward** — it *supplies conclusions*;
+    * **`ProjSound` goes ∀ → ∃.**
+
+    Getting the polarity backwards is exactly how a hypothesis-shaped
+    condition ends up asserted as a conclusion, which is what happened.
 
 ---
 

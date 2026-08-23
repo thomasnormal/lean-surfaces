@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**89 entries across 16 lanes.** Regenerate with
+**90 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -24,6 +24,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
 | `2026-08-23-architecture-9` | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |

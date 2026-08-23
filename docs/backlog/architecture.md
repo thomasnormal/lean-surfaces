@@ -861,3 +861,55 @@ as one of its eleven UB classes, and whether the not-UB subset is a value or a
 refusal is **the C lane's to answer**. If two tiers answer the same way
 independently, the convergence standard promotes the invariant from tier to
 family.
+
+## 2026-08-23-architecture-12 — A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer
+
+**(1) THE SHARPER SIBLING TO "a green build is not a termination argument."** The
+Lean tier's first definition required the structure's sort to be
+**`IsAlwaysZero`** — **unsound**: `instL` turns `Type u` into `Prop` at `u := 0`,
+so a **projected data field yields `False`** (the arena's proj-of-imax-prop
+family, which **the official kernel itself failed at v4.28.0**). The kernel's own
+test is **`!isNeverZero`** — *maybe* zero, not *always*.
+
+**What caught it was the validation lemma**: `TrProjP.instL` was **unprovable**
+against the wrong definition.
+
+> **A definition that merely compiled would have shipped the unsoundness. The
+> proof is what refused it.**
+
+Landed beside step 10 as §0.1's trust boundary in the form of a **work order**:
+**write the validation lemma before declaring a definition done.** A definition
+is a claim, and compiling is not how a claim is checked — the same relation step
+10 draws between a green build and a termination argument, one level more
+dangerous because the artifact was not merely unproven but **wrong**.
+
+**The polarity rule, carried for anywhere universe levels are modelled**:
+`MaybeZero` **REFLECTS** along instantiation (discharges hypotheses),
+`IsAlwaysZero` **TRANSPORTS** forward (supplies conclusions), `ProjSound` goes
+**∀ → ∃**. Getting the polarity backwards is exactly how a hypothesis-shaped
+condition ends up asserted as a conclusion, which is what happened.
+
+**(2) THE THREE-RE-DERIVATIONS ENTRY IS RESOLVED.** With Core's payload landed,
+**Go retired its local `RefusalCause`** (ticketed); its gate is now
+`(r.toCore π).isUndefined = false` by `cases r <;> rfl` against **`Core.isUndefined`,
+a predicate lifted from ES.**
+
+> **The lane contributes the NARROWER TYPE; the PREDICATE is everyone's.**
+
+And the payoff is concrete rather than aesthetic: **two guard shapes a string
+could not express** — a **cited clause that is checkable**, and **`isUndefined`
+per refusal**. So the entry closes as a **result**, not just a diagnosis: the
+string encodings were not merely inelegant duplication, they were **LOSSY**, and
+the loss is recoverable only by carrying the cause as data.
+
+**(3) HOW TO HOLD A FUTURE `σ`, from Ada.** Ada accepted `σ := Unit` while
+naming a **predicted** consumer — a partial trace on a mid-test refusal — and
+**dating it to inch 5**.
+
+> **Predicting a consumer is not having one.**
+
+The anticipated need is **named, dated to an inch, and not built**, which keeps
+the default honest (no field nobody reads) without losing the design intent (the
+inch that will need it knows it is coming). **A prediction held this way is a
+scheduled decision; a prediction held in the type is speculative generality
+wearing a plan's clothes.**

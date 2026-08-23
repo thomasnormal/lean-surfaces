@@ -8,6 +8,50 @@ The founding charter is `docs/go-charter.md`; the founding landing is
 
 ---
 
+## SPEC COVERAGE — the completion metric (standing; updated every landing)
+
+The tier's goal is COMPLETION, and this is the number that measures it:
+how many real stdlib files the walker steps **entirely**. Coverage is
+CONJUNCTIVE (§G1) — a file counts only when EVERY construct it uses is
+modelled — so this is a floor on completeness, never a score.
+
+Reproduce it, do not quote it:
+
+    harness/go/census.sh --reach $(go env GOROOT)/src
+
+The vocabulary it measures against is transcribed from
+`LeanModels/Go/Stmt.lean` and **must be widened in the same commit that
+widens the walker** (§G19, after the previous table proved unreproducible).
+
+| rung | sha | all of `$GOROOT/src` | the LIBRARY only |
+| --- | --- | ---: | ---: |
+| §G16 re-rank | — | *withdrawn — unreproducible (§G19)* | — |
+| §G19 range / slice family | `5b3602f` | 604 / 3,803 (15.9%) | — |
+| §G20 fixed arrays `[N]T` | `da9a7bc` | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
+
+**Two denominators, because the choice is a real one and it moves the
+number by 3.5 points.** `$GOROOT/src` includes `cmd/` — 1,060 files, 28%
+of the corpus — which is the Go *toolchain*: one large program's
+internals, not the language's subject matter. It is legitimate Go and the
+tier must eventually step it, so the first column stays. But it badly
+skews *ranking*: with `cmd/` in, the most-selected packages are `ir`,
+`obj`, `ssa` and `base` — `cmd/compile`'s own guts. Rank over the library
+(§G21).
+
+**This metric measures SYNTACTIC coverage — kind-set containment — and
+that is an upper bound, not executability.** For every construct modelled
+so far the two coincide, because the walker implements each kind's
+semantics. They will NOT coincide for selectors: knowing `fmt.Println` is
+a package call is not being able to run it (§G8; quantified in §G21,
+where the naive figure overstates by 2.5×). So a syntactic-only win must
+never be banked in this table.
+
+Ceiling at this vocabulary: **3,767 (99.1%)** — what the walker would
+reach if every frontier construct were modelled. The gap between 680 and
+3,767 is the remaining work; §G21 prices which part is worth taking.
+
+---
+
 ## 2026-08-22-go-1 — RUNG 1'S SCOPE IS DERIVED: coverage is CONJUNCTIVE, and the charter's "21" was wrong (formerly `§G1`)
 
 Rung 1's scope was not chosen. It was measured, by a reach-ladder mode
@@ -2449,3 +2493,144 @@ python3 harness/diff_test.py; python3 harness/script_corpus.py'` —
 cases, 0 failed** (1,311 matched, 116 whitelisted-unsupported).
 `script_corpus` **65 scripts, 0 failed**. Queued **7,501 s** behind five
 lanes; held the machine **64 s**.
+
+---
+
+## G21 — THE EXTRACTOR TIER, chartered: authorized on a figure that is 2.5× too big, and sized on the one that is not (2026-08-23)
+
+Census only, no implementation — the C tier's founding template, which is
+also how this lane's own charter was written.
+
+Thomas's recalibration authorized the `go/types` extractor tier now, on
+the strength of §G20's frontier table: `SelectorExpr` at **+1,189**, 23×
+the next construct. The authorization stands and this charter accepts it.
+**The figure that motivated it does not survive its own census**, and
+saying so is the charter's first job, because §G8 predicted this exact
+error in advance:
+
+> the honest value of cheap-tier resolution is **a better refusal, not a
+> wider reach** … but it is not reach, and **pricing it as reach would be
+> the motivated error**.
+
+§G20 priced it as reach. Here is the correction, measured.
+
+### THE SPLIT, and what each half is worth
+
+`SelectorExpr` is two constructs sharing one `go/ast` node, so the census
+instrument now splits it the way it splits `ArrayType` (`fileKinds`):
+
+* **`SelectorExpr/pkg`** — the base identifier is an imported name. This
+  is resolvable **syntactically**, from the file's own import list, with
+  no type checker at all.
+* **`SelectorExpr/value`** — `x.f`, `x.M()`, `a.b.M()`. Needs `go/types`.
+
+| | alone |
+| --- | ---: |
+| `SelectorExpr/pkg` | **+503** |
+| `SelectorExpr/value` | +111 |
+| both (§G20's undivided figure) | +1,189 |
+
+Parts sum to 614 against a whole of 1,189 — **conjunctive again, 1.9×**,
+the fourth independent reproduction in this lane.
+
+The call-site census reproduces §G8's split closely (`pkg.F` 29.5% of
+selector calls against §G8's 30.2%; non-package 70.5% against 69.8% — the
+gap is `_test.go` files, which §G8 counted and this run does not). So the
+shapes agree. What disagrees is the **ranking**: §G8 ranked by call-site
+share, which puts methods first at 58.9%. Ranking by REACH inverts it —
+the cheap syntactic half is worth 4.5× the expensive one. **Call-site
+frequency and file reach are different metrics, and for a completion goal
+reach is the one that counts.**
+
+### WHY +503 IS NOT THE PRICE
+
+A file counts as reached only when every construct in it is modelled. For
+selectors that is necessary but **not sufficient**: recognising `fmt.Println`
+as a package call does not let the walker RUN it — that needs `fmt`'s
+semantics. So the executable question is *how many files become steppable
+if the top-k packages are actually modelled*, and it was measured.
+
+Two corrections to the naive figure, both of which shrink it:
+
+1. **`cmd/` skews the ranking.** Excluded (see the standing table).
+2. **`unsafe` and `C` are never executable** — §G8 named them; they are
+   the 1st and 5th most-selected packages, so counting them as modellable
+   inflates every row.
+
+Over the library, with those two excluded:
+
+| packages modelled | files stepped | over baseline 587 |
+| --- | ---: | ---: |
+| top 1 (`bits`) | 594 | +7 |
+| top 3 | 654 | +67 |
+| top 6 | 659 | +72 |
+| top 12 | 691 | +104 |
+| top 25 | 719 | +132 |
+| **ALL 271** | **790** | **+203** |
+
+**The whole cheap tier is worth +203 executable files, not +503** — the
+naive figure overstates by 2.5×, and it takes all 271 packages to collect
+even that. §G8's warning was right, and is now a number.
+
++203 on 587 is still **+35%**, and still the largest single move
+available — so the tier is worth building. It is simply not the
+"+1,189, 23× everything" that authorized it, and the ladder below is
+sized on +203.
+
+Most-selected modellable packages: `bits`(3,737), `syscall`(3,245),
+`fmt`(2,396), `abi`(2,355), `reflect`(2,062), `io`(1,748),
+`errors`(1,678), `ast`(1,444), `token`(1,413), `strings`(1,154),
+`time`(991), `os`(873).
+
+### THE RUNGS
+
+**E1 — `pkg.F` syntactic resolution, plus the first package modelled
+end to end.** No `go/types`. The extractor emits a resolved
+`(package, function)` on every package-qualified call site from the
+import table; the walker gains a callee it can dispatch on, and a refusal
+that NAMES the package instead of saying "selector call" — §5.2's
+`environment` bucket retiring by widening, exactly as
+`docs/family-architecture.md` prescribes.
+
+The first package should be **`math/bits`**, and not because it is the
+most-selected (it is, among modellable ones, but by a thin margin over
+`syscall`). It is the right bridgehead because **this lane has already
+proved theorems about its functions**: `bitLen` is proved correct
+(§G15), and `Len8`/`Reverse8` are accepted against the vendored tables.
+The rung therefore tests the *mechanism* — resolution, dispatch, a
+package boundary — against semantics already established, instead of
+debugging both at once. It is worth only +7 files alone, and that is
+fine: E1's deliverable is the mechanism, and the +7 is the honest label
+on it.
+
+**E2 — `go/types`-backed resolution.** A type checker in the extraction
+path: one large, indivisible step (§G8). It buys `x.M()` and chained
+receivers together. Sized only after E1, because E1's refusal worklist —
+438 packages ranked by frequency, which E1 makes machine-readable — is
+what tells us which types actually need resolving.
+
+**E3 — methods.** Receivers, method sets, and the value/pointer
+distinction. Downstream of E2 by construction.
+
+Extractor and walker rungs **alternate as the census prices them**, per
+the recalibration. On today's numbers the walker's own frontier is spent
+— every remaining construct is worth ≤ +51 — so E1 is next.
+
+### ACCEPTANCE DISCIPLINE — unchanged, and it transfers
+
+The extractor tier inherits the walker's, because none of it is
+walker-specific: **(function, argument)** chosen so a wrong model FAILS a
+row; every oracle value `printf`-ed from `gc` and never typed by hand
+(§G13); **non-vacuity flips RUN, not asserted**; vendored functions
+verbatim with their licence; and the vocabulary law — declare only what
+the rung executes.
+
+One addition the tier needs: a resolution has a **wrong answer**, not
+just a missing one. `pkg.F` where `pkg` is shadowed by a local variable
+is a value selector wearing a package's name, and the import-name
+heuristic gets it wrong silently. E1's acceptance must therefore include
+a **shadowing row** — the case the cheap resolution is most likely to
+misread — and the instrument's own `importNames` already documents that
+it is a heuristic and which direction it errs in.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).

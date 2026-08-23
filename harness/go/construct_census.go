@@ -914,28 +914,78 @@ var walkerVocab = []string{
 // property of the CURRENT vocabulary and is not a ranking for any future
 // one, so re-run rather than quoting an old row.
 var frontier = []string{
-	"SelectorExpr", "SwitchStmt", "CaseClause", "FuncLit", "MapType",
+	"SelectorExpr/pkg", "SelectorExpr/value", "SwitchStmt", "CaseClause", "FuncLit", "MapType",
 	"InterfaceType", "TypeAssertExpr", "TypeSwitchStmt", "DeferStmt",
 	"GoStmt", "ChanType", "SendStmt", "SelectStmt", "CommClause", "Ellipsis",
 }
 
-// fileKinds returns the kind set of one file, with ArrayType split.
+// importNames returns the identifiers this file binds to imported
+// packages — the alias when there is one, else the path's last segment.
+//
+// The last segment is a HEURISTIC and the census says so: a package whose
+// name differs from its directory (`gopkg.in/yaml.v2` -> `yaml`) is missed.
+// It is sound in the direction that matters here — a missed import makes a
+// selector look like a VALUE selector, i.e. it under-counts the rung that
+// is cheap and over-counts the rung that is expensive.
+func importNames(f *ast.File) map[string]bool {
+	m := map[string]bool{}
+	for _, im := range f.Imports {
+		if im.Name != nil {
+			if im.Name.Name != "_" && im.Name.Name != "." {
+				m[im.Name.Name] = true
+			}
+			continue
+		}
+		p := strings.Trim(im.Path.Value, `"`)
+		if i := strings.LastIndex(p, "/"); i >= 0 {
+			p = p[i+1:]
+		}
+		if i := strings.Index(p, "."); i > 0 { // gopkg.in/yaml.v2 -> yaml
+			p = p[:i]
+		}
+		m[p] = true
+	}
+	return m
+}
+
+// fileKinds returns the kind set of one file, with ArrayType and
+// SelectorExpr SPLIT.
+//
+// Both splits exist for the same reason: go/ast spells two things this
+// tier prices differently with ONE node, so a census that cannot separate
+// them cannot state the tier's reach.
+//
+//   - ArrayType: `[]T` (modelled, §G18) vs `[N]T` (modelled, §G20).
+//   - SelectorExpr: `pkg.F`, resolvable SYNTACTICALLY from the file's own
+//     import list, vs `x.field` / `x.Method()`, which need go/types. This
+//     is the split that prices the extractor tier's rungs (§G21), and
+//     §G20 measured the undivided node at +1,189 — 23x the next
+//     construct — which is what authorized that tier.
 func fileKinds(path string) (map[string]bool, bool) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
 	if err != nil {
 		return nil, false
 	}
+	imports := importNames(f)
 	ks := map[string]bool{}
 	ast.Inspect(f, func(n ast.Node) bool {
 		if n == nil {
 			return true
 		}
-		if at, ok := n.(*ast.ArrayType); ok {
-			if at.Len == nil {
+		switch x := n.(type) {
+		case *ast.ArrayType:
+			if x.Len == nil {
 				ks["ArrayType/slice"] = true
 			} else {
 				ks["ArrayType/fixed"] = true
+			}
+			return true
+		case *ast.SelectorExpr:
+			if id, ok := x.X.(*ast.Ident); ok && imports[id.Name] {
+				ks["SelectorExpr/pkg"] = true
+			} else {
+				ks["SelectorExpr/value"] = true
 			}
 			return true
 		}

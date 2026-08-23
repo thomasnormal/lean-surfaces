@@ -2286,3 +2286,23 @@ the machine **66 s**.
 
 `census.sh --compare` re-verified as a gate after this rung modified the
 instrument: **exit 0** identical, **exit 5** on drift.
+
+### A REBASE EXCEPTION, discharged by proof rather than by a rerun
+
+The push rebased onto `29f868e`, which touches a `.lean` file — and the
+standing law is re-run build + `diff_test` after any rebase that does.
+The re-run queued behind the ada lane for 28 minutes, which made it worth
+asking whether it was owed at all. It was not, and the test is checkable:
+
+`lakefile.toml` declares exactly two `lean_lib`s, `LeanModels` and
+`Examples` (`globs = ["Examples.+"]`). **`docs/` is not a library and not
+a default target**, so `docs/*.lean` — there are three — are standalone
+files `lake build` never compiles, and nothing imports this one. The
+incoming commit therefore cannot change any verdict about this tree.
+
+So the law's sharp form: *re-run after a rebase touching a `.lean` file
+that lake actually builds.* The cheap check is whether the path sits under
+a declared `lean_lib` root. The queued re-run was cancelled and its ticket
+removed — with seven lanes waiting, holding a slot for a verdict that
+could be settled by reading `lakefile.toml` is the expensive mistake, not
+the safe one.

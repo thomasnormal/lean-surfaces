@@ -132,8 +132,24 @@ wrong. -/
 structure Kont where
   /-- The fuel level this `Kont` sits at. It is NOT a recursion argument here —
   the fueled recursion is on `kont`'s own `Nat` — but the trunk's fuel-TAKING
-  pure workers (`evalCompareOpH`'s `heapEq`, `setDedup`) need a bound, and it
-  must be the same one the trunk would have passed. -/
+  pure workers need a bound, and it must be the same one the trunk would have
+  passed.
+
+  **THE REACHABLE SET, MEASURED (2026-08-23) — and `setDedup` is NOT in it.**
+  This field is read at exactly ONE site in the whole fuel-free half:
+  `evalCompareOpH h K.fuel op lhs rhs`, in `evalCompareChainM`. What that site
+  reaches is the `heapEq`/`heapEqList`/`heapEqEntries` block (via `.eq`/`.notEq`)
+  and the `valContains` block (via `.inOp`/`.notIn`). `setDedup` is reachable
+  from SET CONSTRUCTION (`Semantics.lean`, the `.pyset` builder), never from a
+  comparison, so naming it here priced an obligation this field does not carry.
+
+  **And the consequence for any monotonicity statement about this record: the
+  fuel-free half is fuel-free in its RECURSION, not in its ARGUMENTS.** A
+  fieldwise order over the 13 FUNCTION fields is too weak — `fuel` is a BOUND
+  and has to be ordered too. The `Res`-level obligations are already discharged
+  on the trunk side: `Obs.lean`'s `heapEqMono`, `valContains_mono` and
+  `evalCompareOpH_mono` are about these SHARED pure workers, so the monadic
+  side imports them rather than reproving them. -/
   fuel : Nat
   /-- Call a module-level function or method by qualified name. -/
   call : String → Array RVal → SemW RVal

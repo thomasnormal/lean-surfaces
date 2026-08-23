@@ -2146,6 +2146,19 @@ standing rule with a named blocker.**
    Without it, erosion silently loses capability: the trunk arm retires
    because the rebuild "agrees", and the agreement was two refusals.
 
+   **AND AN AUDIT MUST LOOK AT THREE SITES, not two: a construct's meaning
+   can be decided at INGESTION.** The corrected `pyc` design fuses at
+   ingestion — `list(d.keys())` rewritten to `list(dictkeys(d))`, on the
+   `ListComp` precedent — so the capability lives in **the ingestion
+   rewrite**, not in the walker on either side.
+
+   An audit that compares only the two interpreters **cannot see it**: both
+   walkers are innocent, and the behaviour is decided before either runs.
+   So the parity audit sweeps **the trunk, the presentation, AND the
+   ingestion rewrites** — and a capability found missing on one side should
+   prompt the question *"is this implemented as a rewrite over there?"*
+   before it is filed as an unported fix.
+
    **AND THE TRIAGE RULE FOR WHAT THE AUDIT FINDS.** The audit surfaces
    divergences; it does not say how to read them, and the R-track lane
    corrected its own ledger on exactly that. It had recorded the 25
@@ -2642,6 +2655,41 @@ express suspension as an *effect*. It must **DEFUNCTIONALIZE**:
   not be available.
 * **the interpreter becomes a SCHEDULER LOOP** over the process table,
   rather than a walk down one process's body.
+* **AND ITS MIRROR — the limit on what a plan may carry.** The rule above
+  says a continuation *may* become data. The mirror says what that data
+  may not be, and the two are one rule:
+
+  > **A pure plan may decide WHAT to do — but it must never supply a term
+  > the definition then RECURSES ON.**
+
+  The reason is the measure, and it differs by half:
+
+  * **in the FUELED half the plan is free**, because **fuel is the
+    measure** — the recursion decreases whatever term it is handed;
+  * **in the FUEL-FREE half the measure IS THE SYNTAX**, and **a
+    plan-supplied term erases it** — a computed scrutinee is not a
+    syntactic subterm of anything.
+
+  So: **data may carry the DECISION; it may not carry the SCRUTINEE.**
+  That is step 10's *reconstructed node* generalized — a rebuilt node is
+  merely the most obvious way to compute a term the recursion then eats,
+  and any plan that produces one has the same effect on the measure.
+
+  **AND THE PAYOFF CASE FOR WRITING *WHY* AT THE SITE.** The file's own
+  comment sat **three lines above the attempted edit**:
+
+  > *"The free-scrutinee discipline is load-bearing twice over — it is
+  > also what keeps this block structurally recursive."*
+
+  **That is the positive counterpart to §5.4's two docstring laws**, and
+  the distinction is worth stating plainly so they are not read as *"do
+  not write prose"*: a docstring asserting a **FACT about the world** (a
+  reachable set, a case that cannot arise) is **a claim, and needs a
+  check**. A comment recording **WHY a constraint exists**, at the site it
+  constrains, is **guidance** — it cannot be wrong about the world because
+  it makes no claim about the world, and it is read exactly when someone
+  is about to violate it. **Write the second freely; gate the first.**
+
 * **suspension is a RETURN VALUE, not an effect** — the step function
   answers *"finished"* or *"suspended, with this residual"*, and the
   scheduler decides who runs next.

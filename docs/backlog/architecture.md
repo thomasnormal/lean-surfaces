@@ -1500,3 +1500,54 @@ walker refuses would be a vocabulary claim the tier cannot honour** — deferral
 hygiene applied to vocabulary, keeping the tier's **stated** surface equal to its
 **actual** one, since a declared-but-refusing operator reads as coverage in every
 table that counts declarations.
+
+## 2026-08-23-architecture-23 — Data may carry the decision, not the scrutinee; and an audit has a third site
+
+From pyc 3c-i-b's red — a **design wall, correctly reverted**.
+
+**(1) THE DEFUNCTIONALIZATION LAW GAINS ITS MIRROR**, stated as one rule where
+the law lives. The existing half says a continuation **may** become data. The
+mirror says what that data may **not** be:
+
+> **A pure plan may decide WHAT to do — but it must never supply a term the
+> definition then RECURSES ON.**
+
+The reason is the measure, and it differs by half: **in the FUELED half the plan
+is free**, because **fuel is the measure** and the recursion decreases whatever
+term it is handed; **in the FUEL-FREE half the measure IS THE SYNTAX**, and **a
+plan-supplied term erases it** — a computed scrutinee is not a syntactic subterm
+of anything.
+
+> **Data may carry the DECISION; it may not carry the SCRUTINEE.**
+
+That is **step 10's reconstructed node generalized**: a rebuilt node is merely
+the most obvious way to compute a term the recursion then eats, and **any plan
+producing one has the same effect on the measure.**
+
+**(2) RIDER — THE PAYOFF CASE FOR WRITING *WHY* AT THE SITE.** The file's own
+comment sat **three lines above the attempted edit**: *"the free-scrutinee
+discipline is load-bearing twice over — it is also what keeps this block
+structurally recursive."*
+
+**This is the positive counterpart to §5.4's two docstring laws**, and the
+distinction now sits in the doc so they are not read as *"do not write prose"*:
+
+* a docstring asserting a **FACT about the world** (a reachable set, a case that
+  cannot arise) is **a claim and needs a check**;
+* a comment recording **WHY a constraint exists**, at the site it constrains, is
+  **guidance** — it **cannot be wrong about the world because it makes no claim
+  about the world**, and it is read **exactly when someone is about to violate
+  it**.
+
+**Write the second freely; gate the first.**
+
+**(3) RIDER — THE CAPABILITY AUDIT HAS A THIRD SITE: INGESTION.** The corrected
+design fuses at ingestion (`list(d.keys())` → `list(dictkeys(d))`, on the
+`ListComp` precedent), so the capability lives in **the ingestion rewrite**, not
+in either walker.
+
+**An audit comparing only the two interpreters cannot see it** — both walkers are
+innocent and the behaviour is decided before either runs. So the parity audit now
+sweeps **trunk, presentation, AND ingestion rewrites**, and a capability found
+missing on one side should prompt *"is this implemented as a rewrite over
+there?"* **before** it is filed as an unported fix.

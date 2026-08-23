@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**125 entries across 16 lanes.** Regenerate with
+**126 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -57,6 +57,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-8` | The Core payload LANDED: holds released, and the gate retired the conditional | architecture |
 | `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
 | `2026-08-23-lean-tier-7` | `TrProjP.instL` GREEN, and the proof caught a soundness defect in my own definition | lean-tier |
+| `2026-08-23-c-7` | THE TERMINATION REPAIR IS **GREEN**, and it took three tenures to state one measure | c |
 | `2026-08-23-architecture-7` | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |
 | `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
 | `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |

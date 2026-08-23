@@ -605,3 +605,59 @@ Unchanged and not reordered: **inch-5 repair → Core adoption → any further
 consolidation.** Item (1) above IS the Core adoption, so the (b) work is
 already in the queue in the right place; item (2) is a note for whoever
 revisits the trunk boundary, not work I am scheduling ahead of the repair.
+
+---
+
+## 2026-08-23-c-7 — THE TERMINATION REPAIR IS **GREEN**, and it took three tenures to state one measure
+
+### Verdict
+
+`lake build` **exit 0**; `docs_check` **87/87**; `diff_test` **1427 cases, 0
+failed**, 116 whitelisted, 1311 matched; the dependent-fixture gate
+(`Examples.c.sunfish.{expr,memory,guards}`) **green, 16 jobs**;
+`script_corpus` **65 scripts, 0 failed**. Coverage: **scoped** — the touched
+modules and everything they import, plus the three importers named as an extra
+gate, because a scoped green does not otherwise cover modules that import the
+touched ones.
+
+The evaluator's recursion is now justified by a **written measure** rather
+than by inference: `2 * Expr.size e + 1` for `evalLValue`/`evalExpr`,
+`2 * size + 2` for the address helpers, with `memberAddr`/`indexAddr` taking
+SUBTERMS instead of rebuilt nodes.
+
+### Three tenures, three different failures — and none was the design
+
+The repair was right from the first attempt. What cost three tenures (**~5.5
+hours of queueing**) was everything around it:
+
+1. **`size_pos` could not be proved by `cases e` alone** — `typeTrait` and
+   `constExpr` carry an `Option Expr`, so `subexprs` has two clauses each and
+   `cases` does not split them. Removed rather than repaired: the measure
+   never needed positivity.
+2. **`simp [...]; omega` where `simp` already closed the goal** — "No goals to
+   be solved". `<;> omega` is a no-op when simp closes and a discharge when it
+   does not.
+3. **`termination_by` in the wrong PLACE.** I used the old Lean syntax — a
+   block after `end` naming each function. This repo's convention
+   (`Sv/Param2.lean`) puts it INSIDE the mutual block after each body.
+4. **The measure was stated but not USABLE.** `omega` had no fact relating
+   `sub.size` to `(unop …).size`, because the first attempt proved equations
+   only for `member`/`index`/`paren`/`call`. **A stated measure is only as
+   good as the lemmas that let the checker use it** — every constructor the
+   evaluator recurses into needs its own equation. Seven were missing.
+
+Point 4 is the one worth keeping. Stating a measure does not discharge the
+obligation; it *relocates* it into a set of equations that must be complete,
+and completeness there is checkable by eye against the recursion sites in a
+way that "inference found something" never was.
+
+### A process cost worth naming: enqueue LAST
+
+One tenure was consumed entirely by a guard doing its job. `triad.sh` records
+the tree hash at enqueue and refuses to build a tree that changed afterwards —
+*"a queued tenure reads the source at BUILD time, so this run would verify a
+tree nobody asked it to."* I committed the STMT-59 answer after ticketing, and
+the run correctly declined, 85 minutes later. **Enqueue is the LAST action
+before waiting**, and a second guard (A6: refusing to build mid-rebase) caught
+the same class of mistake ten minutes afterwards. Both guards are right; both
+cost a queue slot because I did not respect the ordering they encode.

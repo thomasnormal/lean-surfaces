@@ -2744,3 +2744,79 @@ ones**. Corpus selection finds the traversable point **and names the wall — in
 constructs rather than in effort.**
 
 **Index:** MEAS-110 … MEAS-112.
+
+## 2026-08-23-architecture-38 — A mis-bucketed refusal is mis-scheduled; a parser's kinds are the parser's; and the census that refutes a published plan
+
+Three from Go's census landing (`69ea58a`, on master).
+
+**(1) §5.2 — THE CLASSES ARE A WORK ASSIGNMENT, NOT A LABEL.** `int(x)` parses
+as a **`CallExpr` on an `Ident`**, indistinguishable at the AST from calling an
+undefined function, so the walker refused **every type conversion** as
+`environment`: **51 255 of the stdlib's plain-identifier calls — 26.3%** — all
+in the wrong bucket. Verified by **running the walker before and after**, not by
+reading the patch.
+
+> **A mis-bucketed refusal is not mislabelled — it is MIS-SCHEDULED. The class
+> determines WHO OWES THE WORK.**
+
+`environment` retires by **widening the modelled slice**, `unsupported` by
+**climbing a rung**: different work, different owners, different schedules. So a
+mis-bucketed row **queues the wrong lane**, and the downstream damage was
+exactly that — the tier's ranked worklist was a worklist of *environment*
+refusals, and **a quarter of it was never an environment problem at all.** This
+is MEAS-18 (*never pool the four causes*) with the cost finally measured: the
+pooling defect is not a reporting blemish, it is misdirected labour.
+
+**And the fix shape is the reusable part — a PAIRED guard**, one conversion and
+one genuinely-undefined function, so a regression **in either direction** shows.
+My addition, because the reason generalizes past this incident:
+
+> **When a fix moves a boundary, guard BOTH SIDES of it. A one-sided guard
+> ratifies today's error in the other direction.**
+
+Re-classification defects move both ways by construction — the same edit that
+stops over-claiming `environment` can start under-claiming it — and a
+single-sided guard pins only the half that happened to be wrong the day it was
+written.
+
+**(2) §5.4a — A FOURTH WRONG UNIT, and this one was handed to the lane by the
+parser.** `[N]T` and `[]T` are **one `go/ast` kind**, separated only by a `Len`
+field, so a census over AST kinds reported **`ArrayType` 48.0%** — two semantic
+objects summed. Split: **slices 46 188 (85.4%), fixed arrays 7 923 (14.6%)**,
+slices outnumbering fixed **6 : 1**.
+
+> **The files-vs-sites family INSIDE THE AST: an upstream representation's unit
+> is not your unit.**
+
+**The direction is what earns the paragraph.** The sizing question was whether
+the tier could **skip slice semantics** because the tables are fixed-size, and
+the working assumption ran the **opposite way** from the truth — a conflated
+figure could never have corrected it, because **both objects sat inside the one
+number that looked like an answer.** General form, cheap to apply: **a parser's
+kinds are a convenience of the parser**; before pricing by them, ask **which
+distinctions the upstream representation declined to make**. Those are exactly
+the ones your census cannot see, and they are invisible precisely because the
+tool that produced them had no reason to care.
+
+**(3) §9.0a — CENSUS-FIRST'S STRONGEST FORM.** The rung was scoped as *"the
+table functions need array types and indexing"*. They do not: all four tables
+are **untyped STRING constants**, `Len8` is `int(len8tab[x])`, and the
+acceptance case is **string indexing plus a type conversion**.
+
+> **A census is worth running even when the plan is already written. Especially
+> then: the plan is the hypothesis, and the census is the only thing that can
+> refute it before it is paid for.**
+
+**Two things make it the strongest instance.** It is the **second** time the
+corpus corrected a rung's definition before a line was written — and the **first
+time it corrected an entry this lane had already published.** A published entry
+is the hardest premise to re-examine: it has survived review and been cited. The
+census had no way of knowing that, and refuted it anyway.
+
+**The rule that falls out** — and it is a change to how the norm is read:
+*census-first* is **not a phase that ends when planning ends**. **Re-run the
+census at the moment the plan becomes expensive**, the inch before the *work*
+and not only the inch before the *design*, because that is the last point at
+which a refutation is still free.
+
+**Index:** MEAS-113, MEAS-114, STMT-107, STMT-108.

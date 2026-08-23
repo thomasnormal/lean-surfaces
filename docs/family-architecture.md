@@ -3360,6 +3360,35 @@ IS membership.
 They retire on completely different schedules, so pooling them makes the
 scoreboard unreadable.
 
+**AND A LIVE DEFECT HAS NOW SHOWN WHAT "UNREADABLE" COSTS — the classes are a
+WORK ASSIGNMENT, not a label** (Go, `69ea58a`, on master). `int(x)` parses as a
+**`CallExpr` on an `Ident`**, indistinguishable at the AST from calling an
+undefined function, so the walker refused **every type conversion** as
+`environment`. Measured: **51 255 of the stdlib's plain-identifier calls are
+conversions to a predeclared type — 26.3%** — and every one was in the wrong
+bucket. Verified by running the walker **before and after**, not by reading the
+patch.
+
+> **A MIS-BUCKETED REFUSAL IS NOT MISLABELLED — IT IS MIS-SCHEDULED. The class
+> determines WHO OWES THE WORK.**
+
+`environment` retires by **widening the modelled slice**; `unsupported` retires
+by **climbing a rung**. Different work, different owners, different schedules —
+so a mis-bucketed row does not merely read wrong, it **queues the wrong lane**.
+The downstream damage here was exactly that: the tier's ranked worklist was a
+worklist of *environment* refusals, and **a quarter of what would have been on
+it was never an environment problem at all.**
+
+**THE FIX SHAPE IS THE REUSABLE PART: A PAIRED GUARD — one item per side of the
+boundary.** One conversion and one genuinely-undefined function, so a
+regression **in either direction** shows. A single-sided guard pins only the
+half that was wrong when it was written, and re-classification defects move in
+both directions by construction: the same edit that stops over-claiming
+`environment` can start under-claiming it.
+
+> **When a fix moves a boundary, guard BOTH SIDES of it. A one-sided guard
+> ratifies today's error in the other direction.**
+
 1. **`unsupported` — out-of-tier construct.** Retires by climbing a rung.
 
    **DEFERRAL HYGIENE, and it is a rule for every deferred construct.** A
@@ -4279,6 +4308,30 @@ correction **against itself** — *"the correction is large and it is mine to
 own"* — which is the honest half and the reason this is a norm rather than a
 reprimand. The residue is `qol-21`'s own table, still reading `6/82`, filed
 back to that lane as INBOUND (§9.5a).
+
+**A FOURTH WRONG UNIT, AND IT WAS HANDED TO THE LANE BY THE PARSER: AN
+UPSTREAM REPRESENTATION'S UNIT IS NOT YOUR UNIT** (Go, `69ea58a`). `[N]T` and
+`[]T` — **fixed array and slice** — are **one `go/ast` kind**, separated only by
+whether a `Len` field is present. So a census counting AST kinds reported
+**`ArrayType` at 48.0%**, a figure that **summed two semantic objects**. Split
+properly: **slices 46 188 (85.4%), fixed arrays 7 923 (14.6%) — slices outnumber
+fixed 6 : 1.**
+
+> **The files-vs-sites family INSIDE THE AST: an upstream representation's unit
+> is not your unit.**
+
+**And the direction is what makes it worth a paragraph.** The sizing question
+was whether the tier could **skip slice semantics** because the tables it needed
+are fixed-size — the working assumption ran **the opposite way** from the
+measurement, and the conflated number could not have corrected it, because
+**both objects were inside the one figure that looked like an answer.** When the
+rung comes, **slices are the weight, not the tail.**
+
+The general form, and it is cheap to apply: **a parser's kinds are a
+convenience of the parser.** Before pricing anything by them, ask **which
+distinctions the upstream representation declined to make** — those are exactly
+the distinctions your census cannot see, and they are invisible precisely
+because the tool that produced them had no reason to care.
 
 **MEASURED AGAINST ITSELF — and it caught a THIRD wrong unit: IMPORTS.**
 A bound on the breakage from a payload change was taken as the count of
@@ -6477,6 +6530,30 @@ with your prior* is about believing a hit; *count the pattern position* is
 about pricing; *file the residue* is about reporting; **this one is about
 starting** — the grep you skip because you already know what you are about
 to build.
+
+**AND CENSUS-FIRST HAS NOW SHOWN ITS STRONGEST FORM — the census run AFTER a
+plan, refuting the plan's premise before it is paid for** (Go, `69ea58a`). The
+rung was scoped as *"the table functions need array types and indexing"*. They
+do not: **all four tables (`len8tab`, `ntz8tab`, `pop8tab`, `rev8tab`) are
+untyped STRING constants**, `Len8` is `int(len8tab[x])`, and the acceptance case
+is **string indexing plus a type conversion** — no arrays, no slices anywhere in
+it.
+
+> **A census is worth running even when the plan is already written. Especially
+> then: the plan is the hypothesis, and the census is the only thing that can
+> refute it before it is paid for.**
+
+**Two things make this the strongest instance rather than another one.** It is
+the **second** time the corpus corrected a rung's definition *before a line of
+it was written* — and the **first time it corrected an entry this lane had
+already published.** A published entry is the hardest kind of premise to
+re-examine, because it has already survived a review and been cited; the census
+had no way of knowing that and refuted it anyway.
+
+**The practical rule that falls out**: *census-first* is not a phase that ends
+when planning ends. **Re-run the census at the moment the plan becomes
+expensive** — the inch before the work, not only the inch before the design —
+because that is the last point at which a refutation is free.
 
 ### 9.1 BUG BEFORE REFACTOR
 

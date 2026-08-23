@@ -85,7 +85,7 @@ open LeanModels.C (CType Expr Stmt Decl)
 
 /-! ## The monad
 
-`Halt` and `Outcome` are the shared substrate now (`Memory.lean`, §3.4),
+`Loud` and the stack are `Core`'s now (`LeanModels/Core/Outcome.lean`),
 so statements and expressions run in the SAME stack — `ExecM` is `EvalM`.
 That is not a coincidence to tidy away: it is what the ruling bought. An
 expression cannot time out (inch 3 is fuel-free) and a statement can, but
@@ -95,7 +95,8 @@ neither can catch a refusal, so one type serves both. -/
 abbrev ExecM (α : Type) := EvalM α
 
 /-- Run a statement against a starting memory. -/
-def ExecM.run (m : Mem) (x : ExecM α) : Halt (Except Refusal α × Mem) :=
+def ExecM.run (m : Mem) (x : ExecM α) :
+    Except (LeanModels.Core.Loud CDetail Mem) (Except Refusal α × Mem) :=
   EvalM.run m x
 
 /-- The verdict, in `docs/c23-goal.md` §3's vocabulary. -/
@@ -103,7 +104,7 @@ def ExecM.verdict (m : Mem) (x : ExecM α) : Outcome α := EvalM.verdict m x
 
 /-- Fuel exhaustion, as a named primitive — never a bare `throw`, and not
 a `Refusal` at all. Carries no state: a timeout is not an observation. -/
-def exhausted : ExecM α := fun _ => Halt.timeout
+def exhausted : ExecM α := fun _ => .error .timeout
 
 /-! ## §6.8.7 — how a statement can finish
 

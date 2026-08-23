@@ -103,7 +103,7 @@ not. -/
 
 #guard runPfd 1 0 == .refused (.valueUB (.divideByZero "/"))
 #guard (Refusal.valueUB (.divideByZero "/")).j2 == some "J.2(41)"
-#guard (Outcome.refused (α := Flow) (.valueUB (.divideByZero "/"))).cause? == some Cause.ub
+#guard (Outcome.refused (α := Flow) (.valueUB (.divideByZero "/"))).cause? == some (.undefined () : Cause)
 
 /-! ## §6.8 — the statement forms, gated individually -/
 
@@ -179,7 +179,7 @@ a rung — and the snapshot it carries never reaches this comparison. -/
 #guard run1 frame0 (.unsupported "SwitchStmt" "switch (x) {}" noSpan)
   == .unsupported "out of tier: SwitchStmt"
 #guard (Outcome.unsupported (α := Flow) "out of tier: SwitchStmt").cause?
-  == some Cause.unsupported
+  == some (.unsupported () : Cause)
 
 /-! ## §6.7.11 — aggregate initialization, and the rule that fires on NOTHING
 
@@ -370,7 +370,7 @@ private def progL : Program := { prog with fns := libcCaller :: prog.fns }
 
 #guard ExecM.verdict Mem.empty (callByName 64 progL "calls_libc" [])
   == .refused (.libc "abort")
-#guard (Outcome.refused (α := CVal) (.libc "abort")).cause? == some Cause.libc
+#guard (Outcome.refused (α := CVal) (.libc "abort")).cause? == some (.environment () : Cause)
 -- …and `libc` is NOT the cause an out-of-tier construct gets.
 #guard (Outcome.refused (α := CVal) (.libc "abort")).cause?
     != (Outcome.unsupported (α := CVal) "x").cause?

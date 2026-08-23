@@ -1,5 +1,6 @@
 import LeanModels.C.Ast
 import LeanModels.C.C23.Value
+import LeanModels.Core.Outcome
 
 /-!
 # §6.2.4 / §6.2.6.1 / §6.3.2 / §6.5.3-§6.5.4 — objects, pointers, bytes — M2 inch 2
@@ -108,16 +109,6 @@ are all of the middle kind — **UB, which never retires: it is the
 product** — but the `Cause` projection is defined here so the scorer at
 inch 6 reads it off the refusal rather than re-deriving it. -/
 
-/-- The three REFUSAL causes of `docs/c23-goal.md` §3.1. -/
-inductive Cause where
-  /-- Undefined behavior, refused loudly. **Never retires.** -/
-  | ub
-  /-- A construct outside the tier's vocabulary. Retires by climbing a rung. -/
-  | unsupported
-  /-- A library function outside the modeled slice. Retires by widening it. -/
-  | libc
-deriving Repr, Inhabited, BEq, DecidableEq
-
 /-- The memory model's undefined-behavior classes.
 
 Each names its **Annex J.2 index** — C23 numbers J.2 `(1)`-`(221)`, which
@@ -223,27 +214,6 @@ inductive Refusal where
   | memUB (f : MemFault)
   | libc (name : String)
 deriving Repr, Inhabited, BEq
-
-namespace Refusal
-
-/-- Which of the three schedules this refusal retires on. **UB never
-retires: it is the product.** -/
-def cause : Refusal → Cause
-  | .valueUB _ | .memUB _ => .ub
-  | .libc _ => .libc
-
-/-- The Annex J.2 index, where the refusal is UB and the annex has one. -/
-def j2 : Refusal → Option String
-  | .memUB f => f.j2
-  | .valueUB u => some (match u with
-      | .signedOverflow .. => "J.2(35)"
-      | .divideByZero _ => "J.2(41)"
-      | .divideOverflow => "J.2(35)"
-      | .shiftCountTooLarge .. | .shiftCountNegative _ => "J.2(48)"
-      | .shiftNegativeOperand _ | .shiftOverflow .. => "J.2(49)")
-  | .libc _ => none
-
-end Refusal
 
 /-- The result of a memory operation. `Except` rather than a bespoke sum,
 because inch 3's stack is `ExceptT Refusal (StateT CWorld Halt)` — the
@@ -735,85 +705,76 @@ belongs to the definition.
 So `timeout` and `unsupported` are here, and the two catchable-in-
 principle refusal causes (`ub`, `libc`) stay in `Refusal`. -/
 
-/-! ### HOLD: do NOT replace this with `Core.SemM`'s `Halt` yet
+/-! ## §3.4 — ADOPTED from `Core`: `Loud`, and the guard that came with it
 
-`LeanModels/Core/SemM.lean` is on master and has this type's exact SHAPE.
-Adopting it today would still be wrong, because **its payload is poorer
-than this one**: Core carries `unsupported (msg : String)`, while this
-carries `(what, snapshot : Option Mem)` plus the two structural guards
-that make the §3.4 ruling real — the hand-written `BEq` that ignores the
-snapshot, and `Outcome`, which has nowhere to put a `Mem`.
+The HOLD recorded here is RELEASED. `LeanModels/Core/Outcome.lean` now
+carries a payload that SUBSUMES this lane's: `Loud.unsupported (cause :
+RefusalCause π) (message) (snapshot : Option σ)`, with **both of this
+lane's structural guards lifted into Core** — the `BEq` instance ignores
+the snapshot, and `Loud.observable` has nowhere to put a `σ`. So adoption
+is a substitution at `σ := Mem`, not a rewrite, and the guards are now
+enforced for every tier instead of re-argued by each.
 
-**Importing Core now would delete the ruling**, not consolidate it. The
-rebuild lane is landing a Core payload that SUBSUMES this one (cause +
-message + optional snapshot, with the guards lifted into Core); when it
-does, this lane's adoption is a substitution rather than a rewrite, and
-the duplication is retired the way §9.2 wants — by touch, once the shared
-thing is actually the better one. Until then, this is deliberate
-duplication with a reason, not drift. -/
+**Core's taxonomy is strictly richer, and the extra class is one this
+lane already owes.** `RefusalCause` has four constructors where this
+tier had three, and the fourth is `orderDependence` — exactly the verdict
+Thomas's `∀ order` ruling needs for a program whose observable depends on
+argument evaluation order (`docs/c23-spec-mirror.md` §5). The mapping:
 
-/-- The base monad: outcomes nothing can catch. -/
-inductive Halt (α : Type) where
-  | ok (a : α)
-  /-- Fuel exhaustion, and nothing else. Carries NO state: a timeout is
-  not an observation, and state here would invite treating it as one. -/
-  | timeout
-  /-- Outside the tier. Carries its CAUSE, and optionally a snapshot of
-  the memory as it stood AT the refusal site.
+| this tier's cause | `RefusalCause` | why |
+| --- | --- | --- |
+| `ub` | `.undefined` | "never retires: it is the product" |
+| `unsupported` | `.unsupported` | retires by climbing a rung |
+| `libc` | `.environment` | retires by widening the slice |
+| *(owed)* | `.orderDependence` | the J.1(16) domain, 7 sites |
 
-  **The snapshot is diagnostic only and is NEVER an observable.** It
-  exists so a REFUSE row can say what had happened by the time the model
-  declined; it must not reach any verdict comparison. That guard is
-  structural rather than advisory — see the `BEq` instance below, which
-  ignores it, and `Outcome`, which drops it. -/
-  | unsupported (what : String) (snapshot : Option Mem)
-deriving Repr, Inhabited
+`π := Unit`: this tier's prose already carries the detail, so there is no
+structured payload to add. If the order-dependence verdict later wants to
+name its 7 sites, `π` is where that goes. -/
 
-namespace Halt
+/-- The refusal detail this tier carries. `Unit` — the message is the
+detail — until the order-dependence verdict needs to name a site. -/
+abbrev CDetail := Unit
 
-/-- **The snapshot is not an observable, and this instance is where that
-is enforced.** Two runs that refused the same construct compare EQUAL
-even if they reached it through different memories — because the memory
-is diagnostic. A derived `BEq` would have compared it and quietly made a
-diagnostic aid into part of the verdict. -/
-instance [BEq α] : BEq (Halt α) where
-  beq
-    | .ok a, .ok b => a == b
-    | .timeout, .timeout => true
-    | .unsupported a _, .unsupported b _ => a == b
-    | _, _ => false
+/-- This tier's three causes, in the family's vocabulary. -/
+abbrev Cause := LeanModels.Core.RefusalCause CDetail
 
-@[inline] def bind : Halt α → (α → Halt β) → Halt β
-  | .ok a, f => f a
-  | .timeout, _ => .timeout
-  | .unsupported w s, _ => .unsupported w s
+namespace Refusal
 
-instance : Monad Halt where
-  pure := .ok
-  bind := Halt.bind
+/-- Which of the family's classes this refusal belongs to. **UB never
+retires: it is the product.** -/
+def cause : Refusal → Cause
+  | .valueUB _ | .memUB _ => .undefined ()
+  | .libc _ => .environment ()
 
-@[simp] theorem bind_ok (a : α) (f : α → Halt β) : Halt.bind (.ok a) f = f a := rfl
-@[simp] theorem bind_timeout (f : α → Halt β) :
-    Halt.bind (.timeout : Halt α) f = .timeout := rfl
-@[simp] theorem bind_unsupported (w : String) (sn : Option Mem) (f : α → Halt β) :
-    Halt.bind (.unsupported w sn) f = .unsupported w sn := rfl
+/-- The Annex J.2 index, where the refusal is UB and the annex has one. -/
+def j2 : Refusal → Option String
+  | .memUB f => f.j2
+  | .valueUB u => some (match u with
+      | .signedOverflow .. => "J.2(35)"
+      | .divideByZero _ => "J.2(41)"
+      | .divideOverflow => "J.2(35)"
+      | .shiftCountTooLarge .. | .shiftCountNegative _ => "J.2(48)"
+      | .shiftNegativeOperand _ | .shiftOverflow .. => "J.2(49)")
+  | .libc _ => none
 
-end Halt
+end Refusal
 
 /-! ## The verdict a scoreboard sees
 
-`docs/c23-goal.md` §3's four verdicts, as one type. This is what inch 6
-reads, and it is the second place the snapshot guard is enforced: there
-is nowhere to put a `Mem` here, so a snapshot cannot reach a comparison
-even by accident. -/
+`docs/c23-goal.md` §3's four verdicts. Kept as this tier's own type
+rather than folded into `Loud.observable`, because the scoreboard needs
+the REFUSAL VALUE (to read its J.2 index), which a `String × String`
+observable deliberately discards. It is still the third place the
+snapshot guard holds: there is nowhere to put a `Mem` here either. -/
 
-/-- What a run produced, with the three refusal causes kept apart. -/
+/-- What a run produced, with the causes kept apart. -/
 inductive Outcome (α : Type) where
   | ok (value : α)
-  /-- A refusal that rode in `ExceptT`: cause `ub` or `libc`. -/
+  /-- A refusal that rode in `ExceptT`: cause `undefined` or `environment`. -/
   | refused (r : Refusal)
-  /-- Cause `unsupported` — out of tier. The snapshot is deliberately
-  NOT carried across this boundary. -/
+  /-- Cause `unsupported` — out of tier. The snapshot is deliberately NOT
+  carried across this boundary. -/
   | unsupported (what : String)
   /-- Fuel exhaustion. Never conflated with a refusal. -/
   | timeout
@@ -823,7 +784,7 @@ deriving Repr, Inhabited, BEq
 def Outcome.cause? : Outcome α → Option Cause
   | .ok _ => none
   | .refused r => some r.cause
-  | .unsupported _ => some .unsupported
+  | .unsupported _ => some (.unsupported ())
   | .timeout => none
 
 end LeanModels.C.C23

@@ -135,7 +135,7 @@ def m1' : Except Refusal Mem := m1.storeBytes (Mem.member pPos posB) board
 
 -- The refusal names its Annex J entry, and its cause never retires.
 #guard (Refusal.memUB (.indetAutomatic 0 posScore)).j2 == some "J.2(11)"
-#guard (Refusal.memUB (.indetAutomatic 0 posScore)).cause == Cause.ub
+#guard (Refusal.memUB (.indetAutomatic 0 posScore)).cause == (.undefined () : Cause)
 
 -- Reading one byte PAST the object is a different refusal — J.2(46), the
 -- structural one that `(obj, off)` makes decidable.
@@ -250,7 +250,7 @@ def m3new : Mem := (m3r.toOption.get!).1
 #guard (Refusal.memUB (.reallocZero pOld)).j2 == none
 #guard (MemFault.reallocZero pOld).clause == "7.24.3.7p3"
 -- ...but it is still UB, so it still never retires.
-#guard (Refusal.memUB (.reallocZero pOld)).cause == Cause.ub
+#guard (Refusal.memUB (.reallocZero pOld)).cause == (.undefined () : Cause)
 
 /-! ## The pointer-comparison asymmetry
 
@@ -287,8 +287,8 @@ direction is a class of bug the corpus's 328 subscripts would hide. -/
 `docs/c23-goal.md` §3.1: they retire on completely different schedules,
 so the scorer must be able to tell them apart without parsing a string. -/
 
-#guard (Refusal.libc "qsort").cause == Cause.libc
-#guard (Refusal.valueUB (.divideByZero "/")).cause == Cause.ub
+#guard (Refusal.libc "qsort").cause == (.environment () : Cause)
+#guard (Refusal.valueUB (.divideByZero "/")).cause == (.undefined () : Cause)
 #guard (Refusal.valueUB (.divideByZero "/")).j2 == some "J.2(41)"
 #guard (Refusal.valueUB (.signedOverflow "+" IntTy.int_ 2147483648)).j2 == some "J.2(35)"
 -- `libc` has no J.2 index, because it is not UB.
@@ -297,21 +297,24 @@ so the scorer must be able to tell them apart without parsing a string. -/
 -- **The third cause lives in `Halt`, not in `Refusal`** — the §3.4 ruling.
 -- It reaches a scoreboard through `Outcome`, which is where the causes are
 -- compared, and the three still do not pool.
-#guard (Outcome.unsupported (α := CVal) "SwitchStmt").cause? == some Cause.unsupported
-#guard (Outcome.refused (α := CVal) (.libc "qsort")).cause? == some Cause.libc
-#guard (Outcome.refused (α := CVal) (.valueUB (.divideByZero "/"))).cause? == some Cause.ub
+#guard (Outcome.unsupported (α := CVal) "SwitchStmt").cause? == some (.unsupported () : Cause)
+#guard (Outcome.refused (α := CVal) (.libc "qsort")).cause? == some (.environment () : Cause)
+#guard (Outcome.refused (α := CVal) (.valueUB (.divideByZero "/"))).cause? == some (.undefined () : Cause)
 #guard (Outcome.timeout (α := CVal)).cause? == none
 
 -- **THE SNAPSHOT IS NOT AN OBSERVABLE, and these gates are where that is
 -- checked rather than asserted.** Two refusals of the same construct
 -- reached through DIFFERENT memories compare EQUAL, because `Halt`'s `BEq`
 -- ignores the snapshot; and `Outcome` has nowhere to put a `Mem` at all.
-#guard (Halt.unsupported (α := Nat) "switch" (some Mem.empty))
-    == (Halt.unsupported (α := Nat) "switch" none)
-#guard (Halt.unsupported (α := Nat) "switch" (some m1))
-    == (Halt.unsupported (α := Nat) "switch" (some Mem.empty))
--- ...but the CAUSE is still compared, so the guard has not disabled the gate.
-#guard (Halt.unsupported (α := Nat) "switch" none)
-    != (Halt.unsupported (α := Nat) "goto" none)
+#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some Mem.empty))
+    == (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
+#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some m1))
+    == (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some Mem.empty))
+-- ...but the CAUSE and the PROSE are still compared, so the guard has not
+-- disabled the gate it protects.
+#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
+    != (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "goto" none)
+#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
+    != (LeanModels.Core.Loud.unsupported (σ := Mem) (.undefined ()) "switch" none)
 
 end Examples.c.sunfish.memory

@@ -661,3 +661,81 @@ the run correctly declined, 85 minutes later. **Enqueue is the LAST action
 before waiting**, and a second guard (A6: refusing to build mid-rebase) caught
 the same class of mistake ten minutes afterwards. Both guards are right; both
 cost a queue slot because I did not respect the ordering they encode.
+
+---
+
+## 2026-08-23-c-8 — CORE ADOPTED: the guard this lane wrote is now enforced for every tier
+
+The HOLD at `2026-08-23-c-1` is released. `LeanModels/Core/Outcome.lean` carries
+a payload that **subsumes** this lane's, so adoption is a substitution at
+`σ := Mem` rather than a rewrite.
+
+### What was deleted, and what replaced it
+
+| deleted here | now from `Core` |
+| --- | --- |
+| `inductive Halt (α)` + its `BEq`, `bind`, `Monad`, 3 `@[simp]` lemmas | `Loud π σ` / `HaltWith π σ` |
+| `inductive Cause` (3 constructors) | `RefusalCause π` (4) |
+| `abbrev EvalM := ExceptT Refusal (StateT Mem Halt)` | `SemMWith Mem Refusal CDetail Mem` |
+
+**Both structural guards are now Core's, not this lane's.** `Loud`'s `BEq`
+ignores the snapshot and `Loud.observable` has nowhere to put a `σ` — the two
+properties this lane argued for at §3.4, lifted so that no tier writes them
+again and a tier that *forgets* to cannot silently promote a diagnostic into a
+verdict.
+
+### Core's taxonomy is richer, and the extra class is one this lane owes
+
+`RefusalCause` has four constructors where this tier had three:
+
+| this tier | `RefusalCause` |
+| --- | --- |
+| `ub` | `.undefined` |
+| `unsupported` | `.unsupported` |
+| `libc` | `.environment` |
+| *(owed)* | **`.orderDependence`** |
+
+The fourth is exactly the verdict Thomas's `∀ order` ruling needs for a program
+whose observable depends on argument evaluation order — the `J.1(16)` domain
+this lane measured at **7 sites** (`docs/c23-spec-mirror.md` §5.3). **Adoption
+did not just remove duplication; it supplied a verdict this tier had named and
+could not express.** `π := CDetail := Unit` for now, because the prose already
+carries the detail; `π` is where those 7 sites go if the verdict later wants to
+name them.
+
+`Outcome` is KEPT as this tier's own type rather than folded into
+`Loud.observable`, and the reason is not sentiment: a scoreboard needs the
+REFUSAL VALUE to read its `J.2` index, which a `String × String` observable
+deliberately discards.
+
+### Price, against the estimate
+
+Estimated **~11 real edit sites + 2 aliases, 53 insulated**. Actual: the two
+named primitives (`refuseUnsupported`, `exhausted`), five destructure sites
+(`EvalM.verdict`, `ExecM.run`, `EvalM.run`, `Refusal.cause`, `Outcome.cause?`),
+three type aliases, and **14 gate updates** across the three fixtures — the
+gates cost more than predicted because `Cause.ub`/`libc`/`unsupported` appear
+in assertions, which the site census counted as destructures but not as
+per-occurrence edits. **The 53 `refuseUnsupported` call sites cost exactly
+nothing**, as predicted: routing every refusal through a named primitive is
+what made a substrate change a one-definition edit.
+
+### Stmt.lean's move toward the trunk: NOT free, so NOT noted as ready
+
+The instruction was to fold this in only if the adoption made the dependency
+explicit. **It did not.** `Stmt.lean` still imports `C23.Expr`, which imports
+`C23.Value`, where `IntTy.minVal`'s two's-complement commitment lives; the
+adoption changed the monad, not the import graph. So the observation from
+`2026-08-23-c-6` stands unchanged and unhooked: `Stmt.lean` is edition-scoped
+by CITATION alone (zero Annex-J refs), and moving it would need the `minVal`
+dependency parameterised, which is a real piece of work and not a side effect
+of anything landed here. Recorded so the next lane does not go looking for a
+hook that exists.
+
+### For the editions gate's CONVICTED-BY column
+
+The file-level census the gate asked for is **`docs/backlog/c.md`
+§ `2026-08-23-c-6`** — per-file line counts with `J.2(`, `J.3.` and `C17`
+densities for all eight C-tier files, the (a)-with-named-(b) verdict, and the
+delta a C17 sibling would actually carry. That is the citation the QoL lane's
+tool should point at for this tier.

@@ -116,7 +116,7 @@ private def runIndetRaw (r : Int) : Halt (Except Refusal CVal × Mem) :=
 
 -- The refusal names its Annex J entry, and its cause never retires.
 #guard (Refusal.memUB (.indetAutomatic 1 0)).j2 == some "J.2(11)"
-#guard (Refusal.memUB (.indetAutomatic 1 0)).cause == Cause.ub
+#guard (Refusal.memUB (.indetAutomatic 1 0)).cause == (.undefined () : Cause)
 
 -- ...and the SAME term with `b` written succeeds, so the refusal above is
 -- about the short circuit and not about the term being unevaluable.

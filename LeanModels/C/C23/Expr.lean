@@ -100,7 +100,7 @@ open LeanModels.C (CType Expr CSpan)
 /-- The expression evaluator's monad. See the module docstring: `ExceptT`
 OUTSIDE `StateT` is the state-retaining order, and it is not the obvious
 one. -/
-abbrev EvalM (α : Type) := ExceptT Refusal (StateT Mem Halt) α
+abbrev EvalM (α : Type) := LeanModels.Core.SemMWith Mem Refusal CDetail Mem α
 
 /-- Run an evaluation against a starting memory, keeping BOTH halves: the
 outcome and the memory as it stood when the outcome was produced. A
@@ -109,7 +109,8 @@ refusal that threw away its memory could not say what had happened.
 The `Halt` wrapper is the uncatchable layer (`Memory.lean` §3.4) — a
 `timeout` or an out-of-tier construct answers there and carries no
 `Mem` alongside, because neither is an observation. -/
-def EvalM.run (m : Mem) (x : EvalM α) : Halt (Except Refusal α × Mem) :=
+def EvalM.run (m : Mem) (x : EvalM α) :
+    Except (LeanModels.Core.Loud CDetail Mem) (Except Refusal α × Mem) :=
   StateT.run x m
 
 /-- The run's VERDICT, in `docs/c23-goal.md` §3's vocabulary. This is what
@@ -119,8 +120,8 @@ def EvalM.verdict (m : Mem) (x : EvalM α) : Outcome α :=
   match EvalM.run m x with
   | .ok (.ok a, _) => .ok a
   | .ok (.error r, _) => .refused r
-  | .timeout => .timeout
-  | .unsupported w _ => .unsupported w
+  | .error .timeout => .timeout
+  | .error (.unsupported _ msg _) => .unsupported msg
 
 /-! ### The named refusal primitives
 
@@ -140,14 +141,18 @@ def refuseValue (u : UB) : EvalM α := throw (.valueUB u)
 /-- Refuse a construct outside the tier's vocabulary. Cause:
 `unsupported`, which retires by climbing a rung.
 
-**It answers in `Halt`, not in `ExceptT`** — per §3.4, an out-of-tier
-refusal is uncatchable by definition rather than by a per-construct
-proof. And **this primitive performs the `get` itself**, capturing the
-memory as it stood AT the refusal site, so no call site can forget to.
-That snapshot is diagnostic only: `Halt`'s `BEq` ignores it and
-`Outcome` drops it. -/
+**It answers in the `Halt` BASE, not in `ExceptT`** — per §3.4, an
+out-of-tier refusal is uncatchable by definition rather than by a
+per-construct proof. And **this primitive takes the memory as its
+argument**, capturing it AS IT STOOD at the refusal site, so no call site
+can forget to.
+
+The snapshot is diagnostic only, and since the Core adoption **both
+guards are enforced in `Core` rather than here**: `Loud`'s `BEq` ignores
+the snapshot and `Loud.observable` has nowhere to put one. This tier's
+`Outcome` is the third. -/
 def refuseUnsupported (what : String) : EvalM α := fun m =>
-  Halt.unsupported what (some m)
+  .error (.unsupported (.unsupported ()) what (some m))
 
 /-- Refuse an unmodeled library function. Cause: `libc`, which retires by
 widening the slice. -/

@@ -212,4 +212,67 @@ theorem FoldInv.run {gamma value best : Int} {live : Bool} {rs : List Round}
 #print axioms FoldInv.nil
 #print axioms FoldInv.run
 
+/-! ## §3 THE TWO-HOP COMPOSITION — what `fuelMono` retires
+
+**The premise shape this replaces.** `fold_depth1.lean` §8's call gate carries,
+for each of its two hops, a premise universally quantified over surplus fuel:
+
+    (hmove  : ∀ G : Nat, callIn sunfish (F + G) w  "Position.move"   #[…] = .ok w₁ pv)
+    (hchild : ∀ G : Nat, callIn sunfish (F + G) w₁ "Searcher.bound"  #[…] = .ok w₂ (.int r))
+
+That `∀ G` was never the statement this lane wanted. It is a workaround for
+having no monotonicity AT THE POINT OF USE: unable to say "decided at `F₀`,
+therefore decided at every `F ≥ F₀`", the gate instead DEMANDED the hop at every
+reachable fuel and made each caller pay for a family of facts where one fact was
+true. Two hops meet at an unknown split of the budget, so the quantifier was the
+only way to make the two premises meet.
+
+`Monadic.fuelMono` supplies exactly the missing direction, and the collapse is
+immediate. Nothing below re-states it — `Mono.lean` is consumed by import, and
+its `⊑ʳ` is turned into the EQUATION the gate consumes, which is the one step
+that file deliberately stops short of (it closes at the order, not at the call
+site). -/
+
+/-- **ONE HOP TRANSPORTS UPWARD.** A call that DECIDED at `F₀` has the same
+outcome — state, value and all — at every `F ≥ F₀`. This is `fuelMono` plus the
+observation that `.ok` is not `.timeout`, which is the whole of the extraction
+step (`Run.le_eq`). -/
+theorem hop_transport (m : Module) {F₀ F : Nat} (hF : F₀ ≤ F)
+    {w w' : World} {fname : String} {args : Array RVal} {v : RVal}
+    (h : Monadic.callInMono m F₀ w fname args = .ok w' v) :
+    Monadic.callInMono m F w fname args = .ok w' v := by
+  have hne : Monadic.callInMono m F₀ w fname args ≠ .timeout := by simp [h]
+  rw [← Run.le_eq (Monadic.fuelMono m F₀ F hF w fname args) hne]
+  exact h
+
+/-- **AND TWO HOPS MEET AT THE MAXIMUM.** Each hop is proved ONCE, at whatever
+fuel it happens to need; both then hold at any budget dominating both. The
+`∀ G` families above become two constants and a `max`, and the caller supplies
+the split instead of quantifying over it.
+
+This is the shape `bound_refines_fuelModel` needs at every recursive step: the
+child search and the move that precedes it are established independently and
+composed, rather than being forced to agree on a budget before either is
+proved. -/
+theorem two_hop (m : Module) {F₁ F₂ F : Nat} (hF : max F₁ F₂ ≤ F)
+    {w₀ w₁ w₂ : World} {f₁ f₂ : String} {a₁ a₂ : Array RVal} {v₁ v₂ : RVal}
+    (h₁ : Monadic.callInMono m F₁ w₀ f₁ a₁ = .ok w₁ v₁)
+    (h₂ : Monadic.callInMono m F₂ w₁ f₂ a₂ = .ok w₂ v₂) :
+    Monadic.callInMono m F w₀ f₁ a₁ = .ok w₁ v₁ ∧
+    Monadic.callInMono m F w₁ f₂ a₂ = .ok w₂ v₂ :=
+  ⟨hop_transport m (by omega) h₁, hop_transport m (by omega) h₂⟩
+
+/-- **The `∀ G` form is RECOVERED, not merely replaced** — so the collapse costs
+the gate nothing it previously had. Anything the old premise could discharge,
+one decided hop plus this corollary still discharges. -/
+theorem hop_forall (m : Module) {F₀ : Nat}
+    {w w' : World} {fname : String} {args : Array RVal} {v : RVal}
+    (h : Monadic.callInMono m F₀ w fname args = .ok w' v) :
+    ∀ G : Nat, Monadic.callInMono m (F₀ + G) w fname args = .ok w' v :=
+  fun G => hop_transport m (by omega) h
+
+#print axioms hop_transport
+#print axioms two_hop
+#print axioms hop_forall
+
 end Examples.python.sunfish.monadic_fold

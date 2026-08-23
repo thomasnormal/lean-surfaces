@@ -648,3 +648,90 @@ This landing cannot be the cause and cannot be affected by it: `leanmodels-run`
 is built from `Main.lean`, which does not import this file, so the gate's binary
 is byte-identical with and without it. The landing is committed on that basis,
 to its own branch, with the gate's state stated rather than hidden.
+
+## 2026-08-23-sunfish-rtrack-7 — `fuelMono` retires the `∀ G` premise: two hops meet at a max
+
+`monadic_fold.lean` §3. Three theorems, all of them consumers: `Mono.lean` is
+taken by import and nothing in it is restated.
+
+### What the `∀ G` actually was
+
+`fold_depth1.lean` §8's call gate carries each of its two hops as a premise
+universally quantified over surplus fuel — `∀ G, callIn sunfish (F + G) … = .ok …`
+— once for `Position.move` and once for `Searcher.bound`. This lane wrote those
+premises and should say plainly what they were: not a statement anyone wanted,
+but a workaround for having no monotonicity AT THE POINT OF USE. Unable to say
+"decided at `F₀`, therefore decided at every `F ≥ F₀`", the gate demanded the hop
+at every reachable fuel, so every caller paid for a family of facts where one
+fact was true. The two hops meet at an unknown split of the budget, and
+quantifying was the only way to make two premises about different fuels compose.
+
+### What replaces it
+
+`Monadic.fuelMono` supplies the missing direction at the runner boundary, in the
+trunk's own `⊑ʳ`. Turning that order into the EQUATION a gate consumes is one
+step, and it is the step `Mono.lean` deliberately stops short of — that file
+closes at the order, not at the call site. So:
+
+* `hop_transport` — a call that DECIDED at `F₀` has the same outcome, state and
+  value included, at every `F ≥ F₀`. It is `fuelMono` plus `Run.le_eq` and the
+  observation that `.ok` is not `.timeout`.
+* `two_hop` — each hop proved ONCE at whatever fuel it needs; both hold at any
+  budget dominating both. Two quantified families become two constants and a
+  `max`, and the caller supplies the split instead of quantifying over it.
+* `hop_forall` — the old `∀ G` shape RECOVERED from one decided hop, so the
+  collapse costs the gate nothing it previously had. Worth stating explicitly:
+  a simplification that cannot reproduce what it replaced is a narrowing wearing
+  a simplification's clothes, and this one is not.
+
+This is the shape the recursion step needs at every level — the child search and
+the move preceding it established independently and composed, rather than forced
+to agree on a budget before either is proved.
+
+### Method note: the evidence path for a green tenure
+
+`triad.sh` sends build output to a `mktemp` and, on green, reports only
+`BUILD GREEN` — so a green tenure appears to discard the `#print axioms` and
+`#eval` lines the file exists to produce. It does not: the log is never deleted,
+it is merely unreferenced, and it survives at `$TMPDIR/triad-build.*`. Tenure 2's
+file also settled a question the tenure log could not — `Built
+Examples.python.sunfish.monadic_fold (17s)`, so the module was genuinely rebuilt
+and the new guards were exercised rather than replayed from cache. A lane
+quoting in-file ledger lines should read that file by mtime, not the tenure log.
+
+### Status — GREEN
+
+Tenure of 2026-08-23 13:10 on master 41d1bf3, `--classify` class `tier`, scoped
+build of `Examples.python.sunfish.monadic_fold` + `LeanModels.Python`. Lock line
+clean: acquired after 3679s as `r3c_monadic 91849`, `LOCK RELEASED (mine)` — no
+stale reap. `BUILD GREEN`, `TRIAD DONE (build exit 0, gates green)`; `docs_check`
+green and `diff_test --no-build` green. The module was BUILT, not replayed
+(`[67/67] Built Examples.python.sunfish.monadic_fold (20s)`), so §3 elaborated
+here rather than being served from cache, and the leaf is re-verified at 41d1bf3
+in the same tenure.
+
+The in-file ledger, quoted from this tenure's own build log:
+
+      hop_transport  depends on axioms: [propext, Classical.choice, Quot.sound]
+      two_hop        depends on axioms: [propext, Classical.choice, Quot.sound]
+      hop_forall     depends on axioms: [propext, Classical.choice, Quot.sound]
+
+with the §1 and §2 rows unchanged (`FoldInv.nil` still Classical-free at
+`[propext, Quot.sound]`, the four probe rows still identical across the two
+interpreters). No `sorry`, no `native_decide`.
+
+The considered first shot landed green, which is worth recording honestly as
+luck-adjacent rather than method: it was written without a single elaboration,
+because `check.sh` refuses library files and no `Mono.olean` existed in this
+clone to iterate a scratch file against. That gap is now closed — `Mono` is warm
+here, so the generator layer CAN be iterated lock-free through a scratch file,
+and it will be.
+
+### Refinement to the evidence-path note above
+
+Recovering the build log BY MTIME is not reliable: three `triad-build.*` files
+sat within ninety seconds of this tenure's end, all other lanes'. The mtime that
+does match is the GATE-PHASE build's completion, not the tenure's last log line,
+and lanes overlap there. The reliable key is a SYMBOL only this tenure could
+have printed — `grep -l hop_transport` found exactly one file, unambiguously.
+Search the logs by content, not by clock.

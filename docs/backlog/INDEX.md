@@ -15,11 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**192 entries across 16 lanes.** Regenerate with
+**194 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-architecture-45` | A list is maintained by the attention that wrote the defect; and a new reader under-reads | architecture |
+| `2026-08-23-qol-44` | a flag written last spun forever, in eleven tools | qol |
 | `2026-08-23-architecture-44` | The quirk that blocks direct reuse can fund the crossing | architecture |
 | `2026-08-23-qol-43` | arming a byte-comparing gate arms the pins it does not have | qol |
 | `2026-08-23-architecture-43` | Wrong by answering; and a predicted cost inherits its construct's unit error | architecture |

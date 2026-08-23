@@ -4969,6 +4969,67 @@ is not the whole answer.
 than inside the citation counter whose numbers were not that inch's to move.
 The same rule, at a second site, with the blast radius deliberately bounded.
 
+**AND THE ENUMERATION ITSELF MUST BE BY DISCOVERY, NEVER BY LIST** (QoL,
+`95849db`, on master). A spin the Go lane paid **31 minutes** for was
+reproduced, and it was **not one arm — it was the SHAPE**: `${2:-}` accepts a
+missing value, `shift 2` then fails with one argument left, and the loop
+re-enters on the same argument. **28 value-taking flags across ELEVEN tools**,
+every one of which spins if written last. One guard, `tools/argv.sh`, sourced by
+all of them — the one-source rule again (§5.4a's *let exactly one reader parse
+it*).
+
+The new `ci.sh` `argv-guards` step probes **every value-taking flag found by
+READING the tools**, and the reason it is written that way is the law:
+
+> **A LIST WOULD BE MAINTAINED BY THE SAME ATTENTION THAT WROTE THE UNGUARDED
+> ARM.**
+
+**A hand-maintained scope inherits exactly the failure it exists to catch.**
+The lane that forgets to guard a new flag is the lane that forgets to add it to
+the checklist, and the two omissions are the *same* omission — so the checklist
+cannot see it, by construction. This is MEAS-19's *generated and checked, never
+hand-maintained* aimed at a **gate's scope** rather than at a manifest, and it
+is the sharper half of §5.4b's practical form: **enumerate the pointers by
+discovery, or the pointer list is a second place to forget.**
+
+**AND THE GUARD REFUSES RATHER THAN DEFAULTING, because the near-miss is worse
+than the spin.** The spin is loud in the wall clock and silent in the log; but a
+run that merely **lost its `--gates` value completed and reported GREEN on the
+default floor** — *less coverage than the lane believed it bought, with nothing
+in the log to say so.* **A spin costs an hour; a silent floor costs the
+verdict.**
+
+**AND THE READER LAW, owned TWICE in one landing by the lane that had just
+written the rules it broke:**
+
+> **A NEWLY WRITTEN READER DEFAULTS TO UNDER-READING, AND UNDER-READING IS THE
+> DIRECTION THAT REPORTS "ALL CLEAR".**
+
+Both instances are already-minted laws firing on their own author. **Matching
+one line missed `sites.sh --channel`, a two-line arm** — the same column-0
+anchoring that had `--gate-set` reporting **16 of 44** — and the next pass then
+**discovered `--flag` from `ci.sh`'s OWN fixtures**, which is *a fixture is not
+a tool*: the mirror of §9.7's *a fixture is not enforcement*, and the same
+self-selection hazard (§5.4) arriving through test data rather than through
+source.
+
+**Read the direction, because it is what makes a new reader dangerous rather
+than merely immature**: a reader that under-reads finds **fewer** sites and
+therefore reports **fewer** problems, so its first run looks like good news.
+**The failure mode of a new instrument is congratulation.**
+
+**AND THE RESTRAINT RIDER — the pre-existing double-listing was FLAGGED, NOT
+DE-DUPED.**
+
+> **A DE-DUPE COULD SILENTLY SHRINK A SET.**
+
+An instrument auditing a set must not **repair** that set: de-duplication is an
+edit made by the reader, on data it does not own, and a wrong equality test
+removes a member while the count moves in the direction that looks tidy. **The
+census RECORDS and never adjudicates** (§5.4a) applies to a reader's own input,
+not only to its verdicts — **flag the anomaly, and let the owner decide whether
+two entries are one.**
+
 **AND THE MOMENT A GATE MOVES UP THAT LADDER IS A DECISION WITH A BILL
 ATTACHED** (SV, `b499afa`; instance found while wiring the round-trip gate
 `ea6f667` made unconditional):
@@ -5867,6 +5928,24 @@ inherits it —
 > Off that host it does not degrade quietly to a smaller build; it REFUSES and
 > names the ticketed path.**
 
+**AND A COROLLARY THAT GUARDS THE REBASE EXCEPTION FROM BEING READ AS AN A11
+EXEMPTION** (QoL, `95849db`). `--classify` used to list three hard-coded
+prefixes, so a `.lean` under `probes/` or at the repo root got **no note**; the
+question is now **asked of the lakefile**, and the note names the consequence:
+**outside all `lean_lib` roots, never compiled by `lake build`, so a rebase
+touching only it owes no re-gate.**
+
+> **NOT COMPILED IS NOT NOT RUN.** A file `lake build` ignores is still Lean,
+> and `lake env lean` on it is Lean execution — **A11 covers it regardless of
+> whether any target does.**
+
+**The two facts sit one line apart and pull opposite ways**, which is why the
+note carries both: *"nothing rebuilds it"* is a true statement about the
+**build graph** and says nothing about the **lock**. And the classifier's
+restraint is the pattern: **the note EXPLAINS, it never DOWNGRADES** —
+classification is unchanged, so a tool that has learned something new tells the
+lane about it **without quietly buying it a cheaper tenure.**
+
 **AMENDMENT 12 — TRAPS KILL DESCENDANTS RECURSIVELY, and never bare-kill a
 wrapper.** `pkill -P` reaches children and **misses grandchildren**, which
 is how orphaned `lake` processes survive a lane's exit and go on eating the
@@ -5942,6 +6021,31 @@ because it protected the caller rather than the machine. The practical form is
 A13 as written — **seed the clone**, do not merely refuse to build in it — and
 the general form is that a refusal is a control on **one path**, while the state
 it refuses is reachable from every other.
+
+**AND A TENURE NOW NAMES BOTH HALVES AT OPEN — what will be gated, and what the
+lane ASKED for** (QoL, `95849db`). *"gates: `<list>`"* and *"gates asked by the
+lane: `<list>`"*, composed by `gates_planned`, which calls **the same
+`gates_compose` the gate phase calls**, against a `DEFAULT_FLOOR` constant that
+used to be **a literal inside the phase**.
+
+> **AN ANNOUNCEMENT THAT CAN DRIFT FROM THE PHASE LIES IN THE REASSURING
+> DIRECTION.**
+
+**Two properties, and only the second is unusual.** Printing the plan is
+ordinary; **printing the two halves separately** is what makes a dropped
+argument visible — *asked* and *will run* differ exactly when something ate the
+request, which is the failure `argv.sh` guards from the other end (§5.4b). And
+**composing the announcement with the phase's own function** is the structural
+half: a re-implementation of the plan for display purposes is **a second
+decision site** (§5.4a), and when the two disagree it is the *announcement* the
+reader believes, because it arrives first and looks like a summary.
+
+> **An announcement is GENERATED BY the code it announces, or it is prose about
+> a plan.**
+
+The `DEFAULT_FLOOR` extraction is the whole of the fix: **a literal inside a
+phase cannot be announced without being copied**, and every copy of a value is a
+place for it to drift.
 
 **AND THE SCRIPT PRINTS ITS PROTOCOL LEVEL.** Audit #2 found **two drifted
 copies of `tools/triad.sh` in `/tmp`**. Copying before editing is legitimate —
@@ -6388,6 +6492,7 @@ its refusal paths rather than describing them (§5.4).
 | `tools/ci.sh` | the gate set, run as one — **and the one tool here that CAN start Lean** | A11 (host-gated `lake`), §5.4 (refuses unknown arguments) |
 | `tools/laws.sh --gate-set` | ENUMERATE what each gate is pointed at; `UNRESOLVED`, never guessed | §5.4b |
 | `tools/lakeinfo.sh` | the lakefile's globs, read ONCE and sourced by both protocol tools | §5.4a (*the lakefile decides it*), MEAS-28 |
+| `tools/argv.sh` | ONE value-taking-flag guard, sourced by all eleven tools — refuses, never defaults | §5.4b (discovery, not a list), MEAS-28 |
 
 **THE PREAMBLE'S BLANKET CLAIM NOW HAS ONE STATED EXCEPTION, WHICH IS THE
 POINT OF STATING IT.** *"Every tool below runs no Lean unless its own line says

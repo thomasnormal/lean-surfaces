@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**101 entries across 16 lanes.** Regenerate with
+**102 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -24,6 +24,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-19` | a run is not a measurement until it has been read | qol |
 | `2026-08-23-qol-18` | the tree must not move while you queue, and now it cannot silently | qol |
 | `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
+| `2026-08-23-architecture-17` | Census-first applies to the LEMMA; and the retract framing earns a judgment | architecture |
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
 | `2026-08-23-architecture-16` | A generated model's relations are its own; the order lifts but the congruences don't | architecture |
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |

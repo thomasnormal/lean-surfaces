@@ -1251,6 +1251,24 @@ The monotonicity work below raises the question of what of it belongs in
 
 > **The ORDER lifts; the CONGRUENCES don't.**
 
+**STRENGTHENED — the lift now has THREE in-tree instances**, found by the
+duplication incident above: **`Sv.Res.le`, `Python.Res.le`, and `PyLe`.**
+The ruling was made on two; a third independent instance of the same
+two-constructor order is the convergence standard (§9.3) applied to a
+definition rather than to a name.
+
+**AND A JUDGMENT THAT FALLS OUT OF THE RETRACT: `PyLe` must NOT be defined
+through `toRun`.** `toRun` is the **lossy projection** (§3.4) — it
+**erases `RefusalCause` and the snapshot**. An order mediated by it would
+therefore **equate refusals with different causes**, which is not a
+convenience but a **weakening of the definition**, and §0.1's first
+principle forbids exactly that. Define the order on the type that carries
+the information; do not route it through the view that drops it.
+
+That is the retract framing paying off in a place it was not written for:
+**knowing precisely what `toRun` loses is what makes "do not define
+through it" a derivation rather than a preference.**
+
 That is §2.4's trunk/sibling split arriving in the proof layer: the trunk
 takes what is genuinely one thing (a two-constructor order on any type
 with a bottom), and the siblings keep what is only *shaped* alike. A
@@ -3114,7 +3132,8 @@ instrument copies it:
   `docs/<lang>-<subject>-census.json`, sorted and machine-readable;
 * **A DOCSTRING NAMING A REACHABLE SET IS A CLAIM, AND IT DRIFTS.**
   `Kont.fuel`'s docstring read *"used by `heapEq`, `setDedup`"*; the
-  **measured** set is **`heapEq` + `valContains`**. Nothing failed — a
+  **measured** set is **`heapEq` + `valContains`** — and `setDedup`, which
+  the docstring priced as reachable, measures **0 hits**. Nothing failed — a
   docstring naming the wrong consumers compiles exactly as well as one
   naming the right ones, and a lane reading it to decide a blast radius
   (§5.4a) would have grepped for the wrong thing. **A reachable set is
@@ -4624,6 +4643,38 @@ prose, and each lane hand-implements it.* **Prose cannot be run**, so a
 lane's implementation is only as good as its reading, and a defect in one
 reading is invisible to every other lane. Every item below moves a rule
 from prose into something executable.
+
+### 9.0a CENSUS-FIRST APPLIES TO THE LEMMA, NOT ONLY THE OBLIGATION
+
+**§9.7's duplication instance for this tick, owned by the lane that paid
+for it.** The successor proved `heapEqFuelMono` (14 arms, clean axioms)
+and half of `evalCompareOpH` before discovering that
+`LeanModels/Python/Obs.lean` **already carried all of it**: `Res.le` and
+its congruences — **identical, in the same namespace, a hard name clash
+waiting** — plus `heapEqMono`, `evalCompareOpH_mono`, `valContains_mono`,
+and **the trunk's full `fuelMono` with ~15 corollaries.**
+
+The cause, in the lane's own words:
+
+> *"I applied census-first to the proof OBLIGATION and never ran the one
+> grep that would have found existing monotonicity work."*
+
+**That is the census law with a blind spot, and the blind spot is
+structural rather than careless.** Censusing the *obligation* asks *"what
+must be true?"* and is the discipline this document has been prescribing
+since §1. It does not ask *"has someone already made it true?"* — and a
+lane that has correctly censused its obligation feels **finished with
+census-work** precisely when the second question is still unasked.
+
+> **Before proving `X_mono`, grep the tier AND `Core` for
+> `_mono|Mono|\.le\b`. The grep that would find your own work already
+> done is the one most worth running.**
+
+It is also the retrieval laws' fourth face (§5.4a): *the search that agrees
+with your prior* is about believing a hit; *count the pattern position* is
+about pricing; *file the residue* is about reporting; **this one is about
+starting** — the grep you skip because you already know what you are about
+to build.
 
 ### 9.1 BUG BEFORE REFACTOR
 

@@ -1136,3 +1136,55 @@ blast radius would have grepped for the wrong thing. **A reachable set is
 measurable, therefore checkable**, and a docstring asserting one is in the same
 category as a clause citation: **checked data, or prose that goes stale
 silently.**
+
+## 2026-08-23-architecture-17 — Census-first applies to the LEMMA; and the retract framing earns a judgment
+
+**§9.7's duplication instance for this tick**, owned by the successor lane in its
+own words. It proved `heapEqFuelMono` (14 arms, clean axioms) and half of
+`evalCompareOpH` before finding that `LeanModels/Python/Obs.lean` **already
+carried all of it**: `Res.le` and its congruences — **identical, same namespace,
+a hard name clash waiting** — plus `heapEqMono`, `evalCompareOpH_mono`,
+`valContains_mono`, and **the trunk's full `fuelMono` with ~15 corollaries.**
+
+> *"I applied census-first to the proof OBLIGATION and never ran the one grep
+> that would have found existing monotonicity work."*
+
+**The blind spot is structural rather than careless.** Censusing the *obligation*
+asks *"what must be true?"* — the discipline this doc has prescribed since §1. It
+does not ask *"has someone already made it true?"*, and a lane that has correctly
+censused its obligation **feels finished with census-work** exactly when the
+second question is still unasked.
+
+> **Before proving `X_mono`, grep the tier AND `Core` for `_mono|Mono|\.le\b`.
+> The grep that would find your own work already done is the one most worth
+> running.**
+
+Landed as §9.0a, and noted as **the retrieval laws' fourth face**: *the search
+that agrees with your prior* is about believing a hit, *count the pattern
+position* about pricing, *file the residue* about reporting — **this one is about
+STARTING**, the grep skipped because you already know what you are about to
+build.
+
+**WHAT SURVIVES THE DISCARD, recorded so the tenure is not a total loss:**
+
+* the **hygienic-macro / `ident`-argument technique** — now **confirmed twice**;
+* the **`FlatLe` lift STRENGTHENED to THREE in-tree instances** — `Sv.Res.le`,
+  `Python.Res.le`, `PyLe`. The ruling was made on two; a third independent
+  instance of the same two-constructor order is §9.3's convergence standard
+  applied to a **definition** rather than a name;
+* **a judgment that falls out of the RETRACT: `PyLe` must NOT be defined through
+  `toRun`.** `toRun` is the **lossy projection** — it **erases `RefusalCause` and
+  the snapshot** — so an order mediated by it would **equate refusals with
+  different causes**. That is not a convenience but a **weakening of the
+  definition**, which §0.1's first principle forbids. **Define the order on the
+  type that carries the information; do not route it through the view that drops
+  it.**
+
+**The last one is the retract framing paying off where it was not written for**:
+knowing *precisely* what `toRun` loses is what makes "do not define through it" a
+**derivation rather than a preference**. Had the iso claim stood uncorrected,
+this judgment would have had no basis — the projection would have looked
+information-preserving.
+
+**Also corrected**: `Kont.fuel`'s docstring priced `setDedup` as reachable;
+**measured 0 hits**. The §5.4 docstring-drift note now carries it.

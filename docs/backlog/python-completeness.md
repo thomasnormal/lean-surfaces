@@ -671,3 +671,56 @@ as anything that touches control can be. 3c-i-b and 3c-i-c follow separately.
 **Nothing here touches `harness/monadic_gate.py`**, per the end-condition; the
 new witnesses' expectations go in the census's CPython-written column and
 `diff_test`.
+
+## 2026-08-23-pycomplete-11 — 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named
+
+`list(d.keys())`, `sorted(d.values())`, `sum(d.values())`, `len(d.keys())`,
+`tuple`/`set`/`any`/`all`/`max`/`min` over a view all run — by rewriting the
+ARGUMENT at ingestion rather than fusing at the call site:
+
+    list(d.keys())   ⇢   list(<dictkeys>(d))
+
+The evaluator then meets a shape it already handles: `d` rides the ordinary
+argument path, so nothing new is recursed on and §pycomplete-10's structural
+wall is not approached. `applyBuiltin` gains one arm answering the element
+sequence; `callNamePlan` admits the synthetic names.
+
+### THE THIRD PLACE A CONSTRUCT'S MEANING IS DECIDED
+
+A capability audit that reads the extractor and the interpreter will not find
+this rewrite, because it is in neither. **Ingestion is a third decision site**,
+and it already holds two other constructs:
+
+| construct | decided at ingestion | recorded in |
+| --- | --- | --- |
+| `ListComp` | desugars to `list(<genexp>)` | docs/memory-model.md §list comprehensions |
+| `yield from <genexp>` | inlined into the enclosing body | docs/memory-model.md §yield from |
+| **dict views in consuming position** | **rewritten to `<dictkeys>`/`<dictvalues>`/`<dictitems>`** | **here, and `Ast.lean` §the dict-view ingestion rewrite** |
+
+The vocabulary lives in `Ast.lean` (which is what ingestion can see) with a
+header naming the precedent, so the next audit finds it from either end.
+
+### The synthetic names are deliberately NOT builtins
+
+`<dictkeys>` and its siblings use the `<genexpr@n>` convention — angle
+brackets make them unspellable in Python, so they cannot collide with a user
+binding. They are checked in `callNamePlan` BEFORE `isBuiltinName` and kept
+OUT of it: that list is the pinned CPython `dir(builtins)` and every arm that
+may decide a `NameError` consults it, so adding a synthetic name there would
+move a real decision (the §2026-08-15 silent-wrong-answer fix's own lesson).
+
+### The battery is written in the SOURCE spelling, which is the point
+
+Ten new `dict_lab` rows spell `d.keys()`, never `<dictkeys>(d)`. CPython sees
+the source text, and **the rewrite is what is under test** — a row written in
+the lowered form would exercise the evaluator and skip the pass that produced
+it. Two of the ten are the boundary:
+
+* `view_escape_still_loud` — `k = d.keys()` then use. Not a consuming
+  position, so ingestion leaves it alone and the tier refuses. CPython
+  answers 1; the refusal is what keeps the snapshot honest.
+* `view_arg_not_alone_still_loud` — a view that is not the sole argument of a
+  consuming builtin is not the recognised shape either.
+
+**The shape is what licenses the snapshot**, and these two rows are how that
+claim is falsifiable rather than asserted.

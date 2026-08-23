@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**187 entries across 16 lanes.** Regenerate with
+**188 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -81,6 +81,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-architecture-13` | The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface | architecture |
 | `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
+| `2026-08-23-pycomplete-11` | 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named | python-completeness |
 | `2026-08-23-lean-tier-11` | `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition | lean-tier |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-lean-tier-10` | DECISION BRIEF for Thomas: PR #43 does NOT unblock `TrProj.uniq`, and consuming it buys nothing this lane needs | lean-tier |

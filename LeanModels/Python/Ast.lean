@@ -599,3 +599,39 @@ def isPyBuiltinName (id : String) : Bool :=
   ].contains id
 
 end LeanModels.Python
+
+/-! ## §3c-i-b — the dict-view INGESTION rewrite's vocabulary
+
+A dict view in CONSUMING-ARGUMENT position is rewritten at ingestion to a
+synthetic builtin over the receiver: `list(d.keys())` ⇢ `list(<dictkeys>(d))`.
+
+**This is the THIRD place a construct's meaning is decided** — after the
+extractor and the interpreter — and it is the same mechanism `ListComp` and
+`yield from <genexp>` already use (docs/memory-model.md §list comprehensions,
+§yield from). A capability audit that reads only the extractor and the
+evaluator will not see it, which is why it is named here and in
+docs/backlog/python-completeness.md.
+
+Why ingestion and not the evaluator: fusion needs the RECEIVER, and the
+fuel-free evaluator is structural on `Expr`, so a receiver produced by a pure
+recognizer is not a subterm the equation compiler can see (2026-08-23-
+pycomplete-10). Rewriting the ARGUMENT sidesteps it — the receiver then rides
+the ordinary argument path. -/
+
+/-- The synthetic builtin a dict view lowers to. The angle brackets make the
+name unspellable in Python, the `<genexpr@n>` convention, so it can never
+collide with a user binding — and it is deliberately NOT added to
+`isBuiltinName`, which is the pinned CPython `dir(builtins)` and load-bearing
+for every `NameError` decision. -/
+def dictViewBuiltinName : String → Option String
+  | "keys" => some "<dictkeys>"
+  | "values" => some "<dictvalues>"
+  | "items" => some "<dictitems>"
+  | _ => Option.none
+
+/-- Builtins that CONSUME their argument on the spot, so a view handed to one
+cannot outlive the call — which is what licenses the rewrite's snapshot. -/
+def consumesViewArg : String → Bool
+  | "list" | "tuple" | "set" | "sum" | "any" | "all" => true
+  | "sorted" | "max" | "min" | "len" => true
+  | _ => false

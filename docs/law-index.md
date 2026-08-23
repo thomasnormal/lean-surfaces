@@ -250,6 +250,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-199 | a pin move is drift or deliberate — PRIOR DECLARATION plus named departures decides | `docs/family-architecture.md §5.4b` |
 | MEAS-200 | the LAST RUNG is the tall one — the census says so in advance, not after | `docs/family-architecture.md §9.0b` |
 | MEAS-201 | the acceptance hierarchy ranks CLAIMS, not CLAIMANTS — a coordinator's hypothesis enters at the same rung | `docs/family-architecture.md §5.6` |
+| MEAS-202 | a guard's REPUTATION and its MECHANISM drift apart silently — read the mechanism | `docs/family-architecture.md §7.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -527,6 +528,8 @@ numbers below are the register's own.
 | OPS-75 | a stamp added to a measured artifact owes a DIFFERENTIAL — same verdicts with and without | `docs/family-architecture.md §7.2` |
 | OPS-76 | A COMMIT CANNOT CONTAIN ITS OWN HASH — each rung's sha lands in the FOLLOWING commit | `docs/family-architecture.md §7.2` |
 | OPS-77 | `set_option autoImplicit false` in model files — a required LOUDNESS guard | `docs/family-architecture.md §7.1a` |
+| OPS-78 | the enqueue stamp hashes the INDEX; `lake` builds the WORKING TREE | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
+| OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

@@ -7301,6 +7301,60 @@ reported **"`instN` green"** for a run that actually built **`instN` +
 > stage — between ENQUEUE and RELEASE. Batch BEFORE enqueue, or after the
 > verdict.**
 
+**AND THE STAMP THAT ENFORCES THAT RULE HAS A BLIND SPOT, FOUND BY A LANE
+CHECKING WHETHER IT COULD SAFELY EDIT** (Wasm; fix dispatched to the tools lane
+as priority). **`tree_stamp` is `git write-tree`, which hashes the INDEX.
+`lake` builds the WORKING TREE.** Verified here against the tool:
+`tools/triad.sh:1181-1183`.
+
+> **An UNCOMMITTED, UNSTAGED edit between enqueue and acquire is INVISIBLE to
+> A6's enforcement — and the green would certify a tree the gate never saw.**
+
+**THIS IS THE WRONG-TREE FAMILY ARRIVING INSIDE THE GUARD BUILT TO PREVENT IT.**
+The enqueue stamp exists **precisely** to pin the certified tree, and it points
+at **the one object `lean` does not read.** It is §5.4b's pointer question —
+*what is this pointed AT?* — aimed at a **guard** rather than at a gate, with
+the sharpening the analog apex supplied (§5.3): **correctly motivated,
+correctly implemented, against the wrong object.** Nothing here is a slip; the
+`write-tree` call does exactly what it says, and what it says is not what the
+build reads.
+
+**AND HOW IT WAS FOUND IS ITS OWN LAW.** The lane **almost deferred a safe
+edit** for fear of the stamp, then **read the stamp's implementation instead of
+obeying its reputation** — and found **the fear unfounded and the guard hollow
+in the same read.**
+
+> **A GUARD'S REPUTATION AND ITS MECHANISM DRIFT APART SILENTLY. The lane that
+> reads the mechanism inherits BOTH facts.**
+
+**Both directions of that drift cost something, and they are usually paid by
+different people.** An over-estimated guard **taxes every lane that obeys it**
+— here, a deferred edit and a lost hour, for a rule that did not apply. An
+under-estimated one **taxes whoever eventually trusts a green it did not
+earn.** *The same read settles both*, which is the practical argument for
+reading a guard before working around it: **the cost of the read is bounded and
+it is the only move that can return either answer.**
+
+**AND THE DISCLOSURE IS WHAT MADE IT A FINDING RATHER THAN AN EXPLOIT.** The
+lane's own words: *"mine is comments-only and I'm declaring it rather than
+relying on the hole."*
+
+> **THE SAME HOLE, USED SILENTLY, IS INDISTINGUISHABLE FROM THE ADA INCIDENT.
+> DECLARED, IT IS A TOOL DEFECT WITH A NAMED FIX.**
+
+**This is the drift family's declaration rule (§5.4b) one level up — at protocol
+compliance rather than at an artifact.** There, prior declaration is what
+separates a legitimate baseline change from a silent regression; here it
+separates **a lane working within a known-imperfect protocol** from **a lane
+quietly relying on the imperfection**, and *after the fact the two produce the
+same tenure.* **Declaration is cheap only before**, and it is the entire
+difference between a hole that gets fixed and a hole that gets used.
+
+**The fix is with the tools lane** — working-tree hash via a temp index, at
+**both ends**, with **old-stamp tolerance for the eight live tickets** — and
+until it lands, the honest position is the one this section already prescribes:
+**the rule stands as written, and a lane that must edit says so at enqueue.**
+
 **AND THE STALENESS HAS NOW BEEN SPLIT, MEASURED — most of it is the QUEUE, not
 the BUILD** (Ada). A tenure came back **53 commits behind**, and the obvious
 reading is that a long build fell behind a fast tree. The split says otherwise:

@@ -4523,3 +4523,64 @@ authority than a lane's own report carries.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-198 … MEAS-201**.
+
+## 2026-08-24-architecture-58 — The guard built to pin the tree points at the index
+
+One from the Wasm lane, checking whether it could safely edit before its tenure.
+**Verified against the tool, not the dispatch**: `tools/triad.sh:1181-1183`,
+`tree_stamp()` is `git -C "$CLONE" write-tree`.
+
+**THE DEFECT.** **`git write-tree` hashes the INDEX. `lake` builds the WORKING
+TREE.**
+
+> **An uncommitted, unstaged edit between enqueue and acquire is INVISIBLE to
+> A6's enforcement — and the green would certify a tree the gate never saw.**
+
+**(1) IT IS THE WRONG-TREE FAMILY ARRIVING INSIDE THE GUARD BUILT TO PREVENT
+IT.** The enqueue stamp exists **precisely** to pin the certified tree, and it
+points at **the one object `lean` does not read.** §5.4b's pointer question —
+*what is this pointed AT?* — aimed at a **guard** rather than a **gate**, with
+the sharpening the analog apex supplied: **correctly motivated, correctly
+implemented, against the wrong object.** Nothing is a slip; `write-tree` does
+exactly what it says, and what it says is not what the build reads.
+
+**Read with `-55`, the pair is the whole ladder**: that landing showed a green
+certifying **a tree the ticket's title did not describe**; this one shows the
+guard that pins the tree **pinning a different tree than the one built**. *The
+stamp and the title were both checked against something other than the artifact.*
+
+**(2) HOW IT WAS FOUND IS ITS OWN LAW.** The lane **almost deferred a safe
+edit** for fear of the stamp, then **read the implementation instead of obeying
+the reputation** — and found **the fear unfounded and the guard hollow in the
+same read.**
+
+> **A guard's REPUTATION and its MECHANISM drift apart silently. The lane that
+> reads the mechanism inherits BOTH facts.**
+
+**My addition: both directions cost something, and different people pay.** An
+**over-estimated** guard taxes every lane that obeys it — here, a deferred edit
+for a rule that did not apply. An **under-estimated** one taxes whoever
+eventually trusts a green it did not earn. **The same read settles both**, which
+is the practical argument for reading a guard before working around it: the cost
+is bounded and it is the only move that can return **either** answer.
+
+**(3) THE DISCLOSURE MADE IT A FINDING RATHER THAN AN EXPLOIT** — *"mine is
+comments-only and I'm declaring it rather than relying on the hole."*
+
+> **The same hole, used silently, is indistinguishable from the Ada incident.
+> Declared, it is a tool defect with a named fix.**
+
+**The drift family's declaration rule one level up — at PROTOCOL COMPLIANCE
+rather than at an artifact.** There, prior declaration separates a legitimate
+baseline change from a silent regression; here it separates **a lane working
+within a known-imperfect protocol** from **a lane quietly relying on the
+imperfection** — and **after the fact the two produce the same tenure.**
+Declaration is cheap only before, and it is the entire difference between a hole
+that gets fixed and a hole that gets used.
+
+**Fix with the tools lane** (working-tree hash via temp index, both ends,
+old-stamp tolerance for the eight live tickets). **Until it lands the rule
+stands as written, and a lane that must edit says so at enqueue.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-202, OPS-78, OPS-79**.

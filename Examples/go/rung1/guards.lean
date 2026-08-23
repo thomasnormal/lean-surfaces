@@ -24,7 +24,7 @@ rather than assumed.
 
 namespace Examples.go.rung1
 
-open LeanModels.Go
+open LeanModels LeanModels.Go
 
 /-! ## Integer overflow is DEFINED — the charter's headline, executable
 
@@ -71,28 +71,27 @@ def runTo (stmts : List Stmt) (name : String) : Option Int :=
       | none => none
   | _ => none
 
-/-- The rendered refusal a program produced, if it refused.
-
-**Core's `Loud` now carries the cause as DATA** — `.unsupported cause message
-snapshot` — so the prefix `renderRefusal` writes is a rendering for HUMANS and
-no longer the only way to recover the class. This function still returns the
-message, and `refusedWith` below still reads the prefix, so every guard in this
-file keeps its exact meaning and the text is byte-identical to what it was.
-
-Consuming `cause` structurally instead of parsing the prefix is the obvious
-next move and is deliberately NOT made here: it is the Go lane's call which of
-its own guards should read a constructor rather than a string, and this file is
-their demonstration surface, not the merging lane's. -/
-def refusalOf (stmts : List Stmt) : Option String :=
+/-- The refusal a program produced, if it refused — as DATA. Core's
+`Loud.unsupported` now carries the class as a typed field, so this reads
+it structurally. It used to return the message and the guards parsed a
+`[tag|…]` prefix off the front; that prefix existed only because the
+typed field did not, and both are retired. -/
+def refusalOf (stmts : List Stmt) : Option (RefusalCause SpecRef) :=
   match (execSeq 64 stmts) ({} : GoWorld) with
-  | .error (.unsupported _ m _) => some m
+  | .error (.unsupported c _ _) => some c
   | _ => none
 
-/-- Did the program refuse with this cause? -/
-def refusedWith (stmts : List Stmt) (c : RefusalCause) : Bool :=
+/-- Did the program refuse in this §5.2 class? Compares `className`, which
+Core emits verbatim and which a scoreboard buckets on. -/
+def refusedWith (stmts : List Stmt) (cls : String) : Bool :=
   match refusalOf stmts with
-  | some m => m.startsWith s!"[{c.tag}|"
+  | some c => c.className == cls
   | none => false
+
+/-- Which clause did the refusal cite? `π` is a typed field too, so the
+citation is readable without touching the prose. -/
+def refusalClause (stmts : List Stmt) : Option SpecRef :=
+  (refusalOf stmts).map RefusalCause.detail
 
 private def i64 (n : Int) : Expr := .lit (GoVal.mkInt IntKind.int64 n)
 
@@ -145,22 +144,39 @@ rows check that the refusals the walker actually emits land in the other
 three, and — critically — that `undefined` is a real constructor, so the
 gate is a restriction rather than a statement about an empty type. -/
 
-#guard (RefusalCause.undefined == RefusalCause.unsupportedConstruct) == false
+#guard (RefusalCause.undefined (SpecRef.spec "x")).isUndefined == true
 
 /-! `goto` is in rung 1's census but not stepped at inch 1: it refuses as
 an out-of-tier CONSTRUCT, never as undefined behaviour. -/
-#guard refusedWith [.branch .goto_ (some "end")] RefusalCause.unsupportedConstruct
+#guard refusedWith [.branch .goto_ (some "end")] "unsupported"
 
 /-! An unbound identifier is a construct refusal too — not a zero value,
 and not undefined. -/
-#guard refusedWith [.expr (.ident "nope")] RefusalCause.unsupportedConstruct
+#guard refusedWith [.expr (.ident "nope")] "unsupported"
 
 /-! A statement in the vocabulary but unstepped names itself. -/
-#guard refusedWith [.unmodeled "SwitchStmt"] RefusalCause.unsupportedConstruct
+#guard refusedWith [.unmodeled "SwitchStmt"] "unsupported"
 
 /-! A condition that is not a boolean refuses rather than coercing: Go has
 no truthiness. -/
-#guard refusedWith [.ifS (i64 1) [] []] RefusalCause.unsupportedConstruct
+#guard refusedWith [.ifS (i64 1) [] []] "unsupported"
+
+/-! The cited clause travels as DATA, so a guard can name it. `goto`
+refuses under the spec's "Goto_statements"; an unbound identifier under
+"Declarations_and_scope". Neither is reachable by reading prose. -/
+
+#guard (refusalClause [.branch .goto_ (some "end")]).map SpecRef.section_
+       == some "Goto_statements"
+#guard (refusalClause [.expr (.ident "nope")]).map SpecRef.doc == some "spec"
+
+/-! **The zero-UB gate, read as data.** No refusal this tier can emit is
+in the `undefined` class — checked here on the four refusals the walker
+actually produces, and proved for ALL of them in `Spec.lean`. -/
+
+#guard (refusalOf [.branch .goto_ (some "end")]).map RefusalCause.isUndefined == some false
+#guard (refusalOf [.expr (.ident "nope")]).map RefusalCause.isUndefined == some false
+#guard (refusalOf [.unmodeled "SwitchStmt"]).map RefusalCause.isUndefined == some false
+#guard (refusalOf [.ifS (i64 1) [] []]).map RefusalCause.isUndefined == some false
 
 /-! ## Division by zero is a PANIC, not undefined behaviour
 
@@ -169,7 +185,7 @@ panic. It therefore goes to ρ — it is catchable in principle by `recover`
 — and must NOT appear as a refusal at all. -/
 
 /-! It does not refuse. -/
-#guard refusalOf [.declare "x" (.binary .quo (i64 1) (i64 0))] == none
+#guard (refusalOf [.declare "x" (.binary .quo (i64 1) (i64 0))]).isNone
 
 /-! It panics: the run ends in ρ, with the runtime's message. -/
 #guard (match (execSeq 64 [.declare "x" (.binary .quo (i64 1) (i64 0))]) ({} : GoWorld) with

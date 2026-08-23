@@ -410,3 +410,105 @@ the moment a float constructor enters `GoVal` — which is also the moment
 Go becomes §3.8's second consumer, with the structural consequence you
 name.
 
+
+---
+
+## G3 — THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23)
+
+Core's payload landing (`f714f76`) gave `Loud.unsupported` a typed cause,
+and records this lane as the **third tier** to have re-derived §5.2's four
+classes locally. The coordinator migrated the tier mechanically and left
+one decision open. **Verdict: retire the local enum, and read the cause as
+data.**
+
+### What was retired, and why it had to be
+
+The tier adopted Core when `Loud.unsupported` held a bare `String`, so it
+kept its own four-class `RefusalCause`, a `tag` function, and
+`renderRefusal`, which wrote `[<tag>|<doc>:<section>] <prose>` into the
+message. The guards then recovered the class with `String.startsWith`.
+
+That was the right shape while Core could not hold the class. It is the
+wrong shape now, and the argument is Core's own: its header states that a
+scoreboard *"buckets on THIS, never by parsing the payload's prose — the
+entire reason the class is a constructor and not a string convention."*
+Keeping the prefix would leave **the class making a round trip through a
+string that exists only because the typed field did not**.
+
+Retired: the local `RefusalCause`, `RefusalCause.tag`,
+`RefusalCause.toCore`, and `renderRefusal`. The two taxonomies were
+already the same four classes under the same four names — this tier's
+`tag` and Core's `className` returned byte-identical strings — so the
+collapse loses nothing. Verified by grep: no prefix is built and none is
+parsed anywhere in the lane.
+
+**The message is prose again.** The payload landing deliberately kept the
+prefix byte-for-byte so nothing downstream of the text moved; that was the
+conservative call and correct at the time. The only consumer of that text
+was this lane's own guards, so removing it moved nothing else. The
+now-stale note in `Sem.lean` saying the prefix is retained was corrected
+rather than left to rot.
+
+### THE GATE SURVIVED AND GOT SHORTER
+
+`GoRefusal` — three constructors, no `undefined` — stays. It is still this
+tier's own type and still the reason cause 2 is unreachable here. What
+changed is what it maps into and what the gate is stated against:
+
+* `GoRefusal.toCore : GoRefusal → SpecRef → RefusalCause SpecRef`, so the
+  cited clause rides as the constructor's payload.
+* The gate is now `(r.toCore π).isUndefined = false`, proved
+  `cases r <;> rfl` — **stated against Core's `isUndefined`, which Core
+  lifted from the ES lane precisely so the gate is written once per family
+  rather than once per tier.** This lane's contribution is the narrower
+  `GoRefusal`; the predicate is everyone's.
+* Non-vacuity is still pinned, and it too moved onto Core's predicate:
+  `(RefusalCause.undefined π).isUndefined = true`. Without that row the
+  gate would pass for the wrong reason if `undefined` were ever dropped.
+
+### What reading the class as data BUYS, beyond deleting code
+
+Two guard shapes that were not expressible while the class lived in a
+string, both now in the battery:
+
+* **The clause is checkable.** `refusalClause` reads π structurally, so a
+  guard pins that `goto` refuses citing the spec's `Goto_statements` and
+  an unbound identifier cites `Declarations_and_scope`. Previously the
+  citation was inside the prose.
+* **The gate is checkable per-refusal.** Four guards assert
+  `RefusalCause.isUndefined = false` on the four refusals the walker
+  actually emits — the executable companion to the theorem that covers
+  all of them.
+
+Battery: **34 `#guard`s**, up from 28. Non-vacuity RUN on both new shapes
+— claiming `goto` is `undefined`, and claiming the wrong cited clause,
+each make Lean report the failing expression; restoring rebuilds clean.
+
+### Triad
+
+Authored lock-free per rule 3; every module rebuilt in isolation at
+`nice -n 19`, the largest an 11-job target. Axioms unchanged: `propext`
+and `Quot.sound` at worst, several theorems depending on none.
+
+**Tenure GREEN**, read from the full log rather than the summary:
+
+| gate | result |
+| --- | --- |
+| `lake build` (scoped: `LeanModels.Go{,.Sem,.Spec}` + the guards) | **exit 0** |
+| `docs_check` | **87/87** marked blocks, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued **76 minutes**, held the machine **91 seconds**. The whitelist moved
+118 → **116** and matched 1,309 → **1,311** against §G2's run: two cases
+that were whitelisted-unsupported now MATCH. Neither is this lane's —
+nothing here touches the Python tier — but it is the direction the
+scoreboard is supposed to move, and worth recording because a whitelist
+that only grows is the failure mode the no-whitelist rule exists to
+prevent.
+
+**§G2's tenure closed GREEN** and is recorded here: `lake build` exit 0,
+`docs_check` 83/83, `diff_test` **1,427 cases, 0 failed** (1,309 matched,
+118 whitelisted), `script_corpus` **65 scripts, 0 failed**. The ticket
+queued **3h47m** and held the machine **84 seconds** — lock-free authoring
+meant the tenure bought verification, not compute.

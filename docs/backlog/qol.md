@@ -2425,6 +2425,7 @@ green across all twelve tools. `docs_check` **88/88**. No Lean executed.
 
 ---
 
+<<<<<<< HEAD
 ## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-27` (QoL lane's to renumber or close)
 
 *Id kept in the architecture namespace; nothing minted in the QoL sequence.
@@ -2454,3 +2455,75 @@ corrected figures (Sv 17 → 11, C 2/6 → 1/7, `REF_CORE` 6 → 5) are owed the
 treatment wherever `qol-21` published them.
 
 *Renumber into your sequence or close it — the call is yours.*
+=======
+## 2026-08-23-qol-36 — INCIDENT: a self-test that ran CI, 26 deep, on a cold clone
+
+I caused this. `bash tools/ci.sh --self-test` ran the **entire CI**, and its
+own tool-self-test step invoked `ci.sh --self-test` again — **26 instances**,
+each starting `lake build` with default parallelism, no `nice` and **no
+ticket**, in a clone whose Mathlib cache did not exist. Load ~30 on Thomas's
+machine for 20+ minutes.
+
+### Why the guard did not hold — and it is my own law
+
+After the *first* near-miss I diagnosed the re-entrancy, added a belt, verified
+it green, and **left the hung process running in the background.** That process
+had the pre-belt `selftests` in memory and kept spawning.
+
+> **An amendment takes effect when the last script predating it is dead** —
+> §7.1a's 16.2, which is in this lane's own ledger, and which I applied to
+> other lanes' runners while leaving mine alive.
+
+Worse: I then **edited `ci.sh` repeatedly while 26 instances were executing
+it**. §7.1a names that hazard exactly — *bash reads a script INCREMENTALLY, so
+editing one that is running corrupts it*. I cannot cleanly separate "ran the
+old code" from "read a shifted file", and I am not going to claim I can.
+
+**The honest summary: the guard never failed, because the guard was never in
+those processes.** A fix in the source does not stop what is already running.
+
+### Why a cold clone made it a machine-killer
+
+`~/repos/lean-qol` was made with a plain `git clone`, **never A13-seeded** — I
+confirmed the absence of `.lake` earlier this session, and `check.sh --iterate`
+had been correctly refusing it as **cold** all along. So the accidental build
+had to fetch and build Mathlib from nothing: the `.lake` it left behind is
+**3.2 GB**. Not an invalidated cache — **a cache that never existed.**
+
+> **An unseeded clone is permanently one accident away from a full Mathlib
+> build**, and A13's "27 s and 29 MB" is the price of not being in that state.
+
+### The fix: three layers, because the incident used the one path with none
+
+1. **`ci.sh` takes NO arguments.** Ignoring an unknown flag is how a self-test
+   request became a full build. `--self-test` now exits **2** before anything.
+2. **An environment sentinel, not an argv check.** `LS_CI_SELF_TEST` is
+   inherited by **every descendant at any depth and through any argv** — which
+   is precisely what an argv or filename guard cannot do.
+3. **The self-test stubs `lake`.** Under the sentinel, PATH is prefixed with a
+   no-op `lake` that exits 97 loudly, so a self-test **cannot reach a real
+   build** even if a future edit re-introduces a call. A11: any lake
+   invocation needs a ticket or a stub, and a self-test has no ticket.
+
+All three verified live: the incident command exits 2; a pre-set sentinel
+refuses; a stubbed `lake build` exits 97. The guards sit at lines 31/51/58,
+**before the first `step` at 129**.
+
+`--verify-guards` is the one allowlisted flag, and its handler cannot reach the
+CI body. An allowlist is not the defect — **ignoring an unknown flag was.**
+
+### Machine, verified by pid rather than assumed
+
+Killed by pid, mine only: the recursion chain (**26 `ci.sh`**), its `lake`, and
+every orphaned `lean` under a `lean-qol` path. Confirmed after: **0 `ci.sh`, 0
+lean-qol `lean`/`lake`**, load **~30 → 14**, and the sv, es and c lanes' own
+processes (`9282`, `13705`, `31843`, `49734`) **untouched** — base rule 6, kills
+by parentage and by path, never `pkill`.
+
+### Owed
+
+`ci.sh`'s own `step "lake-build" lake build` still runs an unticketed bare
+`lake` when CI is invoked normally. On a GitHub runner that is fine; **on
+Thomas's machine it is not**, and it is shared infrastructure rather than this
+lane's to change unilaterally. Flagged for the coordinator.
+>>>>>>> cc3d9ec (INCIDENT FIX: ci.sh could run itself, 26 deep, each level building Mathlib)

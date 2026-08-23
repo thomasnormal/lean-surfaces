@@ -6,6 +6,62 @@
 set -u
 cd "$(dirname "$0")/.."
 
+# ---------------------------------------------------------------- SAFETY
+# 2026-08-23: `bash tools/ci.sh --self-test` ran the ENTIRE CI, because this
+# script ignored unknown arguments — and its tool-self-test step then invoked
+# ci.sh again, which invoked `lake build` with default parallelism, no nice and
+# no ticket, in a clone whose cache was cold.  Twenty minutes of mathlib and
+# load ~30 on Thomas's machine.
+#
+# Three layers, because the incident used the one path that had none:
+#
+#   1. THIS SCRIPT TAKES NO ARGUMENTS.  Ignoring an unknown flag is how a
+#      self-test request became a full build.
+#   2. AN ENVIRONMENT SENTINEL, not an argv check.  `LS_CI_SELF_TEST` is
+#      inherited by EVERY descendant at any depth and through any argv, which
+#      is exactly what an argv or filename guard cannot do.
+#   3. THE SELF-TEST STUBS `lake`.  Under the sentinel, PATH is prefixed with a
+#      no-op `lake` that refuses loudly, so a self-test CANNOT reach a real
+#      build even if a future edit re-introduces a call.  A11: any lake
+#      invocation needs a ticket or a stub, and a self-test has no ticket.
+# EXACTLY ONE allowlisted flag, and its handler cannot reach the CI body — an
+# allowlist is not the defect; IGNORING an unknown flag was.  Without this the
+# guards below would be untestable, and an untested refusal path is the thing
+# this whole file now exists to stop.
+if [ "${1:-}" = "--verify-guards" ] && [ "$#" = "1" ]; then
+  vok=0; vbad=0
+  vcheck() { if [ "$2" = "$3" ]; then vok=$((vok+1)); echo "  ok   $1"; \
+             else vbad=$((vbad+1)); echo "  FAIL $1: got '$2' want '$3'"; fi; }
+  out="$(bash "$0" --self-test 2>&1)"; rc=$?
+  vcheck "an unknown flag REFUSES, never runs CI"  "$rc" "2"
+  vcheck "  ...naming the flag it got"             "$(printf '%s' "$out" | grep -c -- 'got: --self-test')" "1"
+  out="$(LS_CI_SELF_TEST=1 bash "$0" 2>&1)"; rc=$?
+  vcheck "the sentinel REFUSES re-entry"           "$rc" "2"
+  vcheck "  ...naming A11"                         "$(printf '%s' "$out" | grep -c 'A11')" "1"
+  stub="$(mktemp -d "${TMPDIR:-/tmp}/ci-vg.XXXXXX")"
+  printf '#!/usr/bin/env bash\nexit 97\n' > "$stub/lake"; chmod +x "$stub/lake"
+  rc=0; ( PATH="$stub:$PATH"; lake build >/dev/null 2>&1 ) || rc=$?
+  vcheck "a stubbed lake cannot build"             "$rc" "97"
+  rm -rf "$stub"
+  echo "verify-guards: $vok ok, $vbad failed"
+  [ "$vbad" = "0" ] || exit 1
+  exit 0
+fi
+
+if [ "$#" -gt 0 ]; then
+  echo "ci.sh: takes NO arguments (got: $*)" >&2
+  echo "  The full CI is the only thing this script runs.  For a tool's own" >&2
+  echo "  refusal paths use 'bash tools/<tool>.sh --self-test' directly." >&2
+  exit 2
+fi
+
+if [ -n "${LS_CI_SELF_TEST:-}" ]; then
+  echo "ci.sh: REFUSING — LS_CI_SELF_TEST is already set in this environment," >&2
+  echo "  so this is a re-entry from a self-test.  CI does not run inside CI," >&2
+  echo "  and a build started here would carry no ticket (A11)." >&2
+  exit 2
+fi
+
 pass=(); fail=(); skip=()
 step() { # step <name> <command...>
   local name="$1"; shift
@@ -36,7 +92,19 @@ maybe() { # maybe <name> <required-file> <command...>
 # silently between audits — which is how four of this lane's tools shipped with
 # defects the 2026-08-23 audit had to find by reading.
 selftests() {
-  local t rc=0
+  local t rc=0 stub
+  # A no-op `lake` in front of PATH, plus the sentinel every descendant
+  # inherits.  Belt (argv), suspenders (sentinel), and a stub so that even a
+  # successful re-entry cannot reach a real build.
+  stub="$(mktemp -d "${TMPDIR:-/tmp}/ci-selftest-stub.XXXXXX")" || return 1
+  cat > "$stub/lake" <<'STUB'
+#!/usr/bin/env bash
+echo "lake: REFUSED — a self-test may not invoke lake (no ticket, A11)." >&2
+exit 97
+STUB
+  chmod +x "$stub/lake"
+  export LS_CI_SELF_TEST=1
+  export PATH="$stub:$PATH"
   for t in tools/*.sh; do
     [ -r "$t" ] || continue
     # A CASE ARM, not the STRING.  Matching the bare string picked up `ci.sh`
@@ -54,6 +122,7 @@ selftests() {
   done
   python3 tools/docs_check.py --self-test >/dev/null 2>&1 || {
     echo "    SELF-TEST FAILED: docs_check.py"; rc=1; }
+  rm -rf "$stub"
   return "$rc"
 }
 

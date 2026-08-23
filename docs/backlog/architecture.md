@@ -2820,3 +2820,87 @@ and not only the inch before the *design*, because that is the last point at
 which a refutation is still free.
 
 **Index:** MEAS-113, MEAS-114, STMT-107, STMT-108.
+
+## 2026-08-23-architecture-39 — Take the acceptance case that can fail; a performance symptom is a modelling question; and a proved spec adjudicates its siblings
+
+Three from Go's rung 4 (`a991f22`, on master).
+
+**(1) §5.6 — THE DISCRIMINATING ACCEPTANCE CASE, and take it NOW.** `Len8`
+would have passed under **any** string representation; `rev8tab` holds **128
+bytes ≥ `0x80`** of its 256, and a Lean `Char` at code point 200 is **two bytes
+in UTF-8** — so that table, and only that table, could tell a wrong value model
+from a right one. It did: `stringV (s : String)` was refuted **by the spec's own
+words** (a Go string value is a sequence of bytes; `s[i]` yields a byte) and
+became `stringV (bytes : List UInt8)`. Blast radius **7 sites, checked before
+the change**.
+
+> **Choose the acceptance case that can FAIL under the wrong model, and take it
+> NOW rather than defer it. The alternative is rebuilding the model after the
+> rung has been built on it.**
+
+**The trap I named is that the non-discriminating case is the attractive one**:
+`Len8` is simpler, lands sooner, and passes. A rung accepted on it would have
+been **green on a wrong value model**, with every later inch adding weight to
+the thing that had to be replaced. **An acceptance case that cannot fail is a
+demonstration; one that can is a measurement** — §5.3's distinction moved from
+the row to the choice of subject.
+
+**(2) §5.4a — A PERFORMANCE SYMPTOM IS A MODELLING QUESTION**, landed as the
+**diagnosis half** of §8's *raising heartbeats trades a wrong answer for a slow
+one*. That line says what not to do with a timeout; this says where to look, and
+**three times in one rung the faithful shape was also the cheap one**: run-time
+panics carry a `runtime.Error` and not a string (`runtimeErrorV`), and a
+conversion **is a different construct that Go's grammar merely spells like a
+call** (`Expr.convert`, emitted by the frontend — 0 timeouts without the
+in-`evalExpr` branch, 4 with it, and moving it to the `none` path recovered
+nothing). **No heartbeat bump was needed.**
+
+> **When the faithful shape keeps turning out to be the cheap one, the cost was
+> reporting a CONFLATION, not a budget.**
+
+**My addition is the mechanism, because it makes the law usable rather than
+anecdotal**: a model that conflates two things must **decide between them at run
+time**, on every visit, and the kernel pays for that decision every reduction.
+**Un-conflating moves the decision to the frontend, where it happens once.** So
+a cost spike is evidence about **where a distinction lives**. And it is the
+parser-unit law from `-38` seen from the other side: `go/ast` merges `[N]T` with
+`[]T` **and** a conversion with a call — **the census reads those merges as a
+measurement hazard; the interpreter feels them as a cost.** Same fact, and that
+lane's charter already rules the second: anything type-dependent is the
+frontend's.
+
+*(Routing note: the coordinator offered "cookbook or §5.4a". It went to §5.4a
+alone — the cookbook is one page per CLAIM SHAPE, and this is a diagnosis rule,
+not a way to word a theorem.)*
+
+**(3) §5.6 — PROVED-SPEC-AS-ORACLE, a THIRD adjudicator kind.** `Len8` was
+checked **exhaustively over all 256 inputs** against `bitLenSpec`, **§G13's
+proved spec**, and `Reverse8` against **what `gc` printed**.
+
+> **The theorem proved for the crypto lane's hand-rolled loop now predicts the
+> standard library's table-driven function, and they agree on every input.**
+
+> **Once a spec is PROVED for one implementation, it serves as an INDEPENDENT
+> STANDARD for sibling implementations.**
+
+So a tier has **three** adjudicator kinds — compiled oracle, hand-derivation,
+spec-theorem — and the demotion rule (`-37`) applies to the third **per
+relation, exactly as before**: a spec-theorem row adjudicates *"this
+implementation computes the spec"*, **not** *"the compiled artifact does"*.
+Which is why `Reverse8` still needed `gc`, and why `Len8`'s oracle rows are not
+retired by its spec rows.
+
+**What makes it new evidence rather than a second proof**: it is **one proved
+relation used twice**, and its value comes from the implementations being
+**structurally unrelated** — a hand-rolled loop and a table lookup, no shared
+code, written years apart to do the same arithmetic.
+
+**AND THE SMALL GUARD SHAPE:** three named high-byte rows beside the exhaustive
+sweep, **so a representation that lost the high bit fails BY NAME, not only in
+bulk.** An exhaustive sweep is the stronger check and the **worse diagnostic** —
+it reports *"some input disagrees"* and leaves the reader to bisect. A handful
+of rows chosen **at the boundary the model is most likely to get wrong** costs
+nothing and turns a bulk failure into a sentence. Non-vacuity run on both, which
+is what keeps the named rows from being decoration.
+
+**Index:** MEAS-115 … MEAS-117, STMT-109.

@@ -4274,6 +4274,43 @@ MEAS-11 restated with the artifact named — the same move as §7.1a's
 one-second-build rule: *name the artifact whose existence success would have
 produced*, rather than reading success off the absence of complaint.
 
+**AND THE DIAGNOSIS HALF, measured THREE TIMES IN ONE RUNG: A PERFORMANCE
+SYMPTOM IS A MODELLING QUESTION** (Go rung 4, `a991f22`). §8's line —
+*raising heartbeats trades a WRONG answer for a SLOW one* — says what **not**
+to do with a timeout. This says where to look instead, and the evidence is that
+**each time, the faithful shape was also the cheap one**:
+
+* **Strings.** Once a Go string was bytes, every run-time panic forced
+  `String.toUTF8` through the kernel and **four guards timed out**. Chasing the
+  cost surfaced a **faithfulness bug**: Go's run-time panics carry a
+  `runtime.Error`, **not a string**. `GoVal` gained `runtimeErrorV` — the
+  faithful shape and the cheap one.
+* **Conversions.** A conversion had landed as a **branch inside `evalExpr`'s
+  `.call` arm**: measured **0 timeouts without it and 4 with it**, and moving it
+  to the `none` path recovered nothing. **The fix was the DESIGN, not the
+  budget** — a conversion **is a different construct** that Go's grammar merely
+  *spells* like a call, so it became `Expr.convert`, emitted by the frontend
+  from the predeclared-name list. **No heartbeat bump was needed.**
+
+> **A PERFORMANCE SYMPTOM IS A MODELLING QUESTION. When the faithful shape
+> keeps turning out to be the cheap one, the cost was reporting a conflation,
+> not a budget.**
+
+**The mechanism is worth stating, because it is not luck.** A model that
+conflates two things must **decide between them at run time**, in the
+interpreter, on every visit — and a kernel pays for that decision every time it
+reduces the term. **Un-conflating moves the decision to the frontend, where it
+happens once.** So a cost spike is evidence about **where a distinction lives**,
+and *"the interpreter is doing work that a compiler-side split would have done
+once"* is a hypothesis a lane can check directly.
+
+**This is also the frontend un-conflating what `go/ast` conflates** — the same
+boundary as the parser-unit law above, seen from the other side: the AST merges
+`[N]T` with `[]T`, and it merges a conversion with a call. **The census reads
+those merges as a measurement hazard; the interpreter feels them as a cost.**
+Both are the same fact, and the ruling for the second is already written in
+that lane's charter: **anything type-dependent is decided by the frontend.**
+
 **A FIFTH INSTANCE, AND IT CARRIES A DIRECTION THE OTHERS DO NOT: THE COUNT
 HAD BEEN PUBLISHED.** `tools/substrate.sh`'s `REF_LOCAL` matched any line
 beginning `| unsupported` — **including `match` arms inside proofs** — and
@@ -5142,6 +5179,68 @@ the loop's independence from the table was a *fact* and not a *convenience*. A
 lemma widened by its consumer and re-proved with no new work has been **measured
 to be more general**, which is strictly better evidence than being written
 general by an author who guessed.
+
+**AND THE RIDER THAT DECIDES WHICH ACCEPTANCE CASE TO TAKE — take the
+DISCRIMINATING one, and take it NOW** (Go rung 4, `a991f22`, on master). Two
+functions were vendored. **`Len8` would have passed under any string
+representation**; **`rev8tab` holds 128 bytes ≥ `0x80` of its 256**, and a Lean
+`Char` at code point 200 is **two bytes in UTF-8** — so that table, and only
+that table, could tell a wrong value model from a right one. It did:
+`GoVal.stringV (s : String)` was **refuted by the spec's own words** — a Go
+string value is a sequence of **bytes**, and `s[i]` yields a byte — and became
+`stringV (bytes : List UInt8)`. **Blast radius 7 sites, checked before the
+change.**
+
+> **Choose the acceptance case that can FAIL under the wrong model, and take it
+> NOW rather than defer it. The alternative is rebuilding the model after the
+> rung has been built on it.**
+
+**The trap is that the non-discriminating case is the attractive one**: `Len8`
+is simpler, lands sooner, and passes. A rung accepted on it would have been
+**green on a wrong value model**, and every subsequent inch would have added
+weight to the thing that had to be replaced. **An acceptance case that cannot
+fail is a demonstration; one that can is a measurement** — the same distinction
+§5.3 draws for verdicts, applied to the choice of subject rather than to the
+row.
+
+**AND THE THEOREM BECOMES AN ORACLE FOR ITS SIBLINGS — a THIRD adjudicator
+kind.** The same landing checked `Len8` **exhaustively over all 256 inputs**
+against `bitLenSpec` — **§G13's PROVED spec** — and `Reverse8` against **what
+`gc` printed**.
+
+> **The theorem proved for the crypto lane's hand-rolled loop now predicts the
+> standard library's table-driven function, and they agree on every input.**
+
+> **Once a spec is PROVED for one implementation, it serves as an INDEPENDENT
+> STANDARD for sibling implementations.**
+
+So a tier's adjudicators are now three kinds, not two: the **compiled oracle**
+(what the real toolchain printed), the **hand-derivation**, and the
+**spec-theorem**. The third is the cheapest to run and the most fragile to
+misread, so the demotion rule applies to it **exactly as before, per relation**
+(§5.4a): a spec-theorem row adjudicates *"this implementation computes the
+spec"* and **not** *"the compiled artifact does"* — which is why `Reverse8`
+still needed `gc`, and why `Len8`'s oracle rows are not retired by `Len8`'s
+spec rows.
+
+**Two implementations agreeing against one proved spec is genuinely new
+evidence**, and it is worth naming what it is: not a second proof, and not a
+differential between two models. It is **one proved relation used twice**, and
+its value comes from the implementations being **structurally unrelated** — a
+hand-rolled loop and a table lookup, which share no code and were written years
+apart to do the same arithmetic.
+
+**AND THE SMALL GUARD SHAPE THAT CAME WITH IT: NAMED SINGLE ROWS BESIDE AN
+EXHAUSTIVE SWEEP.** Three named high-byte rows sit next to the 256-input sweep,
+
+> **so a representation that lost the high bit fails BY NAME, not only in
+> bulk.**
+
+An exhaustive sweep is the stronger check and the **worse diagnostic**: it
+reports *"some input disagrees"* and leaves the reader to bisect. **A handful of
+named rows chosen at the boundary the model is most likely to get wrong costs
+nothing and turns a bulk failure into a sentence.** Non-vacuity was run on both,
+which is what keeps the named rows from being decoration (§5.3).
 
 Applied: **SystemVerilog's exemplar is the floating-point divider** (§3.5.2
 states its theorem, and it factors through the shared vertex rather than

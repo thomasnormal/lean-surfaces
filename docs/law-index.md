@@ -161,6 +161,9 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-112 | corpus-driven selection finds the frontier's traversable point BY CONSTRUCTION | `docs/family-architecture.md §9` |
 | MEAS-113 | an upstream representation's unit is not YOUR unit — a parser's kinds are the parser's | `docs/family-architecture.md §5.4a` |
 | MEAS-114 | re-run the census when the plan becomes EXPENSIVE — the last point a refutation is free | `docs/family-architecture.md §9.0a` |
+| MEAS-115 | a PERFORMANCE SYMPTOM is a modelling question — the faithful shape is often the cheap one | `docs/family-architecture.md §5.4a` |
+| MEAS-116 | once PROVED for one implementation, a spec adjudicates its SIBLINGS — a third adjudicator kind | `docs/family-architecture.md §5.6` |
+| MEAS-117 | named single rows beside an exhaustive sweep — so a failure lands BY NAME | `docs/family-architecture.md §5.6` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -277,6 +280,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-106 | write the PROVED/CHECKED boundary before either half can close | `docs/family-architecture.md §5.4a`; cookbook §12 |
 | STMT-107 | a mis-bucketed refusal is MIS-SCHEDULED — the class determines who owes the work | `docs/family-architecture.md §5.2` |
 | STMT-108 | when a fix moves a boundary, guard BOTH sides — a paired guard | `docs/family-architecture.md §5.2` |
+| STMT-109 | choose the acceptance case that can FAIL under the wrong model, and take it NOW | `docs/family-architecture.md §5.6` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

@@ -1,6 +1,7 @@
 import LeanModels.Ada.Ast
 import LeanModels.Ada.Json
 import LeanModels.Ada.Load
+import LeanModels.Ada.Ada2012.Value
 
 /-!
 # The Ada lane (`LeanModels.Ada`)
@@ -9,8 +10,14 @@ Ada as the project's fourth modeled language. The charter is
 `docs/ada-charter.md`; the envelope it ingests is
 `docs/ada-envelope-schema.md`.
 
-**M1 (ingestion) is what exists. There is no semantics and none is
-designed.**
+**M1 (ingestion) is complete. M2 has begun** — `docs/ada-semantics-design.md`
+is the plan and `LeanModels/Ada/Ada2012/Value.lean` is its inch 1. There is
+still no interpreter.
+
+`Ada2012/` is imported from here for one reason worth stating, because it was
+learned the expensive way: a module no module imports is **never elaborated**,
+so a build that is green says nothing about it. Inch 1's first tenure was
+green while its own file had never been compiled.
 
 ## Placement: `Ast`/`Json`/`Load` are TRUNK, and the reason is structural
 

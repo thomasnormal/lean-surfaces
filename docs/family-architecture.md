@@ -2861,6 +2861,36 @@ program over it. Stated precisely: **the monad carries one process's step;
 threads" will design a suspension effect, discover it cannot exist, and pay
 for the discovery.
 
+**AND THE OBLIGATION THAT COMES WITH THE SCHEDULER LOOP — DISCHARGED, and it
+is the pattern every tier that takes this route will owe** (SV, `b499afa`, on
+master). Defunctionalizing produces a **second** interpreter shape: the
+resumable stepper beside the walker that was already there. The ruling is that
+the walker does **not** retire:
+
+> **`execSStmts` is RECOVERED as the NON-SUSPENDING CASE of `stepSStmts`, not
+> superseded — proved, so the two cannot drift into a second interpreter.**
+
+The old definition becomes a **theorem-backed special case**. That is the whole
+of the discipline, and it is cheap **only at the moment the stepper is
+introduced**: the agreement theorem is provable then, when the stepper was
+built to generalize the walker and nothing has diverged yet.
+
+**THE CONTRAST THAT PRICES IT is inside this repository — the Python
+trunk/rebuild window.** There, both implementations stayed **executable**, and
+that single fact is why the tier needed the **whole capability-parity
+apparatus**: a parity audit sweeping trunk, presentation and ingestion rewrites
+(§3.4, `2026-08-23-architecture-23`), a census of what each side can do, and a
+standing question of which one a finding is about.
+
+> **Two EXECUTABLE implementations of one semantics cost a parity APPARATUS.
+> One executable plus one theorem-backed SPECIAL CASE costs a THEOREM.**
+
+Both are legitimate — the Python window was a deliberate migration with the
+apparatus priced in — but **the choice is made at the moment the second
+implementation appears, and only then is the cheap option available.** A tier
+that ships a stepper without the agreement theorem has silently chosen the
+expensive one, and will not find out until the two answers differ.
+
 **For the Go tier specifically: goroutine parking takes this exact shape**
 — a blocked goroutine's continuation becomes data in `W`, the runtime
 becomes a scheduler loop, and parking is a return value. Go's charter
@@ -4563,6 +4593,110 @@ is not the whole answer.
 `--verify-guards` region is cut before matching, **inside `gate_rows`** rather
 than inside the citation counter whose numbers were not that inch's to move.
 The same rule, at a second site, with the blast radius deliberately bounded.
+
+**AND THE MOMENT A GATE MOVES UP THAT LADDER IS A DECISION WITH A BILL
+ATTACHED** (SV, `b499afa`; instance found while wiring the round-trip gate
+`ea6f667` made unconditional):
+
+> **AN UNCONDITIONAL BYTE-COMPARING GATE INHERITS EVERY UNPINNED INPUT OF THE
+> ARTIFACT IT COMPARES. Arming the gate arms the pins it does not have.**
+
+The mechanism is that a **byte comparison has no tolerance**, so it silently
+promotes every input of the compared artifact into a **pin requirement**.
+Measured: all **21 SV envelopes stamp pyslang's POINT version**, `ci.yml`
+installed it **unpinned**, and the newly-unconditional `sv_round_trip` would
+therefore **turn every PR red at pyslang's next release** — *for a reason
+unrelated to anyone's change.*
+
+**It is green today only because the resolver happens to match**, which is not
+the same thing as being pinned:
+
+> **A green that holds because nobody has released yet is evidence about the
+> WORLD, not about the pin.**
+
+**AND THIS IS MEAS-9's DUAL, which is why it belongs beside it.** A gate that is
+a permanent SKIP is *a check pretending*; a gate that goes red **for reasons
+unrelated to the change** is a check being **ignored** — it trains a team to
+re-run rather than to read, and it burns the credibility of every honest red
+beside it. **Both failures are the same defect — the gate is not about the
+change — pointed in opposite directions**, and arming an under-pinned gate is
+how a tree moves from the first to the second in one commit.
+
+**THE COMPOUND, and it is the part worth a cadence change: A FLAGGED WART PLUS
+A NEW GATE IS AN ARMED BOMB.** The half-applied family stamp was **already
+recorded** in the lane's own dormancy note — *"DONE for the census; the
+envelope still stamps 11.0.0"* — an honest, correctly-filed, entirely dormant
+wart. It stayed dormant only while nothing compared those bytes unconditionally.
+
+> **Arming a gate re-prices every deferral the artifact is carrying. Re-read
+> the DORMANCY RECORDS before a gate goes unconditional** (§9.7).
+
+Disposition, recorded so the interim is not mistaken for the fix: an **interim
+pin** (`pyslang==11.0.0`, **marked temporary**) is dispatched to the tools lane,
+and the **durable fix** — a **family** stamp plus regeneration, **validated by
+the same gate** — rides the SV lane's Landing A. *A pin is a schedule, not a
+design; the design is the artifact not caring about the point release.*
+
+**AND THE SHARPENING THAT RELOCATES THE OBLIGATION** (QoL, `582529d`;
+`docs/backlog/qol.md` `2026-08-23-qol-43`). The unpinned input was **harmless
+for as long as the gate sat unwired**. Nobody edited it; nothing about it
+changed; what changed was that something started **comparing** it.
+
+> **Wiring a comparison changes the blast radius of inputs NOBODY EDITED — so
+> the PIN AUDIT belongs to the ARMING COMMIT, not to the gate's author.**
+
+That is the useful reassignment, because the gate's author is the person least
+able to see it: they wrote a correct comparison, and the defect is in a
+`ci.yml` install line they never touched. **The arming commit is where the two
+facts meet**, and it is the only commit in which both are visible.
+
+**And it has a checkable form**, which is what keeps it from being advice — for
+each **unconditional comparing** gate, `--gate-set` asks:
+
+* does the **compared artifact embed a version string**? and
+* is that version **pinned at every install site** — **both arms of any `||`
+  fallback**, since the second arm was unpinned here too?
+
+The `||` clause is the part discovered rather than designed: a fallback install
+path is an install site that **only runs when the first one failed**, which is
+exactly when nobody is watching. **A pin audit that reads only the happy path
+audits the arm that was already fine.**
+
+**A SMALL INTERFACE LAW FROM THE SAME INCIDENT, minted against a line twenty
+minutes old: THE SKIP BRANCH'S INSTALL HINT WAS ITSELF UNPINNED.** The gate
+skipped politely and told the reader how to enable it — with the **unpinned**
+command.
+
+> **A hint is an INSTRUCTION, and an instruction that reproduces the defect IS
+> the defect.**
+
+So **error and skip messages that tell a user what to run are part of the
+gate's surface, and are audited with it.** A message is not commentary on the
+tool; for the reader who follows it, the message *is* the tool. This is §5.4's
+argument-parser rule pointed at the other end of the interface — **the refusal
+path is a surface in both directions: what it accepts, and what it tells you to
+do next.**
+
+**AND ONE NOTE LEFT STANDING BY NAME, because it is another lane's document:**
+`docs/sv-charter.md:138` carries a **dated venv measurement** that will quietly
+stop being true. It is **flagged to the SV lane through the register** rather
+than edited across lane lines (§9.5a) — naming it here is the durable half, and
+the edit is theirs to make. **A dated measurement in someone else's document is
+NAMED, never corrected in passing**: correcting it silently would take a record
+of their moment and make it a record of mine.
+
+**AND A CONVERGENT NOTE ON WHY THE SV LANE KEPT ITS NEW LEMMAS OUT OF THE
+GLOB**: an unverified `rfl` inside `LeanModels/` would have turned `lake build`
+red, *"and a red build means the gates never run — which would have cost the
+proof evidence as well as the build."* The Wasm lane reported the same shape
+from the other side (its fork build *"when red hides every gate behind it"*,
+`886ede9`). Two tiers, independently:
+
+> **A RED BUILD IS NOT ONE FAILURE — IT IS AN OUTAGE OF EVERY GATE BEHIND IT.**
+
+Which makes *build-red* a **gate-set** event rather than a build event, and
+makes staging an unproven definition outside the glob a **gate-preserving**
+move rather than timidity.
 
 **COROLLARY — AN EXPECTED-TO-FAIL ARTIFACT IS THE WEAKEST GATE IN ANY SET**,
 because its verdict is invariant under everything the file says. A file expected
@@ -6437,6 +6571,13 @@ through the families finds the class of defect those families exist to
 name. And a family that finds **nothing** on a sweep is itself a result —
 either the discipline took, or the lens is wrong.
 
+* **ON EVERY GATE THAT GOES UNCONDITIONAL — re-read the owning lane's
+  DORMANCY RECORDS.** A deferral that was correctly filed and genuinely
+  harmless stays harmless only while nothing checks it; arming a gate
+  **re-prices every wart the artifact is carrying** (§5.4b, the pyslang
+  instance). This is a **trigger**, not a tick: it fires on a change of gate
+  state, and the thing it reads is the lane's own record of what it knowingly
+  left undone.
 * **FULL — about every 10 landings**, and the next full audit **re-measures
   its own headline numbers**: the **38%** violation density, and whether
   the three `--compare` exit codes and four `git_rev` stamps are actually

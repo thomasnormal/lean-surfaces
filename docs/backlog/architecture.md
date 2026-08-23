@@ -2293,3 +2293,121 @@ moved once is exactly the number that needs its state carried (MEAS-10). The
 defect lost *declarations*, not *targets*.
 
 **Index:** MEAS-93 … MEAS-96.
+
+## 2026-08-23-architecture-33 — A stepper RECOVERS its walker; and arming a gate arms the pins it does not have
+
+Two from the SV lane's green (`b499afa`, on master).
+
+**(1) §3.6 (1a) — THE SUBSUMPTION OBLIGATION, and it is the pattern every tier
+that defunctionalizes will owe.** Defunctionalizing a suspending language
+produces a **second interpreter shape**: the resumable stepper beside the walker
+already there. SV discharged the obligation rather than living with it —
+
+> **`execSStmts` is RECOVERED as the NON-SUSPENDING CASE of `stepSStmts`, not
+> superseded — proved, so the two cannot drift into a second interpreter.**
+
+— and the old definition becomes a **theorem-backed special case**. **The
+discipline is cheap only at the moment the stepper is introduced**, while the
+stepper was built to generalize the walker and nothing has diverged yet.
+
+**The contrast that prices it is in this repository**, and it is what I added:
+the Python **trunk/rebuild** window kept **both sides executable**, and that
+single fact is why that tier needed the **whole capability-parity apparatus** —
+the three-site audit of `2026-08-23-architecture-23`, a census of what each side
+can do, and a standing question of which side a finding is about.
+
+> **Two EXECUTABLE implementations of one semantics cost a parity APPARATUS.
+> One executable plus one theorem-backed SPECIAL CASE costs a THEOREM.**
+
+Both are legitimate — the Python window was a deliberate migration with the
+apparatus priced in — but **the choice is made when the second implementation
+appears, and only then is the cheap option available.** A tier shipping a
+stepper without the agreement theorem has silently taken the expensive road and
+will not learn it until the two answers differ.
+
+**(2) §5.4b — ARMING A GATE IS A PINNING DECISION, made retroactively.**
+
+> **An unconditional byte-comparing gate inherits every unpinned input of the
+> artifact it compares. Arming the gate arms the pins it does not have.**
+
+A byte comparison has **no tolerance**, so it promotes every input of the
+compared artifact into a **pin requirement**. Measured: all **21 SV envelopes
+stamp pyslang's POINT version**, `ci.yml` installed it **unpinned**, and the
+newly-unconditional `sv_round_trip` would **turn every PR red at pyslang's next
+release, for a reason unrelated to anyone's change**. **Green today only because
+the resolver happens to match** — *a green that holds because nobody has
+released yet is evidence about the world, not about the pin.*
+
+**This is MEAS-9's dual, which is the framing I think earns its place:** a
+permanent SKIP is *a check pretending*; a gate red for reasons unrelated to the
+change is *a check being ignored* — it trains a team to re-run rather than read,
+and it spends the credibility of every honest red beside it. **Same defect — the
+gate is not about the change — pointed in opposite directions**, and arming an
+under-pinned gate moves a tree from the first to the second in one commit.
+
+**THE COMPOUND, and it is what changes the cadence.** The half-applied family
+stamp was **already flagged** in the lane's own dormancy note — *"DONE for the
+census; the envelope still stamps 11.0.0"* — honest, correctly filed, entirely
+dormant. Dormant **only while nothing compared those bytes unconditionally**.
+
+> **A flagged wart plus a new gate is an armed bomb.**
+
+So §9.7 gains a **trigger** rather than a tick: **on every gate that goes
+unconditional, re-read the owning lane's dormancy records** — arming a gate
+re-prices every deferral the artifact carries. Disposition recorded so the
+interim is not mistaken for the fix: the **temporary pin** (`pyslang==11.0.0`,
+marked as such) is dispatched to the tools lane; the **durable fix** — family
+stamp plus regeneration, **validated by the same gate** — rides SV's Landing A.
+*A pin is a schedule, not a design.*
+
+**AND A CONVERGENCE WORTH TWO SENTENCES.** SV kept its new lemmas **out of the
+`LeanModels` glob** because an unverified `rfl` would have turned `lake build`
+red, *"and a red build means the gates never run — which would have cost the
+proof evidence as well as the build."* The Wasm lane reported the same shape
+from the other side (`886ede9`: its fork build, *"when red hides every gate
+behind it"*). Two tiers, independently: **a red build is not one failure, it is
+an OUTAGE of every gate behind it** — which makes build-red a **gate-set** event
+and makes staging an unproven definition outside the glob a **gate-preserving**
+move rather than timidity.
+
+**THREE RIDERS, arriving from QoL (`582529d`, `2026-08-23-qol-43`) while this
+entry was being written.**
+
+**(a) The obligation is RELOCATED, and that is the sharpest part.** The unpinned
+input was **harmless for as long as the gate sat unwired** — nobody edited it,
+nothing about it changed; what changed is that something started **comparing**
+it.
+
+> **Wiring a comparison changes the blast radius of inputs NOBODY EDITED — so
+> the PIN AUDIT belongs to the ARMING COMMIT, not to the gate's author.**
+
+The gate's author is the person least able to see it: they wrote a correct
+comparison, and the defect lives in a `ci.yml` line they never touched. **The
+arming commit is the only commit where both facts are visible.** Checkable form
+for `--gate-set`: for each unconditional comparing gate, does its compared
+artifact embed a version string, and is that version pinned at **every** install
+site — **both arms of any `||` fallback**, since the second arm was unpinned
+here too. The `||` clause was discovered, not designed: **a fallback install
+path runs only when the first one failed, which is exactly when nobody is
+watching**, so a pin audit that reads the happy path audits the arm that was
+already fine.
+
+**(b) A message is a surface.** The SKIP branch politely told the reader how to
+enable the gate — with the **unpinned** command, in a line twenty minutes old.
+
+> **A hint is an INSTRUCTION, and an instruction that reproduces the defect IS
+> the defect.**
+
+Error and skip messages that tell a user what to run are **part of the gate's
+surface and audited with it**. For the reader who follows it, the message *is*
+the tool — §5.4's argument-parser rule pointed at the other end of the
+interface.
+
+**(c) One note left standing by name.** `docs/sv-charter.md:138`'s dated venv
+measurement will quietly stop being true. **Named in §5.4b and flagged to SV,
+not edited** — a dated measurement in another lane's document is named, never
+corrected in passing, because correcting it silently turns a record of their
+moment into a record of mine (§9.5a, and `2026-08-23-architecture-26`'s
+annotation norm seen from the outside).
+
+**Index:** MEAS-97 … MEAS-102, STMT-103, STMT-104.

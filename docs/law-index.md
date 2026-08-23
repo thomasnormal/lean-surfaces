@@ -143,6 +143,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-94 | a DECLARATION is not a CALL; a CALL is not a RUN — the gate ladder's four states | `docs/family-architecture.md §5.4b` |
 | MEAS-95 | enumeration over-reports, execution under-reports — a gate set needs both | `docs/family-architecture.md §5.4b` |
 | MEAS-96 | a right action taken for a wrong STATED reason survives the fix | `docs/family-architecture.md §5.4b`; `docs/backlog/architecture.md 2026-08-23-architecture-32` |
+| MEAS-97 | an unconditional byte-comparing gate inherits every unpinned input it compares | `docs/family-architecture.md §5.4b` |
+| MEAS-98 | a green that holds because nobody has released is evidence about the WORLD | `docs/family-architecture.md §5.4b` |
+| MEAS-99 | a flagged wart plus a new gate is an armed bomb — re-read dormancy records | `docs/family-architecture.md §5.4b`, §9.7 trigger |
+| MEAS-100 | a RED BUILD is an outage of every gate behind it | `docs/family-architecture.md §5.4b` |
+| MEAS-101 | the PIN AUDIT belongs to the arming commit — both arms of any `||` fallback | `docs/family-architecture.md §5.4b` |
+| MEAS-102 | a hint is an instruction; one that reproduces the defect IS the defect | `docs/family-architecture.md §5.4b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -253,6 +259,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-100 | a definition a LEMMA cannot state about is a fidelity gap | `docs/backlog.md §L88`, sharper form of §L82; cookbook §17 |
 | STMT-101 | ONE EXECUTION, TWO PROJECTIONS — an outcome and its class cannot drift | `docs/family-architecture.md §5.2` |
 | STMT-102 | the refusal-class field's PRESENCE is a theorem; absence means it did not refuse | `docs/family-architecture.md §5.2` |
+| STMT-103 | a stepper RECOVERS the walker as its non-suspending case — never a parallel implementation | `docs/family-architecture.md §3.6` (1a) |
+| STMT-104 | two executable implementations cost a parity APPARATUS; one plus a special case costs a THEOREM | `docs/family-architecture.md §3.6` (1a) |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

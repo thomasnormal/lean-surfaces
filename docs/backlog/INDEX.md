@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**162 entries across 16 lanes.** Regenerate with
+**163 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -31,6 +31,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-35` | audit MEDIUM 9-10: a checker with a floor, and a CI that can fail | qol |
 | `2026-08-23-qol-34` | audit MEDIUM 11 and LOW 12: a ledger that can fail, and a map that reads the tree | qol |
 | `2026-08-23-qol-33` | audit HIGH 4-5: a regex awk rejected outright, and a guard that failed open | qol |
+| `2026-08-23-architecture-33` | A stepper RECOVERS its walker; and arming a gate arms the pins it does not have | architecture |
 | `2026-08-23-qol-32` | audit HIGHs 1-3 and MEDIUMs 7-8: the matchers learn what a comment is | qol |
 | `2026-08-23-architecture-32` | The enumeration's first finding was about the enumerator | architecture |
 | `2026-08-23-qol-31` | the vendored-fixture convention, and a prose mention that still cost the whole library | qol |

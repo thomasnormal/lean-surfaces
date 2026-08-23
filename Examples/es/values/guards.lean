@@ -81,11 +81,11 @@ rather than about any operation. -/
 
 #guard match SemM.run (W := Unit) (ρ := Abrupt) (α := Unit)
               (SemM.refuseIntrinsic "Symbol.species") () with
-  | .unsupported c _ => c.className == "environment"
+  | .error (.unsupported c _ _) => c.className == "environment"
   | _ => false
 
 #guard match SemM.run (W := Unit) (ρ := Abrupt) (α := Unit) SemM.timeout () with
-  | .timeout => true
+  | .error .timeout => true
   | _ => false
 
 /-! ## The FOUR family classes, and this tier's two EXPECTED-EMPTY gates

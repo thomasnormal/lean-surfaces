@@ -41,7 +41,7 @@ def throwsKind (m : EsW α) (k : String) : Bool :=
 /-- Did it REFUSE (not in `ρ`, so no `try` can reach it), with this cause? -/
 def refuses (m : EsW α) (cls : String) : Bool :=
   match SemM.run m default with
-  | .unsupported c _ => c.className == cls
+  | .error (.unsupported c _ _) => c.className == cls
   | _ => false
 
 /-! ## The `sta.js` construction shape -/
@@ -151,10 +151,15 @@ feature. -/
             { get := some (.obj g), enumerable := some true, configurable := some true }
   return Val.sameValue (← getV 10 o (.str "g") (.obj o)) (.obj o)) true
 
-/- An ECMASCRIPT body is the ONE boundary left, and it refuses loudly
-rather than answering `undefined`. -/
+/- An ECMASCRIPT body was inch 3's one boundary. Inch 5 retired it — bodies
+RUN, and `Examples/es/statements/guards.lean` is where they are pinned.
+What this guard now holds is the LAYERING: `esCall` here is still the
+FRAGMENT, and it must keep refusing rather than quietly answering
+`undefined`, because a fragment that returns a plausible value is how a
+caller that forgot to move to `Eval.callComplete` scores a false pass. -/
 #guard refuses (do
-  let f ← ordinaryFunctionCreate none .ecmascript none .strict true
+  let f ← ordinaryFunctionCreate none (.ecmascript { params := [], body := default })
+            none .strict true
   esCall f .undef []) "unsupported"
 
 /-! ## Environment Records — §9.1.1.1
@@ -232,7 +237,7 @@ program outcome, so it is in `ρ` and catchable. -/
     let outer ← newDeclarativeEnvironment none
     let inner ← newDeclarativeEnvironment (some outer)
     lookupName 0 inner "v") default with
-  | .timeout => true
+  | .error .timeout => true
   | _ => false
 
 end Examples.es.functions

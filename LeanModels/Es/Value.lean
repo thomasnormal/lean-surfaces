@@ -24,7 +24,7 @@ needs it.
 **What is NOT here, and why it is a boundary rather than a gap.** Every
 conversion that can reach an object — `ToPrimitive`, and therefore
 `ToNumber`/`ToString` at an object argument — needs `[[Get]]` and
-`[[Call]]`, which are inch 2. Those arms REFUSE (`Halt.unsupported`)
+`[[Call]]`, which are inch 2. Those arms REFUSE (`Loud.unsupported`)
 rather than guessing, and `docs/es-semantics-design.md` §0.1 measured why
 the object model is rung 0 and not a later rung: `sta.js` cannot even
 construct `Test262Error` without it.

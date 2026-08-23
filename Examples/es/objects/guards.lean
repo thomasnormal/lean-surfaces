@@ -32,7 +32,7 @@ def yields (m : EsW Val) (v : Val) : Bool :=
 /-- Did the computation REFUSE, with this cause? -/
 def refusesWith (m : EsW α) (cls : String) : Bool :=
   match SemM.run m default with
-  | .unsupported c _ => c.className == cls
+  | .error (.unsupported c _ _) => c.className == cls
   | _ => false
 
 /-! ## The `sta.js` floor
@@ -214,7 +214,7 @@ without needing a call — §10.1.8.1 step 7, honoured BEFORE the refusal. -/
     let a ← ordinaryObjectCreate none
     let b ← ordinaryObjectCreate (some a)
     ordinaryGet 0 b (.str "k") (.obj b)) default with
-  | .timeout => true
+  | .error .timeout => true
   | _ => false
 
 end Examples.es.objects

@@ -123,10 +123,10 @@ cannot be reached by `try`. These pin that, which is the property the
 scoreboard's REFUSE bucket depends on. -/
 
 @[es_spec] theorem refuse_is_not_catchable (W : Type) (w : W) (c : EsRefusal) (m : String) :
-    SemM.run (ρ := Abrupt) (α := Unit) (SemM.refuse c m) w = Halt.unsupported c m := rfl
+    SemM.run (ρ := Abrupt) (α := Unit) (SemM.refuse c m) w = .error (.unsupported c m none) := rfl
 
 @[es_spec] theorem timeout_is_not_catchable (W : Type) (w : W) :
-    SemM.run (ρ := Abrupt) (α := Unit) SemM.timeout w = Halt.timeout := rfl
+    SemM.run (ρ := Abrupt) (α := Unit) SemM.timeout w = .error .timeout := rfl
 
 /-! ## The Property Descriptor classification — ES2026 §6.2.6.1-.3
 
@@ -227,14 +227,25 @@ callable is not automatically a constructor. -/
 
 @[es_spec] theorem plain_object_is_not_callable : (Obj.callable {}) = none := rfl
 
-/-! ## `Body` — the one boundary inch 3 leaves
+/-! ## `Body` — inch 3's one boundary, now closed
 
-A `builtin` runs; an `ecmascript` body is `OrdinaryCallEvaluateBody`, which
-is the statement evaluator. Distinct constructors, so the arm cannot be
-taken by accident. -/
+A `builtin` runs; an `ecmascript` body CARRIES its `Code` as of inch 5 and
+`Eval.evalCallBody` runs it. The constructors stay distinct, so the arm
+still cannot be taken by accident — but the statement is `noConfusion`
+rather than `== … = false`, because `Code` holds a `Node` and `Body` no
+longer derives `DecidableEq`. Deriving it would have manufactured an
+equality on function bodies that no clause of the spec asks for. -/
 
-@[es_spec] theorem body_builtin_ne_ecmascript (n : String) :
-    (Body.builtin n == Body.ecmascript) = false := rfl
+@[es_spec] theorem body_builtin_ne_ecmascript (n : String) (c : Code) :
+    Body.builtin n ≠ Body.ecmascript c := by
+  intro h; exact Body.noConfusion h
+
+/-- The `Code` a function closes over survives into its slot unchanged —
+§10.2.3 steps 6-7 store the Parse Nodes, they do not compile them. -/
+@[es_spec] theorem ecmascript_body_keeps_its_code (ps : List Node) (b : Node) :
+    (match Body.ecmascript { params := ps, body := b } with
+     | .ecmascript c => (c.params, c.body)
+     | .builtin _ => ([], b)) = (ps, b) := rfl
 
 /-! ## The four REFUSE classes — §5.2, adopted at `14bdd7a`
 

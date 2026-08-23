@@ -30,7 +30,7 @@ def throwsKind (m : EsW α) (k : String) : Bool :=
 
 def refusesClass (m : EsW α) (cls : String) : Bool :=
   match SemM.run m default with
-  | .unsupported c _ => c.className == cls
+  | .error (.unsupported c _ _) => c.className == cls
   | _ => false
 
 /-! ## `ToNumber` — §7.1.4, and the NaN paths need `sameValue`

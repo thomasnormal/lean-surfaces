@@ -489,3 +489,163 @@ of writing the witnesses down before the code.
 Checked for SoftFloat's `INBOUND` entry and `toInt_eq_truncate` at
 `92fcfcb`: **neither is on master yet**, so there is nothing to renumber or
 close today. This entry is the standing obligation until it is.
+
+---
+
+## 2026-08-23-es-0 — M2 INCH 5: statements, declaration instantiation, and function bodies — a Script RUNS, and Core's `Outcome` was adopted in the same touch
+
+`LeanModels/Es/{Object,Completion,Function,Spec,Eval}.lean` +
+`Examples/es/statements/guards.lean` — **~690 new lines in `Eval.lean`, 44 new
+`#guard`s (250 in the lane), 82 `@[es_spec]` lemmas.**
+
+**SIZED FROM THE PINNED SPEC BEFORE BEING WRITTEN**, the discipline inches 2
+and 3 set: the named abstract operations realized here carry **422 numbered
+steps** in `ES2026` — `FunctionDeclarationInstantiation` 127,
+`GlobalDeclarationInstantiation` 68, `CaseBlockEvaluation` 48,
+`ForLoopEvaluation` 30, `BlockDeclarationInstantiation` 24,
+`ScriptEvaluation` 20, `InstantiateOrdinaryFunctionExpression` 20 — against
+inch 3's 204 and inch 2's 159. (`ForInOfLoopEvaluation`'s 18 are NOT counted:
+`for…of` refuses, because it needs the iterator protocol.)
+
+### THE INCH-3 REFUSAL IS RETIRED
+
+`OrdinaryCallEvaluateBody` on an `ecmascript` body was inch 3's one boundary.
+`Body.ecmascript` now carries its `Code` — the ingested `params` and `body`
+Parse Nodes, per §10.2.3 steps 6-7 — and `Eval.evalCallBody` runs it.
+Functions call, close over their environment, hoist, construct, and return.
+
+### THE LAYERING THAT MADE IT POSSIBLE, and what it still costs
+
+`Function.lean` cannot import `Eval.lean`, so the complete
+`OrdinaryCallEvaluateBody` could not go where `[[Call]]` lives. The tier
+already had the answer: `Ordinary.ordinaryGet` is the accessor-free fragment
+and `Function.getV` is the complete §10.1.8.1. Inch 5 uses the SAME shape —
+`Function.ordinaryCallEvaluateBody` stays the fragment and refuses;
+`Eval.evalCallBody`/`callComplete`/`constructComplete` are complete and are
+what the evaluator calls. `Examples/es/functions/guards.lean` now pins that
+the fragment KEEPS refusing, which is what stops a caller that forgot to move
+up from scoring a false pass.
+
+**The price, stated rather than buried:** `Convert.ordinaryToPrimitive` and
+`Function.getV` still reach `[[Call]]` through the OLD, builtin-only
+`callValue`, because they sit below `Eval.lean`. So a user-defined
+`valueOf`/`toString` reached by COERCION, and a user-defined GETTER, still
+refuse. That is `2026-08-23-es-1`.
+
+### THREE COMPLETION TYPES ARE THE MONAD'S, ONE IS THE RETURN VALUE
+
+`ρ = Abrupt` already had all four constructors from inch 1, which turned out
+to be the whole design: `return`, `break` and `continue` are RAISED, exactly
+like `throw`, so no statement threads them by hand and none can be dropped by
+forgetting a case. `SemM.catchRaise` — new, and the only new operator on the
+monad — is where each is absorbed: `evalCallBody` takes the `return`,
+`runLoop` takes an unlabelled `break`/`continue`, `try` takes the `throw` and
+RE-RAISES everything else, which is why `return` crosses a `try`.
+
+A refusal and a timeout live BELOW `ExceptT ρ`, so `catchRaise` cannot see
+one. A `try` that could swallow a refusal would let an unmodeled construct
+score as a pass; `Spec.lean`'s `rfl` pins that it cannot.
+
+### `empty` IS NOT `undefined`, and the corpus says so
+
+`evalStmt` answers `Option Val` — the completion VALUE, `none` for the spec's
+`empty`. Collapsing the two at the leaves would make
+`eval("1; if (true) { }")` answer `1`; §14.6.2 step 5 runs
+`UpdateEmpty(…, undefined)` and the answer is `undefined`. That is exactly
+what `Examples/es/test262/if_cptn.json` asserts, and it is guarded.
+
+### CORE'S `Outcome` WAS ADOPTED IN THE SAME TOUCH
+
+Per the coordinator's instruction, the substrate was touched once. `EsRefusal
+:= RefusalCause EsDetail`, `SemM W ρ := SemMWith W ρ EsDetail Unit`; the local
+`RefusalCause`, `Halt`, its `bind` and its `Monad` instance are DELETED, not
+wrapped.
+
+**The 7-site price was right, and incomplete.** The destructuring sites were
+exactly 7, all in the guard helpers — the concentration argument held. But the
+number was quoted as the price of the adoption, and it was not: it counted
+only `.unsupported`, missing 22 CONSTRUCTION sites (`Halt.ok` ×7,
+`Halt.timeout` ×13, `Halt.unsupported` ×2) across five modules. The true
+mechanical surface was ~30. **A price grepped for one constructor is not a
+price for the type.**
+
+### TWO SILENT WRONG ANSWERS, FOUND BY READING THE SPEC AGAINST THE MODEL
+
+The inch was written, green, committed and QUEUED FOR ITS TRIAD before this
+was noticed. It was found by re-reading §14.7.4.4 to check a docstring claim,
+not by any test failing — and both defects were the kind this lane exists to
+prevent, because they answer the wrong thing quietly instead of refusing.
+
+**One.** `Abrupt.brk`/`cont` carried no `[[Value]]`, and `Completion.lean`
+said so in as many words: "`empty` is the only case that arises for them in
+the language core". §14.2.2 step 3 refutes it — `UpdateEmpty(s, sl)` applies
+to an ABRUPT `s`, so the `break` out of `{ 5; break; }` leaves carrying the
+`5`, and §14.7.4.4 step 3.c hands that to the loop. `while (true) { 5; break;
+}` completed `empty` where the language says `5`.
+
+**Two.** `V` starts at ***undefined***, not `empty` (§14.7.4.4 step 1;
+§14.12.4 step 2 says the same for `switch`). The loop seeded it with `empty`,
+so `eval("1; while (false);")` answered `1` where the language says
+`undefined`.
+
+Both are exactly what test262's `-cptn` family tests, so the rung-0 slice
+would have scored them as failures — or worse, as passes on the tests that do
+not look. **The ticket was CANCELLED rather than spent validating a tree with
+a known wrong answer in it**, the fix landed, and five guards now pin the
+corrected clauses. `Abrupt.updateEmpty` is no longer the identity.
+
+**The lesson is the one the lane keeps relearning: a docstring that argues a
+field is unnecessary is a claim, and a claim is worth exactly one re-read of
+the clause it is about.** The same shape as `NewFunctionEnvironment` in inch
+3 — except that one was caught by three guards failing, and this one was
+caught only because a docstring was checked. The missing guards are the real
+defect, and they are written now.
+
+### WHAT REFUSES, DELIBERATELY
+
+Each is a guard, so it fails the day the boundary moves: the `arguments`
+object (needs `%Object.prototype%` and `@@iterator`), a non-simple parameter
+list, generators and `async`, `for…of`/`for…in`, labelled jumps, destructuring
+in a declaration or a `catch` parameter, and any node outside the pinned
+vocabulary.
+
+---
+
+## 2026-08-23-es-1 — the coercion/accessor cycle: move `ToPrimitive` and `[[Get]]`'s accessor walk into the evaluator's mutual block
+
+ECMA-262's real dependency knot is `ToPrimitive → Call → EvaluateBody →
+Evaluation → ToPrimitive`, and Lean's one-file `mutual` is where a knot has to
+go. Today `Convert.ordinaryToPrimitive` and `Function.getV` sit below
+`Eval.lean` and reach the builtin-only `callValue`, so a user-defined
+`valueOf`/`toString`/getter refuses.
+
+Two shapes were considered and the cheap one is worse: parameterizing the
+conversion chain by a caller threads an extra argument through every
+signature in `Convert.lean`. The honest fix is to merge the knot — the
+coercion chain, the call chain and the evaluator — into one `mutual`, which is
+what the spec itself is. It is a restructuring, not a semantics gap.
+
+---
+
+## 2026-08-23-es-2 — the Directive Prologue (§11.2.2), and non-strict `this`
+
+Every function this tier creates has `[[Strict]] = true`, inherited from inch
+3's `FuncData` default and now also written by `instantiateFunction`. The
+prologue is not read, so `"use strict"` is neither required nor detected.
+
+It is observable through `this`: `OrdinaryCallBindThis`'s sloppy arm needs the
+global object and the wrapper intrinsics, so a non-strict function called bare
+REFUSES where it should see the global object. The refusal is loud, so nothing
+scores a false pass — but half of test262 runs each test in both modes, and
+the sloppy half cannot be scored until this lands.
+
+---
+
+## 2026-08-23-es-3 — the global object, and §16.1.7's `CreateGlobalVarBinding`
+
+`GlobalDeclarationInstantiation` puts `var` names on the global OBJECT, so
+`var x` at top level makes `globalThis.x`. This tier has no global object, so
+`instantiateDeclarations` puts them in the declarative record for both §16.1.7
+and §10.2.11. The observable that separates them is `this.x` at top level, and
+`resolveThisBinding` already refuses without the global object — so no test
+can reach the difference and score a pass. It lands with the realm (inch 6).

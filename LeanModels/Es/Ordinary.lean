@@ -9,7 +9,7 @@ cited `(ES2026, clause-id, step)`.
 **Fuel is an INDEX, never a layer** (`docs/family-architecture.md` §3.4):
 the prototype walk recurses, so `hasProperty`/`get`/`set` take a `fuel`
 argument that decreases at the `[[Prototype]]` step. Exhaustion is
-`Halt.timeout` and nothing else. Hidden in the state it would not be the
+`.error .timeout` and nothing else. Hidden in the state it would not be the
 recursion argument and the interpreter could not show termination.
 
 **Accessor properties REFUSE.** `[[Get]]` on an accessor calls the getter,
@@ -25,12 +25,12 @@ namespace LeanModels.Es
 not a program error, so it is not in `ρ` and no `try` can catch it. -/
 def deref (r : ObjRef) : EsW Obj := fun w =>
   match w.get? r with
-  | some o => Halt.ok (.ok o, w)
-  | none => Halt.unsupported (esRefusal .construct "internal")
-              s!"internal: dangling object reference {r} (report this)"
+  | some o => .ok (.ok o, w)
+  | none => .error (.unsupported (esRefusal .construct "internal")
+              s!"internal: dangling object reference {r} (report this)" none)
 
 def store (r : ObjRef) (o : Obj) : EsW Unit := fun w =>
-  Halt.ok (.ok (), w.set r o)
+  .ok (.ok (), w.set r o)
 
 /-! ## The simple slots -/
 
@@ -59,7 +59,7 @@ def ordinarySetPrototypeOf (fuel : Nat) (r : ObjRef) (v : Option ObjRef) : EsW B
   if !o.extensible then return false
   -- steps 8-11: reject a prototype cycle
   let rec walk : Nat → Option ObjRef → EsW Bool
-    | 0, _ => fun _ => Halt.timeout
+    | 0, _ => fun _ => .error .timeout
     | _, none => return true
     | n + 1, some p =>
       if p == r then return false
@@ -168,7 +168,7 @@ def ordinaryDefineOwnProperty (r : ObjRef) (k : PropKey) (desc : PropDesc) : EsW
 /-- `OrdinaryHasProperty(O, P)` — ES2026 §10.1.7.1, 6 steps. Walks
 `[[Prototype]]`; fuel bounds the walk. -/
 def ordinaryHasProperty : Nat → ObjRef → PropKey → EsW Bool
-  | 0, _, _ => fun _ => Halt.timeout
+  | 0, _, _ => fun _ => .error .timeout
   | n + 1, r, k => do
     if (← ordinaryGetOwnProperty r k).isSome then return true
     match (← deref r).proto with
@@ -188,7 +188,7 @@ property is complete, and step 7's "if the getter is `undefined` return
 call.
 -/
 def ordinaryGet : Nat → ObjRef → PropKey → Val → EsW Val
-  | 0, _, _, _ => fun _ => Halt.timeout
+  | 0, _, _, _ => fun _ => .error .timeout
   | n + 1, r, k, receiver => do
     match ← ordinaryGetOwnProperty r k with
     | none =>
@@ -216,7 +216,7 @@ create an own property on `obj` rather than mutating the prototype.
 -/
 def ordinarySetWithOwnDescriptor :
     Nat → ObjRef → PropKey → Val → Val → Option PropDesc → EsW Bool
-  | 0, _, _, _, _, _ => fun _ => Halt.timeout
+  | 0, _, _, _, _, _ => fun _ => .error .timeout
   | n + 1, r, k, v, receiver, ownDesc => do
     match ownDesc with
     | none =>
@@ -289,6 +289,6 @@ def ordinaryOwnPropertyKeys (r : ObjRef) : EsW (List PropKey) := do
 /-- `OrdinaryObjectCreate(proto)` — ES2026 §10.1.12.1, 5 steps. -/
 def ordinaryObjectCreate (proto : Option ObjRef) : EsW ObjRef := fun w =>
   let (r, w') := w.alloc { proto := proto }
-  Halt.ok (.ok r, w')
+  .ok (.ok r, w')
 
 end LeanModels.Es

@@ -23,15 +23,15 @@ namespace LeanModels.Es
 is a tier fault, not a program error, so it is not catchable. -/
 def derefEnv (r : EnvRef) : EsW EnvRec := fun w =>
   match w.envs[r]? with
-  | some e => Halt.ok (.ok e, w)
-  | none => Halt.unsupported (esRefusal .construct "internal")
-              s!"internal: dangling environment reference {r} (report this)"
+  | some e => .ok (.ok e, w)
+  | none => .error (.unsupported (esRefusal .construct "internal")
+              s!"internal: dangling environment reference {r} (report this)" none)
 
 def storeEnv (r : EnvRef) (e : EnvRec) : EsW Unit := fun w =>
-  Halt.ok (.ok (), { w with envs := w.envs.set! r e })
+  .ok (.ok (), { w with envs := w.envs.set! r e })
 
 def allocEnv (e : EnvRec) : EsW EnvRef := fun w =>
-  Halt.ok (.ok w.envs.size, { w with envs := w.envs.push e })
+  .ok (.ok w.envs.size, { w with envs := w.envs.push e })
 
 /-! ## Throwing the errors the spec names
 
@@ -188,7 +188,7 @@ def newFunctionEnvironment (f : ObjRef) (newTarget : Val) : EsW EnvRef := do
 a `this` binding. An arrow function's record has none, so the walk passes
 straight through it — which IS lexical `this`, not a special case. -/
 def getThisEnvironment : Nat → EnvRef → EsW EnvRef
-  | 0, _ => fun _ => Halt.timeout
+  | 0, _ => fun _ => .error .timeout
   | n + 1, r => do
     if ← envHasThisBinding r then return r
     match (← derefEnv r).outer with
@@ -210,7 +210,7 @@ Reference Record proper (§6.2.5) arrives with the expression evaluator;
 until then the resolved environment is what a caller needs.
 -/
 def resolveBinding : Nat → EnvRef → String → EsW EnvRef
-  | 0, _, _ => fun _ => Halt.timeout
+  | 0, _, _ => fun _ => .error .timeout
   | n + 1, r, name => do
     if ← envHasBinding r name then return r
     match (← derefEnv r).outer with

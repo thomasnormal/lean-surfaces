@@ -174,7 +174,7 @@ guards above are not passing merely because the right is never reached. -/
 #guard match SemM.run (do
     let e ← newDeclarativeEnvironment none
     evalExpr 0 e (num "1")) default with
-  | .timeout => true
+  | .error .timeout => true
   | _ => false
 
 end Examples.es.eval

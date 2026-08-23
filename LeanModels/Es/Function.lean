@@ -64,7 +64,7 @@ def ordinaryFunctionCreate (proto : Option ObjRef) (body : Body)
     (env : Option EnvRef) (thisMode : ThisMode) (strict : Bool) : EsW ObjRef := fun w =>
   let fd : FuncData := { body := body, env := env, thisMode := thisMode, strict := strict }
   let (r, w') := w.alloc { proto := proto, callable := some fd }
-  Halt.ok (.ok r, w')
+  .ok (.ok r, w')
 
 /--
 `MakeConstructor(F, writablePrototype, prototype)` — §10.2.5, 13 steps.
@@ -140,8 +140,12 @@ def prepareForOrdinaryCall (f : ObjRef) (newTarget : Val) : EsW EnvRef :=
 `OrdinaryCallEvaluateBody(F, argumentsList)` — §10.2.1.4, 1 step, which
 delegates to `EvaluateBody` — **the statement evaluator, inch 5**.
 
-A `builtin` body runs now. An `ecmascript` body is THE boundary of inch 3,
-and it refuses with `unsupportedConstruct` rather than answering
+A `builtin` body runs now. An `ecmascript` body needs the statement
+evaluator, which imports this file, so **this is the fragment and
+`Eval.evalCallBody` is the complete clause** — the same layering that
+leaves the accessor-free `[[Get]]` in `Ordinary.lean` and the complete one
+in `getV` below. Nothing in the model calls this arm any more: `Eval`'s
+`callValue'` supersedes `callValue`. It refuses rather than answering
 `undefined`, because a silent `undefined` here would let every function
 call in the corpus score as a pass.
 -/
@@ -152,9 +156,9 @@ def ordinaryCallEvaluateBody (f : ObjRef) (thisArg : Val) (args : List Val) : Es
   | some fd =>
     match fd.body with
     | .builtin n => callBuiltin n thisArg args
-    | .ecmascript =>
+    | .ecmascript _ =>
       SemM.refuseConstruct
-        "ECMAScript function body: OrdinaryCallEvaluateBody needs the statement evaluator (inch 5)"
+        "ECMAScript function body: this is the FRAGMENT; Eval.evalCallBody is the complete clause"
 
 /-- `[[Call]](thisArgument, argumentsList)` — §10.2.1, 14 steps. -/
 def esCall (f : ObjRef) (thisArg : Val) (args : List Val) : EsW Val := do
@@ -243,7 +247,7 @@ exist yet. -/
 /-- `Get(O, P)` — §7.3.2, and the complete `OrdinaryGet` (§10.1.8.1)
 including step 8's `Call(getter, Receiver)`. -/
 def getV : Nat → ObjRef → PropKey → Val → EsW Val
-  | 0, _, _, _ => fun _ => Halt.timeout
+  | 0, _, _, _ => fun _ => .error .timeout
   | n + 1, r, k, receiver => do
     match ← ordinaryGetOwnProperty r k with
     | none =>
@@ -280,7 +284,7 @@ def ordinaryHasInstance (fuel : Nat) (c : Val) (o : Val) : EsW Bool := do
     match ← ordinaryGet fuel cr (.str "prototype") (.obj cr) with
     | .obj protoRef =>
       let rec walk : Nat → Val → EsW Bool
-        | 0, _ => fun _ => Halt.timeout
+        | 0, _ => fun _ => .error .timeout
         | n + 1, .obj orf => do
           match (← deref orf).proto with
           | none => return false

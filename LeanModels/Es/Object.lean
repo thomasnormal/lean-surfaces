@@ -1,4 +1,5 @@
 import LeanModels.Es.Completion
+import LeanModels.Es.Ast
 
 /-!
 # The ordinary object model (`LeanModels.Es`)
@@ -140,6 +141,26 @@ inductive ThisMode where
   deriving DecidableEq, Repr, Inhabited
 
 /--
+`[[FormalParameters]]` and `[[ECMAScriptCode]]` — §10.2.3 steps 6-7.
+
+The spec stores *Parse Nodes*, so this stores the ingested AST: a function
+closes over its own source structure and nothing is re-parsed at call
+time. Keeping the AST rather than a pre-compiled closure is what lets
+`FunctionDeclarationInstantiation` read the parameter list's STATIC
+semantics — `BoundNames`, `IsSimpleParameterList` — at the moment of the
+call, which is exactly where §10.2.11 reads them.
+-/
+structure Code where
+  params : List Node
+  body : Node
+  /-- True for an arrow whose `ConciseBody` is an `AssignmentExpression`
+  rather than a `FunctionBody`: `x => x + 1`. Its value IS the return
+  value (§15.3.5 step 4), so there is no statement list to run and no
+  `return` completion to absorb. -/
+  exprBody : Bool := false
+  deriving Repr, Inhabited
+
+/--
 What a callable object's `[[Call]]` actually runs.
 
 **A builtin is named, not embedded.** Storing a `List Val → …` closure in
@@ -147,15 +168,23 @@ What a callable object's `[[Call]]` actually runs.
 heap — the whole first-order discipline the Python tier keeps for the same
 reason. So a builtin carries its NAME and a table dispatches it.
 
-`ecmascript` carries no body: evaluating one is `OrdinaryCallEvaluateBody`
-(§10.2.1.4), which needs the statement evaluator — inch 5. That arm
-refuses, which is a boundary and not a gap, and it is a SHARPER refusal
-than inch 2's: an accessor whose getter is a BUILTIN now works.
+`ecmascript` carries its `Code`. Inch 3 left this constructor EMPTY and
+`OrdinaryCallEvaluateBody` refused on it, because the statement evaluator
+did not exist; inch 5 gives it the AST and retires that refusal.
+`Function.lean` still holds the refusing fragment for the same reason
+`Ordinary.ordinaryGet` still holds the accessor-free `[[Get]]`: the
+complete version needs the evaluator, and the evaluator imports this file.
+
+**`DecidableEq` is gone from this type.** It was derivable while both
+arms were finite; a `Code` holds a `Node`, whose equality is the AST's,
+and no clause in the model branches on whether two function bodies are
+the same term. Deriving it anyway would have manufactured an equality the
+spec never asks for.
 -/
 inductive Body where
   | builtin (name : String)
-  | ecmascript
-  deriving DecidableEq, Repr, Inhabited
+  | ecmascript (code : Code)
+  deriving Repr, Inhabited
 
 /-- The internal slots §10.2 gives an ECMAScript function object. -/
 structure FuncData where

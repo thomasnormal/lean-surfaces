@@ -1,3 +1,4 @@
+import LeanModels.Core.Outcome
 import LeanModels.Es.Value
 
 /-!
@@ -109,48 +110,30 @@ structure EsDetail where
   name : String := ""
   deriving Repr, Inhabited
 
-/--
-The family's four REFUSE classes — §5.2 — parameterized by a tier payload.
+/-! ## The four REFUSE classes now come from `Core`
 
-They retire on completely different schedules, which is why pooling them
-makes a scoreboard unreadable.
+**ADOPTED BY SUBSTITUTION** (master `eeeb1fd`). This file previously carried
+`RefusalCause π` and a three-constructor `Halt` locally, under an adoption
+note; `Core.Outcome` now carries both, and its `RefusalCause` is **this
+lane's shape, lifted verbatim** — four constructors, `className`,
+`isUndefined`, `isOrderDependence`, `detail`, with Core's own docstring
+recording that `isUndefined` was *"lifted from ES so the gate is written
+once."*
+
+So the adoption is a DELETION, not a translation: the local type, its three
+helpers, the local `Halt`, its `bind` and its `Monad` instance are gone and
+Core's are imported. **No adapter, no wrapper** — the reconciliation rule.
+`EsCause`/`EsDetail` stay, because they are the tier's payload `π`, which is
+exactly what Core parameterizes over.
+
+`σ := Unit`: this tier has no snapshot consumer, and a diagnostic snapshot
+without one is designing against nothing — the same reasoning that kept
+`Run`'s move out of the C charter's M1. Core's `refuseWith` is there when a
+consumer appears.
 -/
-inductive RefusalCause (π : Type) where
-  /-- Out-of-tier construct. Retires by climbing a rung. -/
-  | unsupported (detail : π)
-  /-- The language says this run has no meaning. **Never retires: it is the
-  product.** Expected EMPTY for ECMAScript, and gated below. -/
-  | undefined (detail : π)
-  /-- The run needs something outside the modeled slice. -/
-  | environment (detail : π)
-  /-- The language admits several orders and the model cannot show the
-  observable invariant under all of them. Expected EMPTY for ECMAScript
-  (§2.3 measured zero order latitude), and gated below. -/
-  | orderDependence (detail : π)
-  deriving Repr, Inhabited
 
-/-- This tier's instantiation. -/
+/-- This tier's refusal cause — Core's four classes at this tier's payload. -/
 abbrev EsRefusal := RefusalCause EsDetail
-
-namespace RefusalCause
-
-/-- The class, as a scoreboard bucket name — the string §9.4's shared
-verdict vocabulary aggregates on. -/
-def className : RefusalCause π → String
-  | .unsupported _ => "unsupported"
-  | .undefined _ => "undefined"
-  | .environment _ => "environment"
-  | .orderDependence _ => "order-dependence"
-
-def isUndefined : RefusalCause π → Bool
-  | .undefined _ => true
-  | _ => false
-
-def isOrderDependence : RefusalCause π → Bool
-  | .orderDependence _ => true
-  | _ => false
-
-end RefusalCause
 
 /-- **The tier's ONLY cause constructor.** Everything that refuses goes
 through here, which is what makes the two gates below meaningful: a UB or
@@ -160,41 +143,6 @@ def esRefusal (k : EsCause) (name : String) : EsRefusal :=
   | .construct => .unsupported { kind := .construct, name := name }
   | .unmodeledIntrinsic => .environment { kind := .unmodeledIntrinsic, name := name }
   | .hostFacility => .environment { kind := .hostFacility, name := name }
-
-/--
-The base of the stack: a computation that produced a value, ran out of
-fuel, or hit something the tier does not model.
-
-These are three of `Run`'s four constructors (`LeanModels/Python/Runtime.lean`);
-the fourth, `.exn`, is not here because in this tier an exception is an
-ABRUPT COMPLETION and therefore lives in `ρ`, which is the whole point of
-§1.2. The covenant is unchanged and is the family's: `.timeout` is fuel
-exhaustion and nothing else, `.unsupported` is loud and fuel-independent.
--/
-inductive Halt (α : Type) where
-  | ok (value : α)
-  /-- Fuel exhaustion, and nothing else. -/
-  | timeout
-  /-- Outside the tier. Loud, fuel-independent, and carries its cause so a
-  scoreboard can bucket it without parsing prose (`docs/es-charter.md`
-  §3.6: the three causes are never pooled). -/
-  | unsupported (cause : EsRefusal) (message : String)
-  deriving Repr, Inhabited
-
-namespace Halt
-
-def pure' (a : α) : Halt α := .ok a
-
-def bind : Halt α → (α → Halt β) → Halt β
-  | .ok a, f => f a
-  | .timeout, _ => .timeout
-  | .unsupported c m, _ => .unsupported c m
-
-instance : Monad Halt where
-  pure := pure'
-  bind := bind
-
-end Halt
 
 /--
 An abrupt completion — ES2026 §6.2.4. The four non-normal `[[Type]]`s,
@@ -209,33 +157,27 @@ language. This tier is the second consumer the C charter said would settle
 where such a type lives; that question is the architecture lane's and does
 not block here, because the shape below is parametric in ρ.
 
-`break`/`continue` carry an OPTIONAL target: `[[Target]]` is a label or
-`empty`, and the enclosing iteration or labelled statement is what absorbs
-it. Their `[[Value]]` is `empty` in the cases that arise, which is what
-`UpdateEmpty` exists to fill.
+`break`/`continue` carry an OPTIONAL target — `[[Target]]` is a label or
+`empty` — and an OPTIONAL value, `none` for the spec's `empty`.
+
+**The value field was added after this file claimed it was unnecessary.**
+The first version said `[[Value]]` is "`empty` in the cases that arise" and
+made `UpdateEmpty` the identity. §14.2.2 step 3 refutes it: `UpdateEmpty(s,
+sl)` applies to an ABRUPT `s`, so the `break` out of `{ 5; break; }` leaves
+carrying the `5`, and §14.7.4.4 step 3.c hands that value to the loop.
+Without the field `while (true) { 5; break; }` completes `empty` where the
+language says `5` — a silent wrong answer, and exactly what test262's
+`-cptn` family tests.
 -/
 inductive Abrupt where
   | throw (value : Val)
   | ret (value : Val)
-  | brk (target : Option String)
-  | cont (target : Option String)
+  | brk (target : Option String) (value : Option Val)
+  | cont (target : Option String) (value : Option Val)
   deriving Repr, Inhabited
 
-/--
-The tier's semantic monad — the family's §3.4 shape, `ExceptT` OUTSIDE
-`StateT` so the world survives a raise.
-
-`W` is the world (realm, heap, execution contexts) and arrives at inch 2.
-`ρ` is left a parameter rather than fixed to `Abrupt` so that the pure
-fragment — the conversions of `Value.lean` — can be typed at a narrower
-error type, and so the core export can replace this without a signature
-change.
-
-**Fuel is NOT in here**, per §3.4: it is an index on the step function,
-because its job is to BE the recursion argument and hidden in state it is
-not an argument at all.
--/
-abbrev SemM (W : Type) (ρ : Type) := ExceptT ρ (StateT W Halt)
+/-- The tier's semantic monad — **Core's**, at `π := EsDetail`, `σ := Unit`. -/
+abbrev SemM (W : Type) (ρ : Type) := SemMWith W ρ EsDetail Unit
 
 /-- The tier's usual instantiation: errors are abrupt completions. -/
 abbrev EsM (W : Type) := SemM W Abrupt
@@ -244,32 +186,59 @@ namespace SemM
 
 /-- `? Foo(x)` is `← foo x`; this is the explicit form for the rare place
 a raise is written rather than propagated. -/
-def raise (e : ρ) : SemM W ρ α := throw e
+def raise (e : ρ) : SemM W ρ α := _root_.LeanModels.raiseIn e
 
 /-- Refuse: loud, fuel-independent, and cause-bucketed. Not an error in
 `ρ` — a refusal is not something a program can catch. -/
 def refuse (c : EsRefusal) (msg : String) : SemM W ρ α :=
-  fun _ => Halt.unsupported c msg
+  _root_.LeanModels.refuse c msg
 
 /-- Refuse an unmodeled CONSTRUCT — class `unsupported`. -/
 def refuseConstruct (msg : String) : SemM W ρ α :=
-  refuse (esRefusal .construct msg) msg
+  _root_.LeanModels.refuse (esRefusal .construct msg) msg
 
-/-- Refuse an unmodeled BUILT-IN — class `environment`, retires by
-widening the slice. -/
+/-- Refuse an unmodeled BUILT-IN — class `environment`, retires by widening
+the slice. -/
 def refuseIntrinsic (name : String) : SemM W ρ α :=
-  refuse (esRefusal .unmodeledIntrinsic name) name
+  _root_.LeanModels.refuse (esRefusal .unmodeledIntrinsic name) name
 
 /-- Refuse a HOST facility — class `environment`, does NOT retire by
 building more language. -/
 def refuseHost (hook : String) : SemM W ρ α :=
-  refuse (esRefusal .hostFacility hook) hook
+  _root_.LeanModels.refuse (esRefusal .hostFacility hook) hook
 
 /-- Fuel exhaustion. The only exhaustion outcome. -/
-def timeout : SemM W ρ α := fun _ => Halt.timeout
+def timeout : SemM W ρ α := _root_.LeanModels.exhausted
+
+/--
+Catch a RAISE — and nothing else.
+
+This is the seam every ES statement that absorbs a completion goes
+through: `try` absorbs a `throw`, an iteration statement absorbs a
+`break`/`continue`, and `OrdinaryCallEvaluateBody` absorbs a `return`.
+All four are `ρ`, so ALL FOUR use this one operator and the handler
+decides which it keeps — a handler that does not want a completion
+re-raises it, which is how `return` escapes a `try` block.
+
+**A refusal and a timeout are NOT catchable.** They live in the base
+`HaltWith`, below `ExceptT ρ`, so no handler here can see one: a refusal
+that a `try` could swallow would let an unmodeled construct score as a
+pass, which is the failure mode §3.6 exists to prevent. The `rfl` in
+`Spec.lean` pins that.
+
+**The state survives.** `ExceptT ρ (StateT W _)` puts the state UNDER the
+raise, so the handler runs in the world the raising computation left
+behind — the heap a `throw` mutated on its way out is still there, which
+is what `try { o.x = 1; throw e } catch {}` requires.
+-/
+def catchRaise (m : SemM W ρ α) (h : ρ → SemM W ρ α) : SemM W ρ α := fun w => do
+  match ← m w with
+  | (.error e, w') => h e w'
+  | (.ok a, w') => pure (.ok a, w')
 
 /-- Run a computation from a world, exposing the base outcome. -/
-def run (m : SemM W ρ α) (w : W) : Halt (Except ρ α × W) := m w
+def run (m : SemM W ρ α) (w : W) :
+    _root_.LeanModels.HaltWith EsDetail Unit (Except ρ α × W) := m w
 
 end SemM
 
@@ -310,26 +279,29 @@ namespace Abrupt
 /--
 `UpdateEmpty(completionRecord, value)` — ES2026 §6.2.4.6.
 
-The spec's rule: a `return` or `throw` completion always has a value, so
-it is returned unchanged; a `break`/`continue` whose `[[Value]]` is
-`empty` takes the supplied one. Because `brk`/`cont` here carry no value
-field at all — `empty` is the only case that arises for them in the
-language core — this is currently the identity, and it is written out
-rather than omitted so that the clause has a definition to cite and the
-day a valued `break` is needed there is a place to put it.
+The spec's rule, and the whole rule: a `return` or `throw` always has a
+value, so it comes back unchanged (step 1 is an ASSERT to that effect); a
+`break`/`continue` whose `[[Value]]` is `empty` takes the supplied one.
+
+This was the identity until inch 5, on the reasoning that `brk`/`cont`
+never carry a value. They do — `evalStmtList` is where they pick one up,
+and a loop or `switch` is where it is read back out.
 -/
-def updateEmpty (c : Abrupt) (_v : Val) : Abrupt := c
+def updateEmpty : Abrupt → Val → Abrupt
+  | .brk t none, v => .brk t (some v)
+  | .cont t none, v => .cont t (some v)
+  | c, _ => c
 
 /-- Is this completion one an iteration statement absorbs? -/
 def isLoopFlow : Abrupt → Bool
-  | .brk _ | .cont _ => true
+  | .brk .. | .cont .. => true
   | .throw _ | .ret _ => false
 
 /-- Does this completion target `label`, or no label at all? An unlabelled
 `break` is absorbed by the nearest iteration or switch; a labelled one
 only by its own labelled statement. -/
 def targets (lbl : Option String) : Abrupt → Bool
-  | .brk t | .cont t => t == lbl
+  | .brk t _ | .cont t _ => t == lbl
   | .throw _ | .ret _ => false
 
 end Abrupt

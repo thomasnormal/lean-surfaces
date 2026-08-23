@@ -598,8 +598,9 @@ propagating outward to a labelled statement can serve; a general
 
 * **51 of 253 `if`s have an `else`** — the else-less arm is the common
   path and gets the first gate.
-* **All 50 `for`s carry all three clauses** (48 `init`, 49 `cond`, 50
-  `inc`), so the "omitted clause" cases are 3 sites, not a third of them.
+* **Three of the 50 `for`s omit a clause** — 48 carry `init`, 49 carry
+  `cond`, 50 carry `inc`, so two omit `init` and one omits `cond`. The
+  "omitted clause" cases are 3 sites, not a third of them.
   An omitted `cond` means *true* (§6.8.6.3p2), which is one line and one
   gate.
 * **98 of 103 returns carry a value.**

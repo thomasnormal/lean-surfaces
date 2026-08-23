@@ -103,7 +103,7 @@ private def runIndet (r : Int) : Outcome CVal :=
   EvalM.verdict (setInt mem0 0 r) (evalExpr ctx0 cond)
 
 /-- The same run, unwrapped, for the memory-retention gate below. -/
-private def runIndetRaw (r : Int) : Halt (Except Refusal CVal × Mem) :=
+private def runIndetRaw (r : Int) : LeanModels.HaltWith CDetail Mem (Except Refusal CVal × Mem) :=
   EvalM.run (setInt mem0 0 r) (evalExpr ctx0 cond)
 
 -- r = 0: the right operand is NOT evaluated, so the indeterminate `b` is
@@ -116,7 +116,7 @@ private def runIndetRaw (r : Int) : Halt (Except Refusal CVal × Mem) :=
 
 -- The refusal names its Annex J entry, and its cause never retires.
 #guard (Refusal.memUB (.indetAutomatic 1 0)).j2 == some "J.2(11)"
-#guard (Refusal.memUB (.indetAutomatic 1 0)).cause == Cause.ub
+#guard (Refusal.memUB (.indetAutomatic 1 0)).cause == (.undefined () : Cause)
 
 -- ...and the SAME term with `b` written succeeds, so the refusal above is
 -- about the short circuit and not about the term being unevaluable.

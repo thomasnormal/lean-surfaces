@@ -661,3 +661,291 @@ the run correctly declined, 85 minutes later. **Enqueue is the LAST action
 before waiting**, and a second guard (A6: refusing to build mid-rebase) caught
 the same class of mistake ten minutes afterwards. Both guards are right; both
 cost a queue slot because I did not respect the ordering they encode.
+
+---
+
+## 2026-08-23-c-8 — CORE ADOPTED: the guard this lane wrote is now enforced for every tier
+
+The HOLD at `2026-08-23-c-1` is released. `LeanModels/Core/Outcome.lean` carries
+a payload that **subsumes** this lane's, so adoption is a substitution at
+`σ := Mem` rather than a rewrite.
+
+### What was deleted, and what replaced it
+
+| deleted here | now from `Core` |
+| --- | --- |
+| `inductive Halt (α)` + its `BEq`, `bind`, `Monad`, 3 `@[simp]` lemmas | `Loud π σ` / `HaltWith π σ` |
+| `inductive Cause` (3 constructors) | `RefusalCause π` (4) |
+| `abbrev EvalM := ExceptT Refusal (StateT Mem Halt)` | `SemMWith Mem Refusal CDetail Mem` |
+
+**Both structural guards are now Core's, not this lane's.** `Loud`'s `BEq`
+ignores the snapshot and `Loud.observable` has nowhere to put a `σ` — the two
+properties this lane argued for at §3.4, lifted so that no tier writes them
+again and a tier that *forgets* to cannot silently promote a diagnostic into a
+verdict.
+
+### Core's taxonomy is richer, and the extra class is one this lane owes
+
+`RefusalCause` has four constructors where this tier had three:
+
+| this tier | `RefusalCause` |
+| --- | --- |
+| `ub` | `.undefined` |
+| `unsupported` | `.unsupported` |
+| `libc` | `.environment` |
+| *(owed)* | **`.orderDependence`** |
+
+The fourth is exactly the verdict Thomas's `∀ order` ruling needs for a program
+whose observable depends on argument evaluation order — the `J.1(16)` domain
+this lane measured at **7 sites** (`docs/c23-spec-mirror.md` §5.3). **Adoption
+did not just remove duplication; it supplied a verdict this tier had named and
+could not express.** `π := CDetail := Unit` for now, because the prose already
+carries the detail; `π` is where those 7 sites go if the verdict later wants to
+name them.
+
+`Outcome` is KEPT as this tier's own type rather than folded into
+`Loud.observable`, and the reason is not sentiment: a scoreboard needs the
+REFUSAL VALUE to read its `J.2` index, which a `String × String` observable
+deliberately discards.
+
+### Price, against the estimate
+
+Estimated **~11 real edit sites + 2 aliases, 53 insulated**. Actual: the two
+named primitives (`refuseUnsupported`, `exhausted`), five destructure sites
+(`EvalM.verdict`, `ExecM.run`, `EvalM.run`, `Refusal.cause`, `Outcome.cause?`),
+three type aliases, and **14 gate updates** across the three fixtures — the
+gates cost more than predicted because `Cause.ub`/`libc`/`unsupported` appear
+in assertions, which the site census counted as destructures but not as
+per-occurrence edits. **The 53 `refuseUnsupported` call sites cost exactly
+nothing**, as predicted: routing every refusal through a named primitive is
+what made a substrate change a one-definition edit.
+
+### Stmt.lean's move toward the trunk: NOT free, so NOT noted as ready
+
+The instruction was to fold this in only if the adoption made the dependency
+explicit. **It did not.** `Stmt.lean` still imports `C23.Expr`, which imports
+`C23.Value`, where `IntTy.minVal`'s two's-complement commitment lives; the
+adoption changed the monad, not the import graph. So the observation from
+`2026-08-23-c-6` stands unchanged and unhooked: `Stmt.lean` is edition-scoped
+by CITATION alone (zero Annex-J refs), and moving it would need the `minVal`
+dependency parameterised, which is a real piece of work and not a side effect
+of anything landed here. Recorded so the next lane does not go looking for a
+hook that exists.
+
+### For the editions gate's CONVICTED-BY column
+
+The file-level census the gate asked for is **`docs/backlog/c.md`
+§ `2026-08-23-c-6`** — per-file line counts with `J.2(`, `J.3.` and `C17`
+densities for all eight C-tier files, the (a)-with-named-(b) verdict, and the
+delta a C17 sibling would actually carry. That is the citation the QoL lane's
+tool should point at for this tier.
+
+---
+
+## 2026-08-23-c-9 — the audit's five rows, all FIXED; two were claims that had never been checked
+
+`docs/quality-audit-2026-08-23.md` § `c` — five rows, none high. All five are
+correct and all five are fixed. Two of them are the same failure this lane has
+now hit three times: **a claim nobody had an instrument for.**
+
+### MEDIUM · coverage · `Value.lean:38` — the widths did not "come from" the profile
+
+The docstring said widths "come from the ABSTRACT profile". They are
+**hand-transcribed literals** (`def int_ : IntTy := ⟨true, 32⟩`), and
+`--check` gates a HOST against the JSON via clang — it never reads a Lean
+file. Nothing in `tools/` or `harness/` compared the two.
+
+Fixed BOTH ways. The docstring now says the profile is the widths'
+**CITATION, not their SOURCE**; and **`harness/c_profile_probe.py
+--check-lean`** now closes the gap for real — it parses the `IntTy`
+definitions out of `Value.lean` and fails loudly if a width disagrees with the
+profile fact it claims to follow. Deliberately a PARSE, not an import, so the
+check runs anywhere the two committed files do, with no toolchain in the loop.
+
+**Non-vacuous by measurement**: perturbing `int_` to 64 bits gives
+`int_32 (sizeof(int) == 4) forces int_ to 32 bits, Lean says 64`, exit 1. It
+also refuses to pass when it parses ZERO definitions, because a check that
+matched nothing would read green forever.
+
+### MEDIUM · provenance · `Examples/c/sunfish/memory.lean:20` — cited to a file with no layout in it
+
+The struct-layout table was cited to `docs/c-profile.json`, which carries 13
+facts and **not one layout offset**; `c_profile_probe.py` does not probe layout
+at all. The offsets were real — measured by compiling `_Static_assert`s on both
+targets — but the citation pointed somewhere they have never been. Corrected to
+say exactly what was done, and to say that the profile supplies the TARGETS
+while the offsets are their own measurement.
+
+### LOW · docdrift · `Stmt.lean:343` — a headline refuted by its own parenthetical
+
+*"all 50 carry all three clauses (48 `init`, 49 `cond`, 50 `inc`)"* — if 48
+carry `init`, two do not. Now reads: **three of the 50 omit a clause (two omit
+`init`, one omits `cond`)**, which is what the next sentence already said. The
+identical wording had propagated to `docs/c-semantics-design.md`; fixed there
+too.
+
+### LOW · absence · `c_api_census.py:187` — provenance transcribed, not computed
+
+`source` and `sha256` were hardcoded literals describing a tarball the script
+never opens. Now **computed from the tree actually read** (`SRC`), as a
+deterministic digest over every file's path and bytes in sorted order, and an
+unreadable file is a loud exit rather than a silent gap.
+
+### LOW · absence · `c_suite_census.py:138` — a swallowed read failure
+
+`source_facts()` returned `{}` on `OSError`, and the caller does
+`row.update(...)`, so an unreadable test produced a row that merely LACKED its
+source facts — **indistinguishable from a test that has none**. That is the
+never-hide-errors law, and it was mine. Now a loud `SystemExit`: *a census that
+silently drops a file it could not read reports a wrong answer, not a smaller
+one.*
+
+### The pattern across three of these
+
+`Value.lean`'s widths, `memory.lean`'s offsets, and — earlier today —
+`c_construct_census`'s `--compare` were all **claims with no instrument
+behind them**, and all three read green for exactly as long as nobody looked.
+The audit found in one pass what this lane had walked past repeatedly. The
+standing correction is the one already written at `2026-08-23-c-5` for
+termination and it generalises: **a claim that cannot fail is not a check**,
+and the fix is always to build the instrument, not to soften the sentence.
+
+---
+
+## 2026-08-23-c-10 — THE ADOPTION'S TENURE CAME BACK RED, and the one defect was sitting in its own diff's CONTEXT
+
+### The verdict, recovered rather than re-run
+
+The Core-adoption ticket (`1787486390521832000-49734-c`) **did** run. It
+queued **8008 s** — 2 h 13 m — behind five lanes, acquired at 16:16:14, and
+was **RED in 15 seconds**.
+
+Recovering it was itself a lesson. `triad.sh` writes its build output to
+`$TMPDIR/triad-build.XXXXXX`, and that file contains **only `lake build`
+output** — no ticket, no lane, no branch. Sixty-eight such logs sat in
+`$TMPDIR`, and grepping them for `cadopt`, `c-core-adoption` or the lane tag
+matched **nothing**, because none of those strings is ever written into a
+build log. The lane's own transcript (`say` lines: the ticket, the queue
+waits, the classification, the verdict) goes to whatever file the detached
+runner redirected to — here `scratchpad/triad-c.log`. **The ticket name lives
+in the LANE's log; the errors live in the TRIAD's log, and only the lane's log
+names the triad's.** Recovery is: find the lane log by CONTENT, read the `full
+log:` line at its foot, and follow it.
+
+### What was red
+
+Build **exit 1** at **17 of 18** targets. Everything under `LeanModels/C`
+built green — including the three drain-amendment theorems the hand-off named
+as the sole expected unknown, which needed no repair at all and printed the
+ordinary `[propext, Classical.choice, Quot.sound]`. `Examples.c.sunfish.stmt`
+was never attempted; lake stops at the first failing module.
+
+Two errors, both in `Examples/c/sunfish/expr.lean`, and **both one defect**:
+
+```
+:106:36  Function expected at
+           Halt
+         but this term has type ?m.1
+:133:48  Invalid dotted identifier notation: the expected type of `.ok`
+         could not be determined
+```
+
+`runIndetRaw`'s return type still names the **deleted local `Halt`**. The
+second error is a cascade of the first: with the scrutinee at `?m.1` the
+match's arms have no expected type.
+
+### Why the site census missed it, and it is not a counting error
+
+The adoption's own diff **touches this file** — one line, `Cause.ub` →
+`(.undefined () : Cause)`, at `:118`. The stale `Halt` is at `:106`, which
+puts it **inside that hunk's three lines of leading context**. The census
+counted occurrences of the deleted *value* constructors and destructures; a
+**type annotation** naming the deleted type is a fourth shape, and it appeared
+on screen, greyed, directly above an edit that was made. The generalisable
+form: **a census over a deleted definition must enumerate every syntactic
+position the name can occupy — type annotations included — and diff context is
+the worst place to review one, because the eye reads it as already-checked.**
+
+### The repair
+
+`LeanModels.HaltWith CDetail Mem (Except Refusal CVal × Mem)` — which is
+exactly what `EvalM.run` returns (`Except (Loud CDetail Mem) (Except Refusal α
+× Mem)`). Written with the `LeanModels.` prefix because this file opens
+`LeanModels.C.C23` and not the root, the same reason `LeanModels.C.CSpan` is
+spelled out ten lines above it.
+
+Verified BEFORE the ticket, at **2.7 s** and no tenure, by `tools/check.sh` on
+a scratch file outside the lake globs that restates both shapes — the
+`EvalM.run` type and the `.ok (_, m)` destructure the memory-retention gate
+does on it. Exit 0, 0 warnings. `check.sh` **refuses** the library file itself
+(`CASE refuse-library`), which is right, and the scratch restatement is the
+sanctioned way round it.
+
+### The rest of the tree is clean, checked rather than assumed
+
+`Cause.ub` / `Cause.libc` / `Cause.unsupported` / `Halt.ok` / `Halt.timeout`:
+**zero** hits under `LeanModels/C` and `Examples/c`. The remaining `Halt`
+mentions in the tier are docstring prose; every other `Halt` in the repository
+belongs to the **ES lane's own local `Halt`** (`LeanModels/Es/Completion.lean`),
+which is not this adoption's business.
+
+### The re-gate is a SPINE build, not the `tier` one the classifier would pick
+
+The first tenure classified `tier` and built 18 targets. It was right then.
+It is wrong now: master moved **52 commits** under this branch, and `Core` is
+in this tier's import closure, so a scoped green would say nothing about
+whether the adoption still holds against the Core that exists. The re-ticket
+therefore names **no build target at all** — `BUILD_TARGETS=""` is every
+default target — and pays the full build deliberately.
+
+### VERDICT — GREEN, and it is a SPINE green
+
+`tools/triad.sh --lane cadopt` with no `--classify`: queued **4954 s**, held
+the machine **42 minutes**, build **exit 0**, **3765 jobs**, *Build completed
+successfully*. **Zero** `error`/`✖`/`sorry` lines in the whole log.
+
+| gate | result |
+| --- | --- |
+| `lake build` (every default target) | **exit 0**, 3765 jobs |
+| `tools/docs_check.py` | **91 / 91** marked blocks, 36 illustrative-exempt |
+| `harness/diff_test.py` | **1427 cases, 0 failed** — 1311 matched, 116 whitelisted-unsupported |
+| `harness/c_profile_probe.py --check-lean` | **9 / 9** width/signedness points, 8 `IntTy` defs parsed |
+| `harness/script_corpus.py` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+| `tools/backlog-index.sh --check` | in sync, 189 entries |
+
+The two targets that decided it: `Examples.c.sunfish.expr` ✔ (the module that
+was red) and `Examples.c.sunfish.stmt` ✔ — **the one the first tenure never
+reached**, because lake stops at the first failing module and `stmt` was
+target 18 of 18.
+
+**COVERAGE (§5.4a): SPINE — every default target, no scope caveat.** This is
+the one claim a `tier` green could not have made, and it is the claim that was
+needed: `Core` moved **52 commits** under this branch (`Core/Order.lean` new,
+`Core/Outcome.lean` +67 lines of `PartialOrder` / `CCPO` / `MonoBind` instances
+on `HaltWith`, all **purely additive** — 118 insertions, 0 deletions), and the
+adoption's whole premise is that this tier's monad IS Core's. A green scoped to
+the C modules would have re-verified the adoption against the Core it was
+written for, not the Core that exists.
+
+### Axiom ledger, from this build
+
+| theorem | axioms |
+| --- | --- |
+| `Mem.get?_alloc`, `Mem.resolve_alloc`, `Mem.resolve_ok`, `Mem.loadBytes_storeBytes` | `propext, Quot.sound` |
+| `Mem.get?_set_self` | `propext` |
+| `Mem.resolve_kill` | `propext, Classical.choice, Quot.sound` |
+| `and_shortCircuits`, `or_shortCircuits`, `cond_takesOneArm` | `propext, Classical.choice, Quot.sound` |
+
+The three drain-amendment theorems — the hand-off's sole expected unknown,
+because their simp sets gained `Except.bind`/`Except.pure` under the new monad
+— **needed no repair and carry no new axioms.** The unknown resolved to
+nothing; the defect was somewhere nobody had flagged.
+
+### The queue, for Amendment 9's record
+
+Enqueued 19:25:58 at depth 6, acquired 20:50:00 — **1 h 22 m**, behind `ada`
+and `sv` (a 40-minute full build) with `leantier`, `softfloat` and `wasm`
+ahead in the queue. One ticket ahead of this one was **reaped by the staleness
+sweep** (`reaped stale ticket …-go (pid 73698 dead)`) — A9's sweep doing
+exactly its job, visible in the lane log, and worth one line here because a
+queue that only ever grows is the failure mode the sweep exists to prevent.

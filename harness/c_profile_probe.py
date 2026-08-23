@@ -29,6 +29,7 @@ Python >= 3.9, stdlib only.  Deterministic; a double run is byte-identical.
 
 import argparse
 import json
+import re
 import os
 import subprocess
 import sys
@@ -221,6 +222,78 @@ def check(profile, target):
     return 0
 
 
+LEAN_VALUE = "LeanModels/C/C23/Value.lean"
+
+# Each profile fact, and what it forces the Lean `IntTy` literals to say.
+# (fact id, C expression it asserts, [(IntTy def name, signed, bits)])
+LEAN_BINDING = [
+    ("char_bit_8", "CHAR_BIT == 8", [("char_", None, 8), ("uchar", False, 8)]),
+    ("short_16", "sizeof(short) == 2", [("short_", True, 16), ("ushort", False, 16)]),
+    ("int_32", "sizeof(int) == 4", [("int_", True, 32), ("uint", False, 32)]),
+    ("long_64", "sizeof(long) == 8", [("long_", True, 64), ("ulong", False, 64)]),
+    ("char_signed", "(char)-1 < 0", [("char_", True, 8)]),
+]
+
+
+def read_lean_widths(path):
+    """Parse `def <name> : IntTy := ⟨<signed>, <bits>⟩` out of the value model.
+
+    Deliberately a PARSE and not an import: the point is to compare the
+    committed Lean literals against the committed JSON, with no toolchain in
+    the loop, so the check runs anywhere the two files do."""
+    try:
+        text = open(path, "r", errors="replace").read()
+    except OSError as e:
+        sys.exit("c_profile_probe --check-lean: cannot read %s: %s" % (path, e))
+    found = {}
+    for m in re.finditer(
+            r"def\s+(\w+)\s*:\s*IntTy\s*:=\s*[\u27e8<]\s*(true|false)\s*,\s*(\d+)\s*[\u27e9>]",
+            text):
+        found[m.group(1)] = (m.group(2) == "true", int(m.group(3)))
+    if not found:
+        sys.exit("c_profile_probe --check-lean: parsed ZERO IntTy definitions from "
+                 "%s — the check would pass vacuously, which is worse than failing"
+                 % path)
+    return found
+
+
+def check_lean(profile, path):
+    """THE GAP THIS CLOSES: `--check` gates a HOST against the JSON and never
+    reads a Lean file, so the value model's widths were hand-transcribed with
+    nothing comparing them to the profile they cite.  This compares them."""
+    widths = read_lean_widths(path)
+    facts = {f["id"]: f for f in profile["facts"]}
+    bad, checked = [], 0
+    for fid, expr, bindings in LEAN_BINDING:
+        if fid not in facts:
+            bad.append("profile has no fact %r, but the Lean widths depend on it" % fid)
+            continue
+        if not facts[fid].get("required", True):
+            continue
+        for name, signed, bits in bindings:
+            if name not in widths:
+                bad.append("%s: no `def %s : IntTy` found" % (fid, name))
+                continue
+            gotSigned, gotBits = widths[name]
+            checked += 1
+            if gotBits != bits:
+                bad.append("%s (%s) forces %s to %d bits, Lean says %d"
+                           % (fid, expr, name, bits, gotBits))
+            if signed is not None and gotSigned != signed:
+                bad.append("%s (%s) forces %s signed=%s, Lean says %s"
+                           % (fid, expr, name, signed, gotSigned))
+    if bad:
+        print("c_profile_probe --check-lean: %s DISAGREES with the profile on "
+              "%d point(s):" % (path, len(bad)))
+        for b in bad:
+            print("  " + b)
+        return 1
+    print("c_profile_probe --check-lean: %s agrees with the profile on all %d "
+          "width/signedness points (%d IntTy defs parsed)"
+          % (path, checked, len(widths)))
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--target", action="append", default=[],
@@ -228,7 +301,13 @@ def main():
     ap.add_argument("-o", "--output", help="write the profile JSON here")
     ap.add_argument("--check", metavar="JSON",
                     help="gate a host against an existing profile")
+    ap.add_argument("--check-lean", metavar="JSON", dest="check_lean",
+                    help="gate the Lean value model's IntTy literals against the profile")
     args = ap.parse_args()
+
+    if args.check_lean:
+        with open(args.check_lean) as fh:
+            return check_lean(json.load(fh), LEAN_VALUE)
 
     if args.check:
         with open(args.check) as fh:

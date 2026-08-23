@@ -35,9 +35,18 @@ DEFINES, while the same file's 327 overflow-capable signed sites are
 undefined at the boundary and must refuse. A model that blurred the two
 would be wrong about the corpus's hottest sort key.
 
-Widths come from the ABSTRACT profile (`docs/c-profile.json`), not from a
-host: 8 facts, satisfied by both development hosts, checkable on any
-third by `harness/c_profile_probe.py --check`.
+The widths below are the ones the ABSTRACT profile
+(`docs/c-profile.json`) records — 8 facts, satisfied by both development
+hosts and checkable on any third by `harness/c_profile_probe.py --check`.
+
+**They are hand-transcribed literals, and the profile is their CITATION
+rather than their SOURCE.** Nothing generated `⟨true, 32⟩` from the JSON,
+and until this landing nothing compared the two: `--check` gates a HOST
+against the JSON via clang, and never reads a Lean file. That gap is now
+closed by `harness/c_profile_probe.py --check-lean`, which parses these
+`IntTy` definitions and fails loudly if a width here disagrees with the
+profile fact it claims to follow. The claim is still a transcription; it
+is simply a CHECKED one.
 
 The stored value is always the MATHEMATICAL integer, in range for its
 type. That invariant is what makes "did this overflow?" decidable rather

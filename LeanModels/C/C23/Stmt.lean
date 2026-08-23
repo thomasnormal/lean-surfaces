@@ -40,10 +40,12 @@ because a timeout is not an observation of anything.
 So the stack gains a base:
 
 ```
-ExecM α := ExceptT Refusal (StateT Mem Halt) α
+ExecM α := SemMWith Mem Refusal CDetail Mem α
+        = ExceptT Refusal (StateT Mem (Except (Loud CDetail Mem))) α
 ```
 
-where `Halt` carries fuel exhaustion and nothing else. A timeout discards
+where Core's `Loud` carries fuel exhaustion and the out-of-tier frontier,
+and nothing else. A timeout discards
 the memory, correctly — there is no world to report.
 
 ## WHERE REFUSAL LIVES — RULED, at `docs/family-architecture.md` §3.4
@@ -61,8 +63,8 @@ objects** — and signal handlers in the language at large. Inside `ρ`,
 "no catch reaches a refusal" is a per-language, per-construct proof
 obligation; uncatchability belongs to the definition.
 
-So `unsupported` lives in `Halt` (`Memory.lean`), and the diagnostic need
-is met the better way: **`Halt.unsupported` carries a structured payload
+So `unsupported` lives in Core's `Loud` base, and the diagnostic need
+is met the better way: **`Loud.unsupported` carries a structured payload
 — the cause, plus an OPTIONAL memory snapshot captured AT the refusal
 site.** §3.4's existing law pays for it, because every refusal already
 routes through a NAMED primitive with its own `@[spec]` lemma, and that
@@ -85,7 +87,7 @@ open LeanModels.C (CType Expr Stmt Decl)
 
 /-! ## The monad
 
-`Halt` and `Outcome` are the shared substrate now (`Memory.lean`, §3.4),
+`Loud` and the stack are `Core`'s now (`LeanModels/Core/Outcome.lean`),
 so statements and expressions run in the SAME stack — `ExecM` is `EvalM`.
 That is not a coincidence to tidy away: it is what the ruling bought. An
 expression cannot time out (inch 3 is fuel-free) and a statement can, but
@@ -95,7 +97,8 @@ neither can catch a refusal, so one type serves both. -/
 abbrev ExecM (α : Type) := EvalM α
 
 /-- Run a statement against a starting memory. -/
-def ExecM.run (m : Mem) (x : ExecM α) : Halt (Except Refusal α × Mem) :=
+def ExecM.run (m : Mem) (x : ExecM α) :
+    Except (Loud CDetail Mem) (Except Refusal α × Mem) :=
   EvalM.run m x
 
 /-- The verdict, in `docs/c23-goal.md` §3's vocabulary. -/
@@ -103,7 +106,7 @@ def ExecM.verdict (m : Mem) (x : ExecM α) : Outcome α := EvalM.verdict m x
 
 /-- Fuel exhaustion, as a named primitive — never a bare `throw`, and not
 a `Refusal` at all. Carries no state: a timeout is not an observation. -/
-def exhausted : ExecM α := fun _ => Halt.timeout
+def exhausted : ExecM α := fun _ => .error .timeout
 
 /-! ## §6.8.7 — how a statement can finish
 
@@ -340,8 +343,9 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     | .whileS c body _ => execLoop fuel ctx (some c) none body false
     -- §6.8.6.3 — `do … while`: the body runs BEFORE the first test. 29 sites.
     | .doS body c _ => execLoop fuel ctx (some c) none body true
-    -- §6.8.6.4 — `for`. 50 sites, and all 50 carry all three clauses
-    -- (48 `init`, 49 `cond`, 50 `inc`), so the omitted-clause arms are
+    -- §6.8.6.4 — `for`. 50 sites; 48 carry `init`, 49 carry `cond`, 50 carry
+    -- `inc` — so THREE sites omit a clause (two omit `init`, one omits
+    -- `cond`) and the omitted-clause arms are
     -- three sites rather than a third of them. An omitted `cond` is TRUE.
     | .forS init c inc body _ => do
         match init with
@@ -617,12 +621,12 @@ impossible to mistake for a theorem. -/
 
 /-- More fuel never turns a decided answer into a different one.
 
-`Halt.timeout` is the bottom: a run that exhausted its fuel may become
+`Loud.timeout` is the bottom: a run that exhausted its fuel may become
 anything at higher fuel, and a run that DECIDED keeps its exact answer,
 memory included. -/
 def FuelMono : Prop :=
   ∀ (fuel : Nat) (ctx : Ctx) (s : Stmt) (m : Mem) (r : Except Refusal Flow) (m' : Mem),
-    ExecM.run m (execStmt fuel ctx s) = Halt.ok (r, m') →
-    ∀ fuel' ≥ fuel, ExecM.run m (execStmt fuel' ctx s) = Halt.ok (r, m')
+    ExecM.run m (execStmt fuel ctx s) = .ok (r, m') →
+    ∀ fuel' ≥ fuel, ExecM.run m (execStmt fuel' ctx s) = .ok (r, m')
 
 end LeanModels.C.C23

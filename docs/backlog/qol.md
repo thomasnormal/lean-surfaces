@@ -1864,3 +1864,72 @@ and the DUPLICATED/VIOLATION flip turning on whether the helper file exists.
 Doc-first: §2.4 names the gate and carries the first run and the two-channel
 argument; the §7 tools list and the law index gain their rows. `docs_check`
 **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-27 — `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare
+
+### STMT-60 — clean, and the one hit is clause (4)'s legitimate case
+
+**Zero violations.** The only definition in the tree with a version-typed
+binder is Go's `perIterationLoopVars (v : LangVersion) : Bool`, and it is
+reported as **`clause-4`**, not as a violation: §2.4(4) records that for Go
+the edition is a property of the **file**, carried as data, so a predicate
+**classifying** that data is not a semantics parameterised by edition.
+
+The discriminator is the **return type** — a plain `Bool`/`String`/`Nat`
+classifies, a monad or a value computes — and the tool prints the list so a
+lane can **dispute the list rather than the verdict**. The header states the
+hole up front and the report repeats it every run:
+
+> **CATCHES THE HONEST SPELLING ONLY.** A version smuggled as a `Nat` is
+> invisible to a type-based rule, and that is the spelling someone reaching
+> for the forbidden thing would use.
+
+### STMT-59 — and it convicts the section's own tier
+
+```
+  LANG   VER     SIBLING    TRUNK  RATIO  THEOREMS CONVICTED-BY
+  C      C23        2213      732   3.02    7/0    clauses only: c-construct-census.json (no census names the FILES)
+```
+
+**The sibling is three times its trunk** — the inverse of *thin siblings over
+a thick shared trunk* — and **no census names its files**. §2.4(1) asks for a
+measurement convicting the **FILE**; a C construct census exists, and it
+convicts clauses. Which of the law's two branches applies (*"the editions
+really do differ that much"* or *"the census was not run"*) is the C lane's
+call — the gate's job was to make the question unavoidable, and it does.
+
+### STMT-61 — measurable, and there is nothing to measure
+
+The design was a statement-shape comparison across trunk and sibling. **It
+holds mechanically and would report zero forever**: measured before building
+it, the C trunk holds **0 theorems** and the C23 sibling holds **7**. A
+duplicate-finder needs a trunk theorem to duplicate.
+
+So the failure mode in this tree is not *"proved twice"* — it is **"proved
+only in the sibling"**, which is the same evidence read the other way round.
+That is now a **column** (`THEOREMS 7/0`), not a comparison that cannot fire.
+The law index records the mechanism and why it is not built. **This is the
+STMT-62/63 rule applied to a third law: a gate whose evidence row does not
+exist yet is a design, not a build.**
+
+### Two false attributions caught before landing
+
+The conviction lookup first credited C23 to **`ada-suite-census.json`** — a
+coincidental token match against a test name — because it took the
+alphabetically first JSON containing the string. Anchoring the filename to the
+tier fixed it; the glob `*c*` had matched the word *census* in every file in
+the directory. And it now separates **`FILES:`** from **`clauses only:`**,
+because saying *"no census"* when a clause delta exists is as wrong as saying
+the file is convicted.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **12 ok, 0 failed** — a version binder found,
+a `Bool` return classified as clause-4, a semantic return as a VIOLATION with
+its return type named, an `Edition` binder counted, a def without one silent,
+prose about one ignored, and the sibling walk with its line counts, theorem
+split, and a non-edition directory correctly not treated as a sibling.
+Doc-first: §2.4 names the gate and carries the C23 finding; the §7 tools list
+and three law-index rows updated. `docs_check` **87/87**. No Lean executed.

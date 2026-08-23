@@ -792,6 +792,24 @@ if a sibling is thick, either the editions really do differ that much
 (measure and prove it) or the census was not run. Three clauses make it
 operational.
 
+**STMT-59 AND STMT-60 HAVE A GATE: `tools/editions.sh`.** First run,
+2026-08-23 — and it convicts this section's own tier. **`LeanModels/C/C23/` is
+2213 lines against a 732-line trunk: a ratio of 3.02**, which is the inverse of
+*thin siblings over a thick shared trunk*, and **no census names its files**
+(a C construct census exists; §2.4(1) asks for a measurement convicting the
+FILE). STMT-60 is clean: **zero violations**, with Go's
+`perIterationLoopVars (v : LangVersion) : Bool` correctly reported as **clause
+(4)'s legitimate case** — a predicate classifying per-file version DATA, not a
+semantics parameterised by edition. The discriminator is the RETURN type, and
+the tool prints the list so a lane disputes the list rather than the verdict.
+
+**STMT-61 is measurable but has nothing to measure.** Clause (2) says theorems
+prove once on the trunk; a duplicate-statement finder across trunk and sibling
+would report **zero forever**, because the C trunk holds **0 theorems** and its
+C23 sibling holds **7**. The failure mode in this tree is not *"proved twice"*
+— it is **"proved only in the sibling"**, so the theorem split is reported as a
+column (`7/0`) rather than built as a comparison that cannot fire.
+
 **(1) CENSUS-GATED PLACEMENT. A file enters a sibling directory only when a
 MEASUREMENT convicts it of edition-sensitivity — never prophylactically.**
 The C tier supplies *both* halves of the precedent, and the failed half is
@@ -4540,6 +4558,7 @@ its refusal paths rather than describing them (§5.4).
 | `tools/laws.sh` | which laws have a gate, and which are only prose | §9.7's audit cadence; *fixes live in gates* |
 | `tools/substrate.sh` | the substrate contract per tier, by SHAPE | §3.4 (STMT-19..22), §8.5 (STMT-67) |
 | `tools/dupes.sh` | duplication, counted rather than remembered | §2.4 (MEAS-28) |
+| `tools/editions.sh` | thin siblings, and no edition-parameterised definition | §2.4 (STMT-59, STMT-60) |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
 
 **AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor

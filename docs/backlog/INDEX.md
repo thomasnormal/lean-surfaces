@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**111 entries across 16 lanes.** Regenerate with
+**112 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
 | `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
 | `2026-08-23-qol-25` | the attribution fix: the headline held, the DISPATCH was wrong | qol |
 | `2026-08-23-qol-24` | gate DESIGNS for the two head homes, and one of the ten needs no gate at all | qol |

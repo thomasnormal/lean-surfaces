@@ -176,9 +176,9 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-56 | edition token — it never renames | `docs/family-architecture.md §1.1` law 4 |
 | STMT-57 | `language_version` is first-class; the ingester REFUSES a mismatch | `docs/family-architecture.md §1.5` |
 | STMT-58 | `frontend.version` is the FRONTEND's FAMILY, never a point release | `docs/family-architecture.md §1.5` |
-| STMT-59 | THIN SIBLINGS OVER A THICK SHARED TRUNK | `docs/family-architecture.md §2.4` |
-| STMT-60 | no definition takes a version parameter | `docs/family-architecture.md §2.4` |
-| STMT-61 | theorems prove ONCE on the trunk | `docs/family-architecture.md §2.4` clause (2) |
+| STMT-59 | THIN SIBLINGS OVER A THICK SHARED TRUNK | `docs/family-architecture.md §2.4` — gate: `tools/editions.sh` |
+| STMT-60 | no definition takes a version parameter | `docs/family-architecture.md §2.4` — gate: `tools/editions.sh` |
+| STMT-61 | theorems prove ONCE on the trunk | `docs/family-architecture.md §2.4` clause (2) — gate: `tools/editions.sh` reports the sibling/trunk theorem split; a duplicate finder cannot fire while the trunk holds 0 |
 | STMT-62 | THE ONE HONEST FORK — an arity change forks type and consumers | `docs/family-architecture.md §2.4` clause (3) |
 | STMT-63 | the edition parameter's granularity is language-decided | `docs/family-architecture.md §2.4` clause (4) |
 | STMT-64 | ONE extractor per language, never per edition | `docs/family-architecture.md §1.6` |

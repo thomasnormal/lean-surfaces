@@ -162,4 +162,97 @@ theorem rt_sub_split_right (ts1 ts2 ts : List valtype)
       intro t ht
       exact hall t (by rw [hsplit]; exact List.mem_append_right _ ht)
 
+/-- **THE BRIDGE.** The model's zip-based `Forall₂`, *under the length premise
+    `Resulttype_sub` always carries*, is exactly Mathlib's inductive
+    `List.Forall₂`.
+
+    This refines `docs/backlog/wasm.md` `2026-08-23-wasm-4`, which concluded
+    Mathlib's `forall₂_*` API "does not apply to this model at all". That is
+    true of the LEMMAS applied directly — the two predicates are different
+    constants — but Mathlib supplies the ADAPTER itself,
+    `List.forall₂_iff_zip`, whose side condition is a length equality. And
+    `Resulttype_sub` carries a length equality in its constructor, precisely
+    because its `Forall₂` is length-blind.
+
+    So the honest statement is: **the API does not apply pointwise, but it
+    applies through a one-time bridge, and the bridge's premise is already in
+    every `Resulttype_sub`.** Paying it once restores the whole library for
+    everything downstream — which is what `rt_sub_trans` and `rt_sub_app`
+    below spend it on. -/
+theorem rt_bridge (ts1 ts2 : List valtype) :
+    ts1 subs< ts2 ↔ List.Forall₂ Valtype_sub ts1 ts2 := by
+  unfold resulttypeSub
+  constructor
+  · rintro ⟨_, _, hlen, hall⟩
+    refine List.forall₂_iff_zip.mpr ⟨by simpa using hlen, ?_⟩
+    intro a b hab
+    exact hall (a, b) hab
+  · intro h
+    refine Resulttype_sub.mk_Resulttype_sub _ _ (by simpa using h.length_eq) ?_
+    intro t ht
+    exact List.forall₂_zip h (by simpa using ht)
+
+/-- Transitivity of `Valtype_sub`. Two constructors, two cases.
+    Isabelle counterpart: `Valtype_sub_trans`. -/
+theorem valtype_sub_trans (a b c : valtype)
+    (h1 : Valtype_sub a b) (h2 : Valtype_sub b c) : Valtype_sub a c := by
+  cases h1 with
+  | refl _ => exact h2
+  | bot _  => exact Valtype_sub.bot c
+
+/-- Transitivity of `resulttypeSub`.
+    Isabelle counterpart: `Resulttype_sub_trans` (closes on `list_all2_trans`;
+    here the bridge plus a two-case induction). O3 needs this. -/
+theorem rt_sub_trans (ts1 ts2 ts3 : List valtype)
+    (h1 : ts1 subs< ts2) (h2 : ts2 subs< ts3) : ts1 subs< ts3 := by
+  rw [rt_bridge] at h1 h2 ⊢
+  induction h1 generalizing ts3 with
+  | nil => cases h2; exact List.Forall₂.nil
+  | cons hab _ ih =>
+    cases h2 with
+    | cons hbc hr2 => exact List.Forall₂.cons (valtype_sub_trans _ _ _ hab hbc) (ih _ hr2)
+
+/-- `resulttypeSub` is a congruence for `++`.
+    Isabelle counterpart: `Resulttype_sub_append` (closes on
+    `list_all2_appendI`; here the bridge plus `List.rel_append`). O3 needs
+    this. -/
+theorem rt_sub_app (a b c d : List valtype)
+    (h1 : a subs< c) (h2 : b subs< d) : (a ++ b) subs< (c ++ d) := by
+  rw [rt_bridge] at h1 h2 ⊢
+  exact List.rel_append h1 h2
+
+
+/-- **O3.** Transitivity of instruction-type subtyping.
+
+    Isabelle counterpart: `instr_subtyping_trans` — 64 lines there, and the
+    only one of the four needing a structured `proof -`. The port follows its
+    shape exactly:
+
+    * unfold `instrtype_sub` twice to get two frame decompositions;
+    * **split the second against the first** — `rt_sub_split_left` on the
+      DOMAIN (`d_sub_23 subs< ts_12 ++ d_sub_12`) and `rt_sub_split_right` on
+      the RANGE (`ts'_12 ++ r_sub_12 subs< r_sub_23`). This is the step both
+      split orientations exist for, and it is why they had to land first;
+    * assemble the composite frame `ts_23 ++ a` / `ts'_23 ++ c` and discharge
+      the five side conditions with `rt_sub_app`, `rt_sub_trans` and
+      `List.append_assoc`. -/
+theorem instrtype_sub_trans (ft1 ft2 ft3 : functype)
+    (h12 : instrtype_sub ft1 ft2) (h23 : instrtype_sub ft2 ft3) :
+    instrtype_sub ft1 ft3 := by
+  obtain ⟨⟨d1⟩, ⟨r1⟩⟩ := ft1
+  obtain ⟨⟨d2⟩, ⟨r2⟩⟩ := ft2
+  obtain ⟨⟨d3⟩, ⟨r3⟩⟩ := ft3
+  obtain ⟨i12, o12, si12, no12, hd2, hr2, hio12, hsi12, hno12⟩ := h12
+  obtain ⟨i23, o23, si23, no23, hd3, hr3, hio23, hsi23, hno23⟩ := h23
+  -- domain: split `si23 subs< d2 = i12 ++ si12`
+  obtain ⟨a, b, ha, hb, hab⟩ := rt_sub_split_left si23 i12 si12 (hd2 ▸ hsi23)
+  -- range: split `r2 = o12 ++ no12 subs< no23`
+  obtain ⟨c, d, hc, hd, hcd⟩ := rt_sub_split_right o12 no12 no23 (hr2 ▸ hno23)
+  refine ⟨i23 ++ a, o23 ++ c, b, d, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [hd3, hab, List.append_assoc]
+  · rw [hr3, hcd, List.append_assoc]
+  · exact rt_sub_app _ _ _ _ hio23 (rt_sub_trans _ _ _ (rt_sub_trans _ _ _ ha hio12) hc)
+  · exact rt_sub_trans _ _ _ hb hsi12
+  · exact rt_sub_trans _ _ _ hno12 hd
+
 end SubtypingPort

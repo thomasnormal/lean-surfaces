@@ -661,3 +661,123 @@ right as taken; only its conclusion was too wide.* Something of the form
 equality."*
 
 *Renumber into your sequence or close it — the call is yours.*
+
+---
+
+## 2026-08-24-wasm-7 — **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies
+
+**LEDGER (§9.0): obligations proved on the soundness path — 2 of 5.**
+O1 `instrtype_sub_refl`, O3 `instrtype_sub_trans`. Remaining: O2, O4, O5.
+
+Two tenures this pass. The first (`85489`) **MISSED** the pin and the second
+(`69357`) **MATCHED** it, and the pair is worth recording together because the
+pin caught a fault in one direction and a success in the other.
+
+| tenure | `SubtypingPort` | failing modules | `typing_lemmas` errors | verdict |
+| --- | --- | ---: | ---: | --- |
+| `85489` 20:49 | **✖ 1 error** | 2 | 6 | **pin MISS** |
+| `69357` 22:48 | **✔ Built (12s), 0 errors** | **1** | **6** | **pin MATCH** |
+
+**The pin has now earned its keep in both directions.** `2026-08-23-wasm-6`
+used it to find a success hiding inside a red build; `85489` used it to find a
+**regression** hiding inside an identically red build. The exit code was `1`
+all four times. Nothing but the pinned shape distinguishes the four outcomes,
+which is §5.4b's corollary stated as an operational fact rather than a
+principle.
+
+Also observed: `tools/triad.sh` now prints
+`first 8 of 11 (summary LOCATES; the full log COUNTS)` — §7's lesson has moved
+from prose into the tool, and the truncation announces itself.
+
+**`85489`'s single error was arity, not mathematics:**
+
+```
+SubtypingPort.lean:213:84: Application type mismatch
+  hr2 has type List.Forall₂ Valtype_sub … (sort Prop)
+     but is expected to have type List valtype (sort Type)   in `ih hr2`
+```
+
+`induction … generalizing ts3` makes the IH take the generalized list as its
+first explicit argument. `ih _ hr2`. Everything else in that tenure was
+accepted on first contact.
+
+### THE BRIDGE — and it partly rehabilitates this lane's own finding
+
+`2026-08-23-wasm-4` concluded Mathlib's `forall₂_*` API *"does not apply to
+this model at all"*. **That was right about the lemmas and wrong about the
+library.** Mathlib ships the adapter:
+
+> `List.forall₂_iff_zip : Forall₂ R l₁ l₂ ↔ length l₁ = length l₂ ∧ ∀ {a b}, (a,b) ∈ zip l₁ l₂ → R a b`
+
+Its side condition is a **length equality** — and `Resulttype_sub` carries a
+length equality in its constructor, **precisely because** its `Forall₂` is
+length-blind. So the two halves of the earlier finding lock together: the very
+length-blindness that made the API inapplicable is what supplies the adapter's
+premise.
+
+The corrected statement, now in the file where the next reader meets it: **the
+API does not apply pointwise, but it applies through a ONE-TIME bridge whose
+premise is already in every `Resulttype_sub`.** `rt_bridge` pays it once;
+everything downstream spends it. The payoff was immediate — `rt_sub_app`
+collapsed from a second hand-rolled `zip_append` argument to
+`exact List.rel_append h1 h2`.
+
+**This is the same instrument ladder a third time, and it did not stop where
+the last entry left it.** `grep → comment-aware scanner → compiler` produced a
+claim; the compiler then *refined* that claim rather than merely refuting it.
+"Does not apply at all" was too strong, and only writing the bridge revealed
+how much weaker the true statement is.
+
+### What is proved now — 11 declarations, compiler-verified
+
+`zip_self_eq`, `rt_sub_refl`, **`instrtype_sub_refl` (O1)**,
+`rt_sub_split_left`, `rt_sub_split_right`, **`rt_bridge`**,
+`valtype_sub_trans`, `rt_sub_trans`, `rt_sub_app`, and
+**`instrtype_sub_trans` (O3)** — plus the restated `instrtype_sub`.
+
+**Hygiene: 0 `sorry`, 0 warnings, no `native_decide`** — the file emits no
+diagnostic at all, checked in the build log and by
+`harness/wasm_sorry_census.py` on the file itself.
+
+O3 follows Aaron Lee's 64-line `instr_subtyping_trans` exactly: two frame
+decompositions, **the second split against the first** (`split_left` on the
+domain, `split_right` on the range), then the composite frame `i23 ++ a` /
+`o23 ++ c` discharged with `rt_sub_app`, `rt_sub_trans` and
+`List.append_assoc`. **That step is the whole reason both split orientations
+had to land first**, and it is where `2026-08-22-wasm-2`'s
+two-obligations-not-one reading pays off concretely.
+
+Vendored at `docs/wasm-port/SubtypingPort.lean`; fork clone commit
+**`8c69259d9`**, local only, **not pushed upstream**.
+
+### O2 / O4 CENSUS — and they need NOTHING new
+
+Read before writing, per §L25. Both are single-frame manipulations:
+
+* **O2 `instr_subtyping_weaken2`** — split the frame's range half
+  `ro ++ no` against the weakened type with **`rt_sub_split_right`**, then
+  compose each half with `rt_sub_trans`.
+* **O4 `instr_subtyping_strengthen2`** — the dual: split the domain half
+  `ri ++ si` with **`rt_sub_split_left`**, compose with `rt_sub_trans`.
+
+**Every prerequisite is already proved.** No new supporting lemma, and no
+`rt_sub_app` — unlike O3, neither rebuilds a composite frame. Both are ~6 lines
+and are **already written and ticketed**; this entry does not claim they
+compile.
+
+### Pinned failure shape — UPDATED (a stale pin is the next lane's confusing red)
+
+The port is now **13 declarations / 290 lines** with O2+O4 added. For the next
+tenure: **`SubtypingPort` GREEN with 0 errors; 1 failing module
+(`typing_lemmas`); 6 errors in it.** Module and error counts are unchanged from
+the last pin — only the port's contents grew — so a regression still shows as
+`SubtypingPort` leaving green.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** This landing updates one
+vendored `.lean` that sits outside `LeanModels` and the `Examples.+` glob, and
+appends to `docs/backlog/wasm.md`. No gate in this repository can reach the
+vendored file — which is itself the §5.4b enumeration for it, stated rather
+than assumed. `docs_check` passes; `tools/backlog-index.sh` re-run per §9.5.
+The Lean execution reported above was in the **fork's** tree, under a ticket.

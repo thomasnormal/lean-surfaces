@@ -5103,6 +5103,24 @@ the law**, so the next enforcement inch is chosen by **measured demand**
 rather than by whoever remembers a rule at the time. First run, 2026-08-23:
 **332 laws, 206 cited by a tool, 126 with no gate at all.**
 
+**CORRECTED 2026-08-23, and the correction changed the DISPATCH, not the
+headline.** Attribution matched tokens by substring, so **`§9` matched `§9.5`,
+`§9.7` and `§9.2`** — one law homed at §9 was credited to seven tools,
+including `ada_round_trip.py`. That is the identifier law failing inside the
+instrument that measures enforcement. Tokens now match whole, with a boundary.
+The headline barely moved (**216 → 215 cited, 116 NO GATE**) because the false
+credits and two newly-attributed laws nearly cancelled — but **the demand
+ranking moved completely**: §9.2 led at 14 citations and now does not appear
+in the top six, because most of that 14 was `§9.x` mentions. **§2.4 is the
+head, with seven ungated laws at 8 citations each.**
+
+Two further mechanisms landed with it. A law whose home names a script is
+attributed **by identity**, so a law implemented before it was indexed can
+say so (`— gate: tools/triad.sh`); and a law the index marks
+**`ungateable: <reason>`** is reported in its own bucket rather than as debt,
+because re-surfacing a settled finding every audit is how it gets
+re-litigated. `PROOF-40` is the first.
+
 Two honesty clauses that make the number usable. **Citation over-credits** — a
 tool that mentions a law in a comment is counted — so the NO GATE list is a
 **LOWER BOUND on the unenforced set, never a coverage figure.** And **the unit

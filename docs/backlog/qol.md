@@ -1732,3 +1732,74 @@ the first — it puts the fact where a reader of the index sees it.
 (sharp, cheap, immediately true), then the `laws.sh` attribution fix (it
 corrects a headline number), then PROOF-39, then STMT-59. PROOF-40 is recorded
 as ungateable; STMT-62 and STMT-63 are tripwires whose evidence is thin today.
+
+---
+
+## 2026-08-23-qol-25 — the attribution fix: the headline held, the DISPATCH was wrong
+
+Ruled first because a dispatch chosen off a wrong number is the motivated-error
+law pointed at ourselves. It was wrong — **not in the headline, in the
+ranking.**
+
+### The defect: `§9` matched `§9.5`
+
+Attribution matched home tokens by **substring**, so a law homed at `§9` was
+credited to every tool mentioning any `§9.x` — **seven tools for one law**,
+including `ada_round_trip.py`. **That is the identifier law failing inside the
+instrument that measures enforcement**, and it is the third time this lane has
+met it: `sites.sh`'s `.unsupportedDevice`, `arms_of`'s first-hit-per-file, and
+now this. Same fix each time — require a boundary.
+
+The ledger *citation counts* used the same loose match, which is where the
+damage was.
+
+### The numbers: headline held, ranking inverted
+
+| | before | after |
+| --- | ---: | ---: |
+| cited by a tool | 216 | **215** |
+| ungateable (recorded, not debt) | — | **1** |
+| NO GATE | 116 | **116** |
+
+The headline barely moved because false credits and two newly-attributed laws
+nearly cancelled. **The demand ranking did not survive:**
+
+| home | before | after |
+| --- | ---: | ---: |
+| `§9.2` (PROOF-38/39/40) | **14** — the head | not in the top six |
+| `§2.4` and its clauses | 7 | **8, and seven ungated laws** |
+
+§9.2's 14 was mostly `§9.x` mentions. **§2.4 is the head by breadth and by
+count**, which means the ruled order — MEAS-28, STMT-60 (both §2.4), then
+PROOF-39 (§9.2) — is now *better* supported than when it was ruled, and
+PROOF-39 sits lower than it looked.
+
+### Two mechanisms, both cheap
+
+**Attribution by identity when the home names a script.** `MEAS-60` and
+`OPS-46` were never ungated — both are implemented in `tools/triad.sh`
+(verified) and were invisible because their home is a ledger entry id no tool
+cites. Their index rows now carry `— gate: tools/triad.sh`, and identity
+attribution (which already worked) does the rest. **34 laws are homed in a
+ledger entry**, so this channel exists for all of them.
+
+**`ungateable: <reason>` in the index home column**, reported in its own
+bucket. Re-surfacing a settled finding every audit is how it gets
+re-litigated. `PROOF-40` is recorded with the ruled sentence: *cost is a
+judgement over lane-time and build invalidation; the only mechanical proxy is
+the half never in dispute.*
+
+### A cost regression, caught and fixed before landing
+
+The boundary fix built one regex **per token per file** and doubled the run —
+**50 s → 1 m 51 s**. Hoisted to once per token: **54 s**. A tool that prices
+enforcement has to be priced too, which is the lesson `sites.sh` took a
+budget for.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **22 ok, 0 failed** (17 → 22) — `§9` not
+matching `§9.5` while `§9.5` does, a dated id not matching its longer sibling,
+and an ungateable row recognised with its reason. Doc-first: §9.7 carries the
+correction and says the dispatch moved rather than the headline. `docs_check`
+**87/87**. No Lean executed.

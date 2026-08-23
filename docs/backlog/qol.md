@@ -1231,3 +1231,70 @@ report directions including the shared line, that a clean pass prints
 **nothing**, and that the unstampable case is loud. Live: a sandboxed dry-run
 enqueued, printed `tree at enqueue: 6a8b1bd6f8d9`, acquired and proceeded with
 no complaint, leaving no ticket. `docs_check` **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-19 — a run is not a measurement until it has been read
+
+The successor lane's instrumented proof run counted **"0 open arms" twice**
+while it was (a) looping in `simp` until the heartbeat timeout and (b)
+erroring inside a `first` chain — `split` fails **hard**, escapes the chain,
+and never reaches the fallback the counter counts.
+
+> **A counter that counts goals reaching a fallback reads an ERROR as a
+> SUCCESS.**
+
+That is `#print axioms` on a failed statement wearing different clothes: **a
+success signal that survives the failure it should report.** Same family as
+`diagnose.sh:axioms-clean-lie`, and the same fix — read the state, don't infer
+it from the absence of a complaint.
+
+### What `check.sh` now prints after every run
+
+```
+    exit code      1
+    warnings       2 total — 1 sorry, 1 other
+      other: unused variable 'fuel'
+    heartbeats     1 line(s) — THE RUN DID NOT FINISH THINKING:
+      f.lean:1:1: error: (deterministic) timeout at `whnf`, maximum number of ...
+    maxRecDepth    none
+  VERDICT  NOT A MEASUREMENT: exit 1; 1 error line(s); heartbeat timeout; 1 non-sorry warning(s): unused variable 'fuel'
+```
+
+versus `VERDICT  TRUSTWORTHY: exit 0, sorry-only warnings`.
+
+Four decisions worth naming:
+
+* **Both runaway modes print even when they did NOT fire** (`heartbeats
+  none`). An absent line is information; it is what lets a lane trust the run
+  without re-reading the log.
+* **An error line voids the verdict even at exit 0** — that is the escaping-
+  `first`-chain case exactly, and it is a self-test row.
+* **A non-sorry warning voids it too**, and its class is listed. §L88 already
+  records an unused-variable warning that *was* a fidelity bug: unused fuel
+  meant the walk was not happening.
+* **`--axioms` runs a temp copy with `#print axioms` appended**, so the axiom
+  lines come from the **same elaboration** whose exit code is being read — an
+  axiom print from a different run is a number without its state. And they are
+  reported **only** when the run was a measurement; otherwise the section
+  refuses by name and cites §0.1 II(a).
+
+### The fixtures were wrong before the code was
+
+My first synthetic outputs used `warning: file:line: text`. Lean's real shape
+is `file:line:col: warning: text`, and the class extractor — which strips
+everything up to `warning:` — returned the file path instead of the message.
+The test failed, and it was the **fixture** that was wrong, not the tool. A
+synthetic output that does not match the real one tests a program nobody runs.
+
+### Triad
+
+`bash -n` clean. `tools/check.sh --self-test`: **74 ok, 0 failed** (58 → 74,
+**16 new**) — a clean run, a sorry-only run, a nonzero exit, an **error at exit
+0**, a heartbeat timeout called out and named in the verdict, `maxRecDepth`
+called out and pointing at its three causes, a non-sorry warning voiding the
+run with its class listed, no output at all, and the axiom section refusing on
+a failed run while reporting on a clean one. Docs-first: §7's tools list gains
+the verdict row and the law. `docs_check` **87/87**. **No Lean executed** — the
+verdict is a function of `(exit code, output)`, so it is tested on synthetic
+outputs, which is also the only way to test the failing cases at all.

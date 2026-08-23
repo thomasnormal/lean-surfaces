@@ -73,6 +73,7 @@
 #   tools/check.sh path/to/file.lean        # decide, then elaborate
 #   tools/check.sh --explain path/to/f.lean # decide and PRINT, run nothing
 #   tools/check.sh --iterate --lane <you> path/to/file.lean
+#   tools/check.sh --axioms 'Foo.bar,Foo.baz' path/to/file.lean
 #   tools/check.sh --self-test              # every refusal path RUN, no Lean
 #
 # EXIT  0 elaborated clean (or --explain)   1 Lean reported errors
@@ -89,6 +90,7 @@ LOCK="${LS_LOCK:-/tmp/ls-build.lock}"
 NICE="${LS_NICE:-19}"
 EXPLAIN=0
 SELF_TEST=0
+AXIOMS=""
 TARGET=""
 ITERATE=0
 LANE=""
@@ -109,6 +111,7 @@ while [ $# -gt 0 ]; do
     --dir)       CLONE="${2:-}"; shift 2 ;;
     --explain)   EXPLAIN=1; shift ;;
     --iterate)   ITERATE=1; shift ;;
+    --axioms)    AXIOMS="${2:-}"; shift 2 ;;
     --lane)      LANE="${2:-}"; shift 2 ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
@@ -188,6 +191,90 @@ lock_is_ours() {
     p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
   done
   return 1
+}
+
+# ------------------------------------------- IS THIS RUN A MEASUREMENT?
+# From the successor lane's instrumented proof run, which counted "0 open
+# arms" TWICE while (a) looping in `simp` until the heartbeat timeout and
+# (b) erroring inside a `first` chain — `split` fails HARD, escapes the chain,
+# and never reaches the fallback the counter counts.
+#
+#   > A counter that counts goals reaching a fallback reads an ERROR as a
+#   > SUCCESS.
+#
+# It is the same shape as `#print axioms` on a failed statement: a success
+# signal that SURVIVES the failure it should report.  So a run is not a
+# measurement until its exit code, its warning classes and its two known
+# runaway modes have been read — and this says so in one line, because a
+# report nobody reads at a glance is a report that gets skipped at 2am.
+warning_classes() {             # output -> the distinct NON-sorry warnings
+  grep -E 'warning:' "$1" 2>/dev/null \
+    | grep -v "declaration uses 'sorry'" \
+    | sed 's/^.*warning: *//' | cut -c1-72 | sort -u
+}
+
+# rc, output -> the report on stdout, and the one-line verdict LAST.
+run_verdict() {
+  local rc="$1" f="$2" nerr nsorry nwarn nother hb mrd reasons="" cls
+  [ -f "$f" ] || { echo "    (no output captured)"; echo "  VERDICT  NOT A MEASUREMENT: no output was captured"; return 1; }
+  nerr="$(grep -cE '^error|error:' "$f" 2>/dev/null || true)"
+  nsorry="$(grep -c "declaration uses 'sorry'" "$f" 2>/dev/null || true)"
+  nwarn="$(grep -cE 'warning:' "$f" 2>/dev/null || true)"
+  nother=$((nwarn - nsorry))
+  hb="$(grep -cE 'maximum number of heartbeats|\(deterministic\) timeout' "$f" 2>/dev/null || true)"
+  mrd="$(grep -cE 'maxRecDepth|maximum recursion depth' "$f" 2>/dev/null || true)"
+
+  printf '    exit code      %s\n' "$rc"
+  printf '    warnings       %s total — %s sorry, %s other\n' "$nwarn" "$nsorry" "$nother"
+  if [ "$nother" -gt 0 ]; then
+    warning_classes "$f" | sed 's/^/      other: /'
+  fi
+  # The two runaway modes get their own lines whether or not they fired: an
+  # absent line is information too, and "heartbeats none" is what lets a lane
+  # trust the run without re-reading the log.
+  if [ "$hb" -gt 0 ]; then
+    printf '    heartbeats     %s line(s) — THE RUN DID NOT FINISH THINKING:\n' "$hb"
+    grep -E 'maximum number of heartbeats|\(deterministic\) timeout' "$f" | head -3 | cut -c1-96 | sed 's/^/      /'
+  else
+    printf '    heartbeats     none\n'
+  fi
+  if [ "$mrd" -gt 0 ]; then
+    printf '    maxRecDepth    %s line(s) — see tools/diagnose.sh --explain max-rec-depth (THREE causes):\n' "$mrd"
+    grep -E 'maxRecDepth|maximum recursion depth' "$f" | head -3 | cut -c1-96 | sed 's/^/      /'
+  else
+    printf '    maxRecDepth    none\n'
+  fi
+
+  [ "$rc" != "0" ]    && reasons="${reasons:+$reasons; }exit $rc"
+  [ "$nerr" -gt 0 ]   && reasons="${reasons:+$reasons; }$nerr error line(s)"
+  [ "$hb" -gt 0 ]     && reasons="${reasons:+$reasons; }heartbeat timeout"
+  [ "$mrd" -gt 0 ]    && reasons="${reasons:+$reasons; }maxRecDepth"
+  if [ "$nother" -gt 0 ]; then
+    cls="$(warning_classes "$f" | head -1)"
+    reasons="${reasons:+$reasons; }$nother non-sorry warning(s): ${cls:-unknown}"
+  fi
+
+  if [ -n "$reasons" ]; then
+    printf '  VERDICT  NOT A MEASUREMENT: %s\n' "$reasons"
+    return 1
+  fi
+  printf '  VERDICT  TRUSTWORTHY: exit 0, sorry-only warnings\n'
+  return 0
+}
+
+# §0.1 II(a): a declaration whose STATEMENT failed prints "does not depend on
+# any axioms" — CLEANER than the truth.  So the axiom lines are reported only
+# from a run that was a measurement, and otherwise refused BY NAME.
+axiom_report() {                # output, trustworthy(0/1)
+  local f="$1" ok="$2"
+  grep -qE "depend.* on|does not depend on any axioms" "$f" 2>/dev/null || return 0
+  if [ "$ok" != "0" ]; then
+    printf '    axioms         NOT REPORTED — this run was not a measurement, and a failed\n'
+    printf '                   STATEMENT prints "does not depend on any axioms" (§0.1 II(a))\n'
+    return 0
+  fi
+  printf '    axioms         (from a clean elaboration):\n'
+  grep -E "depends on axioms|does not depend on any axioms" "$f" | cut -c1-96 | sed 's/^/      /'
 }
 
 # ------------------------------------------------- the machine, measured
@@ -531,6 +618,64 @@ TOML
   check "the ceiling is 3 GB, stricter than A16's tenure line" \
         "$ITER_RSS_LIMIT_KB" "3145728"
 
+  # ---- IS THIS RUN A MEASUREMENT?  (the successor lane's "0 open arms")
+  echo "  -- run verdict"
+  v="$tmp/verdict"; mkdir -p "$v"
+
+  printf 'info: elaborated\n' > "$v/clean.out"
+  check "clean run -> TRUSTWORTHY" \
+        "$(run_verdict 0 "$v/clean.out" | grep -c 'VERDICT  TRUSTWORTHY: exit 0, sorry-only warnings')" "1"
+  check "  ...and both runaway modes read 'none'" \
+        "$(run_verdict 0 "$v/clean.out" | grep -cE 'heartbeats     none|maxRecDepth    none')" "2"
+
+  printf "f.lean:3:0: warning: declaration uses 'sorry'\nf.lean:9:0: warning: declaration uses 'sorry'\n" > "$v/sorry.out"
+  check "sorry-only warnings stay TRUSTWORTHY" \
+        "$(run_verdict 0 "$v/sorry.out" | grep -c 'TRUSTWORTHY')" "1"
+  check "  ...and the sorries are COUNTED"  \
+        "$(run_verdict 0 "$v/sorry.out" | grep -c 'warnings       2 total — 2 sorry, 0 other')" "1"
+
+  check "a nonzero exit is NOT A MEASUREMENT" \
+        "$(run_verdict 1 "$v/clean.out" | grep -c 'NOT A MEASUREMENT: exit 1')" "1"
+
+  # THE CASE THAT MINTED THIS: an error inside a `first` chain, where a
+  # fallback-counting instrument read the error as a success.
+  printf 'f.lean:12:2: error: tactic split failed\ninfo: done\n' > "$v/escaped.out"
+  check "an ERROR with exit 0 is still NOT A MEASUREMENT" \
+        "$(run_verdict 0 "$v/escaped.out" | grep -c 'NOT A MEASUREMENT: 1 error line')" "1"
+
+  printf 'f.lean:1:1: error: (deterministic) timeout at `whnf`, maximum number of heartbeats (200000) has been reached\n' > "$v/hb.out"
+  check "a heartbeat timeout is CALLED OUT" \
+        "$(run_verdict 1 "$v/hb.out" | grep -c 'THE RUN DID NOT FINISH THINKING')" "1"
+  check "  ...and named in the verdict"    \
+        "$(run_verdict 1 "$v/hb.out" | grep -c 'heartbeat timeout')" "1"
+
+  printf 'f.lean:2:2: error: maximum recursion depth has been reached\n' > "$v/mrd.out"
+  check "maxRecDepth is CALLED OUT"        \
+        "$(run_verdict 1 "$v/mrd.out" | grep -c 'maxRecDepth    1 line')" "1"
+  check "  ...pointing at its THREE causes" \
+        "$(run_verdict 1 "$v/mrd.out" | grep -c 'THREE causes')" "1"
+
+  printf "f.lean:4:0: warning: declaration uses 'sorry'\nf.lean:7:9: warning: unused variable 'fuel'\n" > "$v/other.out"
+  check "a NON-sorry warning voids the measurement" \
+        "$(run_verdict 0 "$v/other.out" | grep -c 'NOT A MEASUREMENT: 1 non-sorry warning')" "1"
+  check "  ...and its class is LISTED"     \
+        "$(run_verdict 0 "$v/other.out" | grep -c 'other: unused variable')" "1"
+
+  check "no output at all is NOT A MEASUREMENT" \
+        "$(run_verdict 0 "$v/does-not-exist" | grep -c 'no output was captured')" "1"
+
+  # §0.1 II(a): the axiom line is the one that reads CLEANER than the truth.
+  printf "'thm' does not depend on any axioms\nf.lean:1:1: error: unknown identifier\n" > "$v/ax-bad.out"
+  run_verdict 0 "$v/ax-bad.out" >/dev/null; vok=$?
+  check "a failed run REFUSES to report axioms" \
+        "$(axiom_report "$v/ax-bad.out" "$vok" | grep -c 'NOT REPORTED')" "1"
+  check "  ...citing the mode table"       \
+        "$(axiom_report "$v/ax-bad.out" "$vok" | grep -c '§0.1 II(a)')" "1"
+  printf "'thm' depends on axioms: [propext, Classical.choice, Quot.sound]\n" > "$v/ax-ok.out"
+  run_verdict 0 "$v/ax-ok.out" >/dev/null; vok=$?
+  check "a clean run DOES report them"     \
+        "$(axiom_report "$v/ax-ok.out" "$vok" | grep -c 'propext')" "1"
+
   unset LS_MOCK_LOAD LS_MOCK_SWAP LS_MOCK_LEAN_CHILD
   ITERATE=0; LANE=""
 
@@ -640,9 +785,37 @@ if [ "$ITERATE" = "1" ]; then
   ) & ITER_WATCHDOG=$!
   printf '%s\n' "$ITER_WATCHDOG" > "$ENTRY.guard" 2>/dev/null
 fi
+# --axioms runs a TEMP COPY with `#print axioms` appended, so the axiom lines
+# come from the SAME elaboration whose exit code and warnings are being read —
+# an axiom print from a different run is a number without its state (§5.4a).
+RUN_TARGET="$REL"
+AXCOPY=""
+if [ -n "$AXIOMS" ]; then
+  AXCOPY="$(mktemp "${TMPDIR:-/tmp}/check-axioms.XXXXXX.lean")" || die "no temp file"
+  cat "$CLONE/$REL" > "$AXCOPY" || die "cannot copy '$REL'"
+  printf '\n' >> "$AXCOPY"
+  printf '%s' "$AXIOMS" | tr ',' '\n' | while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    printf '#print axioms %s\n' "$d" >> "$AXCOPY"
+  done
+  RUN_TARGET="$AXCOPY"
+  echo "  AXIOMS   appended #print axioms for: $AXIOMS (run from a temp copy, so"
+  echo "           error paths below name that copy rather than $REL)"
+fi
+
+RUN_LOG="$(mktemp "${TMPDIR:-/tmp}/check-run.XXXXXX")" || die "no temp file"
 # shellcheck disable=SC2086
-nice -n "$NICE" lake env lean "$REL"
-RUN_RC=$?
+nice -n "$NICE" lake env lean "$RUN_TARGET" 2>&1 | tee "$RUN_LOG"
+RUN_RC="${PIPESTATUS[0]}"
+
+# A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.
+echo
+run_verdict "$RUN_RC" "$RUN_LOG"
+VERDICT_OK=$?
+[ -n "$AXIOMS" ] && axiom_report "$RUN_LOG" "$VERDICT_OK"
+[ -n "$AXCOPY" ] && rm -f "$AXCOPY"
+rm -f "$RUN_LOG"
+
 if [ "$ITERATE" = "1" ]; then
   cleanup_iterate
   # THE STOP MIRRORS THE START: the same function, the same numbers.

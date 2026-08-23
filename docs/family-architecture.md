@@ -4266,11 +4266,29 @@ its refusal paths rather than describing them (§5.4).
 | `tools/diagnose.sh` | annotate a build log with cause, fix and the law's home | §7's *"the summary LOCATES; the full log COUNTS"* |
 | `tools/check.sh` | one file, against a warm clone's oleans — and it names the case | §7.1 rule 3 and its warm-clone amendment |
 | `tools/check.sh --iterate` | the proof-iteration loop, lock-free on measured conditions | A17 (draft) |
+| `tools/check.sh` (verdict) | after any run: `TRUSTWORTHY` vs `NOT A MEASUREMENT: <why>` | *a counter that counts goals reaching a fallback reads an error as a success* |
 | `tools/sites.sh` | price a constructor change by the sites that DESTRUCTURE it | §5.4a's pattern-position law |
 | `tools/analogues.sh` | how many proved analogues a statement shape has, and how long | the Lean tier's tractability estimate |
 | `tools/new-proof.sh` | scaffolds for the four recurring proof shapes, laws inline | `docs/statement-cookbook.md` |
 | `tools/backlog-index.sh` | generate `docs/backlog/INDEX.md`; `--check` gates its staleness | §9.5, §5.5 |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
+
+**AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor
+lane's instrumented proof run counted **"0 open arms" twice** while it was
+(a) looping in `simp` until the heartbeat timeout and (b) erroring inside a
+`first` chain — `split` fails **hard**, escapes the chain, and never reaches
+the fallback the counter counts.
+
+> **A counter that counts goals reaching a fallback reads an ERROR as a
+> SUCCESS.**
+
+It is `#print axioms` on a failed statement wearing different clothes: **a
+success signal that survives the failure it should report.** So `tools/check.sh`
+now closes every run with the exit code, the warning classes (naming any that
+is not `declaration uses 'sorry'`), the two runaway modes called out by name
+whether or not they fired, and a **one-line verdict** — `TRUSTWORTHY: exit 0,
+sorry-only warnings`, or `NOT A MEASUREMENT:` followed by every reason. Axiom
+lines are reported **only** from a run that was a measurement.
 
 **`tools/sites.sh` is the one to reach for before pricing any substrate
 change**, because three lanes priced one constructor change three different

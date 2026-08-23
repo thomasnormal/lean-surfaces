@@ -5171,12 +5171,13 @@ proved its increment's class by hand (`git diff --name-only <green-sha>
 HEAD`, two docs files). This makes that mechanical, under the provenance law
 above: **a green that rests on another green must carry the one it rests on.**
 
-**A GREEN CERTIFIES A TREE, NOT A COMMIT.** The tenure stamp is
-`git write-tree` — the INDEX tree — plus HEAD. So a green can certify content
-that is not any commit, whenever staged work was in the tree. A green is
-therefore **citable** as an increment base only when its index tree equals its
-HEAD commit's tree; otherwise the sha names something the green did not
-certify. This is the provenance law applied to the evidence's own identity.
+**A GREEN CERTIFIES A TREE, NOT A COMMIT.** The tenure stamp hashes the
+**WORKING TREE** — what `lake` actually reads — plus HEAD. (It hashed the
+INDEX until `22ed755`; that blind spot is its own entry below.) So a green can
+certify content that is not any commit, whenever uncommitted work was in the
+tree. A green is therefore **citable** as an increment base only when its
+working tree equals its HEAD commit's tree; otherwise the sha names what the
+green did not certify. This is the provenance law applied to the evidence's own identity.
 
 **AND THE LADDER HAS A THIRD RUNG, MEASURED THE EXPENSIVE WAY: A GREEN
 CERTIFIES A TREE, NEVER A TITLE** (Ada successor's reconstruction; the adoption
@@ -7325,11 +7326,10 @@ reported **"`instN` green"** for a run that actually built **`instN` +
 > stage — between ENQUEUE and RELEASE. Batch BEFORE enqueue, or after the
 > verdict.**
 
-**AND THE STAMP THAT ENFORCES THAT RULE HAS A BLIND SPOT, FOUND BY A LANE
-CHECKING WHETHER IT COULD SAFELY EDIT** (Wasm; fix dispatched to the tools lane
-as priority). **`tree_stamp` is `git write-tree`, which hashes the INDEX.
-`lake` builds the WORKING TREE.** Verified here against the tool:
-`tools/triad.sh:1181-1183`.
+**AND THE STAMP THAT ENFORCES THAT RULE HAD A BLIND SPOT, FOUND BY A LANE
+CHECKING WHETHER IT COULD SAFELY EDIT** (Wasm; **fixed in `22ed755`**).
+**`tree_stamp` WAS `git write-tree`, which hashes the INDEX. `lake` builds the
+WORKING TREE.** Verified against the tool at the time: `tools/triad.sh:1181-1183`.
 
 > **An UNCOMMITTED, UNSTAGED edit between enqueue and acquire is INVISIBLE to
 > A6's enforcement — and the green would certify a tree the gate never saw.**
@@ -7342,6 +7342,22 @@ the sharpening the analog apex supplied (§5.3): **correctly motivated,
 correctly implemented, against the wrong object.** Nothing here is a slip; the
 `write-tree` call does exactly what it says, and what it says is not what the
 build reads.
+
+**RESOLVED (`22ed755`, merged `b98b4d0`; verified here — `STAMP_VERSION="v2"`
+at `tools/triad.sh:1192-1208`).** The stamp now hashes the working tree through
+a **temporary** `GIT_INDEX_FILE`, so the lane's own staging area is untouched;
+`add -A` catches untracked files (a new `.lean` is exactly what must not slip
+in) and honours `.gitignore` (so `.lake` churn cannot defeat it), **at both
+ends**, for **0.31 s cold against 0.015 s**, twice per tenure. Two
+consequences worth keeping. **An index-only edit is now ACCEPTED** — content
+staged but absent from the working tree will never be elaborated, so it is not
+part of what the tenure certifies, and the old stamp's refusal of it was a
+false alarm in the opposite direction. And **stamps carry a version**: a `v1`
+stamp compared against a `v2` one reads `unversioned`, which **accepts and
+logs** rather than refusing, because the two hash different objects and an
+answer to one is not evidence about the other — eight tenures were queued when
+the fix landed. **OPS-79's interim rule therefore SUNSETS: it applies only to
+tenures whose tickets carry v1 stamps.**
 
 **AND HOW IT WAS FOUND IS ITS OWN LAW.** The lane **almost deferred a safe
 edit** for fear of the stamp, then **read the stamp's implementation instead of
@@ -7373,13 +7389,6 @@ separates **a lane working within a known-imperfect protocol** from **a lane
 quietly relying on the imperfection**, and *after the fact the two produce the
 same tenure.* **Declaration is cheap only before**, and it is the entire
 difference between a hole that gets fixed and a hole that gets used.
-
-**THE FIX HAS LANDED** (QoL `22ed755`, merged `b98b4d0`; verified here —
-`STAMP_VERSION="v2"` and the `GIT_INDEX_FILE` temp index at
-`tools/triad.sh:1192-1208`). Working-tree hash at both ends, `add -A` so a new
-untracked `.lean` cannot slip in, `.gitignore` honoured, **0.31 s cold against
-0.015 s**, twice per tenure. **OPS-79's interim rule therefore SUNSETS: it
-applies only to tenures whose tickets carry v1 stamps.**
 
 **AND THE RE-POINTING FLIPPED ONE OF THE GUARD'S OLD VERDICTS, DELIBERATELY.**
 The old stamp **REFUSED an index-only edit**; the new one **accepts** it —
@@ -7527,7 +7536,7 @@ tenure reads the source at **build** time, not at enqueue time, so an edit made
 while waiting silently changes what the verdict is *about*. Measured
 2026-08-23: the Lean tier nearly reported **"instN green"** for a run that
 would have built **instN + weak'**, because the queue wait outlasted the tree.
-`tools/triad.sh` now stamps the index's tree (`git write-tree`) plus `HEAD`
+`tools/triad.sh` now stamps the **working tree**'s hash plus `HEAD`
 **into the ticket** at enqueue, re-takes it at acquire, and on a difference
 prints `TREE CHANGED SINCE ENQUEUE (<enq> → <now>)` and **refuses**.
 `--build-current-tree` proceeds for a lane that batched deliberately — and
@@ -8880,6 +8889,32 @@ it never fails. `INBOUND FROM THE SOFTFLOAT LANE — …` yields the id `INBOUND
 > **A MIGRATION-TOLERANT GATE DISTINGUISHES OLD-VALID FROM NEVER-VALID, or
 > `--strict` can never be adopted.**
 
+**AND THE CENSUS MOVED — 7 MALFORMED, NOT 6 — AND THE COMPOSITION CHANGED,
+WHICH IS THE MORE USEFUL FACT** (re-measured here). One of the seven **is not an
+entry at all**: `docs/backlog/go.md:11` is `## SPEC COVERAGE — the completion
+metric`, **a standing section header** carrying §9.0's own required number. The
+other six are INBOUND entries.
+
+> **TWO REMEDIES FOR ONE SYMPTOM, DISTINGUISHED BY WHAT THE HEADING *IS*.** An
+> **entry** missing an id gets **an id**. A **section header** gets **demoted to
+> `###`** — **never an invented id**, because that would put it in the index
+> **as an entry that does not exist.**
+
+**The unit family at the heading level.** The guard reports a **syntactic**
+class — *does this `##` parse as `<id> — <title>`* — and **two semantic kinds
+sit inside it.** Giving the section header an id would **satisfy the guard and
+corrupt the index**, which is every member of this family's shape: *the check
+was right; the unit underneath it was two things.*
+
+**And it is why the guard WARNS rather than auto-fixing.** A gate that repaired
+its own findings would have written an id onto that header — **the flattering
+repair, applied to the one case the gate cannot classify.**
+
+> **A guard that can NAME a defect it cannot CLASSIFY must hand it to someone
+> who can.**
+
+
+
 **Without that distinction a strict mode is unshippable**, and the reason is
 arithmetic rather than taste: a gate that treats every pre-scheme heading as
 junk fails on **history**, so it can only be turned on after a tree-wide
@@ -8976,6 +9011,41 @@ convention in a charter can be a defect in a tool.** §9.5a was written for
 readers and the generator reads it too; **a rule about how humans write headings
 became an input to a program, and nobody re-checked it against the program's
 grammar.**
+
+**AND THE RECONCILIATION REGIME IS RULED, because the ownership norm does not
+settle it by itself** (asked by the tools lane after it reconciled this
+document's stamp paragraphs at a merge; ratified here). The question: when a
+finding and its fix land from **different lanes in the same window**, does the
+fixing lane **reconcile the register at the merge**, or is reconciliation
+**INBOUND** to the owning lane like everything else?
+
+> **RULING — IT SPLITS, AND THE TEST IS ONE QUESTION: does the edit change what
+> the document CLAIMS, or only WHEN it claims it?**
+
+* **TENSE AND STATUS — reconcile AT THE MERGE, by the lane that landed the
+  fix.** *"The stamp IS `git write-tree`"* becomes false the moment the fix
+  lands, and **the fixing lane is the only party who knows that.** An INBOUND
+  would leave the charter **false for the length of a round-trip**, and
+  model-matches-code makes divergence a **blocker**, not a queue item.
+* **REASONING, LAWS, DATED ENTRIES — INBOUND, always.** A lane reconciling a
+  status may **not** restate a law, re-scope a finding, or delete an analysis on
+  the way past, and dated entries stay under the annotation norm untouched.
+
+**Two conditions make the first half safe, and the tools lane met both**:
+**preserve the reasoning intact** — the analysis is the register's value and
+none of it was wrong — and **say in the landing exactly what changed and why.**
+
+**AND THE OWNER STILL AUDITS, which is the half that cannot be delegated.** The
+first exercise of this ruling produced a **correct, well-reasoned reconciliation
+that also left the section saying the same thing twice**: the fixing lane added
+a `RESOLVED` paragraph while this lane's own *"the fix has landed"* paragraph
+already stood forty lines below. **Neither edit was wrong — the duplication
+existed only in the UNION**, which is exactly what an owner's read catches and a
+merge cannot. Consolidated on the way through.
+
+> **Reconciliation-by-edit is right for TENSE and owes an owner's pass for
+> COHERENCE. The merge fixes what is FALSE; only the owner sees what is now
+> REDUNDANT.**
 
 **AND THE RULE HAS NOW BEEN TESTED AGAINST A DISPATCH, WHICH IS THE CASE THAT
 DECIDES WHETHER IT IS A RULE.** A coordinator dispatch instructed this lane to

@@ -258,6 +258,10 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-207 | a failure that only ever costs TIME has no constituency for fixing it | `docs/family-architecture.md §5.4b` |
 | MEAS-208 | AN ID IS ONE TOKEN — a migration-tolerant gate separates old-valid from never-valid | `docs/family-architecture.md §9.5` |
 | MEAS-209 | a CONVENTION in a charter can be a DEFECT in a tool — re-check prose rules against the program that reads them | `docs/family-architecture.md §9.5a` |
+| MEAS-210 | reconciliation splits: TENSE/STATUS at the merge, REASONING/LAWS inbound — does the edit change what it CLAIMS or WHEN | `docs/family-architecture.md §9.5a` |
+| MEAS-211 | the merge fixes what is FALSE; only the owner sees what is now REDUNDANT | `docs/family-architecture.md §9.5a` |
+| MEAS-212 | two remedies for one symptom: an ENTRY gets an id, a SECTION HEADER gets demoted — never an invented id | `docs/family-architecture.md §9.5` |
+| MEAS-213 | a guard that can NAME a defect it cannot CLASSIFY must hand it to someone who can | `docs/family-architecture.md §9.5` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -535,7 +539,7 @@ numbers below are the register's own.
 | OPS-75 | a stamp added to a measured artifact owes a DIFFERENTIAL — same verdicts with and without | `docs/family-architecture.md §7.2` |
 | OPS-76 | A COMMIT CANNOT CONTAIN ITS OWN HASH — each rung's sha lands in the FOLLOWING commit | `docs/family-architecture.md §7.2` |
 | OPS-77 | `set_option autoImplicit false` in model files — a required LOUDNESS guard | `docs/family-architecture.md §7.1a` |
-| OPS-78 | the enqueue stamp hashes the INDEX; `lake` builds the WORKING TREE | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
+| OPS-78 | a guard must hash the object the BUILD reads, never the one beside it (the enqueue stamp hashed the INDEX while `lake` built the WORKING TREE; fixed `22ed755`) | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
 | OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` — **SUNSET**: stamp v2 is live; applies only to v1-stamped tickets |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging

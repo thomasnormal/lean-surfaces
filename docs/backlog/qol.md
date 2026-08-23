@@ -3440,3 +3440,49 @@ substrate 25, editions 12, dupes 10, a6-guard 8 — every tool that sources
 argv one-source gate. Fixture repos only: the live queue was verified
 untouched (8 tickets, sv holding the lock) and every run used a stubbed `lake`
 with `LS_LOCK`/`LS_QUEUE` in the scratchpad. No Lean executed.
+
+## 2026-08-24-qol-49 — the merge left the model describing a guard that no longer exists
+
+`22ed755` merged as `b98b4d0`. The merge is clean and green on master —
+triad **283 ok**, backlog-index **47 ok**, `--verify-guards` **32 ok**,
+docs_check 91/91 — and the two commits either side of it (`4b8585e`,
+`17c8da1`) are **docs-only**: the architecture lane REGISTERED the stamp
+finding in the same hours the tools lane FIXED it. No code conflict.
+
+**But a docs-only neighbour is exactly how a model goes stale.** Four
+present-tense claims survived the merge describing a guard that no longer
+exists:
+
+* `docs/family-architecture.md` §5.4a-i — **mine**, written yesterday: "the
+  tenure stamp is `git write-tree` — the INDEX tree", and citability defined
+  as the index tree matching HEAD's. My own fix falsified my own paragraph.
+* §7.2's registration — "`tree_stamp` **is** `git write-tree`… fix dispatched
+  to the tools lane as priority". The dispatch had already landed.
+* §7.2's A6 gate description — "`tools/triad.sh` **now** stamps the index's
+  tree".
+* `docs/law-index.md` **OPS-78** — "the enqueue stamp hashes the INDEX; `lake`
+  builds the WORKING TREE", pointing at `tools/triad.sh`.
+
+Repaired surgically, preserving the architecture lane's analysis intact — the
+reasoning is the register's value and none of it was wrong. Only the tense and
+the status changed, plus a **RESOLVED** paragraph recording the two
+consequences a future reader needs: the index-only acceptance, and stamp
+versioning's accept-and-log.
+
+**OPS-78 was restated as a LAW rather than a symptom.** "The enqueue stamp
+hashes the INDEX" is an observation with a shelf life; the durable rule is
+**a guard must hash the object the BUILD reads, never the one beside it** —
+with the incident kept parenthetically so the row stays traceable.
+
+The general shape, which is worth more than this instance: **when a finding
+and its fix land from different lanes in the same window, the register
+describes the defect in the present tense and the code has already moved.**
+Neither lane is wrong and neither merge is dirty — the divergence is created
+by the ORDER, and it survives precisely because both halves are green. Model
+and code land together; when they land from two lanes, someone owes the
+reconciliation at the merge.
+
+### Triad
+
+Docs only, no tool changed. laws 45 ok, docs_check 91/91, and the suite above
+re-run on merged master. No Lean executed.

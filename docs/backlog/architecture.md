@@ -4716,3 +4716,77 @@ written.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-203 … MEAS-209**, and **OPS-79 sunset**.
+
+## 2026-08-24-architecture-60 — The merge fixes what is false; only the owner sees what is now redundant
+
+A merge, a ruling, and a corrected census. Merged QoL's `qol-model-matches-code`
+@ `5fa7492` into master and resolved the conflict in this lane's document.
+
+**THE MERGE.** QoL reconciled four present-tense claims that its own fix had
+falsified — §5.4a-i (theirs), §7.2's registration and A6 description (mine), and
+`OPS-78`. **The analysis was preserved intact; only tense and status moved**,
+plus a `RESOLVED` paragraph carrying the two consequences a future reader needs.
+**Verified for sense, not just cleanliness** — and that mattered:
+
+* **`OPS-78` resolved by COMBINING, nothing dropped from either side.** QoL's
+  shelf-life-free statement — *a guard must hash the object the BUILD reads,
+  never the one beside it* — **subsumes** my symptom line, which survives inside
+  its parenthetical along with the fix sha. **`OPS-79` is mine and untouched**,
+  sunset intact.
+* **AND THE UNION SAID THE FIX TWICE.** QoL's `RESOLVED (22ed755)` paragraph
+  landed forty lines above my *"the fix has landed"* paragraph from `-59`.
+  **Neither edit was wrong**; the duplication existed **only in the union**.
+  Consolidated into one `RESOLVED` paragraph carrying **both** halves — QoL's
+  temp-index mechanism, index-only acceptance and accept-and-log versioning,
+  plus my verification citation, the 0.31 s/0.015 s cost and the OPS-79 sunset.
+* One merge artifact fixed: a mid-sentence line break left in §5.4a-i.
+
+**(1) THE RECONCILIATION REGIME — RULED, since it touches this lane's ownership
+norm.** The question was whether the fixing lane reconciles at the merge or
+whether reconciliation is INBOUND like everything else.
+
+> **It SPLITS, and the test is one question: does the edit change what the
+> document CLAIMS, or only WHEN it claims it?**
+
+**TENSE AND STATUS reconcile at the merge, by the lane that landed the fix** —
+*"the stamp IS `git write-tree`"* goes false the moment the fix lands, **the
+fixing lane is the only party who knows that**, an INBOUND would leave the
+charter **false for a round-trip**, and model-matches-code makes divergence a
+**blocker**, not a queue item. **REASONING, LAWS AND DATED ENTRIES stay
+INBOUND** — a lane reconciling a status may not restate a law, re-scope a
+finding, or delete an analysis on the way past.
+
+**Two conditions make the first half safe and QoL met both**: preserve the
+reasoning intact, and say in the landing exactly what changed and why.
+
+**And the owner still audits — the half that cannot be delegated.** The very
+first exercise of this ruling produced a **correct reconciliation that left the
+section saying the same thing twice.**
+
+> **Reconciliation-by-edit is right for TENSE and owes an owner's pass for
+> COHERENCE. The merge fixes what is FALSE; only the owner sees what is now
+> REDUNDANT.**
+
+**(2) THE CENSUS MOVED, AND THE COMPOSITION IS THE FINDING.** Re-measured here:
+**7 malformed, not 6** — and **one of them is not an entry at all.**
+`docs/backlog/go.md:11` is `## SPEC COVERAGE — the completion metric`, **a
+standing section header** carrying §9.0's own required number; the other six are
+INBOUND entries.
+
+> **Two remedies for one symptom, distinguished by what the heading IS**: an
+> **entry** missing an id gets **an id**; a **section header** gets **demoted to
+> `###`** — never an invented id, **which would put it in the index as an entry
+> that does not exist.**
+
+**The unit family at the heading level.** The guard reports a **syntactic**
+class and **two semantic kinds sit inside it** — *the check was right; the unit
+underneath it was two things.* **And it is why the guard warns rather than
+auto-fixing**: a gate repairing its own findings would have written an id onto
+that header, **the flattering repair applied to the one case it cannot
+classify.**
+
+> **A guard that can NAME a defect it cannot CLASSIFY must hand it to someone
+> who can.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-210 … MEAS-213**.

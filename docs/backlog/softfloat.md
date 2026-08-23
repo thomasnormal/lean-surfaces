@@ -831,3 +831,70 @@ Both are blocked on the same prerequisite, and **the parse half and `roundQ`
 are one inch** (2026-08-23-softfloat-13). The declarative half of that
 prerequisite is now landed; the computable `roundQ` and the equivalence are
 what remain before `ofScientific_correct` can be stated at all.
+
+---
+
+## 2026-08-24-softfloat-15 — `roundQ` LANDS AS AN ALGORITHM WITH EVIDENCE, and says so
+
+`LeanModels/SoftFloat/RoundAlg.lean`. Zero errors, zero warnings, verdict
+**TRUSTWORTHY**. `zero_repr` and `roundQ_isNearest_zero` `[propext]`;
+`roundQ_zero` **no axioms**.
+
+### THE FIRST ARITHMETIC TARGET IS `×`, AND CORE'S CODE DECIDES IT
+
+Not a judgement call. `mul`'s finite branch is **one line** —
+`roundWithAccuracy spec (s₁ * s₂) (m₁ * m₂) (e₁ + e₂) .exact` — the exact
+product's significand and exponent handed straight to rounding with `.exact`
+accuracy. `add`'s is **five steps**: two `decreaseExponent` calls to align
+exponents, a **signed** sum that can be negative or zero, then `normalize`,
+which case-splits three ways on the sign and calls `round`, which calls
+`roundWithAccuracy` anyway.
+
+> **`mul`'s obligation is a strict sub-problem of `add`'s.** Whatever proves
+> `mul` is needed for `add` too; the converse is false. So `×` first.
+
+### WHAT LANDED, AND WHAT IT IS NOT
+
+`roundQ` is computable, **mode-parametric over all five §4.3 attributes**,
+returns a `Q` so that `IsNearest fmt q (roundQ fmt mode q)` is directly
+statable, and terminates without fuel or well-founded recursion —
+`Nat.log2`, a shift, a division, two bounded corrections.
+
+**It is an ALGORITHM WITH EVIDENCE, not a specification, and the file says so
+in its own header.** The satisfaction theorems are what would make it one, and
+two remain:
+
+* `roundQ_repr` — the output is representable (the corrections exist to make
+  this true);
+* `roundQ_nearest` — nothing the format holds is strictly closer. This is the
+  real content and needs the interleaving argument about representable values
+  at differing exponents — the heart of a Flocq-style development.
+
+**They are stated as TEXT, not as `sorry`ed declarations.** A `sorry` would put
+`sorryAx` into this file's axiom prints and make every neighbouring theorem's
+receipt unreadable (§0.1 II(a)). This lane has already caught two axiom prints
+that lied; it will not manufacture a third.
+
+### EVIDENCE IN PLACE OF THE MISSING PROOF, LABELLED AS EVIDENCE
+
+`roundQ` was written independently of core's rounding. At a **3-bit
+significand**, where every rounding decision is forced and hand-checkable, the
+two are checked to agree on the rounding-sensitive integers **9, 11, 13, 5, 7**
+— including the ties — all by `decide`, in the kernel. And the modes are shown
+to genuinely differ (9 → ties-to-even **8**, toward-zero **8**, toward-positive
+**10**), so the mode parameter is not decoration.
+
+**This is corroboration, not proof**, and it is what justifies carrying `roundQ`
+before the satisfaction theorems land.
+
+### §9.0 — UNCHANGED, DELIBERATELY
+
+**`op_correct`: 1 of 12.** Nothing here moves it. `roundQ` is not an
+`op_correct`; `roundQ_isNearest_zero` is satisfaction on a single point, not an
+operation. The 21 excluded theorems stay excluded, and these three join them —
+**24 landed theorems, 1 of which is an `op_correct`.** A numerator that moved
+because a supporting file landed would be exactly the flattering direction this
+lane has corrected twice already.
+
+**The decimal blocker is unchanged**: `Es/Convert.lean:251` (print) and `:168`
+(parse), both live, both gated by `--decimal-demand` in this triad.

@@ -1,4 +1,5 @@
 import LeanModels.Go.Sem
+import LeanModels.Go.Obs
 
 /-!
 # The abstract syntax and the statement walker

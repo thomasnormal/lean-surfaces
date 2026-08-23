@@ -218,6 +218,45 @@ Every refusal this tier emits carries a cause drawn from `GoRefusal`, and
     (r.toCore π).isUndefined = false :=
   goRefusal_never_undefined r π
 
+/-! ### 2.1b THE STORE OPERATIONS, opened by the seam
+
+**These are the three lemmas `docs/backlog/go.md` §G8 recorded as
+unprovable**, and they are what the loop induction steps through. §G8's
+blocker was real — `lookupLocal name w` is not definitionally the match
+on `w.locals.find? …` — and `LeanModels/Go/Obs.lean` is the answer: with
+`go_run` opening the stack, each proof is four lines instead of an
+open-ended fight with `simp`.
+
+They connect the interpreter's monadic helpers to §1.3b's PURE world
+functions, which is exactly the join an induction over mutation needs:
+the pure side carries the frame reasoning, these carry the stepping. -/
+
+@[go_spec] theorem lookupLocal_ok {w : GoWorld} {name : String} {a : Addr}
+    (h : wLookup w name = some a) :
+    lookupLocal name w = .ok (.ok a, w) := by
+  unfold wLookup at h
+  cases hf : w.locals.find? (fun p => p.1 == name) with
+  | none => rw [hf] at h; simp at h
+  | some p =>
+    rw [hf] at h; simp only [Option.map_some, Option.some.injEq] at h
+    simp only [lookupLocal, go_run, hf, h]
+
+@[go_spec] theorem loadAddr_ok {w : GoWorld} {a : Addr} {v : GoVal}
+    (h : wRead w a = some v) : loadAddr a w = .ok (.ok v, w) := by
+  unfold wRead at h
+  cases hf : w.store.find? (fun p => p.1 == a) with
+  | none => rw [hf] at h; simp at h
+  | some p =>
+    rw [hf] at h; simp only [Option.map_some, Option.some.injEq] at h
+    simp only [loadAddr, go_run, hf, h]
+
+/-- A write lands in exactly the world §1.3b's frame lemmas describe —
+the join between the monadic step and the pure reasoning. -/
+@[go_spec] theorem storeLocal_ok {w : GoWorld} {name : String} {a : Addr}
+    {v : GoVal} (h : wLookup w name = some a) :
+    storeLocal name v w = .ok (.ok ⟨⟩, wStore w a v) := by
+  simp only [storeLocal, go_run, lookupLocal_ok h, wStore]
+
 /-! ### 2.2 Flow short-circuits — cookbook §13
 
 A non-normal flow stops the sequence. Stated at the sequence combinator,

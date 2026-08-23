@@ -1232,3 +1232,104 @@ Queued 100 minutes, held the machine **66 seconds**.
 its blocker named (§G8: the lane needs a `SemM`-reduction lemma set, the
 analogue of the Python lane's `py_simp`, before the induction is
 attemptable); the MM-oracle is untouched.
+
+---
+
+## G10 — THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23)
+
+### THE CENSUS FIRST — what Python actually has, and why Go's answer is cheaper
+
+§9.0a: census the lemma, not just the obligation. Measured on the tree:
+
+| artifact | size | what it actually contains |
+| --- | ---: | --- |
+| `LeanModels/Python/Obs.lean` | 158,701 B, **79 theorems** | `fuelMono` over a nine-function mutual block, the `Res.le`/`Run.le` approximation orders, and the congruences `Run.le_bind`, `Run.le_bindE`, `Run.le_ite`, `Run.le_withLocals`, `Run.le_toWorld` |
+| `LeanModels/Python/Monadic/Substrate.lean` | 10,603 B | §1 the `Run σ` ↔ family-stack isomorphism proved both ways, §2 Python's named refusals, §3 the frame/world zoom, and `liftRes` |
+
+**And the census found the thing that changes the estimate: Python has no
+opener, because it never needed one.** `Run` is a DATATYPE — its `bind`
+reduces by cases, so the wall Python hit was the approximation-order
+congruences, not the unfolding. `GoM` is a transformer STACK, so the
+opener is exactly what was missing. **Different wall, and Go's is one
+lemma wide.** Quoting Python's 79 theorems as the price would have been
+the wrong read of a real number.
+
+§3.4's ruling was taken as written: **the ORDER lifts, the CONGRUENCES
+don't** — each is about a different monad's `bind`, and Python's `Res`
+carries an `.exn` arm this stack does not, so a lifted congruence would be
+the thick-trunk mistake. Core supplies the order; this lane supplies its
+own congruences.
+
+### THE SEAM — `LeanModels/Go/Obs.lean`, 126 lines, 10 rows
+
+**One opening**, per §3.4's *"one opening of the monad stack is the right
+number"*:
+
+    run_bind : (x >>= f) w = match x w with
+      | .error h            => .error h                  -- loud, state discarded
+      | .ok (.error e, w')  => .ok (.error e, w')        -- panic, state RETAINED
+      | .ok (.ok a, w')     => f a w'                    -- continue
+
+Then the primitives every `do` block bottoms out in — `pure`, `get`,
+`set`, `modify`, `refuseGo`, `exhausted`, `raiseIn` — and two corollaries,
+`map` via `map_eq_pure_bind` and the value-discarding sequence. **`map`
+needs no second opening, which is the point of having exactly one.**
+
+All ten tagged `@[go_run]`, the simp set **named once** in `SpecAttr.lean`
+beside `go_spec`, registered there for the same import-boundary reason.
+
+The three outcome rows are the covenant made mechanical: a refusal
+discards state and cannot be caught, a panic RETAINS it, and only a value
+continues. That is the layer order paying for itself in a form a proof can
+rewrite with.
+
+### §G8's BLOCKER IS CLEARED — and the receipts are the lemmas it named
+
+§G8 recorded three lemmas as unprovable and named the cause: *"`lookupLocal
+name w` is NOT definitionally the match on `w.locals.find? …`"*. That was
+correct and is still correct. With `go_run` opening the stack, each is now
+**four lines**:
+
+* `lookupLocal_ok` — name resolves to its address, world unchanged;
+* `loadAddr_ok` — an address reads its value, world unchanged;
+* `storeLocal_ok` — **a write lands in exactly the world §1.3b's frame
+  lemmas describe.**
+
+That last one is the join the induction needs: §1.3b's `wStore`/`wRead`
+carry the frame reasoning on the PURE side, and `storeLocal_ok` is the
+bridge from the monadic step to it. The two halves now meet.
+
+Axioms: `run_bind`, `lookupLocal_ok`, `storeLocal_ok` all depend on
+**`propext` alone**. No `sorry`, no `native_decide`.
+
+### What this does and does not settle
+
+**Settles:** the reduction problem. Stepping the walker is now a rewrite
+with a named set rather than a per-proof excavation, and the three
+step lemmas exist.
+
+**Does not settle:** the loop induction itself. It still needs the
+`for`-loop's own congruence — the `ite` shape over the loop condition, and
+the recursion on fuel — and those are §3.4's remaining five shapes,
+landing when a consumer needs them. **The debt is smaller and its next
+step is mechanical rather than open-ended**, which is the difference
+between §G8's entry and this one.
+
+Split moved **20/12 → 20/15**; the three new rows are interpreter-facing
+by construction, since they are statements about the walker's helpers.
+
+### Triad
+
+**Tenure GREEN**, read from the full log:
+
+| gate | result |
+| --- | --- |
+| `lake build` (scoped: `LeanModels.Go{,.Obs,.Spec,.SpecAttr,.Stmt}`) | **exit 0** |
+| `docs_check` | **91/91** marked, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued **92 minutes** (sixth in a six-deep queue at its worst), held the
+machine **65 seconds**.
+
+`fallthrough` deferred (4.0%); MM-oracle untouched.

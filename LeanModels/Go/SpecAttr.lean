@@ -17,4 +17,11 @@ namespace LeanModels.Go
 never be confused with a sibling's (`py_spec`, `es_spec`). -/
 register_label_attr go_spec
 
+/-- **The simp set that opens the monad stack, named ONCE.**
+`docs/family-architecture.md` §3.4: *"one opening of the monad stack is
+the right number."* `LeanModels/Go/Obs.lean` is where the lemmas live;
+this is the name they are tagged with, declared here for the same
+import-boundary reason `go_spec` is. -/
+register_simp_attr go_run
+
 end LeanModels.Go

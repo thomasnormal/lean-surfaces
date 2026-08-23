@@ -3130,6 +3130,23 @@ instrument copies it:
 
 * named `harness/<lang>_<subject>_census.py`, output to
   `docs/<lang>-<subject>-census.json`, sorted and machine-readable;
+* **A DOCSTRING THAT ARGUES A CASE AWAY IS A CLAIM — CHECK IT AGAINST THE
+  CLAUSE IT CITES.** Sharper than the drift below, because prose reasoning
+  reads as *justification* rather than as *assertion*. Measured on ES:
+  `Completion.lean` argued **in prose** that `Abrupt.brk`/`cont` never need
+  a `[[Value]]`. **§14.2.2 step 3 refutes it** — `while (true) { 5; break;
+  }` completed **empty**, and the language says **5**. A second, same
+  shape: **`V` starts at `undefined`, not empty**, so `1; while (false);`
+  answered **1**. Both are the **test262 `-cptn` family** — silent wrong
+  answers, found only by **re-reading the pinned spec against the
+  docstring** after the inch was green and queued.
+
+  > **The missing GUARDS were the real defect.** The docstring stood where
+  > a guard belonged, and prose cannot fail.
+
+  A docstring arguing a case away is doing the job §5.5's manifest exists
+  to do — pairing a claim with the clause that settles it — but **without
+  the check**, which is the whole of the difference;
 * **A DOCSTRING NAMING A REACHABLE SET IS A CLAIM, AND IT DRIFTS.**
   `Kont.fuel`'s docstring read *"used by `heapEq`, `setDedup`"*; the
   **measured** set is **`heapEq` + `valContains`** — and `setDedup`, which
@@ -3351,7 +3368,24 @@ for one reason earning its keep in a second.
 raw grep returned **8**, of which **3** were name collisions on other
 types — and the honest total is **7**, not 5, because the two
 **construction** sites match a *different* pattern than the destructuring
-ones. **No single grep produced the number.** That is the law's own
+ones. **No single grep produced the number.**
+
+**AND THE FULLER RE-MEASUREMENT SHARPENS IT: the ES price was RIGHT AND
+INCOMPLETE.** Its **7 destructure sites were exactly right** — but the same
+adoption carried **22 CONSTRUCTION sites across five modules**, which a
+grep for `.unsupported` alone never sees. The type's price was **not 7**;
+7 was the price of *one half of one direction*.
+
+> **A price grepped for ONE CONSTRUCTOR is not a price for the TYPE. Price
+> CONSTRUCTION and DESTRUCTURING separately, and SUM.**
+
+This is the same failure the ladder has now shown four ways — imports,
+identifiers, one-channel patterns, and now **one direction of use** — and
+it is the most seductive of the four, because the destructure number was
+**correct**. A right answer to half the question reads exactly like a right
+answer.
+
+That is the law's own
 prescription arriving in its own calibration: enumerate the positions, and
 expect more than one pattern to be needed.
 
@@ -4061,6 +4095,14 @@ a box already in swap it is **the first thing jetsam takes**. The rules:
   rather than good. So after a red, **the next build is FULL again** — a
   scoped build is how you extend a green, never how you recover from a
   red;
+* **CANCEL A QUEUED TICKET RATHER THAN VALIDATE A KNOWN-WRONG TREE.**
+  Recorded as the right move: ES cancelled its own queued ticket on
+  discovering two wrong answers, instead of spending a tenure on a verdict
+  it already knew was about the wrong state. **A tenure is the scarce
+  resource** (A9's queue exists because it is), and a green over a tree
+  with a known wrong answer is **a number about the wrong state** — §5.4a
+  applied to *scheduling* rather than to reporting. Re-ticket after the
+  fix; the queue position is cheaper than the tenure;
 * the **full triad stays OWED**, discharged when the box is quiet:
   **load < 5 and swap < 1 GB**.
 

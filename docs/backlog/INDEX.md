@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**102 entries across 16 lanes.** Regenerate with
+**103 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -23,6 +23,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-20` | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
 | `2026-08-23-qol-19` | a run is not a measurement until it has been read | qol |
 | `2026-08-23-qol-18` | the tree must not move while you queue, and now it cannot silently | qol |
+| `2026-08-23-architecture-18` | Price the TYPE not one constructor; a docstring that argues is a claim; cancelling a ticket is the right move | architecture |
 | `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
 | `2026-08-23-architecture-17` | Census-first applies to the LEMMA; and the retract framing earns a judgment | architecture |
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |

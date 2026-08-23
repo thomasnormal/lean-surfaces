@@ -1188,3 +1188,45 @@ information-preserving.
 
 **Also corrected**: `Kont.fuel`'s docstring priced `setDedup` as reachable;
 **measured 0 hits**. The §5.4 docstring-drift note now carries it.
+
+## 2026-08-23-architecture-18 — Price the TYPE not one constructor; a docstring that argues is a claim; cancelling a ticket is the right move
+
+Three from ES inch 5.
+
+**(1) THE ES PRICE WAS RIGHT AND INCOMPLETE.** Its **7 destructure sites were
+exactly right** — and the same adoption carried **22 CONSTRUCTION sites across
+five modules**, which a grep for `.unsupported` alone never sees. The type's
+price was **not 7**; 7 was the price of *one half of one direction*.
+
+> **A price grepped for ONE CONSTRUCTOR is not a price for the TYPE. Price
+> CONSTRUCTION and DESTRUCTURING separately, and SUM.**
+
+The ladder has now shown this failure **four ways** — imports, identifiers,
+one-channel patterns, and now **one direction of use** — and this is the most
+seductive, because **the destructure number was correct**. *A right answer to
+half the question reads exactly like a right answer.*
+
+**(2) A DOCSTRING THAT ARGUES A CASE AWAY IS A CLAIM.** Sharper than the drift
+note it now sits above, because prose reasoning reads as **justification** rather
+than assertion. `Completion.lean` argued **in prose** that `Abrupt.brk`/`cont`
+never need a `[[Value]]`; **§14.2.2 step 3 refutes it** — `while (true) { 5;
+break; }` completed **empty** where the language says **5**. Same shape a second
+time: **`V` starts at `undefined`, not empty**, so `1; while (false);` answered
+**1**. Both are the **test262 `-cptn` family**, and both were found only by
+**re-reading the pinned spec against the docstring** *after* the inch was green
+and queued.
+
+> **The missing GUARDS were the real defect.** The docstring stood where a guard
+> belonged, and **prose cannot fail**.
+
+A docstring arguing a case away is doing exactly what §5.5's manifest does —
+pairing a claim with the clause that settles it — **but without the check**,
+which is the whole of the difference.
+
+**(3) CANCELLING ITS OWN QUEUED TICKET WAS THE RIGHT MOVE**, recorded under A14.
+The lane dropped the ticket on discovering the wrong answers rather than spend a
+tenure validating a tree it already knew was wrong. **A tenure is the scarce
+resource** — A9's queue exists because it is — and a green over a known-wrong
+tree is **a number about the wrong state**: §5.4a applied to **scheduling**
+rather than to reporting. **Re-ticket after the fix; the queue position is
+cheaper than the tenure.**

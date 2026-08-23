@@ -672,3 +672,71 @@ would have found nothing either.
 2. **Print second** (the Dragon4-style exact algorithm of
    `2026-08-23-softfloat-10`): greenfield, fuel-shaped, and it retires
    `Convert.lean:251` — the only site in the tree that no other lane can fix.
+
+---
+
+## 2026-08-23-softfloat-13 — PARSE INCH, STATEMENT-FIRST: `ofScientific`'s branches are NOT shape-uniform
+
+`harness/softfloat/probe_ofscientific.lean` (zero errors). Exploratory probe
+run **before** writing the theorem, to fix its statement. Two findings, and the
+first one changes the subject of the theorem.
+
+### THE THEOREM CANNOT BE ABOUT `ofScientific`'s UNPACKED RESULT
+
+`UnpackedFloat.ofScientific` has three branches: zero, two SAFETY CUTOFFS, and
+the computing path. **They do not return the same shape.**
+
+| branch | binary16 example | result |
+| --- | --- | --- |
+| cutoff, `e > 2 ^ exponentBits` | `1e33` | `.infinity .positive` — **directly**, computing nothing |
+| computing path, `e = 2 ^ exponentBits` | `1e32` | **`.finite`** — measured `.isInf = false`, `.isFinite = true` |
+| the same, after `pack` | `1e32` | `packedInfinity` |
+
+The reason is structural: `roundWithAccuracy` returns only `.zero` or
+`.finite`, **never `.infinity`** — overflow to infinity happens one layer up, in
+`pack`. Core states it in `UnpackedFloat`'s own docstring: *"an unpacked float
+in canonical form for a given format may not actually be representable in that
+format … the `pack` function will overflow the float to infinity."*
+
+> **So `op_correct` for the parse half must be stated AFTER `pack`, or must
+> carry a representability hypothesis.** A single statement about the unpacked
+> result would be comparing `.infinity` on one branch against an
+> unrepresentable `.finite` on another, and it would be false without either
+> having been wrong about the arithmetic.
+
+This is precisely why the inch was probed statement-first. The bug it prevents
+is not an arithmetic error; it is a theorem that is false for a reason having
+nothing to do with what it was meant to say.
+
+### THE KERNEL COST IS VALUE-DEPENDENT, NOT ONLY WIDTH-DEPENDENT
+
+§1.3 measured the width axis (binary16 → binary256, cost linear in the
+significand, priced in `maxRecDepth`). The parse probe found the other axis:
+
+* `ofScientific binary64 1 (-1)` — `0.1` — closes by `rfl` at `maxRecDepth 4000`;
+* `ofScientific binary64 3 (-1)` — `0.3` — does **not** close at **16000**.
+
+Same width, same operation, same denominator; only the numerator differs. And
+`1e32` at binary16 does not close at 16000 either, while `1e33` closes
+instantly — because the latter takes the cutoff and computes nothing.
+
+> **An instance row that closes for one literal may not close for its
+> neighbour.** So the parse theorem must be **parametric**, and the
+> `decide`-closed base cases must be **chosen and measured**, never assumed
+> from a nearby row that happened to work. That is the §0.1 II(a) ladder with a
+> sharper edge than the width axis gave it.
+
+### WHAT DID CLOSE, and it is the fragment ES parses
+
+Zero at every width and both cutoffs by `rfl`; exactness for `m * 10 ^ e` with
+`e ≥ 0` at **binary16, binary32, binary64 and binary128**; and the dyadic
+negative exponents (`5e-1 = 1/2`, `125e-3 = 1/8`) that are exact in binary.
+`ofsci_zero` — `∀ spec e, ofScientific spec 0 e = .zero .positive`, over a
+general `Format` — closes by `rfl`.
+
+### NEXT, and the statement is now fixed
+
+`ofScientific_correct` stated over `pack spec (ofScientific spec m e)`, against
+the correctly-rounded value of the exact rational `m * 10 ^ e`. It needs
+`roundQ`, which is the same prerequisite the arithmetic `op_correct` family
+needs — so the parse half and `roundQ` are one inch, not two.

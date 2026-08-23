@@ -26,7 +26,10 @@
 # also define it, or git falls back to a normal conflict.  Measured both ways.
 # `--install-merge-driver` sets `merge.ours.driver=true` in THIS clone.
 #
+#   tools/backlog-index.sh --strict     # exit 3 on a MALFORMED heading
+#
 # EXIT  0 in sync (or written)   1 drift (--check)   2 refusal
+#       3 a heading a lane cannot see: `## <sentence>` becomes a JUNK ID
 #
 # ZERO Lean execution.  Safe outside a tenure (A11).
 
@@ -35,6 +38,7 @@ set -u
 CLONE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIR=""
 MODE="write"
+STRICT=0
 
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "backlog-index.sh: $*" >&2; exit 2; }
@@ -48,6 +52,7 @@ while [ $# -gt 0 ]; do
     --check)     MODE="check"; shift ;;
     --install-merge-driver) MODE="install-driver"; shift ;;
     --ensure-driver)        MODE="ensure-driver"; shift ;;
+    --strict)    STRICT=1; shift ;;
     --self-test) MODE="self-test"; shift ;;
     -h|--help)   usage ;;
     *)           die "unknown argument '$1'" ;;
@@ -109,6 +114,67 @@ rows() {                        # -> "sortkey\tid\ttitle\tlane"
         printf "%s\t%s\t%s\t%s\n", key, id, title, lane
       }' "$f"
   done
+}
+
+# THE SHAPE THIS FILE SILENTLY ACCEPTS (the analog founding, 2026-08).
+#
+# `rows` takes the FIRST TOKEN of every `## ` heading as an id.  Given a
+# structural heading — `## Phase 1`, `## Notes` — it invents the id `Phase` or
+# `Notes` and emits a row nobody wrote: the analog lane produced 246 entries
+# with three junk ids before conforming its headings by hand.  The sensitivity
+# was real and unadvertised, and THE GENERATOR'S SILENT ACCEPTANCE IS THE
+# DEFECT, not the lane's headings.
+#
+# THREE VERDICTS, because the tree holds three different things (measured
+# 2026-08-24: 18 undated, 8 malformed, across 7 lane files):
+#
+#   conforming   `<id> — <title>` with a dated §9.5 id
+#   undated      `<id> — <title>` whose id is not dated — the Go lane's
+#                historical `G1`…`G18`.  Real entries, ALREADY flagged and
+#                sorted last; a warning, never a failure, or `--strict` could
+#                never be adopted while they exist.
+#   malformed    no ` — ` at all, or a MULTI-WORD phrase before it, so the id
+#                is a word lifted out of a sentence.  This is the junk-id
+#                family, and it is what --strict fails on.
+#
+# The discriminator is the token count before the em dash: an id is ONE token.
+# `INBOUND FROM THE SOFTFLOAT LANE — …` is five, and yields the id `INBOUND`.
+heading_rows() {                # -> "verdict<TAB>file:line<TAB>heading"
+  local f base
+  for f in "$DIR"/*.md; do
+    [ -f "$f" ] || continue
+    base="$(basename "$f")"
+    case "$base" in INDEX.md) continue ;; esac
+    awk -v F="$f" '
+      /^## / {
+        line = substr($0, 4); gsub(/\r/, "", line)
+        has = (index(line, " — ") > 0)
+        pre = line; if (has) sub(/ — .*$/, "", pre)
+        n = split(pre, w, /[ \t]+/)
+        dated = (w[1] ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}-.*-[0-9]+$/)
+        v = (has && n == 1) ? (dated ? "conforming" : "undated") : "malformed"
+        printf "%s\t%s:%d\t%s\n", v, F, NR, substr(line, 1, 60)
+      }' "$f"
+  done
+}
+
+# LOUD, ON STDERR, NAMING THE FILE AND THE HEADING.  The old report was a
+# COUNT inside the generated file — a place the lane that wrote the heading
+# never looks.  A warning nobody is shown is not a warning.
+heading_report() {              # -> 0 clean, 3 when a malformed heading exists
+  local rows mal und
+  rows="$(heading_rows)"
+  mal="$(printf '%s\n' "$rows" | awk -F'\t' '$1 == "malformed"' | grep -c . || true)"
+  und="$(printf '%s\n' "$rows" | awk -F'\t' '$1 == "undated"' | grep -c . || true)"
+  if [ "$mal" != "0" ]; then
+    echo "backlog-index.sh: $mal heading(s) are not \`## <id> — <title>\`, so this generator" >&2
+    echo "  INVENTS an id from the first word and emits a row the lane never wrote:" >&2
+    printf '%s\n' "$rows" | awk -F'\t' '$1 == "malformed" { printf "    %s\n      ## %s\n", $2, $3 }' >&2
+    echo "  Give each one a §9.5 id (\`YYYY-MM-DD-<lane>-<n>\`) before the em dash." >&2
+  fi
+  [ "$und" = "0" ] || echo "backlog-index.sh: $und heading(s) use a non-dated id (flagged in the index, sorted last)" >&2
+  [ "$mal" = "0" ] || return 3
+  return 0
 }
 
 render() {
@@ -185,7 +251,40 @@ MD
   check "a drifter still yields a row"   "$(rows | grep -c .)" "5"
   check "  ...and is flagged in the page" "$(render | grep -c 'do not use the §9.5 id scheme')" "1"
   check "  ...and sorts LAST"             "$(rows | LC_ALL=C sort -r | tail -1 | awk -F'\t' '{print $2}')" "G1"
+  # A DRIFTER IS A WARNING, NEVER A FAILURE.  The Go lane's `G1`…`G18` are
+  # real entries under an older scheme; if --strict failed on them it could
+  # never be turned on, and a flag nobody can turn on is not a gate.
+  check "an undated id WARNS"            "$(heading_report 2>&1 >/dev/null | grep -c 'non-dated id')" "1"
+  check "  ...and does NOT fail strict"  "$(heading_report >/dev/null 2>&1; echo $?)" "0"
   sed -i.bak '$d' "$tmp/bl/beta.md"; rm -f "$tmp/bl/beta.md.bak"
+
+  # ---- THE MALFORMED SHAPE (the analog founding): a heading with no id at
+  # all, from which this generator INVENTS one out of the first word.
+  # SNAPSHOT AND RESTORE, never `sed '$d'` per appended line: `$d;$d;$d`
+  # deletes ONE line, because `d` restarts the cycle and the later commands
+  # never run.  The first cut left two lines behind and three later rows read
+  # a tree nobody meant to build.
+  cp "$tmp/bl/beta.md" "$tmp/bl/beta.orig"
+  printf '## Phase 1\n\ntext\n' >> "$tmp/bl/beta.md"
+  check "a structural heading is MALFORMED" "$(heading_rows | awk -F'\t' '$1=="malformed"' | grep -c .)" "1"
+  check "  ...and the generator still invents an id" \
+        "$(rows | awk -F'\t' '{print $2}' | grep -c '^Phase$')" "1"
+  out="$(heading_report 2>&1 >/dev/null)"
+  check "  ...the warning NAMES the file"   "$(printf '%s' "$out" | grep -c 'beta.md:')" "1"
+  check "  ...and quotes the heading"       "$(printf '%s' "$out" | grep -c '## Phase 1')" "1"
+  check "  ...and says what to write"       "$(printf '%s' "$out" | grep -c 'YYYY-MM-DD')" "1"
+  check "  ...and it is NOT dropped"        "$(rows | grep -c .)" "5"
+  check "malformed exits 3"                 "$(heading_report >/dev/null 2>&1; echo $?)" "3"
+  # A MULTI-WORD PHRASE before the em dash is the SAME defect wearing a title:
+  # `INBOUND FROM THE SOFTFLOAT LANE — …` yields the id `INBOUND`.  Eight of
+  # these are live in the tree, which is why --strict is opt-in.
+  cp "$tmp/bl/beta.orig" "$tmp/bl/beta.md"
+  printf '## INBOUND FROM SOMEWHERE — `2026-01-01-x-9` (a note)\n' >> "$tmp/bl/beta.md"
+  check "a multi-word id is malformed too"  "$(heading_rows | awk -F'\t' '$1=="malformed"' | grep -c .)" "1"
+  check "  ...because an id is ONE token"   "$(rows | awk -F'\t' '{print $2}' | grep -c '^INBOUND$')" "1"
+  cp "$tmp/bl/beta.orig" "$tmp/bl/beta.md"; rm -f "$tmp/bl/beta.orig"
+  check "a conforming tree warns about nothing" "$(heading_report 2>&1 >/dev/null | grep -c .)" "0"
+  check "  ...and exits clean"              "$(heading_report >/dev/null 2>&1; echo $?)" "0"
 
   check "the page counts entries and lanes" "$(render | grep -c '\*\*4 entries across 2 lanes\.\*\*')" "1"
   check "the page says GENERATED"           "$(render | grep -c 'GENERATED by')" "1"
@@ -277,6 +376,15 @@ fi
 [ -d "$DIR" ] || die "no backlog directory at '$DIR'"
 OUT="$DIR/INDEX.md"
 
+# THE WARNING RUNS ON EVERY GENERATING MODE, because the moment to say "this
+# heading will become a junk id" is the moment the id is being made.  It never
+# changes what is written: a row is REPORTED, never dropped — a row nobody can
+# see is missing is worse than a row with an ugly id.
+HEADING_RC=0
+case "$MODE" in
+  stdout|check|write) heading_report || HEADING_RC=$? ;;
+esac
+
 case "$MODE" in
   ensure-driver)
     ensure_driver || true ;;
@@ -305,3 +413,10 @@ case "$MODE" in
     render > "$OUT" || die "cannot write '$OUT'"
     echo "backlog-index.sh: wrote $OUT ($(rows | grep -c .) entries)" ;;
 esac
+
+# --strict TURNS THE WARNING INTO A VERDICT, and it is opt-in for one measured
+# reason: 8 malformed headings are live across 7 lane files right now, and
+# §9.5 makes a lane file appendable only BY ITS OWN LANE — so this cannot be
+# made mandatory by the lane that owns none of them.
+[ "$STRICT" = "1" ] && [ "$HEADING_RC" != "0" ] && exit "$HEADING_RC"
+exit 0

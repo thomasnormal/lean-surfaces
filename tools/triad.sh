@@ -1178,20 +1178,58 @@ build_red_report() {                  # log, headline -> the whole red block
 # re-taken at acquire.  A6 is being amended to say "never change the tree
 # between enqueue and release"; this is the gate that enforces it, because a
 # fix that lives only in a rule is a rule, and fixes live in gates.
-tree_stamp() {                        # -> "<tree> <head>", or '' when unstampable
+# THE STAMP MUST HASH WHAT LAKE READS (the wasm lane, 2026-08-24).
+#
+# `git write-tree` hashes the INDEX.  `lake` compiles the WORKING TREE.  So an
+# uncommitted, unstaged edit made between enqueue and acquire moved exactly the
+# files lean reads while leaving the stamp IDENTICAL — the guard passed, the
+# tenure ran, and the green certified a tree the gate never saw.  That is the
+# Ada wrong-tree hazard mechanized into the tool that exists to prevent it.
+# Measured in this clone while writing the fix: index `2fd6962...`, working
+# tree `112a516...` — the guard had been comparing the wrong one.
+#
+# A TEMPORARY INDEX, never the real one: `git add -A` against a throwaway
+# GIT_INDEX_FILE hashes the working tree without touching the lane's staging
+# area.  `add -A` includes UNTRACKED files (a new `.lean` is exactly what must
+# not slip in) and honours `.gitignore` (so `.lake` output churning during a
+# build cannot defeat the stamp).  Cost measured here: 0.31s cold against
+# 0.015s for the index — twice per tenure, which is free.
+STAMP_VERSION="v2"
+worktree_tree() {                     # -> the WORKING TREE's hash, or ''
+  local idx t
+  idx="$(mktemp "${TMPDIR:-/tmp}/triad-index.XXXXXX")" || return 1
+  rm -f "$idx"                        # git creates it; mktemp only reserves the name
+  GIT_INDEX_FILE="$idx" git -C "$CLONE" add -A >/dev/null 2>&1 || { rm -f "$idx"; return 1; }
+  t="$(GIT_INDEX_FILE="$idx" git -C "$CLONE" write-tree 2>/dev/null)"
+  rm -f "$idx"
+  [ -n "$t" ] || return 1
+  printf '%s' "$t"
+}
+tree_stamp() {                        # -> "v2 <tree> <head>", or '' when unstampable
   local t h
-  t="$(git -C "$CLONE" write-tree 2>/dev/null)" || return 1
+  t="$(worktree_tree)" || return 1
   [ -n "$t" ] || return 1
   h="$(git -C "$CLONE" rev-parse HEAD 2>/dev/null || echo none)"
-  printf '%s %s\n' "$t" "$h"
+  printf '%s %s %s\n' "$STAMP_VERSION" "$t" "$h"
 }
+# A STAMP CARRIES ITS OWN VERSION, so a ticket enqueued by the OLD code is not
+# read as a changed tree.  Eight tenures were live when this landed; comparing
+# an index stamp against a working-tree stamp would have refused every one of
+# them for a defect that is the tool's, not theirs.
+stamp_tag() {  case "$1" in v[0-9]*) printf '%s' "${1%% *}" ;; *) printf 'v1' ;; esac; }
+stamp_tree() { local r; case "$1" in v[0-9]*) r="${1#* }"; printf '%s' "${r%% *}" ;;
+                                     *) printf '%s' "${1%% *}" ;; esac; }
 
-tree_verdict() {                      # enq, now -> same | changed | unknown
+tree_verdict() {                      # enq, now -> same | changed | unknown | unversioned
   if [ -z "$1" ] || [ -z "$2" ]; then echo unknown; return 0; fi
+  # DIFFERENT STAMP VERSIONS ARE NOT A DIFFERENT TREE.  They are answers to two
+  # different QUESTIONS — one asked of the index, one of the working tree — and
+  # an answer to one is not evidence about the other.
+  if [ "$(stamp_tag "$1")" != "$(stamp_tag "$2")" ]; then echo unversioned; return 0; fi
   if [ "$1" = "$2" ]; then echo same; else echo changed; fi
 }
 
-short_tree() { printf '%s' "${1%% *}" | cut -c1-12; }
+short_tree() { printf '%s' "$(stamp_tree "$1")" | cut -c1-12; }
 
 # Prints the line in both directions — refusing and overriding say the SAME
 # thing, because the point is that the run is ABOUT a different tree, and that
@@ -1201,6 +1239,14 @@ tree_change_report() {                # enq, now, override -> 0 proceed / 1 refu
     same) return 0 ;;
     unknown)
       echo "TREE STAMP UNAVAILABLE — this run cannot verify the tree is the one it queued for" >&2
+      return 0 ;;
+    unversioned)
+      # ACCEPT AND LOG, never refuse: the ticket predates the working-tree
+      # stamp, so the two numbers answer different questions.  Refusing here
+      # would strand a queue full of tenures for a defect that was the tool's.
+      echo "TREE STAMP VERSION CHANGED since this ticket was enqueued ($(stamp_tag "$1") -> $(stamp_tag "$2"))." >&2
+      echo "  The old stamp hashed the INDEX; this one hashes the WORKING TREE, so they cannot be" >&2
+      echo "  compared. PROCEEDING — and this run's tree is NOT verified against its enqueue." >&2
       return 0 ;;
     changed)
       echo "TREE CHANGED SINCE ENQUEUE ($(short_tree "$1") → $(short_tree "$2"))" >&2
@@ -1260,10 +1306,14 @@ record_green() {                # class, full(yes|no), root, depth, targets
   local f tree head citable tg
   f="$(green_ledger_path)" || return 0
   head="$(git -C "$CLONE" rev-parse HEAD 2>/dev/null)" || return 0
-  tree="$(git -C "$CLONE" write-tree 2>/dev/null || echo none)"
-  # CITABLE IS THE TREE/COMMIT QUESTION.  The tenure certified the INDEX tree;
-  # if that is not the commit's tree, the sha names something the green did
-  # not certify, and citing it as a base would over-claim.
+  # THE SAME BLINDNESS, ONE LEVEL DOWN.  This read `git write-tree` too, so a
+  # green taken with an unstaged edit in the working tree recorded the INDEX's
+  # hash and could be judged citable while the elaborated content was
+  # something else.  One source: whatever lake read is what gets recorded.
+  tree="$(worktree_tree 2>/dev/null || echo none)"
+  # CITABLE IS THE TREE/COMMIT QUESTION.  The tenure certified the WORKING
+  # TREE; if that is not the commit's tree, the sha names something the green
+  # did not certify, and citing it as a base would over-claim.
   if [ "$tree" = "$(git -C "$CLONE" rev-parse HEAD^{tree} 2>/dev/null)" ]; then
     citable=yes
   else
@@ -1327,9 +1377,21 @@ merge_target_ref() {
   # `origin/master` reads days back while `git rev-list HEAD..origin/master`
   # cheerfully reports 0.  Prefer `github/master`; either way, SAY which ref
   # the classification was taken against.
-  local r
+  local r rem h
   for r in github/master origin/master; do
     if git -C "$CLONE" rev-parse --verify --quiet "$r" >/dev/null 2>&1; then echo "$r"; return 0; fi
+  done
+  # `master` IS NOT A UNIVERSAL NAME.  The wasm fork's default branch is not
+  # called master, so this returned nothing and the tenure fell back to a FULL
+  # build — conservative, and therefore silent, which is how a heuristic stays
+  # broken.  The remote itself records which branch is its head; ask it rather
+  # than guessing a name.  Order is still a preference, not an assumption.
+  for rem in github origin $(git -C "$CLONE" remote 2>/dev/null); do
+    h="$(git -C "$CLONE" symbolic-ref --quiet "refs/remotes/$rem/HEAD" 2>/dev/null)" || continue
+    [ -n "$h" ] || continue
+    h="${h#refs/remotes/}"
+    git -C "$CLONE" rev-parse --verify --quiet "$h" >/dev/null 2>&1 || continue
+    echo "$h"; return 0
   done
   echo ""
 }
@@ -1361,6 +1423,48 @@ merge_target_ref() {
 # BUILD_TARGETS; an advisory that leaked those would NARROW THE VERY BUILD IT
 # is only supposed to describe.  `$( … )` cannot leak a variable — the trap
 # this lane has been bitten by three times is, for once, precisely the tool.
+# ------------------------------------ the delta a tenure is ABOUT (Ada, 2026-08)
+#
+# A VERDICT CERTIFIES A TREE, NEVER A TITLE.  The Ada adoption tenure went
+# green on a tree that contained no adoption: the branch was docs-only, and the
+# ONLY visible tell was that the build took four seconds.  A title is a claim
+# about intent; the tree is what was elaborated, and when they disagree the
+# green is about the tree.  So the tree is stated in the log's first lines,
+# where a mismatch is self-evident before anyone waits for a build.
+#
+# PURE GIT, at enqueue only: no lake, no tenure, nothing that can fail a run.
+#
+# THE ABSENCE FAMILY.  `master` is not reachable from every tenure — a foreign
+# checkout has its own unrelated master, and a seeded clone may have neither
+# ref.  Each of those is a DIFFERENT absence and none of them may take the
+# success path: "0 files" is a measurement (this branch IS master), "n/a" is
+# the admission that nothing was measured, and the two must never print alike.
+delta_vs_master() {             # -> the one-line summary; never fails a run
+  local base mb files lean f nondocs=""
+  # A foreign checkout's `origin/master` is a DIFFERENT PROJECT's master, so
+  # this is refused rather than attempted: a number computed against the wrong
+  # master is worse than no number (§7.1a).
+  [ "$FOREIGN" = "1" ] && { printf 'n/a (foreign tree)'; return 0; }
+  base="$(merge_target_ref)"
+  [ -n "$base" ] || { printf 'n/a (no github/master or origin/master in this clone)'; return 0; }
+  mb="$(git -C "$CLONE" merge-base "$base" HEAD 2>/dev/null)"
+  [ -n "$mb" ] || { printf 'n/a (no merge base with %s — unrelated histories)' "$base"; return 0; }
+  files="$(git -C "$CLONE" diff --name-only "$mb..HEAD" 2>/dev/null | grep -c . || true)"
+  [ "$files" = "0" ] && { printf '0 files (HEAD is at %s)' "$base"; return 0; }
+  lean="$(git -C "$CLONE" diff --name-only "$mb..HEAD" 2>/dev/null | grep -c '\.lean$' || true)"
+  printf '%s file(s), %s .lean' "$files" "$lean"
+  [ "$lean" != "0" ] && return 0
+  # NO `.lean` IS NOT THE SAME AS DOCS-ONLY, and labelling it so would repeat
+  # the incident one level down: `lakefile.toml`, `lean-toolchain` and
+  # `lake-manifest.json` carry no `.lean` and invalidate the WHOLE graph.  The
+  # label is asked of the classifier that already answers this question.
+  for f in $(git -C "$CLONE" diff --name-only "$mb..HEAD" 2>/dev/null); do
+    [ "$(classify_path "$f")" = "docs" ] || { nondocs="$f"; break; }
+  done
+  if [ -n "$nondocs" ]; then printf ' — NOT docs-only (%s)' "$nondocs"
+  else printf ' — DOCS-ONLY'; fi
+}
+
 class_hint() {                  # -> the advisory text; never refuses, never narrows
   local base changed cls
   base="$AGAINST"; [ -n "$base" ] || base="$(merge_target_ref)"
@@ -1598,6 +1702,125 @@ if [ "$SELF_TEST" = "1" ]; then
   check "no merge target is NOT fatal"        "$(class_hint >/dev/null 2>&1; echo $?)" "0"
   check "  ...and it says so, naming both refs" "$(class_hint | grep -c 'neither github/master nor origin/master')" "1"
   CLONE="$saved_cl"; AGAINST="$saved_ag"
+
+  # ---- THE STAMP HASHES WHAT LAKE READS (the wasm lane's integrity hole)
+  echo "  -- working-tree stamp"
+  ws="$tmp/wstamp"; mkdir -p "$ws"; git init -q "$ws" 2>/dev/null
+  git -C "$ws" config user.email qol@example; git -C "$ws" config user.name qol
+  printf 'one\n' > "$ws/f.lean"; git -C "$ws" add -A; git -C "$ws" commit -qm base
+  saved_cl="$CLONE"; CLONE="$ws"
+  enq2="$(tree_stamp)"
+  check "the stamp carries its version"       "$(stamp_tag "$enq2")" "v2"
+  check "  ...and its tree is still readable" "$(short_tree "$enq2")" "$(git -C "$ws" rev-parse HEAD^{tree} | cut -c1-12)"
+
+  # (a) A WORKING-TREE-ONLY EDIT: unstaged, uncommitted.  `lake` compiles THIS
+  # file, so the stamp MUST move.  Under the index stamp it did not — that is
+  # the hole, and the second row is its regression test: the old number is
+  # provably unmoved by the same edit.
+  printf 'two\n' > "$ws/f.lean"
+  check "an UNSTAGED edit IS a changed tree"  "$(tree_verdict "$enq2" "$(tree_stamp)")" "changed"
+  check "  ...and the INDEX stamp misses it"  \
+        "$( [ "$(git -C "$ws" write-tree)" = "$(stamp_tree "$enq2")" ] && echo unmoved || echo moved )" "unmoved"
+  printf 'one\n' > "$ws/f.lean"
+  check "restoring it restores the stamp"     "$(tree_verdict "$enq2" "$(tree_stamp)")" "same"
+
+  # (c) AN UNTRACKED FILE.  A new `.lean` that nothing staged is exactly what
+  # must not slip into a tenure: lake will happily compile it.
+  printf 'new\n' > "$ws/g.lean"
+  check "an UNTRACKED file IS a changed tree" "$(tree_verdict "$enq2" "$(tree_stamp)")" "changed"
+  rm -f "$ws/g.lean"
+
+  # (b) AN INDEX-ONLY EDIT: staged, then the working tree put back.  THE STAMP
+  # ACCEPTS IT, and that is the correct reading — `lake` reads the working
+  # tree, so content that exists only in the index will not be elaborated and
+  # is not part of what this tenure certifies.  The old index stamp REFUSED
+  # this case, which was a false alarm in the opposite direction.
+  printf 'staged\n' > "$ws/f.lean"; git -C "$ws" add f.lean; printf 'one\n' > "$ws/f.lean"
+  check "an INDEX-only edit is NOT a change"  "$(tree_verdict "$enq2" "$(tree_stamp)")" "same"
+  check "  ...though the index stamp moved"   \
+        "$( [ "$(git -C "$ws" write-tree)" = "$(stamp_tree "$enq2")" ] && echo unmoved || echo moved )" "moved"
+  git -C "$ws" reset -q
+
+  # IGNORED BUILD OUTPUT MUST NOT DEFEAT THE STAMP: `.lake` churns during every
+  # build, and a stamp that moved with it would refuse every second attempt.
+  printf '.lake/\n' > "$ws/.gitignore"; git -C "$ws" add -A; git -C "$ws" commit -qm ignore
+  enq3="$(tree_stamp)"
+  mkdir -p "$ws/.lake"; printf 'artifact\n' > "$ws/.lake/out"
+  check "ignored output does not move it"     "$(tree_verdict "$enq3" "$(tree_stamp)")" "same"
+
+  # A SYMLINKED CLONE PATH still stamps the same tree (`git -C` resolves it).
+  ln -sf "$ws" "$tmp/wslink"
+  CLONE="$tmp/wslink"
+  check "a symlinked clone stamps alike"      "$(stamp_tree "$(tree_stamp)")" "$(stamp_tree "$enq3")"
+  CLONE="$ws"
+
+  # OLD TICKETS ARE NOT STRANDED.  Eight tenures were live when this landed;
+  # their stamps hashed the index, and comparing the two would have refused
+  # every one of them for a defect that was the tool's.
+  check "a v1 stamp is UNVERSIONED, not changed" "$(tree_verdict "abc123 HEAD1" "$(tree_stamp)")" "unversioned"
+  out="$(tree_change_report "abc123 HEAD1" "$(tree_stamp)" 0 2>&1)"; rc=$?
+  check "  ...and it PROCEEDS"                "$rc" "0"
+  check "  ...saying the tree is NOT verified" "$(printf '%s' "$out" | grep -c 'NOT verified against its enqueue')" "1"
+  check "  ...naming both questions"          "$(printf '%s' "$out" | grep -c 'INDEX.*WORKING TREE')" "1"
+  check "a v1 stamp still shortens"           "$(short_tree 'abc123def4567890 HEAD1')" "abc123def456"
+  CLONE="$saved_cl"
+
+  # ---- THE DELTA A TENURE IS ABOUT (the Ada wrong-tree incident)
+  echo "  -- delta vs master"
+  dv="$tmp/delta"; mkdir -p "$dv/docs" "$dv/LeanModels"; git init -q "$dv" 2>/dev/null
+  git -C "$dv" config user.email qol@example; git -C "$dv" config user.name qol
+  printf 'name = "x"\n[[lean_lib]]\nname = "LeanModels"\n' > "$dv/lakefile.toml"
+  printf '# d\n' > "$dv/docs/a.md"; printf -- '-- m\n' > "$dv/LeanModels/M.lean"
+  git -C "$dv" add -A; git -C "$dv" commit -qm base
+  git -C "$dv" update-ref refs/remotes/origin/master HEAD
+  saved_cl="$CLONE"; saved_fg="$FOREIGN"; CLONE="$dv"; FOREIGN=0
+
+  # A branch that IS master measured 0 — a measurement, not an absence.
+  check "no delta says so as a MEASUREMENT" "$(delta_vs_master)" "0 files (HEAD is at origin/master)"
+  # THE INCIDENT'S OWN SHAPE: a docs-only tree under any title at all.
+  printf '# more\n' >> "$dv/docs/a.md"; git -C "$dv" add -A; git -C "$dv" commit -qm docs
+  check "a docs-only delta is LABELLED"     "$(delta_vs_master)" "1 file(s), 0 .lean — DOCS-ONLY"
+  # ...and the direction that would repeat it one level down: no `.lean` is
+  # NOT docs-only when the lakefile moved.
+  printf 'extra = 1\n' >> "$dv/lakefile.toml"; git -C "$dv" add -A; git -C "$dv" commit -qm lakefile
+  check "0 .lean is NOT docs-only alone"    "$(delta_vs_master)" "2 file(s), 0 .lean — NOT docs-only (lakefile.toml)"
+  printf -- '-- edit\n' >> "$dv/LeanModels/M.lean"; git -C "$dv" add -A; git -C "$dv" commit -qm lean
+  check "a Lean delta counts the .lean"     "$(delta_vs_master)" "3 file(s), 1 .lean"
+
+  # THE ABSENCE FAMILY: three different absences, none of them "0 files".
+  FOREIGN=1
+  check "a foreign tree refuses to compare" "$(delta_vs_master)" "n/a (foreign tree)"
+  FOREIGN=0
+  nm="$tmp/nomaster"; mkdir -p "$nm"; git init -q "$nm" 2>/dev/null
+  git -C "$nm" config user.email qol@example; git -C "$nm" config user.name qol
+  printf 'x\n' > "$nm/a.txt"; git -C "$nm" add -A; git -C "$nm" commit -qm base
+  # CAPTURED, never named: `git init`'s default branch is `master` on some
+  # versions and `main` on others, and a fixture that assumes one silently
+  # skips its own case on the other — the first cut asserted the WRONG absence
+  # because `rev-parse master` failed and no ref was ever created.
+  nm_first="$(git -C "$nm" rev-parse HEAD)"
+  CLONE="$nm"
+  check "no merge target is NAMED, not zero" "$(delta_vs_master)" "n/a (no github/master or origin/master in this clone)"
+
+  # A FORK WHOSE DEFAULT BRANCH IS NOT `master` (the wasm lane).  The remote
+  # RECORDS its head; asking it beats guessing a name, and guessing failed
+  # CONSERVATIVELY — a full tenure every time, which is why nobody noticed.
+  git -C "$nm" update-ref refs/remotes/upstream/main "$nm_first"
+  git -C "$nm" symbolic-ref refs/remotes/upstream/HEAD refs/remotes/upstream/main
+  git -C "$nm" remote add upstream /dev/null 2>/dev/null || true
+  check "a fork's HEAD ref is the fallback"  "$(merge_target_ref)" "upstream/main"
+  check "  ...and the delta uses it"         "$(delta_vs_master | grep -c 'upstream/main')" "1"
+  git -C "$nm" symbolic-ref -d refs/remotes/upstream/HEAD 2>/dev/null
+  git -C "$nm" update-ref -d refs/remotes/upstream/main 2>/dev/null
+  git -C "$nm" remote remove upstream 2>/dev/null || true
+  check "with neither, it is still empty"    "$(merge_target_ref)" ""
+  # An unrelated history has the ref but no merge base — a THIRD absence.
+  git -C "$nm" checkout -q --orphan other; printf 'y\n' > "$nm/b.txt"
+  git -C "$nm" add -A; git -C "$nm" commit -qm orphan
+  git -C "$nm" update-ref refs/remotes/origin/master "$nm_first"
+  check "unrelated histories are their own n/a" \
+        "$(delta_vs_master)" "n/a (no merge base with origin/master — unrelated histories)"
+  CLONE="$saved_cl"; FOREIGN="$saved_fg"
 
   # ---- THE GREEN LEDGER AND --since (§5.4a-i, the pyc lane's withdrawn ticket)
   echo "  -- increment greens"
@@ -2379,6 +2602,7 @@ printf '%s\n' "${ENQ_STAMP:-unstampable}" > "$QUEUE/$TICKET" \
   || die "cannot write a ticket into $QUEUE"
 say "enqueued $TICKET (queue depth $(ls "$QUEUE" | wc -l | tr -d ' '))"
 [ -n "$ENQ_STAMP" ] && say "tree at enqueue: $(short_tree "$ENQ_STAMP")"
+say "delta vs master: $(delta_vs_master)"
 # BOTH HALVES, so the transcript answers "did it run what I asked for?" without
 # anyone reconstructing the composition rules from the flags.
 say "gates: $(gates_planned)"

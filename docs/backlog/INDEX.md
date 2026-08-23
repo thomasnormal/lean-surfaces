@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**142 entries across 16 lanes.** Regenerate with
+**143 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -30,6 +30,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-30` | correction: the build log was never deleted, only unnamed | qol |
 | `2026-08-23-qol-29` | the merge driver configures itself, and a green build's axiom ledger survives | qol |
 | `2026-08-23-qol-28` | `--axioms` dropped the last name, and the absence was silent | qol |
+| `2026-08-23-architecture-28` | The guard was never in those processes; and a correct refusal is not a mitigation | architecture |
 | `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
 | `2026-08-23-architecture-27` | A published number is a second artifact; a check that cannot fire; and an instrument that selected itself | architecture |
 | `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |

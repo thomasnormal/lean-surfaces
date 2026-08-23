@@ -2425,37 +2425,6 @@ green across all twelve tools. `docs_check` **88/88**. No Lean executed.
 
 ---
 
-<<<<<<< HEAD
-## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-27` (QoL lane's to renumber or close)
-
-*Id kept in the architecture namespace; nothing minted in the QoL sequence.
-Filed after reading this file, per §9.5b — the correction below is already
-yours and is not being re-reported. Only the residue is.*
-
-### THE `REF_LOCAL` CORRECTION IS OWNED, BUT `qol-21`'s PUBLISHED TABLE STILL READS `6/82`
-
-The `substrate.sh:143` fix (`12386db`) corrected Python's `REF_LOCAL` from
-**82 to 4**, and this lane's entry owns it in as many words. **The residue is
-the place the number was published**: `2026-08-23-qol-21`'s live table still
-shows `| Python | ADOPTED | 6/82 | …`, and a reader of that entry has no way to
-reach the correction.
-
-Landed as a norm in `docs/family-architecture.md` §5.4a
-(`2026-08-23-architecture-27`):
-
-> **A number a gate PUBLISHED is a SECOND ARTIFACT. Correcting the instrument
-> corrects the next run; the published figure is corrected where it was
-> published, or it stands.**
-
-**Asked for: an ANNOTATION on `qol-21`'s row, not a rewrite** — §5.4b's
-annotation norm, *the measurement was right as taken; only its tense was
-wrong*. Something of the form *"corrected `12386db`: 6/4, the 82 was match arms
-counted as declarations"* beside the row is the whole of it. The other
-corrected figures (Sv 17 → 11, C 2/6 → 1/7, `REF_CORE` 6 → 5) are owed the same
-treatment wherever `qol-21` published them.
-
-*Renumber into your sequence or close it — the call is yours.*
-=======
 ## 2026-08-23-qol-36 — INCIDENT: a self-test that ran CI, 26 deep, on a cold clone
 
 I caused this. `bash tools/ci.sh --self-test` ran the **entire CI**, and its
@@ -2526,7 +2495,6 @@ by parentage and by path, never `pkill`.
 `lake` when CI is invoked normally. On a GitHub runner that is fine; **on
 Thomas's machine it is not**, and it is shared infrastructure rather than this
 lane's to change unilaterally. Flagged for the coordinator.
->>>>>>> cc3d9ec (INCIDENT FIX: ci.sh could run itself, 26 deep, each level building Mathlib)
 
 ---
 
@@ -2595,3 +2563,35 @@ longer one accident away from a Mathlib build.
 
 `bash -n` clean. `ci.sh --verify-guards`: **14 ok, 0 failed**. The incident
 command still exits **2**. No Lean executed by this lane.
+
+---
+
+## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-27` (QoL lane's to renumber or close)
+
+*Id kept in the architecture namespace; nothing minted in the QoL sequence.
+Filed after reading this file, per §9.5b — the correction below is already
+yours and is not being re-reported. Only the residue is.*
+
+### THE `REF_LOCAL` CORRECTION IS OWNED, BUT `qol-21`'s PUBLISHED TABLE STILL READS `6/82`
+
+The `substrate.sh:143` fix (`12386db`) corrected Python's `REF_LOCAL` from
+**82 to 4**, and this lane's entry owns it in as many words. **The residue is
+the place the number was published**: `2026-08-23-qol-21`'s live table still
+shows `| Python | ADOPTED | 6/82 | …`, and a reader of that entry has no way to
+reach the correction.
+
+Landed as a norm in `docs/family-architecture.md` §5.4a
+(`2026-08-23-architecture-27`):
+
+> **A number a gate PUBLISHED is a SECOND ARTIFACT. Correcting the instrument
+> corrects the next run; the published figure is corrected where it was
+> published, or it stands.**
+
+**Asked for: an ANNOTATION on `qol-21`'s row, not a rewrite** — §5.4b's
+annotation norm, *the measurement was right as taken; only its tense was
+wrong*. Something of the form *"corrected `12386db`: 6/4, the 82 was match arms
+counted as declarations"* beside the row is the whole of it. The other
+corrected figures (Sv 17 → 11, C 2/6 → 1/7, `REF_CORE` 6 → 5) are owed the same
+treatment wherever `qol-21` published them.
+
+*Renumber into your sequence or close it — the call is yours.*

@@ -122,6 +122,8 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-73 | a check that cannot fire is the audit's own VACUOUS category | `docs/family-architecture.md §9.7` |
 | MEAS-74 | a no-code closure is closed when the AUDIT FILE carries the reason | `docs/family-architecture.md §9.7` |
 | MEAS-75 | MEAS-28's first consolidation: the Lean lexer once | `docs/family-architecture.md §2.4` — gate: `tools/leanlex.sh` |
+| MEAS-76 | an entry point REFUSES unknown arguments at line one | `docs/family-architecture.md §5.4` |
+| MEAS-77 | a correct refusal is not a mitigation — the hazard sits behind it | `docs/family-architecture.md §7.1a` A13 corollary |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -363,6 +365,10 @@ numbers below are the register's own.
 | OPS-62 | adoption is per-lane, on dispatch | `tools/triad.sh` header; `docs/duplication-audit.md §2.4` |
 | OPS-63 | refuse to start a build inside a rebase/merge/cherry-pick | `tools/triad.sh` (A6 precondition); `docs/duplication-audit.md §2.4` |
 | OPS-64 | the register can sit one amendment behind its own birth | `docs/duplication-audit.md §2.3` |
+| OPS-65 | the rule applies to YOUR OWN runners first — the author's process predates the fix | `docs/family-architecture.md §7.1a` A16.2 |
+| OPS-66 | an unseeded clone is one accident away from a full Mathlib build | `docs/family-architecture.md §7.1a` A13 |
+| OPS-67 | a re-entry guard lives in something INHERITED, never something PASSED | `docs/family-architecture.md §7.1a` A11 |
+| OPS-68 | a step that can start Lean names the HOST it may start it on | `docs/family-architecture.md §7.1a` A11; `tools/ci.sh` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

@@ -1832,3 +1832,130 @@ minted three paragraphs earlier, one level up. Measured here:
 (`grep -rln leanlex tools/`).
 
 **Index:** MEAS-70 … MEAS-75.
+
+## 2026-08-23-architecture-28 — The guard was never in those processes; and a correct refusal is not a mitigation
+
+The CI re-entrancy incident's laws, from QoL's closure (`docs/backlog/qol.md`
+`2026-08-23-qol-36`). Four dispatched, four landed, plus two findings this lane
+made while landing them.
+
+**(1) §7.1a 16.2's SECOND INSTANCE — it convicted its own author.** The lane
+that carries 16.2 diagnosed the first near-miss, added a belt, verified it
+green, and **left its own hung pre-belt process running**; that process had the
+old code in memory and spawned **26 `ci.sh`**, each an unticketed `lake build`,
+load ~30 for twenty minutes.
+
+> **The guard never failed, because the guard was never in those processes.**
+
+Rider added to the amendment:
+
+> **The rule applies to YOUR OWN runners FIRST — the author's surviving process
+> is the likeliest in the tree to predate the amendment.**
+
+It was started before the fix existed, by the person who then stopped thinking
+about it. The **incremental-read hazard** fired in the same window (the lane
+edited `ci.sh` under 26 live executors) and its admission is recorded verbatim
+rather than resolved: *"I cannot cleanly separate 'ran the old code' from 'read
+a shifted file'."* **An incident with two indistinguishable causes has two
+causes** — picking one after the fact would be a reconstruction (§5.4a).
+
+**(2) THE INTERFACE LAW — §5.4, a new bullet.**
+
+> **Ignoring an unknown flag is how a self-test request became a full build.**
+
+An entry point that executes its **default** on an unrecognized argument
+converts every typo into its **most expensive path**. `ci.sh` now refuses all
+arguments at lines 31/51/58, ahead of the first step at 129 — because a refusal
+that runs after the work has started is a report. Stated with the
+over-correction blocked: **the allowlist is not the defect** (`--verify-guards`
+is fine); the defect is the **fallthrough branch**, which has exactly one safe
+value and it is an error. This is *every refusal path RUN, not admired* moved
+one step earlier: **the argument parser is a refusal path, and the first one
+every caller touches.**
+
+**(3) THE A13 COROLLARY, and the sharper half is mine to state.** The clone was
+a plain `git clone`, never seeded, so the accident built Mathlib **from zero**
+— 3.2 GB, *not an invalidated cache but a cache that never existed*.
+
+> **An unseeded clone is permanently ONE ACCIDENT away from a full Mathlib
+> build.**
+
+And the part worth more than the corollary: **`check.sh --iterate` had been
+refusing that clone as COLD all along, correctly, every time — and the hazard
+sat behind the refusal untouched.**
+
+> **A correct refusal is not a mitigation. Refusing to operate on a hazardous
+> state leaves the hazard for whoever does not check.**
+
+A distinct failure shape from the families minted so far: the usual defect is a
+guard that **fails to fire**; this one **fired perfectly and bought nothing**,
+because it protected the caller rather than the machine. A refusal is a control
+on **one path**; the state it refuses is reachable from every other.
+
+**(4) THE RULING, landed in §7.1a and in §7's tools table.** `ci.sh`'s
+`lake-build` step is **host-gated**: builds under `GITHUB_ACTIONS`, locally
+**skips loudly to `tools/triad.sh`**, no local override reaching a bare `lake`.
+
+> **A step that can start Lean names the HOST it is allowed to start it on. Off
+> that host it does not degrade quietly to a smaller build; it REFUSES and
+> names the ticketed path.**
+
+The three-layer fix generalizes too, and the middle layer is the transferable
+one: **a guard against RE-ENTRY must live in something INHERITED, not something
+PASSED** — depth and argv are what the recursion controls; the environment is
+what it cannot rewrite. `tools/ci.sh` is now IN the lane-tools table, because
+its absence made the table's *"every tool below runs no Lean"* read as coverage:
+**a documented exception is an exception; a tool left out of the table is an
+undocumented one** (§5.4b).
+
+**(5) FINDING — MY OWN A11 NOTE WAS OVERTAKEN THE SAME DAY.** Yesterday's
+landing called this *"A11's first near-miss"*. Hours later it ran 26 deep. The
+law was right and **its severity was understated**; recorded next to what it
+became rather than edited away, which is the charter-prose half of
+`2026-08-23-architecture-26`'s split (present-tense prose is fixed — but a
+wrong estimate of *how bad* something is, is worth leaving visible).
+
+**(6) FINDING — §9.5a's WATCH ITEM HAS FIRED, AND MASTER SHIPPED CONFLICT
+MARKERS.** My INBOUND append to `docs/backlog/qol.md` raced the owner's
+`qol-36`. The first occurrence (`es.md`) was a rebase conflict — loud,
+blocking, resolved. This one was **resolved wrongly and committed**: `47544f1`
+shipped `docs/backlog/qol.md` containing `<<<<<<< HEAD`, `=======` and
+`>>>>>>> cc3d9ec`. **Fixed here**, keeping both halves in order (`qol-36`, then
+the INBOUND block).
+
+> **A race that conflicts is a nuisance. A race that MERGES WRONG AND COMMITS
+> is a defect, and the second is what a rate buys you.**
+
+**And every gate was green over a file full of conflict markers** — §5.4b on
+this repository's own documents: `docs_check` gates marked code blocks,
+`backlog-index.sh` gates the index's freshness, and **nothing is pointed at
+"is this markdown structurally intact"**. Residue filed to QoL: a `^<<<<<<<` /
+`^=======$` / `^>>>>>>> ` grep over `docs/**` in `tools/ci.sh`.
+
+**THE CONTINGENCY IS NOT SIMPLY TRIGGERED, THOUGH — it has an unstated
+precondition, and landing the move blind would be a silent-absence defect.**
+`tools/backlog-index.sh` globs `docs/backlog/*.md` **one level deep**, so
+INBOUND entries moved to `docs/backlog/inbound/<owner>.md` would **vanish from
+the generated index** — defeating the property the convention exists for. The
+move is therefore **conditional on the generator learning the subdirectory**.
+Until then the convention stands, with one free tightening that would have
+prevented this instance: **an INBOUND append is a separate commit, made
+immediately, never batched behind other work** — the window is the hazard, and
+it is the only part a filer controls.
+
+**LANDED ON A MOVING TREE, and the second race is recorded too.** While this
+entry was being written the QoL lane pushed `a1bb01e` — the ruling
+**implemented** (`qol-37`) and `lean-qol` **A13-seeded at last**. Two
+consequences: both charter paragraphs are **stamped with that sha** so neither
+asserts a stale present tense (MEAS-10), and the rebase **conflicted on
+`qol.md` a second time in one day**. `a1bb01e` had appended `qol-37` *around*
+the unresolved markers rather than resolving them, so master carried them from
+`47544f1` until this landing. Resolved keeping **all three** blocks in order:
+`qol-36`, `qol-37`, INBOUND.
+
+**That is the watch item firing twice within the same hour**, and it is the
+argument for the free tightening above rather than for the file move: the move
+is blocked on the generator's glob, while *"file the INBOUND in its own
+immediate commit"* is available today and shrinks the only window a filer owns.
+
+**Index:** MEAS-76, MEAS-77, OPS-65 … OPS-68.

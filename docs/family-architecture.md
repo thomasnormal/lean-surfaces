@@ -3632,6 +3632,30 @@ instrument copies it:
   reproduced the lesson: its first answer was a plausible table produced
   by matching renumbered clauses (§2.1), and it was the spot-checks that
   caught it;
+* **AN ENTRY POINT REFUSES UNKNOWN ARGUMENTS AT LINE ONE.** An instrument that
+  **ignores** an unrecognized flag and proceeds to its default does not have a
+  lenient interface; it has one that **converts every typo into its most
+  expensive path**.
+
+  > **Ignoring an unknown flag is how a self-test request became a full
+  > build.**
+
+  Measured (`docs/backlog/qol.md` `2026-08-23-qol-36`): `bash tools/ci.sh
+  --self-test` — a request for the *cheapest* thing the tool does — ran the
+  **entire CI**, because the flag was unknown and unknown meant *nothing*.
+  `ci.sh` now takes **no arguments** and exits **2** before anything else runs;
+  the guards sit at lines 31/51/58, **ahead of the first step at 129**, because
+  a refusal that runs after the work has started is a report, not a refusal.
+
+  **The allowlist is not the defect.** One flag (`--verify-guards`) is
+  permitted and its handler cannot reach the CI body — that is fine, and it is
+  worth saying because the obvious over-correction is *"never take a flag"*.
+  The rule is about the **default on the unrecognized branch**: a tool's
+  argument parser has exactly one safe fallthrough, and it is an error.
+
+  This is §5.4's *every refusal path RUN, not admired* pushed one step earlier
+  — **the argument parser is a refusal path**, and it is the first one every
+  caller touches;
 * **AN INSTRUMENT THAT SELECTS FILES BY CONTENT MUST EXCLUDE ITSELF BY
   IDENTITY, NEVER BY PATTERN — its own source re-matches the pattern by
   construction.** Measured in `tools/ci.sh` (`a9f7867`): a new step selected
@@ -4758,6 +4782,43 @@ build looks to every reaper like a lane whose owner file is simply missing.
 cheap form of that is what the lane did: a per-tool timeout, so a hang cannot
 become a tenure.
 
+**ESCALATED THE SAME DAY — THE NEAR-MISS BECAME THE INCIDENT (`qol-36`).**
+The paragraph above was written while this was still a hang somebody noticed.
+Hours later the same re-entrancy ran **26 deep** on an unseeded clone: 26
+`lake build`s, no ticket, no `nice`, load ~30 for twenty minutes, 3.2 GB of
+Mathlib built from nothing. **The law was right and its severity was
+understated**, which is recorded rather than edited away — a charter sentence
+is present-tense prose and gets fixed, but a *wrong estimate of how bad
+something is* is worth leaving visible next to what it turned into.
+
+**THE FIX IS THREE LAYERS, and the shape generalizes past `ci.sh`:** (1) the
+entry point **refuses arguments** (§5.4); (2) an **environment sentinel**
+(`LS_CI_SELF_TEST`) rather than an argv check, because it is inherited by
+**every descendant at any depth and through any argv**, which is exactly what
+an argv or filename guard cannot do; (3) under the sentinel, **`lake` itself is
+stubbed** with a no-op that exits loudly, so a self-test **cannot reach a real
+build** even if a future edit re-introduces the call. Layer 3 is A11 as a
+mechanism instead of a rule: *any `lake` invocation needs a ticket or a stub,
+and a self-test has no ticket.*
+
+> **A guard against RE-ENTRY must live in something INHERITED, not in
+> something PASSED.** Depth and argv are exactly what the recursion controls;
+> the environment is what it cannot rewrite.
+
+**AND THE COORDINATOR'S RULING ON THE PART THE LANE FLAGGED AS NOT ITS OWN:
+`ci.sh`'s `lake-build` step is HOST-GATED** — ruled, and **implemented in
+`a1bb01e`** (`docs/backlog/qol.md` `2026-08-23-qol-37`; `--verify-guards` 14
+ok). It builds under `GITHUB_ACTIONS`;
+locally it **skips loudly and points at `tools/triad.sh`**, and **no local
+override reaches a bare `lake`.** The lane was right to flag rather than fix
+it: shared infrastructure whose default is *build the world* is a machine-wide
+setting, not a lane-local one. The rule it lands, stated so the next such tool
+inherits it —
+
+> **A step that can start Lean names the HOST it is allowed to start it on.
+> Off that host it does not degrade quietly to a smaller build; it REFUSES and
+> names the ticketed path.**
+
 **AMENDMENT 12 — TRAPS KILL DESCENDANTS RECURSIVELY, and never bare-kill a
 wrapper.** `pkill -P` reaches children and **misses grandchildren**, which
 is how orphaned `lake` processes survive a lane's exit and go on eating the
@@ -4807,6 +4868,32 @@ and **compare or reset only against `github/master`** — never against
 `origin`, which in a seeded clone is not what the name implies. This lane
 hit the same trap from the third direction (§7.2's clone incident), and the
 count is now **four lanes, one root cause.**
+
+**THE A13 COROLLARY, MEASURED THE HARD WAY (2026-08-23, `qol-36`).** The clone
+that ran the 26-deep recursion was a **plain `git clone`, never seeded**. So the
+accidental build had nothing to build *from*: it fetched and built Mathlib from
+zero and left **3.2 GB** of `.lake` behind — **not an invalidated cache, a cache
+that never existed.**
+
+> **An unseeded clone is permanently ONE ACCIDENT away from a full Mathlib
+> build.** A13's *27 s and 29 MB* is the price of not being in that state.
+
+**AND THE SHARP HALF: `check.sh --iterate` HAD BEEN REFUSING THAT CLONE AS COLD
+ALL ALONG, CORRECTLY** (`~/repos/lean-qol`, **seeded since `a1bb01e`** — the
+state below is the one that produced the incident, not today's)**.** The refusal was right, it fired every time, and the
+hazard sat **behind** it untouched — because a guard that declines to *use* a
+bad state does nothing to *remove* it.
+
+> **A correct refusal is not a mitigation. Refusing to operate on a hazardous
+> state leaves the hazard for whoever does not check.**
+
+That is a distinct failure shape from the ones this document has been minting,
+and worth naming as such: the usual defect is a guard that **fails to fire**;
+this is a guard that **fired perfectly, every time, and bought nothing**,
+because it protected the caller rather than the machine. The practical form is
+A13 as written — **seed the clone**, do not merely refuse to build in it — and
+the general form is that a refusal is a control on **one path**, while the state
+it refuses is reachable from every other.
 
 **AND THE SCRIPT PRINTS ITS PROTOCOL LEVEL.** Audit #2 found **two drifted
 copies of `tools/triad.sh` in `/tmp`**. Copying before editing is legitimate —
@@ -4963,6 +5050,31 @@ sharper: by-touch tolerates a slow migration because the old artifact is
 *inert*. A superseded **runner is not inert** — it holds locks, kills
 processes and runs traps — so its migration window is a hazard rather than
 merely a delay.
+
+**16.2's SECOND INSTANCE, AND IT CONVICTED ITS OWN AUTHOR (2026-08-23, QoL,
+`docs/backlog/qol.md` `2026-08-23-qol-36`).** The lane that carries 16.2 in its
+own ledger diagnosed a CI re-entrancy near-miss, added a belt, verified it
+green — **and left its own hung pre-belt process running.** That process had the
+old `selftests` in memory and went on spawning: **26 instances of `ci.sh`**,
+each starting `lake build` with default parallelism, no `nice` and **no
+ticket**. Load ~30 for twenty minutes.
+
+> **The guard never failed, because the guard was never in those processes.**
+> A fix in the source does not stop what is already running.
+
+Which is 16.2 restated from the far side, and it earns a rider the amendment
+did not have:
+
+> **The rule applies to YOUR OWN runners FIRST. The author's surviving process
+> is the likeliest in the tree to predate the amendment** — it was started
+> before the fix existed, by the person who then stopped thinking about it.
+
+**And the incremental-read hazard fired in the same window**, which this
+section already names: the lane **edited `ci.sh` while 26 instances were
+executing it**, and reports honestly that it *"cannot cleanly separate 'ran the
+old code' from 'read a shifted file'."* Record that admission rather than
+resolving it — **an incident with two indistinguishable causes has two causes**,
+and a post-hoc pick between them would be a reconstruction (§5.4a).
 
 **A PRICING CLIFF IN `--classify`, measured — budget it deliberately.**
 Adding **one new `Examples/` subdirectory** made classification widen from
@@ -5205,6 +5317,18 @@ its refusal paths rather than describing them (§5.4).
 | `tools/editions.sh` | thin siblings, and no edition-parameterised definition | §2.4 (STMT-59, STMT-60) |
 | `tools/backlog-index.sh --ensure-driver` | configure the generated index's merge driver, once per clone | §9.5; *fixes live in gates* |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
+| `tools/ci.sh` | the gate set, run as one — **and the one tool here that CAN start Lean** | A11 (host-gated `lake`), §5.4 (refuses unknown arguments) |
+
+**THE PREAMBLE'S BLANKET CLAIM NOW HAS ONE STATED EXCEPTION, WHICH IS THE
+POINT OF STATING IT.** *"Every tool below runs no Lean unless its own line says
+otherwise"* was true while `ci.sh` was absent from the table — and absence is
+not an exemption, it is a **hole**. `ci.sh` runs `lake` on a GitHub runner and
+**refuses to locally**, which is a fact a lane must be able to read here rather
+than discover from a load average. Its `--self-test` also does not exist by
+design: the flag **refuses**, and the tool's guards are exercised through
+`--verify-guards` under a sentinel that stubs `lake`. **A tool whose exception
+is written down is a documented exception; a tool left out of the table is an
+undocumented one**, and the second reads exactly like coverage (§5.4b).
 
 **AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor
 lane's instrumented proof run counted **"0 open arms" twice** while it was
@@ -5800,6 +5924,44 @@ recurs, INBOUND entries move to **`docs/backlog/inbound/<owner>.md`** — a
 file the owner reads and drains but never appends to, which restores the
 single-writer property. Not done now, because one conflict is an incident
 and not yet a rate; §9.7's light tick is where it would show up as one.
+
+**THE WATCH ITEM HAS FIRED — SECOND OCCURRENCE, 2026-08-23, AND IT LANDED
+WORSE THAN THE FIRST.** This lane filed an INBOUND entry into
+`docs/backlog/qol.md` in the same window the owner appended `qol-36`. The
+first occurrence (`es.md`) was a **rebase conflict**: loud, blocking,
+resolved. This one was resolved **wrongly and committed** — `47544f1` shipped
+`docs/backlog/qol.md` with **`<<<<<<< HEAD` / `=======` / `>>>>>>> cc3d9ec`
+markers in the file**, swallowing neither entry but publishing both inside a
+conflict. Fixed here, keeping both halves in order (`qol-36`, then the
+INBOUND block); the escalation is recorded rather than the fix alone, because
+**the rate is not what changed — the FAILURE MODE is.**
+
+> **A race that conflicts is a nuisance. A race that MERGES WRONG AND COMMITS
+> is a defect, and the second is what a rate buys you.**
+
+**AND EVERY GATE WAS GREEN OVER A FILE CONTAINING CONFLICT MARKERS**, which is
+§5.4b measured on this repository's own documents: `docs_check` gates *marked
+code blocks*, `backlog-index.sh` gates the *index's freshness*, and neither is
+pointed at *"is this markdown structurally intact"*. A one-line grep for
+`^<<<<<<<`, `^=======$`, `^>>>>>>> ` over `docs/**` is the missing pointer, and
+it belongs in `tools/ci.sh` — filed as residue, not landed here (this lane
+writes documents, not gates).
+
+**THE MOVE ITSELF HAS A PRECONDITION THE CONTINGENCY ABOVE DOES NOT STATE, and
+landing it without the precondition would be a silent-absence defect.**
+`tools/backlog-index.sh` globs **`docs/backlog/*.md`, one level deep** — so
+INBOUND entries moved to `docs/backlog/inbound/<owner>.md` would **vanish from
+the generated index**, defeating the exact property the convention exists for
+(*"an owner sees what is queued for them"*). So:
+
+> **The move is CONDITIONAL on the generator learning the subdirectory. Until
+> the glob is fixed, moving the files makes the queue invisible — a worse
+> failure than the race it retires.**
+
+Until then, the convention stands as written, with one tightening that costs
+nothing and would have prevented this instance: **an INBOUND append is a
+separate commit, made immediately, never batched behind other work** — the
+window is the whole hazard, and it is the only part of it a filer controls.
 
 #### 9.5b THE ROUTING LAW — file the RESIDUE, not the REPORT
 

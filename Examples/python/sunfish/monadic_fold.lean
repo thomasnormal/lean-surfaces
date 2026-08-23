@@ -109,25 +109,26 @@ identical fuel, with the interpreter as the only difference. That is the check
 that cannot go stale, and it is the one that would survive a re-pin of the
 fixture.
 
-Deliberately NOT asserted here: a fuel THRESHOLD. Fuel thresholds are the one
-measurement that does not transport — the rebuild spends fuel only at the knot,
-so at fixed `F` it is at least as decisive as the trunk (Eval.lean §0.2) and the
-DIRECTION of that inequality at this particular boundary is not something this
-lane has observed. Writing a number here would be a guard that cannot see what
-it is fed. -/
+The fuel THRESHOLD is asserted separately below, and only because it has now
+been measured. Fuel thresholds are the one measurement that does not transport:
+the rebuild spends fuel only at the knot, so at fixed `F` it is at least as
+decisive as the trunk (Eval.lean §0.2), and the DIRECTION of that inequality at
+this boundary had to be read off the machine before any number could be written
+down. -/
 #guard probeMono 47 1 300 == probeTrunk 47 1 300
 #guard probeMono 0 1 300 == probeTrunk 0 1 300
 
-/-! **…so it is MEASURED instead, in this same tenure.** `fold_depth1.lean:114`
-guards the trunk's threshold: at `F = 200` both trunk rows are `none`. The two
-lines below print what the REBUILD does at the same fuel, which is exactly the
-one bit needed to place the rebuild against the trunk on this boundary —
-`true, true` means the thresholds agree here, `false` anywhere means the rebuild
-is strictly more decisive, as §0.2 permits. Printed, not asserted, because a
-guard may only carry a number that has already been read off the machine. Once
-this tenure reports, the surviving row becomes a `#guard`. -/
-#eval ((probeMono 47 1 200).isNone, (probeMono 0 1 200).isNone)
-#eval ((probeTrunk 47 1 200).isNone, (probeTrunk 0 1 200).isNone)
+/-! **THE THRESHOLD, MEASURED FIRST AND GUARDED SECOND.** `fold_depth1.lean:114`
+guards the trunk's threshold: at `F = 200` both trunk rows are `none`. The
+tenure of 2026-08-23 03:13 printed the rebuild's answer at the same fuel and got
+`(true, true)` — and the trunk's, `(true, true)` — so the two interpreters
+EXHAUST TOGETHER at this boundary and the rebuild is not more decisive here.
+Those rows were `#eval`s in the commit that measured them and are `#guard`s in
+this one, which is the only order in which a guard may acquire a number: the
+machine answers, then the file asserts. Had either row come back `false`, §0.2
+permits it and the assertion below would have been written the other way. -/
+#guard (probeMono 47 1 200).isNone && (probeMono 0 1 200).isNone
+#guard (probeTrunk 47 1 200).isNone && (probeTrunk 0 1 200).isNone
 
 /-! ## §2 `FoldInv` over `RoundOK` — the settled vocabulary, first statement
 

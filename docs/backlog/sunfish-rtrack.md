@@ -591,10 +591,45 @@ and `FoldInv.nil` is even Classical-free at `[propext, Quot.sound]`. No `sorry`,
 no `native_decide`.
 
 Gates: `docs_check` GREEN. `diff_test` GREEN — 1427 cases, 0 failed, 118
-whitelisted-unsupported, 1309 matched. `monadic_gate` RED, and NOT from this
-landing (see below).
+whitelisted-unsupported, 1309 matched. `monadic_gate` RED, and not from this
+landing (see below); that gate no longer exists.
 
-### The acceptance gate is RED on master, and the merge is what made it so
+### The acceptance gate was RED, and MY READING OF IT WAS WRONG
+
+Recorded here because the wrong inference is the useful part. What follows below
+is what this lane concluded from the log; the ruling came back that it was a
+DEFECT — rung 3b's dict-keys fix never crossed the presentation boundary into
+the rebuild — fixed in one line by the pyc lane (eb9b88d). The gate itself is
+gone in the collapse (eeeb1fd): there is no `--monadic` and no second
+interpreter to gate, `diff_test`'s other side is CPython, and the baseline is
+1427 / 0 failed / 116 whitelisted / 1311 matched.
+
+**The reasoning error.** The refusal messages cited `docs/memory-model.md` and
+said live dict iteration is deliberately outside the tier, and this lane read a
+DELIBERATE message as evidence of a DELIBERATE state — concluding the corpus and
+the tier boundary disagreed and someone had to rule which moved. But a refusal
+message is written at the DEFINITION site and says what that code path intends;
+it is no evidence at all about whether reaching that path HERE was intended. An
+unported fix lands you on a deliberate refusal by accident, and the refusal
+still reads as designed. The tell was available and this lane did not weigh it:
+the trunk answered these rows and CPython agreed, so the tier boundary plainly
+did not exclude them — only ONE presentation refused. Two implementations of one
+declared tier disagreeing is a defect in whichever is younger, and the younger
+one was the rebuild.
+
+The generalisation for this lane: when two interpreters of the SAME tier differ,
+the null hypothesis is an unported fix, never a boundary dispute. Boundary
+disputes are rare and cost a ruling; unported fixes are common and cost a line.
+
+### What this lane got right, and keeps
+
+The INDEPENDENCE argument stands and is what made the landing safe to commit
+against a red gate: `leanmodels-run` is built from `Main.lean`, which does not
+import this leaf module, so the gate's binary was byte-identical with and
+without it. Committing to a branch with the gate's state stated in the message
+was the correct call even though the diagnosis attached to it was not.
+
+### The divergence census, as measured
 
 25 divergences, every one of them the same shape: the rebuild answers
 `unsupported: <builtin>() over dict keys — live dict iteration is outside the

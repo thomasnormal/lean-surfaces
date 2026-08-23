@@ -97,6 +97,11 @@ type Census struct {
 	Imports         map[string]int    `json:"imports"`
 	ImportsExternal []string          `json:"imports_external"`
 	Literals        map[string]int    `json:"basic_lit_kinds"`
+	// Shapes: sub-forms of a construct that a NODE COUNT cannot see.
+	// `SwitchStmt: 5186` says nothing about how many carry a
+	// `fallthrough` (208) or an init clause (258), and those are what
+	// decide what a rule costs. Added for rung 2's scoping.
+	Shapes map[string]int `json:"shapes"`
 
 	// root is not emitted: it only decides how source paths are
 	// SPELLED in the output, so that a census taken under one
@@ -136,6 +141,7 @@ func newCensus() *Census {
 		Builtins:        map[string]int{},
 		Imports:         map[string]int{},
 		Literals:        map[string]int{},
+		Shapes:          map[string]int{},
 	}
 }
 
@@ -433,6 +439,9 @@ func (c *Census) censusFile(path string) error {
 			c.IncDecOps[x.Tok.String()]++
 		case *ast.BranchStmt:
 			c.BranchOps[x.Tok.String()]++
+			if x.Label != nil {
+				c.Shapes["branch_labeled_"+x.Tok.String()]++
+			}
 		case *ast.BasicLit:
 			c.Literals[x.Kind.String()]++
 		case *ast.GoStmt:
@@ -483,13 +492,73 @@ func (c *Census) censusFile(path string) error {
 			default:
 				c.RangeOver["other"]++
 			}
+			c.Shapes["range_total"]++
 			if x.Tok == token.DEFINE {
 				c.RangeOver["declares_vars"]++
+				c.Shapes["range_declares_vars"]++
+			}
+			if x.Key != nil && x.Value != nil {
+				c.Shapes["range_two_vars"]++
 			}
 		case *ast.ForStmt:
+			c.Shapes["for_total"]++
+			if x.Init == nil && x.Cond == nil && x.Post == nil {
+				// `for {}` — the most common for-loop form, and the one
+				// where fuel is load-bearing rather than a formality.
+				c.Shapes["for_bare"]++
+			}
 			if a, ok := x.Init.(*ast.AssignStmt); ok && a.Tok == token.DEFINE {
 				// The loop form whose scoping CHANGED at go1.22.
 				c.RangeOver["for_clause_declares_vars"]++
+				c.Shapes["for_declares_vars"]++
+				if len(a.Lhs) > 1 {
+					c.Shapes["for_declares_multi"]++
+				}
+			}
+		case *ast.SwitchStmt:
+			c.Shapes["switch_total"]++
+			if x.Tag == nil {
+				c.Shapes["switch_tagless"]++
+			} else {
+				c.Shapes["switch_tagged"]++
+			}
+			if x.Init != nil {
+				c.Shapes["switch_with_init"]++
+			}
+			nc := 0
+			for _, st := range x.Body.List {
+				if cc, ok := st.(*ast.CaseClause); ok {
+					nc++
+					if cc.List == nil {
+						c.Shapes["switch_with_default"]++
+					} else if len(cc.List) == 1 {
+						c.Shapes["case_single_expr"]++
+					} else {
+						c.Shapes["case_multi_expr"]++
+					}
+				}
+			}
+			c.Shapes[fmt.Sprintf("switch_with_%d_cases", nc)]++
+		case *ast.TypeSwitchStmt:
+			c.Shapes["typeswitch_total"]++
+			if x.Init != nil {
+				c.Shapes["typeswitch_with_init"]++
+			}
+		case *ast.TypeSpec:
+			c.Shapes["typespec_total"]++
+			if x.Assign.IsValid() {
+				c.Shapes["typespec_alias"]++
+			}
+			if x.TypeParams != nil {
+				c.Shapes["typespec_generic"]++
+			}
+			switch x.Type.(type) {
+			case *ast.StructType:
+				c.Shapes["typespec_struct"]++
+			case *ast.InterfaceType:
+				c.Shapes["typespec_interface"]++
+			default:
+				c.Shapes["typespec_other"]++
 			}
 		case *ast.CallExpr:
 			if id, ok := x.Fun.(*ast.Ident); ok && builtinNames[id.Name] {

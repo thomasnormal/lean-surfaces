@@ -93,25 +93,29 @@ an obligation: cause 2 is expected EMPTY and should be gated.
 This is the gate, and it is a statement about a function between two
 enumerations — no interpreter, no world, no fuel. -/
 
-/-- **The Go tier cannot refuse `undefined`.** Not "does not": cannot. -/
-@[go_spec] theorem goRefusal_never_undefined (r : GoRefusal) :
-    r.toCause ≠ RefusalCause.undefined := by
-  cases r <;> simp [GoRefusal.toCause]
+/-- **The Go tier cannot refuse `undefined`.** Not "does not": cannot.
+
+Stated against Core's own `isUndefined`, which Core lifted from the ES
+lane so the gate is written once per family. This tier's contribution is
+the narrower `GoRefusal`; the predicate is everyone's. -/
+@[go_spec] theorem goRefusal_never_undefined (r : GoRefusal) (π : SpecRef) :
+    (r.toCore π).isUndefined = false := by
+  cases r <;> rfl
 
 /-- The image, spelled out, so a reader can see the bucket is exactly
 three and which three. -/
-@[go_spec] theorem goRefusal_image (r : GoRefusal) :
-    r.toCause = RefusalCause.unsupportedConstruct
-      ∨ r.toCause = RefusalCause.environment
-      ∨ r.toCause = RefusalCause.orderDependence := by
-  cases r <;> simp [GoRefusal.toCause]
+@[go_spec] theorem goRefusal_image (r : GoRefusal) (π : SpecRef) :
+    (r.toCore π).className = "unsupported"
+      ∨ (r.toCore π).className = "environment"
+      ∨ (r.toCore π).className = "order-dependence" := by
+  cases r <;> simp [GoRefusal.toCore, RefusalCause.className]
 
 /-- Non-vacuity: `undefined` really is a constructor of the family type,
 so the theorem above is a restriction and not a statement about an empty
 type. Without this row, deleting `undefined` from `RefusalCause` would
 make the gate pass for the wrong reason. -/
-@[go_spec] theorem undefined_is_a_real_cause :
-    RefusalCause.undefined ≠ RefusalCause.unsupportedConstruct := by decide
+@[go_spec] theorem undefined_is_a_real_cause (π : SpecRef) :
+    (RefusalCause.undefined π).isUndefined = true := rfl
 
 /-! ## §2 THE INTERPRETER HALF — everything below mentions the walker
 
@@ -133,8 +137,7 @@ and keeps no diagnostic snapshot.) -/
 @[go_spec] theorem refuseGo_run
     (W : Type) (w : W) (r : GoRefusal) (π : SpecRef) (m : String) :
     (refuseGo (W := W) (ρ := Panic) (α := Unit) r π m) w
-      = .error (.unsupported (r.toCause.toCore π) (renderRefusal r.toCause π m)
-          none) := rfl
+      = .error (.unsupported (r.toCore π) m none) := rfl
 
 @[go_spec] theorem exhausted_is_not_catchable (W : Type) (w : W) :
     (LeanModels.exhausted : SemMWith W Panic SpecRef Unit Unit) w
@@ -142,11 +145,11 @@ and keeps no diagnostic snapshot.) -/
 
 /-- The interpreter-side corollary of §1.4, and it carries no content of
 its own — which is the point of having put the gate in the spec half.
-Every refusal this tier emits renders a cause drawn from `GoRefusal`, and
-§1.4 says that image excludes `undefined`. -/
-@[go_spec] theorem refuseGo_cause_never_undefined (r : GoRefusal) :
-    r.toCause ≠ RefusalCause.undefined :=
-  goRefusal_never_undefined r
+Every refusal this tier emits carries a cause drawn from `GoRefusal`, and
+§1.4 says that image is never `undefined`. -/
+@[go_spec] theorem refuseGo_cause_never_undefined (r : GoRefusal) (π : SpecRef) :
+    (r.toCore π).isUndefined = false :=
+  goRefusal_never_undefined r π
 
 /-! ### 2.2 Flow short-circuits — cookbook §13
 
@@ -154,7 +157,21 @@ A non-normal flow stops the sequence. Stated at the sequence combinator,
 which is where the rule lives. -/
 
 @[go_spec] theorem execSeq_nil (fuel : Nat) (w : GoWorld) :
-    (execSeq fuel []) w = .ok (.ok Flow.normal, w) := rfl
+    (execSeq (fuel + 1) []) w = .ok (.ok Flow.normal, w) := rfl
+
+/-- **Fuel exhaustion is `timeout`, never a refusal**, and it is reachable
+at every statement form — the walker recurses on fuel alone. -/
+@[go_spec] theorem execSeq_no_fuel (body : List Stmt) (w : GoWorld) :
+    (execSeq 0 body) w = .error .timeout := rfl
+
+@[go_spec] theorem execStmt_no_fuel (st : Stmt) (w : GoWorld) :
+    (execStmt 0 st) w = .error .timeout := rfl
+
+/-- Bare `for {}` — 47.0% of the standard library's `for` loops — is
+where that stops being a formality: with no condition, only fuel bounds
+it. -/
+@[go_spec] theorem bare_for_exhausts (fuel : Nat) (w : GoWorld) :
+    (execLoop 0 none none [] []) w = .error .timeout := rfl
 
 @[go_spec] theorem flow_normal_isNormal : Flow.normal.isNormal = true := rfl
 @[go_spec] theorem flow_returned_not_normal (v) : (Flow.returned v).isNormal = false := rfl
@@ -164,6 +181,6 @@ which is where the rule lives. -/
 /-! ### 2.3 The empty statement really is a no-op -/
 
 @[go_spec] theorem exec_empty (fuel : Nat) (w : GoWorld) :
-    (execStmt fuel Stmt.empty) w = .ok (.ok Flow.normal, w) := rfl
+    (execStmt (fuel + 1) Stmt.empty) w = .ok (.ok Flow.normal, w) := rfl
 
 end LeanModels.Go

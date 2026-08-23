@@ -1093,7 +1093,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
         | closure nm ps ao lo hg ig bd cap => exact .unsupported
         | pyset xs => exact .unsupported
     -- §3a: the trunk never builds a `forDict` frame; its arm refuses
-    | forDict tg ad i n sv bd => simp only [execGen]; exact .unsupported
+    | forDict tg ad i n sv kd bd => simp only [execGen]; exact .unsupported
     | countFrom cur step => simp only [execGen]; exact .ok h _
 
 

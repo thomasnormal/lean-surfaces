@@ -1508,3 +1508,428 @@ budget in both directions with the stop point named, and `--arms` on a
 synthetic function with a **nested** match and an `if/then`, the block ending
 at the next top-level, a missing function, and a doc comment containing a fake
 arm. `docs_check` **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-23 — the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern
+
+### (a) `applyBuiltin` — I measured the right definition and read it wrong
+
+**There is exactly one definition** (`grep` over the tree: `Monadic/Eval.lean:257`,
+and one each for `iterValues` and `applyCallPlan`), so we measured the same
+function. The disagreement was about its **shape**, and the successor lane —
+who read the source — was right. Two defects:
+
+1. **The `if/then` detector missed the chain entirely.** My regex required a
+   character after `then`, and in `if fname == "len" then` the `then` is at
+   **end of line**. Zero matches. So a 19-deep chain reported `0 if/then`.
+2. **Nested match arms were counted as top-level.** The "shallowest depth"
+   heuristic finds the shallowest `|`, and in an if-chain the `|` arms live
+   *inside* the branches — so 45 nested arms were reported as the dispatch.
+
+**Why that is not cosmetic**, in the lane's own words: a shape report that
+inverts ite and match **sends a prover to a tactic that cannot apply** —
+`cases` on a `String`. The tool was arguing for the wrong proof.
+
+Now, and matching their verbatim reading exactly:
+
+```
+LeanModels/Python/Monadic/Eval.lean:257  if/else-if chain  19 deep (1 if + 18 else-if), 21 then-tokens in all,
+                                                           15 on `vs` of 30 match block(s), 45 nested arm(s), 213 lines
+```
+
+**The shape is now read from what comes FIRST, not from what is more
+numerous** — reading beat counting, so the tool records the order. And three
+units are kept apart, because they answer different questions: **30** match
+tokens in all, **15** on the dispatch argument `vs` (the successor's number),
+**45** arms nested inside them. A count without its unit is the same ambiguity
+`laws.sh` hit between a law and its home.
+
+**Every definition is printed.** `arms_of` no longer stops at the first hit per
+file, and a name resolving more than once prints `N DEFINITIONS resolve to this
+name — all of them:`. That was the identifier law failing inside the tool
+again, and it is now a self-test row.
+
+The shape is reproduced as a **calibration fixture** — a 19-deep chain with 15
+`match vs with` blocks carrying 45 arms — so the inversion cannot come back.
+
+### (b) substrate.sh: a `no` names its pattern
+
+`Go run NO` was not actionable: a tier could dispute the verdict but not the
+reason. Every `no` now carries a tag, and the patterns are printed under the
+table:
+
+```
+  [U] uncatch   (theorem|example|lemma|#guard) ... (tryCatch|catchIn|.catch), or
+                tryCatch within 2 lines of (Loud|Halt|unsupported)
+  [R] run       ^def (toRun|run)\b
+```
+
+with the header saying **"dispute the PATTERN, not the verdict."** Checking my
+own `Go run NO` against its now-visible pattern: Go has `execStmt` and
+`execSeq`, neither named `run` nor `toRun` — so the NO is a statement about
+the **pattern's** reach, exactly as it should be, and Go can now say so.
+
+### The hang was localized correctly, and I profiled that path
+
+The hang was the **constructor-site mode** (`sites.sh CallPlan builtin`) — which
+is the path I profiled: `scan_sites` **6 s**, `declaring_types` **2 s**, the 357
+awk spawns **~1 s**, the comment stripper **~5 s**, total **5.8 s**. Still not
+reproduced; the two-minute run remains unexplained, and the progress line will
+name the file if it recurs.
+
+### Triad
+
+`bash -n` clean. `sites.sh --self-test`: **42 ok, 0 failed** (36 → 42) —
+including the five calibration rows. `substrate.sh --self-test` **20 ok**.
+`docs_check` **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-24 — gate DESIGNS for the two head homes, and one of the ten needs no gate at all
+
+Designs only — nothing built. Each carries its honesty clause **first**,
+because what a check cannot see decides whether it is worth building.
+
+### §9.2 — consolidation by touch
+
+**PROOF-38 · CONSOLIDATION BY TOUCH, never big-bang; byte-identical across
+the move.** *"A lane converts its own artifact the next time it opens that
+artifact for any other reason, in the same landing — no deadline, no sweep,
+and the test is that the committed output is byte-identical before and
+after."*
+
+> **CANNOT SEE** whether the lane had another reason to open the file. It sees
+> only whether the diff contains changes *beyond* the conversion — a proxy
+> that misses a lane which opened the file to read it.
+
+Reads the staged diff for a **conversion signature**: a file that newly
+imports or calls a shared helper (`censuskit`, `tools/triad.sh`, a `Core`
+loader). Reports each conversion as **BY-TOUCH** (the file has other changes
+too) or **SWEEP** (the conversion is the file's only change), and for a
+converted census instrument runs its existing `--compare` to check the
+committed JSON is unchanged — the byte-identical half is a composition of a
+contract that already exists, not new machinery. **A violation is two or more
+SWEEP conversions in one landing.**
+
+**PROOF-39 · port the SUCCESSOR; keep the predecessor as the record of what
+it fixed.** The measured failure is precise: a harvesting tier inherits a
+known-fragile mechanism *silently*, "**because the predecessor is not marked
+as superseded — it is merely older**" (`py_loop`'s Miller-pattern unification,
+replaced by `py_vcgen`, both still in the tree).
+
+> **CANNOT SEE an undocumented supersession.** If no prose records that B
+> replaced A, nothing can find it — two generations nobody wrote down are
+> invisible to a grep.
+
+So the gate is a **marking** gate, not a discovery one. Reads `docs/**` for
+supersession claims naming two artifacts, and reads those artifacts' headers.
+Reports the pairs and whether the predecessor carries a `SUPERSEDED BY <x>`
+marker. **A violation is a documented supersession whose predecessor is
+unmarked** — exactly the silent-inheritance case.
+
+**PROOF-40 · the migration must never cost more than the defect it removes.**
+
+> **NO GATE POSSIBLE.** "Cost" here is a judgement over future lane-time and
+> build invalidation. The only mechanical proxy is the net line delta — and
+> that is the half that was never in dispute. A gate reporting *"net −300
+> lines, proceed"* would license a migration that saves 300 lines and
+> invalidates every lane's build, which is precisely the trade §9.6 measured
+> and **REJECTED** for the shared workspace (0.43 GB a lane against spine-touch
+> invalidation at 8 spine moves in 60 commits).
+
+What is worth having is a **report, not a gate**: fold net delta and
+spine-touch count into PROOF-38's output, so the arithmetic is visible to the
+human who owns the judgement. `laws.sh` should record PROOF-40 as
+**`ungateable: cost is a judgement over lane-time and build invalidation; the
+only mechanical proxy is the half never in dispute`** so it stops surfacing as
+debt.
+
+### §2.4 — thin siblings, and clauses 3 and 4
+
+**MEAS-28 · duplication policed by an instrument, not by discipline.**
+
+> **CANNOT SEE semantic duplication under different spellings** — two loaders
+> doing one job with different names and shapes read as two different things.
+
+The most directly gateable of the ten, because the law literally asks for an
+instrument: read `harness/*.py` and the tier loaders for repeated *contracts*
+(a `git_rev` helper, a `--compare` path, an envelope loader), report how many
+independent implementations each contract has with file:line for each. **A
+violation is a contract implemented more than once where a shared helper
+already exists** — which is `docs/duplication-audit.md` run continuously
+rather than by hand every ten landings.
+
+**STMT-59 · THIN SIBLINGS OVER A THICK SHARED TRUNK.** The law states its own
+test: *"if a sibling is thick, either the editions really do differ that much
+(measure and prove it) or the census was not run."*
+
+> **CANNOT SEE whether thickness is justified.** It can only pair the
+> thickness with the presence or absence of a conviction record.
+
+Reads `LeanModels/<Lang>/<Ver>/` against its trunk `LeanModels/<Lang>/` and
+reports each sibling's size as a fraction of its trunk, beside the census
+artifact convicting its files. **A violation is a sibling over the threshold
+with no census naming its contents** — the *"census was not run"* branch, made
+visible. (Today this has one row, `C/C23/`; it is a tripwire for the next lane
+rather than a finding about this one.)
+
+**STMT-60 · no definition takes a version parameter.**
+
+> **CANNOT SEE a version smuggled as a `Nat` or `String`.** A definition taking
+> `(v : Nat)` that means the edition is invisible to a type-based rule, and
+> that is the spelling someone reaching for the forbidden thing would use.
+
+Reads every `def`/`abbrev`/`structure` signature under `LeanModels/` and
+reports any whose parameter list contains a binder whose **type** is an
+edition or version type. **A violation is exactly that** — cheap, sharp, and
+worth having despite the hole, because the honest spelling is the one it
+catches.
+
+**STMT-62 · THE ONE HONEST FORK — an arity change forks type and consumers.**
+
+> **CANNOT SEE whether a shared consumer is unsound.** A consumer handling
+> both shapes through a deliberate wrapper looks identical to one that forgot
+> to fork, so this reports **candidates**, never violations.
+
+Composes with `tools/sites.sh`: compare constructor **arities** of the
+same-named type across trunk and sibling, and where they differ, ask sites.sh
+whether the destructure sites are forked per edition or shared. Reports each
+differing-arity type with its consumer split. **The candidate to look at is a
+differing arity with a shared consumer** — the `PyErr` shape (3.9's two
+nullary constructors against 3.11's three-way split).
+
+**STMT-63 · the edition parameter's granularity is language-decided.**
+
+> **CANNOT SEE whether the granularity is CORRECT for the language.** That is a
+> fact about the language's own spec, not about our tree. This checks our model
+> against **our own recorded claim**, and nothing more.
+
+Reads each tier's envelope schema and loader for where `language_version`
+sits — one per build, or one per file — and reports the granularity each tier
+encodes beside the granularity its charter claims. **A violation is a tier
+whose charter says per-file while its envelope carries one version for the
+whole build**, which is Go's measured case (`//go:build go1.N` overriding the
+`go` line per file, verified in both directions from one compiler invocation).
+
+### My own pair — and they are not ungated at all
+
+**MEAS-60** (*an empty diff measured nothing*) and **OPS-46** (*less scope,
+ZERO invention*) are **both already implemented in `tools/triad.sh`** —
+verified: the `NOTHING STAGED OR COMMITTED` fallback and the hyphenated-
+`Examples` widening. They surface as NO GATE because **`laws.sh` attributes by
+home token, and their home is a backlog entry id that no tool cites.**
+
+That is not a gate-design problem; it is an **attribution defect in
+`laws.sh`**, and it means **the 116 is too high by an unknown margin** — every
+law whose durable home is a ledger entry rather than a `§` or a script is
+mis-filed the same way. Two fixes, both cheap: extend the law-index home
+column to name the implementing script (identity attribution already works),
+or have `laws.sh` accept a law's **hook phrase** as a second token. I would do
+the first — it puts the fact where a reader of the index sees it.
+
+**Recommended build order, if these are ruled in:** MEAS-28 and STMT-60 first
+(sharp, cheap, immediately true), then the `laws.sh` attribution fix (it
+corrects a headline number), then PROOF-39, then STMT-59. PROOF-40 is recorded
+as ungateable; STMT-62 and STMT-63 are tripwires whose evidence is thin today.
+
+---
+
+## 2026-08-23-qol-25 — the attribution fix: the headline held, the DISPATCH was wrong
+
+Ruled first because a dispatch chosen off a wrong number is the motivated-error
+law pointed at ourselves. It was wrong — **not in the headline, in the
+ranking.**
+
+### The defect: `§9` matched `§9.5`
+
+Attribution matched home tokens by **substring**, so a law homed at `§9` was
+credited to every tool mentioning any `§9.x` — **seven tools for one law**,
+including `ada_round_trip.py`. **That is the identifier law failing inside the
+instrument that measures enforcement**, and it is the third time this lane has
+met it: `sites.sh`'s `.unsupportedDevice`, `arms_of`'s first-hit-per-file, and
+now this. Same fix each time — require a boundary.
+
+The ledger *citation counts* used the same loose match, which is where the
+damage was.
+
+### The numbers: headline held, ranking inverted
+
+| | before | after |
+| --- | ---: | ---: |
+| cited by a tool | 216 | **215** |
+| ungateable (recorded, not debt) | — | **1** |
+| NO GATE | 116 | **116** |
+
+The headline barely moved because false credits and two newly-attributed laws
+nearly cancelled. **The demand ranking did not survive:**
+
+| home | before | after |
+| --- | ---: | ---: |
+| `§9.2` (PROOF-38/39/40) | **14** — the head | not in the top six |
+| `§2.4` and its clauses | 7 | **8, and seven ungated laws** |
+
+§9.2's 14 was mostly `§9.x` mentions. **§2.4 is the head by breadth and by
+count**, which means the ruled order — MEAS-28, STMT-60 (both §2.4), then
+PROOF-39 (§9.2) — is now *better* supported than when it was ruled, and
+PROOF-39 sits lower than it looked.
+
+### Two mechanisms, both cheap
+
+**Attribution by identity when the home names a script.** `MEAS-60` and
+`OPS-46` were never ungated — both are implemented in `tools/triad.sh`
+(verified) and were invisible because their home is a ledger entry id no tool
+cites. Their index rows now carry `— gate: tools/triad.sh`, and identity
+attribution (which already worked) does the rest. **34 laws are homed in a
+ledger entry**, so this channel exists for all of them.
+
+**`ungateable: <reason>` in the index home column**, reported in its own
+bucket. Re-surfacing a settled finding every audit is how it gets
+re-litigated. `PROOF-40` is recorded with the ruled sentence: *cost is a
+judgement over lane-time and build invalidation; the only mechanical proxy is
+the half never in dispute.*
+
+### A cost regression, caught and fixed before landing
+
+The boundary fix built one regex **per token per file** and doubled the run —
+**50 s → 1 m 51 s**. Hoisted to once per token: **54 s**. A tool that prices
+enforcement has to be priced too, which is the lesson `sites.sh` took a
+budget for.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **22 ok, 0 failed** (17 → 22) — `§9` not
+matching `§9.5` while `§9.5` does, a dated id not matching its longer sibling,
+and an ungateable row recognised with its reason. Doc-first: §9.7 carries the
+correction and says the dispatch moved rather than the headline. `docs_check`
+**87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-26 — MEAS-28 gets its instrument: duplication counted, not remembered
+
+The one law in the tree that **literally asks for a tool**, and it had none.
+`docs/duplication-audit.md` measured the census contract implemented **14
+times** — by hand, every ten landings, which is exactly what the law forbids.
+
+### First run, 39 Python files
+
+| contract | count | status |
+| --- | ---: | --- |
+| `--compare` | **15** | DUPLICATED — `censuskit.py` proposed, not landed |
+| `census` main | **15** | DUPLICATED |
+| double-run | **10** | DUPLICATED |
+| self-test | **10** | DUPLICATED (none proposed) |
+| `git_rev` | **8** | DUPLICATED |
+
+### Two channels, and the `git_rev` row proves why both are needed
+
+**CONTRACTS** (curated shapes) finds **8** files running `git rev-parse`.
+**NAMES** (mechanical, every top-level `def` in more than one file) finds **3**
+called `def git_rev`. So **five implement the contract under another name** —
+`_git`, `_read`, inline — which is precisely the duplication a name-based rule
+misses and a contract-based one catches. Each channel finds what the other
+cannot, and neither alone would have reported 8.
+
+The mechanical channel also surfaced rows no curated list had:
+`_reexec_under_pinned_frontend` ×4, `_read` ×4, `classify` ×6.
+
+### A duplicate is not automatically a violation
+
+§9.2 consolidates **by touch**, so the tool separates **`DUPLICATED`** (work
+*available* — no shared helper has landed) from **`VIOLATION`** (work
+*refused* — the helper exists and is not being used). Today every row is
+DUPLICATED, because `harness/censuskit.py` is still a proposal. That means the
+instrument currently reports **opportunity, not debt**, and it will flip to
+VIOLATION the moment the helper lands — which is the right way round: the
+count becomes a red only once ignoring it is a choice.
+
+### The honesty clause is in the header, not the footnote
+
+> **CANNOT SEE semantic duplication under different spellings.** Two envelope
+> loaders doing one job with different function names, argument orders and
+> local variables read here as two different things. The duplication that cost
+> this repository most was found by a human reading four loaders side by side,
+> and that reading is not automated here.
+
+So every count is a **floor**, in the same direction every other instrument in
+this tree errs.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **9 ok, 0 failed** — files found across both
+directories, a contract implemented twice, a contract nobody implements, a
+name in three files and one in two, a unique name correctly *not* reported,
+and the DUPLICATED/VIOLATION flip turning on whether the helper file exists.
+Doc-first: §2.4 names the gate and carries the first run and the two-channel
+argument; the §7 tools list and the law index gain their rows. `docs_check`
+**87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-27 — `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare
+
+### STMT-60 — clean, and the one hit is clause (4)'s legitimate case
+
+**Zero violations.** The only definition in the tree with a version-typed
+binder is Go's `perIterationLoopVars (v : LangVersion) : Bool`, and it is
+reported as **`clause-4`**, not as a violation: §2.4(4) records that for Go
+the edition is a property of the **file**, carried as data, so a predicate
+**classifying** that data is not a semantics parameterised by edition.
+
+The discriminator is the **return type** — a plain `Bool`/`String`/`Nat`
+classifies, a monad or a value computes — and the tool prints the list so a
+lane can **dispute the list rather than the verdict**. The header states the
+hole up front and the report repeats it every run:
+
+> **CATCHES THE HONEST SPELLING ONLY.** A version smuggled as a `Nat` is
+> invisible to a type-based rule, and that is the spelling someone reaching
+> for the forbidden thing would use.
+
+### STMT-59 — and it convicts the section's own tier
+
+```
+  LANG   VER     SIBLING    TRUNK  RATIO  THEOREMS CONVICTED-BY
+  C      C23        2213      732   3.02    7/0    clauses only: c-construct-census.json (no census names the FILES)
+```
+
+**The sibling is three times its trunk** — the inverse of *thin siblings over
+a thick shared trunk* — and **no census names its files**. §2.4(1) asks for a
+measurement convicting the **FILE**; a C construct census exists, and it
+convicts clauses. Which of the law's two branches applies (*"the editions
+really do differ that much"* or *"the census was not run"*) is the C lane's
+call — the gate's job was to make the question unavoidable, and it does.
+
+### STMT-61 — measurable, and there is nothing to measure
+
+The design was a statement-shape comparison across trunk and sibling. **It
+holds mechanically and would report zero forever**: measured before building
+it, the C trunk holds **0 theorems** and the C23 sibling holds **7**. A
+duplicate-finder needs a trunk theorem to duplicate.
+
+So the failure mode in this tree is not *"proved twice"* — it is **"proved
+only in the sibling"**, which is the same evidence read the other way round.
+That is now a **column** (`THEOREMS 7/0`), not a comparison that cannot fire.
+The law index records the mechanism and why it is not built. **This is the
+STMT-62/63 rule applied to a third law: a gate whose evidence row does not
+exist yet is a design, not a build.**
+
+### Two false attributions caught before landing
+
+The conviction lookup first credited C23 to **`ada-suite-census.json`** — a
+coincidental token match against a test name — because it took the
+alphabetically first JSON containing the string. Anchoring the filename to the
+tier fixed it; the glob `*c*` had matched the word *census* in every file in
+the directory. And it now separates **`FILES:`** from **`clauses only:`**,
+because saying *"no census"* when a clause delta exists is as wrong as saying
+the file is convicted.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **12 ok, 0 failed** — a version binder found,
+a `Bool` return classified as clause-4, a semantic return as a VIOLATION with
+its return type named, an `Edition` binder counted, a def without one silent,
+prose about one ignored, and the sibling walk with its line counts, theorem
+split, and a non-edition directory correctly not treated as a sibling.
+Doc-first: §2.4 names the gate and carries the C23 finding; the §7 tools list
+and three law-index rows updated. `docs_check` **87/87**. No Lean executed.

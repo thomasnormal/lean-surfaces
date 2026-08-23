@@ -410,3 +410,344 @@ the moment a float constructor enters `GoVal` — which is also the moment
 Go becomes §3.8's second consumer, with the structural consequence you
 name.
 
+
+---
+
+## G3 — THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23)
+
+Core's payload landing (`f714f76`) gave `Loud.unsupported` a typed cause,
+and records this lane as the **third tier** to have re-derived §5.2's four
+classes locally. The coordinator migrated the tier mechanically and left
+one decision open. **Verdict: retire the local enum, and read the cause as
+data.**
+
+### What was retired, and why it had to be
+
+The tier adopted Core when `Loud.unsupported` held a bare `String`, so it
+kept its own four-class `RefusalCause`, a `tag` function, and
+`renderRefusal`, which wrote `[<tag>|<doc>:<section>] <prose>` into the
+message. The guards then recovered the class with `String.startsWith`.
+
+That was the right shape while Core could not hold the class. It is the
+wrong shape now, and the argument is Core's own: its header states that a
+scoreboard *"buckets on THIS, never by parsing the payload's prose — the
+entire reason the class is a constructor and not a string convention."*
+Keeping the prefix would leave **the class making a round trip through a
+string that exists only because the typed field did not**.
+
+Retired: the local `RefusalCause`, `RefusalCause.tag`,
+`RefusalCause.toCore`, and `renderRefusal`. The two taxonomies were
+already the same four classes under the same four names — this tier's
+`tag` and Core's `className` returned byte-identical strings — so the
+collapse loses nothing. Verified by grep: no prefix is built and none is
+parsed anywhere in the lane.
+
+**The message is prose again.** The payload landing deliberately kept the
+prefix byte-for-byte so nothing downstream of the text moved; that was the
+conservative call and correct at the time. The only consumer of that text
+was this lane's own guards, so removing it moved nothing else. The
+now-stale note in `Sem.lean` saying the prefix is retained was corrected
+rather than left to rot.
+
+### THE GATE SURVIVED AND GOT SHORTER
+
+`GoRefusal` — three constructors, no `undefined` — stays. It is still this
+tier's own type and still the reason cause 2 is unreachable here. What
+changed is what it maps into and what the gate is stated against:
+
+* `GoRefusal.toCore : GoRefusal → SpecRef → RefusalCause SpecRef`, so the
+  cited clause rides as the constructor's payload.
+* The gate is now `(r.toCore π).isUndefined = false`, proved
+  `cases r <;> rfl` — **stated against Core's `isUndefined`, which Core
+  lifted from the ES lane precisely so the gate is written once per family
+  rather than once per tier.** This lane's contribution is the narrower
+  `GoRefusal`; the predicate is everyone's.
+* Non-vacuity is still pinned, and it too moved onto Core's predicate:
+  `(RefusalCause.undefined π).isUndefined = true`. Without that row the
+  gate would pass for the wrong reason if `undefined` were ever dropped.
+
+### What reading the class as data BUYS, beyond deleting code
+
+Two guard shapes that were not expressible while the class lived in a
+string, both now in the battery:
+
+* **The clause is checkable.** `refusalClause` reads π structurally, so a
+  guard pins that `goto` refuses citing the spec's `Goto_statements` and
+  an unbound identifier cites `Declarations_and_scope`. Previously the
+  citation was inside the prose.
+* **The gate is checkable per-refusal.** Four guards assert
+  `RefusalCause.isUndefined = false` on the four refusals the walker
+  actually emits — the executable companion to the theorem that covers
+  all of them.
+
+Battery: **34 `#guard`s**, up from 28. Non-vacuity RUN on both new shapes
+— claiming `goto` is `undefined`, and claiming the wrong cited clause,
+each make Lean report the failing expression; restoring rebuilds clean.
+
+### Triad
+
+Authored lock-free per rule 3; every module rebuilt in isolation at
+`nice -n 19`, the largest an 11-job target. Axioms unchanged: `propext`
+and `Quot.sound` at worst, several theorems depending on none.
+
+**Tenure GREEN**, read from the full log rather than the summary:
+
+| gate | result |
+| --- | --- |
+| `lake build` (scoped: `LeanModels.Go{,.Sem,.Spec}` + the guards) | **exit 0** |
+| `docs_check` | **87/87** marked blocks, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued **76 minutes**, held the machine **91 seconds**. The whitelist moved
+118 → **116** and matched 1,309 → **1,311** against §G2's run: two cases
+that were whitelisted-unsupported now MATCH. Neither is this lane's —
+nothing here touches the Python tier — but it is the direction the
+scoreboard is supposed to move, and worth recording because a whitelist
+that only grows is the failure mode the no-whitelist rule exists to
+prevent.
+
+**§G2's tenure closed GREEN** and is recorded here: `lake build` exit 0,
+`docs_check` 83/83, `diff_test` **1,427 cases, 0 failed** (1,309 matched,
+118 whitelisted), `script_corpus` **65 scripts, 0 failed**. The ticket
+queued **3h47m** and held the machine **84 seconds** — lock-free authoring
+meant the tenure bought verification, not compute.
+
+---
+
+## G4 — INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23)
+
+Census-first, before a line of inch 2's semantics. §G1's reach ladder said
+*which* kinds to add; it could not say what they COST, because a node
+count cannot see a construct's sub-forms. `SwitchStmt: 5,186` says nothing
+about how many carry a `fallthrough`. So the instrument gained a `shapes`
+field and the Go 1.25.6 standard library was re-censused.
+
+**The instrument was cross-validated before it was believed.** The
+counters were first written as a scratch program, then folded into
+`harness/go/construct_census.go`; both produce identical numbers on all
+fifteen counters. Committed censuses regenerated, and all three gates
+re-verified: agree → 0, agree → 0, drift → 5, double-run byte-identical.
+
+*(A summarizer bug was caught and is worth one line, because it is the
+failure mode this project names: an `awk` pass computing the ratios
+matched `switch_total` as a SUBSTRING of `typeswitch_total` and reported
+`fallthrough` at 27.2% and "switch with default" at 320.6%. The raw counts
+were always right; the derived line was not. A ratio above 100% is the
+kind of wrong answer that announces itself — the dangerous version is the
+one that lands at 27% and looks plausible.)*
+
+### The switch family — cheaper than its ladder position suggests
+
+| shape | n | of 5,186 switches |
+| --- | ---: | ---: |
+| **`fallthrough`** | **208** | **4.0%** |
+| with an init clause | 258 | 5.0% |
+| with a `default` | 2,456 | 47.4% |
+| tagless (`switch { case cond: }`) | 1,052 | 20.3% |
+| ≤3 cases | — | **63.8%** |
+| ≤7 cases | — | 91.3% |
+
+Type switches: **766**, of which **4** carry an init clause. Case
+expressions: **22,671 single-expression against 3,297 multi** — 87% of
+non-default cases test exactly one value, with a tail reaching a single
+276-expression case.
+
+**The decision this makes: `fallthrough` is a rung of its own, not part of
+inch 2.** It appears in 4% of switches, and it is the one switch feature
+that breaks the clean reading of a case body as an independent block — it
+makes the body's exit depend on the NEXT clause. Deferring it keeps 96% of
+switch sites reachable and keeps the rule compositional. The init clause
+(5%) defers with it for the same price.
+
+### The loops — where `LangVersion` stops being a predicate
+
+| shape | n | of parent |
+| --- | ---: | ---: |
+| `for` total | 22,853 | — |
+| **bare `for {}`** | **10,733** | **47.0%** |
+| `for` declaring vars (`:=`) | 8,519 | 37.3% |
+| `range` declaring vars | 13,196 | **98.4%** of 13,412 ranges |
+| **loop-var delta sites** | **21,715** | — |
+
+Two findings, and both change inch 2's shape:
+
+**`for {}` is the single commonest loop form at 47%.** It has no
+condition, so termination is entirely the body's business — which makes it
+exactly where **fuel stops being a formality**. `docs/statement-cookbook.md`
+§5's fuel-placement question is not deferrable past this construct, and
+`LeanModels/Core/Outcome.lean`'s header is explicit that fuel is an index
+on the step function and never a monad layer.
+
+**The Go 1.21→1.22 delta touches 21,715 sites in the standard library
+alone.** §G2 landed `LangVersion.perIterationLoopVars` with three guard
+rows and no consumer; inch 2 is where it becomes a branch in a rule. The
+charter's §3.3 acceptance test — the model must produce `[3 3 3]` and
+`[0 1 2]` from byte-identical bodies in one package — is inch 2's, and
+the census says the branch it depends on is not a corner case.
+
+Labelled control flow stays small: **183 labelled `break` (1.1%)** and
+**174 labelled `continue` (2.2%)**. `goto`: 583. The inch-1 walker already
+returns `Flow.broke`/`Flow.continued` carrying an optional label, so
+resolution is a bounded addition rather than a redesign.
+
+### `TypeSpec` — structs, and almost nothing else
+
+**11,264 type declarations: 8,156 structs (72.4%)**, 2,670 other (23.7%),
+**438 interfaces (3.9%)**, 185 aliases, 68 generic. Inch 2's `TypeSpec`
+work is struct declaration; interfaces are a later rung and the census
+says they are 4% of the surface, not a co-equal half.
+
+### Inch 2's scope, derived
+
+1. `TypeSpec` over struct types, and `DeclStmt`'s remaining forms — the
+   `+1,400`-file knee §G1 measured.
+2. `SwitchStmt`/`CaseClause`, **excluding `fallthrough` and init clauses**
+   (96% and 95% of sites respectively).
+3. `ForStmt` including bare `for {}`, which forces the fuel decision, and
+   `RangeStmt` — carrying the go1.22 branch, with §3.3's acceptance test
+   as the gate.
+
+Deferred with a measured price rather than a shrug: `fallthrough` (4%),
+switch init (5%), type switches (766 sites, and they need `go/types`),
+interfaces (3.9%).
+
+**A fixture gap the census found in this lane's own artifact:**
+`Examples/go/rung1/rung1.go` exercises one switch with four cases and a
+default, but **no `fallthrough` and no type switch** — consistent with
+deferring both, and recorded so the rung-2 fixture is written knowing it.
+
+### Triad
+
+Docs and one harness instrument; **no Lean**, so no tenure owed. `gofmt -l`
+clean, `go vet` clean, both committed censuses regenerated and their gates
+re-verified, `docs_check` green.
+
+---
+
+## G5 — INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23)
+
+Inch 2 on §G4's census: struct declarations, the go1.22 loop-variable
+BRANCH with the charter's §3.3 acceptance test as the gate, bare-`for`
+fuel semantics stated, and `fallthrough` deferred as its own rung.
+
+### THE GATE: `docs/go-charter.md` §3.3, discharged
+
+The charter set the family's copies-vs-deltas acceptance test and was
+blunt about it: *"If the architecture cannot express that program, it is
+wrong regardless of how faithful either individual version-mirror is."*
+
+**It passes.** One `loopVarProbe`, one walker, one field of the world
+different:
+
+    runUnder go1.21 loopVarProbe "changes" == some 1
+    runUnder go1.22 loopVarProbe "changes" == some 3
+
+The observable is **pointer identity, not closure capture** — the same
+thing §3.2 measured on the real toolchain, where collecting `&i` across
+iterations gave *"1 distinct address under go1.21 and 3 under go1.22."*
+The probe counts how many times `&i` changes across three iterations, so
+the Lean model and the `go build` run are answering the same question with
+the same number.
+
+**Non-vacuity RUN, in both directions, because a version branch that does
+nothing would pass a one-sided test:**
+
+* claiming go1.21 also yields 3 — i.e. no branch at all — **fails**;
+* claiming the counting loop breaks under go1.22 — i.e. freshening
+  without the copy-back — **fails**.
+
+The second is the charter's named trap: *"An implementation that freshens
+bindings without the copy-out passes every closure-capture test and
+silently corrupts ordinary counting loops."* So `countProbe` runs exactly
+five times under **both** versions, and that row is as load-bearing as the
+delta row. The spec's two halves are implemented as two halves: fresh
+LOCATIONS per iteration, and the previous iteration's VALUE copied in.
+
+**The loop-variable set is READ OFF, not declared.** Whatever `init` binds
+is the set — the locals added since the enclosing scope. A hand-maintained
+list would be a second place to get the same fact wrong.
+
+### Bare `for {}` — the fuel semantics, stated
+
+47.0% of the standard library's `for` loops (§G4). With no condition,
+nothing but fuel bounds it:
+
+* `execStmt 0 _` and `execSeq 0 _` are **`Halt.timeout`**, never a
+  refusal — Core's `exhausted`, and the family's rule that exhaustion has
+  exactly one outcome.
+* `execLoop 0 none none [] []` is `timeout`: the bare loop's own semantics.
+* **`break` still escapes one**, guarded — so the exhaustion above is the
+  loop terminating on fuel, not a walker that cannot leave a loop. Without
+  that row the timeout row would pass for the wrong reason.
+
+**The walker now recurses on FUEL ALONE**, not lexicographically on
+(fuel, statement). Core's header is explicit that fuel is an index on the
+step function and never a monad layer, *"because hidden in state it is not
+an argument and the interpreter fails to show termination."* Recursing on
+fuel makes that argument trivial; the price is that nesting depth draws on
+the same budget as iteration, which is a stated cost rather than a
+discovered one.
+
+*Termination shaped the code once more, visibly:* `evalExpr`'s composite-
+literal arm first evaluated fields while walking the type's DECLARED
+order, and Lean rejected it — `find?` loses the structural link to the
+literal. Fields are now evaluated by structural recursion over the
+literal (`evalFields`) and then placed in declaration order. The
+definition is better for it, and the reason is recorded next to it.
+
+### Structs — 72.4% of type declarations
+
+`TypeSpec` over struct types, keyed composite literals, and field
+selectors. Keyed form only: the positional form depends on declaration
+order, which is a typing question `go/types` answers and this walker does
+not. An absent field takes the zero value (`nilV` at this rung — field
+types are a later rung's census); a key the type does not declare is a
+**refusal**, not an invention, and so is a literal of an undeclared type.
+
+### `fallthrough` — DEFERRED AS ITS OWN RUNG, at a measured 4.0%
+
+**208 of 5,186 switches** (§G4). It is the one switch feature that breaks
+reading a case body as an independent block, because the body's exit
+depends on the NEXT clause. Deferring it keeps **96% of switch sites**
+reachable and keeps the rule compositional. Switch init clauses (5.0%)
+defer with it for the same reason and the same price.
+
+It refuses as an **out-of-tier construct, never as undefined behaviour** —
+guarded twice, once on the class and once on `isUndefined`, so the
+deferral cannot quietly become a UB claim.
+
+### The statement split moved, and the direction is honest
+
+**17 spec-half, 12 interpreter-facing — 58.6% mathematics**, down from
+§G2's 63%. Inch 2's additions are fuel theorems, and the cookbook says
+plainly that *"fuel thresholds do not transport at all."* A rung that
+adds loops SHOULD move this ratio down; a rung that added loops and left
+it at 63% would mean the fuel facts had been written into spec-shaped
+statements, which is §6's named trap. Recorded as a measurement rather
+than smoothed over.
+
+### Battery
+
+**46 `#guard`s**, up from 34. New: structs (field read, zero-fill, two
+refusal shapes), the §3.3 pair, the copy-back pair, bare-`for` timeout,
+`break` escaping a bare loop, and the `fallthrough` deferral pair. Axioms
+unchanged — `propext` and `Quot.sound` at worst, several theorems
+depending on none. No `sorry`, no `native_decide`.
+
+### Triad
+
+Authored lock-free per rule 3; every module built in isolation at
+`nice -n 19`. **Tenure GREEN**, read from the full log:
+
+| gate | result |
+| --- | --- |
+| `lake build` (scoped: `LeanModels.Go{,.Sem,.Spec,.Stmt}` + guards) | **exit 0** |
+| `docs_check` | **87/87** marked, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued **76 minutes**, held the machine **102 seconds** — the build arm
+returned in one second, every module having been elaborated lock-free
+during authoring. The Python tier is unmoved at every number, which is
+what a landing confined to `LeanModels/Go/` must produce.

@@ -106,10 +106,32 @@ home_tokens() {                 # id, home -> one token per line
   printf '%s' "$home" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z-]+-[0-9]+' | sort -u
 }
 
+# A TOKEN MUST MATCH AS A WHOLE TOKEN.  `grep -F "§9"` matches `§9.5`, `§9.7`
+# and `§9.2`, so a law homed at §9 was credited to every tool that mentions any
+# §9.x — seven tools for one law, including `ada_round_trip.py`.  That is the
+# identifier law failing inside the instrument that measures enforcement, which
+# is the third time this lane has met it (sites.sh's `.unsupportedDevice`,
+# arms_of's first-hit-per-file, and now this).  Same fix as sites.sh: require a
+# boundary, and let the direction of the error be stated rather than hidden.
+tok_regex() {                   # token -> an ERE that matches it WHOLE
+  printf '%s' "$1" | sed -e 's/[][\.*^$(){}?+|/]/\\&/g' -e 's/$/([^0-9.A-Za-z]|$)/'
+}
+
 cited_by() {                    # tokens on stdin -> the gate files for a law
   local toks f hit out=""
   toks="$(cat)"
   [ -n "$toks" ] || { echo ""; return 0; }
+  # ONE regex per token, built ONCE.  Building it inside the file loop cost a
+  # `sed` per token per file and doubled the run (50s -> 1m51s) — the tool that
+  # prices enforcement has to be priced too, the same lesson sites.sh took.
+  local res=""
+  while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    res="$res$(tok_regex "$t")
+"
+  done <<PRE
+$toks
+PRE
   # A law whose HOME IS A SCRIPT is gated BY IDENTITY, not by citation — that
   # file does not cite its own path, and the first version of this rule filed
   # every such law as NO GATE.  The register's own entries (`tools/triad.sh`
@@ -124,11 +146,11 @@ $toks
 IDENT
   for f in $(gate_files); do
     hit=0
-    while IFS= read -r t; do
-      [ -n "$t" ] || continue
-      if grep -qF -- "$t" "$f" 2>/dev/null; then hit=1; break; fi
+    while IFS= read -r r; do
+      [ -n "$r" ] || continue
+      if grep -qE -- "$r" "$f" 2>/dev/null; then hit=1; break; fi
     done <<TOKS
-$toks
+$res
 TOKS
     if [ "$hit" = "1" ]; then
       case " $out " in *" $(basename "$f") "*) ;; *) out="${out:+$out }$(basename "$f")" ;; esac
@@ -143,7 +165,7 @@ ledger_citations() {            # tokens on stdin -> how many ledger LINES cite 
   [ -d "$LEDGERS" ] || { echo 0; return 0; }
   while IFS= read -r t; do
     [ -n "$t" ] || continue
-    n=$((n + $(grep -rhF -- "$t" "$LEDGERS"/*.md 2>/dev/null | grep -c . || true)))
+    n=$((n + $(grep -rhE -- "$(tok_regex "$t")" "$LEDGERS"/*.md 2>/dev/null | grep -c . || true)))
   done <<TOKS
 $toks
 TOKS
@@ -211,6 +233,25 @@ MD
   check "NO GATE sorts by citation count" "$(printf '%s' "$rank" | head -1)" "4 MEAS-2"
   check "  ...the less-cited one second"  "$(printf '%s' "$rank" | tail -1)" "1 CLONE-1"
 
+  # ---- tokens match WHOLE, or a law homed at §9 is credited to every tool
+  # that mentions §9.5.
+  printf 'set -u\n# implements §9.5 and nothing else\n' > "$fx/tools/nine5.sh"
+  check "§9 does NOT match §9.5"        "$(printf '§9\n' | cited_by | grep -c nine5)" "0"
+  check "§9.5 DOES match §9.5"          "$(printf '§9.5\n' | cited_by | grep -c nine5)" "1"
+  printf 'set -u\n# implements 2026-08-22-qol-10\n' > "$fx/tools/q10.sh"
+  check "a dated id does not match its longer sibling" \
+        "$(printf '2026-08-22-qol-1\n' | cited_by | grep -c q10)" "0"
+  rm -f "$fx/tools/nine5.sh" "$fx/tools/q10.sh"
+
+  # ---- a law the index marks ungateable is not debt
+  cat >> "$fx/docs/law-index.md" <<'MD'
+| PROOF-99 | a law no script can check | `docs/family-architecture.md §9.9` — ungateable: cost is a judgement |
+MD
+  check "an ungateable row is recognised" \
+        "$(law_rows | grep -c 'ungateable:')" "1"
+  check "  ...and carries its reason"     \
+        "$(law_rows | grep -c 'cost is a judgement')" "1"
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
@@ -220,9 +261,16 @@ fi
 [ -f "$INDEX" ]  || die "no law index at '$INDEX'"
 [ -f "$FAMILY" ] || die "no family doc at '$FAMILY'"
 
+# A law the index marks `ungateable: <reason>` is not debt — it is a decided
+# question, and re-surfacing it every audit is how a settled finding gets
+# re-litigated.  PROOF-40 is the first.
+UNGATEABLE="$({ law_rows; amendment_rows; } | grep -i 'ungateable:' || true)"
+N_UNGATEABLE="$(printf '%s' "$UNGATEABLE" | grep -c . || true)"
+
 ROWS="$(
   { law_rows; amendment_rows; } | while IFS="$(printf '\t')" read -r id hook home; do
       [ -n "$id" ] || continue
+      case "$home" in *[Uu]ngateable:*) continue ;; esac
       toks="$(home_tokens "$id" "$home")"
       printf '%s\t%s\t%s\t%s\t%s\n' \
         "$(printf '%s' "$toks" | ledger_citations)" \
@@ -239,6 +287,7 @@ echo "laws.sh — $NLAW laws (index + register), $(tools_list | grep -c . || tru
 echo "          measured at $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo 'no git')"
 echo
 printf '  CITED BY A TOOL   %s\n' "$GATED"
+printf '  UNGATEABLE        %s   (recorded with a reason; not debt)\n' "$N_UNGATEABLE"
 printf '  NO GATE           %s   <- a LOWER BOUND: citation over-credits, so the\n' "$NNO"
 printf '                        real unenforced set is LARGER than this.\n'
 echo
@@ -262,6 +311,11 @@ if [ "$VERBOSE" = "1" ]; then
   echo "  EVERY law, with the tools citing its home:"
   printf '%s\n' "$ROWS" | grep -v '^$' | sort -rn \
     | awk -F'\t' '{ printf "    %4s  %-9s %-34s %s\n", $1, $2, ($3 == "" ? "NO GATE" : $3), substr($4, 1, 52) }'
+  echo
+fi
+if [ "$N_UNGATEABLE" != "0" ]; then
+  echo "  RECORDED UNGATEABLE:"
+  printf '%s\n' "$UNGATEABLE" | awk -F'\t' '{ printf "    %-9s %s\n", $1, substr($3, 1, 92) }'
   echo
 fi
 echo "  Citation is a PROXY for enforcement and it over-credits: a tool that"

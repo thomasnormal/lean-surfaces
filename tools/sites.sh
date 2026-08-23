@@ -248,12 +248,16 @@ arms_of() {                     # fn -> "file:line arms ite lines"
         }
         return out
       }
-      { code = strip($0) }
+      { orig = $0; code = strip($0) }
       code ~ ("^[ \t]*(private[ \t]+)?(def|partial def)[ \t]+" FN2 "[ \t(:]") && !inblk {
-        inblk = 1; start = NR; arms = 0; ite = 0; next
+        inblk = 1; start = NR; arms = 0; ite = 0; elif = 0; top = 0; minind = 0
+        matches = 0; firstctl = ""; delete scrn; next
       }
       inblk && code ~ /^(def|partial def|theorem|lemma|abbrev|instance|structure|inductive|example|end|namespace|section|open|@\[|#)/ {
-        printf "%s:%d %d %d %d %d\n", FN, start, top, arms, ite, NR - start; inblk = 0; exit
+        # NO `exit`: a name can resolve MORE THAN ONCE, and reporting the
+        # first hit is the identifier law failing inside the tool again.
+        bestn = 0; best = "-"; for (k in scrn) if (scrn[k] > bestn) { bestn = scrn[k]; best = k }; printf "%s:%d %d %d %d %d %d %s %d %s %d\n", FN, start, top, arms, ite, elif, NR - start, (firstctl == "" ? "none" : firstctl), matches, best, bestn
+        inblk = 0
       }
       inblk {
         # TOP-LEVEL arms and TOTAL arms are different numbers, and the hand
@@ -262,15 +266,39 @@ arms_of() {                     # fn -> "file:line arms ite lines"
         # so BOTH are reported — an arm count without its depth is the same
         # ambiguity laws.sh hit between a law and its home.
         # (No apostrophes in here: this awk program is single-quoted.)
+        # THE PRINCIPAL DISPATCH IS WHICHEVER CONSTRUCT COMES FIRST, not
+        # whichever is more numerous.  applyBuiltin opens with an if-chain and
+        # carries 45 match arms INSIDE its branches; counting alone called it a
+        # match, and the successor lane, READING it, called it an if-chain.
+        # Reading beat counting, so the tool now records the order.
+        if (firstctl == "" && code ~ /(^|[^A-Za-z0-9_])if([^A-Za-z0-9_]|$)/) firstctl = "if"
+        if (firstctl == "" && code ~ /^[ \t]*\|/) firstctl = "match"
         if (code ~ /^[ \t]*\|/) {
           arms++
           ind = match(code, /\|/) - 1
           if (minind == 0 || ind < minind) { minind = ind; top = 0 }
           if (ind == minind) top++
         }
-        n = gsub(/[^A-Za-z0-9_]then[^A-Za-z0-9_]/, " then ", code); ite += n
+        # `then` sits at END OF LINE in an if-chain, and the first version
+        # required a trailing character — so a 210-line if/else-if chain
+        # reported ZERO if/then.  Anchor both edges.
+        n = gsub(/(^|[^A-Za-z0-9_])then([^A-Za-z0-9_]|$)/, " then ", code); ite += n
+        n = gsub(/(^|[^A-Za-z0-9_])else[ \t]+if([^A-Za-z0-9_]|$)/, " elif ", code); elif += n
+        # `match ... with` BLOCKS, not their arms: the successor lane reads
+        # applyBuiltin as 15 nested matches carrying 45 arms, and a report that
+        # gives only an arm count cannot be checked against that.
+        n = gsub(/(^|[^A-Za-z0-9_])match([^A-Za-z0-9_]|$)/, " match ", code); matches += n
+        # AND the ones on the SAME SCRUTINEE, which is the unit a reader counts:
+        # applyBuiltin has 30 match tokens in all, and the 15 that matter are
+        # `match vs with` — the branches that re-destructure the dispatch
+        # argument.  Total and dominant-scrutinee are different questions.
+        if (match(orig, /match[ \t]+[A-Za-z_][A-Za-z0-9_.]*[ \t]+with/)) {
+          scr = substr(orig, RSTART, RLENGTH)
+          sub(/^match[ \t]+/, "", scr); sub(/[ \t]+with$/, "", scr)
+          scrn[scr]++
+        }
       }
-      END { if (inblk) printf "%s:%d %d %d %d %d\n", FN, start, top, arms, ite, NR - start }' "$f"
+      END { if (inblk) { bestn = 0; best = "-"; for (k in scrn) if (scrn[k] > bestn) { bestn = scrn[k]; best = k }; printf "%s:%d %d %d %d %d %d %s %d %s %d\n", FN, start, top, arms, ite, elif, NR - start, (firstctl == "" ? "none" : firstctl), matches, best, bestn } }' "$f"
   done
 }
 
@@ -485,7 +513,8 @@ LEAN
   check "TOP-LEVEL arms are the dispatch width" "$2" "3"
   check "  ...total counts the NESTED ones too" "$3" "5"
   check "  ...and if/then is counted apart"     "$4" "1"
-  check "the block ends at the next top-level"  "$5" "8"
+  check "the block ends at the next top-level"  "$6" "8"
+  check "the SHAPE is read from what comes first" "$7" "match"
   check "a missing function reports nothing"    "$(arms_of nosuchfn)" ""
   cat > "$am/B.lean" <<'LEAN'
 /-- A doc comment with | a fake arm inside -/
@@ -496,6 +525,42 @@ def z : Nat := 0
 LEAN
   set -- $(arms_of commented)
   check "prose about an arm is not an arm"      "$2" "1"
+
+  # THE applyBuiltin CALIBRATION ROW.  The successor lane read the real
+  # function verbatim: a 19-deep `if fname == … then … else if` chain on a
+  # STRING, with 15 nested `match vs with` blocks carrying 45 arms.  The tool
+  # first reported "45 top-level arms, 0 if/then" — inverting ite and match.
+  # That is not a cosmetic error: a shape report that says `match` sends a
+  # prover to `cases`, and `cases` on a String cannot apply.  The shape is
+  # reproduced here so the inversion cannot come back.
+  cal="$tmp/cal"; mkdir -p "$cal"
+  {
+    echo 'def applyBuiltinLike (K : Kont) (m : Module) (fname : String) (vs : List RVal) :'
+    echo '    SemF RVal := do'
+    i=1
+    while [ "$i" -le 19 ]; do
+      if [ "$i" = "1" ]; then echo "  if fname == \"b$i\" then"
+      else echo "  else if fname == \"b$i\" then"; fi
+      if [ "$i" -le 15 ]; then
+        echo '    match vs with'
+        echo '    | [v] => one v'
+        echo '    | [] => none'
+        echo '    | _ => many'
+      else
+        echo '    plain'
+      fi
+      i=$((i + 1))
+    done
+    echo '  else raisePy .nameError'
+    echo 'def after : Nat := 0'
+  } > "$cal/Cal.lean"
+  CLONE="$cal"
+  set -- $(arms_of applyBuiltinLike)
+  check "CALIBRATION: the shape is an if-chain, not a match" "$7" "if"
+  check "  ...19 deep (1 if + 18 else-if)"     "$(( $5 + 1 ))" "19"
+  check "  ...15 match blocks on the dispatch arg" "${10}" "15"
+  check "  ...and the arg it dispatches on"     "$9" "vs"
+  check "  ...carrying 45 nested arms"          "$2" "45"
 
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
@@ -511,9 +576,25 @@ if [ -n "$ARMS_FN" ]; then
     exit 1
   fi
   echo "sites.sh --arms $ARMS_FN   (measured at $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo 'no git'))"
-  printf '%s\n' "$found" | while read -r at top arms ite lines; do
-    printf '  %-44s %3s top-level arm(s), %3s total, %3s if/then, %s lines\n' \
-      "$at" "$top" "$arms" "$ite" "$lines"
+  n_defs="$(printf '%s\n' "$found" | grep -c .)"
+  [ "$n_defs" -gt 1 ] && printf '  %s DEFINITIONS resolve to this name — all of them:\n' "$n_defs"
+  printf '%s\n' "$found" | while read -r at top arms ite elif lines firstctl matches scr scrn; do
+    # An if/else-if CHAIN is 1 + the else-ifs.  The raw `then` count is higher,
+    # because nested ifs inside the branches also carry one.
+    depth=$((elif + 1))
+    case "$firstctl" in
+      if)    shape="if/else-if chain" ;;
+      match) shape="match dispatch" ;;
+      *)     shape="straight-line" ;;
+    esac
+    if [ "$firstctl" = "if" ]; then
+      printf '  %-40s %-17s %3s deep (1 if + %s else-if), %s then-tokens in all,\n' "$at" "$shape" "$depth" "$elif" "$ite"
+      printf '  %-40s %19s %3s on `%s` of %s match block(s), %s nested arm(s), %s lines\n' \
+        "" "" "$scrn" "$scr" "$matches" "$top" "$lines"
+    else
+      printf '  %-40s %-17s %3s top-level arm(s), %3s total,\n' "$at" "$shape" "$top" "$arms"
+      printf '  %-40s %19s %3s if/then, %3s else-if, %s lines\n' "" "" "$ite" "$elif" "$lines"
+    fi
   done
   echo
   echo "  Arms are where a constructor change LANDS: this is the per-function"

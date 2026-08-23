@@ -24,7 +24,7 @@ rather than assumed.
 
 namespace Examples.go.rung1
 
-open LeanModels.Go
+open LeanModels LeanModels.Go
 
 /-! ## Integer overflow is DEFINED — the charter's headline, executable
 
@@ -71,28 +71,27 @@ def runTo (stmts : List Stmt) (name : String) : Option Int :=
       | none => none
   | _ => none
 
-/-- The rendered refusal a program produced, if it refused.
-
-**Core's `Loud` now carries the cause as DATA** — `.unsupported cause message
-snapshot` — so the prefix `renderRefusal` writes is a rendering for HUMANS and
-no longer the only way to recover the class. This function still returns the
-message, and `refusedWith` below still reads the prefix, so every guard in this
-file keeps its exact meaning and the text is byte-identical to what it was.
-
-Consuming `cause` structurally instead of parsing the prefix is the obvious
-next move and is deliberately NOT made here: it is the Go lane's call which of
-its own guards should read a constructor rather than a string, and this file is
-their demonstration surface, not the merging lane's. -/
-def refusalOf (stmts : List Stmt) : Option String :=
+/-- The refusal a program produced, if it refused — as DATA. Core's
+`Loud.unsupported` now carries the class as a typed field, so this reads
+it structurally. It used to return the message and the guards parsed a
+`[tag|…]` prefix off the front; that prefix existed only because the
+typed field did not, and both are retired. -/
+def refusalOf (stmts : List Stmt) : Option (RefusalCause SpecRef) :=
   match (execSeq 64 stmts) ({} : GoWorld) with
-  | .error (.unsupported _ m _) => some m
+  | .error (.unsupported c _ _) => some c
   | _ => none
 
-/-- Did the program refuse with this cause? -/
-def refusedWith (stmts : List Stmt) (c : RefusalCause) : Bool :=
+/-- Did the program refuse in this §5.2 class? Compares `className`, which
+Core emits verbatim and which a scoreboard buckets on. -/
+def refusedWith (stmts : List Stmt) (cls : String) : Bool :=
   match refusalOf stmts with
-  | some m => m.startsWith s!"[{c.tag}|"
+  | some c => c.className == cls
   | none => false
+
+/-- Which clause did the refusal cite? `π` is a typed field too, so the
+citation is readable without touching the prose. -/
+def refusalClause (stmts : List Stmt) : Option SpecRef :=
+  (refusalOf stmts).map RefusalCause.detail
 
 private def i64 (n : Int) : Expr := .lit (GoVal.mkInt IntKind.int64 n)
 
@@ -137,6 +136,106 @@ which is why the world maps names to ADDRESSES. -/
 too — the shape that puts `EmptyStmt` in real code. -/
 #guard runTo [.declare "x" (i64 3), .empty, .labeled "end" .empty] "x" == some 3
 
+/-! ## Structs — `TypeSpec` is 72.4% of type declarations -/
+
+#guard runTo [.typeDecl "pt" ["x", "y"],
+              .declare "p" (.structLit "pt" [("x", i64 3), ("y", i64 4)]),
+              .declare "r" (.field (.ident "p") "y")] "r" == some 4
+
+/-! An absent field takes the zero value rather than being missing, and a
+field the type does not declare is a refusal rather than an invention. -/
+
+#guard (match (execSeq 64 [.typeDecl "pt" ["x", "y"],
+                           .declare "p" (.structLit "pt" [("x", i64 1)])])
+                          ({} : GoWorld) with
+        | .ok (.ok _, w) =>
+            match w.store.find? (fun q => q.1 == 0) with
+            | some (_, .structV fs) => fs.length == 2
+            | _ => false
+        | _ => false) == true
+
+#guard refusedWith [.typeDecl "pt" ["x"],
+                    .declare "p" (.structLit "pt" [("nope", i64 1)])] "unsupported"
+#guard refusedWith [.declare "p" (.structLit "undeclared" [])] "unsupported"
+
+/-! ## THE §3.3 ACCEPTANCE TEST — one model, two versions, one program
+
+`docs/go-charter.md` §3.3 set this as the gate for the loop-variable
+delta: the model must give byte-identical loop bodies DIFFERENT meanings
+under go1.21 and go1.22, because the real compiler does — §3.2 measured
+one invocation applying both rules to one package.
+
+The observable here is **pointer identity**, not closure capture, which is
+the same thing §3.2 measured on the real toolchain: *"collecting `&i`
+across iterations and counting distinct pointers gives 1 distinct address
+under go1.21 and 3 under go1.22."* The program counts how many times
+`&i` CHANGES across three iterations. -/
+
+def loopVarProbe : List Stmt :=
+  [ .declare "changes" (i64 0),
+    .declare "last" (.lit GoVal.nilV),
+    .forS (some (.declare "i" (i64 0)))
+          (some (.binary .lt (.ident "i") (i64 3)))
+          (some (.incDec "i" true))
+          [ .declare "p" (.addrOf "i"),
+            .ifS (.binary .ne (.ident "p") (.ident "last"))
+                 [.assign "changes" (.binary .add (.ident "changes") (i64 1))] [],
+            .assign "last" (.ident "p") ] ]
+
+def runUnder (v : LangVersion) (stmts : List Stmt) (name : String) : Option Int :=
+  match (execSeq 256 stmts) ({ lang := v } : GoWorld) with
+  | .ok (.ok _, w) =>
+      match w.locals.find? (fun q => q.1 == name) with
+      | some (_, a) =>
+          match w.store.find? (fun q => q.1 == a) with
+          | some (_, .intV _ n) => some n
+          | _ => none
+      | none => none
+  | _ => none
+
+/-! **go1.21: the variable is re-used, so `&i` never changes — 1.**
+**go1.22: each iteration has its own, so it changes every time — 3.**
+Same `loopVarProbe`, same walker, one field of the world different. -/
+
+#guard runUnder LangVersion.go121 loopVarProbe "changes" == some 1
+#guard runUnder LangVersion.go122 loopVarProbe "changes" == some 3
+
+/-! And the half a model can omit while still passing every
+closure-capture test: the previous iteration's VALUE must be copied into
+the fresh variable, or `post` advances a variable the body never sees and
+an ordinary counting loop silently breaks. The loop runs exactly three
+times under BOTH versions. -/
+
+def countProbe : List Stmt :=
+  [ .declare "n" (i64 0),
+    .forS (some (.declare "i" (i64 0)))
+          (some (.binary .lt (.ident "i") (i64 5)))
+          (some (.incDec "i" true))
+          [.assign "n" (.binary .add (.ident "n") (i64 1))] ]
+
+#guard runUnder LangVersion.go121 countProbe "n" == some 5
+#guard runUnder LangVersion.go122 countProbe "n" == some 5
+
+/-! ## Bare `for {}` — 47.0% of loops, and only fuel bounds it -/
+
+#guard (match (execSeq 64 [.forS none none none []]) ({} : GoWorld) with
+        | .error .timeout => true
+        | _ => false) == true
+
+/-! `break` still escapes a bare loop, so the exhaustion above is the
+loop's own semantics and not a walker that cannot leave one. -/
+
+#guard runTo [.declare "x" (i64 7),
+              .forS none none none [.branch .break_ none]] "x" == some 7
+
+/-! ## `fallthrough` is DEFERRED as its own rung, at a measured 4.0%
+
+208 of 5,186 switches (`docs/backlog/go.md` §G4). It refuses as an
+out-of-tier construct — never as undefined behaviour. -/
+
+#guard refusedWith [.branch .fallthrough_ none] "unsupported"
+#guard (refusalOf [.branch .fallthrough_ none]).map RefusalCause.isUndefined == some false
+
 /-! ## THE ZERO-UB GATE, executable
 
 `docs/family-architecture.md` §4.3's Go row: cause 2 is expected EMPTY and
@@ -145,22 +244,39 @@ rows check that the refusals the walker actually emits land in the other
 three, and — critically — that `undefined` is a real constructor, so the
 gate is a restriction rather than a statement about an empty type. -/
 
-#guard (RefusalCause.undefined == RefusalCause.unsupportedConstruct) == false
+#guard (RefusalCause.undefined (SpecRef.spec "x")).isUndefined == true
 
 /-! `goto` is in rung 1's census but not stepped at inch 1: it refuses as
 an out-of-tier CONSTRUCT, never as undefined behaviour. -/
-#guard refusedWith [.branch .goto_ (some "end")] RefusalCause.unsupportedConstruct
+#guard refusedWith [.branch .goto_ (some "end")] "unsupported"
 
 /-! An unbound identifier is a construct refusal too — not a zero value,
 and not undefined. -/
-#guard refusedWith [.expr (.ident "nope")] RefusalCause.unsupportedConstruct
+#guard refusedWith [.expr (.ident "nope")] "unsupported"
 
 /-! A statement in the vocabulary but unstepped names itself. -/
-#guard refusedWith [.unmodeled "SwitchStmt"] RefusalCause.unsupportedConstruct
+#guard refusedWith [.unmodeled "SwitchStmt"] "unsupported"
 
 /-! A condition that is not a boolean refuses rather than coercing: Go has
 no truthiness. -/
-#guard refusedWith [.ifS (i64 1) [] []] RefusalCause.unsupportedConstruct
+#guard refusedWith [.ifS (i64 1) [] []] "unsupported"
+
+/-! The cited clause travels as DATA, so a guard can name it. `goto`
+refuses under the spec's "Goto_statements"; an unbound identifier under
+"Declarations_and_scope". Neither is reachable by reading prose. -/
+
+#guard (refusalClause [.branch .goto_ (some "end")]).map SpecRef.section_
+       == some "Goto_statements"
+#guard (refusalClause [.expr (.ident "nope")]).map SpecRef.doc == some "spec"
+
+/-! **The zero-UB gate, read as data.** No refusal this tier can emit is
+in the `undefined` class — checked here on the four refusals the walker
+actually produces, and proved for ALL of them in `Spec.lean`. -/
+
+#guard (refusalOf [.branch .goto_ (some "end")]).map RefusalCause.isUndefined == some false
+#guard (refusalOf [.expr (.ident "nope")]).map RefusalCause.isUndefined == some false
+#guard (refusalOf [.unmodeled "SwitchStmt"]).map RefusalCause.isUndefined == some false
+#guard (refusalOf [.ifS (i64 1) [] []]).map RefusalCause.isUndefined == some false
 
 /-! ## Division by zero is a PANIC, not undefined behaviour
 
@@ -169,7 +285,7 @@ panic. It therefore goes to ρ — it is catchable in principle by `recover`
 — and must NOT appear as a refusal at all. -/
 
 /-! It does not refuse. -/
-#guard refusalOf [.declare "x" (.binary .quo (i64 1) (i64 0))] == none
+#guard (refusalOf [.declare "x" (.binary .quo (i64 1) (i64 0))]).isNone
 
 /-! It panics: the run ends in ρ, with the runtime's message. -/
 #guard (match (execSeq 64 [.declare "x" (.binary .quo (i64 1) (i64 0))]) ({} : GoWorld) with

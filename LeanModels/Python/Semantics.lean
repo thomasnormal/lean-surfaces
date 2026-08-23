@@ -1712,6 +1712,13 @@ Fuel-free heap helpers over the bounds-checked access primitives
 interpreter invariant violation — unreachable from well-formed worlds —
 and reports loudly (`danglingMsg`), never a silent fallback. -/
 
+/-- §3c-i-a: a view call whose receiver is not a dict. The fused form is
+admitted only over a real dict; anything else keeps the tier's refusal rather
+than inventing an `AttributeError` for a receiver that may legitimately have
+`.keys` in some later tier. -/
+def viewRecvMsg : String :=
+  "'.keys()'/'.values()'/'.items()' on a non-dict receiver is outside the tier (docs/memory-model.md §dict iteration)"
+
 /-- The loud report for a dangling address (unreachable from WF worlds). -/
 def danglingMsg : String :=
   "internal: dangling heap address (heap well-formedness violation — report this)"
@@ -1885,8 +1892,9 @@ inductive DictStep where
   | resized
   /-- Same size, different `shapeVersion` — a key-set change. Never guessed. -/
   | rekeyed
-  /-- The key at the cursor. -/
-  | yieldKey (k : RVal)
+  /-- What the cursor yields at this step — the key, the value, or the
+  `(key, value)` pair, per the view kind. -/
+  | yieldVal (v : RVal)
   /-- The cursor ran off the end. -/
   | done
 deriving Repr, Inhabited, BEq
@@ -1895,11 +1903,34 @@ deriving Repr, Inhabited, BEq
 STARTED with (`n`, `sv`), at cursor `i`. A value update of an existing key
 bumps neither `size` nor `shapeVersion` (`dictStore` grows the version on
 insertion only), so it slips past both guards — exactly as CPython allows. -/
-def dictStep (es : Array (RVal × RVal)) (sv' i n sv : Nat) : DictStep :=
+def dictStep (es : Array (RVal × RVal)) (sv' i n sv : Nat)
+    (kind : DictViewKind) : DictStep :=
   if es.size ≠ n then .resized
   else if sv' ≠ sv then .rekeyed
-  else if h : i < es.size then .yieldKey es[i].1
+  else if h : i < es.size then
+    .yieldVal (match kind with
+               | .keys => es[i].1
+               | .values => es[i].2
+               | .items => .tuple #[es[i].1, es[i].2])
   else .done
+
+/-- §3c-i-a: is this iterable expression a DICT VIEW CALL, and of which kind?
+
+**Fusion is CONTROL: only the call site can tell `list(d.keys())` from
+`k = d.keys()`.** A view is a LIVE object (docs/backlog/python-completeness.md
+2026-08-23-pycomplete-8/9), so a pure worker that answered a snapshot would be
+measurably wrong the moment the view outlived the call — which is why this
+recognizer is syntactic, sits at the `for` dispatch, and admits ONLY the
+zero-argument call shape. Anything else keeps evaluating normally and refuses
+where it always did. -/
+def dictViewCall : Expr → Option (Expr × DictViewKind)
+  | .call (.attribute d "keys" _) args kw Option.none _ =>
+      if args.isEmpty && kw.isEmpty then some (d, .keys) else Option.none
+  | .call (.attribute d "values" _) args kw Option.none _ =>
+      if args.isEmpty && kw.isEmpty then some (d, .values) else Option.none
+  | .call (.attribute d "items" _) args kw Option.none _ =>
+      if args.isEmpty && kw.isEmpty then some (d, .items) else Option.none
+  | _ => Option.none
 
 /-- Store `k ↦ v`: an equal key present replaces ONLY THE VALUE (stored key
 and insertion position retained — `{True: _}` updated through `1` still

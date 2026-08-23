@@ -97,5 +97,11 @@
   "basic_lit_kinds": {
     "INT": 7,
     "STRING": 4
+  },
+  "shapes": {
+    "for_declares_vars": 3,
+    "for_total": 3,
+    "range_declares_vars": 2,
+    "range_total": 2
   }
 }

@@ -15,14 +15,20 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**106 entries across 16 lanes.** Regenerate with
+**117 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
+| `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
+| `2026-08-23-qol-25` | the attribution fix: the headline held, the DISPATCH was wrong | qol |
+| `2026-08-23-qol-24` | gate DESIGNS for the two head homes, and one of the ten needs no gate at all | qol |
+| `2026-08-23-qol-23` | the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern | qol |
 | `2026-08-23-qol-22` | sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce | qol |
 | `2026-08-23-qol-21` | `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE | qol |
 | `2026-08-23-qol-20` | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
+| `2026-08-23-architecture-20` | Six congruence shapes; the walker's real cause was transparency; and a correction inherited its error's scope | architecture |
 | `2026-08-23-qol-19` | a run is not a measurement until it has been read | qol |
 | `2026-08-23-architecture-19` | Probes must refuse on absence; the congruence set has five shapes; and row 1 fired on its author | architecture |
 | `2026-08-23-qol-18` | the tree must not move while you queue, and now it cannot silently | qol |
@@ -40,7 +46,9 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
+| `2026-08-23-pycomplete-9` | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |
 | `2026-08-23-architecture-9` | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |
+| `2026-08-23-pycomplete-8` | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
 | `2026-08-23-lean-tier-8` | `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost | lean-tier |
 | `2026-08-23-architecture-8` | The Core payload LANDED: holds released, and the gate retired the conditional | architecture |
 | `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
@@ -125,6 +133,9 @@ and every existing `§Lnn` reference still resolves there.
 | `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
 | `INBOUND` | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
 | `INBOUND` | `2026-08-22-softfloat-2` (C lane's to triage) | c |
+| `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
+| `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
+| `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 
-**6 heading(s) do not use the §9.5 id scheme** and sort last.
+**9 heading(s) do not use the §9.5 id scheme** and sort last.

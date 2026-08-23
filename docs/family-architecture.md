@@ -763,12 +763,52 @@ layer; everything an edition decides lives WHOLE in that edition's own
 directory. Editions are siblings. Neither is the base of the other, and
 no definition takes a version parameter.**
 
+**MEAS-28 HAS A GATE NOW: `tools/dupes.sh`.** This is the one law in the tree
+that literally asks for a tool, and it had none —
+`docs/duplication-audit.md` measured the census contract implemented **14
+times** by hand, every ten landings, and by hand is what the law forbids. The
+instrument reports two channels, because each misses what the other catches:
+**CONTRACTS** (curated shapes — a `git_rev` helper, a `--compare` path) and
+**repeated `def` NAMES** (mechanical, so it finds what the curated list
+forgot). First run, 2026-08-23, over 39 Python files: `--compare` **15**,
+`census` **15**, `double-run` **10**, `self-test` **10**, `git_rev` **8**.
+
+The two channels earn their keep on that last row: the contract channel finds
+**8** files running `git rev-parse`, the name channel finds **3** called
+`def git_rev` — so **five implement the contract under another name**, which
+is precisely the duplication a name-based rule misses and a contract-based one
+catches.
+
+A duplicate is not automatically a violation: §9.2 consolidates **by touch**,
+so a contract with no shared helper landed is `DUPLICATED` (work available)
+and one whose helper exists unused is `VIOLATION` (work refused). And the
+honesty clause is in the tool's header: **it cannot see semantic duplication
+under different spellings**, so every count is a floor.
+
 **The pattern has a name so that tiers apply it uniformly: THIN SIBLINGS
 OVER A THICK SHARED TRUNK.** The trunk is `LeanModels/<Lang>/`; the
 siblings are `LeanModels/<Lang>/<Ver>/`, and they should be **small** —
 if a sibling is thick, either the editions really do differ that much
 (measure and prove it) or the census was not run. Three clauses make it
 operational.
+
+**STMT-59 AND STMT-60 HAVE A GATE: `tools/editions.sh`.** First run,
+2026-08-23 — and it convicts this section's own tier. **`LeanModels/C/C23/` is
+2213 lines against a 732-line trunk: a ratio of 3.02**, which is the inverse of
+*thin siblings over a thick shared trunk*, and **no census names its files**
+(a C construct census exists; §2.4(1) asks for a measurement convicting the
+FILE). STMT-60 is clean: **zero violations**, with Go's
+`perIterationLoopVars (v : LangVersion) : Bool` correctly reported as **clause
+(4)'s legitimate case** — a predicate classifying per-file version DATA, not a
+semantics parameterised by edition. The discriminator is the RETURN type, and
+the tool prints the list so a lane disputes the list rather than the verdict.
+
+**STMT-61 is measurable but has nothing to measure.** Clause (2) says theorems
+prove once on the trunk; a duplicate-statement finder across trunk and sibling
+would report **zero forever**, because the C trunk holds **0 theorems** and its
+C23 sibling holds **7**. The failure mode in this tree is not *"proved twice"*
+— it is **"proved only in the sibling"**, so the theorem split is reported as a
+column (`7/0`) rather than built as a comparison that cannot fire.
 
 **(1) CENSUS-GATED PLACEMENT. A file enters a sibling directory only when a
 MEASUREMENT convicts it of edition-sensitivity — never prophylactically.**
@@ -1319,10 +1359,23 @@ the `Kont` knot and without weakening anything** — and the reason is
 > **The layer order chosen for STATE-RETENTION ON RAISE is what makes FUEL
 > MONOTONICITY mechanical.**
 
-**AND THE CONGRUENCE SET HAS FIVE SHAPES, not three — two of them CORE's.**
+**AND THE CONGRUENCE SET HAS SIX SHAPES, not three — three of them CORE's.**
 A tier's monotonicity obligations over the substrate are **`bind`, `ite`,
-`tryCatch`** (the monad) **plus `zoomIn`, `zoomOut`** (the **state-zoom
-seam**). The two adapters are **`Core`'s own**
+`tryCatch`** (the monad), **`zoomIn`, `zoomOut`** (the **state-zoom
+seam**), and **`liftRes`** (the **PURE-WORKER seam**:
+`Res.le x y → liftRes x ⊑ liftRes y`).
+
+**`liftRes` earns its own shape for a structural reason, not as a sixth
+item on a list:**
+
+> **`liftRes` is the single door the maximal trunk comes through — so it
+> is the ONLY place fuel-argument monotonicity is consumed, on either
+> side.**
+
+Every pure worker's monotonicity enters the monadic world there and
+nowhere else. That makes it the one seam where a missing lemma is not
+merely a gap but a **severed connection between the two halves of the
+proof**: the trunk's `_mono` results exist and cannot be spent. The two adapters are **`Core`'s own**
 (`LeanModels/Core/Outcome.lean`), so **every tier instantiating `SemMWith`
 inherits the same two obligations** — and, once `Core` carries the seam
 lemmas, inherits their discharge too. Python's `inFrame` / `inWorld` are
@@ -3220,8 +3273,25 @@ instrument copies it:
   the check**, which is the whole of the difference;
 * **A DOCSTRING NAMING A REACHABLE SET IS A CLAIM, AND IT DRIFTS.**
   `Kont.fuel`'s docstring read *"used by `heapEq`, `setDedup`"*; the
-  **measured** set is **`heapEq` + `valContains`** — and `setDedup`, which
-  the docstring priced as reachable, measures **0 hits**. Nothing failed — a
+  **measured** set is **`heapEq` + `valContains`** — or so a correction
+  recorded here claimed.
+
+  **THAT CORRECTION WAS ITSELF WRONG, and the way it was wrong is the
+  sharper law.** `setDedup` **IS** reachable — via `applyBuiltin`'s set arm
+  (`Eval.lean:392`, two `K.fuel` sites), and its `setDedup_mono` is
+  *consumed* in `Obs.lean` through `le_liftRes`. The correcting grep had
+  measured **"0 hits FROM `evalCompareOpH`"** — it inherited the **frame of
+  the very docstring it was correcting**, and so re-answered the old
+  question accurately instead of asking the right one.
+
+  > **A measurement that CORRECTS a claim must not take its SCOPE from the
+  > claim it corrects. Sweep the whole surface, not the cited path.**
+
+  This is the retrieval family's worst case, because a correction carries
+  *more* authority than the claim it replaces: it arrives with a
+  measurement attached. Inheriting the scope makes the second number as
+  wrong as the first **and harder to doubt**. The fuelMono lane fixes the
+  docstring in its landing ticket, carrying that sentence in it. Nothing failed — a
   docstring naming the wrong consumers compiles exactly as well as one
   naming the right ones, and a lane reading it to decide a blast radius
   (§5.4a) would have grepped for the wrong thing. **A reachable set is
@@ -4505,6 +4575,8 @@ its refusal paths rather than describing them (§5.4).
 | `tools/backlog-index.sh` | generate `docs/backlog/INDEX.md`; `--check` gates its staleness | §9.5, §5.5 |
 | `tools/laws.sh` | which laws have a gate, and which are only prose | §9.7's audit cadence; *fixes live in gates* |
 | `tools/substrate.sh` | the substrate contract per tier, by SHAPE | §3.4 (STMT-19..22), §8.5 (STMT-67) |
+| `tools/dupes.sh` | duplication, counted rather than remembered | §2.4 (MEAS-28) |
+| `tools/editions.sh` | thin siblings, and no edition-parameterised definition | §2.4 (STMT-59, STMT-60) |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
 
 **AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor
@@ -4682,11 +4754,40 @@ real until an instrument re-derives it.**
 
     > **Raising heartbeats trades a WRONG answer for a SLOW one.**
 
-    The fix is **syntax-directed dispatch on the goal head**, not a bigger
-    budget: look at what the goal *is* and apply the one lemma for it,
-    instead of trying lemmas until one sticks. A backtracking `first` is a
-    search where a **case analysis** was available, and the exponent is the
-    price of not looking.
+    **CORRECTED — the real cause was TRANSPARENCY, not dispatch shape.**
+    The first diagnosis (recorded here as *"a search where a case analysis
+    was available"*) was the plausible one and not the measured one. Two
+    causes, both found by looking rather than by reasoning:
+
+    * **`apply` at DEFAULT TRANSPARENCY whnf-unfolded tier constants** to
+      hunt for an `ite` underneath — descending *through* `applyBuiltin`.
+      **The actual timeout was the whnf reconciliation of two 200-line
+      bodies.**
+    * **recursive backtracking re-planned a whole subtree per leaf
+      failure.**
+
+    The three fixes are each aimed at one of those, and none is a budget:
+
+    * **`repeat'`** — one step per goal, kept, so **a leaf failure is an
+      open leaf and never a parent re-plan**. That is what makes it
+      **linear**;
+    * **the leaf closer runs FIRST, guarded by `done`** — which stops the
+      transparency descent into named lemmas' definitions before it
+      starts;
+    * **the early `refl` under `with_reducible`** — it succeeds on
+      syntactic equality and, crucially, **FAILS FAST** instead of
+      attempting the 200-line whnf.
+
+    **The transferable form**: when a tactic is exponential, ask what it is
+    *unfolding*, not only what it is *trying*. A backtracking search is
+    visible in the tactic text; a transparency setting is not, and it was
+    the expensive half here.
+
+    **AND `<f>.mutual_induct` EXISTS** — it concludes the **whole mutual
+    conjunction at once**, which is the right shape for a mutual block.
+    One trap: **the conjunct order is NOT source order**, so match on what
+    the goal actually presents rather than on the order the definitions
+    were written in.
 
     **AND A SHAPE THAT DEFEATS EQUATION THEOREMS ENTIRELY.** A ~210-line
     `if fname == … else if …` chain produces **"failed to generate
@@ -5098,6 +5199,24 @@ list, and reports for every law the tool that cites its durable home — or
 the law**, so the next enforcement inch is chosen by **measured demand**
 rather than by whoever remembers a rule at the time. First run, 2026-08-23:
 **332 laws, 206 cited by a tool, 126 with no gate at all.**
+
+**CORRECTED 2026-08-23, and the correction changed the DISPATCH, not the
+headline.** Attribution matched tokens by substring, so **`§9` matched `§9.5`,
+`§9.7` and `§9.2`** — one law homed at §9 was credited to seven tools,
+including `ada_round_trip.py`. That is the identifier law failing inside the
+instrument that measures enforcement. Tokens now match whole, with a boundary.
+The headline barely moved (**216 → 215 cited, 116 NO GATE**) because the false
+credits and two newly-attributed laws nearly cancelled — but **the demand
+ranking moved completely**: §9.2 led at 14 citations and now does not appear
+in the top six, because most of that 14 was `§9.x` mentions. **§2.4 is the
+head, with seven ungated laws at 8 citations each.**
+
+Two further mechanisms landed with it. A law whose home names a script is
+attributed **by identity**, so a law implemented before it was indexed can
+say so (`— gate: tools/triad.sh`); and a law the index marks
+**`ungateable: <reason>`** is reported in its own bucket rather than as debt,
+because re-surfacing a settled finding every audit is how it gets
+re-litigated. `PROOF-40` is the first.
 
 Two honesty clauses that make the number usable. **Citation over-credits** — a
 tool that mentions a law in a comment is counted — so the NO GATE list is a

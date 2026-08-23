@@ -77,50 +77,33 @@ def spec (s : String) : SpecRef := ⟨"spec", s⟩
 def mem (s : String) : SpecRef := ⟨"mem", s⟩
 end SpecRef
 
-/-- The family's four refusal causes (`docs/family-architecture.md` §5.2),
-instantiated for Go.
+/-! ## Refusal causes — CORE'S, and the local enum is RETIRED
 
-`undefined` is PRESENT and is expected to stay EMPTY. That is the point:
-`docs/go-charter.md`'s zero-UB finding is a claim about a document, and
-leaving the constructor out would make it unfalsifiable inside the model.
-Present-and-gated turns it into a property a `#guard` can check — the
-treatment `docs/family-architecture.md` §4.3 prescribes for WebAssembly,
-whose cause-2 bucket is empty by design. Go's is empty for a different
-reason: the memory model bounds its worst case rather than surrendering
-it. **A Go tier that ever emits `undefined` has a bug**, and `Spec.lean`
-says so in a form that fails. -/
-inductive RefusalCause where
-  /-- Syntax or a construct the tier does not model yet. Retires by
-  climbing a rung. -/
-  | unsupportedConstruct
-  /-- The language says this run has no meaning. **Expected empty for Go**
-  — see the note above. -/
-  | undefined
-  /-- Outside the modeled slice: an unmodeled builtin or package. Retires
-  by widening the slice, and is never a language-tier gap. -/
-  | environment
-  /-- The language admits several orders — or several schedules — and the
-  model cannot show the observable invariant under all of them
-  (`docs/go-charter.md` §2.1). Retires by strengthening the
-  race-freedom census, never by guessing. -/
-  | orderDependence
-  deriving Repr, DecidableEq, Inhabited
+This tier briefly carried its own four-class `RefusalCause` plus a
+`renderRefusal` that wrote the class into Core's message as a `[tag|…]`
+prefix, because Core's `Loud` then held only a `String`. Core's payload
+landing (`f714f76`) records Go as the **third tier** to re-derive that
+same taxonomy, and Core now holds it: `RefusalCause π` with the same four
+classes, and `className` returning byte-identical strings to the ones this
+tier had chosen.
 
-/-! ## Refusal causes, and the π every refusal carries
+**So the local enum is retired and the prefix with it.** Keeping either
+would leave the class making a round trip through a string that exists
+only because the typed field once did not — and Core's own rule is now
+explicit that a scoreboard *"buckets on THIS, never by parsing the
+payload's prose"*. The message is again just prose, and the class is read
+as data.
 
-Core's `Loud` has exactly two constructors — `timeout` and
-`unsupported (msg : String)` — and its header is explicit that a tier
-needing more causes *"does not extend this type"*. So the Go tier's
-four-cause taxonomy (`docs/family-architecture.md` §5.2) and its
-spec-section pointer live HERE, and are rendered into Core's message.
-
-**This is a gap worth naming rather than papering over, and it is
-reported to the coordinator**: §5.2 requires the four causes be
-*"reported separately"* because pooling them makes the scoreboard
-unreadable, and a `String` payload means a scoreboard must parse prose to
-bucket them. The rendering below is deterministic and prefix-tagged so
-that parsing is at least mechanical, but a structured payload in Core
-would be better. -/
+What does NOT move is the gate below. `undefined` is PRESENT in Core's
+type and expected to stay EMPTY here, which is the point:
+`docs/go-charter.md`'s zero-UB finding is a claim about a document, and a
+type without the constructor would make the emptiness unfalsifiable —
+Core's own header says the same, that omitting it *"makes the emptiness a
+fact about the TYPE, invisible to the scoreboard."* `GoRefusal` is still
+this tier's own type, and it is still the reason cause 2 is unreachable
+here. **A Go tier that ever emits `undefined` has a bug**, and
+`Spec.lean` says so in a form that fails.
+-/
 
 /-- A panic in flight — ρ. See the header for why it carries an identity
 as well as a value. -/
@@ -189,6 +172,11 @@ structure GoWorld where
   /-- Emitted bytes. Output is world data, per the family's
   effects-as-world-data treatment. -/
   stdout : List String := []
+  /-- Declared struct types: name to its field names, in declaration
+  order. `TypeSpec` is 72.4% structs in the standard library
+  (`docs/backlog/go.md` §G4), so this is what a type declaration means at
+  rung 2; interfaces are 3.9% and a later rung. -/
+  types : List (String × List String) := []
   /-- The language version of the file being executed. Per FILE, not per
   program — see `LangVersion`. -/
   lang : LangVersion := LangVersion.go122
@@ -204,9 +192,15 @@ clause the refusal cites, carried as DATA. `SemMWith` is Core's.
 carried a bare `String`, so it encoded its cause and its clause into a PREFIX
 (`renderRefusal`) and told a scoreboard to parse it. Core's `RefusalCause π`
 landing removes the reason for that: the cause is a constructor and the clause
-is its payload, so `Loud.observable` buckets without reading prose. The prefix
-is kept in the MESSAGE, byte for byte, so nothing downstream of the text
-moves. -/
+is its payload, so `Loud.observable` buckets without reading prose.
+
+The payload landing kept the prefix in the message byte-for-byte so that
+nothing downstream of the text moved — the conservative choice, and the right
+one at that moment. **This lane has since removed it.** Keeping it would have
+left the class making a round trip through a string that exists only because
+the typed field once did not, and the only consumer of the text was this
+tier's own guards, which now read the class and the clause as data. The
+message is prose again. -/
 abbrev GoM := SemMWith GoWorld Panic SpecRef Unit
 
 /-- **The zero-UB gate, as a TYPE rather than a convention.**
@@ -230,47 +224,23 @@ inductive GoRefusal where
   | orderDependence
   deriving Repr, DecidableEq, Inhabited
 
-/-- The image of `GoRefusal` in the family's four causes. `undefined` is
-not in it, and that is the theorem `Spec.lean` records. -/
-def GoRefusal.toCause : GoRefusal → RefusalCause
-  | .unsupportedConstruct => .unsupportedConstruct
-  | .environment => .environment
-  | .orderDependence => .orderDependence
-
-/-- The family's own name for each cause (`docs/family-architecture.md`
-§5.2). Spelled explicitly rather than via `repr`, so the scoreboard's key
-is stable under any change to the constructor's Lean name. -/
-def RefusalCause.tag : RefusalCause → String
-  | .unsupportedConstruct => "unsupported"
-  | .undefined => "undefined"
-  | .environment => "environment"
-  | .orderDependence => "order-dependence"
-
-/-- **The image of this tier's cause in the FAMILY's cause**, carrying the
-cited clause as the payload. The two taxonomies were already the same four
-classes under the same four names — `tag` above and Core's
-`RefusalCause.className` return byte-identical strings — because this tier
-re-derived §5.2 locally when Core could not hold it. This is that duplication
-collapsing in the only direction that loses nothing. -/
-def RefusalCause.toCore (c : RefusalCause) (π : SpecRef) :
-    LeanModels.RefusalCause SpecRef :=
-  match c with
+/-- **The image of `GoRefusal` in the FAMILY's cause type**, carrying the
+cited clause as the payload. `undefined` is not in the image, and that is
+the theorem `Spec.lean` records — now stated against Core's
+`RefusalCause.isUndefined`, which Core lifted from the ES lane precisely
+so the gate is written once per family rather than once per tier. -/
+def GoRefusal.toCore (r : GoRefusal) (π : SpecRef) : RefusalCause SpecRef :=
+  match r with
   | .unsupportedConstruct => .unsupported π
-  | .undefined            => .undefined π
   | .environment          => .environment π
   | .orderDependence      => .orderDependence π
 
-/-- Render a refusal into Core's `String` payload. Deterministic and
-prefix-tagged: the cause comes first, then the clause, then the prose, so
-a scoreboard buckets on a prefix rather than on a search. -/
-def renderRefusal (c : RefusalCause) (π : SpecRef) (msg : String) : String :=
-  s!"[{c.tag}|{π.doc}:{π.section_}] {msg}"
-
 /-- The Go tier's refusal, and the ONLY way this tier refuses. Narrower
-than Core's `refuse` on purpose — see `GoRefusal`. -/
+than Core's `refuse` on purpose — see `GoRefusal`. The message is prose
+only: the class travels as a typed field, not as a prefix. -/
 def refuseGo {W ρ α : Type} (r : GoRefusal) (π : SpecRef) (msg : String) :
     SemMWith W ρ SpecRef Unit α :=
-  LeanModels.refuse (r.toCause.toCore π) (renderRefusal r.toCause π msg)
+  LeanModels.refuse (r.toCore π) msg
 
 /-- Start a panicking sequence with a fresh identity. State-RETAINING, per
 Core's ρ channel. -/

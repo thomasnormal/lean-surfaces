@@ -428,6 +428,57 @@ print(f())
   "the cursor at FUNCTION scope — execGen's arm, and it exercises `break` "
   "and `continue` through the new frame (which is why `genBreak`/"
   "`genContinue` had to treat `forDict` as a LOOP frame, not bookkeeping)")
+w("dict.for-keys", """
+def f():
+    d = {3: 'c', 1: 'a'}
+    out = []
+    for k in d.keys():
+        out.append(k)
+    return tuple(out)
+print(f())
+""", "MATCH", "`for k in d.keys()` at function scope — inch 3c-i-a")
+w("dict.for-values", """
+def f():
+    d = {3: 'c', 1: 'a'}
+    out = []
+    for v in d.values():
+        out.append(v)
+    return tuple(out)
+print(f())
+""", "MATCH", "`for v in d.values()` — the VALUES view, whose element is the "
+  "value, not the key")
+w("dict.values", """
+d = {2: 'b', 1: 'a'}
+print(sorted(d.values()))
+""", "REFUSE", "the VALUES view, consumed immediately — inch 3c-i")
+w("dict.items-consumed", """
+d = {2: 'b', 1: 'a'}
+print(list(d.items()))
+""", "REFUSE", "the ITEMS view, consumed immediately — inch 3c-i")
+w("dict.view-escapes", """
+d = {1: 'a'}
+k = d.keys()
+d[2] = 'b'
+print(list(k))
+""", "REFUSE",
+  "THE 3c-ii MARKER: a view is a LIVE first-class object, not a snapshot — "
+  "CPython prints [1, 2] because `k` still sees the dict. Consuming forms "
+  "(3c-i) never need that; this one does, and it is what an `Obj.dictView` "
+  "would buy")
+w("dict.values-identity-eq", """
+d = {1: 'a'}
+print(d.values() == d.values())
+""", "REFUSE",
+  "THE TRAP, measured: CPython answers FALSE. A values view defines no "
+  "equality, so it compares by IDENTITY — while `d.keys() == {1}` is True "
+  "by SET equality. A model that treated the three views alike would be "
+  "silently wrong here, in the direction that looks most reasonable")
+w("dict.keys-set-algebra", """
+d = {2: 'b', 1: 'a'}
+print(sorted(d.keys() & {1, 9}))
+""", "REFUSE",
+  "keys/items are SET-LIKE (`&`, `|`, `-`, `^` answer a set); values are "
+  "NOT (`d.values() & {1}` is a TypeError). Two inventories, not one")
 w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
@@ -452,10 +503,9 @@ def f():
         t = t + k
     return t
 print(f())
-""", "REFUSE",
-  "the SAME loop inside a function: the shell belongs to the script "
-  "executor, so the closed-function surface has no cursor — inch 3a's real "
-  "content")
+""", "MATCH",
+  "the SAME loop inside a function — 3a gave the bare-key form a cursor at "
+  "every scope; 3c-i-a gives the VIEW forms one too")
 w("dict.items-grow", """
 d = {1: 1}
 for k, v in d.items():

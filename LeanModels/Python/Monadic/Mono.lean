@@ -249,7 +249,7 @@ def KontLe (K K' : Kont) : Prop :=
   (∀ t b o, K.whileLoop t b o ⊑ₚ K'.whileLoop t b o) ∧
   (∀ t xs b, K.forSeq t xs b ⊑ₚ K'.forSeq t xs b) ∧
   (∀ t a i b, K.forList t a i b ⊑ₚ K'.forList t a i b) ∧
-  (∀ t a i n sv b, K.forDict t a i n sv b ⊑ₚ K'.forDict t a i n sv b) ∧
+  (∀ t a i n sv kd b, K.forDict t a i n sv kd b ⊑ₚ K'.forDict t a i n sv kd b) ∧
   (∀ a, K.stepIter a ⊑ₚ K'.stepIter a) ∧
   (∀ k, K.execGen k ⊑ₚ K'.execGen k) ∧
   (∀ t a b, K.forGen t a b ⊑ₚ K'.forGen t a b) ∧
@@ -349,7 +349,7 @@ theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
       | exact hwhile _ _ _
       | exact hforSeq _ _ _
       | exact hforList _ _ _ _
-      | exact hforDict _ _ _ _ _ _
+      | exact hforDict _ _ _ _ _ _ _
       | exact hstepIter _
       | exact hexecGen _
       | exact hforGen _ _ _
@@ -410,7 +410,7 @@ theorem execOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
       | exact hwhile _ _ _
       | exact hforSeq _ _ _
       | exact hforList _ _ _ _
-      | exact hforDict _ _ _ _ _ _
+      | exact hforDict _ _ _ _ _ _ _
       | exact hstepIter _
       | exact hexecGen _
       | exact hforGen _ _ _
@@ -440,7 +440,7 @@ theorem KontLe.bottom (K' : Kont) : KontLe Kont.bottom K' :=
    fun _ _ => PyLe.exhausted_le _, fun _ _ _ => PyLe.exhausted_le _,
    fun _ _ => PyLe.exhausted_le _, fun _ => PyLe.exhausted_le _,
    fun _ _ _ => PyLe.exhausted_le _, fun _ _ _ => PyLe.exhausted_le _,
-   fun _ _ _ _ => PyLe.exhausted_le _, fun _ _ _ _ _ _ => PyLe.exhausted_le _,
+   fun _ _ _ _ => PyLe.exhausted_le _, fun _ _ _ _ _ _ _ => PyLe.exhausted_le _,
    fun _ => PyLe.exhausted_le _, fun _ => PyLe.exhausted_le _,
    fun _ _ _ => PyLe.exhausted_le _, fun _ => PyLe.exhausted_le _,
    fun _ _ => PyLe.exhausted_le _⟩

@@ -74,7 +74,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-25 | no ISO text is reproduced anywhere in this repository | `docs/family-architecture.md §2.1`, restated §11 |
 | MEAS-26 | the neutral layer is the measured INTERSECTION | `docs/family-architecture.md §1.3` |
 | MEAS-27 | CENSUS-GATED PLACEMENT — a sibling only when a measurement convicts | `docs/family-architecture.md §2.4` clause (1) |
-| MEAS-28 | duplication policed by an instrument, not by discipline | `docs/family-architecture.md §2.4` |
+| MEAS-28 | duplication policed by an instrument, not by discipline | `docs/family-architecture.md §2.4` — gate: `tools/dupes.sh` |
 | MEAS-29 | clause citations must be checked data, not prose | `docs/family-architecture.md §2.5` |
 | MEAS-30 | inside a `.md` an untagged `§` is an internal reference | `docs/family-architecture.md §2.5` |
 | MEAS-31 | no step's claim is real until an instrument re-derives it | `docs/family-architecture.md §8` preamble |
@@ -106,7 +106,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-57 | eight seconds each, before any premise is written | `docs/backlog.md §L27` |
 | MEAS-58 | cache a computed fixture as a literal, pin it once | `docs/backlog.md §L28` finding 3 |
 | MEAS-59 | a classifier that absorbs what it does not recognize is confidently wrong | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-2` |
-| MEAS-60 | an empty diff measured nothing — it is not a docs-only landing | `docs/backlog/qol.md 2026-08-22-qol-1` |
+| MEAS-60 | an empty diff measured nothing — it is not a docs-only landing | `docs/backlog/qol.md 2026-08-22-qol-1` — gate: `tools/triad.sh` |
 | MEAS-61 | sized from the pinned spec BEFORE being written | `docs/backlog/es.md 2026-08-22-es-1` |
 | MEAS-62 | CONFIDENCE, priced — HIGH only for what was read at the pin | `docs/backlog/wasm.md 2026-08-22-wasm-1` |
 | MEAS-63 | a decoder that matches must also cite; an honest miss is loud | `docs/backlog/qol.md 2026-08-22-qol-3` |
@@ -176,9 +176,9 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-56 | edition token — it never renames | `docs/family-architecture.md §1.1` law 4 |
 | STMT-57 | `language_version` is first-class; the ingester REFUSES a mismatch | `docs/family-architecture.md §1.5` |
 | STMT-58 | `frontend.version` is the FRONTEND's FAMILY, never a point release | `docs/family-architecture.md §1.5` |
-| STMT-59 | THIN SIBLINGS OVER A THICK SHARED TRUNK | `docs/family-architecture.md §2.4` |
-| STMT-60 | no definition takes a version parameter | `docs/family-architecture.md §2.4` |
-| STMT-61 | theorems prove ONCE on the trunk | `docs/family-architecture.md §2.4` clause (2) |
+| STMT-59 | THIN SIBLINGS OVER A THICK SHARED TRUNK | `docs/family-architecture.md §2.4` — gate: `tools/editions.sh` |
+| STMT-60 | no definition takes a version parameter | `docs/family-architecture.md §2.4` — gate: `tools/editions.sh` |
+| STMT-61 | theorems prove ONCE on the trunk | `docs/family-architecture.md §2.4` clause (2) — gate: `tools/editions.sh` reports the sibling/trunk theorem split; a duplicate finder cannot fire while the trunk holds 0 |
 | STMT-62 | THE ONE HONEST FORK — an arity change forks type and consumers | `docs/family-architecture.md §2.4` clause (3) |
 | STMT-63 | the edition parameter's granularity is language-decided | `docs/family-architecture.md §2.4` clause (4) |
 | STMT-64 | ONE extractor per language, never per edition | `docs/family-architecture.md §1.6` |
@@ -262,7 +262,7 @@ The worked forms, with the trap and the incident for each, are in
 | PROOF-37 | BUG BEFORE REFACTOR | `docs/family-architecture.md §9.1` |
 | PROOF-38 | CONSOLIDATION BY TOUCH, never big-bang; byte-identical across the move | `docs/family-architecture.md §9.2` |
 | PROOF-39 | port the SUCCESSOR; keep the predecessor as the record of what it fixed | `docs/family-architecture.md §9.2` |
-| PROOF-40 | the migration must never cost more than the defect it removes | `docs/family-architecture.md §9.2` |
+| PROOF-40 | the migration must never cost more than the defect it removes | `docs/family-architecture.md §9.2` — ungateable: cost is a judgement over lane-time and build invalidation; the only mechanical proxy is the half never in dispute |
 | PROOF-41 | the law gets ENFORCED in the shared helper, not remembered | `docs/family-architecture.md §9.4` |
 | PROOF-42 | THE LAZINESS LAW — every field takes its successor level inside its lambda | `docs/family-architecture.md §3.6 (1a)`; from `docs/backlog.md §L84` |
 | PROOF-43 | defunctionalize — the continuation becomes DATA in the world | `docs/family-architecture.md §3.6 (1a)` |
@@ -332,7 +332,7 @@ numbers below are the register's own.
 | OPS-43 | the classification is a FLOOR, never a ceiling | `tools/triad.sh`; `docs/backlog/qol.md 2026-08-22-qol-1` |
 | OPS-44 | anything UNRECOGNIZED escalates and is NAMED, never absorbed | `tools/triad.sh`; `docs/backlog/qol.md 2026-08-22-qol-1` |
 | OPS-45 | a scoped green PRINTS its coverage statement beside the verdict | `tools/triad.sh`; `docs/backlog/qol.md 2026-08-22-qol-1` |
-| OPS-46 | less scope, ZERO invention — never run Lean to decide a target's spelling | `docs/backlog/qol.md 2026-08-22-qol-1` |
+| OPS-46 | less scope, ZERO invention — never run Lean to decide a target's spelling | `docs/backlog/qol.md 2026-08-22-qol-1` — gate: `tools/triad.sh` |
 | OPS-47 | `--self-test` runs NO Lean; `--classify-only` takes no tenure | `tools/triad.sh` usage |
 | OPS-48 | lock and queue paths overridable for sandboxing; a live run uses the real ones | `tools/triad.sh` header |
 | OPS-49 | the header IS the usage text | `tools/triad.sh` |

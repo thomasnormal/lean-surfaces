@@ -34,6 +34,14 @@ more — so that the two can be reconciled by substitution.
 > theorems below are proved for an arbitrary `ProjIface`.
 -/
 import Lean4Lean.Verify.Typing.Expr
+-- `Theory.Typing.Basic` (reached via `Verify.Typing.Expr`) DEFINES `IsDefEq` and
+-- `HasType`; their `instL` transport lemmas are PROVED here.  Without this the
+-- file elaborates until it needs `VEnv.IsDefEq.instL` and then reports that the
+-- environment does not contain it -- a missing import wearing a name-resolution
+-- error's clothes.  Upstream's own `Verify/Typing/Lemmas.lean`, which is where
+-- the seven `TrProj.*` obligations live, reaches the same module through
+-- `Theory.Typing.Strong`.  No cycle: `Theory/` never imports `Verify/`.
+import Lean4Lean.Theory.Typing.Lemmas
 
 namespace Lean4Lean
 namespace LeanSurfaces
@@ -52,13 +60,44 @@ structure ProjIface where
   /-- Number of fields of the structure's single constructor. -/
   nfields : Name → Nat
 
-/-- A universe level that denotes `Prop` under every valuation.
+/-- A level that denotes `Prop` under EVERY valuation — the model's semantic
+reading of the kernel's `isAlwaysZero`.
 
-The model treats levels **semantically** rather than algorithmically (there is no
-`isAlwaysZero` in `VLevel`; the thesis's fourteen algorithmic order rules are
-replaced by evaluation into `ℕ`), so the `Prop`-ness test is stated the same way
-rather than mirroring the kernel's syntactic `isAlwaysZero`. -/
-def VLevel.IsAlwaysZero (u : VLevel) : Prop := ∀ ls, u.eval ls = 0
+The model treats levels semantically rather than algorithmically (the thesis's
+fourteen algorithmic order rules are replaced by evaluation into `ℕ`), so both
+level predicates here are stated by evaluation rather than syntactically. -/
+def VLevel.IsAlwaysZero (u : VLevel) : Prop := ∀ ns, u.eval ns = 0
+
+/-- A level that denotes `Prop` under SOME valuation — the model's reading of the
+kernel's `!isNeverZero`, which is what `inferProj` actually tests
+(`maybePropType := !(← getSortLevel type).isNeverZero`).
+
+**The polarity here is load-bearing and was got wrong first.**  Requiring the
+structure's sort to be `Prop` *always* is unsound: `instL` can turn `Type u` into
+`Prop` by taking `u := 0`, so a structure that is not a proposition at one
+instantiation can become one at another, and a data field projected out of it
+then yields `False`.  The arena tests that family as `proj-of-imax-prop`, and the
+official kernel failed it at v4.28.0.
+
+It is also what makes the transport lemmas go through, in both directions and for
+the same reason they are true: `MaybeZero` transports *backwards* along `instL`
+(§`MaybeZero.of_inst`) so it can discharge a hypothesis, while `IsAlwaysZero`
+transports *forwards* (§`IsAlwaysZero.inst`) so it can supply a conclusion. -/
+def VLevel.MaybeZero (u : VLevel) : Prop := ∃ ns, u.eval ns = 0
+
+/-- `IsAlwaysZero` survives level instantiation: a field that is a proposition
+stays one. -/
+theorem VLevel.IsAlwaysZero.inst {u : VLevel} {ls : List VLevel}
+    (h : VLevel.IsAlwaysZero u) : VLevel.IsAlwaysZero (u.inst ls) := by
+  intro ns; rw [VLevel.eval_inst]; exact h _
+
+/-- `MaybeZero` REFLECTS along level instantiation: if the instantiated sort can
+be `Prop`, the original could too — the witness is the instantiated valuation.
+This is the direction the side condition needs, and the reason the structure side
+must be `MaybeZero` rather than `IsAlwaysZero`. -/
+theorem VLevel.MaybeZero.of_inst {u : VLevel} {ls : List VLevel}
+    (h : VLevel.MaybeZero (u.inst ls)) : VLevel.MaybeZero u := by
+  obtain ⟨ns, hns⟩ := h; exact ⟨ls.map (VLevel.eval ns), by rwa [VLevel.eval_inst] at hns⟩
 
 /-- `ArgFromRight k e v` : peeling `k` applications off the spine of `e` exposes
 an application whose argument is `v`.
@@ -105,14 +144,19 @@ executable checker already enforces this — `getSortLevel` routes through
 returning "not a sort" — which is why that checker rejects all four arena
 projection tests while our pinned kernel accepts them. -/
 structure ProjSound (env : VEnv) (U : Nat) (Γ : List VExpr) (e v : VExpr) : Prop where
-  /-- The structure's type must REDUCE TO A SORT.  A stuck sort is a refusal,
-  never a silent "not a `Prop`" (lean4#14807). -/
-  structSortReduces : ∃ A u, env.HasType U Γ e A ∧ env.HasType U Γ A (.sort u)
-  /-- Where the structure is a proposition, the projected field must be one too:
-  a `Prop` structure may not yield a data field. -/
-  propSquash : ∀ A u, env.HasType U Γ e A → env.HasType U Γ A (.sort u) →
-    VLevel.IsAlwaysZero u →
-    ∃ B w, env.HasType U Γ v B ∧ env.HasType U Γ B (.sort w) ∧ VLevel.IsAlwaysZero w
+  /-- The structure's type must REDUCE TO A SORT — stated here as: it HAS a type
+  which HAS a sort.  A stuck sort is a refusal, never a silent "not a `Prop`"
+  (lean4#14807).  And where that sort could be `Prop` under any valuation, the
+  projected field must be a proposition under every valuation.
+
+  **Stated existentially, deliberately.**  A `∀ A u, … → …` shape does not
+  transport along `instL` (nothing reflects an arbitrary instantiated type back
+  to an uninstantiated one), so it could not be validated by the lemmas below.
+  The `∃` shape is also the idiom the model already uses — `IsType` is
+  `∃ u, HasType Γ A (.sort u)`. -/
+  sound : ∃ A u, env.HasType U Γ e A ∧ env.HasType U Γ A (.sort u) ∧
+    (VLevel.MaybeZero u →
+      ∃ B w, env.HasType U Γ v B ∧ env.HasType U Γ B (.sort w) ∧ VLevel.IsAlwaysZero w)
 
 /-- The parametric `TrProj`.
 
@@ -143,6 +187,57 @@ Its consumer is `TrProj.uniq`. -/
 theorem ProjField.det {PI S idx e v v'}
     (h : ProjField PI S idx e v) (h' : ProjField PI S idx e v') : v = v' :=
   ArgFromRight.det h h'
+
+/-! ### The relational validation lemma: `instL`
+
+`TrProj.instL` is the cheapest of the seven open obligations against this
+definition, and it is proved here for the parametric form.  Upstream it reads
+
+    theorem TrProj.instL (H : TrProj Γ s i e e') :
+      TrProj (Γ.map (VExpr.instL ls)) s i (e.instL ls) (e'.instL ls)
+
+Both halves go through, and for structural reasons rather than by luck: `instL`
+distributes over `.app` **without touching binder depth**, so the spine relation
+commutes definitionally; and the level side transports because the two
+predicates were given the polarities the kernel actually uses. -/
+
+/-- The spine relation commutes with level instantiation.  One line per
+constructor: `VExpr.instL` maps `.app f a` to `.app f.instL a.instL`, so both
+cases are definitional. -/
+theorem ArgFromRight.instL {ls : List VLevel} :
+    ∀ {k e v}, ArgFromRight k e v → ArgFromRight k (e.instL ls) (v.instL ls)
+  | _, _, _, .zero => .zero
+  | _, _, _, .succ h => .succ (ArgFromRight.instL h)
+
+/-- The computational half commutes with level instantiation. -/
+theorem ProjField.instL {PI S idx e v} {ls : List VLevel}
+    (H : ProjField PI S idx e v) : ProjField PI S idx (e.instL ls) (v.instL ls) :=
+  ArgFromRight.instL H
+
+/-- The SOUND half commutes with level instantiation.
+
+This is where the polarity of §`VLevel.MaybeZero` earns itself: the hypothesis
+`MaybeZero (u.inst ls)` is discharged by reflecting it back with
+`MaybeZero.of_inst`, and the conclusion `IsAlwaysZero w` is transported forward
+with `IsAlwaysZero.inst`.  With `IsAlwaysZero` on the structure side the first
+step is simply false, which is how the definition's original polarity defect was
+found. -/
+theorem ProjSound.instL {env : VEnv} {U U' : Nat} {Γ : List VExpr} {e v : VExpr}
+    {ls : List VLevel} (hls : ∀ l ∈ ls, l.WF U') (H : ProjSound env U Γ e v) :
+    ProjSound env U' (Γ.map (VExpr.instL ls)) (e.instL ls) (v.instL ls) := by
+  obtain ⟨A, u, hA, hu, hprop⟩ := H.sound
+  refine ⟨A.instL ls, u.inst ls, hA.instL hls, hu.instL hls, fun h0 => ?_⟩
+  obtain ⟨B, w, hB, hw, h0'⟩ := hprop h0.of_inst
+  exact ⟨B.instL ls, w.inst ls, hB.instL hls, hw.instL hls, h0'.inst⟩
+
+/-- **THE VALIDATION LEMMA.**  `TrProj.instL` for the parametric definition —
+the cheapest of the seven obligations that `TrProj`'s absence had left as
+statements about nothing. -/
+theorem TrProjP.instL {PI : ProjIface} {env : VEnv} {U U' : Nat} {Γ : List VExpr}
+    {S : Name} {idx : Nat} {e v : VExpr} {ls : List VLevel}
+    (hls : ∀ l ∈ ls, l.WF U') (H : TrProjP PI env U Γ S idx e v) :
+    TrProjP PI env U' (Γ.map (VExpr.instL ls)) S idx (e.instL ls) (v.instL ls) :=
+  ⟨H.1.instL, H.2.instL hls⟩
 
 end LeanSurfaces
 end Lean4Lean

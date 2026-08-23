@@ -563,3 +563,75 @@ lock and RSS discipline, suppresses the class floor, runs only the lane's
 `--gates`, and prints a coverage statement saying *foreign checkout, gates as
 given, class floor not applicable*. `--against` already exists and would cover
 reason 2 once the floor is suppressible.
+
+---
+
+## 2026-08-23-lean-tier-7 — `TrProjP.instL` GREEN, and the proof caught a soundness defect in my own definition
+
+The validation lemma landed. **`lake build` exit 0 (152 modules), gate
+`lake env lean …/ProjParam.lean` green**, under `tools/triad.sh --foreign`,
+tenure `leantier 65793`, lock acquired in **0 s** (empty queue). Coverage
+statement as printed: *foreign checkout `digama0/lean4lean`; gates as given;
+class floor not applicable — evidence about THAT tree and those gates, and about
+nothing in this repository.*
+
+Local branch `lean-surfaces/trproj` @ **`71829bf6cd5c9b468f64c94cc65d58e0c0f967fe`**,
+no upstream tracking, never pushed to `digama0`. `docs/lean4lean-trproj-parametric.lean`
+is byte-identical to the file that went green: **243 lines, 0 real sorries
+(3 raw, all prose), 0 axioms, 8 theorems.**
+
+### THE FINDING: the proof caught a real soundness defect in the definition
+
+The first draft required the structure's sort to be `IsAlwaysZero` — `Prop` under
+every valuation. **That is unsound, and `TrProjP.instL` is unprovable with it.**
+
+`instL` can turn `Type u` into `Prop` by taking `u := 0`. A structure that is not
+a proposition at one instantiation becomes one at another, and a data field
+projected out of it then yields `False`. The arena tests that family as
+**`proj-of-imax-prop`**, which the official kernel failed at v4.28.0.
+
+The kernel's own test is `maybePropType := !(← getSortLevel type).isNeverZero` —
+***maybe* zero, not *always* zero.** So the structure side must be `MaybeZero`.
+
+**The two polarities are exactly the two the proof needs, and for the same reason
+they are the sound ones:** `MaybeZero` *reflects* along `instL` (the witness is
+the instantiated valuation) so it can discharge a hypothesis; `IsAlwaysZero`
+*transports forward* so it can supply a conclusion. With the polarities swapped
+the first step is simply false.
+
+`ProjSound` also moved from `∀ A u, … → …` to an existential — the `∀` shape
+provably cannot transport, since nothing reflects an arbitrary instantiated type
+back to an uninstantiated one. The `∃` shape is the model's own idiom (`IsType`
+is `∃ u, HasType Γ A (.sort u)`).
+
+**This is the argument for validation lemmas stated as cheaply as it can be: a
+definition that merely compiled would have shipped the unsoundness. The proof is
+what refused it.**
+
+### The red round, and its one-line fix
+
+The first tenure was **RED** — 4 errors, all
+`Invalid field 'instL': the environment does not contain
+'Lean4Lean.VEnv.IsDefEq.instL'`, and per the foreign-tenure contract the gates
+never ran. **A missing import wearing a name-resolution error's clothes:**
+`Theory.Typing.Basic` (reached via `Verify.Typing.Expr`) *defines* `IsDefEq` and
+`HasType`; their `instL` lemmas are *proved* in `Theory.Typing.Lemmas`, which was
+not in my closure. One import line. Upstream's own `Verify/Typing/Lemmas.lean` —
+where the seven `TrProj.*` obligations live — reaches the same module via
+`Theory.Typing.Strong`, and `Theory/` never imports `Verify/`, so no cycle.
+
+Diagnosed from the FULL log, not the summary: the summary truncates, and on a
+red the gate line is absent rather than failing, so "no gate error" would have
+read as "gates passed".
+
+### Tooling
+
+`--foreign` **adopted** (master had landed it while I was arguing for it); the
+plain `--gates` workaround is retired. `--gates-only` announced the skipped floor
+explicitly, which is the Ada lane's 78-minute lesson working.
+
+**`check.sh --iterate` refused twice, by number: swap 84.2 % then 83.2 %, against
+a 50 % line** — load was fine both times (7.28, 8.40). I did not override it. The
+machine is swapping persistently rather than being busy, so proof iteration is
+unavailable and every check costs a tenure; both of this round's compiles were
+ticketed.

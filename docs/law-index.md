@@ -240,6 +240,16 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-189 | after "what is it pointed at", ask WHAT MAKES IT RUN — a gate reached by accident retires by accident | `docs/family-architecture.md §5.4b` |
 | MEAS-190 | PARTITION instruments by corpus dependence; the one that needs it names its re-acquisition | `docs/family-architecture.md §5.4b` |
 | MEAS-191 | a `+0` disclosed in the PLAN is a control; the same number in the retrospective is accounting | `docs/family-architecture.md §9.0b` |
+| MEAS-192 | non-vacuity is a CHAIN OF LINKS — a link whose only guard is nested within it is unguarded | `docs/family-architecture.md §5.3` |
+| MEAS-193 | a coverage bound has a DIRECTION and must state it — "syntactic ⇒ upper" is not general | `docs/family-architecture.md §9.0` |
+| MEAS-194 | a COUNT IN PROSE without its unit becomes whichever count the reader needs | `docs/family-architecture.md §3.2` |
+| MEAS-195 | an open-obligation census reads the DECLARATION, never the commentary | `docs/family-architecture.md §5.4a` |
+| MEAS-196 | a standing DISCLOSURE lives where the claim is served, not where the apology is filed | `docs/family-architecture.md §9.0` |
+| MEAS-197 | a loudness guard present in 1 of 163 files is DECLARED, not POINTED — record the ladder position with the law | `docs/family-architecture.md §7.1a` |
+| MEAS-198 | completeness is counted PER ORIENTATION, not per lemma NAME | `docs/family-architecture.md §9.0` |
+| MEAS-199 | a pin move is drift or deliberate — PRIOR DECLARATION plus named departures decides | `docs/family-architecture.md §5.4b` |
+| MEAS-200 | the LAST RUNG is the tall one — the census says so in advance, not after | `docs/family-architecture.md §9.0b` |
+| MEAS-201 | the acceptance hierarchy ranks CLAIMS, not CLAIMANTS — a coordinator's hypothesis enters at the same rung | `docs/family-architecture.md §5.6` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

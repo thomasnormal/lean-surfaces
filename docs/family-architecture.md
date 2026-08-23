@@ -1313,14 +1313,41 @@ established platform would be describing something that does not exist.
    fact**, and the doc should stop implying otherwise. Measured: **Mathlib
    is a required dependency in `lakefile.toml`** and **26 files import it**
    — 23 under `LeanModels/` plus 3 under `Examples/`. But the breakdown is
-   the point: **Spice 11, Circuit 11, Verilog-A 1, and ZERO in Python, C,
-   SystemVerilog and RISC-V.** The analog lanes need real analysis
+   the point — **and every number here counts FILES THAT IMPORT MATHLIB,
+   nothing else**: **Spice 11 Mathlib-importing files, Circuit 11,
+   Verilog-A 1, and ZERO in Python, C, SystemVerilog and RISC-V.** The analog lanes need real analysis
    (`Mathlib.Data.Real.Basic`, `Analysis.Calculus.Deriv`,
    `MeasureTheory.*`) and take it; the proof tiers claim core-only and
    *are* core-only. So a founding lane states its own dependency posture in
    its charter — "this tier depends on no package" is a claim about that
    tier, checkable per tier, and false if read as a claim about the
    repository.
+
+   **AND THAT SENTENCE HAD TO BE REWORDED, BECAUSE IT WAS READ AS A SORRY
+   COUNT (2026-08-24).** *"Spice 11, Circuit 11, Verilog-A 1"* carried its
+   unit in the **paragraph** and not in the **sentence**, and a dispatch
+   quoting the sentence sent a lane hunting **eleven `sorry`s that do not
+   exist**. Measured on the branch: **zero `sorry`, zero `axiom`, zero
+   `opaque`, zero `partial`, zero `native_decide` tier-wide** — the only
+   `sorry` token in the analog tier is `Surface.lean`'s **guard against**
+   one.
+
+   > **A COUNT IN PROSE WITHOUT ITS UNIT BECOMES WHICHEVER COUNT THE READER
+   > NEEDS.**
+
+   **This is *a status column names what it measures* (§1.2) one level
+   up** — in a sentence rather than a table — and it is worse there,
+   because **a sentence travels**. A table row is read in its table; a
+   number in prose is **quoted**, and the quotation leaves the paragraph
+   that carried the unit behind. **Every number this document states now
+   carries its noun in the same sentence**, not merely in its
+   neighbourhood.
+
+   **And note which direction the misreading ran**: `11` read as
+   incomplete work rather than as dependency, i.e. **toward a problem that
+   needed solving.** A reader supplies the unit that makes the number
+   actionable, so an unlabelled count is not read neutrally — **it is read
+   as whatever would give the reader something to do.**
 
    **AND THE TWO CLAIMS THAT LOOK LIKE ONE — a lane's own correction.**
    *"Mathlib: no cost"* was **right about DEPENDENCY and wrong about
@@ -3860,6 +3887,43 @@ the question.**
 
 A run that executed **nothing** must never score as agreement.
 
+**AND THE STRUCTURAL APEX OF THIS FAMILY: NON-VACUITY IS A CHAIN OF TWO LINKS,
+AND A GUARD ON THE INNER LINK CANNOT SEE THE OUTER ONE** (analog tier's founding
+census, branch `analog-m0-census` at `491b944`; **uncompiled and stated as
+such**).
+
+The chain is: **an inhabited WORLD set, then an inhabited BEHAVIOR set.**
+`RealizableUnder` was added **precisely to stop empty behavior sets** — and it
+is itself guarded by `allowed world`. So **an unsatisfiable `allowed`
+discharges all three obligations at once**, and `#assurance_report` prints a
+**real-looking result**. Measured: **24 assurance cases, 0 carrying a world
+witness** before the inch.
+
+> **THE GUARD'S BLIND SPOT IS POSITIONAL, NOT AN OVERSIGHT — the guard cannot
+> see the outer link BECAUSE THE GUARD IS ITSELF INSIDE IT.**
+
+**That is what makes this the apex rather than another instance.** Every other
+vacuity in this section is a **missing check**: a row that never ran, a premise
+that was false, a comparison that could not fail. This one is a **check that was
+added for exactly the right reason, is correctly implemented, and is
+structurally incapable of catching the case that subsumes it.** No amount of
+care inside the guard reaches it; **the fix has to come from outside — a world
+witness, at the outer link.**
+
+**The general form, since every tier with layered obligations will meet it:**
+
+> **Enumerate the LINKS of a non-vacuity chain and ask, per link, WHICH GUARD IS
+> OUTSIDE IT. A link whose only guard is nested within it is unguarded.**
+
+**AND THE PRIORITY OF PRACTICE IS RECORDED WITH IT.** The July tier
+**implemented §5.3's ruling in Lean before this family minted it as prose in
+August**: `AssuranceCase` **structurally refuses assembly from unrelated theorem
+names** (`Circuit/Surface.lean` — verified on master), and the branch's
+`SourceBinding` equalities block circuit substitution. **Cite `Surface.lean` as
+prior art wherever §5.3 is stated** — a ruling this document wrote down had
+already been built, which is the convergence standard (§9.3) arriving from code
+to prose rather than the other way round.
+
 **AND THE SHARPEST FORM IS A THEOREM THAT IS VACUOUSLY TRUE BECAUSE ITS PREMISE
 IS FALSE** (R-track chain document). Plain `BoundRefines` is **FALSE** —
 refuted at `pos := .int 5`, where the shipped `bound()` refuses so the
@@ -4436,6 +4500,21 @@ the short-circuit `DRAIN` trick the searcher was looking for. The hits were
 real, numerous, and about something else.
 
 > **A grep that agrees with your prior is the one to re-run.**
+
+**AND A CONCESSIVE-PROSE GREP FINDS PROVED THEOREMS AS READILY AS OPEN ONES**
+(analog census). `Spice/DramDifferentialSenseUnbalanced.lean:1899` reads as an
+open obligation — *"admit a uniform positive regeneration-rate certificate"* —
+and is a **docstring on a theorem that is proved two lines below.**
+
+> **PROSE THAT SOUNDS LIKE AN OBLIGATION IS AS COMMON IN A DOCSTRING AS IN A
+> TODO.** Any *"open obligations"* census that greps for hedging language is
+> counting a **register of English**, not a state of the tree.
+
+The instrument-design corollary: **an open-obligation census reads the
+DECLARATION, not the commentary** — `sorry`, `axiom`, `partial`, an admitted
+constant — because those are states the elaborator knows about. **Concessive
+prose is a writing style**, and the tiers that write the most careful docstrings
+will score worst on it, which is the ranking exactly inverted.
 
 This document supplied its own instance: `grep -rl '\bRun\b'` returned
 three SystemVerilog files and **confirmed the expectation that `Run` was
@@ -5478,6 +5557,27 @@ WHAT MAKES IT RUN?** A gate whose answer is *"another file's import"* is
 **held up by something that was not written to hold it.** The fix is with the
 owning lane — one line, next ticket; **the shape is the register's.**
 
+**AND THE DRIFT FAMILY'S MISSING CASE: THE GUARDED ARTIFACT LEGITIMATELY
+CHANGING** (Wasm, `6bd3ca1`). O5's prerequisite `ais_empty_typing` **is one of
+the six broken baseline declarations** — errors **371 and 380** live inside its
+**295–412** span — so repairing it **takes the pin 6 → 4**. The lane **declared
+the future baseline change BEFORE writing the fix.**
+
+> **A pin move is DRIFT or a DELIBERATE CHANGE, and the only thing that
+> distinguishes them is PRIOR DECLARATION plus NAMED DEPARTURES.**
+
+**This completes the family.** §5.4b already had *a guard that never fires*, *a
+guard that always fires*, and *a re-baseline that must report no published fact
+moved*. All three assume the guarded artifact **should not** move. This is the
+case where **it should** — and after the fact, a legitimate repair and a silent
+regression **produce the same diff in the baseline file.**
+
+**Declaration is what converts one into the other**, and it is cheap **only
+before**: afterwards, *"that change was intended"* is unfalsifiable and arrives
+from the one person with a motive. **Name the departures, then make them** —
+which is the re-baseline norm's second half (§5.4b) moved from *report what did
+not move* to *predict what will.*
+
 **AND THE MOMENT A GATE MOVES UP THAT LADDER IS A DECISION WITH A BILL
 ATTACHED** (SV, `b499afa`; instance found while wiring the round-trip gate
 `ea6f667` made unconditional):
@@ -6141,6 +6241,24 @@ names WHICH wrong model you have.** A row that merely goes red says *the model
 is wrong*; this one says *the model is wrong in this specific way*, which is the
 difference between a refutation and a **diagnosis**.
 
+**AND THE HIERARCHY GOVERNS HYPOTHESES FROM EVERY DIRECTION, INCLUDING
+DOWNWARD** (Wasm, `6bd3ca1`). The coordinator raised *"these errors are your new
+proofs"* from a log tail. The lane **refuted it by measurement** — **byte-for-byte
+baseline reproduction at the same six lines**, and **`grep` for `SubtypingPort`
+errors = 0** — **not by assurance**, and **the refutation quoted its
+instrument.**
+
+> **The acceptance hierarchy ranks CLAIMS, not CLAIMANTS. A coordinator's
+> hypothesis enters at the same rung as a lane's self-report, and leaves by the
+> same door.**
+
+**Worth recording because the asymmetry is the natural failure**: a hypothesis
+from the coordinating role arrives with standing, and the cheap response is
+agreement — which would have written a false statement into the register with
+**more** authority than the lane's own reports carry. **The lane answered a
+plausible reading with a reproduction**, which is the only response that
+settles it in either direction.
+
 **And the two top tiers rank on different axes, which is worth saying plainly
 so a lane does not read the hierarchy as a single ladder.** *Cannot be stated*
 is strongest on **WHEN you learn** — design time, before anything is built.
@@ -6507,6 +6625,38 @@ feature that **silently supplies a plausible meaning for something the author
 did not write** is a loudness hazard, and the fix is always the same — **turn it
 off in files that are the model**, where a wrong meaning is a wrong semantics
 rather than a convenience.
+
+**AND THE LAW GAINS A DEPLOYMENT CLAUSE, because the honest ladder position is
+part of the law** (measured 2026-08-24, re-verified here): **1 of 163
+`LeanModels` files carries it. 0 of 188 under `Examples`.**
+
+> **A LOUDNESS GUARD ADOPTED AS LAW BUT PRESENT IN 1 OF 163 FILES IS A DECLARED
+> GATE THAT IS NOT YET POINTED** (§5.4b's ladder), **and the register records
+> the ladder position ALONGSIDE the law — never the law alone.**
+
+**A law without its deployment number reads as a property of the tree**, and
+that is exactly the misreading §5.4b exists to prevent: *the rule is adopted*
+and *the tree obeys the rule* are different claims, and only the second is
+coverage. **So the adoption is stated in three parts:**
+
+* **REQUIRED for NEW files, immediately** — no cost, no migration, and the
+  files most likely to carry a fresh typo;
+* **RETROFIT per tier, riding natural touches** (§9.2's by-touch discipline) —
+  a 162-file sweep is a big-bang change to files nobody is otherwise editing;
+* **EXPLICIT BINDERS FIRST wherever elaboration depends on auto-bound
+  implicits.**
+
+**The third clause is the one with teeth, and `Surface.lean` is its exhibit**:
+it **hard-codes arity 10 and position 4**, so flipping the option there is **a
+SEMANTIC change, not a hygiene change.** Wherever a metaprogram hard-codes a
+shape, the auto-bound implicits are **part of that shape** — and the retrofit
+that looks like a one-line setting is a rewrite of what the metaprogram
+matches.
+
+> **A setting that changes how many binders a declaration has is not a style
+> setting in any file that COUNTS binders.**
+
+
 
 **THREE LEAN TOOLING HAZARDS, recorded because each cost a red and none
 announces itself.**
@@ -7954,6 +8104,26 @@ proof**. Delegation normally *weakens* a coverage number — it is the classic
 place where two implementations drift — and a theorem is exactly what converts
 it from a liability into a legitimate numerator entry.
 
+**AND AN UNCLOSABLE OBLIGATION IS ADMITTED IN THE ARTIFACT'S OWN OUTPUT, NOT IN
+A CAVEAT DOCUMENT** (analog F1). The tier's **model validity is architecturally
+unclosable**, and `#assurance_report` prints **`model validity: MISSING`, 12
+sites** — in the report a reader is already looking at.
+
+> **A standing disclosure lives where the CLAIM is served, not where the
+> apology is filed.**
+
+**The two placements have different half-lives, which is the whole argument.** A
+caveat document is read **once, by whoever is looking for caveats**; the
+artifact's output is read **every time the claim is used**. An
+architecturally-unclosable gap is precisely the kind that outlives everyone who
+remembers it, so it has to be **attached to the thing that keeps being
+consumed** — *keep it visible whenever this tier is described.*
+
+**And it is the reason "unclosable" is not a synonym for "acceptable"**: the
+disclosure does not discharge the obligation, it **prevents the obligation from
+being forgotten** while remaining open, which is the same service §9.7's
+*named, not counted* performs for a denominator.
+
 **AND THE NUMERATOR'S HALF OF THE SAME DISCIPLINE, from SoftFloat — third
 instance, and the lane excluded its own work to get it right.** Its §9.0 number
 is **1/12**, with **21 real, landed theorems EXCLUDED from the numerator**,
@@ -7964,12 +8134,55 @@ twice."*
 > **The DENOMINATOR counts what could have DISAGREED; the NUMERATOR counts only
 > what the family's own definition ADMITS.**
 
+**AND A THIRD UNIT QUESTION INSIDE THE NUMERATOR: ORIENTATION** (Wasm O2/O4,
+`6bd3ca1`, on master; §9.0 = **4/5**). The two duals consumed **opposite
+orientations of the same split lemma**.
+
+> **A lane that had proved only one would be exactly HALF DONE AND NOT KNOW
+> IT** — the name is in the numerator either way.
+
+> **When a lemma family has an ORIENTATION, completeness is counted PER
+> ORIENTATION, not per lemma NAME.**
+
+**This is the unit family (§5.4a) arriving inside a coverage count**, and it is
+the hardest instance to notice because **the artifact is genuinely there**: the
+lemma exists, elaborates, is cited, and closes the goal it was written for. Only
+its **dual consumer** reveals that the name covered half a fact. **The
+two-orientations census reading is what paid off here** — it was taken before
+the work, and it is the reason the second orientation was not discovered by a
+lane finding its proof does not apply.
+
+
+
 **Both halves are now stated, and they fail in opposite directions**, which is
 why neither alone is enough: a padded denominator **understates** progress while
 looking rigorous; a padded numerator **overstates** it while looking
 industrious. **The second is the tempting one** — the 21 theorems are real work,
 landed and green, and the only thing wrong with counting them is that they do
 not answer the question the number asks.
+
+**AND A THIRD AXIS: A COVERAGE BOUND HAS A DIRECTION, AND MUST STATE IT**
+(analog census). Go's syntactic measure **OVER-counts** — an **upper** bound.
+The analog tier's grounding grep **UNDER-counts** — a **lower** bound:
+`dram_bank_256x32` reads as ungrounded while being grounded semantically under
+another spelling, and the instrument **flags it `NO-GROUNDING-WITNESS` in its
+own output** rather than silently scoring it.
+
+> **"SYNTACTIC ⇒ UPPER BOUND" IS NOT GENERAL.** The direction depends on whether
+> the measure can produce **false positives** or **false negatives**, and a
+> measure can do either.
+
+**So a coverage number now carries three things, and they fail independently**:
+the **denominator** (what could have disagreed), the **numerator** (what the
+family's definition admits), and the **SIGN** (which way the number is wrong).
+**Two lanes quoting bounds in opposite directions and neither saying so is how a
+cross-tier table becomes unreadable** — 40% upper and 40% lower are not the same
+40%, and the difference is invisible in the digit.
+
+**And the instrument naming its own uncertain rows is the honest form of a lower
+bound**: not *"we may be under-counting"* in a caveat, but **a labelled row in
+the output**, countable by whoever reads it next. *A caveat is prose; a flagged
+row is data.*
 
 **TWO MORE LANES' NUMBERS, and one is calibration evidence in its own right.**
 
@@ -8336,7 +8549,24 @@ ACATS coverage by **exactly 0**, and **the plan says so**:
 > **It must not be sold as a coverage rung.**
 
 **A `+0` disclosed in the plan is a different artifact from a `+0` explained in
-the retrospective.** The first is a lane pricing its own inch honestly while it
+the retrospective.**
+
+**AND ITS SIBLING, from the other end of a chain: THE LAST RUNG RE-PRICED IN
+ADVANCE** (Wasm, `6bd3ca1`). The census found **O5 is not the six-line job O2
+and O4 were** — roughly **118 lines of prerequisite that cannot be copied**,
+because **no working Lean original exists**, ahead of a **183-line induction.**
+
+> **The LAST RUNG IS THE TALL ONE, and the census says so IN ADVANCE rather than
+> after.**
+
+**Same control, opposite sign**: the `+0` discloses that a rung buys **less**
+than its position suggests; this discloses that one **costs more**. Both are
+statements a lane would rather make afterwards, and both are **worth nothing
+afterwards** — a plan that ends *"and then the last one, similarly"* is the
+sentence a chain document exists to prevent. **The tell that a chain has not
+been censused is that its rungs are all the same size.**
+
+ The first is a lane pricing its own inch honestly while it
 still could have chosen a different one; the second is a lane accounting for a
 number after the fact. **Both are correct and only the first is a control** —
 and it is the cheapest possible one, because at plan time the sentence costs

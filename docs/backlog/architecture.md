@@ -4355,3 +4355,171 @@ sentence costs nothing, afterwards it costs the appearance of progress.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-184 … MEAS-191, STMT-119**.
+
+## 2026-08-24-architecture-56 — The guard is inside the thing it cannot see; and a count in prose without its unit
+
+Seven from the analog tier's founding census (branch `analog-m0-census` at
+`491b944`, **uncompiled and stated as such**; `docs/backlog/analog.md` founds
+the lane — **17 lanes now**). **Verified against the branch and the tree, not
+the dispatch summary** — and one item was a defect in this document.
+
+**(1) §5.3 — THE STRUCTURAL APEX OF THE VACUITY FAMILY.** Non-vacuity is **a
+chain of two links**: an inhabited **world** set, then an inhabited **behavior**
+set. `RealizableUnder` exists to stop empty behavior sets and **is itself
+guarded by `allowed world`** — so **an unsatisfiable `allowed` discharges all
+three obligations at once** and `#assurance_report` prints a real-looking
+result. **24 assurance cases, 0 carrying a world witness.**
+
+> **The guard's blind spot is POSITIONAL, not an oversight — it cannot see the
+> outer link BECAUSE IT IS ITSELF INSIDE IT.**
+
+**Why this is the apex and not another instance**: every other vacuity here is a
+**missing check**. This one is a check **added for the right reason, correctly
+implemented, and structurally incapable of catching the case that subsumes
+it** — no care inside the guard reaches it. General form: **enumerate the LINKS
+of a non-vacuity chain and ask, per link, which guard is OUTSIDE it.**
+
+**(2) §9.0 — A COVERAGE BOUND HAS A DIRECTION, and must state it.** Go's
+syntactic measure **over**-counts; the analog grounding grep **under**-counts
+(`dram_bank_256x32` reads ungrounded while grounded under another spelling, and
+the instrument flags it **`NO-GROUNDING-WITNESS` in its own output**).
+**"Syntactic ⇒ upper bound" is not general** — the direction depends on whether
+the measure can produce false positives or false negatives, **and a measure can
+do either.** So a coverage number carries **three** things that fail
+independently: denominator, numerator, and **sign**. *Two lanes quoting bounds
+in opposite directions and neither saying so is how a cross-tier table becomes
+unreadable.* And the instrument naming its own uncertain rows is the honest form
+of a lower bound: **a caveat is prose; a flagged row is data.**
+
+**(3) §3.2 — THE DEFECT WAS MINE, AND IT IS FIXED.** *"Spice 11, Circuit 11,
+Verilog-A 1"* carried its unit in the **paragraph** and not the **sentence**,
+and a dispatch quoting the sentence sent a lane hunting **eleven `sorry`s that
+do not exist.** Re-verified here: Mathlib-importing files are **11 / 11 / 1**,
+and the analog tier has **zero `sorry`, zero `axiom`/`opaque`/`partial`/
+`native_decide`** — the only `sorry` token is `Surface.lean`'s **guard against**
+one.
+
+> **A count in prose without its unit becomes whichever count the reader
+> needs.**
+
+*A status column names what it measures* **one level up — and worse there,
+because a sentence TRAVELS**: a table row is read in its table; a number in
+prose is **quoted**, and the quotation leaves the unit behind. And **note the
+direction of the misreading**: `11` read as *incomplete work* rather than
+*dependency* — **a reader supplies the unit that makes the number actionable**,
+so an unlabelled count is read as whatever would give the reader something to
+do.
+
+**(4) §5.4a — A CONCESSIVE-PROSE GREP FINDS PROVED THEOREMS AS READILY AS OPEN
+ONES.** `Spice/DramDifferentialSenseUnbalanced.lean:1899` reads as an open
+obligation and is **a docstring on a theorem proved two lines below** (verified).
+**An open-obligation census reads the DECLARATION, not the commentary** —
+`sorry`, `axiom`, `partial`, an admitted constant — because those are states the
+elaborator knows about. **Concessive prose is a writing style, and the tiers
+that write the most careful docstrings score worst on it**: the ranking exactly
+inverted.
+
+**(5) §5.3 — PRIORITY OF PRACTICE, cited.** The July tier **implemented this
+ruling in Lean before the family minted it as prose in August**: `AssuranceCase`
+structurally refuses assembly from unrelated theorem names (`Circuit/Surface.lean`,
+verified on master); `SourceBinding`'s equalities block circuit substitution (on
+the branch). **`Surface.lean` is now cited as prior art where §5.3 is stated** —
+the convergence standard arriving **from code to prose** rather than the other
+way round.
+
+**(6) §7.1a — THE LOUDNESS GUARD GAINS A DEPLOYMENT CLAUSE.** Re-measured here:
+**1 of 163 `LeanModels` files, 0 of 188 under `Examples`.**
+
+> **A loudness guard adopted as law but present in 1 of 163 files is a DECLARED
+> gate that is not yet POINTED, and the register records the ladder position
+> ALONGSIDE the law.**
+
+Because **a law without its deployment number reads as a property of the
+tree** — *the rule is adopted* and *the tree obeys it* are different claims.
+Three-part adoption landed: **required for new files immediately; retrofit
+per-tier riding natural touches (§9.2); explicit binders first where elaboration
+depends on auto-bound implicits.** The third has teeth, and `Surface.lean` is
+the exhibit — it **hard-codes arity 10 and position 4**, so a flip there is **a
+semantic change, not a hygiene change**: *a setting that changes how many
+binders a declaration has is not a style setting in any file that COUNTS
+binders.*
+
+**(7) §9.0 — AN UNCLOSABLE OBLIGATION IS ADMITTED IN THE ARTIFACT'S OWN
+OUTPUT.** `#assurance_report` prints **`model validity: MISSING`, 12 sites**.
+
+> **A standing disclosure lives where the CLAIM is served, not where the apology
+> is filed.**
+
+**The two placements have different half-lives**: a caveat document is read once
+by whoever goes looking for caveats; the artifact's output is read **every time
+the claim is used** — and an architecturally-unclosable gap is precisely the
+kind that outlives everyone who remembers it. It does not discharge the
+obligation; **it prevents the obligation from being forgotten while it stays
+open**, the same service *named, not counted* performs for a denominator.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-192 … MEAS-197**.
+
+## 2026-08-24-architecture-57 — Completeness is counted per orientation; and a pin move declared in advance
+
+Four from Wasm O2/O4 (`6bd3ca1`, verified on master; **§9.0 = 4/5**).
+
+**(1) §9.0 — ORIENTATION IS A COUNTING UNIT INSIDE THE NUMERATOR.** The two
+duals consumed **opposite orientations of the same split lemma**.
+
+> **A lane that had proved only one would be exactly HALF DONE AND NOT KNOW
+> IT** — the name is in the numerator either way.
+
+> **When a lemma family has an orientation, completeness is counted PER
+> ORIENTATION, not per lemma NAME.**
+
+**The unit family arriving inside a coverage count, and the hardest instance to
+notice, because the artifact is genuinely there**: the lemma exists, elaborates,
+is cited, closes its goal. Only the **dual consumer** reveals the name covered
+half a fact — and the two-orientations census reading, **taken before the
+work**, is why the second orientation was not discovered by a lane finding its
+proof does not apply.
+
+**(2) §5.4b — THE DRIFT FAMILY'S MISSING CASE: the guarded artifact
+LEGITIMATELY changing.** O5's prerequisite `ais_empty_typing` **is one of the
+six broken baseline declarations** (errors 371 and 380 inside its 295–412 span),
+so repairing it **takes the pin 6 → 4** — and the lane **declared the change
+before writing the fix.**
+
+> **A pin move is DRIFT or a DELIBERATE CHANGE, and the only thing that
+> distinguishes them is PRIOR DECLARATION plus NAMED DEPARTURES.**
+
+The section had *never fires*, *always fires*, and *re-baseline reports what did
+not move* — **all three assume the artifact should not move.** This is the case
+where **it should**, and **after the fact a legitimate repair and a silent
+regression produce the same diff.** Declaration converts one into the other and
+is cheap **only before**: afterwards *"that change was intended"* is
+unfalsifiable and arrives from the one person with a motive.
+
+**(3) §9.0b — THE LAST RUNG RE-PRICED IN ADVANCE.** O5 is **not** the six-line
+job O2/O4 were: **~118 lines of prerequisite that cannot be copied** (no working
+Lean original exists) ahead of a **183-line induction**.
+
+> **The last rung is the tall one, and the census says so IN ADVANCE.**
+
+**Same control as the `+0`-in-plan, opposite sign** — one discloses that a rung
+buys less than its position suggests, the other that one costs more. Both are
+worth nothing afterwards, and **the tell that a chain has not been censused is
+that its rungs are all the same size.**
+
+**(4) §5.6 — THE HIERARCHY RANKS CLAIMS, NOT CLAIMANTS.** The coordinator raised
+*"these errors are your new proofs"* from a log tail; the lane **refuted it by
+measurement** — byte-for-byte baseline reproduction at the same six lines,
+`grep` for `SubtypingPort` errors **= 0** — **not by assurance**, and **quoted
+its instrument.**
+
+> **A coordinator's hypothesis enters at the same rung as a lane's self-report,
+> and leaves by the same door.**
+
+**Recorded because the asymmetry is the natural failure**: a hypothesis from the
+coordinating role arrives with standing, and the cheap response is agreement —
+which would have written a false statement into the register with **more**
+authority than a lane's own report carries.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-198 … MEAS-201**.

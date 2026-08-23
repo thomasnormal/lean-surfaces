@@ -15,11 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**246 entries across 16 lanes.** Regenerate with
+**248 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-24-architecture-57` | Completeness is counted per orientation; and a pin move declared in advance | architecture |
+| `2026-08-24-architecture-56` | The guard is inside the thing it cannot see; and a count in prose without its unit | architecture |
 | `2026-08-24-architecture-55` | A verdict certifies a tree, never a title | architecture |
 | `2026-08-24-architecture-54` | When the ambient verdict is constant, every bit is in the pin | architecture |
 | `2026-08-24-architecture-53` | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |

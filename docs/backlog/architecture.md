@@ -2966,3 +2966,56 @@ owes a *construct*; this says which lane owes a *blocker*, and both go wrong the
 same way when a plausible adjacency substitutes for a measurement.
 
 **Index:** MEAS-118 … MEAS-120.
+
+## 2026-08-23-architecture-41 — The discriminator lives in the call; and the row a wrong model cannot state
+
+Two from Go's slice census (`e2af807`, on master), both refining
+`2026-08-23-architecture-39`'s acceptance-case rider one rung after it landed.
+
+**(1) §5.6 — THE UNIT IS `(FUNCTION, ARGUMENT)`.** The rung went looking for a
+discriminating function and **could not find one** — which is the finding, not a
+setback. **60 candidates** used a slice expression plus a write through an
+index; tightened to require a **MIDDLE slice `a[i:j]`** — *the only place `cap`
+and `len` come apart, since a tail slice has `cap == len`* — it collapsed to
+**8**, every one needing interfaces, `clear`, `append`, or
+range-over-struct-slice.
+
+> **A discriminating acceptance case does not have to be a discriminating
+> FUNCTION. The case that can fail under a wrong model is `(FUNCTION,
+> ARGUMENT)` — not the function alone.**
+
+`runtime.itoa` (57 nodes, no external calls) **called on a middle slice**
+discriminates both, measured against `gc`. **The tightening is what proves the
+unit**: a tail slice cannot discriminate `cap` from `len` **at all**, so the
+argument's *shape* is part of the discriminator — a search over functions was
+searching the wrong space and returned the honest answer for that space, none.
+
+**And the pet-program line, which is the part I was careful about**, since §5.6
+exists partly to refuse commissioned subjects: the subject here is still
+vendored and unedited, and what the lane chose is **the call**. *A chosen call
+site is not a commissioned program — it is how a caller would use the function.*
+Stated as the boundary: **choosing an ARGUMENT is selection; writing a SUBJECT
+is commissioning.** The first is what a suite does every time it picks an input.
+
+**(2) §5.6 — THE ACCEPTANCE-ROW HIERARCHY, and the top tier is qualitatively
+different.** Against a naive list-copy slice model the four rows sort: the
+return value **PASSES**, the two aliasing rows **FAIL**, and `out[:cap(out)]`
+reaching past the value's own length **CANNOT BE STATED**.
+
+> **Rows the wrong model PASSES < rows it FAILS < rows it CANNOT STATE.**
+
+**Two reasons the top tier is stronger, which I separated because they are
+independent.** It fails at **design time rather than run time** — you find it
+while *writing the row*, before anything is built on the model. And it **cannot
+be argued away as a bug**: inexpressibility is a property of the
+**representation**, not of the code, so no patch answers it. *A value reaching
+beyond its own length into a longer array has no representation in a copy*
+settled the value model **up front** — backing array + offset + len + cap.
+
+**And the procedure runs the opposite way from how the hierarchy reads**: you do
+not know the right model and then find the row; you **try to write the row under
+the candidate model and fail**, and the failure is the finding — §9.7's
+blocker-naming norm in a new place. **An acceptance row you cannot write is a
+specification of what the model is missing.**
+
+**Index:** MEAS-121, MEAS-122.

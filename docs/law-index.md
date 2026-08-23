@@ -167,6 +167,8 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-118 | `+0` in a reach census is a PRECEDENCE fact, not a low score | `docs/family-architecture.md §9.0b` |
 | MEAS-119 | THE CONJUNCTIVE LAW — price a rung against the FAMILY it belongs to, report both numbers | `docs/family-architecture.md §9.0b` |
 | MEAS-120 | decide whether a blocker lives in the VALUE or in the REFERENCE — different owners | `docs/family-architecture.md §5.4a` |
+| MEAS-121 | the discriminating case is `(FUNCTION, ARGUMENT)` — not the function alone | `docs/family-architecture.md §5.6` |
+| MEAS-122 | rows the wrong model PASSES < rows it FAILS < rows it CANNOT STATE | `docs/family-architecture.md §5.6` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

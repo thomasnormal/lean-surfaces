@@ -5226,6 +5226,68 @@ fail is a demonstration; one that can is a measurement** — the same distinctio
 §5.3 draws for verdicts, applied to the choice of subject rather than to the
 row.
 
+**GENERALIZED ONE RUNG LATER, AND THE UNIT IS NOT WHAT IT LOOKED LIKE** (Go's
+slice census, `e2af807`, on master). The rule above says *take the case that can
+fail under a wrong model*. The next rung went looking for such a case and
+**could not find one**, which is the finding rather than a setback:
+
+* **60 candidates** used a slice expression plus a write through an index;
+* tightened to require a **MIDDLE slice `a[i:j]`** — *the only place `cap` and
+  `len` come apart, since a tail slice has `cap == len`* — it collapses to
+  **8**, every one of which needs interfaces, `clear`, `append`, or
+  range-over-struct-slice.
+
+**So no small vendored function exercises both properties.** The pick was
+`runtime.itoa` (**57 nodes, no external calls**) — which, called on a **middle
+slice**, discriminates both: `mid := base[2:6]` has len 4 cap 6, `itoa(mid, 42)`
+returns `"42"` with len 2 cap 4, `base` shows `"....42.."`, `out[0]='X'` makes it
+`"....X2.."`, and `out[:cap(out)]` reaches **past `mid`'s end**.
+
+> **A DISCRIMINATING ACCEPTANCE CASE DOES NOT HAVE TO BE A DISCRIMINATING
+> FUNCTION. The case that can fail under a wrong model is `(FUNCTION,
+> ARGUMENT)` — not the function alone.**
+
+**The tightening is what proves the unit**, and it is worth reading twice: a
+**tail** slice cannot discriminate `cap` from `len` **at all**, so the
+argument's *shape* is part of the discriminator. A search over functions was
+searching the wrong space, and it returned the honest answer for that space —
+**none**.
+
+**AND THIS DOES NOT REINTRODUCE THE PET-PROGRAM TAX §5.6 EXISTS TO REFUSE.** The
+subject is still vendored and unedited; what the lane chose is **the call**, and
+*a chosen call site is not a commissioned program — it is how a caller would use
+the function.* The line to hold: **choosing an ARGUMENT is selection; writing a
+SUBJECT is commissioning.** The first is what a suite does every time it picks
+an input; only the second manufactures the thing it then measures.
+
+**AND THE HIERARCHY THIS COMPLETES — three tiers of acceptance row, and the top
+one is qualitatively different.** Against a naive *list-copy* slice model, the
+four rows sort:
+
+| row | the wrong model's response |
+| --- | --- |
+| the return value (`itoa(mid,42) = "42"`) | **PASSES** |
+| the two aliasing rows (`base` shows the write) | **FAILS** |
+| `out[:cap(out)]` reaching past the value's own length | **CANNOT BE STATED** |
+
+> **Rows the wrong model PASSES < rows it FAILS < rows it CANNOT STATE.**
+
+**A row the wrong model cannot express is the strongest evidence an acceptance
+case can carry**, for two reasons worth separating. It fails at **design
+time, not run time** — you discover it while *writing the row*, before anything
+is built on the model. And it **cannot be argued away as a bug**:
+inexpressibility is a property of the **representation**, not of the code, so
+there is no patch that answers it. *A value reaching beyond its own length into
+a longer array has no representation in a copy* — that sentence settles the
+value model, and it settled this one **up front: backing array + offset + len +
+cap.**
+
+**The practical procedure is the inverse of how it reads.** You do not first
+know the right model and then find the row; you **try to write the row under
+the candidate model and fail** — and the failure is the finding, in exactly the
+sense §9.7's blocker-naming norm means it. **An acceptance row you cannot write
+is a specification of what the model is missing.**
+
 **AND THE THEOREM BECOMES AN ORACLE FOR ITS SIBLINGS — a THIRD adjudicator
 kind.** The same landing checked `Len8` **exhaustively over all 256 inputs**
 against `bitLenSpec` — **§G13's PROVED spec** — and `Reverse8` against **what

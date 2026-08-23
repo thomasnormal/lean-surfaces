@@ -260,6 +260,32 @@ used and satisfied by core layer 1 · **inch N** = scheduled at a named rung ·
 | exception flags | — | — | Annex F territory, no profile slot exists | — | — | — | — |
 | rounding-mode selection | — | — | routed to the profile; **no such slot exists** | — | — | — | — |
 
+### 2.0 THE CONSUMER-SITE CENSUS — measured, and the answer is ZERO unrouted crossings
+
+`harness/softfloat_consumer_census.py` → `docs/softfloat-consumer-census.json`.
+The transfer layer (§3.8) can serve a call site only if it goes through
+`Float.Model`; it can never serve an `opaque`, which has no Lean body. So the
+layer's consumer list is exactly "every site that crosses the opaque boundary",
+and that is measurable.
+
+**Measured at the pin: 42 opaque / 31 reducible declarations; 0 qualified
+crossings; 13 dot-notation candidates, all 13 resolving to non-crossings** — one
+already routed through `.toModel` (this lane's ES unblock, applied by the ES
+lane), two that are `ToString.toString` on an `Int64`/`BigInt`, and ten that are
+this component's own deliberate routing.
+
+**So nothing is waiting on the transfer layer, and ES's residual need is not a
+crossing.** Non-integer `Number::toString` is a REFUSE with a named cause
+(`LeanModels/Es/Convert.lean:249`), which means **decimal printing (§3, plan
+step 3) is now the only item any tier is blocked on.** Everything else in the
+ordering is headroom.
+
+**The instrument corrected itself twice, both times in the flattering
+direction** — 319 → 170 → 13 as the matcher stopped scoring English words
+(`round`, `exp`, `log`), then stopped scoring Mathlib's `Real.exp`/`Real.log` in
+the analog lane. See `docs/backlog/softfloat.md` 2026-08-23-softfloat-9; the law
+is master's own `f48f9db`: *count the pattern position, never the identifier.*
+
 ### 2.1 ES is blocking on ONE thing, and this lane UNBLOCKED it — run, not admired
 
 `docs/backlog/es.md` 2026-08-22-es-3 says the exact-integer arm of
@@ -274,25 +300,33 @@ projection away. `Float.toInt64` is `opaque` — core's own docstring says *"Thi
 function does not reduce in the kernel"* — but `Float.Model.toInt64` is a plain
 `def` over `UnpackedFloat.toInt64`, and `Float.toModel` is a projection.
 
-**Replicated and RUN** (`harness/softfloat/probe_es_unblock.lean`, core imports only, the ES
-function copied verbatim from `LeanModels/Es/Convert.lean`):
+**Replicated and RUN** (`harness/softfloat/probe_es_unblock.lean`, core imports
+only, both bodies transcribed from `LeanModels/Es/Convert.lean`):
 
 | row | `#guard` | `rfl` | `decide` |
 | --- | --- | --- | --- |
-| `numberToString 42.0 = some "42"` — **as landed** | passes | **fails** | **fails** |
-| `numberToStringViaModel 42.0 = some "42"` | passes | **passes** | **passes** |
+| the **pre-unblock** body (`n.toInt64`) | passes | **fails** | **fails** |
+| the **landed** body (`n.toModel.toInt64`) | passes | **passes** | **passes** |
 | the same at `7.0`, `-7.0`, `1000.0` | passes | **passes** | — |
 | `NaN` / `±Infinity` / `±0` arms | passes | **passes** | — |
-| the `%` site (`Convert.lean:303`) | passes | — | **passes** |
-| `numberToStringViaModel 2.5 = none` (still refused) | passes | **passes** | — |
+| the shape the withdrawn `%` arm would need (`Convert.lean:315-324`) | passes | — | **passes** |
+| non-integer `2.5 ⇒ none` (still refused) | passes | **passes** | — |
 
-The change is two expressions: `n.toInt64` → `n.toModel.toInt64`, and
+The change was two expressions: `n.toInt64` → `n.toModel.toInt64`, and
 `t.toFloat` → `Float.ofModel (Float.Model.ofInt64 t)`. Axiom print from a
 zero-error elaboration: `[propext, Classical.choice, Quot.sound]`.
 
-**That moves the whole exact-integer arm from `#guard` strength — which §0.1
-shows is the C runtime, not Lean — to kernel strength.** It is the ES lane's
-edit to make; this lane owes them the measurement, not the commit.
+**That moved the whole exact-integer arm from `#guard` strength — which §0.1
+shows is the C runtime, not Lean — to kernel strength.**
+
+**AND IT IS LANDED: the ES lane committed the routing (`9dab312`), so
+`LeanModels/Es/Convert.lean:224-238` IS the routed body.** This charter said
+*"it is the ES lane's edit to make"* for longer than that was true; the probes
+said worse, labelling the pre-unblock body "as landed" while the real landed
+body was the one they presented as the alternative. Both are corrected, and the
+mechanism is worth keeping: **a transcription of another lane's file is a copy
+with a timestamp, and it rots the moment they commit.** The probes are now a
+regression gate on the landed shape rather than a proposal about it.
 
 **What stays blocked for ES:** `Number::toString` for non-integers, i.e.
 correctly-rounded shortest-round-trip decimal printing. `Float.toString` is
@@ -569,13 +603,46 @@ and it reaches the user-facing `Float` with one more `show`
 (`float_add_nan`, same file). Axioms on all three:
 `[propext, Classical.choice, Quot.sound]`.
 
-**THE DESIGN CONSEQUENCE: layer 3 is a TACTIC, not a body of lemmas.** The
-per-width cost is a mechanical `show` that names the format, which means the
-transfer should be **generated** — a macro that takes a parametric theorem and
-a width and emits the packed corollary — rather than written twice per fact.
-That is the difference between paying clause (3)'s price once and paying it on
-every theorem forever, and it is available because core made the packed
-operations definitional rather than opaque.
+**THE FIRST CONCLUSION WAS "layer 3 is a TACTIC", AND IT IS SUPERSEDED — the
+right answer is a CLASS.** The tactic reading was: the per-width cost is a
+mechanical `show`, so generate it with a macro. True, and beatable. A bake-off
+(`harness/softfloat/probe_transfer_class.lean`) put a macro-shaped simp set
+against a `Packed` class over the wrapper type, and the class wins outright:
+
+> **`LeanModels/SoftFloat/Transfer.lean` restores parametricity ABOVE core's
+> packed boundary.** `Float.Model` and `Float32.Model` become **instances** of
+> `Packed α`, carrying their `Format`, their pack/unpack pair, and the
+> equations saying their operations *are* the parametric ones conjugated. Each
+> IEEE row is then stated **ONCE over `α`** and lands on both widths as a
+> direct application — no macro, no second proof, no second statement.
+
+**This is §3.5.1 clause (1)'s own move applied one level up.** The clause says
+`binary32`/`binary64` are instances of a general `Format`, never separate
+definitions. The class says the same of the *wrappers*. Clause (3) observes
+that core's parametricity stops at the packed boundary; it does, and **ours
+does not have to stop there too**. A future packed width — a `binary16` or
+`binary128` wrapper — becomes an instance and inherits every transferred
+theorem without reproving any of them.
+
+**The acid test, and it is why this was a probe and not an assumption:** a
+class can easily be an abstraction *barrier* rather than a *view*, and then
+`rfl` stops closing at the instances and the whole thing buys nothing.
+Measured — `packed_stays_definitional` and `packed32_stays_definitional`,
+both `rfl`:
+
+```
+-- (illustrative — the acid test's shape; the tree declarations are in Transfer.lean)
+Packed.pack (α := Float.Model)
+  (UnpackedFloat.add Format.binary64 (Packed.unpack a) (Packed.unpack b)) = a.add b
+```
+
+**And the bake-off recorded its own §0.1 II(a) instance.** The class's first
+version omitted `[Add α]`, so `HAdd α α ?m` could not be synthesized and the
+class fields failed to elaborate — whereupon `#print axioms packed_add_nan`
+printed **`does not depend on any axioms`**, the cleanest line available,
+about a theorem whose statement had never elaborated. The lying-axiom-print
+failure mode, reproduced live in this lane rather than quoted from the
+doctrine.
 
 **What layer 3 cannot do**, and it is the boundary to state: it cannot reach
 the `opaque` declarations. `Float.toInt64`, `Float.toString`, `ceil`, `floor`,
@@ -794,6 +861,6 @@ Cite-and-paraphrase throughout; no IEEE text is vendored.
   12 theorems, zero `sorry`, no package dependency.
 * The core census (§1), run against the pin at four widths plus two beyond IEEE.
 * The consumer census (§2), across seven tiers.
-* **The ES unblock, measured** (§2.1) — the ES lane's edit to make.
+* **The ES unblock, measured** (§2.1) — since APPLIED by the ES lane (`9dab312`).
 * Three corrections to the commission (§0) and five to other documents (§2.2,
   §2.3, §2.4 ×3, §2.5).

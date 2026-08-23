@@ -1,0 +1,155 @@
+{
+  "crossing_sites_dotted_candidates": 13,
+  "crossing_sites_qualified": 0,
+  "crossings": [
+    {
+      "file": "LeanModels/Es/Convert.lean",
+      "line": 236,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Convert.lean",
+      "line": 238,
+      "name": ".toString",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Convert.lean",
+      "line": 252,
+      "name": ".toString",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Theorems.lean",
+      "line": 150,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Theorems.lean",
+      "line": 151,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Theorems.lean",
+      "line": 152,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Theorems.lean",
+      "line": 153,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 66,
+      "name": ".toInt64",
+      "position": "anonymous"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 80,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 95,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 167,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 193,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 195,
+      "name": ".toInt64",
+      "position": "dotted"
+    }
+  ],
+  "crossings_by_file": {
+    "LeanModels/Es/Convert.lean": [
+      ".toInt64",
+      ".toString",
+      ".toString"
+    ],
+    "LeanModels/SoftFloat/Theorems.lean": [
+      ".toInt64",
+      ".toInt64",
+      ".toInt64",
+      ".toInt64"
+    ],
+    "LeanModels/SoftFloat/Transfer.lean": [
+      ".toInt64",
+      ".toInt64",
+      ".toInt64",
+      ".toInt64",
+      ".toInt64",
+      ".toInt64"
+    ]
+  },
+  "note": "The opaque set is DERIVED from the toolchain at the pin, never hardcoded: whether a declaration reduces is a fact about the pin. Counts are PATTERN POSITIONS in code, never bare identifiers. Files with no `Float` token in code are excluded -- a sound narrowing that removes same-named members of other types (Mathlib's Real.exp/Real.log, Nat.pow, every type's toString). `dotted`/`anonymous` rows remain CANDIDATES: a regex cannot resolve a receiver's type, so they are never merged into the qualified count.",
+  "opaque_count": 42,
+  "opaque_declarations": [
+    "Float32.acos",
+    "Float32.acosh",
+    "Float32.asin",
+    "Float32.asinh",
+    "Float32.atan",
+    "Float32.atan2",
+    "Float32.atanh",
+    "Float32.cbrt",
+    "Float32.ceil",
+    "Float32.cos",
+    "Float32.cosh",
+    "Float32.exp",
+    "Float32.exp2",
+    "Float32.floor",
+    "Float32.frExp",
+    "Float32.log",
+    "Float32.log10",
+    "Float32.log2",
+    "Float32.pow",
+    "Float32.round",
+    "Float32.scaleB",
+    "Float32.sin",
+    "Float32.sinh",
+    "Float32.tan",
+    "Float32.tanh",
+    "Float32.toFloat",
+    "Float32.toISize",
+    "Float32.toInt16",
+    "Float32.toInt32",
+    "Float32.toInt64",
+    "Float32.toInt8",
+    "Float32.toString",
+    "ISize.toFloat",
+    "ISize.toFloat32",
+    "Int16.toFloat",
+    "Int16.toFloat32",
+    "Int32.toFloat",
+    "Int32.toFloat32",
+    "Int64.toFloat",
+    "Int64.toFloat32",
+    "Int8.toFloat",
+    "Int8.toFloat32"
+  ],
+  "qualified_hits_in_prose": 0,
+  "reducible_count": 31,
+  "schema_version": 1,
+  "toolchain_pin": "leanprover/lean4:v4.33.0-rc1"
+}

@@ -56,16 +56,25 @@ file and run both ways:
 
 | row | `#guard` | `rfl` | `decide` |
 | --- | --- | --- | --- |
-| `numberToString 42.0 = some "42"` (as landed) | passes | **fails** | **fails** |
+| `numberToString 42.0 = some "42"` (the body landed **at the time**) | passes | **fails** | **fails** |
 | `numberToStringViaModel 42.0 = some "42"` | passes | **passes** | **passes** |
 | `7.0`, `-7.0`, `1000.0` | passes | **passes** | — |
 | NaN / ±Infinity / ±0 arms | passes | **passes** | — |
-| the `%` site (`Convert.lean:303`) | passes | — | **passes** |
+| the `%` site (then `Convert.lean:303`; now `:315-324` and **withdrawn**) | passes | — | **passes** |
 | `2.5 ⇒ none` (still refused) | passes | **passes** | — |
 
 Two expressions change: `n.toInt64` → `n.toModel.toInt64`, `t.toFloat` →
 `Float.ofModel (Float.Model.ofInt64 t)`. **It is the ES lane's edit to make;
-this lane owes them the measurement, not the commit.** Still blocked for ES:
+this lane owes them the measurement, not the commit.**
+
+> **SINCE LANDED (annotation, not a rewrite).** The ES lane committed the
+> routing in `9dab312`, about six minutes after this entry was written, so
+> `Convert.lean:224-238` is now the routed body and the row above describes
+> history. The measurement stands as taken; only its tense was wrong. The
+> probes carried the same staleness in a worse form — see
+> `2026-08-23-softfloat-11`.
+
+Still blocked for ES:
 non-integer `Number::toString`, i.e. shortest-round-trip decimal printing —
 `Float.toString` is `opaque` and core has no decimal printer at all. That is
 plan step 3.
@@ -308,3 +317,358 @@ the safe direction, but §7.1 rule 5's warning is that a broken liveness check
 *"does not fall back to caution, it falls forward into reclaiming a lock
 somebody is holding"*. The fix is the one the rule already states: print the
 processes and read them, rather than counting them.
+
+---
+
+## 2026-08-23-softfloat-8 — LAYER 3 LANDED, and it is a CLASS, not a tactic
+
+`LeanModels/SoftFloat/Transfer.lean`. **The priced first item, and the price
+came in lower than the estimate because the estimate was the wrong shape.**
+
+### THE ESTIMATE WAS "A TACTIC". THE ANSWER IS A CLASS, AND IT IS STRICTLY BETTER
+
+`2026-08-22-softfloat-1` measured that every packed operation is definitionally
+`pack ∘ (the parametric op at its format) ∘ unpack`, so a transfer costs one
+mechanical `show` per (theorem, width), and concluded: **generate it** — a macro
+emitting the packed corollary per width.
+
+A bake-off (`harness/softfloat/probe_transfer_class.lean`) put that against a
+`Packed α` class over the wrapper type. **The class wins outright**, and the
+difference is not ergonomic, it is what the theorem SAYS:
+
+| | macro / simp set | `Packed` class |
+| --- | --- | --- |
+| statements per IEEE row | **2** (one per width) | **1** |
+| new widths (`binary16`, `binary128` wrappers) | 1 more per row, forever | **an instance; inherits everything** |
+| what the reader sees | two theorems that must be kept in step | one theorem |
+
+**This is §3.5.1 clause (1)'s own move applied one level up.** The clause says
+`binary32`/`binary64` are instances of a general `Format`, never separate
+definitions. The class says the same of the **wrappers**. Clause (3) observes
+that core's parametricity **stops** at the packed boundary — it does, and this
+file is the finding that **ours does not have to stop there too.**
+
+Landed: `packed_add_nan`, `packed_add_zeros`, `packed_add_inf_opposite`,
+`packed_div_zero_zero`, `packed_div_by_zero`, `packed_sqrt_neg`,
+`packed_compare_nan`, `packed_toInt64_eq_clamped_truncate` — **eight rows, one
+statement each, both widths**. Axioms `[propext]` throughout, or
+`[propext, Quot.sound]` where `toInt_eq_truncate` is used.
+
+### THE ACID TEST, because a class is easily a BARRIER instead of a VIEW
+
+If the class's `pack`/`unpack` stop being definitionally the real ones, `rfl`
+stops closing at the instances and the abstraction buys nothing. Measured:
+`packed_stays_definitional` and `packed32_stays_definitional` both close by
+**`rfl`** through the class. It is a view.
+
+### AND THE BAKE-OFF REPRODUCED §0.1 II(a)'s LYING AXIOM PRINT, LIVE
+
+The class's first version omitted `[Add α]`, so `HAdd α α ?m` could not be
+synthesized and the class fields failed to elaborate. `#print axioms
+packed_add_nan` then printed **`does not depend on any axioms`** — the cleanest
+line the command can emit — about a theorem whose **statement had never
+elaborated**. Twelve errors in the file, and the axiom line read like a
+triumph. The doctrine's most dangerous failure mode, reproduced in this lane
+rather than quoted from the family document.
+
+### THE ES DELIVERY: THE CLAMP IS NOW IN A CONCLUSION, NOT A COMMENT
+
+`packed_toInt64_eq_clamped_truncate` states the packed conversion as
+`Int64.ofIntClamp q.truncate` — **the clamp is in the statement**, deliberately.
+
+The ES lane's `%` bug (`2026-08-23-es-1`) happened because the clamp was
+invisible at the call site. A warning in prose prevented the next one; a
+theorem whose conclusion names `Int64.ofIntClamp` prevents it **in the goal
+state**, where a modular conversion (ECMA-262 §7.1.6 `ToInt32`, mod 2³²) cannot
+silently unify with it. `toInt_eq_truncate` remains stated over the **exact
+value** and is the handle for the modular route — which is now the ES lane's
+`OWED` item, and it has the theorem it needs.
+
+### NEXT, unchanged in order
+
+`roundQ` + `IsCorrectlyRounded` and the mode layer (§3.5), then `op_correct`
+for `+ − × ÷`, then the flag layer, then decimal printing.
+
+---
+
+## 2026-08-23-softfloat-9 — THE CONSUMER-SITE CENSUS: zero unrouted crossings remain, and the instrument corrected itself twice
+
+`harness/softfloat_consumer_census.py` → `docs/softfloat-consumer-census.json`.
+The §5.4 instrument contract: `--compare` mode, every refusal path RUN (12
+self-test rows, no Lean needed), double-run byte-identical, and the toolchain
+**pin stamped**, because *which declarations are opaque is a fact about the pin*
+and therefore an INPUT to the result.
+
+### THE OPAQUE SET IS DERIVED, NEVER HARDCODED
+
+Whether `Float.toInt64` reduces is a property of the toolchain, not of this
+lane's memory. The instrument parses the toolchain's own float sources and
+classifies each declaration `opaque` / `def` / `extern-def`. Measured at
+`leanprover/lean4:v4.33.0-rc1`: **42 opaque, 31 reducible.** A toolchain bump
+moves the census by itself instead of silently invalidating a hardcoded list.
+
+### THE ANSWER: ZERO UNROUTED CROSSINGS
+
+**0 qualified crossings; 13 dot-notation candidates, and every one resolves to
+a non-crossing:**
+
+| site | resolves to |
+| --- | --- |
+| `LeanModels/Es/Convert.lean:236` `.toInt64` | **already routed** — it reads `n.toModel.toInt64`, this lane's unblock, applied |
+| `LeanModels/Es/Convert.lean:238`, `:252` `.toString` | `ToString.toString` on an **`Int64`/`BigInt`**, not `Float.toString` |
+| 10 sites in `LeanModels/SoftFloat/{Theorems,Transfer}.lean` | this component's own deliberate `.toModel` routing |
+
+So **the transfer layer has no unrouted consumer waiting on it.** ES's residual
+need is not a crossing at all: non-integer `Number::toString` is a **REFUSE with
+a named cause** (`Convert.lean:249` — *"needs correctly-rounded decimal
+conversion (SoftFloat step 3)"*), and `%` is refused after the clamp bug. The
+tier is honest about the gap rather than crossing the boundary quietly, which
+is the outcome the transfer layer was supposed to produce.
+
+**Consequence for the plan: decimal printing (step 3) is now the ONLY thing any
+tier is blocked on.** The mode layer, `roundQ` and `op_correct` are headroom,
+not unblocking.
+
+### THE INSTRUMENT CORRECTED ITSELF TWICE, and both errors flattered
+
+This is §5.4a pointed at the instrument rather than at the tree, and the census
+is only trustworthy on its third pass.
+
+| pass | matcher | result | why it was wrong |
+| --- | --- | --- | --- |
+| 1 | bare member name | "26 crossings, **319** prose hits" | `round`, `exp`, `log`, `pow`, `toString` are ENGLISH WORDS and other types' members |
+| 2 | qualified + dot-notation | "0 qualified, **170** candidates" | the analog lane's `.exp`/`.log` are **Mathlib's `Real.exp`/`Real.log`**, not floats at all |
+| 3 | + sound narrowing | "0 qualified, **13** candidates" | a file with no `Float` token in code cannot contain a Float crossing |
+
+**Both errors ran in the flattering direction — a bigger consumer list, which
+is a bigger mandate for this lane.** Pass 1 over-reported by ~24×. The fix that
+mattered was not a cleverer regex but a **sound narrowing**: dropping files that
+never name `Float` cannot drop a Float call site, so it costs no recall.
+
+**And the residue is stated rather than hidden:** a regex cannot resolve a
+receiver's type, so `dotted`/`anonymous` rows are reported as **CANDIDATES** and
+are never merged into the qualified count. The final resolution of all 13 was
+done by reading them, and it is recorded above rather than asserted by the tool.
+
+**The law this pays into**, and it is the master-branch commit `f48f9db`'s own
+title: *count the pattern position, never the identifier.*
+
+---
+
+## 2026-08-23-softfloat-10 — STEP 3 SCOPED: the consumer census found a SECOND consumer, and the algorithm choice follows from the SPEC's own wording
+
+`harness/softfloat/probe_decimal.lean` (zero errors; both theorems `rfl` with
+**no axioms at all**). Design only — no tree module yet.
+
+### THE CONSUMER CENSUS, and the answer to "is there a second?" is YES
+
+Asked to confirm ES's `Number::toString` REFUSE row is the only named consumer.
+**It is the only PRINTING consumer. There is a second, in the inverse
+direction.**
+
+| # | site | direction | served today? |
+| --- | --- | --- | --- |
+| 1 | `LeanModels/Es/Convert.lean:251` — `Number::toString` REFUSE, naming *"correctly-rounded decimal conversion (SoftFloat step 3)"* | float → decimal (**print**) | **NO — core ships no printer at all**; `Float.toString` is `opaque` |
+| 2 | `LeanModels/Es/Convert.lean:168` — `StringToNumber` REFUSE, *"outside the decimal-integer fragment (the StringNumericLiteral grammar is a rung)"* | decimal → float (**parse**) | **PARTLY** — core's `UnpackedFloat.ofScientific` is width-parametric and kernel-reducible (censused reducible) |
+| — | `LeanModels/Es/Eval.lean:72` — BigInt literal outside the decimal fragment | decimal → **BigInt** | not ours: no float involved |
+| — | `Examples/es/convert/guards.lean:82` | the gate row for #1 | — |
+
+**No other tier names a decimal need.** So step 3 is two half-inches, not one,
+and they are asymmetric: **printing is greenfield, parsing already has a core
+primitive to state a theorem about.** Parsing is therefore the cheaper one and
+should probably go first — `ofScientific_correct` is an `op_correct` in the
+existing shape, whereas printing needs a new algorithm.
+
+### THE ALGORITHM: DRAGON4-STYLE EXACT, and the reason is the SPEC's wording
+
+**Not Ryū, not Grisu.** Those are *speed* designs: they use precomputed power
+tables and fixed-point approximations, with a slow fallback for the cases the
+approximation cannot decide. Their correctness arguments are **error bounds on
+an approximation** — "this fast path agrees with the exact answer whenever the
+bound holds". We would then owe ES two theorems: the fast path matches the
+exact algorithm, and the exact algorithm matches the spec. **ES only wants the
+second one.**
+
+ECMA-262 §6.1.6.1.20 does not describe an algorithm at all. It says: let `n`,
+`k`, `s` be integers such that `k ≥ 1`, `10^(k-1) ≤ s < 10^k`,
+`s × 10^(n-k)` is the Number value, **and `k` is as small as possible**. That
+is an **existential over integers with a minimality side condition** — which is
+*literally what an exact big-integer search computes*. So the exact algorithm's
+correctness theorem **is the spec clause**, with no approximation layer to
+excuse.
+
+The family's own reasons stack on top:
+
+* **ℝ never appears** (charter §3.5.1). Exact big-integer arithmetic keeps the
+  whole thing in `Nat`/`Int`; Ryū's tables would be a large data blob whose own
+  correctness is a separate obligation.
+* **Kernel-reducible** (§3.4), so instance rows close by `decide`.
+* **Width-parametric**: the interval is computed from `(mantissa, exponent)` and
+  `fmt.targetExponent`, so binary16/32/64/128 are instances, as everywhere else.
+
+### THE CORRECTNESS STATEMENT ES NEEDS, in the family's output-determined form
+
+```
+-- (illustrative — the obligation shape, not a tree declaration)
+toDecimal_shortest (fmt : Format) (x : UnpackedFloat) (d : Decimal) :
+    toDecimal fmt x = some d →
+      roundTrips fmt x d ∧ ∀ d', d'.digits < d.digits → ¬ roundTrips fmt x d'
+```
+
+*What it emits round-trips, and nothing shorter does.* The second conjunct is
+ECMA-262's *"k is as small as possible"*, and it is the half a fast algorithm
+cannot give you without its own error analysis. The answer is bound in the
+RESULT, never taken as an input (`docs/statement-cookbook.md` §7).
+
+**This is the statement that kills the `"1.000000"` bug by construction** — the
+one the ES lane names at `Convert.lean:207` as the reason they refuse rather
+than delegate to the host: *"handing back the host's `Float.toString` would emit
+`1.000000` where the spec says `1` — a silent wrong answer."* A theorem with
+the minimality conjunct cannot be satisfied by a printer that pads.
+
+### TERMINATION: FUEL, AND IT IS THE FIRST TIME THIS COMPONENT NEEDS IT
+
+Layer 2's fuel answer was **none** — nothing searched. Shortest-round-trip
+printing **searches**: it tries digit counts until one round-trips. So it needs
+well-founded recursion or fuel, and **well-founded recursion is exactly what
+cost this component `sqrt`** (§1.2: `Nat.sqrt`'s `termination_by` is why `sqrt`
+closes under neither `rfl` nor `decide`). Measured in the probe: the fuelled
+loop closes by **`rfl` and by `decide`**, with **no axioms**, and fuel
+exhaustion answers `none` — loud, never a wrong digit count.
+
+### ONE THING FLAGGED BEFORE THE CODE EXISTS
+
+`/` on `Int` is a **convention choice**: `Int.ediv`, `Int.tdiv` and `Int.fdiv`
+disagree on negatives, and the nearest-decimal step divides. The probe's sample
+is positive, where all three agree. **The implementation must pin the convention
+and say which** — a printer that picks one silently is the same shape of defect
+as an unstated rounding mode.
+
+---
+
+## 2026-08-23-softfloat-11 — THE PROBES WENT STALE IN SIX MINUTES, and correcting the text is not the fix
+
+Audit row, `docs/quality-audit-2026-08-23.md` "## softfloat", **HIGH**. Verified
+against the current tree before acting, not taken on the note's word.
+
+### THE DEFECT: THE PROBE PRESENTED THE LANDED VERSION AS THE UNPROVEN ALTERNATIVE
+
+`harness/softfloat/probe_es_unblock.lean` transcribed ES's `numberToString` and
+labelled the transcription *"`LeanModels/Es/Convert.lean:219-226` as landed"*.
+That was true when written. **The ES lane committed the routing (`9dab312`)
+about six minutes later**, so the landed body became the routed one — and the
+probe went on calling the PRE-unblock body "as landed", with its two
+expected-FAIL rows sitting under the heading *"The landed version"*.
+
+**Anyone running the probe would have concluded the unblock was unlanded** — the
+exact opposite of what this lane had just measured, in a file whose whole
+purpose was to demonstrate it. The same staleness sat in
+`probe_es_unblock_axioms.lean`, and a second row cited `Convert.lean:303` for
+the `%` site, which had moved to `:315-324` **and been withdrawn**.
+
+### FIXED, AND THE HALVES ARE NOW NAMED FOR WHAT THEY ARE
+
+`numberStringPreUnblock` (history, the subject of the failure rows) and
+`numberStringLanded` (mirrors `Convert.lean:224-238`). Sections retitled so the
+landed half is the routed one; the `%` row re-cited to `:315-324` and retitled
+*"the shape the WITHDRAWN `%` arm would need"*, with an explicit line saying it
+does **not** claim the arm is landed. The probes are now a **regression gate on
+the landed shape** rather than a proposal about it. Charter §2.1's table and its
+*"the ES lane's edit to make"* line are corrected the same way.
+
+The dated entry `2026-08-22-softfloat-1` is **annotated, not rewritten**: the
+measurement was correct as taken and only its tense was wrong, and a backlog
+entry is a record of a moment.
+
+### THE STRUCTURAL FIX, because correcting prose does not stop the next one
+
+> **A transcription of another lane's file is A COPY WITH A TIMESTAMP, and it
+> rots the moment they commit.**
+
+Six minutes is the measured half-life here, which is short enough that "be
+careful" is not a control. So the copy now carries a **tripwire**:
+`harness/softfloat_consumer_census.py --check-transcriptions` asserts that every
+text this lane's probes assume about another lane's file is *still in that
+file* — the routed `n.toModel.toInt64`, the `Float.ofModel (…ofInt64 t)`
+rebuild, and the `%` arm's refusal string. It is in the gate set, so the next
+time ES moves that code the probe goes **red instead of quietly lying**.
+
+Its own failure path is exercised in the self-test (13 rows now): a fixture
+whose cited text is absent must make the tripwire FIRE, because a check that
+has never failed is a design and not a control.
+
+### WHY THIS ONE WAS INVISIBLE TO EVERY GATE THIS LANE HAD
+
+Worth naming, because the gate set looked complete. `probe_es_unblock.lean` is
+**expected to error** (two rows), and its sibling is expected to be clean — both
+were, throughout. `docs_check` gates marked blocks in `.md`, and this was a
+comment in a `.lean`. The census gated *call sites*, not *citations*. **Every
+gate was green while the file said the opposite of the truth**, because none of
+them was pointed at the claim that had rotted. That is the §5.4a lesson in its
+sharpest form: the failure was silent AND flattering, and it took an outside
+audit to see it.
+
+---
+
+## 2026-08-23-softfloat-12 — THE DECIMAL INCH'S CENSUS: 2 sites in tree, and the suite figure is a BOUND
+
+`harness/softfloat_consumer_census.py --decimal-demand`. Census-first, before
+any decimal code.
+
+### IN-TREE, EXACT — two refusal sites, one per direction
+
+| site | direction | spec | served by core? |
+| --- | --- | --- | --- |
+| `LeanModels/Es/Convert.lean:251` | **print** | ECMA-262 §6.1.6.1.20 `Number::toString` | **no** — `Float.toString` is `opaque`; core ships no printer |
+| `LeanModels/Es/Convert.lean:168` | **parse** | ECMA-262 §7.1.4.1 `StringNumericLiteral` | **partly** — `UnpackedFloat.ofScientific` is width-parametric and kernel-reducible |
+
+**Reproduced by two independent methods**, which is this repository's standard
+for adopting a number: the consumer-site census (call-site scan) and a refusal
+grep found the same two sites. `LeanModels/Es/Eval.lean:72` is a BigInt literal
+row and involves no float; `Spec.lean:290` is prose.
+
+**The asymmetry is the schedule.** Printing is greenfield; parsing already has a
+core primitive to state an `op_correct` about. **Parse is the cheaper half and
+should go first.**
+
+### OUT-OF-TREE — a BOUND, labelled as one, and NOT CI-wired
+
+`built-ins/Number` 340 + `built-ins/parseFloat` 54 = **at most 394 of 23 109
+built-ins files (1.7%)**. It is an **upper** bound and the mode says so in its
+own output: those directories also hold `Number.isInteger`,
+`MAX_SAFE_INTEGER` and friends, which need no conversion at all.
+
+**The exact figure is not computable here.** test262 is out of tree — the ES
+lane's census pins it at sha `3655e746` and the corpus is not on disk — and
+`docs/es262-census.json` carries only aggregate esid counts (`esid_rows` is an
+`int`, not a per-clause map), so it cannot be refined from the committed data
+either. Per §5.4, a mode whose corpus is out-of-tree is **not wired into CI**: a
+gate that is a permanent SKIP is a check pretending.
+
+**1.7% is deliberately a smaller claim than it could have been.** The C tier's
+analogous headline is "21% of format specs"; this lane has now twice published a
+consumer number that shrank under scrutiny (319 → 170 → 13), both times in the
+flattering direction, so the bound is stated as a bound.
+
+### THE INSTRUMENT FAILED LOUDLY FIRST, AND THAT WAS THE DESIGN WORKING
+
+The mode's first run reported **0 in-tree sites** — because it reused
+`strip_lean`, which blanks string literals on purpose for the call-site scan,
+and **a refusal MESSAGE lives inside a string literal by construction.** It
+printed `FAIL … either it was fixed (good) or the marker drifted (bad)` and
+exited non-zero rather than reporting `0` as a finding. That is §5.4's *"an
+empty census is an instrument fault, never a finding"* firing on its author.
+
+Fixed by matching the RAW source for this mode, with a proximity requirement —
+a hit must sit within three lines of a `refuseConstruct` — because the message
+and its call are split across lines in the real file, so same-line matching
+would have found nothing either.
+
+### WHAT THE INCH MUST COVER, from the census
+
+1. **Parse first** (`ofScientific_correct`): core's primitive already exists, so
+   this is an `op_correct` in the shape already built and it retires
+   `Convert.lean:168`.
+2. **Print second** (the Dragon4-style exact algorithm of
+   `2026-08-23-softfloat-10`): greenfield, fuel-shaped, and it retires
+   `Convert.lean:251` — the only site in the tree that no other lane can fix.

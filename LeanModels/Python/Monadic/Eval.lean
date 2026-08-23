@@ -1693,6 +1693,73 @@ def callInMono (m : Module) (fuel : Nat) (w : World) (fname : String)
     (args : Array RVal) : Run World RVal :=
   toRun ((kont m fuel).call fname args) w
 
+/-! ### §4.1 THE CLASS THE PUBLIC WRAPPER ERASES
+
+`Run.unsupported` has ONE field, a `String`. `Loud.unsupported` has THREE — the
+§5.2 CLASS, the prose, and the diagnostic snapshot — so `toRun` is a projection
+that DROPS the class (`Substrate.lean`'s `ofRun_toRun_normalises` states the
+loss as a theorem). Everything downstream of `callInMono` therefore sees prose
+where the model had a classified verdict, and a scoreboard that must bucket by
+class is left parsing prose — the exact thing the class exists to prevent.
+
+**The `--observations` pattern, applied to the class.** That flag's rule is
+already: *the public wrapper erases the world, so under the flag the driver
+calls the inner API and keeps it.* The class is the same shape of loss one layer
+further in, so it gets the same treatment — one run, two projections, and a
+theorem saying they are one run.
+
+**Opt-in, and `harness/cases.json` is untouched.** The differential compares the
+model's line to a dict it builds itself by WHOLE-DICT equality, which is what
+makes any additive field a failure; the field appears only under
+`--observations`, exactly like `stdout` and `args_after`. -/
+
+/-- The runner boundary's INNER value — the one `toRun` is a projection of. -/
+def callInRaw (m : Module) (fuel : Nat) (w : World) (fname : String)
+    (args : Array RVal) : HaltWith Unit Unit (Except PyErr RVal × World) :=
+  (kont m fuel).call fname args w
+
+/-- `Run`'s view of an inner value: `toRun`, written as a function of the
+already-applied run so both projections can share one execution. -/
+def ofHalt {α : Type} :
+    HaltWith Unit Unit (Except PyErr α × World) → Run World α
+  | .ok (.ok a, w)                => .ok w a
+  | .ok (.error e, w)             => .exn w e
+  | .error .timeout               => .timeout
+  | .error (.unsupported _ msg _) => .unsupported msg
+
+/-- **ONE RUN, TWO PROJECTIONS** — and this theorem is what makes that a fact
+rather than an intention. Without it the runner could quietly execute the
+interpreter twice and the two answers could drift. -/
+theorem callInMono_eq_ofHalt (m : Module) (fuel : Nat) (w : World)
+    (fname : String) (args : Array RVal) :
+    callInMono m fuel w fname args = ofHalt (callInRaw m fuel w fname args) := by
+  simp only [callInMono, toRun, callInRaw, ofHalt]
+  rcases h : (kont m fuel).call fname args w with l | ⟨r, w'⟩
+  · cases l <;> rfl
+  · cases r <;> rfl
+
+/-- The §5.2 CLASS, present exactly when the run REFUSED. `none` is not a
+default: it is the statement that this run did not refuse. -/
+def refusalClass {α : Type} :
+    HaltWith Unit Unit (Except PyErr α × World) → Option String
+  | .error (.unsupported c _ _) => some c.className
+  | _ => Option.none
+
+/-- **PRESENT EXACTLY WHEN**, as a theorem rather than a comment: the class is
+there precisely on the runs whose `Run` projection says `unsupported`. A field
+whose presence rule is only documented is a field a consumer will read wrong. -/
+theorem refusalClass_isSome_iff {α : Type}
+    (h : HaltWith Unit Unit (Except PyErr α × World)) :
+    (refusalClass h).isSome ↔ ∃ msg, ofHalt h = .unsupported msg := by
+  cases h with
+  | error l =>
+      cases l with
+      | timeout => simp [refusalClass, ofHalt]
+      | unsupported c msg s => simp [refusalClass, ofHalt]
+  | ok p =>
+      obtain ⟨r, w⟩ := p
+      cases r <;> simp [refusalClass, ofHalt]
+
 /-! ## §5 NON-VACUITY FIRST — the rebuild RUNS, and the KERNEL decides it
 
 The fuel ruling's whole claim is that both halves stay kernel-reducible. That is
@@ -1866,6 +1933,8 @@ indices of a 3-element tuple gives 0+1+2 = 3, and the pair unpacks. -/
 #print axioms execOpen
 #print axioms kont
 #print axioms callInMono
+#print axioms callInMono_eq_ofHalt
+#print axioms refusalClass_isSome_iff
 #print axioms toRun_ofRun
 #print axioms ofRun_toRun_normalises
 #print axioms ofRun_toRun_of_plain

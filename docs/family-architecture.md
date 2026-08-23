@@ -1564,6 +1564,49 @@ about how this family builds proofs and not about one lemma:
   and that is the strongest evidence the backtracking `first` was the defect
   rather than the ambition.
 
+**AND TWO PLACEMENT LAWS THE LANDING PRODUCED**, both cheap to state and both
+learned by nearly getting them wrong:
+
+> **A shared name is worth an import; it is not worth relocating the trunk's
+> elaboration cost.** The `Lean.Order` base instances were ruled to sit beside
+> `FlatLe`. They do not, because `Core/Order.lean` is in `Python/Obs.lean`'s
+> import closure and `Core/Outcome.lean` is not — so "beside" would have dragged
+> `Std.Do` and the `grind` macro rule into all 65 `Examples/` files that import
+> the umbrella. **Check whose closure a file sits in before deciding two things
+> belong together.** The order facts stayed in `Core/Order.lean`; the stack
+> instances went to `Core/Outcome.lean`, where the stack is.
+
+> **ONE OPENING OF THE MONAD STACK IS THE RIGHT NUMBER.** A tier reasoning
+> through `ExceptT`/`StateT`/`Except` by name should do it in exactly one lemma,
+> in the module where the stack is DEFINED, and every other fact should compose
+> that one. Python's is `Monadic/Substrate.lean`'s `bind_apply`; the `toRun_*`
+> seam lemmas beside it translate do-notation into the trunk's `Run.bind`, so a
+> proof about a monadic definition reaches the trunk's vocabulary without
+> re-deriving the boundary. The tell that this is being violated is a proof that
+> unfolds `Functor.map`: `map` drops BELOW the one opening's reach, and the goal
+> stops being about the stack at all — `map_eq_pure_bind` is the way back up.
+
+**AND A THIRD, FROM A GATE THAT CAUGHT ITS OWN AUTHOR ON ITS FIRST RUN.**
+
+> **TWO FIELDS WITH THE SAME NAME ARE NOT THE SAME FIELD.** A new
+> `refusal_census.py` check compared the model's `class` (§5.2's four refusal
+> CLASSES) against the census's `WHITELIST_CLASS` (its own taxonomy of WHICH
+> GAP a row is) and produced **109 confident DRIFT lines**, uniformly wrong.
+> The word matched; the field did not.
+
+The useful part is the SHAPE of the failure, because it is the shape a name
+collision always takes: **not a few odd rows, but a large, uniform, confident
+disagreement.** A check that suddenly convicts most of a corpus is far more
+likely to be measuring the wrong column than to have found a systemic bug — and
+the tell is the uniformity, not the count.
+
+> **A GATE ADDED WITH A LANDING MUST RUN IN THAT LANDING'S TRIAD.** This one
+> did, as a `--gates` addition, and it failed — 116 lines, all of them defects
+> in the gate rather than in the tree, including 7 that flagged behaviour the
+> same commit's own documentation specified. Had it landed unexercised it would
+> have been a red gate in everyone else's tenure, blamed on their change.
+> **An unexercised gate is not a gate; it is a claim.**
+
 That is the same shape as C's routing law paying for itself at adoption: a
 decision taken for one reason turning out to buy a second. Here the
 **speaker split** (§3.4) is doing the work — because `Halt` is the model's

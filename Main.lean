@@ -76,6 +76,16 @@ exactly when":
   `mutated`, the boolean off comparing them with the inputs. Present
   exactly when the run reached a world AND every argument freezes;
   otherwise `args_after_refused` says why.
+* `class` — the model's own §5.2 REFUSAL CLASS (`unsupported`,
+  `environment`, `order-dependence`, `undefined`), present exactly when
+  `status` is `unsupported` and the refusal came from the INTERPRETER.
+  `Run.unsupported` carries one `String`, so the public wrapper erases
+  the class and a scoreboard is left parsing prose; under the flag the
+  driver keeps it off the inner run, the same way it keeps the world.
+  Absence means the run did not refuse — never "refused, unclassified"
+  (`Monadic.refusalClass_isSome_iff`). A boundary-FREEZE refusal keeps a
+  bare `status: unsupported` with no `class`, because it is a statement
+  about the boundary and not about the tier.
 
 WHY OPT-IN, since the fields are strictly additive: `harness/diff_test.py`
 compares the model's line to a dict it builds itself by WHOLE-DICT
@@ -271,7 +281,8 @@ the arm where the boundary FREEZE itself refuses, which stays a
 `status: unsupported` line and now also says what was printed on the way
 there. `.timeout`/`.unsupported` reached no world, so they carry nothing
 extra and are byte-identical to before. -/
-def batchResJson (fuel : Nat) (inArgs : Array Val) (thawed : Array RVal) :
+def batchResJson (fuel : Nat) (inArgs : Array Val) (thawed : Array RVal)
+    (cls : Option String) :
     Run World RVal → String
   | .ok w v =>
       (match RVal.freezeB w.heap fuel v with
@@ -284,7 +295,17 @@ def batchResJson (fuel : Nat) (inArgs : Array Val) (thawed : Array RVal) :
       "{\"status\":\"exn\",\"exn\":" ++ jsonStr (errName e) ++ exnMsgField e
         ++ batchObs fuel inArgs thawed w ++ "}"
   | .timeout => "{\"status\":\"timeout\"}"
-  | .unsupported msg => "{\"status\":\"unsupported\",\"msg\":" ++ jsonStr msg ++ "}"
+  | .unsupported msg =>
+      -- THE §5.2 CLASS, and it rides on this arm ALONE. `refusalClass` is
+      -- `some` exactly on the runs whose `Run` projection is `unsupported`
+      -- (`Monadic.refusalClass_isSome_iff`), so a consumer reading `class`
+      -- never has to ask whether its absence means "not classified" or "did
+      -- not refuse" — it means the latter, and only the latter.
+      "{\"status\":\"unsupported\",\"msg\":" ++ jsonStr msg
+        ++ (match cls with
+            | some c => ",\"class\":" ++ jsonStr c
+            | Option.none => "")
+        ++ "}"
 
 /-- Decode a canonical typed JSON value — the inverse of `valJson`
 (same encoding, DESIGN.md). `partial` like `valJson`: runtime-only. -/
@@ -540,9 +561,17 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool) : IO UInt3
             -- THE INTERPRETER. `callInMono` had `callIn`'s type by construction
             -- (`Monadic/Eval.lean` §4), which is what let the two be compared
             -- row for row; the gate passed and the dual mode is gone.
-            let run := Monadic.callInMono m fuel
+            -- ONE EXECUTION, TWO PROJECTIONS. `callInRaw` is the inner
+            -- value `toRun` projects, and `Monadic.callInMono_eq_ofHalt` is
+            -- the theorem that `ofHalt raw` IS what this line used to compute
+            -- -- so the class is bought without running the interpreter twice
+            -- and without the two answers being able to drift.
+            let raw := Monadic.callInRaw m fuel
               { initWorld m with clock := job.clock.getD [] } job.fname thawed
-            stdout.putStrLn (if obs then batchResJson fuel job.args thawed run
+            let run := Monadic.ofHalt raw
+            stdout.putStrLn (if obs then
+                               batchResJson fuel job.args thawed
+                                 (Monadic.refusalClass raw) run
                              else resJson (Run.toPublic fuel run))
         stdout.flush
       return (if hadError then 1 else 0)

@@ -77,23 +77,10 @@ consumers, stay put. -/
 theorem PyLe_iff_flatLe {σ α : Type} {x y : PyM σ α} :
     x ⊑ₚ y ↔ ∀ s, FlatLe (.error .timeout) (x s) (y s) := PyLe_iff
 
-theorem bind_apply {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s : σ) :
-    (x >>= f) s = (match x s with
-      | .error l => .error l
-      | .ok (.error e, s') => .ok (.error e, s')
-      | .ok (.ok a, s') => f a s') := by
-  cases h : x s with
-  | error l => simp [Bind.bind, ExceptT.bind, ExceptT.mk, StateT.bind, h, Except.bind]
-  | ok p =>
-      obtain ⟨r, s'⟩ := p
-      cases r with
-      | error e =>
-          simp only [Bind.bind, ExceptT.bind, ExceptT.mk, StateT.bind, h, Except.bind,
-                     ExceptT.bindCont]
-          rfl
-      | ok a =>
-          simp [Bind.bind, ExceptT.bind, ExceptT.mk, StateT.bind, h, Except.bind,
-                ExceptT.bindCont]
+/-! `bind_apply` — the one opening of the monad stack — moved to
+`Substrate.lean` §4, where the stack is defined and where the R-track's
+`toRun_*` seam lemmas now sit beside it. Same name, same statement; this file
+consumes it. -/
 
 theorem PyLe.bind {σ α β : Type} {x x' : PyM σ α} {f f' : α → PyM σ β}
     (hx : x ⊑ₚ x') (hf : ∀ a, f a ⊑ₚ f' a) : (x >>= f) ⊑ₚ (x' >>= f') := by

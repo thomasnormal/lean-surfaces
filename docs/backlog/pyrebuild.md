@@ -154,10 +154,10 @@ than by a prose paragraph that could rot silently (87 marked blocks, 87 ok).
   it. Numbers taken there are claims about the replica, not about `Core.Halt`
   (§5.4a, and the twin law). `scratch/spike_probes.lean` does import Core and
   asks the real question.
-* The opt-in JSON refusal-class field. Design note: `Res`/`Run` carry only a
-  `msg`, so the cause must be plumbed the way `--observations` plumbs the
-  world — call the inner API and keep what the public wrapper erases. It is
-  not a one-line addition to `resJson`.
+* ~~The opt-in JSON refusal-class field~~ — **DONE** (see the Owed list at the
+  end of this file). The design note was right that it is not a one-line
+  addition to `resJson`: the plumbing is a second PROJECTION of the same run,
+  with a theorem tying it to the first.
 
 ---
 
@@ -347,6 +347,43 @@ default `lake exe leanmodels-run`, once via this lane's prebuilt binary.
 > is 8 s slower and neither closes" is NOT a finding and must not be quoted as
 > one.**
 
+**THE OWED RE-MEASUREMENT, DONE (2026-08-23) — against the REAL TREE, and the
+answer stands.** `scratch/jp_real_nojp.lean` / `scratch/jp_real_jp.lean` import
+`LeanModels.Python.Monadic.Spec`, so the interpreter, the `Kont` record and the
+`@[spec]` layer are the TREE's; the two files are byte-identical apart from the
+theorem name and `+jp`, and nothing is redefined except the statement literal.
+
+| arm | `jp` | heartbeats | verdict | wall |
+|---|---|---|---|---|
+| control | off | 1 000 000 | timeout at `whnf` | 103 s |
+| treatment | **`mvcgen +jp`** | 1 000 000 | timeout at `whnf` | 115 s |
+
+> **`+jp` does not rescue the four-deep gate.** Both arms exhaust 1 000 000
+> heartbeats on a definition that compiles, so the attribution the void run
+> could not make is now made: the cost is the INTERPRETER's, not a sorried
+> replica's.
+
+**AND THE WALL TIMES ARE STILL NOT A FINDING — for a NEW reason, which is the
+part worth keeping.** The box was at load 11.3 when the control ran and 23.5
+when the treatment did; a 12-second gap across that is noise, and quoting it
+would repeat the void run's error in a subtler form. What IS quotable is the
+heartbeat verdict, because **heartbeats are a deterministic step count and wall
+time is not**. The instrument that survives a busy machine is the one to report.
+
+> **On a shared box, report the DETERMINISTIC half of a measurement and say why
+> the other half was dropped.** A number that moves with the neighbours is not
+> a measurement of your change.
+
+The definitions the timeout is attributed to are certified by the TREE's own
+green build, not by the probe — the probe errors, so its `#print axioms` says
+`sorryAx` for the recovered theorem and can certify nothing (§5.4a row 1).
+`Eval.lean`'s ledger, from a zero-error full build:
+`'LeanModels.Python.Monadic.evalOpen' / '.execOpen' / '.kont' depends on axioms:
+[propext, Classical.choice, Quot.sound]`.
+
+> **A probe cannot certify its own definitions when the probe errors. The
+> certification has to come from the tree's own green build.**
+
 The replica risk was written down before the run and is now a mechanism rather
 than a worry: **a probe that copies the substrate instead of importing it
 measures the copy, and it goes stale at the speed of the trunk.** The owed
@@ -399,8 +436,53 @@ because the commit fell through as a no-op.
   therefore unblocked**: `exf_collapse_abstract` + `fuelMono` is the whole
   argument, and the 8 threshold sites in `genmoves_theorem.lean` can be restated
   rather than re-proved.
-* **The jp number, re-measured against the TREE** — real `Monadic` imports, no
-  replica, same 1M-heartbeat budget, both arms, `jp` recorded with each.
-* **The opt-in JSON refusal-class field**, via the `--observations`-style inner
-  API: `Res`/`Run` carry only a `msg`, so the cause must be plumbed by calling
-  the inner API and keeping what the public wrapper erases.
+* ~~**The jp number, re-measured against the TREE**~~ — **DONE**, above:
+  both arms time out at 1 000 000 heartbeats against the real interpreter, so
+  `+jp` does not rescue the four-deep gate, and the wall times are dropped as
+  load-dependent.
+* ~~**The opt-in JSON refusal-class field**~~ — **DONE**. `Monadic.callInRaw`
+  is the inner value `toRun` projects; `Monadic.ofHalt` is that projection, and
+  `Monadic.callInMono_eq_ofHalt` proves the runner still computes exactly what
+  it computed before — **one execution, two projections**, so the class costs no
+  second interpreter run and the two answers cannot drift.
+  `Monadic.refusalClass` reads the §5.2 class off the inner value, and
+  `Monadic.refusalClass_isSome_iff` makes the field's *present exactly when* a
+  theorem rather than a comment. Emitted as `"class"` under `--observations`
+  only; `harness/cases.json` untouched. **The consumer is what makes it earn its
+  keep**: `harness/refusal_census.py` now reports the §5.2 class DISTRIBUTION
+  off the model, and gates two invariants that could not be stated before —
+  every interpreter refusal carries one of §5.2's four class names, and **no row
+  comes back `undefined`**, which is `Monadic/Spec.lean`'s structural
+  no-undefined-behaviour claim checked from the OUTSIDE on the real corpus.
+  Boundary-FREEZE refusals carry no class by design and are COUNTED, never
+  flagged, so a silent change in that population is still visible.
+  `--script-batch` has no `--observations`, so `SCRIPT_CLASS` stays unchecked —
+  stated, not silently skipped.
+
+  > **THE GATE'S FIRST RUN CAUGHT ITS OWN AUTHOR, which is the argument for
+  > adding it as a gate rather than landing it unexercised.** The first version
+  > compared the model's `class` against the census's `WHITELIST_CLASS` and
+  > produced **109 confident DRIFT lines**. Every one was the same conflation:
+  > `WHITELIST_CLASS` names WHICH GAP a row is (`fstring.conversion`,
+  > `del.name-set-census`), the model's `class` names WHAT KIND of refusal it
+  > made (§5.2's four). **Two fields with the same NAME are not the same
+  > field** — and a check that compares them is confidently, uniformly wrong.
+  > The remaining 7 lines flagged boundary-freeze refusals for lacking a class
+  > the design says they must not have: a gate contradicting its own
+  > specification, in the same commit.
+
+  **THE COLUMN, MEASURED (2026-08-23).** With the check corrected, the whitelist
+  census reports `§5.2 classes measured: unsupported=109; boundary-freeze
+  refusals (no class, by design): 7` over 116 rows in 45 gap classes, and
+  `0 drifts`. So Python's whole closed-function refusal surface is **109
+  `unsupported`, 0 `undefined`, 0 `environment`, 0 `order-dependence`** — the
+  first time that column has been read off the model rather than off a table.
+
+  > **AND TWO EXPECTED-NONEMPTY CLASSES MEASURE EMPTY, which is a COVERAGE
+  > statement and not a result.** The tier has `refuseEnv` and `refuseOrder`
+  > and uses them, so `environment=0` and `order-dependence=0` say the
+  > WHITELIST CORPUS does not reach them — not that the tier never emits them.
+  > `0` for a class the tier CAN emit is a fact about the corpus; `0` for
+  > `undefined`, which the tier's API cannot build at all, is a fact about the
+  > tier. **Same number, different claims** — and a scoreboard that prints them
+  > the same way invites the wrong reading.

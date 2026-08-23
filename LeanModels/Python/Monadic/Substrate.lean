@@ -215,4 +215,62 @@ theorem inWorld_toRun (locals : REnv) (x : SemF α) (w : World) :
   · rcases l with _ | m <;> simp
   · rcases v with a | e <;> simp
 
+
+/-! ## §4 THE RUNNER SEAM — do-notation, translated into `Run`
+
+**One opening of the monad stack, and this is it.** `bind_apply` is the single
+place anything in this tier reasons through `ExceptT`/`StateT`/`Except` by
+name; everything else composes these four lemmas. It lives HERE rather than in
+a consumer because it is a fact about the STACK, and a second consumer that
+opened the stack again would be a second thing to keep true.
+
+**These are the lemmas the sunfish R-track was proving as leaf copies.** They
+translate the rebuild's do-notation into the TRUNK's `Run.bind`, which is the
+vocabulary every `Run`-level theorem is already stated in — so a proof about a
+monadic definition can reach the trunk's lemmas without re-deriving the
+boundary each time. -/
+
+theorem bind_apply {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s : σ) :
+    (x >>= f) s = (match x s with
+      | .error l => .error l
+      | .ok (.error e, s') => .ok (.error e, s')
+      | .ok (.ok a, s') => f a s') := by
+  cases h : x s with
+  | error l => simp [Bind.bind, ExceptT.bind, ExceptT.mk, StateT.bind, h, Except.bind]
+  | ok p =>
+      obtain ⟨r, s'⟩ := p
+      cases r with
+      | error e =>
+          simp only [Bind.bind, ExceptT.bind, ExceptT.mk, StateT.bind, h, Except.bind,
+                     ExceptT.bindCont]
+          rfl
+      | ok a =>
+          simp [Bind.bind, ExceptT.bind, ExceptT.mk, StateT.bind, h, Except.bind,
+                ExceptT.bindCont]
+
+theorem toRun_pure {σ α : Type} (a : α) (s : σ) :
+    toRun (pure a : PyM σ α) s = .ok s a := rfl
+
+theorem toRun_bind {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s : σ) :
+    toRun (x >>= f) s = Run.bind (toRun x s) (fun s' a => toRun (f a) s') := by
+  simp only [toRun, bind_apply]
+  rcases h : x s with l | ⟨r, s'⟩
+  · rcases l with _ | ⟨c, m, sn⟩ <;> rfl
+  · cases r <;> rfl
+
+/-- **`Functor.map` IS NOT UNFOLDED HERE, and that is the proof shape rather
+than a preference.** Unfolding it drops below `bind_apply`'s reach and the goal
+stops being about this stack at all; going through `map_eq_pure_bind` keeps the
+argument at the level the other three lemmas live at. **One opening of the monad
+stack is the right number** — this lemma is what keeps it at one. -/
+theorem toRun_map {σ α β : Type} (g : α → β) (x : PyM σ α) (s : σ) :
+    toRun (g <$> x) s = Run.bind (toRun x s) (fun s' a => .ok s' (g a)) := by
+  rw [map_eq_pure_bind, toRun_bind]
+  simp only [toRun_pure]
+
+#print axioms bind_apply
+#print axioms toRun_pure
+#print axioms toRun_bind
+#print axioms toRun_map
+
 end LeanModels.Python.Monadic

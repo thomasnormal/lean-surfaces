@@ -47,8 +47,10 @@ so `le_bind`/`le_ite` are each tier's own, over each tier's own `bind`. Lifting
 them here would be the thick-trunk mistake: one lemma that has to know every
 tier's monad. The order is shared; the algebra over it is not.
 -/
+import Init.Internal.Order.Basic
 
 namespace LeanModels
+open Lean.Order
 
 /-- The FLAT approximation order over a designated bottom: `x` approximates `y`
 iff `x` is `bot` (the computation gave up) or `x = y` (it decided, and `y`
@@ -65,5 +67,54 @@ theorem FlatLe.bot_le {α : Sort u} (bot y : α) : FlatLe bot bot y := Or.inl rf
 not `bot` is already the value, so `⊑` collapses to equality. -/
 theorem FlatLe.eq_of_ne_bot {α : Sort u} {bot x y : α}
     (h : FlatLe bot x y) (hx : x ≠ bot) : x = y := h.resolve_left hx
+
+
+/-! ## The bridge to `Lean.Order`
+
+The census (`docs/lean-order-census.md`) found this order already in the
+toolchain. These two theorems are what make that a checked fact rather than a
+remark, and the tripwire below is what makes a toolchain bump say so.
+
+**Only the ORDER facts live here.** The base instances for the family stack
+(`HaltWith`, and everything `ExceptT`/`StateT` synthesises above it) live at the
+end of `Core/Outcome.lean` instead, and the reason is measured rather than
+stylistic: this file is imported by `Python/Obs.lean`, `Core/Outcome.lean` is
+not, and moving `Outcome` into `Obs`'s closure would drag `Std.Do`,
+`Std.Tactic.Do` and the `mvcgen_trivial_extensible => grind` macro rule into all
+65 `Examples/` files that import the umbrella. A shared name is worth an import;
+it is not worth relocating the trunk's elaboration cost. -/
+
+/-- `FlatLe` IS `Lean.Order.FlatOrder.rel` — the census's central claim, as a
+theorem. -/
+theorem FlatLe.iff_rel {α : Sort u} {b : α} (x y : α) :
+    FlatLe b x y ↔ FlatOrder.rel (b := b) x y := by
+  constructor
+  · intro h
+    rcases h with h | h
+    · rw [h]; exact .bot
+    · rw [h]; exact .refl
+  · intro h
+    cases h with
+    | bot => exact Or.inl rfl
+    | refl => exact Or.inr rfl
+
+/-- And therefore it is core's `⊑` at the wrapped carrier. -/
+theorem FlatLe.iff_le {α : Sort u} {b : α} (x y : α) :
+    FlatLe b x y ↔ (FlatOrder.mk b x ⊑ FlatOrder.mk b y) := FlatLe.iff_rel x y
+
+/-! ### TRIPWIRE — three `rfl`-grade facts about a module core calls INTERNAL
+
+`Init.Internal.Order` carries no compatibility promise; its own docstrings say
+it is "not meant to be used otherwise". So the shape this file depends on is
+PINNED here, and a toolchain bump that changes it fails THIS file rather than
+failing somewhere downstream with a confusing message. Each line names the
+property it guards. -/
+
+/-- Guards: `FlatOrder` stays a REDUCIBLE type synonym (`@[expose]`). -/
+example {α : Sort u} {b : α} : FlatOrder b = α := rfl
+/-- Guards: the reflexive constructor keeps its name and shape. -/
+example {α : Sort u} {b : α} (x : FlatOrder b) : FlatOrder.rel x x := .refl
+/-- Guards: the bottom constructor keeps its name, and `b` is still the bottom. -/
+example {α : Sort u} {b : α} (x : FlatOrder b) : FlatOrder.rel b x := .bot
 
 end LeanModels

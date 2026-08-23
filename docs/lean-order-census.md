@@ -125,3 +125,34 @@ than under every tier at once — and it restates no tier theorem.
 against the TOOLCHAIN before it is censused against the tree.* The tree's three
 copies were the visible duplication; core's was the fourth, and it was invisible
 because nobody looked one level up.
+
+## Implemented (2026-08-23) — and the placement was decided by measurement
+
+The ruling above is in the tree. What landed, and where:
+
+* **`Core/Order.lean`** — `FlatLe.iff_rel` (the census's central claim, as a
+  theorem), `FlatLe.iff_le`, and a **three-line tripwire** pinning the shape of
+  a module core calls `Internal`: that `FlatOrder b` is still a reducible type
+  synonym, and that `rel.refl` / `rel.bot` still exist under those names. A
+  toolchain bump that moves `FlatOrder` now fails THIS file with a named
+  guard, instead of failing somewhere downstream with a confusing message.
+* **`Core/Outcome.lean` §8** — the three base instances
+  (`PartialOrder`/`CCPO`/`MonoBind` for `HaltWith π σ`), plus
+  `HaltWith.le_iff_flatLe` and `SemMWith.le_iff`: the synthesised order on the
+  WHOLE stack is pointwise `FlatLe`, which is what makes "core covers the stack
+  above its base" checkable rather than asserted. Three `example`s show the
+  stack synthesising with no instance written above the base.
+
+**Why not all of it "beside `FlatLe`", as first ruled.** `Core/Order.lean` is
+imported by `Python/Obs.lean`; `Core/Outcome.lean` is **not**, and its closure
+carries `Std.Do`, `Std.Tactic.Do` and the `mvcgen_trivial_extensible => grind`
+macro rule. Putting the base instances beside `FlatLe` would have pulled all of
+that into `Obs`'s closure and therefore into the **65 `Examples/` files** that
+import the umbrella — including the expensive sunfish proofs.
+
+> **A shared name is worth an import. It is not worth relocating the trunk's
+> elaboration cost.** Check whose closure a file sits in before deciding that
+> two things belong side by side.
+
+No tier theorem was restated: `Res.le`, `Run.le` and `Monadic.PyLe` keep their
+spellings, their notations and their consumers.

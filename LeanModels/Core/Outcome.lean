@@ -90,6 +90,7 @@ is not the default.
 
 Nothing in this file mentions any language. Zero `sorry`, zero `native_decide`.
 -/
+import LeanModels.Core.Order
 import Std.Do
 import Std.Tactic.Do
 
@@ -334,5 +335,71 @@ example : Halt = HaltWith Unit Unit := rfl
 example : SemPS W ρ = SemPSWith W ρ Unit Unit := rfl
 
 end LayerOrder
+
+end LeanModels
+
+/-! ## §8 THE `Lean.Order` BASE INSTANCES — three, and the stack does the rest
+
+`Core/Order.lean` proved `FlatLe` IS `Lean.Order.FlatOrder.rel`. What is left is
+the one thing core cannot supply: **the BOTTOM of this family's base monad.**
+
+Core's flat orders bottom out at `Option` (bottom `none`) and at `IO`/`EIO`/`ST`.
+It ships no instance for `Except ε` as a monad in its own right and could not:
+`Except ε α` is `ExceptT ε Id α`, so the transformer instance would demand
+`PartialOrder (Id α)` for an arbitrary `α`. Our bottom is `.error .timeout` — a
+CONSTRUCTOR of `Loud` in the base layer — and nothing in core can guess it.
+
+Supply it once and **the entire `ExceptT ρ (StateT W (HaltWith π σ))` stack
+synthesises**, because core already carries `PartialOrder`/`CCPO`/`MonoBind` for
+`ExceptT` and `StateT`. The three `example`s below are that claim, checked.
+
+**What this does NOT do, deliberately: it restates no tier theorem.** `Res.le`,
+`Run.le` and `Monadic.PyLe` keep their spellings, their notations and their
+consumers. This is the family fact, landed additively; adopting core's frame in
+a tier's PROOFS is a separate decision with its own price
+(`docs/lean-order-census.md`). -/
+
+namespace LeanModels
+open Lean.Order
+
+/-- The base order: flat, bottomed at the timeout. -/
+instance instPartialOrderHaltWith {π σ α : Type} : PartialOrder (HaltWith π σ α) :=
+  inferInstanceAs (PartialOrder (FlatOrder (Except.error Loud.timeout : HaltWith π σ α)))
+
+instance instCCPOHaltWith {π σ α : Type} : CCPO (HaltWith π σ α) :=
+  inferInstanceAs (CCPO (FlatOrder (Except.error Loud.timeout : HaltWith π σ α)))
+
+/-- `bind` is monotone in both arguments at the base. The two fields ARE the
+left and right halves every tier's own `le_bind` proves by hand. -/
+instance instMonoBindHaltWith {π σ : Type} : MonoBind (HaltWith π σ) where
+  bind_mono_left {α β a₁ a₂ f} h := by
+    cases h with
+    | bot => exact .bot
+    | refl => exact .refl
+  bind_mono_right {α β a f₁ f₂} h := by
+    cases a with
+    | error e => exact .refl
+    | ok v    => exact h v
+
+/-- The base instance's `⊑` IS `FlatLe` at the timeout. -/
+theorem HaltWith.le_iff_flatLe {π σ α : Type} (x y : HaltWith π σ α) :
+    x ⊑ y ↔ FlatLe (Except.error Loud.timeout) x y := (FlatLe.iff_rel x y).symm
+
+/-- **And the order core SYNTHESISES for the whole stack is POINTWISE `FlatLe`**
+— which is exactly the shape every tier wrote by hand. This is the theorem that
+makes the census's "core covers the stack above its base" checkable. -/
+theorem SemMWith.le_iff {W ρ π σ α : Type} (x y : SemMWith W ρ π σ α) :
+    x ⊑ y ↔ ∀ s, FlatLe (Except.error Loud.timeout) (x s) (y s) := by
+  constructor
+  · intro h s; exact (FlatLe.iff_rel _ _).mpr (h s)
+  · intro h s; exact (FlatLe.iff_rel _ _).mp (h s)
+
+/-! The stack, synthesised — no instance written above the base. -/
+example : PartialOrder (SemMWith Nat String Unit Unit Bool) := inferInstance
+example : CCPO (SemMWith Nat String Unit Unit Bool) := inferInstance
+example : MonoBind (SemMWith Nat String Unit Unit) := inferInstance
+
+#print axioms HaltWith.le_iff_flatLe
+#print axioms SemMWith.le_iff
 
 end LeanModels

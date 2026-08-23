@@ -36,6 +36,14 @@ never a reading of the source.
   class entry is an ERROR: the census must cover the whole whitelist, so
   a new gap cannot be added without being classified.
 
+  Since the model emits its own §5.2 REFUSAL CLASS (`--observations`,
+  `Monadic.refusalClass`), this mode also reports that DISTRIBUTION and
+  gates two invariants on it: every interpreter refusal carries one of
+  §5.2's four class names, and none carries ``undefined`` — Python has no
+  undefined behaviour, and this is the outside check on the structural
+  claim ``Monadic/Spec.lean`` makes from the inside. That class is a
+  DIFFERENT field from ``WHITELIST_CLASS`` and is never compared with it.
+
 ``--scripts`` — the same for `harness/scripts.json`'s
   ``"expect": "unsupported"`` rows (the whole-program surface).
 
@@ -623,6 +631,20 @@ w("op.Or", "print(0 or 2)\n", "MATCH", "")
 # fail the run: the census covers the whole whitelist or it is not one.
 # ---------------------------------------------------------------------------
 
+# THE §5.2 REFUSAL CLASSES — `LeanModels/Core/Outcome.lean`'s `RefusalCause`,
+# which the model emits as `class` under `--observations`. There are FOUR, and
+# they are **NOT** the `WHITELIST_CLASS` taxonomy below.
+#
+#   WHITELIST_CLASS names WHICH GAP a row is  — `fstring.conversion`,
+#                                               `del.name-set-census`, …
+#   the model's `class` names WHAT KIND of refusal the model made.
+#
+# The two share the word "class" and nothing else. Comparing them for equality
+# was this check's first version, and it produced 109 confident DRIFT lines
+# that were all the same conflation. **Two fields with the same NAME are not
+# the same field** — the census's own law, applied to the census.
+SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
+
 WHITELIST_CLASS = {
     "arith::powi": "op.Pow",
     "tut_06::true_div": "op.Div",
@@ -771,9 +793,10 @@ SCRIPT_CLASS = {
 # Running
 # ---------------------------------------------------------------------------
 
-def run_batch(runner_cmd, lines, flag):
+def run_batch(runner_cmd, lines, flag, extra=()):
     """One runner process for the whole list; returns the parsed result
-    lines in order. `flag` is `--batch` or `--script-batch`."""
+    lines in order. `flag` is `--batch` or `--script-batch`; `extra` is
+    appended verbatim (`--observations`, for the refusal CLASS)."""
     fd, jobs_path = tempfile.mkstemp(
         dir=os.path.join(REPO_ROOT, "harness"),
         prefix=".census_jobs.", suffix=".jsonl")
@@ -781,7 +804,7 @@ def run_batch(runner_cmd, lines, flag):
         f.write("\n".join(lines) + "\n")
     out = []
     try:
-        proc = subprocess.Popen(list(runner_cmd) + [flag, jobs_path],
+        proc = subprocess.Popen(list(runner_cmd) + [flag, jobs_path] + list(extra),
                                 cwd=REPO_ROOT, stdout=subprocess.PIPE,
                                 text=True)
         for line in proc.stdout:
@@ -919,12 +942,38 @@ def whitelist_census(runner_cmd):
                 job["fuel"] = case["fuel"]
             jobs.append(json.dumps(job, separators=(",", ":")))
             keys.append(key)
-    models = run_batch(runner_cmd, jobs, "--batch")
+    # `--observations` is what carries the model's OWN refusal class. Without
+    # it the table below is a hand-maintained claim that nothing can falsify;
+    # with it, every whitelisted row is checked against the classification the
+    # interpreter actually made. The flag's other fields (`stdout`,
+    # `args_after`) are read by nobody here and are harmless: this census reads
+    # named fields, it does not compare whole dicts the way diff_test does.
+    models = run_batch(runner_cmd, jobs, "--batch", ("--observations",))
     rows = []
     not_refused = []
+    by_class = {}          # §5.2 class -> count
+    boundary = 0           # refusals raised at the BOUNDARY, not by the tier
+    bad_class = []         # a class name outside §5.2's four
+    undefined_rows = []    # Python has none; this is that claim, falsifiable
     for key, model in zip(keys, models):
         if model.get("status") != "unsupported":
             not_refused.append((key, model.get("status")))
+        else:
+            measured = model.get("class")
+            if measured is None:
+                # NOT drift. `class` is present exactly on INTERPRETER
+                # refusals (`Monadic.refusalClass_isSome_iff`), so its absence
+                # says this run reached a world and the boundary FREEZE
+                # refused instead — a statement about the boundary, not about
+                # the tier. Counted so a silent change in that population is
+                # visible; never flagged.
+                boundary += 1
+            elif measured not in SEC52_CLASSES:
+                bad_class.append((key, measured))
+            else:
+                by_class[measured] = by_class.get(measured, 0) + 1
+                if measured == "undefined":
+                    undefined_rows.append(key)
         rows.append((WHITELIST_CLASS[key], key, model.get("msg", "")))
     print_buckets("WHITELIST CENSUS — harness/cases.json "
                   "`expect: unsupported` rows", bucket(rows), len(rows))
@@ -936,6 +985,28 @@ def whitelist_census(runner_cmd):
     for key, status in not_refused:
         print("DRIFT: %s is whitelisted but the model answered %s"
               % (key, status))
+        drift += 1
+    # THE §5.2 COLUMN, MEASURED. Before the model emitted its class this
+    # census could only report the prose; the distribution below is the
+    # scoreboard column §5.2 exists for, taken off the model rather than off a
+    # table somebody maintained by hand.
+    print("§5.2 classes measured: %s; boundary-freeze refusals (no class, by "
+          "design): %d"
+          % (", ".join("%s=%d" % kv for kv in sorted(by_class.items()))
+             or "none", boundary))
+    for key, measured in bad_class:
+        print("DRIFT: %s reported class %r, which is not one of §5.2's four"
+              % (key, measured))
+        drift += 1
+    # THE FALSIFIABLE CLAIM. `Monadic/Spec.lean` gates "Python has no undefined
+    # behaviour" STRUCTURALLY, from the inside — the tier's refusal API has no
+    # entry point that can build the class. This is the same claim checked from
+    # the OUTSIDE, on the real corpus: if a row ever comes back `undefined`,
+    # the structural argument has a hole and this line is how it surfaces.
+    for key in undefined_rows:
+        print("DRIFT: %s came back class `undefined` -- Python has NO undefined "
+              "behaviour, and Monadic/Spec.lean gates that structurally; this "
+              "is that claim failing from the outside" % key)
         drift += 1
     return drift
 

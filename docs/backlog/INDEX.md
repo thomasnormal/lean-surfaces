@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**249 entries across 16 lanes.** Regenerate with
+**250 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -27,6 +27,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-architecture-54` | When the ambient verdict is constant, every bit is in the pin | architecture |
 | `2026-08-24-architecture-53` | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |
 | `2026-08-24-architecture-52` | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
+| `2026-08-24-qol-48` | the stamp was watching the index while lake read the working tree | qol |
 | `2026-08-24-wasm-8` | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
 | `2026-08-23-architecture-51` | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
@@ -172,10 +173,12 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
 | `2026-08-23-architecture-3` | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
 | `2026-08-23-sv-2` | THE STEPPER TENURE RAN AND CAME BACK RED ON ONE GOAL; the `Res` bind lemmas did their job | sv |
+| `2026-08-23-qol-inbound-2` | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
 | `2026-08-23-pyrebuild-2` | THE MERGE TO MASTER: one arm, 25 rows, and a dispatch discharged | pyrebuild |
 | `2026-08-23-es-2` | the Directive Prologue (§11.2.2), and non-strict `this` | es |
 | `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |
 | `2026-08-23-sv-1` | THE OWED FULL-TREE TRIAD IS DISCHARGED BY SOMEONE ELSE'S GREEN, and the number carries the state it was measured in | sv |
+| `2026-08-23-qol-inbound-1` | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
 | `2026-08-23-es-1` | the coercion/accessor cycle: move `ToPrimitive` and `[[Get]]`'s accessor walk into the evaluator's mutual block | es |
 | `2026-08-23-es-1` | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
 | `2026-08-23-architecture-1` | AMENDMENT 17 (DRAFT): proof iteration is a different shape, and five conditions I would tighten | architecture |
@@ -241,8 +244,6 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
 | `SPEC` | the completion metric (standing; updated every landing) | go |
 | `INBOUND` | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
-| `INBOUND` | `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
-| `INBOUND` | `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `INBOUND` | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
 | `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
@@ -270,4 +271,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**30 heading(s) do not use the §9.5 id scheme** and sort last.
+**28 heading(s) do not use the §9.5 id scheme** and sort last.

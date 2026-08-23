@@ -2566,7 +2566,7 @@ command still exits **2**. No Lean executed by this lane.
 
 ---
 
-## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-27` (QoL lane's to renumber or close)
+## 2026-08-23-qol-inbound-1 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-27` (QoL lane's to renumber or close)
 
 *Id kept in the architecture namespace; nothing minted in the QoL sequence.
 Filed after reading this file, per §9.5b — the correction below is already
@@ -2599,7 +2599,7 @@ treatment wherever `qol-21` published them.
 
 ---
 
-## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-28` (QoL lane's to renumber or close)
+## 2026-08-23-qol-inbound-2 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-28` (QoL lane's to renumber or close)
 
 *Filed as its own immediate commit, per the tightening landed today in
 §9.5a — the batching window is the whole hazard, and it is the only part a
@@ -3344,3 +3344,99 @@ landed with the code. `triad.sh` **258 ok** (230 → 258), `--verify-guards`
 `lake` and isolated `LS_LOCK`/`LS_QUEUE`: a root green recorded, an increment
 resolved against it, the chain written, and all three precondition refusals
 fired. No Lean executed; the machine-wide lock was never touched.
+
+## 2026-08-24-qol-48 — the stamp was watching the index while lake read the working tree
+
+Four items; the third arrived mid-flight and went first, because it is the
+enforcement layer the other two decorate.
+
+### The integrity hole (wasm lane) — verified before it was fixed
+
+`tree_stamp` was `git write-tree`, which hashes the **index**. `lake` compiles
+the **working tree**. So an uncommitted, unstaged edit between enqueue and
+acquire moved exactly the files lean reads while leaving the stamp identical:
+the guard passed, the tenure ran, and the green certified a tree the gate
+never saw. The Ada wrong-tree hazard, mechanized into the tool that exists to
+prevent it.
+
+**Measured in this clone while writing the fix** — index `2fd6962…`, working
+tree `112a516…`, because triad.sh itself was edited and unstaged. The guard
+had been comparing the wrong one, demonstrable on the spot.
+
+The fix hashes the working tree through a **temporary** `GIT_INDEX_FILE`, so
+the lane's real staging area is never touched. `add -A` includes untracked
+files (a new `.lean` is exactly what must not slip in) and honours
+`.gitignore` (so `.lake` churn cannot defeat the stamp — verified: 0 `.lake/`
+entries). Cost: **0.31 s cold against 0.015 s**, twice per tenure.
+
+**The index-only case is ACCEPTED, deliberately.** Content staged but absent
+from the working tree will not be elaborated, so it is not part of what the
+tenure certifies. The old stamp refused it — a false alarm in the opposite
+direction. Both directions now have a row.
+
+**Old tickets are not stranded.** Eight tenures were live. A stamp now carries
+`v2`; a `v1` stamp against a `v2` one is `unversioned`, which **accepts and
+logs** rather than refusing — they answer two different questions, and an
+answer to one is not evidence about the other. Refusing would have killed a
+full queue for a defect that was the tool's.
+
+**The same blindness, one level down, in my own work from yesterday.**
+`record_green` also called `git write-tree`, so a green taken with an unstaged
+edit recorded the index's hash and could be judged *citable* while the
+elaborated content was something else. Fixed at the same time, one source.
+
+### Delta vs master at enqueue (Ada)
+
+After `tree at enqueue:`, one pure-git line: `delta vs master: 1 file(s),
+0 .lean — DOCS-ONLY`. A title is a claim about intent; the tree is what was
+elaborated, and when they disagree the green is about the tree.
+
+**One deviation from the brief, and it is the incident one level down.**
+`0 .lean` is **not** DOCS-ONLY: `lakefile.toml`, `lean-toolchain` and
+`lake-manifest.json` carry no `.lean` and invalidate the whole graph. Labelling
+those DOCS-ONLY would have reproduced exactly the tree/label mismatch the line
+exists to expose. The label is asked of `classify_path`, which already answers
+it, and prints `— NOT docs-only (lakefile.toml)` instead. A row pins that.
+
+**The absence family, three distinct members**, none of which may print like a
+measurement: `n/a (foreign tree)` — refused before trying, since a foreign
+checkout's `origin/master` is a different project's master; `n/a (no
+github/master or origin/master in this clone)`; and `n/a (no merge base …
+unrelated histories)`. Against `0 files (HEAD is at origin/master)`, which is
+a measurement.
+
+### The heading guard (analog founding) — extended, not duplicated
+
+This was **half-built**: undated headings already sorted last and were counted
+*inside the generated file* — a place the lane that wrote the heading never
+looks. Measured across the tree: **18 undated, 8 malformed, 7 files.**
+
+The discriminator is the token count before the em dash: **an id is ONE
+token.** `G1 — title` is a real entry under an older scheme (undated: warn,
+never fail, or `--strict` could never be adopted while Go's `G1`…`G18` exist).
+`INBOUND FROM THE SOFTFLOAT LANE — …` is five tokens and yields the id
+`INBOUND` — junk, and that is what `--strict` (exit 3) fails on. Warnings name
+file, line and heading on stderr, on every generating mode.
+
+**Two of the eight were mine**, now conformed to
+`## 2026-08-23-qol-inbound-N — …`. The other six are one per lane file, and
+§9.5 makes a lane file appendable only by its own lane — so `--strict` is not
+wired into ci.sh yet. That is the coordinator's call, and it is one line.
+
+### The merge-target fallback (wasm fork)
+
+`{github,origin}/master` was hard-coded, so a fork whose default branch is
+named otherwise fell back to a full tenure — **conservatively, and therefore
+silently, which is how a heuristic stays broken.** It now asks the remote
+which branch is its head (`refs/remotes/<remote>/HEAD`) instead of guessing a
+name. Order is still a preference, not an assumption.
+
+### Triad
+
+`triad.sh` **283 ok** (258 → 283), `backlog-index.sh` **47 ok** (34 → 47), and
+check 87, laws 45, sites 57, diagnose 51, new-proof 31, analogues 28,
+substrate 25, editions 12, dupes 10, a6-guard 8 — every tool that sources
+`argv.sh` re-run green, and `ci.sh --verify-guards` **32 ok** including the
+argv one-source gate. Fixture repos only: the live queue was verified
+untouched (8 tickets, sv holding the lock) and every run used a stubbed `lake`
+with `LS_LOCK`/`LS_QUEUE` in the scratchpad. No Lean executed.

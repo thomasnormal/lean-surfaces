@@ -282,3 +282,115 @@ module, nothing behind it.
   names a deleted file in the SHARED build protocol. Left deliberately: a spine
   edit mid-merge is worse than a dead pattern, and it is one word for whoever
   touches that case next.
+
+---
+
+## 2026-08-23-pyrebuild-4 — GREEN, and the spike's headline number is VOID
+
+The merge landed on master as `eeeb1fd`. This entry records the green it landed
+on, the spike that rode inside the same tenure, and one hazard found by walking
+into it.
+
+### Triad #4 at `4c72b6c` — the gate table
+
+| gate | result |
+|---|---|
+| `lake build` (all default targets) | **green**, exit 0 |
+| `docs_check` | green — 87 marked blocks, 87 ok |
+| `diff_test` | **1427 cases: 0 failed**, 116 whitelisted-unsupported, 1311 matched |
+| `script_corpus` | green — 65 scripts, 0 failed, 50 matched, 15 loud-blocked |
+| `refusal_census --whitelist` | 116 rows in 45 classes |
+
+**Every row of the delta is accounted for**, against `dc13241`'s
+`25 failed / 118 whitelisted / 1284 matched`: 1284 + 25 (the rung-3b fix) + 2
+(the `MONO_OPENED` rows migrated out of the whitelist) = **1311**, and
+118 − 2 = **116**. Classes 46 → 45 because `iter.dict` held exactly those two
+rows. An unaccounted row would have meant the fix moved something it was not
+supposed to.
+
+**A14 coverage, stated with its state (§5.4a).** The build took **4 seconds**,
+because 131 of the targets were elaborated in tenure #3 (`4f6c11e`) whose tree
+differs only in `Examples/go/rung1/guards.lean` and `docs/`; #4's build is
+lake's trace check confirming currency plus the rebuild of `guards` and its
+dependents. The green is a true statement about all default targets on
+`4c72b6c` — and it is not 131 fresh elaborations, which is the kind of thing a
+later reader would otherwise assume from "full build green".
+
+**A free cross-check, from a design this lane did not know it was using.**
+`triad.sh`'s `--gates` ADDS to the floor rather than replacing it (the Ada
+trap), so `docs_check` and `diff_test` each ran twice — once via the floor's
+default `lake exe leanmodels-run`, once via this lane's prebuilt binary.
+**Identical numbers both ways.**
+
+### The spike — three clean answers, and one that must not be reported
+
+| probe | `jp` | result |
+|---|---|---|
+| `Halt` carries `WPMonad`? | n/a | **YES** — `Except.instWPMonad`, for `Halt` AND `HaltWith String Nat` |
+| snapshot guard | n/a | **kernel-verified**: three `rfl`s, exit 0 |
+| `Std.Do.WP.Frames.of_wp_conjunctive` | n/a | **does not exist** in 4.33.0-rc1 |
+| `Std.Do.WPMonad.of_frameClosure` | n/a | **does not exist** |
+| `WPConjunctive` | n/a | **class does not exist** |
+| ∃F collapse, abstract half | n/a | **PROVED**, `does not depend on any axioms` |
+| ∃F collapse, monotonicity half | n/a | `Monadic.fuelMono` **unknown identifier** |
+| four-deep gate, control | **false** | timeout at whnf, 1M heartbeats, 68 s |
+| four-deep gate, treatment | **true** | timeout at whnf, 1M heartbeats, 76 s |
+
+> **THE FOUR-DEEP NUMBERS ARE VOID. Both arms measured a `kont` that carries
+> `sorryAx`.** `scratch/spike_jp.lean` is a SELF-CONTAINED replica of the
+> substrate, and inch 3a added `GenFrame.forDict` to the tree while the replica
+> kept the old match. Both files therefore emit
+> `Missing cases: (List.cons (GenFrame.forDict _ _ _ _ _ _) _)` at line 1661,
+> and the axiom lists say the rest:
+> `'kont' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]`.
+> A timeout against a sorried definition cannot be attributed to `jp`. **"+jp
+> is 8 s slower and neither closes" is NOT a finding and must not be quoted as
+> one.**
+
+The replica risk was written down before the run and is now a mechanism rather
+than a worry: **a probe that copies the substrate instead of importing it
+measures the copy, and it goes stale at the speed of the trunk.** The owed
+re-run imports the real `Monadic` modules.
+
+**The result that IS usable is the other one.** `exf_collapse_abstract` proves,
+axiom-free, that `(∃ t, ∀ F ≥ t, P F) ↔ (∃ F, P F)` for upward-closed `P`. So
+the Leroy-Grall threshold form collapses **for free once monotonicity is in
+hand**, and the whole question reduces to a single missing lemma —
+`Monadic.fuelMono`, which SV already has as a worked shape at
+`LeanModels/Sv/Obs.lean:295`. That is a very different price from "the
+threshold cannot collapse", and it is the spike's real deliverable.
+
+*(One caveat checked rather than assumed: the axiom line printed in a file that
+also errored later, at the `#check`. §5.4a's trap is a `#print axioms` on a
+decl whose STATEMENT failed; this theorem is at lines 20-27 with no error
+reported there, and the later `#check` is an independent declaration. Judged
+sound, and the owed re-run puts it in a file with no errors so the question
+cannot be asked again.)*
+
+### HAZARD — `git stash` inside a merge silently destroys `MERGE_HEAD`
+
+Found by doing it. Run mid-merge (here, casually, to compare a block count
+against the pre-merge tree), `git stash` + `git stash pop` restores the working
+tree and the content is correct — **what is gone is the second PARENT.**
+
+`git status` looks right. The diff is right. A commit at that point would have
+had the correct tree and the WRONG PARENTAGE: master would not have been an
+ancestor, and the failure would have surfaced much later as a push that will
+not fast-forward, with nothing in the tree to explain it. It was caught only
+because the commit fell through as a no-op.
+
+> **Never stash mid-merge. If a comparison is needed, take it from
+> `git show <ref>:<path>`, which touches no state.** And the check that catches
+> it costs one command: `git log -1 --format=%p` on a merge commit must print
+> TWO parents.
+
+### Owed
+
+* **`Monadic.fuelMono`** — the ∃F collapse's one missing lemma. SV's is the
+  worked shape. Never weaken a definition to get it: if it needs the `Kont`
+  knot, say where and stop.
+* **The jp number, re-measured against the TREE** — real `Monadic` imports, no
+  replica, same 1M-heartbeat budget, both arms, `jp` recorded with each.
+* **The opt-in JSON refusal-class field**, via the `--observations`-style inner
+  API: `Res`/`Run` carry only a `msg`, so the cause must be plumbed by calling
+  the inner API and keeping what the public wrapper erases.

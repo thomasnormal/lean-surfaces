@@ -387,3 +387,81 @@ already emitted — and a refused test should still yield a PARTIAL trace, not
 nothing. That is σ-shaped. But the scoreboard does not exist until inch 5-6,
 so there is no consumer today and `Unit` stands. Predicting a consumer is not
 having one; the question gets asked at inch 5.
+
+## 2026-08-23-ada-2 — TICKET: adopt Core's outcome layer (π = ArmRef, σ = Unit)
+
+Replace the by-shape `Loud`/`Halt`/`SemM`/refusal-class definitions in
+`LeanModels/Ada/Ada2012/Value.lean` (marked **ADOPT** at `:40`, `:66`, `:131`,
+`:150`, `:162`, `:310`) with imports of `LeanModels.Core.Outcome`. Kept a
+separate ticket from inch 1 deliberately: mixing a known import swap with the
+value layer's real decisions is how a tenure gets spent proving nothing.
+
+**Ada currently imports ZERO Core modules** — its entire closure is `Lean`
+plus its own files. That is why inch 1's green transferred across a 53-commit
+rebase untouched, and adopting ends that property on purpose: after this
+ticket, Core changes can break the Ada lane, and Ada's greens stop being
+base-independent. That is the price of the shared substrate and it is worth
+paying, but it should be paid knowingly.
+
+### The mapping, and why inch 1 had to land first
+
+Core separates two channels, and Ada needs BOTH — which is exactly the
+distinction inch 1 spent its guards establishing:
+
+- **`raiseIn` (`ρ`, state-RETAINING)** — `Constraint_Error` and every other
+  Ada exception. ARM 11.4: an exception PROPAGATES; the world survives it and
+  a handler may observe it. State-retention is not an implementation nicety
+  here, it is the language.
+- **`refuse` (`π`, state-discarding)** — constructs outside the modelled
+  tier. Not `Constraint_Error`, which the ARM defines completely.
+
+Inch 1's load-bearing guard (`!okIs (.int Int8 (-128)) (constrain Int8 128)`)
+is what makes this mapping legible: out-of-range RAISES, so it goes on `ρ`.
+Had `constrain` refused, the same construct would have landed on `π` and the
+adoption would have wired Ada's most common outcome into the give-up channel.
+
+**`π = ArmRef`** — the ARM clause reference, so a refusal says WHICH rule went
+unmodelled and the scoreboard buckets on `RefusalCause.className` while the
+clause rides in `.detail`, class-blind.
+
+### σ = Unit stands — and the consumer's mechanism ALREADY EXISTS
+
+Per the family default: adding a snapshot without a consumer is designing
+against nothing. The registered-not-claimed consumer (a refusal mid-test
+should yield a PARTIAL event trace, not nothing) is still hypothetical — the
+ACATS scoreboard does not exist until inch 5-6.
+
+**Correction to my own inch-1 note, from reading the current Core.** I wrote
+that "Core's `Loud` arms discard state", implying the partial-trace consumer
+would need a mechanism built for it. It would not: **`Core.refuseWith`
+already carries a snapshot**, and its docstring says it is kept separate from
+`refuse` precisely "so that attaching one is a DELIBERATE act at the site that
+has the state — and so that the common case cannot accidentally carry one."
+So the inch-5 question is narrowed from *"can this be done"* to *"is
+`σ = TraceRows` worth it"*, with the mechanism already paid for. Registering
+a consumer remains cheaper than predicting one; the question still gets asked
+at inch 5, not now.
+
+### Checks this ticket must perform, not assume
+
+- **`okIs` may or may not survive.** It exists because `Except` carries no
+  `BEq` in this toolchain. Core ships `instance [BEq π] : BEq (Loud π σ)` —
+  on `Loud`, not on `Except` — so the helper is probably still needed.
+  **Verify by compiling, not by reading**: 31 guards depend on it.
+- **`Halt` vs `HaltWith`.** `Core.Halt = HaltWith Unit Unit` is payload-free;
+  Ada needs `HaltWith ArmRef Unit`. The bare `Halt` spelling is the wrong one
+  for this lane — an easy and silent mis-adoption.
+- **Re-run `--classify-only` AFTER the edit.** Inch 1's first tenure was green
+  while `Value.lean` had never compiled, because nothing imported it. The
+  build list must still name all three Ada modules afterward.
+- **Declaration order.** Anchor-span splicing deleted a whole section during
+  inch 1; re-print the order after editing rather than trusting the diff.
+
+### `Core/Order.lean` is NOT part of this ticket
+
+It landed on master since the last read (`FlatLe`, `FlatLe.iff_rel`, the
+`FlatOrder` tripwires) and is the extraction step behind `_mono` corollaries.
+Ada has no recursion, loops, or fixpoints yet, so there is nothing to
+approximate and adopting it now would be a dependency bought for a use that
+does not exist. It becomes relevant when the statement tier gets iteration —
+inch 3+ — and should be adopted then, by that ticket.

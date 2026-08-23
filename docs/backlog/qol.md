@@ -2876,3 +2876,70 @@ its follow-up `grep` running in the session's cwd, which is why it reported
 passes the clone **explicitly** — the shared reader takes its root as an
 argument, which is the same rule as the stamps). `triad.sh` **181 ok** (176 →
 181). `laws.sh` 43 ok. No Lean executed.
+
+## 2026-08-23-qol-42 — the SV round-trip gate joins CI, and qol-40's orphan was half instrument
+
+`laws.sh --gate-set` reported `.sv` as an orphan kind (qol-40). Closing it
+turned up two findings that point opposite ways, and both belong here.
+
+### The gate really was not in CI
+
+`harness/sv_round_trip.py` appears in the committed `tools/ci.sh` **zero
+times** — measured against HEAD, not inferred. It is host-safe: it re-runs
+`extractors/sv/extract.py` over every committed
+`Examples/system-verilog/**/*.sv.json` inside a scratch mirror and compares
+bytes. No simulator, no network, no Lean. It takes **no argument** (`REPO` and
+the envelope root come from the script's own location), so wiring it needed no
+path. It is now a full `step`, called unconditionally: a tracked file is not
+optional.
+
+**The interpreter is part of the gate.** Measured before wiring, on a host
+without pyslang: all 18 live envelopes come back `REFUSE extractor-failed:
+ModuleNotFoundError: No module named 'pyslang'`. That is a red reporting an
+**absent package as though it were envelope drift** — the one distinction this
+gate exists to make. So the step chooses its interpreter **by capability**
+(which `python3.12`/`python3` can actually `import pyslang`), never by name:
+
+* a capable interpreter → the gate runs, here and on a runner;
+* none, off CI → a named SKIP, because pyslang is **not tracked** — the same
+  discriminator `maybe` applies to an absent simulator;
+* none, on a GitHub runner → **FAIL**, because `.github/workflows/ci.yml`
+  installs it there, so a runner that cannot import it has a broken install
+  and skipping would retire the gate exactly where it is the only reader.
+
+### ...but "no gate names `.sv`" was my own instrument under-reading
+
+`gate_rows` anchored its match at **column 0**. Every host-gated gate is
+declared *inside a function or an `if`*, so it is indented, so the enumeration
+never saw it. Measured: **16 gates before, 44 after** — the fix recovered
+`lake-build` (an auditor reading that list would have concluded CI does not
+gate the build at all), 27 simulator-gated spice/sv/rv rows, and the new one.
+
+The counterfactual is the honest test, so it was run: **new `laws.sh` against
+the OLD `ci.sh` reports 43 gates and NO orphan kinds.** `sv-harness` and
+`sv2-harness` were already pointed at `.sv` and my anchor hid them. So qol-40's
+finding was **half instrument artifact**, and this entry corrects it.
+
+What survives the correction: those two rows are **simulator-gated** and SKIP
+when neither `iverilog` nor `xrun` is on PATH, which is a stock runner. On CI
+`.sv` had **no gate that runs**, and the round-trip gate is precisely the one
+that can — so the wiring was worth doing for a reason narrower than the one
+that prompted it. Leading whitespace is indentation, not evidence.
+
+**A fixture is not enforcement**, applied to declarations: `--verify-guards`
+drives these same functions with stubs, so that region is cut before matching.
+It is cut inside `gate_rows` rather than in `enforcement_text`, whose keying is
+the self-test spelling and whose citation counts are not this inch's to move.
+
+### Left standing, named rather than fixed
+
+`gate_rows` enumerates a **declaration**, so a gate wrapped in a function that
+nothing ever calls would still be listed. "A declaration is not a call" is the
+next cousin of the fixture rule; here the call site is pinned by a
+`--verify-guards` row asserting `^sv_round_trip_step$` instead.
+
+### Triad
+
+`bash -n` clean. `ci.sh --verify-guards` **26 ok** (17 → 26), `laws.sh` **45
+ok** (43 → 45), `triad.sh` 181 ok, `check.sh` 87 ok, `docs_check` 5 ok. No Lean
+executed.

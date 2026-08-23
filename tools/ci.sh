@@ -164,6 +164,55 @@ conflict_markers() {            # [dir] -> 1 when the TRACKED tree carries any
   return 1
 }
 
+# THE SV ROUND-TRIP GATE, WHICH WAS ORPHANED.  `laws.sh --gate-set` enumerated
+# the declared gate sets and found `.sv` as a kind with 21 committed envelopes
+# and ZERO mentions of harness/sv_round_trip.py in this file: the SV lane's own
+# gate was never in CI.  It is host-safe — it re-runs extractors/sv/extract.py
+# over Examples/system-verilog/**/*.sv.json inside a scratch mirror and compares
+# bytes; no simulator, no network, no Lean — and it takes no argument, reading
+# the envelope root from its own location.  So it is a full step.
+#
+# THE INTERPRETER IS PART OF THE GATE.  The extractor imports pyslang, which
+# .github/workflows/ci.yml installs under python3.12 (falling back to python3)
+# and which tools/lean_magic.py names for the same reason.  Measured before
+# wiring: on a dev host without it, all 18 live envelopes come back
+# `REFUSE extractor-failed: ModuleNotFoundError: No module named 'pyslang'` —
+# a red reporting an ABSENT PACKAGE as though it were envelope drift, which is
+# the one distinction this gate exists to make.  So the interpreter is CHOSEN
+# BY CAPABILITY (which python can actually import pyslang?), never by name.
+sv_python() { # -> prints an interpreter that can import pyslang; 1 if none can
+  local py
+  for py in python3.12 python3; do
+    command -v "$py" >/dev/null 2>&1 || continue
+    "$py" -c "import pyslang" >/dev/null 2>&1 || continue
+    printf '%s\n' "$py"; return 0
+  done
+  return 1
+}
+sv_round_trip_step() {
+  local py
+  if py="$(sv_python)"; then
+    step "sv-round-trip" "$py" harness/sv_round_trip.py
+    return
+  fi
+  # pyslang is NOT tracked by this repository, so its absence is an environment
+  # fact and SKIP is honest — the same discriminator `maybe` applies to an
+  # absent simulator.  On a GitHub runner it is not: the workflow installs it
+  # there, so a runner that cannot import it has a broken install, and skipping
+  # would retire the gate exactly where it is the only reader.
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    echo "=== [sv-round-trip] FAIL — no python3.12/python3 can import pyslang,"
+    echo "    but .github/workflows/ci.yml installs it on this runner.  A gate"
+    echo "    that cannot run in CI is not a skip, it is a broken install."
+    fail+=("sv-round-trip")
+  else
+    echo "=== [sv-round-trip] SKIP (no python3.12/python3 can import pyslang —"
+    echo "    an environment fact, not envelope drift; pyslang is not tracked)"
+    echo "    To run it here: python3.12 -m pip install pyslang"
+    skip+=("sv-round-trip")
+  fi
+}
+
 # THE GUARDS, VERIFIED — placed after the definitions so it drives the REAL
 # `lake_build_step` rather than a copy of it, and before any step runs.
 if [ "$VERIFY_GUARDS" = "1" ]; then
@@ -229,7 +278,55 @@ VSTUB
   vcheck "a committed marker FAILS the gate"      "$?" "1"
   vcheck "  ...and names the file and line"       "$(grep -c 'a.md:1' "$vout")" "1"
 
-  PATH="$vpath"; rm -rf "$vstub"
+  # THE SV GATE'S INTERPRETER CHOICE, BOTH WAYS.  Stubbed rather than probed,
+  # so the rows read the same on a host that has pyslang and on one that does
+  # not — the failure this guards against is a gate that reports a missing
+  # package as envelope drift, and that must be reproducible either way.
+  mkdir -p "$vstub/svok" "$vstub/svno"
+  # `$1` is escaped: the heredoc is UNQUOTED so that $vstub expands, which
+  # means every other dollar has to be spelled for the stub, not for here.
+  cat > "$vstub/svok/python3.12" <<SVOK
+#!/usr/bin/env bash
+[ "\$1" = "-c" ] && exit 0      # this interpreter CAN import pyslang
+touch "$vstub/SVRAN"            # ...and records that the harness was reached
+exit 0
+SVOK
+  cat > "$vstub/svno/python3.12" <<SVNO
+#!/usr/bin/env bash
+[ "\$1" = "-c" ] && exit 1      # this interpreter CANNOT import pyslang
+touch "$vstub/SVRAN"
+exit 0
+SVNO
+  cp "$vstub/svno/python3.12" "$vstub/svno/python3"
+  chmod +x "$vstub/svok/python3.12" "$vstub/svno/python3.12" "$vstub/svno/python3"
+
+  # PATH set around the call rather than as a `VAR=v func` prefix, and the
+  # command hash dropped with it: bash resolves an already-hashed `python3`
+  # from the hash table, which would reach the real one past the stub.
+  rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
+  PATH="$vstub/svok:$vpath"; hash -r
+  sv_round_trip_step > "$vout" 2>&1
+  vcheck "a python that imports pyslang RUNS the gate" "$( [ -e "$vstub/SVRAN" ] && echo ran || echo none )" "ran"
+  vcheck "  ...and it is a pass, not a skip"       "${pass[*]}" "sv-round-trip"
+
+  rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
+  PATH="$vstub/svno:$vpath"; hash -r
+  GITHUB_ACTIONS= sv_round_trip_step > "$vout" 2>&1
+  vcheck "no pyslang off a CI host is a named SKIP" "${skip[*]}" "sv-round-trip"
+  vcheck "  ...naming the package, not drift"      "$(grep -c 'not envelope drift; pyslang' "$vout")" "1"
+  vcheck "  ...and the harness never ran"          "$( [ -e "$vstub/SVRAN" ] && echo ran || echo none )" "none"
+
+  rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
+  GITHUB_ACTIONS=true sv_round_trip_step > "$vout" 2>&1
+  vcheck "no pyslang ON a runner is a FAILURE"     "${fail[*]}" "sv-round-trip"
+  vcheck "  ...naming the workflow that installs it" "$(grep -c 'workflows/ci.yml installs it' "$vout")" "1"
+
+  # A TRACKED FILE IS NOT OPTIONAL: the gate is called unconditionally, and no
+  # future edit may downgrade it to a `maybe`.
+  vcheck "the gate is called as a full step"       "$(grep -c '^sv_round_trip_step$' "$0")" "1"
+  vcheck "  ...and never as a maybe"               "$(grep -cE '^maybe(_lean)? .*sv-round-trip' "$0")" "0"
+
+  PATH="$vpath"; hash -r; rm -rf "$vstub"
   echo "verify-guards: $vok ok, $vbad failed"
   [ "$vbad" = "0" ] || exit 1
   exit 0
@@ -246,6 +343,7 @@ maybe "leanpy-survey"   harness/leanpy_survey.py  python3 harness/leanpy_survey.
 step  "extractor-tests" python3 extractors/python/test_extract.py
 step  "leanpy-cache-tests" python3 tools/test_leanpy.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
+sv_round_trip_step
 maybe "spice-dram-bank-256x32-source" Examples/spice/dram_bank_256x32/generate.py \
   python3 Examples/spice/dram_bank_256x32/generate.py --check
 maybe_lean "spice-dram-bank-256x32-adversarial" harness/spice/dram_bank_256x32_source_test.lean \

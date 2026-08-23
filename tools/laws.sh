@@ -331,9 +331,25 @@ gate_is_expected_fail() {
 gate_rows() {                   # -> "set<TAB>name<TAB>pointer<TAB>flag<TAB>decl"
   local ci="$CLONE/tools/ci.sh" tr="$CLONE/tools/triad.sh"
   if [ -r "$ci" ]; then
-    awk '/^(step|maybe|maybe_lean) +"/ {
-           n = $0; sub(/^[a-z_]+ +"/, "", n); sub(/".*/, "", n)
-           d = $0; sub(/^[a-z_]+ +"[^"]*" */, "", d)
+    # ANCHORED AT COLUMN 0, THIS MISSED EVERY WRAPPED GATE.  `lake-build` — the
+    # most consequential row in the file — is declared INSIDE lake_build_step()
+    # because it is host-gated, so it is indented, so the enumeration omitted
+    # it: an auditor reading this list would conclude CI does not gate the
+    # build.  The same shape hid the sv round-trip gate.  Leading whitespace is
+    # indentation, not evidence.
+    #
+    # But a FIXTURE IS NOT ENFORCEMENT (the rule enforcement_text already
+    # applies to citations): --verify-guards drives these same functions with
+    # stubs, so its rows must not be enumerated as gates.  That region is cut
+    # here rather than in enforcement_text, which keys on the self-test
+    # spelling and whose citation counts are not this inch's to move.
+    awk 'BEGIN { fixture = 0 }
+         /VERIFY_GUARDS" = "1"/ { fixture = 1 }
+         fixture && /verify-guards: \$vok ok/ { fixture = 0; next }
+         fixture { next }
+         /^[ \t]*(step|maybe|maybe_lean) +"/ {
+           n = $0; sub(/^[ \t]*[a-z_]+ +"/, "", n); sub(/".*/, "", n)
+           d = $0; sub(/^[ \t]*[a-z_]+ +"[^"]*" */, "", d)
            printf "ci.sh\t%s\t%s\n", n, d
          }' "$ci"
   fi
@@ -485,6 +501,13 @@ MD
 step  "docs"        python3 tools/docs_check.py
 step  "probe"       lake env lean probes/probe_es_unblock.lean   # EXPECTED TO ERROR
 step  "computed"    run_the_thing
+wrapped_step() {
+  step "wrapped" python3 tools/wrapped_gate.py
+}
+if [ "$VERIFY_GUARDS" = "1" ]; then
+  step "fixture-row" python3 tools/never_a_gate.py
+  echo "verify-guards: $vok ok, $vbad failed"
+fi
 CISH
   printf '# Scans README.md, AGENTS.md, and docs/**/*.md for marked blocks.\n' \
     > "$gs/tools/docs_check.py"
@@ -492,7 +515,13 @@ CISH
   i=1; while [ "$i" -le 6 ]; do printf '# d\n' > "$gs/docs/d$i.md"; i=$((i+1)); done
   saved_cl="$CLONE"; CLONE="$gs"
 
-  check "gates are read from DECLARATIONS"  "$(gate_rows | grep -c .)" "3"
+  check "gates are read from DECLARATIONS"  "$(gate_rows | grep -c .)" "4"
+  # A HOST-GATED gate lives inside a function, so it is indented; anchoring at
+  # column 0 dropped `lake-build` and 27 others from the enumeration.
+  check "an INDENTED gate is still a gate"  "$(gate_rows | grep -c 'wrapped')" "1"
+  # ...but a fixture that DRIVES the gates is not one of them (the rule
+  # enforcement_text applies to citations, applied here to declarations).
+  check "  ...a --verify-guards row is not" "$(gate_rows | grep -c 'fixture-row')" "0"
   check "a declared script is a pointer"    "$(gate_pointer 'python3 tools/docs_check.py' | tr -d ' ')" "tools/docs_check.py"
   check "the gate's OWN words extend it"    "$(gate_pointer "$(cat "$gs/tools/docs_check.py")" | grep -c 'README.md')" "1"
   check "an EXPECTED-TO-ERROR gate is the weakest row" \

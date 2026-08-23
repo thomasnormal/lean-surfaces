@@ -306,15 +306,15 @@ so the scorer must be able to tell them apart without parsing a string. -/
 -- checked rather than asserted.** Two refusals of the same construct
 -- reached through DIFFERENT memories compare EQUAL, because `Halt`'s `BEq`
 -- ignores the snapshot; and `Outcome` has nowhere to put a `Mem` at all.
-#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some Mem.empty))
-    == (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
-#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some m1))
-    == (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some Mem.empty))
+#guard (LeanModels.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some Mem.empty))
+    == (LeanModels.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
+#guard (LeanModels.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some m1))
+    == (LeanModels.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" (some Mem.empty))
 -- ...but the CAUSE and the PROSE are still compared, so the guard has not
 -- disabled the gate it protects.
-#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
-    != (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "goto" none)
-#guard (LeanModels.Core.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
-    != (LeanModels.Core.Loud.unsupported (σ := Mem) (.undefined ()) "switch" none)
+#guard (LeanModels.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
+    != (LeanModels.Loud.unsupported (σ := Mem) (.unsupported ()) "goto" none)
+#guard (LeanModels.Loud.unsupported (σ := Mem) (.unsupported ()) "switch" none)
+    != (LeanModels.Loud.unsupported (σ := Mem) (.undefined ()) "switch" none)
 
 end Examples.c.sunfish.memory

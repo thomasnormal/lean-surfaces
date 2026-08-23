@@ -100,7 +100,7 @@ open LeanModels.C (CType Expr CSpan)
 /-- The expression evaluator's monad. See the module docstring: `ExceptT`
 OUTSIDE `StateT` is the state-retaining order, and it is not the obvious
 one. -/
-abbrev EvalM (α : Type) := LeanModels.Core.SemMWith Mem Refusal CDetail Mem α
+abbrev EvalM (α : Type) := SemMWith Mem Refusal CDetail Mem α
 
 /-- Run an evaluation against a starting memory, keeping BOTH halves: the
 outcome and the memory as it stood when the outcome was produced. A
@@ -110,7 +110,7 @@ The `Halt` wrapper is the uncatchable layer (`Memory.lean` §3.4) — a
 `timeout` or an out-of-tier construct answers there and carries no
 `Mem` alongside, because neither is an observation. -/
 def EvalM.run (m : Mem) (x : EvalM α) :
-    Except (LeanModels.Core.Loud CDetail Mem) (Except Refusal α × Mem) :=
+    Except (Loud CDetail Mem) (Except Refusal α × Mem) :=
   StateT.run x m
 
 /-- The run's VERDICT, in `docs/c23-goal.md` §3's vocabulary. This is what

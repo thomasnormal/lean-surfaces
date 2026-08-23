@@ -216,7 +216,7 @@ inductive Refusal where
 deriving Repr, Inhabited, BEq
 
 /-- The result of a memory operation. `Except` rather than a bespoke sum,
-because inch 3's stack is `ExceptT Refusal (StateT CWorld Halt)` — the
+because inch 3's stack is Core's `SemMWith` — `ExceptT` over `StateT` over `Loud` — the
 STATE-RETAINING order, which the `mvcgen` pilot proved by `rfl` is the
 one that does not discard the world on a raise — and an operation written
 against `Except Refusal` today needs no adapter tomorrow
@@ -737,7 +737,7 @@ detail — until the order-dependence verdict needs to name a site. -/
 abbrev CDetail := Unit
 
 /-- This tier's three causes, in the family's vocabulary. -/
-abbrev Cause := LeanModels.Core.RefusalCause CDetail
+abbrev Cause := RefusalCause CDetail
 
 namespace Refusal
 

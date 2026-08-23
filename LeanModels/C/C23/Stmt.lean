@@ -40,10 +40,12 @@ because a timeout is not an observation of anything.
 So the stack gains a base:
 
 ```
-ExecM α := ExceptT Refusal (StateT Mem Halt) α
+ExecM α := SemMWith Mem Refusal CDetail Mem α
+        = ExceptT Refusal (StateT Mem (Except (Loud CDetail Mem))) α
 ```
 
-where `Halt` carries fuel exhaustion and nothing else. A timeout discards
+where Core's `Loud` carries fuel exhaustion and the out-of-tier frontier,
+and nothing else. A timeout discards
 the memory, correctly — there is no world to report.
 
 ## WHERE REFUSAL LIVES — RULED, at `docs/family-architecture.md` §3.4
@@ -61,8 +63,8 @@ objects** — and signal handlers in the language at large. Inside `ρ`,
 "no catch reaches a refusal" is a per-language, per-construct proof
 obligation; uncatchability belongs to the definition.
 
-So `unsupported` lives in `Halt` (`Memory.lean`), and the diagnostic need
-is met the better way: **`Halt.unsupported` carries a structured payload
+So `unsupported` lives in Core's `Loud` base, and the diagnostic need
+is met the better way: **`Loud.unsupported` carries a structured payload
 — the cause, plus an OPTIONAL memory snapshot captured AT the refusal
 site.** §3.4's existing law pays for it, because every refusal already
 routes through a NAMED primitive with its own `@[spec]` lemma, and that
@@ -96,7 +98,7 @@ abbrev ExecM (α : Type) := EvalM α
 
 /-- Run a statement against a starting memory. -/
 def ExecM.run (m : Mem) (x : ExecM α) :
-    Except (LeanModels.Core.Loud CDetail Mem) (Except Refusal α × Mem) :=
+    Except (Loud CDetail Mem) (Except Refusal α × Mem) :=
   EvalM.run m x
 
 /-- The verdict, in `docs/c23-goal.md` §3's vocabulary. -/
@@ -618,12 +620,12 @@ impossible to mistake for a theorem. -/
 
 /-- More fuel never turns a decided answer into a different one.
 
-`Halt.timeout` is the bottom: a run that exhausted its fuel may become
+`Loud.timeout` is the bottom: a run that exhausted its fuel may become
 anything at higher fuel, and a run that DECIDED keeps its exact answer,
 memory included. -/
 def FuelMono : Prop :=
   ∀ (fuel : Nat) (ctx : Ctx) (s : Stmt) (m : Mem) (r : Except Refusal Flow) (m' : Mem),
-    ExecM.run m (execStmt fuel ctx s) = Halt.ok (r, m') →
-    ∀ fuel' ≥ fuel, ExecM.run m (execStmt fuel' ctx s) = Halt.ok (r, m')
+    ExecM.run m (execStmt fuel ctx s) = .ok (r, m') →
+    ∀ fuel' ≥ fuel, ExecM.run m (execStmt fuel' ctx s) = .ok (r, m')
 
 end LeanModels.C.C23

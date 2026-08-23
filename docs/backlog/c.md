@@ -809,3 +809,143 @@ The audit found in one pass what this lane had walked past repeatedly. The
 standing correction is the one already written at `2026-08-23-c-5` for
 termination and it generalises: **a claim that cannot fail is not a check**,
 and the fix is always to build the instrument, not to soften the sentence.
+
+---
+
+## 2026-08-23-c-10 — THE ADOPTION'S TENURE CAME BACK RED, and the one defect was sitting in its own diff's CONTEXT
+
+### The verdict, recovered rather than re-run
+
+The Core-adoption ticket (`1787486390521832000-49734-c`) **did** run. It
+queued **8008 s** — 2 h 13 m — behind five lanes, acquired at 16:16:14, and
+was **RED in 15 seconds**.
+
+Recovering it was itself a lesson. `triad.sh` writes its build output to
+`$TMPDIR/triad-build.XXXXXX`, and that file contains **only `lake build`
+output** — no ticket, no lane, no branch. Sixty-eight such logs sat in
+`$TMPDIR`, and grepping them for `cadopt`, `c-core-adoption` or the lane tag
+matched **nothing**, because none of those strings is ever written into a
+build log. The lane's own transcript (`say` lines: the ticket, the queue
+waits, the classification, the verdict) goes to whatever file the detached
+runner redirected to — here `scratchpad/triad-c.log`. **The ticket name lives
+in the LANE's log; the errors live in the TRIAD's log, and only the lane's log
+names the triad's.** Recovery is: find the lane log by CONTENT, read the `full
+log:` line at its foot, and follow it.
+
+### What was red
+
+Build **exit 1** at **17 of 18** targets. Everything under `LeanModels/C`
+built green — including the three drain-amendment theorems the hand-off named
+as the sole expected unknown, which needed no repair at all and printed the
+ordinary `[propext, Classical.choice, Quot.sound]`. `Examples.c.sunfish.stmt`
+was never attempted; lake stops at the first failing module.
+
+Two errors, both in `Examples/c/sunfish/expr.lean`, and **both one defect**:
+
+```
+:106:36  Function expected at
+           Halt
+         but this term has type ?m.1
+:133:48  Invalid dotted identifier notation: the expected type of `.ok`
+         could not be determined
+```
+
+`runIndetRaw`'s return type still names the **deleted local `Halt`**. The
+second error is a cascade of the first: with the scrutinee at `?m.1` the
+match's arms have no expected type.
+
+### Why the site census missed it, and it is not a counting error
+
+The adoption's own diff **touches this file** — one line, `Cause.ub` →
+`(.undefined () : Cause)`, at `:118`. The stale `Halt` is at `:106`, which
+puts it **inside that hunk's three lines of leading context**. The census
+counted occurrences of the deleted *value* constructors and destructures; a
+**type annotation** naming the deleted type is a fourth shape, and it appeared
+on screen, greyed, directly above an edit that was made. The generalisable
+form: **a census over a deleted definition must enumerate every syntactic
+position the name can occupy — type annotations included — and diff context is
+the worst place to review one, because the eye reads it as already-checked.**
+
+### The repair
+
+`LeanModels.HaltWith CDetail Mem (Except Refusal CVal × Mem)` — which is
+exactly what `EvalM.run` returns (`Except (Loud CDetail Mem) (Except Refusal α
+× Mem)`). Written with the `LeanModels.` prefix because this file opens
+`LeanModels.C.C23` and not the root, the same reason `LeanModels.C.CSpan` is
+spelled out ten lines above it.
+
+Verified BEFORE the ticket, at **2.7 s** and no tenure, by `tools/check.sh` on
+a scratch file outside the lake globs that restates both shapes — the
+`EvalM.run` type and the `.ok (_, m)` destructure the memory-retention gate
+does on it. Exit 0, 0 warnings. `check.sh` **refuses** the library file itself
+(`CASE refuse-library`), which is right, and the scratch restatement is the
+sanctioned way round it.
+
+### The rest of the tree is clean, checked rather than assumed
+
+`Cause.ub` / `Cause.libc` / `Cause.unsupported` / `Halt.ok` / `Halt.timeout`:
+**zero** hits under `LeanModels/C` and `Examples/c`. The remaining `Halt`
+mentions in the tier are docstring prose; every other `Halt` in the repository
+belongs to the **ES lane's own local `Halt`** (`LeanModels/Es/Completion.lean`),
+which is not this adoption's business.
+
+### The re-gate is a SPINE build, not the `tier` one the classifier would pick
+
+The first tenure classified `tier` and built 18 targets. It was right then.
+It is wrong now: master moved **52 commits** under this branch, and `Core` is
+in this tier's import closure, so a scoped green would say nothing about
+whether the adoption still holds against the Core that exists. The re-ticket
+therefore names **no build target at all** — `BUILD_TARGETS=""` is every
+default target — and pays the full build deliberately.
+
+### VERDICT — GREEN, and it is a SPINE green
+
+`tools/triad.sh --lane cadopt` with no `--classify`: queued **4954 s**, held
+the machine **42 minutes**, build **exit 0**, **3765 jobs**, *Build completed
+successfully*. **Zero** `error`/`✖`/`sorry` lines in the whole log.
+
+| gate | result |
+| --- | --- |
+| `lake build` (every default target) | **exit 0**, 3765 jobs |
+| `tools/docs_check.py` | **91 / 91** marked blocks, 36 illustrative-exempt |
+| `harness/diff_test.py` | **1427 cases, 0 failed** — 1311 matched, 116 whitelisted-unsupported |
+| `harness/c_profile_probe.py --check-lean` | **9 / 9** width/signedness points, 8 `IntTy` defs parsed |
+| `harness/script_corpus.py` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+| `tools/backlog-index.sh --check` | in sync, 189 entries |
+
+The two targets that decided it: `Examples.c.sunfish.expr` ✔ (the module that
+was red) and `Examples.c.sunfish.stmt` ✔ — **the one the first tenure never
+reached**, because lake stops at the first failing module and `stmt` was
+target 18 of 18.
+
+**COVERAGE (§5.4a): SPINE — every default target, no scope caveat.** This is
+the one claim a `tier` green could not have made, and it is the claim that was
+needed: `Core` moved **52 commits** under this branch (`Core/Order.lean` new,
+`Core/Outcome.lean` +67 lines of `PartialOrder` / `CCPO` / `MonoBind` instances
+on `HaltWith`, all **purely additive** — 118 insertions, 0 deletions), and the
+adoption's whole premise is that this tier's monad IS Core's. A green scoped to
+the C modules would have re-verified the adoption against the Core it was
+written for, not the Core that exists.
+
+### Axiom ledger, from this build
+
+| theorem | axioms |
+| --- | --- |
+| `Mem.get?_alloc`, `Mem.resolve_alloc`, `Mem.resolve_ok`, `Mem.loadBytes_storeBytes` | `propext, Quot.sound` |
+| `Mem.get?_set_self` | `propext` |
+| `Mem.resolve_kill` | `propext, Classical.choice, Quot.sound` |
+| `and_shortCircuits`, `or_shortCircuits`, `cond_takesOneArm` | `propext, Classical.choice, Quot.sound` |
+
+The three drain-amendment theorems — the hand-off's sole expected unknown,
+because their simp sets gained `Except.bind`/`Except.pure` under the new monad
+— **needed no repair and carry no new axioms.** The unknown resolved to
+nothing; the defect was somewhere nobody had flagged.
+
+### The queue, for Amendment 9's record
+
+Enqueued 19:25:58 at depth 6, acquired 20:50:00 — **1 h 22 m**, behind `ada`
+and `sv` (a 40-minute full build) with `leantier`, `softfloat` and `wasm`
+ahead in the queue. One ticket ahead of this one was **reaped by the staleness
+sweep** (`reaped stale ticket …-go (pid 73698 dead)`) — A9's sweep doing
+exactly its job, visible in the lane log, and worth one line here because a
+queue that only ever grows is the failure mode the sweep exists to prevent.

@@ -141,10 +141,30 @@ finding rather than silently diverging:
 | `environment` | outside the modeled slice (a library unit we do not model) | by widening the slice |
 | `orderDependence` | an unspecified order the model cannot show unobservable | by a census, per §3.6 |
 
-**The design does not move ES's type.** Two options exist — a `Core`
-`RefusalCause` with all four, or a per-tier cause type — and choosing between
-them is the architecture lane's call, not this lane's, exactly as the ES
-charter left it. What this lane owes is the measurement, which is above.
+**RULED (`docs/family-architecture.md`, `14bdd7a`), and this lane's
+measurement is what forced the question.** `Core` carries the four §5.2
+classes as a four-constructor type **parameterized by a tier payload** —
+`RefusalCause π`. The classes are family law; the payload is the tier's. C
+instantiates `π` with a J.2 index, **Ada with an ARM paragraph reference**,
+ES with a host-hook name. The payload objection dissolves the way `ρ` did:
+what differs irreducibly per tier is not a *class*, it is a *parameter*.
+
+The per-tier-cause-type alternative was rejected on this family's own
+precedent — it makes the four-way partition a per-tier proof obligation, and
+*a family invariant that must be re-established per tier is not a family
+invariant, it is N lemmas*. It would also defeat the cross-tier scoreboard,
+for which "how many `REFUSE(undefined)` across the family" is exactly the
+question it exists to answer.
+
+**AND AN EXPECTED-EMPTY CLASS IS PRESENT AND GATED, NEVER ABSENT** — the
+clause of the ruling that binds this lane's inch 1 hardest. Omitting a
+constructor makes the emptiness *a fact about the type, invisible to the
+scoreboard*, which then cannot distinguish "this language has no such
+behaviour" from "this tier did not model that column". **A gate needs a
+constructor to be about.** So Ada carries `orderDependence` from inch 1 with
+an explicit gate predicate, expecting it empty and *measuring* rather than
+assuming that — and `undefined` carries its ARM 1.1.5 citation rather than a
+loose string.
 
 ### 1.4 Bounded errors are MEMBERSHIP sites — never `⊕`
 

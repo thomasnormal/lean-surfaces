@@ -271,3 +271,119 @@ Ada-charter rung that names the float condition in Ada's terms (ARM Annex G,
 `Float`/`Long_Float`, and whether ACATS 4.2's numerics tests are in scope), or
 a plain statement that floats are out of tier. Either is fine; the current
 state is a deferral pointing at another language's rung.
+
+## 2026-08-23-ada-1 — M2 INCH 1 IS GREEN, and the audit found a gate of mine that could not fail
+
+`LeanModels/Ada/Ada2012/Value.lean` — the value layer, **31 `#guard`s** — plus
+the four rows of `docs/quality-audit-2026-08-23.md` "## ada". Triad green:
+`build exit=0`, `docs_check 88/88`, `diff_test 1427 cases, 0 failed, 116
+whitelisted, 1311 matched`.
+
+### THE DECISION INCH 1 EXISTS FOR, verified
+
+`constrain` is this tier's `close`. In range → the value; out of range →
+**raise `Constraint_Error`** (ARM 4.6, 5.2). Not a wrap, and **not a
+refusal**: the ARM defines the outcome completely, so refusing it would be a
+false statement about the language and would refuse most of a suite that is
+largely *about* constraint checking. The C lane's `close` refuses at exactly
+this position because C leaves signed overflow undefined — same slot,
+opposite answer, and the difference is the languages'.
+
+Guarded directly: `!okIs (.int Int8 (-128)) (constrain Int8 128)` — Ada never
+wraps. Also pinned: overflow on `+`/`-`/`*` raises, division by zero raises
+(ARM 4.5.5(11)), `adaDiv` truncates toward zero and `adaRem` takes the LEFT
+operand's sign (ARM 4.5.5(5-6)), and `Boolean` goes through the enumeration
+constructor because **`Boolean` and `Character` ARE enumeration types** (ARM
+3.5.2-3.5.3) — a tier giving `Boolean` its own constructor models a language
+Ada is not.
+
+`adaDiv` is DEFINED here rather than borrowed: `Int.tdiv` is not in this
+toolchain's `Int` module (checked), and a tier whose division is "whatever
+`/` resolved to" has not decided anything.
+
+### THE AUDIT'S FOUR ROWS — two of them bit my own gate
+
+**`ada_round_trip.py:357` is the one worth reading.** Its docstring said *"the
+gate must FAIL a tampered envelope, or it is decoration"* — and **it never
+once ran the gate.** Three of six cases asserted `SKIP`, which `check()`
+returned because the fixture passed an EMPTY temp dir as `source_root`, so
+`regenerate()` bailed before comparing anything. No case reached EDGE 2/3,
+the field loop, or the payload compare, and **no case ever produced MATCH**.
+The instrument I built to catch vacuity elsewhere was vacuous itself.
+
+Now 11 cases with a source staged under `source_root` and a **stub
+extractor** standing in for the frontend: untampered → MATCH, and mutated
+payload / `unsupported_count` / markings / unit-name → DIVERGE each.
+Stubbing is deliberate — the subject is the COMPARISON, not the parser — and
+it also keeps the self-test alive now that libadalang has been purged twice.
+
+**`:331`** — `SKIP` was exempt from `bad`, so a run pointed at the wrong
+`--source-root` reported `MATCH 0, SKIP N` and **exited 0**. A gate that
+compared nothing passed. `MATCH + DIVERGE == 0` is now an instrument-level
+failure naming the root — the same absence-vs-zero defect this gate's own
+VACUOUS verdict exists to catch (`2026-08-22-ada-1`), found in the gate.
+
+**`ada_suite_census.py:688`** — a missing or unparseable `VERSION.A` recorded
+`"acats_version": null, "language_version": null` verbatim: **an absence
+serialized as a measurement.** Now refuses, as does an unlisted major and a
+missing `ACATS*.LST`. All four refusal paths RUN, exit 1 each — and running
+them **exposed a latent crash**: `clause_of` assumed 7-character ACATS names
+and raised `IndexError` on a short one. A traceback is not a refusal. My own
+refusal fixture found a bug a real delivery would never have triggered.
+
+**`guards.lean:140`** — vacuous twice over. An all-zero span satisfied
+`endLine ≥ line && endCol ≥ col`, so the guard could not detect the very
+absence it existed to pin; and `endCol ≥ col` is not a validity property of a
+MULTI-LINE span at all (10:40 → 12:5 is legal and would have failed). Now the
+positive property, pre-verified against the fixture in Python so no tenure
+was spent discovering it.
+
+One regression caused and caught in the same landing: the new manifest
+refusal broke the census's own self-test fixture, which had no `ACATS*.LST`.
+Fixed by giving the fixture one.
+
+### THE TRIAD DEBT, DISCHARGED
+
+The debt accumulated across `§L63`, `§L69`, `§L70`, `§L74`, `§L75` and
+`2026-08-22-ada-*` — every one of which landed docs or standalone Python with
+the Lean third unrun — is discharged here. This is the lane's **first landing
+with Lean in it**, and it carries the full class floor.
+
+### THREE PROCESS FINDINGS, all of them mine
+
+**1. A module no module imports is never elaborated.** Inch 1's first tenure
+was GREEN while `Value.lean` had never been compiled: nothing imported it,
+and `LeanModels.lean` deliberately does not import the Ada lane. 78 minutes
+of queue bought a docs check. `LeanModels/Ada.lean` now imports it, and
+`triad.sh --classify-only` names the modules a green actually covers — it
+must be re-run AFTER the code is written, not before.
+
+**2. Anchor-span splicing deletes whatever a previous edit put between the
+anchors.** The second RED had one root cause: a `python` replace spanning
+`"**ADOPT** (Core.Halt)"` … `"An abrupt completion in Ada"` silently removed
+the value section a previous splice had inserted between them, so
+`IntSubtype`/`EnumSubtype`/`Val` vanished and every other error cascaded from
+`Abrupt.ret (value : Option Val)`. **Verify by re-printing the declaration
+order**, which is how the fix was confirmed.
+
+**3. `Except` carries no `BEq` in this toolchain.** The third RED was three
+guards comparing an `Except` with `==`. Fixed with an `okIs` helper needing
+only `BEq Val` — **not** by declaring an orphan `BEq (Except ε α)`, which
+would be a global instance added for a local convenience that the next tier
+comparing an `Except` would inherit without asking.
+
+### Adoption, deliberately NOT folded in
+
+Core's `Except (Loud π σ)` is in the tree. The by-shape `Loud`/`Halt`/`SemM`
+here are marked **ADOPT** and are replaced by imports as their **own ticket**
+— mixing a known three-line fix with a real redesign is how a tenure gets
+spent proving nothing. `π = ArmRef`; **`σ = Unit`**, per the family default:
+*adding a snapshot without a consumer is designing against nothing*, and the
+ACATS grader consumes event traces, not states.
+
+**A candidate consumer is registered rather than claimed**: Core's `Loud` arms
+discard state, so a refusal mid-test would discard the event-trace rows
+already emitted — and a refused test should still yield a PARTIAL trace, not
+nothing. That is σ-shaped. But the scoreboard does not exist until inch 5-6,
+so there is no consumer today and `Unit` stands. Predicting a consumer is not
+having one; the question gets asked at inch 5.

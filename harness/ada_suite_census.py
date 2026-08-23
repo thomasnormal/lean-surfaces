@@ -294,6 +294,16 @@ def clause_of(name):
     chapter that follows Ada 83's organization and, the User's Guide says in
     4.3.1, "sometimes will not correspond" to the current clause.  So legacy
     tests get their chapter reported as such and never as an ARM clause."""
+    # ACATS names are 7 or 8 characters (User's Guide 4.3.1, 4.3.2) and a
+    # real delivery has no shorter one -- but a MALFORMED delivery would
+    # crash here with an IndexError, and a traceback is not a refusal.
+    # Found by this instrument's own refusal-path fixture.
+    if len(name) < 7:
+        sys.exit("ada_suite_census: test name %r is shorter than the 7 "
+                 "characters the ACATS naming convention requires (User's "
+                 "Guide 4.3). This is not an ACATS delivery, or it is "
+                 "damaged; guessing a class and clause from it would be "
+                 "worse than refusing." % name)
     modern = name[6].isdigit()
     if not modern:
         return {"naming": "legacy", "aig_chapter": name[1], "clause": None,
@@ -536,6 +546,13 @@ END C23001A;
     "support/REPORT.A": "package Report is\nend Report;\n",
     "support/VERSION.A": ('package Version is\n   ACATS_Version : constant '
                           'String := "4.2 ";\nend Version;\n'),
+    # The delivery's own file list. The census REFUSES without one (the
+    # 2026-08-23 audit's absence row), so the fixture carries it -- and
+    # listing every basename keeps `manifest_check` reporting no MISSING
+    # file, which is the state a real delivery is in.
+    "support/ACATS42.LST": ("C340001.A\nB340001.A\nC23001A.ADA\n"
+                            "F340A00.A\nFCNDECL.ADA\nREPORT.A\n"
+                            "VERSION.A\nACATS42.LST\nUG-1.HTM\n"),
     "docs/UG-1.HTM": "<html></html>\n",
 }
 
@@ -561,7 +578,7 @@ def self_test():
             ("language_version", out["language_version"], "Ada2012"),
             ("tests", s["tests_language"], 3),
             ("foundation_units", s["foundation_units"], 1),
-            ("support_files", s["support_files"], 3),
+            ("support_files", s["support_files"], 4),
             ("files_total", s["files_total"], len(SELF_TEST_FILES)),
             ("doc_files", s["doc_files"], 1),
             ("legacy", s["by_naming"].get("legacy"), 1),
@@ -632,7 +649,11 @@ def manifest_check(root):
                     listed = {l.strip().upper() for l in fh if l.strip()}
                 break
     if listed is None:
-        return None
+        sys.exit("ada_suite_census: no ACATS*.LST manifest under %s. It is "
+                 "the delivery's own file list and the only way to know the "
+                 "unpack is COMPLETE; without it an incomplete corpus would "
+                 "shrink every number here silently, which is the failure "
+                 "this check exists to prevent." % root)
     have = {n.upper() for _, _, fs in os.walk(root) for n in fs}
     missing = sorted(listed - have)
     if missing:
@@ -677,15 +698,39 @@ VERSION_CONST = re.compile(r'(?i)ACATS_Version\s*:\s*constant\s+String\s*:=\s*"'
 
 
 def suite_version(root):
-    """Read the suite's own version constant.  Returns (version, edition)."""
+    """Read the suite's own version constant.  Returns (version, edition).
+
+    REFUSES rather than recording `null`.  The 2026-08-23 audit found this
+    returning `(None, None)` for a missing or unparseable `VERSION.A`, which
+    was then written out verbatim as `"acats_version": null,
+    "language_version": null` — an ABSENCE serialized as a measurement.  The
+    edition is what tells a reader which Ada this census is about, so a
+    census that cannot determine it has not measured the thing it names.
+    """
     for dirpath, _, filenames in os.walk(root):
         for name in filenames:
             if name.upper() == "VERSION.A":
-                m = VERSION_CONST.search(read(os.path.join(dirpath, name)))
-                if m:
-                    major = m.group(1).split(".")[0]
-                    return m.group(1), SUITE_EDITION.get(major)
-    return None, None
+                path = os.path.join(dirpath, name)
+                m = VERSION_CONST.search(read(path))
+                if not m:
+                    sys.exit("ada_suite_census: %s carries no readable "
+                             "`ACATS_Version` constant. The suite version is "
+                             "what fixes which Ada edition this census is "
+                             "about; recording it as null would serialize an "
+                             "absence as a measurement." % path)
+                major = m.group(1).split(".")[0]
+                edition = SUITE_EDITION.get(major)
+                if edition is None:
+                    sys.exit("ada_suite_census: ACATS major version %r is not "
+                             "in SUITE_EDITION %r — this delivery is a "
+                             "baseline this instrument has never seen, and "
+                             "guessing its Ada edition would be worse than "
+                             "refusing." % (major, sorted(SUITE_EDITION)))
+                return m.group(1), edition
+    sys.exit("ada_suite_census: no VERSION.A anywhere under %s. Every ACATS "
+             "delivery ships one (support/version.a); without it the edition "
+             "is unknown and a census that cannot say which Ada it measured "
+             "is not a census." % root)
 
 
 def build(root, full=False):

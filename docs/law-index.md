@@ -151,6 +151,10 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-102 | a hint is an instruction; one that reproduces the defect IS the defect | `docs/family-architecture.md §5.4b` |
 | MEAS-103 | a number from another tier prices yours only if the STRUCTURES match | cookbook §22; `docs/family-architecture.md §9.7` |
 | MEAS-104 | a NAMED blocker is a next step; an unnamed one is a wall | `docs/family-architecture.md §9.7` |
+| MEAS-105 | a census that names a LANGUAGE when it measured one of its TIERS | cookbook §22; `docs/backlog/architecture.md 2026-08-23-architecture-35` |
+| MEAS-106 | the tell is the UNIFORMITY, not the count — a wrong column, not a systemic bug | `docs/family-architecture.md §5.4b` |
+| MEAS-107 | an unexercised gate is not a gate; it is a claim | `docs/family-architecture.md §5.4b` |
+| MEAS-108 | zero for a class the tier CAN emit is about the CORPUS; cannot build, about the TIER | `docs/family-architecture.md §5.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

@@ -875,7 +875,8 @@ becomes two thin ones.
 **(1a) AND THE COMPANION MEASUREMENT FOR THE OPPOSITE MOVE — PLACING TWO THINGS
 SIDE BY SIDE.** Clause (1) prices *separating*; this prices *joining*, and the
 unit is the same one lanes forget: **the import closure**. From the fuelMono
-lane (staged on ticket 40057; **conditional on that landing**):
+lane (**LANDED**, `6b91a8d`, on master — the conditional stamp this paragraph
+carried is discharged):
 
 > **A SHARED NAME IS WORTH AN IMPORT; IT IS NOT WORTH RELOCATING THE TRUNK'S
 > ELABORATION COST. Check whose CLOSURE a file sits in before deciding two
@@ -3452,6 +3453,30 @@ tier emitting `undefined` has a bug.* A gate needs a constructor to be
 about. **ES converges by touch** (§9.2), gaining the two constructors it
 omits and gating both.
 
+**AND THE RULING NOW HAS ITS COUNTING RULE, measured on the first corpus run
+that gated it (`6b91a8d`): TWO ZEROES THAT ARE NOT THE SAME ZERO.**
+
+> **A zero for a class the tier CAN emit is a fact about the CORPUS. A zero for
+> a class the tier's API CANNOT BUILD is a fact about the TIER. Same number,
+> different claims.**
+
+Measured: `environment=0` and `order-dependence=0` say **the whitelist corpus
+does not reach `refuseEnv` / `refuseOrder`** — a **coverage** statement, and an
+honest one. `undefined=0` says something else entirely: the tier's API **cannot
+construct it**, so that zero is a **property of the model**, and it is the
+`undefined` column's whole reason for existing (§4.3's *expect the bucket empty,
+and gate it*).
+
+**Conflating them is how a coverage hole reads as a soundness result.** *"No
+undefined behaviour observed"* is a sentence both zeroes support and only one
+earns; a scoreboard that prints a bare `0` in both cells has published the
+weaker claim under the stronger one's name. **The distinction is
+structural — can the API build it? — so it is decidable once per class rather
+than argued per report**, and the census now gates the strong half from the
+OUTSIDE, on the real corpus: *every interpreter refusal carries one of the four
+class names, and none carries `undefined`.* 116 rows, 45 gap classes, 7
+boundary-freeze refusals with no class **by design**, 0 drifts.
+
 **AND BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — they are
 the STRONGER form, not an exception to it.** A tier-local refusal type may
 legitimately lack a class outright (Go's `GoRefusal` has no `undefined`).
@@ -3549,7 +3574,7 @@ obligation, it is the honest home of §3.4's explicit-parameter design, and
 it is named here as a priced fork rather than taken.
 
 **AND THE IMPLEMENTATION LAW FOR THE CLASS FIELD, from the fuelMono lane**
-(staged on ticket 40057; **conditional on that landing**). A model that reports
+(**LANDED**, `6b91a8d`). A model that reports
 a refusal *class* alongside its outcome has two answers about one event, and
 two answers is exactly the shape that drifts. The ruling:
 
@@ -4133,9 +4158,10 @@ distinction**: `§9` counts **0** against a ledger that says `§9.5` twice, whil
 A comment saying *"careful, whole tokens"* would not have survived the next
 rewrite; a row that fails does.
 
-**AND THE CONSTRUCTIVE HALF, from the fuelMono lane** (staged on ticket 40057;
-**conditional on that landing**, and stated so rather than presented as
-tree-state). The instance above diagnoses the disease — an instrument's runtime
+**AND THE CONSTRUCTIVE HALF, from the fuelMono lane** (**LANDED**, `6b91a8d`;
+this paragraph carried a conditional stamp until then, and the discharge is
+recorded rather than quietly deleted). The instance above diagnoses the
+disease — an instrument's runtime
 is partly a reading of the machine. This one prescribes the **unit**:
 
 > **HEARTBEATS ARE A DETERMINISTIC STEP COUNT; WALL TIME IS NOT. On a shared
@@ -4771,6 +4797,40 @@ from the other side (its fork build *"when red hides every gate behind it"*,
 Which makes *build-red* a **gate-set** event rather than a build event, and
 makes staging an unproven definition outside the glob a **gate-preserving**
 move rather than timidity.
+
+**A GATE THAT CAUGHT ITS OWN AUTHOR ON ITS FIRST RUN (`6b91a8d`) — and the
+shape of the failure is the reusable part.** A new census gate compared the
+model's `class` field against `refusal_census`'s `WHITELIST_CLASS` and produced
+**109 confident `DRIFT` lines**. Every one was the same conflation:
+`WHITELIST_CLASS` names **which GAP** a row is; the model's class names **what
+KIND** of refusal it made.
+
+> **TWO FIELDS WITH THE SAME NAME ARE NOT THE SAME FIELD.**
+
+Seven further lines flagged boundary-freeze refusals for **lacking a class the
+same commit's own documentation says they must not have** — *a gate
+contradicting its own specification.*
+
+> **THE TELL IS THE UNIFORMITY, NOT THE COUNT. A check that suddenly convicts
+> most of a corpus is far likelier to be reading the wrong column than to have
+> found a systemic bug.**
+
+A systemic bug in a mature corpus is **ragged** — it hits the rows that share a
+cause and misses the rest. **Uniform, confident, and everywhere is the signature
+of a MISREAD, not a discovery**, and the instinct it should trigger is *"which
+column am I actually comparing?"* before *"how did this get so bad?"* Note the
+direction: this error was **alarming**, not flattering, which is the only reason
+it was chased on sight (MEAS-12's asymmetry, again).
+
+**AND THE ARGUMENT FOR LANDING IT AS A `--gates` ADDITION RATHER THAN SHIPPING
+IT UNEXERCISED:**
+
+> **An unexercised gate is not a gate; it is a claim.**
+
+The same rule as *a check that has never failed is a design, not a control*
+(§5.4), sharpened by the best possible instance — **its first real run convicted
+its author**, and the two defects it surfaced were both **in the gate**. A gate
+whose first execution is on someone else's landing has been tested by nobody.
 
 **COROLLARY — AN EXPECTED-TO-FAIL ARTIFACT IS THE WEAKEST GATE IN ANY SET**,
 because its verdict is invariant under everything the file says. A file expected

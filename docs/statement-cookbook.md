@@ -496,16 +496,27 @@ defined, not as a step to keep.
 census, not by analogy (Go, `6a73111`).** "Open the stack once" presumes there
 is a stack to open. There is a fork, and the seam's whole shape turns on it:
 
-* **the run type is a DATATYPE** (Python's `Run`): `bind` **reduces by
-  cases**, so there is **no opener and none is needed** — Python never wrote
-  one. The wall that tier hit was elsewhere: the **approximation-order
-  congruences**.
-* **the run type is a TRANSFORMER STACK** (Go's `GoM`): nothing reduces by
-  cases, so **the opener is exactly what is missing**, and it is **one lemma
-  wide**.
+* **the run type is a DATATYPE** (Python's **trunk** `Run`): `bind` **reduces
+  by cases**, so there is **no opener and none is needed**. The wall that tier
+  hit was elsewhere: the **approximation-order congruences**.
+* **the run type is a TRANSFORMER STACK** (Go's `GoM`, and Python's **monadic**
+  `PyM`): nothing reduces by cases, so **the opener is exactly what is
+  missing**, and it is **one lemma wide** — `bind_apply`, in
+  `LeanModels/Python/Monadic/Substrate.lean` with the `toRun` corollaries
+  beside it.
 
 > **Ask what the run type IS before pricing the seam. A datatype's cost is its
 > CONGRUENCES; a stack's cost is its OPENER.**
+
+**THE FORK IS PER-TIER, NOT PER-LANGUAGE — and getting that wrong is the
+second half of the same lesson.** The census that found the fork reported it as
+*"Python has no opener"*; **Python has two tiers**, and only the **trunk** is
+the datatype. The **monadic** tier is a stack and **does** have an opener. The
+sentence was true of what was measured and false of what it named:
+
+> **A census that names a LANGUAGE when it measured one of its TIERS is the
+> right measurement under the wrong quantifier.** Name the artifact you ran it
+> over.
 
 **THE GUARD, and it is the transferable half.** The census began from a real
 measurement — `Python/Obs.lean` is **158 KB and 79 theorems** — and the honest
@@ -521,9 +532,12 @@ This is MEAS-1 (*census before pricing*) with the failure mode named: pricing by
 **analogy** feels like pricing by **measurement**, because there is a measured
 number in it.
 
-**INCIDENT.** The fuelMono lane, staged on ticket 40057 — recorded here
-**conditional on that landing** — refined by the Go lane's seam census
-(`6a73111`, on master). Related: `docs/family-architecture.md` §3.4's *one
+**INCIDENT.** The fuelMono lane (**LANDED**, `6b91a8d`: `bind_apply` moved from
+`Mono.lean` to `Substrate.lean` — *"it belongs where the stack is DEFINED, not
+in the monotonicity module that happened to need it first"* — with `toRun_map`
+going through `map_eq_pure_bind` so that `map` never reaches for a second
+opening). Refined by the Go lane's seam census (`6a73111`), and that census's
+own quantifier corrected here. Related: `docs/family-architecture.md` §3.4's *one
 monad, one `vcgen`* — the same rule at the family scale, of which this is the
 per-module form — and §3.4's *the ORDER lifts; the CONGRUENCES don't*, which is
 why the datatype tier's congruences never became the stack tier's problem.

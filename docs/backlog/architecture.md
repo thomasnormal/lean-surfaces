@@ -2071,7 +2071,16 @@ data point when it works.
 ## 2026-08-23-architecture-30 — Heartbeats over wall time; one execution, two projections; and a shared name is worth an import
 
 Four from the fuelMono lane, **staged on ticket 40057**. Every one is landed
-**conditional on that landing** and says so at the site — a law citing a tree
+**conditional on that landing** and says so at the site
+
+> **ANNOTATION (`6b91a8d`): the ticket LANDED, and all four conditional stamps
+> in the charter are discharged** — `bind_apply` in `Substrate.lean`, the
+> `callInRaw`/`ofHalt` projection pair, the heartbeats measurement, and the
+> `Order.lean`-not-`Outcome.lean` placement. Recorded rather than deleted,
+> because a stamp that is removed silently leaves no evidence that the claim was
+> ever conditional.
+
+ — a law citing a tree
 that has not landed is a claim about a branch, and §5.4a's state stamp is the
 difference between recording that and pretending otherwise.
 
@@ -2423,6 +2432,15 @@ and it decides the seam's whole shape:
 * **a DATATYPE run** (Python's `Run`) — `bind` **reduces by cases**, so there is
   **no opener and none is needed**; that tier's wall was the
   **approximation-order congruences**;
+
+  > **ANNOTATION (`6b91a8d`; entry NOT rewritten).** This bullet says *Python*
+  > where it should say *Python's TRUNK*. The census measured one of that
+  > language's **two** tiers and named the language: the **monadic** tier is a
+  > transformer stack and **does** have an opener — `bind_apply`, in
+  > `LeanModels/Python/Monadic/Substrate.lean` with the `toRun` corollaries.
+  > Corrected per-tier in cookbook §22, with the meta-law recorded there and in
+  > `2026-08-23-architecture-35`.
+
 * **a TRANSFORMER STACK** (Go's `GoM`) — nothing reduces by cases, so **the
   opener is exactly what was missing**, and it is **one lemma wide**.
 
@@ -2489,3 +2507,76 @@ smaller and its next step is MECHANICAL rather than OPEN-ENDED.** *The same size
 of debt, differently shaped, is progress and should be reported as such.*
 
 **Index:** MEAS-103, MEAS-104, STMT-105, PROOF-57.
+
+## 2026-08-23-architecture-35 — A census that names a language when it measured one of its tiers; and a gate that caught its author
+
+A correction to the previous landing plus two from `6b91a8d`. The dated entries
+`-30` and `-34` are **annotated**; the charter's and cookbook's present-tense
+prose is **corrected**.
+
+**(1) THE CORRECTION: PER-TIER, NOT PER-LANGUAGE.** Go's census reported *"Python
+has no opener, because it never needed one"*. **Python has two tiers.** The
+**trunk**'s `Run` is a datatype — true, no opener, and the wall was the order
+congruences. The **monadic** tier is a **transformer stack** and **does** have an
+opener: `bind_apply`, `LeanModels/Python/Monadic/Substrate.lean`, with the
+`toRun` corollaries beside it.
+
+> **A census that names a LANGUAGE when it measured one of its TIERS is the
+> right measurement under the wrong quantifier.** Name the artifact you ran it
+> over.
+
+**This is the files-vs-sites family at TIER granularity** — the same defect as
+counting identifiers where pattern positions were meant (§5.4a), one level up:
+the number is real, the **unit** is wrong, and the wrong unit is the more
+plausible one. Worth noting **what did not break**: the datatype-vs-stack fork
+itself is unaffected, and Go's own price — one lemma — was right. **A wrong
+quantifier over a right measurement damages the GENERALIZATION, not the
+decision that was made from it**, which is exactly why it survives review: the
+lane that made it got the right answer.
+
+**AND THE STAMPS ARE DISCHARGED.** All four `-30` landings carried *"staged on
+ticket 40057; conditional on that landing"*. It landed. The charter now says
+**LANDED `6b91a8d`** at each site, and the discharge is **recorded rather than
+quietly deleted** — a stamp removed silently leaves no evidence the claim was
+ever conditional, which is the annotation norm applied to a stamp's retirement.
+
+**(2) §5.4b — A GATE THAT CAUGHT ITS OWN AUTHOR ON ITS FIRST RUN.** A new census
+gate produced **109 confident `DRIFT` lines**, every one the same conflation:
+`WHITELIST_CLASS` names **which GAP** a row is, the model's class names **what
+KIND** of refusal it made. **Two fields with the same name are not the same
+field.** Seven more flagged boundary-freeze refusals for lacking a class the
+same commit's documentation says they must not have — *a gate contradicting its
+own specification.*
+
+> **The tell is the UNIFORMITY, not the count. A check that suddenly convicts
+> most of a corpus is far likelier to be reading the wrong column than to have
+> found a systemic bug.**
+
+**My addition is why uniformity is the signal**: a systemic bug in a mature
+corpus is **ragged** — it hits the rows sharing a cause and misses the rest.
+Uniform, confident and everywhere is the signature of a **misread**. The
+instinct it should trigger is *"which column am I comparing?"* before *"how did
+this get so bad?"* Landed beside:
+
+> **An unexercised gate is not a gate; it is a claim.**
+
+— the same rule as *a check that has never failed is a design, not a control*,
+with the best instance available: **its first real run convicted its author, and
+both defects were in the gate.** A gate whose first execution is on somebody
+else's landing has been tested by nobody.
+
+**(3) §5.2 — THE COUNTING RULE FOR THE EXPECTED-EMPTY CLASS.**
+
+> **A zero for a class the tier CAN emit is a fact about the CORPUS. A zero for
+> a class the tier's API CANNOT BUILD is a fact about the TIER.**
+
+`environment=0` and `order-dependence=0` are **coverage**; `undefined=0` is a
+**property of the model**. **Conflating them is how a coverage hole reads as a
+soundness result** — *"no undefined behaviour observed"* is a sentence both
+zeroes support and only one earns. The distinction is **structural** (can the
+API build it?), so it is decidable **once per class** rather than argued per
+report, and the census now gates the strong half from the outside on the real
+corpus: 116 rows, 45 gap classes, 7 boundary-freeze refusals with no class by
+design, 0 drifts.
+
+**Index:** MEAS-105 … MEAS-108.

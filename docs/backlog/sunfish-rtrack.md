@@ -445,3 +445,171 @@ the §L80 chain and the one that produced the lift are both in this category.
 Stays on the base-case lane's ledger; neither lane enters `bound_depth.lean` for
 four spec-side lines while the machine is in this state. If this lane is next to
 hold a legitimate tenure there after the re-founding, it takes it without asking.
+
+## 2026-08-22-sunfish-rtrack-6 — R3c RE-FOUNDED: the ledger transports, and the first `FoldInv`
+
+`Examples/python/sunfish/monadic_fold.lean`, the lane's first file on the
+rebuilt interpreter. Two things land in it and a third is measured rather than
+claimed.
+
+### The allocation ledger, re-run
+
+The trunk's depth-1 probe was refactored to take the interpreter as a PARAMETER,
+so `probeTrunk` and `probeMono` differ in nothing but which of `callIn` /
+`Monadic.callInMono` runs `Searcher.bound`. That refactor is the whole reason
+the check is free: `callInMono` was given `callIn`'s exact type on purpose
+(Eval.lean §4), and `World` / `Heap` / `RVal` are shared substrate the rebuild
+does not touch, so the fixture — a trunk-built `searcherW` — is legitimate input
+to both.
+
+Beyond re-asserting the four numbers this lane measured months ago, the file
+adds a DIFFERENTIAL row: `probeMono … == probeTrunk …`, both evaluated in the
+same build. The absolute rows pin the rebuild to a memory; the differential row
+pins it to the trunk as it actually stands, and is the row that survives a
+re-pin of the fixture. Prefer it if the two ever disagree about which is wrong.
+
+### `FoldInv` over `RoundOK` — and it is a STRENGTHENING, not a rename
+
+`FoldInv` carries `RoundOK` per round — the classification itself — where
+`fold_depth1.lean`'s `RanInv` carried only the DERIVED `Sound`. `Sound` is
+recovered where needed via `qsRoundOK_sound`. So `FoldInv → RanInv` and not the
+converse, which is precisely the content of entry -2's "the classification is
+the primitive". `RoundOK` is an ALIAS of `QSRoundOK`, not a copy: one definition
+of the four-way classification exists in the repository, and the rename inside
+`bound_depth.lean` stays owed rather than being spent as churn on a file the
+re-founding retires.
+
+Per the base-case lane's constraint, `FoldInv` carries the ROUND obligation
+only. Neither stand-pat direction is baked in.
+
+### Two self-corrections, both caught before spending a tenure
+
+1. I had written `#guard`s asserting the rebuild's fuel threshold at `F = 200`.
+   That number was measured on the TRUNK (`fold_depth1.lean:114`) and never on
+   the rebuild — a guard that cannot see the numbers it is fed. It is now an
+   `#eval` that PRINTS the rebuild's behaviour at that fuel, so the tenure
+   DELIVERS the measurement instead of asserting it, and the surviving row can
+   become a guard afterwards.
+2. I "hardened" `FoldInv.nil` on the belief that `rcases` cannot split `Sound`
+   because it is a `def`. The green `RanInv.nil` beside it does exactly that.
+   The edit replaced a proven script with an unproven one and was reverted.
+
+The general form of both: a landing must not contain a claim the landing itself
+is what first tests. Where a fact is unmeasured, print it; where a script is
+already green, copy it.
+
+### Every assertion is printed before it is asserted
+
+The build queue reached eight tickets deep while this file was being authored.
+At that depth a `#guard` that fails costs hours to return one bit, so all four
+ledger rows are `#eval`ed immediately above the `#guard`s: a RED build still
+hands back the numbers that made it red, and the next tenure is an edit rather
+than another blind shot. Recommended for any lane asserting a first measurement
+on unfamiliar ground.
+
+### A defect in `tools/triad.sh --build-target`
+
+Narrowing the build is silently defeated by the DEFAULT GATES. Both
+`harness/diff_test.py` and `harness/monadic_gate.py` invoke the runner through
+`lake exe leanmodels-run`, and `monadic_gate.py` additionally runs an
+unconditional `lake build` unless given `--no-build`. So a lane that narrows
+gets a full build regardless, executed during the GATE phase: build/gate
+accounting is misleading, and an unrelated build failure surfaces as a gate
+failure. Amendment 14's coverage statement is written against a narrowing that
+did not happen. Either the gates should take `--no-build` when the tenure has
+already built, or `--build-target` should refuse to combine with gates that
+build.
+
+### The re-founding was a RE-FOUNDING, not a rebase
+
+The dispatch expected this branch's base to be an ancestor of master. It is not:
+`git merge-base --is-ancestor` reports diverged, because the rebuild reached
+master through a recreated branch rather than the gate branch this worktree was
+cut from. A rebase would have replayed a dozen already-merged commits as
+duplicates. Since the lane had no commits of its own yet, the correct action was
+to move the worktree onto master and carry the untracked file across. Check the
+ancestry before rebasing on a claim that it is clean; the claim was made in good
+faith and was still wrong.
+
+### The finding that decides the next inch
+
+The generator ENGINE is complete on the rebuild and the names are preserved, but
+the PROOF layer is empty — there is no `IterSteps` / `IterDrains` / `GenEmits` /
+`GenSilent` under `Monadic/`. Founding it is this lane's.
+
+The fuel accounting makes that cheaper than feared.
+`(kont m (fuel+1)).drainIter a` is `drainIterAt (kont m fuel) a`, whose recursive
+call is `K.drainIter a` at `fuel` — ONE fuel level per drained element, which is
+exactly the trunk's accounting. The drain family therefore transports
+structurally, with `callIn m fuel` becoming `(kont m fuel).drainIter`; the same
+holds for `stepIter` through `execGen`. This is a class-4 surface by entry -3's
+taxonomy, so it is re-proved rather than transported — but it is re-proved at the
+same shape, which is the difference between a port and a rewrite.
+
+### …and how it must NOT be founded, decided by the rebuild's own measurement
+
+Spec.lean §1.5 records a measured `mvcgen` limitation: it splits an inner `match`
+into one VC per branch WITHOUT retaining the discriminant equation, so
+unreachable branches arrive as bare `False` with nothing to refute them, and the
+four-deep gate still fails to close at ~4M heartbeats even with arm-level
+`@[spec]` lemmas in the registry. The registry has 27 entries and NONE of them
+touch generators.
+
+That decides the approach before any time is spent on it. `stepIterAt` is built
+from precisely the shape that limitation names — nested matches on
+`Heap.get? … a`, then the generator's status, then `Heap.update` — nested deeper
+than the gate that already fails. Founding `IterSteps` / `GenEmits` as `mvcgen`
+triples would walk into the recorded wall with a harder instance of it.
+
+So the generator layer is founded as JUDGMENTS — Props over
+`toRun (…) w = .ok w' v`, proved by unfolding with the discriminants supplied as
+PREMISES — which is the trunk's method and the reason it transports: the
+computed-shape law never depended on a tactic retaining discriminant equations,
+because the premises ARE those equations. `mvcgen` stays available for the flat
+arms where it already works. This is the altitude style holding up for the
+reason the taxonomy predicted, not for a new one.
+
+### Status — VERIFIED, and the owed measurement is DELIVERED
+
+Tenure of 2026-08-23 03:13 on master 91579b1. `BUILD GREEN`, so every `#guard`
+in the file passed: the rebuild reproduces the depth-1 ledger exactly.
+
+The printed rows, trunk and rebuild side by side, were IDENTICAL —
+`some (46, 1, 70, 246)` and `some (0, 2, 70, 247)` from both interpreters. The
+differential rows therefore hold, and the 176/177 decomposition closes on the
+rebuild as it did on the trunk.
+
+The fuel threshold that entry text called owed is now MEASURED: at `F = 200`
+both rows are `none` on the rebuild AND on the trunk — printed as `(true, true)`
+twice. The thresholds AGREE at this boundary; the rebuild is not more decisive
+here. That number is now read off the machine, so it may become a `#guard` in
+the next commit, which is the only order in which a guard is allowed to acquire
+a number.
+
+`#print axioms` on all three theorems: `[propext, Classical.choice, Quot.sound]`,
+and `FoldInv.nil` is even Classical-free at `[propext, Quot.sound]`. No `sorry`,
+no `native_decide`.
+
+Gates: `docs_check` GREEN. `diff_test` GREEN — 1427 cases, 0 failed, 118
+whitelisted-unsupported, 1309 matched. `monadic_gate` RED, and NOT from this
+landing (see below).
+
+### The acceptance gate is RED on master, and the merge is what made it so
+
+25 divergences, every one of them the same shape: the rebuild answers
+`unsupported: <builtin>() over dict keys — live dict iteration is outside the
+tier`, where CPython and the trunk both answer. By builtin: `tuple()` 12,
+`list()` 5, then `set()`, `sum()`, `any()`, `all()` at 2 each. There are ZERO
+divergences of any other kind.
+
+The gate ran 1427 rows; the rebuild was reported green at 1394. So the merge
+brought roughly three dozen new corpus rows from master, and the rebuild refuses
+25 of them BY DESIGN — `docs/memory-model.md` puts live dict iteration outside
+the tier deliberately. This is not a defect in the rebuild's semantics; it is the
+acceptance corpus and the declared tier boundary disagreeing after a merge, and
+somebody has to rule on which one moves.
+
+This landing cannot be the cause and cannot be affected by it: `leanmodels-run`
+is built from `Main.lean`, which does not import this file, so the gate's binary
+is byte-identical with and without it. The landing is committed on that basis,
+to its own branch, with the gate's state stated rather than hidden.

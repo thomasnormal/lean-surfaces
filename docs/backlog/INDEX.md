@@ -15,34 +15,18 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**144 entries across 16 lanes.** Regenerate with
+**120 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
-| `2026-08-23-qol-37` | CI's build is gated by host, and this clone is seeded at last | qol |
-| `2026-08-23-qol-36` | INCIDENT: a self-test that ran CI, 26 deep, on a cold clone | qol |
-| `2026-08-23-qol-35` | audit MEDIUM 9-10: a checker with a floor, and a CI that can fail | qol |
-| `2026-08-23-qol-34` | audit MEDIUM 11 and LOW 12: a ledger that can fail, and a map that reads the tree | qol |
-| `2026-08-23-qol-33` | audit HIGH 4-5: a regex awk rejected outright, and a guard that failed open | qol |
-| `2026-08-23-qol-32` | audit HIGHs 1-3 and MEDIUMs 7-8: the matchers learn what a comment is | qol |
-| `2026-08-23-qol-31` | the vendored-fixture convention, and a prose mention that still cost the whole library | qol |
-| `2026-08-23-qol-30` | correction: the build log was never deleted, only unnamed | qol |
-| `2026-08-23-qol-29` | the merge driver configures itself, and a green build's axiom ledger survives | qol |
 | `2026-08-23-qol-28` | `--axioms` dropped the last name, and the absence was silent | qol |
-| `2026-08-23-architecture-28` | The guard was never in those processes; and a correct refusal is not a mitigation | architecture |
 | `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
-| `2026-08-23-architecture-27` | A published number is a second artifact; a check that cannot fire; and an instrument that selected itself | architecture |
 | `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
-| `2026-08-23-architecture-26` | A transcription is a copy with a timestamp; and every gate was green while the file lied | architecture |
 | `2026-08-23-qol-25` | the attribution fix: the headline held, the DISPATCH was wrong | qol |
-| `2026-08-23-architecture-25` | The audit-response norm: the remedy for a provenance gap is provenance, never reconstruction | architecture |
 | `2026-08-23-qol-24` | gate DESIGNS for the two head homes, and one of the ten needs no gate at all | qol |
-| `2026-08-23-architecture-24` | This lane's three audit findings, fixed; and the laws predicted where the defects are | architecture |
 | `2026-08-23-qol-23` | the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern | qol |
-| `2026-08-23-architecture-23` | Data may carry the decision, not the scrutinee; and an audit has a third site | architecture |
 | `2026-08-23-qol-22` | sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce | qol |
-| `2026-08-23-architecture-22` | A transcribed expectation is a third implementation; and a census that could have overturned the plan | architecture |
 | `2026-08-23-qol-21` | `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE | qol |
 | `2026-08-23-architecture-21` | The versioning exemplar is REALIZED; a falling split is correct; and deferrals need a double guard | architecture |
 | `2026-08-23-qol-20` | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
@@ -65,26 +49,21 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
 | `2026-08-23-pycomplete-9` | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |
-| `2026-08-23-lean-tier-9` | `TrProjP.instN` GREEN; and the quality audit found four real defects in this lane's instruments, one of which had published wrong citations | lean-tier |
 | `2026-08-23-architecture-9` | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |
 | `2026-08-23-pycomplete-8` | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
 | `2026-08-23-lean-tier-8` | `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost | lean-tier |
 | `2026-08-23-architecture-8` | The Core payload LANDED: holds released, and the gate retired the conditional | architecture |
 | `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
 | `2026-08-23-lean-tier-7` | `TrProjP.instL` GREEN, and the proof caught a soundness defect in my own definition | lean-tier |
-| `2026-08-23-c-7` | THE TERMINATION REPAIR IS **GREEN**, and it took three tenures to state one measure | c |
 | `2026-08-23-architecture-7` | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |
 | `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
 | `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
-| `2026-08-23-c-6` | STMT-59 answered: **(a), with a named (b) subset already scheduled** | c |
 | `2026-08-23-architecture-6` | Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance | architecture |
 | `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
-| `2026-08-23-c-5` | **A GREEN BUILD IS NOT A TERMINATION ARGUMENT** | c |
 | `2026-08-23-architecture-5` | Re-founding needs a differ-on-purpose word; names asserting verdicts expire | architecture |
 | `2026-08-23-wasm-4` | THE PORT'S FIRST VERDICT: Mathlib's `Forall₂` is **not the model's `Forall₂`**, and the census's "no cost" conclusion needed the qualification | wasm |
 | `2026-08-23-pyrebuild-4` | GREEN, and the spike's headline number is VOID | pyrebuild |
 | `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
-| `2026-08-23-c-4` | INCH 5 IS **RED**, and the diagnosis is the deliverable | c |
 | `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
 | `2026-08-23-pyrebuild-3` | THE UNION FAILED, exactly where the full build was chosen to look | pyrebuild |
 | `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |
@@ -108,6 +87,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-architecture-8` | THE DUAL LAW — an obstruction that is only ENCOUNTERED is not measured either | architecture |
 | `2026-08-22-qol-7` | `tools/check.sh`: rule 3's warm-clone amendment, CHECKED instead of guessed | qol |
 | `2026-08-22-architecture-7` | `Core.SemM` LANDED — the §3.8 trigger fired, and the reconciliation INVERTS | architecture |
+| `2026-08-22-sunfish-rtrack-6` | R3c RE-FOUNDED: the ledger transports, and the first `FoldInv` | sunfish-rtrack |
 | `2026-08-22-qol-6` | the DEFAULT GATE SET now announces itself: the ES lane's migration finding, made loud | qol |
 | `2026-08-22-architecture-6` | SoftFloat LAYER 3 — TRANSFER, commissioned by core itself | architecture |
 | `2026-08-22-sunfish-rtrack-5` | the lock hypothesis is CONFIRMED, and two numbers close two arguments | sunfish-rtrack |
@@ -151,18 +131,14 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
-| `INBOUND` | `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
-| `INBOUND` | `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `INBOUND` | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
 | `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
 | `INBOUND` | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
 | `INBOUND` | `2026-08-22-softfloat-2` (C lane's to triage) | c |
-| `G7` | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
-| `G6` | INCH 3: the model reproduces a REAL crypto function, 35 rows, and the expected column was generated (2026-08-23) | go |
 | `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 
-**13 heading(s) do not use the §9.5 id scheme** and sort last.
+**9 heading(s) do not use the §9.5 id scheme** and sort last.

@@ -2354,3 +2354,71 @@ lane's imports.
 off-standard axiom returning 2, naming the axiom **and** the declaration,
 saying the tenure is not green; the declared three passing; and
 `Lean.ofReduceBool` caught as off-standard. No Lean executed.
+
+---
+
+## 2026-08-23-qol-35 — audit MEDIUM 9-10: a checker with a floor, and a CI that can fail
+
+### MEDIUM — `docs_check.py:81`, a corpus that could shrink to nothing
+
+The default corpus was filtered by `is_file()`, so renaming or deleting
+`README.md`, `AGENTS.md` or `docs/` **silently shrank it** — and
+`(REPO/"docs").rglob("*.md")` on a nonexistent directory yields nothing without
+error. With no floor on `n_checked`, an empty corpus reported a clean check.
+
+Now a missing default **refuses by name**, and `n_checked == 0` over the
+default corpus refuses with *"an empty check is an instrument fault, never a
+clean tree"* — §5.4's zero-row law, applied to the checker that enforces it
+everywhere else. Explicit paths still bypass the floor: a lane checking one
+file should not be forced to have blocks in it.
+
+`docs_check.py` gained its first **`--self-test`** (5 rows), and the root is
+injectable so the refusals are **driven rather than admired**.
+
+### MEDIUM — `tools/ci.sh:17`, 34 of 39 steps that could not fail
+
+`maybe` turned **any** missing path into SKIP, so deleting `tools/docs_check.py`
+or `harness/sv/diff_test.py` left CI green. The discriminator needs no list and
+is mechanical: **a file git tracks is not optional.** A tracked path that is
+absent is now a **FAIL** (*"a gate file that vanished is a defect, not an
+absent simulator"*); an untracked one — a simulator binary, a generated
+artifact — stays a SKIP, which is honest.
+
+And **no tool's `--self-test` ran in CI**, so a gate could rot silently between
+audits — which is how four of this lane's tools shipped with defects this audit
+had to find by reading. There is now a `tool-self-tests` step running all
+twelve plus `docs_check.py --self-test`.
+
+### The near-miss in that step, and why it is the interesting part
+
+The first selector was `grep -q -- '--self-test'`, which matched **`ci.sh`
+itself** — it mentions the flag in the very function doing the matching — so
+the step re-entered CI and started an **unticketed `lake build`**. It hung,
+which is the only reason I looked.
+
+Two guards now, and both are load-bearing: the selector matches a **handler**
+(`--self-test)` or `= "--self-test"`, the two spellings in this tree) rather
+than the string, and an explicit `*/ci.sh) continue` belt. The belt is not
+redundant — my own comment inside `ci.sh` now contains `= "--self-test"`, so
+the grep matches it again and **the belt is what excludes it**. A tool that
+merely talks about a flag does not accept it.
+
+Per-tool `timeout 120`, so a future tool that hangs cannot hang CI.
+
+### Two rows closed without a code change, recorded in the audit file itself
+
+**MEDIUM `triad.sh:497`** was already fixed by `4c710e3` before the audit was
+written — verified against the row's own example rather than assumed:
+`Examples/go/bitlen/bitlen.go` classifies `docs`, and a code reference still
+widens. The `git grep -l` **prefilter** is still a bare-basename match, which
+is what line 497 reads — but it only selects candidates and `code_mentions`
+decides.
+
+**HIGH `a6-guard.sh`'s triad wiring** is not done, with the reason in the
+report: `triad.sh` never rewrites the tree, so the guard there would be a check
+that cannot fire — this audit's own `vacuous` category.
+
+### Triad
+
+`bash -n` clean. `docs_check.py --self-test` **5 ok** (new). The CI step runs
+green across all twelve tools. `docs_check` **88/88**. No Lean executed.

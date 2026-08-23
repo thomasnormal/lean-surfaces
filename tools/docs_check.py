@@ -73,11 +73,27 @@ def looks_like_path(token):
     return token.endswith(PATH_EXTS)
 
 
-def doc_files(paths):
+def doc_files(paths, repo=None):
+    repo = repo or REPO
     if paths:
         return [Path(p).resolve() for p in paths]
-    files = [REPO / "README.md", REPO / "AGENTS.md"]
-    files += sorted((REPO / "docs").rglob("*.md"))
+    # A DEFAULT PATH GOING MISSING IS AN INSTRUMENT FAULT, NOT A SMALLER TREE.
+    # The old filter was `[f for f in files if f.is_file()]`, so renaming or
+    # deleting README.md, AGENTS.md or docs/ silently shrank the corpus and the
+    # run still reported a clean check — and `docs/`.rglob on a nonexistent
+    # directory yields nothing without error.  §5.4's zero-row law, on the
+    # checker itself.
+    required = [repo / "README.md", repo / "AGENTS.md"]
+    missing = [p for p in required if not p.is_file()]
+    docs_dir = repo / "docs"
+    if not docs_dir.is_dir():
+        missing.append(docs_dir)
+    if missing:
+        raise SystemExit(
+            "docs_check: REFUSING — default corpus path(s) absent: %s\n"
+            "  A missing default is an instrument fault, not a smaller tree."
+            % ", ".join(str(p) for p in missing))
+    files = required + sorted(docs_dir.rglob("*.md"))
     return [f for f in files if f.is_file()]
 
 
@@ -188,12 +204,60 @@ def check_block(path, content):
     return None
 
 
+def self_test():
+    """Every refusal path RUN, not admired (§5.4)."""
+    import tempfile
+    ok = bad = 0
+
+    def check(name, got, want):
+        nonlocal ok, bad
+        if got == want:
+            ok += 1
+            print("  ok   %s" % name)
+        else:
+            bad += 1
+            print("  FAIL %s: got %r want %r" % (name, got, want))
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        # A complete corpus is accepted.
+        (root / "README.md").write_text("# r\n", encoding="utf-8")
+        (root / "AGENTS.md").write_text("# a\n", encoding="utf-8")
+        (root / "docs").mkdir()
+        (root / "docs" / "d.md").write_text("# d\n", encoding="utf-8")
+        check("a complete default corpus is accepted",
+              len(doc_files(None, root)), 3)
+        # A MISSING DEFAULT REFUSES rather than shrinking the corpus.
+        (root / "AGENTS.md").unlink()
+        try:
+            doc_files(None, root)
+            check("a missing default refuses", "returned", "SystemExit")
+        except SystemExit as exc:
+            check("a missing default refuses", "SystemExit", "SystemExit")
+            check("  ...naming the absent path", "AGENTS.md" in str(exc), True)
+        (root / "AGENTS.md").write_text("# a\n", encoding="utf-8")
+        # A MISSING docs/ DIRECTORY is the rglob-yields-nothing case.
+        import shutil
+        shutil.rmtree(root / "docs")
+        try:
+            doc_files(None, root)
+            check("a missing docs/ refuses", "returned", "SystemExit")
+        except SystemExit as exc:
+            check("a missing docs/ refuses", "SystemExit", "SystemExit")
+            check("  ...naming docs", "docs" in str(exc), True)
+
+    print("self-test: %d ok, %d failed" % (ok, bad))
+    return 0 if bad == 0 else 1
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Check doc-embedded code blocks against the repo tree.")
     ap.add_argument("paths", nargs="*",
                     help="markdown files to check (default: README.md, "
                          "AGENTS.md, docs/**/*.md)")
+    ap.add_argument("--self-test", action="store_true",
+                    help="run every refusal path and exit")
     ap.add_argument("--list-unmarked", action="store_true",
                     help="also list blocks that carry no marker")
     args = ap.parse_args(argv)
@@ -201,7 +265,10 @@ def main(argv=None):
     n_checked = n_ok = n_illustrative = n_unmarked = 0
     failures = []
     unmarked = []
-    for doc in doc_files(args.paths):
+    if args.self_test:
+        return self_test()
+    docs = doc_files(args.paths)
+    for doc in docs:
         rel = doc.relative_to(REPO) if str(doc).startswith(str(REPO)) else doc
         for block in parse_blocks(doc):
             kind = classify(block)
@@ -229,6 +296,14 @@ def main(argv=None):
     print("docs_check: %d marked blocks (%d ok), %d illustrative-exempt, "
           "%d unmarked (not checked)"
           % (n_checked, n_ok, n_illustrative, n_unmarked))
+
+    # ZERO MARKED BLOCKS IS AN INSTRUMENT FAULT, NOT A CLEAN TREE.  With no
+    # floor, a corpus that shrank to nothing reported success.
+    if n_checked == 0 and not args.paths:
+        print("docs_check: REFUSING — zero marked blocks over %d document(s).\n"
+              "  An empty check is an instrument fault, never a clean tree."
+              % len(docs), file=sys.stderr)
+        return 2
 
     # §9.5's generated index, REPORTED but not enforced.  A hard gate here
     # would red every lane that appends a backlog entry without regenerating,

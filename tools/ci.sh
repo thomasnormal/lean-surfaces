@@ -12,12 +12,52 @@ step() { # step <name> <command...>
   echo "=== [$name] $*"
   if "$@"; then pass+=("$name"); else fail+=("$name"); fi
 }
+# A FILE GIT TRACKS IS NOT OPTIONAL.  `maybe` turned ANY missing path into a
+# SKIP, so deleting or renaming `tools/docs_check.py`, `harness/sv/diff_test.py`
+# or `harness/spice/*.py` left CI green — 34 of 39 steps went through it.  The
+# discriminator is mechanical and needs no list: if the repository tracks the
+# path, its absence is a DEFECT; if it does not (a simulator binary, a
+# generated artifact, an out-of-tree corpus), its absence is an environment
+# fact and SKIP is honest.
 maybe() { # maybe <name> <required-file> <command...>
   local name="$1" req="$2"; shift 2
-  if [ -e "$req" ]; then step "$name" "$@"; else
-    echo "=== [$name] SKIP ($req not present)"; skip+=("$name"); fi
+  if [ -e "$req" ]; then step "$name" "$@"; return; fi
+  if git ls-files --error-unmatch -- "$req" >/dev/null 2>&1; then
+    echo "=== [$name] FAIL — $req is TRACKED by this repository and is missing."
+    echo "    A gate file that vanished is a defect, not an absent simulator."
+    fail+=("$name")
+  else
+    echo "=== [$name] SKIP ($req not present, and not tracked — an environment fact)"
+    skip+=("$name")
+  fi
 }
 
+# THE TOOLS' OWN REFUSAL PATHS.  None of them ran in CI, so a gate could rot
+# silently between audits — which is how four of this lane's tools shipped with
+# defects the 2026-08-23 audit had to find by reading.
+selftests() {
+  local t rc=0
+  for t in tools/*.sh; do
+    [ -r "$t" ] || continue
+    # A CASE ARM, not the STRING.  Matching the bare string picked up `ci.sh`
+    # ITSELF — which mentions --self-test in this very function — so the loop
+    # re-entered CI and started an UNTICKETED `lake build`.  A tool that merely
+    # talks about the flag does not accept it.
+    # Both handler spellings in this tree — a `case` arm and an equality test —
+    # and neither matches `ci.sh`, which only MENTIONS the flag.
+    grep -qE -- '--self-test\)|= "--self-test"' "$t" || continue
+    case "$t" in */ci.sh) continue ;; esac        # belt: never re-enter CI
+    # A per-tool timeout, so a future tool that hangs cannot hang CI.
+    if ! timeout 120 bash "$t" --self-test >/dev/null 2>&1; then
+      echo "    SELF-TEST FAILED (or timed out): ${t##*/}"; rc=1
+    fi
+  done
+  python3 tools/docs_check.py --self-test >/dev/null 2>&1 || {
+    echo "    SELF-TEST FAILED: docs_check.py"; rc=1; }
+  return "$rc"
+}
+
+step  "tool-self-tests" selftests
 step  "lake-build"      lake build
 step  "py-harness"      python3 harness/diff_test.py --no-build
 # leanpy: whole PROGRAMS against CPython. Fails only on a DIVERGENCE (the

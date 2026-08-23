@@ -1308,3 +1308,60 @@ a machine. The guard now exists, so the rule upgrades:
 That moves the check from a discipline a reader must apply to **an artifact a
 lane must produce** — §9's thesis applied to the law most likely to be violated
 by the person who wrote it.
+
+## 2026-08-23-architecture-20 — Six congruence shapes; the walker's real cause was transparency; and a correction inherited its error's scope
+
+Three from the fuelMono lane (31/31 `evalOpen` arms, certified). Two of them
+correct entries this lane recorded.
+
+**(1) THE CONGRUENCE SET IS SIX SHAPES, three of them Core's** — `bind`, `ite`,
+`tryCatch` (monad), `zoomIn`, `zoomOut` (state-zoom seam), and **`liftRes`** (the
+**PURE-WORKER seam**: `Res.le x y → liftRes x ⊑ liftRes y`). Corrects the "five"
+recorded last round.
+
+> **`liftRes` is the single door the maximal trunk comes through — so it is the
+> ONLY place fuel-argument monotonicity is consumed, on either side.**
+
+It earns a shape structurally rather than as a list item: every pure worker's
+monotonicity enters the monadic world **there and nowhere else**, so a missing
+lemma is not a gap but a **severed connection between the two halves of the
+proof** — the trunk's `_mono` results exist and cannot be spent.
+
+**(2) THE WALKER'S EXPONENTIAL TIMEOUT: the real cause was TRANSPARENCY, not
+dispatch shape.** Last round's recorded diagnosis (*"a search where a case
+analysis was available"*) was the **plausible** one, not the measured one. Two
+causes, found by looking: **`apply` at DEFAULT TRANSPARENCY whnf-unfolded tier
+constants** hunting for an `ite` underneath, descending *through* `applyBuiltin`
+— **the actual timeout was the whnf reconciliation of two 200-line bodies** —
+plus **recursive backtracking re-planning a subtree per leaf failure**.
+
+Three fixes, each aimed at one cause and none a budget: **`repeat'`** (one step
+per goal, kept, so a leaf failure is an **open leaf** and never a parent
+re-plan — that is what makes it **linear**); **the leaf closer FIRST, guarded by
+`done`** (stops the transparency descent into named lemmas' definitions before it
+starts); and **the early `refl` under `with_reducible`** (succeeds on syntactic
+equality and **FAILS FAST** rather than attempting the 200-line whnf).
+
+> **When a tactic is exponential, ask what it is UNFOLDING, not only what it is
+> TRYING.** A backtracking search is visible in the tactic text; a transparency
+> setting is not, and it was the expensive half.
+
+Also: **`<f>.mutual_induct` exists** and concludes the **whole mutual conjunction
+at once** — with the trap that **conjunct order is NOT source order**.
+
+**(3) THE `Kont.fuel` CORRECTION WAS ITSELF WRONG — and the way it was wrong is
+the sharper law.** `setDedup` **IS** reachable (via `applyBuiltin`'s set arm,
+`Eval.lean:392`, two `K.fuel` sites; verified here — `setDedup_mono` is consumed
+in `Obs.lean` through `le_liftRes`). The correcting grep had measured **"0 hits
+FROM `evalCompareOpH`"**, **inheriting the frame of the very docstring it was
+correcting** — re-answering the old question accurately instead of asking the
+right one.
+
+> **A measurement that CORRECTS a claim must not take its SCOPE from the claim it
+> corrects. Sweep the whole surface, not the cited path.**
+
+**This is the retrieval family's worst case**, because a correction carries
+**more** authority than the claim it replaces: it arrives with a measurement
+attached. Inheriting the scope makes the second number as wrong as the first
+**and harder to doubt.** The fuelMono lane fixes the docstring in its landing
+ticket, carrying that sentence in it.

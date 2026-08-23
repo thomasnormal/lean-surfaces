@@ -1319,10 +1319,23 @@ the `Kont` knot and without weakening anything** — and the reason is
 > **The layer order chosen for STATE-RETENTION ON RAISE is what makes FUEL
 > MONOTONICITY mechanical.**
 
-**AND THE CONGRUENCE SET HAS FIVE SHAPES, not three — two of them CORE's.**
+**AND THE CONGRUENCE SET HAS SIX SHAPES, not three — three of them CORE's.**
 A tier's monotonicity obligations over the substrate are **`bind`, `ite`,
-`tryCatch`** (the monad) **plus `zoomIn`, `zoomOut`** (the **state-zoom
-seam**). The two adapters are **`Core`'s own**
+`tryCatch`** (the monad), **`zoomIn`, `zoomOut`** (the **state-zoom
+seam**), and **`liftRes`** (the **PURE-WORKER seam**:
+`Res.le x y → liftRes x ⊑ liftRes y`).
+
+**`liftRes` earns its own shape for a structural reason, not as a sixth
+item on a list:**
+
+> **`liftRes` is the single door the maximal trunk comes through — so it
+> is the ONLY place fuel-argument monotonicity is consumed, on either
+> side.**
+
+Every pure worker's monotonicity enters the monadic world there and
+nowhere else. That makes it the one seam where a missing lemma is not
+merely a gap but a **severed connection between the two halves of the
+proof**: the trunk's `_mono` results exist and cannot be spent. The two adapters are **`Core`'s own**
 (`LeanModels/Core/Outcome.lean`), so **every tier instantiating `SemMWith`
 inherits the same two obligations** — and, once `Core` carries the seam
 lemmas, inherits their discharge too. Python's `inFrame` / `inWorld` are
@@ -3202,8 +3215,25 @@ instrument copies it:
   the check**, which is the whole of the difference;
 * **A DOCSTRING NAMING A REACHABLE SET IS A CLAIM, AND IT DRIFTS.**
   `Kont.fuel`'s docstring read *"used by `heapEq`, `setDedup`"*; the
-  **measured** set is **`heapEq` + `valContains`** — and `setDedup`, which
-  the docstring priced as reachable, measures **0 hits**. Nothing failed — a
+  **measured** set is **`heapEq` + `valContains`** — or so a correction
+  recorded here claimed.
+
+  **THAT CORRECTION WAS ITSELF WRONG, and the way it was wrong is the
+  sharper law.** `setDedup` **IS** reachable — via `applyBuiltin`'s set arm
+  (`Eval.lean:392`, two `K.fuel` sites), and its `setDedup_mono` is
+  *consumed* in `Obs.lean` through `le_liftRes`. The correcting grep had
+  measured **"0 hits FROM `evalCompareOpH`"** — it inherited the **frame of
+  the very docstring it was correcting**, and so re-answered the old
+  question accurately instead of asking the right one.
+
+  > **A measurement that CORRECTS a claim must not take its SCOPE from the
+  > claim it corrects. Sweep the whole surface, not the cited path.**
+
+  This is the retrieval family's worst case, because a correction carries
+  *more* authority than the claim it replaces: it arrives with a
+  measurement attached. Inheriting the scope makes the second number as
+  wrong as the first **and harder to doubt**. The fuelMono lane fixes the
+  docstring in its landing ticket, carrying that sentence in it. Nothing failed — a
   docstring naming the wrong consumers compiles exactly as well as one
   naming the right ones, and a lane reading it to decide a blast radius
   (§5.4a) would have grepped for the wrong thing. **A reachable set is
@@ -4664,11 +4694,40 @@ real until an instrument re-derives it.**
 
     > **Raising heartbeats trades a WRONG answer for a SLOW one.**
 
-    The fix is **syntax-directed dispatch on the goal head**, not a bigger
-    budget: look at what the goal *is* and apply the one lemma for it,
-    instead of trying lemmas until one sticks. A backtracking `first` is a
-    search where a **case analysis** was available, and the exponent is the
-    price of not looking.
+    **CORRECTED — the real cause was TRANSPARENCY, not dispatch shape.**
+    The first diagnosis (recorded here as *"a search where a case analysis
+    was available"*) was the plausible one and not the measured one. Two
+    causes, both found by looking rather than by reasoning:
+
+    * **`apply` at DEFAULT TRANSPARENCY whnf-unfolded tier constants** to
+      hunt for an `ite` underneath — descending *through* `applyBuiltin`.
+      **The actual timeout was the whnf reconciliation of two 200-line
+      bodies.**
+    * **recursive backtracking re-planned a whole subtree per leaf
+      failure.**
+
+    The three fixes are each aimed at one of those, and none is a budget:
+
+    * **`repeat'`** — one step per goal, kept, so **a leaf failure is an
+      open leaf and never a parent re-plan**. That is what makes it
+      **linear**;
+    * **the leaf closer runs FIRST, guarded by `done`** — which stops the
+      transparency descent into named lemmas' definitions before it
+      starts;
+    * **the early `refl` under `with_reducible`** — it succeeds on
+      syntactic equality and, crucially, **FAILS FAST** instead of
+      attempting the 200-line whnf.
+
+    **The transferable form**: when a tactic is exponential, ask what it is
+    *unfolding*, not only what it is *trying*. A backtracking search is
+    visible in the tactic text; a transparency setting is not, and it was
+    the expensive half here.
+
+    **AND `<f>.mutual_induct` EXISTS** — it concludes the **whole mutual
+    conjunction at once**, which is the right shape for a mutual block.
+    One trap: **the conjunct order is NOT source order**, so match on what
+    the goal actually presents rather than on the order the definitions
+    were written in.
 
     **AND A SHAPE THAT DEFEATS EQUATION THEOREMS ENTIRELY.** A ~210-line
     `if fname == … else if …` chain produces **"failed to generate

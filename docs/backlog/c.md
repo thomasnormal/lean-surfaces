@@ -526,3 +526,82 @@ it will re-attach to.
 Two changes on one tenure would have been a gamble at 1-3 hours per verdict,
 so this landing repairs the latent defect and lands the finding; the handler
 is a separate ticket.
+
+---
+
+## 2026-08-23-c-6 — STMT-59 answered: **(a), with a named (b) subset already scheduled**
+
+`tools/editions.sh` reports the C tier at 3.02× (sibling 2213 / trunk 732),
+theorems 7/0, and **no census naming the sibling's FILES**. §2.4(1) asks for
+file-level conviction. Here it is — produced, not asserted, and it needed no
+tenure.
+
+### The file-level census
+
+| file | lines | `J.2(` | `J.3.` | `C17` | §clauses |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **trunk** `Ast.lean` | 382 | 0 | 0 | 0 | 1 |
+| **trunk** `Json.lean` | 318 | 0 | 0 | 0 | 1 |
+| **trunk** `Load.lean` | 83 | 0 | 0 | 0 | 0 |
+| `C23.lean` | 89 | 1 | 0 | 5 | 14 |
+| `C23/Value.lean` | 448 | **16** | **11** | **12** | 71 |
+| `C23/Memory.lean` | 829 | **47** | 1 | 3 | 95 |
+| `C23/Expr.lean` | 910 | 2 | 3 | 0 | 82 |
+| `C23/Stmt.lean` | 628 | **0** | **0** | **0** | 64 |
+
+**The trunk is clean: 783 lines, zero Annex-J references, zero C17 contrasts.**
+Its version-neutrality is not a claim, it is a measurement.
+
+### The answer: (a) — and the ratio is what §1.4 PREDICTED
+
+`docs/family-architecture.md` §1.4 said, before any of this was written:
+*"M2's inches 2–5 — memory model, expression semantics, statements, calls —
+are all rules an edition decides, so within the priced ~15–20 sessions `C23/`
+holds most of the tier."* The sibling being 3× the trunk is that prediction
+coming true, not drift away from it. **§2.4's thin-siblings expectation is
+calibrated on tiers whose sibling holds a DELTA; this tier's sibling holds the
+SEMANTICS, and the trunk holds an AST and an ingester.**
+
+The sharper test, and the one that actually answers §2.4: **what would a C17
+sibling differ in?** From this lane's own verified work — `IntTy.minVal` (C23
+mandates two's complement at §6.2.6.2p6 NOTE 2; C17 permitted three
+representations), the Annex J indices (C23 numbers J.1/J.2/J.3; C17 does not,
+so `J.2(35)` is not a C17 citation form), `realloc(p,0)` (UB in C23, not in
+C17), and every renumbered §6.5/§6.8 citation. **That is roughly ONE definition
+plus a citation layer — a genuine delta.** The other ~2900 lines would be
+character-identical, which is the honest reading of the 3.02×: the sibling is
+big because the SEMANTICS is big, not because the editions differ by 2213
+lines.
+
+### The (b) subset, named and already scheduled
+
+The census also convicts, and I am not going to round it away:
+
+1. **`Halt` / `Outcome` / `Cause` / `Refusal` in `Memory.lean` are
+   family-level, not C23-level.** `LeanModels/Core/Outcome.lean` now carries
+   exactly this shape. This is the Core adoption already ticketed behind the
+   inch-5 repair, priced at **~11 real edit sites, 53 insulated**. It is the
+   single largest genuinely-misplaced block in the sibling.
+2. **`Stmt.lean` carries ZERO Annex-J references and zero C17 contrasts** —
+   the least edition-specific file in the sibling by a wide margin. Its 64
+   clause citations are §6.8, which C23 renumbered, so it is edition-scoped by
+   CITATION and not by content: statement semantics is the same language in
+   both editions. It cannot simply move, because it depends transitively on
+   `Value.lean`'s `minVal`, which is genuinely C23 — **but that dependency is
+   the whole reason it sits in the sibling, and that is worth stating rather
+   than leaving the reader to infer a richer justification than exists.**
+
+### Theorems 7/0 — already fixed by the landing in flight
+
+The gate saw `7/0` (all in the sibling, none on the trunk). The termination
+repair adds **5 theorems to the trunk** (`Expr.size_member`, `size_index`,
+`size_paren`, `size_call`, `sizes_cons` in `Ast.lean`) because the size
+measure belongs where the AST is. Current counts in the working tree are
+**18 sibling / 5 trunk**. The metric will move on its own when that lands.
+
+### Ordering
+
+Unchanged and not reordered: **inch-5 repair → Core adoption → any further
+consolidation.** Item (1) above IS the Core adoption, so the (b) work is
+already in the queue in the right place; item (2) is a note for whoever
+revisits the trunk boundary, not work I am scheduling ahead of the repair.

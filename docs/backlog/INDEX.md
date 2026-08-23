@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**124 entries across 16 lanes.** Regenerate with
+**125 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -60,6 +60,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-7` | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |
 | `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
 | `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
+| `2026-08-23-c-6` | STMT-59 answered: **(a), with a named (b) subset already scheduled** | c |
 | `2026-08-23-architecture-6` | Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance | architecture |
 | `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
 | `2026-08-23-c-5` | **A GREEN BUILD IS NOT A TERMINATION ARGUMENT** | c |

@@ -274,8 +274,10 @@ def Expr.size (e : Expr) : Nat := e.subexprs.length
 /-- The same measure over an argument list. -/
 def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 
-@[simp] theorem Expr.size_pos (e : Expr) : 0 < e.size := by
-  cases e <;> simp [Expr.size, Expr.subexprs]
+-- (`size_pos` was tried here and removed: `typeTrait` and `constExpr` carry an
+-- `Option Expr`, so `subexprs` has two clauses each and `cases e` does not
+-- split them. The measure below never needed positivity — every decrease goal
+-- closes by `omega` on the `Nat` alone — so the lemma was cost without use.)
 
 @[simp] theorem Expr.size_member (b : Expr) (f : String) (a : Bool) (t : CType) (s : CSpan) :
     (Expr.member b f a t s).size = b.size + 1 := by
@@ -283,7 +285,7 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 
 @[simp] theorem Expr.size_index (b i : Expr) (t : CType) (s : CSpan) :
     (Expr.index b i t s).size = b.size + i.size + 1 := by
-  simp [Expr.size, Expr.subexprs]; omega
+  simp [Expr.size, Expr.subexprs] <;> omega
 
 @[simp] theorem Expr.size_paren (sub : Expr) (t : CType) (s : CSpan) :
     (Expr.paren sub t s).size = sub.size + 1 := by
@@ -291,11 +293,11 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 
 @[simp] theorem Expr.size_call (c : Expr) (args : List Expr) (t : CType) (s : CSpan) :
     (Expr.call c args t s).size = c.size + Expr.sizes args + 1 := by
-  simp [Expr.size, Expr.sizes, Expr.subexprs]; omega
+  simp [Expr.size, Expr.sizes, Expr.subexprs] <;> omega
 
 @[simp] theorem Expr.sizes_cons (e : Expr) (es : List Expr) :
     Expr.sizes (e :: es) = e.size + Expr.sizes es := by
-  simp [Expr.sizes, Expr.size]
+  simp [Expr.sizes, Expr.size] <;> omega
 
 /-- The expressions a block-scope declaration contains. -/
 def Decl.exprs : Decl → List Expr

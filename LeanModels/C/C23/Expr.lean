@@ -575,6 +575,8 @@ def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
       else refuseUnsupported s!"unary '{op}' is not an lvalue"
   | .compoundLit .. => refuseUnsupported "compound literal (inch 4: it needs an object)"
   | e => refuseUnsupported s!"not an lvalue: {e.kindName}"
+  termination_by e => 2 * e.size + 1
+  decreasing_by all_goals (simp_wf <;> omega)
 
 /-- §6.5 — an expression in VALUE position. -/
 def evalExpr (ctx : Ctx) : Expr → EvalM CVal
@@ -764,6 +766,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .initList .. => refuseUnsupported "initializer list (inch 4)"
   | .compoundLit .. => refuseUnsupported "compound literal (inch 4)"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
+  termination_by e => 2 * e.size + 1
+  decreasing_by all_goals (simp_wf <;> omega)
 
 /-- §6.5.3.4 — the ADDRESS of `base.field` / `base->field`.
 
@@ -776,6 +780,8 @@ def memberAddr (ctx : Ctx) (base : Expr) (field : String) (arrow : Bool) : EvalM
   match ctx.layout.fieldOff base.ty field with
   | some off => pure (Mem.member basePtr off)
   | none => refuseUnsupported s!"no layout for field '{field}'"
+  termination_by 2 * base.size + 2
+  decreasing_by all_goals (simp_wf <;> omega)
 
 /-- §6.5.3.2p2 — the ADDRESS of `base[idx]`. Same discipline: the parts,
 never the rebuilt node. -/
@@ -787,6 +793,8 @@ def indexAddr (ctx : Ctx) (base idx : Expr) (ty : CType) : EvalM Ptr := do
   match ctx.layout.size ty with
   | some esz => readMem (fun m => Mem.subscript m bp esz i)
   | none => refuseUnsupported s!"no size for element type '{ty}'"
+  termination_by 2 * (base.size + idx.size) + 2
+  decreasing_by all_goals (simp_wf <;> omega)
 
 end
 
@@ -804,13 +812,6 @@ expression nodes (`Ast.lean`); the main pair carries `2 * size + 1` and
 the address helpers `2 * size + 2`, so a helper is strictly smaller than
 the node that called it and strictly larger than the subterms it
 evaluates. The doubling is what buys room for that middle rung. -/
-termination_by
-  evalLValue _ e => 2 * e.size + 1
-  evalExpr _ e => 2 * e.size + 1
-  memberAddr _ base _ _ => 2 * base.size + 2
-  indexAddr _ base idx _ => 2 * (base.size + idx.size) + 2
-decreasing_by all_goals (simp_wf; omega)
-
 /-! ## Spec lemmas — arm level, and the drain amendment
 
 `docs/backlog.md` §L61 measured what altitude buys here: unfolded

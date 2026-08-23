@@ -5171,11 +5171,13 @@ proved its increment's class by hand (`git diff --name-only <green-sha>
 HEAD`, two docs files). This makes that mechanical, under the provenance law
 above: **a green that rests on another green must carry the one it rests on.**
 
-**A GREEN CERTIFIES A TREE, NOT A COMMIT.** The tenure stamp is
-`git write-tree` — the INDEX tree — plus HEAD. So a green can certify content
-that is not any commit, whenever staged work was in the tree. A green is
-therefore **citable** as an increment base only when its index tree equals its
-HEAD commit's tree; otherwise the sha names something the green did not
+**A GREEN CERTIFIES A TREE, NOT A COMMIT.** The tenure stamp hashes the
+**WORKING TREE** — what `lake` actually reads — plus HEAD. (It hashed the
+INDEX until `22ed755`; that blind spot is its own entry below.) So a green can
+certify content that is not any commit, whenever uncommitted work was in the
+tree. A green is therefore **citable** as an increment base only when its
+working tree equals its HEAD commit's tree; otherwise the sha names what the
+green did not
 certify. This is the provenance law applied to the evidence's own identity.
 
 **AND THE LADDER HAS A THIRD RUNG, MEASURED THE EXPENSIVE WAY: A GREEN
@@ -7301,11 +7303,10 @@ reported **"`instN` green"** for a run that actually built **`instN` +
 > stage — between ENQUEUE and RELEASE. Batch BEFORE enqueue, or after the
 > verdict.**
 
-**AND THE STAMP THAT ENFORCES THAT RULE HAS A BLIND SPOT, FOUND BY A LANE
-CHECKING WHETHER IT COULD SAFELY EDIT** (Wasm; fix dispatched to the tools lane
-as priority). **`tree_stamp` is `git write-tree`, which hashes the INDEX.
-`lake` builds the WORKING TREE.** Verified here against the tool:
-`tools/triad.sh:1181-1183`.
+**AND THE STAMP THAT ENFORCES THAT RULE HAD A BLIND SPOT, FOUND BY A LANE
+CHECKING WHETHER IT COULD SAFELY EDIT** (Wasm; **fixed in `22ed755`**).
+**`tree_stamp` WAS `git write-tree`, which hashes the INDEX. `lake` builds the
+WORKING TREE.** Verified against the tool at the time: `tools/triad.sh:1181-1183`.
 
 > **An UNCOMMITTED, UNSTAGED edit between enqueue and acquire is INVISIBLE to
 > A6's enforcement — and the green would certify a tree the gate never saw.**
@@ -7318,6 +7319,19 @@ the sharpening the analog apex supplied (§5.3): **correctly motivated,
 correctly implemented, against the wrong object.** Nothing here is a slip; the
 `write-tree` call does exactly what it says, and what it says is not what the
 build reads.
+
+**RESOLVED (`22ed755`).** The stamp now hashes the working tree through a
+**temporary** `GIT_INDEX_FILE`, so the lane's own staging area is untouched;
+`add -A` catches untracked files (a new `.lean` is exactly what must not slip
+in) and honours `.gitignore` (so `.lake` churn cannot defeat it). Two
+consequences worth keeping. **An index-only edit is now ACCEPTED** — content
+staged but absent from the working tree will never be elaborated, so it is not
+part of what the tenure certifies, and the old stamp's refusal of it was a
+false alarm in the opposite direction. And **stamps carry a version**: a `v1`
+stamp compared against a `v2` one reads `unversioned`, which **accepts and
+logs** rather than refusing, because the two hash different objects and an
+answer to one is not evidence about the other — eight tenures were queued when
+the fix landed.
 
 **AND HOW IT WAS FOUND IS ITS OWN LAW.** The lane **almost deferred a safe
 edit** for fear of the stamp, then **read the stamp's implementation instead of
@@ -7435,7 +7449,7 @@ tenure reads the source at **build** time, not at enqueue time, so an edit made
 while waiting silently changes what the verdict is *about*. Measured
 2026-08-23: the Lean tier nearly reported **"instN green"** for a run that
 would have built **instN + weak'**, because the queue wait outlasted the tree.
-`tools/triad.sh` now stamps the index's tree (`git write-tree`) plus `HEAD`
+`tools/triad.sh` now stamps the **working tree**'s hash plus `HEAD`
 **into the ticket** at enqueue, re-takes it at acquire, and on a difference
 prints `TREE CHANGED SINCE ENQUEUE (<enq> → <now>)` and **refuses**.
 `--build-current-tree` proceeds for a lane that batched deliberately — and

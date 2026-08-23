@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**250 entries across 16 lanes.** Regenerate with
+**251 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -27,6 +27,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-architecture-54` | When the ambient verdict is constant, every bit is in the pin | architecture |
 | `2026-08-24-architecture-53` | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |
 | `2026-08-24-architecture-52` | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
+| `2026-08-24-qol-49` | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` | the stamp was watching the index while lake read the working tree | qol |
 | `2026-08-24-wasm-8` | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |

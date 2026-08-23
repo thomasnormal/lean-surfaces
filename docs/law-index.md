@@ -528,7 +528,7 @@ numbers below are the register's own.
 | OPS-75 | a stamp added to a measured artifact owes a DIFFERENTIAL — same verdicts with and without | `docs/family-architecture.md §7.2` |
 | OPS-76 | A COMMIT CANNOT CONTAIN ITS OWN HASH — each rung's sha lands in the FOLLOWING commit | `docs/family-architecture.md §7.2` |
 | OPS-77 | `set_option autoImplicit false` in model files — a required LOUDNESS guard | `docs/family-architecture.md §7.1a` |
-| OPS-78 | the enqueue stamp hashes the INDEX; `lake` builds the WORKING TREE | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
+| OPS-78 | a guard must hash the object the BUILD reads, never the one beside it (the enqueue stamp hashed the INDEX while `lake` built the WORKING TREE; fixed `22ed755`) | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
 | OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging

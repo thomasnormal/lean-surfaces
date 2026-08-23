@@ -249,6 +249,23 @@ structure EnvRec where
   newTarget : Val := .undef
   deriving Repr, Inhabited
 
+/--
+Which EXOTIC object this is, if any — ES2026 §10.4.
+
+Marked the way callability already is: `callable : Option FuncData` is what
+makes `IsCallable` a field test rather than a guess (§7.2.3), and this is
+the same shape for the same reason. An Array's `[[DefineOwnProperty]]`
+differs from the ordinary one (§10.4.2.1), and a model that could not SEE
+that it was holding an Array would have to guess.
+
+One constructor today. It is an `inductive` rather than a `Bool` because
+§10.4 has ten more — String, Arguments, Proxy — and each arrives by adding
+an arm here plus a branch in the dispatcher, never by widening a flag.
+-/
+inductive ExoticKind where
+  | array
+  deriving DecidableEq, Repr, Inhabited
+
 /-! ## Ordinary objects and the heap -/
 
 /--
@@ -269,6 +286,8 @@ structure Obj where
   `none` for a plain object — which is what makes `IsCallable` a field test
   rather than a guess (§7.2.3). -/
   callable : Option FuncData := none
+  /-- `none` for an ordinary object. See `ExoticKind`. -/
+  exotic : Option ExoticKind := none
   deriving Repr, Inhabited
 
 /-- The realm's heap. `ObjRef` is the index, the Python tier's shape. -/

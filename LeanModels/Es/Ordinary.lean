@@ -204,6 +204,148 @@ def ordinaryGet : Nat → ObjRef → PropKey → Val → EsW Val
         | _ => SemM.refuseConstruct
                  "accessor property: [[Get]] must call the getter, which needs [[Call]] (inch 4)"
 
+/-! ## Array exotic objects — ES2026 §10.4.2
+
+An Array's `length` is LIVE in both directions: writing an index at or past
+it grows it (§10.4.2.1 step 3.h), and writing a smaller `length` DELETES the
+elements above it (§10.4.2.4). Neither happens for an ordinary object with a
+`length` data property, which is exactly why `Obj` carries `ExoticKind` and
+this is a different `[[DefineOwnProperty]]` rather than a convention.
+
+**No `Nat`/`Float` conversion appears below.** An earlier shape converted the
+length through `ToUint32` into a `Nat` and needed `Int64.toInt`/`Int.toNat`.
+Indices arrive from `PropKey.arrayIndex?` as `Nat` and lengths live as
+`Float`, and `Nat.toFloat` is total and exact over `[0, 2^32)` — so every
+comparison happens in `Float` and the conversion that could clamp is simply
+never made. `n.toInt64` is `@[extern]` (kernel-opaque) AND saturating; that
+is the defect that withdrew `%` in inch 4.
+-/
+
+/-- Is this Number an exact non-negative integer below `2^32` — the
+`ToUint32` fixpoint §10.4.2.4 step 5 tests with `SameValueZero`?
+
+A ROUND TRIP through `Float.Model`, not a range check on a converted
+value: the `@[extern]` path SATURATES, so `1e30` would convert to
+`2^63 - 1` and then pass a naive range test. The two expressions are the
+ones `numberToString` already uses. -/
+def isExactUint32 (n : Float) : Bool :=
+  Float.ofModel (Float.Model.ofInt64 n.toModel.toInt64) == n
+    && n ≥ 0.0 && n < 4294967296.0
+
+/-- The `length` of an Array, and whether it is writable. -/
+def arrayLength (o : Obj) : Float × Bool :=
+  let d := o.find? (.str "length")
+  ((match d.bind (·.value) with | some (.num f) => f | _ => 0.0),
+   (match d.bind (·.writable) with | some b => b | none => true))
+
+/-- Store a new `length` VALUE while preserving its attributes — which are
+`writable: true, enumerable: false, configurable: false` and must stay so
+(§10.4.2.2 step 6). -/
+def putLength (o : Obj) (n : Float) : Obj :=
+  let d := (o.find? (.str "length")).getD (PropDesc.data (.num 0.0) true false false)
+  o.put (.str "length") { d with value := some (.num n) }
+
+/--
+`ArraySetLength(A, Desc)` — ES2026 §10.4.2.4, 34 steps.
+
+The truncating half of the live `length`. `a.length = 1` on `[10, 20]`
+must DELETE index 1, not merely renumber — `hasOwnProperty(1)` is `false`
+afterwards, and that is the oracle case this clause exists for.
+
+**The descending walk is replaced by a filter, and the arm where that
+would differ REFUSES.** §10.4.2.4 steps 17+ count DOWN so that a
+non-configurable element stops the truncation partway and `length` is left
+just above it. Deleting every own index at or above the new length is the
+same SET whenever every element is configurable — which is true of every
+index this tier can create, since only `Object.defineProperty` (inch 6)
+can make one otherwise. So the difference is unreachable, and rather than
+rely on that it is checked and refused.
+-/
+def arraySetLength (r : ObjRef) (desc : PropDesc) : EsW Bool := do
+  match desc.value with
+  -- step 1: no [[Value]] means this is an attribute-only redefinition
+  | none => ordinaryDefineOwnProperty r (.str "length") desc
+  | some (.num newLen) =>
+    -- steps 3-5: ToUint32 must be a FIXPOINT of ToNumber, else RangeError.
+    -- `throwError` lives in `Env.lean`, which is ABOVE this file, so the
+    -- raise is spelled out; it is the same `SemM.raise` that clause uses.
+    if !isExactUint32 newLen then
+      SemM.raise (.throw (.str "RangeError: Invalid array length"))
+    else do
+      let o ← deref r
+      let (oldLen, writable) := arrayLength o
+      if newLen ≥ oldLen then                                  -- step 11
+        store r (putLength o newLen)
+        return true
+      else if !writable then return false                      -- step 12
+      else do
+        let doomed := o.props.filter (fun p =>
+          match p.1.arrayIndex? with
+          | some i => newLen ≤ i.toFloat
+          | none => false)
+        if doomed.any (fun p => p.2.configurable == some false) then
+          SemM.refuseConstruct
+            "array truncation across a non-configurable element needs §10.4.2.4's descending walk"
+        else do
+          let kept := o.props.filter (fun p =>
+            match p.1.arrayIndex? with
+            | some i => i.toFloat < newLen
+            | none => true)
+          store r (putLength { o with props := kept } newLen)
+          return true
+  | some _ => SemM.raise (.throw (.str "RangeError: Invalid array length"))
+
+/--
+`[[DefineOwnProperty]]` for an Array — ES2026 §10.4.2.1, 18 steps.
+
+The growing half: defining an index at or past `length` sets `length` to
+`index + 1` (step 3.h), which is why `a = [10, 20]; a[5] = 99` leaves
+`a.length` at 6 and not 2.
+-/
+def arrayDefineOwnProperty (r : ObjRef) (k : PropKey) (desc : PropDesc) : EsW Bool := do
+  if k == PropKey.str "length" then arraySetLength r desc      -- step 1
+  else
+    match k.arrayIndex? with
+    | none => ordinaryDefineOwnProperty r k desc               -- step 3 falls through
+    | some idx => do
+      let (oldLen, writable) := arrayLength (← deref r)
+      -- step 3.i: past the end of a non-writable length is a refusal to write
+      if idx.toFloat ≥ oldLen && !writable then return false
+      if !(← ordinaryDefineOwnProperty r k desc) then return false
+      if idx.toFloat ≥ oldLen then                             -- step 3.h
+        store r (putLength (← deref r) (idx.toFloat + 1.0))
+      return true
+
+/-- `O.[[DefineOwnProperty]](P, Desc)` — the DISPATCHER, and the spelling
+every caller of the internal method should use. `ordinaryDefineOwnProperty`
+is §10.1.6's ordinary implementation; this is the method itself. -/
+def esDefineOwnProperty (r : ObjRef) (k : PropKey) (desc : PropDesc) : EsW Bool := do
+  match (← deref r).exotic with
+  | some .array => arrayDefineOwnProperty r k desc
+  | none => ordinaryDefineOwnProperty r k desc
+
+/-- `ArrayCreate(length)` — ES2026 §10.4.2.2, 7 steps. The prototype is
+`%Array.prototype%`, a realm intrinsic (inch 6), so it is `none` here for
+the same reason `ordinaryFunctionCreate`'s is. -/
+def arrayCreate (len : Nat) : EsW ObjRef := fun w =>
+  let (r, w') := w.alloc
+    { proto := none, exotic := some .array,
+      props := [(.str "length", PropDesc.data (.num len.toFloat) true false false)] }
+  .ok (.ok r, w')
+
+/-- `CreateDataProperty(O, P, V)` — ES2026 §7.3.4, 2 steps: a fresh
+enumerable, writable, configurable data property, through the object's OWN
+`[[DefineOwnProperty]]`. **Every literal's property goes through here** —
+an evaluator that appended to `props` directly would lose both the
+duplicate-key rule and the Array's live `length`. -/
+def createDataProperty (r : ObjRef) (k : PropKey) (v : Val) : EsW Bool :=
+  esDefineOwnProperty r k (PropDesc.data v true true true)
+
+/-- `CreateDataPropertyOrThrow(O, P, V)` — ES2026 §7.3.5, 3 steps. -/
+def createDataPropertyOrThrow (r : ObjRef) (k : PropKey) (v : Val) : EsW Unit := do
+  if ← createDataProperty r k v then pure ()
+  else SemM.raise (.throw (.str s!"TypeError: cannot create property {k.text}"))
+
 /--
 `OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc)` —
 ES2026 §10.1.9.2, 20 steps, and `OrdinarySet` (§10.1.9.1, 2 steps) is its
@@ -241,11 +383,15 @@ def ordinarySetWithOwnDescriptor :
           | some existing =>
             if existing.isAccessor then return false             -- step 2.e.ii
             if existing.writable == some false then return false -- step 2.e.iii
-            -- step 2.e.iv: a VALUE-ONLY redefinition on the receiver
-            ordinaryDefineOwnProperty rr k { value := some v }
+            -- step 2.e.iv: a VALUE-ONLY redefinition on the receiver.
+            -- Through the DISPATCHER, not the ordinary implementation: on an
+            -- Array this is the step that grows `length`, and `a[5] = 99`
+            -- arrives here.
+            esDefineOwnProperty rr k { value := some v }
           | none =>
-            -- step 2.f: CreateDataProperty on the receiver
-            ordinaryDefineOwnProperty rr k (PropDesc.data v true true true)
+            -- step 2.f: CreateDataProperty on the receiver — the AO by name,
+            -- which is itself the dispatcher.
+            createDataProperty rr k v
         | _ => return false                                      -- step 2.c
       else
         match d.set.getD .undef with

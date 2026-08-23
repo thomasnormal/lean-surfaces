@@ -754,3 +754,88 @@ than swallowing it.
 
 **Both rows are the lane's own instruments failing quietly rather than loudly**,
 which is the failure mode the whole tier is built to refuse.
+
+---
+
+## 2026-08-24-es-1 — the data-literal inch: object and array literals, `UpdateExpression`, and the Array exotic object
+
+`LeanModels/Es/{Object,Ordinary,Eval}.lean` + `Examples/es/literals/guards.lean` —
+**35 new `#guard`s (290 in the lane).**
+
+**§9.0 ledger: 38/66 node kinds stated; 0 test262 scored.** In-vocabulary tests
+go **2,869 -> 4,118**, matching the census's predicted +1,249 exactly.
+
+**SIZED FROM THE PINNED SPEC BEFORE BEING WRITTEN: 195 numbered steps** —
+PropertyDefinitionEvaluation 35, ArraySetLength 34, Array
+Initializer/ArrayAccumulation 33, the four Update operators 40, Array
+[[DefineOwnProperty]] 18, Array Init Evaluation 12, Object Init Evaluation 11,
+ArrayCreate 7, CreateDataPropertyOrThrow 3, CreateDataProperty 2. Against inch
+5's 422 and inch 3's 204.
+
+### THE CENSUS REDIRECTED THE INCH, and that is the finding
+
+The discriminating decision was expected to be `ObjectExpression`'s value
+model — property order and duplicate keys. **It was already correct.**
+`Obj.put` replaces IN PLACE (so a duplicate key keeps its first slot and takes
+its last value) and `ordinaryOwnPropertyKeys` (§10.1.11.1) already sorted
+integer indices ahead of creation-ordered strings, both written at inch 2 for
+their own reasons.
+
+So the object risk was never REPRESENTATION, it was **DISCIPLINE**: an
+evaluator that appends to `props` directly bypasses a model that is already
+right. Every property therefore routes through `CreateDataPropertyOrThrow` ->
+`[[DefineOwnProperty]]`, without exception, and the four-way guard is what
+holds it there.
+
+**A discriminating decision can live in discipline rather than in
+representation** — and a census is what tells you which.
+
+### THE OPEN VALUE MODEL WAS THE *ARRAY*
+
+`Obj` had no exotic marker, so an Array's live `length` was unrepresentable.
+Added `exotic : Option ExoticKind`, mirroring `callable : Option FuncData` —
+the tier's own precedent for "make it a field test, not a guess" (§7.2.3) —
+plus §10.4.2.1's `[[DefineOwnProperty]]`, §10.4.2.4's `ArraySetLength`,
+`ArrayCreate`, and an `esDefineOwnProperty` dispatcher that the `[[Set]]` path
+now goes through so `a[5] = 99` reaches the array's own method.
+
+### NO Float->Nat CONVERSION APPEARS ANYWHERE IN IT
+
+The first shape converted `length` through `ToUint32` into a `Nat` and needed
+`Int64.toInt`/`Int.toNat`, two conversions this lane has never exercised.
+Indices arrive from `PropKey.arrayIndex?` as `Nat`, lengths live as `Float`,
+and `Nat.toFloat` is total and exact over `[0, 2^32)` — so every comparison
+happens in `Float` and the conversion is simply never made. **A conversion not
+made is a conversion that cannot clamp**, which is the inch-4 `%` defect
+answered structurally rather than by a guard.
+
+`isExactUint32` is a ROUND TRIP through `Float.Model`, not a range check on a
+converted value: `n.toInt64` is `@[extern]` and SATURATES, so `1e30` becomes
+`2^63 - 1` and passes a naive range test. Guarded.
+
+### THE THREE DISCRIMINATORS, EACH ORACLE-VERIFIED IN SOURCE SPELLING
+
+Every expected value was read off a running engine BEFORE the Lean was
+written, never derived from the prose.
+
+* **Object order + duplicates.** `{b:1, 2:2, 1:3, a:4, b:5}` -> keys
+  `["1","2","b","a"]`, `b === 5`. Fails four ways: append-no-sort gives
+  `["b","2","1","a","b"]`; insertion-order-with-dedupe gives `["b","2","1","a"]`;
+  index-sort-with-dedupe-to-end gives `["1","2","a","b"]`.
+* **Elision.** `[1, , 3]` has `length` 3 and **no own property at 1**.
+  Dropping the hole closes the array to `[1,3]`; filling it with `undefined`
+  invents a property. `Node.kidsOpt` keeps the hole that `Node.kids` drops.
+* **`ToNumeric` ordering.** `s = "3"; s++` answers the **Number** `3`.
+  §13.4.3.1 converts BEFORE choosing the answer, so saving the old value and
+  converting afterwards returns `"3"` — wrong in a way no numeric test catches.
+
+Plus both directions of the live `length`: `a[5] = 99` grows it to 6, and
+`a.length = 1` DELETES index 1 rather than renumbering.
+
+### WHAT REFUSES
+
+Spread in either literal (iterator protocol / `CopyDataProperties`), get/set
+in an object literal (`2026-08-23-es-1`), shorthand methods (`[[HomeObject]]`,
+the class inch), BigInt increment, and array truncation across a
+non-configurable element — that last one unreachable in this tier, and checked
+rather than assumed.

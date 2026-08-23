@@ -54,7 +54,19 @@ def Node.child? : Node → String → Option Node
     | _ => none
   | _, _ => none
 
-/-- A child LIST, with holes dropped — `arguments`, `elements`, `body`. -/
+/-- A child LIST **with its holes kept**, which `[1, , 3]` needs.
+
+`Node.kids` drops them, and for `arguments` or `body` that is right. For an
+array's `elements` it is not: §13.2.4.1 leaves an elision's index ABSENT and
+only advances the counter, so `[1, , 3]` has `length` 3 and no own property
+at 1. Dropping the hole would close the array up to `[1, 3]`; filling it
+with `undefined` would make `hasOwnProperty(1)` true. Both are wrong, and
+only a list that still contains the hole can be right. -/
+def Node.kidsOpt : Node → String → List (Option Node)
+  | Node.mk _ _ _ cs, k => ((cs.find? (fun p => p.1 == k)).map (·.2)).getD []
+  | _, _ => []
+
+/-- A child LIST, with holes dropped — `arguments`, `body`. -/
 def Node.kids : Node → String → List Node
   | Node.mk _ _ _ cs, k =>
     match (cs.find? (fun p => p.1 == k)).map (·.2) with
@@ -386,6 +398,30 @@ def evalRef : Nat → EnvRef → Node → EsW Ref
         return { base := .value base, name := key }
     | _ => SemM.refuseConstruct "expression is not a valid assignment target"
 
+/-- The `PropertyKey` a `Property` node names — §13.2.5.5.
+
+Three shapes. A COMPUTED key is evaluated and run through `ToPropertyKey`.
+A LITERAL key goes through the same conversion, which is how `{2: 2}`
+becomes the string key `"2"` — and therefore an array index, which is what
+puts it before `"b"` in `Object.keys`. An IDENTIFIER key is its own text and
+is deliberately NOT evaluated: `{a: 1}` does not read a binding named `a`. -/
+def propKeyOf : Nat → EnvRef → Node → EsW PropKey
+  | 0, _, _ => fun _ => .error .timeout
+  | fuel + 1, env, p =>
+    match p.child? "key" with
+    | none => SemM.refuseConstruct "internal: Property without a key (report this)"
+    | some k =>
+      if p.flag "computed" then do toPropertyKey fuel (← evalExpr fuel env k)
+      else
+        match k with
+        | Node.lit v _ _ => do toPropertyKey fuel (← literalValue v)
+        | _ =>
+          match k.str? "name" with
+          | some nm => pure (PropKey.str nm)
+          | none =>
+            SemM.refuseConstruct
+              "internal: a non-computed key is neither a Literal nor an Identifier"
+
 /-- Evaluate an expression to a value — §13. -/
 def evalExpr : Nat → EnvRef → Node → EsW Val
   | 0, _, _ => fun _ => .error .timeout
@@ -510,6 +546,73 @@ def evalExpr : Nat → EnvRef → Node → EsW Val
           for a in n.kids "arguments" do
             args := args ++ [← evalExpr fuel env a]
           constructComplete fuel fv args
+      | .objectExpression => do
+        -- §13.2.5.5 PropertyDefinitionEvaluation. EVERY property goes through
+        -- `CreateDataPropertyOrThrow` — never through `props` directly. That
+        -- discipline is the whole correctness argument here: it is what makes
+        -- a duplicate key UPDATE in place (so `{b:1, a:2, b:3}` keeps `b`
+        -- first) and what would carry an Array's live `length` if this were
+        -- one.
+        let obj ← ordinaryObjectCreate none
+        for prop in n.kids "properties" do
+          match prop.kindOf with
+          | some .property =>
+            if prop.str? "kind" != some "init" then
+              SemM.refuseConstruct
+                "get/set in an object literal needs the accessor path (2026-08-23-es-1)"
+            else if prop.flag "method" then
+              SemM.refuseConstruct "a shorthand method needs [[HomeObject]] (the class inch)"
+            else do
+              let k ← propKeyOf fuel env prop
+              match prop.child? "value" with
+              | none => SemM.refuseConstruct "internal: Property without a value (report this)"
+              | some ve => do
+                let v ← evalExpr fuel env ve
+                createDataPropertyOrThrow obj k v
+          | some .spreadElement =>
+            SemM.refuseConstruct "object spread needs CopyDataProperties (§7.3.25)"
+          | _ => SemM.refuseConstruct "internal: unexpected node in an ObjectExpression"
+        return .obj obj
+      | .arrayExpression => do
+        -- §13.2.4.1 ArrayAccumulation. The counter advances past an elision
+        -- WITHOUT defining anything, which is what leaves `[1, , 3]` with a
+        -- hole at 1 and a `length` of 3.
+        let arr ← arrayCreate 0
+        let mut i : Nat := 0
+        for el in n.kidsOpt "elements" do
+          match el with
+          | none => i := i + 1
+          | some e =>
+            if e.kindOf == some .spreadElement then
+              SemM.refuseConstruct "array spread needs the iterator protocol (§7.4)"
+            else do
+              let v ← evalExpr fuel env e
+              let _ ← createDataProperty arr (.str (toString i)) v
+              i := i + 1
+        -- §13.2.4.2 step 5: `length` counts TRAILING elisions, which the
+        -- per-element writes never reached.
+        let _ ← esDefineOwnProperty arr (.str "length") { value := some (.num i.toFloat) }
+        return .obj arr
+      | .updateExpression => do
+        match n.child? "argument", n.str? "operator" with
+        | some a, some op => do
+          let r ← evalRef fuel env a
+          -- §13.4.2.1 step 2: `ToNumeric` runs BEFORE the answer is chosen,
+          -- so `s = "3"; s++` answers the NUMBER 3, not the string. An
+          -- implementation that saved the old value and converted afterwards
+          -- returns `"3"` and is wrong in a way no numeric test would catch.
+          let oldValue ← toNumber fuel (← getValue fuel r)
+          let newValue ←
+            match oldValue with
+            | .num x =>
+              if op == "++" then pure (Val.num (x + 1.0))
+              else if op == "--" then pure (Val.num (x - 1.0))
+              else SemM.refuseConstruct s!"update operator '{op}' is not modeled"
+            | _ => SemM.refuseConstruct "BigInt increment needs a BigInt tier"
+          putValue fuel r newValue
+          -- §13.4.2.1 vs §13.4.4.1: postfix answers the OLD value, prefix the new.
+          return (if n.flag "prefix" then newValue else oldValue)
+        | _, _ => SemM.refuseConstruct "internal: malformed UpdateExpression"
       -- §15.2.5, §15.3.4: a function EXPRESSION and an arrow are the same
       -- clause; the node's kind is what makes an arrow lexical-`this` and
       -- non-constructible.

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**153 entries across 16 lanes.** Regenerate with
+**154 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -32,6 +32,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-32` | audit HIGHs 1-3 and MEDIUMs 7-8: the matchers learn what a comment is | qol |
 | `2026-08-23-qol-31` | the vendored-fixture convention, and a prose mention that still cost the whole library | qol |
 | `2026-08-23-qol-30` | correction: the build log was never deleted, only unnamed | qol |
+| `2026-08-23-architecture-30` | Heartbeats over wall time; one execution, two projections; and a shared name is worth an import | architecture |
 | `2026-08-23-qol-29` | the merge driver configures itself, and a green build's axiom ledger survives | qol |
 | `2026-08-23-architecture-29` | An instrument optimization is proved by output equality; and §5.4b's first two catches | architecture |
 | `2026-08-23-qol-28` | `--axioms` dropped the last name, and the absence was silent | qol |

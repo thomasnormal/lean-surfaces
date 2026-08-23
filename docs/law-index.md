@@ -132,6 +132,10 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-83 | an empty field in a whitespace-separated record is not a field | `docs/family-architecture.md §5.4b` |
 | MEAS-84 | a fixture is not enforcement — strip the self-test before attributing | `docs/family-architecture.md §9.7` — gate: `tools/laws.sh` |
 | MEAS-85 | past the budget every count is a FLOOR, and the verdict goes to a FILE | `docs/family-architecture.md §9.7` |
+| MEAS-86 | heartbeats are a DETERMINISTIC step count; wall time is not — say why it was dropped | `docs/family-architecture.md §5.4a` |
+| MEAS-87 | a probe cannot certify its own definitions — the TREE's green ledger does | `docs/family-architecture.md §5.4a` |
+| MEAS-88 | check whose CLOSURE a file sits in before placing two things side by side | `docs/family-architecture.md §2.4` clause (1a) |
+| MEAS-89 | a table asserting how the interpreter classifies is unfalsifiable until the interpreter confirms it | `docs/family-architecture.md §5.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -240,6 +244,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-98 | a premise is not paid until something DISCHARGES it | `docs/backlog.md §L25` standing-law item 3; cookbook §21 |
 | STMT-99 | an existential judgment is earned across theorems, not within one | `docs/backlog.md §L38`; cookbook §15 |
 | STMT-100 | a definition a LEMMA cannot state about is a fidelity gap | `docs/backlog.md §L88`, sharper form of §L82; cookbook §17 |
+| STMT-101 | ONE EXECUTION, TWO PROJECTIONS — an outcome and its class cannot drift | `docs/family-architecture.md §5.2` |
+| STMT-102 | the refusal-class field's PRESENCE is a theorem; absence means it did not refuse | `docs/family-architecture.md §5.2` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -300,6 +306,7 @@ The worked forms, with the trap and the incident for each, are in
 | PROOF-53 | the dependency graph is SEMANTIC, not nominal — name rules run first | `docs/backlog/lean-tier.md 2026-08-22-lean-tier-2` |
 | PROOF-54 | strip comments and strings before counting `sorry` | `docs/backlog/wasm.md 2026-08-22-wasm-1`; `harness/wasm_sorry_census.py` |
 | PROOF-55 | "0 sorry" can distinguish the emission MODE, not the progress | `docs/backlog/wasm.md 2026-08-22-wasm-1` |
+| PROOF-56 | open the monad stack ONCE, where it is defined — the tell is unfolding `Functor.map` | cookbook §22 |
 
 ## D. BUILD + OPS AMENDMENTS — the lock protocol and its register
 

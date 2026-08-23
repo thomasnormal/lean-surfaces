@@ -872,6 +872,28 @@ the editions (§1.3). The verified conviction — `IntTy.minVal`, on C23
 in the trunk**. Prophylactic siblings are how a thick trunk silently
 becomes two thin ones.
 
+**(1a) AND THE COMPANION MEASUREMENT FOR THE OPPOSITE MOVE — PLACING TWO THINGS
+SIDE BY SIDE.** Clause (1) prices *separating*; this prices *joining*, and the
+unit is the same one lanes forget: **the import closure**. From the fuelMono
+lane (staged on ticket 40057; **conditional on that landing**):
+
+> **A SHARED NAME IS WORTH AN IMPORT; IT IS NOT WORTH RELOCATING THE TRUNK'S
+> ELABORATION COST. Check whose CLOSURE a file sits in before deciding two
+> things belong side by side.**
+
+Measured: the instances landed in `Outcome` §8 rather than beside `FlatLe`,
+because the tidier-looking placement **dragged `Std.Do` into 65 `Examples`
+closures**. Nothing would have failed — every one of those files would still
+build — and that is the whole hazard: **a placement decision made on naming
+grounds pays in elaboration time across every downstream file, and the bill
+arrives on lanes that never made the decision.**
+
+The practical form is a grep, not a judgment call: **before moving a
+definition next to a name it shares, list who imports the destination** and
+ask whether the destination's own imports belong in all of those closures. It
+is MEAS-1 (*census before pricing*) applied to a decision that does not look
+like it has a price.
+
 **(2) THEOREMS PROVE ONCE ON THE TRUNK** and serve every edition that
 imports it. A sibling carries a theorem only when the FACT it states is
 edition-decided. This is where the pattern pays: the expensive artifact in
@@ -3405,6 +3427,45 @@ and show the observable invariant. That is a different and much larger
 obligation, it is the honest home of §3.4's explicit-parameter design, and
 it is named here as a priced fork rather than taken.
 
+**AND THE IMPLEMENTATION LAW FOR THE CLASS FIELD, from the fuelMono lane**
+(staged on ticket 40057; **conditional on that landing**). A model that reports
+a refusal *class* alongside its outcome has two answers about one event, and
+two answers is exactly the shape that drifts. The ruling:
+
+> **ONE EXECUTION, TWO PROJECTIONS.** The outcome and its class come from the
+> **same run** — `callInRaw` projected two ways, with
+> `callInMono_eq_ofHalt` tying them — **so the two answers cannot drift.**
+
+A second run, or a table consulted after the fact, would let the class describe
+a different execution from the outcome it labels, and nothing would fail. This
+is §3.4's routing discipline pointed at a *field* instead of a monad layer: the
+class is not extra data about the run, it is **a view of it**.
+
+**AND THE FIELD'S PRESENCE IS A THEOREM, not a convention.**
+`refusalClass_isSome_iff` settles what an absent class means:
+
+> **Absence means the run did NOT refuse — never *"refused, unclassified"*.**
+
+Left as a convention, `none` is ambiguous in precisely the direction §5.2 exists
+to prevent: an unclassified refusal would be **invisible to every per-cause
+count** while the run itself was a refusal, and the scoreboard would read the
+gap as *"no refusals of that kind"* rather than *"a refusal we failed to
+classify"*. That is the silent-absence family (§5.4) inside the verdict system,
+and a theorem is what removes it.
+
+**AND THE CENSUS'S `WHITELIST_CLASS` IS NOW CROSS-CHECKED BY THE INTERPRETER
+ITSELF**, which is the part that generalizes past this tier:
+
+> **A table asserting how the interpreter classifies is an UNFALSIFIABLE CLAIM
+> ABOUT the interpreter — until the interpreter is asked to confirm it.**
+
+The whitelist was exactly that: a hand-maintained statement of the model's own
+behaviour, checked against nothing, in an instrument whose whole purpose is to
+report that behaviour. It is §5.4's docstring laws in table form — *a claim
+about the world, and therefore checked data or prose that will go stale
+silently* — and the fix is the same fix: **let the thing being described answer
+the question.**
+
 ### 5.3 VACUOUS is not a verdict — and neither is MUTUAL REFUSAL
 
 A run that executed **nothing** must never score as agreement.
@@ -3908,6 +3969,36 @@ distinction**: `§9` counts **0** against a ledger that says `§9.5` twice, whil
 
 A comment saying *"careful, whole tokens"* would not have survived the next
 rewrite; a row that fails does.
+
+**AND THE CONSTRUCTIVE HALF, from the fuelMono lane** (staged on ticket 40057;
+**conditional on that landing**, and stated so rather than presented as
+tree-state). The instance above diagnoses the disease — an instrument's runtime
+is partly a reading of the machine. This one prescribes the **unit**:
+
+> **HEARTBEATS ARE A DETERMINISTIC STEP COUNT; WALL TIME IS NOT. On a shared
+> box, report the deterministic half and SAY WHY the other half was dropped.**
+
+Measured on the `+jp` question: **both arms time out at 1M heartbeats against
+the REAL tree** — a number that does not move when another lane starts a build.
+It **replaces the spike's `VOID` headline**, and the method decision (judgments,
+not `mvcgen`) now rests on a **tree-level** number instead of a spike's.
+
+**Dropping wall time is not the same as hiding it.** An unexplained omission is
+what makes the surviving number ambiguous — a reader cannot tell a dropped
+measurement from one that was never taken — so the report **names the drop and
+its reason**. That is the state-stamp rule (MEAS-10) applied to what is *absent*
+rather than to what is quoted.
+
+**RIDER — A PROBE CANNOT CERTIFY ITS OWN DEFINITIONS.** A probe that **errors**
+prints `sorryAx`, so its axiom line describes the error recovery and not the
+tree.
+
+> **The certification comes from the TREE's green build ledger, never from the
+> probe's own axiom print.**
+
+MEAS-11 restated with the artifact named — the same move as §7.1a's
+one-second-build rule: *name the artifact whose existence success would have
+produced*, rather than reading success off the absence of complaint.
 
 **A FIFTH INSTANCE, AND IT CARRIES A DIRECTION THE OTHERS DO NOT: THE COUNT
 HAD BEEN PUBLISHED.** `tools/substrate.sh`'s `REF_LOCAL` matched any line

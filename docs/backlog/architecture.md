@@ -2053,3 +2053,84 @@ Saturday, gated the same day; recorded because *fixes live in gates* is worth a
 data point when it works.
 
 **Index:** MEAS-78 … MEAS-85.
+
+## 2026-08-23-architecture-30 — Heartbeats over wall time; one execution, two projections; and a shared name is worth an import
+
+Four from the fuelMono lane, **staged on ticket 40057**. Every one is landed
+**conditional on that landing** and says so at the site — a law citing a tree
+that has not landed is a claim about a branch, and §5.4a's state stamp is the
+difference between recording that and pretending otherwise.
+
+**(1) §5.4a — THE MEASUREMENT'S UNIT.** The instance landed an hour earlier
+(`laws.sh` spawn-bound, `2026-08-23-architecture-29`) diagnosed the disease:
+an instrument's runtime is partly a reading of the machine. This one prescribes
+the cure.
+
+> **Heartbeats are a DETERMINISTIC step count; wall time is not. On a shared
+> box, report the deterministic half and SAY WHY the other half was dropped.**
+
+Measured: **both arms time out at 1M heartbeats against the REAL tree** — a
+number that does not move when another lane starts a build. It **replaces the
+spike's `VOID` headline**, and the judgments-not-`mvcgen` method decision now
+rests on a **tree-level** number rather than a spike's. The clause I added:
+**dropping wall time is not hiding it, but an unexplained omission is** — a
+reader cannot tell a dropped measurement from one never taken, so MEAS-10
+applies to the *absent* half as much as the quoted one.
+
+**RIDER — a probe that errors prints `sorryAx`, so a probe cannot certify its
+own definitions.** The certification comes from **the tree's green build
+ledger**. MEAS-11 with the artifact named, which is §7.1a's one-second-build
+move: name the artifact whose existence success would have produced.
+
+**(2) §5.2 — ONE EXECUTION, TWO PROJECTIONS.** A model reporting a refusal
+*class* beside its outcome has two answers about one event, which is the shape
+that drifts. `callInRaw` projected two ways with `callInMono_eq_ofHalt` tying
+them: **the two answers cannot drift**, because the class is not extra data
+about the run — it is a **view** of it.
+
+And `refusalClass_isSome_iff` makes the field's **presence a theorem**:
+**absence means the run did not refuse, never "refused, unclassified."** Worth
+the theorem because the convention fails in the direction §5.2 exists to
+prevent — an unclassified refusal is invisible to every per-cause count while
+the run *was* a refusal, and the scoreboard reads *"no refusals of that kind"*.
+Silent absence inside the verdict system.
+
+**And the census's `WHITELIST_CLASS` is now cross-checked by the interpreter
+itself**, which is the half that generalizes:
+
+> **A table asserting how the interpreter classifies is an UNFALSIFIABLE CLAIM
+> ABOUT the interpreter — until the interpreter is asked to confirm it.**
+
+§5.4's docstring laws in table form: a claim about the world is checked data or
+prose that goes stale silently, and the fix is to let the thing being described
+answer the question.
+
+**(3) §2.4 — A NEW CLAUSE (1a), the companion to census-gated placement.**
+Clause (1) prices **separating** two things; nothing priced **joining** them.
+
+> **A SHARED NAME IS WORTH AN IMPORT; IT IS NOT WORTH RELOCATING THE TRUNK'S
+> ELABORATION COST. Check whose CLOSURE a file sits in before deciding two
+> things belong side by side.**
+
+Measured: instances landed in `Outcome` §8 rather than beside `FlatLe`, because
+the tidier placement **dragged `Std.Do` into 65 `Examples` closures**. Nothing
+would have failed — that is the hazard. **A placement decision made on naming
+grounds pays in elaboration time across every downstream file, and the bill
+arrives on lanes that never made the decision.** Practical form is a grep, not
+a judgment call: list who imports the destination first. MEAS-1 applied to a
+decision that does not look like it has a price.
+
+**(4) COOKBOOK ENTRY 22 — opening the monad stack.** *Once, in the module where
+the stack is DEFINED* — not zero times (something must connect abstraction to
+representation) and not twice (two openings are two definitions kept in step by
+hand). **The tell that it is being violated is a proof that unfolds
+`Functor.map`**: a proof reasoning about the stack's plumbing in a module with
+no business knowing the plumbing exists. Written as the per-module form of
+§3.4's *one monad, one `vcgen`*, and the entry says to treat the unfold as a
+signal to add a lemma where the stack is defined rather than as a step to keep.
+
+The cookbook's table gains row 22. `2026-08-22-qol-2`'s title still says *"21
+claim shapes"* and is **left alone**: it is a dated record and it was right as
+taken (`2026-08-23-architecture-26`).
+
+**Index:** MEAS-86 … MEAS-89, STMT-101, STMT-102, PROOF-56.

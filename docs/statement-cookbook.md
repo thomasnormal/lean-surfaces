@@ -37,6 +37,7 @@ incident**.
 | 19 | refusal causes | the ∀/∃ direction is what distinguishes them |
 | 20 | invariant shape | a flat `∧`-chain, at the COMPOSABLE altitude |
 | 21 | re-proving | never repair a statement to make a proof pass |
+| 22 | opening the monad stack | ONCE, in the module where the stack is DEFINED |
 
 ---
 
@@ -470,6 +471,31 @@ assuming the hypothesis and try to build it.*
 **INCIDENT.** `AGENTS.md` failure-modes, *statement discipline when
 re-proving*; the discharge law is finding 1 of `docs/backlog.md` §L24 and law
 3 of §L25.
+
+---
+
+## 22 — Opening the monad stack: once, where the stack is defined
+
+**FORM.** The stack is unfolded to its concrete representation **exactly
+once**, in the module that **defines** it, and every downstream proof works
+through the lemmas that opening produced. Not zero times (something has to
+connect the abstraction to its representation) and not twice (two openings are
+two definitions of the same thing, kept in step by hand).
+
+**TRAP.** The opening migrates outward one proof at a time, because each
+individual proof is easier to close by unfolding than by finding the lemma.
+Nothing fails — every such proof is correct — and the cost is paid later, when
+the stack's representation changes and the repairs are spread across every
+module that opened it. **The tell that it is happening is a proof that unfolds
+`Functor.map`**: a proof reasoning about the *stack's plumbing* rather than
+about the *program*, in a module that has no business knowing the plumbing
+exists. Treat that unfold as a signal to go add a lemma where the stack is
+defined, not as a step to keep.
+
+**INCIDENT.** The fuelMono lane, staged on ticket 40057 — recorded here
+**conditional on that landing**. Related: `docs/family-architecture.md` §3.4's
+*one monad, one `vcgen`* — the same rule at the family scale, of which this is
+the per-module form.
 
 ---
 

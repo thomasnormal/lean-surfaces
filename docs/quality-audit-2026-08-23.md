@@ -78,6 +78,61 @@ Each row is owed a fix or an explicit won't-fix note in the owning lane's backlo
 - **MEDIUM** [provenance] `LeanModels/Sv/Sem2.lean:24` — The whole sv-0.2 differential ledger (pin1 R02–R11, pin2a W01–W08/C01–C05, pin2b I01–I09, pin3 CYCLE rows, pin4 Z01–Z07/S01–S05) cites its oracle rows to `scratchpad/rows/pin1–pin4.sv`, which is not in the repository and not in git; `pin2a`/`pin2b` appear in no docs file, so the row identifiers the #guard comments key on have no register anywhere.
   - fix: Commit the pin decks under `Examples/system-verilog/sem2/probes/` (where t2_*.sv already live) and cite those paths, per family-architecture §7.1a 'Anything a lane must obey belongs in a git-tracked file'.
 
+### sv — DISPOSITIONS (sv lane, 2026-08-23)
+
+**HIGH `sv-corpus-coverage.md:351` — FIXED.** The document now names
+`docs/sv-construct-census.json` (20 295 bytes, committed, provenance +
+summary, `--compare`-checkable) as the artifact its tables are read
+against, carries the exact regeneration invocation, and states the
+per-file `census.json` exclusion as *policy* rather than leaving it a
+silent `.gitignore` entry. The 0-byte `unlockable.txt` is explained with
+its measurement rather than repaired: re-measured 2026-08-22, **two of the
+eleven files no longer exist in the corpus and the other nine no longer
+classify**, with `classify()` verified byte-identical function-by-function,
+so it is a corpus-or-host difference (Linux → `darwin-arm64`), **not a
+regression**. The audit's own count is also now corrected in the document:
+the tables were taken over 21 336 chapter files, the corpus walks 21 186.
+
+**MEDIUM `Param.lean:997` (vacuous crossCheck) — ACCEPTED, next Lean
+tenure.** The audit is right and this is the more serious of the four,
+because it is a *silent* pass rather than a dangling citation: "clean" and
+"compared nothing" are the same value. It is the same law this lane landed
+in `harness/sv_round_trip.py` days earlier — the family `live` flag, where
+three envelopes that could not run were separated from eighteen that
+agreed, precisely so a vacuous run cannot serialize as agreement. The same
+fix applies here in the same shape: return `(messages, comparisons_made)`
+and have `load_design_sv2` refuse **VACUOUS** at zero. Batched into the
+landing that moves the stepper into the build, since both are tier-`Sv`.
+
+**MEDIUM `adder/proof.lean:275` (stimuli never simulated) — ACCEPTED,
+rewording.** The claim overreaches: the guards use `a=5,b=3` / `a=200,b=100`
+while `cases.json` drives `1+2, 255+1, 170+85, 0+0, 127+127`, so no
+simulator ever adjudicated these vectors. Taking the audit's second option —
+reword to *"consistent with the LRM rules the harness verified"* — because
+it is true today, where the first option (add the vectors to `cases.json`)
+requires a simulator run that should be its own measured landing rather
+than a claim made in advance. Adding them is queued separately, not
+abandoned.
+
+**MEDIUM `SelfCheck.lean:51` (§f and T01–T29 resolve to nothing) and
+`Sem2.lean:24` (pin decks cite `scratchpad/rows/`) — ACCEPTED, PARTIAL, and
+the partiality is deliberate.** Both citations are dangling and both will
+be corrected to say so. **Neither will be "fixed" by writing the missing
+table.** The audit's suggested remedy for `SelfCheck.lean:51` — *add the §f
+fixture table with the recorded Xcelium output* — would require Xcelium
+rows this lane does not have and cannot re-derive: the Xcelium host is
+unreachable from here, a standing obligation this lane has carried since
+its charter (`sv-charter.md` §9: the 4-state operator table is *unverified
+on any reachable host*). **Inventing those rows to satisfy a provenance
+audit would be the exact defect the audit exists to catch**, one level up.
+So the citations get corrected to state that the fixtures are
+**unreproducible pending simulator access**, naming what would restore
+them; the `Sem2.lean` pin decks get committed under
+`Examples/system-verilog/sem2/probes/` **if the scratch files prove
+recoverable**, and marked unreproducible if not. A dangling pointer
+replaced by an honest "lost, and here is what would restore it" is a real
+fix; a fabricated table is not.
+
 ## c (5)
 
 - **MEDIUM** [coverage] `LeanModels/C/C23/Value.lean:38` — The widths do not "come from" the profile — they are hand-transcribed integer literals in Lean (`def int_ : IntTy := ⟨true, 32⟩`, lines 75-82), and `c_profile_probe.py --check` gates a HOST against the JSON (probe_fact via clang `_Static_assert`) and never reads a Lean file. No tool in tools/ or harness/ cross-checks the Lean literals against docs/c-profile.json; grep for `c-profile` across tools/ returns nothing.

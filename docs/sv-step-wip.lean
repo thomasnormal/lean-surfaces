@@ -114,46 +114,122 @@ def stepSStmts (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
 end
 
 
-/-! ## THE SUBSUMPTION OBLIGATION — STATED, NOT YET DISCHARGED
+/-! ## `Res` bind lemmas — the thing that unparks the proof
 
-`stepSStmts` must not become a second, divergent interpreter. The
-discharge is:
+`Res`'s `Monad` bind is an ANONYMOUS instance field, not a named constant,
+so `simp only [bind, Res.bind]` names nothing and plain `simp` oscillates
+between "no progress" and over-reducing the `do` block. That was the sole
+recorded obstacle (docs/backlog.md §L87). Four `rfl` lemmas make
+`do`-reduction over `Res` mechanical.
 
-    theorem stepSStmts_done_agrees :
-        ∀ fuel st nba out ss st' nba' out',
-          stepSStmts fuel st nba out ss = .ok (st', nba', out', .done) →
-          execSStmts fuel st nba out ss = .ok (st', nba', out')
+**They live here, not in `Semantics.lean`, on purpose.** `Semantics.lean`
+is inside the `LeanModels` library glob, so an unverified `rfl` that does
+not hold would turn `lake build` red — and a red build means the gates
+never run, taking the rest of the tenure's evidence with it. They move
+into `Semantics.lean` in the landing AFTER they are green here. -/
 
-i.e. **whenever the stepper finishes without suspending, it agrees with
-the executor that was already there** — so `execSStmts` is not
-superseded, it is RECOVERED as the non-suspending case. Note it is
-stated without a syntactic `isTriggerFree` predicate: "did not suspend"
-is a fact about the RUN, which is weaker to assume and stronger to
-conclude than "contains no suspension syntax" — a body may carry a
-`#delay` on a branch not taken and the lemma still applies.
+@[simp] theorem Res.bind_ok {α β : Type} (a : α) (f : α → Res β) :
+    (Res.ok a >>= f) = f a := rfl
 
-**Status: OPEN, and this file is therefore NOT part of the build.** It
-lives under `docs/` like `docs/mvcgen-pilot.lean`, which `lakefile.toml`'s
-globs (the `LeanModels` lib root and `Examples.+`) deliberately exclude.
-The definitions above elaborate cleanly (`lake env lean` exit 0); the
-proof does not close yet.
+@[simp] theorem Res.bind_timeout {α β : Type} (f : α → Res β) :
+    ((Res.timeout : Res α) >>= f) = Res.timeout := rfl
 
-**Where the proof stands**, so the next session resumes from the real
-state rather than from scratch. Both directions go by `match fuel`, then
-`rw [stepSStmt.eq_def] at h` with the GOAL LEFT FOLDED — unfolding
-`execSStmt` up front is wrong, because the leaf case delegates to
-`execSStmt (fuel + 1)` and so needs the goal still in applied form. The
-six `stmt` branches split as: `h_1`-`h_3` the suspension forms
-(contradictory, `simp at h`), `h_4` `ifStmt` (case on `evalSExpr`, then
-`by_cases` on `condTrue`, then the IH), `h_5` `block` (directly the other
-IH), `h_6` the delegating leaves (case on `execSStmt (fuel+1)`). The
-残 obstacle is bind-reduction bookkeeping in `Res`'s `Monad` instance:
-`Res.bind` is an anonymous instance field, not a named constant, so
-`simp only [bind, Res.bind]` does not exist and plain `simp` oscillates
-between "no progress" and over-reducing the `do` block. The likely fix is
-a small set of local `@[simp]` lemmas for `Res`'s bind on `.ok`/
-`.timeout`/`.unsupported` — landing those first, in `Semantics.lean`,
-would make both directions routine.
--/
+@[simp] theorem Res.bind_unsupported {α β : Type} (m : String) (f : α → Res β) :
+    ((Res.unsupported m : Res α) >>= f) = Res.unsupported m := rfl
+
+@[simp] theorem Res.pure_eq {α : Type} (a : α) : (pure a : Res α) = Res.ok a := rfl
+
+/-! ## THE SUBSUMPTION OBLIGATION
+
+**Whenever the stepper finishes without suspending, it agrees with the
+executor that was already there** — so `execSStmts` is not superseded, it
+is RECOVERED as the non-suspending case, and `stepSStmts` cannot drift
+into a second interpreter.
+
+Stated WITHOUT a syntactic `isTriggerFree` predicate: "did not suspend" is
+a fact about the RUN, weaker to assume and stronger to conclude than
+"contains no suspension syntax" — a body may carry a `#delay` on a branch
+that was not taken and the lemma still applies to it.
+
+**The goal is left FOLDED** in the first theorem: the delegating-leaf case
+calls `execSStmt (fuel + 1)`, so unfolding `execSStmt` up front puts the
+goal in a shape that case cannot discharge. Each branch unfolds it
+locally instead. -/
+
+mutual
+
+theorem stepSStmt_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
+    (out : Out) (stmt : SStmt) (st' : SvState) (nba' : NbaQueue) (out' : Out),
+    stepSStmt fuel st nba out stmt = .ok (st', nba', out', .done) →
+    execSStmt fuel st nba out stmt = .ok (st', nba', out') := by
+  intro fuel
+  match fuel with
+  | 0 => intro st nba out stmt st' nba' out' h; simp [stepSStmt] at h
+  | fuel + 1 =>
+    intro st nba out stmt st' nba' out' h
+    rw [stepSStmt.eq_def] at h
+    simp only at h
+    split at h
+    · next hh =>
+      rw [SelfCheck.execSStmt.eq_def]; simp only [hh, if_true]; simp_all
+    · next hh =>
+      split at h
+      case h_1 | h_2 | h_3 => simp at h
+      case h_4 cond thenB elseB =>
+        rw [SelfCheck.execSStmt.eq_def]; simp only [hh]
+        cases hc : evalSExpr fuel st cond with
+        | ok c =>
+          simp only [hc, Res.bind_ok] at h ⊢
+          by_cases hct : c.condTrue = true
+          · simp only [hct, if_true] at h ⊢
+            exact stepSStmt_done_agrees fuel _ _ _ _ _ _ _ h
+          · simp only [hct] at h ⊢
+            cases elseB with
+            | none => simp_all
+            | some sE => exact stepSStmt_done_agrees fuel _ _ _ _ _ _ _ h
+        | timeout => simp only [hc, Res.bind_timeout] at h; simp at h
+        | unsupported m => simp only [hc, Res.bind_unsupported] at h; simp at h
+      case h_5 body =>
+        rw [SelfCheck.execSStmt.eq_def]; simp only [hh]
+        exact stepSStmts_done_agrees fuel _ _ _ _ _ _ _ h
+      case h_6 =>
+        cases he : execSStmt (fuel + 1) st nba out stmt with
+        | ok r =>
+          obtain ⟨ra, rb, rc⟩ := r
+          simp only [he, Res.bind_ok, Res.pure_eq] at h ⊢
+          simp_all
+        | timeout => simp only [he, Res.bind_timeout] at h; simp at h
+        | unsupported m => simp only [he, Res.bind_unsupported] at h; simp at h
+
+theorem stepSStmts_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
+    (out : Out) (ss : List SStmt) (st' : SvState) (nba' : NbaQueue) (out' : Out),
+    stepSStmts fuel st nba out ss = .ok (st', nba', out', .done) →
+    execSStmts fuel st nba out ss = .ok (st', nba', out') := by
+  intro fuel
+  match fuel with
+  | 0 => intro st nba out ss st' nba' out' h; simp [stepSStmts] at h
+  | fuel + 1 =>
+    intro st nba out ss st' nba' out' h
+    rw [stepSStmts.eq_def] at h
+    rw [SelfCheck.execSStmts.eq_def]
+    simp only at h ⊢
+    cases ss with
+    | nil => simp_all
+    | cons sHd rest =>
+      simp only at h ⊢
+      cases hs : stepSStmt fuel st nba out sHd with
+      | ok r =>
+        obtain ⟨sa, nb, ou, oc⟩ := r
+        simp only [hs, Res.bind_ok] at h
+        cases oc with
+        | done =>
+          have hx := stepSStmt_done_agrees fuel st nba out sHd sa nb ou hs
+          simp only [hx, Res.bind_ok]
+          exact stepSStmts_done_agrees fuel _ _ _ _ _ _ _ h
+        | suspended t r => simp at h
+      | timeout => simp only [hs, Res.bind_timeout] at h; simp at h
+      | unsupported m => simp only [hs, Res.bind_unsupported] at h; simp at h
+
+end
 
 end LeanModels.Sv

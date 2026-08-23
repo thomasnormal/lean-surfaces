@@ -124,3 +124,88 @@ SoftFloat census bear on it:
 * The circuit side is **`LeanModels/Sv/`**, not `LeanModels/Circuit/` — and the
   trap is live: `docs/circuit-spec-surface.md` has a section headed *"Exact
   divider"* about a **resistive voltage divider**.
+
+---
+
+## 2026-08-23-sv-1 — THE OWED FULL-TREE TRIAD IS DISCHARGED BY SOMEONE ELSE'S GREEN, and the number carries the state it was measured in
+
+This lane had owed a full-tree triad for its landed Lean since `6aaeca3`
+(deferred under Amendment 11 at load 40.9, then a queued tenure that was
+killed before it ever acquired — `grep -c 'LOCK ACQUIRED'` over its log
+returns **0**, so there was never a verdict to report, only an absence).
+
+**It is discharged, and not by an SV tenure.** `6aaeca3` is an ancestor of
+`4c72b6c`, which a successor lane built FULL — all default targets, 839
+jobs, green, tenure 06:36, gate floor green — and master `d41e083`'s Lean
+tree is **byte-identical** to `4c72b6c`. A green over a superset tree that
+contains this lane's commits unchanged is evidence about this lane's
+commits.
+
+**Recorded with its provenance rather than as a bare green**, because a
+number carries the state it was measured in: *verified by the `4c72b6c`
+full green (successor lane, 2026-08-23), not by an SV tenure.* This lane
+never ran it, and the record should not imply otherwise.
+
+**Consequence for the stepper tenure: it owes only its own delta.** A
+scoped build extends a green rather than replacing it, so the stepper
+lands under `--classify` on tier Sv with the gate floor, not a full
+rebuild.
+
+---
+
+## 2026-08-23-sv-2 — THE STEPPER TENURE RAN AND CAME BACK RED ON ONE GOAL; the `Res` bind lemmas did their job
+
+**Verdict, lock line first.** `LOCK ACQUIRED after 4519s as 'sv 63300'` —
+75 minutes queued, then a real tenure. `build exit 0`; `docs_check` green;
+`lake env lean docs/sv-step-wip.lean` **FAILED on exactly one error**;
+`TRIAD DONE (build exit 0, gates RED)`; `LOCK RELEASED (mine)` — clean.
+
+**The detachment fix is what made a tenure happen at all.** The previous
+ticket was reaped as stale (base rule 5) because its pid died with the
+turn. `setsid` does not exist on macOS, so the first relaunch failed
+outright and never enqueued; the double-fork subshell `( nohup … & )`
+reparents to init (`ppid = 1`) and survives. Ticket
+`1787466441060079000-63300-sv`.
+
+**THE FOUR `Res` BIND LEMMAS WORKED — the recorded obstacle is gone.**
+§L87 named the blocker precisely: `Res`'s `Monad` bind is an anonymous
+instance field, so `simp only [bind, Res.bind]` names nothing and plain
+`simp` oscillates. With `bind_ok`/`bind_timeout`/`bind_unsupported`/
+`pure_eq` as `@[simp]`, **the error count went 4 → 1** and every remaining
+`bind`-reduction error disappeared. The diagnosis in §L87 was right and the
+prescription was right.
+
+**The one survivor was trivial and is now fixed.** At the delegating-leaf
+case: `h : r.fst = st' ∧ r.2.fst = nba' ∧ r.2.snd = out'` against
+`⊢ r = (st', nba', out')` — componentwise equalities on a triple that were
+never destructured, so `simp_all` had nothing to substitute into. Fix:
+`obtain ⟨ra, rb, rc⟩ := r` before the `simp only`. Three flagged
+`unused simp argument: if_false` warnings cleaned in the same pass.
+
+**Lemmas deliberately still OUT of `Semantics.lean`.** They are proved
+`rfl` only once this gate is green; putting an unverified `rfl` inside the
+`LeanModels` glob would turn `lake build` red, and **a red build means the
+gates never run** — which would have cost the proof evidence as well as
+the build. They move in on the landing that also moves the stepper to
+`LeanModels/Sv/Step.lean`, which is the landing where classification flips
+from `docs` to tier `Sv`.
+
+**Coverage, stated rather than assumed.** This tenure's own line reads
+*docs-only: NO Lean was elaborated … evidence about the prose and about
+NOTHING in the model* — accurate for the class floor, and the reason the
+`--gates` entry is the one carrying real information here. `--classify`
+also caught, before any tenure was spent, that my edits were **unstaged and
+therefore invisible** to it, that a `.lean` outside every lake glob is
+still A11 Lean execution and needs `--gates`, and that
+`docs/backlog/INDEX.md` was stale.
+
+**Quality-audit §sv dispositions recorded** in
+`docs/quality-audit-2026-08-23.md`: the HIGH is FIXED here; `Param.lean`'s
+vacuous `crossCheck` is ACCEPTED for the next tier-`Sv` tenure (it is the
+same `live`-flag law this lane landed in `sv_round_trip.py` — "clean" and
+"compared nothing" must not be one value); `adder/proof.lean`'s stimulus
+claim is ACCEPTED and gets reworded rather than back-filled; and the two
+dangling-citation rows are ACCEPTED **PARTIAL on purpose** — they will be
+corrected to say the fixtures are unreproducible pending simulator access,
+because **fabricating the missing Xcelium table to satisfy a provenance
+audit would be that audit's own defect one level up**.

@@ -346,10 +346,46 @@ shortest path to a four-digit conformance suite.
 
 ## Artifacts
 
-* `extractors/sv/census.py` — the census tool (python3.12; `--recheck`,
-  `--limit`, `--jobs`, `--corpus`).
-* `harness/sv/conformance/census.json` — 21,336 per-file records
-  (path, chapter, metadata, status, envelope kinds, adapter blockers,
-  unlockable flag) + the summary block backing every table above.
-* `harness/sv/conformance/unlockable.txt` — the 11 ch-4/6/11 unlockable
-  simulation tests, one corpus-relative path per line.
+**CORRECTED 2026-08-23** (quality audit HIGH, `docs/quality-audit-2026-08-23.md`
+§sv). This section previously named `harness/sv/conformance/census.json` as
+"the summary block backing every table above" — a file that **`.gitignore`
+line 5 excludes**, so it is absent from every checkout. A table whose backing
+artifact cannot be obtained is a number about nothing, and the exclusion was
+worse than an oversight because it looked deliberate.
+
+* **`docs/sv-construct-census.json` — THE COMMITTED ARTIFACT, and what
+  every table above should be read against.** Provenance + summary block,
+  20 295 bytes, sorted and indent-stable so a double run is byte-identical.
+  It carries the corpus name and path, file count, walk mode, frontend
+  FAMILY (`pyslang-11`, never a point release), platform and python version,
+  because a census that cannot say what it measured is not a measurement.
+  `--compare` checks it against a fresh run and **exits non-zero on any
+  drifting key**.
+* `extractors/sv/census.py` — the census tool (python3.12 + pyslang 11.x;
+  `--corpus-name`, `--corpus`, `--all-dirs`, `--recheck`, `--compare`,
+  `--limit`, `--jobs`). Regenerate both artifacts with:
+
+      python3.12 extractors/sv/census.py --corpus-name sv-tests-2
+
+* `harness/sv/conformance/census.json` — the **per-file** records, ~11.9 MB
+  over 21 186 files. **Deliberately not committed**: this repository's
+  census artifacts run 6 KB–773 KB, so the per-file half stays
+  regenerable-by-the-line-above while the half every claim actually cites is
+  the committed summary. Its exclusion is now a stated policy rather than a
+  silent `.gitignore` entry.
+* `harness/sv/conformance/unlockable.txt` — **0 bytes on this host, and that
+  is a measured finding rather than a missing file.** This document was
+  written when it held 11 ch-4/6/11 paths. Re-measured 2026-08-22: **two of
+  those eleven files no longer exist in the corpus; the other nine do and no
+  longer classify as unlockable.** `classify()` was verified
+  **byte-identical** to the committed version function-by-function, so this
+  is a corpus-or-host difference and **not a regression** — the landed set
+  was measured on Linux, this one on `darwin-arm64`. Recording it is the
+  point: with no provenance stamp there was no way to tell those three
+  causes apart, which is why the stamp now exists.
+
+**One further staleness this correction exposes**: the counts above were
+taken over **21 336** chapter files; the corpus today walks **21 186**. The
+tables are therefore accurate as of their census date and not as of this
+checkout — which is exactly what `--compare` is for, and why it now exits
+non-zero rather than reporting agreement it cannot support.

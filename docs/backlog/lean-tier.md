@@ -1545,3 +1545,91 @@ convention. Same reach-per-cost move that opened the TrProj corner with `instL`.
 
 * **TrProj slice** — 4 proved / 3 blocked, WAITING with triggers (entries 13–15).
 * **Export corner** — **0 of 27 pairs proved**; manifest landed, property stated.
+
+---
+
+## 2026-08-23-lean-tier-18 — arc 2 STOPPED BEFORE WRITING: the round-trip property is not STATABLE against the current code, and a pure core is a precondition
+
+I went to prove `Level`'s four constructors and censused the monad first. **The
+property I published in arc 1 is correct in content but is not currently
+statable in Lean**, and saying so now is cheaper than discovering it mid-proof.
+
+### The measurement
+
+```lean
+-- Export.lean:48
+abbrev M := ReaderT Context <| StateT State IO
+-- Export/Parse.lean:32
+abbrev M := StateT State <| IO
+```
+
+**Both sides bottom out in `IO`, and both touch an opaque `@[extern]`
+primitive.** The exporter does not *return* its JSON — it prints it:
+
+```lean
+IO.println (s.setObjVal! namespaced idx).compress   -- Export.lean:91
+```
+
+and the parser does not *take* a string — it pulls from a stream
+(`(← get).stream.getLine`, `Parse.lean:482,488`).
+
+`IO.println` and `Stream.getLine` are opaque externs. **A Lean proof cannot
+evaluate through them**, so `parse (dump E) = E` cannot even be *written* as a
+proposition about these functions, let alone proved. **This is a statability
+blocker, not a difficulty.**
+
+### It is SHALLOW, which is the good news
+
+The entanglement is six touch points, not a pervasive design:
+
+| side | IO touch points |
+| --- | --- |
+| `Export.lean` | **3** `IO.println` (`:91`, `:412`, `:438`) |
+| `Export/Parse.lean` | `stream` field (`:24`), `M.run` (`:34`), **2** `getLine` (`:482`, `:488`) |
+
+Everything else — all 27 item kinds' JSON construction and destruction, and the
+whole index-table discipline — is **pure computation over state**. The `State`
+monad part is entirely reasonable-about; only the `IO` base is not.
+
+And upstream already half-anticipates this: `Parse.lean:506` carries the commented
+hint `parseStream (IO.FS.Stream.ofString input)`, i.e. the parser is already
+meant to be drivable from a string.
+
+### PROPOSAL — arc 2 becomes "factor a pure core", and it needs a ruling
+
+The refactor is small and surgical:
+
+1. **Emit** — replace the 3 `IO.println` with appending to an output list carried
+   in `State`; `dump` then *returns* its lines.
+2. **Parse** — replace `stream`/`getLine` with an input line list in `State`.
+3. **Base monad** — `IO` becomes `Id` (or `Except String`), with thin `IO`
+   wrappers preserved so `Main.lean` and the 22 `#guard_msgs` tests still work
+   unchanged.
+
+After that the property is statable exactly as arc 1 wrote it, the index-table
+invariant is a statement about pure state, and `Level`'s four constructors become
+the first real proof.
+
+**Why this is a ruling and not a step.** It modifies upstream's core shape rather
+than adding a file beside it — a different posture from the `TrProj` work, which
+was purely additive. It is the kind of change that is *more* upstreamable, not
+less (a pure core makes the tool unit-testable as well as provable), but it is
+still someone else's architecture, and this lane's standing rule is that
+adjacent-to-upstream moves get flagged rather than taken. **Same call as the
+parametric `TrProj` decision: proposed, not started.**
+
+**If declined**, the export corner is statability-blocked and joins the TrProj
+slice in WAITING — with a named place, as ever: *the property needs a pure core;
+the code is `IO`-based; the gap is six touch points.*
+
+### Coverage, per the standing note
+
+**Export corner: 0 of 27 pairs proved, at `af5aa64`.** One natural denominator —
+the manifest's 27 item kinds — so the **two-denominator template does not apply
+here**, per the arch lane's exemption norm.
+
+### Ledger
+
+* **TrProj slice** — 4 proved / 3 blocked, WAITING with triggers.
+* **Export corner** — **0/27 @ `af5aa64`**; manifest landed, property stated,
+  **statability blocker found, refactor proposed**.

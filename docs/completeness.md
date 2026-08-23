@@ -331,8 +331,13 @@ day dict deletion lands.
   §L53 before the inch was written and every one the adjacent `.list`
   tactic verbatim.
 * **3a — the cursor at function scope and the bare `for k in d` form**:
-  a mutual-block member plus its four walker arms.
-* **3c — the view methods as iterables** and `enumerate(d)`.
+  LANDED (§pycomplete-5), on the monadic definition only.
+* **3c-i — views and `enumerate` in CONSUMING position**: LANDED across
+  §pycomplete-5 (the cursor takes a view KIND), §pycomplete-11 (the
+  ingestion rewrite) and §pycomplete-14 (`enumerate(d)`'s own frame).
+* **3c-ii — the views as FIRST-CLASS values**: REMAINING, and it needs an
+  `Obj.dictView` plus the set-algebra inventory and the identity-equality
+  rule §pycomplete-8 measured.
 * **3d — `DictComp`**, which rides 3a.
 
 **Unblocks**: dict iteration, one of the two or three most common idioms

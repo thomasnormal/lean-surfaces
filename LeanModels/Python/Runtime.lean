@@ -149,6 +149,13 @@ inductive GenFrame where
   /-- `enumerate(<heap list>, start)` at index `i`, cursor `cur`: the
   object is re-read every step, like `forList`. -/
   | enumList (i : Int) (a : Addr) (cur : Nat)
+  /-- §3c-i-c `enumerate(<heap dict>, start)` at index `i`, cursor `cur`:
+  the live KEY cursor with an index, carrying the size `n` and
+  `shapeVersion` `sv` the enumeration started with. Those two are 3a's
+  guards, and they are what makes this frame a CURSOR rather than a
+  snapshot: an escaped `enumerate(d)` still sees the dict, and CPython
+  raises on the STEP after a resize rather than at the bind. -/
+  | enumDict (i : Int) (a : Addr) (cur : Nat) (n : Nat) (sv : Nat)
   /-- `itertools.count(start, step)` — never exhausts. -/
   | countFrom (cur : Int) (step : Int)
 deriving Repr, Inhabited, BEq
@@ -306,6 +313,7 @@ def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .forGen _ a _ => a < h.size
   | .enumSeq _ xs => RVal.WFList h xs
   | .enumList _ a _ => a < h.size
+  | .enumDict _ a _ _ _ => a < h.size
   | .block _ => True
   | .whileLoop .. => True
   | .countFrom .. => True

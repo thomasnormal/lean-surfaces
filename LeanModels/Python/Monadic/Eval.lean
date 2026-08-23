@@ -1487,6 +1487,21 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
           else K.execGen k'
       | some _ => refuse "internal: an enumerate cursor over a non-list object (report this)"
       | Option.none => refuse danglingMsg
+  -- §3c-i-c: `enumerate(d)`. This is `forDict`'s decision with the tuple
+  -- wrapped at the frame — `dictStep` already decides all three mutation
+  -- regimes, and the view kind is `.keys` because CPython enumerates a bare
+  -- dict by key. Exhaustion falls out BY CONSTRUCTION rather than by a guard:
+  -- `.done` pops the frame through `K.execGen k'`, so a dict that grows AFTER
+  -- the enumerate is exhausted cannot raise — which is what the oracle says
+  -- (`[(0, 'a')]` then `[]`, never a RuntimeError).
+  | .enumDict i ad cur n sv :: k' => do
+      match ← dictStepM ad cur n sv .keys with
+      | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
+      | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
+      | some (.yieldVal kv) =>
+          pure (some (.tuple #[.int i, kv], .enumDict (i + 1) ad (cur + 1) n sv :: k'))
+      | some .done => K.execGen k'
+      | Option.none => refuse "internal: an enumerate cursor over a non-dict object (report this)"
   | .countFrom cur step :: k' =>
       -- never exhausts: `count` is the infinite ray of sunfish's move generator,
       -- and a consumer's `break` is what ends it.

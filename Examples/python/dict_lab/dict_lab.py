@@ -411,3 +411,60 @@ def view_arg_not_alone_still_loud(a):
     # a view beside another argument is not the recognised shape either
     d = {1: a}
     return len(list(d.keys())[0:1])
+
+
+# §3c-i-c: `enumerate(d)` -- the KEY cursor with an index. It is not a loop
+# the interpreter drives but an OBJECT the loop consumes: `enumerate` builds a
+# generator frame and every consumer reaches it through the stepper. The rows
+# below are the four that pin the behaviour CPython actually has.
+
+
+def enum_dict_index(a):
+    d = {3: 0, 1: 0, a: 0}
+    t = 0
+    for i, k in enumerate(d):
+        t = t + i * k
+    return t
+
+
+def enum_dict_start(a):
+    d = {3: 0, 1: 0, a: 0}
+    t = 0
+    for i, k in enumerate(d, 5):
+        t = t + i
+    return t
+
+
+def enum_dict_start_negative(a):
+    # the START is an `int`, never a `Nat` -- CPython counts up from -3
+    d = {3: 0, a: 0}
+    t = 0
+    for i, k in enumerate(d, -3):
+        t = t + i
+    return t
+
+
+def enum_dict_bind_then_grow(a):
+    # THE RULED DELTA (docs/backlog/python-completeness.md
+    # 2026-08-23-pycomplete-13, ruling (c)). Binding an enumerate over a dict
+    # and then GROWING that dict is SILENT: CPython's guard is on the STEP,
+    # not on the bind, so this returns 1. A model that guarded at the bind
+    # would raise here and be wrong; a model that SNAPSHOTTED would be wrong
+    # at `enum_dict_grow_is_loud` instead. The pair is what makes the ruling
+    # falsifiable.
+    d = {1: a}
+    e = enumerate(d)
+    d[2] = 9
+    return 1
+
+
+def enum_dict_grow_then_step(a):
+    # ...and STEPPING after the growth raises CPython's RuntimeError. The tier
+    # REPRODUCES that rather than refusing it, exactly as `dict.grow-during-iter`
+    # already does for the bare cursor -- the size guard was faithful before
+    # this inch and this frame inherits it. Named for the CONSTRUCT, not for a
+    # verdict: the verdict is the census's to record.
+    d = {1: a}
+    e = enumerate(d)
+    d[2] = 9
+    return next(e)[0]

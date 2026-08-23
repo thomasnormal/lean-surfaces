@@ -2287,6 +2287,11 @@ theorem pbExecGen_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) 
                 | _ => exact PBF.unsupported
           · rw [h1, h2]
             exact PBF.unsupported
+      -- §3c-i-c: the trunk CONSTRUCTS an `enumDict` frame (`enumFrame` is
+      -- shared) but refuses when STEPPING it, and a refusal is blind
+      | enumDict i ad cur n sv =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          exact PBF.unsupported
       -- §3a: the trunk's `forDict` arm refuses, and a refusal is blind
       | forDict tg ad i n sv kd bd =>
           simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]

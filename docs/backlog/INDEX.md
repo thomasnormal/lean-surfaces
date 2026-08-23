@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**220 entries across 16 lanes.** Regenerate with
+**225 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -86,11 +86,14 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
 | `2026-08-23-architecture-17` | Census-first applies to the LEMMA; and the retract framing earns a judgment | architecture |
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
+| `2026-08-23-lean-tier-16` | NEW CORNER CHARTERED: the export envelope. Three candidates eliminated by measurement, one stands | lean-tier |
 | `2026-08-23-architecture-16` | A generated model's relations are its own; the order lifts but the congruences don't | architecture |
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
+| `2026-08-23-pycomplete-15` | THE FLAGSHIP LADDER's CENSUS: `del d[k]` makes a refusal REQUIRED that was only inherited | python-completeness |
 | `2026-08-23-lean-tier-15` | WAITING begins, and the first act was fixing the guards that WAITING depends on | lean-tier |
 | `2026-08-23-architecture-15` | A6 covered half the hazard; and the gate line has THREE states | architecture |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
+| `2026-08-23-pycomplete-14` | INCH 3c-i-c BUILT: `enumerate(d)` runs, and the census's price held exactly | python-completeness |
 | `2026-08-23-lean-tier-14` | CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING | lean-tier |
 | `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
@@ -213,6 +216,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
+| `SPEC` | the completion metric (standing; updated every landing) | go |
 | `INBOUND` | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
 | `INBOUND` | `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
@@ -228,6 +232,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G21` | THE EXTRACTOR TIER, chartered: authorized on a figure that is 2.5× too big, and sized on the one that is not (2026-08-23) | go |
 | `G20` | FIXED ARRAYS: the value model that needed no new constructor, and the frontier stops being a construct (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 | `G19` | RANGE IS NOT A SECOND LOOP; and the census retracts the `+0` law (2026-08-23) | go |
@@ -241,4 +246,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**27 heading(s) do not use the §9.5 id scheme** and sort last.
+**29 heading(s) do not use the §9.5 id scheme** and sort last.

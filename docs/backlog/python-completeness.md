@@ -1091,3 +1091,188 @@ check stops applying — `e = enumerate(d); list(e); d[2] = 'b'; list(e)` answer
 `[(0, 'a')]` then `[]`, not a `RuntimeError`. The frame is popped at
 exhaustion, so an exhausted generator never re-reads the dict. A model that
 kept `n` live past the end would raise where CPython answers `[]`.
+
+## 2026-08-23-pycomplete-14 — INCH 3c-i-c BUILT: `enumerate(d)` runs, and the census's price held exactly
+
+`for i, k in enumerate(d)`, `enumerate(d, 5)`, `enumerate(d, -3)` and the
+escaped-then-stepped forms all run, on a new `GenFrame.enumDict` frame beside
+`enumList`. §pycomplete-13 priced this at nine sites and ZERO new `Kont`
+machinery; the price held, and two further sites turned out to owe nothing.
+
+### What landed, against the censused site list
+
+| site | what |
+| --- | --- |
+| `Runtime.lean` | `enumDict (i : Int) (a : Addr) (cur n sv : Nat)`, and its `a < h.size` WF arm |
+| `Semantics.lean` `enumFrame` | the dict arm DECIDES — `.ok (.enumDict i a 0 es.size sv)` |
+| `Semantics.lean` ×2 | `genBreak`/`genContinue`: a builtin-iterator frame is never a LOOP frame |
+| `Monadic/Eval.lean` `execGen` | the step: `dictStepM ad cur n sv .keys`, tuple wrapped at the frame |
+| `Semantics.lean` `stepIter` | the trunk REFUSES the step (ruling (c)) |
+| `PayloadBlind` / `ClockErase` / `Obs` | one refusal-is-blind arm each |
+
+### The two sites that owed NOTHING, and why that is the interesting half
+
+* **`Monadic/Script.lean` needs no `SKont` field.** A module-level
+  `for i, k in enumerate(d)` routes `S.forGen → K.stepIter → execGen` and
+  lands on the new arm. §pycomplete-13 said `enumerate` is an OBJECT the loop
+  consumes rather than a loop the interpreter drives; the script shell is the
+  second record that would have paid for the other reading, and it pays
+  nothing. **The finding generalised further than it was stated.**
+* **`VCGen.lean` owes no transition theorem.** `genSteps_enumListCons` and
+  `genSilent_enumListDone` exist because the trunk STEPS an `enumList` frame.
+  The trunk refuses to step `enumDict`, so there is no transition to state —
+  a refusal has no `GenSteps` and no `GenSilent`. The censused "optional" is
+  now decided: not optional, INAPPLICABLE.
+
+### A witness that would have tested the wrong construct
+
+§pycomplete-13's battery spelled the never-stepped row
+`print(type(e).__name__)`. **`type` is in `isPyBuiltinName` and NOT in
+`isBuiltinName`** — CPython binds it, the model does not implement it — so
+that row would have refused at `type` and been recorded as evidence about
+`enumerate`. Caught by reading the two tables before the ticket rather than
+by a red build. Re-spelled as `print('bound')`: reaching the print IS the
+observation, because CPython's guard is on the step and binding is silent.
+**A witness must fail for the reason it names**, and the census's own rule —
+witnesses named by CONSTRUCT — does not by itself guarantee that; the
+spelling has to be in tier too.
+
+For the same reason `enum_dict_grow_is_loud` was renamed
+`enum_dict_grow_then_step` before landing: it named a VERDICT, and the
+verdict it named was wrong — the tier REPRODUCES CPython's `RuntimeError`
+here (as `dict.grow-during-iter` already did for the bare cursor) rather than
+refusing it.
+
+### Census deltas
+
+* grammar census **113 → 117 witnesses**; `dict.enumerate` flips
+  **REFUSE → MATCH**, joined by `dict.enumerate-start`,
+  `dict.enumerate-escapes` and `dict.enumerate-resize` (MATCH) and
+  `dict.enumerate-of-items` (REFUSE — the excluded composition).
+* `harness/cases.json` **655 → 660 rows**, all five `match`, so
+  `diff_test` goes **1456 → 1464 cases** (`1337 → 1345 matched`) with
+  `119 whitelisted-unsupported` UNCHANGED — this inch adds capability
+  without adding a gap.
+
+  **That number was predicted WRONG before the ticket, and the verdict
+  corrected it: 1461 was the prediction, 1464 is the measurement.** A ROW is
+  not a CASE — a row carries an `args` LIST, and `diff_test` runs one case per
+  arg-tuple, so three of the five rows are two cases each. Same shape as the
+  conflation `6b91a8d` recorded when the model's §5.2 `class` was compared
+  against `WHITELIST_CLASS`: two counts sharing a noun are not the same count.
+  Recorded rather than quietly edited, because §5.4a's rule is that a
+  published number is a second artifact — and the corrected one is the
+  measurement, not the arithmetic.
+* the whitelist census stays **119 rows in 46 classes** and the script census
+  **15 rows in 10 classes**, for the same reason.
+
+### What did NOT move
+
+`enumerate(d.items())` still refuses: 3c-i-b's `consumesViewArg` excludes
+`enumerate` because the object outlives its call. `dict(d.items())` is still
+unlanded. `enumerate(d, start=5)` is still `kwargs.callee-kind`. The
+first-class rows — `enumerate(d) == enumerate(d)`, `len`, `reversed` — remain
+3c-ii's. And sunfish is untouched: its `enumObj` is `.enumSeq` over a string
+snapshot, a different frame entirely.
+
+**§pycomplete-13's "its dict arm is today's refusal" is superseded by this
+entry**, and the date on each is what separates them.
+
+## 2026-08-23-pycomplete-15 — THE FLAGSHIP LADDER's CENSUS: `del d[k]` makes a refusal REQUIRED that was only inherited
+
+The R-track measured `bound()`'s AST down to **two refused constructs, both
+`TABLE_SIZE` eviction lines**, and both are this lane's live-dict-iteration
+family:
+
+    541:  del self.tp_score[next(iter(self.tp_score))]
+    511:  del self.tp_move[next(k for k in self.tp_move if k != self.root)]
+
+Both are `del d[<expr>]`, so **inch (1) is the shared dependency** and the
+other two are the two ways of producing the key. Censused on CPython 3.9.19
+before any design, in the source spelling.
+
+### THE FINDING, and it fires a cross-rung note written two rungs ago
+
+§pycomplete-1 recorded that the same-size KEY-SET CHURN regime *"is
+unreachable today only because `del d[k]` refuses first, and becomes REQUIRED
+the day dict deletion lands."* **That day is inch (1), and the census now
+proves the refusal must stay.**
+
+| churn shape (same size: one `del`, one insert, mid-iteration) | CPython 3.9.19 |
+| --- | --- |
+| churn at the middle key of 3 | `RuntimeError: dictionary keys changed during iteration` |
+| churn at the **first** key of 3 | **no error — the loop completes** |
+| churn at the last key of 3 | `RuntimeError: dictionary keys changed…` |
+| `del d[2]; d[2] = 9` (same key back) | **no error** |
+| 1-key dict, del + add | `RuntimeError: dictionary keys changed…` |
+| 8-key dict, churn at key 3 | `RuntimeError: dictionary keys changed…` |
+| churn then `break` immediately | **no error**, `[1, 3]` |
+
+**The first probe raised, and a one-probe census would have concluded the
+regime is a faithful second `RuntimeError` and told the inch to reproduce
+it.** Four shapes later it does not raise at all, and what separates them is
+the entries-array layout and the compaction schedule — exactly what
+`Semantics.lean`'s `rekeyed` arm already says is not guessable. So the
+existing refusal is CONFIRMED BY MEASUREMENT rather than merely inherited,
+and inch (1) must keep it while making it reachable for the first time.
+*A regime that only ever raised in the probe you happened to write is the
+most dangerous kind of green.*
+
+### `del d[k]` — the rest of the oracle's column
+
+| probe | CPython |
+| --- | --- |
+| `d = {1:'a',2:'b'}; del d[1]` | `{2: 'b'}` |
+| `del d[9]` (absent) | `KeyError: 9` — and twice-deleted, and on `{}`, likewise |
+| `del d[2]; d[2] = 'z'` | `[1, 3, 2]` — **reinsertion APPENDS**; deletion does not hold the slot |
+| `del d[k]` inside `for k in d` | `RuntimeError: dictionary changed size during iteration` |
+| `e = d; del e[1]` | `{2: 'b'}` — mutation through the alias, the heap shape the tier already has |
+
+So the value semantics are cheap: remove the entry, and reinsertion is
+`dictStore`'s existing append. **`shapeVersion` is the load-bearing half** —
+deletion must BUMP it, or the churn guard above cannot fire (a `del` + insert
+pair leaves the size unchanged, and size is the only guard that fires today).
+
+### The price: inch (1) touches all THREE decision sites
+
+`delStmt (names : Array String)` cannot represent a subscript target, and the
+refusal is upstream of the AST: `Json.lean`'s `"Delete"` arm reads a plain
+string array because **the EXTRACTOR's clause 4 admits BARE NAMES only** and
+ships everything else as `Unsupported`. So this inch is the extractor, the
+ingestion, and the evaluator — the first inch to touch all three sites
+§pycomplete-11 named. The additive shape keeps the existing tier untouched: a
+new `delSubscript (recv key : Expr)` beside `delStmt names`, so no landed
+`del` behaviour moves. `del_lab::del_sub` is the witness that flips.
+
+### Inches (2) and (3) — cheaper, and the 3c-i-c precedent transfers whole
+
+| probe | CPython |
+| --- | --- |
+| `next(iter(d))` on `{2:'b',1:'a'}` | `2` — insertion order |
+| `it = iter(d); next(it), next(it)` | `2 1` |
+| `next(iter({}))` | `StopIteration` |
+| `next(iter(d), -1)` on `{}` | `-1` — the 2-arg form |
+| `type(iter(d)).__name__` | `dict_keyiterator` |
+| `it = iter(d); d[2]='b'; print('bound')` | `bound` — **silent** |
+| `it = iter(d); d[2]='b'; next(it)` | `RuntimeError: dictionary changed size…` |
+| `next(k for k in d if k != root)` | `2`; no match → `StopIteration`; with default → the default |
+| `g = (k for k in d); d[3]='c'; next(g)` | `RuntimeError` — the genexp is LAZY and LIVE over the dict |
+
+**That bind-silent / step-raises pair is `dict.enumerate-escapes` and
+`dict.enumerate-resize` again, unchanged**, so 3c-i-c's frame is the
+precedent for both: an `iterDict` frame is `enumDict` without the index, and
+the genexp already has a cursor class. Two cheap notes: `next` ALREADY
+implements both the 1-arg and 2-arg forms, so inch (2) gets `next(it, d)`
+free; and **`iter` is in `isPyBuiltinName` but NOT in `isBuiltinName`** — the
+same two-table gap §pycomplete-14 was caught by — so inch (2) must add it to
+the implemented list, deliberately and with the `NameError` consequence in
+view.
+
+### The sequencing, and why the flagship's own lines are SAFE
+
+In both flagship lines the `next(...)` is evaluated to a key and the iterator
+is then ABANDONED before `del` runs, so the mutation never meets a live
+cursor. `del d[next(iter(d))]` answers `{2: 'b'}` and `del d[next(k for k in
+d if k != root)]` answers `{1: 'a'}` — measured. The hazard the guards exist
+for is real but is not on the flagship's path, which is the honest reason
+these are inches rather than walls.

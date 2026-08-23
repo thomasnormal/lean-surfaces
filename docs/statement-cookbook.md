@@ -37,7 +37,7 @@ incident**.
 | 19 | refusal causes | the ∀/∃ direction is what distinguishes them |
 | 20 | invariant shape | a flat `∧`-chain, at the COMPOSABLE altitude |
 | 21 | re-proving | never repair a statement to make a proof pass |
-| 22 | opening the monad stack | ONCE, in the module where the stack is DEFINED |
+| 22 | opening the monad stack | ONCE, where the stack is DEFINED — and only a STACK needs one |
 
 ---
 
@@ -492,10 +492,41 @@ about the *program*, in a module that has no business knowing the plumbing
 exists. Treat that unfold as a signal to go add a lemma where the stack is
 defined, not as a step to keep.
 
+**AND THE LAW IS CONDITIONAL ON WHAT THE TIER'S RUN TYPE *IS* — minted by
+census, not by analogy (Go, `6a73111`).** "Open the stack once" presumes there
+is a stack to open. There is a fork, and the seam's whole shape turns on it:
+
+* **the run type is a DATATYPE** (Python's `Run`): `bind` **reduces by
+  cases**, so there is **no opener and none is needed** — Python never wrote
+  one. The wall that tier hit was elsewhere: the **approximation-order
+  congruences**.
+* **the run type is a TRANSFORMER STACK** (Go's `GoM`): nothing reduces by
+  cases, so **the opener is exactly what is missing**, and it is **one lemma
+  wide**.
+
+> **Ask what the run type IS before pricing the seam. A datatype's cost is its
+> CONGRUENCES; a stack's cost is its OPENER.**
+
+**THE GUARD, and it is the transferable half.** The census began from a real
+measurement — `Python/Obs.lean` is **158 KB and 79 theorems** — and the honest
+report is that **quoting Python's 79 theorems as the price would have been the
+wrong read of a real number.** Not a wrong number: a right number **about a
+different structure.**
+
+> **A number from another tier measures THEIR structure. It prices yours only
+> if the structures match — establish that first, or the census you skipped is
+> the one that mattered.**
+
+This is MEAS-1 (*census before pricing*) with the failure mode named: pricing by
+**analogy** feels like pricing by **measurement**, because there is a measured
+number in it.
+
 **INCIDENT.** The fuelMono lane, staged on ticket 40057 — recorded here
-**conditional on that landing**. Related: `docs/family-architecture.md` §3.4's
-*one monad, one `vcgen`* — the same rule at the family scale, of which this is
-the per-module form.
+**conditional on that landing** — refined by the Go lane's seam census
+(`6a73111`, on master). Related: `docs/family-architecture.md` §3.4's *one
+monad, one `vcgen`* — the same rule at the family scale, of which this is the
+per-module form — and §3.4's *the ORDER lifts; the CONGRUENCES don't*, which is
+why the datatype tier's congruences never became the stack tier's problem.
 
 ---
 

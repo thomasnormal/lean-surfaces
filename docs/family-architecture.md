@@ -1432,6 +1432,17 @@ The monotonicity work below raises the question of what of it belongs in
 
 > **The ORDER lifts; the CONGRUENCES don't.**
 
+**TAKEN AS WRITTEN BY A SECOND TIER, and it decided a scope rather than
+settling an argument** (Go, `6a73111`, on master). Go's seam needed
+congruences; `Python.Res` carries an **`.exn` arm the Go stack does not have**,
+so lifting Python's would have been **the thick-trunk mistake this ruling
+exists to prevent**. Core supplied the **order**; the lane wrote its **own
+congruences**. A ruling whose first out-of-tier use is a lane *declining* to
+reuse something is better evidence than one whose first use is a lane reusing
+it — **the ruling's whole content is where the line falls, and only the
+refusing case tests the line.**
+
+
 **STRENGTHENED — the lift now has THREE in-tree instances**, found by the
 duplication incident above: **`Sv.Res.le`, `Python.Res.le`, and `PyLe`.**
 The ruling was made on two; a third independent instance of the same
@@ -1483,6 +1494,26 @@ the `Kont` knot and without weakening anything** — and the reason is
 
 > **The layer order chosen for STATE-RETENTION ON RAISE is what makes FUEL
 > MONOTONICITY mechanical.**
+
+**AND THE LAYER ORDER IS NOW MECHANICAL IN A SECOND TIER — Go's `run_bind`,
+the covenant in a form a proof can REWRITE with** (`6a73111`). One lemma opens
+the stack, and its arms *are* the order restated as rewriting rules: **loud
+discards state, panic RETAINS it, only a value continues.** Nothing about that
+list is a design decision made at the seam — it is `ExceptT ρ (StateT W Halt)`
+read off, arm by arm, in the one place a proof needs it.
+
+> **The covenant made mechanical: the layer order paying for itself in a form a
+> proof can rewrite with.**
+
+**This is the SECOND tier in which the speaker split bought a theorem it was not
+designed for.** The split — `ρ` is what the program can talk about, `Halt` what
+only the model can say (§3.4) — was chosen for **fidelity**, so that a model-level refusal
+could not be caught by modelled code. It keeps returning **proof** dividends:
+fuel monotonicity became mechanical because of the state-retention order, and
+now a stack-opening lemma is three arms long because each speaker has exactly
+one behaviour on `bind`. **A distinction drawn for the right reason keeps paying
+in currencies it was not drawn in**, which is the strongest available argument
+for drawing them on principle rather than on convenience.
 
 **AND THE CONGRUENCE SET HAS SIX SHAPES, not three — three of them CORE's.**
 A tier's monotonicity obligations over the substrate are **`bind`, `ite`,
@@ -6703,6 +6734,26 @@ side by side rather than reporting the first outcome.
 **try the nearest alternative formulation and record the tactic diff.** A
 negative needs a measurement too, and the measurement is a comparison, not
 an attempt.
+
+**AND THE WORKED INSTANCE, one seam later: §G8 → §G9** (Go, `6a73111`, on
+master). §G8 recorded three lemmas as **unprovable** — and did the one thing
+that made the entry useful: it **named the cause exactly**, that
+`lookupLocal name w` is **not definitionally** the match on `w.locals.find?`.
+With the opening lemma landed, each of the three is **four lines**
+(`lookupLocal_ok`, `loadAddr_ok`, `storeLocal_ok`; `propext` alone).
+
+> **A NAMED BLOCKER IS A NEXT STEP; AN UNNAMED ONE IS A WALL.** *"Unprovable"*
+> retires a line of work. *"Unprovable BECAUSE these two terms are not
+> definitionally equal"* is a specification of the lemma that would fix it.
+
+**And the honest half of the same entry is the model for how to leave a
+blocker.** The seam does **not** settle the induction — it still needs the
+for-loop's `ite` congruence and the fuel recursion — and the lane says so, with
+the distinction that matters: **the debt is smaller and its next step is
+MECHANICAL rather than OPEN-ENDED.** That is what discharging a blocker looks
+like when it does not finish the job, and it is a reportable state rather than
+a hedge: *the same size of debt, differently shaped, is progress and should be
+recorded as such.*
 
 This document's `#guard` probe (§5.4) happens to have the prescribed shape
 — `#guard`, `rfl` and `decide` on the *same* propositions — which is why it

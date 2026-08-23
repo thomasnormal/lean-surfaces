@@ -149,6 +149,8 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-100 | a RED BUILD is an outage of every gate behind it | `docs/family-architecture.md §5.4b` |
 | MEAS-101 | the PIN AUDIT belongs to the arming commit — both arms of any `||` fallback | `docs/family-architecture.md §5.4b` |
 | MEAS-102 | a hint is an instruction; one that reproduces the defect IS the defect | `docs/family-architecture.md §5.4b` |
+| MEAS-103 | a number from another tier prices yours only if the STRUCTURES match | cookbook §22; `docs/family-architecture.md §9.7` |
+| MEAS-104 | a NAMED blocker is a next step; an unnamed one is a wall | `docs/family-architecture.md §9.7` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -261,6 +263,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-102 | the refusal-class field's PRESENCE is a theorem; absence means it did not refuse | `docs/family-architecture.md §5.2` |
 | STMT-103 | a stepper RECOVERS the walker as its non-suspending case — never a parallel implementation | `docs/family-architecture.md §3.6` (1a) |
 | STMT-104 | two executable implementations cost a parity APPARATUS; one plus a special case costs a THEOREM | `docs/family-architecture.md §3.6` (1a) |
+| STMT-105 | a datatype run costs CONGRUENCES; a transformer stack costs an OPENER | cookbook §22; `docs/family-architecture.md §3.4` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -322,6 +325,7 @@ The worked forms, with the trap and the incident for each, are in
 | PROOF-54 | strip comments and strings before counting `sorry` | `docs/backlog/wasm.md 2026-08-22-wasm-1`; `harness/wasm_sorry_census.py` |
 | PROOF-55 | "0 sorry" can distinguish the emission MODE, not the progress | `docs/backlog/wasm.md 2026-08-22-wasm-1` |
 | PROOF-56 | open the monad stack ONCE, where it is defined — the tell is unfolding `Functor.map` | cookbook §22 |
+| PROOF-57 | the covenant made mechanical — `run_bind`'s arms ARE the layer order | `docs/family-architecture.md §3.4` |
 
 ## D. BUILD + OPS AMENDMENTS — the lock protocol and its register
 

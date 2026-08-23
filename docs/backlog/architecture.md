@@ -2411,3 +2411,81 @@ moment into a record of mine (§9.5a, and `2026-08-23-architecture-26`'s
 annotation norm seen from the outside).
 
 **Index:** MEAS-97 … MEAS-102, STMT-103, STMT-104.
+
+## 2026-08-23-architecture-34 — Ask what the run type IS before pricing the seam; and a named blocker is a next step
+
+Three from the Go lane's seam landing (`6a73111`, on master).
+
+**(1) COOKBOOK 22 IS NOW CONDITIONAL — minted by CENSUS, not by analogy.**
+*"Open the stack once"* presumes there is a stack. Go's census found the fork,
+and it decides the seam's whole shape:
+
+* **a DATATYPE run** (Python's `Run`) — `bind` **reduces by cases**, so there is
+  **no opener and none is needed**; that tier's wall was the
+  **approximation-order congruences**;
+* **a TRANSFORMER STACK** (Go's `GoM`) — nothing reduces by cases, so **the
+  opener is exactly what was missing**, and it is **one lemma wide**.
+
+> **Ask what the run type IS before pricing the seam. A datatype's cost is its
+> CONGRUENCES; a stack's cost is its OPENER.**
+
+**And the guard is the transferable half, because the number was REAL.**
+`Python/Obs.lean` is 158 KB and 79 theorems — a true measurement — and the
+lane's own words are the law: *"quoting Python's 79 theorems as my price would
+have been the wrong read of a real number."* Not a wrong number: **a right
+number about a different structure.**
+
+> **A number from another tier measures THEIR structure. It prices yours only
+> if the structures match — establish that first, or the census you skipped is
+> the one that mattered.**
+
+MEAS-1 with its failure mode named: **pricing by ANALOGY feels like pricing by
+MEASUREMENT, because there is a measured number in it.** That is the same
+family as §5.4a's scope inheritance, arriving through a tier boundary instead
+of through a correction.
+
+**(2) §3.4 — TWO RIDERS, and the second is the one I would keep.**
+
+**(a) The ruling held by being DECLINED.** Go needed congruences and did not
+lift Python's, because `Python.Res` carries an **`.exn` arm the Go stack does
+not have** — lifting it would have been the thick-trunk mistake. Core supplied
+the **order**, the lane wrote its **own** congruences. Recorded because **a
+ruling whose first out-of-tier use is a lane declining to reuse something is
+better evidence than one whose first use is reuse**: the ruling's content is
+*where the line falls*, and only the refusing case tests the line.
+
+**(b) `run_bind` is the covenant made mechanical.** One lemma opens the stack
+and its arms *are* the layer order restated as rewriting rules — **loud
+discards state, panic RETAINS it, only a value continues.** Nothing there was
+decided at the seam; it is `ExceptT ρ (StateT W Halt)` read off arm by arm, in
+the one place a proof needs it.
+
+> **The covenant made mechanical: the layer order paying for itself in a form a
+> proof can rewrite with.**
+
+**This is the SECOND tier in which the speaker split bought a theorem it was not
+designed for.** The split was chosen for **fidelity** — so a model-level refusal
+could not be caught by modelled code — and it keeps returning **proof**
+dividends: fuel monotonicity became mechanical from the state-retention order,
+and now a stack-opening lemma is three arms long because each speaker has
+exactly one behaviour on `bind`. **A distinction drawn for the right reason
+keeps paying in currencies it was not drawn in** — the strongest argument
+available for drawing them on principle rather than on convenience.
+
+**(3) §9.7 — §G8 → §G9 AS THE WORKED INSTANCE OF THE BLOCKER-NAMING NORM.**
+§G8 recorded three lemmas as unprovable **and named the cause exactly**:
+`lookupLocal name w` is not definitionally the match on `w.locals.find?`. One
+seam later each is **four lines** (`propext` alone).
+
+> **A NAMED BLOCKER IS A NEXT STEP; AN UNNAMED ONE IS A WALL.** *"Unprovable"*
+> retires a line of work; *"unprovable BECAUSE these two terms are not
+> definitionally equal"* is a specification of the lemma that fixes it.
+
+Landed beside §9.7's *an obstruction that is only encountered is not measured
+either*, which is the same law stated negatively. **And the honest half is the
+model for how to LEAVE a blocker**: the seam does not settle the induction, the
+lane says so, and it names the difference that makes it progress — **the debt is
+smaller and its next step is MECHANICAL rather than OPEN-ENDED.** *The same size
+of debt, differently shaped, is progress and should be reported as such.*
+
+**Index:** MEAS-103, MEAS-104, STMT-105, PROOF-57.

@@ -1324,3 +1324,111 @@ in `proof_layer.definitional_stubs`** — specifically `VEnv.addInduct` or
    committed baseline. It caught real movement (nightly 66/67 → 67/67), so it
    earns its place — but it is a **procedure, not a gate**, and a future dispatch
    should either make it one or stop calling it a guard.
+
+---
+
+## 2026-08-23-lean-tier-16 — NEW CORNER CHARTERED: the export envelope. Three candidates eliminated by measurement, one stands
+
+Thomas recalibrated to months-scale: WAITING is legitimate only for the
+genuinely blocked SLICE, and the lane censuses a new corner rather than parking.
+Four candidates, censused against upstream `master` `e0e3f6b`. **Three are
+eliminated by measurement, and two of them are eliminated for the best possible
+reason — the work is already done.**
+
+### The eliminations
+
+**Level arithmetic — ELIMINATED: already complete, and occupied.**
+
+| file | lines | theorems | REAL sorries |
+| --- | ---: | ---: | ---: |
+| `Verify/Level.lean` | 3 880 | 249 | **0** |
+| `Verify/LevelStd.lean` | 540 | 35 | **0** |
+| `Theory/VLevel.lean` | 188 | 36 | **0** |
+| `Level.lean` | 363 | 0 | **0** |
+| **total** | **4 971** | **320** | **0** |
+
+There is nothing to prove: completeness of `normalize'`, `isEquiv'` and `geq'`
+all landed (`4ff2346`, `8b51c9c`), the new algorithm was switched on (`3f6e8f9`),
+and HEAD adds coNP-hardness. The corner is finished **and** it is where the
+author has been working this month.
+
+**WHNF/reduction — ELIMINATED: it is entirely inside the 24 already censused.**
+Five sorries across the whole `Verify/TypeChecker/` tree, and every one is
+already classified: `inferProj.WF`, `reduceProjCore.WF`, `reduceRecursor.WF`
+(TrProj-blocked), `tryEtaStructCore.WF` (TrProj + missing model rule),
+`isDefEqUnitLike.WF` (missing model rule). `Basic.lean` (84 theorems) and
+`TypeChecker.lean` (20) are **sorry-free**. No new obligations exist here.
+
+**Defeq's non-app fragments — ELIMINATED: they ARE the injectivity cluster.**
+`sort_inv`, `forallE_inv_stratified`, `sort_forallE_inv` are the three sorries in
+`Theory/Typing/Injectivity.lean` — proved for `SExpr` in `Experimental/` and
+awaiting the author's port (entry 6.4). DO NOT ENTER.
+
+### THE CORNER: `lean4export` envelope verification
+
+`leanprover/lean4export`, HEAD `cacf989`. **1 710 lines, 0 theorems, 0 sorries,
+22 golden-output `#guard_msgs` tests.** It ships a complete emit/parse dual —
+`Export.lean` (438) writes NDJSON, `Export/Parse.lean` (509) reads it back into
+`Lean.ConstantInfo`.
+
+**MEASURED OBLIGATION COUNT — 26 emit/parse pairs plus one top-level property:**
+
+| kind | pairs | constructors |
+| --- | ---: | --- |
+| `Expr` | **11** | bvar, sort, const, app, lam, forallE, letE, proj, natLit, strLit, mdata |
+| `Level` | 4 | succ, max, imax, param (`zero` pre-seeded at index 0) |
+| `Name` | 2 | str, num (`anonymous` pre-seeded) |
+| declaration kinds | 8 | axiom, defn, thm, opaque, quot, induct, ctor, rec |
+| `BinderInfo` | 1 | 4 values |
+| **total** | **26** | + `parse ∘ dump = id` at the environment level |
+
+### Why this one, by reach-per-cost
+
+**It depends on none of the three holes that block everything else.** No
+`addInduct` (serialization needs no constructor data — it *transports* the
+declaration, it does not interpret it). No confluence. No no-confusion. It is
+**greenfield**: 0 sorries means nothing is inherited, and 0 theorems means **no
+verification effort is in flight to collide with**.
+
+**And it is on the reflexive capstone's own trusted list.** Charter §10.5
+enumerates what stays trusted after a verified checker: *"the formal spec, the
+checker's own compilation and execution, and — if the tier ever wants a number
+rather than a proof about a corpus — **the exporter that produced the
+environment**. That last one is the quiet one."* **This corner is that quiet
+one.** Verifying the round-trip removes a named entry from the capstone's
+trusted set — which is exactly the kind of reduction the tier exists to make, and
+the only one currently reachable.
+
+It is also **the backlog's original envelope item** and charter §4's subject:
+every other tier in the family hand-built an envelope schema and this tier
+adopted upstream's unverified. Verifying it closes that asymmetry.
+
+### The honest difficulty, named before starting
+
+**The real content is hash-consing, not JSON.** `dumpExprAux` assigns integer
+indices through `getIdx` over a `visitedExprs` table, and `parse` resolves them
+back. So the round-trip theorem is not a syntactic induction — it is a statement
+that **the index table is consistent**: every index the exporter emits resolves,
+under the parser, to the term that produced it. That is ordinary structural work
+with an invariant, and it is where the arc's difficulty actually lives.
+
+**Toolchain note:** lean4export pins `v4.34.0-rc2`, two releases ahead of ours,
+but commit `af5aa64` sits at exactly our `v4.33.0-rc1` and is byte-identical to
+master except one test expectation. The arc starts there.
+
+**Scope caveat, stated plainly:** this verifies a TOOL, not the type theory. Its
+reach is the envelope. That is a smaller claim than the TrProj corner's, and it
+is the one currently available.
+
+### First arc
+
+1. Re-pin the clone at `af5aa64` (our toolchain) and census the format spec
+   (`format_ndjson.md`, 353 lines) against the 26 pairs — a coverage manifest in
+   §5.5's shape, which is the instrument this corner owes before any Lean.
+2. State the round-trip property and the index-table invariant.
+3. Take the cheapest pair — `Level` (4 constructors, no recursion through the
+   index table except `succ`) — as the first proof, the same reach-per-cost move
+   that opened the TrProj corner with `instL`.
+
+**The TrProj drift guards continue as the background duty** (entry 15); this
+corner is the foreground.

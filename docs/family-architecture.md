@@ -771,6 +771,32 @@ edition-decided. This is where the pattern pays: the expensive artifact in
 this repository is not the definition but the proof estate, and a trunk
 theorem is proved once for all editions rather than re-proved per sibling.
 
+**THE MEASURED COST OF GETTING THIS SPLIT WRONG — three independent
+re-derivations of one payload.** A trunk that is POORER than its adopters
+need does not stay poor: **each adopter rebuilds the missing payload
+locally, in string form, plus a parser to recover it.** Measured, three
+tiers, none of them talking to each other:
+
+| tier | what it rebuilt |
+| --- | --- |
+| **C** | the refusal snapshot (`Option Mem`) |
+| **ES** | the refusal cause (`EsRefusal`) |
+| **Go** | **its own four-class `RefusalCause`** — whose tag is **byte-identical to Core's `className`** — flattened with the clause into a **prose prefix for a scoreboard to parse back out** |
+
+**Three is the family's own evidence bar** (§9.3 ratified the span field
+names on exactly this standard), and what it convicts here is not the
+tiers: it is **the trunk**. Go's version is the sharpest, because it
+re-derives a name Core *already has* and then **encodes structure into a
+string so a consumer can decode it** — a round trip that exists only
+because the typed field does not.
+
+> **A thin sibling is cheap. A trunk too poor for its siblings is not — it
+> is paid for N times, in string-building and re-parsing, by lanes that
+> never see each other's version.**
+
+That is the direct cost of the gap §3.4 records, and it is why the fix
+belongs in `Core` rather than in any adopter.
+
 **(3) THE ONE HONEST FORK — stated as a boundary so nobody engineers around
 it.** When a shared DATATYPE changes SHAPE between editions, the type and
 its consumers **must** fork. The measured instance is `PyErr`: 3.9 encodes
@@ -1741,6 +1767,14 @@ standing rule with a named blocker.**
    ORACLE is the evidence* becomes **operational by REMOVING THE SECOND
    MODEL**: with one model and one oracle, the ordinary harness already
    sees this class.
+
+   **A SECOND MEASURED INSTANCE, and it is smaller and therefore worse.**
+   `for` has **three** entry paths — `execGen`, `SKont`, `Kont` — and the
+   **third was missed**. `diff_test` could never have caught it, for the
+   same reason: **the trunk refuses the same rows**, so parity held while
+   both were wrong. The 25-row instance was a whole capability going
+   missing; this one is **a single dispatch arm**, invisible by exactly the
+   same mechanism. The class does not announce itself by size.
 
    > **Agreement between two models is not evidence. Agreement with the
    > ORACLE is.**
@@ -2807,6 +2841,20 @@ instrument copies it:
 
 * named `harness/<lang>_<subject>_census.py`, output to
   `docs/<lang>-<subject>-census.json`, sorted and machine-readable;
+* **ROWS AND WITNESSES ARE NAMED FOR THE CONSTRUCT, NEVER FOR THE
+  VERDICT.**
+
+  > **A name asserting a VERDICT has a shelf life. One asserting a
+  > CONSTRUCT does not.**
+
+  Measured: a row named `keys_for_is_still_loud` **expired the moment inch
+  3a landed** — the construct stopped being loud, and **both instruments
+  convicted the NAME** rather than the behaviour. Renamed
+  `keys_for_live_cursor`, which names what the row *exercises* and is
+  therefore still true after the tier grows. A verdict-named row is a
+  small piece of prose embedded in an identifier, and it goes stale the
+  way §9's prose does — except that nothing greps it, so it goes stale
+  **silently** and then convicts the wrong thing;
 * a **`--compare`** mode against the committed JSON, because corpora that
   live in other repositories move on their own schedule and staleness must
   be mechanically detectable rather than merely possible;
@@ -2930,7 +2978,99 @@ change must visit, and check that enumeration against the thing that
 dispatches** — the `match`, the clause list, the table — not against the
 name index.
 
+**MEASURED AGAINST ITSELF — and it caught a THIRD wrong unit: IMPORTS.**
+A bound on the breakage from a payload change was taken as the count of
+**direct importers** of `Core.Outcome` — **2 files**. That is neither the
+identifier nor the pattern position; it is a unit that cannot see the
+thing at all, because **a consumer reaches a constructor's shape without
+naming its module.** The convicting case: `guards.lean`'s `refusalOf`
+matches `.error (.unsupported m)` and **names no Core symbol whatsoever**.
+
+The calibration, five units on one change:
+
+| unit counted | value | what it is |
+| --- | ---: | --- |
+| direct importers of `Core.Outcome` | **2** | **not a bound at all** — misses every non-importing destructurer |
+| transitive reachers | **128** | true, useless: bounds nothing |
+| **sites that DESTRUCTURE the constructor** | **11 lines / 3 files** | **the right unit** — a tight upper bound |
+| actually broken | **1** | what the change cost |
+| build-reported | **6** | five `#guard`s downstream of **one** cause |
+
+> **The blast radius of a constructor change is bounded by the sites that
+> DESTRUCTURE it. Grep the PATTERN POSITION — `.error (.unsupported` —
+> not imports, and not the API's identifiers.**
+
+**Read the last two rows together, because they are the practical point.**
+The destructure count (11) **over**-estimates real breakage (1) — it is an
+upper bound, which is what you want for planning. The build report (6)
+**over**-states *sites* by amplification: five of the six are `#guard`s
+downstream of a single cause. So **neither the plan nor the build log is a
+count of causes**; the destructure grep bounds the work, and the log
+locates it.
+
+**And the grep must DISCRIMINATE.** Two correct exclusions in this change
+were `.unsupportedDevice` — a constructor of a **different type** whose
+name shares a prefix. A pattern-position grep that matches on the
+constructor name alone re-imports the identifier law's failure; matching
+the **position** (`.error (.unsupported`) is what excludes them.
+
 #### AND THE THIRD OF THE FAMILY — when a VERDICT VOCABULARY must grow
+
+**THE RE-FOUNDING COROLLARY, and it is now the FOURTH instrument this lane
+has had to teach a legitimate new state:**
+
+> **During a re-founding, every two-sided check needs a vocabulary for
+> "these differ ON PURPOSE" — and the default vocabulary never has one.**
+
+The four: `DIVERGE`/`DIVERGED`, the census's grammar column, the gate's
+`OPENED`, and now `MONO_OPENED`. Four is no longer a run of bad luck; it is
+**a property of re-founding**. Any check built when there was one model
+will need this word the moment there are two, and it will not have it.
+
+**THE HONESTY SPLIT that keeps this from becoming whitelisting:**
+
+> **The census RECORDS intent and never adjudicates. The gate
+> ADJUDICATES.**
+
+A census may say *"these differ on purpose"* — that is a claim about
+**intent**, and recording it is what makes the difference visible. Only the
+**gate** may decide whether the difference is acceptable, and it decides
+**from the oracle**: `OPENED` counts **only when the rebuild matches
+CPython**. Separating the two is what stops "extend the vocabulary" from
+degrading into "record that we meant it" — the failure the *adjudicator is
+the oracle, never the table* rule names.
+
+**AND THIS VOCABULARY IS WINDOW SCAFFOLDING — it retires with the window.**
+The two-model window (§3.4) is what creates the need for a
+differ-on-purpose word; when the window closes the word has nothing to
+name. The resolution is ruled **DELETE**, not deprecate: the successor's
+landing **deletes `monadic_gate.py`**. A vocabulary kept past its window
+becomes a permanent invitation to record intent instead of measuring
+agreement.
+
+**BUT DELETE HAS A PRECONDITION, and missing it inverts the ruling.**
+`MONO_OPENED` could not simply be deleted. Its own comment recorded why
+the table was safe: it *"cannot become a silencer BECAUSE `monadic_gate`
+adjudicated its rows against the oracle."* **Delete the adjudicator and
+keep the table, and you have built the silencer** — the rows survive with
+nothing checking them, which is precisely the whitelist the honesty split
+forbids.
+
+> **When a window's ADJUDICATOR retires, every row it adjudicated must be
+> RE-ANCHORED to the surviving oracle — never left merely recorded.**
+
+Done here by moving the rows `expect:unsupported → match`, so
+**`diff_test` adjudicates them against CPython**. The adjudicator changed;
+the adjudication did not lapse.
+
+**And the re-anchoring is not optional bookkeeping — dropping the rows
+would have been worse than keeping them.** Four census rows carried
+`mono=MATCH` against `expect=REFUSE`, where the `REFUSE` was **the retired
+trunk's answer**. Dropping them checks the rebuild against **a retired
+interpreter's expectation**; keeping them un-adjudicated checks it against
+nothing. **Only re-anchoring to the surviving oracle is a check at all** —
+which is §5.3's *agreement with the ORACLE* rule, arriving at the moment a
+window closes rather than while it is open.
 
 The two rules above are about **counting**. This one is about **verdict
 vocabularies**, and it is the third instance minted this session:
@@ -3501,8 +3641,34 @@ a box already in swap it is **the first thing jetsam takes**. The rules:
 * fall back to **SCOPED builds** (`--build-target`), and when you do, the
   landing carries a **§5.4a coverage statement** — *what was built, what
   was not, and therefore what the green covers*;
+* **CORRECTION to that guidance: a scoped coverage statement needs a GREEN
+  to scope a DELTA against.** A coverage statement says what this green
+  covers *relative to a known-good baseline*; **a red full build leaves
+  nothing to scope**, because the untouched part's status is unknown
+  rather than good. So after a red, **the next build is FULL again** — a
+  scoped build is how you extend a green, never how you recover from a
+  red;
 * the **full triad stays OWED**, discharged when the box is quiet:
   **load < 5 and swap < 1 GB**.
+
+**AND THE TRIAD SUMMARY IS NOT A COUNT — measured on the wrapper itself.**
+`tools/triad.sh`'s "first failures" block is
+`grep -E '^error|✖' | sort -u | head -8`: **deduplicated and truncated at
+eight.** Worse, **`lake` stops at the first failing module**, so the log
+it summarises is already partial. A "one error in 839 targets" line
+reported from a red triad came from exactly this block — and a failure
+count taken from it is a **LOWER BOUND on sites, never a count.**
+
+> **The triad summary LOCATES; the full log COUNTS.**
+
+**And a red build means THE GATES NEVER RAN.** Build exit 1 short-circuits
+the tenure, so a red triad yields **a build-error list and nothing else** —
+no `docs_check`, no `diff_test`, no census. A red triad is therefore not a
+triad *result* with one part failing; it is **an aborted triad**, and
+reporting it as "triad: 1 failure" claims two gates that never executed.
+This is §5.4a again, on the instrument that reports the other instruments:
+**the number carries the state it was taken in, and "red" is a state in
+which most of the numbers do not exist.**
 
 A scoped green is a real green about a smaller claim. Reporting it as a
 full triad is the flattering direction §5.4a exists to catch.

@@ -568,3 +568,156 @@ on a landing**, never a fact; the merge lands on green.
 itself: **a claim that a type now carries a field should be checked against the
 type, not asserted beside it.** When the block goes green the conditional
 paragraph is retired **by the gate**, not by an editor remembering to.
+
+## 2026-08-23-architecture-5 — Re-founding needs a differ-on-purpose word; names asserting verdicts expire
+
+Three laws from py-complete inch 3a.
+
+**(1) THE RE-FOUNDING COROLLARY to the vocabulary law, and it is the FOURTH
+instrument this lane has had to teach a legitimate new state:**
+
+> **During a re-founding, every two-sided check needs a vocabulary for "these
+> differ ON PURPOSE" — and the default vocabulary never has one.**
+
+The four: `DIVERGE`/`DIVERGED`, the census's grammar column, the gate's
+`OPENED`, now `MONO_OPENED`. **Four is no longer a run of bad luck; it is a
+property of re-founding.** Any check built when there was one model will need
+this word the moment there are two, and will not have it.
+
+**THE HONESTY SPLIT that stops this becoming whitelisting:** *the census RECORDS
+intent and never adjudicates; the gate ADJUDICATES.* A census may say "these
+differ on purpose" — a claim about **intent**, and recording it is what makes
+the difference visible. Only the gate decides whether it is acceptable, and it
+decides **from the oracle**: `OPENED` counts only when the rebuild matches
+CPython. Without the split, "extend the vocabulary" degrades into "record that
+we meant it" — precisely the failure *the adjudicator is the oracle, never the
+table* names.
+
+**AND IT IS WINDOW SCAFFOLDING — it retires with the window.** The two-model
+window creates the need for a differ-on-purpose word; when the window closes the
+word has nothing to name. **Resolution ruled DELETE, not deprecate** — the
+successor's landing deletes `monadic_gate.py`. A vocabulary kept past its window
+is a standing invitation to record intent instead of measuring agreement.
+
+**(2) THE NAMING LAW**, landed in §5.4's instrument contract where rows are
+governed:
+
+> **A name asserting a VERDICT has a shelf life. One asserting a CONSTRUCT does
+> not.**
+
+Measured: `keys_for_is_still_loud` **expired the moment 3a landed** — the
+construct stopped being loud, and **both instruments convicted the NAME** rather
+than the behaviour. Renamed `keys_for_live_cursor`, which names what the row
+*exercises* and stays true as the tier grows. **A verdict-named row is prose
+embedded in an identifier**, and it goes stale the way §9's prose does — except
+nothing greps it, so it goes stale **silently** and then convicts the wrong
+thing.
+
+**(3) A SECOND MEASURED INSTANCE of two-model blindness, smaller and therefore
+worse.** `for` has **three** entry paths — `execGen`, `SKont`, `Kont` — and the
+**third was missed**. `diff_test` could never catch it: the trunk refuses the
+same rows, so parity held while both were wrong. The 25-row instance was a whole
+capability going missing; this is **a single dispatch arm**, invisible by exactly
+the same mechanism. **The class does not announce itself by size** — which is
+the argument for the capability-parity audit being routine rather than reserved
+for large merges.
+
+## 2026-08-23-architecture-6 — Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance
+
+**(1) THE MEASURED COST OF A TRUNK POORER THAN ITS SIBLINGS — three independent
+re-derivations.** Go is the **third** tier found re-deriving §5.2 locally: its
+own four-class `RefusalCause` whose tag is **byte-identical to Core's
+`className`**, flattened with the clause into **a prose prefix for a scoreboard
+to parse back out.** After C's snapshot and ES's cause, that is three lanes, none
+talking to each other, each rebuilding the same missing payload **in string form
+plus a parser to recover it.**
+
+**Three is the family's own evidence bar** (§9.3 ratified the span field names on
+exactly this standard) — and what it convicts is **not the tiers, it is the
+trunk.** Go's is the sharpest: it re-derives a name **Core already has**, then
+**encodes structure into a string so a consumer can decode it** — a round trip
+existing only because the typed field does not.
+
+> **A thin sibling is cheap. A trunk too poor for its siblings is not — it is
+> paid for N times, in string-building and re-parsing, by lanes that never see
+> each other's version.**
+
+Landed beside the thin-siblings strategy as the direct cost of the §3.4 gap, and
+the reason the fix belongs in `Core` rather than any adopter.
+
+**(2) DELETE HAS A PRECONDITION, and missing it inverts the ruling.**
+`MONO_OPENED` could not simply be deleted: its own comment recorded why the table
+was safe — it *"cannot become a silencer BECAUSE `monadic_gate` adjudicated its
+rows against the oracle."* **Delete the adjudicator and keep the table and you
+have built the silencer.**
+
+> **When a window's ADJUDICATOR retires, every row it adjudicated must be
+> RE-ANCHORED to the surviving oracle — never left merely recorded.**
+
+Done by moving the rows `expect:unsupported → match`, so **`diff_test`
+adjudicates them against CPython**: the adjudicator changed, the adjudication did
+not lapse. **And dropping them would have been worse than keeping them** — four
+census rows carried `mono=MATCH` against `expect=REFUSE`, where the `REFUSE` was
+**the retired trunk's answer**. Dropping checks the rebuild against a retired
+interpreter's expectation; keeping un-adjudicated checks it against nothing.
+**Only re-anchoring is a check at all** — §5.3's *agreement with the ORACLE*
+arriving at the moment a window CLOSES rather than while it is open.
+
+**(3) A CORRECTION TO MY OWN A14 GUIDANCE.** I wrote that a red full build falls
+back to scoped `--build-target` builds carrying a coverage statement. **That is
+wrong, and the reason is structural: a scoped coverage statement needs a GREEN to
+scope a DELTA against.** A coverage statement says what this green covers
+*relative to a known-good baseline*; **a red full build leaves nothing to
+scope**, because the untouched part's status is unknown rather than good. So
+after a red, **the next build is FULL again**. Scoped builds are how you **extend
+a green**, never how you **recover from a red** — and my guidance would have had
+lanes reporting scoped greens over an unknown tree.
+
+## 2026-08-23-architecture-7 — The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts
+
+Two findings from the successor's triad #3.
+
+**(1) THE PATTERN-POSITION LAW MEASURED AGAINST ITSELF — and it caught a THIRD
+wrong unit: IMPORTS.** A bound on breakage from a payload change was taken as the
+count of **direct importers** of `Core.Outcome` — **2 files**. That is neither
+the identifier nor the pattern position; it is a unit that **cannot see the thing
+at all**, because a consumer reaches a constructor's shape without naming its
+module. The convicting case: `guards.lean`'s `refusalOf` matches
+`.error (.unsupported m)` and **names no Core symbol whatsoever**.
+
+Five units on one change: direct importers **2** (not a bound at all);
+transitive reachers **128** (true, useless); **sites that DESTRUCTURE the
+constructor — 11 lines / 3 files (the right unit)**; actually broken **1**;
+build-reported **6** (five `#guard`s downstream of ONE cause).
+
+> **The blast radius of a constructor change is bounded by the sites that
+> DESTRUCTURE it. Grep the PATTERN POSITION — `.error (.unsupported` — not
+> imports, and not the API's identifiers.**
+
+**The last two rows are the practical point.** The destructure count (11)
+**over**-estimates real breakage (1) — an upper bound, which is what planning
+wants. The build report (6) **over**-states *sites* by amplification, five of six
+being `#guard`s downstream of one cause. **Neither the plan nor the build log is
+a count of causes**: the destructure grep bounds the work, the log locates it.
+
+**And the grep must DISCRIMINATE**: two correct exclusions were
+`.unsupportedDevice`, a constructor of a **different type** sharing a name
+prefix. Matching the constructor name alone re-imports the identifier law's
+failure; matching the **position** is what excludes them.
+
+**(2) THE TRIAD SUMMARY IS NOT A COUNT — measured on the wrapper itself.**
+`tools/triad.sh`'s "first failures" block is `grep -E '^error|✖' | sort -u |
+head -8` — **deduplicated and truncated at eight** — and **`lake` stops at the
+first failing module**, so the log it summarises is already partial. A "one error
+in 839 targets" line reported from a red triad came from exactly this block. A
+failure count taken from it is a **LOWER BOUND on sites, never a count.**
+
+> **The triad summary LOCATES; the full log COUNTS.**
+
+**And a red build means THE GATES NEVER RAN.** Build exit 1 short-circuits the
+tenure, so a red triad yields **a build-error list and nothing else** — no
+`docs_check`, no `diff_test`, no census. A red triad is not a triad *result* with
+one part failing; it is an **aborted triad**, and reporting it as "triad: 1
+failure" claims two gates that never executed. §5.4a on the instrument that
+reports the other instruments: **the number carries the state it was taken in,
+and "red" is a state in which most of the numbers do not exist.**

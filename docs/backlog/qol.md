@@ -1362,3 +1362,74 @@ ordering itself. Live: **~50 s** over 332 laws, which is an audit-cadence cost,
 not an inner-loop one. Docs-first: §9.7 names the instrument and carries both
 honesty clauses; the tools list gains its row. `docs_check` **87/87**. No Lean
 executed.
+
+---
+
+## 2026-08-23-qol-21 — `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE
+
+`laws.sh` picked the target and this closes the loop on it: §3.4 was the
+most-cited home in the tree with **no gate at all** — nine laws at 21 ledger
+citations — and it is the contract every tier's refusal vocabulary is built
+on. Coverage moved **206 → 216 cited, 126 → 116 NO GATE**, and `STMT-19..22`
+plus `STMT-67` now name `substrate.sh` as their gate.
+
+### The live table
+
+| tier | monad | refusals | uncatch | run | adequacy |
+| --- | --- | --- | --- | --- | --- |
+| Ada | NONE | 0/1 | no | NO | — |
+| C | BY-SHAPE | 2/6 | no | NO | TWINS? (alloc / allocZeroed) |
+| Circuit | NONE | 0/1 | no | yes | — |
+| Es | BY-SHAPE | 5/3 | no | yes | TWINS? (envCreate…) |
+| Go | **ADOPTED** | 2/0 | no | NO | — |
+| Python | **ADOPTED** | 6/82 | **yes** | yes | **OWED** (runScriptClock / runScriptClockMono) |
+| Rv | NONE | 0/0 | no | NO | TWINS? (rowCsr / rowCsrI) |
+| Sv | **OWN** | 0/17 | no | yes | — |
+| SoftFloat, Spice, VerilogA | NONE | 0/0 | no | NO | — |
+
+Calibration held on every tier the dispatch named — Python ADOPTED with
+adequacy OWED, Go ADOPTED, C and ES BY-SHAPE, SV OWN — **with one divergence
+reported rather than fitted: Ada is `NONE`, not BY-SHAPE.** `LeanModels/Ada/`
+is 498 lines of `Ast`/`Json`/`Load` with **no evaluator at all**, so there is
+no monad to have a shape. If adoption is ticketed, it is ticketed against
+something that does not exist yet.
+
+### Four defects, each found by the tool disagreeing with the calibration
+
+1. **Python read `OWN`.** The ADOPTED test spelled the pre-`:=` part as
+   `[^:=]*`, and a binder like `(σ : Type)` **contains a colon** — so the
+   pattern could never match a parameterised abbrev, and `abbrev PyM (σ : Type)
+   := SemM σ PyErr` fell through to the verdict-type branch. The tier most
+   committed to Core read as the tier that rejected it.
+2. **A signature spans lines.** `callIn`'s return type `: Run World RVal` is on
+   its **second** line, so a single-line rule never compared return types and
+   paired anything whose binders matched.
+3. **A magic threshold was doing invisible work.** Twins required
+   `length(sig) > 24` and the fixture landed on **exactly 24**. Replaced by a
+   shape rule — three typed binders and a return type — which is auditable.
+4. **Signature identity is necessary, not sufficient.** With it fixed, `alloc
+   / allocZeroed` and `envCreateImmutableBinding / envCreateMutableBinding`
+   came back as "two semantics". They are siblings, not rivals. So the verdict
+   splits: **`OWED`** when the pair also carries a second-implementation marker
+   (`Mono`, the naming this repo actually uses for a rebuild twin), and
+   **`TWINS?`** — a candidate for a human — otherwise. The marker list is named
+   in the source as a *convention, not a law*, so the next lane can see what
+   the verdict rests on.
+
+### The bound, stated before the numbers
+
+This greps text. `BY-SHAPE` is a claim about **syntax**, `ADOPTED` about an
+**identifier**, and neither is a type-checked equality. A green row is evidence
+that **nothing here contradicts §3.4** — never that §3.4 holds. Same direction
+of error as `laws.sh`, and said in the same place: before the table.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **20 ok, 0 failed** on a synthetic tier tree —
+Core excluded, all four monad verdicts including **the ES trap** (a tier
+defining Core's *name* is BY-SHAPE, not ADOPTED), the fit boundary in both
+directions, twins by signature with adequacy found and OWED, the marker rule
+accepting `callIn/callInMono` and rejecting both real false positives,
+uncatchability by pattern, and refusal counting. `laws.sh` **17 ok**,
+`docs_check` **87/87**. Docs-first: §3.4 names the gate and carries the first
+run; the §7 tools list gains its row. No Lean executed.

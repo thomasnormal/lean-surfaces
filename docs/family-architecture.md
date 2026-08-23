@@ -2037,6 +2037,24 @@ new tiers adopt the substrate and use mvcgen on the fuel-free fragment,
 **deciding fuel's fate BEFORE writing the interpreter** — which is a
 founding-checklist item, not an afterthought.
 
+**§3.4 HAS A GATE NOW: `tools/substrate.sh`.** `tools/laws.sh` measured this
+section as the most-cited home in the tree with **no gate at all** — nine laws
+at 21 ledger citations, more than any other unenforced section, and it is the
+contract every tier's refusal vocabulary is built on. The census reports, per
+tier: the monad as **ADOPTED / BY-SHAPE / OWN / NONE** (STMT-21, *by shape,
+not by spelling* — the ES tier defines its own `SemM` with Core's name, and a
+grep for the NAME would call that adoption); Core-channel refusal sites against
+locally-declared ones; an uncatchability statement found **by pattern**
+(STMT-19); whether the tier **has a run** (STMT-22); and two evaluators sharing
+a signature, with their adequacy theorem or `OWED` (STMT-67, §8.5).
+
+First run, 2026-08-23: **Python ADOPTED** with adequacy **OWED**
+(`runScriptClockMono` beside `runScriptClock`), **Go ADOPTED**, **C and ES
+BY-SHAPE** mid-adoption, **SV OWN**, and **Ada NONE** — ingestion only, no
+evaluator in the tree yet. The tool distinguishes `OWED` from `TWINS?`, because
+signature identity is **necessary and not sufficient**: `alloc / allocZeroed`
+share one and are siblings, not rivals.
+
 #### 3.4.1 THE FIT BOUNDARY — the substrate is for INTERPRETERS, and one tier found the edge
 
 Recorded by the **Lean tier's founding lane** (`docs/lean-tier-charter.md`
@@ -4403,6 +4421,7 @@ its refusal paths rather than describing them (§5.4).
 | `tools/new-proof.sh` | scaffolds for the four recurring proof shapes, laws inline | `docs/statement-cookbook.md` |
 | `tools/backlog-index.sh` | generate `docs/backlog/INDEX.md`; `--check` gates its staleness | §9.5, §5.5 |
 | `tools/laws.sh` | which laws have a gate, and which are only prose | §9.7's audit cadence; *fixes live in gates* |
+| `tools/substrate.sh` | the substrate contract per tier, by SHAPE | §3.4 (STMT-19..22), §8.5 (STMT-67) |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
 
 **AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor

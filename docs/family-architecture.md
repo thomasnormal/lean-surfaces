@@ -2922,6 +2922,42 @@ change must visit, and check that enumeration against the thing that
 dispatches** — the `match`, the clause list, the table — not against the
 name index.
 
+**MEASURED AGAINST ITSELF — and it caught a THIRD wrong unit: IMPORTS.**
+A bound on the breakage from a payload change was taken as the count of
+**direct importers** of `Core.Outcome` — **2 files**. That is neither the
+identifier nor the pattern position; it is a unit that cannot see the
+thing at all, because **a consumer reaches a constructor's shape without
+naming its module.** The convicting case: `guards.lean`'s `refusalOf`
+matches `.error (.unsupported m)` and **names no Core symbol whatsoever**.
+
+The calibration, five units on one change:
+
+| unit counted | value | what it is |
+| --- | ---: | --- |
+| direct importers of `Core.Outcome` | **2** | **not a bound at all** — misses every non-importing destructurer |
+| transitive reachers | **128** | true, useless: bounds nothing |
+| **sites that DESTRUCTURE the constructor** | **11 lines / 3 files** | **the right unit** — a tight upper bound |
+| actually broken | **1** | what the change cost |
+| build-reported | **6** | five `#guard`s downstream of **one** cause |
+
+> **The blast radius of a constructor change is bounded by the sites that
+> DESTRUCTURE it. Grep the PATTERN POSITION — `.error (.unsupported` —
+> not imports, and not the API's identifiers.**
+
+**Read the last two rows together, because they are the practical point.**
+The destructure count (11) **over**-estimates real breakage (1) — it is an
+upper bound, which is what you want for planning. The build report (6)
+**over**-states *sites* by amplification: five of the six are `#guard`s
+downstream of a single cause. So **neither the plan nor the build log is a
+count of causes**; the destructure grep bounds the work, and the log
+locates it.
+
+**And the grep must DISCRIMINATE.** Two correct exclusions in this change
+were `.unsupportedDevice` — a constructor of a **different type** whose
+name shares a prefix. A pattern-position grep that matches on the
+constructor name alone re-imports the identifier law's failure; matching
+the **position** (`.error (.unsupported`) is what excludes them.
+
 #### AND THE THIRD OF THE FAMILY — when a VERDICT VOCABULARY must grow
 
 **THE RE-FOUNDING COROLLARY, and it is now the FOURTH instrument this lane
@@ -3558,6 +3594,25 @@ a box already in swap it is **the first thing jetsam takes**. The rules:
   red;
 * the **full triad stays OWED**, discharged when the box is quiet:
   **load < 5 and swap < 1 GB**.
+
+**AND THE TRIAD SUMMARY IS NOT A COUNT — measured on the wrapper itself.**
+`tools/triad.sh`'s "first failures" block is
+`grep -E '^error|✖' | sort -u | head -8`: **deduplicated and truncated at
+eight.** Worse, **`lake` stops at the first failing module**, so the log
+it summarises is already partial. A "one error in 839 targets" line
+reported from a red triad came from exactly this block — and a failure
+count taken from it is a **LOWER BOUND on sites, never a count.**
+
+> **The triad summary LOCATES; the full log COUNTS.**
+
+**And a red build means THE GATES NEVER RAN.** Build exit 1 short-circuits
+the tenure, so a red triad yields **a build-error list and nothing else** —
+no `docs_check`, no `diff_test`, no census. A red triad is therefore not a
+triad *result* with one part failing; it is **an aborted triad**, and
+reporting it as "triad: 1 failure" claims two gates that never executed.
+This is §5.4a again, on the instrument that reports the other instruments:
+**the number carries the state it was taken in, and "red" is a state in
+which most of the numbers do not exist.**
 
 A scoped green is a real green about a smaller claim. Reporting it as a
 full triad is the flattering direction §5.4a exists to catch.

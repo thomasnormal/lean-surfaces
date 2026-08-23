@@ -672,3 +672,52 @@ scope**, because the untouched part's status is unknown rather than good. So
 after a red, **the next build is FULL again**. Scoped builds are how you **extend
 a green**, never how you **recover from a red** — and my guidance would have had
 lanes reporting scoped greens over an unknown tree.
+
+## 2026-08-23-architecture-7 — The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts
+
+Two findings from the successor's triad #3.
+
+**(1) THE PATTERN-POSITION LAW MEASURED AGAINST ITSELF — and it caught a THIRD
+wrong unit: IMPORTS.** A bound on breakage from a payload change was taken as the
+count of **direct importers** of `Core.Outcome` — **2 files**. That is neither
+the identifier nor the pattern position; it is a unit that **cannot see the thing
+at all**, because a consumer reaches a constructor's shape without naming its
+module. The convicting case: `guards.lean`'s `refusalOf` matches
+`.error (.unsupported m)` and **names no Core symbol whatsoever**.
+
+Five units on one change: direct importers **2** (not a bound at all);
+transitive reachers **128** (true, useless); **sites that DESTRUCTURE the
+constructor — 11 lines / 3 files (the right unit)**; actually broken **1**;
+build-reported **6** (five `#guard`s downstream of ONE cause).
+
+> **The blast radius of a constructor change is bounded by the sites that
+> DESTRUCTURE it. Grep the PATTERN POSITION — `.error (.unsupported` — not
+> imports, and not the API's identifiers.**
+
+**The last two rows are the practical point.** The destructure count (11)
+**over**-estimates real breakage (1) — an upper bound, which is what planning
+wants. The build report (6) **over**-states *sites* by amplification, five of six
+being `#guard`s downstream of one cause. **Neither the plan nor the build log is
+a count of causes**: the destructure grep bounds the work, the log locates it.
+
+**And the grep must DISCRIMINATE**: two correct exclusions were
+`.unsupportedDevice`, a constructor of a **different type** sharing a name
+prefix. Matching the constructor name alone re-imports the identifier law's
+failure; matching the **position** is what excludes them.
+
+**(2) THE TRIAD SUMMARY IS NOT A COUNT — measured on the wrapper itself.**
+`tools/triad.sh`'s "first failures" block is `grep -E '^error|✖' | sort -u |
+head -8` — **deduplicated and truncated at eight** — and **`lake` stops at the
+first failing module**, so the log it summarises is already partial. A "one error
+in 839 targets" line reported from a red triad came from exactly this block. A
+failure count taken from it is a **LOWER BOUND on sites, never a count.**
+
+> **The triad summary LOCATES; the full log COUNTS.**
+
+**And a red build means THE GATES NEVER RAN.** Build exit 1 short-circuits the
+tenure, so a red triad yields **a build-error list and nothing else** — no
+`docs_check`, no `diff_test`, no census. A red triad is not a triad *result* with
+one part failing; it is an **aborted triad**, and reporting it as "triad: 1
+failure" claims two gates that never executed. §5.4a on the instrument that
+reports the other instruments: **the number carries the state it was taken in,
+and "red" is a state in which most of the numbers do not exist.**

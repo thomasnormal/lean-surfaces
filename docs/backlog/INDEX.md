@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**176 entries across 16 lanes.** Regenerate with
+**177 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -25,6 +25,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-41` | two tools that disagreed, and stamps that read the wrong repo | qol |
 | `2026-08-23-qol-40` | `laws.sh --gate-set`: §5.4b made checkable, and `.sv` has no gate | qol |
 | `2026-08-23-qol-39` | laws.sh was SPAWN-BOUND, so its runtime was other lanes' load | qol |
+| `2026-08-23-architecture-39` | Take the acceptance case that can fail; a performance symptom is a modelling question; and a proved spec adjudicates its siblings | architecture |
 | `2026-08-23-qol-38` | the marker gate I owed, a self-citation I created, and recovery by content | qol |
 | `2026-08-23-architecture-38` | A mis-bucketed refusal is mis-scheduled; a parser's kinds are the parser's; and the census that refutes a published plan | architecture |
 | `2026-08-23-qol-37` | CI's build is gated by host, and this clone is seeded at last | qol |

@@ -4066,6 +4066,34 @@ is true**, and *"we cannot currently reproduce this"* is a true claim.
 > **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
 > neither.**
 
+**AND THE SAME DISCIPLINE FOR A PARTIAL THEOREM CLAIM — the standard, from Go's
+closed loop (`cd14591`).** The landing's claim is one sentence and it does two
+different things:
+
+> **The LOOP is correct, PROVED. The FUNCTION is correct, CHECKED** — on 35
+> inputs against two independent standards.
+
+Proved: the arithmetic bracketed both ways, the bridge lemma (the interpreter's
+`>>= 1` **is** the spec's `/2`), one turn, and the loop. Checked: the
+prologue/epilogue composing the loop theorem up to `callFunction`. **Neither
+half is hedged and neither is inflated**, and the reason that was achievable is
+the part worth copying:
+
+> **WRITE THE PROVED/CHECKED BOUNDARY BEFORE YOU CAN CLOSE EITHER HALF. A
+> boundary drawn after a proof lands is drawn BY the proof.**
+
+The distinction was written into the file at **§G6**, when *both* halves were
+open; closing one of them **did not move the other half's words.** A boundary
+written afterwards is written by an author who now knows which side won, and it
+drifts in one direction only — the proved side quietly annexes whatever sits
+next to it, because at that moment the annexation feels like precision.
+
+**This is §0.1 II(a)'s receipts rule at the granularity of a CLAIM rather than a
+tactic**: a theorem statement carries how it was established, and *"checked on
+35 inputs against two independent standards"* is a strictly better sentence than
+either *"correct"* or an apologetic silence. **A checked half is a result; it is
+only a weakness when it is described in the vocabulary of the proved half.**
+
 **A FOURTH INSTANCE, and it is the one that flatters hardest: the SEARCH
 that agrees with you.** A name collision made a `grep` confirm a prior —
 `DRAIN` in `VCGen.lean` is the *generator drain*, 47 occurrences, and not
@@ -6795,8 +6823,9 @@ side by side rather than reporting the first outcome.
 negative needs a measurement too, and the measurement is a comparison, not
 an attempt.
 
-**AND THE WORKED INSTANCE, one seam later: §G8 → §G9** (Go, `6a73111`, on
-master). §G8 recorded three lemmas as **unprovable** — and did the one thing
+**AND THE WORKED INSTANCE, one seam later: §G8 → §G10** (Go, `6a73111`, on
+master; **this document first cited it as `§G9` — the clearing entry is `§G10`,
+per the lane's own ladder table**). §G8 recorded three lemmas as **unprovable** — and did the one thing
 that made the entry useful: it **named the cause exactly**, that
 `lookupLocal name w` is **not definitionally** the match on `w.locals.find?`.
 With the opening lemma landed, each of the three is **four lines**
@@ -6814,6 +6843,30 @@ MECHANICAL rather than OPEN-ENDED.** That is what discharging a blocker looks
 like when it does not finish the job, and it is a reportable state rather than
 a hedge: *the same size of debt, differently shaped, is progress and should be
 recorded as such.*
+
+**AND THE LADDER IS NOW COMPLETE, which turns the norm from an anecdote into a
+measurable one** (Go, `cd14591`; the lane keeps the table itself):
+
+| rung | the blocker, as NAMED | what it cost to clear |
+| --- | --- | --- |
+| **§G8** | the monad stack does not reduce at all | **a lemma SET** |
+| **§G10** | — cleared by `Obs.lean`'s seam | **10 rows** |
+| **§G11** | a dependent-match discriminant will not rewrite | **ONE congruence** |
+| **§G12** | — cleared by `run_bind_ok` and friends | **3 rows**, `propext` alone |
+
+ending in **a proved loop**. Read the right-hand column downward: **a lemma set,
+then ten rows, then one congruence, then three rows.**
+
+> **A WELL-NAMED BLOCKER NARROWS EACH TIME IT IS RE-STATED. If the next
+> statement of the blocker is no smaller than the last, the naming was wrong —
+> the lane has re-described the wall rather than located it.**
+
+That is the norm's **test**, and it is what a lane can check without waiting for
+the proof: not *"did we make progress?"* but *"is the blocker's next form
+narrower than its last?"* A blocker that keeps arriving at the same width is a
+symptom being renamed. **And the arc's shape is the argument for naming
+blockers at all** — nothing here was a breakthrough; each rung was ordinary work
+made possible by the previous rung stating exactly what was missing.
 
 This document's `#guard` probe (§5.4) happens to have the prescribed shape
 — `#guard`, `rfl` and `decide` on the *same* propositions — which is why it

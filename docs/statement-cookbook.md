@@ -38,6 +38,7 @@ incident**.
 | 20 | invariant shape | a flat `∧`-chain, at the COMPOSABLE altitude |
 | 21 | re-proving | never repair a statement to make a proof pass |
 | 22 | opening the monad stack | ONCE, where the stack is DEFINED — and only a STACK needs one |
+| 23 | rewriting past a dependent match | never touch the SCRUTINEE — rewrite the whole BIND from a head equation |
 
 ---
 
@@ -273,6 +274,9 @@ inverses cannot fire until it is renamed.
 
 **INCIDENT.** `docs/backlog.md` §L58 — fifteen lines instead of an induction,
 because neither side has to agree on a threshold.
+
+*See also §23 — when the interpreter's `match` is a DEPENDENT one, destructuring
+it is not available and the rewrite goes through the bind's head instead.*
 
 ## 11 — Well-formedness premises
 
@@ -541,6 +545,50 @@ own quantifier corrected here. Related: `docs/family-architecture.md` §3.4's *o
 monad, one `vcgen`* — the same rule at the family scale, of which this is the
 per-module form — and §3.4's *the ORDER lifts; the CONGRUENCES don't*, which is
 why the datatype tier's congruences never became the stack tier's problem.
+
+---
+
+## 23 — Rewriting past a dependent match
+
+**FORM.** **Never touch the scrutinee.** Rewrite the **whole bind** from a
+proved equation about what its **head** does:
+
+```lean
+-- (illustrative — the head-equation shape)
+theorem run_bind_ok (h : x w = .ok (.ok a, w')) : (x >>= f) w = f a w'
+```
+
+**One lemma per outcome of the stack** — three, here, because the stack has
+three (`ok` / `loud` / `panic`), which is the covenant again
+(`docs/family-architecture.md` §3.4). Put them **beside the seam**, not in the
+exemplar that needed them first: they are reusable at **every loop and every
+`do` block the tier will ever prove about**.
+
+**TRAP.** The two moves that look obvious and are both wrong. **A congruence
+over the match** still leaves a match — Lean will not rewrite inside a
+**dependent match discriminant**, which is the blocker, not an inconvenience on
+the way to it. **Let-binding the interpreter's scrutinee** to make it free edits
+**the definition** to suit the proof, which is the one move §0.1 forbids. The
+head-equation form clears the blocker **with no congruence over the match at
+all**, and the interpreter's definition is untouched.
+
+**TWO RIDERS, both discovered rather than designed.**
+
+* **`dsimp only` is needed for the IOTA step.** After the rewrite the goal is
+  `match Flow.normal with …` — a match on a **literal constructor** — and
+  **`simp only` will not reduce it.**
+* **Check the head's actual associativity before building a `show` on it.**
+  `execLoop`'s head is `evalExpr >>= fun v => asBool v >>= …`, **not**
+  `(evalExpr >>= asBool) >>= …`. A `show` built on the assumed shape fails, and
+  it fails **without naming the difference** — the goal trace is what tells you.
+  *Assume the shape and the error teaches you nothing; read the goal.*
+
+**INCIDENT.** Go, `cd14591` — §G11's named blocker (*"`simp` will not rewrite
+inside a dependent match discriminant"*) cleared by three rows in `Obs.lean`
+§1b, `propext` alone, ending in `loop_computes` proved. The charter's
+nested-match ceiling (§3.4) is the same Lean fact met from the tactic side:
+**that ceiling stands, and this is the route around it for a tier that owns its
+own lemmas.**
 
 ---
 

@@ -2491,6 +2491,11 @@ keeps paying in currencies it was not drawn in** — the strongest argument
 available for drawing them on principle rather than on convenience.
 
 **(3) §9.7 — §G8 → §G9 AS THE WORKED INSTANCE OF THE BLOCKER-NAMING NORM.**
+
+> **ANNOTATION (`cd14591`; entry NOT rewritten).** The clearing entry is
+> **§G10**, not §G9 — the lane's own ladder table names it. Corrected in the
+> charter, and the arc is now complete there: §G8 → §G10 → §G11 → §G12.
+
 §G8 recorded three lemmas as unprovable **and named the cause exactly**:
 `lookupLocal name w` is not definitionally the match on `w.locals.find?`. One
 seam later each is **four lines** (`propext` alone).
@@ -2580,3 +2585,83 @@ corpus: 116 rows, 45 gap classes, 7 boundary-freeze refusals with no class by
 design, 0 drifts.
 
 **Index:** MEAS-105 … MEAS-108.
+
+## 2026-08-23-architecture-36 — Never touch the scrutinee; the blocker ladder is complete; and a boundary drawn after a proof is drawn by the proof
+
+Three from Go's closed loop induction (`cd14591`, on master).
+
+**(1) COOKBOOK 23 — REWRITING PAST A DEPENDENT MATCH.**
+
+> **Never touch the scrutinee — rewrite the WHOLE BIND from a proved equation
+> about its head.**
+
+`run_bind_ok (h : x w = .ok (.ok a, w')) : (x >>= f) w = f a w'`, **one lemma
+per outcome of the stack** — three, because the stack has three, which is the
+covenant again — placed **beside the seam** rather than in the exemplar that
+needed them first, since they are reusable at every loop and every `do` block
+the tier will prove about.
+
+**The entry is written around the two wrong moves**, because both look
+obvious: a **congruence over the match** still leaves a match (the Lean fact
+*simp will not rewrite inside a dependent match discriminant* is the blocker
+itself, not an obstacle en route), and **let-binding the interpreter's
+scrutinee** edits the definition to suit the proof — §0.1's forbidden move. The
+head-equation form clears it **with no congruence over the match at all**, and
+the definition stays untouched.
+
+**Two riders, both discovered rather than designed**: `dsimp only` is needed for
+the **iota** step, because `simp only` will not reduce a match on a **literal
+constructor**; and the head's **associativity must be read, not assumed** —
+`execLoop`'s head is `evalExpr >>= fun v => asBool v >>= …`, and a `show` built
+on the other shape fails **without naming the difference.** *Assume the shape
+and the error teaches you nothing; read the goal.*
+
+Cross-referenced from cookbook §10 (the destructuring route, unavailable here)
+and tied to §3.4's **nested-match ceiling**: same Lean fact from the tactic
+side. **The ceiling stands; this is the route around it for a tier that owns its
+own lemmas.**
+
+**(2) §9.7 — THE BLOCKER LADDER IS COMPLETE, and it converts the norm from
+anecdote to test.** §G8 *a lemma SET* → §G10 *cleared, 10 rows* → §G11 *ONE
+congruence* → §G12 *cleared, 3 rows on `propext` alone*, ending in a proved
+loop. Read the cost column downward and the shape is the finding:
+
+> **A well-named blocker NARROWS each time it is re-stated. If the next
+> statement is no smaller than the last, the naming was wrong — the lane has
+> re-described the wall rather than located it.**
+
+That is the norm's **test**, checkable without waiting for the proof: not *"did
+we progress?"* but *"is the blocker's next form narrower than its last?"* A
+blocker arriving repeatedly at the same width is a symptom being renamed. **And
+the arc argues for the norm itself**: nothing in it was a breakthrough — each
+rung was ordinary work made possible by the previous rung stating exactly what
+was missing.
+
+**Citation corrected**: `2026-08-23-architecture-34` cited the clearing entry as
+**§G9**; it is **§G10**, per the lane's own table. Charter fixed, dated entry
+annotated.
+
+**(3) §5.4a — THE STANDARD FOR A PARTIAL THEOREM CLAIM.**
+
+> **The LOOP is correct, PROVED. The FUNCTION is correct, CHECKED** — 35 inputs,
+> two independent standards.
+
+Neither half hedged, neither inflated. **The mechanism is what makes it
+repeatable**, and it is the law:
+
+> **Write the proved/checked boundary BEFORE you can close either half. A
+> boundary drawn after a proof lands is drawn BY the proof.**
+
+§G6 wrote the distinction while **both** halves were open, so closing one **did
+not move the other half's words.** A boundary written afterwards is written by
+someone who already knows which side won, and **it drifts in one direction
+only** — the proved side annexes what sits next to it, because at that moment
+the annexation feels like precision.
+
+Landed as §0.1 II(a)'s receipts rule at the granularity of a **claim** rather
+than a tactic: *"checked on 35 inputs against two independent standards"* is a
+strictly better sentence than either *"correct"* or an apologetic silence. **A
+checked half is a result; it is only a weakness when it is described in the
+vocabulary of the proved half.**
+
+**Index:** MEAS-109, STMT-106, PROOF-58, PROOF-59.

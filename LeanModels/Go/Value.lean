@@ -107,11 +107,30 @@ frontend's job and that seven constructs are type-dependent. -/
 inductive GoVal where
   | boolV (b : Bool)
   | intV (k : IntKind) (n : Int)
-  | stringV (s : String)
+  /-- **A Go string is a BYTE SEQUENCE, not a sequence of characters.**
+  The specification is explicit — *"a string value is a (possibly empty)
+  sequence of bytes"* — and `s[i]` yields a `byte`, never a rune.
+
+  Modelling it as a Lean `String` would be wrong, and the corpus says so
+  concretely: `math/bits`' `rev8tab` contains **128 bytes ≥ 0x80** (of
+  256), and a Lean `Char` at code point 200 occupies **two** bytes in
+  UTF-8 — measured, `(String.singleton c).utf8ByteSize = 2`. So a Lean
+  `String` cannot hold that table with `len` 256 and `s[i]` byte-exact,
+  and `Reverse8` would be unmodellable while looking fine. -/
+  | stringV (bytes : List UInt8)
   | ptrV (a : Addr)
   | chanV (c : ChanId)
   | structV (fields : List (String × GoVal))
   | sliceV (elems : List GoVal)
+  /-- A **run-time error** value — what a run-time panic carries.
+
+  Go's `panic` from a run-time fault does NOT carry a string: it carries a
+  value implementing `runtime.Error`, which is an `error`. Modelling it as
+  `stringV` was wrong on that point, and it also cost: once a Go string
+  became a byte sequence, every such panic forced `String.toUTF8` through
+  the kernel and the `#guard` battery timed out. The faithful shape is
+  also the cheap one. -/
+  | runtimeErrorV (msg : String)
   | nilV
   deriving Repr, Inhabited
 
@@ -126,7 +145,12 @@ def mkInt (k : IntKind) (n : Int) : GoVal := .intV k (k.wrap n)
 strings `""`, and pointers, channels and slices `nil`. -/
 def zeroBool : GoVal := .boolV false
 def zeroInt (k : IntKind) : GoVal := .intV k 0
-def zeroString : GoVal := .stringV ""
+def zeroString : GoVal := .stringV []
+
+/-- Build a Go string from Lean text, via its UTF-8 bytes. Identity on
+ASCII, and byte-exact on everything else — which is the property the
+`String` representation could not offer. -/
+def ofString (s : String) : GoVal := .stringV s.toUTF8.toList
 
 end GoVal
 

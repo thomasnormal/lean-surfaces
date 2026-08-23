@@ -101,6 +101,28 @@ inductive Expr where
   | structLit (typeName : String) (fields : List (String × Expr))
   /-- `SelectorExpr` reading a struct field. -/
   | field (e : Expr) (name : String)
+  /-- A **CONVERSION**, `T(e)`.
+
+  Go's grammar spells a conversion exactly like a call, and `go/ast` gives
+  both a `CallExpr` — but they are different constructs, and
+  `docs/backlog/go.md` §G14 measured the cost of conflating them: 51,255
+  of the standard library's plain-identifier "calls" are conversions to a
+  predeclared type, 26.3% of them, and bucketing those as `environment`
+  put language work in the library's bucket.
+
+  **The disambiguation is the FRONTEND's job**, which is what
+  `docs/go-charter.md` §7.3 already rules for everything type-dependent:
+  the extractor sees the predeclared name (`isBuiltinTypeName`) and emits
+  this node. Keeping it a separate constructor also keeps `evalExpr`'s
+  `.call` arm thin — inlining the check there was measured to time out
+  four of the exemplar's proofs. -/
+  | convert (typeName : String) (e : Expr)
+  /-- `IndexExpr`. At this rung the operand is a STRING, and Go's rule is
+  that `s[i]` yields a **byte** — never a rune, and never a character.
+  Arrays, slices and maps are later rungs (`docs/backlog/go.md` §G14
+  measured the split: slices are 85.4% of `ArrayType`, fixed arrays
+  14.6%). -/
+  | index (x i : Expr)
   /-- `CallExpr` on a plain identifier. **The single biggest reach unlock
   in the census**: calls appear in 73.3% of the files rung 1 already
   reaches (`docs/backlog/go.md` §G6), so without them nothing with a
@@ -227,11 +249,11 @@ def binNum (op : BinOp) (k : IntKind) (x y : Int) : GoM GoVal :=
       if y = 0 then
         -- "Run-time panics": integer divide by zero panics. A DEFINED
         -- outcome, so ρ — never `undefined`.
-        panicWith 0 (.stringV "runtime error: integer divide by zero")
+        panicWith 0 (GoVal.runtimeErrorV "runtime error: integer divide by zero")
       else pure (GoVal.mkInt k (x / y))
   | .rem =>
       if y = 0 then
-        panicWith 0 (.stringV "runtime error: integer divide by zero")
+        panicWith 0 (GoVal.runtimeErrorV "runtime error: integer divide by zero")
       else pure (GoVal.mkInt k (x % y))
   | .eq => pure (.boolV (x == y))
   | .ne => pure (.boolV (x != y))
@@ -245,7 +267,7 @@ def binNum (op : BinOp) (k : IntKind) (x y : Int) : GoM GoVal :=
       -- outcome, so ρ. Another instance of the zero-UB posture: C leaves
       -- this undefined, Go names the panic.
       if y < 0 then
-        panicWith 0 (.stringV "runtime error: negative shift amount")
+        panicWith 0 (GoVal.runtimeErrorV "runtime error: negative shift amount")
       else
         let p : Int := 2 ^ y.toNat
         match op with
@@ -279,6 +301,28 @@ def isBuiltinTypeName (s : String) : Bool :=
   s == "rune" || s == "string" || s == "uint" || s == "uint8" ||
   s == "uint16" || s == "uint32" || s == "uint64" || s == "uintptr" ||
   s == "any"
+
+/-- Convert a value to a predeclared integer type. The result is reduced
+into the target's range by the target's own rule — which is
+`IntKind.wrap`, the same one function the spec gives for both
+signednesses (`docs/go-charter.md`'s zero-UB finding). -/
+def convertInt (name : String) (v : GoVal) : Option GoVal :=
+  match v with
+  | .intV _ n =>
+      match name with
+      | "int"     => some (GoVal.mkInt IntKind.int64 n)
+      | "int64"   => some (GoVal.mkInt IntKind.int64 n)
+      | "int32"   => some (GoVal.mkInt IntKind.int32 n)
+      | "int16"   => some (GoVal.mkInt IntKind.int16 n)
+      | "int8"    => some (GoVal.mkInt IntKind.int8 n)
+      | "uint"    => some (GoVal.mkInt IntKind.uint64 n)
+      | "uint64"  => some (GoVal.mkInt IntKind.uint64 n)
+      | "uint32"  => some (GoVal.mkInt IntKind.uint32 n)
+      | "uint16"  => some (GoVal.mkInt IntKind.uint16 n)
+      | "uint8"   => some (GoVal.mkInt IntKind.uint8 n)
+      | "byte"    => some (GoVal.mkInt IntKind.uint8 n)
+      | _ => none
+  | _ => none
 
 /-- Bind a call's parameters in the callee's frame. -/
 def bindParams : List String → List GoVal → GoM Unit
@@ -370,19 +414,35 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
       | _ =>
           refuseGo .unsupportedConstruct (SpecRef.spec "Selectors")
             "selector on a non-struct"
+  | f + 1, .convert tname e => do
+      match convertInt tname (← evalExpr prog f e) with
+      | some v => pure v
+      | none =>
+          refuseGo .unsupportedConstruct (SpecRef.spec "Conversions")
+            s!"conversion to '{tname}' is not stepped yet"
+  | f + 1, .index x i => do
+      match ← evalExpr prog f x, ← evalExpr prog f i with
+      | .stringV bytes, .intV _ n =>
+          if n < 0 then
+            -- "Index expressions": a negative or out-of-range index is a
+            -- run-time PANIC, a DEFINED outcome — never undefined.
+            panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
+          else
+            match bytes[n.toNat]? with
+            | some b => pure (.intV IntKind.uint8 (b.toNat : Int))
+            | none =>
+                panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
+      | _, _ =>
+          refuseGo .unsupportedConstruct (SpecRef.spec "Index_expressions")
+            "indexing outside this rung (string only)"
   | f + 1, .call name args => do
       match prog.find? (fun d => d.1 == name) with
       | none =>
-          if isBuiltinTypeName name then
-            -- A CONVERSION, not a call. A language construct this rung
-            -- does not step yet — so `unsupported`, never `environment`.
-            refuseGo .unsupportedConstruct (SpecRef.spec "Conversions")
-              s!"conversion to '{name}' is not stepped yet"
-          else
-            -- A call to something the program does not declare is
-            -- ENVIRONMENT: it retires by widening the modelled slice,
-            -- never by climbing a rung.
-            refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
+          -- A call to something the program does not declare is
+          -- ENVIRONMENT: it retires by widening the modelled slice, never
+          -- by climbing a rung. **Conversions do not reach here** — they
+          -- are `Expr.convert`, emitted by the frontend.
+          refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
       | some (_, params, body) =>
           if params.length != args.length then
             refuseGo .unsupportedConstruct (SpecRef.spec "Calls")

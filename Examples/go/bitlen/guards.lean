@@ -653,7 +653,7 @@ private def refusalClass (st : List Stmt) : Option String :=
   | .error (.unsupported c _ _) => some c.className
   | _ => none
 
-#guard refusalClass [.declare "y" (.call "int" [.lit (GoVal.mkInt uintK 7)])]
+#guard refusalClass [.declare "y" (.convert "notAType" (.lit (GoVal.mkInt uintK 7)))]
        == some "unsupported"
 #guard refusalClass [.declare "y" (.call "notAFunction" [])] == some "environment"
 

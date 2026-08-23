@@ -64,7 +64,7 @@ is what makes `GoVal.mkInt` safe to apply at every arithmetic site. -/
 /-! ### 1.2 The zero value — "The zero value" -/
 
 @[go_spec] theorem zero_bool : GoVal.zeroBool = GoVal.boolV false := rfl
-@[go_spec] theorem zero_string : GoVal.zeroString = GoVal.stringV "" := rfl
+@[go_spec] theorem zero_string : GoVal.zeroString = GoVal.stringV [] := rfl
 @[go_spec] theorem zero_int (k : IntKind) : GoVal.zeroInt k = GoVal.intV k 0 := rfl
 
 /-! ### 1.3 The language-version predicate — the versioning exemplar

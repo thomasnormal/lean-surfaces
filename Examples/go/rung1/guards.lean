@@ -291,7 +291,8 @@ panic. It therefore goes to ρ — it is catchable in principle by `recover`
 #guard (match (execSeq [] 64 [.declare "x" (.binary .quo (i64 1) (i64 0))]) ({} : GoWorld) with
         | .ok (.error p, _) =>
             match p.value with
-            | .stringV msg => msg == "runtime error: integer divide by zero"
+            -- A run-time panic carries a `runtime.Error`, not a string.
+            | .runtimeErrorV msg => msg == "runtime error: integer divide by zero"
             | _ => false
         | _ => false) == true
 

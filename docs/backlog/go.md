@@ -1706,3 +1706,99 @@ reason), and the census is what keeps it honest.
 80 `#guard`s in the exemplar.
 
 `fallthrough` deferred (4.0%); MM-oracle untouched.
+
+---
+
+## G15 — RUNG 4: a Go string is BYTES, and a conversion is its own node (2026-08-23)
+
+The rung §G14 redefined, built. The census kept correcting things on the
+way in, so the entry is mostly corrections.
+
+### THE CENSUS: `rev8tab` decides the value model
+
+`Len8`'s table holds only 0..8 — it would fit any string representation.
+**`rev8tab` holds 128 bytes ≥ 0x80 of its 256** (measured through
+`bits.Reverse8` itself, not by parsing the source, after a first parse
+miscounted the length as 240).
+
+And a Lean `Char` at code point 200 is **two** bytes in UTF-8 — measured,
+`(String.singleton c).utf8ByteSize = 2`. So a Lean `String` cannot hold
+that table with `len` 256 and `s[i]` byte-exact.
+
+**`GoVal.stringV (s : String)` was therefore wrong**, and the
+specification says so directly: *"a string value is a (possibly empty)
+sequence of bytes"*, with `s[i]` yielding a **byte**. It is now
+`stringV (bytes : List UInt8)`. Blast radius was 7 sites — the census
+checked before the change, and it is why the change was cheap.
+
+**Taking `Reverse8` now rather than deferring it is the point.** `Len8`
+alone would have passed under the wrong representation, and the value
+model would have been rebuilt after this rung was built on it.
+
+### A SECOND MODELLING ERROR, found by the cost
+
+Once strings were bytes, every run-time panic forced `String.toUTF8`
+through the kernel and four `#guard`s timed out. Chasing that surfaced a
+faithfulness bug: **Go's run-time panics do not carry a string.** They
+carry a value implementing `runtime.Error`. `GoVal` gained
+`runtimeErrorV`, which is both the faithful shape and the cheap one — the
+performance symptom was pointing at a correctness defect.
+
+### AND A THIRD — the conversion node
+
+§G14 landed conversions as a branch inside `evalExpr`'s `.call` arm.
+Measured, that was too expensive: **0 proof timeouts without the branch, 4
+with it**, and moving it onto the lookup's `none` path did not recover
+them. `set_option maxHeartbeats` did not take effect either.
+
+**The fix was the design, not the budget.** A conversion IS a different
+construct — Go's grammar merely spells it like a call, and `go/ast`
+conflates them — so it is now `Expr.convert`, its own node, emitted by the
+frontend from the predeclared-name list. That is what
+`docs/go-charter.md` §7.3 already rules for everything type-dependent: the
+frontend disambiguates, the walker steps. `evalExpr`'s `.call` arm is
+thin again, no heartbeat bump was needed, and the model says what it
+means.
+
+*This is the third time this rung a performance symptom turned out to be
+a modelling question.*
+
+### THE ACCEPTANCE CASE — `Examples/go/bits8/`
+
+    func Len8(x uint8) int       { return int(len8tab[x]) }
+    func Reverse8(x uint8) uint8 { return rev8tab[x] }
+
+vendored from `src/math/bits/bits.go`, and transcribed as
+`int(len8tab[x])` = a **conversion of a string index** — exactly the two
+constructs this rung added.
+
+**Both checked exhaustively over all 256 inputs, one guard each**, against
+two different standards:
+
+| function | standard | why it is independent |
+| --- | --- | --- |
+| `Len8` | **`bitLenSpec`** — §G13's PROVED spec | one side is a table lookup, the other a proved recursive specification, derived by different routes |
+| `Reverse8` | what `gc` printed | no proved spec exists, so the compiler is the standard |
+
+`Len8` against `bitLenSpec` is the nicer half: **the theorem proved for
+the crypto lane's hand-rolled loop now predicts the standard library's
+table-driven function**, and the two agree on every input.
+
+Three named high-byte rows (`Reverse8 1 = 128`, `255 = 255`, `129 = 129`)
+sit beside the sweep so a representation that lost the high bit fails by
+name and not only in bulk. Non-vacuity RUN on both: flipping the high-byte
+row and breaking the exhaustive sweep each make Lean report it.
+
+### Also in this rung
+
+String indexing yields a **byte** (`uint8`), and an out-of-range index is
+a **run-time panic** — a defined outcome, in ρ, never `undefined`.
+
+### Triad
+
+**Tenure GREEN**: `lake build` exit 0, `docs_check` **91/91**,
+`diff_test` **1,427 cases, 0 failed** (1,311 matched, 116 whitelisted),
+`script_corpus` **65 scripts, 0 failed**. Held the machine **62 s**.
+
+`fallthrough` deferred (4.0%); arrays and slices still deferred with
+§G14's split (slices 85.4%); MM-oracle untouched.

@@ -2677,6 +2677,13 @@ Three from Go's completed exemplar (`4bda5af`, on master).
 > real vendored program** outside Python. 22 theorems, `propext` /
 > `Quot.sound` / `Classical.choice` at worst, no `sorry`, no `native_decide`.
 
+> **ANNOTATION (Thomas's completion directive, 2026-08-23; entry NOT
+> rewritten).** This is a **WAYPOINT**. It describes an **exemplar**, never the
+> **tier** — Go's completion is measured by its stdlib reach instrument, and
+> that number is elsewhere and much smaller. §9.0 now carries the framing, and
+> §5.6 says it at the milestone itself. Nothing in the entry was wrong; what
+> needed fixing was **what a reader would infer next**.
+
 Read against §5.6's own rule it is the whole shape: a **suite** set the scope,
 **one exemplar** drove the proof library, and the exemplar was **chosen for its
 theorem**. **The property that makes it a milestone rather than a demonstration
@@ -3751,3 +3758,96 @@ case takes the success path** — so the check never changes: **name what the
 non-empty case would produce, and assert that.**
 
 **Index:** MEAS-148 … MEAS-153.
+
+## 2026-08-23-architecture-50 — The goal is COMPLETION, and a milestone is a waypoint
+
+**From Thomas directly, landed in §9 as strategy — the highest authority in the
+charter, and it reframes every item under §9.**
+
+> *"It's not enough to stop at 'we proved one function works.' The goal is to
+> COMPLETE the lean-surfaces project for the target languages. That's months of
+> work or more — don't call the goal done after a day."*
+
+**(1) §9.0 IS NEW, AND IT SITS FIRST IN THE STANDING STRATEGY.** Each tier's
+endgame is **full-spec support, measured by that tier's own conformance suite**
+— test262 (ES), gcc.c-torture (C), ACATS (Ada), sv-tests (SV), the Wasm spec
+suite, Go's stdlib reach instrument, and Python's refusal surface plus the
+flagship theorem. Landed as a table so no lane has to ask which number it is
+judged by.
+
+> **Every lane ledger carries its standing SPEC-COVERAGE NUMBER, updated per
+> landing, stamped with its sha.**
+
+**In the LEDGER, not only in a charter**, for the reason `-47` had already
+established from the other side: **a ledger is appended per landing so the
+number moves with the work, while a number in a charter is a copy the code
+cannot see.**
+
+**And I said what the instruments were for**, because that is the sentence that
+makes the section cohere rather than read as a new demand: suites driving scope
+(§5.6), coverage as `stated/(stated+refused+out-of-tier)` (§5.5), the four
+refusal causes with separate retirement schedules (§5.2), reach censuses
+(§9.0b) — **all of it exists to make that one number honest and re-derivable.**
+A completion goal without an instrument is a wish; **the instruments were built
+first, and this is the target they were built for.**
+
+**(2) A MILESTONE IS A WAYPOINT — and this lane published the milestone that
+prompted it.**
+
+> **"The exemplar is complete" describes an EXEMPLAR. It never describes a
+> TIER.**
+
+**The failure mode already had a name here**: it is §5.4's construct-versus-
+verdict naming law **at the scale of a project**. And the reason a waypoint
+reads as an ending is worth keeping, because *nothing about the waypoint is
+wrong*: a completed exemplar is the first thing in a tier that **feels
+finished** — theorem, clean axioms, a name. **The defect is entirely in what a
+reader infers next.** Hence the enforceable form:
+
+> **A claim of completion cites a SUITE NUMBER and its SHA, or it is a claim
+> about an artifact and not about a tier.**
+
+`2026-08-23-architecture-37` is **annotated** accordingly (not rewritten), and
+§5.6 now says *waypoint* at the milestone itself.
+
+**(3) DEFERRED-UNTIL-CONSUMER UNLOCKS ARE AUTHORIZED WHEN THE CONSUMER IS
+COMPLETION.** This document has been strict that *adding a snapshot without a
+consumer is designing against nothing* and *predicting a consumer is not having
+one*. One consumer is now standing:
+
+> **The spec surface IS a consumer. A deferral whose trigger was "when someone
+> needs it" is unlocked when COMPLETION needs it.**
+
+**First instance: Go's `go/types` extractor tier** — deferred while nothing
+consumed selector resolution, now required because the stdlib reach the tier is
+measured by runs through it (§5.4a's *value or reference* split already named it
+as the extractor's work).
+
+**And I landed the guard that keeps this from retiring a law that has paid for
+itself**: completion authorizes **the work**; the census still authorizes **the
+order**. *"Completion needs it eventually"* is true of every construct in the
+language and therefore **prices nothing** — the reach census says which unlock
+is next, and the conjunctive law says which ones must ship together.
+
+**(4) §9 — WAITING TIGHTENS: it is a property of a SLICE, never of a LANE.**
+
+> **A blocked slice waits. The lane's foreground moves to a new censused
+> corner.**
+
+First instance the Lean tier, whose upstream-blocked obligations keep their
+trigger and their standing guard duty while the lane's foreground is
+re-censused. **A lane with nothing to do because one slice is blocked has not
+measured its corpus** — §9.0b's partial order read as a work queue: the blocked
+slice is one node, and **a census that produced only one node was not a
+census.**
+
+**THIS LANE'S OWN STANDING NUMBER, stated rather than skipped.** The
+architecture lane models no language and has no conformance suite, so it has no
+spec-coverage number; **recording the exemption is the point** (§5.4b: a
+documented exception is an exception, an omission is an undocumented one). What
+it carries instead, per landing: **`docs_check` marked-block count** (91/91
+today) and the **law-index id ranges** minted, which are the closest thing this
+lane has to coverage — *how much of the tree's checkable prose is checked, and
+where each law durably lives.*
+
+**Index:** MEAS-154 … MEAS-159.

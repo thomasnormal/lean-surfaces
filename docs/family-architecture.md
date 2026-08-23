@@ -5654,6 +5654,10 @@ this section existed to produce** (Go, `4bda5af`, on master):
 > `propext` / `Quot.sound` / `Classical.choice` at worst, no `sorry`, no
 > `native_decide`.
 
+**IT IS A WAYPOINT, AND §9.0 IS WHY THAT WORD MATTERS**: this describes an
+**exemplar**, never the **tier**. Go's completion is measured by its stdlib
+reach instrument, and that number is elsewhere and much smaller.
+
 Read against what this section asks for, it is the whole shape: a **suite** set
 the tier's scope, **one exemplar** drove the proof library, and the exemplar was
 **chosen for its theorem** — a function-level statement about a program the tier
@@ -7360,6 +7364,86 @@ lane's implementation is only as good as its reading, and a defect in one
 reading is invisible to every other lane. Every item below moves a rule
 from prose into something executable.
 
+### 9.0 THE GOAL IS COMPLETION — and a milestone is a WAYPOINT
+
+**From Thomas, 2026-08-23. This is the highest authority in this document, and
+it reframes every item below it.**
+
+> *"It's not enough to stop at 'we proved one function works.' The goal is to
+> COMPLETE the lean-surfaces project for the target languages. That's months of
+> work or more — don't call the goal done after a day."*
+
+**WHAT "DONE" MEANS IS PER TIER, AND IT IS MEASURED BY THAT TIER'S OWN
+CONFORMANCE SUITE.** Each lane's endgame is **full-spec support**, and the
+number that says how far away it is comes from the suite the tier is judged by:
+
+| tier | the suite that measures completion |
+| --- | --- |
+| **ECMAScript** | **test262** |
+| **C** | **gcc.c-torture** |
+| **Ada** | **ACATS** |
+| **SystemVerilog** | **sv-tests** |
+| **WebAssembly** | **the Wasm spec suite** |
+| **Go** | **the stdlib reach instrument** |
+| **Python** | **the refusal surface + the flagship theorem** |
+
+> **EVERY LANE LEDGER CARRIES ITS STANDING SPEC-COVERAGE NUMBER, UPDATED PER
+> LANDING, STAMPED WITH ITS SHA.**
+
+That is the stamp discipline (MEAS-10) applied to the **one** number that says
+how far the tier is from done — and it belongs in the **ledger**, not only in a
+charter, for the reason §7.2 already gives: **a ledger is appended per landing,
+so the number moves with the work, while a number in a charter is a copy the
+code cannot see.**
+
+**AND THIS IS WHAT THE INSTRUMENTS WERE FOR.** Everything this document has been
+minting — suites driving scope (§5.6), coverage as
+`stated / (stated + refused + out-of-tier)` (§5.5), the four refusal causes and
+their separate retirement schedules (§5.2), reach censuses (§9.0b) — exists to
+make that number **honest and re-derivable**. A completion goal without an
+instrument is a wish; the instruments were built first, and this is the target
+they were built for.
+
+**A MILESTONE IS A WAYPOINT, AND THE REGISTER RECORDS IT AS ONE.**
+
+> **"The exemplar is complete" describes an EXEMPLAR. It never describes a
+> TIER.**
+
+**The failure mode already has a name here**: it is the construct-versus-verdict
+naming law (§5.4) at the scale of a project. *"First full function-level theorem
+about a vendored program"* names **what was achieved** and stays true; *"the tier
+is done"* would be a claim about **a suite number**, and only a suite number can
+settle it.
+
+**And the reason a waypoint reads as an ending is worth stating, because
+nothing about the waypoint is wrong**: a completed exemplar is the first thing
+in a tier that **feels finished** — it has a theorem, clean axioms, and a name.
+**The defect is entirely in what a reader infers next**, which is why the
+correction belongs in the register rather than in the landing.
+
+> **THE OPERATIONAL TEST: a claim of completion cites a SUITE NUMBER and its
+> SHA, or it is a claim about an artifact and not about a tier.**
+
+**DEFERRED-UNTIL-CONSUMER UNLOCKS ARE AUTHORIZED WHEN THE DEFERRAL'S CONSUMER
+IS COMPLETION ITSELF.** This document has been strict that *adding a snapshot
+without a consumer is designing against nothing* and *predicting a consumer is
+not having one* (§3.4). Under a completion goal, one consumer is now standing:
+
+> **THE SPEC SURFACE IS A CONSUMER. A deferral whose trigger was "when someone
+> needs it" is unlocked when COMPLETION needs it.**
+
+**First instance: Go's `go/types` extractor tier** — deferred while nothing
+consumed selector resolution, and now required, because the stdlib reach the
+tier is measured by runs through it (§5.4a's *value or reference* split names it
+as the extractor's work).
+
+**And the guard that keeps this from licensing speculative building, because it
+would otherwise retire a law that has paid for itself:** completion authorizes
+**the work**; the census still authorizes **the order** (§9.0b). *"Completion
+needs it eventually"* is true of every construct in the language and therefore
+prices nothing — **the reach census says which unlock is next, and the
+conjunctive law says which ones must ship together.**
+
 **AND ONE OBSERVATION ABOUT WHY CORPUS-DRIVEN SELECTION WORKS, recorded because
 it reads as luck and is not** (Go, `4bda5af`). The exemplar was reachable at all
 because `bigmod.bitLen` **hand-rolls its loop to avoid the lookup table**
@@ -7394,6 +7478,20 @@ not a feeling**: *a **DRIFT** in the obligation census's `real` count, or
 which is **PR #43 landing**, and unblocks 15 of 24.*
 
 > **WAITING NAMES AN EXECUTABLE TRIGGER, OR IT IS A EUPHEMISM FOR STOPPED.**
+
+**AND UNDER §9.0's COMPLETION GOAL THE RULE TIGHTENS: WAITING IS A PROPERTY OF A
+SLICE, NEVER OF A LANE.**
+
+> **A blocked slice waits. The LANE's foreground moves to a new censused
+> corner.**
+
+**First instance: the Lean tier** — the upstream-blocked obligations keep their
+trigger and their standing guard duty, and the lane's foreground work is
+re-censused rather than suspended. **A lane that has nothing to do because one
+slice is blocked has not measured its corpus**, which is §9.0b's partial order
+read as a work queue: the blocked slice is one node, and a census that produced
+only one node was not a census.
+
 
 **The trigger has to be something a periodic run can ANSWER**, which is why the
 form matters: *"when upstream is ready"* is unfalsifiable and ages into silence;

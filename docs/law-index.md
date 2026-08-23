@@ -202,6 +202,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-151 | unit rows test the CALLEE's arguments; only the seam tests the CALL SITE | `docs/family-architecture.md §5.4b` |
 | MEAS-152 | a transform on NOTHING produces nothing and reports success doing it | `docs/family-architecture.md §5.4b` |
 | MEAS-153 | when one predicate SUBSUMES another, ask it FIRST | `docs/family-architecture.md §5.4a-i` |
+| MEAS-154 | THE GOAL IS COMPLETION — full-spec support, measured by the tier's own conformance suite | `docs/family-architecture.md §9.0` |
+| MEAS-155 | every lane ledger carries its standing SPEC-COVERAGE number, per landing, stamped | `docs/family-architecture.md §9.0` |
+| MEAS-156 | a milestone is a WAYPOINT — "the exemplar is complete" never describes a TIER | `docs/family-architecture.md §9.0` |
+| MEAS-157 | a completion claim cites a SUITE NUMBER and its SHA, or it is about an artifact | `docs/family-architecture.md §9.0` |
+| MEAS-158 | THE SPEC SURFACE IS A CONSUMER — completion unlocks a deferral; the census still orders it | `docs/family-architecture.md §9.0` |
+| MEAS-159 | WAITING is a property of a SLICE, never of a LANE | `docs/family-architecture.md §9` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

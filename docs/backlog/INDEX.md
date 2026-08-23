@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**218 entries across 16 lanes.** Regenerate with
+**220 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-architecture-50` | The goal is COMPLETION, and a milestone is a waypoint | architecture |
 | `2026-08-23-architecture-49` | A full build is its own root; and 27 green rows that could not see the call site | architecture |
 | `2026-08-23-architecture-48` | A witness must fail for the reason it names; and INAPPLICABLE is not OPTIONAL | architecture |
 | `2026-08-23-qol-47` | increment greens, phase 1: a green may rest on a named green | qol |
@@ -227,6 +228,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G20` | FIXED ARRAYS: the value model that needed no new constructor, and the frontier stops being a construct (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 | `G19` | RANGE IS NOT A SECOND LOOP; and the census retracts the `+0` law (2026-08-23) | go |
 | `G18` | THE SLICE RUNG: a header, not a list, and the row a copy model cannot state (2026-08-23) | go |
@@ -239,4 +241,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**26 heading(s) do not use the §9.5 id scheme** and sort last.
+**27 heading(s) do not use the §9.5 id scheme** and sort last.

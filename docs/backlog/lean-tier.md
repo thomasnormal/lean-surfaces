@@ -459,13 +459,10 @@ precisely why they can be validated before the reconciliation lands.
 proved outright by a two-case induction rather than up to definitional equality.
 Its consumer is `TrProj.uniq`, the cheapest of the seven.
 
-**Typechecking is QUEUED, not done.** The ticketed build (A9 FIFO; A11, since all
-Lean execution is now locked; A14 scoped rather than full-tree; A15's
-per-process line) sat 6th in a six-deep queue at the end of this dispatch and had
-not reached the head. The definition is therefore **written and
-instrument-verified sorry-free, but NOT yet typechecked**, and that is stated
-rather than implied. The build script is `scratchpad/leantier-m3.sh` and its log
-`scratchpad/leantier-m3.log`.
+**Typechecking: GREEN — see entry 6**, which supersedes this paragraph. (As
+written, this entry said the typecheck was queued and not done; it completed
+later the same night, twice, and the correction is recorded rather than edited
+away.)
 
 ### Hygiene
 
@@ -483,3 +480,86 @@ inductives. A large share of the open work is **specification gaps wearing proof
 obligations' clothes**, and the triage rule that catches them — *before asking
 whether a proof is hard, ask whether the model can conclude it at all* — is now
 stated at the top of the charter.
+
+
+---
+
+## 2026-08-23-lean-tier-6 — `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect
+
+### The verdict
+
+**`lake env lean Lean4Lean/Verify/Typing/ProjParam.lean` — exit 0, no diagnostics.**
+Verified by **two independent runners**, which is more than was asked for and is
+the only reason the first one counts at all (see below):
+
+| runner | tenure | build | typecheck |
+| --- | --- | --- | --- |
+| the retired private script | lock after 3807 s | `lake build` exit 0, **115 s** | **exit 0, 1 s** |
+| **`tools/triad.sh`** | lock after **6496 s** as `leantier 71863` | exit 0, 1 s (already built) | **green, 8 s** |
+
+The triad's one-second build is not a no-op that skipped the work: the earlier
+run had already produced `.lake` (405 MB), so `lake build` had nothing to do. The
+gate is the load-bearing part, and it re-ran `lake env lean` **on the current
+source** (mtime 21:19, gate 01:11) for 8 s with no output.
+
+**The landed artifact is byte-identical to the file that was typechecked** —
+`diff -q` between `docs/lean4lean-trproj-parametric.lean` and the clone's copy is
+clean. Audited with this lane's own obligation instrument: **0 real sorries
+(3 raw, all prose), 0 axioms**, 2 theorems, 3 defs, 2 structures, 1 inductive.
+
+So the parametric `TrProj` — minimal assumed interface, sound side condition at
+its centre, arena and #14807/#14806 cited as witnesses — **compiles against
+lean4lean at its own pin**, and `ArgFromRight.det` / `ProjField.det` prove the
+computational half functional.
+
+### The private script is retired (A16.2), and the defect was mine three times
+
+`scratchpad/leantier-m3.sh` and `scratchpad/leantier-inch2.sh` are **deleted**.
+Both wrote the owner file as `<lane> lake pid <pid> (<note>)`, so the LAST field
+was `TrProj)` / `lean4lean)` — **a paren, not a pid**, and a staleness check
+reading `$NF` parses garbage. `tools/triad.sh`'s own header already cites the
+`lean4lean)` instance as its exemplar. That is A5 read and then implemented
+wrongly, by this lane, twice — which is the argument for the shared script
+stated better than any advocacy could.
+
+**One migration hazard worth passing on: SIGKILL bypasses the EXIT trap**, so the
+killed script's queue ticket was orphaned and had to be removed by hand. Anyone
+retiring a ticket-holding script owes that second step or leaves a phantom at the
+queue head. (In this instance the process was already dead — it had completed at
+20:26:27 and released cleanly — so the kill hit nothing live, but the ticket
+cleanup was still required.)
+
+Under `triad.sh` the owner line reads `leantier 71863`: lane, then pid, pid last.
+The defect is gone because the format is no longer this lane's to get wrong.
+
+### What `triad.sh` could not express, reported rather than worked around
+
+`--classify` **cannot be used against a foreign checkout**, and there are two
+independent reasons:
+
+1. **The class floor hard-wires this repo's gates.** `gate_floor` yields
+   `docs_check` / `diff_test`, which do not exist in the lean4lean clone, so
+   every `--classify` run there fails on gates that are meaningless in it. There
+   is no `--no-floor`.
+2. **Classification diffs against the clone's `origin/master`** — which for a
+   foreign checkout is *upstream's* master. Measured:
+   `CLASSIFY: NOTHING STAGED OR COMMITTED against origin/master — this measured
+   nothing`, with `origin -> git@github-work:digama0/lean4lean`. Correct
+   behaviour, wrong frame.
+
+**What was NOT missing**, checked rather than assumed: `--dir` genuinely
+relocates the build (`cd "$CLONE"`, then `lake build`), and elan resolves the
+toolchain per directory from `lean-toolchain`, so the clone's own
+`v4.33.0-rc2` is picked up with no flag. The foreign-toolchain concern was a
+non-issue.
+
+**The workaround is legitimate, not a private copy:** without `--classify`,
+`--gates` fully replaces the default (`if [ -z "$GATES" ]`), so
+`--lane leantier --dir <clone> --gates 'lake env lean …'` runs exactly the two
+phases the retired script ran — full `lake build`, then the typecheck — inside
+one proper tenure, with no reduction in coverage. **Suggested addition for the
+QoL lane** (not implemented here): a `--foreign` flag that keeps the tenure,
+lock and RSS discipline, suppresses the class floor, runs only the lane's
+`--gates`, and prints a coverage statement saying *foreign checkout, gates as
+given, class floor not applicable*. `--against` already exists and would cover
+reason 2 once the floor is suppressible.

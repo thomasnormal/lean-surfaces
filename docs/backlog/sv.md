@@ -209,3 +209,35 @@ dangling-citation rows are ACCEPTED **PARTIAL on purpose** — they will be
 corrected to say the fixtures are unreproducible pending simulator access,
 because **fabricating the missing Xcelium table to satisfy a provenance
 audit would be that audit's own defect one level up**.
+
+
+---
+
+## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-33` (SV lane's to renumber or close)
+
+*Filed as its own immediate commit (§9.5a's tightening). Named rather than
+edited: a dated measurement in another lane's document is the lane's own record
+of a moment, and correcting it in passing would turn it into a record of mine.*
+
+### `docs/sv-charter.md:138`'s VENV MEASUREMENT WILL QUIETLY STOP BEING TRUE
+
+The line prices the absent frontend: *"a clean `python3.12 -m venv` +
+`pip install pyslang` yields **pyslang 11.0.0** — inside the extractor's
+declared 11.x range."* **That was a measurement of an unpinned resolver**, so it
+is a statement about **what PyPI served that day**, not about the command. At
+pyslang's next release the same command yields a different version and the
+sentence is false — silently, with nothing failing.
+
+This is the same input that made the round-trip gate an armed bomb once it went
+unconditional (`docs/family-architecture.md` §5.4b; `582529d`, `b499afa`): all
+21 envelopes stamp the **point** version, and the interim pin is temporary by
+design.
+
+**Asked for, and it is small:** either **stamp the line** — *"11.0.0, resolved
+`<date>`, unpinned"* — so a stale number is **readable** rather than wrong, or
+carry it forward with the durable family stamp when Landing A lands. **The fix
+is the stamp, not the refresh** (`docs/backlog/architecture.md`
+`2026-08-23-architecture-24`), and §0's *"every extractor claim was made through
+that venv"* inherits whatever this line says.
+
+*Renumber into your sequence or close it — the call is yours.*

@@ -265,15 +265,42 @@ run_verdict() {
 # §0.1 II(a): a declaration whose STATEMENT failed prints "does not depend on
 # any axioms" — CLEANER than the truth.  So the axiom lines are reported only
 # from a run that was a measurement, and otherwise refused BY NAME.
-axiom_report() {                # output, trustworthy(0/1)
-  local f="$1" ok="$2"
-  grep -qE "depend.* on|does not depend on any axioms" "$f" 2>/dev/null || return 0
+# `printf '%s'` WITHOUT A TRAILING NEWLINE loses the last element: `read`
+# returns non-zero at a partial final line, so the loop body never runs for it.
+# `--axioms 'A,B'` appended only A; `--axioms 'OneName'` appended NOTHING AT
+# ALL — and since 9dae608 made this flag the evidence standard, a single-name
+# axiom claim through it has been unverifiable and looked green.
+append_axiom_prints() {         # file, "a,b,c" -> appends, echoes the COUNT
+  local file="$1" names="$2" d n=0
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    printf '#print axioms %s\n' "$d" >> "$file" || return 1
+    n=$((n + 1))
+  done <<NAMES
+$(printf '%s\n' "$names" | tr ',' '\n')
+NAMES
+  echo "$n"
+}
+
+axiom_report() {                # output, trustworthy(0/1), names REQUESTED
+  local f="$1" ok="$2" want="${3:-0}" found
+  found="$(grep -cE "depends on axioms|does not depend on any axioms" "$f" 2>/dev/null || true)"
   if [ "$ok" != "0" ]; then
     printf '    axioms         NOT REPORTED — this run was not a measurement, and a failed\n'
     printf '                   STATEMENT prints "does not depend on any axioms" (§0.1 II(a))\n'
     return 0
   fi
-  printf '    axioms         (from a clean elaboration):\n'
+  # ABSENCE IS NOT ZERO.  The old guard opened with `grep -q … || return 0`,
+  # so a run that printed NO axiom line at all said nothing and left the
+  # verdict green — this tool's own law (a success signal that survives the
+  # failure it should report) firing on the guard built to enforce it.
+  if [ "$found" != "$want" ]; then
+    printf '    axioms         REFUSED — %s name(s) requested, %s axiom line(s) printed.\n' "$want" "$found"
+    printf '                   ABSENCE IS NOT ZERO: a name that produced no line was never\n'
+    printf '                   checked, so a verdict quoting this run is unverifiable.\n'
+    return 1
+  fi
+  printf '    axioms         %s of %s requested (from a clean elaboration):\n' "$found" "$want"
   grep -E "depends on axioms|does not depend on any axioms" "$f" | cut -c1-96 | sed 's/^/      /'
 }
 
@@ -668,13 +695,36 @@ TOML
   printf "'thm' does not depend on any axioms\nf.lean:1:1: error: unknown identifier\n" > "$v/ax-bad.out"
   run_verdict 0 "$v/ax-bad.out" >/dev/null; vok=$?
   check "a failed run REFUSES to report axioms" \
-        "$(axiom_report "$v/ax-bad.out" "$vok" | grep -c 'NOT REPORTED')" "1"
+        "$(axiom_report "$v/ax-bad.out" "$vok" 1 | grep -c 'NOT REPORTED')" "1"
   check "  ...citing the mode table"       \
-        "$(axiom_report "$v/ax-bad.out" "$vok" | grep -c '§0.1 II(a)')" "1"
+        "$(axiom_report "$v/ax-bad.out" "$vok" 1 | grep -c '§0.1 II(a)')" "1"
   printf "'thm' depends on axioms: [propext, Classical.choice, Quot.sound]\n" > "$v/ax-ok.out"
   run_verdict 0 "$v/ax-ok.out" >/dev/null; vok=$?
   check "a clean run DOES report them"     \
-        "$(axiom_report "$v/ax-ok.out" "$vok" | grep -c 'propext')" "1"
+        "$(axiom_report "$v/ax-ok.out" "$vok" 1 | grep -c 'propext')" "1"
+
+  # ---- THE DROPPED NAME.  `printf '%s'` with no trailing newline loses the
+  # LAST element, so `--axioms 'OneName'` appended nothing and the absence was
+  # silent.  Measured by the fuelMono lane; these rows are the regression.
+  ax="$tmp/ax"; mkdir -p "$ax"
+  : > "$ax/one.lean"
+  check "a SINGLE name is appended, not dropped" "$(append_axiom_prints "$ax/one.lean" 'OneName')" "1"
+  check "  ...and the line is really there"      "$(grep -c '#print axioms OneName' "$ax/one.lean")" "1"
+  : > "$ax/two.lean"
+  check "the LAST of several is not dropped"     "$(append_axiom_prints "$ax/two.lean" 'A,B')" "2"
+  check "  ...and B is the one that used to go"  "$(grep -c '#print axioms B' "$ax/two.lean")" "1"
+  : > "$ax/three.lean"
+  check "an empty element is skipped, not counted" "$(append_axiom_prints "$ax/three.lean" 'A,,B')" "2"
+
+  # ---- ABSENCE IS NOT ZERO: fewer lines than names must REFUSE, loudly.
+  printf "'a' depends on axioms: [propext]\n" > "$ax/one.out"
+  check "1 requested, 1 printed -> reported"  "$(axiom_report "$ax/one.out" 0 1 | grep -c 'propext')" "1"
+  check "2 requested, 1 printed -> REFUSED"   "$(axiom_report "$ax/one.out" 0 2 | grep -c 'REFUSED')" "1"
+  check "  ...and it exits nonzero"           "$(axiom_report "$ax/one.out" 0 2 >/dev/null; echo $?)" "1"
+  check "  ...saying absence is not zero"     "$(axiom_report "$ax/one.out" 0 2 | grep -c 'ABSENCE IS NOT ZERO')" "1"
+  : > "$ax/none.out"
+  check "1 requested, NONE printed -> REFUSED" "$(axiom_report "$ax/none.out" 0 1 | grep -c 'REFUSED')" "1"
+  check "  ...the case that used to be SILENT" "$(axiom_report "$ax/none.out" 0 1 >/dev/null; echo $?)" "1"
 
   unset LS_MOCK_LOAD LS_MOCK_SWAP LS_MOCK_LEAN_CHILD
   ITERATE=0; LANE=""
@@ -794,12 +844,10 @@ if [ -n "$AXIOMS" ]; then
   AXCOPY="$(mktemp "${TMPDIR:-/tmp}/check-axioms.XXXXXX.lean")" || die "no temp file"
   cat "$CLONE/$REL" > "$AXCOPY" || die "cannot copy '$REL'"
   printf '\n' >> "$AXCOPY"
-  printf '%s' "$AXIOMS" | tr ',' '\n' | while IFS= read -r d; do
-    [ -n "$d" ] || continue
-    printf '#print axioms %s\n' "$d" >> "$AXCOPY"
-  done
+  AX_WANT="$(append_axiom_prints "$AXCOPY" "$AXIOMS")" || die "cannot write '$AXCOPY'"
+  [ "${AX_WANT:-0}" -gt 0 ] || die "--axioms '$AXIOMS' named nothing to print"
   RUN_TARGET="$AXCOPY"
-  echo "  AXIOMS   appended #print axioms for: $AXIOMS (run from a temp copy, so"
+  echo "  AXIOMS   appended $AX_WANT #print axioms for: $AXIOMS (run from a temp copy, so"
   echo "           error paths below name that copy rather than $REL)"
 fi
 
@@ -812,7 +860,12 @@ RUN_RC="${PIPESTATUS[0]}"
 echo
 run_verdict "$RUN_RC" "$RUN_LOG"
 VERDICT_OK=$?
-[ -n "$AXIOMS" ] && axiom_report "$RUN_LOG" "$VERDICT_OK"
+if [ -n "$AXIOMS" ]; then
+  if ! axiom_report "$RUN_LOG" "$VERDICT_OK" "${AX_WANT:-0}"; then
+    echo "  VERDICT  NOT A MEASUREMENT: the axiom section refused (see above)"
+    VERDICT_OK=1
+  fi
+fi
 [ -n "$AXCOPY" ] && rm -f "$AXCOPY"
 rm -f "$RUN_LOG"
 

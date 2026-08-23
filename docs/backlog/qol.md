@@ -1933,3 +1933,61 @@ prose about one ignored, and the sibling walk with its line counts, theorem
 split, and a non-edition directory correctly not treated as a sibling.
 Doc-first: §2.4 names the gate and carries the C23 finding; the §7 tools list
 and three law-index rows updated. `docs_check` **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-28 — `--axioms` dropped the last name, and the absence was silent
+
+Reported by the fuelMono lane, reproduced immediately, and it is my defect.
+
+`printf '%s' "$AXIOMS" | tr ',' '\n' | while IFS= read -r d` — **without a
+trailing newline `read` returns non-zero on the final partial line, so the loop
+body never runs for it.** Measured:
+
+* `--axioms 'A,B'` appended **only `A`**;
+* `--axioms 'OneName'` appended **nothing at all**.
+
+And `axiom_report` opened with `grep -q … || return 0`, so a run that printed
+**no axiom line whatever** said nothing and left the verdict `TRUSTWORTHY`.
+A bogus name never reached Lean, so it never errored — where a plain
+`lake env lean` on the same `#print axioms` is exit 1.
+
+**Since `9dae608` made this flag the evidence standard, every single-name
+`--axioms` verdict has been unverifiable and looked green.**
+
+### It is this tool's own law, firing on the guard built to enforce it
+
+`qol-19` landed `--axioms` under the statement *"a success signal that survives
+the failure it should report"*. The guard then did exactly that: the absence of
+the evidence it existed to collect **read as success**. `cc497eb`'s law —
+absence is not zero — was needed against the code that quoted it.
+
+### The fix, and the guard that makes it self-reporting
+
+`printf '%s\n'`, extracted into `append_axiom_prints` which **returns the
+count appended**; and `axiom_report` now takes the number of names **requested**
+and **refuses loudly** when the axiom lines printed do not equal it:
+
+```
+    axioms         REFUSED — 2 name(s) requested, 1 axiom line(s) printed.
+                   ABSENCE IS NOT ZERO: a name that produced no line was never
+                   checked, so a verdict quoting this run is unverifiable.
+```
+
+A refusal **voids the verdict** (`NOT A MEASUREMENT: the axiom section
+refused`), so the flag can no longer report green while under-collecting. A
+clean run now states its own coverage — `axioms 2 of 2 requested` — rather than
+printing lines whose completeness the reader had to assume.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **85 ok, 0 failed** (74 → 85, **11 new**) — the
+single name appended and present, the last of several not dropped, an empty
+element skipped without being counted, and the count guard in four states:
+1-of-1 reported, 2-requested-1-printed refused with a nonzero exit and the
+absence-is-not-zero line, and **1-requested-none-printed refused — the case
+that used to be silent.** No Lean executed; the guard is a function of
+`(log, verdict, count)`, which is also the only way to test the failing cases.
+
+**Owed to every lane:** any `--axioms` verdict quoted since `9dae608`,
+especially a single-name one, should be re-run before it is relied on.

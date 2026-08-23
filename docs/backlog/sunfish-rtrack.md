@@ -1035,3 +1035,59 @@ green)`; module built in 1.1s.
 Nine theorems, all `[propext, Classical.choice, Quot.sound]` — the three seam
 lemmas are absent from the ledger, which is the deletion showing up as evidence
 rather than as a claim.
+
+## 2026-08-23-sunfish-rtrack-10 — `GenEmits.forGenRound` on the rebuild: R2's chain step closes
+
+`monadic_gen.lean` §6. Eight theorems, all founded in the scratch loop first.
+This is the last interpreter-facing piece R2 needed; what remains of the chain is
+the caller's induction, not more contact with the interpreter.
+
+### The drain is a RELATION, and that removes a definition
+
+The trunk states "what a continuation yields" through `drainGen`. That function
+lives in `VCGen.lean`, NOT `Semantics.lean` — it is proof-layer scaffolding, not
+an interpreter primitive, which this lane initially mis-stated as "the rebuild
+lacks a continuation-drain". It lacks nothing; the scaffolding is simply mine to
+choose.
+
+So `GenYieldsM` is an inductive RELATION whose two constructors are the two
+things a continuation can do, each carrying its own single-fuel witness. The
+relation IS the drain. It pays twice: no `drainGen_mono` to prove, and no
+fuel-indexed threshold to thread, because each step's witness is transported by
+`Mono.lean` only where it is actually needed. A definition removed rather than
+ported is the cheapest kind of progress available on a re-founding.
+
+### What landed
+
+`GenYieldsM`, `GenEmitsM` and its algebra (`.trans`, `.nil`), the silent-transfer
+lemma `GenYieldsM.of_silent` (only the HEAD step is rewritten — the rest of the
+derivation carries over untouched), `GenEmitsM.silent`, the two `forGen` frame
+steps (`genSilent_forGenCons` / `genSilent_forGenDone`), and `forGenRound`
+itself, assembled exactly as the trunk assembles it: a silent prefix over a
+transitive composition.
+
+As on the trunk, the loop is deliberately NOT one induction: an infinite inner
+generator has no remainder list to induct on, so rounds are chained by the caller
+and `hrest` is where its induction or its `break` goes.
+
+### One spelling error worth recording
+
+`GenEmitsM.silent`'s premise was first written in the TRUNK's argument order —
+`GenSilent m st k st₁ k₁`, states and continuations interleaved — while this
+file's own `GenSilentM` takes both states first. The elaborator caught it as an
+`HAppend GenCont GenCont FrameState` instance failure, which names the symptom
+and not the cause. The lesson is the computed-shape law pointed inward: a lane
+re-founding a layer copies its own predecessor's CALL SHAPES from memory, and
+those are exactly what the re-founding is entitled to change.
+
+### Status — GREEN
+
+Tenure of 2026-08-23 23:32 on master `6d6ba2e`, class `tier`, scoped build.
+`LOCK ACQUIRED after 0s as 'r3c_monadic 40926'` → `LOCK RELEASED (mine)`, no
+`TREE CHANGED SINCE ENQUEUE` (`tree at enqueue: 4dd9c190d3b3`, matched by
+`git -C <worktree> write-tree`). `BUILD GREEN`, `TRIAD DONE (build exit 0, gates
+green)` — and the class floor has GROWN since the last landing: `docs_check`,
+`diff_test`, and now `refusal_census --whitelist`. Module built in 1.3s.
+
+Seventeen theorems in the file, every one `[propext, Classical.choice,
+Quot.sound]`. No `sorry`, no `native_decide`.

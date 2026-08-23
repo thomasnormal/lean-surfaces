@@ -4921,12 +4921,55 @@ that root**. A chain whose root is scoped does not satisfy it, and the
 coverage line says which case it is rather than leaving the reader to
 reconstruct it.
 
-**THE LEDGER IS PER-CLONE, AND THAT IS THE POINT.** Greens are recorded in
-`.git/triad-greens` — untracked, so it can never conflict; inside the git
-directory, so it survives rebase and checkout. A green recorded in clone A is
-invisible in clone B because it is not VERIFIABLE from clone B: the build
-cache, toolchain and tree state that produced it are not there. **Evidence
-does not travel by assumption.** Its absence is honest, not a limitation.
+**THE LEDGER IS PER WORKING DIRECTORY, AND THAT IS THE POINT.** Greens are
+recorded in `.git/triad-greens` — untracked, so it can never conflict; inside
+the git directory, so it survives rebase and checkout. A green recorded in one
+working directory is invisible in another because it is not VERIFIABLE there:
+the build cache, toolchain and tree state that produced it are not present.
+**Evidence does not travel by assumption.** Its absence is honest, not a
+limitation.
+
+**AND THE SCOPING IS `--git-dir`, NEVER `--git-common-dir` — "per-clone" is the
+wrong unit and this sentence used to say it.** A **linked worktree shares the
+common git dir and has its OWN `.lake`**, so a ledger scoped to the common dir
+would offer clone-wide greens to a worktree that cannot reproduce them.
+
+> **THE CACHE IS PART OF WHAT PRODUCED THE GREEN.** Scope the evidence to the
+> directory that holds it.
+
+That is the unit family (§5.4a) arriving in git plumbing: **`--git-dir` and
+`--git-common-dir` differ on exactly the case the feature exists for**, and the
+plausible-looking one is wrong. A worktree is the standard way this repository
+takes a pristine baseline (§5.4b's re-baseline norm), so the wrong scope would
+have misfired precisely where lanes are most careful.
+
+**AND ONLY GREENS ARE RECORDED — REDS RECORD NOTHING.**
+
+> **A LEDGER OF ATTEMPTS IS A LOG, AND A LOG IS NOT EVIDENCE OF A VERDICT.**
+
+The ledger's entire purpose is to be **citable as a base**, and only a green can
+be cited; an attempt history answers *"what happened here?"*, which is a
+different question with a different consumer (the build log, §7.2, which is now
+identified and attributable). **Mixing them would make the ledger's own name a
+claim it cannot keep** — a reader who found reds in a file called `triad-greens`
+would be right to distrust everything else in it.
+
+**AND THE MODEL'S FIRST THEOREM, which survived its own implementation bug:**
+
+> **A FULL BUILD IS ITS OWN ROOT, HOWEVER IT WAS REACHED.**
+
+An increment whose build was **not narrowed** is a full build, whatever flags
+produced it — so it starts a new chain rather than extending an old one.
+Measured the hard way: such a run was recorded **at `depth=1` under an older
+root** until the full-build test was moved **first**. **The invariant was right
+and the implementation asked the questions in the wrong order** — which is the
+distinction worth keeping, because the fix is a reordering rather than a
+rethink, and a lane reading only the bug report would have concluded the model
+was wrong.
+
+**The ordering rule generalizes past this test**: when one predicate
+**subsumes** another, it is asked first, or the subsumed one answers on its
+behalf and the answer is quietly narrower.
 
 #### 5.4b GATE TOPOLOGY — a gate set is a set of POINTERS, and coverage is what they point AT
 
@@ -5366,6 +5409,39 @@ Note the ordering hazard that produced it, which is generic to shell: **a helper
 defined below its caller does not exist yet**, and the failure arrives as a
 missing command rather than as a wrong answer — loud in the siblings, silent in
 the row that mattered.
+
+**AND THE POINTER LIST APPLIES TO A TEST SUITE, WHICH IS WHERE IT IS HARDEST TO
+BELIEVE** (QoL, `2b3d608`, on master). **Two bugs shipped past 27 passing unit
+rows**, and the topology says why in one line:
+
+> **The rows tested `record_green`'s ARGUMENTS, not what the CALL SITES pass.**
+
+Every row was pointed at the function; **no row was pointed at the seam.** So
+the suite could be exhaustive about the callee and blind to the caller, and
+**the end-to-end run was the only thing that could see it** — which is §5.4b's
+own claim (*a claim no gate points at is ungated, however green the
+neighbourhood*) arriving in the place a lane is least likely to audit, because
+**27 green rows read as thoroughness.**
+
+**This is the fixture-vs-reality family at the INTEGRATION SEAM**, beside *a
+fixture is not enforcement* (§9.7) and *a fixture is not a tool* (above): a unit
+row supplies its own arguments, so **it tests the function against the author's
+belief about the call**, not against the call. **Where a suite's inputs are
+authored, the suite's coverage stops.**
+
+**AND THE RIDER, which is absence in a new costume:** `targets=` came out
+**EMPTY for a full build**, because `sed 's/^$/all/'` **does not fire on empty
+INPUT** — *there is no line for it to match.* A substitution that rewrites an
+empty **line** is not a substitution that rewrites empty **input**, and the two
+are indistinguishable in the pattern.
+
+> **A transform on nothing produces nothing, and reports success doing it.**
+
+Every member of the absence family has now worn a different costume — a `null`
+measured on an absent repo, a zero-row census, a negative self-test row that
+never ran, and now a `sed` with no line. **The constant is that the empty case
+takes the success path**, so the check is always the same: **name what the
+non-empty case would produce, and assert that.**
 
 **AND A VOCABULARY RULE THIS SECTION NEEDS, because it counts things: A
 PROCEDURE IS NOT A GATE.** The tier's arena check is **recomputed by hand** from

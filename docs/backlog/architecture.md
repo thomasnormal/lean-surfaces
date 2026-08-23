@@ -3671,3 +3671,83 @@ limit stated: an unchanged whitelist proves the inch added **no new refusal**,
 not **no new behaviour**.
 
 **Index:** MEAS-145 … MEAS-147.
+
+## 2026-08-23-architecture-49 — A full build is its own root; and 27 green rows that could not see the call site
+
+Four from QoL's `2b3d608` (§5.4a-i is live on master — the increment-green
+model, ledger, refusals and merge-bar line landed doc-first, in this lane's
+file, with the code).
+
+**(1) §5.4a-i — THE LEDGER'S SCOPE, and the section's own wording corrected.**
+It said **per-CLONE**; the unit is **per WORKING DIRECTORY**, scoped by
+**`--git-dir` and never `--git-common-dir`**, because **a linked worktree shares
+the common git dir and has its own `.lake`.**
+
+> **The cache is part of what produced the green.** Scope the evidence to the
+> directory that holds it.
+
+**This is the unit family arriving in git plumbing**, and it is the sharp kind:
+`--git-dir` and `--git-common-dir` **differ on exactly the case the feature
+exists for**, and the plausible-looking one is wrong. Worth flagging that a
+worktree is **this repository's standard way of taking a pristine baseline**
+(§5.4b's re-baseline norm), so the wrong scope would have misfired **precisely
+where lanes are being most careful.**
+
+**AND ONLY GREENS ARE RECORDED — reds record nothing.**
+
+> **A ledger of ATTEMPTS is a log, and a log is not evidence of a verdict.**
+
+The ledger exists to be **citable as a base**, and only a green can be cited; an
+attempt history answers a different question for a different consumer (the build
+log, now identified and attributable, `-47`). **Mixing them would make the
+ledger's own name a claim it cannot keep** — a reader finding reds in a file
+called `triad-greens` would be right to distrust everything else in it.
+
+**(2) §5.4a-i — THE MODEL'S FIRST THEOREM, which survived its own
+implementation bug.**
+
+> **A FULL BUILD IS ITS OWN ROOT, HOWEVER IT WAS REACHED.**
+
+An increment whose build was **not narrowed** is a full build whatever flags
+produced it, so it **starts a chain** rather than extending one. Measured the
+hard way: such a run was recorded at **`depth=1` under an older root** until the
+full-build test was moved **first**.
+
+**The distinction I made sure the text keeps**: *the invariant was right and the
+implementation asked the questions in the wrong order.* The fix is a
+**reordering**, not a rethink — and a lane reading only the bug report would
+have concluded the model was wrong. Generalized:
+
+> **When one predicate SUBSUMES another, ask it FIRST — or the subsumed one
+> answers on its behalf, and the answer is quietly narrower.**
+
+**(3) §5.4b — THE POINTER LIST APPLIES TO A TEST SUITE, which is where it is
+hardest to believe.** Two bugs shipped past **27 passing unit rows**:
+
+> **The rows tested `record_green`'s ARGUMENTS, not what the CALL SITES pass.**
+
+Every row pointed at the function; **none pointed at the seam** — so the suite
+was exhaustive about the callee and blind to the caller, and **the end-to-end
+run was the only thing that could see it.** §5.4b's own claim arriving where a
+lane is least likely to audit, because **27 green rows read as thoroughness.**
+
+Filed as the **fixture-vs-reality family at the INTEGRATION SEAM**, beside *a
+fixture is not enforcement* and *a fixture is not a tool*, with the sentence
+that makes it actionable: **a unit row supplies its own arguments, so it tests
+the function against the author's belief about the call. Where a suite's inputs
+are authored, its coverage stops.**
+
+**(4) RIDER — ABSENCE IN A NEW COSTUME.** `targets=` came out **empty for a full
+build** because `sed 's/^$/all/'` **does not fire on empty INPUT** — *there is
+no line for it to match.* A substitution that rewrites an empty **line** is not
+one that rewrites empty **input**, and the pattern cannot tell them apart.
+
+> **A transform on nothing produces nothing, and reports success doing it.**
+
+I listed the family's costumes together, because that is the useful part: a
+`null` measured on an absent repo, a zero-row census, a negative self-test row
+that never ran, and now a `sed` with no line. **The constant is that the empty
+case takes the success path** — so the check never changes: **name what the
+non-empty case would produce, and assert that.**
+
+**Index:** MEAS-148 … MEAS-153.

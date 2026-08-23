@@ -196,6 +196,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-145 | a WITNESS must fail for the reason it names — the SPELLING has to be in tier | `docs/family-architecture.md §5.4` |
 | MEAS-146 | INAPPLICABLE, NOT OPTIONAL — a requested artifact with no subject | `docs/family-architecture.md §9.7` |
 | MEAS-147 | a zero DELTA across a capability inch is a claim about the INCH — three zeroes, never pooled | `docs/family-architecture.md §5.2` |
+| MEAS-148 | scope evidence per WORKING DIRECTORY (`--git-dir`) — the cache is part of what produced the green | `docs/family-architecture.md §5.4a-i` |
+| MEAS-149 | a ledger of ATTEMPTS is a log; a log is not evidence of a verdict | `docs/family-architecture.md §5.4a-i` |
+| MEAS-150 | A FULL BUILD IS ITS OWN ROOT, however it was reached | `docs/family-architecture.md §5.4a-i` |
+| MEAS-151 | unit rows test the CALLEE's arguments; only the seam tests the CALL SITE | `docs/family-architecture.md §5.4b` |
+| MEAS-152 | a transform on NOTHING produces nothing and reports success doing it | `docs/family-architecture.md §5.4b` |
+| MEAS-153 | when one predicate SUBSUMES another, ask it FIRST | `docs/family-architecture.md §5.4a-i` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

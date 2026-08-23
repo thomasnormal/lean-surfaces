@@ -204,9 +204,9 @@ world from `(v, l)` to `(v / 2, l + 1)`.
 This is the crux, and it is the theorem that needed BOTH halves of the
 last two inches: `go_run` to step `lookupLocal`/`loadAddr`/`storeLocal`,
 and `wRead_wStore_other` to show that writing `len` leaves `n` alone. -/
-theorem body_step {w : GoWorld} {an al : Addr} {v l f : Nat}
+theorem body_step (P : FuncTable) {w : GoWorld} {an al : Addr} {v l f : Nat}
     (hi : Inv w an al v l) (hv : v < 2 ^ 64) (hl : l + 1 < 2 ^ 63) (hf : 4 ≤ f) :
-    ∃ w', execSeq [] f loopBody w = .ok (.ok Flow.normal, w')
+    ∃ w', execSeq P f loopBody w = .ok (.ok Flow.normal, w')
         ∧ Inv w' an al (v / 2) (l + 1) := by
   obtain ⟨f, rfl⟩ : ∃ g, f = g + 4 := ⟨f - 4, by omega⟩
   refine ⟨wStore (wStore w al (.intV intK ((l + 1 : Nat) : Int))) an
@@ -237,9 +237,9 @@ theorem body_step {w : GoWorld} {an al : Addr} {v l f : Nat}
 
 /-- **THE CONDITION**: `n != 0` reads `n` and compares it to zero, leaving
 the world untouched. -/
-theorem cond_eval {w : GoWorld} {an al : Addr} {v l f : Nat}
+theorem cond_eval (P : FuncTable) {w : GoWorld} {an al : Addr} {v l f : Nat}
     (hi : Inv w an al v l) (hf : 2 ≤ f) :
-    evalExpr [] f loopCond w = .ok (.ok (.boolV (decide (¬ (v = 0)))), w) := by
+    evalExpr P f loopCond w = .ok (.ok (.boolV (decide (¬ (v = 0)))), w) := by
   obtain ⟨f, rfl⟩ : ∃ g, f = g + 2 := ⟨f - 2, by omega⟩
   have h0 : GoVal.mkInt uintK 0 = .intV uintK 0 := by rfl
   simp only [loopCond, u, evalExpr, go_run, lookupLocal_ok hi.ln, loadAddr_ok hi.rn, h0, binNum]
@@ -263,10 +263,10 @@ induction hypothesis at `v / 2`. -/
 theorem asBool_ok (b : Bool) (w : GoWorld) :
     asBool (.boolV b) w = .ok (.ok b, w) := rfl
 
-theorem loop_computes : ∀ (v : Nat) (l f : Nat) (w : GoWorld) (an al : Addr),
+theorem loop_computes (P : FuncTable) : ∀ (v : Nat) (l f : Nat) (w : GoWorld) (an al : Addr),
     Inv w an al v l → v < 2 ^ 64 → l + bitLenSpec v < 2 ^ 63 →
     bitLenSpec v + 6 ≤ f →
-    ∃ w', execLoop [] f (some loopCond) none loopBody [] w = .ok (.ok Flow.normal, w')
+    ∃ w', execLoop P f (some loopCond) none loopBody [] w = .ok (.ok Flow.normal, w')
         ∧ Inv w' an al 0 (l + bitLenSpec v) := by
   intro v
   induction v using Nat.strongRecOn with
@@ -278,7 +278,7 @@ theorem loop_computes : ∀ (v : Nat) (l f : Nat) (w : GoWorld) (an al : Addr),
       rw [hz] at hf hl
       refine ⟨w, ?_, by simpa [hz] using hi⟩
       simp only [execLoop]
-      rw [run_bind_ok (cond_eval (f := f) hi (by omega)), run_bind_ok (asBool_ok _ w)]
+      rw [run_bind_ok (cond_eval P (f := f) hi (by omega)), run_bind_ok (asBool_ok _ w)]
       simp only [decide_not, decide_true, Bool.not_true, Bool.false_eq_true, if_false,
         decide_false, Bool.not_false, if_true]
       exact run_pure _ _
@@ -289,11 +289,11 @@ theorem loop_computes : ∀ (v : Nat) (l f : Nat) (w : GoWorld) (an al : Addr),
       have hl2 : l + 1 + bitLenSpec (v / 2) < 2 ^ 63 := by omega
       have hf2 : bitLenSpec (v / 2) + 6 ≤ f := by omega
       have hv2 : v / 2 < 2 ^ 64 := by omega
-      obtain ⟨w1, hw1, hi1⟩ := body_step hi hv hl1 hfb
+      obtain ⟨w1, hw1, hi1⟩ := body_step P hi hv hl1 hfb
       obtain ⟨w2, hw2, hi2⟩ := ih (v / 2) hlt (l + 1) f w1 an al hi1 hv2 hl2 hf2
       refine ⟨w2, ?_, ?_⟩
       · simp only [execLoop]
-        rw [run_bind_ok (cond_eval (f := f) hi (by omega)), run_bind_ok (asBool_ok _ w)]
+        rw [run_bind_ok (cond_eval P (f := f) hi (by omega)), run_bind_ok (asBool_ok _ w)]
         have hne : ¬ (v = 0) := by omega
         simp only [hne, not_false_eq_true, decide_true, Bool.not_true,
           Bool.false_eq_true, if_false]
@@ -327,6 +327,128 @@ theorem bitLenSpec_le_64 {n : Nat} (h : n < 2 ^ 64) : bitLenSpec n ≤ 64 := by
 made it steppable; §G11 proved one turn and named the last obstacle; and
 `run_bind_ok` above closes it. The loop's correctness is now a theorem,
 not a checked composition. -/
+
+/-! ## §1d THE COMPOSITION — from the loop to the FUNCTION
+
+The loop theorem says what the loop does. This carries it through the
+function's frame: bind the parameter, declare `len`, run the loop, return
+`len`. Each of the three statements is `body_step`-shaped, which is what
+made this one inch rather than a campaign. -/
+
+/-- The world after the callee's frame is set up: `n` at 0, `len` at 1. -/
+def setupW (v : Nat) : GoWorld :=
+  { store := [(1, .intV intK 0), (0, .intV uintK (v : Int))],
+    nextAddr := 2,
+    locals := [("len", 1), ("n", 0)] }
+
+theorem setup_inv (v : Nat) : Inv (setupW v) 0 1 v 0 := by
+  refine ⟨by decide, ?_, ?_, ?_, ?_⟩ <;> simp [setupW, wLookup, wRead]
+
+/-- The world after the parameter is bound. -/
+def paramW (v : Nat) : GoWorld :=
+  { store := [(0, .intV uintK (v : Int))], nextAddr := 1, locals := [("n", 0)] }
+
+theorem bindParams_ok (v : Nat) (hv : v < 2 ^ 64) :
+    bindParams ["n"] [GoVal.mkInt uintK (v : Int)] ({} : GoWorld)
+      = .ok (.ok ⟨⟩, paramW v) := by
+  simp only [bindParams, bindLocal, go_run, mkInt_u v hv]
+  rfl
+
+theorem declare_ok (P : FuncTable) (v : Nat) (f : Nat) :
+    execStmt P (f + 2) (.declare "len" (.lit (GoVal.mkInt intK 0))) (paramW v)
+      = .ok (.ok Flow.normal, setupW v) := by
+  have h0 : GoVal.mkInt intK 0 = .intV intK 0 := by rfl
+  simp only [execStmt, go_run, evalExpr, h0]
+  rfl
+
+
+
+/-- The `for` statement: no init, so the loop-variable set is empty and
+the version branch is a no-op here. -/
+theorem for_step (P : FuncTable) (v : Nat) (hv : v < 2 ^ 64) (f : Nat)
+    (hf : bitLenSpec v + 6 ≤ f) (hb : bitLenSpec v < 2 ^ 63) :
+    ∃ w', execStmt P (f + 1) (.forS none (some loopCond) none loopBody) (setupW v)
+        = .ok (.ok Flow.normal, w')
+      ∧ Inv w' 0 1 0 (bitLenSpec v) := by
+  obtain ⟨w1, hw1, hi1⟩ :=
+    loop_computes P v 0 f (setupW v) 0 1 (setup_inv v) hv (by simpa using hb) hf
+  refine ⟨{ w1 with locals := (setupW v).locals }, ?_, ?_⟩
+  · simp only [execStmt]
+    rw [run_bind_ok (run_get (setupW v)), run_bind_ok (run_get (setupW v))]
+    simp only [Nat.sub_self, List.take_zero, List.map_nil]
+    rw [run_bind_ok hw1, run_bind_ok (run_modify _ w1)]
+    rfl
+  · refine ⟨hi1.ne, ?_, ?_, hi1.rn, ?_⟩
+    · simp [wLookup, setupW]
+    · simp [wLookup, setupW]
+    · have h := hi1.rl; rw [Nat.zero_add] at h; exact h
+
+
+
+/-- `bitLenBody` IS the three statements, with the loop's own pieces. -/
+theorem body_eq : bitLenBody
+    = [ .declare "len" (.lit (GoVal.mkInt intK 0)),
+        .forS none (some loopCond) none loopBody,
+        .ret (some (.ident "len")) ] := rfl
+
+/-- `return len` reads `len` and returns it. -/
+theorem ret_ok (P : FuncTable) {w : GoWorld} {an al : Addr} {v l f : Nat}
+    (hi : Inv w an al v l) :
+    execStmt P (f + 2) (.ret (some (.ident "len"))) w
+      = .ok (.ok (Flow.returned (some (.intV intK (l : Int)))), w) := by
+  simp only [execStmt, go_run, evalExpr, lookupLocal_ok hi.ll, loadAddr_ok hi.rl]
+
+/-- The function's THREE STATEMENTS, run end to end. -/
+theorem body_runs (v : Nat) (hv : v < 2 ^ 64) (g : Nat)
+    (hg : bitLenSpec v + 8 ≤ g) :
+    ∃ w', execSeq prog (g + 3) bitLenBody (paramW v)
+        = .ok (.ok (Flow.returned (some (.intV intK ((bitLenSpec v : Nat) : Int)))), w') := by
+  have hb64 : bitLenSpec v ≤ 64 := bitLenSpec_le_64 hv
+  obtain ⟨h, rfl⟩ : ∃ h, g = h + 2 := ⟨g - 2, by omega⟩
+  obtain ⟨w2, hw2, hi2⟩ := for_step prog v hv (h + 2) (by omega) (by omega)
+  refine ⟨w2, ?_⟩
+  simp only [body_eq, execSeq]
+  rw [run_bind_ok (declare_ok prog v (h + 2))]
+  dsimp only
+  rw [run_bind_ok hw2]
+  dsimp only
+  rw [run_bind_ok (ret_ok prog (f := h) hi2)]
+  rfl
+
+/-- **THE FUNCTION.** `bitLen v` returns `bitLenSpec v`. -/
+theorem bitLen_correct (v : Nat) (hv : v < 2 ^ 64) (f : Nat)
+    (hf : bitLenSpec v + 11 ≤ f) :
+    ∃ w', callFunction prog f "bitLen" [GoVal.mkInt uintK (v : Int)] ({} : GoWorld)
+        = .ok (.ok (.intV intK ((bitLenSpec v : Nat) : Int)), w') := by
+  obtain ⟨g, rfl⟩ : ∃ g, f = g + 3 := ⟨f - 3, by omega⟩
+  obtain ⟨w3, hw3⟩ := body_runs v hv g (by omega)
+  have hfind : prog.find? (fun d => d.1 == "bitLen")
+      = some ("bitLen", ["n"], bitLenBody) := rfl
+  have hlen : ((["n"] : List String).length
+      != ([GoVal.mkInt uintK (v : Int)] : List GoVal).length) = false := rfl
+  refine ⟨{ w3 with locals := [] }, ?_⟩
+  simp only [callFunction, hfind, hlen, Bool.false_eq_true, if_false]
+  rw [run_bind_ok (run_get ({} : GoWorld))]
+  rw [run_bind_ok (bindParams_ok v hv)]
+  rw [run_bind_ok hw3]
+  rw [run_bind_ok (run_modify _ w3)]
+  rfl
+
+/-- **THE CLAIM, in the form the guards use.** `bitLen` — the helper the
+35 differential rows call — returns `bitLenSpec` on every value the type
+can hold. The fixed fuel of 4096 suffices because a bit length never
+exceeds 64 (`bitLenSpec_le_64`).
+
+**This demotes the 35 spec rows below from checks to corroboration**:
+they were the evidence while the composition was owed, and they are now
+instances of a theorem. The 35 ORACLE rows keep their full weight —
+they are the only thing tying the model to what `gc` actually printed,
+and no theorem about the model can replace them. -/
+theorem bitLen_eq_spec (v : Nat) (hv : v < 2 ^ 64) :
+    bitLen (v : Int) = some ((bitLenSpec v : Nat) : Int) := by
+  have hb : bitLenSpec v ≤ 64 := bitLenSpec_le_64 hv
+  obtain ⟨w', hw⟩ := bitLen_correct v hv 4096 (by omega)
+  simp only [bitLen, hw]
 
 /-! ## §2 THE INTERPRETER BRIDGE — one step, and it is the load-bearing one
 

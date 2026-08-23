@@ -1508,3 +1508,108 @@ Axioms: `propext`, `Quot.sound`, `Classical.choice` at worst;
 `script_corpus` **65 scripts, 0 failed**. Held the machine **88 s**.
 
 `fallthrough` deferred (4.0%); MM-oracle untouched.
+
+---
+
+## G13 — THE EXEMPLAR IS COMPLETE: the FUNCTION is correct, proved (2026-08-23)
+
+§G12 proved the loop. This carries it through the function's frame, and
+the claim changes accordingly.
+
+### THE COMPOSITION — one inch, as the table predicted
+
+§G12's table said each remaining statement was `body_step`-shaped. It
+was, and the inch is four small lemmas plus the wrapper:
+
+* `bindParams_ok` — the parameter lands at address 0;
+* `declare_ok` — `var len = 0` lands at address 1, giving `setupW`;
+* `for_step` — the `for` statement: **no init, so the loop-variable set
+  is empty and the version branch is a no-op here**, and the loop's
+  locals-restore is the identity on this frame;
+* `ret_ok` — `return len` reads `len` and returns it;
+* `bitLen_correct` — the four composed through `callFunction`.
+
+**And one generalisation the composition forced, which is the better
+design anyway:** `body_step`, `cond_eval` and `loop_computes` were stated
+with `[]` as the program table, because the loop calls nothing.
+`callFunction` passes the real table, so they are now stated over an
+arbitrary `P : FuncTable`. The loop genuinely does not care, and now says
+so.
+
+`run_bind_ok` did every step. `dsimp only` did the iota reductions
+between them — the same second-order obstacle §G12 recorded, hit twice
+more and dispatched the same way.
+
+### THE FINAL CLAIM
+
+| layer | statement | status |
+| --- | --- | --- |
+| spec | `bitLenSpec_lt` — `n < 2 ^ bitLenSpec n` | **PROVED** |
+| spec | `bitLenSpec_le` — `0 < n → 2 ^ (k-1) ≤ n` | **PROVED** |
+| spec | `bitLenSpec_le_64` — never exceeds the width | **PROVED** |
+| bridge | `shr_one_is_halving` — the interpreter's `>>= 1` IS the spec's `/ 2` | **PROVED** |
+| interp | `cond_eval`, `body_step` — the loop's test and one turn | **PROVED** |
+| interp | `loop_computes` — the loop leaves `len = l + bitLenSpec v` | **PROVED** |
+| interp | `bindParams_ok`, `declare_ok`, `for_step`, `ret_ok` — the frame | **PROVED** |
+| **whole** | **`bitLen_correct` — `callFunction … "bitLen" [v]` returns `bitLenSpec v`, for every `v < 2⁶⁴`** | **PROVED** |
+| **whole** | `bitLen_eq_spec` — the same, in the form the guards call | **PROVED** |
+| corroboration | 35 spec rows | now **instances of a theorem** |
+| corroboration | 35 oracle rows — what `gc` actually printed | **keep full weight** |
+
+**The claim is now: the FUNCTION is correct, proved.** §G6 wrote the
+distinction *"model and toolchain agree"* versus *"`bitLen` is correct"*
+into the file before either was closed; both are now closed, and the file
+says which is which.
+
+**The 35 oracle rows are NOT demoted, and that is deliberate.** They are
+the only thing tying the model to what the compiled function actually
+printed. `bitLen_correct` proves the model computes `bitLenSpec`; it
+cannot prove `gc` does. Only the oracle rows carry that, and no theorem
+about the model can replace them. The 35 SPEC rows are demoted, because
+they are now instances of `bitLen_eq_spec`.
+
+22 theorems in the exemplar. Axioms `propext`, `Quot.sound`,
+`Classical.choice` at worst. No `sorry`, no `native_decide`.
+
+### NEXT INCH, censused from the selector worklist
+
+§G8's brief said the cheap tier's value is *"a better refusal plus a
+ranked worklist"*. Here is the worklist paying out. Of the 438 stdlib
+packages called, ranked by call volume, the top of the list splits by
+whether this tier could ever model them:
+
+| package | calls | modellable? |
+| --- | ---: | --- |
+| `fmt` | 10,567 | yes, but it is the **verb mini-language** — its own spec (§5.4's `printf` problem) |
+| `unsafe` | 8,966 | **never** — it is the escape hatch |
+| `strings` | 6,042 | yes — pure functions, but needs the string tier |
+| **`math/bits`** | **3,936** | **yes, and it is the closest** |
+| `os`, `time`, `C` | 3,900 / 1,835 / 1,833 | environment, clock, cgo — all outside |
+
+**`math/bits` is the first package on the list this tier could actually
+execute**: 49 exported functions, **26 with a plain integer signature**,
+no state, no I/O. And `bits.Len` is *the same function as the exemplar*.
+
+**But it is blocked on exactly one thing, and the census names it: eight
+of those functions are TABLE-DRIVEN** (`len8tab`, `ntz8tab`, `pop8tab`) —
+they need array types and indexing, which are §G6's #2 and #3 blockers
+(`ArrayType` 48.0%, `IndexExpr` 28.3% of rung-1-reachable files) and are
+in the vocabulary but not stepped.
+
+**And that is why this exemplar was reachable at all.** `bigmod.bitLen`'s
+own comment says it exists because *"bits.Len and bits.LeadingZeros use a
+lookup table for the low-order bits on some architectures"* — the crypto
+code hand-rolls the loop **to avoid the table**. The census picked the one
+function in this neighbourhood that does not need the construct the tier
+lacks, without knowing that was why. Next inch: **array types and
+indexing**, which unlocks `math/bits` and is the largest remaining
+sequential blocker.
+
+### Triad
+
+**Tenure GREEN**: `lake build` exit 0 (scoped to `LeanModels.Go` and the
+exemplar), `docs_check` **91/91**, `diff_test` **1,427 cases, 0 failed**
+(1,311 matched, 116 whitelisted), `script_corpus` **65 scripts, 0
+failed**. Held the machine **58 s**.
+
+`fallthrough` deferred (4.0%); MM-oracle untouched.

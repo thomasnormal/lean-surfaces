@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**214 entries across 16 lanes.** Regenerate with
+**215 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-architecture-48` | A witness must fail for the reason it names; and INAPPLICABLE is not OPTIONAL | architecture |
 | `2026-08-23-architecture-47` | The shape set had a fourth member; and duplication is discovered by changing | architecture |
 | `2026-08-23-qol-46` | the floor grows a gate, and a tenure says what it could have been | qol |
 | `2026-08-23-architecture-46` | A guard that always fires; a procedure is not a gate; and WAITING names its trigger | architecture |

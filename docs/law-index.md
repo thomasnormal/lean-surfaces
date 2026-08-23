@@ -193,6 +193,9 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-142 | DUPLICATION IS DISCOVERED BY CHANGING, not by reading — grep the OLD VALUE | `docs/family-architecture.md §7.2` |
 | MEAS-143 | pair every "did not change" row with a "did happen" sibling | `docs/family-architecture.md §5.4b` |
 | MEAS-144 | a document that ENUMERATES a set owns that set's maintenance | `docs/family-architecture.md §7.2` |
+| MEAS-145 | a WITNESS must fail for the reason it names — the SPELLING has to be in tier | `docs/family-architecture.md §5.4` |
+| MEAS-146 | INAPPLICABLE, NOT OPTIONAL — a requested artifact with no subject | `docs/family-architecture.md §9.7` |
+| MEAS-147 | a zero DELTA across a capability inch is a claim about the INCH — three zeroes, never pooled | `docs/family-architecture.md §5.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

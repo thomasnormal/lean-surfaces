@@ -3603,3 +3603,71 @@ reader keys on the first line — and **one differential run retires the
 argument.**
 
 **Index:** MEAS-140 … MEAS-144, OPS-72 … OPS-75.
+
+## 2026-08-23-architecture-48 — A witness must fail for the reason it names; and INAPPLICABLE is not OPTIONAL
+
+Two from pyc's 3c-i-c (**ticketed**; both landed conditional on that landing and
+stamped at the site).
+
+**(1) §5.4 — THE SPELLING HALF OF THE WITNESS-NAMING LAW.** A never-stepped-
+binding row spelled `print(type(e).__name__)` would have **refused at `type`** —
+a builtin out of tier — and been **filed as evidence about `enumerate`.**
+
+> **A witness must FAIL FOR THE REASON IT NAMES**, and naming the row for its
+> construct does not secure that: **the SPELLING has to be in tier too.**
+
+**The mechanism I put beside it**: a row is a small program, and **every token in
+it is a claim that the tier can run that token** — so a witness written in the
+vocabulary a reader finds natural reports **the first thing the tier lacks**,
+which is rarely what the row is about. The fix is the pattern: **minimal
+spelling** — `print('bound')`, where **reaching the `print` IS the
+observation**, leaving no second construct to fail first.
+
+**And how it was caught is the part I would not let pass**: by **reading the
+builtin tables before the ticket**, not by a red. The bad version would have
+been **loud** — a refusal, not a wrong answer — and still wrong, because the
+refusal would have been **filed under the wrong subject.**
+
+> **A loud failure attributed to the wrong cause is a silent one for every
+> reader downstream.**
+
+That is what makes this the spelling half of *rows and witnesses are named for
+the CONSTRUCT*: the naming law makes a row's **subject** durable; this one makes
+its **evidence** honest, and a row can satisfy the first while failing the
+second.
+
+**(2) §9.7 — A FOURTH KIND OF NO-CODE CLOSURE: INAPPLICABLE, NOT OPTIONAL.** A
+transition theorem was owed for a construct the trunk **refuses to step**, and
+**a refusal has neither `GenSteps` nor `GenSilent`** — so nothing exists for the
+theorem to quantify over.
+
+> **The theorem is not WAIVED; it has NO SUBJECT.**
+
+**The vocabulary is the whole point.** *Optional* is a judgement about
+**priority** and invites a later reader to reinstate it; *inapplicable* is a
+statement about **the tree**, and it carries the condition that would change it
+— **the day the trunk steps that construct, the subject exists and the
+obligation is live.** A closure recording *"not needed"* loses that trigger; one
+recording *"no subject, and here is what creates one"* keeps it. Which is the
+WAITING rule (`-46`) applied to an obligation instead of to a lane.
+
+**And the line against WOULD-BE-VACUOUS**, since both end in *"do not write
+it"*: a vacuous check **has a subject and cannot fail**; an inapplicable one
+**has no subject at all** — the first is a design error the lane could commit,
+the second is a fact about where the tier stands.
+
+**RIDER — §5.2, AND IT IS A THIRD ZERO.** The inch's headline is that **the
+whitelist did not move**: *it adds capability without adding a refusal.* **A
+refusal census reports that result as silence** — a capability inch normally
+shows rows *leaving* the whitelist, this one shows **nothing at all**, so **the
+non-move is the finding and it has to be claimed in prose, because the artifact
+cannot claim it.**
+
+Now three zeroes, and they must not be pooled: a **zero count** for a class the
+tier can emit is about the **corpus**; a **zero count** for one its API cannot
+build is about the **tier**; a **zero DELTA across an inch that added
+capability** is about **the inch**. **Same digit, three claims.** With the
+limit stated: an unchanged whitelist proves the inch added **no new refusal**,
+not **no new behaviour**.
+
+**Index:** MEAS-145 … MEAS-147.

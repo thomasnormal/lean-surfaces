@@ -3514,6 +3514,29 @@ OUTSIDE, on the real corpus: *every interpreter refusal carries one of the four
 class names, and none carries `undefined`.* 116 rows, 45 gap classes, 7
 boundary-freeze refusals with no class **by design**, 0 drifts.
 
+**AND A ZERO *DELTA* READS DIFFERENTLY AGAIN — IT CAN BE THE HEADLINE** (pyc's
+3c-i-c; **ticketed**). The inch's result is that **the whitelist did not move**:
+
+> **The inch ADDS CAPABILITY WITHOUT ADDING A REFUSAL.**
+
+**That is a shape worth naming, because it is the one result a refusal census
+reports as silence.** A capability inch normally shows up as rows *leaving* the
+whitelist; this one shows up as **nothing at all** — and a reader scanning the
+diff of the census sees an unchanged file. **The non-move is the finding, and it
+has to be claimed in prose because the artifact cannot claim it.**
+
+**Read against the two zeroes above, the three are now distinct and must not be
+pooled**: a **zero count** for a class the tier can emit is about the **corpus**;
+a **zero count** for one its API cannot build is about the **tier**; and a **zero
+DELTA across an inch that added capability** is about **the inch** — the tier
+grew and its refusal surface did not. **Same digit, three claims**, and only the
+third is evidence that a change was strictly additive.
+
+**And the honest limit, which keeps it from becoming a boast**: an unchanged
+whitelist proves the inch added **no new refusal**, not that it added **no new
+behaviour** — those are different statements, and only the first is what a
+refusal census can see.
+
 **AND BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — they are
 the STRONGER form, not an exception to it.** A tier-local refusal type may
 legitimately lack a class outright (Go's `GoRefusal` has no `undefined`).
@@ -3942,7 +3965,31 @@ instrument copies it:
   therefore still true after the tier grows. A verdict-named row is a
   small piece of prose embedded in an identifier, and it goes stale the
   way §9's prose does — except that nothing greps it, so it goes stale
-  **silently** and then convicts the wrong thing;
+  **silently** and then convicts the wrong thing.
+
+  **AND ITS SPELLING HALF, which the naming rule does NOT secure** (pyc's
+  3c-i-c; **ticketed — conditional on that landing**). A never-stepped-binding
+  witness spelled `print(type(e).__name__)` would have **refused at `type`** —
+  a builtin out of tier — and been **filed as evidence about `enumerate`.**
+
+  > **A WITNESS MUST FAIL FOR THE REASON IT NAMES.**
+
+  **Naming the row for its construct does not achieve that; the SPELLING has
+  to be in tier too.** A row is a small program, and every token in it is a
+  claim that the tier can run that token — so a witness written in the
+  vocabulary a reader finds natural will report **the first thing the tier
+  lacks**, which is rarely the thing the row is about.
+
+  **The fix is the pattern to copy: MINIMAL SPELLING.** `print('bound')` —
+  **reaching the `print` IS the observation.** Nothing in the row exercises
+  anything except the binding under test, so there is no second construct to
+  fail first.
+
+  **And note how it was caught: by READING the builtin tables before the
+  ticket, not by a red.** The failing version would have been **loud** — a
+  refusal, not a wrong answer — and still wrong, because the refusal would have
+  been **filed under the wrong subject.** *A loud failure attributed to the
+  wrong cause is a silent one for every reader downstream*;
 * a **`--compare`** mode against the committed JSON, because corpora that
   live in other repositories move on their own schedule and staleness must
   be mechanically detectable rather than merely possible;
@@ -7882,6 +7929,27 @@ reads, one audit later, exactly like a row nobody acted on. Note that this
 closure and the vacuous one point in **opposite** directions — one refuses to do
 too little, the other refuses to do something useless — and both are available
 only to an owner who **verified the row first** (§5.4a).
+
+**A FOURTH KIND — INAPPLICABLE, NOT OPTIONAL: THE REQUESTED ARTIFACT HAS NO
+SUBJECT** (pyc's 3c-i-c; **ticketed — conditional on that landing**). A
+transition theorem was owed for a construct the trunk **refuses to step**, and
+**a refusal has neither `GenSteps` nor `GenSilent`** — so there is nothing for
+the theorem to quantify over.
+
+> **The theorem is not WAIVED; it has NO SUBJECT.**
+
+**The vocabulary is the whole point, and it is why this is a fourth kind rather
+than a variant of the vacuous one.** *Optional* is a judgement about **priority**
+and invites a later reader to reinstate it; *inapplicable* is a statement about
+**the tree**, and it comes with the condition that would change it — **the day
+the trunk steps that construct, the subject exists and the obligation is
+live.** A closure that records *"not needed"* loses that trigger; one that
+records *"no subject, and here is what creates one"* keeps it.
+
+**The distinction from WOULD-BE-VACUOUS is worth stating**, since both end in
+*"do not write it"*: a vacuous check **has a subject and cannot fail**; an
+inapplicable one **has no subject at all.** The first is a design error the lane
+could commit; the second is a fact about where the tier currently stands.
 
 **And the audit records what it got wrong**, which is the practice worth
 copying more than any item above: it ran Lean outside the lock while

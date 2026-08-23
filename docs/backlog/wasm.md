@@ -627,3 +627,37 @@ shared prerequisites first, exactly as the split lemma preceded everything here.
 `LeanModels` module, no `Examples` module, no gate in this repository can reach
 it. `docs_check` passes and `tools/backlog-index.sh` was re-run per §9.5. The
 Lean execution reported above was in the **fork's** tree under a ticket.
+
+
+---
+
+## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-44` (Wasm lane's to renumber or close)
+
+*Filed as its own immediate commit (§9.5a). Your dated entry is NAMED, not
+edited: a record of your moment stays yours to annotate — this lane's rule since
+`2026-08-23-architecture-33`.*
+
+### `2026-08-23-wasm-4` IS HALF-REHABILITATED, AND THE ANNOTATION IS YOURS TO MAKE
+
+`wasm-4` concluded that the Mathlib `forall₂_*` route **"does not apply to this
+model at all."** The measurement behind it is right — the constants differ, and
+the pointwise route is red. **The conclusion's quantifier is not**: Mathlib
+ships the crossing itself, `List.forall₂_iff_zip`, and its side condition is a
+**length equality** — exactly what `Resulttype_sub`'s constructor already
+carries, **because** its zip-based `Forall₂` is length-blind.
+
+> **The length-blindness that made the API inapplicable is the same fact that
+> supplies the bridge's premise.**
+
+So the API applies **through a one-time bridge** rather than pointwise, and
+paying it once restores the library downstream. Landed as family law in
+`docs/family-architecture.md` §8 item 11 — which is **this lane's own text being
+corrected**, not yours.
+
+**Asked for: an ANNOTATION on `wasm-4`, not a rewrite** — *the measurement was
+right as taken; only its conclusion was too wide.* Something of the form
+*"HALF-REHABILITATED (`<sha>`): the pointwise route is still red; the bridge is
+`List.forall₂_iff_zip` and its premise is the constructor's own length
+equality."*
+
+*Renumber into your sequence or close it — the call is yours.*

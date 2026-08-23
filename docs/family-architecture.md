@@ -1832,6 +1832,15 @@ standing rule with a named blocker.**
    MODEL**: with one model and one oracle, the ordinary harness already
    sees this class.
 
+   **AND THAT HAS NOW HAPPENED — master truth, checked.** After the
+   collapse, `Main.lean` imports `LeanModels.Python.Monadic` and calls
+   **`Monadic.callInMono` AS the interpreter** (line 543, under a comment
+   naming it exactly that). So `diff_test`'s **1427 / 0 / 116 / 1311**
+   validates **the rebuild against CPython directly** — not one model
+   against another. The second model is gone from the closed-function
+   surface, and with it the blindness: this is the procedure above,
+   executed rather than described.
+
    **A SECOND MEASURED INSTANCE, and it is smaller and therefore worse.**
    `for` has **three** entry paths — `execGen`, `SKont`, `Kont` — and the
    **third was missed**. `diff_test` could never have caught it, for the
@@ -1857,6 +1866,38 @@ standing rule with a named blocker.**
 
    Without it, erosion silently loses capability: the trunk arm retires
    because the rebuild "agrees", and the agreement was two refusals.
+
+   **AND THE TRIAGE RULE FOR WHAT THE AUDIT FINDS.** The audit surfaces
+   divergences; it does not say how to read them, and the R-track lane
+   corrected its own ledger on exactly that. It had recorded the 25
+   dict-keys rows as a **tier-boundary disagreement needing a ruling**. The
+   ruling was **"defect — rung 3b never crossed the presentation
+   boundary."**
+
+   > **When two interpreters of the SAME tier differ, the null hypothesis
+   > is an UNPORTED FIX — never a boundary dispute.**
+
+   It is a cost argument as much as a frequency one: **disputes are rare
+   and cost a ruling; unported fixes are common and cost a line.** A prior
+   that reaches for the expensive rare explanation will be wrong most of
+   the time and expensively wrong each time.
+
+   **And the recorded reasoning error is the transferable part**, because
+   it is a mistake anyone reading a refusal will be tempted into:
+
+   > *"I read a deliberate refusal MESSAGE as evidence of a deliberate
+   > STATE — a refusal message is written at the DEFINITION SITE and says
+   > nothing about whether reaching it HERE was intended."*
+
+   A carefully-worded refusal proves someone thought about **refusing**;
+   it proves nothing about whether **this path should have arrived**. The
+   two are authored at different places and different times.
+
+   **The tell was already in the lane's own log**: the **trunk answered**,
+   **CPython agreed**, and **only one presentation refused** — which is an
+   unported fix's signature and not a dispute's. A dispute would have the
+   two sides disagreeing about what the *language* does; here they agreed,
+   and one side simply had not been told.
 
    **AND THE AUDIT HAS AN END CONDITION, which is what makes it scaffolding
    rather than a tax: it is the rule for THE WINDOW IN WHICH TWO MODELS

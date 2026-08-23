@@ -913,3 +913,48 @@ the default honest (no field nobody reads) without losing the design intent (the
 inch that will need it knows it is coming). **A prediction held this way is a
 scheduled decision; a prediction held in the type is speculative generality
 wearing a plan's clothes.**
+
+## 2026-08-23-architecture-13 — The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface
+
+**(1) A TRIAGE RULE, from the R-track lane correcting its OWN ledger.** It had
+recorded the 25 dict-keys rows as a **tier-boundary disagreement needing a
+ruling**. The ruling was **"defect — rung 3b never crossed the presentation
+boundary."** The capability-parity audit *surfaces* divergences; it did not say
+how to **read** them, and this closes that gap:
+
+> **When two interpreters of the SAME tier differ, the null hypothesis is an
+> UNPORTED FIX — never a boundary dispute.**
+
+**A cost argument as much as a frequency one**: disputes are **rare and cost a
+ruling**; unported fixes are **common and cost a line**. A prior that reaches for
+the expensive rare explanation is wrong most of the time and expensively wrong
+each time.
+
+**The recorded reasoning error is the transferable part**, because it is a
+mistake anyone reading a refusal is tempted into:
+
+> *"I read a deliberate refusal MESSAGE as evidence of a deliberate STATE — a
+> refusal message is written at the DEFINITION SITE and says nothing about
+> whether reaching it HERE was intended."*
+
+A carefully-worded refusal proves someone thought about **refusing**; it proves
+nothing about whether **this path should have arrived**. The two are authored at
+different places and different times.
+
+**And the tell was already in the lane's own log**: the **trunk answered**,
+**CPython agreed**, **only one presentation refused** — an unported fix's
+signature, not a dispute's. A dispute would have the two sides disagreeing about
+what the *language* does; here they agreed and one side had simply not been told.
+
+**(2) MASTER TRUTH — the two-model window has CLOSED on the closed-function
+surface.** Verified in the tree: `Main.lean:14` imports
+`LeanModels.Python.Monadic`, and line 543 reads `let run := Monadic.callInMono m
+fuel` under a comment naming it **THE INTERPRETER**. So `diff_test`'s
+**1427 / 0 / 116 / 1311** validates **the rebuild against CPython directly**, not
+one model against another.
+
+**The second model is gone from that surface, and with it the blindness** — which
+is the *remove the second model* procedure **executed rather than described**.
+The capability-parity audit remains the rule for whatever windows remain open;
+where the window has closed, the ordinary differential covers the class again, as
+the end condition said it would.

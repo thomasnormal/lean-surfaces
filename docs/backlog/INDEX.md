@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**180 entries across 16 lanes.** Regenerate with
+**181 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -192,6 +192,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
+| `G18` | THE SLICE RUNG: a header, not a list, and the row a copy model cannot state (2026-08-23) | go |
 | `G17` | THE SLICE RUNG'S ACCEPTANCE PICK: the discriminator lives in the CALL (2026-08-23) | go |
 | `G16` | THE RE-RANK: the walker has doubled its reach, and the next rung is ONE family (2026-08-23) | go |
 | `G15` | RUNG 4: a Go string is BYTES, and a conversion is its own node (2026-08-23) | go |
@@ -201,4 +202,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**24 heading(s) do not use the §9.5 id scheme** and sort last.
+**25 heading(s) do not use the §9.5 id scheme** and sort last.

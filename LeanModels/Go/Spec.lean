@@ -151,6 +151,56 @@ address's contents change. -/
     (name : String) : wLookup (wStore w a v) name = wLookup w name := by
   simp [wLookup, wStore]
 
+/-! ### 1.3c FRAME PREDICATES FOR SLICES — the aliasing-aware pair
+
+§1.3b's `wRead_wStore_same`/`_other` frame a write to an ADDRESS. A slice
+write is not addressed that way: it goes through a header into a backing
+array, and **two different headers can name the same element**. So the
+pair needs its aliasing-aware form, and it is the slice analogue of the
+two above rather than a replacement for them.
+
+The aliasing question is entirely `off + i`: two headers over the same
+backing array name the same element exactly when their offsets and
+indices sum alike. That is why the predicate below mentions no header at
+all — it is arithmetic, and stating it that way is what keeps these in
+the spec half. -/
+
+/-- Read element `i` through a header at offset `off`. -/
+def sliceElem (es : List GoVal) (off i : Nat) : Option GoVal := es[off + i]?
+
+/-- **Two headers name the same element.** Same backing array is a
+separate condition, handled by §1.3b's address-level pair — this is the
+within-array half. -/
+def AliasAt (off₁ i₁ off₂ i₂ : Nat) : Prop := off₁ + i₁ = off₂ + i₂
+
+/-- **A write through one slice IS visible through an overlapping one.**
+This is the row `docs/backlog/go.md` §G17 measured a copy model failing:
+`out[0] = 'X'` seen through `base`. -/
+@[go_spec] theorem sliceElem_set_alias (es : List GoVal) (off₁ i₁ off₂ i₂ : Nat)
+    (v : GoVal) (ha : AliasAt off₁ i₁ off₂ i₂) (h : off₁ + i₁ < es.length) :
+    sliceElem (es.set (off₁ + i₁) v) off₂ i₂ = some v := by
+  unfold AliasAt at ha
+  unfold sliceElem
+  rw [← ha]
+  exact List.getElem?_set_self h
+
+/-- **And INVISIBLE through a slice that does not overlap it.** The frame
+half: everything the write did not name is untouched. -/
+@[go_spec] theorem sliceElem_set_disjoint (es : List GoVal) (off₁ i₁ off₂ i₂ : Nat)
+    (v : GoVal) (hd : ¬ AliasAt off₁ i₁ off₂ i₂) :
+    sliceElem (es.set (off₁ + i₁) v) off₂ i₂ = sliceElem es off₂ i₂ := by
+  unfold AliasAt at hd
+  unfold sliceElem
+  exact List.getElem?_set_ne hd
+
+/-- **Across DIFFERENT backing arrays a write is invisible**, and that
+half needs no new lemma: backing arrays are store entries keyed by
+address, so it is §1.3b's `wRead_wStore_other` unchanged. Recorded here so
+the pair is findable as a pair. -/
+@[go_spec] theorem slice_write_other_backing (w : GoWorld) (a b : Addr) (v : GoVal)
+    (h : b ≠ a) : wRead (wStore w a v) b = wRead w b :=
+  wRead_wStore_other w a b v h
+
 /-! ### 1.4 THE ZERO-UB GATE
 
 `docs/go-charter.md`'s headline is that the Go specification never says

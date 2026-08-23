@@ -123,6 +123,15 @@ inductive Expr where
   measured the split: slices are 85.4% of `ArrayType`, fixed arrays
   14.6%). -/
   | index (x i : Expr)
+  /-- `SliceExpr` — `a[lo:hi]`. A NEW HEADER over the SAME backing array:
+  that sharing is the whole content of the rung
+  (`docs/backlog/go.md` §G17). -/
+  | slice (x : Expr) (lo hi : Option Expr)
+  /-- `len(e)` / `cap(e)`. A dedicated node rather than a branch inside
+  `.call`, for the reason §G15 measured: inlining a name check there made
+  `simp only [evalExpr]` carry it through every reduction and timed out
+  four proofs. The frontend emits this. -/
+  | builtin1 (name : String) (e : Expr)
   /-- `CallExpr` on a plain identifier. **The single biggest reach unlock
   in the census**: calls appear in 73.3% of the files rung 1 already
   reaches (`docs/backlog/go.md` §G6), so without them nothing with a
@@ -150,6 +159,9 @@ inductive Stmt where
   /-- `AssignStmt` in its compound form — `x op= e`. The census's
   exemplar needs `>>=`; the form is general. -/
   | assignOp (op : BinOp) (name : String) (e : Expr)
+  /-- `a[i] = e` — a write THROUGH a slice, into its backing array. This
+  is the statement the aliasing rows of the acceptance case turn on. -/
+  | assignIndex (x i e : Expr)
   /-- `ReturnStmt`. -/
   | ret (e : Option Expr)
   /-- `IfStmt`. -/
@@ -225,6 +237,31 @@ def bindLocal (name : String) (v : GoVal) : GoM Unit := do
         nextAddr := a + 1,
         store := (a, v) :: w.store,
         locals := (name, a) :: w.locals }
+
+/-- Read element `k` of the backing array at `a`. Out of range is a
+run-time PANIC — a defined outcome, never `undefined`. -/
+def loadIdx (a : Addr) (k : Nat) : GoM GoVal := do
+  match ← loadAddr a with
+  | .arrayV elems =>
+      match elems[k]? with
+      | some v => pure v
+      | none => panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
+  | _ =>
+      refuseGo .unsupportedConstruct (SpecRef.spec "Index_expressions")
+        "indexed a non-array backing object"
+
+/-- Write element `k` of the backing array at `a`. **This is where
+aliasing happens**: every slice header pointing at `a` sees it. -/
+def storeIdx (a : Addr) (k : Nat) (v : GoVal) : GoM Unit := do
+  match ← loadAddr a with
+  | .arrayV elems =>
+      if k < elems.length then do
+        let w ← get
+        set { w with store := (a, .arrayV (elems.set k v)) :: w.store.filter (fun p => p.1 != a) }
+      else panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
+  | _ =>
+      refuseGo .unsupportedConstruct (SpecRef.spec "Index_expressions")
+        "indexed a non-array backing object"
 
 /-- Write through an existing binding. -/
 def storeLocal (name : String) (v : GoVal) : GoM Unit := do
@@ -420,8 +457,46 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
       | none =>
           refuseGo .unsupportedConstruct (SpecRef.spec "Conversions")
             s!"conversion to '{tname}' is not stepped yet"
+  | f + 1, .builtin1 name e => do
+      match name, ← evalExpr prog f e with
+      | "len", .sliceV _ _ l _   => pure (GoVal.mkInt IntKind.int64 (l : Int))
+      | "cap", .sliceV _ _ _ c   => pure (GoVal.mkInt IntKind.int64 (c : Int))
+      | "len", .stringV bs       => pure (GoVal.mkInt IntKind.int64 (bs.length : Int))
+      | _, _ =>
+          refuseGo .unsupportedConstruct (SpecRef.spec "Length_and_capacity")
+            s!"{name} of an operand outside this rung"
+  | f + 1, .slice x lo hi => do
+      match ← evalExpr prog f x with
+      | .sliceV b off l c => do
+          -- Defaults: a missing low is 0, a missing high is the LENGTH
+          -- (not the capacity) — the spec's rule, and the difference is
+          -- exactly what the acceptance case's fourth row turns on.
+          let lo' ← match lo with
+            | none => pure 0
+            | some e => match ← evalExpr prog f e with
+                        | .intV _ n => pure n.toNat
+                        | _ => pure 0
+          let hi' ← match hi with
+            | none => pure l
+            | some e => match ← evalExpr prog f e with
+                        | .intV _ n => pure n.toNat
+                        | _ => pure l
+          if lo' ≤ hi' && hi' ≤ c then
+            -- The new header points at the SAME backing array. `cap`
+            -- shrinks from the low end only, which is why it can reach
+            -- past the new length.
+            pure (.sliceV b (off + lo') (hi' - lo') (c - lo'))
+          else
+            panicWith 0 (GoVal.runtimeErrorV "runtime error: slice bounds out of range")
+      | _ =>
+          refuseGo .unsupportedConstruct (SpecRef.spec "Slice_expressions")
+            "slice expression outside this rung (slices only)"
   | f + 1, .index x i => do
       match ← evalExpr prog f x, ← evalExpr prog f i with
+      | .sliceV b off l _, .intV _ n =>
+          if n < 0 || n.toNat ≥ l then
+            panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
+          else loadIdx b (off + n.toNat)
       | .stringV bytes, .intV _ n =>
           if n < 0 then
             -- "Index expressions": a negative or out-of-range index is a
@@ -551,6 +626,17 @@ def execStmt (prog : FuncTable) : Nat → Stmt → GoM Flow
       | _ =>
           refuseGo .unsupportedConstruct (SpecRef.spec "IncDec_statements")
             "++/-- on a non-integer"
+  | f + 1, .assignIndex x i e => do
+      match ← evalExpr prog f x, ← evalExpr prog f i with
+      | .sliceV b off l _, .intV _ n =>
+          if n < 0 || n.toNat ≥ l then
+            panicWith 0 (GoVal.runtimeErrorV "runtime error: index out of range")
+          else do
+            storeIdx b (off + n.toNat) (← evalExpr prog f e)
+            pure .normal
+      | _, _ =>
+          refuseGo .unsupportedConstruct (SpecRef.spec "Assignment_statements")
+            "indexed assignment outside this rung (slices only)"
   | _ + 1, .ret none => pure (.returned none)
   | f + 1, .ret (some e) => do pure (.returned (some (← evalExpr prog f e)))
   | f + 1, .ifS cond thenB elseB => do

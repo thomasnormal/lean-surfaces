@@ -1973,3 +1973,81 @@ Acceptance: `itoa` on a middle slice, all four rows above, oracle columns
 
 `fallthrough` deferred (4.0%); maps and interfaces at +0 and strictly
 downstream (§G16); MM-oracle untouched.
+
+---
+
+## G18 — THE SLICE RUNG: a header, not a list, and the row a copy model cannot state (2026-08-23)
+
+Built as §G17 sized it.
+
+### THE VALUE MODEL, decided up front
+
+    | arrayV (elems : List GoVal)                        -- the backing object
+    | sliceV (backing : Addr) (off len cap : Nat)        -- the header
+
+A slice is a **header into a backing array in the store**, which is what
+lets two slices share one. The old `sliceV (elems : List GoVal)` had no
+consumers, so replacing it cost nothing — checked before changing it.
+
+### THE ACCEPTANCE CASE — `runtime.itoa` on a MIDDLE slice
+
+`Examples/go/itoa/`. Vendored verbatim, called as §G17's census
+prescribed: `mid := base[2:6]`, len 4, cap 6. Every expected value
+`printf`-ed from the compiled function.
+
+| row | what it checks | a list-copy model |
+| --- | --- | --- |
+| 1 | the return header is `(off 4, len 2, cap 4)` | **PASSES** — the trap |
+| 2 | the caller's array reads `"....42.."` | fails |
+| 3 | `out[0]='X'` makes it `"....X2.."` | fails |
+| 4 | `out[:cap(out)]` is `(off 4, len 4, cap 4)` | **cannot be stated** |
+
+Row 4 is the rule's strongest form: the wrong model does not *fail* it —
+a copy has no capacity beyond its own length, so the value that row names
+has no representation. **Non-vacuity RUN on rows 3 and 4**: flipping row 3
+to claim the write is invisible, and row 4 to the copy model's `cap == len`,
+each make Lean report it.
+
+Also guarded: the argument's own `len 4` / `cap 6` — genuinely apart —
+and that an out-of-range index is a **run-time panic**, a defined outcome
+in ρ, never `undefined`.
+
+### THE FRAME PREDICATES, aliasing-aware
+
+§1.3b frames a write to an ADDRESS. A slice write goes through a header
+into a backing array, and **two headers can name the same element**, so
+the pair needs its aliasing form. Landed beside the originals:
+
+* `sliceElem_set_alias` — **a write through one slice IS visible through
+  an overlapping one** (row 3, as a theorem);
+* `sliceElem_set_disjoint` — **and invisible through one that does not
+  overlap**;
+* `slice_write_other_backing` — across DIFFERENT backing arrays, which
+  needs no new proof: backing arrays are store entries keyed by address,
+  so it is `wRead_wStore_other` unchanged, recorded so the pair is
+  findable as a pair.
+
+The aliasing question turned out to be **entirely `off + i`** — two
+headers name the same element exactly when their offset-plus-index sums
+agree. So `AliasAt` mentions no header at all; it is arithmetic, which is
+what keeps these in the spec half. Both depend on **`propext` alone**.
+
+### What was NOT built, and why
+
+**`range` over a slice.** §G17 sized it into the rung with the note that
+it should reuse `execLoop` rather than fork it — but `itoa` does not use
+it, and this lane's vocabulary law is *declare only what the rung
+executes*. It is the next thing, and the note stands: when it lands it
+reuses the loop machinery the `bitLen` induction is proved about.
+
+`append` likewise absent — `itoa` does not use it and its growth rule is
+its own question. Fixed arrays `[N]T` still excluded (14.6%, §G14).
+
+### Triad
+
+**Tenure GREEN**: `lake build` exit 0, `docs_check` **91/91**,
+`diff_test` **1,427 cases, 0 failed** (1,311 matched, 116 whitelisted),
+`script_corpus` **65 scripts, 0 failed**. Held the machine **63 s**.
+
+`fallthrough` deferred (4.0%); maps and interfaces at +0 and strictly
+downstream (§G16); MM-oracle untouched.

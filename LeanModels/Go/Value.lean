@@ -121,7 +121,20 @@ inductive GoVal where
   | ptrV (a : Addr)
   | chanV (c : ChanId)
   | structV (fields : List (String × GoVal))
-  | sliceV (elems : List GoVal)
+  /-- A **backing array** — the object a slice points into. It lives in
+  the store at an `Addr`, which is what makes two slices able to share
+  one. -/
+  | arrayV (elems : List GoVal)
+  /-- A **slice HEADER**: which backing array, where it starts, how long
+  it is, and how far it could grow.
+
+  **Not a list.** `docs/backlog/go.md` §G17 measured why: a list-copy
+  model passes the return-value row of the acceptance case, fails both
+  aliasing rows, and **cannot even express** the fourth — a slice whose
+  `cap` reaches past its own `len` into a longer array has no
+  representation as a copy. The wrong model does not fail that row; it
+  cannot state it. -/
+  | sliceV (backing : Addr) (off len cap : Nat)
   /-- A **run-time error** value — what a run-time panic carries.
 
   Go's `panic` from a run-time fault does NOT carry a string: it carries a

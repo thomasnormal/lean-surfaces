@@ -1280,6 +1280,14 @@ against it indefinitely. The tell: `iterValues_mono` **closed the moment the sea
 lemmas existed**, with no arm changed. **When a monotonicity goal resists work
 that is succeeding elsewhere, check the SET before checking the proof.**
 
+**(4a) AMENDED AT THE LANDING — SIX shapes: monad (3) + state-zoom seam (2) +
+PURE-WORKER seam (1).** The sixth is **`liftRes`**, the door a tier's REUSED
+pure workers come through. `PyLe.liftRes : Res.le x y → liftRes x ⊑ₚ liftRes y`
+is four lines and is the ONLY place the tier's fuel BOUND is consumed — both
+`K.fuel` sites in the monadic Python tier reach `Obs.lean`'s `_mono` lemmas
+through it. **A tier that REUSES another's pure workers owes a congruence for
+the DOOR they come through, not just for the operations it writes itself.**
+
 **(5) A CONGRUENCE WALKER'S COMPLEXITY IS SET BY ITS DISPATCH.** `mono_with`'s
 backtracking `first` at each node is **LINEAR on bind spines, EXPONENTIAL on
 `ite` chains** — **~22 nested `ite`s timed out at 200 000 heartbeats.**
@@ -1290,11 +1298,29 @@ The fix is **syntax-directed dispatch on the goal head**, not budget: a
 backtracking `first` is a **search where a case analysis was available**, and the
 exponent is the price of not looking.
 
+**(5a) AMENDED AT THE LANDING — the exponent was real, and the fix is smaller
+than the prediction.** No goal-head dispatcher was written; the walker closes
+all 61 arms plus the 19-deep chain at the **default 200 000 heartbeats**. Two
+mechanisms, only one of which had been named: the backtracking `first` re-plans
+a SUBTREE per leaf failure (cure: **`repeat'`** — one step per goal, KEPT), and
+**`apply` unifies at DEFAULT transparency**, so it whnf-unfolds a tier constant
+to find an `ite` underneath and descends *through* the very lemma it should stop
+at (cures: **run the leaf closer FIRST guarded by `done`**, and make the
+reflexivity probe **`with_reducible`**). **"Syntax-directed" is bought with
+TRANSPARENCY CONTROL and a non-backtracking driver, not with a dispatcher — a
+tactic that unfolds is a tactic that has left the syntax.**
+
 **(6) A ~210-LINE `if fname == …` CHAIN DEFEATS EQUATION-THEOREM GENERATION**
 ("failed to generate equational theorem"), so **`unfold` is the only door** —
 `simp only` and `rw` cannot open it, both needing equations that were never
 generated. The definition still works; it becomes **unreachable by the tactics
 that rewrite with it.**
+
+**(6a) THE ARM COUNT, CORRECTED BY READING THE SOURCE.** The chain is **19**
+`if fname == …` arms, each branch a small nested `match vs with`. A tool
+reported 45 by counting the nested match arms as top-level ones and missing the
+`if ==` form entirely. **A tool's arm count is a candidate, not a finding** —
+same law as (3), one level up.
 
 **(7) §5.4a's ROW 1 FIRED ON ITS OWN AUTHOR, live.**
 `applyBuiltin_mono does not depend on any axioms` printed **beside a

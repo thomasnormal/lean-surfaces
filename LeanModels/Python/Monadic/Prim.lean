@@ -135,21 +135,37 @@ structure Kont where
   pure workers need a bound, and it must be the same one the trunk would have
   passed.
 
-  **THE REACHABLE SET, MEASURED (2026-08-23) — and `setDedup` is NOT in it.**
-  This field is read at exactly ONE site in the whole fuel-free half:
-  `evalCompareOpH h K.fuel op lhs rhs`, in `evalCompareChainM`. What that site
-  reaches is the `heapEq`/`heapEqList`/`heapEqEntries` block (via `.eq`/`.notEq`)
-  and the `valContains` block (via `.inOp`/`.notIn`). `setDedup` is reachable
-  from SET CONSTRUCTION (`Semantics.lean`, the `.pyset` builder), never from a
-  comparison, so naming it here priced an obligation this field does not carry.
+  **THE REACHABLE SET, MEASURED (2026-08-23) — TWO SITES, and `setDedup` IS in
+  it.** This field is read at exactly two sites in the whole fuel-free half:
+
+  * `evalCompareOpH h K.fuel op lhs rhs` in `evalCompareChainM` (`Eval.lean`
+    §1), which reaches the `heapEq`/`heapEqList`/`heapEqEntries` block (via
+    `.eq`/`.notEq`) and the `valContains` block (via `.inOp`/`.notIn`);
+  * `setDedup (← frameHeap) K.fuel [] xs` in `applyBuiltin`'s `set` arm
+    (`Eval.lean` §0.6), which is SET CONSTRUCTION — reached from `set(x)`,
+    never from a comparison.
+
+  **AND THE PREVIOUS CORRECTION OF THIS DOCSTRING WAS WRONG IN THE OTHER
+  DIRECTION, which is why the method is written down and not just the answer.**
+  It measured "0 hits reachable from `evalCompareOpH`" and concluded `setDedup`
+  was out — but that grep had already inherited THIS DOCSTRING'S OWN FRAME: it
+  swept what the comparison site reaches instead of sweeping the fuel-free half
+  for `K.fuel`. A one-line `grep -n 'K\.fuel' Monadic/*.lean` answers the
+  question the field actually poses and returns both sites. **A claim of the
+  form "exactly one site" is settled by sweeping the SURFACE, never by
+  following the site the claim already names.**
+
+  Both obligations are discharged trunk-side and imported rather than reproved:
+  `Obs.lean`'s `heapEqMono`, `valContains_mono`, `evalCompareOpH_mono` and
+  `setDedup_mono` are about these SHARED pure workers. `Monadic/Mono.lean`
+  consumes all four through one congruence, `PyLe.liftRes`.
 
   **And the consequence for any monotonicity statement about this record: the
   fuel-free half is fuel-free in its RECURSION, not in its ARGUMENTS.** A
   fieldwise order over the 13 FUNCTION fields is too weak — `fuel` is a BOUND
-  and has to be ordered too. The `Res`-level obligations are already discharged
-  on the trunk side: `Obs.lean`'s `heapEqMono`, `valContains_mono` and
-  `evalCompareOpH_mono` are about these SHARED pure workers, so the monadic
-  side imports them rather than reproving them. -/
+  and has to be ordered too. `Monadic/Mono.lean`'s `KontLe` therefore carries
+  `K.fuel ≤ K'.fuel` as its first conjunct, which STRENGTHENS the relation and
+  weakens no definition. -/
   fuel : Nat
   /-- Call a module-level function or method by qualified name. -/
   call : String → Array RVal → SemW RVal

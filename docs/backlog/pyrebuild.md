@@ -386,9 +386,19 @@ because the commit fell through as a no-op.
 
 ### Owed
 
-* **`Monadic.fuelMono`** — the ∃F collapse's one missing lemma. SV's is the
-  worked shape. Never weaken a definition to get it: if it needs the `Kont`
-  knot, say where and stop.
+* ~~**`Monadic.fuelMono`**~~ — **LANDED** (`LeanModels/Python/Monadic/Mono.lean`).
+  Axiom-free: `'LeanModels.Python.Monadic.fuelMono' depends on axioms: [propext,
+  Classical.choice, Quot.sound]`. It did NOT need the `Kont` knot opened and
+  nothing was weakened: the knot is exactly where the proof splits, because the
+  rebuild's own two halves induct differently — the fuel-FREE half on SYNTAX
+  (`evalOpen.mutual_induct` / `execOpen.mutual_induct`, 61 arms, one uniform
+  tactic) and the FUELED half on FUEL (`kontMono`, the file's one fuel
+  induction, framework code like `Obs.lean`'s). `KontLe` is the fieldwise order
+  on the record PLUS `K.fuel ≤ K'.fuel` — the bound is a field and the fuel-free
+  half is fuel-free in its RECURSION, not in its ARGUMENTS. **The ∃F collapse is
+  therefore unblocked**: `exf_collapse_abstract` + `fuelMono` is the whole
+  argument, and the 8 threshold sites in `genmoves_theorem.lean` can be restated
+  rather than re-proved.
 * **The jp number, re-measured against the TREE** — real `Monadic` imports, no
   replica, same 1M-heartbeat budget, both arms, `jp` recorded with each.
 * **The opt-in JSON refusal-class field**, via the `--observations`-style inner

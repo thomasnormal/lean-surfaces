@@ -1,5 +1,6 @@
 -- LEGACY: statement target of pre-rebuild theorems; compiles, refuses what
 -- it does not implement, gains no consumers; deleted when re-founded.
+import LeanModels.Core.Order
 import LeanModels.Python.Logic
 
 /-!
@@ -65,6 +66,15 @@ to equality. This is the extraction step of every `_mono` corollary. -/
 theorem Res.le_eq {α : Type} {x y : Res α} (h : x ⊑ y) (hx : x ≠ .timeout) :
     x = y := (Res.le_iff.mp h).resolve_left hx
 
+/-- **`Res.le` IS Core's flat order** (`LeanModels/Core/Order.lean`), and this
+`Iff.rfl` is the whole bridge. Stated as an iff rather than as a redefinition on
+purpose: `Res.le`'s spelling, its `⊑` notation and its consumers all stay put,
+and the tree gains the shared name additively. The congruences below stay
+tier-local — `Sv.Res` and `Python.Res` are different types, so `le_bind` and
+`le_ite` are each tier's own. -/
+theorem Res.le_iff_flatLe {α : Type} {x y : Res α} :
+    x ⊑ y ↔ FlatLe .timeout x y := Iff.rfl
+
 /-- Congruence of `⊑` under `bind`: run the prefix (IH), then the
 continuation pointwise (IH again, or reflexivity for fuel-free tails). -/
 theorem Res.le_bind {α β : Type} {x x' : Res α} {f f' : α → Res β}
@@ -111,6 +121,11 @@ theorem Run.timeout_le {σ α : Type} (y : Run σ α) :
 /-- A decided (non-`timeout`) lower bound is already the outcome. -/
 theorem Run.le_eq {σ α : Type} {x y : Run σ α} (h : x ⊑ʳ y)
     (hx : x ≠ .timeout) : x = y := (Run.le_iff.mp h).resolve_left hx
+
+/-- The same bridge for the state-carrying order — the fourth instance of the
+one shape. -/
+theorem Run.le_iff_flatLe {σ α : Type} {x y : Run σ α} :
+    x ⊑ʳ y ↔ FlatLe .timeout x y := Iff.rfl
 
 /-- Congruence of `⊑ʳ` under `Run.bind`: run the prefix (IH), then the
 continuation pointwise at every intermediate state. -/

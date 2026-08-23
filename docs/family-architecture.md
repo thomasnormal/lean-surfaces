@@ -1338,6 +1338,24 @@ a lane will grind arms indefinitely against it. The tell is that
 changed. When a monotonicity goal resists work that is succeeding
 elsewhere, **check the SET before checking the proof.**
 
+**AMENDED AT THE LANDING: SIX shapes — monad (3) + state-zoom seam (2) +
+PURE-WORKER seam (1).** `Monadic.fuelMono` landed and the set was one short.
+The sixth is **`liftRes`**: the seam where a `Res`-level fact about a
+fuel-taking *shared pure worker* becomes a `⊑` fact about the tier that lifts
+it. `PyLe.liftRes : Res.le x y → liftRes x ⊑ₚ liftRes y` is four lines, and it
+is the ONLY place the tier's fuel BOUND is consumed — both `K.fuel` sites in
+the monadic Python tier (`evalCompareOpH_mono` and `setDedup_mono`) come
+through it and nothing else.
+
+> **A tier that REUSES another's pure workers owes a congruence for the DOOR
+> they come through, not just for the operations it writes itself.**
+
+That is the general statement, and it generalises to every tier built on a
+maximal trunk: the composition operators are the tier's own, but `liftRes` is
+where somebody else's theorem enters, and an order with no congruence there
+cannot import a single shared proof. The tell is the same as the seam's: a
+goal that names a worker this tier never defined.
+
 That is the same shape as C's routing law paying for itself at adoption: a
 decision taken for one reason turning out to buy a second. Here the
 **speaker split** (§3.4) is doing the work — because `Halt` is the model's
@@ -4677,6 +4695,43 @@ real until an instrument re-derives it.**
     never generated. Worth knowing before designing a dispatcher that
     shape: the definition still *works*, but it becomes unreachable by the
     tactics that rewrite with it.
+
+    **AMENDED AT THE LANDING — the exponent was real, the diagnosis was
+    half right, and the fix is smaller than the prediction.** The walker
+    now closes **every** arm of `Monadic.fuelMono` (61 arms across two
+    mutual blocks, plus a 19-deep `ite` chain) at the **default 200 000
+    heartbeats**, and no goal-head dispatcher was written. Two mechanisms
+    were doing the damage and only one had been named:
+
+    1. **The backtracking `first` re-plans a SUBTREE per leaf failure** —
+       the named cause, and the cure is `repeat'`, which takes **one step
+       per goal and KEEPS it**. A failure at a leaf must be an *open leaf*,
+       never a parent that reconsiders. That alone makes the descent linear
+       and it needs no dispatch table.
+    2. **`apply` unifies at DEFAULT transparency** — the cause that had not
+       been named, and the more expensive one. `apply PyLe.ite` will
+       happily **whnf-unfold a tier constant** to find an `ite` underneath
+       it, so the walker descends *through* `applyBuiltin` instead of
+       stopping at `applyBuiltin_mono`, and a reflexivity probe on two
+       200-line bodies differing only in one variable tries to reconcile
+       them by unfolding. THAT is what "timed out at whnf" was.
+
+    The two cures are one line each: **run the leaf closer FIRST, guarded
+    by `done`** (so a named lemma is reached before `apply` can unfold past
+    it), and **make the reflexivity probe `with_reducible`** (so it
+    succeeds on syntactically equal subtrees and fails *fast* otherwise).
+
+    > **"Syntax-directed" is bought with TRANSPARENCY CONTROL and a
+    > non-backtracking driver, not with a dispatcher.** Before writing one,
+    > check whether the walker is descending through definitions it should
+    > be stopping at — a tactic that unfolds is a tactic that has left the
+    > syntax.
+
+    And the equation-theorem row stands with its number corrected: the
+    chain is **19 `if fname == …` arms** (a tool reported 45 by counting
+    the nested `match vs with` arms as top-level ones — the shape was
+    settled by READING the source, and a tool's arm count is a candidate,
+    not a finding).
 
     **AND A TACTIC-MACRO TECHNIQUE that turns a per-arm hand proof into one
     line — measured on `heapEqFuelMono`, 14 arms, axioms `[propext]`.**

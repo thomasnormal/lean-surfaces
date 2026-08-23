@@ -4230,6 +4230,18 @@ other and a rebase is not a build.
 
 > **"A red from a torn tree is not evidence of anything."**
 
+**AND THE TREE MUST NOT MOVE WHILE YOU QUEUE — enforced, not asked.** A queued
+tenure reads the source at **build** time, not at enqueue time, so an edit made
+while waiting silently changes what the verdict is *about*. Measured
+2026-08-23: the Lean tier nearly reported **"instN green"** for a run that
+would have built **instN + weak'**, because the queue wait outlasted the tree.
+`tools/triad.sh` now stamps the index's tree (`git write-tree`) plus `HEAD`
+**into the ticket** at enqueue, re-takes it at acquire, and on a difference
+prints `TREE CHANGED SINCE ENQUEUE (<enq> → <now>)` and **refuses**.
+`--build-current-tree` proceeds for a lane that batched deliberately — and
+prints the **same line**, because the run is about a different tree either way.
+A6's prose is the rule; this is the gate, and **fixes live in gates.**
+
 (§5.4a's provenance law, third instance — and the only one where the
 misleading number reads *dirtier* than the truth rather than cleaner.)
 

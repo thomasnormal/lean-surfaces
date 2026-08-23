@@ -1175,3 +1175,59 @@ cases, the classifier on the four real shapes it must tell apart (an arm, a
 right-hand side, a line that does **both**, and a `#guard`), comment stripping
 including a nested block, the literal-dot regression, and the no-hits-no-
 phantom rule. `docs_check` **87/87**. No Lean executed; no tenure needed.
+
+---
+
+## 2026-08-23-qol-18 — the tree must not move while you queue, and now it cannot silently
+
+A queued tenure reads the source at **build** time, not at enqueue time. So an
+edit made while waiting **silently changes what the verdict is about** — and
+measured this morning, the Lean tier nearly reported **"instN green"** for a
+run that would have built **instN + weak'**. The queue wait outlasted the
+tree.
+
+`tools/triad.sh` now stamps the index's tree (`git write-tree`) plus `HEAD`
+**into the ticket** at enqueue — so a human reading the queue can see what each
+waiting lane is waiting *for* — re-takes the stamp at acquire, and on a
+difference prints:
+
+```
+TREE CHANGED SINCE ENQUEUE (6a8b1bd6f8d9 → 91c4e0a72b15)
+```
+
+and **refuses**. `--build-current-tree` proceeds for a lane that batched an
+edit deliberately, and prints **the same line** — because the run is about a
+different tree either way, and the only thing the override changes is who
+decided.
+
+### Three directions, and the third is the one that keeps it usable
+
+* **changed → refuse**, naming both trees and saying to re-enqueue;
+* **unchanged → proceed silently** (a gate that narrates its successes is a
+  gate people stop reading);
+* **unstampable → proceed, LOUDLY.** A non-git directory or an unreadable
+  index cannot prove the tree held, and refusing there would block `--foreign`
+  and every non-repo use for a fact nobody can establish. It prints `TREE STAMP
+  UNAVAILABLE — this run cannot verify the tree is the one it queued for` and
+  continues. Saying *"I could not check"* is not the same as saying *"it is
+  fine"*, and the line exists so the two never read alike.
+
+### Doc-first, and the division of labour
+
+§7.2 now carries the enforcement paragraph next to A6's torn-tree rule. The
+**amendment text is the arch lane's** — A6 is being extended to *"never change
+the tree between enqueue and release"* — and this lane wrote the gate, not the
+rule. That split is the point: **fixes live in gates**, and a rule whose only
+enforcement is prose is a rule that gets guessed. The doc says so and points
+here.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **156 ok, 0 failed** (142 → 156, **14 new**) —
+the verdict on identical stamps, a moved tree, a moved **HEAD**, and an
+unstampable side; then a **real git repository** stamped, edited and re-stamped
+so `git write-tree` itself is exercised rather than mocked; then all three
+report directions including the shared line, that a clean pass prints
+**nothing**, and that the unstampable case is loud. Live: a sandboxed dry-run
+enqueued, printed `tree at enqueue: 6a8b1bd6f8d9`, acquired and proceeded with
+no complaint, leaving no ticket. `docs_check` **87/87**. No Lean executed.

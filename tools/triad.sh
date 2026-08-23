@@ -100,6 +100,7 @@
 #   — e.g. a loaded machine where amendment 14 makes a full build a
 #   quiet-machine-only operation — and then the lane OWES the coverage
 #   statement §5.4a asks for.
+#   tools/triad.sh --lane x --build-current-tree   # accept a tree edited while queued
 #   tools/triad.sh --lane x --gates "a; b"      # the floor PLUS your gates
 #   tools/triad.sh --lane x --gates-only "a; b" # your gates INSTEAD of the floor
 #   tools/triad.sh --lane x --foreign --gates "..."   # a FOREIGN checkout
@@ -148,6 +149,7 @@ GATES=""
 CLASSIFY=0
 CLASSIFY_ONLY=0
 FOREIGN=0
+BUILD_CURRENT_TREE=0
 GATES_ONLY=0
 AGAINST=""                                     # merge target; default below
 
@@ -186,6 +188,7 @@ while [ $# -gt 0 ]; do
     --build-target) BUILD_TARGET_ARGS="${BUILD_TARGET_ARGS:+$BUILD_TARGET_ARGS }${2:-}"; shift 2 ;;
     --classify)  CLASSIFY=1; shift ;;
     --foreign)   FOREIGN=1; shift ;;
+    --build-current-tree) BUILD_CURRENT_TREE=1; shift ;;
     --classify-only) CLASSIFY=1; CLASSIFY_ONLY=1; shift ;;
     --against)   AGAINST="${2:-}"; shift 2 ;;
     -h|--help)   usage ;;
@@ -874,6 +877,56 @@ build_red_report() {                  # log, headline -> the whole red block
   return 0
 }
 
+# ------------------------------- THE TREE MUST NOT MOVE WHILE YOU QUEUE
+# A queued tenure reads the source at BUILD time, not at enqueue time, so an
+# edit made while waiting silently changes what the verdict is about.  Measured
+# this morning: the Lean tier nearly reported "instN green" for a run that
+# would have built instN AND weak' — the queue wait was long enough for the
+# tree to move underneath the ticket.
+#
+# The stamp is the INDEX's tree (`git write-tree`) plus HEAD, taken at enqueue
+# and written into the ticket so a human reading the queue can see it, and
+# re-taken at acquire.  A6 is being amended to say "never change the tree
+# between enqueue and release"; this is the gate that enforces it, because a
+# fix that lives only in a rule is a rule, and fixes live in gates.
+tree_stamp() {                        # -> "<tree> <head>", or '' when unstampable
+  local t h
+  t="$(git -C "$CLONE" write-tree 2>/dev/null)" || return 1
+  [ -n "$t" ] || return 1
+  h="$(git -C "$CLONE" rev-parse HEAD 2>/dev/null || echo none)"
+  printf '%s %s\n' "$t" "$h"
+}
+
+tree_verdict() {                      # enq, now -> same | changed | unknown
+  if [ -z "$1" ] || [ -z "$2" ]; then echo unknown; return 0; fi
+  if [ "$1" = "$2" ]; then echo same; else echo changed; fi
+}
+
+short_tree() { printf '%s' "${1%% *}" | cut -c1-12; }
+
+# Prints the line in both directions — refusing and overriding say the SAME
+# thing, because the point is that the run is ABOUT a different tree, and that
+# is true whether or not the lane chose it.
+tree_change_report() {                # enq, now, override -> 0 proceed / 1 refuse
+  case "$(tree_verdict "$1" "$2")" in
+    same) return 0 ;;
+    unknown)
+      echo "TREE STAMP UNAVAILABLE — this run cannot verify the tree is the one it queued for" >&2
+      return 0 ;;
+    changed)
+      echo "TREE CHANGED SINCE ENQUEUE ($(short_tree "$1") → $(short_tree "$2"))" >&2
+      if [ "$3" = "1" ]; then
+        echo "  --build-current-tree: proceeding anyway. The verdict is about the CURRENT tree," >&2
+        echo "  not the one that queued, and the coverage statement is about what built NOW." >&2
+        return 0
+      fi
+      echo "  A queued tenure reads the source at BUILD time, so this run would verify a" >&2
+      echo "  tree nobody asked it to. Re-enqueue, or pass --build-current-tree if you" >&2
+      echo "  batched the edit deliberately." >&2
+      return 1 ;;
+  esac
+}
+
 # --------------------------------------------------------------- self-test
 # §5.4's law, pointed at this script: every refusal path RUN, not admired.
 # No Lean, no lock, no queue outside the temp dir it creates.
@@ -1121,6 +1174,40 @@ if [ "$SELF_TEST" = "1" ]; then
   # The deleted harness (master eeeb1fd) is no longer matched.
   check "the deleted monadic_gate is not matched"  "$(gate_runner_targets 'python3 harness/monadic_gate.py')" ""
   check "  ...while the live harnesses still are"  "$(gate_runner_targets 'python3 harness/script_corpus.py')" "leanmodels-run"
+
+  # ---- the tree must not move while you queue (measured: the Lean tier
+  # nearly reported "instN green" for a run that would have built instN + weak')
+  echo "  -- enqueue-tree stamp"
+  check "identical stamps are the same tree"  "$(tree_verdict 'aaa HEAD1' 'aaa HEAD1')" "same"
+  check "a moved tree is CHANGED"             "$(tree_verdict 'aaa HEAD1' 'bbb HEAD1')" "changed"
+  check "a moved HEAD is CHANGED too"         "$(tree_verdict 'aaa HEAD1' 'aaa HEAD2')" "changed"
+  check "an unstampable side is UNKNOWN"      "$(tree_verdict '' 'bbb HEAD1')" "unknown"
+
+  # A REAL repository: stamp, edit, re-stamp.
+  tr="$tmp/treerepo"; mkdir -p "$tr" && git init -q "$tr" 2>/dev/null
+  git -C "$tr" config user.email qol@example; git -C "$tr" config user.name qol
+  printf 'one\n' > "$tr/a.txt"; git -C "$tr" add -A; git -C "$tr" commit -qm base
+  saved="$CLONE"; CLONE="$tr"
+  enq="$(tree_stamp)"
+  check "a real tree stamps"                  "$( [ -n "$enq" ] && echo stamped)" "stamped"
+  check "no edit -> same"                     "$(tree_verdict "$enq" "$(tree_stamp)")" "same"
+  printf 'two\n' >> "$tr/a.txt"; git -C "$tr" add -A
+  now="$(tree_stamp)"
+  check "an edit while queued -> changed"     "$(tree_verdict "$enq" "$now")" "changed"
+
+  # The refusal, and the override, and the line they SHARE.
+  out="$(tree_change_report "$enq" "$now" 0 2>&1)"; rc=$?
+  check "enqueue, edit, acquire -> REFUSE"    "$rc" "1"
+  check "  ...and the line names both trees"  "$(printf '%s' "$out" | grep -c 'TREE CHANGED SINCE ENQUEUE (')" "1"
+  check "  ...and says what to do"            "$(printf '%s' "$out" | grep -c 'Re-enqueue')" "1"
+  out="$(tree_change_report "$enq" "$now" 1 2>&1)"; rc=$?
+  check "--build-current-tree -> PROCEED"     "$rc" "0"
+  check "  ...printing the SAME line"         "$(printf '%s' "$out" | grep -c 'TREE CHANGED SINCE ENQUEUE (')" "1"
+  out="$(tree_change_report "$enq" "$enq" 0 2>&1)"; rc=$?
+  check "enqueue, no edit -> PROCEED silently" "$rc:$(printf '%s' "$out" | grep -c .)" "0:0"
+  out="$(tree_change_report "" "$now" 0 2>&1)"; rc=$?
+  check "unstampable -> proceed, but LOUDLY"  "$rc:$(printf '%s' "$out" | grep -c 'TREE STAMP UNAVAILABLE')" "0:1"
+  CLONE="$saved"
 
   check "the banner names the protocol level" \
         "$(banner | grep -c 'protocol base 1-6 + A4-A13 + A16')" "1"
@@ -1469,8 +1556,11 @@ release() {
 }
 trap release EXIT INT TERM
 
-: > "$QUEUE/$TICKET" || die "cannot write a ticket into $QUEUE"
+ENQ_STAMP="$(tree_stamp || true)"
+printf '%s\n' "${ENQ_STAMP:-unstampable}" > "$QUEUE/$TICKET" \
+  || die "cannot write a ticket into $QUEUE"
 say "enqueued $TICKET (queue depth $(ls "$QUEUE" | wc -l | tr -d ' '))"
+[ -n "$ENQ_STAMP" ] && say "tree at enqueue: $(short_tree "$ENQ_STAMP")"
 
 # --------------------------------------------------------------- wait: FIFO
 # A9: only the OLDEST ticket attempts the mkdir.  A plain spinlock starves —
@@ -1511,6 +1601,12 @@ while :; do
     exit 9
   fi
 done
+
+# ------------------------------------------- the tree, re-checked at ACQUIRE
+NOW_STAMP="$(tree_stamp || true)"
+if ! tree_change_report "$ENQ_STAMP" "$NOW_STAMP" "$BUILD_CURRENT_TREE"; then
+  exit 2
+fi
 
 # ---------------------------------------------------------- RSS kill line
 # A11 and base rule 6: OUR descendants only, recursively — a guard rooted at a

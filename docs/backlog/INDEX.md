@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**72 entries across 16 lanes.** Regenerate with
+**73 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -24,6 +24,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
+| `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
 | `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
 | `2026-08-23-architecture-3` | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
 | `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |

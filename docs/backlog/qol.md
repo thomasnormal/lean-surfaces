@@ -2305,3 +2305,52 @@ won't-fix carries its reason.
 per-shape rows). `a6-guard.sh` **8 ok** — its first self-test, covering the
 positive case, a build elsewhere, no builds, an unreadable cwd, and a missing
 probe. Live on this machine the guard exits 0 correctly. No Lean executed.
+
+---
+
+## 2026-08-23-qol-34 — audit MEDIUM 11 and LOW 12: a ledger that can fail, and a map that reads the tree
+
+### MEDIUM — `triad.sh:848`, the ledger had no failing path
+
+`axiom_ledger` grepped, echoed, and returned 0 whenever **any** axiom line
+existed. It never inspected the bracketed list, so **`[sorryAx]` printed
+identically to `[propext, Classical.choice, Quot.sound]`** and the tenure still
+said `TRIAD DONE … gates green`.
+
+**That is this lane's own law for the third time** — a success signal that
+survives the failure it should report — and this time in the guard built two
+landings ago to *carry the evidence*. `qol-19` stated it, `qol-28` hit it in
+`--axioms`, and it was sitting in the ledger the whole time.
+
+Now the declared standard set is named (`propext Classical.choice Quot.sound`,
+AGENTS.md § House rules), every line's list is scanned against it, and anything
+outside returns **2**, names the axiom **and the declaration**, and **sets the
+tenure's exit code to red**: *"a build carrying these is not a green tenure."*
+
+### LOW — `triad.sh:432`, a comment the tree contradicts
+
+`example_dir_tiers` was a hand map whose header asserted it *"is not
+derivable"*, and which claimed `go` had **no** model tier — while
+`LeanModels/Go/` is 1,129 lines and every `Examples/go/**/*.lean` says
+`import LeanModels.Go`. **A hand-written claim the tree contradicts is the
+identifier law wearing a comment.**
+
+The map now **derives from the imports that exist**, falling back to the
+explicit table only where nothing is declared. Verified live: `go → Go`, and
+`mixed-signal → Circuit Python` — which is *exactly* what the hand map said,
+so the derivation reproduces the one row that was genuinely ambiguous instead
+of replacing it with a guess.
+
+**Two self-test rows changed rather than the code**, and that is the finding:
+they encoded the hand map's errors. `Examples/go/…` now contributes `Go`, and
+the row says so. The spice row was made **fixture-driven** — it declares the
+imports it means instead of inheriting whatever the live tree happens to have,
+because a derived map read from the real tree makes a test drift with every
+lane's imports.
+
+### Triad
+
+`bash -n` clean. `triad.sh --self-test`: **174 ok, 0 failed** (169 → 174) — an
+off-standard axiom returning 2, naming the axiom **and** the declaration,
+saying the tenure is not green; the declared three passing; and
+`Lean.ofReduceBool` caught as off-standard. No Lean executed.

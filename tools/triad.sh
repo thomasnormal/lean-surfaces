@@ -419,7 +419,16 @@ is_recognized() {       # 0 when a rule (not the catch-all) matched the path
 # not derivable: `system-verilog` -> `Sv`, and `mixed-signal` spans two tiers
 # (its proofs import both `LeanModels.Circuit.MixedSignal` and
 # `LeanModels.Python.Surface`).
+# DERIVED FIRST, hand-map second.  The map's header claimed it "is not
+# derivable"; for `go` it plainly is — `Examples/go/**/*.lean` all say
+# `import LeanModels.Go`, and `LeanModels/Go/` is 1,129 lines.  A hand-written
+# claim that the tree contradicts is the identifier law wearing a comment.
 example_dir_tiers() {   # Examples/<dir> -> zero or more LeanModels tier keys
+  local derived
+  derived="$(grep -rhoE '^[ \t]*import[ \t]+LeanModels\.[A-Za-z0-9_]+' \
+               "${LS_GREP_ROOT:-$CLONE}/Examples/$1" --include='*.lean' 2>/dev/null \
+             | sed 's/.*LeanModels\.//' | sort -u | tr '\n' ' ' | sed 's/ *$//')"
+  if [ -n "$derived" ]; then printf '%s\n' "$derived"; return 0; fi
   case "$1" in
     ada)            echo Ada ;;
     c)              echo C ;;
@@ -891,12 +900,41 @@ build_log_pointer() {           # log -> the line naming it, and the caveat
     "$1" "$(( $(ls "$(dirname "$1")"/triad-build.* 2>/dev/null | grep -c . || echo 1) - 1 ))"
 }
 
-axiom_ledger() {                # log -> the axiom lines, labelled; 1 if none
-  local lines
+# THE DECLARED STANDARD SET (AGENTS.md § House rules: `#print axioms` of every
+# @[spec] theorem shows only the three).  Named here so a lane disputes the
+# LIST rather than the verdict.
+AXIOM_STANDARD='propext Classical.choice Quot.sound'
+
+# A LEDGER THAT CANNOT FAIL IS A LEDGER NOBODY NEEDS TO READ.  The first cut
+# grepped, echoed, and returned 0 whenever any axiom line existed — so
+# `[sorryAx]` and `[Lean.ofReduceBool]` printed identically to the standard
+# three and the tenure still said gates green.  That is this lane's own law
+# (a success signal that survives the failure it should report) for the third
+# time, now in the guard built to carry the evidence.
+axiom_ledger() {                # log -> lines, labelled; 1 none; 2 OFF-STANDARD
+  local lines bad
   lines="$(grep -E 'depends on axioms|does not depend on any axioms' "$1" 2>/dev/null || true)"
   [ -n "$lines" ] || return 1
   echo "axiom ledger, from this build:"
   printf '%s\n' "$lines" | sed 's/^/    /'
+  # Each line's bracketed list, minus the standard set: whatever remains is an
+  # axiom nobody declared, and `sorryAx` is the one that matters most.
+  bad="$(printf '%s\n' "$lines" | awk -v STD="$AXIOM_STANDARD" '
+      BEGIN { n = split(STD, a, " "); for (i = 1; i <= n; i++) ok[a[i]] = 1 }
+      /depends on axioms/ {
+        decl = $0; sub(/^[^\x27]*\x27/, "", decl); sub(/\x27.*$/, "", decl)
+        list = $0; sub(/^.*\[/, "", list); sub(/\].*$/, "", list)
+        gsub(/,/, " ", list)
+        m = split(list, ax, " ")
+        for (i = 1; i <= m; i++) if (ax[i] != "" && !(ax[i] in ok))
+          printf "%s (%s)\n", ax[i], decl
+      }' | sort -u)"
+  if [ -n "$bad" ]; then
+    echo "AXIOMS OFF THE DECLARED STANDARD ($AXIOM_STANDARD):"
+    printf '%s\n' "$bad" | sed 's/^/    /'
+    echo "A build carrying these is not a green tenure — read them before quoting it."
+    return 2
+  fi
   return 0
 }
 
@@ -1293,6 +1331,17 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...under a label naming the build" "$(axiom_ledger "$tmp/green.log" | head -1)" "axiom ledger, from this build:"
   printf 'info: building\nBuild completed successfully.\n' > "$tmp/plain.log"
   check "a log with no axiom line says nothing" "$(axiom_ledger "$tmp/plain.log")" ""
+
+  # THE LEDGER MUST BE ABLE TO FAIL.  [sorryAx] printed identically to the
+  # standard three and the tenure still said gates green.
+  printf "'thm' depends on axioms: [propext, sorryAx]\n" > "$tmp/sorry.log"
+  check "an OFF-STANDARD axiom returns 2"     "$(axiom_ledger "$tmp/sorry.log" >/dev/null; echo $?)" "2"
+  check "  ...naming the axiom and the decl"  "$(axiom_ledger "$tmp/sorry.log" | grep -c 'sorryAx (thm)')" "1"
+  check "  ...and saying the tenure is not green" "$(axiom_ledger "$tmp/sorry.log" | grep -c 'not a green tenure')" "1"
+  printf "'ok1' depends on axioms: [propext, Classical.choice, Quot.sound]\n" > "$tmp/std.log"
+  check "the declared three pass"             "$(axiom_ledger "$tmp/std.log" >/dev/null; echo $?)" "0"
+  printf "'r' depends on axioms: [Lean.ofReduceBool]\n" > "$tmp/rb.log"
+  check "ofReduceBool is off-standard too"    "$(axiom_ledger "$tmp/rb.log" >/dev/null; echo $?)" "2"
   bl="$tmp/bl"; mkdir -p "$bl"
   : > "$bl/triad-build.aaa"; : > "$bl/triad-build.bbb"; : > "$bl/triad-build.ccc"
   check "a green tenure NAMES its log"        "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'full log:')" "1"
@@ -1352,8 +1401,14 @@ if [ "$SELF_TEST" = "1" ]; then
   check "an UNRECOGNIZED path -> spine"     "$(class_name "$CLASS_RANK")" "spine"
   check "and it is NAMED, not absorbed"     "$CLASS_UNKNOWN" "Makefile"
 
+  # The tier map is DERIVED from imports now, so this row declares the imports
+  # it means instead of inheriting whatever the live tree happens to have.
+  mkdir -p "$tmp/tiermap/Examples/spice/rc"
+  printf 'import LeanModels.Spice\n' > "$tmp/tiermap/Examples/spice/rc/proof.lean"
+  LS_GREP_ROOT="$tmp/tiermap"
   cls Examples/spice/rc/net.cir
   check "an input_dir file is a build input" "$BUILD_TARGETS" "Examples LeanModels.Spice"
+  LS_GREP_ROOT=
 
   check "module_of refuses a hyphen"        "$(module_of Examples/system-verilog/x.lean)" ""
   check "module_of derives a plain path"    "$(module_of LeanModels/Sv/Obs.lean)" "LeanModels.Sv.Obs"
@@ -1420,7 +1475,11 @@ if [ "$SELF_TEST" = "1" ]; then
 
   cls Examples/go/rung1/rung1.go Examples/c/sunfish/sunfish.json
   check "MIXED invisible+reachable -> tier"             "$(class_name "$CLASS_RANK")" "tier"
-  check "  ...scoped to the reachable one's tier"       "$CLASS_TIERS" "C"
+  # `Go` appears because the map is DERIVED and `Examples/go/**` really does
+  # `import LeanModels.Go` — the hand map claimed go had no tier, and the tree
+  # says otherwise.  The audit's LOW row is this, and the assertion follows the
+  # tree rather than the comment.
+  check "  ...scoped to the tiers the imports declare"  "$CLASS_TIERS" "Go C"
 
   LS_GREP_ROOT="$tmp/does-not-exist"
   cls Examples/go/rung1/rung1.go
@@ -1826,7 +1885,12 @@ run_gates "$GATES"
 # A GREEN TENURE MUST NAME ITS LOG TOO.  The file persists either way; what a
 # lane loses is the PATH, and with 56 of them in one TMPDIR the newest is very
 # likely somebody else's.
-if led="$(axiom_ledger "$BUILD_LOG")"; then printf '%s\n' "$led" | while IFS= read -r l; do say "$l"; done; fi
+led="$(axiom_ledger "$BUILD_LOG")"; led_rc=$?
+[ "$led_rc" != "1" ] && printf '%s\n' "$led" | while IFS= read -r l; do say "$l"; done
+if [ "$led_rc" = "2" ]; then
+  say "AXIOM LEDGER RED — the build compiled, and its axioms are not the declared set"
+  rc=1
+fi
 say "$(build_log_pointer "$BUILD_LOG")"
 
 say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"

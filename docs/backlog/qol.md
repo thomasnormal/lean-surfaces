@@ -2761,3 +2761,68 @@ same reason `triad.sh`'s watchdog publishes its pid instead of exporting it.
 `bash -n` clean. `--self-test`: **35 ok, 0 failed** (33 → 35). Full run 62 s
 with unchanged numbers; `--budget 5` stops at law 24 and declares its counts
 floors. No Lean executed.
+
+---
+
+## 2026-08-23-qol-40 — `laws.sh --gate-set`: §5.4b made checkable, and `.sv` has no gate
+
+§5.4b's incident is the one where **every gate was green while the file said
+the opposite of the truth** — four gates, four elsewheres, and the rotted claim
+lived in a `.lean` **comment** that none of them pointed at. This enumerates
+the pointers.
+
+### The honesty clause is the first thing it prints
+
+> **Enumeration reads DECLARATIONS.** A gate whose target is computed at
+> runtime is listed **UNRESOLVED**, never guessed — a guessed pointer is worse
+> than a missing one, because it makes a claim look **covered**. And §5.4b's
+> own rule applies to this mode: **a gate set is audited by ENUMERATION, never
+> by execution**, so nothing here runs a gate.
+
+Live: **16 gates declared, 2 UNRESOLVED** — `conflict-markers` and
+`tool-self-tests`, both shell functions whose targets really are computed. They
+are named as unresolved rather than credited.
+
+### The gate's own words are half the enumeration
+
+A step declared `python3 tools/docs_check.py` names only the **script**; its
+**scope** is in that script's header — *"Scans README.md, AGENTS.md, and
+docs/\*\*/\*.md"*. Reading only the declaration left `.md` looking orphaned
+while `docs_check` was pointed squarely at it. §5.4b says it plainly — *a gate
+that documents its scope has already done half the enumeration* — so the mode
+reads both, and the orphan list went from five kinds to one.
+
+### The one orphan is real, and it is not a small one
+
+```
+  ORPHAN KINDS — present in the tree, named by NO gate's declared pointer:
+    .sv        no declared pointer names it
+```
+
+Verified rather than reported: **`harness/sv_round_trip.py` exists and appears
+in `tools/ci.sh` zero times**, against **18 `.sv` files** in the tree. (The four
+`sv/` matches in ci.sh are `harness/sv/diff_test.py` — a different thing.) That
+corroborates the audit's own note that some harnesses are never invoked, and it
+is exactly the §5.4b shape: **a kind nobody has pointed a gate at, in a
+neighbourhood that is otherwise green.**
+
+`MEAS-68` rows are flagged `WEAKEST(MEAS-68)` from the declaration's own words
+— an expected-to-error gate's verdict is **invariant under everything else the
+artifact says**.
+
+### A defect that made every kind look orphaned
+
+The first run reported **16/16 UNRESOLVED** and five orphan kinds. `gate_rows`
+emitted five tab-separated fields with two empty placeholders — and **TAB is
+whitespace, so bash collapses consecutive tabs into one delimiter**, landing the
+declaration in the wrong variable. A padding field you cannot see is a padding
+field that is not there. Three fields now.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **43 ok, 0 failed** (35 → 43), calibrated on
+§5.4b's own table — gates read from declarations, a declared script as a
+pointer, the gate's own words extending it, an `EXPECTED TO ERROR` row flagged
+weakest while an ordinary one is not, a runtime target left UNRESOLVED rather
+than guessed, and the incident's `.lean`-alongside-`.md` shape. No Lean
+executed.

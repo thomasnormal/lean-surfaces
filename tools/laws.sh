@@ -30,6 +30,7 @@
 #   tools/laws.sh --top 5         # just the NO GATE head
 #   tools/laws.sh --verbose       # every law, with its citing tools
 #   tools/laws.sh --budget 30     # seconds; PARTIAL past it, counts are FLOORS
+#   tools/laws.sh --gate-set      # §5.4b: what each gate is POINTED AT, + orphans
 #   tools/laws.sh --self-test
 #
 # ZERO Lean execution.  Safe outside a tenure (A11).
@@ -40,6 +41,7 @@ CLONE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TOP=10
 VERBOSE=0
 SELF_TEST=0
+GATE_SET=0
 # A TOOL THAT PRICES ENFORCEMENT MUST ITSELF BE PRICED — and a two-minute audit
 # instrument stops being run, which is how audit instruments die.
 BUDGET="${LS_LAWS_BUDGET:-120}"
@@ -54,6 +56,7 @@ while [ $# -gt 0 ]; do
     --top)       TOP="${2:-}"; shift 2 ;;
     --verbose)   VERBOSE=1; shift ;;
     --budget)    BUDGET="${2:-}"; shift 2 ;;
+    --gate-set)  GATE_SET=1; shift ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
     *)           die "unknown argument '$1'" ;;
@@ -282,6 +285,80 @@ ledger_citations() {            # tokens on stdin -> how many ledger LINES cite 
   return 0
 }
 
+# ============================ §5.4b GATE TOPOLOGY ============================
+# "A gate set is a set of POINTERS, and coverage is what they point AT."  The
+# lane that shipped a rotted transcription was not running without gates: it
+# had FOUR, all green throughout, and none was pointed at the claim that had
+# rotted.  Four gates, four elsewheres.
+#
+# > ENUMERATION READS DECLARATIONS.  A gate whose target is computed at
+# > runtime — a variable command, a glob built from a flag, a step that shells
+# > out to something this cannot see — is listed UNRESOLVED.  It is NOT
+# > guessed, because a guessed pointer is worse than a missing one: it makes a
+# > claim look covered.  And §5.4b's own rule applies to this tool: a gate set
+# > is audited by ENUMERATION, never by execution, so nothing here runs a gate.
+#
+# The pointer of a gate is taken from its DECLARATION and, where the gate
+# states its own scope, from the gate's own words — "a gate that documents its
+# scope has already done half the enumeration".
+
+# What each gate names, as a file-kind pointer: the extensions and directories
+# its declaration mentions.  Anything else it may touch is not declared.
+gate_pointer() {                # command-text -> the kinds/paths it names
+  printf '%s' "$1" | awk '
+    function emit(t) { if (!(t in s)) { s[t] = 1; printf "%s ", t } }
+    {
+      line = $0
+      while (match(line, /\*\.[A-Za-z0-9]+|[A-Za-z0-9_.\/-]+\.(lean|md|py|json|sh|cir|va|sv)/)) {
+        emit(substr(line, RSTART, RLENGTH)); line = substr(line, RSTART + RLENGTH)
+      }
+    }
+    END { print "" }'
+}
+
+# A gate whose declared verdict is "expected to fail" is the weakest row in any
+# set: its verdict is INVARIANT under everything else the artifact says
+# (MEAS-68).  Detected from the declaration's own words.
+gate_is_expected_fail() {
+  case "$1" in
+    *xpected*rror*|*xpected*fail*|*EXPECTED\ TO\ ERROR*|*must\ fail*) return 0 ;;
+  esac
+  return 1
+}
+
+# The declared gate sets: ci.sh's steps, and the triad's class floors.  Both
+# are DECLARATIONS; neither is executed.
+gate_rows() {                   # -> "set<TAB>name<TAB>pointer<TAB>flag<TAB>decl"
+  local ci="$CLONE/tools/ci.sh" tr="$CLONE/tools/triad.sh"
+  if [ -r "$ci" ]; then
+    awk '/^(step|maybe|maybe_lean) +"/ {
+           n = $0; sub(/^[a-z_]+ +"/, "", n); sub(/".*/, "", n)
+           d = $0; sub(/^[a-z_]+ +"[^"]*" */, "", d)
+           printf "ci.sh\t%s\t%s\n", n, d
+         }' "$ci"
+  fi
+  if [ -r "$tr" ]; then
+    awk '/^gate_floor\(\)/,/^}/ {
+           if ($0 ~ /echo .python3/) {
+             c = $0; sub(/^[^\x27]*\x27/, "", c); sub(/\x27.*$/, "", c)
+             k = $0; sub(/^ *\)? */, "", k); sub(/\).*/, "", k)
+             printf "triad-floor\t%s\t%s\n", k, c
+           }
+         }' "$tr"
+  fi
+}
+
+# THE ORPHAN LIST.  A file KIND present in the tree that no gate's declared
+# pointer names is ungated, however green the neighbourhood.  Kind is the unit
+# because the incident's claim was a KIND — a transcription inside a `.lean`
+# COMMENT — that every gate's pointer missed.
+tree_kinds() {
+  find "$CLONE" -type f -name '*.*' 2>/dev/null \
+    | grep -vE '/\.lake/|/\.git/|/node_modules/' \
+    | sed 's/.*\.//' | sort | uniq -c | sort -rn \
+    | awk '$1 >= 5 { print $2 }'
+}
+
 # --------------------------------------------------------------- self-test
 if [ "$SELF_TEST" = "1" ]; then
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/laws-selftest.XXXXXX")" || die "no temp dir"
@@ -400,12 +477,104 @@ MD
   check "  ...and carries its reason"     \
         "$(law_rows | grep -c 'cost is a judgement')" "1"
 
+  # ---- §5.4b GATE TOPOLOGY, calibrated on the incident's own table: four
+  # gates, four elsewheres, all green, and the rotted claim inside a .lean
+  # COMMENT that none of them pointed at.
+  gs="$tmp/gs"; mkdir -p "$gs/tools" "$gs/docs" "$gs/LeanModels"
+  cat > "$gs/tools/ci.sh" <<'CISH'
+step  "docs"        python3 tools/docs_check.py
+step  "probe"       lake env lean probes/probe_es_unblock.lean   # EXPECTED TO ERROR
+step  "computed"    run_the_thing
+CISH
+  printf '# Scans README.md, AGENTS.md, and docs/**/*.md for marked blocks.\n' \
+    > "$gs/tools/docs_check.py"
+  i=1; while [ "$i" -le 6 ]; do printf -- '-- a comment\n' > "$gs/LeanModels/M$i.lean"; i=$((i+1)); done
+  i=1; while [ "$i" -le 6 ]; do printf '# d\n' > "$gs/docs/d$i.md"; i=$((i+1)); done
+  saved_cl="$CLONE"; CLONE="$gs"
+
+  check "gates are read from DECLARATIONS"  "$(gate_rows | grep -c .)" "3"
+  check "a declared script is a pointer"    "$(gate_pointer 'python3 tools/docs_check.py' | tr -d ' ')" "tools/docs_check.py"
+  check "the gate's OWN words extend it"    "$(gate_pointer "$(cat "$gs/tools/docs_check.py")" | grep -c 'README.md')" "1"
+  check "an EXPECTED-TO-ERROR gate is the weakest row" \
+        "$(gate_is_expected_fail 'lake env lean probes/p.lean   # EXPECTED TO ERROR' && echo weak)" "weak"
+  check "  ...and an ordinary gate is not"  "$(gate_is_expected_fail 'python3 tools/docs_check.py' && echo weak)" ""
+  check "a runtime target is UNRESOLVED, not guessed" \
+        "$(gate_pointer 'run_the_thing' | tr -d ' ')" ""
+  check "the incident's shape: .lean is a tree kind" \
+        "$(tree_kinds | grep -c '^lean$')" "1"
+  check "  ...and so is .md"                "$(tree_kinds | grep -c '^md$')" "1"
+  CLONE="$saved_cl"
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
 fi
 
 # -------------------------------------------------------------------- main
+if [ "$GATE_SET" = "1" ]; then
+  echo "laws.sh --gate-set — §5.4b: a gate set is a set of POINTERS"
+  echo "                    measured at $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo 'no git')"
+  echo
+  echo "  ENUMERATION READS DECLARATIONS.  A gate whose target is computed at"
+  echo "  runtime is listed UNRESOLVED, never guessed — a guessed pointer is"
+  echo "  worse than a missing one, because it makes a claim look covered."
+  echo "  Nothing here is executed: a gate set is audited by ENUMERATION."
+  echo
+  printf '  %-12s %-30s %-30s %s\n' SET GATE 'POINTED AT (declared)' FLAG
+  printf '  %-12s %-30s %-30s %s\n' ------------ ------------------------------ ------------------------------ ----
+  n_unres=0; n_weak=0; n_gates=0
+  covered=""
+  # THREE fields, not five with empty placeholders: TAB is whitespace, so bash
+  # COLLAPSES consecutive tabs into one delimiter and the declaration landed in
+  # the wrong variable — every gate then read UNRESOLVED, which made every file
+  # kind look orphaned.  A padding field you cannot see is a padding field that
+  # is not there.
+  while IFS="$(printf '\t')" read -r set name decl; do
+    [ -n "$name" ] || continue
+    n_gates=$((n_gates + 1))
+    ptr="$(gate_pointer "$decl")"
+    # AND THE GATE'S OWN WORDS.  §5.4b: "a gate that documents its scope has
+    # already done half the enumeration."  A step declared as
+    # `python3 tools/docs_check.py` names only the script; the SCOPE is in that
+    # script's header ("Scans README.md, AGENTS.md, and docs/**/*.md"), and
+    # without reading it `.md` looked orphaned while docs_check was pointed
+    # squarely at it.
+    for tgt in $ptr; do
+      case "$tgt" in
+        *.sh|*.py)
+          [ -r "$CLONE/$tgt" ] && ptr="$ptr $(head -40 "$CLONE/$tgt" | gate_pointer "$(cat)" 2>/dev/null)" ;;
+      esac
+    done
+    ptr="$(printf '%s' "$ptr" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/ *$//')"
+    flag=""
+    if gate_is_expected_fail "$decl"; then flag="WEAKEST(MEAS-68)"; n_weak=$((n_weak + 1)); fi
+    if [ -z "$ptr" ]; then ptr="UNRESOLVED — computed at runtime"; n_unres=$((n_unres + 1))
+    else covered="$covered $ptr"; fi
+    printf '  %-12s %-30s %-30s %s\n' "$set" "$(printf '%s' "$name" | cut -c1-30)" "$(printf '%s' "$ptr" | cut -c1-30)" "$flag"
+  done <<GATES
+$(gate_rows)
+GATES
+  echo
+  printf '  %s gate(s) declared; %s UNRESOLVED; %s expected-to-fail\n' "$n_gates" "$n_unres" "$n_weak"
+  echo
+  echo "  ORPHAN KINDS — present in the tree, named by NO gate's declared pointer:"
+  orph=0
+  for k in $(tree_kinds); do
+    case " $covered " in
+      *".$k"*) ;;
+      *) printf '    .%-8s  no declared pointer names it\n' "$k"; orph=$((orph + 1)) ;;
+    esac
+  done
+  [ "$orph" = "0" ] && echo "    (none)"
+  echo
+  echo "  A KIND is the unit because the incident's rotted claim WAS a kind: a"
+  echo "  transcription inside a .lean COMMENT, which docs_check (.md only) and"
+  echo "  two probes (their own rows only) all pointed elsewhere from.  Four"
+  echo "  gates, four elsewheres, all green.  An orphan here is not a defect —"
+  echo "  it is a claim nobody has pointed a gate at."
+  exit 0
+fi
+
 [ -f "$INDEX" ]  || die "no law index at '$INDEX'"
 [ -f "$FAMILY" ] || die "no family doc at '$FAMILY'"
 

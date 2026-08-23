@@ -343,7 +343,7 @@ mislabelled.
 | --- | --- | --- | --- | --- | --- | --- |
 | C | `C` | spec-mirror — ISO/IEC 9899 | `C23` (now), `C17` (if claimed) | clang, pinned family + profile | `ctwin/sunfish.c`; c-testsuite; gcc torture | active — M2 |
 | Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — **definition is the MONADIC interpreter**; the deep interpreter is the legacy layer under §3.4(c)'s erosion contract |
-| SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — 8 166 lines, **98 theorems**, dormant but verified working |
+| SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — **8 562 lines, 106 declarations** (96 `theorem`/`lemma` + 10 `example`) **as measured at `00fe2dc`**; dormant but verified working |
 | WebAssembly | `Wasm` | spec-mirror — W3C core **+ official suite** | **PROPOSED** | the reference interpreter **and the `.wast` runner** | the official `.wast` suite | founding |
 | ECMAScript | `Es` | spec-mirror — ECMA-262 **+ official suite** | **PROPOSED** | an engine **and test262's harness** | test262 | founding — blocked on SoftFloat (§3.5.3) |
 | Ada | `Ada` | spec-mirror — ISO/IEC 8652 **+ official suite** | **`Ada2022`** (spec head) **and `Ada2012`** (suite edition) — RATIFIED | a GNAT toolchain **and the ACATS grader** | **ACATS 4.2**, 4 188 tests | founding — **version pair FORCED** |
@@ -413,13 +413,39 @@ declarations plus `example`s — and under that rule this document counts
 **93 + 5 = 98 exactly**. The earlier disagreement was never about the tree:
 93 was the same measurement under a narrower rule that omitted the five
 `example`s. A number is adopted here when a second rule reproduces it, not
-when a neighbour asserts it, and this one now is.
+when a neighbour asserts it.
 
-**One standing violation, flagged and not fixed here.**
-`docs/sv-corpus-coverage.md` line 5 records a corpus path under a private
-home directory and organization. That breaches the same rule this
-correction invokes. It is the SV lane's file and their charter is in
-flight, so it is theirs to redact — but it is named here so it is not lost.
+**AND THE ROW NOW CARRIES ITS STATE STAMP, because it drifted — this
+document violating its own provenance law.** *"Settled at 98"* was true at
+`8f4fd65` (8 166 lines, 93 + 5) and is false at `00fe2dc` (**8 562 lines,
+96 + 10 = 106**). A derivable number written without the revision it was
+derived at is **a measurement with its state stripped off** (§5.4a), and
+the fix is the stamp rather than the refresh: **a stamped stale number is
+readable; an unstamped current one rots silently.** The counts belong in a
+`--check` mode so the registry **drifts loudly** rather than being
+re-noticed by an audit.
+
+**FIVE STANDING VIOLATIONS, not one — this row was understated and is
+corrected.** It previously named a single file, which is exactly the
+error §5.4a warns about: **the instance that was noticed reported as the
+population.** The one-grep answer
+(`grep -rl '/Users/ahle\|/home/thomas-ahle' docs/`) finds live private
+paths in **five** documents:
+
+| file | what it is |
+| --- | --- |
+| `docs/sv-construct-census.json:5` | **the worst of the five** — `"corpus_path"`, a **committed machine-readable provenance field**, not prose |
+| `docs/sv-charter.md:189` | a `DEFAULT_CORPUS` constant |
+| `docs/sv-corpus-coverage.md:5` | the corpus path originally flagged |
+| `docs/litreview/area-c-isa-models.md:9,213` | checkout paths |
+| `docs/howto/add-a-spec-to-existing-code.md:159` | a working directory inside quoted output |
+
+**The census JSON is the one that matters most**, because a provenance
+field is *read by tools and copied forward*, where prose is only read by
+people. **A repo-wide private-path grep belongs in `tools/check.sh`** so
+the redaction is complete by construction rather than by whoever
+last looked — which is this document's own §9 thesis applied to a rule it
+was content to state in prose.
 
 ### 1.3 The version-neutral boundary, stated per language
 
@@ -3570,6 +3596,22 @@ why it is stated once rather than three times:
 | **a red from a torn tree** | a rebase under a running build yields `Unknown constant` against a healthy master (§7.2) | Go lane |
 | **a `#guard` batch quoted as KERNEL evidence** | `#guard` attests the runtime and passes where the kernel cannot reduce at all (§5.4) — so a batch cited for kernel-reducibility is quoting the wrong oracle | SoftFloat lane |
 
+**AND THE SAME LAW APPLIES TO FINDINGS, measured: the VERIFIER LAYER
+EARNED ITS COST.** The first full audit ran every candidate finding
+through a re-read before publishing, and the re-read was not a formality:
+**8 of 64 were REFUTED**, and **many of the confirmed were confirmed WITH
+CORRECTIONS** — **severities moved in both directions** and
+**consequences were replaced outright.**
+
+> **A finding un-re-read is a claim, not a finding.**
+
+Both halves matter. Publishing the 8 would have sent lanes to fix
+non-defects; publishing the corrected ones uncorrected would have sent
+them to fix real defects **for the wrong reason**, which is worse because
+it survives the fix. And the severities moving **both** ways is the tell
+that the verifier was doing work rather than rubber-stamping — a layer
+that only ever downgrades is a filter, not a check.
+
 > **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
 > neither.**
 
@@ -3628,8 +3670,31 @@ A bound on the breakage from a payload change was taken as the count of
 **direct importers** of `Core.Outcome` — **2 files**. That is neither the
 identifier nor the pattern position; it is a unit that cannot see the
 thing at all, because **a consumer reaches a constructor's shape without
-naming its module.** The convicting case: `guards.lean`'s `refusalOf`
-matches `.error (.unsupported m)` and **names no Core symbol whatsoever**.
+naming its module.** The convicting case *was* `guards.lean`'s
+`refusalOf` — **and the current file refutes both halves of how this
+document described it.** It now reads
+
+```lean
+-- Examples/go/rung1/guards.lean (excerpt: the destructurer, at HEAD)
+def refusalOf (stmts : List Stmt) : Option (RefusalCause SpecRef) :=
+  match (execSeq [] 64 stmts) ({} : GoWorld) with
+  | .error (.unsupported c _ _) => some c
+```
+
+— a **three-field** pattern, not `.unsupported m`, and a return type that
+**names `Core`'s `RefusalCause` outright**. The example was true when
+written and **the Core payload landing invalidated it**, which is the
+version of this document's own drift law that bites hardest: *the artifact
+a claim cites keeps changing after the claim is filed.*
+
+**The point survives the example, restated so it cannot be refuted by a
+signature change:** a consumer **reaches a constructor's shape by
+destructuring it**, and a module-import census cannot see that — whether
+or not this particular consumer also happens to name the type. And **the
+row's own count needs the same correction**: the doc's recommended grep
+(`.error (.unsupported`) finds **11 lines across FIVE files**, not three —
+`Go/Spec.lean`, `Core/Outcome.lean`, `Monadic/Substrate.lean`,
+`Examples/go/bitlen/guards.lean`, `Examples/go/rung1/guards.lean`.
 
 The calibration, five units on one change:
 
@@ -5502,6 +5567,32 @@ tool that mentions a law in a comment is counted — so the NO GATE list is a
 the count ranks is the HOME, not the law**: laws sharing a `§` share every
 token and therefore tie, which is information rather than noise — it says the
 *section* is what the ledgers keep reaching for. The report prints both views.
+
+**THE FIRST FULL AUDIT HAS RUN, and its artifact is
+`docs/quality-audit-2026-08-23.md` — 56 confirmed / 8 refuted, grouped by
+owner, every lane dispatched.** §9.7 described a cadence; this is its first
+completed instance, and the aggregate says something about the law
+families themselves.
+
+**THE CONFIRMED SET CLUSTERS EXACTLY ON THE SIX MINTED FAMILIES.** Of the
+11 HIGH findings: **3 provenance, 4 identifier-in-instruments, 1 absence,
+1 vacuous-guard, 2 docdrift.** Not one high finding landed outside a
+family this document had already minted.
+
+> **The laws predicted where the defects are.**
+
+That is the strongest available evidence that the minting has been
+measurement and not taxonomy: a family invented to describe one incident
+would not go on to locate eleven more across seven lanes. It also sets the
+cadence's most useful parameter:
+
+> **The LENS LIST for the next audit = the law families minted since the
+> last one.**
+
+An audit with no lens list re-reads everything shallowly; an audit aimed
+through the families finds the class of defect those families exist to
+name. And a family that finds **nothing** on a sweep is itself a result —
+either the discipline took, or the lens is wrong.
 
 * **FULL — about every 10 landings**, and the next full audit **re-measures
   its own headline numbers**: the **38%** violation density, and whether

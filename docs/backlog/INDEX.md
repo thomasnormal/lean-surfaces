@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**130 entries across 16 lanes.** Regenerate with
+**131 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -28,6 +28,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
 | `2026-08-23-qol-25` | the attribution fix: the headline held, the DISPATCH was wrong | qol |
 | `2026-08-23-qol-24` | gate DESIGNS for the two head homes, and one of the ten needs no gate at all | qol |
+| `2026-08-23-architecture-24` | This lane's three audit findings, fixed; and the laws predicted where the defects are | architecture |
 | `2026-08-23-qol-23` | the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern | qol |
 | `2026-08-23-architecture-23` | Data may carry the decision, not the scrutinee; and an audit has a third site | architecture |
 | `2026-08-23-qol-22` | sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce | qol |

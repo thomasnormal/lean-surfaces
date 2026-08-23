@@ -1551,3 +1551,64 @@ innocent and the behaviour is decided before either runs. So the parity audit no
 sweeps **trunk, presentation, AND ingestion rewrites**, and a capability found
 missing on one side should prompt *"is this implemented as a rewrite over
 there?"* **before** it is filed as an unported fix.
+
+## 2026-08-23-architecture-24 — This lane's three audit findings, fixed; and the laws predicted where the defects are
+
+The cross-tree audit (`docs/quality-audit-2026-08-23.md`, `00fe2dc`) filed three
+rows against `family-architecture.md`. **All three verified here before fixing**
+— the audit's own second register entry demands exactly that — and **one was
+worse than reported.**
+
+**F1 (`:418`) — UNDERSTATED, corrected.** The row named **one** private-path
+violation. The one-grep answer finds **FIVE live ones**:
+`docs/sv-construct-census.json:5` (a **committed machine-readable `corpus_path`
+provenance field** — the worst, because a provenance field is *read by tools and
+copied forward* where prose is only read by people), `docs/sv-charter.md:189`,
+`docs/sv-corpus-coverage.md:5`, `docs/litreview/area-c-isa-models.md:9,213`, and
+`docs/howto/add-a-spec-to-existing-code.md:159`. **Reporting the instance that
+was noticed as the population is the §5.4a error**, committed by the section that
+states it. A repo-wide grep belongs in `tools/check.sh`.
+
+**F2 (`:346`) — the provenance law, violated by this document.** *"Settled at
+98"* was true at `8f4fd65` (8 166 lines, 93+5) and false at `00fe2dc` (**8 562
+lines, 96+10 = 106**). Row re-measured **and stamped with the revision**. The
+fix is the **stamp**, not the refresh: **a stamped stale number is readable; an
+unstamped current one rots silently.** Counts owed to a `--check` mode so the
+registry drifts loudly.
+
+**F3 (`:3631`) — my convicting example was invalidated by a landing I
+documented.** `refusalOf` now reads `.error (.unsupported c _ _)` — **three
+fields** — and returns `Option (RefusalCause SpecRef)`, **naming Core outright**.
+The **Core payload landing** did it. Re-quoted as a **docs_check-gated block** so
+it cannot drift again, and **the point restated so a signature change cannot
+refute it**: a consumer reaches a constructor's shape **by destructuring it**,
+and a module-import census cannot see that *whether or not* the consumer also
+names the type. The row's count is corrected too: **11 lines across FIVE files**,
+not three.
+
+**REGISTER ENTRY 1 — §9.7's FIRST FULL INSTANCE, with the audit as its
+artifact.** Of the 11 HIGH findings: **3 provenance, 4
+identifier-in-instruments, 1 absence, 1 vacuous-guard, 2 docdrift.** **Not one
+landed outside a family this document had already minted.**
+
+> **The laws predicted where the defects are.**
+
+That is the strongest available evidence the minting has been **measurement, not
+taxonomy** — a family invented to describe one incident would not go on to locate
+eleven more across seven lanes. Cadence parameter recorded: **the LENS LIST for
+the next audit = the law families minted since the last one**; and **a family
+that finds nothing on a sweep is itself a result** (either the discipline took,
+or the lens is wrong).
+
+**REGISTER ENTRY 2 — the verifier layer earned its cost, measurably.** **8 of 64
+findings REFUTED**, and many confirmed **with corrections** — **severities moved
+in both directions**, consequences replaced.
+
+> **A finding un-re-read is a claim, not a finding.**
+
+Both halves matter: publishing the 8 would have sent lanes to fix non-defects;
+publishing the corrected ones uncorrected would have sent them to fix real
+defects **for the wrong reason**, which is worse because **it survives the fix**.
+And severities moving **both** ways is the tell the verifier was working rather
+than rubber-stamping — **a layer that only ever downgrades is a filter, not a
+check.**

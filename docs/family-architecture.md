@@ -1644,6 +1644,45 @@ standing rule with a named blocker.**
    allowed to do, and the counting law said how much it would cost. Neither
    number nor shape moved on contact.
 
+   **AND THE MIRROR-IMAGE DEFECT, measured as a master RED.** Erosion has a
+   second direction nobody had ruled on: not the legacy layer growing, but
+   the **TRUNK** growing after the branch cut. Rung 3b's **seven
+   draining-consumer arms** landed on the trunk and were **merged without
+   the capability crossing the presentation boundary** — so the rebuild
+   **refuses what the trunk runs, on 25 rows.**
+
+   **`diff_test` is STRUCTURALLY BLIND to this class, and the blindness is
+   not a bug.** A differential harness measures **agreement between the two
+   sides**; when both refuse, **parity holds while both are wrong.** The
+   instrument that sees it is the **refusal census's expectation column**,
+   because that column is written from **CPython's measured behaviour** —
+   the oracle — rather than from the model's.
+
+   > **Agreement between two models is not evidence. Agreement with the
+   > ORACLE is.**
+
+   That is **§5.3 one level up**: §5.3 forbids a run that executed nothing
+   from scoring as agreement; this forbids **two refusals** from scoring as
+   agreement. Same shape — a check finding sameness where there was no
+   content — and the same fix: anchor the expectation outside the pair.
+
+   **THE RULE:**
+
+   > **Every merge across a presentation boundary owes a CAPABILITY-PARITY
+   > AUDIT** — the census, run against **both** targets — and
+   > **trunk-landed capabilities must RE-PRESENT in the rebuild before the
+   > trunk arm may retire.**
+
+   Without it, erosion silently loses capability: the trunk arm retires
+   because the rebuild "agrees", and the agreement was two refusals.
+
+   **THE COROLLARY, and it is the maximal-trunk design paying off
+   measurably: the fix cost ONE LINE.** The rebuild's single `iterValues`
+   dispatch serves **six** consumers that the trunk pays **seven arms**
+   for. The defect was expensive to *find* and trivial to *fix*, and the
+   ratio is the argument — a design that concentrates dispatch converts a
+   seven-arm capability gap into a one-line one.
+
    **The SEQUENCING rationale, which is about risk and not about Python.**
    `mvcgen` warns on every invocation that it is experimental, and one Std
    bug surfaced in twenty lines of probing (§3.4). **New tiers should
@@ -2645,9 +2684,22 @@ and show the observable invariant. That is a different and much larger
 obligation, it is the honest home of §3.4's explicit-parameter design, and
 it is named here as a priced fork rather than taken.
 
-### 5.3 VACUOUS is not a verdict
+### 5.3 VACUOUS is not a verdict — and neither is MUTUAL REFUSAL
 
-A run that executed **nothing** must never score as agreement. Python's
+A run that executed **nothing** must never score as agreement.
+
+**And the same rule one level up, from a measured master defect (§3.4's
+erosion clause): TWO REFUSALS MUST NEVER SCORE AS AGREEMENT.** A
+differential harness compares the two sides to each other, so when both
+refuse it reports parity — **while both are wrong.** `diff_test` is
+structurally blind to this class, which is not a defect in `diff_test`: it
+is what a differential harness *is*. **Agreement between two models is not
+evidence; agreement with the ORACLE is** — which is why the refusal
+census's expectation column, written from CPython's measured behaviour
+rather than from the model's, is the instrument that sees it.
+
+Both halves of §5.3 are the same law: **a check must not report sameness
+where there was no content.** Python's
 harness carries `"live"`; C's scoreboard carries the statement count. This
 is an instrument-level ERROR, not a verdict — a scoreboard that reports it
 as MATCH is broken, and one that reports it as REFUSE is lying about

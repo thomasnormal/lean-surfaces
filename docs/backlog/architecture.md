@@ -488,3 +488,44 @@ index existed to go stale — **the migration was invisible to the gate that wou
 have caught it** until the last step landed. §9.7's light tick is where a lane
 should look for "did the record's shape change under me?", and this is the first
 instance of that question having a real answer.
+
+## 2026-08-23-architecture-3 — CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind
+
+From the completeness lane's **RED 2, a master defect**. Erosion has a second
+direction nobody had ruled on: not the legacy layer growing, but the **TRUNK**
+growing after the branch cut. Rung 3b's **seven draining-consumer arms** landed
+on the trunk and were **merged without the capability crossing the presentation
+boundary** — so the rebuild **refuses what the trunk runs, on 25 rows**.
+
+**`diff_test` is STRUCTURALLY BLIND to this class, and the blindness is not a
+bug.** A differential harness measures **agreement between the two sides**; when
+both refuse, **parity holds while both are wrong**. The instrument that sees it
+is the **refusal census's expectation column**, because that column is written
+from **CPython's measured behaviour** — the oracle — not from the model's.
+
+> **Agreement between two models is not evidence. Agreement with the ORACLE is.**
+
+**This is §5.3 one level up, and §5.3 now says so.** That rule forbids a run
+which executed nothing from scoring as agreement; this forbids **two refusals**
+from scoring as agreement. Same shape — a check finding sameness where there was
+no content — and the same fix: **anchor the expectation outside the pair.**
+
+**THE RULE, landed in the erosion clause:**
+
+> **Every merge across a presentation boundary owes a CAPABILITY-PARITY AUDIT**
+> — the census, run against **both** targets — and **trunk-landed capabilities
+> must RE-PRESENT in the rebuild before the trunk arm may retire.**
+
+Without it erosion **silently loses capability**: the trunk arm retires because
+the rebuild "agrees", and the agreement was two refusals.
+
+**THE COROLLARY — the maximal-trunk design paying off measurably: the fix cost
+ONE LINE.** The rebuild's single `iterValues` dispatch serves **six** consumers
+that the trunk pays **seven arms** for. The defect was expensive to FIND and
+trivial to FIX, and that ratio is the argument: a design concentrating dispatch
+converts a seven-arm capability gap into a one-line one.
+
+**Also recorded**: the rebuild lane's transcript was lost (its work is safe on
+its branch) and a successor lane is spawned inheriting its ledger. The ledger
+surviving the transcript is the point — §7.1a's durability lesson holding up
+under its own test case.

@@ -1686,6 +1686,14 @@ standing rule with a named blocker.**
    MODEL**: with one model and one oracle, the ordinary harness already
    sees this class.
 
+   **A SECOND MEASURED INSTANCE, and it is smaller and therefore worse.**
+   `for` has **three** entry paths — `execGen`, `SKont`, `Kont` — and the
+   **third was missed**. `diff_test` could never have caught it, for the
+   same reason: **the trunk refuses the same rows**, so parity held while
+   both were wrong. The 25-row instance was a whole capability going
+   missing; this one is **a single dispatch arm**, invisible by exactly the
+   same mechanism. The class does not announce itself by size.
+
    > **Agreement between two models is not evidence. Agreement with the
    > ORACLE is.**
 
@@ -2751,6 +2759,20 @@ instrument copies it:
 
 * named `harness/<lang>_<subject>_census.py`, output to
   `docs/<lang>-<subject>-census.json`, sorted and machine-readable;
+* **ROWS AND WITNESSES ARE NAMED FOR THE CONSTRUCT, NEVER FOR THE
+  VERDICT.**
+
+  > **A name asserting a VERDICT has a shelf life. One asserting a
+  > CONSTRUCT does not.**
+
+  Measured: a row named `keys_for_is_still_loud` **expired the moment inch
+  3a landed** — the construct stopped being loud, and **both instruments
+  convicted the NAME** rather than the behaviour. Renamed
+  `keys_for_live_cursor`, which names what the row *exercises* and is
+  therefore still true after the tier grows. A verdict-named row is a
+  small piece of prose embedded in an identifier, and it goes stale the
+  way §9's prose does — except that nothing greps it, so it goes stale
+  **silently** and then convicts the wrong thing;
 * a **`--compare`** mode against the committed JSON, because corpora that
   live in other repositories move on their own schedule and staleness must
   be mechanically detectable rather than merely possible;
@@ -2875,6 +2897,38 @@ dispatches** — the `match`, the clause list, the table — not against the
 name index.
 
 #### AND THE THIRD OF THE FAMILY — when a VERDICT VOCABULARY must grow
+
+**THE RE-FOUNDING COROLLARY, and it is now the FOURTH instrument this lane
+has had to teach a legitimate new state:**
+
+> **During a re-founding, every two-sided check needs a vocabulary for
+> "these differ ON PURPOSE" — and the default vocabulary never has one.**
+
+The four: `DIVERGE`/`DIVERGED`, the census's grammar column, the gate's
+`OPENED`, and now `MONO_OPENED`. Four is no longer a run of bad luck; it is
+**a property of re-founding**. Any check built when there was one model
+will need this word the moment there are two, and it will not have it.
+
+**THE HONESTY SPLIT that keeps this from becoming whitelisting:**
+
+> **The census RECORDS intent and never adjudicates. The gate
+> ADJUDICATES.**
+
+A census may say *"these differ on purpose"* — that is a claim about
+**intent**, and recording it is what makes the difference visible. Only the
+**gate** may decide whether the difference is acceptable, and it decides
+**from the oracle**: `OPENED` counts **only when the rebuild matches
+CPython**. Separating the two is what stops "extend the vocabulary" from
+degrading into "record that we meant it" — the failure the *adjudicator is
+the oracle, never the table* rule names.
+
+**AND THIS VOCABULARY IS WINDOW SCAFFOLDING — it retires with the window.**
+The two-model window (§3.4) is what creates the need for a
+differ-on-purpose word; when the window closes the word has nothing to
+name. The resolution is ruled **DELETE**, not deprecate: the successor's
+landing **deletes `monadic_gate.py`**. A vocabulary kept past its window
+becomes a permanent invitation to record intent instead of measuring
+agreement.
 
 The two rules above are about **counting**. This one is about **verdict
 vocabularies**, and it is the third instance minted this session:

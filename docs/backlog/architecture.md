@@ -568,3 +568,56 @@ on a landing**, never a fact; the merge lands on green.
 itself: **a claim that a type now carries a field should be checked against the
 type, not asserted beside it.** When the block goes green the conditional
 paragraph is retired **by the gate**, not by an editor remembering to.
+
+## 2026-08-23-architecture-5 — Re-founding needs a differ-on-purpose word; names asserting verdicts expire
+
+Three laws from py-complete inch 3a.
+
+**(1) THE RE-FOUNDING COROLLARY to the vocabulary law, and it is the FOURTH
+instrument this lane has had to teach a legitimate new state:**
+
+> **During a re-founding, every two-sided check needs a vocabulary for "these
+> differ ON PURPOSE" — and the default vocabulary never has one.**
+
+The four: `DIVERGE`/`DIVERGED`, the census's grammar column, the gate's
+`OPENED`, now `MONO_OPENED`. **Four is no longer a run of bad luck; it is a
+property of re-founding.** Any check built when there was one model will need
+this word the moment there are two, and will not have it.
+
+**THE HONESTY SPLIT that stops this becoming whitelisting:** *the census RECORDS
+intent and never adjudicates; the gate ADJUDICATES.* A census may say "these
+differ on purpose" — a claim about **intent**, and recording it is what makes
+the difference visible. Only the gate decides whether it is acceptable, and it
+decides **from the oracle**: `OPENED` counts only when the rebuild matches
+CPython. Without the split, "extend the vocabulary" degrades into "record that
+we meant it" — precisely the failure *the adjudicator is the oracle, never the
+table* names.
+
+**AND IT IS WINDOW SCAFFOLDING — it retires with the window.** The two-model
+window creates the need for a differ-on-purpose word; when the window closes the
+word has nothing to name. **Resolution ruled DELETE, not deprecate** — the
+successor's landing deletes `monadic_gate.py`. A vocabulary kept past its window
+is a standing invitation to record intent instead of measuring agreement.
+
+**(2) THE NAMING LAW**, landed in §5.4's instrument contract where rows are
+governed:
+
+> **A name asserting a VERDICT has a shelf life. One asserting a CONSTRUCT does
+> not.**
+
+Measured: `keys_for_is_still_loud` **expired the moment 3a landed** — the
+construct stopped being loud, and **both instruments convicted the NAME** rather
+than the behaviour. Renamed `keys_for_live_cursor`, which names what the row
+*exercises* and stays true as the tier grows. **A verdict-named row is prose
+embedded in an identifier**, and it goes stale the way §9's prose does — except
+nothing greps it, so it goes stale **silently** and then convicts the wrong
+thing.
+
+**(3) A SECOND MEASURED INSTANCE of two-model blindness, smaller and therefore
+worse.** `for` has **three** entry paths — `execGen`, `SKont`, `Kont` — and the
+**third was missed**. `diff_test` could never catch it: the trunk refuses the
+same rows, so parity held while both were wrong. The 25-row instance was a whole
+capability going missing; this is **a single dispatch arm**, invisible by exactly
+the same mechanism. **The class does not announce itself by size** — which is
+the argument for the capability-parity audit being routine rather than reserved
+for large merges.

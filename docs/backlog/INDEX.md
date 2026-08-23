@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**78 entries across 16 lanes.** Regenerate with
+**79 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -27,6 +27,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
 | `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
 | `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
+| `2026-08-23-architecture-5` | Re-founding needs a differ-on-purpose word; names asserting verdicts expire | architecture |
 | `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
 | `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
 | `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |

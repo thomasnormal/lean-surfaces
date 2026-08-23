@@ -300,25 +300,33 @@ projection away. `Float.toInt64` is `opaque` — core's own docstring says *"Thi
 function does not reduce in the kernel"* — but `Float.Model.toInt64` is a plain
 `def` over `UnpackedFloat.toInt64`, and `Float.toModel` is a projection.
 
-**Replicated and RUN** (`harness/softfloat/probe_es_unblock.lean`, core imports only, the ES
-function copied verbatim from `LeanModels/Es/Convert.lean`):
+**Replicated and RUN** (`harness/softfloat/probe_es_unblock.lean`, core imports
+only, both bodies transcribed from `LeanModels/Es/Convert.lean`):
 
 | row | `#guard` | `rfl` | `decide` |
 | --- | --- | --- | --- |
-| `numberToString 42.0 = some "42"` — **as landed** | passes | **fails** | **fails** |
-| `numberToStringViaModel 42.0 = some "42"` | passes | **passes** | **passes** |
+| the **pre-unblock** body (`n.toInt64`) | passes | **fails** | **fails** |
+| the **landed** body (`n.toModel.toInt64`) | passes | **passes** | **passes** |
 | the same at `7.0`, `-7.0`, `1000.0` | passes | **passes** | — |
 | `NaN` / `±Infinity` / `±0` arms | passes | **passes** | — |
-| the `%` site (`Convert.lean:303`) | passes | — | **passes** |
-| `numberToStringViaModel 2.5 = none` (still refused) | passes | **passes** | — |
+| the shape the withdrawn `%` arm would need (`Convert.lean:315-324`) | passes | — | **passes** |
+| non-integer `2.5 ⇒ none` (still refused) | passes | **passes** | — |
 
-The change is two expressions: `n.toInt64` → `n.toModel.toInt64`, and
+The change was two expressions: `n.toInt64` → `n.toModel.toInt64`, and
 `t.toFloat` → `Float.ofModel (Float.Model.ofInt64 t)`. Axiom print from a
 zero-error elaboration: `[propext, Classical.choice, Quot.sound]`.
 
-**That moves the whole exact-integer arm from `#guard` strength — which §0.1
-shows is the C runtime, not Lean — to kernel strength.** It is the ES lane's
-edit to make; this lane owes them the measurement, not the commit.
+**That moved the whole exact-integer arm from `#guard` strength — which §0.1
+shows is the C runtime, not Lean — to kernel strength.**
+
+**AND IT IS LANDED: the ES lane committed the routing (`9dab312`), so
+`LeanModels/Es/Convert.lean:224-238` IS the routed body.** This charter said
+*"it is the ES lane's edit to make"* for longer than that was true; the probes
+said worse, labelling the pre-unblock body "as landed" while the real landed
+body was the one they presented as the alternative. Both are corrected, and the
+mechanism is worth keeping: **a transcription of another lane's file is a copy
+with a timestamp, and it rots the moment they commit.** The probes are now a
+regression gate on the landed shape rather than a proposal about it.
 
 **What stays blocked for ES:** `Number::toString` for non-integers, i.e.
 correctly-rounded shortest-round-trip decimal printing. `Float.toString` is
@@ -853,6 +861,6 @@ Cite-and-paraphrase throughout; no IEEE text is vendored.
   12 theorems, zero `sorry`, no package dependency.
 * The core census (§1), run against the pin at four widths plus two beyond IEEE.
 * The consumer census (§2), across seven tiers.
-* **The ES unblock, measured** (§2.1) — the ES lane's edit to make.
+* **The ES unblock, measured** (§2.1) — since APPLIED by the ES lane (`9dab312`).
 * Three corrections to the commission (§0) and five to other documents (§2.2,
   §2.3, §2.4 ×3, §2.5).

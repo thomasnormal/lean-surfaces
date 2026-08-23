@@ -296,6 +296,22 @@ def self_test():
         check("file that names `Float` is kept",
               any("HasFloat" in f for f in files))
 
+    # 3d. the transcription tripwire FIRES when the cited text is gone
+    with _tf.TemporaryDirectory() as td:
+        os.makedirs(os.path.join(td, "a")); os.makedirs(os.path.join(td, "b"))
+        open(os.path.join(td, "a/citer.lean"), "w").write("-- cites b\n")
+        open(os.path.join(td, "b/cited.lean"), "w").write("nothing relevant\n")
+        global TRANSCRIPTIONS
+        old_t, TRANSCRIPTIONS = TRANSCRIPTIONS, [
+            ("a/citer.lean", "b/cited.lean", "MISSING_MARKER", None, "probe row")]
+        old_r, ROOT2 = ROOT, td
+        globals()["ROOT"] = td
+        try:
+            fired = not check_transcriptions()
+        finally:
+            globals()["ROOT"] = old_r; TRANSCRIPTIONS = old_t
+        check("transcription tripwire FIRES on stale text", fired)
+
     # 4. a MISSING toolchain dir refuses loudly rather than returning empty
     try:
         classify_toolchain("/nonexistent/toolchain/dir")
@@ -317,12 +333,55 @@ def self_test():
     return ok
 
 
+# A transcription of another lane's file is A COPY WITH A TIMESTAMP.  This lane
+# shipped one that went stale in SIX MINUTES -- the probes labelled the
+# pre-unblock body "as landed" while ES committed the routing, so anyone running
+# them concluded the unblock was unlanded (2026-08-23 quality audit, HIGH).
+# Correcting the text does not stop the next one; a tripwire does.
+TRANSCRIPTIONS = [
+    # (file that cites, file cited, must-be-present, must-be-absent-or-None, why)
+    ("harness/softfloat/probe_es_unblock.lean", "LeanModels/Es/Convert.lean",
+     "n.toModel.toInt64", None,
+     "the LANDED numberToString routes through Float.Model"),
+    ("harness/softfloat/probe_es_unblock_axioms.lean", "LeanModels/Es/Convert.lean",
+     "Float.ofModel (Float.Model.ofInt64 t)", None,
+     "the LANDED numberToString rebuilds the Float through the model"),
+    ("harness/softfloat/probe_es_unblock.lean", "LeanModels/Es/Convert.lean",
+     "needs a non-clamping truncation", None,
+     "the `%` arm is WITHDRAWN and refuses by name"),
+]
+
+
+def check_transcriptions():
+    """Assert every probe's transcription still matches the file it cites."""
+    ok = True
+    for citer, cited, present, absent, why in TRANSCRIPTIONS:
+        cp, dp = os.path.join(ROOT, citer), os.path.join(ROOT, cited)
+        if not os.path.exists(cp) or not os.path.exists(dp):
+            print(f"  FAIL  missing file: {citer} or {cited}"); ok = False; continue
+        body = open(dp, encoding="utf-8").read()
+        if present not in body:
+            print(f"  FAIL  {citer} assumes {cited} contains {present!r} ({why}) "
+                  f"-- IT DOES NOT.  The transcription has gone stale.")
+            ok = False
+        elif absent and absent in body:
+            print(f"  FAIL  {citer} assumes {cited} no longer contains {absent!r}")
+            ok = False
+        else:
+            print(f"  ok    {citer} <- {cited}: {why}")
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--compare", action="store_true")
     ap.add_argument("--toolchain")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--check-transcriptions", action="store_true",
+                    help="assert the probes' transcriptions still match the files they cite")
     a = ap.parse_args()
+    if a.check_transcriptions:
+        sys.exit(0 if check_transcriptions() else 1)
     if a.self_test:
         sys.exit(0 if self_test() else 1)
     pin, tcdir = toolchain_dir()

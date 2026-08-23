@@ -56,16 +56,25 @@ file and run both ways:
 
 | row | `#guard` | `rfl` | `decide` |
 | --- | --- | --- | --- |
-| `numberToString 42.0 = some "42"` (as landed) | passes | **fails** | **fails** |
+| `numberToString 42.0 = some "42"` (the body landed **at the time**) | passes | **fails** | **fails** |
 | `numberToStringViaModel 42.0 = some "42"` | passes | **passes** | **passes** |
 | `7.0`, `-7.0`, `1000.0` | passes | **passes** | — |
 | NaN / ±Infinity / ±0 arms | passes | **passes** | — |
-| the `%` site (`Convert.lean:303`) | passes | — | **passes** |
+| the `%` site (then `Convert.lean:303`; now `:315-324` and **withdrawn**) | passes | — | **passes** |
 | `2.5 ⇒ none` (still refused) | passes | **passes** | — |
 
 Two expressions change: `n.toInt64` → `n.toModel.toInt64`, `t.toFloat` →
 `Float.ofModel (Float.Model.ofInt64 t)`. **It is the ES lane's edit to make;
-this lane owes them the measurement, not the commit.** Still blocked for ES:
+this lane owes them the measurement, not the commit.**
+
+> **SINCE LANDED (annotation, not a rewrite).** The ES lane committed the
+> routing in `9dab312`, about six minutes after this entry was written, so
+> `Convert.lean:224-238` is now the routed body and the row above describes
+> history. The measurement stands as taken; only its tense was wrong. The
+> probes carried the same staleness in a worse form — see
+> `2026-08-23-softfloat-11`.
+
+Still blocked for ES:
 non-integer `Number::toString`, i.e. shortest-round-trip decimal printing —
 `Float.toString` is `opaque` and core has no decimal printer at all. That is
 plan step 3.
@@ -443,3 +452,158 @@ done by reading them, and it is recorded above rather than asserted by the tool.
 
 **The law this pays into**, and it is the master-branch commit `f48f9db`'s own
 title: *count the pattern position, never the identifier.*
+
+---
+
+## 2026-08-23-softfloat-10 — STEP 3 SCOPED: the consumer census found a SECOND consumer, and the algorithm choice follows from the SPEC's own wording
+
+`harness/softfloat/probe_decimal.lean` (zero errors; both theorems `rfl` with
+**no axioms at all**). Design only — no tree module yet.
+
+### THE CONSUMER CENSUS, and the answer to "is there a second?" is YES
+
+Asked to confirm ES's `Number::toString` REFUSE row is the only named consumer.
+**It is the only PRINTING consumer. There is a second, in the inverse
+direction.**
+
+| # | site | direction | served today? |
+| --- | --- | --- | --- |
+| 1 | `LeanModels/Es/Convert.lean:251` — `Number::toString` REFUSE, naming *"correctly-rounded decimal conversion (SoftFloat step 3)"* | float → decimal (**print**) | **NO — core ships no printer at all**; `Float.toString` is `opaque` |
+| 2 | `LeanModels/Es/Convert.lean:168` — `StringToNumber` REFUSE, *"outside the decimal-integer fragment (the StringNumericLiteral grammar is a rung)"* | decimal → float (**parse**) | **PARTLY** — core's `UnpackedFloat.ofScientific` is width-parametric and kernel-reducible (censused reducible) |
+| — | `LeanModels/Es/Eval.lean:72` — BigInt literal outside the decimal fragment | decimal → **BigInt** | not ours: no float involved |
+| — | `Examples/es/convert/guards.lean:82` | the gate row for #1 | — |
+
+**No other tier names a decimal need.** So step 3 is two half-inches, not one,
+and they are asymmetric: **printing is greenfield, parsing already has a core
+primitive to state a theorem about.** Parsing is therefore the cheaper one and
+should probably go first — `ofScientific_correct` is an `op_correct` in the
+existing shape, whereas printing needs a new algorithm.
+
+### THE ALGORITHM: DRAGON4-STYLE EXACT, and the reason is the SPEC's wording
+
+**Not Ryū, not Grisu.** Those are *speed* designs: they use precomputed power
+tables and fixed-point approximations, with a slow fallback for the cases the
+approximation cannot decide. Their correctness arguments are **error bounds on
+an approximation** — "this fast path agrees with the exact answer whenever the
+bound holds". We would then owe ES two theorems: the fast path matches the
+exact algorithm, and the exact algorithm matches the spec. **ES only wants the
+second one.**
+
+ECMA-262 §6.1.6.1.20 does not describe an algorithm at all. It says: let `n`,
+`k`, `s` be integers such that `k ≥ 1`, `10^(k-1) ≤ s < 10^k`,
+`s × 10^(n-k)` is the Number value, **and `k` is as small as possible**. That
+is an **existential over integers with a minimality side condition** — which is
+*literally what an exact big-integer search computes*. So the exact algorithm's
+correctness theorem **is the spec clause**, with no approximation layer to
+excuse.
+
+The family's own reasons stack on top:
+
+* **ℝ never appears** (charter §3.5.1). Exact big-integer arithmetic keeps the
+  whole thing in `Nat`/`Int`; Ryū's tables would be a large data blob whose own
+  correctness is a separate obligation.
+* **Kernel-reducible** (§3.4), so instance rows close by `decide`.
+* **Width-parametric**: the interval is computed from `(mantissa, exponent)` and
+  `fmt.targetExponent`, so binary16/32/64/128 are instances, as everywhere else.
+
+### THE CORRECTNESS STATEMENT ES NEEDS, in the family's output-determined form
+
+```
+-- (illustrative — the obligation shape, not a tree declaration)
+toDecimal_shortest (fmt : Format) (x : UnpackedFloat) (d : Decimal) :
+    toDecimal fmt x = some d →
+      roundTrips fmt x d ∧ ∀ d', d'.digits < d.digits → ¬ roundTrips fmt x d'
+```
+
+*What it emits round-trips, and nothing shorter does.* The second conjunct is
+ECMA-262's *"k is as small as possible"*, and it is the half a fast algorithm
+cannot give you without its own error analysis. The answer is bound in the
+RESULT, never taken as an input (`docs/statement-cookbook.md` §7).
+
+**This is the statement that kills the `"1.000000"` bug by construction** — the
+one the ES lane names at `Convert.lean:207` as the reason they refuse rather
+than delegate to the host: *"handing back the host's `Float.toString` would emit
+`1.000000` where the spec says `1` — a silent wrong answer."* A theorem with
+the minimality conjunct cannot be satisfied by a printer that pads.
+
+### TERMINATION: FUEL, AND IT IS THE FIRST TIME THIS COMPONENT NEEDS IT
+
+Layer 2's fuel answer was **none** — nothing searched. Shortest-round-trip
+printing **searches**: it tries digit counts until one round-trips. So it needs
+well-founded recursion or fuel, and **well-founded recursion is exactly what
+cost this component `sqrt`** (§1.2: `Nat.sqrt`'s `termination_by` is why `sqrt`
+closes under neither `rfl` nor `decide`). Measured in the probe: the fuelled
+loop closes by **`rfl` and by `decide`**, with **no axioms**, and fuel
+exhaustion answers `none` — loud, never a wrong digit count.
+
+### ONE THING FLAGGED BEFORE THE CODE EXISTS
+
+`/` on `Int` is a **convention choice**: `Int.ediv`, `Int.tdiv` and `Int.fdiv`
+disagree on negatives, and the nearest-decimal step divides. The probe's sample
+is positive, where all three agree. **The implementation must pin the convention
+and say which** — a printer that picks one silently is the same shape of defect
+as an unstated rounding mode.
+
+---
+
+## 2026-08-23-softfloat-11 — THE PROBES WENT STALE IN SIX MINUTES, and correcting the text is not the fix
+
+Audit row, `docs/quality-audit-2026-08-23.md` "## softfloat", **HIGH**. Verified
+against the current tree before acting, not taken on the note's word.
+
+### THE DEFECT: THE PROBE PRESENTED THE LANDED VERSION AS THE UNPROVEN ALTERNATIVE
+
+`harness/softfloat/probe_es_unblock.lean` transcribed ES's `numberToString` and
+labelled the transcription *"`LeanModels/Es/Convert.lean:219-226` as landed"*.
+That was true when written. **The ES lane committed the routing (`9dab312`)
+about six minutes later**, so the landed body became the routed one — and the
+probe went on calling the PRE-unblock body "as landed", with its two
+expected-FAIL rows sitting under the heading *"The landed version"*.
+
+**Anyone running the probe would have concluded the unblock was unlanded** — the
+exact opposite of what this lane had just measured, in a file whose whole
+purpose was to demonstrate it. The same staleness sat in
+`probe_es_unblock_axioms.lean`, and a second row cited `Convert.lean:303` for
+the `%` site, which had moved to `:315-324` **and been withdrawn**.
+
+### FIXED, AND THE HALVES ARE NOW NAMED FOR WHAT THEY ARE
+
+`numberStringPreUnblock` (history, the subject of the failure rows) and
+`numberStringLanded` (mirrors `Convert.lean:224-238`). Sections retitled so the
+landed half is the routed one; the `%` row re-cited to `:315-324` and retitled
+*"the shape the WITHDRAWN `%` arm would need"*, with an explicit line saying it
+does **not** claim the arm is landed. The probes are now a **regression gate on
+the landed shape** rather than a proposal about it. Charter §2.1's table and its
+*"the ES lane's edit to make"* line are corrected the same way.
+
+The dated entry `2026-08-22-softfloat-1` is **annotated, not rewritten**: the
+measurement was correct as taken and only its tense was wrong, and a backlog
+entry is a record of a moment.
+
+### THE STRUCTURAL FIX, because correcting prose does not stop the next one
+
+> **A transcription of another lane's file is A COPY WITH A TIMESTAMP, and it
+> rots the moment they commit.**
+
+Six minutes is the measured half-life here, which is short enough that "be
+careful" is not a control. So the copy now carries a **tripwire**:
+`harness/softfloat_consumer_census.py --check-transcriptions` asserts that every
+text this lane's probes assume about another lane's file is *still in that
+file* — the routed `n.toModel.toInt64`, the `Float.ofModel (…ofInt64 t)`
+rebuild, and the `%` arm's refusal string. It is in the gate set, so the next
+time ES moves that code the probe goes **red instead of quietly lying**.
+
+Its own failure path is exercised in the self-test (13 rows now): a fixture
+whose cited text is absent must make the tripwire FIRE, because a check that
+has never failed is a design and not a control.
+
+### WHY THIS ONE WAS INVISIBLE TO EVERY GATE THIS LANE HAD
+
+Worth naming, because the gate set looked complete. `probe_es_unblock.lean` is
+**expected to error** (two rows), and its sibling is expected to be clean — both
+were, throughout. `docs_check` gates marked blocks in `.md`, and this was a
+comment in a `.lean`. The census gated *call sites*, not *citations*. **Every
+gate was green while the file said the opposite of the truth**, because none of
+them was pointed at the claim that had rotted. That is the §5.4a lesson in its
+sharpest form: the failure was silent AND flattering, and it took an outside
+audit to see it.

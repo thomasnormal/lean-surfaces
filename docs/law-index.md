@@ -177,6 +177,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-126 | order work by what is SHARED, not by what is NEXT | `docs/family-architecture.md §9.0b` |
 | MEAS-127 | a predicted maintenance COST inherits the unit error of the construct it prices | `docs/family-architecture.md §5.4a` |
 | MEAS-128 | an OPENING is witnessed with the oracle's expectation, never a second decision site | `docs/family-architecture.md §5.4a` |
+| MEAS-129 | a coverage PIN is maintained in the landing that grows the artifact | `docs/family-architecture.md §5.4a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -297,6 +298,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-110 | a guarantee inside an IMPLICATION guarantees nothing when the antecedent fails | `docs/family-architecture.md §8` (the polarity pair) |
 | STMT-111 | THE HONEST SIGNATURE — omit a redundant hypothesis; never accept-and-ignore | `docs/family-architecture.md §8` |
 | STMT-112 | a snapshot is WRONG BY ANSWERING, not by answering wrongly | `docs/family-architecture.md §5.1` |
+| STMT-113 | a nonstandard generated relation is not ORPHANED — price the BRIDGE (the crossing IFF) first | `docs/family-architecture.md §8` item 11 |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

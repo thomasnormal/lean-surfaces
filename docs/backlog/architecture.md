@@ -3223,3 +3223,67 @@ to know what it does is not**, and the difference is whether the expectation cam
 from the oracle or from the lane.
 
 **Index:** MEAS-127, MEAS-128, STMT-112.
+
+## 2026-08-23-architecture-44 — The quirk that blocks direct reuse can fund the crossing
+
+One from the Wasm lane (**queued**; landed conditional on that landing and
+stamped at the site), correcting §8 item 11 — text this lane wrote.
+
+**THE CORRECTION.** Item 11 said the Mathlib `forall₂_*` route *"cannot apply
+to this model at all."* **Mathlib ships the crossing itself —
+`List.forall₂_iff_zip`** — and its side condition is a **length equality**,
+which is precisely what `Resulttype_sub`'s constructor already carries **because
+its zip-based `Forall₂` is length-blind.**
+
+> **The length-blindness that made the API inapplicable is the same fact that
+> supplies the bridge's premise.**
+
+> **A generated model's relation being NONSTANDARD does not ORPHAN it from the
+> library. Look for the IFF that CROSSES — its premise is often already carried
+> by the generator's extra fields, so the same quirk that blocks direct reuse
+> can FUND the crossing.**
+
+The API does not apply **pointwise**; it applies **through a one-time bridge**,
+and paying it once **restores the whole library downstream**.
+
+**WHAT CHANGED AND WHAT DID NOT, because this is my text being corrected.** The
+measurement was right — the constants differ, the pointwise route is red. **What
+was wrong was the quantifier on the conclusion**: *"does not apply"* where the
+evidence supported *"does not apply directly."* **A negative about a library is
+a claim about a SEARCH**, so §9.7's rule for negatives governs it exactly — *an
+obstruction that is only encountered is not measured* — and the nearest
+alternative formulation was one search away.
+
+**And the practical order it gives a lane, which is the part worth carrying:**
+when a generated relation blocks a library, **do not price a hand-rolled
+replacement first — price the BRIDGE**, one `iff` whose premise you may already
+be holding. **A bridge is bought once; a replacement is maintained forever.**
+
+**AND THE TELL NOW READS BOTH WAYS.** *A generated model's extra premises tell
+you what its relation does NOT carry* — item 11's existing law — **and they are
+the currency for crossing to the library**, because the bridge's side condition
+is drawn from the same list. **What the relation lacks, and what you already
+hold**, are the same sentence read in two directions.
+
+**§5.4a — A PIN MAINTAINED IN THE LANDING THAT GREW THE ARTIFACT.** The port's
+pin moved **5 → 9 declarations** as the port grew. Recorded because **routine is
+the point**: a coverage pin is a **claim with a shelf life**, true when written
+and quietly under-claiming from the next inch onward. **A pin updated later is a
+re-measurement; a pin updated with the work is bookkeeping** — and only the
+second is free.
+
+*(Note: I could not find a rule under the literal name "the stale-pin rule" in
+the charter or the wasm ledger, so this landed in §5.4a's pin material beside
+`RE-PINNING IS RECOVERY, NOT DERIVATION` rather than as a citation to a rule I
+could not locate. If it lives somewhere I did not search, this bullet should be
+merged into it rather than standing alone.)*
+
+**ROUTING NOTE — wasm-4 IS NAMED, NOT EDITED.** The dispatch said to annotate
+`2026-08-23-wasm-4`. That entry is **another lane's dated record**, and this
+lane's own rule (`2026-08-23-architecture-33`, §9.5a) is that such a record is
+**named, never corrected in passing** — annotating it myself would turn a record
+of their moment into a record of mine. The half-rehabilitation is therefore
+recorded here and in §8, and the annotation is **filed to the Wasm lane as
+INBOUND**, in its own immediate commit (§9.5a's tightening).
+
+**Index:** MEAS-129, STMT-113.

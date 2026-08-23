@@ -4071,6 +4071,15 @@ instrument copies it:
   a *hint* toward the commit, never the pin itself. **Reconstructing a pin
   from provenance metadata is a guess that looks like a citation** — the
   reproduction is what makes it a fact;
+* **AND A PIN THAT DESCRIBES A GROWING ARTIFACT IS MAINTAINED IN THE LANDING
+  THAT GROWS IT.** First routine application, recorded because routine is the
+  point: the Wasm port's pin was **updated 5 → 9 declarations as the port
+  grew** (queued; conditional on that landing). A coverage pin is a **claim
+  with a shelf life** — it is true when written and quietly under-claims from
+  the next inch onward — and the cheap form is to move it **in the same commit
+  that moves the artifact**, which is the model-matches-code discipline applied
+  to a number. **A pin updated later is a re-measurement; a pin updated with
+  the work is bookkeeping**, and only the second is free;
 * **double-run byte-identical**, verified;
 * **every quoted number is paired with the STATE it was taken from**, per
   the provenance law below;
@@ -6715,9 +6724,43 @@ real until an instrument re-derives it.**
     `∀ t ∈ xs₁.zip xs₂, P t.1 t.2` — while **Mathlib's `List.Forall₂` is
     INDUCTIVE and a different constant.** The two are not
     interchangeable in the way that matters: **zip truncates, so the
-    zip-based relation does not imply equal lengths.** The entire Mathlib
-    `forall₂_*` route cannot apply, and importing it costs a red rather
-    than a shortcut.
+    zip-based relation does not imply equal lengths.** The Mathlib
+    `forall₂_*` route cannot be pointed at the model **POINTWISE**, and
+    importing it that way costs a red rather than a shortcut.
+
+    **HALF-REHABILITATED BY A DEEPER SEARCH, and the correction is worth
+    more than the finding was** (Wasm; **queued — conditional on that
+    landing**). This text first said the route *"cannot apply at all"*.
+    **Mathlib ships the crossing itself: `List.forall₂_iff_zip`** — and
+    its side condition is **a length equality**, which is *exactly* what
+    `Resulttype_sub`'s constructor already carries.
+
+    > **The length-blindness that made the API inapplicable is the same
+    > fact that supplies the bridge's premise.**
+
+    So the API does not apply **pointwise**; it applies **through a
+    one-time bridge**, and **paying it once restores the whole library
+    downstream.**
+
+    > **A generated model's relation being NONSTANDARD does not ORPHAN it
+    > from the library. Look for the IFF that CROSSES — its premise is
+    > often already carried by the generator's extra fields, so the same
+    > quirk that blocks direct reuse can FUND the crossing.**
+
+    **Note what changed and what did not.** The measurement was right:
+    those constants are different, and the pointwise route is red. **What
+    was wrong was the quantifier on the conclusion** — *"does not apply"*
+    where the evidence supported *"does not apply directly"*. A negative
+    about a library is a claim about a **search**, and §9.7's rule for
+    negatives applies to it exactly: *an obstruction that is only
+    encountered is not measured* — **try the nearest alternative
+    formulation** before recording the door as shut.
+
+    **And the practical order this gives a lane**: when a generated
+    relation blocks a library, do not price a hand-rolled replacement
+    first. **Price the BRIDGE first** — one `iff`, whose premise you may
+    already be holding — because a bridge is bought once and a
+    replacement is maintained forever.
 
     **THE GENERATOR'S EXTRA PREMISES ARE THE TELL, and reading them is the
     cheap check.** The generator emits `Resulttype_sub` with a **separate
@@ -6730,7 +6773,10 @@ real until an instrument re-derives it.**
 
     So the premise list is not boilerplate to be discharged; it is a
     **specification of the gaps**, and a lane that reads it first learns
-    what no library lemma can supply.
+    what no library lemma can supply — **and, per the rehabilitation
+    above, what the bridge to the library will cost, because those same
+    premises are the price of crossing.** The tell reads in both
+    directions: **what the relation lacks, and what you already hold.**
 
     **And what DOES transfer is the FACTORING, not the lemmas.** Aaron
     Lee's Isabelle `list_all2` is inductive, so his closer has **no

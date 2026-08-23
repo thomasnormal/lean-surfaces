@@ -1244,3 +1244,83 @@ of the path.
 
 **If Thomas declines to engage, WAITING is still correct** — the drift guards
 catch the landing whenever it comes, and the four proved lemmas keep.
+
+---
+
+## 2026-08-23-lean-tier-15 — WAITING begins, and the first act was fixing the guards that WAITING depends on
+
+WAITING is ratified, and the lane's standing duty is the drift guards. So the
+first thing to do was **run them**, because a duty that has never been executed
+is a plan, not a duty. Two of four fired. **Both were self-inflicted.**
+
+### The defect: the guards were pinned to OUR BRANCH, not to upstream
+
+| guard | result | cause |
+| --- | --- | --- |
+| kernel census | ok | — |
+| correspondence | **DRIFT: `lean4lean_commit`** | baseline captured at `71829bf` — **our own first branch commit** |
+| obligation census | **DRIFT: `totals`** | `raw` 138→141, **`real` 113→113** — our own docstring prose in `ProjParam.lean` |
+| spec census | **REFUSE** | thesis LaTeX corpus purged; see below |
+
+> **A guard that always fires is exactly as useless as one that never can.** The
+> audit's defect class was "a `--compare` that cannot exit nonzero"; this is its
+> mirror — a `--compare` that cannot exit zero. Either way the lane learns to
+> ignore it, and the drift it was watching for arrives unnoticed.
+
+The cause is precise: the baselines were taken while checked out on
+`lean-surfaces/trproj`, so they encode **our** work as the reference. Every
+future commit of ours would re-fire them, and upstream drift — the thing they
+exist to catch — would be indistinguishable from our own noise.
+
+### The fix: baseline against upstream, not against ourselves
+
+`git worktree add` gives a pristine `master` checkout (2.1 MB) **without touching
+the branch**, and the guards now run against it:
+
+```
+correspondence  : ok
+obligation      : ok
+kernel          : ok
+```
+
+**No published fact moved.** `rules_by_relation` is unchanged (`STUB` 17 — the
+24 %-maps-to-a-stub headline holds), obligations are 113 real / 24 proof-layer,
+and the correspondence now records `e0e3f6bcccb8` — **upstream master** — as its
+base rather than one of our commits. The re-baseline corrected *what the guard
+watches*, not *what we measured*.
+
+### THE STANDING DUTY, written so it can be executed without rediscovery
+
+Run from `docs/backlog/lean-tier.md`'s lane clone, against the **master
+worktree**, never the branch:
+
+```
+W=<scratchpad>/leantier-probe/l4l-master        # git worktree, upstream master
+K=<scratchpad>/leantier-probe/kernelsrc/src/kernel
+L=~/.elan/toolchains/leanprover--lean4---v4.33.0-rc1/src/lean
+
+python3 harness/lean_kernel_census.py        --lean-src $L --kernel-src $K --compare docs/lean-kernel-census.json
+python3 harness/lean_rule_correspondence.py  --l4l $W --spec-census docs/lean-spec-census.json --compare docs/lean-rule-correspondence.json
+python3 harness/lean4lean_obligation_census.py --l4l $W --compare docs/lean4lean-obligation-census.json
+```
+
+Refresh the worktree first (`git -C $W fetch origin && git -C $W reset --hard origin/master`).
+**All three are pure Python over out-of-tree corpora — no Lean, no tenure, no
+ticket.** That is what makes this duty affordable at any cadence.
+
+**The trigger to watch for is a DRIFT in the obligation census's `real` count or
+in `proof_layer.definitional_stubs`** — specifically `VEnv.addInduct` or
+`VInductDecl.WF` leaving the stub list. That is PR #43 landing, and it unblocks
+15 of 24.
+
+### Two honest gaps in the duty, recorded rather than glossed
+
+1. **The spec census cannot run** — the thesis LaTeX corpus (`digama0/lean-type-theory`)
+   was purged and is not re-fetched here. Its baseline is committed and the
+   instrument is pinned to `master 0ba1787`, so re-fetching restores it; but as
+   of now that guard is **armed but not runnable**, and saying so is the point.
+2. **The arena check is not an instrument.** The 63/67 figure is recomputed by
+   hand from a downloaded `results.json`; there is no `--compare` and no
+   committed baseline. It caught real movement (nightly 66/67 → 67/67), so it
+   earns its place — but it is a **procedure, not a gate**, and a future dispatch
+   should either make it one or stop calling it a guard.

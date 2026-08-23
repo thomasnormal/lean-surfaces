@@ -13,7 +13,7 @@
     "total_lines": 7
   },
   "isDefEq_constructors": 13,
-  "lean4lean_commit": "71829bf6cd5c9b468f64c94cc65d58e0c0f967fe",
+  "lean4lean_commit": "e0e3f6bcccb840cb0ea6f11c2b274ada93a12e00",
   "method": "MECHANICAL: Theory/ inductive constructor lists, and rule counts joined from lean-spec-census.json. DECLARED: the judgment\u2192inductive map in MAP, one cited row per family, which the instrument refuses to let rot.",
   "rows": [
     {

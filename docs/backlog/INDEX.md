@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**119 entries across 16 lanes.** Regenerate with
+**120 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -46,6 +46,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-architecture-13` | The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface | architecture |
 | `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
+| `2026-08-23-pycomplete-11` | 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named | python-completeness |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
 | `2026-08-23-pycomplete-9` | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |

@@ -450,11 +450,11 @@ print(f())
 w("dict.values", """
 d = {2: 'b', 1: 'a'}
 print(sorted(d.values()))
-""", "REFUSE", "the VALUES view, consumed immediately — inch 3c-i")
+""", "MATCH", "the VALUES view, consumed immediately — inch 3c-i-b")
 w("dict.items-consumed", """
 d = {2: 'b', 1: 'a'}
 print(list(d.items()))
-""", "REFUSE", "the ITEMS view, consumed immediately — inch 3c-i")
+""", "MATCH", "the ITEMS view, consumed immediately — inch 3c-i-b")
 w("dict.view-escapes", """
 d = {1: 'a'}
 k = d.keys()
@@ -630,6 +630,11 @@ WHITELIST_CLASS = {
     "dict_lab::ret_dict": "boundary.heap-value",
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
+    # §3c-i-b: a view that ESCAPES its call, and one that is not the sole
+    # argument — neither is the recognised shape, so ingestion leaves both
+    # alone and the tier refuses. These are 3c-ii's territory.
+    "dict_lab::view_escape_still_loud": "dictview.first-class",
+    "dict_lab::view_arg_not_alone_still_loud": "dictview.first-class",
     "sf_hist::push": "boundary.list-mutation",
     "sf_hist::rotate_scores": "boundary.list-mutation",
     "cls_lab::attr_on_int": "attr.on-scalar",

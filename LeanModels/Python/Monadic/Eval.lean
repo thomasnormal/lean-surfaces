@@ -189,6 +189,11 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
         -- The ONE builtin that refuses BEFORE its arguments evaluate: stdin is
         -- a runner-boundary effect, and the trunk refuses at the dispatch.
         .preRefuse "input() is outside the tier (stdin is a runner-boundary effect; docs/memory-model.md §effects)"
+      -- §3c-i-b: the ingestion rewrite's synthetic view builtins. Checked
+      -- BEFORE `isBuiltinName` and deliberately kept OUT of it: that list is
+      -- the pinned CPython `dir(builtins)` and every arm that may decide a
+      -- `NameError` consults it, so polluting it would move a real decision.
+      else if (dictViewBuiltinKind fname).isSome then .builtin fname
       else if isBuiltinName fname then .builtin fname
       else if isModuleDunder fname then
         .preRefuse s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
@@ -463,7 +468,18 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | some (start, step) => do
         let a ← heapPush (.generator "<count>" [] [.countFrom start step] .suspended)
         pure (.ref a)
-  else notYet s!"builtin: {fname}()"
+  else match dictViewBuiltinKind fname with
+    -- §3c-i-b: the view's element sequence. Only ingestion emits this name,
+    -- and only in consuming-argument position, so the snapshot cannot outlive
+    -- the call that asked for it.
+    | some kind =>
+      match vs with
+      | [.ref a] => do
+          match Heap.get? (← frameHeap) a with
+          | some (.dict es _) => pure (.listV (dictViewElems es kind))
+          | _ => refuse viewRecvMsg
+      | _ => refuse viewRecvMsg
+    | Option.none => notYet s!"builtin: {fname}()"
 
 /-- Apply a resolved plan to already-evaluated arguments. Not mutual with the
 evaluator: the arguments are values, so nothing here evaluates syntax. -/

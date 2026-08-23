@@ -1117,9 +1117,23 @@ mutual
         let drainOk := match f with
           | .name d _ => drainingBuiltins.contains d
           | _ => false
+        -- §3c-i-b: a dict VIEW in CONSUMING-ARGUMENT position becomes a
+        -- synthetic builtin over the receiver — `list(d.keys())` ⇢
+        -- `list(<dictkeys>(d))`. The rewrite fires ONLY here, so
+        -- `k = d.keys()` is untouched and still refuses: the shape is what
+        -- licenses the snapshot, exactly as it does for `ListComp`.
+        let consuming := match f with
+          | .name d _ => consumesViewArg d && args.size == 1
+          | _ => false
         let args' ← args.mapM fun a => do
           match a with
           | .genExp .. => lowerExpr ctx a (drainOk := drainOk)
+          | .call (.attribute recv attr _) vargs vkw Option.none vsp =>
+              match (if consuming && vargs.isEmpty && vkw.isEmpty then
+                       dictViewBuiltinName attr else Option.none) with
+              | some vn =>
+                  return .call (.name vn vsp) #[← lowerExpr ctx recv] #[] Option.none vsp
+              | Option.none => lowerExpr ctx a
           | a => lowerExpr ctx a
         return .call (← lowerExpr ctx f) args'
           (← kwargs.mapM fun kv => do pure (kv.1, ← lowerExpr ctx kv.2)) cu sp

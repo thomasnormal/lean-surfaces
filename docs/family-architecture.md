@@ -1324,29 +1324,34 @@ alternative is closed by the covenant rather than by preference.
 payload, exactly as the `Halt` ruling (cause + optional snapshot) and the
 `RefusalCause` ruling (four classes, tier payload `π`) already prescribe.
 
-**THE HOLD RELEASES ON LANDING — conditional, because master says
-otherwise today.** A Core-payload merge is queued whose
+**THE HOLDS ARE RELEASED — LANDED, not conditional.**
 `Loud.unsupported (cause : RefusalCause π) (message) (snapshot : Option σ)`
-**subsumes both tiers**: C at `σ := Mem` with its guards lifted, ES at
-`π := EsRefusal`. **On that landing both HOLDs release** — the two
-payload-bearing tiers converge by import like the other eleven sites, and
-this section's *"Core carries neither"* **goes false at that moment.**
+is on master, and it **subsumes both tiers**: C at `σ := Mem` with its
+guards lifted, ES at `π := EsRefusal`. **Both HOLDs release** — the two
+payload-bearing tiers converge by import like the other eleven sites — and
+this section's earlier *"Core carries neither"* **is now false, which is
+the outcome it was written to become.**
 
-**Master truth as this is written: NOT YET MERGED.** Checked rather than
-assumed — `LeanModels/Core/Outcome.lean` still reads
-`| unsupported (msg : String)` and contains **zero** occurrences of
-`RefusalCause`. The release is therefore stated as a **condition on a
-landing**, not as a fact; the merge lands on green.
+**Master truth, checked rather than assumed** (the same discipline that
+recorded the negative a landing ago): `LeanModels/Core/Outcome.lean` now
+declares `inductive RefusalCause (π : Type)` with `| unsupported (detail :
+π)`, and `Loud` carries the three-field payload. C and ES are released; Go
+has the adaptation on master and **the structural-cause decision is Go's
+to make**, not this document's.
 
-**And the discharge is pinned by a docs_check-checked block against
-`Core/Outcome.lean` rather than by prose** — which is the right instinct
-and this document's own §9 thesis applied to itself: **a claim that a type
-now carries a field should be checked against the type, not asserted
-beside it.** When the block goes green, the paragraph above is retired by
-the gate rather than by an editor remembering to.
-Until that lands, **the eleven mechanical sites converge by import and the
-two payload-bearing tiers HOLD** — importing them now would trade two
-implemented rulings for a `String`.
+**AND THE MECHANISM WORKED — this is worth recording because it was a
+proposal a landing ago.** The discharge was pinned by a
+**`docs_check`-checked block against `Core/Outcome.lean`** rather than by
+prose, and **the gate is what retired the conditional paragraph**, not an
+editor remembering to. The document's own §9 thesis, applied to itself and
+now with an instance: **a claim that a type carries a field is checked
+against the type, and it cannot rot silently.** `docs_check` reads
+**87/87** on the merged tree.
+**All thirteen sites may now converge by import** — the eleven mechanical
+ones and the two payload-bearing tiers — because the trunk is no longer
+poorer than its adopters. The hold existed to stop a convergence that
+would have traded two implemented rulings for a `String`; it has served
+its purpose and is discharged.
 
 #### AND IT HAS LANDED — the dispatch is discharged, and the two HOLDs are released
 
@@ -3837,6 +3842,25 @@ queue and takes the lock while `git` is rewriting the tree, the tenure
 opens on a torn tree — a build that was never going to be meaningful,
 holding the machine-wide lock while it fails. Drop the ticket or finish the
 rebase first.
+
+**AND NEVER `git stash` MID-MERGE — it silently destroys `MERGE_HEAD`.**
+Measured on the Core-payload merge itself. A `stash` / `stash pop` inside
+an active merge leaves the **content correct and the SECOND PARENT gone**:
+the resulting commit is an ordinary one wearing a merge's tree. The lane
+caught it only because its commit **fell through as a no-op**; had it
+landed, **master would not have been an ancestor**, the push would have
+been rejected, and **nothing in the tree would explain why** — the files
+would all be right.
+
+> **Never stash mid-merge. Take comparisons from
+> `git show <ref>:<path>`, which touches no state.**
+
+**And verify before declaring a merge ready: `git log -1 --format=%p` must
+show TWO parents.** That is the check the failure mode demands, because
+every other signal — the diff, the build, the gates — looks correct. It is
+§5.4a's shape in git metadata: **the artifact reads clean while the thing
+that makes it a merge is missing**, and only a check aimed at the metadata
+can see it.
 
 **The order is `stage → build → rebase`, or `rebase → build`.** Never both
 at once, and note that this is a *same-clone* hazard: it is not prevented

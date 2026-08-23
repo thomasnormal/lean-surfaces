@@ -721,3 +721,53 @@ one part failing; it is an **aborted triad**, and reporting it as "triad: 1
 failure" claims two gates that never executed. §5.4a on the instrument that
 reports the other instruments: **the number carries the state it was taken in,
 and "red" is a state in which most of the numbers do not exist.**
+
+## 2026-08-23-architecture-8 — The Core payload LANDED: holds released, and the gate retired the conditional
+
+**MASTER TRUTH, verified rather than accepted** (`eeeb1fd`):
+`LeanModels/Core/Outcome.lean` now declares `inductive RefusalCause (π : Type)`
+with `| unsupported (detail : π)`, and `Loud π σ` carries
+`(cause : RefusalCause π) (message : String) (snapshot : Option σ)`. **The
+condition on the conditional paragraph is TRUE**, so the prose is now the fact.
+
+**Both HOLDs release.** The payload **subsumes both tiers** — C at `σ := Mem`
+with its guards lifted, ES at `π := EsRefusal` — so **all thirteen sites may
+converge by import**, the eleven mechanical and the two payload-bearing. The hold
+existed to stop a convergence that would have traded two implemented rulings for
+a `String`; **it has served its purpose and is discharged.** C and ES are told;
+Go has the adaptation on master and **the structural-cause decision is Go's**.
+
+**AND THE MECHANISM WORKED — recorded because it was a proposal one landing
+ago.** The discharge was pinned by a **`docs_check`-checked block against
+`Core/Outcome.lean`**, and **the gate retired the conditional paragraph**, not an
+editor remembering to. The block matches the landed `Loud`, the `BEq` instance
+that **ignores the snapshot**, and `observable`, which **drops it** — so the two
+constraints of the original `Halt` ruling (*optional*, *never an observable*) are
+now **checked against the type** rather than asserted beside it. `docs_check`
+reads **87/87** on the merged tree.
+
+That is this document's §9 thesis with an instance attached: **a claim that a
+type carries a field is checked against the type, and it cannot rot silently.**
+This doc has twice carried a claim that went stale under it — the `ofRun`/`toRun`
+iso, and *"Core carries neither"* — and this is the first one retired **by a
+gate** instead of by a correction.
+
+## 2026-08-23-architecture-9 — NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD
+
+From the Core-payload merge itself, into §7. A `stash` / `stash pop` inside an
+active merge leaves the **content correct and the SECOND PARENT gone** — the
+resulting commit is an ordinary commit wearing a merge's tree.
+
+**The failure is delayed and unexplainable.** The lane caught it only because its
+commit **fell through as a no-op**; had it landed, **master would not have been
+an ancestor**, the push would have been rejected, and **nothing in the tree would
+explain why** — every file would be right.
+
+> **Never stash mid-merge. Take comparisons from `git show <ref>:<path>`, which
+> touches no state.**
+
+**And verify before declaring a merge ready: `git log -1 --format=%p` must show
+TWO parents.** That is the check this failure mode demands, because **every other
+signal — the diff, the build, the gates — looks correct.** It is §5.4a's shape in
+git metadata: **the artifact reads clean while the thing that makes it a merge is
+missing**, and only a check aimed at the metadata can see it.

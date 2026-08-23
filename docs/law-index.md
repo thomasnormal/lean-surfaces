@@ -213,6 +213,13 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-162 | a coverage table publishes TWO denominators and the cost of the choice | `docs/family-architecture.md §9.0` |
 | MEAS-163 | a SYNTACTIC-ONLY win must never be banked in a coverage number | `docs/family-architecture.md §9.0` |
 | MEAS-164 | no corpus witness RELOCATES the discriminator into the call — census, relocate, confirm | `docs/family-architecture.md §9.0` |
+| MEAS-165 | the conjunctive law's third level — a file needs every FUNCTION it calls, not the package's name | `docs/family-architecture.md §9.0b` |
+| MEAS-166 | an ALTERNATION derived from a census is a consequence; one adopted as convention is a rhythm | `docs/family-architecture.md §9.0b` |
+| MEAS-167 | a mechanism's acceptance case needs TWO entries — one row proves an answer, two prove a lookup | `docs/family-architecture.md §5.6` |
+| MEAS-168 | the gate lands WITH the capability — fixes-live-in-gates applied at birth skips the incident | `docs/family-architecture.md §5.6` |
+| MEAS-169 | import-REACHABILITY completes the pre-flight pair: names you USE that resolve nowhere | `docs/family-architecture.md §9.0a` |
+| MEAS-170 | a coverage number's DENOMINATOR counts what could have DISAGREED | `docs/family-architecture.md §9.0` |
+| MEAS-171 | a numerator earned by FORWARDING needs the theorem that the forwarding is faithful | `docs/family-architecture.md §9.0` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -335,6 +342,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-112 | a snapshot is WRONG BY ANSWERING, not by answering wrongly | `docs/family-architecture.md §5.1` |
 | STMT-113 | a nonstandard generated relation is not ORPHANED — price the BRIDGE (the crossing IFF) first | `docs/family-architecture.md §8` item 11 |
 | STMT-114 | A RESOLUTION CAN BE WRONG, NOT MERELY MISSING — every resolution rung owes a shadowing row | `docs/family-architecture.md §5.2` |
+| STMT-115 | a correctness gate bounds BOTH error directions — over-refusing is a failure mode | `docs/family-architecture.md §5.2` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -483,6 +491,8 @@ numbers below are the register's own.
 | OPS-73 | an advisory runs in a SUBSHELL — one that leaked would narrow the build it describes | `docs/family-architecture.md §7.2` |
 | OPS-74 | a build log says whose it is; an artifact with no identity is storage, not evidence | `docs/family-architecture.md §7.2` |
 | OPS-75 | a stamp added to a measured artifact owes a DIFFERENTIAL — same verdicts with and without | `docs/family-architecture.md §7.2` |
+| OPS-76 | A COMMIT CANNOT CONTAIN ITS OWN HASH — each rung's sha lands in the FOLLOWING commit | `docs/family-architecture.md §7.2` |
+| OPS-77 | `set_option autoImplicit false` in model files — a required LOUDNESS guard | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

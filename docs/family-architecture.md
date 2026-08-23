@@ -3539,6 +3539,40 @@ resolver that cannot be wrong **in its own tests** while being wrong in the
 corpus. It is §5.6's discriminating-row law pointed at resolution: **the row
 that matters is the one a naive resolver gets confidently wrong.**
 
+**AND THE GATE IS TWO-SIDED, WHICH IS WHAT COMPLETES THE SHAPE** (Go E1,
+`4a9f9ec`, on master; the census found **484 shadowing binding sites across 198
+stdlib files**, so this is a live surface and not a corner). Both error
+directions are real, and **a battery that bounds only one of them licenses the
+other**:
+
+| direction | what it does | cost |
+| --- | --- | --- |
+| **RECKLESS** | resolves a **shadowed** use | **wrong answer** (DIVERGE) |
+| **TIMID** | refuses an **unshadowed** use | **lost reach** (a REFUSE that need not exist) |
+
+> **A merely-CONSERVATIVE resolver fails this gate exactly as a reckless one
+> does.**
+
+**The timid direction is what a naive fix causes**, which is why it needs a row
+rather than a note: Go's `:=` **binds only from its declaration point**, so a
+use **PRECEDING** the shadow, and one whose shadow sits in a **SIBLING BLOCK**,
+**must both still resolve.** A resolver that refuses on the mere *presence* of
+the name is safe in the way that costs the tier its corpus. The battery is
+**10 rows, exit 6 on failure, non-vacuity run — reckless fails 4, timid
+fails 2.**
+
+**This is the paired-guard law (§5.2) arriving where it is hardest to
+believe**, because one side of the pair looks like caution rather than a
+defect:
+
+> **A CORRECTNESS GATE BOUNDS BOTH ERROR DIRECTIONS. Over-refusing is a failure
+> mode, not a safe default.**
+
+The two directions retire on different schedules, too — the reckless side is a
+**DIVERGE** and must be zero, the timid side is a **REFUSE** that shows up in
+coverage — so pooling them would hide a correctness defect inside a coverage
+number (§5.2's own reason for separating causes).
+
 **AND A ZERO *DELTA* READS DIFFERENTLY AGAIN — IT CAN BE THE HEADLINE** (pyc's
 3c-i-c; **ticketed**). The inch's result is that **the whitelist did not move**:
 
@@ -5797,6 +5831,37 @@ the candidate model and fail** — and the failure is the finding, in exactly th
 sense §9.7's blocker-naming norm means it. **An acceptance row you cannot write
 is a specification of what the model is missing.**
 
+**AND TWO RIDERS FROM THE FIRST RESOLUTION RUNG, both about what an acceptance
+case must CONTAIN** (Go E1, `4a9f9ec`).
+
+**A DISPATCH TABLE WITH ONE ENTRY IS INDISTINGUISHABLE FROM A HARD-CODED
+ANSWER.** The walker half vendored **two** functions, not one, for exactly that
+reason.
+
+> **A mechanism's acceptance case needs enough entries to show it is a
+> MECHANISM.** One row proves an answer; two prove a lookup.
+
+That is §5.3's vacuity ruling applied to **dispatch** rather than to a verdict:
+a single-entry table passes every test a correct table passes, and **nothing in
+the result distinguishes the two** — the same shape as a check that cannot fail,
+one level down in the implementation.
+
+**AND THE GATE LANDED WITH THE CAPABILITY, NOT AFTER AN INCIDENT.** The lane
+added its resolver self-test to the **triad gate list** in the same landing that
+built the resolver, so **the shadowing discipline is enforced by the gate rather
+than by the operator.** *Fixes live in gates* is usually retrospective — a rule
+minted from something that went wrong. **Applied at birth it costs nothing and
+skips the incident**, which is the cheapest form the rule ever takes and the
+easiest to forget while the capability still feels well understood by the person
+who wrote it.
+
+**And one convergence worth a clause**: the rung's discriminating arguments
+**pull in opposite directions on the same input** — `ntz64(0) = 64` against
+`log64(0) = -1` — which is the four-tier hierarchy's top row (below) arrived at
+independently, on a mechanism rather than on a value model. **The pattern
+generalizes past the case that minted it**, which is the test this document
+applies to everything it promotes.
+
 **AND A FOURTH TIER SITS ATOP IT — THE ROW THAT KILLS TWO WRONG MODELS AT ONCE,
 IN OPPOSITE DIRECTIONS** (Go, `da9a7bc`, on master). `runtime.printuint`'s array
 never escapes, so the acceptance case is **one array with two operations**:
@@ -6161,6 +6226,28 @@ never fired is a design, not a control:
   `tools/triad.sh` treats those exits as a resource kill rather than a red
   build and re-runs once, which is base rule 2 firing as designed rather
   than a lane deciding a red was spurious.
+
+**AND A REQUIRED LOUDNESS GUARD FOR MODEL FILES: `set_option autoImplicit
+false`** (SV; a 17-second red, re-ticketed, one-import fix). The error was
+loud **only because that option is set in that file.** Without it, Lean would
+have **silently bound the unknown identifier as an implicit universe variable**
+and failed **later and stranger** — the lane's own Edge precedent.
+
+> **`autoImplicit false` converts a strange late failure into a named
+> 17-second one.**
+
+**It is a LOUDNESS control, not a style preference**, which is why it belongs
+beside the hazards below rather than in a linting note: the setting does not
+prevent the mistake, it decides **where and under what name** the mistake
+surfaces. Off, a typo becomes a well-formed program with an extra universe
+variable, and the eventual error names something that is not the defect. On, the
+identifier is simply unknown, at the site, immediately.
+
+**The general shape, since every tier will meet a version of it**: a language
+feature that **silently supplies a plausible meaning for something the author
+did not write** is a loudness hazard, and the fix is always the same — **turn it
+off in files that are the model**, where a wrong meaning is a wrong semantics
+rather than a convenience.
 
 **THREE LEAN TOOLING HAZARDS, recorded because each cost a red and none
 announces itself.**
@@ -6824,6 +6911,29 @@ attributes the whole gap to the one phase it can see.
 > and start-to-finish are different costs with different owners, and only one of
 > them appears in the build log.**
 
+**AND A GIT MECHANIC THAT DEFEATS THE OBVIOUS WAY OF STAMPING A LANDING** (Go
+E1, `4a9f9ec`).
+
+> **A COMMIT CANNOT CONTAIN ITS OWN HASH.** An `--amend` to insert it
+> **invalidates it**, leaving a citation to a **destroyed** commit.
+
+The stamp discipline (§9.0, MEAS-10) asks each landing to carry its sha, and the
+natural move — commit, read the sha, amend it into the message — produces a
+message naming a commit that **no longer exists**. **The amend rewrites the
+object the sha was computed over**, so the citation is not merely stale, it
+points at nothing.
+
+> **Each rung's sha lands in the FOLLOWING commit.**
+
+**Which is a property of the artifact, not a preference about workflow**: a
+self-referential identifier is impossible for the same reason a checksum cannot
+cover itself, and every scheme that tries produces a citation with **no
+referent** rather than a wrong one. The practical form for this repository:
+**a landing cites its predecessors; the ledger entry that follows cites the
+landing.** Same discipline, one commit of latency, and every sha in the tree
+resolves.
+
+
 
 The window is **enqueue → release**, not build-start → build-end, and the
 forbidden act is **any** change, not just a history rewrite. This is
@@ -7486,6 +7596,35 @@ table would mislead:
 denominators or a stated reason there is one, the upper-bound guard wherever the
 measure is syntactic, and the vocabulary the ceiling is taken at.
 
+**AND SV IS THE SECOND LANE TO LAND ITS STANDING NUMBER, with two disciplines
+the table's shape did not yet name.**
+
+**(a) LIVE IS THE HONEST DENOMINATOR — 18/21 envelopes.** Three of the
+twenty-one are not live, and counting them would let a **vacuous row read as
+agreement**: a row that ran nothing is not a row that agreed.
+
+> **A coverage number's denominator counts what could have DISAGREED.**
+
+That is §5.3's vacuity ruling arriving in the denominator rather than in a
+verdict, and it is the more dangerous position, because a denominator is
+**quoted without its definition** far more often than a verdict is. **The
+inflation is invisible and always in the flattering direction** — dead rows
+raise the numerator's ceiling and never lower it.
+
+**(b) AND A NUMERATOR MAY BE EARNED BY FORWARDING, IF A THEOREM SAYS SO —
+11/11 stepper constructors, six of them through the delegating arm.**
+
+> **They are not reimplemented, they are FORWARDED — and the `agrees` theorem
+> proves the forwarding, which is why they cannot drift.**
+
+**The claim being made is precise, and it is worth copying because the naive
+version of it is wrong.** *"Six constructors are handled"* would be a coverage
+claim resting on **a reading of the code**; *"six are forwarded, and here is the
+theorem that the forwarding is faithful"* is a coverage claim resting on **a
+proof**. Delegation normally *weakens* a coverage number — it is the classic
+place where two implementations drift — and a theorem is exactly what converts
+it from a liability into a legitimate numerator entry.
+
 **AND THE RIDER THAT MADE §5.6's SELECTION CRITERION ROUTINE: WHEN THE
 DISCRIMINATOR HAS NO CORPUS WITNESS, IT MOVES INTO THE CALL.** Copy-by-value is
 the fixed-array value model's decider, and **the corpus does not do it**:
@@ -7672,7 +7811,27 @@ a five-minute import into a scheduled inch, and nothing contradicts it — the
 build agrees, loudly, every time.
 
 > **RIDER — the same grep, run FORWARD: pre-flight a name-collision check for
-> every name a landing DECLARES.** The tree-wide namespace grep that finds what
+> every name a landing DECLARES.**
+>
+> **AND ITS SECOND HALF, which the clash check does NOT cover** (SV): a clash
+> check finds **duplicate declarations** — names you DECLARE that already exist.
+> It says nothing about **identifiers that resolve NOWHERE** — names you USE
+> that no module in the closure defines. **An import-reachability check
+> completes the pair**: resolve every capitalized identifier a new file uses to
+> its defining module, and confirm that module is in the closure.
+>
+> **The two halves are the same query pointed in opposite directions**, which is
+> why they are stated together: *what am I about to shadow* and *what am I about
+> to reference that is not here.* The second is the one that produced the
+> 17-second red above, and the one a lane skips because the build "will just
+> tell you" — which it does, in whatever vocabulary the missing name happens to
+> trigger.
+>
+> **And its one false positive was NOTED, not papered over**: a **docstring**
+> naming another tier's type resolves nowhere and is not a defect.
+> **Comment-stripping is the known fix**, and recording the false positive with
+> its remedy is what keeps the check from being quietly narrowed to make the
+> noise go away (§5.4b: a de-dupe could silently shrink a set). The tree-wide namespace grep that finds what
 > you already have is the identical query that finds what you are about to
 > shadow, and §9.0a's opening instance had *"`Res.le` and its congruences —
 > identical, in the same namespace, a hard name clash waiting."* One grep,
@@ -7788,6 +7947,39 @@ observation: **price a candidate rung against the FAMILY it belongs to, and
 report both numbers** — alone, and jointly. A per-construct table with no joint
 column is not just incomplete; **it systematically under-prices exactly the
 rungs worth taking.**
+
+**AND A THIRD LEVEL, measured: BUNDLE → FAMILY → PACKAGE-FUNCTION** (Go E1,
+`4a9f9ec`, on master). §G21 priced `math/bits` at **+7** from the package
+ranking. E1 built the mechanism and it measured **+0**.
+
+> **A FILE NEEDS EVERY FUNCTION IT CALLS, NOT THE PACKAGE'S NAME.**
+
+The 7 files are the fiat64 curves, `math/big/arith.go` and `strconv/itoa.go`,
+and what blocks them is `Add64` (2 077 sites), `Mul64` (1 038), `Sub64` (186)
+and `Div` — **all MULTI-VALUE RETURNS**, which block **88% of `math/bits`' call
+sites.** So the conjunctive law has a third granularity: **constructs bundle
+into families, and families bundle into the CALLABLE SURFACE a file actually
+needs.** Pricing a package by its ranking prices **a name**; the file needs
+**every function in the call**.
+
+**And the lane read its own `+0` correctly, which is the retracted law paying
+off**: *"`+0` means not a rung on its own AT THIS VOCABULARY, not worthless."*
+The mechanism is built, gated and correct; what it unlocks is downstream of a
+different rung. **That is exactly the reading `2026-08-23-architecture-42`'s
+retraction bought**, arriving one inch later in the lane that paid for it.
+
+**AND THE SCHEDULING CONSEQUENCE, which is the part that outranks the number.**
+The next rung is **multi-value returns — a WALKER rung** — reached from an
+extractor rung.
+
+> **The extractor/walker ALTERNATION is what the census SAYS TO DO, not a
+> scheduling convention.**
+
+**An alternation adopted as a convention would be a rhythm; one derived from a
+census is a consequence**, and the difference shows the first time the census
+says *do two walker rungs in a row.* A convention would resist that; a
+consequence has nothing to resist with. **Never defend an alternation the census
+did not produce.**
 
 **(3) AND THE SAME ORDERING APPLIES TO OBLIGATIONS, NOT ONLY TO CONSTRUCTS —
 SHARED PREREQUISITES FIRST** (Wasm, `f657041`). An obligation list's order is an

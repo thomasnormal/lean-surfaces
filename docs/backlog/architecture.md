@@ -3938,3 +3938,119 @@ stopped being a description and became a procedure.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; law-index ids minted here **MEAS-160 … MEAS-164, STMT-114**.
+
+## 2026-08-24-architecture-52 — The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash
+
+Three from Go E1 (`4a9f9ec`) with two riders, and three from SV's 17-second red
+(re-ticketed).
+
+**(1) §5.2 — THE RESOLUTION GATE IS TWO-SIDED, which completes the shape landed
+yesterday.** **484 shadowing binding sites across 198 stdlib files**, so this is
+a live surface. Both directions are real: **reckless** resolves a shadowed use
+(**wrong answer**, DIVERGE); **timid** refuses an unshadowed one (**lost
+reach**, a REFUSE that need not exist).
+
+> **A merely-CONSERVATIVE resolver fails this gate exactly as a reckless one
+> does.**
+
+**The timid direction is what a naive fix causes**, which is why it needs rows
+and not a note: Go's `:=` binds **only from its declaration point**, so a use
+**preceding** the shadow and one whose shadow is in a **sibling block** must
+both still resolve. Battery: **10 rows, exit 6, non-vacuity run — reckless fails
+4, timid fails 2.**
+
+Landed as the paired-guard law arriving where it is hardest to believe, since
+one side of the pair **looks like caution**: **a correctness gate bounds BOTH
+error directions; over-refusing is a failure mode, not a safe default.** And I
+noted the reason pooling them would hurt: the reckless side is a **DIVERGE**
+(must be zero), the timid side a **REFUSE** (shows up in coverage) — pooling
+hides a correctness defect inside a coverage number.
+
+**(2) §9.0b — THE CONJUNCTIVE LAW'S THIRD LEVEL: BUNDLE → FAMILY →
+PACKAGE-FUNCTION.** §G21 priced `math/bits` at **+7** from the package ranking;
+E1 built the mechanism and measured **+0**.
+
+> **A file needs every FUNCTION it calls, not the package's name.**
+
+Blocked by `Add64` (2 077 sites), `Mul64` (1 038), `Sub64` (186) and `Div` —
+**all multi-value returns, blocking 88% of `math/bits`' call sites.**
+
+**And the lane read its own `+0` correctly, which is the retraction paying
+off**: *not a rung on its own AT THIS VOCABULARY, not worthless.* That is
+exactly the reading `2026-08-23-architecture-42` bought, arriving one inch later
+in the lane that paid for it.
+
+**The scheduling consequence outranks the number**: the next rung is multi-value
+returns, **a walker rung**, reached from an extractor rung — so **the
+extractor/walker alternation is what the census SAYS TO DO, not a scheduling
+convention.** My addition: **an alternation adopted as a convention is a rhythm;
+one derived from a census is a consequence**, and the difference shows the first
+time the census says *two walker rungs in a row* — a convention would resist
+that, a consequence has nothing to resist with.
+
+**(3) §7.2 — A GIT MECHANIC THAT DEFEATS THE OBVIOUS STAMP.**
+
+> **A COMMIT CANNOT CONTAIN ITS OWN HASH.** An `--amend` to insert it
+> invalidates it, leaving a citation to a **destroyed** commit.
+
+The §9.0 stamp discipline asks each landing to carry its sha, and the natural
+move produces a message naming a commit **that no longer exists** — not stale,
+**without a referent**. **Each rung's sha lands in the FOLLOWING commit.** I
+recorded it as a property of the artifact rather than a workflow preference: a
+self-referential identifier is impossible for the same reason a checksum cannot
+cover itself.
+
+**RIDERS FROM THE SAME RUNG, both about what an acceptance case must CONTAIN.**
+**A dispatch table with one entry is indistinguishable from a hard-coded
+answer** — the walker vendored **two** functions for that reason: *one row
+proves an answer, two prove a lookup*, which is §5.3's vacuity ruling one level
+down, in the implementation. And **the gate landed WITH the capability**: the
+resolver self-test went into the triad gate list in the same landing, so the
+shadowing discipline is enforced by the gate and not the operator. *Fixes live
+in gates* is usually retrospective; **applied at birth it costs nothing and
+skips the incident** — the cheapest form the rule takes and the easiest to skip
+while the capability still feels well understood by its author.
+
+**(4) §7.1a — `set_option autoImplicit false` IS A REQUIRED LOUDNESS GUARD FOR
+MODEL FILES** (SV). The 17-second red was loud **only because that option is
+set**; without it Lean would have **silently bound the unknown identifier as an
+implicit universe variable** and failed **later and stranger**.
+
+> **It converts a strange late failure into a named 17-second one.**
+
+**It is a loudness control, not a style preference** — the setting does not
+prevent the mistake, it decides **where and under what name** it surfaces. And
+the general shape, since every tier meets a version: **a language feature that
+silently supplies a plausible meaning for something the author did not write is
+a loudness hazard**, and the fix is always to turn it off in files that ARE the
+model, where a wrong meaning is a wrong semantics.
+
+**(5) §9.0a — THE PRE-FLIGHT'S SECOND HALF.** The clash check finds **duplicate
+declarations** — names you DECLARE. It says nothing about **identifiers that
+resolve NOWHERE** — names you USE. An **import-reachability check** completes
+the pair: resolve every capitalized identifier a new file uses to its defining
+module, confirm the module is in the closure. **The two halves are the same
+query pointed in opposite directions**, and the second is the one a lane skips
+because *"the build will just tell you"* — which it does, in whatever vocabulary
+the missing name happens to trigger. **Its one false positive was NOTED, not
+papered over** (a docstring naming another tier's type); comment-stripping is
+the known fix, and recording it is what keeps the check from being quietly
+narrowed to silence the noise.
+
+**(6) §9.0 — SV IS THE SECOND LANE TO LAND ITS STANDING NUMBER, with two
+disciplines the template did not yet name.** **LIVE is the honest
+denominator** — 18/21 envelopes, because **a vacuous row must not read as
+agreement**:
+
+> **A coverage number's DENOMINATOR counts what could have DISAGREED.**
+
+§5.3's vacuity ruling in the denominator, which is the more dangerous position:
+**a denominator is quoted without its definition far more often than a verdict
+is**, and dead rows inflate only in the flattering direction. And **11/11
+stepper constructors, six through the delegating arm** — *they are not
+reimplemented, they are forwarded, and the `agrees` theorem proves the
+forwarding.* **Delegation normally weakens a coverage number**; the theorem is
+what converts it from a liability into a legitimate numerator entry.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-165 … MEAS-171, STMT-115, OPS-76, OPS-77**.

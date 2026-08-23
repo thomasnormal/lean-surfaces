@@ -122,12 +122,28 @@ def default_oracle():
     exception-MESSAGE comparison added the same day is what made it
     visible (3.13+ appends `Did you mean: …?` to a NameError). The oracle
     is printed with every run for the same reason the survey prints it."""
+    # AUDIT docs/quality-audit-2026-08-23.md §python: this fell back
+    # python3.9 -> python3 -> sys.executable SILENTLY, which is the exact trap
+    # the docstring above describes — a corpus comparing against 3.14 while
+    # claiming the 3.9 pin, with every MATCH measured against the wrong
+    # reference. The fallbacks stay (a box without the pin should still be
+    # able to run this), but each degradation now SAYS so, in the same voice
+    # the re-exec warning uses.
     for cand in ("python3.9", "python3"):
         try:
             if subprocess.run([cand, "-c", ""], capture_output=True).returncode == 0:
+                if cand != "python3.9":
+                    print("harness/script_corpus.py: WARNING the pinned oracle "
+                          "'python3.9' is not installed; oracling against %r "
+                          "instead — version drift will read as model "
+                          "divergence" % cand, file=sys.stderr)
                 return cand
         except OSError:
             continue
+    print("harness/script_corpus.py: WARNING neither 'python3.9' nor 'python3' "
+          "is runnable; oracling against %s (%s) — this is NOT the pinned "
+          "reference" % (sys.executable, sys.version.split()[0]),
+          file=sys.stderr)
     return sys.executable
 
 

@@ -237,10 +237,25 @@ end Ref
 boards chosen for the parts of `gen_moves` random play does not reach:
 both promotion forms, en passant, the king-passant squares, castling in
 three rights combinations, sliders, edge knights, and both pawn
-double-move boundaries. Every expected list below is CPython's own
-answer, in CPython's order. (A further 40 boards reached by random play
-from the opening — 987 more moves — were checked the same way while the
-reference was written.) -/
+double-move boundaries.
+
+PROVENANCE, re-labelled per docs/quality-audit-2026-08-23.md §python. The
+expected lists below were TRANSCRIBED from CPython's own answers, in
+CPython's order, when this reference was written (together with a further 40
+boards reached by random play from the opening — 987 more moves — checked the
+same way and not kept). **Nothing re-derives them.** `gen_moves` appears in
+ZERO `harness/cases.json` rows, so no gate compares these literals to CPython
+again; they are a transcription with a date, not a live oracle, and the
+previous present-tense wording ("Every expected list below IS CPython's own
+answer") claimed more than the repository can currently show.
+
+THE REAL FIX, and why it is not taken here: a generator that SURVIVES — the
+fourteen boards moved to one data file that both this pin and a Python script
+read, so the literals below are regenerated from CPython rather than trusted.
+That is a self-contained inch, and the boards are defined in the sunfish
+campaign's own proof files, so it belongs with whoever owns them; the
+python-completeness lane is noting it, not claiming it
+(docs/backlog/python-completeness.md 2026-08-23-pycomplete-12). -/
 
 -- the shipped opening board, the same 20 moves the interpreter yields above
 #guard (match Ref.refMoves board0.toList true true 0 0 64 with

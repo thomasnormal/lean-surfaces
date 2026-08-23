@@ -4245,3 +4245,113 @@ property of a question.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-179 … MEAS-183**.
+
+## 2026-08-24-architecture-55 — A verdict certifies a tree, never a title
+
+Seven from the Ada successor's reconstruction (adoption redo `342a1f5`, tenure
+queued, merge pending green). **All seven landed.**
+
+**(1) §5.4a-i — THE WRONG-TREE GREEN, and it completes a ladder this section
+already had two rungs of.** A prior *"adoption tenure"* was **GREEN** — true
+lock line, clean gates, exit 0 — certifying a tree (`ea56aea`, identical to the
+ticket commit's tree) containing **only backlog-doc changes.** The adoption had
+**never been implemented**; `Value.lean` still carried **all 8 `ADOPT`
+markers.**
+
+> **The green was TRUE and answered a different question than the ticket asked.**
+
+> **A verdict certifies a TREE, never a TITLE.**
+
+**Landed as the exact DUAL of the enqueue-tree stamp**, which is the framing
+that makes both usable: **the stamp stops the tree changing AFTER enqueue;
+nothing checked that the tree ever CONTAINED the work the title promises.** One
+guards the interval, the other guards the premise, and **a tenure can satisfy
+the first perfectly while failing the second completely** — this one did.
+
+**And I kept the witness RANKING, because it is the transferable part**: tree
+identity is **primary** (the verdict *is* about a tree, so it is the only
+witness speaking in the verdict's own terms); duration is **corroborating**
+(**4 seconds cannot be a Mathlib-rooted adoption**) and still second, because a
+duration is a fact about *this run* while the claim is about *this tree*. **A
+lane that leads with duration will one day meet a warm cache and conclude
+nothing is wrong.** Tools-lane aid noted: a **diffstat-vs-master line in the
+triad header** would have made the 4-second doc-only green self-evident.
+
+**(2) §5.2 — A REFUSAL USED AS AN INSTRUMENT.** The census cannot see
+`AssignStmt`'s target-child shape (libadalang's `CallExpr` covers calls **and**
+indexed components), so inch 2 will **refuse every non-simple target** with
+`RefusalCause.unsupported` citing ARM 5.2.
+
+> **A refusal is a PENDING MEASUREMENT: honest, countable, and read off the
+> MODEL by the next census.**
+
+**The alternatives are both worse** — guessing the split puts an unmeasured
+number in the plan, deferring waits on an instrument nobody is building. And it
+**inverts the usual direction of evidence**: normally the instrument measures
+the model; here **the model measures for the instrument**, which is available
+whenever a model can *recognize* what it cannot *handle*.
+
+**(3) §2.5 — A PARAGRAPH RANGE IS EDITION-RELATIVE.** Census pinned Ada 2022,
+tier at 2012, and **5.2.1 sits inside "5.1–5.3"**.
+
+> **A clause number RESOLVES; a RANGE enumerates — and a range is a claim about
+> which clauses EXIST in an edition.**
+
+Settled **without the 2012 RM**, by corpus: **zero `TargetName` nodes in 4 821
+ACATS sources** (also zero `DeclExpr`/`ReduceAttributeRef`/`Parallel*`). **The
+corpus decided an edition question the missing document could not** — recorded
+as a **method**, since the obvious moves are to defer or to assume continuity,
+and assuming continuity is the motivated error (it is the answer that lets the
+work proceed). **With its limit stated**: this settles **presence**, never
+**semantics** — stretch it further and a missing document has been swapped for
+an argument from silence.
+
+**(4) §5.4b — PARTITION INSTRUMENTS BY CORPUS DEPENDENCE, measured under a real
+purge.** The scratchpad purge took ACATS, the ARM texts and adatools; **every
+number was re-derived from git-tracked, content-pinned census JSONs.** **4 of 5
+instruments self-test PASS with no corpus**; the one that needs it **refuses
+loudly with the acquisition path.**
+
+**Both halves are required and are usually confused**: an instrument that could
+run corpus-free but reads the corpus anyway turns an outage into a tree-wide
+red; one that needs it and merely **skips** turns an outage into **silence**
+(MEAS-9). **The purge is the test that separates them**, and this is the first
+time this tree has had one run across a full instrument set.
+
+**(5) §5.2 — TWO TIERS CHOSE THE SAME `π` INDEPENDENTLY, WITH OPPOSITE
+NARROWING.** Go and Ada each instantiated the payload as **a citation into their
+own standard** (`SpecRef` / `ArmRef`), and they **diverge on the class set**: Go
+narrows and excludes `undefined`; Ada does not, because its `undefined` bucket
+is a real product — the ARM's **bounded errors**.
+
+> **Convergence on the PARAMETER plus divergence on the INSTANTIATION is exactly
+> what a correct parameterization looks like.**
+
+Had both narrowed the same way, the honest reading would be that the family had
+guessed a **default** rather than found a **parameter**.
+
+**(6) §5.4b — A GATE CAN BE POINTED BY ACCIDENT, which the four-state ladder
+does not distinguish.** `LeanModels.lean` does not import `LeanModels.Ada`; the
+tier reaches the default build **only through the `Examples` glob**.
+
+> **A gate reached by ACCIDENT retires when somebody tidies an unrelated file.**
+
+*A dependency satisfied by a neighbour is not a dependency met*, pointed at a
+gate's **reachability** — and **worse in one specific way**: the neighbour case
+fails loudly elsewhere, this one fails **silently here**, because deleting the
+last example that imports the tier changes **nothing in the gate set**. So the
+enumeration owes one more question after *what is it pointed at*: **WHAT MAKES
+IT RUN?** Fix with the Ada lane; the shape is the register's.
+
+**(7) §9.0b — THE `+0` DISCLOSED IN THE PLAN, second instance and the lane cited
+Go's precedent itself.** Inch 2 moves ACATS coverage by exactly 0 and **says so
+in the plan**: *it must not be sold as a coverage rung.*
+
+**A `+0` disclosed in the plan is a different artifact from a `+0` explained in
+the retrospective** — the first is a lane pricing its own inch honestly **while
+it could still have chosen a different one**. **Both are correct and only the
+first is a control**, and it is the cheapest one available: at plan time the
+sentence costs nothing, afterwards it costs the appearance of progress.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-184 … MEAS-191, STMT-119**.

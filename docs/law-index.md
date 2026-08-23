@@ -232,6 +232,14 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-181 | record a correction as a REFINEMENT with both halves, never as an erratum | `docs/family-architecture.md §8` item 11 |
 | MEAS-182 | a qualifier may attach to a RANGE of dated entries — rewriting destroys what was known when | `docs/family-architecture.md §8` item 11 |
 | MEAS-183 | a STATUS COLUMN names what it measures — in-tree and rostered are separate facts | `docs/family-architecture.md §1.2` |
+| MEAS-184 | a verdict certifies a TREE, never a TITLE — compare the certified tree against the claim | `docs/family-architecture.md §5.4a-i` |
+| MEAS-185 | witness ranking: tree identity PRIMARY, build duration CORROBORATING | `docs/family-architecture.md §5.4a-i` |
+| MEAS-186 | a REFUSAL is a pending measurement — the model emits the datum the census cannot see | `docs/family-architecture.md §5.2` |
+| MEAS-187 | a clause number RESOLVES; a RANGE enumerates, and a range is edition-relative | `docs/family-architecture.md §2.5` |
+| MEAS-188 | a CORPUS can settle an edition question a missing document cannot — presence, never semantics | `docs/family-architecture.md §2.5` |
+| MEAS-189 | after "what is it pointed at", ask WHAT MAKES IT RUN — a gate reached by accident retires by accident | `docs/family-architecture.md §5.4b` |
+| MEAS-190 | PARTITION instruments by corpus dependence; the one that needs it names its re-acquisition | `docs/family-architecture.md §5.4b` |
+| MEAS-191 | a `+0` disclosed in the PLAN is a control; the same number in the retrospective is accounting | `docs/family-architecture.md §9.0b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -358,6 +366,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-116 | a FALSE PREMISE does not weaken a theorem — it VACATES it, and a vacated theorem PASSES | `docs/family-architecture.md §5.3` |
 | STMT-117 | an `op_correct` statement mentions NO algorithm; the tie rule is a PARAMETER | cookbook §24 |
 | STMT-118 | an OMISSION is stated in the file, never silently completed | cookbook §24 |
+| STMT-119 | convergence on the PARAMETER plus divergence on the INSTANTIATION is a correct parameterization | `docs/family-architecture.md §5.2` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

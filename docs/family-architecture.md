@@ -1187,6 +1187,33 @@ is the strongest available argument that clause citations must be
 lane's retrofit is in flight and will move these rows**; the table records
 the state at the commit that measured it, not a standing accusation.
 
+**AND A PARAGRAPH RANGE IS EDITION-RELATIVE, which the citation checker also
+cannot see** (Ada, 2026-08-24). The spec census is pinned at **Ada 2022**, the
+tier is **2012**, and **5.2.1 (Target Name Symbols) sits inside "5.1–5.3"** — so
+a range copied across the edition boundary silently changes what it contains.
+
+> **A CLAUSE NUMBER RESOLVES; A RANGE ENUMERATES. A range is a claim about which
+> clauses EXIST in an edition, and it changes when the edition does.**
+
+**The tier had no 2012 RM to check against, and settled it by CORPUS
+MEASUREMENT instead**: **zero `TargetName` nodes in 4 821 ACATS sources** (also
+zero `DeclExpr`, `ReduceAttributeRef`, `Parallel*`).
+
+> **The corpus decided an edition question the missing document could not.**
+
+**That is worth recording as a method and not just an outcome.** The obvious
+move when a spec edition is unavailable is to defer, and the second-most obvious
+is to assume continuity — *"5.1–5.3 surely means the same thing"* — which is the
+motivated error, since it is the answer that lets the work proceed. **A corpus
+of conforming programs is a third source**: it cannot say what the edition
+*permits*, but it can say what the edition's own test suite **exercises**, and a
+construct absent from 4 821 sources is not one the range needed to cover.
+
+**The limit belongs with it**: this settles **presence**, never **semantics**.
+Zero occurrences answers *"is this construct in scope for the range?"*; it says
+nothing about what the range's clauses **mean**, and a lane that stretches it
+that far has swapped a missing document for an argument from silence.
+
 **And the same instrument caught this document.** §1.3 originally read the
 `§6.3.1.3` row above as evidence that C23 *mandates* two's-complement
 conversion. It does not — p3 is identical across the editions and C23
@@ -3488,7 +3515,24 @@ a richer shape than either.
 > family law; the payload is the tier's.**
 
 C instantiates `π` with a J.2 index, Ada with an ARM paragraph, ES with a
-host-hook name. **The payload objection dissolves exactly the way `ρ` did**
+host-hook name.
+
+**AND TWO TIERS HAVE NOW CHOSEN THE SAME SHAPE INDEPENDENTLY, WITH OPPOSITE
+NARROWING DECISIONS — which is stronger evidence than agreement would have
+been.** Go and Ada each instantiated `π` as **a citation into their own
+standard** (`SpecRef` / `ArmRef`) without coordinating. **And they diverge on
+the class set, each justified by their own spec**: Go **NARROWS** the cause type
+and **excludes `undefined`**; Ada **does not**, because its `undefined` bucket is
+a real product — the ARM's **bounded errors**.
+
+> **Convergence on the PARAMETER plus divergence on the INSTANTIATION is
+> exactly what a correct parameterization looks like.**
+
+Had both tiers narrowed the same way, the honest reading would be that the
+family had guessed a *default* rather than found a *parameter*. **Two tiers
+filling the same slot with different content, each on their own spec's
+authority, is the ruling working as designed** — and it is §9.3's convergence
+standard applied to a design decision rather than to a name. **The payload objection dissolves exactly the way `ρ` did**
 (§3.4): what differs irreducibly per tier is not a *class*, it is a
 *parameter*, and a parameter is the thing this family already knows how to
 share.
@@ -3537,6 +3581,28 @@ than argued per report**, and the census now gates the strong half from the
 OUTSIDE, on the real corpus: *every interpreter refusal carries one of the four
 class names, and none carries `undefined`.* 116 rows, 45 gap classes, 7
 boundary-freeze refusals with no class **by design**, 0 drifts.
+
+**AND A REFUSAL CAN BE USED AS AN INSTRUMENT — the model emitting the datum the
+census cannot see** (Ada inch 2). The construct census **cannot see
+`AssignStmt`'s target-child shape**, because libadalang's `CallExpr` covers
+**both calls and indexed components**. Rather than guess a split or defer the
+inch, the tier will **REFUSE every non-simple target** with
+`RefusalCause.unsupported` citing **ARM 5.2**.
+
+> **A REFUSAL IS A PENDING MEASUREMENT: honest, countable, and read off the
+> MODEL by the next census.**
+
+**The move is worth naming because the alternatives are both worse.** Guessing
+the split puts an unmeasured number into the plan (§5.4a's motivated error);
+deferring the inch waits for an instrument nobody is building. **Refusing turns
+the gap into a datum** — every refusal is a row, the rows are countable, and the
+count is exactly the measurement the census could not take.
+
+**And it inverts the usual direction of evidence**: normally the instrument
+measures the model. Here **the model measures for the instrument**, which is
+available whenever the model can *recognize* what it cannot *handle*. That is
+the same property §5.2's four causes already require — **a refusal names what it
+refused** — used as a source of data rather than as an admission.
 
 **AND A FIFTH CORRECTNESS SHAPE, owed by every RESOLUTION rung: A RESOLUTION CAN
 BE WRONG, NOT MERELY MISSING** (Go, `fef0b79`, on master).
@@ -5033,6 +5099,43 @@ therefore **citable** as an increment base only when its index tree equals its
 HEAD commit's tree; otherwise the sha names something the green did not
 certify. This is the provenance law applied to the evidence's own identity.
 
+**AND THE LADDER HAS A THIRD RUNG, MEASURED THE EXPENSIVE WAY: A GREEN
+CERTIFIES A TREE, NEVER A TITLE** (Ada successor's reconstruction; the adoption
+redo is `342a1f5`, tenure queued). A prior *"adoption tenure"* came back
+**GREEN** — true lock line, clean gates, **exit 0** — certifying a tree
+(`ea56aea`, identical to the ticket commit's tree) that contained **only
+backlog-doc changes.** The adoption it was enqueued **for had never been
+implemented**: `Value.lean` still carried **all 8 `ADOPT` markers**.
+
+> **THE GREEN WAS TRUE AND ANSWERED A DIFFERENT QUESTION THAN THE TICKET
+> ASKED.**
+
+**This is the exact DUAL of the enqueue-tree stamp** (§7.2), and the pair is
+worth reading together: the stamp stops the tree **changing after enqueue**;
+**nothing checked that the tree ever CONTAINED the work the ticket's title
+promises.** One guards the interval, the other guards the premise, and a tenure
+can satisfy the first perfectly while failing the second completely.
+
+> **A verdict certifies a TREE, never a TITLE. The reader of a green compares
+> the CERTIFIED TREE against the CLAIM — the title is not evidence about the
+> tree, it is evidence about intent.**
+
+**TWO WITNESSES, RANKED, and the ranking is the transferable part.**
+
+* **PRIMARY — tree identity.** The verdict **is** about a tree, so the tree is
+  the only witness that speaks in the verdict's own terms. Everything else is
+  circumstantial.
+* **CORROBORATING — build duration.** **4 seconds cannot be a Mathlib-rooted
+  adoption.** It is decisive in practice and it is still second, because a
+  duration is a fact about *this run* and the claim is about *this tree*.
+
+**Keep them in that order.** A lane that leads with duration will one day meet a
+warm cache and conclude nothing is wrong, and a lane that leads with the tree
+never needs the clock. **The cheap mechanical aid — noted for the tools lane —
+is a diffstat-vs-master line in the triad header**: a doc-only tenure would then
+announce itself, and the 4-second green would have been **self-evident** rather
+than reconstructed.
+
 **CLASSIFICATION IS COMPUTED AGAINST THE CHAIN ROOT, NEVER THE PARENT.** Two
 increments classified against their immediate predecessors can be `tier A`
 and `tier B`, with neither build covering their interaction — a tier green
@@ -5353,6 +5456,28 @@ census RECORDS and never adjudicates** (§5.4a) applies to a reader's own input,
 not only to its verdicts — **flag the anomaly, and let the owner decide whether
 two entries are one.**
 
+**AND A RUNG CAN BE POINTED AT THE CLAIM BY ACCIDENT, which the ladder's four
+states do not distinguish** (Ada, 2026-08-24). **`LeanModels.lean` does not
+import `LeanModels.Ada`** — the tier reaches the default build **only through
+the `Examples` glob.** It is a **live, pointed** gate whose liveness is supplied
+by **an example file happening to import it.**
+
+> **A gate reached by ACCIDENT is a gate that retires when somebody tidies an
+> unrelated file.**
+
+**This is *a dependency satisfied by a NEIGHBOUR is not a dependency met*
+(§7.2) pointed at a gate's REACHABILITY rather than at a tool's inputs**, and it
+is worse in one specific way: the neighbour case fails **loudly, elsewhere**,
+while this one fails **silently, here** — deleting the last example that imports
+the tier removes the tier from the build and **nothing in the gate set notices,
+because the gate did not change.** The pointer list would record this rung as
+green and pointed on the day it stopped running.
+
+**So the enumeration owes one more question after "what is it pointed at":
+WHAT MAKES IT RUN?** A gate whose answer is *"another file's import"* is
+**held up by something that was not written to hold it.** The fix is with the
+owning lane — one line, next ticket; **the shape is the register's.**
+
 **AND THE MOMENT A GATE MOVES UP THAT LADDER IS A DECISION WITH A BILL
 ATTACHED** (SV, `b499afa`; instance found while wiring the round-trip gate
 `ea6f667` made unconditional):
@@ -5608,6 +5733,27 @@ but calling it a guard **overstates it**.
 **nothing executes** — it does not even reach `DECLARED` on the ladder above,
 because there is no declaration for an enumerator to find. **A gate set padded
 with procedures reads as coverage and is staffed by memory.**
+
+**AND THE DURABILITY DESIGN HAS ITS FULL FORM NOW, measured under a purge**
+(Ada; §L86 collecting). The scratchpad purge took **ACATS, the ARM texts and
+adatools** — and **every number was re-derived from git-tracked,
+content-pinned census JSONs.** The partition is the design:
+
+* **4 of 5 instruments SELF-TEST PASS with no corpus** — they do not need it, so
+  they do not fail without it;
+* **the one that does need it REFUSES LOUDLY, with the acquisition path** — so
+  its absence is a stated gap that names its own repair.
+
+> **PARTITION INSTRUMENTS BY CORPUS DEPENDENCE. The ones that do not need the
+> corpus must not fail without it; the one that does must name its own
+> re-acquisition.**
+
+**Both halves are required and they are usually confused.** An instrument that
+*could* run corpus-free but reads the corpus anyway converts an outage into a
+tree-wide red; an instrument that genuinely needs it and merely **skips** turns
+an outage into **silence** (MEAS-9). **The purge is the test that separates
+them**, and this is the first time this tree has had one run over a full
+instrument set.
 
 **AND THE HONEST GAP BESIDE IT, recorded rather than glossed**: the spec census
 **cannot run** — its LaTeX corpus was purged — but **its baseline is committed
@@ -8182,6 +8328,19 @@ sites.** So the conjunctive law has a third granularity: **constructs bundle
 into families, and families bundle into the CALLABLE SURFACE a file actually
 needs.** Pricing a package by its ranking prices **a name**; the file needs
 **every function in the call**.
+
+**AND THE SECOND INSTANCE STATED IT BEFORE THE WORK, which is the reading
+becoming a habit** (Ada inch 2, citing Go's precedent by name). The inch moves
+ACATS coverage by **exactly 0**, and **the plan says so**:
+
+> **It must not be sold as a coverage rung.**
+
+**A `+0` disclosed in the plan is a different artifact from a `+0` explained in
+the retrospective.** The first is a lane pricing its own inch honestly while it
+still could have chosen a different one; the second is a lane accounting for a
+number after the fact. **Both are correct and only the first is a control** —
+and it is the cheapest possible one, because at plan time the sentence costs
+nothing and afterwards it costs the appearance of progress.
 
 **And the lane read its own `+0` correctly, which is the retracted law paying
 off**: *"`+0` means not a rung on its own AT THIS VOCABULARY, not worthless."*

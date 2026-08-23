@@ -201,7 +201,7 @@ var builtinNames = map[string]bool{
 func main() {
 	var paths []string
 	var out, compare, root, ladder, kindsets string
-	var reach bool
+	var reach, resolve bool
 	args := os.Args[1:]
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -231,6 +231,8 @@ func main() {
 			kindsets = args[i]
 		case "--reach":
 			reach = true
+		case "--resolve":
+			resolve = true
 		case "--ladder":
 			i++
 			if i >= len(args) {
@@ -240,6 +242,10 @@ func main() {
 		default:
 			paths = append(paths, args[i])
 		}
+	}
+	if resolve {
+		runResolveSelfTest()
+		return
 	}
 	if reach {
 		runReach(paths, root)
@@ -1083,4 +1089,254 @@ func runReach(paths []string, root string) {
 	}
 	whole := count(setOf(walkerVocab, frontier))
 	fmt.Printf("  %-32s %6d %+8d\n", "+ ALL of the frontier", whole, whole-b)
+}
+
+// ---------------------------------------------------------------------------
+// --resolve : THE E1 RESOLVER, and the shadowing gate it owes
+//
+// Rung E1 (docs/backlog/go.md §G21) resolves `pkg.F(...)` to a
+// (package-path, function) pair from the FILE'S OWN IMPORT TABLE — no
+// go/types. The walker then dispatches on `Expr.callPkg`.
+//
+// THE DISCIPLINE THIS MODE EXISTS FOR
+//
+// A resolution can be WRONG, not merely missing, and that is a refusal
+// shape the tier had not met before: every earlier refusal was an absence.
+// `bits` can be a local variable shadowing the import, and the census found
+// **484 such binding sites across 198 standard-library files** — including
+// `local "hash" shadows import "hash"` and `local "crc32" shadows import
+// "hash/crc32"`. A resolver that ignores scope reports those as package
+// calls and the walker executes the wrong function silently.
+//
+// The gate is TWO-SIDED, because both failure directions are real:
+//
+//   - resolve a SHADOWED use  -> a wrong answer (the dangerous direction);
+//   - refuse an unshadowed use -> lost reach (the timid direction, which a
+//     naive "is this name bound anywhere in the function?" check causes,
+//     since Go's `:=` binds only from its declaration point onward).
+//
+// So the battery asserts both, and a resolver that is merely conservative
+// fails it just as a reckless one does.
+// ---------------------------------------------------------------------------
+
+type resolution struct {
+	pkg, fn string
+	line    int
+}
+
+// binding is a local name in scope from `pos` to the end of its block.
+type binding struct {
+	name string
+	pos  token.Pos
+	end  token.Pos // end of the scope that owns it
+}
+
+// resolveFile returns the package calls it can justify, honouring scope.
+func resolveFile(fset *token.FileSet, f *ast.File) []resolution {
+	imports := map[string]string{}
+	for _, im := range f.Imports {
+		path := strings.Trim(im.Path.Value, `"`)
+		name := ""
+		if im.Name != nil {
+			if im.Name.Name == "_" || im.Name.Name == "." {
+				continue
+			}
+			name = im.Name.Name
+		} else {
+			name = path
+			if i := strings.LastIndex(name, "/"); i >= 0 {
+				name = name[i+1:]
+			}
+			if i := strings.Index(name, "."); i > 0 {
+				name = name[:i]
+			}
+		}
+		imports[name] = path
+	}
+
+	var binds []binding
+	// collect every local binding of a name that COLLIDES with an import
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.FuncDecl:
+			if x.Body == nil {
+				return true
+			}
+			// parameters, results and receiver bind over the whole body
+			fields := []*ast.FieldList{x.Type.Params, x.Type.Results, x.Recv}
+			for _, fl := range fields {
+				if fl == nil {
+					continue
+				}
+				for _, fd := range fl.List {
+					for _, id := range fd.Names {
+						if _, ok := imports[id.Name]; ok {
+							binds = append(binds, binding{id.Name, x.Body.Pos(), x.Body.End()})
+						}
+					}
+				}
+			}
+		case *ast.BlockStmt:
+			// `:=` and `var` bind from the STATEMENT onward, to block end
+			for _, st := range x.List {
+				switch d := st.(type) {
+				case *ast.AssignStmt:
+					if d.Tok == token.DEFINE {
+						for _, l := range d.Lhs {
+							if id, ok := l.(*ast.Ident); ok {
+								if _, isImp := imports[id.Name]; isImp {
+									binds = append(binds, binding{id.Name, d.End(), x.End()})
+								}
+							}
+						}
+					}
+				case *ast.DeclStmt:
+					if gd, ok := d.Decl.(*ast.GenDecl); ok {
+						for _, sp := range gd.Specs {
+							if vs, ok := sp.(*ast.ValueSpec); ok {
+								for _, id := range vs.Names {
+									if _, isImp := imports[id.Name]; isImp {
+										binds = append(binds, binding{id.Name, d.End(), x.End()})
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		case *ast.RangeStmt:
+			for _, e := range []ast.Expr{x.Key, x.Value} {
+				if id, ok := e.(*ast.Ident); ok {
+					if _, isImp := imports[id.Name]; isImp {
+						binds = append(binds, binding{id.Name, x.Body.Pos(), x.Body.End()})
+					}
+				}
+			}
+		}
+		return true
+	})
+
+	shadowed := func(name string, at token.Pos) bool {
+		for _, b := range binds {
+			if b.name == name && at >= b.pos && at < b.end {
+				return true
+			}
+		}
+		return false
+	}
+
+	var out []resolution
+	ast.Inspect(f, func(n ast.Node) bool {
+		ce, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		se, ok := ce.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		id, ok := se.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		path, isImport := imports[id.Name]
+		if !isImport || shadowed(id.Name, id.Pos()) {
+			return true
+		}
+		out = append(out, resolution{path, se.Sel.Name, fset.Position(id.Pos()).Line})
+		return true
+	})
+	return out
+}
+
+func runResolveSelfTest() {
+	type tc struct {
+		name string
+		src  string
+		want []string // "path.Fn" expected, in order
+	}
+	cases := []tc{
+		{"plain package call", `package p
+import "math/bits"
+func f(x uint64) int { return bits.Len64(x) }`, []string{"math/bits.Len64"}},
+
+		{"aliased import", `package p
+import b "math/bits"
+func f(x uint64) int { return b.Len64(x) }`, []string{"math/bits.Len64"}},
+
+		{"path tail differs from dir", `package p
+import "encoding/json"
+func f() { json.Marshal(nil) }`, []string{"encoding/json.Marshal"}},
+
+		// --- the WRONG-ANSWER direction: must NOT resolve ---
+		{"parameter shadows the import", `package p
+import "math/bits"
+func f(bits int) int { return bits.Len64(0) }`, nil},
+
+		{"var shadows the import", `package p
+import "math/bits"
+func f() int { var bits int; _ = bits; return bits.Len64(0) }`, nil},
+
+		{"short decl shadows the import", `package p
+import "math/bits"
+func f() int { bits := 0; _ = bits; return bits.Len64(0) }`, nil},
+
+		{"range var shadows the import", `package p
+import "math/bits"
+func f(xs []int) { for _, bits := range xs { _ = bits.Len64(0) } }`, nil},
+
+		// --- the TIMID direction: a use BEFORE the shadow MUST resolve ---
+		{"use precedes the shadowing :=", `package p
+import "math/bits"
+func f(x uint64) int {
+	n := bits.Len64(x)
+	bits := 0
+	_ = bits
+	return n
+}`, []string{"math/bits.Len64"}},
+
+		{"shadow is in a SIBLING block, not this one", `package p
+import "math/bits"
+func f(x uint64) int {
+	if x > 0 { bits := 0; _ = bits }
+	return bits.Len64(x)
+}`, []string{"math/bits.Len64"}},
+
+		{"not an import at all", `package p
+func f(x foo) int { return x.Len64() }`, nil},
+	}
+
+	pass, fail := 0, 0
+	for _, c := range cases {
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, "t.go", c.src, parser.SkipObjectResolution)
+		if err != nil {
+			fmt.Printf("  FAIL  %-38s parse error: %v\n", c.name, err)
+			fail++
+			continue
+		}
+		got := []string{}
+		for _, r := range resolveFile(fset, f) {
+			got = append(got, r.pkg+"."+r.fn)
+		}
+		ok := len(got) == len(c.want)
+		if ok {
+			for i := range got {
+				if got[i] != c.want[i] {
+					ok = false
+				}
+			}
+		}
+		if ok {
+			fmt.Printf("  ok    %-38s -> %v\n", c.name, got)
+			pass++
+		} else {
+			fmt.Printf("  FAIL  %-38s -> %v, want %v\n", c.name, got, c.want)
+			fail++
+		}
+	}
+	fmt.Printf("\nresolver self-test: %d passed, %d failed\n", pass, fail)
+	if fail > 0 {
+		os.Exit(6)
+	}
 }

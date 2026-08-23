@@ -2,6 +2,7 @@ import LeanModels.Go.SpecAttr
 import LeanModels.Go.Value
 import LeanModels.Go.Sem
 import LeanModels.Go.Obs
+import LeanModels.Go.Packages
 import LeanModels.Go.Stmt
 import LeanModels.Go.Spec
 

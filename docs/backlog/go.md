@@ -27,7 +27,18 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | --- | --- | ---: | ---: |
 | §G16 re-rank | — | *withdrawn — unreproducible (§G19)* | — |
 | §G19 range / slice family | `5b3602f` | 604 / 3,803 (15.9%) | — |
-| §G20 fixed arrays `[N]T` | `da9a7bc` | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
+| §G20 fixed arrays `[N]T` | `da9a7bc` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
+| §G22 rung E1 (`pkg.F` + `math/bits`) | *filled in below* | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
+
+E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
+unchanged on purpose — a mechanism rung that unlocks nothing must not be
+allowed to look like progress here.
+
+*(A landing's own sha cannot appear in the commit that creates it — a
+commit does not contain its own hash, and amending to insert it changes
+it again. So each rung's sha lands in the FOLLOWING commit, which is how
+§G19's and §G20's rows were filled. Noted here because the first attempt
+at this row cited a sha that the amend had already destroyed.)*
 
 **Two denominators, because the choice is a real one and it moves the
 number by 3.5 points.** `$GOROOT/src` includes `cmd/` — 1,060 files, 28%
@@ -2632,5 +2643,132 @@ heuristic gets it wrong silently. E1's acceptance must therefore include
 a **shadowing row** — the case the cheap resolution is most likely to
 misread — and the instrument's own `importNames` already documents that
 it is a heuristic and which direction it errs in.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+---
+
+## G22 — RUNG E1: the mechanism works, and it is worth +0 files (2026-08-23)
+
+E1 as chartered: `pkg.F` resolution in the extractor, dispatch in the
+walker, `math/bits` end to end. Both halves are built and gated. **Its
+reach is +0**, the charter's own "+7" estimate was optimistic, and this
+entry leads with that because §G21 spent its length on exactly this
+failure mode.
+
+### THE DIVISION OF LABOUR
+
+* **The extractor resolves.** `bits.Len64(x)` becomes
+  `Expr.callPkg "math/bits" "Len64" [x]` from the file's own import table.
+  No `go/types`.
+* **The walker dispatches.** It never parses a package name.
+
+`callPkg` is its own node for the reason `convert` is (§G14): a decision
+the frontend makes once must not be re-made inline at every evaluation.
+
+### THE SHADOWING GATE — a fifth refusal-correctness shape
+
+Every earlier refusal in this lane was an ABSENCE. A resolution can be
+**wrong**: `bits` may be a local shadowing the import, and the census
+found **484 such binding sites across 198 standard-library files** —
+`local "hash" shadows import "hash"`, `local "crc32" shadows import
+"hash/crc32"`.
+
+`construct_census.go --resolve` carries a **two-sided** battery, because
+both failure directions are real:
+
+| direction | the mistake | rows |
+| --- | --- | --- |
+| reckless | resolve a SHADOWED use — a wrong answer | 4 |
+| timid | refuse an unshadowed use — lost reach | 2 |
+
+The timid direction is the one a naive fix causes: Go's `:=` binds only
+from its declaration point onward, so "is this name bound anywhere in the
+function?" wrongly refuses a use that PRECEDES the shadow, and wrongly
+refuses one whose shadow is in a sibling block. Both are rows.
+
+10 rows, exit 6 on failure. Non-vacuity **run**: a reckless resolver fails
+4 and exits 6; a timid one fails 2. A resolver that is merely conservative
+fails this gate exactly as a reckless one does.
+
+### THE WALKER HALF
+
+Vendored verbatim from `cmd/compile/internal/ssa/rewrite.go`:
+
+    func log64(n int64) int64 { return int64(bits.Len64(uint64(n))) - 1 }
+    func ntz64(x int64) int   { return bits.TrailingZeros64(uint64(x)) }
+
+Two functions, not one, because a dispatch table with a single entry is
+indistinguishable from a hard-coded answer. `math/bits` is first because
+§G15 **proved** `bitLen` correct, so the rung tests the mechanism against
+settled semantics; `len64_model_is_the_proved_spec` closes that by `rfl`.
+
+The discriminating arguments are the negative ones — `uint64(n)` wraps:
+
+| call | `gc` | what a wrong model gives |
+| --- | ---: | --- |
+| `log64(-1)` | 63 | no wrap: `Len64` of a negative is not a `Nat` |
+| `log64(0)` | **-1** | 0 if `Len64(0)` were special-cased to 1 |
+| `ntz64(0)` | **64** | 0 — Go DEFINES this as the width |
+| `ntz64(MinInt64)` | 63 | the single set bit is the top one |
+
+`ntz64(0) = 64` and `log64(0) = -1` pull in **opposite directions on the
+same zero argument**, which is why both functions are here. 32 guards
+(counted, per §G20's rule), every value `printf`-ed from `gc`, 6
+non-vacuity flips run.
+
+Unmodelled packages refuse as `environment` **naming the callee** —
+`math/rand.Intn is not modelled`, not "selector call" — which is §5.2's
+bucket retiring by widening, and makes the refusal stream a ranked
+worklist (§G8's recommendation 2). Gated, including that it is never
+`undefined`: the zero-UB gate holds across a package boundary.
+
+### THE REACH: +0, and the charter's +7 was optimistic
+
+| vocabulary | files |
+| --- | ---: |
+| baseline (§G20) | 680 |
+| **+ E1 as landed** (`Len64`, `TrailingZeros64`) | **680 (+0)** |
+| + if ALL of `math/bits` were modelled | 687 (+7) |
+
+**The conjunctive law again, now at the PACKAGE-FUNCTION level.** §G21
+priced `math/bits` at +7 from the package ranking, but a file needs every
+function it calls, not the package's name. The 7 files are exactly:
+
+`crypto/internal/fips140/edwards25519/scalar_fiat.go`,
+`nistec/fiat/p{224,256,384,521}_fiat64.go`, `math/big/arith.go`,
+`strconv/itoa.go`
+
+and what blocks them, measured: **`Add64` 2,077 sites, `Mul64` 1,038,
+`Sub64` 186** — plus `Div`. All **multi-value returns**.
+
+§G19's retraction applies to this +0 exactly as it did to `RangeStmt`: it
+means *not a rung on its own at this vocabulary*, not *worthless*. E1's
+deliverable is the mechanism, and the mechanism is real, gated, and
+reusable by every package that follows. But the honest label on this
+landing is **+0**, and the standing coverage table does not move.
+
+That is the third time this lane's own published estimate has been
+corrected by its own census (§G13, §G21, now §G22), and the second time
+the correction was to a number *this lane* had written one rung earlier.
+
+### NEXT: multi-value returns, priced by this rung
+
+Not another package. `Flow.returned` carries one `GoVal`, and that single
+fact blocks:
+
+* all 7 of `math/bits`' files, and
+* **88% of `math/bits` call sites** (`Add64` 54.7%, `Mul64` 27.7%,
+  `Sub64` 5.5%),
+
+and it is a WALKER rung, not an extractor one — so the alternation the
+recalibration asked for is what the census says to do, not a scheduling
+convention. E2 (`go/types`) is unchanged: sized only after E1's refusal
+worklist says which types need resolving, and E1 now produces that
+worklist.
+
+One thing the rung surfaced and did not model: `bits.UintSize` is a
+package-level **constant**, not a function. Package constants are a
+distinct resolution kind and are not in this rung's vocabulary.
 
 MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).

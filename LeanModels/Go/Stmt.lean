@@ -1,5 +1,6 @@
 import LeanModels.Go.Sem
 import LeanModels.Go.Obs
+import LeanModels.Go.Packages
 
 /-!
 # The abstract syntax and the statement walker
@@ -19,6 +20,7 @@ rung 1's figures after three inches had widened it; the current state:
 | 6 (§G18) | **slices**: `a[i:j]`, `len`/`cap`, indexed assignment, the header value model |
 | 7 (§G19) | `range` over a slice — desugared to `forS`, not a second loop |
 | 8 (§G20) | **fixed arrays `[N]T`**: `arrayLit`, and addressability as the shape of `a[:]` and `a[i] = v` |
+| 9 (§G22) | **resolved package calls** (`callPkg`) — rung E1 of the extractor tier; `LeanModels/Go/Packages.lean` holds the models |
 
 **Do not quote a reach figure here.** Two earlier versions of this header
 carried one and both went stale, and §G19 found the second was not even
@@ -158,6 +160,23 @@ inductive Expr where
   function in it runs. Method calls and calls through values need
   `go/types` and are a later rung. -/
   | call (name : String) (args : List Expr)
+  /-- A **resolved package call**, `pkg.F(args)`.
+
+  The EXTRACTOR resolves the selector — `bits.Len64(x)` becomes
+  `callPkg "math/bits" "Len64" [x]` from the file's own import table, with
+  no type checker (`docs/backlog/go.md` §G21, rung E1). The walker never
+  parses a package name.
+
+  This is its own node for the reason `convert` is (§G14): a decision the
+  frontend can make once must not be re-made inline on every evaluation,
+  and burying it in `.call`'s arm is what cost four proof timeouts there.
+
+  **Resolution can be WRONG, not merely missing** — `bits` may be a local
+  variable shadowing the import, and 484 such binding sites exist across
+  198 standard-library files (§G21). Emitting this node is therefore a
+  claim the extractor has to earn, and its shadowing behaviour is gated
+  by `harness/go/construct_census.go --resolve --self-test`. -/
+  | callPkg (pkg : String) (fn : String) (args : List Expr)
   deriving Repr, Inhabited
 
 /-- Statements, rung 1. -/
@@ -575,6 +594,17 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
       | _, _ =>
           refuseGo .unsupportedConstruct (SpecRef.spec "Index_expressions")
             "indexing outside this rung (string only)"
+  | f + 1, .callPkg pkg fn args => do
+      let vals ← evalArgs prog f args
+      match pkgCall pkg fn vals with
+      | some v => pure v
+      | none =>
+          -- ENVIRONMENT, and it NAMES the callee. §5.2 says this bucket
+          -- retires by widening the modelled slice, never by climbing a
+          -- rung, and a refusal that names `pkg.fn` makes the refusal
+          -- stream a ranked worklist instead of undifferentiated noise.
+          refuseGo .environment (SpecRef.spec "Packages")
+            s!"{pkg}.{fn} is not modelled"
   | f + 1, .call name args => do
       match prog.find? (fun d => d.1 == name) with
       | none =>

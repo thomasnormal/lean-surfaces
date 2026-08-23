@@ -208,6 +208,11 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-157 | a completion claim cites a SUITE NUMBER and its SHA, or it is about an artifact | `docs/family-architecture.md §9.0` |
 | MEAS-158 | THE SPEC SURFACE IS A CONSUMER — completion unlocks a deferral; the census still orders it | `docs/family-architecture.md §9.0` |
 | MEAS-159 | WAITING is a property of a SLICE, never of a LANE | `docs/family-architecture.md §9` |
+| MEAS-160 | the strongest row kills TWO wrong models in OPPOSITE directions — the direction names the culprit | `docs/family-architecture.md §5.6` |
+| MEAS-161 | a minted law caught its own lane's FUTURE error — the register is predictive, not only descriptive | `docs/family-architecture.md §9.7` |
+| MEAS-162 | a coverage table publishes TWO denominators and the cost of the choice | `docs/family-architecture.md §9.0` |
+| MEAS-163 | a SYNTACTIC-ONLY win must never be banked in a coverage number | `docs/family-architecture.md §9.0` |
+| MEAS-164 | no corpus witness RELOCATES the discriminator into the call — census, relocate, confirm | `docs/family-architecture.md §9.0` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -329,6 +334,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-111 | THE HONEST SIGNATURE — omit a redundant hypothesis; never accept-and-ignore | `docs/family-architecture.md §8` |
 | STMT-112 | a snapshot is WRONG BY ANSWERING, not by answering wrongly | `docs/family-architecture.md §5.1` |
 | STMT-113 | a nonstandard generated relation is not ORPHANED — price the BRIDGE (the crossing IFF) first | `docs/family-architecture.md §8` item 11 |
+| STMT-114 | A RESOLUTION CAN BE WRONG, NOT MERELY MISSING — every resolution rung owes a shadowing row | `docs/family-architecture.md §5.2` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

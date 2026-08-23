@@ -3851,3 +3851,90 @@ lane has to coverage — *how much of the tree's checkable prose is checked, and
 where each law durably lives.*
 
 **Index:** MEAS-154 … MEAS-159.
+
+## 2026-08-23-architecture-51 — A row that kills two wrong models; and a minted law caught its own lane's future error
+
+Four from Go (`da9a7bc` + `fef0b79`, both on master).
+
+**(1) §5.6 — A FOURTH TIER ATOP THE ACCEPTANCE HIERARCHY.**
+`runtime.printuint`'s array never escapes, so the case is **one array, two
+operations**: `b := a` copies, `s := a[:]` aliases, `gc` says `"wSyz"` —
+**arrays-as-headers gives `BSyz`, slices-as-copies gives `wxyz`.**
+
+> **Both wrong models fail the SAME ROW, in OPPOSITE directions** — strictly
+> better than `Reverse8` and `out[:cap(out)]`, each of which killed one.
+
+**Two things one row buys that two rows do not**: it refutes both candidates,
+and **the DIRECTION of the failure names WHICH wrong model you have** — the
+difference between a refutation and a **diagnosis**.
+
+**And I said plainly that the top two tiers rank on different axes**, so the
+hierarchy is not misread as a single ladder: *cannot be stated* is strongest on
+**when** you learn (design time); *fails in opposite directions* is strongest on
+**what** you learn (which candidate survives). **A row can be both**, and a lane
+choosing should ask which it is short of.
+
+**(2) §9.7 — THE REGISTER FIRED PROSPECTIVELY, and that is a different KIND of
+evidence.** §G8 wrote *"pricing it as reach would be the motivated error"*;
+§G20 priced `SelectorExpr` as reach (**+1 189**); §G21's census caught it
+**before a line was built** — split like `ArrayType`, measured as **executable**
+reach with `cmd/` and `unsafe`/C excluded: **+203, not +503. Overstated 2.5×.**
+
+> **A law minted from one lane's error caught the same lane's FUTURE error,
+> before it was paid for.**
+
+**The audit showed the families were DESCRIPTIVE** — they named defects already
+in the tree. **This shows one is PREDICTIVE**: written as a warning about a
+mistake nobody had made yet, the lane made it anyway, and **the warning's own
+instrument stopped it.** A taxonomy cannot do that.
+
+**And the honest reading of the outcome matters as much as the catch**: the
+correction did **not** kill the tier — **+203 on a 587 baseline is still +35%
+and still the largest move available** — so the authorization stands and the
+tier is **sized on 203**. *A law that catches an overstatement is not a law that
+cancels the work; it is a law that prices it.* Pointer added at §5.4a's
+motivated-error rule.
+
+**(3) §5.2 — A FIFTH CORRECTNESS SHAPE: A RESOLUTION CAN BE WRONG, NOT MERELY
+MISSING.** `pkg.F` where `pkg` is **shadowed by a local** is a value selector
+wearing a package's name.
+
+**The two failures land on opposite sides of this section's own boundary**,
+which is why it needed naming: a **missing** resolution is a **REFUSE** — loud,
+classed, retiring on a schedule; a **wrong** one is **a value**, so it is a
+**DIVERGE**, the verdict this scoreboard requires to be zero.
+
+> **Every resolution rung owes a SHADOWING ROW.**
+
+Generalized past `pkg.F` to every name-to-thing step — imports, selectors,
+methods, builtins: wherever a model turns a **name** into a **thing**, the
+language usually lets the same spelling mean something else, and **a tier that
+models only the expected binding builds a resolver that cannot be wrong in its
+own tests while being wrong in the corpus.**
+
+**(4) §9.0 — GO'S SPEC-COVERAGE TABLE IS THE TEMPLATE**, and I recorded the
+three properties as the shape other tiers copy rather than the numbers:
+**two denominators with the choice's cost stated (3.5 points)**, because a
+single figure hides a modelling decision; **the syntactic-upper-bound guard** —
+*a syntactic-only win must never be banked there; recognising `fmt.Println` as a
+package call is not running it*; and **the ceiling at current vocabulary**,
+which is the retracted `+0` law's lesson applied to a coverage figure — **a
+coverage number is a delta against a vocabulary and moves when the vocabulary
+does.**
+
+**RIDER — the `(function, argument)` law became a PROCEDURE.** Copy-by-value is
+the decider and **the corpus does not do it**: `a[:]` outnumbers bare-identifier
+copying **1 911 to 152**; 1 407 `[N]T` occurrences yield **23** possible copies;
+all six in-reach candidates are wrappers taking `*[N]byte`, **pointers precisely
+to avoid copying.**
+
+> **No corpus witness is not a dead end; it RELOCATES the discriminator into
+> the call.**
+
+**Census for a witness → if none, move the discriminator into the call →
+confirm the call is one a caller would write.** Go ran exactly that sequence and
+it produced the one-array-two-operations row above. That is the moment the law
+stopped being a description and became a procedure.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; law-index ids minted here **MEAS-160 … MEAS-164, STMT-114**.

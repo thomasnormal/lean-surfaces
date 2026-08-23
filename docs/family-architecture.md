@@ -3514,6 +3514,31 @@ OUTSIDE, on the real corpus: *every interpreter refusal carries one of the four
 class names, and none carries `undefined`.* 116 rows, 45 gap classes, 7
 boundary-freeze refusals with no class **by design**, 0 drifts.
 
+**AND A FIFTH CORRECTNESS SHAPE, owed by every RESOLUTION rung: A RESOLUTION CAN
+BE WRONG, NOT MERELY MISSING** (Go, `fef0b79`, on master).
+
+> **`pkg.F` where `pkg` is SHADOWED BY A LOCAL is a value selector wearing a
+> package's name.**
+
+**The two failures land on opposite sides of this section's own boundary**, and
+that is why the shape needs naming. A **missing** resolution is a **refusal** —
+loud, classed, and retiring on a schedule (§5.2's four causes). A **wrong**
+resolution is **a value**: the model resolves confidently, steps something real,
+and returns an answer that is simply not the program's. **The first is a
+REFUSE; the second is a DIVERGE**, and DIVERGE is the one this scoreboard
+requires to be zero.
+
+> **Every resolution rung owes a SHADOWING ROW.** A resolver's acceptance case
+> is not complete until it contains a name that *looks* resolvable and is not.
+
+**This generalizes past `pkg.F` to every name-to-thing step a tier takes** —
+imports, selectors, methods, builtins: wherever a model turns a **name** into a
+**thing**, the language usually provides a way for the same spelling to mean
+something else, and the tier that models only the *expected* binding has built a
+resolver that cannot be wrong **in its own tests** while being wrong in the
+corpus. It is §5.6's discriminating-row law pointed at resolution: **the row
+that matters is the one a naive resolver gets confidently wrong.**
+
 **AND A ZERO *DELTA* READS DIFFERENTLY AGAIN — IT CAN BE THE HEADLINE** (pyc's
 3c-i-c; **ticketed**). The inch's result is that **the whitelist did not move**:
 
@@ -4708,7 +4733,9 @@ nothing when the expensive work is shared, which is worth checking before a
 channel is refused on performance grounds.
 
 **AND THE MOTIVATED-ERROR RULE, from a census that was wrong TWICE before
-it was right — and both errors flattered.** SoftFloat's consumer count ran
+it was right — and both errors flattered** (and see §9.7 for the instance where
+this rule, written down in advance, **caught its own lane's later error before
+it was paid for**). SoftFloat's consumer count ran
 **319 → 170 → 13 candidates → 0 qualified crossings.** The two wrong
 numbers came from the identifier trap in its purest form: **bare member
 names are English words and other types' members**, and `.exp` / `.log`
@@ -5769,6 +5796,34 @@ know the right model and then find the row; you **try to write the row under
 the candidate model and fail** — and the failure is the finding, in exactly the
 sense §9.7's blocker-naming norm means it. **An acceptance row you cannot write
 is a specification of what the model is missing.**
+
+**AND A FOURTH TIER SITS ATOP IT — THE ROW THAT KILLS TWO WRONG MODELS AT ONCE,
+IN OPPOSITE DIRECTIONS** (Go, `da9a7bc`, on master). `runtime.printuint`'s array
+never escapes, so the acceptance case is **one array with two operations**:
+`b := a` **copies**, `s := a[:]` **aliases**, and `gc` says `a` is **`"wSyz"`**.
+
+| model | what it produces |
+| --- | --- |
+| **the truth** (value + addressability) | **`wSyz`** |
+| **arrays-as-headers** | `BSyz` |
+| **slices-as-copies** | `wxyz` |
+
+> **BOTH wrong models fail the SAME ROW, in OPPOSITE directions** — strictly
+> better than `Reverse8` and `out[:cap(out)]`, each of which killed one.
+
+**Two things one row buys here that two rows do not.** It **refutes both
+candidates**, and — the part worth the tier — **the DIRECTION of the failure
+names WHICH wrong model you have.** A row that merely goes red says *the model
+is wrong*; this one says *the model is wrong in this specific way*, which is the
+difference between a refutation and a **diagnosis**.
+
+**And the two top tiers rank on different axes, which is worth saying plainly
+so a lane does not read the hierarchy as a single ladder.** *Cannot be stated*
+is strongest on **WHEN you learn** — design time, before anything is built.
+*Fails in opposite directions* is strongest on **WHAT you learn** — which
+candidate survives. **A row can be both**, and a lane choosing between them
+should ask which it is short of: certainty about the model, or certainty about
+which model.
 
 **AND THE THEOREM BECOMES AN ORACLE FOR ITS SIBLINGS — a THIRD adjudicator
 kind.** The same landing checked `Len8` **exhaustively over all 256 inputs**
@@ -7404,6 +7459,51 @@ make that number **honest and re-derivable**. A completion goal without an
 instrument is a wish; the instruments were built first, and this is the target
 they were built for.
 
+**AND GO'S TABLE IS THE TEMPLATE — the first lane to land the standing number,
+and the shape the other tiers' ledger heads should copy** (`fef0b79`, on
+master). Three properties, and each one exists because the naive version of the
+table would mislead:
+
+* **TWO DENOMINATORS, with the choice's cost stated.** The number moves **3.5
+  points** depending on which denominator is chosen, so both are published and
+  the gap is named. **A single coverage figure hides a modelling decision**;
+  publishing the spread makes the decision visible instead of settling it by
+  whichever number reads better.
+* **THE SYNTACTIC-UPPER-BOUND GUARD.** The table measures **syntactic**
+  coverage, which is **an upper bound** — and it carries the rule that keeps the
+  bound honest:
+
+  > **A syntactic-only win must NEVER be banked there.** Recognising `fmt.Println`
+  > as a package call **is not running it.**
+
+* **THE CEILING IS THE CURRENT VOCABULARY.** The number is read against what
+  the tier can step **today**, which is the retracted `+0` law's lesson
+  (§9.0b) applied to a coverage figure rather than to a rung: **a coverage
+  number is a delta against a vocabulary, and it moves when the vocabulary
+  does.**
+
+**The other tiers' ledger heads cite this table's shape**, not its numbers: two
+denominators or a stated reason there is one, the upper-bound guard wherever the
+measure is syntactic, and the vocabulary the ceiling is taken at.
+
+**AND THE RIDER THAT MADE §5.6's SELECTION CRITERION ROUTINE: WHEN THE
+DISCRIMINATOR HAS NO CORPUS WITNESS, IT MOVES INTO THE CALL.** Copy-by-value is
+the fixed-array value model's decider, and **the corpus does not do it**:
+`a[:]` outnumbers bare-identifier copying **1 911 to 152**, and in the 76
+unlocked files **1 407 `[N]T` occurrences yield 23 possible copies** — all six
+in-reach candidates being trivial wrappers taking `*[N]byte`, **pointers
+precisely to avoid copying.**
+
+> **No corpus witness is not a dead end; it relocates the discriminator.** The
+> `(function, argument)` law says the case is a **call**, so a decider the
+> corpus never exercises is supplied by **choosing the call**, not by
+> commissioning a program.
+
+**This is the moment that law stopped being a description and became a
+procedure**: census for a witness → if none, move the discriminator into the
+call → confirm the call is one a caller would write. Go ran exactly that
+sequence and it produced `runtime.printuint` with one array and two operations.
+
 **A MILESTONE IS A WAYPOINT, AND THE REGISTER RECORDS IT AS ONE.**
 
 > **"The exemplar is complete" describes an EXEMPLAR. It never describes a
@@ -8062,6 +8162,37 @@ families themselves.
 family this document had already minted.
 
 > **The laws predicted where the defects are.**
+
+**AND THE PROSPECTIVE INSTANCE HAS NOW LANDED, WHICH IS STRICTLY STRONGER**
+(Go, `da9a7bc` → `fef0b79`, both on master). The sentence above is
+**retrospective**: the families located defects that already existed. This one
+ran forward:
+
+* **§G8 wrote the warning in advance** — *"pricing it as reach would be the
+  motivated error"*;
+* **§G20 then priced `SelectorExpr` as reach**: **+1 189**, 23× the next
+  construct;
+* **§G21's census caught it before a line was built** — split the way
+  `ArrayType` was split (`pkg.F` needs only the import list; `x.f`/`x.M` needs
+  types), then measured as **executable** reach with `cmd/` and `unsafe`/C
+  excluded: **+203 files, not +503. Overstated 2.5×.**
+
+> **A LAW MINTED FROM ONE LANE'S ERROR CAUGHT THE SAME LANE'S FUTURE ERROR,
+> BEFORE IT WAS PAID FOR.**
+
+**That is the strongest evidence the register can produce, and it is a
+different kind of evidence from the audit's.** The audit showed the families
+were **descriptive** — they named defects that were already in the tree. This
+shows one is **predictive**: it was written as a warning about a mistake nobody
+had made yet, the lane made it anyway, and **the warning's own instrument was
+what stopped it.** A taxonomy cannot do that; only a measured law can.
+
+**And the honest reading of the outcome matters as much as the catch.** The
+correction did **not** kill the tier — **+203 on a 587 baseline is still +35%
+and still the largest move available**, so the authorization stands and the
+tier is **sized on 203**. *A law that catches an overstatement is not a law that
+cancels the work; it is a law that prices it.*
+
 
 That is the strongest available evidence that the minting has been
 measurement and not taxonomy: a family invented to describe one incident

@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**225 entries across 16 lanes.** Regenerate with
+**227 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-architecture-51` | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
 | `2026-08-23-architecture-50` | The goal is COMPLETION, and a milestone is a waypoint | architecture |
 | `2026-08-23-architecture-49` | A full build is its own root; and 27 green rows that could not see the call site | architecture |
 | `2026-08-23-architecture-48` | A witness must fail for the reason it names; and INAPPLICABLE is not OPTIONAL | architecture |
@@ -84,6 +85,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-18` | the tree must not move while you queue, and now it cannot silently | qol |
 | `2026-08-23-architecture-18` | Price the TYPE not one constructor; a docstring that argues is a claim; cancelling a ticket is the right move | architecture |
 | `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
+| `2026-08-23-lean-tier-17` | EXPORT CORNER, arc 1: re-pinned, 27-obligation manifest landed, round-trip property and index invariant stated | lean-tier |
 | `2026-08-23-architecture-17` | Census-first applies to the LEMMA; and the retract framing earns a judgment | architecture |
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
 | `2026-08-23-lean-tier-16` | NEW CORNER CHARTERED: the export envelope. Three candidates eliminated by measurement, one stands | lean-tier |

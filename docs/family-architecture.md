@@ -4271,6 +4271,7 @@ its refusal paths rather than describing them (§5.4).
 | `tools/analogues.sh` | how many proved analogues a statement shape has, and how long | the Lean tier's tractability estimate |
 | `tools/new-proof.sh` | scaffolds for the four recurring proof shapes, laws inline | `docs/statement-cookbook.md` |
 | `tools/backlog-index.sh` | generate `docs/backlog/INDEX.md`; `--check` gates its staleness | §9.5, §5.5 |
+| `tools/laws.sh` | which laws have a gate, and which are only prose | §9.7's audit cadence; *fixes live in gates* |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
 
 **AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor
@@ -4707,6 +4708,22 @@ adopted from an incident is a hypothesis until someone re-runs it under the
 same conditions. **This is the first strategy item to complete that loop**,
 and it is the template for the rest — the exit-code fixes and the 38%
 violation density are next, and they are owed the same treatment.
+
+**THE AUDIT HAS AN INSTRUMENT NOW: `tools/laws.sh`.** The cadence above had
+been walking the laws by hand, which is the shape §5.4 exists to retire. It
+reads `docs/law-index.md`, this section's amendment register and §7's tools
+list, and reports for every law the tool that cites its durable home — or
+**`NO GATE`**. It then sorts the NO GATE list by **how many lane ledgers cite
+the law**, so the next enforcement inch is chosen by **measured demand**
+rather than by whoever remembers a rule at the time. First run, 2026-08-23:
+**332 laws, 206 cited by a tool, 126 with no gate at all.**
+
+Two honesty clauses that make the number usable. **Citation over-credits** — a
+tool that mentions a law in a comment is counted — so the NO GATE list is a
+**LOWER BOUND on the unenforced set, never a coverage figure.** And **the unit
+the count ranks is the HOME, not the law**: laws sharing a `§` share every
+token and therefore tie, which is information rather than noise — it says the
+*section* is what the ledgers keep reaching for. The report prints both views.
 
 * **FULL — about every 10 landings**, and the next full audit **re-measures
   its own headline numbers**: the **38%** violation density, and whether

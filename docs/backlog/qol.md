@@ -1298,3 +1298,67 @@ a failed run while reporting on a clean one. Docs-first: §7's tools list gains
 the verdict row and the law. `docs_check` **87/87**. **No Lean executed** — the
 verdict is a function of `(exit code, output)`, so it is tested on synthetic
 outputs, which is also the only way to test the failing cases at all.
+
+---
+
+## 2026-08-23-qol-20 — `tools/laws.sh`: which laws have a gate, and which are only prose
+
+§9.7's cadence had been walking the laws **by hand**, which is the shape §5.4
+exists to retire. The rule it serves is blunt — **fixes live in gates**, and a
+law whose only enforcement is prose was measured at a **38% violation
+density**, by lanes that had read the protocol.
+
+`tools/laws.sh` reads `docs/law-index.md`, §7.1a's amendment register and §7's
+tools list, and reports per law the tool that cites its durable home — or
+**`NO GATE`** — then sorts that list by **how many lane ledgers cite the law**,
+so the next inch is chosen by **measured demand** rather than by whoever
+remembers a rule at the time.
+
+### First run: 332 laws, 206 cited, **126 with no gate**
+
+Two honesty clauses, and they are what make the number usable:
+
+* **Citation over-credits.** This greps text; it cannot tell a gate from a
+  comment, and a tool that merely *mentions* §7.1a is counted. So the NO GATE
+  list is a **LOWER BOUND on the unenforced set — never a coverage figure.**
+  Same shape as §5.4a's destructure count: a bound you can act on, not a
+  census you can report.
+* **The unit the count ranks is the HOME, not the law.** Laws sharing a `§`
+  share every token and therefore tie. That is information, not noise — it
+  says the *section* is what the ledgers keep reaching for — so the report
+  prints both views, and the grouped one is the actionable one.
+
+### The top five NO GATE laws, by ledger citations
+
+| cites | id | law | home |
+| ---: | --- | --- | --- |
+| 24 | `STMT-67` | a second semantics owes an adequacy theorem | §8.5 (with §3.4 clause b) |
+| 21 | `STMT-22` | THE FIT BOUNDARY — "does this tier HAVE a run?" | §3.4.1 |
+| 21 | `STMT-21` | adopted by SHAPE, not by spelling | §3.4 |
+| 21 | `STMT-20` | the monad layer ORDER is load-bearing | §3.4 |
+| 21 | `STMT-19` | the uncatchability invariant is TYPE-level, never lemma-level | §3.4 |
+
+**Grouped, the answer is sharper and it is one place:** `§3.4` — the monad and
+outcome substrate contract — carries **9 ungated laws at 21 citations**
+(`STMT-14` through `STMT-22`), against `§8.5`'s single law at 24 and `§9.2`'s
+three at 13. The most-reached-for unenforced section in the tree is the one
+every tier's refusal vocabulary is built on.
+
+### The rule that failed first, and it was mine
+
+`cited_by` began as pure citation-matching, which filed **every law homed in a
+script as NO GATE** — `tools/triad.sh` does not cite its own path. A law whose
+home *is* a script is gated **by identity**. The self-test caught it on a
+fixture before the live run, which is the only reason the first published
+number was not wrong by the whole register.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **17 ok, 0 failed**, on a synthetic law index
+— row parsing including a non-id row that must be skipped, the register, the
+tools list, all three token shapes (`§`, script path, dated ledger id), gated
+vs ungated, gated-by-identity, ledger counting across files, and the demand
+ordering itself. Live: **~50 s** over 332 laws, which is an audit-cadence cost,
+not an inner-loop one. Docs-first: §9.7 names the instrument and carries both
+honesty clauses; the tools list gains its row. `docs_check` **87/87**. No Lean
+executed.

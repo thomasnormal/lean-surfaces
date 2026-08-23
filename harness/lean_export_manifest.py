@@ -38,6 +38,27 @@ import argparse, json, re, subprocess, sys
 from pathlib import Path
 
 
+# THE FORK'S DIVERGENCE TRIPWIRE.  Our fork factors a pure core out of the
+# exporter (see Export.lean's header).  The divergence is defined against a
+# PINNED upstream shape, so if upstream edits any of these sites the fork must go
+# LOUD rather than silently diverging further.  Each entry is a substring that
+# MUST still be present in the pinned upstream blob.
+DIVERGENCE_BASE = "af5aa64bb914c3c2c781f378088dbd38acf4f804"
+UPSTREAM_TOUCHPOINTS = {
+    "Export.lean": [
+        "abbrev M := ReaderT Context <| StateT State IO",
+        "IO.println (s.setObjVal! namespaced idx).compress",
+        "IO.println <| Json.mkObj fields |>.compress",
+        "IO.println exportMetadata.compress",
+    ],
+    "Export/Parse.lean": [
+        "abbrev M := StateT State <| IO",
+        "stream : IO.FS.Stream",
+        "(← get).stream.getLine",
+    ],
+}
+
+
 class CensusRefusal(Exception):
     """The instrument declines, loudly.  An input fault, never a finding."""
 
@@ -139,6 +160,40 @@ def _spec_sections(md: str) -> tuple[dict[str, str], str]:
     return out, ver
 
 
+def check_divergence(root: Path) -> dict:
+    """Re-read the PINNED upstream touch points; refuse if any has moved.
+
+    This is the transcription law applied to a fork: our divergence is stated
+    against a specific upstream shape, and a shape that changed underneath us is
+    a fact we must be told about, not one to discover when a proof stops making
+    sense.
+    """
+    found, missing = {}, []
+    for rel, needles in UPSTREAM_TOUCHPOINTS.items():
+        try:
+            r = subprocess.run(["git", "-C", str(root), "show", f"{DIVERGENCE_BASE}:{rel}"],
+                               capture_output=True, text=True, timeout=60)
+        except (OSError, subprocess.SubprocessError) as e:
+            raise CensusRefusal(f"cannot read pinned upstream {rel}: {e}") from e
+        if r.returncode != 0:
+            raise CensusRefusal(
+                f"pinned upstream base {DIVERGENCE_BASE[:12]} does not contain {rel} — "
+                "the divergence base is gone; re-pin deliberately"
+            )
+        blob = r.stdout
+        for needle in needles:
+            (found.setdefault(rel, []).append(needle) if needle in blob
+             else missing.append(f"{rel}: {needle!r}"))
+    if missing:
+        raise CensusRefusal(
+            "UPSTREAM MOVED under this fork's divergence — these touch points are no "
+            "longer present at the pinned base: " + "; ".join(missing) +
+            ". The fork's header describes a shape that no longer exists; re-census before proceeding."
+        )
+    return {"base": DIVERGENCE_BASE, "touchpoints_verified": found,
+            "total": sum(len(v) for v in found.values())}
+
+
 def _rev(d: Path) -> str:
     try:
         r = subprocess.run(["git", "-C", str(d), "rev-parse", "HEAD"],
@@ -211,7 +266,16 @@ def main(argv=None) -> int:
     ap.add_argument("--export", required=True, type=Path, help="a lean4export checkout")
     ap.add_argument("-o", "--output", type=Path)
     ap.add_argument("--compare", type=Path)
+    ap.add_argument("--check-divergence", action="store_true",
+                    help="verify the fork's upstream touch points at the pinned base")
     a = ap.parse_args(argv)
+    if a.check_divergence:
+        try:
+            d = check_divergence(a.export)
+        except CensusRefusal as e:
+            print(f"REFUSE: {e}", file=sys.stderr); return 2
+        print(f"ok: {d['total']} upstream touch points intact at {d['base'][:12]}")
+        return 0
     try:
         res = census(a.export)
     except CensusRefusal as e:

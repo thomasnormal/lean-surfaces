@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**217 entries across 16 lanes.** Regenerate with
+**218 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -103,6 +103,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-softfloat-11` | THE PROBES WENT STALE IN SIX MINUTES, and correcting the text is not the fix | softfloat |
 | `2026-08-23-pycomplete-11` | 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named | python-completeness |
 | `2026-08-23-lean-tier-11` | `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition | lean-tier |
+| `2026-08-23-c-11` | INCH 5's OPEN PROBLEM IS CLOSED, and the ∀-order discharge could not have been attempted before it | c |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-softfloat-10` | STEP 3 SCOPED: the consumer census found a SECOND consumer, and the algorithm choice follows from the SPEC's own wording | softfloat |
 | `2026-08-23-pycomplete-10` | 3c-i-b hits a STRUCTURAL wall, and the fix is an ingestion rewrite, not a call-site fusion | python-completeness |

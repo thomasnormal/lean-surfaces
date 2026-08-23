@@ -812,3 +812,81 @@ ENQUEUE time.** Adding `weak'` while `instN`'s ticket was still queued would hav
 silently changed what that tenure tested, and a green would have been reported
 for code that was never the subject. The file was left untouched until `instN`
 reported.
+
+---
+
+## 2026-08-23-lean-tier-10 — DECISION BRIEF for Thomas: PR #43 does NOT unblock `TrProj.uniq`, and consuming it buys nothing this lane needs
+
+Read-only census of `digama0/lean4lean` PR #43 (`addInduct`), fetched as a
+**ref only** and inspected with git plumbing — never checked out, because the
+`weak'` enqueue-tree gate was live and a checkout would have modified the tree
+the queued tenure had already hashed. (Verified after the fetch:
+`git write-tree` still `706583bb408f`, matching the gate.)
+
+PR #43 head `eddf009`, **20 files, +1256/−35**.
+
+### Q1 — Would PR #43 supply the no-confusion shape `uniq` needs? **NO.**
+
+`uniq` needs *defeq of constructor-headed applications ⇒ defeq of the
+corresponding arguments*. What PR #43 actually adds is **ι-reduction**:
+
+* a new `VEnv` field `pats : (p : Pattern) → p.RHS × p.Check → Prop` — a
+  registry of schematic reduction rules — plus `VEnv.addPat`;
+* a **14th `IsDefEq` constructor**, `| pat`, letting a registered pattern fire:
+  `env.pats p r → p.Matches e m1 m2 → … → Γ ⊢ e ≡ r.1.apply m1 m2 : A`.
+
+**That is the opposite direction from what `uniq` requires.** A reduction rule
+computes *forwards* (a constructor-headed redex steps to its reduct); `uniq`
+must reason *backwards* from "these two applications are defeq" to "their
+arguments are". Reduction gives no such inversion.
+
+**The word "injectivity" does appear in the PR, and it is a false friend.** All
+of it is *name* injectivity — `addConst_foldlM_inj` (the naming function is
+injective on the list), `addInduct_recs_name_inj` (recursor names),
+`iota_toPattern_inj`, `Pattern.varN_const_inj`. **Nothing about defeq of
+constructor arguments.** Searched by shape as well as by name: PR #43 introduces
+**zero** lemmas taking a hypothesis of the form
+`IsDefEq(U) _ _ (.app …) (.app …)`.
+
+**And it makes `uniq` strictly HARDER.** A 14th way for two terms to be
+definitionally equal is a 14th case any inversion must dispatch. The `uniq`
+obligation's cost goes up, not down.
+
+### Q2 — What would consuming it cost?
+
+| dimension | measured |
+| --- | --- |
+| size | 20 files, **+1256 / −35** |
+| `VEnv` shape | **a new field** — so every `VEnv` literal, and the `LE`/`rfl`/`trans` triple, changes |
+| `IsDefEq` shape | **a new constructor** — every inversion over defeq gains a case |
+| blast radius | PR #43 itself had to patch **20 files** to absorb its own change; `Theory/`+`Verify/` contain **157** `induction … with` / `cases … with` blocks as a loose upper bound on exposure |
+| toolchain | **`v4.33.0-rc2` — identical to ours.** No reconciliation needed |
+| freshness | **15 behind / 14 ahead of master**, merge-base `1a16b72`. **Not rebased.** Consuming means rebasing it ourselves or pinning to a stale base |
+| build at our pin | **NOT MEASURED** — would cost a tenure, and Q1 already decides the question |
+
+### Q3 — Does it collide with our work? **NO.**
+
+**`TrProj` is still `sorry` on PR #43** (`Verify/Typing/Expr.lean:67`, verified on
+the branch). PR #43 does not touch it. Its only change to that file is to add
+`VExpr.mkApps`, a left fold of applications — a spine helper, adjacent to our
+`ArgFromRight` but not a substitute for it.
+
+So the parametric `TrProj` neither duplicates PR #43 nor is duplicated by it, in
+either direction, which is what the untouched-complement rule was protecting.
+
+### RECOMMENDATION
+
+> **Do not consume PR #43. Wait for upstream.**
+
+It does not unblock `uniq`, it does not touch `TrProj`, it raises the cost of
+every defeq inversion, and it is 15 commits behind a moving master. The only
+reason to take it would be to obtain **inductives** — a different goal, on the
+in-flight side of the line, and one the ruling put out of bounds.
+
+**`uniq`'s status is unchanged and its wording should stay as entry 8 set it:**
+plausibly blocked on no-confusion — **and this brief narrows *where* that
+no-confusion would have to come from.** It is not in `addInduct`; it would need
+the constructor *elimination* principles (recursors and their no-confusion
+consequences), which PR #43 registers as reduction rules rather than deriving as
+injectivity. **Still NOT MEASURED, and now with a named place it is absent
+from.**

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**97 entries across 16 lanes.** Regenerate with
+**98 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -43,6 +43,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-6` | Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance | architecture |
 | `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
 | `2026-08-23-architecture-5` | Re-founding needs a differ-on-purpose word; names asserting verdicts expire | architecture |
+| `2026-08-23-wasm-4` | THE PORT'S FIRST VERDICT: Mathlib's `Forall₂` is **not the model's `Forall₂`**, and the census's "no cost" conclusion needed the qualification | wasm |
 | `2026-08-23-pyrebuild-4` | GREEN, and the spike's headline number is VOID | pyrebuild |
 | `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
 | `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |

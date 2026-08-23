@@ -388,3 +388,83 @@ a better position than the census had.
 recorded above was in the **fork's** tree, under a ticket, with
 `LEAN_NUM_THREADS=2` and `nice -n 19` via `tools/triad.sh`, and the lock was
 released cleanly (`LOCK RELEASED (mine)`). `docs_check` passes.
+
+---
+
+## 2026-08-23-wasm-4 — THE PORT'S FIRST VERDICT: Mathlib's `Forall₂` is **not the model's `Forall₂`**, and the census's "no cost" conclusion needed the qualification
+
+The verification ticket from `2026-08-22-wasm-3` ran at 00:29:57 and **failed
+(build exit 1)**. Per §7's aborted-triad rule this is **not a triad result
+with one part failing — the gates never ran**, so there is no `docs_check` or
+census number from that tenure and none is claimed. And per the same section,
+the wrapper's "first failures" block is a deduplicated `head -8`, so **the
+summary LOCATES and the full log COUNTS**: every number below is read from the
+full 1448-line log, not from the summary.
+
+**THE VERDICT ON THE PORT: seven errors, and all seven are ONE finding.**
+`Resulttype_sub`'s constructor wants
+`Forall₂ (fun t_1_elem t_2_elem => t_1_elem sub< t_2_elem)`, and every Mathlib
+lemma the port cited produces `List.Forall₂`. Those are **different
+constants**. Measured at `wasm2.0.lean:16`, the generated model defines its
+own:
+
+```
+def Forall₂ {α₁ α₂} (P : α₁ → α₂ → Prop) (xs₁ : List α₁) (xs₂ : List α₂) : Prop :=
+  ∀ t ∈ xs₁ |>.zip xs₂, P (t.1) (t.2)
+```
+
+**It is ZIP-BASED, where Mathlib's `List.Forall₂` is INDUCTIVE.** So
+`List.forall₂_take_append`, `List.forall₂_drop_append`, `List.Forall₂.flip`
+and `List.Forall₂.length_eq` — the entire route
+`2026-08-22-wasm-1` §2.2 identified and `2026-08-22-wasm-2` called
+"independently confirmed" — **do not apply to this model at all.**
+
+**AND THE DIFFERENCE IS SEMANTIC, NOT COSMETIC.** A zip-based `Forall₂` **does
+not imply equal lengths**, because `zip` truncates to the shorter list. That
+is precisely why the generator emits `Resulttype_sub` with a **separate
+explicit length premise** — it knows its own `Forall₂` is length-blind. The
+failing proof tried to recover the length from the relation
+(`hall.length_eq`) and the compiler's answer names the shape exactly:
+
+```
+error: SubtypingPort.lean:108:23: Invalid field `length_eq` … `hall`
+of type  ∀ t ∈ ts.zip (ts1 ++ ts2), (fun t_1_elem t_2_elem => t_1_elem sub<t_2_elem) t.1 t.2
+```
+
+**WHAT THIS CORRECTS.** `2026-08-22-wasm-2` finding 6 concluded the Mathlib
+question was answered *"and the answer is no cost"*. **That was right about
+the DEPENDENCY and wrong about the APPLICABILITY** — Mathlib is indeed already
+required by the fork's `lakefile.lean`, so importing it costs nothing; but the
+`forall₂_*` API cannot be pointed at this model, so the *lemma* it was wanted
+for is not free. The two claims were conflated and are now separated.
+
+**WHAT SURVIVES, AND IT IS THE LOAD-BEARING PART.** Aaron Lee's Isabelle
+development uses `list_all2`, which IS inductive and length-aware — so
+**Isabelle's `metis list_all2_append2` closer has no Lean counterpart here,
+but Isabelle's FACTORING does**: reflexivity, both split orientations, then
+transitivity. The port keeps the factoring and re-derives the splitting
+argument from `List.zip_append` instead of citing a library lemma. **The
+census's structural findings are untouched; only the tactic-level route
+changed.**
+
+**A THIRD INSTRUMENT LESSON, and it is the same one twice.**
+`2026-08-22-wasm-3` recorded the count going `grep → comment-aware scanner →
+compiler`, each step from a better instrument. This is the same ladder applied
+to a *claim* rather than a count: "Mathlib has the lemma" survived a **read**
+of Mathlib and a **read** of the Isabelle proof, and died on **the compiler**.
+Reading two sources that agree with each other is not verification when both
+are about a third thing the model does not use.
+
+**STATE.** The port is rewritten against the model's actual `Forall₂` — the
+length taken from the constructor's premise, the split derived via
+`List.zip_append` — and **re-ticketed**. Its header now carries the finding, so
+the next person to reach for Mathlib's `forall₂_*` here reads why it cannot
+work before trying it. **No claim is made that it compiles**: at the time of
+writing the ticket is queued, and the only honest status is *queued*.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** This landing edits one file and
+adds none. The Lean execution reported above was in the **fork's** tree under
+a ticket via `tools/triad.sh`, and it was an **aborted triad** (build red, so
+gates never ran) — recorded as such rather than as a triad result.

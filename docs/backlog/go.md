@@ -751,3 +751,162 @@ Queued **76 minutes**, held the machine **102 seconds** — the build arm
 returned in one second, every module having been elaborated lock-free
 during authoring. The Python tier is unmoved at every number, which is
 what a landing confined to `LeanModels/Go/` must produce.
+
+---
+
+## G6 — INCH 3: the model reproduces a REAL crypto function, 35 rows, and the expected column was generated (2026-08-23)
+
+Suite-driven, no pet programs. The census picked the exemplar, the
+exemplar picked the operators, and the oracle wrote the expectations.
+
+### THE CENSUS — what the walker still refuses inside what rung 1 reaches
+
+Rung 1's vocabulary reaches 3,084 of the standard library's 5,419 files.
+That is a claim about the INGESTER. The sharper question is what the
+WALKER refuses inside those files, and it has a different answer:
+
+| construct | reachable files using it | share |
+| --- | ---: | ---: |
+| **`CallExpr`** | **2,261** | **73.3%** |
+| `ArrayType` | 1,479 | 48.0% |
+| `IndexExpr` | 874 | 28.3% |
+| `RangeStmt` | 676 | 21.9% |
+| `SliceExpr` | 541 | 17.5% |
+| `FuncLit` | 442 | 14.3% |
+| `SwitchStmt` / `CaseClause` | 432 / 430 | 14.0% |
+| `GoStmt` / `ChanType` / `SendStmt` / `SelectStmt` | 26 / 26 / 19 / 10 | ≤0.8% |
+
+**Files ENTIRELY within what the walker stepped before this inch: 633.**
+
+Two findings. **Calls are the single biggest unlock at 73.3%** — nothing
+with a function in it runs without them, which is most of Go. And the
+concurrency constructs this tier was chartered for are **under 1%** of
+rung-1-reachable files: they are not where the sequential ladder's weight
+is, which is the census agreeing with the charter's own sequencing note
+rather than contradicting it.
+
+### THE EXEMPLAR — chosen by search, not by taste
+
+A second census swept every non-generic, non-method function in the
+standard library for ones the walker could execute, then filtered to those
+that RETURN a value and do real arithmetic. 751 candidates on the loose
+filter; the tight one surfaced this:
+
+    // bitLen is a version of bits.Len that only leaks the bit length of
+    // n, but not its value.
+    func bitLen(n uint) int {
+        len := 0
+        for n != 0 { len++; n >>= 1 }
+        return len
+    }
+
+`src/crypto/internal/fips140/bigmod/nat.go` — **FIPS-140 crypto code**,
+a better provenance than anything this lane would have written. Vendored
+verbatim beside the model in `Examples/go/bitlen/bitlen.go` with its
+BSD-3-Clause attribution, under §1.4's ruling that the in-tree copies are
+taken under the repository's single instrument.
+
+**The exemplar chose the operators, which is the point of picking from the
+corpus.** `n >>= 1` forced compound assignment and the shift operators;
+`for n != 0` forced a condition-only loop; the function boundary forced
+calls. Nothing was added because it looked useful. The bitwise
+`&`/`|`/`^`/`&^` family is deliberately NOT declared — no exemplar needed
+it, and declaring an operator the walker refuses would be a vocabulary
+claim the tier cannot honour.
+
+### THE DIFFERENTIAL — and the expected column was GENERATED
+
+**35 rows**, sweeping the powers of two and their neighbours to the full
+64-bit width. The model, executed in Lean's kernel, reproduces what the
+`gc`-compiled function printed on every one, including `2^64 − 1 → 64`.
+
+**The first version typed the expected column by hand, and that was the
+wrong way round.** This file's whole claim is that two independent
+implementations agree; a hand-copied expectation makes the Lean side the
+source of both columns the moment someone "fixes" a row. The rows are now
+`printf`-ed from the compiled binary and mechanically rewritten into
+`#guard` syntax. Recorded because the hand-typed version *passed* — it
+would have shipped looking identical and meaning less.
+
+Non-vacuity RUN: flipping `bitLen (2^64−1)` to 63, and flipping the fuel
+row to claim 4 fuel suffices for a 64-bit walk, each make Lean report the
+failing expression; restoring rebuilds clean.
+
+**What is claimed and what is not.** These rows are a differential claim —
+model and toolchain agree on this function. They are **not** a proof that
+`bitLen` is correct. `bitLen n` = the number of significant bits of `n` is
+an induction over the loop and is this lane's next theorem, not this
+inch's. The distinction is written into the file so a later reader cannot
+mistake one for the other.
+
+### Fuel is load-bearing here, not decorative
+
+The loop runs once per significant bit, so `bitLen (2^63)` needs 64
+iterations. Guarded: at fuel 4 the answer is **`timeout`** — the model
+declines — and at 4,096 it answers. A wrong number at low fuel would be
+the failure this rung exists to prevent.
+
+### Calls, and where an undeclared one lands
+
+A call to a function the program does not declare is **`environment`**,
+not a language gap: it retires by widening the modelled slice, never by
+climbing a rung. Guarded on `bits.Len`, and guarded again on
+`isUndefined` being false — the standing gate, now reaching calls.
+
+Arguments are evaluated in the CALLER's frame before any parameter is
+bound, which is the spec's order and matters when an argument names a
+variable the callee also has. A `break` or `continue` that would cross a
+function boundary refuses rather than escaping.
+
+**`FuncTable` is a parameter, not world state.** `GoWorld` is declared
+before `Stmt` and cannot mention it — but the better reason is that a
+function table does not change as a program runs. Threading it says so,
+and keeps `GoWorld` about the things that move.
+
+**Fuel reached expressions at this rung, and calls are why.** Expression
+evaluation was structural and total until now; a call can recur, so
+`evalExpr` takes fuel and the two evaluators merged into one mutual block.
+
+### Battery and split
+
+**88 `#guard`s** — 46 at rung 1, 42 on the exemplar. Statement split
+unchanged at **17 spec / 12 interpreter**: this inch added no theorems,
+which is honest — its result is differential, not deductive, and inflating
+the spec half with restatements of what the guards already check would be
+the §6 trap in the other direction.
+
+Axioms unchanged: `propext` and `Quot.sound` at worst. No `sorry`, no
+`native_decide`. A stray unused binder the linter flagged was removed
+rather than silenced.
+
+### Standing
+
+`fallthrough` stays deferred until its rung (4.0%). The MM-oracle is
+untouched pending Thomas's ruling — and this inch's census is the first
+evidence bearing on its timing: the concurrency constructs are under 1% of
+rung-1-reachable files, so the sequential ladder is not being starved by
+waiting.
+
+### Triad
+
+Authored lock-free per rule 3. **Tenure GREEN**, read from the full log:
+
+| gate | result |
+| --- | --- |
+| `lake build` | **exit 0**, 3,721 jobs, zero failed targets |
+| `docs_check` | **87/87** marked, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued **106 minutes**, held the machine **37 minutes** — and the second
+number is the one worth recording, because it is 25× the previous inch's
+91 seconds. **Adding `Examples/go/bitlen/` made `--classify` widen the
+build target from four Go modules to the whole `Examples` library**, which
+pulled in the Python tier's heavy proof files (`pins_search` alone is 54
+seconds). Nothing was wrong and nothing failed; the tenure simply cost
+what a whole-library target costs. Worth knowing before the next inch adds
+a directory: a new `Examples/` subdirectory is not free, and the classifier
+is right to be conservative about it.
+
+The Python tier is unmoved at every gate number, which is what a landing
+confined to `LeanModels/Go/` and `Examples/go/` must produce.

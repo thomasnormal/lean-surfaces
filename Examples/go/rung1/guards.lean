@@ -61,7 +61,7 @@ branches on data rather than forking. -/
 guard can name a concrete answer instead of a monadic value. -/
 
 def runTo (stmts : List Stmt) (name : String) : Option Int :=
-  match (execSeq 64 stmts) ({} : GoWorld) with
+  match (execSeq [] 64 stmts) ({} : GoWorld) with
   | .ok (.ok _, w) =>
       match w.locals.find? (fun p => p.1 == name) with
       | some (_, a) =>
@@ -77,7 +77,7 @@ it structurally. It used to return the message and the guards parsed a
 `[tag|…]` prefix off the front; that prefix existed only because the
 typed field did not, and both are retired. -/
 def refusalOf (stmts : List Stmt) : Option (RefusalCause SpecRef) :=
-  match (execSeq 64 stmts) ({} : GoWorld) with
+  match (execSeq [] 64 stmts) ({} : GoWorld) with
   | .error (.unsupported c _ _) => some c
   | _ => none
 
@@ -145,7 +145,7 @@ too — the shape that puts `EmptyStmt` in real code. -/
 /-! An absent field takes the zero value rather than being missing, and a
 field the type does not declare is a refusal rather than an invention. -/
 
-#guard (match (execSeq 64 [.typeDecl "pt" ["x", "y"],
+#guard (match (execSeq [] 64 [.typeDecl "pt" ["x", "y"],
                            .declare "p" (.structLit "pt" [("x", i64 1)])])
                           ({} : GoWorld) with
         | .ok (.ok _, w) =>
@@ -183,7 +183,7 @@ def loopVarProbe : List Stmt :=
             .assign "last" (.ident "p") ] ]
 
 def runUnder (v : LangVersion) (stmts : List Stmt) (name : String) : Option Int :=
-  match (execSeq 256 stmts) ({ lang := v } : GoWorld) with
+  match (execSeq [] 256 stmts) ({ lang := v } : GoWorld) with
   | .ok (.ok _, w) =>
       match w.locals.find? (fun q => q.1 == name) with
       | some (_, a) =>
@@ -218,7 +218,7 @@ def countProbe : List Stmt :=
 
 /-! ## Bare `for {}` — 47.0% of loops, and only fuel bounds it -/
 
-#guard (match (execSeq 64 [.forS none none none []]) ({} : GoWorld) with
+#guard (match (execSeq [] 64 [.forS none none none []]) ({} : GoWorld) with
         | .error .timeout => true
         | _ => false) == true
 
@@ -288,7 +288,7 @@ panic. It therefore goes to ρ — it is catchable in principle by `recover`
 #guard (refusalOf [.declare "x" (.binary .quo (i64 1) (i64 0))]).isNone
 
 /-! It panics: the run ends in ρ, with the runtime's message. -/
-#guard (match (execSeq 64 [.declare "x" (.binary .quo (i64 1) (i64 0))]) ({} : GoWorld) with
+#guard (match (execSeq [] 64 [.declare "x" (.binary .quo (i64 1) (i64 0))]) ({} : GoWorld) with
         | .ok (.error p, _) =>
             match p.value with
             | .stringV msg => msg == "runtime error: integer divide by zero"

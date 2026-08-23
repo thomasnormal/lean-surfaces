@@ -1417,3 +1417,94 @@ failed**. Lock was free — acquired in **0 s**, held **62 s**, the
 lane's fastest tenure yet and the first with no queue at all.
 
 `fallthrough` deferred (4.0%); MM-oracle untouched.
+
+---
+
+## G12 — THE LOOP INDUCTION CLOSES: `len = l + bitLenSpec v`, proved (2026-08-23)
+
+§G11's blocker was *"`simp` will not rewrite inside a dependent match
+discriminant."* It is cleared, and the loop's correctness is a theorem.
+
+### THE CONGRUENCE — and the trick is to never touch the scrutinee
+
+`LeanModels/Go/Obs.lean` §1b, three rows beside the seam. **The answer is
+not a congruence over the scrutinee**, which would still leave a match:
+it is to rewrite the WHOLE bind from a proved equation about what its
+head DOES.
+
+    run_bind_ok    (h : x w = .ok (.ok a, w')) : (x >>= f) w = f a w'
+    run_bind_loud  (h : x w = .error l)        : (x >>= f) w = .error l
+    run_bind_panic (h : x w = .ok (.error e, w')) : (x >>= f) w = .ok (.error e, w')
+
+Three because the stack has three outcomes, and the split is the covenant
+again — loud stops everything, a panic propagates carrying its world,
+only a value continues. **They live beside the seam, not in the exemplar
+that needed them first, because they are reusable at every loop and every
+`do` block this tier will ever prove about.** The Lean fact they exist for
+is named in a comment above them.
+
+Per the ruling, the lemma was preferred over let-binding `execLoop`'s
+scrutinee: **the definition stays untouched.**
+
+### THE INDUCTION
+
+`loop_computes` — strong induction on `v`; each turn is `cond_eval` to
+test, `body_step` to advance, the hypothesis at `v / 2`. Two facts the
+proof needed that are worth recording:
+
+* `dsimp only` for the **iota** step. After `run_bind_ok hw1` the goal is
+  `match Flow.normal with …` — a match on a literal constructor, which
+  `simp only` will not reduce but `dsimp only` will. A second, smaller
+  instance of the same family of obstacle.
+* The **`asBool` prefix is its own bind.** `execLoop`'s head is
+  `evalExpr … >>= fun v => asBool v >>= …`, not `(evalExpr >>= asBool) >>= …`
+  — discovered by tracing the goal rather than assumed, after a `show`
+  built on the assumed shape failed.
+
+### THE FINAL CLAIM, in one table
+
+| layer | statement | status |
+| --- | --- | --- |
+| **spec** | `bitLenSpec_lt` — `n < 2 ^ bitLenSpec n` | **PROVED** |
+| **spec** | `bitLenSpec_le` — `0 < n → 2 ^ (k-1) ≤ n` | **PROVED** |
+| **spec** | `bitLenSpec_le_64` — a bit length never exceeds the width | **PROVED** |
+| **bridge** | `shr_one_is_halving` — the interpreter's `>>= 1` IS the spec's `/ 2` | **PROVED** |
+| **interp** | `cond_eval` — `n != 0` reads `n`, world untouched | **PROVED** |
+| **interp** | `body_step` — one turn: `(v, l) → (v/2, l+1)` | **PROVED** |
+| **interp** | **`loop_computes` — the loop leaves `len = l + bitLenSpec v`** | **PROVED** |
+| differential | 35 oracle rows (what `gc` printed) | checked |
+| differential | 35 spec rows (`bitLen n = bitLenSpec n`) | checked |
+| **owed** | the prologue/epilogue — `bindParams`, `var len = 0`, `return len` — composing the loop theorem up to `callFunction` | **not proved** |
+
+**The first two bracket the mathematics, the bridge joins it to the
+interpreter's arithmetic, and the induction carries it through the
+loop's mutation. What is still checked rather than proved is the
+function's frame around the loop** — three statements, each of the shape
+`body_step` already handles, and the honest remaining step.
+
+So the exemplar's claim is now precise: *the loop is correct, proved; the
+function is correct, checked on 35 inputs against two independent
+standards.* §G6 wrote that distinction into the file before it could be
+closed, and closing half of it did not change what the other half says.
+
+### The blocker ladder, complete
+
+| entry | blocker | size |
+| --- | --- | --- |
+| §G8 | the monad stack does not reduce at all | a lemma SET |
+| §G10 | — cleared by `Obs.lean`'s seam, 10 rows | — |
+| §G11 | a dependent-match discriminant will not rewrite | one congruence |
+| §G12 | — cleared by `run_bind_ok` and friends, 3 rows | — |
+
+Axioms: `propext`, `Quot.sound`, `Classical.choice` at worst;
+`run_bind_ok` depends on **`propext` alone**. No `sorry`, no
+`native_decide`, in either file.
+
+### Triad
+
+**Tenure GREEN**: `lake build` exit 0 (scoped to `LeanModels.Go`,
+`LeanModels.Go.Obs` and the exemplar), `docs_check` **91/91**,
+`diff_test` **1,427 cases, 0 failed** (1,311 matched, 116 whitelisted),
+`script_corpus` **65 scripts, 0 failed**. Held the machine **88 s**.
+
+`fallthrough` deferred (4.0%); MM-oracle untouched.

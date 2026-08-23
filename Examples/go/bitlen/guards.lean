@@ -249,21 +249,84 @@ theorem cond_eval {w : GoWorld} {an al : Addr} {v l f : Nat}
   | zero => simp
   | succ k => simp; omega
 
-/-! **WHAT REMAINS, and it is a DIFFERENT blocker from §G8's.**
+/-! ## §1c THE LOOP INDUCTION — CLOSED
 
-§G8 could not step the walker at all. It can now: the two lemmas above
-carry a full turn of the loop. What stops the induction closing is
-narrower and sharper — **`simp` will not rewrite inside a DEPENDENT MATCH
-DISCRIMINANT.** `execLoop`'s reduced form is
+§G11 named the last blocker: **`simp` will not rewrite inside a dependent
+match discriminant.** `LeanModels/Go/Obs.lean` §1b answers it, and the
+answer is not a congruence over the scrutinee — it is three lemmas that
+step a bind from a KNOWN HEAD, so the match never appears at all.
 
-    match pure false w with | .error … | .ok (.error …) | .ok (.ok a, w') => if a = false then …
+With those, the induction closes. It is a strong induction on `v`, and
+each turn is `cond_eval` to test, `body_step` to advance, and the
+induction hypothesis at `v / 2`. -/
 
-and `run_pure` fires on `pure false w` **in isolation** — checked — but
-not there, because the branches' types depend on the scrutinee. The fix is
-a match-congruence lemma or binding the condition into a `let` before the
-match; it is findable work, not an open-ended fight. The debt went from
-*"cannot step the walker"* to *"one match congruence away"*, and that is
-the honest size of it. -/
+theorem asBool_ok (b : Bool) (w : GoWorld) :
+    asBool (.boolV b) w = .ok (.ok b, w) := rfl
+
+theorem loop_computes : ∀ (v : Nat) (l f : Nat) (w : GoWorld) (an al : Addr),
+    Inv w an al v l → v < 2 ^ 64 → l + bitLenSpec v < 2 ^ 63 →
+    bitLenSpec v + 6 ≤ f →
+    ∃ w', execLoop [] f (some loopCond) none loopBody [] w = .ok (.ok Flow.normal, w')
+        ∧ Inv w' an al 0 (l + bitLenSpec v) := by
+  intro v
+  induction v using Nat.strongRecOn with
+  | _ v ih =>
+    intro l f w an al hi hv hl hf
+    obtain ⟨f, rfl⟩ : ∃ g, f = g + 1 := ⟨f - 1, by omega⟩
+    rcases Nat.eq_zero_or_pos v with rfl | hpos
+    · have hz : bitLenSpec 0 = 0 := by simp [bitLenSpec]
+      rw [hz] at hf hl
+      refine ⟨w, ?_, by simpa [hz] using hi⟩
+      simp only [execLoop]
+      rw [run_bind_ok (cond_eval (f := f) hi (by omega)), run_bind_ok (asBool_ok _ w)]
+      simp only [decide_not, decide_true, Bool.not_true, Bool.false_eq_true, if_false,
+        decide_false, Bool.not_false, if_true]
+      exact run_pure _ _
+    · have hbs : bitLenSpec v = bitLenSpec (v / 2) + 1 := bitLenSpec_pos hpos
+      have hlt : v / 2 < v := by omega
+      have hfb : (4 : Nat) ≤ f := by omega
+      have hl1 : l + 1 < 2 ^ 63 := by omega
+      have hl2 : l + 1 + bitLenSpec (v / 2) < 2 ^ 63 := by omega
+      have hf2 : bitLenSpec (v / 2) + 6 ≤ f := by omega
+      have hv2 : v / 2 < 2 ^ 64 := by omega
+      obtain ⟨w1, hw1, hi1⟩ := body_step hi hv hl1 hfb
+      obtain ⟨w2, hw2, hi2⟩ := ih (v / 2) hlt (l + 1) f w1 an al hi1 hv2 hl2 hf2
+      refine ⟨w2, ?_, ?_⟩
+      · simp only [execLoop]
+        rw [run_bind_ok (cond_eval (f := f) hi (by omega)), run_bind_ok (asBool_ok _ w)]
+        have hne : ¬ (v = 0) := by omega
+        simp only [hne, not_false_eq_true, decide_true, Bool.not_true,
+          Bool.false_eq_true, if_false]
+        rw [run_bind_ok hw1]
+        dsimp only
+        rw [run_bind_ok (run_get w1)]
+        cases hb : w1.lang.perIterationLoopVars
+        · simp only [hb, Bool.false_eq_true, if_false]; exact hw2
+        · simp only [hb, if_true]
+          rw [run_bind_ok (show freshenLoopVars [] w1 = .ok (.ok ⟨⟩, w1) from rfl)]
+          exact hw2
+      · have he : l + 1 + bitLenSpec (v / 2) = l + bitLenSpec v := by omega
+        simpa [he] using hi2
+
+/-- A bit length never exceeds the width — needed so a concrete fuel
+suffices for every input the type can hold. -/
+theorem bitLenSpec_le_64 {n : Nat} (h : n < 2 ^ 64) : bitLenSpec n ≤ 64 := by
+  rcases Nat.eq_zero_or_pos n with rfl | hp
+  · simp [bitLenSpec]
+  · have h1 : 2 ^ (bitLenSpec n - 1) ≤ n := bitLenSpec_le hp
+    have hlt : bitLenSpec n - 1 < 64 := by
+      rcases Nat.lt_or_ge (bitLenSpec n - 1) 64 with hx | hx
+      · exact hx
+      · have h2 : (2 : Nat) ^ 64 ≤ 2 ^ (bitLenSpec n - 1) :=
+          Nat.pow_le_pow_right (by omega) hx
+        omega
+    have hb : 1 ≤ bitLenSpec n := by rw [bitLenSpec_pos hp]; omega
+    omega
+
+/-! **THE DEBT IS CLEARED.** §G8 could not step the walker; §G10's seam
+made it steppable; §G11 proved one turn and named the last obstacle; and
+`run_bind_ok` above closes it. The loop's correctness is now a theorem,
+not a checked composition. -/
 
 /-! ## §2 THE INTERPRETER BRIDGE — one step, and it is the load-bearing one
 

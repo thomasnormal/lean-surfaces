@@ -66,6 +66,46 @@ by hand. -/
     obtain ⟨r, w'⟩ := p
     cases r <;> simp [Except.bind, pure, StateT.pure, Except.pure]
 
+/-! ## §1b STEPPING A BIND FROM A KNOWN HEAD — the congruence
+
+**The Lean fact this exists for: `simp` will not rewrite inside a
+DEPENDENT MATCH DISCRIMINANT.** `run_bind`'s right-hand side is a match
+whose branch types depend on the scrutinee, so once a proof has produced
+that shape, no amount of `simp [go_run]` will reduce the scrutinee —
+`run_bind` fires on the head *in isolation* and refuses to fire in that
+position. `docs/backlog/go.md` §G11 hit this and named it; these three
+lemmas are the answer.
+
+**The trick is to never rewrite inside the match at all.** Given what the
+head DOES — as an equation proved separately — each lemma rewrites the
+WHOLE bind in one step, and the match never appears. That is why they are
+stated on `x w = …` hypotheses rather than as congruences over the
+scrutinee: a congruence would still leave a match.
+
+Three lemmas because the stack has three outcomes, and the split is the
+covenant again: loud stops everything, a panic propagates carrying its
+world, only a value continues. **These are reusable at every loop and
+every `do` block the tier will ever prove about** — which is why they
+live here beside the seam and not in the exemplar that needed them first.
+-/
+
+/-- The head produced a VALUE: continue with it, in the world it left. -/
+@[go_run] theorem run_bind_ok {x : GoM α} {f : α → GoM β} {w w' : GoWorld} {a : α}
+    (h : x w = .ok (.ok a, w')) : (x >>= f) w = f a w' := by
+  rw [run_bind, h]
+
+/-- The head REFUSED or ran out of fuel: the bind is that, unchanged. -/
+@[go_run] theorem run_bind_loud {x : GoM α} {f : α → GoM β} {w : GoWorld}
+    {l : Loud SpecRef Unit} (h : x w = .error l) : (x >>= f) w = .error l := by
+  rw [run_bind, h]
+
+/-- The head PANICKED: the panic propagates and the world survives with
+it — the ρ channel, which is the whole reason for the layer order. -/
+@[go_run] theorem run_bind_panic {x : GoM α} {f : α → GoM β} {w w' : GoWorld}
+    {e : Panic} (h : x w = .ok (.error e, w')) :
+    (x >>= f) w = .ok (.error e, w') := by
+  rw [run_bind, h]
+
 /-! ## §2 THE PRIMITIVES
 
 Each is a constant of the tier, so each gets its own row rather than

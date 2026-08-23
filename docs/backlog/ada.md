@@ -14,6 +14,60 @@ history.
 
 ---
 
+## SPEC COVERAGE — the completion metric (standing; updated every landing)
+
+Per `docs/family-architecture.md` §9.0: the tier's goal is COMPLETION, the
+suite that measures it for Ada is **ACATS**, and this number is how far away
+it is. The Go lane's table (`fef0b79`) is the shape being copied — two
+denominators with the choice's cost named, the upper-bound guard, and the
+ceiling read at the CURRENT vocabulary.
+
+Reproduce it, do not quote it:
+
+    python3 harness/ada_suite_census.py            # the corpus and the ladder
+    python3 harness/ada_round_trip.py --self-test  # the extractor's gate
+
+| rung | sha | ACATS language tests | ACATS **core** (clauses 1-13) |
+| --- | --- | ---: | ---: |
+| M2 inch 1 — the value layer | `9985b05` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+| M2 Core adoption | *this landing* | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+
+**IT IS ZERO, AND ZERO IS THE HONEST NUMBER.** Nothing has been graded,
+because **no grader has run**: there is no statement tier yet, so no ACATS
+test can be executed and no verdict emitted. The instruments that will
+produce the number exist and are audit-hardened (`harness/ada_round_trip.py`,
+`harness/ada_suite_census.py`), and the emitter that feeds `GRADE` is inch 5-6
+(`docs/ada-charter.md` §4.4). **Standing a graded run up is a named rung, and
+it is the one after inch 2.** A tier that quietly omitted this row until it
+had something flattering to put in it would be hiding the only number §9.0
+asks for.
+
+**Two denominators, and the gap is 192 tests.** `tests_language` (4,188)
+includes the **Specialized Needs Annexes**; `tests_core` (3,996) is clauses
+1-13, which is the slice `docs/ada-semantics-design.md` scopes M2 to. The
+annex tests are legitimate Ada and the tier must eventually grade them, so
+the wider column stays — but ranking against it would rank work this tier
+has not scoped.
+
+**CEILING AT THE CURRENT VOCABULARY: 739 core tests (18.5%).** That is the
+reach ladder's step 0 — the core tests that use **none** of the nine heavy
+buckets (exceptions, tasking, access types, separate compilation,
+instantiation, generics, real types, tagged types, `goto`). It is what a
+tier could grade if it modelled everything *else* perfectly, and the
+vocabulary today is **scalars and one raise** — no statements at all. So 739
+is the bucket-free ceiling, **not** a claim about inch 2.
+
+**THE UPPER-BOUND GUARD, in this tier's own terms.** A bucket-reach figure is
+SYNTACTIC: it says which tests avoid a construct, never that their semantics
+are modelled. **Recognising that a test avoids tasking is not running it.** No
+syntactic win is ever banked in the graded column — that column moves only
+when a test is executed and `GRADE` accepts the emitted trace. And one
+structural fact sets the real entry price: **2,707 of the tests call
+`Report.Test`**, so the ACATS `Report` package is a prerequisite of the first
+non-zero row rather than a later convenience.
+
+---
+
 ## 2026-08-22-ada-1 — THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters
 
 `docs/family-architecture.md` §9 landed at `cd0a722`. Five items were
@@ -465,3 +519,127 @@ Ada has no recursion, loops, or fixpoints yet, so there is nothing to
 approximate and adopting it now would be a dependency bought for a use that
 does not exist. It becomes relevant when the statement tier gets iteration —
 inch 3+ — and should be adopted then, by that ticket.
+
+## 2026-08-24-ada-1 — CORE ADOPTION LANDS: the two-channel mapping, and the ticket's own tenure had gone green over a tree that did not contain it
+
+`2026-08-23-ada-2` ticketed this. What follows first is the state that ticket
+was left in, because reconstructing it was half the work and the shape of the
+mistake is reusable.
+
+### THE PREDECESSOR'S TENURE WAS GREEN, AND IT WAS GREEN ABOUT THE TICKET
+
+The adoption ticket's tenure ran and returned **`TRIAD DONE (build exit 0,
+gates green)`** (`/private/tmp/ada-t7.out`, lock acquired after **7,649 s**
+queued, full log `$TMPDIR/triad-build.NU6mws`). Read the verdict alone and
+the adoption is done. Read the tenure's own header and it is not:
+
+    tree at enqueue: ea56aea0893c        # == git rev-parse 8326457^{tree}
+    build exit=0                          # 4 seconds after the lock opened
+
+**The tree it certified was the TICKET COMMIT — docs only.** A 4-second full
+build is a build with nothing to do. `LeanModels/Ada/Ada2012/Value.lean` still
+imported `LeanModels.Ada.Ast` and nothing else, and all six `ADOPT` markers
+were still in it. The green was true and it was **about a different question
+than the one the ticket asked**.
+
+> **A GREEN NAMES A TREE. A TICKET NAMES AN INTENTION. Reading the first as
+> evidence for the second is how a ticket gets marked done by its own
+> paperwork.**
+
+This is §5.4a's unit law meeting §7.2's *"a queued tenure reads the source at
+BUILD time"* from the other side: the family already knows a tree can change
+out from under a ticket, and this is the case where **it never changed into
+it**. The cheap defence is the one this entry uses — a tenure log is
+self-identifying, so the header's `tree at enqueue` is checkable against
+`git rev-parse <sha>^{tree}` in one command, and the build's *duration* is a
+second witness that costs nothing to read.
+
+### THE ADOPTION, and the mapping is the content
+
+`LeanModels/Ada/Ada2012/Value.lean` now imports `LeanModels.Core.Outcome`.
+Deleted: the by-shape `RefusalCause` (four constructors), `Loud`, `Halt`,
+`SemM`, `Cause.tag`, and `SemM.refuse`/`SemM.timeout`. **π = `ArmRef`**,
+**σ = `Unit`**.
+
+| Ada outcome | channel | Core primitive | why |
+| --- | --- | --- | --- |
+| `Constraint_Error` and every Ada exception | **`ρ` — state-RETAINING** | `raiseIn` | ARM 11.4: an exception PROPAGATES and a handler observes the world it was raised in |
+| a construct outside the modelled tier | **`π` — state-discarding** | `refuse` | the model stopped, not the program; there is no world to hand back |
+
+Inch 1 had to land first because its one load-bearing guard is what makes the
+mapping legible: `!okIs (.int Int8 (-128)) (constrain Int8 128)` — out of
+range RAISES. **Had `constrain` refused, this adoption would have wired Ada's
+most common outcome into the give-up channel**, and every rule that can
+produce a scalar would have had to be revisited to get it back.
+
+**The mapping is now MEASURED, not described** — five new `#guard`s
+(38 total, up from 31):
+
+* the world is written to 42, then `Constraint_Error` is raised, and **42
+  comes back through the raise** — an EFFECT surviving, which is a strictly
+  stronger claim than an initial world passing through;
+* a refusal's **class and ARM paragraph read back as DATA** (`className`,
+  `detail`), never parsed out of prose;
+* and both negatives: a raise is not a refusal, a refusal is not a raise.
+
+### THE THREE CHECKS THE TICKET SAID TO PERFORM, PERFORMED
+
+1. **`okIs` survives.** Core ships `instance [BEq π] : BEq (Loud π σ)` — on
+   `Loud`, **not** on `Except`. `constrain` returns `Except Abrupt Val`, so
+   the synthesis failure the helper exists for is untouched and its three
+   sites still need it. The ticket was right to flag this one: reading Core's
+   instance list suggests the opposite answer, because a `BEq` *does* arrive
+   with the adoption — on the type the helper is not about.
+2. **`HaltWith ArmRef Unit`, not bare `Halt`.** `Core.Halt` is
+   `HaltWith Unit Unit`; adopting it would have compiled and dropped every
+   ARM reference at the type level. Made structural rather than remembered:
+   `example (W : Type) : AdaM W = ExceptT Abrupt (StateT W AdaHalt) := rfl`.
+   The tier's name is **`AdaHalt`** — a local `abbrev Halt` would have
+   shadowed Core's inside this namespace and made the wrong one the one a
+   reader sees.
+3. **Re-classified after the edit**, and the build list is reported as it
+   actually came back rather than as the ticket predicted: `tier`, building
+   **`LeanModels.Ada.Ada2012.Value LeanModels.Ada`** — two targets, not the
+   "three Ada modules" the ticket remembered, because only one file was
+   touched and `LeanModels.Ada` pulls the rest of the tier in as imports.
+   The failure mode the check exists for is closed either way: the file is
+   NAMED, so it cannot go green unelaborated the way inch 1's first tenure
+   did.
+
+Declaration order was re-printed after editing rather than trusted to the
+diff (anchor-span splicing deleted a whole section during inch 1); every
+declaration from `ArmRef` to `orderDependenceGate` is present and in order.
+
+### ADA DOES NOT NARROW THE CAUSE TYPE, and Go is the reason to say so
+
+The Go tier refuses only through a narrower `GoRefusal` with no `undefined`
+constructor, so its empty class is unreachable **by construction** — the
+right gate for a language whose spec never says "undefined". **Ada's
+`undefined` bucket is expected NON-empty** (ARM 1.1.5, 23 paragraphs in
+clauses 1-13), so a narrowing type here would delete this tier's product.
+Ada refuses through Core's `refuse` directly, all four classes reachable, and
+its expected-empty class is a different one — `orderDependence`, gated by
+predicate, now written on Core's `RefusalCause.isOrderDependence` rather than
+on a local `match`.
+
+**And a convergence worth recording**: `GoM = SemMWith GoWorld Panic SpecRef
+Unit` against `AdaM W = SemMWith W Abrupt ArmRef Unit`. **Two tiers, chosen
+independently, whose refusal payload is a citation into their own standard.**
+That is the family's convergence standard met on the `π` slot, and it is
+evidence that `RefusalCause π`'s parameterisation was cut in the right place.
+
+### THE PRICE, PAID KNOWINGLY
+
+Ada's **zero-Core-imports** property is over. It is the reason inch 1's green
+survived a 53-commit rebase untouched; from here, a Core change can break this
+tier and this tier's greens are no longer base-independent. `Core/Order.lean`
+arrives **in the closure** as `Core/Outcome.lean`'s own import — and **in the
+closure is not in use**: nothing here mentions `FlatLe`, and the `_mono`
+corollaries it backs are adopted by the ticket that gives this tier recursion
+(inch 3+), which is exactly where the ticket put them.
+
+### NEXT: INCH 2, CENSUS-FIRST
+
+`W` + assignment + sequence + `if` (ARM 5.1-5.3). The census runs before the
+rules, per this lane's standing practice, and the standing spec-coverage row
+above is what it has to move.

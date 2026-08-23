@@ -923,6 +923,41 @@ demonstrates the consequence with an executable rather than an argument:
 
 > **A single Go build is a MIXED-EDITION object.**
 
+**AND THE EXEMPLAR IS NOW REALIZED, NOT PLANNED — the charter's acceptance
+test is DISCHARGED.** Go inch 2 built it: **one walker, one world field
+different.**
+
+* `runUnder go1.21 loopVarProbe = some 1`;
+* `runUnder go1.22 loopVarProbe = some 3`;
+* the observable is **POINTER IDENTITY** — and it is **the same number the
+  real toolchain gave** (1 distinct address under go1.21, 3 under go1.22),
+  so the model reproduces the measurement rather than a story about it.
+
+**This is the whole family-versioning thesis in one artifact**: the edition
+is a **datum in the world**, not a directory; the walker is **shared**, not
+copied; and the delta is **one field**. §2.4's thin-siblings ruling and
+clause (4)'s edition-as-data both discharge here at once.
+
+**AND THE NON-VACUITY PAIR IS THE STANDARD, not a nicety.** The claim is
+gated in **BOTH directions**: **go1.21 claiming 3 fails**, and **the
+counting loop breaking under 1.22 fails.** The reason both are needed is a
+named trap the lane hit:
+
+> **Freshening without copy-back passes every closure test and corrupts
+> ordinary loops.**
+
+A wrong implementation that satisfies the *interesting* half is exactly
+what a one-directional gate certifies. So:
+
+> **Every version-delta claim carries a non-vacuity PAIR — the old
+> behaviour must FAIL under the new edition, and the new behaviour must
+> FAIL under the old.**
+
+**And the loop-variable set is READ OFF the init's locals, not
+hand-listed** — the census discipline (§5.4) applied inside the semantics:
+a hand-written list is a second source of truth that drifts from the
+construct it describes.
+
 **So for Go a COPY architecture is not inelegant — it is INCORRECT.** Two
 whole spec-mirrors, one per edition, cannot express a program whose files
 disagree, because there is no single model in which such a program has a
@@ -3053,6 +3088,25 @@ They retire on completely different schedules, so pooling them makes the
 scoreboard unreadable.
 
 1. **`unsupported` — out-of-tier construct.** Retires by climbing a rung.
+
+   **DEFERRAL HYGIENE, and it is a rule for every deferred construct.** A
+   deferral is cause 1 and must stay cause 1; the failure mode is that it
+   **quietly becomes a UB claim** — cause 2, which never retires — because
+   nothing stopped the drift. Go's `fallthrough` is the worked example and
+   the pattern to copy:
+
+   * **the census figure travels IN the refusal message** — `fallthrough`
+     refuses carrying its **4.0%** corpus share, so the cost of the
+     deferral is visible **at the point of refusal** rather than in a
+     document a reader would have to go find;
+   * **it is guarded TWICE — on the CLASS and on `isUndefined`** — *so the
+     deferral cannot quietly become a UB claim.*
+
+   The double guard is the load-bearing half. One guard proves the
+   construct is refused; the second proves **which kind of refusal it
+   is**, and that is the property that would otherwise erode silently as a
+   tier grows. A deferral that cannot be distinguished from undefined
+   behaviour has given up the one distinction §5.2 exists to keep.
    Universal; Python's `.unsupported` exactly.
 2. **`undefined` — the language says this run has no meaning.** C's UB,
    Ada's erroneous execution. **Never retires: it is the product.** Its
@@ -4662,6 +4716,22 @@ real until an instrument re-derives it.**
    definition swap the mathematics **recompiles unchanged** — the 35% is
    the entire re-founding scope, and **four files re-found to nothing at
    all**.
+
+   **AND THE METRIC MUST NOT BECOME A TARGET — a corollary the Go lane
+   stated by watching its own number FALL.** Go's split moved **63% →
+   58.6%**, and **that is CORRECT.** Fuel theorems do not transport, so:
+
+   > **A rung that adds fuel-bearing constructs moves the split DOWN.
+   > Holding it flat would mean fuel facts were written into spec-shaped
+   > statements.**
+
+   That is this step's own trap, and it is Goodhart's law with a specific
+   mechanism: the ratio is a **diagnostic of where statements live**, not a
+   score to maximise. A lane optimising for a flat 65% would achieve it by
+   **smuggling interpreter facts into mathematical statements** — producing
+   exactly the interleaving the step forbids, while the metric applauded.
+   **Read a falling split as evidence the discipline is holding under a
+   rung that genuinely added interpreter surface.**
 
    **The decisive part is that the split was not made for this.** The
    calmness lane separated its spec half from its interpreter half **for

@@ -157,7 +157,21 @@ A non-normal flow stops the sequence. Stated at the sequence combinator,
 which is where the rule lives. -/
 
 @[go_spec] theorem execSeq_nil (fuel : Nat) (w : GoWorld) :
-    (execSeq fuel []) w = .ok (.ok Flow.normal, w) := rfl
+    (execSeq (fuel + 1) []) w = .ok (.ok Flow.normal, w) := rfl
+
+/-- **Fuel exhaustion is `timeout`, never a refusal**, and it is reachable
+at every statement form — the walker recurses on fuel alone. -/
+@[go_spec] theorem execSeq_no_fuel (body : List Stmt) (w : GoWorld) :
+    (execSeq 0 body) w = .error .timeout := rfl
+
+@[go_spec] theorem execStmt_no_fuel (st : Stmt) (w : GoWorld) :
+    (execStmt 0 st) w = .error .timeout := rfl
+
+/-- Bare `for {}` — 47.0% of the standard library's `for` loops — is
+where that stops being a formality: with no condition, only fuel bounds
+it. -/
+@[go_spec] theorem bare_for_exhausts (fuel : Nat) (w : GoWorld) :
+    (execLoop 0 none none [] []) w = .error .timeout := rfl
 
 @[go_spec] theorem flow_normal_isNormal : Flow.normal.isNormal = true := rfl
 @[go_spec] theorem flow_returned_not_normal (v) : (Flow.returned v).isNormal = false := rfl
@@ -167,6 +181,6 @@ which is where the rule lives. -/
 /-! ### 2.3 The empty statement really is a no-op -/
 
 @[go_spec] theorem exec_empty (fuel : Nat) (w : GoWorld) :
-    (execStmt fuel Stmt.empty) w = .ok (.ok Flow.normal, w) := rfl
+    (execStmt (fuel + 1) Stmt.empty) w = .ok (.ok Flow.normal, w) := rfl
 
 end LeanModels.Go

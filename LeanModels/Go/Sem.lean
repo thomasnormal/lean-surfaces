@@ -172,6 +172,11 @@ structure GoWorld where
   /-- Emitted bytes. Output is world data, per the family's
   effects-as-world-data treatment. -/
   stdout : List String := []
+  /-- Declared struct types: name to its field names, in declaration
+  order. `TypeSpec` is 72.4% structs in the standard library
+  (`docs/backlog/go.md` §G4), so this is what a type declaration means at
+  rung 2; interfaces are 3.9% and a later rung. -/
+  types : List (String × List String) := []
   /-- The language version of the file being executed. Per FILE, not per
   program — see `LangVersion`. -/
   lang : LangVersion := LangVersion.go122

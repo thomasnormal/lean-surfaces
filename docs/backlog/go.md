@@ -622,3 +622,132 @@ deferring both, and recorded so the rung-2 fixture is written knowing it.
 Docs and one harness instrument; **no Lean**, so no tenure owed. `gofmt -l`
 clean, `go vet` clean, both committed censuses regenerated and their gates
 re-verified, `docs_check` green.
+
+---
+
+## G5 — INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23)
+
+Inch 2 on §G4's census: struct declarations, the go1.22 loop-variable
+BRANCH with the charter's §3.3 acceptance test as the gate, bare-`for`
+fuel semantics stated, and `fallthrough` deferred as its own rung.
+
+### THE GATE: `docs/go-charter.md` §3.3, discharged
+
+The charter set the family's copies-vs-deltas acceptance test and was
+blunt about it: *"If the architecture cannot express that program, it is
+wrong regardless of how faithful either individual version-mirror is."*
+
+**It passes.** One `loopVarProbe`, one walker, one field of the world
+different:
+
+    runUnder go1.21 loopVarProbe "changes" == some 1
+    runUnder go1.22 loopVarProbe "changes" == some 3
+
+The observable is **pointer identity, not closure capture** — the same
+thing §3.2 measured on the real toolchain, where collecting `&i` across
+iterations gave *"1 distinct address under go1.21 and 3 under go1.22."*
+The probe counts how many times `&i` changes across three iterations, so
+the Lean model and the `go build` run are answering the same question with
+the same number.
+
+**Non-vacuity RUN, in both directions, because a version branch that does
+nothing would pass a one-sided test:**
+
+* claiming go1.21 also yields 3 — i.e. no branch at all — **fails**;
+* claiming the counting loop breaks under go1.22 — i.e. freshening
+  without the copy-back — **fails**.
+
+The second is the charter's named trap: *"An implementation that freshens
+bindings without the copy-out passes every closure-capture test and
+silently corrupts ordinary counting loops."* So `countProbe` runs exactly
+five times under **both** versions, and that row is as load-bearing as the
+delta row. The spec's two halves are implemented as two halves: fresh
+LOCATIONS per iteration, and the previous iteration's VALUE copied in.
+
+**The loop-variable set is READ OFF, not declared.** Whatever `init` binds
+is the set — the locals added since the enclosing scope. A hand-maintained
+list would be a second place to get the same fact wrong.
+
+### Bare `for {}` — the fuel semantics, stated
+
+47.0% of the standard library's `for` loops (§G4). With no condition,
+nothing but fuel bounds it:
+
+* `execStmt 0 _` and `execSeq 0 _` are **`Halt.timeout`**, never a
+  refusal — Core's `exhausted`, and the family's rule that exhaustion has
+  exactly one outcome.
+* `execLoop 0 none none [] []` is `timeout`: the bare loop's own semantics.
+* **`break` still escapes one**, guarded — so the exhaustion above is the
+  loop terminating on fuel, not a walker that cannot leave a loop. Without
+  that row the timeout row would pass for the wrong reason.
+
+**The walker now recurses on FUEL ALONE**, not lexicographically on
+(fuel, statement). Core's header is explicit that fuel is an index on the
+step function and never a monad layer, *"because hidden in state it is not
+an argument and the interpreter fails to show termination."* Recursing on
+fuel makes that argument trivial; the price is that nesting depth draws on
+the same budget as iteration, which is a stated cost rather than a
+discovered one.
+
+*Termination shaped the code once more, visibly:* `evalExpr`'s composite-
+literal arm first evaluated fields while walking the type's DECLARED
+order, and Lean rejected it — `find?` loses the structural link to the
+literal. Fields are now evaluated by structural recursion over the
+literal (`evalFields`) and then placed in declaration order. The
+definition is better for it, and the reason is recorded next to it.
+
+### Structs — 72.4% of type declarations
+
+`TypeSpec` over struct types, keyed composite literals, and field
+selectors. Keyed form only: the positional form depends on declaration
+order, which is a typing question `go/types` answers and this walker does
+not. An absent field takes the zero value (`nilV` at this rung — field
+types are a later rung's census); a key the type does not declare is a
+**refusal**, not an invention, and so is a literal of an undeclared type.
+
+### `fallthrough` — DEFERRED AS ITS OWN RUNG, at a measured 4.0%
+
+**208 of 5,186 switches** (§G4). It is the one switch feature that breaks
+reading a case body as an independent block, because the body's exit
+depends on the NEXT clause. Deferring it keeps **96% of switch sites**
+reachable and keeps the rule compositional. Switch init clauses (5.0%)
+defer with it for the same reason and the same price.
+
+It refuses as an **out-of-tier construct, never as undefined behaviour** —
+guarded twice, once on the class and once on `isUndefined`, so the
+deferral cannot quietly become a UB claim.
+
+### The statement split moved, and the direction is honest
+
+**17 spec-half, 12 interpreter-facing — 58.6% mathematics**, down from
+§G2's 63%. Inch 2's additions are fuel theorems, and the cookbook says
+plainly that *"fuel thresholds do not transport at all."* A rung that
+adds loops SHOULD move this ratio down; a rung that added loops and left
+it at 63% would mean the fuel facts had been written into spec-shaped
+statements, which is §6's named trap. Recorded as a measurement rather
+than smoothed over.
+
+### Battery
+
+**46 `#guard`s**, up from 34. New: structs (field read, zero-fill, two
+refusal shapes), the §3.3 pair, the copy-back pair, bare-`for` timeout,
+`break` escaping a bare loop, and the `fallthrough` deferral pair. Axioms
+unchanged — `propext` and `Quot.sound` at worst, several theorems
+depending on none. No `sorry`, no `native_decide`.
+
+### Triad
+
+Authored lock-free per rule 3; every module built in isolation at
+`nice -n 19`. **Tenure GREEN**, read from the full log:
+
+| gate | result |
+| --- | --- |
+| `lake build` (scoped: `LeanModels.Go{,.Sem,.Spec,.Stmt}` + guards) | **exit 0** |
+| `docs_check` | **87/87** marked, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued **76 minutes**, held the machine **102 seconds** — the build arm
+returned in one second, every module having been elaborated lock-free
+during authoring. The Python tier is unmoved at every number, which is
+what a landing confined to `LeanModels/Go/` must produce.

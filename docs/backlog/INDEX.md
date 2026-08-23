@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**116 entries across 16 lanes.** Regenerate with
+**117 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -133,8 +133,9 @@ and every existing `§Lnn` reference still resolves there.
 | `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
 | `INBOUND` | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
 | `INBOUND` | `2026-08-22-softfloat-2` (C lane's to triage) | c |
+| `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 
-**8 heading(s) do not use the §9.5 id scheme** and sort last.
+**9 heading(s) do not use the §9.5 id scheme** and sort last.

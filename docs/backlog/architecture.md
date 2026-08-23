@@ -1959,3 +1959,97 @@ is blocked on the generator's glob, while *"file the INBOUND in its own
 immediate commit"* is available today and shrinks the only window a filer owns.
 
 **Index:** MEAS-76, MEAS-77, OPS-65 … OPS-68.
+
+## 2026-08-23-architecture-29 — An instrument optimization is proved by output equality; and §5.4b's first two catches
+
+Four from the QoL lane (`7a4876f`, `8fb27db`, `f5b35a0`), plus the residue this
+lane filed yesterday coming back closed (`bf329ad`).
+
+**(1) §5.4a — THE PROVENANCE LAW REACHES THE INSTRUMENT'S OWN COST.**
+`laws.sh` timed at **54 s, 1m23, 1m55, then past two minutes** on an input that
+had barely changed: **spawn-bound**, ~8 000 spawns at four to six per law, and
+spawn latency scales with machine load.
+
+> **The instrument's cost was a measurement of somebody else's work.**
+
+New row in the instance table. Two things about the response were worth more
+than the fix. **It was profiled first, and the profile refuted the author's
+guess** — three slices came back uniform at ~1.15 s, so no subset of laws was
+pathological and a fix aimed at the guess would have optimized the fast part.
+And the optimization was accepted on **output equality**: 231/118/1
+**byte-identical**, runtime 62 s.
+
+> **An instrument optimization is proved by OUTPUT EQUALITY, never by speed.**
+
+**And the sharpening, which is the part I would not want a lane to miss:** the
+faster algorithm was also the **simpler** one. `index()` would have been faster
+still and would have **dropped the whole-token rule** — *exactly how `§9` came
+to match `§9.5`* and mis-credited a law to seven tools (§9.7). So: **the
+optimization that is also a simplification is the dangerous one, because it
+deletes a distinction the previous version was paying for.** The anti-regression
+is a self-test row (`§9` counts 0 where a ledger says `§9.5` twice; `§9.5`
+counts 2), not a comment — a comment would not survive the next rewrite.
+
+**(2) §5.4b — THE HONESTY RIDER, from `--gate-set`'s own first line.**
+
+> **A guessed pointer is worse than a missing one, because it makes a claim
+> look COVERED.**
+
+`UNRESOLVED` is the only honest value for a runtime-computed gate target (16
+declared, 2 UNRESOLVED, both shell functions whose targets really are computed).
+It is *the remedy for a provenance gap is provenance* arriving at a gate set.
+
+**And §5.4b's "gate's own words" clause is now MEASURED rather than
+recommended**: reading only the declaration left `.md` looking orphaned while
+`docs_check` was pointed squarely at it; reading the script's header too took
+the orphan list **from five kinds to one**. Four of five orphans were the
+enumerator's blind spot, not the tree's. Also recorded: `gate_rows` emitted five
+tab-separated fields with two empty placeholders, and a tab is whitespace, so
+bash collapsed them — **an empty field in a whitespace-separated record is not a
+field** — and the reason it was caught is its **direction**: it erred toward
+alarm. The same collapse silently *attributing* gates would have read as
+coverage and survived.
+
+**(3) §5.4b's FIRST TWO CATCHES, one mechanical and one by hand.**
+`harness/sv_round_trip.py` appears in `ci.sh` **zero times against 18 `.sv`
+files** — a whole KIND with no gate, found by the instrument built from the
+section **one day after it was written**. And the Wasm lane ran the enumeration
+by hand on its own four gates (`886ede9`): its headline *"5 live obligations"*
+was pointed at by one text scanner **that cannot see whether the file
+elaborates**, and was ungated **in exactly the dimension that later refuted
+it**. Three censuses green, deterministic, refusal paths executed — the
+dense-neighbourhood trap, literally. **Neither catch needed a new failure; both
+needed someone to write the pointer list down.**
+
+**(4) §5.4a + §7's tools table — TWO TOOLS THAT DISAGREED ABOUT ONE FILE.**
+`check.sh` read `lakefile.toml` and called a repo-root `.lean` scratch;
+`triad.sh` hard-coded the globs and warned about the same file. It warned rather
+than refused, **but two protocol tools disagreeing about one file eventually
+gets trusted in the wrong direction.**
+
+> **When two tools disagree about a fact, neither is the authority. Find the
+> artifact that DEFINES the fact, and let exactly one reader parse it.**
+
+`tools/lakeinfo.sh` is that reader, sourced by both (MEAS-28). **The
+transferable half is that the fix went deeper than the classifier**:
+`lean_glob_offenders`'s predicate asked *"is this not-docs?"* while its message
+named a lake glob — so **a guard must ask the question its MESSAGE claims to be
+answering.** *"The warning names a lake glob, so the LAKEFILE decides it."*
+
+**(5) §9.7 — A FIXTURE IS NOT ENFORCEMENT**, minted within an hour of its cause:
+a self-test row naming A15 made `laws.sh` credit **itself** as A15's gate. The
+self-test region is stripped before attribution now. That is §5.4's
+self-selection law in the attribution direction — **a tool that searches for
+text will find the text it contains, and the copy it most likely contains is the
+one it was built to recognize.** Landed with `--budget`'s honest partial: past
+the budget every count is a **FLOOR**, and the verdict is written to a **file**,
+because a subshell's variable does not survive the subshell.
+
+**RESIDUE CLOSED.** `2026-08-23-architecture-28`'s INBOUND — the conflict-marker
+gate — landed in `bf329ad`: one `git grep` over the tracked tree, failing on any
+hit, **verified in both directions**, with its single possible false positive (a
+setext underline of exactly seven `=`) **named rather than discovered**. Filed
+Saturday, gated the same day; recorded because *fixes live in gates* is worth a
+data point when it works.
+
+**Index:** MEAS-78 … MEAS-85.

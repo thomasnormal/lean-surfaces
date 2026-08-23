@@ -124,6 +124,14 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-75 | MEAS-28's first consolidation: the Lean lexer once | `docs/family-architecture.md §2.4` — gate: `tools/leanlex.sh` |
 | MEAS-76 | an entry point REFUSES unknown arguments at line one | `docs/family-architecture.md §5.4` |
 | MEAS-77 | a correct refusal is not a mitigation — the hazard sits behind it | `docs/family-architecture.md §7.1a` A13 corollary |
+| MEAS-78 | an instrument optimization is proved by OUTPUT EQUALITY, never by speed | `docs/family-architecture.md §5.4a` |
+| MEAS-79 | the optimization that is also a SIMPLIFICATION deletes a distinction — pin it in a row | `docs/family-architecture.md §5.4a` |
+| MEAS-80 | two tools disagreeing: find the artifact that DEFINES the fact, one reader | `docs/family-architecture.md §5.4a` — gate: `tools/lakeinfo.sh` |
+| MEAS-81 | a guard must ask the question its MESSAGE claims to answer | `docs/family-architecture.md §5.4a` |
+| MEAS-82 | a guessed pointer is worse than a missing one — `UNRESOLVED`, never guessed | `docs/family-architecture.md §5.4b` — gate: `tools/laws.sh --gate-set` |
+| MEAS-83 | an empty field in a whitespace-separated record is not a field | `docs/family-architecture.md §5.4b` |
+| MEAS-84 | a fixture is not enforcement — strip the self-test before attributing | `docs/family-architecture.md §9.7` — gate: `tools/laws.sh` |
+| MEAS-85 | past the budget every count is a FLOOR, and the verdict goes to a FILE | `docs/family-architecture.md §9.7` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

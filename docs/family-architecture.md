@@ -3770,6 +3770,7 @@ why it is stated once rather than three times:
 | **a timing measured on a twin** | 568 ms against the shallow twin; the faithful interpreter does not close at ~14 minutes (§3.4) | rebuild lane |
 | **a red from a torn tree** | a rebase under a running build yields `Unknown constant` against a healthy master (§7.2) | Go lane |
 | **a `#guard` batch quoted as KERNEL evidence** | `#guard` attests the runtime and passes where the kernel cannot reduce at all (§5.4) — so a batch cited for kernel-reducibility is quoting the wrong oracle | SoftFloat lane |
+| **an INSTRUMENT'S OWN RUNTIME** | `laws.sh` measured 54 s, 1m23, 1m55, then past two minutes on the same input — it was **spawn-bound**, so its cost was a reading of *other lanes' builds* | QoL lane |
 
 **AND THE SAME LAW APPLIES TO FINDINGS, measured: the VERIFIER LAYER
 EARNED ITS COST.** The first full audit ran every candidate finding
@@ -3866,6 +3867,47 @@ The practical form: **price a change by enumerating the positions the
 change must visit, and check that enumeration against the thing that
 dispatches** — the `match`, the clause list, the table — not against the
 name index.
+
+**AND THE LAW REACHES THE INSTRUMENT'S OWN COST, which is the one number a
+lane never thinks to distrust (`7a4876f`).** `tools/laws.sh` was timed at
+**54 s, then 1m23, then 1m55, then past two minutes** on an input that had
+barely changed. It was **spawn-bound** — roughly **8 000 process spawns**, four
+to six per law — and spawn latency scales with machine load, so:
+
+> **The instrument's cost was a measurement of somebody else's work.**
+
+The provenance law pointed at the tool that audits the tools. Two things in the
+response are worth copying more than the fix.
+
+**It was PROFILED FIRST, and the profile refuted the author's guess.** The
+suspicion was a pathological subset of laws; three slices (rows 1-30, 150-179,
+300-329) came back **uniform at ~1.15 s**, and the same per-law work over a
+pre-read file took **13 s** against the real script's minutes. *No subset was
+pathological; the spawns were.* A fix aimed at the guess would have optimized a
+part that was already fast — §5.4a's flattering direction wearing performance
+clothes.
+
+**And the optimization was accepted on OUTPUT EQUALITY, not on the clock:**
+**231 cited / 118 NO GATE / 1 ungateable, byte-identical before and after**,
+with the runtime falling to 62 s.
+
+> **An instrument optimization is proved by OUTPUT EQUALITY, never by speed. An
+> optimization that changes a count has changed the instrument, not its cost.**
+
+**THE SHARPEST PART IS THE BOUNDARY THAT SURVIVED, because the faster algorithm
+was also the SIMPLER one.** Counting with `index()` would have been faster
+still — and would have **dropped the whole-token rule**, which is *exactly how
+`§9` came to match `§9.5`* and mis-credited a law to seven tools (§9.7). The
+awk escapes and anchors each token instead, and **a self-test row pins the
+distinction**: `§9` counts **0** against a ledger that says `§9.5` twice, while
+`§9.5` counts **2**.
+
+> **The optimization that is also a SIMPLIFICATION is the dangerous one: it
+> deletes a distinction the previous version was paying for. Pin the
+> distinction in a self-test row before you take the speed.**
+
+A comment saying *"careful, whole tokens"* would not have survived the next
+rewrite; a row that fails does.
 
 **A FIFTH INSTANCE, AND IT CARRIES A DIRECTION THE OTHERS DO NOT: THE COUNT
 HAD BEEN PUBLISHED.** `tools/substrate.sh`'s `REF_LOCAL` matched any line
@@ -4153,6 +4195,28 @@ qualifier is the whole rule:
 
 > **The adjudicator is the ORACLE, never the TABLE.**
 
+**AND ITS TOOLING FORM, measured on two protocol tools that disagreed about one
+file (`f5b35a0`).** `check.sh` read `lakefile.toml` and called a repo-root
+`.lean` **scratch** (correct — `Examples.+` matches no root module);
+`triad.sh` hard-coded `LeanModels/*|Examples/*` and warned **"unstaged Lean
+under a lake glob"** about the same file. It warned rather than refused, so
+nothing broke — **but two protocol tools disagreeing about one file eventually
+gets trusted in the wrong direction**, and the lane fixed it before it did.
+
+> **When two tools disagree about a fact, neither is the authority. Find the
+> artifact that DEFINES the fact, and let exactly one reader parse it.**
+
+`tools/lakeinfo.sh` now holds the reader and both tools source it (MEAS-28: a
+second parser is a duplicate that will drift). **And the fix had to go deeper
+than the classifier**, which is the transferable half: the warning came from
+`lean_glob_offenders`, whose predicate asked *"is this not-docs?"* — and a
+repo-root `.lean` **is** spine, which is not-docs, so the guard was answering a
+different question from the one its message announced.
+
+> **A guard must ask the question its MESSAGE claims to be answering. "The
+> warning names a lake glob, so the LAKEFILE decides it."**
+
+
 A new verdict word is not a place to record what you have decided is
 acceptable; it is a place to record **what the oracle says**, under a name
 the old vocabulary could not pronounce. Without that guard, "extend the
@@ -4232,6 +4296,64 @@ marker, in one of two forms:
 Then read the file's claims against that list. **The claims with no pointer are
 the exposure**, and they are found by reading the list — never by watching the
 lights.
+
+**THIS SECTION HAS AN INSTRUMENT NOW: `tools/laws.sh --gate-set` (`8fb27db`),
+landed one day after the section was written.** It enumerates the pointers
+rather than running them — *a gate set is audited by enumeration, never by
+execution* — and **16 gates are declared, 2 UNRESOLVED**.
+
+**Its honesty clause prints FIRST, and it is a rider this section owes:**
+enumeration reads **declarations**, so a gate whose target is **computed at
+runtime** is listed `UNRESOLVED` and never guessed.
+
+> **A guessed pointer is worse than a missing one, because it makes a claim
+> look COVERED.**
+
+`UNRESOLVED` is the only honest value for a runtime-computed target. A missing
+pointer is a hole a reader can see; a plausible one closes the question. This
+is *the remedy for a provenance gap is provenance, never reconstruction*
+(§5.4a) arriving at a gate set — **an unresolvable target named honestly keeps
+the hole visible and closeable.**
+
+**AND THE "GATE'S OWN WORDS" CLAUSE ABOVE IS NOW MEASURED, not merely
+recommended.** Reading only the *declaration* — `python3 tools/docs_check.py`,
+which names a script and no scope — left `.md` looking **orphaned** while
+`docs_check` was pointed squarely at it. Reading the declaration **and the
+script's own header** *("Scans README.md, AGENTS.md, and docs/\*\*/\*.md")* took
+the orphan list from **five kinds to one**. **Four of five orphans were the
+enumerator's blind spot, not the tree's.**
+
+**A defect on the way, and its DIRECTION is why it was caught.** `gate_rows`
+emitted five tab-separated fields with **two empty placeholders**, and a tab is
+whitespace — so bash collapsed them and every declaration landed in the wrong
+variable, making **every kind look orphaned**. Three fields now.
+
+> **An empty field in a whitespace-separated record is not a field.**
+
+Recorded beside MEAS-12's asymmetry: this error erred toward **alarm**, and an
+alarming number gets investigated on sight. Had the same collapse quietly
+*attributed* gates instead of losing them, it would have read as coverage and
+survived — **the flattering direction is the one that ships.**
+
+**THE SECTION'S FIRST TWO CATCHES, one mechanical and one by hand.**
+
+* **Mechanical** — `harness/sv_round_trip.py` **exists and appears in `ci.sh`
+  ZERO times**, against **18 `.sv` files** in the tree. (`ci.sh`'s four `sv/`
+  matches are `harness/sv/diff_test.py`, a different thing.) Exactly the §5.4b
+  shape: **a whole KIND nobody has pointed a gate at, inside an otherwise green
+  neighbourhood** — found by the instrument built from the section, one day
+  after it was written.
+* **By hand** — the Wasm lane ran the enumeration on its own four gates
+  (`886ede9`) and found its **headline claim** — *"5 live obligations"* —
+  pointed at by exactly one gate, **a text scanner that cannot see whether the
+  file ELABORATES**. It was ungated **in precisely the dimension that later
+  refuted it**: a compiler found the file does not build, making one of the
+  five unreachable. Three censuses, all green, all deterministic, all with
+  executed refusal paths — **the dense-neighbourhood trap, literally.**
+
+**Both catches are the same shape as the incident that minted the section**,
+which is the useful part: the law did not need a new failure to prove itself,
+it needed someone to write the pointer list down.
 
 **COROLLARY — AN EXPECTED-TO-FAIL ARTIFACT IS THE WEAKEST GATE IN ANY SET**,
 because its verdict is invariant under everything the file says. A file expected
@@ -5318,6 +5440,8 @@ its refusal paths rather than describing them (§5.4).
 | `tools/backlog-index.sh --ensure-driver` | configure the generated index's merge driver, once per clone | §9.5; *fixes live in gates* |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
 | `tools/ci.sh` | the gate set, run as one — **and the one tool here that CAN start Lean** | A11 (host-gated `lake`), §5.4 (refuses unknown arguments) |
+| `tools/laws.sh --gate-set` | ENUMERATE what each gate is pointed at; `UNRESOLVED`, never guessed | §5.4b |
+| `tools/lakeinfo.sh` | the lakefile's globs, read ONCE and sourced by both protocol tools | §5.4a (*the lakefile decides it*), MEAS-28 |
 
 **THE PREAMBLE'S BLANKET CLAIM NOW HAS ONE STATED EXCEPTION, WHICH IS THE
 POINT OF STATING IT.** *"Every tool below runs no Lean unless its own line says
@@ -6050,6 +6174,26 @@ say so (`— gate: tools/triad.sh`); and a law the index marks
 **`ungateable: <reason>`** is reported in its own bucket rather than as debt,
 because re-surfacing a settled finding every audit is how it gets
 re-litigated. `PROOF-40` is the first.
+
+**A THIRD CLAUSE, MINTED WITHIN AN HOUR OF ITS OWN CAUSE: A FIXTURE IS NOT
+ENFORCEMENT.** Adding a `laws.sh` self-test row that *named* A15 made `laws.sh`
+credit **itself** as A15's gate — the instrument counting its own test data as
+enforcement. The self-test region is now **stripped before any attribution
+grep**, with rows in both directions.
+
+> **An instrument must not read its own fixtures as evidence. Test data
+> mentions a law; it does not enforce one.**
+
+That is the self-selection law (§5.4) in the attribution direction: a tool that
+searches for text will find the text it contains, and the copy it is most
+likely to contain is the one it was built to recognize.
+
+**AND A BUDGET WITH AN HONEST PARTIAL VERDICT.** `--budget` (default 120 s,
+progress every 50 laws) stops the run and declares **every count a FLOOR**
+rather than reporting a number that happens to be what fit in the time. The
+verdict is written to a **file** rather than a variable, for the same reason
+`triad.sh`'s watchdog publishes its pid: a subshell's variable does not survive
+the subshell, and a verdict that cannot escape its own scope is not a verdict.
 
 Two honesty clauses that make the number usable. **Citation over-credits** — a
 tool that mentions a law in a comment is counted — so the NO GATE list is a

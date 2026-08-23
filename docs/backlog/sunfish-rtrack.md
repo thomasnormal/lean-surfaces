@@ -735,3 +735,303 @@ does match is the GATE-PHASE build's completion, not the tenure's last log line,
 and lanes overlap there. The reliable key is a SYMBOL only this tenure could
 have printed — `grep -l hop_transport` found exactly one file, unambiguously.
 Search the logs by content, not by clock.
+
+## 2026-08-23-sunfish-rtrack-8 — R2's generator layer founded: the seam, and the drain
+
+`Examples/python/sunfish/monadic_gen.lean`, new leaf. R2's judgments re-proved on
+the rebuilt interpreter — class-4 by entry -3, so re-proved rather than carried,
+but at the SAME shape, which is the difference between a port and a rewrite.
+
+### The seam, named once
+
+Every proof in the file reduces a `do` block under `toRun`. Doing that by
+unfolding the monad stack costs one layer at a time — `Pure.pure`, `StateT.pure`,
+`ExceptT.pure`, `ExceptT.mk`, `Except.pure` — and THREE of this lane's four
+scratch iterations were spent peeling exactly those, one per round trip. Named
+once, it never recurs: `toRun_pure`, `toRun_bind`, `toRun_map`.
+
+The shape is worth recording because the first attempt got it wrong. `toRun_map`
+should NOT be proved by unfolding `Functor.map`: that drops to the inner `Except`
+layer, where `Mono.lean`'s `bind_apply` does not reach, and the goals become
+unrecognisable. It follows from `toRun_bind` by `map_eq_pure_bind` with no
+unfolding at all. So the seam has exactly ONE lemma that opens the stack, and the
+other two are corollaries. A seam with one opening is the right number.
+
+**These are LIFT CANDIDATES, proposed and not performed.** They are framework
+facts about `toRun`, not about sunfish, and belong beside `toRun` in
+`Monadic/Substrate.lean` or beside `bind_apply` in `Monadic/Mono.lean`. They sit
+in a leaf here because `Substrate.lean` is spine that eleven lanes share, and
+this lane does not take that edit unilaterally.
+
+### The primitives are single-witness
+
+`IterStepsM` and `IterDrainsM` are `∃ F`, one witness — where the trunk states
+`∃ t, ∀ F ≥ t`. The trunk's threshold form is the same workaround as §8's `∀ G`
+premises, for the same reason: no monotonicity at the point of use. Here the
+threshold is RECOVERED as a theorem (`at_fuel`) from `Mono.lean`'s
+generator-family monotonicity, which is consumed by import and never restated —
+`KontLe`'s tenth component is `stepIter`, its thirteenth `drainIter`, and
+`kontMono` turns `f ≤ f'` into one. Introduction costs one run instead of a
+family; elimination loses nothing. This is `hop_forall` applied to judgments
+rather than to calls.
+
+### The drain, both arms
+
+`drain_nil` and `drain_cons` at the fuel the rebuild actually spends — the drain
+at `F + 1` is one step at `F` followed by the rest of the drain at `F`. The
+one-level-per-element accounting that entry -6 OBSERVED is now PROVED.
+`IterDrainsM.cons` and `.nil` lift them to the judgment level, where the caller
+never names a fuel: two witnesses meet at a `max`, exactly as `two_hop` does.
+
+### `GenSilent`: the trunk's threshold is an ARTIFACT, and here is the evidence
+
+The design pass has an answer, and it is a theorem rather than a preference.
+
+The trunk states silent transitions as `∃ d t, ∀ F ≥ t, …`. That `t` is NOT
+intrinsic to silent transitions — it is an artifact of the trunk's FUELED
+expression evaluator. On the rebuild `evalOpen`/`execOpen` are fuel-free
+(structural on syntax), so the only fuel a continuation step spends is the
+`K.execGen` recursion itself, exactly one level. The accounting is therefore
+exact: `d` fuel performs the rearrangement, `F` runs the residue, and both sides
+bottom out together at `F = 0`. `GenSilentM` quantifies over ALL `F`, from zero,
+with no threshold.
+
+The evidence is `genSilent_block_nil` — popping an exhausted block, proved at
+`⟨1, …⟩` with `∀ F` from zero, axioms clean. `genSilent_while` is the same for a
+`while` header.
+
+**And the arms are NOT all alike, which is the sharper half.** `genSilent_branch`
+EVALUATES its test, and `evalOpen` takes the `Kont` because an expression may
+CALL — so that arm is not unconditionally fuel-exact. What replaces the blanket
+threshold is better than it: the fuel dependence is ISOLATED into a single
+premise about the test, and the transition is exact relative to that premise.
+For a call-free test the premise holds uniformly in `F` and the arm is exact
+too. The trunk's `∃ t` was covering both kinds of arm with one shape; the
+rebuild lets them be told apart, and only the expression-evaluating ones pay.
+
+Two spelling notes paid for in iterations. `genPlan` opens with
+`if !s.hasYield then .delegate`, so a yield-free `while` DELEGATES and the
+rearrangement arms need the yield premise to be reached at all. And the branch
+arm's premise is spelled as `genPlan`'s RESULT rather than as `hasYield`,
+because rewriting inside `genPlan` leaves an `if (!true) = true` that the
+rewriter then has to be talked out of — the computed-shape law, again.
+
+### Method note: the evidence path for a green tenure
+
+`triad.sh` sends build output to a `mktemp` and, on green, reports only
+`BUILD GREEN` — so a green tenure appears to discard the `#print axioms` and
+`#eval` lines the file exists to produce. It does not: the log is never deleted,
+it is merely unreferenced, and it survives at `$TMPDIR/triad-build.*`. Tenure 2's
+file also settled a question the tenure log could not — `Built
+Examples.python.sunfish.monadic_fold (17s)`, so the module was genuinely rebuilt
+and the new guards were exercised rather than replayed from cache. A lane
+quoting in-file ledger lines should read that file by mtime, not the tenure log.
+
+### Status — GREEN
+
+Tenure of 2026-08-23 13:10 on master 41d1bf3, `--classify` class `tier`, scoped
+build of `Examples.python.sunfish.monadic_fold` + `LeanModels.Python`. Lock line
+clean: acquired after 3679s as `r3c_monadic 91849`, `LOCK RELEASED (mine)` — no
+stale reap. `BUILD GREEN`, `TRIAD DONE (build exit 0, gates green)`; `docs_check`
+green and `diff_test --no-build` green. The module was BUILT, not replayed
+(`[67/67] Built Examples.python.sunfish.monadic_fold (20s)`), so §3 elaborated
+here rather than being served from cache, and the leaf is re-verified at 41d1bf3
+in the same tenure.
+
+The in-file ledger, quoted from this tenure's own build log:
+
+      hop_transport  depends on axioms: [propext, Classical.choice, Quot.sound]
+      two_hop        depends on axioms: [propext, Classical.choice, Quot.sound]
+      hop_forall     depends on axioms: [propext, Classical.choice, Quot.sound]
+
+with the §1 and §2 rows unchanged (`FoldInv.nil` still Classical-free at
+`[propext, Quot.sound]`, the four probe rows still identical across the two
+interpreters). No `sorry`, no `native_decide`.
+
+The considered first shot landed green, which is worth recording honestly as
+luck-adjacent rather than method: it was written without a single elaboration,
+because `check.sh` refuses library files and no `Mono.olean` existed in this
+clone to iterate a scratch file against. That gap is now closed — `Mono` is warm
+here, so the generator layer CAN be iterated lock-free through a scratch file,
+and it will be.
+
+### Refinement to the evidence-path note above
+
+Recovering the build log BY MTIME is not reliable: three `triad-build.*` files
+sat within ninety seconds of this tenure's end, all other lanes'. The mtime that
+does match is the GATE-PHASE build's completion, not the tenure's last log line,
+and lanes overlap there. The reliable key is a SYMBOL only this tenure could
+have printed — `grep -l hop_transport` found exactly one file, unambiguously.
+Search the logs by content, not by clock.
+
+## 2026-08-23-sunfish-rtrack-8 — R2's generator layer founded: the seam, and the drain
+
+`Examples/python/sunfish/monadic_gen.lean`, new leaf. R2's judgments re-proved on
+the rebuilt interpreter — class-4 by entry -3, so re-proved rather than carried,
+but at the SAME shape, which is the difference between a port and a rewrite.
+
+### The seam, named once
+
+Every proof in the file reduces a `do` block under `toRun`. Doing that by
+unfolding the monad stack costs one layer at a time — `Pure.pure`, `StateT.pure`,
+`ExceptT.pure`, `ExceptT.mk`, `Except.pure` — and THREE of this lane's four
+scratch iterations were spent peeling exactly those, one per round trip. Named
+once, it never recurs: `toRun_pure`, `toRun_bind`, `toRun_map`.
+
+The shape is worth recording because the first attempt got it wrong. `toRun_map`
+should NOT be proved by unfolding `Functor.map`: that drops to the inner `Except`
+layer, where `Mono.lean`'s `bind_apply` does not reach, and the goals become
+unrecognisable. It follows from `toRun_bind` by `map_eq_pure_bind` with no
+unfolding at all. So the seam has exactly ONE lemma that opens the stack, and the
+other two are corollaries. A seam with one opening is the right number.
+
+**These are LIFT CANDIDATES, proposed and not performed.** They are framework
+facts about `toRun`, not about sunfish, and belong beside `toRun` in
+`Monadic/Substrate.lean` or beside `bind_apply` in `Monadic/Mono.lean`. They sit
+in a leaf here because `Substrate.lean` is spine that eleven lanes share, and
+this lane does not take that edit unilaterally.
+
+### The primitives are single-witness
+
+`IterStepsM` and `IterDrainsM` are `∃ F`, one witness — where the trunk states
+`∃ t, ∀ F ≥ t`. The trunk's threshold form is the same workaround as §8's `∀ G`
+premises, for the same reason: no monotonicity at the point of use. Here the
+threshold is RECOVERED as a theorem (`at_fuel`) from `Mono.lean`'s
+generator-family monotonicity, which is consumed by import and never restated —
+`KontLe`'s tenth component is `stepIter`, its thirteenth `drainIter`, and
+`kontMono` turns `f ≤ f'` into one. Introduction costs one run instead of a
+family; elimination loses nothing. This is `hop_forall` applied to judgments
+rather than to calls.
+
+### The drain, both arms
+
+`drain_nil` and `drain_cons` at the fuel the rebuild actually spends — the drain
+at `F + 1` is one step at `F` followed by the rest of the drain at `F`. The
+one-level-per-element accounting that entry -6 OBSERVED is now PROVED.
+`IterDrainsM.cons` and `.nil` lift them to the judgment level, where the caller
+never names a fuel: two witnesses meet at a `max`, exactly as `two_hop` does.
+
+### `GenSilent` is deliberately NOT in this landing
+
+Its trunk form relates two runs neither of which is known to have decided, so
+`fuelMono` does not collapse it the way it collapses the decided ones, and the
+single-witness treatment that works for `IterSteps` does not obviously apply. The
+open question is whether the `+ d` fuel offset makes `∀ F` (from zero) true
+outright — the intuition is that it does, since `d` fuel performs the
+rearrangement and `F` then runs the residue, so both sides bottom out together at
+`F = 0` — or whether the trunk's extra `∃ t` is load-bearing. That is a design
+pass with a concrete instance attached, not a definition to guess at, and it is
+the next inch.
+
+### Method note
+
+Founded entirely in a scratch file through `check.sh`, four iterations in
+minutes, where each attempt would previously have cost a build tenure. The loop
+became available only once `Mono.olean` was warm in this clone; before that,
+`check.sh` had nothing to elaborate against and the file's own glob refused it.
+The lesson for the next lane founding a layer: get one tenure's oleans FIRST,
+then iterate lock-free, rather than spending tenures as an edit-compile loop.
+
+### Status — GREEN
+
+Tenure of 2026-08-23 17:16 on master `abddf11`, `--classify` class `tier`.
+`LOCK ACQUIRED after 7467s as 'r3c_monadic 87093'` → `LOCK RELEASED (mine)`;
+`BUILD GREEN`, `TRIAD DONE (build exit 0, gates green)`, `docs_check` and
+`diff_test --no-build` both green. Module built in 1.2s. All twelve theorems
+report clean axioms — `toRun_pure` and `toRun_bind` at `[propext]` alone,
+`toRun_map` at `[propext, Quot.sound]`, the rest at
+`[propext, Classical.choice, Quot.sound]`. No `sorry`, no `native_decide`.
+
+### THE TICKET WAS RE-ENQUEUED, and why
+
+The first ticket for this landing was WITHDRAWN and re-enqueued, because this
+lane edited the tree under it — §5's silent arms were folded in while the ticket
+sat at position 8, on the reasoning that the lock had not yet been acquired so
+editing was safe. That reasoning is wrong and the rule says so: the tree a ticket
+will build is frozen from ENQUEUE to release, not from acquire. The enqueue-tree
+gate would have refused at acquire with `TREE CHANGED SINCE ENQUEUE` and burned
+the slot, as it burned two other lanes' before.
+
+What makes this worth recording rather than merely admitting: the warning had
+already been read. `--classify` prints *"stage them or they are not in this
+green"*, and this lane drew the narrow lesson (stage before classifying) instead
+of the general one (a ticketed tree is immutable). A rule learned as a procedure
+does not generalise; a rule learned as a reason does.
+
+The re-enqueue was free at position 8 and the verdict above is from the clean
+ticket: `tree at enqueue: 61933145cf68`, matching `git write-tree` at acquire.
+
+**A second trap found while fixing the first.** The stamp verification initially
+reported MISMATCH — falsely. `cd X && nohup Y > log 2>&1 &` backgrounds the
+ENTIRE conjunction, so the `cd` ran in a subshell and the follow-up
+`git write-tree` / `git rev-parse HEAD` executed in a DIFFERENT REPOSITORY
+altogether, reporting that repo's HEAD. Re-run with `git -C <worktree>` the
+stamps matched exactly. This one is more dangerous than the rule it was checking:
+a verification that silently runs in the wrong repo can just as easily print a
+false MATCH, and nothing about its output would look wrong. Stamp checks take
+`git -C` explicitly; an inherited cwd is never evidence.
+
+## 2026-08-23-sunfish-rtrack-9 — the leaf copies are DELETED, by touch, as contracted
+
+Entry -8 landed `toRun_pure` / `toRun_bind` / `toRun_map` in a leaf and marked
+them with an expiry: shared versions were assigned to the `fuelMono` lane, and
+these were to go in this lane's NEXT landing after theirs reached master. Theirs
+is on master (`Monadic/Substrate.lean` §4, with `bind_apply` moved there beside
+them under the same fully-qualified name). They are gone from this file now.
+
+Worth stating plainly: the shared statement is better than the one it replaces.
+Mine spelled the RHS as an explicit four-arm match because I was reducing a
+match; theirs spells it as `Run.bind`, which is the vocabulary every `Run`-level
+theorem in the trunk already speaks. Mine was the expedient shape; theirs is the
+seam. Deleting a lemma one wrote is cheap when the replacement is the better
+statement — the cost of `lift-don't-copy` is paid at the writing, not here.
+
+### The repoint had a predicted cost, and the prediction was worth making
+
+Before the shared seam landed, this lane pre-registered a specific risk: three
+proofs relied on the match RHS reducing by iota, and against a `Run.bind` RHS
+they might need `Run.bind` named in the `dsimp`/`simp` sets. That was measured
+in a scratch file BEFORE editing the landing file, by restating the shared seam
+locally with the new RHS against warm (stale-but-sufficient) oleans — the only
+unknown was tactic behaviour, and that simulation reproduces it exactly.
+
+Result, more precise than the prediction:
+
+* `drain_nil` and `drain_cons` — UNCHANGED. A full `simp` unfolds `Run.bind`
+  unaided.
+* `genSilent_branch` — the bare `dsimp only` fails outright with `dsimp made no
+  progress`, because `Run.bind` is an `@[inline]` def and not `@[reducible]`, so
+  `dsimp only` will not unfold it unless NAMED. It now reads
+  `dsimp only [Run.bind]`, and needs a trailing `rfl` for the final
+  `Run.bind (Run.ok st₁ b) f` that the SECOND rewrite leaves behind — a step the
+  match shape had been reducing silently.
+
+The general form: `simp` copes with a definition it is not told about; `dsimp
+only` does not. A proof that leans on iota reduction of an opaque-ish `def` is
+carrying an invisible dependency on that def's reducibility, and it surfaces the
+moment the RHS changes shape. Naming the def is the cheap fix; noticing that the
+dependency existed is the part worth writing down.
+
+### Why this landing was re-gated rather than fast-forwarded
+
+Entry -8's tenure was green at `abddf11`, but `6b91a8d` then moved `bind_apply`
+into `Substrate.lean` and added `refusalClass` arms — 164 lines INSIDE this
+module's import closure. The §5.4a coverage line says a scoped green covers the
+named modules "and everything they IMPORT", so a change inside the closure
+voids exactly that transfer. The previous landing rode a "closure byte-unchanged,
+diff 0 lines" argument; this one cannot, and the honest consequence is a fresh
+tenure rather than a fast-forward. The rule earns its keep by being applied when
+it costs something.
+
+### Status — GREEN
+
+Tenure of 2026-08-23 17:30 on master `19b369f`, `--classify` class `tier`,
+scoped build of `Examples.python.sunfish.monadic_gen` + `LeanModels.Python`.
+`LOCK ACQUIRED after 0s as 'r3c_monadic 25586'` → `LOCK RELEASED (mine)`, no
+`TREE CHANGED SINCE ENQUEUE` (`tree at enqueue: 82e04ef994bf`, matching
+`git -C <worktree> write-tree`). `BUILD GREEN`, `TRIAD DONE (build exit 0, gates
+green)`; module built in 1.1s.
+
+Nine theorems, all `[propext, Classical.choice, Quot.sound]` — the three seam
+lemmas are absent from the ledger, which is the deletion showing up as evidence
+rather than as a claim.

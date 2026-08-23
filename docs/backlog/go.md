@@ -28,7 +28,7 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G16 re-rank | — | *withdrawn — unreproducible (§G19)* | — |
 | §G19 range / slice family | `5b3602f` | 604 / 3,803 (15.9%) | — |
 | §G20 fixed arrays `[N]T` | `da9a7bc` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
-| §G22 rung E1 (`pkg.F` + `math/bits`) | *filled in below* | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
+| §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be

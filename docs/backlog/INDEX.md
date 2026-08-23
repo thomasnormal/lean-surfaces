@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**227 entries across 16 lanes.** Regenerate with
+**238 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -77,12 +77,16 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-22` | sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce | qol |
 | `2026-08-23-architecture-22` | A transcribed expectation is a third implementation; and a census that could have overturned the plan | architecture |
 | `2026-08-23-qol-21` | `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE | qol |
+| `2026-08-23-lean-tier-21` | THE 28th OBLIGATION: the byte-level round-trip rests on a hole in Lean core, and it is stamped OUT OF SCOPE | lean-tier |
 | `2026-08-23-architecture-21` | The versioning exemplar is REALIZED; a falling split is correct; and deferrals need a double guard | architecture |
 | `2026-08-23-qol-20` | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
+| `2026-08-23-lean-tier-20` | the guard-pinned-to-our-branch defect RECURRED in the newest instrument, and is now fixed at the root | lean-tier |
 | `2026-08-23-architecture-20` | Six congruence shapes; the walker's real cause was transparency; and a correction inherited its error's scope | architecture |
 | `2026-08-23-qol-19` | a run is not a measurement until it has been read | qol |
+| `2026-08-23-lean-tier-19` | PURE CORE LANDED: the round-trip property is now statable, and behaviour identity is EVIDENCED by upstream's own 22 golden tests | lean-tier |
 | `2026-08-23-architecture-19` | Probes must refuse on absence; the congruence set has five shapes; and row 1 fired on its author | architecture |
 | `2026-08-23-qol-18` | the tree must not move while you queue, and now it cannot silently | qol |
+| `2026-08-23-lean-tier-18` | arc 2 STOPPED BEFORE WRITING: the round-trip property is not STATABLE against the current code, and a pure core is a precondition | lean-tier |
 | `2026-08-23-architecture-18` | Price the TYPE not one constructor; a docstring that argues is a claim; cancelling a ticket is the right move | architecture |
 | `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
 | `2026-08-23-lean-tier-17` | EXPORT CORNER, arc 1: re-pinned, 27-obligation manifest landed, round-trip property and index invariant stated | lean-tier |
@@ -141,25 +145,31 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-6` | Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance | architecture |
 | `2026-08-23-wasm-5` | §5.4b APPLIED TO THIS LANE: the "5 live obligations" claim had **no gate pointed at it**, and the compiler was the missing pointer | wasm |
 | `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
+| `2026-08-23-es-5` | the audit's other two rows: a docstring that outlived its code, and a lint blind to legal Lean | es |
 | `2026-08-23-c-5` | **A GREEN BUILD IS NOT A TERMINATION ARGUMENT** | c |
 | `2026-08-23-architecture-5` | Re-founding needs a differ-on-purpose word; names asserting verdicts expire | architecture |
 | `2026-08-23-wasm-4` | THE PORT'S FIRST VERDICT: Mathlib's `Forall₂` is **not the model's `Forall₂`**, and the census's "no cost" conclusion needed the qualification | wasm |
 | `2026-08-23-pyrebuild-4` | GREEN, and the spike's headline number is VOID | pyrebuild |
 | `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
+| `2026-08-23-es-4` | the corpora are BACK, the ecma262 pin was RECOVERED not guessed, and `esmeta` was the QUIET half of the `rev()` defect | es |
 | `2026-08-23-c-4` | INCH 5 IS **RED**, and the diagnosis is the deliverable | c |
 | `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
 | `2026-08-23-sv-3` | LANDING A: the stepper enters the build, and the gate that armed a CI bomb validates its defusal | sv |
 | `2026-08-23-pyrebuild-3` | THE UNION FAILED, exactly where the full build was chosen to look | pyrebuild |
 | `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |
+| `2026-08-23-es-3` | the global object, and §16.1.7's `CreateGlobalVarBinding` | es |
 | `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
 | `2026-08-23-architecture-3` | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
 | `2026-08-23-sv-2` | THE STEPPER TENURE RAN AND CAME BACK RED ON ONE GOAL; the `Res` bind lemmas did their job | sv |
 | `2026-08-23-pyrebuild-2` | THE MERGE TO MASTER: one arm, 25 rows, and a dispatch discharged | pyrebuild |
+| `2026-08-23-es-2` | the Directive Prologue (§11.2.2), and non-strict `this` | es |
 | `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |
 | `2026-08-23-sv-1` | THE OWED FULL-TREE TRIAD IS DISCHARGED BY SOMEONE ELSE'S GREEN, and the number carries the state it was measured in | sv |
+| `2026-08-23-es-1` | the coercion/accessor cycle: move `ToPrimitive` and `[[Get]]`'s accessor walk into the evaluator's mutual block | es |
 | `2026-08-23-es-1` | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
 | `2026-08-23-architecture-1` | AMENDMENT 17 (DRAFT): proof iteration is a different shape, and five conditions I would tighten | architecture |
 | `2026-08-23-ada-1` | M2 INCH 1 IS GREEN, and the audit found a gate of mine that could not fail | ada |
+| `2026-08-23-es-0` | M2 INCH 5: statements, declaration instantiation, and function bodies — a Script RUNS, and Core's `Outcome` was adopted in the same touch | es |
 | `2026-08-22-architecture-14` | TWO FOLLOW-UPS RECORDED | architecture |
 | `2026-08-22-architecture-13` | CORRECTION — `Run` is a RETRACT of `SemM`, not an isomorphism (and this doc claimed the iso twice) | architecture |
 | `2026-08-22-qol-12` | `--foreign`: the tenure is about THE MACHINE, the gates are about the tree | qol |
@@ -234,6 +244,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G22` | RUNG E1: the mechanism works, and it is worth +0 files (2026-08-23) | go |
 | `G21` | THE EXTRACTOR TIER, chartered: authorized on a figure that is 2.5× too big, and sized on the one that is not (2026-08-23) | go |
 | `G20` | FIXED ARRAYS: the value model that needed no new constructor, and the frontier stops being a construct (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
@@ -248,4 +259,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**29 heading(s) do not use the §9.5 id scheme** and sort last.
+**30 heading(s) do not use the §9.5 id scheme** and sort last.

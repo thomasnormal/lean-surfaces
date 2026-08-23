@@ -251,6 +251,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-200 | the LAST RUNG is the tall one — the census says so in advance, not after | `docs/family-architecture.md §9.0b` |
 | MEAS-201 | the acceptance hierarchy ranks CLAIMS, not CLAIMANTS — a coordinator's hypothesis enters at the same rung | `docs/family-architecture.md §5.6` |
 | MEAS-202 | a guard's REPUTATION and its MECHANISM drift apart silently — read the mechanism | `docs/family-architecture.md §7.2` |
+| MEAS-203 | RE-POINTING a guard is not monotone tightening — each flipped verdict owes its reasoning where the check lives | `docs/family-architecture.md §7.2` |
+| MEAS-204 | a defect in a PRIMITIVE: census its other callers before closing | `docs/family-architecture.md §7.2` |
+| MEAS-205 | ask the ORACLE that already answers — a label re-derived inline is a second, weaker classifier | `docs/family-architecture.md §7.2` |
+| MEAS-206 | a TAXONOMY OF ABSENCE belongs at the print statement, where a zero and a non-answer become one | `docs/family-architecture.md §7.2` |
+| MEAS-207 | a failure that only ever costs TIME has no constituency for fixing it | `docs/family-architecture.md §5.4b` |
+| MEAS-208 | AN ID IS ONE TOKEN — a migration-tolerant gate separates old-valid from never-valid | `docs/family-architecture.md §9.5` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -529,7 +535,7 @@ numbers below are the register's own.
 | OPS-76 | A COMMIT CANNOT CONTAIN ITS OWN HASH — each rung's sha lands in the FOLLOWING commit | `docs/family-architecture.md §7.2` |
 | OPS-77 | `set_option autoImplicit false` in model files — a required LOUDNESS guard | `docs/family-architecture.md §7.1a` |
 | OPS-78 | the enqueue stamp hashes the INDEX; `lake` builds the WORKING TREE | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
-| OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` |
+| OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` — **SUNSET**: stamp v2 is live; applies only to v1-stamped tickets |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

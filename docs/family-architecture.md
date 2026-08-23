@@ -5727,6 +5727,30 @@ was the lane's own docstring prose in `ProjParam.lean`.
 > Either way the lane learns to ignore it, and the drift it was watching for
 > arrives unnoticed.**
 
+**AND A THIRD WAY A SIGNAL GOES DEAD, WITH THE PROPERTY THAT KEEPS IT ALIVE:
+THE FAILURE THAT ONLY EVER COSTS TIME** (QoL `22ed755`). The tenure-class
+heuristic hard-coded `{github,origin}/master`, so a fork whose default branch is
+named otherwise **fell back to a full tenure** — *conservatively, therefore
+silently.*
+
+> **A HEURISTIC THAT FAILS CONSERVATIVELY IS EXACTLY HOW A HEURISTIC STAYS
+> BROKEN: a full tenure every time and no one the wiser.**
+
+**And the structural reason it survives is worth naming, because it is not
+inattention:**
+
+> **A failure mode that only ever costs TIME has NO CONSTITUENCY FOR FIXING
+> IT.** Nobody is wrong, nothing is red, and the bill is paid in minutes spread
+> across everyone.
+
+**This completes the stuck-channel family** — a gate that never fires, a guard
+that always fires, and now **a heuristic that always answers the safe way.** All
+three carry **zero information**, and this one is the hardest to retire because
+its symptom is **indistinguishable from correct caution.** The fix was to
+**ask the remote which branch is its HEAD** rather than to guess better: *a
+heuristic with a fallback nobody can see should be replaced by a question
+somebody can answer.*
+
 **It is MEAS-35's mirror, exactly**: the audit's defect class was *a `--compare`
 that cannot exit nonzero*; this is **a `--compare` that cannot exit zero**. The
 two failures look nothing alike — one is silent, one is noisy — and they end in
@@ -7350,10 +7374,78 @@ quietly relying on the imperfection**, and *after the fact the two produce the
 same tenure.* **Declaration is cheap only before**, and it is the entire
 difference between a hole that gets fixed and a hole that gets used.
 
-**The fix is with the tools lane** — working-tree hash via a temp index, at
-**both ends**, with **old-stamp tolerance for the eight live tickets** — and
-until it lands, the honest position is the one this section already prescribes:
-**the rule stands as written, and a lane that must edit says so at enqueue.**
+**THE FIX HAS LANDED** (QoL `22ed755`, merged `b98b4d0`; verified here —
+`STAMP_VERSION="v2"` and the `GIT_INDEX_FILE` temp index at
+`tools/triad.sh:1192-1208`). Working-tree hash at both ends, `add -A` so a new
+untracked `.lean` cannot slip in, `.gitignore` honoured, **0.31 s cold against
+0.015 s**, twice per tenure. **OPS-79's interim rule therefore SUNSETS: it
+applies only to tenures whose tickets carry v1 stamps.**
+
+**AND THE RE-POINTING FLIPPED ONE OF THE GUARD'S OLD VERDICTS, DELIBERATELY.**
+The old stamp **REFUSED an index-only edit**; the new one **accepts** it —
+*content staged but absent from the working tree will never be elaborated, so it
+is not part of what the tenure certifies.* **The old refusal was a false alarm
+in the other direction.**
+
+> **RE-POINTING A GUARD IS NOT MONOTONE TIGHTENING. A guard aimed at the right
+> object flips some of its old verdicts, and each flip owes its reasoning WHERE
+> THE CHECK LIVES.**
+
+**This is the necessary companion to MEAS-202**, and the reason it needs saying:
+*"we fixed the guard"* invites the reading that everything it used to reject it
+still rejects, plus more. **A re-aimed guard is a different guard** — some old
+reds were about the old object and do not survive the move — and a lane meeting
+the newly-accepted case a year from now will ask whether it was considered. The
+answer belongs **in the test comment**, not in a landing message that no one
+greps.
+
+**AND THE SAME BLINDNESS WAS ONE LEVEL DOWN, FOUND BY THE FIX RATHER THAN BY A
+SECOND INCIDENT.** `record_green` also called `write-tree`, so a green taken
+with an unstaged edit **recorded the index's hash and could be judged CITABLE
+while the elaborated content was something else.** One source, two consumers,
+one fix.
+
+> **WHEN A DEFECT IS FOUND IN A PRIMITIVE, CENSUS ITS OTHER CALLERS BEFORE
+> CLOSING. The second consumer is found by the FIX, not by the second
+> incident.**
+
+**The exposure audit came back clean** — all merged greens were porcelain-clean,
+and **clean ⇒ index == working tree**, which is the sort of argument worth
+keeping: *the defect was live, and the population that could have been affected
+was measured rather than assumed.* This is MEAS-28's one-source rule read
+backwards: sharing a primitive is what made **one** fix sufficient, and it is
+also what made **one** defect reach two guards.
+
+**AND THE DELTA-VS-MASTER LINE LANDED WITH ONE DEVIATION FROM THE BRIEF, WHICH
+IS THE INCIDENT ONE LEVEL DOWN.** *"0 `.lean` files"* is **not** docs-only:
+`lakefile.toml`, `lean-toolchain` and `lake-manifest.json` carry no `.lean` and
+**invalidate the entire graph.** Printing `DOCS-ONLY` for them would **reproduce
+the tree/label mismatch the line exists to expose.**
+
+> **ASK THE ORACLE THAT ALREADY ANSWERS THE QUESTION. A label re-derived inline
+> is a SECOND classifier, and it will be weaker than the first.**
+
+So the label is asked of `classify_path` and prints
+`NOT docs-only (lakefile.toml)`. **A line added to catch a mismatch that
+introduces a mismatch of its own is the failure this whole section keeps
+finding**, and the fix is the one §5.4a already gives for two tools disagreeing:
+**one reader, and it is the one that already exists.**
+
+**AND THE ABSENCE FAMILY HAS THREE MEMBERS AT THIS PRINT STATEMENT, NONE OF
+WHICH MAY LOOK LIKE A MEASUREMENT**: `n/a-foreign-tree` (refused before
+trying), `n/a-no-merge-target`, `n/a-unrelated-histories` — against **`0
+files`**, which **is** a measurement.
+
+> **A TAXONOMY OF ABSENCE BELONGS AT THE PRINT STATEMENT, because that is where
+> a zero and a non-answer become indistinguishable.**
+
+Every earlier member of this family was an absence **inside** an instrument (a
+`null` on an absent repo, a zero-row census, a `sed` with no input). **This one
+is at the boundary where the instrument speaks**, and it is the last place the
+distinction is still available: **once `0` is printed, no reader can recover
+whether the question was answered or declined.**
+
+
 
 **AND THE STALENESS HAS NOW BEEN SPLIT, MEASURED — most of it is the QUEUE, not
 the BUILD** (Ada). A tenure came back **53 commits behind**, and the obvious
@@ -8774,6 +8866,38 @@ its own lane, with ids `YYYY-MM-DD-<lane>-<n>` that need **no reservation**
 because the lane name makes them unique; `docs/backlog.md` becomes a
 **generated index**, which is §5.5's "generated and checked, never
 hand-maintained" applied to the repository's own record.
+
+**AND THE HEADING GUARD OVER THESE FILES NEEDED A MIGRATION VOCABULARY, which
+is what makes `--strict` adoptable at all** (QoL `22ed755`; measured **18
+undated, 8 malformed, across 7 files**). The discriminator is one sentence:
+
+> **AN ID IS ONE TOKEN.**
+
+`G1 — t` yields the id `G1`: **a real entry under an older scheme** — it warns,
+it never fails. `INBOUND FROM THE SOFTFLOAT LANE — …` yields the id `INBOUND`,
+**five tokens where one belongs**: junk, and what `--strict` fails on.
+
+> **A MIGRATION-TOLERANT GATE DISTINGUISHES OLD-VALID FROM NEVER-VALID, or
+> `--strict` can never be adopted.**
+
+**Without that distinction a strict mode is unshippable**, and the reason is
+arithmetic rather than taste: a gate that treats every pre-scheme heading as
+junk fails on **history**, so it can only be turned on after a tree-wide
+rewrite — which is the big-bang §9.2 forbids. **With it, the strict mode's
+failure set is exactly the set somebody can fix today**, and history warns
+without blocking.
+
+**And the guard was EXTENDED, not duplicated** — undated headings already sorted
+last and were being counted **inside the generated file, where the lane that
+wrote the heading never looks.** *A count that lands only in an artifact its
+subject does not read is a count nobody acts on*, which is §9.5a's own reason
+for rendering INBOUND against each owning lane. **Two of the eight were the
+tools lane's own and are conformed; the other six belong to lanes that own their
+files (§9.5), so `--strict` is not wired into CI yet** — a gate held at
+`declared` (§5.4b) on purpose, with the reason recorded rather than the
+adoption forced.
+
+
 
 **AND A TENURE NAMES ITS BUILD LOG, GREEN OR RED.** `tools/triad.sh` writes
 the build to a `mktemp` file and **never deletes it** — there is no `rm` of it

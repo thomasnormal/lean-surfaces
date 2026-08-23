@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**250 entries across 16 lanes.** Regenerate with
+**251 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-24-architecture-59` | Re-pointing a guard is not monotone tightening | architecture |
 | `2026-08-24-architecture-58` | The guard built to pin the tree points at the index | architecture |
 | `2026-08-24-architecture-57` | Completeness is counted per orientation; and a pin move declared in advance | architecture |
 | `2026-08-24-architecture-56` | The guard is inside the thing it cannot see; and a count in prose without its unit | architecture |

@@ -4584,3 +4584,110 @@ stands as written, and a lane that must edit says so at enqueue.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-202, OPS-78, OPS-79**.
+
+## 2026-08-24-architecture-59 — Re-pointing a guard is not monotone tightening
+
+Six from QoL's four-item landing (`22ed755`, merged `b98b4d0`) plus one sunset.
+**Verified against the tree**: `STAMP_VERSION="v2"` and the `GIT_INDEX_FILE`
+temp index at `tools/triad.sh:1192-1208`.
+
+**(0) THE SUNSET.** Yesterday's interim rule (OPS-79) applied *until the fix
+lands*. **It has landed** — working-tree hash at both ends, `add -A` so a new
+untracked `.lean` cannot slip in, `.gitignore` honoured, **0.31 s vs 0.015 s**,
+twice per tenure. **OPS-79 now applies only to tenures whose tickets carry v1
+stamps**, and the law-index row says so rather than being deleted.
+
+**(1) §7.2 — THE RE-POINTING FLIPPED AN OLD VERDICT, DELIBERATELY.** The old
+stamp **refused an index-only edit**; the new one **accepts** it — *content
+staged but absent from the working tree will never be elaborated, so it is not
+part of what the tenure certifies.* **The old refusal was a false alarm in the
+other direction.**
+
+> **Re-pointing a guard is NOT monotone tightening. A guard aimed at the right
+> object flips some of its old verdicts, and each flip owes its reasoning WHERE
+> THE CHECK LIVES.**
+
+**The necessary companion to MEAS-202**, and I said why it needs saying:
+*"we fixed the guard"* invites the reading that everything it used to reject it
+still rejects, **plus more**. A re-aimed guard is **a different guard**, and a
+lane meeting the newly-accepted case a year from now will ask whether it was
+considered — the answer belongs in the test comment, **not in a landing message
+nobody greps.**
+
+**(2) §7.2 — THE SECOND CONSUMER WAS FOUND BY THE FIX, NOT BY A SECOND
+INCIDENT.** `record_green` also called `write-tree`, so a green taken with an
+unstaged edit **recorded the index's hash and could be judged CITABLE while the
+elaborated content was something else.**
+
+> **When a defect is found in a PRIMITIVE, census its other callers before
+> closing.**
+
+**And the exposure audit is the part worth copying**: all merged greens were
+porcelain-clean, and **clean ⇒ index == working tree** — *the defect was live,
+and the population that could have been affected was measured rather than
+assumed.* MEAS-28 read backwards: **sharing a primitive is what made one fix
+sufficient, and what made one defect reach two guards.**
+
+**(3) §7.2 — MY OWN RECOMMENDATION LANDED WITH A DEVIATION, and the deviation
+was right.** I proposed a diffstat-vs-master line in `-55`. **"0 `.lean` files"
+is not docs-only**: `lakefile.toml`, `lean-toolchain` and `lake-manifest.json`
+carry no `.lean` and **invalidate the whole graph** — printing `DOCS-ONLY` for
+them would **reproduce the tree/label mismatch the line exists to expose.**
+
+> **Ask the ORACLE that already answers the question. A label re-derived inline
+> is a SECOND classifier, and it will be weaker than the first.**
+
+**A line added to catch a mismatch that introduces a mismatch of its own** is
+the failure this section keeps finding, and the fix is §5.4a's: one reader, and
+it is the one that already exists (`classify_path`, printing
+`NOT docs-only (lakefile.toml)`).
+
+**(4) §7.2 — THE ABSENCE TAXONOMY BELONGS AT THE PRINT STATEMENT.** Three
+members — `n/a-foreign-tree` (refused before trying), `n/a-no-merge-target`,
+`n/a-unrelated-histories` — against **`0 files`**, which **is** a measurement.
+
+**Every earlier member of this family was an absence INSIDE an instrument**; this
+one is **at the boundary where the instrument speaks**, and that is the last
+place the distinction survives: **once `0` is printed, no reader can recover
+whether the question was answered or declined.**
+
+**(5) §9.5 — AN ID IS ONE TOKEN, which is what makes `--strict` adoptable.**
+`G1 — t` yields `G1`: a real entry under an older scheme (**warn**).
+`INBOUND FROM THE SOFTFLOAT LANE — …` yields `INBOUND`, five tokens where one
+belongs (**junk; `--strict` exit 3**).
+
+> **A migration-tolerant gate distinguishes OLD-VALID from NEVER-VALID, or
+> `--strict` can never be adopted.**
+
+**The arithmetic, not the taste**: a gate treating every pre-scheme heading as
+junk fails on **history**, so it could only be switched on after a tree-wide
+rewrite — the big-bang §9.2 forbids. With the distinction, **the strict mode's
+failure set is exactly the set somebody can fix today.** The guard was
+**extended, not duplicated**, and the undated headings were being counted
+**inside the generated file, where the lane that wrote the heading never
+looks** — *a count that lands only in an artifact its subject does not read is a
+count nobody acts on.* Six of the eight belong to other lanes, so `--strict`
+sits at **declared** (§5.4b) **on purpose, with the reason recorded rather than
+the adoption forced.**
+
+**(6) §5.4b — A THIRD WAY A SIGNAL GOES DEAD.** The tenure-class heuristic
+hard-coded `{github,origin}/master`, so a fork whose default branch is named
+otherwise **fell back to a full tenure — conservatively, therefore silently.**
+
+> **A heuristic that fails conservatively is exactly how a heuristic stays
+> broken: a full tenure every time and no one the wiser.**
+
+> **A failure mode that only ever costs TIME has NO CONSTITUENCY FOR FIXING
+> IT** — nobody is wrong, nothing is red, and the bill is paid in minutes spread
+> across everyone.
+
+**This completes the stuck-channel family**: a gate that never fires, a guard
+that always fires, and now **a heuristic that always answers the safe way** —
+all three carrying zero information, and this one **hardest to retire because
+its symptom is indistinguishable from correct caution.** The fix was to **ask
+the remote which branch is its HEAD** rather than guess better: *a heuristic
+with a fallback nobody can see should be replaced by a question somebody can
+answer.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-203 … MEAS-208**, and **OPS-79 sunset**.

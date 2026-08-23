@@ -4450,7 +4450,9 @@ lights.
 **THIS SECTION HAS AN INSTRUMENT NOW: `tools/laws.sh --gate-set` (`8fb27db`),
 landed one day after the section was written.** It enumerates the pointers
 rather than running them — *a gate set is audited by enumeration, never by
-execution* — and **16 gates are declared, 2 UNRESOLVED**.
+execution* — and **44 gates are declared, 2 UNRESOLVED** (`ea6f667`; the
+first run said **16**, and the missing 28 were the anchor defect corrected
+below — the count is stamped here because it moved once already).
 
 **Its honesty clause prints FIRST, and it is a rider this section owes:**
 enumeration reads **declarations**, so a gate whose target is **computed at
@@ -4487,12 +4489,13 @@ survived — **the flattering direction is the one that ships.**
 
 **THE SECTION'S FIRST TWO CATCHES, one mechanical and one by hand.**
 
-* **Mechanical** — `harness/sv_round_trip.py` **exists and appears in `ci.sh`
-  ZERO times**, against **18 `.sv` files** in the tree. (`ci.sh`'s four `sv/`
-  matches are `harness/sv/diff_test.py`, a different thing.) Exactly the §5.4b
-  shape: **a whole KIND nobody has pointed a gate at, inside an otherwise green
-  neighbourhood** — found by the instrument built from the section, one day
-  after it was written.
+* **Mechanical, and CORRECTED WITHIN A DAY — see the correction below, which
+  is the more valuable half.** `harness/sv_round_trip.py` **exists and appeared
+  in `ci.sh` ZERO times**, against **18 `.sv` files** in the tree and 21
+  committed envelopes — the SV lane's own gate was never in CI, and it is now
+  wired (`ea6f667`). **But the headline it was first reported under —
+  *".sv has no gate"* — was an INSTRUMENT ARTIFACT**, and the surviving claim
+  is narrower.
 * **By hand** — the Wasm lane ran the enumeration on its own four gates
   (`886ede9`) and found its **headline claim** — *"5 live obligations"* —
   pointed at by exactly one gate, **a text scanner that cannot see whether the
@@ -4504,6 +4507,62 @@ survived — **the flattering direction is the one that ships.**
 **Both catches are the same shape as the incident that minted the section**,
 which is the useful part: the law did not need a new failure to prove itself,
 it needed someone to write the pointer list down.
+
+**THE CORRECTION, AND IT IS THE SHARPEST THING IN THIS SECTION: THE
+ENUMERATION'S FIRST FINDING WAS ABOUT THE ENUMERATOR** (`ea6f667`, correcting
+this document's own `f587ec2`). `gate_rows` anchored its match **at column 0**,
+so every **host-gated** gate — declared inside a function or an `if`, hence
+**indented** — was invisible. **16 gates enumerated; 44 after the fix**,
+including **`lake-build` itself**. An auditor reading the 16-row list would have
+concluded *CI does not gate the build*.
+
+**The counterfactual was RUN, not assumed**: the new `laws.sh` against the
+**OLD** `ci.sh` reports **43 gates and NO orphan kinds**. `sv-harness` and
+`sv2-harness` had been pointing at `.sv` all along; the anchor hid them.
+
+> **A new instrument's FIRST finding is the one to re-run against the old
+> input.**
+
+**And the flattering direction here is not the usual one — it does not flatter
+the TREE, it flatters the INSTRUMENT.** A day-old tool reporting a dramatic gap
+in somebody else's work is the single output its author is least likely to
+doubt: it is the tool justifying its own existence. That is *a finding
+un-re-read is a claim, not a finding* (§5.4a) pointed at the enumerator, and the
+scope-inheritance rule from the same section — *a measurement that CORRECTS a
+claim must not take its scope from the claim it corrects* — is what the
+counterfactual implements. **Running the new tool on the old input is the
+output-equality discipline (§5.4a) used in the correction direction: it is the
+only way to separate what the FIX changed from what the TREE changed.**
+
+**WHAT SURVIVES, and it is a real finding in a narrower form.** Both `.sv` rows
+are **simulator-gated and SKIP on a stock runner**, so **on CI, `.sv` had no
+gate that RUNS** — and the round-trip gate is the one that can, which is why
+the wiring was right for a reason different from the one first given. *The
+disposition was correct; its justification was not, and only the second was
+published.*
+
+**SO THE POINTER LIST HAS FOUR STATES, NOT TWO, and "green" reports only the
+last.** A gate can be **DECLARED**, **CALLED**, **RUN ON THIS HOST**, and
+**POINTED AT THE CLAIM** — and each step loses members:
+
+> **A DECLARATION IS NOT A CALL.** A gate declared inside a never-called
+> function still enumerates perfectly.
+
+> **A CALL IS NOT A RUN.** A gate that SKIPs for an absent simulator, package
+> or host is a gate the claim does not have *here*.
+
+Enumeration reads declarations, so **it can only ever establish the first
+state**; the call site is pinned separately — by a `--verify-guards` row, in
+this tree — and the host question is answered by the skip discriminator (*a
+tracked file is not optional; an untracked one may SKIP*). **A gate set audited
+only by enumeration over-reports, and one audited only by execution
+under-reports**, which is why §5.4b asks for the pointer list *and* why the list
+is not the whole answer.
+
+**AND *A FIXTURE IS NOT ENFORCEMENT* (§9.7) EXTENDS TO DECLARATIONS**: the
+`--verify-guards` region is cut before matching, **inside `gate_rows`** rather
+than inside the citation counter whose numbers were not that inch's to move.
+The same rule, at a second site, with the blast radius deliberately bounded.
 
 **COROLLARY — AN EXPECTED-TO-FAIL ARTIFACT IS THE WEAKEST GATE IN ANY SET**,
 because its verdict is invariant under everything the file says. A file expected

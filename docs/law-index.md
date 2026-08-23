@@ -139,6 +139,10 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-90 | a false blanket claim HIDES the real gap — the claim is why nobody looked | `docs/family-architecture.md §5.4` |
 | MEAS-91 | cite by NAME — fixing offsets buys one landing of accuracy | `docs/family-architecture.md §5.4` |
 | MEAS-92 | a row is closed when the CLAIM is true; a substituted remedy must SAY WHICH | `docs/family-architecture.md §9.7` |
+| MEAS-93 | a new instrument's FIRST finding is the one to re-run against the OLD input | `docs/family-architecture.md §5.4b` |
+| MEAS-94 | a DECLARATION is not a CALL; a CALL is not a RUN — the gate ladder's four states | `docs/family-architecture.md §5.4b` |
+| MEAS-95 | enumeration over-reports, execution under-reports — a gate set needs both | `docs/family-architecture.md §5.4b` |
+| MEAS-96 | a right action taken for a wrong STATED reason survives the fix | `docs/family-architecture.md §5.4b`; `docs/backlog/architecture.md 2026-08-23-architecture-32` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

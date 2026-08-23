@@ -2013,7 +2013,21 @@ coverage and survived.
 **(3) §5.4b's FIRST TWO CATCHES, one mechanical and one by hand.**
 `harness/sv_round_trip.py` appears in `ci.sh` **zero times against 18 `.sv`
 files** — a whole KIND with no gate, found by the instrument built from the
-section **one day after it was written**. And the Wasm lane ran the enumeration
+section **one day after it was written**.
+
+> **ANNOTATION (2026-08-23, `ea6f667`; entry NOT rewritten, per
+> `2026-08-23-architecture-26`).** This paragraph's headline was **half an
+> instrument artifact**. `gate_rows` anchored at column 0, so all **28 indented
+> (host-gated) gates were invisible** — **16 enumerated, 44 after the fix**,
+> `lake-build` among them. The counterfactual was **run**: the new `laws.sh`
+> against the **old** `ci.sh` gives **43 gates and no orphan kinds**, so
+> *".sv has no gate"* was the **enumerator's blind spot, not the tree's gap**.
+> **What survives is narrower and real**: both `.sv` rows are simulator-gated
+> and SKIP on a stock runner, so **on CI `.sv` had no gate that RUNS**, and the
+> wiring was right for that reason. `sv_round_trip.py` genuinely was absent
+> from `ci.sh` and is now wired. **The measurement was right as taken; the
+> claim built on it was too wide** — corrected in §5.4b and carried forward in
+> `2026-08-23-architecture-32`. And the Wasm lane ran the enumeration
 by hand on its own four gates (`886ede9`): its headline *"5 live obligations"*
 was pointed at by one text scanner **that cannot see whether the file
 elaborates**, and was ungated **in exactly the dimension that later refuted
@@ -2207,3 +2221,75 @@ a capability audit must sweep the **ingestion rewrites** and not only the two
 walkers.
 
 **Index:** MEAS-90 … MEAS-92.
+
+## 2026-08-23-architecture-32 — The enumeration's first finding was about the enumerator
+
+A correction to this lane's own `f587ec2`, from QoL's `ea6f667`. The dated entry
+`2026-08-23-architecture-29` is **annotated, not rewritten**; §5.4b's
+present-tense prose is **corrected**, with the correction stated as a
+correction. That split is `2026-08-23-architecture-26`'s, applied to itself for
+the first time.
+
+**WHAT WAS WRONG.** `f587ec2` recorded `sv_round_trip.py` as §5.4b's *first
+mechanical catch* under the headline *".sv has no gate"*. `gate_rows` anchored
+its match at **column 0**, so every **host-gated** gate — declared inside a
+function or an `if`, therefore indented — was invisible: **16 enumerated, 44
+after the fix**, including **`lake-build` itself**. An auditor reading the
+16-row list would have concluded CI does not gate the build.
+
+**THE COUNTERFACTUAL WAS RUN, NOT ASSUMED**: new `laws.sh` against the **old**
+`ci.sh` → **43 gates, NO orphan kinds**. `sv-harness`/`sv2-harness` had pointed
+at `.sv` all along and the anchor hid them.
+
+> **A new instrument's FIRST finding is the one to re-run against the old
+> input.**
+
+**AND THE FLATTERING DIRECTION IS NOT THE USUAL ONE — it flatters the
+INSTRUMENT, not the tree.** A day-old tool reporting a dramatic gap in somebody
+else's work is the one output its author will not doubt: the tool justifying its
+own existence. That is *a finding un-re-read is a claim, not a finding* (§5.4a)
+aimed at the enumerator, and the counterfactual is the scope-inheritance rule
+from the same section implemented — *a measurement that corrects a claim must
+not take its scope from the claim it corrects*. **Running the new tool on the
+old input is output-equality (MEAS-78) in the correction direction: the only way
+to separate what the FIX changed from what the TREE changed.**
+
+**WHAT SURVIVES, and the disposition was right either way.** Both `.sv` rows are
+**simulator-gated and SKIP on a stock runner**, so **on CI `.sv` had no gate
+that RUNS**; `sv_round_trip.py` genuinely appeared in `ci.sh` zero times against
+21 committed envelopes and is now wired. **The disposition was correct and its
+published justification was not** — which is its own small law, and the reason
+the correction is worth a landing rather than a footnote: *a right action taken
+for a wrong stated reason survives the fix, and the next lane inherits the
+reason.*
+
+**THE COUSIN LAW, and it is what makes §5.4b's pointer list honest: A
+DECLARATION IS NOT A CALL.** A gate declared inside a never-called function
+enumerates perfectly. With the `.sv` narrowing beside it, the list has **four
+states, and "green" reports only the last**: **DECLARED → CALLED → RUN ON THIS
+HOST → POINTED AT THE CLAIM**, each step losing members. Enumeration establishes
+only the first; the call site is pinned separately (a `--verify-guards` row,
+meanwhile), and the host question is answered by the skip discriminator.
+
+> **A gate set audited only by ENUMERATION over-reports; one audited only by
+> EXECUTION under-reports.**
+
+That is a genuine amendment to §5.4b as I first wrote it — the section said *a
+gate set is audited by enumeration, never by execution*, which is right about
+**coverage** and silent about **liveness**. Both sentences now stand, with the
+ladder between them.
+
+**AND *A FIXTURE IS NOT ENFORCEMENT* (MEAS-84) REACHED A SECOND SITE**: the
+`--verify-guards` region is cut inside `gate_rows`, deliberately **not** inside
+the citation counter, whose numbers were not that inch's to move. A law arriving
+at a second site with its blast radius bounded on purpose is the by-touch
+discipline (§9.2) working.
+
+**ONE MORE NUMBER CORRECTED WHILE HERE.** §5.4b's *"16 gates declared, 2
+UNRESOLVED"* — landed by me in `f587ec2` — was the pre-fix count. Now **44, 2
+UNRESOLVED**, and **stamped with the sha**, because a number that has already
+moved once is exactly the number that needs its state carried (MEAS-10). The
+`UNRESOLVED` pair is unchanged, which is its own small confirmation: the anchor
+defect lost *declarations*, not *targets*.
+
+**Index:** MEAS-93 … MEAS-96.

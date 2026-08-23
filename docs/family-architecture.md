@@ -4241,6 +4241,33 @@ Re-run clean; that is the only thing that settles it.
 
 ---
 
+#### THE LANE TOOLS — one line each, and the law each one implements
+
+Every tool below runs **no Lean** unless its own line says otherwise, so it is
+safe outside a tenure (A11), and every one has a `--self-test` that executes
+its refusal paths rather than describing them (§5.4).
+
+| tool | what it is for | the law it implements |
+| --- | --- | --- |
+| `tools/triad.sh` | the build protocol AS CODE — lock, ticket, tenure, gates | §7.1, §7.1a (base 1-6, A4-A16) |
+| `tools/triad.sh --classify` | size the triad to the diff and STATE what the green covers | §5.4a, §7.1 rule 4 |
+| `tools/diagnose.sh` | annotate a build log with cause, fix and the law's home | §7's *"the summary LOCATES; the full log COUNTS"* |
+| `tools/check.sh` | one file, against a warm clone's oleans — and it names the case | §7.1 rule 3 and its warm-clone amendment |
+| `tools/check.sh --iterate` | the proof-iteration loop, lock-free on measured conditions | A17 (draft) |
+| `tools/sites.sh` | price a constructor change by the sites that DESTRUCTURE it | §5.4a's pattern-position law |
+| `tools/analogues.sh` | how many proved analogues a statement shape has, and how long | the Lean tier's tractability estimate |
+| `tools/new-proof.sh` | scaffolds for the four recurring proof shapes, laws inline | `docs/statement-cookbook.md` |
+| `tools/backlog-index.sh` | generate `docs/backlog/INDEX.md`; `--check` gates its staleness | §9.5, §5.5 |
+| `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
+
+**`tools/sites.sh` is the one to reach for before pricing any substrate
+change**, because three lanes priced one constructor change three different
+wrong ways in a week. Measured on this tree for `unsupported`: **21 types
+declare a constructor by that name**, and the tool excludes **1250** hits —
+1207 by position, 43 by prefix — to report **9 destructure + 15 construct**.
+A bare name grep would have returned roughly 1274.
+
+
 ## 8 THE FOUNDING CHECKLIST
 
 The order below is the C lane's measured order, which worked: M1 landed in

@@ -1091,3 +1091,87 @@ honestly, the `GATES NOT RUN` line with its headline and counts intact, and
 the deleted harness no longer matched while the live ones still are.
 `docs_check` **87/87**. Spine edit, no Lean executed — the self-tests drive
 synthetic logs, so no tenure was needed.
+
+---
+
+## 2026-08-23-qol-17 — `tools/sites.sh`: price a constructor change by what DESTRUCTURES it
+
+Three lanes priced one constructor change three different wrong ways in a
+week — importers **2**, transitive reachers **128**, a name grep **over by 4**
+— and §5.4a records the calibration: the right unit is **the sites that
+destructure it**, and the law is *name the TYPE first, then grep its
+constructor's pattern, wherever that type rides.*
+
+`tools/sites.sh <Type> <ctor>` implements it and reports three buckets:
+**CONSTRUCT**, **DESTRUCTURE** (match arms plus the `#guard`/`rfl` pins that
+fix the shape), and **LOOK-ALIKES excluded with the reason** — because an
+exclusion nobody can audit is just a smaller wrong number.
+
+### Live on this tree, and the numbers are the argument
+
+**21 types declare a constructor named `unsupported`.** The tool excludes
+**1250** hits — **1207 by position** (no channel this type rides) and **43 by
+prefix** (`.unsupportedDevice`, `.unsupportedConstruct`, six more) — to report
+**9 destructure + 15 construct**. A bare name grep would have returned about
+**1274**. The convicting case from the doc is found: `Examples/go/rung1/`
+`guards.lean`'s `refusalOf`, which destructures `.error (.unsupported _ m _)`
+and **names no Core symbol at all** — invisible to an importer count, which is
+why that count was never a bound.
+
+The doc cites it as `guards.lean:80`; it is at **line 88** today. The tool
+asserts the **file and the symbol**, never the line — a line number is exactly
+the kind of number that goes stale between the measurement and the citation.
+
+### Calibrated against the three recorded cases
+
+Fixtures reproduce each shape and assert the doc's decomposition: **ES 5
+destructure + 2 construct = the honest 7, with 3 look-alikes**; **C 8 construct
++ 8 destructure through the `Halt` channel**, where `.error (.unsupported`
+returns **zero** — the under-count that reads as *"no work to do"*; and the Go
+case above.
+
+One number is deliberately **not** asserted. The doc records ES's raw grep as
+**8**, but not the pattern that produced it, and 5 + 3 = 8 only under a reading
+I cannot verify. The test asserts the decomposition the doc **does** record,
+plus the law's own point — *no single grep produces the number* — rather than a
+figure whose provenance cannot be reconstructed. Same for the dispatch's C
+figures: it said **2+6 / 5+3**, the doc says **8 construct + 8 destructure**,
+and the sums agree, but no sub-split is recorded anywhere, so the totals are
+what the calibration uses.
+
+### Three defects in my own instrument, all found by testing it
+
+1. **A phantom exclusion per empty file.** Files with no hits sent one empty
+   line through the loop and were filed as look-alikes — **~300 phantom
+   exclusions** on the real tree. §5.4's law, biting the tool written to serve
+   it: a zero-row read is an instrument fault, not a finding.
+2. **Match arms counted as declarations.** The declaration scanner attributed
+   `| unsupported` inside a later `def` to the last `inductive` seen, so the
+   live run reported `Run` five times and `Hands` three. That is the
+   identifier law failing *inside the tool that exists to prevent it*; leaving
+   the inductive block now ends the run, and 27 became 21.
+3. **`awk -v` eats one backslash level**, so `\.` became a **wildcard** dot and
+   matched the space in `| unsupported (m : String)` — a declaration counted
+   as a use. There is now a regression row asserting the dot is literal.
+
+And a fourth found by reading the first live output: **comments are not
+sites**. Six doc-comment mentions of `Halt.unsupported` were counted as
+CONSTRUCT sites, including a markdown table inside `Core/Outcome.lean`. The
+scanner now strips Lean comments — nesting `/- -/` correctly — before looking
+for the token, which `harness/wasm_sorry_census.py` already had to learn
+(`docs/backlog/wasm.md 2026-08-22-wasm-1`). That alone moved CONSTRUCT from 21
+to 15.
+
+### Docs-first
+
+§7 had **no tools list at all**, so one landed with this: ten tools, one line
+each, naming the law each implements. Unnumbered, to avoid colliding with a
+§7.x another lane may be drafting.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **25 ok, 0 failed** — the three calibration
+cases, the classifier on the four real shapes it must tell apart (an arm, a
+right-hand side, a line that does **both**, and a `#guard`), comment stripping
+including a nested block, the literal-dot regression, and the no-hits-no-
+phantom rule. `docs_check` **87/87**. No Lean executed; no tenure needed.

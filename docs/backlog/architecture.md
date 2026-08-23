@@ -2904,3 +2904,65 @@ nothing and turns a bulk failure into a sentence. Non-vacuity run on both, which
 is what keeps the named rows from being decoration.
 
 **Index:** MEAS-115 … MEAS-117, STMT-109.
+
+## 2026-08-23-architecture-40 — The census partially orders the rungs; the conjunctive law is now family law
+
+Three from Go's re-rank (`4618380`, on master). **Headline, stamped:** the
+walker steps **1 289 of 3 084 rung-1-reachable stdlib files — 41.8%**, up from
+**633**. Rungs 3 and 4 **doubled** it, and the number moved **by construction
+rather than by drift**, which is why it is quoted with the commit that produced
+it (MEAS-10).
+
+**(1) §9.0b — NEW SUBSECTION: a reach census does not just RANK, it PARTIALLY
+ORDERS.**
+
+> **`+0` in a reach census means NO REACHABLE FILE IS BLOCKED ONLY BY THAT
+> CONSTRUCT. It cannot be a next rung AT ANY PRICE; it is strictly DOWNSTREAM
+> of whatever co-occurs with it.**
+
+`MapType +0` and interfaces `+0`, both behind slices. **My addition is the
+misreading it prevents**: a lane reading `+0` as *"cheap, do it when
+convenient"* will build a rung that unblocks nothing — **and will not find out
+until after paying, because the construct itself will work perfectly.** So the
+two readings of a small number are opposite: **`+56` is a small rung; `+0` is
+not a rung at all.** A rank says what is worth most; a partial order says what
+is even **available**, and this census answers both with one number.
+
+**(2) §9.0b — THE CONJUNCTIVE LAW, PROMOTED to family law on its third
+independent reproduction.** It was nowhere in the charter or the law index —
+checked before promoting — so it had been a lane observation through all three.
+
+> **Some constructs have value only as a FAMILY. Ship any one and almost
+> nothing moves; ship the family and the reach steps.**
+
+`ArrayType` **+528**, `SliceExpr` **+27**, `RangeStmt` **+29** — parts **584**,
+whole **+1 019**, **1.7×**, reach **41.8% → 74.8%**. §G1's bundles and §G4's
+switch family were the first two; **this is the first where the parts are
+individually near-worthless in single digits**, which makes the failure mode
+concrete: **a lane pricing these three separately would have rejected all
+three.** Three reproductions is this document's own evidence bar (§9.3), so:
+**price a candidate rung against the family it belongs to and report both
+numbers** — a per-construct table with no joint column **systematically
+under-prices exactly the rungs worth taking.**
+
+**And the counterpart that stops the law licensing bundles**: the family is what
+the **census** says co-occurs, not what a lane finds tidy. **Fixed arrays are
+14.6% of `ArrayType` and are NOT in it** — declare only what executes (§5.2's
+deferral hygiene).
+
+**(3) §5.4a — VALUE OR REFERENCE, a diagnostic for two adjacent-looking
+blockers.** The `strings` package did not start paying after the value model was
+fixed, because `strings.Index(…)` is a **selector call** — 52.4% of call sites,
+ruled `go/types` work.
+
+> **§G15 changed what a string IS; it did not change what `pkg.F` MEANS.**
+
+They fail on the same line of source, and **a lane that has just fixed the first
+will reach for it again when the second bites.** So: **decide whether a blocker
+lives in the VALUE or in the REFERENCE before pricing it** — the value model was
+this lane's, the selector resolution is the extractor's. Landed as §5.2's
+mis-scheduling law **in a second dimension**: the refusal class says which lane
+owes a *construct*; this says which lane owes a *blocker*, and both go wrong the
+same way when a plausible adjacency substitutes for a measurement.
+
+**Index:** MEAS-118 … MEAS-120.

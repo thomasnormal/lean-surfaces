@@ -164,6 +164,9 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-115 | a PERFORMANCE SYMPTOM is a modelling question — the faithful shape is often the cheap one | `docs/family-architecture.md §5.4a` |
 | MEAS-116 | once PROVED for one implementation, a spec adjudicates its SIBLINGS — a third adjudicator kind | `docs/family-architecture.md §5.6` |
 | MEAS-117 | named single rows beside an exhaustive sweep — so a failure lands BY NAME | `docs/family-architecture.md §5.6` |
+| MEAS-118 | `+0` in a reach census is a PRECEDENCE fact, not a low score | `docs/family-architecture.md §9.0b` |
+| MEAS-119 | THE CONJUNCTIVE LAW — price a rung against the FAMILY it belongs to, report both numbers | `docs/family-architecture.md §9.0b` |
+| MEAS-120 | decide whether a blocker lives in the VALUE or in the REFERENCE — different owners | `docs/family-architecture.md §5.4a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

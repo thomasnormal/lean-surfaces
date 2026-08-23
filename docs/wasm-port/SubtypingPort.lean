@@ -255,4 +255,36 @@ theorem instrtype_sub_trans (ft1 ft2 ft3 : functype)
   · exact rt_sub_trans _ _ _ hb hsi12
   · exact rt_sub_trans _ _ _ hno12 hd
 
+/-- **O2.** The RANGE may be weakened upward.
+
+    Isabelle counterpart: `instr_subtyping_weaken2`.
+
+    Census (`docs/backlog/wasm.md`): needs **no new prerequisite** — the
+    frame's range half `rest_out ++ needed_out` is split against the weakened
+    type by `rt_sub_split_right`, and the two resulting halves are composed
+    with `rt_sub_trans`. -/
+theorem instr_subtyping_weaken2 (tx1 tx2 ty1 ty2 ty2_sup : List valtype)
+    (h : instrtype_sub (mkFunctype tx1 ty1) (mkFunctype tx2 ty2))
+    (hsup : ty2 subs< ty2_sup) :
+    instrtype_sub (mkFunctype tx1 ty1) (mkFunctype tx2 ty2_sup) := by
+  obtain ⟨ri, ro, si, no, hx, hy, hio, hsi, hno⟩ := h
+  obtain ⟨c, d, hc, hd, hcd⟩ := rt_sub_split_right ro no ty2_sup (hy ▸ hsup)
+  exact ⟨ri, c, si, d, hx, hcd, rt_sub_trans _ _ _ hio hc, hsi,
+         rt_sub_trans _ _ _ hno hd⟩
+
+/-- **O4.** The DOMAIN may be strengthened downward.
+
+    Isabelle counterpart: `instr_subtyping_strengthen2`. The dual of O2, and
+    the reason the split lemma was needed in BOTH orientations: this one
+    splits with `rt_sub_split_left` where O2 splits with `rt_sub_split_right`.
+    Census: no new prerequisite. -/
+theorem instr_subtyping_strengthen2 (tx1 tx2 ty1 ty2 tx2_sub : List valtype)
+    (h : instrtype_sub (mkFunctype tx1 ty1) (mkFunctype tx2 ty2))
+    (hsub : tx2_sub subs< tx2) :
+    instrtype_sub (mkFunctype tx1 ty1) (mkFunctype tx2_sub ty2) := by
+  obtain ⟨ri, ro, si, no, hx, hy, hio, hsi, hno⟩ := h
+  obtain ⟨a, b, ha, hb, hab⟩ := rt_sub_split_left tx2_sub ri si (hx ▸ hsub)
+  exact ⟨a, ro, b, no, hab, hy, rt_sub_trans _ _ _ ha hio,
+         rt_sub_trans _ _ _ hb hsi, hno⟩
+
 end SubtypingPort

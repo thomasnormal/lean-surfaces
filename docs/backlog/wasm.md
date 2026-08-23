@@ -781,3 +781,100 @@ appends to `docs/backlog/wasm.md`. No gate in this repository can reach the
 vendored file — which is itself the §5.4b enumeration for it, stated rather
 than assumed. `docs_check` passes; `tools/backlog-index.sh` re-run per §9.5.
 The Lean execution reported above was in the **fork's** tree, under a ticket.
+
+---
+
+## 2026-08-24-wasm-8 — **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF
+
+**LEDGER (§9.0): 4 of 5 obligations proved.** O1 `instrtype_sub_refl`,
+O3 `instrtype_sub_trans`, **O2 `instr_subtyping_weaken2`**,
+**O4 `instr_subtyping_strengthen2`**. Only **O5** remains.
+
+`[00:26:34] LOCK ACQUIRED after 1370s as 'wasm 23427'` → `build exit=1` →
+`[00:27:00] GATES NOT RUN (build red — aborted triad)` →
+`[00:27:01] LOCK RELEASED (mine)`. Tree at enqueue `8b91c58f84cd`.
+
+**THE PIN TABLE — five tenures, exit code 1 on every one:**
+
+| tenure | `SubtypingPort` | its errors | failing modules | `typing_lemmas` errors | verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| `85489` 20:49 | ✖ | 1 | 2 | 6 | **MISS** |
+| `69357` 22:48 | **✔ Built (12s)** | **0** | **1** | **6** | **MATCH** |
+| **`23427` 00:26** | **✔ Built (12s)** | **0** | **1** | **6** | **MATCH** |
+
+**The ambient verdict was constant across all five, so every bit of
+information was in the pin** — and the pin says O2 and O4 landed.
+
+**A HYPOTHESIS CHECKED AND REFUTED, which is why the comparison is run rather
+than eyeballed.** The dispatch flagged that `No goals to be solved` and
+`too many variable names provided` "smell like YOUR new proofs erring rather
+than the baseline 6", with the standing instruction not to rationalise a
+genuine red into the baseline. **Measured: they are not this lane's.** Both
+carry `typing_lemmas.lean` line numbers — `371:8` and `1865:4` — and the six
+errors reproduce byte-for-byte as the baseline set at **371, 380, 537, 1035,
+1113, 1865**. `grep -c "error: SubtypingPort"` returns **0**. The suspicion was
+the right one to raise and the log settles it in the other direction; that is
+the pin doing exactly the job it was installed for.
+
+**Hygiene: 0 `sorry`, 0 warnings, no `native_decide`.** 13 declarations, no
+diagnostic of any kind from this lane's file. Fork clone **`70b572903`**, local
+only, **not pushed upstream**.
+
+**O2 and O4 cost one tenure between them and needed no new lemma** — exactly
+what `2026-08-24-wasm-7`'s census predicted. Each is ~6 lines: split one half
+of the frame (`rt_sub_split_right` for O2's range, `rt_sub_split_left` for
+O4's domain) and compose with `rt_sub_trans`. **Neither uses `rt_sub_app`**,
+because neither rebuilds a composite frame — the census called that too. This
+is the clearest payoff yet of the two-orientations reading from
+`2026-08-22-wasm-2`: O2 and O4 are duals that consume *different* orientations,
+so a lane that had proved only one would be exactly half done and would not
+know it.
+
+### O5's CENSUS — and its single prerequisite is INSIDE the damage
+
+`ais_single_typing_inversion` calls, measured over its body:
+`instrtype_sub` ✓, `instrtype_sub_refl` (O1) ✓, `instrtype_sub_trans` (O3) ✓,
+`resulttype_sub_refl` (→ `rt_sub_refl`) ✓ — **all ported and proved** — plus
+one that is not:
+
+> **`ais_empty_typing`** (`typing_lemmas.lean:295`):
+> `Instrs_ok2 s c [] (t1s f-> t2s) ↔ (wf_context c ∧ wf_store s ∧ t1s subs< t2s)`
+
+**And it spans lines 295–412, which straddles the first two baseline errors.**
+`371:8 too many variable names provided` and `380:17 rcases failed` are
+**inside `ais_empty_typing` itself**. So O5's one missing prerequisite is not
+merely un-ported — **it is one of the broken declarations**, and two of the
+six baseline errors belong to it.
+
+**Three consequences, stated before any proof is attempted:**
+
+1. **It cannot be copied.** The other ports were transcriptions of working
+   proofs; this one has no working original in Lean. It must be re-derived, or
+   taken from Aaron Lee's Isabelle if a counterpart exists there.
+2. **O5 is therefore NOT the ~6-line job O2/O4 were.** `ais_empty_typing` is
+   ~118 lines before O5's own 183-line induction is touched. The ladder's last
+   rung is the tall one, and the census says so in advance rather than after.
+3. **A repair here would move the baseline.** Fixing `ais_empty_typing` would
+   take **2 of the 6** baseline errors with it — so the pinned failure shape
+   would change from 6 to 4, and that is a *deliberate* pin change rather than
+   drift. Flagged now so the next lane reads a moved pin as intended, not as a
+   confusing red.
+
+**Next inch: `ais_empty_typing`, census-first** — read Isabelle for a
+counterpart before re-deriving from scratch, exactly as the four proved
+obligations were.
+
+### Pinned failure shape — UNCHANGED, and now with a scheduled change
+
+Port is **13 declarations / 290 lines**. Next tenure:
+**`SubtypingPort` GREEN, 0 errors; 1 failing module (`typing_lemmas`); 6
+errors.** If `ais_empty_typing` is repaired the pin becomes **4 errors** — see
+consequence 3.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** Updates one vendored `.lean`
+outside `LeanModels` and the `Examples.+` glob, and appends to this file. No
+gate in this repository can reach the vendored file — the §5.4b enumeration for
+it, stated not assumed. `docs_check` passes; `tools/backlog-index.sh` re-run
+per §9.5. The Lean execution was in the **fork's** tree, under a ticket.

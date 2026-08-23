@@ -3612,6 +3612,32 @@ it survives the fix. And the severities moving **both** ways is the tell
 that the verifier was doing work rather than rubber-stamping — a layer
 that only ever downgrades is a filter, not a check.
 
+**AND THE AUDIT-RESPONSE NORM, from the SV lane's dispositions**, which
+closes an incentive loophole this audit creates by existing. **An audit
+that demands provenance applies pressure to MANUFACTURE provenance** —
+a dangling citation is embarrassing, and a plausible reconstructed table
+makes the embarrassment go away. SV had two citations resolving to
+nothing and the backing Xcelium host unreachable. They corrected the
+citations to **unreproducible-pending-access** rather than rebuilding the
+table:
+
+> **Fabricating rows to satisfy a provenance audit would be that audit's
+> own defect, one level up. A dangling pointer replaced by an honest
+> 'lost, and here is what would restore it' is a real fix; a fabricated
+> table is not.**
+
+> **The remedy for a provenance gap is PROVENANCE, never
+> RECONSTRUCTION.**
+
+The reconstructed table is strictly worse than the dangling pointer it
+replaces, and the audit is what makes it so: **a dangling pointer
+announces its own failure**, while a fabricated one **passes every future
+check** and is indistinguishable from a measurement until someone tries to
+act on it. An honest *lost, and here is what would restore it* keeps the
+gap **visible and closeable** — it names the access that would reopen it.
+Closing a finding is not the goal; **the finding is closed when the claim
+is true**, and *"we cannot currently reproduce this"* is a true claim.
+
 > **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
 > neither.**
 

@@ -1612,3 +1612,30 @@ defects **for the wrong reason**, which is worse because **it survives the fix**
 And severities moving **both** ways is the tell the verifier was working rather
 than rubber-stamping — **a layer that only ever downgrades is a filter, not a
 check.**
+
+## 2026-08-23-architecture-25 — The audit-response norm: the remedy for a provenance gap is provenance, never reconstruction
+
+Rider from SV's dispositions, landed verbatim beside "a finding un-re-read is a
+claim, not a finding" (§5.4a). It closes an **incentive loophole the audit
+creates by existing**: an audit that demands provenance applies pressure to
+**manufacture** provenance, because a dangling citation is embarrassing and a
+plausible reconstructed table makes the embarrassment go away.
+
+SV had two citations resolving to nothing and the backing Xcelium host
+unreachable. They corrected the citations to **unreproducible-pending-access**
+rather than rebuilding the table:
+
+> **Fabricating rows to satisfy a provenance audit would be that audit's own
+> defect, one level up. A dangling pointer replaced by an honest 'lost, and here
+> is what would restore it' is a real fix; a fabricated table is not.**
+
+> **The remedy for a provenance gap is PROVENANCE, never RECONSTRUCTION.**
+
+**The reconstructed table is strictly worse than the dangling pointer it
+replaces, and the audit is what makes it so.** A dangling pointer **announces
+its own failure**; a fabricated one **passes every future check** and is
+indistinguishable from a measurement until someone tries to act on it. The
+honest disposition keeps the gap **visible and closeable** — it names the access
+that would reopen it. **Closing a finding is not the goal: the finding is closed
+when the claim is true**, and *"we cannot currently reproduce this"* is a true
+claim.

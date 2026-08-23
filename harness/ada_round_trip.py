@@ -329,46 +329,148 @@ def main():
     if args.summary:
         print("markings vs the ACAA's SUMMARY: "
               + ", ".join("%s %d" % (k, v) for k, v in sorted(mtally.items())))
+
+    # A WHOLLY-SKIPPED RUN IS AN INSTRUMENT ERROR, NOT A PASS.
+    #
+    # `regenerate()` returns SKIP whenever a recorded source is not found
+    # under `--source-root` (default "."), so a run pointed at the wrong root
+    # reported `DIVERGE 0, ERROR 0, MATCH 0, SKIP N` and exited 0 — a gate
+    # that cannot fail because it compared nothing.  That is the same
+    # absence-vs-zero defect this gate's own VACUOUS marking verdict exists
+    # to catch (§L75), found in the gate itself by the 2026-08-23 audit.
+    compared = tally.get("MATCH", 0) + tally.get("DIVERGE", 0)
+    if compared == 0:
+        print("round-trip: NOTHING WAS COMPARED — %d envelope(s), all SKIP or "
+              "ERROR. This is an instrument-level failure, not a pass: check "
+              "--source-root (it is %r) against the envelopes' recorded "
+              "spellings."
+              % (sum(tally.values()), args.source_root))
+        return 1
     return 1 if bad else 0
 
 
+def _stub_extractor(tmpdir, envelope):
+    """A stand-in for `extractors/ada/extract.py` that emits `envelope`.
+
+    The gate's job is to COMPARE an envelope against a regeneration, and that
+    comparison is what the self-test must exercise. Driving the real
+    extractor would drag libadalang into a self-test whose subject is the
+    comparison, so the frontend is stubbed and the comparison is real.
+    Everything `regenerate()` passes — `--source-name`, `--language-version`,
+    `--profile-id` — is honoured, so EDGE 3 and the edition check are live.
+    """
+    path = os.path.join(tmpdir, "stub_extract.py")
+    payload = os.path.join(tmpdir, "stub_payload.json")
+    with open(payload, "w") as fh:
+        json.dump(envelope, fh)
+    with open(path, "w") as fh:
+        fh.write(
+            "import json,sys\n"
+            "a=sys.argv[1:]\n"
+            "out=a[a.index('-o')+1]\n"
+            "names=[a[i+1] for i,x in enumerate(a) if x=='--source-name']\n"
+            "lv=a[a.index('--language-version')+1]\n"
+            "pid=a[a.index('--profile-id')+1]\n"
+            "e=json.load(open(%r))\n"
+            "e['language_version']=lv; e['profile_id']=pid\n"
+            "if names:\n"
+            "    e['source_files']=[dict(s,path=n) for s,n in "
+            "zip(e['source_files'],names)]\n"
+            "json.dump(e,open(out,'w'))\n" % payload)
+    return path
+
+
 def self_test():
-    """The gate must FAIL a tampered envelope, or it is decoration.  Each
-    edge is broken in turn and the gate must name it."""
+    """The gate must FAIL a tampered envelope, or it is decoration.
+
+    **This self-test used to be decoration itself**, and the 2026-08-23
+    quality audit said so: three of its six cases asserted `SKIP`, which
+    `check()` returned because the fixture's source_root was an EMPTY temp
+    dir — so `regenerate()` bailed before comparing anything, and no case
+    ever reached EDGE 2/3, the field loop, or the payload compare. No case
+    ever produced MATCH. A gate whose own self-test never runs the gate is
+    the audit's central defect class, found here in the instrument that
+    exists to catch it elsewhere.
+
+    Now the round-trip is REALLY exercised: a source is staged under
+    source_root and a stub extractor stands in for the frontend, so an
+    untampered envelope must MATCH and each tampering must DIVERGE.
+    """
     ok = True
     base = {"schema_version": "ada-0.1", "language_version": "Ada2012",
             "profile_id": "p", "source_files": [{"path": "x.ada"}],
             "compilation_units": [{"name": "X", "kind": "PackageDecl",
-                                   "order": 0,
+                                   "order": 0, "position": 0, "file": 0,
                                    "decl": {"kind": "PackageDecl"}}],
             "markings": [], "unsupported_count": 0}
 
     def verdict(env, vocab=None):
+        """Pre-check cases: no source staged, so these must not reach the
+        round-trip at all."""
         with tempfile.TemporaryDirectory() as t:
             return check(env, t, vocab, t)[0]
 
+    def roundtrip(env, regenerated=None, vocab=None):
+        """Stage `env`'s source under source_root and run the REAL comparison
+        against what the stub returns (`regenerated`, default: `env`)."""
+        global EXTRACTOR
+        saved = EXTRACTOR
+        with tempfile.TemporaryDirectory() as t:
+            for src in env["source_files"]:
+                real = os.path.join(t, src["path"])
+                os.makedirs(os.path.dirname(real), exist_ok=True)
+                with open(real, "w") as fh:
+                    fh.write("package X is\nend X;\n")
+            _INDEX.pop(t, None)
+            EXTRACTOR = _stub_extractor(t, regenerated or env)
+            try:
+                return check(env, t, vocab, t)
+            finally:
+                EXTRACTOR = saved
+
+    mutated_payload = {**base, "compilation_units": [
+        {**base["compilation_units"][0],
+         "decl": {"kind": "PackageBody"}}]}
+    mutated_count = {**base, "unsupported_count": 3}
+    mutated_marks = {**base, "markings": [
+        {"kind": "ERROR", "file": 0, "line": 1, "col": 1,
+         "end_line": 1, "end_col": 2, "text": "x"}]}
+
     cases = [
+        # --- pre-checks: these must be caught BEFORE any regeneration.
         ("a wrong schema version is caught",
          verdict({**base, "schema_version": "ada-9.9"}), "DIVERGE"),
         ("a missing edition is caught",
          verdict({**base, "language_version": ""}), "DIVERGE"),
         ("a node kind outside the vocabulary is caught",
          verdict(base, {"SomethingElse"}), "DIVERGE"),
-        ("a kind INSIDE the vocabulary passes the vocabulary check",
-         verdict(base, {"PackageDecl"}), "SKIP"),
-        ("an Unsupported leaf is NOT a vocabulary violation",
-         verdict({**base, "compilation_units": [
-             {**base["compilation_units"][0],
-              "decl": {"kind": "Unsupported", "node_class": "TaskTypeDecl"}}]},
-                 {"PackageDecl"}), "SKIP"),
         ("an ABSOLUTE recorded path is SKIPped with the path named",
          verdict({**base, "source_files": [{"path": "/abs/x.ada"}]},
                  {"PackageDecl"}), "SKIP"),
+        # --- THE ROUND TRIP ITSELF, which the audit found untested.
+        ("an UNTAMPERED envelope round-trips to MATCH",
+         roundtrip(base)[0], "MATCH"),
+        ("...and MATCH is reachable with a vocabulary in force",
+         roundtrip(base, vocab={"PackageDecl"})[0], "MATCH"),
+        ("an Unsupported leaf is not a vocabulary violation, and MATCHes",
+         roundtrip({**base, "compilation_units": [
+             {**base["compilation_units"][0],
+              "decl": {"kind": "Unsupported", "node_class": "TaskTypeDecl"}}]},
+                   vocab={"PackageDecl"})[0], "MATCH"),
+        ("a mutated compilation_units PAYLOAD diverges",
+         roundtrip(base, regenerated=mutated_payload)[0], "DIVERGE"),
+        ("a mutated unsupported_count diverges",
+         roundtrip(base, regenerated=mutated_count)[0], "DIVERGE"),
+        ("a mutated markings array diverges",
+         roundtrip(base, regenerated=mutated_marks)[0], "DIVERGE"),
+        ("a mutated unit NAME diverges (EDGE 2)",
+         roundtrip(base, regenerated={**base, "compilation_units": [
+             {**base["compilation_units"][0], "name": "Y"}]})[0], "DIVERGE"),
     ]
     for name, got, want in cases:
         if got != want:
             ok = False
-        print("%s %-56s got %r want %r"
+        print("%s %-58s got %r want %r"
               % ("ok " if got == want else "FAIL", name, got, want))
     print("self-test:", "PASSED" if ok else "FAILED")
     return 0 if ok else 1

@@ -137,7 +137,17 @@ verdicts. -/
 
 -- Every marking carries a full CERR-grade span. The scoreboard emits the
 -- ACAA's `CERR` records, which need a line AND a position.
-#guard b371001.markings.all (fun m => m.endLine ≥ m.line && m.endCol ≥ m.col)
+--
+-- The 2026-08-23 audit found the previous form VACUOUS twice over: it tested
+-- `endLine ≥ line && endCol ≥ col`, which an ALL-ZERO span satisfies -- so
+-- the guard could not detect the very absence it existed to pin -- and
+-- `endCol ≥ col` is not a validity property of a MULTI-LINE span at all
+-- (10:40 to 12:5 is legal and would have failed it). The positive property
+-- is asserted instead: a real line, a real column, and an end that is
+-- after the start in the reading order a span actually has.
+#guard b371001.markings.all (fun m =>
+  m.line > 0 && m.col > 0 &&
+    (m.endLine > m.line || (m.endLine == m.line && m.endCol >= m.col)))
 
 #guard b371001.unsupportedCount == 0
 

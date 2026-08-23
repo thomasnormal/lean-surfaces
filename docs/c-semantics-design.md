@@ -383,9 +383,20 @@ The family checklist's step 7 (`docs/family-architecture.md` §8.4) makes
 this a decision about the interpreter's TYPE, taken before the
 interpreter is written. **Taken: `evalExpr` is structurally recursive on
 `Expr` and carries no fuel.** Calls — the one expression that can recurse
-into an arbitrary body — are delegated to a `CallHandler` that takes the
-argument expressions UNEVALUATED, so the recursion needing fuel lives
-where fuel will live.
+into an arbitrary body — are delegated to a `CallHandler`, so the
+recursion needing fuel lives where fuel will live.
+
+**AMENDED AT INCH 5's REPAIR: the handler takes VALUES, not argument
+expressions.** The original design had it take the arguments unevaluated,
+which kept the expression layer fuel-free by handing the handler a job it
+had no way to do: §6.5.3.3p4 evaluates arguments in the CALLER's scope,
+and the handler holds the CALLEE's. Every nested call to a defined
+function therefore refused. The repair puts an `evalArgs` inside
+`evalExpr`'s own mutual block — so the argument walk borrows the measure
+that is already there, and the layer stays fuel-free for the reason it
+always did (the walk is structural on `Expr`), while the handler receives
+`List CVal` and the fuel-bearing recursion stays in `callFn`. The cost was
+one extra decrease goal and the return of `Expr.size_pos`.
 
 **And that is TWO places, which inch 4's census corrected**: fuel arrives
 at **inch 4 with LOOPS** (84 of them — 50 `for`, 29 `do`, 5 `while`; an

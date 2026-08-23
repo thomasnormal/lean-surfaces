@@ -377,4 +377,72 @@ private def progL : Program := { prog with fns := libcCaller :: prog.fns }
 -- `libc` carries no J.2 index, because an unmodelled library call is not UB.
 #guard (Refusal.libc "abort").j2 == none
 
+/-! ## §6.5.3.3p4 — a NESTED call, and why these gates exist
+
+Until `evalArgs` moved into the expression layer's mutual block, **every**
+call whose callee was a defined function refused. The handler was given
+argument EXPRESSIONS and no evaluator to reduce them, so it answered
+*"nested call to '…' — argument evaluation is inch 5's open problem"*.
+
+That is why these gates are here rather than merely implied by the ones
+above: `callByName` takes ALREADY-EVALUATED arguments, so every call gate
+before this point enters the tier at the top and never exercises a call
+in ARGUMENT position. The whole `J.1(16)` domain — 7 sites, every one an
+effectful argument that is a nested call (`docs/c23-spec-mirror.md` §5.3)
+— was unreachable, and an `∀ order` theorem over it would have quantified
+over refusals. **A claim that cannot fail is not a check**
+(`2026-08-23-c-5`), so the domain had to be made reachable before it could
+be discharged. -/
+
+/-- An `int` literal, as clang spells one. -/
+private def intE (n : Int) : Expr := .intLit (toString n) "int" noSpan
+
+/-- The callee, as a plain `DeclRefExpr` — `calleeNameOf` peels the
+conversions clang would wrap it in, and the libc gate above uses the same
+bare spelling. -/
+private def pfdRef : Expr :=
+  .declRef "pyfloordiv" "FunctionDecl" "int (int, int)" noSpan
+
+private def retCall (args : List Expr) (name : String) : LeanModels.C.FunctionDefn :=
+  { name := name, ty := "int (void)", storage := none, params := [],
+    body := some (.compound
+      [.ret (some (.call pfdRef args "int" noSpan)) noSpan] noSpan),
+    span := noSpan }
+
+/-- `int c1(void) { return pyfloordiv(7, 2); }` — a call in EXPRESSION
+position, with its arguments evaluated by `evalArgs`. -/
+private def caller1 : LeanModels.C.FunctionDefn := retCall [intE 7, intE 2] "c1"
+
+/-- `int c2(void) { return pyfloordiv(pyfloordiv(7, 2), 2); }` — the
+`J.1(16)` SHAPE itself: two arguments, one of them a call. -/
+private def caller2 : LeanModels.C.FunctionDefn :=
+  retCall [.call pfdRef [intE 7, intE 2] "int" noSpan, intE 2] "c2"
+
+private def progN : Program := { prog with fns := caller1 :: caller2 :: prog.fns }
+
+private def runN (name : String) : Option Int :=
+  match ExecM.verdict Mem.empty (callByName 64 progN name []) with
+  | .ok (.int _ n) => some n
+  | _ => none
+
+-- `pyfloordiv(7, 2) = 3`, reached through an argument list rather than
+-- through `callByName`'s already-evaluated one.
+#guard runN "c1" == some 3
+
+-- …and the nested one: the inner call answers 3, the outer computes
+-- `pyfloordiv(3, 2) = 1`. This is the gate that would have failed before
+-- the repair, with `unsupported`, not with a wrong number.
+#guard runN "c2" == some 1
+
+-- Non-vacuity, stated as the lane's law wants it: the OLD refusal message
+-- is gone, and these calls do not refuse at all.
+#guard (match ExecM.verdict Mem.empty (callByName 64 progN "c2" []) with
+        | .ok _ => "ran" | .refused _ => "refused"
+        | .unsupported w => w | .timeout => "timeout") == "ran"
+
+-- Fuel still bounds the nesting: each call level costs one, and exhaustion
+-- is a TIMEOUT rather than a refusal, at a nested call as at a top-level one.
+#guard ExecM.verdict Mem.empty (callByName 1 progN "c2" [])
+  == (.timeout : Outcome CVal)
+
 end Examples.c.sunfish.stmt

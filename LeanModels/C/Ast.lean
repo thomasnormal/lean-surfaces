@@ -279,10 +279,11 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 -- attempt covered only member/index/paren/call and left nine goals unprovable
 -- at `decreasing_by` — a STATED measure is only as good as the lemmas that
 -- let the checker use it.
--- (`size_pos` was tried here and removed: `typeTrait` and `constExpr` carry an
--- `Option Expr`, so `subexprs` has two clauses each and `cases e` does not
--- split them. The measure below never needed positivity — every decrease goal
--- closes by `omega` on the `Nat` alone — so the lemma was cost without use.)
+-- (`size_pos` was once tried here and removed as unprovable by `cases e`:
+-- `typeTrait` and `constExpr` carry an `Option Expr`, so `subexprs` has two
+-- clauses each and `cases` does not split them. That diagnosis was right about
+-- the TACTIC and wrong about the FACT — see `Expr.size_pos` below, which the
+-- argument-list measure does need.)
 
 @[simp] theorem Expr.size_member (b : Expr) (f : String) (a : Bool) (t : CType) (s : CSpan) :
     (Expr.member b f a t s).size = b.size + 1 := by
@@ -331,6 +332,24 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 @[simp] theorem Expr.sizes_cons (e : Expr) (es : List Expr) :
     Expr.sizes (e :: es) = e.size + Expr.sizes es := by
   simp [Expr.sizes, Expr.size] <;> omega
+
+/-- Every node counts itself: **each `subexprs` clause emits `e`**, either as
+`e :: …` or as the catch-all `[e]`, so the list is never empty.
+
+This is what `evalArgs` needs and `evalExpr` never did. Walking an argument
+LIST, the step from `e :: es` to `es` drops `e.size` from the measure, and that
+is a decrease only if `e.size` is not zero — where every goal in the expression
+walk closed on the `+ 1` a constructor contributes.
+
+The proof is three lines because it does NOT go through `cases e`: `eq_def`
+turns the definition back into its `match`, and `split` splits the *clauses* —
+including the `some`/`none` pair under `typeTrait` and `constExpr` that a
+`cases` on `e` leaves as one unreduced variable. The earlier removal read a
+tactic's failure as the fact's absence. -/
+@[simp] theorem Expr.size_pos (e : Expr) : 0 < e.size := by
+  unfold Expr.size
+  rw [Expr.subexprs.eq_def]
+  split <;> simp
 
 /-- The expressions a block-scope declaration contains. -/
 def Decl.exprs : Decl → List Expr

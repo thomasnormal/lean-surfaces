@@ -305,10 +305,12 @@ so the evaluator RESOLVES instead. -/
 #guard EvalM.verdict mem0 (evalExpr ctx0 (.strLit "hi" "char[3]" noSpan))
   == .unsupported "string literal (inch 4: it needs a static object)"
 
--- A call refuses as `unsupported` — the cause that retires by climbing a
--- rung — and names the callee so a human can act on it.
+-- A call in a context with NO PROGRAM refuses as `unsupported` — the cause
+-- that retires by climbing a rung — and names the callee so a human can act
+-- on it. `ctx0` carries no function definitions; `Examples/c/sunfish/stmt.lean`
+-- is where a call with a program behind it actually runs.
 #guard EvalM.verdict mem0 (evalExpr ctx0
   (.call (.declRef "abort" "FunctionDecl" "void (void)" noSpan) [] "void" noSpan))
-  == .unsupported "call to 'abort' — the call semantics is inch 5"
+  == .unsupported "call to 'abort' in a context with no program — call it through 'callByName'"
 
 end Examples.c.sunfish.expr

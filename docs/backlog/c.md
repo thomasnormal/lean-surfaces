@@ -949,3 +949,183 @@ ahead in the queue. One ticket ahead of this one was **reaped by the staleness
 sweep** (`reaped stale ticket …-go (pid 73698 dead)`) — A9's sweep doing
 exactly its job, visible in the lane log, and worth one line here because a
 queue that only ever grows is the failure mode the sweep exists to prevent.
+
+---
+
+## 2026-08-23-c-11 — INCH 5's OPEN PROBLEM IS CLOSED, and the ∀-order discharge could not have been attempted before it
+
+The dispatch was the 7-site `J.1(16)` ∀-order discharge. The first thing
+that work found is that **the domain was unreachable**, so the discharge
+would have been a theorem about seven refusals. This entry is the repair
+that makes it reachable; the discharge itself is the next rung.
+
+### The finding, and it is one line of the model
+
+`docs/c23-spec-mirror.md` §5.3 describes the `J.1(16)` domain as *"7 call
+sites where the effectful argument is a nested call"*. That sentence names
+the domain **and** the reason it could not be evaluated:
+
+```
+LeanModels/C/C23/Stmt.lean:562   (before)
+  | some _ => refuseUnsupported
+      s!"nested call to '{nm}' — argument evaluation is inch 5's open problem"
+```
+
+**Every** call whose callee was a defined function refused. So an `∀ order`
+theorem stated over the seven sites would have quantified over seven
+`unsupported` refusals — true, unfalsifiable, and evidence of nothing.
+That is `2026-08-23-c-5`'s law arriving in a new costume: **a claim that
+cannot fail is not a check**, and a quantifier over an empty-in-practice
+domain is exactly such a claim. The obligation was therefore inverted:
+make the domain reachable first.
+
+### Why it was unreachable: two rejected shapes, and the third
+
+`CallHandler` had been through two designs before this one, and both
+failure modes are recorded in the type's own docstring:
+
+| shape | what it bought | what it cost |
+| --- | --- | --- |
+| `(Expr → EvalM CVal) → …` — hand the handler the evaluator | arguments evaluate in the caller's scope, per §6.5.3.3p4 | **termination died**: a recursive function passed into an opaque callee is constrained by nothing |
+| `Expr → List Expr → EvalM CVal` — hand it the arguments unevaluated | terminated | the handler holds the CALLEE's scope and has no evaluator, so it could not do the job at all |
+| **`Expr → List CVal → EvalM CVal`** — evaluate them first | both | one extra decrease goal, and `Expr.size_pos` |
+
+The third shape is the one the second's own docstring predicted:
+*"the shape that will solve it is an `evalArgs` inside the mutual block
+below, feeding the handler VALUES."* The prediction was right and the
+reason is worth stating generally: **the argument walk needs `evalExpr`'s
+recursion, so it has to live where `evalExpr`'s MEASURE lives.** Handing
+the evaluator out moves the recursion somewhere no measure covers; keeping
+the walk in the mutual block costs one goal.
+
+The expression layer is still FUEL-FREE, and for the reason it always was:
+`evalArgs` is structural on `Expr`, not on a call graph. The fuel-bearing
+recursion stays in `callFn`, one level down per call, which is what the
+new fuel gate measures.
+
+### `Expr.size_pos` comes back, and the earlier removal was a tactic verdict read as a fact
+
+The list measure is `2 * Expr.sizes es + 2`. Three decrease goals:
+
+| goal | needs |
+| --- | --- |
+| `evalExpr (.call c args)` → `evalArgs args` | `+2 < 2·c.size + 3` — free |
+| `evalArgs (e :: es)` → `evalExpr e` | the `+2` beating `evalExpr`'s `+1` when the tail is empty |
+| `evalArgs (e :: es)` → `evalArgs es` | **`0 < e.size`** |
+
+`Expr.size_pos` had been tried at `LeanModels/C/Ast.lean` and removed, with
+the reason recorded: `typeTrait` and `constExpr` carry an `Option Expr`, so
+`subexprs` has two clauses each and `cases e` does not split them. **That
+diagnosis was right about the tactic and wrong about the fact.** Every
+`subexprs` clause emits the node itself — as `e :: …` or as the catch-all
+`[e]` — so the list is never empty and the lemma is simply true:
+
+```lean
+@[simp] theorem Expr.size_pos (e : Expr) : 0 < e.size := by
+  unfold Expr.size
+  rw [Expr.subexprs.eq_def]
+  split <;> simp
+```
+
+`eq_def` turns the definition back into its `match` and **`split` splits the
+CLAUSES**, including the `some`/`none` pair that `cases e` leaves as one
+unreduced variable. Three lines. The general lesson, and it is the second
+time this lane has paid for it: **"my tactic failed" and "the fact is
+false" are different findings, and only one of them is worth recording as
+a reason not to try.** The removal note is now corrected in place rather
+than deleted, because the wrong version is the instructive half.
+
+### Non-vacuity, gated rather than asserted
+
+Every call gate this tier had entered through `callByName`, which takes
+**already-evaluated** arguments — so not one of them exercised a call in
+ARGUMENT position. New gates in `Examples/c/sunfish/stmt.lean`:
+
+* `c1` — `return pyfloordiv(7, 2);` — a call in expression position, its
+  arguments evaluated by `evalArgs`. Answers **3**.
+* `c2` — `return pyfloordiv(pyfloordiv(7, 2), 2);` — **the `J.1(16)` shape
+  itself**: two arguments, one of them a call. Answers **1**.
+* the outcome of `c2` is `"ran"`, stated as a match over all four
+  `Outcome` constructors, so the gate fails loudly if it ever refuses again.
+* `callByName 1` on the nested caller is a **`timeout`**, not a refusal —
+  fuel still bounds nesting, and exhaustion stays unpooled with refusal.
+
+`c2` is the gate that would have failed before this landing, and it would
+have failed with `unsupported`, not with a wrong number.
+
+### Two deletions and a message that had stopped being true
+
+`evalArgsLR` is **deleted** rather than kept. It was the left-to-right walk,
+sitting in `Stmt.lean` and unreachable, described as *"the shape the repair
+will re-attach to"*. The repair did not re-attach to it — argument
+evaluation had to move into `Expr.lean` to borrow the measure — so keeping
+it would have left two answers to one question, which is what
+`docs/family-architecture.md` §9.2 exists to stop.
+
+`noCalls`'s message read *"call to 'x' — the call semantics is inch 5"*.
+Inch 5 has landed; what remains true is that a bare `Ctx` has **no program
+behind it**, so the text now says that. This is the `Stmt.lean:343` docdrift
+class the audit named, caught before it aged.
+
+### Model and code landed together
+
+`docs/c-semantics-design.md` §4.1b said the handler *"takes the argument
+expressions UNEVALUATED"*. That was the design, and it is now false, so it
+is amended in the same commit rather than left for a reader to trip over.
+`docs/c23-spec-mirror.md` §5.3 gains the reachability paragraph — the
+J.1(16) row's status was never wrong about the count, only silent about
+whether the seven could be run.
+
+### What this does NOT claim
+
+The ∀-order obligation is **not discharged**. Left-to-right is written down
+as the canonical order and nothing more; `evalArgs` makes the property
+STATABLE about a function instead of unstatable about an opaque handler.
+The discharge — the effect-summary argument that at most one argument
+writes what its siblings read, over the 7 sites, with `0` sites having two
+effectful arguments to help — is the next rung and is named here so nobody
+reads this landing as having done it.
+
+### VERDICT — GREEN
+
+`tools/triad.sh --lane corder --classify --build-target "LeanModels.C
+Examples.c.sunfish.{expr,memory,stmt,guards}"`: queued **3714 s**, build
+**exit 0**, **19 jobs**, zero `error`/`✖`/`sorry` lines. The build itself
+took **17 s** — a scoped tier build on a warm clone, against 40 minutes for
+the spine build this lane paid two rungs ago, which is the whole argument
+for `--classify` when nothing shared has moved.
+
+| gate | result |
+| --- | --- |
+| `lake build` (tier + the four C fixtures) | **exit 0**, 19 jobs |
+| `tools/docs_check.py` | **91 / 91** marked blocks |
+| `harness/diff_test.py` | **1427 cases, 0 failed** — 1311 matched, 116 whitelisted |
+| `harness/c_profile_probe.py --check-lean` | **9 / 9** width/signedness points |
+| `harness/script_corpus.py` | **65 scripts, 0 failed** |
+| `tools/backlog-index.sh --check` | in sync, 197 entries |
+
+**COVERAGE (§5.4a): SCOPED, and here the scope is the whole story.** A
+scoped green does not cover modules that IMPORT the touched ones — so the
+question is who imports the C tier, and the answer is measured, not
+assumed: `grep '^import LeanModels\.C\(\.\|$\)'` over the tree returns
+**16 lines, every one of them inside `LeanModels/C/` or `Examples/c/`**.
+The C tier's importer set is exactly its own fixtures, all four of which
+are named as build targets above. That makes this scoped green a complete
+claim about the change, which a `tier` green is *not* entitled to be in
+general — the entitlement comes from the import census, and it is recorded
+here so the next lane checks rather than inherits it.
+
+`Expr.size_pos` is a new `@[simp]` lemma, which is the one thing in this
+landing with a blast radius beyond the tier. Measured too: nothing outside
+`LeanModels/C/` mentions `Expr.size`, and the lemma is namespaced to
+`LeanModels.C.Expr`.
+
+### Axiom ledger
+
+Unchanged, and that is the interesting part: adding a fifth function to
+`evalExpr`'s mutual block did not disturb the three drain-amendment
+theorems, which still prove and still carry `[propext, Classical.choice,
+Quot.sound]`. Their proofs go through `simp [evalExpr, …]`, i.e. through
+`evalExpr`'s equation lemmas, and those were the standing risk in
+enlarging the block. Named here because it was a risk that could have
+cost a tenure and did not.

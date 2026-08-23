@@ -479,24 +479,11 @@ structure Program where
 def Program.find? (p : Program) (name : String) : Option LeanModels.C.FunctionDefn :=
   p.fns.find? (·.name == name)
 
-/-- §6.5.3.3p4 — evaluate the arguments, LEFT TO RIGHT.
-
-**Currently unreachable**: the handler's reverted signature gives it no
-evaluator to pass here. Kept because it is the canonical-order half of
-Thomas's `∀ order` ruling and the shape the repair will re-attach to.
-
-**Left-to-right is the CANONICAL order, not the claim.** §6.5.3.3p10
-leaves the order indeterminately sequenced, and Thomas's ruling makes
-correctness a `∀ order` property; this function is how a witness is
-extracted, and the obligation is discharged per-site over the 7 sites the
-census found (`docs/c23-spec-mirror.md` §5.3). Structural on the list, so
-no fuel enters here. -/
-def evalArgsLR (ev : LeanModels.C.Expr → EvalM CVal) : List LeanModels.C.Expr → ExecM (List CVal)
-  | [] => pure []
-  | e :: es => do
-      let v ← ev e
-      let vs ← evalArgsLR ev es
-      pure (v :: vs)
+-- `evalArgsLR` lived here, unreachable, as "the shape the repair will
+-- re-attach to". The repair did not re-attach to it: argument evaluation
+-- had to move INTO `Expr.lean`'s mutual block to borrow `evalExpr`'s
+-- measure, so the real function is `C23.evalArgs` and this copy is deleted
+-- rather than left as a second answer to one question.
 
 /-- §6.5.3.3p4 / §6.9.2p7 — give each parameter its own automatic object
 and store the argument into it.
@@ -540,7 +527,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
     | some body => do
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
-        let handler : CallHandler := fun callee _ =>
+        let handler : CallHandler := fun callee vs =>
           let nm := calleeNameOf callee
           if nm == "<indirect>" then
             -- 19 sites, every one through `movecb`. The callback protocol
@@ -549,17 +536,14 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             refuseUnsupported "indirect call through a function pointer (movecb)"
           else
             match prog.find? nm with
-            -- One of the 27 externals. Classifiable WITHOUT evaluating the
-            -- arguments, which is why this arm survives the handler's
-            -- reverted signature: cause `libc`, which retires by widening
-            -- the slice and never pools with the other two.
+            -- One of the 27 externals: cause `libc`, which retires by
+            -- widening the slice and never pools with the other two.
             | none => throw (.libc nm)
-            -- A NESTED call to a defined function needs its arguments
-            -- evaluated in the CALLER's scope, and the handler no longer
-            -- receives a way to do that — see `CallHandler`'s note. This is
-            -- inch 5's open problem, refused by name rather than guessed.
-            | some _ => refuseUnsupported
-                s!"nested call to '{nm}' — argument evaluation is inch 5's open problem"
+            -- A NESTED call to a defined function. `evalArgs` has already
+            -- evaluated `vs` in the CALLER's scope (§6.5.3.3p4), so this is
+            -- the ordinary call, one fuel down — the recursion this whole
+            -- definition is built around, and the arm that used to refuse.
+            | some g => callFn fuel prog g vs
         let ctx0 : Ctx :=
           { env := [], enums := prog.enums, layout := prog.layout, call := handler }
         let ctx ← bindParams prog.layout ctx0 f.params args

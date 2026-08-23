@@ -281,33 +281,47 @@ def calleeNameOf : Expr → String
   | .declRef n _ _ _ => n
   | _ => "<indirect>"
 
-/-- What a call site delegates to: **the caller's own evaluator**, the
-callee, and the ARGUMENT EXPRESSIONS, unevaluated.
+/-- What a call site delegates to: the callee expression and its arguments
+**already evaluated, in the CALLER's scope**.
 
-Two things this signature gets right that the inch-3 draft did not.
+**This signature is the repair of inch 5's open problem, and the two
+rejected shapes are worth keeping.** §6.5.3.3p4 evaluates arguments in the
+caller's scope, so inch 5 first tried `(Expr → EvalM CVal) → …`, handing
+`evalExpr ctx` to the handler as a closure. That broke termination: a
+recursive function passed into an OPAQUE callee cannot be shown to
+terminate, because nothing constrains what the callee does with it. The
+retreat was `List Expr` — unevaluated — which terminated by handing the
+handler a job it had no way to do, and every nested call to a defined
+function refused.
 
-**The evaluator is NOT passed in, and the attempt to is recorded.**
-§6.5.3.3p4 evaluates arguments in the CALLER's scope, so inch 5 tried
-`(Expr → EvalM CVal) → …`, handing `evalExpr ctx` to the handler as a
-closure. **That broke termination**: a recursive function passed into an
-OPAQUE callee cannot be shown to terminate, because nothing constrains
-what the callee does with it. Reverted. Supplying the caller's context
-without a closure is inch 5's open problem, and the shape that will
-solve it is an `evalArgs` inside the mutual block below, feeding the
-handler VALUES.
+The shape that works is the one `CallHandler`'s own note predicted:
+**`evalArgs` inside the mutual block below, feeding the handler VALUES.**
+The recursion is then `evalExpr`'s, where the measure already lives, and
+the callee is opaque again because it receives data rather than a function.
 
-**The ORDER stays the handler's choice**, which is where Thomas's ruling
-lives: §6.5.3.3p10 leaves argument evaluation indeterminately sequenced,
-so `∀ order` is a property of the handler, not of this type.
+**The ORDER is now this layer's, not the handler's**, and that is a
+deliberate move of the obligation. §6.5.3.3p10 leaves argument evaluation
+indeterminately sequenced (`J.1(16)`); `evalArgs` fixes left-to-right as
+the CANONICAL order for extracting witnesses, and Thomas's `∀ order`
+ruling becomes a theorem about `evalArgs` — a thing that can be stated —
+rather than a property of an opaque handler, which could not be. -/
+abbrev CallHandler := Expr → List CVal → EvalM CVal
 
-Taking expressions rather than values is still what keeps this layer
-fuel-free: `evalExpr` hands the list off without recursing through it. -/
-abbrev CallHandler := Expr → List Expr → EvalM CVal
+/-- The handler for a context with **no program behind it**: a bare `Ctx`
+knows names, enums and layout, and nothing about function definitions, so
+there is nothing to call INTO.
 
-/-- The inch-3 handler: every call refuses as `unsupported`, which is the
-cause that retires by climbing a rung — NOT `libc`, and never silently. -/
+It refuses as `unsupported` — the cause that retires by climbing a rung —
+NOT `libc`, and never silently. The arguments have already been evaluated
+by then (`evalArgs`), which is deliberate: their effects are the caller's,
+and a refusal must not un-happen them.
+
+The message used to read *"the call semantics is inch 5"*. Inch 5 has
+landed and `callFn` supplies a real handler; what remains true is only
+that THIS context has no program. -/
 def noCalls : CallHandler := fun callee _ =>
-  refuseUnsupported s!"call to '{calleeNameOf callee}' — the call semantics is inch 5"
+  refuseUnsupported
+    s!"call to '{calleeNameOf callee}' in a context with no program — call it through 'callByName'"
 
 /-! ## Layout — the implementation-defined surface, PARAMETERIZED
 
@@ -748,9 +762,12 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         | none => refuseUnsupported s!"unknown enum constant '{name}'"
       else refuseUnsupported s!"name '{name}' in value position without a conversion"
 
-  -- §6.5.3.3 — the call, DELEGATED. This layer is fuel-free precisely
-  -- because it does not evaluate the arguments; see `CallHandler`.
-  | .call callee args _ _ => ctx.call callee args
+  -- §6.5.3.3p4 — the arguments are evaluated HERE, in the caller's scope,
+  -- and the handler receives VALUES. Still fuel-free: `evalArgs` is in this
+  -- mutual block and shrinks the same `Expr` measure.
+  | .call callee args _ _ => do
+      let vs ← evalArgs ctx args
+      ctx.call callee vs
 
   -- §6.5.4.4 — `sizeof`, answered by the layout, never computed here.
   | .typeTrait trait argTy sub ty _ =>
@@ -772,6 +789,37 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .compoundLit .. => refuseUnsupported "compound literal (inch 4)"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
   termination_by e => 2 * e.size + 1
+  decreasing_by all_goals (simp_wf <;> omega)
+
+/-- §6.5.3.3p4 — a call's arguments, evaluated in the CALLER's scope,
+**left to right**.
+
+This is the function inch 5 named and could not write, and it is in the
+mutual block for the reason the failure taught: the recursion it needs is
+`evalExpr`'s, so it must sit where `evalExpr`'s measure does. Handing the
+evaluator OUT to a handler put the recursion somewhere nothing could
+constrain it; keeping it here costs one extra decrease goal.
+
+**LEFT-TO-RIGHT IS THE CANONICAL ORDER, NOT THE CLAIM.** §6.5.3.3p10
+leaves argument evaluation *indeterminately sequenced* — `J.1(16)`, the
+one Annex J entry this tier's `∀ order` ruling actually ranges over — so
+this definition is how a WITNESS is extracted, and correctness is the
+separate `∀ order` obligation over the 7 sites `docs/c23-spec-mirror.md`
+§5.3 measured. Writing the canonical order down is what makes that
+obligation STATABLE; it does not discharge it, and nothing here should be
+read as if it did.
+
+The measure is `2 * Expr.sizes es + 2`, and the `+ 2` is load-bearing:
+the head step must beat `evalExpr`'s `2 * e.size + 1` for a list whose
+tail is empty, and the tail step needs `0 < e.size` — which is why
+`Expr.size_pos` had to come back. -/
+def evalArgs (ctx : Ctx) : List Expr → EvalM (List CVal)
+  | [] => pure []
+  | e :: es => do
+      let v ← evalExpr ctx e
+      let vs ← evalArgs ctx es
+      pure (v :: vs)
+  termination_by es => 2 * Expr.sizes es + 2
   decreasing_by all_goals (simp_wf <;> omega)
 
 /-- §6.5.3.4 — the ADDRESS of `base.field` / `base->field`.

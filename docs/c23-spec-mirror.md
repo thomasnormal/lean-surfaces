@@ -358,6 +358,18 @@ address computations or plain scalar reads, so the per-site discharge is
 question that belongs to the calls inch, priced at **7 sites rather than
 320**.
 
+**REACHABILITY, and it decides when the discharge can be attempted.** "The
+effectful argument is a nested call" is not only the shape of the domain —
+until inch 5's handler repair it was also the reason the domain could not
+be evaluated at all. A `CallHandler` taking UNEVALUATED arguments had no
+evaluator for them, so every nested call to a defined function refused,
+and a `∀ order` theorem stated then would have quantified over **seven
+refusals**: true, and evidence of nothing. The repair (`evalArgs` inside
+the expression layer's mutual block; the handler takes `List CVal`) makes
+the domain reachable, and only then is the obligation worth stating. This
+is `2026-08-23-c-5`'s law applied to a quantifier: **a claim that cannot
+fail is not a check.**
+
 **Items not yet reached** are not in the register. An item enters when an
 inch touches it, and it is decided then — never silently.
 

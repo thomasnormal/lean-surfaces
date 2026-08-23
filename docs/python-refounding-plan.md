@@ -459,9 +459,21 @@ different shape. `genmoves_ray` (20 sites) is the eventual payoff and the right
    §2 ceiling is the plan's only real unknown: if `bound_depth`-scale statements
    re-prove under `mvcgen`+`grind`, the whole estate is class (a) and
    `twinAgrees` is never needed; if they do not, `twinAgrees` becomes the
-   central artifact for 671 theorems. **Everything else in this document is
-   already measured; this is the one number that is not.** Spike it before
-   sequencing the remaining ~1 000 theorems.
+   central artifact for **334 theorems — not 671.** **Everything else in this
+   document is already measured; this is the one number that is not.** Spike it
+   before sequencing the remaining ~1 000 theorems.
+
+   > **CORRECTED, and the correction was already in this file — twice.** §2.6
+   > retires "671 theorems in four files" explicitly (*"§2.6 retires that
+   > figure"*, and again at §2.6's own "including §3's '671 theorems in four
+   > files'"), because 671 counted every theorem in those files while only the
+   > **interpreter-facing** third can exercise the ceiling at all. This
+   > recommendation was written against the pre-§2.6 count and never updated,
+   > so the document argued with itself: it retired a figure in one section and
+   > priced its top recommendation with it in another. **A number retired in
+   > one section is not retired until every section that spends it is
+   > re-read** — the provenance law (§5.4a) pointed at a document rather than
+   > at a measurement.
 
 ---
 

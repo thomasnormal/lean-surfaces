@@ -16,6 +16,36 @@ principle I forbids swapping a validated definition for an unvalidated one; the
 gate below is what would eventually earn that right, and `twinAgrees` (§8.5) is
 what would earn it in a theorem.
 
+> **SUPERSEDED (2026-08-23) — the paragraph above is the rebuild's FOUNDING
+> premise, and the gate below earned the right it describes.** Kept rather
+> than deleted, because the premise is what makes the acceptance argument
+> legible; but a reader must not take it for the current state.
+>
+> What is true now, verified in the tree rather than asserted:
+>
+> * **The runner IS the rebuild.** `Main.lean` imports
+>   `LeanModels.Python.Monadic` and dispatches through `Monadic.callInMono`
+>   and `Monadic.runScriptClockMono`. There is no `--monadic` flag any more,
+>   on the runner or on any of the three harnesses — the flag existed to
+>   select between two interpreters, and there is one.
+> * **`Semantics.lean` says `PARTLY LEGACY` in its own first line**, and
+>   master (`c4f8184`) records the registry consequence: *"Python's definition
+>   is the monadic interpreter and the deep interpreter is the legacy layer
+>   under the erosion contract."*
+> * **The one clause still literally true is the narrowest one**:
+>   `LeanModels/Python.lean` — the *library root* — still does not import the
+>   rebuild. That is a fact about the library root, not about which
+>   interpreter defines the tier, and reading it as the latter is the trap
+>   this note exists to close.
+>
+> **And `twinAgrees` is not what earned it.** The right was earned by the
+> differential gate, not by a theorem; `docs/python-refounding-plan.md` §2.6
+> then re-scoped the `twinAgrees` question to the interpreter-facing third of
+> the estate. **There is no §8.5 in this document** — the anchor dangles in
+> all four places it appears (here, §3.1's lead-in, and twice in §7). The
+> section that actually reasons about `twinAgrees` is the refounding plan's
+> §3.
+
 ---
 
 ## §0 THE VERDICT SO FAR, first
@@ -53,6 +83,15 @@ constructed — the remaining `notYet` sites are unreachable defensive arms.
 **Both corpora were green in the SAME run**, which §5.3.3 is the reason for
 insisting on. **The rebuild is NOT merged**: the branch remains its home per the
 standing ruling, and the merge is the coordinator's call.
+
+> **STATE AS OF 2026-08-23.** Still the coordinator's call, and still
+> unmerged — but the branch is no longer the rebuild alone. It now carries
+> the `RefusalCause π` / `Loud` payload landing that master's own `c4f8184`
+> dispatched to Core and that two tiers (C, ES) are explicitly HOLDING for,
+> plus the rung-3b capability fix that closes 25 `keys_*`/`star_dict` rows.
+> The merge is therefore no longer only about which interpreter Python uses;
+> it is what releases those two holds. See `docs/backlog/pyrebuild.md`
+> §2026-08-23-pyrebuild-2.
 
 The three things a later session inherits and does not have to invent: the fuel
 architecture, the gate command, and a frontier that is **bucketed by arm** rather
@@ -278,6 +317,25 @@ rebuild's call boundary is the *same* boundary, not a similar one — which is w
 lets `callInMono` have `callIn`'s type and the harnesses compare them directly.
 
 ### 3.1 THE PRICE OF FIDELITY, measured — and it is not free
+
+> **PROVENANCE (added 2026-08-23). EVERY NUMBER IN THIS SECTION WAS MEASURED
+> AT `jp := false`, AND NONE OF THEM SAYS SO.** `Std.Tactic.Do`'s `mvcgen`
+> config defaults `jp` to `false` (`Std/Tactic/Do/Syntax.lean:43`, checked in
+> the pinned toolchain), and no measurement below ever passed `+jp`. Core's
+> own docstring for that option describes aggressive `if`/`match` splitting
+> with exponential VC blow-up as the thing `jp` controls — **which is this
+> section's failure mode named exactly**: the gate dies with `timeout at whnf`
+> *inside `mvcgen`'s splitting*, and `evalOpen`'s `.name` arm is a nine-way
+> `match` nested four deep.
+>
+> So the ceilings below are **not** evidence about `mvcgen` in general; they
+> are evidence about `mvcgen` at `jp := false`. `docs/python-refounding-plan.md`
+> §4.5 adopted the rule — *every VC number from now on records its `jp`
+> setting* — but adopted it in a **different file from the one holding the
+> numbers**, which is how a retroactive marking goes unread. It is written
+> here now, next to the figures it qualifies. (The governing law is
+> `docs/family-architecture.md` §5.4a; §4.5's citation of "§5.4a" resolves
+> there, not inside this document, which has no §5.4a.)
 
 The pilot's shallow twin closed GATE 3's **full four-deep** shape
 (`score = pst[p][j] - pst[p][i]`) with an `mvcgen` step of **568 ms**. The same
@@ -807,8 +865,7 @@ any/all (6). What is left, in measured order:
    module bindings, `max`/`min` over a heap referent (1).
 3. ~~The script executor.~~ **DONE** — see §6.2.
 
-Then, and only then, `twinAgrees` (§8.5) — which this rebuild does not attempt
-and does not need in order to be measured.
-
-Then, and only then, `twinAgrees` (§8.5) — which this rebuild does not attempt
-and does not need in order to be measured.
+Then, and only then, `twinAgrees` (§8.5 — dangling, see the note at the head
+of this document; the live discussion is `docs/python-refounding-plan.md` §3)
+— which this rebuild does not attempt and does not need in order to be
+measured.

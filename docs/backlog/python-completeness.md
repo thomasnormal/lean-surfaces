@@ -606,3 +606,68 @@ Five new witnesses, all REFUSE today: `dict.values`, `dict.items-consumed`
 (3c-i's targets), `dict.view-escapes` (3c-ii's marker),
 `dict.values-identity-eq` and `dict.keys-set-algebra` (the two traps). 111
 witnesses.
+
+## 2026-08-23-pycomplete-9 — 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap
+
+The sequencing note asked that 3c-i's footprint stay "inside the two shared
+pure workers + witnesses", so the successor's re-merge would be trivially
+textual. **That footprint is not achievable for a CORRECT 3c-i**, and the
+census already contains the proof. Recording it before a ticket is spent on it.
+
+### Why the shared-worker route is a silent wrong answer
+
+The two shared sites are `Semantics.lean`'s dict attribute-call PLAN (admits
+`.get`/`.clear`) and `enumerate()`-over-a-dict. Admitting `.keys()`/
+`.values()`/`.items()` in the plan means the call must ANSWER something, and
+the only thing a pure plan can answer is a value. A snapshot is the obvious
+one — and a snapshot is measurably wrong:
+
+    d = {1: 'a'};  k = d.keys();  d[2] = 'b';  print(list(k))
+    CPython: [1, 2]        a snapshot would print: [1]
+
+That is `dict.view-escapes`, already a witness (§pycomplete-8). So the
+shared-worker route buys 3c-i by installing exactly the failure the loudness
+doctrine exists to prevent, in the one shape the census had already measured.
+**The constraint and correctness point in opposite directions, and correctness
+wins.**
+
+### What the code says the real footprint is
+
+Fusion is CONTROL, and the repo already knows it: the only view form in tier
+today is recognised SYNTACTICALLY at the statement level —
+`Monadic/Script.lean`'s `.forStmt target (.call (.attribute d "items" …) …)`
+arm. Every consumer (`sum`/`tuple`/`list`/`set`/`any`/`all` via `iterValues`,
+`sorted`/`max`/`min` via `sortedValH`/`extremumValH`) receives an ALREADY
+EVALUATED `RVal`, so no pure worker can tell `list(d.keys())` from
+`k = d.keys()`. Only the call site can.
+
+### The corrected split — and the first piece is genuinely small
+
+* **3c-i-a — `for` over a view, at every scope.** `for k in d.keys():`,
+  `for v in d.values():`, `for k, v in d.items():`. **This is one FIELD on
+  3a's frame**: `GenFrame.forDict` already carries
+  `(target, addr, i, n, sv, body)`, so adding a view KIND turns
+  `for k in d` and all three view loops into the SAME cursor, with
+  `dictStep`'s `yieldKey` generalised to yield the key, the value, or the
+  `(k, v)` tuple. Three cursor paths to touch — the same three 3a taught us
+  to check — plus the syntactic recognition. **`for k, v in d.items():` at
+  FUNCTION scope is the single most common dict idiom in real Python, and
+  today it refuses** (`dict.items-in-function`).
+* **3c-i-b — consuming CALLS.** `list(d.keys())`, `sorted(d.values())`,
+  `sum(d.values())`, `tuple(d.items())`, `dict(d.items())`. Needs one
+  argument-evaluation helper that recognises the view call before evaluating
+  it, wired at the consumer sites.
+* **3c-i-c — `enumerate(d)`.** Live, so it needs its own frame like `forDict`
+  — it cannot ride a snapshot either.
+
+### The recommendation
+
+Take **3c-i-a** as the next ticket. It is the dominant idiom, it is one field
+plus arms on machinery inch 3a just landed and verified, and its footprint is
+`Runtime.lean` + monadic control + witnesses — the same shape the ruling
+already sanctioned for 3a, and about as textual for the successor to re-merge
+as anything that touches control can be. 3c-i-b and 3c-i-c follow separately.
+
+**Nothing here touches `harness/monadic_gate.py`**, per the end-condition; the
+new witnesses' expectations go in the census's CPython-written column and
+`diff_test`.

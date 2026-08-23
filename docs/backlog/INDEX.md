@@ -46,6 +46,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
+| `2026-08-23-pycomplete-9` | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |
 | `2026-08-23-architecture-9` | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |
 | `2026-08-23-pycomplete-8` | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
 | `2026-08-23-lean-tier-8` | `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost | lean-tier |

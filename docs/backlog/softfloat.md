@@ -278,6 +278,28 @@ quiet way, passing every in-range test. **The lesson for cross-lane filing:
 check what the owner has already landed before filing, and file the residue,
 not the report.**
 
+**2a. THE CLAMP WARNING WAS NOT PREVENTIVE — IT FOUND A LIVE BUG.** The residue
+this lane filed to ES (core's `toInt` clamps; ECMA-262's `ToInt32`/`ToUint32`
+reduce modulo 2³²) was written as a warning about a conversion that tier **has
+not built yet**. The ES lane audited **both** `toInt64` sites rather than the
+reported one, and found the second was already wrong: `applyBinary`'s `%` was
+
+    | "%" => return .num (a - b * (a / b).toInt64.toFloat)
+
+and `Float.toInt64` clamps, so a large quotient **silently produced a wrong
+remainder that every in-range test would have passed** (`2026-08-23-es-1`).
+`%` is now REFUSED pending the exact-value route. Their audit also confirmed
+the good half: `numberToString`'s site is guarded by `n.abs < 1e15`, far inside
+`Int64`, so the clamp cannot fire there — *"the distinction the warning draws is
+exactly the distinction the guard makes"*.
+
+**So the lesson from finding 2 inverts.** There the routing beat the file and
+the report arrived redundant; here the same reduced entry — *the residue, not
+the report* — was the part that carried a defect nobody had looked for. **Filing
+the residue is not a courtesy to the owner, it is where the value was.** The
+`es.md` INBOUND entry has since been dropped entirely: fully absorbed, acted on,
+and its conflict on rebase was the third collision of the same tail race.
+
 **3. A SLOPPY LIVENESS CHECK, caught by looking twice.** This lane's pre-rebase
 "is a build running in my clone" probe was a `pgrep | while read | grep -c`
 pipeline that returned **2** when the true answer was **0** — the one live

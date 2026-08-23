@@ -1221,6 +1221,36 @@ family adopts the monad's **shape** (`ExceptT ρ (StateT W Halt)`, its
 the iso as available rather than mandatory. A tier with no kernel-reducible
 runs to protect may spell it either way.
 
+**AND THE LAYER ORDER PAYS OFF A SECOND TIME — fuel monotonicity becomes
+MECHANICAL.** Measured **in scratch** by the successor's `Monadic.fuelMono`
+feasibility probe (kernel-checked there; **not yet landed**, and stated as
+such). The ∃F collapse's one missing lemma is provable **without touching
+the `Kont` knot and without weakening anything** — and the reason is
+§3.4's own covenant:
+
+* the **only** `catch` in the fuel-free half is `tryCatch` on
+  `ExceptT PyErr` — **the PROGRAM's channel**;
+* **nothing observes the `Halt` layer**, so **no arm can branch on a
+  timeout**;
+* therefore every arm is a **bind / ite / tryCatch composition**, and
+  `tryCatch_apply` — *`Loud` passes straight through; the handler is
+  reached only from `ρ`* — makes the induction mechanical.
+
+> **The layer order chosen for STATE-RETENTION ON RAISE is what makes FUEL
+> MONOTONICITY mechanical.**
+
+That is the same shape as C's routing law paying for itself at adoption: a
+decision taken for one reason turning out to buy a second. Here the
+**speaker split** (§3.4) is doing the work — because `Halt` is the model's
+channel and no program construct observes it, monotonicity has no case to
+consider where a timeout is inspected.
+
+**Recorded as the family's MONOTONICITY RECIPE for ρ-bearing tiers**, with
+its own boundary marker: **`le_tryCatch` is the one lemma SV's `fuelMono`
+never needed**, because SV has **no `ρ`**. A tier with no program-error
+channel gets a shorter recipe; a tier that adds one inherits exactly this
+lemma.
+
 **`Run σ α` IS A FAITHFULLY-EMBEDDED VIEW of that stack — a RETRACT, not
 an isomorphism.** Both stacks `#synth` a `WPMonad` with **zero instances
 written**, which **retires the 2026-08-13 spike's obstacle 1** — *"`Run` is
@@ -3236,6 +3266,39 @@ ones. **No single grep produced the number.** That is the law's own
 prescription arriving in its own calibration: enumerate the positions, and
 expect more than one pattern to be needed.
 
+**AND THE MOTIVATED-ERROR RULE, from a census that was wrong TWICE before
+it was right — and both errors flattered.** SoftFloat's consumer count ran
+**319 → 170 → 13 candidates → 0 qualified crossings.** The two wrong
+numbers came from the identifier trap in its purest form: **bare member
+names are English words and other types' members**, and `.exp` / `.log`
+were **Mathlib's `Real.exp` / `Real.log`**.
+
+**What makes this more than a third instance of the identifier law is the
+DIRECTION.** A bigger consumer list is **a bigger mandate for the lane
+that is counting**. The error was not random with respect to the
+measurer's interest:
+
+> **When an instrument's error would ENLARGE ITS OWNER'S MANDATE, treat the
+> number as FLATTERING until a recall-preserving narrowing reproduces it.**
+
+That is §5.4a's asymmetry with a cause attached. The provenance law
+observes that misleading numbers tend to read clean; this says **where to
+expect it**: at any measurement whose overstatement would justify the
+measurer.
+
+**AND THE FIX IS THE INSTRUCTIVE PART — it was not a cleverer regex.** A
+sharper pattern would have been one more guess. What worked was a
+**narrowing that CANNOT LOSE RECALL**: *a file with no `Float` token in
+code cannot contain a `Float` crossing.* The narrowing is justified by an
+argument about the domain, so it is safe by construction rather than by
+being careful.
+
+And the leftovers were handled by **not counting them**: dotted rows were
+kept as **CANDIDATES, never merged into the count**, and **resolved by
+reading**. **13 candidates became 0 qualified crossings** — a number that
+only exists because the ambiguous rows were held apart from the total
+instead of being folded in with a plausible assumption.
+
 **Read the last two rows together, because they are the practical point.**
 The destructure count (11) **over**-estimates real breakage (1) — it is an
 upper bound, which is what you want for planning. The build report (6)
@@ -3757,6 +3820,31 @@ never fired is a design, not a control:
   `tools/triad.sh` treats those exits as a resource kill rather than a red
   build and re-runs once, which is base rule 2 firing as designed rather
   than a lane deciding a red was spurious.
+
+**THREE LEAN TOOLING HAZARDS, recorded because each cost a red and none
+announces itself.**
+
+* **Through a `def`-ALIAS, DOT NOTATION PICKS THE TARGET'S LEMMA.**
+  `VEnv.HasType.instN` and `VEnv.IsDefEq.instN` **take their arguments in
+  different orders**, and `HasType` is a `def` unfolding to `IsDefEq` — so
+  dot notation resolves to the **`IsDefEq`** lemma and **mis-slots
+  silently**. It worked for `instL` only because those two orders
+  *coincide*, which is the worst kind of luck: it taught the wrong lesson
+  before it produced a red. **Name the lemma you mean.**
+* **Nested inductives refuse `induction`.** Use the equation compiler's
+  **`<f>.induct`** — and note the calling convention differs: the arms
+  arrive **unfolded**, so **`apply` it**; `induction … using` fails.
+* **A plain `def` delta-unfolds past the motive.** Prove the `_iff` form
+  first, then `attribute [irreducible]` — otherwise the definition
+  disappears underneath the induction that was supposed to be about it.
+
+**AND THE ONE-SECOND-BUILD RULE — a positive artifact, not just a positive
+assertion.** `exit 0` with **no `Build completed` line is not evidence**: a
+build that did nothing and a build that did everything exit the same way.
+The evidence is **the olean mtime landing in the build's second**. That is
+the same discipline as the positive assertion below, carried one step
+further — from *"do not infer success from the absence of errors"* to
+*"name the artifact whose existence success would have produced."*
 
 **And the wrapper asserts success POSITIVELY**, which is §5.4a implemented
 rather than described: it greps for `Build completed successfully` instead

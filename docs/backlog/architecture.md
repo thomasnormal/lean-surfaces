@@ -958,3 +958,66 @@ is the *remove the second model* procedure **executed rather than described**.
 The capability-parity audit remains the rule for whatever windows remain open;
 where the window has closed, the ordinary differential covers the class again, as
 the end condition said it would.
+
+## 2026-08-23-architecture-14 — Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards
+
+**(1) THE MOTIVATED-ERROR RULE.** SoftFloat's consumer census ran **319 → 170 →
+13 candidates → 0 qualified crossings** — wrong twice before right, the identifier
+trap in its purest form (**bare member names are English words and other types'
+members**; `.exp`/`.log` were **Mathlib's `Real.exp`/`Real.log`**).
+
+**What makes it more than a third instance is the DIRECTION**: a bigger consumer
+list is **a bigger mandate for the lane doing the counting**. The error was not
+random with respect to the measurer's interest.
+
+> **When an instrument's error would ENLARGE ITS OWNER'S MANDATE, treat the
+> number as FLATTERING until a recall-preserving narrowing reproduces it.**
+
+That is §5.4a's asymmetry **with a cause attached** — the provenance law says
+misleading numbers tend to read clean; this says **where to expect it**.
+
+**And the fix is the instructive part: not a cleverer regex.** A sharper pattern
+is one more guess. What worked was a **narrowing that CANNOT LOSE RECALL** — *a
+file with no `Float` token in code cannot contain a `Float` crossing* — justified
+by an argument about the domain, so it is **safe by construction rather than by
+being careful**. Leftovers were handled by **not counting them**: dotted rows
+kept as **CANDIDATES, never merged into the count**, resolved by **reading**.
+**13 candidates → 0 crossings** is a number that only exists because the
+ambiguous rows were held apart instead of folded in with a plausible assumption.
+
+**Plus the one-second-build rule**: `exit 0` with **no `Build completed` line is
+not evidence** — a build that did nothing and one that did everything exit the
+same way. The evidence is **the olean mtime landing in the build's second**: from
+*"do not infer success from the absence of errors"* to *"name the artifact whose
+existence success would have produced."*
+
+**(2) THE LAYER ORDER PAYS OFF A SECOND TIME — `fuelMono` becomes MECHANICAL.**
+Measured **in scratch** (kernel-checked there; **not yet landed**). The ∃F
+collapse's one missing lemma is provable **without touching the `Kont` knot and
+without weakening anything**, and the reason is §3.4's covenant: the **only**
+`catch` in the fuel-free half is `tryCatch` on `ExceptT PyErr` — **the program's
+channel** — and **nothing observes the `Halt` layer**, so **no arm can branch on
+a timeout**. Every arm is therefore a bind/ite/tryCatch composition, and
+`tryCatch_apply` (Loud passes straight through; the handler is reached only from
+ρ) makes the induction mechanical.
+
+> **The layer order chosen for STATE-RETENTION ON RAISE is what makes FUEL
+> MONOTONICITY mechanical.**
+
+Same shape as C's routing law paying for itself at adoption: **a decision taken
+for one reason buying a second.** The **speaker split** is doing the work — no
+program construct observes `Halt`, so monotonicity has no case where a timeout is
+inspected. Recorded as the family's **monotonicity recipe for ρ-bearing tiers**,
+with its boundary marker: **`le_tryCatch` is the one lemma SV's `fuelMono` never
+needed**, because SV has **no ρ**.
+
+**(3) THREE LEAN TOOLING HAZARDS**, each of which cost a red and none of which
+announces itself. **Through a `def`-alias, dot notation picks the TARGET's
+lemma**: `HasType.instN` and `IsDefEq.instN` take arguments in **different
+orders**, and `HasType` unfolds to `IsDefEq`, so dot notation **mis-slots
+silently** — it worked for `instL` only because those orders *coincide*, which
+taught the wrong lesson before producing a red. **Name the lemma you mean.**
+**Nested inductives refuse `induction`** — use `<f>.induct`, whose arms arrive
+**unfolded**, so **`apply` it**; `induction … using` fails. **A plain `def`
+delta-unfolds past the motive** — prove the `_iff`, then `attribute
+[irreducible]`.

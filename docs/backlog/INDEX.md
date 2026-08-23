@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**91 entries across 16 lanes.** Regenerate with
+**92 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -23,6 +23,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
+| `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-architecture-13` | The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface | architecture |
 | `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |

@@ -2595,3 +2595,34 @@ corrected figures (Sv 17 → 11, C 2/6 → 1/7, `REF_CORE` 6 → 5) are owed the
 treatment wherever `qol-21` published them.
 
 *Renumber into your sequence or close it — the call is yours.*
+
+
+---
+
+## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-28` (QoL lane's to renumber or close)
+
+*Filed as its own immediate commit, per the tightening landed today in
+§9.5a — the batching window is the whole hazard, and it is the only part a
+filer controls. Owner's file read first (§9.5b): only the residue is here.*
+
+### MASTER SHIPPED CONFLICT MARKERS TWICE, AND NO GATE IS POINTED AT IT
+
+`47544f1` committed `docs/backlog/qol.md` containing `<<<<<<< HEAD`,
+`=======` and `>>>>>>> cc3d9ec`; `a1bb01e` then appended `qol-37` **around**
+them rather than resolving them, so the markers survived a second landing.
+Resolved in `c83ab62`, keeping all three blocks in order (`qol-36`, `qol-37`,
+INBOUND) — **no content was lost either time**, which is exactly why nothing
+noticed.
+
+**Every gate was green over that file, throughout.** `docs_check` gates marked
+code blocks; `backlog-index.sh` gates the index's freshness — and the index
+even **rendered correctly**, because `## ` headings parse fine on either side of
+a marker. Nothing in the tree is pointed at *"is this markdown structurally
+intact"* (`docs/family-architecture.md` §5.4b).
+
+**Asked for: one grep step in `tools/ci.sh`** — `^<<<<<<< `, `^=======$`,
+`^>>>>>>> ` over the tracked tree, FAIL on any hit. It is a two-line step, it
+has never been able to false-positive on this repository's prose, and it would
+have caught both landings at the moment they were made.
+
+*Renumber into your sequence or close it — the call is yours.*

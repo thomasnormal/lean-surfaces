@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**143 entries across 16 lanes.** Regenerate with
+**144 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -151,6 +151,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
+| `INBOUND` | `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `INBOUND` | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
@@ -164,4 +165,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 
-**12 heading(s) do not use the §9.5 id scheme** and sort last.
+**13 heading(s) do not use the §9.5 id scheme** and sort last.

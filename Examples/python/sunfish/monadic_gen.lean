@@ -231,4 +231,130 @@ theorem genSilent_branch (m : Module) (st st' st₁ : FrameState) (test : Expr)
 #print axioms genSilent_while
 #print axioms genSilent_branch
 
+/-! ## §6 `GenEmits` — and the drain is a RELATION, not a function
+
+The trunk states "what a continuation yields" through `drainGen`, a function it
+had to write. That function lives in `VCGen.lean`, not `Semantics.lean`: it is
+PROOF-LAYER scaffolding, not an interpreter primitive. The rebuild therefore owes
+no such function, and this file does not write one — `GenYieldsM` is an
+inductive RELATION whose two constructors are the two things a continuation can
+do, each carrying its own single-fuel witness. The relation IS the drain.
+
+That is a definition REMOVED rather than ported, and it pays twice: there is no
+`drainGen_mono` to prove, and no fuel-indexed threshold to thread, because each
+step's witness is transported by `Mono.lean` where it is needed. -/
+
+/-- **What a continuation yields.** `done` is exhaustion; `yield` is one value
+and a resumption. Each step carries its own `∃ F`. -/
+inductive GenYieldsM (m : Module) :
+    FrameState → GenCont → List RVal → FrameState → Prop
+  | done {st st' k} (h : ∃ F, toRun ((kont m F).execGen k) st = .ok st' Option.none) :
+      GenYieldsM m st k [] st'
+  | yield {st st₁ st' k k' v vs}
+      (h : ∃ F, toRun ((kont m F).execGen k) st = .ok st₁ (some (v, k')))
+      (hrest : GenYieldsM m st₁ k' vs st') :
+      GenYieldsM m st k (v :: vs) st'
+
+/-- **The compositional object**: the frame PREFIX emits `ws` and falls through,
+leaving the machine at `st₁` with whatever was below it — for EVERY continuation.
+The interpreter only scrutinises head frames, so this is exactly as strong as the
+per-frame behaviour, and composition is `List.append` on both sides. -/
+def GenEmitsM (m : Module) (st : FrameState) (pre : GenCont)
+    (ws : List RVal) (st₁ : FrameState) : Prop :=
+  ∀ k vs st', GenYieldsM m st₁ k vs st' → GenYieldsM m st (pre ++ k) (ws ++ vs) st'
+
+theorem GenEmitsM.trans {m : Module} {st st₁ st₂ : FrameState}
+    {pre pre' : GenCont} {ws ws' : List RVal}
+    (h : GenEmitsM m st pre ws st₁) (h' : GenEmitsM m st₁ pre' ws' st₂) :
+    GenEmitsM m st (pre ++ pre') (ws ++ ws') st₂ := by
+  intro k vs st' hk
+  have := h' k vs st' hk
+  have := h (pre' ++ k) (ws' ++ vs) st' this
+  simpa [List.append_assoc] using this
+
+theorem GenEmitsM.nil {m : Module} {st : FrameState} :
+    GenEmitsM m st [] [] st := by
+  intro k vs st' hk; simpa using hk
+
+/-- **A silent transition transfers yields.** Only the HEAD step is rewritten —
+the rest of the derivation carries over untouched, which is the whole reason the
+relational form is cheaper than a drain function here. -/
+theorem GenYieldsM.of_silent {m : Module} {st st₁ : FrameState} {k k₁ : GenCont}
+    {vs : List RVal} {st' : FrameState}
+    (hs : GenSilentM m st st₁ k k₁) (h : GenYieldsM m st₁ k₁ vs st') :
+    GenYieldsM m st k vs st' := by
+  obtain ⟨d, hd⟩ := hs
+  cases h with
+  | done hF =>
+      obtain ⟨F, hFe⟩ := hF
+      exact .done ⟨F + d, by rw [hd F]; exact hFe⟩
+  | yield hF hrest =>
+      obtain ⟨F, hFe⟩ := hF
+      exact .yield ⟨F + d, by rw [hd F]; exact hFe⟩ hrest
+
+/-- A silent PREFIX, for every continuation, is emission-preserving. -/
+theorem GenEmitsM.silent {m : Module} {st st₁ st₂ : FrameState}
+    {pre pre₁ : GenCont} {ws : List RVal}
+    (hs : ∀ k, GenSilentM m st st₁ (pre ++ k) (pre₁ ++ k))
+    (h : GenEmitsM m st₁ pre₁ ws st₂) : GenEmitsM m st pre ws st₂ :=
+  fun k vs st' hk => GenYieldsM.of_silent (hs k) (h k vs st' hk)
+
+/-- The `forGen` frame on a YIELD: the inner object steps, the target binds, and
+the loop frame is pushed back under the body. -/
+theorem genSilent_forGenCons (m : Module) (target : Expr) (ad : Addr)
+    (body : List Stmt) (st st₁ st₂ : FrameState) (v : RVal) (k' : GenCont)
+    (hstep : ∀ F, toRun (inFrame ((kont m F).stepIter ad)) st = .ok st₁ (some v))
+    (hasg : toRun (assignM target v) st₁ = .ok st₂ ()) :
+    GenSilentM m st st₂ (.forGen target ad body :: k')
+      (.block body :: .forGen target ad body :: k') :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt]
+    rw [toRun_bind, hstep F]
+    dsimp only [Run.bind]
+    rw [toRun_bind, hasg]
+    rfl⟩
+
+/-- …and on EXHAUSTION: the loop frame pops and the tail resumes. -/
+theorem genSilent_forGenDone (m : Module) (target : Expr) (ad : Addr)
+    (body : List Stmt) (st st₁ : FrameState) (k' : GenCont)
+    (hstep : ∀ F, toRun (inFrame ((kont m F).stepIter ad)) st
+      = .ok st₁ Option.none) :
+    GenSilentM m st st₁ (.forGen target ad body :: k') k' :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt]
+    rw [toRun_bind, hstep F]
+    rfl⟩
+
+/-- **ONE ROUND of `for x in <generator>` whose body FALLS THROUGH**, at
+`GenEmits` altitude — R2's chain step on the rebuilt interpreter. The inner
+object yields, the target binds it, the body emits `ws`, and the loop frame is
+still there for the rest.
+
+As on the trunk, the loop is NOT packaged as one induction here: an infinite
+inner generator has no remainder list to induct on, so the rounds are chained by
+the CALLER and `hrest` is where its own induction (or its `break`) goes. -/
+theorem GenEmitsM.forGenRound {m : Module} {target : Expr} {ad : Addr}
+    {body : List Stmt} {st st₁ st₂ st₃ st₄ : FrameState} {v : RVal}
+    {ws ws' : List RVal}
+    (hstep : ∀ F, toRun (inFrame ((kont m F).stepIter ad)) st = .ok st₁ (some v))
+    (hasg : toRun (assignM target v) st₁ = .ok st₂ ())
+    (hbody : GenEmitsM m st₂ [.block body] ws st₃)
+    (hrest : GenEmitsM m st₃ [.forGen target ad body] ws' st₄) :
+    GenEmitsM m st [.forGen target ad body] (ws ++ ws') st₄ :=
+  GenEmitsM.silent
+    (pre := [GenFrame.forGen target ad body])
+    (pre₁ := [GenFrame.block body, GenFrame.forGen target ad body])
+    (fun k => by
+      simpa using genSilent_forGenCons m target ad body st st₁ st₂ v k hstep hasg)
+    (GenEmitsM.trans hbody hrest)
+
+#print axioms GenYieldsM
+#print axioms GenEmitsM.trans
+#print axioms GenEmitsM.nil
+#print axioms GenYieldsM.of_silent
+#print axioms GenEmitsM.silent
+#print axioms genSilent_forGenCons
+#print axioms genSilent_forGenDone
+#print axioms GenEmitsM.forGenRound
+
 end Examples.python.sunfish.monadic_gen

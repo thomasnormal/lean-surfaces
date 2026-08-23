@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**220 entries across 16 lanes.** Regenerate with
+**222 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -86,6 +86,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
 | `2026-08-23-architecture-17` | Census-first applies to the LEMMA; and the retract framing earns a judgment | architecture |
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
+| `2026-08-23-lean-tier-16` | NEW CORNER CHARTERED: the export envelope. Three candidates eliminated by measurement, one stands | lean-tier |
 | `2026-08-23-architecture-16` | A generated model's relations are its own; the order lifts but the congruences don't | architecture |
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
 | `2026-08-23-lean-tier-15` | WAITING begins, and the first act was fixing the guards that WAITING depends on | lean-tier |
@@ -106,6 +107,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-lean-tier-11` | `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition | lean-tier |
 | `2026-08-23-c-11` | INCH 5's OPEN PROBLEM IS CLOSED, and the ∀-order discharge could not have been attempted before it | c |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
+| `2026-08-23-sunfish-rtrack-10` | `GenEmits.forGenRound` on the rebuild: R2's chain step closes | sunfish-rtrack |
 | `2026-08-23-softfloat-10` | STEP 3 SCOPED: the consumer census found a SECOND consumer, and the algorithm choice follows from the SPEC's own wording | softfloat |
 | `2026-08-23-pycomplete-10` | 3c-i-b hits a STRUCTURAL wall, and the fix is an ingestion rewrite, not a call-site fusion | python-completeness |
 | `2026-08-23-lean-tier-10` | DECISION BRIEF for Thomas: PR #43 does NOT unblock `TrProj.uniq`, and consuming it buys nothing this lane needs | lean-tier |

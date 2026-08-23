@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**159 entries across 16 lanes.** Regenerate with
+**162 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-43` | arming a byte-comparing gate arms the pins it does not have | qol |
 | `2026-08-23-qol-42` | the SV round-trip gate joins CI, and qol-40's orphan was half instrument | qol |
 | `2026-08-23-qol-41` | two tools that disagreed, and stamps that read the wrong repo | qol |
 | `2026-08-23-qol-40` | `laws.sh --gate-set`: §5.4b made checkable, and `.sv` has no gate | qol |
@@ -173,6 +174,8 @@ and every existing `§Lnn` reference still resolves there.
 | `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
 | `INBOUND` | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
 | `INBOUND` | `2026-08-22-softfloat-2` (C lane's to triage) | c |
+| `G9` | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
+| `G8` | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
 | `G7` | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
 | `G6` | INCH 3: the model reproduces a REAL crypto function, 35 rows, and the expected column was generated (2026-08-23) | go |
 | `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
@@ -180,4 +183,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 
-**13 heading(s) do not use the §9.5 id scheme** and sort last.
+**15 heading(s) do not use the §9.5 id scheme** and sort last.

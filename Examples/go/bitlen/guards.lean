@@ -24,7 +24,20 @@ arithmetic, and this is what came out. Its source, verbatim from
     }
 
 FIPS-140 crypto code — a better provenance than anything this lane could
-have written. Reproduced under the cite-and-paraphrase law;
+have written.
+
+**THE ORACLE'S PROVENANCE, so the printed column survives its
+generator.** The expected values in §3 were produced by compiling exactly
+the function above into a `main` that prints `"%d %d\n"` for each input,
+and running it:
+
+    $ go version    # go1.25.6 darwin/arm64
+    $ go build -o bl main.go && ./bl
+
+An audit noted that a vendored source marked *"NOT compiled as part of
+this repository"* shipped the column without the command that made it.
+The command is now here, the Go version is pinned, and the inputs are the
+list in §3 — so the column is reproducible from this file alone. Reproduced under the cite-and-paraphrase law;
 BSD-3-Clause, "Copyright 2009 The Go Authors", per
 `docs/go-charter.md` §1.4's ruling that the in-tree copies are taken under
 the repository's single instrument rather than the website's CC-BY-4.0.
@@ -283,16 +296,26 @@ def bitLenN (n : Nat) : Option Int := bitLen (n : Int)
 #guard bitLenN 9223372036854775808 == some (bitLenSpec 9223372036854775808)
 #guard bitLenN 18446744073709551615 == some (bitLenSpec 18446744073709551615)
 
-/-! ## Non-vacuity
+/-! ## Non-vacuity — the harness DISCRIMINATES
 
-A differential row that cannot fail is decoration. Two things are checked
-here, and the third — that a WRONG expectation actually breaks the build —
-was verified by flipping a row and watching Lean report it, then restoring
-(`docs/backlog/go.md` §G6). It is not left in the file, because a guard
-that must fail is not a guard. -/
+A differential row that cannot fail is decoration. An audit
+(`docs/quality-audit-2026-08-23.md`) caught this section failing its own
+standard: its rows were byte-identical to ordinary oracle rows above, so
+it checked nothing the file did not already check. These rows are
+different in kind — each asserts a NEGATIVE, which no oracle row does:
 
-#guard (bitLen 1024).isSome
-#guard bitLen 1024 == some 11
+* the model does not answer a neighbouring value,
+* and does not answer `none` (a refusal or a fuel exhaustion).
+
+Together they say the harness would notice if either failure mode
+appeared, which is what "can fail" means. The stronger check — that a
+wrong EXPECTATION breaks the build — is a flip test, run and recorded in
+`docs/backlog/go.md` §G6 and §G9, and deliberately not left in the file,
+because a guard that must fail is not a guard. -/
+
+#guard (bitLen 1024 == some 10) == false
+#guard (bitLen 1024 == some 12) == false
+#guard (bitLen 1024 == none) == false
 
 /-! ## Fuel is not decoration either
 

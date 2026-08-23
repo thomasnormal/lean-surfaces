@@ -1149,3 +1149,86 @@ No implementation was done and none is proposed here.
 
 `fallthrough` stays deferred (4.0%); the MM-oracle is untouched. Ticketed
 with explicit `--gates`; verdict below.
+
+---
+
+## G9 — THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23)
+
+`docs/quality-audit-2026-08-23.md` "## go". Three rows, none high, and the
+first is the one worth the entry.
+
+### 1. The non-vacuity section checked NOTHING — and it is this lane's own rule
+
+`Examples/go/bitlen/guards.lean` carried a section headed *"a differential
+row that cannot fail is decoration"* whose rows were **byte-identical to
+ordinary oracle rows above it**. So the section asserting that the harness
+can fail was itself decoration. **The rule was this lane's, written in
+this lane's own words, and this lane broke it one inch later.**
+
+Worth being exact about how: §G6 caught a *confusing* `!=` row, replaced
+it with `bitLen 1024 == some 11` for clarity — and that is precisely the
+oracle row from §3. The fix for a legibility problem introduced a
+duplication problem, and nothing checked for duplication.
+
+**Fixed by making the rows a different KIND of check.** They now assert
+NEGATIVES, which no oracle row does: the model does not answer a
+neighbouring value (`some 10`, `some 12`), and does not answer `none` (a
+refusal or an exhaustion). Together they say the harness would notice
+either failure mode. Verified non-vacuous by flipping one to `== true` and
+watching Lean report it.
+
+The stronger check — that a wrong EXPECTATION breaks the build — stays a
+flip test, run and recorded, and deliberately not in the file: a guard
+that must fail is not a guard.
+
+### 2. `LeanModels/Go/Stmt.lean`'s header was stale by three inches
+
+It still described the file as rung 1's syntax at rung 1's figures, after
+inches 2–4 had added struct declarations, the go1.22 loop-var branch,
+bare-`for` fuel, calls, compound assignment and shifts. Replaced with a
+table of what each inch added, and — the part that was actually
+misleading — a note that **the 56.9% figure is a property of the INGESTER
+vocabulary and has not moved**, while what moved is how much of it the
+WALKER steps. §G6's 633-files figure is the one to quote for the walker.
+Two numbers that measure different things, which is the same distinction
+§G7 had to draw for calls.
+
+### 3. The oracle column shipped without its generator
+
+The vendored `bitlen.go` said *"NOT compiled as part of this repository"*,
+so the `"what gc printed"` column had no reproducer. (The file itself is
+already gone — inch 4 inlined it to stop the classifier widening the build
+— but the point survived the file.)
+
+The docstring now carries the generator: the exact `printf` shape, the
+build-and-run command, and **`go1.25.6 darwin/arm64`** pinned. And it was
+checked rather than asserted: re-running the documented command and
+diffing against every `#guard` in the file gives **35 rows, 35 pairs, zero
+mismatches**. The column is reproducible from the file alone.
+
+### Why all three are the same defect
+
+None was a wrong answer; all three were **provenance decaying out from
+under a correct one** — a rule restated until it stopped biting, a header
+describing an older file, a column whose generator walked away. The
+instrument's `--compare` exists to stop exactly this in JSON. §G1 already
+recorded it happening in prose (the "21 kinds" figure); these are three
+more, and the pattern is now named three times in this lane.
+
+### Triad
+
+**Tenure GREEN**, read from the full log:
+
+| gate | result |
+| --- | --- |
+| `lake build` (scoped: `LeanModels.Go{,.Spec,.Stmt}` + the exemplar) | **exit 0** |
+| `docs_check` | **87/87** marked, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued 100 minutes, held the machine **66 seconds**.
+
+`fallthrough` stays deferred (4.0%); the loop induction stays owed with
+its blocker named (§G8: the lane needs a `SemM`-reduction lemma set, the
+analogue of the Python lane's `py_simp`, before the induction is
+attemptable); the MM-oracle is untouched.

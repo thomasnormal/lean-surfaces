@@ -1,12 +1,25 @@
 import LeanModels.Go.Sem
 
 /-!
-# Rung 1's abstract syntax, and the first statement walker
+# The abstract syntax and the statement walker
 
-M1 inch 1, third part. The syntax here is scoped by MEASUREMENT, not by
-the specification: `docs/backlog/go.md` §G1 derived rung 1 as 45 `go/ast`
-node kinds reaching 3,084 of the standard library's 5,419 files (56.9%),
-and this file carries that vocabulary and refuses everything else by name.
+The syntax here is scoped by MEASUREMENT, not by the specification, and
+the scope has GROWN past the rung it started at. An audit
+(`docs/quality-audit-2026-08-23.md`) caught this header still quoting
+rung 1's figures after three inches had widened it; the current state:
+
+| inch | added | reach |
+| --- | --- | --- |
+| 1 (§G2) | rung 1's 45 `go/ast` kinds | 3,084 of 5,419 stdlib files (56.9%) |
+| 2 (§G5) | struct declarations, the go1.22 loop-var branch, bare-`for` fuel | — |
+| 3 (§G6) | **calls**, compound assignment, shifts | calls appear in 73.3% of those files |
+| 4 (§G7) | — (census + the exemplar's spec half) | — |
+
+The reach figure is a property of rung 1's INGESTER vocabulary and has
+not moved; what moved is how much of that vocabulary the WALKER steps.
+`docs/backlog/go.md` §G6 measures the difference and is the number to
+quote for the walker: 633 files were entirely within it before calls
+landed. Anything outside is refused by name rather than guessed at.
 
 ## Why `return`/`break`/`continue` are in α and only `panic` is in ρ
 

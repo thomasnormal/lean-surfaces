@@ -373,3 +373,91 @@ SPECS; the table directly above it counts TESTS, and there the float slice is
 **2 of 61** printf-family tests for c-testsuite and **19 of 261** for Fujitsu.
 Both true, and they price correctly-rounded decimal printing very
 differently — 21 tests, not a fifth of the corpus.
+## 2026-08-23-c-4 — INCH 5 IS **RED**, and the diagnosis is the deliverable
+
+`c-inch4-wip` @ `91ccd33` got its tenure at 04:30 after **11 366 s (3h9m)** of
+FIFO queueing. **`lake build` exit 1.** It is on a branch and never touched
+master, which is the whole reason the branch discipline exists.
+
+### What broke, and it was my design, not the tooling
+
+```
+LeanModels/C/C23/Expr.lean:555: fail to show termination for
+  evalLValue, evalExpr
+  ... failed to eliminate recursive application
+      evalLValue ctx (base.member field arrow ty sp)
+```
+
+Plus three collapsed proofs at `Expr.lean:844/854/866` — the drain-amendment
+theorems, whose `simp` sets depend on `evalExpr`'s equation lemmas, which stop
+being generated when termination fails. **Those three are consequences, not
+separate failures.**
+
+**The cause is inch 5's handler signature.** Passing `evalExpr ctx` as a
+closure into `ctx.call` adds a recursive call site *through an opaque
+function*, and Lean cannot verify an opaque callee will not re-enter with a
+larger argument. That killed the whole inference — including a
+`.member`/`.index` case that had been accepted since inch 3.
+
+**The second defect the failure exposed, which inch 3 had been getting away
+with.** `evalExpr`'s aggregate cases RECONSTRUCT the node:
+
+    | .member base field arrow ty sp => do
+        let p ← evalLValue ctx (.member base field arrow ty sp)
+
+A reconstructed node is not a syntactic subterm, so it is not structurally
+smaller. Inch 3 built green only because the inference had enough slack
+elsewhere; inch 5 removed the slack and it fell over. **It was latent, and a
+green build was hiding it** — which is why "it compiled" is not the same as
+"the recursion is well-founded for a reason I could state."
+
+### The repair, designed but NOT verified
+
+1. **Take the parts, never rebuild the node.** Add `memberAddr ctx base field
+   arrow` and `indexAddr ctx base idx ty` to the mutual block; both
+   `evalLValue` and `evalExpr` call them with `base`/`idx`, which ARE
+   subterms. The reconstruction disappears.
+2. **Revert the handler to values, and put `evalArgs` back in the mutual
+   block** with an explicit `termination_by` on an `Expr.size` measure, since
+   structural inference cannot see through `List Expr`. `evalExpr` stays
+   fuel-free — arguments are subterms — and the handler gets `List CVal`, so
+   nothing opaque receives a recursive closure.
+
+The design goal that drove inch 5's signature — *arguments are evaluated in
+the caller's scope* — is preserved by (2): evaluation happens inside
+`evalExpr`, which IS the caller's context.
+
+**Not attempted here.** The repair needs a tenure to verify and the queue is
+running 1-3 hours; a fix pushed unverified is what the branch exists to
+prevent.
+
+### Core adoption, priced by site count
+
+The calibration law's grep — `.error (.unsupported` across `LeanModels/C/**`
+and `Examples/c/**` — returns **0** for this tier, and the zero is
+informative: this lane's §3.4 landing already moved `unsupported` OUT of the
+error channel into `Halt`, so a pattern written for tiers where it still rides
+in `ρ` cannot see it. **The named grep under-counts here by construction**; a
+naive `.unsupported` grep then OVER-counts by 4, catching `Ast.lean`'s
+`Expr`/`Stmt`/`Decl.unsupported` AST constructors, which are unrelated.
+
+Measured surface for `Loud.unsupported (cause) (message) (snapshot)` at
+`σ := Mem`:
+
+| | sites |
+| --- | ---: |
+| CONSTRUCT the payload — production | **2** (`refuseUnsupported`, `exhausted`) |
+| CONSTRUCT — gates | 6 (`memory.lean`'s snapshot-guard gates) |
+| DESTRUCTURE — production | 5 (`Halt.bind`, `Refusal.j2`/`cause`, `Outcome.cause?`, `EvalM.verdict`) |
+| DESTRUCTURE — gates | 3 (`stmt.lean`) |
+| **INSULATED call sites — zero cost** | **53** |
+
+**Price: ~11 real edit sites plus two type aliases** (`Halt` → `HaltWith`,
+`EvalM`/`ExecM` → `SemMWith … Mem`). **53 of the 64 touch points cost
+nothing**, because every refusal already routes through a NAMED primitive —
+which is §3.4's own law paying for itself at adoption time, exactly as
+predicted.
+
+**Scheduled, not done**: adoption waits behind the inch-5 repair, so the tier
+is not absorbing a substrate change and a termination fix in one unverified
+step.

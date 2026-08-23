@@ -274,6 +274,11 @@ def Expr.size (e : Expr) : Nat := e.subexprs.length
 /-- The same measure over an argument list. -/
 def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 
+-- Every constructor the evaluator RECURSES INTO needs its own equation, or
+-- `omega` has no fact relating a subterm's size to its parent's. The first
+-- attempt covered only member/index/paren/call and left nine goals unprovable
+-- at `decreasing_by` — a STATED measure is only as good as the lemmas that
+-- let the checker use it.
 -- (`size_pos` was tried here and removed: `typeTrait` and `constExpr` carry an
 -- `Option Expr`, so `subexprs` has two clauses each and `cases e` does not
 -- split them. The measure below never needed positivity — every decrease goal
@@ -294,6 +299,34 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 @[simp] theorem Expr.size_call (c : Expr) (args : List Expr) (t : CType) (s : CSpan) :
     (Expr.call c args t s).size = c.size + Expr.sizes args + 1 := by
   simp [Expr.size, Expr.sizes, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_unop (sub : Expr) (op : String) (post : Bool) (t : CType) (sp : CSpan) :
+    (Expr.unop op sub post t sp).size = sub.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_binop (l r : Expr) (op : String) (t : CType) (sp : CSpan) :
+    (Expr.binop op l r t sp).size = l.size + r.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_compoundAssign (l r : Expr) (op : String) (t : CType) (sp : CSpan) :
+    (Expr.compoundAssign op l r t sp).size = l.size + r.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_cond (c a b : Expr) (t : CType) (sp : CSpan) :
+    (Expr.cond c a b t sp).size = c.size + a.size + b.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_implicitCast (sub : Expr) (ck : String) (t : CType) (sp : CSpan) :
+    (Expr.implicitCast ck sub t sp).size = sub.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_cast (sub : Expr) (ck : String) (t : CType) (sp : CSpan) :
+    (Expr.cast ck sub t sp).size = sub.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_compoundLit (i : Expr) (t : CType) (sp : CSpan) :
+    (Expr.compoundLit i t sp).size = i.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
 
 @[simp] theorem Expr.sizes_cons (e : Expr) (es : List Expr) :
     Expr.sizes (e :: es) = e.size + Expr.sizes es := by

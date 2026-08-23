@@ -161,6 +161,110 @@ decreasing_by omega
           _ ≤ k + 1 := by omega
 
 
+/-! ## §1b THE LOOP'S STEP LEMMAS — the walker, proved through a mutation
+
+`docs/backlog/go.md` §G8 recorded the loop induction as blocked and §G10
+cleared the reduction blocker with the seam. These are what the seam
+bought: the **first proofs in this lane that step the walker through a
+write**, and they are where §1.3b's frame predicates and `Obs.lean`'s
+`go_run` meet on one goal.
+
+They are stated about the loop's own pieces, so they mention the
+interpreter and sit in the interpreter half. -/
+
+/-- The loop's invariant: `n` and `len` live at DISTINCT addresses and
+hold the values the mathematics says they should. The distinctness is not
+bookkeeping — it is exactly what `wRead_wStore_other` needs, and without
+it `len++` could not be shown to leave `n` alone. -/
+structure Inv (w : GoWorld) (an al : Addr) (v l : Nat) : Prop where
+  ne : an ≠ al
+  ln : wLookup w "n" = some an
+  ll : wLookup w "len" = some al
+  rn : wRead w an = some (.intV uintK (v : Int))
+  rl : wRead w al = some (.intV intK (l : Int))
+
+/-- `mkInt` is the identity on a value already in range. -/
+theorem mkInt_u (v : Nat) (h : v < 2 ^ 64) :
+    GoVal.mkInt uintK (v : Int) = .intV uintK (v : Int) := by
+  simp [GoVal.mkInt, IntKind.wrap, uintK, IntKind.uint64, IntKind.modulus]; omega
+
+theorem mkInt_i (l : Nat) (h : l < 2 ^ 63) :
+    GoVal.mkInt intK (l : Int) = .intV intK (l : Int) := by
+  simp [GoVal.mkInt, IntKind.wrap, intK, IntKind.int64, IntKind.modulus]; omega
+
+/-- The loop's body, named so the step lemma can be about it. -/
+def loopBody : List Stmt := [.incDec "len" true, .assignOp .shr "n" (u 1)]
+
+/-- The loop's condition. -/
+def loopCond : Expr := .binary .ne (.ident "n") (u 0)
+
+/-- **ONE TURN OF THE BODY**, proved: `len++` then `n >>= 1` takes the
+world from `(v, l)` to `(v / 2, l + 1)`.
+
+This is the crux, and it is the theorem that needed BOTH halves of the
+last two inches: `go_run` to step `lookupLocal`/`loadAddr`/`storeLocal`,
+and `wRead_wStore_other` to show that writing `len` leaves `n` alone. -/
+theorem body_step {w : GoWorld} {an al : Addr} {v l f : Nat}
+    (hi : Inv w an al v l) (hv : v < 2 ^ 64) (hl : l + 1 < 2 ^ 63) (hf : 4 ≤ f) :
+    ∃ w', execSeq [] f loopBody w = .ok (.ok Flow.normal, w')
+        ∧ Inv w' an al (v / 2) (l + 1) := by
+  obtain ⟨f, rfl⟩ : ∃ g, f = g + 4 := ⟨f - 4, by omega⟩
+  refine ⟨wStore (wStore w al (.intV intK ((l + 1 : Nat) : Int))) an
+            (.intV uintK ((v / 2 : Nat) : Int)), ?_, ?_⟩
+  · have hcast : ((l : Int) + 1) = (((l + 1 : Nat)) : Int) := by push_cast; rfl
+    have hfd : Int.fdiv (v : Int) 2 = ((v / 2 : Nat) : Int) := by
+      cases v with | zero => rfl | succ k => rfl
+    simp only [loopBody, execSeq, execStmt, go_run,
+      lookupLocal_ok hi.ll, loadAddr_ok hi.rl, if_true, hcast,
+      mkInt_i (l + 1) hl, storeLocal_ok hi.ll]
+    have hln : wLookup (wStore w al (.intV intK ((l + 1 : Nat) : Int))) "n" = some an := by
+      rw [wLookup_wStore]; exact hi.ln
+    have hrn : wRead (wStore w al (.intV intK ((l + 1 : Nat) : Int))) an
+        = some (.intV uintK (v : Int)) := by
+      rw [wRead_wStore_other _ _ _ _ hi.ne]; exact hi.rn
+    have h1 : GoVal.mkInt uintK 1 = .intV uintK 1 := by rfl
+    simp only [go_run, lookupLocal_ok hln, loadAddr_ok hrn, u, evalExpr, binNum, h1]
+    have hif : ¬ ((1 : Int) < 0) := by decide
+    have hp : ((2 : Int) ^ (Int.toNat 1)) = 2 := by decide
+    have hmk : GoVal.mkInt uintK ((v / 2 : Nat) : Int) = .intV uintK ((v / 2 : Nat) : Int) :=
+      mkInt_u (v / 2) (by omega)
+    simp only [if_neg hif, hp, hfd, hmk, go_run, storeLocal_ok hln]
+  · refine ⟨hi.ne, ?_, ?_, ?_, ?_⟩
+    · rw [wLookup_wStore, wLookup_wStore]; exact hi.ln
+    · rw [wLookup_wStore, wLookup_wStore]; exact hi.ll
+    · rw [wRead_wStore_same]
+    · rw [wRead_wStore_other _ _ _ _ (Ne.symm hi.ne), wRead_wStore_same]
+
+/-- **THE CONDITION**: `n != 0` reads `n` and compares it to zero, leaving
+the world untouched. -/
+theorem cond_eval {w : GoWorld} {an al : Addr} {v l f : Nat}
+    (hi : Inv w an al v l) (hf : 2 ≤ f) :
+    evalExpr [] f loopCond w = .ok (.ok (.boolV (decide (¬ (v = 0)))), w) := by
+  obtain ⟨f, rfl⟩ : ∃ g, f = g + 2 := ⟨f - 2, by omega⟩
+  have h0 : GoVal.mkInt uintK 0 = .intV uintK 0 := by rfl
+  simp only [loopCond, u, evalExpr, go_run, lookupLocal_ok hi.ln, loadAddr_ok hi.rn, h0, binNum]
+  simp only [decide_not]
+  congr 1
+  cases v with
+  | zero => simp
+  | succ k => simp; omega
+
+/-! **WHAT REMAINS, and it is a DIFFERENT blocker from §G8's.**
+
+§G8 could not step the walker at all. It can now: the two lemmas above
+carry a full turn of the loop. What stops the induction closing is
+narrower and sharper — **`simp` will not rewrite inside a DEPENDENT MATCH
+DISCRIMINANT.** `execLoop`'s reduced form is
+
+    match pure false w with | .error … | .ok (.error …) | .ok (.ok a, w') => if a = false then …
+
+and `run_pure` fires on `pure false w` **in isolation** — checked — but
+not there, because the branches' types depend on the scrutinee. The fix is
+a match-congruence lemma or binding the condition into a `let` before the
+match; it is findable work, not an open-ended fight. The debt went from
+*"cannot step the walker"* to *"one match congruence away"*, and that is
+the honest size of it. -/
+
 /-! ## §2 THE INTERPRETER BRIDGE — one step, and it is the load-bearing one
 
 The interpreter half's content is that the walker's OPERATION is the

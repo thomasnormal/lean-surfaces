@@ -1333,3 +1333,87 @@ Queued **92 minutes** (sixth in a six-deep queue at its worst), held the
 machine **65 seconds**.
 
 `fallthrough` deferred (4.0%); MM-oracle untouched.
+
+---
+
+## G11 — THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23)
+
+The loop induction is **still not closed**. But the debt is a different
+size and a different shape, and both halves of the last two inches paid
+for themselves on one goal.
+
+### PROVED — one full turn of the loop
+
+**`body_step`**: `len++` then `n >>= 1` takes the world from `(v, l)` to
+`(v / 2, l + 1)`.
+
+This is the lane's **first proof that steps the walker through a write**,
+and it is where the two previous inches meet:
+
+* `go_run` (§G10's seam) steps `lookupLocal`, `loadAddr` and `storeLocal`
+  — the three §G8 called unprovable;
+* `wRead_wStore_other` (§G8's frame predicate) shows that **writing `len`
+  leaves `n` alone**, which is the whole reason the invariant carries
+  `an ≠ al`. That distinctness is not bookkeeping: without it the second
+  statement could not be shown to read what the first did not touch.
+
+**`cond_eval`**: `n != 0` reads `n`, compares to zero, and leaves the
+world untouched.
+
+Both stated against an explicit `Inv` structure — distinct addresses,
+and each holding the value the mathematics says it should. Both take
+fuel as `4 ≤ f` / `2 ≤ f` rather than a literal successor pattern, so the
+induction can apply them without destructuring first.
+
+Axioms: `propext`, `Quot.sound`, `Classical.choice` at worst. No `sorry`.
+
+### THE BLOCKER MOVED — and this one is narrow
+
+§G8's blocker was *"cannot step the walker at all."* That is gone. The new
+one is sharper and worth naming exactly, because it is a Lean fact rather
+than a design gap:
+
+> **`simp` will not rewrite inside a DEPENDENT MATCH DISCRIMINANT.**
+
+`execLoop`'s reduced form is
+
+    match pure false w with
+    | .error …
+    | .ok (.error …)
+    | .ok (.ok a, w') => if a = false then … else …
+
+and `run_pure` fires on `pure false w` **in isolation** — checked, it
+closes by `rw` — but not in that position, because the branches' types
+depend on the scrutinee. Three separate reduction strategies (`simp only`
+with the full `go_run` set, staged rewriting, and `rfl`) all leave the
+same goal.
+
+The fixes are known and findable: a match-congruence lemma for
+`execLoop`'s scrutinee, or binding the condition into a `let` before the
+match so the discriminant is a variable. **That is one lemma or one
+definitional tweak, not a campaign.**
+
+### Why this is reported as a partial rather than pushed further
+
+The alternative on offer was to keep grinding at a reduction detail with
+the session's remaining budget, and land either a `sorry` or a
+half-finished proof carried across a boundary. The lane has now twice
+found that **naming the blocker precisely is worth more than one more
+attempt** — §G8 named its blocker, §G10 cleared it in one file, and this
+entry names a strictly smaller one. The trajectory is the argument:
+
+| entry | blocker | size |
+| --- | --- | --- |
+| §G8 | the monad stack does not reduce at all | a lemma SET (`py_simp`'s analogue) |
+| §G10 | — cleared by `Obs.lean`, 10 rows | — |
+| §G11 | one dependent-match discriminant will not rewrite | **one congruence lemma** |
+
+### Triad
+
+**Tenure GREEN**: `lake build` exit 0 (scoped to `LeanModels.Go` and the
+exemplar), `docs_check` **91/91**, `diff_test` **1,427 cases, 0 failed**
+(1,311 matched, 116 whitelisted), `script_corpus` **65 scripts, 0
+failed**. Lock was free — acquired in **0 s**, held **62 s**, the
+lane's fastest tenure yet and the first with no queue at all.
+
+`fallthrough` deferred (4.0%); MM-oracle untouched.

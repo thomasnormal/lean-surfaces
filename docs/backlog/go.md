@@ -1044,3 +1044,108 @@ longer does. The build target is a single module and the class is `tier`
 with `tiers none`.
 
 `fallthrough` stays deferred (4.0%); the MM-oracle is untouched.
+
+---
+
+## G8 — THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23)
+
+Two items, and the first one is a partial. Reporting it as a partial is
+the point.
+
+### (1) THE OWED INDUCTION — substrate landed, theorem NOT
+
+The debt was: *the walker, run on `bitLenBody` with enough fuel, leaves
+`len` equal to `bitLenSpec n`*. **It is not proved, and this entry does
+not claim it is.**
+
+**What landed** is the substrate it rests on, and it is reusable by every
+later theorem about mutation rather than by `bitLen`'s alone —
+`docs/statement-cookbook.md` §9's frame predicates, stated about pure
+world functions so they mention no interpreter and sit in the spec half:
+
+* `wRead_wStore_same` — a write is visible where it was written;
+* `wRead_wStore_other` — **a write is invisible everywhere else**, the
+  frame half, resting on
+* `find_filter_ne`, proved by induction on the store because the library
+  shapes did not line up and an explicit induction is cheaper to keep
+  than a fragile rewrite;
+* `wLookup_wStore` — a write moves no binding.
+
+**What blocked it, named precisely so it is findable work rather than a
+shrug.** The induction needs to step the walker, and stepping it means
+reducing `GoM = ExceptT Panic (StateT GoWorld (Except Loud))` applied to a
+world. That reduction is not `rfl`: `lookupLocal name w` is **not**
+definitionally the match on `w.locals.find? …` — checked, it fails — so
+every step needs a rewrite through the monad stack, and this lane has no
+lemma set for that. The Python lane solved the same problem with
+`py_simp` and an `Obs` spine over many sessions; the Go lane needs its
+analogue, and **that** is the next piece of work, not more proof attempts
+against a bare `simp`.
+
+**Landing the substrate and naming the blocker beats a `sorry`**, and it
+beats thrashing: the alternative on offer was a half-reduced proof carried
+across sessions, which is the shape this project's covenant exists to
+refuse. The debt stands, its size is now known, and its prerequisite has a
+name.
+
+The statement split moved **17/12 → 20/12 = 62.5% mathematics**, up from
+inch 2's 58.6%, because frame predicates are spec-half by construction.
+
+### (2) DECISION BRIEF — selector calls, for the coordinator
+
+§G7 measured selector calls at **275,975 — 52.4% of all call sites**, and
+said they need `go/types`. That was too coarse. Split by receiver shape:
+
+| selector call shape | n | of selectors | of ALL calls |
+| --- | ---: | ---: | ---: |
+| **`pkg.F(…)`** — receiver is an imported package name | **83,276** | **30.2%** | 15.8% |
+| **`x.M(…)`** — receiver is a plain identifier: a METHOD | **162,628** | **58.9%** | 30.9% |
+| `a.b.M(…)`, `f().M(…)`, `arr[i].M(…)` — chained | 30,071 | 10.9% | 5.7% |
+
+**The finding that changes the decision: package calls do NOT need
+`go/types`.** A call is `pkg.F` exactly when the receiver identifier is an
+imported name in that file, and the extractor already parses the import
+table. It is a **syntactic** resolution — 30.2% of selectors, resolvable
+with an import map and no type checker at all.
+
+The other 69.8% do need types: to resolve `x.M()` you must know `x`'s type
+to find `M`'s declaration. **So methods come with the expensive tier and
+not the cheap one** — which answers the third question directly: yes,
+the 30.4% of declarations that are methods arrive together with
+`go/types`, because they are the same problem.
+
+**The trap in the cheap tier, and it is why this is a decision and not an
+obvious yes.** Resolving `pkg.F` syntactically buys the ability to *name*
+the callee — it does not buy the ability to *run* it. Running needs the
+package's semantics, and the corpus calls **438 distinct standard-library
+packages** with a long tail: the top 12 are only **57.6%** of package
+calls, `fmt` alone 12.8%, and the list includes `unsafe` (8,966) and `C`
+(1,833), neither of which this tier will ever execute.
+
+So the honest value of cheap-tier resolution is **a better refusal, not a
+wider reach**: `environment`, naming the package and the function, instead
+of an undifferentiated "selector call". That is worth something — it is
+exactly the bucket `docs/family-architecture.md` §5.2 says must retire by
+widening the slice rather than by climbing a rung, and a scoreboard that
+can rank the 438 by frequency can *pick* what to model next. But it is not
+reach, and pricing it as reach would be the motivated error.
+
+**What the brief recommends, for the coordinator to rule on:**
+
+1. **Do the cheap tier in the extractor**, not the walker: emit a resolved
+   callee (`package`, `function`) on every `pkg.F` call site, from the
+   import table. No `go/types`, no new Lean.
+2. **Treat the resulting refusals as a ranked worklist.** 438 packages,
+   57.6% in twelve — that is a census the tier can act on.
+3. **Defer `go/types` until a consumer needs it.** It buys methods (58.9%
+   of selectors) and chained receivers (10.9%) *together*, at the cost of
+   a type checker in the extraction path — a large, single, indivisible
+   step. Nothing on the current ladder needs it, and the exemplar that
+   would justify it has not been found yet.
+
+No implementation was done and none is proposed here.
+
+### Triad
+
+`fallthrough` stays deferred (4.0%); the MM-oracle is untouched. Ticketed
+with explicit `--gates`; verdict below.

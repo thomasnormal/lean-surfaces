@@ -84,6 +84,73 @@ threshold, not a special case. -/
 @[go_spec] theorem loopvars_go123 :
     LangVersion.perIterationLoopVars ⟨1, 23⟩ = true := by decide
 
+/-! ### 1.3b FRAME PREDICATES for the store — the substrate the loop
+induction needs
+
+`docs/statement-cookbook.md` §9. A loop induction over a Go program is an
+induction over what the STORE does, so before the induction can be
+written the store needs the two lemmas every frame argument uses: a write
+is visible at the address written, and invisible everywhere else.
+
+These are stated about **pure world functions** — `wStore`, `wRead`,
+`wLookup` — and mention no interpreter, so they are spec-half by the
+cookbook's axis and they survive a walker redefinition. They are landed
+ahead of the induction that consumes them because they are reusable by
+every later theorem about mutation, not just by `bitLen`'s. -/
+
+/-- The pure shape `storeLocal` produces: shadow the address, keep the rest. -/
+def wStore (w : GoWorld) (a : Addr) (v : GoVal) : GoWorld :=
+  { w with store := (a, v) :: w.store.filter (fun p => p.1 != a) }
+
+/-- Resolve a name to its address. -/
+def wLookup (w : GoWorld) (name : String) : Option Addr :=
+  (w.locals.find? (fun p => p.1 == name)).map (·.2)
+
+/-- Read an address. -/
+def wRead (w : GoWorld) (a : Addr) : Option GoVal :=
+  (w.store.find? (fun p => p.1 == a)).map (·.2)
+
+/-- The list fact both frame lemmas rest on: filtering out `a` does not
+disturb a lookup of any OTHER address. Proved by induction on the store
+rather than by a library lemma, because the shapes did not line up and an
+explicit induction is cheaper to keep than a fragile rewrite. -/
+theorem find_filter_ne (l : List (Addr × GoVal)) (a b : Addr) (h : b ≠ a) :
+    (l.filter (fun p => p.1 != a)).find? (fun p => p.1 == b)
+      = l.find? (fun p => p.1 == b) := by
+  induction l with
+  | nil => rfl
+  | cons x xs ih =>
+    by_cases hxa : x.1 = a
+    · have hxb : ¬ (x.1 = b) := by rw [hxa]; exact fun hc => h hc.symm
+      rw [List.filter_cons]
+      simp only [hxa, bne_self_eq_false, Bool.false_eq_true, if_false]
+      rw [ih, List.find?_cons_of_neg]
+      simp [hxb]
+    · rw [List.filter_cons]
+      simp only [hxa, bne_iff_ne, ne_eq, not_false_eq_true, if_true]
+      by_cases hxb : x.1 = b
+      · rw [List.find?_cons_of_pos, List.find?_cons_of_pos] <;> simp [hxb]
+      · rw [List.find?_cons_of_neg, List.find?_cons_of_neg, ih] <;> simp [hxb]
+
+/-- **A write is visible where it was written.** -/
+@[go_spec] theorem wRead_wStore_same (w : GoWorld) (a : Addr) (v : GoVal) :
+    wRead (wStore w a v) a = some v := by
+  simp [wRead, wStore]
+
+/-- **A write is invisible everywhere else** — the frame half. -/
+@[go_spec] theorem wRead_wStore_other (w : GoWorld) (a b : Addr) (v : GoVal)
+    (h : b ≠ a) : wRead (wStore w a v) b = wRead w b := by
+  have hb : ¬ (a = b) := fun hc => h hc.symm
+  simp only [wRead, wStore]
+  rw [List.find?_cons_of_neg (by simp [hb])]
+  rw [find_filter_ne _ a b h]
+
+/-- **A write moves no binding.** Names keep their addresses; only the
+address's contents change. -/
+@[go_spec] theorem wLookup_wStore (w : GoWorld) (a : Addr) (v : GoVal)
+    (name : String) : wLookup (wStore w a v) name = wLookup w name := by
+  simp [wLookup, wStore]
+
 /-! ### 1.4 THE ZERO-UB GATE
 
 `docs/go-charter.md`'s headline is that the Go specification never says

@@ -183,8 +183,30 @@ joins["all-9"] = clean(set(CAND))
 joins["all-9 + intrinsics(sys,_locale)"] = clean(CAND | INTR)
 joins["all-9 + sys,_locale,builtins,itertools,_weakref"] = clean(CAND | INTR | {"builtins","itertools","_weakref"})
 
-result = {"source": "Python-3.9.19.tar.xz",
-          "sha256": "d4892cd1618f6458cb851208c030df1482779609d0f3939991bd38184f8c679e",
+# Provenance is COMPUTED from the tree actually read, never transcribed: a
+# hardcoded sha is a claim about a file this run may not have opened.
+
+def _tree_sha256(root):
+    """A deterministic digest of the tree actually read: every regular file's
+    path and bytes, in sorted path order.  Replaces a transcribed constant
+    that described a tarball this script never opens."""
+    h = hashlib.sha256()
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames.sort()
+        for name in sorted(filenames):
+            fp = os.path.join(dirpath, name)
+            rel = os.path.relpath(fp, root)
+            h.update(rel.encode("utf-8", "replace"))
+            try:
+                with open(fp, "rb") as fh:
+                    h.update(fh.read())
+            except OSError as e:
+                raise SystemExit("c_api_census: cannot read %s: %s" % (fp, e))
+    return h.hexdigest()
+
+
+result = {"source": os.path.basename(os.path.normpath(SRC)),
+          "sha256": _tree_sha256(SRC),
           "api_universe_size": len(api_universe),
           "modules": analyzed,
           "semantic_union_curve": curve,

@@ -886,6 +886,7 @@ theorem and_shortCircuits (ctx : Ctx) (l r : Expr) (ty : CType) (sp : CSpan)
     EvalM.run m (evalExpr ctx (.binop "&&" l r ty sp)) = .ok (.ok (ofBool false), m') := by
   simp only [EvalM.run, StateT.run] at hl ⊢
   simp [evalExpr, ExceptT.bind, ExceptT.bindCont, ExceptT.mk, bind, StateT.bind,
+    Except.bind, Except.pure,
     hl, truthy, ofBool, pure, ExceptT.pure, StateT.pure]
 
 /-- §6.5.15p4 — `||` is the mirror: a TRUE left operand answers 1 in the
@@ -896,6 +897,7 @@ theorem or_shortCircuits (ctx : Ctx) (l r : Expr) (ty : CType) (sp : CSpan)
     EvalM.run m (evalExpr ctx (.binop "||" l r ty sp)) = .ok (.ok (ofBool true), m') := by
   simp only [EvalM.run, StateT.run] at hl ⊢
   simp [evalExpr, ExceptT.bind, ExceptT.bindCont, ExceptT.mk, bind, StateT.bind,
+    Except.bind, Except.pure,
     hl, hn, truthy, ofBool, pure, ExceptT.pure, StateT.pure]
 
 /-- §6.5.16p4 — `?:` evaluates EXACTLY ONE arm, and the theorem names
@@ -906,6 +908,7 @@ theorem cond_takesOneArm (ctx : Ctx) (c t e : Expr) (ty : CType) (sp : CSpan)
     EvalM.run m (evalExpr ctx (.cond c t e ty sp)) = EvalM.run m' (evalExpr ctx e) := by
   simp only [EvalM.run, StateT.run] at hc ⊢
   simp [evalExpr, ExceptT.bind, ExceptT.bindCont, ExceptT.mk, bind, StateT.bind,
+    Except.bind, Except.pure,
     hc, truthy, pure, ExceptT.pure, StateT.pure]
 
 #print axioms and_shortCircuits

@@ -739,3 +739,73 @@ The file-level census the gate asked for is **`docs/backlog/c.md`
 densities for all eight C-tier files, the (a)-with-named-(b) verdict, and the
 delta a C17 sibling would actually carry. That is the citation the QoL lane's
 tool should point at for this tier.
+
+---
+
+## 2026-08-23-c-9 — the audit's five rows, all FIXED; two were claims that had never been checked
+
+`docs/quality-audit-2026-08-23.md` § `c` — five rows, none high. All five are
+correct and all five are fixed. Two of them are the same failure this lane has
+now hit three times: **a claim nobody had an instrument for.**
+
+### MEDIUM · coverage · `Value.lean:38` — the widths did not "come from" the profile
+
+The docstring said widths "come from the ABSTRACT profile". They are
+**hand-transcribed literals** (`def int_ : IntTy := ⟨true, 32⟩`), and
+`--check` gates a HOST against the JSON via clang — it never reads a Lean
+file. Nothing in `tools/` or `harness/` compared the two.
+
+Fixed BOTH ways. The docstring now says the profile is the widths'
+**CITATION, not their SOURCE**; and **`harness/c_profile_probe.py
+--check-lean`** now closes the gap for real — it parses the `IntTy`
+definitions out of `Value.lean` and fails loudly if a width disagrees with the
+profile fact it claims to follow. Deliberately a PARSE, not an import, so the
+check runs anywhere the two committed files do, with no toolchain in the loop.
+
+**Non-vacuous by measurement**: perturbing `int_` to 64 bits gives
+`int_32 (sizeof(int) == 4) forces int_ to 32 bits, Lean says 64`, exit 1. It
+also refuses to pass when it parses ZERO definitions, because a check that
+matched nothing would read green forever.
+
+### MEDIUM · provenance · `Examples/c/sunfish/memory.lean:20` — cited to a file with no layout in it
+
+The struct-layout table was cited to `docs/c-profile.json`, which carries 13
+facts and **not one layout offset**; `c_profile_probe.py` does not probe layout
+at all. The offsets were real — measured by compiling `_Static_assert`s on both
+targets — but the citation pointed somewhere they have never been. Corrected to
+say exactly what was done, and to say that the profile supplies the TARGETS
+while the offsets are their own measurement.
+
+### LOW · docdrift · `Stmt.lean:343` — a headline refuted by its own parenthetical
+
+*"all 50 carry all three clauses (48 `init`, 49 `cond`, 50 `inc`)"* — if 48
+carry `init`, two do not. Now reads: **three of the 50 omit a clause (two omit
+`init`, one omits `cond`)**, which is what the next sentence already said. The
+identical wording had propagated to `docs/c-semantics-design.md`; fixed there
+too.
+
+### LOW · absence · `c_api_census.py:187` — provenance transcribed, not computed
+
+`source` and `sha256` were hardcoded literals describing a tarball the script
+never opens. Now **computed from the tree actually read** (`SRC`), as a
+deterministic digest over every file's path and bytes in sorted order, and an
+unreadable file is a loud exit rather than a silent gap.
+
+### LOW · absence · `c_suite_census.py:138` — a swallowed read failure
+
+`source_facts()` returned `{}` on `OSError`, and the caller does
+`row.update(...)`, so an unreadable test produced a row that merely LACKED its
+source facts — **indistinguishable from a test that has none**. That is the
+never-hide-errors law, and it was mine. Now a loud `SystemExit`: *a census that
+silently drops a file it could not read reports a wrong answer, not a smaller
+one.*
+
+### The pattern across three of these
+
+`Value.lean`'s widths, `memory.lean`'s offsets, and — earlier today —
+`c_construct_census`'s `--compare` were all **claims with no instrument
+behind them**, and all three read green for exactly as long as nobody looked.
+The audit found in one pass what this lane had walked past repeatedly. The
+standing correction is the one already written at `2026-08-23-c-5` for
+termination and it generalises: **a claim that cannot fail is not a check**,
+and the fix is always to build the instrument, not to soften the sentence.

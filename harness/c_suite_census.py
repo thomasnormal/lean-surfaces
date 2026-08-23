@@ -135,8 +135,14 @@ def source_facts(path):
     """Preprocessor and libc needs, read off the source text."""
     try:
         text = open(path, "r", errors="replace").read()
-    except OSError:
-        return {}
+    except OSError as e:
+        # NEVER HIDE AN ERROR.  Returning {} here made `row.update(...)` a
+        # no-op, so an unreadable test produced a row that merely LACKED its
+        # source facts -- indistinguishable from a test with none, and the
+        # census reported a smaller number as if it were a true one.
+        raise SystemExit("c_suite_census: cannot read %s: %s\n"
+                         "A census that silently drops a file it could not read "
+                         "reports a wrong answer, not a smaller one." % (path, e))
     includes = re.findall(r'^\s*#\s*include\s*[<"]([^>"]+)', text, re.M)
     directives = re.findall(r'^\s*#\s*(\w+)', text, re.M)
     macros = [d for d in directives if d in

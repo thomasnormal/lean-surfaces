@@ -343,8 +343,9 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     | .whileS c body _ => execLoop fuel ctx (some c) none body false
     -- §6.8.6.3 — `do … while`: the body runs BEFORE the first test. 29 sites.
     | .doS body c _ => execLoop fuel ctx (some c) none body true
-    -- §6.8.6.4 — `for`. 50 sites, and all 50 carry all three clauses
-    -- (48 `init`, 49 `cond`, 50 `inc`), so the omitted-clause arms are
+    -- §6.8.6.4 — `for`. 50 sites; 48 carry `init`, 49 carry `cond`, 50 carry
+    -- `inc` — so THREE sites omit a clause (two omit `init`, one omits
+    -- `cond`) and the omitted-clause arms are
     -- three sites rather than a third of them. An omitted `cond` is TRUE.
     | .forS init c inc body _ => do
         match init with

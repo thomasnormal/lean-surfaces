@@ -16,9 +16,17 @@ operations themselves.
 ## The layout numbers, and where they come from
 
 Struct layout is IMPLEMENTATION-DEFINED (`J.3.10`), so these offsets are
-measurements, not derivations. They were probed with `_Static_assert` on
-**both** hosts in `docs/c-profile.json` — `arm64-apple-darwin` and
-`x86_64-unknown-linux-gnu` — and both agree:
+measurements, not derivations.
+
+**They are NOT in `docs/c-profile.json`, and this file used to say they
+were.** That artifact carries 13 facts — `CHAR_BIT`, `sizeof(int)`,
+endianness and so on — and not one layout offset;
+`harness/c_profile_probe.py` does not probe layout at all. The offsets
+below were measured directly, by compiling `_Static_assert`s on the two
+TARGETS the profile names (`arm64-apple-darwin` and
+`x86_64-unknown-linux-gnu`), which agreed. The profile is where the
+targets come from; the offsets are their own measurement, and citing it
+for them was a provenance error:
 
     Pos    size 144   b 0   score 120   wc0..bc1 124..127   ep 128   kp 132   h 136
     Move   size 12    i 0   j 4   prom 8

@@ -2026,13 +2026,13 @@ the attribute and checks the tool follows. And the helper lives in
 `backlog-index.sh` with both gates **calling** it, rather than the same six
 lines pasted into two scripts.
 
-### (2) A green build threw away its own evidence
+### (2) A green build stopped naming its own evidence
 
 The in-file `#print axioms` ledger is the **house standard** for library files
 — it is in the tree, it runs under a tenure, and it is immune to
-`check.sh --axioms` by design. But the build writes to a `mktemp` log that is
-named only on **red**, so on **green** that evidence was produced and then
-abandoned: the one outcome in which anybody wants to quote it.
+`check.sh --axioms` by design. But the build writes to a `mktemp` log named only on
+**red**, so on **green** the evidence was produced and then left unreferenced:
+the one outcome in which anybody wants to quote it.
 
 `TRIAD DONE` is now preceded by the salvage, labelled so it is quotable:
 
@@ -2063,3 +2063,46 @@ set staying silent, and a **renamed** driver followed to its new name),
 it is by design). Live: a dry-run configured the driver with one line and the
 next run was silent. Doc-first: §9.5 carries the auto-config; the §7 tools list
 gains the row. No Lean executed.
+
+---
+
+## 2026-08-23-qol-30 — correction: the build log was never deleted, only unnamed
+
+The R-track lane corrected my `qol-29`, and the correction shrinks the fix.
+
+**`tools/triad.sh` never deletes `BUILD_LOG`** — verified, there is no `rm` of
+it anywhere in the script. A green tenure merely stops **referencing** it. My
+entry said the evidence was *"abandoned"* and *"thrown away"*; the file
+persists, and the entry is corrected in place.
+
+**But losing the path is enough to lose the evidence**, and the measurement
+says why: **56 `triad-build.*` files coexist in one `TMPDIR`** right now, from
+many lanes and many runs. The most recent is timestamped four minutes before I
+looked and is very plausibly **another lane's**.
+
+So the fix is smaller than preservation — **name the path on green as well as
+on red** — and the line carries its own caveat, because the advice is only
+needed by a reader who no longer has the line:
+
+```
+full log: …/triad-build.f2OSEj  (kept, not deleted — recover by THIS PATH;
+55 other triad-build logs share this TMPDIR, so the NEWEST is probably
+another lane's)
+```
+
+The count is computed live rather than asserted, so it stays true as the
+directory fills. The axiom-line echo from `qol-29` stays: it is the half a
+lane quotes, and it costs nothing.
+
+**The doc carries the recovery rule** (§9.5): recover by the printed path,
+never by *"the newest"*; and if the line is gone, select by mtime **inside
+your own tenure's window** — the tenure-open and `TRIAD DONE` lines bracket it
+— rather than by recency alone. Selecting by recency across 56 files is
+selecting somebody else's evidence.
+
+### Triad
+
+`bash -n` clean. `triad.sh --self-test`: **165 ok, 0 failed** (161 → 165) — the
+pointer naming the log, saying it was kept rather than deleted, **counting the
+other logs beside it**, and warning off the newest. `docs_check` **87/87**. No
+Lean executed.

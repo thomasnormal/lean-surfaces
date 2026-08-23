@@ -5202,6 +5202,22 @@ because the lane name makes them unique; `docs/backlog.md` becomes a
 **generated index**, which is §5.5's "generated and checked, never
 hand-maintained" applied to the repository's own record.
 
+**AND A TENURE NAMES ITS BUILD LOG, GREEN OR RED.** `tools/triad.sh` writes
+the build to a `mktemp` file and **never deletes it** — there is no `rm` of it
+anywhere in the script. What a green tenure lost was not the file but the
+**path**, and that is enough: measured 2026-08-23, **56 `triad-build.*` files
+coexist in one `TMPDIR`**, from many lanes and many runs.
+
+> **Recover a build log by the PATH the tenure printed, and never by "the
+> newest".** With 56 of them sharing a directory the newest is very likely
+> another lane's, and selecting by mtime means selecting somebody else's
+> evidence. If the line is gone, select by mtime **inside your own tenure's
+> window** — the tenure-open and TRIAD DONE lines bracket it — rather than by
+> recency alone.
+
+The green line carries that caveat with it, because the advice is only needed
+by a reader who no longer has the line.
+
 **AND THE GENERATED INDEX CONFIGURES ITS OWN MERGE DRIVER.** `INDEX.md` is
 generated *and committed*, so it conflicts on every lane's rebase — measured at
 **two conflicts in one day for one lane**, and every lane pays it. A driver is

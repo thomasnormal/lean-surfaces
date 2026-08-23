@@ -827,11 +827,21 @@ coverage_statement() {  # class -> what a green from this run is EVIDENCE OF
 }
 
 # THE IN-FILE `#print axioms` EVIDENCE IS THE HOUSE STANDARD for library
-# files — it is in the tree, it runs under a tenure, and it is immune to
-# `check.sh --axioms` by design.  But the build writes to a mktemp log that is
-# named only on RED, so on GREEN that evidence was produced and then thrown
-# away: the one outcome in which anybody wants to quote it.  Salvage it into
-# the tenure log, labelled, before the log goes.
+# files — in the tree, under a tenure, and immune to `check.sh --axioms` by
+# design.  The build log is NOT deleted (there is no `rm` of it anywhere here);
+# a green tenure merely stops REFERENCING it, which is enough to lose it:
+# measured 2026-08-23, 56 `triad-build.*` files coexist in one TMPDIR, from
+# many lanes and many runs.
+#
+# So the fix is small — NAME THE PATH on green as well as on red — and the
+# axiom lines are echoed too, because they are the half a lane quotes.
+# The pointer a green tenure owes its reader.  It carries the WARNING with it,
+# because the advice is only needed by someone who no longer has the line.
+build_log_pointer() {           # log -> the line naming it, and the caveat
+  printf 'full log: %s  (kept, not deleted — recover by THIS PATH; %s other triad-build logs share this TMPDIR, so the NEWEST is probably another lane\x27s)' \
+    "$1" "$(( $(ls "$(dirname "$1")"/triad-build.* 2>/dev/null | grep -c . || echo 1) - 1 ))"
+}
+
 axiom_ledger() {                # log -> the axiom lines, labelled; 1 if none
   local lines
   lines="$(grep -E 'depends on axioms|does not depend on any axioms' "$1" 2>/dev/null || true)"
@@ -1234,6 +1244,12 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...under a label naming the build" "$(axiom_ledger "$tmp/green.log" | head -1)" "axiom ledger, from this build:"
   printf 'info: building\nBuild completed successfully.\n' > "$tmp/plain.log"
   check "a log with no axiom line says nothing" "$(axiom_ledger "$tmp/plain.log")" ""
+  bl="$tmp/bl"; mkdir -p "$bl"
+  : > "$bl/triad-build.aaa"; : > "$bl/triad-build.bbb"; : > "$bl/triad-build.ccc"
+  check "a green tenure NAMES its log"        "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'full log:')" "1"
+  check "  ...saying it was kept, not deleted" "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'kept, not deleted')" "1"
+  check "  ...counting the OTHER logs beside it" "$(build_log_pointer "$bl/triad-build.aaa" | grep -c '2 other')" "1"
+  check "  ...and warning off the newest"      "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'NEWEST is probably another')" "1"
   check "  ...and reports that it found none"   "$(axiom_ledger "$tmp/plain.log" >/dev/null; echo $?)" "1"
 
   check "the banner names the protocol level" \
@@ -1740,9 +1756,11 @@ gates_only_notice "$FLOOR_USED" "$GATES_ONLY"
 gate_notice "$GATES" "$LANE_GATES"
 run_gates "$GATES"
 
-# Before the log is abandoned: a green build's axiom lines are evidence, and
-# they exist only here.
+# A GREEN TENURE MUST NAME ITS LOG TOO.  The file persists either way; what a
+# lane loses is the PATH, and with 56 of them in one TMPDIR the newest is very
+# likely somebody else's.
 if led="$(axiom_ledger "$BUILD_LOG")"; then printf '%s\n' "$led" | while IFS= read -r l; do say "$l"; done; fi
+say "$(build_log_pointer "$BUILD_LOG")"
 
 say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
 # §5.4a: the verdict carries the state it was taken in.  A scoped green that

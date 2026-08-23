@@ -771,6 +771,32 @@ edition-decided. This is where the pattern pays: the expensive artifact in
 this repository is not the definition but the proof estate, and a trunk
 theorem is proved once for all editions rather than re-proved per sibling.
 
+**THE MEASURED COST OF GETTING THIS SPLIT WRONG — three independent
+re-derivations of one payload.** A trunk that is POORER than its adopters
+need does not stay poor: **each adopter rebuilds the missing payload
+locally, in string form, plus a parser to recover it.** Measured, three
+tiers, none of them talking to each other:
+
+| tier | what it rebuilt |
+| --- | --- |
+| **C** | the refusal snapshot (`Option Mem`) |
+| **ES** | the refusal cause (`EsRefusal`) |
+| **Go** | **its own four-class `RefusalCause`** — whose tag is **byte-identical to Core's `className`** — flattened with the clause into a **prose prefix for a scoreboard to parse back out** |
+
+**Three is the family's own evidence bar** (§9.3 ratified the span field
+names on exactly this standard), and what it convicts here is not the
+tiers: it is **the trunk**. Go's version is the sharpest, because it
+re-derives a name Core *already has* and then **encodes structure into a
+string so a consumer can decode it** — a round trip that exists only
+because the typed field does not.
+
+> **A thin sibling is cheap. A trunk too poor for its siblings is not — it
+> is paid for N times, in string-building and re-parsing, by lanes that
+> never see each other's version.**
+
+That is the direct cost of the gap §3.4 records, and it is why the fix
+belongs in `Core` rather than in any adopter.
+
 **(3) THE ONE HONEST FORK — stated as a boundary so nobody engineers around
 it.** When a shared DATATYPE changes SHAPE between editions, the type and
 its consumers **must** fork. The measured instance is `PyErr`: 3.9 encodes
@@ -2930,6 +2956,30 @@ landing **deletes `monadic_gate.py`**. A vocabulary kept past its window
 becomes a permanent invitation to record intent instead of measuring
 agreement.
 
+**BUT DELETE HAS A PRECONDITION, and missing it inverts the ruling.**
+`MONO_OPENED` could not simply be deleted. Its own comment recorded why
+the table was safe: it *"cannot become a silencer BECAUSE `monadic_gate`
+adjudicated its rows against the oracle."* **Delete the adjudicator and
+keep the table, and you have built the silencer** — the rows survive with
+nothing checking them, which is precisely the whitelist the honesty split
+forbids.
+
+> **When a window's ADJUDICATOR retires, every row it adjudicated must be
+> RE-ANCHORED to the surviving oracle — never left merely recorded.**
+
+Done here by moving the rows `expect:unsupported → match`, so
+**`diff_test` adjudicates them against CPython**. The adjudicator changed;
+the adjudication did not lapse.
+
+**And the re-anchoring is not optional bookkeeping — dropping the rows
+would have been worse than keeping them.** Four census rows carried
+`mono=MATCH` against `expect=REFUSE`, where the `REFUSE` was **the retired
+trunk's answer**. Dropping them checks the rebuild against **a retired
+interpreter's expectation**; keeping them un-adjudicated checks it against
+nothing. **Only re-anchoring to the surviving oracle is a check at all** —
+which is §5.3's *agreement with the ORACLE* rule, arriving at the moment a
+window closes rather than while it is open.
+
 The two rules above are about **counting**. This one is about **verdict
 vocabularies**, and it is the third instance minted this session:
 
@@ -3499,6 +3549,13 @@ a box already in swap it is **the first thing jetsam takes**. The rules:
 * fall back to **SCOPED builds** (`--build-target`), and when you do, the
   landing carries a **§5.4a coverage statement** — *what was built, what
   was not, and therefore what the green covers*;
+* **CORRECTION to that guidance: a scoped coverage statement needs a GREEN
+  to scope a DELTA against.** A coverage statement says what this green
+  covers *relative to a known-good baseline*; **a red full build leaves
+  nothing to scope**, because the untouched part's status is unknown
+  rather than good. So after a red, **the next build is FULL again** — a
+  scoped build is how you extend a green, never how you recover from a
+  red;
 * the **full triad stays OWED**, discharged when the box is quiet:
   **load < 5 and swap < 1 GB**.
 

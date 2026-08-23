@@ -621,3 +621,54 @@ capability going missing; this is **a single dispatch arm**, invisible by exactl
 the same mechanism. **The class does not announce itself by size** — which is
 the argument for the capability-parity audit being routine rather than reserved
 for large merges.
+
+## 2026-08-23-architecture-6 — Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance
+
+**(1) THE MEASURED COST OF A TRUNK POORER THAN ITS SIBLINGS — three independent
+re-derivations.** Go is the **third** tier found re-deriving §5.2 locally: its
+own four-class `RefusalCause` whose tag is **byte-identical to Core's
+`className`**, flattened with the clause into **a prose prefix for a scoreboard
+to parse back out.** After C's snapshot and ES's cause, that is three lanes, none
+talking to each other, each rebuilding the same missing payload **in string form
+plus a parser to recover it.**
+
+**Three is the family's own evidence bar** (§9.3 ratified the span field names on
+exactly this standard) — and what it convicts is **not the tiers, it is the
+trunk.** Go's is the sharpest: it re-derives a name **Core already has**, then
+**encodes structure into a string so a consumer can decode it** — a round trip
+existing only because the typed field does not.
+
+> **A thin sibling is cheap. A trunk too poor for its siblings is not — it is
+> paid for N times, in string-building and re-parsing, by lanes that never see
+> each other's version.**
+
+Landed beside the thin-siblings strategy as the direct cost of the §3.4 gap, and
+the reason the fix belongs in `Core` rather than any adopter.
+
+**(2) DELETE HAS A PRECONDITION, and missing it inverts the ruling.**
+`MONO_OPENED` could not simply be deleted: its own comment recorded why the table
+was safe — it *"cannot become a silencer BECAUSE `monadic_gate` adjudicated its
+rows against the oracle."* **Delete the adjudicator and keep the table and you
+have built the silencer.**
+
+> **When a window's ADJUDICATOR retires, every row it adjudicated must be
+> RE-ANCHORED to the surviving oracle — never left merely recorded.**
+
+Done by moving the rows `expect:unsupported → match`, so **`diff_test`
+adjudicates them against CPython**: the adjudicator changed, the adjudication did
+not lapse. **And dropping them would have been worse than keeping them** — four
+census rows carried `mono=MATCH` against `expect=REFUSE`, where the `REFUSE` was
+**the retired trunk's answer**. Dropping checks the rebuild against a retired
+interpreter's expectation; keeping un-adjudicated checks it against nothing.
+**Only re-anchoring is a check at all** — §5.3's *agreement with the ORACLE*
+arriving at the moment a window CLOSES rather than while it is open.
+
+**(3) A CORRECTION TO MY OWN A14 GUIDANCE.** I wrote that a red full build falls
+back to scoped `--build-target` builds carrying a coverage statement. **That is
+wrong, and the reason is structural: a scoped coverage statement needs a GREEN to
+scope a DELTA against.** A coverage statement says what this green covers
+*relative to a known-good baseline*; **a red full build leaves nothing to
+scope**, because the untouched part's status is unknown rather than good. So
+after a red, **the next build is FULL again**. Scoped builds are how you **extend
+a green**, never how you **recover from a red** — and my guidance would have had
+lanes reporting scoped greens over an unknown tree.

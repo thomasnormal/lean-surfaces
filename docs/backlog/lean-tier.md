@@ -890,3 +890,85 @@ the constructor *elimination* principles (recursors and their no-confusion
 consequences), which PR #43 registers as reduction rules rather than deriving as
 injectivity. **Still NOT MEASURED, and now with a named place it is absent
 from.**
+
+---
+
+## 2026-08-23-lean-tier-11 — `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition
+
+### `weak'`: GREEN
+
+```
+LOCK  [16:31:30] LOCK ACQUIRED after 6062s as 'leantier 20942'
+      [16:31:38] build exit=0  ->  BUILD GREEN
+GATE  [16:31:38] === gate: lake env lean .../ProjParam.lean ===     PRESENT
+      [16:31:39] TRIAD DONE (build exit 0, gates green)
+```
+
+The **enqueue-tree gate held**: `tree at enqueue: 706583bb408f`, identical to
+what was staged, so the tenure built exactly the tree that was ticketed.
+
+Branch `lean-surfaces/trproj` @ **`d461f21db807c5f5748890de1564753805fd2d29`**.
+`docs/lean4lean-trproj-parametric.lean` byte-identical to the green file:
+**334 lines, 0 real sorries, 0 axioms, 16 theorems.**
+
+**Three of the seven obligations are now proved** against the parametric
+definition: `TrProjP.instL`, `TrProjP.instN`, `TrProjP.weak'`. The trap did not
+fire for `weak'` (`IsDefEq.weak'` and `HasType.weak'` agree on `(henv)(W)(H)`);
+the lemma is named explicitly regardless.
+
+### THE FINDING: `TrProj.wf` is NOT provable against my definition as written
+
+Censusing the next obligation — **by reading, before spending a tenure on it** —
+turned up a gap in `ProjSound` rather than in lean4lean.
+
+```lean
+theorem TrProj.wf (H1 : TrProj Δ s i e e') (H2 : VExpr.WF env U Γ e) :
+    VExpr.WF env U Γ e'
+```
+
+and `VExpr.WF env U Γ e := env.IsDefEqU U Γ e e` — *"`e` has a type"*. So `wf`
+requires **the projected field to be typed unconditionally**.
+
+My `ProjSound` types the field only *inside the `Prop` case*:
+
+```lean
+sound : ∃ A u, HasType e A ∧ HasType A (.sort u) ∧
+  (VLevel.MaybeZero u → ∃ B w, HasType v B ∧ HasType B (.sort w) ∧ IsAlwaysZero w)
+```
+
+When the structure's sort is **not** maybe-`Prop`, the definition says **nothing
+whatever about `v`** — so `wf` cannot be derived. The definition is too weak, and
+this is the second time the obligations have caught a defect in it rather than in
+the tree it targets (the first was the `IsAlwaysZero`/`MaybeZero` polarity).
+
+### The pre-registered restructure
+
+Hoist the field's typing **out of** the implication, leaving the `Prop`-squash as
+a condition on the **levels alone**:
+
+```lean
+sound : ∃ A u B w, HasType e A ∧ HasType A (.sort u)
+                 ∧ HasType v B ∧ HasType B (.sort w)
+                 ∧ (VLevel.MaybeZero u → VLevel.IsAlwaysZero w)
+```
+
+* **strictly stronger** — the field is now typed in every case, which is exactly
+  what `wf` consumes;
+* **says the same thing about soundness** — a maybe-`Prop` structure still forces
+  an always-`Prop` field;
+* **transports identically** — the implication `MaybeZero u → IsAlwaysZero w`
+  becomes `MaybeZero (u.inst ls) → IsAlwaysZero (w.inst ls)`, discharged by
+  `MaybeZero.of_inst` then `IsAlwaysZero.inst`, which is the proof already
+  written. The three green lemmas need only their `refine` shapes widened.
+
+**Cost: one tenure for all four** (`instL`, `instN`, `weak'` re-proved, plus
+`wf`), batched per base rule 4 rather than paid twice.
+
+### Status of the seven
+
+| obligation | status |
+| --- | --- |
+| `instL`, `instN`, `weak'` | **PROVED** (green, `d461f21`) |
+| `wf` | blocked on **my own** definition; restructure pre-registered above |
+| `uniq` | **plausibly blocked on no-confusion** — entry 8, narrowed by entry 10: not in `addInduct`, would need the constructor *elimination* principles. NOT MEASURED |
+| `weak'_inv`, `defeqDFC` | uncensused. Both are `∃`-conclusions over a *changed* context, so neither is a congruence like the three proved ones |

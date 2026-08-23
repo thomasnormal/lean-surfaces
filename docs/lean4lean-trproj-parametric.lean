@@ -271,6 +271,48 @@ theorem ProjSound.instN {env : VEnv} {U : Nat} {Γ₀ Γ₁ Γ : List VExpr}
   exact ⟨B.inst e₀ k, w, VEnv.HasType.instN henv W hB h₀,
     VEnv.HasType.instN henv W hw h₀, h0'⟩
 
+/-! ### `weak'` — the third obligation
+
+Structurally identical to `instN`: `lift'` distributes over `.app` at the SAME
+`Lift` (`| .app fn arg, k => .app (fn.lift' k) (arg.lift' k)`; only `lam` and
+`forallE` step to `k.cons`), and sorts are inert (`| .sort u, _ => .sort u`), so
+again no level transport is needed and the same `u`, `w` carry through.
+
+**The argument-order trap does NOT fire here** — `VEnv.IsDefEq.weak'` and
+`VEnv.HasType.weak'` both take `(henv) (W) (H)`. The lemma is still named
+explicitly: the rule is not to depend on two orders happening to agree, which is
+exactly the luck `instL` was relying on. -/
+
+/-- The spine relation commutes with lifting. -/
+theorem ArgFromRight.weak' {l : Lift} :
+    ∀ {n e v}, ArgFromRight n e v → ArgFromRight n (e.lift' l) (v.lift' l)
+  | _, _, _, .zero => .zero
+  | _, _, _, .succ h => .succ (ArgFromRight.weak' h)
+
+/-- The computational half commutes with lifting. -/
+theorem ProjField.weak' {PI : ProjIface} {S : Name} {idx : Nat} {e v : VExpr} {l : Lift}
+    (H : ProjField PI S idx e v) : ProjField PI S idx (e.lift' l) (v.lift' l) :=
+  ArgFromRight.weak' H
+
+/-- The sound half commutes with lifting.  Sorts are inert under `lift'`, so the
+`MaybeZero`/`IsAlwaysZero` obligations transfer with no level lemma. -/
+theorem ProjSound.weak' {env : VEnv} {U : Nat} {Γ Γ' : List VExpr} {l : Lift} {e v : VExpr}
+    (henv : env.Ordered) (W : Ctx.Lift' l Γ Γ') (H : ProjSound env U Γ e v) :
+    ProjSound env U Γ' (e.lift' l) (v.lift' l) := by
+  obtain ⟨A, u, hA, hu, hprop⟩ := H.sound
+  refine ⟨A.lift' l, u, VEnv.HasType.weak' henv W hA,
+    VEnv.HasType.weak' henv W hu, fun h0 => ?_⟩
+  obtain ⟨B, w, hB, hw, h0'⟩ := hprop h0
+  exact ⟨B.lift' l, w, VEnv.HasType.weak' henv W hB,
+    VEnv.HasType.weak' henv W hw, h0'⟩
+
+/-- **THE THIRD VALIDATION LEMMA.**  `TrProj.weak'` for the parametric form. -/
+theorem TrProjP.weak' {PI : ProjIface} {env : VEnv} {U : Nat} {Γ Γ' : List VExpr}
+    {S : Name} {idx : Nat} {l : Lift} {e v : VExpr}
+    (henv : env.Ordered) (W : Ctx.Lift' l Γ Γ') (H : TrProjP PI env U Γ S idx e v) :
+    TrProjP PI env U Γ' S idx (e.lift' l) (v.lift' l) :=
+  ⟨ProjField.weak' H.1, ProjSound.weak' henv W H.2⟩
+
 /-- **THE SECOND VALIDATION LEMMA.**  `TrProj.instN` for the parametric form. -/
 theorem TrProjP.instN {PI : ProjIface} {env : VEnv} {U : Nat} {Γ₀ Γ₁ Γ : List VExpr}
     {S : Name} {idx : Nat} {e₀ A₀ : VExpr} {k : Nat} {e v : VExpr}

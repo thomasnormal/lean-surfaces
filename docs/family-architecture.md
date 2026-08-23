@@ -3391,6 +3391,84 @@ One scoreboard shape for the whole family. The invariant is unchanged and
 is the whole point: **DIVERGE must be zero, and REFUSE is never
 agreement.**
 
+### 5.0a DECLARED DIVERGENCES — where a KNOWN, DECIDED difference lives
+
+**RULED 2026-08-24, on the pyc lane's request.** The lane found that **CPython's
+dict-iterator error state is STICKY and the model's is not** — an **inherited,
+named** divergence (from `enumDict`, `§pycomplete-14`) — and **deliberately gave
+it no witness row, because a row would be a DIVERGE.** It lived only in prose,
+and *never-hide-errors says prose is not a ledger.* Both halves of that are
+right, which is why it needed a ruling rather than a preference.
+
+**THE RESOLUTION STARTS BY SEPARATING TWO THINGS THE WORD "DIVERGE" WAS
+CARRYING.** `DIVERGE` is a **verdict about a run**: the model answered, the
+answer was wrong, and **nobody had decided that in advance**. What the pyc lane
+holds is not that. It is a **decision the tier has already taken and can
+state** — the model answers differently, on purpose, for a reason with a name
+and an owner.
+
+> **A DIVERGENCE THE TIER HAS DECIDED TO CARRY IS NOT A VERDICT. IT IS A DEBT —
+> and debts are REGISTERED, AGED and GATED, never narrated.**
+
+**So the invariant is untouched: `DIVERGE` stays zero, always.** A declared
+divergence is not admitted to the scoreboard, because admitting it would make
+the one number that means something mean nothing. **It goes to its own
+register.**
+
+**THE DECLARED-DIVERGENCE REGISTER — machine-readable, per tier, beside the
+refusal whitelist** (same instrument family, same form, so it is read by a tool
+and not by a reader's memory). Each row carries **six fields**:
+
+| field | why it is required |
+| --- | --- |
+| **SITE** | what construct, at what spelling — so the row is findable from the code |
+| **ORACLE behaviour** | what the language does (*sticky*) |
+| **MODEL behaviour** | what the tier does (*not sticky*) |
+| **INHERITED FROM** | the upstream decision and its id (`enumDict`, `§pycomplete-14`) — **blank means ORIGINATED here**, which is a different and heavier claim |
+| **DECLARED** | the date, so the row can be AGED |
+| **RETIREMENT CONDITION** | what would close it — and *"when someone models it"* is not a condition (§9's WAITING rule) |
+
+**AND THE REGISTER IS GATED IN BOTH DIRECTIONS, which is the part that makes it
+a ledger rather than a list.** For every row, an instrument asks:
+
+* **is the model still divergent here?** — a divergence that has been **silently
+  FIXED** leaves a **stale declaration**, and a stale declaration is a false
+  claim about the tier that reads as diligence;
+* **is the divergence still the one described?** — a divergence that has
+  **silently WIDENED** is the same row describing a bigger fact, which is the
+  worse failure and the one no reader will notice.
+
+That is the paired-guard law (§5.2): **a boundary is guarded on both sides, or
+the unguarded side is where it moves.**
+
+**AND IT IS COUNTED IN §9.0 AS A THIRD QUANTITY — never folded into either
+existing one.** A declared divergence is **not** coverage (the tier does not
+model that behaviour) and **not** a gap (the tier does model the construct, and
+answers). It is **covered-wrongly-on-purpose**, so the standing line reads
+`declared-divergences: N` **beside** the coverage number rather than inside it.
+**Folding it into the numerator would claim the behaviour; folding it into the
+denominator would claim the tier had never reached it. Both are false.**
+
+**Aging is the point of the DECLARED field**, and it hooks the audit cadence
+(§9.7): **a row that has aged past several audits without its retirement
+condition moving is a finding** — not because carrying it is wrong, but because
+*a debt nobody has priced in months is a debt nobody is going to pay*, and the
+honest options at that point are to retire it, to escalate it, or to say plainly
+that the tier ships this difference permanently.
+
+**INHERITED IS NOT ORIGINATED, and the field exists because the retirement
+condition lives UPSTREAM.** The pyc row's owner is not the pyc lane; it is
+whoever owns `enumDict`. **A tier that inherits a divergence inherits the
+obligation to cite it, not to fix it** — and an inherited row that has lost its
+upstream citation has become an originated one by neglect.
+
+**WHY NOT THE ALTERNATIVES.** A *whitelist* would put the row inside the
+scoreboard's own vocabulary and invite exactly the reading the invariant
+forbids — *some DIVERGEs are fine* — and a whitelist is a permission, not a
+debt: it does not age. **Prose in the tier doc is what this ruling replaces**;
+prose cannot be counted, cannot be aged, and cannot be gated, and it is
+indistinguishable from an oversight the moment its author leaves.
+
 ### 5.1 The verdicts
 
 | verdict | meaning |
@@ -3947,6 +4025,43 @@ what the statement claims **when the interesting case does not apply** (§8's
 implication rule), and if the answer is *"nothing at all"*, the premise is
 carrying the theorem rather than the other way round.
 
+**AND THE DEEPEST FORM OF THIS FAMILY: A DIFFERENT HYPOTHESIS WITH THE SAME
+STATEMENT** (pyc inch 2). `sbEvict_lit`'s **∃-quantified body HID the previous
+inch's ingestion change from the compiler**: **zero theorems break**, three
+prose sites are stale, and the `room` hypothesis **now prevents an unmodelled
+STATE CHANGE where it used to prevent a REFUSAL.**
+
+> **The statement is IDENTICAL, the meaning MOVED, and no tool can see it.**
+
+**This is model-matches-code at the level of a hypothesis's RATIONALE**, which
+is a layer below everything else this section covers. Every other divergence
+here is visible to *something*: a red, a census, a diff, a verdict. **A premise
+whose purpose has changed under a stable statement is visible to nobody** — the
+elaborator is satisfied, the theorem is true, and the file compiles exactly as
+it did.
+
+**THE LANE ASKED WHAT INSTRUMENT COULD SEE IT. The honest answer is that none
+can, AT THE STATEMENT LEVEL — and that the rationale becomes checkable the
+moment it is written as a claim with a witness.** *"The `room` hypothesis
+prevents X"* is a proposition, and it is testable in exactly one way:
+
+> **DROP THE HYPOTHESIS, AND A SPECIFIC NAMED THING MUST HAPPEN.** Write that
+> thing down as a row, and the rationale is no longer prose.
+
+**When the purpose moves, the row's SUBJECT changes** — from *a refusal* to *an
+unmodelled state change* — and **the row breaks even though the theorem does
+not.** That is §5.3's own discipline (*pair every "did not change" with a "did
+happen"*) applied to a **premise**, and it is the only construction that puts a
+rationale inside the reach of a tool.
+
+**The limit is worth stating too, because the lane's own answer named it**:
+falsifiable witness pairs cover **behaviour**, and a rationale is not behaviour
+until someone writes the counterexample it excludes. **An unwritten rationale
+stays unfalsifiable no matter how good the instruments are** — the fix is not a
+better tool, it is a sentence that could be wrong.
+
+
+
 **And the same rule one level up, from a measured master defect (§3.4's
 erosion clause): TWO REFUSALS MUST NEVER SCORE AS AGREEMENT.** A
 differential harness compares the two sides to each other, so when both
@@ -4049,6 +4164,24 @@ instrument copies it:
   schedule, for the same reason. The remedy is the same too: it must be
   **checked against the component**, not restated. Nine rows that now run
   against the oracle *are* that check;
+* **AND A CLOSED-LIST DOCSTRING IS A TIME BOMB — the 2026-08-13 incident
+  REPLAYED FROM A COMMENT** (pyc inch 2). `Expr.genAllocFree` named **"a closed
+  list of two"** generator allocators. **`iter` is the third**, and without the
+  fix **ordinary Python reports `internal: heap well-formedness violation`.**
+
+  > **A DOCSTRING THAT ENUMERATES IS A CENSUS THAT NO INSTRUMENT RE-RUNS.**
+
+  **The closed-list form is the aggravating factor, not the enumeration.** *"Used
+  by `heapEq`, `setDedup`"* is a claim that drifts; ***"a closed list of two"***
+  is a claim that **licenses code to assume completeness** — the reader who adds
+  the third member is told, in the file, that there is no third member. **The
+  docstring did not merely go stale; it argued against its own repair.**
+
+  **And the failure surfaced as an INTERNAL error on ordinary input**, which is
+  the shape §5.4a keeps convicting: **the tier's own invariant broke, and the
+  message named the invariant rather than the cause.** The same incident had
+  already been paid for once in August; **it came back through a comment**,
+  because the code was fixed and the sentence that would recreate it was not;
 * **A DOCSTRING NAMING A REACHABLE SET IS A CLAIM, AND IT DRIFTS.**
   `Kont.fuel`'s docstring read *"used by `heapEq`, `setDedup`"*; the
   **measured** set is **`heapEq` + `valContains`** — or so a correction
@@ -4500,6 +4633,39 @@ the short-circuit `DRAIN` trick the searcher was looking for. The hits were
 real, numerous, and about something else.
 
 > **A grep that agrees with your prior is the one to re-run.**
+
+**AND THE INGESTION-REWRITE AVAILABILITY RULE, STATED FROM A ZERO** (pyc inch
+2, branch `pyc-del` @ `485e7a3`, ticketed and pending green).
+
+> **An INGESTION REWRITE is available exactly when the construct's meaning is
+> decided by SYNTAX.**
+
+Measured: `iter(d)` extracts as **a plain `Call` with ZERO extractor sites**, so
+the previous inch's shape — fuse at ingestion, on the `ListComp` precedent —
+**does not transfer.** *The envelope proves the negative*: there is no syntactic
+site to rewrite, because the construct is a call like any other and its meaning
+is decided by **what it is called on**.
+
+**A rule stated from a zero is worth more than the same rule stated from a
+success**, and this is the second time this register has said so (§9.0b's `+0`).
+A rewrite that *worked* tells you it was available **here**; a census returning
+**zero sites** tells you **what property made it available there** — and the
+property is the transferable part. **The previous inch's shape was never about
+`ListComp`; it was about syntax deciding meaning**, which nobody could have
+known while it kept working.
+
+**AND THE CHURN REGIME IS TWO CPYTHON RULES, NOT ONE — a SAMPLING-POSITION
+hazard.** The for-loop census **sampled one rule from one cursor position**, and
+the refusal the lane wrote is honest to **both**.
+
+> **A census that samples from ONE POSITION measures the rule that position is
+> subject to, not the construct's rule.**
+
+**This is the unit family with the sampling frame as the unit.** Every earlier
+member had a wrong *unit of counting*; this one has a **correct unit counted
+from a privileged vantage** — and the number is right about what it saw. **The
+tell is a census whose sites are all structurally alike**, which reads as a
+clean population and is a sampling artifact.
 
 **AND A CONCESSIVE-PROSE GREP FINDS PROVED THEOREMS AS READILY AS OPEN ONES**
 (analog census). `Spice/DramDifferentialSenseUnbalanced.lean:1899` reads as an
@@ -5199,6 +5365,24 @@ can satisfy the first perfectly while failing the second completely.
 > **A verdict certifies a TREE, never a TITLE. The reader of a green compares
 > the CERTIFIED TREE against the CLAIM — the title is not evidence about the
 > tree, it is evidence about intent.**
+
+**AND THE LAW HAS AN AFFIRMATIVE USE, now on its THIRD instance** (R-track;
+after SV declined a rebase and this lane's own `-55` recorded the negative
+case). The R-track lane **committed the INDEX rather than the working tree**,
+because post-certification **verdict prose** would otherwise have changed the
+tree the green certified.
+
+> **A lane that understands *the verdict certifies a TREE* will sometimes commit
+> something other than what is in front of it — and that is the law being
+> USED, not worked around.**
+
+**The negative and affirmative readings are worth keeping side by side.**
+Negatively, the law catches a green that answered a different question.
+Affirmatively, it tells a lane **which of several honest commits preserves the
+certification** — decline the rebase, decline the fold-in, commit the index.
+**Three lanes have now taken the affirmative branch independently**, which is
+the convergence standard (§9.3) applied to a law's *use* rather than to its
+statement.
 
 **TWO WITNESSES, RANKED, and the ranking is the transferable part.**
 
@@ -8207,6 +8391,47 @@ measure is syntactic, and the vocabulary the ceiling is taken at.
 
 > **A chain document's FIRST RUNG IS THE STATEMENT, and a WAITING lane cannot
 > cite an UNSTATED theorem as its target.**
+
+**AND RUNG 1 HAS NOW BEEN PAID, WHICH SUPPLIES THE LAW'S ECONOMICS** (R-track,
+chain doc merged `68327fb`; `flagship.lean` ticketed). The campaign's namesake
+theorem cost **ONE scratch elaboration.**
+
+> **The rung listed FIRST, blocking the most WAITING triggers, was the CHEAPEST
+> item on the board — and it had never been anyone's task**, because every
+> archived ladder ends *"…and then `bound_refines_fuelModel` assembles."*
+
+> **A goal theorem that only ever appears as the LAST LINE OF PLANS will never
+> be written. Type the target before the path to it.**
+
+**Three properties, and the third is why this outranks a scheduling
+observation.** The statement is **usually cheap** — it is a type, not a proof.
+It makes **every progress claim falsifiable**, because a claim of progress
+toward an unwritten theorem cannot be checked against anything. And:
+
+> **It is the only artifact that can tell a lane it has been serving something
+> it never checked.**
+
+**A path is measured against its target**, so a chain with no typed target
+measures its rungs against **each other** — which is internally consistent,
+locally green, and unfalsifiable in exactly the way §5.3 keeps convicting.
+**The cost asymmetry is the practical argument**: an unwritten target is
+indefinitely expensive to be wrong about and one elaboration to be right about.
+
+**AND ASSEMBLY-DIFFICULTY ZERO IS THE DESIGN GOAL THAT FOLLOWS.** The strong
+induction is discharged **once, in the assembly file**; every side condition is
+`omega`'s; the theorem reduces to **exactly two named obligations with no proof
+shape.**
+
+> **No part of the flagship's difficulty should live in its ASSEMBLY — and now
+> none does.**
+
+**The reason to state it as a goal rather than a happy outcome**: difficulty
+parked in the assembly is difficulty that **every future re-founding pays
+again**, and it is invisible in the obligation list, so a lane reading *"two
+obligations remain"* believes it. **An assembly that is hard is an obligation
+list that lies about its own length.**
+
+
 
 **This closes a gap in §9's WAITING rule** (`-46`), which required an
 **executable trigger** and said nothing about the **target**. A trigger that

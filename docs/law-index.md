@@ -262,6 +262,13 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-211 | the merge fixes what is FALSE; only the owner sees what is now REDUNDANT | `docs/family-architecture.md §9.5a` |
 | MEAS-212 | two remedies for one symptom: an ENTRY gets an id, a SECTION HEADER gets demoted — never an invented id | `docs/family-architecture.md §9.5` |
 | MEAS-213 | a guard that can NAME a defect it cannot CLASSIFY must hand it to someone who can | `docs/family-architecture.md §9.5` |
+| MEAS-214 | a DECLARED divergence is a DEBT, not a verdict — registered, aged and gated, never narrated | `docs/family-architecture.md §5.0a` |
+| MEAS-215 | the divergence register is gated BOTH ways — silently fixed is a stale claim, silently widened is worse | `docs/family-architecture.md §5.0a` |
+| MEAS-216 | declared divergences are a THIRD quantity in §9.0 — neither numerator nor denominator | `docs/family-architecture.md §5.0a` |
+| MEAS-217 | INHERITED is not ORIGINATED — the retirement condition lives upstream, and the citation is the obligation | `docs/family-architecture.md §5.0a` |
+| MEAS-218 | an INGESTION REWRITE is available exactly when the construct's meaning is decided by SYNTAX | `docs/family-architecture.md §5.4a` |
+| MEAS-219 | a census sampling from ONE POSITION measures that position's rule, not the construct's | `docs/family-architecture.md §5.4a` |
+| MEAS-220 | a docstring that ENUMERATES is a census no instrument re-runs; a CLOSED LIST argues against its own repair | `docs/family-architecture.md §5.4` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -389,6 +396,9 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-117 | an `op_correct` statement mentions NO algorithm; the tie rule is a PARAMETER | cookbook §24 |
 | STMT-118 | an OMISSION is stated in the file, never silently completed | cookbook §24 |
 | STMT-119 | convergence on the PARAMETER plus divergence on the INSTANTIATION is a correct parameterization | `docs/family-architecture.md §5.2` |
+| STMT-120 | a goal theorem that only appears as the LAST LINE OF PLANS will never be written | `docs/family-architecture.md §9.0` |
+| STMT-121 | no part of a flagship's difficulty lives in its ASSEMBLY — a hard assembly is an obligation list that lies about its length | `docs/family-architecture.md §9.0` |
+| STMT-122 | a hypothesis's RATIONALE is checkable only as a row: drop it, and a specific named thing must happen | `docs/family-architecture.md §5.3` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

@@ -4790,3 +4790,144 @@ classify.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-210 … MEAS-213**.
+
+## 2026-08-24-architecture-61 — A declared divergence is a debt, not a verdict
+
+Eight from two sources — R-track rung 1 (chain doc `68327fb`; `flagship.lean`
+ticketed) and pyc inch 2 (branch `pyc-del` @ `485e7a3`, ticketed, pending
+green). **The ruling request is answered first, because it was the one item that
+could not be landed as an observation.**
+
+**(8) THE RULING — §5.0a IS NEW: DECLARED DIVERGENCES.** CPython's dict-iterator
+error state is **sticky**; the model's is **not** — inherited and named from
+`enumDict`, `§pycomplete-14`. The lane gave it **no witness row** because a row
+would be a **DIVERGE**, so it lived only in prose — and *never-hide-errors says
+prose is not a ledger.* **Both halves were right**, which is why it needed a
+ruling.
+
+**The resolution separates two things the word was carrying.** `DIVERGE` is a
+**verdict about a run**: the model answered, the answer was wrong, and **nobody
+decided that in advance.** What the lane holds is a **decision already taken,
+with a name and an owner.**
+
+> **A divergence the tier has DECIDED to carry is not a verdict. It is a DEBT —
+> registered, aged and gated, never narrated.**
+
+**The invariant is untouched: `DIVERGE` stays zero, always.** Admitting these
+would make the one number that means something mean nothing. They go to a
+**machine-readable register beside the refusal whitelist**, six fields — SITE,
+ORACLE behaviour, MODEL behaviour, **INHERITED FROM** (blank = originated, a
+heavier claim), **DECLARED** (so it can be aged), **RETIREMENT CONDITION**
+(*"when someone models it"* is not one, per §9's WAITING rule).
+
+**Gated in BOTH directions**, which is what makes it a ledger: *is the model
+still divergent here* (a silently **fixed** divergence leaves a stale
+declaration — a false claim that reads as diligence) and *is it still the one
+described* (a silently **widened** one is the same row describing a bigger
+fact — worse, and invisible). **Counted in §9.0 as a THIRD quantity**:
+`declared-divergences: N` **beside** the coverage number, because folding it
+into the numerator would claim the behaviour and into the denominator would
+claim the tier never reached it — **both false**. **Aging hooks §9.7**: a row
+past several audits with an unmoved retirement condition is a finding, since *a
+debt nobody has priced in months is a debt nobody is going to pay.*
+
+**Why not the alternatives**, stated so this is not re-litigated: a *whitelist*
+puts the row inside the scoreboard's vocabulary and invites *"some DIVERGEs are
+fine"* — and **a whitelist is a permission, not a debt: it does not age.** Prose
+in the tier doc is **what this ruling replaces.**
+
+**(1) §9.0 — THE TYPED-TARGET LAW GAINS ITS ECONOMICS.** The campaign's namesake
+theorem cost **one scratch elaboration** — *the rung listed first, blocking the
+most WAITING triggers, was the cheapest item on the board*, and had never been
+anyone's task because every archived ladder ends *"…and then
+`bound_refines_fuelModel` assembles."*
+
+> **A goal theorem that only ever appears as the LAST LINE OF PLANS will never
+> be written. Type the target before the path to it.**
+
+Three properties, and the third is why it outranks a scheduling note: the
+statement is **cheap**, it makes **every progress claim falsifiable**, and **it
+is the only artifact that can tell a lane it has been serving something it never
+checked.** My addition: **a path is measured against its target**, so a chain
+with no typed target measures its rungs **against each other** — internally
+consistent, locally green, unfalsifiable.
+
+**(2) §9.0 — ASSEMBLY-DIFFICULTY ZERO AS A DESIGN GOAL.** Strong induction
+discharged **once**, side conditions all `omega`'s, **exactly two named
+obligations with no proof shape**. Stated as a goal rather than an outcome
+because **difficulty parked in the assembly is paid again by every re-founding
+and is invisible in the obligation list**: *a hard assembly is an obligation
+list that lies about its own length.*
+
+**(3) §5.4a-i — THE AFFIRMATIVE USE, third instance.** The lane **committed the
+index rather than the working tree**, because post-certification verdict prose
+would have changed the certified tree. **The negative reading catches a green
+that answered a different question; the affirmative one tells a lane which
+honest commit PRESERVES the certification** — decline the rebase (SV), decline
+the fold-in (R-track), commit the index. Three lanes, independently: §9.3's
+convergence standard applied to a law's **use**.
+
+**(4) §5.4a — THE INGESTION-REWRITE AVAILABILITY RULE, STATED FROM A ZERO.**
+`iter(d)` extracts as a plain `Call` with **zero extractor sites**.
+
+> **An ingestion rewrite is available exactly when the construct's meaning is
+> decided by SYNTAX.**
+
+**A rule stated from a zero beats the same rule stated from a success**: the
+working rewrite told the lane it was available *here*; the zero tells it **what
+property made it available there.** The previous inch's shape was never about
+`ListComp` — **it was about syntax deciding meaning**, which nobody could know
+while it kept working.
+
+**(5) §5.4 — A CLOSED-LIST DOCSTRING IS A TIME BOMB.** `Expr.genAllocFree` named
+*"a closed list of two"*; **`iter` is the third**, and without the fix ordinary
+Python reports **`internal: heap well-formedness violation`** — the 2026-08-13
+incident **replayed from a comment.**
+
+> **A docstring that ENUMERATES is a census that no instrument re-runs.**
+
+**The closed-list form is the aggravating factor, not the enumeration**: a
+drifting list is a stale claim, but *"a closed list of two"* **licenses code to
+assume completeness** — the reader who adds the third member is told, in the
+file, that there is none. **The docstring did not merely go stale; it argued
+against its own repair.** And it came back **through a comment**, because the
+code was fixed and the sentence that would recreate it was not.
+
+**(6) §5.4a — SAMPLING-POSITION BIAS.** The for-loop census **sampled one rule
+from one cursor position**; the churn regime is **two CPython rules**, and the
+refusal is honest to both.
+
+> **A census sampling from ONE POSITION measures the rule that position is
+> subject to, not the construct's rule.**
+
+**The unit family with the SAMPLING FRAME as the unit** — every earlier member
+had a wrong unit of counting; this one counts a correct unit **from a privileged
+vantage**, and the number is right about what it saw. **The tell is a census
+whose sites are all structurally alike**, which reads as a clean population.
+
+**(7) §5.3 — THE DEEPEST ONE: A DIFFERENT HYPOTHESIS WITH THE SAME STATEMENT.**
+`sbEvict_lit`'s ∃-quantified body **hid the previous inch's ingestion change
+from the compiler**: zero theorems break, three prose sites stale, and the
+`room` hypothesis **now prevents an unmodelled STATE CHANGE where it used to
+prevent a REFUSAL.**
+
+> **The statement is identical, the meaning moved, and no tool can see it.**
+
+**Everything else in this section is visible to something** — a red, a census, a
+diff, a verdict. **A premise whose purpose changed under a stable statement is
+visible to nobody.** The lane asked what instrument could; **my answer: none, at
+the statement level — and the rationale becomes checkable the moment it is
+written as a claim with a witness.**
+
+> **Drop the hypothesis, and a specific named thing must happen.** Write that
+> thing down as a row, and the rationale is no longer prose.
+
+**When the purpose moves, the row's SUBJECT changes and the row breaks even
+though the theorem does not** — §5.3's *pair every "did not change" with a "did
+happen"*, applied to a premise. **With the limit the lane itself named**:
+witness pairs cover **behaviour**, and **an unwritten rationale stays
+unfalsifiable no matter how good the instruments are.** The fix is not a better
+tool; **it is a sentence that could be wrong.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-214 … MEAS-220, STMT-120 … STMT-122**.

@@ -1802,3 +1802,94 @@ a **run-time panic** — a defined outcome, in ρ, never `undefined`.
 
 `fallthrough` deferred (4.0%); arrays and slices still deferred with
 §G14's split (slices 85.4%); MM-oracle untouched.
+
+---
+
+## G16 — THE RE-RANK: the walker has doubled its reach, and the next rung is ONE family (2026-08-23)
+
+Census only, no semantics. Re-ranked with conversions correctly bucketed
+(§G14) and strings-as-bytes landed (§G15).
+
+### WHERE THE WALKER IS
+
+| measure | files | of |
+| --- | ---: | ---: |
+| standard library | 5,419 | — |
+| rung-1 INGESTER reach | 3,084 | 56.9% of stdlib |
+| **WALKER steps entirely** | **1,289** | **41.8% of reachable** |
+
+**633 → 1,289: rungs 3 and 4 doubled it.** That is calls, conversions and
+string indexing, and it is the first time the walker's number has moved by
+more than a rounding.
+
+### WHAT IT STILL REFUSES, re-ranked
+
+| construct | files | share of reachable |
+| --- | ---: | ---: |
+| `ArrayType` | 1,479 | 48.0% |
+| `RangeStmt` | 676 | 21.9% |
+| `SliceExpr` | 541 | 17.5% |
+| `FuncLit` | 442 | 14.3% |
+| `SwitchStmt` / `CaseClause` | 432 / 430 | 14.0% |
+| `GoStmt`, `ChanType`, `SendStmt`, `SelectStmt`, `CommClause` | 26 … 9 | ≤0.8% |
+
+### THE FINDING: the top three are ONE FAMILY, and it is conjunctive again
+
+`ArrayType`, `SliceExpr` and `RangeStmt` are not three rungs. They are
+slices — `[]T`, `a[i:j]`, and `for … range` over one — and measured as
+unlocks they behave exactly like §G1's bundles:
+
+| added | files reached | delta |
+| --- | ---: | ---: |
+| baseline | 1,289 | — |
+| `ArrayType` alone | 1,817 | +528 |
+| `SliceExpr` alone | 1,316 | **+27** |
+| `RangeStmt` alone | 1,318 | **+29** |
+| **all three** | **2,308 (74.8%)** | **+1,019** |
+
+**Sum of the parts is 584; the whole is 1,019 — 1.7×.** Ship any one and
+almost nothing moves; ship the family and reach goes 41.8% → 74.8%. This
+is the third independent reproduction of the conjunctive law in this lane
+(§G1's bundles, §G4's switch family, now slices), and the first where the
+parts are individually near-worthless in the *single digits*.
+
+**Everything else is small, and two are ZERO:**
+
+| cluster | delta |
+| --- | ---: |
+| `SwitchStmt` + `CaseClause` | +141 |
+| `FuncLit` | +56 |
+| `MapType` | **+0** |
+| interfaces (`InterfaceType` + `TypeAssertExpr` + `TypeSwitchStmt`) | **+0** |
+
+A `+0` means **no rung-1-reachable file is blocked ONLY by that
+construct** — every file using a map or an interface also uses something
+else the walker lacks. So maps and interfaces cannot be a next rung at any
+price; they are strictly downstream of slices.
+
+### THE STRINGS PACKAGE DOES NOT START PAYING — and the reason is precise
+
+The question was whether §G15's strings-as-bytes makes the `strings`
+package (6,042 calls) reachable. **It does not, and the two things are
+unrelated:** `strings.Index(…)` is a **selector call**, and §G8 measured
+selector calls at 52.4% of all call sites and ruled them `go/types` work.
+The blocker is **resolving `strings` to a package**, not representing its
+values. Landing the byte representation changed what a string IS; it did
+not change what `pkg.F` means.
+
+That distinction is worth keeping because the two look adjacent and are
+not: the value model was this lane's to fix, and the selector resolution
+is the extractor's — §G8's brief, ratified, still unstarted.
+
+### NEXT RUNG, sized by the census
+
+**Slices, as one family**: `[]T`, `a[i:j]`, and `range` over a slice.
+Reach 41.8% → 74.8%. Fixed arrays `[N]T` are **14.6%** of `ArrayType`
+(§G14) and are NOT part of it — declare only what executes.
+
+The acceptance case should be picked the way §G13's was: a real function
+the census surfaces, chosen so it can FAIL under a wrong model — §G15's
+lesson that `Reverse8`, not `Len8`, decided the value model.
+
+`fallthrough` deferred (4.0%); maps and interfaces measured at +0 and
+strictly downstream; MM-oracle untouched.

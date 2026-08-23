@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**239 entries across 16 lanes.** Regenerate with
+**241 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-24-softfloat-14` | THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology | softfloat |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
 | `2026-08-23-architecture-51` | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
 | `2026-08-23-architecture-50` | The goal is COMPLETION, and a milestone is a waypoint | architecture |
@@ -103,6 +104,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-pycomplete-14` | INCH 3c-i-c BUILT: `enumerate(d)` runs, and the census's price held exactly | python-completeness |
 | `2026-08-23-lean-tier-14` | CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING | lean-tier |
 | `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
+| `2026-08-23-softfloat-13` | PARSE INCH, STATEMENT-FIRST: `ofScientific`'s branches are NOT shape-uniform | softfloat |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-pycomplete-13` | INCH 3c-i-c's CENSUS: `enumerate(d)` is a GENERATOR FRAME, so the Kont record is not touched at all | python-completeness |
 | `2026-08-23-lean-tier-13` | MILESTONE: 4 proved / 3 blocked, `weak'_inv` parked on an IMPORT CYCLE; and the arena re-measure moved a fact | lean-tier |

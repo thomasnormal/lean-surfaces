@@ -1091,3 +1091,43 @@ green)` — and the class floor has GROWN since the last landing: `docs_check`,
 
 Seventeen theorems in the file, every one `[propext, Classical.choice,
 Quot.sound]`. No `sorry`, no `native_decide`.
+
+## 2026-08-24-sunfish-rtrack-11 — THE CHAIN DOCUMENT: the flagship becomes a distance
+
+`docs/sunfish-flagship-chain.md`. Nine rungs from where R2 stands to
+`bound_refines_fuelModel`, each with owner and blocker-or-mechanical status.
+**§9.0 number for this lane henceforth: chain rungs closed / total. Today 2 / 9.**
+
+### The three things the document had to measure rather than assume
+
+1. **The flagship is not stated in Lean anywhere.** It lives in prose in
+   `docs/backlog-archive.md`. That is rung 1, listed first because a goal theorem
+   nobody has typed is a goal nobody can typecheck against.
+2. **Rung 6's denominator is 57, not 221 and not 63.** `bound_depth.lean` holds
+   221 theorems and 63 statement-slice defs, and both are the wrong number:
+   `docs/python-refounding-plan.md` §2.6 counts only INTERPRETER-FACING
+   statements and gets 57 there, 82 in `genmoves_ray`, 61 in `move_gate` — 200
+   across the three, not 558. A re-founding's size is the count of statements
+   that NAME the interpreter, and any larger figure is arithmetic about the wrong
+   set.
+3. **`twinAgrees` is a fork this lane declines, on the plan's own pricing.** A
+   whole-interpreter adequacy theorem would transport all 57 at near-zero
+   marginal cost, but the plan prices transport as paying only above ~100
+   mostly-mechanical theorems in ONE file, and no file clears that on the
+   corrected count. The standing instruction is *do not start it
+   speculatively*; rung 6 is re-proof, and `twinAgrees` is reconsidered only if
+   the first dozen statements resist. Recording the fork matters as much as the
+   choice: a later lane that wants transport should find the price already
+   computed rather than re-derive it.
+
+### A dangling anchor, found while reading
+
+`docs/python-monadic-rebuild.md` cites `twinAgrees` at "§8.5" in four places and
+**there is no §8.5 in that document** — the document says so about itself. The
+section that actually reasons about `twinAgrees` is the refounding plan's §3.
+Not this lane's file to fix, but a reader following the anchor lands nowhere,
+and the chain document cites §3 directly for that reason.
+
+### Status
+
+Verdict pending.

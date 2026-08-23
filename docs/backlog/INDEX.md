@@ -23,6 +23,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-pycomplete-8` | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
 | `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
 | `2026-08-23-architecture-7` | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |
 | `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |

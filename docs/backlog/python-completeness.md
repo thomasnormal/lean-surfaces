@@ -519,3 +519,90 @@ state, after `DIVERGE`/`DIVERGED`, the census's grammar column and the gate's
 `OPENED`. The pattern is now unmistakable: **during a re-founding, every
 two-sided check needs a vocabulary for "these differ on purpose", and the
 default vocabulary never has one.**
+
+## 2026-08-23-pycomplete-8 — INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct
+
+Measured on CPython 3.9.19 before any design. The headline is that
+`.keys()`/`.values()`/`.items()` are **not** three spellings of one thing, and
+the differences are exactly where a reasonable-looking model would be silently
+wrong.
+
+### What a view IS
+
+| probe | CPython |
+| --- | --- |
+| `type(d.keys())` | `dict_keys` — an OBJECT, not a list |
+| `k = d.keys(); d[2] = 'b'; list(k)` | `[1, 2]` — **LIVE**, it still sees the dict |
+| `len(d.keys())` after growth | tracks the dict |
+| `d.keys()[0]` | `TypeError: 'dict_keys' object is not subscriptable` |
+| `list(reversed(d.keys()))` | works (3.8+) |
+
+### THE TRAP, and it is the finding of this census
+
+| probe | CPython | why it matters |
+| --- | --- | --- |
+| `d.keys() == {1, 2}` | **True** | keys compare as a SET |
+| `d.items() & {(1,'a')}` | `{(1, 'a')}` | items are set-like too |
+| `d.values() & {1}` | **TypeError** | values are NOT set-like |
+| `d.values() == d.values()` | **False** | a values view defines NO equality, so it falls back to IDENTITY |
+
+**`d.values() == d.values()` being False is the row to keep.** Two views of the
+same dict, compared, answer False — and a model that treated the three views
+uniformly (or that made a view compare by contents) would answer True. That is
+the silently-wrong direction, and it is also the intuitive one, which is what
+makes it worth a witness rather than a sentence.
+
+### Mutation during view iteration is 3a's regime, unchanged
+
+Growth during `.keys()` iteration raises the same
+`RuntimeError: dictionary changed size during iteration`; a value update
+during `.values()` iteration is fine. So 3c inherits 3a's guards rather than
+inventing any — `dictStep` already decides all three regimes.
+
+### `enumerate(d)` needs nothing new either
+
+`enumerate(d)` is `[(0, k₀), (1, k₁), …]` over the keys, `enumerate(d, 5)`
+starts at 5, and growth mid-iteration raises the same `RuntimeError`. It is the
+key cursor with an index — 3a's frame with `enumSeq`'s counter.
+
+### The split, and it is the same shape as 3b/3a
+
+* **3c-i — views in CONSUMING position.** `for k, v in d.items():`,
+  `list(d.keys())`, `sorted(d.values())`, `sum(d.values())`,
+  `enumerate(d)`/`enumerate(d.items())`, `dict(d.items())`, `tuple(d.items())`.
+  **The view never escapes**, so it needs no object: the call is FUSED with its
+  consumer, exactly as the script shell already fuses
+  `for … in d.items():`. This is nearly all real usage.
+* **3c-ii — views as FIRST-CLASS VALUES.** `k = d.keys()` held across
+  statements, set algebra, `==` against a set, `reversed`. This needs an
+  `Obj.dictView` carrying the dict's address and the view KIND, plus a
+  set-algebra inventory for keys/items and the identity-equality rule for
+  values. `dict.view-escapes` is its marker witness.
+
+**3c-i is the inch; 3c-ii is a tier.** Splitting them is not deferral: the
+consuming forms are what stdlib and application code actually write, and they
+cost no new heap kind.
+
+### Where the refusals live, and the instrument constraint
+
+Two SHARED sites carry almost all of it — `Semantics.lean:2920` (the dict
+attribute-call plan, which admits `.get`/`.clear` and refuses the rest) and
+`Semantics.lean:3805` (`enumerate()` over a dict). Both are pure workers on
+the "maximal trunk", so admitting them serves BOTH presentations, exactly as
+rung 3b's `sortedValH`/`extremumValH` already did.
+
+Per the arch lane's end-condition, **3c adds nothing to `harness/monadic_gate.py`**:
+the two-model window is closing, so new expectations go in the census's
+CPython-written column and in `diff_test`, both of which survive the collapse.
+`MONO_OPENED` and the monadic census column are window vocabulary and retire
+with the window; when the successor's delete/modify conflict arrives on
+`monadic_gate.py`, **the resolution is DELETE** — those +38 lines are
+scaffolding, and its two `OPENED` rows become ordinary `diff_test` rows once
+there is one interpreter and the differential's other side is CPython.
+
+### Battery
+
+Five new witnesses, all REFUSE today: `dict.values`, `dict.items-consumed`
+(3c-i's targets), `dict.view-escapes` (3c-ii's marker),
+`dict.values-identity-eq` and `dict.keys-set-algebra` (the two traps). 111
+witnesses.

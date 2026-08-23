@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**73 entries across 16 lanes.** Regenerate with
+**77 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -23,8 +23,12 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
 | `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
+| `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
+| `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
 | `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
+| `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |
 | `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
 | `2026-08-23-architecture-3` | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
 | `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |

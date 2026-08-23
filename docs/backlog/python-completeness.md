@@ -424,3 +424,60 @@ the same-size churn hazard remains unreachable, exactly as §L53 recorded.
 Encoding the divergence beats switching the parity check off: the census keeps
 gating BOTH interpreters, and the rows where they differ ON PURPOSE are
 written down rather than tolerated. 106 witnesses now.
+
+## 2026-08-23-pycomplete-6 — THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch
+
+Inch 3a's first verification came back **build green, gates RED**, on two
+independent counts. Neither was a proof failure and both were real.
+
+### RED 1 — the inch was HALF WIRED, and `dict.for-in-function` is what caught it
+
+`dict.for` (module scope) MATCHED. `dict.for-in-function` REFUSED against a
+recorded MATCH. The monadic interpreter has **THREE** `for` entry paths, not
+the two the static census named:
+
+| path | who takes it | wired in the first attempt? |
+| --- | --- | --- |
+| `execGen`'s `.forList`/`.forDict` frames | a GENERATOR body | yes |
+| `SKont.forList`/`.forDict` | module scope | yes |
+| **`Kont.forList`/`.forDict`** | an ORDINARY `def` — **the commonest path of all** | **NO** |
+
+The third is `Monadic/Prim.lean`'s `Kont`, a *different record* from the script
+shell's `SKont`, and its dict arm sat one screen below the one I patched. A
+census that had stopped at "grep the refusal messages" would have shipped a
+cursor that worked in generators and at module scope and refused in every
+ordinary function — and the diff_test battery would NOT have caught it,
+because the trunk refuses those rows too, so trunk/monadic parity holds while
+both are wrong.
+
+**The witness was written to exercise `break` and `continue` through the new
+frame, and it earned its place twice over: it caught a missing ENTRY PATH, not
+the flow control it was aimed at.** §L14's law again — a statement-level count
+is not an ingestion verdict; run the thing.
+
+### RED 2 — rung 3b never reached the rebuild, and the merge is where it was lost
+
+25 divergences, every one a `keys_*` or `star_dict` row: **the trunk
+implements the draining consumers and the rebuild does not.** Rung 3b landed
+on the trunk (2026-08-22-pycomplete-1) while the monadic branch was already
+cut, and the merge carried the trunk's arms without carrying the capability
+across the presentation boundary. That is a defect on master that predates
+this inch; the gate run is what surfaced it.
+
+**The fix is ONE line, and the reason is the rebuild's own factoring.** The
+trunk pays rung 3b seven times — one arm per consumer, each beside its own
+`.list` arm. The rebuild has `iterValues`, the single dispatch `sum`/`tuple`/
+`list`/`set`/`any`/`all` all share, so the same capability is one arm there.
+`sorted`/`max`/`min` needed nothing at all: they route through the SHARED
+trunk workers (`sortedValH`/`extremumValH`), which is `Monadic/Substrate.lean`'s
+"maximal trunk" claim paying off in a measurable way — those four rows were
+already green in the red run.
+
+### What did NOT need changing
+
+The census expectations were already right: the four `mono=` divergences and
+the trunk column both stated the intended end state, so the fixes made the
+recorded expectations true rather than the expectations being edited to match
+the code. **That is the direction a scoreboard has to move in**, and it is
+only possible because the expectations were written from CPython's measured
+behaviour (§L53) rather than from the model's.

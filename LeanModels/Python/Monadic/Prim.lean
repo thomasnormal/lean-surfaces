@@ -159,6 +159,9 @@ structure Kont where
   forSeq : Expr → List RVal → List Stmt → SemF RFlow
   /-- `for target in <heap list at a>: body` — the LIVE index cursor. -/
   forList : Expr → Addr → Nat → List Stmt → SemF RFlow
+  /-- `for k in d` in an ORDINARY function body — the LIVE dict cursor,
+  carrying the size and `shapeVersion` the loop started with (§3a). -/
+  forDict : Expr → Addr → Nat → Nat → Nat → List Stmt → SemF RFlow
   /-- Advance a generator one yield. -/
   stepIter : Addr → SemW (Option RVal)
   /-- THE CONTINUATION WALKER: run a generator body from its defunctionalized
@@ -186,6 +189,7 @@ def Kont.bottom : Kont where
   whileLoop   := fun _ _ _ => exhausted
   forSeq      := fun _ _ _ => exhausted
   forList     := fun _ _ _ _ => exhausted
+  forDict     := fun _ _ _ _ _ _ => exhausted
   stepIter    := fun _     => exhausted
   execGen     := fun _     => exhausted
   forGen      := fun _ _ _ => exhausted

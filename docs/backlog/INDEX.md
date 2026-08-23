@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**83 entries across 16 lanes.** Regenerate with
+**85 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -23,6 +23,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-pycomplete-9` | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |
 | `2026-08-23-pycomplete-8` | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
 | `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
 | `2026-08-23-architecture-7` | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |

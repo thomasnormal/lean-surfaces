@@ -183,7 +183,212 @@ theorem moves_emits_qs (w : World) (e : REnv)
     hpos hd hsorted hgxl hdrain hsort
   exact ⟨env', moves_prologue_qs w e hd hk hstmt⟩
 
-/-! ## §4 What the stream is NOT, and what F3c still owes
+/-! ## §4 THE STAND-PAT ROUND — the loop body, at the round the stream leads with
+
+§L30: the depth-0 stand-pat *"is the round the whole fail-low `Report` argument
+stands on"*. §3 puts it on the wire; this section runs the loop body over it.
+
+**It is the ONLY round that takes `sbScore`'s first branch.** The score chain
+opens `if move is None and depth == 0`, and both conjuncts hold at exactly this
+round and nowhere else — depth ≥ 1 fails the second, every real move fails the
+first. `fold_depth1.lean` gates branches 2–5 and never this one, which is why it
+is proved here rather than reused. -/
+
+/-- The frame the stand-pat round leaves: `score` bound and `best` folded. -/
+def envStandPat (e : REnv) (scv bst : Int) : REnv :=
+  Env.set (Env.set e "score" (.int scv)) "best" (.int (max bst scv))
+
+/-- **THE SCORE LINE.** `if move is None and depth == 0: score = pos.score`. -/
+theorem standpat_score (w : World) (e : REnv) (sc : Int) (b : String)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (F : Nat)
+    (hmv : Env.lookup e "move" = some .none)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    execStmt sunfish (F + 12) ⟨w, e⟩ sbScore
+      = .ok ⟨w, Env.set e "score" (.int sc)⟩ .next := by
+  obtain ⟨s0, s1, s2, s3, s4, s5, s6, s7, hslit⟩ := sbScore_lit
+  obtain ⟨q0, q1, q2, q3, hb1⟩ := sbB1_lit
+  have hmvE : evalExpr sunfish (F + 8) ⟨w, e⟩ (.name "move" s0) = .ok ⟨w, e⟩ .none := by
+    py_simp [-globalsFold, -globalsStep, hmv]
+  have hnoneE : evalExpr sunfish (F + 7) ⟨w, e⟩ (.constant Const.none s1)
+      = .ok ⟨w, e⟩ .none := by py_simp [-globalsFold, -globalsStep]
+  have hisOp : evalCompareOpH w.heap (F + 7) .is (.none : RVal) .none = .ok true := by
+    simp [evalCompareOpH, RVal.isNone]
+  have hisNone : evalExpr sunfish (F + 9) ⟨w, e⟩
+      (.compare (.name "move" s0) #[.is] #[.constant Const.none s1] s2)
+        = .ok ⟨w, e⟩ (.bool true) := compare_one (F := F + 6) hmvE hnoneE hisOp
+  have hdE : evalExpr sunfish (F + 7) ⟨w, e⟩ (.name "depth" s3) = .ok ⟨w, e⟩ (.int 0) := by
+    py_simp [-globalsFold, -globalsStep, hd]
+  have hzE : evalExpr sunfish (F + 6) ⟨w, e⟩ (.constant (.int 0) s4)
+      = .ok ⟨w, e⟩ (.int 0) := by py_simp [-globalsFold, -globalsStep]
+  have hzOp : evalCompareOpH w.heap (F + 6) .eq (.int 0) (.int 0) = .ok true := by
+    simp [evalCompareOpH, RVal.refFree, valEq]
+  have hdZero : evalExpr sunfish (F + 8) ⟨w, e⟩
+      (.compare (.name "depth" s3) #[.eq] #[.constant (.int 0) s4] s5)
+        = .ok ⟨w, e⟩ (.bool true) := compare_one (F := F + 5) hdE hzE hzOp
+  have hcond : evalExpr sunfish (F + 11) ⟨w, e⟩
+      (.boolOp .and
+        #[.compare (.name "move" s0) #[.is] #[.constant Const.none s1] s2,
+          .compare (.name "depth" s3) #[.eq] #[.constant (.int 0) s4] s5] s6)
+        = .ok ⟨w, e⟩ (.bool true) := by
+    rw [evalExpr]
+    simpa using boolChain_and2 (F := F + 8) hisNone rfl hdZero
+  rw [hslit, execStmt_if_true hcond rfl]
+  simp only [hb1, execStmts]
+  py_simp [-globalsFold, -globalsStep, hpos, posOf, posCAux, posCls_methods]
+
+/-- **THE `max` FOLD.** `best = max(best, score)` — the accumulator's only
+update, and `max` is a builtin the module never rebinds. -/
+theorem standpat_max (w : World) (e : REnv) (bst scv : Int) (F : Nat)
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hs : Env.lookup e "score" = some (.int scv))
+    (hnomax : Env.lookup e "max" = Option.none) :
+    execStmt sunfish (F + 8) ⟨w, e⟩ sbMax
+      = .ok ⟨w, Env.set e "best" (.int (max bst scv))⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, hlit⟩ := sbMax_lit
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hb, hs, hnomax, maxG, maxNotFun, maxCls, maxNT]
+
+/-- **THE CUTOFF, ARM 1 — it FIRES.** `best >= gamma`, so the round breaks, and
+the block stores NOTHING: that is the depth-0 round's heap-freedom, proved rather
+than assumed.
+
+**And it dies for a sharper reason than the pin records.** `sbKill_lit`'s
+docstring names the SECOND conjunct as the QS-node killer (*"at a QS node the
+second conjunct is falsy"*) — true of a real move. At the STAND-PAT round it
+never gets that far: `move` IS `None`, so the chain dies on the FIRST conjunct and
+`depth` is never evaluated. This gate therefore needs **no depth hypothesis at
+all**, and does not take one. -/
+theorem standpat_cut_fires (w : World) (e : REnv) (bst gamma : Int) (F : Nat)
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hmv : Env.lookup e "move" = some .none)
+    (hge : gamma ≤ bst) :
+    execStmt sunfish (F + 14) ⟨w, e⟩ sbCut = .ok ⟨w, e⟩ .brk := by
+  obtain ⟨p0, p1, p2, p3, hlit⟩ := sbCut_lit
+  obtain ⟨sbr, hcb⟩ := sbCutB_split
+  obtain ⟨k0, k1, k2, k3, k4, k5, hklit⟩ := sbKill_lit
+  have hcond : evalExpr sunfish (F + 13) ⟨w, e⟩
+      (.compare (.name "best" p0) #[.gtE] #[.name "gamma" p1] p2)
+        = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hb, hg, if_pos hge]
+  have hkill : execStmt sunfish (F + 12) ⟨w, e⟩ sbKill = .ok ⟨w, e⟩ .next := by
+    have hmvE : evalExpr sunfish (F + 8) ⟨w, e⟩ (.name "move" k0) = .ok ⟨w, e⟩ .none := by
+      py_simp [-globalsFold, -globalsStep, hmv]
+    have hnoneE : evalExpr sunfish (F + 7) ⟨w, e⟩ (.constant Const.none k1)
+        = .ok ⟨w, e⟩ .none := by py_simp [-globalsFold, -globalsStep]
+    have hisOp : evalCompareOpH w.heap (F + 7) .isNot (.none : RVal) .none = .ok false := by
+      simp [evalCompareOpH, RVal.isNone]
+    have hfirst : evalExpr sunfish (F + 9) ⟨w, e⟩
+        (.compare (.name "move" k0) #[.isNot] #[.constant Const.none k1] k2)
+          = .ok ⟨w, e⟩ (.bool false) := compare_one (F := F + 6) hmvE hnoneE hisOp
+    have hcondk : evalExpr sunfish (F + 11) ⟨w, e⟩
+        (.boolOp .and
+          #[.compare (.name "move" k0) #[.isNot] #[.constant Const.none k1] k2,
+            .name "depth" k3] k4) = .ok ⟨w, e⟩ (.bool false) := by
+      rw [evalExpr]
+      simpa using boolChain_and_falsy (F := F + 9) hfirst rfl
+    rw [hklit, execStmt_if_false hcondk rfl]
+    rfl
+  rw [hlit, execStmt_if_true hcond rfl, hcb]
+  simp only [execStmts, hkill, Run.bind]
+  rfl
+
+/-- **THE CUTOFF, ARM 2 — it does NOT fire.** `best < gamma`, so the round falls
+through and the loop takes another element. -/
+theorem standpat_cut_skips (w : World) (e : REnv) (bst gamma : Int) (F : Nat)
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hlt : bst < gamma) :
+    execStmt sunfish (F + 14) ⟨w, e⟩ sbCut = .ok ⟨w, e⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, hlit⟩ := sbCut_lit
+  have hcond : evalExpr sunfish (F + 13) ⟨w, e⟩
+      (.compare (.name "best" p0) #[.gtE] #[.name "gamma" p1] p2)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hb, hg,
+      if_neg (show ¬ gamma ≤ bst by omega)]
+  rw [hlit, execStmt_if_false hcond rfl]
+  rfl
+
+/-! ### THE ROUND, both arms
+
+`best` is deliberately left FREE in all five gates rather than fixed at
+`-mateUpper`: the round lemma has to hold at every accumulator the loop can
+present it with, and only the entry gate knows the loop starts there. -/
+
+set_option linter.unusedSimpArgs false in
+/-- **THE STAND-PAT ROUND, cutting.** Three statements, `.brk` out. -/
+theorem standpat_round_cut (w : World) (e : REnv) (sc bst gamma : Int) (b : String)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (hmv : Env.lookup e "move" = some .none)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hge : gamma ≤ max bst sc) :
+    ∃ f, execStmts sunfish f ⟨w, e⟩ sbBody = .ok ⟨w, envStandPat e sc bst⟩ .brk := by
+  refine ⟨38, ?_⟩
+  rw [sbBody_split]
+  simp only [execStmts]
+  rw [standpat_score w e sc b wc0 wc1 bc0 bc1 ep kp 25 hmv hd hpos]
+  simp only [Run.bind]
+  rw [standpat_max w (Env.set e "score" (.int sc)) bst sc 28
+    (by simp [Env.lookup_set_ne, hb]) (by simp [Env.lookup_set_self])
+    (by simp [Env.lookup_set_ne, hnomax])]
+  simp only [Run.bind]
+  rw [standpat_cut_fires w (Env.set (Env.set e "score" (.int sc)) "best"
+      (.int (max bst sc))) (max bst sc) gamma 21
+    (by simp [Env.lookup_set_self])
+    (by simp [Env.lookup_set_ne, hg])
+    (by simp [Env.lookup_set_ne, hmv]) hge]
+  rfl
+
+set_option linter.unusedSimpArgs false in
+/-- **THE STAND-PAT ROUND, continuing.** Same three statements, `.next` out —
+the loop goes on to the ordering line's first move. -/
+theorem standpat_round_next (w : World) (e : REnv) (sc bst gamma : Int) (b : String)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (hmv : Env.lookup e "move" = some .none)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hlt : max bst sc < gamma) :
+    ∃ f, execStmts sunfish f ⟨w, e⟩ sbBody = .ok ⟨w, envStandPat e sc bst⟩ .next := by
+  refine ⟨38, ?_⟩
+  rw [sbBody_split]
+  simp only [execStmts]
+  rw [standpat_score w e sc b wc0 wc1 bc0 bc1 ep kp 25 hmv hd hpos]
+  simp only [Run.bind]
+  rw [standpat_max w (Env.set e "score" (.int sc)) bst sc 28
+    (by simp [Env.lookup_set_ne, hb]) (by simp [Env.lookup_set_self])
+    (by simp [Env.lookup_set_ne, hnomax])]
+  simp only [Run.bind]
+  rw [standpat_cut_skips w (Env.set (Env.set e "score" (.int sc)) "best"
+      (.int (max bst sc))) (max bst sc) gamma 21
+    (by simp [Env.lookup_set_self])
+    (by simp [Env.lookup_set_ne, hg]) hlt]
+  rfl
+
+/-! **AND THE ROUND SPLITS WHERE `foldFrom` SPLITS.** The spec's head rule at a
+`standPat sc :: rs` schedule and the shipped statements' two arms are keyed on the
+SAME test, `gamma ≤ max best sc` — which is what makes the `Inv` for
+`PyStmtTriple.forGen` writable in the next inch: the invariant can be `foldFrom`
+applied to the remaining rounds and nothing else. -/
+theorem standpat_agrees_cut (gamma bst sc : Int) (live : Bool) (rs : List Round)
+    (h : gamma ≤ max bst sc) :
+    foldFrom gamma bst live (standPat sc :: rs) = (max bst sc, live || false, .cut) :=
+  foldFrom_cons_cut gamma bst live false sc rs h
+
+theorem standpat_agrees_next (gamma bst sc : Int) (live : Bool) (rs : List Round)
+    (h : ¬ gamma ≤ max bst sc) :
+    foldFrom gamma bst live (standPat sc :: rs)
+      = foldFrom gamma (max bst sc) (live || false) rs :=
+  foldFrom_cons_next gamma bst live false sc rs h
+
+/-! ## §5 What the stream is NOT, and what F3c still owes
 
 * **The killer arm.** `hk` is `killer = none`, which the census measured at ~99 %
   of depth-0 nodes. When the killer IS present its own test is
@@ -239,5 +444,13 @@ own shape and not an assumption bolted on. -/
 #print axioms branchTrueEnters
 #print axioms moves_prologue_qs
 #print axioms moves_emits_qs
+#print axioms standpat_score
+#print axioms standpat_max
+#print axioms standpat_cut_fires
+#print axioms standpat_cut_skips
+#print axioms standpat_round_cut
+#print axioms standpat_round_next
+#print axioms standpat_agrees_cut
+#print axioms standpat_agrees_next
 
 end Examples.python.sunfish.qs_stream

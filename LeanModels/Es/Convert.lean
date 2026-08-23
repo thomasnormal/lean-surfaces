@@ -208,22 +208,34 @@ the host's `Float.toString` would emit `"1.000000"` where the spec says
 `"1"` — a silent wrong answer, and this tier's whole product is not
 emitting those.
 
-**VERIFICATION STRENGTH, stated because it differs inside this one
-function.** The NaN/±Infinity/±0 arms are `rfl`-provable and carry
-`@[es_spec]` lemmas. The exact-integer arm is NOT: it goes through
-`Float.toInt64`, which is `@[extern]`, and `rfl`/`decide`/
-`with_unfolding_all rfl` all fail on it in both directions while `#guard`
-evaluates it. That arm is therefore guard-verified only, and closing it
-is SoftFloat Layer 2 (`docs/family-architecture.md` §3.5.5 step 3), not
-something this inch can reformulate away. -/
+**ONE verification strength, after a correction.** An earlier version of
+this function used `Float.toInt64`/`Float.toFloat`, which are `@[extern]`
+and reduce in neither `rfl` nor `decide`, and recorded the exact-integer
+arm as guard-verified-only — concluding there was "no kernel-reducible
+substitute short of the bit model." **That conclusion was wrong by one
+projection: the bit model IS core's `Float.Model`.** Routing through it
+makes every arm here `rfl`-provable, so the split is gone.
+
+What remains blocked is genuinely blocked: a NON-integer needs
+correctly-rounded shortest-round-trip decimal conversion, `Float.toString`
+is opaque, and core ships no decimal printer. That is SoftFloat's
+(`docs/family-architecture.md` §3.5.5 step 3), and it answers `none` here
+so the caller refuses. -/
 def numberToString (n : Float) : Option String :=
   if n.isNaN then some "NaN"
   else if n == (1.0 / 0.0) then some "Infinity"
   else if n == (-1.0 / 0.0) then some "-Infinity"
   else if n == 0.0 then some "0"                       -- covers -0, per the spec
   else
-    let t := n.toInt64
-    if t.toFloat == n && n.abs < 1e15 then some (ToString.toString t) else none
+    -- VIA THE BIT MODEL, not the extern conversions.  `n.toInt64` and
+    -- `t.toFloat` are `@[extern]` and reduce in NEITHER `rfl` nor
+    -- `decide`; `n.toModel.toInt64` and `Float.ofModel (…ofInt64 t)`
+    -- reduce in both.  Two expressions, and the exact-integer arm
+    -- becomes provable rather than merely evaluable — measured by the
+    -- SoftFloat lane and re-checked here.
+    let t := n.toModel.toInt64
+    if Float.ofModel (Float.Model.ofInt64 t) == n && n.abs < 1e15 then
+      some (ToString.toString t) else none
 
 /-- `ToString` on a PRIMITIVE — §7.1.17 steps 1-9. Split out for the same
 reason as `primitiveToNumber`: no recursion, so no `partial`. -/
@@ -300,7 +312,16 @@ def applyBinary (fuel : Nat) (lval : Val) (op : String) (rval : Val) : EsW Val :
       | "-" => return .num (a - b)
       | "*" => return .num (a * b)
       | "/" => return .num (a / b)
-      | "%" => return .num (a - b * (a / b).toInt64.toFloat)
+      | "%" =>
+        -- WITHDRAWN, on the SoftFloat lane's clamp warning.  This was
+        -- `a - b * (a / b).toInt64.toFloat`, and `Float.toInt64` CLAMPS
+        -- out of range — so a large quotient silently produced a wrong
+        -- remainder that every in-range test would have passed.  That is
+        -- the flattering direction, which is the one this tier refuses.
+        -- §6.1.6.1.6 `Number::remainder` returns the truncated-quotient
+        -- remainder, and doing it correctly needs the exact-value route
+        -- (SoftFloat's `toInt_eq_truncate`), not a clamping conversion.
+        SemM.refuseConstruct "`%` needs a non-clamping truncation (SoftFloat's toInt_eq_truncate); refusing rather than clamping"
       | _ => SemM.refuseConstruct s!"binary operator '{op}' is not modeled yet"
     | _, _ => throwError "TypeError" "Cannot mix BigInt and other types"
 

@@ -78,3 +78,49 @@ No `.lake` exists in this clone — reclaimed during the disk action,
 sources intact. Next ticket, in order: CoW-seed `.lake` from a warm idle
 peer (A13), `tools/triad.sh`, then `Res`-bind `@[simp]` lemmas and the
 stepper's subsumption proof.
+
+---
+
+## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-3` (SV lane's to triage)
+
+*Filed by the SoftFloat lane during its consumer census
+(`docs/softfloat-charter.md` §2.2). Id kept in the SoftFloat namespace so this
+lane mints nothing in yours.*
+
+### `docs/family-architecture.md` §3.5.3 ATTRIBUTES A NEED TO YOU THAT NO SV DOCUMENT STATES
+
+Line 1770 reads:
+
+| SystemVerilog | `real`, and the divider flagship | §3.5.2 |
+
+**Measured: no SV document asks for `real`.** `LeanModels/Sv/*.lean` contains
+zero `Float`, zero `shortreal`, and every occurrence of `real` is the English
+word in prose (`Ingest2.lean:642`, `Regions.lean:233`/`:331`,
+`Tests.lean:15`/`:20`). The SV need this lane can find is **the divider**, and
+nothing else.
+
+**Why it matters rather than being pedantry.** SoftFloat is priced off the
+consumer table. A `real` row that no tier asked for buys type-level float
+support for SV's language surface — a different and much larger job than the
+divider theorem — and it would be built on an inference, not a request. **If
+SV does want `real`, say so and it is a real row.** If not, the correction
+saves the estimate.
+
+### AND THE FLAGSHIP'S SHAPE, AS THIS LANE UNDERSTANDS IT
+
+Recorded so you can correct it early rather than after the spec algebra is
+built around it: the target is Berkeley HardFloat's **`divSqrtRecFN`** —
+division **and** square root in one RTL module — with the theorem composing
+through the **`recFN` recoding** at the module boundary. Two facts from the
+SoftFloat census bear on it:
+
+* **`sqrt` does not reduce in Lean's kernel**, and floats are not the cause:
+  `Nat.sqrt` is defined by well-founded recursion
+  (`Init/Data/Nat/Sqrt/Basic.lean`), so `Nat.sqrt 49 = 7` fails both `rfl` and
+  `decide`. `+ − × ÷` all reduce. If the divider proof needs a computable
+  `√`, SoftFloat can state it by comparing squares and stay reducible — but
+  that is scope this lane has flagged for Thomas
+  (`docs/softfloat-charter.md` §7 item 3) and your answer is an input to it.
+* The circuit side is **`LeanModels/Sv/`**, not `LeanModels/Circuit/` — and the
+  trap is live: `docs/circuit-spec-surface.md` has a section headed *"Exact
+  divider"* about a **resistive voltage divider**.

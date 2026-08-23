@@ -14,10 +14,22 @@
 
       lean harness/es/float_probe.lean          # silence = every check passed
 
-  Every line below is a KERNEL claim.  `rfl` is definitional equality
-  checked by the kernel; `#guard` evaluates a `Bool` in the kernel and
-  fails loudly with the expression printed.  If core `Float` were opaque,
-  none of them would elaborate.
+  TWO KINDS OF LINE, and an earlier version of this file described them as
+  one.  **`example … := by rfl` is a KERNEL claim** — definitional equality
+  checked by the kernel, which is what makes the headline below mean
+  something.  **`#guard` is NOT.**  It evaluates through `evalExpr`, which
+  honours `@[extern]`, so it passes identically whether a declaration
+  reduces in the kernel or is opaque to it.
+
+  Measured, on the same expression: `#guard (42.0 : Float).toInt64 == 42`
+  PASSES while `rfl` and `decide` on it both FAIL.  So a `#guard` over
+  floats is attested by the HOST FPU, not by Lean.
+
+  The file's conclusion is unaffected, because it never rested on the
+  guards: the `rfl` examples are the evidence that core `Float` is
+  kernel-reducible, and they are the lines that would break if it were
+  not.  The guards below are kept as the DIFFERENTIAL half — host answer
+  beside kernel answer — which is worth more than either alone.
 
   MEASURED on `leanprover/lean4:v4.33.0-rc1` (2026-08-22): all pass.
   `Float` is a structure over `Float.Model`, itself a `UInt64` of bits

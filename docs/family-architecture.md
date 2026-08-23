@@ -260,7 +260,7 @@ Seven language lanes exist today. Measured (`.lean` lines under
 
 | lane | lines | authority | outcome type | source spans |
 | --- | ---: | --- | --- | --- |
-| Python | 32331 | CPython 3.9 (extraction) | `Run σ α` | `LeanModels.Span` |
+| Python | 32331 | CPython 3.9 (extraction) | **`Core.SemM`** (definition); `Run σ α` legacy, under the erosion contract | `LeanModels.Span` |
 | Spice | 23366 | ngspice (extraction) | none — contracts | `Circuit.Spice.SourceSpan` |
 | SystemVerilog | 8166 | IEEE 1800 (spec) + pyslang | `Sv.Res α` | none |
 | Circuit | 4309 | physical law | none — enclosures | `Circuit.Spice.SourceSpan` |
@@ -326,7 +326,7 @@ mislabelled.
 | language | `<Lang>` | authority | edition tokens | oracle | corpus | state |
 | --- | --- | --- | --- | --- | --- | --- |
 | C | `C` | spec-mirror — ISO/IEC 9899 | `C23` (now), `C17` (if claimed) | clang, pinned family + profile | `ctwin/sunfish.c`; c-testsuite; gcc torture | active — M2 |
-| Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — mid-campaign |
+| Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — **definition is the MONADIC interpreter**; the deep interpreter is the legacy layer under §3.4(c)'s erosion contract |
 | SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — 8 166 lines, **98 theorems**, dormant but verified working |
 | WebAssembly | `Wasm` | spec-mirror — W3C core **+ official suite** | **PROPOSED** | the reference interpreter **and the `.wast` runner** | the official `.wast` suite | founding |
 | ECMAScript | `Es` | spec-mirror — ECMA-262 **+ official suite** | **PROPOSED** | an engine **and test262's harness** | test262 | founding — blocked on SoftFloat (§3.5.3) |
@@ -1122,9 +1122,20 @@ this document it says so.
 **Layer 1 — one monad family, and the layer ORDER is load-bearing.**
 
 ```lean
--- (illustrative — the substrate shape, not yet in the tree)
+-- (illustrative — the substrate shape; LANDED as LeanModels/Core/Outcome.lean)
 abbrev SemM (W : Type) (ρ : Type) := ExceptT ρ (StateT W Halt)
 ```
+
+**THE TWO-ABBREV SPELLING IS CANON, and the reason is a Lean fact worth
+recording so no tier re-derives it: DEFAULT TYPE ARGUMENTS FAIL FOR
+MONAD-RETURNING ABBREVS.** Giving the payload parameter a default does not
+work — `SemM W ρ Int` binds **`Int` to `π`**, not to the value type,
+because the abbrev returns a monad and the next argument lands on the
+defaulted slot. So the family spells it as **two** abbrevs, `SemMWith` and
+`SemM`, with `rfl`s **pinning the `Unit` instantiation** so the specialised
+spelling is provably the general one at the default payload. A tier that
+tries the single-abbrev-with-default spelling will get a type error that
+does not name the cause.
 
 **This document first wrote `StateT W (ExceptT ρ Halt)`, and that is
 REFUTED BY `rfl`.** `StateT` outside `ExceptT` **discards the state on a
@@ -1141,19 +1152,42 @@ verified here independently before propagating.
 spelling.** `Run σ α` could be spelled as core's `EStateM`, and the
 isomorphism is available. It is **not taken**: kernel `rfl` measured
 **1.4× slower on `EStateM` at fuel 4096**, and kernel reduction is
-load-bearing here — `#guard`/`#py_check` and every captured run are kernel
-`rfl`, which is what makes *run-not-admired* affordable at all. So the
+load-bearing here. **(That reason stands; the ATTESTATION named for it was
+wrong — `#guard`/`#py_check` are RUNTIME attestation, not kernel `rfl`.
+See §5.4's instrument contract. The 1.4× measurement was on kernel `rfl`
+and is unaffected; what needs re-attesting is which artifacts certify
+kernel-reducibility.)** So the
 family adopts the monad's **shape** (`ExceptT ρ (StateT W Halt)`, its
 `WPMonad` instance, its laws) while keeping its own spelling, and records
 the iso as available rather than mandatory. A tier with no kernel-reducible
 runs to protect may spell it either way.
 
-**`Run σ α` IS that stack — proved, not asserted.** The pilot's
-`ofRun`/`toRun` are mutually inverse in 22 lines, and both stacks `#synth`
-a `WPMonad` with **zero instances written**. That **retires the 2026-08-13
-spike's obstacle 1** — *"`Run` is not a monad"* — as a permanent obstacle:
-it was a fact about the tree, not about the type. The instance was never
-unavailable; it was never asked for.
+**`Run σ α` IS A FAITHFULLY-EMBEDDED VIEW of that stack — a RETRACT, not
+an isomorphism.** Both stacks `#synth` a `WPMonad` with **zero instances
+written**, which **retires the 2026-08-13 spike's obstacle 1** — *"`Run` is
+not a monad"* — as a permanent obstacle: it was a fact about the tree, not
+about the type. The instance was never unavailable; it was never asked for.
+
+**CORRECTION — this document twice called `ofRun`/`toRun` "mutually
+inverse", and the Core payload landing makes that FALSE.** With
+`Loud.unsupported` now carrying `(cause, message, snapshot)` and
+`Run.unsupported` carrying **one field**, a round trip through `Run`
+returns the only class `Run` can represent: **an `orderDependence` refusal
+goes in and `unsupported` comes out.** The pilot's iso was true of the
+poorer `Loud` it was proved against, and the payload ruling — which this
+document argued for — is exactly what broke it.
+
+**The lane replaced the claim rather than weakening it, which is the right
+move**: `toRun ∘ ofRun = id` **still holds**, so `Run` embeds faithfully
+and **no trunk-shaped outcome is corrupted by lifting**. The residue is
+stated as theorems rather than left as a caveat — `ofRun_toRun_normalises`
+says *exactly what is lost*, `ofRun_toRun_of_plain` says *exactly when the
+trip is the identity*. A retract with its residue characterised is a
+stronger artifact than an isomorphism that quietly stopped being one.
+
+> **`Run` is a faithfully-embedded VIEW. The stack is RICHER by the
+> refusal payload. Theorems about `Run` transport ALONG THE EMBEDDING —
+> never the other way.**
 
 #### FAMILY LAW — ONE `Except`/`throw` PATTERN, EVERY TIER
 
@@ -1193,8 +1227,11 @@ behind.
   1.4× kernel-`rfl` cost. One shared *name* for our own stack is exactly
   what "adopted by shape, not by spelling" asks for.
 * **This is cheaper than the Python migration and must not be confused with
-  it.** `Run → SemM` is a **re-spelling with a proved iso** (`ofRun`/
-  `toRun`, mutually inverse), so it owes **no adequacy theorem**. The
+  it.** `Run → SemM` is an **embedding with a proved retract** (`toRun ∘
+  ofRun = id`), so it owes **no adequacy theorem** — the contrast survives
+  the correction above, and for the reason that always mattered: **a
+  retract is not a second semantics.** It is one semantics with a poorer
+  view, and `Run`'s theorems lift along the embedding unchanged. The
   migration that owes `twinAgrees` is the move to a *second semantics*
   (§3.4 clause b), which is a different thing entirely. Re-spelling: cheap,
   by touch. Second semantics: gated.
@@ -1207,7 +1244,114 @@ that an import will absorb. **Two are not:**
 | finding | consequence |
 | --- | --- |
 | 11 sites: the stack's shape, spelled differently | **rename on import** — mechanical, by touch |
-| **2 sites: `Except Loud` where the stack requires `Halt`** | **NOT interchangeable** — a semantics fix |
+| **2 sites: a tier-local `inductive Halt α`** | **NOT interchangeable** — but see the correction below: the fix is in CORE |
+
+**THE TWO SITES, NAMED — and the finding inverts.** Measured on master
+after `Core/Outcome.lean` landed:
+
+| site | its `Halt` | `unsupported` payload |
+| --- | --- | --- |
+| **Core** `Outcome.lean` | `abbrev Halt := Except Loud` | **`msg : String`** |
+| **C** `C23/Memory.lean:739` | `inductive Halt α` | `(what : String) (snapshot : Option Mem)` |
+| **ES** `Es/Completion.lean:174` | `inductive Halt α` | `(cause : EsRefusal) (message : String)` |
+
+**All three agree on the SHAPE** — `ok` / `timeout` / `unsupported` — so
+the covenant holds everywhere. **The whole divergence is the `unsupported`
+PAYLOAD, and Core's is the POOREST of the three.**
+
+**Both tiers implement rulings this document made.** C's `snapshot` is the
+`Halt` ruling's structured payload, with the never-an-observable guard made
+**structural** (its `BEq` ignores the snapshot; `Outcome` drops it) — the
+exact two constraints §3.4 imposed. ES's `cause` is the `RefusalCause`
+ruling. **Core carried neither — and that is the state the table above
+records, which is no longer the state of the tree.** The row is kept
+because the dispatch below is only legible against the gap it closed;
+§5.4a asks a number to carry its state, and this table's state is
+*master before the rebuild lane's merge*.
+
+> **So convergence-by-import would DELETE both payloads.** That is a
+> regression, and it is *"the quiet way to lose facts"* arriving from the
+> other direction: not two tiers to be fixed, but **a trunk too poor to
+> absorb them.**
+
+**AND CORE'S OWN HEADER OFFERS AN ALTERNATIVE THAT THE COVENANT CLOSES.**
+It suggests that *"a tier that needs more than two causes does **not**
+extend this type; it adds an `.except` layer of its own, which composes for
+free."* The Go lane — **the third independent finding of this gap** — named
+why that cannot be the answer, and it is decisive on the family's own
+terms:
+
+> **An extra `.except` layer is, BY CONSTRUCTION, a CATCHABLE channel.**
+
+`ρ` is the program's channel precisely because `ExceptT` is where catch
+constructs are instantiated (§3.4's speaker split). Putting refusal causes
+in another `.except` layer therefore puts **refusal in a catchable
+position** — the exact thing the `Halt` ruling forbids, and it would be
+re-forbidden per language by the N lemmas that ruling rejected. Composing
+"for free" is free only if you do not need uncatchability, and refusal is
+the one thing that does.
+
+**So the payload goes INTO `Loud`, not beside it** — and Core's header
+alternative is closed by the covenant rather than by preference.
+
+**The fix is in CORE, not in C or ES**: parameterize `Loud.unsupported`'s
+payload, exactly as the `Halt` ruling (cause + optional snapshot) and the
+`RefusalCause` ruling (four classes, tier payload `π`) already prescribe.
+Until that lands, **the eleven mechanical sites converge by import and the
+two payload-bearing tiers HOLD** — importing them now would trade two
+implemented rulings for a `String`.
+
+#### AND IT HAS LANDED — the dispatch is discharged, and the two HOLDs are released
+
+The rebuild lane's merge carries exactly the parameterization dispatched
+above. In `LeanModels/Core/Outcome.lean`, on the merge commit:
+
+```lean
+-- LeanModels/Core/Outcome.lean (excerpt: the landed payload and its guard)
+inductive Loud (π : Type) (σ : Type) where
+  | timeout
+  | unsupported (cause : RefusalCause π) (message : String) (snapshot : Option σ)
+instance [BEq π] : BEq (Loud π σ) where
+    | .unsupported c m _, .unsupported c' m' _ => c == c' && m == m'
+def Loud.observable : Loud π σ → String × String
+  | .unsupported c m _ => (c.className, m)
+```
+
+That block is **checked against the tree**, not quoted at it: `docs_check`
+matches every line above as a subsequence of `Core/Outcome.lean`, so the
+subsumption claim below cannot drift from the definition without a gate
+going red. A prose paragraph would have made the same claim and rotted
+silently.
+
+**It SUBSUMES both payload-bearing tiers, and the subsumption is checked
+against the table above rather than asserted:**
+
+| tier | its payload | how Core now expresses it |
+| --- | --- | --- |
+| **C** | `(what : String) (snapshot : Option Mem)` | `message` + `snapshot`, at `σ := Mem` |
+| **ES** | `(cause : EsRefusal) (message : String)` | `cause` + `message`, at `π := EsRefusal` |
+
+**And C's guard is lifted rather than re-implemented.** The
+never-an-observable constraint is now enforced *twice, structurally, in
+Core*: the hand-written `BEq (Loud π σ)` compares `cause` and `message` and
+**ignores the snapshot**, and `Loud.observable` returns
+`(cause.className, message)` — a pair with **nowhere to put a `σ`**, so a
+snapshot cannot reach a comparison even by accident. That is C's instance
+generalized, so no tier writes it again and a tier that forgets to cannot
+silently promote a diagnostic into a verdict.
+
+> **So both HOLDs become SUBSTITUTIONS.** ES's own record of its hold
+> (`docs/backlog/es.md`, 51b1893) predicted this precisely — *"the adoption
+> then becomes a substitution and both expected-empty gate theorems
+> transfer unchanged, since they are stated about `esRefusal` rather than
+> about the base"* — and the shape that landed is the shape it predicted.
+> C's is the same substitution at `σ := Mem`.
+
+**The two lanes are UNBLOCKED, not migrated.** This document does not
+perform their imports: §9.2's by-touch discipline is theirs to schedule,
+and the covenant it was waiting on is now a fact about the trunk rather
+than a promise about it. What changed is only that importing Core no longer
+trades an implemented ruling for a `String`.
 
 The two are not interchangeable **by this document's own `rfl`**: `Halt`
 sits outside `StateT`, so a `Loud` result carries **no `W`**; an
@@ -1222,8 +1366,7 @@ import** — that is the cheap, mechanical majority — **and the two
 theorems said re-established over the real stack. Filing them under
 "rename" would be the quiet way to lose two facts.
 
-**`Core.SemM` becomes the one spelling once the rebuild's extraction lands
-on master** — imminent, in its post-merge triad as this is written.
+**`Core.SemM` IS the one spelling — LANDED** — imminent, in its post-merge triad as this is written.
 
 **And the SV verdict softens accordingly.** §3.6's hybrid reading — *a
 dormant tier that will not be rebuilt* — becomes **migrates when touched**,
@@ -1399,6 +1542,28 @@ survives the bound: the pilot's `evalM` is structural on `Expr`, and a
 whole real gate's slice carries no fuel numeral anywhere. Fuel is owed only
 at `callIn` / `execWhile` / `execFor` / `heapEq` / generators.
 
+**A WORKED INSTANCE OF THAT SCOPE, and it resolves the third defect this
+document was holding.** The held question was whether per-arm `@[spec]`
+lemmas suffice for **nested-match** arms — the binding lemma could not be
+*stated*, because `mvcgen` splits the inner match **without retaining the
+discriminant**, so unreachable branches arrive as bare `⊢ False`. **The
+outcome: the nested-match ceiling stands, and the tier routes around it.**
+
+The generator proof layer on the monadic interpreter is founded as
+**judgments with discriminant premises — the trunk's method — and NOT as
+`mvcgen` triples.** The ceiling decided it.
+
+**And the reason the trunk's method transports is exact**: the
+computed-shape law (§5.6) **never relied on a tactic retaining discriminant
+equations** — the premise carries the discriminant explicitly, so nothing
+is lost when a tactic declines to. A method that depends on what a tactic
+happens to preserve is fragile in precisely the way the harvest rule (§9.2)
+warns about; a method that carries its own premises is not.
+
+So §3.4's *"mvcgen on the fuel-free fragment"* has a measured boundary
+inside the fragment too: **arm-level `@[spec]` where the match is flat,
+judgments-with-premises where it nests.**
+
 **Four laws to adopt now, at zero cost**, all measured rather than
 proposed:
 
@@ -1525,6 +1690,54 @@ standing rule with a named blocker.**
    legacy layer gives it a new consumer and a new reason to live, which is
    the opposite of erosion. The one-line refuse arm is the unique move that
    keeps the legacy layer compiling without giving it a future.
+
+   **EXECUTED, and the first measured instance: the completeness lane's
+   inch 3a.** The shared type grew; **the trunk took exactly one refuse
+   arm**; and the change landed at **9 arms — the number the
+   pattern-position law had just rescued from an identifier count of 35**
+   (§5.4a). A ruling and a counting law, both minted within a day, paying
+   off together in the same inch: the ruling said what the legacy layer was
+   allowed to do, and the counting law said how much it would cost. Neither
+   number nor shape moved on contact.
+
+   **AND THE MIRROR-IMAGE DEFECT, measured as a master RED.** Erosion has a
+   second direction nobody had ruled on: not the legacy layer growing, but
+   the **TRUNK** growing after the branch cut. Rung 3b's **seven
+   draining-consumer arms** landed on the trunk and were **merged without
+   the capability crossing the presentation boundary** — so the rebuild
+   **refuses what the trunk runs, on 25 rows.**
+
+   **`diff_test` is STRUCTURALLY BLIND to this class, and the blindness is
+   not a bug.** A differential harness measures **agreement between the two
+   sides**; when both refuse, **parity holds while both are wrong.** The
+   instrument that sees it is the **refusal census's expectation column**,
+   because that column is written from **CPython's measured behaviour** —
+   the oracle — rather than from the model's.
+
+   > **Agreement between two models is not evidence. Agreement with the
+   > ORACLE is.**
+
+   That is **§5.3 one level up**: §5.3 forbids a run that executed nothing
+   from scoring as agreement; this forbids **two refusals** from scoring as
+   agreement. Same shape — a check finding sameness where there was no
+   content — and the same fix: anchor the expectation outside the pair.
+
+   **THE RULE:**
+
+   > **Every merge across a presentation boundary owes a CAPABILITY-PARITY
+   > AUDIT** — the census, run against **both** targets — and
+   > **trunk-landed capabilities must RE-PRESENT in the rebuild before the
+   > trunk arm may retire.**
+
+   Without it, erosion silently loses capability: the trunk arm retires
+   because the rebuild "agrees", and the agreement was two refusals.
+
+   **THE COROLLARY, and it is the maximal-trunk design paying off
+   measurably: the fix cost ONE LINE.** The rebuild's single `iterValues`
+   dispatch serves **six** consumers that the trunk pays **seven arms**
+   for. The defect was expensive to *find* and trivial to *fix*, and the
+   ratio is the argument — a design that concentrates dispatch converts a
+   seven-arm capability gap into a one-line one.
 
    **The SEQUENCING rationale, which is about risk and not about Python.**
    `mvcgen` warns on every invocation that it is experimental, and one Std
@@ -1664,6 +1877,41 @@ Per-operation correctness, proved once, in IEEE form:
 op_correct (fmt : Format) :
     bitOp fmt x y  =  round fmt mode (exactRational (val x ∘ val y))
 ```
+
+##### LAYER 3 — TRANSFER, and core COMMISSIONS it explicitly
+
+The two layers above are not the whole component, and core says so in its
+own words. `UnpackedFloat`'s docstring disclaims the role outright: it is
+**not a goal of that development** to be the basis of a general-purpose
+float library *"or to have any direct lemmas written about it at all."*
+Users wanting such a library should
+
+> develop it **completely separately**, prove the operations **equivalent**
+> to core's, and then **transfer lemmas** to `Float` and `Float32`.
+
+**So the third layer is TRANSFER, and it is commissioned rather than
+optional.** This sharpens §3.5.1's "layer 1 is free": core supplies the
+*executable* model for free and **explicitly declines to be a proof
+basis**. The family's layer 2 is the separate library core asks for; layer
+3 is the equivalence-and-transfer bridge that makes layer 1's reduction
+usable in a proof about `Float`.
+
+It also explains the shape of the work: without transfer, a theorem about
+our `Format`-parametric algebra says nothing about the `Float` an
+interpreter actually observes, and a `#guard` on that `Float` attests only
+the runtime (§5.4). **Layer 3 is what joins the two oracles the differential
+pair names.**
+
+**AND THE NaN PAYLOAD IS UNSATISFIABLE OVER CORE'S MODEL — an open Thomas
+decision.** §3.5.4 routes NaN payload and sign to ∀-resolution, quantifying
+over the admissible payloads. Core's `UnpackedFloat` states plainly:
+*"There is no payload attached to a NaN in this format."* **You cannot
+quantify over a payload the type does not have.** So the routing §3.5.4
+prescribes is not available on core's model as it stands, and the choices —
+carry our own NaN representation in layer 2, restrict the claims to
+payload-independent facts, or accept core's payload-free NaN as the
+family's answer — are **Thomas's**, not this document's. Registered as
+open.
 
 ##### WIDTH-PARAMETRICITY IS A REQUIREMENT, not a description
 
@@ -2127,7 +2375,7 @@ candidates**:
 | candidate | status | would it trigger? |
 | --- | --- | --- |
 | **C's M2 inch 4** — statements + `CWorld` | planned; C is at inch 1 and uses its own `CRes` at the value layer | yes — the first C code that needs a world |
-| **the rebuild lane's `SemM`** | in flight; **`SemM` is not in the tree** (checked) | yes — and it arrives as the stack, not as bare `Run` |
+| **the rebuild lane's `SemM`** | **LANDED — this was the first-arriving trigger** | **FIRED** — and it arrived as the stack, not as bare `Run` |
 | a third tier adopting the outcome type | none proposed | yes |
 
 **Whichever lands first is the trigger**, and the rule is unchanged in
@@ -2135,12 +2383,15 @@ substance: the move happens when a second consumer exists, not before
 (the ingester tier does not mention `Run`) and not after (a second
 interpreter landing with its own copy of `Run` is a defect, not a design).
 
-**And §3.4 collapses this question into one.** Since `Run σ α` is
-*proved* to be `ExceptT ρ (StateT W Halt)` — `ofRun`/`toRun` mutually
-inverse — "move `Run` to `Core`" and "land the `SemM` substrate" are **the
-same landing**, not two. The destination should therefore be the stack,
-with `Run` as its established view, so that a lane arriving via either
-route finds one artifact.
+**And §3.4 collapses this question into one.** `Run σ α` is a
+**faithfully-embedded VIEW** of `ExceptT ρ (StateT W Halt)` — a retract,
+`toRun ∘ ofRun = id`, **not** the isomorphism this section first claimed
+(§3.4 carries the correction). So "move `Run` to `Core`" and "land the
+`SemM` substrate" are still **the same landing**, not two: the destination
+is the stack, with `Run` as its established view, so a lane arriving by
+either route finds one artifact. What changes is the direction of travel —
+**`Run`'s theorems lift into the stack; the stack's facts do not descend
+into `Run` without passing through the residue theorems.**
 
 **And the price is drifting.** §L35 measured 1251 `Run.` sites in 24
 files; today it is **1282 in 31**. The deferral is correct and it is not
@@ -2426,6 +2677,27 @@ tier emitting `undefined` has a bug.* A gate needs a constructor to be
 about. **ES converges by touch** (§9.2), gaining the two constructors it
 omits and gating both.
 
+**AND BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — they are
+the STRONGER form, not an exception to it.** A tier-local refusal type may
+legitimately lack a class outright (Go's `GoRefusal` has no `undefined`).
+That is not a divergence from the rule, because the two live at different
+levels:
+
+* the tier's local type **maps into Core's four-class cause**;
+* the **gate is the THEOREM that the image excludes the class**.
+
+So **the scoreboard sees the constructor** — Core's vocabulary is complete
+and the column exists — while **the tier cannot construct it**, provably,
+rather than by a check that might not fire. A by-construction gate is
+*better* than a runtime one for exactly the reason §3.4 prefers type-level
+invariants to N lemmas: nothing has to fire.
+
+The two instances: **ES's `es_never_undefined`** (a theorem, beside
+`es_never_orderDependent`, and ES's own file already records both as
+*"PRESENT and GATED"*) and **Go's build-breaking guard**. Different
+mechanisms, same shape — the class is nameable by the family and
+unconstructible by the tier.
+
 **AND ES'S OWN REFINEMENT IS PRESERVED, because it is a real finding.** ES
 did not merely drop a class — it **split `environment` in two by
 RETIREMENT SCHEDULE**: `unmodeledIntrinsic` (a built-in outside the slice,
@@ -2442,6 +2714,19 @@ convergence standard §9.3 used to ratify the span field names — a
 measurement, not a taste — and §5.2 should gain a fifth cause. One tier's
 distinction is a payload; two tiers' identical distinction is a class.
 
+**AND THE RULING IS NOT DELIVERED UNTIL THE CLASS REACHES THE JSON.** The
+runner's canonical JSON currently **drops the refusal class**, so the
+scoreboard **cannot bucket** — which is the one thing §9.4's shared
+vocabulary and this ruling exist to make possible. A cause type that no
+consumer can read is a well-typed private note.
+
+**Follow-up: an OPT-IN field**, on the `--observations` model — off by
+default so the canonical output stays byte-stable for every existing
+`--compare` baseline (§5.4), on when a scoreboard asks for it. Recorded
+here rather than in a lane's notes because it is the ruling's **delivery
+gap**, not an implementation detail: until it lands, the four classes are
+family law that the scoreboard cannot see.
+
 **Ada's inch 1 consumes this directly**: four constructors, `π` = the ARM
 paragraph reference, `undefined` carrying its 1.1.5 erroneous-execution
 citation, and `order-dependence` present and gated until Ada measures
@@ -2455,9 +2740,22 @@ and show the observable invariant. That is a different and much larger
 obligation, it is the honest home of §3.4's explicit-parameter design, and
 it is named here as a priced fork rather than taken.
 
-### 5.3 VACUOUS is not a verdict
+### 5.3 VACUOUS is not a verdict — and neither is MUTUAL REFUSAL
 
-A run that executed **nothing** must never score as agreement. Python's
+A run that executed **nothing** must never score as agreement.
+
+**And the same rule one level up, from a measured master defect (§3.4's
+erosion clause): TWO REFUSALS MUST NEVER SCORE AS AGREEMENT.** A
+differential harness compares the two sides to each other, so when both
+refuse it reports parity — **while both are wrong.** `diff_test` is
+structurally blind to this class, which is not a defect in `diff_test`: it
+is what a differential harness *is*. **Agreement between two models is not
+evidence; agreement with the ORACLE is** — which is why the refusal
+census's expectation column, written from CPython's measured behaviour
+rather than from the model's, is the instrument that sees it.
+
+Both halves of §5.3 are the same law: **a check must not report sameness
+where there was no content.** Python's
 harness carries `"live"`; C's scoreboard carries the statement count. This
 is an instrument-level ERROR, not a verdict — a scoreboard that reports it
 as MATCH is broken, and one that reports it as REFUSE is lying about
@@ -2480,6 +2778,45 @@ instrument copies it:
   reproduced the lesson: its first answer was a plausible table produced
   by matching renumbered clauses (§2.1), and it was the spot-checks that
   caught it;
+* **`#guard` IS NOT A KERNEL ORACLE — it attests the RUNTIME.** It runs
+  unsafe `evalExpr`, honours `@[extern]` / `@[implemented_by]` / `opaque`,
+  and **passes identically whether a declaration reduces or has no body at
+  all.** Measured here on the pinned toolchain, three propositions, all
+  `#guard`-PASS and kernel-FAIL:
+
+  ```
+  -- (illustrative — probes, not tree files)
+  #guard Nat.sqrt 49 == 7                  -- PASSES
+  example : Nat.sqrt 49 = 7 := by rfl      -- FAILS: unsolved goals
+  example : Nat.sqrt 49 = 7 := by decide   -- FAILS
+  #guard (2.75 : Float).toInt64 == 2       -- PASSES
+  example : (2.75:Float).toInt64 = 2 := by rfl     -- FAILS
+  ```
+
+  So **"run, not admired" via `#guard` is RUNTIME attestation** — a claim
+  about the *compiled* semantics. For pure, extern-free code the **value**
+  agrees with the kernel; but **KERNEL-REDUCIBILITY is certified only by
+  `rfl` / `decide`** (or `#guard_expr` with `=~`). **Any claim of
+  "kernel-reducible runs" resting on `#guard` alone is overstated**, and
+  this document made one (§3.4, now corrected).
+
+  **THE PAIR IS A DIFFERENTIAL, and that is the constructive half.**
+  `#guard` attests the **C runtime**; `rfl`/`decide` attest **core's
+  model**. A float-touching row therefore carries **both**, and
+  **disagreement between them is a FINDING** — the two oracles have
+  genuinely diverged, which is exactly the kind of fact a family of
+  language models exists to surface rather than to average away.
+
+  **Placement relative to the decide ladder (§0.1 II(a)): the ladder's
+  rungs are KERNEL tactics. `#guard` is BENEATH the ladder, not on it.**
+  It is not a cheaper rung-2; it is a different kind of evidence, and the
+  receipts rule applies to it too — a row attested by `#guard` says so.
+
+  **Re-attestation owed, cheaply**: the rebuild's *"9 `#guard`s decide real
+  runs in the kernel"* (re-attest **one run per half with `decide`**); the
+  **~50 ES `#guard`s** under `Examples/es`, FPU-attested today; and
+  `harness/es/float_probe.lean`, which **mis-describes `#guard` as kernel
+  evaluation** — the ES lane's fix.
 * **double-run byte-identical**, verified;
 * **every quoted number is paired with the STATE it was taken from**, per
   the provenance law below;
@@ -2499,6 +2836,7 @@ why it is stated once rather than three times:
 | **`#print axioms` on a failed declaration** | a statement-elaboration error prints *"does not depend on any axioms"* — **cleaner than the truth** — even when the proof is `sorry` (§0.1 II(a)) | rebuild lane |
 | **a timing measured on a twin** | 568 ms against the shallow twin; the faithful interpreter does not close at ~14 minutes (§3.4) | rebuild lane |
 | **a red from a torn tree** | a rebase under a running build yields `Unknown constant` against a healthy master (§7.2) | Go lane |
+| **a `#guard` batch quoted as KERNEL evidence** | `#guard` attests the runtime and passes where the kernel cannot reduce at all (§5.4) — so a batch cited for kernel-reducibility is quoting the wrong oracle | SoftFloat lane |
 
 > **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
 > neither.**
@@ -2552,6 +2890,55 @@ The practical form: **price a change by enumerating the positions the
 change must visit, and check that enumeration against the thing that
 dispatches** — the `match`, the clause list, the table — not against the
 name index.
+
+#### AND THE THIRD OF THE FAMILY — when a VERDICT VOCABULARY must grow
+
+The two rules above are about **counting**. This one is about **verdict
+vocabularies**, and it is the third instance minted this session:
+
+> **A CHECK WHOSE VOCABULARY CANNOT EXPRESS A LEGITIMATE NEW STATE WILL
+> EITHER BLOCK THE STATE OR BE SWITCHED OFF — both wrong. Extend the
+> vocabulary, and make the new word EARN ITS VERDICT FROM THE ORACLE,
+> NEVER FROM THE TABLE.**
+
+The failure has two exits and a check reaches for one of them
+automatically. **Blocking**: the state is legitimate, the gate says no, and
+correct work cannot land. **Switching off**: the gate is disabled or
+loosened, and now nothing is checked. Neither is a decision anyone makes on
+purpose; both are what happens when a vocabulary runs out of words and
+nobody notices that is what happened.
+
+Three instances, and the third is the sharp one:
+
+| instance | the missing word |
+| --- | --- |
+| `DIVERGE` / `DIVERGED` (§9.4) | a **display name drifting with its selector** — the same state under two spellings |
+| the census's `mono=` expectations | a **two-interpreter scoreboard needing a second column**, and reporting one |
+| **`monadic_gate.py`** | exits non-zero on **ANY** non-frontier divergence — so a **RULED** divergence (trunk refuses, rebuild returns `1`, **CPython AGREES with the rebuild**) **literally could not land green** |
+
+**The fix, and the guard that makes it safe.** `monadic_gate.py` gained
+`OPENED` — **counted only when the rebuild matches CPython.** That
+qualifier is the whole rule:
+
+> **The adjudicator is the ORACLE, never the TABLE.**
+
+A new verdict word is not a place to record what you have decided is
+acceptable; it is a place to record **what the oracle says**, under a name
+the old vocabulary could not pronounce. Without that guard, "extend the
+vocabulary" is just whitelisting with better manners — which is why this
+is the same prohibition as the standing ban on `"expect": "unsupported"`
+rows that silence a mismatch, generalized from one harness to every check.
+
+**And the wrong fix was named and refused rather than merely not taken**:
+switching the gate off would have turned a vocabulary problem into a
+coverage hole, and a coverage hole reads green. That is §5.4a's flattering
+direction, reached by a route that feels like pragmatism.
+
+**This is also what §5.1's membership ruling was**, recognized late: *the
+DIVERGE test is not equality at every site* extended a verdict vocabulary
+so it could express a legitimate state — two conforming implementations
+disagreeing — that the old one could only call DIVERGE. Same law, applied
+before it was named.
 
 Every instrument output, triad line, coverage count, `#guard` batch, axiom
 print and timing is reported **with the state that produced it** — clean
@@ -2924,7 +3311,8 @@ durable home. Anything a lane must obey belongs in a git-tracked file.
 | 13 | **mandatory CoW cache seeding** — below | **carried** |
 | 14 | **full-tree builds are QUIET-MACHINE-ONLY** — below | **new** |
 | 15 | `pkill -f <path>` does NOT kill a `lake build` — below | **new** (its RSS number is SUPERSEDED by 16) |
-| 16 | **RSS line is PER-PROCESS 5 GB / chain 10 GB**, and **16.2 retiring a runner** — below | **new** |
+| 16 | **RSS line is PER-PROCESS 5 GB / chain 10 GB**, and **16.2 retiring a runner** — below | **carried** |
+| 17 | **the single-file ITERATION loop**, ticket-free under conditions — below | **DRAFT — five tightenings flagged** |
 
 **AMENDMENT 4 — the owner file is written ONCE, under `set -C`.** Origin: a
 lane holding the lock had its `owner` file **overwritten by another lane**.
@@ -3160,6 +3548,65 @@ foreign checkout — `lean4lean`, `spectec` — is built with **plain
 line and A14's quiet-machine rule all still apply. What does not apply is
 the *scoping*, so those tenures run the full gate set the lane names
 explicitly, and their landings carry a §5.4a coverage statement saying so.
+
+**AMENDMENT 17 (DRAFT) — PROOF ITERATION IS A DIFFERENT SHAPE FROM BUILD
+VERIFICATION.** The measured problem: **a 300-line proof at one compile per
+tenure is not a session's work** — roughly **80–88 minutes per compile**
+under the queue. A11 made the lock cover all Lean execution and subsumed
+old rule 3's exemption; that **fixed the starvation of BUILDS and, in the
+same move, priced ITERATION out.** A17 re-licenses a narrow slice, with the
+conditions rule 3 was missing when it was abused.
+
+**A single-file iteration loop** — `lake env lean <file>`, which **writes no
+oleans** — is permitted **without a ticket** under **all** of:
+
+* **(a)** machine **load < 10 AND swap < 50%**, checked **immediately
+  before each run** (A8's atomic-re-read discipline, applied per
+  iteration);
+* **(b)** at most **ONE such process per lane**, `nice -n 19`,
+  `LEAN_NUM_THREADS=2`;
+* **(c)** the file's imports' **oleans are WARM** — otherwise it silently
+  becomes a dependency build, which is §7.1's cold-clone trap;
+* **(d)** it **YIELDS**: the loop pauses while any build tenure is in its
+  build phase on a memory-tight box, and **swap > 50% = stop**.
+
+**Tools side:** `check.sh` gains an **`--iterate`** case implementing
+(a)–(c), so the conditions are **checked, not guessed** — which is the
+whole difference between this and the rule-3 exemption it replaces.
+
+**FIVE TIGHTENINGS FLAGGED FOR RULING**, in the order I would apply them:
+
+1. **THE PER-LANE CAP DOES NOT COMPOSE — this is the load-bearing one.**
+   (b) caps one process *per lane*; N lanes each obeying it is N
+   unticketed Lean processes, which is the hazard the lock exists for.
+   **The check should count ALL iteration processes machine-wide, not the
+   lane's own** — the same class of error as measuring RSS over the box
+   instead of over your own chain, with the scope inverted.
+2. **NO RSS CEILING.** (b) bounds count and niceness but not memory, and
+   A16 exists because **one honest worker measured 3 251 MB**. An
+   unticketed, unsupervised process needs an explicit line — I would set
+   it **below** A16's 5 GB precisely because nothing is watching it, and
+   make exceeding it a kill rather than a pause.
+3. **(d) SHOULD MIRROR (a) ON BOTH CONDITIONS.** (a) starts on *load < 10
+   AND swap < 50%*; (d) stops only on swap. A loop that starts at load 9
+   keeps running as load climbs, since swap alone gates it. **Pause on
+   `load ≥ 10` OR `swap ≥ 50%`.**
+4. **A11's THOMAS-PRIORITY CLAUSE IS UNTOUCHED, and should be said.** A
+   training run outranks every tenure — and therefore outranks an
+   iteration loop, which stops for it and not merely for swap.
+5. **THE CHECK IS PER-ITERATION AND THE YIELD IS BEST-EFFORT.** There is a
+   window between passing (a) and a tenure starting, so A17 is a
+   *courtesy* protocol, not a guarantee — which is the strongest argument
+   for tightening 2: the RSS ceiling is the backstop that does not depend
+   on anyone observing anything in time.
+
+**AND A SECOND DATA POINT ON THE A15 → A16 CHAIN FIGURE.** The C lane's
+**stale watchdog killed a HEALTHY build at 6 171 MB against the superseded
+6 144 MB line.** That is A15's number doing active harm after it was
+superseded — a retired limit still enforcing — and it confirms both halves
+of A16: the raise was right, and **canon's 10 GB chain line is the correct
+one.** It is also A16.2 in miniature: **an amendment takes effect when the
+last script predating it is dead**, and this watchdog was not.
 
 ### 7.2 The master branch
 
@@ -3461,6 +3908,55 @@ renamed to an archive, every existing `§Lnn` reference keeps resolving, and
 **new landings use per-lane files from that commit on.** It also retires the
 race §7.2's push-time re-read rule exists to survive.
 
+#### 9.5a THE INBOUND CONVENTION — filing into a lane that is not yours
+
+Per-lane files answer *"where do I append?"* only while every entry has an
+obvious owner. One lane filing a finding into **another lane's** file needs
+a convention, or it mints ids in a sequence it does not own:
+
+* the entry is **headed `INBOUND`**;
+* it carries a **SENDER-namespace id** — `YYYY-MM-DD-<sender>-<n>` — so
+  **nothing is minted in the owner's sequence**;
+* it tells the owner explicitly to **renumber it or close it**; the entry
+  is a *proposal to the owner's record*, not a fact already in it;
+* the **generated index renders `INBOUND` as its own class**, listed
+  against each owning lane, so an owner sees what is queued for them
+  without reading their own file for surprises.
+
+**AND THE MEASURED COST, which is the part worth flagging: cross-lane
+appends REINTRODUCE the tail race §9.5 just retired.** `es.md` conflicted
+on rebase because the owner appended to it concurrently — exactly the
+contention per-lane files exist to remove, arriving through the one door
+they left open.
+
+**Contingency, and it is a WATCH ITEM rather than a change**: if the race
+recurs, INBOUND entries move to **`docs/backlog/inbound/<owner>.md`** — a
+file the owner reads and drains but never appends to, which restores the
+single-writer property. Not done now, because one conflict is an incident
+and not yet a rate; §9.7's light tick is where it would show up as one.
+
+#### 9.5b THE ROUTING LAW — file the RESIDUE, not the REPORT
+
+> **CHECK WHAT THE OWNER ALREADY LANDED, AND FILE THE RESIDUE, NOT THE
+> REPORT.**
+
+Measured: an ES entry arrived **90% redundant**, because the ES lane had
+already **accepted, re-measured and sharpened** both findings before the
+report was written. **The residue — the `ToInt32` clamp — was the only
+thing worth filing**, and it was the part the report buried under the
+nine-tenths the owner already had.
+
+This is the retrieval laws' third face (§5.4a). *A grep that agrees with
+your prior is the one to re-run* is about searching; *count the pattern
+position* is about pricing; **this is about FILING — a report sent without
+checking what landed is a duplicate its sender cannot see**, and it costs
+the owner the read.
+
+The practical form is the same in all three: **look at the thing itself
+before reporting about it.** For a cross-lane finding that means reading
+the owner's file first and filing only what is not already in it — which
+also makes the INBOUND entry short enough to be cheap to renumber.
+
 ### 9.6 WORKSPACE
 
 * **NOW — amendment 13 CoW seeding** (§7.1a). 27 s and 29 MB per clone
@@ -3507,6 +4003,34 @@ copying more than any item above: it ran Lean outside the lock while
 exercising its own new script, and wrote that down — *the refusal path that
 is only designed is not one, and the incident that is only regretted is not
 measured.*
+
+**AND ITS DUAL, minted by the ES lane from two of its OWN retracted
+claims.** The law above covers one direction: a path you never walked is
+not evidence. The dual covers **negative claims**:
+
+> **AN OBSTRUCTION THAT IS ONLY ENCOUNTERED IS NOT MEASURED EITHER.**
+
+Two retracted claims, both drawn from a single attempt:
+
+* *"`rfl` failed, so no kernel-reducible substitute exists"* — a failed
+  attempt, generalized to a non-existence claim;
+* *"`#guard` passed, so the kernel accepted it"* — a passing attempt,
+  generalized to a claim about a different oracle entirely (§5.4).
+
+**Neither was measured against an ALTERNATIVE**, and that is the whole
+defect. The SoftFloat lane got both right by **replicating the function
+with core-only imports and DIFFING THE TACTICS** — running the candidates
+side by side rather than reporting the first outcome.
+
+**Practical form:** before writing *"no X exists"* or *"X is unprovable"*,
+**try the nearest alternative formulation and record the tactic diff.** A
+negative needs a measurement too, and the measurement is a comparison, not
+an attempt.
+
+This document's `#guard` probe (§5.4) happens to have the prescribed shape
+— `#guard`, `rfl` and `decide` on the *same* propositions — which is why it
+could support a claim about the difference between them. Had it run only
+the failing half, it would have produced exactly the retracted claim above.
 
 ---
 

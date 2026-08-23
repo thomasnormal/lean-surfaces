@@ -784,3 +784,243 @@ where every number comes from, and a figure written from intent rather than
 from output is the failure mode in its cheapest form. The commit message
 carrying `99` is already on master and is **not rewritten** — shared history
 does not get rebased to hide an error; it gets a correction that points at it.
+
+---
+
+## 2026-08-23-qol-13 — `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD
+
+Three fixes, all from one 78-minute Ada tenure.
+
+### 1. `--gates` adds, `--gates-only` replaces
+
+Without `--classify`, `--gates` **silently replaced** the default set:
+`--gates "docs_check"` dropped the differential and the run went green against
+fewer checks than the default it thought it was extending. That is the **exact
+mirror** of the narrower-default trap the ES lane found (`qol-6`) — a gate set
+that shrinks without saying so — and the two now have one answer:
+
+* **`--gates` ADDS to the floor** (the class floor under `--classify`, the
+  default floor without it). This script cannot tell "also run mine" from
+  "instead of yours", so it takes the reading that **cannot silently shrink a
+  gate set**.
+* **`--gates-only` REPLACES**, and announces which floor gates it is skipping.
+  Replacement is now a flag you have to type.
+* **`--foreign` implies `--gates-only`**, because there is no applicable floor
+  in a foreign checkout.
+
+### 2. Unstaged Lean under a lake glob is a REFUSAL
+
+A tenure verifies the **staged** tree. Spending one on a tree whose Lean is
+not staged verifies something nobody is landing — those files get compiled but
+not landed, or landed but not compiled. The check counts **untracked** files
+too, because Ada's `Value.lean` was untracked rather than merely unstaged.
+Live: exit **2** with the files named. Under `--classify-only` it is reported
+and **not** refused — no tenure is at stake there, so a refusal would be
+theatre.
+
+### 3. Lean that nothing imports gets a loud line
+
+`Value.lean` was untracked **and unimported**. The `LeanModels` library
+declares **no `globs`** in `lakefile.toml`, so lake builds `LeanModels.lean`
+and its transitive imports **only**: a new module nobody imports is never
+compiled, and a green build is **green about nothing** where it is concerned.
+
+It is loud but **not** a refusal — the file may be landing together with the
+import that will reach it. Two exemptions, both read from the lakefile rather
+than assumed: **`LeanModels.lean` itself** (the library root, imported by
+nothing by design), and **everything under `Examples/`**, which declares
+`globs = ["Examples.+"]` and is therefore a target whether or not anything
+imports it.
+
+### The collision that did not happen
+
+This landing rebased onto the rebuild lane's `--build-target`, which arrived
+while this work was in flight. **They compose**: their flag unions into
+`BUILD_TARGETS` through the same `add_build_target` the classifier uses, and
+their own self-test asserts "UNION with the classifier's floor, never
+replacement". Nothing had to be reconciled — the union was designed for this
+in `qol-1`, and it held.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **118 ok, 0 failed** (102 → 118, **16 new**;
+102 already included the rebuild lane's four). Gate composition in all four
+combinations plus the announcement; lake-glob detection distinguishing a doc's
+`.lean` and a non-`.lean` path; import detection against a real fixture tree,
+with the orphan reported, the imported one silent, and both exemptions
+asserted. Live on this tree: the refusal exits **2**, `--classify-only` exits
+**0** and reports, and the unimported line fires on a staged orphan. **No Lean
+was executed.**
+
+### The count was wrong AGAIN, and twice is a process defect
+
+`qol-12` reported a predicted 99 against a measured 98, and was corrected.
+This entry then did the identical thing: **119 written, 118 measured**. One
+slip is a slip; the same slip twice in three landings is a **process defect**,
+and the process was "write the entry, then run the self-test, then don't
+re-read the number."
+
+**The fix is ordering, not care.** The measured line is now pasted from the
+run into the entry — the self-test is run *first*, its last line copied, and
+the entry written around it. A number that is typed from intent has no
+provenance at all, which is §5.4a's subject exactly: *a number carries the
+state it was measured in.* Both wrong figures were attached to green runs, in
+entries whose whole purpose is to be citable later — which is what makes the
+cheap version of this failure worth two corrections rather than one shrug.
+
+Neither commit message is rewritten. `4d32526` and `92fcfcb` carry the wrong
+figures on master, and this line is how they resolve.
+
+---
+
+## 2026-08-23-qol-14 — the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket
+
+§9.5 moved the backlog's rebase collision off the §-numbers — where `L2`, `L3`
+and `L4` each appeared twice — and onto one generated file. The ES lane hit
+it: two lanes appending on the same day both regenerate `INDEX.md`, and the
+diffs overlap. **Merging a generated file is always wrong**; the merged result
+is a *third* version matching neither tree. The correct resolution is take
+either side and regenerate, and that is now mechanical.
+
+### `.gitattributes`, and the half that is easy to ship broken
+
+`docs/backlog/INDEX.md merge=ours` — so a rebase resolves without a conflict,
+leaving the index **stale-but-valid** until regenerated.
+
+**But the attribute alone does nothing.** `ours` is **not** one of git's
+built-in merge drivers — those are `text`, `binary` and `union` — so each
+clone must also define `merge.ours.driver`. Measured both ways before
+shipping: without the config the same merge **still conflicts** (markers in
+the file); with it, it resolves to our side. Both directions are self-test
+rows, so the day someone deletes the config line the test says which half
+broke. `tools/backlog-index.sh --install-merge-driver` sets it, and the header
+of the generated page now opens with **"CONFLICT? REGENERATE with
+`tools/backlog-index.sh` — never merge."**
+
+### One correction to the dispatch: the docs_check rule did NOT exist
+
+The brief said a docs_check rule refusing a stale index "already exists". It
+does not — `qol-11` shipped a **NOTE**, deliberately non-fatal, and said so.
+That gap matters more now, because `merge=ours` makes a stale index the
+**routine** post-rebase state: a driver that resolves quietly plus a check
+that only whispers is a mechanism for landing stale artifacts.
+
+So the refusal now exists — **in `tools/triad.sh`'s preconditions, not at the
+docs_check gate**, and the placement is the point. Base rule 4 makes a triad
+**one per landing**, so a red at gate 2 costs the whole tenure; a refusal
+before the ticket costs **one command**. Same refusal, one tenure cheaper —
+and this lane has watched a tenure cost 78 minutes. It is scoped to landings
+that **touch `docs/backlog/`**: another lane's stale index is not this lane's
+refusal to eat. Under `--classify-only` it reports and does not refuse, since
+no tenure is at stake. The `docs_check` notice stays for runs outside the
+triad, and `--check` remains the standalone gate: three layers, each at its
+own cost.
+
+### The installer shipped a bug that the self-tests did not cover
+
+`--install-merge-driver` worked and printed `ours: command not found` — a
+backtick inside a double-quoted `echo`, so the shell ran `ours` as a command.
+The config was set correctly, so **every behavioural test passed**; what was
+broken was the part only a human reads. There is now a check that the
+installer's output contains **no shell error text**, which is the same lesson
+this repo keeps paying for in different costumes: a test that asserts the
+effect and never reads the output is a test with a blind spot exactly the
+width of the message.
+
+### Triad
+
+`bash -n` clean. `tools/triad.sh --self-test`: **122 ok, 0 failed** (118 →
+122, **4 new**: a freshly generated index is not stale, an un-regenerated one
+is, regenerating clears it, and no generator means nothing to be stale about).
+`tools/backlog-index.sh --self-test`: **25 ok, 0 failed** (15 → 25, **10
+new**: the shipped attribute resolving to `ours` on `INDEX.md` and
+`unspecified` on an ordinary doc, the merge conflicting **without** the config
+and succeeding **with** it, our side kept, no third version, the config set,
+the installer's success line, its silence on shell errors, and the header's
+conflict instruction). `docs_check` **83/83**. Live: the refusal exits **2**
+naming the file, and a regenerated index passes. Tools-only: **no tenure, no
+Lean executed.**
+
+---
+
+## 2026-08-23-qol-15 — `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling
+
+The C lane measured **~85 minutes per compile** for a 300-line proof under
+"one tenure per compile". That is not a slow loop; **it is no loop at all**.
+`--iterate` runs a single-shot `lake env lean` on a **library** file — the case
+§7.1 rule 3 does not cover — **without a ticket**.
+
+Implemented to **A17's five tightenings**, which supersede the first dispatch
+where they differ.
+
+### It is framed as a courtesy protocol, and that framing is the honest part
+
+Everything this mode does to stay polite — the load line, the swap line, the
+single slot, yielding to the owner's workloads — is **checked at the moment it
+starts and enforced by nothing afterwards**. Another lane can take a tenure a
+second later and nothing stops this process. So `--help` says it plainly:
+**the only guarantee is the RSS ceiling**, 3 GB on its own chain, and it
+**kills rather than pauses**, because nothing else is watching an unticketed
+process. That ceiling is deliberately **stricter than A16's 5 GB per-process
+tenure line**: a tenure has a watchdog and a lock behind it; an iterate has
+only this.
+
+### The five tightenings
+
+1. **The slot is MACHINE-WIDE**, not per-lane — a shared `/tmp/ls-iterate/`
+   with one live entry total, staleness by the two-part test. Two lanes
+   iterating is the shape that took the box down at load 29, only smaller.
+2. **An explicit RSS kill line at 3 GB** on the iterate's own chain — and,
+   applying A16's lesson at this scale, **the guard is not in its own kill
+   set**.
+3. **The STOP mirrors the START on both axes.** One function decides both, so
+   the mirror is true *by construction* rather than by two lists agreeing: a
+   loop whose machine degrades mid-flight is refused its **next** run, by
+   number. Load and swap never kill a run in progress; only the ceiling does.
+4. **The provenance line names the priority clause** — *"yields to owner
+   workloads (Thomas's own processes have absolute priority, A11)"*.
+5. **The whole mode is framed as courtesy in `--help`.**
+
+Every run prints what it was permitted by, so a green carries its own
+provenance (§5.4a) rather than resting on a claim that the machine *was*
+quiet.
+
+### The citation checks itself, and "present" is not "adopted"
+
+A17 had **no row** in §7.1a when this was written, so the tool grepped the
+register at run time and said so. **While the work was in flight the row
+landed — marked `DRAFT`** — which would have silently switched the honest note
+off. So the check now distinguishes **three** states: absent, **draft**, and
+adopted, and only the third is silent. Today it prints *"A17 is in §7.1a but
+marked DRAFT. Present is not adopted."*
+
+The register row is the arch lane's to promote; this lane does not edit
+another lane's amendment text. **The note clears itself when the row does.**
+
+### Every reader is mockable, because a guard nobody can trigger is untested
+
+`read_load`, `read_swap_pct` and `has_lean_descendant` honour mock variables,
+so the self-test drives **each refusal**. The machine-wide test uses a **real
+foreign pid** from a different lane name — a live `sleep` — rather than a
+simulated one.
+
+### Live, on the machine as it actually was
+
+The box sat at **load 19–33 and swap ~90%** throughout, so every live run
+**refused by number**. That is the demonstration that matters: the happy path
+is exercised through `--explain` and its decision functions, never by running
+Lean, because this lane holds no ticket and the machine was never quiet enough
+for its own tool to permit it.
+
+### Triad
+
+`bash -n` clean. `tools/check.sh --self-test`: **58 ok, 0 failed** (26 → 58,
+**32 new**) — the courtesy framing and the priority clause in the WHY, the
+same file refused by the ticket path and permitted by the iterate path,
+stop-mirrors-start asserted on **both** axes and shown to be the same function
+the refusal quotes, load exactly at the line allowed, a cold clone naming A13,
+**a second iterate refused across lane names** with the stale entry reaped,
+all four staleness states, our own entry never blocking us, the RSS ceiling in
+**both** directions plus the offender it names, and the A17 citation in all
+three states. `triad.sh` **122 ok**, `backlog-index.sh` **25 ok**, `docs_check`
+**83/83**. **No Lean was executed.**

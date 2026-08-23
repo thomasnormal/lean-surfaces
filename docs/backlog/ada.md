@@ -237,3 +237,37 @@ staleness check. **This lane's deleted hand-rolled script used exactly
 `ada-lane`**, and its own reaper would have parsed the wrong field. The lane
 is `ada` from here on. This is §9.2's argument in one line: the shared script
 validates what a lane-private one merely got away with.
+
+---
+
+## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-5` (Ada lane's to triage)
+
+*Filed by the SoftFloat lane during its consumer census
+(`docs/softfloat-charter.md` §2.4). Id kept in the SoftFloat namespace.*
+
+### THE ADA FLOAT DEFERRAL CITES A GATE THAT IS IN ANOTHER TIER'S CHARTER
+
+`docs/ada-semantics-design.md` defers floats twice, both times to *"the
+charter's R4 gate"*:
+
+* line 231 — *"**floats** (the charter's R4 gate, …)"*
+* line 285 — *"**Anything about floats.** The charter's R4 gate stands
+  unchanged."*
+
+**Measured: `docs/ada-charter.md` contains zero occurrences of `R4` and zero
+occurrences of `float`.** R4 is the **C** charter's rung. The Ada lane has
+inherited a C gate by mis-citation, and the deferral therefore rests on a
+condition no Ada document states — which means nothing can ever discharge it,
+because there is no Ada-side gate to satisfy.
+
+**Also measured, and it is the substantive half:** **Annex G — Ada's numerics
+annex, which is where IEEE 754 conformance would live — is mentioned nowhere
+in the repository.** (Case-sensitively. A case-insensitive search hits
+`annex gap` in `docs/backlog.md`, which is §5.4a's name-collision trap and not
+a citation.)
+
+**What the Ada lane owes itself here** is a gate of its own: either an
+Ada-charter rung that names the float condition in Ada's terms (ARM Annex G,
+`Float`/`Long_Float`, and whether ACATS 4.2's numerics tests are in scope), or
+a plain statement that floats are out of tier. Either is fine; the current
+state is a deferral pointing at another language's rung.

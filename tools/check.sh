@@ -31,9 +31,48 @@
 # The lake libraries are READ FROM lakefile.toml, not hardcoded here — a
 # hardcoded glob is a second copy of the lakefile that goes stale silently.
 #
+# --iterate — THE PROOF-ITERATION CASE, AND IT IS A COURTESY PROTOCOL.
+#
+# Read this before using it.  `--iterate` runs Lean OUTSIDE the build lock.
+# Everything it does to stay polite — the load line, the swap line, the
+# machine-wide single-slot, yielding to the owner's workloads — is COURTESY:
+# checked at the moment it starts, and not enforced by anything afterwards.
+# Another lane can take a tenure a second later, the machine can fill up, and
+# nothing will stop this process.  THE ONLY GUARANTEE THIS MODE MAKES IS THE
+# RSS CEILING: 3 GB on its own chain, and it KILLS rather than pauses, because
+# nothing else is watching an unticketed process.  Everything else is a
+# promise about the moment of starting.
+#
+# WHY IT EXISTS.  Paying a TENURE PER COMPILE makes proof iteration
+# unaffordable: the C lane measured ~85 MINUTES PER COMPILE for a 300-line
+# proof, which is not a slow loop, it is no loop at all.
+#
+# Permitted only while all of these hold, CHECKED ON EVERY RUN:
+#
+#   1. ONE iterate MACHINE-WIDE — not one per lane.  A shared directory
+#      (/tmp/ls-iterate/), one live entry total, staleness by the TWO-PART
+#      test.  Two lanes iterating is the shape that took the box down at
+#      load 29, just smaller.
+#   2. load average below 10          — refused by number, not by feel
+#   3. swap below 50%                 — likewise
+#   4. every project import already has an olean (the warm-clone rule again)
+#
+# And the STOP condition MIRRORS THE START, on both axes: the same function
+# decides both, so a loop whose machine degrades mid-flight is refused its
+# NEXT run, by number.  (Load and swap never kill a run in progress — only the
+# RSS ceiling does that.)
+#
+# A11 is not being weakened.  The lock exists because concurrent BUILDS took
+# the machine down at load 29, and a single-file elaboration on a quiet
+# machine is not that.  This is the one exemption A11's own rationale allows,
+# made CONDITIONAL AND MEASURED rather than asserted — and A11's priority
+# clause is unchanged and printed on every run: THOMAS'S OWN PROCESSES HAVE
+# ABSOLUTE PRIORITY, and this mode yields to owner workloads.
+#
 # USAGE
 #   tools/check.sh path/to/file.lean        # decide, then elaborate
 #   tools/check.sh --explain path/to/f.lean # decide and PRINT, run nothing
+#   tools/check.sh --iterate --lane <you> path/to/file.lean
 #   tools/check.sh --self-test              # every refusal path RUN, no Lean
 #
 # EXIT  0 elaborated clean (or --explain)   1 Lean reported errors
@@ -51,6 +90,16 @@ NICE="${LS_NICE:-19}"
 EXPLAIN=0
 SELF_TEST=0
 TARGET=""
+ITERATE=0
+LANE=""
+ITER_DIR="${LS_ITERATE_DIR:-/tmp/ls-iterate}"    # MACHINE-WIDE, one live entry
+MAX_LOAD="${LS_ITERATE_MAX_LOAD:-10}"
+MAX_SWAP_PCT="${LS_ITERATE_MAX_SWAP_PCT:-50}"
+# 3 GB, and deliberately STRICTER than A16's 5 GB per-process tenure line: a
+# tenure has a watchdog and a lock behind it, an unticketed iterate has only
+# this.  It kills, it does not pause.
+ITER_RSS_LIMIT_KB="${LS_ITERATE_RSS_LIMIT_KB:-3145728}"
+THREADS="${LEAN_NUM_THREADS:-2}"
 
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "check.sh: $*" >&2; exit 2; }
@@ -59,6 +108,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --dir)       CLONE="${2:-}"; shift 2 ;;
     --explain)   EXPLAIN=1; shift ;;
+    --iterate)   ITERATE=1; shift ;;
+    --lane)      LANE="${2:-}"; shift 2 ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
     -*)          die "unknown argument '$1'" ;;
@@ -137,6 +188,155 @@ lock_is_ours() {
     p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
   done
   return 1
+}
+
+# ------------------------------------------------- the machine, measured
+# Every reader is MOCKABLE, because a guard whose refusal path cannot be
+# executed is a guard nobody has tested.  The self-test drives all three.
+read_load() {                   # 1-minute load average
+  [ -n "${LS_MOCK_LOAD:-}" ] && { printf '%s\n' "$LS_MOCK_LOAD"; return 0; }
+  if [ -r /proc/loadavg ]; then awk '{print $1}' /proc/loadavg; return 0; fi
+  sysctl -n vm.loadavg 2>/dev/null | awk '{ gsub(/[{}]/, ""); print $1 }'
+}
+
+read_swap_pct() {               # swap in use, as a percentage of total
+  [ -n "${LS_MOCK_SWAP:-}" ] && { printf '%s\n' "$LS_MOCK_SWAP"; return 0; }
+  if [ -r /proc/meminfo ]; then
+    awk '/^SwapTotal:/{t=$2} /^SwapFree:/{f=$2}
+         END{ if (t+0 <= 0) print 0; else printf "%.1f", (t-f)*100/t }' /proc/meminfo
+    return 0
+  fi
+  sysctl -n vm.swapusage 2>/dev/null | awk '{
+      for (i = 1; i <= NF; i++) {
+        if ($i == "total") { v = $(i+2); gsub(/[^0-9.]/, "", v); t = v }
+        if ($i == "used")  { v = $(i+2); gsub(/[^0-9.]/, "", v); u = v }
+      }
+      if (t+0 <= 0) print 0; else printf "%.1f", u*100/t }'
+}
+
+over() {                        # over A B -> 0 when A > B, in floating point
+  awk -v a="$1" -v b="$2" 'BEGIN { exit !(a+0 > b+0) }'
+}
+
+descendants() {                 # BFS over ps, never `pgrep -P` (A12's lesson)
+  ps -eo pid,ppid 2>/dev/null | awk -v root="$1" '
+    NR > 1 { child[$2] = child[$2] " " $1 }
+    END { n = 1; q[1] = root
+          for (i = 1; i <= n; i++) {
+            split(child[q[i]], kids, " ")
+            for (k in kids) if (kids[k] != "") { n++; q[n] = kids[k]; print kids[k] } } }'
+}
+
+has_lean_descendant() {
+  [ -n "${LS_MOCK_LEAN_CHILD:-}" ] && { [ "$LS_MOCK_LEAN_CHILD" = "1" ]; return $?; }
+  local kid
+  for kid in $(descendants "$1"); do
+    case "$(ps -o comm= -p "$kid" 2>/dev/null)" in *lean*|*lake*) return 0 ;; esac
+  done
+  return 1
+}
+
+# THE SLOT IS MACHINE-WIDE.  One live entry in a shared directory, whatever
+# lane it belongs to: two lanes iterating at once is the shape that took the
+# box down at load 29, only smaller.  Entry filename IS the pid; its contents
+# are `<lane> <pid>`, A5's format, so a human reading the directory sees who.
+iterate_entry() { printf '%s/%s\n' "$ITER_DIR" "$$"; }
+
+# The TWO-PART test again (§7.1 rule 5), and the failure direction is the same:
+# an unparseable entry is treated as LIVE, so a bad file refuses a new iterate
+# rather than reclaiming one that is running.
+iterate_entry_live() {          # entry file -> 0 when its holder is alive
+  local f="$1" owner pid
+  [ -f "$f" ] || return 1
+  owner="$(cat "$f" 2>/dev/null)"; [ -n "$owner" ] || return 1
+  pid="$(printf '%s' "$owner" | awk '{print $NF}')"     # A5: pid LAST
+  case "$pid" in ''|*[!0-9]*) return 0 ;; esac          # unparseable => live
+  kill -0 "$pid" 2>/dev/null || return 1                # part 1: dead => stale
+  has_lean_descendant "$pid" || return 1                # part 2: no Lean => stale
+  return 0
+}
+
+iterate_live_holder() {         # -> the contents of the live entry, or ''
+  local f
+  [ -d "$ITER_DIR" ] || return 1
+  for f in "$ITER_DIR"/*; do
+    [ -f "$f" ] || continue
+    case "$f" in *"/$$") continue ;; esac               # never ourselves
+    if iterate_entry_live "$f"; then
+      cat "$f" 2>/dev/null
+      return 0
+    fi
+    rm -f "$f" 2>/dev/null                              # stale: reaped, quietly
+  done
+  return 1
+}
+
+# ONE function decides START and STOP, so "the stop mirrors the start" is true
+# by construction rather than by two lists agreeing.
+machine_is_quiet() {            # -> '' when quiet, else the reason, by number
+  local l s
+  l="$(read_load)"; s="$(read_swap_pct)"
+  ITER_LOAD="$l"; ITER_SWAP="$s"
+  if over "$l" "$MAX_LOAD"; then
+    echo "load average is $l, over the line of $MAX_LOAD"; return 0
+  fi
+  if over "$s" "$MAX_SWAP_PCT"; then
+    echo "swap is ${s}% in use, over the line of ${MAX_SWAP_PCT}%"; return 0
+  fi
+  echo ""
+}
+
+# The one guarantee this mode makes.  Pure, so both directions are testable.
+iterate_rss_verdict() {         # limit_kb  < "<pid> <rss_kb>" rows
+  awk -v lim="$1" '
+    { total += $2; if ($2 > worst) { worst = $2; wpid = $1 } }
+    END { if (total > lim) printf "kill %s %d\n", (wpid == "" ? "-" : wpid), total
+          else print "ok" }'
+}
+
+# The citation checks itself, and "present" is not "adopted": A17 landed in
+# §7.1a as a DRAFT row while this was being written, which would have silently
+# turned the honest note off.  Three states, three messages.
+a17_status() {                  # -> absent | draft | adopted
+  local doc="$CLONE/docs/family-architecture.md" row
+  [ -f "$doc" ] || { echo absent; return 0; }
+  row="$(grep -m1 '^| 17 ' "$doc" 2>/dev/null)"
+  if [ -z "$row" ]; then
+    grep -q 'AMENDMENT 17' "$doc" 2>/dev/null || { echo absent; return 0; }
+    row="$(grep -m1 'AMENDMENT 17' "$doc")"
+  fi
+  case "$row" in *DRAFT*|*draft*) echo draft ;; *) echo adopted ;; esac
+}
+
+ITER_LOAD=""; ITER_SWAP=""
+decide_iterate() {              # sets VERDICT / WHY / MISSING, and the numbers
+  local holder reason
+  VERDICT=""; WHY=""; MISSING=""
+  ITER_LOAD="$(read_load)"; ITER_SWAP="$(read_swap_pct)"
+  if holder="$(iterate_live_holder)"; then
+    VERDICT="refuse-concurrent"
+    WHY="an iterate is already running MACHINE-WIDE ($holder). One slot total, whatever lane holds it: two single-file elaborations are the shape that took the machine down at load 29, just smaller"
+    return 0
+  fi
+  reason="$(machine_is_quiet)"
+  if [ -n "$reason" ]; then
+    case "$reason" in
+      load*) VERDICT="refuse-load"
+             WHY="$reason. Lock-free iteration is a courtesy permitted on a QUIET machine, and this one is not quiet" ;;
+      *)     VERDICT="refuse-swap"
+             WHY="$reason. A swapping machine turns one elaboration into everybody's slowdown" ;;
+    esac
+    return 0
+  fi
+  MISSING="$(missing_oleans "$CLONE/$1" 2>/dev/null || true)"
+  if [ -n "$MISSING" ]; then
+    VERDICT="refuse-cold"
+    WHY="this clone is COLD for $(printf '%s\n' "$MISSING" | grep -c .) of the file's imports — resolving them here is Lean execution outside the lock (A11) and a GB-scale download (A13). Seed first, then iterate"
+    return 0
+  fi
+  VERDICT="iterate"
+  WHY="conditions met — lock-free per A17: load $ITER_LOAD < $MAX_LOAD, swap ${ITER_SWAP}% < ${MAX_SWAP_PCT}%, imports warm, the machine-wide iterate slot is free. COURTESY ONLY — yields to owner workloads (Thomas's own processes have absolute priority, A11), and the sole guarantee is the $((ITER_RSS_LIMIT_KB / 1048576)) GB RSS ceiling, which KILLS"
+  return 0
 }
 
 # ------------------------------------------------------------- the verdict
@@ -252,6 +452,88 @@ TOML
   decide scratch/warm.lean
   check "no lock at all is not our tenure"        "$VERDICT" "scratch"
 
+  # ---- --iterate: the tightened A17 spec, every refusal EXECUTED
+  echo "  -- iterate"
+  ITER_DIR="$tmp/iter"; mkdir -p "$ITER_DIR"
+  LANE="testlane"; ITERATE=1
+  export LS_MOCK_LOAD=1.0 LS_MOCK_SWAP=5.0
+
+  decide_iterate LeanModels/Core/New.lean
+  check "a quiet machine + warm clone -> iterate" "$VERDICT" "iterate"
+  check "  ...and the WHY cites A17"              "$(printf '%s' "$WHY" | grep -c 'lock-free per A17')" "1"
+  check "  ...names the priority clause"          "$(printf '%s' "$WHY" | grep -c 'yields to owner workloads')" "1"
+  check "  ...and says COURTESY ONLY"             "$(printf '%s' "$WHY" | grep -c 'COURTESY ONLY')" "1"
+  check "  ...naming the RSS ceiling as the guarantee" "$(printf '%s' "$WHY" | grep -c '3 GB RSS ceiling')" "1"
+  check "  ...on a LIBRARY file the ticket path refuses" \
+        "$(decide LeanModels/Core/New.lean; echo "$VERDICT")" "refuse-library"
+
+  # THE STOP MIRRORS THE START: one function, asserted on both axes.
+  check "quiet machine -> no stop reason"         "$(machine_is_quiet)" ""
+  check "stop mirrors start on LOAD"              "$(LS_MOCK_LOAD=42.5 machine_is_quiet)" \
+        "load average is 42.5, over the line of 10"
+  check "stop mirrors start on SWAP"              "$(LS_MOCK_SWAP=87.3 machine_is_quiet)" \
+        "swap is 87.3% in use, over the line of 50%"
+  LS_MOCK_LOAD=42.5 decide_iterate LeanModels/Core/New.lean
+  check "high load refuses"                       "$VERDICT" "refuse-load"
+  check "  ...with the STOP function's own words" "$(printf '%s' "$WHY" | grep -c 'load average is 42.5, over the line of 10')" "1"
+  LS_MOCK_LOAD=10 decide_iterate LeanModels/Core/New.lean
+  check "load exactly AT the line is allowed"     "$VERDICT" "iterate"
+  LS_MOCK_SWAP=87.3 decide_iterate LeanModels/Core/New.lean
+  check "high swap refuses"                       "$VERDICT" "refuse-swap"
+  check "  ...naming the NUMBER"                  "$(printf '%s' "$WHY" | grep -c '87.3')" "1"
+
+  decide_iterate scratch/cold.lean
+  check "a cold clone refuses"                    "$VERDICT" "refuse-cold"
+  check "  ...naming A13"                         "$(printf '%s' "$WHY" | grep -c 'A13')" "1"
+
+  # THE SLOT IS MACHINE-WIDE.  A real foreign pid, from a DIFFERENT lane.
+  sleep 120 & other=$!
+  printf 'some-other-lane %s\n' "$other" > "$ITER_DIR/$other"
+  LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean
+  check "a SECOND iterate refuses ACROSS LANES"   "$VERDICT" "refuse-concurrent"
+  check "  ...naming the holder's lane"           "$(printf '%s' "$WHY" | grep -c 'some-other-lane')" "1"
+  check "  ...and it outranks the load check"     "$(LS_MOCK_LOAD=99 LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean; echo "$VERDICT")" "refuse-concurrent"
+  LS_MOCK_LEAN_CHILD=0 decide_iterate LeanModels/Core/New.lean
+  check "part 2: a live pid with no Lean is STALE" "$VERDICT" "iterate"
+  check "  ...and the stale entry was REAPED"      "$(ls "$ITER_DIR" | grep -c "^$other\$")" "0"
+  kill "$other" 2>/dev/null; wait "$other" 2>/dev/null
+
+  printf 'dead-lane 999999\n' > "$ITER_DIR/999999"
+  LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean
+  check "part 1: a DEAD holder is reclaimed"      "$VERDICT" "iterate"
+  printf 'go-lane lake pid 43341 (cwd /x)\n' > "$ITER_DIR/bogus"
+  decide_iterate LeanModels/Core/New.lean
+  check "an UNPARSEABLE holder is never reclaimed" "$VERDICT" "refuse-concurrent"
+  rm -f "$ITER_DIR"/*
+  check "our OWN entry never blocks us" \
+        "$(printf 'testlane %s\n' "$$" > "$ITER_DIR/$$"; LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean; echo "$VERDICT")" "iterate"
+  rm -f "$ITER_DIR"/*
+
+  # The self-updating citation, in all three states.
+  a17dir="$tmp/a17"; mkdir -p "$a17dir/docs"
+  saved_clone="$CLONE"; CLONE="$a17dir"
+  check "no doc at all -> absent"          "$(a17_status)" "absent"
+  printf '# doc\n| 16 | something | new |\n' > "$a17dir/docs/family-architecture.md"
+  check "no A17 row -> absent"             "$(a17_status)" "absent"
+  printf '| 17 | the iteration loop | **DRAFT — five tightenings** |\n' >> "$a17dir/docs/family-architecture.md"
+  check "a DRAFT row -> draft, not adopted" "$(a17_status)" "draft"
+  printf '# doc\n| 17 | the iteration loop | **carried** |\n' > "$a17dir/docs/family-architecture.md"
+  check "a carried row -> adopted"          "$(a17_status)" "adopted"
+  CLONE="$saved_clone"
+
+  # THE ONE GUARANTEE: the RSS ceiling, asserted in BOTH directions.
+  check "a chain under the ceiling survives" \
+        "$(printf '10 1000000\n11 1000000\n' | iterate_rss_verdict 3145728)" "ok"
+  check "a chain over the ceiling is KILLED" \
+        "$(printf '10 2000000\n11 2000000\n' | iterate_rss_verdict 3145728 | awk '{print $1}')" "kill"
+  check "  ...naming the worst offender"  \
+        "$(printf '10 500000\n11 3000000\n' | iterate_rss_verdict 3145728 | awk '{print $2}')" "11"
+  check "the ceiling is 3 GB, stricter than A16's tenure line" \
+        "$ITER_RSS_LIMIT_KB" "3145728"
+
+  unset LS_MOCK_LOAD LS_MOCK_SWAP LS_MOCK_LEAN_CHILD
+  ITERATE=0; LANE=""
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
@@ -269,22 +551,106 @@ case "$ABS" in /*) ;; *) ABS="$(pwd)/$TARGET" ;; esac
 REL="${ABS#"$CLONE"/}"
 case "$REL" in /*) die "'$TARGET' is outside the clone '$CLONE'" ;; esac
 
-decide "$REL"
+if [ "$ITERATE" = "1" ]; then
+  [ -n "$LANE" ] || die "--iterate requires --lane <name>: the one-per-lane slot is a pidfile keyed by it"
+  case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+" ;; esac
+  decide_iterate "$REL"
+else
+  decide "$REL"
+fi
+
 CMD="nice -n $NICE lake env lean $REL"
 echo "check.sh: $REL"
-echo "  CASE   $VERDICT"
+if [ "$VERDICT" = "iterate" ]; then
+  echo "  CASE   iterate: conditions met — lock-free per A17"
+else
+  echo "  CASE   $VERDICT"
+fi
 echo "  WHY    $WHY"
+# §5.4a: the numbers this run was PERMITTED BY ride the run.
+[ "$ITERATE" = "1" ] && printf '  STATE  load %s (line %s), swap %s%% (line %s%%), lane %s\n' \
+  "$ITER_LOAD" "$MAX_LOAD" "$ITER_SWAP" "$MAX_SWAP_PCT" "$LANE"
 case "$VERDICT" in
-  refuse-library|refuse-cold)
+  refuse-*)
     [ -n "$MISSING" ] && printf '  MISSING %s\n' "$(printf '%s' "$MISSING" | tr '\n' ' ')"
     echo "  REFUSED — nothing was run."
     exit 2 ;;
 esac
+# The citation checks itself: A17 is being drafted, and a pointer to a rule
+# that is not yet written is the thing this repository keeps paying for.
+if [ "$ITERATE" = "1" ]; then
+  case "$(a17_status)" in
+    absent)
+      echo "  NOTE   A17 has NO ROW in §7.1a. This run's permission rests on the"
+      echo "         conditions above, which were CHECKED, not on the register." ;;
+    draft)
+      echo "  NOTE   A17 is in §7.1a but marked DRAFT. Present is not adopted: this"
+      echo "         run's permission rests on the conditions above, which were"
+      echo "         CHECKED. The note clears when the row does." ;;
+  esac
+fi
 echo "  RUN    $CMD"
 if [ "$EXPLAIN" = "1" ]; then
   echo "  --explain: nothing was run."
   exit 0
 fi
 cd "$CLONE" || die "cannot cd '$CLONE'"
+ITER_WATCHDOG=""
+ENTRY=""
+cleanup_iterate() {
+  [ -n "$ITER_WATCHDOG" ] && kill "$ITER_WATCHDOG" 2>/dev/null
+  [ -n "$ENTRY" ] && rm -f "$ENTRY" "$ENTRY.guard" 2>/dev/null
+  return 0
+}
+if [ "$ITERATE" = "1" ]; then
+  # A5's format, and the pid SPANS the run (A10's shape at a smaller scale).
+  mkdir -p "$ITER_DIR" 2>/dev/null || die "cannot create '$ITER_DIR'"
+  ENTRY="$(iterate_entry)"
+  printf '%s %s\n' "$LANE" "$$" > "$ENTRY" || die "cannot write '$ENTRY'"
+  trap 'cleanup_iterate' EXIT INT TERM
+  export LEAN_NUM_THREADS="$THREADS"
+  echo "  RUN    LEAN_NUM_THREADS=$THREADS $CMD"
+  # THE ONLY GUARANTEE THIS MODE MAKES.  It KILLS rather than pauses, because
+  # nothing else is watching an unticketed process.  A16's lesson applies at
+  # this scale too: the guard is NOT in its own kill set.
+  (
+    while kill -0 $$ 2>/dev/null; do
+      sleep 10
+      g="$(cat "$ENTRY.guard" 2>/dev/null)"
+      case "$g" in ''|*[!0-9]*) g=0 ;; esac
+      excl=" $g $(descendants "$g" 2>/dev/null | tr '\n' ' ') "
+      rows=""
+      for pp in $(descendants $$); do
+        case "$excl" in *" $pp "*) continue ;; esac
+        rr="$(ps -o rss= -p "$pp" 2>/dev/null | tr -d ' ')"
+        case "$rr" in ''|*[!0-9]*) continue ;; esac
+        rows="$rows$pp $rr
+"
+      done
+      case "$(printf '%s' "$rows" | iterate_rss_verdict "$ITER_RSS_LIMIT_KB")" in
+        kill\ *)
+          tot="$(printf '%s' "$rows" | awk '{t += $2} END {print t+0}')"
+          echo "ITERATE RSS CEILING: chain at $((tot / 1024)) MB > $((ITER_RSS_LIMIT_KB / 1024)) MB — KILLING (this mode's only guarantee)" >&2
+          for pp in $(descendants $$); do
+            case "$excl" in *" $pp "*) continue ;; esac
+            kill -9 "$pp" 2>/dev/null
+          done ;;
+      esac
+    done
+  ) & ITER_WATCHDOG=$!
+  printf '%s\n' "$ITER_WATCHDOG" > "$ENTRY.guard" 2>/dev/null
+fi
 # shellcheck disable=SC2086
 nice -n "$NICE" lake env lean "$REL"
+RUN_RC=$?
+if [ "$ITERATE" = "1" ]; then
+  cleanup_iterate
+  # THE STOP MIRRORS THE START: the same function, the same numbers.
+  stop_reason="$(machine_is_quiet)"
+  if [ -n "$stop_reason" ]; then
+    echo "  STOP   $stop_reason — the NEXT run will refuse (the stop mirrors the start)"
+  else
+    echo "  STOP   conditions still hold (load $ITER_LOAD, swap ${ITER_SWAP}%) — another run is permitted"
+  fi
+fi
+exit "$RUN_RC"

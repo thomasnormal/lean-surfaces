@@ -4,34 +4,64 @@
 index generated rather than maintained, which is §5.5's *"generated and
 checked, never hand-maintained"* applied to the repository's own record.
 
+**CONFLICT? REGENERATE with `tools/backlog-index.sh` — never merge.** A
+merged generated file is a third version that matches neither tree;
+`.gitattributes` marks this file `merge=ours` so a rebase resolves without
+one (install the driver once with
+`tools/backlog-index.sh --install-merge-driver`).
+
 Entries live in `docs/backlog/<lane>.md`, appended only by their own lane,
 with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**39 entries across 13 lanes.** Regenerate with
+**73 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
+| `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
+| `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
+| `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
+| `2026-08-23-architecture-3` | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
+| `2026-08-23-pyrebuild-2` | THE MERGE TO MASTER: one arm, 25 rows, and a dispatch discharged | pyrebuild |
+| `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |
+| `2026-08-23-es-1` | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
+| `2026-08-23-architecture-1` | AMENDMENT 17 (DRAFT): proof iteration is a different shape, and five conditions I would tighten | architecture |
+| `2026-08-22-architecture-14` | TWO FOLLOW-UPS RECORDED | architecture |
+| `2026-08-22-architecture-13` | CORRECTION — `Run` is a RETRACT of `SemM`, not an isomorphism (and this doc claimed the iso twice) | architecture |
 | `2026-08-22-qol-12` | `--foreign`: the tenure is about THE MACHINE, the gates are about the tree | qol |
+| `2026-08-22-architecture-12` | BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — as the STRONGER form | architecture |
 | `2026-08-22-qol-11` | §9.5 FINISHED: the monolith is frozen, the index is generated, and the id drifter is dated | qol |
+| `2026-08-22-architecture-11` | CORE'S `.except`-LAYER ALTERNATIVE IS CLOSED BY THE COVENANT (Go lane, third finding of the gap) | architecture |
 | `2026-08-22-qol-10` | the GATE PHASE was building the tree, and it defeated every narrowing | qol |
+| `2026-08-22-architecture-10` | §9.5 GAINS THE INBOUND CONVENTION AND THE ROUTING LAW | architecture |
 | `2026-08-22-qol-9` | AMENDMENT 16: the 3 GB chain cap was killing honest builds, and the guard was in its own kill set | qol |
+| `2026-08-22-architecture-9` | THE HELD mvcgen DEFECT RESOLVES — the ceiling stands, and the tier routes around it | architecture |
 | `2026-08-22-qol-8` | `tools/new-proof.sh` and `tools/analogues.sh`: the laws at the moment they are cheap | qol |
+| `2026-08-22-architecture-8` | THE DUAL LAW — an obstruction that is only ENCOUNTERED is not measured either | architecture |
 | `2026-08-22-qol-7` | `tools/check.sh`: rule 3's warm-clone amendment, CHECKED instead of guessed | qol |
+| `2026-08-22-architecture-7` | `Core.SemM` LANDED — the §3.8 trigger fired, and the reconciliation INVERTS | architecture |
 | `2026-08-22-qol-6` | the DEFAULT GATE SET now announces itself: the ES lane's migration finding, made loud | qol |
+| `2026-08-22-architecture-6` | SoftFloat LAYER 3 — TRANSFER, commissioned by core itself | architecture |
 | `2026-08-22-sunfish-rtrack-5` | the lock hypothesis is CONFIRMED, and two numbers close two arguments | sunfish-rtrack |
 | `2026-08-22-qol-5` | `--classify` reachability: the Go lane's correction, and the measurement that widened it | qol |
 | `2026-08-22-lean-tier-5` | `TrProj` written PARAMETRICALLY, under explicit approval to take adjacent-to-in-flight work | lean-tier |
+| `2026-08-22-es-5` | SUBSTRATE ADOPTION ON HOLD: this lane's `Halt` is the RICHER shape, and importing Core now would DELETE the ruling | es |
+| `2026-08-22-architecture-5` | `#guard` IS NOT A KERNEL ORACLE — reproduced here, and it corrects this document | architecture |
 | `2026-08-22-sunfish-rtrack-4` | THE ROUND VOCABULARY IS SETTLED, and the lock incident has a mechanism | sunfish-rtrack |
 | `2026-08-22-qol-4` | `docs/law-index.md`: 315 laws, and every one is a POINTER | qol |
 | `2026-08-22-lean-tier-4` | the crux ruling CONFIRMED, and inch 2 blocked one level deeper: the model cannot say "constructor" | lean-tier |
+| `2026-08-22-es-4` | TWO CORRECTIONS ACCEPTED: `#guard` is NOT a kernel oracle, and the "no substitute" claim was wrong by ONE PROJECTION | es |
+| `2026-08-22-architecture-4` | THE `GenFrame` RULING EXECUTED — first measured instance, and two laws paid off together | architecture |
 | `2026-08-22-wasm-3` | INCH 1, STEP 2: **the pin does NOT build** — six errors, all in the hand-written proof file, and the model itself is FINE | wasm |
 | `2026-08-22-sunfish-rtrack-3` | TRANSPORT CLASSIFICATION for the re-founding | sunfish-rtrack |
 | `2026-08-22-qol-3` | `tools/diagnose.sh`: 22 failure signatures, each with the incident that minted it | qol |
 | `2026-08-22-lean-tier-3` | M3 inch 1 WITHDRAWN: the candidate first proof is blocked on a MISSING MODEL RULE, and my own M2 census recommended it | lean-tier |
 | `2026-08-22-es-3` | M2 INCH 4(a): reference records and the conversions, and the tier now has TWO verification strengths | es |
+| `2026-08-22-architecture-3` | NEW LAW — a verdict vocabulary that cannot express a legitimate state fails BOTH ways | architecture |
 | `2026-08-22-wasm-2` | INCH 1, STEP 1: the four branches are **ISABELLE**, none is merged, and they prove the **ENTIRE LADDER** — so the engagement is a PORT, not a discovery | wasm |
 | `2026-08-22-sunfish-rtrack-2` | PROPOSAL: one round vocabulary for both folds | sunfish-rtrack |
 | `2026-08-22-qol-2` | `docs/statement-cookbook.md`: 21 claim shapes, each with the incident that minted it | qol |
@@ -39,10 +69,12 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-lean-tier-2` | M2 OBLIGATION CENSUS: 24 sorries are 3 missing DEFINITIONS, and two of the three are already being written by strangers | lean-tier |
 | `2026-08-22-es-2` | `RefusalCause π` ADOPTED, both expected-empty gates PROVED — and the ladder was being read one layer up | es |
 | `2026-08-22-c-2` | INCH 4: the tier RUNS a function, and refusal moves to `Halt` on the §3.4 ruling | c |
+| `2026-08-22-architecture-2` | THE `GenFrame` RULING — what a SHARED type may do while the legacy layer erodes | architecture |
 | `2026-08-22-ada-2` | M2's DESIGN: the substrate instantiated, and Ada needs a REFUSAL CAUSE the substrate does not have | ada |
 | `2026-08-22-wasm-1` | THE SORRY CENSUS: the number that carried the ruling was **5, not 13**, and the whole ledger is ONE corner of the metatheory | wasm |
 | `2026-08-22-sv-1` | THE DETERMINISM CLAIM IS CORRECTED: the Lean was right, the PROSE overclaimed, and determinism turns out to be relative to the trace | sv |
 | `2026-08-22-sunfish-rtrack-1` | THE `pst` LOCALITY LEMMA and the SEARCHED ROUND, rebuilt after a purge | sunfish-rtrack |
+| `2026-08-22-softfloat-1` | M1: the two censuses, the layer-2 design, and inch 1 | softfloat |
 | `2026-08-22-research-1` | the proof-framework survey, and the two best findings were in our own toolchain | research |
 | `2026-08-22-qol-1` | `tools/triad.sh --classify`: the triad now sizes itself to the diff, and SAYS WHAT ITS GREEN COVERS | qol |
 | `2026-08-22-pyrebuild-1` | THE ACCEPTANCE GATE PASSES | pyrebuild |
@@ -51,5 +83,15 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-go-1` | RUNG 1'S SCOPE IS DERIVED: coverage is CONJUNCTIVE, and the charter's "21" was wrong (formerly `§G1`) | go |
 | `2026-08-22-es-1` | M2 INCH 3: environments, `[[Call]]`, `[[Construct]]` and `this` — and the spec CORRECTED this lane about `[[ThisBindingStatus]]` | es |
 | `2026-08-22-c-1` | §L83's TRIAD CLOSES GREEN, the standing strategy is adopted by touch, and inch 4 opens with fuel | c |
+| `2026-08-22-basecase-1` | F3c INCH 2: the STAND-PAT ROUND, and a third loss to `/private/tmp` | basecase |
 | `2026-08-22-audit-1` | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
+| `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
+| `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
+| `INBOUND` | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
+| `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
+| `INBOUND` | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
+| `INBOUND` | `2026-08-22-softfloat-2` (C lane's to triage) | c |
+| `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
+
+**6 heading(s) do not use the §9.5 id scheme** and sort last.

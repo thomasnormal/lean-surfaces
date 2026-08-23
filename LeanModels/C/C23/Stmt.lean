@@ -150,6 +150,136 @@ expression is compared unequal to 0). -/
 def evalCond (ctx : Ctx) (e : Expr) : ExecM Bool :=
   liftEval (do let v ← evalExpr ctx e; truthy v)
 
+/-! ## §6.7.11 — initialization, and the rule that fires on NOTHING
+
+**Measured, on all 75 `InitListExpr` nodes in the corpus: every one is
+FULL.** Not one array initializer is shorter than its extent and not one
+structure initializer omits a member. So §6.7.11p10's rule — *the
+unmentioned members are initialized as objects with static storage
+duration*, i.e. to zero — **fires on zero corpus sites.**
+
+That is exactly the condition under which the memory model installed
+effective types (§2.5): a rule is cheap to install correctly while
+nothing exercises it and expensive to retrofit afterwards, and **no
+instrument in this project would otherwise notice it was missing.** So it
+is implemented, and gated on a SYNTHETIC partial initializer, because the
+corpus cannot exercise it and a rule nobody ran is a rule nobody checked.
+
+**Zero-initialization is TYPE-DIRECTED, not a memset.** §6.7.11p10 says
+the unmentioned members are initialized *as if by `= 0`*, and for a
+pointer member that is a NULL POINTER, not all-bits-zero. Writing zero
+bytes over a pointer member would make it read back as an integer and
+`loadPtr` would refuse it — a wrong answer that looks like a right one.
+So the recursion below dispatches on the member's type. -/
+
+mutual
+
+/-- §6.7.11p10 — initialize an object to zero, as if it had static
+storage duration. Type-directed: see the section note. -/
+def zeroInit : Nat → Ctx → Ptr → CType → ExecM Unit
+  | 0, _, _, _ => exhausted
+  | fuel + 1, ctx, p, ty =>
+    match intTyOf? ty with
+    -- an integer member: the value zero at its own width
+    | some t => liftEval (writeMem (fun m => Mem.storeInt m p t 0))
+    | none =>
+      if isPtrType ty then
+        -- §6.3.2.3p3: `= 0` on a pointer is a NULL POINTER, not zero bytes
+        liftEval (writeMem (fun m => Mem.storePtr m p Ptr.null))
+      else
+        match ctx.layout.elem ty with
+        | some (et, n) =>
+            match ctx.layout.size et with
+            | some esz => zeroElems fuel ctx p et esz n 0
+            | none => refuseUnsupported s!"no size for element type '{et}'"
+        | none =>
+          match ctx.layout.members ty with
+          | some ms => zeroMembers fuel ctx p ty ms
+          | none => refuseUnsupported s!"cannot zero-initialize '{ty}'"
+
+/-- Zero the elements of an array, from index `i` up. -/
+def zeroElems : Nat → Ctx → Ptr → CType → Nat → Nat → Nat → ExecM Unit
+  | 0, _, _, _, _, _, _ => exhausted
+  | fuel + 1, ctx, p, et, esz, n, i =>
+    if i ≥ n then pure ()
+    else do
+      zeroInit fuel ctx (Mem.member p (i * esz)) et
+      zeroElems fuel ctx p et esz n (i + 1)
+
+/-- Zero the members of a structure, in declaration order. -/
+def zeroMembers : Nat → Ctx → Ptr → CType → List (String × CType) → ExecM Unit
+  | 0, _, _, _, _ => exhausted
+  | _, _, _, _, [] => pure ()
+  | fuel + 1, ctx, p, ty, (nm, mty) :: rest => do
+      match ctx.layout.fieldOff ty nm with
+      | some off => zeroInit fuel ctx (Mem.member p off) mty
+      | none => refuseUnsupported s!"no offset for member '{nm}'"
+      zeroMembers fuel ctx p ty rest
+
+end
+
+/-! ### The initializer proper -/
+
+mutual
+
+/-- §6.7.11 — initialize the object at `p`, of type `ty`, from `e`.
+
+A scalar initializer is an assignment (§6.7.11p11). A brace-enclosed list
+initializes an aggregate member by member (p9), **in declaration order**,
+and every member the list does not reach is zeroed (p10). -/
+def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
+  | 0, _, _, _, _ => exhausted
+  | fuel + 1, ctx, p, ty, e =>
+    match e with
+    | .initList inits _ _ =>
+        match ctx.layout.elem ty with
+        -- an ARRAY: elements at i * sizeof(elem), then §6.7.11p10 on the tail
+        | some (et, n) =>
+            match ctx.layout.size et with
+            | some esz => initElems fuel ctx p et esz n 0 inits
+            | none => refuseUnsupported s!"no size for element type '{et}'"
+        | none =>
+          match ctx.layout.members ty with
+          -- a STRUCTURE: members in declaration order, then p10 on the rest
+          | some ms => initMembers fuel ctx p ty ms inits
+          | none => refuseUnsupported s!"cannot initialize aggregate '{ty}'"
+    -- §6.7.11p11 — a scalar initializer is a single expression.
+    | _ => do
+        let v ← evalE ctx e
+        liftEval (storeAt p ty v)
+
+/-- Array elements, then zero-fill (§6.7.11p10). -/
+def initElems : Nat → Ctx → Ptr → CType → Nat → Nat → Nat → List Expr → ExecM Unit
+  | 0, _, _, _, _, _, _, _ => exhausted
+  | fuel + 1, ctx, p, et, esz, n, i, es =>
+    match es with
+    -- the list ran out: every remaining element is zeroed
+    | [] => zeroElems fuel ctx p et esz n i
+    | e :: rest =>
+        if i ≥ n then
+          -- §6.7.11p2 is a CONSTRAINT: more initializers than elements.
+          refuseUnsupported "more initializers than array elements"
+        else do
+          initObject fuel ctx (Mem.member p (i * esz)) et e
+          initElems fuel ctx p et esz n (i + 1) rest
+
+/-- Structure members in declaration order, then zero-fill. -/
+def initMembers : Nat → Ctx → Ptr → CType → List (String × CType) → List Expr → ExecM Unit
+  | 0, _, _, _, _, _ => exhausted
+  | fuel + 1, ctx, p, ty, ms, es =>
+    match ms, es with
+    | [], [] => pure ()
+    | [], _ :: _ => refuseUnsupported "more initializers than structure members"
+    -- the list ran out: §6.7.11p10 zeroes every member it did not reach
+    | rest, [] => zeroMembers fuel ctx p ty rest
+    | (nm, mty) :: mrest, e :: erest => do
+        match ctx.layout.fieldOff ty nm with
+        | some off => initObject fuel ctx (Mem.member p off) mty e
+        | none => refuseUnsupported s!"no offset for member '{nm}'"
+        initMembers fuel ctx p ty mrest erest
+
+end
+
 /-! ## §6.8.7.1 — `goto`, and why a label search is enough
 
 Measured: the corpus's **7 `goto`s reach exactly 3 labels**
@@ -283,11 +413,9 @@ def execLoop : Nat → Ctx → Option Expr → Option Expr → Stmt → Bool →
 /-- §6.7 — create the objects a declaration introduces and bind their
 names, left to right.
 
-**Scalar declarators only.** Measured: 273 of 321 `VarDecl`s carry an
-initializer and **34 of those are `InitListExpr`** — aggregate
-initialization is real work with its own layout obligations (it writes
-through the layout rather than reading it) and is the next landing, not a
-corner. It refuses here rather than initializing partially. -/
+Measured: 273 of 321 `VarDecl`s carry an initializer, and **75
+`InitListExpr` nodes** appear in the corpus (35 top-level, 40 nested).
+Both shapes go through `initObject` (§6.7.11). -/
 def declare : Nat → Ctx → List Decl → ExecM Ctx
   | 0, _, _ => exhausted
   | _, ctx, [] => pure ctx
@@ -305,30 +433,58 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
             let ctx' := { ctx with env := (name, o) :: ctx.env }
             match init with
             | none => declare fuel ctx' ds
-            | some e =>
-                match e with
-                | .initList .. =>
-                    refuseUnsupported "aggregate initializer (the next landing)"
-                | _ => do
-                    let v ← evalE ctx' e
-                    liftEval (storeAt (Ptr.toObject o) ty v)
-                    declare fuel ctx' ds
+            | some e => do
+                -- §6.7.11 — scalar or aggregate, one entry point.
+                initObject fuel ctx' (Ptr.toObject o) ty e
+                declare fuel ctx' ds
     | _ => refuseUnsupported "non-object declaration in a block"
 
 end
 
-/-! ## `fuelMono` — more fuel never changes a decided answer
+/-! ## `fuelMono` — still an obligation, and now with a known technique
 
 The lemma every `∃ n, ∀ fuel ≥ n` argument rests on
-(`docs/c-semantics-design.md` §4.2). Stated for `execStmt` and proved by
-induction on the FUEL DIFFERENCE, never on the statement.
+(`docs/c-semantics-design.md` §4.2): more fuel never changes a decided
+answer.
 
-**Not yet proved** — it is stated here so the obligation is visible and
-named rather than assumed, and discharging it is the next landing's
-first item. It is the one place this inch owes a proof rather than a
-gate. -/
+**NOT PROVED HERE, and the reason is worth recording rather than
+apologising for.**
 
-/-- More fuel never turns a decided answer into a different one. -/
+*The technique is no longer open.* `LeanModels/Sv/Obs.lean` already
+solves this exact problem: a flat approximation order `⊑` with `timeout`
+at the bottom, `fuelMono` stated as ONE CONJUNCTION over the whole mutual
+block, proved by induction on fuel with a `le_bind` congruence doing the
+work at each operator. **96 lines for four functions.** This lane should
+LIFT that machinery, not write a second copy of it — the `⊑` order and
+its bind congruence are generic in the result type, and a second
+hand-rolled monotonicity order is precisely the duplication
+`docs/family-architecture.md` §9.2 exists to stop.
+
+*What makes it more than a transcription here.* This mutual block is TEN
+functions, not four — `execStmt`, `execBlock`, `execLoop`, `declare`,
+`initObject`, `initElems`, `initMembers`, `zeroInit`, `zeroElems`,
+`zeroMembers` — so the conjunction has ten conjuncts. And where SV's
+functions return a result directly, these return a MONADIC value, so
+monotonicity is pointwise in the memory: `∀ m, run m (f fuel …) ⊑ run m
+(f fuel' …)`. Both are mechanical against the template; neither is free.
+
+*Why it was not attempted in this session, specifically.* Proof
+iteration needs many short Lean runs, and under build-lock Amendment 11
+every one of them needs a tenure — which cost this lane **88 minutes** of
+FIFO queueing on its last landing. A 300-line proof developed at one
+compile per tenure is not a session's work; it is a week's. **That is the
+lock's real cost on PROOF work as distinct from build verification**, and
+it is a different shape of problem from the starvation the ticket queue
+fixed. Reported rather than worked around.
+
+So the obligation is stated as a `Prop` below — visible, named, and
+impossible to mistake for a theorem. -/
+
+/-- More fuel never turns a decided answer into a different one.
+
+`Halt.timeout` is the bottom: a run that exhausted its fuel may become
+anything at higher fuel, and a run that DECIDED keeps its exact answer,
+memory included. -/
 def FuelMono : Prop :=
   ∀ (fuel : Nat) (ctx : Ctx) (s : Stmt) (m : Mem) (r : Except Refusal Flow) (m' : Mem),
     ExecM.run m (execStmt fuel ctx s) = Halt.ok (r, m') →

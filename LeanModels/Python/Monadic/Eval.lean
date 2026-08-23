@@ -233,8 +233,15 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
             refuse s!"{fname}() over a generator DRAINS it (a stateful read) — outside the tier"
           else do
             inFrame (K.drainIter a)
-      | some (.dict _ _) =>
-          refuse s!"{fname}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+      -- §L53 rung 3b, carried across the presentation boundary. A DRAINING
+      -- consumer has no mutation window — it takes the keys with no user code
+      -- running in between — so it needs only the keys in insertion order, and
+      -- the hazard the old refusal cited could never be met here. The trunk
+      -- pays this SEVEN times, once per consumer; `iterValues` is the one
+      -- dispatch `sum`/`tuple`/`list`/`set`/`any`/`all` share, so here it is
+      -- ONE arm. `sorted`/`max`/`min` never reach this dispatch — they route
+      -- through the shared trunk workers, which is why they were never red.
+      | some (.dict es _) => pure (dictKeys es).toList
       | some (.pyset _) =>
           refuseOrder s!"{fname}() over a set is outside the tier (hash order; docs/memory-model.md)"
       | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")

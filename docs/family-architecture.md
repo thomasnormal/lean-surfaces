@@ -4890,6 +4890,44 @@ that trusts them stops looking. This is the same instinct as §5.4's *every
 refusal path RUN, not admired*, pointed at the evidence instead of at the
 code.
 
+#### 5.4a-i INCREMENT GREENS — a green may rest on a NAMED green, and must say so
+
+A branch that is already green is charged again for every tenure taken on
+top of it: `--classify` diffs the whole branch against `github/master`, so a
+two-file docs commit stacked on a freshly-certified branch re-elaborates work
+that was certified an hour earlier. The pyc lane withdrew such a ticket and
+proved its increment's class by hand (`git diff --name-only <green-sha>
+HEAD`, two docs files). This makes that mechanical, under the provenance law
+above: **a green that rests on another green must carry the one it rests on.**
+
+**A GREEN CERTIFIES A TREE, NOT A COMMIT.** The tenure stamp is
+`git write-tree` — the INDEX tree — plus HEAD. So a green can certify content
+that is not any commit, whenever staged work was in the tree. A green is
+therefore **citable** as an increment base only when its index tree equals its
+HEAD commit's tree; otherwise the sha names something the green did not
+certify. This is the provenance law applied to the evidence's own identity.
+
+**CLASSIFICATION IS COMPUTED AGAINST THE CHAIN ROOT, NEVER THE PARENT.** Two
+increments classified against their immediate predecessors can be `tier A`
+and `tier B`, with neither build covering their interaction — a tier green
+already declares that it does not cover modules that IMPORT the ones it
+built. Chaining against parents compounds an admitted partial into an
+unstated one. Chaining against the root does not: the union of everything
+since the root is what gets classified.
+
+**THE MERGE BAR.** An increment green satisfies it **iff the chain root is a
+FULL (spine) green and every increment in the chain was classified against
+that root**. A chain whose root is scoped does not satisfy it, and the
+coverage line says which case it is rather than leaving the reader to
+reconstruct it.
+
+**THE LEDGER IS PER-CLONE, AND THAT IS THE POINT.** Greens are recorded in
+`.git/triad-greens` — untracked, so it can never conflict; inside the git
+directory, so it survives rebase and checkout. A green recorded in clone A is
+invisible in clone B because it is not VERIFIABLE from clone B: the build
+cache, toolchain and tree state that produced it are not there. **Evidence
+does not travel by assumption.** Its absence is honest, not a limitation.
+
 #### 5.4b GATE TOPOLOGY — a gate set is a set of POINTERS, and coverage is what they point AT
 
 The transcription incident above (§5.4) has a second half, and it is the more

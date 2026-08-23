@@ -3254,3 +3254,93 @@ stubbed `lake`: both the floor line with its label and the advisory print, and
 `--classify-only` reports the same floor — one spelling, two paths. The census
 itself was NOT run here: it executes the model, which needs a tenure (A11).
 Its flags were verified from `--help`, which runs nothing.
+
+## 2026-08-23-qol-47 — increment greens, phase 1: a green may rest on a named green
+
+The pyc lane withdrew a wasteful ticket and proved its increment's class by
+hand (`git diff --name-only <green-sha> HEAD`, two docs files). Phase 1 makes
+that mechanical, under the three rulings.
+
+### The finding that shaped the design: nothing recorded greens
+
+Only the lock and the queue persisted, both in `/tmp`, both ephemeral. "The
+branch was green an hour ago" was a **memory**, and an increment cannot rest
+on a memory. So the ledger is the feature and `--since` is a thin flag on it.
+
+`.git/triad-greens`: untracked (it can never conflict — the INDEX.md scar),
+inside the git dir (survives rebase and checkout), and **per working
+directory** (`--git-dir`, not `--git-common-dir`) because a linked worktree
+has its own `.lake` and the cache is part of what produced the green. A green
+recorded elsewhere is not verifiable here, and its absence here is honest.
+**Evidence does not travel by assumption.**
+
+### A green certifies a TREE, not a commit
+
+The stamp is `git write-tree` — the INDEX tree — plus HEAD, so a green can
+certify content that is not any commit. Citability is exactly
+`git write-tree == git rev-parse HEAD^{tree}` (verified: both `e24588c1` on a
+clean tree here). A green whose index tree is not its commit's tree is
+recorded `citable=no` and refused as a base: the sha would name something the
+green did not certify.
+
+### Five refusals, all before the ticket
+
+Not a commit; **not an ancestor** — which is also what makes rebase safe,
+since a rebase writes new shas so a green from before one can never be cited;
+no recorded green ("a green is evidence, not a memory"); `citable=no`; and no
+resolvable root. Plus an **empty increment**, which the branch-diff path
+treats as "measured nothing" and falls back to a full build — but a lane that
+asked to price an increment asked about something that does not exist, so it
+is refused instead. And two contradictions: `--since` requires `--classify`
+(not implied — implying a flag changes behaviour silently, and the precedent
+here is `--foreign requires --gates`), and `--since` contradicts `--against`.
+
+### Root-based classification, and what the run showed
+
+Classification is taken against the chain **root**, never the named green.
+Naming any recorded green is allowed; when the two differ the run says so:
+
+```
+INCREMENT: you named the green at 9f8e7d6; classifying against its ROOT a1b2c3d
+           instead (§5.4a-i: against the root, never the parent — two
+           increments priced against their predecessors can be tier A and
+           tier B with neither build covering both)
+```
+
+**Two bugs the end-to-end run caught that the unit rows did not.** First,
+`targets=` came out EMPTY for a full build, so the coverage line printed
+`targets , recorded …` — a blank where the most important word belonged.
+`sed 's/^$/all/'` does not fire on empty *input*: there is no line to match.
+Second, and worse: an increment run whose build was **not** narrowed (a docs
+class that keeps its tenure builds every default target) was recorded as
+`depth=1` under an older root. **A full build is its own root, however it was
+reached** — that test now comes first, and the merge bar is stated in terms of
+what the root BUILT.
+
+### The composed coverage line, live
+
+```
+COVERAGE (§5.4a-i): INCREMENT green.
+  increment  ad64a3d..6992dfc  (1 file(s), class docs)
+  on top of  the green at ad64a3d (class spine, targets all, recorded …)
+  root       ad64a3d (FULL build)
+  docs-only: NO Lean was elaborated, …
+  This green is evidence about THE INCREMENT ON TOP OF THAT GREEN and nothing
+  else. It is NOT evidence that the branch is green as a whole, and it inherits
+  every limit of the green it rests on.
+  MERGE BAR: SATISFIED — the chain root is a FULL green and this increment was
+             classified against that root (§5.4a-i).
+```
+
+The clause is unconditional, including when the base was a full build: what it
+guards against is the **reading**, not the base. A scoped root prints
+`MERGE BAR: NOT SATISFIED` and says to take a full green.
+
+### Triad
+
+Doc-first: `docs/family-architecture.md` §5.4a-i and triad.sh's §7 surface
+landed with the code. `triad.sh` **258 ok** (230 → 258), `--verify-guards`
+32 ok, docs_check 91/91. Verified end-to-end on scratch repos with a stubbed
+`lake` and isolated `LS_LOCK`/`LS_QUEUE`: a root green recorded, an increment
+resolved against it, the chain written, and all three precondition refusals
+fired. No Lean executed; the machine-wide lock was never touched.

@@ -138,6 +138,31 @@
 # the `gates:` line every tenure prints at open.
 #   tools/triad.sh --classify-only      # print the classification, run nothing
 #   tools/triad.sh --classify --against <ref>    # default: github/master
+#   tools/triad.sh --classify --since <sha>      # price the INCREMENT (§5.4a-i)
+#
+# INCREMENT GREENS (§5.4a-i).  `--classify` diffs the whole BRANCH against
+# github/master, so a two-file docs commit stacked on a freshly-green branch
+# re-elaborates work certified an hour earlier — the pyc lane withdrew such a
+# ticket and proved its increment's class by hand.  `--since <sha>` prices the
+# increment instead, and the green it produces is evidence about THE INCREMENT
+# ON TOP OF THE NAMED GREEN, never about the branch alone.
+#
+#   * A GREEN CERTIFIES A TREE, NOT A COMMIT.  The stamp is `git write-tree`
+#     (the INDEX tree) + HEAD, so a green can certify content that is not any
+#     commit.  Such a green is recorded `citable=no` and cannot be a base: the
+#     sha would name something the green did not certify.
+#   * CLASSIFICATION IS AGAINST THE CHAIN ROOT, NEVER THE PARENT.  Two
+#     increments priced against their predecessors can be `tier A` and
+#     `tier B` with neither build covering their interaction.  Naming any
+#     recorded green is allowed; the diff is taken against its ROOT, and the
+#     line says so when the two differ.
+#   * THE MERGE BAR: an increment green satisfies it iff the chain root is a
+#     FULL (spine) green.  A scoped root does not, and the coverage line says
+#     which case it is.
+#   * THE LEDGER is `.git/triad-greens` — untracked (it can never conflict),
+#     inside the git dir (it survives rebase), and PER WORKING DIRECTORY,
+#     because `.lake` is.  A green recorded elsewhere is not verifiable here.
+#     Evidence does not travel by assumption.
 #
 # The lock and queue paths are overridable (LS_LOCK / LS_QUEUE) so the logic
 # can be exercised in a sandbox.  A live run always uses the real paths.
@@ -169,6 +194,9 @@ GATES=""
 # `gate_floor` — which had its own second copy of the same list, so a floor
 # change had to be made twice or the classified and unclassified paths would
 # have run different gates.
+SINCE=""                # --since <sha>: price the INCREMENT (§5.4a-i)
+SINCE_ROOT=""           # the chain root the increment is actually diffed against
+SINCE_LINE=""           # the base green's ledger line, kept for the coverage line
 DOCS_FLOOR='python3 tools/docs_check.py'
 DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py; python3 harness/refusal_census.py --whitelist --no-build'
 # The label the announcement carries, so the first lane to see a new gate line
@@ -220,6 +248,7 @@ while [ $# -gt 0 ]; do
     --build-current-tree) BUILD_CURRENT_TREE=1; shift ;;
     --classify-only) CLASSIFY=1; CLASSIFY_ONLY=1; shift ;;
     --against)   need_val "$#" "$1"; AGAINST="$2"; shift 2 ;;
+    --since)     need_val "$#" "$1"; SINCE="$2"; shift 2 ;;
     -h|--help)   usage ;;
     *)           echo "triad.sh: unknown argument '$1'" >&2; usage ;;
   esac
@@ -966,6 +995,38 @@ tenure_needed() {       # class, lane's own --gates -> yes | no
   esac
 }
 
+# THE INCREMENT'S COVERAGE, COMPOSED (§5.4a-i).  The pyc lane stated this by
+# hand and the coordinator accepted it; this makes it mechanical instead of
+# artisanal.  Both shas are named because either one alone is a claim nobody
+# can check: the increment without its base says nothing about what is under
+# it, and the base without the increment is last hour's verdict.
+increment_coverage() {  # class -> the composed statement, ending in the clause
+  local named root_class root_full n
+  named="$(git -C "$CLONE" rev-parse --short "${SINCE}^{commit}" 2>/dev/null || echo unknown)"
+  root_class="$(ledger_field "$SINCE_LINE" class)"
+  root_full="$(ledger_field "$SINCE_LINE" full)"
+  n="$(printf '%s' "$CHANGED" | grep -c . || true)"
+  printf 'INCREMENT green.\n'
+  printf '  increment  %s..%s  (%s file(s), class %s)\n' "$BASE_SHA" "$(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo unknown)" "$n" "$1"
+  printf '  on top of  the green at %s (class %s, targets %s, recorded %s)\n' \
+         "$named" "$root_class" "$(ledger_field "$SINCE_LINE" targets)" "$(ledger_field "$SINCE_LINE" at)"
+  printf '  root       %s (%s)\n' "$BASE_SHA" \
+         "$( [ "$root_full" = "yes" ] && echo 'FULL build' || echo 'scoped — see the merge bar below' )"
+  printf '  %s\n' "$(coverage_statement "$1")"
+  # THE CLAUSE IS UNCONDITIONAL, including when the base was a full build:
+  # what it guards against is the READING, not the base.
+  printf '  This green is evidence about THE INCREMENT ON TOP OF THAT GREEN and nothing\n'
+  printf '  else. It is NOT evidence that the branch is green as a whole, and it inherits\n'
+  printf '  every limit of the green it rests on.\n'
+  if [ "$root_full" = "yes" ]; then
+    printf '  MERGE BAR: SATISFIED — the chain root is a FULL green and this increment was\n'
+    printf '             classified against that root (§5.4a-i).\n'
+  else
+    printf '  MERGE BAR: NOT SATISFIED — the chain root is SCOPED, so no green in this chain\n'
+    printf '             covers what a scoped build leaves out. Take one full green.\n'
+  fi
+}
+
 coverage_statement() {  # class -> what a green from this run is EVIDENCE OF
   case "$1" in
     docs) echo "docs-only: NO Lean was elaborated, so a green here is evidence about the prose, its citations and its paths — and about NOTHING in the model." ;;
@@ -1159,6 +1220,107 @@ tree_change_report() {                # enq, now, override -> 0 proceed / 1 refu
 # §5.4's law, pointed at this script: every refusal path RUN, not admired.
 # No Lean, no lock, no queue outside the temp dir it creates.
 # ------------------------------------------------------- --classify (§5.4a)
+# ---------------------------------------------- the green ledger (§5.4a-i)
+#
+# NOTHING RECORDED GREENS BEFORE THIS.  Only the lock and the queue persisted,
+# both in /tmp and both ephemeral, so "the branch was green an hour ago" was a
+# memory rather than evidence — and an increment cannot rest on a memory.
+#
+# PER WORKING DIRECTORY, not per repository: `--git-dir` rather than
+# `--git-common-dir`, because a linked worktree has its OWN `.lake`, and the
+# build cache is part of what produced the green.  Untracked, so it can never
+# conflict on a rebase (the INDEX.md scar); inside the git dir, so it survives
+# rebase and checkout.  A green recorded elsewhere is not VERIFIABLE here, and
+# its absence here is honest: evidence does not travel by assumption.
+green_ledger_path() {           # -> the ledger path, or '' when there is no git dir
+  local d
+  d="$(git -C "$CLONE" rev-parse --git-dir 2>/dev/null)" || return 1
+  [ -n "$d" ] || return 1
+  case "$d" in /*) ;; *) d="$CLONE/$d" ;; esac
+  printf '%s/triad-greens' "$d"
+}
+
+# EVERY FIELD IS SPACE-FREE, so a line parses by splitting on spaces and needs
+# no quoting rules.  Target and gate lists are comma-joined for that reason.
+ledger_field() {                # line, key -> value
+  printf '%s' "$1" | tr ' ' '\n' \
+    | awk -F= -v k="$2" '$1 == k { print substr($0, length(k) + 2); exit }'
+}
+
+ledger_lookup() {               # full-sha -> the NEWEST green line for it
+  local f; f="$(green_ledger_path)" || return 1
+  [ -f "$f" ] || return 1
+  grep "^green $1 " "$f" 2>/dev/null | tail -1
+}
+
+# A GREEN IS RECORDED ONLY WHEN THE WHOLE TRIAD WAS GREEN.  A red writes
+# nothing: a ledger that recorded attempts would be a log, and a log is not
+# evidence of a verdict.
+record_green() {                # class, full(yes|no), root, depth, targets
+  local f tree head citable tg
+  f="$(green_ledger_path)" || return 0
+  head="$(git -C "$CLONE" rev-parse HEAD 2>/dev/null)" || return 0
+  tree="$(git -C "$CLONE" write-tree 2>/dev/null || echo none)"
+  # CITABLE IS THE TREE/COMMIT QUESTION.  The tenure certified the INDEX tree;
+  # if that is not the commit's tree, the sha names something the green did
+  # not certify, and citing it as a base would over-claim.
+  if [ "$tree" = "$(git -C "$CLONE" rev-parse HEAD^{tree} 2>/dev/null)" ]; then
+    citable=yes
+  else
+    citable=no
+  fi
+  # EVERY FIELD MUST HAVE A VALUE.  An empty target list means the FULL build,
+  # and `targets=` read back as the empty string — which the coverage line then
+  # printed as a blank where the most important word belonged.  `sed s/^$/all/`
+  # does not fire on empty INPUT: there is no line for it to match.
+  tg="$(printf '%s' "${5:-}" | tr ' ' ',')"; [ -n "$tg" ] || tg="all"
+  printf 'green %s tree=%s class=%s citable=%s full=%s root=%s depth=%s targets=%s gates=%s lane=%s ticket=%s at=%s\n' \
+    "$head" "$tree" "$1" "$citable" "$2" "$3" "$4" "$tg" \
+    "$(gate_names "$GATES" | tr -d ' ')" \
+    "$LANE" "${TICKET:-none}" "$(date '+%Y-%m-%dT%H:%M:%S')" >> "$f" 2>/dev/null || true
+}
+
+# THE FIVE REFUSALS, all before a ticket is written.  A refusal costs one
+# command; a wrong base costs a tenure AND publishes a coverage line nobody
+# can check.
+since_resolve() {               # uses SINCE; sets SINCE_ROOT/SINCE_LINE; 1 + reason on refusal
+  local sha line root
+  if [ "$SINCE" = "auto" ]; then
+    echo "--since auto is not built yet (§5.4a-i phase 2). Name the sha of a recorded green:" >&2
+    echo "  the ledger is $(green_ledger_path 2>/dev/null || echo '<no git dir>')" >&2
+    return 1
+  fi
+  sha="$(git -C "$CLONE" rev-parse --verify --quiet "${SINCE}^{commit}" 2>/dev/null)"
+  [ -n "$sha" ] || { echo "--since '$SINCE' is not a commit in this clone" >&2; return 1; }
+  # AN INCREMENT MUST BE ON TOP OF ITS BASE.  This is also what makes a rebase
+  # safe: a rebase writes NEW shas, so a green recorded before it stops being
+  # an ancestor and is refused instead of silently naming rewritten content.
+  git -C "$CLONE" merge-base --is-ancestor "$sha" HEAD 2>/dev/null || {
+    echo "--since $(printf '%.12s' "$sha") is NOT AN ANCESTOR of HEAD, so this would not be an increment" >&2
+    echo "  on top of it. (A rebase rewrites shas: a green from before one can never be cited.)" >&2
+    return 1; }
+  line="$(ledger_lookup "$sha")" || true
+  [ -n "$line" ] || {
+    echo "no green is RECORDED for $(printf '%.12s' "$sha") in $(green_ledger_path)" >&2
+    echo "  A green is evidence, not a memory — and this clone holds no record of that one." >&2
+    return 1; }
+  [ "$(ledger_field "$line" citable)" = "yes" ] || {
+    echo "the green at $(printf '%.12s' "$sha") is NOT CITABLE: it certified an INDEX tree that is not" >&2
+    echo "  that commit's tree, so it covered staged work that was never committed." >&2
+    return 1; }
+  root="$(ledger_field "$line" root)"
+  case "$root" in
+    self) root="$sha" ;;
+    ""|unknown)
+      echo "the green at $(printf '%.12s' "$sha") has NO RESOLVABLE ROOT: it was itself a scoped green" >&2
+      echo "  with no full build under it, so there is nothing sound to classify the increment" >&2
+      echo "  against (§5.4a-i: against the ROOT, never the parent). Take one full green first." >&2
+      return 1 ;;
+  esac
+  SINCE_ROOT="$root"; SINCE_LINE="$line"
+  return 0
+}
+
 merge_target_ref() {
   # THE A13 CAVEAT, and it has caught four lanes: a seeded clone inherits the
   # peer's REMOTES, so `origin` can be a stale local bundle and
@@ -1436,6 +1598,99 @@ if [ "$SELF_TEST" = "1" ]; then
   check "no merge target is NOT fatal"        "$(class_hint >/dev/null 2>&1; echo $?)" "0"
   check "  ...and it says so, naming both refs" "$(class_hint | grep -c 'neither github/master nor origin/master')" "1"
   CLONE="$saved_cl"; AGAINST="$saved_ag"
+
+  # ---- THE GREEN LEDGER AND --since (§5.4a-i, the pyc lane's withdrawn ticket)
+  echo "  -- increment greens"
+  gl="$tmp/ledger"; mkdir -p "$gl"; git init -q "$gl" 2>/dev/null
+  git -C "$gl" config user.email qol@example; git -C "$gl" config user.name qol
+  printf 'name = "x"\n[[lean_lib]]\nname = "LeanModels"\n' > "$gl/lakefile.toml"
+  mkdir -p "$gl/docs"; printf '# d\n' > "$gl/docs/a.md"
+  git -C "$gl" add -A; git -C "$gl" commit -qm root
+  R_SHA="$(git -C "$gl" rev-parse HEAD)"
+  printf '# more\n' >> "$gl/docs/a.md"; git -C "$gl" add -A; git -C "$gl" commit -qm inc
+  H_SHA="$(git -C "$gl" rev-parse HEAD)"
+  saved_cl="$CLONE"; saved_sn="$SINCE"; saved_lane="$LANE"; saved_g="$GATES"
+  CLONE="$gl"; LANE="qol"; GATES="python3 tools/docs_check.py"
+
+  # THE LEDGER LIVES IN THE GIT DIR, per working directory (a linked worktree
+  # has its own .lake, and the cache is part of what produced the green).
+  check "the ledger is inside the git dir"    "$(green_ledger_path)" "$gl/.git/triad-greens"
+
+  # A CLEAN TREE IS CITABLE; a tree carrying staged work is not, because the
+  # green then certified content that is not that commit.
+  ( cd "$gl" && record_green spine yes self 0 "" )
+  check "a green is recorded"                 "$(grep -c "^green $H_SHA " "$gl/.git/triad-greens")" "1"
+  check "  ...as citable on a clean tree"     "$(ledger_field "$(ledger_lookup "$H_SHA")" citable)" "yes"
+  check "  ...naming itself as the root"      "$(ledger_field "$(ledger_lookup "$H_SHA")" root)" "self"
+  check "  ...and every field parses"         "$(ledger_field "$(ledger_lookup "$H_SHA")" class)" "spine"
+  check "  ...including the gate names"       "$(ledger_field "$(ledger_lookup "$H_SHA")" gates)" "docs_check"
+  # A FULL build has an EMPTY target list, and the field must still say what
+  # that MEANS: `targets=` printed a blank where the word `all` belonged.
+  check "  ...and a full build says targets=all" "$(ledger_field "$(ledger_lookup "$H_SHA")" targets)" "all"
+  printf 'staged\n' > "$gl/docs/b.md"; git -C "$gl" add -A
+  ( cd "$gl" && record_green spine yes self 0 "" )
+  check "staged work makes a green UNCITABLE" "$(ledger_field "$(ledger_lookup "$H_SHA")" citable)" "no"
+  git -C "$gl" reset -q --hard HEAD; rm -f "$gl/docs/b.md"
+
+  # THE FIVE REFUSALS.  Each names its own cause: a refusal nobody can read is
+  # a refusal that gets worked around.
+  SINCE="not-a-sha"
+  check "a non-commit --since refuses"        "$(since_resolve 2>&1 >/dev/null | grep -c 'is not a commit')" "1"
+  # A SIBLING, not an ancestor: the shape a rebase leaves behind.
+  git -C "$gl" checkout -q -b side "$R_SHA"; printf 'x\n' > "$gl/docs/c.md"
+  git -C "$gl" add -A; git -C "$gl" commit -qm side
+  S_SHA="$(git -C "$gl" rev-parse HEAD)"; git -C "$gl" checkout -q master 2>/dev/null || git -C "$gl" checkout -q -
+  SINCE="$S_SHA"
+  out="$(since_resolve 2>&1 >/dev/null)"
+  check "a non-ancestor refuses"              "$(printf '%s' "$out" | grep -c 'NOT AN ANCESTOR')" "1"
+  check "  ...naming why a rebase can't be cited" "$(printf '%s' "$out" | grep -c 'rebase rewrites shas')" "1"
+  SINCE="$R_SHA"
+  out="$(since_resolve 2>&1 >/dev/null)"
+  check "an UNRECORDED green refuses"         "$(printf '%s' "$out" | grep -c 'no green is RECORDED')" "1"
+  check "  ...saying evidence is not memory"  "$(printf '%s' "$out" | grep -c 'evidence, not a memory')" "1"
+
+  # Now record shapes for the remaining two refusals and the happy paths.
+  lf="$gl/.git/triad-greens"; : > "$lf"
+  T_R="$(git -C "$gl" rev-parse "$R_SHA^{tree}")"
+  printf 'green %s tree=%s class=spine citable=no full=yes root=self depth=0 targets=all gates=g lane=l ticket=t at=now\n' "$R_SHA" "$T_R" > "$lf"
+  check "an UNCITABLE base refuses"           "$(since_resolve 2>&1 >/dev/null | grep -c 'NOT CITABLE')" "1"
+  printf 'green %s tree=%s class=tier citable=yes full=no root=unknown depth=0 targets=LeanModels.A gates=g lane=l ticket=t at=now\n' "$R_SHA" "$T_R" > "$lf"
+  out="$(since_resolve 2>&1 >/dev/null)"
+  check "a rootless scoped base refuses"      "$(printf '%s' "$out" | grep -c 'NO RESOLVABLE ROOT')" "1"
+  check "  ...naming the root rule"           "$(printf '%s' "$out" | grep -c 'against the ROOT, never the parent')" "1"
+
+  # THE HAPPY PATH, and the one that makes the root rule visible.
+  printf 'green %s tree=%s class=spine citable=yes full=yes root=self depth=0 targets=all gates=docs_check at=2026-08-23T10:00:00 lane=l ticket=t\n' "$R_SHA" "$T_R" > "$lf"
+  SINCE_ROOT=""; SINCE_LINE=""
+  check "a full green resolves to itself"     "$(since_resolve >/dev/null 2>&1; printf '%s' "$SINCE_ROOT")" "$R_SHA"
+  # A CHAIN: the named green is an increment whose root is the full green, so
+  # classification is taken against the ROOT, not against what was named.
+  M_SHA="$H_SHA"
+  printf 'green %s tree=%s class=docs citable=yes full=no root=%s depth=1 targets=all gates=docs_check at=2026-08-23T11:00:00 lane=l ticket=t\n' "$M_SHA" "$(git -C "$gl" rev-parse "$M_SHA^{tree}")" "$R_SHA" >> "$lf"
+  SINCE="$M_SHA"; SINCE_ROOT=""
+  check "a chained green resolves to its ROOT" "$(since_resolve >/dev/null 2>&1; printf '%s' "$SINCE_ROOT")" "$R_SHA"
+  check "  ...which is NOT the named sha"      "$( [ "$SINCE_ROOT" = "$M_SHA" ] && echo named || echo root )" "root"
+
+  # THE COMPOSED COVERAGE LINE.  Both shas, the clause verbatim, the bar.
+  SINCE="$R_SHA"; since_resolve >/dev/null 2>&1
+  BASE_SHA="$(git -C "$gl" rev-parse --short "$R_SHA")"; CHANGED="docs/a.md"
+  out="$(increment_coverage docs)"
+  check "the coverage names the increment"    "$(printf '%s' "$out" | grep -c 'increment  ')" "1"
+  check "  ...and the green it rests on"      "$(printf '%s' "$out" | grep -c 'on top of  the green at')" "1"
+  check "  ...and the resolved root"          "$(printf '%s' "$out" | grep -c '^  root       ')" "1"
+  check "  ...the clause, verbatim"           "$(printf '%s' "$out" | grep -c 'INCREMENT ON TOP OF THAT GREEN and nothing')" "1"
+  check "  ...that it is NOT a branch green"  "$(printf '%s' "$out" | grep -c 'NOT evidence that the branch is green as a whole')" "1"
+  check "  ...and that limits are inherited"  "$(printf '%s' "$out" | grep -c 'inherits')" "1"
+  check "a FULL root SATISFIES the merge bar" "$(printf '%s' "$out" | grep -c 'MERGE BAR: SATISFIED')" "1"
+  # ...and the direction that must never read as satisfied.
+  printf 'green %s tree=%s class=tier citable=yes full=no root=self depth=0 targets=LeanModels.A gates=g at=now lane=l ticket=t\n' "$R_SHA" "$T_R" > "$lf"
+  SINCE_LINE=""; since_resolve >/dev/null 2>&1
+  out="$(increment_coverage docs)"
+  check "a SCOPED root does NOT satisfy it"   "$(printf '%s' "$out" | grep -c 'MERGE BAR: NOT SATISFIED')" "1"
+  check "  ...and says to take a full green"  "$(printf '%s' "$out" | grep -c 'Take one full green')" "1"
+
+  CLONE="$saved_cl"; SINCE="$saved_sn"; LANE="$saved_lane"; GATES="$saved_g"
+  SINCE_ROOT=""; SINCE_LINE=""; CHANGED=""
 
   # ---- WHAT WILL RUN, SAID AT TENURE OPEN, and by the SAME composer
   saved_lg="$LANE_GATES"; saved_go="$GATES_ONLY"; saved_fg="$FOREIGN"
@@ -1885,6 +2140,15 @@ if [ "$FOREIGN" = "1" ]; then
     die "--foreign requires --gates: the class floor is not applicable in a foreign checkout, so without your own gates there would be NOTHING TO RUN. Naming a gate that does not exist there is the failure this refusal prevents."
   GATES_ONLY=1            # there is no applicable floor to add to
 fi
+# --since's two contradictions, stated before a ticket is ever written.
+if [ -n "$SINCE" ]; then
+  # NOT IMPLIED.  --since only means something with --classify, but implying a
+  # flag CHANGES BEHAVIOUR SILENTLY, and the precedent in this file is the
+  # other way (--foreign REQUIRES --gates).  A refusal costs one command.
+  [ "$CLASSIFY" = "1" ] || die "--since requires --classify: it prices the INCREMENT the classifier measures (§5.4a-i)"
+  [ -z "$AGAINST" ] || die "--since and --against CONTRADICT: --against names the branch's merge target, --since names the green this increment rests ON. Pick one."
+  [ "$FOREIGN" = "0" ] || die "--foreign and --since CONTRADICT: a foreign checkout has no ledger of OUR greens (§7.1a)."
+fi
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
 cd "$CLONE" || die "cannot cd '$CLONE'"
@@ -1927,19 +2191,37 @@ run_gates() {                         # "cmd; cmd" -> sets rc
 CLASS=""
 FLOOR_USED=""
 if [ "$CLASSIFY" = "1" ]; then
-  BASE="$AGAINST"
-  [ -n "$BASE" ] || BASE="$(merge_target_ref)"
-  [ -n "$BASE" ] || die "no merge target (neither github/master nor origin/master) — pass --against <ref>"
-  git -C "$CLONE" rev-parse --verify --quiet "$BASE" >/dev/null 2>&1 || die "--against '$BASE' is not a ref in this clone"
-  BASE_SHA="$(git -C "$CLONE" rev-parse --short "$BASE" 2>/dev/null || echo unknown)"
-  BASE_REMOTE="${BASE%%/*}"
-  BASE_URL="$(git remote get-url "$BASE_REMOTE" 2>/dev/null || echo "")"
-  case "$BASE_URL" in
-    /*|file:*|*.bundle)
-      echo "A13 WARNING: remote '$BASE_REMOTE' is a LOCAL path ($BASE_URL) — a seeded clone's" >&2
-      echo "             origin is a stale bundle, and comparing against it reads days back." >&2
-      echo "             Add the real remote and re-run with --against github/master." >&2 ;;
-  esac
+  if [ -n "$SINCE" ]; then
+    # THE INCREMENT'S BASE IS THE CHAIN ROOT, NEVER THE NAMED GREEN (§5.4a-i).
+    # Naming any recorded green is allowed; what the diff is taken against is
+    # its root, and the line below says so whenever the two differ.
+    since_resolve || die "--since refused (see above) — nothing was queued"
+    BASE="$SINCE_ROOT"
+    BASE_SHA="$(git -C "$CLONE" rev-parse --short "$BASE" 2>/dev/null || echo unknown)"
+    BASE_URL=""; BASE_REMOTE=""
+    SINCE_SHA="$(git -C "$CLONE" rev-parse --short "$(git -C "$CLONE" rev-parse "${SINCE}^{commit}")" 2>/dev/null || echo unknown)"
+    if [ "$SINCE_ROOT" != "$(git -C "$CLONE" rev-parse "${SINCE}^{commit}" 2>/dev/null)" ]; then
+      say "INCREMENT: you named the green at $SINCE_SHA; classifying against its ROOT $BASE_SHA instead"
+      say "           (§5.4a-i: against the root, never the parent — two increments priced against"
+      say "            their predecessors can be tier A and tier B with neither build covering both)"
+    else
+      say "INCREMENT: classifying against the green at $BASE_SHA (which is its own chain root)"
+    fi
+  else
+    BASE="$AGAINST"
+    [ -n "$BASE" ] || BASE="$(merge_target_ref)"
+    [ -n "$BASE" ] || die "no merge target (neither github/master nor origin/master) — pass --against <ref>"
+    git -C "$CLONE" rev-parse --verify --quiet "$BASE" >/dev/null 2>&1 || die "--against '$BASE' is not a ref in this clone"
+    BASE_SHA="$(git -C "$CLONE" rev-parse --short "$BASE" 2>/dev/null || echo unknown)"
+    BASE_REMOTE="${BASE%%/*}"
+    BASE_URL="$(git remote get-url "$BASE_REMOTE" 2>/dev/null || echo "")"
+    case "$BASE_URL" in
+      /*|file:*|*.bundle)
+        echo "A13 WARNING: remote '$BASE_REMOTE' is a LOCAL path ($BASE_URL) — a seeded clone's" >&2
+        echo "             origin is a stale bundle, and comparing against it reads days back." >&2
+        echo "             Add the real remote and re-run with --against github/master." >&2 ;;
+    esac
+  fi
 
   # EXPLICIT ROOT, never inherited cwd.  The R-track lane measured the cost:
   # `cd X && nohup Y … &` backgrounds the WHOLE conjunction, so a follow-up
@@ -1962,6 +2244,13 @@ if [ "$CLASSIFY" = "1" ]; then
   # A census with nothing to say must not be answered quietly.  An empty diff
   # is not a docs-only landing; it is a classification that MEASURED NOTHING,
   # and the safe direction is the full build.
+  if [ "$N_CHANGED" = "0" ] && [ -n "$SINCE" ]; then
+    # AN EMPTY INCREMENT IS NOT A CHEAP ONE.  The branch-diff path falls back
+    # to the full build here, which is the safe reading of "measured nothing";
+    # but a lane that asked to price an INCREMENT asked about something that
+    # does not exist, and the honest answer is to say so before the ticket.
+    die "the increment $BASE_SHA..HEAD is EMPTY — there is nothing on top of that green to price"
+  fi
   if [ "$N_CHANGED" = "0" ]; then
     echo "CLASSIFY: NOTHING STAGED OR COMMITTED against $BASE — this measured nothing." >&2
     [ "$CLASSIFY_ONLY" = "1" ] || { CLASS="spine"; BUILD_TARGETS=""; echo "          falling back to the FULL build (never downgrade)." >&2; }
@@ -2032,7 +2321,23 @@ if [ "$CLASSIFY" = "1" ]; then
     gate_notice "$GATES" "$LANE_GATES"
     run_gates "$GATES"
     say "TRIAD DONE (docs-only, no build; gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
-    say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
+    if [ -n "$SINCE" ]; then
+      increment_coverage "$CLASS" | while IFS= read -r _l; do say "COVERAGE (§5.4a-i): $_l"; done
+    else
+      say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
+    fi
+    # A DOCS GREEN ELABORATED NOTHING, so it is never a chain ROOT.  It can
+    # still be a link IN a chain: a docs increment on top of a full green
+    # carries that root forward, which is why `root` is a field and not a
+    # boolean.
+    if [ "$rc" = "0" ]; then
+      if [ -n "$SINCE" ]; then
+        record_green docs no "$SINCE_ROOT" "$(( $(ledger_field "$SINCE_LINE" depth) + 1 ))" ""
+      else
+        record_green docs no unknown 0 ""
+      fi
+      say "green recorded in $(green_ledger_path)"
+    fi
     exit "$rc"
   fi
 fi
@@ -2255,6 +2560,31 @@ say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green ||
 # §5.4a: the verdict carries the state it was taken in.  A scoped green that
 # does not say what it covers is a number without its state.
 [ "$FOREIGN" = "1" ] && say "COVERAGE (§5.4a): $(foreign_coverage)"
-[ -n "$CLASS" ] && say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
-[ -n "$GATE_BUILT" ] && say "COVERAGE (§5.4a): gate phase additionally built: $GATE_BUILT" 
+if [ -n "$SINCE" ]; then
+  increment_coverage "$CLASS" | while IFS= read -r _l; do say "COVERAGE (§5.4a-i): $_l"; done
+elif [ -n "$CLASS" ]; then
+  say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
+fi
+[ -n "$GATE_BUILT" ] && say "COVERAGE (§5.4a): gate phase additionally built: $GATE_BUILT"
+
+# THE LEDGER IS WRITTEN LAST, and only on a GREEN triad: a red records
+# nothing, because a ledger of attempts is a log, and a log is not evidence of
+# a verdict.  `root=self` requires a FULL build — a narrowed green cannot be
+# the root of a chain, which is what the merge bar above rests on.
+if [ "$rc" = "0" ] && [ "$BUILD_EXIT" = "0" ] && [ "$FOREIGN" = "0" ]; then
+  # A FULL BUILD IS ITS OWN ROOT, however it was reached.  This test comes
+  # FIRST: an increment run whose build was NOT narrowed (a docs class that
+  # kept its tenure builds every default target) elaborated everything, so
+  # recording it as depth=1 under an older root would send the next lane's
+  # increment back to a base it no longer needs — conservative, but wrong, and
+  # the merge bar is stated in terms of what the root BUILT.
+  if [ -z "$BUILD_TARGETS" ]; then
+    record_green "${CLASS:-spine}" yes self 0 ""
+  elif [ -n "$SINCE" ]; then
+    record_green "${CLASS:-tier}" no "$SINCE_ROOT" "$(( $(ledger_field "$SINCE_LINE" depth) + 1 ))" "$BUILD_TARGETS"
+  else
+    record_green "${CLASS:-tier}" no unknown 0 "$BUILD_TARGETS"
+  fi
+  say "green recorded in $(green_ledger_path) — citable as an increment base with --since $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null)"
+fi
 exit "$rc"

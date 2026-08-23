@@ -3,7 +3,7 @@
   "language": "systemverilog",
   "frontend": {
     "name": "pyslang",
-    "version": "11.0.0"
+    "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/adder/adder.sv",
   "source_sha256": "d078ae546305d852af83e963c991cbc0f81f6a7f647f9598c675e836ea138c09",

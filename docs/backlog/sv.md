@@ -210,34 +210,86 @@ corrected to say the fixtures are unreproducible pending simulator access,
 because **fabricating the missing Xcelium table to satisfy a provenance
 audit would be that audit's own defect one level up**.
 
-
 ---
 
-## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-33` (SV lane's to renumber or close)
+## 2026-08-23-sv-3 — LANDING A: the stepper enters the build, and the gate that armed a CI bomb validates its defusal
 
-*Filed as its own immediate commit (§9.5a's tightening). Named rather than
-edited: a dated measurement in another lane's document is the lane's own record
-of a moment, and correcting it in passing would turn it into a record of mine.*
+**The stepper is in the build.** `docs/sv-step-wip.lean` →
+`LeanModels/Sv/Step.lean`, imported from `LeanModels.lean`. Both `agrees`
+theorems came green in tenure `sv 9282` before any of this moved, which is
+why moving them is a move and not a gamble.
 
-### `docs/sv-charter.md:138`'s VENV MEASUREMENT WILL QUIETLY STOP BEING TRUE
+**AND THE FOUR `Res` LEMMAS WERE NEVER NEEDED — §L87's DIAGNOSIS WAS
+WRONG, and the build caught it.** The first attempt at this landing moved
+them into `Semantics.lean` and came back RED in 8 seconds:
+`LeanModels/Sv/Obs.lean:67:16: 'LeanModels.Sv.Res.pure_eq' has already been
+declared`. **`Obs.lean` has carried all four the whole time** —
+`Res.pure_eq`, `Res.ok_bind`, `Res.timeout_bind`, `Res.unsupported_bind`,
+plus a fifth this lane did not know it wanted (`Res.bind_eq_ok`, which
+turns `x >>= f = .ok r` in hypothesis position into an existential nest) —
+documented there as *"the do-notation stepping rules (global simp lemmas,
+mirroring the Python lane's)"*.
 
-The line prices the absent frontend: *"a clean `python3.12 -m venv` +
-`pip install pyslang` yields **pyslang 11.0.0** — inside the extractor's
-declared 11.x range."* **That was a measurement of an unpinned resolver**, so it
-is a statement about **what PyPI served that day**, not about the command. At
-pyslang's next release the same command yields a different version and the
-sentence is false — silently, with nothing failing.
+So the recorded obstacle was never *"`Res`'s bind is an anonymous instance
+field, so the lemmas do not exist"*. It was **`docs/sv-step-wip.lean`
+imported `SelfCheck`, and `SelfCheck` does not import `Obs`** — the lemmas
+existed, in the same namespace, one import away, and out of scope. Every
+symptom §L87 recorded (`simp only [bind, Res.bind]` naming nothing, plain
+`simp` oscillating) is what a missing import looks like from inside the
+file. **The fix is one `import LeanModels.Sv.Obs` in `Step.lean` and three
+renames to the existing spellings**; `Semantics.lean` is untouched.
 
-This is the same input that made the round-trip gate an armed bomb once it went
-unconditional (`docs/family-architecture.md` §5.4b; `582529d`, `b499afa`): all
-21 envelopes stamp the **point** version, and the interim pin is temporary by
-design.
+This is the second time this tier has "needed" something it already had —
+the first was `SelfCheck` already executing `initial` blocks. Both were
+found by building rather than by reading, and both cost less than the
+duplicate would have.
 
-**Asked for, and it is small:** either **stamp the line** — *"11.0.0, resolved
-`<date>`, unpinned"* — so a stale number is **readable** rather than wrong, or
-carry it forward with the durable family stamp when Landing A lands. **The fix
-is the stamp, not the refresh** (`docs/backlog/architecture.md`
-`2026-08-23-architecture-24`), and §0's *"every extractor claim was made through
-that venv"* inherits whatever this line says.
+**`execSStmts` is RECOVERED, not superseded** — that is the whole content
+of the landing. A resumable stepper and a run-to-completion walker over
+the same statement type is exactly the "two interpreters, unreconciled"
+shape this lane warned about in `sv-r1-scheduler.md` §9.3; the subsumption
+theorem is what makes it one interpreter with a special case instead.
 
-*Renumber into your sequence or close it — the call is yours.*
+**THE CI BOMB, found and defused in the same landing.** `extract.py`
+stamped `"version": pyslang.__version__` — the exact point release, baked
+into the bytes of all 21 committed envelopes — while `.github/workflows/
+ci.yml` installs pyslang **unpinned**. Harmless for as long as
+`sv_round_trip` was simulator-gated and SKIPped; **armed** the moment it
+became an unconditional CI step, because the next pyslang patch release
+would have changed one string in every envelope and reported **all 21 as
+DIVERGE on every PR**, for a reason unrelated to anyone's change. Now
+stamped by FAMILY (`pyslang-11`), the same spelling `census.py` already
+used, so the two instruments agree. **18 envelopes regenerated and
+verified by `sv_round_trip` itself** — the gate that armed the bomb is the
+gate that proves it defused: `MATCH 18 / DIVERGE 0 / REFUSE 3 / TIMEOUT 0`,
+18 live of 21.
+
+**Three envelopes deliberately still carry the old stamp.** `alu_div`,
+`ff_one` and `popcnt` record `source_files` as absolute paths into a
+machine that no longer exists, so nobody can regenerate them; they are
+`REFUSE sources-not-in-tree`, **live=false**, and their bytes are never
+compared. Left untouched rather than hand-edited, **because editing them
+would make them look regenerated when they cannot be** — the schema doc
+says so explicitly rather than leaving a reader to wonder why three files
+differ.
+
+**The audit's VACUOUS row is fixed, additively.** `PDesign.crossCheck`
+skipped every field whose `resolved?` metadata was absent and returned
+`[]`, so `[]` meant both "everything agreed" and "nothing was compared" —
+an envelope with no metadata passed the *ingestion-time differential test*
+without one comparison. `crossCheckFull` now pairs the messages with a
+count of comparisons made, and `load_design_sv2` **refuses VACUOUS at
+zero**. Done additively — `crossCheck` keeps its signature, so every
+existing `#guard … == []` keeps its meaning — because changing the return
+type would have broken five guards across three files for no gain. It is
+the same law as the `live` flag in `sv_round_trip.py`: **a vacuous run
+must not serialize as agreement**, and this lane has now applied it to
+both of its differential instruments.
+
+**One process note worth keeping.** The first regeneration loop reported
+`regenerated=0` and I nearly recorded that as a finding; it was `&&`
+swallowing the failure. Re-run with the error surfaced, the extractor was
+failing **loudly** with `KeyError: 'version'` — two consumption sites still
+read the old key. The extractor refusing rather than silently emitting a
+half-updated stamp is the never-hide-errors law paying out; my loop hiding
+it was the same law being broken one level up, in the same minute.

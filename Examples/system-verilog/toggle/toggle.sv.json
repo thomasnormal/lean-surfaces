@@ -3,7 +3,7 @@
   "language": "systemverilog",
   "frontend": {
     "name": "pyslang",
-    "version": "11.0.0"
+    "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/toggle/toggle.sv",
   "source_sha256": "69439fbfd2998bdd306956c2ce0920bc8a91be7b6b0884e36eea920bc53f2da4",

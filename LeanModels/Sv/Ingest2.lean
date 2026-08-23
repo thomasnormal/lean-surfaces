@@ -567,9 +567,16 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
     | .error e => throwErrorAt path "load_design_sv2: '{pathStr}' is not a valid sv-0.2 envelope: {e}"
     | .ok envl => pure envl
   let pd := envl.design
-  match pd.crossCheck with
-  | [] => pure ()
-  | msgs =>
+  match pd.crossCheckFull with
+  | ([], 0) =>
+      -- VACUOUS: the differential test ran and compared NOTHING.  Before
+      -- this arm existed, `[]` meant both "everything agreed" and "there
+      -- was nothing to agree about", and an envelope carrying no
+      -- `resolved` metadata passed the gate without a single comparison.
+      throwErrorAt path
+        "load_design_sv2: '{pathStr}' REFUSED — VACUOUS cross-check: the envelope carries no `resolved` metadata on any parameter, localparam, declaration width or generate count, so the Lean-vs-slang differential compared NOTHING. An empty message list is not agreement when no comparison was made."
+  | ([], _) => pure ()
+  | (msgs, _) =>
       throwErrorAt path
         "load_design_sv2: '{pathStr}' REFUSED — our defaults elaboration disagrees with the envelope's `resolved` metadata (Lean vs slang differential):\n  {String.intercalate "\n  " msgs}"
   let funName := (← getCurrNamespace) ++ name.getId

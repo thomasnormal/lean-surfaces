@@ -21,6 +21,12 @@ import LeanModels.Sv.Ingest2
 -- proved), the slot-structured trace, and the `cycleOf` abstraction every
 -- observation is stated through. No semantics — see docs/sv-r1-scheduler.md.
 import LeanModels.Sv.Regions
+-- R1 inch 4a: the resumable stepper. `stepSStmts` runs a process body to
+-- completion OR to its first suspension point, with the continuation kept as
+-- DATA (the residual statement list) because `SemM` cannot suspend. Carries
+-- the proof that `execSStmts` is RECOVERED as its non-suspending case, so the
+-- walker is subsumed rather than replaced by a second interpreter.
+import LeanModels.Sv.Step
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

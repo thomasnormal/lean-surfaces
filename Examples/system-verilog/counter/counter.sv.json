@@ -3,7 +3,7 @@
   "language": "systemverilog",
   "frontend": {
     "name": "pyslang",
-    "version": "11.0.0"
+    "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/counter/counter.sv",
   "source_sha256": "ced43d285ae516e39164aadd568ab145811a1638f73ee93f5345137a540393de",

@@ -3,7 +3,7 @@
   "language": "systemverilog",
   "frontend": {
     "name": "pyslang",
-    "version": "11.0.0"
+    "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/swap_nba/swap_nba.sv",
   "source_sha256": "2421c07a4f9565807abb05fcc09cfe670ea832a51eacf87509aec50d6dd632b8",

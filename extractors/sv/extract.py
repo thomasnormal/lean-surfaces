@@ -46,7 +46,21 @@ from pyslang.ast import (
 from pyslang.syntax import SyntaxTree
 
 SCHEMA_VERSION = "sv-0.1"
-FRONTEND = {"name": "pyslang", "version": pyslang.__version__}
+# THE FRONTEND IS STAMPED BY FAMILY, NEVER BY POINT RELEASE.
+#
+# This used to be `"version": pyslang.__version__`, i.e. "11.0.0" baked into
+# the bytes of all 21 committed envelopes.  Harmless while the round-trip
+# gate was simulator-gated and SKIPped; ARMED the moment that gate became an
+# unconditional CI step, because the workflow installs pyslang unpinned: the
+# next point release would have changed one string in every envelope and
+# reported all 21 as DIVERGE on every PR, for a reason unrelated to anyone's
+# change.
+#
+# The family is what the envelope actually depends on -- pyslang 11.x parses
+# and elaborates the same way; the patch digit is not a semantic input.  Same
+# spelling as `extractors/sv/census.py`, so the two instruments agree.
+FRONTEND = {"name": "pyslang",
+            "family": "pyslang-%s" % pyslang.__version__.split(".")[0]}
 
 UNSUPPORTED_TEXT_LIMIT = 200
 
@@ -2376,7 +2390,7 @@ def process_symbolic(top, sources, incdirs, out_path):
             "schema_version": SYM_SCHEMA_VERSION,
             "language": "systemverilog",
             "frontend": {"name": FRONTEND["name"],
-                         "version": FRONTEND["version"]},
+                         "family": FRONTEND["family"]},
             "mode": "symbolic",
             "top": top,
             "source_files": file_entries,
@@ -2438,7 +2452,7 @@ def process_file(source_path):
     envelope = {
         "schema_version": SCHEMA_VERSION,
         "language": "systemverilog",
-        "frontend": {"name": FRONTEND["name"], "version": FRONTEND["version"]},
+        "frontend": {"name": FRONTEND["name"], "family": FRONTEND["family"]},
         "source_file": rel_posix(source_path),
         "source_sha256": source_sha256,
         "design": convert_design(sm, comp),

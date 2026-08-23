@@ -3,7 +3,7 @@
   "language": "systemverilog",
   "frontend": {
     "name": "pyslang",
-    "version": "11.0.0"
+    "family": "pyslang-11"
   },
   "mode": "symbolic",
   "top": "cv32e40p_popcnt",

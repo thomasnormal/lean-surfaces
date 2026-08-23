@@ -3,7 +3,7 @@
   "language": "systemverilog",
   "frontend": {
     "name": "pyslang",
-    "version": "11.0.0"
+    "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/xsel/xsel.sv",
   "source_sha256": "f146491b9ba0aee4d34a8235991f0b4fb12cecca9c80c5fdc1567b961de2a7b6",

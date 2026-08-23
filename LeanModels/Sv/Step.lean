@@ -1,4 +1,12 @@
 import LeanModels.Sv.SelfCheck
+-- Obs.lean carries the `Res` do-notation stepping rules as GLOBAL simp
+-- lemmas (`pure_eq`, `ok_bind`, `timeout_bind`, `unsupported_bind`,
+-- `bind_eq_ok`), mirroring the Python lane's set. They are the whole reason
+-- the subsumption proof below reduces: without this import they are out of
+-- scope, `simp` cannot step a `do` block over `Res`, and it oscillates
+-- between "no progress" and over-reducing. SelfCheck does not import Obs,
+-- so this line is load-bearing rather than incidental.
+import LeanModels.Sv.Obs
 
 /-!
 # R1 inch 4a, step 2 — the RESUMABLE stepper
@@ -114,31 +122,6 @@ def stepSStmts (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
 end
 
 
-/-! ## `Res` bind lemmas — the thing that unparks the proof
-
-`Res`'s `Monad` bind is an ANONYMOUS instance field, not a named constant,
-so `simp only [bind, Res.bind]` names nothing and plain `simp` oscillates
-between "no progress" and over-reducing the `do` block. That was the sole
-recorded obstacle (docs/backlog.md §L87). Four `rfl` lemmas make
-`do`-reduction over `Res` mechanical.
-
-**They live here, not in `Semantics.lean`, on purpose.** `Semantics.lean`
-is inside the `LeanModels` library glob, so an unverified `rfl` that does
-not hold would turn `lake build` red — and a red build means the gates
-never run, taking the rest of the tenure's evidence with it. They move
-into `Semantics.lean` in the landing AFTER they are green here. -/
-
-@[simp] theorem Res.bind_ok {α β : Type} (a : α) (f : α → Res β) :
-    (Res.ok a >>= f) = f a := rfl
-
-@[simp] theorem Res.bind_timeout {α β : Type} (f : α → Res β) :
-    ((Res.timeout : Res α) >>= f) = Res.timeout := rfl
-
-@[simp] theorem Res.bind_unsupported {α β : Type} (m : String) (f : α → Res β) :
-    ((Res.unsupported m : Res α) >>= f) = Res.unsupported m := rfl
-
-@[simp] theorem Res.pure_eq {α : Type} (a : α) : (pure a : Res α) = Res.ok a := rfl
-
 /-! ## THE SUBSUMPTION OBLIGATION
 
 **Whenever the stepper finishes without suspending, it agrees with the
@@ -179,7 +162,7 @@ theorem stepSStmt_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
         rw [SelfCheck.execSStmt.eq_def]; simp only [hh]
         cases hc : evalSExpr fuel st cond with
         | ok c =>
-          simp only [hc, Res.bind_ok] at h ⊢
+          simp only [hc, Res.ok_bind] at h ⊢
           by_cases hct : c.condTrue = true
           · simp only [hct, if_true] at h ⊢
             exact stepSStmt_done_agrees fuel _ _ _ _ _ _ _ h
@@ -187,8 +170,8 @@ theorem stepSStmt_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
             cases elseB with
             | none => simp_all
             | some sE => exact stepSStmt_done_agrees fuel _ _ _ _ _ _ _ h
-        | timeout => simp only [hc, Res.bind_timeout] at h; simp at h
-        | unsupported m => simp only [hc, Res.bind_unsupported] at h; simp at h
+        | timeout => simp only [hc, Res.timeout_bind] at h; simp at h
+        | unsupported m => simp only [hc, Res.unsupported_bind] at h; simp at h
       case h_5 body =>
         rw [SelfCheck.execSStmt.eq_def]; simp only [hh]
         exact stepSStmts_done_agrees fuel _ _ _ _ _ _ _ h
@@ -196,10 +179,10 @@ theorem stepSStmt_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
         cases he : execSStmt (fuel + 1) st nba out stmt with
         | ok r =>
           obtain ⟨ra, rb, rc⟩ := r
-          simp only [he, Res.bind_ok, Res.pure_eq] at h ⊢
+          simp only [he, Res.ok_bind, Res.pure_eq] at h ⊢
           simp_all
-        | timeout => simp only [he, Res.bind_timeout] at h; simp at h
-        | unsupported m => simp only [he, Res.bind_unsupported] at h; simp at h
+        | timeout => simp only [he, Res.timeout_bind] at h; simp at h
+        | unsupported m => simp only [he, Res.unsupported_bind] at h; simp at h
 
 theorem stepSStmts_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
     (out : Out) (ss : List SStmt) (st' : SvState) (nba' : NbaQueue) (out' : Out),
@@ -220,15 +203,15 @@ theorem stepSStmts_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue
       cases hs : stepSStmt fuel st nba out sHd with
       | ok r =>
         obtain ⟨sa, nb, ou, oc⟩ := r
-        simp only [hs, Res.bind_ok] at h
+        simp only [hs, Res.ok_bind] at h
         cases oc with
         | done =>
           have hx := stepSStmt_done_agrees fuel st nba out sHd sa nb ou hs
-          simp only [hx, Res.bind_ok]
+          simp only [hx, Res.ok_bind]
           exact stepSStmts_done_agrees fuel _ _ _ _ _ _ _ h
         | suspended t r => simp at h
-      | timeout => simp only [hs, Res.bind_timeout] at h; simp at h
-      | unsupported m => simp only [hs, Res.bind_unsupported] at h; simp at h
+      | timeout => simp only [hs, Res.timeout_bind] at h; simp at h
+      | unsupported m => simp only [hs, Res.unsupported_bind] at h; simp at h
 
 end
 

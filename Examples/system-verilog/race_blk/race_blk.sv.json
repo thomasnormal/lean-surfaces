@@ -3,7 +3,7 @@
   "language": "systemverilog",
   "frontend": {
     "name": "pyslang",
-    "version": "11.0.0"
+    "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/race_blk/race_blk.sv",
   "source_sha256": "d5f99aa0cffc4b6b708b7eca4e1f4073684bc05af2503161f080b10745143b71",

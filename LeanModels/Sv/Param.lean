@@ -1011,6 +1011,40 @@ where
     | .ok ds => ds.map fun dc => (dc.name, dc.width)
     | _ => []
 
+/-- How many metadata fields `crossCheck` can actually COMPARE.
+
+**Why this exists.** `crossCheck` skips every field whose `resolved?`
+metadata is absent — the `| none =>` arms in the parameter fold, in
+`checkLocals`, in `checkDecls`, and the count-less `genFor` — and returns
+`[]`. So `[]` means BOTH "everything agreed" and "nothing was compared",
+and an envelope carrying no `resolved` metadata at all passed the
+"ingestion-time differential test against the frontend" without a single
+comparison being made (quality audit 2026-08-23, `sv` MEDIUM,
+`Param.lean:997`).
+
+That is the same defect the family's `live` flag fixes for verdict rows:
+**a vacuous run must not serialize as agreement.** Counting the
+*comparable* fields is exact rather than approximate here, because
+`crossCheck` compares precisely the fields whose metadata is `some` —
+this count and the number of comparisons performed are the same number. -/
+private def comparableCount (d : PDesign) : Nat :=
+  (d.params.filter (·.resolved?.isSome)).length
+  + (d.localParams.filter (·.resolved?.isSome)).length
+  + (d.decls.filter (fun pd => (PType.resolved? pd.type).isSome)).length
+  + (d.generates.filter (fun g =>
+        match g with
+        | .genFor _ _ _ _ _ rc _ => rc.isSome
+        | _ => false)).length
+
+/-- `crossCheck`'s messages PAIRED WITH the number of comparisons made, so
+that "clean" and "compared nothing" stop being the same value.
+
+`crossCheck` itself is unchanged and still returns just the messages, so
+every existing `#guard … == []` keeps its meaning; the loader
+(`load_design_sv2`) is what consumes the count and refuses **VACUOUS**. -/
+def PDesign.crossCheckFull (d : PDesign) : List String × Nat :=
+  (d.crossCheck, comparableCount d)
+
 /-! ## Starter lemmas 1: instantiation preserves the declaration surface
 
 Specs are ports-only, so the load-bearing well-formedness fact is that

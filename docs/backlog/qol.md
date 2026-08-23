@@ -2826,3 +2826,53 @@ pointer, the gate's own words extending it, an `EXPECTED TO ERROR` row flagged
 weakest while an ordinary one is not, a runtime target left UNRESOLVED rather
 than guessed, and the incident's `.lean`-alongside-`.md` shape. No Lean
 executed.
+
+---
+
+## 2026-08-23-qol-41 — two tools that disagreed, and stamps that read the wrong repo
+
+### The glob disagreement, resolved by deleting the second parser
+
+`check.sh` read `lakefile.toml` and called a repo-root `.lean` **scratch** —
+correct, since `Examples.+` matches no root module and the `LeanModels` lib's
+root is `LeanModels.lean` itself. `triad.sh` hard-coded `LeanModels/*|Examples/*`
+and warned **"UNSTAGED LEAN UNDER A LAKE GLOB"** about the same file. It warned
+rather than refused, so it was safe today — and the R-track lane's words are
+the reason it still had to go: *two protocol tools disagreeing about the same
+file eventually gets trusted in the wrong direction.*
+
+`tools/lakeinfo.sh` now holds the reader, **sourced by both** — not a second
+parser, which is the defect `dupes.sh` counts. Live: `check.sh` says `CASE
+scratch` and `triad.sh` warns **zero** times about the same file.
+
+**The fix had to go one level deeper than the classifier.** Rewiring
+`classify_path` was not enough: the warning is emitted by
+`lean_glob_offenders`, which asked *"is this not-docs?"* — and a repo-root
+`.lean` is `spine`, which is not-docs. **The warning names a lake glob, so the
+lakefile is what decides it.** Three rows pin it: a repo-root `.lean` is not an
+offender, both tools agree it is `scratch`, and a real library file still is
+one.
+
+### Stamps must name their repo
+
+`cd X && nohup Y > log 2>&1 &` backgrounds the **entire conjunction**, so the
+R-track lane's follow-up `git write-tree` ran in the **wrong repository** and
+printed another repo's HEAD as a MISMATCH. **With coincidentally-equal trees
+the same bug yields a FALSE MATCH — a lane confirming a stamp it never
+checked.** And in agent threads cwd does not persist between calls at all.
+
+Every live `git` in `triad.sh`'s classify and stamp paths now carries
+`git -C "$CLONE"`. The self-test **runs the stamp from `/`** and asserts it
+still reads the repo it was told about, and that the result is not the outer
+repo's HEAD — the false-match direction, checked rather than assumed.
+
+I hit this same shape myself an hour earlier: a `cd … && nohup … &` line left
+its follow-up `grep` running in the session's cwd, which is why it reported
+`tools/triad.sh: No such file or directory` in a repo that plainly has one.
+
+### Triad
+
+`bash -n` clean. `check.sh` **87 ok** (the row that read `lake_lib_roots` now
+passes the clone **explicitly** — the shared reader takes its root as an
+argument, which is the same rule as the stamps). `triad.sh` **181 ok** (176 →
+181). `laws.sh` 43 ok. No Lean executed.

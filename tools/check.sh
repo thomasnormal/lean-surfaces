@@ -122,30 +122,15 @@ done
 
 # ------------------------------------------------------------- the lakefile
 # "Check, don't assume" — the library roots come from lakefile.toml.
-lake_lib_roots() {              # -> one library/exe root name per line
-  local f="$CLONE/lakefile.toml"
-  [ -f "$f" ] || return 0
-  awk '
-    /^\[\[lean_lib\]\]/  { sec = "lib"; next }
-    /^\[\[lean_exe\]\]/  { sec = "exe"; next }
-    /^\[\[/              { sec = "";    next }
-    sec == "lib" && /^[ \t]*name[ \t]*=/ { print val($0); next }
-    sec == "exe" && /^[ \t]*root[ \t]*=/ { print val($0); next }
-    function val(l) { sub(/^[^=]*=[ \t]*/, "", l); gsub(/["\047 \t\r]/, "", l); return l }
-  ' "$f"
-}
+# The lakefile reader is SHARED with triad.sh — the two disagreed about a
+# repo-root `.lean` until it was, and two protocol tools disagreeing about one
+# file eventually gets trusted in the wrong direction.
+LAKEINFO="$(dirname "${BASH_SOURCE[0]}")/lakeinfo.sh"
+[ -r "$LAKEINFO" ] || { echo "check.sh: missing $LAKEINFO" >&2; exit 2; }
+# shellcheck source=/dev/null
+. "$LAKEINFO"
 
-glob_class() {                  # repo-relative path -> library | scratch
-  local p="$1" root top
-  for root in $(lake_lib_roots); do
-    top="${root%%.*}"           # `LeanModels.Circuit.DCRunner` -> `LeanModels`
-    [ -n "$top" ] || continue
-    case "$p" in
-      "$top".lean|"$top"/*) echo library; return 0 ;;
-    esac
-  done
-  echo scratch
-}
+glob_class() { lake_glob_class "$CLONE" "$1"; }
 
 # ---------------------------------------------------------------- imports
 imports_of() {                  # file -> imported module names, one per line
@@ -520,7 +505,7 @@ TOML
   export LS_LOCK="$tmp/lock"; LOCK="$LS_LOCK"
 
   check "the lakefile's libs are READ, not hardcoded" \
-        "$(lake_lib_roots | tr '\n' ' ' | sed 's/ *$//')" "LeanModels Examples Main"
+        "$(lake_lib_roots "$CLONE" | tr '\n' ' ' | sed 's/ *$//')" "LeanModels Examples Main"
   check "a LeanModels path is library-class"  "$(glob_class LeanModels/Core/New.lean)" "library"
   check "an Examples path is library-class"   "$(glob_class Examples/python/x/proof.lean)" "library"
   check "the exe root is library-class"       "$(glob_class Main.lean)" "library"

@@ -198,6 +198,15 @@ done
 
 LANE_GATES="$GATES"                            # what the LANE asked for, kept
 
+# The lakefile reader is SHARED with check.sh.  The two disagreed about a
+# repo-root `.lean` — check.sh read the lakefile and said scratch (correct:
+# `Examples.+` does not match a root module), triad.sh hard-coded
+# `LeanModels/*|Examples/*` and warned about it.  One source now.
+LAKEINFO="$(dirname "${BASH_SOURCE[0]}")/lakeinfo.sh"
+[ -r "$LAKEINFO" ] || { echo "triad.sh: missing $LAKEINFO" >&2; exit 2; }
+# shellcheck source=/dev/null
+. "$LAKEINFO"
+
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 die() { echo "triad.sh: $*" >&2; exit 2; }
 
@@ -393,8 +402,22 @@ classify_path() {       # path -> docs | tier | spine
     LeanModels/Core/*|vendor/*)                     echo spine ;;
     # The SHARED harness — the differential every tier is judged by.
     harness/diff_test.py|harness/cases.json)        echo spine ;;
-    # Tier-local: a model directory, or the Examples that exercise it.
-    LeanModels/*|Examples/*)                        echo tier ;;
+    # Tier-local: whatever the LAKEFILE calls a library — asked, not assumed.
+    *) if [ "$(lake_glob_class "$CLONE" "$1")" = "library" ]; then echo tier
+       else
+         case "$1" in
+           docs/*|notebooks/*|tools/*|harness/*|.github/*) echo docs ;;
+           .gitignore|*.md)                                echo docs ;;
+           *.lean)                                         echo spine ;;
+           *)                                              echo spine ;;
+         esac
+       fi ;;
+    esac
+    return 0
+}
+
+_classify_path_unused() {
+  case "$1" in
     # Prose, instruments and tooling: none of it reaches the elaborator.
     docs/*|notebooks/*|tools/*|harness/*|.github/*) echo docs ;;
     .gitignore|*.md)                                echo docs ;;
@@ -686,7 +709,11 @@ lean_glob_offenders() { # stdin: paths -> the .lean ones inside a lake glob
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     case "$p" in *.lean) ;; *) continue ;; esac
-    [ "$(classify_path "$p")" = "docs" ] && continue
+    # ASK THE LAKEFILE, not the class.  "Not docs" included a repo-root
+    # `.lean`, which is scratch by the lakefile's own globs — and check.sh said
+    # so while this warned about it.  The warning names a lake glob, so the
+    # lakefile is what decides.
+    [ "$(lake_glob_class "$CLONE" "$p")" = "library" ] || continue
     echo "$p"
   done
 }
@@ -1191,6 +1218,11 @@ if [ "$SELF_TEST" = "1" ]; then
   offend="$(printf 'docs/mvcgen-pilot.lean\nLeanModels/Ada/Value.lean\nExamples/python/x/proof.lean\ntools/x.sh\nREADME.md\n' | lean_glob_offenders | tr '\n' ' ' | sed 's/ *$//')"
   check "lake-glob Lean is an offender"    "$offend" "LeanModels/Ada/Value.lean Examples/python/x/proof.lean"
   check "a doc's .lean is NOT"             "$(printf 'docs/mvcgen-pilot.lean\n' | lean_glob_offenders)" ""
+  # THE DISAGREEMENT: check.sh reads the lakefile and calls a repo-root `.lean`
+  # SCRATCH (`Examples.+` matches no root module); this warned about it.
+  check "a REPO-ROOT .lean is not under a glob" "$(printf 'Foo.lean\n' | lean_glob_offenders)" ""
+  check "  ...and both tools now agree"          "$(lake_glob_class "$CLONE" Foo.lean)" "scratch"
+  check "  ...while a real library file IS"      "$(printf 'LeanModels/Core/Basic.lean\n' | lean_glob_offenders)" "LeanModels/Core/Basic.lean"
   check "a non-.lean path is NOT"          "$(printf 'LeanModels/Ada/notes.md\n' | lean_glob_offenders)" ""
 
   imp="$tmp/improot"
@@ -1302,6 +1334,12 @@ if [ "$SELF_TEST" = "1" ]; then
   saved="$CLONE"; CLONE="$tr"
   enq="$(tree_stamp)"
   check "a real tree stamps"                  "$( [ -n "$enq" ] && echo stamped)" "stamped"
+  # FROM A FOREIGN CWD: the stamp must read the repo it was TOLD about, not the
+  # one the shell happens to be sitting in.  A stamp read from the wrong repo
+  # prints a MISMATCH — or, with coincidentally-equal trees, a FALSE MATCH.
+  foreign="$( cd / && tree_stamp )"
+  check "the stamp ignores the inherited cwd"  "$foreign" "$enq"
+  check "  ...and is not the outer repo's"     "$( [ "$foreign" != "$(git -C "$saved" rev-parse HEAD 2>/dev/null)" ] && echo distinct)" "distinct"
   check "no edit -> same"                     "$(tree_verdict "$enq" "$(tree_stamp)")" "same"
   printf 'two\n' >> "$tr/a.txt"; git -C "$tr" add -A
   now="$(tree_stamp)"
@@ -1592,7 +1630,7 @@ merge_target_ref() {
   # the classification was taken against.
   local r
   for r in github/master origin/master; do
-    if git rev-parse --verify --quiet "$r" >/dev/null 2>&1; then echo "$r"; return 0; fi
+    if git -C "$CLONE" rev-parse --verify --quiet "$r" >/dev/null 2>&1; then echo "$r"; return 0; fi
   done
   echo ""
 }
@@ -1603,8 +1641,8 @@ if [ "$CLASSIFY" = "1" ]; then
   BASE="$AGAINST"
   [ -n "$BASE" ] || BASE="$(merge_target_ref)"
   [ -n "$BASE" ] || die "no merge target (neither github/master nor origin/master) — pass --against <ref>"
-  git rev-parse --verify --quiet "$BASE" >/dev/null 2>&1 || die "--against '$BASE' is not a ref in this clone"
-  BASE_SHA="$(git rev-parse --short "$BASE" 2>/dev/null || echo unknown)"
+  git -C "$CLONE" rev-parse --verify --quiet "$BASE" >/dev/null 2>&1 || die "--against '$BASE' is not a ref in this clone"
+  BASE_SHA="$(git -C "$CLONE" rev-parse --short "$BASE" 2>/dev/null || echo unknown)"
   BASE_REMOTE="${BASE%%/*}"
   BASE_URL="$(git remote get-url "$BASE_REMOTE" 2>/dev/null || echo "")"
   case "$BASE_URL" in
@@ -1614,11 +1652,17 @@ if [ "$CLASSIFY" = "1" ]; then
       echo "             Add the real remote and re-run with --against github/master." >&2 ;;
   esac
 
-  CHANGED="$( { git diff --name-only "$BASE...HEAD" 2>/dev/null
-                git diff --name-only --cached 2>/dev/null; } | sort -u )"
+  # EXPLICIT ROOT, never inherited cwd.  The R-track lane measured the cost:
+  # `cd X && nohup Y … &` backgrounds the WHOLE conjunction, so a follow-up
+  # `git write-tree` ran in the WRONG repository and printed another repo's
+  # HEAD as a MISMATCH — and with coincidentally-equal trees the same bug
+  # yields a FALSE MATCH, a lane confirming a stamp it never checked.  In agent
+  # threads cwd does not persist between calls at all.
+  CHANGED="$( { git -C "$CLONE" diff --name-only "$BASE...HEAD" 2>/dev/null
+                git -C "$CLONE" diff --name-only --cached 2>/dev/null; } | sort -u )"
   N_CHANGED="$(printf '%s' "$CHANGED" | grep -c . || true)"
-  UNSTAGED_ALL="$( { git diff --name-only 2>/dev/null
-                     git ls-files --others --exclude-standard 2>/dev/null; } | sort -u )"
+  UNSTAGED_ALL="$( { git -C "$CLONE" diff --name-only 2>/dev/null
+                     git -C "$CLONE" ls-files --others --exclude-standard 2>/dev/null; } | sort -u )"
   N_UNSTAGED_LEAN="$(printf '%s\n' "$UNSTAGED_ALL" | grep -c '\.lean$' || true)"
   UNSTAGED_LEAN_GLOB="$(printf '%s\n' "$UNSTAGED_ALL" | lean_glob_offenders)"
   UNIMPORTED_NEW="$(printf '%s\n' "$CHANGED" | unimported_new_modules)"

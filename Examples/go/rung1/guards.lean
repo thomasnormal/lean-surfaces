@@ -71,13 +71,21 @@ def runTo (stmts : List Stmt) (name : String) : Option Int :=
       | none => none
   | _ => none
 
-/-- The rendered refusal a program produced, if it refused. Core's `Loud`
-carries a `String`, so the tier's cause is recovered from the prefix
-`renderRefusal` writes — see `LeanModels/Go/Sem.lean` for why that is a
-rendering and not a structured payload. -/
+/-- The rendered refusal a program produced, if it refused.
+
+**Core's `Loud` now carries the cause as DATA** — `.unsupported cause message
+snapshot` — so the prefix `renderRefusal` writes is a rendering for HUMANS and
+no longer the only way to recover the class. This function still returns the
+message, and `refusedWith` below still reads the prefix, so every guard in this
+file keeps its exact meaning and the text is byte-identical to what it was.
+
+Consuming `cause` structurally instead of parsing the prefix is the obvious
+next move and is deliberately NOT made here: it is the Go lane's call which of
+its own guards should read a constructor rather than a string, and this file is
+their demonstration surface, not the merging lane's. -/
 def refusalOf (stmts : List Stmt) : Option String :=
   match (execSeq 64 stmts) ({} : GoWorld) with
-  | .error (.unsupported m) => some m
+  | .error (.unsupported _ m _) => some m
   | _ => none
 
 /-- Did the program refuse with this cause? -/

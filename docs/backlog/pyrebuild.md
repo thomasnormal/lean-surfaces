@@ -233,6 +233,48 @@ dropping them would have checked the rebuild against a retired interpreter's
 expectation. Whitelist consistency after the migration is exact: **112
 whitelisted rows, 112 `WHITELIST_CLASS` keys, zero stale, zero drift.**
 
+### The static bound was WRONG, and the calibration is the useful part
+
+Triad #3 (`4f6c11e`, build RED at 06:34:44) convicted the bound this lane
+published one commit earlier: *"exactly two non-Core files import
+`Core.Outcome`."* True, and irrelevant. `Examples/go/rung1/guards.lean` defines
+its OWN `refusalOf` that destructures `.error (.unsupported m)` and never names
+a single Core symbol, so it appears in no importer list and in no grep for the
+Core API's spelling.
+
+| measure | count |
+| --- | --- |
+| the published bound (DIRECT importers of `Core.Outcome`) | **2 files** |
+| files TRANSITIVELY reaching `Core.Outcome` | **128 files** |
+| `Loud`-shape sites outside Core (the right pattern position) | **11 lines / 3 files** |
+| still broken after the Go fix | **1 root site** — `guards.lean:80` |
+| errors the build reported | **6, one module** — `:80` plus five `#guard`s that fail BECAUSE it did |
+
+Neither 2 nor 128 was the answer. The question is *"what destructures the
+changed constructor?"*, and it is answered by grepping the CONSTRUCTOR's shape
+— `.error (.unsupported` — not imports and not API names. That grep also
+excluded two look-alikes correctly: `Circuit/Elaboration.lean` and
+`Spice/Mos1Resolved.lean` use `.unsupportedDevice`, a different constructor on
+a different type.
+
+> **§5.4a's constructive half again, and this lane broke it while citing it: a
+> count that prices a decision must come from the PATTERN POSITION. An import
+> graph answers "who could be affected"; only the constructor's own shape
+> answers "who must change".**
+
+**A second calibration, on the instrument rather than the census.**
+`triad.sh`'s failure summary is `grep -E '^error|✖' | sort -u | head -8`. The
+"one error in 839 targets" reading of triad #2 came from that TRUNCATED
+summary, not from the build log, and it was repeated up the chain before
+anyone opened the log. #2 happened to fit under the cap; that is luck, not a
+property. **The full log at `BUILD_LOG` is the source of truth, and the
+summary's `head -8` should be read as a preview.** Triad #3, read from the
+full log: 1 failed module, 8 error lines, **131 targets built**.
+
+The prediction was pre-registered before #3 exited — *"`guards.lean:80` is the
+only remaining break"* — and the full log confirmed it exactly: one failed
+module, nothing behind it.
+
 ### Owed
 
 * `tools/triad.sh` still pattern-matches `*monadic_gate*` in its

@@ -51,15 +51,13 @@ structure SKont where
   stmts : List Stmt → SemF RFlow
   /-- One top-level statement. -/
   one : Stmt → SemF RFlow
-  /-- `for … in d.items():` — CPython's dict_items iterator. -/
-  items : Addr → Nat → Nat → Expr → List Stmt → SemF RFlow
   /-- `for` over an immutable value sequence. -/
   forSeq : Expr → List RVal → List Stmt → SemF RFlow
   /-- `for` over a heap list — the LIVE index cursor. -/
   forList : Expr → Addr → Nat → List Stmt → SemF RFlow
   /-- `for k in d` — the LIVE dict cursor, carrying the size and
   `shapeVersion` the loop started with (§3a). -/
-  forDict : Expr → Addr → Nat → Nat → Nat → List Stmt → SemF RFlow
+  forDict : Expr → Addr → Nat → Nat → Nat → DictViewKind → List Stmt → SemF RFlow
   /-- `for` over a generator — the LAZY cursor. -/
   forGen : Expr → Addr → List Stmt → SemF RFlow
   /-- `while … else`. -/
@@ -69,10 +67,9 @@ structure SKont where
 def SKont.bottom : SKont where
   stmts   := fun _ => exhausted
   one     := fun _ => exhausted
-  items   := fun _ _ _ _ _ => exhausted
   forSeq  := fun _ _ _ => exhausted
   forList := fun _ _ _ _ => exhausted
-  forDict := fun _ _ _ _ _ _ => exhausted
+  forDict := fun _ _ _ _ _ _ _ => exhausted
   forGen  := fun _ _ _ => exhausted
   whileL  := fun _ _ _ => exhausted
 
@@ -111,21 +108,6 @@ def scriptStmtsAt (S : SKont) (m : Module) : List Stmt → SemF RFlow
       | .ret _ => refuse "'return' at module top level (CPython: SyntaxError at compile time)"
       | flow => pure flow
 
-/-- `for target in d.items():` — the LIVE entries re-read per step, a SIZE
-change the faithful `RuntimeError`. This is the one `for` the ordinary statement
-executor cannot express, and the shipped sunfish padding loop is its target. -/
-def scriptItemsAt (S : SKont) (m : Module) (a n i : Nat) (target : Expr)
-    (body : List Stmt) : SemF RFlow := do
-  match Heap.get? (← frameHeap) a with
-  | some (.dict entries _) =>
-      if entries.size ≠ n then
-        raisePy (.runtimeError "dictionary changed size during iteration")
-      else if hlt : i < entries.size then do
-        bindAndPublish m target (.tuple #[entries[i].1, entries[i].2])
-        loopFlow (S.items a n (i + 1) target body) (← S.stmts body)
-      else pure .next
-  | _ => refuse "internal: items-loop receiver is not a dict (report this)"
-
 /-- The VALUE-sequence cursor (tuples, namedtuples, boundary lists, str code
 points, materialized ranges — the snapshot IS the live semantics for all of
 them, because every one of them is immutable). -/
@@ -150,7 +132,7 @@ def scriptForListAt (S : SKont) (m : Module) (target : Expr) (a i : Nat)
         bindAndPublish m target (xs.getD i .none)
         loopFlow (S.forList target a (i + 1) body) (← S.stmts body)
       else pure .next
-  | some (.dict es sv) => S.forDict target a 0 es.size sv body
+  | some (.dict es sv) => S.forDict target a 0 es.size sv .keys body
   | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
   | some (.generator ..) =>
       if moduleGenFree m then
@@ -160,18 +142,18 @@ def scriptForListAt (S : SKont) (m : Module) (target : Expr) (a i : Nat)
   | some (.pyset _) => refuse "internal: a list cursor over a set (report this)"
   | Option.none => refuse "internal: a dangling heap address (report this)"
 
-/-- §3a THE LIVE DICT CURSOR at module scope — `scriptItemsAt`'s sibling for
-the BARE-KEY form. Same three regimes, same guards, same faithful
+/-- §3a/§3c-i-a THE LIVE DICT CURSOR at module scope — one cursor for the
+bare-key form and all three views. Same three regimes, same guards, same faithful
 `RuntimeError`; the only difference is that this one binds the KEY where
 `items` binds a `(key, value)` tuple (docs/memory-model.md §dict iteration). -/
 def scriptForDictAt (S : SKont) (m : Module) (target : Expr) (a i n sv : Nat)
-    (body : List Stmt) : SemF RFlow := do
-  match ← dictStepM a i n sv with
+    (kind : DictViewKind) (body : List Stmt) : SemF RFlow := do
+  match ← dictStepM a i n sv kind with
   | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
   | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
-  | some (.yieldKey kv) => do
+  | some (.yieldVal kv) => do
       bindAndPublish m target kv
-      loopFlow (S.forDict target a (i + 1) n sv body) (← S.stmts body)
+      loopFlow (S.forDict target a (i + 1) n sv kind body) (← S.stmts body)
   | some .done => pure .next
   | Option.none => refuse "internal: a dict cursor over a non-dict object (report this)"
 
@@ -207,31 +189,35 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
       let t ← evalOpen K m test
       let b ← truthyM t
       if b then S.stmts body.toList else S.stmts orelse.toList
-  | .forStmt target (.call (.attribute d "items" _) #[] #[] Option.none _) body orelse _ =>
-      if orelse.isEmpty then do
-        let dv ← evalOpen K m d
-        match dv with
-        | .ref a =>
-            match Heap.get? (← frameHeap) a with
-            | some (.dict entries _) => S.items a entries.size 0 target body.toList
-            | _ =>
-                refuse "'.items()' on a non-dict receiver is outside the tier (docs/memory-model.md §the one pipeline)"
-        | _ =>
-            refuse "'.items()' on a non-dict receiver is outside the tier (docs/memory-model.md §the one pipeline)"
-      else refuse "'for … else' at module top level is outside the tier"
   | .forStmt target iter body orelse _ =>
       if orelse.isEmpty then do
-        let it ← evalOpen K m iter
-        match it with
-        | .listV xs => S.forSeq target xs.toList body.toList
-        | .tuple xs => S.forSeq target xs.toList body.toList
-        | .ntuple _ _ xs => S.forSeq target xs.toList body.toList
-        | .str t => S.forSeq target (strCharVals t) body.toList
-        | .rangeV lo hi step => do
-            let xs ← liftRes (rangeVals lo hi step)
-            S.forSeq target xs body.toList
-        | .ref a => S.forList target a 0 body.toList
-        | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
+        -- §3c-i-a: ALL THREE VIEWS ride the ONE cursor. `.items()` used to
+        -- have a shell of its own (`scriptItemsAt`); two mechanisms for one
+        -- construct is the drift `dictStep` exists to prevent one level down,
+        -- so it is folded in here. `.items()`'s semantics are unchanged — same
+        -- live re-read, same faithful size `RuntimeError` — and it gains the
+        -- same-size key-set guard for free.
+        match dictViewCall iter with
+        | some (d, kind) => do
+            let dv ← evalOpen K m d
+            match dv with
+            | .ref a =>
+                match Heap.get? (← frameHeap) a with
+                | some (.dict es sv) => S.forDict target a 0 es.size sv kind body.toList
+                | _ => refuse viewRecvMsg
+            | _ => refuse viewRecvMsg
+        | Option.none => do
+          let it ← evalOpen K m iter
+          match it with
+          | .listV xs => S.forSeq target xs.toList body.toList
+          | .tuple xs => S.forSeq target xs.toList body.toList
+          | .ntuple _ _ xs => S.forSeq target xs.toList body.toList
+          | .str t => S.forSeq target (strCharVals t) body.toList
+          | .rangeV lo hi step => do
+              let xs ← liftRes (rangeVals lo hi step)
+              S.forSeq target xs body.toList
+          | .ref a => S.forList target a 0 body.toList
+          | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
       else refuse "'for … else' is outside the v0 tier"
   | .tryStmt body excName handler tryUnsupported _ =>
       -- The admission is the interpreter's verbatim; only the body and handler
@@ -300,10 +286,9 @@ def skont (m : Module) : Nat → SKont
     -- construction O(fuel), and script mode runs at fuel 1 000 000.
     { stmts   := fun ss => scriptStmtsAt (skont m fuel) m ss
       one     := fun s => scriptOneAt (skont m fuel) (kont m fuel) m s
-      items   := fun a n i t b => scriptItemsAt (skont m fuel) m a n i t b
       forSeq  := fun t xs b => scriptForAt (skont m fuel) m t xs b
       forList := fun t a i b => scriptForListAt (skont m fuel) m t a i b
-      forDict := fun t a i n sv b => scriptForDictAt (skont m fuel) m t a i n sv b
+      forDict := fun t a i n sv k b => scriptForDictAt (skont m fuel) m t a i n sv k b
       forGen  := fun t a b => scriptForGenAt (skont m fuel) (kont m fuel) m t a b
       whileL  := fun t b o => scriptWhileAt (skont m fuel) (kont m fuel) m t b o }
   termination_by structural fuel => fuel

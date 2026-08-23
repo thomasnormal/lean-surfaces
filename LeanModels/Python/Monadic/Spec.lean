@@ -169,10 +169,11 @@ does not leak into the proof layer. -/
 is unchanged, which is the half that matters — a cursor step must not disturb
 the dict it is walking, and this is where that is a theorem rather than a
 reading of the code. -/
-@[spec] theorem dictStepM_spec (a i n sv : Nat) (st0 : FrameState) :
-    ⦃fun st => ⌜st = st0⌝⦄ dictStepM a i n sv
+@[spec] theorem dictStepM_spec (a i n sv : Nat) (kind : DictViewKind)
+    (st0 : FrameState) :
+    ⦃fun st => ⌜st = st0⌝⦄ dictStepM a i n sv kind
     ⦃⇓ r => fun st => ⌜st = st0 ∧ r = (match Heap.get? st0.world.heap a with
-        | some (.dict es sv') => some (dictStep es sv' i n sv)
+        | some (.dict es sv') => some (dictStep es sv' i n sv kind)
         | _ => Option.none)⌝⦄ := by
   mvcgen [dictStepM, frameHeap]; all_goals grind
 

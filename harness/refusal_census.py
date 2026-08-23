@@ -428,6 +428,25 @@ print(f())
   "the cursor at FUNCTION scope — execGen's arm, and it exercises `break` "
   "and `continue` through the new frame (which is why `genBreak`/"
   "`genContinue` had to treat `forDict` as a LOOP frame, not bookkeeping)")
+w("dict.for-keys", """
+def f():
+    d = {3: 'c', 1: 'a'}
+    out = []
+    for k in d.keys():
+        out.append(k)
+    return tuple(out)
+print(f())
+""", "MATCH", "`for k in d.keys()` at function scope — inch 3c-i-a")
+w("dict.for-values", """
+def f():
+    d = {3: 'c', 1: 'a'}
+    out = []
+    for v in d.values():
+        out.append(v)
+    return tuple(out)
+print(f())
+""", "MATCH", "`for v in d.values()` — the VALUES view, whose element is the "
+  "value, not the key")
 w("dict.values", """
 d = {2: 'b', 1: 'a'}
 print(sorted(d.values()))
@@ -484,10 +503,9 @@ def f():
         t = t + k
     return t
 print(f())
-""", "REFUSE",
-  "the SAME loop inside a function: the shell belongs to the script "
-  "executor, so the closed-function surface has no cursor — inch 3a's real "
-  "content")
+""", "MATCH",
+  "the SAME loop inside a function — 3a gave the bare-key form a cursor at "
+  "every scope; 3c-i-a gives the VIEW forms one too")
 w("dict.items-grow", """
 d = {1: 1}
 for k, v in d.items():

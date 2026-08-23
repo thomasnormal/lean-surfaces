@@ -3993,6 +3993,24 @@ it stopped. The preview is labelled **`first N of M`** and still only locates.
 The dead `monadic_gate` patterns went with it — that harness was deleted in
 `eeeb1fd`.
 
+**AND THE GATE LINE HAS THREE STATES, not two — a distinction two lanes
+drew independently the same morning, which is the family's convergence
+standard.** Reading a missing gate line requires knowing *why* it is
+missing, and only one of the two absences is a verdict:
+
+| gate line | lock | what it means |
+| --- | --- | --- |
+| **PRESENT** | acquired | **the gates RAN** — this is a verdict |
+| **ABSENT** | **ACQUIRED** | **RED — an aborted triad.** The build failed, so the gates never ran |
+| **ABSENT** | **not acquired** | **NEVER STARTED — not a verdict at all.** No tenure ever opened |
+
+**The third row is the one that was missing**, and it is what **SV's killed
+ticket** and **the Lean tier's pending one** both were. Collapsing it into
+the second reports a red for work that was never attempted; collapsing it
+into the first is worse. **The discriminator is whether the LOCK was
+acquired** — which is why the lock line, not the gate line, is what a
+reader checks first.
+
 **And a red build means THE GATES NEVER RAN.** Build exit 1 short-circuits
 the tenure, so a red triad yields **a build-error list and nothing else** —
 no `docs_check`, no `diff_test`, no census. A red triad is therefore not a
@@ -4161,14 +4179,30 @@ cheap part is the failure; the expensive part is the investigation cycle
 that ends by proving master was fine all along — theirs did, with all four
 "missing" constants present and the diff empty.
 
-**COROLLARY — never rebase while HOLDING A QUEUED TICKET that could acquire
-mid-operation.** A6 forbids rebasing under a running build; the ticket
-queue (A9) adds a second window with the same shape, and it is easier to
-miss because nothing is running yet. If your ticket reaches the head of the
-queue and takes the lock while `git` is rewriting the tree, the tenure
-opens on a torn tree — a build that was never going to be meaningful,
-holding the machine-wide lock while it fails. Drop the ticket or finish the
-rebase first.
+**AMENDED — A6 COVERED ONLY HALF THE HAZARD, and the missing half is the
+ordinary one.** A6 forbade *rebasing* under a running build; a corollary
+extended it to a queued ticket, on the grounds that a ticket reaching the
+head mid-`git` opens a tenure on a torn tree. Both are true and both are
+too narrow, because of a fact about *when the tree is read*:
+
+> **A queued tenure reads the source at BUILD time, not at ENQUEUE time.**
+
+So **an ordinary EDIT** to a file while its ticket sits in the queue
+**silently changes what the verdict is about.** Nothing is torn, nothing
+fails, and the tenure is not interrupted — it simply builds a different
+tree than the one enqueued. The measured near-miss: a lane would have
+reported **"`instN` green"** for a run that actually built **`instN` +
+`weak'`**. A true statement about a tree nobody asked about.
+
+> **Never CHANGE THE TREE a ticket will build — no rebase, no edit, no
+> stage — between ENQUEUE and RELEASE. Batch BEFORE enqueue, or after the
+> verdict.**
+
+The window is **enqueue → release**, not build-start → build-end, and the
+forbidden act is **any** change, not just a history rewrite. This is
+§5.4a's shape once more and in its most ordinary clothing: **the number
+reads clean and is about the wrong state**, and here the wrong state was
+produced by the most routine thing a lane does between tickets.
 
 **AND NEVER `git stash` MID-MERGE — it silently destroys `MERGE_HEAD`.**
 Measured on the Core-payload merge itself. A `stash` / `stash pop` inside

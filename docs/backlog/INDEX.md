@@ -15,13 +15,14 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**92 entries across 16 lanes.** Regenerate with
+**94 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
+| `2026-08-23-architecture-15` | A6 covered half the hazard; and the gate line has THREE states | architecture |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
@@ -30,6 +31,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
 | `2026-08-23-architecture-9` | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |
+| `2026-08-23-lean-tier-8` | `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost | lean-tier |
 | `2026-08-23-architecture-8` | The Core payload LANDED: holds released, and the gate retired the conditional | architecture |
 | `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
 | `2026-08-23-lean-tier-7` | `TrProjP.instL` GREEN, and the proof caught a soundness defect in my own definition | lean-tier |

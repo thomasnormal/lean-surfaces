@@ -1021,3 +1021,43 @@ taught the wrong lesson before producing a red. **Name the lemma you mean.**
 **unfolded**, so **`apply` it**; `induction … using` fails. **A plain `def`
 delta-unfolds past the motive** — prove the `_iff`, then `attribute
 [irreducible]`.
+
+## 2026-08-23-architecture-15 — A6 covered half the hazard; and the gate line has THREE states
+
+**(1) A6 AMENDED — the missing half is the ORDINARY one.** A6 forbade *rebasing*
+under a running build, and a corollary extended it to a queued ticket. Both true,
+both too narrow, because of a fact about **when the tree is read**:
+
+> **A queued tenure reads the source at BUILD time, not at ENQUEUE time.**
+
+So an **ordinary EDIT** to a file while its ticket sits in the queue **silently
+changes what the verdict is about**. Nothing is torn, nothing fails, the tenure
+is not interrupted — it simply builds a different tree than the one enqueued. The
+measured near-miss: a lane would have reported **"`instN` green"** for a run that
+actually built **`instN` + `weak'`** — a true statement about a tree nobody asked
+about.
+
+> **Never CHANGE THE TREE a ticket will build — no rebase, no edit, no stage —
+> between ENQUEUE and RELEASE. Batch BEFORE enqueue, or after the verdict.**
+
+The window is **enqueue → release**, not build-start → build-end, and the
+forbidden act is **any** change, not just a history rewrite. §5.4a's shape in its
+most ordinary clothing: **the number reads clean and is about the wrong state**,
+produced here by the most routine thing a lane does between tickets.
+
+**(2) THE GATE LINE HAS THREE STATES, not two** — drawn independently by two
+lanes the same morning, which is the family's convergence standard. Reading a
+missing gate line requires knowing **why** it is missing, and only one of the two
+absences is a verdict:
+
+| gate line | lock | meaning |
+| --- | --- | --- |
+| **PRESENT** | acquired | **the gates RAN** — a verdict |
+| **ABSENT** | **ACQUIRED** | **RED — aborted triad**; the build failed and the gates never ran |
+| **ABSENT** | **not acquired** | **NEVER STARTED — not a verdict at all** |
+
+**The third row was the missing one**, and it is what **SV's killed ticket** and
+**the Lean tier's pending one** both were. Collapsing it into the second reports
+a red for work never attempted; collapsing it into the first is worse. **The
+discriminator is whether the LOCK was acquired** — which is why the lock line,
+not the gate line, is what a reader checks first.

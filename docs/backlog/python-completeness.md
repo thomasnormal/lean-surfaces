@@ -1150,8 +1150,19 @@ refusing it.
   `dict.enumerate-escapes` and `dict.enumerate-resize` (MATCH) and
   `dict.enumerate-of-items` (REFUSE — the excluded composition).
 * `harness/cases.json` **655 → 660 rows**, all five `match`, so
-  `diff_test` goes **1456 → 1461 cases** with `119 whitelisted-unsupported`
-  UNCHANGED — this inch adds capability without adding a gap.
+  `diff_test` goes **1456 → 1464 cases** (`1337 → 1345 matched`) with
+  `119 whitelisted-unsupported` UNCHANGED — this inch adds capability
+  without adding a gap.
+
+  **That number was predicted WRONG before the ticket, and the verdict
+  corrected it: 1461 was the prediction, 1464 is the measurement.** A ROW is
+  not a CASE — a row carries an `args` LIST, and `diff_test` runs one case per
+  arg-tuple, so three of the five rows are two cases each. Same shape as the
+  conflation `6b91a8d` recorded when the model's §5.2 `class` was compared
+  against `WHITELIST_CLASS`: two counts sharing a noun are not the same count.
+  Recorded rather than quietly edited, because §5.4a's rule is that a
+  published number is a second artifact — and the corrected one is the
+  measurement, not the arithmetic.
 * the whitelist census stays **119 rows in 46 classes** and the script census
   **15 rows in 10 classes**, for the same reason.
 

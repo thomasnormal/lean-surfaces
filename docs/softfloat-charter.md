@@ -260,6 +260,32 @@ used and satisfied by core layer 1 · **inch N** = scheduled at a named rung ·
 | exception flags | — | — | Annex F territory, no profile slot exists | — | — | — | — |
 | rounding-mode selection | — | — | routed to the profile; **no such slot exists** | — | — | — | — |
 
+### 2.0 THE CONSUMER-SITE CENSUS — measured, and the answer is ZERO unrouted crossings
+
+`harness/softfloat_consumer_census.py` → `docs/softfloat-consumer-census.json`.
+The transfer layer (§3.8) can serve a call site only if it goes through
+`Float.Model`; it can never serve an `opaque`, which has no Lean body. So the
+layer's consumer list is exactly "every site that crosses the opaque boundary",
+and that is measurable.
+
+**Measured at the pin: 42 opaque / 31 reducible declarations; 0 qualified
+crossings; 13 dot-notation candidates, all 13 resolving to non-crossings** — one
+already routed through `.toModel` (this lane's ES unblock, applied by the ES
+lane), two that are `ToString.toString` on an `Int64`/`BigInt`, and ten that are
+this component's own deliberate routing.
+
+**So nothing is waiting on the transfer layer, and ES's residual need is not a
+crossing.** Non-integer `Number::toString` is a REFUSE with a named cause
+(`LeanModels/Es/Convert.lean:249`), which means **decimal printing (§3, plan
+step 3) is now the only item any tier is blocked on.** Everything else in the
+ordering is headroom.
+
+**The instrument corrected itself twice, both times in the flattering
+direction** — 319 → 170 → 13 as the matcher stopped scoring English words
+(`round`, `exp`, `log`), then stopped scoring Mathlib's `Real.exp`/`Real.log` in
+the analog lane. See `docs/backlog/softfloat.md` 2026-08-23-softfloat-9; the law
+is master's own `f48f9db`: *count the pattern position, never the identifier.*
+
 ### 2.1 ES is blocking on ONE thing, and this lane UNBLOCKED it — run, not admired
 
 `docs/backlog/es.md` 2026-08-22-es-3 says the exact-integer arm of

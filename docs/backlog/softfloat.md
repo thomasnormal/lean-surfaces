@@ -379,3 +379,67 @@ value** and is the handle for the modular route — which is now the ES lane's
 
 `roundQ` + `IsCorrectlyRounded` and the mode layer (§3.5), then `op_correct`
 for `+ − × ÷`, then the flag layer, then decimal printing.
+
+---
+
+## 2026-08-23-softfloat-9 — THE CONSUMER-SITE CENSUS: zero unrouted crossings remain, and the instrument corrected itself twice
+
+`harness/softfloat_consumer_census.py` → `docs/softfloat-consumer-census.json`.
+The §5.4 instrument contract: `--compare` mode, every refusal path RUN (12
+self-test rows, no Lean needed), double-run byte-identical, and the toolchain
+**pin stamped**, because *which declarations are opaque is a fact about the pin*
+and therefore an INPUT to the result.
+
+### THE OPAQUE SET IS DERIVED, NEVER HARDCODED
+
+Whether `Float.toInt64` reduces is a property of the toolchain, not of this
+lane's memory. The instrument parses the toolchain's own float sources and
+classifies each declaration `opaque` / `def` / `extern-def`. Measured at
+`leanprover/lean4:v4.33.0-rc1`: **42 opaque, 31 reducible.** A toolchain bump
+moves the census by itself instead of silently invalidating a hardcoded list.
+
+### THE ANSWER: ZERO UNROUTED CROSSINGS
+
+**0 qualified crossings; 13 dot-notation candidates, and every one resolves to
+a non-crossing:**
+
+| site | resolves to |
+| --- | --- |
+| `LeanModels/Es/Convert.lean:236` `.toInt64` | **already routed** — it reads `n.toModel.toInt64`, this lane's unblock, applied |
+| `LeanModels/Es/Convert.lean:238`, `:252` `.toString` | `ToString.toString` on an **`Int64`/`BigInt`**, not `Float.toString` |
+| 10 sites in `LeanModels/SoftFloat/{Theorems,Transfer}.lean` | this component's own deliberate `.toModel` routing |
+
+So **the transfer layer has no unrouted consumer waiting on it.** ES's residual
+need is not a crossing at all: non-integer `Number::toString` is a **REFUSE with
+a named cause** (`Convert.lean:249` — *"needs correctly-rounded decimal
+conversion (SoftFloat step 3)"*), and `%` is refused after the clamp bug. The
+tier is honest about the gap rather than crossing the boundary quietly, which
+is the outcome the transfer layer was supposed to produce.
+
+**Consequence for the plan: decimal printing (step 3) is now the ONLY thing any
+tier is blocked on.** The mode layer, `roundQ` and `op_correct` are headroom,
+not unblocking.
+
+### THE INSTRUMENT CORRECTED ITSELF TWICE, and both errors flattered
+
+This is §5.4a pointed at the instrument rather than at the tree, and the census
+is only trustworthy on its third pass.
+
+| pass | matcher | result | why it was wrong |
+| --- | --- | --- | --- |
+| 1 | bare member name | "26 crossings, **319** prose hits" | `round`, `exp`, `log`, `pow`, `toString` are ENGLISH WORDS and other types' members |
+| 2 | qualified + dot-notation | "0 qualified, **170** candidates" | the analog lane's `.exp`/`.log` are **Mathlib's `Real.exp`/`Real.log`**, not floats at all |
+| 3 | + sound narrowing | "0 qualified, **13** candidates" | a file with no `Float` token in code cannot contain a Float crossing |
+
+**Both errors ran in the flattering direction — a bigger consumer list, which
+is a bigger mandate for this lane.** Pass 1 over-reported by ~24×. The fix that
+mattered was not a cleverer regex but a **sound narrowing**: dropping files that
+never name `Float` cannot drop a Float call site, so it costs no recall.
+
+**And the residue is stated rather than hidden:** a regex cannot resolve a
+receiver's type, so `dotted`/`anonymous` rows are reported as **CANDIDATES** and
+are never merged into the qualified count. The final resolution of all 13 was
+done by reading them, and it is recorded above rather than asserted by the tool.
+
+**The law this pays into**, and it is the master-branch commit `f48f9db`'s own
+title: *count the pattern position, never the identifier.*

@@ -2943,3 +2943,46 @@ next cousin of the fixture rule; here the call site is pinned by a
 `bash -n` clean. `ci.sh --verify-guards` **26 ok** (17 → 26), `laws.sh` **45
 ok** (43 → 45), `triad.sh` 181 ok, `check.sh` 87 ok, `docs_check` 5 ok. No Lean
 executed.
+
+## 2026-08-23-qol-43 — arming a byte-comparing gate arms the pins it does not have
+
+The SV lane's finding, one line to stop the bleeding. Verified rather than
+taken on faith: `.github/workflows/ci.yml:29` installed pyslang **unpinned**,
+while `extractors/sv/extract.py` sets
+`FRONTEND = {"name": "pyslang", "version": pyslang.__version__}` and writes it
+into every envelope — **all 21 committed envelopes carry `"version":
+"11.0.0"`** inside the exact bytes `sv_round_trip.py` compares (measured:
+`21` of `21`). The extractor's own docstring already says it: *"same input
+bytes (and same pyslang version) => same output bytes."*
+
+So the next pyslang release turns **every PR red with 21 DIVERGEs unrelated to
+anyone's change** — and it does so *because* qol-42 armed the gate. Pinned to
+`pyslang==11.0.0` on both arms of the `||`, marked **TEMPORARY — remove when
+extract.py stamps the family (SV Landing A regenerates the envelopes)**. SV
+owns the real fix. YAML re-parsed: 7 steps.
+
+**And the same defect one level down, in a line I wrote twenty minutes
+earlier.** The SKIP branch's hint said `pip install pyslang` — unpinned. A
+developer following it after the next release would install 11.0.1, run the
+gate, get 21 DIVERGEs, and conclude the envelopes had drifted: exactly the
+misreading the capability check exists to prevent. Pinned too. A hint is an
+instruction, and an instruction that reproduces the defect is the defect.
+
+Left standing, named: `docs/sv-charter.md:138` records that a clean venv yields
+pyslang 11.0.0. That is a **dated measurement**, not an instruction, and it is
+the SV lane's document — but it will quietly stop being true.
+
+### For the register — a new defect family
+
+> **An unconditional byte-comparing gate inherits every unpinned input of the
+> artifact it compares; arming the gate arms the pins it does not have.**
+
+The gate was harmless while it sat unwired: an unpinned input costs nothing
+until something compares against it on every PR. The family is not "pin your
+dependencies" — it is that **wiring a comparison changes the blast radius of
+inputs nobody edited**, so the pin audit belongs to the *arming* commit, not
+to the gate's author.
+
+### Triad
+
+`bash -n` clean, `ci.sh --verify-guards` 26 ok, YAML parses. No Lean executed.

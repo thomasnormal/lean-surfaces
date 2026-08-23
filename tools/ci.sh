@@ -208,7 +208,10 @@ sv_round_trip_step() {
   else
     echo "=== [sv-round-trip] SKIP (no python3.12/python3 can import pyslang —"
     echo "    an environment fact, not envelope drift; pyslang is not tracked)"
-    echo "    To run it here: python3.12 -m pip install pyslang"
+    # PINNED for the same reason the workflow is: the version is stamped INTO
+    # the compared bytes, so an unpinned hint hands a developer 21 DIVERGEs
+    # and the impression that the envelopes drifted.
+    echo "    To run it here: python3.12 -m pip install pyslang==11.0.0"
     skip+=("sv-round-trip")
   fi
 }

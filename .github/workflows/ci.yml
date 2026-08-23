@@ -26,7 +26,15 @@ jobs:
         run: |
           python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
           # SV extraction (notebook 03 + extractors/sv) runs under python3.12 + pyslang
-          python3.12 -m pip install --user pyslang || python3 -m pip install --user pyslang
+          # PINNED, and TEMPORARY — remove when extract.py stamps the family
+          # (SV Landing A regenerates the envelopes).  extract.py sets
+          # FRONTEND = {"name": "pyslang", "version": pyslang.__version__} and
+          # writes it into every envelope: all 21 committed ones carry
+          # "version": "11.0.0" inside the bytes sv_round_trip.py compares.
+          # Unpinned, the next pyslang release turns every PR red with 21
+          # DIVERGEs unrelated to anyone's change — now that the round-trip
+          # gate is armed in ci.sh.
+          python3.12 -m pip install --user pyslang==11.0.0 || python3 -m pip install --user pyslang==11.0.0
       - name: Circuit simulators (SV and SPICE differential harnesses)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog ngspice
       - name: Restore Mathlib build cache

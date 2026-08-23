@@ -3278,6 +3278,21 @@ the charter or the wasm ledger, so this landed in §5.4a's pin material beside
 could not locate. If it lives somewhere I did not search, this bullet should be
 merged into it rather than standing alone.)*
 
+> **ANNOTATION (coordinator confirmation; entry NOT rewritten).** Resolved, and
+> the open question is closed in the direction that matters: **the rule has no
+> formal name and no prior home** — it was a **coordination instruction to one
+> lane**, carried in dispatches only. **Nothing to merge; the §5.4a bullet is
+> its durable home**, and §5.4a now says so, because a rule living only in the
+> message that carried it is §7.1a's purge hazard in miniature — every lane that
+> never received the message never had the rule.
+
+> **ANNOTATION (same confirmation) — THE ROUTING NOTE BELOW IS RATIFIED.** The
+> coordinator confirmed the deviation was right and recorded **the dispatch as
+> the error**: there is **no standing exception**, and `2026-08-23-architecture-33`'s
+> norm governs. Landed into §9.5a as a precedent, because the case that tests a
+> norm is the one where an **instruction** pushes against it — every other
+> temptation to edit across lane lines is mere convenience.
+
 **ROUTING NOTE — wasm-4 IS NAMED, NOT EDITED.** The dispatch said to annotate
 `2026-08-23-wasm-4`. That entry is **another lane's dated record**, and this
 lane's own rule (`2026-08-23-architecture-33`, §9.5a) is that such a record is

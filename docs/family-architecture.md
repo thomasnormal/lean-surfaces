@@ -4079,7 +4079,14 @@ instrument copies it:
   the next inch onward — and the cheap form is to move it **in the same commit
   that moves the artifact**, which is the model-matches-code discipline applied
   to a number. **A pin updated later is a re-measurement; a pin updated with
-  the work is bookkeeping**, and only the second is free;
+  the work is bookkeeping**, and only the second is free.
+
+  **This bullet is that rule's DURABLE HOME, and how it got here is the point.**
+  It reached the tree as a **coordination instruction to one lane** — carrying
+  no name, living only in dispatches. That is precisely the state §7.1a's
+  register exists to end: **a rule that lives only in the message that carried
+  it is one purge from gone, and every lane that never received the message
+  never had it.** Confirmed with the coordinator rather than assumed;
 * **double-run byte-identical**, verified;
 * **every quoted number is paired with the STATE it was taken from**, per
   the provenance law below;
@@ -7241,6 +7248,27 @@ a convention, or it mints ids in a sequence it does not own:
 * the **generated index renders `INBOUND` as its own class**, listed
   against each owning lane, so an owner sees what is queued for them
   without reading their own file for surprises.
+
+**AND THE RULE HAS NOW BEEN TESTED AGAINST A DISPATCH, WHICH IS THE CASE THAT
+DECIDES WHETHER IT IS A RULE.** A coordinator dispatch instructed this lane to
+**annotate another lane's dated entry directly**. It was declined on the
+strength of the norm — *a dated record in another lane's document is NAMED,
+never corrected in passing* — the finding was landed here, and the annotation
+was filed to the owner as `INBOUND`. **The coordinator confirmed the deviation
+and recorded the dispatch as the error.**
+
+> **THERE IS NO STANDING EXCEPTION. Another lane's dated record is annotated by
+> THAT LANE, from your INBOUND — never by you in passing, and not on
+> instruction.**
+
+**Why the confirmation is worth a paragraph rather than a footnote**: an
+instruction is the one pressure this norm cannot survive by itself. Every other
+temptation to edit across lane lines is a convenience — this one arrives with
+authority attached, and *"I was told to"* is exactly the reasoning that would
+make the norm advisory. **A landed law is not overridden by a dispatch; a
+dispatch that conflicts with one is a finding about the dispatch**, and the
+cheap move when they conflict is to land the finding, file the residue, and say
+which rule you followed.
 
 **AND THE MEASURED COST, which is the part worth flagging: cross-lane
 appends REINTRODUCE the tail race §9.5 just retired.** `es.md` conflicted

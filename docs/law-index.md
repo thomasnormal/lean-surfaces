@@ -178,6 +178,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-127 | a predicted maintenance COST inherits the unit error of the construct it prices | `docs/family-architecture.md §5.4a` |
 | MEAS-128 | an OPENING is witnessed with the oracle's expectation, never a second decision site | `docs/family-architecture.md §5.4a` |
 | MEAS-129 | a coverage PIN is maintained in the landing that grows the artifact | `docs/family-architecture.md §5.4a` |
+| MEAS-130 | NO STANDING EXCEPTION — another lane's dated record is annotated by that lane, not on instruction | `docs/family-architecture.md §9.5a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

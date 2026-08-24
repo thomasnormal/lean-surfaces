@@ -3984,6 +3984,54 @@ exhaustiveness arm in the tree becomes a false positive:**
 > **The defect is not unreachability. It is a REFUSAL BELIEVED TO BE A
 > BOUNDARY that is not one.**
 
+**RULED — REFUSAL-FORM FOR AN EXHAUSTIVENESS ARM, and the two candidate answers
+both skipped a prior question** (pyc, raised rather than assumed; the trunk's
+`forDict` / `enumDict` / `iterDict` arms).
+
+**The prior question is: WHY IS THE ARM REACHABLE IN THE TYPE AT ALL?** The
+comments answer it — *"the trunk never **builds** a `forDict` frame"* — which is
+a claim about **construction sites**, not about the type. So the ruling is
+three-way, not two-way:
+
+> **(1) IF THE IMPOSSIBILITY IS PROVABLE AT THE TYPE LEVEL, DISCHARGE IT
+> THERE** — `nomatch`, or narrow the frame type. **No arm, no message, no
+> documentation, no failure mode.** This is the only outcome where nothing is
+> load-bearing, and it is STMT-129's rule (*where a rule is at risk of
+> re-collapsing, the durable form is a type, not a reminder*).
+
+> **(2) OTHERWISE — the type admits the frame and only the trunk's construction
+> discipline excludes it — REFUSAL-FORM WINS.** The arm is a **live defensive
+> path** whose unreachability is a claim about **callers**, and callers change.
+
+**(b)'s safety argument is decisive at (2) and it is the register's own
+preference stated in a new place**: if the arm ever **becomes** reachable,
+**refusal-form fails soft, loud and classed; absurd-form crashes.** This
+document has ruled for the loud-and-classed failure every time it has been
+offered the trade — *the flattering direction is the one that ships*, and a
+crash in a model is the least informative failure available.
+
+> **(3) BUT (a) IS RIGHT ABOUT ONE THING, AND IT IS TAKEN: THE DOCUMENTATION
+> MUST STOP BEING WHAT CARRIES THE CLAIM.**
+
+**Not by changing the form — by GATING the claim.** *"The trunk never constructs
+this frame"* is **a measurable statement about the trunk**: a census over
+construction sites, which either finds one or does not. So the arm keeps
+refusal-form **and** the by-construction claim gets the check that §5.4 demands
+of every prose claim.
+
+**This refines what I ruled yesterday.** I wrote that *documented* is doing real
+work in the by-construction row, because **an undocumented arm is
+indistinguishable from the defect by reading** — true, and **reading was the
+best instrument then available.** A census is better and is available. **Once the
+claim is gated, the arm is no longer *believed* unreachable; it is *measured*
+unreachable** — which moves it out of MEAS-256's defect category **by
+measurement rather than by assertion**, and that is the whole difference the
+category was drawn to capture.
+
+**Summary for the three arms**: they are pyc's to keep in refusal-form, and
+pyc's to gate. **No conformance edit is owed on form; a census is owed on the
+claim.**
+
 **AND THE CONVERSE CASE ARRIVED THE NEXT DAY, so the two must be read together:
 AN UNREACHABLE *CHECK* IS KEPT** (pyc inch 3, `3ea2f2a`, ticketed). The
 register checker's **empty-register test is now unreachable** — two tiers have
@@ -6031,6 +6079,18 @@ certification** — decline the rebase, decline the fold-in, commit the index.
 **Three lanes have now taken the affirmative branch independently**, which is
 the convergence standard (§9.3) applied to a law's *use* rather than to its
 statement.
+
+**AND A FIFTH, AT PUSH GRANULARITY** (SoftFloat's `roundQ` landing, merged —
+`52c5d35` is **the GATED sha**). The lane **refused to call its clean rebase
+gated.**
+
+> **A rebase that changes nothing still produces a DIFFERENT COMMIT, and the
+> certificate names the one that was BUILT.**
+
+**The certificate discipline at the smallest granularity yet** — not a merge,
+not a ticket, but **which of two shas a clean rebase produced.** *Nothing was at
+stake and the lane held the line anyway, which is the only time a discipline is
+cheap to keep.*
 
 **AND A FOURTH, AT MERGE GRANULARITY, ARRIVING UNPROMPTED** (Ada). The lane
 **pre-declared** that the merge was *"the gated Lean landing, not a docs commit
@@ -8674,6 +8734,21 @@ fixed while the build ran.**
 
 > **NOTHING CHECKS THAT A TICKET'S BASE WAS EVER GREEN.** The enqueue stamp pins
 > *what will be built*; it says nothing about whether that tree ever passed.
+
+**AND THE MITIGATION MET ITS INTENDED CASE ON DAY ONE** (QoL's base-staleness
+warning; pyc3 acquired with **`BASE STALE: 4 commits behind`**). It was **read,
+reasoned about, and CORRECTLY NOT ACTED ON mid-tenure** per A6 — the four
+commits touch **disjoint files.**
+
+> **The warn-never-refuse design was validated by a lane DECLINING to act on
+> it.**
+
+**That is the outcome a warning is FOR, and it looks like nothing happened.** A
+refusing gate here would have killed a tenure over a staleness that could not
+affect it; **a warning that is read and reasoned about produces exactly this: a
+lane that knows something it did not know, and changes nothing.** *The evidence
+that a warning is correctly calibrated is a documented decision NOT to act, not
+a saved incident.*
 
 **This is the wrong-tree family's remaining corner**, and it points the opposite
 way from all the others: those catch a green certifying **the wrong tree**; this

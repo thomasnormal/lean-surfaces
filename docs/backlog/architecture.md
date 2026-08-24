@@ -5840,3 +5840,77 @@ is not.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-265 … MEAS-273**.
+
+## 2026-08-24-architecture-70 — Refusal-form for an exhaustiveness arm: gate the claim, not the form
+
+A ruling requested by the pyc lane (**raised rather than assumed**) on the
+trunk's three unreachable frame-step arms, plus two validation notes and one
+certificate-discipline instance.
+
+**THE RULING — AND BOTH CANDIDATE ANSWERS SKIPPED A PRIOR QUESTION.** Before
+choosing between refusal-form and absurd-form: **why is the arm reachable in the
+TYPE at all?** The comments answer it — *"the trunk never **builds** a `forDict`
+frame"* — **a claim about construction sites, not about the type.** So the
+ruling is three-way:
+
+**(1) IF PROVABLE AT THE TYPE LEVEL, DISCHARGE IT THERE** — `nomatch`, or narrow
+the frame type. **No arm, no message, no documentation, no failure mode**; the
+only outcome where nothing is load-bearing, and STMT-129's rule (*the durable
+form is a type, not a reminder*).
+
+**(2) OTHERWISE — the type admits the frame and only construction discipline
+excludes it — REFUSAL-FORM WINS.** The arm is a **live defensive path** whose
+unreachability is a claim about **callers**, and callers change. **(b)'s safety
+argument is decisive here**: if the arm ever becomes reachable, **refusal-form
+fails soft, loud and classed; absurd-form crashes** — and this register has
+ruled for the loud-and-classed failure every time the trade has been offered.
+
+**(3) BUT (a) IS RIGHT ABOUT ONE THING AND I TAKE IT: the DOCUMENTATION must
+stop being what carries the claim** — fixed **not by changing the form but by
+GATING the claim.** *"The trunk never constructs this frame"* is **measurable**:
+a census over construction sites. The arm keeps refusal-form **and** the claim
+gets the check §5.4 demands of every prose claim.
+
+**This refines what I ruled two days ago.** I wrote that *documented* does real
+work in the by-construction row, because an undocumented arm is
+**indistinguishable from the defect by reading** — true, and **reading was the
+best instrument then available.** A census is better and is available. **Once
+gated, the arm is no longer BELIEVED unreachable; it is MEASURED unreachable** —
+which moves it out of MEAS-256's defect category **by measurement rather than by
+assertion**, and that is the whole difference the category exists to draw.
+
+**Disposition for the three arms: keep the form, gate the claim. No conformance
+edit is owed on form; a census is owed on the claim.**
+
+**VALIDATION NOTE 1 — §7.2: the base-staleness warning met its intended case on
+day one.** pyc3 acquired with `BASE STALE: 4 commits behind`; **read, reasoned
+about, and correctly NOT acted on** mid-tenure per A6 (disjoint files).
+
+> **The warn-never-refuse design was validated by a lane DECLINING to act on
+> it.**
+
+**That is the outcome a warning is FOR, and it looks like nothing happened.** A
+refusing gate would have killed a tenure over a staleness that could not affect
+it. *The evidence that a warning is correctly calibrated is a documented
+decision NOT to act, not a saved incident.*
+
+**VALIDATION NOTE 2 — the reconciliation reached the lane it governed while its
+inch was still queued**, and **the lane's design was already on the ruled
+side.** Recorded because it is the direction the register exists for: **a ruling
+that arrives before the work and agrees with it is the cheapest possible
+outcome**, and it is invisible unless someone says so.
+
+**AND A FIFTH AFFIRMATIVE USE OF TREE-NOT-TITLE, AT PUSH GRANULARITY**
+(SoftFloat's `roundQ`, merged; `52c5d35` is **the gated sha**). The lane
+**refused to call its clean rebase gated.**
+
+> **A rebase that changes nothing still produces a DIFFERENT COMMIT, and the
+> certificate names the one that was BUILT.**
+
+**The smallest granularity this discipline has held at yet** — not a merge, not
+a ticket, but **which of two shas a clean rebase produced.** *Nothing was at
+stake and the lane held the line anyway, which is the only time a discipline is
+cheap to keep.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-274 … MEAS-276**.

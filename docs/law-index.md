@@ -322,6 +322,9 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-271 | ORPHANED is the shape a deleted row leaves behind — check from the GUARDS back to the ROWS | `docs/family-architecture.md §5.0a` |
 | MEAS-272 | between a RULED IDIOM and an IMPLEMENTED PRECEDENT, follow the instance until the ruling has one | `docs/family-architecture.md §5.0a` |
 | MEAS-273 | an acceptance test written against a PATTERN inherits every future instance for free | `docs/family-architecture.md §5.0a` |
+| MEAS-274 | an exhaustiveness arm: PROVABLE → discharge in the type; otherwise REFUSAL-FORM, and GATE the by-construction claim | `docs/family-architecture.md §5.2` |
+| MEAS-275 | a warning is validated by a documented decision NOT to act, not by a saved incident | `docs/family-architecture.md §7.2` |
+| MEAS-276 | a clean rebase still produces a DIFFERENT COMMIT — the certificate names the one that was BUILT | `docs/family-architecture.md §5.4a-i` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

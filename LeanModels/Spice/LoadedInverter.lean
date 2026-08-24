@@ -1470,6 +1470,96 @@ theorem loadedInverter_settles_within
       rw [sub_zero, abs_of_nonneg hdomain.1]
       exact hbound
 
+/-! ## Corner minimisation (family A11)
+
+The settling theorems above quantify over a PVT CORNER BOX, so their decay
+rate is not a constant and the F2 numeric certificates cannot reach them
+directly.  What closes the gap is not analysis but a worst-case bound over the
+box: the rate is one quotient, so bounding its numerator below and its
+denominator above is a single `div_le_div₀`.
+
+Probing Mathlib's monotone-on-a-box vocabulary first said NOT to use it.
+`IsCompact.exists_isMinOn` supplies a minimiser that EXISTS and cannot be
+evaluated, which is useless against a concrete deadline, and `MonotoneOn`
+would need the rate decomposed coordinate by coordinate to say what one
+quotient bound says at once.
+
+The binding corner is the PMOS branch (`nBeta = 2 * pBeta`), at
+`1156000000/33`, about `3.5e7`; the bound below is `3e7`, which keeps a 17%
+margin and stays a round rational.
+-/
+
+/-- Worst-case decay rate over the whole PVT corner box. -/
+theorem loadedInverterCornerRun_decayRate_lower {world : LoadedInverterWorld}
+    (hcorner : LoadedInverterCornerRun world) :
+    (30000000 : ℝ) ≤ loadedInverterDecayRate world := by
+  obtain ⟨⟨hnt0, hnt1, hpt0, hpt1, hnb0, hnb1, hratio, hc0, hc1⟩,
+    hvdd0, hvdd1, hinit0, hinit1, hhor⟩ := hcorner
+  have hsupply : (0:ℝ) < world.environment.supply := by linarith
+  have hcap : (0:ℝ) < world.fabricated.loadCapacitance := by linarith
+  have hden : (0:ℝ) <
+      2 * world.fabricated.loadCapacitance * world.environment.supply := by
+    positivity
+  have hdenmax :
+      2 * world.fabricated.loadCapacitance * world.environment.supply ≤
+        33 / 2500000000000 := by nlinarith
+  unfold loadedInverterDecayRate loadedInverterNOverdrive
+    loadedInverterPOverdrive
+  split
+  · have hnum : (289 / 312500 : ℝ) ≤
+        world.fabricated.nBeta *
+          (world.environment.supply - world.fabricated.nThreshold) ^ 2 := by
+      nlinarith [sq_nonneg (world.environment.supply -
+        world.fabricated.nThreshold - 17/5)]
+    calc (30000000 : ℝ)
+        ≤ (289 / 312500) / (33 / 2500000000000) := by norm_num
+      _ ≤ _ := div_le_div₀ (by nlinarith) hnum hden hdenmax
+  · have hpb : (1 / 25000 : ℝ) ≤ world.fabricated.pBeta := by linarith
+    have hnum : (289 / 625000 : ℝ) ≤
+        world.fabricated.pBeta *
+          (world.environment.supply - world.fabricated.pThreshold) ^ 2 := by
+      nlinarith [sq_nonneg (world.environment.supply -
+        world.fabricated.pThreshold - 17/5)]
+    calc (30000000 : ℝ)
+        ≤ (289 / 625000) / (33 / 2500000000000) := by norm_num
+      _ ≤ _ := div_le_div₀ (by nlinarith) hnum hden hdenmax
+
+theorem loadedInverterCornerRun_initialError_nonneg
+    {world : LoadedInverterWorld} (hcorner : LoadedInverterCornerRun world) :
+    0 ≤ loadedInverterInitialError world := by
+  obtain ⟨-, hvdd0, hvdd1, hinit0, hinit1, -⟩ := hcorner
+  unfold loadedInverterInitialError loadedInverterError
+  split <;> linarith
+
+theorem loadedInverterCornerRun_initialError_le
+    {world : LoadedInverterWorld} (hcorner : LoadedInverterCornerRun world) :
+    loadedInverterInitialError world ≤ 11 / 2 := by
+  obtain ⟨-, hvdd0, hvdd1, hinit0, hinit1, -⟩ := hcorner
+  unfold loadedInverterInitialError loadedInverterError
+  split <;> linarith
+
+/-- A11 COMPOSED WITH F2: over the whole corner box, one microsecond settles
+to within 10 mV.  The rate is bounded by corner minimisation and the
+exponential by the F2 decay certificate at split depth 10; `11/2 * 1/550` is
+exactly `1/100`. -/
+theorem loadedInverterCornerRun_deadline
+    {world : LoadedInverterWorld} (hcorner : LoadedInverterCornerRun world) :
+    loadedInverterInitialError world *
+        Real.exp (-loadedInverterDecayRate world * (1 / 1000000)) ≤
+      1 / 100 := by
+  have hrate := loadedInverterCornerRun_decayRate_lower hcorner
+  have herr0 := loadedInverterCornerRun_initialError_nonneg hcorner
+  have herr1 := loadedInverterCornerRun_initialError_le hcorner
+  have hmono : Real.exp (-loadedInverterDecayRate world * (1 / 1000000)) ≤
+      Real.exp (-30) := Real.exp_le_exp.2 (by linarith)
+  have h30 : Real.exp (-(30 : ℝ)) ≤ 1 / 550 :=
+    LeanModels.Circuit.exp_neg_le_of_pow_le (by norm_num) 10 (by norm_num)
+      (by norm_num)
+  have hexp0 : (0:ℝ) ≤
+      Real.exp (-loadedInverterDecayRate world * (1/1000000)) :=
+    (Real.exp_pos _).le
+  nlinarith
+
 end LeanModels.Spice
 
 namespace LeanModels.Circuit

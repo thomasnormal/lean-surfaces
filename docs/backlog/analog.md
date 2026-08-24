@@ -33,7 +33,15 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | pre-lane baseline | `ed9f1f5` | 0 / 24 | 0 / 21 | 9 / 21 |
 | `2026-08-24-analog-1` | `491b944` | **8 / 24** | **4 / 21** | 9 / 21 |
 | `2026-08-24-analog-2` | `c34834e` | 8 / 24 | 4 / 21 | 9 / 21 |
-| `2026-08-24-analog-3` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-3` | `5119cf6` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-4` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+
+**F2 numeric hypotheses discharged: 2 / 12** — `loaded_rc` (analog-3) and
+`loaded_inverter` (analog-4). The remaining 10 split **by the shape of the
+world, not by the certificate**: 1 more corner-boxed (`loaded_inverter`'s
+siblings, A11 applies unchanged), and **9 pinned-nominal** (`dram_1t1c` 5,
+`dram_sense_amp` 4) where the rate is already a concrete constant and no
+corner minimisation is needed at all.
 
 **DECLARED DIVERGENCES: 0** — and the qualifier is part of the number.
 
@@ -531,3 +539,73 @@ attempt per hour-long queue. Every lemma name in the kit was WRONG on first
 writing (`inv_le_inv_of_le`, `pow_le_pow_left` — both renamed in this Mathlib)
 and each was found by probing `#check` rather than by spending a tenure. **The
 one-shot regime did not just cost time; it selected for guessing.**
+
+---
+
+## 2026-08-24-analog-4 — A11: corner minimisation lands, and my own repricing was wrong
+
+**The lemma.** `loadedInverterCornerRun_decayRate_lower`: over the entire PVT
+corner box, `3e7 ≤ loadedInverterDecayRate world`. The binding corner is the
+PMOS branch (`nBeta = 2 * pBeta`) at `1156000000/33 ≈ 3.5e7`; `3e7` keeps a 17%
+margin and stays a round rational. With `initialError ≤ 11/2` and the F2 decay
+certificate at split depth 10 (`exp (-30) ≤ 1/550`), the product is exactly
+`11/2 × 1/550 = 1/100`, and `loaded_inverter_settled_at_microsecond` now proves
+10 mV settling in one microsecond **for every allowed corner** — axioms
+`[propext, Classical.choice, Quot.sound]`.
+
+**THE PROBE SAID DON'T USE THE VOCABULARY IT WAS SENT TO FIND.** The instruction
+was to probe Mathlib's monotone-on-a-box vocabulary first. It answered in the
+negative, and that was worth more than a hit:
+
+* `IsCompact.exists_isMinOn` gives a minimiser that **exists and cannot be
+  evaluated** — against a concrete deadline that is no use at all;
+* `MonotoneOn` / `AntitoneOn` would need the rate decomposed coordinate by
+  coordinate, four monotonicity lemmas to say what one quotient bound says.
+
+The rate is a single quotient, so bounding numerator below and denominator
+above is **one `div_le_div₀`**, and the whole lemma compiled on the first
+attempt.
+
+> **A probe that returns "this vocabulary does not apply" has done its job.
+> The measurement that probing pays does not require the probe to find
+> something.**
+
+### AND THE REPRICING IN `analog-3` WAS WRONG — I generalised from one deck
+
+`analog-3` priced A11 as unlocking **8 of the remaining 11 sites**, on the
+strength of `loaded_inverter` being a PVT corner box. Censusing the other two
+decks while landing this one shows they are **not corner boxes at all**:
+
+| deck | sites | world | blocked on |
+| --- | ---: | --- | --- |
+| `loaded_inverter` | 3 | PVT corner box | A11 — **1 discharged here** |
+| `dram_1t1c` | 5 | `fabricated = dram1T1CNominal.instance` — **pinned** | concrete-constant arithmetic |
+| `dram_sense_amp` | 4 | `dramSenseAmpLayout.fabricated = …` — **pinned** | concrete-constant arithmetic |
+
+So corner minimisation unlocks **3 sites, not 8**, and the other 9 were never
+corner-blocked — they are *easier* than priced, needing only the rate's concrete
+value and the F2 kit already landed.
+
+> **I priced eleven sites from the shape of one, one landing after invoking
+> census-first to authorise the order. A repricing is a measurement and owes a
+> census exactly like the first pricing did.**
+
+The error was in the flattering direction for the *lemma* (it looked like it
+unlocked more) and the pessimistic direction for the *tier* (nine sites looked
+blocked on work they never needed). Both halves are wrong, which is what
+extrapolation from one instance produces.
+
+**Next: A12 — the pinned-nominal nine.** No new mathematics; instantiate the
+decay rate at each deck's nominal constants and apply `exp_neg_le_of_pow_le`.
+`dram_1t1c` first, being the larger.
+
+**Note on the axiom pins.** The first draft of the `spec.lean` mirror named
+`LoadedInverterExampleAllowed` unqualified, which does not resolve there; the
+build went red **and** `#print axioms` reported `sorryAx` alongside the errors.
+Not a silent degrade — the tenure would have caught it either way — but it is
+the second signal, and it is why every new theorem here carries a pin.
+
+**Iteration note.** `LeanModels/Spice/LoadedInverter.lean` takes **192 s** to
+re-elaborate; the scratch loop against its built olean takes 8. Developing the
+lemma standalone first and inserting it once is worth roughly one order of
+magnitude on a file this size.

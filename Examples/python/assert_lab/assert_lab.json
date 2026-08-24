@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/assert_lab/assert_lab.py",
-  "source_sha256": "d03afc0498b42cb55e5caeefbd19c89a1ee4a7958557941af083eeb72fffa041",
+  "source_sha256": "dd4bfad8184ea9f05e4881816f88ea29fdcd078c675f0a41450ada176ec78fbc",
   "module": {
     "kind": "Module",
     "body": [
@@ -2079,7 +2079,7 @@
         "span": {
           "lineno": 138,
           "col_offset": 0,
-          "end_lineno": 144,
+          "end_lineno": 148,
           "end_col_offset": 12
         },
         "name": "catch_assert",
@@ -2100,34 +2100,34 @@
           {
             "kind": "Try",
             "span": {
-              "lineno": 140,
+              "lineno": 144,
               "col_offset": 4,
-              "end_lineno": 143,
+              "end_lineno": 147,
               "end_col_offset": 17
             },
             "body": [
               {
                 "kind": "Assert",
                 "span": {
-                  "lineno": 141,
+                  "lineno": 145,
                   "col_offset": 8,
-                  "end_lineno": 141,
+                  "end_lineno": 145,
                   "end_col_offset": 20
                 },
                 "test": {
                   "kind": "Compare",
                   "span": {
-                    "lineno": 141,
+                    "lineno": 145,
                     "col_offset": 15,
-                    "end_lineno": 141,
+                    "end_lineno": 145,
                     "end_col_offset": 20
                   },
                   "left": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 141,
+                      "lineno": 145,
                       "col_offset": 15,
-                      "end_lineno": 141,
+                      "end_lineno": 145,
                       "end_col_offset": 16
                     },
                     "id": "n"
@@ -2139,9 +2139,9 @@
                     {
                       "kind": "Constant",
                       "span": {
-                        "lineno": 141,
+                        "lineno": 145,
                         "col_offset": 19,
-                        "end_lineno": 141,
+                        "end_lineno": 145,
                         "end_col_offset": 20
                       },
                       "value": {
@@ -2158,26 +2158,26 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 143,
+                  "lineno": 147,
                   "col_offset": 8,
-                  "end_lineno": 143,
+                  "end_lineno": 147,
                   "end_col_offset": 17
                 },
                 "value": {
                   "kind": "UnaryOp",
                   "span": {
-                    "lineno": 143,
+                    "lineno": 147,
                     "col_offset": 15,
-                    "end_lineno": 143,
+                    "end_lineno": 147,
                     "end_col_offset": 17
                   },
                   "op": "USub",
                   "operand": {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 143,
+                      "lineno": 147,
                       "col_offset": 16,
-                      "end_lineno": 143,
+                      "end_lineno": 147,
                       "end_col_offset": 17
                     },
                     "value": {
@@ -2193,17 +2193,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 144,
+              "lineno": 148,
               "col_offset": 4,
-              "end_lineno": 144,
+              "end_lineno": 148,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Name",
               "span": {
-                "lineno": 144,
+                "lineno": 148,
                 "col_offset": 11,
-                "end_lineno": 144,
+                "end_lineno": 148,
                 "end_col_offset": 12
               },
               "id": "n"

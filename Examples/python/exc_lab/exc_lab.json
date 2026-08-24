@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/exc_lab/exc_lab.py",
-  "source_sha256": "12972ad94a08ee20bad7a0b17542640906c8815a66c3dd7a1ba16902e2bd56d4",
+  "source_sha256": "70744ec1bd0a9c86a1262c1e3ffc03595ac65fbc00e7a6bd8d131e378b6b4c17",
   "module": {
     "kind": "Module",
     "body": [
@@ -5895,6 +5895,120 @@
               },
               "id": "total"
             }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 337,
+          "col_offset": 0,
+          "end_lineno": 346,
+          "end_col_offset": 17
+        },
+        "name": "except_ancestor_still_loud",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 337,
+              "col_offset": 31,
+              "end_lineno": 337,
+              "end_col_offset": 32
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 343,
+              "col_offset": 4,
+              "end_lineno": 346,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 344,
+                  "col_offset": 8,
+                  "end_lineno": 344,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 344,
+                    "col_offset": 15,
+                    "end_lineno": 344,
+                    "end_col_offset": 21
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 344,
+                      "col_offset": 15,
+                      "end_lineno": 344,
+                      "end_col_offset": 16
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 344,
+                      "col_offset": 20,
+                      "end_lineno": 344,
+                      "end_col_offset": 21
+                    },
+                    "id": "n"
+                  }
+                }
+              }
+            ],
+            "exc_name": "ArithmeticError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 346,
+                  "col_offset": 8,
+                  "end_lineno": 346,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "UnaryOp",
+                  "span": {
+                    "lineno": 346,
+                    "col_offset": 15,
+                    "end_lineno": 346,
+                    "end_col_offset": 17
+                  },
+                  "op": "USub",
+                  "operand": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 346,
+                      "col_offset": 16,
+                      "end_lineno": 346,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
           }
         ]
       }

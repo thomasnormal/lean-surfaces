@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**347 entries across 17 lanes.** Regenerate with
+**348 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -69,6 +69,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-qol-50` |  | nothing checked whether a ticket's base had ever been green | qol |
 | `2026-08-24-qol-49` |  | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
+| `2026-08-24-pycomplete-22` |  | `except <builtin>:` lands as a SUBSUMPTION TABLE, and a docstring that argued a case away expires with it | python-completeness |
 | `2026-08-24-pycomplete-21` |  | a substring is not a declaration: the register's declaration shape gets an anchor, and the fixture needs no fixture | python-completeness |
 | `2026-08-24-c-21` |  | THE SCOREBOARD INCH: read the oracle, size what is exact, and refuse to invent a struct | c |
 | `2026-08-24-softfloat-20` |  | THE BRIDGE LEMMAS: what core's round and sticky bits MEAN | softfloat |
@@ -294,6 +295,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-qol-7` |  | `tools/check.sh`: rule 3's warm-clone amendment, CHECKED instead of guessed | qol |
 | `2026-08-22-architecture-7` |  | `Core.SemM` LANDED — the §3.8 trigger fired, and the reconciliation INVERTS | architecture |
 | `2026-08-22-sunfish-rtrack-6` |  | R3c RE-FOUNDED: the ledger transports, and the first `FoldInv` | sunfish-rtrack |
+| `2026-08-22-softfloat-6` | INBOUND | INBOUND FROM THE SOFTFLOAT LANE: Python lane's to triage | python-completeness |
 | `2026-08-22-qol-6` |  | the DEFAULT GATE SET now announces itself: the ES lane's migration finding, made loud | qol |
 | `2026-08-22-architecture-6` |  | SoftFloat LAYER 3 — TRANSFER, commissioned by core itself | architecture |
 | `2026-08-22-sunfish-rtrack-5` |  | the lock hypothesis is CONFIRMED, and two numbers close two arguments | sunfish-rtrack |
@@ -341,7 +343,6 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` |  | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` |  | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
-| `INBOUND` | INBOUND | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
 | `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
 | `G7` |  | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
@@ -368,4 +369,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**26 heading(s) do not use the §9.5 id scheme** and sort last.
+**25 heading(s) do not use the §9.5 id scheme** and sort last.

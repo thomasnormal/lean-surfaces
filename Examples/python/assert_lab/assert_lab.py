@@ -136,7 +136,11 @@ def msg_nonascii(n):
 
 
 def catch_assert(n):
-    # the recorded gap: AssertionError is not an admitted handler class
+    # WAS the recorded gap ("AssertionError is not an admitted handler
+    # class") until §except-builtin admitted it. A comment describing a
+    # LIMITATION, expiring with the inch that lifted it -- the fourth of
+    # that shape this lane has hit, and the first found in a WITNESS
+    # rather than in a docstring or a proof.
     try:
         assert n > 0
     except AssertionError:

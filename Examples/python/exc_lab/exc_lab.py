@@ -332,3 +332,16 @@ def drive_yield_under_try(n):
     for x in yield_under_try(n):
         total = total + x
     return total
+
+
+def except_ancestor_still_loud(n):
+    # §except-builtin THE FRONTIER, and it is falsifiable: ArithmeticError is
+    # ZeroDivisionError's CPython ancestor, so CPython answers -1 here.
+    # Admitting it would claim a catch set this tier has never enumerated, so
+    # it is refused BY NAME rather than derived from a hierarchy. The day an
+    # inch needs it, this row flips and the pair below stays put.
+    try:
+        return 1 // n
+    except ArithmeticError:
+        return -1
+

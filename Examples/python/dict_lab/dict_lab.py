@@ -843,3 +843,20 @@ def genexp_bound_no_mutation(a, root):
     d = {1: a, 2: 5}
     g = (k for k in d if k != root)
     return next(g)
+
+
+def except_recursion_as_runtime(a):
+    # §except-builtin THE SUBSUMPTION PAIR, and it lives here because this is
+    # where the tier can REACH a RecursionError at all: heapEq's active-pair
+    # check, the same shape two_cycles_eq pins. CPython's MRO is
+    # RecursionError <- RuntimeError, so the WIDER handler name catches the
+    # narrower error -- which is why builtinExcCatches is a subsumption
+    # relation and not a name-to-constructor equality.
+    d = {}
+    e = {}
+    d[0] = d
+    e[0] = e
+    try:
+        return 1 if d == e else 0
+    except RuntimeError:
+        return a

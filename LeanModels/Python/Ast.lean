@@ -29,6 +29,7 @@ inductive BinOp where
   | bitOr | bitXor | bitAnd
 deriving Repr, Inhabited, BEq, DecidableEq
 
+
 /-- Unary operators. 1:1 with CPython: `usub` ↔ `USub`, `not` ↔ `Not`,
 `uadd` ↔ `UAdd`, `invert` ↔ `Invert`. -/
 inductive UnaryOp where
@@ -454,10 +455,17 @@ inductive PyErr where
   exactly as it is today, so a message gap closes at ZERO cost to the
   spec surface. A payload would have changed all of them.
 
-  `except ZeroDivisionError:` needs no update: builtin exception names are
-  not matchable at all (only admitted user classes and the pinned
-  import-error names), so the two cannot be told apart by any program in
-  the tier. -/
+  **THAT ARGUMENT EXPIRED, and this is the repair.** It read: *"`except
+  ZeroDivisionError:` needs no update: builtin exception names are not
+  matchable at all … so the two cannot be told apart by any program in the
+  tier."* True when written, and it was a claim about a LIMITATION rather
+  than about the split — so the inch that lifted the limitation
+  (§except-builtin) falsified it, and no proof noticed because no proof
+  depended on it. Builtin names ARE matchable now, so a program CAN tell
+  the two apart, and `builtinExcCatches` maps **both** constructors to
+  `ZeroDivisionError` for exactly that reason: mapping only the first would
+  let `0 ** -1` escape a handler CPython catches, which is a wrong answer
+  and not a missing feature. -/
   | zeroDivisionPow
   | indexError
   | valueError (msg : String)
@@ -501,6 +509,59 @@ inductive PyErr where
   class-identity representation observationally exact. -/
   | user (cid : Nat) (name : String)
 deriving Repr, Inhabited, BEq, DecidableEq
+/-! ### §except-builtin — WHICH BUILTIN EXCEPTION NAMES A HANDLER MAY MATCH
+
+Three tables, and they are DATA rather than logic spread through the two
+`except` matchers (the rebuild has one at function scope and one at module
+scope, and a rule spelled twice is a rule that drifts).
+
+**NOTHING IS INFERRED.** CPython's exception hierarchy is deep and mostly
+irrelevant here; every pair below is one this tier can actually exhibit,
+cited against CPython 3.9.19's own MRO. An ancestor the tier could compute
+but has not measured is REFUSED by name, not admitted by derivation. -/
+
+/-- The builtin exception names an `except` clause may name. Exactly the
+classes this tier can RAISE, plus the universal `Exception`. -/
+def admittedBuiltinExc : List String :=
+  ["Exception", "TypeError", "NameError", "ZeroDivisionError", "IndexError",
+   "ValueError", "KeyError", "RuntimeError", "RecursionError",
+   "AttributeError", "AssertionError", "StopIteration"]
+
+/-- Ancestors CPython defines and this tier deliberately does NOT admit yet.
+Named so the refusal can say WHAT it would have caught rather than emitting
+the generic message — a frontier that names itself is one the next inch can
+price. `BaseException` additionally differs from `Exception` on classes this
+tier cannot raise at all (`KeyboardInterrupt`, `SystemExit`). -/
+def refusedAncestorExc : List String :=
+  ["BaseException", "ArithmeticError", "LookupError", "OSError", "EnvironmentError"]
+
+/-- Does `except <cls>:` catch this error? The SUBSUMPTION relation, as an
+explicit list of pairs.
+
+    Exception          catches everything below, and every admitted user
+                       exception class too (`class N(Exception): pass`)
+    ZeroDivisionError  catches BOTH `zeroDivisionError` and `zeroDivisionPow`
+                       — CPython presents one class with two messages
+    RuntimeError       catches `recursionError` as well: CPython's MRO is
+                       `RecursionError <- RuntimeError <- Exception`, which is
+                       why this is a subsumption relation and not an equality
+    everything else    exact, one name to one constructor -/
+def builtinExcCatches : String → PyErr → Bool
+  | "Exception",         _                   => true
+  | "TypeError",         .typeError _        => true
+  | "NameError",         .nameError _        => true
+  | "ZeroDivisionError", .zeroDivisionError  => true
+  | "ZeroDivisionError", .zeroDivisionPow    => true
+  | "IndexError",        .indexError         => true
+  | "ValueError",        .valueError _       => true
+  | "KeyError",          .keyError           => true
+  | "RuntimeError",      .runtimeError _     => true
+  | "RuntimeError",      .recursionError     => true
+  | "RecursionError",    .recursionError     => true
+  | "AttributeError",    .attributeError     => true
+  | "AssertionError",    .assertionError _   => true
+  | "StopIteration",     .stopIteration      => true
+  | _,                   _                   => false
 
 /-- Interpreter results. `unsupported` = outside the v0 tier (loud), NOT a Python error. -/
 inductive Res (α : Type) where

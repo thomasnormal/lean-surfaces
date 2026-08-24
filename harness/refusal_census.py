@@ -238,7 +238,12 @@ try:
     print(1)
 except ValueError:
     print(2)
-""", "REFUSE", "the handler sort")
+""", "MATCH",
+  "FLIPPED by §except-builtin: `ValueError` is now an admitted handler class. "
+  "WHAT THIS ROW PROVES AND DOES NOT: the production is reachable and the "
+  "program answers 1 — the handler never FIRES here, so the catch itself is "
+  "exercised by `exc_lab::except_builtin(0)` and `except_exception`, not by "
+  "this witness. A grammar row is a lower bound on coverage, never the catch")
 w("stmt.Assert", """
 assert 1 == 1
 print("ok")
@@ -937,8 +942,11 @@ WHITELIST_CLASS = {
     "exc_lab::bare_except": "exc.handler",
     "exc_lab::multi_handler": "exc.handler",
     "exc_lab::tuple_handler": "exc.handler",
-    "exc_lab::except_exception": "exc.handler",
-    "exc_lab::except_builtin": "exc.handler",
+    # §except-builtin: the FRONTIER. `except_builtin`/`except_exception` LEFT
+    # this table when builtin classes became matchable; this row is what keeps
+    # the boundary falsifiable -- an ancestor the tier refuses BY NAME rather
+    # than deriving a catch set it has never enumerated.
+    "exc_lab::except_ancestor_still_loud": "exc.ancestor-class",
     "exc_lab::raise_args": "exc.raise",
     "exc_lab::raise_bare": "exc.raise",
     "exc_lab::raise_value": "exc.raise",
@@ -982,7 +990,6 @@ WHITELIST_CLASS = {
     "ann_lab::ann_novalue_shadows_global": "annassign.no-value",
     "ann_lab::ann_attr_target": "annassign.non-simple-target",
     "assert_lab::msg_set": "set.order",
-    "assert_lab::catch_assert": "exc.handler",
     "fstring_lab::conversion_repr": "fstring.conversion",
     "fstring_lab::conversion_ascii": "fstring.conversion",
     "fstring_lab::format_spec": "fstring.format-spec",

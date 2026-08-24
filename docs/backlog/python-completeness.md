@@ -147,7 +147,7 @@ left asserting a defect that no longer exists.
 
 ---
 
-## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-6` (Python lane's to triage)
+## 2026-08-22-softfloat-6 — INBOUND FROM THE SOFTFLOAT LANE: Python lane's to triage
 
 *Filed by the SoftFloat lane during its core census
 (`docs/softfloat-charter.md` §2.5). Id kept in the SoftFloat namespace.*
@@ -2061,3 +2061,133 @@ guards. `declared-divergences: 1` for this tier.
 file is a GATE, and a gate that lands without being run is the §5.4b shape
 again. So the instrument was added to `--gates` explicitly rather than relying
 on the class floor, which runs only `docs_check`.
+
+## 2026-08-24-pycomplete-22 — `except <builtin>:` lands as a SUBSUMPTION TABLE, and a docstring that argued a case away expires with it
+
+`exc_lab::except_builtin` was the whitelisted refusal upstream-blocking
+`pyc-div-1`'s witness: a program-level probe of the sticky dict-iterator needs
+`except RuntimeError:`, and the tier's admitted handler shape named user
+classes only.
+
+### THE FLAGSHIP DOES NOT CARE, measured before anything else
+
+`bound()` contains **zero** `try` statements. All of `sunfish.py` has exactly
+one, and its handler is `Stop` — a user class already in tier. So rung 9 is
+untouched either way, and this inch is paying down a DEBT rather than serving
+the flagship.
+
+### BLAST RADIUS — AND I SCOPED IT WRONG TWICE, at two different scales
+
+The first census enumerated handlers in `exc_lab.py` and found two builtin
+classes (`ZeroDivisionError`, `Exception`). **The gate found a third**:
+`assert_lab::catch_assert` catches `AssertionError`, and I had never looked
+outside the file the row I was fixing happened to live in.
+
+Re-scoped to `Examples/python/*/*.py` and re-ticketed. **The gate found a
+fourth**: the grammar witness `stmt.Try` catches `ValueError` — and the grammar
+census's witnesses are not files at all, they are Python source embedded as
+STRING LITERALS inside `harness/refusal_census.py`.
+
+> **A blast-radius census must span every corpus that RUNS the language, and
+> this repository has three in three different shapes** — typed-call witnesses
+> in `Examples/python/*/*.py`, grammar witnesses as inline source inside
+> `refusal_census.py`, and whole programs in `harness/scripts/*.py`. Scoping to
+> the file where the defect lives finds one; scoping to the obvious corpus
+> finds most; only enumerating all three finds them all.
+
+Two red tenures for one error at two scales. The complete enumeration:
+
+| corpus | site | handler | disposition |
+| --- | --- | --- | --- |
+| Examples | `exc_lab` | `ZeroDivisionError`, `Exception` | FLIP to match |
+| Examples | `assert_lab` | `AssertionError` | FLIP — missed by census 1 |
+| Examples | `import_lab` ×3 | `ImportError` | unaffected — `importErrorHandlerMatch` is checked first |
+| Census | `stmt.Try` | `ValueError` | FLIP — missed by census 2 |
+| Scripts | 3 files | `ImportError` | unaffected, same reason |
+
+**And two of the flipping rows were vacuous.** `except_builtin` passed `n=1`,
+which never divides by zero, and `stmt.Try`'s program never raises at all —
+both would have flipped to `match` WITHOUT ENTERING A HANDLER. The flip adds
+`n=0` to the first; the second keeps its verdict, but its note now says plainly
+what it does and does not prove, because a grammar row is a lower bound on
+coverage and never evidence about the catch.
+
+### WHY IT IS A TABLE, AND WHY IT IS DATA
+
+Three facts make a name-to-constructor equality wrong:
+
+* **`RecursionError <- RuntimeError`** in CPython's MRO, so the WIDER handler
+  name must catch the narrower error. This pair alone makes it a subsumption
+  relation.
+* **`except Exception:` is universal** — every builtin the tier raises, and
+  every admitted user class too.
+* **`ZeroDivisionError` is TWO constructors** — see below.
+
+So the relation lives in `Ast.lean` as three explicit tables
+(`admittedBuiltinExc`, `refusedAncestorExc`, `builtinExcCatches`) rather than
+as logic inside the matcher — **because the matcher exists twice**, at function
+scope and at module scope, and a rule spelled twice is a rule that drifts.
+**Nothing is inferred**: every pair is one this tier can actually exhibit, and
+an ancestor the tier could compute but has not measured is refused BY NAME.
+
+### THE DOCSTRING THAT EXPIRED, and it is the third of its shape
+
+`PyErr.zeroDivisionPow`'s own docstring justified splitting the constructor
+partly on this:
+
+> *"`except ZeroDivisionError:` needs no update: builtin exception names are
+> not matchable at all … so the two cannot be told apart by any program in the
+> tier."*
+
+True when written — and a claim about a LIMITATION rather than about the split,
+so the inch that lifted the limitation falsified it, and **no proof noticed
+because no proof depended on it.** Had the table mapped only
+`zeroDivisionError`, `0 ** -1` would silently escape a handler CPython
+catches: *a wrong answer, not a missing feature.* Both constructors map, and
+the docstring is repaired in the same commit as the code that invalidated it.
+
+> **Third instance of one shape: a docstring that argues a case away on the
+> strength of a limitation the next inch removes.** `sbEvict_lit`'s "ingests as
+> `Stmt.unsupported`" (§pycomplete-20), this lane's own "cannot be witnessed"
+> (§pycomplete-19), and now this. The common factor is not carelessness — each
+> was true when written. It is that **an argument resting on what the tier
+> CANNOT do has an expiry date that nothing in the tree tracks.**
+
+### The frontier names itself
+
+`ArithmeticError`, `LookupError`, `BaseException`, `OSError`,
+`EnvironmentError` are refused BY NAME with a message saying why — admitting
+them would claim a catch set the model has never enumerated.
+`exc_lab::except_ancestor_still_loud` is the falsifiable witness (CPython
+answers −1 through `ArithmeticError`); it joins `WHITELIST_CLASS` as
+`exc.ancestor-class`, so the frontier is a row rather than a belief.
+
+**And the subsumption witness had to move.** Its first draft used a nested
+recursive `def` — which is `closure_lab::rec_nested_name`'s whitelisted
+refusal, so it would have refused for a reason having nothing to do with
+exceptions. Its second problem was worse: the tier reaches `.recursionError`
+at exactly ONE site, `heapEq`'s active-pair check, so deep recursion exhausts
+FUEL instead. The witness lives in `dict_lab` on the two-self-cyclic-dicts
+shape, which is the only place the pair is reachable at all.
+
+### Census deltas
+
+* `harness/cases.json` **697 → 699 rows**; `except_builtin`,
+  `except_exception` and `assert_lab::catch_assert` FLIP
+  `unsupported → match` and leave `WHITELIST_CLASS`; one new gap joins it
+  (`exc.ancestor-class`). Grammar census: `stmt.Try` flips `REFUSE → MATCH`.
+* `docs/backlog/python-completeness.md`'s INBOUND heading re-spelled id-first.
+  The index derives an entry's id from the heading's FIRST TOKEN, so the old
+  spelling rendered the row as ``| `INBOUND` | INBOUND | … |`` — present but
+  unaddressable. Six of six now conform.
+
+### What this unblocks
+
+`pyc-div-1`'s retirement condition named `exc_lab::except_builtin` leaving the
+whitelist as its blocker. **It has left.** The debt's witness
+(`dict_lab::iter_sticky_after_resize`) is now writable, so the row's probe can
+gain its program-level form and the retirement becomes fully exercisable — the
+next inch, not this one, because writing the witness is where that debt's
+measurement belongs.
+
+**§9.0: `3 of 3` flagship-serving pyc surfaces · `declared-divergences: 1`.**

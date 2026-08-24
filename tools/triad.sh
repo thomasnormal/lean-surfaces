@@ -1615,6 +1615,52 @@ base_staleness() {              # [fresh] -> the line; never fails a run
 # refuse where the staleness line only warns.  It fires only on an un-rebased
 # worktree, it is local once the tip is fetched, and an ABSENT answer is never
 # a refusal — not knowing master's version is not evidence that ours is old.
+# IS THIS COPY OF THE TOOL A SUPERSEDED PUBLISHED VERSION? (item 15)
+#
+# A version skew that recurs is not a lane's carelessness, it is a missing
+# guard.  Two live tripwires were found by inspection on 2026-08-24
+# (lean-softfloat, lean-ada): copies carrying a `triad.sh` from before a fix,
+# refusing tickets for a defect that had already been repaired.
+#
+# COMPARED BY THE TOOL'S IDENTITY, NEVER BY GIT ANCESTRY.  A worktree on an old
+# branch legitimately carries old commits; what matters is which VERSION OF THE
+# TOOL it is running.  So the question asked is content identity:
+#
+#   > is my `tools/triad.sh` byte-identical to a PUBLISHED version of it that
+#   > master has since replaced?
+#
+# That ordering is what a bare hash comparison cannot give.  It also answers
+# the hazard that makes the naive test unusable: A LANE EDITING THIS TOOL has
+# content matching NOTHING in master's history, so it is never "behind" and is
+# never refused — which matters, because the lane that maintains the guard
+# would otherwise be the one it blocks first.  Three states, one test:
+#
+#   matches the tip .................. current, allow
+#   matches an OLDER published version SUPERSEDED, refuse a NEW enqueue
+#   matches nothing .................. local work, allow
+# THE OBJECT IS THE SCRIPT THAT IS RUNNING, not `$CLONE/tools/triad.sh`.  They
+# are the same file in the normal case and NOT the same when a lane points a
+# current tool at another checkout with `--dir`: there the tool enforcing the
+# rules is the current one, and refusing because the OTHER tree carries an old
+# copy would be a wrong-object refusal — §5.4b's pointer question aimed at this
+# guard.  Parameterised so the fixtures can name a file; defaults to us.
+tool_is_superseded() {          # [path] -> the sha our copy matches, when superseded
+  local f="${1:-${BASH_SOURCE[0]}}" tip mine c n=0
+  mine="$(git hash-object "$f" 2>/dev/null)" || return 1
+  [ -n "$mine" ] || return 1
+  tip="$(remote_tip)"
+  case "$tip" in !*) return 1 ;; esac      # an absent answer is never a refusal
+  [ "$(git -C "$CLONE" rev-parse "$tip:tools/triad.sh" 2>/dev/null)" = "$mine" ] && return 1
+  # BOUNDED: the last 60 published versions of this one file, newest first.
+  for c in $(git -C "$CLONE" log --format=%H "$tip" -- tools/triad.sh 2>/dev/null | head -60); do
+    n=$((n + 1))
+    if [ "$(git -C "$CLONE" rev-parse "$c:tools/triad.sh" 2>/dev/null)" = "$mine" ]; then
+      printf '%s' "$c"; return 0
+    fi
+  done
+  return 1                                 # not a published version: local work
+}
+
 stamp_version_guard() {
   local tip theirs
   [ "$FOREIGN" = "1" ] && return 0
@@ -1631,6 +1677,26 @@ stamp_version_guard() {
   which is how a fresh ticket gets an unstaged rewrite past the guard.
   Commit or stash, rebase onto $tipshort, and re-run.
   (A ticket already IN FLIGHT is accepted-and-logged; a NEW one is not.)"
+}
+
+# THE SECOND HALF OF THE SAME REFUSAL, and it fires where the first cannot: a
+# skew that changed no STAMP_VERSION.  Both are enqueue-only by construction —
+# this runs in the precondition block and nothing calls it at acquire — so a
+# ticket already in flight is untouched, per the v1/v2 accept-and-log precedent.
+tool_version_guard() {
+  local sup supshort behind tipshort
+  [ "$FOREIGN" = "1" ] && return 0
+  sup="$(tool_is_superseded)" || return 0
+  supshort="$(git -C "$CLONE" rev-parse --short "$sup" 2>/dev/null)"
+  tipshort="$(git -C "$CLONE" rev-parse --short "$(remote_tip)" 2>/dev/null)"
+  behind="$(git -C "$CLONE" rev-list --count "$sup..$TIP_REF" -- tools/triad.sh 2>/dev/null || echo '?')"
+  die "this worktree's tools/triad.sh is a SUPERSEDED version: byte-identical to master at
+  $supshort, which is $behind published change(s) behind master ($tipshort) ON THAT FILE.
+  A ticket enqueued here would be judged by an OLDER tool than the one master enforces,
+  and two lanes spent a day refusing tickets for defects already repaired.
+  Refresh it:  git checkout master -- tools/triad.sh     (or rebase this worktree)
+  (A ticket already IN FLIGHT is accepted-and-logged; a NEW one is not.
+   A copy you are EDITING matches no published version and is never refused.)"
 }
 
 class_hint() {                  # -> the advisory text; never refuses, never narrows
@@ -2279,6 +2345,37 @@ if [ "$SELF_TEST" = "1" ]; then
   # evidence that ours is old.
   git -C "$wk" remote set-url origin "$tmp/nope.git"; rm -f "$TIP_CACHE_FILE"
   check "an unreachable remote never refuses" "$( ( stamp_version_guard ) >/dev/null 2>&1; echo $?)" "0"
+
+  # ---- IS THIS COPY OF THE TOOL SUPERSEDED? (item 15)
+  # The work clone sits at the FIRST commit while the upstream has moved on,
+  # so its tools/triad.sh is a published version master has replaced -- the
+  # exact shape that had two lanes refusing tickets for repaired defects.
+  git -C "$wk" remote set-url origin "$up"; rm -f "$TIP_CACHE_FILE"
+  wkt="$wk/tools/triad.sh"
+  check "an OLD published copy is SUPERSEDED"  \
+        "$(tool_is_superseded "$wkt" >/dev/null 2>&1 && echo superseded || echo allowed)" "superseded"
+  check "  ...and it names WHICH version it is" \
+        "$(git -C "$wk" rev-parse --short "$(tool_is_superseded "$wkt")" 2>/dev/null | grep -c .)" "1"
+  # THE TIP ITSELF IS NOT BEHIND ANYTHING.
+  git -C "$sd" show HEAD:tools/triad.sh > "$tmp/tip-copy.sh" 2>/dev/null
+  rm -f "$TIP_CACHE_FILE"
+  check "the CURRENT version is allowed"       \
+        "$(tool_is_superseded "$tmp/tip-copy.sh" >/dev/null 2>&1 && echo superseded || echo allowed)" "allowed"
+  # AND THE HAZARD THAT MAKES THE NAIVE TEST UNUSABLE: a lane EDITING this tool
+  # matches no published version, so it is never "behind" and never refused --
+  # otherwise the lane that maintains the guard is the one it blocks first.
+  cp "$wkt" "$tmp/edited.sh"; printf '\n# a local edit\n' >> "$tmp/edited.sh"
+  rm -f "$TIP_CACHE_FILE"
+  check "a copy being EDITED is never superseded" \
+        "$(tool_is_superseded "$tmp/edited.sh" >/dev/null 2>&1 && echo superseded || echo allowed)" "allowed"
+  # ABSENCE IS NEVER A REFUSAL, the same rule the staleness line follows.
+  git -C "$wk" remote set-url origin "$tmp/nope.git"; rm -f "$TIP_CACHE_FILE"
+  check "an unreachable remote never refuses it" \
+        "$(tool_is_superseded "$wkt" >/dev/null 2>&1 && echo superseded || echo allowed)" "allowed"
+  git -C "$wk" remote set-url origin "$up"; rm -f "$TIP_CACHE_FILE"
+  # A MISSING FILE IS NOT A SUPERSEDED ONE.
+  check "a nonexistent path is not superseded"  \
+        "$(tool_is_superseded "$tmp/no-such-tool.sh" >/dev/null 2>&1 && echo superseded || echo allowed)" "allowed"
   git -C "$wk" remote set-url origin "$up"; rm -f "$TIP_CACHE_FILE"
   CLONE="$saved_cl"; FOREIGN="$saved_fg"; rm -f "$TIP_CACHE_FILE"
 
@@ -2910,6 +3007,7 @@ if [ "$CLASSIFY_ONLY" = "0" ]; then
   gate_reason="$(gate_spec_refusal "$(gates_planned)" plan)" && die "$gate_reason"
 fi
 stamp_version_guard      # a NEW ticket from a pre-rebase worktree is refused here
+tool_version_guard       # ...and one from a SUPERSEDED copy of this tool
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
 cd "$CLONE" || die "cannot cd '$CLONE'"

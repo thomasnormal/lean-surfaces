@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**329 entries across 17 lanes.** Regenerate with
+**330 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -41,6 +41,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-architecture-62` |  | The ruling met reality within the hour, and reality had four corrections | architecture |
 | `2026-08-24-architecture-61` |  | A declared divergence is a debt, not a verdict | architecture |
 | `2026-08-24-architecture-60` |  | The merge fixes what is false; only the owner sees what is now redundant | architecture |
+| `2026-08-24-qol-59` |  | the item-12 residual is stale copies, and a courtesy scoped to one clone | qol |
 | `2026-08-24-architecture-59` |  | Re-pointing a guard is not monotone tightening | architecture |
 | `2026-08-24-qol-58` |  | the clause the gate lacked was exactly the incident it did not catch | qol |
 | `2026-08-24-architecture-58` |  | The guard built to pin the tree points at the index | architecture |

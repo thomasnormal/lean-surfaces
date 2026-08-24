@@ -75,6 +75,7 @@
 #   tools/check.sh --explain path/to/f.lean # decide and PRINT, run nothing
 #   tools/check.sh --iterate --lane <you> path/to/file.lean
 #   tools/check.sh --axioms 'Foo.bar,Foo.baz' path/to/file.lean
+#   tools/check.sh --clone <path>   # the target lives in ANOTHER checkout
 #   tools/check.sh --self-test              # every refusal path RUN, no Lean
 #
 # EXIT  0 elaborated clean (or --explain)   1 Lean reported errors
@@ -87,6 +88,25 @@
 set -u
 
 CLONE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# WHERE THE TARGET LIVES, which is not always where this script lives.
+#
+# The out-of-clone refusal below is RIGHT — a path outside the checkout cannot
+# be classified against its lakefile, and silently elaborating one would be the
+# wrong-tree family again.  But its SCOPE was the script's own clone, so the
+# Lean tier's export corner — whose work lives in a foreign lean4export
+# checkout BY CHARTER — could never use `--iterate` at all.  A17's courtesy
+# loop was machine-wide in its wording and per-clone in its reach:
+#
+# > A courtesy protocol scoped to one clone is invisible to a lane whose work
+# > is in another.
+#
+# So the guard is re-pointed, never removed, and only ON REQUEST.  What follows
+# the target are the TARGET-RELATIVE reads: its lakefile globs, its oleans, the
+# directory the elaboration runs in.  What does NOT follow it are the
+# CHARTER-relative reads — A17's own citation and this repo's backlog driver
+# are claims about OUR repository and stay here.  The load and pressure lines
+# are untouched: they are machine-wide facts and have no clone.
+TARGET_CLONE="${LS_CHECK_CLONE:-}"
 LOCK="${LS_LOCK:-/tmp/ls-build.lock}"
 NICE="${LS_NICE:-19}"
 EXPLAIN=0
@@ -114,6 +134,7 @@ die()   { echo "check.sh: $*" >&2; exit 2; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
+    --clone)     need_val "$#" "$1"; TARGET_CLONE="$2"; shift 2 ;;
     --explain)   EXPLAIN=1; shift ;;
     --iterate)   ITERATE=1; shift ;;
     --axioms)    need_val "$#" "$1"; AXIOMS="$2"; shift 2 ;;
@@ -135,7 +156,7 @@ LAKEINFO="$(dirname "${BASH_SOURCE[0]}")/lakeinfo.sh"
 # shellcheck source=/dev/null
 . "$LAKEINFO"
 
-glob_class() { lake_glob_class "$CLONE" "$1"; }
+glob_class() { lake_glob_class "${TARGET_CLONE:-$CLONE}" "$1"; }
 
 # ---------------------------------------------------------------- imports
 imports_of() {                  # file -> imported module names, one per line
@@ -149,8 +170,8 @@ is_core_module() {              # toolchain-provided: not our olean to check
 olean_for() {                   # module -> olean path, or '' when absent
   local rel c
   rel="$(printf '%s' "$1" | sed 's/[«»]//g' | tr '.' '/')"
-  for c in "$CLONE/.lake/build/lib/lean/$rel.olean" \
-           "$CLONE"/.lake/packages/*/.lake/build/lib/lean/"$rel".olean; do
+  for c in "${TARGET_CLONE:-$CLONE}/.lake/build/lib/lean/$rel.olean" \
+           "${TARGET_CLONE:-$CLONE}"/.lake/packages/*/.lake/build/lib/lean/"$rel".olean; do
     [ -f "$c" ] && { echo "$c"; return 0; }
   done
   echo ""; return 1
@@ -502,7 +523,7 @@ decide_iterate() {              # sets VERDICT / WHY / MISSING, and the numbers
     esac
     return 0
   fi
-  MISSING="$(missing_oleans "$CLONE/$1" 2>/dev/null || true)"
+  MISSING="$(missing_oleans "${TARGET_CLONE:-$CLONE}/$1" 2>/dev/null || true)"
   if [ -n "$MISSING" ]; then
     VERDICT="refuse-cold"
     WHY="this clone is COLD for $(printf '%s\n' "$MISSING" | grep -c .) of the file's imports — resolving them here is Lean execution outside the lock (A11) and a GB-scale download (A13). Seed first, then iterate"
@@ -530,7 +551,7 @@ decide() {                      # decide <repo-relative-path>
     WHY="'$1' is inside a lake library glob — that is the build's own graph, not a scratch file. Rule 3's exemption does not cover it: take a ticket (tools/triad.sh --lane <you>). LIBRARY FILE: the in-file '#print axioms' ledger via a tenure is the evidence path — --axioms is for SCRATCH files, and this refusal is by design, not a gap"
     return 0
   fi
-  MISSING="$(missing_oleans "$CLONE/$1" 2>/dev/null || true)"
+  MISSING="$(missing_oleans "${TARGET_CLONE:-$CLONE}/$1" 2>/dev/null || true)"
   if [ -n "$MISSING" ]; then
     VERDICT="refuse-cold"
     WHY="this clone is COLD for $(printf '%s\n' "$MISSING" | grep -c .) of the file's imports. Running it here would RESOLVE AND DOWNLOAD them — Lean execution outside the lock (A11) and a GB-scale download instead of CoW seeding (A13). Seed first (A13), then probe"
@@ -745,6 +766,34 @@ TOML
         "$(printf 'testlane %s\n' "$$" > "$ITER_DIR/$$"; LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean; echo "$VERDICT")" "iterate"
   rm -f "$ITER_DIR"/*
 
+  # ---- THE OUT-OF-CLONE GUARD, AND ITS OPT-IN (the Lean tier's export corner)
+  # Driven through the FLAG PATH: the guard lives in the main flow, so no
+  # helper-level row can see it.  LS_MOCK_LOAD forces an immediate refuse-load
+  # so the run stops before any elaboration -- what is under test is whether
+  # the guard let the path through, not what happens after.
+  fgn="$tmp/foreign"; mkdir -p "$fgn"
+  printf 'name = "e"\n[[lean_lib]]\nname = "Export"\n' > "$fgn/lakefile.toml"
+  printf -- '-- x\n' > "$fgn/x.lean"
+  guard_out() {                 # extra args... -> the run's output
+    LS_MOCK_LOAD=99 timeout 60 bash "$0" --lane t --iterate "$@" 2>&1
+  }
+  check "a foreign target is REFUSED by default" \
+        "$(guard_out "$fgn/x.lean" | grep -c 'is outside')" "1"
+  check "  ...and the refusal NAMES the opt-in" \
+        "$(guard_out "$fgn/x.lean" | grep -c 'clone <path>')" "1"
+  check "--clone ACCEPTS the same target"       \
+        "$(guard_out --clone "$fgn" "$fgn/x.lean" | grep -c 'is outside')" "0"
+  check "  ...and LS_CHECK_CLONE does too"      \
+        "$(LS_CHECK_CLONE="$fgn" guard_out "$fgn/x.lean" | grep -c 'is outside')" "0"
+  check "  ...reaching the machine-wide lines"  \
+        "$(guard_out --clone "$fgn" "$fgn/x.lean" | grep -c 'load average is 99')" "1"
+  check "a bad --clone is refused by name"      \
+        "$(guard_out --clone "$tmp/nope" "$fgn/x.lean" | grep -c "is not a directory")" "1"
+  # THE IN-CLONE PATH IS UNCHANGED, which is the half that must not regress.
+  check "an in-clone target still passes"       \
+        "$(guard_out "$CLONE/tools/check.sh" | grep -c 'is outside')" "0"
+
+
   # The self-updating citation, in all three states.
   a17dir="$tmp/a17"; mkdir -p "$a17dir/docs"
   saved_clone="$CLONE"; CLONE="$a17dir"
@@ -859,6 +908,8 @@ fi
 # ------------------------------------------------------------------- main
 [ -n "$TARGET" ] || die "a .lean file is required (or --self-test)"
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
+[ -n "${TARGET_CLONE:-$CLONE}" ] || TARGET_CLONE="$CLONE"
+[ -d "${TARGET_CLONE:-$CLONE}" ] || die "--clone '$TARGET_CLONE' is not a directory"
 case "$TARGET" in *.lean) ;; *) die "'$TARGET' is not a .lean file" ;; esac
 
 # Same one-per-clone merge-driver fix the triad does — a lane that only ever
@@ -870,8 +921,10 @@ case "$TARGET" in *.lean) ;; *) die "'$TARGET' is not a .lean file" ;; esac
 ABS="$TARGET"
 case "$ABS" in /*) ;; *) ABS="$(pwd)/$TARGET" ;; esac
 [ -f "$ABS" ] || die "no such file: $TARGET"
-REL="${ABS#"$CLONE"/}"
-case "$REL" in /*) die "'$TARGET' is outside the clone '$CLONE'" ;; esac
+REL="${ABS#"${TARGET_CLONE:-$CLONE}"/}"
+case "$REL" in /*)
+  die "'$TARGET' is outside '$TARGET_CLONE'. A path outside the checkout cannot be classified against its lakefile. If the target legitimately lives in another checkout — the Lean tier's export corner does, by charter — name it: --clone <path> (or LS_CHECK_CLONE=<path>)." ;;
+esac
 
 if [ "$ITERATE" = "1" ]; then
   [ -n "$LANE" ] || die "--iterate requires --lane <name>: the one-per-lane slot is a pidfile keyed by it"
@@ -916,7 +969,7 @@ if [ "$EXPLAIN" = "1" ]; then
   echo "  --explain: nothing was run."
   exit 0
 fi
-cd "$CLONE" || die "cannot cd '$CLONE'"
+cd "${TARGET_CLONE:-$CLONE}" || die "cannot cd '$TARGET_CLONE'"
 ITER_WATCHDOG=""
 ENTRY=""
 cleanup_iterate() {
@@ -969,7 +1022,7 @@ RUN_TARGET="$REL"
 AXCOPY=""
 if [ -n "$AXIOMS" ]; then
   AXCOPY="$(mktemp "${TMPDIR:-/tmp}/check-axioms.XXXXXX.lean")" || die "no temp file"
-  cat "$CLONE/$REL" > "$AXCOPY" || die "cannot copy '$REL'"
+  cat "${TARGET_CLONE:-$CLONE}/$REL" > "$AXCOPY" || die "cannot copy '$REL'"
   printf '\n' >> "$AXCOPY"
   AX_WANT="$(append_axiom_prints "$AXCOPY" "$AXIOMS")" || die "cannot write '$AXCOPY'"
   [ "${AX_WANT:-0}" -gt 0 ] || die "--axioms '$AXIOMS' named nothing to print"

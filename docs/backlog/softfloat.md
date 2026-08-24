@@ -1208,3 +1208,69 @@ With the bits now meaning something, the residue is in hand. What is left:
 the `Accuracy`, now that `Accuracy` is pinned to `m % 2^(n+1)` vs `2^n`); the
 second `shiftToTargetExponent` absorbs a rounding carry-out; and the result is
 nearest among **all** representables, which is the interleaving argument.
+
+---
+
+## 2026-08-24-softfloat-21 — THE NEARER-NEIGHBOUR CASE ANALYSIS: core's rounding IS round-half-to-even
+
+`LeanModels/SoftFloat/Theorems.lean`. `em_shift_eq` and
+`roundedMantissa_eq_roundHalfEven`, both `[propext, Classical.choice,
+Quot.sound]`, verdict **TRUSTWORTHY**, zero `sorry`.
+
+### THE STATEMENT
+
+```
+(⟨m, false, false⟩ >>> (n+1)).roundedMantissa
+  = if 2 * (m % 2^(n+1)) < 2^(n+1) then m / 2^(n+1)
+    else if 2^(n+1) < 2 * (m % 2^(n+1)) then m / 2^(n+1) + 1
+    else m / 2^(n+1) + (m / 2^(n+1)) % 2
+```
+
+Both sides are **exact integer arithmetic against the residue**. Core's
+rounding is no longer a bit procedure this component reasons *around*; it is
+round-half-to-even, and the four branches are the four IEEE §4.3.1 cases:
+exact, strictly below half, **exactly half → tie to even**, strictly above.
+
+The step it unlocks is the one it was for: `Accuracy` was pinned to the residue
+by the bridge lemmas, and the case analysis was then closed rather than
+open-ended — four branches, each decided.
+
+### FOUR OBSTACLES, AND EACH IS A GENERAL LESSON
+
+The proof took five iterations. Every failure was mechanical, and all four
+causes recur:
+
+1. **A `match` will not reduce while its scrutinee is symbolic.** Core's
+   `accuracy` matches on `⟨_, roundBit, stickyBit⟩`; leaving
+   `stickyBit := m % 2^n != 0` un-literalised stalled two branches with no
+   error message pointing at the cause. **Both bits must be literal `true`/
+   `false` first** — by `rw [hb]` where a hypothesis is an equation, and by
+   `rw [show (… != 0) = true from by simp [hs]]` where it is a negation.
+2. **A hypothesis stated over `2^(n+1)` never fires against a goal rewritten
+   to `2 * 2^n`.** `hres` had to be *restated* over the same power the goal
+   carries. Rewriting the goal and not the hypothesis is a silent no-op.
+3. **`omega` cannot resolve an `if`.** The last branch failed with a
+   perfectly linear goal still wrapped in a conditional; `rw [if_neg (by
+   omega), if_pos (by omega)]` discharged the conditions and the rest was
+   `rfl`.
+4. **`omega` is linear** — already recorded for `2^n * bit`, and it bit again.
+
+### THE METHOD NOTE FROM THE LAST ENTRY PAID FOR ITSELF, TWICE
+
+`2026-08-24-softfloat-20` recorded *"stop guessing definitional forms; run
+`trace_state` and read the goal."* Two of the four obstacles above were found
+that way in one step each, after guesses had failed repeatedly. The third
+guess-driven attempt made the proof **worse** — an invented `show
+… = decide (1 = …)` rewrite turned 2 failing cases into 8. Reading beat
+guessing every time it was tried.
+
+### §9.0 — STILL 1/12
+
+Lemmas toward `RoundWithAccuracyIsNearest`, not the obligation.
+**32 landed theorems, 1 an unconditional `op_correct`.**
+
+### WHAT REMAINS, in dependency order
+
+Carry-out absorption (the second `shiftToTargetExponent`, for when rounding up
+overflows the significand), then nearest-among-**all**-representables — the
+interleaving argument, which is the genuinely hard one and the last piece.

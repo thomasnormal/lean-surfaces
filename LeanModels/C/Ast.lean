@@ -129,7 +129,16 @@ everything but a function definition. -/
 inductive Decl where
   | var (name : String) (ty : CType) (storage : Option String)
       (init : Option Expr) (span : CSpan)
-  | param (name : String) (ty : CType) (span : CSpan)
+  /-- A parameter. `name` is **optional**, because C's is: §6.7.6.3 lets a
+  prototype declare a parameter with no identifier (`int f(int);`), and
+  clang reports one with no `name`.
+
+  `none` is not `""` and is never a synthetic. A fabricated `_unnamed_3`
+  would be a fabricated column one field over — it reads exactly like a
+  real name, and something downstream would eventually look it up. The
+  absence is decided in exactly ONE place, `C23.bindParams`
+  (`docs/backlog/c.md` 2026-08-24-c-20). -/
+  | param (name : Option String) (ty : CType) (span : CSpan)
   | field (name : String) (ty : CType) (span : CSpan)
   | record (name : Option String) (fields : List Decl) (span : CSpan)
   | typedef (name : String) (ty : CType) (underlying : Option TypeNode) (span : CSpan)

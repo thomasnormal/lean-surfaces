@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**320 entries across 17 lanes.** Regenerate with
+**321 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -58,6 +58,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-qol-49` |  | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
 | `2026-08-24-pycomplete-20` |  | the cursor moves to CONSTRUCTION, pyc-div-2 retires by its own condition, and the census that gates the claim corrected itself twice | python-completeness |
+| `2026-08-24-c-20` |  | AN UNNAMED PARAMETER: allocate, initialize, bind nothing | c |
 | `2026-08-24-softfloat-19` |  | `mul_correct` REDUCED TO ONE OBLIGATION, and `roundQ` is not on its path | softfloat |
 | `2026-08-24-pycomplete-19` |  | INCH (3): the flagship's LAST refused line was already retired, and the inch is the MEASUREMENT that proves it | python-completeness |
 | `2026-08-24-c-19` |  | SPAN `col` BECOMES OPTIONAL, and the prediction is recorded BEFORE the run | c |

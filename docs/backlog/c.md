@@ -2212,3 +2212,156 @@ wider than last time, deliberately: this is the first prediction that will
 actually be about the frontier, and the tier has never measured its
 frontier against 266 tests. `refused-unsupported` predicted ~200.
 
+
+---
+
+## 2026-08-24-c-20 — AN UNNAMED PARAMETER: allocate, initialize, bind nothing
+
+`2026-08-24-c-19` uncovered the second blocker under the first: **198 of
+300** `gcc.c-torture` tests refused at the ingester with `ParmVarDecl:
+field 'name': String expected`. C permits it — §6.7.6.3 lets a prototype
+declare a parameter with no identifier (`int f(int);`) — so the schema was
+wrong and the corpus was right.
+
+**This one is not schema-widening**, and that is the whole of its
+interest. `col` had no reader; `name` has one, and it is the semantics.
+
+### The ruling, and where each clause lives in the code
+
+> **§6.9.2p7 holds for an unnamed parameter too: the argument is
+> evaluated, the parameter object exists and is initialized with the
+> converted value, and no identifier denotes it — which in this model is
+> exactly one thing: no environment entry.**
+
+**(1) Argument evaluation is untouched, and structurally so.** Arguments
+are evaluated by `C23.evalArgs`, in `Expr.lean`, *before* `bindParams` is
+reached — the caller cannot see parameter names and nothing here is in a
+position to make it. Same order, same effects, same memory growth. This
+is not a promise about the diff; it is a fact about which function the
+diff is in.
+
+**(2) The allocation is NOT elided, and eliding it is not expressible.**
+The `alloc` and the `storeAt` sit **outside** the match on the name; only
+the environment update is inside it:
+
+```lean
+let (m', o) := m.alloc .automatic sz (some ty)
+set m'
+liftEval (storeAt (Ptr.toObject o) ty v)
+let env' := match n with
+            | some nm => (nm, o) :: ctx.env
+            | none => ctx.env
+```
+
+Nothing can take the object's address, because nothing names it — so an
+optimizer's instinct is to skip the allocation. **That instinct is a
+LEMMA about `Mem`, not a shortcut**: this model's memory has a shape, and
+whether an unreachable allocation is unobservable in it is a claim that
+would have to be proved. It is not claimed here, so it is not taken, and
+the code is arranged so that taking it would require moving lines rather
+than deleting a branch.
+
+> **"Nothing can observe it" is a theorem about your model, not a licence.
+> Write the code so the shortcut costs an edit, and the next reader has to
+> notice they are taking it.**
+
+**(3) The absence is decided in exactly ONE place.** `bindParams` is the
+only consumer of the `Option`. Nothing downstream ever sees a name for an
+unnamed parameter, and in particular there is **no synthetic** — no
+`_unnamed_3`, which would be a fabricated name one field over from the
+fabricated column `2026-08-24-c-19` refused. A synthetic reads exactly
+like a real name and something would eventually look it up.
+
+`Examples/c/sunfish/guards.lean`'s structural gate compares against
+`some "a"` rather than around it, so the gate sees the absence too.
+
+### The prediction, restated beside its result
+
+**Predicted (recorded in `2026-08-24-c-19`, before either run):
+60/300 scored, band 40–110, `refused-unsupported` ~200.**
+
+This is the first prediction that is actually about the FRONTIER —
+`c-19`'s missed because the tests never reached it. 266 tests should now
+ingest (`not-ingested` → 1, the lone `EnumConstantDecl: value`;
+`not-parsed` stays 30), and what happens to them is a measurement of how
+far this tier's vocabulary reaches into a corpus it was never designed
+against.
+
+### VERDICT — GREEN, and the INGESTION WALL IS GONE
+
+Ticket `1787566806249940000-27008-crunga`:
+
+```
+[12:20:06] base: base aebf1fd is AT the origin/master tip
+[12:46:11] LOCK ACQUIRED after 1555s as 'crunga 27008'
+[13:18:02] TRIAD DONE (build exit 0, gates green)
+```
+
+Spine class, tree `fe634682147f`, **3781 jobs, exit 0, 0 `error:` lines**,
+COVERAGE full. docs_check 91/91; diff_test **1504 cases, 0 failed**;
+c_profile_probe 9/9; both `--selftest`s ok; `--offline` re-verified all
+300 sha256 with no network.
+
+```
+gcc.c-torture 28/300 scored  (passed 28, failed 0)
+  the zeroes, kept apart: refused-unsupported 197, refused-libc 38,
+    refused-ub 4, timeout 0, not-ingested 3, not-parsed 30,
+    runner-error 0, not-fetched 0
+```
+
+**§9.0: 24 → 28/300 scored.** `not-ingested` 199 → **3** (all three the
+lone remaining absence-family case, `EnumConstantDecl: field 'value'`).
+**267 of 300 now reach the interpreter**, against 67 two landings ago.
+
+### PREDICTED 60/300, band 40–110. ACTUAL 28. MISSED AGAIN, and LOWER than the floor.
+
+And this time the miss is about the frontier, exactly as `c-19` said it
+would be — but not in the way the number suggests. **The interesting part
+is which half of the prediction was right:**
+
+| predicted | actual |
+| --- | --- |
+| `not-ingested` → ~1 | **3** — near enough |
+| `refused-unsupported` → **~200** | **197** — near enough |
+| **scored → 60** | **28** — off by 32 |
+
+I predicted the largest bucket almost exactly and still missed the score
+by more than the score. The gap is a bucket I did not predict at all:
+**`refused-libc` went 1 → 38**, and 36 of those are `exit`.
+
+> **Predicting a BUCKET is not predicting the RESIDUAL. A residual is a
+> difference, so it inherits the error of every bucket you did NOT
+> predict — and the one I did not predict was the one that had never had
+> a chance to be observed.**
+
+`refused-libc` stood at 1 because only 67 tests had ever reached the
+interpreter; the libc wall was standing behind the ingestion wall, and a
+frontier measured from behind another frontier is **a lower bound on
+itself**. That is the third instance of one shape today — `col` hid
+`name`, ingestion hid libc, and `2026-08-24-c-19` named the general form
+before this run confirmed it.
+
+> **Each wall you remove is the first honest measurement of the next one.
+> A queue of blockers cannot be priced from behind the first of them, and
+> a plan that prices it anyway is measuring its own ignorance.**
+
+### The walls, all visible at once for the first time
+
+| n | wall | owner |
+| ---: | --- | --- |
+| **197** | `unsupported` — 79 `no layout for declared type`, 64 `unbound name`, 8 arity, 7 `not an lvalue: StringLiteral`, 7 non-object block declarations, … | the tier's vocabulary: **rungs, one construct at a time** |
+| **38** | `libc` — **36 `exit`**, 1 `memset`, 1 `__builtin_alloca` | widening the modelled slice |
+| **30** | clang rejects under the pinned profile | nothing this lane owns |
+| **4** | UB refusals | never retires — it is the product |
+| **3** | `EnumConstantDecl: value` | the last absence-family case |
+
+**36 `exit` is the single cheapest number on the board** and it is not a
+rung: `exit(0)`/`exit(1)` in a torture test is the *oracle itself*
+speaking — the same exit-status convention `abort` already has a verdict
+for. Modelling `exit` is a scoreboard decision, not a semantics one, and
+it is the obvious next move for anyone reading this table.
+
+`no layout for declared type` at 79 is the largest and is one thing: the
+runner hands `torLayout`, which knows the scalar spellings and nothing
+about arrays or structs. That is a runner improvement, not a tier rung.
+

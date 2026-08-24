@@ -217,7 +217,8 @@ partial def parseDecl (j : Json) : Except String Decl := do
           (← match getOptNode j "init" with
               | none => pure none
               | some v => some <$> parseExpr v) span
-    | "ParmVarDecl" => return .param (← getStr j "name") (← getStr j "type") span
+    -- `name` is OPTIONAL (§6.7.6.3): absent and `null` are one absence.
+    | "ParmVarDecl" => return .param (← getOptStr j "name") (← getStr j "type") span
     | "FieldDecl" => return .field (← getStr j "name") (← getStr j "type") span
     | "RecordDecl" =>
         return .record (← getOptStr j "name")

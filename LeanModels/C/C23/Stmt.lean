@@ -502,11 +502,26 @@ def bindParams (lay : Layout) : Ctx → List LeanModels.C.Decl → List CVal →
         match lay.size ty with
         | none => refuseUnsupported s!"no layout for parameter type '{ty}'"
         | some sz => do
+            -- §6.9.2p7 holds for an UNNAMED parameter too: the object
+            -- exists and is initialized with the converted argument. The
+            -- allocation and the store are OUTSIDE the match on `n` on
+            -- purpose — eliding them for the unnamed case is not
+            -- expressible here without moving code, which is the point.
+            -- (Whether the allocation is unobservable when nothing names
+            -- the object is a LEMMA about `Mem`, not a shortcut; it is not
+            -- claimed, so it is not taken.)
             let m ← get
             let (m', o) := m.alloc .automatic sz (some ty)
             set m'
             liftEval (storeAt (Ptr.toObject o) ty v)
-            bindParams lay { ctx with env := (n, o) :: ctx.env } ps vs
+            -- …and the ONLY difference an unnamed parameter makes is that
+            -- no identifier denotes the object, which in this model is
+            -- exactly one thing: no environment entry. This is the single
+            -- place the absence is decided.
+            let env' := match n with
+                        | some nm => (nm, o) :: ctx.env
+                        | none => ctx.env
+            bindParams lay { ctx with env := env' } ps vs
     | _ => refuseUnsupported "non-parameter in a parameter list"
 
 /-- §6.5.3.3 — call a defined function with already-evaluated arguments.

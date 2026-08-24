@@ -126,7 +126,7 @@ private def pfd : Option FunctionDefn :=
 -- Two `int` parameters, in order.
 #guard (pfd.map fun f => f.params.map fun p => match p with
     | .param n t _ => (n, t)
-    | _ => ("?", "?")) == some [("a", "int"), ("b", "int")]
+    | _ => (none, "?")) == some [(some "a", "int"), (some "b", "int")]
 
 -- THREE statements: a two-object declaration, an `if`, a `return`.
 #guard (pfd.bind fun f => f.body.map fun b => match b with

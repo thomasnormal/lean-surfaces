@@ -241,7 +241,15 @@ class Extractor:
                 "init": self.node(init) if init else None}
 
     def e_ParmVarDecl(self, n):
-        return {"name": n.get("name"), "type": qual(n)}
+        # `name` is OMITTED when the parameter has none -- C permits it
+        # (§6.7.6.3: `int f(int);`) and clang reports no `name`.  Same shape
+        # as `col` and `macro`: one spelling for absence, and never a
+        # synthetic, which would be a fabricated name one field over from a
+        # fabricated column.
+        out = {"type": qual(n)}
+        if n.get("name") is not None:
+            out["name"] = n["name"]
+        return out
 
     def e_FieldDecl(self, n):
         return {"name": n.get("name"), "type": qual(n)}

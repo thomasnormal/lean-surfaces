@@ -2010,3 +2010,60 @@ than in effort.
 > THING to fix next — and a number that could not do that would not be
 > worth the tenure that produced it.**
 
+### VERDICT — GREEN, and §9.0 MOVES
+
+`tools/triad.sh --lane crunga --classify`, ticket
+`1787563655997873000-64812-crunga`:
+
+```
+[11:27:36] base: base 7129f2b is AT the origin/master tip
+[11:27:36] LOCK ACQUIRED after 0s as 'crunga 64812'
+[12:03:34] TRIAD DONE (build exit 0, gates green)
+[12:03:35] LOCK RELEASED (mine)
+```
+
+Classified **spine** (`lakefile.toml` gains a `lean_exe`), tree at enqueue
+`db7ccb175d1f`, **36-minute full build, 3780 jobs, 0 `error:` lines**.
+COVERAGE (§5.4a): **full — a green covers every default target at this
+sha**, which is what a spine class buys and the only landing in this lane
+entitled to say it without an importer census.
+
+| gate | result |
+| --- | --- |
+| `lake build` (all default targets) | **exit 0, 3780 jobs** |
+| `tools/docs_check.py` | **91 / 91** |
+| `harness/diff_test.py` | **1504 cases, 0 failed** — 1378 matched, 126 whitelisted |
+| `harness/refusal_census.py --whitelist --no-build` | green |
+| `harness/c_profile_probe.py --check-lean` | **9 / 9** |
+| `tools/c_corpus_fetch.py --selftest` | **ok** — the never-vendor guard refused three inside-repo paths |
+| `harness/c_torture_score.py --selftest` | **ok** — the sort-`u` trap and all eight zero-states |
+| `tools/c_corpus_fetch.py --offline` | **300 at pin `9e54d865`**, every sha256 re-verified, no network |
+
+### THE NUMBER
+
+```
+gcc.c-torture 24/300 scored  (passed 24, failed 0)
+  the zeroes, kept apart: refused-unsupported 39, refused-libc 1,
+    refused-ub 3, timeout 0, not-ingested 203, not-parsed 30,
+    runner-error 0, not-fetched 0
+```
+
+`24 + 39 + 1 + 3 + 0 + 203 + 30 + 0 + 0 = 300`. **Nothing is unaccounted
+for, which is the property the state split exists to give.**
+
+**§9.0 goes from `gcc.c-torture 0 scored (runner needed)` to
+`gcc.c-torture 24/300 scored`.** It is the first number this tier has
+ever had, and the first landing here that moved one rather than a proof
+obligation.
+
+**Read it honestly.** 24 is small, `failed` is 0, and the two facts
+together say the tier does not yet get torture tests WRONG — it declines
+them. The queue of reasons is now ordered and each has an owner:
+
+| next | what it unblocks |
+| ---: | --- |
+| **199** | one schema decision — is a span's `col` optional? — plus one `extract.py` change |
+| **39** | the `unsupported` frontier: rungs, one construct at a time |
+| **30** | nothing this lane owns: clang rejects them under the pinned profile (K&R definitions, `asm`, VLAs in structs) |
+| **3** | UB refusals, which never retire — they are the product |
+

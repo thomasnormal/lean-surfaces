@@ -3780,7 +3780,6 @@ coordinator, not to me.
 backlog-index 62, diagnose 51, `--verify-guards` 32, docs_check 91/91. No Lean
 executed; live queue untouched.
 
-<<<<<<< HEAD
 ## 2026-08-24-qol-54 — "first 8 of 46" was sorted, not first
 
 pyc3's attempt-2 summary announced **"first 8 of 46"** and listed
@@ -3836,7 +3835,6 @@ it, and that the remainder begins at the first cascade line.
 `triad.sh` **329 ok** (317 → 329), and check 104, laws 45, backlog-index 62,
 diagnose 51, sites 57, `--verify-guards` 32, docs_check 91/91. Fixtures only;
 the live queue was empty at the close. No Lean executed.
-=======
 ---
 
 ## 2026-08-24-c-13 — INBOUND FROM THE C LANE: QoL lane's to renumber or close
@@ -3963,7 +3961,6 @@ existing row at 2502 exercises `add_build_target` directly and therefore
 cannot see this.
 
 *Renumber into your sequence or close it — the call is yours.*
->>>>>>> 17d1f7b
 
 ## 2026-08-24-qol-55 — a widening flag that did nothing, a condition that meant its opposite, and two gates wired
 

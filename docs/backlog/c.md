@@ -2780,3 +2780,159 @@ thing §5.0a exists to prevent.
 > was invisible — and that window is exactly when it is most likely to be
 > normalised.**
 
+
+---
+
+## 2026-08-24-c-23 — `c-div-2` DIAGNOSED: the model was right, the ENVELOPE was a different program
+
+The row `2026-08-24-c-22` opened undiagnosed, with a deadline it set
+itself — *"must not survive a second landing unchanged"*. It did not.
+
+### The defect
+
+`20010224-1.c` declares `int16_t masktab[6] = { 1, 2, 3, 4, 5 };` — five
+initializers for six elements. **clang's JSON dumper puts a PARTIALLY
+initialised array's elements under `array_filler`, with the implicit
+filler prepended, and leaves `inner` EMPTY.** `e_InitListExpr` read only
+`inner`, so the envelope said:
+
+```json
+"init": { "kind": "InitListExpr", "inits": [], "type": "int16_t[6]" }
+```
+
+The tier then did exactly the right thing with exactly the wrong data:
+§6.7.11p21 zero-fills every unmentioned element, all six were unmentioned,
+and `bndpsd[1]` came out 0 where the test requires 140.
+
+> **The envelope was not malformed. It was a well-formed description of a
+> DIFFERENT PROGRAM — and that is the one failure mode a schema cannot
+> catch, because every check it offers was passed.**
+
+Every guard in the chain was green: clang accepted the source, the
+extractor exited 0, the schema validated, the ingester parsed, the
+interpreter ran, and the answer was confidently wrong. **The only
+instrument that could see it was the one that compares an answer to an
+oracle** — which is what the scoreboard is, and it found this on its
+fourth run.
+
+### Why the row was opened before it was understood — and what that bought
+
+`2026-08-24-c-22` wrote the register row with `model: NOT YET DIAGNOSED`
+and listed four candidates it could not distinguish between. **None of the
+four was right.** The defect was not in the tier at all.
+
+> **Had it been left as a number, `failed 2` would have read as two model
+> defects.** Writing the row before the diagnosis is what kept the
+> question open long enough to be answered — and the answer moved the
+> defect out of the semantics entirely.
+
+### The fix, and what it deliberately does NOT carry
+
+`e_InitListExpr` reads `array_filler` when `inner` is empty, and **drops
+the `ImplicitValueInitExpr`**: §6.7.11p21's zero-fill is the MODEL's job,
+which `initElems` already performs from the extent, so carrying clang's
+filler would be a second answer to one question (§9.2).
+
+Verified end to end before ticketing: `masktab[0] = 1`, **`masktab[5] =
+0`** (the zero-fill was always right — that half of the model needed no
+change), `psd[3] = 20`, and **`bndpsd[1] = 140`**, the exact value the
+test demands.
+
+### THE BLAST RADIUS, measured — and the number was NOT inflated
+
+**4 of 270 envelopes** carried an empty `InitListExpr`. Their verdicts on
+the last run: **1 `failed`** (this one), 1 `refused-unsupported`, 1
+`refused-libc`, 1 `timeout`.
+
+**None of them PASSED.** The silent corruption never produced a false
+pass in this corpus, so the standing 98 was not built on it. That is a
+measurement and not a reassurance: it is exactly the question a reader
+should ask when an ingester is found to have been emitting wrong data
+under a green score, and it is answerable only because the per-test log
+keeps every verdict rather than a total.
+
+### THE PREDICTION, and it is deliberately narrow
+
+| bucket | now | predicted |
+| --- | ---: | ---: |
+| `passed` | 96 | **97** |
+| `failed` | 2 | **1** |
+| **scored** | 98 | **98**, band **97 – 101** |
+
+**A tight band is as much a claim as a wide one.** `2026-08-24-c-21`'s was
+41 points because the change freed tests at a declaration and everything
+after was unmeasured. This one is 4, because only four envelopes changed
+and three of them were blocked before they ever reached the data. Scored
+should barely move at all: `c-div-2` was already counted — it was a
+`failed`, and `failed` is a score. **What changes is not the size of the
+number but its truth.**
+
+### Landed ALONE, and the reason is attribution
+
+The coordinator ruled two further items in the same message — the
+`oracle-tests-compiler` state and the struct-alignment profile extension.
+Neither is here.
+
+> **A landing that moves the number for three reasons at once has
+> measured none of them.** Every prediction in this lane has been per
+> bucket precisely so that a miss localises; folding an extractor fix, a
+> new zero-state and a profile decision into one tenure would produce one
+> number and three candidate explanations for it.
+
+### VERDICT — GREEN, and all three point predictions EXACT
+
+Ticket `1787607980059859000-38534-crunga`:
+
+```
+[23:46:20] base: base bc6ef3f is AT the origin/master tip
+[23:46:20] LOCK ACQUIRED after 0s as 'crunga 38534'
+[00:56:24] TRIAD DONE (build exit 0, gates green)
+```
+
+Spine (an `extractors/` path is UNRECOGNIZED by `--classify` and escalates,
+which is right: the extractor produces the envelopes fixtures load at
+elaboration time, so it genuinely can change elaboration). **3785 jobs,
+exit 0, 0 `error:` lines**, COVERAGE full. docs_check 91/91; diff_test
+**1508 cases, 0 failed**; c_profile_probe 9/9; both `--selftest`s ok;
+`--offline` re-verified all 300 sha256.
+
+```
+gcc.c-torture 98/300 scored  (passed 97, failed 1)
+  the zeroes, kept apart: refused-unsupported 154, refused-libc 5,
+    refused-ub 10, timeout 2, not-ingested 1, not-parsed 30,
+    runner-error 0, not-fetched 0
+  FIRST FAILURE (log order, verbatim): 20021127-1.c  failed
+```
+
+| bucket | predicted | actual |
+| --- | ---: | ---: |
+| `passed` | **97** | **97** |
+| `failed` | **1** | **1** |
+| `scored` | **98** (band 97–101) | **98** |
+
+**Three point estimates, three exact hits** — and by the discipline's own
+terms that is the LEAST informative outcome available, which is exactly
+what it should have been. The prediction was narrow because the change was
+narrow: four envelopes moved and three of them were blocked before the
+data mattered. **An exact hit here is same-instrument transcription, and
+the row is worth having because the alternative — a surprise — would have
+meant the blast-radius measurement was wrong.**
+
+Compare the day's four bands. `c-19` missed low because a second blocker
+was hidden behind the first; `c-21` landed 3 above an arithmetic floor
+because everything freed hit another wall; `c-22` landed 20 above its
+point because a conversion rate did not transfer; this one hit dead on
+because nothing was hidden. **The band width has tracked the real
+uncertainty every time, and the four together are the argument for
+predicting per bucket rather than in total.**
+
+### AND THE ONLY REMAINING FAILURE IS THE ONE A CONFORMING SEMANTICS MUST FAIL
+
+`FIRST FAILURE: 20021127-1.c` — `c-div-1`, the `llabs`
+declare-call-define shape. The scoreboard's `failed` column is now
+**exactly one test, and it is the test where the model is right.**
+
+That is the cleanest possible state to hand the `oracle-tests-compiler`
+ruling: the state has exactly one member, its membership is already
+argued in the register, and nothing else is hiding in the column.
+

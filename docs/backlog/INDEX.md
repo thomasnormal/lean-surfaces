@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**361 entries across 17 lanes.** Regenerate with
+**362 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -75,6 +75,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-qol-49` |  | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
 | `2026-08-24-pycomplete-23` |  | pyc-div-1's probe gains its second side, and the instrument's own claim expires with it | python-completeness |
+| `2026-08-24-c-23` |  | `c-div-2` DIAGNOSED: the model was right, the ENVELOPE was a different program | c |
 | `2026-08-24-softfloat-22` |  | THE RED WAS MY VERIFICATION METHOD, NOT A RENAME | softfloat |
 | `2026-08-24-pycomplete-22` |  | `except <builtin>:` lands as a SUBSUMPTION TABLE, and a docstring that argued a case away expires with it | python-completeness |
 | `2026-08-24-c-22` |  | `unbound name` was not a missing feature. It was a WRONG LAW. | c |

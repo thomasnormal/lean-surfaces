@@ -20,18 +20,19 @@
   },
   {
    "id": "c-div-2",
-   "kind": "open-undiagnosed",
+   "kind": "retired-diagnosed",
    "site": "gcc.c-torture/execute/20010224-1.c at pin 9e54d865. Scoreboard verdict: failed (reached abort()).",
    "oracle": "`int16_t bndpsd[6]` is filled by `ba_compute_psd(0)`, which reads `masktab[0] == 1`, sets `bndpsd[1] = psd[0] = 50`, then accumulates `psd[1..3]` through `logadd(int16_t*, int16_t*)`. main() requires `bndpsd[1] == 140`; 50+40+30+20 = 140.",
-   "model": "NOT YET DIAGNOSED. The model reaches abort(), so it computed something other than 140, but which step is wrong has not been determined. Candidates not yet distinguished: the `int16_t`/`short` spelling through `intTyOf?`; \u00a76.7.11p21's zero-fill of `masktab[5]`, which this landing's `setupGlobals` now performs for the first time; the address-of-element arguments; or the loop's use of `j` mutated in its own body. Recorded with the absence stated rather than a guess written into the field.",
+   "model": "DIAGNOSED AND FIXED, 2026-08-24, within the one-landing deadline the row set itself. The model was RIGHT. clang's JSON dumper puts a PARTIALLY initialised array's elements under `array_filler` -- with the implicit filler prepended -- and leaves `inner` EMPTY, so `extractors/c/extract.py`'s `e_InitListExpr`, which read only `inner`, emitted `\"inits\": []` for `int16_t masktab[6] = {1,2,3,4,5}`. The tier then correctly zero-filled all six elements per \u00a76.7.11p21 and computed 0 where the test wanted 140. The envelope was a well-formed description of a DIFFERENT program.",
    "inherited_from": null,
    "declared": "2026-08-24",
-   "retirement_condition": "Diagnosis, then either a fix (the row is deleted) or a restatement as a real declared divergence (the row's kind changes and `model` gets a diagnosis). THIS ROW MUST NOT SURVIVE A SECOND LANDING UNCHANGED: an open-undiagnosed row that ages is a carried divergence that was never declared.",
+   "retirement_condition": "RETIRED. `e_InitListExpr` reads `array_filler` when `inner` is empty and drops the `ImplicitValueInitExpr` filler, because \u00a76.7.11p21's zero-fill is the model's job and carrying clang's would be a second answer to one question. Verified end to end: masktab[0]=1, masktab[5]=0 (the zero-fill still correct), psd[3]=20, bndpsd[1]=140.",
    "guards": [
     "docs/c-torture-pin.json lists 20010224-1.c with its sha256",
-    "the scoreboard's `failed` count is the live guard: it is 2, and any landing that changes it must account for both rows"
+    "the scoreboard's `failed` count is the live guard: it is 2, and any landing that changes it must account for both rows",
+    "the scoreboard's `failed` count: this test leaves `failed` for `passed`, and the count drops 2 -> 1"
    ],
-   "why_not_a_refusal": "The run produced an ANSWER and the answer was wrong. That is the one thing this tier's whole design is meant to make impossible without saying so, which is why it is written down before it is understood rather than after."
+   "why_not_a_refusal": "It never was a divergence in the SEMANTICS -- and that is the reason the row was opened before it was understood. Had it been left as a number, `failed 2` would have read as two model defects, and the real defect was in the instrument that feeds the model."
   }
  ]
 }

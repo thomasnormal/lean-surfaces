@@ -835,6 +835,27 @@ and one whose helper exists unused is `VIOLATION` (work refused). And the
 honesty clause is in the tool's header: **it cannot see semantic duplication
 under different spellings**, so every count is a floor.
 
+**AND ONE CLASS OF DUPLICATE IS FOUND BY THE COMPILER, NOT BY AN INSTRUMENT**
+(Go §G23, `9a6d6ad`). `bitLenSpec` existed **twice** — in `Packages.lean` and in
+the example's local copy — and **Lean's ambiguity error found it.**
+
+> **A DUPLICATED SPECIFICATION IS FOUND BY THE NAMESPACE, NOT BY REVIEW.**
+
+**Worth recording because it is the cheap corner of MEAS-28's problem.**
+`dupes.sh` exists because most duplication is **invisible to the language**:
+different names, different files, same contract. But a duplicate that shares a
+**name in a shared namespace** is caught by the elaborator for free — so the
+instrument's real subject is *duplication the compiler cannot see*, and a lane
+should not build a census for the half that reports itself.
+
+**AND THE REPAIR DID MORE THAN DEDUPLICATE: it made a proved theorem
+LOAD-BEARING.** With one definition, **`Len64`'s model IS definitionally what
+§G15 proved** — the package model and the proved spec are now the same object
+rather than two objects a lemma relates.
+
+> **The best outcome of removing a duplicate is not tidiness; it is that a
+> theorem stops being ABOUT the model and starts being TRUE OF it.**
+
 **AND THE GATE HAS PRODUCED ITS FIRST CONSOLIDATION: `tools/leanlex.sh`, the
 Lean lexing primitives ONCE** (`12386db`). Four tools had grown — or were about
 to grow — the same comment walker, and the 2026-08-23 audit found **three
@@ -4033,6 +4054,29 @@ the question.**
 
 A run that executed **nothing** must never score as agreement.
 
+**AND A THIRD MECHANISM IN ONE LANE, WHICH TURNS THE FAMILY INTO A TAXONOMY BY
+MECHANISM** (Go §G23, `9a6d6ad`). The blank-discard guard had **`| _ => true`
+with unbound parameters**: the body **refused**, the **fallback fired**, and
+**the row PASSED.** Flipping it gave **0 errors** — the row had never been
+testing anything.
+
+> **A FALLBACK ARM RETURNING `true` CONVERTS A FAILING RUN INTO A PASSING ROW.**
+
+**Three mechanisms, one lane, and naming them separately is the point** — they
+share a symptom (*a green row that tests nothing*) and **no two of them are found
+the same way**:
+
+| mechanism | how the row goes hollow | how it is caught |
+| --- | --- | --- |
+| **hand-typed oracle** (§G13) | the expectation is a human's reading, so both columns come from one source | provenance — *the oracle writes its own column* |
+| **byte-identical section** (§G15) | the row duplicates its neighbour, so it cannot disagree | reading the rows against each other |
+| **catch-all fallback** (§G23) | the row's own failure path returns success | **flipping the model** — nothing else reaches it |
+
+**The catch-all is the worst of the three, because it converts a REFUSAL into a
+PASS.** The other two produce rows that never had content; this one **takes a
+row that was working, lets it fail, and reports the failure as agreement.**
+*Every earlier vacuity in this section is an absence; this one is an inversion.*
+
 **AND THE STRUCTURAL APEX OF THIS FAMILY: NON-VACUITY IS A CHAIN OF TWO LINKS,
 AND A GUARD ON THE INNER LINK CANNOT SEE THE OUTER ONE** (analog tier's founding
 census, branch `analog-m0-census` at `491b944`; **uncompiled and stated as
@@ -5494,6 +5538,23 @@ certification** — decline the rebase, decline the fold-in, commit the index.
 the convergence standard (§9.3) applied to a law's *use* rather than to its
 statement.
 
+**AND A FOURTH, AT MERGE GRANULARITY, ARRIVING UNPROMPTED** (Ada). The lane
+**pre-declared** that the merge was *"the gated Lean landing, not a docs commit
+bundled into it"* — **separate shas, said before the merge rather than
+reconstructed after.**
+
+> **The certified-tree boundary is expressed at MERGE GRANULARITY: what was
+> gated is one sha, and what rode along is another.**
+
+**A bundled merge is the wrong-tree failure with the evidence pre-mixed**: after
+the fact, *"the green covers this"* becomes a claim about a commit that contains
+both the gated tree and whatever was folded in beside it, and **no reader can
+separate them from the merge alone.** Declaring the split **before** costs a
+sentence; recovering it afterwards requires the tree comparison this section
+exists to make unnecessary.
+
+
+
 **TWO WITNESSES, RANKED, and the ranking is the transferable part.**
 
 * **PRIMARY — tree identity.** The verdict **is** about a tree, so the tree is
@@ -5502,6 +5563,40 @@ statement.
 * **CORROBORATING — build duration.** **4 seconds cannot be a Mathlib-rooted
   adoption.** It is decisive in practice and it is still second, because a
   duration is a fact about *this run* and the claim is about *this tree*.
+
+**AMENDED — DURATION DROPS TO THIRD, AND THE SECOND WITNESS IS `Built` vs
+`Replayed`** (Ada, merged `44ae259`; the lane applied this section's own
+forensics to **its own honest 2-second build**). **The predecessor's dishonest
+4 s and this lane's honest 2 s look ALIKE in the summary and OPPOSITE in the
+full log.**
+
+> **DURATION IS A CORROBORATOR, NOT THE WITNESS.**
+
+> **`Built` vs `Replayed` is the primary witness that a module ELABORATED — a
+> fact the summary line does not carry.**
+
+**Ruled witness order: TREE IDENTITY first, `Built`/`Replayed` second, CLOCK
+third.** Recorded as an **amendment, not an erratum** (MEAS-181): the original
+ranking was **right that duration is not primary and right about why** — a
+duration is a fact about *this run* while the claim is about *this tree*. What
+it got wrong was **treating duration as the best available second witness**,
+when a stronger one was in the log the whole time. **Both halves stand.**
+
+**AND THE SECOND WITNESS MUST BE READ FROM THE RIGHT PHASE — a log is not a bag
+of lines** (Go, `6c7a2b3`). That triad log carried **330 `Replayed` lines** —
+**from the GATE phase's runner, not the build.** The build's own lines were
+**30 `Built` / 2 `Replayed`, with all eleven tier modules `Built`.**
+
+> **Reading the gate phase's lines as the build's witness would have been the
+> available mistake.**
+
+**Which is this section's own unit family arriving inside a log**: `Replayed` is
+a correct token counted from the wrong region, and **the wrong region is the
+larger one** — so the mistake is both easy and flattering-in-reverse (it makes
+an honest build look replayed). **A witness is a token PLUS the phase it was
+read from**, and a grep over a whole log has already discarded half of that.
+
+
 
 **Keep them in that order.** A lane that leads with duration will one day meet a
 warm cache and conclude nothing is wrong, and a lane that leads with the tree
@@ -6539,6 +6634,42 @@ who wrote it.
 independently, on a mechanism rather than on a value model. **The pattern
 generalizes past the case that minted it**, which is the test this document
 applies to everything it promotes.
+
+**AND THE HIERARCHY HAS A COMPANION METHOD, now on its SECOND instance and
+worth its own name: ASK WHAT THE WRONG MODEL WOULD *PERMIT*** (Go §G23,
+`9a6d6ad`; after §G20's array-as-slice-header). A `GoVal.tupleV` **would accept
+programs `gc` REJECTS** — *"assignment mismatch: 1 variable but … returns 2
+values"*. **Multi-valuedness is a property of the CALL SITE, never of a value.**
+
+> **To choose between two model shapes, ask which one ACCEPTS A PROGRAM THE
+> ORACLE REJECTS.**
+
+**This is the acceptance hierarchy's dual, and it applies EARLIER.** The
+hierarchy ranks rows by what a wrong model **fails or cannot state** — it needs
+a candidate row and a run. This asks what a wrong model **admits**, and it can
+be answered **from the shape alone, before any row exists**: *the over-permissive
+model is refuted by a program that should not typecheck.*
+
+**And over-permissiveness is the failure a differential corpus is worst at
+finding**, which is why the method earns a row rather than a mention: a corpus is
+made of **valid** programs, so **a model that accepts too much passes every one
+of them.** Nothing in the suite is shaped like the counterexample; **only the
+question is.**
+
+**AND ACCEPTANCE POWER IS NOT ROW COUNT — the flips measure which rows do the
+work.** Measured on the same rung: the carry-dropping wrong model **passes 5 of
+8 `add128` rows**, and **only the ripple rows discriminate.** All three flips
+were run.
+
+> **A ROW COUNT IS NOT ACCEPTANCE POWER. The non-vacuity flips are what
+> distinguish a row that does work from a row that keeps it company.**
+
+**Eight rows sounds like a battery and behaves like three.** The other five are
+not waste — they document the construct and they would catch a *different* wrong
+model — but **a lane reading "8 rows" as strength has read the wrong number**,
+and the number that answers the question is *how many rows change verdict when
+the model is perturbed.* **§5.3's non-vacuity discipline, used as a measuring
+instrument rather than as a hygiene check.**
 
 **AND A FOURTH TIER SITS ATOP IT — THE ROW THAT KILLS TWO WRONG MODELS AT ONCE,
 IN OPPOSITE DIRECTIONS** (Go, `da9a7bc`, on master). `runtime.printuint`'s array
@@ -9049,6 +9180,21 @@ sites.** So the conjunctive law has a third granularity: **constructs bundle
 into families, and families bundle into the CALLABLE SURFACE a file actually
 needs.** Pricing a package by its ranking prices **a name**; the file needs
 **every function in the call**.
+
+**AND A THIRD USE, with a CALIBRATION PREDICTION attached** (Go §G23,
+`9a6d6ad`). Reach was **unmoved deliberately and said so in the plan**, and the
+next rung is **fully priced in advance at `+7` with all prerequisites
+discharged.**
+
+> **A plan that prices its next rung EXACTLY is making a falsifiable claim, and
+> the landing either confirms the instrument or corrects it.**
+
+**Owed at that landing**: if it lands at **exactly +7**, it is recorded beside
+ES's exact-to-the-unit prediction as **calibration evidence** (§9.0) — *an
+instrument that has never predicted has never been tested*, and this lane will
+then have predicted twice and hit twice. **If it lands elsewhere, that is the
+more valuable row**, because a missed prediction with all prerequisites
+discharged says something about the *pricing method* rather than about the work.
 
 **AND THE SECOND INSTANCE STATED IT BEFORE THE WORK, which is the reading
 becoming a habit** (Ada inch 2, citing Go's precedent by name). The inch moves

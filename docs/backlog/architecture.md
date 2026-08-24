@@ -4268,6 +4268,13 @@ nothing checked that the tree ever CONTAINED the work the title promises.** One
 guards the interval, the other guards the premise, and **a tenure can satisfy
 the first perfectly while failing the second completely** — this one did.
 
+> **ANNOTATION (Ada, `44ae259`; entry NOT rewritten).** The ranking below is
+> **AMENDED, not withdrawn**: duration drops to **third** and **`Built` vs
+> `Replayed`** becomes the second witness. The reasoning here was right that
+> duration is not primary and right about why; what it got wrong was treating
+> duration as the best available *second* witness when a stronger one was in the
+> log all along. Carried forward in `2026-08-24-architecture-63`.
+
 **And I kept the witness RANKING, because it is the transferable part**: tree
 identity is **primary** (the verdict *is* about a tree, so it is the only
 witness speaking in the verdict's own terms); duration is **corroborating**
@@ -5038,3 +5045,115 @@ reputation denied.*
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-221 … MEAS-225, STMT-123, STMT-124**.
+
+## 2026-08-24-architecture-63 — Duration is a corroborator, not the witness
+
+Eight from two merged sources — Ada's adoption green (`44ae259`, **fifth tier on
+Core**; verified here: `LeanModels/Ada/` now imports Core in 1 file, was 0) and
+Go's §G23 (`9a6d6ad`, sha filled at `6c7a2b3`).
+
+**(1) §5.4a-i — MY WITNESS RANKING IS AMENDED, and the lane found it by applying
+this section's forensics to ITS OWN HONEST BUILD.** The predecessor's dishonest
+**4 s** and Ada's honest **2 s** *look alike in the summary and opposite in the
+full log.*
+
+> **Duration is a CORROBORATOR, not the witness.**
+> **`Built` vs `Replayed` is the primary witness that a module ELABORATED — a
+> fact the summary line does not carry.**
+
+**Ruled order: TREE IDENTITY → `Built`/`Replayed` → CLOCK.** Recorded as an
+**amendment, not an erratum** (MEAS-181, my own law): the original was **right
+that duration is not primary and right about why**; what it got wrong was
+**treating duration as the best available SECOND witness** when a stronger one
+sat in the log the whole time. **Both halves stand**, and `-55` is annotated
+rather than rewritten.
+
+**(4) AND THE SECOND WITNESS MUST BE READ FROM THE RIGHT PHASE.** Go's triad log
+carried **330 `Replayed` lines — from the GATE phase's runner, not the build**;
+the build's own were **30 `Built` / 2 `Replayed`, all eleven tier modules
+`Built`.**
+
+> **A witness is a TOKEN PLUS THE PHASE it was read from. A log is not a bag of
+> lines.**
+
+**The unit family arriving inside a log**: `Replayed` is a correct token counted
+from the wrong region, **and the wrong region is the larger one** — so the
+mistake is easy *and* flattering-in-reverse, since it makes an honest build look
+replayed. **A grep over a whole log has already discarded half the witness.**
+
+**(2) §5.4a-i — SEPARATE SHAS, DECLARED BEFORE THE MERGE, unprompted.** The lane
+pre-declared *"you are merging the gated Lean landing, not a docs commit bundled
+into it"* — **the certified-tree boundary at MERGE granularity.** A bundled
+merge is **the wrong-tree failure with the evidence pre-mixed**: afterwards *"the
+green covers this"* names a commit containing both the gated tree and whatever
+rode along, and **no reader can separate them from the merge alone.** Fourth
+affirmative use of tree-not-title.
+
+**(3) §5.6 — A COMPANION METHOD, second instance, now with its own name: ASK
+WHAT THE WRONG MODEL WOULD *PERMIT*.** A `GoVal.tupleV` would **accept programs
+`gc` rejects** — *"assignment mismatch: 1 variable but … returns 2 values"*.
+**Multi-valuedness is a property of the CALL SITE, never of a value.**
+
+> **To choose between two model shapes, ask which one ACCEPTS a program the
+> oracle REJECTS.**
+
+**It is the acceptance hierarchy's dual and it applies EARLIER** — the hierarchy
+needs a candidate row and a run; this is answerable **from the shape alone**.
+And the reason it earns a row: **over-permissiveness is what a differential
+corpus is worst at finding**, because a corpus is made of **valid** programs, so
+**a model that accepts too much passes every one of them.** Nothing in the suite
+is shaped like the counterexample; **only the question is.**
+
+**(7) §5.6 — ACCEPTANCE POWER IS NOT ROW COUNT.** The carry-dropping wrong model
+**passes 5 of 8 `add128` rows**; **only the ripple rows discriminate**, and all
+three flips were run.
+
+> **A row count is not acceptance power. The non-vacuity flips measure which
+> rows do the work.**
+
+**Eight rows sounds like a battery and behaves like three** — the other five are
+not waste, but **a lane reading "8 rows" as strength has read the wrong
+number.** §5.3's non-vacuity discipline used as **a measuring instrument** rather
+than a hygiene check.
+
+**(5) §5.3 — A THIRD MECHANISM IN ONE LANE, so the family becomes a TAXONOMY BY
+MECHANISM.** `| _ => true` with unbound parameters: **body refused, fallback
+fired, row passed**; the flip gave **0 errors**. Landed as a three-row table —
+hand-typed oracle (§G13), byte-identical section (§G15), catch-all fallback
+(§G23) — because they share a symptom and **no two are found the same way.**
+
+> **A fallback arm returning `true` converts a failing run into a passing row.**
+
+**And the catch-all is the worst of the three, because it converts a REFUSAL
+into a PASS**: the other two produce rows that never had content; this one
+**takes a working row, lets it fail, and reports the failure as agreement.**
+*Every earlier vacuity in this section is an absence; this one is an inversion.*
+
+**(6) §2.4 — ONE CLASS OF DUPLICATE IS FOUND BY THE COMPILER.** `bitLenSpec`
+existed twice and **Lean's ambiguity error found it.**
+
+> **A duplicated SPECIFICATION is found by the namespace, not by review.**
+
+**The cheap corner of MEAS-28's problem** — `dupes.sh` exists because most
+duplication is invisible to the language, so **the instrument's real subject is
+duplication the compiler cannot see**, and a lane should not build a census for
+the half that reports itself. **And the repair did more than deduplicate**:
+`Len64`'s model **IS definitionally what §G15 proved.**
+
+> **The best outcome of removing a duplicate is not tidiness; it is that a
+> theorem stops being ABOUT the model and starts being TRUE OF it.**
+
+**(8) §9.0b — THE `+0`-IN-PLAN CONTROL'S THIRD USE, with a prediction
+attached.** Reach unmoved **deliberately and said in the plan**; the next rung is
+**priced in advance at `+7` with all prerequisites discharged.**
+
+> **A plan that prices its next rung EXACTLY is making a falsifiable claim.**
+
+**Owed at that landing**: exactly `+7` records beside ES's exact prediction as
+**calibration evidence**; **anything else is the more valuable row**, because a
+missed prediction with all prerequisites discharged says something about the
+**pricing method** rather than about the work.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-226 … MEAS-231, STMT-125**, and **MEAS-185
+amended.**

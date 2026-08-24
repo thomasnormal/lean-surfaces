@@ -233,7 +233,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-182 | a qualifier may attach to a RANGE of dated entries — rewriting destroys what was known when | `docs/family-architecture.md §8` item 11 |
 | MEAS-183 | a STATUS COLUMN names what it measures — in-tree and rostered are separate facts | `docs/family-architecture.md §1.2` |
 | MEAS-184 | a verdict certifies a TREE, never a TITLE — compare the certified tree against the claim | `docs/family-architecture.md §5.4a-i` |
-| MEAS-185 | witness ranking: tree identity PRIMARY, build duration CORROBORATING | `docs/family-architecture.md §5.4a-i` |
+| MEAS-185 | witness ranking **AMENDED**: tree identity FIRST, `Built`/`Replayed` SECOND, clock THIRD (duration is a corroborator, not the witness) | `docs/family-architecture.md §5.4a-i` |
 | MEAS-186 | a REFUSAL is a pending measurement — the model emits the datum the census cannot see | `docs/family-architecture.md §5.2` |
 | MEAS-187 | a clause number RESOLVES; a RANGE enumerates, and a range is edition-relative | `docs/family-architecture.md §2.5` |
 | MEAS-188 | a CORPUS can settle an edition question a missing document cannot — presence, never semantics | `docs/family-architecture.md §2.5` |
@@ -274,6 +274,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-223 | a retirement condition names what must CHANGE and what must NOT — the negative half blocks the flattering repair | `docs/family-architecture.md §5.0a` |
 | MEAS-224 | INHERITED-FROM-SELF keeps the field: origin ≠ site, and the condition gets STRONGER | `docs/family-architecture.md §5.0a` |
 | MEAS-225 | reading master and BEING on master are different needs — a bare mirror satisfies the first | `docs/family-architecture.md §7.2` |
+| MEAS-226 | a witness is a TOKEN PLUS THE PHASE it was read from — a log is not a bag of lines | `docs/family-architecture.md §5.4a-i` |
+| MEAS-227 | the certified-tree boundary is expressed at MERGE GRANULARITY — separate shas, declared before | `docs/family-architecture.md §5.4a-i` |
+| MEAS-228 | to choose between model SHAPES, ask which one ACCEPTS a program the oracle REJECTS | `docs/family-architecture.md §5.6` |
+| MEAS-229 | a ROW COUNT is not acceptance power — the non-vacuity flips measure which rows do the work | `docs/family-architecture.md §5.6` |
+| MEAS-230 | a duplicated SPECIFICATION is found by the namespace, not by review | `docs/family-architecture.md §2.4` |
+| MEAS-231 | a plan that prices its next rung EXACTLY makes a falsifiable claim — the landing calibrates the instrument | `docs/family-architecture.md §9.0b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -406,6 +412,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-122 | a hypothesis's RATIONALE is checkable only as a row: drop it, and a specific named thing must happen | `docs/family-architecture.md §5.3` |
 | STMT-123 | a hypothesis can change LOUD → QUIET while statement and theorem hold still — observability is not measured | `docs/family-architecture.md §5.3` |
 | STMT-124 | hypothesis KINDS — tier / modelling / bridging — determine the retirement move | `docs/family-architecture.md §5.3` |
+| STMT-125 | a FALLBACK arm returning `true` converts a failing run into a passing row — vacuity by INVERSION | `docs/family-architecture.md §5.3` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

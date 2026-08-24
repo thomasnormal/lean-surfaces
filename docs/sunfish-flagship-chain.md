@@ -6,7 +6,7 @@ rather than approached implicitly.** Per Thomas's scale recalibration
 document fixes the denominator so that "how far" has an answer that is a number
 and not a mood.
 
-**§9.0 number for this lane: `chain rungs closed / total`.** Today: **4 / 9.**
+**§9.0 number for this lane: `chain rungs closed / total`.** Today: **5 / 9**, and the chain is now WHOLLY INTERNAL.
 
 ---
 
@@ -79,9 +79,11 @@ unsolved question in it.
 | 6 | The ~57 interpreter-facing statement gates of `bound()`, re-proved monadically | R-track | OPEN |
 | 7 | `RecursionStepW V` assembled | R-track | MECHANICAL after 3,5,6 |
 | 8 | Base case `BoundRefinesW V 0` | base-case lane | BLOCKED (their ledger) |
-| 9 | Three tier surfaces for real-play scope | pyc lane | BLOCKED (sequenced after 3c-i-c) |
+| 9 | Three tier surfaces for real-play scope | pyc lane | **CLOSED (with scope)** |
 
-**Closed: 4 of 9** — rung 1 (`flagship.lean`: the theorem typed and its induction
+**Closed: 5 of 9** — rung 9 (pyc inch 3, `cf13932`: `bound()`'s unsupported
+census is ZERO, all three flagship-serving surfaces landed, scoped by the
+`scope_against_real_play` register row), rung 1 (`flagship.lean`: the theorem typed and its induction
 discharged), rung 2 (`GenEmitsM.forGenRound`), rung 3 (`forGenChain`: the
 caller's induction discharged once, over `ForGenRunM`) and rung 4
 (`FoldInv`/`.step`/`.nil`/`.run` in `monadic_fold.lean`).
@@ -108,10 +110,26 @@ what matters**: `docs/python-refounding-plan.md` §2.6 counts only
 INTERPRETER-FACING statements and gets **57** for `bound_depth`, 82 for
 `genmoves_ray`, 61 for `move_gate` — 200 across the three, not 558.
 
-So rung 6 is ~57 statements, each a `py_simp`-shaped gate re-aimed at the monadic
-interpreter. That is large but bounded, and the per-statement cost is now known
-rather than guessed: the `toRun` seam (`Substrate.lean` §4) plus the
-computed-shape discipline closes these in a scratch loop without a build tenure.
+So rung 6 is ~57 statements. **But they are not ~57 independent proofs, and that
+is now measured rather than hoped.** They are ~57 INSTANTIATIONS of a handful of
+ARM lemmas — one per shape a generator-body statement can take (`.branch`,
+`.delegate`, the loop arms) — each supplying a `genPlan` equation, discharged by
+`rfl` on a slice, and whatever sub-runs its own statement makes. The arms are
+shared infrastructure; only the premises are per-statement.
+
+The price measurement that established this: `genSilent_branch'` and
+`genSilent_delegateNext` (§9 of `monadic_gen.lean`), both proved first shot in a
+scratch iteration. `delegateNext` is the high-frequency one — most of `moves()`
+is assignments and calls, not control flow — so the arm that covers the most
+statements is already in hand.
+
+It also exposed a defect in this lane's own earlier work: §5's `genSilent_branch`
+hard-codes `Stmt.ifStmt`, which is the right shape for proving an arm EXISTS and
+the wrong shape for USING it, since a real slice presents as an opaque `Stmt`
+with a computed `genPlan`. The trunk's lemma takes `s` plus a plan premise for
+exactly that reason. **Re-founding copied the proof and not the interface**, and
+that is a failure mode worth naming: a ported lemma can be true, green, and
+unusable.
 
 **The `twinAgrees` fork, and why it is NOT taken.** A whole-interpreter adequacy
 theorem would transport all 57 at near-zero marginal cost. The refounding plan
@@ -122,19 +140,25 @@ artifact — and the plan's standing instruction is *do not start it
 speculatively*. This lane follows that: rung 6 is re-proof, and `twinAgrees` gets
 reconsidered only if the first dozen statements resist.
 
-## §5 THE EXTERNAL DEPENDENCY, NAMED
+## §5 THE EXTERNAL DEPENDENCY — DISCHARGED
 
-Real-play scope makes `bound()`'s two eviction sites reachable, and both are
+Real-play scope made `bound()`'s two eviction sites reachable, and both were
 `Unsupported` **at ingestion** — not merely unproven but unrepresentable. Three
-surfaces, measured from the AST rather than recalled:
+surfaces were owed: `del d[k]`, `iter(d)` + `next(...)`, and
+`next(<genexp over dict keys, with filter>)`.
 
-1. `del d[k]` — `Delete` with a `Subscript` target on a dict. Both sites.
-2. `next(<genexp over dict keys, with filter>)` — sunfish.py:511.
-3. `iter(d)` then `next(...)` — sunfish.py:541.
+**All three landed** with the pyc lane's inch 3 (`cf13932`), and `bound()`'s
+unsupported census is now **zero**. The scope under which that holds travels in
+the register's `scope_against_real_play` row rather than being restated here; the
+one divergence behind it is a declared debt with a live two-sided probe, not a
+silent exclusion.
 
-(2) and (3) are the live-dict-iteration class. Everything else in `bound()` is
-representable today: it runs on both interpreters, which the depth-1 ledger rows
-demonstrate.
+**So the chain has no external dependency left.** Everything between the typed
+flagship and its discharge is rungs 5 and 6 (this lane's, entangled) and rung 8
+(the base-case lane's `BoundRefinesW V 0`). That is worth stating plainly because
+it changes what "blocked" can mean for this lane: nothing is waiting on anyone
+outside the two proof lanes, so every remaining rung is work rather than
+sequencing.
 
 ## §6 WHAT THIS DOCUMENT IS NOT
 

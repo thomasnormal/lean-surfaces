@@ -4,6 +4,13 @@ import LeanModels.Spice.Mos1Logic
 
 namespace Examples.spice.and_gate.proof
 
+-- Loudness guard (family-architecture.md §autoImplicit ruling, 2026-08-24):
+-- without this a mistyped or unopened name is silently auto-bound as an
+-- implicit variable rather than reported. This file is monomorphic --
+-- no `Type`/`Sort` binders, no generic type variables -- so the flip is
+-- inert here, and it is file-local: importers are unaffected.
+set_option autoImplicit false
+
 open LeanModels.Spice
 
 load_circuit andGateDeck from "Examples/spice/and_gate/and_gate.cir"
@@ -82,5 +89,67 @@ theorem cmos_and_mos1_correct :
       simpa [nCurrent, pCurrent, mos1NCurrent, mos1PCurrent] using hout⟩,
     by simpa [nCurrent, pCurrent, mos1NCurrent, mos1PCurrent] using hnand,
     by simpa [nCurrent, mos1NCurrent] using hnseries⟩
+
+/-- Boolean rail assignment used only to exhibit non-vacuity witnesses.
+
+`nseries` is the node between the two series pull-down NMOS devices. It sits
+at the rail `a ∧ ¬b`: with `a` high and `b` low the upper device is
+source-follower-off and the lower one is cut off, so the node holds the
+supply rail; in every other vector it is pulled to ground or carries no
+current. The same assignment appears as `xcarry.nseries` in the half-adder,
+whose `and2` subcircuit is this deck. -/
+private def andGateLevel (left right : Bool) (name : String) : Bool :=
+  if name == "vdd" then true
+  else if name == "a" then left
+  else if name == "b" then right
+  else if name == "nand" then !(Bool.and left right)
+  else if name == "nseries" then Bool.and left (!right)
+  else if name == "out" then Bool.and left right
+  else false
+
+/-- Exact rail-valued state used to show that the open MOS1 component
+contract is non-vacuous for every Boolean input vector. -/
+private noncomputable def andGateMos1Witness
+    (left right : Bool) : Mos1CircuitState :=
+  { voltage := fun target =>
+      logicVoltage (andGateLevel left right target.name)
+    sourceCurrent := fun _ => 0 }
+
+set_option maxHeartbeats 1000000 in
+/-- `cmos_and_mos1_correct` is universally quantified over states satisfying
+the MOS1 equations, the supply envelope and the input drivers; on its own it
+would hold vacuously if no such state existed. This exhibits one for each of
+the four input vectors, so the contract is a claim this deck could have
+contradicted. -/
+theorem and_gate_mos1_observation_exists (left right : Bool) :
+    Mos1BinaryGateObservation andGateMos1
+      (mos_node! andGateMos1 "a") (mos_node! andGateMos1 "b")
+      (mos_node! andGateMos1 "out") left right (Bool.and left right) := by
+  refine ⟨andGateMos1Witness left right, ?_, ?_, ?_, ?_⟩
+  · rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [Mos1ComponentSatisfies,
+        andGateMos1Witness, andGateMos1,
+        andGateDeck_mos1, andGateLevel, mos1Nodes, Mos1ResolvedCircuit.nodes,
+        Mos1Device.nodes, Mos1DeviceLaw, mos1Kcl, mos1DeviceCurrentLeaving,
+        mos1DrainCurrent, Mos1Model.params, mos1ForwardCurrent, logicVoltage,
+        ground, supply, node] <;> norm_num
+  · rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [Mos1WithinSupply,
+        andGateMos1Witness, andGateMos1,
+        andGateDeck_mos1, andGateLevel, mos1Nodes, Mos1ResolvedCircuit.nodes,
+        Mos1Device.nodes, logicVoltage]
+  · rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [Mos1DrivesTwo,
+        andGateMos1Witness, andGateMos1,
+        andGateDeck_mos1, andGateLevel, logicVoltage,
+        ground, supply, node]
+  all_goals
+    rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [andGateMos1Witness, andGateMos1,
+        andGateDeck_mos1, andGateLevel, logicVoltage, node]
 
 end Examples.spice.and_gate.proof

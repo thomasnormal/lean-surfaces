@@ -1844,8 +1844,19 @@ if [ "$SELF_TEST" = "1" ]; then
 
   # ---- the gate phase's own build (the R-track's finding)
   echo "  -- gate-phase build"
+  # THE PROPERTY, NOT A SNAPSHOT OF ANOTHER LANE'S DATA.  This asserted the
+  # literal list `leanmodels-run circuit-dc-runner`, so the C lane adding a
+  # third `[[lean_exe]]` (c-torture-run, 1ef4a02) turned master's self-test
+  # red for every lane -- a row that pins someone else's data fails when they
+  # do their job.  What this row is FOR is that the reader reads the lakefile:
+  # so it is checked against the lakefile, counted independently.
   check "exe names are READ from the lakefile" \
-        "$(lake_exe_names | tr '\n' ' ' | sed 's/ *$//')" "leanmodels-run circuit-dc-runner"
+        "$(lake_exe_names | grep -c .)" \
+        "$(grep -c '^\[\[lean_exe\]\]' "$CLONE/lakefile.toml")"
+  check "  ...and every name is one the file declares" \
+        "$(lake_exe_names | while IFS= read -r e; do grep -q "name *= *\"$e\"" "$CLONE/lakefile.toml" || echo miss; done | grep -c .)" "0"
+  check "  ...including the runner the gates need" \
+        "$(lake_exe_names | grep -cx 'leanmodels-run')" "1"
   check "the tier floor needs the runner"      "$(gate_runner_targets "$(gate_floor tier)")" "leanmodels-run"
   check "the docs floor needs NO runner"       "$(gate_runner_targets "$(gate_floor docs)")" ""
   check "script_corpus needs it too"           "$(gate_runner_targets 'python3 harness/script_corpus.py')" "leanmodels-run"

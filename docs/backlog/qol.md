@@ -4152,3 +4152,68 @@ REAL refusal now: the box is genuinely busy, and the load line fires first.
 `check.sh` **106 ok** (104 → 106), `triad.sh` **348 ok** (343 → 348),
 backlog-index 62, laws 45, sites 57, `--verify-guards` 43, docs_check 91/91.
 Fixtures only; live queue untouched. No Lean executed.
+
+## 2026-08-24-qol-58 — the clause the gate lacked was exactly the incident it did not catch
+
+Item 13: `harness/lean_comment_forms.py` gains the declaration-slot family's
+general rule, after SV's seventh instance — a `/--` attached to a `#guard`.
+
+> `/--` binds to the next DECLARATION; `/-!` stands alone; `#guard` / `#eval`
+> / `#print` / `#check` are COMMANDS, not declarations.
+
+**Why the case was invisible, and it was not the blacklist.** The scanner's
+token reader accepted `[A-Za-z0-9_]` only, so a leading `#` stopped it dead
+and every command follower read as the **empty token** — which is in no
+blacklist and never will be. Adding `#guard` to the list alone would have
+changed nothing. The reader now takes a leading `#`, and only `#`: `|`
+(inductive constructor), `@[…]` (attribute) and `(` still read as the empty
+token and stay legal.
+
+**The prefix hazard is load-bearing, and both numbers were measured first.**
+`#guard` is a prefix of `#guard_msgs`, which is **legal and is 42 sites on
+master** — it takes `in` and attaches to what follows. Matching is whole-token
+(the existing design), so those 42 stay silent; a prefix test would have
+reported every one of them and red-lighted the tree. Would-be new defects
+in-tree: **zero**, so the rule lands green — SV's instance is not on master,
+which makes this preventive here.
+
+The regression set **extends, not replaces**: 18 rows covering the four new
+commands, `#guard_msgs` staying legal, the shapes the tree relies on
+(declaration, theorem, structure field, inductive constructor, attribute,
+`/-!` standing alone), the followers that were already illegal, and analog's
+string-literal control — Go and SV both name `--` inside error strings. Wired
+into `ci.sh`'s `selftests()` beside `docs_check.py`, because a fixture nobody
+runs is not a fixture.
+
+One expectation was wrong and the scanner corrected it: `/-- d -/ /-- e -/
+def f` is **one** orphan, not two — the first comment dangles, the second
+attaches to `def`.
+
+### And master's self-test was already red, for everyone
+
+Found while running the suite: `check "exe names are READ from the lakefile"`
+asserted the literal list `leanmodels-run circuit-dc-runner`, so the C lane
+adding a third `[[lean_exe]]` (`c-torture-run`, `1ef4a02`) turned
+`triad.sh --self-test` red on clean master. Verified by stashing: it fails
+without any of my changes.
+
+**A row that pins another lane's data fails when they do their job.** What
+that row is *for* is that the reader reads the lakefile — so it now counts
+`[[lean_exe]]` blocks independently, checks every returned name against the
+file, and asserts the runner the gates need is among them. Property, not
+snapshot.
+
+### The self-matching row, third time today
+
+`grep -c 'lean_comment_forms.py --self-test' "$0"` counted **its own text**
+and read 2. Same trap as the `--stdout --strict` row an item ago, and the
+`sort -u` caption row before that. Anchored to the invocation line. Three
+instances in one day says the reflex needed is: **a row that greps its own
+file must anchor, or it will find itself.**
+
+### Triad
+
+`triad.sh` **350 ok** (348 → 350, and master un-redded), `lean_comment_forms`
+**18 ok** (new), `ci.sh --verify-guards` **44 ok** (43 → 44), check 106,
+backlog-index 62, laws 45, docs_check 91/91. All three live gates green:
+comment-forms 0, headings 0, freshness 0. Live queue empty. No Lean executed.

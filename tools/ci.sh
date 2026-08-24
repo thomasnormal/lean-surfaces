@@ -107,6 +107,10 @@ STUB
   done
   python3 tools/docs_check.py --self-test >/dev/null 2>&1 || {
     echo "    SELF-TEST FAILED: docs_check.py"; rc=1; }
+  # The comment-form gate's own regression set, run where the other tools'
+  # are: a fixture nobody runs is not a fixture.
+  python3 harness/lean_comment_forms.py --self-test >/dev/null 2>&1 || {
+    echo "    SELF-TEST FAILED: lean_comment_forms.py"; rc=1; }
   rm -rf "$stub"
   return "$rc"
 }
@@ -451,6 +455,10 @@ SVNO
   # FRESHNESS, ITS OWN ROWS AND ITS OWN FIXTURE: a written index is in sync, a
   # hand-edited one has DRIFTED.  Kept apart from the heading rows on purpose,
   # so a failure names which promise broke.
+  # ANCHORED TO THE INVOCATION LINE.  A bare substring count matched this row
+  # itself and read 2 -- the same self-matching trap as the --stdout row, and
+  # the third time this session that a row counted its own text.
+  vcheck "the comment-form gate's own rows run"  "$(grep -c '^  python3 harness/lean_comment_forms.py --self-test' "$0")" "1"
   vcheck "backlog-index-fresh is its own step"     "$(grep -c '^step  \"backlog-index-fresh\" backlog_index_fresh$' "$0")" "1"
   vcheck "  ...checking freshness, not headings"   "$(grep -c 'strict' <<< "$(grep '^backlog_index_fresh()' "$0")")" "0"
   vbi="$vstub/bi"; mkdir -p "$vbi"

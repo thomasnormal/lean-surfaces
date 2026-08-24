@@ -9020,6 +9020,29 @@ again**, and it is invisible in the obligation list, so a lane reading *"two
 obligations remain"* believes it. **An assembly that is hard is an obligation
 list that lies about its own length.**
 
+**AND THE ARC CLOSED: `bound_refines_fuelModel` IS ON MASTER** (`230a7b1`) —
+**typed, assembling, certified.** The theorem that had spent every archived
+ladder as the words *"…and then it assembles"* is now a constant in the tree.
+
+> **The typed-target law's first full cycle: STATED (one scratch elaboration) →
+> ASSEMBLED (difficulty zero, by design) → MERGED.** R-track's §9.0 stands at
+> **4/9**, with rung 3 closed on **finiteness-as-object**.
+
+**And the rung recorded a unit-family instance on the way through: THE RECIPE
+TRANSFERRED UNCHANGED AND THE FUNCTION DID NOT.**
+
+> **The two look alike in the SOURCE and are different constants in the TREE.**
+
+**A recipe is a shape a lane can carry between sites by reading**; a function is
+an object with an identity the elaborator tracks. **Transferring the recipe is
+free and transferring the function is a claim** — and the two are
+indistinguishable in a diff, which is where the frame-versus-loop distinction
+had to be made explicitly rather than inherited. *The same family as
+`bitLenSpec` existing twice (§2.4): sameness in the source is not sameness in
+the tree, in either direction.*
+
+
+
 
 
 **This closes a gap in §9's WAITING rule** (`-46`), which required an
@@ -9802,17 +9825,24 @@ Per-lane files answer *"where do I append?"* only while every entry has an
 obvious owner. One lane filing a finding into **another lane's** file needs
 a convention, or it mints ids in a sequence it does not own:
 
-* the entry is **headed `INBOUND`**;
+* the heading is
+  **`## <sender-id> — INBOUND FROM THE <X> LANE: <what the owner should do>`** —
+  the **id comes FIRST**, as §9.5's id law requires, and **`INBOUND` is a TITLE
+  PREFIX, never the id**;
 * it carries a **SENDER-namespace id** — `YYYY-MM-DD-<sender>-<n>` — so
   **nothing is minted in the owner's sequence**;
 * it tells the owner explicitly to **renumber it or close it**; the entry
   is a *proposal to the owner's record*, not a fact already in it;
-* the **generated index renders `INBOUND` as its own class**, listed
-  against each owning lane, so an owner sees what is queued for them
-  without reading their own file for surprises.
+* the **generated index renders `INBOUND` as its own class, derived from the
+  TITLE PREFIX**, listed against each owning lane, so an owner sees what is
+  queued for them without reading their own file for surprises;
+* **MIGRATION — entries in the ORIGINAL spelling are OLD-VALID**: the index
+  still classes them by their id token and **the guard warns without failing**,
+  until the owning lane re-spells them.
 
-**AND THIS CONVENTION IS IN TENSION WITH §9.5's ID LAW — found by the guard the
-same day the law landed, and one of the seven offenders is THIS LANE'S.**
+**THE BULLETS ABOVE ARE THE RESOLVED SHAPE. HOW THEY GOT THERE IS THE PART WORTH
+KEEPING — this convention was IN TENSION WITH §9.5's ID LAW, found by the guard
+the same day the law landed, and one of the seven offenders was THIS LANE'S.**
 `tools/backlog-index.sh` wants `## <id> — <title>`; §9.5a's heading starts with
 the word `INBOUND`, so the generator **invents `INBOUND` as the id** — which is
 precisely the *five tokens where one belongs* case that *an id is one token*
@@ -9830,10 +9860,43 @@ prose one:
 
 **Routed to the tools lane, not taken unilaterally**, because the generator is
 theirs and re-spelling six other lanes' headings to match a shape I chose would
-be exactly the cross-lane edit §9.5a exists to prevent. **Until it settles, the
-existing INBOUND headings are OLD-VALID — warn, never fail** — which is the
-migration vocabulary from §9.5 doing its job on **this document's own
-convention**, one landing after it was written.
+be exactly the cross-lane edit §9.5a exists to prevent.
+
+**AND IT LANDED — the generator now classes on the title prefix and accepts the
+original spelling as old-valid** (QoL, merged; `tools/backlog-index.sh` classes
+from the title at its `INBOUND` test and warns on the old form without failing).
+**The bullets above are amended to match, and that amendment is THIS lane's to
+make**: the generator moving is a tense fix; **the convention's CONTENT changing
+is a claim change**, which the reconciliation ruling below assigns to the owner.
+
+**AND THE MIGRATION CLAUSE'S JUSTIFICATION IS THE REGISTER-GRADE PART**, because
+it is argued from the charter's own authority rather than from convenience:
+
+> **A shape the rules once REQUIRED cannot become a failure the day a new rule
+> lands.**
+
+**§9.5a mandated the original spelling**, so **a guard punishing obedience would
+be the tool contradicting the law** — and the lanes holding those headings did
+exactly what this document told them to. *Old-valid is not leniency; it is the
+only disposition consistent with having given the instruction.*
+
+**AND THE ENFORCING LANE CAUGHT ITSELF VIOLATING THE ADJACENT RULE WHILE
+CONFORMING TO THIS ONE.** Re-spelling the headings, QoL **minted
+`2026-08-23-qol-inbound-1/2` for entries THIS LANE had sent** — ids in the
+**owner's** namespace for a **sender's** entry, which is the exact thing the
+sender-namespace bullet exists to prevent. **Re-spelled to
+`2026-08-23-architecture-27/28`, with the correction recorded in place**, and
+those two entries are now **the in-tree exemplar of the resolved shape.**
+
+> **Conforming to one rule is when you are most likely to break its neighbour** —
+> attention is on the shape being fixed, and the adjacent constraint is
+> satisfied by habit rather than by check.
+
+**Same family as the heading guard convicting §9.5a itself**: the instrument
+enforcing a rule met the rule's own author, and here **the lane enforcing a rule
+met its own violation of the rule beside it.** Both were caught **because
+something mechanical was pointed at the work** — and in both cases the
+mechanical thing was aimed at a *different* rule than the one it convicted.
 
 **Recorded rather than quietly fixed, because the shape is the useful part: a
 convention in a charter can be a defect in a tool.** §9.5a was written for

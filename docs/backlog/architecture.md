@@ -5392,3 +5392,77 @@ suppressing repair was available and cheaper at every step.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-240 … MEAS-244, STMT-127**.
+
+## 2026-08-24-architecture-66 — The charter's half of the INBOUND resolution
+
+A charter amendment owed at the convention level, plus two riders and the
+flagship's arrival. QoL landed the generator side of the resolution I recorded
+in `-59` (verified here: `tools/backlog-index.sh` classes from the **title
+prefix** and warns on the original spelling without failing).
+
+**THE AMENDMENT — §9.5a's BULLETS NOW DESCRIBE THE RESOLVED SHAPE**, in QoL's
+wording:
+
+* the heading is
+  **`## <sender-id> — INBOUND FROM THE <X> LANE: <what the owner should do>`** —
+  **id first**, per §9.5's id law, and **`INBOUND` is a TITLE PREFIX, never the
+  id**;
+* the index renders INBOUND as its own class **derived from the title prefix**;
+* **entries in the original spelling are OLD-VALID** — classed by their id
+  token, guard warns without failing, until the owning lane re-spells them.
+
+**And the amendment is MINE to land, not QoL's**, exactly as the reconciliation
+ruling assigns it: **the generator moving is a tense fix; the convention's
+CONTENT changing is a claim change.** The `-59` paragraph recording *"recommended,
+not taken — routed to the tools lane"* is **reconciled in place** rather than
+deleted, so the sequence stays legible: tension found by the guard → resolution
+recommended and routed → generator lands → charter amends.
+
+**THE MIGRATION CLAUSE'S JUSTIFICATION IS THE REGISTER-GRADE PART**, and it is
+argued from the charter's own authority rather than from leniency:
+
+> **A shape the rules once REQUIRED cannot become a failure the day a new rule
+> lands.**
+
+**§9.5a mandated the original spelling**, so **a guard punishing obedience would
+be the tool contradicting the law.** The lanes holding those headings did what
+this document told them to. *Old-valid is not tolerance; it is the only
+disposition consistent with having given the instruction.*
+
+**RIDER — THE ENFORCING LANE CAUGHT ITSELF VIOLATING THE ADJACENT RULE.**
+Re-spelling the headings, QoL **minted `2026-08-23-qol-inbound-1/2` for entries
+this lane had sent** — owner-namespace ids for a sender's entries, the exact
+thing the sender-namespace bullet prevents. Re-spelled to
+`2026-08-23-architecture-27/28`, **correction recorded in place**, and those two
+are now **the in-tree exemplar.**
+
+> **Conforming to one rule is when you are most likely to break its
+> NEIGHBOUR** — attention is on the shape being fixed, and the adjacent
+> constraint is satisfied by habit rather than by check.
+
+**Same family as the heading guard convicting §9.5a itself**, and both share the
+detail worth keeping: **the mechanical thing that caught it was aimed at a
+DIFFERENT rule than the one it convicted.**
+
+**AND THE FLAGSHIP ARRIVED — `bound_refines_fuelModel` IS ON MASTER**
+(`230a7b1`): **typed, assembling, certified.** The theorem that spent every
+archived ladder as the words *"…and then it assembles"* is now a constant in the
+tree.
+
+> **The typed-target law's first full cycle: STATED (one scratch elaboration) →
+> ASSEMBLED (difficulty zero, by design) → MERGED.**
+
+R-track's §9.0 is **4/9**, rung 3 closed on **finiteness-as-object** — and the
+rung left a unit-family instance behind: **the recipe transferred unchanged and
+the FUNCTION did not.**
+
+> **The two look alike in the SOURCE and are different constants in the TREE.**
+
+**A recipe is a shape a lane carries between sites by reading; a function is an
+object whose identity the elaborator tracks** — so transferring the recipe is
+free and transferring the function is **a claim**, and the two are
+indistinguishable in a diff. *The same family as `bitLenSpec` existing twice:
+sameness in the source is not sameness in the tree, in either direction.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-245 … MEAS-247**.

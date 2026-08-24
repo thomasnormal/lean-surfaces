@@ -1343,3 +1343,104 @@ associations, and the default expressions a missing argument takes.
 adoption ticket parked it with a reason: `FlatLe` backs the `_mono`
 corollaries and Ada had no recursion. A call is recursion. It is in the
 closure already (Outcome imports it); this is the rung that may put it to use.
+
+## 2026-08-24-ada-6 — INCH 3 BUILDS: calls, the frame, `return` — and `orderDependence` EMITS for the first time
+
+`LeanModels/Ada/Ada2012/Stmt.lean` grows to 1,106 lines and 54 guards. Built
+to §2026-08-24-ada-5's census, on the Go tier's shape.
+
+**The first tenure came back RED on ONE guard, and it was the right guard
+to lose.** Inch 2 pinned *`CallStmt` refuses at ARM 5.1 — 56,062 nodes, and
+it is inch 3's*. Inch 3 made that false, so the guard failed:
+
+    Expression
+      refusedAtClause "5.1" [Node.node "CallStmt" sp0 #[ident "P"]]
+    did not evaluate to `true`
+
+> **A guard that pins a REFUSAL must go red the moment the frontier moves
+> past it, or the tier keeps claiming not to model something it models.**
+
+That is the whole value of writing refusals as guards rather than as prose:
+the gate, not a reviewer, noticed that a claim had expired. The witness
+moved to a kind still genuinely out of tier (`CaseStmt`, ARM 5.4, inch
+7's) and a second guard records that `CallStmt` now refuses one step
+further in, at ARM 6.4, when its child is not a call — so the arm stays
+non-vacuous and only its clause moved. **52 of 53 guards passed on the
+first compile**, including the whole mutual block, the frame machinery and
+the order-dependence emission.
+
+### THE STRUCTURE IS BORROWED, DELIBERATELY
+
+`LeanModels/Go/Stmt.lean` is a `mutual` over `evalExpr`/`evalArgs`/
+`evalCallValues`/`execStmt`, **fuel-indexed, with the function table as a
+leading PARAMETER and no `termination_by`**. Inch 3 is the same five-function
+shape — `evalExpr`, `callExpr`, `evalArgs`, `callSubp`, `execStmts` — for the
+same reasons, and the absence of `termination_by` is load-bearing: it would
+force well-founded recursion and take the gate's kernel reduction away, which
+is the trap inch 2 recorded about `partial`. The C tier's `Expr.lean` measures
+on AST size instead; this tier cannot afford to.
+
+**The table is a PARAMETER, not `W`.** A subprogram body is program text, and
+putting text in the world would make elaboration look like a side effect. Go
+decided this first; Ada follows rather than re-deciding.
+
+### WHAT A FRAME ABSORBS — the two-channel mapping at the call boundary
+
+`inFrame` is the whole of it, and its three arms are three different laws:
+
+* **`.ret` is CAUGHT.** That is what a frame is FOR (ARM 6.5) — and it needed
+  **no new machinery**, because inch 1 already put `.ret` in `Abrupt`.
+* **Any other exception PROPAGATES, and the frame is POPPED anyway.** ARM
+  11.4: an exception leaving a subprogram still leaves it. Guarded both ways.
+* **A refusal does not come back at all.** There is no world on `π` — it is
+  the state-discarding channel — so there is nothing to pop. **A `π` arm that
+  restored a world would be inventing one.**
+
+### THE ORDER-DEPENDENCE GATE EMITS, exactly at the rung inch 2 predicted
+
+Inch 2 recorded that its evaluation order was unobservable *because every form
+in its vocabulary is side-effect-free, and the question becomes live exactly
+when calls arrive*. It arrives:
+
+> **Two or more arguments, and at least one contains a call → REFUSE with
+> `RefusalCause.orderDependence` citing ARM 6.4.1.**
+
+ARM 6.4.1 leaves the order unspecified and a call can have an effect, so the
+model **refuses rather than picking an order and calling it the language**.
+This is the first `orderDependence` emission in the tier, and it makes inch
+1's `orderDependenceGate` — written expecting an empty bucket — non-vacuous
+for the first time. Both directions are guarded: it fires on the ambiguous
+shape and **does not** fire on one argument or on several with no call among
+them, because a gate that refused those would be refusing the language rather
+than the model's limit.
+
+`containsCall` answers **`true` out of fuel**, because its only consumer
+refuses on `true` and a refusal is the safe direction — a budget-exhausted
+"no" would silently license the very order-dependence it exists to catch.
+
+### THE CENSUS PAID FOR ITSELF TWICE
+
+* **A parameterless call's argument list is a LEAF** (35 of 160). `P;` is the
+  commonest call shape there is, and a walker matching only `.node "AssocList"`
+  would have refused every one. Inch 2 paid to learn this encoding; inch 3
+  handled it on the first try and guards it.
+* **A `CallExpr` suffix is not always an argument list** — 20 of 124 are
+  `BinOp`, a range or slice. Refused citing ARM 4.1.2 rather than read as
+  arguments.
+
+### THE SLICE, AND EVERY EXCLUSION CITES ITS CLAUSE
+
+Positional associations only (**named refuses, 6.4.1**); `in` mode only
+(**`out`/`in out` refuse, 6.2** — the subclause that also carries the Bounded
+Errors category, so the next rung starts there); simple-name callees only
+(`DottedName`/`AttributeRef` refuse, 6.4); no default expressions (an arity
+mismatch refuses, 6.4.1).
+
+The table BUILDER (`subpOf`, `collectSubps`) is guarded **apart from** the
+call rules, so a red says which of the two is wrong — and one guard closes the
+loop by driving the walker from a table the builder produced.
+
+### THE NUMBER IS STILL ZERO
+
+ACATS **0 / 4,188** and **0 / 3,996**. Inch 3 gives calls; the 1,374 v0 tests
+call `Report`, which must be MODELLED (inch 5). The row moves at inch 6.

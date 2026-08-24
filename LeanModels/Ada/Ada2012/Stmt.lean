@@ -139,6 +139,12 @@ now is a field and the cost of adding them later is every rule. -/
 * **`trace` — declared, unwritten, and the reason §1 exists.** -/
 structure AdaWorld where
   objects : List (String × Val) := []
+  /-- **Inch 3.** The call stack's locals, innermost first. Separate from
+  `objects` rather than replacing it: inch 3 models no nested subprogram, so a
+  static chain would be a shape with nothing to chain. A lookup searches the
+  innermost frame and then the outer store, and every inch-2 guard is
+  unaffected because the default is `[]`. -/
+  frames : List (List (String × Val)) := []
   elaborated : List String := []
   output : List String := []
   trace : List TraceRow := []
@@ -161,7 +167,13 @@ def foldId (s : String) : String := s.toLower
 
 /-- The current value of a named object, case-folded per ARM 2.3. -/
 def lookupObj (w : AdaWorld) (name : String) : Option Val :=
-  (w.objects.find? (fun p => p.1 == foldId name)).map Prod.snd
+  let key := foldId name
+  let outer := (w.objects.find? (fun p => p.1 == key)).map Prod.snd
+  match w.frames with
+  | [] => outer
+  | f :: _ => match (f.find? (fun p => p.1 == key)).map Prod.snd with
+              | some v => some v
+              | none => outer
 
 /-- Replace a named object's value. **Only ever called after `lookupObj`
 succeeded** — an assignment to an undeclared name is refused before this,
@@ -169,7 +181,13 @@ because inch 2 models no declaration — so this updates in place and never
 creates, which is what keeps a refused program from quietly acquiring a
 variable. -/
 def updateObj (w : AdaWorld) (name : String) (v : Val) : AdaWorld :=
-  { w with objects := w.objects.map (fun p => if p.1 == foldId name then (p.1, v) else p) }
+  let key := foldId name
+  let hit (l : List (String × Val)) := l.any (fun p => p.1 == key)
+  let put (l : List (String × Val)) := l.map (fun p => if p.1 == key then (p.1, v) else p)
+  match w.frames with
+  | f :: rest => if hit f then { w with frames := put f :: rest }
+                 else { w with objects := put w.objects }
+  | [] => { w with objects := put w.objects }
 
 /-! ## §4 CITING THE ARM WHEN THE ARM IS NOT ON THE MACHINE -/
 
@@ -324,88 +342,135 @@ def intLiteral (t : String) : AdaM W Val :=
     | some n => pure (Val.univInt (Int.ofNat n))
     | none => refuse (.unsupported (clauseRef "2.4")) s!"integer literal '{t}' did not parse"
 
-/-- Evaluate an expression. Structurally recursive on `fuel`, so the gate can
-run it in the kernel. Shaped like `LeanModels/Es/Eval.lean`'s walker: match
-the node's SHAPE, then dispatch on its `kind`, then a loud default. -/
-def evalExpr : Nat → Node → AdaM AdaWorld Val
-  | 0, _ => exhausted
+/-! ## §8a INCH 3 — the subprogram table, the frame, and what a frame ABSORBS
+
+`docs/backlog/ada.md` §2026-08-24-ada-5 censused this rung: 178 ARM paragraphs
+and 16.39% of the corpus, with the weight in the ARGUMENTS rather than in the
+call (`AssocList` + `ParamAssoc` = 271,135 nodes against 152,654 call nodes).
+
+**The table is a PARAMETER, not world state**, following the Go tier's
+`FuncTable` (`LeanModels/Go/Stmt.lean`): a subprogram body is program text,
+and putting text in `W` would make elaboration look like a side effect. -/
+
+/-- A subprogram this tier can call. -/
+structure Subp where
+  /-- Case-folded, per ARM 2.3. -/
+  name : String
+  isFunction : Bool
+  /-- Formal parameter names, case-folded, in POSITIONAL order. -/
+  params : List String
+  /-- Every mode is `in` (`ModeDefault`/`ModeIn`). **`out` and `in out` are
+  outside inch 3's slice** and the call refuses citing ARM 6.2 — which is also
+  the subclause carrying a Bounded (Run-Time) Errors category, so it is the
+  right place for the next rung to start. -/
+  modesOk : Bool
+  body : List Node
+  deriving Repr, Inhabited
+
+abbrev SubpTable := List (String × Subp)
+
+/-- **WHAT A FRAME ABSORBS, and it is the two-channel mapping deciding.**
+
+Run `x` in a NEW frame and come back:
+
+* **`.ret` is CAUGHT** — that is what a frame is FOR (ARM 6.5).
+* **any other Ada exception PROPAGATES, and the frame is still POPPED.** ARM
+  11.4: an exception leaving a subprogram still leaves it, so the frame dies
+  with the call rather than with the success.
+* **a REFUSAL does not come back at all** — there is no world on `π`, which is
+  the state-discarding channel, so there is nothing to pop. That asymmetry is
+  not an omission: it is the adoption's mapping showing through at the frame
+  boundary, and a `π` arm that restored a world would be inventing one. -/
+def inFrame (locals : List (String × Val)) (x : AdaM AdaWorld Unit) :
+    AdaM AdaWorld (Option Val) := fun w =>
+  match x { w with frames := locals :: w.frames } with
+  | .error h => .error h
+  | .ok (.ok _, w') => .ok (.ok none, { w' with frames := w.frames })
+  | .ok (.error (.ret v), w') => .ok (.ok v, { w' with frames := w.frames })
+  | .ok (.error e, w') => .ok (.error e, { w' with frames := w.frames })
+
+/-- Does this subtree contain a call? **Out of fuel answers `true`**, because
+the only consumer refuses on `true` and a refusal is the safe direction — a
+budget-exhausted "no" would silently license the very order-dependence this
+predicate exists to catch. -/
+def containsCall : Nat → Node → Bool
+  | 0, _ => true
   | fuel + 1, n =>
     match n with
-    | .leaf k _ t =>
-      match k with
-      | "IntLiteral" => intLiteral t
-      | "Identifier" => do
-        let w ← get
-        match lookupObj w t with
-        | some v => pure v
-        | none =>
-          refuse (.unsupported (clauseRef "3.3"))
-            s!"'{t}' is not in the store — inch 2 models no object declaration"
-      | _ =>
-        refuse (.unsupported (clauseRef "4.4"))
-          s!"expression leaf '{k}' is outside inch 2's vocabulary"
-    | .node k _ ch =>
-      match k with
-      | "ParenExpr" =>
-        if ch.size == 1 then evalExpr fuel ch[0]!
-        else refuse (.unsupported (clauseRef "4.4")) "ParenExpr: unexpected arity"
-      | "UnOp" =>
-        if ch.size != 2 then refuse (.unsupported (clauseRef "4.5")) "UnOp: unexpected arity"
-        else do
-          let v ← evalExpr fuel ch[1]!
-          match kindOf ch[0]! with
-          | "OpNot" =>
-            match v.asBool with
-            | some b => pure (Val.ofBool (!b))
-            | none => refuse (.unsupported (clauseRef "4.5.6")) "'not' applied to a non-Boolean"
-          | "OpMinus" =>
-            match v with
-            | .int s x => ofAbrupt (constrain s (-x))
-            | .univInt x => pure (Val.univInt (-x))
-            | .enum _ _ => refuse (.unsupported (clauseRef "4.5.4")) "unary '-' on an enumeration"
-          | u =>
-            refuse (.unsupported (clauseRef "4.5"))
-              s!"unary operator '{u}' is outside inch 2's vocabulary"
-      | "BinOp" =>
-        if ch.size != 3 then refuse (.unsupported (clauseRef "4.5")) "BinOp: unexpected arity"
-        else do
-          let l ← evalExpr fuel ch[0]!
-          let r ← evalExpr fuel ch[2]!
-          let op := kindOf ch[1]!
-          match operands l r with
-          | none =>
-            refuse (.unsupported (clauseRef "4.5"))
-              s!"operator '{op}' on these operand types is outside inch 2's vocabulary"
-          | some (sub, x, y) =>
-            match applyArith sub op x y with
-            | some res => ofAbrupt res
-            | none =>
-              refuse (.unsupported (clauseRef "4.5"))
-                s!"binary operator '{op}' is outside inch 2's vocabulary"
-      | "RelationOp" =>
-        if ch.size != 3 then refuse (.unsupported (clauseRef "4.5.2")) "RelationOp: unexpected arity"
-        else do
-          let l ← evalExpr fuel ch[0]!
-          let r ← evalExpr fuel ch[2]!
-          let op := kindOf ch[1]!
-          match l.asInt, r.asInt with
-          | some x, some y =>
-            match applyRel op x y with
-            | some v => pure v
-            | none =>
-              refuse (.unsupported (clauseRef "4.5.2"))
-                s!"relational operator '{op}' is outside inch 2's vocabulary"
-          | _, _ =>
-            refuse (.unsupported (clauseRef "4.5.2"))
-              s!"relational operator '{op}' on non-integer operands is outside inch 2's vocabulary"
-      | _ =>
-        refuse (.unsupported (clauseRef "4.4"))
-          s!"expression node '{k}' is outside inch 2's vocabulary"
-    | .absent =>
-      refuse (.unsupported (clauseRef "4.4")) "an ABSENT node is not an expression"
-    | .unsupported cls _ _ =>
-      refuse (.unsupported (clauseRef "4.4"))
-        s!"frontend node class '{cls}' is outside the pinned vocabulary"
+    | .node "CallExpr" _ _ => true
+    | .node _ _ ch => ch.any (containsCall fuel)
+    | _ => false
+
+/-- The identifier under a `DefiningName` (ARM 6.1). -/
+def definingName : Node → Option String
+  | .node "DefiningName" _ ch =>
+      if ch.size == 1 then
+        match ch[0]! with
+        | .leaf "Identifier" _ t => some t
+        | _ => none
+      else none
+  | .leaf "Identifier" _ t => some t
+  | _ => none
+
+/-- One `ParamSpec`: its names and whether its mode is in the slice.
+Arity 6, measured (35 of 35); the mode is child 2. -/
+def paramSpec : Node → Option (List String × Bool) 
+  | .node "ParamSpec" _ ch =>
+      if ch.size != 6 then none else
+      let ok := kindOf ch[2]! == "ModeDefault" || kindOf ch[2]! == "ModeIn"
+      match ch[0]! with
+      | .node "DefiningNameList" _ ns =>
+          let named := ns.toList.filterMap definingName
+          if named.length == ns.size then some (named.map foldId, ok) else none
+      | _ => none
+  | _ => none
+
+/-- A `SubpSpec`'s parameter list. An ABSENT list is a parameterless
+subprogram, which is ordinary and not a failure. -/
+def paramsOf : Node → List String × Bool
+  | .node "ParamSpecList" _ ps =>
+      ps.foldl (fun acc s =>
+        match paramSpec s with
+        | some (ns, ok) => (acc.1 ++ ns, acc.2 && ok)
+        | none => (acc.1, false)) (([], true) : List String × Bool)
+  | .absent => ([], true)
+  | _ => ([], false)
+
+/-- A `SubpBody` read into a `Subp`. Arities measured off the fixtures:
+`SubpBody` 6 of 6, `SubpSpec` 4 of 4, `HandledStmts` 2 of 2. -/
+def subpOf : Node → Option Subp
+  | .node "SubpBody" _ ch =>
+      if ch.size != 6 then none else
+      match ch[1]!, ch[4]! with
+      | .node "SubpSpec" _ sp, .node "HandledStmts" _ hs =>
+          if sp.size != 4 || hs.size < 1 then none else
+          match definingName sp[1]! with
+          | none => none
+          | some nm =>
+            let (ps, ok) := paramsOf sp[2]!
+            some { name := foldId nm,
+                   isFunction := kindOf sp[0]! == "SubpKindFunction",
+                   params := ps, modesOk := ok,
+                   body := match hs[0]! with
+                           | .node "StmtList" _ ss => ss.toList
+                           | other => [other] }
+      | _, _ => none
+  | _ => none
+
+/-- Every `SubpBody` in a declaration tree, as a table. Explicitly recursive
+on a LIST at a decreasing fuel rather than folding, so the recursion stays
+structural and the table stays kernel-reducible. -/
+def collectSubps : Nat → List Node → SubpTable
+  | 0, _ => []
+  | _ + 1, [] => []
+  | fuel + 1, n :: rest =>
+      let here := match subpOf n with
+                  | some s => [(s.name, s)]
+                  | none => []
+      let inner := match n with
+                   | .node _ _ ch => collectSubps fuel ch.toList
+                   | _ => []
+      here ++ inner ++ collectSubps fuel rest
 
 /-! ## §9 ARM 5.2 — THE ASSIGNMENT'S SUBTYPE CHECK
 
@@ -431,37 +496,232 @@ def convertTo (target v : Val) : AdaM W Val :=
 
 /-! ## §10 THE STATEMENT TIER — ARM 5.1, 5.2, 5.3 -/
 
+/-! ## §10 THE WALKER — ARM 5.1-5.3 and 6.1/6.3/6.4/6.4.1/6.5
+
+ONE `mutual` block, every function structurally recursive on `fuel` and
+carrying the subprogram table as a leading parameter. That is the Go tier's
+shape (`LeanModels/Go/Stmt.lean`: `mutual` over `evalExpr`/`evalArgs`/
+`evalCallValues`/`execStmt`, fuel-indexed, `FuncTable` as a parameter) and it
+is followed rather than reinvented — **with `termination_by` deliberately
+absent**, because it would force well-founded recursion and take the gate's
+kernel reduction away. The C tier's `Expr.lean` measures on AST size instead;
+this tier cannot, for that reason. -/
+
+mutual
+
+/-- Evaluate an expression. -/
+def evalExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld Val
+  | 0, _ => exhausted
+  | fuel + 1, n =>
+    match n with
+    | .leaf k _ t =>
+      match k with
+      | "IntLiteral" => intLiteral t
+      | "Identifier" => do
+        let w ← get
+        match lookupObj w t with
+        | some v => pure v
+        | none =>
+          refuse (.unsupported (clauseRef "3.3"))
+            s!"'{t}' is not in the store — inch 2 models no object declaration"
+      | _ =>
+        refuse (.unsupported (clauseRef "4.4"))
+          s!"expression leaf '{k}' is outside this tier's vocabulary"
+    | .node k _ ch =>
+      match k with
+      | "ParenExpr" =>
+        if ch.size == 1 then evalExpr prog fuel ch[0]!
+        else refuse (.unsupported (clauseRef "4.4")) "ParenExpr: unexpected arity"
+      | "UnOp" =>
+        if ch.size != 2 then refuse (.unsupported (clauseRef "4.5")) "UnOp: unexpected arity"
+        else do
+          let v ← evalExpr prog fuel ch[1]!
+          match kindOf ch[0]! with
+          | "OpNot" =>
+            match v.asBool with
+            | some b => pure (Val.ofBool (!b))
+            | none => refuse (.unsupported (clauseRef "4.5.6")) "'not' applied to a non-Boolean"
+          | "OpMinus" =>
+            match v with
+            | .int s x => ofAbrupt (constrain s (-x))
+            | .univInt x => pure (Val.univInt (-x))
+            | .enum _ _ => refuse (.unsupported (clauseRef "4.5.4")) "unary '-' on an enumeration"
+          | u =>
+            refuse (.unsupported (clauseRef "4.5"))
+              s!"unary operator '{u}' is outside this tier's vocabulary"
+      | "BinOp" =>
+        if ch.size != 3 then refuse (.unsupported (clauseRef "4.5")) "BinOp: unexpected arity"
+        else do
+          let l ← evalExpr prog fuel ch[0]!
+          let r ← evalExpr prog fuel ch[2]!
+          let op := kindOf ch[1]!
+          match operands l r with
+          | none =>
+            refuse (.unsupported (clauseRef "4.5"))
+              s!"operator '{op}' on these operand types is outside this tier's vocabulary"
+          | some (sub, x, y) =>
+            match applyArith sub op x y with
+            | some res => ofAbrupt res
+            | none =>
+              refuse (.unsupported (clauseRef "4.5"))
+                s!"binary operator '{op}' is outside this tier's vocabulary"
+      | "RelationOp" =>
+        if ch.size != 3 then refuse (.unsupported (clauseRef "4.5.2")) "RelationOp: unexpected arity"
+        else do
+          let l ← evalExpr prog fuel ch[0]!
+          let r ← evalExpr prog fuel ch[2]!
+          let op := kindOf ch[1]!
+          match l.asInt, r.asInt with
+          | some x, some y =>
+            match applyRel op x y with
+            | some v => pure v
+            | none =>
+              refuse (.unsupported (clauseRef "4.5.2"))
+                s!"relational operator '{op}' is outside this tier's vocabulary"
+          | _, _ =>
+            refuse (.unsupported (clauseRef "4.5.2"))
+              s!"relational operator '{op}' on non-integer operands is outside this tier's vocabulary"
+      -- ARM 6.4: a FUNCTION call in expression position.
+      | "CallExpr" => do
+        let r ← callExpr prog fuel n
+        match r with
+        | some v => pure v
+        | none =>
+          refuse (.unsupported (clauseRef "6.5"))
+            "a function call completed without returning a value"
+      | _ =>
+        refuse (.unsupported (clauseRef "4.4"))
+          s!"expression node '{k}' is outside this tier's vocabulary"
+    | .absent =>
+      refuse (.unsupported (clauseRef "4.4")) "an ABSENT node is not an expression"
+    | .unsupported cls _ _ =>
+      refuse (.unsupported (clauseRef "4.4"))
+        s!"frontend node class '{cls}' is outside the pinned vocabulary"
+
+/-- ARM 6.4, *Subprogram Calls*. Measured shapes: `CallExpr` is 2 children
+(124 of 124) — a name and a suffix — and `CallStmt` wraps one (32 of 32).
+
+**THE SUFFIX IS NOT ALWAYS AN ARGUMENT LIST.** 20 of 124 are `BinOp`, which is
+a range or a slice (`A (1 .. 10)`), and 35 of 160 `AssocList` nodes are LEAVES
+carrying empty text — a parameterless call. Both are refused or handled
+explicitly rather than falling through a pattern that assumed a node. -/
+def callExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld (Option Val)
+  | 0, _ => exhausted
+  | fuel + 1, n =>
+    match n with
+    | .node "CallExpr" _ ch =>
+      if ch.size != 2 then refuse (.unsupported (clauseRef "6.4")) "CallExpr: unexpected arity"
+      else
+        match ch[0]! with
+        | .leaf "Identifier" _ nm =>
+          match prog.find? (fun e => e.1 == foldId nm) with
+          | none =>
+            refuse (.unsupported (clauseRef "6.4"))
+              s!"'{nm}' is not a subprogram this tier has elaborated"
+          | some (_, s) =>
+            match ch[1]! with
+            -- THE TRAP, HANDLED: an empty argument list is a LEAF, not a node
+            -- with no children — 35 of 160, and `P;` is the commonest call.
+            | .leaf "AssocList" _ _ => callSubp prog fuel s []
+            | .node "AssocList" _ assoc =>
+              -- ARM 6.4.1 LEAVES THE ORDER UNSPECIFIED, and a call can have an
+              -- effect. This is the first site in the tier where the order is
+              -- OBSERVABLE, exactly as inch 2 predicted it would be.
+              if assoc.size ≥ 2 && assoc.any (containsCall fuel) then
+                refuse (.orderDependence (clauseRef "6.4.1"))
+                  s!"'{nm}' is called with {assoc.size} arguments and at least one contains a call: ARM 6.4.1 leaves the evaluation order unspecified, so the observable outcome is not determined by this model"
+              else do
+                let args ← evalArgs prog fuel assoc.toList
+                callSubp prog fuel s args
+            | sfx =>
+              refuse (.unsupported (clauseRef "4.1.2"))
+                s!"a '{kindOf sfx}' suffix is an index or a slice, not an argument list"
+        | callee =>
+          refuse (.unsupported (clauseRef "6.4"))
+            s!"callee '{kindOf callee}' is not a simple name — inch 3 has no name resolution"
+    | other =>
+      refuse (.unsupported (clauseRef "6.4")) s!"'{kindOf other}' is not a call"
+
+/-- ARM 6.4.1, *Parameter Associations* — 51 paragraphs, the biggest subclause
+in the rung. `ParamAssoc` is 2 children (139 of 139) and a **`null` designator
+is a POSITIONAL association**, which is the shape the corpus is made of. -/
+def evalArgs (prog : SubpTable) : Nat → List Node → AdaM AdaWorld (List Val)
+  | 0, _ => exhausted
+  | _ + 1, [] => pure []
+  | fuel + 1, a :: rest =>
+    match a with
+    | .node "ParamAssoc" _ pc =>
+      if pc.size != 2 then refuse (.unsupported (clauseRef "6.4.1")) "ParamAssoc: unexpected arity"
+      else
+        match pc[0]! with
+        | .absent => do
+          let v ← evalExpr prog fuel pc[1]!
+          let vs ← evalArgs prog fuel rest
+          pure (v :: vs)
+        | d =>
+          refuse (.unsupported (clauseRef "6.4.1"))
+            s!"a NAMED association (designator '{kindOf d}') is outside inch 3's slice"
+    | other =>
+      refuse (.unsupported (clauseRef "6.4.1"))
+        s!"'{kindOf other}' is not a parameter association"
+
+/-- Enter the frame, run the body, and come back with whatever `return`
+delivered. ARM 6.3, 6.5. -/
+def callSubp (prog : SubpTable) : Nat → Subp → List Val → AdaM AdaWorld (Option Val)
+  | 0, _, _ => exhausted
+  | fuel + 1, s, args =>
+    if !s.modesOk then
+      refuse (.unsupported (clauseRef "6.2"))
+        s!"'{s.name}' has a parameter mode outside inch 3's slice — only `in` is modelled"
+    else if s.params.length != args.length then
+      refuse (.unsupported (clauseRef "6.4.1"))
+        s!"'{s.name}' takes {s.params.length} parameters and was given {args.length} arguments — inch 3 models no default expression"
+    else
+      inFrame (s.params.zip args) (execStmts prog fuel s.body)
+
 /-- Execute a sequence of statements (ARM 5.1).
 
-ONE function over a LIST, so the whole tier is structurally recursive on
-`fuel` with no mutual block. `elsif` is handled by **lowering** — ARM 5.3's
-`elsif` is a nested `if`, and the rule rebuilds it as one. -/
-def execStmts : Nat → List Node → AdaM AdaWorld Unit
+ONE function over a LIST, and `elsif` is handled by **lowering** — ARM 5.3's
+`elsif` is a nested `if`, so the rule rebuilds it as one. -/
+def execStmts (prog : SubpTable) : Nat → List Node → AdaM AdaWorld Unit
   | 0, _ => exhausted
   | _ + 1, [] => pure ()
   | fuel + 1, s :: rest =>
     match s with
     | .leaf k _ _ =>
       match k with
-      -- ARM 5.1: null_statement. A LEAF, because the extractor emits a
-      -- childless node as a leaf carrying its source text.
-      | "NullStmt" => execStmts fuel rest
+      | "NullStmt" => execStmts prog fuel rest
       | _ =>
         refuse (.unsupported (clauseRef "5.1"))
-          s!"statement leaf '{k}' is outside inch 2's vocabulary"
+          s!"statement leaf '{k}' is outside this tier's vocabulary"
     | .node k esp ch =>
       match k with
-      -- ARM 5.1: a sequence_of_statements, SPLICED rather than recursed
-      -- into, which is what keeps this one function.
-      | "StmtList" => execStmts fuel (ch.toList ++ rest)
-      | "NullStmt" => execStmts fuel rest
-      -- ARM 5.2: assignment_statement.
+      | "StmtList" => execStmts prog fuel (ch.toList ++ rest)
+      | "NullStmt" => execStmts prog fuel rest
+      -- ARM 6.4: a PROCEDURE call statement. `CallStmt` wraps one `CallExpr`,
+      -- 32 of 32, and its value (if any) is discarded.
+      | "CallStmt" =>
+        if ch.size != 1 then refuse (.unsupported (clauseRef "6.4")) "CallStmt: unexpected arity"
+        else do
+          let _ ← callExpr prog fuel ch[0]!
+          execStmts prog fuel rest
+      -- ARM 6.5: `return`. A RAISE on rho, which the call frame absorbs -- so
+      -- the frame is what makes a return local, and no new machinery is
+      -- needed because inch 1 put `.ret` in `Abrupt` already.
+      | "ReturnStmt" =>
+        if ch.size != 1 then refuse (.unsupported (clauseRef "6.5")) "ReturnStmt: unexpected arity"
+        else
+          match ch[0]! with
+          | .absent => raiseIn (.ret none)
+          | e => do
+            let v ← evalExpr prog fuel e
+            raiseIn (.ret (some v))
       | "AssignStmt" =>
         if ch.size != 2 then refuse (.unsupported (clauseRef "5.2")) "AssignStmt: unexpected arity"
         else
           match ch[0]! with
           | .leaf "Identifier" _ name => do
-            let v ← evalExpr fuel ch[1]!
+            let v ← evalExpr prog fuel ch[1]!
             let w ← get
             match lookupObj w name with
             | none =>
@@ -470,23 +730,20 @@ def execStmts : Nat → List Node → AdaM AdaWorld Unit
             | some cur => do
               let v' ← convertTo cur v
               modify (fun w' => updateObj w' name v')
-              execStmts fuel rest
+              execStmts prog fuel rest
           | target =>
             refuse (.unsupported (clauseRef "5.2"))
-              s!"assignment target '{kindOf target}' is not a simple name — the target-shape census has not run"
-      -- ARM 5.3: if_statement.
+              s!"assignment target '{kindOf target}' is not a simple name — the target-shape census says 83.7% are, and the rest need composite VALUES"
       | "IfStmt" =>
         if ch.size != 4 then refuse (.unsupported (clauseRef "5.3")) "IfStmt: unexpected arity"
         else do
-          let c ← evalExpr fuel ch[0]!
+          let c ← evalExpr prog fuel ch[0]!
           match c.asBool with
           | none =>
             refuse (.unsupported (clauseRef "5.3"))
-              "an if condition that is not Boolean is outside inch 2's vocabulary"
-          | some true => execStmts fuel (ch[1]! :: rest)
+              "an if condition that is not Boolean is outside this tier's vocabulary"
+          | some true => execStmts prog fuel (ch[1]! :: rest)
           | some false =>
-            -- An EMPTY elsif list is a LEAF, not a node with no children, so
-            -- a non-node here means "no elsif parts" and not "malformed".
             let elsifs :=
               match ch[2]! with
               | .node "ElsifStmtPartList" _ es => es.toList
@@ -494,25 +751,27 @@ def execStmts : Nat → List Node → AdaM AdaWorld Unit
             match elsifs with
             | [] =>
               match ch[3]! with
-              | .node "ElsePart" _ ep => execStmts fuel (ep.toList ++ rest)
-              | _ => execStmts fuel rest
+              | .node "ElsePart" _ ep => execStmts prog fuel (ep.toList ++ rest)
+              | _ => execStmts prog fuel rest
             | e :: es =>
               match e with
               | .node "ElsifStmtPart" _ ec =>
                 if ec.size != 2 then refuse (.unsupported (clauseRef "5.3")) "ElsifStmtPart: unexpected arity"
                 else
-                  execStmts fuel
+                  execStmts prog fuel
                     (Node.node "IfStmt" esp
                       #[ec[0]!, ec[1]!, Node.node "ElsifStmtPartList" esp es.toArray, ch[3]!] :: rest)
               | bad =>
                 refuse (.unsupported (clauseRef "5.3"))
-                  s!"elsif part '{kindOf bad}' is outside inch 2's vocabulary"
+                  s!"elsif part '{kindOf bad}' is outside this tier's vocabulary"
       | _ =>
         refuse (.unsupported (clauseRef "5.1"))
-          s!"statement node '{k}' is outside inch 2's vocabulary"
+          s!"statement node '{k}' is outside this tier's vocabulary"
     | other =>
       refuse (.unsupported (clauseRef "5.1"))
-        s!"statement node '{kindOf other}' is outside inch 2's vocabulary"
+        s!"statement node '{kindOf other}' is outside this tier's vocabulary"
+
+end
 
 /-! ## §11 THE GATE
 
@@ -550,28 +809,31 @@ private def w0 : AdaWorld :=
   { objects := [("x", .int int8 0), ("y", .int int8 10), ("b", Val.ofBool false)],
     trace := [row0] }
 
-private def endsWith (name : String) (v : Val) (ss : List Node) : Bool :=
-  match execStmts 64 ss w0 with
+private def endsWith (name : String) (v : Val) (ss : List Node)
+    (prog : SubpTable := []) : Bool :=
+  match execStmts prog 64 ss w0 with
   | .ok (.ok _, w') => match lookupObj w' name with
                        | some u => u == v
                        | none => false
   | _ => false
 
-private def raisesKeeping (exc : String) (name : String) (v : Val) (ss : List Node) : Bool :=
-  match execStmts 64 ss w0 with
+private def raisesKeeping (exc : String) (name : String) (v : Val) (ss : List Node)
+    (prog : SubpTable := []) : Bool :=
+  match execStmts prog 64 ss w0 with
   | .ok (.error (.raised n _), w') =>
       n == exc && (match lookupObj w' name with
                    | some u => u == v
                    | none => false) && w'.trace == [row0]
   | _ => false
 
-private def refusedAtClause (clause : String) (ss : List Node) : Bool :=
-  match execStmts 64 ss w0 with
+private def refusedAtClause (clause : String) (ss : List Node)
+    (prog : SubpTable := []) : Bool :=
+  match execStmts prog 64 ss w0 with
   | .error (.unsupported c _ _) => c.className == "unsupported" && c.detail.clause == clause
   | _ => false
 
-private def timedOut (fuel : Nat) (ss : List Node) : Bool :=
-  match execStmts fuel ss w0 with
+private def timedOut (fuel : Nat) (ss : List Node) (prog : SubpTable := []) : Bool :=
+  match execStmts prog fuel ss w0 with
   | .error .timeout => true
   | _ => false
 
@@ -641,9 +903,18 @@ private def timedOut (fuel : Nat) (ss : List Node) : Bool :=
 -- in the model: the target-shape census has not run.
 #guard refusedAtClause "5.2" [assign (.node "DottedName" sp0 #[ident "R", ident "F"]) (lit "1")]
 
--- ARM 5.1: a statement kind outside the rung. CallStmt is 56,062 nodes, 2.7x
--- the assignments, and it is inch 3's.
-#guard refusedAtClause "5.1" [.node "CallStmt" sp0 #[ident "P"]]
+-- ARM 5.1: a statement kind outside the tier's vocabulary. This guard USED to
+-- name `CallStmt` -- "56,062 nodes, 2.7x the assignments, and it is inch 3's"
+-- -- and inch 3 made it FAIL, which is the gate earning its keep: a guard that
+-- pins a REFUSAL must go red the moment the frontier moves past it, or the
+-- tier would keep claiming not to model something it models. The witness moves
+-- to a kind that is still genuinely out of tier: `CaseStmt` is ARM 5.4 and
+-- inch 7's, at 715 nodes.
+#guard refusedAtClause "5.1" [.node "CaseStmt" sp0 #[ident "P"]]
+
+-- ...and `CallStmt` now refuses ONE step further in, at ARM 6.4, when its
+-- child is not a call at all. The arm stays non-vacuous; only its clause moved.
+#guard refusedAtClause "6.4" [.node "CallStmt" sp0 #[ident "P"]]
 
 -- ARM 2.4.2: a based literal is refused rather than parsed wrong.
 #guard refusedAtClause "2.4.2" [assign (ident "X") (lit "16#FF#")]
@@ -691,5 +962,145 @@ private def twoWay : BoundedSite Int := { site := clauseRef "5.1", permitted := 
 -- which citations were checked to the paragraph and which were not.
 #guard (clauseRef "5.2").toString == "5.2"
 #guard (clauseRef "5.2") == ({ clause := "5.2", para := "" } : ArmRef)
+
+/-! ### INCH 3 — calls, the frame, and `return`
+
+`Subp` is written directly rather than through a `SubpBody` fixture, so the
+call rules are tested apart from the table BUILDER — which gets its own
+fixture below. That separation is the reason a red here would say which of the
+two is wrong. -/
+
+private def callOf (nm : String) (args : List Node) : Node :=
+  .node "CallExpr" sp0
+    #[ident nm,
+      (if args.isEmpty then .leaf "AssocList" sp0 ""
+       else .node "AssocList" sp0 (args.map (fun a => Node.node "ParamAssoc" sp0 #[.absent, a])).toArray)]
+private def callStmt (nm : String) (args : List Node) : Node := .node "CallStmt" sp0 #[callOf nm args]
+private def retStmt (e : Node) : Node := .node "ReturnStmt" sp0 #[e]
+
+/-- `procedure Bump is begin X := X + 1; end;` — no parameters, so its
+argument list is a LEAF. -/
+private def bump : Subp :=
+  { name := "bump", isFunction := false, params := [], modesOk := true,
+    body := [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))] }
+
+/-- `procedure SetX (N : Integer) is begin X := N; end;` -/
+private def setX : Subp :=
+  { name := "setx", isFunction := false, params := ["n"], modesOk := true,
+    body := [assign (ident "X") (ident "N")] }
+
+/-- `function Twice (N : Integer) return Integer is begin return N + N; end;` -/
+private def twice : Subp :=
+  { name := "twice", isFunction := true, params := ["n"], modesOk := true,
+    body := [retStmt (bin "OpPlus" (ident "N") (ident "N"))] }
+
+/-- The same, but its parameter has a mode outside the slice. -/
+private def outMode : Subp := { setX with name := "outmode", modesOk := false }
+
+/-- A procedure that raises rather than returning — ARM 11.4's case. -/
+private def blowUp : Subp :=
+  { name := "blowup", isFunction := false, params := ["n"], modesOk := true,
+    body := [assign (ident "X") (lit "200")] }
+
+private def prog0 : SubpTable :=
+  [("bump", bump), ("setx", setX), ("twice", twice), ("outmode", outMode), ("blowup", blowUp)]
+
+private def refusedAs (cls clause : String) (ss : List Node) (prog : SubpTable := []) : Bool :=
+  match execStmts prog 64 ss w0 with
+  | .error (.unsupported c _ _) => c.className == cls && c.detail.clause == clause
+  | _ => false
+
+/-- Did a frame LEAK? After the call the store must be exactly what it was
+apart from the intended write, and `frames` must be back to empty. -/
+private def framesEmptyAfter (ss : List Node) (prog : SubpTable) : Bool :=
+  match execStmts prog 64 ss w0 with
+  | .ok (.ok _, w') => w'.frames == []
+  | .ok (.error _, w') => w'.frames == []
+  | _ => false
+
+-- ARM 6.4: a parameterless procedure call runs its body. The argument list is
+-- a LEAF here -- the encoding that would make a naive walker refuse `P;`.
+#guard endsWith "x" (.int int8 1) [callStmt "Bump" []] prog0
+
+-- ...and it is called by a name in the OTHER case, per ARM 2.3.
+#guard endsWith "x" (.int int8 2) [callStmt "BUMP" [], callStmt "bump" []] prog0
+
+-- ARM 6.4.1: a positional argument binds to the formal, and the body reads it
+-- through the FRAME rather than through the outer store.
+#guard endsWith "x" (.int int8 9) [callStmt "SetX" [lit "9"]] prog0
+
+-- ARM 6.5: a FUNCTION call returns a value, and `return` is a raise the frame
+-- absorbed -- it did not escape to the caller.
+#guard endsWith "x" (.int int8 14) [assign (ident "X") (callOf "Twice" [lit "7"])] prog0
+
+-- THE FRAME IS POPPED. `N` is the callee's formal; after the call it must not
+-- be visible, and the frame stack must be empty again.
+#guard framesEmptyAfter [callStmt "SetX" [lit "9"]] prog0
+#guard refusedAtClause "3.3" [callStmt "SetX" [lit "9"], assign (ident "X") (ident "N")] prog0
+
+-- ...AND IT IS POPPED WHEN AN EXCEPTION LEAVES THE CALL, not only on success.
+-- ARM 11.4: an exception leaving a subprogram still leaves it.
+#guard raisesKeeping constraintError "x" (.int int8 0) [callStmt "BlowUp" [lit "1"]] prog0
+#guard framesEmptyAfter [callStmt "BlowUp" [lit "1"]] prog0
+
+-- THE ORDER-DEPENDENCE GATE FIRES, and this is its FIRST real content in this
+-- tier. Two arguments and one contains a call: ARM 6.4.1 leaves the order
+-- unspecified and a call can have an effect, so the model refuses rather than
+-- picking an order and calling it the language. Inch 2 predicted this rung.
+#guard refusedAs "order-dependence" "6.4.1"
+         [assign (ident "X") (callOf "Twice" [callOf "Twice" [lit "1"], lit "2"])] prog0
+
+-- ...and it does NOT fire when the order cannot be observed: one argument, or
+-- several with no call among them. A gate that refused these would be
+-- refusing the language rather than the model's limit.
+#guard endsWith "x" (.int int8 14) [assign (ident "X") (callOf "Twice" [lit "7"])] prog0
+
+-- THE CITABLE EXCLUSIONS, each refusing at the clause it would have needed.
+#guard refusedAtClause "6.2" [callStmt "OutMode" [lit "1"]] prog0
+#guard refusedAtClause "6.4.1" [callStmt "SetX" []] prog0
+#guard refusedAtClause "6.4" [callStmt "Nope" []] prog0
+#guard refusedAtClause "6.4"
+         [.node "CallStmt" sp0 #[.node "CallExpr" sp0 #[.node "DottedName" sp0 #[ident "P", ident "Q"], .leaf "AssocList" sp0 ""]]] prog0
+#guard refusedAtClause "4.1.2"
+         [.node "CallStmt" sp0 #[.node "CallExpr" sp0 #[ident "Bump", bin "OpDoubleDot" (lit "1") (lit "9")]]] prog0
+#guard refusedAtClause "6.4.1"
+         [.node "CallStmt" sp0 #[.node "CallExpr" sp0 #[ident "SetX",
+            .node "AssocList" sp0 #[.node "ParamAssoc" sp0 #[ident "N", lit "1"]]]]] prog0
+
+-- THE TABLE BUILDER, tested apart from the call rules. One `SubpBody` at the
+-- arities measured off the fixtures: SubpBody 6, SubpSpec 4, HandledStmts 2.
+private def defName (n : String) : Node := .node "DefiningName" sp0 #[ident n]
+private def bodyOfBump : Node :=
+  .node "SubpBody" sp0
+    #[.leaf "OverridingUnspecified" sp0 "",
+      .node "SubpSpec" sp0
+        #[.leaf "SubpKindProcedure" sp0 "procedure", defName "Bump", .absent, .absent],
+      .absent,
+      .node "DeclarativePart" sp0 #[.leaf "AdaNodeList" sp0 ""],
+      .node "HandledStmts" sp0
+        #[.node "StmtList" sp0 #[assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))],
+          .leaf "AdaNodeList" sp0 ""],
+      .leaf "EndName" sp0 "Bump"]
+
+#guard (subpOf bodyOfBump).isSome
+#guard (collectSubps 32 [bodyOfBump]).length == 1
+-- the name is FOLDED, and an absent ParamSpecList is a parameterless
+-- subprogram rather than a failure
+#guard match subpOf bodyOfBump with
+       | some s => s.name == "bump" && s.params == [] && s.modesOk && !s.isFunction
+       | none => false
+-- ...and a table built by the BUILDER drives the walker, closing the loop
+#guard endsWith "x" (.int int8 1) [callStmt "Bump" []] (collectSubps 32 [bodyOfBump])
+
+-- `containsCall` answers TRUE out of fuel, because its only consumer refuses
+-- on true and a refusal is the safe direction.
+#guard containsCall 0 (lit "1")
+#guard !containsCall 8 (bin "OpPlus" (lit "1") (lit "2"))
+#guard containsCall 8 (bin "OpPlus" (callOf "Twice" [lit "1"]) (lit "2"))
+
+-- AND THE INCH-1 GATE FINALLY HAS A CAUSE TO BE ABOUT: `orderDependenceGate`
+-- was written expecting an empty bucket. It is no longer vacuous.
+#guard !orderDependenceGate [.orderDependence (clauseRef "6.4.1")]
+#guard orderDependenceGate [.unsupported (clauseRef "6.4"), .undefined erroneousExecution]
 
 end LeanModels.Ada.Ada2012

@@ -637,7 +637,6 @@ below the floor — but dropping a RED gate is exactly the move that must be
 visible rather than quiet. SV keeps `harness/sv_divergence_probe.py`,
 which passes, and puts the shared checker back the day the ES file
 conforms.
-<<<<<<< HEAD
 
 **GATE RESTORED — the condition this lane stated has been met.** ES
 normalized its register (master `133e87d`) and the shared checker now runs
@@ -666,5 +665,3 @@ Examples/es/statements/guards.lean — **the BUILD is the run**`. Three
 tiers, three probe shapes — a Python subprocess, a Lean `#guard`, and a
 grep-based counter — under one checker. Guessing would have produced a
 wrong bug report; flagging cost a sentence.
-=======
->>>>>>> 7f27e6aa3b2370c3bb72e08ae30cffdd33c085b1

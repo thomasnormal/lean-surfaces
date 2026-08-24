@@ -488,4 +488,59 @@ theorem genSilent_delegateNext (m : Module) (st st₁ : FrameState) (s : Stmt)
 #print axioms genSilent_branch'
 #print axioms genSilent_delegateNext
 
+/-! ## §10 THE PRODUCING ARMS — where a generator stops being silent
+
+§5 and §9 cover the SILENT arms: frame rearrangements that change where the
+machine is without changing what it has produced. A generator that only ever
+took those arms would never yield anything. These three are the arms that
+DECIDE a step, and they are what `GenYieldsM`'s two constructors consume:
+
+* `genStep_yield` feeds `.yield` — the only arm that produces a value;
+* `genStep_nilCont` and `genStep_returnNone` feed `.done` — the two ways a
+  continuation can be finished, one by running out of frames and one by an
+  explicit `return`.
+
+With these the drain relation is INHABITED from the interpreter side: every
+`GenYieldsM` derivation now has interpreter-level witnesses available for each
+of its steps, where before §10 the relation was well-formed but could only be
+introduced by hand. -/
+
+/-- **THE YIELD ARM.** Not silent — this is the arm that produces a value, and
+the resumption is the rest of the block under the same tail. -/
+theorem genStep_yield (m : Module) (st st₁ : FrameState) (s : Stmt) (e : Expr)
+    (ss : List Stmt) (k' : GenCont) (v : RVal) (F : Nat)
+    (hplan : genPlan s = .yieldHere e)
+    (hev : toRun (evalOpen (kont m F) m e) st = .ok st₁ v) :
+    toRun ((kont m (F + 1)).execGen (.block (s :: ss) :: k')) st
+      = .ok st₁ (some (v, .block ss :: k')) := by
+  simp only [kont, execGenAt, hplan]
+  rw [toRun_bind, hev]
+  dsimp only [Run.bind]
+  exact toRun_pure _ _
+
+/-- **EXHAUSTION at the empty continuation** — the base of every drain. -/
+theorem genStep_nilCont (m : Module) (st : FrameState) (F : Nat) :
+    toRun ((kont m (F + 1)).execGen []) st = .ok st Option.none := by
+  simp only [kont, execGenAt]
+  exact toRun_pure _ _
+
+/-- **A bare `return` ENDS a generator.** The delegate arm's `.ret` with no value
+is exhaustion, not a yield — and the rebuild refuses `return <value>` loudly
+rather than dropping `StopIteration.value`, so this arm is the whole of the
+`.ret` story inside the tier. -/
+theorem genStep_returnNone (m : Module) (st st₁ : FrameState) (s : Stmt)
+    (ss : List Stmt) (k' : GenCont) (F : Nat)
+    (hplan : genPlan s = .delegate)
+    (hrun : toRun (execOpen (kont m F) m s) st = .ok st₁ (.ret .none)) :
+    toRun ((kont m (F + 1)).execGen (.block (s :: ss) :: k')) st
+      = .ok st₁ Option.none := by
+  simp only [kont, execGenAt, hplan]
+  rw [toRun_bind, hrun]
+  dsimp only [Run.bind]
+  exact toRun_pure _ _
+
+#print axioms genStep_yield
+#print axioms genStep_nilCont
+#print axioms genStep_returnNone
+
 end Examples.python.sunfish.monadic_gen

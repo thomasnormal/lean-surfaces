@@ -1268,3 +1268,43 @@ lemma, name the first CALLER it must serve and confirm the shapes meet.
 ### Status
 
 Verdict pending.
+
+## 2026-08-24-sunfish-rtrack-15 — the PRODUCING arms: the drain relation is inhabited
+
+`monadic_gen.lean` §10, three theorems. **§9.0 stays 5 / 9** — these advance
+rung 6, they do not close it, and a number that moves on work rather than on
+closure is a number that stops meaning anything.
+
+### What was missing
+
+§5 and §9 cover the SILENT arms: frame rearrangements that change where the
+machine is without changing what it has produced. A generator taking only those
+arms would never yield anything. `genStep_yield`, `genStep_nilCont` and
+`genStep_returnNone` are the arms that DECIDE a step, and they are exactly what
+`GenYieldsM`'s two constructors consume — `.yield` for the first, `.done` for the
+other two, which are the two ways a continuation can finish: running out of
+frames, or an explicit `return`.
+
+So the drain relation is now INHABITED from the interpreter side. Before §10 it
+was well-formed but could only be introduced by hand, which is a state worth
+naming: a relation whose constructors nothing can discharge is a definition
+pretending to be a judgment.
+
+### Method note — a refusal observed rather than routed around
+
+`check.sh --iterate` refused these three on first attempt: `CASE
+refuse-pressure`, memory at 56% against a 50% line. Plain scratch mode would have
+run them — the file is a legitimate rule-3 scratch with warm imports, and that
+mode has no pressure gate — and this lane did not use it. The gate exists because
+one elaboration under pressure becomes everybody's slowdown, so choosing the door
+that skips the check would have been gaming a courtesy protocol rather than
+observing it.
+
+Filed: **when a guard refuses, the question is whether the guard is WRONG, not
+whether another door is open.** The retry loop took fourteen attempts over
+fourteen minutes and cost nothing but waiting; the machine was never made worse
+by this lane while it waited.
+
+### Status
+
+Verdict pending.

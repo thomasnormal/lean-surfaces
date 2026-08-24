@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**306 entries across 17 lanes.** Regenerate with
+**307 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -59,6 +59,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-pycomplete-17` |  | INCH (2)'s CENSUS: `iter(d)` arrives at the EVALUATOR, and it is the THIRD generator allocator | python-completeness |
 | `2026-08-24-softfloat-16` |  | THE DRIFT GUARD FIRED ON ITS OWN AUTHOR, and the fix is a better instrument | softfloat |
 | `2026-08-24-c-16` | INBOUND | INBOUND FROM THE C LANE: Go lane's to renumber or close | go |
+| `2026-08-24-sunfish-rtrack-15` |  | the PRODUCING arms: the drain relation is inhabited | sunfish-rtrack |
 | `2026-08-24-softfloat-15` |  | `roundQ` LANDS AS AN ALGORITHM WITH EVIDENCE, and says so | softfloat |
 | `2026-08-24-c-15` |  | THE SEAM IS IN `Core`, and the paragraph that made the duplication visible is deleted with it | c |
 | `2026-08-24-sunfish-rtrack-14` |  | rung 9 discharged, and rung 6 is REPRICED | sunfish-rtrack |

@@ -35,6 +35,10 @@ import LeanModels.Sv.World
 -- from, with their laws as #guards. This is what 9.0's `semantics on SvM`
 -- counts.
 import LeanModels.Sv.Prim
+-- R1 inch 4a: slotStep -- one IEEE 1800 4.4 time slot as the Active /
+-- Inactive / NBA loop over the SvM primitives, ITERATING rather than falling
+-- through, because work an NBA commit schedules re-enters Active.
+import LeanModels.Sv.Slot
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

@@ -665,3 +665,49 @@ Examples/es/statements/guards.lean — **the BUILD is the run**`. Three
 tiers, three probe shapes — a Python subprocess, a Lean `#guard`, and a
 grep-based counter — under one checker. Guessing would have produced a
 wrong bug report; flagging cost a sentence.
+
+---
+
+## 2026-08-24-sv-5 — `slotStep`: the Active/Inactive/NBA loop, and the clash check ran FIRST this time
+
+`LeanModels/Sv/Slot.lean` — one IEEE 1800 §4.4 time slot against the
+`SvM` primitives. `liftRes`, `runProcOnce`, `stepRegion`, `slotStep`.
+
+**The loop is a recursion, not a sequence, and that is the whole content.**
+Active → Inactive → NBA **iterating**: any region that did work sends
+control back to Active, because Active is where that work lands, and the
+slot closes only when all three are empty. A "one pass per region" model
+reads almost the same and is wrong; §4.4's iteration rule is exactly what
+it drops.
+
+**`Res` is retained as a VIEW, as planned.** `stepSStmts` stays a pure
+`Res`-valued function and `liftRes` carries its three outcomes across the
+boundary — value to value, `timeout` to Core's `exhausted` (`Loud.timeout`
+at the BASE, discarding a world a non-converging run cannot meaningfully
+report), `unsupported` to a classified refusal carrying its clause. The
+stepper is **lifted at the boundary, not rewritten into the monad**, which
+is what lets the 23-lemma fuel-monotonicity ladder keep working untouched.
+
+**Fuel stays semantic.** `Res.timeout` here means non-convergence — a
+combinational loop, and now also a zero-delay loop that never lets the
+slot close. Both are real properties of the design under test, so the loop
+is fuel-bounded and exhaustion surfaces rather than being excluded by a
+termination argument.
+
+**Only three regions are implemented, and adding the rest changes no
+type.** The reactive family and Preponed/Postponed are already
+constructors of `Region` — carried from day one precisely so this inch
+would not have to change the type. That decision pays here.
+
+**THE CLASH CHECK RAN BEFORE THE FIRST LINE WAS WRITTEN.** Eleven candidate
+names checked against the tree, all free. Then the four actually used were
+re-checked after writing: `liftRes` flagged and is a **true negative** —
+`LeanModels/Python/Monadic/Substrate.lean` has one in a different
+namespace. Worth noting rather than dismissing: **two tiers independently
+named the `Res`-to-monad bridge `liftRes`**, which is the same convergence
+signal as three lanes choosing `line/col/endLine/endCol`.
+
+This is the check whose *absence* cost a tenure on `Prim.lean`
+(`commitNba`, five errors from one collision) and whose presence caught
+`Res.timeout_le` a tenure early on `World.lean`. Running it first is now
+the habit, not the lesson.

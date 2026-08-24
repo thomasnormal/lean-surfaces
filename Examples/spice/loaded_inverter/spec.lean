@@ -79,6 +79,20 @@ theorem loaded_inverter_settles_within
       (if world.environment.input then 0 else world.environment.supply)
       tolerance deadline world.environment.horizon := by proofs
 
+/-- A11 INSTANTIATED: the settling deadline is DISCHARGED over the whole PVT
+corner box, not assumed.  One microsecond settles to within 10 mV for every
+allowed corner. -/
+theorem loaded_inverter_settled_at_microsecond
+    {world : LoadedInverterWorld} {boundary : LoadedInverterBoundary}
+    (hallowed :
+      Examples.spice.loaded_inverter.proof.LoadedInverterExampleAllowed
+        world)
+    (hbehavior : LoadedInverterBehavior world boundary ())
+    (hhorizon : (1 / 1000000 : ℝ) ≤ world.environment.horizon) :
+    SettlesWithin boundary.outputVoltage
+      (if world.environment.input then 0 else world.environment.supply)
+      (1 / 100) (1 / 1000000) world.environment.horizon := by proofs
+
 theorem loaded_inverter_static_power_zero
     {world : LoadedInverterWorld}
     (hallowed :
@@ -115,3 +129,4 @@ theorem loaded_inverter_assurance :
 #print axioms loaded_inverter_settles_within
 #print axioms loaded_inverter_static_power_zero
 #print axioms loaded_inverter_assurance
+#print axioms loaded_inverter_settled_at_microsecond

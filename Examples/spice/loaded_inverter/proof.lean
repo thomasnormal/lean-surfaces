@@ -154,6 +154,23 @@ theorem loaded_inverter_settles_within
     (loadedInverterCornerRun_admissible hallowed) hbehavior.2
       htolerance hdeadline0 hdeadlineH hdeadline
 
+/-- A11 INSTANTIATED.  `loaded_inverter_settles_within` carried its settling
+deadline as a HYPOTHESIS and nothing discharged it, because the deck's world is
+a PVT corner box rather than a single world -- so the F2 numeric certificate
+could not reach it on its own.  Corner minimisation supplies the missing half:
+the decay rate is at least `3e7` over the whole box, so one microsecond settles
+to within 10 mV for EVERY allowed corner, not for a nominal one. -/
+theorem loaded_inverter_settled_at_microsecond
+    {world : LoadedInverterWorld} {boundary : LoadedInverterBoundary}
+    (hallowed : LoadedInverterExampleAllowed world)
+    (hbehavior : LoadedInverterBehavior world boundary ())
+    (hhorizon : (1 / 1000000 : ℝ) ≤ world.environment.horizon) :
+    SettlesWithin boundary.outputVoltage
+      (if world.environment.input then 0 else world.environment.supply)
+      (1 / 100) (1 / 1000000) world.environment.horizon :=
+  loaded_inverter_settles_within hallowed hbehavior (by norm_num) (by norm_num)
+    hhorizon (loadedInverterCornerRun_deadline hallowed)
+
 /-- Rail-valued DC states consume zero static channel power in this named
 MOS1 profile. -/
 theorem loaded_inverter_static_power_zero

@@ -81,7 +81,7 @@ stepper's subsumption proof.
 
 ---
 
-## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-3` (SV lane's to triage)
+## 2026-08-22-softfloat-3 — INBOUND FROM THE SOFTFLOAT LANE: SV lane's to triage
 
 *Filed by the SoftFloat lane during its consumer census
 (`docs/softfloat-charter.md` §2.2). Id kept in the SoftFloat namespace so this
@@ -381,3 +381,64 @@ exists in `LeanModels/Python/Obs.lean` and is **not** a collision, because
 `Sv.Res` and `Python.Res` are different types; that is the precedent, not
 a conflict. `Obs.lean`'s `timeout_le` and `⊑` congruences are therefore
 NOT restated here — they are tier-local by design.
+
+---
+
+## 2026-08-24-sv-1 — TRIAGE: SV does NOT want `real`, and the audit reword I accepted was never applied
+
+Two items, one an answer owed outward and one a debt owed inward.
+
+### The SoftFloat lane's question, answered: NO
+
+`2026-08-22-softfloat-3` asked whether `docs/family-architecture.md`
+§3.5.3's row — *"SystemVerilog | `real`, and the divider flagship"* — is a
+need this tier actually has. **It is not.** Re-measured independently
+here: `LeanModels/Sv/*.lean` contains **zero `Float`**, **zero
+`shortreal`**, and every occurrence of `real` is the English word in prose
+(`Tests.lean:15` "the **real** extractor envelopes", `:352` "real
+vocabulary", `:441`/`:474` "real-schema", `:521` "byte-real"). The
+SoftFloat lane's measurement is correct.
+
+**The SV need is the divider, and nothing else.** That is not a hedge: the
+flagship (`sv-charter.md` §6) is IEEE 754 *division*, which wants
+SoftFloat's **spec layer** — `op_correct` as the correctly-rounded exact
+rational result, decidable over `Rat`, no reals — and Berkeley HardFloat's
+`divSqrtRecFN` as the RTL. Type-level `real`/`shortreal` in the SV
+*language surface* is a different and much larger job: this tier's value
+model is `Logic`/`LVec`, 4-state bit vectors, and `real` would be a new
+scalar kind through the whole expression tier. **Nobody here asked for it,
+and the estimate should not carry it.**
+
+### And a debt this triage turned up in my own record
+
+The 2026-08-23 quality audit flagged
+`Examples/system-verilog/adder/proof.lean:275` — the guards claim to
+*"reproduce the Xcelium-verified outcomes"* while `harness/sv/cases.json`
+drives different vectors, so no simulator ever adjudicated them. I
+recorded the disposition as **ACCEPTED, rewording** and then **never
+applied it.** Measured today: the sentence is still in the tree at **10
+sites** — `adder`, `counter`, `swap_nba`, `xsel` (both `proof.lean` and
+`spec.lean`), plus `race_blk/spec.lean` and `toggle/spec.lean`.
+
+Recording an acceptance is not the same as making the change, and the gap
+survived two green landings because nothing gates prose against its own
+audit disposition. **The reword is owed and now scheduled**, batched with
+the next tier-`Sv` tenure since these are files inside the build glob;
+docs-class cannot carry them.
+
+### §5.0a declared-divergence register — this tier has two
+
+Filed rather than left implicit, per the new register:
+
+1. **The Xcelium 4-state operator table is unverified on any reachable
+   host.** `docs/sv-design-m0.md` calls it *"normative — verified on
+   Xcelium"*; Icarus reproduces the 10 harness cases, but the
+   operator-level table has never been re-checked from here. Standing
+   since `sv-charter.md` §9. **Gated**: no new claim may call it
+   dual-simulator-verified without a re-run.
+2. **10 guard sites claim Xcelium adjudication of stimuli no simulator
+   ran** (above). **Debt**, with a scheduled remedy.
+
+Both are provenance divergences rather than semantic ones — the model and
+the simulator have not been shown to disagree; the claim of agreement is
+what outruns the evidence.

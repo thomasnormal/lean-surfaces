@@ -1772,3 +1772,66 @@ and not the hypothesis that says the same thing.
 > same syntax. A slot that wants `rfl` where you expected to pass `h` is
 > that, and not a mis-stated lemma.**
 
+### VERDICT — GREEN
+
+`tools/triad.sh --lane crunga --classify`, ticket
+`1787557614438165000-50586-crunga`:
+
+```
+[09:46:54] base: base 40c093c is AT the origin/master tip
+[10:45:42] LOCK ACQUIRED after 3494s as 'crunga 50586'
+[10:46:10] TRIAD DONE (build exit 0, gates green)
+[10:46:11] LOCK RELEASED (mine)
+```
+
+Tree at enqueue `86ff6365ed9f`; classified **tier**; 29 seconds of tenure
+behind 58 minutes of queue at depth 6.
+
+| gate | result |
+| --- | --- |
+| `lake build` build phase / gate phase | **exit 0, 18 jobs / 38 jobs** |
+| `tools/docs_check.py` | **91 / 91**, 39 illustrative-exempt |
+| `harness/diff_test.py` | **1500 cases, 0 failed** — 1374 matched, 126 whitelisted |
+| `harness/refusal_census.py --whitelist --no-build` | green |
+| `harness/c_profile_probe.py --check-lean` | **9 / 9** |
+| `tools/backlog-index.sh --check` | in sync |
+| `error:` / `sorry` lines in the full log | **0** |
+
+**ELABORATION WITNESS.** `Built LeanModels.C.C23.Expr (8.0 s)` and — the
+line that carries the eleven new `#guard`s — **`Built
+Examples.c.sunfish.expr (1.6 s)`**. `LeanModels.Core.Outcome` is
+**Replayed**, which is the check that this landing is tier-local: the seam
+lift is in and this rung did not touch it.
+
+### Axiom ledger
+
+All four Rung B theorems on `[propext, Classical.choice, Quot.sound]` —
+no `sorryAx`, no `native_decide` — and Rung A's three and the three
+drain-amendment theorems unchanged beside them:
+
+```
+evalArgs_pure_pointwise     [propext, Classical.choice, Quot.sound]
+evalArgs_orderIndependent   [propext, Classical.choice, Quot.sound]
+evalArgs_pair_swap          [propext, Classical.choice, Quot.sound]
+evalArgs_pair_oneEffect     [propext, Classical.choice, Quot.sound]
+```
+
+### COVERAGE (§5.4a) — scoped, and the importer census re-run
+
+`grep '^import LeanModels\.C\(\.\|$\)'` still returns 16 lines, all
+inside `LeanModels/C/` or `Examples/c/`, and every one of them is in the
+build. `--build-target` was NOT passed this time: it is a no-op
+(`2026-08-24-c-14`, filed to QoL), and passing a flag that does nothing in
+order to write a coverage sentence it does not support is the defect that
+entry names. The classifier's floor covers the tier here because
+`Examples.c.sunfish.expr` is in it and `stmt` imports it — and `stmt`
+elaborated exit 0 under A17 against the fresh oleans after the green, the
+same way `2026-08-24-c-12` closed the same gap.
+
+### §9.0 — the tier's standing number
+
+**`gcc.c-torture` 0 scored (runner needed).** Unchanged, and now the ONLY
+thing between this tier and a number: rungs A and B moved proof
+obligations, and inch 6's `lean_exe` batch runner is what creates the
+denominator — corpus fetched AT PIN by content hash, never vendored
+(`docs/c23-goal.md` §2, GPL).

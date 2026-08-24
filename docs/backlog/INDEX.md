@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**337 entries across 17 lanes.** Regenerate with
+**339 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -81,6 +81,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-c-17` |  | RUNG B: the 208 are DISCHARGED, the 7 have a NAME, and the order parameter was never needed | c |
 | `2026-08-24-softfloat-16` |  | THE DRIFT GUARD FIRED ON ITS OWN AUTHOR, and the fix is a better instrument | softfloat |
 | `2026-08-24-c-16` | INBOUND | INBOUND FROM THE C LANE: Go lane's to renumber or close | go |
+| `2026-08-24-sunfish-rtrack-15` |  | the PRODUCING arms: the drain relation is inhabited | sunfish-rtrack |
 | `2026-08-24-softfloat-15` |  | `roundQ` LANDS AS AN ALGORITHM WITH EVIDENCE, and says so | softfloat |
 | `2026-08-24-c-15` |  | THE SEAM IS IN `Core`, and the paragraph that made the duplication visible is deleted with it | c |
 | `2026-08-24-sunfish-rtrack-14` |  | rung 9 discharged, and rung 6 is REPRICED | sunfish-rtrack |
@@ -341,6 +342,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G5` |  | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` |  | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` |  | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G25` |  | VARIADICS: packing allocates, spreading does not; +52 predicted, +52 measured (2026-08-24) | go |
 | `G24` |  | THE `math/bits` COMPLETION RUNG: +7 predicted, +7 measured (2026-08-24) | go |
 | `G23` |  | MULTI-VALUE RETURNS: Go has no tuple values, and the reach is +0 again (2026-08-24) | go |
 | `G22` |  | RUNG E1: the mechanism works, and it is worth +0 files (2026-08-23) | go |
@@ -358,4 +360,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**24 heading(s) do not use the §9.5 id scheme** and sort last.
+**25 heading(s) do not use the §9.5 id scheme** and sort last.

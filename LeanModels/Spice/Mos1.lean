@@ -14,6 +14,13 @@ to the DC channel equation.
 
 namespace LeanModels.Spice
 
+-- Loudness guard (family-architecture.md §autoImplicit ruling, 2026-08-24):
+-- without this a mistyped or unopened name is silently auto-bound as an
+-- implicit variable rather than reported. This file is monomorphic --
+-- no `Type`/`Sort` binders, no generic type variables -- so the flip is
+-- inert here, and it is file-local: importers are unaffected.
+set_option autoImplicit false
+
 /-- Real-valued parameters consumed by the channel equation. These are
 obtained from the exact validated `Mos1Model`, not from named parameters. -/
 structure Mos1Params where
@@ -771,6 +778,42 @@ theorem Mos1HalfAdderContract.observation_sound
     exact hsum.symm.trans houtputs.1
   · apply logicVoltage_injective
     exact hcarry.symm.trans houtputs.2
+
+/-- One rail-valued observation of a physical MOS1 two-input gate instance.
+
+The two-input analogue of `Mos1HalfAdderObservation`, and it exists for the
+same reason: `Mos1BinaryGateContract` is universally quantified over every
+state satisfying the component equations, the supply envelope and the input
+drivers, so it says nothing at all if no such state exists.  A contract
+without a companion observation is a claim that cannot be contradicted by
+this deck. -/
+noncomputable def Mos1BinaryGateObservation (circuit : Mos1ResolvedCircuit)
+    (leftNode rightNode outputNode : NodeId)
+    (left right output : Bool) : Prop :=
+  ∃ state,
+    Mos1ComponentSatisfies circuit [supply, leftNode, rightNode] state ∧
+    Mos1WithinSupply circuit state ∧
+    Mos1DrivesTwo state leftNode rightNode left right ∧
+    state.voltage outputNode = logicVoltage output
+
+/- NO `observation_sound` COMPANION HERE, DELIBERATELY.  The half-adder's
+version refines an observation into `HalfAdderBehavior`, a separate
+implementation-independent predicate.  A binary gate's corresponding
+conclusion would be `output = operation left right`, which is definitionally
+trivial once `output` is instantiated -- a lemma that could not fail, added
+only for symmetry.  Symmetry is not a consumer.
+
+AND THIS IS A PLAIN BLOCK COMMENT, NOT A DOC COMMENT, ON PURPOSE.  A doc
+comment is GRAMMAR: it must attach to a declaration, so it is exactly the
+wrong form for marking a declaration's ABSENCE -- it occupies the slot it is
+trying to say is empty.  The first draft of this note was a doc comment and
+cost a tenure (unexpected token; expected 'lemma').
+
+AND IT CANNOT QUOTE THE DELIMITERS IT DESCRIBES.  Lean block comments NEST,
+so writing an opener without its closer -- even as an example inside
+backticks -- leaves this comment open and swallows the rest of the file.
+The second draft did that and was caught by a depth count before it reached
+the queue.  Name the delimiters; never spell them. -/
 
 /-- In the explicit deck profile (`VTO=1`, `LAMBDA=0`, positive beta), a
 strongly-on forward channel carrying zero current has zero drain-source

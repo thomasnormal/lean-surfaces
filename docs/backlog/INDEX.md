@@ -67,6 +67,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-ada-4` |  | THE TARGET-SHAPE RUNG ANSWERS, and the answer is that 5.2's refusal was never blocked on the measurement | ada |
 | `2026-08-24-ada-3` |  | INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug | ada |
 | `2026-08-24-sv-2` |  | THE §5.0a REGISTER IS FILED: two provenance rows, four measured guards, and one row born with its retirement in flight | sv |
+| `2026-08-24-analog-2` |  | A1: the last contract without a witness, and a symmetry lemma declined | analog |
 | `2026-08-24-ada-2` |  | INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts | ada |
 | `2026-08-24-sv-1` |  | TRIAGE: SV does NOT want `real`, and the audit reword I accepted was never applied | sv |
 | `2026-08-24-es-1` |  | the data-literal inch: object and array literals, `UpdateExpression`, and the Array exotic object | es |
@@ -292,7 +293,6 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` |  | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` |  | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
-| `SPEC` |  | the completion metric (standing; updated every landing) | analog |
 | `INBOUND` | INBOUND | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
@@ -319,4 +319,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**26 heading(s) do not use the §9.5 id scheme** and sort last.
+**25 heading(s) do not use the §9.5 id scheme** and sort last.

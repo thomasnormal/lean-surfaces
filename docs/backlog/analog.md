@@ -18,7 +18,7 @@ it needs `Mathlib.Data.Real.Basic`, `Analysis.Calculus.Deriv` and friends becaus
 
 ---
 
-## SPEC COVERAGE — the completion metric (standing; updated every landing)
+### SPEC COVERAGE — the completion metric (standing; updated every landing)
 
 Reproduce it, do not quote it:
 
@@ -31,7 +31,18 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | landing | sha | grounded assurance cases | circuits fully grounded | circuits with any case |
 | --- | --- | ---: | ---: | ---: |
 | pre-lane baseline | `ed9f1f5` | 0 / 24 | 0 / 21 | 9 / 21 |
-| `2026-08-24-analog-1` | *(next commit)* | **8 / 24** | **4 / 21** | 9 / 21 |
+| `2026-08-24-analog-1` | `491b944` | **8 / 24** | **4 / 21** | 9 / 21 |
+
+**F1 RIDES THIS TABLE AND IS NOT OPTIONAL** (coordinator ruling): `model
+validity: MISSING`, architecturally unclosable, admitted 12×. The numbers above
+are model-level throughout; none of them is evidence that a fabricated device
+matches its model.
+
+`491b944` is a **scoped** green (`tier` class): it covers the modules built and
+everything they import, not the modules that import them and not any untouched
+tier. Triad `[01:41:35] LOCK ACQUIRED after 4164s` → `[02:26:24] BUILD GREEN` →
+`[02:26:59] TRIAD DONE (build exit 0, gates green)` → `[02:27:00] LOCK RELEASED
+(mine)`. Citable as an increment base with `--since 491b944`.
 
 **TWO DENOMINATORS, and the gap is the point.** The table above counts
 `AssuranceCase` declarations, which only 9 of the 21 circuits use. The other 12
@@ -39,9 +50,11 @@ carry proved behavior specs in the lane's older house style — a universal
 theorem paired by hand with a `..._realizable` twin — and those are not worse,
 they are unbundled. Against the corpus rather than the bundle:
 
-* **19 / 21 circuits have a proved behavior spec.** `gnd_alias` is a parser
-  regression fixture with no Lean file at all, and is out of the denominator by
-  construction rather than by omission. `and_gate` is the one live gap (below).
+* **19 / 21 circuits have a proved behavior spec**, and since
+  `2026-08-24-analog-2` **all 19 of them are non-vacuous** — `and_gate` was the
+  last contract with no companion observation and now has one for all four input
+  vectors. `gnd_alias` is a parser regression fixture with no Lean file at all,
+  and is out of the denominator by construction rather than by omission.
 * **19 / 21 circuits are reachable from an ngspice path** in `harness/spice/`.
   The two with no oracle path are `dram_array_2x2` and `dram_bitcell`.
 
@@ -152,12 +165,19 @@ defect to fix — no Lean proof turns a PDK measurement into a kernel theorem �
 the machine-emitted admission on every example is the honest boundary of the
 whole enterprise. **Keep it visible whenever this tier is described.**
 
+> **THE MANDATED QUOTING FORM (coordinator ruling, 2026-08-24).** Every
+> description of this tier — the §9.0 standing report included — carries F1 as:
+> **`model validity: MISSING`, architecturally unclosable, admitted 12×.**
+> A coverage number for this tier that omits it is quoting the numerator
+> without the boundary the whole tier sits inside.
+
 ---
 
 ### THE OPEN QUEUE, censused and priced
 
-**A1 — `and_gate` has no realizability twin, and its sibling proves the exact
-missing lemma.** `cmos_and_mos1_correct : Mos1BinaryGateContract …` is purely
+**A1 — LANDED, `2026-08-24-analog-2`.** *(Original entry kept below; the queue
+is a record, not a to-do list.)* **A1 — `and_gate` has no realizability twin,
+and its sibling proves the exact missing lemma.** `cmos_and_mos1_correct : Mos1BinaryGateContract …` is purely
 universal over `Mos1ComponentSatisfies ∧ Mos1WithinSupply ∧ Mos1DrivesTwo`, and
 nothing in the tree proves that premise set is satisfiable for this deck.
 `half_adder` proves precisely that shape — `half_adder_mos1_observation_exists`,
@@ -267,3 +287,160 @@ case naming one circuit while proving facts about another, and `#assurance_repor
 rejects a case attached to a different elaborated circuit. Last substantive
 commits here were July 25–29; §5.3 and §9.0(a) are August. The dormant lane was
 ahead of the register, and the register should cite it.
+
+---
+
+## 2026-08-24-analog-2 — A1: the last contract without a witness, and a symmetry lemma declined
+
+**The gap.** `cmos_and_mos1_correct` is a `Mos1BinaryGateContract`: universally
+quantified over every state satisfying the component equations, the supply
+envelope and the input drivers. Nothing in the tree showed such a state exists
+for this deck, so the theorem was the same shape as the assurance cases
+`2026-08-24-analog-1` grounded — true of a deck no state satisfies. `and_gate`
+was the last one in the corpus.
+
+**The fix, from the sibling's template.** `half_adder` already proves exactly
+this shape (`half_adder_mos1_observation_exists`, exhibiting
+`halfAdderMos1Witness` and discharging the conjuncts over all four input pairs),
+and the half-adder's `and2` subcircuit **is** this deck — `and_gate.cir` is that
+subcircuit flattened. So:
+
+* `LeanModels/Spice/Mos1.lean` gains `Mos1BinaryGateObservation`, the two-input
+  analogue of `Mos1HalfAdderObservation`;
+* `Examples/spice/and_gate/proof.lean` gains `andGateLevel` /
+  `andGateMos1Witness` / `and_gate_mos1_observation_exists`, proved for all four
+  vectors;
+* `spec.lean` exposes it with `#print axioms`.
+
+The witness rails are the deck's own: `nand = ¬(a∧b)`, `out = a∧b`, and
+`nseries = a ∧ ¬b` — the series node between the two pull-down NMOS devices,
+matching `xcarry.nseries` in the half-adder. The deck's committed ngspice
+comments agree (`00: out≈0, nand=5`; `11: out=5, nand≈0`), which is validation,
+never a premise.
+
+**A SYMMETRY LEMMA DECLINED, and this is the reusable part.** The obvious
+companion was `Mos1BinaryGateContract.observation_sound`, mirroring
+`Mos1HalfAdderContract.observation_sound`. It was written, then removed. The
+half-adder's version refines an observation into `HalfAdderBehavior`, a separate
+implementation-independent predicate; the binary-gate version's conclusion would
+be `output = operation left right`, which is **definitionally trivial** once
+`output` is instantiated to `operation left right`.
+
+> **A lemma that cannot fail is not a lemma, and "the sibling has one" is not a
+> consumer. Symmetry is a reason to LOOK for a lemma, never a reason to KEEP
+> one.**
+
+This is F7 (dead framework surface, 9 sites) caught at the moment of creation
+rather than found in a later census — the cheapest place to catch it, and the
+only place where declining costs nothing. A comment stands where the lemma would
+have been, saying why it is absent, so the next reader does not re-add it.
+
+**autoImplicit retrofit rode this touch** (ruling 1(b)): `Spice/Mos1.lean`,
+`and_gate/proof.lean` and `and_gate/spec.lean` now carry
+`set_option autoImplicit false`. All three verified monomorphic first — no
+`Type`/`Sort` binders, no generic or Greek type variables across 44 + 8 + 3
+declarations — and the option is **file-local**, so the 11 files importing
+`Mos1.lean` are unaffected. That is the difference from `Circuit/Assurance.lean`,
+where the flip is a semantic change because `Circuit/Surface.lean` hard-codes
+`AssuranceCase`'s arity at 10 and its circuit at index 4.
+
+**Standing number unmoved: still 8/24 grounded assurance cases.** `and_gate`
+carries no `AssuranceCase`, so this landing does not touch that table — it moves
+the *corpus* denominator instead: all 19 circuits with a proved behavior spec are
+now non-vacuous. **A landing that improves the tier without moving the headline
+number must say so rather than letting the flat table imply nothing happened**
+(§G22's `+0` discipline).
+
+**Next: A10/F2** — `RatInterval.exp_contains`, with
+`Spice/DramBankCoreSpec.lean:30-36` as the specification of done.
+
+### Triad — RED first, and a comment is not syntactically inert
+
+`[04:36:54] LOCK ACQUIRED after 3616s as 'analog 67609'` →
+`[04:38:00] BUILD DID NOT COMPLETE (exit 1)` → `GATES NOT RUN (build red —
+aborted triad)` → `[04:38:01] LOCK RELEASED (mine)`. One module, one error:
+
+    LeanModels/Spice/Mos1.lean:804:77: unexpected token '/--'; expected 'lemma'
+
+**The declined-lemma comment was itself the defect.** The note left "where the
+lemma would have been" was written as a doc comment, and a doc comment is
+GRAMMAR: it must attach to a declaration. It is therefore exactly the wrong
+form for marking a declaration's ABSENCE — **it occupies the slot it is trying
+to say is empty.** One hour of queue, 66 seconds of build, gates never reached.
+
+> **A comment is not syntactically inert. A doc-comment token is grammar, not
+> prose, and the declined-lemma convention needs a comment FORM that cannot
+> occupy a declaration slot.**
+
+**AND THE FIX HAD THE SAME BUG ONE LEVEL DOWN, caught before the queue.** The
+plain-block rewrite *quoted the delimiters it was describing* — and Lean block
+comments **NEST**, so an opener written as an example, even inside backticks,
+raises the depth and never lowers it: the comment swallows the rest of the
+file. A depth count over the file found it at nesting depth 2. A second draft
+then dropped the closing delimiter entirely — the very failure the note
+warns about — and the same count found that too.
+
+> **A comment that describes comment syntax cannot QUOTE it. Name the
+> delimiters; never spell them.**
+
+**So the fix lives in a gate**, `harness/lean_comment_forms.py`: orphan doc
+comments and unbalanced block comments, over every `.lean` file in the tree
+(385 today, 0 defects). Both refusal paths were RUN, not admired — injected
+into throwaway files, each fires with exit 1.
+
+**And the gate has a false-positive control, because the first draft had one.**
+Go and SystemVerilog both have a `--` operator and both name it inside error
+strings (`"++/-- on a non-integer"`), which reads to a naive scanner as a
+doc-comment opener; the first draft reported `LeanModels/Go/Stmt.lean:821` and
+`LeanModels/Sv/Param.lean:787` as defective when **both were clean**. The
+scanners now skip string literals, and the control case is in the test set.
+**The two tiers most likely to trip this check are the two whose languages
+contain the token** — a gate whose false positives land on other lanes is worse
+than no gate, because it spends someone else's attention.
+
+**Proposal for the coordinator, not taken unilaterally:** wire
+`lean_comment_forms` into `tools/ci.sh` near `docs_check`. It is pure Python,
+shells out to nothing, needs no tenure, and runs the whole tree in under a
+second. This lane runs it via `--gates` in the meantime.
+
+**RED #3 — THE SAME FAMILY, AND THE GATE COULD NOT SEE IT.**
+`[05:21:31] LOCK ACQUIRED after 2174s` → `[05:23:34] BUILD DID NOT COMPLETE
+(exit 1)` → `GATES NOT RUN`. One error:
+
+    Examples/spice/and_gate/proof.lean:122:16: unexpected token 'set_option'; expected 'lemma'
+
+Not the `autoImplicit` retrofit — **all three guard placements were correct**
+and were re-verified against the top-of-file rule. The defect was a doc comment
+followed by `set_option maxHeartbeats … in`. A doc comment opens
+`declModifiers`; `set_option … in` is a command **combinator**, not a
+declaration, so the docstring never finds what it attaches to.
+
+> **The correct order is `set_option … in` FIRST, then the docstring, then the
+> declaration** — which seven sites on master already do, including
+> `Spice/DramDifferentialSense.lean:1134` in this tier. The fix was to copy a
+> shape the tree had already proved, instead of inventing one.
+
+**AND THE OBVIOUS GENERALISATION IS UNSOUND — the tree refused it.** The family
+is "a token in a declaration slot", so the natural fix is to WHITELIST the
+declaration starters and flag everything else. That draft accused **60+
+known-green sites**, because docstrings legally attach to things that are not
+declarations: **structure fields** (`val : Int`), **inductive constructors**
+(`| nil : I`), and **`#guard_msgs in` expected-output blocks**.
+
+> **A whitelist of "what a docstring may precede" is a claim about Lean's
+> grammar; a blacklist of "what it may never precede" is a claim about a few
+> commands. Only the second is checkable without a parser.**
+
+So the gate blacklists `set_option`, `open`, `namespace`, `section`, `end`,
+`import`, `variable`, `universe`, another comment, and end-of-file. Sound
+against all 385 green files (0 defects), and the regression set now pins all
+three shipped reds plus five legal shapes that must stay silent — the string
+literal, the documented field, the documented constructor, `#guard_msgs`, and
+the proven-safe `set_option`-then-docstring order. Every case RUN, not admired.
+
+**Parse validation without a tenure.** Lean cannot be run outside the lock and
+these files are not dependency-free, so the placements were checked three other
+ways: comment-nesting depth 0 in all touched files; the gate clean tree-wide;
+and a **precedent check** — every doc-comment follower in the three touched
+files matched one of the 169 distinct followers that already appear after doc
+comments in green `origin/master` code.

@@ -4485,3 +4485,73 @@ own state, tested before hashing. Every census wants that arm: *nothing* and
 ### Triad
 
 Audit only, no tool changed. No Lean executed.
+
+## 2026-08-24-qol-63 — the census was wrong three ways, and the inversion never happened
+
+An amendment to qol-62, and a question settled by evidence.
+
+### The attribution was wrong, and R-track's caution is why it matters
+
+The row I labelled R-track — `lean-surfaces @ pyrebuild-monadic`, behind 11,
+on the high-water instrument — is the **orphaned rebuild-successor clone**.
+R-track works from `scratchpad/lean-monadic` (a worktree of `lean-merged`,
+branch `sunfish-r3c-monadic`), whose `tools/triad.sh` and `tools/check.sh` are
+**byte-identical to master `55aa98c`** — verified by hash, not by claim. Its
+`vm.swapusage` hits are the retirement comment and a mock, exactly as R-track
+said.
+
+> A lane told to refresh tools it already has will find nothing and may then
+> distrust a guard that is currently telling the truth. (R-track)
+
+That is the cost of a misattributed row, and it is higher than the cost of
+missing one.
+
+### THREE defects in the census instrument, not one
+
+* **Reach.** `-maxdepth 5` found 9 checkouts; there are **21**. R-track's sits
+  at depth 6, so the sweep could not have seen it. A census that names its
+  subjects by where it happened to look reports the lanes it can reach as
+  though they were the lanes that exist.
+* **Labels.** Two different checkouts are named `lean-arch2` — `~/repos`
+  (current) and `scratchpad` (behind 16). Displaying the basename made them
+  one row. Locations now disambiguate.
+* **Absence** (from qol-62): a missing `check.sh` read as "local-work".
+
+Three instrument defects in one audit whose whole purpose was to audit others.
+**A census's reach and its labels are part of its claim**, and neither was
+stated in qol-62's table.
+
+### The inversion: refuted, with the arithmetic
+
+R-track's hypothesis was that the pre-relabel `read_pressure` returned FREE
+while reporting "in use", making its 56% and 51% refusals phantoms. Every
+published version says otherwise:
+
+```
+5427478  08-24 05:35  printf "%.1f memory_pressure:free%%(macos)\n",     100 - f
+40c093c  08-24 09:41  printf "%.1f memory_pressure:100-free%%(macos)\n", 100 - f
+```
+
+**The arithmetic never changed.** `100 - f` is in-use in both; only the label
+moved. So the number was correct from the moment the instrument landed, and
+R-track's 56% and 51% were **real in-use readings above the 50% line —
+correct refusals, not artifacts.** There is no failure window, so there is no
+phantom enumeration to run.
+
+The relabel fixed a **label that invited a misreading** — which is what it
+claimed to fix, and which had already collected two scalps in prose. It did
+not fix a live inversion. Worth stating plainly in both directions: the
+sharper finding would have been more valuable, and it is not what the evidence
+says.
+
+### Corrected operational finding
+
+Still on the high-water instrument, iteration artifactually blocked:
+**`scratchpad/lean-arch2`** (behind 16) and **`~/repos/lean-surfaces`** (the
+orphan). Note the arch lane holds two checkouts and only the `~/repos` one is
+current. `lean-merged`, `lean-pyc3` and `lean-research` have no `check.sh` at
+all; `lean-basecase` and `lean-audit` have no iterate line.
+
+### Triad
+
+Audit only, no tool changed. No Lean executed.

@@ -32,6 +32,55 @@ theorem em_shift_mantissa (em : ExtendedMantissa) (n : Nat) :
       ih, Nat.div_div_eq_div_mul, ← Nat.pow_succ]
 
 
+
+/-! ## The BRIDGE to exact residue arithmetic
+
+`RoundWithAccuracyIsNearest` (`Mul.lean`) bottoms out here.  Core decides every
+rounding from two bits — round and sticky — and these two lemmas say what those
+bits MEAN in exact arithmetic: after shifting right by `n+1`, the round bit is
+bit `n` of the significand and the sticky bit records whether anything below it
+survives.  Together they determine `m % 2^(n+1)` against `2^n`, which is exactly
+the comparison every IEEE §4.3 mode needs.
+
+`em_shift_round` needs no induction — one unfold plus `em_shift_mantissa`.
+`em_shift_sticky` is a genuine recursion (`sticky(n+1) = round(n) ∨ sticky(n)`)
+and turns on `Nat.mod_pow_succ`, with the bit CASED so that `2^n * bit` becomes
+linear and `omega` can see it.
+-/
+
+/-- THE ROUND BIT after `n+1` shifts is bit `n` of `m`. -/
+theorem em_shift_round (m n : Nat) :
+    ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> (n + 1)).roundBit = ((m / 2 ^ n) % 2 != 0) := by
+  simp only [HShiftRight.hShiftRight, Nat.repeat, ExtendedMantissa.shiftRightOne]
+  rw [show (Nat.repeat ExtendedMantissa.shiftRightOne n ((ExtendedMantissa.ofMantissaAndAccuracy m .exact))).mantissa
+        = ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> n).mantissa from rfl, em_shift_mantissa]
+  rfl
+
+/-- THE STICKY BIT after `n+1` shifts records whether ANY of bits `0..n-1` is set. -/
+theorem em_shift_sticky (m n : Nat) :
+    ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> (n + 1)).stickyBit = (m % 2 ^ n != 0) := by
+  induction n with
+  | zero =>
+    simp [HShiftRight.hShiftRight, Nat.repeat, ExtendedMantissa.shiftRightOne,
+          ExtendedMantissa.ofMantissaAndAccuracy, Nat.pow_zero, Nat.mod_one]
+  | succ n ih =>
+    simp only [HShiftRight.hShiftRight, Nat.repeat, ExtendedMantissa.shiftRightOne] at ih ⊢
+    rw [show (Nat.repeat ExtendedMantissa.shiftRightOne n ((ExtendedMantissa.ofMantissaAndAccuracy m .exact))).mantissa
+          = ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> n).mantissa from rfl, em_shift_mantissa] at *
+    rw [ih]
+    have h : m % 2 ^ (n + 1) = m % 2 ^ n + 2 ^ n * ((m / 2 ^ n) % 2) := Nat.mod_pow_succ
+    have hp : 0 < 2 ^ n := Nat.two_pow_pos n
+    -- CASE ON THE BIT, so `2 ^ n * bit` becomes LINEAR and omega can see it.
+    rcases Nat.mod_two_eq_zero_or_one (m / 2 ^ n) with hb | hb
+    · -- bit is 0: the round bit contributes nothing, and h collapses
+      rw [hb] at h
+      simp only [ExtendedMantissa.ofMantissaAndAccuracy, hb, Nat.mul_zero, Nat.add_zero] at h ⊢
+      simp [h]
+    · -- bit is 1: the round bit forces sticky true, and h shows the residue is ≥ 2^n
+      rw [hb] at h
+      simp only [ExtendedMantissa.ofMantissaAndAccuracy, hb, Nat.mul_one] at h ⊢
+      simp [h]
+
 /-! ## THE ES ROW: core's float→int conversion IS truncation of the exact value
 
 IEEE 754-2019 §5.8 `convertToIntegerTowardZero`.  The statement mentions NO

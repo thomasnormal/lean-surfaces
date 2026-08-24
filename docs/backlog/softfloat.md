@@ -1139,3 +1139,72 @@ discharged — at which point `mul_correct` becomes unconditional in one line,
 and `div`, `sqrt` and `add` all draw on the same lemma.
 
 **28 landed theorems, 1 of which is an unconditional `op_correct`.**
+
+---
+
+## 2026-08-24-softfloat-20 — THE BRIDGE LEMMAS: what core's round and sticky bits MEAN
+
+`LeanModels/SoftFloat/Theorems.lean`. `em_shift_round` `[propext]`;
+`em_shift_sticky` `[propext, Classical.choice, Quot.sound]`. Verdict
+**TRUSTWORTHY**, zero errors, zero `sorry`.
+
+### THE FIRST REAL STEP INTO `RoundWithAccuracyIsNearest`
+
+`Mul.lean` reduced multiplication to one obligation about core's
+`roundWithAccuracy`. That obligation bottoms out in a translation problem:
+**core decides every rounding from two bits**, round and sticky, and nothing so
+far said what those bits mean in exact arithmetic.
+
+Now something does. After shifting `⟨m, false, false⟩` right by `n+1`:
+
+| bit | value |
+| --- | --- |
+| mantissa | `m / 2^(n+1)` (already had it — `em_shift_mantissa`) |
+| **round** | bit `n` of `m`, i.e. `(m / 2^n) % 2 ≠ 0` |
+| **sticky** | whether anything below survives, i.e. `m % 2^n ≠ 0` |
+
+Together they determine `m % 2^(n+1)` against `2^n` — **exactly the comparison
+every IEEE §4.3 rounding mode needs**, and exactly what `roundQ`'s `applyRM`
+consumes. The bit-level and the exact-rational views of rounding are now the
+same view.
+
+### TWO ASYMMETRIES WORTH RECORDING
+
+* **`em_shift_round` needs NO induction.** One unfold plus `em_shift_mantissa`
+  — because the round bit after `n+1` shifts is just the low bit of the
+  mantissa after `n`. The recursion was already paid.
+* **`em_shift_sticky` is a genuine recursion** — `sticky(n+1) = round(n) ∨
+  sticky(n)` — and turns on `Nat.mod_pow_succ`
+  (`x % b^(k+1) = x % b^k + b^k * ((x / b^k) % b)`), which core ships.
+
+### THE ARITHMETIC OBSTACLE, AND IT IS A GENERAL ONE
+
+`omega` could not close the sticky step, and the reason generalizes past this
+lemma: `2^n * ((m / 2^n) % 2)` is **nonlinear**, and `omega` is a linear
+decision procedure. **Casing the bit first** — it is `0` or `1` by
+`Nat.mod_two_eq_zero_or_one` — turns the product into `0` or `2^n` and the
+goal becomes linear.
+
+> **When `omega` fails on bit arithmetic, look for a product of a power and a
+> bit, and case the bit.** The nonlinearity is usually one variable wide.
+
+### AND A METHOD NOTE: STOP GUESSING DEFINITIONAL FORMS
+
+Three attempts were lost to hand-written `show` patterns guessing how core's
+`>>>` unfolds. The fix was to run `simp only [...]` with `trace_state` and
+**read the actual goal**, which showed `(E0 m).mantissa` sitting unreduced —
+the reason a perfectly good hypothesis `hb` would not apply. Two minutes of
+looking beat three rounds of guessing.
+
+### §9.0 — STILL 1/12
+
+These are lemmas toward the obligation, not the obligation. `mul_correct_of`
+stays conditional. **30 landed theorems, 1 an unconditional `op_correct`.**
+
+### WHAT REMAINS IN `RoundWithAccuracyIsNearest`
+
+With the bits now meaning something, the residue is in hand. What is left:
+`roundToNearestEven` picks the nearer of the two neighbours (a case analysis on
+the `Accuracy`, now that `Accuracy` is pinned to `m % 2^(n+1)` vs `2^n`); the
+second `shiftToTargetExponent` absorbs a rounding carry-out; and the result is
+nearest among **all** representables, which is the interleaving argument.

@@ -304,8 +304,10 @@ theorem xsel_runs (σ : ScheduleOracle) (stim : List SvState) :
 
 /-! ## Non-vacuity pins (`#guard`)
 
-The canonical trace reproduces the Xcelium-verified outcomes (same values
-as `Tests.lean`/the differential harness). -/
+The canonical trace is consistent with the LRM rules the differential
+harness verified (same values as `Tests.lean`). These particular stimuli
+were NOT themselves simulated: `harness/sv/cases.json` drives different
+vectors. -/
 
 private def xselCyc (sel : LVec) : SvState :=
   [("sel", sel), ("a", LVec.ofNat 8 0xAA), ("b", LVec.ofNat 8 0x55)]

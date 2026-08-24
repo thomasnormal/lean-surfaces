@@ -33,7 +33,9 @@ node-for-node the extracted envelope (a mismatch fails the file). -/
     throw (IO.userError "toggle envelope has unsupported nodes")
 
 /-! Non-vacuity: concrete runs in surface syntax (`#sv_check`, Surface.lean
-— fixed generous fuel), reproducing the Xcelium-verified outcomes
+— fixed generous fuel), consistent with the LRM rules the differential
+harness verified (these stimuli were not themselves simulated —
+`harness/sv/cases.json` drives different vectors)
 (harness/sv/cases.json rows `toggle_directed`/`toggle_x`). -/
 
 -- reset pulse, then en for 3 cycles: q toggles 0 → 1 → 0 → 1

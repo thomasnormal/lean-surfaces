@@ -2,7 +2,7 @@
   "tier": "sv",
   "schema": "declared-divergences-1",
   "probe": "harness/sv_divergence_probe.py",
-  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py; PROBE is per-tier and named above because it must speak this tier's language. Both rows are KIND=provenance: the model and the simulator have not been shown to disagree -- what outran the evidence is the CLAIM of agreement. Provenance retires by re-running; semantic would retire by remodelling.",
+  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py; PROBE is per-tier and named above because it must speak this tier's language. Both rows are KIND=provenance: the model and the simulator have not been shown to disagree -- what outran the evidence is the CLAIM of agreement. Provenance retires by re-running; semantic would retire by remodelling. RETIREMENT: sv-div-2 retired 2026-08-24 and moved to retired_rows with its guards deleted from the probe in the same commit. Kept rather than dropped so the register can be AGED -- a debt that was paid is evidence, and a ledger that forgets its closed rows cannot show that any row ever closes.",
   "rows": [
     {
       "id": "sv-div-1",
@@ -14,9 +14,14 @@
       "inherited_note": "ORIGINATED here. The claim was made in this lane's own M0 design memo and has never been reproducible from this workspace; there is no upstream decision to cite.",
       "declared": "2026-08-22",
       "retirement_condition": "Re-run the per-operator 4-state table under xrun on a host with an Xcelium licence, commit the recorded rows as a fixture under harness/sv/, and diff them against Basic.lean's tables. The fixture's PRESENCE is what sv_div_1_still_divergent tests, so the row retires by the fixture landing -- not by anyone deciding the tables look right.",
-      "guards": ["sv_div_1_still_divergent", "sv_div_1_has_not_widened"],
+      "guards": [
+        "sv_div_1_still_divergent",
+        "sv_div_1_has_not_widened"
+      ],
       "gated": "No new claim anywhere in this tier may describe the operator table as dual-simulator-verified until this row retires. Icarus reproduces the 10 differential harness CASES; it has never adjudicated the operator TABLE, and the two are not the same claim."
-    },
+    }
+  ],
+  "retired_rows": [
     {
       "id": "sv-div-2",
       "kind": "provenance",
@@ -27,8 +32,13 @@
       "inherited_note": "ORIGINATED here, and found by the 2026-08-23 quality audit rather than by this lane.",
       "declared": "2026-08-24",
       "retirement_condition": "Reword all 10 sites from 'reproduces the Xcelium-verified outcomes' to a claim the evidence supports -- consistent with the LRM rules the harness verified. sv_div_2_still_divergent counts surviving sites, so the row retires automatically when the count reaches zero; it cannot be closed by assertion.",
-      "guards": ["sv_div_2_still_divergent", "sv_div_2_has_not_widened"],
-      "born_with_retirement_in_flight": "This row is filed with its remedy already scheduled -- the rewording is batched into the next tier-Sv tenure alongside slotStep's first piece, since these are files inside the build glob and docs-class cannot carry them. It is registered anyway rather than left as an in-flight intention, because this lane RECORDED the audit disposition as 'ACCEPTED, rewording' on 2026-08-23 and then did not apply it, and the gap survived two green landings. Recording an acceptance is not making the change; a row that ages is what makes the difference visible."
+      "guards": [
+        "sv_div_2_still_divergent",
+        "sv_div_2_has_not_widened"
+      ],
+      "born_with_retirement_in_flight": "This row is filed with its remedy already scheduled -- the rewording is batched into the next tier-Sv tenure alongside slotStep's first piece, since these are files inside the build glob and docs-class cannot carry them. It is registered anyway rather than left as an in-flight intention, because this lane RECORDED the audit disposition as 'ACCEPTED, rewording' on 2026-08-23 and then did not apply it, and the gap survived two green landings. Recording an acceptance is not making the change; a row that ages is what makes the difference visible.",
+      "retired": "2026-08-24",
+      "retired_by": "All 10 sites reworded from 'reproduces the Xcelium-verified outcomes' to 'consistent with the LRM rules the differential harness verified', each stating plainly that the guarded stimuli were not themselves simulated and that harness/sv/cases.json drives different vectors. sv_div_2_still_divergent counted the surviving sites to ZERO, which is what closed the row -- the count closed it, not an assertion that it was fixed. Its two guards are deleted in the same commit as the row, per 5.0a: a guard whose row is gone guards nothing, and a row whose guard is gone is unfalsifiable."
     }
   ]
 }

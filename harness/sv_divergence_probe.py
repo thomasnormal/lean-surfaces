@@ -37,8 +37,13 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Pinned at DECLARED time; a change in either direction is a guard failure.
+#
+# sv-div-2 and its two guards were REMOVED TOGETHER on 2026-08-24 when the
+# 10-site rewording landed and `still_divergent` counted the surviving claim
+# sites to zero. 5.0a: the row and the guard are deleted together -- a guard
+# whose row is gone guards nothing, and a row whose guard is gone is
+# unfalsifiable. The retired row is kept in the register's `retired_rows`.
 DIV1_CLAIM_SITES = 9      # 'xcelium' mentions in docs/sv-design-m0.md
-DIV2_CLAIM_SITES = 10     # 'Xcelium-verified outcomes' in Examples/system-verilog
 
 
 def _grep_count(pattern, path, flags=""):
@@ -78,29 +83,9 @@ def sv_div_1_has_not_widened():
             % (n, DIV1_CLAIM_SITES))
 
 
-def sv_div_2_still_divergent():
-    """DIV-2 is 'guards claim Xcelium adjudication of stimuli no simulator
-    ran'. It RETIRES when the rewording lands, so it is still divergent
-    exactly while the phrase survives anywhere."""
-    n = _grep_count("Xcelium-verified outcomes",
-                    os.path.join(REPO, "Examples", "system-verilog"))
-    return (n > 0, "'Xcelium-verified outcomes' sites: %d" % n)
-
-
-def sv_div_2_has_not_widened():
-    """Widens if the claim spreads beyond the sites counted at DECLARED."""
-    n = _grep_count("Xcelium-verified outcomes",
-                    os.path.join(REPO, "Examples", "system-verilog"))
-    return (n <= DIV2_CLAIM_SITES,
-            "'Xcelium-verified outcomes' sites: %d (pinned <= %d)"
-            % (n, DIV2_CLAIM_SITES))
-
-
 GUARDS = {
     "sv_div_1_still_divergent": sv_div_1_still_divergent,
     "sv_div_1_has_not_widened": sv_div_1_has_not_widened,
-    "sv_div_2_still_divergent": sv_div_2_still_divergent,
-    "sv_div_2_has_not_widened": sv_div_2_has_not_widened,
 }
 
 

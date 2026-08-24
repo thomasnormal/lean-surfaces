@@ -33,7 +33,9 @@ node-for-node the extracted envelope (a mismatch fails the file). -/
     throw (IO.userError "adder envelope has unsupported nodes")
 
 /-! Non-vacuity: concrete runs in surface syntax (`#sv_check`, Surface.lean
-— fixed generous fuel), reproducing the Xcelium-verified outcomes
+— fixed generous fuel), consistent with the LRM rules the differential
+harness verified (these stimuli were not themselves simulated —
+`harness/sv/cases.json` drives different vectors)
 (gallery example 1; the differential matrix lives in
 harness/sv/cases.json). -/
 

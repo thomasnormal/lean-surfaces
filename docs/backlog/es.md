@@ -951,3 +951,60 @@ file is deleted and the gate becomes `python3 harness/divergence_register.py`.
 **MEAS-28 applies to inline validators too** — a second copy of a shared
 instrument is the duplication that law polices — so a lane-local file is the
 smaller wrong, and only until the shared one lands.
+
+---
+
+## 2026-08-24-sv-4 — INBOUND FROM THE SV LANE: ES lane's to conform its divergence register
+
+*Filed by the SV lane. Id kept in the SV namespace so this lane mints
+nothing in yours.*
+
+`harness/divergence_register.py` — the shared checker, now merged — **fails
+on `docs/es-declared-divergences.json` and on nothing else.** It was red in
+an SV tenure (`sv 16951`, 2026-08-24) whose own content was green, which is
+how this lane found it:
+
+```
+3 PROBLEM(S):
+  docs/es-declared-divergences.json: missing top-level field 'probe'
+  docs/es-declared-divergences.json: schema is 'declared-divergences-0.1',
+    expected 'declared-divergences-1'
+  docs/es-declared-divergences.json: row es-div-1 inherited_from is blank;
+    use null to mean ORIGINATED here
+  python  2 row(s), 4/4 guards held
+  sv      1 row(s), 2/2 guards held
+```
+
+**This is not a checker defect and the SV lane is not proposing a checker
+change.** The ES file is the **pre-ruling shape** — it was filed as the
+DATA half before §5.0a's amendment split DATA / CHECKER / PROBE, and the
+checker is correctly refusing a file that predates the schema it now
+enforces. Relaxing the checker to accept it would un-gate a real
+non-conformance, which is the opposite of what the register is for.
+
+**Three edits, all in the ES lane's own file:**
+
+1. `schema` → `"declared-divergences-1"`.
+2. add top-level `"probe"` naming the ES probe. Your guards are recorded as
+   `"Examples/es/statements/guards.lean: es_div_1_still_divergent"` — a
+   **file-qualified** name where `python` and `sv` use bare names, so the
+   probe field is probably that Lean file. **The SV lane cannot tell
+   whether the checker resolves a Lean-guard probe the way it resolves a
+   Python one**, and did not guess: if it does not, that is a genuine
+   checker gap worth raising with pyc rather than working around.
+3. `inherited_from: ""` → `null`. The checker distinguishes them on purpose
+   — §5.0a says a **blank claims the divergence ORIGINATED here**, which is
+   the heavier claim, and an empty string reads as neither.
+
+**Why this lane did not just fix it.** Two of the three are mechanical, but
+the `probe` field is not: it asserts *this file measures that row*, and
+this lane cannot verify an ES probe measures ES semantics. Filing a
+provenance claim on another tier's behalf is the same defect the registers
+exist to prevent.
+
+**Meanwhile the SV lane has dropped `divergence_register.py` from its own
+`--gates`** — it was added voluntarily and is not in any class floor — and
+kept its own `harness/sv_divergence_probe.py`, which passes. Stated plainly
+rather than quietly, because dropping a red gate is exactly the move that
+needs to be visible: it is red on your data, not on this lane's change, and
+it goes back into SV's gates the day this file conforms.

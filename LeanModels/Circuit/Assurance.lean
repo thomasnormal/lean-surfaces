@@ -82,4 +82,62 @@ structure AssuranceCase
   realizable : RealizableUnder behavior allowed
   withinDomain : StaysWithinValidityDomain behavior allowed domain
 
+/-! ## Grounding — the outer link of the non-vacuity chain
+
+`RealizableUnder` was added so that a safety theorem could not be discharged
+by an empty BEHAVIOR set.  It cannot do the same for an empty ALLOWED-WORLD
+set, because it is itself guarded by `allowed world`: all three fields of
+`AssuranceCase` are universally quantified over `allowed`, so an `allowed`
+that no world satisfies discharges safety, realizability and domain closure
+simultaneously, and `#assurance_report` prints the same lines it prints for a
+real result.
+
+Non-vacuity is therefore a CHAIN OF TWO LINKS — an inhabited world set, then
+an inhabited behavior set — and `RealizableUnder` closes only the inner one.
+-/
+
+/-- At least one world is allowed.  This is the outer link: without it every
+obligation in an `AssuranceCase` is satisfiable by an empty premise. -/
+def GroundedUnder {World : Type} (allowed : World → Prop) : Prop :=
+  ∃ world, allowed world
+
+/-- The existential form of an assurance result: some allowed world really has
+a behavior, and that behavior meets both the specification and the validity
+domain.  Unlike the three universal obligations this is FALSE when `allowed`
+is empty, so it is the statement that could have disagreed. -/
+def ExhibitsUnder {World Boundary Internal : Type}
+    (behavior : Behavior World Boundary Internal)
+    (allowed : World → Prop)
+    (specification domain : World → Boundary → Internal → Prop) : Prop :=
+  ∃ world boundary internal,
+    allowed world ∧
+      behavior world boundary internal ∧
+        specification world boundary internal ∧
+          domain world boundary internal
+
+/-- A grounded assurance case exhibits a witness.  One lemma converts any of
+the tier's assurance cases from three universally-quantified obligations into
+the existential form, given the one fact none of them currently carries. -/
+theorem AssuranceCase.exhibits
+    {World Boundary Internal Artifact : Type}
+    {circuit : Artifact}
+    {behavior : Behavior World Boundary Internal}
+    {allowed : World → Prop}
+    {source : SourceBinding circuit behavior allowed}
+    {specification domain : World → Boundary → Internal → Prop}
+    (assurance :
+      AssuranceCase circuit behavior allowed source specification domain)
+    (grounded : GroundedUnder allowed) :
+    ExhibitsUnder behavior allowed specification domain := by
+  obtain ⟨world, hworld⟩ := grounded
+  obtain ⟨boundary, internal, hbehavior⟩ := assurance.realizable world hworld
+  exact ⟨world, boundary, internal, hworld, hbehavior,
+    assurance.safe world boundary internal hworld hbehavior,
+    assurance.withinDomain world boundary internal hworld hbehavior⟩
+
+/-- An allowed-world set pinned to a single world is grounded by that world. -/
+theorem groundedUnder_eq {World : Type} (world : World) :
+    GroundedUnder (fun candidate => candidate = world) :=
+  ⟨world, rfl⟩
+
 end LeanModels.Circuit

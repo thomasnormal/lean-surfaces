@@ -58,8 +58,27 @@ theorem rlc_assurance :
           rlcEnergy world boundary time ≤ rlcEnergy world boundary 0)
       Examples.spice.rlc_discharge.proof.RLCEnergyDomain := by proofs
 
+/-- The outer non-vacuity link: the allowed-world set is the singleton
+`rlcWorld`, so it is inhabited and the case above could have failed. -/
+theorem rlc_grounded :
+    GroundedUnder Examples.spice.rlc_discharge.proof.RLCExampleAllowed :=
+  ⟨Examples.spice.rlc_discharge.proof.rlcWorld, rfl⟩
+
+/-- The existential form, which an empty allowed-world set would refute. -/
+theorem rlc_exhibits :
+    ExhibitsUnder RLCBehavior
+      Examples.spice.rlc_discharge.proof.RLCExampleAllowed
+      (fun world boundary _internal =>
+        ∀ time, 0 ≤ time → time ≤ world.environment.horizon →
+          rlcEnergy world boundary time ≤ rlcEnergy world boundary 0)
+      Examples.spice.rlc_discharge.proof.RLCEnergyDomain :=
+  _root_.rlc_assurance.exhibits _root_.rlc_grounded
+
 #assurance_report rlcSpecDeck using _root_.rlc_assurance
   [_root_.rlc_initial_energy]
+
+#print axioms rlc_grounded
+#print axioms rlc_exhibits
 
 #print axioms rlc_realizable
 #print axioms rlc_energy_dissipates

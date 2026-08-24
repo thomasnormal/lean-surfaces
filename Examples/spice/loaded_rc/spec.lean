@@ -90,6 +90,23 @@ theorem loaded_rc_assurance :
           boundary.outputVoltage time ≤ 10 / 3)
       LoadedRCVoltageDomain := by proofs
 
+/-- The outer non-vacuity link: the allowed-world set is the singleton
+`loadedRCWorld`, so it is inhabited and the case above could have failed. -/
+theorem loaded_rc_grounded :
+    GroundedUnder Examples.spice.loaded_rc.proof.LoadedRCExampleAllowed :=
+  ⟨Examples.spice.loaded_rc.proof.loadedRCWorld, rfl⟩
+
+/-- The existential form, which an empty allowed-world set would refute. -/
+theorem loaded_rc_exhibits :
+    ExhibitsUnder LoadedRCBehavior
+      Examples.spice.loaded_rc.proof.LoadedRCExampleAllowed
+      (fun world boundary _internal =>
+        Throughout world.environment.horizon fun time =>
+          0 ≤ boundary.outputVoltage time ∧
+          boundary.outputVoltage time ≤ 10 / 3)
+      LoadedRCVoltageDomain :=
+  loaded_rc_assurance.exhibits loaded_rc_grounded
+
 #assurance_report loadedRCDeck using loaded_rc_assurance
   [loaded_rc_determinate, loaded_rc_monotone, loaded_rc_settles,
     loaded_rc_backward_euler, loaded_rc_backward_euler_no_overshoot]

@@ -36,12 +36,41 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | `2026-08-24-analog-3` | `5119cf6` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-4` | `494b850` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-5` | `2cf53de` | 8 / 24 | 4 / 21 | 9 / 21 |
-| `2026-08-24-analog-6` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-6` | `130dd20` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-7` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
 
-**F2 numeric hypotheses discharged: 4 / 12** — `loaded_rc` (analog-3),
-`loaded_inverter` (analog-4), `dram_1t1c` write-zero (analog-5),
-`dram_sense_amp` small-signal (analog-6). All four decks in the family now have
-one discharged exemplar; the remaining 8 are siblings of a proved pattern.
+**F2 exp/log certificates discharged: 7 / 7 — THE FAMILY IS CLOSED.**
+
+**AND THE DENOMINATOR WAS WRONG UNTIL THIS LANDING.** Every previous entry
+reported `N / 12`. Re-censusing with a bracket-aware extractor found **7**, not
+12: the original figure counted library-internal occurrences of
+`hdeadline`/`hsmall` and six *plain bounds* (`0 ≤ deadline`,
+`deadline ≤ horizon`, `1/1e9 ≤ horizon`) that are trivial side conditions, not
+transcendental certificates. A first regex attempt at the recount **also
+under-counted**, silently missing `loaded_rc` because its hypothesis nests
+parentheses two deep.
+
+> **A denominator computed by a heuristic is a heuristic. This one was quoted
+> in four consecutive landings before anything checked it, and §9.0's warning
+> that a denominator is "quoted without its definition" was written about
+> exactly this.**
+
+The seven, and the corollary that discharges each — six corollaries for seven
+obligations, because `performance_realizable` carries two:
+
+| parent theorem | hypothesis | discharged by |
+| --- | --- | --- |
+| `loaded_rc_settles` | `hdeadline` | `loaded_rc_settled_at_horizon` |
+| `loaded_inverter_settles_within` | `hdeadline` | `loaded_inverter_settled_at_microsecond` |
+| `dram_1t1c_write_zero_settles` | `hdeadline` | `dram_1t1c_write_zero_settled_at_2ns` |
+| `dram_sense_amp_small_signal_realizable` | `hsmall` | `..._realizable_at_1ns` |
+| `dram_sense_amp_small_signal_behavior` | `hsmall` | `..._behavior_at_1ns` |
+| `dram_sense_amp_small_signal_performance_realizable` | `hdeadline` + `hsmall` | `..._performance_at_1ns` |
+
+**F2 IS A FAMILY, NOT THE TIER** (§9.0's waypoint law). F4 still has 88 sites,
+F3 eight, F5 two, F6 one, and F1 is unclosable by construction. Closing F2
+closes the family that was the tier's stated real-analysis frontier; it does
+not close the tier.
 
 **The certificate kit is now directionally COMPLETE** — decay above, decay
 below, growth below, growth above — which is what analog-6 found missing.
@@ -732,3 +761,59 @@ nothing about the fourth.
 **Next: A14 — the remaining 8 siblings.** Every deck in the family now has a
 worked exemplar, so these are instantiations rather than investigations. The
 coordinate audit stays first, and the direction audit joins it.
+
+---
+
+## 2026-08-24-analog-7 — A14: F2 closes at 7/7, and the denominator it closed was not the one I had been quoting
+
+**The last three certificates.** `dram_sense_amp_small_signal_behavior_at_1ns`
+and `dram_sense_amp_small_signal_performance_at_1ns` discharge the remaining
+obligations, the latter closing **two** at once — its `hsmall` by the growth
+certificate at split depth 10, its `hdeadline` by the **deadline** certificate
+at split depth 8 (`5/2 ≤ (9/8)^8`). Both directions of the kit, in one theorem.
+The sense amplifier's performance claim — a 250 mV margin, inside the rail
+domain, within one nanosecond, from a 100 mV deviation — now holds **outright**.
+Axioms `[propext, Classical.choice, Quot.sound]` throughout.
+
+The shared numeric facts are named (`..._cap_1ns`, `..._deadline_1ns`) rather
+than inlined three times, and `analog-6`'s corollary was refactored onto them.
+
+### THE DENOMINATOR
+
+`N / 12` was wrong in four consecutive landings. The recount is in the standing
+block above; the short version is that 12 counted library-internal occurrences
+and six plain bounds, and the real figure is 7. **My first recount was also
+wrong** — a regex that missed `loaded_rc` because its hypothesis nests
+parentheses two deep, which is the third time in this lane a heuristic scanner
+has produced a confident wrong number.
+
+> **Three for three: the orphan-doc scanner accused two clean files, the
+> `analog-4` repricing generalised from one deck, and the F2 denominator counted
+> the wrong things. Every one was a MEASUREMENT taken with an instrument nobody
+> had validated against a known answer. The instrument is part of the claim.**
+
+### THE GATE CAUGHT MY OWN REGRESSION
+
+Refactoring the `analog-6` corollary onto the shared lemma left its doc comment
+attached to nothing. `harness/lean_comment_forms.py` reported
+`ORPHAN DOC COMMENT …:783 — followed by '/-- The small-signal cap…', not a
+declaration` **in under a second**, naming the line and what followed it.
+
+> **The same defect class cost four tenures before the gate existed and one
+> second after. A gate's value is not that it prevents the defect — I made the
+> defect again — but that it moves discovery from the far side of an hour-long
+> queue to the near side of a keystroke.**
+
+### WHAT IS LEFT, AND WHAT IS NOT
+
+F2 is closed. **The tier is not**, and the distinction is §9.0's waypoint law:
+F4 still holds 88 sites, F3 eight, F5 two, F6 one, and F1 is unclosable by
+construction and admitted 12×. What closing F2 buys is that **every settling
+and regenerating claim in the corpus now rests on rational arithmetic rather
+than on an assumed constant** — the tier's stated real-analysis frontier, and
+only that.
+
+**Next: A15 — F3 (unbalanced latch determinacy, 8 sites)**, which needs Grönwall
+lifted from the scalar case to the 2-D pair field. That is the first item in
+this lane's queue that is genuinely new mathematics rather than instantiation,
+and the coordinate/direction audits go first.

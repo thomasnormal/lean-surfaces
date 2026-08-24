@@ -780,12 +780,37 @@ theorem dram_sense_amp_small_signal_realizable
     dram_sense_amp_small_signal_behavior
       hinitial hhorizon hsmall⟩
 
-/-- A13 INSTANTIATED.  `dram_sense_amp_small_signal_realizable` carried
+/-- The small-signal cap at a 100 mV deviation over one nanosecond, certified
+by the growth certificate at split depth 10. Shared by all three corollaries
+below, which is why it is a named fact rather than three inline proofs. -/
+theorem dram_sense_amp_small_signal_cap_1ns :
+    dramDifferentialSenseSmallSignalTrace (1 / 10) (1 / 1000000000) ≤
+      1 / 2 := by
+  unfold dramDifferentialSenseSmallSignalTrace
+  have h1 : (1000000000 : ℝ) * (1 / 1000000000) = 1 := by norm_num
+  rw [h1]
+  have he : Real.exp (1 : ℝ) ≤ (10 / 9) ^ 10 :=
+    LeanModels.Circuit.exp_le_of_pow_le 10 (by norm_num) (by norm_num)
+      (by norm_num)
+  nlinarith [(Real.exp_pos (1:ℝ)).le]
+
+/-- A 250 mV margin is reached within one nanosecond from a 100 mV deviation.
+The deadline is a `log`, so this uses the DEADLINE certificate at split depth
+8 (`5/2 ≤ (9/8)^8`), not the growth one. -/
+theorem dram_sense_amp_small_signal_deadline_1ns :
+    dramDifferentialSenseSmallSignalDeadline (1 / 10) (1 / 4) ≤
+      1 / 1000000000 := by
+  unfold dramDifferentialSenseSmallSignalDeadline
+  have hlog : Real.log ((1 / 4 : ℝ) / (1 / 10)) ≤ 1 := by
+    have h : ((1 : ℝ) / 4) / (1 / 10) = 5 / 2 := by norm_num
+    rw [h]
+    exact LeanModels.Circuit.log_le_of_le_pow (by norm_num) (by norm_num) 8
+      (by norm_num) (by norm_num)
+  exact max_le (by norm_num) (by linarith)
+
+/-- A13/A14 INSTANTIATED.  `dram_sense_amp_small_signal_realizable` carried
 `hsmall` -- the bound that keeps the small-signal linearisation honest -- as a
-HYPOTHESIS.  At a 100 mV initial deviation over a one-nanosecond horizon it is
-now DISCHARGED: the regeneration factor is `exp 1`, certified above by the
-growth certificate at split depth 10 (`exp 1 ≤ (10/9)^10`), and
-`(1/10)·(10/9)^10 < 1/2`.
+HYPOTHESIS; here it is discharged.
 
 This deck needed the one direction the F2 kit did not have.  Its deviation
 GROWS -- a sense amplifier regenerates -- so the honest bound is on growth from
@@ -794,18 +819,19 @@ theorem dram_sense_amp_small_signal_realizable_at_1ns :
     ∃ boundary,
       DramDifferentialSenseBehavior
         (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
-        boundary () := by
-  refine dram_sense_amp_small_signal_realizable
-    (initialDeviation := 1 / 10) (horizon := 1 / 1000000000)
-    (by norm_num) (by norm_num) ?_
-  show dramDifferentialSenseSmallSignalTrace (1 / 10) (1 / 1000000000) ≤ 1 / 2
-  unfold dramDifferentialSenseSmallSignalTrace
-  have h1 : (1000000000 : ℝ) * (1 / 1000000000) = 1 := by norm_num
-  rw [h1]
-  have he : Real.exp (1 : ℝ) ≤ (10 / 9) ^ 10 :=
-    LeanModels.Circuit.exp_le_of_pow_le 10 (by norm_num) (by norm_num)
-      (by norm_num)
-  nlinarith [(Real.exp_pos (1:ℝ)).le]
+        boundary () :=
+  dram_sense_amp_small_signal_realizable (by norm_num) (by norm_num)
+    dram_sense_amp_small_signal_cap_1ns
+
+/-- The witnessing boundary itself, not merely its existence. -/
+theorem dram_sense_amp_small_signal_behavior_at_1ns :
+    DramDifferentialSenseBehavior
+      (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+      (dramDifferentialSenseSmallSignalBoundary
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+        (1 / 10)) () :=
+  dram_sense_amp_small_signal_behavior (by norm_num) (by norm_num)
+    dram_sense_amp_small_signal_cap_1ns
 
 theorem dram_sense_amp_small_signal_performance_realizable
     {initialDeviation required horizon : ℝ}
@@ -924,5 +950,25 @@ theorem dram_sense_amp_full_basin_regeneration
 #print axioms dram_sense_amp_small_signal_realizable
 #print axioms dram_sense_amp_small_signal_performance_realizable
 #print axioms dram_sense_amp_full_basin_regeneration
+
+/-- A14: the last exp/log certificate in the tier's F2 census.  Both of this
+theorem's numeric hypotheses are discharged, so the sense amplifier's
+PERFORMANCE claim -- reaching a 250 mV margin, in the rail domain, within one
+nanosecond -- holds outright. -/
+theorem dram_sense_amp_small_signal_performance_at_1ns :
+    ∃ boundary,
+      DramDifferentialSenseBehavior
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+          boundary () ∧
+        DramDifferentialSenseInRailDomain
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+          boundary ∧
+        DramDifferentialSenseReachesMargin
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+          boundary true (1 / 4)
+          (dramDifferentialSenseSmallSignalDeadline (1 / 10) (1 / 4)) :=
+  dram_sense_amp_small_signal_performance_realizable (by norm_num)
+    (by norm_num) dram_sense_amp_small_signal_deadline_1ns
+    dram_sense_amp_small_signal_cap_1ns
 
 end Examples.spice.dram_sense_amp.proof

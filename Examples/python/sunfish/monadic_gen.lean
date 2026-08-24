@@ -439,4 +439,53 @@ theorem forGen_done (m : Module) (target : Expr) (ad : Addr) (body : List Stmt)
 #print axioms forGen_step
 #print axioms forGen_done
 
+/-! ## §9 ARM LEMMAS, GENERAL IN THE STATEMENT — rung 6's actual unit of work
+
+§5's `genSilent_branch` hard-codes `Stmt.ifStmt`. That was the right shape for
+proving the ARM exists and the wrong shape for USING it: a real statement slice
+(`sbNull`, `sbStand`, …) presents as an opaque `Stmt` with a computed `genPlan`,
+not as a literal constructor application. The trunk's own branch lemma takes `s`
+plus a `genPlan` premise for exactly this reason, and re-founding copied the
+proof rather than the interface.
+
+**This is rung 6's unit of work, and it is smaller than the rung's headline
+number suggests.** The ~57 interpreter-facing statements of `bound()` are not 57
+independent proofs: they are 57 INSTANTIATIONS of a handful of arm lemmas, each
+supplying a `genPlan` equation (by `rfl` on a slice) and the sub-runs its own
+statement makes. The arms are shared; only the premises are per-statement. -/
+
+/-- **The branch arm, general in the statement.** -/
+theorem genSilent_branch' (m : Module) (st st' st₁ : FrameState) (s : Stmt)
+    (test : Expr) (body orelse ss : List Stmt) (k' : GenCont)
+    (v : RVal) (b : Bool)
+    (hplan : genPlan s = .branch test body orelse)
+    (hev : ∀ F, toRun (evalOpen (kont m F) m test) st = .ok st' v)
+    (htr : toRun (truthyM v) st' = .ok st₁ b) :
+    GenSilentM m st st₁ (.block (s :: ss) :: k')
+      ((if b then GenFrame.block body else GenFrame.block orelse)
+        :: .block ss :: k') :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt, hplan]
+    rw [toRun_bind, hev F]
+    dsimp only [Run.bind]
+    rw [toRun_bind, htr]
+    rfl⟩
+
+/-- **The DELEGATE arm** — a yield-free statement runs through the ordinary
+executor and the walker moves on. This is the arm every non-control statement of
+a generator body takes, so for rung 6 it is the highest-frequency one: most of
+`moves()` is assignments and calls, not control flow. -/
+theorem genSilent_delegateNext (m : Module) (st st₁ : FrameState) (s : Stmt)
+    (ss : List Stmt) (k' : GenCont)
+    (hplan : genPlan s = .delegate)
+    (hrun : ∀ F, toRun (execOpen (kont m F) m s) st = .ok st₁ .next) :
+    GenSilentM m st st₁ (.block (s :: ss) :: k') (.block ss :: k') :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt, hplan]
+    rw [toRun_bind, hrun F]
+    rfl⟩
+
+#print axioms genSilent_branch'
+#print axioms genSilent_delegateNext
+
 end Examples.python.sunfish.monadic_gen

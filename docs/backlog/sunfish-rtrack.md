@@ -1221,3 +1221,50 @@ entangled and will advance together rather than in sequence.
 ### Status
 
 Verdict pending.
+
+## 2026-08-24-sunfish-rtrack-14 — rung 9 discharged, and rung 6 is REPRICED
+
+**§9.0: 5 / 9, and the chain is now WHOLLY INTERNAL.**
+
+### Rung 9 closed, by another lane
+
+pyc inch 3 (`cf13932`) landed the last of the three flagship-serving surfaces;
+`bound()`'s unsupported census is zero. The scope it holds under travels in the
+register's `scope_against_real_play` row rather than being restated here. Nothing
+between the typed flagship and its discharge now waits on anyone outside the two
+proof lanes — rungs 5 and 6 (this lane's) and rung 8 (the base-case lane's).
+
+That is worth saying precisely because it changes what "blocked" may mean for
+this lane from today: every remaining rung is WORK, not sequencing.
+
+### Rung 6 is ~57 instantiations, not ~57 proofs
+
+The headline number stands and its MEANING changes. The interpreter-facing
+statements of `bound()` are not independent proofs: they are instantiations of a
+handful of ARM lemmas — one per shape a generator-body statement can take —
+each supplying a `genPlan` equation (`rfl` on a slice) plus whatever sub-runs the
+statement itself makes. The arms are shared; only the premises are per-statement.
+
+Measured, not assumed: `genSilent_branch'` and `genSilent_delegateNext` (§9),
+both first shot in one scratch iteration each. `delegateNext` is the
+high-frequency arm — most of `moves()` is assignments and calls rather than
+control flow — so the arm covering the most statements is already in hand.
+
+### A defect in this lane's own earlier work, found by trying to USE it
+
+§5's `genSilent_branch` hard-codes `Stmt.ifStmt`. That is the right shape for
+proving an arm EXISTS and the wrong shape for using it: a real statement slice
+presents as an opaque `Stmt` with a COMPUTED `genPlan`, never as a literal
+constructor application. The trunk's own branch lemma takes `s` plus a plan
+premise for exactly that reason, and this lane copied the trunk's PROOF without
+copying its INTERFACE.
+
+Filed for the register: **a ported lemma can be true, green, and unusable.** The
+re-founding taxonomy classifies statements by what they depend on; it says
+nothing about whether the re-stated version can be applied where the original
+was. The check that would have caught it is cheap — before landing a re-founded
+lemma, name the first CALLER it must serve and confirm the shapes meet.
+
+### Status
+
+Verdict pending.

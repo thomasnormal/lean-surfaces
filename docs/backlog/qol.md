@@ -4296,3 +4296,72 @@ name, and the in-clone path unchanged.
 `check.sh` **113 ok** (106 → 113), triad 350, backlog-index 62, laws 45,
 sites 57, comment-forms 18, `--verify-guards` 44, docs_check 91/91. Live queue
 empty. No Lean executed.
+
+## 2026-08-24-qol-60 — a version skew that recurs is a missing guard
+
+Item 15: `triad.sh` refuses a NEW enqueue from a worktree running a
+SUPERSEDED copy of itself.
+
+### Identity, not ancestry — and the hazard that decides the design
+
+A worktree on an old branch legitimately carries old shas, so ancestry says
+nothing about which TOOL is running. The question asked is content identity:
+
+> is my `tools/triad.sh` byte-identical to a PUBLISHED version of it that
+> master has since replaced?
+
+Three states, one test: matches the tip → current; matches an **older**
+published version → superseded, refuse; matches **nothing** → local work,
+allow. That last state is not a nicety. A bare "differs from master → refuse"
+would refuse **every lane editing this tool**, starting with the one that
+maintains the guard. A copy under development matches no published version, so
+it is never behind.
+
+### The object is the script that is RUNNING
+
+The first cut hashed `$CLONE/tools/triad.sh`. Those are the same file in the
+normal case and **not** the same when a current tool is pointed at another
+checkout with `--dir` — there the tool enforcing the rules is the current one,
+and refusing because the *other* tree carries an old copy is a wrong-object
+refusal. §5.4b's pointer question, aimed at this guard. Now
+`${BASH_SOURCE[0]}`, parameterised so fixtures can name a file.
+
+Caught by testing, not by reading: running softfloat's and ada's own copies
+returned "allowed" for both, because **their copies contain no guard at all** —
+a superseded copy predates the thing that would refuse it. Which is the
+honest limit of this guard, worth stating: **it cannot help a copy older than
+itself.** It closes every skew that begins after it lands — refresh once, and
+future drift refuses itself.
+
+### Both tripwires were already gone
+
+By the time it was built, softfloat's `triad.sh` was byte-identical to the
+current tip: they refreshed on the coordinator's instruction. Nothing on this
+box is superseded, which is why the fixtures matter — the live tree could no
+longer demonstrate either direction.
+
+End to end on a fixture upstream, running a superseded copy that DOES carry
+the guard:
+
+```
+triad.sh: this worktree's tools/triad.sh is a SUPERSEDED version: byte-identical
+  to master at 0174227, which is 1 published change(s) behind master (fd3888a)
+  ON THAT FILE.
+  Refresh it:  git checkout master -- tools/triad.sh     (or rebase this worktree)
+```
+
+**And the named remedy was executed, not just printed**: after
+`git checkout master -- tools/triad.sh` the refusal is gone and the
+classification prints. A refusal naming a fix that does not work is worse than
+no refusal.
+
+Enqueue-only by construction — it runs in the precondition block and nothing
+calls it at acquire — so a ticket already in flight is untouched, per the
+v1/v2 accept-and-log precedent. Absence is never a refusal: an unreachable
+remote, and a path that does not exist, both allow.
+
+### Triad
+
+`triad.sh` **356 ok** (350 → 356), check 113, backlog-index 62, laws 45,
+sites 57, comment-forms 18, `--verify-guards` 44, docs_check 91/91. Fixtures
+only. No Lean executed.

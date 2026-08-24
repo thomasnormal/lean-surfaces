@@ -3779,3 +3779,59 @@ coordinator, not to me.
 `check.sh` **104 ok** (87 → 104), and triad 317, laws 45, sites 57,
 backlog-index 62, diagnose 51, `--verify-guards` 32, docs_check 91/91. No Lean
 executed; live queue untouched.
+
+## 2026-08-24-qol-54 — "first 8 of 46" was sorted, not first
+
+pyc3's attempt-2 summary announced **"first 8 of 46"** and listed
+`spec.lean:102-139`. The kept full log's FIRST error was `spec.lean:24` —
+*maximum recursion depth*, a **different failure class**, of which the other
+~44 lines were the cascade. The summary showed neither head nor tail and
+dropped the only line of the causal class; the lane spent a diagnosis cycle
+hunting `noncomputable` before opening the log.
+
+> **"Truncation would have been harmless; a labelled-but-unfaithful sample is
+> not, because what survives is a coherent wrong story."** (pyc3)
+
+### The cause was `sort -u`, and the trap is lexicographic
+
+The pool was built with `grep … | sort -u`, so `head -8` took the first eight
+**in string order** while the label promised log order. And `spec.lean:102`
+sorts *before* `spec.lean:24`, because `1` precedes `2`. The high line numbers
+were not merely a different sample — **they were the ones that sorted first**,
+which is why the real first error was not just missing but systematically
+unreachable.
+
+Reproduced on the fixture before fixing: the old sample's eight lines contain
+`spec.lean:24` **zero times**.
+
+### What it prints now
+
+```
+FIRST error (verbatim — later lines may be its cascade):
+  error: LeanModels/Pyc/spec.lean:24:2: maximum recursion depth has been reached
+next 7 of 41 more distinct, IN LOG ORDER (summary LOCATES; the full log COUNTS):
+  error: LeanModels/Pyc/spec.lean:102:8: failed to synthesize Decidable (cascade)
+  ...
+```
+
+The first error is printed **verbatim and unconditionally** — everything after
+it may be its cascade, so it is the one line a summary may never drop — and
+the remainder is deduplicated **in log order** (`awk '!seen[$0]++'`, never
+`sort -u`). If a line says "next N", it is the next N as the build emitted
+them.
+
+### Two rows had pinned the defect
+
+`check "the preview is LABELLED first 8 of 15"` and `"...the deduped pool is
+2, and says so"` asserted the *label* — the exact promise the sample was
+breaking — so they passed throughout. A row that checks the caption while the
+picture is wrong is not a test of the picture. Both re-pointed at what the
+summary can now keep, and the new rows assert the **content**: that the first
+line printed IS the log's first error, that a sorted sample would have dropped
+it, and that the remainder begins at the first cascade line.
+
+### Triad
+
+`triad.sh` **329 ok** (317 → 329), and check 104, laws 45, backlog-index 62,
+diagnose 51, sites 57, `--verify-guards` 32, docs_check 91/91. Fixtures only;
+the live queue was empty at the close. No Lean executed.

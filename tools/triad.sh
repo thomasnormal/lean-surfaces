@@ -1129,15 +1129,35 @@ axiom_ledger() {                # log -> lines, labelled; 1 none; 2 OFF-STANDARD
 # between total and distinct error lines named as AMPLIFICATION, because that
 # gap is exactly what turns one root cause into a scary number (or a
 # comforting one).
-build_failure_report() {              # log -> counts, then a LABELLED preview
-  local log="$1" n_mod n_tot n_dis pool m shown amp built
+build_failure_report() {              # log -> counts, then a FAITHFUL preview
+  # THE SAMPLE MUST BE THE SAMPLE IT CLAIMS TO BE (pyc3, 2026-08-24).
+  #
+  # This said "first 8 of 46" and showed `spec.lean:102-139`, while the log's
+  # FIRST error was `spec.lean:24` — a maximum-recursion-depth failure, a
+  # DIFFERENT CLASS, whose cascade the other ~44 lines were.  The one line
+  # naming the causal class was the one line dropped, and the lane spent a
+  # diagnosis cycle hunting `noncomputable` before opening the full log.
+  #
+  # THE CAUSE WAS `sort -u`.  It deduplicated by SORTING ALPHABETICALLY, so
+  # `head -8` took the first eight IN STRING ORDER while the label promised
+  # log order — and `spec.lean:102` sorts before `spec.lean:24` because `1`
+  # precedes `2`.  The higher line numbers were not merely a different sample;
+  # they were the ones that sorted first.
+  #
+  # > "Truncation would have been harmless; a labelled-but-unfaithful sample is
+  # > not, because what survives is a coherent wrong story."  (pyc3)
+  #
+  # So: the FIRST error is printed verbatim and unconditionally, and the rest
+  # is deduplicated IN LOG ORDER (`awk !seen[$0]++`, never `sort -u`).  If a
+  # line says "first N", it is the first N as the build emitted them.
+  local log="$1" n_mod n_tot n_dis pool m shown amp built first rest nrest
   [ -f "$log" ] || { echo "    (no log at '$log')"; return 0; }
   n_mod="$(grep -c '✖' "$log" 2>/dev/null || true)"
   n_tot="$(grep -cE '^error|error:' "$log" 2>/dev/null || true)"
   n_dis="$(grep -E '^error|error:' "$log" 2>/dev/null | sort -u | grep -c . || true)"
-  pool="$(grep -E '^error|✖' "$log" 2>/dev/null | sort -u || true)"
+  # ORDER-PRESERVING dedup: first occurrence wins, and the order is the log's.
+  pool="$(grep -E '^error|✖' "$log" 2>/dev/null | awk '!seen[$0]++' || true)"
   m="$(printf '%s' "$pool" | grep -c . || true)"
-  shown="$m"; [ "$shown" -gt 8 ] && shown=8
   built="$(grep -oE '\[[0-9]+/[0-9]+\]' "$log" 2>/dev/null \
            | tr -d '[]' \
            | awk -F/ '{ if ($1+0 > k) { k = $1+0; n = $2+0 } } END { if (n) printf "%d of %d", k, n }')"
@@ -1149,8 +1169,21 @@ build_failure_report() {              # log -> counts, then a LABELLED preview
   printf '    error lines      %s total, %s distinct%s\n' "$n_tot" "$n_dis" "$amp"
   printf '    targets          %s when lake stopped — and lake stops at the FIRST failing module\n' \
          "${built:-unknown}"
-  printf '    first %s of %s (summary LOCATES; the full log COUNTS):\n' "$shown" "$m"
-  printf '%s\n' "$pool" | head -8 | sed 's/^/      /'
+  # THE FIRST ERROR, ALWAYS, VERBATIM.  Everything after it may be a cascade
+  # of it, so it is the one line a summary may never drop.
+  first="$(grep -m1 -E '^error|error:' "$log" 2>/dev/null || true)"
+  if [ -n "$first" ]; then
+    printf '    FIRST error (verbatim — later lines may be its cascade):\n'
+    printf '      %s\n' "$first"
+  fi
+  rest="$(printf '%s\n' "$pool" | grep -v '^$' | grep -vxF "$first" || true)"
+  nrest="$(printf '%s' "$rest" | grep -c . || true)"
+  shown="$nrest"; [ "$shown" -gt 7 ] && shown=7
+  if [ "$nrest" -gt 0 ]; then
+    printf '    next %s of %s more distinct, IN LOG ORDER (summary LOCATES; the full log COUNTS):\n' \
+           "$shown" "$nrest"
+    printf '%s\n' "$rest" | head -7 | sed 's/^/      /'
+  fi
   printf '    These counts say how far the build GOT, not how much of the tree is broken.\n'
   return 0
 }
@@ -2319,7 +2352,11 @@ if [ "$SELF_TEST" = "1" ]; then
   check "error lines: total AND distinct"          "$(printf '%s' "$out" | grep -c 'error lines      12 total, 12 distinct')" "1"
   check "how far lake GOT is reported"             "$(printf '%s' "$out" | grep -c '502 of 839')" "1"
   check "  ...with lake's stop-at-first named"     "$(printf '%s' "$out" | grep -c 'FIRST failing module')" "1"
-  check "the preview is LABELLED first 8 of 15"    "$(printf '%s' "$out" | grep -c 'first 8 of 15')" "1"
+  # This row used to assert the label `first 8 of 15` — the exact promise the
+  # sample broke, since `sort -u` reordered before `head`.  It now asserts the
+  # promise the summary can keep.
+  check "the preview leads with the FIRST error"   "$(printf '%s' "$out" | grep -c 'FIRST error (verbatim')" "1"
+  check "  ...and the remainder says LOG ORDER"    "$(printf '%s' "$out" | grep -c 'IN LOG ORDER')" "1"
   check "  ...and says which one counts"           "$(printf '%s' "$out" | grep -c 'summary LOCATES; the full log COUNTS')" "1"
   check "the preview really is 8 lines"            "$(printf '%s' "$out" | grep -c '^      ')" "8"
   check "no amplification claimed when there is none" "$(printf '%s' "$out" | grep -c 'AMPLIFIED')" "0"
@@ -2339,9 +2376,51 @@ if [ "$SELF_TEST" = "1" ]; then
   out2="$(build_failure_report "$rl2")"
   check "amplification: 40 total, 1 distinct"      "$(printf '%s' "$out2" | grep -c '40 total, 1 distinct')" "1"
   check "  ...and the ratio is NAMED"              "$(printf '%s' "$out2" | grep -c 'AMPLIFIED 40.0x')" "1"
-  check "  ...the deduped pool is 2, and says so"  "$(printf '%s' "$out2" | grep -c 'first 2 of 2')" "1"
+  check "  ...the deduped pool still dedups"       "$(printf '%s' "$out2" | grep -c 'next 1 of 1 more distinct')" "1"
 
   printf 'error: boom\n' > "$tmp/red-bare.log"
+
+  # ---- THE FIRST ERROR IS NEVER DROPPED (pyc3's attempt-2 diagnosis cycle)
+  # A class-A error at line 24, then 40 class-B cascade errors at 102-141 —
+  # the shape that misled, INCLUDING the lexicographic trap: `spec.lean:102`
+  # sorts BEFORE `spec.lean:24`, because `1` precedes `2`.
+  cas="$tmp/cascade.log"
+  {
+    echo "info: [1/500] Building LeanModels.Pyc.Spec"
+    echo "error: LeanModels/Pyc/spec.lean:24:2: maximum recursion depth has been reached"
+    i=102; while [ "$i" -le 141 ]; do
+      echo "error: LeanModels/Pyc/spec.lean:$i:8: failed to synthesize Decidable (cascade)"
+      i=$((i + 1))
+    done
+    echo "✖ [37/500] Building LeanModels.Pyc.Spec"
+  } > "$cas"
+  out="$(build_failure_report "$cas")"
+  check "the FIRST error is printed verbatim"  "$(printf '%s' "$out" | grep -c 'FIRST error (verbatim')" "1"
+  check "  ...and it is the log's first line"  \
+        "$(printf '%s' "$out" | grep -A1 'FIRST error' | tail -1 | sed 's/^ *//')" \
+        "error: LeanModels/Pyc/spec.lean:24:2: maximum recursion depth has been reached"
+  check "  ...the CAUSAL class, not the cascade" \
+        "$(printf '%s' "$out" | grep -c 'maximum recursion depth')" "1"
+  # THE TRAP, ASSERTED: the old `sort -u` sample really did drop it, so this
+  # fixture exercises the defect rather than merely resembling it.
+  check "  ...which a SORTED sample would drop" \
+        "$(grep -E '^error|✖' "$cas" | sort -u | head -8 | grep -c 'spec.lean:24')" "0"
+  check "  ...while log order puts it first"   \
+        "$(grep -E '^error|✖' "$cas" | awk '!seen[$0]++' | head -1 | grep -c 'spec.lean:24')" "1"
+  # AND THE REST IS IN LOG ORDER, so "next N" is the next N as emitted.
+  check "the sample continues in LOG ORDER"    \
+        "$(printf '%s' "$out" | grep -c 'IN LOG ORDER')" "1"
+  check "  ...beginning at the first cascade line" \
+        "$(printf '%s' "$out" | grep -A1 'IN LOG ORDER' | tail -1 | grep -c 'spec.lean:102')" "1"
+  check "  ...and no line claims to be sorted" "$(printf '%s' "$out" | grep -c 'first 8 of')" "0"
+
+  # ONE error and NO error: neither may invent a section.
+  printf 'error: only one thing went wrong\n' > "$tmp/one.log"
+  check "a single error still leads"           "$(build_failure_report "$tmp/one.log" | grep -c 'FIRST error')" "1"
+  check "  ...with no empty 'next' section"    "$(build_failure_report "$tmp/one.log" | grep -c 'IN LOG ORDER')" "0"
+  printf '✖ [3/9] Building X\n' > "$tmp/noerr.log"
+  check "a log with no error line invents none" "$(build_failure_report "$tmp/noerr.log" | grep -c 'FIRST error')" "0"
+
   check "no progress lines -> targets unknown"     "$(build_failure_report "$tmp/red-bare.log" | grep -c 'targets          unknown')" "1"
   check "a missing log refuses honestly"           "$(build_failure_report "$tmp/no-such.log" | grep -c 'no log at')" "1"
 

@@ -1135,3 +1135,110 @@ would before the rung was built. All 1,374 v0 tests call `Report`, which needs
 inch 3 (calls, frames) and inch 5 (the native `Report` and the trace emitter).
 Inch 2 is on the critical path to inch 6's 517 tests; it is not a coverage
 rung and is not recorded as one.
+
+## 2026-08-24-ada-4 — THE TARGET-SHAPE RUNG ANSWERS, and the answer is that 5.2's refusal was never blocked on the measurement
+
+`harness/ada_construct_census.py` gains the child-kind measurement the census
+named as a prerequisite (§2026-08-24-ada-2) and inch 2's ARM 5.2 rule refuses
+against (§2026-08-24-ada-3). **The rung ran, and it retires an uncertainty
+rather than unlocking code** — which is a better outcome than it sounds, and
+the reason is the finding.
+
+### THE NUMBER — ARM 5.2 assignment targets
+
+Measured over the two content-pinned envelopes (3,505 nodes, 49 assignments):
+
+| target shape | count | share | status in inch 2 |
+| --- | ---: | ---: | --- |
+| `Identifier` — a simple name | **41** | **83.7%** | **modelled** |
+| `CallExpr` | 6 | 12.2% | refused |
+| `DottedName` — a selected component | 2 | 4.1% | refused |
+
+**This is a SAMPLE, not the corpus.** 49 assignments against the corpus's
+20,529, from the two fixtures the hazard census picked — so it is a first
+number with the denominator named, and the corpus figure needs the SOURCES
+path and therefore the re-acquire rung.
+
+### THE FINDING: THE REFUSAL WAS BLOCKED ON VALUES, NOT ON SHAPES
+
+The rung was scheduled as *"the named rung before 5.2's assignment rule can
+widen."* The measurement says the rule **should not widen yet, for a reason
+the shape census could not have been expected to give**:
+
+> **The 16.3% inch 2 refuses are not a target-SHAPE gap. A `DottedName`
+> target is a record field and a `CallExpr` target is an array element — so
+> collecting them needs RECORD and ARRAY VALUES, which this tier does not
+> have at all.**
+
+Widening the target pattern without them would produce a rule that recognises
+`A (I) := X` and then has nothing to store into. **The refusal stays exactly
+where it is, and it is now a refusal with a measured price (16.3% of a
+49-assignment sample) instead of an unmeasured one.** That is what the
+refusal-as-pending-measurement move was for: the pending measurement came
+back, and it re-aimed the next rung from *widen 5.2* to *composite values*.
+
+### AND THE COLUMN A SHAPE CENSUS CANNOT PRODUCE, kept separate
+
+`CallExpr` is libadalang's node for **both a function call and an indexed
+component**, so the six above are ambiguous *by shape*. The SOURCES path now
+records a `target_resolution` column (`resolve_target`) which the envelope
+path deliberately does not have — and the envelope document **says what it
+cannot answer in its own `frontend` field** rather than letting a reader
+assume the columns mean the same thing.
+
+**The expectation to CHECK when it runs, stated as an expectation:** Ada's
+legality rules make a function call ineligible as an assignment target, so all
+six should resolve to indexed components or slices. If any resolves to a
+subprogram, that is a finding about the corpus or about the instrument, and it
+is exactly what a resolution column is for. It is not asserted here.
+
+**A resolution FAILURE is recorded as data, never swallowed** — the
+exception's class name becomes the bucket, so a corpus where resolution
+routinely fails reports that fact instead of quietly shrinking its own
+denominator.
+
+### THE SAME RUN VALIDATED INCH 2's `IfStmt` SHAPES, PER SLOT
+
+The walker's shapes were read off the fixtures by hand; this measures them:
+
+| `IfStmt` slot | measured |
+| --- | --- |
+| `condition` | `RelationOp` 13, `Identifier` 10, `CallExpr` 6, `BinOp` 1, `UnOp` 1 |
+| `then` | `StmtList` 31 — **uniform** |
+| `elsif_parts` | `ElsifStmtPartList` 31 — **uniform** |
+| `else_part` | `Absent` **22**, `ElsePart` **9** |
+
+The else-slot split is **exactly the 22/9 that inch 2 derived by arithmetic**
+(31 `IfStmt` minus 9 `ElsePart`) — now measured directly rather than inferred.
+And inch 2's condition vocabulary covers **25 of 31 (80.6%)**; the six it
+refuses are `CallExpr`, which is inch 3's.
+
+**The empty-list-as-a-leaf trap, quantified:** `ElsifStmtPartList` arity is
+`{leaf: 30, 2: 1}` and `AssocList` is `{leaf: 35, ...}` — so the encoding is
+GENERAL, not an elsif quirk, and any future walker over a list-shaped node
+meets it.
+
+### WHAT THE INSTRUMENT GAINED, and one thing it can now do without a frontend
+
+* `child_kinds` on both paths: for nine parent kinds, the kind distribution of
+  every child SLOT — the parent-child structure the flat map lacked.
+* `arity_by_kind`, which is what makes the leaf-vs-node encoding visible.
+* `--envelope`, a second input path reading `ada-0.1` envelopes. **Not a
+  degraded fallback: it answers a strictly smaller question and labels which
+  one.** It exists because the corpus and the frontend are both off this
+  machine while the envelopes are content-pinned and in the tree.
+* `--compare` now **refuses across measurement kinds** rather than
+  subtracting two documents that answer different questions — §5.4a's unit
+  family in miniature, where the numbers would subtract cleanly and mean
+  nothing.
+* `--self-test-envelope`, which **needs no frontend and passes 7/7 here**. The
+  full `--self-test` still REFUSES without libadalang and is deliberately not
+  softened into a skip: a gate whose main half cannot run does not get to
+  report success.
+
+### NEXT
+
+Inch 3 — calls, the frame, `return` (ARM 6.5) — which also owes the
+`orderDependence` gate its first real content, because a call is the first
+expression form in this tier that can have an effect and therefore the first
+one whose operand order is observable.

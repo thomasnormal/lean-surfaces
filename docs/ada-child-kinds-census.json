@@ -1,0 +1,716 @@
+{
+  "absent_children": 516,
+  "arity_by_kind": {
+    "AbstractAbsent": {
+      "leaf": 4
+    },
+    "AdaNodeList": {
+      "1": 9,
+      "17": 1,
+      "2": 2,
+      "27": 1,
+      "3": 4,
+      "4": 3,
+      "5": 2,
+      "6": 2,
+      "leaf": 41
+    },
+    "Aggregate": {
+      "2": 6
+    },
+    "AggregateAssoc": {
+      "2": 6
+    },
+    "AliasedAbsent": {
+      "leaf": 64
+    },
+    "AliasedPresent": {
+      "leaf": 2
+    },
+    "AllAbsent": {
+      "leaf": 7
+    },
+    "AllPresent": {
+      "leaf": 4
+    },
+    "AlternativesList": {
+      "1": 17
+    },
+    "ArrayTypeDef": {
+      "2": 2
+    },
+    "AssignStmt": {
+      "2": 49
+    },
+    "AssocList": {
+      "1": 95,
+      "2": 27,
+      "3": 2,
+      "5": 1,
+      "leaf": 35
+    },
+    "AttributeRef": {
+      "3": 35
+    },
+    "BaseAssocList": {
+      "2": 1,
+      "leaf": 3
+    },
+    "BeginBlock": {
+      "2": 1
+    },
+    "BinOp": {
+      "3": 84
+    },
+    "CallExpr": {
+      "2": 124
+    },
+    "CallStmt": {
+      "1": 32
+    },
+    "CaseStmt": {
+      "3": 2
+    },
+    "CaseStmtAlternative": {
+      "2": 9
+    },
+    "CaseStmtAlternativeList": {
+      "4": 1,
+      "5": 1
+    },
+    "CharLiteral": {
+      "leaf": 16
+    },
+    "CompilationUnit": {
+      "3": 8
+    },
+    "ComponentDef": {
+      "3": 2
+    },
+    "ComponentList": {
+      "2": 2
+    },
+    "CompositeConstraint": {
+      "1": 15
+    },
+    "CompositeConstraintAssoc": {
+      "2": 15
+    },
+    "ConcatOp": {
+      "2": 23
+    },
+    "ConcatOperand": {
+      "2": 73
+    },
+    "ConcatOperandList": {
+      "1": 9,
+      "10": 1,
+      "13": 1,
+      "2": 5,
+      "4": 5,
+      "5": 1,
+      "6": 1
+    },
+    "ConcreteTypeDecl": {
+      "4": 19
+    },
+    "ConstantAbsent": {
+      "leaf": 32
+    },
+    "ConstantPresent": {
+      "leaf": 10
+    },
+    "ConstrainedArrayIndices": {
+      "1": 2
+    },
+    "ConstraintList": {
+      "1": 2
+    },
+    "DeclBlock": {
+      "3": 1
+    },
+    "DeclarativePart": {
+      "1": 23
+    },
+    "DefiningName": {
+      "1": 152
+    },
+    "DefiningNameList": {
+      "1": 65,
+      "2": 2,
+      "7": 1
+    },
+    "DerivedTypeDef": {
+      "7": 1
+    },
+    "DiscriminantChoiceList": {
+      "leaf": 15
+    },
+    "DiscriminantSpec": {
+      "4": 2
+    },
+    "DiscriminantSpecList": {
+      "1": 2
+    },
+    "DottedName": {
+      "2": 54
+    },
+    "ElsePart": {
+      "1": 9
+    },
+    "ElsifStmtPart": {
+      "2": 2
+    },
+    "ElsifStmtPartList": {
+      "2": 1,
+      "leaf": 30
+    },
+    "EndName": {
+      "1": 27
+    },
+    "EnumLiteralDecl": {
+      "1": 5
+    },
+    "EnumLiteralDeclList": {
+      "5": 1
+    },
+    "EnumTypeDef": {
+      "1": 1
+    },
+    "ExceptionHandler": {
+      "3": 2
+    },
+    "ExitStmt": {
+      "2": 1
+    },
+    "ForLoopSpec": {
+      "5": 2
+    },
+    "ForLoopStmt": {
+      "3": 2
+    },
+    "ForLoopVarDecl": {
+      "2": 2
+    },
+    "HandledStmts": {
+      "2": 24
+    },
+    "Identifier": {
+      "leaf": 794
+    },
+    "IfStmt": {
+      "4": 31
+    },
+    "IntLiteral": {
+      "leaf": 110
+    },
+    "IterTypeIn": {
+      "leaf": 2
+    },
+    "KnownDiscriminantPart": {
+      "1": 2
+    },
+    "LibraryItem": {
+      "2": 8
+    },
+    "LimitedAbsent": {
+      "leaf": 8
+    },
+    "LoopStmt": {
+      "3": 1
+    },
+    "ModeDefault": {
+      "leaf": 61
+    },
+    "ModeIn": {
+      "leaf": 3
+    },
+    "NameList": {
+      "1": 3,
+      "2": 1,
+      "3": 1
+    },
+    "NotNullAbsent": {
+      "leaf": 119
+    },
+    "NullRecordDef": {
+      "1": 2
+    },
+    "NumberDecl": {
+      "2": 2
+    },
+    "ObjectDecl": {
+      "8": 29
+    },
+    "OpAndThen": {
+      "leaf": 2
+    },
+    "OpConcat": {
+      "leaf": 73
+    },
+    "OpDiv": {
+      "leaf": 6
+    },
+    "OpDoubleDot": {
+      "leaf": 32
+    },
+    "OpEq": {
+      "leaf": 10
+    },
+    "OpGt": {
+      "leaf": 4
+    },
+    "OpGte": {
+      "leaf": 1
+    },
+    "OpLt": {
+      "leaf": 3
+    },
+    "OpLte": {
+      "leaf": 4
+    },
+    "OpMinus": {
+      "leaf": 18
+    },
+    "OpMod": {
+      "leaf": 5
+    },
+    "OpMult": {
+      "leaf": 3
+    },
+    "OpNeq": {
+      "leaf": 2
+    },
+    "OpNot": {
+      "leaf": 1
+    },
+    "OpOr": {
+      "leaf": 1
+    },
+    "OpPlus": {
+      "leaf": 19
+    },
+    "OthersDesignator": {
+      "leaf": 5
+    },
+    "OverridingUnspecified": {
+      "leaf": 34
+    },
+    "PackageBody": {
+      "5": 3
+    },
+    "PackageDecl": {
+      "5": 5
+    },
+    "ParamAssoc": {
+      "2": 139
+    },
+    "ParamSpec": {
+      "6": 35
+    },
+    "ParamSpecList": {
+      "1": 25,
+      "2": 5
+    },
+    "Params": {
+      "1": 30
+    },
+    "ParenExpr": {
+      "1": 12
+    },
+    "ParentList": {
+      "leaf": 1
+    },
+    "PragmaArgumentAssoc": {
+      "2": 2
+    },
+    "PragmaNode": {
+      "2": 4
+    },
+    "PragmaNodeList": {
+      "leaf": 10
+    },
+    "PrivateAbsent": {
+      "leaf": 12
+    },
+    "PrivatePart": {
+      "1": 3
+    },
+    "PrivateTypeDef": {
+      "3": 1
+    },
+    "PublicPart": {
+      "1": 5
+    },
+    "QualExpr": {
+      "2": 2
+    },
+    "RangeConstraint": {
+      "1": 4
+    },
+    "RangeSpec": {
+      "1": 5
+    },
+    "RealLiteral": {
+      "leaf": 3
+    },
+    "RecordTypeDef": {
+      "4": 2
+    },
+    "RelationOp": {
+      "3": 24
+    },
+    "ReturnStmt": {
+      "1": 26
+    },
+    "ReverseAbsent": {
+      "leaf": 1
+    },
+    "ReversePresent": {
+      "leaf": 1
+    },
+    "SignedIntTypeDef": {
+      "1": 1
+    },
+    "StmtList": {
+      "1": 53,
+      "2": 17,
+      "3": 5,
+      "4": 1,
+      "5": 2,
+      "7": 2,
+      "9": 2
+    },
+    "StringLiteral": {
+      "leaf": 68
+    },
+    "SubpBody": {
+      "6": 19
+    },
+    "SubpDecl": {
+      "3": 15
+    },
+    "SubpKindFunction": {
+      "leaf": 20
+    },
+    "SubpKindProcedure": {
+      "leaf": 14
+    },
+    "SubpSpec": {
+      "4": 34
+    },
+    "SubtypeDecl": {
+      "3": 8
+    },
+    "SubtypeIndication": {
+      "3": 108
+    },
+    "SynchronizedAbsent": {
+      "leaf": 1
+    },
+    "TaggedAbsent": {
+      "leaf": 3
+    },
+    "TypeAccessDef": {
+      "4": 11
+    },
+    "UnOp": {
+      "2": 3
+    },
+    "UsePackageClause": {
+      "1": 1
+    },
+    "WhileLoopSpec": {
+      "1": 2
+    },
+    "WhileLoopStmt": {
+      "3": 2
+    },
+    "WithClause": {
+      "3": 4
+    },
+    "WithPrivateAbsent": {
+      "leaf": 1
+    }
+  },
+  "child_kinds": {
+    "AssignStmt": {
+      "expression": {
+        "Aggregate": 2,
+        "AttributeRef": 4,
+        "BinOp": 18,
+        "CallExpr": 11,
+        "CharLiteral": 1,
+        "DottedName": 1,
+        "Identifier": 10,
+        "RealLiteral": 1,
+        "RelationOp": 1
+      },
+      "target": {
+        "CallExpr": 6,
+        "DottedName": 2,
+        "Identifier": 41
+      }
+    },
+    "BinOp": {
+      "left": {
+        "AttributeRef": 9,
+        "BinOp": 8,
+        "CallExpr": 4,
+        "Identifier": 33,
+        "IntLiteral": 27,
+        "RelationOp": 3
+      },
+      "operator": {
+        "OpAndThen": 2,
+        "OpDiv": 6,
+        "OpDoubleDot": 32,
+        "OpMinus": 16,
+        "OpMod": 5,
+        "OpMult": 3,
+        "OpOr": 1,
+        "OpPlus": 19
+      },
+      "right": {
+        "BinOp": 6,
+        "CallExpr": 3,
+        "Identifier": 25,
+        "IntLiteral": 42,
+        "ParenExpr": 3,
+        "QualExpr": 2,
+        "RelationOp": 3
+      }
+    },
+    "CallExpr": {
+      "name": {
+        "AttributeRef": 9,
+        "DottedName": 12,
+        "Identifier": 103
+      },
+      "suffix": {
+        "AssocList": 104,
+        "BinOp": 20
+      }
+    },
+    "CallStmt": {
+      "name": {
+        "CallExpr": 32
+      }
+    },
+    "ElsePart": {
+      "then": {
+        "StmtList": 9
+      }
+    },
+    "ElsifStmtPart": {
+      "condition": {
+        "RelationOp": 2
+      },
+      "then": {
+        "StmtList": 2
+      }
+    },
+    "IfStmt": {
+      "condition": {
+        "BinOp": 1,
+        "CallExpr": 6,
+        "Identifier": 10,
+        "RelationOp": 13,
+        "UnOp": 1
+      },
+      "else_part": {
+        "Absent": 22,
+        "ElsePart": 9
+      },
+      "elsif_parts": {
+        "ElsifStmtPartList": 31
+      },
+      "then": {
+        "StmtList": 31
+      }
+    },
+    "RelationOp": {
+      "left": {
+        "AttributeRef": 2,
+        "BinOp": 1,
+        "CallExpr": 5,
+        "Identifier": 16
+      },
+      "operator": {
+        "OpEq": 10,
+        "OpGt": 4,
+        "OpGte": 1,
+        "OpLt": 3,
+        "OpLte": 4,
+        "OpNeq": 2
+      },
+      "right": {
+        "AttributeRef": 2,
+        "CallExpr": 1,
+        "CharLiteral": 5,
+        "Identifier": 10,
+        "IntLiteral": 5,
+        "StringLiteral": 1
+      }
+    },
+    "UnOp": {
+      "operand": {
+        "Identifier": 3
+      },
+      "operator": {
+        "OpMinus": 2,
+        "OpNot": 1
+      }
+    }
+  },
+  "envelopes": [
+    "b371001.json",
+    "report.json"
+  ],
+  "frontend": {
+    "answers": "shape",
+    "cannot_answer": "resolution \u2014 a CallExpr target is not distinguishable from an indexed component without the frontend; run the SOURCES path",
+    "name": "ada-0.1 envelope"
+  },
+  "input": "ada-0.1 envelopes",
+  "instrument": "harness/ada_construct_census.py",
+  "language": "ada",
+  "measurement": "child-kinds",
+  "node_kind_counts": {
+    "Absent": 516,
+    "AbstractAbsent": 4,
+    "AdaNodeList": 65,
+    "Aggregate": 6,
+    "AggregateAssoc": 6,
+    "AliasedAbsent": 64,
+    "AliasedPresent": 2,
+    "AllAbsent": 7,
+    "AllPresent": 4,
+    "AlternativesList": 17,
+    "ArrayTypeDef": 2,
+    "AssignStmt": 49,
+    "AssocList": 160,
+    "AttributeRef": 35,
+    "BaseAssocList": 4,
+    "BeginBlock": 1,
+    "BinOp": 84,
+    "CallExpr": 124,
+    "CallStmt": 32,
+    "CaseStmt": 2,
+    "CaseStmtAlternative": 9,
+    "CaseStmtAlternativeList": 2,
+    "CharLiteral": 16,
+    "CompilationUnit": 8,
+    "ComponentDef": 2,
+    "ComponentList": 2,
+    "CompositeConstraint": 15,
+    "CompositeConstraintAssoc": 15,
+    "ConcatOp": 23,
+    "ConcatOperand": 73,
+    "ConcatOperandList": 23,
+    "ConcreteTypeDecl": 19,
+    "ConstantAbsent": 32,
+    "ConstantPresent": 10,
+    "ConstrainedArrayIndices": 2,
+    "ConstraintList": 2,
+    "DeclBlock": 1,
+    "DeclarativePart": 23,
+    "DefiningName": 152,
+    "DefiningNameList": 68,
+    "DerivedTypeDef": 1,
+    "DiscriminantChoiceList": 15,
+    "DiscriminantSpec": 2,
+    "DiscriminantSpecList": 2,
+    "DottedName": 54,
+    "ElsePart": 9,
+    "ElsifStmtPart": 2,
+    "ElsifStmtPartList": 31,
+    "EndName": 27,
+    "EnumLiteralDecl": 5,
+    "EnumLiteralDeclList": 1,
+    "EnumTypeDef": 1,
+    "ExceptionHandler": 2,
+    "ExitStmt": 1,
+    "ForLoopSpec": 2,
+    "ForLoopStmt": 2,
+    "ForLoopVarDecl": 2,
+    "HandledStmts": 24,
+    "Identifier": 794,
+    "IfStmt": 31,
+    "IntLiteral": 110,
+    "IterTypeIn": 2,
+    "KnownDiscriminantPart": 2,
+    "LibraryItem": 8,
+    "LimitedAbsent": 8,
+    "LoopStmt": 1,
+    "ModeDefault": 61,
+    "ModeIn": 3,
+    "NameList": 5,
+    "NotNullAbsent": 119,
+    "NullRecordDef": 2,
+    "NumberDecl": 2,
+    "ObjectDecl": 29,
+    "OpAndThen": 2,
+    "OpConcat": 73,
+    "OpDiv": 6,
+    "OpDoubleDot": 32,
+    "OpEq": 10,
+    "OpGt": 4,
+    "OpGte": 1,
+    "OpLt": 3,
+    "OpLte": 4,
+    "OpMinus": 18,
+    "OpMod": 5,
+    "OpMult": 3,
+    "OpNeq": 2,
+    "OpNot": 1,
+    "OpOr": 1,
+    "OpPlus": 19,
+    "OthersDesignator": 5,
+    "OverridingUnspecified": 34,
+    "PackageBody": 3,
+    "PackageDecl": 5,
+    "ParamAssoc": 139,
+    "ParamSpec": 35,
+    "ParamSpecList": 30,
+    "Params": 30,
+    "ParenExpr": 12,
+    "ParentList": 1,
+    "PragmaArgumentAssoc": 2,
+    "PragmaNode": 4,
+    "PragmaNodeList": 10,
+    "PrivateAbsent": 12,
+    "PrivatePart": 3,
+    "PrivateTypeDef": 1,
+    "PublicPart": 5,
+    "QualExpr": 2,
+    "RangeConstraint": 4,
+    "RangeSpec": 5,
+    "RealLiteral": 3,
+    "RecordTypeDef": 2,
+    "RelationOp": 24,
+    "ReturnStmt": 26,
+    "ReverseAbsent": 1,
+    "ReversePresent": 1,
+    "SignedIntTypeDef": 1,
+    "StmtList": 82,
+    "StringLiteral": 68,
+    "SubpBody": 19,
+    "SubpDecl": 15,
+    "SubpKindFunction": 20,
+    "SubpKindProcedure": 14,
+    "SubpSpec": 34,
+    "SubtypeDecl": 8,
+    "SubtypeIndication": 108,
+    "SynchronizedAbsent": 1,
+    "TaggedAbsent": 3,
+    "TypeAccessDef": 11,
+    "UnOp": 3,
+    "UsePackageClause": 1,
+    "WhileLoopSpec": 2,
+    "WhileLoopStmt": 2,
+    "WithClause": 4,
+    "WithPrivateAbsent": 1
+  },
+  "nodes_total": 3505
+}

@@ -272,8 +272,10 @@ theorem adder_runs (σ : ScheduleOracle) (stim : List SvState) :
 
 /-! ## Non-vacuity pins (`#guard`)
 
-The canonical trace reproduces the Xcelium-verified outcomes (same values
-as `Tests.lean`/the differential harness). -/
+The canonical trace is consistent with the LRM rules the differential
+harness verified (same values as `Tests.lean`). These particular stimuli
+were NOT themselves simulated: `harness/sv/cases.json` drives different
+vectors. -/
 
 -- known add and mod-2^8 wrap: 5+3 = 8, 200+100 = 300 ≡ 44
 #guard (adderTrace (LVec.xVec 8) (LVec.xVec 8)

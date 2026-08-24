@@ -207,8 +207,10 @@ example : Deterministic swapNbaDesign := by sv_prove [swap_nba_total]
 
 /-! ## Non-vacuity pins (`#guard`)
 
-The canonical trace reproduces the Xcelium-verified outcomes (same values
-as `Tests.lean`/the differential harness), so the theorems above are about
+The canonical trace is consistent with the LRM rules the differential
+harness verified (same values as `Tests.lean`). These particular stimuli
+were NOT themselves simulated: `harness/sv/cases.json` drives different
+vectors, so the theorems above are about
 the behavior the simulator actually exhibits. -/
 
 -- swap_nba: (1,2) → (2,1) → (1,2)

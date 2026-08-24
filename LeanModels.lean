@@ -31,6 +31,10 @@ import LeanModels.Sv.Step
 -- SvM abbrev, and the two `rfl` adoption facts (Res.le IS Core's FlatLe at
 -- timeout, adopted by iff so the monotonicity ladder transfers untouched).
 import LeanModels.Sv.World
+-- R1 inch 4a: the SvM primitive layer -- the operations slotStep is built
+-- from, with their laws as #guards. This is what 9.0's `semantics on SvM`
+-- counts.
+import LeanModels.Sv.Prim
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

@@ -33,7 +33,9 @@ node-for-node the extracted envelope (a mismatch fails the file). -/
     throw (IO.userError "swap_nba envelope has unsupported nodes")
 
 /-! Non-vacuity: concrete runs in surface syntax (`#sv_check`, Surface.lean
-— fixed generous fuel), reproducing the Xcelium-verified outcomes. -/
+— fixed generous fuel), consistent with the LRM rules the differential
+harness verified (these stimuli were not themselves simulated —
+`harness/sv/cases.json` drives different vectors). -/
 
 -- swap_nba: swaps every cycle — and under the reversed schedule too
 #sv_check swapNbaDesign [[clk := 1], [clk := 1]] shows a = [2, 1], b = [1, 2]

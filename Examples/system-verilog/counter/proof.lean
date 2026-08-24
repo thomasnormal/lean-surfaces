@@ -301,8 +301,10 @@ example : Deterministic counterDesign := by sv_prove [counter_total]
 
 /-! ## Non-vacuity pins (`#guard`)
 
-The canonical trace reproduces the Xcelium-verified outcomes (same values
-as `Tests.lean`/the differential harness). -/
+The canonical trace is consistent with the LRM rules the differential
+harness verified (same values as `Tests.lean`). These particular stimuli
+were NOT themselves simulated: `harness/sv/cases.json` drives different
+vectors. -/
 
 -- counter: x through pre-reset edges (x+1 = x), reset to 0, then count
 #guard (counterTrace (LVec.xVec 1) (LVec.xVec 1) (LVec.xVec 8)

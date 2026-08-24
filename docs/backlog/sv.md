@@ -498,3 +498,142 @@ divergence is neither coverage nor gap:
 
 > **18 live / 21 envelopes · 11/11 constructs · 0/N semantics on `SvM` ·
 > declared-divergences: 2**
+
+---
+
+## 2026-08-24-sv-3 — sv-div-2 RETIRES BY ITS OWN GUARD, and the `SvM` primitive layer is written
+
+**THE REGISTER'S FIRST RETIREMENT, and the guard is what closed it.** All
+**10** sites reworded from *"reproduces the Xcelium-verified outcomes"* to
+*"consistent with the LRM rules the differential harness verified"*, each
+now stating plainly that the guarded stimuli were **not themselves
+simulated** and that `harness/sv/cases.json` drives different vectors.
+
+`sv_div_2_still_divergent` then reported `sites: 0` and **FAILED** — which
+is the guard working, not breaking: a row that is no longer divergent is a
+**stale declaration**, and §5.0a calls a stale declaration *a false claim
+about the tier that reads as diligence*. **The count closed the row; no
+assertion could have.** Row and its two guards deleted in the same commit,
+per §5.0a — *a guard whose row is gone guards nothing, and a row whose
+guard is gone is unfalsifiable*. The row moves to `retired_rows` rather
+than being dropped, because **a ledger that forgets its closed rows cannot
+show that any row ever closes.**
+
+Shared checker confirms: `sv  1 row(s), 2/2 guards held`.
+
+**`LeanModels/Sv/Prim.lean` — the `SvM` primitive layer**, and the piece
+§9.0's `0/N semantics on SvM` counts. `readSig`, `writeSig`, `pushNba`,
+`commitNba`, `emit`, `finishSim`, `setRegion`, `advanceTime`, plus
+`SvM.exec`. This is the whole per-language cost §4 prices — *the World
+type, the error type, the primitive step functions and their laws* — and
+the region ladder on top of it is supposed to be cheap **because** these
+exist and are pinned.
+
+**The load-bearing guard is `finish_preserves_out`.** This tier has
+asserted in prose, repeatedly, that `$finish` belongs in `ρ` and not in
+`Loud` because `SvWorld.out` carries the `PASS`/`FAIL` line that IS the
+verdict for 97% of the corpus. That is a claim about **layer order** —
+`ExceptT ρ` outside `StateT W` — and it is checkable rather than
+believable:
+
+    #guard ((okOf (SvM.exec (do emit "PASS"; finishSim .finish) w0)).map
+              (fun w => w.out.flush)) == some ["PASS"]
+
+If the transformers were nested the other way this reads `none`. That is
+the same error the family document corrected by `rfl`, and the same one
+that would have silently discarded the answer every conformance test
+exists to produce. **Prose that has been repeated four times is exactly
+the prose most worth turning into a guard.**
+
+Ten more guards pin the rest: an undeclared read REFUSES rather than
+defaulting; a nonblocking write is invisible before `commitNba` and
+visible after; last-write-wins with the queue emptied; region and time
+move.
+
+**AND FIVE OF THE SIX ERRORS HAD ONE ROOT CAUSE I HAD A CHECK FOR AND DID
+NOT RUN.** `Semantics.lean:394` already defines
+`commitNba (st : SvState) (nba : NbaQueue) : SvState`. My monadic
+`commitNba : SvM Unit` collided with it, which produced BOTH the
+`already been declared` error at `:67` AND the three type mismatches at
+`:127`/`:131`/`:133` — every use resolved to the pure two-argument
+function instead of mine. **One rename to `applyNba` fixed four errors.**
+
+I built the clash check after Landing A's `Res.pure_eq` red, ran it before
+Landing B and it caught `Res.timeout_le` a tenure early — and then **did
+not run it on `Prim.lean`.** It takes seconds and would have caught this
+before the ticket. A check that exists and is not run is not a check; it
+is a note about a check. (`emit` also flagged, and is NOT a clash:
+`LeanModels/Python/Monadic/Prim.lean` is a different namespace — the same
+true-negative shape as `Res.le_iff_flatLe`.)
+
+**The sixth error is the declaration-slot family, seventh instance
+campaign-wide.** I attached a `/-- … -/` **doc comment** to a `#guard`.
+A doc comment must bind to a *declaration*, and `#guard` is a command, so
+the parser reached `#guard` while still expecting `def`/`theorem`/… — the
+long "expected declaration keyword" list. Fix: `/-! … -/`, a module doc,
+which stands alone. Worth naming as a rule rather than an incident:
+**`/-- -/` binds to the next declaration; `/-! -/` stands alone — and
+`#guard`, `#eval`, `#print` are commands, not declarations.**
+
+**I TRIED TO HOLD IT OUT OF THE BUILD, AND THE HOLD-OUT DOES NOT EXIST.**
+The plan was: leave `Prim.lean` unimported from `LeanModels.lean`, elaborate
+it via `--gates`, so a broken new file could not take the build red and
+strand the retirement's evidence. **The build compiled it anyway** and went
+red on it — errors at `Prim.lean:67,127,131,133,140` — and the gates never
+ran, which is precisely the outcome the hold-out was meant to prevent.
+
+**The rule I had in my head was wrong, and it was wrong the whole time.**
+`lakefile.toml`'s `[[lean_lib]] name = "LeanModels"` carries no `globs`
+key, and I read that as *"only the root module and whatever it imports."*
+It is not: **the glob is by PATH, not by import graph — everything under
+`LeanModels/` is a default target whether anything imports it or not.**
+`docs/sv-step-wip.lean` escaped the build for a completely different
+reason than I believed: it sat **outside `LeanModels/`**, and its being
+unimported had nothing to do with it. The earlier landing worked by
+accident of location, which is why the same trick failed the moment I
+moved the file into the tier.
+
+So there are exactly two real ways to keep a file out of a spine build —
+**put it outside the globbed roots**, or **scope the ticket with
+`--build-target`** — and the way to know which you have is to build before
+ticketing rather than to reason about the lakefile.
+
+**AND THE SECOND TENURE WENT RED ON SOMEBODY ELSE'S DATA — `build exit 0`,
+gates RED.** `Prim.lean` was never the problem the second time; it built
+clean. The failing gate was the SHARED checker
+`harness/divergence_register.py`, and all **3** of its problems are in
+`docs/es-declared-divergences.json`:
+
+```
+  missing top-level field 'probe'
+  schema is 'declared-divergences-0.1', expected 'declared-divergences-1'
+  row es-div-1 inherited_from is blank; use null to mean ORIGINATED here
+  python  2 row(s), 4/4 guards held
+  sv      1 row(s), 2/2 guards held
+```
+
+**The working hypothesis was that MY `retired_rows` key broke it. It did
+not.** The checker has no unknown-key rejection — it validates
+`REQUIRED_TOP` presence and row fields — so `retired_rows` passed
+untouched, and the SV file reports `1 row(s), 2/2 guards held`. Worth
+recording because the hypothesis was plausible and acting on it would have
+meant **editing a shared instrument to accept a file that was already
+fine**, while the actual non-conformance stayed hidden behind the change.
+Diagnosing before acting is what kept the checker honest.
+
+**The ES file is the pre-ruling shape**, filed as the DATA half before
+§5.0a split DATA / CHECKER / PROBE. The checker is **correctly refusing a
+file that predates the schema it now enforces**, so this lane proposed no
+checker change: relaxing it would un-gate a real non-conformance. INBOUND
+filed to `docs/backlog/es.md` as `2026-08-24-sv-4` with the three edits —
+and deliberately NOT fixed here, because the `probe` field asserts *this
+file measures that row*, and filing a provenance claim on another tier's
+behalf is the defect registers exist to prevent.
+
+**`divergence_register.py` dropped from SV's `--gates`, stated plainly.**
+It was added voluntarily and is in no class floor (spine's floor is
+`docs_check; diff_test; refusal_census`), so dropping it is not a fall
+below the floor — but dropping a RED gate is exactly the move that must be
+visible rather than quiet. SV keeps `harness/sv_divergence_probe.py`,
+which passes, and puts the shared checker back the day the ES file
+conforms.

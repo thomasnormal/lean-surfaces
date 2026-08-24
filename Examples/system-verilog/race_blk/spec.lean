@@ -33,7 +33,9 @@ node-for-node the extracted envelope (a mismatch fails the file). -/
     throw (IO.userError "race_blk envelope has unsupported nodes")
 
 /-! Non-vacuity: concrete runs in surface syntax (`#sv_check`, Surface.lean
-— fixed generous fuel), reproducing the Xcelium-verified outcomes. -/
+— fixed generous fuel), consistent with the LRM rules the differential
+harness verified (these stimuli were not themselves simulated —
+`harness/sv/cases.json` drives different vectors). -/
 
 -- race_blk: (2,2) under source order, (1,1) under reverse — the race
 #sv_check raceBlkDesign [[clk := 1]] shows a = [2], b = [2]

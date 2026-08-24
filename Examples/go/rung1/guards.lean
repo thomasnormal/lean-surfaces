@@ -51,7 +51,7 @@ branches on data rather than forking. -/
 /-! ## Flow — a non-normal flow stops a sequence -/
 
 #guard Flow.normal.isNormal == true
-#guard (Flow.returned none).isNormal == false
+#guard (Flow.returned []).isNormal == false
 #guard (Flow.broke (some "scan")).isNormal == false
 #guard (Flow.continued none).isNormal == false
 
@@ -127,7 +127,7 @@ which is why the world maps names to ADDRESSES. -/
 
 /-! A non-normal flow stops the sequence: the assignment after the
 `return` never runs, so `x` keeps its first value. -/
-#guard runTo [.declare "x" (i64 1), .ret none, .assign "x" (i64 2)] "x" == some 1
+#guard runTo [.declare "x" (i64 1), .ret [], .assign "x" (i64 2)] "x" == some 1
 
 /-! `break` likewise. -/
 #guard runTo [.declare "x" (i64 1), .branch .break_ none, .assign "x" (i64 2)] "x" == some 1

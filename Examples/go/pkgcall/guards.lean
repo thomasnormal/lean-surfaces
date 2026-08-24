@@ -58,12 +58,12 @@ resolved the selector from the import table; the walker never sees the
 name `bits`. -/
 
 def log64Body : List Stmt :=
-  [ .ret (some (.binary .sub
+  [ .ret [(.binary .sub
       (.convert "int64" (.callPkg "math/bits" "Len64" [.convert "uint64" (.ident "n")]))
-      (i64 1))) ]
+      (i64 1))] ]
 
 def ntz64Body : List Stmt :=
-  [ .ret (some (.callPkg "math/bits" "TrailingZeros64" [.convert "uint64" (.ident "x")])) ]
+  [ .ret [(.callPkg "math/bits" "TrailingZeros64" [.convert "uint64" (.ident "x")])] ]
 
 def prog : FuncTable :=
   [ ("log64", ⟨["n"], log64Body⟩), ("ntz64", ⟨["x"], ntz64Body⟩) ]
@@ -112,11 +112,11 @@ modelled by the same `bitLenSpec`, so the package model and the proved
 function are the same function — stated here rather than assumed. -/
 
 #guard (match pkgCall "math/bits" "Len64" [GoVal.mkInt IntKind.uint64 255] with
-        | some (.intV _ v) => v == (bitLenSpec 255 : Nat)
+        | some [.intV _ v] => v == (bitLenSpec 255 : Nat)
         | _ => false) == true
 
 #guard (match pkgCall "math/bits" "Len64" [GoVal.mkInt IntKind.uint64 0] with
-        | some (.intV _ v) => v == 0        -- gc: Len64(0) = 0
+        | some [.intV _ v] => v == 0        -- gc: Len64(0) = 0
         | _ => false) == true
 
 /-- The spec half, stated about the spec alone so it is a THEOREM and not
@@ -124,7 +124,7 @@ an evaluation: `Len64`'s model is the same recursion §G15 proved
 `bigmod.bitLen` implements, so the two cannot drift apart silently. -/
 theorem len64_model_is_the_proved_spec (k : IntKind) (v : Int) :
     pkgCall "math/bits" "Len64" [.intV k v]
-      = some (GoVal.mkInt IntKind.int64 (bitLenSpec v.toNat)) := by
+      = some [GoVal.mkInt IntKind.int64 (bitLenSpec v.toNat)] := by
   rfl
 
 /-! ## An UNMODELLED package refuses as `environment`, NAMING the callee.

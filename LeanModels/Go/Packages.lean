@@ -91,19 +91,36 @@ theorem trailingZeros_zero_is_special : trailingZerosSpec 0 ≠ 64 := by
 `none` means NOT MODELLED, and the caller turns that into an
 `environment` refusal naming `pkg.fn`. It never means "undefined": this
 tier's refusal type has no `undefined` constructor (§G10). -/
-def pkgCall (pkg fn : String) (args : List GoVal) : Option GoVal :=
+def pkgCall (pkg fn : String) (args : List GoVal) : Option (List GoVal) :=
   match pkg, fn, args with
   | "math/bits", "Len64", [.intV _ n] =>
-      some (GoVal.mkInt IntKind.int64 (bitLenSpec n.toNat))
+      some [GoVal.mkInt IntKind.int64 (bitLenSpec n.toNat)]
   | "math/bits", "TrailingZeros64", [.intV _ n] =>
       -- Go: TrailingZeros64(0) == 64. The width, not zero.
-      some (GoVal.mkInt IntKind.int64 (if n = 0 then 64 else trailingZerosSpec n.toNat))
+      some [GoVal.mkInt IntKind.int64 (if n = 0 then 64 else trailingZerosSpec n.toNat)]
+  | "math/bits", "Add64", [.intV _ x, .intV _ y, .intV _ c] =>
+      -- `sum, carryOut := Add64(x, y, carry)`. The carry OUT is the whole
+      -- reason this function exists: it is what a caller chains into the
+      -- next limb, and a model that returns only the sum passes every
+      -- single-limb test while failing every ripple (§G23).
+      -- Add64's PARAMETERS are `uint64`, so each argument is normalised
+      -- through that kind before the sum. Trusting the caller's `IntKind`
+      -- would let a negative `int64` reach the carry test and invert it —
+      -- a wrong answer rather than a refusal, which is the shape §G22's
+      -- shadowing gate was built for.
+      let x' := IntKind.uint64.wrap x
+      let y' := IntKind.uint64.wrap y
+      let c' := IntKind.uint64.wrap c
+      let s := x' + y' + c'
+      some [GoVal.mkInt IntKind.uint64 s,
+            GoVal.mkInt IntKind.uint64 (if s ≥ (IntKind.uint64.modulus : Int) then 1 else 0)]
   | _, _, _ => none
 
 /-- The modelled surface, as data — so "what does this tier support" is a
 value a test can read, not a grep over a match. -/
 def modelledPkgFuncs : List (String × String) :=
-  [("math/bits", "Len64"), ("math/bits", "TrailingZeros64")]
+  [("math/bits", "Len64"), ("math/bits", "TrailingZeros64"),
+   ("math/bits", "Add64")]
 
 theorem modelled_iff_some_Len64 :
     (pkgCall "math/bits" "Len64" [GoVal.mkInt IntKind.uint64 1]).isSome := by

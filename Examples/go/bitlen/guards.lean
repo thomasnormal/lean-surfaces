@@ -93,7 +93,7 @@ def bitLenBody : List Stmt :=
     .forS none (some (.binary .ne (.ident "n") (u 0))) none
       [ .incDec "len" true,
         .assignOp .shr "n" (u 1) ],
-    .ret (some (.ident "len")) ]
+    .ret [(.ident "len")] ]
 
 /-- The program: one function, one parameter. -/
 def prog : FuncTable := [("bitLen", ["n"], bitLenBody)]
@@ -115,14 +115,15 @@ the walker is redefined.
 right until zero, counting. The two theorems are the CHARACTERISATION —
 `bitLenSpec n` really is the number of significant bits, bracketed from
 both sides. Together they say `2^(k-1) ≤ n < 2^k` for `k = bitLenSpec n`,
-which is the definition of bit length and not a restatement of the code. -/
+which is the definition of bit length and not a restatement of the code.
 
-def bitLenSpec : Nat → Nat
-  | 0 => 0
-  | n + 1 => bitLenSpec ((n + 1) / 2) + 1
-decreasing_by omega
-
-@[go_spec] theorem bitLenSpec_zero : bitLenSpec 0 = 0 := by simp [bitLenSpec]
+**`bitLenSpec` now lives in `LeanModels/Go/Packages.lean`**, not here.
+§G23 modelled `bits.Len64` and needed the same recursion, and TWO copies
+of a specification is the one thing this campaign's "model always matches
+code" rule exists to prevent: they can drift, and nothing would say so.
+The definition moved verbatim, so every theorem below is unchanged — and
+`Len64`'s model is now, definitionally, the function §G15 proved
+`bigmod.bitLen` computes. -/
 
 @[go_spec] theorem bitLenSpec_pos {n : Nat} (h : 0 < n) :
     bitLenSpec n = bitLenSpec (n / 2) + 1 := by
@@ -389,20 +390,22 @@ theorem for_step (P : FuncTable) (v : Nat) (hv : v < 2 ^ 64) (f : Nat)
 theorem body_eq : bitLenBody
     = [ .declare "len" (.lit (GoVal.mkInt intK 0)),
         .forS none (some loopCond) none loopBody,
-        .ret (some (.ident "len")) ] := rfl
+        .ret [(.ident "len")] ] := rfl
 
 /-- `return len` reads `len` and returns it. -/
 theorem ret_ok (P : FuncTable) {w : GoWorld} {an al : Addr} {v l f : Nat}
     (hi : Inv w an al v l) :
-    execStmt P (f + 2) (.ret (some (.ident "len"))) w
-      = .ok (.ok (Flow.returned (some (.intV intK (l : Int)))), w) := by
+    execStmt P (f + 2) (.ret [(.ident "len")]) w
+      = .ok (.ok (Flow.returned [(.intV intK (l : Int))]), w) := by
+  -- §G23 made `.ret` n-ary; the singleton kept its own arm precisely so
+  -- this proof did not have to change.
   simp only [execStmt, go_run, evalExpr, lookupLocal_ok hi.ll, loadAddr_ok hi.rl]
 
 /-- The function's THREE STATEMENTS, run end to end. -/
 theorem body_runs (v : Nat) (hv : v < 2 ^ 64) (g : Nat)
     (hg : bitLenSpec v + 8 ≤ g) :
     ∃ w', execSeq prog (g + 3) bitLenBody (paramW v)
-        = .ok (.ok (Flow.returned (some (.intV intK ((bitLenSpec v : Nat) : Int)))), w') := by
+        = .ok (.ok (Flow.returned [(.intV intK ((bitLenSpec v : Nat) : Int))]), w') := by
   have hb64 : bitLenSpec v ≤ 64 := bitLenSpec_le_64 hv
   obtain ⟨h, rfl⟩ : ∃ h, g = h + 2 := ⟨g - 2, by omega⟩
   obtain ⟨w2, hw2, hi2⟩ := for_step prog v hv (h + 2) (by omega) (by omega)

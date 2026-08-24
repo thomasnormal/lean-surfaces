@@ -56,7 +56,7 @@ def itoaBody : List Stmt :=
         .assignOp .quo "val" (u64 10) ],
     .assignIndex (.ident "buf") (.ident "i")
       (.convert "byte" (.binary .add (.ident "val") (u64 48))),
-    .ret (some (.slice (.ident "buf") (some (.ident "i")) none)) ]
+    .ret [(.slice (.ident "buf") (some (.ident "i")) none)] ]
 
 def prog : FuncTable := [("itoa", ["buf", "val"], itoaBody)]
 

@@ -21,6 +21,7 @@ rung 1's figures after three inches had widened it; the current state:
 | 7 (§G19) | `range` over a slice — desugared to `forS`, not a second loop |
 | 8 (§G20) | **fixed arrays `[N]T`**: `arrayLit`, and addressability as the shape of `a[:]` and `a[i] = v` |
 | 9 (§G22) | **resolved package calls** (`callPkg`) — rung E1 of the extractor tier; `LeanModels/Go/Packages.lean` holds the models |
+| 10 (§G23) | **multi-value returns**: n-ary `Flow.returned` and `ret`, `assignCall` destructuring with a real blank `_`, Go's redeclaration rule |
 
 **Do not quote a reach figure here.** Two earlier versions of this header
 carried one and both went stale, and §G19 found the second was not even
@@ -201,8 +202,23 @@ inductive Stmt where
   /-- `a[i] = e` — a write THROUGH a slice, into its backing array. This
   is the statement the aliasing rows of the acceptance case turn on. -/
   | assignIndex (x i e : Expr)
-  /-- `ReturnStmt`. -/
-  | ret (e : Option Expr)
+  /-- `a, b := f(x)` and `a, b = f(x)` — destructuring a MULTI-VALUED call.
+
+  `none` in `targets` is the blank `_`, which **discards** a result and
+  binds nothing; the census says that is not an edge case but **35.7% of
+  all destructurings** (7,964 of 22,315 sites, §G23).
+
+  `defining` distinguishes `:=` (14,951 sites) from `=` (7,364).
+
+  This is a DIFFERENT feature from parallel assignment `a, b = 1, 2`
+  (3,288 sites), which `go/ast` spells with the same `AssignStmt` node —
+  one node shape, two features, and the frontend separates them by
+  counting the right-hand side. -/
+  | assignCall (targets : List (Option String)) (defining : Bool) (call : Expr)
+  /-- `return e₁, …, eₙ` — ONE node for zero, one or many expressions,
+  mirroring Go's single `ReturnStmt`. Multi-valued returns are 13,991
+  sites in the non-test standard library (§G23). -/
+  | ret (es : List Expr)
   /-- `IfStmt`. -/
   | ifS (cond : Expr) (thenB : List Stmt) (elseB : List Stmt)
   /-- `LabeledStmt`. -/
@@ -245,7 +261,14 @@ end
 short-circuit shape: a non-`normal` flow stops the sequence. -/
 inductive Flow where
   | normal
-  | returned (v : Option GoVal)
+  /-- A `return` in flight, carrying **n values**.
+
+  `[]` is a bare `return`, `[v]` the single-valued case, and `[a, b]` a
+  multi-valued one. ONE constructor with a list, because Go's grammar has
+  one `ReturnStmt` taking zero, one or many expressions — and because the
+  alternative, a separate `returnedMulti`, would make every consumer
+  handle two shapes of the same thing (`docs/backlog/go.md` §G23). -/
+  | returned (vs : List GoVal)
   | broke (label : Option String)
   | continued (label : Option String)
   deriving Repr, Inhabited
@@ -597,7 +620,14 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
   | f + 1, .callPkg pkg fn args => do
       let vals ← evalArgs prog f args
       match pkgCall pkg fn vals with
-      | some v => pure v
+      | some [v] => pure v
+      | some vs =>
+          -- A multi-valued call in a SINGLE-value context. Go rejects this
+          -- at compile time ("assignment mismatch: 1 variable but
+          -- bits.Add64 returns 2 values"), so the model must not quietly
+          -- take the first result — that is how a carry gets dropped.
+          refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+            s!"{pkg}.{fn} returns {vs.length} values in a single-value context"
       | none =>
           -- ENVIRONMENT, and it NAMES the callee. §5.2 says this bucket
           -- retires by widening the modelled slice, never by climbing a
@@ -627,12 +657,15 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
             let r ← execSeq prog f body
             modify (fun w => { w with locals := saved })
             match r with
-            | .returned (some v) => pure v
+            | .returned [v] => pure v
             -- A bare `return`, or falling off the end, yields no value.
             -- Rung 3 has single-valued functions only, so `nilV` is the
             -- honest answer and a caller that uses it will refuse on the
             -- type mismatch rather than silently read a zero.
-            | .returned none | .normal => pure GoVal.nilV
+            | .returned [] | .normal => pure GoVal.nilV
+            | .returned vs =>
+                refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+                  s!"{name} returns {vs.length} values in a single-value context"
             | _ =>
                 refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
                   s!"{name}: break or continue crossed a function boundary"
@@ -694,6 +727,51 @@ def evalArgs (prog : FuncTable) : Nat → List Expr → GoM (List GoVal)
       let vs ← evalArgs prog f rest
       pure (v :: vs)
 
+/-- Evaluate a call in a **multi-value context**, yielding all its results.
+
+Go has NO tuple values — `x := bits.Add64(1,2,0)` is a compile error
+("assignment mismatch: 1 variable but bits.Add64 returns 2 values",
+verified against `gc`). Multi-valuedness is therefore a property of the
+CALL SITE, never of a value, which is why this is a separate evaluator
+rather than a `GoVal.tupleV`. A tuple value would let the model accept
+programs Go rejects — the same error class as modelling an array as a
+slice header (§G20).
+
+Only a CALL can appear here. Go's other multi-value forms — the comma-ok
+of a map index, type assertion or channel receive — are a different rung
+and are refused by name. -/
+def evalCallValues (prog : FuncTable) : Nat → Expr → GoM (List GoVal)
+  | 0, _ => LeanModels.exhausted
+  | f + 1, .callPkg pkg fn args => do
+      let vals ← evalArgs prog f args
+      match pkgCall pkg fn vals with
+      | some vs => pure vs
+      | none =>
+          refuseGo .environment (SpecRef.spec "Packages")
+            s!"{pkg}.{fn} is not modelled"
+  | f + 1, .call name args => do
+      match prog.find? (fun d => d.1 == name) with
+      | none => refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
+      | some (_, params, body) =>
+          if params.length != args.length then
+            refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+              s!"{name}: wrong argument count"
+          else do
+            let vals ← evalArgs prog f args
+            let saved := (← get).locals
+            bindParams params vals
+            let r ← execSeq prog f body
+            modify (fun w => { w with locals := saved })
+            match r with
+            | .returned vs => pure vs
+            | .normal => pure []
+            | _ =>
+                refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+                  s!"{name}: break or continue crossed a function boundary"
+  | _ + 1, _ =>
+      refuseGo .unsupportedConstruct (SpecRef.spec "Assignment_statements")
+        "a multi-valued context needs a call (comma-ok forms are a later rung)"
+
 /-- Step one statement. Fuel is the recursion argument and every nested
 step spends one. -/
 def execStmt (prog : FuncTable) : Nat → Stmt → GoM Flow
@@ -748,8 +826,50 @@ def execStmt (prog : FuncTable) : Nat → Stmt → GoM Flow
       | _, _ =>
           refuseGo .unsupportedConstruct (SpecRef.spec "Assignment_statements")
             "indexed assignment on a non-addressable or unmodelled operand"
-  | _ + 1, .ret none => pure (.returned none)
-  | f + 1, .ret (some e) => do pure (.returned (some (← evalExpr prog f e)))
+  | f + 1, .assignCall targets defining callE => do
+      let vals ← evalCallValues prog f callE
+      if vals.length != targets.length then
+        -- Go's own words. This is a COMPILE error in Go, so it can only
+        -- be a refusal here, never a silent truncation.
+        refuseGo .unsupportedConstruct (SpecRef.spec "Assignment_statements")
+          s!"assignment mismatch: {targets.length} variables but the call returns {vals.length} values"
+      else do
+        -- Every result is evaluated; a BLANK target discards its value and
+        -- binds nothing. `_` is not a variable named "_".
+        let rec go : List (Option String) → List GoVal → GoM Unit
+          | [], _ => pure ()
+          | _, [] => pure ()
+          | none :: ts, _ :: vs => go ts vs
+          | some n :: ts, v :: vs => do
+              -- **Go's REDECLARATION rule.** A short variable declaration
+              -- may name variables already declared in the same block, and
+              -- the spec is explicit that "redeclaration does not
+              -- introduce a new variable; it just assigns a new value to
+              -- the original". The acceptance case turns on this:
+              -- `lo, c := bits.Add64(lo, x, 0)` redeclares the PARAMETER
+              -- `lo` and declares only `c`.
+              --
+              -- Scoping is by name, not by block, at this rung — the
+              -- walker's `locals` is a flat list — so a `:=` in an inner
+              -- block that shadows an outer name is assigned rather than
+              -- shadowed. That is a known gap, not a claim, and it is the
+              -- same gap `--resolve`'s block tracking closed on the
+              -- extractor side (§G22).
+              let known ← (do let w ← get
+                              pure ((w.locals.find? (fun p => p.1 == n)).isSome))
+              if defining && !known then bindLocal n v else storeLocal n v
+              go ts vs
+        go targets vals
+        pure .normal
+  -- The SINGLETON has its own arm, and the reason is fuel, not speed.
+  -- Routing `return e` through `evalArgs` would spend one extra level
+  -- (`evalArgs` is itself fuel-indexed), which would move every existing
+  -- single-valued proof's fuel bound — including §G15's proved
+  -- `bitLen_correct`. Go's semantics do not distinguish the two, so the
+  -- arm that keeps the settled proofs settled is the right one.
+  | f + 1, .ret [] => pure (.returned [])
+  | f + 1, .ret [e] => do pure (.returned [(← evalExpr prog f e)])
+  | f + 1, .ret es => do pure (.returned (← evalArgs prog f es))
   | f + 1, .ifS cond thenB elseB => do
       if ← asBool (← evalExpr prog f cond) then execSeq prog f thenB
       else execSeq prog f elseB
@@ -875,8 +995,11 @@ def callFunction (prog : FuncTable) (fuel : Nat) (name : String)
         let r ← execSeq prog fuel body
         modify (fun w => { w with locals := saved })
         match r with
-        | .returned (some v) => pure v
-        | .returned none | .normal => pure GoVal.nilV
+        | .returned [v] => pure v
+        | .returned [] | .normal => pure GoVal.nilV
+        | .returned vs =>
+            refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+              s!"{name} returns {vs.length} values in a single-value context"
         | _ =>
             refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
               s!"{name}: break or continue crossed a function boundary"

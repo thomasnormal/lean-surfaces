@@ -28,7 +28,8 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G16 re-rank | — | *withdrawn — unreproducible (§G19)* | — |
 | §G19 range / slice family | `5b3602f` | 604 / 3,803 (15.9%) | — |
 | §G20 fixed arrays `[N]T` | `da9a7bc` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
-| §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
+| §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
+| §G23 multi-value returns | *filled in next* | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -2772,3 +2773,157 @@ package-level **constant**, not a function. Package constants are a
 distinct resolution kind and are not in this rung's vocabulary.
 
 MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+---
+
+## G23 — MULTI-VALUE RETURNS: Go has no tuple values, and the reach is +0 again (2026-08-24)
+
+The walker rung §G22's census called. The mechanism is built and gated;
+**the advance reach claim of +7 did not land, and this entry says so
+first.**
+
+### THE CENSUS: how the corpus spells it
+
+| spelling | sites |
+| --- | ---: |
+| `a, b = f()` / `a, b := f()` — destructuring | **22,315** |
+| ...`:=` form | 14,951 |
+| ...`=` form | 7,364 |
+| ...**with a BLANK `_` discarding a result** | **7,964 (35.7%)** |
+| `return e₁, …, eₙ` | 13,991 |
+| functions returning ≥ 2 | 6,675 (exactly 2: **85.9%**) |
+| ...named results / anonymous | 3,328 / 3,347 — an even split |
+| `a, b = 1, 2` — PARALLEL assignment | 3,288 |
+
+Two things the census settled that guesswork would not have:
+
+* **The blank is not an edge case.** More than a third of all
+  destructurings discard a result, so `_` had to be a real discard from
+  the first commit, not a variable named `"_"`.
+* **`a, b = 1, 2` is a DIFFERENT feature** wearing the same `go/ast`
+  node. One node shape, two features; the frontend separates them by
+  counting the right-hand side, and this rung models only the first.
+
+### THE VALUE MODEL: there is no tuple value, and that is checkable
+
+The obvious shape is a `GoVal.tupleV`. It is wrong, and `gc` says so:
+
+    x := bits.Add64(1, 2, 0)
+    // assignment mismatch: 1 variable but bits.Add64 returns 2 values
+
+Multi-valuedness is a property of the **call site**, never of a value. A
+tuple value would let the model accept programs Go rejects — the same
+error class as modelling an array as a slice header (§G20), and caught
+the same way: by asking what the wrong model would permit.
+
+So `Flow.returned` carries a **list** (`[]` bare, `[v]` single, `[a,b]`
+multi — one constructor, mirroring Go's single `ReturnStmt`), there is no
+tuple `GoVal`, and a multi-valued call reaching a single-value context
+REFUSES rather than yielding its first result. That refusal matters:
+silently taking the first value is exactly how a carry gets dropped.
+
+### THE FUEL DECISION, and why a settled proof stayed settled
+
+Routing `return e` through the n-ary `evalArgs` costs one extra fuel
+level, which would have moved the fuel bound of every single-valued proof
+— including §G15's proved `bitLen_correct`. Go's semantics do not
+distinguish the two, so `.ret [e]` keeps its **own arm**. The settled
+proofs did not move, and `ret_one_run` in `Spec.lean` now carries the
+epilogue's shape so future rungs cannot quietly re-break them.
+
+### A DUPLICATE SPECIFICATION, removed
+
+`bits.Len64` needed the same recursion `Examples/go/bitlen` had defined
+locally, and Lean's ambiguity error found it. Two copies of a
+specification is precisely what "the model always matches the code"
+exists to prevent — they can drift and nothing says so. `bitLenSpec` now
+lives once, in `LeanModels/Go/Packages.lean`, so `Len64`'s model IS
+definitionally the function §G15 proved `bigmod.bitLen` computes.
+
+### THE ACCEPTANCE, and a model that passes 5 of 8 rows
+
+`crypto/internal/fips140/aes/ctr.go`'s `add128`, vendored verbatim — four
+lines holding the whole rung: `:=` destructuring, `=` destructuring **with
+a blank**, a multi-valued return, and Go's **redeclaration** rule (`lo` is
+a parameter, so `lo, c := …` assigns `lo` and declares only `c`).
+
+The carry from the first `Add64` feeds the second, so a single-return
+model makes it zero forever:
+
+| `⟨lo, hi, x⟩` | `gc` | carry-dropping model |
+| --- | --- | --- |
+| `⟨0,0,0⟩`, `⟨0,0,1⟩`, `⟨1,2,3⟩`, `⟨MAX-1,7,1⟩`, `⟨MAX,0,0⟩` | — | **agrees on all five** |
+| `⟨MAX, 0, 1⟩` | `⟨0, 1⟩` | `⟨0, 0⟩` |
+| `⟨MAX, 5, 1⟩` | `⟨0, 6⟩` | `⟨0, 5⟩` |
+| `⟨MAX, MAX, 1⟩` | `⟨0, 0⟩` | `⟨0, MAX⟩` |
+
+**Five of eight rows agree.** A single-return model is not obviously
+broken; it is quietly wrong exactly where carries propagate. Only the
+three ripple rows separate them, and all three flips were run.
+
+17 guards (counted), every value `printf`-ed from `gc`.
+
+### THE NON-VACUITY FLIP CAUGHT A GUARD THAT CHECKED NOTHING
+
+The blank-discard row was written with a `| _ => true` fallback and a
+world whose parameters were unbound — so the body REFUSED, the fallback
+fired, and the row passed without testing anything. Flipping it produced
+**0 errors**, which is how it was found.
+
+The lesson is sharper than "write better guards": **a fallback arm that
+returns `true` converts a failing run into a passing row.** Fixed by
+binding the parameters and making the fallback `false`, plus a companion
+row asserting the run actually SUCCEEDS, so the assertion cannot pass by
+failing. That is the third distinct vacuity shape this lane has hit
+(§G13's hand-typed oracle, §G15's byte-identical non-vacuity section, now
+the swallowing fallback).
+
+### THE REACH: +0, and the +7 needs one more rung
+
+The advance claim was the 7 files §G22 identified. It did not land:
+
+| vocabulary | files |
+| --- | ---: |
+| baseline (§G20, §G22) | 680 |
+| **+ multi-value returns and `Add64`** | **680 (+0)** |
+| + if ALL of `math/bits` were modelled | 687 (+7) |
+
+`Add64` was 2,077 of the blocking sites and is now modelled, but the
+files need **every** function they call. What still blocks all 7:
+
+`Mul64` (1,038 sites), `Sub64` (186), `Add` (7), `Sub` (5), `Mul` (4),
+`Div` (1), `LeadingZeros` (1), `TrailingZeros` (1) — and **`UintSize`,
+which is not a function at all**: `const UintSize = uintSize`. Package
+CONSTANTS are a resolution kind the extractor does not have, so the +7
+needs both the remaining functions and a new (small) extractor capability.
+
+This is the conjunctive law a fourth time, and the second rung running to
+report +0. The distinction worth keeping: §G22 was +0 because a *mechanism*
+unlocks nothing by itself; §G23 is +0 because the mechanism's first
+*consumer* was only one of nine. Both are real, neither is failure, and
+the standing coverage table does not move for either.
+
+**Next, and it is now a small, purely additive rung**: the remaining
+eight `math/bits` functions plus package constants — every one of them
+unblocked by this rung, none needing new walker machinery, and together
+they are the +7. That is the first time this lane can name a rung whose
+reach is fully priced in advance and whose blockers are all removed.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+### VERDICT
+
+`tools/triad.sh --lane go --classify --gates '…docs_check; diff_test;
+script_corpus; census.sh --resolve'` — **green**.
+
+* **Tree certified**: `b2d63096a900` — verified equal to this landing's
+  working tree, not inferred from the ticket's title.
+* **Elaboration witness**: **30 Built, 2 Replayed**, and every one of the
+  eleven Go-tier modules — `LeanModels.Go`, `.Stmt`, `.Spec` and all
+  eight `Examples.go.*.guards` — is **Built**. The build was a real
+  elaboration, not a cache replay. (The 330 `Replayed` lines in the triad
+  log belong to the gate phase's runner, not the build phase; duration
+  corroborates but Built/Replayed is the witness.)
+* Queued **4,511 s**; build phase **11 s**; `TRIAD DONE` at 01:41:31.
+* `docs_check` 91/91, `diff_test` 0 failed, `script_corpus` 65/0,
+  resolver self-test 10/0.

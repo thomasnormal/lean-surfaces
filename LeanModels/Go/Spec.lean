@@ -339,4 +339,39 @@ it. -/
 @[go_spec] theorem exec_empty (fuel : Nat) (w : GoWorld) :
     (execStmt [] (fuel + 1) Stmt.empty) w = .ok (.ok Flow.normal, w) := rfl
 
+/-! ### §2.7 `evalArgs` at one argument (§G23)
+
+`.ret` became n-ary when multi-valued returns landed, so the epilogue of
+every single-valued function now routes through `evalArgs` instead of
+`evalExpr`. That inserts a second bind, and a second bind is exactly the
+nested-match blocker §G11 hit and §G12's congruence solved.
+
+Rather than re-open that at every future call site, the one-argument case
+is collapsed here: `evalArgs` on a singleton IS `evalExpr` followed by a
+pure wrap. It is `rfl`, and it keeps `ret_ok`-shaped proofs the length
+they were before the rung. -/
+@[go_spec] theorem evalArgs_nil (prog : FuncTable) (f : Nat) :
+    evalArgs prog f [] = pure [] := by
+  cases f <;> simp [evalArgs]
+
+@[go_spec] theorem evalArgs_one (prog : FuncTable) (f : Nat) (e : Expr) :
+    evalArgs prog (f + 1) [e] = (do let v ← evalExpr prog f e; pure [v]) := by
+  simp [evalArgs]
+
+/-- `evalArgs` on one argument, RUN — the head's proved equation carried
+through both binds at once. -/
+@[go_spec] theorem evalArgs_one_run {prog : FuncTable} {f : Nat} {e : Expr}
+    {w w' : GoWorld} {v : GoVal} (h : evalExpr prog f e w = .ok (.ok v, w')) :
+    evalArgs prog (f + 1) [e] w = .ok (.ok [v], w') := by
+  rw [evalArgs_one, run_bind_ok h]; rfl
+
+/-- **The epilogue lemma.** `return e` with one expression, run. This is
+the shape every single-valued function's last statement has, and it is
+stated once here so that §G23's n-ary `.ret` costs those proofs nothing. -/
+@[go_spec] theorem ret_one_run {prog : FuncTable} {f : Nat} {e : Expr}
+    {w w' : GoWorld} {v : GoVal} (h : evalExpr prog (f + 1) e w = .ok (.ok v, w')) :
+    execStmt prog (f + 2) (.ret [e]) w = .ok (.ok (Flow.returned [v]), w') := by
+  show (evalExpr prog (f + 1) e >>= fun v => pure (Flow.returned [v])) w = _
+  rw [run_bind_ok h]; rfl
+
 end LeanModels.Go

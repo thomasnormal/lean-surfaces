@@ -116,9 +116,9 @@ def prog8 : FuncTable :=
   [ ("Len8", ["x"],
       -- `int(len8tab[x])` — a CONVERSION of a string INDEX, which is
       -- exactly the two constructs this rung added.
-      [.ret (some (.convert "int" (.index (.lit (.stringV len8tab)) (.ident "x"))))]),
+      [.ret [(.convert "int" (.index (.lit (.stringV len8tab)) (.ident "x")))]]),
     ("Reverse8", ["x"],
-      [.ret (some (.index (.lit (.stringV rev8tab)) (.ident "x")))]) ]
+      [.ret [(.index (.lit (.stringV rev8tab)) (.ident "x"))]]) ]
 
 /-- Run one of them on a concrete byte. -/
 def run8 (name : String) (x : Nat) : Option Int :=

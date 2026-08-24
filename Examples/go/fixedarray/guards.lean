@@ -106,7 +106,7 @@ def printuintBody : List Stmt :=
           (.convert "byte" (.binary .add (.binary .rem (.ident "v") (u64 10)) (u64 48))),
         .ifS (.binary .lt (.ident "v") (u64 10)) [ .branch .break_ none ] [],
         .assignOp .quo "v" (u64 10) ],
-    .ret (some (.slice (.ident "buf") (some (.ident "i")) none)) ]
+    .ret [(.slice (.ident "buf") (some (.ident "i")) none)] ]
 
 def prog : FuncTable := [("printuint", ⟨["v"], printuintBody⟩)]
 

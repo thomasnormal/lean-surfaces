@@ -1128,6 +1128,56 @@ section that actually reasons about `twinAgrees` is the refounding plan's §3.
 Not this lane's file to fix, but a reader following the anchor lands nowhere,
 and the chain document cites §3 directly for that reason.
 
+### Status — GREEN
+
+Tenure of 2026-08-24 01:02, `LOCK ACQUIRED after 3308s as 'r3c_monadic 37891'`,
+`BUILD GREEN`, `TRIAD DONE (build exit 0, gates green)`. Certified tree
+`ce249aaab855` — the tree frozen at enqueue. A six-second green is a cached full
+build; the tree is what is certified, not the elapsed time.
+
+## 2026-08-24-sunfish-rtrack-12 — RUNG 1: the flagship is TYPED, and it assembles
+
+`Examples/python/sunfish/flagship.lean`. `bound_refines_fuelModel` now exists in
+Lean. For the whole campaign before today it existed only as prose — in
+`docs/backlog-archive.md` and in three successive "and then it assembles"
+ladders — and nowhere in the tree. **§9.0: 3 / 9.**
+
+### It does more than type: it ASSEMBLES
+
+The strong induction is discharged in that file, once, so the flagship reduces to
+exactly TWO named obligations and no proof shape: `BoundRefinesW V 0` (the
+base-case lane's) and `RecursionStepW V` (this lane's). Neither is discharged
+there, so the theorem has genuine hypotheses rather than being a definition
+dressed as one. When they land it closes by application and nothing about its
+SHAPE is then in question — which is the property worth having early, because a
+proof shape that is still open is a place where the goal can quietly move.
+
+The induction routes `0 ≤ d : Int` through `d.toNat` so the recursion is on a
+`Nat` and every side condition is `omega`'s. Deliberately ordinary: no part of
+the flagship's difficulty should live in its assembly, and now none does.
+
+### The finding, and it is uncomfortable
+
+**Rung 1 cost one scratch elaboration.** The rung listed first, blocking the most
+WAITING triggers, and carrying the campaign's own name, was the cheapest item on
+the board. It had simply never been anyone's explicit task: every ladder in the
+archive ended with "and then `bound_refines_fuelModel` assembles", and because
+assembling it was always the LAST step of a plan, it was never the FIRST step of
+a session.
+
+The general form, filed for the register: *a goal theorem that only ever appears
+as the last line of plans will never be written.* Type the target before the
+path to it — the target's statement is usually cheap, it makes every claim of
+progress toward it falsifiable, and it is the only artifact that can tell a lane
+it has been serving something it never checked.
+
+### What this does NOT claim
+
+Nothing about `bound()` is proved here. The two obligations are exactly as open
+as they were yesterday, and the distance in `docs/sunfish-flagship-chain.md` is
+unchanged apart from this rung. What changed is that the distance is now measured
+against a typed object rather than a remembered one.
+
 ### Status
 
 Verdict pending.

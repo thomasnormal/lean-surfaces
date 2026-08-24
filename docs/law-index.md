@@ -456,6 +456,19 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-405 | an INSTRUMENT carrying an expiring claim is worse than a comment carrying one — it is what a reader trusts | `docs/family-architecture.md §5.0a` |
 | MEAS-406 | an INSTRUMENT FIX is validated by its FIRST CUSTOMER, not by its own suite | `docs/family-architecture.md §5.4` |
 | MEAS-407 | decide what a RED WILL MEAN before the run, and make the output carry the discriminator | `docs/family-architecture.md §5.0a` |
+| MEAS-408 | THE INSTRUMENT IS PART OF THE CLAIM — validate against a KNOWN ANSWER before publishing any denominator | `docs/family-architecture.md §9.0` |
+| MEAS-409 | a RECOUNT with the instrument still under suspicion is the same measurement taken again — validate first | `docs/family-architecture.md §9.0` |
+| MEAS-410 | a GATE'S VALUE is that it MOVES DISCOVERY (queue → keystroke), not that it prevents the defect | `docs/family-architecture.md §5.4b` |
+| MEAS-411 | a CLOSURE STATEMENT is scoped to exactly what closed, and says what the closure BUYS | `docs/family-architecture.md §9.0` |
+| MEAS-412 | a failure in a SHARED DEPENDENCY multiplies at the corpus's size — give it its own bucket or it reads as breadth | `docs/family-architecture.md §9.0` |
+| MEAS-413 | a partition can SUM while one row is N copies of one fact — conservation proves nothing lost, not independence | `docs/family-architecture.md §9.0` |
+| MEAS-414 | a FAILURE IS A VERDICT, NOT A ZERO — the scored line is drawn at EXECUTION, not at agreement | `docs/family-architecture.md §9.0` |
+| MEAS-415 | an EXCLUSION needs its own LIVENESS CHECK — it must refuse when its subject is deleted or fixed | `docs/family-architecture.md §5.5` |
+| MEAS-416 | REFUTED (waiting on work) and no-proof-exists (waiting on the world) age on opposite schedules — never pool them | `docs/family-architecture.md §5.5` |
+| MEAS-417 | a DIGEST ANYONE CAN RECOMPUTE beats a list nobody diffs — corpus drift becomes detectable, not merely possible | `docs/family-architecture.md §5.4` |
+| MEAS-418 | an exact RECONCILIATION to an independently known total is the cheapest validation against a known answer | `docs/family-architecture.md §5.4` |
+| MEAS-419 | structure a change so that PERFORMING it MEASURES the unknown its payoff depends on | `docs/family-architecture.md §9.0b` |
+| MEAS-420 | close a COST FLAG OUT LOUD when the cost does not arrive — otherwise the register samples only the flags that were right | `docs/family-architecture.md §7.1a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -601,6 +614,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-135 | point the acceptance test at the ALMOST-IDENTICAL WRONG MODEL, not at the design | `docs/family-architecture.md §5.4b` |
 | STMT-136 | a SIMULATOR MUST PRESERVE THE BOUNDARIES IT SIMULATES — a stand-in may drop cost, never structure | `docs/family-architecture.md §5.4` |
 | STMT-137 | a step changing REPRESENTATION and not VALUE owes a LOSSLESSNESS argument, not a correctness one | `docs/family-architecture.md §3.5` |
+| STMT-138 | a GENERATED model can be better shaped than a hand mechanisation for a specific lemma — first datum for extraction | `docs/family-architecture.md §7.1a` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -784,6 +798,12 @@ numbers below are the register's own.
 | OPS-108 | a capability landed before its ENABLING CONTEXT is a regression wearing a feature's name — land it gated | `docs/family-architecture.md §5.2` |
 | OPS-109 | a CONTROL is validated against what the program REQUIRES, never against what the control RESEMBLES | `docs/family-architecture.md §5.0a` |
 | OPS-110 | a debt row's BLAST RADIUS is an object-identity claim — write the site at the granularity that is actually true | `docs/family-architecture.md §5.0a` |
+| OPS-111 | an IDIOM TABLE is indexed by ELIMINATOR, not by taste — contradicting idioms locate the key neither named | `docs/family-architecture.md §7.1a` |
+| OPS-112 | `cases` works where `induction` refuses — a refusal attached to ONE ELIMINATOR is not attached to the goal | `docs/family-architecture.md §7.1a` |
+| OPS-113 | BUNDLING IS CHEAPEST TO JUSTIFY WHEN A LANE IS WINNING — "while I'm in here" is a scope claim in a costume | `docs/family-architecture.md §9.2` |
+| OPS-114 | SHARED QUESTIONS GET ONE READER — two throttles disagreeing is not redundancy, it is a protocol with two truths | `docs/family-architecture.md §7.1a` |
+| OPS-115 | a FIX MUST NOT BE PICKED THE WAY THE DEFECT WAS PICKED — a better-feeling unmeasured value repeats the error | `docs/family-architecture.md §7.1a` |
+| OPS-116 | LABEL DECISIONS WITH THE MEASUREMENT THAT PRODUCED THEM — a bare constant is re-litigated by every reader | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

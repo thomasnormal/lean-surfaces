@@ -7978,6 +7978,24 @@ embedded strings, generated text — and the glob follows.** *Two of the three
 attempts were spent rediscovering that the instrument itself is part of the
 corpus it measures.*
 
+**AND A POPULATION RULE SHOULD SHIP AS DATA WITH A CONTENT DIGEST** (ES
+scoreboard, ticketed; five rejection buckets **conserving to the exact file
+count**).
+
+> **A DIGEST ANYONE CAN RECOMPUTE BEATS A LIST NOBODY DIFFS.**
+
+**A published population list is checked once, by its author, on the day it is
+written.** *A digest converts the same claim into a one-command question any
+reader can ask at any later time* — and, unlike a list, **it fails loudly when
+the population drifts**, which is precisely the event a list is powerless to
+report. **The cost is a line; the property bought is that corpus drift becomes
+detectable rather than merely possible** — the same argument §5.4 already makes
+for `--compare`, at the level of *which files* rather than *which rows*.
+
+*And the five buckets conserving to the file count is the conservation check
+doing its second job:* **an exact reconciliation to an independently known total
+is the cheapest available validation of an instrument against a known answer.**
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -8024,6 +8042,27 @@ is decided by the size of the number, not by the soundness of the reading.**
 a guard whose price has not arrived yet** — the same trade §5.0a already makes
 with declared divergences: **register the debt while naming it is still
 cheap.**
+
+**AND THE VALUE OF A GATE HAS NOW BEEN QUANTIFIED, WHICH SETTLES AN ARGUMENT
+THIS SECTION KEPT HAVING WITH ITSELF** (analog, F2). The same defect class cost
+**four tenures before the gate and one second after.**
+
+> **A GATE'S VALUE IS NOT THAT IT PREVENTS THE DEFECT — the lane made it again —
+> BUT THAT IT MOVES DISCOVERY from the far side of an hour-long queue to the near
+> side of a keystroke.**
+
+**Which reprices every gate this register has argued for.** *The prevention
+framing makes a gate look weak whenever the defect recurs, and it recurs* —
+people do not stop making mistakes because a check exists. **The latency framing
+makes the same gate obviously worth its cost**, because the saving is the
+distance between the error and its discovery, and that distance is paid **per
+occurrence, forever.**
+
+**And it explains why the cheap-and-local gates keep outperforming the thorough
+ones**: a gate's return is *frequency × latency saved*, so **a keystroke-fast
+check on a common defect beats a queue-long check on a rare one**, even when the
+second is more rigorous. *Rank proposed gates by where they move discovery TO,
+not by what they catch.*
 
 **AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
 ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
@@ -8614,6 +8653,26 @@ declaration converts the coverage claim from prose into a build dependency.*
 
 *This is the register's oldest rule — the oracle writes its own column (§5.3) —
 arriving at the one number the family reads most.*
+
+**AND AN EXCLUSION FROM A DENOMINATOR NEEDS ITS OWN LIVENESS CHECK, WHICH IS THE
+PIECE EVERY "KNOWN EXCEPTION" LIST LACKS** (Lean tier's mdata implementation,
+`74074f9`, merged). A refuted kind **must still be FOUND IN BOTH SOURCES**:
+
+> **If upstream ever deletes or fixes `parseExprMdata`, the census REFUSES rather
+> than silently carrying a stale exclusion.**
+
+**An exclusion is a claim about something that exists**, and the usual failure is
+not a wrong exclusion but **an exclusion that outlives its subject** — at which
+point the denominator is quietly smaller than the corpus and every derived rate
+is quietly larger. *The row that says "we do not count X" must fail when X is
+gone, exactly as a load-bearing coverage row fails when its handler is deleted.*
+
+**AND THE TWO EXCLUSION KINDS WERE FRAMED AS MIRROR IMAGES, WHICH IS WORTH
+KEEPING**: **REFUTED** is *held out until a premise is proved*; **the 28th** is
+*held out because no proof exists to find.* **One is waiting on work and the
+other is waiting on the world**, and they age on opposite schedules — the first
+should shrink as the tier advances, and the second should not move at all.
+*A list that pools them reports neither.*
 
 ---
 
@@ -9541,6 +9600,49 @@ operational form**: **specialise first, and treat editing the subject as the
 LAST resort it is.** *A matcher with no equations is not a wall — it is a
 general statement asking to be asked a specific question.*
 
+**AND A PORT CAME IN CHEAPER THAN THE ORIGINAL, FOR THREE REASONS WORTH SEPARATING**
+(Wasm A′, 4/23 with the capstone; ticketed).
+
+* **`cases` WORKS WHERE `induction` REFUSES** — the mutual restriction is
+  **induction-only.** *A refusal attached to one eliminator is not a refusal
+  attached to the goal*, and a lane that reads "mutual induction is not
+  supported" as "this cannot be eliminated" stops one tactic early.
+* **THE GENERATED MODEL IS BETTER SHAPED THAN THE HAND MECHANISATION FOR THIS
+  LEMMA.**
+
+  > **A SPECTEC-GENERATED ARTIFACT BEAT A HAND MECHANISATION ON A SPECIFIC
+  > LEMMA — which is a row in the extraction-pipeline argument, not a
+  > pleasantry.**
+
+  *Generation is usually defended on FIDELITY and conceded on ergonomics*; this
+  is a measured case where it won on ergonomics too, because a generated model
+  has the spec's own case structure rather than the shape a human found
+  convenient while proving something else. **One instance is not a trend — it is
+  the first datum the argument has ever had.**
+* **`cases` REORDERS PREMISES — a FOURTH idiom, CONTRADICTING the established
+  `rename_i` rule**, and it was noted **in the code** *"so the next reader
+  doesn't apply the wrong one."*
+
+  > **AN IDIOM TABLE IS INDEXED BY ELIMINATOR, NOT BY TASTE.**
+
+  **Four idioms that disagree is not four preferences; it is one table with a
+  missing key** — and the register's earlier framing invited exactly the wrong
+  read, because a rule stated without its key looks like a house style a lane may
+  deviate from. *Where two idioms contradict, the contradiction locates the
+  parameter neither of them named.*
+
+**AND A FLAGGED FORMULATION MISMATCH RESOLVED IN THE PORT'S FAVOUR** (same
+landing): the **∃-form adaptation cost a handful of lines against Isabelle's
+structured block.**
+
+> **A flag that predicted cost is worth closing OUT LOUD when the cost does not
+> arrive — otherwise the register only ever records the flags that were right.**
+
+*A risk register nobody closes becomes a list of reasons not to try things*, and
+the asymmetry is structural: **a realized risk announces itself and an
+unrealized one is silent.** **Recording the cheap resolution is what keeps the
+next mismatch from being priced off a biased sample.**
+
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
 
@@ -10344,6 +10446,49 @@ and **the derivation is the one that flips signs.**
 
 *The fix for a polarity defect is not a more careful reader — it is a label the
 polarity cannot be read wrongly through.*
+
+**AND TWO THROTTLES DISAGREEING IS A PROTOCOL THAT CONTRADICTS ITSELF** (QoL 17,
+merged `8b501ec`).
+
+> **SHARED QUESTIONS GET ONE READER.** *Two instruments answering "is the box
+> busy?" differently is not redundancy; it is a protocol with two truths.*
+
+**MEAS-28 at the instrument layer** — and the failure is worse than a wrong
+answer, because **whichever throttle a lane consults becomes the policy**, so the
+fleet's behaviour depends on which tool a lane happened to run. *Unification is
+not tidiness here; it is the difference between a rule and a coin flip.*
+
+**AND THE NUMBER CHOSEN WAS 4, NOT 6, FOR A REASON THAT IS THE WHOLE DEFECT
+CLASS**: *"6 is not measured at all — choosing the larger number on an unmeasured
+basis would repeat the precise error being fixed."*
+
+> **A FIX MUST NOT BE PICKED THE WAY THE DEFECT WAS PICKED.** *The temptation at
+> the moment of repair is to reach for a better-feeling value, which reproduces
+> the unmeasured choice under a new number.*
+
+**AND A DECISION CARRIES ITS READING THE WAY A MEASUREMENT CARRIES ITS
+INSTRUMENT**: *"a bare `LEAN_NUM_THREADS=4` invites exactly the question the
+reading answers."*
+
+> **LABEL DECISIONS WITH THE MEASUREMENT THAT PRODUCED THEM.** A bare constant is
+> re-litigated by every reader; a constant with its reading is a settled fact
+> with a retirement condition.
+
+*This is the name-the-instrument rule reaching configuration*, which is where the
+family's numbers are most often frozen and least often explained.
+
+**AND FOR THE OPS RECORD — THOMAS'S BUILD-PROFILE QUESTION WAS ANSWERED BY
+MEASUREMENT, NOT BY OPINION** (same landing): **two files are 85% of the build**;
+**zero `grind` and zero `native_decide` tree-wide**; and **the remedies preserve
+every certificate.**
+
+**All three findings matter, and the two negatives matter most.** *A tree-wide
+zero for the two usual suspects is what makes the 85% concentration actionable* —
+without it, a lane would have spent a tenure hunting tactic costs that are not
+there. **And "preserves every certificate" is the constraint that makes a build
+remedy admissible in this family at all**: a faster build that weakens what the
+tree proves is not a remedy, it is a different tree. *Record the constraint with
+the speedup, or the next optimisation will be priced without it.*
 
 **A bare percentage is not a measurement, it is a measurement's shadow** — and
 the shadow of *free* and the shadow of *in-use* are **the same shape**. The
@@ -12427,6 +12572,31 @@ directly off the conservation check, since an unreached bucket is one whose mass
 is still sitting in some earlier wall. *A zero you have never seen a candidate
 for is a prediction wearing a result's clothes.*
 
+**AND A SHARED-DEPENDENCY FAILURE NEEDS ITS OWN BUCKET, OR IT MASQUERADES AS
+BREADTH** (ES scoreboard, ticketed). `prelude-failed` is a state because **a
+broken prelude would otherwise print 1 816 identical refusals and read as a
+FRONTIER rather than as ONE FILE.**
+
+> **A FAILURE IN A SHARED DEPENDENCY MULTIPLIES INTO THE SCOREBOARD AT THE
+> CORPUS'S SIZE. Give it a bucket, or one defect reports as a landscape.**
+
+**This is the conservation check's blind spot**, and worth stating beside it: a
+partition can **sum perfectly** while one row is **1 816 copies of a single
+fact**. *Summing proves nothing is lost; it does not prove the rows are
+independent* — and a lane pricing work off that table would schedule a campaign
+against one broken import.
+
+**AND THE INSTRUMENT CORRECTED ITS AUTHOR BEFORE THE TICKET** (same landing):
+
+> **A FAILURE IS A VERDICT, NOT A ZERO — it's 2/3 scored.**
+
+**Failures count toward SCORED; only NON-RUNS do not.** *A test that ran and
+disagreed produced information; a test that never ran produced none* — and
+collapsing them costs the denominator its meaning in the direction that flatters
+nobody but confuses everybody. **The scored/unreached line is drawn at
+EXECUTION, not at agreement**, which is the same line the zero-states rule above
+draws and the one a lane re-blurs every time a red feels like a gap.
+
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —
 
@@ -12492,6 +12662,42 @@ lemma-shaped absence that nobody notices while every deck they own settles.*
 **The generalization is the one the other three axes already teach**: a number, a
 kit and a library all describe the corpus that produced them, and **the honest
 statement names that corpus rather than the artifact.**
+
+**AND A PRECONDITION UNDERNEATH ALL FOUR AXES, PAID FOR THREE TIMES BY ONE LANE**
+(analog F2 closed 7/7; `a14` ticketed). *"N/12 was never right… my first recount
+was ALSO wrong — three for three."*
+
+> **EVERY ONE WAS A MEASUREMENT TAKEN WITH AN INSTRUMENT NOBODY HAD VALIDATED
+> AGAINST A KNOWN ANSWER. THE INSTRUMENT IS PART OF THE CLAIM.**
+
+**So a counted denominator now has a precondition, not merely three axes:** the
+instrument that produced it must have been **run against a case whose answer was
+known in advance.** *Denominator, numerator and sign describe how a number can be
+wrong once it is trusted; this describes whether it was ever entitled to be.*
+
+**And the three-for-three is what makes it a precondition rather than advice.**
+The lane did not get a wrong number and fix it — **it got a wrong number, fixed
+it with the same unvalidated instrument, and got another one.** *A recount
+performed with the instrument under suspicion is not a check; it is the same
+measurement taken again*, and it produces the reassurance of agreement for free.
+
+> **VALIDATE THE INSTRUMENT AGAINST A KNOWN ANSWER BEFORE PUBLISHING ANY
+> DENOMINATOR — and again before every RECOUNT, because a recount inherits the
+> defect that caused it.**
+
+**AND THE WAYPOINT DISCIPLINE WAS APPLIED AT A CLOSURE, WHICH IS WHERE IT IS
+HARDEST** (same landing). *"F2 is a family, not the tier — what closing it buys
+is precise: every settling and regenerating claim now rests on RATIONAL
+ARITHMETIC rather than an assumed constant."*
+
+> **A CLOSURE STATEMENT IS SCOPED TO EXACTLY WHAT CLOSED, and says what the
+> closure BUYS rather than what it ends.**
+
+**A 7/7 is the most inviting moment in a lane's life to overstate**, because the
+fraction is complete and completeness reads as finality. *Naming the family, then
+naming the property every downstream claim now rests on, converts a milestone
+into a waypoint in one sentence* — and it is the same discipline §9.0 asks of a
+coverage number, applied to prose at the moment prose is least disciplined.
 **Two lanes quoting bounds in opposite directions and neither saying so is how a
 cross-tier table becomes unreadable** — 40% upper and 40% lower are not the same
 40%, and the difference is invisible in the digit.
@@ -12958,6 +13164,21 @@ discipline reaching **rung selection**, where it decides what work gets done
 rather than how a finished number reads. **Skipping it is not a gap in the
 scoreboard; counting it would have been.**
 
+**AND A REFACTOR CAN BE DESIGNED TO MEASURE ITSELF, WHICH IS THE RIGHT ANSWER TO
+AN AMDAHL UNKNOWN** (pyc's sharding census + QoL 17, merged `8b501ec`). Rather
+than estimate the serial fraction: **shard by family first, then read the
+per-shard profile FROM THAT BUILD.**
+
+> **A CHANGE WHOSE PAYOFF DEPENDS ON AN UNKNOWN SHOULD BE STRUCTURED SO THAT
+> PERFORMING IT MEASURES THE UNKNOWN.**
+
+**That turns one unknown into a measurement rather than a guess**, and it is the
+constructive form of the frontier law: *the only way to price the second wall is
+to remove the first* — **so choose the first step that both advances and
+observes.** A step chosen this way **pays whether or not the estimate was right**,
+which is the same shape as a band that names its ignorance, moved from the
+prediction into the plan.
+
 **(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
 What it said:** *a construct measuring `+0` is not cheap, it is unreachable —
 not a rung at any price, strictly downstream of whatever co-occurs with it.*
@@ -13210,6 +13431,20 @@ The rule for all of it: **a lane converts its own artifact the next time it
 opens that artifact for any other reason, in the same landing** — no
 deadline, no sweep, and the test is that the committed output is
 **byte-identical before and after**.
+
+**AND THE RULE'S HARDEST MOMENT IS MOMENTUM, WHERE A LANE CORRECTLY UNBUNDLED**
+(pyc, same landing). `genmoves_ray` was **not a leaf — 173 theorems, three
+importers, a materially riskier change** — and it was **priced separately**
+rather than carried along.
+
+> **BUNDLING IS CHEAPEST TO JUSTIFY EXACTLY WHEN A LANE IS ALREADY WINNING. The
+> argument "while I'm in here" is a scope claim wearing an efficiency costume.**
+
+**The by-touch rule assumes the touch is small**, and a green streak is when that
+assumption stops being checked: *the marginal item always looks marginal from
+inside the tenure that would carry it.* **The mechanical test is the one the lane
+used — leaf or not, importer count, theorem count** — and it is answerable
+before the decision rather than after the red.
 
 | shared thing | what it replaces | adopted when |
 | --- | --- | --- |

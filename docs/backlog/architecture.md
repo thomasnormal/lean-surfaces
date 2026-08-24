@@ -7397,3 +7397,103 @@ value owes a LOSSLESSNESS argument, not a correctness one** — and naming which
 kind a step is collapses the obligation before any tactic runs.
 
 Law rows: **MEAS-396…MEAS-407, STMT-137, OPS-108…OPS-110.**
+
+## 2026-08-24-architecture-86 — The instrument is part of the claim
+
+Twelve from six sources plus an ops-ledger note. Analog F2 closed 7/7 (`a14`
+ticketed), Wasm A′ 4/23 with the capstone (ticketed), the Lean tier's mdata
+implementation (`74074f9`, merged), the ES scoreboard (ticketed), pyc's sharding
+census + QoL 17 (merged `8b501ec`), and Thomas's build-profile question answered
+by measurement.
+
+**(1) §9.0 — A PRECONDITION UNDERNEATH ALL FOUR AXES, PAID THREE TIMES BY ONE
+LANE.** *"N/12 was never right… my first recount was ALSO wrong — three for
+three."*
+
+> **Every one was a measurement taken with an instrument nobody had validated
+> against a known answer. THE INSTRUMENT IS PART OF THE CLAIM.**
+
+**And the three-for-three is what makes it a precondition rather than advice**: a
+**recount performed with the instrument under suspicion is the same measurement
+taken again**, and it produces the reassurance of agreement for free. Validate
+before publishing a denominator **and again before every recount.**
+
+**(2) §5.4b — A GATE'S VALUE, QUANTIFIED** (four tenures before, one second
+after). **Not that it prevents the defect — the lane made it again — but that it
+MOVES DISCOVERY from the far side of an hour-long queue to the near side of a
+keystroke.** *The prevention framing makes every gate look weak whenever the
+defect recurs, and it recurs.* Return is **frequency × latency saved**, so **rank
+gates by where they move discovery TO.**
+
+**(3) §9.0 — THE WAYPOINT DISCIPLINE AT A CLOSURE**, which is where it is
+hardest: *"F2 is a family, not the tier — what closing it buys is precise: every
+settling and regenerating claim now rests on rational arithmetic rather than an
+assumed constant."* **A 7/7 is the most inviting moment in a lane's life to
+overstate.**
+
+**(4) §7.1a — A PORT CHEAPER THAN THE ORIGINAL, THREE SEPARATE REASONS.**
+**`cases` works where `induction` refuses** (the mutual restriction is
+induction-only — *a refusal attached to one eliminator is not attached to the
+goal*); **the generated model is better shaped than the hand mechanisation for
+this lemma** — a SpecTec artifact beating hand work on ergonomics, **the first
+datum the extraction-pipeline argument has ever had**; and **`cases` reorders
+premises**, a fourth idiom contradicting `rename_i`, noted in code. **An idiom
+table is indexed by ELIMINATOR, not by taste** — *where two idioms contradict,
+the contradiction locates the parameter neither named.*
+
+**(5) §7.1a — A FLAGGED MISMATCH RESOLVED IN THE PORT'S FAVOUR** (∃-form, a
+handful of lines against a structured Isabelle block). **Close a cost flag out
+loud when the cost does not arrive** — *a realized risk announces itself and an
+unrealized one is silent*, so a register that never closes flags is priced off a
+biased sample.
+
+**(6) §5.5 — AN EXCLUSION WITH ITS OWN LIVENESS CHECK.** A refuted kind must
+still be **found in both sources**: *if upstream deletes or fixes
+`parseExprMdata`, the census refuses rather than silently carrying a stale
+exclusion.* **The usual failure is an exclusion that outlives its subject.** And
+the mirror-image framing: **REFUTED waits on work; the 28th waits on the world** —
+opposite aging schedules, never pooled.
+
+**(7) §5.4 — A DIGEST ANYONE CAN RECOMPUTE BEATS A LIST NOBODY DIFFS.** The
+population rule ships as data with a content digest; five rejection buckets
+**conserve to the exact file count** — **an exact reconciliation to an
+independently known total is the cheapest validation against a known answer**,
+which is item 1's precondition being met rather than asserted.
+
+**(8) §9.0 — `prelude-failed` AS ITS OWN ZERO-STATE.** A broken prelude would
+print **1 816 identical refusals and read as a frontier rather than one file.**
+**Conservation proves nothing was lost; it does not prove the rows are
+independent.**
+
+**(9) §9.0 — A FAILURE IS A VERDICT, NOT A ZERO** ("it's 2/3 scored"). **Failures
+count toward scored; only non-runs do not** — the line is drawn at **execution**,
+not at agreement.
+
+**(10) §9.0b — A REFACTOR DESIGNED TO MEASURE ITSELF.** Shard by family first,
+then read the per-shard profile **from that build**. **Structure a change so that
+performing it measures the unknown its payoff depends on** — the constructive
+form of *the only way to price the second wall is to remove the first.*
+
+**(11) §9.2 — UNBUNDLING AT THE MOMENT OF MOMENTUM.** `genmoves_ray` was **not a
+leaf — 173 theorems, three importers** — and was priced separately. **Bundling is
+cheapest to justify exactly when a lane is already winning**; *"while I'm in
+here" is a scope claim wearing an efficiency costume.*
+
+**(12) §7.1a — THREE FROM QoL 17.** **Shared questions get one reader** — *two
+throttles disagreeing about whether the box is busy is a protocol with two
+truths*, and whichever a lane consults becomes the policy. **4, not 6**, because
+*"6 is not measured at all — choosing the larger number on an unmeasured basis
+would repeat the precise error being fixed"*: **a fix must not be picked the way
+the defect was picked.** And **decisions carry their readings** the way
+measurements carry their instruments — *a bare `LEAN_NUM_THREADS=4` invites
+exactly the question the reading answers.*
+
+**Ops record — the build-profile investigation** (Thomas's question, answered by
+measurement): **two files are 85% of the build**, **zero `grind` and zero
+`native_decide` tree-wide**, and **the remedies preserve every certificate.**
+*The two negatives matter most* — a tree-wide zero for the usual suspects is what
+makes the 85% actionable — and **"preserves every certificate" is the constraint
+that makes a build remedy admissible at all**: a faster build that weakens what
+the tree proves is a different tree.
+
+Law rows: **MEAS-408…MEAS-420, STMT-138, OPS-111…OPS-116.**

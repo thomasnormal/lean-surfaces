@@ -26,7 +26,7 @@ namespace Examples.c.sunfish.stmt
 open LeanModels.C.C23
 open LeanModels.C (CType Expr Stmt)
 
-private def noSpan : LeanModels.C.CSpan := ⟨0, 0, 0, 0, none, none⟩
+private def noSpan : LeanModels.C.CSpan := ⟨0, some 0, 0, some 0, none, none⟩
 
 /-! ## The function, taken from the ingested corpus -/
 

@@ -143,8 +143,17 @@ def span_of(node, loc):
     b = loc.absorb(begin_raw) or {}
     start_line = loc.line
     e = loc.absorb(end_raw) or {}
-    span = {"line": start_line, "col": b.get("col"),
-            "end_line": loc.line, "end_col": e.get("col")}
+    # `col` is OMITTED when clang did not give one -- the same shape the
+    # `macro` field below uses, so the schema has ONE spelling for absence.
+    # clang knows some locations only to a line (an unnamed parameter in a
+    # prototype is the common case) and emitting `null`, or worse a 0, would
+    # put a value where the frontend had none.  Measured: this is what gated
+    # 199 of 300 gcc.c-torture tests at the ingester (2026-08-24-c-18).
+    span = {"line": start_line, "end_line": loc.line}
+    if b.get("col") is not None:
+        span["col"] = b["col"]
+    if e.get("col") is not None:
+        span["end_col"] = e["col"]
     # A construct produced by a macro has a spelling location distinct from
     # its expansion location.  Emit the macro only then, so macro-free
     # sources stay byte-identical to a schema without the field.

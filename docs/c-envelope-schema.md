@@ -88,6 +88,24 @@ a macro body — and names the macro plus its spelling site. A node written
 directly in the source carries no `macro` key, so macro-free sources
 produce byte-identical envelopes to a schema without the field.
 
+**`col` and `end_col` are OPTIONAL, and `line`/`end_line` are not.**
+clang knows some locations only to a LINE — an unnamed parameter in a
+prototype (`int f(int);`) is the common case — and the extractor emits
+the key only when clang supplied one, exactly as it does for `macro`. So
+the schema has ONE spelling for absence: the key is missing. (A reader
+should accept an explicit `null` as the same absence; `LeanModels/C/Json.lean`
+does, through the same `getOptNat` the macro fields use.)
+
+> **An absent column is `none`, never `0`. A fabricated column is
+> silently wrong data that reads exactly like a measured one, and
+> column 0 has to stay distinguishable from column-unknown.**
+
+This was not a design choice made in advance — it is `2026-08-24-c-18`'s
+scoreboard reporting that **199 of 300** `gcc.c-torture` tests reached the
+ingester and were refused for `span: field 'col': Natural number
+expected`, because the extractor wrote `null` where the schema said
+`Nat`. The instrument found it; the schema is what changed.
+
 ## 3 The node vocabulary — 45 kinds, and where they come from
 
 **The ingester REFUSES any `kind` outside this table**, emitting an

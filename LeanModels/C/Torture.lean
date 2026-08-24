@@ -53,6 +53,7 @@ on the TYPE and never by parsing prose (`Core`'s `RefusalCause` rule, one
 level up). -/
 inductive Verdict where
   | passed
+  | passedViaExit                -- reached `exit(0)`: the ORACLE, not a libc model
   | failed                       -- reached `abort()`: the test's own check failed
   | refusedUB (what : String)
   | refusedLibc (name : String)
@@ -67,11 +68,12 @@ deriving Repr, Inhabited, BEq
 /-- Is this a SCORE — a verdict the oracle can read — as opposed to an
 absence of one? -/
 def Verdict.isScored : Verdict → Bool
-  | .passed | .failed => true
+  | .passed | .passedViaExit | .failed => true
   | _ => false
 
 def Verdict.token : Verdict → String
   | .passed => "passed"
+  | .passedViaExit => "passed"
   | .failed => "failed"
   | .refusedUB _ => "refused-ub"
   | .refusedLibc _ => "refused-libc"
@@ -84,6 +86,7 @@ def Verdict.token : Verdict → String
 
 def Verdict.detail : Verdict → String
   | .passed | .failed | .timeout | .notFetched => ""
+  | .passedViaExit => "exit(0) — the oracle's success channel, not a libc model"
   | .refusedUB w => w
   | .refusedLibc n => n
   | .unsupported w => w
@@ -97,27 +100,121 @@ def Verdict.detail : Verdict → String
 outside the table gets `none`, which is a loud refusal at the use site
 rather than a guessed size — the same discipline `Layout.unknown` exists
 for. -/
-def torSize : CType → Option Nat
+/-- The SCALAR spellings, from `docs/c-profile.md`'s `char_bit_8`,
+`int_32`, `long_64`. `double` is deliberately absent — floats are a named
+decision, not an oversight. -/
+def torScalarSize : CType → Option Nat
   | "char" | "signed char" | "unsigned char" | "_Bool" => some 1
   | "short" | "short int" | "unsigned short" => some 2
-  | "int" | "unsigned int" | "const int" | "unsigned" => some 4
+  | "int" | "unsigned int" | "unsigned" => some 4
   | "long" | "unsigned long" | "long long" | "unsigned long long"
   | "long int" | "unsigned long int" => some 8
   | t => if t.endsWith "*" then some 8 else none
 
-def torLayout : Layout := { Layout.unknown with size := torSize }
+/-- Drop the qualifiers. Exact: `const`/`volatile` do not change a size. -/
+def stripQuals : Nat → CType → CType
+  | 0, t => t
+  | n + 1, t =>
+      if t.startsWith "const " then stripQuals n ((t.drop 6).toString)
+      else if t.startsWith "volatile " then stripQuals n ((t.drop 9).toString)
+      else t
+
+/-- `T[N]` → `(T, N)`. **Single dimension only**: `int[2][3]` splits into
+three parts and gets `none`, which is a named zero rather than a guess. -/
+def arrayOf (t : CType) : Option (CType × Nat) :=
+  if !t.endsWith "]" then none
+  else match ((t.dropEnd 1).toString).splitOn "[" with
+       | [e, ext] => ext.toNat?.map fun n => (e, n)
+       | _ => none
+
+/-- The unit's own typedefs, as a spelling map. A lookup, not a
+computation — so resolving through it invents nothing. -/
+def typedefsOf (envl : Envelope) : List (CType × CType) :=
+  envl.unit.items.filterMap fun i => match i with
+    | .decl (.typedef nm ty _ _) => some (nm, ty)
+    | _ => none
+
+def resolve (tds : List (CType × CType)) : Nat → CType → CType
+  | 0, t => t
+  | n + 1, t0 =>
+      let t := stripQuals 8 t0
+      match tds.find? (·.1 == t) with
+      | some p => resolve tds n p.2
+      | none => t
+
+/-- A size the instrument can compute EXACTLY, or `none`.
+
+Scalars come from the profile; an array is `n × elem` and §6.2.5p20 says
+so with no padding to guess; typedefs and qualifiers are lookups.
+
+**A `struct` gets `none`, and that is the item rather than a shortfall in
+it.** Laying one out needs an ALIGNMENT RULE: C leaves the padding
+implementation-defined (§6.7.2.1p18), the natural-alignment convention
+everyone reaches for is an ABI this project has not pinned, and a layout
+computed from an undeclared rule is a FABRICATED layout — the same defect
+as a fabricated column, one abstraction up. Structs stay a named zero
+until `docs/c-profile.md` pins the rule. -/
+def sizeIn (tds : List (CType × CType)) : Nat → CType → Option Nat
+  | 0, _ => none
+  | n + 1, t0 =>
+      let t := resolve tds 8 t0
+      match torScalarSize t with
+      | some s => some s
+      | none => (arrayOf t).bind fun p => (sizeIn tds n p.1).map (· * p.2)
+
+/-- The layout for ONE test, built from its own envelope. -/
+def layoutFor (envl : Envelope) : Layout :=
+  let tds := typedefsOf envl
+  { Layout.unknown with
+      size := fun t => sizeIn tds 16 t
+      elem := fun t => arrayOf (resolve tds 8 t) }
+
+/-- Peel the conversions a value arrives wrapped in. -/
+def peelVal : Expr → Expr
+  | .implicitCast _ s _ _ => peelVal s
+  | .cast _ s _ _ => peelVal s
+  | .paren s _ _ => peelVal s
+  | e => e
+
+/-- **THE ORACLE GUARD.** `exit(n)` is the verdict channel, not a library
+call this tier models — but the refusal carries only the NAME, and
+`exit(0)` and `exit(1)` are opposite verdicts. So an `exit` refusal is
+read as success only when every `exit` in the translation unit takes
+exactly one argument that peels to the literal `0`.
+
+A program with any other `exit` is NOT scored: we could not tell which one
+was reached, and guessing is the pooling §3.1 forbids.
+
+Measured when it was written: all 36 tests that refused on `exit` contain
+`exit(0)` and nothing else, so this guard is free today. It is here
+because it is what makes the reading honest rather than lucky. -/
+def exitIsAlwaysZero (envl : Envelope) : Bool :=
+  envl.unit.exprs.all fun e => match e with
+    | .call callee args _ _ =>
+        if calleeNameOf callee == "exit" then
+          match args with
+          | [a] => match peelVal a with
+                   | .intLit "0" _ _ => true
+                   | _ => false
+          | _ => false
+        else true
+    | _ => true
 
 /-- Run one ingested test: call its `main` with no arguments, from an
 empty memory, and read the outcome.
 
-`abort` is NOT modelled and never will be by widening the libc slice —
-reaching it is the oracle's failure signal, so it is caught here by NAME
-and turned into a verdict rather than left as an environment refusal. -/
+`abort` and `exit` are caught BY NAME, before the libc slice can turn
+them into environment refusals, because both are the exit-status oracle
+speaking — `docs/c23-goal.md` §1.2. Neither is modelled and neither ever
+will be by widening the slice. -/
 def scoreEnvelope (fuel : Nat) (envl : Envelope) : Verdict :=
-  let prog : Program := { fns := envl.unit.functionDefns, layout := torLayout }
+  let prog : Program := { fns := envl.unit.functionDefns, layout := layoutFor envl }
   match ExecM.verdict Mem.empty (callByName fuel prog "main" []) with
   | .ok _ => .passed
   | .refused (.libc "abort") => .failed
+  | .refused (.libc "exit") =>
+      if exitIsAlwaysZero envl then .passedViaExit
+      else .refusedLibc "exit (an argument is not a literal 0 — which exit was reached is unknown)"
   | .refused (.libc n) => .refusedLibc n
   | .refused (.valueUB u) => .refusedUB (toString (repr u))
   | .refused (.memUB f) => .refusedUB (toString (repr f))
@@ -176,7 +273,7 @@ def summarise (rows : List (String × Verdict)) : List String := Id.run do
   let mut firstFail : Option (String × Verdict) := none
   for (n, v) in rows do
     match v with
-    | .passed => passed := passed + 1
+    | .passed | .passedViaExit => passed := passed + 1
     | .failed =>
         failed := failed + 1
         if firstFail.isNone then firstFail := some (n, v)

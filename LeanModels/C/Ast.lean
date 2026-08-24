@@ -143,9 +143,17 @@ inductive Decl where
   | record (name : Option String) (fields : List Decl) (span : CSpan)
   | typedef (name : String) (ty : CType) (underlying : Option TypeNode) (span : CSpan)
   | enum (name : Option String) (constants : List Decl) (span : CSpan)
-  /-- The value is the FOLDED integer as a decimal string; clang's
-  `ConstantExpr` wrapper is flattened here (schema §3.1). -/
-  | enumConst (name : String) (value : String) (span : CSpan)
+  /-- An enumeration constant. clang's `ConstantExpr` wrapper is flattened
+  by the extractor (schema §3.1). `value` is the FOLDED integer as a decimal
+  string, and it is **optional**: clang does not always give one, and the
+  absence family's rule holds here as it did for `col` and a parameter's
+  `name` — no fabricated `"0"`, which would read exactly like a folded
+  value somebody would then use as one.
+
+  Measured: nothing in this tier reads it. `C23.Ctx.enums` is only ever
+  supplied from `Program.enums`, which nothing builds from an envelope, so
+  this is schema-widening (`docs/backlog/c.md` 2026-08-24-c-21). -/
+  | enumConst (name : String) (value : Option String) (span : CSpan)
   | unsupported (cKind : String) (text : String) (span : CSpan)
 deriving Repr, Inhabited
 

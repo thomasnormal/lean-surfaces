@@ -275,9 +275,14 @@ class Extractor:
         # consumer wants the number rather than the tree.  All 11 in-corpus
         # `ConstantExpr` nodes are exactly these.  Where a `ConstantExpr` is
         # NOT flattenable (bit-field widths, rung R2) it is emitted as a node.
+        # `value` is OMITTED when clang folded none -- the absence family
+        # again (see `col`, and a parameter's `name`).  A fabricated "0"
+        # would read exactly like a folded value somebody would then use.
         v = next((c for c in kids(n) if c.get("kind") == "ConstantExpr"), None)
-        return {"name": n.get("name"),
-                "value": (v or {}).get("value")}
+        out = {"name": n.get("name")}
+        if (v or {}).get("value") is not None:
+            out["value"] = v["value"]
+        return out
 
     # ---- the structured type tree (typedefs only) ---------------------
     def type_node(self, t):

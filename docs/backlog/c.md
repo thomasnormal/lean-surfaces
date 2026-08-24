@@ -2365,3 +2365,214 @@ it is the obvious next move for anyone reading this table.
 runner hands `torLayout`, which knows the scalar spellings and nothing
 about arrays or structs. That is a runner improvement, not a tier rung.
 
+
+---
+
+## 2026-08-24-c-21 — THE SCOREBOARD INCH: read the oracle, size what is exact, and refuse to invent a struct
+
+Three items, none of them semantics, taken together because separately
+each would leave the frontier lying. `2026-08-24-c-20`'s table said the
+two largest reasons in a 197-item "unsupported frontier" belonged to the
+INSTRUMENT rather than the tier — a frontier that counts instrument
+limits as language limits is not a frontier.
+
+### (1) `exit(n)` IS the verdict channel — and the guard is syntactic
+
+Ruled: `exit` gets the by-name treatment `abort` already has, **reading
+the oracle rather than modelling libc**. But `abort` needs no argument and
+`exit` does: `exit(0)` is success, `exit(1)` is failure, and the refusal
+carries only the NAME — so scoring `exit` by name alone would fabricate a
+verdict exactly where §3.1 forbids pooling.
+
+So the driver checks the ARGUMENT syntactically, in the envelope, before
+it will read an `exit` refusal as a pass: **every `exit` call in the
+translation unit must have exactly one argument that peels (through casts
+and parens) to the literal `0`.** A program containing any other `exit`
+is not scored — it stays a named refusal, because we could not tell which
+`exit` was reached.
+
+**Measured before it was built**: of the 36 tests refusing on `exit`, all
+36 contain `exit(0)` and nothing else. The guard is therefore free today
+and is still there, because it is what makes the reading honest rather
+than lucky.
+
+> **Reading an oracle is not modelling a library. The test is whether the
+> code could answer differently for a program the oracle does not
+> describe — and if it could, the guard belongs in the scoreboard, not in
+> a comment.**
+
+### (2) The runner's layout: size what is EXACT, name what is not
+
+`torLayout` knew the scalar spellings and nothing else, so **79 tests
+were refused for `no layout for declared type`** — an instrument limit
+counted as a tier limit. Censused before building:
+
+| n | kind | what it needs |
+| ---: | --- | --- |
+| **28** | arrays (`char[N]`, `int[N]`, …) | nothing — §6.2.5p20 makes an array's size EXACTLY `n × elem`, with no padding to guess |
+| **32** | `struct`/`union` | an ALIGNMENT RULE, which the profile does not pin |
+| **21** | other — `double`, typedef names (`trio`), `volatile a_struct` | qualifier stripping and typedef resolution are lookups; `double` is the floats decision |
+
+Arrays, typedef resolution and qualifier stripping are **exact** and land.
+Structs **do not**, and that is the point of the item rather than a
+shortfall in it: laying out a structure needs an alignment rule, C leaves
+padding implementation-defined (§6.7.2.1p18), and the natural-alignment
+rule everyone would reach for is an ABI convention this project has not
+pinned.
+
+> **A layout the instrument computes from a rule nobody declared is a
+> FABRICATED LAYOUT — the same defect as a fabricated column, one
+> abstraction up. Structs stay a NAMED zero until the profile pins the
+> rule.**
+
+### (3) `EnumConstantDecl.value` — the last absence case
+
+3 tests, same family, same rules: optional with stated semantics, no
+fabrication. And measured like `col` was: **nothing in the tier reads it**
+— `Ctx.enums` is only ever supplied from `Program.enums`, which nothing
+builds from an envelope — so this is schema-widening again.
+
+### THE PREDICTION, and its band is built out of the day's own two laws
+
+`2026-08-24-c-20` established that a bucket can be predicted well and a
+residual still missed, and that each wall is a lower bound on the next.
+So this prediction is **per bucket**, and its band is split at the line
+those laws draw:
+
+| bucket | predicted |
+| --- | ---: |
+| `not-ingested` | **0** (from 3) |
+| `refused-libc` | **2** (from 38 — `memset`, `__builtin_alloca`) |
+| `refused-unsupported` | **~175** (from 197) |
+| `refused-ub` | ~5 |
+| `not-parsed` | 30 — unchanged, not this lane's |
+| **scored** | **72 / 300** (from 28), band **64 – 105** |
+
+**The floor and the width mean different things, and that is the whole
+design of the band.**
+
+*The floor, 64, is the part that CANNOT hide a wall.* A test refusing on
+`exit` has already reached `exit(0)` — in these programs the last
+statement of `main` — so it ran to completion and there is nothing behind
+its refusal. 28 + 36 = 64 is arithmetic, not estimation.
+
+*Everything above the floor is exposure to a wall that is unknown by
+construction.* The layout fixes free a test at a DECLARATION, early in the
+run, so every statement after it is unmeasured — and the tier has never
+observed those statements. 41 of the band's 41-point width is that
+ignorance, stated as width instead of hidden in a point estimate.
+
+### TENURE 1 — RED, and the lesson is one I had already been taught today
+
+`[13:28:15] LOCK ACQUIRED after 0s as 'crunga 87819'` →
+`[13:30:10] TRIAD DONE (build exit 0, gates RED)`. **An aborted triad**,
+and the diagnosis is not interesting: three errors in
+`LeanModels/C/Torture.lean`, two of them one cause (`String.drop` returns
+a `String.Slice` at this toolchain, not a `String`) and one a docstring
+left stacked on another by a scripted edit.
+
+**What is interesting is that A17 would have caught all three in ten
+seconds and I did not run it.** I verified `LeanModels/C/Ast.lean` after
+editing it and did not verify `Torture.lean` after REWRITING it — the
+larger of the two changes went unchecked because the smaller one had just
+passed.
+
+> **The fast loop is only worth what you point it at. A cheap check that
+> is run on the file you were LEAST worried about is a cheap check you did
+> not run.**
+
+The whole argument for `qol-53` was that a defect should cost ten seconds
+instead of a tenure. This one cost a tenure because the instrument was
+available and unused, which is a worse failure than not having it —
+`2026-08-24-c-13`'s inbound bought a capability, and a capability is not a
+practice.
+
+Fixed and **verified in the fast loop before re-ticketing**: exit 0, zero
+warnings, including the `String.dropRight` deprecation the first pass had
+also introduced.
+
+**If a fourth hidden wall appears, the register gets its confirmation and
+the shape is a law. If it does not, this is the first prediction to
+survive contact with a newly-exposed frontier, and the reason will be
+that the exposure was priced into the band instead of into the guess.**
+
+### VERDICT — GREEN, and the PREDICTION LANDED
+
+Ticket `1787571147529854000-8803-crunga`:
+
+```
+[13:32:27] base: base 720ff3c is AT the origin/master tip
+[13:32:27] LOCK ACQUIRED after 0s as 'crunga 8803'
+[13:34:02] TRIAD DONE (build exit 0, gates green)
+```
+
+Spine, tree `0f1d03c02b78`, **3781 jobs, exit 0, 0 `error:` lines**,
+COVERAGE full. docs_check 91/91; diff_test **1504 cases, 0 failed**;
+c_profile_probe 9/9; both `--selftest`s ok; `--offline` re-verified all
+300 sha256 with no network.
+
+```
+gcc.c-torture 67/300 scored  (passed 67, failed 0)
+  the zeroes, kept apart: refused-unsupported 191, refused-libc 4,
+    refused-ub 5, timeout 2, not-ingested 1, not-parsed 30,
+    runner-error 0, not-fetched 0
+```
+
+**§9.0: 28 → 67/300 scored.** `67 + 191 + 4 + 5 + 2 + 1 + 30 = 300`.
+
+### PREDICTED vs ACTUAL, per bucket
+
+| bucket | predicted | actual | |
+| --- | ---: | ---: | --- |
+| `scored` | **72** (band 64–105) | **67** | **inside the band, 5 under the point** |
+| `refused-ub` | ~5 | 5 | exact |
+| `refused-libc` | 2 | 4 | close |
+| `not-ingested` | 0 | 1 | close |
+| `refused-unsupported` | ~175 | 191 | over-predicted the drop by 16 |
+| `timeout` | *(not predicted)* | **2** | a bucket that had never been non-zero |
+
+**This is the first prediction in this lane to survive contact with a
+newly-exposed frontier**, and the reason is exactly the structure the band
+was given rather than luck about the number:
+
+* the **floor** was arithmetic — 28 already-scoring + 36 `exit`
+  conversions that cannot hide a wall, because a test refusing on
+  `exit(0)` had already run to completion. It held: 67 ≥ 64.
+* the **width** was ignorance, and the ignorance was real. 67 sits **3
+  above the floor**, which says that of the ~31 tests freed by the layout
+  work, **almost all immediately hit another wall** — `refused-unsupported`
+  fell only 197 → 191 while absorbing them. The fourth hidden wall
+  appeared exactly as the shape predicted; it was priced into the band
+  instead of into the guess, and so the prediction held anyway.
+
+> **A band whose floor is arithmetic and whose width is a named ignorance
+> can be RIGHT about a frontier it cannot see. A point estimate over the
+> same evidence would have been wrong by 30 and called the shape wrong
+> too.**
+
+And `timeout` going 0 → 2 is the fifth wall arriving, small and on
+schedule: two tests now run far enough to exhaust fuel 64. **A bucket
+that has never been non-zero is not a measured zero** — it is a bucket
+nothing has reached yet, which is the whole doctrine of this scoreboard
+seen once more from the inside.
+
+### The frontier now — and it is the tier's own for the first time
+
+| n | wall | owner |
+| ---: | --- | --- |
+| **191** | `unsupported` — **69 unbound name**, 54 `no layout` (all struct/union now), 9 `not an lvalue: StringLiteral`, 8 non-object block declarations, 8 arity, 6 unary operator, 6 string literal | the tier |
+| 30 | clang under the pinned profile | not this lane's |
+| 5 | UB refusals | never retires — the product |
+| 4 | libc — `memset`, `__builtin_memcpy`, `__builtin_memset`, `__builtin_alloca` | widening the slice |
+| 2 | timeout at fuel 64 | the fuel bound |
+| 1 | `EnumConstantDecl: value` | the last absence case, now single |
+
+**`refused-libc` fell 38 → 4 and the remainder is four distinct names**,
+which is the shape a genuine libc frontier has — no single dominant entry
+left. The 54 remaining `no layout` are now **entirely struct/union**, so
+the instrument's share of that number is gone and what is left is the
+profile decision this landing declined to fake.
+
+**`unbound name` at 69 is now the largest single reason and is the first
+true semantics rung on this board.** Census before building, as always.
+

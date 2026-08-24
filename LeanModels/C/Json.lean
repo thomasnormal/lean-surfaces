@@ -232,7 +232,8 @@ partial def parseDecl (j : Json) : Except String Decl := do
         return .enum (← getOptStr j "name")
           (← (← getArr j "constants").mapM parseDecl) span
     | "EnumConstantDecl" =>
-        return .enumConst (← getStr j "name") (← getStr j "value") span
+        -- `value` is OPTIONAL: clang does not always fold one.
+        return .enumConst (← getStr j "name") (← getOptStr j "value") span
     | "Unsupported" =>
         return .unsupported (← getStr j "c_kind") (← getStr j "text") span
     | other => throw s!"unknown declaration kind {other.quote}"

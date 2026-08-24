@@ -348,6 +348,9 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-297 | an instrument earns a NEW number by first reproducing an OLD one already gated | `docs/family-architecture.md §5.4b` |
 | MEAS-298 | a WHITELIST of legal positions claims the grammar; a BLACKLIST claims a few commands — only the second is parser-free | `docs/family-architecture.md §5.4a` |
 | MEAS-299 | MEMBERSHIP IN THE GREEN CORPUS as a parser proxy — admissible only when stated as WEAKER than parsing | `docs/family-architecture.md §5.4a` |
+| MEAS-300 | a fleet status is THREE NUMBERS — rungs assigned, executing, building — never "N lanes live" | `docs/family-architecture.md §1.2`, §9.0 |
+| MEAS-301 | DURABILITY LIVES IN ARTIFACTS, NOT IN AGENTS | `docs/family-architecture.md §7.2` |
+| MEAS-302 | a certificate over the WORKING TREE makes even uncommitted state recoverable | `docs/family-architecture.md §7.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -642,6 +645,8 @@ numbers below are the register's own.
 | OPS-82 | a comment describing comment syntax cannot QUOTE it — name the delimiters, never spell them | `docs/family-architecture.md §7.1a` |
 | OPS-83 | a tactic dispatching on a goal's HEAD needs a stable head — a `def` unfolding to a binder has none | `docs/family-architecture.md §7.1a` |
 | OPS-84 | `with_reducible` per `apply` — each failure is one HEAD COMPARISON, not one unfolding | `docs/family-architecture.md §7.1a` |
+| OPS-85 | REPORT-THEN-CONTINUE — proceed to the named next rung; stop only on a ruling, a merge you consume, or a pending verdict | `docs/family-architecture.md §9.0-pre` |
+| OPS-86 | commit provenance comes from the ENVIRONMENT, never from a flag someone types | `docs/family-architecture.md §7.2` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

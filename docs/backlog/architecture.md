@@ -6268,3 +6268,88 @@ where they are most likely to be read as one.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-292 … MEAS-299**.
+
+## 2026-08-24-architecture-74 — The trough was a coordinator artifact; and durability lives in artifacts
+
+A standing protocol change, a row against the coordinating role, and the storm's
+durability finding. **Processed once after the 529 wave** — the dispatch was in
+transcript; nothing was lost.
+
+**(1) §9.0-pre IS NEW — REPORT-THEN-CONTINUE, effective now for every lane.**
+After reporting a landing or verdict, **proceed immediately to the named next
+rung**; stop only on **(a)** a ruling, **(b)** a merge you consume, **(c)** a
+tenure verdict not yet returned.
+
+**The rationale is measured and it convicts the coordinating role**: Thomas
+twice observed the fleet at near-zero activity, **both times caused by an
+ack-gated loop** — every lane reporting, then parking, while the queue drained.
+
+> **The trough was a COORDINATOR ARTIFACT, not a work shortage.**
+
+**Landed as A17's instrument-artifact law arriving at the coordination layer**:
+there a monotone proxy closed a gate and set a day's economics; here **an
+acknowledgment was a serialization point nobody had priced** — and **both were
+invisible for the same reason: the cost fell as WAITING, which no artifact
+records.**
+
+**And I added the asymmetry that makes it the right default**: a lane that
+continues when it should have waited produces **work that may need redoing**; a
+lane that waits when it should have continued produces **nothing, and leaves no
+trace that it did.** *The first failure is visible and bounded; the second is
+invisible and unbounded* — which is why the three blocks are **enumerated
+rather than left to judgment.**
+
+**This lane is event-driven by charter**, so it lives in exception (a) by
+construction; **the standing §9.0 snapshot is its continuous work**, and it now
+carries the fleet line.
+
+**(2) §1.2 — THE FIFTH AUTHOR-BLINDNESS CASE IS THE COORDINATOR'S, ON THIS
+EXACT LAW.** Thomas was told **"all fourteen lanes are live"** while **13 of 14
+agents were parked and the queue was empty.**
+
+> **"Live" answered whichever question the reader brought** — the coordinator
+> meant *has state and a named rung*; Thomas read *is executing*.
+
+**The analog roster conflation** (*active-in-tree* vs *staffed*) **applied to
+the fleet, by the role that circulated the law.** Honest form:
+**`N lanes with assigned rungs · M executing · K building`** — **three numbers
+because there are three facts**, and every pair can differ. *A single word
+covering three states is not a summary; it is a choice made on the reader's
+behalf without telling them.*
+
+**Five cases in four days, and they no longer read as coincidence** — the
+heading guard convicting §9.5a's author; the enforcing lane minting
+owner-namespace ids; **this document's §9.0 requirement producing three
+malformed headings**; a lane violating a law inside the commit that landed it;
+and now **the coordinating role committing the unit defect it had just
+circulated.** **The role that dispatches laws writes more of them than anyone,
+so it is the most exposed, not the least.**
+
+**(3) §7.2 — THE DESIGN WAS TESTED BY A FLEET-WIDE DEATH: twelve agents, ZERO
+work lost.** Worktrees, pushed branches, ledgers and detached runners carried
+everything.
+
+> **Durability lives in ARTIFACTS, not in AGENTS.**
+
+**And the one in-flight gap was recoverable BECAUSE OF THE STAMP v2 FIX** —
+R-track's certified-but-uncommitted staged state. The certificate hashes the
+**working tree**, so `index tree == certified tree` was **verifiable after the
+death of the agent that produced it** (`4ed731e`, merged `d681a89`; both on
+master, verified here).
+
+> **A certificate over the WORKING TREE makes even uncommitted state
+> recoverable.**
+
+**A payoff the fix was not designed for.** It closed an integrity hole — *the
+stamp must hash what `lake` reads* — and bought a different property entirely:
+**uncommitted work became identifiable by a third party**, because a hash of it
+exists that somebody else can recompute. *An integrity fix that makes state
+addressable makes it recoverable, and nobody planned the second half.*
+
+**And a small identity row**: the classifier **blocked an explicit `-c`
+override**, and **plain config was right.** *A typed identity is an assertion; a
+configured one is a fact about the clone* — and the difference matters exactly
+in the case that produced it, **where one party commits on another's behalf.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-300 … MEAS-302, OPS-85, OPS-86**.

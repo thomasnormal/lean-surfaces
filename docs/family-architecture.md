@@ -375,6 +375,36 @@ question the reader brought.**
 > separate facts; a single word that can be true of either is a word that will
 > be read as both.
 
+
+**AND THE FIFTH AUTHOR-BLINDNESS CASE IS THE COORDINATOR'S, ON THIS EXACT LAW,
+ONE LEVEL UP** (2026-08-24, self-filed). Thomas was told **"all fourteen lanes
+are live"** while **13 of 14 agents were parked and the queue was empty.**
+
+> **"LIVE" answered whichever question the reader brought** — the coordinator
+> meant *has recoverable state and a named rung*; Thomas read *is executing*.
+
+**The same conflation as the analog roster row** (*active-in-tree* versus
+*staffed*), **applied by the role that wrote the law, to the fleet.** And the
+honest form is the one this register keeps arriving at — **stop compressing
+independent facts into one word:**
+
+> **"N lanes with assigned rungs; M executing; K building."**
+
+**Three numbers, because there are three facts**, and every pair of them can
+differ: a lane can hold a rung and not be running, run without building, and
+build without holding a rung anyone has read. *A single word covering three
+states is not a summary, it is a choice made on the reader's behalf without
+telling them.*
+
+**FIVE CASES IN FOUR DAYS NOW**, and they no longer read as coincidence: the
+heading guard convicting §9.5a's author; the enforcing lane minting
+owner-namespace ids; **this document's §9.0 requirement producing three
+malformed headings**; a lane violating a law inside the commit that landed it;
+and now **the coordinating role committing the unit defect it had just
+circulated.** *Writing a law is the moment of maximum confidence and minimum
+habit* — and **the role that dispatches laws writes more of them than anyone,
+so it is the most exposed, not the least.**
+
 This is the unit family (§5.4a) arriving in a table's **vocabulary** rather than
 in a count — and it has the same tell: **the word looked like a property of the
 tier, and it was a property of a question.**
@@ -6366,6 +6396,41 @@ certification** — decline the rebase, decline the fold-in, commit the index.
 the convergence standard (§9.3) applied to a law's *use* rather than to its
 statement.
 
+**AND THE DESIGN WAS TESTED BY A FLEET-WIDE DEATH — TWELVE AGENTS, ZERO WORK
+LOST** (the 529 storm, 2026-08-24). Worktrees, pushed branches, ledgers and
+detached runners **carried everything.**
+
+> **DURABILITY LIVES IN ARTIFACTS, NOT IN AGENTS.**
+
+**And the one in-flight gap was recoverable BECAUSE OF THE STAMP v2 FIX** —
+R-track's **certified-but-uncommitted staged state**. The certificate hashes the
+**working tree**, so `index tree == certified tree` was **verifiable after the
+death of the agent that produced it**, and the work was committed on the lane's
+behalf (`4ed731e`, merged `d681a89`; both on master, verified here).
+
+> **A CERTIFICATE OVER THE WORKING TREE MAKES EVEN UNCOMMITTED STATE
+> RECOVERABLE.**
+
+**That is a payoff the fix was not designed for.** It was built to close an
+integrity hole — *the stamp must hash what `lake` reads* — and the property it
+bought is **a different one entirely**: uncommitted work becomes **identifiable
+by a third party**, because there is a hash of it that somebody else can
+recompute. *An integrity fix that makes state addressable makes it recoverable,
+and nobody planned the second half.*
+
+**AND A SMALL IDENTITY ROW FROM THE SAME RECOVERY**: the classifier **blocked an
+explicit `-c` identity override** on that commit, and **plain config was the
+right form.**
+
+> **COMMIT PROVENANCE COMES FROM THE ENVIRONMENT, NEVER FROM A FLAG SOMEONE
+> TYPES.**
+
+**A typed identity is an assertion; a configured one is a fact about the clone**
+— and the difference matters precisely in the case that produced it, where **one
+party commits on another's behalf.** *The attribution a recovering party should
+produce is the one the environment already knows, not the one they believe is
+correct.*
+
 **AND A FIFTH, AT PUSH GRANULARITY** (SoftFloat's `roundQ` landing, merged —
 `52c5d35` is **the GATED sha**). The lane **refused to call its clean rebase
 gated.**
@@ -9946,6 +10011,45 @@ lane's implementation is only as good as its reading, and a defect in one
 reading is invisible to every other lane. Every item below moves a rule
 from prose into something executable.
 
+### 9.0-pre REPORT-THEN-CONTINUE — the lane cadence, ruled 2026-08-24
+
+**Standing change, effective now, for every lane.**
+
+> **AFTER REPORTING A LANDING OR A VERDICT, PROCEED IMMEDIATELY TO YOUR NAMED
+> NEXT RUNG. Do not await acknowledgment.**
+
+**Stop only when BLOCKED, and the blocks are three:**
+
+* **(a)** a **RULING** you need and do not have;
+* **(b)** a **MERGE YOU CONSUME**;
+* **(c)** a **TENURE VERDICT** not yet returned.
+
+**THE RATIONALE IS MEASURED, AND IT CONVICTS THE COORDINATING ROLE.** Thomas
+**twice** observed the fleet at near-zero activity, and **both times the cause
+was an ack-gated loop** — every lane reporting, then parking, while the queue
+drained.
+
+> **The trough was a COORDINATOR ARTIFACT, not a work shortage.**
+
+**Which is this register's own instrument-artifact law arriving at the
+coordination layer** (§7.1a's A17 defect): *a day's economics set by a
+mechanism nobody was measuring.* There the proxy was monotone and closed a gate;
+here the ack was a **serialization point** nobody had priced — **and both were
+invisible for the same reason: the cost fell as WAITING, which no artifact
+records.**
+
+**And the asymmetry that makes report-then-continue the right default**: a lane
+that continues when it should have waited produces **work that may need
+redoing**; a lane that waits when it should have continued produces **nothing,
+and leaves no trace that it did.** *The first failure is visible and bounded;
+the second is invisible and unbounded* — which is why the three blocks are
+enumerated rather than left to judgment.
+
+**For this lane specifically**: the architecture lane is **event-driven by
+charter**, so it lives in exception (a) by construction — it lands what
+dispatches bring. **The standing §9.0 family snapshot is its continuous work**,
+and it now carries the fleet line below.
+
 ### 9.0 THE GOAL IS COMPLETION — and a milestone is a WAYPOINT
 
 **From Thomas, 2026-08-23. This is the highest authority in this document, and
@@ -10007,6 +10111,16 @@ most likely to be read as one number.*
 **And the `declared-divergences` column is deliberately BESIDE the coverage
 number, never inside it** (§5.0a): **5 rows across 3 tiers**, all gated both
 ways by the shared checker.
+
+**AND THE SNAPSHOT NOW CARRIES A FLEET LINE, IN THREE NUMBERS** — because the
+one-word version was the defect filed above:
+
+> **`N lanes with assigned rungs · M executing · K building`**
+
+**Never "N lanes live".** The three can differ in every pair, and the compressed
+form **answers whichever question the reader brought.** *This line is the
+coordinating role's own correction, carried in the place the family's numbers
+are read.*
 
 **AND IT IS A `###` SECTION, NEVER A `##` ENTRY — a requirement this rule owed
 from the start and did not carry** (found 2026-08-24 by the heading guard, three

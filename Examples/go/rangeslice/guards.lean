@@ -101,8 +101,8 @@ def allFFBody : List Stmt :=
     .ret [(.lit (.boolV true))] ]
 
 def prog : FuncTable :=
-  [ ("digitZero", ⟨["dst"], digitZeroBody⟩),
-    ("allFF",     ⟨["b"], allFFBody⟩) ]
+  [ ("digitZero", ⟨["dst"], false, digitZeroBody⟩),
+    ("allFF",     ⟨["b"], false, allFFBody⟩) ]
 
 /-! ## The worlds. One backing array each; the argument is a WINDOW. -/
 
@@ -180,7 +180,7 @@ ever forks from `execLoop`, this row breaks. -/
                   (some (.binary .lt (.ident "i") (.builtin1 "len" (.ident "dst"))))
                   (some (.incDec "i" true))
                   [ .assignIndex (.ident "dst") (.ident "i") (.lit (byt 48)) ] ]
-        let pHand : FuncTable := [("digitZero", ⟨["dst"], byHand ++ [.ret [(.builtin1 "len" (.ident "dst"))]]⟩)]
+        let pHand : FuncTable := [("digitZero", ⟨["dst"], false, byHand ++ [.ret [(.builtin1 "len" (.ident "dst"))]]⟩)]
         (match (callFunction prog 64 "digitZero" [mid]) dotBase,
                (callFunction pHand 64 "digitZero" [mid]) dotBase with
          | .ok (.ok (.intV _ a), wa), .ok (.ok (.intV _ b), wb) =>
@@ -218,7 +218,7 @@ def clobberBody : List Stmt :=
         .assign "i" (i64 100) ],
     .ret [(.ident "n")] ]
 
-def clobberProg : FuncTable := [("count", ⟨["s"], clobberBody⟩)]
+def clobberProg : FuncTable := [("count", ⟨["s"], false, clobberBody⟩)]
 
 /-- a 5-element backing array, ranged over whole -/
 def fiveW : GoWorld :=

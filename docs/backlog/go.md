@@ -30,7 +30,8 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G20 fixed arrays `[N]T` | `da9a7bc` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G23 multi-value returns | `9a6d6ad` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
-| §G24 `math/bits` complete + constants | `eb1e8b0` | **687 / 3,803 (18.1%)** | **594 / 2,743 (21.7%)** |
+| §G24 `math/bits` complete + constants | `eb1e8b0` | 687 / 3,803 (18.1%) | 594 / 2,743 (21.7%) |
+| §G25 variadics | *filled in next* | **739 / 3,803 (19.4%)** | **644 / 2,743 (23.5%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -3105,3 +3106,123 @@ substitutions (`GoWorld`/`Mem`, `Panic`/`Refusal`, `SpecRef`/`CDetail`,
 `Unit`/`Mem`) and nothing else.
 
 *Renumber into your sequence or close it — the call is yours.*
+
+---
+
+## G25 — VARIADICS: packing allocates, spreading does not; +52 predicted, +52 measured (2026-08-24)
+
+### THE CENSUS THAT CHOSE THIS RUNG OVER `fmt`
+
+`fmt` was the presumed next step. The census says it is a rider, not a
+rung. Split by what each `fmt` selection needs (library-only, 2,396 —
+reconciling exactly with §G21's figure):
+
+| needs | selections | share |
+| --- | ---: | ---: |
+| variadics **and** verb parsing | 2,105 | **87.9%** |
+| variadics only | 274 | 11.4% |
+| neither | 17 | 0.7% |
+
+Over all of `$GOROOT/src` (6,403) the split is the same to a tenth.
+
+Priced as REACH, the two halves are not close:
+
+| vocabulary | all of `src` | library |
+| --- | ---: | ---: |
+| baseline (§G24) | 687 | 594 |
+| **+ variadics alone** | **739 (+52)** | **644 (+50)** |
+| + variadics + `fmt` minus the `Fprint` family | 742 (+3) | 646 (+2) |
+| + variadics + ALL of `fmt` | 742 (+3) | 646 (+2) |
+
+**Variadics are worth seventeen times what `fmt` adds on top**, and the
+`Fprint` family costs nothing extra — so `io.Writer` was never the
+binding constraint, though 2,493 of `fmt`'s 6,403 selections (38.9%) are
+`Fprintf`/`Fprintln`/`Fprint` and it would have been natural to assume
+interfaces gated them.
+
+Two structural findings:
+
+* **`fmt` without variadics is not a rung at all** — every one of its
+  entry points is variadic. The ordering was never a choice.
+* `fmt` contributes **+3 against 6,403 call sites**. Call-site frequency
+  is not reach (§G21's lesson, third reproduction).
+
+Variadics also stand on their own: **520** variadic parameter
+declarations, **1,757** spread call sites, **224** distinct variadic
+function names — a consumer base far wider than `fmt`.
+
+### THE VALUE MODEL: the marker cannot live at the call site
+
+`f(1,2,3)` packs its surplus arguments into a slice **only if `f` was
+declared `f(xs ...T)`**; the same call text against a fixed-arity `f` is
+an arity error. So the callee's signature decides, and `FuncTable` gained
+a variadic marker — `List (String × List String × Bool × List Stmt)`.
+`arityOk` states the fixed and variadic rules in one place so the three
+call paths cannot drift.
+
+### THE ACCEPTANCE: one callee, two call forms, opposite aliasing
+
+Measured against `gc` with a callee that writes `xs[0] = 'Z'`:
+
+| call | the CALLER's slice afterwards |
+| --- | --- |
+| `clobber(s...)` | **`"Zbc"`** — the callee ALIASED it |
+| `clobber(a, b, c)` | **`"abc"`** — packing gave it a FRESH array |
+
+The function is identical; only the call form differs. **A model with one
+code path for both fails one row whichever way it chooses** — it cannot
+pass both. That is why `callDots` is its own node rather than a flag: the
+two forms differ observably, and §G14's rule is that a distinction the
+frontend can make must not be re-made inline.
+
+`clobber()` returns **0** — a variadic parameter with no arguments is a
+slice of length zero, and it always exists.
+
+13 guards, every value `printf`-ed from `gc`, **5 non-vacuity flips run**
+including both halves of the aliasing pair.
+
+### THE PREDICTION
+
+Called in §G25's census **before building**: `687 → 739` and
+`594 → 644`. Measured after: **`687 → 739` and `594 → 644`.**
+
+Third consecutive exact reach prediction (§G20 `[N]T` +76, §G24
+`math/bits` +7, now +52). The instrument that makes them is
+`construct_census.go --reach` plus the package-aware probe; the practice
+that makes them honest is pricing the rung before writing the code, so
+the number cannot be fitted afterwards.
+
+### A SETTLED PROOF MOVED, AND WAS PUT BACK
+
+`bitLen_correct` broke: its arity hypothesis named the inline length
+comparison that `arityOk` replaced. It is one line — `harity` in place of
+`hlen`, plus `bindBySig` in the simp set — and the theorem is unchanged.
+Worth recording because it is the second time a walker-wide refactor
+touched §G15's proof (§G23's n-ary `.ret` was the first), and both times
+the fix was a hypothesis restatement rather than a re-proof. That is the
+payoff of the spec-half/interpreter-half split: the mathematics did not
+move, only the interpreter row that names the check.
+
+### NEXT
+
+`fmt` is now unblocked but priced at **+3 / +2**, which does not justify
+verb-parsing semantics yet. The next rung should be re-censused from the
+current frontier rather than assumed — with variadics landed, the
+frontier table is stale and `Ellipsis` has left it.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+### VERDICT
+
+`tools/triad.sh --lane go --classify --gates '…'` — **green**.
+
+* **Tree certified**: `dae3ca43c408558869c1e6e61ce79a330d2dbfa3`, verified
+  equal to this landing's working tree, and recorded in the greens ledger
+  against ticket `1787573505393285000-44296-go` with
+  `Examples.go.variadic.guards` among its targets.
+* **Elaboration witness**: **36 Built, 2 Replayed** — all twelve Go-tier
+  modules **Built**, `Examples.go.variadic.guards` and
+  `LeanModels.Go.Stmt` among them.
+* Queued 139 s; build phase 16 s.
+* `docs_check` 91/91; `diff_test` **1,500 cases, 0 failed**;
+  `script_corpus` 65/0; resolver self-test **13/13**.

@@ -23,6 +23,7 @@ rung 1's figures after three inches had widened it; the current state:
 | 9 (§G22) | **resolved package calls** (`callPkg`) — rung E1 of the extractor tier; `LeanModels/Go/Packages.lean` holds the models |
 | 10 (§G23) | **multi-value returns**: n-ary `Flow.returned` and `ret`, `assignCall` destructuring with a real blank `_`, Go's redeclaration rule |
 | 11 (§G24) | `math/bits` completed (14 functions), package CONSTANTS (`pkgConst`), and `PkgOutcome` so a defined panic is not a gap |
+| 12 (§G25) | **variadics**: a `FuncTable` variadic marker, packing into a FRESH slice, and `callDots` spreading the caller's own |
 
 **Do not quote a reach figure here.** Two earlier versions of this header
 carried one and both went stale, and §G19 found the second was not even
@@ -187,6 +188,19 @@ inductive Expr where
   distinguishes them: `bits.UintSize()` is an error, and a model that let
   a constant be called would accept a program `gc` rejects. -/
   | pkgConst (pkg : String) (name : String)
+  /-- `f(a, b, xs...)` — the SPREAD call, where the final argument is
+  already a slice and is passed through rather than packed.
+
+  Its own node, not a flag on `.call`, because the two forms differ
+  OBSERVABLY and the difference is the rung's acceptance case. Measured
+  against `gc` with a callee that writes `xs[0] = 'Z'`:
+
+      clobber(s...)    -> the caller's slice becomes "Zbc"   ALIASED
+      clobber(a, b, c) -> the caller's slice stays  "abc"    FRESH
+
+  Packing allocates; spreading does not. A model with one code path for
+  both gets one of these rows wrong whichever way it chooses. -/
+  | callDots (name : String) (fixed : List Expr) (spread : Expr)
   deriving Repr, Inhabited
 
 /-- Statements, rung 1. -/
@@ -449,13 +463,69 @@ def bindParams : List String → List GoVal → GoM Unit
   | _, [] => pure ()
   | n :: ns, v :: vs => do bindLocal n v; bindParams ns vs
 
-/-- A program's function table: name to (parameter names, body).
+/-- Bind a call's arguments, PACKING the surplus when the callee is
+variadic.
+
+Inside `func f(a int, xs ...T)`, `xs` is an ordinary `[]T` — the spec is
+explicit that the parameter "is a slice" — so packing allocates a fresh
+backing array and binds a header to it. Two consequences the acceptance
+case turns on:
+
+* `f()` with no variadic arguments binds `xs` to a slice of length **0**,
+  not to `nil` and not to nothing. The parameter always exists.
+* the packed slice is FRESH, so writing through `xs` inside the callee
+  cannot reach any caller's array. A model that aliased the caller's
+  arguments would pass every read-only test.
+
+`arity` is checked by the caller, so this is total. -/
+def bindParamsVariadic (params : List String) (vals : List GoVal) : GoM Unit := do
+  match params.reverse with
+  | [] => pure ()
+  | last :: firstsRev =>
+      let firsts := firstsRev.reverse
+      let fixed := vals.take firsts.length
+      let rest := vals.drop firsts.length
+      bindParams firsts fixed
+      -- a FRESH backing array: the callee's `xs` is its own storage
+      let w ← get
+      let a := w.nextAddr
+      set { w with nextAddr := a + 1, store := (a, .arrayV rest) :: w.store }
+      bindLocal last (.sliceV a 0 rest.length rest.length)
+
+/-- Does this argument count fit this signature?
+
+Variadic: at least the fixed parameters. Fixed: exactly. Stated once so
+the three call paths cannot drift (`docs/backlog/go.md` §G25). -/
+def arityOk (params : List String) (vari : Bool) (n : Nat) : Bool :=
+  if vari then n + 1 ≥ params.length else n == params.length
+
+/-- Bind a SPREAD call. The variadic parameter is bound to the caller's
+slice header itself — no fresh backing array — which is why a write
+through it inside the callee reaches the caller. -/
+def bindBySpread (params : List String) (fixed : List GoVal) (sp : GoVal) : GoM Unit := do
+  match params.reverse with
+  | [] => pure ()
+  | last :: firstsRev => do
+      bindParams firstsRev.reverse fixed
+      bindLocal last sp
+
+/-- Bind by signature — the one entry point the call paths share. -/
+def bindBySig (params : List String) (vari : Bool) (vals : List GoVal) : GoM Unit :=
+  if vari then bindParamsVariadic params vals else bindParams params vals
+
+/-- A program's function table: name to (parameters, **variadic?**, body).
 
 **Program text, not world state.** `GoWorld` is declared before `Stmt`
 and so cannot mention it, but the deeper reason is that a function table
 does not change as a program runs — threading it as a parameter says so,
-and keeps `GoWorld` about the things that do move. -/
-abbrev FuncTable := List (String × List String × List Stmt)
+and keeps `GoWorld` about the things that do move.
+
+The variadic marker cannot live at the call site. `f(1,2,3)` packs its
+surplus arguments into a slice only if `f` was DECLARED `f(xs ...T)`, and
+the same call text against a fixed-arity `f` is an arity error — so the
+callee's signature is what decides, and the walker must be able to read
+it (`docs/backlog/go.md` §G25). -/
+abbrev FuncTable := List (String × List String × Bool × List Stmt)
 
 def asBool (v : GoVal) : GoM Bool :=
   match v with
@@ -654,6 +724,37 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
       | none =>
           refuseGo .environment (SpecRef.spec "Constants")
             s!"{pkg}.{name} is not modelled"
+  | f + 1, .callDots name fixed spreadE => do
+      match prog.find? (fun d => d.1 == name) with
+      | none => refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
+      | some (_, params, vari, body) =>
+          if !vari then
+            -- `f(xs...)` on a fixed-arity function does not compile in Go.
+            refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+              s!"{name}: spread call on a non-variadic function"
+          else if fixed.length + 1 != params.length then
+            refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+              s!"{name}: wrong argument count"
+          else do
+            let fvals ← evalArgs prog f fixed
+            match ← evalExpr prog f spreadE with
+            | .sliceV b o l c => do
+                let saved := (← get).locals
+                bindBySpread params fvals (.sliceV b o l c)
+                let r ← execSeq prog f body
+                modify (fun w => { w with locals := saved })
+                match r with
+                | .returned [v] => pure v
+                | .returned [] | .normal => pure GoVal.nilV
+                | .returned vs =>
+                    refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+                      s!"{name} returns {vs.length} values in a single-value context"
+                | _ =>
+                    refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
+                      s!"{name}: break or continue crossed a function boundary"
+            | _ =>
+                refuseGo .unsupportedConstruct (SpecRef.spec "Passing_arguments")
+                  s!"{name}: spread of a non-slice"
   | f + 1, .call name args => do
       match prog.find? (fun d => d.1 == name) with
       | none =>
@@ -662,8 +763,8 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
           -- by climbing a rung. **Conversions do not reach here** — they
           -- are `Expr.convert`, emitted by the frontend.
           refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
-      | some (_, params, body) =>
-          if params.length != args.length then
+      | some (_, params, vari, body) =>
+          if !arityOk params vari args.length then
             refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
               s!"{name}: wrong argument count"
           else do
@@ -672,7 +773,7 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
             -- an argument names a variable the callee also has.
             let vals ← evalArgs prog f args
             let saved := (← get).locals
-            bindParams params vals
+            bindBySig params vari vals
             let r ← execSeq prog f body
             modify (fun w => { w with locals := saved })
             match r with
@@ -772,14 +873,14 @@ def evalCallValues (prog : FuncTable) : Nat → Expr → GoM (List GoVal)
   | f + 1, .call name args => do
       match prog.find? (fun d => d.1 == name) with
       | none => refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
-      | some (_, params, body) =>
-          if params.length != args.length then
+      | some (_, params, vari, body) =>
+          if !arityOk params vari args.length then
             refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
               s!"{name}: wrong argument count"
           else do
             let vals ← evalArgs prog f args
             let saved := (← get).locals
-            bindParams params vals
+            bindBySig params vari vals
             let r ← execSeq prog f body
             modify (fun w => { w with locals := saved })
             match r with
@@ -1005,13 +1106,13 @@ def callFunction (prog : FuncTable) (fuel : Nat) (name : String)
     (args : List GoVal) : GoM GoVal := do
   match prog.find? (fun d => d.1 == name) with
   | none => refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
-  | some (_, params, body) =>
-      if params.length != args.length then
+  | some (_, params, vari, body) =>
+      if !arityOk params vari args.length then
         refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
           s!"{name}: wrong argument count"
       else do
         let saved := (← get).locals
-        bindParams params args
+        bindBySig params vari args
         let r ← execSeq prog fuel body
         modify (fun w => { w with locals := saved })
         match r with

@@ -113,11 +113,11 @@ def rev8expected : List UInt8 :=
 
 /-- The two functions, transcribed. -/
 def prog8 : FuncTable :=
-  [ ("Len8", ["x"],
+  [ ("Len8", ["x"], false,
       -- `int(len8tab[x])` — a CONVERSION of a string INDEX, which is
       -- exactly the two constructs this rung added.
       [.ret [(.convert "int" (.index (.lit (.stringV len8tab)) (.ident "x")))]]),
-    ("Reverse8", ["x"],
+    ("Reverse8", ["x"], false,
       [.ret [(.index (.lit (.stringV rev8tab)) (.ident "x"))]]) ]
 
 /-- Run one of them on a concrete byte. -/

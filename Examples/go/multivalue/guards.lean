@@ -81,7 +81,7 @@ def add128Body : List Stmt :=
       (.callPkg "math/bits" "Add64" [.ident "hi", u64 0, .ident "c"]),
     .ret [.ident "lo", .ident "hi"] ]
 
-def prog : FuncTable := [("add128", ⟨["lo", "hi", "x"], add128Body⟩)]
+def prog : FuncTable := [("add128", ⟨["lo", "hi", "x"], false, add128Body⟩)]
 
 private def emptyW : GoWorld := { store := [], nextAddr := 0, locals := [] }
 

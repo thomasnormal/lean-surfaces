@@ -166,7 +166,7 @@ def mulAddBody : List Stmt :=
     .ret [ .convert "uint64" (.binary .add (.ident "hi") (.ident "cc")),
            .convert "uint64" (.ident "lo") ] ]
 
-def prog : FuncTable := [("mulAddWWW_g", ⟨["x", "y", "c"], mulAddBody⟩)]
+def prog : FuncTable := [("mulAddWWW_g", ⟨["x", "y", "c"], false, mulAddBody⟩)]
 
 private def runMul (x y c : Int) : Option (Int × Int) :=
   match (evalCallValues prog 256 (.call "mulAddWWW_g" [ue x, ue y, ue c])) emptyW with

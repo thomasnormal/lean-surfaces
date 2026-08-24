@@ -108,7 +108,7 @@ def printuintBody : List Stmt :=
         .assignOp .quo "v" (u64 10) ],
     .ret [(.slice (.ident "buf") (some (.ident "i")) none)] ]
 
-def prog : FuncTable := [("printuint", ⟨["v"], printuintBody⟩)]
+def prog : FuncTable := [("printuint", ⟨["v"], false, printuintBody⟩)]
 
 private def emptyW : GoWorld := { store := [], nextAddr := 0, locals := [] }
 

@@ -96,7 +96,7 @@ def bitLenBody : List Stmt :=
     .ret [(.ident "len")] ]
 
 /-- The program: one function, one parameter. -/
-def prog : FuncTable := [("bitLen", ["n"], bitLenBody)]
+def prog : FuncTable := [("bitLen", ["n"], false, bitLenBody)]
 
 /-- Run `bitLen` on a concrete input and read the integer back out. -/
 def bitLen (n : Int) : Option Int :=
@@ -426,11 +426,14 @@ theorem bitLen_correct (v : Nat) (hv : v < 2 ^ 64) (f : Nat)
   obtain ⟨g, rfl⟩ : ∃ g, f = g + 3 := ⟨f - 3, by omega⟩
   obtain ⟨w3, hw3⟩ := body_runs v hv g (by omega)
   have hfind : prog.find? (fun d => d.1 == "bitLen")
-      = some ("bitLen", ["n"], bitLenBody) := rfl
-  have hlen : ((["n"] : List String).length
-      != ([GoVal.mkInt uintK (v : Int)] : List GoVal).length) = false := rfl
+      = some ("bitLen", ["n"], false, bitLenBody) := rfl
+  -- §G25 replaced the inline length comparison with `arityOk`, which
+  -- states the fixed and variadic rules in one place. `bitLen` is not
+  -- variadic, so the check reduces exactly as the old one did.
+  have harity : (!arityOk (["n"] : List String) false
+      ([GoVal.mkInt uintK (v : Int)] : List GoVal).length) = false := rfl
   refine ⟨{ w3 with locals := [] }, ?_⟩
-  simp only [callFunction, hfind, hlen, Bool.false_eq_true, if_false]
+  simp only [callFunction, hfind, harity, Bool.false_eq_true, if_false, bindBySig]
   rw [run_bind_ok (run_get ({} : GoWorld))]
   rw [run_bind_ok (bindParams_ok v hv)]
   rw [run_bind_ok hw3]

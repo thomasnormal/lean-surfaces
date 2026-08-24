@@ -58,7 +58,7 @@ def itoaBody : List Stmt :=
       (.convert "byte" (.binary .add (.ident "val") (u64 48))),
     .ret [(.slice (.ident "buf") (some (.ident "i")) none)] ]
 
-def prog : FuncTable := [("itoa", ["buf", "val"], itoaBody)]
+def prog : FuncTable := [("itoa", ["buf", "val"], false, itoaBody)]
 
 private def byt (n : Nat) : GoVal := GoVal.mkInt IntKind.uint8 (n : Int)
 

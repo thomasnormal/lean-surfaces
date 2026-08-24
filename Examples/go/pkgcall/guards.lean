@@ -66,7 +66,7 @@ def ntz64Body : List Stmt :=
   [ .ret [(.callPkg "math/bits" "TrailingZeros64" [.convert "uint64" (.ident "x")])] ]
 
 def prog : FuncTable :=
-  [ ("log64", ⟨["n"], log64Body⟩), ("ntz64", ⟨["x"], ntz64Body⟩) ]
+  [ ("log64", ⟨["n"], false, log64Body⟩), ("ntz64", ⟨["x"], false, ntz64Body⟩) ]
 
 private def emptyW : GoWorld := { store := [], nextAddr := 0, locals := [] }
 

@@ -4431,3 +4431,56 @@ it.
 `triad.sh` **367 ok** (356 → 367), check 113, backlog-index 62, laws 45,
 sites 57, comment-forms 18, `--verify-guards` 44, docs_check 91/91. Fixtures
 only; live queue empty. No Lean executed.
+
+## 2026-08-24-qol-62 — the one manual sweep the guard's honest limit leaves
+
+Item 15's guard cannot see a copy older than itself, so this closes that gap
+once. Census of every lean-surfaces checkout on this box, classified by
+CONTENT IDENTITY against master (`55aa98c`), not by branch:
+
+```
+CHECKOUT             branch                triad.sh    check.sh    generations missing
+lean-coord           master @ 55aa98c      current     current     —
+lean-qol             (this lane)           current     current     —
+lean-softfloat       master @ 55aa98c      current     current     —
+lean-ada             ada-m2-inch3 @c235df7 behind 2    current     item15, item16
+lean-arch2           master @ a67a9b0      behind 2    current     item15, item16
+lean-surfaces-wasm   master @ 0f44b74      behind 2    current     item15, item16
+lean-surfaces        pyrebuild-monadic     behind 11   behind 3    item12, item15, item16
+lean-audit           master @ 4ea85f3      behind 28   behind 10   all
+lean-research        master @ 616ec4a      behind 31   ABSENT      all
+```
+
+Three current, three one generation back, three old. Every checkout except
+coord/qol/softfloat carries a **pre-guard** `triad.sh`, so none of them can
+refuse itself — which is the limit this sweep exists to cover.
+
+### The finding that is not about the guard at all
+
+**`lean-surfaces` (R-track) still runs the HIGH-WATER swap instrument.** Its
+`check.sh` predates item 8, so `--iterate` there has been refusing on
+`vm.swapusage` "used" — a mark of one bad minute held for the machine's
+uptime — for as long as the fix has existed. R-track has been in the forced
+one-shot-compile regime the whole time and would have no way to know the fix
+landed. That is a bigger live cost than any stale `triad.sh` in the table, and
+the census found it only because it looked at BOTH tools rather than the one
+the guard is about.
+
+`lean-audit` has no swap or pressure line at all, and `lean-research` has **no
+`check.sh`** — both predate the iterate feature.
+
+### And the census script reported absence as a category
+
+The first pass called `lean-research`'s missing `check.sh` **"local-work"** —
+because `git hash-object` on a nonexistent file returns empty, and empty
+matched no published blob, so it fell through to the "not a published version"
+arm. A missing file read as a lane's edit.
+
+**The absence family, in the instrument written to audit the others**, and it
+would have sent someone to review edits that do not exist. `ABSENT` is now its
+own state, tested before hashing. Every census wants that arm: *nothing* and
+*something unrecognised* are different answers.
+
+### Triad
+
+Audit only, no tool changed. No Lean executed.

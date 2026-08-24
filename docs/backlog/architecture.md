@@ -7110,3 +7110,99 @@ MISSING GATE rather than a recipe defect**, which moves the fix from this role's
 habit into `docs_check` — routed to the tools lane, noted in §7.2.
 
 Law rows: **MEAS-365…MEAS-371, STMT-132…STMT-133, OPS-100…OPS-103.**
+
+## 2026-08-24-architecture-83 — An argument resting on what the tier cannot do has an expiry date nothing tracks
+
+Fourteen from six sources: pyc's `except_builtin` inch (`c8d46c8`, ticketed),
+QoL's census self-correction (`771ed1c`, merged), analog A13 (`130dd20`,
+ticketed), SV's `slotStep` (in tenure), Go `§G26` and SoftFloat's arrival.
+**Two are corrections of the coordinating role; one is a lane correcting a story
+that flattered both of us.**
+
+**(1) §5.0a — THE EXPIRY LAW, generalizing three instances**, each **true when
+written**.
+
+> **An argument resting on what the tier CANNOT DO has an expiry date nothing in
+> the tree tracks.**
+
+Paired with the epistemic-boundary discriminator as its temporary look-alike: *we
+cannot construct that yet* wears the same words as *no one can*. **A cannot-claim
+now owes two things** — a witness attempt at filing time, **and** a tracking
+mechanism: **cite the limitation BY NAME, so the inch that removes it can grep
+for its dependents.** *The retirement-condition mechanism moved from the row to
+the argument; the lane that lifts a limitation is the only lane guaranteed to
+know it is gone.*
+
+**(2) §5.3 — A VACUOUS FLIP CAUGHT PRE-LANDING.** The witness's **n=1 never
+divides by zero** — it would have flipped `unsupported`→`match` **without
+entering the handler**; only **n=0** proves the catch. **A flip must exercise the
+behaviour it certifies, not merely stop refusing** — and the standing question is
+*what would this row do if the new code were deleted?*
+
+**(3) §9.1 — `set -e`'s `&&` EXEMPTION, the gate-vs-comment family's recursive
+case.** `git rebase && echo` puts the rebase in an `&&` list, **exempt from
+`set -e`**: *the remedy for a stuck channel became a new way to be stuck.* Run
+alone, read `$?`. **A repair to a control is a control, and gets the control's
+audit, not the repair's.**
+
+**(4) §9.0 — AN AUDIT'S SCOPE DECLARATIONS BELONG IN ITS OUTPUT.** *"Neither the
+reach nor the labelling was stated in the table, which is what let a wrong row
+look authoritative."* **Rows present with no boundary drawn is a false claim of
+completeness made by the layout.**
+
+**(5) §9.0 — THE ANTI-FLATTERING CORRECTION.** *"The inversion never happened —
+the arithmetic was always `100-f`; only the label moved."* R-track's refusals were
+real and correct; **no failure window exists.** A hypothesis **both parties wanted
+true**, killed by reading two `printf` lines. **The first instance where the
+incentive pointed at the FINDING rather than at a person** — and the cost of
+getting it wrong would have been a law minted on an incident that never occurred.
+
+**(6) §9.0 — AN INSTRUMENT RETIRING ITSELF.** *"The guard remains the durable
+answer; this sweep is one-time evidence, not a repeatable instrument."* **The
+expiry law applied to an instrument instead of an argument.**
+
+**(7) §9.0 — THE AUDIT PAID BY NOT FINDING WHAT IT LOOKED FOR.** Coordinates
+fine; the blocker was **the deck's physics** (a sense amp regenerates). *From the
+proof side it would have surfaced as a failed `exact` deep in a tactic block;
+from the coordinates it surfaced **before a tactic ran**.* **An error stated in
+the domain's vocabulary instead of the prover's is what a structured audit buys.**
+
+**(8) §9.0 — DIRECTIONAL COMPLETENESS, the FOURTH AXIS** after denominator,
+numerator and sign. **A kit built from settling circuits is complete for settling
+and silently missing a direction for regenerating ones** — decay and growth are
+not one obligation with a sign flipped; only one falls out of `add_one_le_exp`.
+
+**(9) §9.0 — IMPORT CLOSURE IS A PER-CONSUMER FACT.** *Three decks having it says
+nothing about the fourth* — the unit defect in the substrate, and the direction
+lanes get wrong is **who is not getting it at all.**
+
+**(10) §5.4b — THE ALMOST-IDENTICAL WRONG MODEL AS THE ACCEPTANCE TEST'S
+TARGET.** *The loop is a RECURSION, not a sequence*; a one-pass-per-region model
+**reads almost identically and drops §4.4's iteration rule exactly.** **Point the
+gate at the near-miss** — the wrong model satisfies every property the right one
+has minus the one nobody stated.
+
+**(11) §3.2 — SECOND `liftRes` CONVERGENCE, on a NAME.** Two tiers independently
+named the `Res`-to-monad bridge identically. **Record convergences on names with
+the same weight as convergences on shapes** — naming is the cheaper instrument
+and fires earlier.
+
+**(12) §9.0b — SELECTION COUNT IS NOW THE MOST RELIABLE WAY TO PICK WRONG**
+(`fmt` at 9.5× `strconv`'s selections and one-sixth its reach; **fourth
+reproduction** — a proxy wrong four times of four is a signal with the sign
+reversed). Plus `syscall` **skipped with a law**: **a package the model will never
+run is not one it can be credited for.**
+
+**(13) §7.1a — THE COORDINATOR'S CITATIONS ARE CLAIMS** (against me). The
+dispatch's quoted identifiers did not match; **Go pushed on its own verified
+green.** *A mismatched stamp is exactly the thing that should not authorize a
+push* — the exemption came from the citation's function, never from an argument.
+
+**(14) §3.5 — A SPEC-CONFORMANCE FACT EXTRACTED FROM AN IMPLEMENTATION BY
+PROOF.** *"Core's rounding is no longer a bit procedure I reason AROUND — it IS
+round-half-to-even"*; **the four branches ARE §4.3.1's four cases.** With the
+method note paying twice: **the one guess-driven attempt turned 2 failing cases
+into 8** — *where the spec names one correct result, a guess is strictly
+dominated.*
+
+Law rows: **MEAS-372…MEAS-384, STMT-134…STMT-135, OPS-104…OPS-106.**

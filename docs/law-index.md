@@ -420,6 +420,19 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-369 | where a fact is stated at TWO TIMES, the later is the measurement and the earlier owes the word PROJECTION | `docs/family-architecture.md §5.4` |
 | MEAS-370 | a guard STATES ITS OWN LIMIT IN THE CODE — it closes only the skew that begins after it lands | `docs/family-architecture.md §7.2` |
 | MEAS-371 | a coordinator's SITUATIONAL statements need timestamps or instruments, exactly as any number does | `docs/family-architecture.md §7.1a` |
+| MEAS-372 | an argument resting on WHAT THE TIER CANNOT DO has an expiry date nothing in the tree tracks | `docs/family-architecture.md §5.0a` |
+| MEAS-373 | a limitation-dependent argument CITES ITS LIMITATION BY NAME, so the inch that lifts it can grep its dependents | `docs/family-architecture.md §5.0a` |
+| MEAS-374 | a FLIP must exercise the behaviour it certifies — ask what the row would do if the new code were deleted | `docs/family-architecture.md §5.3` |
+| MEAS-375 | an audit's SCOPE DECLARATIONS belong IN its output — reach and labelling printed elsewhere are not printed | `docs/family-architecture.md §9.0` |
+| MEAS-376 | a hypothesis BOTH PARTIES WANT TRUE gets the cheapest check first — nobody present is positioned to doubt it | `docs/family-architecture.md §9.0` |
+| MEAS-377 | a one-time SWEEP is not a repeatable instrument — state the single-use scope and keep the guard | `docs/family-architecture.md §9.0` |
+| MEAS-378 | DIRECTIONAL COMPLETENESS — a kit is complete only for the corpus that built it (fourth axis) | `docs/family-architecture.md §9.0` |
+| MEAS-379 | an audit that CONFIRMS its subject is a result — eliminating the cheap explanation makes the expensive one legible | `docs/family-architecture.md §9.0` |
+| MEAS-380 | a kit is shared only where it is IMPORTED — import closure is a PER-CONSUMER fact | `docs/family-architecture.md §9.0` |
+| MEAS-381 | SELECTION COUNT is the most reliable way to pick WRONG — rank by reach (fourth reproduction) | `docs/family-architecture.md §9.0b` |
+| MEAS-382 | a package the model will NEVER RUN is not one it can be credited for | `docs/family-architecture.md §9.0b` |
+| MEAS-383 | a coordinator's cited pids, shas and trees are CLAIMS like any other; a mismatched stamp authorizes nothing | `docs/family-architecture.md §7.1a` |
+| MEAS-384 | independent identical NAMING is the same evidence as independent identical design | `docs/family-architecture.md §3.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -561,6 +574,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-131 | a table the PROGRAM CANNOT CHANGE is a parameter; the world holds what EXECUTION mutates | `docs/family-architecture.md §5.6` |
 | STMT-132 | where a def's matcher has NO EQUATIONS, SPECIALISE it at the argument you care about — surgery is the last resort | `docs/family-architecture.md §7.1a` |
 | STMT-133 | the stranded route needs EQUATIONS, the open route needs only REDUCTION — open exactly when the discriminant is string-free | `docs/family-architecture.md §7.1a` |
+| STMT-134 | a branch structure PROVED to be a spec clause's case split is a spec-conformance fact, not an implementation detail | `docs/family-architecture.md §3.5` |
+| STMT-135 | point the acceptance test at the ALMOST-IDENTICAL WRONG MODEL, not at the design | `docs/family-architecture.md §5.4b` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -737,6 +752,9 @@ numbers below are the register's own.
 | OPS-101 | a refusal naming a fix that DOESN'T WORK is worse than no refusal — execute the remedy before shipping it | `docs/family-architecture.md §5.4` |
 | OPS-102 | IDENTITY, NOT ANCESTRY: matches-nothing = local work, never behind; two states make a guard refuse its own maintainer | `docs/family-architecture.md §7.2` |
 | OPS-103 | a coordinator's MERGE RECIPE is a tool — same gate audit; run the all-docs marker scan after EVERY merge | `docs/family-architecture.md §7.2` |
+| OPS-104 | `set -e` DOES NOT APPLY INSIDE `&&` — run the command alone and read `$?` | `docs/family-architecture.md §9.1` |
+| OPS-105 | a REPAIR TO A CONTROL IS A CONTROL — it gets the control's audit, not the repair's | `docs/family-architecture.md §9.1` |
+| OPS-106 | where the spec names ONE correct result, a guess is strictly dominated — measured: 2 failing cases became 8 | `docs/family-architecture.md §3.5` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

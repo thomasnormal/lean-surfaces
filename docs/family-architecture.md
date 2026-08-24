@@ -1777,6 +1777,20 @@ about how this family builds proofs and not about one lemma:
   converged on by two independent designs is a design, not a workaround** —
   and that is the strongest evidence the backtracking `first` was the defect
   rather than the ambition.
+* **AND THE SAME SIGNAL HAS NOW FIRED ON A NAME RATHER THAN A DESIGN — SECOND
+  INSTANCE** (SV, in tenure). **Two tiers independently named the
+  `Res`-to-monad bridge `liftRes`**, identically and without contact.
+
+  > **THE SUBSTRATE'S VOCABULARY IS EMERGING BOTTOM-UP, and independent
+  > identical naming is the same evidence as independent identical design.**
+
+  **This is the `line`/`col` convergence's shape at ×3 arriving at ×2 on a
+  different kind of object** — and naming is the cheaper instrument, because it
+  costs nothing to observe and it happens before any code is shared. *When two
+  tiers reach for the same word for the same seam, the seam is real and the
+  substrate is late, not early.* **Record convergences on NAMES with the same
+  weight as convergences on shapes;** they are the earliest signal this family
+  gets that a component belongs in §3.2's list.
 
 **AND TWO PLACEMENT LAWS THE LANDING PRODUCED**, both cheap to state and both
 learned by nearly getting them wrong:
@@ -2690,6 +2704,29 @@ regions, better than anything CPython documents. For `+ − × ÷ √` and the
 comparisons, the standard names one correctly-rounded result for every
 input, and computing it is **decidable integer arithmetic on finite
 encodings**. There is nothing approximate about it.
+
+**AND THE TIER HAS NOW MADE THAT CONCRETE IN THE STRONGEST AVAILABLE FORM — A
+SPEC-CONFORMANCE FACT EXTRACTED FROM AN IMPLEMENTATION BY PROOF** (SoftFloat's
+arrival, ticketed).
+
+> **"Core's rounding is no longer a bit procedure I reason AROUND — it IS
+> round-half-to-even."** The four branches **ARE** §4.3.1's four cases.
+
+**This is the endgame shape for every mirror tier in this family, seen once.**
+The usual relationship between an implementation and a spec clause is *the
+implementation is believed to satisfy the clause*; here **the branch structure
+was PROVED to be the clause's case split**, which converts a body of bit
+manipulation from an obstacle to reason around into **a citable statement of the
+standard.** *A tier that can do this for a component stops needing a model of
+it.*
+
+**AND THE METHOD NOTE PAID TWICE, WHICH IS WHY IT IS RECORDED AND NOT JUST
+NOTED**: *the one guess-driven attempt made it WORSE — 2 failing cases became
+8.* **A guess in a domain with a decidable specification is strictly dominated**,
+because the answer is derivable and the guess is not even cheap: it costs the
+attempt plus the diagnosis of the six new failures. *Where the spec names one
+correct result, reading it is the fast path, and this is the second measurement
+that says so.*
 
 **The obstacle was believed to be Lean-internal, and on the pinned
 toolchain it no longer exists.** `docs/completeness.md` §6 records the
@@ -4101,6 +4138,37 @@ mechanism.**
 > * **YES** → a register row, with that condition, however distant.
 > * **NO — no experiment exists** → an **epistemic boundary**, not a debt.
 
+**AND THE DISCRIMINATOR NEEDS A COMPANION FOR THE OTHER SIDE OF THE SAME LINE,
+GENERALIZED FROM THREE INSTANCES** (pyc's `except_builtin` inch, `c8d46c8`,
+ticketed). Each of the three was **TRUE WHEN WRITTEN**, and the common factor is
+the finding:
+
+> **AN ARGUMENT RESTING ON WHAT THE TIER CANNOT DO HAS AN EXPIRY DATE NOTHING IN
+> THE TREE TRACKS.**
+
+**A cannot-claim is a measurement of the tier, and the tier is the thing most
+likely to change.** The epistemic boundary above is the *permanent* case — no
+experiment exists, ever — while these are its **temporary look-alikes**: *we
+cannot construct that yet* wearing the same words as *no one can*. **The
+distinction is invisible in the sentence and decisive for the decision built on
+it.**
+
+**So a cannot-claim now carries two obligations, and the second is the one this
+register was missing.** A **witness attempt at filing time** (§9.7's rule: the
+claim is that you tried and it failed, not that it would) — **and a TRACKING
+MECHANISM for the inch that lifts it**, because the first obligation says nothing
+about the day the limitation goes away.
+
+> **A LIMITATION-DEPENDENT ARGUMENT CITES ITS LIMITATION BY NAME, so the inch
+> that removes the limitation can GREP FOR ITS DEPENDENTS.**
+
+**This is the retirement-condition mechanism moved from the row to the
+argument.** *A declared divergence has a named condition and an audit that ages
+it; a cannot-claim buried in prose has neither* — and the cheap fix is not a
+second register but **a citable name in the sentence**, which turns the lifting
+inch into the auditor. *The lane that removes a limitation is the only lane
+guaranteed to know it is gone.*
+
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
 belongs**: in the artifact's output, admitted **12 times**, *where the claim is
@@ -5211,6 +5279,26 @@ be able to state **which paths were writable and which were the subject**, and a
 subject touched during a proof is **a finding, not a step.** *This lane proposed
 the edit twice; the guard that would have caught it is a list of paths, not more
 care.*
+
+**AND A VACUOUS FLIP WAS CAUGHT BEFORE IT LANDED, WHICH IS WHERE THIS FAMILY IS
+CHEAPEST** (pyc, same inch). The candidate witness used **n=1**, which **never
+divides by zero** —
+
+> **It would have flipped `unsupported` → `match` WITHOUT ENTERING THE HANDLER.
+> Only n=0 proves the catch.**
+
+> **A FLIP MUST EXERCISE THE BEHAVIOUR IT CERTIFIES, NOT MERELY STOP REFUSING.**
+
+**The two are indistinguishable in the scoreboard**, which is the whole hazard: a
+row moving from `unsupported` to `match` reads as *the feature now works*, and it
+is equally produced by *the test stopped needing the feature.* **Every scoreboard
+in this family has this hole**, because a verdict records the outcome and not the
+path taken to it.
+
+**The standing form is a question a lane can ask of any flip**: *what would this
+row do if the new code were deleted?* **A row that still passes is a row the
+feature did not earn** — and asking it costs one re-run, against a wrong number
+that survives every later audit because nothing in it looks wrong.
 
 ### 5.4 One census-instrument pattern per tier
 
@@ -7800,6 +7888,25 @@ a guard whose price has not arrived yet** — the same trade §5.0a already make
 with declared divergences: **register the debt while naming it is still
 cheap.**
 
+**AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
+ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
+
+> **The loop is a RECURSION, not a sequence. A one-pass-per-region model reads
+> almost identically and drops §4.4's iteration rule EXACTLY.**
+
+**Point the gate at the near-miss, not at the design.** A test written against
+the intended semantics passes for both models — *the wrong one satisfies every
+property the right one has, minus the one nobody thought to state* — so the only
+discriminating test is **the one built from the wrong model's specific
+consequence.**
+
+**And this is the inverted-nesting guard's rule generalized from a guard to a
+MODEL.** *A guard that exhibits the catastrophe fails only when the catastrophe
+is reachable*; here the catastrophe is **an entire alternative reading of the
+spec**, and the acceptance test's job is to be **the sentence that distinguishes
+them.** *When a lane can name the wrong model, the test writes itself; when it
+cannot, a green means the lane and the code agree — which was never in doubt.*
+
 **AND EVIDENCE-ISOLATION AS A TICKET-COMPOSITION PRINCIPLE** (SV, same tenure).
 The new `Prim.lean` was **held OUT of the build and elaborated via gates**, so
 **a red build could not take the retirement evidence down with it.**
@@ -8707,6 +8814,23 @@ proofs"*) were **each corrected by lane measurement.**
 from different lanes, against the role that dispatches their work, is what makes
 *claims, not claimants* a **practice** — and it is cheap to sustain **only while
 the measurement, not the disagreement, is what gets published.**
+
+**AND THE RULE REACHED THE COORDINATOR'S OWN CITATIONS, WHICH IS THE LAST PLACE
+IT HAD BEEN EXEMPT** (Go, ticket correction). The dispatch quoted identifiers
+that **did not match**; the lane pushed **on ITS OWN verified green** and said
+so.
+
+> **A MISMATCHED STAMP IS EXACTLY THE THING THAT SHOULD NOT AUTHORIZE A PUSH.**
+
+> **A coordinator's cited pids, shas and trees are CLAIMS LIKE ANY OTHER.**
+
+**The exemption was never argued for; it came from the citation's function.** A
+relayed identifier arrives *as the evidence*, so a lane checking it feels like a
+lane doubting the record rather than reading it — **and the failure mode is
+silent, because a wrong identifier that nobody re-derives simply becomes the
+ledger's version of events.** *The lane that pushed on its own green did the
+cheaper thing and the correct one: a stamp you verified beats a stamp you were
+handed, at equal cost.*
 
 **And the two top tiers rank on different axes, which is worth saying plainly
 so a lane does not read the hierarchy as a single ladder.** *Cannot be stated*
@@ -11931,14 +12055,110 @@ own output** rather than silently scoring it.
 **So a coverage number now carries three things, and they fail independently**:
 the **denominator** (what could have disagreed), the **numerator** (what the
 family's definition admits), and the **SIGN** (which way the number is wrong).
+**And a FOURTH axis arrived from the analog tier's A13** (`130dd20`, ticketed):
+**DIRECTIONAL COMPLETENESS.**
+
+> **A kit built from SETTLING circuits is complete for settling and silently
+> missing a direction for REGENERATING ones. Decay and growth are not one
+> obligation with a sign flipped — only ONE of the two falls out of
+> `add_one_le_exp`.**
+
+**A kit's completeness is relative to the corpus that built it**, and the failure
+is silent because the missing direction is not a hole in a list — *it is a
+lemma-shaped absence that nobody notices while every deck they own settles.*
+**The generalization is the one the other three axes already teach**: a number, a
+kit and a library all describe the corpus that produced them, and **the honest
+statement names that corpus rather than the artifact.**
 **Two lanes quoting bounds in opposite directions and neither saying so is how a
 cross-tier table becomes unreadable** — 40% upper and 40% lower are not the same
 40%, and the difference is invisible in the digit.
+
+**AND THE AUDIT THAT FOUND IT PAID BY NOT FINDING WHAT IT LOOKED FOR** (same
+landing). The coordinates were **fine**; the blocker was **the deck's PHYSICS** —
+a sense amp *regenerates*.
+
+> **From the PROOF side the missing direction would have surfaced as a failed
+> `exact` deep in a tactic block. From the COORDINATES it surfaced as a property
+> of the deck's physics BEFORE A TACTIC RAN.**
+
+**Which is the clearest statement this register has of what a structured audit
+buys**: not a faster path to the same error message, but **an error stated in the
+domain's vocabulary instead of the prover's.** *A failed `exact` says a step did
+not close; a regenerating sense amp says which physics the kit does not cover* —
+and only the second tells a lane what to build.
+
+**And an audit's value is not conditional on its hypothesis being right.** The
+coordinate list was built to find a free coordinate and found none; **the pass
+that found nothing is what promoted the real blocker into view**, because
+eliminating the cheap explanation is what leaves the expensive one legible.
+*Report an audit that confirms its subject as a result, not as a wasted tenure.*
+
+**AND A KIT IS SHARED ONLY WHERE IT IS IMPORTED** (same landing).
+
+> **Three decks having it says NOTHING about the fourth. Import closure is a
+> PER-CONSUMER fact.**
+
+**The same unit defect the fleet line already carries, in the substrate**: *"the
+kit is shared"* is a summary of a set, and the coverage question is always
+**which members**. §3.1's grep discipline is the mechanical form — *list who
+imports it* — and this adds the direction lanes actually get wrong: **not who
+would be affected by moving it, but who is not getting it at all.**
 
 **And the instrument naming its own uncertain rows is the honest form of a lower
 bound**: not *"we may be under-counting"* in a caveat, but **a labelled row in
 the output**, countable by whoever reads it next. *A caveat is prose; a flagged
 row is data.*
+
+**AND AN AUDIT'S SCOPE DECLARATIONS BELONG IN ITS OUTPUT, WHICH IS THE SAME RULE
+ONE LEVEL UP** (QoL's census self-correction, `771ed1c`, merged). Three defects
+in the audit instrument, and the visibility clause is what makes them a law:
+
+> **Neither the REACH nor the LABELLING was stated in the table — which is what
+> let a wrong row look authoritative.**
+
+**A table is read by people who will never open the instrument**, so an
+undeclared scope is not a gap in the audit, it is **a false claim of
+completeness** made by the layout: rows present, no boundary drawn, therefore the
+boundary is the corpus. *The flagged-row rule above says an instrument names its
+uncertain rows; this says it names the EDGE OF ITS OWN REACH in the same place.*
+**An audit that knows its limits and prints them elsewhere has not printed
+them.**
+
+**AND THE CORRECTION ITSELF IS THE ITEM, BECAUSE IT WENT THE UNFLATTERING WAY.**
+The attractive hypothesis — an inversion window in which R-track's refusals were
+wrong — was **killed by reading two `printf` lines:**
+
+> **"THE INVERSION NEVER HAPPENED — the arithmetic was always `100-f`; only the
+> LABEL moved."**
+
+**Both parties wanted the sharper finding, and neither got it.** *"I'd rather say
+that plainly than accept the more flattering version — the sharper finding would
+have been more valuable, and it isn't what the evidence shows."* **R-track's
+refusals were real and correct; no failure window exists.**
+
+> **A HYPOTHESIS BOTH PARTIES WANT TRUE IS THE ONE THAT NEEDS THE CHEAPEST
+> CHECK RUN FIRST — because nobody in the conversation is positioned to doubt
+> it.**
+
+**This is *claims, not claimants* in its hardest direction: not a lane correcting
+a coordinator, but a lane correcting a story that flattered them both.** The
+register has been collecting the healthy-direction evidence; **this is the first
+instance where the incentive pointed at the FINDING rather than at a person**,
+and the cost of getting it wrong would have been a law minted on an incident that
+never occurred. *Two `printf` lines is the entire price of not doing that.*
+
+**AND THE INSTRUMENT RETIRED ITSELF IN FAVOUR OF THE MECHANICAL CONTROL** (same
+landing).
+
+> **"The GUARD remains the durable answer; this sweep is ONE-TIME EVIDENCE, not a
+> repeatable instrument."**
+
+**A sweep that answers a question once and a guard that answers it forever are
+different artifacts, and the sweep is the one that rots.** *Keeping it invites a
+later lane to re-run it and trust a number whose corpus assumptions have
+expired* — the expiry law above, applied to an instrument instead of an argument.
+**An instrument that states its own single-use scope is doing the same work as a
+row that names its retirement condition.**
 
 **TWO MORE LANES' NUMBERS, and one is calibration evidence in its own right.**
 
@@ -12266,6 +12486,29 @@ MEAS-2/MEAS-3 exist for exactly this: a named instrument at a fixed path, with a
 `ArrayType` (`go/ast` spells `[]T` and `[N]T` with one node) and **keeps the
 vocabulary as data**.
 
+**AND THE FOURTH REPRODUCTION HAS PROMOTED ONE PROXY FROM UNRELIABLE TO
+ACTIVELY MISLEADING** (Go `§G26`, merged).
+
+> **SELECTION COUNT IS NOW THE MOST RELIABLE WAY TO PICK WRONG.**
+
+`fmt` carries **9.5× `strconv`'s selections** and **one-sixth its reach.**
+**Four reproductions is past the point where this is a caution** — *a proxy that
+is wrong four times out of four is not noise, it is a signal with the sign
+reversed*, and the register should say so in the imperative: **rank by reach,
+and treat a high selection count as evidence AGAINST picking a package**, since
+the thing selections measure is how much surface a package touches, not how much
+of it the model can execute.
+
+**AND A CANDIDATE WAS SKIPPED WITH A LAW RATHER THAN A PREFERENCE** — `syscall`:
+
+> **A PACKAGE THE MODEL WILL NEVER RUN IS NOT ONE IT CAN BE CREDITED FOR.**
+
+*Reach is a claim about execution, so a denominator that includes the
+unexecutable is inflated at the source* — and this is the numerator/denominator
+discipline reaching **rung selection**, where it decides what work gets done
+rather than how a finished number reads. **Skipping it is not a gap in the
+scoreboard; counting it would have been.**
+
 **(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
 What it said:** *a construct measuring `+0` is not cheap, it is unreachable —
 not a rung at any price, strictly downstream of whatever co-occurs with it.*
@@ -12491,6 +12734,18 @@ independent of it and cheap:
   the contract.
 * **Four copies of a 6-line `git_rev` that all swallow their failure** and
   stamp `null` provenance. Same law, same direction: silent, flattering.
+* **AND THE REMEDY FOR A STUCK CHANNEL BECAME A NEW WAY TO BE STUCK** (pyc,
+  same inch). `git rebase && echo …` puts the rebase **in an `&&` list, which
+  EXEMPTS it from `set -e`** — so the guard added to catch unchecked failures
+  **created a differently-unchecked failure.**
+
+  > **`set -e` DOES NOT APPLY INSIDE `&&`. Run the command ALONE and read `$?`.**
+
+  **This is the gate-versus-comment family's recursive case, and it is the one
+  worth stating loudly**: *the fix for a silent failure is itself a candidate
+  silent failure*, and it inherits none of the scrutiny the original defect
+  earned — **because it arrives labelled as the fix.** *A repair to a control is
+  a control, and gets the control's audit, not the repair's.*
 
 Three one-line changes and one shared helper. **Not gated on the kit.**
 

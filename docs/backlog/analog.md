@@ -35,13 +35,16 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | `2026-08-24-analog-2` | `c34834e` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-3` | `5119cf6` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-4` | `494b850` | 8 / 24 | 4 / 21 | 9 / 21 |
-| `2026-08-24-analog-5` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-5` | `2cf53de` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-6` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
 
-**F2 numeric hypotheses discharged: 3 / 12** — `loaded_rc` (analog-3),
-`loaded_inverter` (analog-4), `dram_1t1c` write-zero (analog-5). The remaining
-9 split **by the shape of the world, not by the certificate**: 2 corner-boxed
-(A11 applies unchanged) and 7 in the `dram_1t1c`/`dram_sense_amp` family, where
-the pattern is now proved and the work is per-deck arithmetic.
+**F2 numeric hypotheses discharged: 4 / 12** — `loaded_rc` (analog-3),
+`loaded_inverter` (analog-4), `dram_1t1c` write-zero (analog-5),
+`dram_sense_amp` small-signal (analog-6). All four decks in the family now have
+one discharged exemplar; the remaining 8 are siblings of a proved pattern.
+
+**The certificate kit is now directionally COMPLETE** — decay above, decay
+below, growth below, growth above — which is what analog-6 found missing.
 
 **DECLARED DIVERGENCES: 0** — and the qualifier is part of the number.
 
@@ -667,3 +670,65 @@ first try in the scratch loop, and the real files were built once. The one cost
 was discovering that `Examples.spice.dram_1t1c.proof` had no olean yet — a
 scratch probe against an unbuilt module fails on the import, not on the proof,
 so the module has to be built once before the loop is worth anything.
+
+---
+
+## 2026-08-24-analog-6 — A13: the coordinate audit ran first, and found the gap somewhere else entirely
+
+**The audit, as `analog-5`'s law requires.** `dram_sense_amp`'s sites all run
+through `dramSenseWorld initialTrue initialComplement horizon`, which pins:
+
+| coordinate | status |
+| --- | --- |
+| `fabricated` | **PINNED** — `dramSenseAmpLayout.fabricated`, thresholds 1 V, betas 1e-4, caps 3e-13 |
+| `supply` | **PINNED at 5 V** — inside the world constructor |
+| `initialTrue` / `initialComplement` | free, but coupled: `5/2 ± initialDeviation` |
+| `horizon` | **FREE** |
+| `required` | **FREE** (performance theorem only) |
+
+**So the audit found FEWER free coordinates than `dram_1t1c`, not more.** Where
+`dram_1t1c` leaves `supply` free above the threshold — the finding that forced
+an explicit `hsupply` hypothesis — this deck pins it in the constructor. On the
+coordinate axis, `dram_sense_amp` was the *easier* deck.
+
+### AND THE BLOCKER WAS NOT A COORDINATE AT ALL
+
+The audit was looking for a free parameter and found a **missing direction**.
+`dramDifferentialSenseSmallSignalTrace initialDeviation time =
+initialDeviation * exp (1000000000 * time)` — a **growing** exponential, because
+a sense amplifier REGENERATES. Its `hsmall` hypothesis bounds that growth from
+ABOVE, and the F2 kit had three of the four directions:
+
+| direction | lemma | who needed it |
+| --- | --- | --- |
+| decay above | `exp_neg_le_of_pow_le` | every settling deck |
+| decay below | `one_sub_div_pow_le_exp_neg` | two-sidedness |
+| growth below | `one_add_div_pow_le_exp` | the `log` deadline |
+| **growth above** | **absent until now** | **the sense amp** |
+
+> **A kit built from settling circuits is complete for settling and silently
+> missing a direction for regenerating ones. Decay and growth are not the same
+> obligation with a sign flipped: bounding decay ABOVE and growth ABOVE need
+> different lemmas, and only one of them falls out of `add_one_le_exp`.**
+
+`exp_le_inv_sub_pow` closes it: `exp a ≤ (1/(1 - a/n))^n` for `a < n`, obtained
+by inverting the growth-below bound. `dram_sense_amp_small_signal_realizable_at_1ns`
+then discharges `hsmall` at a 100 mV deviation over one nanosecond —
+`exp 1 ≤ (10/9)^10` at split depth 10, and `(1/10)·(10/9)^10 < 1/2`. Axioms
+`[propext, Classical.choice, Quot.sound]`.
+
+**The audit paid for itself by not finding what it was looking for.** Had I
+started from the proof, the missing direction would have surfaced as a failed
+`exact` deep inside a tactic block; starting from the coordinates surfaced it as
+a property of the deck's *physics* — this circuit grows, the others shrink —
+before a single tactic ran.
+
+**Also found: `Circuit.Enclosure` was not in this module's import closure at
+all.** Neither the new lemma nor the previously landed ones were visible from
+`Examples/spice/dram_sense_amp/proof.lean`; the deck needed the import added.
+A kit is only shared where it is imported, and three decks having it says
+nothing about the fourth.
+
+**Next: A14 — the remaining 8 siblings.** Every deck in the family now has a
+worked exemplar, so these are instantiations rather than investigations. The
+coordinate audit stays first, and the direction audit joins it.

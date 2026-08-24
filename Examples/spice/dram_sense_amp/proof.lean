@@ -1,5 +1,6 @@
 import LeanModels.Spice.DramDifferentialSenseSpec
 import LeanModels.Circuit.Surface
+import LeanModels.Circuit.Enclosure
 
 namespace Examples.spice.dram_sense_amp.proof
 
@@ -778,6 +779,33 @@ theorem dram_sense_amp_small_signal_realizable
       initialDeviation,
     dram_sense_amp_small_signal_behavior
       hinitial hhorizon hsmall⟩
+
+/-- A13 INSTANTIATED.  `dram_sense_amp_small_signal_realizable` carried
+`hsmall` -- the bound that keeps the small-signal linearisation honest -- as a
+HYPOTHESIS.  At a 100 mV initial deviation over a one-nanosecond horizon it is
+now DISCHARGED: the regeneration factor is `exp 1`, certified above by the
+growth certificate at split depth 10 (`exp 1 ≤ (10/9)^10`), and
+`(1/10)·(10/9)^10 < 1/2`.
+
+This deck needed the one direction the F2 kit did not have.  Its deviation
+GROWS -- a sense amplifier regenerates -- so the honest bound is on growth from
+above, while every settling deck needed decay from above. -/
+theorem dram_sense_amp_small_signal_realizable_at_1ns :
+    ∃ boundary,
+      DramDifferentialSenseBehavior
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+        boundary () := by
+  refine dram_sense_amp_small_signal_realizable
+    (initialDeviation := 1 / 10) (horizon := 1 / 1000000000)
+    (by norm_num) (by norm_num) ?_
+  show dramDifferentialSenseSmallSignalTrace (1 / 10) (1 / 1000000000) ≤ 1 / 2
+  unfold dramDifferentialSenseSmallSignalTrace
+  have h1 : (1000000000 : ℝ) * (1 / 1000000000) = 1 := by norm_num
+  rw [h1]
+  have he : Real.exp (1 : ℝ) ≤ (10 / 9) ^ 10 :=
+    LeanModels.Circuit.exp_le_of_pow_le 10 (by norm_num) (by norm_num)
+      (by norm_num)
+  nlinarith [(Real.exp_pos (1:ℝ)).le]
 
 theorem dram_sense_amp_small_signal_performance_realizable
     {initialDeviation required horizon : ℝ}

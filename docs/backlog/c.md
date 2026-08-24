@@ -2576,3 +2576,207 @@ profile decision this landing declined to fake.
 **`unbound name` at 69 is now the largest single reason and is the first
 true semantics rung on this board.** Census before building, as always.
 
+
+---
+
+## 2026-08-24-c-22 — `unbound name` was not a missing feature. It was a WRONG LAW.
+
+`2026-08-24-c-21` left `unbound name` as the largest single reason on the
+board — **69 of 300** — and called it "the first true semantics rung".
+The census says it is a rung, but not the one that was named.
+
+### The census: 69 of 69
+
+Every one of the 69 unbound names is a **file-scope object** of the test's
+own translation unit. Not one is a local, a parameter, a function name or
+a typo. Measured against each test's own envelope:
+
+| | |
+| --- | ---: |
+| tests refusing on `unbound name` | **69** |
+| …where the name is a **file-scope object** | **69 (100 %)** |
+| …a local, parameter, function or enum constant | **0** |
+
+And of those objects: **35 have no initializer** (so §6.7.10p10
+zero-initializes them, exactly, with nothing to evaluate) and **34 have
+one**; by type, 39 scalar, 22 array, 8 struct/union.
+
+### The defect, and it is one line of the tier
+
+`callFn` started every frame at `env := []`. That is the rule *"no object
+declared outside a function is visible inside one"*, and C's rule is the
+opposite: §6.2.1p4, an identifier declared at file scope has file scope,
+which runs to the end of the translation unit.
+
+> **This was not a missing capability. It was a wrong law, and it read as
+> a missing capability because the corpus the tier grew up on passes
+> everything through parameters.** `ctx0 := { env := [] }` is a complete,
+> confident, wrong model of C's scoping, and nothing in `sunfish.c` could
+> tell — every one of its 58 functions takes what it needs as an argument.
+
+That is the sharpest form of the day's recurring shape. The instrument
+did not reveal a gap in the tier's vocabulary; it revealed a rule the tier
+had asserted and never been contradicted on.
+
+> **A corpus can only contradict the rules it exercises. A model validated
+> on one program has, for every rule that program does not use, an
+> untested assertion where it thinks it has a verified one — and those are
+> indistinguishable from inside.**
+
+### What landed
+
+**Tier**: `Program.globals : Env`, and `callFn` seeds `ctx0.env` from it —
+parameters bind ON TOP, so a parameter shadowing a global wins by being
+consed later, which is §6.2.1's block scope doing its own work.
+
+**Runner**: `setupGlobals` builds the objects — `allocZeroed` when there
+is no initializer (§6.7.10p10, exact), `alloc` (indeterminate) plus the
+tier's own `initObject` when there is one, so a half-built object refuses
+on `J.2(11)` instead of reading a fabricated 0. An object whose type the
+layout cannot size is **skipped**, staying unbound and loud, because
+binding it would need a size and inventing one is the fabricated-layout
+defect this lane refused two landings ago.
+
+### WHAT THE FAST LOOP COULD AND COULD NOT CHECK HERE
+
+Both changed files went through A17 before ticketing — the practice
+`2026-08-24-c-21` had to learn the hard way — and one of them **could not
+be checked whole**, for a reason worth recording:
+
+* `LeanModels/C/C23/Stmt.lean` — **exit 0, zero warnings.**
+* `LeanModels/C/Torture.lean` — **refused**: `` `globals` is not a field of
+  structure `Program` ``.
+
+That error is the INSTRUMENT, not the code. `lake env lean` writes no
+oleans — which is what makes A17 lock-free — so `Torture.lean` was checked
+against the `Stmt.olean` from before the field existed.
+
+> **A17 cannot check a file whose DEPENDENCY you just changed. It checks a
+> file against the tree's last BUILD, so the edit it is blindest to is the
+> one that moves an INTERFACE — which is the edit most worth checking.**
+
+Closed rather than carried: `setupGlobals` never mentions `Program`, so it
+was extracted verbatim into a scratch file and checked against the same
+stale oleans — **exit 0, zero warnings**. What stays unverified until the
+tenure is the single line `{ prog with globals := genv }`, named here
+rather than rounded away.
+
+### THE PREDICTION
+
+| bucket | now | predicted |
+| --- | ---: | ---: |
+| **scored** | 67 | **78**, band **62 – 115** |
+| `refused-unsupported` | 191 | ~175 |
+| `refused-ub` | 5 | ~8 |
+| `timeout` | 2 | ~4 |
+
+**The floor is BELOW the current score, and that is deliberate.** Every
+band so far has had a floor that was arithmetic. This one does not,
+because this change can REGRESS: a test that scores today while never
+touching a global may now fail during `setupGlobals` if one of its
+globals has an initializer the tier cannot run. That risk is real, it is
+not estimable from here, and a floor of 67 would have hidden it.
+
+Of the 69, 8 have struct globals that stay unsizeable, so ~61 can pass
+this wall. At the last two landings' conversion rate — about one in ten
+freed tests actually reaching a verdict — 78 is the point estimate, and
+the band's upper half is the fifth-wall exposure that has now appeared
+four times running.
+
+### VERDICT — GREEN, and the scoreboard CONVICTED THE MODEL for the first time
+
+Ticket `1787601875914569000-93535-crunga`:
+
+```
+[22:04:36] base: base 8cfca11 is AT the origin/master tip
+[23:25:56] LOCK ACQUIRED after 4819s as 'crunga 93535'
+[23:29:17] TRIAD DONE (build exit 0, gates green)
+```
+
+Classified **tier** this time (no `lakefile.toml` in the diff), 14 build
+jobs + 38 gate jobs, **exit 0, 0 `error:` lines**. docs_check 91/91;
+diff_test **1508 cases, 0 failed**; c_profile_probe 9/9; both
+`--selftest`s ok; `--offline` re-verified all 300 sha256.
+
+```
+gcc.c-torture 98/300 scored  (passed 96, failed 2)
+  the zeroes, kept apart: refused-unsupported 154, refused-libc 5,
+    refused-ub 10, timeout 2, not-ingested 1, not-parsed 30,
+    runner-error 0, not-fetched 0
+```
+
+**§9.0: 67 → 98/300 scored.** And `failed` is **2**, where it has been
+`0` every run since the scoreboard existed.
+
+### PREDICTED 78, band 62–115. ACTUAL 98 — inside, and this time HIGH.
+
+| bucket | predicted | actual |
+| --- | ---: | ---: |
+| **scored** | **78** (band 62–115) | **98** — inside, 20 over the point |
+| `refused-unsupported` | ~175 | **154** — 21 better than predicted |
+| `refused-ub` | ~8 | 10 |
+| `timeout` | ~4 | 2 |
+| `refused-libc` | — | 5 |
+
+Two bands running now, and the second one held for the opposite reason
+from the first: `2026-08-24-c-21` came in **3 above its floor** because
+almost every freed test hit another wall; this one came in **20 above its
+point** because they did not. **The conversion rate is not a constant** —
+it was ~10 % when the freed tests were unblocked at a DECLARATION, and it
+is ~50 % here, because a test unblocked by having its globals exist was
+otherwise ready to run. I had reused the earlier rate; the mechanism was
+different and the rate came with it.
+
+> **A conversion rate measured behind one wall does not transfer to the
+> next. What a fix frees is not "a test" — it is a test AT A PARTICULAR
+> POINT in its own execution, and how much is left after that point is
+> the whole quantity.**
+
+The floor being deliberately below the current score also paid: **no
+regression occurred**, `setupGlobals` broke nothing that was scoring, and
+the floor is what made that a checkable claim rather than a hope.
+
+### THE TWO FAILURES — and the register is opened for them
+
+A `failed` row is the only class of scoreboard row that can convict the
+model, so **`docs/c-declared-divergences.json` opens here** (§5.0a,
+schema `declared-divergences-1`, matching the ES/Python/Sv registers) with
+one row per failure. Neither is folded into a count and left there.
+
+**`c-div-1` — `20021127-1.c`: the MODEL IS RIGHT and the test still
+fails.** It declares `llabs`, calls `llabs(-1)`, and then DEFINES
+`long long llabs (long long b) { abort (); }`. It passes only if the
+implementation recognises `llabs` as a BUILTIN and never calls the
+definition. The model does the ordinary, correct thing — finds the
+definition and calls it — and reaches `abort`.
+
+> **The oracle is testing the COMPILER, not the language. A conformance
+> corpus contains tests a conforming semantics must fail, and a
+> scoreboard that cannot say so will eventually be "fixed" into agreeing
+> with them.**
+
+Retirement is named and NOT taken unilaterally: model the `<stdlib.h>`
+builtins by name, or class builtin-recognition tests out of the
+denominator with a named state — **the second is a scoreboard decision,
+and silently excluding tests a model cannot pass is how a conformance
+number stops meaning anything.**
+
+**`c-div-2` — `20010224-1.c`: OPEN, and recorded UNDIAGNOSED.** The test
+requires `bndpsd[1] == 140` (50+40+30+20); the model reached `abort`, so
+it computed something else, and **which step is wrong has not been
+determined**. The `model` field says exactly that instead of a guess, and
+lists the candidates it does not distinguish between — the
+`int16_t`/`short` spelling, §6.7.11p21's zero-fill of `masktab[5]` which
+`setupGlobals` performs here for the first time, the address-of-element
+arguments, and the loop's use of `j` mutated in its own body.
+
+The row carries a retirement condition that is really a deadline: **it
+must not survive a second landing unchanged.** An open-undiagnosed row
+that ages is a carried divergence that was never declared, which is the
+thing §5.0a exists to prevent.
+
+> **Write the row before you understand the defect. A divergence recorded
+> only once it is explained is a divergence that had a window in which it
+> was invisible — and that window is exactly when it is most likely to be
+> normalised.**
+

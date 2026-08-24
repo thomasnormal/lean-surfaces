@@ -1,0 +1,37 @@
+{
+ "schema": "declared-divergences-1",
+ "tier": "C",
+ "language_version": "C23 (N3220)",
+ "note": "family-architecture.md \u00a75.0a. A row here is a DEBT, never a verdict. This file is opened by 2026-08-24-c-22, the landing in which `lake exe c-torture-run` produced the C tier's first non-zero `failed` count (2 of 300). A `failed` row on the scoreboard is a test that RAN and reached abort(); it is the only class of scoreboard row that can convict the model, so every one of them is listed here with its diagnosis or with the explicit absence of one.",
+ "rows": [
+  {
+   "id": "c-div-1",
+   "kind": "oracle-shape",
+   "site": "gcc.c-torture/execute/20021127-1.c at pin 9e54d865. Scoreboard verdict: failed (reached abort()).",
+   "oracle": "The test declares `long long llabs (long long);`, calls `llabs(-1)`, and DEFINES `long long llabs (long long b) { abort (); }`. It passes only if the implementation recognises `llabs` as a builtin and folds the call without calling the definition in the file. Reaching the definition is the failure signal the test was written to produce.",
+   "model": "The model does the ordinary thing: `Program.find? \"llabs\"` finds the definition in the translation unit and calls it, so the call reaches `abort()`. THE MODEL IS BEHAVING CORRECTLY -- there is no C rule it is getting wrong. What it lacks is builtin RECOGNITION, which is a compiler optimisation and not a semantics.",
+   "inherited_from": null,
+   "declared": "2026-08-24",
+   "retirement_condition": "Either the tier models the `<stdlib.h>` builtins by name (widening the libc slice, which retires it as a pass), or the scoreboard classes builtin-recognition tests out of the denominator with a NAMED state. The second is a scoreboard decision and is NOT taken unilaterally: silently excluding tests a model cannot pass is how a conformance number stops meaning anything.",
+   "guards": [
+    "docs/c-torture-pin.json lists 20021127-1.c with its sha256, so the test cannot change under the pin without the fetch refusing"
+   ],
+   "why_not_a_refusal": "It is not a refusal because nothing was out of tier: every construct in the test is modelled, the call ran, and the program reached abort() exactly as a conforming implementation WITHOUT builtin folding would. The oracle and the model disagree about what the program means, and the oracle is testing the compiler rather than the language."
+  },
+  {
+   "id": "c-div-2",
+   "kind": "open-undiagnosed",
+   "site": "gcc.c-torture/execute/20010224-1.c at pin 9e54d865. Scoreboard verdict: failed (reached abort()).",
+   "oracle": "`int16_t bndpsd[6]` is filled by `ba_compute_psd(0)`, which reads `masktab[0] == 1`, sets `bndpsd[1] = psd[0] = 50`, then accumulates `psd[1..3]` through `logadd(int16_t*, int16_t*)`. main() requires `bndpsd[1] == 140`; 50+40+30+20 = 140.",
+   "model": "NOT YET DIAGNOSED. The model reaches abort(), so it computed something other than 140, but which step is wrong has not been determined. Candidates not yet distinguished: the `int16_t`/`short` spelling through `intTyOf?`; \u00a76.7.11p21's zero-fill of `masktab[5]`, which this landing's `setupGlobals` now performs for the first time; the address-of-element arguments; or the loop's use of `j` mutated in its own body. Recorded with the absence stated rather than a guess written into the field.",
+   "inherited_from": null,
+   "declared": "2026-08-24",
+   "retirement_condition": "Diagnosis, then either a fix (the row is deleted) or a restatement as a real declared divergence (the row's kind changes and `model` gets a diagnosis). THIS ROW MUST NOT SURVIVE A SECOND LANDING UNCHANGED: an open-undiagnosed row that ages is a carried divergence that was never declared.",
+   "guards": [
+    "docs/c-torture-pin.json lists 20010224-1.c with its sha256",
+    "the scoreboard's `failed` count is the live guard: it is 2, and any landing that changes it must account for both rows"
+   ],
+   "why_not_a_refusal": "The run produced an ANSWER and the answer was wrong. That is the one thing this tier's whole design is meant to make impossible without saying so, which is why it is written down before it is understood rather than after."
+  }
+ ]
+}

@@ -1465,6 +1465,106 @@ delta_vs_master() {             # -> the one-line summary; never fails a run
   else printf ' — DOCS-ONLY'; fi
 }
 
+# ------------------------------- was this ticket's base ever green? (pyc, 2026-08-24)
+#
+# THE PYC LANE PAID 116 MINUTES FOR THIS: 4852s queued plus 2083s building, to
+# rediscover a defect that was ALREADY FIXED on master three minutes into its
+# own build.  Its base was red for a full build when committed, and nothing
+# checked whether master had moved past it — least of all during a queue wait
+# hours deep, which is precisely when the fix lands.
+#
+# WARN, NEVER REFUSE.  A pinned base is legitimate: the SV lane declined a
+# rebase the same day for tree-certification reasons, and a guard that refused
+# would have been wrong about that lane while being right about this one.  A
+# wrong warning costs a line; a wrong refusal costs a tenure.
+#
+# READ-ONLY, AND IT DOES NOT MOVE THE LANE'S REFS.  Measured while writing
+# this: `git fetch origin master:refs/triad/tip` DOES advance `origin/master`,
+# because git updates remote-tracking refs OPPORTUNISTICALLY for any fetched
+# ref that maps to one.  Fetching by URL has no configured mapping, so nothing
+# is opportunistically updated.  A diagnostic must not move the state the lane
+# is about to be judged against.
+TIP_REF="refs/triad/tip"
+# A SUBSHELL CANNOT SET A PARENT'S VARIABLE.  The first cut returned the sha on
+# stdout and the REASON in a global, so every caller — all of which use
+# `$( … )` — read an empty reason and printed `n/a ()`.  That is this lane's
+# fourth encounter with the same trap, so the answer is carried the only way
+# that survives a subshell: IN THE VALUE.  A leading `!` marks a reason.
+# The cache is a FILE for the same reason, the way laws.sh --budget writes its
+# PARTIAL verdict to one.
+TIP_CACHE_FILE="${TMPDIR:-/tmp}/triad-tip.$$"
+remote_tip() {                  # [fresh] -> "<sha>" | "!<reason>"
+  local base rem br url sha
+  [ "${1:-}" = "fresh" ] && rm -f "$TIP_CACHE_FILE"
+  if [ -s "$TIP_CACHE_FILE" ]; then cat "$TIP_CACHE_FILE"; return 0; fi
+  base="$(merge_target_ref)"
+  [ -n "$base" ] || { printf '!no github/master or origin/master in this clone' | tee "$TIP_CACHE_FILE"; return 0; }
+  rem="${base%%/*}"; br="${base#*/}"
+  url="$(git -C "$CLONE" remote get-url "$rem" 2>/dev/null || true)"
+  [ -n "$url" ] || { printf "!remote '%s' has no URL" "$rem" | tee "$TIP_CACHE_FILE"; return 0; }
+  git -C "$CLONE" update-ref -d "$TIP_REF" 2>/dev/null || true
+  # BOUNDED AND NON-INTERACTIVE.  An enqueue must never block on a network
+  # hang or an auth prompt: a diagnostic that can stall the thing it describes
+  # is worse than no diagnostic.
+  if ! timeout 25 env GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="ssh -oBatchMode=yes" \
+       git -C "$CLONE" fetch -q --no-tags "$url" "$br:$TIP_REF" >/dev/null 2>&1; then
+    printf '!could not reach %s (offline, or it declined)' "$rem" | tee "$TIP_CACHE_FILE"; return 0
+  fi
+  sha="$(git -C "$CLONE" rev-parse "$TIP_REF" 2>/dev/null)"
+  [ -n "$sha" ] || { printf '!fetched nothing from %s' "$rem" | tee "$TIP_CACHE_FILE"; return 0; }
+  printf '%s' "$sha" | tee "$TIP_CACHE_FILE"
+}
+
+base_staleness() {              # [fresh] -> the line; never fails a run
+  local tip base rem url mb behind note=""
+  [ "$FOREIGN" = "1" ] && { printf 'n/a (foreign tree)'; return 0; }
+  tip="$(remote_tip "${1:-}")"
+  case "$tip" in !*) printf 'n/a (%s)' "${tip#!}"; return 0 ;; esac
+  base="$(merge_target_ref)"; rem="${base%%/*}"
+  url="$(git -C "$CLONE" remote get-url "$rem" 2>/dev/null || true)"
+  # A13 AGAIN, and here it would make the check LIE: a seeded clone's origin
+  # can be a local bundle, whose tip is days behind github's and would report
+  # a stale base as current.  The check still runs; the line says what it is.
+  case "$url" in /*|file:*|*.bundle) note=" [A13: '$rem' is a LOCAL path — its tip may not be github's]" ;; esac
+  mb="$(git -C "$CLONE" merge-base "$tip" HEAD 2>/dev/null)"
+  [ -n "$mb" ] || { printf 'n/a (no merge base with %s — unrelated histories)' "$base"; return 0; }
+  behind="$(git -C "$CLONE" rev-list --count "$mb..$tip" 2>/dev/null || echo 0)"
+  if [ "$behind" = "0" ]; then
+    printf 'base %s is AT the %s tip%s' "$(git -C "$CLONE" rev-parse --short "$mb" 2>/dev/null)" "$base" "$note"
+  else
+    printf 'BASE STALE: %s commit(s) behind %s tip %s (this ticket branches from %s) — consider rebasing before it runs%s' \
+      "$behind" "$base" "$(git -C "$CLONE" rev-parse --short "$tip" 2>/dev/null)" \
+      "$(git -C "$CLONE" rev-parse --short "$mb" 2>/dev/null)" "$note"
+  fi
+}
+
+# THE ONE REFUSAL IN THIS FAMILY, and it is narrow by construction: a NEW
+# enqueue from a worktree whose triad.sh predates master's stamp version.
+#
+# The leantier successor created a fresh ticket under a pre-rebase v1
+# triad.sh with an unstaged rewrite; accept-and-log is for tickets ALREADY IN
+# FLIGHT, never for new ones, and the distinction is the whole reason this can
+# refuse where the staleness line only warns.  It fires only on an un-rebased
+# worktree, it is local once the tip is fetched, and an ABSENT answer is never
+# a refusal — not knowing master's version is not evidence that ours is old.
+stamp_version_guard() {
+  local tip theirs
+  [ "$FOREIGN" = "1" ] && return 0
+  tip="$(remote_tip)"
+  case "$tip" in !*) return 0 ;; esac      # an absent answer is never a refusal
+  theirs="$(git -C "$CLONE" show "$tip:tools/triad.sh" 2>/dev/null \
+            | awk -F'"' '/^STAMP_VERSION=/ { print $2; exit }')"
+  [ -n "$theirs" ] || return 0
+  case "${theirs#v}${STAMP_VERSION#v}" in *[!0-9]*) return 0 ;; esac
+  [ "${theirs#v}" -gt "${STAMP_VERSION#v}" ] || return 0
+  local tipshort; tipshort="$(git -C "$CLONE" rev-parse --short "$tip" 2>/dev/null)"
+  die "this worktree's triad.sh stamps $STAMP_VERSION but master's stamps $theirs.
+  A ticket enqueued here would be judged by an OLDER rule than the one master enforces —
+  which is how a fresh ticket gets an unstaged rewrite past the guard.
+  Commit or stash, rebase onto $tipshort, and re-run.
+  (A ticket already IN FLIGHT is accepted-and-logged; a NEW one is not.)"
+}
+
 class_hint() {                  # -> the advisory text; never refuses, never narrows
   local base changed cls
   base="$AGAINST"; [ -n "$base" ] || base="$(merge_target_ref)"
@@ -1821,6 +1921,76 @@ if [ "$SELF_TEST" = "1" ]; then
   check "unrelated histories are their own n/a" \
         "$(delta_vs_master)" "n/a (no merge base with origin/master — unrelated histories)"
   CLONE="$saved_cl"; FOREIGN="$saved_fg"
+
+  # ---- WAS THE BASE EVER GREEN? (the pyc lane's 116 minutes)
+  echo "  -- base staleness"
+  up="$tmp/upstream.git"; sd="$tmp/seed"; wk="$tmp/work"
+  git init -q --bare "$up" 2>/dev/null
+  mkdir -p "$sd"; git init -q "$sd" 2>/dev/null
+  git -C "$sd" config user.email qol@example; git -C "$sd" config user.name qol
+  printf 'name = "x"\n[[lean_lib]]\nname = "LeanModels"\n' > "$sd/lakefile.toml"
+  mkdir -p "$sd/tools"; printf 'STAMP_VERSION="v2"\n' > "$sd/tools/triad.sh"
+  git -C "$sd" add -A; git -C "$sd" commit -qm base
+  git -C "$sd" branch -M master 2>/dev/null
+  git -C "$sd" remote add origin "$up" 2>/dev/null; git -C "$sd" push -q origin master 2>/dev/null
+  # THE BARE REPO'S HEAD, SET EXPLICITLY.  `git init --bare` points HEAD at
+  # `refs/heads/main` on current git, so a clone whose only branch is `master`
+  # checks out NOTHING — no HEAD, hence no merge-base, and every row below
+  # measured the "unrelated histories" path instead of the one it named.
+  git -C "$up" symbolic-ref HEAD refs/heads/master 2>/dev/null
+  git clone -q "$up" "$wk" 2>/dev/null
+  git -C "$wk" config user.email qol@example; git -C "$wk" config user.name qol
+  saved_cl="$CLONE"; saved_fg="$FOREIGN"; CLONE="$wk"; FOREIGN=0; rm -f "$TIP_CACHE_FILE"
+
+  check "a base AT the tip says so"          "$(base_staleness fresh | grep -c 'is AT the origin/master tip')" "1"
+  # A13: the remote is a local path here, and a local remote's tip can be days
+  # behind github's — the check still runs, and the LINE says what it is.
+  check "  ...and a LOCAL remote is flagged" "$(base_staleness fresh | grep -c 'A13.*LOCAL path')" "1"
+
+  # MASTER MOVES while this clone sits still — the pyc lane's exact shape.
+  printf 'fix\n' > "$sd/fix.txt"; git -C "$sd" add -A; git -C "$sd" commit -qm fix
+  printf 'fix2\n' > "$sd/fix2.txt"; git -C "$sd" add -A; git -C "$sd" commit -qm fix2
+  git -C "$sd" push -q origin master 2>/dev/null
+  out="$(base_staleness fresh)"
+  check "a moved master is LOUD"             "$(printf '%s' "$out" | grep -c 'BASE STALE:')" "1"
+  check "  ...counting the commits behind"   "$(printf '%s' "$out" | grep -c '2 commit(s) behind')" "1"
+  check "  ...naming the tip sha"            "$(printf '%s' "$out" | grep -c "$(git -C "$sd" rev-parse --short HEAD)")" "1"
+  check "  ...and what to do about it"       "$(printf '%s' "$out" | grep -c 'consider rebasing')" "1"
+  # WARN, NEVER REFUSE: a pinned base is legitimate (SV declined a rebase the
+  # same day), so this must stay a line and never a verdict.
+  check "  ...but it is only a WARNING"      "$(base_staleness fresh >/dev/null 2>&1; echo $?)" "0"
+
+  # THE FETCH MUST NOT MOVE THE LANE'S OWN REFS.  Measured: a refspec fetch by
+  # REMOTE NAME advances origin/master opportunistically; by URL it does not.
+  before="$(git -C "$wk" rev-parse origin/master)"
+  base_staleness fresh >/dev/null 2>&1
+  check "the check does not move origin/master" "$(git -C "$wk" rev-parse origin/master)" "$before"
+
+  # THE ABSENCE FAMILY, and none of these may read like "at the tip".
+  FOREIGN=1; rm -f "$TIP_CACHE_FILE"
+  check "a foreign tree is n/a"              "$(base_staleness fresh)" "n/a (foreign tree)"
+  FOREIGN=0; rm -f "$TIP_CACHE_FILE"
+  git -C "$wk" remote set-url origin "$tmp/nope.git"
+  check "an unreachable remote is n/a"       "$(base_staleness fresh | grep -c 'n/a (could not reach')" "1"
+  check "  ...and still not a refusal"       "$(base_staleness fresh >/dev/null 2>&1; echo $?)" "0"
+  git -C "$wk" remote set-url origin "$up"; rm -f "$TIP_CACHE_FILE"
+
+  # ---- THE ONE REFUSAL: a NEW ticket from a pre-rebase worktree
+  # `accept-and-log` is for tickets ALREADY IN FLIGHT; a new one is refused.
+  check "an equal stamp version passes"      "$( ( stamp_version_guard ) >/dev/null 2>&1; echo $?)" "0"
+  printf 'STAMP_VERSION="v3"\n' > "$sd/tools/triad.sh"
+  git -C "$sd" add -A; git -C "$sd" commit -qm bump; git -C "$sd" push -q origin master 2>/dev/null
+  rm -f "$TIP_CACHE_FILE"
+  out="$( ( stamp_version_guard ) 2>&1 )"; rc=$?
+  check "an OLDER local stamp REFUSES"       "$rc" "2"
+  check "  ...naming both versions"          "$(printf '%s' "$out" | grep -c 'stamps v2 but master.*stamps v3')" "1"
+  check "  ...and the in-flight distinction" "$(printf '%s' "$out" | grep -c 'IN FLIGHT is')" "1"
+  # AN ABSENT ANSWER IS NEVER A REFUSAL: not knowing master's version is not
+  # evidence that ours is old.
+  git -C "$wk" remote set-url origin "$tmp/nope.git"; rm -f "$TIP_CACHE_FILE"
+  check "an unreachable remote never refuses" "$( ( stamp_version_guard ) >/dev/null 2>&1; echo $?)" "0"
+  git -C "$wk" remote set-url origin "$up"; rm -f "$TIP_CACHE_FILE"
+  CLONE="$saved_cl"; FOREIGN="$saved_fg"; rm -f "$TIP_CACHE_FILE"
 
   # ---- THE GREEN LEDGER AND --since (§5.4a-i, the pyc lane's withdrawn ticket)
   echo "  -- increment greens"
@@ -2372,6 +2542,7 @@ if [ -n "$SINCE" ]; then
   [ -z "$AGAINST" ] || die "--since and --against CONTRADICT: --against names the branch's merge target, --since names the green this increment rests ON. Pick one."
   [ "$FOREIGN" = "0" ] || die "--foreign and --since CONTRADICT: a foreign checkout has no ledger of OUR greens (§7.1a)."
 fi
+stamp_version_guard      # a NEW ticket from a pre-rebase worktree is refused here
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
 cd "$CLONE" || die "cannot cd '$CLONE'"
@@ -2582,6 +2753,7 @@ release() {
   kill_own_chain KILL
   rm -f "$QUEUE/$TICKET" 2>/dev/null
   [ -n "$GUARD_PIDFILE" ] && rm -f "$GUARD_PIDFILE" 2>/dev/null
+  rm -f "$TIP_CACHE_FILE" 2>/dev/null
   if [ "$HELD" = "1" ]; then
     # A7: verify the lock is still OURS before removing anything.  A
     # surviving detached trap pointed at a RE-CREATED lock would delete an
@@ -2603,6 +2775,7 @@ printf '%s\n' "${ENQ_STAMP:-unstampable}" > "$QUEUE/$TICKET" \
 say "enqueued $TICKET (queue depth $(ls "$QUEUE" | wc -l | tr -d ' '))"
 [ -n "$ENQ_STAMP" ] && say "tree at enqueue: $(short_tree "$ENQ_STAMP")"
 say "delta vs master: $(delta_vs_master)"
+say "base: $(base_staleness)"
 # BOTH HALVES, so the transcript answers "did it run what I asked for?" without
 # anyone reconstructing the composition rules from the flags.
 say "gates: $(gates_planned)"
@@ -2669,6 +2842,13 @@ NOW_STAMP="$(tree_stamp || true)"
 if ! tree_change_report "$ENQ_STAMP" "$NOW_STAMP" "$BUILD_CURRENT_TREE"; then
   exit 2
 fi
+
+# AND THE BASE, RE-CHECKED HERE TOO.  The enqueue line is read by whoever
+# typed the command; THIS one lands in the log beside the verdict, and the
+# queue is hours deep — which is exactly when the fix lands, as it did for the
+# pyc lane three minutes into its own build.  `fresh` because a cached answer
+# from four hours ago is the very thing being warned about.
+say "base at acquire: $(base_staleness fresh)"
 
 # ---------------------------------------------------------- RSS kill line
 # A11 and base rule 6: OUR descendants only, recursively — a guard rooted at a

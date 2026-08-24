@@ -3617,6 +3617,69 @@ agreement** — and it retires by **re-running**. **Same register, same gating,
 completely different work**, and a row that does not say which has told its
 reader nothing about what would close it.
 
+**AND THE FIRST TWO FILINGS TAUGHT THE SCHEMA FIVE MORE THINGS** (pyc handoff
+rev 2, verify at inch 3; SV's register, `ee8d8bd`, on master).
+
+**(e) A PROBE MUST BE A NAMED DECLARATION — `#guard` IS ANONYMOUS.** The pyc
+lane corrected **its own approved design** against ES's implementation:
+*"`#guard` has no name for the checker to verify"*, and the lane's own verdict
+was *"ES got this right and I did not."*
+
+> **ANONYMOUS EVIDENCE CANNOT BE CITED. A certification schema forces naming.**
+
+**Which is why the `GUARDS` field is a field and not a checkbox**: a row saying
+*"guarded"* is a reading; a row **naming two declarations** is something the
+shared checker can look up, and **a probe that cannot be named cannot be found
+by anything except the person who wrote it.**
+
+**(f) THE CHECKER FAILS ON AN EMPTY REGISTER SET.**
+
+> **A test that passes because it found NOTHING is exactly the unexercised
+> gate.**
+
+**§5.3's vacuity ruling applied to the register's own acceptance test** — the
+one place it would have been easiest to skip, since an empty register is the
+normal state of a tier with no declared divergences. **The zero-row law
+(§5.4's *an empty census is an instrument fault, never a finding*) reaches the
+instrument that polices the debts.** Landed with commit claims **scoped to what
+RAN**.
+
+**(g) A RETIREMENT CONDITION CAN BE BUILT TO EXCLUDE JUDGMENT** (SV). One row's
+guard tests **ARTIFACT PRESENCE** — the `xrun` fixture — so **it cannot be
+closed by deciding the tables look right.** Another **COUNTS surviving sites**,
+so **the count reaching zero closes it and assertion cannot.**
+
+> **The best retirement conditions are not stricter opinions; they are
+> conditions with NO PLACE FOR AN OPINION TO ENTER.**
+
+**Both shapes generalize**: *presence of an artifact* and *a count reaching
+zero*. Each converts *"is this fixed?"* — a question a motivated party answers —
+into a fact a script reads. **The flattering-repair hazard (§5.0a's constraint
+pair) is a defence against the wrong fix; this is a defence against no fix at
+all.**
+
+**(h) "WIDENED" MEANS SOMETHING DIFFERENT FOR A PROVENANCE ROW, discovered at
+first use** (SV). For a **semantic** row, widening is the model diverging over
+more inputs. For a **provenance** row, **widening is the UNSUPPORTED CLAIM
+SPREADING TO MORE SITES** — guarded by **claim-site counts pinned at
+`DECLARED`.**
+
+> **A semantic-shaped guard would have had nothing to measure here.**
+
+**So `KIND` does not merely change the retirement condition — it changes the
+guard VOCABULARY**, and that is a stronger reason for the field than the one it
+was ruled on. *A register with one guard vocabulary would have silently
+mis-guarded every provenance row it accepted.*
+
+**(i) AND THE FAILURE DIRECTION WAS RUN, NOT TRUSTED** — an **11th** claim site
+makes `has_not_widened` report **11** against a pin of **≤ 10** and **exit 1.**
+Plus the honesty that closes the loop: **the one field that could not be a
+measurement** — the model's agreement with Xcelium, *the very thing unverified* —
+is **SCOPED IN THE ROW rather than implied.**
+
+> **A row that says what it CANNOT measure is the register's own honesty applied
+> to itself.**
+
 **WHY NOT THE ALTERNATIVES.** A *whitelist* would put the row inside the
 scoreboard's own vocabulary and invite exactly the reading the invariant
 forbids — *some DIVERGEs are fine* — and a whitelist is a permission, not a
@@ -3865,6 +3928,34 @@ to its own unreachability** — and the second is worse, because deletion at lea
 leaves a diff. **Nothing changes when a guard becomes unreachable; the code that
 strands it is somewhere else entirely.**
 
+**AND THE LAW NEEDS A DISTINCTION IT DID NOT SHIP WITH, found by the pyc lane
+auditing its OWN inch against it** (handoff rev 2; verify at inch-3 landing).
+**Not every unreachable arm is a defect** — without the split, **every
+exhaustiveness arm in the tree becomes a false positive:**
+
+| kind | what it is | verdict |
+| --- | --- | --- |
+| **unreachable BY CONSTRUCTION, and DOCUMENTED** | the trunk's `.iterDict` arm — **the exhaustiveness obligation**, not a boundary claim | **fine** |
+| **unreachable and BELIEVED REACHABLE** | ES's sloppy-`this` refusal — *the tier looked bounded while it answered* | **the defect** |
+
+> **The defect is not unreachability. It is a REFUSAL BELIEVED TO BE A
+> BOUNDARY that is not one.**
+
+**The discriminator is what the arm CLAIMS**, not whether it runs. An
+exhaustiveness arm claims *the match is total*; **a refusal claims the tier
+declines this behaviour** — and a claim about the tier's boundary is falsified
+by unreachability in a way a totality obligation never is. **Documented is doing
+real work in that first row**: an undocumented by-construction arm is
+indistinguishable from the second kind **by reading**, which is the only
+instrument available here.
+
+**And the audit is the deliverable, with no new defect found** — which is the
+outcome a lane should be able to report without embarrassment. *A law's first
+application producing "we are clean, and here is the distinction your law was
+missing" is worth more than a hit.*
+
+
+
 **AND THE ROW WAS GATED BOTH WAYS ON THE FIRST TRY**, with two named theorems
 (`es_div_1_still_divergent`, `es_div_1_has_not_widened`) — **§5.0a's
 both-directions requirement implemented before it had been exercised anywhere.**
@@ -3935,6 +4026,21 @@ something else, and the tier that models only the *expected* binding has built a
 resolver that cannot be wrong **in its own tests** while being wrong in the
 corpus. It is §5.6's discriminating-row law pointed at resolution: **the row
 that matters is the one a naive resolver gets confidently wrong.**
+
+**AND A DEFINED PANIC IS NOT A TIER GAP — STATED AS A THEOREM SO IT CANNOT
+RE-COLLAPSE** (Go §G24, `eb1e8b0`). `Div` panics resolve into `PkgOutcome`'s
+three cases, so **the model's panic is a MODELLED OUTCOME, not an
+`unsupported`.**
+
+> **A behaviour the language DEFINES as a failure is a value of the outcome
+> type, never a hole in the tier.**
+
+**This is §G14's mis-bucketing prevented STRUCTURALLY rather than by
+vigilance.** The mis-bucketing law says a wrong class mis-schedules the work;
+**a three-case outcome type makes the wrong class unrepresentable** — the
+distinction that had to be remembered is now one the elaborator enforces.
+*Where a rule is at risk of re-collapsing, the durable form is a type, not a
+reminder.*
 
 **AND A REFUSAL CAN BE HONEST ABOUT THE MODEL AND FALSE ABOUT THE WORLD — the
 leaf-encoding trap** (Ada inch 2, branch `adainch2`, ticketed; verify at its
@@ -4193,6 +4299,28 @@ the question.**
 ### 5.3 VACUOUS is not a verdict — and neither is MUTUAL REFUSAL
 
 A run that executed **nothing** must never score as agreement.
+
+**AND THE FAMILY HAS ITS FIRST CATCH AT CREATION RATHER THAN BY CENSUS**
+(analog A1, ticketed; verify at landing). The lane wrote the sibling-mirroring
+`observation_sound`, **saw the conclusion was definitionally trivial once
+`output` instantiates**, and **removed it — leaving a comment where it stood so
+nobody re-adds it.**
+
+> **A LEMMA THAT CANNOT FAIL IS NOT A LEMMA, and "the sibling has one" is not a
+> consumer.**
+
+> **SYMMETRY IS A REASON TO LOOK FOR A LEMMA, NEVER A REASON TO KEEP ONE.**
+
+**Two things make this worth a row.** It is **F7 — dead framework surface —
+caught AT CREATION**, where every previous instance in this tree was found by a
+later census; and the **comment left in place** is what stops the next author
+re-deriving it, since *the symmetry that suggested it will still be there.*
+
+**And "the sibling has one" is the exact reasoning that would have kept it**,
+which is why it needed naming: a mirrored lemma **looks like completeness** and
+reads as diligence, and the tell is that its justification is a fact about
+**another file** rather than about a consumer in this one. *A consumer is a
+theorem that needs it; a sibling is a resemblance.*
 
 **AND A THIRD MECHANISM IN ONE LANE, WHICH TURNS THE FAMILY INTO A TAXONOMY BY
 MECHANISM** (Go §G23, `9a6d6ad`). The blank-discard guard had **`| _ => true`
@@ -4458,6 +4586,25 @@ instrument copies it:
   schedule, for the same reason. The remedy is the same too: it must be
   **checked against the component**, not restated. Nine rows that now run
   against the oracle *are* that check;
+* **AND THE REPAIR SHAPE FOR ALL OF THEM: CONVERT THE LIST INTO A THEOREM**
+  (Go §G24, `eb1e8b0`). `modelledPkgFuncs` **named `bits.Len`** while `pkgCall`
+  **implemented `Len64` only** —
+
+  > **A list that says what a model supports is a CLAIM, and an unchecked claim
+  > drifts on the first edit. This one drifted INSIDE ONE RUNG.**
+
+  **Repaired by making the list arity-carrying and `rfl`-checked** by
+  `surface_is_honest`, axioms clean. **That is the constructive answer this
+  bullet family has been circling**: the docstring laws say *a claim needs a
+  check*; this says **what the check should be when the claim is a LIST** —
+  not a census that re-reads it, but **a theorem that cannot elaborate unless
+  the list and the implementation agree.**
+
+  **And the drift interval is the argument.** A list that goes stale over months
+  invites a periodic census; **one that drifted inside a single rung cannot be
+  policed by any cadence** — the only instrument fast enough is the elaborator.
+  *Where a claim and its subject live in the same build, the check belongs in
+  the build;*
 * **AND A CLOSED-LIST DOCSTRING IS A TIME BOMB — the 2026-08-13 incident
   REPLAYED FROM A COMMENT** (pyc inch 2). `Expr.genAllocFree` named **"a closed
   list of two"** generator allocators. **`iter` is the third**, and without the
@@ -5719,6 +5866,29 @@ can satisfy the first perfectly while failing the second completely.
 > the CERTIFIED TREE against the CLAIM — the title is not evidence about the
 > tree, it is evidence about intent.**
 
+**AND THE SAME LAW APPLIES TO THE WORD "VERIFIED" — including in a
+coordinator's own note** (Go §G24, `eb1e8b0`). The dispatch claimed §G24 was
+*"on master (verified)"*; **the shas that had actually been verified were
+§G23's.** The lane **flagged it rather than quietly acting on it.**
+
+> **A stale note never authorizes — and that applies to the note's AUTHOR's
+> authority, not only to its age.**
+
+> **A verification claim carries WHAT was verified. A sha-less "verified" is a
+> TITLE.**
+
+**Which is this section's own ladder, one level up from the artifact**: a green
+certifies a tree and not a title; **a "verified" certifies the specific objects
+someone looked at, and not the sentence it appears in.** The failure mode is
+identical — *the word is true of something, and the something is not what the
+reader will assume.*
+
+**And the lane's response is the transferable part**, since a dispatch from the
+coordinating role arrives with standing: **it flagged rather than acted.**
+*Claims, not claimants* covers who may be wrong; this covers **what to do about
+it in the moment** — neither obey a note you cannot verify nor silently work
+around it, but **say which shas you checked.**
+
 **AND THE LAW HAS AN AFFIRMATIVE USE, now on its THIRD instance** (R-track;
 after SV declined a rebase and this lane's own `-55` recorded the negative
 case). The R-track lane **committed the INDEX rather than the working tree**,
@@ -5817,6 +5987,27 @@ of lines** (Go, `6c7a2b3`). That triad log carried **330 `Replayed` lines** —
 
 > **Reading the gate phase's lines as the build's witness would have been the
 > available mistake.**
+
+**AND THERE IS A THIRD STATE, which makes the pair a TAXONOMY** (Go §G24). A
+module **named in the target list emitted NO LINE AT ALL** — **current from the
+authoring build of the same tree** — while **its dependents `Built` against
+it.**
+
+> **The witness taxonomy is `Built` / `Replayed` / SILENT-CURRENT, and only
+> reading the DEPENDENTS disambiguates the third.**
+
+**"All Go modules `Built`" would have been wrong**, and the interesting part is
+that the third state is **invisible to any check that reads the module's own
+lines** — there are none. **Absence is the signal**, and this register has
+convicted absence-reading four times already (a `null` on an absent repo, a
+zero-row census, a `sed` with no input, a negative row that never ran).
+
+**Here the disambiguation is structural rather than heuristic**: a silent module
+whose **dependents built against it** was current; a silent module **nothing
+built against** was not in the build at all. *The witness for a module that says
+nothing is the testimony of the modules that used it.*
+
+
 
 **Which is this section's own unit family arriving inside a log**: `Replayed` is
 a correct token counted from the wrong region, and **the wrong region is the

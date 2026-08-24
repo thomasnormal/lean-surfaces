@@ -304,6 +304,15 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-253 | the RECIPIENT's measurement, not the sender's, closes an INBOUND row | `docs/family-architecture.md §9.5a` |
 | MEAS-254 | a diff between two censuses is only a number if both answered the SAME QUESTION | `docs/family-architecture.md §5.4` |
 | MEAS-255 | a registered UNASSERTED expectation is the falsifiable version of a TODO | `docs/family-architecture.md §5.6` |
+| MEAS-256 | the defect is not unreachability — it is a REFUSAL BELIEVED TO BE A BOUNDARY that is not one | `docs/family-architecture.md §5.2` |
+| MEAS-257 | a verification claim carries WHAT was verified — a sha-less "verified" is a TITLE | `docs/family-architecture.md §5.4a-i` |
+| MEAS-258 | the witness taxonomy is `Built` / `Replayed` / SILENT-CURRENT — only the DEPENDENTS disambiguate the third | `docs/family-architecture.md §5.4a-i` |
+| MEAS-259 | ANONYMOUS EVIDENCE CANNOT BE CITED — a probe is a NAMED declaration | `docs/family-architecture.md §5.0a` |
+| MEAS-260 | the register's checker FAILS on an empty set — a test passing because it found nothing is the unexercised gate | `docs/family-architecture.md §5.0a` |
+| MEAS-261 | the best retirement conditions have NO PLACE FOR AN OPINION TO ENTER — artifact presence, or a count reaching zero | `docs/family-architecture.md §5.0a` |
+| MEAS-262 | KIND changes the GUARD VOCABULARY, not just the retirement condition | `docs/family-architecture.md §5.0a` |
+| MEAS-263 | a row that says what it CANNOT measure is the register's honesty applied to itself | `docs/family-architecture.md §5.0a` |
+| MEAS-264 | convert a CLAIMS LIST into a THEOREM — where claim and subject share a build, the check belongs in the build | `docs/family-architecture.md §5.4` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -439,6 +448,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-125 | a FALLBACK arm returning `true` converts a failing run into a passing row — vacuity by INVERSION | `docs/family-architecture.md §5.3` |
 | STMT-126 | the ATTESTING INSTRUMENT constrains how a definition must be written (`partial` blocks `#guard`) | `docs/family-architecture.md §7.1a` |
 | STMT-127 | "the RUN is correct" and "the CERTIFICATE is correct" are different claims — only the second is what a green IS | `docs/family-architecture.md §5.4a-i` |
+| STMT-128 | a lemma that CANNOT FAIL is not a lemma — symmetry is a reason to LOOK, never to KEEP | `docs/family-architecture.md §5.3` |
+| STMT-129 | a behaviour the language DEFINES as a failure is a value of the outcome type, never a tier gap | `docs/family-architecture.md §5.2` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

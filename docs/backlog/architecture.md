@@ -5614,3 +5614,120 @@ what the world will look like if the work is right** — same cost to write, and
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-249 … MEAS-255**, and **MEAS-175 amended.**
+
+## 2026-08-24-architecture-68 — The defect is not unreachability; and a sha-less "verified" is a title
+
+Eleven from four sources: analog A1 (ticketed), Go §G24 (`eb1e8b0`, on master),
+pyc handoff rev 2 (verify at inch 3), SV's register filing (`ee8d8bd`, on
+master). **All eleven landed**, and two of them correct things this lane wrote.
+
+**(8) §5.2 — YESTERDAY'S REACHABILITY LAW NEEDED A DISTINCTION IT DID NOT SHIP
+WITH**, found by the pyc lane auditing its own inch against it. **Without the
+split, every exhaustiveness arm in the tree becomes a false positive:**
+**unreachable BY CONSTRUCTION and DOCUMENTED** (the trunk's `.iterDict` arm —
+*the exhaustiveness obligation, not a boundary claim*) versus **unreachable and
+BELIEVED REACHABLE** (ES's defect — *the tier looked bounded while it
+answered*).
+
+> **The defect is not unreachability. It is a REFUSAL BELIEVED TO BE A BOUNDARY
+> that is not one.**
+
+**The discriminator is what the arm CLAIMS, not whether it runs** — an
+exhaustiveness arm claims *the match is total*, a refusal claims *the tier
+declines this behaviour*, and only the second is falsified by unreachability.
+**"Documented" earns its place in that first row**: an undocumented
+by-construction arm is indistinguishable from the defect **by reading**, which
+is the only instrument available. *And the audit found no new defect — a law's
+first application producing "we are clean, and here is the distinction your law
+was missing" is worth more than a hit.*
+
+**(2) §5.4a-i — MY OWN NOTE WAS THE STALE ONE.** The dispatch claimed §G24 was
+*"on master (verified)"*; **the verified shas were §G23's.** The lane **flagged
+rather than quietly acting.**
+
+> **A stale note never authorizes — including on its author's authority, not
+> only on its age.**
+> **A verification claim carries WHAT was verified. A sha-less "verified" is a
+> TITLE.**
+
+**This section's ladder, one level up from the artifact**: a green certifies a
+tree and not a title; **a "verified" certifies the objects someone looked at,
+not the sentence it appears in.** And the lane's response is the transferable
+part — **flag, do not obey and do not silently work around**: *claims, not
+claimants* says who may be wrong, this says **what to do in the moment.**
+
+**(4) §5.4a-i — A THIRD WITNESS STATE.** A module named in the target list
+emitted **no line at all** — current from the authoring build of the same tree —
+while **its dependents `Built` against it.** *"All Go modules Built" would have
+been wrong.*
+
+> **`Built` / `Replayed` / SILENT-CURRENT — and only reading the DEPENDENTS
+> disambiguates the third.**
+
+**Absence is the signal**, and this register has convicted absence-reading four
+times already. **Here the disambiguation is structural**: *the witness for a
+module that says nothing is the testimony of the modules that used it.*
+
+**(6,7,9,10,11) §5.0a — THE FIRST TWO FILINGS TAUGHT THE SCHEMA FIVE THINGS.**
+
+**A probe must be a NAMED declaration** — `#guard` is anonymous, and the pyc
+lane corrected **its own approved design** against ES's (*"ES got this right and
+I did not"*). **Anonymous evidence cannot be cited**, which is why `GUARDS` is a
+field and not a checkbox: *a probe that cannot be named cannot be found by
+anything except the person who wrote it.*
+
+**The checker FAILS on an empty register set** — *a test that passes because it
+found nothing is exactly the unexercised gate.* §5.3's vacuity ruling reaching
+**the instrument that polices the debts**, at the one place it was easiest to
+skip.
+
+**Retirement conditions can be built to EXCLUDE JUDGMENT**: one guard tests
+**artifact presence** (the `xrun` fixture — *it cannot be closed by deciding the
+tables look right*), another **counts surviving sites** (*the count reaching zero
+closes it and assertion cannot*). **The best retirement conditions are not
+stricter opinions; they are conditions with no place for an opinion to enter** —
+and where the constraint pair defends against **the wrong fix**, these defend
+against **no fix at all.**
+
+**"Widened" means something different for a PROVENANCE row**, discovered at
+first use: **the unsupported CLAIM spreading to more sites**, guarded by
+claim-site counts pinned at `DECLARED`. *A semantic-shaped guard would have had
+nothing to measure here* — so **`KIND` changes the GUARD VOCABULARY, not just
+the retirement condition**, which is a stronger reason for the field than the
+one I ruled it on.
+
+**And the failure direction was RUN**: an 11th claim site makes
+`has_not_widened` report 11 against a pin of ≤ 10 and **exit 1**. Plus **the one
+field that could not be a measurement** — the model's agreement with Xcelium,
+*the very thing unverified* — is **scoped in the row rather than implied.**
+**A row that says what it cannot measure is the register's own honesty applied
+to itself.**
+
+**(3) §5.4 — THE REPAIR SHAPE FOR THE WHOLE DOCSTRING FAMILY: CONVERT THE LIST
+INTO A THEOREM.** `modelledPkgFuncs` named `bits.Len` while `pkgCall`
+implemented `Len64` only — *a list that says what a model supports is a claim,
+and this one drifted **inside one rung**.* Now arity-carrying and `rfl`-checked
+by `surface_is_honest`. **The drift interval is the argument**: a list stale over
+months invites a periodic census; **one that drifts inside a single rung cannot
+be policed by any cadence** — *where a claim and its subject share a build, the
+check belongs in the build.*
+
+**(1) §5.3 — THE FIRST CATCH AT CREATION RATHER THAN BY CENSUS.** The lane wrote
+the sibling-mirroring `observation_sound`, saw the conclusion was definitionally
+trivial, **removed it, and left a comment where it stood.**
+
+> **A lemma that cannot fail is not a lemma, and "the sibling has one" is not a
+> consumer. Symmetry is a reason to LOOK for a lemma, never to KEEP one.**
+
+**F7 caught at creation**, where every prior instance came from a later census —
+and **the comment is what stops the next author re-deriving it**, since the
+symmetry will still be there. *A consumer is a theorem that needs it; a sibling
+is a resemblance.*
+
+**(5) §5.2 — A DEFINED PANIC IS NOT A TIER GAP, stated as a theorem so it cannot
+re-collapse.** `Div` panics resolve into `PkgOutcome`'s three cases. **§G14's
+mis-bucketing prevented STRUCTURALLY rather than by vigilance** — *where a rule
+is at risk of re-collapsing, the durable form is a type, not a reminder.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-256 … MEAS-264, STMT-128, STMT-129**.

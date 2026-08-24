@@ -403,6 +403,16 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-352 | a real frontier is FLAT AND WIDE; a spike inside one bucket is an instrument's signature | `docs/family-architecture.md §9.0` |
 | MEAS-353 | a LAYOUT computed from an undeclared rule is a FABRICATED LAYOUT — a fabricated column one abstraction up | `docs/family-architecture.md §4.2` |
 | MEAS-354 | a DATED SNAPSHOT ages within its own date — where a row moves daily, publish the ARC, not the endpoint | `docs/family-architecture.md §9.0` |
+| MEAS-355 | a tier whose model is RELATIONAL scores by OBLIGATIONS, not tests — the asymmetry is structural, not effort | `docs/family-architecture.md §9.0` |
+| MEAS-356 | an endgame described by the artifact it would REUSE is a claim about that artifact — open it before scheduling | `docs/family-architecture.md §9.0` |
+| MEAS-357 | RE-CENSUS EVERY BRANCH BEFORE PORTING — a proof source is a corpus and moves on someone else's schedule | `docs/family-architecture.md §5.4` |
+| MEAS-358 | price the rung BEFORE writing the code, so the number cannot be fitted afterwards | `docs/family-architecture.md §9.0` |
+| MEAS-359 | two behaviours aliasing in OPPOSITE directions: one code path fails one row whichever way it chooses — say which | `docs/family-architecture.md §9.0` |
+| MEAS-360 | a DEFECT REPORT is a claim about a tree — a stale toolkit reports the defect it is carrying | `docs/family-architecture.md §7.1a` |
+| MEAS-361 | a re-measured deferral can find a DIFFERENT line binds; the instrument PAIR makes a diagnosis survive its own success | `docs/family-architecture.md §7.1a` |
+| MEAS-362 | a WORLD is not pinned or free — EACH COORDINATE is; enumerate them and mark each by name | `docs/family-architecture.md §3.6` |
+| MEAS-363 | a true confirmation of the shape you CHECKED is not evidence about the shape you SKIPPED | `docs/family-architecture.md §3.6` |
+| MEAS-364 | STABILITY UNDER REFACTOR is the spec-half/interpreter-half split's measurable dividend — count what had to change | `docs/family-architecture.md §5.6` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -541,6 +551,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-128 | a lemma that CANNOT FAIL is not a lemma — symmetry is a reason to LOOK, never to KEEP | `docs/family-architecture.md §5.3` |
 | STMT-129 | a behaviour the language DEFINES as a failure is a value of the outcome type, never a tier gap | `docs/family-architecture.md §5.2` |
 | STMT-130 | carry a residual as a HYPOTHESIS, never a `sorry` — a `sorry` poisons neighbouring receipts | `docs/family-architecture.md §9.0` |
+| STMT-131 | a table the PROGRAM CANNOT CHANGE is a parameter; the world holds what EXECUTION mutates | `docs/family-architecture.md §5.6` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -708,6 +719,11 @@ numbers below are the register's own.
 | OPS-92 | the FAST LOOP is only worth what you point it at — a cheap check run on the file you least feared is one you did not run | `docs/family-architecture.md §5.4b` |
 | OPS-93 | a CAPABILITY IS NOT A PRACTICE — the cure is coverage (every file the tenure touched), not vigilance | `docs/family-architecture.md §5.4b` |
 | OPS-94 | install a DISCRIMINATING GUARD while it has nothing to discriminate; later it arrives with a constituency against it | `docs/family-architecture.md §5.4b` |
+| OPS-95 | a GREP-BASED EXISTENCE CHECK answers "is this string here", not "is this thing declared" — require `def` AND `#guard` | `docs/family-architecture.md §5.4b` |
+| OPS-96 | STRIP COMMENTS FIRST — `^\s*def` matches inside a block comment, which IS the deleted-declaration case | `docs/family-architecture.md §5.4b` |
+| OPS-97 | before writing a fixture, GREP THE TREE — the counterexample the guard needs is often already checked in | `docs/family-architecture.md §5.4b` |
+| OPS-98 | a rule keyed to a SOURCE'S STATE degrades silently into its default — re-check the state PER USE | `docs/family-architecture.md §5.4` |
+| OPS-99 | design-by-precedent is proven by a DECLINED sibling choice, cited with the sibling's recorded reason | `docs/family-architecture.md §5.6` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

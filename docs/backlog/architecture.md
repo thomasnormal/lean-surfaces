@@ -6913,3 +6913,98 @@ copy was one entry short. **The correct post-rebase test is
 compares a file to itself always passes* — the stuck-channel family's
 always-fires twin, landed today at §5.4b, met immediately in this lane's own
 process.
+
+## 2026-08-24-architecture-81 — A tier whose model is relational scores by obligations, not by tests
+
+Thirteen from five sources: Wasm's next-corner census (`0f44b74`, merged), pyc's
+checker tightening (`79fcd3b`, queued), Ada's inch-3 maintenance and design,
+analog A12 and Go §G25 (both ticketed, verify at landing). **One AMENDS §9.0's
+conformance-suite table in place; one refines §3.6's ∀-parameter ruling.**
+
+**(1) §9.0 — THE SUITE TABLE'S BOUNDARY CASE, and the Wasm row amended.**
+
+> **A tier whose model is RELATIONAL scores by OBLIGATIONS, not by tests. The
+> asymmetry is structural, not effort.**
+
+Every other tier's model **executes**; this one is a set of inductive `Prop`s,
+and the escape — an executable interpreter — is **§8.4's declined endgame wearing
+a different hat.** *Change the UNIT of the number, do not build the refused thing
+under a new name.* **Full-spec support is still the endgame; what differs is what
+a denominator can be made of.**
+
+**(2) §9.0 — THE FRONTIER LAW REACHED A ROADMAP ITEM BEFORE IT WAS SCHEDULED.**
+The soundness endgame was priced as *"port the Isabelle ladder"*; Isabelle itself
+is **10 lemmas / 77 incomplete** — *original mechanisation, no ladder.*
+**The cheapest audit a roadmap admits is opening the thing it says it will
+copy.**
+
+**(3) §5.4 — THE `--compare` FAMILY'S FIRST NON-CORPUS INSTANCE.** Ported from a
+**13-lemma copy while the branch held 19**; **re-census every branch before
+porting.** A stale corpus makes a *number* wrong and a reviewer can see it; **a
+stale proof source makes a PLAN wrong** with nothing anomalous to notice. The
+same census found **37 complete lemmas including `Subtyping_Theorem.thy`** — the
+absence family's most expensive shape: *not a wrong belief, an unopened file.*
+
+**(4) §5.4 — A PORTING RULE'S FAILURE MODE NAMED.** *"Isabelle-before-scratch"
+silently degrades to "scratch"* when counterparts are incomplete. **A rule whose
+violation looks identical to its compliance is re-checked PER USE.**
+
+**(5) §5.4b — THE ALWAYS-FIRES MEMBER'S GENERAL FORM, after a third bite.**
+
+> **A grep-based existence check answers "is this string here?" when the question
+> was "is this thing declared?"**
+
+Repair: **`def` AND `#guard`, comments STRIPPED FIRST** — `^\s*def` matches
+happily inside a block comment, *which is exactly the deleted-declaration case.*
+**Any existence check over source text must first reduce it to the part the
+compiler reads.**
+
+**(6) §5.4b — REAL-REPO FIXTURES.** *The string proving the bug is the guard's
+own name, in the register file that names it.* **Before writing a fixture, grep
+the tree**; a synthetic fixture is a guess about the wild case, a real one is one.
+
+**(7) §7.1a — THE CHANNEL FAMILY'S CONSUMER-SIDE MEMBER: THE STALE TOOLKIT.**
+Ada's `tools/` was **372 lines behind**: *"I was reporting a defect I was
+carrying, not one master had."* **The wrong-tree family met from the REPORTING
+end** — worse for the fleet than a stale green, because it spends another lane's
+attention on a landed fix. QoL's item-15 guard is the structural fix.
+
+**(8) §5.6 — DESIGN BY PRECEDENT, PROVEN BY THE DECLINED HALF.** Go's
+mutual-on-fuel **adopted**; C's `termination_by` **rejected** for C's own
+recorded reason (WF recursion takes kernel reduction). **Adoption alone is weak
+evidence — declining a precedent requires the cost only a written record
+supplies.**
+
+**(9) §5.6 — PROGRAM TEXT, NOT WORLD STATE.** Ada's subprogram table is
+parameterised like Go's `FuncTable`. **A table the program cannot change is a
+PARAMETER; the world holds what EXECUTION mutates** — the line for every tier's
+tables, pools and layout maps.
+
+**(10) §7.1a — A RE-MEASURED DEFERRAL FOUND A DIFFERENT LINE BINDING** (pressure
+51.0, load 6.86): *blocked on load rather than memory.* **The pair makes the
+diagnosis survive its own success**, since relieving the first limit is what
+promotes the second.
+
+**(11) §3.6 — THE ∀-PARAMETER RULING REFINED.**
+
+> **A world is not "pinned" or "free". EACH COORDINATE is.**
+
+The supply coordinate was free inside a *pinned* world (rate → 0 as supply →
+threshold⁺); the corollary now carries **`hsupply = 5` explicitly**. And the
+lane's self-conviction, landed with it: *"both times the shape I checked was real
+and the shape I skipped was the one that mattered"* — **a true confirmation is
+more dangerous than a false one, because it discharges the feeling that prompted
+the check.** Remedy: **the coordinate list, not more care.**
+
+**(12) §9.0 — THE DESIGNED PREDICTION, THREE CONSECUTIVE EXACT** (+76/+7/+52):
+**price the rung before writing the code, so the number cannot be fitted
+afterwards.** Plus the opposite-aliasing acceptance — **one code path fails one
+row whichever way it chooses** — landed as a result rather than an excuse: *an
+excuse names a cost; a result names the ROW it falls on.*
+
+**(13) §5.6 — STABILITY UNDER REFACTOR AS THE SPLIT'S MEASURABLE DIVIDEND.** A
+settled proof survived its **second** walker refactor by **hypothesis restatement
+alone.** *The first survival is luck until it repeats* — and the metric is free
+at every refactor: **count what had to change.**
+
+Law rows: **MEAS-355…MEAS-364, STMT-131, OPS-95…OPS-99.**

@@ -4217,3 +4217,82 @@ file must anchor, or it will find itself.**
 **18 ok** (new), `ci.sh --verify-guards` **44 ok** (43 → 44), check 106,
 backlog-index 62, laws 45, docs_check 91/91. All three live gates green:
 comment-forms 0, headings 0, freshness 0. Live queue empty. No Lean executed.
+
+## 2026-08-24-qol-59 — the item-12 residual is stale copies, and a courtesy scoped to one clone
+
+Two things: a residual report answered by measurement, and item 14.
+
+### The residual: current master is clean, and two OTHER lanes will trip
+
+R-track reported `--classify-only` still tripping the empty-plan guard.
+Reproduced on current master across **eight** shapes — bare, `--against HEAD`,
+docs/tier/spine class, empty diff, `--gates-only`, and the two documented
+contradictions (`--foreign`, `--since`) — and **not one emits EMPTY PLAN**.
+The two `rc=2` results are the intended contradiction refusals, verified by
+reading their messages.
+
+Then the decisive test: the **pre-fix** `triad.sh` (`278e27f`, parent of
+`40c093c`) trips on the identical fixture. So the trip is a stale copy, not a
+missing shape — **no fix is needed**.
+
+**But "rebase" is the wrong answer to give R-track.** Classifying every
+lean-surfaces checkout on this box by content:
+
+```
+lean-softfloat  master             GUARD, NO FIX -> WILL TRIP
+lean-ada        ada-m2-inch3       GUARD, NO FIX -> WILL TRIP
+lean-surfaces   pyrebuild-monadic  no-guard (CANNOT trip)
+lean-arch2 / lean-coord / lean-qol / lean-surfaces-wasm   guard+fix (fine)
+lean-audit / lean-research                                 no-guard
+```
+
+R-track's own worktree carries `tools/triad.sh` as of **`b2150ae`**, which
+**predates the guard entirely** — the string `EMPTY PLAN` is not in it, and
+running it on the fixture produces the classification, not a refusal. So the
+report cannot have come from that checkout as it stands now. The two
+checkouts that *will* trip are **lean-softfloat** and **lean-ada**, both
+confirmed by running their own copies.
+
+A version skew that recurs is not a lane's carelessness; it is a missing
+guard. `stamp_version_guard` already refuses a NEW enqueue from a worktree
+whose `STAMP_VERSION` is behind master — it just doesn't fire here, because
+this skew changed no stamp version. Widening it to "your triad.sh is behind
+master's" would close the class. **Offered, not built.**
+
+### Item 14: a courtesy protocol scoped to one clone
+
+`check.sh` computed the target's path relative to its OWN clone and refused
+anything outside, so the Lean tier's export corner — whose work lives in a
+foreign `lean4export` checkout **by charter** — could never use `--iterate`.
+
+> A courtesy protocol scoped to one clone is invisible to a lane whose work is
+> in another.
+
+The guard is **re-pointed, never removed**, and only on request: `--clone
+<path>` or `LS_CHECK_CLONE=<path>`. The split that matters is which reads
+follow the target:
+
+* **target-relative** — its lakefile globs, its oleans, the directory the
+  elaboration runs in, the axioms copy, and the guard itself;
+* **charter-relative** — A17's own citation and this repo's backlog driver are
+  claims about OUR repository and stay here;
+* **machine-wide** — load and pressure are untouched. They have no clone.
+
+**Resolved lazily, never defaulted.** The first cut assigned
+`TARGET_CLONE="$CLONE"` once at startup, which FROZE it: nineteen self-test
+rows that re-point `CLONE` for a fixture went on reading the real repo, and
+said so immediately. Every consumer now spells `${TARGET_CLONE:-$CLONE}`, so
+an unset opt-in follows `CLONE` wherever a caller moves it.
+
+Seven rows through the flag path — the guard is in the main flow, so no
+helper-level row can see it — with `LS_MOCK_LOAD=99` forcing an immediate
+refuse-load so nothing elaborates: a foreign target refused by default, the
+refusal naming the opt-in, `--clone` and `LS_CHECK_CLONE` both accepting it,
+the run reaching the machine-wide lines afterwards, a bad `--clone` refused by
+name, and the in-clone path unchanged.
+
+### Triad
+
+`check.sh` **113 ok** (106 → 113), triad 350, backlog-index 62, laws 45,
+sites 57, comment-forms 18, `--verify-guards` 44, docs_check 91/91. Live queue
+empty. No Lean executed.

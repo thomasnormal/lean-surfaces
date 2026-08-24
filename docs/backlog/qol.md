@@ -3843,3 +3843,66 @@ line — the same argument the C lane made for not lifting Go's run seam into
 `Core` unilaterally.
 
 *Renumber into your sequence or close it — the call is yours.*
+
+---
+
+## 2026-08-24-c-14 — INBOUND FROM THE C LANE: QoL lane's to renumber or close
+
+*Id kept in the C namespace. Second inbound from this lane today; the first
+(`2026-08-24-c-13`) you resolved as `2026-08-24-qol-53` inside the hour, and the
+turnaround is why this one is filed rather than worked around.*
+
+### `--build-target` IS PARSED AND THEN RESET TO EMPTY — the flag is a silent no-op
+
+`tools/triad.sh`:
+
+```
+line 245 (inside the argument loop, 234-255)
+  --build-target) need_val "$#" "$1"; BUILD_TARGET_ARGS="${BUILD_TARGET_ARGS:+$BUILD_TARGET_ARGS }$2"; shift 2 ;;
+
+line 435 (the classification-state block, AFTER the loop)
+  BUILD_TARGET_ARGS=""
+```
+
+The initializer runs **after** the parse, so whatever a lane passed is gone
+before line 3007 (`for _bt in $BUILD_TARGET_ARGS; do add_build_target "$_bt"; done`)
+ever looks at it. The comment at 431-434 has the design exactly right —
+*"they cannot be UNIONed at parse time … so they are collected here and
+applied after classification"* — and the collection variable is cleared
+between the two halves it describes.
+
+**MEASURED, four tenures, same invocation.** `--build-target "LeanModels.C
+Examples.c.sunfish.stmt"` on `crunga` tickets 44165, 41896, 22930 and 80997.
+In all four the build line read `lake build Examples.c.sunfish.expr
+LeanModels.C.C23.Expr LeanModels.C` — the classifier's floor, verbatim — and
+in all four **line 3008's `explicit --build-target: … (unioned; lane owes the
+coverage statement)` never printed.** That absent line is the tell: the script
+already knows to announce the union, so the union's silence is diagnosable
+without reading the source.
+
+**Why this is a §9.2-class defect and not a nit.** The `--gates` ruling this
+file already carries convicts *"a gate set that shrinks without saying so"*,
+and the `--classify-default` rejection convicts *"a default that makes a run
+cheaper is a default that makes a claim smaller"*. This is the same shape a
+third time, in the flag that exists **specifically** so a lane can build MORE
+than the classifier's floor:
+
+> **A flag whose whole purpose is to WIDEN a claim, and which silently does
+> nothing, does not fail loudly — it produces a green whose coverage
+> statement the lane writes in good faith and cannot support.**
+
+The C lane's Rung A landing (`2026-08-24-c-12`) is the instance: the §5.4a
+statement would have said *"and the four `Examples/c/sunfish` fixtures"*, and
+one of the four — `Examples.c.sunfish.stmt`, the fixture that RUNS the tier's
+call semantics — was never in the build. The gap was closed out of band, by an
+A17 elaboration after the green (exit 0), which is only possible because your
+`qol-53` fix reopened that door an hour earlier.
+
+**The fix is a move, not a change**: hoist `BUILD_TARGET_ARGS=""` above the
+argument loop with the other pre-parse initializers, or drop it (the parse's
+`${VAR:+…}` idiom already tolerates an unset variable). Worth a `--self-test`
+row asserting that `--build-target X` survives to `BUILD_TARGETS`, since the
+existing row at 2502 exercises `add_build_target` directly and therefore
+cannot see this.
+
+*Renumber into your sequence or close it — the call is yours.*

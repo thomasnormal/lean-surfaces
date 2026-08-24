@@ -1451,6 +1451,99 @@ because `--iterate` was refused for the whole session on a swap reading
 that is a high-water mark. **The cost of A17 being closed is not the
 iteration; it is that the iteration happens inside the lock.**
 
+### VERDICT — GREEN
+
+`tools/triad.sh --lane crunga --classify`, ticket
+`1787544192801624000-80997-crunga`:
+
+```
+[06:03:13] LOCK ACQUIRED after 0s as 'crunga 80997'
+[06:04:16] TRIAD DONE (build exit 0, gates green)
+[06:04:17] LOCK RELEASED (mine)
+```
+
+**63 seconds of tenure, after 5 934 s of queueing across three red ones.**
+
+| gate | result |
+| --- | --- |
+| `lake build` (build phase) | **exit 0, 18 jobs** |
+| `lake build` (gate phase) | **exit 0, 38 jobs** |
+| `tools/docs_check.py` | **91 / 91** marked blocks, 39 illustrative-exempt |
+| `harness/diff_test.py` | **1492 cases, 0 failed** — 1367 matched, 125 whitelisted |
+| `harness/refusal_census.py --whitelist --no-build` | green |
+| `harness/c_profile_probe.py --check-lean` | **9 / 9** width/signedness points |
+| `tools/backlog-index.sh --check` | in sync |
+| `error:` / `✖` / `sorry` lines in the full build log | **0** |
+
+**THE ELABORATION WITNESS (Built vs Replayed).** `LeanModels.C.C23.Expr`
+is **Built (7.6 s)**, not replayed, and so are every module below it:
+`Built LeanModels.C.C23.Stmt (457 ms)`, `Built LeanModels.C.C23 (222 ms)`,
+`Built LeanModels.C (755 ms)`, `Built Examples.c.sunfish.guards (5.7 s)`,
+`Built Examples.c.sunfish.memory (1.2 s)`, **`Built
+Examples.c.sunfish.expr (1.5 s)`** — which is the line that matters, because
+that is the file whose fifteen `#guard`s carry 320 / 215 / 10 / 7 / 0 / 208,
+the seven line numbers, and the ten `CallExpr` nodes. A replayed fixture
+would have proved nothing about them.
+
+### Axiom ledger
+
+The three Rung A theorems carry exactly `[propext, Classical.choice,
+Quot.sound]` — no `sorryAx`, no `native_decide`:
+
+```
+'LeanModels.C.C23.evalExpr_memInvariant'   [propext, Classical.choice, Quot.sound]
+'LeanModels.C.C23.evalLValue_memInvariant' [propext, Classical.choice, Quot.sound]
+'LeanModels.C.C23.evalArgs_memInvariant'   [propext, Classical.choice, Quot.sound]
+```
+
+And the three drain-amendment theorems are **unchanged**, which was the
+standing risk in adding a `structure`, a macro and eighteen lemmas to this
+file: `and_shortCircuits`, `or_shortCircuits`, `cond_takesOneArm`, same
+three axioms as before.
+
+### COVERAGE (§5.4a) — SCOPED, with one gap NAMED and then CLOSED
+
+The build was `lake build Examples.c.sunfish.expr LeanModels.C.C23.Expr
+LeanModels.C`. A scoped green does not cover modules that IMPORT the touched
+ones, so the question is who imports the C tier, and the answer is measured:
+`grep '^import LeanModels\.C\(\.\|$\)'` returns **16 lines, every one
+inside `LeanModels/C/` or `Examples/c/`** — unchanged from
+`2026-08-23-c-11`'s census, re-run rather than inherited.
+
+**And one of those importers was NOT in the build.** This lane passed
+`--build-target "LeanModels.C Examples.c.sunfish.stmt"` on all four tenures
+and the flag is a **silent no-op** — `tools/triad.sh` parses it at line 245
+and resets `BUILD_TARGET_ARGS=""` at line 435, after the argument loop. Filed
+as `2026-08-24-c-14`.
+
+> **A green's coverage statement is written by the LANE and is only as true
+> as the flags it believes it passed; a widening flag that silently does
+> nothing produces an honest lane making a false claim.**
+
+The gap is closed rather than carried: `Examples/c/sunfish/stmt.lean` was
+elaborated **after** the green under A17 — `tools/check.sh --iterate`,
+**exit 0, TRUSTWORTHY** — against the fresh oleans the tenure had just
+written. That is a real check and it is a DIFFERENT one from a build, so it
+is recorded as what it is: the tier's other three fixtures are covered by the
+tenure; `stmt` is covered by a lock-free single-file elaboration at the same
+tree.
+
+`Expr.isPure` and `Expr.nodeIsPure` are new names in `LeanModels.C.C23`, and
+`mem_inv` / `open_eval` / `open_lvalue` are new tactic macros. Blast radius,
+measured: nothing outside `LeanModels/C/` and `Examples/c/` mentions any of
+them, and no lemma in this landing is `@[simp]` — the one thing
+`2026-08-23-c-11` flagged as having reach beyond the tier was `Expr.size_pos`,
+and this landing adds no such thing.
+
+### What Rung B now costs
+
+**7 sites, not 215**, and the shape is fixed: at each, one nested call and
+the question of whether it writes what its siblings read. `evalArgs` makes
+the property statable; `evalArgs_memInvariant` retires the sibling half at
+all seven. The remaining obligation is an effect summary for one callee per
+site, plus the observable question this entry named — the ANSWER, not the
+run, because two orders can disagree about which refusal is reported.
+
 ### §9.0 — the tier's standing number
 
 **`gcc.c-torture` 0 scored (runner needed).** Unchanged, and it will stay

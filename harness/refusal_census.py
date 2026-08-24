@@ -567,6 +567,100 @@ print(list(enumerate(d.items())))
   "an enumerate OUTLIVES its call, so 3c-i-b's `consumesViewArg` excludes "
   "it and the view is not rewritten. Composing the view kind with this "
   "cursor is its own inch")
+# --- §iter: `iter(d)` + `next` over dict KEYS (2026-08-23-pycomplete-17/18).
+# The flagship's key source; the frame is `enumDict` without the index. Every
+# expectation below is CPython 3.9.19's own, measured before the design.
+w("dict.iter-next", """
+d = {2: 'b', 1: 'a'}
+print(next(iter(d)))
+""", "MATCH",
+  "the flagship's key expression, minimal: CPython answers 2 — the FIRST key "
+  "in INSERTION order, which is what makes `next(iter(d))` an eviction policy "
+  "and not an arbitrary pick")
+w("dict.iter-steps", """
+d = {2: 'b', 1: 'a'}
+it = iter(d)
+print(next(it))
+print(next(it))
+""", "MATCH",
+  "ONE cursor, stepped twice. `next` already implemented both its forms, so "
+  "the inch bought the stepping for free — the frame is the whole cost")
+w("dict.iter-empty", """
+print(next(iter({}), -1))
+""", "MATCH",
+  "the 2-argument `next` on an EXHAUSTED-at-birth cursor: CPython answers "
+  "the default, and the 1-argument form on the same cursor is StopIteration")
+w("dict.iter-escapes", """
+d = {1: 'a'}
+it = iter(d)
+d[2] = 'b'
+print('bound')
+""", "MATCH",
+  "`dict.enumerate-escapes` again, at a different builtin: binding an "
+  "iterator and then GROWING the dict is SILENT in CPython — the guard is on "
+  "the STEP, not the bind, so reaching the print is the whole observation")
+w("dict.iter-resize", """
+d = {1: 'a'}
+it = iter(d)
+d[2] = 'b'
+print(next(it))
+""", "MATCH",
+  "the same two statements with a different THIRD line, and that pairing is "
+  "the point: stepping after the growth RAISES RuntimeError. A bind-time "
+  "guard passes one and fails the other; a snapshot fails the other way")
+w("dict.iter-exhausted", """
+d = {1: 'a'}
+it = iter(d)
+print(next(it))
+print(next(it, -1))
+d[2] = 'b'
+print(next(it, -2))
+""", "MATCH",
+  "THE EXHAUSTION BOUNDARY, measured: an iterator STEPPED PAST the end is "
+  "DEAD (CPython clears its `di_dict`), so a later growth is silent and the "
+  "default comes back. One that has merely yielded its LAST key is still "
+  "LIVE and still raises — the frame reproduces both because the pop happens "
+  "at the step that FINDS the end, never at the last yield")
+w("dict.iter-for", """
+d = {2: 'b', 1: 'a'}
+for k in iter(d):
+    print(k)
+""", "MATCH",
+  "THE WITNESS FOR THE ALLOCATOR CENSUS. `iter` is the THIRD expression that "
+  "can allocate an `Obj.generator` without a generator `def` (`enumerate` and "
+  "`count` are the others), so it had to join `Expr.genAllocFree`. Without "
+  "that line this program reports ordinary Python as an internal heap "
+  "well-formedness violation — the 2026-08-13 incident, replayed")
+w("dict.iter-churn", """
+d = {1: 1, 2: 2, 3: 3}
+it = iter(d)
+print(next(it))
+del d[2]
+d[9] = 9
+print(next(it))
+""", "REFUSE",
+  "THE CHURN GUARD through the `iter` cursor rather than a `for`. CPython "
+  "answers 1 then 3 SILENTLY here, and the SAME churn one step later raises "
+  "'dictionary keys changed during iteration' instead — what separates them "
+  "is `di_len` reaching zero with a live entry still ahead of the cursor. "
+  "The model has no such counter, so the regime stays permanently LOUD")
+w("dict.iter-of-list", """
+print(next(iter([7, 8])))
+""", "REFUSE",
+  "THE RECEIVER BOUNDARY, falsifiable: CPython answers 7 (a `list_iterator`). "
+  "Every non-dict receiver has its own CPython iterator TYPE — "
+  "`str_iterator`, `tuple_iterator`, `range_iterator`, `set_iterator`, and "
+  "`iter(g) is g` — each with its own mutation regime, so each is its own "
+  "inch and none is guessed")
+w("del.dict-next-iter", """
+d = {1: 'a', 2: 'b'}
+del d[next(iter(d))]
+print(d)
+""", "MATCH",
+  "THE FLAGSHIP LINE (sunfish.py:541 `del self.tp_score[next(iter("
+  "self.tp_score))]`), whole. Inch (1) landed the `del`, inch (2) the key: "
+  "the cursor is ABANDONED before the deletion runs, so the hazard the "
+  "guards exist for is never on this path")
 w("dict.keys", """
 print(list({2: 'b', 1: 'a'}.keys()))
 """, "MATCH",
@@ -853,6 +947,20 @@ WHITELIST_CLASS = {
     "dict_lab::del_churn_first_key": "dict.keyset-churn",
     "dict_lab::del_churn_same_key_back": "dict.keyset-churn",
     "dict_lab::del_churn_middle_key": "dict.keyset-churn",
+    # §iter: the SAME churn regime reached through the `iter`/`next` cursor
+    # instead of a `for`. 2026-08-23-pycomplete-17 measured why it is one
+    # regime and not two: CPython's `dict_keyiterator` raises "keys changed"
+    # only when `di_len` hits zero with a live entry still ahead of the
+    # cursor, so the same churn answers silently one step earlier and raises
+    # one step later. The model has no `di_len`, so the guard stays LOUD.
+    "dict_lab::iter_churn_still_loud": "dict.keyset-churn",
+    # §iter: the RECEIVER boundary. `iterFrame` answers a cursor for a heap
+    # dict and refuses every other receiver, because CPython has a distinct
+    # iterator TYPE per receiver and each carries its own mutation regime.
+    "dict_lab::iter_list_recv_still_loud": "iter.non-dict-receiver",
+    # §iter: the 2-argument SENTINEL form needs a CALLABLE first argument and
+    # builds a `callable_iterator` — a second object kind, not a frame.
+    "dict_lab::iter_sentinel_still_loud": "iter.sentinel-form",
 }
 
 # The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused

@@ -3920,6 +3920,48 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
      | Option.none => .unsupported danglingMsg)
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
 
+/-- §iter: the initial frame of `iter(v)` — a heap DICT gets the live KEY
+cursor, and nothing else does.
+
+WHY THE OTHER RECEIVERS REFUSE RATHER THAN ANSWER. CPython has a distinct
+iterator TYPE per receiver — `list_iterator`, `str_iterator`,
+`tuple_iterator`, `range_iterator`, `set_iterator`, `dict_keyiterator`, and
+`iter(g) is g` for a generator — and each carries its own mutation regime.
+The dict one is the flagship's (`del d[next(iter(d))]`, sunfish.py:541); the
+others are an inch each, and a REFUSAL where CPython answers is a witnessed
+capability gap, while a guessed cursor is not.
+
+Unlike `enumFrame` this worker has exactly ONE caller (the monadic rebuild's
+`iter` arm): the trunk has no `iter` arm, so it never builds this frame and
+never has to decide. That is the `forDict` arrangement, and it is why
+§pycomplete-13's ruling (c) — declare the trunk's capability delta and
+witness it — has nothing to rule on here. -/
+def iterFrame (h : Heap) : RVal → Res GenFrame
+  | .ref a =>
+    (match Heap.get? h a with
+     | some (.dict es sv) => .ok (.iterDict a 0 es.size sv)
+     | some (.list _) =>
+         .unsupported "iter() over a list is outside the tier (CPython's `list_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+     | some (.generator ..) =>
+         .unsupported "iter() over a generator answers the generator ITSELF in CPython (`iter(g) is g`) — outside the tier"
+     | some (.pyset _) =>
+         .unsupported "iter() over a set is outside the tier (hash order; docs/memory-model.md)"
+     | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
+     | some (.cell _) => .unsupported cellInternal
+     | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+     | Option.none => .unsupported danglingMsg)
+  | .str _ =>
+      .unsupported "iter() over a str is outside the tier (CPython's `str_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+  | .tuple _ =>
+      .unsupported "iter() over a tuple is outside the tier (CPython's `tuple_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+  | .listV _ =>
+      .unsupported "iter() over a boundary list is outside the tier (CPython's `list_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+  | .ntuple .. =>
+      .unsupported "iter() over a namedtuple is outside the tier (CPython's `tuple_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+  | .rangeV .. =>
+      .unsupported "iter() over a range is outside the tier (CPython's `range_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+  | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
+
 /-- `itertools.count()` / `count(start)` / `count(start, step)`. -/
 def countArgs : List RVal → Option (Int × Int)
   | [] => some (0, 1)
@@ -3957,6 +3999,7 @@ def genBreak : GenCont → Option GenCont
   -- unwind inside a body, and these frames have no body). Loud, not a
   -- silent pop.
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
+  | .iterDict .. :: _
   | .countFrom .. :: _ => Option.none
 
 /-- `continue`: drop the pending blocks, KEEP the enclosing loop frame
@@ -3970,6 +4013,7 @@ def genContinue : GenCont → Option GenCont
   | k@(.forGen ..  :: _) => some k
   | k@(.whileLoop .. :: _) => some k
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
+  | .iterDict .. :: _
   | .countFrom .. :: _ => Option.none
 
 mutual
@@ -4128,10 +4172,17 @@ mutual
     -- 2026-08-13 adds `print`: it MUTATES `World.stdout`, the one effect
     -- the interpreter performs, so the world-preservation fragment must
     -- exclude it exactly as it excludes the allocating calls.
+    -- §iter adds `iter`: it ALLOCATES an `Obj.generator` (the key cursor).
+    -- It is not enough that the TRUNK refuses it — `funsHeapFree` is also the
+    -- guard `callNamePlan` reads to conclude that a local holding a `.ref` in
+    -- a heap-free module must be a DICT (closures allocate, so there can be
+    -- none). An `it = iter(d)` that left the fragment intact would make that
+    -- conclusion false, and `it(0)` would name the wrong type in a faithful
+    -- `TypeError`. The carve-out is the same one `enumerate` and `count` have.
     | .call (.name id _) args kwargs _ _ =>
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && (id != "any") && (id != "all") && (id != "set")
-        && (id != "print") && (id != "list") && (id != "dict")
+        && (id != "print") && (id != "list") && (id != "dict") && (id != "iter")
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && heapFreeAttr attr && recv.heapFree
@@ -4258,13 +4309,20 @@ def funsAnyGen : List FunctionDefn → Bool
   | f :: fs => f.isGenerator || Stmt.hasGenDefList f.body.toList || funsAnyGen fs
 
 mutual
-  /-- Can this expression ALLOCATE an `Obj.generator`? Only two shapes
-  can, and neither needs a generator `def`: a call of `enumerate` or
-  `count` (the H4 generator FRAMES `enumSeq`/`countFrom`), and a
+  /-- Can this expression ALLOCATE an `Obj.generator`? Only three shapes
+  can, and none needs a generator `def`: a call of `enumerate`, `count` or
+  `iter` (the H4 generator FRAMES `enumSeq`/`countFrom`/`iterDict`), and a
   generator EXPRESSION that survived lowering (an admitted one becomes a
   synthesized generator function, which `funsAnyGen` sees). `next(…)`
   STEPS a generator and never builds one; an `unsupported` node refuses
   at evaluation, so it allocates nothing.
+
+  §iter ADDED THE THIRD, and this list is the reason the inch had to be
+  censused rather than transliterated: `iter(d)` allocates exactly as
+  `enumerate(d)` does, so a module whose only generator is one of these
+  would otherwise be classified generator-FREE and the script shell's
+  `for k in iter(d)` would report ordinary Python as an internal heap
+  well-formedness violation — the 2026-08-13 incident below, replayed.
 
   FOUND 2026-08-13 by `tools/leanpy`: `moduleGenFree` used to claim that
   a module with no generator def can hold no generator object, on the
@@ -4282,7 +4340,7 @@ mutual
     | .boolOp _ vs _ => Expr.genAllocFreeList vs.toList
     | .compare l _ cs _ => l.genAllocFree && Expr.genAllocFreeList cs.toList
     | .call (.name id _) args kwargs _ _ =>
-      (id != "enumerate") && (id != "count")
+      (id != "enumerate") && (id != "count") && (id != "iter")
         && Expr.genAllocFreeList args.toList && Expr.genAllocFreeKw kwargs.toList
     | .call f args kwargs _ _ =>
       f.genAllocFree && Expr.genAllocFreeList args.toList
@@ -6531,6 +6589,13 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
       -- monadic rebuild's (docs/backlog/python-completeness.md
       -- 2026-08-23-pycomplete-13, ruling (c)).
       .unsupported "stepping an enumerate() over a dict is outside this interpreter's tier — the live cursor is the monadic rebuild's (docs/memory-model.md §dict iteration)"
+    | .iterDict .. :: _ =>
+      -- §iter, and it is the `forDict` arrangement rather than `enumDict`'s
+      -- one above: this interpreter has NO `iter` arm at all, so `iter(d)`
+      -- refuses at name resolution and the frame is unreachable here. The arm
+      -- exists to compile and to refuse, and gains no consumers — which is
+      -- also why the inch owes no trunk-side capability delta to witness.
+      .unsupported "stepping an iter() over a dict is outside this interpreter's tier — the live cursor is the monadic rebuild's (docs/memory-model.md §dict iteration)"
     | .forDict .. :: _ =>
       -- THE LEGACY INTERPRETER'S CONTRACT under no-backwards-compat: this
       -- interpreter never CONSTRUCTS a `forDict` frame (only

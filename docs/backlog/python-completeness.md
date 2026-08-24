@@ -1375,3 +1375,268 @@ next has reason to open that file.
 * `docs/memory-model.md` updated in three places: the H1 dict inventory, the
   `del` construct paragraph, and the cross-rung churn note that predicted
   this inch.
+
+## 2026-08-24-pycomplete-17 — INCH (2)'s CENSUS: `iter(d)` arrives at the EVALUATOR, and it is the THIRD generator allocator
+
+Inch (2) of the flagship ladder is `iter(d)` + `next` over dict keys — the key
+half of `del self.tp_score[next(iter(self.tp_score))]` (sunfish.py:541), whose
+`del` half landed as §pycomplete-16. Censused on CPython 3.9.19 and against the
+tree before any design.
+
+### THE FIRST FINDING, and it inverts inch (1)'s shape
+
+Inch (1)'s answer was an INGESTION REWRITE: `del d[k]` could not arrive any
+other way, because `delStmt` admits bare names and the refusal was upstream of
+the AST. **Inch (2) is the opposite, and the extracted envelope says so
+outright.** `iter(d)` comes out of the extractor as an ordinary
+`Call(Name "iter", [Name "d"])` — no `call_unsupported`, no new node kind —
+and `Json.lean` ingests it unchanged. The construct arrives at the
+**EVALUATOR**, and the whole inch is one builtin arm plus one frame.
+
+The reason is worth keeping, because it is the rule and not the accident:
+**an ingestion rewrite is available exactly when the construct's meaning is
+decided by SYNTAX.** `del o[k]` names its receiver syntactically and `del` has
+no value, so `<dictdel>(o, k)` is exact. `iter` is a SHADOWABLE name whose
+meaning depends on its argument's runtime TYPE — `list_iterator`,
+`str_iterator`, `dict_keyiterator`, or the generator itself — and ingestion
+sees neither the binding nor the type. A rewrite there would be a guess.
+*The third decision site is a tool, not a default.*
+
+### THE SECOND FINDING, and it is the one that would have gone wrong
+
+`Expr.genAllocFree`'s docstring reads *"Only two shapes can allocate an
+`Obj.generator` … a call of `enumerate` or `count`"*. **`iter` is the third**,
+and nothing in the §pycomplete-15 price sheet predicted it. The consequence is
+not a missing feature but a WRONG LOUD ANSWER: `moduleGenFree` would classify a
+module holding an `iter` cursor as generator-FREE, and
+
+    d = {2: 'b', 1: 'a'}
+    for k in iter(d):
+        print(k)
+
+would report ordinary Python as *"internal: a generator object in a module
+with no generator defs (heap well-formedness violation — report this)"* — the
+2026-08-13 `tools/leanpy` incident, verbatim, at a new builtin. The witness
+`dict.iter-for` exists to convict exactly that, and it is a MATCH only because
+the census read the docstring that names the closed list.
+
+`Expr.heapFree` needed the same carve-out for a DIFFERENT reason, and the two
+must not be conflated. The trunk refuses `iter` entirely, so world-preservation
+is safe there; but `funsHeapFree` is also the guard `callNamePlan` reads to
+conclude that *a local holding a `.ref` in a heap-free module must be a DICT*
+(closures allocate, so there can be none). An `it = iter(d)` that left the
+fragment intact would falsify that, and `it(0)` would name the wrong type in an
+otherwise faithful `TypeError`. **Two allocator censuses, two arguments, one
+line each.**
+
+### The oracle's column, in the source spelling
+
+| probe | CPython 3.9.19 |
+| --- | --- |
+| `next(iter({2:'b',1:'a'}))` | `2` — insertion order |
+| `it = iter(d); next(it), next(it)` | `2 1` — ONE cursor |
+| `next(iter({}))` / `next(iter({}), -1)` | `StopIteration` / `-1` |
+| `type(iter(d)).__name__` | `dict_keyiterator` |
+| `it = iter(d); d[2]='b'; print('bound')` | `bound` — **silent** |
+| `it = iter(d); d[2]='b'; next(it)` | `RuntimeError: dictionary changed size…` |
+| `it = iter(d); del d[1]; next(it)` | the same `RuntimeError` — shrink is size too |
+| `it=iter(d); jt=it; next(it), next(jt)` | `1 2` — identity, one shared cursor |
+| `for k in iter(d)` / `list(iter(d))` | `2 1` / `[2, 1]` |
+| `del d[next(iter(d))]` | `{2: 'b'}` — **the flagship line** |
+| `iter([7,8])`, `iter('xy')`, `iter((5,6))`, `iter(range(3,9))`, `iter({4})` | all answer, each a DIFFERENT iterator type |
+| `iter(g) is g` | `True` — a generator is its own iterator |
+| `iter(3)` | `TypeError: 'int' object is not iterable` |
+| `iter()` | `TypeError: iter expected at least 1 argument, got 0` |
+| `iter(d, 0)` | `TypeError: iter(v, w): v must be callable` |
+| `iter(lambda: 1, 1)` | a `callable_iterator` — a second OBJECT KIND |
+
+### THE THIRD FINDING: the churn regime is TWO CPython rules, and now both are named
+
+§pycomplete-15 measured the same-size key-set churn regime through a `for`
+loop and concluded *"the entries-array layout is what separates them"*. Driving
+the SAME regime through an explicit `iter`/`next` cursor splits that sentence
+into two facts, because the cursor can be positioned anywhere:
+
+| shape (`d = {1,2,3}`, one `del`, one insert, size unchanged) | CPython 3.9.19 |
+| --- | --- |
+| churn after yielding key **1** | `1, 3, 9` — **silent** |
+| churn after yielding key **2** | `1, 2, 3` then `RuntimeError: dictionary keys changed…` |
+| churn **before** any `next` | `2, 3, 9` — **silent** |
+| churn, then the iterator RUNS OFF the end | `RuntimeError: dictionary keys changed…` |
+| 8-key dict, churn at key 3 | `0,1,2,4` — silent |
+
+`dictiter_iternextkey` raises *"changed size"* on `di_used != ma_used` — a SIZE
+check the model has — and raises *"keys changed"* at the point CPython's own
+source comments *"We found an element (key), but did not expect it"*: `di_len`
+has reached **zero** while a live entry still lies ahead of the cursor. So the
+`for` table's four shapes were four samples of one two-part rule, and the
+`iter` spelling is what made the parts separable.
+
+**The refusal is therefore not a coarse approximation of one rule; it is the
+honest answer to two.** A model carrying `di_len` alone would answer where
+CPython is silent; one carrying the tombstoned array alone would be silent
+where CPython raises. Both, together, or LOUD — and LOUD is what stays.
+*A regime you have only ever probed from one cursor position is a regime you
+have measured once.*
+
+### A fourth measurement, recorded because it constrains the frame
+
+Exhaustion is **discovered, not implied**:
+
+    d = {1:'a'};  it = iter(d);  next(it)   # yields 'the last key'
+    d[2] = 'b';   next(it, -1)              # RuntimeError — the iterator is STILL LIVE
+
+    d = {1:'a'};  it = iter(d);  next(it);  next(it, -1)   # RUNS OFF: -1
+    d[2] = 'b';   next(it, -2)                             # -2 — silent, it is DEAD
+
+CPython clears `di_dict` at the step that finds the end, and only then stops
+guarding. A frame popped at the LAST YIELD would answer `-1` where CPython
+raises; one never popped would raise where CPython answers `-2`. The
+`enumDict` precedent already pops on `.done`, so both fall out — but they fall
+out of WHERE the pop happens, which is why the pair is a witness and not a
+comment.
+
+### THE PRICE — nine frame sites, and the two that were not on the sheet
+
+| site | file | what |
+| --- | --- | --- |
+| constructor | `Runtime.lean` §generator continuations | `iterDict (a cur n sv)` beside `enumDict` |
+| well-formedness | `Runtime.lean` `GenFrame.WF` | `a < h.size` |
+| classifiers ×2 | `Semantics.lean` `genBreak`/`genContinue` | one pattern each |
+| worker | `Semantics.lean` `iterFrame` | new, beside `enumFrame` |
+| step (rebuild) | `Monadic/Eval.lean` `execGen` | `dictStepM … .keys`, yielding the BARE key |
+| step (trunk) | `Semantics.lean` `execGen` | one arm, REFUSING |
+| `PayloadBlind`/`ClockErase`/`Obs` | one arm each | mechanical, and all three are the `enumDict` arm verbatim |
+| builtin arm | `Monadic/Eval.lean` `applyBuiltin` | `iter` |
+| builtin table | `Ast.lean` `isBuiltinName` | `+ "iter"`, 22 → **23 names** |
+| **allocator census 1** | `Semantics.lean` `Expr.genAllocFree` | **not on the sheet** — see above |
+| **allocator census 2** | `Semantics.lean` `Expr.heapFree` (+ the one `Obs.lean` destructuring) | **not on the sheet** — see above |
+| lowering table | `Json.lean` `lowerBuiltins` | `+ "iter"`, the two-table gap closed at the third table too |
+
+**`VCGen` owes nothing** and `Mono.lean` owes nothing, for §pycomplete-13's
+reason unchanged: the frame is consumed through `stepIter`/`execGen`/`forGen`,
+all of which are existing `Kont` fields, and the trunk refuses to step it, so
+there is no transition theorem to state. `Monadic/Spec.lean` owes nothing
+either — `dictStepM_spec` is stated for an arbitrary `kind` and arbitrary
+`(a i n sv)`, so the new frame inherits it the moment it is written in terms of
+`dictStepM`.
+
+### The ruling §pycomplete-13 had to make, and why this inch has nothing to rule
+
+3c-i-c had to choose between three ways of handling a TRUNK that builds a frame
+it will not step, because `enumFrame` is SHARED. Here the trunk has **no `iter`
+arm at all** — `iter` falls through its positional chain to `isPyBuiltinName`
+and refuses as an unmodelled builtin, exactly as it did before this inch. So
+`iterFrame` has one caller, the trunk never constructs the frame, and its step
+arm is `forDict`'s: *"exists to compile and to refuse, and gains no consumers"*.
+No capability delta, no witness to carry one, no `Obs.lean` branch to rewrite
+away. **The cheaper arrangement was available because the trunk was silent, and
+the census is what noticed the difference rather than transliterating (c).**
+
+### What inch (2) does NOT cover, named so it is not silently assumed
+
+* `iter` over a **list / str / tuple / range / set** — CPython answers, with a
+  distinct iterator TYPE and a distinct mutation regime for each.
+  `dict.iter-of-list` is the falsifiable witness; each is its own inch.
+* `iter(g)` over a generator — CPython answers `g` ITSELF (`iter(g) is g`).
+  Cheap, exact, and still out: it is a different RETURN (a `.ref`, not a
+  frame), so it would be a second shape in one arm.
+* `iter(d.keys())` — `consumesViewArg` excludes `iter` for `enumerate`'s
+  reason: the cursor OUTLIVES the call, so the rewrite's snapshot is not
+  licensed. Composing the view kind with this cursor is its own inch.
+* `iter(v, sentinel)` — a `callable_iterator`, a second object kind.
+* An ERROR-STATE gap, inherited and named below.
+
+### AN INHERITED WART, MEASURED: CPython's iterator error state is STICKY
+
+    d = {1:'a'};  it = iter(d);  d[2] = 'b'
+    try:    next(it)
+    except RuntimeError: pass
+    next(it, 'DEFAULT')      # CPython: RuntimeError AGAIN. The model: 'DEFAULT'.
+
+`dictiter_iternextkey` sets `di_used = -1` and CPython's own comment calls it
+*"sticky"*; the model's `stepIterAt` CLOSES the generator when an exception
+propagates out, and a closed generator answers `next`'s default. **"Dead" and
+"poisoned" are different states, and the model has only one of them.** This is
+**inherited from §pycomplete-14** — `enumDict` has had it since 3c-i-c and it
+was not measured then — not introduced here; the fix is a `GenStatus`
+constructor, which is a `Kont`-adjacent price and belongs to whichever inch has
+reason to open that file. Recorded rather than replicated silently, and
+deliberately NOT given a witness row: the census records measured verdicts, and
+a row here would be a `DIVERGE`.
+Interestingly the OTHER message is not sticky — after *"keys changed"* CPython
+clears `di_dict` and the iterator merely dies — so the two RuntimeErrors differ
+in aftermath as well as in cause.
+
+### Battery — sixteen typed-call rows and ten witnesses, expectations ORACLE-written
+
+Every source is the SPELLING a program would contain and every expectation is
+CPython 3.9.19's own. Three rows are REFUSES and each names what CPython
+answers: `iter_churn_still_loud` (CPython answers 4, silently),
+`iter_list_recv_still_loud` (CPython answers 7), `iter_sentinel_still_loud`
+(CPython raises `TypeError`). The falsifiable PAIRS are
+`iter_bind_then_grow`/`iter_grow_then_step` (the guard is on the step) and
+`iter_last_key_then_grow`/`iter_ran_off_then_grow` (exhaustion is discovered).
+
+## 2026-08-24-pycomplete-18 — INCH (2) BUILT: `iter(d)` + `next` runs, and the price held except where the census caught it
+
+`next(iter(d))` runs, and with it `for k in iter(d)`, `list(iter(d))`, the
+aliased cursor, and **the flagship's whole line** — `del d[next(iter(d))]`
+answers `{2: 'b'}`, which is inch (1) and inch (2) meeting on sunfish.py:541.
+
+### What landed, against the censused site list
+
+Nine frame sites, the builtin arm, the builtin table — all as priced. The two
+sites the price sheet did NOT have are the two allocator censuses
+(`Expr.genAllocFree`, `Expr.heapFree`), and they are the whole reason this inch
+was censused against the tree rather than transliterated from `enumDict`.
+**The `enumerate` precedent transfers at the FRAME and not at the MODULE.** A
+new frame is nine mechanical arms; a new ALLOCATOR is two closed lists that
+name their members, and a docstring is the only thing that says so.
+
+### Three consumers that owed nothing, and that is the interesting half
+
+`next`, `for`, and the draining consumers all reach the frame through
+`stepIter`, and none needed a line:
+
+* `next(it)` and `next(it, d)` — `next` already implemented both forms, so the
+  sentinel came free with the frame, which is what §pycomplete-15 predicted.
+* `for k in iter(d)` — the `.ref`-to-generator arm of the `for` dispatch, which
+  routes to `forGen`. Free at function scope; at MODULE scope it is free only
+  because `genAllocFree` was fixed, which is what makes `dict.iter-for` the
+  witness for that site rather than for the cursor.
+* `list(iter(d))` — `iterValues`' generator arm, draining unguarded because
+  `list` allocates.
+
+*The generator-frame design keeps paying: one stepper, and every consumer that
+already reached `enumerate` reaches this too.*
+
+### The churn guard, kept and now UNDERSTOOD
+
+`iter_churn_still_loud` is the same `.rekeyed` refusal §pycomplete-16 made
+required, reached through a different spelling — and the census (above) is what
+turned "the entries-array layout" into two named CPython rules. The guard did
+not move; the ARGUMENT for it got stronger, and a stronger argument for an
+existing refusal is the cheapest kind of progress this lane makes.
+
+### Census deltas
+
+* grammar census **122 → 132 witnesses**: `dict.iter-next`, `dict.iter-steps`,
+  `dict.iter-empty`, `dict.iter-escapes`, `dict.iter-resize`,
+  `dict.iter-exhausted`, `dict.iter-for` and `del.dict-next-iter` (MATCH);
+  `dict.iter-churn` and `dict.iter-of-list` (REFUSE).
+* `harness/cases.json` **670 → 686 rows**, sixteen `dict_lab::iter_*`; three
+  are new gaps and join `WHITELIST_CLASS` — one `dict.keyset-churn` and two
+  new classes, `iter.non-dict-receiver` and `iter.sentinel-form`.
+* `isBuiltinName` **22 → 23 names**; `Monadic/Eval.lean`'s count comment moved
+  with it, because a comment that states a number is a claim.
+* `docs/memory-model.md` updated in three places: the H1 dict inventory, the
+  cross-rung churn note (now carrying the `di_len` mechanism), and a new
+  §`iter(d)` cursor paragraph.
+
+### §9.0 after this inch
+
+**2 of 3 flagship-serving pyc surfaces.** `del d[k]` (§pycomplete-16) and
+`iter(d)` + `next` (here); the third is `next(<genexp over keys with a
+filter>)`, the other eviction line's key expression, and §pycomplete-15's
+census of it stands unchanged — *"the genexp already has a cursor class"*.

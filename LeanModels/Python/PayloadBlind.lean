@@ -2292,6 +2292,11 @@ theorem pbExecGen_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) 
       | enumDict i ad cur n sv =>
           simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
           exact PBF.unsupported
+      -- §iter: the trunk never CONSTRUCTS an `iterDict` frame (`iterFrame` has
+      -- one caller and it is the rebuild's), and a refusal is blind
+      | iterDict ad cur n sv =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          exact PBF.unsupported
       -- §3a: the trunk's `forDict` arm refuses, and a refusal is blind
       | forDict tg ad i n sv kd bd =>
           simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]

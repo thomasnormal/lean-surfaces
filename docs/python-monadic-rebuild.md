@@ -13,8 +13,9 @@ a **second Python semantics** written on the family substrate
 authoritative and untouched, the campaign's files are untouched, no proof
 migrates, and `LeanModels/Python.lean` does not import the rebuild. §0.1
 principle I forbids swapping a validated definition for an unvalidated one; the
-gate below is what would eventually earn that right, and `twinAgrees` (§8.5) is
-what would earn it in a theorem.
+gate below is what would eventually earn that right, and `twinAgrees`
+(§8.5 — a CROSS-DOCUMENT citation that lost its filename; the section is
+`docs/python-refounding-plan.md` §3) is what would earn it in a theorem.
 
 > **SUPERSEDED (2026-08-23) — the paragraph above is the rebuild's FOUNDING
 > premise, and the gate below earned the right it describes.** Kept rather
@@ -41,10 +42,15 @@ what would earn it in a theorem.
 > **And `twinAgrees` is not what earned it.** The right was earned by the
 > differential gate, not by a theorem; `docs/python-refounding-plan.md` §2.6
 > then re-scoped the `twinAgrees` question to the interpreter-facing third of
-> the estate. **There is no §8.5 in this document** — the anchor dangles in
-> all four places it appears (here, §3.1's lead-in, and twice in §7). The
-> section that actually reasons about `twinAgrees` is the refounding plan's
-> §3.
+> the estate. **There is no §8.5 in this document, and never was** — and the
+> DEFECT is not a missing section but a missing FILENAME: every `§8.5` here is
+> an untagged CROSS-DOCUMENT citation, and its true referent is
+> `docs/python-refounding-plan.md` §3, the section that actually reasons about
+> `twinAgrees`. Each of the three citations now carries that filename (the
+> founding paragraph above, §3's lead-in, and §7's last step); the `§8.5`
+> token is left standing beside it so the anchor stays searchable, and NOTHING
+> is renumbered in either document. *A section number without a file is a
+> citation that can only be checked in the document that cannot satisfy it.*
 
 ---
 
@@ -354,9 +360,10 @@ program the differential gate does not run, and the honest version of it is
 larger by more than three orders of magnitude.
 
 This is **not** a reason to keep a shallow twin — a twin is a second thing to
-keep true, and §8.5's `twinAgrees` is the bill for it. The prescription was *more
-`@[spec]` lemmas at the `evalOpen`-arm level, not fewer premises in the
-statement*.
+keep true, and §8.5's `twinAgrees` (`docs/python-refounding-plan.md` §3 — the
+citation's filename, missing here since it was written) is the bill for it.
+The prescription was *more `@[spec]` lemmas at the `evalOpen`-arm level, not
+fewer premises in the statement*.
 
 **THE PRESCRIPTION WAS THEN TESTED, AND IT DOES NOT SUFFICE — for a nameable
 reason.** Two arm-level lemmas land (`evalOpen_name_local`, `evalOpen_const`).
@@ -883,8 +890,9 @@ any/all (6). What is left, in measured order:
    module bindings, `max`/`min` over a heap referent (1).
 3. ~~The script executor.~~ **DONE** — see §6.2.
 
-Then, and only then, `twinAgrees` (§8.5 — dangling, see the note at the head
-of this document; the live discussion is `docs/python-refounding-plan.md` §3)
+Then, and only then, `twinAgrees` (§8.5 — a cross-document citation missing its
+filename, see the note at the head of this document; the section is
+`docs/python-refounding-plan.md` §3)
 — which this rebuild does not attempt and does not need in order to be
 measured.
 

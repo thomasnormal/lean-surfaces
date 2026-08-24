@@ -1179,3 +1179,95 @@ inch), 23 absent.
 scrape.** The reach numbers (+1,249, +1,036) were computed from an explicit
 kind SET rather than the scrape and are unaffected; the `N/66` figures were
 not, and 40/66 should be read as 33/66 + 8 partial.
+
+---
+
+## 2026-08-25-es-1 — the scoreboard: `test262 scored` leaves 0
+
+`LeanModels/Es/Score.lean` (`es-score`), `harness/es_score.py`,
+`harness/es_score_corpus.py`, `harness/es_scoreboard.py`,
+`harness/es/slice_probe.mjs`, `docs/es-scoreboard-corpus.json`.
+
+**§9.0: 33/66 stated + 8 partial; vocabulary 5,464; runnable 1,816;
+test262 scored — first real number this run; declared-divergences 1.**
+
+### THE REALM WAS NOT THE PREREQUISITE. THREE BINDINGS WERE.
+
+The realm inch was priced and then withdrawn by its own census. Measuring the
+prelude's intrinsic surface gave six property paths, not six intrinsics — and
+then **every one of them turned out to sit in failure formatting**:
+
+    formatIdentityFreeValue   JSON.stringify, String()
+    formatSimpleValue         String(), Object.prototype
+    assert.compareArray       String()
+    compareArray.format       Array.prototype.map
+
+`assert(mustBeTrue, message)` opens `if (mustBeTrue === true) { return; }`, and
+`assert.sameValue` opens with the same early return over `_isSameValue`, which
+uses only `===`, `1/a` and `a !== a`. `sta.js` needs nothing at all.
+**A passing test touches no intrinsic.** What was missing was that
+`undefined`, `NaN` and `Infinity` are properties of the global object this
+tier does not have — three bindings, added as immutable declarative ones
+(§19.1's attributes, reproduced for every observable the tier can reach).
+
+This corrected the lane's own "decisive fact" from the previous entry: *no
+test can reach a verdict without those four intrinsics* was wrong. No test can
+reach a FAILURE MESSAGE without them.
+
+### THE POPULATION IS NAMED, AND PINNED BY CONTENT
+
+`docs/es-scoreboard-corpus.json` carries the rule as data, the test262 commit,
+the count, and a **digest over content** — sha256 of the sorted
+`<relpath> <sha256>` lines. Re-derive and it matches or the corpus moved.
+1,816 admitted; rejected 8,505 kind-outside-the-evaluator, 4,745
+out-of-slice-flag, 4,201 not-parsed, 3,415 needs-an-intrinsic, 311
+negative-test. **The states sum to 22,993**, the file count.
+
+The full list is not in `docs/`: it is ~1,800 lines derivable from the rule
+plus the pinned commit, and a digest anyone can recompute is a stronger pin
+than a list nobody diffs.
+
+### THE ZEROES ARE NOT THE SAME ZERO
+
+Eleven states, and they sum: `passed`, `failed`, `refused-construct`,
+`refused-intrinsic`, `refused-host`, `timeout`, `threw-other`,
+`prelude-failed`, `not-parsed`, `not-ingested`, `runner-error`. The three ES
+refusal causes stay apart because §3.6 says so; `prelude-failed` is its own
+state because a broken prelude would otherwise print 1,816 identical
+refusals and look like a frontier instead of one file.
+
+`harness/es_score.py` re-derives the driver's summary from the per-test lines
+by a different program and **compares them line for line** — agreement is
+evidence, disagreement is a defect in one of the two. The first non-pass is
+printed verbatim IN LOG ORDER, because `sort -u` answers "which distinct
+outcomes exist" and a reader asks "what went wrong first".
+
+### THE FIRST TENURE WENT GATES-RED, AND THE REFUSAL WAS THE INSTRUMENT'S OWN
+
+Build GREEN, corpus verified (1,816, digest unchanged), and then
+`es_scoreboard.py` refused: **`.lake/build/bin/es-score is not built`.**
+
+The cause was the lakefile. `es-score` is a new `lean_exe` and is NOT in
+`defaultTargets`, so `lake build <all default targets>` — which is what a
+tenure runs — never built it. Adding it to `defaultTargets` would fix it by
+making **every other lane's triad** build this tier's scoreboard binary: a
+fleet-wide cost for one lane's gate, which is the wrong place to put it. The
+gate builds what the gate needs.
+
+`lake exe` builds-and-runs in one step and is what the C lane's torture gate
+uses, but it writes build progress to STDOUT — the same stream the per-test
+lines travel on — and the scorer would then refuse a non-data line correctly
+and unhelpfully. So: `lake build es-score`, then run the binary, with build
+output kept on stderr.
+
+**The red is the absent-corpus discipline firing one layer up.** The
+scoreboard refused to report a number when its own runner was missing, rather
+than printing `0 scored` and passing. That is what the state partition is
+for, and the first thing it caught was the harness rather than the model.
+
+### EVERY EARLIER NUMBER WAS A PROXY
+
+`+1,249`, `+1,036`, `33/66`, `5,464` are predictions computed from the
+evaluator's own arms — four inches of exact prediction-vs-actual measuring
+the instrument against itself. This is the first instrument in the lane that
+runs the tests.

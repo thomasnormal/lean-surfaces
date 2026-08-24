@@ -68,3 +68,7 @@ root = "LeanModels.Circuit.DCRunner"
 name = "c-torture-run"
 root = "LeanModels.C.Torture"
 
+
+[[lean_exe]]
+name = "es-score"
+root = "LeanModels.Es.Score"

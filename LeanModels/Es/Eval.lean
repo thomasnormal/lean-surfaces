@@ -1178,6 +1178,35 @@ end
 /-! ## Running a Script — ES2026 §16.1 -/
 
 /--
+A Script's environment, with the three VALUE globals bound.
+
+§19.1.1-19.1.3 make `undefined`, `NaN` and `Infinity` properties of the
+GLOBAL OBJECT — `{ writable: false, enumerable: false, configurable: false }`
+— and this tier has no global object (inch 6). They are bound here as
+IMMUTABLE declarative bindings instead, which reproduces every observable
+the tier can reach: the values, and the failure to assign them.
+
+**What is not optional is having them at all.** `undefined` is a free
+identifier in 176 of the runnable slice and `NaN`/`Infinity` in another 64;
+without these bindings each is a `ReferenceError` where the language has a
+value — the exact bug that forced `Examples/es/literals/guards.lean` to
+write `void 0`. Three bindings, and they are what takes the scoreboard off
+zero; the intrinsics behind them are the realm inch.
+
+The remaining difference — `globalThis.undefined`, or `delete undefined` —
+needs the global object, and every path to it already refuses.
+-/
+def newScriptEnvironment : EsW EnvRef := do
+  let env ← newDeclarativeEnvironment none
+  for (n, v) in [("undefined", Val.undef),
+                 ("NaN", Val.num (0.0 / 0.0)),
+                 ("Infinity", Val.num (1.0 / 0.0))] do
+    envCreateImmutableBinding env n true
+    envInitializeBinding env n v
+  return env
+
+
+/--
 `ScriptEvaluation(scriptRecord)` — §16.1.6, over
 `GlobalDeclarationInstantiation` (§16.1.7).
 

@@ -200,6 +200,51 @@ def exitIsAlwaysZero (envl : Envelope) : Bool :=
         else true
     | _ => true
 
+/-- **§6.2.1p4 + §6.7.10p10 — build the unit's file-scope objects.**
+
+Returns the environment a frame starts in. Three cases, and the third is
+the one that had to be thought about:
+
+* **no initializer** → `allocZeroed`. §6.7.10p10: an object with static
+  storage duration and no initializer is zero-initialized. Exact, and no
+  evaluation is involved.
+* **an initializer** → `alloc` (bytes INDETERMINATE) and then the tier's
+  own `initObject`. The object is not pre-zeroed: if the initializer
+  cannot be run the refusal propagates and names itself, and a read of a
+  half-built object would refuse on `J.2(11)` rather than return a
+  fabricated 0.
+* **a type the layout cannot size** → the object is SKIPPED and stays
+  unbound. That is deliberate: binding it would need a size, and inventing
+  one is the fabricated-layout defect. A test that never touches it is
+  unaffected; a test that does gets the same loud `unbound name` it got
+  before, which is the honest message for "the instrument could not build
+  this object".
+
+Earlier globals are in scope for later initializers, which is §6.2.1p4's
+"to the end of the translation unit" doing its own work. -/
+def setupGlobals (fuel : Nat) (lay : Layout) :
+    List LeanModels.C.Decl → Env → ExecM Env
+  | [], acc => pure acc
+  | d :: ds, acc =>
+    match d with
+    | .var nm ty _ init _ =>
+        match lay.size ty with
+        | none => setupGlobals fuel lay ds acc
+        | some sz =>
+            match init with
+            | none => do
+                let m ← get
+                let (m', o) := m.allocZeroed .static_ sz (some ty)
+                set m'
+                setupGlobals fuel lay ds ((nm, o) :: acc)
+            | some e => do
+                let m ← get
+                let (m', o) := m.alloc .static_ sz (some ty)
+                set m'
+                initObject fuel { env := acc, layout := lay } (Ptr.toObject o) ty e
+                setupGlobals fuel lay ds ((nm, o) :: acc)
+    | _ => setupGlobals fuel lay ds acc
+
 /-- Run one ingested test: call its `main` with no arguments, from an
 empty memory, and read the outcome.
 
@@ -208,8 +253,12 @@ them into environment refusals, because both are the exit-status oracle
 speaking — `docs/c23-goal.md` §1.2. Neither is modelled and neither ever
 will be by widening the slice. -/
 def scoreEnvelope (fuel : Nat) (envl : Envelope) : Verdict :=
-  let prog : Program := { fns := envl.unit.functionDefns, layout := layoutFor envl }
-  match ExecM.verdict Mem.empty (callByName fuel prog "main" []) with
+  let lay := layoutFor envl
+  let prog : Program := { fns := envl.unit.functionDefns, layout := lay }
+  let run : ExecM CVal := do
+    let genv ← setupGlobals fuel lay envl.unit.fileScopeObjects []
+    callByName fuel { prog with globals := genv } "main" []
+  match ExecM.verdict Mem.empty run with
   | .ok _ => .passed
   | .refused (.libc "abort") => .failed
   | .refused (.libc "exit") =>

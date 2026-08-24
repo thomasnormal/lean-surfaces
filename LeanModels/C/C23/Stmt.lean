@@ -475,6 +475,20 @@ structure Program where
   fns : List LeanModels.C.FunctionDefn
   layout : Layout := Layout.unknown
   enums : List (String × Int) := []
+  /-- **§6.2.1p4 — the file-scope objects a function body can SEE.**
+
+  This field is a bug fix, not a feature. `callFn` used to start every
+  frame at `env := []`, which is the rule *"no object declared outside a
+  function is visible inside one"* — and C's rule is the opposite: an
+  identifier declared at file scope has file scope, and that scope runs to
+  the end of the translation unit. The old spelling was not a missing
+  capability, it was a wrong law, and it was invisible because the corpus
+  the tier was built on passes everything through parameters.
+
+  Measured on `gcc.c-torture`: **69 of 300 tests refused with `unbound
+  name`, and all 69 of the names were file-scope objects** — 100 %, no
+  locals and no typos (`docs/backlog/c.md` 2026-08-24-c-22). -/
+  globals : Env := []
 
 def Program.find? (p : Program) (name : String) : Option LeanModels.C.FunctionDefn :=
   p.fns.find? (·.name == name)
@@ -559,8 +573,12 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- the ordinary call, one fuel down — the recursion this whole
             -- definition is built around, and the arm that used to refuse.
             | some g => callFn fuel prog g vs
+        -- §6.2.1p4: the frame starts with the file-scope objects in scope,
+        -- and the parameters are bound ON TOP of them, so a parameter that
+        -- shadows a global wins by being consed later.
         let ctx0 : Ctx :=
-          { env := [], enums := prog.enums, layout := prog.layout, call := handler }
+          { env := prog.globals, enums := prog.enums, layout := prog.layout,
+            call := handler }
         let ctx ← bindParams prog.layout ctx0 f.params args
         let flow ← execStmt fuel ctx body
         match flow with

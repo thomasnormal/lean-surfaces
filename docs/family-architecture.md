@@ -3617,6 +3617,49 @@ agreement** — and it retires by **re-running**. **Same register, same gating,
 completely different work**, and a row that does not say which has told its
 reader nothing about what would close it.
 
+**AND THE CHECKER'S OWN DISCIPLINE SET, from the third filing** (pyc inch 3).
+**`--self-test` rejects TEN MUTATED COPIES OF A REAL FILE** — *a checker that
+only ever passes is a claim* — and **`UNGATED` and `ORPHANED` are both checked,
+in both directions**, because:
+
+> **ORPHANED is the shape a DELETED ROW leaves behind — the one hole a build
+> cannot see.**
+
+**A row deleted with its guards left standing produces no error anywhere**: the
+guards still elaborate, the register still validates, and the debt has simply
+stopped being declared. **Only a check that looks from the GUARDS back to the
+ROWS finds it**, which is the layered-instrument rule (§5.0a (b)) pointed at the
+register's own contents rather than at a tier's.
+
+**AND BETWEEN A RULED IDIOM AND AN IMPLEMENTED PRECEDENT, THE IMPLEMENTED ONE
+WINS.** Rev 2's **named-Lean-declaration** guards became **probe functions**,
+because **SV's precedent was IMPLEMENTED** and **no spec in the tree touches the
+monadic stepper** — the lane's own verdict: *writing that idiom blind was the
+wrong risk.*
+
+> **A ruled idiom with no instance is a design; an implemented precedent is a
+> measurement. Until the ruling has an instance, follow the instance.**
+
+**This is a rule about MY OWN rulings and it is the right one.** A ruling is
+written from the cases visible when it is made; **a precedent has met the tier's
+actual materials.** The ruling is not overturned — it is **waiting for its first
+implementation**, and a lane that builds the ruled shape blind is **testing the
+ruling with its own inch.** *The register's job is to record which shapes have
+been built, not to make lanes prove designs.*
+
+**AND AN ACCEPTANCE TEST WHOSE SUBJECT IS A GLOB INHERITS EVERY FUTURE TIER FOR
+FREE.** The checker's acceptance test was *"validate ES's file when it
+merges"* — **SV's file was on master first**, so the checker **validated a SECOND
+tier on day one**, with **`git diff --quiet` proof it changed nothing.**
+
+> **An acceptance test written against a PATTERN rather than a NAME is satisfied
+> by whichever instance arrives first — and by every one after it.**
+
+**The pattern was not a shortcut; it was the design of the ruling** (per-tier
+data at a fixed path, one shared checker), and this is what that design buys on
+its first day: **the cross-tier claim was demonstrated by an accident of merge
+order**, at no cost, against a tier the checker's author had not seen.
+
 **AND THE FIRST TWO FILINGS TAUGHT THE SCHEMA FIVE MORE THINGS** (pyc handoff
 rev 2, verify at inch 3; SV's register, `ee8d8bd`, on master).
 
@@ -3941,6 +3984,32 @@ exhaustiveness arm in the tree becomes a false positive:**
 > **The defect is not unreachability. It is a REFUSAL BELIEVED TO BE A
 > BOUNDARY that is not one.**
 
+**AND THE CONVERSE CASE ARRIVED THE NEXT DAY, so the two must be read together:
+AN UNREACHABLE *CHECK* IS KEPT** (pyc inch 3, `3ea2f2a`, ticketed). The
+register checker's **empty-register test is now unreachable** — two tiers have
+filed rows — and the lane **kept it**:
+
+> **That is a fact about TODAY, not about the design. Deleting it buys a silent
+> green.**
+
+**This is not in tension with the law above; it is the same discriminator
+answering differently, and the difference is worth being explicit about**,
+because a lane holding both rules at once will otherwise pick by instinct:
+
+| artifact | what it CLAIMS | what unreachability means |
+| --- | --- | --- |
+| **a REFUSAL** | *the tier declines this behaviour* — a claim about the **boundary** | the claim is **FALSE**; the tier answers where it says it stops |
+| **a CHECK** | nothing about the tier — only *if this happens, fail* | the antecedent is **unmet today**, which is a fact about the **register's contents**, not about the checker |
+
+**A refusal's unreachability falsifies it. A check's unreachability is just the
+world not having produced its input yet** — and the input here is *a tier with no
+declared divergences*, which every future tier starts as. **Deleting the check
+would make its own resurrection silent**, which is the reverse of the dead-code
+instinct and the right call: *dead code is removed because nothing will ever
+reach it; this will be reached by the next tier that files nothing.*
+
+
+
 **The discriminator is what the arm CLAIMS**, not whether it runs. An
 exhaustiveness arm claims *the match is total*; **a refusal claims the tier
 declines this behaviour** — and a claim about the tier's boundary is falsified
@@ -4026,6 +4095,39 @@ something else, and the tier that models only the *expected* binding has built a
 resolver that cannot be wrong **in its own tests** while being wrong in the
 corpus. It is §5.6's discriminating-row law pointed at resolution: **the row
 that matters is the one a naive resolver gets confidently wrong.**
+
+**AND A REFUSAL'S CAUSE MUST BE WITNESSED SEPARATELY FROM ITS SITE, OR THE SITE
+GETS BLAMED** (pyc inch 3). The naive witness **REFUSES** — a body-assigned
+local, hitting **the capture rule** — and **a lane writing only that row would
+conclude the surface is out of tier.** The paired witness, with a **parameter
+binding**, **MATCHES.**
+
+> **What refuses is the CAPTURE RULE, which has nothing to do with dicts.**
+
+> **A REFUSAL NAMES A SITE. It does not name its CAUSE — and the site is what a
+> reader will blame.**
+
+**This is the witness-spelling law's other half** (§5.4: *a witness must fail for
+the reason it names*). That one keeps a row from failing for an **unrelated**
+reason; this one keeps a row that fails for a **real** reason from being read as
+a fact about **the wrong construct.** **The instrument is the same in both
+cases: a PAIR** — one row that refuses, one that matches, differing in exactly
+the feature under test.
+
+**AND A REGIME THE TIER CANNOT WITNESS AT ALL, NAMED AS SUCH.** Dict-genexp
+laziness is **observable only if the object outlives a mutation** — and
+**outliving is exactly what the binding refusal forbids.**
+
+> **An EPISTEMIC BOUNDARY, stated as a fact about the INSTRUMENT rather than as
+> a gap in the MODEL.**
+
+**Which is a third thing a tier can say about a behaviour**, beside *modelled*
+and *refused*: **"the tier cannot construct an experiment that would tell."**
+Recording it as a model gap would be **false** — the model may well be right —
+and recording nothing would leave a silence indistinguishable from coverage.
+**It is the §5.0a instinct applied one level earlier**: where a declared
+divergence says *we know we differ and here is the debt*, this says **we cannot
+find out, and here is why the question is unreachable from inside.**
 
 **AND A DEFINED PANIC IS NOT A TIER GAP — STATED AS A THEOREM SO IT CANNOT
 RE-COLLAPSE** (Go §G24, `eb1e8b0`). `Div` panics resolve into `PkgOutcome`'s
@@ -5121,6 +5223,29 @@ member had a wrong *unit of counting*; this one has a **correct unit counted
 from a privileged vantage** — and the number is right about what it saw. **The
 tell is a census whose sites are all structurally alike**, which reads as a
 clean population and is a sampling artifact.
+
+**AND A CROSS-LANE INSTRUMENT FIRING ON ANOTHER LANE'S CODE IS THE INSTRUMENT
+WORKING — the temptation is to narrow it** (SoftFloat). The census caught **7
+float sites in ES's new `Ordinary.lean` within one rebase of their appearing**,
+and the lane **MEASURED rather than assumed**: `Nat.toFloat` is an **abbrev over
+`Float.ofNat` and REDUCES** — `rfl` closes it — **so ES crosses nothing.**
+
+> **The alternative reading — *"my gate is noisy about other lanes' code"* —
+> invites narrowing it to own-lane files, and that narrowing would have hidden a
+> REAL crossing had those sites been `Int64.toFloat`.**
+
+**Recorded because the narrowing is the natural response and it is
+unrecoverable**: a filter scoped to *my files* removes an entire class of
+finding **without ever reporting that it did.** The rows would simply stop
+arriving, and **nothing distinguishes "the other lanes are clean" from "I stopped
+looking."**
+
+**The discipline that made the noise tolerable is the same one §5.4a already
+prescribes**: the hits were **candidates, resolved by reading**, and the reading
+produced a *reduction proof* rather than an opinion. **A cross-lane instrument
+is affordable exactly when its hits are cheap to adjudicate** — so the answer to
+a noisy cross-lane gate is a **better adjudication path**, never a narrower
+scope.
 
 **AND A CONCESSIVE-PROSE GREP FINDS PROVED THEOREMS AS READILY AS OPEN ONES**
 (analog census). `Spice/DramDifferentialSenseUnbalanced.lean:1899` reads as an
@@ -6560,6 +6685,29 @@ self-test row — rather than **suppressing the row.** The suppressing repair wa
 available and cheaper at every step: widen the filter, drop the candidate, mark
 the row known-noisy. **The tell that an instrument ladder is being climbed
 rather than dismantled is that the self-test gets LONGER at the end of it.**
+
+**AND THE SIMPLEST WAY OF ALL, SELF-CAUGHT: A CHECK WIRED WITH `;` INSTEAD OF
+`&&`** (SoftFloat, corrected in `1b526bc`; verify at landing). The
+verify-then-push chain **printed `DRIFT` and pushed anyway.**
+
+> **A CHECK WHOSE FAILURE DOES NOT STOP THE NEXT STEP IS NOT A GATE — IT IS A
+> COMMENT.**
+
+**Every chain converted, and the corrective push itself `&&`-gated**, which is
+the detail that makes it a fix rather than a repair.
+
+**And the scope is the point: `tools/triad.sh` already gets this right.** The
+defect lives in **ad-hoc shell chains that REIMPLEMENT a gate** — the wrapper is
+disciplined, and every one-off `verify; push` written beside it is **a second,
+undisciplined implementation of the same idea.** That is MEAS-28's duplication
+law arriving in **shell control flow**, where the copy is three characters long
+and does not look like a copy at all.
+
+**It also completes this section's stuck-channel taxonomy from the cheapest
+end**: a gate that never fires, one that always fires, a heuristic that always
+answers safely, a negative row that passes on absence — **and now a gate whose
+verdict was never connected to anything.** *The first four fail at deciding; this
+one decides correctly and is not listened to.*
 
 **AND A THIRD WAY A SIGNAL GOES DEAD, WITH THE PROPERTY THAT KEEPS IT ALIVE:
 THE FAILURE THAT ONLY EVER COSTS TIME** (QoL `22ed755`). The tenure-class
@@ -9367,6 +9515,12 @@ ladder as the words *"…and then it assembles"* is now a constant in the tree.
 > ASSEMBLED (difficulty zero, by design) → MERGED.** R-track's §9.0 stands at
 > **4/9**, with rung 3 closed on **finiteness-as-object**.
 
+**AND THE PYC DEPENDENCY IS DISCHARGED, pending its green** (`3ea2f2a`,
+ticketed): **`bound()`'s `unsupported` census is ZERO**, closing rung 9's pyc
+dependency — **on green the lane's §9.0 reads 3 of 3 flagship-serving
+surfaces.** Recorded **conditional**, per the stamp discipline: the census is
+run, the ticket is not.
+
 **And the rung recorded a unit-family instance on the way through: THE RECIPE
 TRANSFERRED UNCHANGED AND THE FUNCTION DID NOT.**
 
@@ -9911,6 +10065,30 @@ instrument that has never predicted has never been tested*, and this lane will
 then have predicted twice and hit twice. **If it lands elsewhere, that is the
 more valuable row**, because a missed prediction with all prerequisites
 discharged says something about the *pricing method* rather than about the work.
+
+**AND A CENSUS CAN RETURN THAT THE WORK IS ALREADY DONE — the strongest form of
+the could-have-overturned standard** (pyc inch 3, `3ea2f2a`, ticketed). The
+third flagship surface **was already built**: every piece had landed **for a
+different reason.**
+
+> **The inch buys no capability; it converts a BELIEVED one into a MEASURED
+> one. What was missing was EVIDENCE, not capability.**
+
+> **A census may return "done" — and that answer is trustworthy only from a
+> census that COULD HAVE RETURNED OTHERWISE.**
+
+**Which this one could**: it **computed the capture arithmetic on the real
+file** rather than checking a list of expected pieces. **A census that only
+looks for what it expects cannot report completeness** — it can only report that
+its expectations were met, and those two are the same sentence with different
+truth conditions.
+
+**And "no capability bought" is a result worth landing, not an embarrassment.**
+The §9.0 discipline already separates **coverage** from **claims**; this is the
+case where **the capability was real and the CLAIM was not**, and closing that
+gap moves a number that had been resting on a belief. *A lane that reports a
+zero-capability inch honestly has done the harder half of the work — the half
+that is invisible in the tree.*
 
 **AND THE SECOND INSTANCE STATED IT BEFORE THE WORK, which is the reading
 becoming a habit** (Ada inch 2, citing Go's precedent by name). The inch moves

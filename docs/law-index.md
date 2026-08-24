@@ -313,6 +313,15 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-262 | KIND changes the GUARD VOCABULARY, not just the retirement condition | `docs/family-architecture.md §5.0a` |
 | MEAS-263 | a row that says what it CANNOT measure is the register's honesty applied to itself | `docs/family-architecture.md §5.0a` |
 | MEAS-264 | convert a CLAIMS LIST into a THEOREM — where claim and subject share a build, the check belongs in the build | `docs/family-architecture.md §5.4` |
+| MEAS-265 | a check whose failure does not STOP THE NEXT STEP is not a gate, it is a comment | `docs/family-architecture.md §5.4b` |
+| MEAS-266 | a cross-lane instrument firing on another lane's code is the instrument WORKING — fix adjudication, never scope | `docs/family-architecture.md §5.4a` |
+| MEAS-267 | a census may return DONE — trustworthy only from a census that could have returned otherwise | `docs/family-architecture.md §9.0b` |
+| MEAS-268 | a REFUSAL names a SITE, not its CAUSE — witness the cause separately or the site gets blamed | `docs/family-architecture.md §5.2` |
+| MEAS-269 | an EPISTEMIC BOUNDARY is a fact about the instrument, not a gap in the model | `docs/family-architecture.md §5.2` |
+| MEAS-270 | an unreachable CHECK is kept; an unreachable REFUSAL is a defect — the claim is the discriminator | `docs/family-architecture.md §5.2` |
+| MEAS-271 | ORPHANED is the shape a deleted row leaves behind — check from the GUARDS back to the ROWS | `docs/family-architecture.md §5.0a` |
+| MEAS-272 | between a RULED IDIOM and an IMPLEMENTED PRECEDENT, follow the instance until the ruling has one | `docs/family-architecture.md §5.0a` |
+| MEAS-273 | an acceptance test written against a PATTERN inherits every future instance for free | `docs/family-architecture.md §5.0a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

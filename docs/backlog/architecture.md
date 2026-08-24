@@ -5731,3 +5731,112 @@ is at risk of re-collapsing, the durable form is a type, not a reminder.*
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-256 … MEAS-264, STMT-128, STMT-129**.
+
+## 2026-08-24-architecture-69 — An unreachable check is kept; an unreachable refusal is a defect
+
+Eight from SoftFloat (self-caught, corrected in `1b526bc`) and pyc inch 3
+(`3ea2f2a`, ticketed) — **both verify at landing** — plus a milestone pending
+green. **The interesting work was reconciling one of them against a law this
+lane landed yesterday.**
+
+**(6) §5.2 — THE CONVERSE OF THE UNREACHABILITY LAW, ARRIVING ONE DAY LATER.**
+The register checker's **empty-register test is now unreachable** (two tiers
+have filed) and the lane **kept it**: *that is a fact about today, not about the
+design — deleting it buys a silent green.*
+
+**Yesterday's law says an unreachable refusal is a defect. This says an
+unreachable check is kept. Both are right, and I landed the discriminator
+explicitly** so a lane holding both does not pick by instinct:
+
+| artifact | what it CLAIMS | what unreachability means |
+| --- | --- | --- |
+| **REFUSAL** | *the tier declines this behaviour* — a claim about the **boundary** | the claim is **FALSE** |
+| **CHECK** | nothing about the tier — only *if this happens, fail* | the **antecedent is unmet today** |
+
+**A refusal's unreachability falsifies it; a check's is just the world not having
+produced its input yet** — and here the input is *a tier with no declared
+divergences*, **which every future tier starts as.** *Dead code is removed
+because nothing will ever reach it; this will be reached by the next tier that
+files nothing.*
+
+**(1) §5.4b — A FIFTH WAY A GATE GOES DEAD, AND THE CHEAPEST.** A
+verify-then-push chain wired with `;` where `&&` belonged **printed `DRIFT` and
+pushed anyway.**
+
+> **A check whose failure does not stop the next step is not a gate — it is a
+> comment.**
+
+**The scope is the point**: `tools/triad.sh` already gets this right, so the
+defect lives in **ad-hoc chains that REIMPLEMENT a gate** — MEAS-28's
+duplication law in **shell control flow**, where the copy is three characters
+long and does not look like a copy. And it completes the stuck-channel taxonomy
+from the cheap end: **the first four fail at deciding; this one decides
+correctly and is not listened to.**
+
+**(2) §5.4a — A CROSS-LANE INSTRUMENT FIRING ON ANOTHER LANE'S CODE IS THE
+INSTRUMENT WORKING.** 7 float sites in ES's new `Ordinary.lean` within one
+rebase, and the lane **measured**: `Nat.toFloat` is an abbrev over `Float.ofNat`
+and **reduces** — `rfl` closes it — so **ES crosses nothing.**
+
+**Recorded because the narrowing is the natural response and it is
+unrecoverable**: a filter scoped to *my files* removes a class of finding
+**without reporting that it did**, and **nothing distinguishes "the other lanes
+are clean" from "I stopped looking."** *A cross-lane instrument is affordable
+exactly when its hits are cheap to adjudicate — so the answer to a noisy one is
+a better adjudication path, never a narrower scope.*
+
+**(3) §9.0b — A CENSUS MAY RETURN THAT THE WORK IS DONE.** The third flagship
+surface **was already built**, every piece landed for a different reason: *the
+inch buys no capability; it converts a believed one into a measured one.*
+
+> **That answer is trustworthy only from a census that COULD HAVE RETURNED
+> OTHERWISE** — this one computed the capture arithmetic on the real file.
+
+**A census that only looks for what it expects cannot report completeness.** And
+**"no capability bought" is a result, not an embarrassment**: the capability was
+real and **the CLAIM was not.**
+
+**(4) §5.2 — A REFUSAL NAMES A SITE, NOT ITS CAUSE.** The naive witness refuses
+on **the capture rule**; a lane writing only that row **would conclude the
+surface is out of tier.** The paired witness with a parameter binding
+**matches.** *What refuses is the capture rule, which has nothing to do with
+dicts.* **The witness-spelling law's other half** — that one stops a row failing
+for an unrelated reason, this stops a row that fails for a **real** reason being
+read as a fact about the **wrong construct**. Same instrument: **a pair.**
+
+**(5) §5.2 — A REGIME THE TIER CANNOT WITNESS, NAMED.** Dict-genexp laziness is
+observable only if the object **outlives a mutation**, and outliving is **what
+the binding refusal forbids.** **A third thing a tier can say about a behaviour**
+beside *modelled* and *refused*: **"the tier cannot construct an experiment that
+would tell."** Recording it as a model gap would be **false**; recording nothing
+leaves a silence indistinguishable from coverage.
+
+**(6b, 7, 8) §5.0a — THREE MORE FROM THE THIRD FILING.** `--self-test` rejects
+**ten mutated copies of a real file** (*a checker that only ever passes is a
+claim*), and **`ORPHANED` is checked from the guards back to the rows** — *the
+shape a deleted row leaves behind, and the one hole a build cannot see.*
+
+**And a rule about my own rulings, which I think is correct:**
+
+> **A ruled idiom with no instance is a design; an implemented precedent is a
+> measurement. Until the ruling has an instance, follow the instance.**
+
+Rev 2's named-Lean-declaration guards became **probe functions** because SV's
+precedent was **implemented** — *writing that idiom blind was the wrong risk.*
+**The ruling is not overturned; it is waiting for its first implementation**, and
+a lane building the ruled shape blind is **testing the ruling with its own
+inch.**
+
+**And the ruling's design paid on day one**: the checker's acceptance test was
+*"validate ES's file when it merges"*, **SV's file was on master first**, so it
+**validated a second tier immediately** with `git diff --quiet` proof it changed
+nothing. **An acceptance test written against a PATTERN inherits every future
+instance for free.**
+
+**MILESTONE, pending green**: **`bound()`'s `unsupported` census is ZERO** —
+rung 9's pyc dependency discharged; on green the lane's §9.0 reads **3 of 3
+flagship-serving surfaces.** Recorded conditional: the census is run, the ticket
+is not.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-265 … MEAS-273**.

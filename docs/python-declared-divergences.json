@@ -1,0 +1,43 @@
+{
+  "tier": "python",
+  "schema": "declared-divergences-1",
+  "probe": "harness/pyc_divergence_probe.py",
+  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py (founded by this tier); PROBE is per-tier and named above because it must speak this tier's language. Both rows are KIND=semantic: the model is wrong, and they retire by REMODELLING. pyc-div-1's probe can run only the ORACLE side (the divergence is unreachable by an in-tier program); pyc-div-2's runs BOTH, and is this register's first live two-sided probe.",
+  "rows": [
+    {
+      "id": "pyc-div-1",
+      "kind": "semantic",
+      "site": "stepIterAt (LeanModels/Python/Monadic/Eval.lean) on a dict-cursor frame -- GenFrame.iterDict or GenFrame.enumDict -- after its size guard has raised. Spelling: `it = iter(d)` / `d[k] = v` / `next(it)` raises / any further `next(it, x)`.",
+      "oracle": "CPython 3.9.19 POISONS the iterator. dictiter_iternextkey sets di_used = -1 and its own comment calls the state sticky, so every later `next` -- with a default or without -- re-raises RuntimeError: dictionary changed size during iteration. MEASURED by the probe on every run. The tier's OTHER dict-iteration RuntimeError is deliberately not covered: after 'dictionary keys changed during iteration' CPython clears di_dict and the iterator merely dies, which the model already reproduces.",
+      "model": "stepIterAt's tryCatch rewrites the object to `.generator qname locals [] .closed` and re-raises, so a later `next(it, x)` answers `x` and a bare `next(it)` raises StopIteration. Dead and poisoned are different states and this tier has only one of them. MEASURED by the probe as the ABSENCE of a poisoned GenStatus constructor, which is where the divergence lives.",
+      "inherited_from": "enumDict, docs/backlog/python-completeness.md 2026-08-23-pycomplete-14 (inch 3c-i-c)",
+      "inherited_note": "NOT originated here. iterDict (2026-08-24-pycomplete-18) reuses stepIterAt's close-on-exception path and adds no new decision; enumDict is where the path was chosen, and it was chosen without this being measured. The upstream owner is this same lane, which under 5.0a removes the excuse and not the citation.",
+      "declared": "2026-08-24",
+      "retirement_condition": "GenStatus gains a POISONED state that stepIterAt sets, instead of `.closed`, when the exception came from a dict-cursor frame's guard; and a new typed-call row dict_lab::iter_sticky_after_resize (CPython: the re-raised RuntimeError) moves OUT of this register and INTO harness/cases.json as a MATCH. pyc_div_1_still_divergent tests for the poisoned state directly, so the row retires by the state landing -- it cannot be closed by assertion.",
+      "guards": [
+        "pyc_div_1_still_divergent",
+        "pyc_div_1_has_not_widened"
+      ],
+      "blocked_on": "exc_lab::except_builtin must leave the refusal whitelist first: the retiring witness needs `except RuntimeError:`, and the tier's admitted handler shape names a user-defined class. This is why the row's MODEL half is pinned at GenStatus rather than run as a program -- the divergence is not reachable by any in-tier program today, and the probe says so rather than implying a run it cannot make.",
+      "must_not_move": "exc_lab::gen_closes must stay MATCH through any fix. Closing on exception is CORRECT for a user generator -- CPython closes those too -- and only the C-level cursor frames change. A fix that flips gen_closes has fixed the wrong thing."
+    },
+    {
+      "id": "pyc-div-2",
+      "kind": "semantic",
+      "site": "The generator-expression construction path: ingestion lowers a genexp to a synthesized generator function whose body is `for k in .0: ...`, and the loop's cursor frame is pushed by execGen at the FIRST RESUME (LeanModels/Python/Monadic/Eval.lean, the `.ref`-to-dict arm of the generator-body `for`). Spelling: `g = (k for k in d)` / mutate `d` / `next(g)`.",
+      "oracle": "CPython 3.9.19 raises RuntimeError: dictionary changed size during iteration. PEP 289 evaluates the outermost iterable AND calls iter() on it when the genexp OBJECT is created, so the dict iterator's size snapshot predates the mutation. MEASURED by the probe on every run.",
+      "model": "The tier answers 1. The forDict frame -- and with it the size and shapeVersion the cursor guards against -- is not created until the generator is first stepped, by which time the mutation has already happened, so the guard compares the dict against itself. MEASURED by the probe on every run, through tools/leanpy: this row is FULLY REACHABLE in tier and both sides are genuinely run.",
+      "inherited_from": null,
+      "inherited_note": "ORIGINATED here, and found by this lane's own witness rather than by an audit. It was invisible to every prior genexp witness in the tree because they all iterate a range (immutable, so the deferral is unobservable) or a generator (whose own laziness masks it). It took the dict composition -- the one thing 2026-08-24-pycomplete-19 actually added -- to expose it.",
+      "declared": "2026-08-24",
+      "retirement_condition": "The cursor is created at genexp CONSTRUCTION rather than at first resume -- what iterFrame already does for `iter(d)` (Eval.lean, applyBuiltin) and what the genexp path does not -- and the witness program in pyc_div_2_still_divergent flips to MATCH, both sides raising. The guard runs that exact program, so the row retires by the behaviour changing and cannot be closed by assertion.",
+      "guards": [
+        "pyc_div_2_still_divergent",
+        "pyc_div_2_has_not_widened"
+      ],
+      "the_asymmetry_that_names_the_fix": "Two dict cursors in one tier, one right and one wrong, and the difference is only WHERE the frame is built. `iter(d)` snapshots at creation because iterFrame runs inside applyBuiltin -- which is why 2026-08-24-pycomplete-18's dict.iter-escapes / dict.iter-resize pair MATCHES. The genexp path snapshots at first resume because execGen pushes the frame. The fix is to make the second do what the first already does.",
+      "scope_against_real_play": "MEASURED by reading bound(): of its four generator expressions, exactly ONE iterates a dict (sunfish.py:511, the tp_move eviction), and it creates and steps the cursor inside a single expression -- `<dictdel>` receives already-evaluated arguments, so the key is computed before any deletion runs. Nothing mutates the dict inside the create-to-first-resume window, so real play does not enter the divergent regime and rung 9's discharge is scoped honestly. The tp_score line uses iter(), which snapshots at creation and is not affected at all.",
+      "blocked_on": "Nothing blocks the witness -- unlike pyc-div-1 this program runs. What the FIX needs is a change to generator allocation for every genexp, which is why it is a named future inch rather than a line taken blind."
+    }
+  ]
+}

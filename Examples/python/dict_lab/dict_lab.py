@@ -725,3 +725,71 @@ def iter_sentinel_still_loud(a):
     d = {1: a}
     it = iter(d, 0)
     return 1
+
+
+# §genexp: `next(<genexp over dict KEYS with a filter>)` -- the flagship's
+# OTHER eviction line (`del self.tp_move[next(k for k in self.tp_move
+# if k != self.root)]`, sunfish.py:511). The census
+# (docs/backlog/python-completeness.md 2026-08-24-pycomplete-19) measured the
+# price at ZERO model sites: the genexp lowering already admits this shape, and
+# the synthesized generator's `for k in <dict>` is rung 3a's cursor. What was
+# never witnessed is the COMPOSITION -- every genexp witness in the tree
+# iterates a range, a generator or a tuple, and none iterates a DICT.
+#
+# The capture rule is what separates the two rows at the bottom from the rest,
+# and it is NOT about dicts at all: a genexp may capture a PARAMETER the body
+# never assigns (the flagship captures `self`), and may not capture a
+# body-assigned local, because the by-value snapshot could go stale.
+
+
+def genexp_next_key(a, root):
+    d = {1: a, 2: 5}
+    return next(k for k in d if k != root)
+
+
+def genexp_next_default(a, root):
+    # no key passes the filter -- the 2-argument form answers the default
+    d = {1: a}
+    return next((k for k in d if k != root), -1)
+
+
+def genexp_next_stop(a, root):
+    # and the 1-argument form is the faithful StopIteration
+    d = {1: a}
+    return next(k for k in d if k != root)
+
+
+def genexp_drain(a, root):
+    # `list` IS a draining builtin, so this composes the filter with a drain
+    d = {1: a, 2: 5}
+    return len(list(k for k in d if k != root))
+
+
+def genexp_flagship(a, root):
+    # THE FLAGSHIP'S OTHER EVICTION LINE, whole: inch (1) landed the `del`,
+    # and the key expression needed nothing -- this row is the measurement
+    # that proves it rather than an inch that built it.
+    d = {1: a, 2: 5}
+    del d[next(k for k in d if k != root)]
+    return len(d)
+
+
+def genexp_local_capture_still_loud(a):
+    # THE CAPTURE BOUNDARY, falsifiable: CPython answers 2. `root` is
+    # body-ASSIGNED, so the by-value snapshot is not licensed and ingestion
+    # leaves the genexp un-lowered. Nothing about dicts is refused here --
+    # genexp_next_key is the same construct with `root` a PARAMETER, and it
+    # matches. A conservative admission, sound but not tight.
+    root = 1
+    d = {1: a, 2: 5}
+    return next(k for k in d if k != root)
+
+
+def genexp_bound_still_loud(a, root):
+    # BINDING the genexp to a name refuses (the snapshot could go stale before
+    # consumption), which is why the LAZY-and-LIVE behaviour of a genexp over a
+    # dict cannot be witnessed in tier at all: observing it needs the object to
+    # outlive a mutation. CPython answers 2 here.
+    d = {1: a, 2: 5}
+    g = (k for k in d if k != root)
+    return next(g)

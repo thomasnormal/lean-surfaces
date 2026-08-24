@@ -652,6 +652,46 @@ print(next(iter([7, 8])))
   "`str_iterator`, `tuple_iterator`, `range_iterator`, `set_iterator`, and "
   "`iter(g) is g` — each with its own mutation regime, so each is its own "
   "inch and none is guessed")
+# --- §genexp: `next(<genexp over dict KEYS with a filter>)`, the flagship's
+# OTHER eviction line (2026-08-24-pycomplete-19). At MODULE scope the captured
+# names are module-level, so they are `outer` names and not captures at all --
+# which is why these run where the function-scope local-capture row refuses.
+w("dict.genexp-next", """
+d = {2: 'b', 1: 'a'}
+root = 2
+print(next(k for k in d if k != root))
+""", "MATCH",
+  "the flagship's key expression: CPython answers 1 -- the first key in "
+  "INSERTION order that passes the filter. The genexp lowers to a synthesized "
+  "generator whose `for k in <dict>` is rung 3a's cursor, so this surface cost "
+  "ZERO model sites -- the inch is the measurement, not the build")
+w("dict.genexp-nomatch", """
+d = {1: 'a'}
+root = 1
+print(next(k for k in d if k != root))
+""", "MATCH",
+  "no key passes the filter, so the 1-argument `next` is the faithful "
+  "StopIteration -- and `dict.genexp-default` is the same program with the "
+  "2-argument form answering -1 instead")
+w("dict.genexp-default", """
+d = {1: 'a'}
+root = 1
+print(next((k for k in d if k != root), -1))
+""", "MATCH", "the 2-argument form on the same empty filter")
+w("dict.genexp-drain", """
+d = {2: 'b', 1: 'a'}
+root = 2
+print(list(k for k in d if k != root))
+""", "MATCH",
+  "the same filter under a DRAINING consumer, which is a different lowering "
+  "admission path (`list` is in drainingBuiltins, `next` is not) reaching the "
+  "same cursor")
+# `dict.genexp-bound-is-loud` LIVED HERE and is now `pyc-div-2` in
+# docs/python-declared-divergences.json. It measured DIVERGE -- CPython raises,
+# the tier answers 1 -- and DIVERGE is the zero-tolerance invariant, so the row
+# does not belong in this census's vocabulary. It moved to the register, whose
+# probe RUNS it both ways every time: strictly more gating than a census row,
+# not less (family-architecture §5.0a).
 w("del.dict-next-iter", """
 d = {1: 'a', 2: 'b'}
 del d[next(iter(d))]
@@ -961,6 +1001,12 @@ WHITELIST_CLASS = {
     # §iter: the 2-argument SENTINEL form needs a CALLABLE first argument and
     # builds a `callable_iterator` — a second object kind, not a frame.
     "dict_lab::iter_sentinel_still_loud": "iter.sentinel-form",
+    # §genexp: the CAPTURE admission, not the dict cursor -- `genexp_next_key`
+    # is the same construct with the captured name a PARAMETER and it MATCHES,
+    # so what refuses here is a conservative by-value-snapshot rule, sound but
+    # not tight. Its intended pair, `genexp_bound_still_loud`, turned out to
+    # MATCH: binding is not what refuses, and the gate caught the mislabel.
+    "dict_lab::genexp_local_capture_still_loud": "genexp.lowering-admission",
 }
 
 # The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused

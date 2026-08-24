@@ -200,8 +200,9 @@ cycle DETECTION, never by running out of fuel).
 * In tier H1: literals, read (`KeyError` faithful), write (aliasing-
   visible), `len`, `in`/`not in`, `.get(k)`/`.get(k, d)`, `==`/`!=`,
   truthiness, live iteration as above, the three VIEWS in consuming
-  position, `enumerate(d)`, `del d[k]`, and `iter(d)` + `next` (the bare
-  KEY cursor as a first-class object). Loud: the views as
+  position, `enumerate(d)`, `del d[k]`, `iter(d)` + `next` (the bare
+  KEY cursor as a first-class object), and `next(<genexp over the keys with
+  a filter>)`. Loud: the views as
   FIRST-CLASS values (`k = d.keys()` held across statements, set algebra,
   `reversed`), `.update/.pop/…`, comprehensions, `**kwargs`, `|`,
   returning a dict through the boundary, same-size key-set churn
@@ -1767,6 +1768,44 @@ arm at all, so — unlike `enumerate`, whose `enumFrame` is shared —
 there is no trunk-side capability delta to rule on, and the trunk's
 `iterDict` step arm exists to compile and to refuse, the `forDict`
 arrangement exactly.
+
+### The genexp cursor (§pycomplete-19) — and the price that was already paid
+
+`next(k for k in d if k != root)` is the flagship's OTHER eviction key
+(`sunfish.py:511`), and it cost **zero model sites**. Ingestion lowers an
+admitted genexp to a synthesized generator function whose body is
+`for k in .0: if …: yield k`, and that `for` over a heap dict is §3a's cursor
+reached through `execGen` — so the composition was built before anyone asked
+for it. What the inch added is EVIDENCE: every other genexp witness in the tree
+iterates a range, a generator or a tuple, and none iterated a dict.
+
+**Two boundaries here are the LOWERING's, not the cursor's, and confusing them
+is the trap.** A genexp may capture a parameter the body never assigns (the
+flagship captures `self`); it may not capture a body-assigned local, because
+the by-value snapshot could go stale, and it may not be BOUND to a name first,
+for the same reason. `dict_lab::genexp_next_key` and
+`dict_lab::genexp_local_capture_still_loud` are the same construct either side
+of that line, and only the second refuses.
+
+**AND THE CURSOR IS BUILT AT THE WRONG TIME — a DECLARED DIVERGENCE**
+(`pyc-div-2`). A genexp over a dict is LAZY and LIVE: PEP 289 evaluates the
+outermost iterable *and calls `iter()` on it* when the genexp OBJECT is made,
+so CPython's snapshot predates any later mutation. **The tier does not push the
+loop's cursor frame until the FIRST RESUME**, so `g = (k for k in d)` / mutate
+`d` / `next(g)` answers where CPython raises.
+
+**Two dict cursors in this tier, one right and one wrong, and the difference is
+only WHERE the frame is built.** `iter(d)` snapshots at creation, because
+`iterFrame` runs inside `applyBuiltin` — which is exactly why the
+`dict.iter-escapes` / `dict.iter-resize` pair matches. The genexp path
+snapshots at first resume, because `execGen` pushes the frame. The fix is to
+make the second do what the first already does, and it is a named future inch:
+it touches generator allocation for every genexp.
+
+The divergence is confined to the create-to-first-resume WINDOW — move the
+mutation after the first `next` and the tier agrees again — and real play does
+not enter it: `bound()`'s only dict-iterating genexp creates and steps its
+cursor inside a single expression.
 
 ### The tier this forces
 

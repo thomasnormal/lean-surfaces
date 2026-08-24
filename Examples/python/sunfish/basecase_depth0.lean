@@ -911,7 +911,7 @@ one is a value the shipped `bound()` refuses without:
 | `spelled` | `entry.lower` raises `AttributeError` | §7 (c) |
 | `killer` | `pos.value(killer)` raises `TypeError: cannot unpack non-iterable int object` — measured at `gamma > pos.score`, where the fold reaches the killer test | §7 (d) |
 | `history` | `pos in self.history` at `depth ≥ 1` | not read at depth 0 (short-circuit), so the base case never spends it; the STEP will |
-| `room` | the out-of-tier `del` becomes reachable and the run refuses | `sbEvict_lit`'s own comment; hole five, found by discharging §10 |
+| `room` | the eviction becomes reachable and the run DELETES — a WRONG WORLD, where it used to be a refusal | `sbEvict_lit`'s own comment (now retired); hole five, found by discharging §10 |
 | `clock` | the trace underruns | §7 (b) |
 | `ml` / `mu` | `-MATE_LOWER` is a `NameError`; both constants are statically POISONED (`mlG`/`muG`), so the live globals decide | every head gate's premise list |
 
@@ -996,11 +996,30 @@ structure BoundWF (V : RVal → Int → Int) (w : World) (ci : ClassId)
   /-- `history` is the set `__init__` builds. Not read at depth 0 — the
   repetition test short-circuits on `depth > 0` — and read at every depth above. -/
   history : ∃ items : Array RVal, Heap.get? w.heap hs = some (.pyset items)
-  /-- **`tp_score` has ROOM.** `sbEvict`'s own comment records the cost of
-  omitting this: *"`del d[k]` is outside the tier and ingests as
-  `Stmt.unsupported`, so every gate below must show the guard is FALSE"* — so at
-  `len(self.tp_score) > TABLE_SIZE` the shipped eviction becomes REACHABLE and the
-  run refuses. Stated as the pre-store bound, because the store adds at most one
+  /-- **`tp_score` has ROOM.**
+
+  **DROPPING THIS NO LONGER PRODUCES A REFUSAL; IT PRODUCES A WRONG WORLD.**
+  `evict_dead` proves `execStmt sunfish 12 ⟨w, e⟩ sbEvict = .ok ⟨w, e⟩ .next` —
+  the SAME `w` on both sides — and it earns that by showing the guard is
+  `.bool false` and NEVER OPENING THE BODY. With the guard TRUE the body now
+  EXECUTES: `<dictdel>(self.tp_score, next(iter(self.tp_score)))` removes the
+  first key in insertion order and bumps `shapeVersion`, so the statement
+  answers `.ok ⟨w', e⟩ .next` with `w'.heap` differing at `ts`. Before
+  §pycomplete-16 it answered `.unsupported`, which announced itself. **The
+  hypothesis is unchanged and still needed; what changed is that its violation
+  is now SILENT** — and nothing in this tree measures observability, so it was
+  caught only by re-reading the prose. Witnesses that the line executes:
+  `dict_lab::iter_flagship` and the grammar witness `del.dict-next-iter`.
+
+  **AND IT IS A MODELLING HYPOTHESIS, NOT A TIER ONE** (family-architecture
+  §5.0a's taxonomy). A TIER hypothesis says the tier does not model this region
+  and retires by widening the tier; a MODELLING hypothesis says the model
+  represents the region approximately and retires by modelling the thing.
+  **The honest retirement is to MODEL THE EVICTION, not to widen the tier** —
+  the tier already reaches it. Misclassifying it would license the cheaper
+  wrong repair.
+
+  Stated as the pre-store bound, because the store adds at most one
   entry (`dictStore_length_le`); `room_after_store` is the bridge to the computed
   shape `evict_dead` reads. Hole five, and the same species as the other four. -/
   room : (es.size : Int) < tableSize

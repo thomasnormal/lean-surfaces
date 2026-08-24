@@ -461,12 +461,22 @@ theorem sbStore_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 
             (.call (.name "Entry" p16) #[.attribute (.name "entry" p17) "lower" p18,
               .name "best" p19] #[] Option.none p20) p21) p22] #[] p23 := ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
 
-/-- The eviction guard, and the FIFO delete it hides. `del d[k]` is outside
-the tier and ingests as `Stmt.unsupported`, so every gate below must show the
-guard is FALSE rather than step through it — which is exactly what the shipped
-`TABLE_SIZE = 10**6` buys. Both `del`s (this one and the `tp_move` one inside
-the cutoff) are the WHOLE of `bound`'s unsupported census — §L14 measured two,
-down from §L13's three, once the closure cell removed the `NestedDef`. -/
+/-- The eviction guard, and the FIFO delete it hides.
+
+**THE COUNT THIS DOCSTRING CARRIED IS RETIRED, AND SO IS ITS REASON.** It read
+*"`del d[k]` is outside the tier and ingests as `Stmt.unsupported`"*, and both
+halves are now false: §pycomplete-16 lowered `del d[k]` to
+`<dictdel>(recv, key)` under an `exprStmt`, §pycomplete-18 landed the
+`next(iter(...))` key, and §pycomplete-19 measured the `tp_move` line's
+`next(<genexp>)` key as already admitted. **`bound`'s unsupported census is
+ZERO** — it was two at §L14, three at §L13.
+
+**The gates below still show the guard is FALSE, and they must, but not for the
+reason written here before.** Stepping through this statement no longer
+REFUSES; it DELETES. What `TABLE_SIZE = 10**6` buys is therefore no longer a
+refusal that would announce itself but a state change that would not — see
+`BoundWF.room`, where the cost of dropping the hypothesis is stated as the
+world inequality it now produces. -/
 theorem sbEvict_lit : ∃ (b : Array Stmt) (p0 p1 p2 p3 p4 p5 p6 : Span), sbEvict =
     .ifStmt (.compare (.call (.name "len" p0)
         #[.attribute (.name "self" p1) "tp_score" p2] #[] Option.none p3) #[.gt]

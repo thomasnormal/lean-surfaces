@@ -21,6 +21,21 @@ stage. No `proof.lean`: checks-only, like `tut_01`.
 
 open LeanModels LeanModels.Python
 
+/- **`maxRecDepth`, and the number is measured.** `load_program` builds the
+whole module as a LITERAL term through the derived `ToExpr` instances, so the
+elaborator's recursion depth scales with the envelope, not with the proof.
+`dict_lab` is the largest envelope in the tree — 611 KB and 101 functions,
+against `gen_lab`'s 272 KB and 53 — and it crossed the default 512 somewhere
+between 85 functions (§pycomplete-18, green) and 101 (§pycomplete-19).
+
+The failure is worth naming because it does not look like itself: the recursion
+limit is hit at THIS line, `dict_lab` is then added UNCOMPILED, and every one of
+the ~44 downstream `#guard`/`#py_check` lines reports
+*"depends on 'dict_lab', which is 'noncomputable'"* — a different failure class
+pointing at a different file. The root error is the only one that names the
+cause, and it is the FIRST one. -/
+set_option maxRecDepth 65536
+
 load_program dict_lab from "Examples/python/dict_lab/dict_lab.json"
 
 /-! ### 1-2: aliasing, callee mutation through the shared world -/

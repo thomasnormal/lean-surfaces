@@ -1143,6 +1143,38 @@ verdict it named was wrong — the tier REPRODUCES CPython's `RuntimeError`
 here (as `dict.grow-during-iter` already did for the bare cursor) rather than
 refusing it.
 
+### THE ENVELOPE OUTGREW THE ELABORATOR, and the error did not look like itself
+
+`load_program` builds the module as a LITERAL through the derived `ToExpr`
+instances, so the elaborator's recursion depth scales with the ENVELOPE.
+`dict_lab` is now the largest in the tree — **611 KB, 101 functions**, against
+`gen_lab`'s 272 KB and 53 — and it crossed the default `maxRecDepth` of 512
+somewhere between §pycomplete-18's 85 functions (green) and this inch's 101.
+Fixed with `set_option maxRecDepth 65536 in` at the `load_program`, the
+established precedent (`clock_lab`, `sf_order` use 100000).
+
+**The diagnosis cost far more than the fix, and the reason generalises.** The
+recursion limit is hit at the `load_program` line; `dict_lab` is then added
+UNCOMPILED; and all ~44 downstream `#guard`/`#py_check` lines report
+*"depends on 'dict_lab', which is 'noncomputable'"*. **The visible errors are a
+different failure class than the cause**, and they are individually plausible —
+they read as "something in the new Python is noncomputable", which sent this
+lane hunting generator expressions and `ToExpr` instances. The only error naming
+the cause is the FIRST one.
+
+> **A cascade's first error is the causal one, and every later error is
+> evidence about the cascade rather than about the defect.**
+
+**AND THE TRIAD'S SUMMARY OMITTED IT** — a finding for the tool, measured
+against the kept full log. The summary announced *"first 8 of 46"* and listed
+six errors at `spec.lean:102-139`. The full log's FIRST error is
+`spec.lean:24:0: maximum recursion depth has been reached`; its LAST are
+`spec.lean:140-143`. **The summary showed neither the head nor the tail, and
+dropped the only line of a different class.** Truncation would have been
+harmless; a labelled-but-unfaithful sample is not, because the surviving lines
+are a coherent wrong story. The recommendation is one line: whatever else it
+samples, the summary must print the FIRST error verbatim.
+
 ### Census deltas
 
 * grammar census **113 → 117 witnesses**; `dict.enumerate` flips
@@ -1640,3 +1672,210 @@ existing refusal is the cheapest kind of progress this lane makes.
 `iter(d)` + `next` (here); the third is `next(<genexp over keys with a
 filter>)`, the other eviction line's key expression, and §pycomplete-15's
 census of it stands unchanged — *"the genexp already has a cursor class"*.
+
+## 2026-08-24-pycomplete-19 — INCH (3): the flagship's LAST refused line was already retired, and the inch is the MEASUREMENT that proves it
+
+`bound()`'s two `TABLE_SIZE` eviction lines were the R-track's whole refused
+census. §pycomplete-16 landed the `del`, §pycomplete-18 landed
+`next(iter(...))`, and this inch went to build the third surface —
+`next(<genexp over dict keys with a filter>)`, the `tp_move` line's key. **The
+census before building found the price is ZERO model sites.**
+
+### THE RE-CENSUS, and it is §pycomplete-16's law firing in the other direction
+
+§pycomplete-16 re-censused an expensive design and found it four times cheaper.
+Here the re-census found the design already BUILT, and every piece of it was
+landed for another reason:
+
+| the line needs | where it came from |
+| --- | --- |
+| `del d[k]` | §pycomplete-16 (inch 1) |
+| `next(...)`, both arities | pre-existing (H4) |
+| a genexp with a FILTER lowered to a generator function | pre-existing — `gen_lab::first_over` witnesses `next((x for x in upto(n) if x > k), -1)` today |
+| `for k in <dict>` **inside a generator body** | §3a's cursor — `execGen`'s `.ref`-to-dict arm builds a `forDict` frame |
+| the three mutation regimes | §3a, unchanged |
+
+**Measured, not assumed.** The genexp at `sunfish.py:511` captures exactly one
+name — `self` — and `self` is a parameter of `bound` that the body never
+assigns, so the lowering's STRICT admission
+(`ctx.params.contains n && !ctx.assigned.contains n`) passes with no `drainOk`
+and no change to `drainingBuiltins`. The other three genexps in `bound` were
+computed the same way; the one at line 444 fails admission and is a different
+construct's problem.
+
+> **`bound`'s unsupported census is ZERO.** It was two at §L14 and three at
+> §L13. The flagship chain's rung 9 closes, and it closes on a measurement.
+
+### WHAT WAS ACTUALLY MISSING WAS EVIDENCE, NOT CAPABILITY
+
+Every genexp witness in the tree iterates a `range`, a generator, or a tuple.
+**Not one iterates a DICT.** The composition — a genexp whose `for` walks a live
+dict cursor, under a filter, stepped once by `next` — had never been run. So
+this inch is seven typed-call rows and five witnesses, and the honest headline
+is that it BUYS NO CAPABILITY: it converts a believed capability into a
+measured one. *A surface nobody has run is a surface nobody knows the tier has.*
+
+### THE PAIR THAT PREVENTS THE WRONG CONCLUSION
+
+The naive witness for this surface REFUSES:
+
+    root = 1                      # a body-assigned LOCAL
+    return next(k for k in d if k != root)      # REFUSED
+
+and a lane that wrote only that row would have concluded the dict-genexp
+surface is out of tier. It is not. `genexp_next_key(a, root)` is the SAME
+construct with `root` a PARAMETER and it MATCHES. **What refuses is the capture
+admission, and it has nothing to do with dicts**: a by-value snapshot of a
+body-assigned local could go stale, so the lowering refuses it unless the
+genexp is immediately drained. The two rows are filed together for exactly that
+reason.
+
+**And the refusal is CONSERVATIVE rather than principled**, which is worth
+saying because it names a separable inch. `next` is not in `drainingBuiltins`,
+but a genexp in directly-passed argument position to `next` has a lifetime
+strictly SHORTER than a drained one — one step, with no user code between
+creation and step — so the snapshot cannot go stale. Admitting it is one line
+and its own census; this inch does not take it, because the flagship does not
+need it and a shared admission gate has a blast radius across every genexp.
+
+### THE CLAIM WAS FALSE, AND THE CLAIM IS EXACTLY WHY I DID NOT LOOK
+
+This entry first said the tier *"cannot witness"* a dict genexp's liveness,
+because binding a genexp to a name supposedly refuses. **The gate convicted
+both halves**, and the correction is the inch's real product.
+
+**Binding does not refuse.** The lowering's strict admission passes on a
+PARAMETER capture regardless of `drainOk`, so `g = (k for k in d if k != root)`
+lowers and `next(g)` answers 2 — agreeing with CPython.
+`gen_lab::gen_assigned_lazy` refuses because it captures a body-assigned `lim`,
+**not** because it binds. *That is this entry's own §5.2 finding — a refusal
+names a SITE, not its cause — broken in the same commit that stated it.*
+
+**And the liveness IS witnessable — which is how the tier's first fully
+probeable DIVERGENCE was found.** `g = (k for k in d)` / `d[3] = 'c'` /
+`next(g)` raises in CPython and answers `1` here: PEP 289 calls `iter()` on the
+outermost iterable when the genexp OBJECT is created, while this tier does not
+push the cursor frame until the first resume, so the guard compares the dict
+against itself. Filed as **`pyc-div-2`**, and unlike `pyc-div-1` its probe RUNS
+both sides every time.
+
+> **A false blanket claim hides the real gap, and the claim is why nobody
+> looked.** The gap here was not smaller than the claim — it was a DIVERGE, and
+> the sentence asserting unwitnessability is the reason it sat one edit away
+> from being shipped as a REFUSE row.
+
+### THE CONSTRUCTION-SITE CENSUS, and it corrected the question that ordered it
+
+§5.2's ruling (`bf3f33f`) made "the trunk never constructs this frame" a
+MEASURABLE claim rather than a docstring. Run over the three frames this lane
+had called unreachable:
+
+| frame | construction sites | trunk-reachable? |
+| --- | --- | --- |
+| `.forDict` | `Monadic/Eval.lean` ×3, `Monadic/Script.lean` ×3 — **zero trunk sites** | no |
+| `.enumDict` | `Semantics.lean` `enumFrame` — **which the trunk's `enumerate` arm calls** | **YES** |
+| `.iterDict` | `Semantics.lean` `iterFrame` — sole caller is the rebuild's `applyBuiltin` | no |
+
+**`enumDict`'s trunk step arm is a LIVE path**, not an unreachable one: §3c-i-c
+ruling (c) had the trunk BUILD the frame and refuse at the step, so a trunk
+`e = enumerate(d); next(e)` reaches it. The lane asked for a ruling about
+"three unreachable refusals" and **only two of them were unreachable** — the
+census caught it on its first run, which is what it was ordered for.
+
+Type-level discharge (`nomatch`, or narrowing the frame type) is **not
+available at a price anyone would pay**: the frames live inside `Obj.generator`
+on a SHARED heap, so narrowing means indexing the heap by presentation, which
+ripples through `Obj`, `Heap.WF`, `PayloadBlind`, `ClockErase` and `Obs`. So
+refusal-form stands for the two, with the claim gated by this census.
+
+### THE DECLARED-DIVERGENCE REGISTER, FOUNDED
+
+§5.0a's canonical shape is DATA per-tier, CHECKER shared, PROBE per-tier. This
+tier builds the **checker** — `harness/divergence_register.py` — and files the
+**data** (`docs/python-declared-divergences.json`) and its **probe**
+(`harness/pyc_divergence_probe.py`) alongside it.
+
+* **It validates SV's file UNMODIFIED**, today: 2 tier files, 3 rows, 6 guards,
+  all held. Cross-tier validation is the acceptance test and it did not have to
+  wait for a second filer.
+* **It asks only tier-independent questions** — fields present, kind in the
+  ruled two, guards exactly two and distinct, `declared` dateable, retirement
+  condition not WAITING-shaped, probe exists, probe ran, every guard held.
+  Nothing semantic is decided there; MEAS-28.
+* **The guard set is checked BOTH ways.** A row naming a guard the probe lacks
+  is UNGATED; a probe guard no row names is ORPHANED — the shape a deleted row
+  leaves behind, and the one hole a build cannot see.
+* **`--self-test` exercises the checker's own defect detection** against ten
+  mutated copies of a real file. A checker that only ever passes is a claim,
+  and the rules that matter are the ones that have never fired on real data.
+* **The empty-register check is kept although it is now unreachable** (sv and
+  python have both filed). It is a fact about today, not about the design, and
+  removing it would buy a silent green.
+
+### `pyc-div-1`, and the honest thing about its guards
+
+The row is the sticky dict-iterator error state: CPython poisons
+(`di_used = -1`, its own comment says sticky) and re-raises on every later
+`next`; the model CLOSES the generator, so `next(it, x)` answers `x`.
+`KIND: semantic`, `INHERITED FROM: enumDict / §pycomplete-14` — not blank,
+because blank is the heavier ORIGINATED claim and it would be false.
+
+**THE DIVERGENCE IS NOT REACHABLE BY AN IN-TIER PROGRAM**, and the probe says so
+instead of implying a run it cannot make. Observing it needs the first
+`RuntimeError` survived, which needs `except RuntimeError:` — and
+`exc_lab::except_builtin` is a whitelisted refusal. So the ORACLE half is a
+genuine run every time, and the MODEL half is pinned where the divergence
+actually lives: the ABSENCE of a poisoned `GenStatus` constructor. That is not a
+weaker guard than a program would be — **it fires on exactly the event that must
+retire the row**, which is a poisoned state landing.
+
+The widening metric is the count of synthetic iterators whose frame carries a
+dict guard: `<enumerate>` and `<iter>`, two. `<count>` is allocated the same way
+and deliberately NOT counted — its frame carries no dict guard, so it can never
+raise the sticky error, and a metric that counted it would fire on an unrelated
+feature.
+
+### THE STALE PROSE, REPAIRED — and why nothing caught it
+
+`sbEvict_lit`'s docstring said `del d[k]` *"ingests as `Stmt.unsupported`"* and
+that `bound`'s unsupported census is two. Both were false the moment inch (1)
+landed. **Nothing broke, because `sbEvict_lit` quantifies the body
+existentially (`∃ b : Array Stmt`) and `evict_dead` earns its result by showing
+the guard is `.bool false` and never opening the body.** The proof was immune to
+the change; the prose was not, and prose cannot fail.
+
+`BoundWF.room`'s rationale is rewritten to the falsifiable form: dropping it no
+longer produces a refusal, it produces a WRONG WORLD — `evict_dead` proves
+`.ok ⟨w, e⟩ .next` with the SAME `w`, and with the guard TRUE the body now
+removes a key and bumps `shapeVersion`, answering `.ok ⟨w', e⟩ .next`. **The
+hypothesis is unchanged and still needed; what changed is that its violation is
+now SILENT**, and observability is not a property any instrument here measures.
+It is reclassified TIER → MODELLING (§5.0a's taxonomy): the honest retirement is
+to model the eviction, not to widen the tier.
+
+### Census deltas
+
+* grammar census **132 → 136 witnesses**: `dict.genexp-next`,
+  `dict.genexp-nomatch`, `dict.genexp-default`, `dict.genexp-drain`, all MATCH.
+  `dict.genexp-bound-is-loud` was written as a fifth and measured **DIVERGE**;
+  it does not belong in this census's vocabulary and moved to the register,
+  whose probe runs it both ways — strictly more gating than a census row.
+* `harness/cases.json` **686 → 693 rows**; **one** new gap joins
+  `WHITELIST_CLASS` (`genexp.lowering-admission` — the CAPTURE rule, not the
+  dict cursor). A second was predicted and the gate refused it:
+  `genexp_bound_still_loud` MATCHES.
+* **declared-divergences: 0 → 2** — the third standing quantity, beside the
+  coverage number and never folded into it. `pyc-div-2` is the register's first
+  row whose probe runs BOTH sides.
+* Three prose sites repaired in `Examples/python/sunfish/`; zero theorems moved.
+
+### §9.0 after this inch
+
+**3 of 3 flagship-serving pyc surfaces. `declared-divergences: 2`.**
+Rung 9's dependency on this lane is discharged: `bound()` has no refused
+construct left — **and the discharge is SCOPED, measured rather than assumed.**
+Of `bound()`'s four generator expressions exactly one iterates a dict
+(`sunfish.py:511`), and it creates and steps its cursor inside a single
+expression, so real play never enters `pyc-div-2`'s create-to-first-resume
+window. The `tp_score` line uses `iter()`, which snapshots at creation and is
+unaffected. Had real play entered the window, this discharge would not stand.

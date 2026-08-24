@@ -8,7 +8,7 @@ The founding charter is `docs/go-charter.md`; the founding landing is
 
 ---
 
-## SPEC COVERAGE — the completion metric (standing; updated every landing)
+### SPEC COVERAGE — the completion metric (standing; updated every landing)
 
 The tier's goal is COMPLETION, and this is the number that measures it:
 how many real stdlib files the walker steps **entirely**. Coverage is
@@ -30,7 +30,7 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G20 fixed arrays `[N]T` | `da9a7bc` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G23 multi-value returns | `9a6d6ad` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
-| §G24 `math/bits` complete + constants | *filled in next* | **687 / 3,803 (18.1%)** | **594 / 2,743 (21.7%)** |
+| §G24 `math/bits` complete + constants | `eb1e8b0` | **687 / 3,803 (18.1%)** | **594 / 2,743 (21.7%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -408,7 +408,7 @@ Inch 2: the `switch` family and `TypeSpec`, which the ladder showed are
 the rung's remaining weight — and `for`, which is where `LangVersion`
 stops being a predicate with three guard rows and starts being a branch
 in the loop rule.
-## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-4` (Go lane's to triage)
+## 2026-08-22-softfloat-4 — INBOUND FROM THE SOFTFLOAT LANE: Go lane's to triage
 
 *Filed by the SoftFloat lane during its consumer census
 (`docs/softfloat-charter.md` §2.4). Id kept in the SoftFloat namespace.*

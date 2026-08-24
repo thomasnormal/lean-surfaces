@@ -364,6 +364,19 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-313 | an ASSUMED BLOCKER is a claim about the corpus, as checkable as the count | `docs/family-architecture.md §9.0b` |
 | MEAS-314 | a census artifact's value includes every FUTURE instance of the traps it recorded | `docs/family-architecture.md §5.4b` |
 | MEAS-315 | the `+0`-in-plan control extends to a CHAIN — each rung discloses its zero, the chain says where the number moves | `docs/family-architecture.md §5.4b` |
+| MEAS-316 | THE COUNT CLOSED THE ROW; no assertion could have — a guard that fails when the debt is paid | `docs/family-architecture.md §5.0a` |
+| MEAS-317 | `retired_rows` — a ledger that forgets its closed rows cannot show that any row ever closes | `docs/family-architecture.md §5.0a` |
+| MEAS-318 | a row stays filed until the guard is MEASURED to flip — writing the code is not the condition | `docs/family-architecture.md §5.0a` |
+| MEAS-319 | an EXISTENCE check can find its own fixtures — the rejection fixture is the test whose success is a failure | `docs/family-architecture.md §5.0a` |
+| MEAS-320 | a worker living in a trunk file proves nothing — WHO CALLS IT decides | `docs/family-architecture.md §5.0a` |
+| MEAS-321 | pin a correction as a POSITIVE EXPECTATION — a belief is lost by silence, an expectation only by a failure | `docs/family-architecture.md §5.0a` |
+| MEAS-322 | PROSE REPEATED FOUR TIMES is the prose worth turning into a guard | `docs/family-architecture.md §5.4b` |
+| MEAS-323 | compose a tenure so its EVIDENCE does not share a failure domain with its RISK | `docs/family-architecture.md §5.4b` |
+| MEAS-324 | a REPORT has nothing to spend, so it has nothing to guard — the guard follows the resource | `docs/family-architecture.md §5.4b` |
+| MEAS-325 | a number's label names its SOURCE and its TRANSFORM — either alone is a shadow | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-326 | a REPRICING owes a census exactly like the first pricing — one instance replaces the population with itself | `docs/family-architecture.md §5.4a` |
+| MEAS-327 | an INFERENCE-built consumer table prices a component against demand nobody expressed | `docs/family-architecture.md §5.4a` |
+| MEAS-328 | the probe-pays law does not require the probe to FIND something | `docs/family-architecture.md §5.4a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -501,6 +514,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-127 | "the RUN is correct" and "the CERTIFICATE is correct" are different claims — only the second is what a green IS | `docs/family-architecture.md §5.4a-i` |
 | STMT-128 | a lemma that CANNOT FAIL is not a lemma — symmetry is a reason to LOOK, never to KEEP | `docs/family-architecture.md §5.3` |
 | STMT-129 | a behaviour the language DEFINES as a failure is a value of the outcome type, never a tier gap | `docs/family-architecture.md §5.2` |
+| STMT-130 | carry a residual as a HYPOTHESIS, never a `sorry` — a `sorry` poisons neighbouring receipts | `docs/family-architecture.md §9.0` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -663,6 +677,7 @@ numbers below are the register's own.
 | OPS-87 | when a guard refuses, ask whether the GUARD IS WRONG — never whether another door is open | `docs/family-architecture.md §5.4a` |
 | OPS-88 | state cross-spelling claims on MATCH-FREE lemmas — a match over an instantiation is a different constant | `docs/family-architecture.md §7.1a` |
 | OPS-89 | `no-goals` is never about the tactic it names — a discharged goal reads like a hard one | `docs/family-architecture.md §7.1a` |
+| OPS-90 | a trunk proof's `clear` line is INTERFACE, not hygiene — it constrains the induction motive | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

@@ -6531,3 +6531,100 @@ the row does not move at 6, the chain's claim was wrong.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-309 … MEAS-315**.
+
+## 2026-08-24-architecture-77 — The count closed the row; no assertion could have
+
+Fourteen from six sources — SV (batched tenure at head), Wasm, pyc, SoftFloat,
+analog A11, QoL (merged `40c093c`). Ticketed items verify at their landings.
+**One carries a schema ruling.**
+
+**(1,7) §5.0a — THE FIRST RETIREMENT, AND THE CONDITION CLOSED IT.** After the
+rewording, `still_divergent` reported **`sites: 0` and FAILED** — *which is the
+guard working.*
+
+> **The count closed the row; no assertion could have.**
+
+**The retirement-condition ruling collecting its dividend**: the condition was
+built with *no place for an opinion to enter*, so **the row did not need
+anyone's judgement — the guard failed, and the failure WAS the closure.**
+
+**RULED — the schema gains `retired_rows`**, and the shared checker accepts it.
+*A ledger that forgets its closed rows cannot show that any row ever closes* — a
+register that only grows reads as **a list of things nobody fixes**, and **the
+aging mechanism becomes unreadable, because a row's age means nothing without
+the distribution of ages at closure.** **Retirement is the register's only
+evidence that it is a ledger rather than an accumulator.**
+
+**And the honesty discipline was pre-stated by the next lane to reach one**:
+`pyc-div-2` stays filed until the guard is **measured** to flip — *retiring it on
+the strength of having written the code would be exactly the assertion its
+retirement condition forbids.* **A lane that has written the fix knows more than
+anyone about whether it works, and is therefore least able to serve as its own
+guard.**
+
+**(5,6) §5.0a — TWO FROM THE CHECKER.** A **self-referential existence check**
+passed a file it should reject: the fixture's fake guards pointed at the checker
+and **the substring check found them** — *the fixture and the false positive are
+the same artifact.* Caught by **the self-test's own expectation**, which is the
+encouraging half: *a rejection fixture is the only test whose success is a
+failure.* And the census flagged the lane's own new code, forcing **caller-based
+counting** — *a worker living in a trunk file proves nothing; who calls it
+decides* — **residence is not membership.** The correction is **pinned as a
+POSITIVE EXPECTATION**, which is the sharpest sentence in the batch: *a belief is
+lost by nobody restating it; an expectation is lost only by something failing.*
+
+**(2,3,13) §5.4b — THREE ON GUARD DESIGN.** *Prose repeated four times is
+exactly the prose worth turning into a guard* — **repetition is the cheapest
+signal that a claim is load-bearing**, and the guard's content is the **inverted
+nesting**, because *a guard that asserts the design passes when the design is
+accidentally right.* **Evidence-isolation as ticket composition**: `Prim.lean`
+held out of the build so **a red could not take the retirement evidence with
+it** — *a tenure carrying both a bet and a receipt should not let the bet decide
+whether the receipt is readable.* And **a report has nothing to spend, so it has
+nothing to guard**, with the spec still validated in report mode **because it is
+displayed there** — *the guard follows the resource, the validation follows the
+claim.*
+
+**(14) §7.1a — THE POLARITY FIX CARRIED THE SAME DEFECT ONE TURN DOWN.** The
+label said `memory_pressure:free%` while printing the complement.
+
+> **Naming the instrument was necessary and NOT sufficient. A number's label
+> names its SOURCE and its TRANSFORM — either alone is a shadow.**
+
+*The fix for a polarity defect is not a more careful reader — it is a label the
+polarity cannot be read wrongly through.*
+
+**(4) §7.1a — A TRUNK PROOF'S `clear` LINE IS INTERFACE, NOT HYGIENE.**
+`clear h` was load-bearing and **dropped as boilerplate**; the leading
+hypothesis sweeps into the induction motive. **The line a porter is most likely
+to drop, because hygiene is what a reader trims when adapting someone else's
+proof.** And the **instrument-payoff law's second measurement**: *four 20-second
+probes did what four tenures could not* — two independent measurements now, from
+different tiers.
+
+**(8,9) §9.0 — A SUSPICION REFUTED, REDIRECTING THE NEXT INCH.** `mul_correct`
+names **CORE's `roundWithAccuracy`**, not `roundQ` — *redirecting the next inch
+from proving things about OUR algorithm to proving them about the one the tiers
+actually run.* **The anti-circularity rule arriving as a scheduling
+consequence**: *an obligation's subject is a fact to be read, not inferred from
+who wrote the file.* **Sixth coordinator hypothesis corrected in a day** — now
+routine traffic. And a **residual carried as a HYPOTHESIS, not a `sorry`**:
+the load-bearing clause is the second one — **a `sorry` contaminates every axiom
+print in its neighbourhood**, so it costs the receipts of theorems it has
+nothing to do with. Plus **the §7.4 omission paid**: no overflow side condition,
+because `ReprQ` deliberately carries no upper bound — *neither the omission nor
+the dividend would have been legible if the bound had been quietly folded in.*
+
+**(10,11,12) §5.4a — THREE ON PRICING.** **A repricing owes a census exactly
+like the first pricing did**: 8-of-11 corrected to 3, **wrong in the flattering
+direction for the lemma and the pessimistic direction for the tier** — *one
+instance does not bias an estimate, it replaces the population with itself.* **An
+inference-built consumer table over-prices the component** — the lift-pricing
+law's mirror: *one lane under-priced by counting its own call sites, this one
+over-priced by inventing consumers on another tier's behalf, and the population
+is not yours to infer either way.* And **the probe-pays law does not require the
+probe to find something** — *an instrument reporting "the tool you were reaching
+for is the wrong tool" has saved exactly the work it cost to run.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-316 … MEAS-328, STMT-130, OPS-90**.

@@ -3742,6 +3742,40 @@ the machinery is disciplined and the thing typed beside it is not — **and the
 undisciplined thing runs in the same session, with the same environment, against
 the same live infrastructure.**
 
+**AND A SELF-REFERENTIAL EXISTENCE CHECK PASSES A FILE IT SHOULD REJECT** (pyc,
+checker + census done). The declaration-shape self-test's **fake guards pointed
+at the checker itself**, and **the substring check found them** — so the
+rejection fixture passed.
+
+> **A checker that searches for text can find its own fixtures' text, and an
+> EXISTENCE check is the search most likely to.**
+
+**Self-selection (§5.4) arriving in the one place it is hardest to see**: the
+fixture is *designed* to contain the strings the checker hunts, so **the fixture
+and the false positive are the same artifact.** And the catch is the encouraging
+half — **the self-test's own expectation caught it**: the row expected a
+rejection, got a pass, and **the disagreement between the two was the finding.**
+*A rejection fixture is the only test whose success is a failure, which is why it
+is worth writing even when the accepting path looks obvious.*
+
+**AND THE CENSUS CAUGHT THE LANE'S OWN NEW CODE AS A FALSE DRIFT, FORCING
+CALLER-BASED COUNTING.**
+
+> **A worker living in a trunk file proves nothing; WHO CALLS IT decides.**
+
+**Residence is not membership** — the same unit error as counting identifiers
+where pattern positions were meant, arriving at **file location instead of
+syntax.** A function's home directory is a fact about how someone organized the
+tree; **its callers are a fact about the tier's surface**, and only the second is
+what a drift census is asking about.
+
+**And the correction is PINNED AS A POSITIVE EXPECTATION** — *so the correction
+cannot be quietly lost the way the belief was.* **That is the sharpest sentence
+in the batch.** A belief is lost by nobody re-stating it; **a positive expectation
+is lost only by something failing** — so the repair is not *"we now know better"*
+but **a row that breaks if the knowledge decays.** *The way a correction is
+stored decides whether it survives the person who made it.*
+
 **AND THE CHECKER'S OWN DISCIPLINE SET, from the third filing** (pyc inch 3).
 **`--self-test` rejects TEN MUTATED COPIES OF A REAL FILE** — *a checker that
 only ever passes is a claim* — and **`UNGATED` and `ORPHANED` are both checked,
@@ -3806,6 +3840,41 @@ tier on day one**, with **`git diff --quiet` proof it changed nothing.**
 data at a fixed path, one shared checker), and this is what that design buys on
 its first day: **the cross-tier claim was demonstrated by an accident of merge
 order**, at no cost, against a tier the checker's author had not seen.
+
+**§5.0a HAS ITS FIRST RETIREMENT, AND THE CONDITION CLOSED IT** (SV, batched
+tenure at head; `sv-div-2` retired). After the rewording, `still_divergent`
+reported **`sites: 0` and FAILED** — *which is the guard working.*
+
+> **THE COUNT CLOSED THE ROW; NO ASSERTION COULD HAVE.**
+
+**That is the retirement-condition ruling collecting its dividend.** The
+condition was built with *no place for an opinion to enter* — a count reaching
+zero — and when the work was done **the row did not need anyone's judgement to
+close: the guard failed, and the failure WAS the closure.** *A guard that fails
+when the debt is paid is the only kind that can retire a row without a decision.*
+
+**AND THE SCHEMA GAINS A SEVENTH FIELD — RULED: `retired_rows`.**
+
+> **A ledger that forgets its closed rows cannot show that any row EVER
+> CLOSES.**
+
+**The shared checker accepts it, and retired rows stay in the file.** A register
+that only ever grows reads as **a list of things nobody fixes** — and the aging
+mechanism (§9.7) becomes unreadable, because *a row's age means nothing without
+the distribution of ages at closure.* **Retirement is the register's only
+evidence that it is a ledger rather than an accumulator.**
+
+**AND THE DISCIPLINE THAT KEEPS A RETIREMENT HONEST WAS PRE-STATED BY THE NEXT
+LANE TO REACH ONE** (pyc): `pyc-div-2` **stays filed until the guard is MEASURED
+to flip.**
+
+> **Retiring it on the strength of having WRITTEN THE CODE would be exactly the
+> assertion its retirement condition forbids.**
+
+**The condition and the code are two different facts**, and the gap between them
+is where every optimistic closure lives. *A lane that has written the fix knows
+more than anyone about whether it works, and is therefore the party least able
+to serve as its own guard.*
 
 **AND THE FIRST TWO FILINGS TAUGHT THE SCHEMA FIVE MORE THINGS** (pyc handoff
 rev 2, verify at inch 3; SV's register, `ee8d8bd`, on master).
@@ -5928,6 +5997,52 @@ case" was free.**
 > **A PREDICTED MAINTENANCE COST INHERITS THE UNIT ERROR OF THE CONSTRUCT IT
 > WAS PREDICTED FOR.**
 
+**AND A REPRICING IS A MEASUREMENT AND OWES A CENSUS EXACTLY LIKE THE FIRST
+PRICING DID** (analog A11, ticketed). Its own **8-of-11 repricing corrected to
+3** by censusing the other decks — and the error ran **both ways at once**:
+
+> **Wrong in the FLATTERING direction for the lemma and the PESSIMISTIC
+> direction for the tier — both halves, which is what extrapolation from ONE
+> instance produces.**
+
+**That is the sharpest statement of the extrapolation hazard this register
+has.** A single instance does not bias a estimate in one direction; **it
+replaces the population with itself**, so every quantity derived from it moves
+in whichever direction that one case happens to sit. *A repricing feels like
+diligence — it is a second look — and it inherits the first pricing's exemption
+from measurement unless someone says otherwise.*
+
+**And the remaining sites split BY THE SHAPE OF THE WORLD, not by the
+certificate** — a blocked-on taxonomy **keyed to the hypothesis's quantifier
+domain.** *What blocks a site is a property of what must be true for it, not of
+what one wanted to prove about it.*
+
+**AND AN INFERENCE-BUILT CONSUMER TABLE OVER-PRICES THE COMPONENT** (SoftFloat).
+**Four SV cells retired** that were **the lane's own inference from R1-exit, not
+SV's request.**
+
+> **A consumer table built from INFERENCE prices a component against demand
+> nobody expressed.**
+
+**The lift-pricing law's mirror.** There a lane under-priced by counting **its
+own call sites** instead of the definition's surface; here a lane **over-priced
+by inventing consumers** on another tier's behalf. *Both errors come from
+answering a question about someone else's needs without asking them* — and the
+correction in both directions is the same: **the population is not yours to
+infer.**
+
+**AND A PROBE THAT RETURNS "THIS VOCABULARY DOES NOT APPLY" HAS DONE ITS JOB**
+(analog A11). `exists_isMinOn` gives a minimiser that **cannot be evaluated**;
+the rate is **one quotient, one `div_le_div₀`.**
+
+> **The probe-pays law does not require the probe to FIND something.**
+
+**A negative probe result is a measurement of the SEARCH SPACE**, and it is the
+cheapest kind to bank: the alternative to a probe returning *not applicable* is
+**a lane discovering the same thing halfway through building on it.** *An
+instrument that reports "the tool you were reaching for is the wrong tool" has
+saved exactly the work it cost to run.*
+
 **AND A THIRD, WHERE THE PREDICTION WAS EXACTLY RIGHT ON THE HALF THE LANE
 OWNED** (C's seam lift, merged). `c-12` priced **5 theorems / ~40 lines**;
 reality was **12 / 183.** But **the seam half was EXACT** — the entire gap is
@@ -7311,6 +7426,53 @@ verify-then-push chain **printed `DRIFT` and pushed anyway.**
 > **A CHECK WHOSE FAILURE DOES NOT STOP THE NEXT STEP IS NOT A GATE — IT IS A
 > COMMENT.**
 
+**AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
+
+> **PROSE REPEATED FOUR TIMES IS EXACTLY THE PROSE WORTH TURNING INTO A
+> GUARD.**
+
+The claim — `$finish` lives in `ρ` because `SvWorld.out` carries the verdict
+line — became a **`#guard` whose inverted nesting reads `none`**: *the error
+that would silently discard the answer every conformance test exists to
+produce.*
+
+**Repetition is the cheapest available signal that a claim is load-bearing**,
+and it is one a lane already has: **nobody restates an incidental fact four
+times.** This register has said *a claim needs a check* many ways; **this says
+which claim to check first**, without a census — *count the restatements.*
+
+**And the guard's content is the right one because it is the INVERTED nesting**:
+not *"the layer order is as documented"* but **the specific wrong order, and what
+it destroys.** *A guard that asserts the design passes when the design is
+accidentally right; a guard that exhibits the catastrophe fails only when the
+catastrophe is reachable.*
+
+**AND EVIDENCE-ISOLATION AS A TICKET-COMPOSITION PRINCIPLE** (SV, same tenure).
+The new `Prim.lean` was **held OUT of the build and elaborated via gates**, so
+**a red build could not take the retirement evidence down with it.**
+
+> **Compose a tenure so that its EVIDENCE does not share a failure domain with
+> its RISK.**
+
+**This is *a red build is an outage of every gate behind it* used in advance
+rather than diagnosed after.** The lane had two things in one tenure — a risky
+addition and the proof that a debt was paid — and **put them in different
+failure domains on purpose.** *A tenure carrying both a bet and a receipt should
+not let the bet decide whether the receipt is readable.*
+
+**AND A GUARD SPLIT BY WHAT EXISTS AT THE MOMENT OF THE QUESTION** (QoL items
+12-14, merged `40c093c`).
+
+> **A REPORT HAS NOTHING TO SPEND, SO IT HAS NOTHING TO GUARD.**
+
+The plan guard was refusing the tool's **own report mode** — and the fix is not
+an exemption but a **re-derivation of what the guard is for**: it protects a
+*commitment of resources*, and a report commits none. **With the lane's own spec
+still validated in report mode BECAUSE IT IS DISPLAYED THERE** — which is the
+half that keeps this from being a hole: *the guard follows the resource, and the
+validation follows the claim, and they are different questions asked of the same
+invocation.*
+
 **AND ITS SECOND GENUS-MEMBER, SELF-REPORTED: A RETRY LOOP THAT REBASES MUST
 RE-RUN THE CLOSURE CHECK ON EACH NEW BASE** (ES, pushed `c49c244`+`6e85d56`).
 The fetch-rebase-push loop **re-based without re-running the transfer test**,
@@ -8513,6 +8675,27 @@ announces itself.**
   first, then `attribute [irreducible]` — otherwise the definition
   disappears underneath the induction that was supposed to be about it.
 
+**A TRUNK PROOF'S `clear` LINE IS INTERFACE, NOT HYGIENE** (Wasm; fix clean,
+ticketed). `clear h` was **LOAD-BEARING and was dropped as boilerplate** — the
+leading hypothesis **sweeps into the induction motive.**
+
+> **`clear` before an induction is part of the PROOF'S CONTRACT: it says which
+> hypotheses the motive must not generalize over.**
+
+**The ported-lemma law's sibling.** That one says *the proof architecture ports,
+the proofs do not*; this says **a line that LOOKS like tidying is architecture** —
+and it is the line a porter is most likely to drop, because **hygiene is exactly
+what a reader trims when adapting someone else's proof.** *A tactic whose only
+visible effect is a smaller context is doing its work in the motive, where the
+context is not visible at all.*
+
+**AND THE INSTRUMENT-PAYOFF LAW HAS ITS SECOND MEASUREMENT**: *the scratch loop
+did in **four 20-second probes** what **four tenures** could not.* **Same lane,
+same defect class, two orders of magnitude** — arriving the day after crunga's
+5 934-seconds-for-43 figure, from a different tier. *Two independent
+measurements is this document's convergence standard, applied to the claim that
+instruments set cost rather than defects.*
+
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
 
@@ -9278,6 +9461,25 @@ consumer-side corollary the every-line-names-its-instrument rule was missing:
 
 > **A RELAYED NUMBER WITHOUT ITS INSTRUMENT NAME RE-CREATES THE DEFECT THE
 > INSTRUMENT FIXED.**
+
+**AND THE POLARITY FIX CARRIED THE SAME DEFECT ONE TURN DOWN** (QoL, merged
+`40c093c`). The label said **`memory_pressure:free%`** while **printing the
+complement.**
+
+> **Naming the instrument was NECESSARY AND NOT SUFFICIENT: an unlabelled
+> POLARITY is the same defect one turn of the screw down.**
+
+**Labels now name the TRANSFORM — `100-free%` — not merely the source.** Which
+fixes a rule this register had been stating at the wrong granularity: *name the
+instrument* answers **where the number came from** and says nothing about **what
+was done to it on the way.** A derived number carries **two** provenance facts,
+and **the derivation is the one that flips signs.**
+
+> **A NUMBER'S LABEL NAMES ITS SOURCE AND ITS TRANSFORM. Either alone is a
+> shadow.**
+
+*The fix for a polarity defect is not a more careful reader — it is a label the
+polarity cannot be read wrongly through.*
 
 **A bare percentage is not a measurement, it is a measurement's shadow** — and
 the shadow of *free* and the shadow of *in-use* are **the same shape**. The
@@ -10667,6 +10869,45 @@ consumed** — *keep it visible whenever this tier is described.*
 disclosure does not discharge the obligation, it **prevents the obligation from
 being forgotten** while remaining open, which is the same service §9.7's
 *named, not counted* performs for a denominator.
+
+**AND A SUSPICION ABOUT THE CRITICAL PATH, REFUTED — WHICH REDIRECTED THE NEXT
+INCH** (SoftFloat, `mul` stated, ticketed). `mul_correct` is **one term, no
+tactics**, and the coordinator's suspicion — *`roundQ` on the path* — was
+**refuted by reading the obligation**: it names **CORE's
+`roundWithAccuracy`.** `roundQ` **stays the independent cross-check, off the
+critical path.**
+
+> **It redirects the next inch from proving things about OUR algorithm to
+> proving them about THE ONE THE TIERS ACTUALLY RUN.**
+
+**Which is the point of the anti-circularity rule arriving as a scheduling
+consequence** (cookbook §24): a spec that names no algorithm leaves the
+obligation pointing at **whatever the consumers actually execute** — and the
+moment someone assumes it points at the lane's own implementation, **the next
+inch is aimed at the wrong artifact.** *An obligation's subject is a fact to be
+read, not inferred from who wrote the file.*
+
+**Sixth coordinator hypothesis corrected in a day**, which has stopped being
+notable and is now the expected traffic — *the asymmetry MEAS-201 warned about,
+running in the healthy direction as routine.*
+
+**AND A RESIDUAL CARRIED AS A HYPOTHESIS, NOT A `sorry`.**
+
+> **Type-checked rather than described — and NO `sorryAx` to poison
+> neighbouring receipts.**
+
+**The second clause is the load-bearing one.** A `sorry` does not merely mark
+one gap; it **contaminates every axiom print in its neighbourhood** (§0.1
+II(a)), so a residual left as a `sorry` **costs the receipts of theorems that
+have nothing to do with it.** A hypothesis costs its consumers a premise —
+visible, local, and discharged where someone is looking.
+
+**AND THE §7.4 OMISSION PAID ITS DIVIDEND**: **no overflow side condition**,
+because **`ReprQ` deliberately carries no upper bound.** *A stated omission
+collecting its return* — the decision recorded as *"we are not covering this,
+and here is why"* turned out to be **the reason a later obligation is smaller**,
+and neither the omission nor the dividend would have been legible if the bound
+had been quietly folded in.
 
 **AND THE NUMERATOR'S HALF OF THE SAME DISCIPLINE, from SoftFloat — third
 instance, and the lane excluded its own work to get it right.** Its §9.0 number

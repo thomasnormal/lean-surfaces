@@ -16,7 +16,8 @@ row per envelope ITEM KIND, joining three independent sources —
     EMIT    Export.lean               what the exporter writes
     PARSE   Export/Parse.lean         what the reference parser reads back
 
-A round-trip obligation exists exactly where all three agree an item kind lives.
+A round-trip obligation exists exactly where all three agree an item kind lives
+AND the round-trip is not refuted by the artifact itself (see REFUTED).
 Where they DISAGREE the manifest says so rather than smoothing it: an item the
 spec documents but nothing parses is a gap, and an item emitted but undocumented
 is a different gap.
@@ -144,6 +145,28 @@ NOT_EMITTED = {
     "mvar":      "Expr.mvar — same panic",
 }
 
+# REFUTED, NOT COUNTED (coordinator ruling, 2026-08-24).  A kind that IS emitted
+# and IS parsed but whose round-trip statement is FALSE BY UPSTREAM DESIGN.  It
+# is not an unproved obligation — no proof exists to be found — so counting it
+# would fix the ceiling below 100% forever, "a number that can only be too low"
+# with no owner able to move it.  The mirror image of the 28th obligation's
+# NAMED, NOT COUNTED: that one is a live obligation deliberately held out of the
+# denominator until its premise is proved, this one is a documented property of
+# the artifact.  Both are declared here so the absence is a DATUM, not a gap.
+#
+# A refuted kind is still required to be PRESENT in both sources below — the
+# claim "this round-trip is false" is only meaningful about a kind that exists.
+REFUTED = {
+    "mdata": (
+        "Expr.mdata — parseExprMdata BINDS AND DISCARDS the metadata "
+        "(`let some (.obj _dataObj) := data[\"data\"]?`) and returns `.mdata {} expr`, "
+        "under upstream's own comment \"TODO: Unclear how to perfectly recover with the "
+        "current output format\".  `parse (dump e) = e` is therefore FALSE for any "
+        "non-empty KVMap, not merely unproved.  Also unreachable on the default path: "
+        "dumpExpr strips mdata via removeMData unless --export-mdata is passed."
+    ),
+}
+
 
 def _emit_sites(src: str) -> dict[str, int]:
     """`("<kind>",` at a JSON-object position — anchored, not a bare substring."""
@@ -260,7 +283,9 @@ def census(root: Path) -> dict:
             "spec_section": s, "spec_documented": s is not None,
             "emit_line": e, "parse_fn": f"parse{psuf}", "parse_line": p,
             "nested_in": nested,
-            "round_trip_obligation": bool(p) and (bool(e) or bool(nested)),
+            "refuted": REFUTED.get(key),
+            "round_trip_obligation": (bool(p) and (bool(e) or bool(nested))
+                                      and key not in REFUTED),
         })
     if missing:
         raise CensusRefusal("declared item kinds not found where they belong: " + "; ".join(missing))
@@ -282,6 +307,7 @@ def census(root: Path) -> dict:
             "undocumented_in_spec": sorted(r["key"] for r in rows if not r["spec_documented"]),
         },
         "not_emitted_by_design": dict(sorted(NOT_EMITTED.items())),
+        "refuted_not_counted": dict(sorted(REFUTED.items())),
         "rows": sorted(rows, key=lambda r: (r["category"], r["key"])),
     }
 

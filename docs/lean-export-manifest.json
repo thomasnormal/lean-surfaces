@@ -12,7 +12,7 @@
     "by_category": {
       "aux": 1,
       "declaration": 9,
-      "expr": 11,
+      "expr": 10,
       "level": 4,
       "name": 2
     },
@@ -21,8 +21,11 @@
       "recs",
       "types"
     ],
-    "total": 27,
+    "total": 26,
     "undocumented_in_spec": []
+  },
+  "refuted_not_counted": {
+    "mdata": "Expr.mdata \u2014 parseExprMdata BINDS AND DISCARDS the metadata (`let some (.obj _dataObj) := data[\"data\"]?`) and returns `.mdata {} expr`, under upstream's own comment \"TODO: Unclear how to perfectly recover with the current output format\".  `parse (dump e) = e` is therefore FALSE for any non-empty KVMap, not merely unproved.  Also unreachable on the default path: dumpExpr strips mdata via removeMData unless --export-mdata is passed."
   },
   "rows": [
     {
@@ -32,6 +35,7 @@
       "nested_in": null,
       "parse_fn": "parseBinderInfo",
       "parse_line": 151,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -43,6 +47,7 @@
       "nested_in": null,
       "parse_fn": "parseAxiomInfo",
       "parse_line": 237,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Axiom"
@@ -54,6 +59,7 @@
       "nested_in": "induct",
       "parse_fn": "parseCtorInfo",
       "parse_line": 365,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Inductive Declaration:"
@@ -65,6 +71,7 @@
       "nested_in": null,
       "parse_fn": "parseDefnInfo",
       "parse_line": 249,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Definition"
@@ -76,6 +83,7 @@
       "nested_in": null,
       "parse_fn": "parseInductive",
       "parse_line": 434,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Inductive Declaration:"
@@ -87,6 +95,7 @@
       "nested_in": null,
       "parse_fn": "parseOpaqueInfo",
       "parse_line": 295,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Opaques"
@@ -98,6 +107,7 @@
       "nested_in": null,
       "parse_fn": "parseQuotInfo",
       "parse_line": 312,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Quotients"
@@ -109,6 +119,7 @@
       "nested_in": "induct",
       "parse_fn": "parseRecInfo",
       "parse_line": 392,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Inductive Declaration:"
@@ -120,6 +131,7 @@
       "nested_in": null,
       "parse_fn": "parseThmInfo",
       "parse_line": 280,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Theorems"
@@ -131,6 +143,7 @@
       "nested_in": "induct",
       "parse_fn": "parseInductInfo",
       "parse_line": 331,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Inductive Declaration:"
@@ -142,6 +155,7 @@
       "nested_in": null,
       "parse_fn": "parseExprApp",
       "parse_line": 142,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -153,6 +167,7 @@
       "nested_in": null,
       "parse_fn": "parseExprBVar",
       "parse_line": 122,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -164,6 +179,7 @@
       "nested_in": null,
       "parse_fn": "parseExprConst",
       "parse_line": 130,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -175,6 +191,7 @@
       "nested_in": null,
       "parse_fn": "parseExprForallE",
       "parse_line": 173,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -186,6 +203,7 @@
       "nested_in": null,
       "parse_fn": "parseExprLam",
       "parse_line": 159,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -197,6 +215,7 @@
       "nested_in": null,
       "parse_fn": "parseExprLetE",
       "parse_line": 187,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -208,7 +227,8 @@
       "nested_in": null,
       "parse_fn": "parseExprMdata",
       "parse_line": 223,
-      "round_trip_obligation": true,
+      "refuted": "Expr.mdata \u2014 parseExprMdata BINDS AND DISCARDS the metadata (`let some (.obj _dataObj) := data[\"data\"]?`) and returns `.mdata {} expr`, under upstream's own comment \"TODO: Unclear how to perfectly recover with the current output format\".  `parse (dump e) = e` is therefore FALSE for any non-empty KVMap, not merely unproved.  Also unreachable on the default path: dumpExpr strips mdata via removeMData unless --export-mdata is passed.",
+      "round_trip_obligation": false,
       "spec_documented": true,
       "spec_section": "Expressions"
     },
@@ -219,6 +239,7 @@
       "nested_in": null,
       "parse_fn": "parseExprNatLit",
       "parse_line": 213,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -230,6 +251,7 @@
       "nested_in": null,
       "parse_fn": "parseExprProj",
       "parse_line": 202,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -241,6 +263,7 @@
       "nested_in": null,
       "parse_fn": "parseExprSort",
       "parse_line": 126,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -252,6 +275,7 @@
       "nested_in": null,
       "parse_fn": "parseExprStrLit",
       "parse_line": 219,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Expressions"
@@ -263,6 +287,7 @@
       "nested_in": null,
       "parse_fn": "parseLevelImax",
       "parse_line": 113,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Levels"
@@ -274,6 +299,7 @@
       "nested_in": null,
       "parse_fn": "parseLevelMax",
       "parse_line": 108,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Levels"
@@ -285,6 +311,7 @@
       "nested_in": null,
       "parse_fn": "parseLevelParam",
       "parse_line": 118,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Levels"
@@ -296,6 +323,7 @@
       "nested_in": null,
       "parse_fn": "parseLevelSucc",
       "parse_line": 104,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Levels"
@@ -307,6 +335,7 @@
       "nested_in": null,
       "parse_fn": "parseNameNum",
       "parse_line": 98,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Names"
@@ -318,6 +347,7 @@
       "nested_in": null,
       "parse_fn": "parseNameStr",
       "parse_line": 92,
+      "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
       "spec_section": "Names"

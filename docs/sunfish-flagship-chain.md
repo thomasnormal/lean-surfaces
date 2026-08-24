@@ -6,17 +6,29 @@ rather than approached implicitly.** Per Thomas's scale recalibration
 document fixes the denominator so that "how far" has an answer that is a number
 and not a mood.
 
-**§9.0 number for this lane: `chain rungs closed / total`.** Today: **2 / 9.**
+**§9.0 number for this lane: `chain rungs closed / total`.** Today: **3 / 9.**
 
 ---
 
 ## §1 THE THEOREM
 
 `bound_refines_fuelModel` says the shipped `Searcher.bound` keeps the promise its
-own docstring makes. It **is not stated in Lean anywhere** — it exists in prose
-in `docs/backlog-archive.md` and nowhere in the tree. That is rung 1, and it is
-listed first because a goal theorem that has never been typed is a goal nobody
-can typecheck against.
+own docstring makes. **It is now STATED IN LEAN** —
+`Examples/python/sunfish/flagship.lean` — where for the whole campaign before
+2026-08-24 it existed only as prose in `docs/backlog-archive.md` and in three
+successive "and then it assembles" ladders.
+
+Rung 1 was listed first because a goal theorem that has never been typed is a
+goal nobody can typecheck against: every WAITING trigger aimed at it is
+unexecutable, and every claim to be serving it is unfalsifiable. Typing it
+converts all three into machine-checkable things.
+
+**And it does more than type: it ASSEMBLES.** The strong induction is discharged
+in that file, so the flagship reduces to exactly two named obligations and no
+proof shape — `BoundRefinesW V 0` (rung 8, base-case lane) and `RecursionStepW V`
+(rung 7, this lane). Neither is discharged there, so the theorem has genuine
+hypotheses; when they land it closes by application and nothing about its shape
+is then in question.
 
 **The model choice is already ruled** (archive, §L17 successor): the theorem is
 stated against **the docstring's `s*`**, in which the per-move futility bound and
@@ -59,7 +71,7 @@ unsolved question in it.
 
 | # | rung | owner | status |
 |---|------|-------|--------|
-| 1 | State `bound_refines_fuelModel` in Lean | R-track | MECHANICAL |
+| 1 | State `bound_refines_fuelModel` in Lean, and discharge its induction | R-track | **CLOSED** |
 | 2 | R2 ordering line, monadic — generator judgment layer | R-track | **CLOSED** |
 | 3 | R2 ordering line, monadic — the caller's chain induction | R-track | MECHANICAL |
 | 4 | R3 fold, spec side (`FoldInv` over `RoundOK`) | R-track | **CLOSED** |
@@ -69,9 +81,15 @@ unsolved question in it.
 | 8 | Base case `BoundRefinesW V 0` | base-case lane | BLOCKED (their ledger) |
 | 9 | Three tier surfaces for real-play scope | pyc lane | BLOCKED (sequenced after 3c-i-c) |
 
-**Closed: 2 of 9** — rung 2 (today: `GenEmitsM.forGenRound`, seventeen theorems in
+**Closed: 3 of 9** — rung 1 (`flagship.lean`: the theorem typed and its induction
+discharged), rung 2 (`GenEmitsM.forGenRound`, seventeen theorems in
 `monadic_gen.lean`) and rung 4 (`FoldInv`/`.step`/`.nil`/`.run` in
 `monadic_fold.lean`).
+
+Rung 1 cost one scratch elaboration. That is worth recording next to the number:
+the rung listed first, blocking the most triggers, and carrying the campaign's
+name, was the cheapest one on the board — it had simply never been anyone's
+explicit task.
 
 ## §4 RUNG 6 IS THE BULK, AND ITS NUMBER IS MEASURED
 

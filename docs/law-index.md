@@ -296,6 +296,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-245 | a shape the rules once REQUIRED cannot become a failure the day a new rule lands | `docs/family-architecture.md §9.5a` |
 | MEAS-246 | conforming to one rule is when you are most likely to break its NEIGHBOUR | `docs/family-architecture.md §9.5a` |
 | MEAS-247 | a RECIPE transfers by reading; a FUNCTION is a constant — alike in the source, different in the tree | `docs/family-architecture.md §9.0` |
+| MEAS-248 | a standing block is a `###` SECTION, only landings are `##` ENTRIES — say the level or three lanes pick one | `docs/family-architecture.md §9.0` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

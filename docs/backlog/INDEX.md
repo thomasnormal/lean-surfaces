@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**276 entries across 17 lanes.** Regenerate with
+**278 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -47,6 +47,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-ada-4` |  | THE TARGET-SHAPE RUNG ANSWERS, and the answer is that 5.2's refusal was never blocked on the measurement | ada |
 | `2026-08-24-ada-3` |  | INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug | ada |
 | `2026-08-24-ada-2` |  | INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts | ada |
+| `2026-08-24-sv-1` |  | TRIAGE: SV does NOT want `real`, and the audit reword I accepted was never applied | sv |
+| `2026-08-24-es-1` |  | the data-literal inch: object and array literals, `UpdateExpression`, and the Array exotic object | es |
 | `2026-08-24-analog-1` |  | CENSUS-FIRST: non-vacuity is a chain of two links, and the tier closed only the inner one | analog |
 | `2026-08-24-ada-1` |  | CORE ADOPTION LANDS: the two-channel mapping, and the ticket's own tenure had gone green over a tree that did not contain it | ada |
 | `2026-08-23-architecture-51` |  | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
@@ -236,6 +238,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-architecture-4` |  | THE `GenFrame` RULING EXECUTED — first measured instance, and two laws paid off together | architecture |
 | `2026-08-22-wasm-3` |  | INCH 1, STEP 2: **the pin does NOT build** — six errors, all in the hand-written proof file, and the model itself is FINE | wasm |
 | `2026-08-22-sunfish-rtrack-3` |  | TRANSPORT CLASSIFICATION for the re-founding | sunfish-rtrack |
+| `2026-08-22-softfloat-3` | INBOUND | INBOUND FROM THE SOFTFLOAT LANE: SV lane's to triage | sv |
 | `2026-08-22-qol-3` |  | `tools/diagnose.sh`: 22 failure signatures, each with the incident that minted it | qol |
 | `2026-08-22-lean-tier-3` |  | M3 inch 1 WITHDRAWN: the candidate first proof is blocked on a MISSING MODEL RULE, and my own M2 census recommended it | lean-tier |
 | `2026-08-22-es-3` |  | M2 INCH 4(a): reference records and the conversions, and the tier now has TWO verification strengths | es |
@@ -272,7 +275,6 @@ and every existing `§Lnn` reference still resolves there.
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
-| `INBOUND` | INBOUND | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-2` (C lane's to triage) | c |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
 | `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
@@ -297,4 +299,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**31 heading(s) do not use the §9.5 id scheme** and sort last.
+**30 heading(s) do not use the §9.5 id scheme** and sort last.

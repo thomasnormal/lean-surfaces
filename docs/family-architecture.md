@@ -8938,6 +8938,27 @@ charter, for the reason §7.2 already gives: **a ledger is appended per landing,
 so the number moves with the work, while a number in a charter is a copy the
 code cannot see.**
 
+**AND IT IS A `###` SECTION, NEVER A `##` ENTRY — a requirement this rule owed
+from the start and did not carry** (found 2026-08-24 by the heading guard, three
+lanes deep). §9.0 asked every lane for a standing block and **said nothing about
+its heading level**, so Ada, Go and the analog tier each independently wrote
+`## SPEC COVERAGE — …` — **a standing section wearing an entry's syntax**, which
+is precisely the case §9.5's two-remedies ruling calls **demote, never
+id-ify**: giving it an id would put it in the index **as an entry that does not
+exist.**
+
+> **A standing block in a per-lane ledger is a `###` SECTION. Only landings are
+> `##` ENTRIES.**
+
+**The three existing headers are old-valid and are their lanes' to demote** —
+one line each, no id, no renumbering. **And the lesson is the one §9.5a already
+paid for, arriving through a different door**: this rule was written for readers,
+**the generator reads the ledgers too**, and *a rule that specifies a document's
+CONTENT while leaving its SYNTAX to taste has left the syntax to be decided
+three times.* **Say the level, or three lanes will each pick one.**
+
+
+
 **AND THIS IS WHAT THE INSTRUMENTS WERE FOR.** Everything this document has been
 minting — suites driving scope (§5.6), coverage as
 `stated / (stated + refused + out-of-tier)` (§5.5), the four refusal causes and

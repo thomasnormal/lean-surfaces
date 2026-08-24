@@ -5464,5 +5464,27 @@ free and transferring the function is **a claim**, and the two are
 indistinguishable in a diff. *The same family as `bitLenSpec` existing twice:
 sameness in the source is not sameness in the tree, in either direction.*
 
+**AND THE PUSH ITSELF SURFACED THE NEXT ONE — the census composition changed
+again, and this time ALL THREE malformed headings are MINE BY ORIGIN.** With the
+INBOUND entries correctly separated into their own old-valid class, what remains
+is **three `## SPEC COVERAGE — …` headers** (Ada, Go, analog) — **a standing
+section wearing an entry's syntax**, in three lanes, because **§9.0 asked every
+lane for a standing block and never said at what heading level.**
+
+> **A standing block in a per-lane ledger is a `###` SECTION. Only landings are
+> `##` ENTRIES.**
+
+**Fixed at the source rather than in three files**: §9.0 now says the level. The
+three existing headers are **old-valid and their lanes' to demote** — one line
+each, **no id, no renumbering**, per `-60`'s two-remedies ruling (**demote, never
+id-ify**; an invented id would put a standing section in the index as an entry
+that does not exist).
+
+**And it is §9.5a's lesson arriving through a different door.** That rule was
+written for readers and the generator read it too; **this one specified a
+document's CONTENT and left its SYNTAX to taste** — so the syntax got decided
+**three times, identically wrong.** *Say the level, or three lanes will each pick
+one.*
+
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
-**91/91**; ids minted here **MEAS-245 … MEAS-247**.
+**91/91**; ids minted here **MEAS-245 … MEAS-248**.

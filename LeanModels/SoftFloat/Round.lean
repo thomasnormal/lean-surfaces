@@ -68,6 +68,47 @@ structure IsDirected (fmt : Format) (q y : Q) (side : Q → Q → Prop) : Prop w
   /-- nothing the format holds is strictly between -/
   closest : ∀ z, ReprQ fmt z → side z q → Q.Le (Q.dist q z) (Q.dist q y) → Q.Eq z y
 
+/-! ## 2a. CANONICALITY — and the tie rule is NOT statable without it
+
+A `Q` has no canonical significand: the SAME value has many `(m, e)` pairs and
+they differ in the PARITY of `m`.  Doubling `m` and decrementing `e` turns any
+significand even, so **"∃ an even significand" is VACUOUS** — it holds of every
+value, odd ones included.  Measured: `Q.dyadic 5 0`, `Q.dyadic 10 (-1)` and
+`Q.dyadic 20 (-2)` are the same value with significands 5, 10, 20.
+
+That matters for `IsNearest` above, whose `tieOk` PARAMETER has the right shape
+but, as first shipped, had **no canonicality notion in this file to instantiate
+it with** — and the obvious instantiation is the vacuous one.  A tie clause
+that is always true silently permits the wrong answer on every tie.  **Not
+wrong, but instantiable wrongly**, and the fix is additive.
+
+`IsCanonical` is the format's own normalization: the leading significand bit is
+set, or the value sits at `minExponent` (a subnormal).  That is exactly what
+core's `targetExponent` computes, and it is a fact about the FORMAT, not about
+the rational.
+-/
+
+/-- The format's canonical significand/exponent pair: normal (leading bit set)
+    or subnormal (sitting at `minExponent`).  IEEE 754-2019 §3.4. -/
+def IsCanonical (fmt : Format) (m : Int) (e : Int) : Prop :=
+  m.natAbs < 2 ^ fmt.mantissaBits ∧
+    (2 ^ (fmt.mantissaBits - 1) ≤ m.natAbs ∨ e = fmt.minExponent)
+
+instance (fmt : Format) (m e : Int) : Decidable (IsCanonical fmt m e) := by
+  unfold IsCanonical; infer_instance
+
+/-- IEEE 754-2019 §4.3.1's tie clause, stated where parity is well-defined:
+    at the CANONICAL significand, where each value has exactly one. -/
+def TieEven (fmt : Format) (y : Q) : Prop :=
+  ∃ (m : Int) (e : Int), IsCanonical fmt m e ∧ Q.Eq y (Q.dyadic m e) ∧ m % 2 = 0
+
+/-- The witness that makes the vacuity concrete: `5` and `10 * 2⁻¹` are the SAME
+    value, but only the first is canonical at a 3-bit significand — so the
+    even-significand representation of an odd value is ruled out, which is
+    exactly what the vacuous reading failed to do. -/
+theorem even_repr_of_odd_is_not_canonical :
+    ¬ IsCanonical { mantissaBitsWithoutImplicit := 2, exponentBits := 5 } 10 (-1) := by decide
+
 /-! ## 3. The predicate elaborates, and it says what it should on the EASY row:
     an exactly representable value rounds to ITSELF, under any tie rule. -/
 

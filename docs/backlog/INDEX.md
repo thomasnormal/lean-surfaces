@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**282 entries across 17 lanes.** Regenerate with
+**285 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -42,7 +42,10 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-qol-49` |  | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
 | `2026-08-24-pycomplete-18` |  | INCH (2) BUILT: `iter(d)` + `next` runs, and the price held except where the census caught it | python-completeness |
+| `2026-08-24-softfloat-17` |  | THE TIE RULE IS NOT STATABLE WITHOUT CANONICALITY | softfloat |
 | `2026-08-24-pycomplete-17` |  | INCH (2)'s CENSUS: `iter(d)` arrives at the EVALUATOR, and it is the THIRD generator allocator | python-completeness |
+| `2026-08-24-softfloat-16` |  | THE DRIFT GUARD FIRED ON ITS OWN AUTHOR, and the fix is a better instrument | softfloat |
+| `2026-08-24-softfloat-15` |  | `roundQ` LANDS AS AN ALGORITHM WITH EVIDENCE, and says so | softfloat |
 | `2026-08-24-softfloat-14` |  | THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology | softfloat |
 | `2026-08-24-sunfish-rtrack-12` |  | RUNG 1: the flagship is TYPED, and it assembles | sunfish-rtrack |
 | `2026-08-24-sunfish-rtrack-11` |  | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |

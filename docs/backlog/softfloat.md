@@ -898,3 +898,115 @@ lane has corrected twice already.
 
 **The decimal blocker is unchanged**: `Es/Convert.lean:251` (print) and `:168`
 (parse), both live, both gated by `--decimal-demand` in this triad.
+
+---
+
+## 2026-08-24-softfloat-16 — THE DRIFT GUARD FIRED ON ITS OWN AUTHOR, and the fix is a better instrument
+
+Triad8 went **RED** — `[03:02:17] LOCK ACQUIRED` → `BUILD GREEN` →
+`[03:03:13] TRIAD DONE (build exit 0, gates RED)`. The failing gate was this
+lane's own `--compare`: *"DRIFT against the committed census."* A red triad is
+an aborted triad; nothing landed.
+
+### THE DRIFT WAS TWO ROWS, AND NOT THE ONES EXPECTED
+
+The standing hypothesis was that `Basic.lean`'s new `Q.Eq/Le/abs/dist` had
+moved consumer sites. **It had not.** Measured, the whole diff is:
+
+```
+> dotted  .log2  LeanModels/SoftFloat/RoundAlg.lean:30
+> dotted  .log2  LeanModels/SoftFloat/RoundAlg.lean:30
+```
+
+13 → 15 candidates. Line 30 is `ilog2Q`:
+`(Nat.log2 q.num.natAbs : Int) - (Nat.log2 q.den : Int)` — two `Nat.log2` on
+one line. **`Float.log2` is opaque**, so `log2` is in the instrument's member
+set, and a properly-qualified `Nat.log2` matched it.
+
+### IT IS THE NAME-COLLISION CLASS AGAIN, IN ITS THIRD DISGUISE
+
+`2026-08-23-softfloat-9` recorded two passes of this: bare English words
+(`round`, `exp`, `log`) and Mathlib's `Real.exp`/`Real.log` in the analog lane.
+The **sound narrowing** (a file must contain the `Float` token) killed both —
+and does **not** kill this one, because `RoundAlg.lean` genuinely contains
+`Float` (it opens `Float.Model`). The narrowing's precondition was satisfied
+and the candidate was still spurious.
+
+### THE FIX IS A RULE, NOT A REGENERATION
+
+> **An UPPERCASE receiver is a NAMESPACE, not a value.** One that is not a
+> float owner is a **definite non-crossing**: `Nat.log2` cannot be
+> `Float.log2`. A lowercase receiver is a value whose type a regex cannot
+> resolve, and stays a candidate.
+
+Lean's own naming convention is what makes this sound, and the excluded rows
+are **listed under `excluded`, not dropped**, so the exclusion is auditable.
+
+**The rule validates itself against work already done by hand.** 15 candidates
+→ **8 candidates + 7 excluded**, and the seven are exactly the rows this lane
+had previously resolved *manually* in `2026-08-23-softfloat-12`: the two
+`ToString.toString` on `Int64`/`BigInt`, the two `Nat.log2`, and
+`Float.Model.toInt64` / `Float32.Model.toInt64` / `Packed.toInt64` — the
+**reducible** model and this component's own class, none of them opaque
+crossings. **The instrument now derives the answer that previously needed a
+human read.**
+
+Three self-test rows added (13 → 16), including the exact defect that turned
+triad8 red: `Nat.log2` must be excluded, must **not** be a dotted candidate,
+and a lowercase receiver must still be one.
+
+### A DRIFT GUARD FIRING ON ITS AUTHOR IS THE GUARD WORKING
+
+Recorded as such. The gate was added in `2026-08-23-softfloat-12` to catch the
+census going stale against the tree; the first thing it caught was **this
+lane's own edit**, one ticket later. It cost a tenure and bought a better
+instrument, which is the trade the gate exists to make.
+
+## 2026-08-24-softfloat-17 — THE TIE RULE IS NOT STATABLE WITHOUT CANONICALITY
+
+`LeanModels/SoftFloat/Round.lean` §2a. Landed at the pre-verified splice point,
+between the predicate and its first use.
+
+### "∃ AN EVEN SIGNIFICAND" IS VACUOUS
+
+A `Q` has no canonical significand: the same value has many `(m, e)` pairs and
+they differ in the **parity** of `m`. Doubling `m` and decrementing `e` turns
+any significand even. Measured — `Q.dyadic 5 0`, `Q.dyadic 10 (-1)` and
+`Q.dyadic 20 (-2)` are one value with significands **5 (odd), 10, 20**.
+
+So the obvious instantiation of `IsNearest`'s `tieOk` parameter is **true of
+every value, odd ones included**, and a tie clause that is always true silently
+permits the wrong answer on every tie.
+
+**`IsNearest`'s tie field was under-specified as shipped: not wrong, but
+instantiable wrongly.** The parameter's SHAPE was right; the file simply
+carried no canonicality notion to instantiate it with, and the nearest thing to
+hand was the vacuous one.
+
+### THE FIX, AND IT IS THE FORMAT'S OWN NORMALIZATION
+
+`IsCanonical fmt m e` — the significand fits, and either the leading bit is set
+(normal) or the exponent sits at `minExponent` (subnormal). That is exactly
+what core's `targetExponent` computes, and it is a fact about the **format**,
+not about the rational. `TieEven` is then stated over it, where each value has
+exactly one parity.
+
+Verified: `IsCanonical m3 5 0` **true**; `IsCanonical m3 10 (-1)` and
+`IsCanonical m3 20 (-2)` **false** — the even-significand representations of an
+odd value are ruled out, which is precisely what the vacuous reading failed to
+do. `even_repr_of_odd_is_not_canonical` closes by `decide` with **no axioms**.
+
+### THE FAILURE MODE, NAMED
+
+> **A weaker predicate: easier to satisfy, and it looks fine.**
+
+This is §5.3's family living inside a **spec parameter** rather than a proof.
+The parameter's shape was right, the obvious instantiation vacuous, and only a
+witness computation caught it — no type error, no failing proof, no red gate
+would ever have fired.
+
+### §9.0 — STILL 1/12
+
+`op_correct` unchanged. `IsCanonical`, `TieEven` and the witness are spec
+machinery, not operations. **26 landed theorems, 1 of which is an
+`op_correct`.**

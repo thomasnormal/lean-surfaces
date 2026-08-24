@@ -183,10 +183,20 @@ def scan_tree(names):
                     for m in site.finditer(line):
                         recv, mem = m.group(1), m.group(2)
                         if recv in ownerset:
+                            # a float-owning namespace: a DEFINITE crossing
                             out.append(("qualified", f"{recv}.{mem}"))
                         elif recv == "":
                             out.append(("anonymous", f".{mem}"))
+                        elif recv[0].isupper():
+                            # AN UPPERCASE RECEIVER IS A NAMESPACE, NOT A VALUE, and
+                            # one that is not a float owner is a DEFINITE NON-crossing:
+                            # `Nat.log2` cannot be `Float.log2`, and `Float.Model.toInt64`
+                            # is the REDUCIBLE model rather than the opaque wrapper.
+                            # Recorded, not silently dropped, so the exclusion is auditable.
+                            out.append(("namespaced", f"{recv}.{mem}"))
                         else:
+                            # a lowercase receiver is a VALUE whose type a regex cannot
+                            # resolve -- a genuine candidate
                             out.append(("dotted", f".{mem}"))
                     return out
                 for i, cl in enumerate(code_lines):
@@ -210,6 +220,7 @@ def build(tcdir, pin):
     rows = scan_tree(opaque)
     code = [r for r in rows if r["position"] == "qualified"]
     dotted = [r for r in rows if r["position"] in ("dotted", "anonymous")]
+    namespaced = [r for r in rows if r["position"] == "namespaced"]
     prose = [r for r in rows if r["position"] == "prose"]
     by_file = {}
     for r in code + dotted:
@@ -223,18 +234,23 @@ def build(tcdir, pin):
                  "Files with no `Float` token in code are excluded -- a sound "
                  "narrowing that removes same-named members of other types "
                  "(Mathlib's Real.exp/Real.log, Nat.pow, every type's toString). "
-                 "`dotted`/`anonymous` rows remain CANDIDATES: a regex cannot "
-                 "resolve a receiver's type, so they are never merged into the "
-                 "qualified count."),
+                 "`dotted`/`anonymous` rows remain CANDIDATES: a LOWERCASE receiver "
+                 "is a value whose type a regex cannot resolve. An UPPERCASE receiver "
+                 "is a NAMESPACE, and one that is not a float owner is a definite "
+                 "non-crossing (`Nat.log2` is not `Float.log2`); those are listed "
+                 "under `excluded` rather than dropped, so the exclusion is auditable."),
         "opaque_count": len(opaque),
         "reducible_count": len(reducible),
         "opaque_declarations": opaque,
         "crossing_sites_qualified": len(code),
         "crossing_sites_dotted_candidates": len(dotted),
+        "excluded_non_float_namespace": len(namespaced),
         "qualified_hits_in_prose": len(prose),
         "crossings_by_file": {k: sorted(v) for k, v in sorted(by_file.items())},
         "crossings": sorted(code + dotted,
                             key=lambda r: (r["file"], r["line"], r["name"])),
+        "excluded": sorted(namespaced,
+                           key=lambda r: (r["file"], r["line"], r["name"])),
     }
 
 
@@ -279,6 +295,27 @@ def self_test():
               ("qualified", "Float.toInt64") in names)
         check("dot-notation `.toInt64` is a CANDIDATE, not certain",
               ("dotted", ".toInt64") in names)
+
+    # 3b2. AN UPPERCASE NON-FLOAT NAMESPACE IS A DEFINITE NON-CROSSING.
+    #      This is the defect that turned triad8 red: `Nat.log2` scored as a
+    #      candidate because `Float.log2` is opaque and `log2` is in the member set.
+    with _tf.TemporaryDirectory() as td:
+        d = os.path.join(td, "LeanModels"); os.makedirs(d)
+        open(os.path.join(d, "N.lean"), "w").write(
+            "def f (y : Float) := (Nat.log2 3 : Int) + y.toInt64.toNat\n")
+        old_r3, _ = ROOT, None
+        globals()["ROOT"] = td
+        try:
+            rows = scan_tree(["Float.log2", "Float.toInt64"])
+        finally:
+            globals()["ROOT"] = old_r3
+        pos = {(r["position"], r["name"]) for r in rows}
+        check("`Nat.log2` is EXCLUDED as a non-float namespace",
+              ("namespaced", "Nat.log2") in pos)
+        check("`Nat.log2` is NOT a dotted candidate",
+              ("dotted", ".log2") not in pos)
+        check("a lowercase receiver stays a candidate",
+              ("dotted", ".toInt64") in pos)
 
     # 3c. the sound narrowing drops a file that never names Float
     with _tf.TemporaryDirectory() as td:
@@ -474,7 +511,8 @@ def main():
     print(f"softfloat_consumer_census: {data['opaque_count']} opaque / "
           f"{data['reducible_count']} reducible declarations at {pin}; "
           f"{data['crossing_sites_qualified']} qualified crossings + "
-          f"{data['crossing_sites_dotted_candidates']} dot-notation candidates, "
+          f"{data['crossing_sites_dotted_candidates']} dot-notation candidates "
+          f"({data['excluded_non_float_namespace']} excluded as non-float namespaces), "
           f"{data['qualified_hits_in_prose']} qualified hits in prose")
 
 

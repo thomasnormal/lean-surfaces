@@ -1,23 +1,11 @@
 {
-  "crossing_sites_dotted_candidates": 13,
+  "crossing_sites_dotted_candidates": 8,
   "crossing_sites_qualified": 0,
   "crossings": [
     {
       "file": "LeanModels/Es/Convert.lean",
       "line": 236,
       "name": ".toInt64",
-      "position": "dotted"
-    },
-    {
-      "file": "LeanModels/Es/Convert.lean",
-      "line": 238,
-      "name": ".toString",
-      "position": "dotted"
-    },
-    {
-      "file": "LeanModels/Es/Convert.lean",
-      "line": 252,
-      "name": ".toString",
       "position": "dotted"
     },
     {
@@ -52,24 +40,6 @@
     },
     {
       "file": "LeanModels/SoftFloat/Transfer.lean",
-      "line": 80,
-      "name": ".toInt64",
-      "position": "dotted"
-    },
-    {
-      "file": "LeanModels/SoftFloat/Transfer.lean",
-      "line": 95,
-      "name": ".toInt64",
-      "position": "dotted"
-    },
-    {
-      "file": "LeanModels/SoftFloat/Transfer.lean",
-      "line": 167,
-      "name": ".toInt64",
-      "position": "dotted"
-    },
-    {
-      "file": "LeanModels/SoftFloat/Transfer.lean",
       "line": 193,
       "name": ".toInt64",
       "position": "dotted"
@@ -83,9 +53,7 @@
   ],
   "crossings_by_file": {
     "LeanModels/Es/Convert.lean": [
-      ".toInt64",
-      ".toString",
-      ".toString"
+      ".toInt64"
     ],
     "LeanModels/SoftFloat/Theorems.lean": [
       ".toInt64",
@@ -96,13 +64,55 @@
     "LeanModels/SoftFloat/Transfer.lean": [
       ".toInt64",
       ".toInt64",
-      ".toInt64",
-      ".toInt64",
-      ".toInt64",
       ".toInt64"
     ]
   },
-  "note": "The opaque set is DERIVED from the toolchain at the pin, never hardcoded: whether a declaration reduces is a fact about the pin. Counts are PATTERN POSITIONS in code, never bare identifiers. Files with no `Float` token in code are excluded -- a sound narrowing that removes same-named members of other types (Mathlib's Real.exp/Real.log, Nat.pow, every type's toString). `dotted`/`anonymous` rows remain CANDIDATES: a regex cannot resolve a receiver's type, so they are never merged into the qualified count.",
+  "excluded": [
+    {
+      "file": "LeanModels/Es/Convert.lean",
+      "line": 238,
+      "name": "ToString.toString",
+      "position": "namespaced"
+    },
+    {
+      "file": "LeanModels/Es/Convert.lean",
+      "line": 252,
+      "name": "ToString.toString",
+      "position": "namespaced"
+    },
+    {
+      "file": "LeanModels/SoftFloat/RoundAlg.lean",
+      "line": 30,
+      "name": "Nat.log2",
+      "position": "namespaced"
+    },
+    {
+      "file": "LeanModels/SoftFloat/RoundAlg.lean",
+      "line": 30,
+      "name": "Nat.log2",
+      "position": "namespaced"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 80,
+      "name": "Float.Model.toInt64",
+      "position": "namespaced"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 95,
+      "name": "Float32.Model.toInt64",
+      "position": "namespaced"
+    },
+    {
+      "file": "LeanModels/SoftFloat/Transfer.lean",
+      "line": 167,
+      "name": "Packed.toInt64",
+      "position": "namespaced"
+    }
+  ],
+  "excluded_non_float_namespace": 7,
+  "note": "The opaque set is DERIVED from the toolchain at the pin, never hardcoded: whether a declaration reduces is a fact about the pin. Counts are PATTERN POSITIONS in code, never bare identifiers. Files with no `Float` token in code are excluded -- a sound narrowing that removes same-named members of other types (Mathlib's Real.exp/Real.log, Nat.pow, every type's toString). `dotted`/`anonymous` rows remain CANDIDATES: a LOWERCASE receiver is a value whose type a regex cannot resolve. An UPPERCASE receiver is a NAMESPACE, and one that is not a float owner is a definite non-crossing (`Nat.log2` is not `Float.log2`); those are listed under `excluded` rather than dropped, so the exclusion is auditable.",
   "opaque_count": 42,
   "opaque_declarations": [
     "Float32.acos",

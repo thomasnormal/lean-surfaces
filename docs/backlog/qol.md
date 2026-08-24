@@ -4046,3 +4046,50 @@ fixture-is-not-enforcement trap, inside the row meant to enforce.
 check 104, laws 45, sites 57, backlog-index 62, diagnose 51, new-proof 31,
 substrate 25, analogues 28, dupes 10, editions 12, a6-guard 8, docs_check
 91/91. Fixtures only. No Lean executed.
+
+## 2026-08-24-qol-56 — index freshness is a different promise, so it is a different step
+
+The approved follow-up to qol-55's scoping note. `docs/backlog/INDEX.md` is
+GENERATED and committed, so a stale one is a file that matches no tree —
+worth a gate. It is wired as `backlog-index-fresh` (`--check`), **beside**
+`backlog-headings` (`--stdout --strict`), not folded into it.
+
+**Why two steps and not one flag more.** "The headings are well-formed" and
+"the generated file is current" fail for different reasons, are fixed by
+different people, and take different actions to repair. A step that can go red
+for two unrelated reasons tells its reader neither — the reader still has to
+open the output to learn which promise broke, which is the whole cost a named
+step exists to remove.
+
+Demonstrated rather than argued, on one fixture:
+
+```
+baseline:            headings=0  freshness=0
+after a hand-edit:   headings=0  freshness=1   <- only freshness fails
+after a bad heading: headings=3  freshness=0   <- only headings fails
+```
+
+Each promise fails alone, and with its own exit code. `--check` without
+`--strict` is silent on headings, so the separation holds in the tool as well
+as in the wiring.
+
+Four rows, both directions and the separation itself: the step exists as its
+own step, its command carries no `--strict`, a freshly written index is in
+sync, and a hand-edited one is DRIFT. stdout is dropped (the in-sync line);
+the DRIFT report and its diff are on stderr and stay visible.
+
+### One process note
+
+The first attempt anchored the insertion on a literal containing an em dash
+and asserted its way out — the assert fired *before* the write, so the file
+was untouched and `--verify-guards` still read 39 ok, which is what said so.
+Re-done with line-position insertion. A `cat -v | cut` on the same line had
+already failed with `Illegal byte sequence`: **a multi-byte character in an
+anchor is a matching problem in one tool and an encoding problem in the
+next.** Anchor on ASCII, or anchor on position.
+
+### Triad
+
+`ci.sh --verify-guards` **43 ok** (39 → 43), backlog-index 62, triad 343,
+check 104, laws 45, docs_check 91/91. All three live gates green on this tree:
+headings 0, freshness 0, comment-forms 0. No Lean executed.

@@ -448,6 +448,20 @@ SVNO
   bash tools/backlog-index.sh --backlog "$vbl" --stdout --strict > /dev/null 2>&1
   vcheck "  ...and a malformed heading FAILS it" "$?" "3"
 
+  # FRESHNESS, ITS OWN ROWS AND ITS OWN FIXTURE: a written index is in sync, a
+  # hand-edited one has DRIFTED.  Kept apart from the heading rows on purpose,
+  # so a failure names which promise broke.
+  vcheck "backlog-index-fresh is its own step"     "$(grep -c '^step  \"backlog-index-fresh\" backlog_index_fresh$' "$0")" "1"
+  vcheck "  ...checking freshness, not headings"   "$(grep -c 'strict' <<< "$(grep '^backlog_index_fresh()' "$0")")" "0"
+  vbi="$vstub/bi"; mkdir -p "$vbi"
+  printf '## 2026-01-01-y-1 — an entry\n' > "$vbi/y.md"
+  bash tools/backlog-index.sh --backlog "$vbi" --dir "$vstub" > /dev/null 2>&1
+  bash tools/backlog-index.sh --backlog "$vbi" --dir "$vstub" --check > /dev/null 2>&1
+  vcheck "a freshly written index is in sync"      "$?" "0"
+  printf '\nhand-edited\n' >> "$vbi/INDEX.md"
+  bash tools/backlog-index.sh --backlog "$vbi" --dir "$vstub" --check > /dev/null 2>&1
+  vcheck "  ...and a hand-edit is DRIFT"           "$?" "1"
+
   PATH="$vpath"; hash -r; rm -rf "$vstub"
   echo "verify-guards: $vok ok, $vbad failed"
   [ "$vbad" = "0" ] || exit 1
@@ -490,6 +504,16 @@ step  "lean-comment-forms" python3 harness/lean_comment_forms.py
 # is a different promise and not this step's to make.
 backlog_headings() { bash tools/backlog-index.sh --stdout --strict >/dev/null; }
 step  "backlog-headings" backlog_headings
+# INDEX FRESHNESS, A SEPARATE PROMISE AND THEREFORE A SEPARATE STEP.  `--check`
+# regenerates and diffs: docs/backlog/INDEX.md is GENERATED and committed, so a
+# stale one is a file that matches no tree.  It is deliberately NOT folded into
+# the step above: "the headings are well-formed" and "the generated file is
+# current" fail for different reasons and get fixed by different people, and a
+# step that can go red for two unrelated reasons tells its reader neither.
+# stdout is dropped (the in-sync line); the DRIFT report and its diff are on
+# stderr and stay visible.
+backlog_index_fresh() { bash tools/backlog-index.sh --check >/dev/null; }
+step  "backlog-index-fresh" backlog_index_fresh
 maybe "notebooks"       tools/run_notebooks.py    python3 tools/run_notebooks.py
 # RV lane: differential validation of LeanModels/Rv against the pinned
 # sail-riscv reference emulator (prebuilt release binary under

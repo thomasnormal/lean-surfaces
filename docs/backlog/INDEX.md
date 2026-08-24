@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**278 entries across 17 lanes.** Regenerate with
+**277 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -227,6 +227,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-qol-6` |  | the DEFAULT GATE SET now announces itself: the ES lane's migration finding, made loud | qol |
 | `2026-08-22-architecture-6` |  | SoftFloat LAYER 3 — TRANSFER, commissioned by core itself | architecture |
 | `2026-08-22-sunfish-rtrack-5` |  | the lock hypothesis is CONFIRMED, and two numbers close two arguments | sunfish-rtrack |
+| `2026-08-22-softfloat-5` | INBOUND | INBOUND FROM THE SOFTFLOAT LANE: Ada lane's to give floats a gate of its own, or rule them out of tier | ada |
 | `2026-08-22-qol-5` |  | `--classify` reachability: the Go lane's correction, and the measurement that widened it | qol |
 | `2026-08-22-lean-tier-5` |  | `TrProj` written PARAMETRICALLY, under explicit approval to take adjacent-to-in-flight work | lean-tier |
 | `2026-08-22-es-5` |  | SUBSTRATE ADOPTION ON HOLD: this lane's `Halt` is the RICHER shape, and importing Core now would DELETE the ruling | es |
@@ -270,10 +271,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
 | `SPEC` |  | the completion metric (standing; updated every landing) | go |
 | `SPEC` |  | the completion metric (standing; updated every landing) | analog |
-| `SPEC` |  | the completion metric (standing; updated every landing) | ada |
 | `INBOUND` | INBOUND | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
-| `INBOUND` | INBOUND | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-2` (C lane's to triage) | c |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
@@ -299,4 +298,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**30 heading(s) do not use the §9.5 id scheme** and sort last.
+**28 heading(s) do not use the §9.5 id scheme** and sort last.

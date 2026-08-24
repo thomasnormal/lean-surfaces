@@ -14,7 +14,7 @@ history.
 
 ---
 
-## SPEC COVERAGE — the completion metric (standing; updated every landing)
+### SPEC COVERAGE — the completion metric (standing; updated every landing)
 
 Per `docs/family-architecture.md` §9.0: the tier's goal is COMPLETION, the
 suite that measures it for Ada is **ACATS**, and this number is how far away
@@ -295,7 +295,7 @@ validates what a lane-private one merely got away with.
 
 ---
 
-## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-5` (Ada lane's to triage)
+## 2026-08-22-softfloat-5 — INBOUND FROM THE SOFTFLOAT LANE: Ada lane's to give floats a gate of its own, or rule them out of tier
 
 *Filed by the SoftFloat lane during its consumer census
 (`docs/softfloat-charter.md` §2.4). Id kept in the SoftFloat namespace.*

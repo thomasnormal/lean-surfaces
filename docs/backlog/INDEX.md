@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**326 entries across 17 lanes.** Regenerate with
+**328 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -88,8 +88,10 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-wasm-8` |  | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` |  | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
 | `2026-08-24-ada-5` |  | INCH 3's CENSUS: 178 paragraphs, 16.39% of the corpus, and BOTH of this tier's empty refusal classes get their first real site | ada |
+| `2026-08-24-sv-4` | INBOUND | INBOUND FROM THE SV LANE: ES lane's to conform its divergence register | es |
 | `2026-08-24-analog-4` |  | A11: corner minimisation lands, and my own repricing was wrong | analog |
 | `2026-08-24-ada-4` |  | THE TARGET-SHAPE RUNG ANSWERS, and the answer is that 5.2's refusal was never blocked on the measurement | ada |
+| `2026-08-24-sv-3` |  | sv-div-2 RETIRES BY ITS OWN GUARD, and the `SvM` primitive layer is written | sv |
 | `2026-08-24-es-3` |  | a RED triad that measured nothing: the gate list is `;`-separated and shredded an inline validator into five false gates | es |
 | `2026-08-24-analog-3` |  | A10/F2: the transcendental certificate becomes a decision procedure, and F2 splits in two | analog |
 | `2026-08-24-ada-3` |  | INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug | ada |

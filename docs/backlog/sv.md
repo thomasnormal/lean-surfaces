@@ -637,3 +637,31 @@ below the floor — but dropping a RED gate is exactly the move that must be
 visible rather than quiet. SV keeps `harness/sv_divergence_probe.py`,
 which passes, and puts the shared checker back the day the ES file
 conforms.
+
+**GATE RESTORED — the condition this lane stated has been met.** ES
+normalized its register (master `133e87d`) and the shared checker now runs
+clean here:
+
+```
+DECLARED-DIVERGENCE REGISTER — 3 tier file(s), 3 row(s), 6 guard(s) run
+  es       1 row(s), 2/2 guards held
+  python   1 row(s), 2/2 guards held
+  sv       1 row(s), 2/2 guards held
+divergence_register: OK — every row gated both ways, declared-divergences: 3
+```
+
+`harness/divergence_register.py` goes back into SV's `--gates` from the
+next ticket. Verified by running it here rather than on report, because
+the whole reason the gate was dropped was that a red had to be traced to
+its actual owner — and the same standard applies to believing it is fixed.
+
+**And the concern this lane FLAGGED rather than guessed is answered.** The
+INBOUND noted that ES's guards were file-qualified where `python` and `sv`
+use bare names, and said plainly that SV could not tell whether the
+checker resolves a Lean-guard probe the way it resolves a Python one — and
+that if it did not, that was a checker gap for pyc rather than something
+to work around. It does: `es_div_1_still_divergent ok declared in
+Examples/es/statements/guards.lean — **the BUILD is the run**`. Three
+tiers, three probe shapes — a Python subprocess, a Lean `#guard`, and a
+grep-based counter — under one checker. Guessing would have produced a
+wrong bug report; flagging cost a sentence.

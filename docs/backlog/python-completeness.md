@@ -2191,3 +2191,86 @@ next inch, not this one, because writing the witness is where that debt's
 measurement belongs.
 
 **§9.0: `3 of 3` flagship-serving pyc surfaces · `declared-divergences: 1`.**
+
+## 2026-08-24-pycomplete-23 — pyc-div-1's probe gains its second side, and the instrument's own claim expires with it
+
+`pyc-div-1` said CPython POISONS a dict iterator whose size guard fired
+(`di_used = -1`, sticky) while this tier merely CLOSES the generator, so a later
+`next(it, x)` answers `x`. Filed at §pycomplete-19 with **one side running**:
+the oracle half executed, the model half was pinned at the absence of a
+poisoned `GenStatus` constructor. Honest, and weaker than a run.
+
+### THE BLOCKER WAS NAMED, AND IT WENT AWAY
+
+The row's `blocked_on` said the witness needs `except RuntimeError:` to survive
+the first raise, and that `exc_lab::except_builtin` was a whitelisted refusal.
+§pycomplete-22 admitted builtin handler classes; the refusal left the
+whitelist; the blocker resolved. **The row's retirement condition is now fully
+exercisable**, which is the whole point of having written the blocker down
+rather than leaving it as "when someone models it".
+
+The field is kept as `was_blocked_on` rather than deleted, because a blocker
+that silently disappears leaves the instrument describing a world that no
+longer exists — which is exactly what happened next.
+
+### THE PROBE'S OWN DOCSTRING EXPIRED — fifth of the shape, first inside an instrument
+
+`pyc_divergence_probe.py` opened with:
+
+> **THE DIVERGENCE IS NOT REACHABLE BY AN IN-TIER PROGRAM.**
+
+True for a day and a half, and false the moment §pycomplete-22 landed. It is
+the **fifth** claim in this lane to expire that way — after `sbEvict_lit`'s
+"ingests as `Stmt.unsupported`", this lane's "cannot be witnessed",
+`zeroDivisionPow`'s "builtin exception names are not matchable at all", and
+`catch_assert`'s "the recorded gap" — and the first found **inside an
+instrument** rather than a docstring, a witness or a proof.
+
+> Every one was TRUE when written. The common factor is that each rested on
+> what the tier **could not do**, and a premise of that shape has an expiry
+> date that nothing in the tree tracks. An instrument carrying one is worse
+> than a comment carrying one, because the instrument is what a reader trusts
+> when the comments disagree.
+
+### What the guards do now
+
+* `pyc_div_1_still_divergent` RUNS the witness under CPython and under
+  `tools/leanpy` and compares: the oracle must print `first-raised` and then
+  DIE re-raising, the model must print `first-raised` and then answer
+  `DEFAULT`. The `GenStatus` check stays alongside, because a poisoned state
+  landing is the fact the retirement condition names.
+* `pyc_div_1_has_not_widened` gains a real control: **a FRESH cursor over the
+  same dict, made after the poisoning, must work on BOTH sides** (CPython
+  answers 1). The row describes one poisoned OBJECT — not a poisoned dict, and
+  not a poisoned interpreter. The source-level counts
+  (`DICT_GUARDED_ITERATORS`, `STICKY_CAPABLE_RAISES`) stay pinned above,
+  because "could a THIRD site inherit this row" is a question no program can
+  ask.
+
+The first control drafted for this was `raise ValueError` inside the `try` —
+and **raising a builtin class is itself a whitelisted refusal**, so it would
+have refused for a reason having nothing to do with iterators. Caught before
+ticketing this time, by asking what the program needs rather than what it
+looks like.
+
+### Blast radius — three corpora, checked FIRST
+
+Per §pycomplete-22's law, and applied before the ticket rather than after two
+red tenures. The change touches `harness/pyc_divergence_probe.py` and
+`docs/python-declared-divergences.json`; **zero references to either exist in
+any of the three corpora** that run Python (`Examples/python/*/*.py`, the
+inline grammar witnesses in `refusal_census.py`, `harness/scripts/*.py`). No
+witness moves, and none may: this row is a DIVERGENCE, so a census row for it
+would be a `DIVERGE` — it lives in the register precisely so the scoreboard
+never sees it.
+
+### And what a failing guard would mean here
+
+If `pyc_div_1_still_divergent` fails on this landing, the honest readings are
+two and both are useful: either the model no longer diverges — in which case
+**the row must retire** and the guard has done its job in the direction §5.0a
+cares most about — or the witness is wrong. The detail line prints both sides'
+exit status and output, so the tenure distinguishes them without a rerun.
+
+**§9.0: `3 of 3` flagship-serving pyc surfaces · `declared-divergences: 1`**
+for this tier, now with both sides measured.

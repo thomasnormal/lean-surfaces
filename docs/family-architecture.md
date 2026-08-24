@@ -3436,6 +3436,31 @@ a rule the document does not state and the oracle merely happens to
 exhibit. The single exception is the unspecified-order class, which gets
 the canonical-plus-census treatment already recorded (§5.2, cause 4).
 
+**AND THE SAME REFUSAL RUNS ONE ABSTRACTION UP, ON THE INSTRUMENT** (C,
+`b57e983`, merged; **28 → 67/300**). The scoreboard needed struct layouts to
+size what it was measuring, and the lane **declined to compute them**.
+
+> **A LAYOUT COMPUTED FROM AN UNDECLARED RULE IS A FABRICATED LAYOUT — a
+> FABRICATED COLUMN one abstraction up.**
+
+Padding is **implementation-defined** and natural alignment is **an ABI this
+project has not pinned**, so a layout derived from *what the host happens to do*
+is exactly the rule §4.2 forbids the model to invent — **arriving in the
+MEASUREMENT instead of the semantics, where the table above does not look for
+it.**
+
+**The fabrication family now spans three levels and refuses at one principle**: a
+fabricated **column** (a scoreboard field the oracle never emitted), a fabricated
+**name** (an identifier reconstructed rather than read), and a fabricated
+**layout** (a size computed from an unpinned ABI). *Whatever the artifact, the
+defect is identical — a value that reads as measured and was reasoned.*
+
+**And an instrument's fabrications are harder to catch than a model's**, because
+**a tier's refusals are COUNTED and a scoreboard's are not.** The model has a
+taxonomy that makes it say *I decline*; **the instrument has a column that will
+hold whatever is put in it.** *§4.3's table should be read as binding on every
+artifact a tier publishes, not only on its semantics.*
+
 ### 4.3 The behavior-classes → refusal-taxonomy mapping slot
 
 Every spec-mirror tier fills this table before it writes semantics. C's
@@ -7555,6 +7580,29 @@ condition under which a lane stops thinking about it. *A tool that has worked
 becomes invisible faster than one that has not.* **The cure is the gate set, not
 the memory** (§5.4b's ladder: a check at `declared` is not at `called`).
 
+**AND ONE STEP LATER STILL — THE CHECK THAT RAN, POINTED AT THE WRONG SUBJECT**
+(C, `b57e983`; the lane's own red, owned with its law). The fast loop **was
+invoked**: it verified **the small edit** and **skipped the rewrite.**
+
+> **THE FAST LOOP IS ONLY WORTH WHAT YOU POINT IT AT. A cheap check run on the
+> file you were LEAST WORRIED ABOUT is a cheap check you did not run.**
+
+> **A CAPABILITY IS NOT A PRACTICE.**
+
+**This member leaves the family's worst artifact, not its best.** The
+never-invoked check leaves **no green to mislead anyone**; this one leaves **a
+green that is true about the wrong file.** *An unrun check is silent; a misaimed
+check testifies.*
+
+**And the misaiming is ANTI-correlated with risk by construction, which is why
+vigilance is the wrong cure.** A lane points a cheap check where it feels
+uncertain — and **the rewrite is the edit it has just finished thinking hardest
+about.** *Confidence is manufactured by attention, so the file understood best is
+the file verified last.* The fix is therefore **a rule about COVERAGE** — *every
+file the tenure touched, cheapest check first* — **not a resolution to
+remember**, which is the same conclusion the never-invoked member reached one
+step earlier.
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -7577,6 +7625,30 @@ not *"the layer order is as documented"* but **the specific wrong order, and wha
 it destroys.** *A guard that asserts the design passes when the design is
 accidentally right; a guard that exhibits the catastrophe fails only when the
 catastrophe is reachable.*
+
+**AND A RULE ABOUT WHEN TO INSTALL A DISCRIMINATING GUARD** (C, `b57e983` —
+**exit-as-oracle reads success only when every exit peels to a literal `0`**,
+adopted after measuring that **all 36 qualify**).
+
+> **THE TIME TO INSTALL A DISCRIMINATING GUARD IS WHEN IT HAS NOTHING TO
+> DISCRIMINATE.**
+
+The guard **costs nothing today** — it excludes no test — so it is adopted
+**because it makes the reading honest rather than lucky**, with no case pending
+and no interest on the other side. **Installed later, the IDENTICAL guard arrives
+as a breaking change with a constituency against it**: it now *subtracts from a
+published number*, and the argument about whether `exit(f())` ever meant what
+`exit(0)` means gets held **in front of the row it would delete.**
+
+**This inverts the usual instinct, which is to write a guard when something slips
+past it.** *A guard adopted at zero cost is adopted on principle; the same guard
+adopted at a cost is adopted against an interest* — and **the second conversation
+is decided by the size of the number, not by the soundness of the reading.**
+
+*Free is not the same as unnecessary.* **A guard with nothing to discriminate is
+a guard whose price has not arrived yet** — the same trade §5.0a already makes
+with declared divergences: **register the debt while naming it is still
+cheap.**
 
 **AND EVIDENCE-ISOLATION AS A TICKET-COMPOSITION PRINCIPLE** (SV, same tenure).
 The new `Prim.lean` was **held OUT of the build and elaborated via gates**, so
@@ -10794,18 +10866,38 @@ cannot see), and this exists so the family can be read in one place.
 | **WebAssembly** | **4 / 5** | — |
 | **Ada** | statement tier **RUNNING**; **ACATS 0 / 4 188**, honest | — |
 | **SystemVerilog** | **18/21** live envelopes · **11/11** stepper constructors · **0 / N** | **2** |
-| **C** | Rung A landed; **c-torture 0** (runner next) | — |
+| **C** | **gcc.c-torture 67 / 300** scored, **failed 0**; five landings (**0 → 24 → 24 → 28 → 67**) | — |
 | **analog** | **8 / 24** grounded; first inch merged | — |
 | **SoftFloat** | **1 / 12** + declarative spec + `roundQ` | — |
 | **Lean tier** | **0 / 27**, `Name` pairs pending | — |
 
 **Read the zeroes with §9.0's own counting rules and they are not all the same
 zero.** **ACATS 0/4 188** is *honest* — the suite is wired and the tier has not
-scored on it. **c-torture 0** is *the runner does not exist yet*. **`0/N`** in
+scored on it. **c-torture 0** *was* the runner-does-not-exist-yet zero — **and it retired
+inside this snapshot's own date**, which is the finding below. **`0/N`** in
 SV is *the denominator itself is not yet fixed.* **Three different states
 wearing one digit**, which is precisely the conflation §9.0's denominator, sign
 and numerator rules exist to keep apart — *and a family table is where they are
 most likely to be read as one number.*
+
+**AND A DATED SNAPSHOT AGES WITHIN ITS OWN DATE.** C's row was written at
+**0 (no runner)** and, on the same date, passed through **24 → 24 → 28 → 67 of
+300** across **five landings** — so *"snapshot 2026-08-24"* named a day during
+which the row it stamped changed four times.
+
+> **A snapshot's stamp must be as fine as the fastest thing it stamps. A date is
+> not a granularity when a lane lands five times in one.**
+
+**The remedy is not a finer clock — it is the pointer the block already
+carries**: *the lane ledgers are the live copies.* **A stale cell in a dated
+table is harmless exactly as long as no one quotes it**, and the failure mode is
+a reader treating a same-day stamp as *current* rather than as *one reading among
+several that day.* **So the stamp is a sha's job, not a date's** — and where a
+row is expected to move within the day, **the honest cell is the ARC, not the
+endpoint**, which is why C's row now carries all five numbers rather than the
+last one.
+
+*A row that shows its path cannot be misread as a live figure.*
 
 **And the `declared-divergences` column is deliberately BESIDE the coverage
 number, never inside it** (§5.0a): **5 rows across 3 tiers**, all gated both
@@ -11244,6 +11336,70 @@ built from today's frontier is **not a plan with uncertain estimates, it is a
 plan whose later items have never been observed at all.** *The only way to price
 the second wall is to remove the first.*
 
+**AND THE ARC CLOSED WITH THE THIRD OUTCOME — A PREDICTION THAT HELD, AND HELD
+BY STRUCTURE** (C, `b57e983`, merged; **28 → 67/300**). Two misses had already
+paid for the discipline; this is the thing the discipline was for.
+
+> **A BAND WHOSE FLOOR IS ARITHMETIC AND WHOSE WIDTH IS A NAMED IGNORANCE CAN BE
+> RIGHT ABOUT A FRONTIER IT CANNOT SEE.**
+
+**The floor was not a guess.** It was **28 already scored plus 36
+exit-conversions that CANNOT hide a wall** — a test refusing on `exit(0)` **had
+already run to completion**, so converting it can only add. *A floor built from
+tests whose completion was ALREADY OBSERVED is arithmetic, not optimism.* The
+width carried the **named unknown**: how much of the layout-freed work the next
+wall would absorb.
+
+**And both halves of "either way the row pays" landed in the same run.** The
+**fourth hidden wall appeared exactly as the frontier law predicts** —
+`unsupported` absorbed **~28 of the 31 layout-freed tests** — **and the
+prediction held anyway**, because the band had been drawn wide enough to contain
+it. **A point estimate over the same evidence would have been wrong by 30, and
+would have called the SHAPE wrong too.**
+
+> **A band that names its ignorance survives the discovery it could not have
+> made. A point estimate over identical evidence does not.**
+
+**So the trilogy is complete, and its three outcomes are genuinely distinct**: a
+miss **about the instrument** (predicted and reported were different quantities),
+a miss **about the residual** (a difference inherits every bucket you did not
+predict), and a **hold by structure** (a floor that could not fall, a width that
+admitted the unseen). *Only the third is repeatable on purpose — and it is
+repeatable precisely because NEITHER OF ITS TWO PARTS WAS AN ESTIMATE.*
+
+**Which retires the version of prediction this register started with.** The value
+was never a hit rate; **it is that each of the three outcomes taught something no
+green could have** — and the one that held taught the most, because it is the
+only one that can be *designed* rather than discovered.
+
+**AND A FRONTIER ENTRY BECOMES ACTIONABLE WHEN ITS INSTRUMENT COMPONENT IS GONE
+AND SAYS SO.** After the layout work, the **54 remaining `no-layout` are ENTIRELY
+struct/union.**
+
+> **The instrument's share of that number is gone.**
+
+**A mixed bucket purified into a single named cause** — and note that **the
+number did not have to fall to improve.** It went from *"some of this is us and
+some of it is C"* to **one cause a reader can price**, which is a different kind
+of progress from a score moving and is invisible in the score. *A scoreboard inch
+should report WHICH of the two it got*; a lane reading only the totals cannot
+tell a purified bucket from a stuck one.
+
+**AND A BUCKET'S INTERNAL DISTRIBUTION DISTINGUISHES A FRONTIER FROM AN
+ARTIFACT.** The remaining libc frontier is **4 entries under four distinct names
+with no dominant one** — **the shape a genuine libc frontier has.** The **36-exit
+spike** it replaced was **one oracle convention wearing a libc costume.**
+
+> **A REAL FRONTIER IS FLAT AND WIDE. A SPIKE INSIDE A SINGLE BUCKET IS AN
+> INSTRUMENT'S SIGNATURE.**
+
+**And this is a test a lane can run WITHOUT FIXING ANYTHING** — before choosing
+the next rung, look at how the bucket's mass is spread. **One name holding most
+of a bucket is a hypothesis that the bucket is misnamed**, and it is the cheap
+half of the frontier law: *you do not always have to remove the wall to discover
+it was not one.* **The expensive half remains** — a flat bucket still has to be
+walked through to be priced.
+
 
 
 **Which is the answer to the question §9.0's completion framing keeps
@@ -11260,6 +11416,33 @@ more than 200/300 that names nothing.*
 catches double-counting, dropped rows and silently-absorbed categories **in one
 arithmetic identity**, without knowing anything about what the categories mean.
 *Every zero-state vocabulary in this family should carry one.*
+
+**AND THE VOCABULARY NEEDS A SECOND AXIS, WHICH THE FIFTH WALL SUPPLIED ON
+SCHEDULE** (C, `b57e983`; `timeout` **0 → 2**).
+
+> **A BUCKET THAT HAS NEVER BEEN NON-ZERO IS NOT A MEASURED ZERO; IT IS A BUCKET
+> NOTHING HAS REACHED YET.**
+
+**Which is this scoreboard's whole doctrine seen once more from the inside.** The
+partition summed, every row was accounted for, and **one accounted row was
+reporting the FRONTIER'S POSITION rather than the tier's behaviour** — a `0`
+meaning *no test got this far*, printed in the same column, in the same
+typeface, as a `0` meaning *we handle this*.
+
+**And this is §5.2's gate taxonomy met again in a new artifact, minus the thing
+that made it safe there.** *Empty because the corpus does not reach it* is the
+first of the three kinds of empty gate — **but a gate records its emptiness WITH
+ITS REASON, and a scoreboard cell records an integer.** *The same distinction
+that is written down at a gate is erased by a table.*
+
+> **Only FRONTIER MOTION converts an unreached zero into a measured one, so a
+> zero's kind is a fact about the RUN, not about the row.**
+
+The cheap discipline is one the eight-way line already supports: **a row's zero
+is a measurement only once a test has ARRIVED at it and LEFT** — readable
+directly off the conservation check, since an unreached bucket is one whose mass
+is still sitting in some earlier wall. *A zero you have never seen a candidate
+for is a prediction wearing a result's clothes.*
 
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —

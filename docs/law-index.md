@@ -395,6 +395,14 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-344 | a charter overtaken by its own scoreboard is FLAGGED, never re-read charitably | `docs/family-architecture.md §9.0` |
 | MEAS-345 | the glob is by PATH, not by import graph — BUILD, do not reason about the lakefile | `docs/family-architecture.md §7.2` |
 | MEAS-346 | a check that EXISTS AND ISN'T RUN is not a check; it is a note about a check | `docs/family-architecture.md §5.4b` |
+| MEAS-347 | a band with an ARITHMETIC floor and a NAMED-IGNORANCE width can be right about a frontier it cannot see | `docs/family-architecture.md §9.0` |
+| MEAS-348 | a floor built from tests whose COMPLETION was already observed is arithmetic, not optimism | `docs/family-architecture.md §9.0` |
+| MEAS-349 | a bucket that has NEVER BEEN NON-ZERO is not a measured zero; nothing has reached it yet | `docs/family-architecture.md §9.0` |
+| MEAS-350 | only FRONTIER MOTION converts an unreached zero into a measured one — a zero's kind is a fact about the run | `docs/family-architecture.md §9.0` |
+| MEAS-351 | a frontier entry is ACTIONABLE when its instrument component is gone AND SAYS SO | `docs/family-architecture.md §9.0` |
+| MEAS-352 | a real frontier is FLAT AND WIDE; a spike inside one bucket is an instrument's signature | `docs/family-architecture.md §9.0` |
+| MEAS-353 | a LAYOUT computed from an undeclared rule is a FABRICATED LAYOUT — a fabricated column one abstraction up | `docs/family-architecture.md §4.2` |
+| MEAS-354 | a DATED SNAPSHOT ages within its own date — where a row moves daily, publish the ARC, not the endpoint | `docs/family-architecture.md §9.0` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -697,6 +705,9 @@ numbers below are the register's own.
 | OPS-89 | `no-goals` is never about the tactic it names — a discharged goal reads like a hard one | `docs/family-architecture.md §7.1a` |
 | OPS-90 | a trunk proof's `clear` line is INTERFACE, not hygiene — it constrains the induction motive | `docs/family-architecture.md §7.1a` |
 | OPS-91 | `/--` binds to the next DECLARATION; `/-!` stands alone; `#guard`/`#eval`/`#print` are COMMANDS | `docs/family-architecture.md §7.1a` |
+| OPS-92 | the FAST LOOP is only worth what you point it at — a cheap check run on the file you least feared is one you did not run | `docs/family-architecture.md §5.4b` |
+| OPS-93 | a CAPABILITY IS NOT A PRACTICE — the cure is coverage (every file the tenure touched), not vigilance | `docs/family-architecture.md §5.4b` |
+| OPS-94 | install a DISCRIMINATING GUARD while it has nothing to discriminate; later it arrives with a constituency against it | `docs/family-architecture.md §5.4b` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

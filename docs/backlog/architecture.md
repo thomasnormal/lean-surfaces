@@ -6822,3 +6822,83 @@ incident it will not catch.*
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-339 … MEAS-346, OPS-91**.
+
+## 2026-08-24-architecture-80 — A band whose floor is arithmetic and whose width is a named ignorance
+
+Eight from C's scoreboard inch (`b57e983`, merged; **28 → 67/300**), the
+calibration arc's payoff. **The prediction trilogy completes with its third
+outcome — a hold by structure — and the day's §9.0 row is re-stamped as an arc.**
+
+**(1) §9.0 — THE BAND THAT HELD, AND HELD BY STRUCTURE.**
+
+> **A band whose floor is ARITHMETIC and whose width is a NAMED IGNORANCE can be
+> right about a frontier it cannot see.**
+
+The floor was **28 scored + 36 exit-conversions that cannot hide a wall** — a
+test refusing on `exit(0)` **had already run to completion**, so converting it
+can only add. **Both halves of "either way the row pays" landed at once**: the
+fourth hidden wall appeared exactly as the frontier law predicts (`unsupported`
+absorbed **~28 of 31** layout-freed tests) **and the prediction held anyway.** *A
+point estimate over the same evidence would have been wrong by 30 and called the
+shape wrong too.* **Only this outcome is repeatable on purpose — because neither
+of its two parts was an estimate.**
+
+**(2) §9.0 — THE ZERO-STATE VOCABULARY GAINS A SECOND AXIS** (`timeout` 0 → 2,
+the fifth wall on schedule).
+
+> **A bucket that has never been non-zero is not a measured zero; it is a bucket
+> nothing has reached yet.**
+
+Landed as **§5.2's gate taxonomy met again minus what made it safe there**: *a
+gate records its emptiness with its reason; a scoreboard cell records an
+integer.* **Only frontier motion converts one kind into the other.**
+
+**(3) §5.4b — INSTALL A DISCRIMINATING GUARD WHILE IT IS FREE** (exit-as-oracle
+peels to a literal `0`; all 36 qualify, measured before building).
+
+> **The time to install a discriminating guard is when it has nothing to
+> discriminate.**
+
+Later, the identical guard **subtracts from a published number** and arrives with
+a constituency against it. *Free is not the same as unnecessary.*
+
+**(4) §4.2 — THE FABRICATION FAMILY, ONE ABSTRACTION UP.**
+
+> **A layout computed from an undeclared rule is a FABRICATED LAYOUT — a
+> fabricated column one abstraction up.**
+
+Padding is implementation-defined and natural alignment is an **unpinned ABI**,
+so the refusal §4.2 already binds on the model **arrives in the MEASUREMENT**,
+where §4.3's table does not look for it. Column → name → layout, one principle.
+*A tier's refusals are counted; a scoreboard's are not.*
+
+**(5) §9.0 — A PURIFIED BUCKET IS PROGRESS THE SCORE CANNOT SHOW.** The 54
+remaining `no-layout` are **entirely struct/union**: *the instrument's share of
+that number is gone.* **A frontier entry is actionable when its instrument
+component has been removed and says so** — report which of the two kinds of
+progress an inch got.
+
+**(6) §5.4b — THE CHECK THAT RAN, POINTED AT THE WRONG SUBJECT** (the lane's own
+red, owned with its law).
+
+> **The fast loop is only worth what you point it at.** / **A capability is not a
+> practice.**
+
+The check-not-run family's attention-allocation member — **and its worst
+artifact**: a green that is true about the wrong file. **Anti-correlated with
+risk by construction**, so the cure is coverage, not vigilance.
+
+**(7) §9.0 — DISTRIBUTION AS EVIDENCE.** 4 libc entries, four distinct names, no
+dominant one — **the shape a genuine frontier has**, against the 36-exit spike
+that was an oracle convention in a libc costume.
+
+> **A real frontier is flat and wide; a spike inside one bucket is an
+> instrument's signature.**
+
+**(8) §9.0 — THE STANDING SNAPSHOT'S C ROW, RE-STAMPED AS AN ARC** (0 → 24 → 24
+→ 28 → 67 of 300, five landings, zeroes conserved at every step). Filed against
+the snapshot itself: **a dated snapshot ages within its own date**, so where a
+row moves daily **the honest cell is the arc, not the endpoint**, and the stamp
+is a sha's job rather than a date's.
+
+Law rows: **MEAS-347…MEAS-354, OPS-92…OPS-94.**

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**269 entries across 17 lanes.** Regenerate with
+**271 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -34,12 +34,14 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-architecture-54` | When the ambient verdict is constant, every bit is in the pin | architecture |
 | `2026-08-24-architecture-53` | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |
 | `2026-08-24-architecture-52` | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
+| `2026-08-24-qol-50` | nothing checked whether a ticket's base had ever been green | qol |
 | `2026-08-24-qol-49` | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` | the stamp was watching the index while lake read the working tree | qol |
 | `2026-08-24-softfloat-14` | THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology | softfloat |
 | `2026-08-24-sunfish-rtrack-11` | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
 | `2026-08-24-wasm-8` | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
+| `2026-08-24-ada-3` | INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug | ada |
 | `2026-08-24-ada-2` | INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts | ada |
 | `2026-08-24-analog-1` | CENSUS-FIRST: non-vacuity is a chain of two links, and the tier closed only the inner one | analog |
 | `2026-08-24-ada-1` | CORE ADOPTION LANDS: the two-channel mapping, and the ticket's own tenure had gone green over a tree that did not contain it | ada |

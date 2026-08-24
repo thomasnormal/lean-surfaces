@@ -30,7 +30,8 @@ Reproduce it, do not quote it:
 | rung | sha | ACATS language tests | ACATS **core** (clauses 1-13) |
 | --- | --- | ---: | ---: |
 | M2 inch 1 — the value layer | `9985b05` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
-| M2 Core adoption | *this landing* | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+| M2 Core adoption | `342a1f5` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+| M2 inch 2 — the statement tier | *this landing* | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
 
 **IT IS ZERO, AND ZERO IS THE HONEST NUMBER.** Nothing has been graded,
 because **no grader has run**: there is no statement tier yet, so no ACATS
@@ -1001,3 +1002,136 @@ its own merits — `git diff --name-only 342a1f5 HEAD` is two `.md` files,
 nothing in it can change elaboration, and the class's gate (`docs_check`,
 91/91 marked blocks, plus `backlog-index.sh --check` in sync) is the whole
 gate it owes. One full green in a quiet window retires both items at once.
+
+## 2026-08-24-ada-3 — INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug
+
+`LeanModels/Ada/Ada2012/Stmt.lean`, 695 lines, plus two widenings to
+`Value.lean`. The rung was censused first (§2026-08-24-ada-2) and built to
+that census: **5.3 first on the corpus's own ratio**, the bounded-error
+membership machinery at 5.1, and non-simple assignment targets refused.
+
+### THE FINDING: AN EMPTY LIST IS A LEAF, NOT AN EMPTY NODE
+
+`extractors/ada/extract.py` emits `children` when a node has children and
+`text` otherwise. So an `if` with no `elsif` carries its `ElsifStmtPartList`
+as a **leaf with empty text** — and **30 of the 31 in the two fixtures are
+leaves**.
+
+> **A walker written from the GRAMMAR would match `.node "ElsifStmtPartList"
+> _ #[]`, hit ONE `if` in thirty-one, and refuse the rest — and the refusal
+> would read as a missing semantics rather than as a wrong encoding.**
+
+That is the sharpest argument for census-first this lane has produced,
+because the failure is silent in exactly the way a refusal is *supposed* to
+be safe: the model would have said *"I do not model this"* about a construct
+it fully modelled. Cross-checked on the else slot by arithmetic: 31 `IfStmt`
+minus 9 `ElsePart` is exactly the 22 `null` children the extractor emits under
+`IfStmt`.
+
+**Every node shape in the walker was read off `report.json` and
+`b371001.json` (3,505 nodes) with a script, not recalled**: `AssignStmt` is
+2 children (49 of 49), `IfStmt` is 4 (31 of 31), `ElsifStmtPart` 2, `ElsePart`
+1, `BinOp`/`RelationOp` 3 with the **operator as the middle child**, `UnOp` 2,
+and `Identifier`/`IntLiteral` are leaves carrying source text.
+
+### `partial` IS OPAQUE TO THE KERNEL, so the whole tier is fuel-structural
+
+`Ast.lean`'s own walkers are `partial`, and a `#guard` stated through a
+`partial` definition **cannot reduce** — the ES lane recorded the same fact
+about its JSON layer. So every function here is **structurally recursive on
+`fuel`**, which is the family's fuel-is-an-index rule paying a second dividend
+beyond termination: it is what lets the gate RUN the interpreter instead of
+admiring it. `termination_by` is deliberately absent — adding it would force
+well-founded recursion and take kernel reduction away again.
+
+**`execStmts` is ONE function over a statement LIST**, not a mutual pair, and
+`elsif` is handled by **LOWERING**: ARM 5.3's `elsif` is a nested `if`, so the
+rule rebuilds it as one and re-enters the same function. Two guards pin the
+lowering — the elsif branch runs when it matches, and the else part survives
+the rebuild when no elsif matches.
+
+### THE INCH-1 DECISION NOW FIRES THROUGH A STATEMENT RULE
+
+ARM 5.2 converts the value to the TARGET's subtype and checks the constraint.
+`X := 200` into an `Int8` **raises `Constraint_Error`** — it does not wrap and
+does not refuse — and because a raise travels on `ρ`, the guard checks that
+**the world SURVIVES**: `x` still holds its old value and the trace still
+holds its row. That is the adoption's two-channel mapping doing its job one
+layer up, and `ofAbrupt` is the single place inch 1's pure `Except Abrupt`
+decisions are lifted onto `ρ`.
+
+**The arithmetic is inch 1's, and that is proved rather than asserted** —
+five `rfl` examples pin `applyArith` against `addOp`, `subOp`, `mulOp` and
+`divOp` at a known subtype, so this is not a second implementation that
+happens to agree.
+
+**`Val.univInt` is new, and it is the ARM's own concept.** ARM 3.5.4: an
+integer literal is of type *universal_integer*, implicitly converted at its
+point of use. `X := 5` cannot be written without saying what `5` is, and
+giving the literal a subtype at the literal would decide the conversion before
+the semantics could see it — the same error `Ast.lean` avoids by keeping a
+literal's source spelling.
+
+### THREE DECISIONS WHERE THE SOURCE OF THE FACT IS STATED
+
+**1. Case folding is a STANDARD fact with a NEGATIVE corpus measurement.** ARM
+2.3 makes identifiers case-insensitive, so every lookup and store folds. But
+across both fixtures there are **131 distinct case-folded identifiers and ZERO
+spelled in more than one case** — so this came from the standard, not from the
+corpus, and the entry says which. The witness should exist corpus-wide (ACATS
+legacy tests are upper-case, modern ones mixed); checking it belongs to the
+re-acquire rung. The fixtures write `X` while the store holds `x`, so every
+guard exercises the fold.
+
+**2. A citation whose paragraph could not be checked cites the CLAUSE and
+says so BY SHAPE.** The ARM text is not on this machine, so `ArmRef.toString`
+was widened: an empty `para` renders as the bare clause. Inch 1 had the text
+and cites `1.1.5(9)`; inch 2 does not and cites `5.2`. **Guessing a paragraph
+number would have been indistinguishable from having checked one.**
+
+**3. THE EVALUATION ORDER IS UNOBSERVABLE AT THIS VOCABULARY, which is why
+fixing one is sound here.** Ada leaves operand order unspecified — normally an
+`orderDependence` question. But every expression form in inch 2's vocabulary
+is side-effect-free, because the one form that could have an effect is a
+function call and calls are refused until inch 3. **No program in this
+fragment can observe the order this file happens to evaluate in.** The
+question becomes live exactly when calls arrive, and inch 3 owes the answer.
+That is the `orderDependence` gate acquiring its first real content: it is
+empty here for a reason that can be stated, not merely because nothing has
+emitted one yet.
+
+### THE BOUNDED-SITE MACHINERY IS PRESENT AND GATED, WITH NO SITE
+
+`BoundedSite α` carries its permitted set as a per-site datum and
+`admits` is MEMBERSHIP — equality is the singleton case, and **never `⊕`**,
+whose `S ≠ ∅` side condition converts a permission into an obligation.
+**No ARM 5.1 site is instantiated**: the permitted set is a fact about the
+ARM's text and the ARM's text is not here. Writing one from memory is exactly
+what decision 2 above exists to prevent. So the type is present and gated,
+the same discipline the `RefusalCause` ruling applies to an expected-empty
+class — a gate needs something to be about. Scale for when the text returns:
+**57 Bounded (Run-Time) Errors paragraphs in clauses 1-13**.
+
+### THE SPINE LINE IS DEFERRED, WITH THE MEASUREMENT
+
+`import LeanModels.Ada` into `LeanModels.lean` was to ride this landing.
+`LeanModels.lean` is **spine** class, so it makes the landing a FULL build,
+and A14 makes a full build quiet-machine-only at **load < 5 AND swap < 1 GB**.
+Checked at ticket time rather than assumed:
+
+    load averages: 3.94   swap used: 8,077 MB
+
+**Load passes; swap fails by eight times.** Both conditions are required, so
+the line waits. It is not dropped — the tier still reaches the default build
+only through the `Examples.+` glob, so a pruned fixture would drop it
+silently, and that is the POINTED-versus-DECLARED rung still open. It rides
+the next landing that opens a quiet window, together with the FULL green that
+§5.4a-i's increment chain needs before it can start on this lane at all.
+
+### THE NUMBER IS STILL ZERO, AND IT WAS PREDICTED
+
+The standing coverage row moves by **0 tests**, exactly as the census said it
+would before the rung was built. All 1,374 v0 tests call `Report`, which needs
+inch 3 (calls, frames) and inch 5 (the native `Report` and the trace emitter).
+Inch 2 is on the critical path to inch 6's 517 tests; it is not a coverage
+rung and is not recorded as one.

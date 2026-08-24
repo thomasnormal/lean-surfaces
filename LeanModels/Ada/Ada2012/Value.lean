@@ -85,8 +85,16 @@ structure ArmRef where
   para : String
   deriving Repr, DecidableEq, Inhabited, BEq
 
-/-- `3.5.4(10/3)` — the ARM's own citation spelling. -/
-def ArmRef.toString (r : ArmRef) : String := s!"{r.clause}({r.para})"
+/-- `3.5.4(10/3)` — the ARM's own citation spelling.
+
+**An EMPTY `para` renders as the bare clause**, and that shape is load-bearing
+rather than cosmetic: inch 2 was written with the ARM text absent from this
+machine (`docs/backlog/ada.md` §2026-08-24-ada-2), so its citations can name
+the clause the census verifies and must NOT invent a paragraph number the
+lane cannot check. A citation that could not be checked to the paragraph
+**says so by its shape** instead of guessing. -/
+def ArmRef.toString (r : ArmRef) : String :=
+  if r.para.isEmpty then r.clause else s!"{r.clause}({r.para})"
 
 instance : ToString ArmRef := ⟨ArmRef.toString⟩
 
@@ -180,10 +188,22 @@ structure EnumSubtype where
   last : Nat
   deriving Repr, DecidableEq, Inhabited, BEq
 
-/-- A scalar value. -/
+/-- A scalar value.
+
+**`univInt` is ARM 3.5.4's `universal_integer`, and it is the ARM's own
+concept rather than a modelling convenience.** An integer literal is of type
+*universal_integer* and is implicitly converted at its point of use; a tier
+that gave `5` a subtype at the literal would have decided the conversion
+before the semantics could see it, which is exactly the reason this file
+keeps a literal's SOURCE SPELLING one layer down. Inch 2 needs it because
+`X := 5` cannot be written without saying what `5` is, and ARM 5.2's answer
+is *whatever the target's subtype makes it* — see `Stmt.lean`. -/
 inductive Val where
   | int (sub : IntSubtype) (v : Int)
   | enum (sub : EnumSubtype) (pos : Nat)
+  /-- ARM 3.5.4 — `universal_integer`: exact, unbounded, and converted at
+  its point of use. -/
+  | univInt (v : Int)
   deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- `Standard.Boolean` — an enumeration type, per ARM 3.5.3. -/
@@ -428,6 +448,11 @@ private def okIs (v : Val) : Except Abrupt Val → Bool
 private def TrueOnly : EnumSubtype := { booleanType with first := 1, last := 1 }
 #guard isRaise constraintError (constrainEnum TrueOnly 0)
 #guard isOk (constrainEnum TrueOnly 1)
+
+-- A citation whose paragraph could not be checked cites the CLAUSE, and the
+-- rendering says which kind it is. Inch 1 had the ARM text and cites to the
+-- paragraph; inch 2 does not and cites to the clause.
+#guard ({ clause := "5.2", para := "" } : ArmRef).toString == "5.2"
 
 -- The refusal classes: all four PRESENT, per the ruling. `undefined` carries
 -- the clause that defines erroneous execution rather than a loose string.

@@ -2,6 +2,7 @@ import LeanModels.Ada.Ast
 import LeanModels.Ada.Json
 import LeanModels.Ada.Load
 import LeanModels.Ada.Ada2012.Value
+import LeanModels.Ada.Ada2012.Stmt
 
 /-!
 # The Ada lane (`LeanModels.Ada`)

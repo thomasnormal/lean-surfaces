@@ -1520,6 +1520,299 @@ theorem evalArgs_memInvariant (ctx : Ctx) : ∀ (es : List Expr),
       exact MemInvariant.bind (evalExpr_memInvariant ctx e h.1) fun _ =>
         MemInvariant.bind (ihs h.2) fun _ => MemInvariant.pure' _
 
+
+/-! ## RUNG B — §6.5.3.3p10 / `J.1(16)`: the order becomes a PARAMETER, and
+the 208 fall
+
+Rung A proved that a pure expression does not WRITE. This section spends
+that, and the spending splits the same way the obligation does:
+
+* **the 208 multi-argument sites whose every argument is pure** — settled
+  here, unconditionally. The argument is short once purity is in hand:
+  memory never changes, so every argument's value is a function of the
+  memory the CALL started in, and a function of that memory cannot depend
+  on when it was applied;
+* **the 7** — one nested call each, and whether it writes what its
+  siblings read. That is an effect summary, it is **not** proved here, and
+  it appears below as a NAMED hypothesis with a theorem saying exactly
+  what discharging it buys.
+
+**THE ORDER PARAMETER TURNED OUT NOT TO NEED A TAGGED EVALUATOR.** The
+plan was an `evalArgsAt` over position-tagged arguments, so that two
+orders could be compared. Purity makes it unnecessary: once every argument
+is a function of ONE memory, "the value of argument `i`" is
+`valOf? ctx m eᵢ` no matter which walk produced it, and the ∀-order
+statement is about `List.Perm` directly. The tagging existed to carry
+information across the reordering, and Rung A had already made that
+information order-free.
+
+> **A parameter you were going to thread is a sign the property is not yet
+> stated at the right level: when the order stops being observable, the
+> machinery for observing it stops being needed.**
+
+**AND THE OBSERVABLE IS THE ANSWER, NEVER THE RUN.** Every theorem below
+takes the canonical run's success as a HYPOTHESIS rather than assuming it
+in prose, and that is not fussiness. Two orders can disagree about *which
+refusal is reported* whenever more than one argument would refuse —
+`f(g(), h())` with both refusing answers with `g`'s cause left-to-right
+and `h`'s right-to-left, and §3.1 never pools the causes, so the
+difference is visible in the verdict.
+
+> **Order-independence is a property of the VALUE and the MEMORY, never of
+> the trace: a ∀-order theorem quantified over the run would be false for
+> a reason that has nothing to do with sequencing.** -/
+
+/-- The value an expression yields at a given memory, or `none` if it
+yields none — it refused, or the model halted.
+
+This is the function the whole ∀-order argument turns on. `evalExpr ctx e`
+IS a function of the memory it is handed, so if the memory is the same
+then so is the answer, and *when* the argument ran cannot enter into it.
+Saying that requires naming the function. -/
+def valOf? (ctx : Ctx) (m : Mem) (e : Expr) : Option CVal :=
+  match evalExpr ctx e m with
+  | .ok (.ok v, _) => some v
+  | _ => none
+
+theorem valOf?_of_run {ctx : Ctx} {m m' : Mem} {e : Expr} {v : CVal}
+    (h : evalExpr ctx e m = .ok (.ok v, m')) : valOf? ctx m e = some v := by
+  simp only [valOf?, h]
+
+/-- The converse, **for a pure expression**, and purity is exactly what
+makes it a converse rather than something weaker: it pins the out-memory
+to the in-memory, so the whole run can be reconstructed and not just its
+value. -/
+theorem run_of_valOf? {ctx : Ctx} {m : Mem} {e : Expr} {v : CVal}
+    (hp : Expr.isPure e = true) (h : valOf? ctx m e = some v) :
+    evalExpr ctx e m = .ok (.ok v, m) := by
+  rw [valOf?] at h
+  split at h
+  · rename_i v₀ m₀ heq
+    have hm : m₀ = m := (evalExpr_memInvariant ctx e hp).out m _ m₀ heq
+    simp only [Option.some.injEq] at h
+    subst h
+    subst hm
+    exact heq
+  · simp at h
+
+/-! ### The argument walk, opened once
+
+Two lemmas — build a `cons` step and take one apart — so that neither
+theorem below has to unfold the monad again. This is `Core` §4's discipline
+one level up: **one opening, and the rest are corollaries.** -/
+
+theorem evalArgs_nil (ctx : Ctx) (m : Mem) :
+    evalArgs ctx [] m = .ok (.ok [], m) := by
+  simp only [evalArgs]
+  exact SemMWith.run_pure _ _
+
+theorem evalArgs_cons_ok {ctx : Ctx} {e : Expr} {es : List Expr} {m m₀ m₁ : Mem}
+    {v : CVal} {vs : List CVal}
+    (he : evalExpr ctx e m = .ok (.ok v, m₀))
+    (hes : evalArgs ctx es m₀ = .ok (.ok vs, m₁)) :
+    evalArgs ctx (e :: es) m = .ok (.ok (v :: vs), m₁) := by
+  simp only [evalArgs]
+  rw [SemMWith.run_bind_ok he, SemMWith.run_bind_ok hes, SemMWith.run_pure]
+
+/-- Taking a successful walk apart: the head ran, the tail ran from where
+the head left off, and the answer is their cons. **A successful `cons` has
+no other shape** — which is what makes the case analysis below a case
+analysis rather than a guess. -/
+theorem evalArgs_cons_inv {ctx : Ctx} {e : Expr} {es : List Expr} {m m₁ : Mem}
+    {vs' : List CVal} (h : evalArgs ctx (e :: es) m = .ok (.ok vs', m₁)) :
+    ∃ (v : CVal) (m₀ : Mem) (vs : List CVal),
+      evalExpr ctx e m = .ok (.ok v, m₀) ∧ evalArgs ctx es m₀ = .ok (.ok vs, m₁)
+        ∧ vs' = v :: vs := by
+  simp only [evalArgs] at h
+  cases he : evalExpr ctx e m with
+  | error l => rw [SemMWith.run_bind_loud he] at h; simp at h
+  | ok pr =>
+      obtain ⟨r, m₀⟩ := pr
+      cases r with
+      | error r' => rw [SemMWith.run_bind_raise he] at h; simp at h
+      | ok v =>
+          rw [SemMWith.run_bind_ok he] at h
+          cases hts : evalArgs ctx es m₀ with
+          | error l => rw [SemMWith.run_bind_loud hts] at h; simp at h
+          | ok pr2 =>
+              obtain ⟨r2, m₂⟩ := pr2
+              cases r2 with
+              | error r2' => rw [SemMWith.run_bind_raise hts] at h; simp at h
+              | ok tvs =>
+                  rw [SemMWith.run_bind_ok hts, SemMWith.run_pure] at h
+                  simp only [Except.ok.injEq, Prod.mk.injEq] at h
+                  obtain ⟨hl, hm⟩ := h
+                  subst hm
+                  subst hl
+                  exact ⟨v, m₀, tvs, rfl, hts, rfl⟩
+
+/-! ### The pointwise law — and it is the whole of the 208
+
+An all-pure argument list is evaluated **at one memory**, the one the call
+started in, however long the list is. So the list's answer is
+`valOf? ctx m` applied pointwise, and nothing about the walk survives into
+it. -/
+
+/-- **THE POINTWISE LAW.** A pure argument list's values are `valOf? ctx m`
+applied to it, at the INCOMING memory, and the memory comes back
+untouched. -/
+theorem evalArgs_pure_pointwise (ctx : Ctx) : ∀ (es : List Expr),
+    es.all Expr.isPure = true → ∀ (m : Mem) (vs : List CVal) (m' : Mem),
+      evalArgs ctx es m = .ok (.ok vs, m') →
+        m' = m ∧ es.map (valOf? ctx m) = vs.map some := by
+  intro es
+  induction es with
+  | nil =>
+      intro _ m vs m' h
+      rw [evalArgs_nil] at h
+      simp only [Except.ok.injEq, Prod.mk.injEq] at h
+      obtain ⟨hl, hm⟩ := h
+      subst hl
+      exact ⟨hm.symm, rfl⟩
+  | cons e es ih =>
+      intro hp m vs m' h
+      simp only [List.all_cons, Bool.and_eq_true] at hp
+      obtain ⟨v, m₀, tvs, he, hts, hvs⟩ := evalArgs_cons_inv h
+      have hm₀ : m₀ = m := (evalExpr_memInvariant ctx e hp.1).out m _ m₀ he
+      rw [hm₀] at hts
+      obtain ⟨htm, htv⟩ := ih hp.2 m tvs m' hts
+      subst hvs
+      exact ⟨htm, by simp only [List.map_cons, htv, valOf?_of_run he]⟩
+
+/-- The converse at a GIVEN value list: a pure argument list whose values
+`valOf? ctx m` supplies really does run to them, in whatever order it is
+written. **This is the half that makes the claim about EVERY order** and
+not only about the ones that happen to succeed. -/
+theorem evalArgs_pure_ofPointwise (ctx : Ctx) : ∀ (es : List Expr),
+    es.all Expr.isPure = true → ∀ (m : Mem) (vs : List CVal),
+      es.map (valOf? ctx m) = vs.map some →
+        evalArgs ctx es m = .ok (.ok vs, m) := by
+  intro es
+  induction es with
+  | nil =>
+      intro _ m vs h
+      cases vs with
+      | nil => exact evalArgs_nil ctx m
+      | cons w ws => simp at h
+  | cons e es ih =>
+      intro hp m vs h
+      simp only [List.all_cons, Bool.and_eq_true] at hp
+      cases vs with
+      | nil => simp at h
+      | cons v ws =>
+          simp only [List.map_cons, List.cons.injEq] at h
+          exact evalArgs_cons_ok (run_of_valOf? hp.1 h.1) (ih hp.2 m ws h.2)
+
+/-! ### ∀ ORDER, for the 208 -/
+
+/-- **THE ∀-ORDER THEOREM for an all-pure argument list.** Any two orders
+agree on the values — as multisets, which is what "the same arguments in a
+different order" means — and both leave the memory they were handed.
+
+`hperm` is an ARBITRARY permutation and the conclusion is an equation, so
+this is the unconditional discharge of the **208 of 215** multi-argument
+call sites whose every argument is pure. No effect summary appears, because
+no effects do. -/
+theorem evalArgs_orderIndependent (ctx : Ctx) {es fs : List Expr} {vs ws : List CVal}
+    {m m₁ m₂ : Mem} (hperm : es.Perm fs) (hp : es.all Expr.isPure = true)
+    (h₁ : evalArgs ctx es m = .ok (.ok vs, m₁))
+    (h₂ : evalArgs ctx fs m = .ok (.ok ws, m₂)) :
+    m₁ = m ∧ m₂ = m ∧ (vs.map some).Perm (ws.map some) := by
+  have hpf : fs.all Expr.isPure = true := by
+    simp only [List.all_eq_true] at hp ⊢
+    intro x hx
+    exact hp x (hperm.mem_iff.mpr hx)
+  obtain ⟨hm₁, hv⟩ := evalArgs_pure_pointwise ctx es hp m vs m₁ h₁
+  obtain ⟨hm₂, hw⟩ := evalArgs_pure_pointwise ctx fs hpf m ws m₂ h₂
+  refine ⟨hm₁, hm₂, ?_⟩
+  rw [← hv, ← hw]
+  exact hperm.map _
+
+/-- The two-argument instance, spelled out because **four of the seven
+sites have arity two** and because it is the one shape where the other
+order can be exhibited rather than merely compared: the swapped call runs,
+and it runs to the swapped values. -/
+theorem evalArgs_pair_swap (ctx : Ctx) (a b : Expr) {m m₁ : Mem} {va vb : CVal}
+    (ha : Expr.isPure a = true) (hb : Expr.isPure b = true)
+    (h : evalArgs ctx [a, b] m = .ok (.ok [va, vb], m₁)) :
+    m₁ = m ∧ evalArgs ctx [b, a] m = .ok (.ok [vb, va], m) := by
+  have hall : [a, b].all Expr.isPure = true := by
+    simp only [List.all_cons, List.all_nil, Bool.and_eq_true]
+    exact ⟨ha, hb, trivial⟩
+  obtain ⟨hm, hv⟩ := evalArgs_pure_pointwise ctx [a, b] hall m [va, vb] m₁ h
+  simp only [List.map_cons, List.map_nil, List.cons.injEq] at hv
+  refine ⟨hm, evalArgs_pure_ofPointwise ctx [b, a] ?_ m [vb, va] ?_⟩
+  · simp only [List.all_cons, List.all_nil, Bool.and_eq_true]
+    exact ⟨hb, ha, trivial⟩
+  · simp only [List.map_cons, List.map_nil, List.cons.injEq]
+    exact ⟨hv.2.1, hv.1, trivial⟩
+
+/-! ### THE 7 — the residue, as an OBLIGATION rather than a paragraph
+
+At each of the seven sites `docs/c23-spec-mirror.md` §5.3 names, exactly
+one argument is impure and it is a nested call. Rung A retires the
+siblings' half; what remains is whether the callee writes what a sibling
+READS, and this tier has no read-set.
+
+So it is written down as a predicate, and the theorem below says exactly
+what discharging it buys. That is inch 5's move reused: **make the
+property statable about a function first, and the discharge becomes a
+separate nameable step instead of a paragraph.** -/
+
+/-- **THE EFFECT SUMMARY, as an obligation.** Running `x` leaves `e`'s
+value alone.
+
+Stated OBSERVATIONALLY, over `valOf?`, rather than as a footprint — because
+the observable is what Thomas's ∀-order ruling quantifies over, and a
+footprint would be a strictly stronger claim than the obligation needs. A
+callee that writes a location the sibling reads and writes it back is
+non-interfering here and would not be under a footprint reading; the
+standard asks about the value, so this does too. -/
+def NonInterfering {α : Type} (ctx : Ctx) (x : EvalM α) (e : Expr) : Prop :=
+  ∀ (m : Mem) (a : α) (m' : Mem), x m = .ok (.ok a, m') → valOf? ctx m' e = valOf? ctx m e
+
+/-- **WHAT THE EFFECT SUMMARY BUYS**, at the seven sites' shape: two
+arguments, the first pure, the second doing whatever it likes.
+
+Read which hypothesis carries which half. **`hp` is Rung A** — the pure
+sibling does not write, so the call still starts from `m` when it runs
+second, which is why `hec` can be stated at `m` at all. **`hni` is the
+residue** — the call does not disturb what the sibling reads, so the
+sibling still answers `vp` when it runs second. Neither implies the other
+and the theorem needs both; that is the honest shape of a half-discharged
+obligation. -/
+theorem evalArgs_pair_oneEffect (ctx : Ctx) (p c : Expr) {m m₀ m₁ : Mem} {vp vc : CVal}
+    (hp : Expr.isPure p = true) (hni : NonInterfering ctx (evalExpr ctx c) p)
+    (hep : evalExpr ctx p m = .ok (.ok vp, m₀))
+    (hec : evalExpr ctx c m = .ok (.ok vc, m₁)) :
+    evalArgs ctx [p, c] m = .ok (.ok [vp, vc], m₁)
+      ∧ evalArgs ctx [c, p] m = .ok (.ok [vc, vp], m₁) := by
+  -- Rung A: the pure argument's out-memory IS its in-memory.
+  have hm₀ : m₀ = m := (evalExpr_memInvariant ctx p hp).out m _ m₀ hep
+  rw [hm₀] at hep
+  refine ⟨evalArgs_cons_ok hep (evalArgs_cons_ok hec (evalArgs_nil ctx m₁)), ?_⟩
+  -- The residue: after the call, the sibling still answers what it answered.
+  have hsame : valOf? ctx m₁ p = some vp := by
+    rw [hni m vc m₁ hec]
+    exact valOf?_of_run hep
+  exact evalArgs_cons_ok hec
+    (evalArgs_cons_ok (run_of_valOf? hp hsame) (evalArgs_nil ctx m₁))
+
+/-- **AND THE HALF THAT IS FREE.** A pure argument is non-interfering with
+anything — including itself — so the seven sites' hypothesis is only ever
+about the ONE impure argument. This is what makes the residue seven
+obligations and not fourteen. -/
+theorem nonInterfering_of_isPure {ctx : Ctx} {x : Expr} {e : Expr}
+    (hx : Expr.isPure x = true) : NonInterfering ctx (evalExpr ctx x) e := by
+  intro m a m' h
+  have : m' = m := (evalExpr_memInvariant ctx x hx).out m _ m' h
+  rw [this]
+
+#print axioms evalArgs_pure_pointwise
+#print axioms evalArgs_orderIndependent
+#print axioms evalArgs_pair_swap
+#print axioms evalArgs_pair_oneEffect
+
 #print axioms evalExpr_memInvariant
 #print axioms evalLValue_memInvariant
 #print axioms evalArgs_memInvariant

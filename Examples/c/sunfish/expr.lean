@@ -416,4 +416,52 @@ memory-invariance theorem statements about the same expression. -/
 -- is not "the construct does not write".
 #guard !(Expr.isPure (.unsupported "SwitchExpr" "…" noSpan))
 
+/-! ## RUNG B — the two orders, RUN
+
+`LeanModels/C/C23/Expr.lean` proves that an all-pure argument list is
+order-independent. This runs it, on `pyfloordiv`'s own frame — the two
+automatic `int`s the rest of this file uses — and then runs the case the
+theorem's hypothesis EXCLUDES, because a hypothesis nothing would violate
+is not a hypothesis. -/
+
+/-- An lvalue conversion of a frame variable: §6.3.2.1p2, the corpus's
+load-bearing implicit, and the shape every one of the seven J.1(16) sites'
+PURE siblings has. -/
+private def rd (n : String) : Expr :=
+  .implicitCast "LValueToRValue" (.declRef n "VarDecl" "int" noSpan) "int" noSpan
+
+/-- `r++` — §6.5.3.5, and the corpus writes 63 of these. -/
+private def incR : Expr :=
+  .unop "++" (.declRef "r" "VarDecl" "int" noSpan) true "int" noSpan
+
+/-- `r = 7`, `b = -2`. -/
+private def memRB : Mem := setInt (setInt mem0 0 7) 1 (-2)
+
+#guard Expr.isPure (rd "r") && Expr.isPure (rd "b")
+#guard !(Expr.isPure incR)
+
+-- Left to right, and right to left: the SAME values, each in its own place,
+-- and the memory comes back untouched.  `evalArgs_pair_swap`, executed.
+#guard EvalM.run memRB (evalArgs ctx0 [rd "r", rd "b"])
+  == .ok (.ok [.int IntTy.int_ 7, .int IntTy.int_ (-2)], memRB)
+#guard EvalM.run memRB (evalArgs ctx0 [rd "b", rd "r"])
+  == .ok (.ok [.int IntTy.int_ (-2), .int IntTy.int_ 7], memRB)
+
+-- ...and the hypothesis is LOAD-BEARING.  Swap one pure argument for the
+-- corpus's own `r++` and the two orders answer differently: left to right
+-- reads `r` before the increment, right to left reads it after.  The final
+-- memories agree; the VALUES do not, which is exactly the observable
+-- §6.5.3.3p10 leaves indeterminate and Rung A's purity is what excludes.
+#guard EvalM.run memRB (evalArgs ctx0 [rd "r", incR])
+  == .ok (.ok [.int IntTy.int_ 7, .int IntTy.int_ 7], setInt memRB 0 8)
+#guard EvalM.run memRB (evalArgs ctx0 [incR, rd "r"])
+  == .ok (.ok [.int IntTy.int_ 7, .int IntTy.int_ 8], setInt memRB 0 8)
+#guard EvalM.run memRB (evalArgs ctx0 [rd "r", incR])
+  != EvalM.run memRB (evalArgs ctx0 [incR, rd "r"])
+
+-- `valOf?` is the function the whole argument turns on: the value an
+-- argument has AT A MEMORY, with no walk in sight.
+#guard valOf? ctx0 memRB (rd "r") == some (.int IntTy.int_ 7)
+#guard valOf? ctx0 memRB cond == some (ofBool true)
+
 end Examples.c.sunfish.expr

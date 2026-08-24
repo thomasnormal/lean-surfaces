@@ -1648,3 +1648,127 @@ two proofs of one fact **in the open** — Core's §4 says so in as many
 words, and `2026-08-24-c-16` says it to the lane that owns the other
 copy. That is the honest state; a silent one would be the defect.
 
+
+---
+
+## 2026-08-24-c-17 — RUNG B: the 208 are DISCHARGED, the 7 have a NAME, and the order parameter was never needed
+
+Rung A proved a pure expression does not write. This spends it, and the
+spending goes further than the plan expected — because purity does not
+only retire the siblings' half of `J.1(16)`, it makes the whole ∀-order
+question **disappear** wherever every argument is pure.
+
+### The theorem, and why it is short
+
+Once nothing writes, every argument is evaluated at ONE memory: the one
+the call started in. So an argument's value is `valOf? ctx m e` — a
+function of the memory, with no walk in it — and *"the value of argument
+`i`"* is already order-free before any permutation is mentioned.
+
+| theorem | what it says |
+| --- | --- |
+| `evalArgs_pure_pointwise` | a pure list's values ARE `valOf? ctx m` applied pointwise, and the memory comes back untouched |
+| `evalArgs_pure_ofPointwise` | the converse at a given value list — the half that makes it EVERY order, not just the ones that succeed |
+| **`evalArgs_orderIndependent`** | **any permutation of an all-pure list: both orders run, both agree, memory untouched** |
+| `evalArgs_pair_swap` | the arity-2 instance, with the other order EXHIBITED rather than compared |
+
+That last row matters because **four of the seven have arity two**, and
+because comparing two runs is weaker than producing one.
+
+### THE PLAN SAID `evalArgsAt`, AND THE PLAN WAS WRONG IN AN INSTRUCTIVE WAY
+
+The dispatched shape was a position-tagged evaluator — `evalArgsAt` over
+`List (Nat × Expr)` — so that two orders could be compared with each
+argument's position carried along. It is not in the landing, and not
+because it was hard: **it had nothing to carry.** Tagging exists to move
+information across a reordering, and Rung A had already made the only
+information in question order-free.
+
+> **A parameter you were about to thread is a sign the property is not yet
+> stated at the right level. When the order stops being observable, the
+> machinery for observing it stops being needed — and building it anyway
+> is how a model acquires a moving part that models nothing.**
+
+The `List.Perm` statement that replaced it is shorter, quantifies over ALL
+orders rather than over an encoding of them, and needed no new definition.
+
+### THE RESIDUE — seven obligations, and it is seven rather than fourteen
+
+`NonInterfering ctx x e` — running `x` leaves `e`'s value alone — is the
+effect summary, written down as a predicate instead of a paragraph.
+`evalArgs_pair_oneEffect` is what discharging it buys, and the theorem is
+worth reading for which hypothesis carries which half: **`hp` is Rung A**
+(the pure sibling does not write, so the call still starts from `m` when
+it runs second) and **`hni` is the residue** (the call does not disturb
+what the sibling reads, so the sibling still answers the same value when
+it runs second). Neither implies the other.
+
+**Stated OBSERVATIONALLY, over `valOf?`, and that is a decision.** A
+footprint reading — *"the callee writes no location the sibling reads"* —
+would be strictly stronger than the obligation needs: a callee that writes
+a location and writes it back is non-interfering in the sense the standard
+asks about and interfering in the footprint sense. The ruling quantifies
+over the OBSERVABLE, so the obligation does too.
+
+> **An obligation should be no stronger than the thing it discharges. A
+> footprint is easier to compute and harder to satisfy, and choosing it
+> silently turns "we could not prove it" into "the program is wrong."**
+
+And `nonInterfering_of_isPure` is why the count is seven: a pure argument
+is non-interfering with everything, so **only the nested call is ever in
+question** at a site. Fourteen pairwise obligations collapse to one per
+site, for free, out of Rung A.
+
+### What is NOT claimed
+
+Discharging `NonInterfering` at the seven needs a read-set or a frame
+lemma, and this tier has neither. That is the next rung and it is priced
+in constructs rather than effort: **one read-set over the expression
+language, or one frame lemma over `Mem`, and the seven fall out of the
+theorem that is already proved.**
+
+**And the observable is the ANSWER, never the run.** Every theorem takes
+the canonical run's success as a hypothesis — in the statement, not in
+prose. Two orders can disagree about *which refusal is reported* when more
+than one argument would refuse, and §3.1 never pools the causes, so a
+∀-order theorem quantified over the run would be false for a reason that
+has nothing to do with sequencing.
+
+### The gate that makes the hypothesis load-bearing
+
+A hypothesis nothing would violate is not a hypothesis, so
+`Examples/c/sunfish/expr.lean` runs the excluded case on `pyfloordiv`'s own
+frame. With `r = 7`:
+
+| order | answer | memory |
+| --- | --- | --- |
+| `[r, r++]` | `[7, 7]` | `r = 8` |
+| `[r++, r]` | `[7, 8]` | `r = 8` |
+
+The final memories agree; the VALUES do not. That is exactly the
+observable §6.5.3.3p10 leaves indeterminate, it is the corpus's own
+construct (63 increment sites), and it is what Rung A's purity excludes.
+Eleven `#guard`s in all, including `valOf?` on the corpus's `&&`.
+
+### Four errors, and the interesting one is about `cases`
+
+The proof went green in four fast-loop iterations (~10 s each — A17, open
+since `qol-53`). Three were mechanical: two `simp made no progress` from a
+redundant second `simp only` after the first had already applied
+`Except.ok.injEq` twice, and two `rfl`s where the goal wanted `True`
+because `simp only` without `and_true` leaves the tail of a `List.cons`
+injection as `True`.
+
+The fourth is worth keeping. `evalArgs_cons_inv` closes with an anonymous
+constructor, and the first component would not typecheck: `he` had type
+`evalExpr ctx e m = .ok (.ok v, m₀)` where the goal wanted
+`.ok (.ok v, m₀) = .ok (.ok v, m₀)`. The cause is that **`cases he : x`
+GENERALIZES `x` in the goal** — the goal's own `evalExpr ctx e m` had been
+abstracted and instantiated to the constructor, so the slot wanted `rfl`
+and not the hypothesis that says the same thing.
+
+> **`cases h : e` rewrites the GOAL as well as introducing `h`, so inside
+> the branch the hypothesis and the goal are no longer talking about the
+> same syntax. A slot that wants `rfl` where you expected to pass `h` is
+> that, and not a mis-stated lemma.**
+

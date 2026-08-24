@@ -7206,3 +7206,95 @@ into 8** — *where the spec names one correct result, a guess is strictly
 dominated.*
 
 Law rows: **MEAS-372…MEAS-384, STMT-134…STMT-135, OPS-104…OPS-106.**
+
+## 2026-08-24-architecture-84 — Accidentally correct is worse than wrong
+
+Twelve from four sources on one thread: **four lanes retired or corrected their
+own instruments in three hours.** ES's kinds instrument (destructuring
+`a48be18`; instrument `7ea36e7`, ticketed), SoftFloat's sim (re-ticketed
+`ea69b8f`), pyc's `except_builtin` (merged `b5c63e8`), SV's `slotStep` (merged
+`365578f`).
+
+**(1) §9.0 — THE SELF-DEMOTION: 40/66 → 33/66 + 8 PARTIAL.** *"Every N/66 I have
+given you came from the scrape."*
+
+> **Accidentally correct is worse than wrong. Nothing announces the day the
+> accident ends.**
+
+The scrape was right **for four inches** because each happened to implement every
+arm it added — **and it ended quietly inside the very inch whose number was being
+reported.** *A wrong instrument gets fixed; a lucky one gets trusted*, and trust
+accrues at exactly the rate that makes the divergence expensive. **The expiry law
+with the subject changed from an argument to an instrument.**
+
+**(2) §5.5 — NOT EVERY REFUSAL IN AN ARM IS A BOUNDARY.** `internal-malformed`
+guards an AST that cannot occur. Classification **STATED / PARTIAL / REFUSING**,
+**partial OUT of the numerator** — *calling it stated claims a construct the tier
+half-evaluates; calling it absent denies real work.* **§5.0a's argument at arm
+granularity: a debt sits beside the number, never inside it.**
+
+**(3) §5.5 — A LOAD-BEARING COVERAGE TABLE, AND A LANE OFF ITS OWN NUMBER'S
+PATH.** *Delete `evalCatchClause` and the file goes red rather than silently
+keeping the kind in the numerator.* Plus: *"from then on §9.0 comes from the
+instrument rather than from me"* — **a lane reporting its own coverage is a single
+point of failure in its own scoreboard**, and the fix is removal from the path,
+not more care.
+
+**(4) §5.4 — THE SIM THAT ERASED THE BOUNDARY** (my rename hypothesis was the
+**fourteenth** killed by lane measurement; the cause was SCOPE). The real finding
+is the **unsound verification method**: the concatenation sim **merged open
+scopes, supplying the very name the real module lacks.** **A simulator must
+preserve the boundaries it simulates** — *a stand-in may drop cost; it may never
+drop structure, because the structure is what the question is about.*
+
+**(5) §5.4 — VALIDATED IN BOTH DIRECTIONS.** Old sim **passes the broken code**;
+faithful sim **reproduces the triad's exact 8.** **A check that has never failed
+is a design, not a control.**
+
+**(6) §5.4 — THE INVENTORY ROW THIS FAMILY LACKS.** *"The triad was the only
+instrument pointed at the real artifact — which is why that red was worth its
+tenure."* **Say which instruments compile the artifact and which compile a
+stand-in** — speed and fidelity are inversely arranged in every inventory, so
+**a fleet of green stand-ins reads exactly like a verified artifact.**
+
+**(7) §5.4 — THE THREE-CORPORA LAW** (three attempts, two on the lane's own
+census). **A blast-radius census must span every corpus that RUNS the language**,
+and this repo has three shapes: typed-call files, **grammar witnesses as inline
+source strings inside the census tool itself**, and whole scripts. *Scoping to the
+file finds one; scoping to the obvious corpus finds most; only all three finds
+them all.* **Source held as string literals inside an instrument is code that
+runs, and no extension glob will see it.**
+
+**(8) §5.3 — SECOND AND THIRD VACUOUS FLIPS, ONE INCH** (n=1 never divides;
+`stmt.Try` never raises). **Three catches pre-certification makes it systematic**:
+*a lane reaches for the simplest input, and the simplest input is least likely to
+reach the new code.*
+
+**(9) §5.0a — THE FOURTH EXPIRING COMMENT, FIRST IN A WITNESS.** Coverage now
+spans docstrings, architecture notes, proof prose and witnesses — **four classes
+is enough to stop qualifying by artifact.** *A witness is the worst place for one,
+because a stale sentence beside a passing case inherits the case's authority.*
+
+**(10) §9.1 — THE COMPLIANT FORM LANDED WITH THE LAW.** The rebase now runs
+standalone with `$?` read separately. **A control law with a worked compliant
+form is copied; one with only a prohibition is re-derived.**
+
+**(11) §9.0 — A DENOMINATOR CHOSEN FOR MOTION LEGIBILITY** ("3 of 15 regions
+driven"). **A denominator that cannot change for months reports the same digit
+through every landing** — *a sub-denominator with a visible derivative is not a
+softer number.* Honesty condition: **both live in the ledger; the completion
+number is the endgame, the moving one is the instrument.**
+
+**(12) §9.0 — THE SELF-OWNED COST, AND A REFUSAL TO PRICE.** Writing `slotStep`
+in `SvM` first **doubled the adequacy obligation** — *"that's my doing."* **A
+design choice that enlarges a later proof is a cost the lane incurred, not a
+difficulty it discovered**, and the two are indistinguishable at the moment the
+proof gets hard. The real blocker was found **by looking** (no trace-producing
+driver, nothing for `cycleOf` to project), and the next rung's prerequisite
+**landed two inches ago for an unrelated reason** — §9.0b's
+shared-prerequisites-first paying unplanned. And: *"I'll price the proof once
+`runSlots` exists and I can see the real goal shape, rather than estimating it
+from prose."* **Refusing to price is a legitimate output when the prerequisite for
+pricing is a named, scheduled artifact.**
+
+Law rows: **MEAS-385…MEAS-395, STMT-136, OPS-107.**

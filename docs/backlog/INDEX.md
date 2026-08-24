@@ -15,12 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**348 entries across 17 lanes.** Regenerate with
+**349 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-25-wasm-11` |  | THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported | wasm |
+| `2026-08-24-architecture-84` |  | Accidentally correct is worse than wrong | architecture |
 | `2026-08-24-architecture-83` |  | An argument resting on what the tier cannot do has an expiry date nothing tracks | architecture |
 | `2026-08-24-architecture-82` |  | The subject of a verification is immutable to the verifier | architecture |
 | `2026-08-24-architecture-81` |  | A tier whose model is relational scores by obligations, not by tests | architecture |

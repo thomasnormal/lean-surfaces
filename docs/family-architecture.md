@@ -4169,6 +4169,19 @@ second register but **a citable name in the sentence**, which turns the lifting
 inch into the auditor. *The lane that removes a limitation is the only lane
 guaranteed to know it is gone.*
 
+**AND THE FOURTH INSTANCE ARRIVED IMMEDIATELY, IN A NEW ARTIFACT CLASS** (pyc,
+same inch): **the first expiring comment found IN A WITNESS.** The law's coverage
+now spans **docstrings, architecture notes, a proof's prose, and witnesses** —
+
+> **Four artifact classes is enough to stop qualifying this by artifact: ANY
+> PROSE THAT ASSERTS A LIMIT EXPIRES, wherever it is written.**
+
+**And a witness is the worst place for one**, because a witness is read as
+*evidence* rather than as *commentary*: a stale sentence beside a passing case
+inherits the case's authority. *The citable-name remedy applies unchanged — but
+the population it has to reach is now every string in the tree, which is an
+argument for the grep-by-name mechanism over any register of locations.*
+
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
 belongs**: in the artifact's output, admitted **12 times**, *where the claim is
@@ -5299,6 +5312,15 @@ path taken to it.
 row do if the new code were deleted?* **A row that still passes is a row the
 feature did not earn** — and asking it costs one re-run, against a wrong number
 that survives every later audit because nothing in it looks wrong.
+
+**AND THE RULE COLLECTED ITS SECOND AND THIRD INSTANCES INSIDE ONE INCH** (pyc,
+merged `b5c63e8`): **n=1 never divides**, and **`stmt.Try` never raises** — *both
+would have flipped to `match` without entering a handler.* **Three catches in one
+inch, all pre-certification**, which is the number that makes this a systematic
+hazard rather than an anecdote: **a lane writing witnesses reaches for the
+simplest input, and the simplest input is the one least likely to reach the new
+code.** *The witness-writing instinct and the certification requirement point in
+opposite directions by default.*
 
 ### 5.4 One census-instrument pattern per tier
 
@@ -7841,6 +7863,30 @@ fixture, grep the tree for the pathological string**; a checker whose adversary
 is *text this project actually writes* usually has its adversary already
 checked in.
 
+**AND A BLAST-RADIUS CENSUS HAS A SCOPE RULE OF ITS OWN, LEARNED ACROSS THREE
+ATTEMPTS — TWO OF THEM ON THE LANE'S OWN CENSUS** (pyc's `except_builtin`, merged
+`b5c63e8`).
+
+> **A BLAST-RADIUS CENSUS MUST SPAN EVERY CORPUS THAT RUNS THE LANGUAGE — and
+> this repo has THREE, IN THREE SHAPES.**
+
+Typed-call files; **grammar witnesses as INLINE SOURCE STRINGS inside the census
+tool itself**; and whole scripts. **Scoping to the file finds one; scoping to the
+obvious corpus finds most; only all three finds them all.**
+
+**The middle shape is the one that will keep being missed**, and it is worth its
+own sentence: **source held as string literals inside an instrument is code that
+runs, and no file-extension glob will ever see it.** *A census that enumerates
+`.py` files is enumerating a FILESYSTEM CONVENTION, not the language's
+occurrences* — which is the grep-versus-declaration defect above, met at corpus
+granularity rather than at line granularity.
+
+**And the standing form is a question, not a longer glob:** *where does this
+language RUN in this repository?* **Answer it by naming the shapes — files,
+embedded strings, generated text — and the glob follows.** *Two of the three
+attempts were spent rediscovering that the instrument itself is part of the
+corpus it measures.*
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -8096,6 +8142,49 @@ statement**: nothing in a green row records which world it was green about.
 *The cheap standing check is the one the tier already applies to censuses:*
 **make the fixture FAIL first**, since a fixture that cannot be made to fail by
 breaking the feature is not testing the feature.
+
+**AND THE SAME DEFECT AT SIMULATOR SCALE, WHICH IS WHERE IT IS MOST EXPENSIVE**
+(SoftFloat's sim, re-ticketed `ea69b8f`; **the coordinating role's rename
+hypothesis was the fourteenth killed by lane measurement** — the cause was
+SCOPE). The finding is not the cause; it is that **the verification method was
+UNSOUND**: the concatenation sim **merged open scopes**, *supplying the very name
+the real module lacks.*
+
+> **THE SIM ERASED THE BOUNDARY AND WAS TESTING A FILE THAT DOES NOT EXIST.**
+
+> **A SIMULATOR MUST PRESERVE THE BOUNDARIES IT SIMULATES.** A cheap stand-in
+> may drop cost; it may never drop STRUCTURE, because the structure is what the
+> question is about.
+
+**Concatenation is the canonical example and every tier has one** — a merged
+namespace, a flattened import graph, a single translation unit standing in for
+several. *Each is fast precisely because it removes the seam, and the seam is
+where the defects live.* **A stand-in that removes what the real artifact
+enforces does not approximate it; it answers a different question quickly.**
+
+**AND THE FIXED INSTRUMENT WAS VALIDATED IN BOTH DIRECTIONS, WHICH IS THE ONLY
+WAY A REPAIRED CONTROL EARNS TRUST** (same landing). The old sim **passes the
+broken code**; the faithful sim **reproduces the triad's exact 8.**
+
+> **A CHECK THAT HAS NEVER FAILED IS A DESIGN, NOT A CONTROL.**
+
+*Reproducing the known failure is the half lanes skip*, because a green on
+correct input feels like the check working — **and it is exactly the observation
+a check that cannot fail also produces.** **Both directions, or the instrument is
+an assertion about itself.**
+
+**AND THE INCIDENT ARGUES FOR ONE ROW THIS FAMILY'S INSTRUMENT INVENTORIES DO NOT
+CARRY:** *"the triad was the only instrument pointed at the REAL artifact — which
+is why that red was worth its tenure."*
+
+> **AN INSTRUMENT INVENTORY MUST SAY WHICH INSTRUMENTS COMPILE THE ARTIFACT AND
+> WHICH COMPILE A STAND-IN.**
+
+**Speed and fidelity are inversely arranged in every inventory this family has**,
+so the fast instruments are the ones a lane runs and the faithful one is the one
+it defers — *and a fleet of green stand-ins reads exactly like a verified
+artifact.* **The expensive instrument is not redundant with the cheap ones; it is
+the only one whose green is about the thing being shipped.**
 
 **AND ITS COUNTERPART AT THE OTHER EXTREME: A TRANSFORM ON TOO MUCH, REPORTING
 SUCCESS JUST AS QUIETLY** (pyc, `fcb1463`). A **non-greedy regex bounded by a
@@ -8376,6 +8465,49 @@ per-edition **reader's view** promised in §2.4, the **cross-edition diff
 gate** that polices the neutral layer, and the **coverage-by-clause**
 scoreboard. It starts at ~30 rows for C23's value layer and grows with the
 tier.
+
+**AND THE MANIFEST'S `status` COLUMN NEEDED A FOURTH VALUE AT THE ARM LEVEL,
+SUPPLIED BY THE ES LANE'S SELF-DEMOTION** (`7ea36e7`, ticketed).
+
+> **NOT EVERY REFUSAL IN AN ARM IS A BOUNDARY.**
+
+An `internal-malformed` guard defends against **an AST that cannot occur**, so
+counting it as a refusal reports a limitation the tier does not have. The
+classification the lane landed is **STATED / PARTIAL / REFUSING**, with
+
+> **PARTIAL OUT OF THE NUMERATOR.**
+
+**And the reasoning is §5.0a's, one level down.** *Calling it stated claims a
+construct the tier half-evaluates; calling it absent denies real work.* **A
+half-implemented arm is a declared divergence at arm granularity** — it has a
+site, a known difference, and a retirement condition — and the numerator rule
+follows from the register's: **a debt is beside the number, never inside it.**
+
+**The discipline generalizes past ECMAScript**: wherever a tier's unit of work is
+smaller than its unit of counting, **the intermediate state exists and will be
+rounded in one direction by whoever writes the table.** *Naming the third status
+is what stops that rounding from being a matter of mood.*
+
+**AND THE TABLE WAS MADE LOAD-BEARING RATHER THAN DESCRIPTIVE** (same landing).
+The dedicated-clause table **verifies its handlers exist**:
+
+> **Delete `evalCatchClause` and the file goes RED, rather than silently keeping
+> the kind in the numerator.**
+
+**A coverage table whose rows are load-bearing is the only kind that cannot rot
+in the safe direction.** The usual failure is not a wrong row but **a row that
+outlives its handler** — and nothing in a descriptive table notices, because a
+table's rows are true about the day they were written. *Wiring the row to the
+declaration converts the coverage claim from prose into a build dependency.*
+
+**AND THE LANE THEN REMOVED ITSELF FROM ITS OWN NUMBER'S PATH:** *"from then on
+§9.0 comes from the instrument rather than from me."*
+
+> **A LANE THAT REPORTS ITS OWN COVERAGE IS A SINGLE POINT OF FAILURE IN ITS OWN
+> SCOREBOARD. The fix is not more care; it is removing the lane from the path.**
+
+*This is the register's oldest rule — the oracle writes its own column (§5.3) —
+arriving at the one number the family reads most.*
 
 ---
 
@@ -11394,6 +11526,73 @@ the artifact it would reuse is a claim about that artifact — and it is checkab
 today, for less than it costs to discover at the rung.* **The cheapest audit a
 roadmap admits is opening the thing it says it will copy.**
 
+**AND THE NUMBER ITSELF WAS SELF-DEMOTED BY THE LANE THAT PUBLISHED IT — 40/66
+CORRECTED TO 33/66 PLUS 8 PARTIAL** (ES, destructuring `a48be18`; instrument
+`7ea36e7`, ticketed). *"Every N/66 I have given you came from the scrape."*
+
+> **ACCIDENTALLY CORRECT IS WORSE THAN WRONG. Nothing announces the day the
+> accident ends.**
+
+**The mechanism is exact and worth carrying**: the old scrape was right **for
+four inches**, because each of those inches happened to implement **every arm it
+added** — so the proxy and the truth moved together for reasons that had nothing
+to do with the proxy. **And it ended quietly inside the very inch whose number
+was being reported.**
+
+**A wrong instrument gets fixed; a LUCKY one gets trusted**, and trust is
+accumulated at exactly the rate that makes the eventual divergence expensive.
+*This is the expiry law (§5.0a) with the subject changed from an argument to an
+instrument* — **a coincidence has an expiry date nothing in the tree tracks
+either** — and it explains why *validate in both directions* is not pedantry: **a
+proxy agreeing with the truth on every case you have looked at is the observation
+a lucky proxy and a correct one both produce.**
+
+**AND A DENOMINATOR CAN BE CHOSEN FOR MOTION LEGIBILITY, WHICH IS A LEGITIMATE
+REASON AND NEEDS SAYING** (SV's `slotStep`, merged `365578f`). §9.0's line reads
+**"3 of 15 regions driven"** rather than an `N/N` —
+
+> **the number that actually MOVES.**
+
+**A denominator that cannot change for months reports the same digit through
+every landing**, so a lane reading its own scoreboard learns nothing from it and
+stops looking. *Choosing a sub-denominator whose motion is visible per inch is
+not a softer number; it is a number with a derivative.* **The honesty condition
+is the one §9.0 already imposes** — say which denominator, and never let the
+legible one silently replace the completion one. **Both live in the ledger; the
+completion number is the endgame, the moving one is the instrument.**
+
+**AND THE SAME LANE OWNED A COST IT HAD CREATED, WHICH IS THE HARDER HALF OF
+PRICING HONESTLY** (SV, same landing). Writing `slotStep` in `SvM` first
+**DOUBLED the adequacy obligation** — *"the adequacy lemma now carries both
+obligations at once — that's my doing."*
+
+> **A DESIGN CHOICE THAT ENLARGES A LATER PROOF IS A COST THE LANE INCURRED, NOT
+> A DIFFICULTY IT DISCOVERED.**
+
+**The two are indistinguishable at the moment the proof gets hard**, and the
+default attribution is the flattering one: *the obligation is large* reads as a
+fact about the problem. **Recording which half was self-inflicted is what lets a
+later lane consider the other ordering** — and it costs nothing but the sentence.
+
+**AND THE REAL BLOCKER WAS FOUND BY LOOKING RATHER THAN BY REASONING**: there is
+**no trace-producing driver**, so there is **nothing for `cycleOf` to project.**
+*The next rung is the smaller unblocking thing* — **whose prerequisite landed two
+inches ago for an unrelated reason**, which is §9.0b's shared-prerequisites-first
+rule paying without anyone having planned it.
+
+**And the lane declined to price the proof, with a reason this register should
+adopt verbatim:**
+
+> **"I'll price the proof itself once `runSlots` exists and I can see the REAL
+> GOAL SHAPE, rather than estimating it from prose."**
+
+**Which is the frontier law's own discipline turned on an estimate instead of a
+score.** *A proof estimated from the prose describing its statement is priced
+from behind the wall that hides its goal* — and the honest move is not a wider
+band but **naming the observation that would make a band possible.** **Refusing
+to price is a legitimate output when the prerequisite for pricing is a named,
+scheduled artifact.**
+
 **AND A CHARTER CAN BE OVERTAKEN BY ITS OWN SCOREBOARD — flagged rather than
 silently re-read** (C, `34ad979`). The charter's *"39-unsupported frontier,
 rung-at-a-time"* is now **a 197-item frontier whose top two entries belong to
@@ -12746,6 +12945,12 @@ independent of it and cheap:
   silent failure*, and it inherits none of the scrutiny the original defect
   earned — **because it arrives labelled as the fix.** *A repair to a control is
   a control, and gets the control's audit, not the repair's.*
+
+  **POSTSCRIPT, and the reason this is worth a bullet rather than a footnote**:
+  the rebase now **runs standalone with `$?` read separately** — *the recursive
+  law's compliant form, landed in the same inch that found the defect.* **A
+  control law with a worked compliant form is copied; one with only a
+  prohibition is re-derived.**
 
 Three one-line changes and one shared helper. **Not gated on the kit.**
 

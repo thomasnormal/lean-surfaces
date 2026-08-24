@@ -433,6 +433,17 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-382 | a package the model will NEVER RUN is not one it can be credited for | `docs/family-architecture.md §9.0b` |
 | MEAS-383 | a coordinator's cited pids, shas and trees are CLAIMS like any other; a mismatched stamp authorizes nothing | `docs/family-architecture.md §7.1a` |
 | MEAS-384 | independent identical NAMING is the same evidence as independent identical design | `docs/family-architecture.md §3.2` |
+| MEAS-385 | ACCIDENTALLY CORRECT IS WORSE THAN WRONG — nothing announces the day the accident ends | `docs/family-architecture.md §9.0` |
+| MEAS-386 | NOT EVERY REFUSAL IN AN ARM IS A BOUNDARY — status is STATED/PARTIAL/REFUSING, partial OUT of the numerator | `docs/family-architecture.md §5.5` |
+| MEAS-387 | a coverage table whose rows are LOAD-BEARING cannot rot in the safe direction — wire the row to the declaration | `docs/family-architecture.md §5.5` |
+| MEAS-388 | a lane reporting its OWN coverage is a single point of failure in its own scoreboard — remove the lane from the path | `docs/family-architecture.md §5.5` |
+| MEAS-389 | a denominator may be chosen for MOTION LEGIBILITY — publish it beside the completion number, never instead of it | `docs/family-architecture.md §9.0` |
+| MEAS-390 | a check that has NEVER FAILED is a design, not a control — reproduce the known failure too | `docs/family-architecture.md §5.4` |
+| MEAS-391 | an INSTRUMENT INVENTORY says which instruments compile the artifact and which compile a stand-in | `docs/family-architecture.md §5.4` |
+| MEAS-392 | a BLAST-RADIUS CENSUS spans every corpus that RUNS the language — files, embedded source strings, whole scripts | `docs/family-architecture.md §5.4` |
+| MEAS-393 | a design choice that ENLARGES a later proof is a cost the lane INCURRED, not a difficulty it discovered | `docs/family-architecture.md §9.0` |
+| MEAS-394 | REFUSING TO PRICE is a legitimate output when the prerequisite for pricing is a named, scheduled artifact | `docs/family-architecture.md §9.0` |
+| MEAS-395 | ANY PROSE ASSERTING A LIMIT EXPIRES — docstring, architecture note, proof prose, witness; four classes, stop qualifying | `docs/family-architecture.md §5.0a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -576,6 +587,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-133 | the stranded route needs EQUATIONS, the open route needs only REDUCTION — open exactly when the discriminant is string-free | `docs/family-architecture.md §7.1a` |
 | STMT-134 | a branch structure PROVED to be a spec clause's case split is a spec-conformance fact, not an implementation detail | `docs/family-architecture.md §3.5` |
 | STMT-135 | point the acceptance test at the ALMOST-IDENTICAL WRONG MODEL, not at the design | `docs/family-architecture.md §5.4b` |
+| STMT-136 | a SIMULATOR MUST PRESERVE THE BOUNDARIES IT SIMULATES — a stand-in may drop cost, never structure | `docs/family-architecture.md §5.4` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -755,6 +767,7 @@ numbers below are the register's own.
 | OPS-104 | `set -e` DOES NOT APPLY INSIDE `&&` — run the command alone and read `$?` | `docs/family-architecture.md §9.1` |
 | OPS-105 | a REPAIR TO A CONTROL IS A CONTROL — it gets the control's audit, not the repair's | `docs/family-architecture.md §9.1` |
 | OPS-106 | where the spec names ONE correct result, a guess is strictly dominated — measured: 2 failing cases became 8 | `docs/family-architecture.md §3.5` |
+| OPS-107 | a control law ships with a WORKED COMPLIANT FORM — a prohibition alone gets re-derived, not copied | `docs/family-architecture.md §9.1` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

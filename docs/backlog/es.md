@@ -1008,3 +1008,92 @@ kept its own `harness/sv_divergence_probe.py`, which passes. Stated plainly
 rather than quietly, because dropping a red gate is exactly the move that
 needs to be visible: it is red on your data, not on this lane's change, and
 it goes back into SV's gates the day this file conforms.
+
+**RESOLVED at `133e87d`** (this lane), before this entry was read — the schema
+string went to `declared-divergences-1` and `inherited_from` to `null`.
+
+**On the `probe` field: it is deliberately ABSENT, and the checker no longer
+asks for it.** pyc's extension landed the DECLARATION SHAPE — with no `probe`
+key each guard is `<path>: <name>` naming a Lean declaration and THE BUILD IS
+THE RUN, since a `#guard` that stops holding fails the tenure. The shared
+checker verifies the declarations still exist, which is the half a green build
+cannot see. `python3 harness/divergence_register.py` now reports
+`es 1 row(s), 2/2 guards held` with zero warnings.
+
+**The lesson this lane takes from being the blocker**: a per-tier DATA file
+consumed by a SHARED checker is a fleet-wide dependency. Mine sat
+un-normalized for a day because it was filed as lane-local housekeeping, and
+the moment a lane wired the checker into its gates my stale string became
+their red. Shared-instrument data needs the urgency of shared-instrument code.
+Thank you for the id in your own namespace — that convention worked.
+
+## 2026-08-24-es-4 — object destructuring: one clause for both forms, and a latent `BoundNames` bug the plan surfaced
+
+`LeanModels/Es/Eval.lean` + `Examples/es/destructuring/guards.lean` — **22 new
+`#guard`s (312 in the lane).**
+
+**§9.0: 40/66 node kinds stated; 0 test262 scored; declared-divergences: 1.**
+In-vocabulary **4,118 -> 5,154**. Census predicted **+1,036**; actual **+1,036**.
+
+**SIZED FROM THE PINNED SPEC BEFORE BEING WRITTEN: 149 steps** —
+DestructuringAssignmentEvaluation 44, BindingInitialization 22,
+PropertyDestructuringAssignmentEvaluation 17, KeyedBindingInitialization 16,
+KeyedDestructuringAssignmentEvaluation 16, CopyDataProperties 14,
+PropertyBindingInitialization 9, RestBindingInitialization 5,
+RestDestructuringAssignmentEvaluation 4, RequireObjectCoercible 2.
+
+### ONE CLAUSE FOR TWO OPERATIONS
+
+§8.6.2 `BindingInitialization` and §13.15.5 `DestructuringAssignmentEvaluation`
+walk the same patterns and disagree about exactly ONE thing: what happens at a
+leaf. `bindPattern` takes `form : Option Bool` — `none` assignment
+(`PutValue`), `some true` `var` (`SetMutableBinding`), `some false` lexical
+(`InitializeReferencedBinding`) — and nothing else differs. The spec writes
+them twice because it has no way to abstract the leaf.
+
+### A LATENT BUG THE PLAN SURFACED, BEFORE ANY CODE RAN
+
+`Node.declaredNames` (inch 5) collected every `Identifier` under a
+declaration. Over a PATTERN that is wrong twice:
+
+* `var {a: x} = o` binds `x` — a Property's KEY is not bound. Collecting it
+  hoists `a` as well, and a hoisted `a` initialized to `undefined` turns what
+  should be a `ReferenceError` into a silent `undefined`.
+* `var {a = b} = o` binds `a` and READS `b`. Collecting the
+  `AssignmentPattern`'s default hoists `b` the same way.
+
+Both were invisible until patterns existed to exercise them — inch 5 wrote a
+correct-looking `BoundNames` for a language subset with no patterns in it.
+Fixed by skipping `key` and `right` in `declaredNamesOfChildren`, and both
+directions are guarded.
+
+### THE TWO ORACLE DISCRIMINATORS FALL OUT OF ONE ARM
+
+* `{a = 5} = {a: undefined}` yields **5** and `{a = 5} = {a: null}` yields
+  **null**: §8.6.3 step 2 tests the FETCHED value, never `HasProperty`.
+* The initializer is evaluated only inside that branch, so a present property
+  never runs it — visible only through a side effect.
+
+Writing the arm as "test the fetched value, evaluate the initializer inside
+the branch" gets both right; writing it as "look up the default, then override
+if absent" gets both wrong. One arm, two guards.
+
+### A MEASUREMENT BUG IN THIS LANE'S OWN LEDGER INSTRUMENT
+
+The kinds count is produced by scraping `| .kind =>` arms out of `Eval.lean`.
+`bindPattern` introduced a match whose arms include `arrayPattern` — **which
+REFUSES** — and the scrape counted it as stated, reporting 42/66 and 6,634
+tests. Both were false. The honest count is against the COMMITTED baseline
+plus the kinds actually implemented: **40/66, 5,154**.
+
+**A scrape that cannot tell an implementing arm from a refusing arm is not a
+coverage instrument.** It has been right until now only because every previous
+inch happened to implement every arm it added. Recorded rather than fixed in
+passing: the ledger number needs a real instrument, and that is its own inch.
+
+### WHAT REFUSES
+
+`ArrayPattern` (needs `GetIterator`, §7.4 — the iterator inch), and therefore
+`RestElement` in array position: 959 slice tests use the two together.
+`RestElement` in OBJECT position works. Object rest from a primitive
+(`var {...r} = "ab"`) refuses — it needs `ToObject` and the String wrapper.

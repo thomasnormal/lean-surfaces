@@ -162,6 +162,14 @@ would hoist a binding the evaluator then cannot fill. -/
 def Node.declaredNamesOfChildren : List (String × List (Option Node)) → List String
   | [] => []
   | ("init", _) :: rest => Node.declaredNamesOfChildren rest
+  -- A `Property`'s KEY is not bound: `var {a: x} = o` binds `x`, never `a`.
+  -- (For the shorthand `{a}` the key and the value are the SAME identifier,
+  -- so skipping the key still yields `a` — once, from the value.)
+  | ("key", _) :: rest => Node.declaredNamesOfChildren rest
+  -- An `AssignmentPattern`'s DEFAULT is not bound either: `var {a = b} = o`
+  -- binds `a` and READS `b`. Collecting `b` would hoist a binding the
+  -- evaluator never fills, turning a `ReferenceError` into `undefined`.
+  | ("right", _) :: rest => Node.declaredNamesOfChildren rest
   | (_, ns) :: rest => Node.declaredNamesOpt ns ++ Node.declaredNamesOfChildren rest
 
 def Node.declaredNamesOpt : List (Option Node) → List String
@@ -227,6 +235,35 @@ def lexicalDecls (stmts : List Node) : List Node :=
 same reason. -/
 def hoistedFunctions (stmts : List Node) : List Node :=
   stmts.filter (·.kindOf == some .functionDeclaration)
+
+/--
+`CopyDataProperties(target, source, excludedItems)` — ES2026 §7.3.25, 14 steps.
+
+Object rest: `var {a, ...rest} = o` copies every OWN ENUMERABLE property of
+`o` except the ones the pattern already took. Own and enumerable are both
+load-bearing — a prototype's properties are not copied, and neither is a
+non-enumerable own one.
+
+A PRIMITIVE source refuses: `var {...r} = "ab"` is legal and yields
+`{0:"a", 1:"b"}`, but reaching it needs `ToObject` and the String wrapper
+(inch 6). Refusing is the boundary; inventing an empty object would be a
+wrong answer.
+-/
+def copyDataProperties (fuel : Nat) (target : ObjRef) (source : Val)
+    (excluded : List PropKey) : EsW Unit := do
+  match source with
+  | .undef | .null => pure ()                                  -- step 2
+  | .obj src =>
+    for k in (← ordinaryOwnPropertyKeys src) do                -- step 4
+      unless excluded.contains k do
+        match ← ordinaryGetOwnProperty src k with
+        | some d =>
+          if d.enumerable == some true then                    -- step 5.b.ii
+            createDataPropertyOrThrow target k (← getV fuel src k (.obj src))
+        | none => pure ()
+  | _ =>
+    SemM.refuseIntrinsic
+      "object rest from a primitive needs ToObject and the wrapper intrinsics (inch 6)"
 
 /-! ## Creating a function from source — §10.2.3, §15.2.4, §15.3.4 -/
 
@@ -422,6 +459,102 @@ def propKeyOf : Nat → EnvRef → Node → EsW PropKey
             SemM.refuseConstruct
               "internal: a non-computed key is neither a Literal nor an Identifier"
 
+/--
+`BindingInitialization` (§8.6.2) and `DestructuringAssignmentEvaluation`
+(§13.15.5) — **one clause, because they differ only at a LEAF**.
+
+The two operations walk the same patterns and disagree about exactly one
+thing: what happens when the walk reaches a target. A declaration
+initializes a binding; an assignment does `PutValue`. `form` carries that
+and nothing else:
+
+* `none`        — assignment form: `({a} = o)`, and the leaf may be a MEMBER
+* `some true`   — `var`: `SetMutableBinding` into a hoisted binding
+* `some false`  — `let`/`const`: `InitializeReferencedBinding`, which is what
+                  takes the binding out of the temporal dead zone
+
+Writing them separately would have duplicated the whole pattern walk to
+express one branch, which is the shape §8.6.2 and §13.15.5 have in the
+spec only because the spec has no way to abstract it.
+-/
+def bindPattern : Nat → EnvRef → Option Bool → Node → Val → EsW Unit
+  | 0, _, _, _, _ => fun _ => .error .timeout
+  | fuel + 1, env, form, target, v =>
+    match target with
+    | Node.lit .. => SemM.refuseConstruct "internal: a Literal is not a destructuring target"
+    | Node.unsupported ty _ _ =>
+      SemM.refuseConstruct s!"destructuring target '{ty}' is outside the pinned vocabulary"
+    | Node.mk kind _ _ _ =>
+      match kind with
+      | .identifier =>
+        match target.str? "name" with
+        | none => SemM.refuseConstruct "internal: Identifier without a name (report this)"
+        | some nm =>
+          match form with
+          | none => do putValue fuel (← evalRef fuel env target) v
+          | some isVar => do
+            let r ← resolveBinding fuel env nm
+            if isVar then envSetMutableBinding r nm v true
+            else envInitializeBinding r nm v
+      | .memberExpression =>
+        -- §13.15.5.3: an assignment pattern's target may be a REFERENCE, so
+        -- `({a: o.p} = x)` writes a property. A declaration's cannot.
+        match form with
+        | none => do putValue fuel (← evalRef fuel env target) v
+        | some _ =>
+          SemM.refuseConstruct "internal: a member expression cannot be a declaration target"
+      | .assignmentPattern =>
+        -- §8.6.3 step 2 / §13.15.5.5. TWO properties fall out of this one
+        -- shape, and both are oracle-pinned:
+        --   * the test is on the FETCHED value, not on whether the key was
+        --     present, so `{a = 5} = {a: undefined}` yields 5 while
+        --     `{a = 5} = {a: null}` yields null;
+        --   * the Initializer is evaluated INSIDE this branch, so a present
+        --     property never runs it — observable through side effects.
+        -- "Look up the default, then override if the key was absent" gets
+        -- both of those wrong.
+        match target.child? "left", target.child? "right" with
+        | some l, some rhs => do
+          let v' ← match v with
+            | .undef => evalExpr fuel env rhs
+            | _ => pure v
+          bindPattern fuel env form l v'
+        | _, _ => SemM.refuseConstruct "internal: malformed AssignmentPattern"
+      | .objectPattern =>
+        -- §8.6.2 step 1: RequireObjectCoercible (§7.2.1). `var {} = null`
+        -- throws even though the pattern binds nothing.
+        match v with
+        | .undef | .null =>
+          SemM.raise (.throw (.str "TypeError: Cannot destructure `undefined` or `null`"))
+        | _ => do
+          let mut taken : List PropKey := []
+          for prop in target.kids "properties" do
+            match prop.kindOf with
+            | some .property => do
+              let k ← propKeyOf fuel env prop
+              taken := taken ++ [k]
+              match prop.child? "value" with
+              | none => SemM.refuseConstruct "internal: pattern Property without a target"
+              | some tgt => do
+                let pv ← match v with
+                  | .obj r => getV fuel r k v
+                  | _ =>
+                    SemM.refuseIntrinsic
+                      "destructuring a primitive needs ToObject and the wrapper intrinsics (inch 6)"
+                bindPattern fuel env form tgt pv
+            | some .restElement =>
+              match prop.child? "argument" with
+              | none => SemM.refuseConstruct "internal: RestElement without an argument"
+              | some rt => do
+                let rest ← ordinaryObjectCreate none
+                copyDataProperties fuel rest v taken
+                bindPattern fuel env form rt (.obj rest)
+            | _ => SemM.refuseConstruct "internal: unexpected node in an ObjectPattern"
+      | .arrayPattern =>
+        SemM.refuseConstruct
+          "array destructuring needs GetIterator (§7.4) — the iterator inch"
+      | k => SemM.refuseConstruct s!"'{kindName k}' is not a destructuring target"
+
 /-- Evaluate an expression to a value — §13. -/
 def evalExpr : Nat → EnvRef → Node → EsW Val
   | 0, _, _ => fun _ => .error .timeout
@@ -513,11 +646,20 @@ def evalExpr : Nat → EnvRef → Node → EsW Val
         | _, _ => SemM.refuseConstruct "internal: malformed UnaryExpression"
       | .assignmentExpression => do
         match n.child? "left", n.child? "right", n.str? "operator" with
-        | some l, some r, some "=" => do
-          let target ← evalRef fuel env l
-          let v ← evalExpr fuel env r
-          putValue fuel target v
-          return v                                   -- §13.15.2: the VALUE
+        | some l, some r, some "=" =>
+          if l.kindOf == some .objectPattern || l.kindOf == some .arrayPattern then do
+            -- §13.15.2 step 1.a: a DESTRUCTURING assignment evaluates the RHS
+            -- first and then walks the pattern — there is no reference to take
+            -- for the left side. The simple case below keeps the opposite
+            -- order, which is step 1.b's, and the two are not interchangeable.
+            let v ← evalExpr fuel env r
+            bindPattern fuel env none l v
+            return v
+          else do
+            let target ← evalRef fuel env l
+            let v ← evalExpr fuel env r
+            putValue fuel target v
+            return v                                 -- §13.15.2: the VALUE
         | _, _, some op =>
           SemM.refuseConstruct s!"compound assignment '{op}' is not modeled yet"
         | _, _, _ => SemM.refuseConstruct "internal: malformed AssignmentExpression"
@@ -666,7 +808,16 @@ def evalDeclarator : Nat → EnvRef → Bool → Node → EsW Unit
             let r ← resolveBinding fuel env nm
             envInitializeBinding r nm .undef
       | _, _ =>
-        SemM.refuseConstruct "destructuring declaration is not modeled yet"
+        -- A PATTERN. §14.3.1.2/§14.3.2.1 both require an Initializer here —
+        -- `var {a};` is a SyntaxError, so a declarator with a pattern and no
+        -- `init` cannot have parsed.
+        match d.child? "init" with
+        | none =>
+          SemM.refuseConstruct
+            "internal: a destructuring declarator without an initializer (report this)"
+        | some e => do
+          let v ← evalExpr fuel env e
+          bindPattern fuel env (some isVar) idn v
 
 /-- `CatchClauseEvaluation` — §14.15.3 steps 5-8. The parameter gets its
 OWN record, outside the block's, which is why `catch (e) { let e }` is a

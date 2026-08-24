@@ -335,7 +335,7 @@ is the answer. The line, in the standard's own terms:
 
 | J.1 | item | clause | decision | status |
 | ---: | --- | --- | --- | --- |
-| **(16)** | order of evaluation of a call's function designator, arguments and their subexpressions | §6.5.3.3 | **∀ order** (Thomas's ruling); canonical = left-to-right for witness extraction | reachable; **rung A landed** — siblings proved write-free, domain **7 of 215** multi-argument sites |
+| **(16)** | order of evaluation of a call's function designator, arguments and their subexpressions | §6.5.3.3 | **∀ order** (Thomas's ruling); canonical = left-to-right for witness extraction | **rungs A and B landed — 208 of 215 DISCHARGED**; the residue is the 7, and it is one named `NonInterfering` obligation each |
 | **(15)** | order of evaluation of subexpressions, and the order in which side effects take place | §6.5.1 | **∀ order**, same discipline | **0** operators with effects in both operands |
 | **(10)** | value of padding bytes when storing into a structure | §6.2.6.1 | **modeling choice: `indet`** — the byte lattice already has the value, and reading one refuses | armed, fires on 0 corpus sites |
 | **(13)** | value of padding bits in an integer representation | §6.2.6.2 | not reachable — the value model stores a mathematical integer, never a representation | not applicable |
@@ -404,6 +404,59 @@ where every argument is pure, the two orders can still disagree about
 *which refusal is reported* when more than one argument would refuse.
 Order-independence holds for the value and for the memory; the observable
 that rung B has to name is therefore not "the run", it is "the answer".
+
+**RUNG B, LANDED: the 208 are DISCHARGED and the 7 are an obligation with a
+name.** Rung A's purity buys more than the sibling half, because it makes
+each argument's value a function of ONE memory — the one the call started
+in. `LeanModels/C/C23/Expr.lean` now carries `valOf? ctx m e`, that
+function, and proves:
+
+* `evalArgs_pure_pointwise` — an all-pure argument list's values ARE
+  `valOf? ctx m` applied pointwise, at the incoming memory, and the memory
+  comes back untouched;
+* `evalArgs_pure_ofPointwise` — the converse at a given value list, which
+  is the half that makes the claim about EVERY order rather than about the
+  ones that happen to succeed;
+* **`evalArgs_orderIndependent`** — for any permutation whatever of an
+  all-pure argument list, both orders run, and they agree on the values and
+  on the memory. **This is the unconditional discharge of the 208.**
+* `evalArgs_pair_swap` — the arity-2 instance, where the other order is
+  EXHIBITED rather than compared. Four of the seven have arity two.
+
+**The order parameter turned out not to need a tagged evaluator**, which is
+worth recording because the plan said otherwise. The design was an
+`evalArgsAt` over position-tagged arguments so two orders could be compared;
+purity made it unnecessary, because once every argument is a function of one
+memory the phrase *"the value of argument i"* is order-free already, and the
+∀-order statement is about `List.Perm` directly.
+
+> **A parameter you were going to thread is a sign the property is not yet
+> stated at the right level: when the order stops being observable, the
+> machinery for observing it stops being needed.**
+
+**THE RESIDUE, and it is written down rather than described.**
+`NonInterfering ctx x e` — running `x` leaves `e`'s value alone — is stated
+OBSERVATIONALLY over `valOf?` rather than as a footprint, because the
+observable is what the ruling quantifies over and a footprint would be
+strictly stronger than the obligation needs. `evalArgs_pair_oneEffect` is
+what discharging it buys: at a two-argument site with one pure argument,
+purity (Rung A) and non-interference (the residue) together give both
+orders the same values and the same memory. Neither hypothesis implies the
+other, and `nonInterfering_of_isPure` shows why the residue is **seven
+obligations and not fourteen** — a pure argument is non-interfering with
+everything, so only the nested call is ever in question.
+
+**What is still owed at the seven**: discharging `NonInterfering` per site
+needs a read-set or a frame lemma, which this tier does not have. That is
+the next rung's price, stated in constructs rather than in effort.
+
+**AND THE OBSERVABLE IS THE ANSWER, NEVER THE RUN** — every theorem above
+takes the canonical run's success as a hypothesis. Two orders can disagree
+about *which refusal is reported* when more than one argument would refuse,
+and §3.1 never pools the causes, so the difference is visible in the
+verdict. `Examples/c/sunfish/expr.lean` gates the live version of the same
+point: swap one pure argument for the corpus's own `r++` and the two orders
+answer `[7, 7]` and `[7, 8]`.
 
 **Items not yet reached** are not in the register. An item enters when an
 inch touches it, and it is decided then — never silently.

@@ -180,7 +180,20 @@ QUEUE="${LS_QUEUE:-/tmp/ls-build-queue}"
 # healthy tenure reaches.
 RSS_PROC_LIMIT_KB="${LS_RSS_PROC_LIMIT_KB:-5242880}"    # 5 GB, per process
 RSS_CHAIN_LIMIT_KB="${LS_RSS_LIMIT_KB:-10485760}"       # 10 GB, whole chain
-THREADS="${LEAN_NUM_THREADS:-2}"               # amendment 11
+THREADS="${LEAN_NUM_THREADS:-2}"               # amendment 11 — the LOADED-case value
+# ADAPTIVE, BECAUSE A11'S PURPOSE IS THE CONSTRAINT AND 2 IS ONLY A MEANS.
+# A11 says Thomas's processes have absolute priority; `2` was chosen so a BUSY
+# box stays responsive, and then charged its full price to an IDLE one — about
+# 38 minutes of every spine build, per the build-profile investigation.  On a
+# quiet machine the same purpose permits more.
+#
+# WHY 4 AND NOT 6: 4 is a measured-free doubling, and 6 is not measured at all.
+# Choosing the larger number on an unmeasured basis would repeat the exact
+# error being fixed — a constant picked for a case nobody profiled.  Raise it
+# with LS_THREADS_IDLE once a ticketed A/B says so.
+THREADS_IDLE="${LS_THREADS_IDLE:-4}"           # the quiet-box value
+IDLE_LOAD_MAX="${LS_IDLE_LOAD_MAX:-2}"         # "quiet" is defined, not assumed
+IDLE_PRESS_MAX="${LS_IDLE_PRESS_MAX:-40}"
 NICE="${LS_NICE:-19}"                          # amendment 11
 MAX_WAIT="${LS_MAX_WAIT:-14400}"               # 4 h, then give up LOUDLY
 STALE_AFTER="${LS_STALE_AFTER:-1800}"          # only then consider a reclaim
@@ -242,6 +255,7 @@ foreign_coverage() {
   echo "foreign checkout $(foreign_remote); gates as given; class floor not applicable — this green is evidence about THAT tree and those gates, and about nothing in this repository."
 }
 
+. "$(dirname "${BASH_SOURCE[0]}")/instruments.sh"  # load + pressure, labelled
 . "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -975,6 +989,32 @@ gates_compose() {       # floor, lane's gates, gates_only -> the list to run
 # READING of it, because a log should not need a guard to be honest about its
 # own scope.  Composed by the SAME function the gate phase uses, so the line
 # cannot promise a set the phase does not run.
+# THE THREAD COUNT, AND THE READINGS THAT CHOSE IT.  Decided ONCE per phase
+# and never mid-build: a throttle that changed under a running lake would make
+# the build's own timings unattributable, which is the measurement this exists
+# to improve.
+#
+# ABSENCE IS NOT IDLENESS.  An unreadable instrument returns the conservative
+# value, because "I could not tell whether the box is busy" and "the box is
+# quiet" are different answers and only one of them may raise the ceiling.
+choose_threads() {      # -> "<n> <the readings that chose it>"
+  local l p pct src
+  l="$(read_load)"
+  p="$(read_pressure)"; pct="${p%% *}"; src="${p#* }"
+  case "$src" in
+    unavailable*) printf '%s (instruments unreadable: %s — the conservative value)' "$THREADS" "$src"; return 0 ;;
+  esac
+  case "$l" in ''|*[!0-9.]*) printf '%s (load unreadable — the conservative value)' "$THREADS"; return 0 ;; esac
+  if over "$l" "$IDLE_LOAD_MAX"; then
+    printf '%s (load %s over %s — the LOADED-case value)' "$THREADS" "$l" "$IDLE_LOAD_MAX"; return 0
+  fi
+  if over "$pct" "$IDLE_PRESS_MAX"; then
+    printf '%s (memory pressure %s%% over %s%% per %s — the LOADED-case value)' "$THREADS" "$pct" "$IDLE_PRESS_MAX" "$src"; return 0
+  fi
+  printf '%s (load %s under %s, memory pressure %s%% under %s%% per %s — quiet box)' \
+         "$THREADS_IDLE" "$l" "$IDLE_LOAD_MAX" "$pct" "$IDLE_PRESS_MAX" "$src"
+}
+
 gates_planned() {       # -> the gate list this tenure will run
   # A foreign tree and a CLASSIFY-ONLY pass run the gates AS GIVEN: there is no
   # floor to add, because the floor is a claim about THIS repository.
@@ -2132,6 +2172,37 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...naming both questions"          "$(printf '%s' "$out" | grep -c 'INDEX.*WORKING TREE')" "1"
   check "a v1 stamp still shortens"           "$(short_tree 'abc123def4567890 HEAD1')" "abc123def456"
   CLONE="$saved_cl"
+
+  # ---- THE THREAD THROTTLE IS ADAPTIVE (the build-profile investigation)
+  # A11's PURPOSE is the constraint; 2 was the means, chosen for a busy box and
+  # charged to an idle one -- ~38 minutes of every spine build.
+  echo "  -- adaptive threads"
+  saved_t="$THREADS"; saved_ti="$THREADS_IDLE"
+  THREADS=2; THREADS_IDLE=4
+  q="$(LS_MOCK_LOAD=0.50 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" choose_threads)"
+  check "a QUIET box raises the ceiling"      "${q%% *}" "4"
+  check "  ...naming the load that chose it"  "$(printf '%s' "$q" | grep -c 'load 0.50 under 2')" "1"
+  check "  ...the pressure AND its instrument" "$(printf '%s' "$q" | grep -c 'pressure 10.0% under 40% per memory_pressure:100-free%(macos)')" "1"
+  b="$(LS_MOCK_LOAD=11.6 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" choose_threads)"
+  check "a LOADED box keeps the constant"     "${b%% *}" "2"
+  check "  ...naming the load, and the reason" "$(printf '%s' "$b" | grep -c 'load 11.6 over 2 — the LOADED-case value')" "1"
+  r="$(LS_MOCK_LOAD=0.50 LS_MOCK_PRESSURE="88.0 memory_pressure:100-free%(macos)" choose_threads)"
+  check "PRESSURE alone keeps the constant"   "${r%% *}" "2"
+  check "  ...naming the instrument"          "$(printf '%s' "$r" | grep -c 'per memory_pressure:100-free%(macos)')" "1"
+  # ABSENCE IS NOT IDLENESS: only one of "cannot tell" and "quiet" may raise it.
+  u="$(LS_MOCK_LOAD=0.50 LS_MOCK_PRESSURE="0 unavailable(no-instrument)" choose_threads)"
+  check "unreadable pressure falls back to 2" "${u%% *}" "2"
+  check "  ...and says it could not tell"     "$(printf '%s' "$u" | grep -c 'instruments unreadable')" "1"
+  ul="$(LS_MOCK_LOAD="" LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" choose_threads)"
+  check "unreadable load falls back to 2"     "${ul%% *}" "2"
+  # ONCE PER PHASE, NEVER MID-BUILD: two decision sites, and none of them
+  # inside the attempt loop, where a changed throttle would make the build's
+  # own timings unattributable.
+  check "the choice is made once per phase"   "$(grep -c '^ *THREAD_CHOICE=' "$0")" "2"
+  check "  ...and never inside the build loop" \
+        "$(awk '/^for attempt in 1 2; do/{f=1} f&&/choose_threads/{n++} f&&/^done$/{f=0} END{print n+0}' "$0")" "0"
+  THREADS="$saved_t"; THREADS_IDLE="$saved_ti"
+
 
   # ---- THE DELTA A TENURE IS ABOUT (the Ada wrong-tree incident)
   echo "  -- delta vs master"
@@ -3404,8 +3475,12 @@ say "base at acquire: $(base_staleness fresh)"
 GUARD_PIDFILE="$(mktemp "${TMPDIR:-/tmp}/triad-guard.XXXXXX")" || die "no temp dir for the guard pid"
 
 # ----------------------------------------------------------------- the work
+# DECIDED HERE, ONCE, for the build phase.
+THREAD_CHOICE="$(choose_threads)"
+THREADS="${THREAD_CHOICE%% *}"; THREADS_WHY="${THREAD_CHOICE#* }"
 export LEAN_NUM_THREADS="$THREADS"    # A11.  NEVER `-j` — base rule 2.
 banner
+say "threads: LEAN_NUM_THREADS=$THREADS $THREADS_WHY"
 say "tenure open: LEAN_NUM_THREADS=$THREADS nice -n $NICE rss<=$((RSS_PROC_LIMIT_KB / 1024))MB/proc, $((RSS_CHAIN_LIMIT_KB / 1024))MB/chain dir=$CLONE"
 
 if [ "$DRY_RUN" = "1" ]; then
@@ -3471,6 +3546,14 @@ GATE_BUILT=""
 if [ -n "$BUILD_TARGETS" ]; then
   GATE_TARGETS="$(gate_runner_targets "$GATES")"
   if [ -n "$GATE_TARGETS" ]; then
+    # A SECOND DECISION, for a SECOND PHASE.  The build may have run for
+    # 38 minutes and the box is not the box it was; re-reading here is still
+    # "once per phase", and it is the only point between two phases where
+    # nothing of ours is compiling.
+    THREAD_CHOICE="$(choose_threads)"
+    THREADS="${THREAD_CHOICE%% *}"; THREADS_WHY="${THREAD_CHOICE#* }"
+    export LEAN_NUM_THREADS="$THREADS"
+    say "threads (gate phase): LEAN_NUM_THREADS=$THREADS $THREADS_WHY"
     say "=== gate-phase build: $GATE_TARGETS (the gates invoke it; built HERE, not inside a gate) ==="
     # shellcheck disable=SC2086
     nice -n "$NICE" lake build $GATE_TARGETS >> "$BUILD_LOG" 2>&1

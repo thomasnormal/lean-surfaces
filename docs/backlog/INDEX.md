@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**354 entries across 17 lanes.** Regenerate with
+**355 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -42,6 +42,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-architecture-67` |  | The register's canonical shape, and an unreachable refusal guards nothing | architecture |
 | `2026-08-24-architecture-66` |  | The charter's half of the INBOUND resolution | architecture |
 | `2026-08-24-architecture-65` |  | The run is correct and the certificate is correct are different claims | architecture |
+| `2026-08-24-qol-64` |  | A11's purpose is the constraint; 2 was only the means | qol |
 | `2026-08-24-architecture-64` |  | A refusal honest about the model and false about the world | architecture |
 | `2026-08-24-qol-63` |  | the census was wrong three ways, and the inversion never happened | qol |
 | `2026-08-24-architecture-63` |  | Duration is a corroborator, not the witness | architecture |

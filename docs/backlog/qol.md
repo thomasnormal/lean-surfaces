@@ -4555,3 +4555,61 @@ all; `lean-basecase` and `lean-audit` have no iterate line.
 ### Triad
 
 Audit only, no tool changed. No Lean executed.
+
+## 2026-08-24-qol-64 — A11's purpose is the constraint; 2 was only the means
+
+Item 17. `LEAN_NUM_THREADS=2` was chosen so a BUSY box stays responsive under
+A11 — Thomas's processes have absolute priority — and then charged its full
+price to an IDLE one: about **38 minutes of every spine build**, per the
+build-profile investigation.
+
+> The constant was chosen for the loaded case, and a constant cannot tell which
+> case it is in.
+
+The throttle now reads the machine and picks: `load < 2` **and** `pressure <
+40%` → 4; otherwise 2. Live on this box while writing it, and both branches
+from the same instruments:
+
+```
+threads: LEAN_NUM_THREADS=2 (load 13.79 over 2 — the LOADED-case value)
+quiet  : 4 (load 0.4 under 2, memory pressure 12.0% under 40% per memory_pressure:100-free%(macos) — quiet box)
+```
+
+**Every line carries the readings that chose it**, which is the labelling
+family applied to a decision rather than a measurement: a bare
+`LEAN_NUM_THREADS=4` invites exactly the question the reading answers.
+
+### Why 4 and not 6
+
+4 is a doubling the profile already supports; **6 is not measured at all.**
+Picking the larger number on an unmeasured basis would repeat the error being
+fixed — a constant chosen for a case nobody profiled. `LS_THREADS_IDLE` raises
+it the moment a ticketed A/B says so.
+
+### Once per phase, and absence is not idleness
+
+Decided at tenure open and again before the gate phase — the one point between
+two phases where nothing of ours is compiling — and **never inside the attempt
+loop**, where a throttle changing under a running lake would make the build's
+own timings unattributable, which is the measurement this exists to improve.
+Two rows pin that: exactly two decision sites, and zero inside the build loop.
+
+An unreadable instrument returns **2**, and says so. "I cannot tell whether the
+box is busy" and "the box is quiet" are different answers, and only one of them
+may raise a ceiling.
+
+### One source for the instruments
+
+`read_load`, `read_pressure` and `over` moved to `tools/instruments.sh`, now
+sourced by both `check.sh` and `triad.sh`. A second copy would be the defect
+`dupes.sh` counts — and here it would be worse than duplication: **two
+throttles disagreeing about whether the box is busy is a protocol that
+contradicts itself.** `check.sh` is byte-for-byte unchanged in behaviour: 113
+ok, before and after.
+
+### Triad
+
+`triad.sh` **379 ok** (367 → 379), check 113, backlog-index 62, laws 45,
+sites 57, dupes 10, diagnose 51, substrate 25, analogues 28, editions 12,
+new-proof 31, a6-guard 8, comment-forms 18, `--verify-guards` 44, docs_check
+91/91. Fixtures only. No Lean executed.

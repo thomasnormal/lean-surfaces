@@ -3666,6 +3666,27 @@ not *"implement PEP 289"* but *"make these two sites agree"* — **a condition a
 reader can check by diffing two functions.** *The best retirement conditions
 point at something that already exists.*
 
+**AND A SELF-REPORTED INCIDENT WITH A FAMILIAR SHAPE: A DEBUG PROBE FELL
+THROUGH INTO A REAL ENQUEUE AGAINST THE LIVE QUEUE** (QoL, `3c278ce`).
+
+> **A self-test that can reach the live queue is the `ci.sh` recursion incident
+> wearing different clothes.**
+
+**And the diagnosis is the part that generalizes**: *the e2e runs were isolated
+all along; the DEBUG probes were the gap.* Corrections were a
+**nothing-existing-moved** re-application and **ALL probes — not just e2e
+runs — under `LS_QUEUE` / `LS_LOCK` overrides.**
+
+> **ISOLATION DEMANDED OF TESTS MUST BE DEMANDED OF EVERY PROCESS THE TEST
+> SESSION SPAWNS — and the INFORMAL ones are where the gap lives.**
+
+**The formal tests get the isolation because they are the things called
+"tests"**, and a debug probe is written in thirty seconds to answer one
+question. **It is the same asymmetry as the self-selecting instrument** (§5.4):
+the machinery is disciplined and the thing typed beside it is not — **and the
+undisciplined thing runs in the same session, with the same environment, against
+the same live infrastructure.**
+
 **AND THE CHECKER'S OWN DISCIPLINE SET, from the third filing** (pyc inch 3).
 **`--self-test` rejects TEN MUTATED COPIES OF A REAL FILE** — *a checker that
 only ever passes is a claim* — and **`UNGATED` and `ORPHANED` are both checked,
@@ -3695,6 +3716,28 @@ actual materials.** The ruling is not overturned — it is **waiting for its fir
 implementation**, and a lane that builds the ruled shape blind is **testing the
 ruling with its own inch.** *The register's job is to record which shapes have
 been built, not to make lanes prove designs.*
+
+**AND AN ACCEPTANCE CLAUSE CAN BE REFUTED BY THE IMPLEMENTATION, WHICH IS PART
+OF THE ACCEPTANCE** (QoL item 6, merged `3c278ce`). The requested clause —
+*"an unquoted `;` must refuse"* — **would have refused the DEFAULT FLOOR
+ITSELF.** Refined to refuse only **empty-gate strays**, on the reasoning that
+*a mistyped separator could remove a CHECK without removing a LINE*, with
+**trailing `;` MEASURED as harmless** (command substitution strips it).
+
+> **A spec written by the REQUESTER meets the implementation's floor, and the
+> implementer's COUNTER-MEASUREMENT is part of the acceptance.**
+
+**A requested clause is a hypothesis about the implementation**, and the
+implementer is the only party positioned to test it. **The failure mode this
+avoids is an acceptance test that passes by breaking the thing it was written to
+protect** — and it would have passed: refusing the default floor is a
+perfectly consistent reading of the clause as written.
+
+**The measured half is what makes the refinement trustworthy rather than a
+weakening** (the shape §5.4b keeps warning about): the trailing `;` was not
+*assumed* harmless, it was **measured** harmless. *A narrowing justified by a
+measurement is a correction; the same narrowing justified by inconvenience is
+the loosened line this register keeps refusing.*
 
 **AND AN ACCEPTANCE TEST WHOSE SUBJECT IS A GLOB INHERITS EVERY FUTURE TIER FOR
 FREE.** The checker's acceptance test was *"validate ES's file when it
@@ -5415,6 +5458,27 @@ lines where `/--` sat inside STRING LITERALS** — and
 
 > **A gate whose FALSE POSITIVES land on other lanes is worse than no gate — it
 > spends someone else's attention.**
+
+**AND THE COMPLEMENT OF *FIXES LIVE IN GATES*: THE FIX LIVES WITH THE GATE'S
+OWNER** (C lane; **nothing pushed, by its own rule**). The lane **measured a
+shared gate wrong**, found itself blocked, **filed the INBOUND to the gate's
+owner — and did not touch the gate.**
+
+> **"MY LANE IS BLOCKED" IS THE WORST REASON TO MOVE A SHARED SAFETY LINE.**
+
+**It is the worst reason because it is the most persuasive one available in the
+moment**, and it is **always** available: the lane is stopped, the line is the
+thing stopping it, and the edit is one character. **The reasons that should move
+a safety line — a measurement showing it wrong, an owner agreeing — are exactly
+the ones a blocked lane has no time to gather.**
+
+**Note the shape it shares with the instrument-artifact ruling above**: there,
+the cheap repair was to loosen the line rather than fix the reading; here, the
+cheap repair is to loosen the line rather than file the finding. **Both times
+the line was innocent**, and both times **the lane that stopped short produced a
+better artifact than the lane that would have edited.**
+
+
 
 **The discriminator between the two rules is TRUE versus FALSE, and it decides
 who pays:**
@@ -8001,6 +8065,41 @@ announces itself.**
   first, then `attribute [irreducible]` — otherwise the definition
   disappears underneath the induction that was supposed to be about it.
 
+**TWO MORE, BOTH FROM ONE-CAUSE REDS, AND BOTH ABOUT WHAT A TACTIC DISPATCHES
+ON** (C lane; verify at landing).
+
+**A TACTIC THAT DISPATCHES ON A GOAL'S HEAD NEEDS A STABLE HEAD — AND A `def`
+THAT UNFOLDS TO A BINDER HAS NONE.** `MemInvariant` as a `def` produced
+**thirteen identical failures from a single `intro`**; as a `structure` it has a
+head the dispatcher can see.
+
+> **Thirteen failures, one cause — and the count is the tell.** A dispatcher
+> failing on a head it cannot form fails **identically everywhere**, so a
+> uniform failure set is evidence about the DISPATCH, not about the goals.
+
+That is the *uniformity* rule (§5.4b) arriving in a proof: **a check that
+convicts most of a corpus is likelier reading the wrong column** — here, a
+tactic that fails at every site is likelier missing a head than meeting thirteen
+hard goals.
+
+**AND `apply` AT DEFAULT TRANSPARENCY DELTA-UNFOLDED A 19-WAY `String` MATCH
+INTO A whnf TIMEOUT.** Fixed with **`with_reducible` per `apply`**:
+
+> **Each failure is one HEAD COMPARISON, not one UNFOLDING.**
+
+**This is the same hazard §8 already records** (`apply` at default transparency
+whnf-unfolding tier constants) **arriving at a different scale**, and it is
+worth the second entry because the fix is now stated as a **cost model** rather
+than as a caution: the tactic's price is *attempts × cost-per-attempt*, and
+**transparency is what sets the second factor.** A19-way match is nineteen cheap
+comparisons or nineteen expensive unfoldings, and **nothing in the source says
+which.**
+
+**And the landing carried a DOCUMENTED heartbeats budget on the one large
+declaration** — not a raised limit but **a stated one**, which is the honest
+form: *raising heartbeats trades a wrong answer for a slow one*, and **a budget
+written down with its subject is a measurement of what that declaration costs.**
+
 **A FIFTH HAZARD, AND IT BITES THE DOCUMENTATION RATHER THAN THE CODE: A
 COMMENT THAT DESCRIBES COMMENT SYNTAX CANNOT QUOTE IT** (analog; verify at
 landing). **Lean comments NEST**, so a comment containing a worked example of a
@@ -8622,7 +8721,8 @@ oleans** — is permitted **without a ticket** under **all** of:
 
 * **(a)** machine **load < 10 AND swap < 50%**, checked **immediately
   before each run** (A8's atomic-re-read discipline, applied per
-  iteration);
+  iteration) — **BUT SEE THE INSTRUMENT DEFECT BELOW: the swap half of this
+  line has been measuring a HIGH-WATER MARK, not pressure**;
 * **(b)** at most **ONE such process per lane**, `nice -n 19`,
   `LEAN_NUM_THREADS=2`;
 * **(c)** the file's imports' **oleans are WARM** — otherwise it silently
@@ -8667,6 +8767,53 @@ superseded — a retired limit still enforcing — and it confirms both halves
 of A16: the raise was right, and **canon's 10 GB chain line is the correct
 one.** It is also A16.2 in miniature: **an amendment takes effect when the
 last script predating it is dead**, and this watchdog was not.
+
+**AND A SIXTH TIGHTENING, ARRIVING AS A MEASURED INSTRUMENT DEFECT RATHER THAN A
+DESIGN NOTE — AND IT REPRICED A WHOLE DAY** (tools lane, dispatched priority).
+**A17's swap line reads `vm.swapusage`, which on macOS is a HIGH-WATER MARK, not
+a pressure reading.** Measured: **88.5% against the line while
+`memory_pressure` reported 59% free.**
+
+> **A BOX THAT SWAPPED ONCE HAS A17 CLOSED FOR THE REST OF ITS UPTIME.**
+
+**So the entire one-shot-compile regime of 2026-08-24 was an INSTRUMENT
+ARTIFACT.** It shaped **Ada's one-shot discipline**, **three syntax-position
+reds**, and **every lane's make-each-tenure-count behaviour** — a day of
+economics set by a proxy that could only ever ratchet.
+
+> **A REFUSAL GATE WHOSE INSTRUMENT MEASURES A MONOTONE PROXY CONVERTS A
+> TRANSIENT CONDITION INTO A PERMANENT ONE.**
+
+**That is a distinct failure from every other gate defect in this register**,
+and worth separating: the stuck-channel family covers gates that **cannot
+decide**; this one **decides correctly, on a number that never comes back
+down.** A high-water mark is a perfectly good measurement of *what happened*;
+it is **not a measurement of what is true now**, and a gate is a question about
+now.
+
+**THE FIX IS A BETTER INSTRUMENT, NEVER A LOOSER LINE — the third appearance of
+that shape**, after the cross-lane scope narrowing and the conservative
+heuristic. **All three offer the same bargain**: the gate is inconvenient, and
+the cheap repair is to weaken what it demands. **All three are refused for the
+same reason** — *the line was not wrong; the reading was* — and weakening a line
+to accommodate a bad instrument **destroys the evidence that the instrument was
+bad.**
+
+**AND THE COST STRUCTURE IS THE PART THAT OUTLIVES THE BUG.** The syntax-position
+red **class** — a doc comment, then a `set_option`, both *"a token in a
+declaration slot"* — **repeated across two lanes precisely because the artifact
+regime had removed the 15-second check.**
+
+> **A defect class whose prevention cost collapsed from TRIVIAL to a
+> 2000-SECOND QUEUE CYCLE.**
+
+> **COST STRUCTURE IS SET BY INSTRUMENTS, NOT BY DEFECTS.**
+
+**Neither lane made a new mistake**; the same mistake simply stopped being
+catchable in fifteen seconds. **A defect's rate is a property of how cheaply it
+can be checked**, so an instrument that closes a cheap check does not merely slow
+a lane down — **it changes which defects reach the queue at all**, and it does so
+invisibly, because nothing records the checks that were not run.
 
 ### 7.2 The master branch
 
@@ -9936,6 +10083,26 @@ looking rigorous; a padded numerator **overstates** it while looking
 industrious. **The second is the tempting one** — the 21 theorems are real work,
 landed and green, and the only thing wrong with counting them is that they do
 not answer the question the number asks.
+
+**AND A FOURTH THING A NUMBER CAN BE MISSING: ITS POPULATION** (C lane recovery;
+verify at landing). J.1(16)'s domain was carried as **7 named sites**. The
+census measured the population it is a residue OF: **320 call sites → 215
+orderable → 208 all-pure → the same 7.**
+
+> **A RESIDUE WITHOUT ITS POPULATION IS A NUMBER WEARING A CONTEXT IT DOES NOT
+> HAVE.**
+
+**The seven were RIGHT the whole time**, which is what makes this worth a row
+rather than a correction: **nothing was wrong with the residue, and everything
+was missing around it.** Rung B's domain was read as **215** because that was
+the last number anyone had; the residue had **no denominator**, so a reader
+supplied the nearest one — the same reflex as §3.2's unlabelled count, arriving
+through a filter chain instead of through a sentence.
+
+**And the chain is the deliverable, not the endpoint.** *320 → 215 → 208 → 7*
+records **what each filter removed**, so a later lane can ask whether the filter
+was right; **"7 sites" records only that someone once believed seven.** *A
+residue is a claim about everything it excluded.*
 
 **AND A THIRD AXIS: A COVERAGE BOUND HAS A DIRECTION, AND MUST STATE IT**
 (analog census). Go's syntactic measure **OVER-counts** — an **upper** bound.

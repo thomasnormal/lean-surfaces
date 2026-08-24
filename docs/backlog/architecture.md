@@ -6042,3 +6042,117 @@ shipped **with the cases it must NOT fire on**, taken from its own first draft.
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-277 … MEAS-285, OPS-82**, and **MEAS-269
 amended.**
+
+## 2026-08-24-architecture-72 — Cost structure is set by instruments, not by defects
+
+Seven from the C lane's recovery (verify at landing; **nothing pushed by its own
+rule**), the A17 instrument artifact (tools lane, priority), and QoL item 6
+(`3c278ce`, merged). **The centerpiece repriced a day's work across every
+lane.**
+
+**(4) §7.1a A17 — THE SWAP LINE HAS BEEN MEASURING A HIGH-WATER MARK.**
+`vm.swapusage` on macOS is not pressure: **88.5% against the line while
+`memory_pressure` reported 59% free.**
+
+> **A box that swapped once has A17 closed for the rest of its uptime.**
+
+**So the whole one-shot-compile regime of today was an INSTRUMENT ARTIFACT** —
+it shaped Ada's one-shot discipline, three syntax-position reds, and every
+lane's make-each-tenure-count behaviour.
+
+> **A refusal gate whose instrument measures a MONOTONE PROXY converts a
+> transient condition into a permanent one.**
+
+**A distinct failure from the stuck-channel family**, and I separated it: those
+gates **cannot decide**; this one **decides correctly, on a number that never
+comes back down.** A high-water mark measures *what happened*; **a gate is a
+question about now.**
+
+**And the fix is a better instrument, never a looser line — the THIRD appearance
+of that shape** (cross-lane scope, conservative heuristic, now a safety line).
+All three offer the same bargain and are refused for the same reason: *the line
+was not wrong; the reading was* — and **weakening a line to accommodate a bad
+instrument destroys the evidence that the instrument was bad.**
+
+**(5) AND THE COST STRUCTURE IS WHAT OUTLIVES THE BUG.** The syntax-position red
+**class** — doc comment, then `set_option`, both *"a token in a declaration
+slot"* — **repeated across two lanes because the artifact regime had removed the
+15-second check.** *Prevention cost collapsed from trivial to a 2000-second queue
+cycle.*
+
+> **Cost structure is set by INSTRUMENTS, not by DEFECTS.**
+
+**Neither lane made a new mistake**; the same mistake stopped being catchable in
+fifteen seconds. **A defect's rate is a property of how cheaply it can be
+checked** — so an instrument that closes a cheap check **changes which defects
+reach the queue at all**, invisibly, because *nothing records the checks that
+were not run.*
+
+**(1) §9.0 — A FOURTH THING A NUMBER CAN BE MISSING: ITS POPULATION.** J.1(16)'s
+domain was carried as **7 named sites**; the census measured what they are a
+residue of — **320 → 215 → 208 → the same 7.**
+
+> **A residue without its population is a number wearing a context it does not
+> have.**
+
+**The seven were RIGHT the whole time**, which is why this is a row and not a
+correction: **nothing was wrong with the residue and everything was missing
+around it.** Rung B's domain read as 215 because that was the nearest number
+available — the §3.2 unlabelled-count reflex, arriving through a filter chain
+instead of a sentence. **And the chain is the deliverable**: *320 → 215 → 208 →
+7* records what each filter removed; *"7 sites"* records only that someone once
+believed seven.
+
+**(2) §7.1a — TWO TACTIC LAWS FROM ONE-CAUSE REDS.** *A tactic that dispatches
+on a goal's HEAD needs a stable head, and a `def` that unfolds to a binder has
+none* — **thirteen identical failures from one `intro`**, and **the count is the
+tell**: a dispatcher failing on a head it cannot form fails **identically
+everywhere**, so §5.4b's uniformity rule arrives in a proof. And *`apply` at
+default transparency delta-unfolded a 19-way `String` match into a whnf
+timeout* — **`with_reducible` per `apply`**, so **each failure is one head
+comparison, not one unfolding.** Landed as a **cost model**: price is *attempts ×
+cost-per-attempt*, **transparency sets the second factor, and nothing in the
+source says which you are paying.** The documented heartbeats budget is the
+honest form — *not a raised limit but a stated one.*
+
+**(3) §5.4a — THE COMPLEMENT OF *FIXES LIVE IN GATES*: THE FIX LIVES WITH THE
+GATE'S OWNER.** The lane measured a shared gate wrong, was blocked, **filed the
+INBOUND and did not touch it.**
+
+> **"My lane is blocked" is the worst reason to move a shared safety line.**
+
+**It is the worst reason because it is the most persuasive one available in the
+moment, and it is always available.** The reasons that *should* move a safety
+line — a measurement showing it wrong, an owner agreeing — are exactly the ones
+a blocked lane has no time to gather. **Same shape as the A17 ruling above**:
+both times the line was innocent, and **the lane that stopped short produced the
+better artifact.**
+
+**(6) §5.0a — AN ACCEPTANCE CLAUSE REFUTED BY THE IMPLEMENTATION, WHICH IS PART
+OF THE ACCEPTANCE.** *"An unquoted `;` must refuse"* **would have refused the
+default floor itself**; refined to empty-gate strays only, with trailing `;`
+**measured** harmless.
+
+> **A spec written by the requester meets the implementation's floor, and the
+> implementer's counter-measurement is part of the acceptance.**
+
+**The failure mode avoided is an acceptance test that passes by breaking the
+thing it protects** — and it would have passed. *A narrowing justified by a
+measurement is a correction; the same narrowing justified by inconvenience is
+the loosened line.*
+
+**(7) §5.0a — A DEBUG PROBE FELL THROUGH INTO A REAL ENQUEUE.** *A self-test
+that can reach the live queue is the `ci.sh` recursion incident wearing
+different clothes* — and the diagnosis is the transferable part: **the e2e runs
+were isolated all along; the DEBUG probes were the gap.**
+
+> **Isolation demanded of tests must be demanded of every process the test
+> session spawns — and the informal ones are where the gap lives.**
+
+**The formal tests get isolation because they are the things called "tests"**,
+while a debug probe is written in thirty seconds to answer one question — **the
+same asymmetry as the self-selecting instrument**: the machinery is disciplined
+and the thing typed beside it is not.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-286 … MEAS-291, OPS-83, OPS-84**.

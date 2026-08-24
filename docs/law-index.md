@@ -334,6 +334,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-283 | LAWS DO NOT INOCULATE THEIR AUTHORS — gates do | `docs/family-architecture.md §5.3` |
 | MEAS-284 | a STRUCTURAL EDIT needs a structural bound and a counted check | `docs/family-architecture.md §5.4b` |
 | MEAS-285 | FALSE positives on another lane are worse than no gate — ship the cases it must NOT fire on | `docs/family-architecture.md §5.4a` |
+| MEAS-286 | a RESIDUE without its POPULATION is a number wearing a context it does not have | `docs/family-architecture.md §9.0` |
+| MEAS-287 | a refusal gate whose instrument measures a MONOTONE PROXY makes a transient condition permanent | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-288 | COST STRUCTURE IS SET BY INSTRUMENTS, NOT BY DEFECTS | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-289 | "my lane is blocked" is the worst reason to move a shared safety line — the fix lives with the gate's OWNER | `docs/family-architecture.md §5.4a` |
+| MEAS-290 | a requested acceptance clause is a HYPOTHESIS; the implementer's counter-measurement is part of the acceptance | `docs/family-architecture.md §5.0a` |
+| MEAS-291 | isolation demanded of TESTS is demanded of every process the session spawns — the informal ones are the gap | `docs/family-architecture.md §5.0a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -626,6 +632,8 @@ numbers below are the register's own.
 | OPS-80 | accept-and-log tolerance is for tickets IN FLIGHT — a migration's grace window needs a DIRECTION | `docs/family-architecture.md §7.2` |
 | OPS-81 | the module system is opt-in per ROOT — unfolding proofs are portable only to legacy roots | `docs/family-architecture.md §7.1a` |
 | OPS-82 | a comment describing comment syntax cannot QUOTE it — name the delimiters, never spell them | `docs/family-architecture.md §7.1a` |
+| OPS-83 | a tactic dispatching on a goal's HEAD needs a stable head — a `def` unfolding to a binder has none | `docs/family-architecture.md §7.1a` |
+| OPS-84 | `with_reducible` per `apply` — each failure is one HEAD COMPARISON, not one unfolding | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

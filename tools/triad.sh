@@ -1584,6 +1584,92 @@ class_hint() {                  # -> the advisory text; never refuses, never nar
   esac
 }
 
+# ------------------------------- a gate spec is CODE (the ES lane, 2026-08-24)
+#
+# `--gates` was split with `IFS=';'`, which is shell WORD SPLITTING and knows
+# nothing about quotes.  ES's
+#
+#     python3 -c "import json; d=json.load(...); assert ...; print(...)"
+#
+# became FIVE fragments, each run as its own gate, each failing: a green build
+# with five GATE FAILED lines nominally about a JSON file, and NOT ONE OF THEM
+# READ THE FILE.
+#
+# > "A red that looks like diligence is worse than no gate, because the natural
+# > repair is to make the red go away — which would have left the register
+# > permanently unchecked."  (ES)
+#
+# That is the whole reason this refuses rather than repairs quietly: the
+# fragments were not a broken gate, they were a CONVINCING one.
+#
+# THE SEPARATOR IS AN UNQUOTED `;`.  A quoted one belongs to the command, and
+# the scanner below is what tells them apart — the same scan is needed either
+# way, so splitting correctly and refusing precisely cost the same.
+gate_split() {          # "a; b" -> one gate per line, splitting on UNQUOTED ';'
+  printf '%s' "$1" | awk '
+    {
+      n = length($0); out = ""; sq = 0; dq = 0
+      for (i = 1; i <= n; i++) {
+        c = substr($0, i, 1)
+        # A backslash inside double quotes escapes the next character, so a
+        # `\"` does not close the string and a `\;` is not a separator.
+        if (c == "\\" && dq && i < n) { out = out c substr($0, i + 1, 1); i++; continue }
+        if (c == "\047" && !dq) { sq = !sq; out = out c; continue }
+        if (c == "\"" && !sq)   { dq = !dq; out = out c; continue }
+        if (c == ";" && !sq && !dq) { print out; out = ""; continue }
+        out = out c
+      }
+      print out
+    }'
+}
+
+# Does this ONE gate carry a `;` inside its quotes?  That is the ES shape, and
+# it is refused rather than run, because a gate list that stays one command per
+# entry is one a lane can read, grep and reason about — and inline
+# multi-statement code in a gate list is how the fragmenting happened at all.
+gate_has_quoted_semicolon() {   # gate -> 0 when a ';' sits inside quotes
+  printf '%s' "$1" | awk '
+    { n = length($0); sq = 0; dq = 0
+      for (i = 1; i <= n; i++) {
+        c = substr($0, i, 1)
+        if (c == "\\" && dq && i < n) { i++; continue }
+        if (c == "\047" && !dq) { sq = !sq; continue }
+        if (c == "\"" && !sq)   { dq = !dq; continue }
+        if (c == ";" && (sq || dq)) { found = 1 }
+      }
+    }
+    END { exit(found ? 0 : 1) }'
+}
+
+# THE REFUSAL, computed before a ticket exists.  Two shapes, both silent today:
+# a quoted `;` (fragmented into a convincing red), and a STRAY separator that
+# yields an EMPTY gate — `a;; b` or a trailing `a;` — which `run_gates` used to
+# swallow with `[ -n "$g" ] || continue`.  A gate list that silently contains
+# nothing where a gate was meant is the same defect one step earlier.
+gate_spec_refusal() {   # gate list -> a reason on stdout, or nothing
+  local g i=0
+  while IFS= read -r g; do
+    i=$((i + 1))
+    if gate_has_quoted_semicolon "$g"; then
+      printf "gate %s contains an internal ';' inside quotes — ONE COMMAND PER GATE.\n" "$i"
+      printf "    %s\n" "$(printf '%s' "$g" | cut -c1-96)"
+      printf "  Splitting it would fragment one command into several, each failing on its own\n"
+      printf "  and none doing the check (the ES lane got five false GATE FAILED lines this way).\n"
+      printf "  Put the body in a script and name the script here.\n"
+      return 0
+    fi
+    case "$(printf '%s' "$g" | tr -d ' \t')" in
+      "") printf "gate %s is EMPTY — a stray ';' in the gate list.\n" "$i"
+          printf "  An empty gate was silently skipped, so a mistyped separator removed a check\n"
+          printf "  without removing a line from the list.\n"
+          return 0 ;;
+    esac
+  done <<EOF
+$(gate_split "$1")
+EOF
+  return 1
+}
+
 if [ "$SELF_TEST" = "1" ]; then
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/triad-selftest.XXXXXX")" || die "no temp dir"
   trap 'rm -rf "$tmp"' EXIT
@@ -1921,6 +2007,49 @@ if [ "$SELF_TEST" = "1" ]; then
   check "unrelated histories are their own n/a" \
         "$(delta_vs_master)" "n/a (no merge base with origin/master — unrelated histories)"
   CLONE="$saved_cl"; FOREIGN="$saved_fg"
+
+  # ---- A GATE SPEC IS CODE (the ES lane's five false GATE FAILED lines)
+  echo "  -- gate spec quoting"
+  es='python3 -c "import json; d=json.load(open(\"r.json\")); assert d; print(1)"'
+  # THE DEFECT, reproduced: `IFS=';'` is word splitting and knows no quotes.
+  oi="$IFS"; IFS=';'; nfrag=0; for _f in $es; do nfrag=$((nfrag+1)); done; IFS="$oi"
+  check "IFS splitting FRAGMENTS one command"  "$( [ "$nfrag" -gt 1 ] && echo fragmented)" "fragmented"
+  check "  ...while gate_split keeps it whole" "$(gate_split "$es" | grep -c .)" "1"
+  # ...and it is REFUSED, at the cheap end, naming the gate and the reason.
+  out="$(gate_spec_refusal "$es")"
+  check "a quoted ';' is REFUSED"              "$(printf '%s' "$out" | grep -c "internal ';' inside quotes")" "1"
+  check "  ...naming ONE COMMAND PER GATE"     "$(printf '%s' "$out" | grep -c 'ONE COMMAND PER GATE')" "1"
+  check "  ...and saying what to do instead"   "$(printf '%s' "$out" | grep -c 'Put the body in a script')" "1"
+  # A STRAY SEPARATOR yields an EMPTY gate, which run_gates used to swallow —
+  # a mistyped ';' removed a CHECK without removing a LINE.
+  check "a stray ';' is REFUSED"               "$(gate_spec_refusal 'python3 a.py;; python3 b.py' | grep -c 'is EMPTY')" "1"
+  # A TRAILING ';' IS DIFFERENT, and the difference is measured rather than
+  # assumed: command substitution STRIPS trailing newlines, so the empty
+  # fragment after a final ';' never reaches the reader and no gate is lost.
+  # The interior case above is the one that can hide a deleted check.
+  check "  ...while a TRAILING ';' loses nothing" "$(gate_split 'python3 a.py;' | grep -c .)" "1"
+  check "  ...so it is accepted"               "$(gate_spec_refusal 'python3 a.py;' >/dev/null && echo refused || echo accepted)" "accepted"
+
+  # THE EXISTING SPECS ARE UNCHANGED, which is the half that must not regress:
+  # every unquoted ';' is still a separator, including the floor's own two.
+  check "the floor still splits into three"    "$(gate_split "$DEFAULT_FLOOR" | grep -c .)" "3"
+  check "  ...and is NOT refused"              "$(gate_spec_refusal "$DEFAULT_FLOOR" >/dev/null && echo refused || echo accepted)" "accepted"
+  check "a single command is one gate"         "$(gate_split 'python3 tools/docs_check.py' | grep -c .)" "1"
+  check "  ...and is not refused"              "$(gate_spec_refusal 'python3 tools/docs_check.py' >/dev/null && echo refused || echo accepted)" "accepted"
+  # A QUOTED ARGUMENT WITHOUT a semicolon was always fine and must stay fine:
+  # refusing on the mere presence of quotes would break working gate specs.
+  check "a quoted argument is untouched"       "$(gate_split 'python3 x.py --msg "hello world"' | grep -c .)" "1"
+  check "  ...and not refused"                 "$(gate_spec_refusal 'python3 x.py --msg "hello world"' >/dev/null && echo refused || echo accepted)" "accepted"
+  check "single quotes hide a ';' too"         "$(gate_split "python3 -c 'a; b'" | grep -c .)" "1"
+  check "  ...an ESCAPED quote does not close" "$(gate_split 'python3 -c "a \" b; c"' | grep -c .)" "1"
+
+  # NOTHING IS SILENTLY FRAGMENTED, asserted where the guarantee lives:
+  # `run_gates` consumes `gate_split`, so a spec that splits into one command
+  # reaches the shell as one command.  (`run_gates` itself is defined after
+  # this block and is deliberately NOT moved — moving it is what broke a
+  # self-test into a REAL tenure while this row was being written.)
+  check "the ES spec is ONE command to run"    "$(gate_split "$es" | grep -c .)" "1"
+  check "  ...and two real gates stay two"     "$(gate_split 'python3 a.py; python3 b.py' | grep -c .)" "2"
 
   # ---- WAS THE BASE EVER GREEN? (the pyc lane's 116 minutes)
   echo "  -- base staleness"
@@ -2542,6 +2671,9 @@ if [ -n "$SINCE" ]; then
   [ -z "$AGAINST" ] || die "--since and --against CONTRADICT: --against names the branch's merge target, --since names the green this increment rests ON. Pick one."
   [ "$FOREIGN" = "0" ] || die "--foreign and --since CONTRADICT: a foreign checkout has no ledger of OUR greens (§7.1a)."
 fi
+# A GATE SPEC IS CODE, checked before a ticket exists: a fragmenting gate list
+# costs a whole tenure and produces a RED THAT LOOKS LIKE DILIGENCE.
+gate_reason="$(gate_spec_refusal "$(gates_planned)")" && die "$gate_reason"
 stamp_version_guard      # a NEW ticket from a pre-rebase worktree is refused here
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
@@ -2568,17 +2700,17 @@ done
 # normal path runs them INSIDE one.  One implementation, two callers.
 rc=0
 run_gates() {                         # "cmd; cmd" -> sets rc
-  local g old_ifs
-  old_ifs="$IFS"; IFS=';'
-  for g in $1; do
-    IFS="$old_ifs"
+  # READ FROM gate_split, never from IFS word splitting: `IFS=';'` knows
+  # nothing about quotes, which is how ONE command became five gates.
+  local g
+  while IFS= read -r g; do
     g="$(printf '%s' "$g" | sed -e 's/^ *//' -e 's/ *$//')"
-    [ -n "$g" ] || { IFS=';'; continue; }
+    [ -n "$g" ] || continue        # refused at enqueue; belt for a direct caller
     say "=== gate: $g ==="
     nice -n "$NICE" sh -c "$g" || { rc=1; say "  GATE FAILED: $g"; }
-    IFS=';'
-  done
-  IFS="$old_ifs"
+  done <<EOF
+$(gate_split "$1")
+EOF
 }
 
 

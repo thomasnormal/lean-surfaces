@@ -3632,3 +3632,72 @@ the report to the coordinator so it can go out verbatim.
 
 `backlog-index.sh` **62 ok** (47 → 62), docs_check 91/91, and the live tree
 measured before and after. No Lean executed.
+
+## 2026-08-24-qol-52 — a gate spec is code, and `IFS=';'` does not know that
+
+`--gates` was split with `IFS=';'`, which is shell word splitting and knows
+nothing about quotes. The ES lane's
+
+```
+python3 -c "import json; d=json.load(...); assert ...; print(...)"
+```
+
+became four fragments, each run as its own gate, each failing: a green build
+with false GATE FAILED lines nominally about a JSON file, **not one of which
+read the file**.
+
+> "A red that looks like diligence is worse than no gate, because the natural
+> repair is to make the red go away — which would have left the register
+> permanently unchecked." (ES)
+
+That sentence is quoted in the fix, because it is the reason this **refuses**
+rather than repairing quietly: the fragments were not a broken gate, they were
+a convincing one.
+
+### Mechanism, and why refusing costs nothing extra
+
+Detecting "a `;` inside quotes" needs the same quote-aware scan as splitting
+correctly, so the two options cost the same and the tool does **both**:
+`gate_split` splits only on **unquoted** `;` (so nothing can ever be silently
+fragmented), and `gate_spec_refusal` refuses the ES shape at enqueue, before a
+ticket exists. Measured: refuses `gate 4`, **0 tickets created**.
+
+**One acceptance clause could not be taken literally.** "An unquoted `;` must
+refuse" would refuse the **default floor itself** — its own two separators are
+unquoted semicolons — and with them every tenure. The reading that survives
+contact: an unquoted `;` that yields an **empty gate** (`a;; b`) is a stray,
+and `run_gates` used to swallow it via `[ -n "$g" ] || continue`, so a
+mistyped separator could remove a *check* without removing a *line*. That is
+refused. A **trailing** `;` is measured, not assumed, and behaves differently:
+command substitution strips trailing newlines, so no empty fragment ever
+reaches the reader and nothing is lost — accepted, with a row saying so.
+
+### And I broke a self-test into a real tenure while fixing it
+
+To let a row call `run_gates`, I **moved** it above the self-test block with a
+scripted slice. The move mangled the file: `--self-test` still parsed
+(`SELF_TEST=1` confirmed by trace) but the guard never fired, and the run fell
+through into a **real enqueue against the live queue**, waiting behind three
+other lanes' tickets.
+
+Nothing was left behind — the EXIT trap removed the ticket when `timeout`
+killed it, verified against `/tmp/ls-build-queue` — but the lesson is the
+lane's own: **a self-test that can reach the live queue is the ci.sh recursion
+incident wearing different clothes.** Two corrections taken:
+
+* **Nothing existing was moved in the re-application.** The three new
+  functions go *above* the guard; `run_gates` stays exactly where it was. The
+  rows that needed `run_gates` now assert on `gate_split`, which is the
+  guarantee `run_gates` consumes — the honest test, and it needs no surgery.
+* **Every debug probe now uses `LS_QUEUE`/`LS_LOCK` overrides.** Mine did not,
+  for three probes, which is how a broken build reached the real queue at all.
+
+Also re-learned: piping a hanging run to `tail` shows nothing, because the
+pipe buffers. Redirect to a file — the same sizing lesson as the 64KB pipe.
+
+### Triad
+
+`triad.sh` **317 ok** (299 → 317), `--verify-guards` 32 ok, and check 87,
+laws 45, sites 57, backlog-index 62, diagnose 51, new-proof 31, analogues 28,
+substrate 25, editions 12, dupes 10, a6-guard 8, docs_check 91/91. Live queue
+verified untouched (3 tickets). No Lean executed.

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**290 entries across 17 lanes.** Regenerate with
+**291 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -39,6 +39,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-architecture-55` |  | A verdict certifies a tree, never a title | architecture |
 | `2026-08-24-architecture-54` |  | When the ambient verdict is constant, every bit is in the pin | architecture |
 | `2026-08-24-architecture-53` |  | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |
+| `2026-08-24-qol-52` |  | a gate spec is code, and `IFS=';'` does not know that | qol |
 | `2026-08-24-architecture-52` |  | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
 | `2026-08-24-qol-51` |  | the id goes first, INBOUND becomes a title prefix | qol |
 | `2026-08-24-qol-50` |  | nothing checked whether a ticket's base had ever been green | qol |

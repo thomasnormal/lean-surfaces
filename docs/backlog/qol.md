@@ -4362,3 +4362,72 @@ remote, and a path that does not exist, both allow.
 `triad.sh` **356 ok** (350 → 356), check 113, backlog-index 62, laws 45,
 sites 57, comment-forms 18, `--verify-guards` 44, docs_check 91/91. Fixtures
 only. No Lean executed.
+
+## 2026-08-24-qol-61 — the coverage sentence was refutable from the log it was printed in
+
+Item 16. pyc's tenure classified `docs` (correctly: 3 files, 0 `.lean`), then
+elaborated Lean for **38 minutes**, then closed with *"docs-only: NO Lean was
+elaborated … evidence about NOTHING in the model."*
+
+Re-measured from `/private/tmp/pyc5_docs2.log`, and the numbers are worse than
+reported: `CLASSIFICATION: docs` at 14:13:19, `lake build <all default
+targets>` at 14:16:17, `BUILD GREEN` at 14:54:05, and **1056** axiom
+info-lines — not 996 — above the sentence denying any of it happened.
+
+> The classification chooses the SCOPE; only the run can say what was COVERED.
+
+The classification drove the **sentence** while the gate list drove the
+**work**, and the two were never reconciled. The error direction is safe — it
+claims less than was done — but a §5.4a line must be exact, because a reader
+deciding whether that green covers a Lean claim would wrongly discount it. And
+**a sentence refutable from the log it is printed in teaches every reader to
+stop trusting the line**, which costs more than the one wrong verdict.
+
+### Derived from what ran
+
+`coverage_from_run` reads `BUILD_TARGETS` — what lake was actually given —
+and never reads the class: no target list → full; a list → scoped, naming it.
+It *cannot* print the docs sentence after a build, because it cannot see the
+class. The classification keeps its own line beside it:
+
+```
+COVERAGE (§5.4a): full: a green covers every default target at this sha (lake was given no target list).
+  classification: docs — it chose the build SCOPE; the line above is what RAN
+```
+
+The projection printed during classification is now **labelled** a projection
+(`COVERAGE IF THIS CLASS DRIVES THE BUILD`) rather than stated as a verdict —
+nothing has run at that point. The no-tenure path keeps the docs sentence,
+correct by construction: nothing was built.
+
+### And why a docs ticket spends a tenure
+
+Correct behaviour — the gates rule keeps it, since this script cannot know
+whether a lane's gate starts Lean — but a 38-minute docs tenure with no
+explanation reads as a tool error. It now says so, and names the cause:
+
+```
+docs class, TENURE TAKEN ANYWAY: the lane brought its own gates and this
+  script cannot know whether one starts Lean (A11, never downgrade)
+  and they need the runner: leanmodels-run — so this tenure WILL elaborate,
+  whatever the class says
+```
+
+### Both directions, and one fixture that lied
+
+Eleven rows: unit-level (no list → full, a list → scoped, and a built run can
+never claim docs-only) and through the flag path both ways — docs class with
+runner-needing gates prints build-derived coverage with the banner, a true
+docs-only run keeps its sentence, takes no tenure, and prints no banner.
+
+The runner-naming row failed at first, and the fixture was at fault: its
+lakefile declared **no `[[lean_exe]]`**, so `gate_runner_targets` had no runner
+to name. A fixture missing the declaration the feature reads makes its row
+pass or fail for the wrong reason. Declared, with the reason recorded beside
+it.
+
+### Triad
+
+`triad.sh` **367 ok** (356 → 367), check 113, backlog-index 62, laws 45,
+sites 57, comment-forms 18, `--verify-guards` 44, docs_check 91/91. Fixtures
+only; live queue empty. No Lean executed.

@@ -1047,7 +1047,7 @@ increment_coverage() {  # class -> the composed statement, ending in the clause
          "$named" "$root_class" "$(ledger_field "$SINCE_LINE" targets)" "$(ledger_field "$SINCE_LINE" at)"
   printf '  root       %s (%s)\n' "$BASE_SHA" \
          "$( [ "$root_full" = "yes" ] && echo 'FULL build' || echo 'scoped — see the merge bar below' )"
-  printf '  %s\n' "$(coverage_statement "$1")"
+  printf '  %s\n' "$(coverage_from_run)"
   # THE CLAUSE IS UNCONDITIONAL, including when the base was a full build:
   # what it guards against is the READING, not the base.
   printf '  This green is evidence about THE INCREMENT ON TOP OF THAT GREEN and nothing\n'
@@ -1059,6 +1059,32 @@ increment_coverage() {  # class -> the composed statement, ending in the clause
   else
     printf '  MERGE BAR: NOT SATISFIED — the chain root is SCOPED, so no green in this chain\n'
     printf '             covers what a scoped build leaves out. Take one full green.\n'
+  fi
+}
+
+# WHAT A GREEN IS EVIDENCE OF, DERIVED FROM WHAT RAN (pyc, 2026-08-24).
+#
+# The §5.4a sentence was driven by the CLASSIFICATION while the WORK was driven
+# by the gate list, and the two were never reconciled.  A pyc tenure classified
+# `docs` (correctly: 3 files, 0 .lean), then elaborated Lean for THIRTY-EIGHT
+# MINUTES because its lane gates need `leanmodels-run` -- and closed by
+# printing "docs-only: NO Lean was elaborated ... evidence about NOTHING in the
+# model", with 1056 axiom info-lines above it in the same file.
+#
+# The error direction is safe -- it claims LESS than was done -- but a §5.4a
+# line must be exact, because a later reader deciding whether that green covers
+# a Lean claim would wrongly discount it.  And a sentence REFUTABLE FROM THE
+# LOG IT IS PRINTED IN teaches every reader to stop trusting the line.
+#
+# > The classification chooses the SCOPE; only the run can say what was COVERED.
+#
+# So the sentence is read off `BUILD_TARGETS` -- what lake was actually told to
+# build -- and the classification keeps its own line beside it.
+coverage_from_run() {   # -> what a green from THIS RUN is evidence of
+  if [ -z "${BUILD_TARGETS:-}" ]; then
+    printf 'full: a green covers every default target at this sha (lake was given no target list).'
+  else
+    printf 'scoped: a green covers %s and everything they IMPORT. It does NOT cover modules that import THEM, nor any untouched tier, and it is not evidence about master beyond that scope.' "$BUILD_TARGETS"
   fi
 }
 
@@ -2215,7 +2241,10 @@ if [ "$SELF_TEST" = "1" ]; then
   echo "  -- flag paths"
   fr="$tmp/flagrepo"; mkdir -p "$fr/LeanModels" "$fr/docs"; git init -q "$fr" 2>/dev/null
   git -C "$fr" config user.email qol@example; git -C "$fr" config user.name qol
-  printf 'name = "x"\n[[lean_lib]]\nname = "LeanModels"\n' > "$fr/lakefile.toml"
+  # AN EXE IS DECLARED, because `gate_runner_targets` reads the lakefile: a
+  # fixture with no `[[lean_exe]]` has no runner to name, and the row that
+  # checks the banner names one would pass or fail for the wrong reason.
+  printf 'name = "x"\n[[lean_lib]]\nname = "LeanModels"\n[[lean_exe]]\nname = "leanmodels-run"\nroot = "Main"\n' > "$fr/lakefile.toml"
   printf -- '-- m\n' > "$fr/LeanModels/M.lean"; printf '# d\n' > "$fr/docs/a.md"
   git -C "$fr" add -A; git -C "$fr" commit -qm base
   frstub="$tmp/frstub"; mkdir -p "$frstub"
@@ -2242,6 +2271,45 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a classify TICKET plans the floor"    "$(gates_planned)" "$DEFAULT_FLOOR"
   CLASSIFY_ONLY=1; GATES="python3 given.py"
   check "  ...classify-ONLY takes them as given" "$(gates_planned)" "python3 given.py"
+
+  # ---- COVERAGE IS DERIVED FROM WHAT RAN (pyc's 38-minute "docs-only" green)
+  # The sentence was driven by the CLASSIFICATION while the WORK was driven by
+  # the gate list.  A docs-classified tenure elaborated for 38 minutes and then
+  # printed "NO Lean was elaborated", refutable from 1056 axiom lines above it.
+  saved_bt="$BUILD_TARGETS"
+  BUILD_TARGETS=""
+  check "no target list means a FULL green"    "$(coverage_from_run | grep -c 'every default target')" "1"
+  BUILD_TARGETS="LeanModels.Py LeanModels.Sv"
+  check "a target list means a SCOPED green"   "$(coverage_from_run | grep -c 'covers LeanModels.Py LeanModels.Sv and everything they IMPORT')" "1"
+  # THE DEFECT ITSELF: a docs CLASS with a build that ran must never say the
+  # docs sentence.  coverage_from_run cannot: it never reads the class.
+  BUILD_TARGETS=""
+  check "a built run never claims docs-only"   "$(coverage_from_run | grep -c 'NO Lean was elaborated')" "0"
+  BUILD_TARGETS="$saved_bt"
+
+  # ...and through the FLAG path, both directions the brief names.
+  git -C "$fr" rm -q --cached LeanModels/M.lean >/dev/null 2>&1 || true
+  git -C "$fr" checkout -q -- . 2>/dev/null || true
+  printf '# more\n' >> "$fr/docs/a.md"; git -C "$fr" add -A
+  git -C "$fr" -c user.email=q@e -c user.name=q commit -qm docs-only
+  out="$(flagrun --classify --against HEAD~1 --gates-only 'python3 harness/diff_test.py')"
+  check "docs class + runner gates: BUILD-derived" \
+        "$(printf '%s' "$out" | grep -c 'COVERAGE (§5.4a): full: a green covers every default target')" "1"
+  check "  ...and it does NOT say docs-only"   \
+        "$(printf '%s' "$out" | grep -c 'COVERAGE (§5.4a): docs-only')" "0"
+  check "  ...the classification keeps its line" \
+        "$(printf '%s' "$out" | grep -c 'classification: docs')" "1"
+  check "  ...and the banner says WHY a tenure" \
+        "$(printf '%s' "$out" | grep -c 'TENURE TAKEN ANYWAY')" "1"
+  check "  ...naming the runner the gates need" \
+        "$(printf '%s' "$out" | grep -c 'need the runner: leanmodels-run')" "1"
+  # A TRUE docs-only run keeps the sentence, and takes no tenure.
+  out="$(flagrun --classify --against HEAD~1)"
+  check "true docs-only keeps its sentence"    \
+        "$(printf '%s' "$out" | grep -c 'COVERAGE (§5.4a): docs-only: NO Lean was elaborated')" "1"
+  check "  ...and takes NO tenure"             "$(printf '%s' "$out" | grep -c 'NO TENURE TAKEN')" "1"
+  check "  ...so no why-a-tenure banner"       "$(printf '%s' "$out" | grep -c 'TENURE TAKEN ANYWAY')" "0"
+
   CLASSIFY="$saved_c"; CLASSIFY_ONLY="$saved_co"; GATES="$saved_g"; LANE_GATES="$saved_lg"
 
   # ITEM 12: THE BARE REPORT, which is the Ada lane's most common invocation
@@ -3135,7 +3203,10 @@ if [ "$CLASSIFY" = "1" ]; then
   printf '  gate set  %s   (the CLASS FLOOR for `%s`)\n' "$(gate_names "$FLOOR")" "$CLASS"
   [ -n "$LANE_GATES" ] && [ "$GATES_ONLY" = "0" ] && printf '  %s\n' "(the floor, then the lane's own --gates: --gates ADDS, it never replaces)"
   gates_only_notice "$FLOOR" "$GATES_ONLY"
-  printf '  COVERAGE (§5.4a)  %s\n' "$(coverage_statement "$CLASS")"
+  # A PROJECTION, and labelled one: nothing has run at this point, so this is
+  # what the class WOULD cover if it drove the build alone.  The verdict comes
+  # from `coverage_from_run` at the end, off what lake was actually given.
+  printf '  COVERAGE IF THIS CLASS DRIVES THE BUILD (§5.4a)  %s\n' "$(coverage_statement "$CLASS")"
   gate_notice "$GATES" "$LANE_GATES"
 
   # Lean nothing imports: LOUD, but not a refusal — the file may be landing
@@ -3198,6 +3269,14 @@ if [ "$CLASSIFY" = "1" ]; then
       say "green recorded in $(green_ledger_path)"
     fi
     exit "$rc"
+  elif [ "$CLASS" = "docs" ]; then
+    # WHY A DOCS TICKET IS SPENDING A TENURE, said where the reader is looking.
+    # This is correct behaviour -- the gates rule keeps the tenure, because
+    # this script cannot know whether a lane's own gate starts Lean -- but a
+    # 38-minute docs tenure with no explanation reads as a tool error.
+    say "docs class, TENURE TAKEN ANYWAY: the lane brought its own gates and this script cannot know whether one starts Lean (A11, never downgrade)"
+    _rt="$(gate_runner_targets "$GATES")"
+    [ -n "$_rt" ] && say "  and they need the runner: $_rt — so this tenure WILL elaborate, whatever the class says"
   fi
 fi
 
@@ -3431,8 +3510,11 @@ say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green ||
 [ "$FOREIGN" = "1" ] && say "COVERAGE (§5.4a): $(foreign_coverage)"
 if [ -n "$SINCE" ]; then
   increment_coverage "$CLASS" | while IFS= read -r _l; do say "COVERAGE (§5.4a-i): $_l"; done
-elif [ -n "$CLASS" ]; then
-  say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
+elif [ "$FOREIGN" = "0" ]; then
+  # DERIVED FROM THE RUN, never from the class.  This path always built, so a
+  # docs classification here does NOT mean nothing was elaborated.
+  say "COVERAGE (§5.4a): $(coverage_from_run)"
+  [ -n "$CLASS" ] && say "  classification: $CLASS — it chose the build SCOPE; the line above is what RAN"
 fi
 [ -n "$GATE_BUILT" ] && say "COVERAGE (§5.4a): gate phase additionally built: $GATE_BUILT"
 

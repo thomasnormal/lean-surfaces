@@ -3701,3 +3701,81 @@ pipe buffers. Redirect to a file — the same sizing lesson as the 64KB pipe.
 laws 45, sites 57, backlog-index 62, diagnose 51, new-proof 31, analogues 28,
 substrate 25, editions 12, dupes 10, a6-guard 8, docs_check 91/91. Live queue
 verified untouched (3 tickets). No Lean executed.
+
+## 2026-08-24-qol-53 — the politeness line was reading a high-water mark
+
+The C lane's finding, and it explains the whole day. `check.sh --iterate`'s
+swap refusal read `sysctl vm.swapusage` **used** — swap *allocated and not
+reclaimed*, a HIGH-WATER MARK. A box that swapped once had A17 closed for the
+rest of its uptime. ~30 consecutive refusals, every lane forced into
+one-shot-compile, three red tenures that a 15-second scratch check would have
+caught — each paying a ~2000s queue cycle instead. All of it an instrument
+artifact.
+
+Re-measured here while writing the fix, every number at the same moment:
+
+```
+vm.swapusage used ....... 8630M of 10240M = 84.3%   -> REFUSED at the 50% line
+memory_pressure ......... 52% system-wide FREE      -> 48% in use, permits
+kern.memorystatus_vm_pressure_level ... 1 (normal)
+load .................... 3.5 against a line of 10
+```
+
+> **A refusal is only as good as the quantity it refuses on, and a high-water
+> mark is a record of the past wearing the units of the present.**
+
+**The line did not move.** 50% stays exactly where it was — the finding was
+the instrument, not the threshold, and the C lane's own reason for not
+touching it holds: *"my lane is blocked" is the worst reason to move a shared
+safety line.* Linux's `/proc/meminfo` SwapFree was already current-state and
+is untouched. `LS_ITERATE_MAX_SWAP_PCT` still works as an alias so no
+wrapper breaks.
+
+**Every line now names its instrument and platform**, because "swap 88.5%" was
+believable precisely *because* it was unlabelled:
+
+```
+memory pressure is 87.3% in use per memory_pressure:free%(macos), over the line of 50%
+STATE  load 3.93 (line 10), memory pressure 50.0% (line 50%) via memory_pressure:free%(macos)
+```
+
+Both parsers are fixture-tested on **canned output**, since neither can be
+exercised on the other platform's box: a recorded `/proc/meminfo` (50.0%,
+plus the swapless-box case), this machine's verbatim `memory_pressure` text
+(52% free → 48.0% in use), and the kernel-level fallback mapped onto the same
+0-100 line (1→0 normal, 2→75 warn, 4→100 critical). The refusal path still
+executes, and **absence is not pressure**: an unreadable instrument reports
+`0 unavailable(no-instrument)` and PERMITS — a courtesy line that blocks
+because it could not measure is this same defect one level down.
+
+### A second stale number, found by my own probe
+
+`stop_reason="$(machine_is_quiet)"` runs it in a **subshell**, so the numbers
+that call measured died with it and the STOP line printed the values from the
+**start** of the run — a fresh verdict beside a stale reading, the same family
+as the bug being fixed. Called directly now, with the reason returned in
+`QUIET_REASON`. Three rows pin it, including one asserting that the subshell
+form loses them. **Fifth encounter with this trap** in this lane.
+
+### Live, on this box, after
+
+```
+instrument : memory_pressure:free%(macos)
+pressure   : 50.0% (line 50%)      load: 3.93 (line 10)
+VERDICT    : PERMIT — iteration is open
+```
+
+**Worth flagging rather than acting on:** this box currently sits *exactly*
+at the line, so iteration may flap here until memory frees. That is now a real
+current-state signal rather than an artifact — but note the kernel's own
+pressure level says `1 (normal)` at the same moment, which suggests
+`100 − free%` is a stricter notion of pressure than the kernel's. Whether the
+*number* should be the kernel level rather than the free complement is a
+choice about a shared safety line, so it belongs to the C lane and the
+coordinator, not to me.
+
+### Triad
+
+`check.sh` **104 ok** (87 → 104), and triad 317, laws 45, sites 57,
+backlog-index 62, diagnose 51, `--verify-guards` 32, docs_check 91/91. No Lean
+executed; live queue untouched.

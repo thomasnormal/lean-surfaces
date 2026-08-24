@@ -34,7 +34,7 @@
 # --iterate — THE PROOF-ITERATION CASE, AND IT IS A COURTESY PROTOCOL.
 #
 # Read this before using it.  `--iterate` runs Lean OUTSIDE the build lock.
-# Everything it does to stay polite — the load line, the swap line, the
+# Everything it does to stay polite — the load line, the memory-pressure line, the
 # machine-wide single-slot, yielding to the owner's workloads — is COURTESY:
 # checked at the moment it starts, and not enforced by anything afterwards.
 # Another lane can take a tenure a second later, the machine can fill up, and
@@ -54,12 +54,13 @@
 #      test.  Two lanes iterating is the shape that took the box down at
 #      load 29, just smaller.
 #   2. load average below 10          — refused by number, not by feel
-#   3. swap below 50%                 — likewise
+#   3. memory pressure below 50%      — likewise, and it is a CURRENT-STATE
+#      reading on both platforms (macOS read a HIGH-WATER mark until 2026-08-24)
 #   4. every project import already has an olean (the warm-clone rule again)
 #
 # And the STOP condition MIRRORS THE START, on both axes: the same function
 # decides both, so a loop whose machine degrades mid-flight is refused its
-# NEXT run, by number.  (Load and swap never kill a run in progress — only the
+# NEXT run, by number.  (Load and pressure never kill a run in progress — only the
 # RSS ceiling does that.)
 #
 # A11 is not being weakened.  The lock exists because concurrent BUILDS took
@@ -96,7 +97,10 @@ ITERATE=0
 LANE=""
 ITER_DIR="${LS_ITERATE_DIR:-/tmp/ls-iterate}"    # MACHINE-WIDE, one live entry
 MAX_LOAD="${LS_ITERATE_MAX_LOAD:-10}"
-MAX_SWAP_PCT="${LS_ITERATE_MAX_SWAP_PCT:-50}"
+# THE LINE IS UNCHANGED AT 50: the C lane's finding was the INSTRUMENT, not
+# the threshold, and "my lane is blocked" is the worst reason to move a shared
+# safety line.  The old env name still works so nobody's wrapper breaks.
+MAX_PRESS_PCT="${LS_ITERATE_MAX_PRESSURE_PCT:-${LS_ITERATE_MAX_SWAP_PCT:-50}}"
 # 3 GB, and deliberately STRICTER than A16's 5 GB per-process tenure line: a
 # tenure has a watchdog and a lock behind it, an unticketed iterate has only
 # this.  It kills, it does not pause.
@@ -299,19 +303,73 @@ read_load() {                   # 1-minute load average
   sysctl -n vm.loadavg 2>/dev/null | awk '{ gsub(/[{}]/, ""); print $1 }'
 }
 
-read_swap_pct() {               # swap in use, as a percentage of total
-  [ -n "${LS_MOCK_SWAP:-}" ] && { printf '%s\n' "$LS_MOCK_SWAP"; return 0; }
-  if [ -r /proc/meminfo ]; then
+# ---- WHAT THE POLITENESS LINE MEASURES (the C lane, 2026-08-24)
+#
+# THIS READ `sysctl vm.swapusage` "used", WHICH IS A HIGH-WATER MARK, NOT A
+# PRESSURE READING.  On macOS that figure is swap ALLOCATED AND NOT RECLAIMED:
+# once a box has swapped, it stays high for the rest of its uptime whatever the
+# machine is doing now.  So a box that swapped once had A17 closed all day.
+#
+# Measured on this box while writing the fix — every number at the same moment:
+#
+#   vm.swapusage used ......... 8630M of 10240M = 84.3%   -> REFUSED at the 50% line
+#   memory_pressure ........... 52% system-wide FREE      -> 48% in use, permits
+#   kern.memorystatus_vm_pressure_level ... 1 (normal)
+#   load ...................... 3.5 against a line of 10
+#
+# ~30 consecutive refusals across one session, every lane forced into
+# one-shot-compile, and three red tenures that a 15-second scratch check would
+# have caught — each paying a ~2000s queue cycle instead.  ALL OF IT AN
+# INSTRUMENT ARTIFACT.
+#
+# THE LINE IS NOT THE PROBLEM AND IS NOT MOVED.  50% stays exactly where it
+# was; what changes is that the number fed to it is a CURRENT-STATE reading on
+# both platforms.  Linux's /proc/meminfo SwapFree was already current-state and
+# is untouched.
+#
+# > A refusal is only as good as the quantity it refuses on, and a high-water
+# > mark is a record of the past wearing the units of the present.
+#
+# AND THE NUMBER MUST NAME ITS INSTRUMENT.  "swap 88.5%" was believable
+# precisely because it was unlabelled — it read as a pressure reading and was
+# a uptime-long memory of one bad minute.  Every line below carries the
+# instrument and the platform, so the next person to doubt it can check the
+# same source in one command.
+read_pressure() {               # -> "<pct-in-use> <instrument>"
+  [ -n "${LS_MOCK_PRESSURE:-}" ] && { printf '%s\n' "$LS_MOCK_PRESSURE"; return 0; }
+  local mi mp lvl free
+  # LINUX: SwapTotal/SwapFree is a CURRENT-STATE reading and always was.
+  mi="${LS_MOCK_MEMINFO:-/proc/meminfo}"
+  if [ -r "$mi" ]; then
     awk '/^SwapTotal:/{t=$2} /^SwapFree:/{f=$2}
-         END{ if (t+0 <= 0) print 0; else printf "%.1f", (t-f)*100/t }' /proc/meminfo
+         END{ if (t+0 <= 0) printf "0 meminfo:no-swap\n"
+              else printf "%.1f meminfo:SwapTotal-SwapFree(linux)\n", (t-f)*100/t }' "$mi"
     return 0
   fi
-  sysctl -n vm.swapusage 2>/dev/null | awk '{
-      for (i = 1; i <= NF; i++) {
-        if ($i == "total") { v = $(i+2); gsub(/[^0-9.]/, "", v); t = v }
-        if ($i == "used")  { v = $(i+2); gsub(/[^0-9.]/, "", v); u = v }
-      }
-      if (t+0 <= 0) print 0; else printf "%.1f", u*100/t }'
+  # macOS: the free percentage is what `memory_pressure` calls system-wide
+  # free, which is a reading of NOW.  In-use is its complement, so the same
+  # 50% line means the same thing it always did.
+  if [ -n "${LS_MOCK_MEMPRESSURE:-}" ]; then mp="$LS_MOCK_MEMPRESSURE"
+  else mp="$(timeout 15 memory_pressure 2>/dev/null || true)"; fi
+  free="$(printf '%s\n' "$mp" | awk '/System-wide memory free percentage/ {
+            v = $NF; gsub(/[^0-9.]/, "", v); if (v != "") { print v; exit } }')"
+  if [ -n "$free" ]; then
+    awk -v f="$free" 'BEGIN{ printf "%.1f memory_pressure:free%%(macos)\n", 100 - f }'
+    return 0
+  fi
+  # FALLBACK, still a pressure instrument: the kernel's own level.  Mapped onto
+  # the same 0-100 scale so ONE line governs both platforms — 1 normal, 2 warn,
+  # 4 critical.
+  lvl="${LS_MOCK_PRESSURE_LEVEL:-$(sysctl -n kern.memorystatus_vm_pressure_level 2>/dev/null || true)}"
+  case "$lvl" in
+    1) printf '0 memorystatus_vm_pressure_level=1-normal(macos)\n'; return 0 ;;
+    2) printf '75 memorystatus_vm_pressure_level=2-warn(macos)\n'; return 0 ;;
+    4) printf '100 memorystatus_vm_pressure_level=4-critical(macos)\n'; return 0 ;;
+  esac
+  # ABSENCE IS NOT PRESSURE.  A courtesy line that blocks because it could not
+  # measure is the defect this whole entry is about, one level down — so an
+  # unreadable instrument permits and SAYS it permitted blind.
+  printf '0 unavailable(no-instrument)\n'
 }
 
 over() {                        # over A B -> 0 when A > B, in floating point
@@ -373,16 +431,26 @@ iterate_live_holder() {         # -> the contents of the live entry, or ''
 
 # ONE function decides START and STOP, so "the stop mirrors the start" is true
 # by construction rather than by two lists agreeing.
+QUIET_REASON=""
 machine_is_quiet() {            # -> '' when quiet, else the reason, by number
-  local l s
-  l="$(read_load)"; s="$(read_swap_pct)"
-  ITER_LOAD="$l"; ITER_SWAP="$s"
+                                #    (also sets QUIET_REASON + the ITER_* numbers)
+  local l p
+  l="$(read_load)"
+  # "<pct> <instrument>" in ONE value: the number and what produced it cannot
+  # drift apart, and a subshell cannot hand back two variables anyway.
+  p="$(read_pressure)"
+  ITER_LOAD="$l"; ITER_PRESS="${p%% *}"; ITER_PRESS_SRC="${p#* }"
   if over "$l" "$MAX_LOAD"; then
-    echo "load average is $l, over the line of $MAX_LOAD"; return 0
+    QUIET_REASON="load average is $l, over the line of $MAX_LOAD"
+    echo "$QUIET_REASON"; return 0
   fi
-  if over "$s" "$MAX_SWAP_PCT"; then
-    echo "swap is ${s}% in use, over the line of ${MAX_SWAP_PCT}%"; return 0
+  if over "$ITER_PRESS" "$MAX_PRESS_PCT"; then
+    # THE INSTRUMENT IS PART OF THE REASON.  An unlabelled percentage is what
+    # made a uptime-long high-water mark read as a pressure reading.
+    QUIET_REASON="memory pressure is ${ITER_PRESS}% in use per ${ITER_PRESS_SRC}, over the line of ${MAX_PRESS_PCT}%"
+    echo "$QUIET_REASON"; return 0
   fi
+  QUIET_REASON=""
   echo ""
 }
 
@@ -408,11 +476,12 @@ a17_status() {                  # -> absent | draft | adopted
   case "$row" in *DRAFT*|*draft*) echo draft ;; *) echo adopted ;; esac
 }
 
-ITER_LOAD=""; ITER_SWAP=""
+ITER_LOAD=""; ITER_PRESS=""; ITER_PRESS_SRC=""
 decide_iterate() {              # sets VERDICT / WHY / MISSING, and the numbers
-  local holder reason
+  local holder reason _p
   VERDICT=""; WHY=""; MISSING=""
-  ITER_LOAD="$(read_load)"; ITER_SWAP="$(read_swap_pct)"
+  ITER_LOAD="$(read_load)"
+  _p="$(read_pressure)"; ITER_PRESS="${_p%% *}"; ITER_PRESS_SRC="${_p#* }"
   if holder="$(iterate_live_holder)"; then
     VERDICT="refuse-concurrent"
     WHY="an iterate is already running MACHINE-WIDE ($holder). One slot total, whatever lane holds it: two single-file elaborations are the shape that took the machine down at load 29, just smaller"
@@ -423,8 +492,8 @@ decide_iterate() {              # sets VERDICT / WHY / MISSING, and the numbers
     case "$reason" in
       load*) VERDICT="refuse-load"
              WHY="$reason. Lock-free iteration is a courtesy permitted on a QUIET machine, and this one is not quiet" ;;
-      *)     VERDICT="refuse-swap"
-             WHY="$reason. A swapping machine turns one elaboration into everybody's slowdown" ;;
+      *)     VERDICT="refuse-pressure"
+             WHY="$reason. A machine under memory pressure turns one elaboration into everybody's slowdown" ;;
     esac
     return 0
   fi
@@ -435,7 +504,7 @@ decide_iterate() {              # sets VERDICT / WHY / MISSING, and the numbers
     return 0
   fi
   VERDICT="iterate"
-  WHY="conditions met — lock-free per A17: load $ITER_LOAD < $MAX_LOAD, swap ${ITER_SWAP}% < ${MAX_SWAP_PCT}%, imports warm, the machine-wide iterate slot is free. COURTESY ONLY — yields to owner workloads (Thomas's own processes have absolute priority, A11), and the sole guarantee is the $((ITER_RSS_LIMIT_KB / 1048576)) GB RSS ceiling, which KILLS"
+  WHY="conditions met — lock-free per A17: load $ITER_LOAD < $MAX_LOAD, memory pressure ${ITER_PRESS}% < ${MAX_PRESS_PCT}% per ${ITER_PRESS_SRC}, imports warm, the machine-wide iterate slot is free. COURTESY ONLY — yields to owner workloads (Thomas's own processes have absolute priority, A11), and the sole guarantee is the $((ITER_RSS_LIMIT_KB / 1048576)) GB RSS ceiling, which KILLS"
   return 0
 }
 
@@ -558,7 +627,7 @@ TOML
   echo "  -- iterate"
   ITER_DIR="$tmp/iter"; mkdir -p "$ITER_DIR"
   LANE="testlane"; ITERATE=1
-  export LS_MOCK_LOAD=1.0 LS_MOCK_SWAP=5.0
+  export LS_MOCK_LOAD=1.0 LS_MOCK_PRESSURE="5.0 mock:fixture"
 
   decide_iterate LeanModels/Core/New.lean
   check "a quiet machine + warm clone -> iterate" "$VERDICT" "iterate"
@@ -569,19 +638,74 @@ TOML
   check "  ...on a LIBRARY file the ticket path refuses" \
         "$(decide LeanModels/Core/New.lean; echo "$VERDICT")" "refuse-library"
 
+
+  # ---- BOTH PLATFORMS' PARSERS, on CANNED OUTPUT (the C lane's finding)
+  # Neither parser can be exercised on the other platform's box, so both are
+  # driven from recorded text.  The macOS numbers below are this machine's
+  # real readings at the moment the fix was written.
+  echo "  -- pressure instruments"
+  saved_press="${LS_MOCK_PRESSURE:-}"; unset LS_MOCK_PRESSURE
+  mfile="$tmp/meminfo"
+  printf 'MemTotal:       16384000 kB\nSwapTotal:       2097152 kB\nSwapFree:        1048576 kB\n' > "$mfile"
+  check "linux: SwapFree is CURRENT state"     "$(LS_MOCK_MEMINFO="$mfile" read_pressure | awk '{print $1}')" "50.0"
+  check "  ...and it names its instrument"     "$(LS_MOCK_MEMINFO="$mfile" read_pressure | awk '{print $2}')" "meminfo:SwapTotal-SwapFree(linux)"
+  printf 'SwapTotal:             0 kB\nSwapFree:              0 kB\n' > "$tmp/meminfo0"
+  check "  ...a swapless box is 0, not an error" "$(LS_MOCK_MEMINFO="$tmp/meminfo0" read_pressure)" "0 meminfo:no-swap"
+
+  # macOS, verbatim from `memory_pressure` on this box: 52% free -> 48% in use,
+  # against the same 50% line the high-water reading was failing at 84.3%.
+  mp="$(printf 'Pageins: 210948053\nPageouts: 1145554\n\nSystem-wide memory free percentage: 52%%\n')"
+  check "macos: free%% becomes in-use"          "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print $1}')" "48.0"
+  check "  ...naming instrument AND platform"   "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print $2}')" "memory_pressure:free%(macos)"
+  # THE REGRESSION THIS FIXES, as a row: the same box, both instruments.
+  check "  ...and 48%% PERMITS where 84.3%% refused" \
+        "$(LS_MOCK_PRESSURE="$(LS_MOCK_MEMPRESSURE="$mp" read_pressure)" machine_is_quiet)" ""
+  check "  ...while the high-water number would have refused" \
+        "$(LS_MOCK_PRESSURE="84.3 vm.swapusage:used(high-water)" machine_is_quiet | grep -c 'over the line')" "1"
+
+  # The kernel level is the fallback, mapped onto the SAME 0-100 line.
+  nomp="no free percentage in this output"
+  check "macos: level 1 is normal"              "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=1 read_pressure)" "0 memorystatus_vm_pressure_level=1-normal(macos)"
+  check "  ...level 2 is warn, and refuses"     "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=2 read_pressure | awk '{print $1}')" "75"
+  check "  ...level 4 is critical"              "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=4 read_pressure | awk '{print $1}')" "100"
+  check "  ...and warn actually REFUSES"        \
+        "$(LS_MOCK_PRESSURE="$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=2 read_pressure)" machine_is_quiet | grep -c 'over the line of 50%')" "1"
+
+  # ABSENCE IS NOT PRESSURE.  A courtesy line that blocks because it could not
+  # measure is this same defect one level down, so it permits and SAYS so.
+  check "no instrument at all is NAMED"         "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=0 read_pressure)" "0 unavailable(no-instrument)"
+  check "  ...and permits rather than blocking" \
+        "$(LS_MOCK_PRESSURE="0 unavailable(no-instrument)" machine_is_quiet)" ""
+  [ -n "$saved_press" ] && export LS_MOCK_PRESSURE="$saved_press"
+
   # THE STOP MIRRORS THE START: one function, asserted on both axes.
   check "quiet machine -> no stop reason"         "$(machine_is_quiet)" ""
   check "stop mirrors start on LOAD"              "$(LS_MOCK_LOAD=42.5 machine_is_quiet)" \
         "load average is 42.5, over the line of 10"
-  check "stop mirrors start on SWAP"              "$(LS_MOCK_SWAP=87.3 machine_is_quiet)" \
-        "swap is 87.3% in use, over the line of 50%"
+  check "stop mirrors start on PRESSURE"          "$(LS_MOCK_PRESSURE="87.3 mock:fixture" machine_is_quiet)" \
+        "memory pressure is 87.3% in use per mock:fixture, over the line of 50%"
+  # THE INSTRUMENT IS IN THE REFUSAL, because an unlabelled percentage is what
+  # let a high-water mark pass for a pressure reading for a whole day.
+  check "  ...and the reason NAMES its instrument" \
+        "$(LS_MOCK_PRESSURE="87.3 memory_pressure:free%(macos)" machine_is_quiet | grep -c 'per memory_pressure:free%(macos)')" "1"
+  # THE STOP LINE MUST PRINT WHAT IT JUST MEASURED.  `$(machine_is_quiet)` is
+  # a SUBSHELL: the numbers it takes die with it, and the STOP line then shows
+  # the numbers from the START of the run beside a fresh verdict.
+  ITER_PRESS=""; ITER_PRESS_SRC=""
+  LS_MOCK_PRESSURE="7.5 mock:stop-path" machine_is_quiet >/dev/null
+  check "the STOP path keeps the numbers it took" "$ITER_PRESS $ITER_PRESS_SRC" "7.5 mock:stop-path"
+  check "  ...and the reason comes back too"      "$QUIET_REASON" ""
+  ITER_PRESS=""; ITER_PRESS_SRC=""
+  _ignored="$(LS_MOCK_PRESSURE="7.5 mock:subshell" machine_is_quiet)"
+  check "  ...while a subshell call loses them"   "$ITER_PRESS$ITER_PRESS_SRC" ""
+
   LS_MOCK_LOAD=42.5 decide_iterate LeanModels/Core/New.lean
   check "high load refuses"                       "$VERDICT" "refuse-load"
   check "  ...with the STOP function's own words" "$(printf '%s' "$WHY" | grep -c 'load average is 42.5, over the line of 10')" "1"
   LS_MOCK_LOAD=10 decide_iterate LeanModels/Core/New.lean
   check "load exactly AT the line is allowed"     "$VERDICT" "iterate"
-  LS_MOCK_SWAP=87.3 decide_iterate LeanModels/Core/New.lean
-  check "high swap refuses"                       "$VERDICT" "refuse-swap"
+  LS_MOCK_PRESSURE="87.3 mock:fixture" decide_iterate LeanModels/Core/New.lean
+  check "high pressure refuses"                   "$VERDICT" "refuse-pressure"
   check "  ...naming the NUMBER"                  "$(printf '%s' "$WHY" | grep -c '87.3')" "1"
 
   decide_iterate scratch/cold.lean
@@ -714,7 +838,7 @@ TOML
   check "1 requested, NONE printed -> REFUSED" "$(axiom_report "$ax/none.out" 0 1 | grep -c 'REFUSED')" "1"
   check "  ...the case that used to be SILENT" "$(axiom_report "$ax/none.out" 0 1 >/dev/null; echo $?)" "1"
 
-  unset LS_MOCK_LOAD LS_MOCK_SWAP LS_MOCK_LEAN_CHILD
+  unset LS_MOCK_LOAD LS_MOCK_PRESSURE LS_MOCK_LEAN_CHILD
   ITERATE=0; LANE=""
 
   echo "self-test: $ok ok, $bad failed"
@@ -756,8 +880,8 @@ else
 fi
 echo "  WHY    $WHY"
 # §5.4a: the numbers this run was PERMITTED BY ride the run.
-[ "$ITERATE" = "1" ] && printf '  STATE  load %s (line %s), swap %s%% (line %s%%), lane %s\n' \
-  "$ITER_LOAD" "$MAX_LOAD" "$ITER_SWAP" "$MAX_SWAP_PCT" "$LANE"
+[ "$ITERATE" = "1" ] && printf '  STATE  load %s (line %s), memory pressure %s%% (line %s%%) via %s, lane %s\n' \
+  "$ITER_LOAD" "$MAX_LOAD" "$ITER_PRESS" "$MAX_PRESS_PCT" "$ITER_PRESS_SRC" "$LANE"
 case "$VERDICT" in
   refuse-*)
     [ -n "$MISSING" ] && printf '  MISSING %s\n' "$(printf '%s' "$MISSING" | tr '\n' ' ')"
@@ -864,12 +988,18 @@ rm -f "$RUN_LOG"
 
 if [ "$ITERATE" = "1" ]; then
   cleanup_iterate
-  # THE STOP MIRRORS THE START: the same function, the same numbers.
-  stop_reason="$(machine_is_quiet)"
+  # THE STOP MIRRORS THE START: the same function, the same numbers — and the
+  # numbers must be the ones this call just TOOK.  `$(machine_is_quiet)` runs
+  # it in a SUBSHELL, so the ITER_* values it measured were discarded and the
+  # line below printed the numbers from the START of the run: a fresh verdict
+  # beside a stale reading, which is the same family as the instrument bug
+  # this file was just fixed for.  Called directly; the reason comes back in a
+  # global instead of on stdout.
+  machine_is_quiet >/dev/null; stop_reason="$QUIET_REASON"
   if [ -n "$stop_reason" ]; then
     echo "  STOP   $stop_reason — the NEXT run will refuse (the stop mirrors the start)"
   else
-    echo "  STOP   conditions still hold (load $ITER_LOAD, swap ${ITER_SWAP}%) — another run is permitted"
+    echo "  STOP   conditions still hold (load $ITER_LOAD, memory pressure ${ITER_PRESS}% via ${ITER_PRESS_SRC}) — another run is permitted"
   fi
 fi
 exit "$RUN_RC"

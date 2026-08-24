@@ -11,6 +11,11 @@ dependency-aware voltage-divider enclosure.
 
 namespace LeanModels.Circuit
 
+-- Loudness guard (autoImplicit ruling, 2026-08-24): without this a mistyped or
+-- unopened name is silently auto-bound rather than reported. Verified inert
+-- here -- this file binds every variable it uses -- and it is file-local.
+set_option autoImplicit false
+
 structure RatInterval where
   lower : Rat
   upper : Rat
@@ -230,5 +235,74 @@ elab "circuit_enclose" "[" formula:term "]" " with "
       all_goals first
         | assumption
         | norm_num [$lemmas,*]))
+
+/-! ## Transcendental numeric certificates (family F2)
+
+The settling examples all reduce, at their last inference, to a numeric fact
+about `exp` or `log` -- `hdeadline`, `hsmall` -- which reached the top of every
+one of them as an UNDISCHARGED hypothesis.  `DramBankCoreSpec.lean` proved one
+such constant by hand in seven bespoke lines.
+
+These four lemmas make it a DECISION PROCEDURE instead: pick a split depth `n`,
+and what remains is a rational inequality `norm_num` settles.  Nothing here is
+specific to a circuit, and nothing here rounds -- the bounds come from
+`Real.add_one_le_exp` and its mirror, so both endpoints are exact rationals.
+
+The split is what makes the procedure COMPLETE rather than merely sound: the
+one-step bound `exp (-a) <= 1/(1+a)` is far too weak for a real deadline, and
+raising the split depth tightens it without bound.
+-/
+
+/-- One step: `exp (-a) <= 1/(1+a)` for `0 <= a`. -/
+theorem exp_neg_le_inv_one_add {a : ℝ} (ha : 0 ≤ a) :
+    Real.exp (-a) ≤ (1 + a)⁻¹ := by
+  have hpos : (0:ℝ) < 1 + a := by linarith
+  have hle : 1 + a ≤ Real.exp a := by linarith [Real.add_one_le_exp a]
+  rw [Real.exp_neg]
+  simpa [one_div] using one_div_le_one_div_of_le hpos hle
+
+/-- `n`-fold split, upper side: `exp (-a) <= (1/(1+a/n))^n`. -/
+theorem exp_neg_le_inv_pow {a : ℝ} (ha : 0 ≤ a) (n : ℕ) (hn : 0 < n) :
+    Real.exp (-a) ≤ ((1 + a / n)⁻¹) ^ n := by
+  have hn' : (0:ℝ) < n := by exact_mod_cast hn
+  have hsplit : Real.exp (-a) = (Real.exp (-(a / n))) ^ n := by
+    rw [← Real.exp_nat_mul]; congr 1; field_simp
+  rw [hsplit]
+  exact pow_le_pow_left₀ (Real.exp_pos _).le
+    (exp_neg_le_inv_one_add (by positivity)) n
+
+/-- `n`-fold split, lower side: `(1 - a/n)^n <= exp (-a)` while `a <= n`.
+Together with the previous lemma this is a two-sided ENCLOSURE, which is what
+makes it usable where a bound alone would not be. -/
+theorem one_sub_div_pow_le_exp_neg {a : ℝ} (n : ℕ) (hn : 0 < n)
+    (hle : a ≤ n) : (1 - a / n) ^ n ≤ Real.exp (-a) := by
+  have hn' : (0:ℝ) < n := by exact_mod_cast hn
+  have hsplit : Real.exp (-a) = (Real.exp (-(a / n))) ^ n := by
+    rw [← Real.exp_nat_mul]; congr 1; field_simp
+  rw [hsplit]
+  have hnn : (0:ℝ) ≤ 1 - a / n := by rw [sub_nonneg, div_le_one hn']; exact hle
+  exact pow_le_pow_left₀ hnn (Real.one_sub_le_exp_neg (a / n)) n
+
+/-- `n`-fold split on the positive side: `(1 + a/n)^n <= exp a`. -/
+theorem one_add_div_pow_le_exp {a : ℝ} (ha : 0 ≤ a) (n : ℕ) (hn : 0 < n) :
+    (1 + a / n) ^ n ≤ Real.exp a := by
+  have hn' : (0:ℝ) < n := by exact_mod_cast hn
+  have hsplit : Real.exp a = (Real.exp (a / n)) ^ n := by
+    rw [← Real.exp_nat_mul]; congr 1; field_simp
+  rw [hsplit]
+  exact pow_le_pow_left₀ (by positivity)
+    (by linarith [Real.add_one_le_exp (a / n)]) n
+
+/-- DECAY CERTIFICATE: bound `exp (-a)` above by `b`.  Supply a split depth;
+`norm_num` decides the rest. -/
+theorem exp_neg_le_of_pow_le {a b : ℝ} (ha : 0 ≤ a) (n : ℕ) (hn : 0 < n)
+    (h : ((1 + a / n)⁻¹) ^ n ≤ b) : Real.exp (-a) ≤ b :=
+  le_trans (exp_neg_le_inv_pow ha n hn) h
+
+/-- DEADLINE CERTIFICATE: bound `log q` above by `y`.  This is the shape the
+settling theorems need, because a settling deadline is stated as a `log`. -/
+theorem log_le_of_le_pow {q y : ℝ} (hq : 0 < q) (hy : 0 ≤ y)
+    (n : ℕ) (hn : 0 < n) (h : q ≤ (1 + y / n) ^ n) : Real.log q ≤ y :=
+  (Real.log_le_iff_le_exp hq).2 (le_trans h (one_add_div_pow_le_exp hy n hn))
 
 end LeanModels.Circuit

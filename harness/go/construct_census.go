@@ -911,8 +911,8 @@ var walkerVocab = []string{
 	// statements
 	"BlockStmt", "AssignStmt", "ExprStmt", "IfStmt", "ForStmt", "ReturnStmt",
 	"IncDecStmt", "BranchStmt", "LabeledStmt", "EmptyStmt",
-	// the slice family (§G17–§G19) and fixed arrays (§G20)
-	"SliceExpr", "RangeStmt", "ArrayType/slice", "ArrayType/fixed",
+	// the slice family (§G17–§G19), fixed arrays (§G20), variadics (§G25)
+	"SliceExpr", "RangeStmt", "ArrayType/slice", "ArrayType/fixed", "Ellipsis",
 }
 
 // frontier is what the walker does NOT step, ranked by this instrument.
@@ -922,7 +922,7 @@ var walkerVocab = []string{
 var frontier = []string{
 	"SelectorExpr/pkg", "SelectorExpr/value", "SwitchStmt", "CaseClause", "FuncLit", "MapType",
 	"InterfaceType", "TypeAssertExpr", "TypeSwitchStmt", "DeferStmt",
-	"GoStmt", "ChanType", "SendStmt", "SelectStmt", "CommClause", "Ellipsis",
+	"GoStmt", "ChanType", "SendStmt", "SelectStmt", "CommClause",
 }
 
 // importNames returns the identifiers this file binds to imported

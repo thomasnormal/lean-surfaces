@@ -31,7 +31,7 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G23 multi-value returns | `9a6d6ad` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G24 `math/bits` complete + constants | `eb1e8b0` | 687 / 3,803 (18.1%) | 594 / 2,743 (21.7%) |
-| §G25 variadics | *filled in next* | **739 / 3,803 (19.4%)** | **644 / 2,743 (23.5%)** |
+| §G25 variadics | `9b2129e` | **739 / 3,803 (19.4%)** | **644 / 2,743 (23.5%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -3226,3 +3226,81 @@ MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
 * Queued 139 s; build phase 16 s.
 * `docs_check` 91/91; `diff_test` **1,500 cases, 0 failed**;
   `script_corpus` 65/0; resolver self-test **13/13**.
+
+---
+
+## G26 — THE RE-CENSUS AFTER VARIADICS: the frontier is spent, and `syscall` is a mirage (2026-08-24)
+
+Census only. `Ellipsis` left the frontier when §G25 landed, so the table
+was stale; this is the re-run, and it changes what "next" means.
+
+### THE CONSTRUCT FRONTIER IS EFFECTIVELY OVER
+
+| construct | alone |
+| --- | ---: |
+| `SelectorExpr/pkg` | +533 |
+| `SelectorExpr/value` | +117 |
+| `MapType` | +15 |
+| `InterfaceType` | +8 |
+| `SwitchStmt`, `FuncLit` | +2 each |
+| the other nine | **+0** |
+
+Nine of fifteen remaining constructs are worth **nothing**, and the
+largest thing that is not a selector is `MapType` at +15. The walker's own
+vocabulary has essentially stopped paying — §G20 first said so and it is
+now sharper.
+
+### SO THE QUESTION IS WHICH PACKAGE, AND SELECTION COUNT ANSWERS IT WRONG
+
+Ranked by **executable** reach — files that become fully steppable if
+that package were modelled — against selection count:
+
+| package | selections | +files (all `src`) | +files (library) |
+| --- | ---: | ---: | ---: |
+| `syscall` | 3,307 | **+61** | **+58** |
+| **`strconv`** | 673 | **+26** | **+13** |
+| `errors` | 2,016 | +11 | +11 |
+| `math` | 710 | +7 | +7 |
+| `strings` | 2,984 | +5 | +4 |
+| **`fmt`** | **6,403** | **+4** | **+3** |
+| `io` | 2,214 | +4 | +4 |
+| ALL remaining at once | — | +306 | +210 |
+
+`fmt` has **9.5× `strconv`'s selections and a sixth of its reach.**
+`strings` has 4.4× and a fifth. This is the fourth reproduction of
+"call-site frequency is not reach", and it is now the most reliable way
+this lane has of picking wrong.
+
+### `syscall` LEADS AND MUST BE SKIPPED
+
+`syscall` tops the table at +61/+58, and it is not a rung. It **is** the
+operating-system boundary: `syscall.Write`, `syscall.Open`. This tier
+cannot execute it at any price, so its 3,307 selections retire as
+`environment` refusals that NAME the callee — §5.2's bucket retiring by a
+better refusal rather than by reach, exactly as §G8 said of the cheap
+tier and §G21 said of `unsafe` and `C`.
+
+Counting it as available reach would be the same motivated error §G21
+caught in `unsafe`/`C`, one tier up: a package the model will never run
+is not a package the model can be credited for. The honest headline is
+therefore **`strconv` at +26/+13**, not `syscall` at +61/+58.
+
+### NEXT RUNG, PRICED IN ADVANCE
+
+**`strconv`** — the top MODELLABLE package on both denominators, and the
+one whose semantics this lane has already built twice: `runtime.itoa`
+(§G18) and `runtime.printuint` (§G20) are the same digit loops, and
+§G24's `math/bits` supplies the integer primitives.
+
+Called before building, per the practice that has now been exact three
+times running:
+
+> **§G27 `strconv`: 739 → 765 (+26) over all of `$GOROOT/src`;
+> 644 → 657 (+13) over the library.**
+
+The rung should be sized by which `strconv` entry points the 26 files
+actually call — census first, as `math/bits` was, where 82% of the
+package sat behind one missing construct.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%) and now
+visibly minor against a +0 frontier.

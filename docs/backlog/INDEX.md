@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**274 entries across 17 lanes.** Regenerate with
+**275 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -43,6 +43,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-sunfish-rtrack-11` |  | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
 | `2026-08-24-wasm-8` |  | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` |  | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
+| `2026-08-24-ada-4` |  | THE TARGET-SHAPE RUNG ANSWERS, and the answer is that 5.2's refusal was never blocked on the measurement | ada |
 | `2026-08-24-ada-3` |  | INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug | ada |
 | `2026-08-24-ada-2` |  | INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts | ada |
 | `2026-08-24-analog-1` |  | CENSUS-FIRST: non-vacuity is a chain of two links, and the tier closed only the inner one | analog |

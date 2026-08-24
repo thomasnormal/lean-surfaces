@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**289 entries across 17 lanes.** Regenerate with
+**290 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-08-24-architecture-71` |  | The claim is exactly why I did not look | architecture |
 | `2026-08-24-architecture-70` |  | Refusal-form for an exhaustiveness arm: gate the claim, not the form | architecture |
 | `2026-08-24-architecture-69` |  | An unreachable check is kept; an unreachable refusal is a defect | architecture |
 | `2026-08-24-architecture-68` |  | The defect is not unreachability; and a sha-less "verified" is a title | architecture |

@@ -317,7 +317,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-266 | a cross-lane instrument firing on another lane's code is the instrument WORKING — fix adjudication, never scope | `docs/family-architecture.md §5.4a` |
 | MEAS-267 | a census may return DONE — trustworthy only from a census that could have returned otherwise | `docs/family-architecture.md §9.0b` |
 | MEAS-268 | a REFUSAL names a SITE, not its CAUSE — witness the cause separately or the site gets blamed | `docs/family-architecture.md §5.2` |
-| MEAS-269 | an EPISTEMIC BOUNDARY is a fact about the instrument, not a gap in the model | `docs/family-architecture.md §5.2` |
+| MEAS-269 | an EPISTEMIC BOUNDARY is a fact about the instrument, not a gap in the model — **AMENDED**: it is itself a CLAIM and lands only after a witness attempt that failed to CONSTRUCT | `docs/family-architecture.md §5.2` |
 | MEAS-270 | an unreachable CHECK is kept; an unreachable REFUSAL is a defect — the claim is the discriminator | `docs/family-architecture.md §5.2` |
 | MEAS-271 | ORPHANED is the shape a deleted row leaves behind — check from the GUARDS back to the ROWS | `docs/family-architecture.md §5.0a` |
 | MEAS-272 | between a RULED IDIOM and an IMPLEMENTED PRECEDENT, follow the instance until the ruling has one | `docs/family-architecture.md §5.0a` |
@@ -325,6 +325,15 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-274 | an exhaustiveness arm: PROVABLE → discharge in the type; otherwise REFUSAL-FORM, and GATE the by-construction claim | `docs/family-architecture.md §5.2` |
 | MEAS-275 | a warning is validated by a documented decision NOT to act, not by a saved incident | `docs/family-architecture.md §7.2` |
 | MEAS-276 | a clean rebase still produces a DIFFERENT COMMIT — the certificate names the one that was BUILT | `docs/family-architecture.md §5.4a-i` |
+| MEAS-277 | COMPOSITION is a census axis — singles find nothing on it, by construction | `docs/family-architecture.md §5.2` |
+| MEAS-278 | a refusal adopted to AVOID A DEBT is a weakening wearing a boundary's clothes | `docs/family-architecture.md §5.0a` |
+| MEAS-279 | a `has_not_widened` guard whose content is a passing AGREEMENT case exhibits the window's edge | `docs/family-architecture.md §5.0a` |
+| MEAS-280 | a divergence localized to a CONSTRUCTION-SITE difference has a mechanical retirement | `docs/family-architecture.md §5.0a` |
+| MEAS-281 | a milestone survives a divergence only by MEASUREMENT against it, stated where the number is read | `docs/family-architecture.md §9.0` |
+| MEAS-282 | a standing number landing in the SAME TREE as its last rung is SELF-CERTIFYING | `docs/family-architecture.md §9.0` |
+| MEAS-283 | LAWS DO NOT INOCULATE THEIR AUTHORS — gates do | `docs/family-architecture.md §5.3` |
+| MEAS-284 | a STRUCTURAL EDIT needs a structural bound and a counted check | `docs/family-architecture.md §5.4b` |
+| MEAS-285 | FALSE positives on another lane are worse than no gate — ship the cases it must NOT fire on | `docs/family-architecture.md §5.4a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -616,6 +625,7 @@ numbers below are the register's own.
 | OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` — **SUNSET**: stamp v2 is live; applies only to v1-stamped tickets |
 | OPS-80 | accept-and-log tolerance is for tickets IN FLIGHT — a migration's grace window needs a DIRECTION | `docs/family-architecture.md §7.2` |
 | OPS-81 | the module system is opt-in per ROOT — unfolding proofs are portable only to legacy roots | `docs/family-architecture.md §7.1a` |
+| OPS-82 | a comment describing comment syntax cannot QUOTE it — name the delimiters, never spell them | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

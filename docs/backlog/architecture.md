@@ -5914,3 +5914,131 @@ cheap to keep.*
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-274 … MEAS-276**.
+
+## 2026-08-24-architecture-71 — The claim is exactly why I did not look
+
+Nine from pyc's arc (`fcb1463`, ticketed — **verify at landing**), R-track
+(`2444584`, merged) and analog (verify at landing). **The centerpiece corrects a
+law this lane landed one dispatch ago.**
+
+**(1) §5.2 — MY EPISTEMIC-BOUNDARY LAW WAS AMENDED BY THE LANE THAT SUPPLIED
+IT, AND THE ORIGINAL INSTANCE WAS FALSE.** I landed *"dict-genexp laziness
+cannot be witnessed in tier"* as a boundary. The lane **wrote the witness
+anyway** and found **the tier's first fully-probeable DIVERGE**: the cursor
+**snapshots at FIRST RESUME** where **PEP 289 requires `iter()` at CREATION** —
+CPython raises on create-mutate-next, **the model answers.**
+
+> **"The claim is exactly why I did not look."**
+
+> **An epistemic-boundary claim is itself a CLAIM, and it wants a witness
+> attempt before it lands.**
+
+**Both halves stand** — the category is real. What the original did not carry is
+that **it is the most self-sealing claim in this register**: every other claim
+invites checking, and **this one argues in advance that checking is
+impossible.** *A claim that explains why no evidence will arrive is the one
+claim that must arrive with evidence.* **Practical form**: land it only after a
+witness attempt that **failed to construct**, and **record the failed attempt,
+not the conclusion.**
+
+**AND WHY EVERY EARLIER WITNESS MISSED IT**: they all iterated immutable or lazy
+sources. **It took the dict composition** — *the one thing that inch actually
+added.*
+
+> **COMPOSITION IS A CENSUS AXIS. Singles find nothing on it, by construction.**
+
+A per-construct census tests each construct **against a default context**, which
+is exactly where a composition defect cannot appear — **the tier covered both
+halves and neither cover implied the pair.** *A coverage table's rows are the
+things it thought to list.*
+
+**(2) §5.0a — THE RULING, WITH ITS REJECTION AS THE DURABLE PART.** Declare now
+(`pyc-div-2`, first row with a **live two-sided probe**), **fix-at-construction**
+as the named retirement. **Refuse-the-shape REJECTED.**
+
+> **Scaling the model DOWN to dodge a debt is definitions-weakened-to-pass, one
+> level up. A refusal adopted to AVOID A DEBT is a weakening wearing a
+> boundary's clothes.**
+
+**And it would have been invisible as a weakening** — a tier that refuses the
+shape has a smaller surface **and a clean register**: no row, no debt, no aging,
+and every published number improves. §0.1 forbids narrowing a **definition** to
+make a proof pass; **this is narrowing the MODELLED SURFACE to make a LEDGER go
+clean**, and the ledger exists to stop exactly that.
+
+**(3) §5.0a — THE `has_not_widened` GUARD IS A CONTROL RUN.** Move the mutation
+past the first `next` and **oracle and model AGREE** — both exit 1, both print
+`'1'`.
+
+> **A widening guard whose content is a PASSING AGREEMENT CASE does not assert a
+> bound; it exhibits the window's EDGE.**
+
+The earlier guards answer *"has it spread?"* with a number. **This answers
+"where does it stop?" with a run that agrees** — the only evidence that a
+boundary is real rather than merely undisturbed.
+
+**(5) §5.0a — LOCALIZED TO A CONSTRUCTION-SITE DIFFERENCE, WHICH NAMES THE
+FIX.** Two dict cursors, one right and one wrong; the difference is **where the
+frame is built** (`iterFrame` snapshots at creation — *why inch 2's witnesses
+matched*; `execGen` pushes at first resume). **The fix is to make the second do
+what the first already does.** *The best retirement conditions point at
+something that already exists* — this one is checkable **by diffing two
+functions.**
+
+**(4) §9.0 — A MILESTONE SCOPED BY MEASUREMENT AGAINST THE DIVERGENCE THAT
+COULD HAVE UNSEATED IT.** One of `bound()`'s four genexps iterates a dict, and
+it creates-and-steps **inside a single expression with arguments
+pre-evaluated** — **real play never enters the window**, so rung 9's discharge
+**stands, scoped**. **What makes it strong is that the two were made to MEET**:
+the divergence was measured against the exact code the milestone rests on, and
+the answer is recorded **where the milestone is read.**
+
+**(8) §9.0 — A NUMBER CERTIFIED RATHER THAN COUNTED.** The chain doc's **4/9 was
+inside the tree the tenure certified.**
+
+> **A standing number that lands in the SAME TREE as its last rung is
+> SELF-CERTIFYING. One updated afterwards is a REPORT ABOUT a green, not part of
+> one.**
+
+**This sharpens the stamp discipline into something structural**: a stamped
+number sends the reader to a commit; **a certified number is already inside the
+thing the reader is checking.**
+
+**(6) §5.3 — A LANE BROKE ITS OWN LAW IN THE COMMIT THAT LANDED IT**, caught by
+the gate and not by review.
+
+> **Laws do not inoculate their authors. Gates do.**
+
+**Four instances of this shape in three days**, and they read as one fact: the
+heading guard convicting §9.5a's author; the enforcing lane minting
+owner-namespace ids; **this document's §9.0 requirement producing three
+malformed headings**; and now this. **Writing a law is the moment of maximum
+confidence and minimum habit** — *a law's author has thought about it more than
+anyone and applied it fewer times than anyone.*
+
+**(7) §5.4b — A STRUCTURAL EDIT NEEDS A STRUCTURAL BOUND AND A COUNTED CHECK.**
+A non-greedy regex bounded by a **blank line** removed **ten** witnesses instead
+of one. **A blank line is a typographic accident, not a structure**; the next
+top-level call is a claim about **the language**. And `delta == −1` **fails in
+both directions** — too many *and* none — the paired-guard law at a text edit.
+
+**(9) §7.1a + §5.4a — TWO FROM ANALOG.** *A comment that describes comment
+syntax cannot QUOTE it — **name the delimiters, never spell them***: Lean
+comments **nest**, so the quoted example would have swallowed the file, and
+**nesting quietly extends to the next unbalanced close** where a non-nesting
+syntax fails locally and loudly.
+
+**And the false-positive half of the cross-lane rule, which needed reconciling
+with yesterday's landing.** Yesterday: *a cross-lane instrument firing on
+another lane's code is the instrument working — fix adjudication, never scope.*
+Today: **a gate whose FALSE positives land on other lanes is worse than no
+gate.** Both are right and **TRUE-versus-FALSE is the discriminator**: true
+positives are cheap and conclusive to adjudicate; **a falsely accused lane
+cannot fix what is not broken**, and **disproving is strictly more expensive
+than the check that should have prevented it.** *The two tiers most likely to
+trip this check are the two whose languages contain the token* — so the gate
+shipped **with the cases it must NOT fire on**, taken from its own first draft.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-277 … MEAS-285, OPS-82**, and **MEAS-269
+amended.**

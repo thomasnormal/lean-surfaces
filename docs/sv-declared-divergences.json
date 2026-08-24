@@ -1,0 +1,34 @@
+{
+  "tier": "sv",
+  "schema": "declared-divergences-1",
+  "probe": "harness/sv_divergence_probe.py",
+  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py; PROBE is per-tier and named above because it must speak this tier's language. Both rows are KIND=provenance: the model and the simulator have not been shown to disagree -- what outran the evidence is the CLAIM of agreement. Provenance retires by re-running; semantic would retire by remodelling.",
+  "rows": [
+    {
+      "id": "sv-div-1",
+      "kind": "provenance",
+      "site": "docs/sv-design-m0.md, '4-state value core (normative -- these facts were verified on Xcelium)' and the per-operator table under it; consumed by the operator definitions in LeanModels/Sv/Basic.lean",
+      "oracle": "Xcelium's actual per-operator 4-state results. UNMEASURED: no host reachable from this workspace carries an Xcelium licence, so the oracle side of this table has never been observed here.",
+      "model": "LeanModels/Sv/Basic.lean's tabulated per-operator rules -- whole-vector arithmetic collapse, non-strict bitwise (0&x=0, 1|x=1), logical == that is not 'any x -> x', case === always 0/1, the if/ternary split. MEASURED by the probe only for CHANGE (has_not_widened); its agreement with Xcelium is exactly what is unverified.",
+      "inherited_from": null,
+      "inherited_note": "ORIGINATED here. The claim was made in this lane's own M0 design memo and has never been reproducible from this workspace; there is no upstream decision to cite.",
+      "declared": "2026-08-22",
+      "retirement_condition": "Re-run the per-operator 4-state table under xrun on a host with an Xcelium licence, commit the recorded rows as a fixture under harness/sv/, and diff them against Basic.lean's tables. The fixture's PRESENCE is what sv_div_1_still_divergent tests, so the row retires by the fixture landing -- not by anyone deciding the tables look right.",
+      "guards": ["sv_div_1_still_divergent", "sv_div_1_has_not_widened"],
+      "gated": "No new claim anywhere in this tier may describe the operator table as dual-simulator-verified until this row retires. Icarus reproduces the 10 differential harness CASES; it has never adjudicated the operator TABLE, and the two are not the same claim."
+    },
+    {
+      "id": "sv-div-2",
+      "kind": "provenance",
+      "site": "10 sites in Examples/system-verilog: adder, counter, swap_nba and xsel (both proof.lean and spec.lean), plus race_blk/spec.lean and toggle/spec.lean -- each asserting the guards 'reproduce the Xcelium-verified outcomes'",
+      "oracle": "harness/sv/cases.json drives DIFFERENT vectors than the guards check (adder: 1+2, 255+1, 170+85, 0+0, 127+127 against guards at a=5,b=3 and a=200,b=100; xsel: 0x0F/0xF0 and 0xA5/0x5A against guards at 0xAA/0x55). No simulator ever adjudicated the guarded stimuli.",
+      "model": "The guard values themselves, which are correct per the LRM rules the harness DID verify -- the defect is the provenance sentence attached to them, not the numbers. MEASURED by the probe as a live count of surviving claim sites.",
+      "inherited_from": null,
+      "inherited_note": "ORIGINATED here, and found by the 2026-08-23 quality audit rather than by this lane.",
+      "declared": "2026-08-24",
+      "retirement_condition": "Reword all 10 sites from 'reproduces the Xcelium-verified outcomes' to a claim the evidence supports -- consistent with the LRM rules the harness verified. sv_div_2_still_divergent counts surviving sites, so the row retires automatically when the count reaches zero; it cannot be closed by assertion.",
+      "guards": ["sv_div_2_still_divergent", "sv_div_2_has_not_widened"],
+      "born_with_retirement_in_flight": "This row is filed with its remedy already scheduled -- the rewording is batched into the next tier-Sv tenure alongside slotStep's first piece, since these are files inside the build glob and docs-class cannot carry them. It is registered anyway rather than left as an in-flight intention, because this lane RECORDED the audit disposition as 'ACCEPTED, rewording' on 2026-08-23 and then did not apply it, and the gap survived two green landings. Recording an acceptance is not making the change; a row that ages is what makes the difference visible."
+    }
+  ]
+}

@@ -442,3 +442,59 @@ Filed rather than left implicit, per the new register:
 Both are provenance divergences rather than semantic ones — the model and
 the simulator have not been shown to disagree; the claim of agreement is
 what outruns the evidence.
+
+---
+
+## 2026-08-24-sv-2 — THE §5.0a REGISTER IS FILED: two provenance rows, four measured guards, and one row born with its retirement in flight
+
+`docs/sv-declared-divergences.json` (DATA) + `harness/sv_divergence_probe.py`
+(PROBE, named in every row). The shared CHECKER
+`harness/divergence_register.py` has not landed yet; the data validates
+against it when it does.
+
+**Both rows are `KIND=provenance`, and the distinction is the whole reason
+the field exists.** Neither says the model is wrong. Both say a CLAIM is
+unsupported: **the model and the simulator have not been shown to disagree
+— what outran the evidence is the claim of agreement.** Provenance retires
+by **re-running**; semantic would retire by **remodelling**. Same register,
+same gating, completely different work.
+
+* **`sv-div-1`** — the Xcelium 4-state operator table, called *"normative
+  — verified on Xcelium"* in `sv-design-m0.md` and never reproducible from
+  this workspace. ORIGINATED here (no upstream to cite). Retires when a
+  recorded xrun fixture lands under `harness/sv/` and is diffed against
+  `Basic.lean`'s tables — the row tests the **fixture's presence**, so it
+  cannot be closed by anyone deciding the tables look right. **Gated**: no
+  claim in this tier may say dual-simulator-verified until it retires.
+  Icarus reproduces the 10 harness **cases**; it has never adjudicated the
+  operator **table**, and those are not the same claim.
+* **`sv-div-2`** — 10 sites asserting the guards *"reproduce the
+  Xcelium-verified outcomes"* while `cases.json` drives different vectors.
+  Retires when the rewording lands; `still_divergent` counts surviving
+  sites, so **the count reaching zero closes it — assertion cannot.**
+
+**`sv-div-2` is the register's first row born with its retirement already
+in flight**, and it is registered anyway rather than left as an in-flight
+intention. The reason is in the row: this lane recorded the audit
+disposition as *"ACCEPTED, rewording"* on 2026-08-23 **and then did not
+apply it**, and the gap survived two green landings because nothing gates
+prose against its own disposition. **Recording an acceptance is not making
+the change. A row that ages is what makes that difference visible.**
+
+**Run-not-read, honoured.** Every field the probe can back is measured, not
+read: `sv-div-1` is still divergent because **no Xcelium fixture exists**
+(0 found), `sv-div-2` because **10 claim sites survive**. Both refusal
+directions were RUN, not admired — adding an 11th claim site makes
+`sv_div_2_has_not_widened` report `11 (pinned <= 10)` and the probe exit 1.
+
+**What "widened" means for a provenance row**, since the family's exemplar
+is semantic: these rows do not describe a wrong answer, so widening is not
+a semantic diff — it is **the unsupported claim SPREADING to more sites**.
+Both `has_not_widened` guards are therefore claim-site counts pinned at
+DECLARED (9 in `sv-design-m0.md`, 10 in `Examples/`).
+
+**§9.0 line gains a third quantity**, per §5.0a's rule that a declared
+divergence is neither coverage nor gap:
+
+> **18 live / 21 envelopes · 11/11 constructs · 0/N semantics on `SvM` ·
+> declared-divergences: 2**

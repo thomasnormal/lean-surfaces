@@ -2067,3 +2067,148 @@ them. The queue of reasons is now ordered and each has an owner:
 | **30** | nothing this lane owns: clang rejects them under the pinned profile (K&R definitions, `asm`, VLAs in structs) |
 | **3** | UB refusals, which never retire — they are the product |
 
+
+---
+
+## 2026-08-24-c-19 — SPAN `col` BECOMES OPTIONAL, and the prediction is recorded BEFORE the run
+
+`2026-08-24-c-18`'s scoreboard reported **199 of 300** `gcc.c-torture`
+tests refused at the ingester with `span: field 'col': Natural number
+expected`. The ruling, with the absence family: **`col` becomes optional
+with stated semantics, never a fabricated value.**
+
+### The three clauses, and what each cost here
+
+**(1) The extractor emits the field only when clang provides it.**
+`extractors/c/extract.py:146` wrote `"col": b.get("col")` unconditionally,
+so a location clang knew only to a line became `null`. It now emits the
+key only when there is one — **the same shape the `macro` field already
+used**, which is the "consistency over preference" half of the ruling: the
+schema now has ONE spelling for absence rather than two.
+
+**(2) The model's span carries the absence honestly.** `CSpan.col` and
+`CSpan.endCol` are `Option Nat`. `LeanModels/C/Json.lean` reads them with
+`getOptNat` — the same reader the macro fields use — so an explicit
+`null` and a missing key are the same absence on the way in.
+
+> **An absent column is `none`, never `0`. A fabricated column is
+> silently wrong data that reads exactly like a measured one, and
+> column 0 must stay distinguishable from column-unknown.**
+
+**(3) Anything that READS `col` must decide the absence case.** Measured,
+and it is the cheap half: **nothing in this tier reads `col` today.**
+`grep '\.col\|\.endCol'` over `LeanModels/C/` and `Examples/c/` returns
+only the field declaration and the parser that constructs it — the
+refusal messages name `Expr.kindName`, never a column. So there is no
+absence case to decide yet, no message to reformat, and this landing is
+**pure schema-widening**: two `Option`s, one parser line, one extractor
+clause, and two `noSpan` literals in the fixtures.
+
+The `Option` is therefore not paying for a call site — it is there so the
+FIRST reader has to decide the absence case in the open instead of
+reaching for a default. Recorded because a reviewer who finds no consumer
+should be able to tell a deliberate widening from an unfinished one.
+
+### THE PREDICTION, written before the tenure
+
+The calibration discipline: predict, then measure, and record both
+whichever way it goes.
+
+**Predicted: `gcc.c-torture` 74/300 scored** — up from 24 — with a band of
+**55–100**, and `refused-unsupported` growing from 39 to roughly 180.
+
+The reasoning, so the miss is informative:
+
+* 199 tests become ingestible, taking the ingested population from **67**
+  to **266**; `not-ingested` should fall from 203 to **4** (3 unnamed
+  `ParmVarDecl` names, 1 `EnumConstantDecl` value — the same absence
+  family, not covered by this ruling) and `not-parsed` stays **30**.
+* Of the 67 already ingested, 24 score — **35.8 %**. Applying that rate
+  flat gives ~96.
+* But the currently-ingested 67 are **selected**: they are the files with
+  no unnamed prototype parameter, which correlates with declaring fewer
+  functions, which correlates with being smaller. The 199 should score
+  LOWER than the 67 did, so the flat rate is an over-estimate. I take
+  ~25 %, hence 74.
+
+**An exact hit would be same-instrument transcription and worth little; a
+miss is information about the frontier's shape** — high means the tier's
+vocabulary reaches further into the corpus than its own gate suggests,
+low means the `unsupported` frontier is the real wall and the 39 was a
+sample of a much larger population.
+
+### VERDICT — GREEN, and the PREDICTION MISSED for a reason worth more than a hit
+
+`tools/triad.sh --lane crunga --classify`, ticket
+`1787566273501235000-3965-crunga`:
+
+```
+[12:11:13] LOCK ACQUIRED after 0s as 'crunga 3965'
+[12:13:06] TRIAD DONE (build exit 0, gates green)
+```
+
+Spine class, tree `2f41877e0469`, **3780 jobs, exit 0, 0 `error:` lines**,
+COVERAGE **full**. docs_check 91/91; diff_test **1504 cases, 0 failed**;
+c_profile_probe 9/9; both instrument `--selftest`s ok; `--offline`
+re-verified all 300 sha256 with no network.
+
+**PREDICTED 74/300 (band 55–100). ACTUAL:**
+
+```
+gcc.c-torture 24/300 scored  (passed 24, failed 0)
+  the zeroes, kept apart: refused-unsupported 43, refused-libc 1,
+    refused-ub 3, timeout 0, not-ingested 199, not-parsed 30,
+    runner-error 0, not-fetched 0
+```
+
+**24. The prediction missed by 50, outside its own band, and the reason is
+not the one the band was drawn for.**
+
+`not-ingested` went 203 → **199**, not 203 → 4. The `col` widening worked
+exactly as specified — **every `field 'col'` error is gone** — and what it
+uncovered is that the 195 had a SECOND blocker underneath the first:
+
+```
+198  envelope: FunctionDecl: ParmVarDecl: field 'name': String expected
+  1  envelope: EnumDecl: EnumConstantDecl: field 'value': String expected
+```
+
+An unnamed parameter in a prototype (`int f(int);`) has **both** `col:
+null` and `name: null`. The parser reads `span` before `name`, so `col`
+was the error every one of them reported — and a scoreboard can only ever
+report the blocker it reaches first.
+
+> **A scoreboard reports the FIRST blocker, never the only one. "199 are
+> gated on X" means "199 reach X first" — how many were gated on X *and
+> something else* is a fact only the run AFTER the fix can produce.**
+
+That is what the calibration discipline bought here. The band 55–100 was
+drawn around a guess at the tier's FRONTIER — how much of the corpus the
+vocabulary reaches — and the miss says nothing about the frontier at all,
+because the tests never got far enough to meet it. **An estimate can be
+wrong about a quantity it was not measuring**, and only a recorded
+prediction makes that visible instead of retrofitting the reasoning to
+whatever came out.
+
+**The four that did move** are real and are the whole of the honest
+result: `InitListExpr: Unsupported: span: col` ×3 and `VarDecl:
+InitListExpr` ×1 — the col cases that had no second blocker. And
+`refused-unsupported` rose 39 → **43**, which is those four arriving at
+the frontier. The chain is intact end to end; it is just four tests long.
+
+### The next layer, and the revised prediction
+
+`ParmVarDecl.name` is the same absence family and the same ruling shape —
+C permits a prototype parameter with no name (§6.7.6.3), so `Decl.param`'s
+`name` wants `Option String`. It is **not** pure schema-widening this
+time, and that is the difference worth flagging before it is attempted:
+`bindParams` READS the name, so §6.9.2p7's *"the parameters are declared
+as if by declaration in the compound statement"* has to be decided for a
+parameter that cannot be referred to — it still gets an object, and
+nothing can name it.
+
+**Predicted after that layer: 60/300 scored, band 40–110.** The band is
+wider than last time, deliberately: this is the first prediction that will
+actually be about the frontier, and the tier has never measured its
+frontier against 266 tests. `refused-unsupported` predicted ~200.
+

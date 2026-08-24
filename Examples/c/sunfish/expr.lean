@@ -26,7 +26,7 @@ open LeanModels.C (CType Expr)
 
 /-- A synthetic span, for the terms this file builds by hand. The ones
 taken from the corpus carry their real ones. -/
-private def noSpan : LeanModels.C.CSpan := ⟨0, 0, 0, 0, none, none⟩
+private def noSpan : LeanModels.C.CSpan := ⟨0, some 0, 0, some 0, none, none⟩
 
 /-! ## The term under test, taken from the ingested corpus -/
 

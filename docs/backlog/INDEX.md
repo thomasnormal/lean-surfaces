@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**317 entries across 17 lanes.** Regenerate with
+**318 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -59,6 +59,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
 | `2026-08-24-pycomplete-20` |  | the cursor moves to CONSTRUCTION, pyc-div-2 retires by its own condition, and the census that gates the claim corrected itself twice | python-completeness |
 | `2026-08-24-pycomplete-19` |  | INCH (3): the flagship's LAST refused line was already retired, and the inch is the MEASUREMENT that proves it | python-completeness |
+| `2026-08-24-c-19` |  | SPAN `col` BECOMES OPTIONAL, and the prediction is recorded BEFORE the run | c |
 | `2026-08-24-softfloat-18` |  | THE GUARD FIRED A SECOND TIME, ON MASTER'S EDIT, AND THE RESOLUTION IS CLEAN | softfloat |
 | `2026-08-24-pycomplete-18` |  | INCH (2) BUILT: `iter(d)` + `next` runs, and the price held except where the census caught it | python-completeness |
 | `2026-08-24-c-18` |  | INCH 6: the scoreboard is BUILT, and §9.0 stops being a promissory note | c |

@@ -95,8 +95,10 @@ def getBool (j : Json) (name : String) : Except String Bool :=
 
 def parseSpan (j : Json) : Except String CSpan :=
   withCtx "span" do
-    return { line := ← getNat j "line", col := ← getNat j "col"
-             endLine := ← getNat j "end_line", endCol := ← getNat j "end_col"
+    -- `col`/`end_col` are OPTIONAL: absent and `null` are the same absence,
+    -- which is the reading `getOptNat` already gives the macro fields.
+    return { line := ← getNat j "line", col := ← getOptNat j "col"
+             endLine := ← getNat j "end_line", endCol := ← getOptNat j "end_col"
              macroLine := ← (match getOptNode j "macro" with
                              | none => pure none
                              | some m => getOptNat m "line")

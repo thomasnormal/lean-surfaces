@@ -47,9 +47,22 @@ abbrev CType := String
 `line`/`col` are the EXPANSION location — where a reader sees it. -/
 structure CSpan where
   line : Nat
-  col : Nat
+  /-- The column, **when the frontend gives one**.
+
+  `none` is not "column 0" and must never be defaulted to it: clang omits
+  `col` for locations it knows only to a line — an unnamed parameter in a
+  prototype is the common case — and a fabricated column is silently wrong
+  data that reads exactly like a measured one. Column 0 and
+  column-unknown stay distinguishable because they are different
+  constructors.
+
+  **Nothing in this tier reads it today**, so the `Option` costs no call
+  site; it is here so that the first reader has to decide the absence case
+  in the open (`docs/backlog/c.md` 2026-08-24-c-19). -/
+  col : Option Nat
   endLine : Nat
-  endCol : Nat
+  /-- The end column, on the same terms as `col`. -/
+  endCol : Option Nat
   /-- The SPELLING location, present only when it differs from the
   expansion location — i.e. the node came out of a macro body. -/
   macroLine : Option Nat := none

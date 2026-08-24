@@ -14,6 +14,60 @@ history.
 
 ---
 
+## SPEC COVERAGE — the completion metric (standing; updated every landing)
+
+Per `docs/family-architecture.md` §9.0: the tier's goal is COMPLETION, the
+suite that measures it for Ada is **ACATS**, and this number is how far away
+it is. The Go lane's table (`fef0b79`) is the shape being copied — two
+denominators with the choice's cost named, the upper-bound guard, and the
+ceiling read at the CURRENT vocabulary.
+
+Reproduce it, do not quote it:
+
+    python3 harness/ada_suite_census.py            # the corpus and the ladder
+    python3 harness/ada_round_trip.py --self-test  # the extractor's gate
+
+| rung | sha | ACATS language tests | ACATS **core** (clauses 1-13) |
+| --- | --- | ---: | ---: |
+| M2 inch 1 — the value layer | `9985b05` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+| M2 Core adoption | *this landing* | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+
+**IT IS ZERO, AND ZERO IS THE HONEST NUMBER.** Nothing has been graded,
+because **no grader has run**: there is no statement tier yet, so no ACATS
+test can be executed and no verdict emitted. The instruments that will
+produce the number exist and are audit-hardened (`harness/ada_round_trip.py`,
+`harness/ada_suite_census.py`), and the emitter that feeds `GRADE` is inch 5-6
+(`docs/ada-charter.md` §4.4). **Standing a graded run up is a named rung, and
+it is the one after inch 2.** A tier that quietly omitted this row until it
+had something flattering to put in it would be hiding the only number §9.0
+asks for.
+
+**Two denominators, and the gap is 192 tests.** `tests_language` (4,188)
+includes the **Specialized Needs Annexes**; `tests_core` (3,996) is clauses
+1-13, which is the slice `docs/ada-semantics-design.md` scopes M2 to. The
+annex tests are legitimate Ada and the tier must eventually grade them, so
+the wider column stays — but ranking against it would rank work this tier
+has not scoped.
+
+**CEILING AT THE CURRENT VOCABULARY: 739 core tests (18.5%).** That is the
+reach ladder's step 0 — the core tests that use **none** of the nine heavy
+buckets (exceptions, tasking, access types, separate compilation,
+instantiation, generics, real types, tagged types, `goto`). It is what a
+tier could grade if it modelled everything *else* perfectly, and the
+vocabulary today is **scalars and one raise** — no statements at all. So 739
+is the bucket-free ceiling, **not** a claim about inch 2.
+
+**THE UPPER-BOUND GUARD, in this tier's own terms.** A bucket-reach figure is
+SYNTACTIC: it says which tests avoid a construct, never that their semantics
+are modelled. **Recognising that a test avoids tasking is not running it.** No
+syntactic win is ever banked in the graded column — that column moves only
+when a test is executed and `GRADE` accepts the emitted trace. And one
+structural fact sets the real entry price: **2,707 of the tests call
+`Report.Test`**, so the ACATS `Report` package is a prerequisite of the first
+non-zero row rather than a later convenience.
+
+---
+
 ## 2026-08-22-ada-1 — THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters
 
 `docs/family-architecture.md` §9 landed at `cd0a722`. Five items were
@@ -387,3 +441,563 @@ already emitted — and a refused test should still yield a PARTIAL trace, not
 nothing. That is σ-shaped. But the scoreboard does not exist until inch 5-6,
 so there is no consumer today and `Unit` stands. Predicting a consumer is not
 having one; the question gets asked at inch 5.
+
+## 2026-08-23-ada-2 — TICKET: adopt Core's outcome layer (π = ArmRef, σ = Unit)
+
+Replace the by-shape `Loud`/`Halt`/`SemM`/refusal-class definitions in
+`LeanModels/Ada/Ada2012/Value.lean` (marked **ADOPT** at `:40`, `:66`, `:131`,
+`:150`, `:162`, `:310`) with imports of `LeanModels.Core.Outcome`. Kept a
+separate ticket from inch 1 deliberately: mixing a known import swap with the
+value layer's real decisions is how a tenure gets spent proving nothing.
+
+**Ada currently imports ZERO Core modules** — its entire closure is `Lean`
+plus its own files. That is why inch 1's green transferred across a 53-commit
+rebase untouched, and adopting ends that property on purpose: after this
+ticket, Core changes can break the Ada lane, and Ada's greens stop being
+base-independent. That is the price of the shared substrate and it is worth
+paying, but it should be paid knowingly.
+
+### The mapping, and why inch 1 had to land first
+
+Core separates two channels, and Ada needs BOTH — which is exactly the
+distinction inch 1 spent its guards establishing:
+
+- **`raiseIn` (`ρ`, state-RETAINING)** — `Constraint_Error` and every other
+  Ada exception. ARM 11.4: an exception PROPAGATES; the world survives it and
+  a handler may observe it. State-retention is not an implementation nicety
+  here, it is the language.
+- **`refuse` (`π`, state-discarding)** — constructs outside the modelled
+  tier. Not `Constraint_Error`, which the ARM defines completely.
+
+Inch 1's load-bearing guard (`!okIs (.int Int8 (-128)) (constrain Int8 128)`)
+is what makes this mapping legible: out-of-range RAISES, so it goes on `ρ`.
+Had `constrain` refused, the same construct would have landed on `π` and the
+adoption would have wired Ada's most common outcome into the give-up channel.
+
+**`π = ArmRef`** — the ARM clause reference, so a refusal says WHICH rule went
+unmodelled and the scoreboard buckets on `RefusalCause.className` while the
+clause rides in `.detail`, class-blind.
+
+### σ = Unit stands — and the consumer's mechanism ALREADY EXISTS
+
+Per the family default: adding a snapshot without a consumer is designing
+against nothing. The registered-not-claimed consumer (a refusal mid-test
+should yield a PARTIAL event trace, not nothing) is still hypothetical — the
+ACATS scoreboard does not exist until inch 5-6.
+
+**Correction to my own inch-1 note, from reading the current Core.** I wrote
+that "Core's `Loud` arms discard state", implying the partial-trace consumer
+would need a mechanism built for it. It would not: **`Core.refuseWith`
+already carries a snapshot**, and its docstring says it is kept separate from
+`refuse` precisely "so that attaching one is a DELIBERATE act at the site that
+has the state — and so that the common case cannot accidentally carry one."
+So the inch-5 question is narrowed from *"can this be done"* to *"is
+`σ = TraceRows` worth it"*, with the mechanism already paid for. Registering
+a consumer remains cheaper than predicting one; the question still gets asked
+at inch 5, not now.
+
+### Checks this ticket must perform, not assume
+
+- **`okIs` may or may not survive.** It exists because `Except` carries no
+  `BEq` in this toolchain. Core ships `instance [BEq π] : BEq (Loud π σ)` —
+  on `Loud`, not on `Except` — so the helper is probably still needed.
+  **Verify by compiling, not by reading**: 31 guards depend on it.
+- **`Halt` vs `HaltWith`.** `Core.Halt = HaltWith Unit Unit` is payload-free;
+  Ada needs `HaltWith ArmRef Unit`. The bare `Halt` spelling is the wrong one
+  for this lane — an easy and silent mis-adoption.
+- **Re-run `--classify-only` AFTER the edit.** Inch 1's first tenure was green
+  while `Value.lean` had never compiled, because nothing imported it. The
+  build list must still name all three Ada modules afterward.
+- **Declaration order.** Anchor-span splicing deleted a whole section during
+  inch 1; re-print the order after editing rather than trusting the diff.
+
+### `Core/Order.lean` is NOT part of this ticket
+
+It landed on master since the last read (`FlatLe`, `FlatLe.iff_rel`, the
+`FlatOrder` tripwires) and is the extraction step behind `_mono` corollaries.
+Ada has no recursion, loops, or fixpoints yet, so there is nothing to
+approximate and adopting it now would be a dependency bought for a use that
+does not exist. It becomes relevant when the statement tier gets iteration —
+inch 3+ — and should be adopted then, by that ticket.
+
+## 2026-08-24-ada-1 — CORE ADOPTION LANDS: the two-channel mapping, and the ticket's own tenure had gone green over a tree that did not contain it
+
+`2026-08-23-ada-2` ticketed this. What follows first is the state that ticket
+was left in, because reconstructing it was half the work and the shape of the
+mistake is reusable.
+
+### THE PREDECESSOR'S TENURE WAS GREEN, AND IT WAS GREEN ABOUT THE TICKET
+
+The adoption ticket's tenure ran and returned **`TRIAD DONE (build exit 0,
+gates green)`** (`/private/tmp/ada-t7.out`, lock acquired after **7,649 s**
+queued, full log `$TMPDIR/triad-build.NU6mws`). Read the verdict alone and
+the adoption is done. Read the tenure's own header and it is not:
+
+    tree at enqueue: ea56aea0893c        # == git rev-parse 8326457^{tree}
+    build exit=0                          # 4 seconds after the lock opened
+
+**The tree it certified was the TICKET COMMIT — docs only.** A 4-second full
+build is a build with nothing to do. `LeanModels/Ada/Ada2012/Value.lean` still
+imported `LeanModels.Ada.Ast` and nothing else, and all six `ADOPT` markers
+were still in it. The green was true and it was **about a different question
+than the one the ticket asked**.
+
+> **A GREEN NAMES A TREE. A TICKET NAMES AN INTENTION. Reading the first as
+> evidence for the second is how a ticket gets marked done by its own
+> paperwork.**
+
+This is §5.4a's unit law meeting §7.2's *"a queued tenure reads the source at
+BUILD time"* from the other side: the family already knows a tree can change
+out from under a ticket, and this is the case where **it never changed into
+it**. The cheap defence is the one this entry uses — a tenure log is
+self-identifying, so the header's `tree at enqueue` is checkable against
+`git rev-parse <sha>^{tree}` in one command, and the build's *duration* is a
+second witness that costs nothing to read.
+
+### THE ADOPTION, and the mapping is the content
+
+`LeanModels/Ada/Ada2012/Value.lean` now imports `LeanModels.Core.Outcome`.
+Deleted: the by-shape `RefusalCause` (four constructors), `Loud`, `Halt`,
+`SemM`, `Cause.tag`, and `SemM.refuse`/`SemM.timeout`. **π = `ArmRef`**,
+**σ = `Unit`**.
+
+| Ada outcome | channel | Core primitive | why |
+| --- | --- | --- | --- |
+| `Constraint_Error` and every Ada exception | **`ρ` — state-RETAINING** | `raiseIn` | ARM 11.4: an exception PROPAGATES and a handler observes the world it was raised in |
+| a construct outside the modelled tier | **`π` — state-discarding** | `refuse` | the model stopped, not the program; there is no world to hand back |
+
+Inch 1 had to land first because its one load-bearing guard is what makes the
+mapping legible: `!okIs (.int Int8 (-128)) (constrain Int8 128)` — out of
+range RAISES. **Had `constrain` refused, this adoption would have wired Ada's
+most common outcome into the give-up channel**, and every rule that can
+produce a scalar would have had to be revisited to get it back.
+
+**The mapping is now MEASURED, not described** — five new `#guard`s
+(38 total, up from 31):
+
+* the world is written to 42, then `Constraint_Error` is raised, and **42
+  comes back through the raise** — an EFFECT surviving, which is a strictly
+  stronger claim than an initial world passing through;
+* a refusal's **class and ARM paragraph read back as DATA** (`className`,
+  `detail`), never parsed out of prose;
+* and both negatives: a raise is not a refusal, a refusal is not a raise.
+
+### THE THREE CHECKS THE TICKET SAID TO PERFORM, PERFORMED
+
+1. **`okIs` survives.** Core ships `instance [BEq π] : BEq (Loud π σ)` — on
+   `Loud`, **not** on `Except`. `constrain` returns `Except Abrupt Val`, so
+   the synthesis failure the helper exists for is untouched and its three
+   sites still need it. The ticket was right to flag this one: reading Core's
+   instance list suggests the opposite answer, because a `BEq` *does* arrive
+   with the adoption — on the type the helper is not about.
+2. **`HaltWith ArmRef Unit`, not bare `Halt`.** `Core.Halt` is
+   `HaltWith Unit Unit`; adopting it would have compiled and dropped every
+   ARM reference at the type level. Made structural rather than remembered:
+   `example (W : Type) : AdaM W = ExceptT Abrupt (StateT W AdaHalt) := rfl`.
+   The tier's name is **`AdaHalt`** — a local `abbrev Halt` would have
+   shadowed Core's inside this namespace and made the wrong one the one a
+   reader sees.
+3. **Re-classified after the edit**, and the build list is reported as it
+   actually came back rather than as the ticket predicted: `tier`, building
+   **`LeanModels.Ada.Ada2012.Value LeanModels.Ada`** — two targets, not the
+   "three Ada modules" the ticket remembered, because only one file was
+   touched and `LeanModels.Ada` pulls the rest of the tier in as imports.
+   The failure mode the check exists for is closed either way: the file is
+   NAMED, so it cannot go green unelaborated the way inch 1's first tenure
+   did.
+
+Declaration order was re-printed after editing rather than trusted to the
+diff (anchor-span splicing deleted a whole section during inch 1); every
+declaration from `ArmRef` to `orderDependenceGate` is present and in order.
+
+### ADA DOES NOT NARROW THE CAUSE TYPE, and Go is the reason to say so
+
+The Go tier refuses only through a narrower `GoRefusal` with no `undefined`
+constructor, so its empty class is unreachable **by construction** — the
+right gate for a language whose spec never says "undefined". **Ada's
+`undefined` bucket is expected NON-empty** (ARM 1.1.5, 23 paragraphs in
+clauses 1-13), so a narrowing type here would delete this tier's product.
+Ada refuses through Core's `refuse` directly, all four classes reachable, and
+its expected-empty class is a different one — `orderDependence`, gated by
+predicate, now written on Core's `RefusalCause.isOrderDependence` rather than
+on a local `match`.
+
+**And a convergence worth recording**: `GoM = SemMWith GoWorld Panic SpecRef
+Unit` against `AdaM W = SemMWith W Abrupt ArmRef Unit`. **Two tiers, chosen
+independently, whose refusal payload is a citation into their own standard.**
+That is the family's convergence standard met on the `π` slot, and it is
+evidence that `RefusalCause π`'s parameterisation was cut in the right place.
+
+### THE PRICE, PAID KNOWINGLY
+
+Ada's **zero-Core-imports** property is over. It is the reason inch 1's green
+survived a 53-commit rebase untouched; from here, a Core change can break this
+tier and this tier's greens are no longer base-independent. `Core/Order.lean`
+arrives **in the closure** as `Core/Outcome.lean`'s own import — and **in the
+closure is not in use**: nothing here mentions `FlatLe`, and the `_mono`
+corollaries it backs are adopted by the ticket that gives this tier recursion
+(inch 3+), which is exactly where the ticket put them.
+
+### THE VERDICT — GREEN, and this one was checked against its own finding
+
+Ticket `1787523469336706000-94017-adaadopt`, queued **4,812 s**, tenure
+`01:39:03-01:39:47`. Log `/tmp/ada-t8.out`, full build log
+`$TMPDIR/triad-build.NyvxqG`, whose first line identifies it:
+`lane=adaadopt branch=ada-m2-adopt-ticket tree=e547c47b8c32 head=342a1f5`.
+
+| stage | result |
+| --- | --- |
+| build | `lake build LeanModels.Ada.Ada2012.Value LeanModels.Ada` -> **exit 0** |
+| `docs_check` | 91 marked blocks, **91 ok**, 39 illustrative-exempt |
+| `diff_test` | **1,464 cases: 0 failed**, 119 whitelisted-unsupported, 1,345 matched |
+| `refusal_census --whitelist` | green |
+| verdict | **TRIAD DONE (build exit 0, gates green)**, `LOCK RELEASED (mine)` |
+
+**COVERAGE (§5.4a), as the tenure stated it**: scoped — the green covers the
+two named modules and everything they IMPORT; it does **not** cover modules
+that import them, nor any untouched tier, and it is not evidence about master
+beyond that scope. The gate phase additionally built `leanmodels-run`.
+Recorded in `.git/triad-greens` as `class=tier citable=yes full=no`, so it is
+citable as an increment base with `--since 342a1f5` — and **it does not meet
+the merge bar on its own**, because that bar wants a FULL root and this root
+is scoped.
+
+#### A REFINEMENT TO THIS ENTRY'S OWN FORENSICS, found by applying them here
+
+This build also finished in **two seconds**, which is the very shape the
+predecessor's tenure was convicted on. It is honest, and the difference is not
+visible in the tenure summary at all:
+
+    ✔ [7/8] Built    LeanModels.Ada.Ada2012.Value (422ms)
+    ✔ [8/8] Built    LeanModels.Ada (720ms)
+    ℹ [4/8] Replayed LeanModels.Core.Outcome
+
+> **`Built` versus `Replayed` is the witness that a module ELABORATED.
+> Duration is only a corroborator.**
+
+Eight jobs, six of them cache hits — correctly, since `Core/` is byte-identical
+between this branch's base and its own predecessor — and 422 ms of real
+elaboration, confirmed a third way by both `.olean` files carrying the
+tenure's own timestamp. So the checking order is: **tree identity first**
+(`git rev-parse <sha>^{tree}` against the log header), **`Built`/`Replayed`
+second**, **the clock third**. The predecessor's 4 seconds and this 2 seconds
+are indistinguishable at the third check and opposite at the first two.
+
+#### WHAT MOVED UNDER THIS GREEN WHILE IT QUEUED
+
+Master advanced **26 commits** during the 80-minute queue. Measured rather
+than assumed, because after adoption Core is in this tier's closure and the
+question is no longer rhetorical:
+
+* **Ada's own elaboration closure is UNTOUCHED** — no change under
+  `LeanModels/Core/`, `LeanModels/Ada/`, `lakefile.toml` or `lean-toolchain`.
+  The build half of this green therefore transfers across a rebase **by
+  construction**, which is the first time this tier has been able to say that
+  since adoption ended its base-independence.
+* **The GATE inputs DID move** — `harness/cases.json`, `harness/refusal_census.py`
+  and four `LeanModels/Python/` files. Two of the three gates read those, so
+  the **gate** half of this green does not transfer, and a rebase would owe a
+  re-gate under §7.2's *a rebase is a merge, and a merge is not a
+  measurement*.
+
+So this branch is pushed **exactly as it was gated**, at base `fd96fce`, rather
+than rebased into a state nothing has measured.
+
+### NEXT: INCH 2, CENSUS-FIRST
+
+`W` + assignment + sequence + `if` (ARM 5.1-5.3). The census runs before the
+rules, per this lane's standing practice, and the standing spec-coverage row
+above is what it has to move — which, as the next entry measures, it will not.
+
+## 2026-08-24-ada-2 — INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts
+
+Inch 2 is `W` + assignment + sequence + `if` (ARM 5.1-5.3;
+`docs/ada-semantics-design.md` §3, rung 2). Per §L25's law the rung is a
+CENSUS before it is a build, and per §9.0b a reach census does not only rank —
+it partially orders, and it can say a rung is worth doing while moving no
+number at all. This one says exactly that.
+
+**"ARM 5.1-5.3" IS AN ADA 2012 RANGE.** Stated here and again where the
+paragraph counts are, because it is the load-bearing qualifier on every number
+below: **a paragraph range is edition-relative**, so a rung scoped by clause
+number is scoped in an edition or it is not scoped at all. The tier stays
+**Ada 2012**; the spec census stays pinned to **Ada 2022**; the bridge between
+them is a corpus measurement, given in full below.
+
+### THE CORPORA ARE GONE FROM THIS MACHINE, and the content-pinned artifacts are why this census still exists
+
+Measured first, because it conditions everything below: **ACATS 4.2, the ARM's
+`RM-*.TXT` rendering, and the libadalang toolchain are all absent** — the
+scratchpad purge took `adatools/` and both corpora with it
+(`docs/ada-toolchain-census.json` still names the vanished path).
+`import libadalang` fails; there is no `RM-05.TXT`; there is no `acats42`.
+
+**Every number below is therefore re-derived from git-tracked, content-pinned
+census artifacts** — `docs/ada-construct-census.json` (ACATS 4.2, 4,821
+sources parsed, 2,976,861 nodes), `docs/ada-suite-census.json` (ACATS 4.2),
+`docs/ada-spec-census.json` (the ARM). That is §L86's durability argument
+collecting: a corpus pinned by `sha256` and an edition pinned by its own front
+matter outlive the directory they were read from. **What cannot be re-derived
+is anything the instruments did not already record** — see the one such gap at
+the end, which is the rung's real finding.
+
+**THE INSTRUMENTS ARE FINE, AND THEY SAY SO LOUDLY.** Measured, all five
+self-tests today:
+
+| instrument | `--self-test` |
+| --- | --- |
+| `ada_round_trip.py` | **PASSED** |
+| `ada_suite_census.py` | **PASSED** |
+| `ada_spec_census.py` | **PASSED** |
+| `ada_toolchain_census.py` | **PASSED** |
+| `ada_construct_census.py` | **REFUSES** — `libadalang is not importable. It is the tier's frontend and there is no fallback for this instrument.` |
+
+Four of five need no corpus and pass. The fifth **refuses rather than
+degrading**, and its refusal message carries the acquisition path and the
+exact `PYTHONPATH` / `DYLD_LIBRARY_PATH` shape the ctypes bindings need. That
+is the never-hide-errors standard paying out at the moment it is tested: a
+frontend census with a silent fallback would have produced a smaller number
+instead of no number.
+
+**NAMED RUNG: RE-ACQUIRE — a rung, not a background chore.** Nothing is lost,
+but the *reproduce it, do not quote it* line at the head of this ledger is
+un-runnable on this box, and that is a defect to clear before inch 2 builds.
+Its acceptance conditions, so it is not re-done differently next time:
+
+* **PIN BY CONTENT, the way the census JSONs already are.** ACATS 4.2 is
+  pinned by its own `ACATS_Version` constant plus a per-file `sha256`, and the
+  ARM by the edition read out of its front matter. The rung's job is to make
+  the *acquisition* carry the same pins — a manifest of hashes checked on
+  fetch — **so the next purge costs a download and not a reconstruction.**
+  That is the whole reason this lane stamps no `git_rev`: content pinning is
+  strictly stronger for an artifact living outside the repository, and it only
+  pays if the fetch checks it.
+* **DO NOT VENDOR THE ARM TEXT INTO THE REPOSITORY.** Fetch at the pin, then
+  **cite and paraphrase**. The censuses already record everything a reader
+  needs — clause id, title, paragraph count, categories present — and those
+  are derived facts, not the standard's prose.
+* The frontend (`libadalang`, ctypes over a shared library) is a toolchain
+  acquisition, and `harness/ada_toolchain_census.py` already carries the exact
+  `PYTHONPATH` / `DYLD_LIBRARY_PATH` shape it needs. That instrument's
+  `--self-test` passes today, so the path is documented, not lost.
+
+### THE SPEC SIDE — 58 paragraphs, and `if` is nearly free
+
+From `docs/ada-spec-census.json`, the three subclauses inch 2 owns. **The
+range is Ada 2012's; a paragraph range is edition-relative** (the counts are
+read off the 2022 census, and the next section is why that is sound here):
+
+| ARM | title | paragraphs | rule categories present |
+| --- | --- | ---: | --- |
+| 5.1 | Simple and Compound Statements - Sequences of Statements | 23 | Syntax, Name Resolution, Legality, **Static Semantics**, Dynamic Semantics, **Bounded (Run-Time) Errors**, Examples |
+| 5.2 | Assignment Statements | 28 | Syntax, Name Resolution, Legality, Dynamic Semantics, Examples |
+| 5.3 | If Statements | 7 | **Syntax, Dynamic Semantics, Examples — and nothing else** |
+| | **inch 2 total** | **58** | |
+
+**`if` costs almost nothing and it is the most common of the three.** Seven
+paragraphs, no Legality Rules, no Name Resolution Rules, no Static Semantics:
+the ARM has essentially one dynamic rule to state. The expensive one is 5.2 at
+28 paragraphs, and its cost is not the write — it is the TARGET (below).
+
+**ARM 5.1 CARRIES A BOUNDED (RUN-TIME) ERROR, so §1.4's machinery goes live at
+inch 2 rather than at some later rung.** The design already fixed the shape:
+a bounded-error site carries its **permitted set as a per-site datum**, the
+verdict is `obs (run …) ∈ permitted site`, and **never `⊕`** — outcome
+conjunction carries an `S ≠ ∅` side condition that turns a permission into an
+obligation, which is strictly stronger and, for Ada, false. Inch 2 is where
+that stops being a design note. Scale for the whole modelled slice: **57
+Bounded (Run-Time) Errors paragraphs in clauses 1-13**, 104 document-wide.
+
+### THE EDITION HAZARD, and the corpus settles it without the ARM
+
+**The spec census is pinned to Ada 2022 (ISO/IEC 8652:2023); the tier's
+meaning layer is Ada 2012** (`LeanModels/Ada/Ada2012/`, ACATS 4.2). In clause
+5 the editions differ, and one of the differences sits **inside inch 2's
+nominal range**:
+
+* **5.2.1 Target Name Symbols** (the `@` of an assignment target), 8
+  paragraphs — numbered between 5.2 and 5.3;
+* 5.5.3 Procedural Iterators, 37 paragraphs;
+* 5.6.1 Parallel Block Statements, 9 paragraphs.
+
+Reading "ARM 5.1-5.3" off the 2022 census would have pulled 5.2.1 into the
+rung. **The corpus settles it without needing the 2012 RM text**: libadalang
+26 parses Ada 2022 and has a `TargetName` node for `@`, and the construct
+census records **zero `TargetName` nodes in 4,821 ACATS sources** — along with
+zero `DeclExpr`, zero `ReduceAttributeRef`, zero `ParallelLoopStmt` and zero
+`ParallelBlockStmt`. The absence is a fact about the corpus, not about the
+parser's vocabulary.
+
+> **5.2.1 is out of inch 2 BY MEASUREMENT, not by assertion**, and the general
+> rule it instances is the family's whole versioned-surface premise arriving
+> at its smallest possible scale: **a paragraph range is edition-relative, so
+> a rung scoped by clause number is scoped in an edition or it is not scoped.**
+
+### THE CORPUS SIDE — 4.05% of nodes, and `if` outnumbers assignment
+
+From `docs/ada-construct-census.json`, ACATS 4.2 entire (4,821 of 4,973
+sources parsed; the 152 with diagnostics are class B tests, which contain
+deliberate illegalities and are the corpus working as designed):
+
+| node kind | count | ARM |
+| --- | ---: | --- |
+| `StmtList` | 67,520 | 5.1 |
+| `IfStmt` | 21,260 | 5.3 |
+| `AssignStmt` | 20,529 | 5.2 |
+| `NullStmt` | 8,031 | 5.1 |
+| `ElsePart` | 2,236 | 5.3 |
+| `ElsifStmtPart` | 987 | 5.3 |
+| **inch-2 vocabulary** | **120,563** | **4.05% of 2,976,861 nodes** |
+
+**`if` outnumbers assignment**, 21,260 to 20,529, which is the opposite of
+most corpora and is a fact about what ACATS IS: a suite whose dominant idiom
+is *check a condition, then report failure*. The cheapest subclause in the
+ARM is the most frequent construct in the corpus, so **5.3 is the rung's best
+ratio by a wide margin** and should be written first.
+
+**Only 987 `elsif` parts against 21,260 `if`s** — 4.6%. `elsif` is a
+list-shaped tail on the rule and costs one recursion; it is not a separate
+decision.
+
+**What is NOT in the rung, at the scale it is not in the rung:**
+
+| out-of-tier neighbour | count | wants |
+| --- | ---: | --- |
+| `CallStmt` | 56,062 | inch 3 (frame, `return`) |
+| `HandledStmts` | 26,386 | inch 4 (handlers, propagation) |
+| `CallExpr` | 96,592 | inch 3 — **or arrays; see below** |
+
+`CallStmt` outnumbers `AssignStmt` **2.7 to 1**. A statement walker that
+handles 5.1-5.3 and refuses calls will refuse the most common statement in the
+corpus, which is expected and is the reason the reach below is zero.
+
+### THE REACH IS ZERO, and saying so first is the point
+
+`docs/ada-suite-census.json`: the v0 target is **1,374 tests**, and **all
+1,374 use `Report`**. `Report` is a package of 15 subprograms; reaching it
+needs subprogram calls (inch 3) and the native `Report` model (inch 5). So:
+
+> **Inch 2 moves the standing spec-coverage row by exactly 0 tests, and it was
+> never going to move it.**
+
+That is recorded BEFORE the rung is built, not after it disappoints. §9.0's
+guard — *a mechanism rung that unlocks nothing must not be allowed to look
+like progress* — applies to a rung's PLAN as much as to its table, and the Go
+lane's `+0` row is the precedent. Inch 2 is on the critical path to inch 6's
+517 tests through inches 3, 4 and 5; it is not a coverage rung and must not be
+sold as one.
+
+### `W` AT INCH 2 — one component live, four declared
+
+`docs/ada-semantics-design.md` §1.1 fixes four components, and the rung's job
+is to land the STRUCTURE with only the first written:
+
+* **`objects`** — LIVE. Assignment writes it; a scoped map of named objects,
+  **not** a byte-addressed heap (v0 has no `'Address` pressure — Clause 13 is
+  out of v0 and the 1,374-test target reaches it nowhere).
+* **`elaborated`** — declared, unwritten until inch 9. It is data the tier was
+  handed rather than derived: §L74 measured that **680 of 4,810 files, one in
+  seven, have a name that is not among their unit names**, so the order cannot
+  be re-derived from paths.
+* **`output`** — declared, unwritten until `Report` lands at inch 5.
+* **`trace`** — declared, and **it must be in `W` from the first statement
+  rule**. The scoreboard emits the ACAA's `CSTART/CEND/CERR/...` rows and lets
+  `GRADE` decide; an emitter is not retrofittable, and every span a `CERR` row
+  needs (`line`, `col`, `endLine`, `endCol`) is already on every envelope node.
+
+### THE ONE MEASUREMENT THE INSTRUMENTS CANNOT MAKE — and it is inch 2's real decision
+
+**What SHAPE does an assignment target take?** ARM 5.2's `assignment_statement`
+is `variable_name := expression`, and `variable_name` ranges over a simple
+name (in the rung), an indexed component (arrays — not in the rung), a
+selected component (records — not in the rung), and a dereference
+(access types — inch 8). The split decides how much of the 20,529 assignments
+inch 2 honestly covers and how many it must refuse.
+
+**`docs/ada-construct-census.json` cannot answer it.** It is a flat
+kind-frequency map — 280 distinct kinds, no parent-child structure — so it
+knows there are 20,529 `AssignStmt` and 654,029 `Identifier` and cannot pair
+them. And the ambiguity is not incidental: **`CallExpr` (96,592, the
+second-most-frequent kind) is libadalang's node for BOTH a function call and
+an indexed component**, so even a parent-child pass has to disambiguate by
+resolution, not by kind.
+
+> **A frequency census ranks constructs; it cannot answer a question about
+> a construct's ARGUMENT.** That is §9.0's discriminator law in the shape this
+> tier meets it — and unlike Go's case, the corpus DOES have the witness. It
+> just is not in the recorded output.
+
+**NAMED RUNG, and it precedes the build:** extend
+`harness/ada_construct_census.py` to record, for each `AssignStmt`, the KIND
+of its target child (and for `CallExpr`, whether it resolves to a subprogram),
+then re-run it. That needs the re-acquisition rung above. Until it runs, inch
+2's assignment rule should be written to **refuse every non-simple-name
+target with `RefusalCause.unsupported` citing ARM 5.2**, which is honest, is
+countable, and turns the missing measurement into a number the next census
+reads off the model itself.
+
+### THE BUILD ORDER, and one line that rides with the rung
+
+**5.3 FIRST, and the corpus is the argument.** Seven ARM paragraphs with no
+Legality Rules and no Name Resolution Rules, against **21,260 `IfStmt`** — the
+cheapest subclause in the range is the most frequent construct in the corpus.
+Then 5.1 (sequences, `null`, and the bounded-error site), then 5.2 (the
+assignment, whose cost is the target rather than the rule).
+
+**5.1's BOUNDED (RUN-TIME) ERROR is written as a MEMBERSHIP site, never as
+`⊕`** (§1.4): the site carries its permitted set as a per-site datum and the
+verdict is `obs (run …) ∈ permitted site`, with equality as the singleton
+case. Outcome conjunction carries an `S ≠ ∅` side condition that converts a
+permission into an obligation — strictly stronger, and for Ada false.
+
+**5.2 REFUSES EVERY NON-SIMPLE-NAME TARGET**, with
+`RefusalCause.unsupported` citing ARM 5.2, until the target-child-kind census
+extension has run. This is deliberate and is not a gap being papered over:
+**a refusal is how a pending measurement is carried in the model rather than
+in a note.** It is honest (the tier is not claiming to assign into an array it
+has not modelled), it is countable, and the next census reads the number off
+the model itself instead of re-deriving it from the corpus.
+
+**AND ONE LINE RIDES WITH THIS RUNG, NOT A TENURE OF ITS OWN:**
+
+    LeanModels.lean:  import LeanModels.Ada
+
+`LeanModels.lean` does not import the Ada tier. The tier reaches the default
+build **only** through `Examples/ada/report/guards.lean` under the `Examples.+`
+glob — so a tier whose Examples fixture is ever pruned **silently leaves the
+build**, and nothing goes red at the moment it happens. That is the
+POINTED-versus-DECLARED ladder with a live rung missing: the tier is *reached*,
+but it is not *declared*, and only the second survives a fixture being moved.
+
+**Its price, stated before it is paid.** `LeanModels.lean` is in the **spine**
+class (`tools/triad.sh`: *"spine — `LeanModels.lean`, `LeanModels/Core/`, the
+shared harness, the lakefile → the full build"*), so the landing that carries
+this one line is a FULL build rather than a scoped tier build. Amendment 14
+makes a full-tree build **quiet-machine-only — load < 5 and swap < 1 GB** —
+and at drafting the box is at **load 6.67 with 8,714 MB of swap in use**. So
+the line is scheduled, not squeezed in: it rides the inch-2 landing when the
+machine is quiet, and if the machine is not quiet at that moment it waits
+rather than converting a tier green into a red full build. A14's own
+correction applies if that happens — **after a red, the next build is FULL
+again**, because a scoped build extends a green and never recovers from a red.
+
+**AND THE TWO QUIET-WINDOW ITEMS ARE THE SAME WINDOW, so they ride together.**
+This tier cannot produce a **full** green until the box is quiet, and it needs
+one for two independent reasons that arrived within the hour: the spine line
+above is spine-class by construction, and — measured today — **§5.4a-i's
+increment chain REFUSES TO START ON A SCOPED ROOT.** Asked to classify a
+two-file docs increment against the adoption's tier green, `tools/triad.sh`
+answered:
+
+    the green at 342a1f582d9d has NO RESOLVABLE ROOT: it was itself a scoped green
+    with no full build under it, so there is nothing sound to classify the increment
+    against (§5.4a-i: against the ROOT, never the parent). Take one full green first.
+
+That refusal is the machinery working. A scoped green admits it does not cover
+modules importing what it built; chaining onto it would convert an admitted
+partial into an unstated one. **So this lane holds no chained evidence, and
+does not claim any**: the landing that carries this census is `docs` class on
+its own merits — `git diff --name-only 342a1f5 HEAD` is two `.md` files,
+nothing in it can change elaboration, and the class's gate (`docs_check`,
+91/91 marked blocks, plus `backlog-index.sh --check` in sync) is the whole
+gate it owes. One full green in a quiet window retires both items at once.

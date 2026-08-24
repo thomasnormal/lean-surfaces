@@ -1,4 +1,5 @@
 import LeanModels.Ada.Ast
+import LeanModels.Core.Outcome
 
 /-!
 # M2 inch 1 — the value layer, and the one decision that cannot be retrofitted
@@ -30,14 +31,40 @@ Getting this backwards would make the tier refuse a large fraction of a suite
 that is largely *about* constraint checking, and it is not recoverable later:
 every rule that can produce a scalar would have to be revisited.
 
-## SUBSTRATE: defined BY SHAPE, with an adoption note
+## SUBSTRATE: ADOPTED from `LeanModels/Core/Outcome.lean`
 
-`Core.SemM` and `Core.RefusalCause` are ruled and imminent
-(`docs/family-architecture.md`, ruling `14bdd7a`) but not landed. Per the
-dispatch, this file defines them **by shape** exactly as
-`LeanModels/Es/Completion.lean` did, so that adoption is an import change and
-not a redesign. Every definition below that Core will own is marked
-**`ADOPT`**; nothing else in the Ada lane may define these.
+Inch 1 defined the outcome layer **by shape**, marked every such definition
+`ADOPT`, and said adoption should be an import change rather than a redesign.
+This is that change (`docs/backlog/ada.md` §2026-08-23-ada-2): the by-shape
+`RefusalCause` / `Loud` / `Halt` / `SemM` are **gone**, and Core's are
+imported. **π = `ArmRef`** (the paragraph a refusal cites), **σ = `Unit`**
+(no diagnostic snapshot; the consumer is registered, not claimed — see the
+ticket).
+
+**THE TWO-CHANNEL MAPPING, which is the load-bearing content of the
+adoption.** Core separates a state-RETAINING channel from a state-DISCARDING
+one, and Ada needs both, on opposite sides of the line inch 1 drew:
+
+* **`ρ` = `Abrupt`, via `raiseIn` — every Ada exception, `Constraint_Error`
+  first among them.** ARM 11.4: an exception PROPAGATES, and the world it was
+  raised in survives for a handler to see. State-retention here is the
+  language, not an implementation nicety.
+* **`π` = `ArmRef`, via `refuse` — constructs outside the modelled tier, and
+  nothing else.** Never `Constraint_Error`, which the ARM defines completely.
+
+Inch 1's load-bearing guard (`!okIs (.int Int8 (-128)) (constrain Int8 128)`)
+is what makes the mapping legible: out-of-range RAISES, so it belongs on `ρ`.
+Had `constrain` refused, this adoption would have wired Ada's most common
+outcome into the give-up channel — irrecoverably, because every rule that can
+produce a scalar would have to be revisited.
+
+**THE PRICE, PAID KNOWINGLY.** Ada imported ZERO `Core` modules until this
+line, which is why inch 1's green survived a 53-commit rebase untouched. That
+property ends here: Core changes can now break this tier, and its greens stop
+being base-independent. `Core/Order.lean` arrives in the closure as
+`Core/Outcome.lean`'s own import — **in the closure is not in use**: nothing
+here mentions `FlatLe`, and the `_mono` corollaries it backs are adopted by
+the ticket that gives this tier recursion (inch 3+), not by this one.
 -/
 
 namespace LeanModels.Ada.Ada2012
@@ -63,47 +90,26 @@ def ArmRef.toString (r : ArmRef) : String := s!"{r.clause}({r.para})"
 
 instance : ToString ArmRef := ⟨ArmRef.toString⟩
 
-/-! ## ADOPT — the four refusal classes, parameterized by the tier payload -/
+/-! ## The refusal classes — `Core.RefusalCause`, instantiated at `ArmRef`
 
-/--
-**ADOPT** (`Core.RefusalCause` when it lands). The four §5.2 classes are
-family law; the payload is the tier's.
+The four §5.2 classes are family law and Core owns them; the payload is the
+tier's. Inch 1's by-shape copy is deleted, and with it its one spelling
+divergence: this tier's `unsupportedConstruct` is the family's **`unsupported`**.
 
-**All four are present even where Ada expects one to be empty**, which is the
-ruling's sharpest clause: *an expected-empty class is PRESENT AND GATED,
-never absent* — omitting it makes the emptiness a fact about the type,
-invisible to a scoreboard that then cannot tell *"this language has no such
-behaviour"* from *"this tier did not model that column."* **A gate needs a
-constructor to be about.**
--/
-inductive RefusalCause (π : Type) where
-  /-- Out of tier. Retires by climbing a rung. -/
-  | unsupportedConstruct (at_ : π)
-  /-- **The language says this run has no meaning.** For Ada this is ARM
-  1.1.5's *erroneous execution* — the class with no language-specified bound
-  on the possible effect. **Never retires: it is the product.** Measured at
-  23 paragraphs in clauses 1-13, concentrated in ARM 11.5 (*Suppressing
-  Checks*) and ARM 13.9.1 (*Data Validity*). -/
-  | undefined (at_ : π)
-  /-- Outside the modeled slice — a library unit this tier does not model.
-  Retires by widening the slice. -/
-  | environment (at_ : π)
-  /-- Several admissible orders and the model cannot show the observable
-  invariant under all of them. **GATED for Ada**: see `orderDependenceGate`.
-  -/
-  | orderDependence (at_ : π)
-  deriving Repr, Inhabited
+**ADA DOES NOT NARROW THE CAUSE TYPE, and the contrast with Go is the reason
+to say so.** The Go tier refuses only through a narrower `GoRefusal` that has
+no `undefined` constructor, so its empty class is unreachable *by
+construction* — the right gate for a language whose specification never says
+"undefined". **Ada's `undefined` bucket is expected NON-empty**: ARM 1.1.5
+defines erroneous execution as the class with no language-specified bound on
+the possible effect, measured at 23 paragraphs in clauses 1-13 and
+concentrated in ARM 11.5 (*Suppressing Checks*) and ARM 13.9.1 (*Data
+Validity*). A narrowing type here would delete this tier's product. So Ada
+refuses through Core's `refuse` directly, all four classes reachable, and its
+expected-empty class is a different one — gated by predicate below. -/
 
-/-- Ada's cause type: the four classes, carrying ARM paragraphs. -/
+/-- Ada's cause type: the family's four classes, carrying ARM paragraphs. -/
 abbrev Cause := RefusalCause ArmRef
-
-/-- The class name, so a cause rendered into a message string is still
-mechanically recoverable while §the correction note's divergence stands. -/
-def Cause.tag : Cause → String
-  | .unsupportedConstruct r => s!"unsupportedConstruct@{r.toString}"
-  | .undefined r => s!"undefined@{r.toString}"
-  | .environment r => s!"environment@{r.toString}"
-  | .orderDependence r => s!"orderDependence@{r.toString}"
 
 /--
 **THE GATE the ruling requires.** Ada's unspecified-order surface is real —
@@ -118,49 +124,34 @@ Ada's v0 core; if it fails, the failing site is the finding.
 
 **It is deliberately not asserted here.** A gate asserted before the thing it
 gates exists is decoration.
+
+**The predicate is Core's** (`RefusalCause.isOrderDependence`), which Core
+lifted so that the test is written once per family rather than once per tier;
+what stays local is the tier's CLAIM about its own bucket, which is the part
+that is Ada's.
 -/
 def orderDependenceGate (cs : List Cause) : Bool :=
-  cs.all fun c => match c with
-    | .orderDependence _ => false
-    | _ => true
+  cs.all fun c => !c.isOrderDependence
 
 /-- The erroneous-execution citation, so `undefined` always carries the
 clause that defines it rather than an ad-hoc string. -/
 def erroneousExecution : ArmRef := { clause := "1.1.5", para := "9" }
 
-/-! ## ADOPT — the base outcome and the semantic monad -/
+/-! ## The base outcome — `Core.HaltWith`, at THIS tier's payload
 
-/-!
-## ADOPT — the base outcome, and a CORRECTION
+**`AdaHalt`, not `Halt`.** `Core.Halt` is `HaltWith Unit Unit`, the
+payload-free instantiation a tier with no structured cause writes — and
+adopting it here would typecheck, compile, and silently throw every ARM
+reference away. Naming the instantiation is what makes the payload visible at
+the use site; a local `abbrev Halt` would have shadowed Core's inside this
+namespace and made the wrong one the one a reader sees.
 
-The first version of this file defined `Halt` as a bespoke three-constructor
-inductive with a hand-written `Monad` instance, and put the refusal CAUSE
-inside its `unsupported` arm. **Both were wrong against the Core that
-landed** (`LeanModels/Core/Outcome.lean`, `376735e`), and the second was
-wrong in a way the base's own docstring warns about:
+The three by-shape definitions this replaces are gone: `Loud` (a bespoke
+inductive with a hand-written `Monad` instance), `Halt`, and `SemM`. -/
 
-> *"A tier that needs more than two causes does **not** extend this type; it
-> adds an `.except` layer of its own, which composes for free."*
-
-So the base below is Core's, spelled Core's way — `Except Loud`, which gets
-its `Monad` from `Except` rather than from twenty hand-written lines. When
-`LeanModels/Core/Outcome.lean` is imported, these three definitions delete.
--/
-
-/-- **ADOPT** (`Core.Loud`). The model giving up — never a statement about
-the program. Both arms DISCARD state, which is what distinguishes them from a
-language-level raise: there is no meaningful world to hand back, because the
-model stopped rather than the program.
-
-Note `unsupported` carries **only a message**. The four-class `Cause` above
-does not go here; see the correction note. -/
-inductive Loud where
-  | timeout
-  | unsupported (msg : String)
-  deriving Repr, Inhabited, BEq, DecidableEq
-
-/-- **ADOPT** (`Core.Halt`). A run either produces a value or halts loudly. -/
-abbrev Halt := Except Loud
+/-- A run either produces a value or halts loudly, carrying the ARM paragraph
+it halted on. `σ = Unit`, so `Loud`'s diagnostic snapshot is always `none`. -/
+abbrev AdaHalt := HaltWith ArmRef Unit
 
 /-! ## The values
 
@@ -307,34 +298,40 @@ def divOp (sub : IntSubtype) (a b : Int) : Except Abrupt Val :=
     constrain sub (adaDiv a b)
 
 
-/-- **ADOPT** (`Core.SemM`). `ExceptT` OUTSIDE `StateT`, so the world
-survives a raise. Fuel is an INDEX on the step function, never in state. -/
-abbrev SemM (W : Type) (ρ : Type) := ExceptT ρ (StateT W Halt)
+/-- **The tier's monad**, and it is Core's `SemMWith` at Ada's four
+parameters: the world is the caller's, `ρ = Abrupt`, `π = ArmRef`,
+`σ = Unit`. `ExceptT` sits OUTSIDE `StateT` so the world survives a raise —
+Core's layer order, decided there by `rfl` rather than by taste. Fuel is an
+INDEX on the step function, never in state.
 
-/-- The tier's usual instantiation. -/
-abbrev AdaM (W : Type) := SemM W Abrupt
+The Go tier's `GoM = SemMWith GoWorld Panic SpecRef Unit` is the same shape at
+the same position, arrived at independently: **two tiers whose refusal payload
+is a citation into their own standard.** -/
+abbrev AdaM (W : Type) := SemMWith W Abrupt ArmRef Unit
 
-namespace SemM
+/-- **CHECKED, not assumed** — the ticket's second check, made structural.
+The tier's monad is built on the payload-CARRYING halt. Writing
+`SemM W Abrupt` instead would elaborate, compile, and pin `π = Unit`, and
+every ARM reference a refusal cites would be dropped at the type level with
+nothing to notice it. -/
+example (W : Type) : AdaM W = ExceptT Abrupt (StateT W AdaHalt) := rfl
 
-/-- Refuse: loud and fuel-independent. Not an error in `ρ` — a refusal is not
-something an Ada program can handle.
+/-! ## Refusing and raising — Core's named primitives, unaliased
 
-**The `Cause` is rendered into the message for now, and that is a placeholder
-this file names rather than hides.** Core's `Loud` carries no cause and its
-docstring says a tier wanting one adds an `.except` layer of its own; the
-four-class `RefusalCause π` the ruling assigns to Core has **not landed**
-(measured: it exists only in `LeanModels/Es/Completion.lean`). Wiring the
-cause structurally is therefore blocked on that divergence being resolved,
-and a string is the honest interim — it loses the scoreboard's ability to
-bucket without parsing prose, which is precisely why this is a placeholder
-and not a design. -/
-def refuse (c : Cause) (msg : String) : SemM W ρ α :=
-  fun _ => .error (.unsupported s!"[{Cause.tag c}] {msg}")
+`refuse` (out of tier, state-discarding), `refuseWith` (the same plus a
+snapshot — unused here, `σ = Unit`), `exhausted` (fuel), `raiseIn` (the
+language's own raise, state-retaining) are Core's and are used as Core spells
+them. **No tier alias is defined**, because Ada would have nothing to add:
+the Go tier's `refuseGo` earns its existence by NARROWING the cause type, and
+Ada deliberately does not narrow. A pass-through wrapper would be surface
+with no decision in it.
 
-/-- Fuel exhaustion. The only exhaustion outcome. -/
-def timeout : SemM W ρ α := fun _ => .error .timeout
-
-end SemM
+The inch-1 placeholder that rendered the cause into the message string
+(`refuse (c : Cause)` prefixing `[unsupportedConstruct@3.5.4(10)]`) is
+**deleted**: the class is a constructor and the clause is its payload, so
+`Loud.observable` and `RefusalCause.className` bucket a refusal without any
+consumer parsing prose. That was the whole reason the placeholder was named a
+placeholder. -/
 
 
 
@@ -362,7 +359,16 @@ Written out rather than comparing with `==`, because **`Except` carries no
 (Except Abrupt Val)`, three sites). Declaring an orphan `BEq` for a core type
 to serve three guards would be the wrong trade — it is a global instance
 added for a local convenience, and the next tier to compare an `Except` would
-inherit it without asking. This needs only `BEq Val`, which is derived. -/
+inherit it without asking. This needs only `BEq Val`, which is derived.
+
+**RE-CHECKED AT ADOPTION, and it survives.** Core ships
+`instance [BEq π] : BEq (Loud π σ)` — on `Loud`, which is the model's
+give-up type, and NOT on `Except`. `constrain` returns `Except Abrupt Val`,
+so the synthesis failure this helper exists for is untouched by the import,
+and its three sites still need it. Checked by compiling rather than by
+reading, because reading Core's instance list suggests the opposite answer:
+a `BEq` does arrive with the adoption, on the type this helper is not
+about. -/
 private def okIs (v : Val) : Except Abrupt Val → Bool
   | .ok w => w == v
   | _ => false
@@ -427,6 +433,68 @@ private def TrueOnly : EnumSubtype := { booleanType with first := 1, last := 1 }
 -- the clause that defines erroneous execution rather than a loose string.
 #guard erroneousExecution.toString == "1.1.5(9)"
 #guard (RefusalCause.undefined erroneousExecution : Cause) matches .undefined _
+
+-- The class name is the FAMILY's, emitted by Core, and a scoreboard buckets
+-- on it. The by-shape spelling `unsupportedConstruct` is gone with the copy.
+#guard (RefusalCause.undefined erroneousExecution : Cause).className == "undefined"
+#guard (RefusalCause.unsupported erroneousExecution : Cause).className == "unsupported"
+
+/-! ### THE TWO CHANNELS, MEASURED
+
+The adoption is only correct if Ada's outcomes land on the right side of
+Core's line, so the mapping is run rather than described. These three guards
+are the ones that would have caught a wrong adoption, and each fails for a
+different reason if the mapping slips. -/
+
+/-- ARM 9.1, *Task Units* — tasking is outside the modelled tier, so it is
+the honest example of something Ada refuses rather than raises. -/
+private def tasking : ArmRef := { clause := "9.1", para := "1" }
+
+/-- Did the run raise `name`, and what world came back? The world is the
+point: a `ρ` channel that discarded state could not answer the second half. -/
+private def raisedWith (name : String) (w' : Nat) (x : AdaM Nat Val) (w : Nat) : Bool :=
+  match x w with
+  | .ok (.error (.raised n _), wOut) => n == name && wOut == w'
+  | _ => false
+
+/-- The refusal's §5.2 class and its ARM paragraph, read as DATA — never
+parsed back out of prose, which is exactly what the pre-adoption placeholder
+forced a consumer to do. -/
+private def refusedAt (cls : String) (r : ArmRef) (x : AdaM Nat Val) (w : Nat) : Bool :=
+  match x w with
+  | .error (.unsupported c _ _) => c.className == cls && c.detail == r
+  | _ => false
+
+/-- A world EFFECT and then a raise. The effect is what makes the retention
+claim non-trivial: an initial world merely passing through would prove far
+less than a WRITE performed before the raise still being visible after it. -/
+private def effectThenRaise : AdaM Nat Val := do
+  set (42 : Nat)
+  raiseIn (.raised constraintError "value outside Int8 range")
+
+/-- The same exception with no effect before it. -/
+private def raiseAlone : AdaM Nat Val :=
+  raiseIn (.raised constraintError "value outside Int8 range")
+
+/-- Tasking: out of the modelled tier, so this one refuses. -/
+private def refuseTasking : AdaM Nat Val :=
+  refuse (.unsupported tasking) "task rendezvous is not modelled"
+
+-- ρ IS STATE-RETAINING. The world goes in as 7, is written to 42, and comes
+-- back 42 THROUGH the raise. ARM 11.4 -- an exception propagates and a
+-- handler observes the state it was raised in.
+#guard raisedWith constraintError 42 effectThenRaise 7
+#guard raisedWith constraintError 7 raiseAlone 7
+
+-- π IS STATE-DISCARDING, and structurally so: the `.error` arm has nowhere
+-- to put a world. What it does carry is the class and the paragraph.
+#guard refusedAt "unsupported" tasking refuseTasking 7
+
+-- AND THE TWO ARE NOT INTERCHANGEABLE: a raise is not a refusal. This is the
+-- inch-1 decision restated at the substrate, and it is the guard that fails
+-- if `Constraint_Error` is ever wired onto the give-up channel.
+#guard !refusedAt "unsupported" tasking raiseAlone 7
+#guard !raisedWith constraintError 7 refuseTasking 7
 
 -- THE GATE: `order-dependence` is present and expected empty. The predicate
 -- is what inch 6 checks; it holds vacuously on an empty list, and FAILS the

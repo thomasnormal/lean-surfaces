@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**259 entries across 16 lanes.** Regenerate with
+**263 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -37,6 +37,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-sunfish-rtrack-11` | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
 | `2026-08-24-wasm-8` | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
+| `2026-08-24-ada-2` | INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts | ada |
+| `2026-08-24-ada-1` | CORE ADOPTION LANDS: the two-channel mapping, and the ticket's own tenure had gone green over a tree that did not contain it | ada |
 | `2026-08-23-architecture-51` | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
 | `2026-08-23-architecture-50` | The goal is COMPLETION, and a milestone is a waypoint | architecture |
 | `2026-08-23-architecture-49` | A full build is its own root; and 27 green rows that could not see the call site | architecture |
@@ -186,6 +188,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-pyrebuild-2` | THE MERGE TO MASTER: one arm, 25 rows, and a dispatch discharged | pyrebuild |
 | `2026-08-23-es-2` | the Directive Prologue (§11.2.2), and non-strict `this` | es |
 | `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |
+| `2026-08-23-ada-2` | TICKET: adopt Core's outcome layer (π = ArmRef, σ = Unit) | ada |
 | `2026-08-23-sv-1` | THE OWED FULL-TREE TRIAD IS DISCHARGED BY SOMEONE ELSE'S GREEN, and the number carries the state it was measured in | sv |
 | `2026-08-23-qol-inbound-1` | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
 | `2026-08-23-es-1` | the coercion/accessor cycle: move `ToPrimitive` and `[[Get]]`'s accessor walk into the evaluator's mutual block | es |
@@ -252,6 +255,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
 | `SPEC` | the completion metric (standing; updated every landing) | go |
+| `SPEC` | the completion metric (standing; updated every landing) | ada |
 | `INBOUND` | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
 | `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `INBOUND` | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
@@ -280,4 +284,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**28 heading(s) do not use the §9.5 id scheme** and sort last.
+**29 heading(s) do not use the §9.5 id scheme** and sort last.

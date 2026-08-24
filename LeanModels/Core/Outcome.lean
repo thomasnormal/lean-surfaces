@@ -336,6 +336,189 @@ example : SemPS W ρ = SemPSWith W ρ Unit Unit := rfl
 
 end LayerOrder
 
+/-! ## §4 THE RUN SEAM — one opening, and the rest of the stack is corollaries
+
+**RATIFIED BY CONVERGENCE (§9.3), and the convergence IS the argument.**
+Two tiers wrote this lemma independently and neither saw the other's:
+`LeanModels/Go/Obs.lean` §1 for `GoM`, and the C tier's Rung A landing for
+`EvalM`. Both spellings are `SemMWith`; both proofs are the same five
+lines; and **neither mentions a language.** The whole difference between
+them is four type substitutions — `GoWorld`/`Mem`, `Panic`/`Refusal`,
+`SpecRef`/`CDetail`, `Unit`/`Mem` — which is exactly §9.3's signal for a
+shared definition rather than two.
+
+Go's own header drew the line in the right place and put this on the wrong
+side of it: *"the ORDER lifts; the CONGRUENCES don't."* That is true of
+Python's `Res`, which carries an `.exn` arm this stack does not and whose
+`bind` is therefore a different function. It is **not** true of a second
+consumer of THIS stack, and the test is mechanical rather than a matter of
+judgement:
+
+> **A congruence generic in the SUBSTRATE'S OWN parameters is not a
+> per-tier congruence. "The congruences don't lift" is a claim about a
+> DIFFERENT monad, never about a second tier that instantiates the same
+> one — and which of the two you are looking at is decided by whether the
+> proof mentions a tier type.**
+
+**What this section is and is not.** It is `bind`'s opening plus one row
+per primitive — the six shapes §3.4 enumerates, minus the two the state
+zoom already carries. It adds **theorems only**: no instance, no
+`simp`/`grind` attribute, and no change to any existing declaration, so a
+tier that has not adopted it elaborates exactly as before. Attributes stay
+with the tiers, because a simp set is a tier's proof strategy and not a
+family fact — Go's rows are `@[go_run]` and that stays Go's call.
+
+**ADOPTION IS BY TOUCH (§9.2), never big-bang.** The C tier adopts in the
+same commit that lands this, because it is the lane that is here. Go's
+eleven rows in `Obs.lean` §1-§3 become one-line instances of these
+whenever the Go lane next touches that file; nothing asks it to do so
+today, and until it does the tree carries two proofs of one fact **in the
+open**, which is the honest state and not a silent one. -/
+
+section Seam
+variable {W ρ π σ α β : Type}
+
+/-- **THE OPENING.** The one place this stack is unfolded by hand: run the
+head, then stop loudly, propagate the raise **with its world**, or continue
+with the value in the world it left.
+
+The three arms are the covenant in `bind`'s own shape — `Loud` discards,
+`ρ` retains, and only a value continues — which is why the layer order in
+this file's header is what makes the lemma statable at all. -/
+theorem SemMWith.run_bind (x : SemMWith W ρ π σ α) (f : α → SemMWith W ρ π σ β) (w : W) :
+    (x >>= f) w
+      = (match x w with
+         | .error h => .error h
+         | .ok (.error e, w') => .ok (.error e, w')
+         | .ok (.ok a, w') => f a w') := by
+  simp [bind, ExceptT.bind, ExceptT.mk, StateT.bind, ExceptT.bindCont]
+  cases hx : x w with
+  | error h => simp [Except.bind]
+  | ok p =>
+    obtain ⟨r, w'⟩ := p
+    cases r <;> simp [Except.bind, pure, StateT.pure, Except.pure]
+
+/-! ### Stepping a bind from a KNOWN head
+
+**Stated on an `x w = …` hypothesis rather than as congruences**, and the
+reason is a Lean fact both tiers hit independently (`docs/backlog/go.md`
+§G11): **`simp` will not rewrite inside a match DISCRIMINANT.** Once a
+proof has produced `run_bind`'s right-hand side, no amount of rewriting
+reduces the scrutinee — the lemma fires on the head *in isolation* and
+refuses to fire in that position. These three never produce the match at
+all: given what the head DOES, each rewrites the whole bind in one step. -/
+
+/-- The head produced a VALUE: continue with it, in the world it left. -/
+theorem SemMWith.run_bind_ok {x : SemMWith W ρ π σ α} {f : α → SemMWith W ρ π σ β}
+    {w w' : W} {a : α} (h : x w = .ok (.ok a, w')) : (x >>= f) w = f a w' := by
+  rw [SemMWith.run_bind, h]
+
+/-- The head HALTED — fuel exhaustion or an out-of-tier construct. State
+discarded, and the bind is that, unchanged. -/
+theorem SemMWith.run_bind_loud {x : SemMWith W ρ π σ α} {f : α → SemMWith W ρ π σ β}
+    {w : W} {l : Loud π σ} (h : x w = .error l) : (x >>= f) w = .error l := by
+  rw [SemMWith.run_bind, h]
+
+/-- The head RAISED: the raise propagates and **the world survives with
+it** — the `ρ` channel, which is the whole reason for the layer order. -/
+theorem SemMWith.run_bind_raise {x : SemMWith W ρ π σ α} {f : α → SemMWith W ρ π σ β}
+    {w w' : W} {e : ρ} (h : x w = .ok (.error e, w')) :
+    (x >>= f) w = .ok (.error e, w') := by
+  rw [SemMWith.run_bind, h]
+
+/-! ### The primitives, one row each
+
+Each is a constant of the stack, so each gets its own row rather than
+being re-derived at every call site: after `run_bind` splits a `do` block,
+the head is always one of these. -/
+
+theorem SemMWith.run_pure (a : α) (w : W) :
+    (pure a : SemMWith W ρ π σ α) w = .ok (.ok a, w) := rfl
+
+theorem SemMWith.run_get (w : W) :
+    (get : SemMWith W ρ π σ W) w = .ok (.ok w, w) := rfl
+
+theorem SemMWith.run_set (w w' : W) :
+    (set w' : SemMWith W ρ π σ PUnit) w = .ok (.ok ⟨⟩, w') := rfl
+
+theorem SemMWith.run_modify (f : W → W) (w : W) :
+    (modify f : SemMWith W ρ π σ PUnit) w = .ok (.ok ⟨⟩, f w) := rfl
+
+/-- The language's own raise, at the spelling `throw` — which is what a
+tier's own named refusal primitives unfold to. State-RETAINING. -/
+theorem SemMWith.run_throw (e : ρ) (w : W) :
+    (throw e : SemMWith W ρ π σ α) w = .ok (.error e, w) := rfl
+
+/-- §1's named primitive, and the same fact: `raiseIn` IS `throw`. Two
+rows because they are two subjects — a tier that routes through §1's name
+should not have to unfold it to use the seam. -/
+theorem SemMWith.run_raiseIn (e : ρ) (w : W) :
+    (raiseIn e : SemMWith W ρ π σ α) w = .ok (.error e, w) :=
+  SemMWith.run_throw e w
+
+/-- Fuel exhausted. Carries no world, because a timeout is not an
+observation. -/
+theorem SemMWith.run_exhausted (w : W) :
+    (exhausted : SemMWith W ρ π σ α) w = .error .timeout := rfl
+
+/-- Out of tier, with no diagnostic snapshot. -/
+theorem SemMWith.run_refuse (c : RefusalCause π) (m : String) (w : W) :
+    (refuse c m : SemMWith W ρ π σ α) w = .error (.unsupported c m none) := rfl
+
+/-- Out of tier, carrying a snapshot. Separate because attaching one is a
+DELIBERATE act at the site that has the state. -/
+theorem SemMWith.run_refuseWith (c : RefusalCause π) (m : String) (s : σ) (w : W) :
+    (refuseWith c m s : SemMWith W ρ π σ α) w = .error (.unsupported c m (some s)) := rfl
+
+/-! ### The corollaries
+
+`map` is `pure`-after-`bind` and `seqRight` is `bind` with the value
+dropped, so neither needs a second opening — which is the point of having
+exactly one. -/
+
+theorem SemMWith.run_map (g : α → β) (x : SemMWith W ρ π σ α) (w : W) :
+    (g <$> x) w
+      = (match x w with
+         | .error h => .error h
+         | .ok (.error e, w') => .ok (.error e, w')
+         | .ok (.ok a, w') => .ok (.ok (g a), w')) := by
+  rw [map_eq_pure_bind, SemMWith.run_bind]
+  cases hx : x w with
+  | error h => rfl
+  | ok p => obtain ⟨r, w'⟩ := p; cases r <;> rfl
+
+/-- Sequencing without a value — the `do` block's `let _ ← …` shape. -/
+theorem SemMWith.run_seqRight (x : SemMWith W ρ π σ α) (y : SemMWith W ρ π σ β) (w : W) :
+    (x >>= fun _ => y) w
+      = (match x w with
+         | .error h => .error h
+         | .ok (.error e, w') => .ok (.error e, w')
+         | .ok (.ok _, w') => y w') := by
+  rw [SemMWith.run_bind]
+
+/-! ### The seam at the SHORT spelling, pinned
+
+`SemM W ρ` is the `Unit` instantiation (§3 decides that by `rfl`), so a
+payload-free tier needs no separate row. Checked here rather than assumed
+— and checked through `run_bind_ok`, whose statement contains **no match**,
+because that is the honest form of the claim: a `match` elaborated at
+`Loud Unit Unit` is a DIFFERENT matcher constant from one elaborated at
+`Loud π σ`, and an `example` that appeared to compare the two would be
+testing matcher elaboration rather than the seam.
+
+> **Two `match` expressions over instantiations of one type are not the
+> same term even when they are the same function; state a cross-spelling
+> claim on a match-free lemma, or state it about elaboration by
+> accident.** -/
+
+example (x : SemM W ρ α) (f : α → SemM W ρ β) (w w' : W) (a : α)
+    (h : x w = .ok (.ok a, w')) : (x >>= f) w = f a w' := SemMWith.run_bind_ok h
+
+end Seam
+
+#print axioms SemMWith.run_bind
+#print axioms SemMWith.run_map
+
 end LeanModels
 
 /-! ## §8 THE `Lean.Order` BASE INSTANCES — three, and the stack does the rest

@@ -1552,3 +1552,99 @@ denominator: the corpus is GPL and is fetched AT PIN by content hash,
 never vendored (`docs/c23-goal.md` §2), so the number is a property of a
 `lean_exe` driver this tier does not yet have. Rung A moved a proof
 obligation, not a score, and says so.
+
+---
+
+## 2026-08-24-c-15 — THE SEAM IS IN `Core`, and the paragraph that made the duplication visible is deleted with it
+
+`2026-08-24-c-12` found that `LeanModels/Go/Obs.lean` §1 and the C tier's
+Rung A landing had independently proved the same `run_bind` for the same
+`SemMWith` stack, priced the lift at *"5 theorems, ~40 lines, zero proof
+change"*, and **did not take it** — a spine landing is not a tier commit's
+to make. It was dispatched back; this is it.
+
+### What landed in `LeanModels/Core/Outcome.lean` §4
+
+**183 insertions, 0 deletions** — the diff is the claim. Twelve theorems
+and one `example`, no instance, no `simp`/`grind` attribute, and no change
+to any existing declaration, so **every tier that has not adopted it
+elaborates exactly as before**:
+
+* `SemMWith.run_bind` — the opening, and the only hand-unfolding of the
+  stack that now exists anywhere in the tree;
+* `run_bind_ok` / `run_bind_loud` / `run_bind_raise` — stepping from a
+  known head, stated on an `x w = …` hypothesis because **`simp` will not
+  rewrite inside a match DISCRIMINANT** (`docs/backlog/go.md` §G11, a Lean
+  fact both tiers hit independently);
+* the primitive rows: `run_pure`, `run_get`, `run_set`, `run_modify`,
+  `run_throw`, `run_raiseIn`, `run_exhausted`, `run_refuse`,
+  `run_refuseWith`;
+* the corollaries `run_map` and `run_seqRight`, which need no second
+  opening — that being the point of having exactly one.
+
+Attributes deliberately stay with the tiers: Go's rows are `@[go_run]`,
+and a simp set is a lane's proof STRATEGY rather than a family fact.
+
+### The estimate was wrong in the honest direction, and by how much
+
+`2026-08-24-c-12` priced it at 5 theorems and ~40 lines. It is **12
+theorems and 183 lines.** The gap is not the seam — that half was exact —
+it is the PRIMITIVE ROWS, which the estimate counted as C's four
+(`pure`/`get`/`throw`/`refuseUnsupported`) when the family's set is nine,
+because `Core` §1 and §2 name primitives this tier has never used
+(`exhausted`, `refuse`, `refuseWith`, `set`, `modify`).
+
+> **A lift is priced from the LIFTING tier's use of the thing, and the
+> thing belongs to the family: the estimate misses exactly the rows the
+> estimating tier had no reason to write.**
+
+Worth recording because the direction is predictable and the fix is
+cheap — price a lift against the DEFINITION's surface, not against your
+own call sites.
+
+### Two Lean facts the lift produced, both by failing first
+
+**A `match` over an instantiation is a DIFFERENT TERM from a `match` over
+the general type.** The section's cross-spelling check was first written
+as an `example` comparing `run_bind`'s match at `SemM W ρ` (i.e. `π = σ =
+Unit`) with the general one. It does not typecheck: the two matchers are
+distinct constants, elaborated at `Loud Unit Unit` and at `Loud π σ`.
+
+> **State a cross-spelling claim on a MATCH-FREE lemma, or you are testing
+> matcher elaboration rather than the fact you meant.** The check now goes
+> through `run_bind_ok`, whose statement contains no match, and it passes.
+
+**And `rw` closes more than it looks like it does.** `run_seqRight`'s
+proof was written as `rw [run_bind]` followed by a `cases`; the `cases`
+errored with *"no goals to be solved"*, because `rw`'s trailing `rfl` had
+already discharged it. Harmless, and worth naming for the same reason the
+first is: **a tactic that fails because the goal is GONE reads exactly
+like a tactic that fails because the goal is hard.**
+
+### The C tier adopted in this commit, and the note went with the code
+
+`LeanModels/C/C23/Expr.lean`: **35 insertions, 63 deletions.** The five
+seam theorems are deleted and the eight use sites now name Core's. One row
+stays, and it is genuinely this tier's — `EvalM.run_refuseUnsupported`,
+because `refuseUnsupported` CAPTURES the memory at the refusal site
+(`fun m => … (some m)`) where Core's `refuseWith` takes the snapshot as an
+argument. §3.4 put the capture in the primitive so no call site can forget
+it; that makes the primitive C's, and so is its row.
+
+The `§9.3 CONVERGENCE` paragraph that carried the duplication is **deleted
+in the same commit**, and that is a rule rather than tidiness:
+
+> **A paragraph whose job is to make a duplication VISIBLE is deleted by
+> the commit that removes the duplication. Carrying it afterwards
+> documents a state the tree is no longer in — which is the same defect as
+> a stale comment, wearing the costume of diligence.**
+
+### Go is NOT touched, and that is §9.2 rather than politeness
+
+`LeanModels/Go/Obs.lean`'s eleven rows are now one-line instances of these
+and the Go lane can retire them **by touch**, whenever it next has that
+file open. Nothing asks it to today, and until it does the tree carries
+two proofs of one fact **in the open** — Core's §4 says so in as many
+words, and `2026-08-24-c-16` says it to the lane that owns the other
+copy. That is the honest state; a silent one would be the defect.
+

@@ -1120,66 +1120,38 @@ theorem Expr.isPure_cond_e {c a b : Expr} {t : CType} {sp : CSpan}
     Bool.and_eq_true] at h ⊢
   exact h.2.2
 
-/-! ### THE RUN SEAM — one opening, and everything below it is a corollary
+/-! ### THE RUN SEAM — ADOPTED FROM `Core`, not restated here
 
-**§9.3 CONVERGENCE, recorded rather than duplicated in silence.**
-`LeanModels/Go/Obs.lean` §1 lands this same seam for `GoM`, and `GoM` and
-`EvalM` are BOTH `LeanModels.SemMWith` — the proof below is Go's, with
-`GoWorld → Mem`, `Panic → Refusal`, `SpecRef → CDetail`, `Unit → Mem`,
-and **not one line of it mentions either language**. Go's own header says
-*"the ORDER lifts; the CONGRUENCES don't"*, and it is right about
-Python's `Res`, which is a different monad — but not about two tiers that
-share `SemMWith`, and this is the second one. The seam is generic in all
-four parameters and belongs in `LeanModels/Core/Outcome.lean` beside the
-stack it opens; that is a SPINE landing, so it is priced in
-`docs/backlog/c.md` rather than taken unilaterally here. -/
+This tier used to carry its own `run_bind` and its four step lemmas. They
+are gone: `LeanModels/Core/Outcome.lean` §4 now holds them, generic in all
+four of `SemMWith`'s parameters, and this file uses `SemMWith.run_bind`,
+`run_bind_ok`, `run_bind_loud`, `run_bind_raise`, `run_pure`, `run_get`
+and `run_throw` directly.
+
+**The lift is what the convergence asked for and the paragraph that
+carried it is deleted with it.** `2026-08-24-c-12` recorded that
+`LeanModels/Go/Obs.lean` §1 had the same seam for `GoM`, that `GoM` and
+`EvalM` are both `SemMWith`, and that the two proofs differed only by four
+type substitutions — and it said the lift was a spine landing to be
+priced rather than taken from a tier commit. It has now been taken, so
+the note describing the duplication has no subject left.
+
+> **A paragraph that exists to make a duplication visible is deleted by
+> the commit that removes the duplication — carrying it afterwards
+> documents a state the tree is no longer in.**
+
+**One row stays, and it is genuinely this tier's.** `refuseUnsupported`
+captures the memory AS IT STOOD at the refusal site — `fun m => .error (…
+(some m))` — which is not Core's `refuseWith`, whose snapshot is a fixed
+argument. §3.4's ruling put the capture in the primitive so no call site
+can forget it; that makes the primitive C's, and so is its row. -/
 
 section Seam
-variable {α β : Type}
+variable {α : Type}
 
-/-- **THE OPENING.** The only place this tier unfolds the stack by hand:
-run the head, then stop loudly, propagate the refusal with its memory, or
-continue with the value in the memory it left. -/
-theorem EvalM.run_bind (x : EvalM α) (f : α → EvalM β) (m : Mem) :
-    (x >>= f) m
-      = (match x m with
-         | .error h => .error h
-         | .ok (.error e, m') => .ok (.error e, m')
-         | .ok (.ok a, m') => f a m') := by
-  simp [bind, ExceptT.bind, ExceptT.mk, StateT.bind, ExceptT.bindCont]
-  cases hx : x m with
-  | error h => simp [Except.bind]
-  | ok p =>
-    obtain ⟨r, m'⟩ := p
-    cases r <;> simp [Except.bind, pure, StateT.pure, Except.pure]
-
-/-- Stepping a bind from a KNOWN head. Stated on an `x m = …` hypothesis
-rather than as a congruence, because `simp` will not rewrite inside a
-match DISCRIMINANT — the Lean fact `docs/backlog/go.md` §G11 named. -/
-theorem EvalM.run_bind_ok {x : EvalM α} {f : α → EvalM β} {m m' : Mem} {a : α}
-    (h : x m = .ok (.ok a, m')) : (x >>= f) m = f a m' := by rw [EvalM.run_bind, h]
-
-theorem EvalM.run_bind_loud {x : EvalM α} {f : α → EvalM β} {m : Mem}
-    {l : Loud CDetail Mem} (h : x m = .error l) : (x >>= f) m = .error l := by
-  rw [EvalM.run_bind, h]
-
-theorem EvalM.run_bind_refused {x : EvalM α} {f : α → EvalM β} {m m' : Mem} {e : Refusal}
-    (h : x m = .ok (.error e, m')) : (x >>= f) m = .ok (.error e, m') := by
-  rw [EvalM.run_bind, h]
-
-/-! The primitives, one row each, because each is a constant of the tier. -/
-
-theorem EvalM.run_pure (a : α) (m : Mem) : (pure a : EvalM α) m = .ok (.ok a, m) := rfl
-
-theorem EvalM.run_get (m : Mem) : (get : EvalM Mem) m = .ok (.ok m, m) := rfl
-
-/-- The language's own raise is state-RETAINING: this is the `ρ` channel,
-and it is the whole reason for the layer order. -/
-theorem EvalM.run_throw (e : Refusal) (m : Mem) :
-    (throw e : EvalM α) m = .ok (.error e, m) := rfl
-
-/-- An out-of-tier refusal answers in the `Halt` BASE and carries its
-snapshot, so there is no `.ok` for it to produce at all. -/
+/-- An out-of-tier refusal answers in the `Halt` BASE and carries the
+memory it found, so there is no `.ok` for it to produce at all. Not
+Core's `run_refuseWith`: the snapshot here is CAPTURED, not passed. -/
 theorem EvalM.run_refuseUnsupported (what : String) (m : Mem) :
     (refuseUnsupported what : EvalM α) m
       = .error (.unsupported (.unsupported ()) what (some m)) := rfl
@@ -1218,21 +1190,21 @@ variable {α β : Type}
 theorem pure' (a : α) : MemInvariant (pure a : EvalM α) := by
   constructor
   intro m r m' h
-  rw [EvalM.run_pure] at h
+  rw [SemMWith.run_pure] at h
   simp only [Except.ok.injEq, Prod.mk.injEq] at h
   exact h.2.symm
 
 theorem get' : MemInvariant (get : EvalM Mem) := by
   constructor
   intro m r m' h
-  rw [EvalM.run_get] at h
+  rw [SemMWith.run_get] at h
   simp only [Except.ok.injEq, Prod.mk.injEq] at h
   exact h.2.symm
 
 theorem throw' (e : Refusal) : MemInvariant (throw e : EvalM α) := by
   constructor
   intro m r m' h
-  rw [EvalM.run_throw] at h
+  rw [SemMWith.run_throw] at h
   simp only [Except.ok.injEq, Prod.mk.injEq] at h
   exact h.2.symm
 
@@ -1256,18 +1228,18 @@ theorem bind {x : EvalM α} {f : α → EvalM β}
   intro m r m' h
   cases hxm : x m with
   | error l =>
-      rw [EvalM.run_bind_loud hxm] at h
+      rw [SemMWith.run_bind_loud hxm] at h
       simp at h
   | ok p =>
       obtain ⟨r₀, m₀⟩ := p
       have hm₀ : m₀ = m := hx.out m r₀ m₀ hxm
       cases r₀ with
       | error e =>
-          rw [EvalM.run_bind_refused hxm] at h
+          rw [SemMWith.run_bind_raise hxm] at h
           simp only [Except.ok.injEq, Prod.mk.injEq] at h
           exact h.2.symm.trans hm₀
       | ok a =>
-          rw [EvalM.run_bind_ok hxm] at h
+          rw [SemMWith.run_bind_ok hxm] at h
           exact ((hf a).out m₀ r m' h).trans hm₀
 
 /-- `map` needs no second opening: it is `pure`-after-`bind`. Present

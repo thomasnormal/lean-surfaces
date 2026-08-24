@@ -2,17 +2,18 @@
   "schema": "declared-divergences-0.1",
   "tier": "es",
   "language_version": "ES2026",
-  "note": "family-architecture.md \u00a75.0a. A declared divergence is a DEBT, not a verdict: DIVERGE stays zero. Counted in \u00a79.0 as a third quantity, never folded into coverage or gaps. Each row is gated in BOTH directions by the guards named in `gated_by` - one pinning that the model is STILL divergent (a silent fix leaves a stale declaration) and one pinning that the divergence has not WIDENED.",
+  "note": "family-architecture.md \u00a75.0a. A declared divergence is a DEBT, not a verdict: DIVERGE stays zero. Counted in \u00a79.0 as a third quantity, never folded into coverage or gaps. Each row is gated in BOTH directions by the guards in `guards` - one pinning that the model is STILL divergent (a silent fix leaves a stale declaration that reads as diligence) and one pinning that the divergence has not WIDENED. Validated by harness/es_register_check.py, which is a FILE because triad.sh splits --gates on `;` without respecting quoting; it retires in favour of the canonical harness/divergence_register.py when that merges (MEAS-28).",
   "rows": [
     {
       "id": "es-div-1",
+      "kind": "semantic",
       "site": "LeanModels/Es/Eval.lean `instantiateFunction` - the `[[ThisMode]]` given to every non-arrow FunctionDeclaration/FunctionExpression. Observable as `this` inside a bare call in non-strict code.",
       "oracle": "In non-strict code `[[ThisMode]]` is `global`, so OrdinaryCallBindThis (\u00a710.2.1.2 steps 6.a-6.c) replaces an `undefined`/`null` thisArgument with the global object: `function f(){ return this }; f()` answers globalThis.",
       "model": "Every function is created with `[[Strict]] = true` and `[[ThisMode]] = strict`, because the Directive Prologue (\u00a711.2.2) is not read. \u00a710.2.1.2 step 5 then binds the argument exactly as given, so the same call answers `undefined`.",
       "inherited_from": "",
       "declared": "2026-08-24",
       "retirement_condition": "The Directive Prologue (\u00a711.2.2) is parsed and `[[ThisMode]]` becomes `global` for non-strict code. At that point the `.global` arm already present in `ordinaryCallBindThis` becomes REACHABLE and this silent difference turns into a loud refusal (`refuseHost`, 'needs the realm'), which is a boundary rather than a debt. Tracked as 2026-08-23-es-2.",
-      "gated_by": [
+      "guards": [
         "Examples/es/statements/guards.lean: es_div_1_still_divergent",
         "Examples/es/statements/guards.lean: es_div_1_has_not_widened"
       ],

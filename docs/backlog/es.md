@@ -889,3 +889,65 @@ converts to a boundary. Tracked as `2026-08-23-es-2`.
 boundary went into prose or a refusal message; this one could go into neither,
 because the tier answers. It is the first row, and the search that produced it
 should be repeated per inch rather than per audit.
+
+---
+
+## 2026-08-24-es-3 — a RED triad that measured nothing: the gate list is `;`-separated and shredded an inline validator into five false gates
+
+`harness/es_register_check.py` (new), `docs/es-declared-divergences.json`
+(canonical schema).
+
+### WHAT HAPPENED
+
+`2026-08-24-es-2`'s ticket passed `--gates` containing
+
+    python3 -c "import json;d=json.load(...);assert ...;print(...)"
+
+`tools/triad.sh` splits `--gates` on `;` **without respecting quoting**, so the
+Python semicolons split one command into FIVE shell fragments:
+
+    === gate: python3 -c "import json ===                          GATE FAILED
+    === gate: d=json.load(open('docs/es-declared-divergences.json')) ===  GATE FAILED
+    === gate: assert d['schema']=='declared-divergences-0.1' ===   GATE FAILED
+    === gate: assert all(set(r)>={...} for r in d['rows']) ===     GATE FAILED
+    === gate: print('...' % len(d['rows']))" ===                   GATE FAILED
+
+The build was GREEN; the triad went RED on five gates.
+
+### THE TWO SHAPES, and the second is the worse one
+
+**One — a gate spec is CODE.** A `;`-separated gate list turns any inline
+multi-line or semicolon-bearing command into N false gates. Either the runner
+refuses a fragment that cannot parse as a command, or the spec forbids inline
+multi-line code. Until one of those lands, **every gate must be a single
+command with no internal `;`** — which in practice means a FILE.
+
+**Two — the register was never validated.** Five `GATE FAILED` lines about a
+JSON file, and not one of them read the JSON file. This is the
+**unexercised-gate family**: a gate that fails for a reason unrelated to its
+subject tells you nothing about its subject, and a red that looks like
+diligence is worse than no gate, because it will be "fixed" by making the red
+go away. The register had been sitting unvalidated behind five failures
+*about* it.
+
+### THE FIX, and why the checker self-tests in seven directions
+
+`harness/es_register_check.py`, one file, one command, no semicolons. It
+validates §5.0a's fields plus the ruling's `kind` and `guards`, refuses a
+WAITING retirement condition (§9), enforces the paired-guard law by requiring
+at least two guards, and — the part that closes this incident's own hole —
+**checks that every guard the register NAMES is actually DEFINED in the file
+it names.** A register that cites a guard nobody wrote is the same
+unexercised-gate failure one level up.
+
+`--self-test` exercises **both directions** (MEAS-42): one accept and seven
+refusals. A gate that has only ever been seen to pass is exactly what produced
+this entry.
+
+### IT IS TEMPORARY BY CONSTRUCTION
+
+`harness/divergence_register.py` is the canonical checker. When it merges this
+file is deleted and the gate becomes `python3 harness/divergence_register.py`.
+**MEAS-28 applies to inline validators too** — a second copy of a shared
+instrument is the duplication that law polices — so a lane-local file is the
+smaller wrong, and only until the shared one lands.

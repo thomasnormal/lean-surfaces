@@ -287,4 +287,156 @@ theorem instr_subtyping_strengthen2 (tx1 tx2 ty1 ty2 tx2_sub : List valtype)
   exact ⟨a, ro, b, no, hab, hy, rt_sub_trans _ _ _ ha hio,
          rt_sub_trans _ _ _ hb hsi, hno⟩
 
+/-
+  ══════════════════════════════════════════════════════════════════════════
+  THE DECLINED REPAIR — recorded with its price, so a later lane wanting the
+  strong form finds the cost already computed rather than re-deriving it.
+
+  `typing_lemmas.lean:295-412` states `ais_empty_typing` as an IFF:
+
+      Instrs_ok2 s c [] (t1s f-> t2s)
+        ↔ (wf_context c ∧ wf_store s ∧ t1s subs< t2s)
+
+  **It is BROKEN.** Two of the six baseline build errors live inside that
+  span: `371:8 too many variable names provided` and `380:17 rcases failed`.
+
+  REPAIRING IT WAS CONSIDERED AND DECLINED. The measurement that declined it:
+
+  1. **O5 consumes only `.mp`, and only its THIRD component.** Both use sites,
+     measured:
+       * `typing_lemmas.lean:1753` —
+         `have ⟨wf_c', wf_s_2, subsrel⟩ := (ais_empty_typing s c' ts1' ts2').mp instrs_ok2_1; exact subsrel`
+       * `typing_lemmas.lean:1782` — the same shape at `ts2' ts3'`.
+     Neither well-formedness conjunct and neither `.mpr` is ever used.
+
+  2. **Isabelle abandoned the strong form.** In `Properties_Aux.thy` on
+     `aaron/subtyping/instr_ok2_inversion_lemmas` (`e75dad778`), the
+     equality-shaped `e_type_empty` is followed by **`oops`** — given up. What
+     is proved there is `e_type_empty1`, one-directional. So the strong form
+     is a dead end in the other assistant too, not merely unported.
+
+  3. **THE PRICE A REPAIR WOULD CARRY: the baseline pin moves 6 → 4.** Errors
+     `371` and `380` would depart with a fixed `ais_empty_typing`, changing
+     the lane's pinned failure shape. Routing around it instead leaves the
+     baseline untouched at 6, and `371`/`380` stand as known-broken.
+
+  4. **The weak form costs ZERO new prerequisites** — `rt_sub_refl`,
+     `rt_sub_trans` and `rt_sub_app`, all proved above. Isabelle's
+     `e_type_empty1` concludes `empty-functype <ti: ft`, which is why it needs
+     `instr_subtyping_sub_rule` and `instr_subtyping_frame_rule`; a `subs<`
+     conclusion needs neither.
+
+  Repairing upstream's file is upstream's business, and upstream contact is
+  not this lane's to initiate. If a later lane does want the strong form, the
+  price above is what it costs.
+  ══════════════════════════════════════════════════════════════════════════
+-/
+
+/-- **O5's one missing prerequisite, in the WEAK form O5 actually consumes.**
+
+    `typing_lemmas.lean:295` states `ais_empty_typing` as an IFF whose right
+    side is a three-way conjunction:
+    `Instrs_ok2 s c [] (t1s f-> t2s) ↔ (wf_context c ∧ wf_store s ∧ t1s subs< t2s)`.
+    **O5 uses only `.mp`, and only its THIRD component** (measured at
+    `typing_lemmas.lean:1753` and `:1782`, both of which read
+    `have ⟨_, _, subsrel⟩ := (ais_empty_typing …).mp …; exact subsrel`).
+
+    So this states exactly that third component. Three reasons, all measured:
+
+    * **The full iff is not needed.** Nothing in O5 consumes the two
+      well-formedness conjuncts or the `.mpr` direction.
+    * **The original is BROKEN.** `ais_empty_typing` spans
+      `typing_lemmas.lean:295-412`, and two of the six baseline build errors —
+      `371:8 too many variable names provided` and `380:17 rcases failed` —
+      are INSIDE it. There is no working Lean original to transcribe.
+    * **Isabelle abandoned the strong form.** In
+      `Properties_Aux.thy` (`aaron/subtyping/instr_ok2_inversion_lemmas`)
+      the equality-shaped `e_type_empty` is followed by **`oops`** — given up.
+      What is proved there is `e_type_empty1`, the one-directional form.
+
+    Isabelle counterpart: **`e_type_empty1`**. Its conclusion is
+    `empty-functype <ti: ft`, which needs `instr_subtyping_sub_rule` and
+    `instr_subtyping_frame_rule`; **this weaker `subs<` conclusion needs
+    neither**, and closes with machinery already proved above. -/
+theorem ais_empty_subs (s : store) (c : context) (t1s t2s : List valtype)
+    (h : Instrs_ok2 s c [] (mkFunctype t1s t2s)) : t1s subs< t2s := by
+  -- `induction` cannot be used directly: `Instrs_ok2` is MUTUALLY INDUCTIVE
+  -- with `Instr_ok2` and `Expr_ok2`, and the tactic refuses outright. The
+  -- idiom is copied from the fork's own working proof of this very statement
+  -- (`typing_lemmas.lean:326-329`): apply `Instrs_ok2.rec` explicitly with the
+  -- sibling motives at `True`, then `all_goals try trivial` clears them.
+  --
+  -- The case binders arrive INACCESSIBLE, so they are taken with `rename_i`
+  -- from the END rather than named positionally: a positional list is what
+  -- `typing_lemmas.lean:371` gets wrong ("too many variable names provided"),
+  -- and counting from the end is stable under changes to the constructor's
+  -- leading arguments.
+  have main :
+      ∀ (l' : List admininstr) (ft : functype),
+        Instrs_ok2 s c l' ft →
+        ∀ (a b : List valtype),
+          ([] : List admininstr) = l' →
+          (mkFunctype a b) = ft →
+          a subs< b := by
+    -- `clear h` is LOAD-BEARING: without it `induction` sweeps the outer
+    -- hypothesis into the motive and every IH arrives with a spurious leading
+    -- `Instrs_ok2 s c [] (t1s f-> t2s) →`. The original does the same thing at
+    -- `typing_lemmas.lean:325` (`clear instrs_ok2 gen_instrs_ok2_list t1s t2s l`).
+    clear h
+    intro l' ft hh
+    induction hh
+      using Instrs_ok2.rec
+        (motive_1 := fun _ _ _ _ => True)
+        (motive_3 := fun _ _ _ _ => True)
+    all_goals try trivial
+    case empty =>
+      intro a b _ heq
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      exact rt_sub_refl []
+    case instr =>
+      intro a b hempty _
+      exact absurd hempty (by simp)
+    case seq =>
+      rename_i ih1 ih2
+      intro a b hempty heq
+      obtain ⟨e1, e2⟩ := List.append_eq_nil_iff.mp hempty.symm
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      have i1 := ih1 _ _ e1.symm rfl
+      have i2 := ih2 _ _ e2.symm rfl
+      exact rt_sub_trans _ _ _ i1 i2
+    case sub =>
+      rename_i hsub1 hsub2 _ _ _ ih
+      intro a b hempty heq
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      have inner := ih _ _ hempty rfl
+      have s1 : _ subs< _ := hsub1
+      have s2 : _ subs< _ := hsub2
+      exact rt_sub_trans _ _ _ s1 (rt_sub_trans _ _ _ inner s2)
+    -- The case the ORIGINAL gets wrong: BOTH baseline errors (`371:8` and
+    -- `380:17`) live here — an over-long positional binder list, then an
+    -- `obtain` destructuring a functype EQUATION as if it were a pair.
+    case Instrs_ok2_frame =>
+      rename_i ih
+      intro a b hempty heq
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      have inner := ih _ _ hempty rfl
+      exact rt_sub_app _ _ _ _ (rt_sub_refl _) inner
+  exact main [] (mkFunctype t1s t2s) h t1s t2s rfl rfl
+
 end SubtypingPort

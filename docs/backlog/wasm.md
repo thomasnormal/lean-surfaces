@@ -631,7 +631,7 @@ Lean execution reported above was in the **fork's** tree under a ticket.
 
 ---
 
-## INBOUND FROM THE FAMILY-ARCHITECTURE LANE — `2026-08-23-architecture-44` (Wasm lane's to renumber or close)
+## 2026-08-23-architecture-44 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: Wasm lane's to renumber or close
 
 *Filed as its own immediate commit (§9.5a). Your dated entry is NAMED, not
 edited: a record of your moment stays yours to annotate — this lane's rule since
@@ -878,3 +878,99 @@ outside `LeanModels` and the `Examples.+` glob, and appends to this file. No
 gate in this repository can reach the vendored file — the §5.4b enumeration for
 it, stated not assumed. `docs_check` passes; `tools/backlog-index.sh` re-run
 per §9.5. The Lean execution was in the **fork's** tree, under a ticket.
+
+---
+
+## 2026-08-24-wasm-9 — `ais_empty_subs` LANDS: the scratch loop finds in four probes what four tenures could not, and the bug was a line the original had already written
+
+**LEDGER (§9.0): 4 of 5 — UNCHANGED.** `ais_empty_subs` is O5's *prerequisite*,
+not an obligation. O1, O2, O3, O4 proved; **O5 now unblocked with every
+prerequisite in hand.**
+
+`[10:43:46] LOCK ACQUIRED after 3757s as 'wasm 16895'` → `build exit=1` →
+`[10:44:11] GATES NOT RUN (build red — aborted triad)` → `[10:44:12] LOCK
+RELEASED (mine)`.
+
+**PIN COMPARISON — MATCH on all four rows:**
+
+| pinned | measured |
+| --- | --- |
+| `SubtypingPort` **GREEN** | `✔ [3001/3003] Built SubtypingPort (12s)` |
+| its errors **0** | **0** (and **0 warnings**) |
+| failing modules **1** | **1** (`typing_lemmas`) |
+| `typing_lemmas` errors **6** | **6**, at **371, 380, 537, 1035, 1113, 1865** — the baseline set |
+
+**PIN: UNCHANGED, and deliberately so.** The pre-agreed 6 → 4 move remains a
+**recorded non-event**: the broken original is routed around, not through.
+`typing_lemmas.lean` is untouched, so 371 and 380 stand as known-broken. The
+declined repair and its price are in the port file's comment block.
+
+### THE ITERATION LESSON — and it is a big one
+
+Four *tenures* (~1-2 h each) had produced one fix apiece. With the scratch loop
+restored, **four 20-second probes closed the whole thing.** The chain, each
+step found by measurement rather than guessed:
+
+1. **`induction` refuses mutual inductives.** Copied the fork's own
+   `Instrs_ok2.rec` idiom, sibling motives at `True`, `all_goals try trivial`.
+2. **Case binders arrive INACCESSIBLE**, so a positional `case` list cannot
+   name them — which is exactly what `typing_lemmas.lean:371` gets wrong.
+   Switched to `rename_i` counting from the END, which is additionally stable
+   under changes to a constructor's leading arguments.
+3. **`subst` rewrites the IHs**, leaving the middle type inaccessible so the
+   metavariables in `ih _ _ …` could not be solved. Pulled each IH application
+   into its own `have`.
+4. **The real bug — and the original had already written the fix.** A probe of
+   the *isolated* statement and a probe of the *real file* disagreed about the
+   IH's type. Tracing the real one:
+
+   ```
+   ih1 : Instrs_ok2 s C✝ [] (t1s f->t2s) →
+           ∀ (a_1 b : List valtype), [] = admininstr_1_lst✝ → … → a_1 subs<b
+   ```
+
+   That leading hypothesis is **the outer theorem's own `h`**, swept into the
+   motive by `induction`. `typing_lemmas.lean:325` opens its induction with
+   `clear instrs_ok2 gen_instrs_ok2_list t1s t2s l` — **a line this lane had
+   read and dropped as boilerplate.** `clear h` is load-bearing, and it now
+   sits in the file with a comment saying why.
+
+**The transferable form:** step 4 was invisible to every tenure because a
+tenure reports *errors*, and the error it produced ("expected `List valtype`")
+pointed at the call site, not at the motive. Only a `trace_state` on the real
+file showed the extra hypothesis. **An error message locates a symptom; a
+state dump shows the cause** — the same LOCATES-versus-COUNTS distinction §7
+draws for the triad summary, one level down.
+
+And the Isabelle-before-scratch rule paid a second time, at one remove: the
+idiom (step 1) *and* the fix (step 4) were both already in the fork's own
+working proof of this very statement. **Twice now the answer was in the file
+this lane is replacing.**
+
+### What is proved — 16 declarations, compiler-verified, 0 `sorry` / 0 warnings
+
+`zip_self_eq`, `rt_sub_refl`, **O1**, `rt_sub_split_left`,
+`rt_sub_split_right`, `rt_bridge`, `valtype_sub_trans`, `rt_sub_trans`,
+`rt_sub_app`, **O3**, **O2**, **O4**, and now **`ais_empty_subs`** — plus the
+restated `instrtype_sub`. Fork clone **`56b0c8457`**, local only, not pushed.
+
+### Next inch: O5, and its census is already done
+
+`ais_single_typing_inversion` needs `instrtype_sub` ✓, O1 ✓, O3 ✓,
+`rt_sub_refl` ✓, `ais_empty_subs` ✓ — **all five in hand.** What remains is the
+183-line induction itself, over the same mutually-inductive `Instrs_ok2`, so
+the three idioms established here — `Instrs_ok2.rec` with sibling motives,
+`rename_i` from the end, and `clear` before inducting — carry directly. It gets
+its own tenure per the staging rule; it is not bundled with this landing.
+
+**Also in this commit:** the INBOUND heading re-spelled to sender-id-first per
+the `qol.md` exemplar —
+`## 2026-08-23-architecture-44 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: …`.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** Updates one vendored `.lean`
+outside `LeanModels` and the `Examples.+` glob, and appends to this file. No
+gate in this repository can reach the vendored file. `docs_check` passes;
+`tools/backlog-index.sh` re-run per §9.5. The Lean execution was in the
+**fork's** tree, under a ticket.

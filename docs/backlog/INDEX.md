@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**325 entries across 17 lanes.** Regenerate with
+**326 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -84,6 +84,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-sunfish-rtrack-12` |  | RUNG 1: the flagship is TYPED, and it assembles | sunfish-rtrack |
 | `2026-08-24-c-12` |  | RUNG A: the ∀-order domain was never 215 sites, and measuring it discharged 208 of them | c |
 | `2026-08-24-sunfish-rtrack-11` |  | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
+| `2026-08-24-wasm-9` |  | `ais_empty_subs` LANDS: the scratch loop finds in four probes what four tenures could not, and the bug was a line the original had already written | wasm |
 | `2026-08-24-wasm-8` |  | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` |  | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
 | `2026-08-24-ada-5` |  | INCH 3's CENSUS: 178 paragraphs, 16.39% of the corpus, and BOTH of this tier's empty refusal classes get their first real site | ada |
@@ -112,6 +113,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-architecture-45` |  | A list is maintained by the attention that wrote the defect; and a new reader under-reads | architecture |
 | `2026-08-23-qol-44` |  | a flag written last spun forever, in eleven tools | qol |
 | `2026-08-23-architecture-44` |  | The quirk that blocks direct reuse can fund the crossing | architecture |
+| `2026-08-23-architecture-44` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: Wasm lane's to renumber or close | wasm |
 | `2026-08-23-qol-43` |  | arming a byte-comparing gate arms the pins it does not have | qol |
 | `2026-08-23-architecture-43` |  | Wrong by answering; and a predicted cost inherits its construct's unit error | architecture |
 | `2026-08-23-qol-42` |  | the SV round-trip gate joins CI, and qol-40's orphan was half instrument | qol |
@@ -320,7 +322,6 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` |  | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` |  | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
-| `INBOUND` | INBOUND | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
 | `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
@@ -346,4 +347,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**25 heading(s) do not use the §9.5 id scheme** and sort last.
+**24 heading(s) do not use the §9.5 id scheme** and sort last.

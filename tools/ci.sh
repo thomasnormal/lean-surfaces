@@ -429,6 +429,25 @@ SVNO
   vcheck "the gate is called as a full step"       "$(grep -c '^sv_round_trip_step$' "$0")" "1"
   vcheck "  ...and never as a maybe"               "$(grep -cE '^maybe(_lean)? .*sv-round-trip' "$0")" "0"
 
+  # THE TWO GATES WIRED 2026-08-24, both directions where a direction exists.
+  vcheck "lean-comment-forms is a full step"     "$(grep -c '^step  "lean-comment-forms" python3 harness/lean_comment_forms.py$' "$0")" "1"
+  vcheck "  ...and never a maybe"                "$(grep -cE '^maybe(_lean)? .*lean_comment_forms' "$0")" "0"
+  vcheck "  ...called with NO arguments"         "$(grep -c 'lean_comment_forms.py$' "$0")" "1"
+  vcheck "backlog-headings is a full step"       "$(grep -c '^step  "backlog-headings" backlog_headings$' "$0")" "1"
+  # ANCHORED TO THE DEFINITION.  A bare count matched this block's own fixture
+  # invocation too and read 2 — the fixture-is-not-enforcement trap, inside the
+  # row meant to enforce.
+  vcheck "  ...and renders WITHOUT writing"      "$(grep -c '^backlog_headings() { bash tools/backlog-index.sh --stdout --strict' "$0")" "1"
+  # A conforming fixture passes; a malformed one FAILS.  Without the second
+  # row this gate could be wired to something that can never go red.
+  vbl="$vstub/bl"; mkdir -p "$vbl"
+  printf '## 2026-01-01-x-1 — a conforming entry\n' > "$vbl/x.md"
+  bash tools/backlog-index.sh --backlog "$vbl" --stdout --strict > /dev/null 2>&1
+  vcheck "a conforming backlog PASSES --strict"  "$?" "0"
+  printf '## SPEC COVERAGE — a standing header\n' >> "$vbl/x.md"
+  bash tools/backlog-index.sh --backlog "$vbl" --stdout --strict > /dev/null 2>&1
+  vcheck "  ...and a malformed heading FAILS it" "$?" "3"
+
   PATH="$vpath"; hash -r; rm -rf "$vstub"
   echo "verify-guards: $vok ok, $vbad failed"
   [ "$vbad" = "0" ] || exit 1
@@ -460,6 +479,17 @@ maybe "circuit-equation-provenance" harness/spice/equation_provenance_test.py \
 # with build tree) — present on lab hosts, absent on stock runners.
 maybe "verilog-a-extractor-tests" extractors/veriloga/openvaf_ast/Cargo.toml python3 extractors/veriloga/test_extract.py
 maybe "docs-check"      tools/docs_check.py       python3 tools/docs_check.py
+# THE ANALOG LANE'S COMMENT-FORM GATE.  A full step: the file is tracked, it
+# needs no arguments (its root defaults to `.`), it runs no Lean and touches
+# no network — the only `lake` in it is `".lake" not in f.parts`, an exclusion.
+step  "lean-comment-forms" python3 harness/lean_comment_forms.py
+# HEADING SHAPE, now that the tree is at zero malformed.  `--stdout` renders
+# without WRITING, so CI never dirties the tree; the rendered index is
+# discarded and only the warnings (stderr) and the exit code matter.  Scoped
+# deliberately to headings: `--check` would also gate INDEX freshness, which
+# is a different promise and not this step's to make.
+backlog_headings() { bash tools/backlog-index.sh --stdout --strict >/dev/null; }
+step  "backlog-headings" backlog_headings
 maybe "notebooks"       tools/run_notebooks.py    python3 tools/run_notebooks.py
 # RV lane: differential validation of LeanModels/Rv against the pinned
 # sail-riscv reference emulator (prebuilt release binary under

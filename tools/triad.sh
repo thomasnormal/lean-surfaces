@@ -194,6 +194,18 @@ GATES=""
 # `gate_floor` — which had its own second copy of the same list, so a floor
 # change had to be made twice or the classified and unclassified paths would
 # have run different gates.
+# INITIALISED ABOVE THE ARG LOOP, and the placement is the whole bug (crunga,
+# 2026-08-24).  This line used to sit BELOW the loop, so `--build-target` was
+# parsed into the variable and then the variable was RESET TO EMPTY before
+# anything read it: the union never saw the flag and the confirming line never
+# printed.  Measured across four tenures, and silent in every one.
+#
+# THIRD INSTANCE OF THE SILENT-INSTRUMENT SHAPE, and the worst placement for
+# it: this is the one flag whose PURPOSE is to WIDEN a claim, so
+#
+# > a widening flag that silently does nothing produces an honest lane making
+# > a false coverage statement.
+BUILD_TARGET_ARGS=""
 SINCE=""                # --since <sha>: price the INCREMENT (§5.4a-i)
 SINCE_ROOT=""           # the chain root the increment is actually diffed against
 SINCE_LINE=""           # the base green's ledger line, kept for the coverage line
@@ -429,10 +441,11 @@ CLASS_UNKNOWN=""        # paths no rule matched (escalated to spine, listed)
 CLASS_NOTES=""          # one line per thing the lane should know
 BUILD_TARGETS=""        # empty == full `lake build` (every default target)
 # --build-target's raw arguments.  They cannot be UNIONed at parse time because
-# `add_build_target` is not defined yet, so they are collected here and applied
-# after classification — which is also the right ORDER: the classifier is a
-# floor, and an explicit target can only ever add to it.
-BUILD_TARGET_ARGS=""
+# `add_build_target` is not defined yet, so the flag's values are collected in
+# BUILD_TARGET_ARGS (initialised with the other defaults, ABOVE the arg loop —
+# see the note there) and applied after classification, which is also the right
+# ORDER: the classifier is a floor, and an explicit target can only ever add
+# to it.
 
 class_name() {          # rank -> word
   case "${1:-0}" in
@@ -941,8 +954,17 @@ gates_compose() {       # floor, lane's gates, gates_only -> the list to run
   # this script cannot tell the difference between "also run mine" and
   # "instead of yours" — so it takes the reading that cannot silently shrink
   # a gate set, and makes the other one explicit.
-  if [ "$3" = "1" ]; then printf '%s' "$2"; return 0; fi
-  if [ -n "$2" ]; then printf '%s; %s' "$1" "$2"; else printf '%s' "$1"; fi
+  # DEDUPED, ORDER-PRESERVING, so the plan, the classification display and the
+  # execution all show the same list.  `--gates` naming a gate the floor
+  # already has used to print it TWICE and run it twice; deduping an IDENTICAL
+  # command is not shrinking a gate set, it is not repeating one.
+  { if [ "$3" = "1" ]; then printf '%s' "$2"
+    elif [ -n "$2" ]; then printf '%s; %s' "$1" "$2"
+    else printf '%s' "$1"; fi
+  } | awk 'BEGIN { RS = ";" }
+           { g = $0; gsub(/^[ \t\n]+|[ \t\n]+$/, "", g)
+             if (g != "" && !seen[g]++) { out = out (n++ ? "; " : "") g } }
+           END { printf "%s", out }' 
 }
 
 # WHAT WILL ACTUALLY RUN, SAID AT TENURE OPEN.  The spin this lane just fixed
@@ -954,9 +976,22 @@ gates_compose() {       # floor, lane's gates, gates_only -> the list to run
 # own scope.  Composed by the SAME function the gate phase uses, so the line
 # cannot promise a set the phase does not run.
 gates_planned() {       # -> the gate list this tenure will run
-  # A foreign tree and a classify-only pass both run the gates AS GIVEN: there
-  # is no floor to add, because the floor is a claim about THIS repository.
-  if [ "$FOREIGN" = "1" ] || [ "$CLASSIFY" = "1" ]; then printf '%s' "$GATES"; return 0; fi
+  # A foreign tree and a CLASSIFY-ONLY pass run the gates AS GIVEN: there is no
+  # floor to add, because the floor is a claim about THIS repository.
+  #
+  # CLASSIFY_ONLY, NOT CLASSIFY — and the difference blocked every lane that
+  # ticketed with plain `--classify` and no `--gates` (R-track, 2026-08-24).
+  # `--classify-only` sets BOTH flags, so testing the wrong one swept in the
+  # NORMAL classify ticket, returned an empty plan, and the empty-gate guard
+  # then refused it while blaming a `;` the lane never typed.
+  #
+  # It was LATENT until that guard existed: every earlier reader of this
+  # function ran AFTER the classify block had already set GATES from the class
+  # floor, so the wrong branch returned the right answer by accident.  The
+  # guard was simply the first caller to run BEFORE it.  A comment that says
+  # "classify-only" while the code says "classify" is the caption-vs-picture
+  # shape again, in the condition instead of the label.
+  if [ "$FOREIGN" = "1" ] || [ "$CLASSIFY_ONLY" = "1" ]; then printf '%s' "$GATES"; return 0; fi
   gates_compose "$DEFAULT_FLOOR" "$LANE_GATES" "$GATES_ONLY"
 }
 
@@ -1679,8 +1714,8 @@ gate_has_quoted_semicolon() {   # gate -> 0 when a ';' sits inside quotes
 # yields an EMPTY gate — `a;; b` or a trailing `a;` — which `run_gates` used to
 # swallow with `[ -n "$g" ] || continue`.  A gate list that silently contains
 # nothing where a gate was meant is the same defect one step earlier.
-gate_spec_refusal() {   # gate list -> a reason on stdout, or nothing
-  local g i=0
+gate_spec_refusal() {   # gate list [origin] -> a reason on stdout, or nothing
+  local g i=0 origin="${2:-user}"
   while IFS= read -r g; do
     i=$((i + 1))
     if gate_has_quoted_semicolon "$g"; then
@@ -1692,9 +1727,20 @@ gate_spec_refusal() {   # gate list -> a reason on stdout, or nothing
       return 0
     fi
     case "$(printf '%s' "$g" | tr -d ' \t')" in
-      "") printf "gate %s is EMPTY — a stray ';' in the gate list.\n" "$i"
-          printf "  An empty gate was silently skipped, so a mistyped separator removed a check\n"
-          printf "  without removing a line from the list.\n"
+      "") # TWO CAUSES, ONE SYMPTOM, AND ONLY ONE IS THE LANE'S.  A stray ';'
+          # is something a lane typed; an empty list from `gates_planned` is a
+          # TOOL DEFECT, and telling the lane about a separator it never wrote
+          # sends it hunting its own command line (R-track, 2026-08-24).
+          if [ "$origin" = "plan" ]; then
+            printf "gates_planned returned an EMPTY PLAN (tool defect, not your command line).\n"
+            printf "  Nothing in this tenure would have run a single gate. This is triad.sh's\n"
+            printf "  fault, not the invocation's — report it with the flags you used; do NOT\n"
+            printf "  go looking for a stray ';' you did not type.\n"
+          else
+            printf "gate %s is EMPTY — a stray ';' in the gate list.\n" "$i"
+            printf "  An empty gate was silently skipped, so a mistyped separator removed a check\n"
+            printf "  without removing a line from the list.\n"
+          fi
           return 0 ;;
     esac
   done <<EOF
@@ -2084,6 +2130,64 @@ if [ "$SELF_TEST" = "1" ]; then
   check "the ES spec is ONE command to run"    "$(gate_split "$es" | grep -c .)" "1"
   check "  ...and two real gates stay two"     "$(gate_split 'python3 a.py; python3 b.py' | grep -c .)" "2"
 
+  # ---- THE FLAG PATHS, END TO END (items 10 and 11, 2026-08-24)
+  # Both defects were invisible to rows that called the helpers DIRECTLY: a
+  # flag that never reaches a helper cannot be seen by testing the helper.
+  # These rows run the script the way a lane runs it — isolated lock and
+  # queue, a stubbed `lake`, no Lean, bounded.
+  echo "  -- flag paths"
+  fr="$tmp/flagrepo"; mkdir -p "$fr/LeanModels" "$fr/docs"; git init -q "$fr" 2>/dev/null
+  git -C "$fr" config user.email qol@example; git -C "$fr" config user.name qol
+  printf 'name = "x"\n[[lean_lib]]\nname = "LeanModels"\n' > "$fr/lakefile.toml"
+  printf -- '-- m\n' > "$fr/LeanModels/M.lean"; printf '# d\n' > "$fr/docs/a.md"
+  git -C "$fr" add -A; git -C "$fr" commit -qm base
+  frstub="$tmp/frstub"; mkdir -p "$frstub"
+  printf '#!/usr/bin/env bash\necho "Build completed successfully."\nexit 0\n' > "$frstub/lake"
+  chmod +x "$frstub/lake"
+  flagrun() {                   # extra args... -> the run's output
+    rm -rf "$tmp/frq" "$tmp/frl"
+    PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 \
+      TMPDIR="$tmp" timeout 90 bash "$0" --lane fl --dir "$fr" "$@" 2>&1
+  }
+
+  # ITEM 11: a plain `--classify` ticket with no `--gates` must PLAN the floor.
+  # It refused with "gate 1 is EMPTY — a stray ';'", blaming a separator the
+  # lane never typed, because gates_planned tested CLASSIFY where it meant
+  # CLASSIFY_ONLY.
+  out="$(flagrun --classify --against HEAD --gates-only 'true')"
+  check "plain --classify is not REFUSED"      "$(printf '%s' "$out" | grep -c 'is EMPTY')" "0"
+  out="$(flagrun --classify --against HEAD)"
+  check "  ...and it plans a NON-EMPTY floor"  "$(printf '%s' "$out" | grep -c 'gate 1 is EMPTY')" "0"
+  check "  ...reaching the gate phase"         "$(printf '%s' "$out" | grep -c '=== gate:')" "3"
+  # ...while --classify-only keeps taking the gates AS GIVEN.
+  saved_c="$CLASSIFY"; saved_co="$CLASSIFY_ONLY"; saved_g="$GATES"; saved_lg="$LANE_GATES"
+  CLASSIFY=1; CLASSIFY_ONLY=0; GATES=""; LANE_GATES=""
+  check "a classify TICKET plans the floor"    "$(gates_planned)" "$DEFAULT_FLOOR"
+  CLASSIFY_ONLY=1; GATES="python3 given.py"
+  check "  ...classify-ONLY takes them as given" "$(gates_planned)" "python3 given.py"
+  CLASSIFY="$saved_c"; CLASSIFY_ONLY="$saved_co"; GATES="$saved_g"; LANE_GATES="$saved_lg"
+
+  # ITEM 10: `--build-target` was parsed and then RESET TO EMPTY before the
+  # union read it, so the flag was a silent no-op across four tenures.  The
+  # existing row exercises add_build_target directly and cannot see that.
+  out="$(flagrun --gates-only 'true' --build-target LeanModels.Extra)"
+  check "--build-target REACHES the union"     "$(printf '%s' "$out" | grep -c 'explicit --build-target: LeanModels.Extra')" "1"
+  check "  ...and the build uses the target"   "$(printf '%s' "$out" | grep -c 'lake build LeanModels.Extra')" "1"
+  # The initializer's PLACEMENT is the defect, so its placement is asserted.
+  check "  ...its initializer is ABOVE the loop" \
+        "$(awk '/^BUILD_TARGET_ARGS=""/{i=NR} /^while \[ \$# -gt 0 \]; do/{l=NR} END{print (i<l ? "above" : "below")}' "$0")" "above"
+
+  # THE TWO EMPTY-GATE CAUSES read differently, because only one is the lane's.
+  check "an empty PLAN names the tool"         "$(gate_spec_refusal "" plan | grep -c 'tool defect, not your command line')" "1"
+  check "  ...and says not to hunt a ';'"      "$(gate_spec_refusal "" plan | grep -c "do NOT")" "1"
+  check "a stray ';' still names the list"     "$(gate_spec_refusal 'python3 a.py;; python3 b.py' | grep -c "stray ';'")" "1"
+
+  # DISPLAY MATCHES PLAN: --gates repeating a floor gate lists it ONCE.
+  check "a repeated gate is not doubled"       \
+        "$(gates_compose "$DEFAULT_FLOOR" 'python3 tools/docs_check.py' 0 | grep -o 'docs_check' | grep -c .)" "1"
+  check "  ...while a NEW gate is still added" \
+        "$(gates_compose "$DEFAULT_FLOOR" 'python3 harness/script_corpus.py' 0 | grep -c 'script_corpus')" "1"
+
   # ---- WAS THE BASE EVER GREEN? (the pyc lane's 116 minutes)
   echo "  -- base staleness"
   up="$tmp/upstream.git"; sd="$tmp/seed"; wk="$tmp/work"
@@ -2261,8 +2365,13 @@ if [ "$SELF_TEST" = "1" ]; then
   check "--gates-only is announced as REPLACING" "$(gates_planned)" "python3 harness/script_corpus.py"
   GATES_ONLY=0; FOREIGN=1; GATES='python3 x.py'
   check "a foreign tree announces its gates AS GIVEN" "$(gates_planned)" "python3 x.py"
-  FOREIGN=0; CLASSIFY=1
-  check "  ...and so does a classify pass"  "$(gates_planned)" "python3 x.py"
+  # CLASSIFY-ONLY, not CLASSIFY.  This row asserted the DEFECT: it set
+  # CLASSIFY=1 and expected the gates as given, which is exactly the branch
+  # that swept in normal classify tickets and refused them with an empty plan.
+  FOREIGN=0; CLASSIFY=1; CLASSIFY_ONLY=1
+  check "  ...and so does a classify-ONLY pass"  "$(gates_planned)" "python3 x.py"
+  CLASSIFY_ONLY=0; LANE_GATES=""
+  check "  ...but a classify TICKET plans the floor" "$(gates_planned)" "$DEFAULT_FLOOR"
   LANE_GATES="$saved_lg"; GATES_ONLY="$saved_go"; FOREIGN="$saved_fg"
   CLASSIFY="$saved_cl"; GATES="$saved_g"
 
@@ -2752,7 +2861,7 @@ if [ -n "$SINCE" ]; then
 fi
 # A GATE SPEC IS CODE, checked before a ticket exists: a fragmenting gate list
 # costs a whole tenure and produces a RED THAT LOOKS LIKE DILIGENCE.
-gate_reason="$(gate_spec_refusal "$(gates_planned)")" && die "$gate_reason"
+gate_reason="$(gate_spec_refusal "$(gates_planned)" plan)" && die "$gate_reason"
 stamp_version_guard      # a NEW ticket from a pre-rebase worktree is refused here
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"

@@ -3964,3 +3964,85 @@ cannot see this.
 
 *Renumber into your sequence or close it — the call is yours.*
 >>>>>>> 17d1f7b
+
+## 2026-08-24-qol-55 — a widening flag that did nothing, a condition that meant its opposite, and two gates wired
+
+Four authorizations in one branch. Item 11 first, because it was live.
+
+### Item 11 — the regression was mine, and the exposure is ZERO
+
+`gates_planned` tested `CLASSIFY` where its own comment said **classify-only**.
+`--classify-only` sets *both* flags, so the branch swept in the NORMAL
+`--classify` ticket, returned an empty plan, and my item-6 empty-gate guard
+refused it — **blaming a `;` the lane never typed**.
+
+**It was latent until that guard existed.** Ordering, measured: the guard sits
+at line 2768, the classify block at 2811, and `GATES="$(gates_compose "$FLOOR"
+…)"` at **2892**. Every earlier reader of `gates_planned` ran *after* 2892, so
+the wrong branch returned the right answer by accident. The guard was simply
+the first caller to run before it. A comment saying "classify-only" over code
+saying "classify" is the caption-vs-picture shape **in the condition**.
+
+**Exposure audit, enumerated rather than assumed.** Counting `=== gate:`
+invocations per tenure across every transcript on this box: every `--classify`
+tenure that reported green ran **2–6 gates** — R-track's ten read 2,2,2,3,3,3,
+3,3,6. Three tenures show zero (`go_triad2`, `go_t3`, `r3c-monadic-triad4`)
+and **all three end still queued** — they never acquired the lock, never
+reached the gate phase, and none reported green. **No green ever ran zero
+gates.** The structural reason agrees: line 2892 populates `GATES` from the
+class floor before the gate phase.
+
+**The guard's message now distinguishes its two causes**, because only one is
+the lane's: a stray `;` is something a lane typed, while an empty list from
+`gates_planned` is a **tool defect** and now says so — *"tool defect, not your
+command line… do NOT go looking for a stray ';' you did not type."*
+
+### Item 10 — a widening flag that silently did nothing
+
+`--build-target` was parsed at line 245 into `BUILD_TARGET_ARGS`, and the
+variable was **initialised to empty at line 435, after the loop** — so the
+union never saw it and the confirming line never printed. Reproduced before
+fixing: `--build-target LeanModels.Extra` printed the "explicit --build-target"
+line **0 times**. Hoisted above the loop; it now prints, and the build runs
+`lake build LeanModels.Extra`.
+
+> **A widening flag that silently does nothing produces an honest lane making
+> a false coverage statement.** (crunga)
+
+### The rows that could not have caught either
+
+Both defects were invisible to rows calling the helpers **directly** — a flag
+that never reaches a helper cannot be seen by testing the helper. The new rows
+run the script the way a lane runs it (isolated lock and queue, stubbed
+`lake`, no Lean, bounded), and **two existing rows had pinned the defects**:
+one asserted `CLASSIFY=1 → gates as given`, which *was* the bug. Third
+instance of caption-vs-picture in three consecutive items.
+
+### Cosmetic, folded in
+
+`--gates` naming a gate the floor already has printed it twice and ran it
+twice. `gates_compose` now dedupes identical commands, order-preserving, so
+plan, classification display and execution show one list. Deduping an
+identical command is not shrinking a gate set.
+
+### Items 7 and 2 — both gates wired
+
+`step "lean-comment-forms" python3 harness/lean_comment_forms.py` — a full
+step: tracked, argument-free (root defaults to `.`), no Lean, no network.
+And with the tree at **zero malformed headings**, `--strict` is wired as
+`backlog-headings`, using `--stdout` so CI renders without writing. Scoped
+deliberately to headings: `--check` would also gate INDEX freshness, a
+different promise and not this step's to make. Both pass on master's tree, and
+`--verify-guards` covers both directions — a conforming backlog passes, a
+malformed heading exits 3.
+
+One row of mine needed anchoring: `grep -c 'backlog-index.sh --stdout
+--strict'` counted **its own fixture line** and read 2 — the
+fixture-is-not-enforcement trap, inside the row meant to enforce.
+
+### Triad
+
+`triad.sh` **343 ok** (329 → 343), `ci.sh --verify-guards` **39 ok** (32 → 39),
+check 104, laws 45, sites 57, backlog-index 62, diagnose 51, new-proof 31,
+substrate 25, analogues 28, dupes 10, editions 12, a6-guard 8, docs_check
+91/91. Fixtures only. No Lean executed.

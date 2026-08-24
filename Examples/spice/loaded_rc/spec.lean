@@ -107,6 +107,15 @@ theorem loaded_rc_exhibits :
       LoadedRCVoltageDomain :=
   loaded_rc_assurance.exhibits loaded_rc_grounded
 
+/-- F2 INSTANTIATED: the settling deadline is DISCHARGED, not assumed.  At the
+deck's own 10 ms horizon the output is within 10 mV of its final value, with
+the deadline certified by a rational inequality at split depth 4. -/
+theorem loaded_rc_settled_at_horizon
+    {boundary : LoadedRCBoundary}
+    (hbehavior :
+      LoadedRCBehavior Examples.spice.loaded_rc.proof.loadedRCWorld boundary ()) :
+    |boundary.outputVoltage (1 / 100) - 10 / 3| ≤ 1 / 100 := by proofs
+
 #assurance_report loadedRCDeck using loaded_rc_assurance
   [loaded_rc_determinate, loaded_rc_monotone, loaded_rc_settles,
     loaded_rc_backward_euler, loaded_rc_backward_euler_no_overshoot]
@@ -120,3 +129,4 @@ theorem loaded_rc_exhibits :
 #print axioms loaded_rc_backward_euler
 #print axioms loaded_rc_backward_euler_no_overshoot
 #print axioms loaded_rc_assurance
+#print axioms loaded_rc_settled_at_horizon

@@ -32,11 +32,26 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | --- | --- | ---: | ---: | ---: |
 | pre-lane baseline | `ed9f1f5` | 0 / 24 | 0 / 21 | 9 / 21 |
 | `2026-08-24-analog-1` | `491b944` | **8 / 24** | **4 / 21** | 9 / 21 |
+| `2026-08-24-analog-2` | `c34834e` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-3` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
 
-**F1 RIDES THIS TABLE AND IS NOT OPTIONAL** (coordinator ruling): `model
-validity: MISSING`, architecturally unclosable, admitted 12×. The numbers above
-are model-level throughout; none of them is evidence that a fabricated device
-matches its model.
+**DECLARED DIVERGENCES: 0** — and the qualifier is part of the number.
+
+**F1 RIDES THIS TABLE AND IS NOT OPTIONAL**: `model validity: MISSING`,
+architecturally unclosable, admitted 12×. The numbers above are model-level
+throughout; none of them is evidence that a fabricated device matches its model.
+
+The register ruled F1 an **EPISTEMIC BOUNDARY, not a debt** (§5.0a admits no
+permanent row; the discriminator is whether the closing condition can be NAMED,
+and for F1 no experiment the domain admits can establish model validity). So it
+is not filed as a divergence, and the standing line carries this instead:
+
+> **A permanent admission is part of what the number MEANS; a debt is something
+> the number WAITS ON.**
+
+The underdetermined-node observation (below) was likewise ruled a named
+non-case — *spec-admits-both* — because a row there would assert the model is
+wrong where the spec declines to choose. Zero divergence rows, correctly.
 
 `491b944` is a **scoped** green (`tier` class): it covers the modules built and
 everything they import, not the modules that import them and not any untouched
@@ -444,3 +459,75 @@ ways: comment-nesting depth 0 in all touched files; the gate clean tree-wide;
 and a **precedent check** — every doc-comment follower in the three touched
 files matched one of the 169 distinct followers that already appear after doc
 comments in green `origin/master` code.
+
+---
+
+## 2026-08-24-analog-3 — A10/F2: the transcendental certificate becomes a decision procedure, and F2 splits in two
+
+**The kit** (`LeanModels/Circuit/Enclosure.lean`, six lemmas, no new imports):
+
+| lemma | direction |
+| --- | --- |
+| `exp_neg_le_inv_one_add` | one step, `exp (-a) ≤ 1/(1+a)` |
+| `exp_neg_le_inv_pow` | `n`-fold upper, `exp (-a) ≤ (1/(1+a/n))^n` |
+| `one_sub_div_pow_le_exp_neg` | `n`-fold lower, `(1-a/n)^n ≤ exp (-a)` |
+| `one_add_div_pow_le_exp` | `n`-fold lower on the positive side |
+| `exp_neg_le_of_pow_le` | **decay certificate** |
+| `log_le_of_le_pow` | **deadline certificate** |
+
+All from `Real.add_one_le_exp` and `Real.one_sub_le_exp_neg` through
+`Real.exp_nat_mul`. **The split depth is what makes it a procedure rather than
+a lemma**: the one-step bound gives `exp (-16/3) ≤ 3/19`, nowhere near tight
+enough for a real deadline, and raising `n` tightens it without bound —
+`exp (-16/3) ≤ 1/100` needs `n = 20` and is then decided by `norm_num`. No
+floating point anywhere in the path; both endpoints are exact rationals.
+
+**Specification of done, met.** `dramBankCore_exp_write_zero_bound` was seven
+bespoke lines; it is now one call at split depth 1.
+
+**A SITE DISCHARGED, which is the part that counts.** `loaded_rc_settles`
+carried `hdeadline : Real.log ((10/3)/ε)/1500 ≤ time` to the top of the deck
+**assumed**. `loaded_rc_settled_at_horizon` now proves, at the deck's own 10 ms
+horizon and a 10 mV tolerance, that the output is within tolerance — the
+deadline certified at split depth 4, axioms `[propext, Classical.choice,
+Quot.sound]`.
+
+### F2 SPLITS IN TWO, and only one half was the exp certificate
+
+The remaining sites are **no longer blocked on transcendental arithmetic**.
+`loaded_inverter` and `dram_1t1c` state their deadline as
+`initialError * exp (-rate * deadline) ≤ tolerance`, which is exactly
+kit-shaped — but their worlds are **PVT CORNER ENVELOPES**
+(`LoadedInverterCornerRun`), not single worlds, so `rate` is not a constant.
+Discharging them needs a **worst-case bound over the corner box** first: the
+minimum decay rate over the envelope. That is an optimisation problem over a
+product of intervals, and it is a different piece of work.
+
+> **A family named by its missing LEMMA can still be blocked on something that
+> is not a lemma. F2's twelve sites were counted by the certificate they lack;
+> two thirds of them are gated on a QUANTIFIER over a parameter box that the
+> certificate never touches.**
+
+So the honest F2 number is **1 of 12 top-level numeric hypotheses discharged**,
+plus one bespoke constant retired — and the queue below is re-priced, because
+the next inch is a corner-minimisation lemma, not more real analysis.
+
+**A11 (new) — worst-case decay over a PVT box.** For `LoadedInverterCornerRun`
+and its DRAM analogues, prove `rate world ≥ rateMin` for every allowed world,
+with `rateMin` rational. Then the F2 certificate applies unchanged and
+`loaded_inverter`, `dram_1t1c` and `dram_sense_amp` fall together — 8 of the
+remaining 11 sites. This is the real unlock, and it is monotonicity over a
+box, not analysis.
+
+**autoImplicit retrofit (ruling 1(b)) rode `Circuit/Enclosure.lean` only.**
+`Spice/DramBankCoreSpec.lean` was also touched but is **NOT** a free retrofit:
+`rows` and `columns` are auto-bound throughout it and never declared, so the
+flip there needs explicit binders added first. Recorded rather than forced —
+the retrofit rides a touch only when it is inert, and this one is not.
+
+**Iteration is open, and it changed the work.** This landing was built in a
+scratch loop at roughly 8 seconds per probe, against the previous regime of one
+attempt per hour-long queue. Every lemma name in the kit was WRONG on first
+writing (`inv_le_inv_of_le`, `pow_le_pow_left` — both renamed in this Mathlib)
+and each was found by probing `#check` rather than by spending a tenure. **The
+one-shot regime did not just cost time; it selected for guessing.**

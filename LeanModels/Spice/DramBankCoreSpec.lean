@@ -27,13 +27,14 @@ theorem dramBankCoreStoredVoltage_represents (value : Bool) :
   cases value <;>
     norm_num [DramBankCoreStorageRepresents, dramBankCoreStoredVoltage]
 
+/-- The write-zero decay constant.  This was seven bespoke lines until the F2
+kit landed (`Circuit/Enclosure.lean`); it is now one application of the decay
+certificate at split depth 1, and the same call discharges every other
+constant of this shape. -/
 theorem dramBankCore_exp_write_zero_bound :
-    Real.exp (-(16 / 3 : ℝ)) ≤ 1 / 4 := by
-  have hfour : (4 : ℝ) ≤ Real.exp (16 / 3) := by
-    linarith [Real.add_one_le_exp (16 / 3)]
-  rw [Real.exp_neg]
-  simpa [one_div] using
-    one_div_le_one_div_of_le (by norm_num) hfour
+    Real.exp (-(16 / 3 : ℝ)) ≤ 1 / 4 :=
+  LeanModels.Circuit.exp_neg_le_of_pow_le (by norm_num) 1 (by norm_num)
+    (by norm_num)
 
 noncomputable def DramBankCoreReadSpecification
     (world : DramBankCoreReadWorld rows columns)

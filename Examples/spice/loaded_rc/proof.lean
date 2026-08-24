@@ -179,6 +179,27 @@ theorem loaded_rc_settles
       htime0 htimeH hdeadline'
   simpa [loaded_rc_target] using hresult
 
+/-- F2 INSTANTIATED.  `loaded_rc_settles` is universally quantified over
+`epsilon` and `time` with the settling deadline as a HYPOTHESIS, and nothing
+discharged it: the claim reached the top of this deck assumed, not proved.
+Here the deck's own 10 ms horizon and a 10 mV tolerance make it concrete, and
+the deadline is certified by `log_le_of_le_pow` at split depth 4 -- a rational
+inequality, no floating point anywhere in the path. -/
+theorem loaded_rc_settled_at_horizon
+    {boundary : LoadedRCBoundary}
+    (hbehavior : LoadedRCBehavior loadedRCWorld boundary ()) :
+    |boundary.outputVoltage (1 / 100) - 10 / 3| ≤ 1 / 100 := by
+  have hhorizon : loadedRCWorld.environment.horizon = 1 / 100 := by
+    norm_num [loadedRCWorld, loadedRCNominal_eq, LoadedRCNominal.world,
+      deterministicWorld]
+  have hdeadline : Real.log ((10 / 3 : ℝ) / (1 / 100)) / 1500 ≤ 1 / 100 := by
+    have h : Real.log ((10 / 3 : ℝ) / (1 / 100)) ≤ 15 :=
+      LeanModels.Circuit.log_le_of_le_pow (by norm_num) (by norm_num) 4
+        (by norm_num) (by norm_num)
+    linarith
+  exact loaded_rc_settles hbehavior (by norm_num) (by norm_num)
+    (by rw [hhorizon]) hdeadline
+
 /-- Every executable backward-Euler prefix satisfies the numerical residual. -/
 theorem loaded_rc_backward_euler
     {step : ℝ} (hstep : 0 < step) (steps : Nat) :

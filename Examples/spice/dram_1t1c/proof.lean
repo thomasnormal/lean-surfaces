@@ -192,6 +192,53 @@ theorem dram_1t1c_write_zero_settles
   exact dram1T1C_write_zero_settles hallowed.2 hmode hbehavior
     htolerance hdeadline0 hdeadlineH hdeadline
 
+/-- A12: at the pinned nominal instance and a 5 V supply, the write-zero decay
+rate is exactly `16000000000/3` per second.  The deck's world pins `fabricated`
+but leaves `supply` free above the threshold, so the rate has NO uniform lower
+bound over the allowed set -- pinning the supply is what makes it a constant. -/
+theorem dram_1t1c_nominal_decayRate {world : Dram1T1CWorld}
+    (hallowed : Dram1T1CExampleAllowed world)
+    (hsupply : world.environment.supply = 5) :
+    loadedInverterDecayRate world.asLoadedInverter = 16000000000 / 3 := by
+  obtain ⟨hfab, hadm⟩ := hallowed
+  unfold Dram1T1CWorld.asLoadedInverter loadedInverterDecayRate
+    loadedInverterNOverdrive
+  simp only [deterministicWorld, hfab, dram1T1CNominal_eq,
+    Dram1T1CNominal.instance, hsupply]
+  norm_num
+
+/-- A12 INSTANTIATED.  `dram_1t1c_write_zero_settles` carried its deadline as a
+HYPOTHESIS.  At the nominal instance and 5 V, two nanoseconds settle the storage
+node to within 10 mV, certified at split depth 8.
+
+The rate times ONE nanosecond is exactly `16/3` -- the same constant
+`DramBankCoreSpec.lean` proved by hand before the F2 kit existed.  Two
+nanoseconds gives `32/3`, and `5 * (3/7)^8 = 32805/5764801`, comfortably under
+`1/100`. -/
+theorem dram_1t1c_write_zero_settled_at_2ns
+    {world : Dram1T1CWorld} {boundary : Dram1T1CBoundary}
+    (hallowed : Dram1T1CExampleAllowed world)
+    (hmode : world.environment.mode = .writeZero)
+    (hbehavior : Dram1T1CBehavior world boundary ())
+    (hsupply : world.environment.supply = 5)
+    (hhorizon : (1 / 500000000 : ℝ) ≤ world.environment.horizon) :
+    SettlesWithin boundary.storageVoltage 0 (1 / 100) (1 / 500000000)
+      world.environment.horizon := by
+  refine dram_1t1c_write_zero_settles hallowed hmode hbehavior
+    (by norm_num) (by norm_num) hhorizon ?_
+  have hinit0 : 0 ≤ world.environment.initialVoltage :=
+    hallowed.2.2.2.2.2.1
+  have hinit1 : world.environment.initialVoltage ≤ 5 := by
+    rw [← hsupply]; exact hallowed.2.2.2.2.2.2.1
+  have hval : (-(16000000000 / 3 : ℝ)) * (1 / 500000000) = -(32 / 3) := by
+    norm_num
+  rw [dram_1t1c_nominal_decayRate hallowed hsupply, hval]
+  have hexp : Real.exp (-(32 / 3 : ℝ)) ≤ (3 / 7) ^ 8 :=
+    LeanModels.Circuit.exp_neg_le_of_pow_le (by norm_num) 8 (by norm_num)
+      (by norm_num)
+  have hexp0 : (0:ℝ) ≤ Real.exp (-(32 / 3 : ℝ)) := (Real.exp_pos _).le
+  nlinarith
+
 theorem dram_1t1c_write_one_equation_manifest :
     EquationManifest DramWriteProgram [] :=
   dramWriteEquationManifest

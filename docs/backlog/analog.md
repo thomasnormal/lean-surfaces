@@ -34,14 +34,14 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | `2026-08-24-analog-1` | `491b944` | **8 / 24** | **4 / 21** | 9 / 21 |
 | `2026-08-24-analog-2` | `c34834e` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-3` | `5119cf6` | 8 / 24 | 4 / 21 | 9 / 21 |
-| `2026-08-24-analog-4` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-4` | `494b850` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-5` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
 
-**F2 numeric hypotheses discharged: 2 / 12** — `loaded_rc` (analog-3) and
-`loaded_inverter` (analog-4). The remaining 10 split **by the shape of the
-world, not by the certificate**: 1 more corner-boxed (`loaded_inverter`'s
-siblings, A11 applies unchanged), and **9 pinned-nominal** (`dram_1t1c` 5,
-`dram_sense_amp` 4) where the rate is already a concrete constant and no
-corner minimisation is needed at all.
+**F2 numeric hypotheses discharged: 3 / 12** — `loaded_rc` (analog-3),
+`loaded_inverter` (analog-4), `dram_1t1c` write-zero (analog-5). The remaining
+9 split **by the shape of the world, not by the certificate**: 2 corner-boxed
+(A11 applies unchanged) and 7 in the `dram_1t1c`/`dram_sense_amp` family, where
+the pattern is now proved and the work is per-deck arithmetic.
 
 **DECLARED DIVERGENCES: 0** — and the qualifier is part of the number.
 
@@ -609,3 +609,61 @@ the second signal, and it is why every new theorem here carries a pin.
 re-elaborate; the scratch loop against its built olean takes 8. Developing the
 lemma standalone first and inserting it once is worth roughly one order of
 magnitude on a file this size.
+
+---
+
+## 2026-08-24-analog-5 — A12: the pinned-nominal pattern, and "pinned" was only half true
+
+**The site.** `dram_1t1c_write_zero_settles` carried its deadline as a
+hypothesis. `dram_1t1c_write_zero_settled_at_2ns` now proves that at the
+nominal instance and a 5 V supply, **two nanoseconds settle the storage node to
+within 10 mV** — certified at split depth 8, axioms `[propext,
+Classical.choice, Quot.sound]`.
+
+**The constant closes a loop.** `dram_1t1c_nominal_decayRate` evaluates the
+rate at `16000000000/3` per second, so **rate × 1 ns = 16/3 exactly** — the very
+constant `DramBankCoreSpec.lean` proved by hand in seven bespoke lines before
+the F2 kit existed. Two nanoseconds gives `32/3`, and `5 · (3/7)^8 =
+32805/5764801`, comfortably under `1/100`.
+
+### "PINNED-NOMINAL" WAS HALF RIGHT, AND THE HALF I MISSED IS THE LOAD-BEARING ONE
+
+`analog-4` classified these decks as pinned-nominal, against `loaded_inverter`'s
+corner box. `Dram1T1CExampleAllowed` does pin the **fabricated instance**
+(`world.fabricated = dram1T1CNominal.instance`) — but its other conjunct is only
+`Dram1T1CAdmissible`, which constrains the **environment** by
+`threshold < supply` and nothing more.
+
+> **The supply is free above 1 V, so the decay rate has NO uniform lower bound
+> over the allowed set: as `supply → threshold⁺` the rate goes to zero.**
+
+So the deadline cannot be discharged for *every* allowed world, and the
+corollary carries `hsupply : world.environment.supply = 5` as an explicit
+hypothesis. That is honest and it is weaker than `loaded_inverter`'s result,
+which holds over its **whole** box.
+
+> **A world is not "pinned" or "free"; each COORDINATE is. A deck can pin its
+> fabricated instance and leave its environment open, and a classification that
+> names the world rather than the coordinates will read the easy half and miss
+> the binding one.**
+
+This is the same error as `analog-4`'s repricing, one level finer: there I
+generalised across decks from one deck, here I generalised across a world's
+coordinates from one conjunct. **Both times the shape I checked was real and
+the shape I skipped was the one that mattered.**
+
+**Consequence for the remaining 7.** They are not "concrete-constant
+arithmetic" as `analog-4` priced them. Each needs its environment coordinates
+audited first: whichever are free must either be pinned by hypothesis (weaker
+theorem, as here) or bounded like a corner (stronger theorem, as
+`loaded_inverter`). **A12's real content is the pattern, not the count.**
+
+**Next: A13 — `dram_sense_amp`'s 4 sites**, with the environment-coordinate
+audit done FIRST this time.
+
+**Iteration note.** Developed standalone against built oleans per the previous
+landing's measurement: the rate identity and the full corollary each compiled
+first try in the scratch loop, and the real files were built once. The one cost
+was discovering that `Examples.spice.dram_1t1c.proof` had no olean yet — a
+scratch probe against an unbuilt module fails on the import, not on the proof,
+so the module has to be built once before the loop is worth anything.

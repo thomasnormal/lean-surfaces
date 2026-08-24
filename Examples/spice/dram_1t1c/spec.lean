@@ -110,6 +110,20 @@ theorem dram_1t1c_write_zero_settles
     SettlesWithin boundary.storageVoltage 0 tolerance deadline
       world.environment.horizon := by proofs
 
+/-- A12 INSTANTIATED: the write-zero deadline is DISCHARGED, not assumed. At
+the nominal instance and a 5 V supply, two nanoseconds settle the storage node
+to within 10 mV. -/
+theorem dram_1t1c_write_zero_settled_at_2ns
+    {world : Dram1T1CWorld} {boundary : Dram1T1CBoundary}
+    (hallowed :
+      Examples.spice.dram_1t1c.proof.Dram1T1CExampleAllowed world)
+    (hmode : world.environment.mode = .writeZero)
+    (hbehavior : Dram1T1CBehavior world boundary ())
+    (hsupply : world.environment.supply = 5)
+    (hhorizon : (1 / 500000000 : ℝ) ≤ world.environment.horizon) :
+    SettlesWithin boundary.storageVoltage 0 (1 / 100) (1 / 500000000)
+      world.environment.horizon := by proofs
+
 theorem dram_1t1c_write_one_equation_manifest :
     EquationManifest DramWriteProgram [] := by proofs
 
@@ -197,3 +211,4 @@ theorem dram_1t1c_assurance :
 #print axioms dram_1t1c_write_one_domain
 #print axioms dram_1t1c_write_one_assurance
 #print axioms dram_1t1c_assurance
+#print axioms dram_1t1c_write_zero_settled_at_2ns

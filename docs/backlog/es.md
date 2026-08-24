@@ -1097,3 +1097,85 @@ passing: the ledger number needs a real instrument, and that is its own inch.
 `RestElement` in array position: 959 slice tests use the two together.
 `RestElement` in OBJECT position works. Object rest from a primitive
 (`var {...r} = "ab"`) refuses — it needs `ToObject` and the String wrapper.
+
+---
+
+## 2026-08-24-es-5 — the ledger number was wrong, and the instrument that says so
+
+`harness/es_coverage.py` (new). **§9.0 was `40/66`. It is `33/66`.**
+
+    §9.0  node kinds stated: 33/66  (partial: 8, refusing: 2, absent: 23)
+
+### WHY THE OLD NUMBER WAS NOT A MEASUREMENT
+
+It came from scraping `| .kind =>` arms out of `Eval.lean` and counting them.
+That counts an arm whose entire body is `SemM.refuseConstruct "…"` exactly the
+same as one that evaluates. It had been right until 2026-08-24 **only because
+every inch until then happened to implement every arm it added** — the measure
+was ACCIDENTALLY correct, which is worse than wrong, because nothing announces
+the day the accident ends. `bindPattern` ended it by adding a refusing
+`arrayPattern` arm, and the scrape reported 42/66 and 6,634 in-vocabulary
+tests where the truth was 40 and 5,154.
+
+### THE DISTINCTION THAT MAKES THE NEW ONE SOUND
+
+Not every refusal in an arm is a boundary. `internal: malformed IfStatement`
+sits inside a **fully implemented** `if` — it guards against an AST that
+cannot occur. Reading it as "`if` is unimplemented" would be as wrong as the
+bug being fixed. So refusals split by message: `internal:` says nothing about
+coverage; anything else is a boundary. Then
+
+    REFUSING   the whole body is one boundary refusal
+    PARTIAL    real evaluation AND a boundary refusal somewhere
+    STATED     real evaluation, at most `internal:` guards
+
+**PARTIAL is not in the numerator.** `objectExpression` evaluates `init`
+properties and refuses get/set; counting it as stated claims a construct the
+tier half-evaluates, and counting it absent denies work that is there. It
+rides beside the number, the same argument §5.0a makes for declared
+divergences.
+
+### THREE BUGS IN THE INSTRUMENT ITSELF, ALL FOUND BY ITS OWN OUTPUT
+
+Recorded because a measurement tool's own defects are the ones nothing else
+catches:
+
+1. **Under-counting the mirror of the original bug.** Five kinds — `program`,
+   `variableDeclarator`, `catchClause`, `switchCase`, `literal` — are handled
+   by DEDICATED CLAUSES with no `| .kind =>` to read, and the first version
+   called them absent. Fixed with a `DEDICATED` table that names the handling
+   definition and **verifies it exists**: delete `evalCatchClause` and this
+   file goes red rather than quietly keeping the kind in the numerator. A
+   hand-maintained exemption list nothing checks is the discipline-not-
+   instrument shape MEAS-28 forbids.
+2. **Nested arms were invisible.** `objectPattern` matches `| some .property =>`
+   and `| some .restElement =>` INSIDE its own body, and the scan jumped past
+   the body, reporting both absent. Same class of error as the original, in
+   the opposite direction.
+3. **It counted other inductives' constructors as node kinds** — `| .null |
+   .undef =>` over `Val` — and reported DRIFT on them. Now filtered against
+   `Ast.lean`'s vocabulary, so the reader is never told `undef` is an
+   unhandled node.
+
+Aggregation is order-independent by construction: a kind with arms in several
+matches is `refusing` only if all refuse, `partial` if ANY arm carries a
+boundary, else `stated`. The first version took "strongest wins" and the
+answer depended on file order.
+
+`--self-test` exercises all five classifier rules plus three REAL arms whose
+verdicts this lane knows by hand (`arrayPattern` refusing, `objectExpression`
+partial, `emptyStatement` stated), so the file is pinned against the code and
+not only against fixtures.
+
+### WHAT THE HONEST NUMBER SAYS
+
+33 stated, 8 partial (`objectPattern`, `property`, `assignmentExpression`,
+`unaryExpression`, `objectExpression`, `arrayExpression`, `updateExpression`,
+`logicalExpression` — each evaluating its common case and refusing a named
+corner), 2 refusing (`arrayPattern`, `spreadElement` — both the iterator
+inch), 23 absent.
+
+**Every §9.0 figure this lane reported before today was produced by the
+scrape.** The reach numbers (+1,249, +1,036) were computed from an explicit
+kind SET rather than the scrape and are unaffected; the `N/66` figures were
+not, and 40/66 should be read as 33/66 + 8 partial.

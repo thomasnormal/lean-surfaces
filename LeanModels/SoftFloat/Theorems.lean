@@ -142,6 +142,55 @@ theorem roundedMantissa_eq_roundHalfEven (m n : Nat) :
       -- `omega` cannot resolve an `if`; discharge both conditions first.
       rw [if_neg (by omega), if_pos (by omega)]
 
+/-! ## CARRY-OUT ABSORPTION
+
+`roundWithAccuracy` shifts a SECOND time after rounding, for one reason: rounding
+up can carry the significand past `2 ^ mantissaBits`.  The obligation is that
+this second shift changes the REPRESENTATION and not the VALUE. -/
+
+/-- The second shift's exponent is the first plus the shift amount — by `rfl`. -/
+theorem shiftToExponent_exp (m : Nat) (e t : Int) (a : Accuracy) :
+    (UnpackedFloat.shiftToExponent m e a t).2 = e + ((t - e).toNat : Int) := rfl
+
+/-- Its mantissa is the input divided by the shift. -/
+theorem shiftToExponent_mantissa (m : Nat) (e t : Int) (a : Accuracy) :
+    (UnpackedFloat.shiftToExponent m e a t).1.mantissa = m / 2 ^ (t - e).toNat := by
+  show ((ExtendedMantissa.ofMantissaAndAccuracy m a) >>> (t - e).toNat).mantissa = _
+  rw [em_shift_mantissa]
+  -- `ofMantissaAndAccuracy` matches THREE `.inexact` sub-patterns, so `cases a`
+  -- alone leaves the ordering symbolic and the match stuck.
+  rcases a with _ | o
+  · rfl
+  · cases o <;> rfl
+
+/--
+**VALUE PRESERVATION.**  When the bits the shift drops are zero, the shift is
+exact: significand × 2^shift recovers the input.  This is what makes the
+carry-out absorption sound — it re-expresses the same number, it does not
+approximate it.
+-/
+theorem shiftToExponent_exact (m : Nat) (e t : Int) (a : Accuracy)
+    (h : m % 2 ^ (t - e).toNat = 0) :
+    (UnpackedFloat.shiftToExponent m e a t).1.mantissa * 2 ^ (t - e).toNat = m := by
+  rw [shiftToExponent_mantissa]
+  exact Nat.div_mul_cancel (Nat.dvd_of_mod_eq_zero h)
+
+/--
+**THE CARRY CASE ITSELF.**  A significand that rounding carried to exactly
+`2 ^ k` (`k > 0`) is even, so the one-place shift the carry triggers is exact
+and the value survives: the second shift re-expresses the number, it does not
+approximate it.
+-/
+theorem carry_shift_exact (k : Nat) (hk : 0 < k) (e t : Int)
+    (ht : (t - e).toNat = 1) (a : Accuracy) :
+    (UnpackedFloat.shiftToExponent (2 ^ k) e a t).1.mantissa * 2 = 2 ^ k := by
+  have heven : (2 : Nat) ^ k % 2 = 0 := by
+    obtain ⟨j, rfl⟩ : ∃ j, k = j + 1 := ⟨k - 1, by omega⟩
+    rw [Nat.pow_succ]; omega
+  have h : (2 : Nat) ^ k % 2 ^ (t - e).toNat = 0 := by rw [ht, Nat.pow_one]; exact heven
+  have hx := shiftToExponent_exact (2 ^ k) e t a h
+  rwa [ht, Nat.pow_one] at hx
+
 /-! ## THE ES ROW: core's float→int conversion IS truncation of the exact value
 
 IEEE 754-2019 §5.8 `convertToIntegerTowardZero`.  The statement mentions NO

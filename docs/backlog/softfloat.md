@@ -1351,3 +1351,68 @@ built instead of waiting.
 
 Unchanged; the theorems are the same ones, now in a file that compiles.
 **32 landed theorems, 1 an unconditional `op_correct`.**
+
+---
+
+## 2026-08-24-softfloat-23 — CARRY-OUT ABSORPTION: the second shift moves the representation, not the value
+
+`LeanModels/SoftFloat/Theorems.lean`. `shiftToExponent_exp` (no axioms),
+`shiftToExponent_mantissa` `[propext]`, `shiftToExponent_exact` `[propext]`,
+`carry_shift_exact` `[propext, Quot.sound]`. **TRUSTWORTHY**, zero `sorry`.
+
+### WHAT THE SECOND SHIFT IS FOR
+
+`roundWithAccuracy` shifts **twice**. The first shift brings the significand to
+the target exponent and produces the round/sticky bits; the second exists for
+one reason, and core says so in its own comment: *rounding the mantissa may
+have overflowed it*. Rounding up can carry the significand past
+`2 ^ mantissaBits`, and the second shift puts it back.
+
+**So the obligation is not that the second shift computes something — it is
+that it changes the REPRESENTATION and not the VALUE.**
+
+### THE LEMMAS
+
+* `shiftToExponent_mantissa` — the shifted significand is `m / 2^k`, where
+  `k = (t - e).toNat`.
+* `shiftToExponent_exp` — the exponent is `e + k`. By `rfl`.
+* **`shiftToExponent_exact`** — when the dropped bits are zero
+  (`m % 2^k = 0`), the shift is exact: `significand × 2^k = m`. The value
+  survives.
+* **`carry_shift_exact`** — the carry case itself: a significand that rounding
+  carried to exactly `2^k` (`k > 0`) is **even**, so the one-place shift the
+  carry triggers drops only a zero bit. The carry-out is absorbed without loss.
+
+### TWO MECHANICAL OBSTACLES, BOTH RECURRING
+
+1. **`cases a` is not enough for `Accuracy`.** `ofMantissaAndAccuracy` matches
+   **three** `.inexact` sub-patterns (`.lt`, `.eq`, `.gt`), so splitting only on
+   `Accuracy`'s two constructors leaves the `Ordering` symbolic and the match
+   stuck — the same "a `match` will not reduce while its scrutinee is symbolic"
+   failure as `2026-08-24-softfloat-21`, one constructor deeper. `rcases a with
+   _ | o` then `cases o` clears it.
+2. **`<;> [t₁; t₂]` is not valid tactic syntax at this pin.** Explicit
+   `·` bullets instead.
+
+### AND THE FAITHFUL SIM WAS USED FROM THE START
+
+This is the first landing verified with the corrected method from
+`2026-08-24-softfloat-22` — `Basic.lean` **with its `end`**, then `Theorems.lean`
+**from its own `namespace` line**, so only the target's opens are in scope. The
+new lemmas use `Accuracy`, which is exactly the name the old merged sim would
+have supplied for free from `Basic.lean:180` and the real module would not.
+The method change was load-bearing on its very next use.
+
+### §9.0 — STILL 1/12
+
+**36 landed theorems, 1 an unconditional `op_correct`.** Carry-out absorption
+is a component of `RoundWithAccuracyIsNearest`, not the obligation.
+
+### WHAT REMAINS: ONE PIECE
+
+Nearest-among-**all**-representables — the interleaving argument. Everything
+else `RoundWithAccuracyIsNearest` needs is now proved: the residue meaning
+(`em_shift_round`/`em_shift_sticky`), the rounding decision
+(`roundedMantissa_eq_roundHalfEven`), and the carry absorption. What is left is
+the step that quantifies over **other** representable values rather than
+computing this one.

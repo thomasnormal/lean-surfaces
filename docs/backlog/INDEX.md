@@ -15,282 +15,284 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**272 entries across 17 lanes.** Regenerate with
+**274 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
-| id | title | lane |
-| --- | --- | --- |
-| `2026-08-24-architecture-65` | The run is correct and the certificate is correct are different claims | architecture |
-| `2026-08-24-architecture-64` | A refusal honest about the model and false about the world | architecture |
-| `2026-08-24-architecture-63` | Duration is a corroborator, not the witness | architecture |
-| `2026-08-24-architecture-62` | The ruling met reality within the hour, and reality had four corrections | architecture |
-| `2026-08-24-architecture-61` | A declared divergence is a debt, not a verdict | architecture |
-| `2026-08-24-architecture-60` | The merge fixes what is false; only the owner sees what is now redundant | architecture |
-| `2026-08-24-architecture-59` | Re-pointing a guard is not monotone tightening | architecture |
-| `2026-08-24-architecture-58` | The guard built to pin the tree points at the index | architecture |
-| `2026-08-24-architecture-57` | Completeness is counted per orientation; and a pin move declared in advance | architecture |
-| `2026-08-24-architecture-56` | The guard is inside the thing it cannot see; and a count in prose without its unit | architecture |
-| `2026-08-24-architecture-55` | A verdict certifies a tree, never a title | architecture |
-| `2026-08-24-architecture-54` | When the ambient verdict is constant, every bit is in the pin | architecture |
-| `2026-08-24-architecture-53` | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |
-| `2026-08-24-architecture-52` | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
-| `2026-08-24-qol-50` | nothing checked whether a ticket's base had ever been green | qol |
-| `2026-08-24-qol-49` | the merge left the model describing a guard that no longer exists | qol |
-| `2026-08-24-qol-48` | the stamp was watching the index while lake read the working tree | qol |
-| `2026-08-24-softfloat-14` | THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology | softfloat |
-| `2026-08-24-sunfish-rtrack-12` | RUNG 1: the flagship is TYPED, and it assembles | sunfish-rtrack |
-| `2026-08-24-sunfish-rtrack-11` | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
-| `2026-08-24-wasm-8` | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
-| `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
-| `2026-08-24-ada-3` | INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug | ada |
-| `2026-08-24-ada-2` | INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts | ada |
-| `2026-08-24-analog-1` | CENSUS-FIRST: non-vacuity is a chain of two links, and the tier closed only the inner one | analog |
-| `2026-08-24-ada-1` | CORE ADOPTION LANDS: the two-channel mapping, and the ticket's own tenure had gone green over a tree that did not contain it | ada |
-| `2026-08-23-architecture-51` | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
-| `2026-08-23-architecture-50` | The goal is COMPLETION, and a milestone is a waypoint | architecture |
-| `2026-08-23-architecture-49` | A full build is its own root; and 27 green rows that could not see the call site | architecture |
-| `2026-08-23-architecture-48` | A witness must fail for the reason it names; and INAPPLICABLE is not OPTIONAL | architecture |
-| `2026-08-23-qol-47` | increment greens, phase 1: a green may rest on a named green | qol |
-| `2026-08-23-architecture-47` | The shape set had a fourth member; and duplication is discovered by changing | architecture |
-| `2026-08-23-qol-46` | the floor grows a gate, and a tenure says what it could have been | qol |
-| `2026-08-23-architecture-46` | A guard that always fires; a procedure is not a gate; and WAITING names its trigger | architecture |
-| `2026-08-23-qol-45` | the shape set's fourth member, and a log that says whose it is | qol |
-| `2026-08-23-architecture-45` | A list is maintained by the attention that wrote the defect; and a new reader under-reads | architecture |
-| `2026-08-23-qol-44` | a flag written last spun forever, in eleven tools | qol |
-| `2026-08-23-architecture-44` | The quirk that blocks direct reuse can fund the crossing | architecture |
-| `2026-08-23-qol-43` | arming a byte-comparing gate arms the pins it does not have | qol |
-| `2026-08-23-architecture-43` | Wrong by answering; and a predicted cost inherits its construct's unit error | architecture |
-| `2026-08-23-qol-42` | the SV round-trip gate joins CI, and qol-40's orphan was half instrument | qol |
-| `2026-08-23-architecture-42` | My own +0 law, retracted by measurement; and a missing lemma is a missing import | architecture |
-| `2026-08-23-qol-41` | two tools that disagreed, and stamps that read the wrong repo | qol |
-| `2026-08-23-architecture-41` | The discriminator lives in the call; and the row a wrong model cannot state | architecture |
-| `2026-08-23-qol-40` | `laws.sh --gate-set`: §5.4b made checkable, and `.sv` has no gate | qol |
-| `2026-08-23-architecture-40` | The census partially orders the rungs; the conjunctive law is now family law | architecture |
-| `2026-08-23-qol-39` | laws.sh was SPAWN-BOUND, so its runtime was other lanes' load | qol |
-| `2026-08-23-architecture-39` | Take the acceptance case that can fail; a performance symptom is a modelling question; and a proved spec adjudicates its siblings | architecture |
-| `2026-08-23-qol-38` | the marker gate I owed, a self-citation I created, and recovery by content | qol |
-| `2026-08-23-architecture-38` | A mis-bucketed refusal is mis-scheduled; a parser's kinds are the parser's; and the census that refutes a published plan | architecture |
-| `2026-08-23-qol-37` | CI's build is gated by host, and this clone is seeded at last | qol |
-| `2026-08-23-architecture-37` | The first vendored function-level theorem outside Python; and a proof demotes only the rows about the relation it proved | architecture |
-| `2026-08-23-qol-36` | INCIDENT: a self-test that ran CI, 26 deep, on a cold clone | qol |
-| `2026-08-23-architecture-36` | Never touch the scrutinee; the blocker ladder is complete; and a boundary drawn after a proof is drawn by the proof | architecture |
-| `2026-08-23-qol-35` | audit MEDIUM 9-10: a checker with a floor, and a CI that can fail | qol |
-| `2026-08-23-architecture-35` | A census that names a language when it measured one of its tiers; and a gate that caught its author | architecture |
-| `2026-08-23-qol-34` | audit MEDIUM 11 and LOW 12: a ledger that can fail, and a map that reads the tree | qol |
-| `2026-08-23-architecture-34` | Ask what the run type IS before pricing the seam; and a named blocker is a next step | architecture |
-| `2026-08-23-qol-33` | audit HIGH 4-5: a regex awk rejected outright, and a guard that failed open | qol |
-| `2026-08-23-architecture-33` | A stepper RECOVERS its walker; and arming a gate arms the pins it does not have | architecture |
-| `2026-08-23-qol-32` | audit HIGHs 1-3 and MEDIUMs 7-8: the matchers learn what a comment is | qol |
-| `2026-08-23-architecture-32` | The enumeration's first finding was about the enumerator | architecture |
-| `2026-08-23-qol-31` | the vendored-fixture convention, and a prose mention that still cost the whole library | qol |
-| `2026-08-23-architecture-31` | A false blanket claim hides the real gap; and cite by name, not by offset | architecture |
-| `2026-08-23-qol-30` | correction: the build log was never deleted, only unnamed | qol |
-| `2026-08-23-architecture-30` | Heartbeats over wall time; one execution, two projections; and a shared name is worth an import | architecture |
-| `2026-08-23-qol-29` | the merge driver configures itself, and a green build's axiom ledger survives | qol |
-| `2026-08-23-architecture-29` | An instrument optimization is proved by output equality; and §5.4b's first two catches | architecture |
-| `2026-08-23-qol-28` | `--axioms` dropped the last name, and the absence was silent | qol |
-| `2026-08-23-architecture-28` | The guard was never in those processes; and a correct refusal is not a mitigation | architecture |
-| `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
-| `2026-08-23-architecture-27` | A published number is a second artifact; a check that cannot fire; and an instrument that selected itself | architecture |
-| `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
-| `2026-08-23-architecture-26` | A transcription is a copy with a timestamp; and every gate was green while the file lied | architecture |
-| `2026-08-23-qol-25` | the attribution fix: the headline held, the DISPATCH was wrong | qol |
-| `2026-08-23-architecture-25` | The audit-response norm: the remedy for a provenance gap is provenance, never reconstruction | architecture |
-| `2026-08-23-qol-24` | gate DESIGNS for the two head homes, and one of the ten needs no gate at all | qol |
-| `2026-08-23-architecture-24` | This lane's three audit findings, fixed; and the laws predicted where the defects are | architecture |
-| `2026-08-23-qol-23` | the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern | qol |
-| `2026-08-23-architecture-23` | Data may carry the decision, not the scrutinee; and an audit has a third site | architecture |
-| `2026-08-23-qol-22` | sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce | qol |
-| `2026-08-23-architecture-22` | A transcribed expectation is a third implementation; and a census that could have overturned the plan | architecture |
-| `2026-08-23-qol-21` | `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE | qol |
-| `2026-08-23-lean-tier-21` | THE 28th OBLIGATION: the byte-level round-trip rests on a hole in Lean core, and it is stamped OUT OF SCOPE | lean-tier |
-| `2026-08-23-architecture-21` | The versioning exemplar is REALIZED; a falling split is correct; and deferrals need a double guard | architecture |
-| `2026-08-23-qol-20` | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
-| `2026-08-23-lean-tier-20` | the guard-pinned-to-our-branch defect RECURRED in the newest instrument, and is now fixed at the root | lean-tier |
-| `2026-08-23-architecture-20` | Six congruence shapes; the walker's real cause was transparency; and a correction inherited its error's scope | architecture |
-| `2026-08-23-qol-19` | a run is not a measurement until it has been read | qol |
-| `2026-08-23-lean-tier-19` | PURE CORE LANDED: the round-trip property is now statable, and behaviour identity is EVIDENCED by upstream's own 22 golden tests | lean-tier |
-| `2026-08-23-architecture-19` | Probes must refuse on absence; the congruence set has five shapes; and row 1 fired on its author | architecture |
-| `2026-08-23-qol-18` | the tree must not move while you queue, and now it cannot silently | qol |
-| `2026-08-23-lean-tier-18` | arc 2 STOPPED BEFORE WRITING: the round-trip property is not STATABLE against the current code, and a pure core is a precondition | lean-tier |
-| `2026-08-23-architecture-18` | Price the TYPE not one constructor; a docstring that argues is a claim; cancelling a ticket is the right move | architecture |
-| `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
-| `2026-08-23-lean-tier-17` | EXPORT CORNER, arc 1: re-pinned, 27-obligation manifest landed, round-trip property and index invariant stated | lean-tier |
-| `2026-08-23-architecture-17` | Census-first applies to the LEMMA; and the retract framing earns a judgment | architecture |
-| `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
-| `2026-08-23-pycomplete-16` | `del d[k]` LANDS as an ingestion rewrite, and the churn guard becomes REQUIRED | python-completeness |
-| `2026-08-23-lean-tier-16` | NEW CORNER CHARTERED: the export envelope. Three candidates eliminated by measurement, one stands | lean-tier |
-| `2026-08-23-architecture-16` | A generated model's relations are its own; the order lifts but the congruences don't | architecture |
-| `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
-| `2026-08-23-pycomplete-15` | THE FLAGSHIP LADDER's CENSUS: `del d[k]` makes a refusal REQUIRED that was only inherited | python-completeness |
-| `2026-08-23-lean-tier-15` | WAITING begins, and the first act was fixing the guards that WAITING depends on | lean-tier |
-| `2026-08-23-architecture-15` | A6 covered half the hazard; and the gate line has THREE states | architecture |
-| `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
-| `2026-08-23-pycomplete-14` | INCH 3c-i-c BUILT: `enumerate(d)` runs, and the census's price held exactly | python-completeness |
-| `2026-08-23-lean-tier-14` | CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING | lean-tier |
-| `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
-| `2026-08-23-softfloat-13` | PARSE INCH, STATEMENT-FIRST: `ofScientific`'s branches are NOT shape-uniform | softfloat |
-| `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
-| `2026-08-23-pycomplete-13` | INCH 3c-i-c's CENSUS: `enumerate(d)` is a GENERATOR FRAME, so the Kont record is not touched at all | python-completeness |
-| `2026-08-23-lean-tier-13` | MILESTONE: 4 proved / 3 blocked, `weak'_inv` parked on an IMPORT CYCLE; and the arena re-measure moved a fact | lean-tier |
-| `2026-08-23-architecture-13` | The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface | architecture |
-| `2026-08-23-softfloat-12` | THE DECIMAL INCH'S CENSUS: 2 sites in tree, and the suite figure is a BOUND | softfloat |
-| `2026-08-23-pycomplete-12` | the audit's §python triage | python-completeness |
-| `2026-08-23-lean-tier-12` | `wf` GREEN and the hoisted `ProjSound` re-proved: 4 of 7; the remaining three are censused and none is ordinary work | lean-tier |
-| `2026-08-23-architecture-12` | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
-| `2026-08-23-softfloat-11` | THE PROBES WENT STALE IN SIX MINUTES, and correcting the text is not the fix | softfloat |
-| `2026-08-23-pycomplete-11` | 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named | python-completeness |
-| `2026-08-23-lean-tier-11` | `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition | lean-tier |
-| `2026-08-23-c-11` | INCH 5's OPEN PROBLEM IS CLOSED, and the ∀-order discharge could not have been attempted before it | c |
-| `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
-| `2026-08-23-sunfish-rtrack-10` | `GenEmits.forGenRound` on the rebuild: R2's chain step closes | sunfish-rtrack |
-| `2026-08-23-softfloat-10` | STEP 3 SCOPED: the consumer census found a SECOND consumer, and the algorithm choice follows from the SPEC's own wording | softfloat |
-| `2026-08-23-pycomplete-10` | 3c-i-b hits a STRUCTURAL wall, and the fix is an ingestion rewrite, not a call-site fusion | python-completeness |
-| `2026-08-23-lean-tier-10` | DECISION BRIEF for Thomas: PR #43 does NOT unblock `TrProj.uniq`, and consuming it buys nothing this lane needs | lean-tier |
-| `2026-08-23-c-10` | THE ADOPTION'S TENURE CAME BACK RED, and the one defect was sitting in its own diff's CONTEXT | c |
-| `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
-| `2026-08-23-sunfish-rtrack-9` | the leaf copies are DELETED, by touch, as contracted | sunfish-rtrack |
-| `2026-08-23-softfloat-9` | THE CONSUMER-SITE CENSUS: zero unrouted crossings remain, and the instrument corrected itself twice | softfloat |
-| `2026-08-23-pycomplete-9` | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |
-| `2026-08-23-lean-tier-9` | `TrProjP.instN` GREEN; and the quality audit found four real defects in this lane's instruments, one of which had published wrong citations | lean-tier |
-| `2026-08-23-c-9` | the audit's five rows, all FIXED; two were claims that had never been checked | c |
-| `2026-08-23-architecture-9` | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |
-| `2026-08-23-sunfish-rtrack-8` | R2's generator layer founded: the seam, and the drain | sunfish-rtrack |
-| `2026-08-23-sunfish-rtrack-8` | R2's generator layer founded: the seam, and the drain | sunfish-rtrack |
-| `2026-08-23-softfloat-8` | LAYER 3 LANDED, and it is a CLASS, not a tactic | softfloat |
-| `2026-08-23-pycomplete-8` | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
-| `2026-08-23-lean-tier-8` | `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost | lean-tier |
-| `2026-08-23-c-8` | CORE ADOPTED: the guard this lane wrote is now enforced for every tier | c |
-| `2026-08-23-architecture-8` | The Core payload LANDED: holds released, and the gate retired the conditional | architecture |
-| `2026-08-23-sunfish-rtrack-7` | `fuelMono` retires the `∀ G` premise: two hops meet at a max | sunfish-rtrack |
-| `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
-| `2026-08-23-lean-tier-7` | `TrProjP.instL` GREEN, and the proof caught a soundness defect in my own definition | lean-tier |
-| `2026-08-23-c-7` | THE TERMINATION REPAIR IS **GREEN**, and it took three tenures to state one measure | c |
-| `2026-08-23-architecture-7` | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |
-| `2026-08-23-wasm-6` | **O1 IS PROVED**, and both split lemmas with it: the pinned expectation matched EXACTLY, plus O3's census | wasm |
-| `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
-| `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
-| `2026-08-23-c-6` | STMT-59 answered: **(a), with a named (b) subset already scheduled** | c |
-| `2026-08-23-architecture-6` | Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance | architecture |
-| `2026-08-23-wasm-5` | §5.4b APPLIED TO THIS LANE: the "5 live obligations" claim had **no gate pointed at it**, and the compiler was the missing pointer | wasm |
-| `2026-08-23-pycomplete-5` | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
-| `2026-08-23-es-5` | the audit's other two rows: a docstring that outlived its code, and a lint blind to legal Lean | es |
-| `2026-08-23-c-5` | **A GREEN BUILD IS NOT A TERMINATION ARGUMENT** | c |
-| `2026-08-23-architecture-5` | Re-founding needs a differ-on-purpose word; names asserting verdicts expire | architecture |
-| `2026-08-23-wasm-4` | THE PORT'S FIRST VERDICT: Mathlib's `Forall₂` is **not the model's `Forall₂`**, and the census's "no cost" conclusion needed the qualification | wasm |
-| `2026-08-23-sv-4` | LANDING B (4a-0): the SV tier joins the family substrate, and both adoptions are `rfl` | sv |
-| `2026-08-23-pyrebuild-4` | GREEN, and the spike's headline number is VOID | pyrebuild |
-| `2026-08-23-pycomplete-4` | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
-| `2026-08-23-es-4` | the corpora are BACK, the ecma262 pin was RECOVERED not guessed, and `esmeta` was the QUIET half of the `rev()` defect | es |
-| `2026-08-23-c-4` | INCH 5 IS **RED**, and the diagnosis is the deliverable | c |
-| `2026-08-23-architecture-4` | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
-| `2026-08-23-sv-3` | LANDING A: the stepper enters the build, and the gate that armed a CI bomb validates its defusal | sv |
-| `2026-08-23-pyrebuild-3` | THE UNION FAILED, exactly where the full build was chosen to look | pyrebuild |
-| `2026-08-23-pycomplete-3` | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |
-| `2026-08-23-es-3` | the global object, and §16.1.7's `CreateGlobalVarBinding` | es |
-| `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
-| `2026-08-23-architecture-3` | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
-| `2026-08-23-sv-2` | THE STEPPER TENURE RAN AND CAME BACK RED ON ONE GOAL; the `Res` bind lemmas did their job | sv |
-| `2026-08-23-qol-inbound-2` | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
-| `2026-08-23-pyrebuild-2` | THE MERGE TO MASTER: one arm, 25 rows, and a dispatch discharged | pyrebuild |
-| `2026-08-23-es-2` | the Directive Prologue (§11.2.2), and non-strict `this` | es |
-| `2026-08-23-architecture-2` | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |
-| `2026-08-23-ada-2` | TICKET: adopt Core's outcome layer (π = ArmRef, σ = Unit) | ada |
-| `2026-08-23-sv-1` | THE OWED FULL-TREE TRIAD IS DISCHARGED BY SOMEONE ELSE'S GREEN, and the number carries the state it was measured in | sv |
-| `2026-08-23-qol-inbound-1` | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
-| `2026-08-23-es-1` | the coercion/accessor cycle: move `ToPrimitive` and `[[Get]]`'s accessor walk into the evaluator's mutual block | es |
-| `2026-08-23-es-1` | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
-| `2026-08-23-architecture-1` | AMENDMENT 17 (DRAFT): proof iteration is a different shape, and five conditions I would tighten | architecture |
-| `2026-08-23-ada-1` | M2 INCH 1 IS GREEN, and the audit found a gate of mine that could not fail | ada |
-| `2026-08-23-es-0` | M2 INCH 5: statements, declaration instantiation, and function bodies — a Script RUNS, and Core's `Outcome` was adopted in the same touch | es |
-| `2026-08-22-architecture-14` | TWO FOLLOW-UPS RECORDED | architecture |
-| `2026-08-22-architecture-13` | CORRECTION — `Run` is a RETRACT of `SemM`, not an isomorphism (and this doc claimed the iso twice) | architecture |
-| `2026-08-22-qol-12` | `--foreign`: the tenure is about THE MACHINE, the gates are about the tree | qol |
-| `2026-08-22-architecture-12` | BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — as the STRONGER form | architecture |
-| `2026-08-22-qol-11` | §9.5 FINISHED: the monolith is frozen, the index is generated, and the id drifter is dated | qol |
-| `2026-08-22-architecture-11` | CORE'S `.except`-LAYER ALTERNATIVE IS CLOSED BY THE COVENANT (Go lane, third finding of the gap) | architecture |
-| `2026-08-22-qol-10` | the GATE PHASE was building the tree, and it defeated every narrowing | qol |
-| `2026-08-22-architecture-10` | §9.5 GAINS THE INBOUND CONVENTION AND THE ROUTING LAW | architecture |
-| `2026-08-22-qol-9` | AMENDMENT 16: the 3 GB chain cap was killing honest builds, and the guard was in its own kill set | qol |
-| `2026-08-22-architecture-9` | THE HELD mvcgen DEFECT RESOLVES — the ceiling stands, and the tier routes around it | architecture |
-| `2026-08-22-qol-8` | `tools/new-proof.sh` and `tools/analogues.sh`: the laws at the moment they are cheap | qol |
-| `2026-08-22-architecture-8` | THE DUAL LAW — an obstruction that is only ENCOUNTERED is not measured either | architecture |
-| `2026-08-22-qol-7` | `tools/check.sh`: rule 3's warm-clone amendment, CHECKED instead of guessed | qol |
-| `2026-08-22-architecture-7` | `Core.SemM` LANDED — the §3.8 trigger fired, and the reconciliation INVERTS | architecture |
-| `2026-08-22-sunfish-rtrack-6` | R3c RE-FOUNDED: the ledger transports, and the first `FoldInv` | sunfish-rtrack |
-| `2026-08-22-qol-6` | the DEFAULT GATE SET now announces itself: the ES lane's migration finding, made loud | qol |
-| `2026-08-22-architecture-6` | SoftFloat LAYER 3 — TRANSFER, commissioned by core itself | architecture |
-| `2026-08-22-sunfish-rtrack-5` | the lock hypothesis is CONFIRMED, and two numbers close two arguments | sunfish-rtrack |
-| `2026-08-22-qol-5` | `--classify` reachability: the Go lane's correction, and the measurement that widened it | qol |
-| `2026-08-22-lean-tier-5` | `TrProj` written PARAMETRICALLY, under explicit approval to take adjacent-to-in-flight work | lean-tier |
-| `2026-08-22-es-5` | SUBSTRATE ADOPTION ON HOLD: this lane's `Halt` is the RICHER shape, and importing Core now would DELETE the ruling | es |
-| `2026-08-22-architecture-5` | `#guard` IS NOT A KERNEL ORACLE — reproduced here, and it corrects this document | architecture |
-| `2026-08-22-sunfish-rtrack-4` | THE ROUND VOCABULARY IS SETTLED, and the lock incident has a mechanism | sunfish-rtrack |
-| `2026-08-22-qol-4` | `docs/law-index.md`: 315 laws, and every one is a POINTER | qol |
-| `2026-08-22-lean-tier-4` | the crux ruling CONFIRMED, and inch 2 blocked one level deeper: the model cannot say "constructor" | lean-tier |
-| `2026-08-22-es-4` | TWO CORRECTIONS ACCEPTED: `#guard` is NOT a kernel oracle, and the "no substitute" claim was wrong by ONE PROJECTION | es |
-| `2026-08-22-architecture-4` | THE `GenFrame` RULING EXECUTED — first measured instance, and two laws paid off together | architecture |
-| `2026-08-22-wasm-3` | INCH 1, STEP 2: **the pin does NOT build** — six errors, all in the hand-written proof file, and the model itself is FINE | wasm |
-| `2026-08-22-sunfish-rtrack-3` | TRANSPORT CLASSIFICATION for the re-founding | sunfish-rtrack |
-| `2026-08-22-qol-3` | `tools/diagnose.sh`: 22 failure signatures, each with the incident that minted it | qol |
-| `2026-08-22-lean-tier-3` | M3 inch 1 WITHDRAWN: the candidate first proof is blocked on a MISSING MODEL RULE, and my own M2 census recommended it | lean-tier |
-| `2026-08-22-es-3` | M2 INCH 4(a): reference records and the conversions, and the tier now has TWO verification strengths | es |
-| `2026-08-22-architecture-3` | NEW LAW — a verdict vocabulary that cannot express a legitimate state fails BOTH ways | architecture |
-| `2026-08-22-wasm-2` | INCH 1, STEP 1: the four branches are **ISABELLE**, none is merged, and they prove the **ENTIRE LADDER** — so the engagement is a PORT, not a discovery | wasm |
-| `2026-08-22-sunfish-rtrack-2` | PROPOSAL: one round vocabulary for both folds | sunfish-rtrack |
-| `2026-08-22-qol-2` | `docs/statement-cookbook.md`: 21 claim shapes, each with the incident that minted it | qol |
-| `2026-08-22-pycomplete-2` | the §9.4 DIVERGE/DIVERGED violation, closed | python-completeness |
-| `2026-08-22-lean-tier-2` | M2 OBLIGATION CENSUS: 24 sorries are 3 missing DEFINITIONS, and two of the three are already being written by strangers | lean-tier |
-| `2026-08-22-es-2` | `RefusalCause π` ADOPTED, both expected-empty gates PROVED — and the ladder was being read one layer up | es |
-| `2026-08-22-c-2` | INCH 4: the tier RUNS a function, and refusal moves to `Halt` on the §3.4 ruling | c |
-| `2026-08-22-architecture-2` | THE `GenFrame` RULING — what a SHARED type may do while the legacy layer erodes | architecture |
-| `2026-08-22-ada-2` | M2's DESIGN: the substrate instantiated, and Ada needs a REFUSAL CAUSE the substrate does not have | ada |
-| `2026-08-22-wasm-1` | THE SORRY CENSUS: the number that carried the ruling was **5, not 13**, and the whole ledger is ONE corner of the metatheory | wasm |
-| `2026-08-22-sv-1` | THE DETERMINISM CLAIM IS CORRECTED: the Lean was right, the PROSE overclaimed, and determinism turns out to be relative to the trace | sv |
-| `2026-08-22-sunfish-rtrack-1` | THE `pst` LOCALITY LEMMA and the SEARCHED ROUND, rebuilt after a purge | sunfish-rtrack |
-| `2026-08-22-softfloat-1` | M1: the two censuses, the layer-2 design, and inch 1 | softfloat |
-| `2026-08-22-research-1` | the proof-framework survey, and the two best findings were in our own toolchain | research |
-| `2026-08-22-qol-1` | `tools/triad.sh --classify`: the triad now sizes itself to the diff, and SAYS WHAT ITS GREEN COVERS | qol |
-| `2026-08-22-pyrebuild-1` | THE ACCEPTANCE GATE PASSES | pyrebuild |
-| `2026-08-22-pycomplete-1` | RUNG 3b: the eight consumers that could never meet the hazard their refusal cited | python-completeness |
-| `2026-08-22-lean-tier-1` | §9.1 audited against this lane's six instruments; the one real defect was found twice, and the audit lane landed first | lean-tier |
-| `2026-08-22-go-1` | RUNG 1'S SCOPE IS DERIVED: coverage is CONJUNCTIVE, and the charter's "21" was wrong (formerly `§G1`) | go |
-| `2026-08-22-es-1` | M2 INCH 3: environments, `[[Call]]`, `[[Construct]]` and `this` — and the spec CORRECTED this lane about `[[ThisBindingStatus]]` | es |
-| `2026-08-22-c-1` | §L83's TRIAD CLOSES GREEN, the standing strategy is adopted by touch, and inch 4 opens with fuel | c |
-| `2026-08-22-basecase-1` | F3c INCH 2: the STAND-PAT ROUND, and a third loss to `/private/tmp` | basecase |
-| `2026-08-22-audit-1` | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
-| `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
-| `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
-| `SPEC` | the completion metric (standing; updated every landing) | go |
-| `SPEC` | the completion metric (standing; updated every landing) | analog |
-| `SPEC` | the completion metric (standing; updated every landing) | ada |
-| `INBOUND` | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
-| `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
-| `INBOUND` | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
-| `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
-| `INBOUND` | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
-| `INBOUND` | `2026-08-22-softfloat-2` (C lane's to triage) | c |
-| `G9` | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
-| `G8` | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
-| `G7` | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
-| `G6` | INCH 3: the model reproduces a REAL crypto function, 35 rows, and the expected column was generated (2026-08-23) | go |
-| `G5` | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
-| `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
-| `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
-| `G23` | MULTI-VALUE RETURNS: Go has no tuple values, and the reach is +0 again (2026-08-24) | go |
-| `G22` | RUNG E1: the mechanism works, and it is worth +0 files (2026-08-23) | go |
-| `G21` | THE EXTRACTOR TIER, chartered: authorized on a figure that is 2.5× too big, and sized on the one that is not (2026-08-23) | go |
-| `G20` | FIXED ARRAYS: the value model that needed no new constructor, and the frontier stops being a construct (2026-08-23) | go |
-| `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
-| `G19` | RANGE IS NOT A SECOND LOOP; and the census retracts the `+0` law (2026-08-23) | go |
-| `G18` | THE SLICE RUNG: a header, not a list, and the row a copy model cannot state (2026-08-23) | go |
-| `G17` | THE SLICE RUNG'S ACCEPTANCE PICK: the discriminator lives in the CALL (2026-08-23) | go |
-| `G16` | THE RE-RANK: the walker has doubled its reach, and the next rung is ONE family (2026-08-23) | go |
-| `G15` | RUNG 4: a Go string is BYTES, and a conversion is its own node (2026-08-23) | go |
-| `G14` | THE ARRAY RUNG IS NOT THE ARRAY RUNG: the tables are STRINGS, and a live mis-bucketing fell out (2026-08-23) | go |
-| `G13` | THE EXEMPLAR IS COMPLETE: the FUNCTION is correct, proved (2026-08-23) | go |
-| `G12` | THE LOOP INDUCTION CLOSES: `len = l + bitLenSpec v`, proved (2026-08-23) | go |
-| `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
-| `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
+| id | class | title | lane |
+| --- | --- | --- | --- |
+| `2026-08-24-architecture-65` |  | The run is correct and the certificate is correct are different claims | architecture |
+| `2026-08-24-architecture-64` |  | A refusal honest about the model and false about the world | architecture |
+| `2026-08-24-architecture-63` |  | Duration is a corroborator, not the witness | architecture |
+| `2026-08-24-architecture-62` |  | The ruling met reality within the hour, and reality had four corrections | architecture |
+| `2026-08-24-architecture-61` |  | A declared divergence is a debt, not a verdict | architecture |
+| `2026-08-24-architecture-60` |  | The merge fixes what is false; only the owner sees what is now redundant | architecture |
+| `2026-08-24-architecture-59` |  | Re-pointing a guard is not monotone tightening | architecture |
+| `2026-08-24-architecture-58` |  | The guard built to pin the tree points at the index | architecture |
+| `2026-08-24-architecture-57` |  | Completeness is counted per orientation; and a pin move declared in advance | architecture |
+| `2026-08-24-architecture-56` |  | The guard is inside the thing it cannot see; and a count in prose without its unit | architecture |
+| `2026-08-24-architecture-55` |  | A verdict certifies a tree, never a title | architecture |
+| `2026-08-24-architecture-54` |  | When the ambient verdict is constant, every bit is in the pin | architecture |
+| `2026-08-24-architecture-53` |  | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |
+| `2026-08-24-architecture-52` |  | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
+| `2026-08-24-qol-51` |  | the id goes first, INBOUND becomes a title prefix | qol |
+| `2026-08-24-qol-50` |  | nothing checked whether a ticket's base had ever been green | qol |
+| `2026-08-24-qol-49` |  | the merge left the model describing a guard that no longer exists | qol |
+| `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
+| `2026-08-24-softfloat-14` |  | THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology | softfloat |
+| `2026-08-24-sunfish-rtrack-12` |  | RUNG 1: the flagship is TYPED, and it assembles | sunfish-rtrack |
+| `2026-08-24-sunfish-rtrack-11` |  | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
+| `2026-08-24-wasm-8` |  | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
+| `2026-08-24-wasm-7` |  | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
+| `2026-08-24-ada-3` |  | INCH 2 LANDS: `W` and ARM 5.1-5.3, and the census caught a trap that reads as a semantics bug | ada |
+| `2026-08-24-ada-2` |  | INCH 2's CENSUS: 58 ARM paragraphs, 4.05% of the corpus's nodes, and a reach of ZERO said before the rung starts | ada |
+| `2026-08-24-analog-1` |  | CENSUS-FIRST: non-vacuity is a chain of two links, and the tier closed only the inner one | analog |
+| `2026-08-24-ada-1` |  | CORE ADOPTION LANDS: the two-channel mapping, and the ticket's own tenure had gone green over a tree that did not contain it | ada |
+| `2026-08-23-architecture-51` |  | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
+| `2026-08-23-architecture-50` |  | The goal is COMPLETION, and a milestone is a waypoint | architecture |
+| `2026-08-23-architecture-49` |  | A full build is its own root; and 27 green rows that could not see the call site | architecture |
+| `2026-08-23-architecture-48` |  | A witness must fail for the reason it names; and INAPPLICABLE is not OPTIONAL | architecture |
+| `2026-08-23-qol-47` |  | increment greens, phase 1: a green may rest on a named green | qol |
+| `2026-08-23-architecture-47` |  | The shape set had a fourth member; and duplication is discovered by changing | architecture |
+| `2026-08-23-qol-46` |  | the floor grows a gate, and a tenure says what it could have been | qol |
+| `2026-08-23-architecture-46` |  | A guard that always fires; a procedure is not a gate; and WAITING names its trigger | architecture |
+| `2026-08-23-qol-45` |  | the shape set's fourth member, and a log that says whose it is | qol |
+| `2026-08-23-architecture-45` |  | A list is maintained by the attention that wrote the defect; and a new reader under-reads | architecture |
+| `2026-08-23-qol-44` |  | a flag written last spun forever, in eleven tools | qol |
+| `2026-08-23-architecture-44` |  | The quirk that blocks direct reuse can fund the crossing | architecture |
+| `2026-08-23-qol-43` |  | arming a byte-comparing gate arms the pins it does not have | qol |
+| `2026-08-23-architecture-43` |  | Wrong by answering; and a predicted cost inherits its construct's unit error | architecture |
+| `2026-08-23-qol-42` |  | the SV round-trip gate joins CI, and qol-40's orphan was half instrument | qol |
+| `2026-08-23-architecture-42` |  | My own +0 law, retracted by measurement; and a missing lemma is a missing import | architecture |
+| `2026-08-23-qol-41` |  | two tools that disagreed, and stamps that read the wrong repo | qol |
+| `2026-08-23-architecture-41` |  | The discriminator lives in the call; and the row a wrong model cannot state | architecture |
+| `2026-08-23-qol-40` |  | `laws.sh --gate-set`: §5.4b made checkable, and `.sv` has no gate | qol |
+| `2026-08-23-architecture-40` |  | The census partially orders the rungs; the conjunctive law is now family law | architecture |
+| `2026-08-23-qol-39` |  | laws.sh was SPAWN-BOUND, so its runtime was other lanes' load | qol |
+| `2026-08-23-architecture-39` |  | Take the acceptance case that can fail; a performance symptom is a modelling question; and a proved spec adjudicates its siblings | architecture |
+| `2026-08-23-qol-38` |  | the marker gate I owed, a self-citation I created, and recovery by content | qol |
+| `2026-08-23-architecture-38` |  | A mis-bucketed refusal is mis-scheduled; a parser's kinds are the parser's; and the census that refutes a published plan | architecture |
+| `2026-08-23-qol-37` |  | CI's build is gated by host, and this clone is seeded at last | qol |
+| `2026-08-23-architecture-37` |  | The first vendored function-level theorem outside Python; and a proof demotes only the rows about the relation it proved | architecture |
+| `2026-08-23-qol-36` |  | INCIDENT: a self-test that ran CI, 26 deep, on a cold clone | qol |
+| `2026-08-23-architecture-36` |  | Never touch the scrutinee; the blocker ladder is complete; and a boundary drawn after a proof is drawn by the proof | architecture |
+| `2026-08-23-qol-35` |  | audit MEDIUM 9-10: a checker with a floor, and a CI that can fail | qol |
+| `2026-08-23-architecture-35` |  | A census that names a language when it measured one of its tiers; and a gate that caught its author | architecture |
+| `2026-08-23-qol-34` |  | audit MEDIUM 11 and LOW 12: a ledger that can fail, and a map that reads the tree | qol |
+| `2026-08-23-architecture-34` |  | Ask what the run type IS before pricing the seam; and a named blocker is a next step | architecture |
+| `2026-08-23-qol-33` |  | audit HIGH 4-5: a regex awk rejected outright, and a guard that failed open | qol |
+| `2026-08-23-architecture-33` |  | A stepper RECOVERS its walker; and arming a gate arms the pins it does not have | architecture |
+| `2026-08-23-qol-32` |  | audit HIGHs 1-3 and MEDIUMs 7-8: the matchers learn what a comment is | qol |
+| `2026-08-23-architecture-32` |  | The enumeration's first finding was about the enumerator | architecture |
+| `2026-08-23-qol-31` |  | the vendored-fixture convention, and a prose mention that still cost the whole library | qol |
+| `2026-08-23-architecture-31` |  | A false blanket claim hides the real gap; and cite by name, not by offset | architecture |
+| `2026-08-23-qol-30` |  | correction: the build log was never deleted, only unnamed | qol |
+| `2026-08-23-architecture-30` |  | Heartbeats over wall time; one execution, two projections; and a shared name is worth an import | architecture |
+| `2026-08-23-qol-29` |  | the merge driver configures itself, and a green build's axiom ledger survives | qol |
+| `2026-08-23-architecture-29` |  | An instrument optimization is proved by output equality; and §5.4b's first two catches | architecture |
+| `2026-08-23-qol-28` |  | `--axioms` dropped the last name, and the absence was silent | qol |
+| `2026-08-23-architecture-28` |  | The guard was never in those processes; and a correct refusal is not a mitigation | architecture |
+| `2026-08-23-architecture-28` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close | qol |
+| `2026-08-23-qol-27` |  | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
+| `2026-08-23-architecture-27` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close | qol |
+| `2026-08-23-architecture-27` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close | qol |
+| `2026-08-23-architecture-27` |  | A published number is a second artifact; a check that cannot fire; and an instrument that selected itself | architecture |
+| `2026-08-23-qol-26` |  | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
+| `2026-08-23-architecture-26` |  | A transcription is a copy with a timestamp; and every gate was green while the file lied | architecture |
+| `2026-08-23-qol-25` |  | the attribution fix: the headline held, the DISPATCH was wrong | qol |
+| `2026-08-23-architecture-25` |  | The audit-response norm: the remedy for a provenance gap is provenance, never reconstruction | architecture |
+| `2026-08-23-qol-24` |  | gate DESIGNS for the two head homes, and one of the ten needs no gate at all | qol |
+| `2026-08-23-architecture-24` |  | This lane's three audit findings, fixed; and the laws predicted where the defects are | architecture |
+| `2026-08-23-qol-23` |  | the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern | qol |
+| `2026-08-23-architecture-23` |  | Data may carry the decision, not the scrutinee; and an audit has a third site | architecture |
+| `2026-08-23-qol-22` |  | sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce | qol |
+| `2026-08-23-architecture-22` |  | A transcribed expectation is a third implementation; and a census that could have overturned the plan | architecture |
+| `2026-08-23-qol-21` |  | `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE | qol |
+| `2026-08-23-lean-tier-21` |  | THE 28th OBLIGATION: the byte-level round-trip rests on a hole in Lean core, and it is stamped OUT OF SCOPE | lean-tier |
+| `2026-08-23-architecture-21` |  | The versioning exemplar is REALIZED; a falling split is correct; and deferrals need a double guard | architecture |
+| `2026-08-23-qol-20` |  | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
+| `2026-08-23-lean-tier-20` |  | the guard-pinned-to-our-branch defect RECURRED in the newest instrument, and is now fixed at the root | lean-tier |
+| `2026-08-23-architecture-20` |  | Six congruence shapes; the walker's real cause was transparency; and a correction inherited its error's scope | architecture |
+| `2026-08-23-qol-19` |  | a run is not a measurement until it has been read | qol |
+| `2026-08-23-lean-tier-19` |  | PURE CORE LANDED: the round-trip property is now statable, and behaviour identity is EVIDENCED by upstream's own 22 golden tests | lean-tier |
+| `2026-08-23-architecture-19` |  | Probes must refuse on absence; the congruence set has five shapes; and row 1 fired on its author | architecture |
+| `2026-08-23-qol-18` |  | the tree must not move while you queue, and now it cannot silently | qol |
+| `2026-08-23-lean-tier-18` |  | arc 2 STOPPED BEFORE WRITING: the round-trip property is not STATABLE against the current code, and a pure core is a precondition | lean-tier |
+| `2026-08-23-architecture-18` |  | Price the TYPE not one constructor; a docstring that argues is a claim; cancelling a ticket is the right move | architecture |
+| `2026-08-23-qol-17` |  | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |
+| `2026-08-23-lean-tier-17` |  | EXPORT CORNER, arc 1: re-pinned, 27-obligation manifest landed, round-trip property and index invariant stated | lean-tier |
+| `2026-08-23-architecture-17` |  | Census-first applies to the LEMMA; and the retract framing earns a judgment | architecture |
+| `2026-08-23-qol-16` |  | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
+| `2026-08-23-pycomplete-16` |  | `del d[k]` LANDS as an ingestion rewrite, and the churn guard becomes REQUIRED | python-completeness |
+| `2026-08-23-lean-tier-16` |  | NEW CORNER CHARTERED: the export envelope. Three candidates eliminated by measurement, one stands | lean-tier |
+| `2026-08-23-architecture-16` |  | A generated model's relations are its own; the order lifts but the congruences don't | architecture |
+| `2026-08-23-qol-15` |  | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
+| `2026-08-23-pycomplete-15` |  | THE FLAGSHIP LADDER's CENSUS: `del d[k]` makes a refusal REQUIRED that was only inherited | python-completeness |
+| `2026-08-23-lean-tier-15` |  | WAITING begins, and the first act was fixing the guards that WAITING depends on | lean-tier |
+| `2026-08-23-architecture-15` |  | A6 covered half the hazard; and the gate line has THREE states | architecture |
+| `2026-08-23-qol-14` |  | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
+| `2026-08-23-pycomplete-14` |  | INCH 3c-i-c BUILT: `enumerate(d)` runs, and the census's price held exactly | python-completeness |
+| `2026-08-23-lean-tier-14` |  | CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING | lean-tier |
+| `2026-08-23-architecture-14` |  | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
+| `2026-08-23-softfloat-13` |  | PARSE INCH, STATEMENT-FIRST: `ofScientific`'s branches are NOT shape-uniform | softfloat |
+| `2026-08-23-qol-13` |  | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-pycomplete-13` |  | INCH 3c-i-c's CENSUS: `enumerate(d)` is a GENERATOR FRAME, so the Kont record is not touched at all | python-completeness |
+| `2026-08-23-lean-tier-13` |  | MILESTONE: 4 proved / 3 blocked, `weak'_inv` parked on an IMPORT CYCLE; and the arena re-measure moved a fact | lean-tier |
+| `2026-08-23-architecture-13` |  | The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface | architecture |
+| `2026-08-23-softfloat-12` |  | THE DECIMAL INCH'S CENSUS: 2 sites in tree, and the suite figure is a BOUND | softfloat |
+| `2026-08-23-pycomplete-12` |  | the audit's §python triage | python-completeness |
+| `2026-08-23-lean-tier-12` |  | `wf` GREEN and the hoisted `ProjSound` re-proved: 4 of 7; the remaining three are censused and none is ordinary work | lean-tier |
+| `2026-08-23-architecture-12` |  | A definition that COMPILED was unsound; Go's retirement resolves the re-derivations; Ada dates a predicted consumer | architecture |
+| `2026-08-23-softfloat-11` |  | THE PROBES WENT STALE IN SIX MINUTES, and correcting the text is not the fix | softfloat |
+| `2026-08-23-pycomplete-11` |  | 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named | python-completeness |
+| `2026-08-23-lean-tier-11` |  | `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition | lean-tier |
+| `2026-08-23-c-11` |  | INCH 5's OPEN PROBLEM IS CLOSED, and the ∀-order discharge could not have been attempted before it | c |
+| `2026-08-23-architecture-11` |  | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
+| `2026-08-23-sunfish-rtrack-10` |  | `GenEmits.forGenRound` on the rebuild: R2's chain step closes | sunfish-rtrack |
+| `2026-08-23-softfloat-10` |  | STEP 3 SCOPED: the consumer census found a SECOND consumer, and the algorithm choice follows from the SPEC's own wording | softfloat |
+| `2026-08-23-pycomplete-10` |  | 3c-i-b hits a STRUCTURAL wall, and the fix is an ingestion rewrite, not a call-site fusion | python-completeness |
+| `2026-08-23-lean-tier-10` |  | DECISION BRIEF for Thomas: PR #43 does NOT unblock `TrProj.uniq`, and consuming it buys nothing this lane needs | lean-tier |
+| `2026-08-23-c-10` |  | THE ADOPTION'S TENURE CAME BACK RED, and the one defect was sitting in its own diff's CONTEXT | c |
+| `2026-08-23-architecture-10` |  | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
+| `2026-08-23-sunfish-rtrack-9` |  | the leaf copies are DELETED, by touch, as contracted | sunfish-rtrack |
+| `2026-08-23-softfloat-9` |  | THE CONSUMER-SITE CENSUS: zero unrouted crossings remain, and the instrument corrected itself twice | softfloat |
+| `2026-08-23-pycomplete-9` |  | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |
+| `2026-08-23-lean-tier-9` |  | `TrProjP.instN` GREEN; and the quality audit found four real defects in this lane's instruments, one of which had published wrong citations | lean-tier |
+| `2026-08-23-c-9` |  | the audit's five rows, all FIXED; two were claims that had never been checked | c |
+| `2026-08-23-architecture-9` |  | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |
+| `2026-08-23-sunfish-rtrack-8` |  | R2's generator layer founded: the seam, and the drain | sunfish-rtrack |
+| `2026-08-23-sunfish-rtrack-8` |  | R2's generator layer founded: the seam, and the drain | sunfish-rtrack |
+| `2026-08-23-softfloat-8` |  | LAYER 3 LANDED, and it is a CLASS, not a tactic | softfloat |
+| `2026-08-23-pycomplete-8` |  | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
+| `2026-08-23-lean-tier-8` |  | `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost | lean-tier |
+| `2026-08-23-c-8` |  | CORE ADOPTED: the guard this lane wrote is now enforced for every tier | c |
+| `2026-08-23-architecture-8` |  | The Core payload LANDED: holds released, and the gate retired the conditional | architecture |
+| `2026-08-23-sunfish-rtrack-7` |  | `fuelMono` retires the `∀ G` premise: two hops meet at a max | sunfish-rtrack |
+| `2026-08-23-pycomplete-7` |  | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |
+| `2026-08-23-lean-tier-7` |  | `TrProjP.instL` GREEN, and the proof caught a soundness defect in my own definition | lean-tier |
+| `2026-08-23-c-7` |  | THE TERMINATION REPAIR IS **GREEN**, and it took three tenures to state one measure | c |
+| `2026-08-23-architecture-7` |  | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |
+| `2026-08-23-wasm-6` |  | **O1 IS PROVED**, and both split lemmas with it: the pinned expectation matched EXACTLY, plus O3's census | wasm |
+| `2026-08-23-pycomplete-6` |  | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
+| `2026-08-23-lean-tier-6` |  | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
+| `2026-08-23-c-6` |  | STMT-59 answered: **(a), with a named (b) subset already scheduled** | c |
+| `2026-08-23-architecture-6` |  | Three tiers re-derived one payload; DELETE has a precondition; and a correction to my own A14 guidance | architecture |
+| `2026-08-23-wasm-5` |  | §5.4b APPLIED TO THIS LANE: the "5 live obligations" claim had **no gate pointed at it**, and the compiler was the missing pointer | wasm |
+| `2026-08-23-pycomplete-5` |  | INCH 3a BUILT: the live dict cursor, on the monadic definition only | python-completeness |
+| `2026-08-23-es-5` |  | the audit's other two rows: a docstring that outlived its code, and a lint blind to legal Lean | es |
+| `2026-08-23-c-5` |  | **A GREEN BUILD IS NOT A TERMINATION ARGUMENT** | c |
+| `2026-08-23-architecture-5` |  | Re-founding needs a differ-on-purpose word; names asserting verdicts expire | architecture |
+| `2026-08-23-wasm-4` |  | THE PORT'S FIRST VERDICT: Mathlib's `Forall₂` is **not the model's `Forall₂`**, and the census's "no cost" conclusion needed the qualification | wasm |
+| `2026-08-23-sv-4` |  | LANDING B (4a-0): the SV tier joins the family substrate, and both adoptions are `rfl` | sv |
+| `2026-08-23-pyrebuild-4` |  | GREEN, and the spike's headline number is VOID | pyrebuild |
+| `2026-08-23-pycomplete-4` |  | THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES | python-completeness |
+| `2026-08-23-es-4` |  | the corpora are BACK, the ecma262 pin was RECOVERED not guessed, and `esmeta` was the QUIET half of the `rev()` defect | es |
+| `2026-08-23-c-4` |  | INCH 5 IS **RED**, and the diagnosis is the deliverable | c |
+| `2026-08-23-architecture-4` |  | QUALIFICATION: diff_test's blindness is in the AIMING, not the instrument; and the Core-payload hold releases conditionally | architecture |
+| `2026-08-23-sv-3` |  | LANDING A: the stepper enters the build, and the gate that armed a CI bomb validates its defusal | sv |
+| `2026-08-23-pyrebuild-3` |  | THE UNION FAILED, exactly where the full build was chosen to look | pyrebuild |
+| `2026-08-23-pycomplete-3` |  | INCH 3a's CENSUS: the capability is one arm on the new definition and ~35 on a SHARED datatype | python-completeness |
+| `2026-08-23-es-3` |  | the global object, and §16.1.7's `CreateGlobalVarBinding` | es |
+| `2026-08-23-c-3` |  | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |
+| `2026-08-23-architecture-3` |  | CAPABILITY-PARITY AUDIT: two refusals are not agreement, and diff_test is structurally blind | architecture |
+| `2026-08-23-sv-2` |  | THE STEPPER TENURE RAN AND CAME BACK RED ON ONE GOAL; the `Res` bind lemmas did their job | sv |
+| `2026-08-23-pyrebuild-2` |  | THE MERGE TO MASTER: one arm, 25 rows, and a dispatch discharged | pyrebuild |
+| `2026-08-23-es-2` |  | the Directive Prologue (§11.2.2), and non-strict `this` | es |
+| `2026-08-23-architecture-2` |  | BACKLOG V2 migration: this lane's entries were stranded in the frozen redirect | architecture |
+| `2026-08-23-ada-2` |  | TICKET: adopt Core's outcome layer (π = ArmRef, σ = Unit) | ada |
+| `2026-08-23-sv-1` |  | THE OWED FULL-TREE TRIAD IS DISCHARGED BY SOMEONE ELSE'S GREEN, and the number carries the state it was measured in | sv |
+| `2026-08-23-es-1` |  | the coercion/accessor cycle: move `ToPrimitive` and `[[Get]]`'s accessor walk into the evaluator's mutual block | es |
+| `2026-08-23-es-1` |  | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
+| `2026-08-23-architecture-1` |  | AMENDMENT 17 (DRAFT): proof iteration is a different shape, and five conditions I would tighten | architecture |
+| `2026-08-23-ada-1` |  | M2 INCH 1 IS GREEN, and the audit found a gate of mine that could not fail | ada |
+| `2026-08-23-es-0` |  | M2 INCH 5: statements, declaration instantiation, and function bodies — a Script RUNS, and Core's `Outcome` was adopted in the same touch | es |
+| `2026-08-22-architecture-14` |  | TWO FOLLOW-UPS RECORDED | architecture |
+| `2026-08-22-architecture-13` |  | CORRECTION — `Run` is a RETRACT of `SemM`, not an isomorphism (and this doc claimed the iso twice) | architecture |
+| `2026-08-22-qol-12` |  | `--foreign`: the tenure is about THE MACHINE, the gates are about the tree | qol |
+| `2026-08-22-architecture-12` |  | BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — as the STRONGER form | architecture |
+| `2026-08-22-qol-11` |  | §9.5 FINISHED: the monolith is frozen, the index is generated, and the id drifter is dated | qol |
+| `2026-08-22-architecture-11` |  | CORE'S `.except`-LAYER ALTERNATIVE IS CLOSED BY THE COVENANT (Go lane, third finding of the gap) | architecture |
+| `2026-08-22-qol-10` |  | the GATE PHASE was building the tree, and it defeated every narrowing | qol |
+| `2026-08-22-architecture-10` |  | §9.5 GAINS THE INBOUND CONVENTION AND THE ROUTING LAW | architecture |
+| `2026-08-22-qol-9` |  | AMENDMENT 16: the 3 GB chain cap was killing honest builds, and the guard was in its own kill set | qol |
+| `2026-08-22-architecture-9` |  | THE HELD mvcgen DEFECT RESOLVES — the ceiling stands, and the tier routes around it | architecture |
+| `2026-08-22-qol-8` |  | `tools/new-proof.sh` and `tools/analogues.sh`: the laws at the moment they are cheap | qol |
+| `2026-08-22-architecture-8` |  | THE DUAL LAW — an obstruction that is only ENCOUNTERED is not measured either | architecture |
+| `2026-08-22-qol-7` |  | `tools/check.sh`: rule 3's warm-clone amendment, CHECKED instead of guessed | qol |
+| `2026-08-22-architecture-7` |  | `Core.SemM` LANDED — the §3.8 trigger fired, and the reconciliation INVERTS | architecture |
+| `2026-08-22-sunfish-rtrack-6` |  | R3c RE-FOUNDED: the ledger transports, and the first `FoldInv` | sunfish-rtrack |
+| `2026-08-22-qol-6` |  | the DEFAULT GATE SET now announces itself: the ES lane's migration finding, made loud | qol |
+| `2026-08-22-architecture-6` |  | SoftFloat LAYER 3 — TRANSFER, commissioned by core itself | architecture |
+| `2026-08-22-sunfish-rtrack-5` |  | the lock hypothesis is CONFIRMED, and two numbers close two arguments | sunfish-rtrack |
+| `2026-08-22-qol-5` |  | `--classify` reachability: the Go lane's correction, and the measurement that widened it | qol |
+| `2026-08-22-lean-tier-5` |  | `TrProj` written PARAMETRICALLY, under explicit approval to take adjacent-to-in-flight work | lean-tier |
+| `2026-08-22-es-5` |  | SUBSTRATE ADOPTION ON HOLD: this lane's `Halt` is the RICHER shape, and importing Core now would DELETE the ruling | es |
+| `2026-08-22-architecture-5` |  | `#guard` IS NOT A KERNEL ORACLE — reproduced here, and it corrects this document | architecture |
+| `2026-08-22-sunfish-rtrack-4` |  | THE ROUND VOCABULARY IS SETTLED, and the lock incident has a mechanism | sunfish-rtrack |
+| `2026-08-22-qol-4` |  | `docs/law-index.md`: 315 laws, and every one is a POINTER | qol |
+| `2026-08-22-lean-tier-4` |  | the crux ruling CONFIRMED, and inch 2 blocked one level deeper: the model cannot say "constructor" | lean-tier |
+| `2026-08-22-es-4` |  | TWO CORRECTIONS ACCEPTED: `#guard` is NOT a kernel oracle, and the "no substitute" claim was wrong by ONE PROJECTION | es |
+| `2026-08-22-architecture-4` |  | THE `GenFrame` RULING EXECUTED — first measured instance, and two laws paid off together | architecture |
+| `2026-08-22-wasm-3` |  | INCH 1, STEP 2: **the pin does NOT build** — six errors, all in the hand-written proof file, and the model itself is FINE | wasm |
+| `2026-08-22-sunfish-rtrack-3` |  | TRANSPORT CLASSIFICATION for the re-founding | sunfish-rtrack |
+| `2026-08-22-qol-3` |  | `tools/diagnose.sh`: 22 failure signatures, each with the incident that minted it | qol |
+| `2026-08-22-lean-tier-3` |  | M3 inch 1 WITHDRAWN: the candidate first proof is blocked on a MISSING MODEL RULE, and my own M2 census recommended it | lean-tier |
+| `2026-08-22-es-3` |  | M2 INCH 4(a): reference records and the conversions, and the tier now has TWO verification strengths | es |
+| `2026-08-22-architecture-3` |  | NEW LAW — a verdict vocabulary that cannot express a legitimate state fails BOTH ways | architecture |
+| `2026-08-22-wasm-2` |  | INCH 1, STEP 1: the four branches are **ISABELLE**, none is merged, and they prove the **ENTIRE LADDER** — so the engagement is a PORT, not a discovery | wasm |
+| `2026-08-22-sunfish-rtrack-2` |  | PROPOSAL: one round vocabulary for both folds | sunfish-rtrack |
+| `2026-08-22-qol-2` |  | `docs/statement-cookbook.md`: 21 claim shapes, each with the incident that minted it | qol |
+| `2026-08-22-pycomplete-2` |  | the §9.4 DIVERGE/DIVERGED violation, closed | python-completeness |
+| `2026-08-22-lean-tier-2` |  | M2 OBLIGATION CENSUS: 24 sorries are 3 missing DEFINITIONS, and two of the three are already being written by strangers | lean-tier |
+| `2026-08-22-es-2` |  | `RefusalCause π` ADOPTED, both expected-empty gates PROVED — and the ladder was being read one layer up | es |
+| `2026-08-22-c-2` |  | INCH 4: the tier RUNS a function, and refusal moves to `Halt` on the §3.4 ruling | c |
+| `2026-08-22-architecture-2` |  | THE `GenFrame` RULING — what a SHARED type may do while the legacy layer erodes | architecture |
+| `2026-08-22-ada-2` |  | M2's DESIGN: the substrate instantiated, and Ada needs a REFUSAL CAUSE the substrate does not have | ada |
+| `2026-08-22-wasm-1` |  | THE SORRY CENSUS: the number that carried the ruling was **5, not 13**, and the whole ledger is ONE corner of the metatheory | wasm |
+| `2026-08-22-sv-1` |  | THE DETERMINISM CLAIM IS CORRECTED: the Lean was right, the PROSE overclaimed, and determinism turns out to be relative to the trace | sv |
+| `2026-08-22-sunfish-rtrack-1` |  | THE `pst` LOCALITY LEMMA and the SEARCHED ROUND, rebuilt after a purge | sunfish-rtrack |
+| `2026-08-22-softfloat-1` |  | M1: the two censuses, the layer-2 design, and inch 1 | softfloat |
+| `2026-08-22-research-1` |  | the proof-framework survey, and the two best findings were in our own toolchain | research |
+| `2026-08-22-qol-1` |  | `tools/triad.sh --classify`: the triad now sizes itself to the diff, and SAYS WHAT ITS GREEN COVERS | qol |
+| `2026-08-22-pyrebuild-1` |  | THE ACCEPTANCE GATE PASSES | pyrebuild |
+| `2026-08-22-pycomplete-1` |  | RUNG 3b: the eight consumers that could never meet the hazard their refusal cited | python-completeness |
+| `2026-08-22-lean-tier-1` |  | §9.1 audited against this lane's six instruments; the one real defect was found twice, and the audit lane landed first | lean-tier |
+| `2026-08-22-go-1` |  | RUNG 1'S SCOPE IS DERIVED: coverage is CONJUNCTIVE, and the charter's "21" was wrong (formerly `§G1`) | go |
+| `2026-08-22-es-1` |  | M2 INCH 3: environments, `[[Call]]`, `[[Construct]]` and `this` — and the spec CORRECTED this lane about `[[ThisBindingStatus]]` | es |
+| `2026-08-22-c-1` |  | §L83's TRIAD CLOSES GREEN, the standing strategy is adopted by touch, and inch 4 opens with fuel | c |
+| `2026-08-22-basecase-1` |  | F3c INCH 2: the STAND-PAT ROUND, and a third loss to `/private/tmp` | basecase |
+| `2026-08-22-audit-1` |  | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
+| `2026-08-22-architecture-1` |  | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
+| `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
+| `SPEC` |  | the completion metric (standing; updated every landing) | go |
+| `SPEC` |  | the completion metric (standing; updated every landing) | analog |
+| `SPEC` |  | the completion metric (standing; updated every landing) | ada |
+| `INBOUND` | INBOUND | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
+| `INBOUND` | INBOUND | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
+| `INBOUND` | INBOUND | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
+| `INBOUND` | INBOUND | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
+| `INBOUND` | INBOUND | `2026-08-22-softfloat-3` (SV lane's to triage) | sv |
+| `INBOUND` | INBOUND | `2026-08-22-softfloat-2` (C lane's to triage) | c |
+| `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
+| `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
+| `G7` |  | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
+| `G6` |  | INCH 3: the model reproduces a REAL crypto function, 35 rows, and the expected column was generated (2026-08-23) | go |
+| `G5` |  | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
+| `G4` |  | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
+| `G3` |  | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G23` |  | MULTI-VALUE RETURNS: Go has no tuple values, and the reach is +0 again (2026-08-24) | go |
+| `G22` |  | RUNG E1: the mechanism works, and it is worth +0 files (2026-08-23) | go |
+| `G21` |  | THE EXTRACTOR TIER, chartered: authorized on a figure that is 2.5× too big, and sized on the one that is not (2026-08-23) | go |
+| `G20` |  | FIXED ARRAYS: the value model that needed no new constructor, and the frontier stops being a construct (2026-08-23) | go |
+| `G2` |  | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
+| `G19` |  | RANGE IS NOT A SECOND LOOP; and the census retracts the `+0` law (2026-08-23) | go |
+| `G18` |  | THE SLICE RUNG: a header, not a list, and the row a copy model cannot state (2026-08-23) | go |
+| `G17` |  | THE SLICE RUNG'S ACCEPTANCE PICK: the discriminator lives in the CALL (2026-08-23) | go |
+| `G16` |  | THE RE-RANK: the walker has doubled its reach, and the next rung is ONE family (2026-08-23) | go |
+| `G15` |  | RUNG 4: a Go string is BYTES, and a conversion is its own node (2026-08-23) | go |
+| `G14` |  | THE ARRAY RUNG IS NOT THE ARRAY RUNG: the tables are STRINGS, and a live mis-bucketing fell out (2026-08-23) | go |
+| `G13` |  | THE EXEMPLAR IS COMPLETE: the FUNCTION is correct, proved (2026-08-23) | go |
+| `G12` |  | THE LOOP INDUCTION CLOSES: `len = l + bitLenSpec v`, proved (2026-08-23) | go |
+| `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
+| `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
 **31 heading(s) do not use the §9.5 id scheme** and sort last.

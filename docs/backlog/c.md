@@ -1835,3 +1835,127 @@ thing between this tier and a number: rungs A and B moved proof
 obligations, and inch 6's `lean_exe` batch runner is what creates the
 denominator — corpus fetched AT PIN by content hash, never vendored
 (`docs/c23-goal.md` §2, GPL).
+
+---
+
+## 2026-08-24-c-18 — INCH 6: the scoreboard is BUILT, and §9.0 stops being a promissory note
+
+Every landing in this lane so far moved a proof obligation. This one
+moves the standing number, because it builds the thing that creates the
+denominator: **`docs/c23-goal.md` §4.2 said "specced, not built" since
+M1, and it is now built.**
+
+### Three programs, not one, and the split is the spec's own
+
+§4.2 specced `harness/c_refusal_census.py` — one Python instrument. What
+landed is three, because the spec had three jobs in it and they belong to
+different machines:
+
+| job | landed as |
+| --- | --- |
+| fetch at a pin, verify by content, never vendor | `tools/c_corpus_fetch.py` |
+| run each test under fuel, ONE process for the batch | **`lake exe c-torture-run`** (`LeanModels/C/Torture.lean`) |
+| score, and enforce the reporting rules | `harness/c_torture_score.py` |
+| the three as one command | `tools/c_torture_gate.sh` |
+
+The runner had to be the Lean one. A Python driver would have to shell
+out per test, which is `docs/backlog.md`'s three-times-recorded lesson
+inverted — 615 rows went from hours to ~11 s when a batch got one process.
+
+### THE CORPUS IS NEVER IN THIS REPOSITORY, and the guard is EXECUTED
+
+`gcc.c-torture` is GPL-3.0-or-later. `docs/c23-goal.md` §2's ruling is
+*fetch at test time, pin by revision, vendor nothing*, and this is that
+ruling as code: the cache root is **refused if it resolves inside the
+tree**, checked on the RESOLVED path so a symlink or a `..` cannot walk
+back in. `--selftest` runs the refusal three ways, including through
+`docs/../harness`.
+
+> **A licence rule that lives in a paragraph is a rule the next lane has
+> to remember. Put it in the code that would break it, and check the
+> RESOLVED path — a textual comparison is defeated by exactly the input
+> that matters.**
+
+**THE PIN IS TWO HASHES, and they answer different questions.**
+
+| | what it answers |
+| --- | --- |
+| git blob sha1 | what GitHub says the file is AT THE REVISION — recomputed locally as `sha1("blob <len>\0" + bytes)`, so the check does not trust the transport |
+| sha256 | what the bytes ARE, recorded by us — a refetch matching it needs no network to be believed |
+
+> **A pin by revision is a claim about a server's history; a pin by
+> content is a claim about the bytes. Only the second survives the
+> server.**
+
+`docs/c-torture-pin.json` is 300 rows of name + two hashes + frontend
+status, 60 KB, and **contains no source** — a fingerprint is not the
+corpus. It is also what makes `--offline` real: the whole verification
+re-runs with no network and reproduces the same counts.
+
+### The fetch, measured — and a sample rule that was not one
+
+**300 files at pin `9e54d865`, 270 parsed, 30 rejected by the frontend.**
+
+The census recorded **246** parsed of 300 (`docs/c23-suite-census.json`,
+`gcc-torture-exec`). Both say "the first 300 by name" and they disagree
+by 24, because *"first 300 by name"* is not a sample rule until it says
+**first 300 of what**: this fetch takes the 995 `.c` files in the
+`execute/` directory itself, and `execute/` has subdirectories
+(`builtins/`, `ieee/`, `pr…`) that bring the corpus to the 1918 the goal
+doc's table quotes. Two different populations, one phrase.
+
+> **A sample rule has to name its POPULATION, not only its ordering.
+> "First N by name" is reproducible and still ambiguous, which is the
+> worst combination: it looks like a specification and two honest
+> instruments disagree under it.**
+
+The pin file settles it for this lane the only way that survives:
+**by listing the 300, with hashes.** A prose rule can be re-read
+differently; 300 sha256 lines cannot.
+
+### The reporting rules, both EXECUTED rather than described
+
+**The first failure is printed VERBATIM, in log order.** `--selftest`
+runs the trap: two failures with identical text, the later one
+alphabetically first. A sorted summary reports the wrong one; a
+deduplicated summary collapses them to one and reports whichever
+survived.
+
+> **`sort -u` over failures answers "which distinct failures exist"; a
+> reader after a red run asks "what went wrong first". The two coincide
+> only by luck, and a summary that silently answers the other question is
+> worse than no summary, because it looks like an answer.**
+
+**The zeroes are not the same zero.** `not-fetched`, `not-parsed`,
+`refused-unsupported`, `refused-libc`, `refused-ub` and `timeout` are six
+numbers, never one, because they are facts about six different
+subsystems — the fetch, the frontend, three different frontiers of the
+model, and the fuel bound.
+
+> **Pooling the absences makes a scoreboard unfalsifiable: it can no
+> longer tell "the model declined" from "nobody ran it", which is the
+> only distinction that says whether the next rung would move the
+> number.**
+
+The gate degrades along exactly that seam: on a machine with no corpus
+cache the offline pass marks all 300 `absent`, the driver reports
+`not-fetched 300`, and the number is `0/300` — a **different** zero from
+"the model refused 300", and the summary says which.
+
+### `scored = passed + failed`, and `failed` is a SCORE
+
+`docs/c23-goal.md` §1.2: torture's verdict style is *exit status —
+`abort()` on failure, fall off `main` on success*. So reaching `abort` is
+a RESULT, not a refusal to produce one: the program ran and its own check
+failed. The driver catches `abort` **by name** before the libc slice can
+turn it into an environment refusal, because pooling it with `refused`
+would hide the only failures this scoreboard can currently see.
+
+### Two instruments, one answer — one level up
+
+The Lean driver prints its own summary; `harness/c_torture_score.py`
+recomputes it from the per-test lines, in a different language. Agreement
+is evidence; a disagreement would be a defect in one of the two. Both
+carry `--selftest`, and the scorer's refuses an unknown verdict token
+rather than bucketing it.
+

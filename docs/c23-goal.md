@@ -283,12 +283,23 @@ build first; it does not price building them.
 * **Rung 3+** — the construct ladder above, each rung a census of what it
   unblocks before it is built.
 
-### 4.2 The scoreboard instrument — specced, not built
+### 4.2 The scoreboard instrument — **BUILT** (inch 6, `2026-08-24-c-18`)
 
-`harness/c_refusal_census.py`, the sibling of the Python lane's
-`harness/refusal_census.py`. **It is not built here**, because it has
-nothing to run until M2's interpreter skeleton exists, and an instrument
-with no subject is a stub. The spec:
+**LANDED, and not under the name this section guessed.** The spec below
+was written for `harness/c_refusal_census.py`, a Python sibling of the
+Python lane's census. What it became is three programs, because the spec
+had three jobs in it and they belong to different machines:
+
+| job | where it landed | why there |
+| --- | --- | --- |
+| fetch at a pin, verify by content, never vendor | `tools/c_corpus_fetch.py` | it is the only piece that touches the network, and the GPL guard has to be executed where the write happens |
+| run each test under fuel, one process for the batch | **`lake exe c-torture-run`** (`LeanModels/C/Torture.lean`) | the interpreter is in Lean; a Python runner would have to shell out per test, which is the "615 rows, hours to 11 s" lesson inverted |
+| score, and enforce the reporting rules | `harness/c_torture_score.py` | it re-derives the driver's own summary by a different program — two instruments, one answer |
+
+`tools/c_torture_gate.sh` is the three as one command.
+
+**The original spec is kept below verbatim**, because every clause of it
+is still binding and two were nearly lost in the split:
 
 * input: a corpus directory plus its oracle convention
   (`expected-stdout` | `exit-status`), and a pinned revision;
@@ -301,6 +312,30 @@ with no subject is a stub. The spec:
 * an unexecutable test emits a `runner-error` row rather than no row, so
   the count stays honest;
 * **no whitelist for silencing a mismatch** — the standing prohibition.
+
+**Two clauses the build had to add to, and they are now register rows.**
+
+*"One row per test in test order"* was not strong enough. The summary must
+**print the first failure VERBATIM, in log order** — not sorted, not
+deduplicated. `sort -u` over failures answers *"which distinct failures
+exist"*; a reader after a red run asks *"what went wrong first"*, and the
+two coincide only by luck. `--selftest` executes the trap: two failures
+with identical text, the later one alphabetically first.
+
+*"Exit non-zero on any DIVERGE, never on a REFUSE"* left every non-score
+looking alike. **The zeroes are not the same zero**, and the summary keeps
+four apart because they are facts about four different subsystems:
+
+| state | whose fact |
+| --- | --- |
+| `not-fetched` | the fetch |
+| `not-parsed` | the FRONTEND — clang rejected it under the pinned profile |
+| `refused-unsupported` / `refused-libc` / `refused-ub` | the tier's own frontier |
+| `timeout` | the fuel bound |
+
+Pooling them makes the scoreboard unfalsifiable: it can no longer tell
+*"the model declined"* from *"nobody ran it"* — which is the only
+distinction that says whether a rung would move the number.
 
 ### 4.3 The honest scale statement
 

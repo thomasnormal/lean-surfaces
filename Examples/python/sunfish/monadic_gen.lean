@@ -357,4 +357,86 @@ theorem GenEmitsM.forGenRound {m : Module} {target : Expr} {ad : Addr}
 #print axioms genSilent_forGenDone
 #print axioms GenEmitsM.forGenRound
 
+/-! ## §7 THE CHAIN — `forGenRound` iterated, and the induction is the CALLER'S
+
+`forGenRound` deliberately does not close the loop: an infinite inner generator
+has no remainder list to induct on. What closes it is a FINITE run, and supplying
+that finiteness is the caller's obligation. `ForGenRunM` is exactly that
+obligation made into an object — some number of rounds that keep, then an
+exhaustion — and `forGenChain` discharges the induction over it once, so no
+caller writes this induction again. -/
+
+/-- A whole `for x in <generator>` run as the caller sees it. Finite by
+construction. -/
+inductive ForGenRunM (m : Module) (target : Expr) (ad : Addr) (body : List Stmt) :
+    FrameState → List RVal → FrameState → Prop
+  | done {st st₁}
+      (hstep : ∀ F, toRun (inFrame ((kont m F).stepIter ad)) st = .ok st₁ Option.none) :
+      ForGenRunM m target ad body st [] st₁
+  | keep {st st₁ st₂ st₃ st₄ v ws ws'}
+      (hstep : ∀ F, toRun (inFrame ((kont m F).stepIter ad)) st = .ok st₁ (some v))
+      (hasg : toRun (assignM target v) st₁ = .ok st₂ ())
+      (hbody : GenEmitsM m st₂ [.block body] ws st₃)
+      (hrest : ForGenRunM m target ad body st₃ ws' st₄) :
+      ForGenRunM m target ad body st (ws ++ ws') st₄
+
+/-- **THE CHAIN.** The rounds compose into one `GenEmits` for the whole loop. -/
+theorem forGenChain {m : Module} {target : Expr} {ad : Addr} {body : List Stmt}
+    {st st' : FrameState} {ws : List RVal}
+    (h : ForGenRunM m target ad body st ws st') :
+    GenEmitsM m st [.forGen target ad body] ws st' := by
+  induction h with
+  | done hstep =>
+      exact GenEmitsM.silent
+        (pre := [GenFrame.forGen target ad body]) (pre₁ := [])
+        (fun k => by simpa using genSilent_forGenDone m target ad body _ _ k hstep)
+        GenEmitsM.nil
+  | keep hstep hasg hbody _ ih =>
+      exact GenEmitsM.forGenRound hstep hasg hbody ih
+
+/-! ## §8 `bound()`'s OWN fold — a DIFFERENT function, and the distinction matters
+
+Everything above concerns `execGenAt`'s `.forGen` FRAME: the ordering line, where
+a generator iterates another generator. `bound()`'s own loop —
+`for val, move in moves():` — is not that. `bound()` is not itself a generator,
+so its loop runs through `forGenAt`, the `execOpen` path, which returns an
+`RFlow` rather than a yield.
+
+The recipe is the same and the function is not, which is worth stating plainly:
+a lane that proved the frame arm and assumed the loop arm came with it would have
+a gap exactly where the fold lives. These two laws are the fold's interpreter
+half at its lowest altitude — one round, and exhaustion. -/
+
+/-- **ONE ROUND of `bound()`'s fold**: the generator yields, the target binds, the
+body falls through with `.next`, and the loop continues one fuel level down. -/
+theorem forGen_step (m : Module) (target : Expr) (ad : Addr) (body : List Stmt)
+    (st st₁ st₂ st₃ : FrameState) (v : RVal) (F : Nat)
+    (hstep : toRun (inFrame ((kont m F).stepIter ad)) st = .ok st₁ (some v))
+    (hasg : toRun (assignM target v) st₁ = .ok st₂ ())
+    (hbody : toRun (execOpenList (kont m F) m body) st₂ = .ok st₃ .next) :
+    toRun ((kont m (F + 1)).forGen target ad body) st
+      = toRun ((kont m F).forGen target ad body) st₃ := by
+  simp only [kont, forGenAt]
+  rw [toRun_bind, hstep]
+  dsimp only [Run.bind]
+  rw [toRun_bind, hasg]
+  dsimp only [Run.bind]
+  rw [toRun_bind, hbody]
+  rfl
+
+/-- …and EXHAUSTION: the loop falls through with `.next`. -/
+theorem forGen_done (m : Module) (target : Expr) (ad : Addr) (body : List Stmt)
+    (st st₁ : FrameState) (F : Nat)
+    (hstep : toRun (inFrame ((kont m F).stepIter ad)) st = .ok st₁ Option.none) :
+    toRun ((kont m (F + 1)).forGen target ad body) st = .ok st₁ .next := by
+  simp only [kont, forGenAt]
+  rw [toRun_bind, hstep]
+  dsimp only [Run.bind]
+  exact toRun_pure _ _
+
+#print axioms ForGenRunM
+#print axioms forGenChain
+#print axioms forGen_step
+#print axioms forGen_done
+
 end Examples.python.sunfish.monadic_gen

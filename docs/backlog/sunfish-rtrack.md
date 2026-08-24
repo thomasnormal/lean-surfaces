@@ -1181,3 +1181,43 @@ against a typed object rather than a remembered one.
 ### Status
 
 Verdict pending.
+
+## 2026-08-24-sunfish-rtrack-13 — RUNG 3 closes, and rung 5 gets its floor
+
+`monadic_gen.lean` §7–§8, four theorems. **§9.0: 4 / 9.**
+
+### Rung 3 — the caller's induction, discharged once
+
+`forGenRound` deliberately does not close the loop: an infinite inner generator
+has no remainder list to induct on, so finiteness is the CALLER's to supply.
+`ForGenRunM` turns that obligation into an object — rounds that keep, then an
+exhaustion — and `forGenChain` discharges the induction over it once, so no
+caller writes it again. Mechanical as forecast; proved first shot.
+
+### Rung 5's floor — and a distinction that would have bitten
+
+`bound()`'s own fold is **not** the same function as the ordering line's loop.
+Rungs 2–3 concern `execGenAt`'s `.forGen` FRAME: a generator iterating a
+generator. But `bound()` is not itself a generator, so its
+`for val, move in moves():` runs through `forGenAt` — the `execOpen` path, which
+returns an `RFlow` rather than a yield.
+
+`forGen_step` and `forGen_done` are that path's round and exhaustion laws. The
+recipe transferred unchanged (the fourth and fifth uses of `simp only [kont, …]`
+then alternating `rw [toRun_bind, …]` with `dsimp only [Run.bind]`, closing with
+`rfl`), but the FUNCTION is different, and that is the point worth recording: a
+lane that proved the frame arm and assumed the loop arm came with it would have
+a gap exactly where the fold lives. The two arms look alike in the source and
+are different constants in the tree.
+
+### What rung 5 still owes
+
+The round law is the lowest altitude. What is not yet built above it: the body's
+own gate per round (which classifies a round into `Round.report` or
+`Round.settle`), and the accumulator threading that turns a sequence of rounds
+into `FoldInv`. Both need statement gates from rung 6, so rung 5 and rung 6 are
+entangled and will advance together rather than in sequence.
+
+### Status
+
+Verdict pending.

@@ -6,7 +6,7 @@ rather than approached implicitly.** Per Thomas's scale recalibration
 document fixes the denominator so that "how far" has an answer that is a number
 and not a mood.
 
-**§9.0 number for this lane: `chain rungs closed / total`.** Today: **3 / 9.**
+**§9.0 number for this lane: `chain rungs closed / total`.** Today: **4 / 9.**
 
 ---
 
@@ -73,18 +73,26 @@ unsolved question in it.
 |---|------|-------|--------|
 | 1 | State `bound_refines_fuelModel` in Lean, and discharge its induction | R-track | **CLOSED** |
 | 2 | R2 ordering line, monadic — generator judgment layer | R-track | **CLOSED** |
-| 3 | R2 ordering line, monadic — the caller's chain induction | R-track | MECHANICAL |
+| 3 | R2 ordering line, monadic — the caller's chain induction | R-track | **CLOSED** |
 | 4 | R3 fold, spec side (`FoldInv` over `RoundOK`) | R-track | **CLOSED** |
-| 5 | R3 fold, interpreter half on the monadic fold | R-track | OPEN |
+| 5 | R3 fold, interpreter half on the monadic fold | R-track | OPEN (round law landed) |
 | 6 | The ~57 interpreter-facing statement gates of `bound()`, re-proved monadically | R-track | OPEN |
 | 7 | `RecursionStepW V` assembled | R-track | MECHANICAL after 3,5,6 |
 | 8 | Base case `BoundRefinesW V 0` | base-case lane | BLOCKED (their ledger) |
 | 9 | Three tier surfaces for real-play scope | pyc lane | BLOCKED (sequenced after 3c-i-c) |
 
-**Closed: 3 of 9** — rung 1 (`flagship.lean`: the theorem typed and its induction
-discharged), rung 2 (`GenEmitsM.forGenRound`, seventeen theorems in
-`monadic_gen.lean`) and rung 4 (`FoldInv`/`.step`/`.nil`/`.run` in
-`monadic_fold.lean`).
+**Closed: 4 of 9** — rung 1 (`flagship.lean`: the theorem typed and its induction
+discharged), rung 2 (`GenEmitsM.forGenRound`), rung 3 (`forGenChain`: the
+caller's induction discharged once, over `ForGenRunM`) and rung 4
+(`FoldInv`/`.step`/`.nil`/`.run` in `monadic_fold.lean`).
+
+**Rung 5 is the live one, and it has its floor.** `forGen_step` / `forGen_done`
+are the fold's interpreter half at its lowest altitude — one round and
+exhaustion. They are stated over `forGenAt`, NOT the `execGenAt` frame arm that
+rungs 2–3 use, because `bound()` is not itself a generator: its
+`for val, move in moves():` is a plain loop through `execOpen`. Same recipe,
+different function. A lane that proved the frame arm and assumed the loop arm
+came with it would have a gap exactly where the fold lives.
 
 Rung 1 cost one scratch elaboration. That is worth recording next to the number:
 the rung listed first, blocking the most triggers, and carrying the campaign's

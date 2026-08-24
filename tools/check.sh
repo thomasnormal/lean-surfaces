@@ -353,8 +353,13 @@ read_pressure() {               # -> "<pct-in-use> <instrument>"
   else mp="$(timeout 15 memory_pressure 2>/dev/null || true)"; fi
   free="$(printf '%s\n' "$mp" | awk '/System-wide memory free percentage/ {
             v = $NF; gsub(/[^0-9.]/, "", v); if (v != "") { print v; exit } }')"
+  # THE LABEL NAMES THE TRANSFORM, not only the source.  `memory_pressure:free%`
+  # labelled an IN-USE number with the name of its complement, and a reader
+  # quoting it read the free figure as the pressure — from this line's own
+  # output.  Naming the instrument was necessary and NOT SUFFICIENT: an
+  # unlabelled POLARITY is the same defect one turn of the screw down.
   if [ -n "$free" ]; then
-    awk -v f="$free" 'BEGIN{ printf "%.1f memory_pressure:free%%(macos)\n", 100 - f }'
+    awk -v f="$free" 'BEGIN{ printf "%.1f memory_pressure:100-free%%(macos)\n", 100 - f }'
     return 0
   fi
   # FALLBACK, still a pressure instrument: the kernel's own level.  Mapped onto
@@ -656,7 +661,12 @@ TOML
   # against the same 50% line the high-water reading was failing at 84.3%.
   mp="$(printf 'Pageins: 210948053\nPageouts: 1145554\n\nSystem-wide memory free percentage: 52%%\n')"
   check "macos: free%% becomes in-use"          "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print $1}')" "48.0"
-  check "  ...naming instrument AND platform"   "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print $2}')" "memory_pressure:free%(macos)"
+  check "  ...naming instrument AND platform"   "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print $2}')" "memory_pressure:100-free%(macos)"
+  # POLARITY, PINNED: 52% free is 48% in use, and the label must say which.
+  check "  ...and the label states the TRANSFORM" \
+        "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | grep -c '100-free')" "1"
+  check "  ...so the number is not the free%%"   \
+        "$(LS_MOCK_MEMPRESSURE="$mp" read_pressure | awk '{print ($1 == 52.0) ? "free" : "in-use"}')" "in-use"
   # THE REGRESSION THIS FIXES, as a row: the same box, both instruments.
   check "  ...and 48%% PERMITS where 84.3%% refused" \
         "$(LS_MOCK_PRESSURE="$(LS_MOCK_MEMPRESSURE="$mp" read_pressure)" machine_is_quiet)" ""
@@ -687,7 +697,7 @@ TOML
   # THE INSTRUMENT IS IN THE REFUSAL, because an unlabelled percentage is what
   # let a high-water mark pass for a pressure reading for a whole day.
   check "  ...and the reason NAMES its instrument" \
-        "$(LS_MOCK_PRESSURE="87.3 memory_pressure:free%(macos)" machine_is_quiet | grep -c 'per memory_pressure:free%(macos)')" "1"
+        "$(LS_MOCK_PRESSURE="87.3 memory_pressure:100-free%(macos)" machine_is_quiet | grep -c 'per memory_pressure:100-free%(macos)')" "1"
   # THE STOP LINE MUST PRINT WHAT IT JUST MEASURED.  `$(machine_is_quiet)` is
   # a SUBSHELL: the numbers it takes die with it, and the STOP line then shows
   # the numbers from the START of the run beside a fresh verdict.

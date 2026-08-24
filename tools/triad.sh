@@ -2167,6 +2167,19 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...classify-ONLY takes them as given" "$(gates_planned)" "python3 given.py"
   CLASSIFY="$saved_c"; CLASSIFY_ONLY="$saved_co"; GATES="$saved_g"; LANE_GATES="$saved_lg"
 
+  # ITEM 12: THE BARE REPORT, which is the Ada lane's most common invocation
+  # and the one no helper-level row could see.  The plan guard fired on the
+  # tool's OWN report mode and killed the banner it was about to print.
+  out="$(flagrun --classify-only --against HEAD)"
+  check "bare --classify-only is not refused"  "$(printf '%s' "$out" | grep -c 'EMPTY PLAN')" "0"
+  check "  ...and it PRINTS the classification" "$(printf '%s' "$out" | grep -c 'CLASSIFICATION:')" "1"
+  check "  ...showing the class floor it would run" "$(printf '%s' "$out" | grep -c 'the CLASS FLOOR for')" "1"
+  # ...while a spec the LANE typed is still checked, because a report DISPLAYS
+  # it — and the message is the lane's, not the tool's.
+  out="$(flagrun --classify-only --against HEAD --gates 'python3 -c "import json; d=1; print(d)"')"
+  check "a malformed --gates STILL refuses in a report" "$(printf '%s' "$out" | grep -c 'ONE COMMAND PER GATE')" "1"
+  check "  ...blaming the SPEC, not the tool"  "$(printf '%s' "$out" | grep -c 'EMPTY PLAN')" "0"
+
   # ITEM 10: `--build-target` was parsed and then RESET TO EMPTY before the
   # union read it, so the flag was a silent no-op across four tenures.  The
   # existing row exercises add_build_target directly and cannot see that.
@@ -2861,7 +2874,30 @@ if [ -n "$SINCE" ]; then
 fi
 # A GATE SPEC IS CODE, checked before a ticket exists: a fragmenting gate list
 # costs a whole tenure and produces a RED THAT LOOKS LIKE DILIGENCE.
-gate_reason="$(gate_spec_refusal "$(gates_planned)" plan)" && die "$gate_reason"
+#
+# TWO CHECKS, BECAUSE THERE ARE TWO THINGS TO CHECK AND ONLY ONE OF THEM
+# ALWAYS EXISTS:
+#
+#   * THE LANE'S OWN SPEC is whatever a lane typed, so it is validated
+#     whenever there is one — including in report mode, where the spec is
+#     DISPLAYED and a malformed one would be displayed wrong;
+#   * THE COMPOSED PLAN only means anything for a run that will RUN gates.
+#     `--classify-only` takes no tenure and runs none, so there is no plan to
+#     validate — and validating one anyway is how this guard came to refuse
+#     the tool's OWN REPORT MODE, with a message blaming the tool, on the
+#     Ada lane's most common invocation (2026-08-24).
+#
+# > A report has nothing to spend, so it has nothing to guard.
+#
+# The display was never the problem: the classify block sets GATES from the
+# class floor and prints it.  The guard was simply asking a question that has
+# no answer yet, at a point where the answer does not matter.
+if [ -n "$LANE_GATES" ]; then
+  gate_reason="$(gate_spec_refusal "$LANE_GATES")" && die "$gate_reason"
+fi
+if [ "$CLASSIFY_ONLY" = "0" ]; then
+  gate_reason="$(gate_spec_refusal "$(gates_planned)" plan)" && die "$gate_reason"
+fi
 stamp_version_guard      # a NEW ticket from a pre-rebase worktree is refused here
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"

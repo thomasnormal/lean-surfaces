@@ -4093,3 +4093,62 @@ next.** Anchor on ASCII, or anchor on position.
 `ci.sh --verify-guards` **43 ok** (39 → 43), backlog-index 62, triad 343,
 check 104, laws 45, docs_check 91/91. All three live gates green on this tree:
 headings 0, freshness 0, comment-forms 0. No Lean executed.
+
+## 2026-08-24-qol-57 — a report has nothing to spend, so it has nothing to guard
+
+Item 12, and the guard was mine twice over. `--classify-only` without
+`--gates` died with *"gates_planned returned an EMPTY PLAN (tool defect…)"* —
+a message I wrote to be helpful, firing on the tool's own report mode, killing
+the banner it was about to print, on the Ada lane's most common invocation.
+
+### The cut, and why it is neither option offered
+
+The brief offered two: plan the class floor for display, or bypass the guard
+with a report marker. Neither is quite it. **The display was never broken** —
+the classify block already sets `GATES` from the class floor and prints it,
+which is why `--classify-only --gates …` looked clean. The guard was asking a
+question that has no answer *yet*, at a point where the answer does not
+matter.
+
+So the guard is split by what actually exists at that moment:
+
+* **the lane's own spec** is whatever a lane typed, so it is validated
+  whenever there is one — **including in report mode**, where the spec is
+  DISPLAYED and a malformed one would be displayed wrong;
+* **the composed plan** only means anything for a run that will RUN gates.
+
+> **A report has nothing to spend, so it has nothing to guard.**
+
+Verified across all four shapes: bare report `rc=0` and prints its
+classification; report `--gates 'true'` clean; report with the ES-shaped
+malformed spec **still refuses**, and with the *lane's* message
+(`ONE COMMAND PER GATE`) rather than the tool's; real `--classify` tenure
+runs its gates. Two rows go through `flagrun` — the bare invocation itself,
+which is the only path that could have caught this.
+
+### And a polarity the label invited
+
+The coordinator misquoted `memory_pressure`'s FREE percentage as the pressure
+reading. Their prose, not my tool — `read_pressure` returns in-use and always
+did. **But the label was `memory_pressure:free%`, attached to a number that is
+its complement**, so the output invited the misreading from its own line.
+
+Naming the instrument was necessary and **not sufficient**: an unlabelled
+POLARITY is the same defect one turn of the screw down. The label now names
+the transform — `memory_pressure:100-free%(macos)` — and two rows pin it: the
+label states the transform, and 52% free must read as `in-use`, not `free`.
+
+Live, on this box, while writing it:
+
+```
+63.0 memory_pressure:100-free%(macos)     load 11.50, kern level 2
+```
+
+Which corroborates the coordinator's re-measurement (65–70% in use) and is a
+REAL refusal now: the box is genuinely busy, and the load line fires first.
+
+### Triad
+
+`check.sh` **106 ok** (104 → 106), `triad.sh` **348 ok** (343 → 348),
+backlog-index 62, laws 45, sites 57, `--verify-guards` 43, docs_check 91/91.
+Fixtures only; live queue untouched. No Lean executed.

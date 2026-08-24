@@ -6902,3 +6902,14 @@ row moves daily **the honest cell is the arc, not the endpoint**, and the stamp
 is a sha's job rather than a date's.
 
 Law rows: **MEAS-347…MEAS-354, OPS-92…OPS-94.**
+
+**Annotation (same day, this lane's own defect).** `c9272f0` pushed with a
+**stale `INDEX.md`**: after the rebase, the `merge=ours` driver kept origin's
+copy and dropped my regeneration, and my commit idiom **tested the wrong
+thing** — `backlog-index.sh --check` compares the generator's output against the
+**working file**, both of which were fresh, so it passed while the **committed**
+copy was one entry short. **The correct post-rebase test is
+`git diff --quiet docs/backlog/INDEX.md`, not `--check`.** *A check that
+compares a file to itself always passes* — the stuck-channel family's
+always-fires twin, landed today at §5.4b, met immediately in this lane's own
+process.

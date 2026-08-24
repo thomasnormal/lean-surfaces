@@ -439,4 +439,109 @@ theorem ais_empty_subs (s : store) (c : context) (t1s t2s : List valtype)
       exact rt_sub_app _ _ _ _ (rt_sub_refl _) inner
   exact main [] (mkFunctype t1s t2s) h t1s t2s rfl rfl
 
+/-- The FRAME rule for `instrtype_sub`: a frame may be pushed onto both sides
+    of the contextualised type. Isabelle counterpart: `instr_subtyping_frame_rule`.
+    Needed by O5's `Instrs_ok2_frame` case. -/
+theorem instrtype_sub_frame (ts : List valtype) (ft1 : functype) (a b : List valtype)
+    (h : instrtype_sub ft1 (mkFunctype a b)) :
+    instrtype_sub ft1 (mkFunctype (ts ++ a) (ts ++ b)) := by
+  obtain ⟨⟨p⟩, ⟨q⟩⟩ := ft1
+  obtain ⟨ri, ro, si, no, hx, hy, hio, hsi, hno⟩ := h
+  refine ⟨ts ++ ri, ts ++ ro, si, no, ?_, ?_, ?_, hsi, hno⟩
+  · rw [hx, List.append_assoc]
+  · rw [hy, List.append_assoc]
+  · exact rt_sub_app _ _ _ _ (rt_sub_refl ts) hio
+
+/-- **O5.** Single-instruction typing inversion for ADMINISTRATIVE instructions.
+
+    Isabelle counterpart: `instr2_inversion_helper`. The original Lean proof is
+    `typing_lemmas.lean:1682-1865` and is the file's LAST `sorry` (at `1865`,
+    the `Instrs_ok2_frame` case).
+
+    Every prerequisite is proved above: `instrtype_sub_refl` (O1),
+    `instrtype_sub_trans` (O3), `instr_subtyping_weaken2` (O2),
+    `instr_subtyping_strengthen2` (O4), `ais_empty_subs`, and the frame rule.
+
+    The three idioms this file established are all load-bearing here:
+    `Instrs_ok2.rec` with the sibling motives at `True` (the type is mutually
+    inductive), `rename_i` from the END (case binders arrive inaccessible), and
+    `clear` before inducting (or the outer hypothesis is swept into the motive
+    and every IH grows a spurious premise). -/
+theorem ais_single_typing_inversion (s : store) (c : context) (ai : admininstr)
+    (ts1 ts2 : List valtype)
+    (h : Instrs_ok2 s c [ai] (mkFunctype ts1 ts2)) :
+    ∃ p q, Instr_ok2 s c ai (mkFunctype p q)
+         ∧ instrtype_sub (mkFunctype p q) (mkFunctype ts1 ts2) := by
+  have main :
+      ∀ (l : List admininstr) (ft : functype),
+        Instrs_ok2 s c l ft →
+        ∀ (e : admininstr) (x y : List valtype),
+          [e] = l → (mkFunctype x y) = ft →
+          ∃ p q, Instr_ok2 s c e (mkFunctype p q)
+               ∧ instrtype_sub (mkFunctype p q) (mkFunctype x y) := by
+    clear h
+    intro l ft hh
+    induction hh
+      using Instrs_ok2.rec
+        (motive_1 := fun _ _ _ _ => True)
+        (motive_3 := fun _ _ _ _ => True)
+    all_goals try trivial
+    case empty =>
+      intro e x y hl _
+      exact absurd hl (by simp)
+    case instr =>
+      rename_i hinstr _ _ _ _
+      intro e x y hl heq
+      injection hl with he
+      subst he
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      exact ⟨_, _, hinstr, instrtype_sub_refl _⟩
+    case seq =>
+      rename_i hd1 hd2 _ _ _ _ ih1 ih2
+      intro e x y hl heq
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      rcases List.append_eq_singleton_iff.mp hl.symm with ⟨e1, e2⟩ | ⟨e1, e2⟩
+      · -- l1 = [], l2 = [e] : the empty prefix contributes a `subs<` on the domain
+        subst e1
+        obtain ⟨p, q, hp, hq⟩ := ih2 e _ _ e2.symm rfl
+        exact ⟨p, q, hp,
+          instr_subtyping_strengthen2 _ _ _ _ _ hq (ais_empty_subs s _ _ _ hd1)⟩
+      · -- l1 = [e], l2 = [] : the empty suffix contributes a `subs<` on the range
+        subst e2
+        obtain ⟨p, q, hp, hq⟩ := ih1 e _ _ e1.symm rfl
+        exact ⟨p, q, hp,
+          instr_subtyping_weaken2 _ _ _ _ _ hq (ais_empty_subs s _ _ _ hd2)⟩
+    case sub =>
+      rename_i hsub1 hsub2 _ _ _ ih
+      intro e x y hl heq
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      obtain ⟨p, q, hp, hq⟩ := ih e _ _ hl rfl
+      have s1 : _ subs< _ := hsub1
+      have s2 : _ subs< _ := hsub2
+      exact ⟨p, q, hp,
+        instr_subtyping_weaken2 _ _ _ _ _ (instr_subtyping_strengthen2 _ _ _ _ _ hq s1) s2⟩
+    case Instrs_ok2_frame =>
+      rename_i ih
+      intro e x y hl heq
+      unfold mkFunctype at heq
+      injection heq with h1 h2
+      injection h1 with h1
+      injection h2 with h2
+      subst h1; subst h2
+      obtain ⟨p, q, hp, hq⟩ := ih e _ _ hl rfl
+      exact ⟨p, q, hp, instrtype_sub_frame _ _ _ _ hq⟩
+  exact main [ai] (mkFunctype ts1 ts2) h ai ts1 ts2 rfl rfl
+
 end SubtypingPort

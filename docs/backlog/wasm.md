@@ -974,3 +974,91 @@ outside `LeanModels` and the `Examples.+` glob, and appends to this file. No
 gate in this repository can reach the vendored file. `docs_check` passes;
 `tools/backlog-index.sh` re-run per §9.5. The Lean execution was in the
 **fork's** tree, under a ticket.
+
+---
+
+## 2026-08-24-wasm-10 — **O5 PROVED: THE LEDGER CLOSES AT 5/5.** Every obligation on the soundness path is discharged in Lean
+
+**LEDGER (§9.0): 5 of 5.** O1 `instrtype_sub_refl`, O2 `instr_subtyping_weaken2`,
+O3 `instrtype_sub_trans`, O4 `instr_subtyping_strengthen2`, and
+**O5 `ais_single_typing_inversion`** — the 183-line induction that was
+`typing_lemmas.lean`'s last `sorry`.
+
+`[14:07:23] LOCK ACQUIRED after 0s as 'wasm 13943'` → `build exit=1` →
+`[14:09:46] GATES NOT RUN (aborted triad)` → `[14:09:47] LOCK RELEASED (mine)`.
+
+**PIN COMPARISON — MATCH on all four rows:**
+
+| pinned | measured |
+| --- | --- |
+| `SubtypingPort` **GREEN** | `✔ [3001/3003] Built SubtypingPort (124s)` |
+| its errors **0** | **0** (and **0 warnings**) |
+| failing modules **1** | **1** (`typing_lemmas`) |
+| `typing_lemmas` errors **6** | **6**, at 371, 380, 537, 1035, 1113, 1865 |
+
+**PIN: UNCHANGED.** The pre-agreed 6 → 4 stays a recorded non-event —
+`typing_lemmas.lean` is untouched, 371/380 stand as known-broken, the broken
+original routed around rather than through. Elaboration time moved 12s → 124s,
+which is O5's induction and is the only number that shifted.
+
+### What closed the last rung
+
+Two probe rounds, ~20s each — no wasted tenure. Round 1 found three faults,
+all of the kinds this file had already catalogued:
+
+* `rename_i hinstr _ _ _` was **one short** (the `instr` constructor carries a
+  trailing `True` IH from the sibling motive, so the count from the end is 5);
+* `List.cons_eq_nil_iff` does not exist under this toolchain — replaced with
+  **`List.append_eq_singleton_iff`**, which is the lemma the original uses at
+  `typing_lemmas.lean:1729` for exactly this split;
+* the `seq` case needed the *first* derivation, not just the IHs — `rename_i
+  hd1 hd2 _ _ _ _ ih1 ih2`, eight from the end.
+
+Round 2: **RC=0.** The case structure mirrors the original's: `empty` absurd,
+`instr` by O1, `seq` split by `append_eq_singleton_iff` into the two
+one-empty-side branches (the empty side contributing a `subs<` through
+`ais_empty_subs`, composed with **O4** on the domain branch and **O2** on the
+range branch), `sub` by O4-then-O2, and `Instrs_ok2_frame` — **the case the
+original left `sorry` at 1865** — by a small `instrtype_sub_frame` helper
+proved here (Isabelle counterpart: `instr_subtyping_frame_rule`).
+
+**Every one of the five prerequisites was consumed**, which is the census
+paying out exactly as written: O1 in `instr`, O2 and O4 in `seq` and `sub`,
+`ais_empty_subs` in both `seq` branches, and the frame rule in the case that
+had no proof at all. Nothing censused went unused, and nothing unforeseen was
+needed.
+
+### The instrument closed a loop on its own author
+
+`grep` reported **1 `sorry`** in the finished file and Lean reported **no
+diagnostic** — a contradiction that would once have needed a careful read.
+`harness/wasm_sorry_census.py` resolved it in one call: **`0 live / 1 raw, 1
+commented out`**. The token sits inside this lane's own docstring, in prose
+describing the original's last `sorry`. The comment-aware scanner built in
+`2026-08-22-wasm-1` to correct a 13-that-was-5 was, on its last use, checking
+its own author's file for the same mistake — and the raw-versus-live split it
+was built to report is exactly what settled it.
+
+### Status of the engagement
+
+All five obligations are proved against the SpecTec-generated `wasm2.0` model,
+**0 `sorry`, 0 warnings, no `native_decide`**, 18 declarations / 547 lines.
+Fork clone **`caa96f1ed`**, local only, **not pushed upstream** — upstream
+engagement remains Thomas's decision, now with a complete artifact to offer
+rather than a plan.
+
+**What this does NOT claim.** These are the five obligations *this lane
+censused in `typing_lemmas.lean`* — the subtyping corner and its one inversion
+lemma. It is **not** type soundness for Wasm 2.0: progress and preservation
+are not touched, and `docs/wasm-charter.md` §8.2's gap statement stands
+unchanged. What closed is the ladder this lane set out to climb.
+
+**Also in this commit:** the INBOUND heading re-spelled to sender-id-first per
+the `qol.md` exemplar.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** Updates one vendored `.lean`
+outside `LeanModels` and the `Examples.+` glob, and appends to this file.
+`docs_check` passes; `tools/backlog-index.sh` re-run per §9.5. The Lean
+execution was in the **fork's** tree, under a ticket.

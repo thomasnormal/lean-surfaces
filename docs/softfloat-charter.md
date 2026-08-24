@@ -246,13 +246,13 @@ used and satisfied by core layer 1 · **inch N** = scheduled at a named rung ·
 
 | capability | ES | SV | C | Wasm | Python | Go | Ada |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| add / sub / mul | live (L1) | R1-exit | R4, oracle-gated | M2+ (101× `f64.add`) | — | — | deferred |
+| add / sub / mul | live (L1) | — (SV: divider only) | R4, oracle-gated | M2+ (101× `f64.add`) | — | — | deferred |
 | **div** | live (L1) | **FLAGSHIP, R1-exit** | R4 | M2+ (51× `f64.div`) | grammar row, refused today | — | deferred |
 | **sqrt** | — | **R1-exit, same RTL module** | R4 | M2+ (19× `f32.sqrt`) | — | — | deferred |
 | fma | — | — | plan step 4 | absent from the suite vocab | — | — | — |
-| six comparisons | live (L1) | R1-exit | design says v0; **model refuses** | M2+ | — | — | deferred |
-| int → float | live (L1) | R1-exit | R4; refused today, 13 corpus sites | M2+ | — | — | deferred |
-| **float → int truncation** | **BLOCKING** | R1-exit | R4 | M2+ | — | — | deferred |
+| six comparisons | live (L1) | — (SV: divider only) | design says v0; **model refuses** | M2+ | — | — | deferred |
+| int → float | live (L1) | — (SV: divider only) | R4; refused today, 13 corpus sites | M2+ | — | — | deferred |
+| **float → int truncation** | **BLOCKING** | — (SV: divider only) | R4 | M2+ | — | — | deferred |
 | format ↔ format | not needed (one number type) | via `recFN` recoding | R4 | **M2+, and core's is `opaque`** | — | — | — |
 | decimal parse | partial, refuses outside the integer fragment | — | plan step 3 | 16 250× `f32.const` | — | — | — |
 | **decimal print (shortest round-trip)** | **BLOCKING** | — | **plan step 3 — 21% of c-testsuite's format specs** | pattern-compared | grammar row | — | — |
@@ -348,6 +348,15 @@ divider"* about a **resistive voltage divider**.
 **Correction to §3.5.3:** its SV row reads *"`real`, and the divider
 flagship"*. **No SV document asks for `real`**, and `LeanModels/Sv/` contains
 zero `Float`, zero `real`, zero `shortreal`. The SV need is the divider.
+
+**AND THE SV LANE HAS NOW ANSWERED, which upgrades this from an inference to a
+fact** (2026-08-24). They confirm they do **not** want `real`; the true need is
+**the divider** — this component's spec layer over `Rat`, against HardFloat's
+`divSqrtRecFN`. So the SV column narrows to `div` and `sqrt` (one RTL module),
+plus the `recFN` recoding at the boundary. **Every other SV cell in §2.0's
+table was this lane's own inference from "R1-exit" and is retired.** The
+estimate shrinks accordingly, which is the right direction: a consumer table
+built from inference over-prices the component, and SV was four rows of it.
 
 ### 2.3 C: the oracle half is genuinely gated; the model half is what this unblocks
 

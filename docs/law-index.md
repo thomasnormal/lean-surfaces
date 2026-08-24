@@ -377,6 +377,16 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-326 | a REPRICING owes a census exactly like the first pricing — one instance replaces the population with itself | `docs/family-architecture.md §5.4a` |
 | MEAS-327 | an INFERENCE-built consumer table prices a component against demand nobody expressed | `docs/family-architecture.md §5.4a` |
 | MEAS-328 | the probe-pays law does not require the probe to FIND something | `docs/family-architecture.md §5.4a` |
+| MEAS-329 | a RETIRED DIVERGENCE LEAVES A MATCH where it stood — witness out, witness back | `docs/family-architecture.md §5.0a` |
+| MEAS-330 | a new census whose first hit lands on the FRESHEST code is aimed correctly | `docs/family-architecture.md §5.0a` |
+| MEAS-331 | a STATE PARTITION written before the first run is a HYPOTHESIS — the seam is a property of the corpus | `docs/family-architecture.md §9.0` |
+| MEAS-332 | a scoreboard's first job is not to be HIGH — it is to say WHICH ONE THING to fix next | `docs/family-architecture.md §9.0` |
+| MEAS-333 | a zero-state partition carries a CONSERVATION CHECK — it must sum | `docs/family-architecture.md §9.0` |
+| MEAS-334 | a principled refusal that is the tier's DELIVERABLE is not a debt — it is part of what the number means | `docs/family-architecture.md §9.0` |
+| MEAS-335 | a pin by REVISION claims a server's history; a pin by CONTENT claims the bytes — recompute locally | `docs/family-architecture.md §5.4a` |
+| MEAS-336 | a sample rule names its POPULATION, not only its ordering — reproducible-and-ambiguous is the worst combination | `docs/family-architecture.md §5.4a` |
+| MEAS-337 | ONE SPEC, THREE PROGRAMS — a spec's unity is not its implementation's | `docs/family-architecture.md §5.0a` |
+| MEAS-338 | a cost judgement made under pressure is re-priceable after the fact — and a decision that PAID is the one nobody re-examines | `docs/family-architecture.md §7.1a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

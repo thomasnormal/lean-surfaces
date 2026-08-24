@@ -3806,6 +3806,25 @@ implementation**, and a lane that builds the ruled shape blind is **testing the
 ruling with its own inch.** *The register's job is to record which shapes have
 been built, not to make lanes prove designs.*
 
+**AND A SPEC'S UNITY IS NOT ITS IMPLEMENTATION'S** (C inch 6). §4.2's spec had
+**three jobs belonging to different machines** — a fetcher, a one-process Lean
+driver, and an independent re-scorer — and was **amended to BUILT with the
+original spec KEPT VERBATIM, because every clause still binds.**
+
+> **ONE SPEC, THREE PROGRAMS. A spec is a set of obligations; a program is a
+> deployment of them, and the two need not have the same shape.**
+
+**The disposition is the instructive half.** The alternative — rewriting the
+spec into three — would have **lost the fact that the clauses belong together**,
+and it is the kind of edit that looks like tidying: *the implementation has three
+pieces, so the spec should.* **Keeping it verbatim and marking it BUILT records
+both facts**: the obligations are one set, **and** they are discharged by three
+processes with different lifetimes and different machines.
+
+**This is the annotation norm applied to a specification** — *the spec was right
+as written; only its realization is plural* — and it protects the next reader
+from concluding that a clause is optional because no single program owns it.
+
 **AND AN ACCEPTANCE CLAUSE CAN BE REFUTED BY THE IMPLEMENTATION, WHICH IS PART
 OF THE ACCEPTANCE** (QoL item 6, merged `3c278ce`). The requested clause —
 *"an unquoted `;` must refuse"* — **would have refused the DEFAULT FLOOR
@@ -3840,6 +3859,46 @@ tier on day one**, with **`git diff --quiet` proof it changed nothing.**
 data at a fixed path, one shared checker), and this is what that design buys on
 its first day: **the cross-tier claim was demonstrated by an accident of merge
 order**, at no cost, against a tier the checker's author had not seen.
+
+**AND THE FULL ROUND TRIP HAS NOW RUN, END TO END** (pyc inch 4, merged
+`7129f2b`). The witness measured **DIVERGE** at inch 3 → moved **OUT of the
+census into the register** as `pyc-div-2` → the fix compiled and **the row's own
+guard began failing** → the row **retired on BEHAVIOUR** → **the witness returns
+to the census AS A MATCH.**
+
+> **A register that only ever grows is a LIST; this one SHRANK on a failing
+> guard.**
+
+> **A RETIRED DIVERGENCE LEAVES A MATCH WHERE IT STOOD.**
+
+**That receipt structure is the design's proof of life, and it is worth naming
+as a shape**: *witness out, witness back.* The row is not merely deleted — **the
+thing it displaced returns to the scoreboard**, so the census ends up **one MATCH
+richer than before the divergence was found.** A register whose closures left
+holes would be indistinguishable from a register whose rows were quietly
+dropped; **this one hands the evidence back.**
+
+**And the guard failing THE MOMENT THE FIX COMPILED is the paired-guard law
+paying out in the direction nobody designs for.** Both-ways gating was ruled to
+catch **a silently fixed** or **silently widened** divergence — *defects*. Here
+the same mechanism **detected the intended repair**, on the same day it was
+written, **with no separate step to notice it.** *A guard built to catch a
+regression announced a success, because the two are the same measurement read
+from opposite ends.*
+
+**AND A CENSUS WHOSE FIRST RUN CONVICTS THE LANE'S NEWEST LINE IS POINTED AT THE
+RIGHT THING.** The construction-site census's **first output flagged code written
+minutes earlier.**
+
+> **A new instrument's first hit landing on the freshest code is evidence about
+> the INSTRUMENT, not an accident of timing.**
+
+**The complement of *a new instrument's first finding is the one to re-run
+against the old input***: that guards against a tool inventing a dramatic
+finding; **this observes that a tool which immediately sees the thing nobody has
+had time to forget is aimed correctly.** *The newest line is the one whose truth
+the lane is most certain of — so a census that convicts it is being checked
+against the best-known facts available.*
 
 **§5.0a HAS ITS FIRST RETIREMENT, AND THE CONDITION CLOSED IT** (SV, batched
 tenure at head; `sv-div-2` retired). After the rewording, `still_divergent`
@@ -5442,6 +5501,33 @@ instrument copies it:
   different, and most encodings conflate them**, so the refusal has to be
   in the probe rather than in the reader. Hardening one probe and not its
   siblings leaves the quiet ones as the whole remaining exposure;
+* **A PIN BY REVISION IS A CLAIM ABOUT A SERVER'S HISTORY; A PIN BY CONTENT IS
+  A CLAIM ABOUT THE BYTES** (C inch 6, merged `add6ad9`) — **and only the second
+  survives the server.** The blob sha1 is **recomputed locally**, so the check
+  **does not trust the transport.**
+
+  > **A revision is a name somebody else can re-bind. A hash is the thing
+  > itself.**
+
+  **This is the generalization of the re-pinning rule below**, which said *the
+  hash is the anchor; a tag or a date is a hint.* The sharper form is that a
+  revision pin's failure mode is **not staleness but SUBSTITUTION** — the name
+  still resolves, the fetch still succeeds, and **nothing in the pipeline
+  notices** that the bytes changed. *Recomputing locally is what makes the pin a
+  measurement rather than a citation;*
+* **AND A SAMPLE RULE MUST NAME ITS POPULATION, NOT ONLY ITS ORDERING** (C inch
+  6). Two tools **both saying "first 300 by name" differed by 24**, because
+  `execute/` **has subdirectories.**
+
+  > **Reproducible and still ambiguous is the WORST combination** — each tool
+  > gives the same answer every time, and the two answers differ.
+
+  **The sibling of the sort-order law** (§5.4b): that one says *a sample whose
+  ORDER differs from its label's order is a different sample*; this says **the
+  same of its POPULATION**, and the two together are the whole of what "first N"
+  can hide. **Settled the only way that survives re-reading: by LISTING the 300
+  with hashes** — *when a rule cannot be stated unambiguously, the extension is
+  the statement;*
 * **RE-PINNING IS RECOVERY, NOT DERIVATION: find the commit that
   REPRODUCES THE RECORDED HASH.** ES's `ecma262` pin was recovered by
   taking the annotated tag `es2026-errata` → `d89c03f2` and confirming its
@@ -9517,6 +9603,12 @@ regime had removed the 15-second check.**
 
 > **COST STRUCTURE IS SET BY INSTRUMENTS, NOT BY DEFECTS.**
 
+**AND THE EVIDENCE IS NOW n=12, ACROSS THREE INCHES** (C inch 6): after the A17
+fix, **the last nine defects cost under two minutes of machine time TOTAL**,
+against **5 934 seconds for three** before it. *The law arrived with one
+measurement, was corroborated by a second from another tier, and now has a
+population.*
+
 **AND IT NOW HAS ITS BEFORE/AFTER NUMBERS — the day's closing exhibit** (crunga
 Rung A, merged). **Three defects cost 5 934 seconds of QUEUEING for 43 seconds
 of BUILDING.** After the pressure fix, **the next two cost 20 seconds TOTAL** —
@@ -9524,6 +9616,23 @@ including a **`have`-vs-`let`/`letFun` defect that no amount of reading would
 have produced.**
 
 > **The instrument was the whole difference.**
+
+**AND A LANE RE-PRICED ITS OWN PROCESS DECISION IN THE SAME REPORT THAT
+BENEFITED FROM IT** (pyc inch 4). A **70-minute queue for a 67-second compile
+probe**, judged *"the right trade"* in the moment and re-judged **"the wrong
+trade on a busy machine — and I took only one."**
+
+> **A cost judgement made under pressure is a hypothesis about the machine, and
+> it is re-priceable after the fact with information the decision did not
+> have.**
+
+**Worth a row because the incentive runs the other way.** The probe **worked** —
+the report exists because of it — and *a decision that paid is the one nobody
+re-examines.* **The lane separated "it produced the result" from "it was the
+right allocation"**, which are different claims about the same 70 minutes, and
+only the second is about the fleet. *And "I took only one" is the clause that
+makes the reversal actionable rather than remorseful: it bounds the damage and
+names the behaviour that would have compounded it.*
 
 **A 300:1 ratio between waiting and working, then a 300× collapse in the price
 of a defect** — same lane, same class of mistake, **no change in anyone's
@@ -10965,6 +11074,57 @@ through a filter chain instead of through a sentence.
 records **what each filter removed**, so a later lane can ask whether the filter
 was right; **"7 sites" records only that someone once believed seven.** *A
 residue is a claim about everything it excluded.*
+
+**AND A STATE PARTITION WRITTEN BEFORE THE FIRST RUN IS A HYPOTHESIS — the C
+tier's first number convicted the landing that named the rule** (C inch 6,
+merged `add6ad9`; **gcc.c-torture 24/300 scored, failed 0**). `not-parsed`
+reported **233** against a manifest saying **30**: **clang-refused and
+ingester-refused pooled under one token** — *in the landing that states the
+zero-states rule.*
+
+> **A state partition written before the first run is a HYPOTHESIS; the FIRST
+> RUN is what tests it.**
+
+> **The split is only as good as its FINEST REAL SEAM, and you do not know where
+> that seam is until the instrument runs.**
+
+**Author-blindness again, on the freshly written law** — and the useful part is
+that a partition **cannot** be validated by reading: every token in it looks
+distinct on the page. **The seam is a property of the corpus**, and the corpus is
+the one thing the partition's author has not yet consulted.
+
+**AND THE SPLIT PAID IMMEDIATELY**: **195 of 203 are ONE defect** (clang omits
+`col` for line-only locations), so **199 of 300 are gated on a single schema
+decision.**
+
+> **A SCOREBOARD'S FIRST JOB IS NOT TO BE HIGH — IT IS TO SAY WHICH ONE THING TO
+> FIX NEXT.**
+
+**Which is the answer to the question §9.0's completion framing keeps
+provoking**: a low number is not a problem to be managed, it is **a measurement
+whose value is its resolution.** *24/300 that names one schema decision is worth
+more than 200/300 that names nothing.*
+
+**AND THE EIGHT-WAY ZERO-STATE LINE SUMS TO 300.**
+
+> **Nothing unaccounted for is the property the split EXISTS to give — a
+> CONSERVATION CHECK is the scoreboard's own integrity gate.**
+
+**A partition that does not sum is not a partition**, and the check is free: it
+catches double-counting, dropped rows and silently-absorbed categories **in one
+arithmetic identity**, without knowing anything about what the categories mean.
+*Every zero-state vocabulary in this family should carry one.*
+
+**AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
+RATE.** **24 scored, 0 failed** —
+
+> **The tier does not get torture tests WRONG. It DECLINES them.**
+
+**And the 3 UB refusals NEVER retire, because THEY ARE THE PRODUCT.** *That is
+not a permanent debt* (§5.0a admits none) — **a refusal that is the tier's
+deliverable is not owed to anyone**, and the distinction is exactly the one the
+permanent-row ruling turns on: **a debt is something the number waits on; a
+principled refusal is part of what the number MEANS.**
 
 **AND A THIRD AXIS: A COVERAGE BOUND HAS A DIRECTION, AND MUST STATE IT**
 (analog census). Go's syntactic measure **OVER-counts** — an **upper** bound.

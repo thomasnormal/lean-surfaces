@@ -6628,3 +6628,101 @@ for is the wrong tool" has saved exactly the work it cost to run.*
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-316 … MEAS-328, STMT-130, OPS-90**.
+
+## 2026-08-24-architecture-78 — A retired divergence leaves a match where it stood
+
+Twelve dispatched from pyc inch 4 (merged `7129f2b`) and C inch 6 (merged
+`add6ad9` — **gcc.c-torture 24/300 scored, failed 0**). **Eleven landed; one was
+already in the register.**
+
+**NOT RE-LANDED**: the self-referential existence check (dispatch item 3) is the
+same finding landed yesterday as part of `-77` — it arrived again with its merge.
+*Recorded here so the count reconciles rather than looking like a dropped item.*
+
+**(1) §5.0a — THE FULL ROUND TRIP, END TO END.** Witness measured DIVERGE →
+moved out of the census into the register → the fix compiled and **the row's own
+guard began failing** → retired **on behaviour** → **the witness returns to the
+census as a MATCH.**
+
+> **A register that only ever grows is a LIST; this one SHRANK on a failing
+> guard.**
+> **A retired divergence leaves a MATCH where it stood.**
+
+**The receipt structure is the design's proof of life** — *witness out, witness
+back*: the census ends **one MATCH richer than before the divergence was
+found**, so a closure cannot be confused with a quiet deletion. **And the guard
+failing the moment the fix compiled is the paired-guard law paying out in the
+direction nobody designs for**: both-ways gating was ruled to catch a *silently
+fixed* or *silently widened* divergence — **defects** — and here the same
+mechanism **announced the intended repair**, because *a regression and a success
+are the same measurement read from opposite ends.*
+
+**(2)** And **a census whose first run convicts the lane's newest line is
+pointed at the right thing** — the complement of *a new instrument's first
+finding is the one to re-run*: that guards against a tool inventing drama;
+**this observes that a tool seeing what nobody has had time to forget is aimed
+correctly**, because *the newest line is the one whose truth the lane is most
+certain of.*
+
+**(5,6,9,10) §9.0 — THE C TIER'S FIRST NUMBER, AND ITS FIRST RUN CONVICTED THE
+LANDING OF ITS OWN LAW.** `not-parsed` 233 against a manifest saying 30 —
+clang-refused and ingester-refused **pooled under one token**, in the landing
+naming the zero-states rule.
+
+> **A state partition written before the first run is a HYPOTHESIS; the first
+> run tests it. The split is only as good as its finest real seam, and you do
+> not know where that seam is until the instrument runs.**
+
+**A partition cannot be validated by reading** — every token looks distinct on
+the page, and **the seam is a property of the corpus**, the one thing its author
+has not consulted. **The split paid immediately**: 195 of 203 are one defect,
+**199 of 300 gated on a single schema decision** —
+
+> **A scoreboard's first job is not to be HIGH; it is to say which ONE THING to
+> fix next.**
+
+*24/300 that names one schema decision is worth more than 200/300 that names
+nothing.* The **eight-way line SUMS TO 300** — **a partition that does not sum is
+not a partition**, and the check catches double-counting, dropped rows and
+absorbed categories **in one arithmetic identity**. And **the tier does not get
+torture tests wrong, it DECLINES them**: the 3 UB refusals never retire **because
+they are the product** — *not a permanent debt, because a principled refusal is
+part of what the number MEANS.*
+
+**(7,8) §5.4a — TWO ON PROVENANCE.** *A pin by REVISION is a claim about a
+server's history; a pin by CONTENT is a claim about the bytes* — and a revision
+pin's failure mode is **not staleness but SUBSTITUTION**: the name resolves, the
+fetch succeeds, **nothing notices.** Recomputing the blob sha1 locally is what
+makes it a measurement rather than a citation. And **a sample rule must name its
+POPULATION, not only its ordering** — two tools both saying *"first 300 by
+name"* differed by 24. **Reproducible and still ambiguous is the worst
+combination**, settled by **listing the 300 with hashes**: *when a rule cannot be
+stated unambiguously, the extension is the statement.*
+
+**(11) §5.0a — ONE SPEC, THREE PROGRAMS.** §4.2's spec was **amended to BUILT
+with the original kept verbatim, because every clause still binds.** *A spec is
+a set of obligations; a program is a deployment of them.* **Rewriting it into
+three would have lost the fact that the clauses belong together** — and it is
+the kind of edit that looks like tidying. The annotation norm applied to a
+specification: *the spec was right as written; only its realization is plural.*
+
+**(4,12) §7.1a — THE COST LAW'S POPULATION, AND AN HONEST REVERSAL.** Evidence
+is now **n=12 across three inches**: the last nine defects cost **under two
+minutes total** against **5 934 seconds for three** before the fix. And a lane
+**re-priced its own process decision in the same report that benefited from
+it** — a 70-minute queue for a 67-second probe, *"the right trade"* in the
+moment, **"the wrong trade on a busy machine, and I took only one."**
+
+**The incentive runs the other way**: the probe *worked*, and **a decision that
+paid is the one nobody re-examines.** The lane separated *"it produced the
+result"* from *"it was the right allocation"* — different claims about the same
+70 minutes, and **only the second is about the fleet.**
+
+**PENDING, deliberately not landed**: the span-col ruling
+(optional-with-stated-semantics, no fabricated zeroes, absence distinguishable,
+§9.0 motion predicted in advance) **is a design until its landing tests it** —
+*a ruled idiom with no instance is a design; an implemented precedent is a
+measurement.* It gets its row when the landing supplies one.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-329 … MEAS-338**.

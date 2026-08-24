@@ -223,7 +223,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-172 | a goal theorem nobody has TYPED is one nobody can typecheck against | `docs/family-architecture.md §9.0` |
 | MEAS-173 | a DECLINED alternative is recorded with the measurement that declined it | `docs/family-architecture.md §9.0` |
 | MEAS-174 | the NUMERATOR counts only what the family's definition ADMITS | `docs/family-architecture.md §9.0` |
-| MEAS-175 | a census that predicts its own gain TO THE UNIT is calibration evidence | `docs/family-architecture.md §9.0` |
+| MEAS-175 | a census that predicts its own gain TO THE UNIT is calibration evidence — **AMENDED**: only when PREDICTOR and SCORER are independent; a same-instrument match verifies TRANSCRIPTION, not truth | `docs/family-architecture.md §9.0` |
 | MEAS-176 | NAMED, NOT COUNTED — a live obligation kept out of the denominator until its premise is proved | `docs/family-architecture.md §9.0` |
 | MEAS-177 | a RE-FOUNDING's size is the count of statements that NAME the interpreter | `docs/family-architecture.md §5.4a` |
 | MEAS-178 | a SECTION CITATION is mechanically checkable — same class as the docs_check anchors | `docs/family-architecture.md §5.4b` |
@@ -297,6 +297,13 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-246 | conforming to one rule is when you are most likely to break its NEIGHBOUR | `docs/family-architecture.md §9.5a` |
 | MEAS-247 | a RECIPE transfers by reading; a FUNCTION is a constant — alike in the source, different in the tree | `docs/family-architecture.md §9.0` |
 | MEAS-248 | a standing block is a `###` SECTION, only landings are `##` ENTRIES — say the level or three lanes pick one | `docs/family-architecture.md §9.0` |
+| MEAS-249 | REGISTER SHAPE — per-tier DATA, one shared CHECKER, per-tier PROBE named in the row | `docs/family-architecture.md §5.0a` |
+| MEAS-250 | a divergence row names its KIND — `semantic` retires by remodelling, `provenance` by re-running | `docs/family-architecture.md §5.0a` |
+| MEAS-251 | REACHABILITY is part of a guard's definition — an unreachable refusal guards nothing | `docs/family-architecture.md §5.2` |
+| MEAS-252 | a DISPOSITION without its applied diff is aged like a divergence row | `docs/family-architecture.md §9.7` |
+| MEAS-253 | the RECIPIENT's measurement, not the sender's, closes an INBOUND row | `docs/family-architecture.md §9.5a` |
+| MEAS-254 | a diff between two censuses is only a number if both answered the SAME QUESTION | `docs/family-architecture.md §5.4` |
+| MEAS-255 | a registered UNASSERTED expectation is the falsifiable version of a TODO | `docs/family-architecture.md §5.6` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

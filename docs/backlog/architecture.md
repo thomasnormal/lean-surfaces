@@ -5488,3 +5488,129 @@ one.*
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-245 … MEAS-248**.
+
+## 2026-08-24-architecture-67 — The register's canonical shape, and an unreachable refusal guards nothing
+
+A ruling plus nine from three sources: ES (data-literal certified `6a51ecf`;
+`es-div-1` at `b312465`, **triad queued — not on master, so ruled from the design
+rather than the file**), SV (`d20b16d`, merged), Ada child-kinds (`43926b0`,
+merged).
+
+**THE RULING — §5.0a'S CANONICAL SHAPE, before a third tier picks a fourth.**
+
+**The two shapes were never competing.** ES's `docs/es-declared-divergences.json`
+and pyc's `harness/divergence_register.py` are **two halves of one design that
+arrived from opposite ends**, and the repository already has the pattern they
+belong to — §5.4's census contract: **shared-shaped INSTRUMENT, per-tier DATA at
+a fixed path.**
+
+> **DATA: per-tier, one schema — `docs/<lang>-declared-divergences.json`.**
+> **CHECKER: ONE shared script — `harness/divergence_register.py`.**
+> **PROBE: per-tier, and NAMED IN THE ROW.**
+
+**So neither lane rewrites** — which was the constraint, and it turned out not to
+cost anything. **What was diverging was not the design but the vocabulary for
+describing it.**
+
+**The line a third tier will need**: the checker asks questions **identical for
+every tier** (fields present, probe named, probe ran, still divergent, has not
+widened) and **MEAS-28 forbids implementing that six times**; the probe asks a
+question **only the tier can ask** — ES proves two named theorems, pyc guards a
+Lean frame stepper. *A shared probe would have to know every tier's semantics,
+which is the thing tiers exist to keep separate.*
+
+**And the schema gains two fields the implementations taught**: **GUARDS** (the
+two named both-direction guards — the run-not-read rule made **checkable**) and
+**KIND** (`semantic` | `provenance`). **`KIND` is not taxonomy for its own
+sake**: semantic says *the model is wrong* and retires by **remodelling**;
+provenance says *the CLAIM is unsupported* and retires by **re-running**. **Same
+register, same gating, completely different work.**
+
+**(1) §5.2 — AN UNREACHABLE REFUSAL GUARDS NOTHING**, and this is the sharpest
+correction available to §5.2's apparatus. ES's refusal for sloppy `this` **exists
+and is correct** — and is **unreachable**, because `instantiateFunction`
+hardcodes `[[ThisMode]] = strict`, so **sloppy code silently gets `undefined`
+where the language says `globalThis`.**
+
+> **Reachability is part of a guard's definition.**
+
+**The four causes describe what a refusal SAYS; none asks whether it can be
+REACHED.** A correct refusal on a dead path is **indistinguishable from a
+modelled behaviour** — the tier looks bounded, the scoreboard shows no refusal,
+**and the silence reads as coverage.** It inverts §5.0a's layering law: there a
+check is blind to its own **removal**; here to its own **unreachability** — and
+this is worse, because **deletion at least leaves a diff, while the code that
+strands a guard is somewhere else entirely.**
+
+**(2)** The row was **gated both ways on the first try**, two named theorems.
+*A requirement met on its first use was specified at the right level of detail.*
+
+**(3) §9.0 — THE CALIBRATION LAW IS AMENDED BY THE PREDICTING LANE ITSELF**,
+which deflated its own second exact match (`+1,249`): *both numbers come from the
+same vocabulary instrument.*
+
+> **An exact match is evidence about the PRICING INSTRUMENT only when PREDICTOR
+> and SCORER are INDEPENDENT. A same-instrument match verifies TRANSCRIPTION,
+> not truth.**
+
+**Both halves stand** — prediction is still the only way accuracy is
+established; what the original did not say is **what a match is evidence OF**.
+And **the deflation is the register-grade part**: *a calibration claim
+volunteered downward by the party it flatters is the only kind that needs no
+re-reading.*
+
+**(5) §9.7 — A DISPOSITION IS A DEBT TOO.** *"ACCEPTED, rewording"* was recorded
+and **never applied**, surviving **two green landings.**
+
+> **Recording an acceptance is not making the change, and nothing gates prose
+> against its own audit disposition.**
+
+**The three no-code closures are honest ways to close a row without a diff; this
+is a fourth state and not a closure at all** — a row closed *with* a promised
+diff that never arrived. **It reads as the strongest disposition** (the lane
+agreed, no argument) **and it is the only one with nothing downstream to check
+it.** Aged like a divergence row. *Agreement is the cheapest thing a lane can
+produce, so a process that accepts agreement as completion has made its most
+persuasive signal its least verified one.*
+
+**(6) §9.5a — THE PROTOCOL'S SUCCESS CASE.** An INBOUND was answered at triage by
+**independent re-measurement** — zero `Float`, zero `shortreal`, every `real` is
+prose — so **the sender's estimate row comes off.**
+
+> **The recipient's measurement, not the sender's, closes the row.**
+
+**This is what the sender-namespace rule is FOR**, easy to lose sight of while
+arguing about heading syntax: **the owner's job is not to triage the proposal's
+plausibility but to measure the thing it is about.**
+
+**(7) §5.2 — REFUSAL-AS-PENDING-MEASUREMENT CLOSED ITS CYCLE, with a stronger
+outcome than designed for.** The measurement **RE-AIMED THE RUNG**: the refused
+**16.3%** needs **composite values**, not wider target patterns — *widening would
+recognise `A(I) := X` and then have nothing to store into.*
+
+**The pending measurement did not fill a gap in the plan; it replaced the plan's
+next step.** *That is the difference between a measurement and a checklist item:
+a gap that gets filled confirms the plan's shape, while a gap that gets MEASURED
+can convict it.*
+
+**(8) §5.4 — `--compare` REFUSES TO SUBTRACT DOCUMENTS THAT ANSWER DIFFERENT
+QUESTIONS.** The envelope path deliberately lacks `target_resolution` **and says
+so in its own frontend field.**
+
+> **A diff between two censuses is only a number if both answered the same
+> question.**
+
+**The unit family enforced at the comparison OPERATOR** — every earlier member
+was a wrong unit discovered in a finished count, and **this is the first
+instrument that declines to produce the count at all.** Two documents with the
+same schema and different subjects **subtract cleanly and mean nothing.**
+
+**(9) §5.6 — A REGISTERED UNASSERTED EXPECTATION: the falsifiable version of a
+TODO.** All six `CallExpr` targets **should** resolve to indexed components —
+*and if one does not, that is the finding.* **A TODO says work is owed; this says
+what the world will look like if the work is right** — same cost to write, and
+**worth something even if nobody returns to it**, because the next lane inherits
+**a prediction to score** rather than a task to schedule.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-249 … MEAS-255**, and **MEAS-175 amended.**

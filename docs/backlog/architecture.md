@@ -7008,3 +7008,105 @@ alone.** *The first survival is luck until it repeats* — and the metric is fre
 at every refactor: **count what had to change.**
 
 Law rows: **MEAS-355…MEAS-364, STMT-131, OPS-95…OPS-99.**
+
+## 2026-08-24-architecture-82 — The subject of a verification is immutable to the verifier
+
+Nine from four sources: the Lean tier's 6/27 (fork `5414bb4`; name and level
+categories closed), pyc's coverage-lie finding (merged, QoL item 16 landed the
+fix), QoL items 15+16, and two filed against the coordinating role. **The first
+is a correction OF the coordinator and is the day's weightiest law; the last two
+put the coordinator's own machinery inside the audit scope it dispatches.**
+
+**(1) §5.3 — THE SHARPEST NON-VERDICT.** Both fixes the coordinator proposed for
+a matcher red **would have restructured the parser under proof.**
+
+> **A proof obligation that can only be discharged by rewriting its subject has
+> not been discharged.** / **The subject of a verification is IMMUTABLE to the
+> verifier; any fix that edits it changes the question.**
+
+Landed beside VACUOUS because both are **greens that are not about anything** — a
+vacuous theorem proves a contentless statement; a subject-edited theorem proves
+one about **a subject that exists because the proof needed it.** The Lean tier
+makes the cost legible (*the fork's standing rests on the divergence being
+exactly four edits, tripwired*); **where the subject is a vendored source or
+another lane's tree, the same purchase is available with no counter to move.**
+The guard is **a list of writable paths, not more care** — this lane proposed the
+edit twice.
+
+**(2) §7.1a — THE ROUTE-SELECTION LAW, sharpening the third-state finding.**
+**Where a def's matcher has no equations, SPECIALISE at the argument you care
+about**; reach for surgery only if the payload contains something that does not
+reduce. Stranded route needs **equations**; open route needs only **reduction**,
+so it exists **exactly when the discriminant is string-free** — walls 1-2's
+taxonomy predicting which route is available. *A matcher with no equations is not
+a wall; it is a general statement asking to be asked a specific question.*
+
+**(3) §7.1a — A SPINE CLAIM GRADUATED FROM DESIGN TO MEASUREMENT AT n=6.** Four
+monad rules reused **verbatim** across four new pairs. *Reuse across cases chosen
+by the author describes the author; reuse across cases chosen by the corpus is a
+property of the rules.*
+
+**(4) §5.4 — A STATEMENT REFUTABLE FROM THE LOG IT IS PRINTED IN** (1 056 axiom
+lines above *"NO Lean was elaborated"*). **The classification drove the coverage
+sentence while the gate list drove the work, and the two were never reconciled.**
+And the safe direction hid it:
+
+> **Claims-less errors accumulate. A wrong statement that costs its reader
+> nothing is one nobody will report.**
+
+*Counterpart to the false-positive asymmetry: an over-firing gate is reported
+within the hour; an under-claiming report is reported by no one.* QoL's fix has
+two halves and needs both — **the sentence derives from what RAN**, and the
+classification-time sentence is **labelled a PROJECTION.**
+
+**(5) §5.4 — THE LYING FIXTURE.** QoL's lakefile **declared no `lean_exe`**, so
+the runner-naming row passed and failed for the wrong reason. **The vacuity
+family inside a fixture** — worse than a vacuous theorem, because a fixture's
+verdict is a colour and records nothing about which world it was green about.
+*Make the fixture FAIL first.*
+
+**(6) §7.2 — IDENTITY, NOT ANCESTRY, WITH THREE STATES.** *Matches nothing =
+local work, never behind* — **a bare differs-from-master refuses every lane
+editing the tool, starting with the one maintaining the guard.** And the guard
+states **its own limit in the code**: *a superseded copy predates the thing that
+would refuse it; this closes every skew that begins AFTER it lands.* **Every
+guard has that boundary and almost none say so** — written where the guard lives,
+it stays attached to the green a reader will quote.
+
+**(7) §5.4 — A REFUSAL'S REMEDY IS PART OF THE REFUSAL.**
+
+> **A refusal naming a fix that doesn't work is worse than no refusal.**
+> **Execute the remedy before shipping it.**
+
+*A wrong accusation is disproved by reading; a wrong remedy is disproved by
+running it, which costs a tenure.* The missing thing is not effort — it is
+**treating the error string as an artifact that can be wrong.**
+
+**(8) §7.2 — RULED: THE COORDINATOR'S MERGE MACHINERY IS IN THE GATE-AUDIT
+SCOPE** (against me). The fallback's **`git add -A` staged conflicted files as
+resolved**, leaking markers to master twice (`sv.md`, then `qol.md` for hours).
+**The second leak is the finding**: it was caught only because a marker scan had
+been added after the first — *the recipe's own instance of "the clause the gate
+lacks is exactly the incident it will not catch."* Standing: **the all-docs
+marker scan runs after EVERY coordinator merge**, not only after a reported
+conflict. The role's tooling had been implicitly exempt on the ground that it is
+not a tier's instrument; **it writes to master, which is the only property the
+scope should ever have turned on.**
+
+**(9) §7.1a — THE STALE-RELAY PATTERN COMPLETES** (against me). *"Pressure
+~31%"*, then *"the queue is empty; the window is good"* — **both true when sent,
+both aged into falsehood in flight.** Worse than a stale number because **they
+read as PERMISSION**: a number invites re-measurement, a window invites
+proceeding. **Name the instrument, or say what to re-read.**
+
+**Annotation, same landing.** The standing scan **caught a THIRD leak on the
+day it was ruled** — `docs/backlog/qol.md`, live on master from `17d1f7b`, two
+entries' worth of content inside the markers with every gate green. **The owning
+lane resolved it upstream while this landing rebased**; both resolutions kept
+both sides in order and dropped nothing, and my commit reduced to a blank line
+before a `---` (which markdown would otherwise read as a setext heading).
+**Three instances makes it a
+MISSING GATE rather than a recipe defect**, which moves the fix from this role's
+habit into `docs_check` — routed to the tools lane, noted in §7.2.
+
+Law rows: **MEAS-365…MEAS-371, STMT-132…STMT-133, OPS-100…OPS-103.**

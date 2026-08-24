@@ -5178,6 +5178,40 @@ is an instrument-level ERROR, not a verdict — a scoreboard that reports it
 as MATCH is broken, and one that reports it as REFUSE is lying about
 coverage.
 
+**AND THE SHARPEST NON-VERDICT OF ALL, WHICH THIS LANE LEARNED BY BEING
+CORRECTED** (Lean tier, fork `5414bb4`; **6/27, name and level categories
+closed**). **Both fixes the coordinating role proposed for a matcher red would
+have RESTRUCTURED THE PARSER UNDER PROOF.**
+
+> **A PROOF OBLIGATION THAT CAN ONLY BE DISCHARGED BY REWRITING ITS SUBJECT HAS
+> NOT BEEN DISCHARGED.**
+
+**At full generality, and this register adopts it as a law rather than a Lean
+habit:**
+
+> **THE SUBJECT OF A VERIFICATION IS IMMUTABLE TO THE VERIFIER. Any fix that
+> edits it changes the QUESTION.**
+
+**The tier makes the cost legible in a way most do not**: the fork's entire
+standing rests on **the divergence being exactly four edits, tripwired**, so an
+edit to buy a proof is **visible as a number** — *"buying a proof by editing the
+artifact under proof is the one purchase this corner cannot make."* **Where the
+subject is a vendored source, a spec text, or another lane's tree, the same
+purchase is available and leaves no counter to move.**
+
+**And it belongs beside VACUOUS for one reason**: both are **greens that are not
+about anything.** A vacuous theorem proves a statement with no content; a
+subject-edited theorem proves a statement about **a subject that exists only
+because the proof needed it.** *The second is harder to see, because everything
+in it typechecks and the artifact is real* — **it is simply not the artifact the
+claim was about.**
+
+**The mechanical form is a diff, not a judgement.** A verification tenure should
+be able to state **which paths were writable and which were the subject**, and a
+subject touched during a proof is **a finding, not a step.** *This lane proposed
+the edit twice; the guard that would have caught it is a list of paths, not more
+care.*
+
 ### 5.4 One census-instrument pattern per tier
 
 `harness/c_construct_census.py` fixed the contract; every tier's
@@ -5952,6 +5986,25 @@ strictly more expensive than the check that should have prevented it.**
 draft** — the accused cases became the control fixtures. *A cross-lane gate ships
 with the cases it must NOT fire on, or it is an unfunded claim on other lanes'
 time.*
+
+**AND A REFUSAL'S REMEDY IS PART OF THE REFUSAL, WHICH THIS FAMILY HAD NOT SAID**
+(QoL item 15). The guard printed a fix; **the fix did not work.**
+
+> **A REFUSAL NAMING A FIX THAT DOESN'T WORK IS WORSE THAN NO REFUSAL.**
+
+**The cost lands exactly where the table above says it does** — on someone with
+no remedy — **except that here the lane has been told it HAS one**, so the
+expensive part is not the block but **the time spent trusting the instruction.**
+*A wrong accusation is disproved by reading the code; a wrong remedy is disproved
+by running it, which costs a tenure.*
+
+> **EXECUTE THE REMEDY BEFORE SHIPPING THE REFUSAL. A printed fix is a claim, and
+> the gate that prints it is the natural place to test it.**
+
+**This is *a check that exists and isn't run* pointed at the message rather than
+the check** — and it is cheaper to satisfy than it looks: the remedy is a command
+the author already ran while developing. *What is missing is not effort; it is
+the habit of treating the error string as an artifact that can be wrong.*
 
 
 
@@ -7921,6 +7974,22 @@ are indistinguishable in the pattern.
 
 > **A transform on nothing produces nothing, and reports success doing it.**
 
+**AND THE FAMILY GAINED ITS PUREST MEMBER: A FIXTURE MISSING THE DECLARATION THE
+FEATURE READS** (QoL, same tenure). The fixture's lakefile **declared no
+`lean_exe`**, so the runner-naming row **passed and failed for the wrong
+reason** — *the feature under test had nothing to read, and the row reported on
+its absence.*
+
+> **A FIXTURE MISSING THE DECLARATION THE FEATURE READS TESTS THE FEATURE'S
+> BEHAVIOUR ON AN EMPTY WORLD, and reports it under the feature's name.**
+
+**This is the vacuity family (§5.3) inside a fixture** — and it is worse than a
+vacuous theorem, because **a fixture's verdict is a colour rather than a
+statement**: nothing in a green row records which world it was green about.
+*The cheap standing check is the one the tier already applies to censuses:*
+**make the fixture FAIL first**, since a fixture that cannot be made to fail by
+breaking the feature is not testing the feature.
+
 **AND ITS COUNTERPART AT THE OTHER EXTREME: A TRANSFORM ON TOO MUCH, REPORTING
 SUCCESS JUST AS QUIETLY** (pyc, `fcb1463`). A **non-greedy regex bounded by a
 blank line** silently removed **TEN witnesses instead of one** — caught **only
@@ -8138,6 +8207,35 @@ marked **LOST** rather than two plausible reconstructions: *the remedy for a
 provenance gap is provenance, never reconstruction* (§5.4a). A register, a
 backlog entry and a census row are all dated records, and all three are worth
 less the moment they can be silently improved.
+
+**AND THE SAME SECTION'S RULES WERE BROKEN BY A SENTENCE REFUTABLE FROM THE LOG
+IT WAS PRINTED IN** (pyc, merged; QoL item 16 landed the fix). **1 056 axiom
+lines sat ABOVE the words "NO Lean was elaborated."**
+
+> **The CLASSIFICATION drove the coverage sentence while the GATE LIST drove the
+> work, and the two were never reconciled.**
+
+**Two derivations of one fact, diverging silently** — the defect this register
+keeps meeting as *the model always matches the code*, arriving in a place with no
+compiler to notice. **And the safe direction is what made it invisible**: the
+sentence understated, so nobody was harmed enough to file it.
+
+> **CLAIMS-LESS ERRORS ACCUMULATE. A wrong statement that costs its reader
+> nothing is a wrong statement nobody will report.**
+
+*This is the counterpart to the false-positive asymmetry below* — a gate that
+over-fires is reported within the hour by the lane it accuses; **a report that
+under-claims is reported by no one**, and the two failure modes therefore have
+completely different discovery times. **A number that can only be too low still
+needs an owner.**
+
+**The fix is the shape to copy, and it has two halves.** The sentence now
+**derives from WHAT RAN**, and the classification-time sentence is **LABELLED A
+PROJECTION** — *nothing has run at that point.* **Neither half alone would have
+worked**: deriving from the run leaves the early sentence lying, and labelling
+alone leaves two derivations in the tree. *Where a fact is stated at two times,
+the later statement is the measurement and the earlier one owes a word saying it
+is not.*
 
 Incident and dispositions: `docs/backlog/softfloat.md` `2026-08-23-softfloat-11`;
 this lane's landing, `docs/backlog/architecture.md` `2026-08-23-architecture-26`.
@@ -9047,6 +9145,40 @@ same defect class, two orders of magnitude** — arriving the day after crunga's
 measurements is this document's convergence standard, applied to the claim that
 instruments set cost rather than defects.*
 
+**AND THAT STANDARD HAS NOW BEEN MET BY A SPINE CLAIM, WHICH IS A DIFFERENT KIND
+OF THING TO MEASURE** (Lean tier, same fork). **Four monad rules were reused
+VERBATIM across four new pairs** — *the first evidence they are the corner's
+SPINE rather than a two-pair accident.*
+
+> **A SPINE CLAIM GRADUATES FROM DESIGN TO MEASUREMENT WHEN THE SAME RULES
+> DISCHARGE PAIRS THEY WERE NOT WRITTEN FOR.**
+
+**The design version of the claim is unfalsifiable and every lane makes it**: a
+set of lemmas *looks* like a spine at n=2, because two uses is what an author
+needs to notice a pattern. **At n=6, with four of the six not in view when the
+rules were written, the claim has a denominator.** *Reuse across cases chosen by
+the author is a description of the author; reuse across cases chosen by the
+corpus is a property of the rules.*
+
+**AND A ROUTE-SELECTION LAW FOR THE MATCHER FAMILY, which sharpens the
+third-state finding above** (same tier).
+
+> **WHERE A DEF'S MATCHER HAS NO EQUATIONS, SPECIALISE IT AT THE ARGUMENT YOU
+> CARE ABOUT — and reach for surgery on the subject only if the payload contains
+> something that does not reduce.**
+
+**The two routes need different things, and the taxonomy predicts which one
+exists.** The **stranded** route needs **equations** (`simp`/`rw`); the **open**
+route needs only **reduction** (`rfl` at a concrete argument) — **so the open
+route is available exactly when the discriminant is string-free**, which is what
+walls 1-2 already classify. *A lane holding that taxonomy does not have to
+discover the route; it can look it up.*
+
+**And the ordering is the part that matters, because it is the previous law's
+operational form**: **specialise first, and treat editing the subject as the
+LAST resort it is.** *A matcher with no equations is not a wall — it is a
+general statement asking to be asked a specific question.*
+
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
 
@@ -9893,6 +10025,25 @@ LADDER is under its lines"** — and a re-measurement that changes which line bi
 is **a result to record, not a retry to repeat.** *A deferral whose reason
 silently changes has become a habit.*
 
+**AND THE STALE-RELAY PATTERN IS NOW COMPLETE, WITH THE COORDINATING ROLE AS ITS
+REPEAT SOURCE.** *"Pressure ~31%"* was the first; *"the queue is empty, the
+window is good"* is the second. **Both were TRUE WHEN SENT and both aged into
+falsehood while in flight.**
+
+> **A COORDINATOR'S SITUATIONAL STATEMENTS NEED TIMESTAMPS OR INSTRUMENTS
+> ATTACHED, EXACTLY AS ANY NUMBER DOES.**
+
+**What makes them worse than a stale measurement is that they read as
+PERMISSION.** A number invites a lane to re-measure; *"the window is good"*
+invites it to proceed — **so the one class of relay most likely to be acted on
+without checking is the class this register had exempted**, on the unexamined
+ground that it is context rather than data.
+
+**The remedy is the one already ruled for numbers, applied to advice**: name the
+instrument (`the queue at 14:02`), or say what to re-read (`check the queue
+before you start`). *A relayed condition without a timestamp is a measurement
+whose stamp discipline was waived because it was phrased as a sentence.*
+
 **And the compliant behaviour is the row worth copying**: the lane **did not act
 on the relay.** It **re-measured with the landed instrument**, and the decision
 it then made was the opposite of the one the relay implied. *A number arriving
@@ -10288,6 +10439,31 @@ attributes the whole gap to the one phase it can see.
 > and start-to-finish are different costs with different owners, and only one of
 > them appears in the build log.**
 
+**AND THE TOOL-SKEW GUARD THAT CLOSES THE CONSUMER SIDE IS BUILT ON IDENTITY,
+NOT ANCESTRY, AND IT NEEDED THREE STATES TO BE USABLE** (QoL item 15).
+
+> **MATCHES NOTHING = LOCAL WORK, NEVER BEHIND.**
+
+**A bare *differs-from-master* would refuse every lane editing the tool, starting
+with the lane that maintains the guard** — the self-refuting shape this register
+has now met at three gates. *Two states force a guard to call every edit a
+defect; the third state is what lets a control coexist with the work that
+improves it.* **`matches master` / `matches an older master` / `matches nothing`
+are three different facts, and only the middle one is skew.**
+
+**AND THE GUARD STATES ITS OWN LIMIT IN THE CODE, WHICH IS THE PART TO COPY:**
+
+> **A superseded copy PREDATES the thing that would refuse it. This closes every
+> skew that begins AFTER it lands.**
+
+**Every guard has that boundary and almost none say so.** A control installed
+today cannot reach copies made yesterday — *the population it governs is defined
+by its own landing date* — and a reader who does not know that will read a green
+as *no skew* when it means **no skew among copies this guard has ever seen.**
+**Writing the limit where the guard lives, rather than in a landing note, is what
+keeps it attached to the artifact it qualifies**; a limit stated only in prose
+gets separated from its guard by the first person who quotes the green.
+
 **AND A GIT MECHANIC THAT DEFEATS THE OBVIOUS WAY OF STAMPING A LANDING** (Go
 E1, `4a9f9ec`).
 
@@ -10329,6 +10505,48 @@ would all be right.
 
 > **Never stash mid-merge. Take comparisons from
 > `git show <ref>:<path>`, which touches no state.**
+
+**AND THE COORDINATING ROLE'S OWN MERGE MACHINERY IS IN THE GATE-AUDIT SCOPE —
+RULED HERE, after two leaks that reached master** (`docs/backlog/sv.md`, then
+`docs/backlog/qol.md`, the second sitting on master for hours). The merge
+fallback's **`git add -A` staged CONFLICTED files as resolved**, committing
+`<<<<<<<` markers into the tree.
+
+> **A COORDINATOR'S MERGE RECIPE IS A TOOL. It gets the same gate audit as a
+> lane's instrument, and its output reaches master with fewer readers in the
+> way.**
+
+**The second leak is the finding, not the first.** It was caught **only because a
+marker scan had been added after the first** — *the recipe's own instance of the
+rule this register already carries*: **the clause the gate lacks is exactly the
+incident it will not catch.** *A fix that closes the case it was written for and
+adds no detector has bought one incident, not a class.*
+
+**Standing, and it applies to every merge this role performs:** run the
+**all-docs marker scan after each merge**, not only after a merge that reported a
+conflict. **The whole defect is that the resolution SUCCEEDED loudly** — `git
+add -A` returns zero, the commit lands, and the only witness is text in a file
+nobody re-opens.
+
+*And the scope ruling matters beyond this recipe.* **The coordinating role's
+tooling had been implicitly exempt from the audits it dispatches**, on the
+unstated ground that it is not a tier's instrument. It writes to master; that is
+the only property the audit scope should have ever turned on.
+
+**AND THE SCAN CAUGHT A THIRD LEAK ON THE RULING'S OWN LANDING** — `qol.md`
+again, **live on master**, from `17d1f7b`. *Two entries' worth of content sat
+inside `<<<<<<<` / `=======` / `>>>>>>>` while every gate in the tree stayed
+green*, because **no gate reads prose for markers.** **The owning lane resolved
+it upstream while this landing was in flight** — both resolutions kept both sides
+in order and dropped nothing, and **the duplicate work is itself the argument**:
+two roles found the same corruption by scanning, and neither could have been told
+by a gate.
+
+**Three instances is no longer a recipe defect; it is a MISSING GATE**, and the
+distinction decides who fixes it: a recipe defect is fixed by the role that owns
+the recipe, **a missing gate is owed by the tools lane and covers every future
+merger.** *The scan proving itself on the day it was ruled is the argument for
+promoting it out of a coordinator's habit and into `docs_check`.*
 
 **And verify before declaring a merge ready: `git log -1 --format=%p` must
 show TWO parents.** That is the check the failure mode demands, because

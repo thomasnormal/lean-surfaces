@@ -413,6 +413,13 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-362 | a WORLD is not pinned or free — EACH COORDINATE is; enumerate them and mark each by name | `docs/family-architecture.md §3.6` |
 | MEAS-363 | a true confirmation of the shape you CHECKED is not evidence about the shape you SKIPPED | `docs/family-architecture.md §3.6` |
 | MEAS-364 | STABILITY UNDER REFACTOR is the spec-half/interpreter-half split's measurable dividend — count what had to change | `docs/family-architecture.md §5.6` |
+| MEAS-365 | the SUBJECT OF A VERIFICATION IS IMMUTABLE TO THE VERIFIER — any fix that edits it changes the question | `docs/family-architecture.md §5.3` |
+| MEAS-366 | a proof obligation dischargeable ONLY by rewriting its subject has NOT been discharged | `docs/family-architecture.md §5.3` |
+| MEAS-367 | a SPINE claim graduates from design to measurement when the same rules discharge pairs they were not written for | `docs/family-architecture.md §7.1a` |
+| MEAS-368 | CLAIMS-LESS ERRORS ACCUMULATE — a wrong statement that costs its reader nothing is one nobody reports | `docs/family-architecture.md §5.4` |
+| MEAS-369 | where a fact is stated at TWO TIMES, the later is the measurement and the earlier owes the word PROJECTION | `docs/family-architecture.md §5.4` |
+| MEAS-370 | a guard STATES ITS OWN LIMIT IN THE CODE — it closes only the skew that begins after it lands | `docs/family-architecture.md §7.2` |
+| MEAS-371 | a coordinator's SITUATIONAL statements need timestamps or instruments, exactly as any number does | `docs/family-architecture.md §7.1a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -552,6 +559,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-129 | a behaviour the language DEFINES as a failure is a value of the outcome type, never a tier gap | `docs/family-architecture.md §5.2` |
 | STMT-130 | carry a residual as a HYPOTHESIS, never a `sorry` — a `sorry` poisons neighbouring receipts | `docs/family-architecture.md §9.0` |
 | STMT-131 | a table the PROGRAM CANNOT CHANGE is a parameter; the world holds what EXECUTION mutates | `docs/family-architecture.md §5.6` |
+| STMT-132 | where a def's matcher has NO EQUATIONS, SPECIALISE it at the argument you care about — surgery is the last resort | `docs/family-architecture.md §7.1a` |
+| STMT-133 | the stranded route needs EQUATIONS, the open route needs only REDUCTION — open exactly when the discriminant is string-free | `docs/family-architecture.md §7.1a` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -724,6 +733,10 @@ numbers below are the register's own.
 | OPS-97 | before writing a fixture, GREP THE TREE — the counterexample the guard needs is often already checked in | `docs/family-architecture.md §5.4b` |
 | OPS-98 | a rule keyed to a SOURCE'S STATE degrades silently into its default — re-check the state PER USE | `docs/family-architecture.md §5.4` |
 | OPS-99 | design-by-precedent is proven by a DECLINED sibling choice, cited with the sibling's recorded reason | `docs/family-architecture.md §5.6` |
+| OPS-100 | a fixture missing the DECLARATION THE FEATURE READS tests an empty world under the feature's name — make it FAIL first | `docs/family-architecture.md §5.4` |
+| OPS-101 | a refusal naming a fix that DOESN'T WORK is worse than no refusal — execute the remedy before shipping it | `docs/family-architecture.md §5.4` |
+| OPS-102 | IDENTITY, NOT ANCESTRY: matches-nothing = local work, never behind; two states make a guard refuse its own maintainer | `docs/family-architecture.md §7.2` |
+| OPS-103 | a coordinator's MERGE RECIPE is a tool — same gate audit; run the all-docs marker scan after EVERY merge | `docs/family-architecture.md §7.2` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

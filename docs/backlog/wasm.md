@@ -1062,3 +1062,141 @@ the `qol.md` exemplar.
 outside `LeanModels` and the `Examples.+` glob, and appends to this file.
 `docs_check` passes; `tools/backlog-index.sh` re-run per §9.5. The Lean
 execution was in the **fork's** tree, under a ticket.
+
+---
+
+## 2026-08-25-wasm-11 — THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported
+
+The ladder closed at 5/5, so the lane censuses its next corner. Three
+candidates were priced; **the numbers refute the standing lean and surface a
+fourth option that dominates all three.**
+
+### C — THE SUITE SCOREBOARD: **BLOCKED**, and not by a little
+
+The lean was the scoreboard, because §9.0 counts obligations with no
+denominator. **The denominator exists** — `docs/wasm-suite-census.json`, 258
+files / 62 598 assertions, already per-version. **What does not exist is
+anything to run against it.**
+
+Measured in the generated model:
+
+```
+Step_pure : List admininstr → List admininstr → Prop      -- RELATIONAL
+Decidable instances for Step .................... 0
+Option-valued step functions .................... 0
+```
+
+Zero in `wasm2.0.lean` **and** zero in the 3.0 output. The SpecTec Lean
+backend (`spectec/src/backend-lean/`) emits `backend.ml`, `lean_ast.ml`,
+`lean_builder.ml`, `render.ml` — **no executable mode**; the interpreter
+backend is a separate OCaml/AL pipeline that does not target Lean.
+
+So a scoreboard requires **building an executable Wasm interpreter in Lean
+first**. That is precisely what Talos already does at **99.40%**
+(`2026-08-22-wasm-2`), and precisely what `docs/wasm-charter.md` §8.4 ruled
+against on the grounds that competing with the incumbent is the weaker half
+of the fork. **The scoreboard is not an inch; it is the conformance endgame
+the charter declined, wearing a different hat.**
+
+*Recorded so the lean is not re-formed later from the same intuition: every
+other tier can build a scoreboard because every other tier's model executes.
+This tier's model is a set of inductive `Prop`s. The asymmetry is structural,
+not a gap in effort.*
+
+### B — PROGRESS / PRESERVATION: charter-scale, and now measured rather than asserted
+
+`specification/wasm-2.0/B-soundness.spectec` **does exist** for the target
+version — 308 lines, **27 relations / 45 rules**. But read, not counted, those
+are the **apparatus**, not the theorems: runtime typing (`Instr_ok2`,
+`Instrs_ok2`, `Config_ok`), store typing (`Store_ok`, `Funcinst_ok`, …) and
+the **store-extension ladder** (`Extend_globalinst … Extend_store`, 8 rules).
+**No theorem statement appears in it.** Progress and preservation live only in
+`document/core/appendix/properties.rst`, which carries **0 Lemmas** and whose
+sole occurrence of "Proof" is inside the citation string *"Certified Programs
+and Proofs (CPP 2018)"*.
+
+**And the decisive number: Isabelle has not proved it either.** On the fork's
+most advanced branch, `aaron/store_extension/reduction`:
+
+| file | lemmas | incomplete |
+| --- | ---: | ---: |
+| **`Wasm2_Type_Soundness.thy`** | 10 | **77** |
+| `Properties.thy` | 12 | 26 |
+| `Type_Inversion.thy` | 30 | 12 |
+| `store_extension_typing.thy` | 6 | 4 |
+
+**The soundness theorem file is ~90% unproved in Isabelle.** So B is not a
+port — there is no completed ladder to port. It is original mechanisation, and
+the coordinator's warning applies exactly: *a roadmap built from today's
+frontier is a plan whose later items have never been observed at all.*
+**Charter-scale, confirmed by measurement rather than by estimate.**
+
+### A — MORE INVERSION LEMMAS: real, but with a ceiling worth naming
+
+Three inversion theorems remain in the Lean proof lane beyond the one this
+lane proved: `instr_typing_inversion` (764), `ai_typing_inversion` (1085),
+`instrs_single_typing_inversion` (1534). But **the port strategy has a hard
+ceiling**: `Properties_Aux.thy` — the file this lane's five obligations came
+from — is **16 lemmas of which 7 are incomplete** (5 `sorry`, 2 `oops`), and
+**four of the seven are inversion lemmas** (`instr_inversion_2`, `inv_label`,
+`inv_ref`, `instr2_inversion_1`).
+
+**This is why 5/5 went smoothly and why the next batch would not.**
+Isabelle-before-scratch worked because every one of the five had a *complete*
+Isabelle counterpart. For the remaining inversions, roughly half have no
+complete original — the rule silently degrades to scratch, at which point the
+price is B's price in miniature.
+
+### **A′ — THE OPTION THE CENSUS FOUND, and it dominates: three FULLY COMPLETE theory files, unported**
+
+On `aaron/store_extension/reduction` — a branch this lane had listed but never
+opened — three files are **green throughout**:
+
+| file | lemmas | incomplete |
+| --- | ---: | ---: |
+| **`Subtyping_Properties.thy`** | **19** | **0** |
+| **`Typing_Simplified.thy`** | **14** | **0** |
+| **`Subtyping_Theorem.thy`** | **4** | **0** |
+
+**37 complete lemmas, zero `sorry`, zero `oops`.**
+
+Two facts make this the pick:
+
+1. **This lane ported from a STALE copy of its own source.**
+   `Subtyping_Properties.thy` carries **19** lemmas on this branch against the
+   **13** on `aaron/subtyping/inversion_lemmas` that the five obligations came
+   from. Six complete lemmas were added upstream and this lane never saw them —
+   the same cross-repo staleness `--compare` exists for
+   (`docs/c-tier-charter.md` §1.1), hitting a third time, on a proof source
+   rather than a corpus.
+2. **`Subtyping_Theorem.thy` is new and complete**, and its name says it is the
+   corner's capstone — the theorem the 19 properties feed. This lane proved the
+   properties and never knew a theorem sat on top of them.
+
+**Price**: the same shape as the five just closed — complete originals, the
+three established idioms (`Instrs_ok2.rec` with sibling motives, `rename_i`
+from the end, `clear` before inducting) all directly reusable, and a working
+20-second scratch loop. **Materially cheaper per lemma than the five were**,
+because the idioms are now known rather than discovered.
+
+### RECOMMENDATION — **A′**, and the lean is refuted by the numbers
+
+Take the three green files, **`Subtyping_Theorem.thy` first** (4 lemmas, the
+capstone, and it tells us what the 19 are for). Then diff this lane's ported
+13 against the branch's 19 to recover the six it never saw.
+
+**Not C**: blocked on an executable model that does not exist and that the
+charter declined to build. **Not B**: no ladder to port; Isabelle's own
+soundness file is 10/77. **Not A as stated**: half its targets lack complete
+originals; A′ is A restricted to the part where the port strategy actually
+holds.
+
+**A standing check falls out of finding 1**: this lane pinned
+`aaron/subtyping/inversion_lemmas` at `e75dad778` in June and never re-checked
+it. **Before porting, re-census every branch** — the sources move, and this
+census caught one that had.
+
+### Triad
+
+**Not run; not applicable.** Appends to this file only; no Lean, no vendored
+file changed. `docs_check` passes; `tools/backlog-index.sh` re-run per §9.5.

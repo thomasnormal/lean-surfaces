@@ -1242,3 +1242,104 @@ Inch 3 — calls, the frame, `return` (ARM 6.5) — which also owes the
 `orderDependence` gate its first real content, because a call is the first
 expression form in this tier that can have an effect and therefore the first
 one whose operand order is observable.
+
+## 2026-08-24-ada-5 — INCH 3's CENSUS: 178 paragraphs, 16.39% of the corpus, and BOTH of this tier's empty refusal classes get their first real site
+
+Inch 3 is calls, the frame and `return` (ARM 6.1, 6.3, 6.4, 6.4.1, 6.5;
+`docs/ada-semantics-design.md` §3 rung 3). Census before build, per §L25.
+**The range is Ada 2012's** — a paragraph range is edition-relative, and the
+counts below are read off the Ada 2022 census with that qualifier standing.
+
+### IT IS A MUCH BIGGER RUNG THAN INCH 2, ON BOTH AXES
+
+| | inch 2 (5.1-5.3) | inch 3 (6.1, 6.3, 6.4, 6.4.1, 6.5) |
+| --- | ---: | ---: |
+| ARM paragraphs | 58 | **178** — 3.1× |
+| corpus nodes | 120,563 (4.05%) | **487,784 (16.39%)** — 4.0× |
+
+The paragraph weight is not where a reader would guess. **6.4.1 Parameter
+Associations is 51 paragraphs — bigger than 6.4 Subprogram Calls (32) and
+bigger than 6.5 Return Statements (35).** Binding arguments to parameters is
+the expensive half of a call in Ada, and 6.3 Subprogram Bodies is a mere 11.
+
+Node counts (ACATS 4.2): `AssocList` 139,001, `ParamAssoc` 132,134,
+`CallExpr` 96,592, `CallStmt` 56,062, `SubpSpec` 23,655, `ParamSpec` 22,000,
+`SubpBody` 13,438, `ReturnStmt` 4,902, `ExtendedReturnStmt` 503.
+
+> **The two association kinds together (271,135) outnumber the call kinds
+> (152,654) by 1.8 to 1.** The census's own shape says the same thing the
+> paragraph count does: inch 3's work is in the ARGUMENTS, not in the call.
+
+### BOTH EMPTY REFUSAL CLASSES GET THEIR FIRST REAL SITE HERE
+
+This is the finding that re-prices the rung, and it comes from the category
+column rather than from the counts:
+
+* **`orderDependence` — ARM 6.4.1.** Inch 2 recorded that its evaluation
+  order was *unobservable* because every expression form in its vocabulary is
+  side-effect-free, and that **the question becomes live exactly when calls
+  arrive**. It arrives here: a call's parameters may be evaluated in any
+  order, and a function call can have an effect. So the gate this lane wrote
+  in inch 1 (`orderDependenceGate`, present and expected-empty) meets its
+  first candidate site at exactly the rung inch 2 predicted.
+* **`undefined` — ARM 6.4.1 carries an ERRONEOUS EXECUTION category.**
+  Measured from `docs/ada-spec-census.json`'s own category list. This tier's
+  `undefined` bucket is expected NON-empty (ARM 1.1.5, 23 paragraphs in
+  clauses 1-13) and it has had no site until now. **6.4.1 is the first.**
+
+**And a third, one subclause outside the rung's range: ARM 6.2 Formal
+Parameter Modes carries a BOUNDED (RUN-TIME) ERRORS category** — 15
+paragraphs. The `BoundedSite` machinery landed at inch 2 present-and-gated
+with no instance because the ARM text is absent; 6.2 is the nearest candidate
+instance and it is adjacent to this rung rather than in it. Recorded so the
+re-acquire rung knows which subclause to read first.
+
+### THE SHAPES ARE ALREADY MEASURED, and one of them is the inch-2 trap again
+
+The child-kind instrument (§2026-08-24-ada-4) already recorded inch 3's slots:
+
+| slot | measured |
+| --- | --- |
+| `CallStmt.name` | `CallExpr` **32 of 32 — uniform** |
+| `CallExpr.name` | `Identifier` 103, `DottedName` 12, `AttributeRef` 9 |
+| `CallExpr.suffix` | `AssocList` 104, **`BinOp` 20** |
+| `AssocList` arity | **`leaf` 35**, 1 → 95, 2 → 27, 3 → 2, 5 → 1 |
+
+Two things to build against:
+
+**1. A ZERO-ARGUMENT CALL'S `AssocList` IS A LEAF — 35 of 160.** The same
+encoding that would have made a walker refuse 30 of 31 `if` statements will
+make one refuse every parameterless call, and `P;` is the commonest call
+shape there is. Inch 2 paid to learn this once; inch 3 gets it for free, and
+that is what a census artifact is for.
+
+**2. `CallExpr.suffix` IS NOT ALWAYS AN ARGUMENT LIST.** 20 of 124 are
+`BinOp` — a range or slice (`A (1 .. 10)`), which is `OpDoubleDot` at 13,740
+corpus-wide. So the suffix slot is overloaded three ways: arguments, an
+index, and a slice. **This is the `CallExpr` ambiguity from §2026-08-24-ada-4
+reappearing on the other side**: there it made an assignment target
+undecidable by shape, here it makes a call's suffix undecidable by shape. The
+`target_resolution` column generalises to a `suffix_resolution` one, and both
+wait on the same re-acquire rung.
+
+### THE REACH IS STILL ZERO, and this time it is worth saying why precisely
+
+Inch 3 gives the tier calls — and **all 1,374 v0 tests call `Report`**, which
+is a package the tier must MODEL rather than execute (inch 5). So having the
+call mechanism does not by itself execute one test: the callee has to exist.
+The coverage row moves at **inch 6**, and inches 3, 4 and 5 are each necessary
+and none sufficient. Said before the rung is built, as with inch 2.
+
+### THE PLAN
+
+`W` gains a frame stack; `ρ` already has `.ret (value : Option Val)` from inch
+1, so `return` is a raise that a call FRAME catches — which is the same
+two-channel mapping again and needs no new machinery. Core's `zoomIn`/`zoomOut`
+are the state boundary for a call running in a smaller world, and they are
+already imported. The rung's real work is 6.4.1: named and positional
+associations, and the default expressions a missing argument takes.
+
+**`Core/Order.lean` becomes relevant at this rung and not before.** The
+adoption ticket parked it with a reason: `FlatLe` backs the `_mono`
+corollaries and Ada had no recursion. A call is recursion. It is in the
+closure already (Outcome imports it); this is the rung that may put it to use.

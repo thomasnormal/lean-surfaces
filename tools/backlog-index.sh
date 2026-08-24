@@ -111,7 +111,15 @@ rows() {                        # -> "sortkey\tid\ttitle\tlane"
         } else {
           key = "0000-00-00 0000"      # undated: sorts LAST, and is flagged
         }
-        printf "%s\t%s\t%s\t%s\n", key, id, title, lane
+        # THE CLASS COMES FROM THE TITLE PREFIX (§9.5a, resolved).  It used to
+        # come from the id token, which is exactly why the convention and the
+        # id law collided: `INBOUND` cannot be both the class and the id.  The
+        # id token is still honoured so the SIX headings still in the original
+        # spelling keep their class while the lanes that own them re-spell.
+        cls = ""
+        if (title ~ /^INBOUND([^A-Za-z0-9_]|$)/) cls = "INBOUND"
+        else if (id == "INBOUND")                cls = "INBOUND"
+        printf "%s\t%s\t%s\t%s\t%s\n", key, id, title, lane, cls
       }' "$f"
   done
 }
@@ -152,7 +160,12 @@ heading_rows() {                # -> "verdict<TAB>file:line<TAB>heading"
         pre = line; if (has) sub(/ — .*$/, "", pre)
         n = split(pre, w, /[ \t]+/)
         dated = (w[1] ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}-.*-[0-9]+$/)
-        v = (has && n == 1) ? (dated ? "conforming" : "undated") : "malformed"
+        # OLD-VALID: §9.5a told filers to head the entry `INBOUND`, so these
+        # are malformed BECAUSE THE CHARTER SAID SO.  They warn and never
+        # fail, which is the migration vocabulary — a shape the rules once
+        # required cannot be a failure the day a new rule lands.
+        v = (has && n == 1) ? (dated ? "conforming" : "undated") \
+            : ((w[1] == "INBOUND") ? "old-valid" : "malformed")
         printf "%s\t%s:%d\t%s\n", v, F, NR, substr(line, 1, 60)
       }' "$f"
   done
@@ -162,10 +175,11 @@ heading_rows() {                # -> "verdict<TAB>file:line<TAB>heading"
 # COUNT inside the generated file — a place the lane that wrote the heading
 # never looks.  A warning nobody is shown is not a warning.
 heading_report() {              # -> 0 clean, 3 when a malformed heading exists
-  local rows mal und
+  local rows mal und old
   rows="$(heading_rows)"
   mal="$(printf '%s\n' "$rows" | awk -F'\t' '$1 == "malformed"' | grep -c . || true)"
   und="$(printf '%s\n' "$rows" | awk -F'\t' '$1 == "undated"' | grep -c . || true)"
+  old="$(printf '%s\n' "$rows" | awk -F'\t' '$1 == "old-valid"' | grep -c . || true)"
   if [ "$mal" != "0" ]; then
     echo "backlog-index.sh: $mal heading(s) are not \`## <id> — <title>\`, so this generator" >&2
     echo "  INVENTS an id from the first word and emits a row the lane never wrote:" >&2
@@ -173,6 +187,12 @@ heading_report() {              # -> 0 clean, 3 when a malformed heading exists
     echo "  Give each one a §9.5 id (\`YYYY-MM-DD-<lane>-<n>\`) before the em dash." >&2
   fi
   [ "$und" = "0" ] || echo "backlog-index.sh: $und heading(s) use a non-dated id (flagged in the index, sorted last)" >&2
+  if [ "$old" != "0" ]; then
+    echo "backlog-index.sh: $old INBOUND heading(s) use §9.5a's ORIGINAL spelling (old-valid — warn, never fail)." >&2
+    echo "  The id now goes FIRST and INBOUND moves into the title (§9.5a, resolved):" >&2
+    echo "    ## <sender-id> — INBOUND FROM THE <X> LANE: <what the owner should do>" >&2
+    echo "  The index classes them by TITLE PREFIX, so the INBOUND column survives the move." >&2
+  fi
   [ "$mal" = "0" ] || return 3
   return 0
 }
@@ -203,10 +223,10 @@ and every existing \`§Lnn\` reference still resolves there.
 **$total entries across $lanes lanes.** Regenerate with
 \`tools/backlog-index.sh\`; check with \`--check\` (exit 1 on drift).
 
-| id | title | lane |
-| --- | --- | --- |
+| id | class | title | lane |
+| --- | --- | --- | --- |
 HDR
-  rows | LC_ALL=C sort -r | awk -F'\t' '{ printf "| `%s` | %s | %s |\n", $2, $3, $4 }'
+  rows | LC_ALL=C sort -r | awk -F'\t' '{ printf "| `%s` | %s | %s | %s |\n", $2, $5, $3, $4 }'
   if [ "$undated" != "0" ]; then
     printf '\n**%s heading(s) do not use the §9.5 id scheme** and sort last.\n' "$undated"
   fi
@@ -280,8 +300,40 @@ MD
   # these are live in the tree, which is why --strict is opt-in.
   cp "$tmp/bl/beta.orig" "$tmp/bl/beta.md"
   printf '## INBOUND FROM SOMEWHERE — `2026-01-01-x-9` (a note)\n' >> "$tmp/bl/beta.md"
-  check "a multi-word id is malformed too"  "$(heading_rows | awk -F'\t' '$1=="malformed"' | grep -c .)" "1"
-  check "  ...because an id is ONE token"   "$(rows | awk -F'\t' '{print $2}' | grep -c '^INBOUND$')" "1"
+  # §9.5a's ORIGINAL spelling is OLD-VALID, not malformed: the charter told
+  # filers to write it that way, and a shape the rules once REQUIRED cannot be
+  # a failure the day a new rule lands.
+  check "the old INBOUND spelling is OLD-VALID" "$(heading_rows | awk -F'\t' '$1=="old-valid"' | grep -c .)" "1"
+  check "  ...and does NOT fail --strict"   "$(heading_report >/dev/null 2>&1; echo $?)" "0"
+  check "  ...while keeping its INBOUND class" "$(rows | awk -F'\t' '$5=="INBOUND"' | grep -c .)" "1"
+  check "  ...and the warning shows the NEW shape" \
+        "$(heading_report 2>&1 >/dev/null | grep -c 'id now goes FIRST')" "1"
+  # ...but a multi-word heading that is NOT the known convention is still junk.
+  cp "$tmp/bl/beta.orig" "$tmp/bl/beta.md"
+  printf '## SPEC COVERAGE — the completion metric (standing)\n' >> "$tmp/bl/beta.md"
+  check "another multi-word phrase is malformed" "$(heading_rows | awk -F'\t' '$1=="malformed"' | grep -c .)" "1"
+  check "  ...and DOES fail --strict"       "$(heading_report >/dev/null 2>&1; echo $?)" "3"
+
+  # ---- THE RESOLVED SHAPE (§9.5a): id first, INBOUND in the TITLE.
+  cp "$tmp/bl/beta.orig" "$tmp/bl/beta.md"
+  printf '## 2026-01-01-x-9 — INBOUND FROM THE X LANE: renumber or close\n' >> "$tmp/bl/beta.md"
+  check "the new shape is CONFORMING"       "$(heading_rows | awk -F'\t' '$1=="conforming"' | grep -c .)" "5"
+  check "  ...nothing malformed or old"     "$(heading_rows | awk -F'\t' '$1!="conforming"' | grep -c .)" "0"
+  check "  ...and the run is silent"        "$(heading_report 2>&1 >/dev/null | grep -c .)" "0"
+  check "  ...exiting clean under --strict" "$(heading_report >/dev/null 2>&1; echo $?)" "0"
+  # THE CLASS SURVIVES THE MOVE, which is the whole point of the resolution.
+  check "the class comes from the TITLE now" "$(rows | awk -F'\t' '$5=="INBOUND"' | grep -c .)" "1"
+  check "  ...on a row whose id is the SENDER's" \
+        "$(rows | awk -F'\t' '$5=="INBOUND" {print $2}')" "2026-01-01-x-9"
+  check "  ...and the page renders the column" "$(render | grep -c '| id | class | title | lane |')" "1"
+  check "  ...with INBOUND in it"           "$(render | grep -c '| `2026-01-01-x-9` | INBOUND |')" "1"
+
+  # MIXED, which is what the migration window actually looks like: one row in
+  # the old spelling (warn) beside one in the new (clean) — and --strict PASSES.
+  printf '## INBOUND FROM SOMEWHERE — `2026-01-01-x-8` (a note)\n' >> "$tmp/bl/beta.md"
+  check "mixed old-valid + new-shape warns"  "$(heading_report 2>&1 >/dev/null | grep -c 'old-valid')" "1"
+  check "  ...and --strict still PASSES"    "$(heading_report >/dev/null 2>&1; echo $?)" "0"
+  check "  ...with BOTH classed INBOUND"    "$(rows | awk -F'\t' '$5=="INBOUND"' | grep -c .)" "2"
   cp "$tmp/bl/beta.orig" "$tmp/bl/beta.md"; rm -f "$tmp/bl/beta.orig"
   check "a conforming tree warns about nothing" "$(heading_report 2>&1 >/dev/null | grep -c .)" "0"
   check "  ...and exits clean"              "$(heading_report >/dev/null 2>&1; echo $?)" "0"

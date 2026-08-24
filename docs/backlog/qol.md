@@ -2566,7 +2566,7 @@ command still exits **2**. No Lean executed by this lane.
 
 ---
 
-## 2026-08-23-qol-inbound-1 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-27` (QoL lane's to renumber or close)
+## 2026-08-23-architecture-27 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close
 
 *Id kept in the architecture namespace; nothing minted in the QoL sequence.
 Filed after reading this file, per §9.5b — the correction below is already
@@ -2599,7 +2599,7 @@ treatment wherever `qol-21` published them.
 
 ---
 
-## 2026-08-23-qol-inbound-2 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: `2026-08-23-architecture-28` (QoL lane's to renumber or close)
+## 2026-08-23-architecture-28 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close
 
 *Filed as its own immediate commit, per the tightening landed today in
 §9.5a — the batching window is the whole hazard, and it is the only part a
@@ -3419,7 +3419,11 @@ never fail, or `--strict` could never be adopted while Go's `G1`…`G18` exist).
 file, line and heading on stderr, on every generating mode.
 
 **Two of the eight were mine**, now conformed to
-`## 2026-08-23-qol-inbound-N — …`. The other six are one per lane file, and
+`## 2026-08-23-qol-inbound-N — …` — **which was itself wrong, and §9.5a says
+so**: an inbound entry carries a **SENDER-namespace** id so that nothing is
+minted in the OWNER's sequence, and I minted two in mine. Re-spelled at
+`2026-08-24-qol-51` to the architecture lane's own ids. The other six are one
+per lane file, and
 §9.5 makes a lane file appendable only by its own lane — so `--strict` is not
 wired into ci.sh yet. That is the coordinator's call, and it is one line.
 
@@ -3565,3 +3569,66 @@ tool sourcing `argv.sh` re-run green. Fixture repos with a real local upstream
 that moves mid-test; the live queue was verified untouched (6 tickets, lock
 held) and every run used a stubbed `lake` with `LS_LOCK`/`LS_QUEUE` in the
 scratchpad. No Lean executed.
+
+## 2026-08-24-qol-51 — the id goes first, INBOUND becomes a title prefix
+
+The generator side of §9.5a's recorded resolution. Arch found the collision
+and routed it here rather than re-spelling six other lanes' headings —
+**a convention in a charter can be a defect in a tool** — and recommended:
+*the id goes FIRST, `INBOUND` moves into the TITLE, and the generator classes
+on the title prefix rather than the id token.* Implemented as recorded.
+
+### Old-valid is the load-bearing half
+
+The acceptance asked for `--strict` to **pass** on a mixed tree, and it could
+not have: the old INBOUND spelling was `malformed`, which fails. So the guard
+gains a fourth verdict. **These headings are malformed BECAUSE THE CHARTER
+TOLD FILERS TO WRITE THEM THAT WAY** — a shape the rules once required cannot
+become a failure the day a new rule lands. `old-valid` warns, names the new
+shape, and never fails.
+
+The discrimination is narrow on purpose: a multi-word heading beginning with
+`INBOUND` is the known prior convention; **any other** multi-word heading is
+still junk. Live tree, before and after:
+
+```
+9 malformed  ->  3 malformed (the SPEC COVERAGE family)
+                 6 old-valid (INBOUND, warn only)
+--strict: exit 3, and now for one reason only
+```
+
+### The class survives the move
+
+`rows` gains a fifth field and the page a `class` column. The class is read
+from the **title prefix**; the id token is still honoured so the six headings
+awaiting re-spelling keep their class while their owners re-spell them. That
+is the whole resolution: `INBOUND` could not be both the class and the id, and
+now it is only the class.
+
+### And I had got my own two wrong
+
+Conforming my two inbound entries at `2026-08-23-qol-49`, I minted
+`2026-08-23-qol-inbound-1/2` — **ids in MY OWN sequence, for entries the
+architecture lane sent me.** §9.5a exists to prevent exactly that: an inbound
+entry carries a **SENDER-namespace** id so nothing is minted in the owner's
+sequence. Re-spelled to `2026-08-23-architecture-27/28`, which were already
+sitting in the body text where I had left them. The prose in qol-49 that
+described the wrong spelling is corrected in place rather than left standing.
+
+They are now the in-tree exemplar of the resolved shape:
+
+```
+## 2026-08-23-architecture-27 — INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close
+```
+
+### What the charter still owes
+
+The generator now accepts the resolved shape; **§9.5a still describes the old
+one.** Model-matches-code at the convention level means the charter wording
+lands in the same window — arch owns that text, and the exact amendment is in
+the report to the coordinator so it can go out verbatim.
+
+### Triad
+
+`backlog-index.sh` **62 ok** (47 → 62), docs_check 91/91, and the live tree
+measured before and after. No Lean executed.

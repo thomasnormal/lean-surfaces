@@ -322,6 +322,15 @@ theorem dram_sense_amp_small_signal_realizable
           (5 / 2 - initialDeviation) horizon)
         boundary () := by proofs
 
+/-- A13 INSTANTIATED: `hsmall` is DISCHARGED, not assumed.  At a 100 mV
+initial deviation over one nanosecond the small-signal linearisation is
+certified honest by the growth certificate at split depth 10. -/
+theorem dram_sense_amp_small_signal_realizable_at_1ns :
+    ∃ boundary,
+      DramDifferentialSenseBehavior
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+        boundary () := by proofs
+
 /-- A nonzero balanced input has a genuine source-backed transient that
 stays between the supply rails and reaches any requested first-region margin
 by the closed-form deadline. -/
@@ -394,3 +403,4 @@ theorem dram_sense_amp_full_basin_regeneration
 #print axioms dram_sense_amp_small_signal_realizable
 #print axioms dram_sense_amp_small_signal_performance_realizable
 #print axioms dram_sense_amp_full_basin_regeneration
+#print axioms dram_sense_amp_small_signal_realizable_at_1ns

@@ -305,4 +305,32 @@ theorem log_le_of_le_pow {q y : ℝ} (hq : 0 < q) (hy : 0 ≤ y)
     (n : ℕ) (hn : 0 < n) (h : q ≤ (1 + y / n) ^ n) : Real.log q ≤ y :=
   (Real.log_le_iff_le_exp hq).2 (le_trans h (one_add_div_pow_le_exp hy n hn))
 
+/-! ### The fourth direction: growth bounded ABOVE
+
+The three lemmas above bound decay above, decay below, and growth below --
+which is everything a SETTLING circuit needs.  A regenerating one needs the
+fourth: a sense amplifier's small-signal deviation GROWS, and the hypothesis
+that keeps its linearisation honest is an upper bound on that growth.
+
+The gap was found by auditing a deck's free coordinates before attempting any
+proof, not by a proof failing.
+-/
+
+/-- GROWTH CERTIFICATE: `exp a ≤ (1/(1 - a/n))^n` for `a < n`. -/
+theorem exp_le_inv_sub_pow {a : ℝ} (n : ℕ) (hn : 0 < n) (hlt : a < n) :
+    Real.exp a ≤ ((1 - a / n)⁻¹) ^ n := by
+  have hn' : (0:ℝ) < n := by exact_mod_cast hn
+  have hbase : (0:ℝ) < 1 - a / n := by
+    rw [sub_pos, div_lt_one hn']; exact hlt
+  have hlow : (1 - a / n) ^ n ≤ Real.exp (-a) :=
+    one_sub_div_pow_le_exp_neg n hn hlt.le
+  have hpow : (0:ℝ) < (1 - a / n) ^ n := pow_pos hbase n
+  rw [inv_pow, Real.exp_neg] at *
+  exact le_inv_of_le_inv₀ hpow hlow
+
+/-- To bound `exp a` above by `b`: pick a split depth; `norm_num` the rest. -/
+theorem exp_le_of_pow_le {a b : ℝ} (n : ℕ) (hn : 0 < n) (hlt : a < n)
+    (h : ((1 - a / n)⁻¹) ^ n ≤ b) : Real.exp a ≤ b :=
+  le_trans (exp_le_inv_sub_pow n hn hlt) h
+
 end LeanModels.Circuit

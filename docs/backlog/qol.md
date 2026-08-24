@@ -3486,3 +3486,82 @@ reconciliation at the merge.
 
 Docs only, no tool changed. laws 45 ok, docs_check 91/91, and the suite above
 re-run on merged master. No Lean executed.
+
+## 2026-08-24-qol-50 — nothing checked whether a ticket's base had ever been green
+
+The pyc lane spent **116 minutes** of the machine-wide tenure (4852s queued,
+2083s building) rediscovering a defect that was **already fixed on master
+three minutes into its own build**. Its base was red for a full build when
+committed, and nothing checked whether master had moved past it — least of all
+during a queue wait hours deep, which is exactly when the fix lands.
+
+### The line, at enqueue and again at acquire
+
+```
+delta vs master: 0 files (HEAD is at origin/master)
+base: BASE STALE: 1 commit(s) behind origin/master tip d36344d
+      (this ticket branches from 7113979) — consider rebasing before it runs
+```
+
+Those two lines are from the same run, and their disagreement **is** the
+failure mode: the LOCAL tracking ref says "I am at master" while the remote
+says master moved. Only a fetch can tell them apart.
+
+Repeated at **acquire** as well, per the option in the brief — the enqueue
+line is read by whoever typed the command, but the acquire line lands in the
+log beside the verdict, and it is a *fresh* fetch, because a cached answer
+from four hours ago is the very thing being warned about.
+
+**WARN, NEVER REFUSE.** A pinned base is legitimate — SV declined a rebase the
+same day for tree-certification reasons — so a guard that refused would have
+been wrong about that lane while being right about pyc. A wrong warning costs
+a line; a wrong refusal costs a tenure.
+
+### The fetch must not move the lane's own refs
+
+Measured while writing this: `git fetch origin master:refs/triad/tip`
+**advances `origin/master`**, because git updates remote-tracking refs
+*opportunistically* for any fetched ref that maps to one. Fetching **by URL**
+has no configured mapping and updates nothing. A diagnostic must not move the
+state the lane is about to be judged against. Bounded at 25s,
+`GIT_TERMINAL_PROMPT=0`, ssh in batch mode: an enqueue must never block on a
+network hang or an auth prompt.
+
+**The absence family, four members, none reading like "at the tip":** foreign
+tree, no merge target, unreachable remote, unrelated histories. And A13 gets
+its own clause — a seeded clone's origin can be a local bundle whose tip is
+days behind github's, which would report a stale base as current. The check
+still runs; the line says `[A13: 'origin' is a LOCAL path — its tip may not be
+github's]`.
+
+### The one refusal, and why it may refuse
+
+`stamp_version_guard` refuses a **NEW** enqueue from a worktree whose
+triad.sh predates master's `STAMP_VERSION` — the leantier shape. The
+distinction is the whole license: **accept-and-log is for tickets already in
+flight; a new one is not one of them.** It fires before any ticket exists
+(verified: 0 tickets created by a refused run), it is local once the tip is
+fetched, and **an absent answer is never a refusal** — not knowing master's
+version is not evidence that ours is old.
+
+### The subshell trap, fourth encounter
+
+The first cut returned the sha on stdout and the REASON in a global. Every
+caller uses `$( … )`, so every caller read an empty reason and printed
+`n/a ()`. **A subshell cannot set a parent's variable** — so the answer is now
+carried the only way that survives one: **in the value**, with a leading `!`
+marking a reason. The cache had the same disease and is now a file, the way
+`laws.sh --budget` writes its PARTIAL verdict to one.
+
+Also caught by a failing row: `git init --bare` points HEAD at
+`refs/heads/main`, so a fixture cloning a repo whose only branch is `master`
+checks out **nothing** — no HEAD, no merge-base, and six rows silently
+measured the "unrelated histories" path instead of the ones they named.
+
+### Triad
+
+`triad.sh` **299 ok** (283 → 299), `ci.sh --verify-guards` 32 ok, and every
+tool sourcing `argv.sh` re-run green. Fixture repos with a real local upstream
+that moves mid-test; the live queue was verified untouched (6 tickets, lock
+held) and every run used a stubbed `lake` with `LS_LOCK`/`LS_QUEUE` in the
+scratchpad. No Lean executed.

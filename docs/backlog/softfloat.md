@@ -1010,3 +1010,46 @@ would ever have fired.
 `op_correct` unchanged. `IsCanonical`, `TieEven` and the witness are spec
 machinery, not operations. **26 landed theorems, 1 of which is an
 `op_correct`.**
+
+---
+
+## 2026-08-24-softfloat-18 — THE GUARD FIRED A SECOND TIME, ON MASTER'S EDIT, AND THE RESOLUTION IS CLEAN
+
+After the green at `tree 031c854498c5`, rebasing onto master (25 commits) drifted
+the census again — **7 rows, none of them this lane's**, all in
+`LeanModels/Es/Ordinary.lean`, a file master gained in those commits.
+
+| rows | site | resolution |
+| --- | --- | --- |
+| 1 | `:232` `.toInt64` | **the ROUTED form** — `Float.ofModel (Float.Model.ofInt64 n.toModel.toInt64)`. This lane's unblock, applied. Not a crossing. |
+| 6 | `:284 :292 :313 :315 :316 :333` `.toFloat` | `Nat.toFloat` on array indices/lengths from `arrayIndex?`. **Not a crossing.** |
+
+**The `.toFloat` resolution was measured, not assumed**, because it is the
+actionable claim: `Int8/16/32/64.toFloat`, `ISize.toFloat` and `Float32.toFloat`
+ARE opaque, so six `.toFloat` sites in new ES code was a live hazard until the
+receiver type was settled. `Nat.toFloat` is an **`abbrev` over `Float.ofNat`**
+(`Init/Data/OfScientific.lean:81`), and it **reduces** — `rfl` and `decide` both
+close `(3 : Nat).toFloat = 3.0`. So the ES lane's new file crosses nothing.
+
+**This is the census gate doing the job it was built for**, and this time on
+another lane's landing rather than its own: it noticed seven new float sites in
+a file this lane had never read, within one rebase of their appearing.
+
+### AND A PROCESS DEFECT OF THIS LANE'S OWN, RECORDED
+
+The re-push composed its verification and its push with `;` instead of `&&`:
+
+```
+python3 …--compare; fi; git push …        # WRONG: push runs regardless
+```
+
+So `--compare` printed **DRIFT** and the push went through anyway, putting a
+branch with a stale census in front of the coordinator. Caught immediately and
+corrected, but the shape is worth keeping: **a check whose failure does not
+stop the next step is not a gate, it is a comment.** The triad wrapper gets
+this right — it stops on a red gate — and this lane's own shell did not.
+Every verify-then-push chain here is now `&&`.
+
+### §9.0 — STILL 1/12
+
+Unchanged. Nothing in this entry is a theorem.

@@ -1,11 +1,53 @@
 {
-  "crossing_sites_dotted_candidates": 8,
+  "crossing_sites_dotted_candidates": 15,
   "crossing_sites_qualified": 0,
   "crossings": [
     {
       "file": "LeanModels/Es/Convert.lean",
       "line": 236,
       "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Ordinary.lean",
+      "line": 232,
+      "name": ".toInt64",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Ordinary.lean",
+      "line": 284,
+      "name": ".toFloat",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Ordinary.lean",
+      "line": 292,
+      "name": ".toFloat",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Ordinary.lean",
+      "line": 313,
+      "name": ".toFloat",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Ordinary.lean",
+      "line": 315,
+      "name": ".toFloat",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Ordinary.lean",
+      "line": 316,
+      "name": ".toFloat",
+      "position": "dotted"
+    },
+    {
+      "file": "LeanModels/Es/Ordinary.lean",
+      "line": 333,
+      "name": ".toFloat",
       "position": "dotted"
     },
     {
@@ -53,6 +95,15 @@
   ],
   "crossings_by_file": {
     "LeanModels/Es/Convert.lean": [
+      ".toInt64"
+    ],
+    "LeanModels/Es/Ordinary.lean": [
+      ".toFloat",
+      ".toFloat",
+      ".toFloat",
+      ".toFloat",
+      ".toFloat",
+      ".toFloat",
       ".toInt64"
     ],
     "LeanModels/SoftFloat/Theorems.lean": [

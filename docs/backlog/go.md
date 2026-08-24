@@ -31,7 +31,8 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G23 multi-value returns | `9a6d6ad` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G24 `math/bits` complete + constants | `eb1e8b0` | 687 / 3,803 (18.1%) | 594 / 2,743 (21.7%) |
-| §G25 variadics | `9b2129e` | **739 / 3,803 (19.4%)** | **644 / 2,743 (23.5%)** |
+| §G25 variadics | `9b2129e` | ~~739 / 3,803~~ *overstated, see §G27* | ~~644 / 2,743~~ |
+| §G27 correction (same tree; no rung) | *filled in next* | **717 / 3,803 (18.9%)** | **629 / 2,743 (22.9%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -3304,3 +3305,96 @@ package sat behind one missing construct.
 
 MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%) and now
 visibly minor against a +0 frontier.
+
+---
+
+## G27 — THE `strconv` CENSUS KILLED ITS OWN PREDICTION, AND FOUND THE METRIC OVERSTATED (2026-08-24)
+
+Census only. **§G26 predicted `strconv` at +26/+13. The correct figure is
++0**, and finding out cost no code, because the entry-point census ran
+first.
+
+### WHAT THE 26 FILES ACTUALLY CALL
+
+Two entry points. Not thirty:
+
+| entry point | uses in those files |
+| --- | ---: |
+| `FormatInt` | 28 (96.6%) |
+| `Itoa` | 1 |
+
+Corpus-wide `strconv` has **30 distinct functions and 673 uses**
+(`Itoa` 108, `FormatInt` 86, `Atoi` 76, `ParseInt` 75, `Quote` 48…). The
+reach comes from two of them — the vocabulary law paying off again.
+
+And **25 of the 26 files are `*_string.go`**: generated `stringer`
+output, all one shape:
+
+    func (i Kind) String() string {
+        if i < 0 || i >= Kind(len(_Kind_index)-1) {
+            return "Kind(" + strconv.FormatInt(int64(i), 10) + ")"
+        }
+        return _Kind_name[_Kind_index[i]:_Kind_index[i+1]]
+    }
+
+### THAT SHAPE NEEDS TWO THINGS THE WALKER DOES NOT HAVE
+
+* a **method** — `func (i Kind) String()`. `FuncTable` maps a plain name
+  to a body and has nowhere to put a receiver.
+* **string concatenation** — `"Kind(" + … + ")"`. `binNum` is
+  integer-only.
+
+Measured over all 26: **26 need BOTH, 0 are unlocked by `strconv`
+alone.** The prediction was not merely optimistic, it was the wrong
+construct entirely.
+
+### THE STANDING METRIC WAS OVERSTATED, AND BY HOW MUCH
+
+If the reach probe counted those 26, it was counting others like them.
+Audited:
+
+| | counted | declare a method | string concat | either | **honest** |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| all of `$GOROOT/src` | 739 | 16 | 7 | 22 | **717** |
+| library only | 644 | 9 | 7 | 15 | **629** |
+
+**§9.0 is corrected to 717 / 3,803 (18.9%) and 629 / 2,743 (22.9%).**
+
+The cause is precisely the one the coverage table's own guard names — *it
+measures SYNTACTIC coverage, an upper bound* — and I wrote that guard and
+then used the number as if it were executable anyway. `FuncDecl` is one
+`go/ast` kind for two things the walker prices differently, and so is
+`BinaryExpr`. That is the **third** instance of the shape after
+`ArrayType` (§G20) and `SelectorExpr` (§G21); it should have been looked
+for, not stumbled on.
+
+**The deltas survive.** +76, +7 and +52 were each measured with the same
+gap-affected files on both sides, so they are unaffected; only the
+absolute level was inflated. A wrong baseline and a right delta is the
+honest description.
+
+### THE FIX LIVES IN THE GATE
+
+`construct_census.go` now splits both nodes — `FuncDecl/plain` vs
+`FuncDecl/method`, and `BinaryExpr` vs `BinaryExpr/strcat` — so the
+instrument cannot make this mistake again. It independently reproduces
+the audit: `FuncDecl/method` +15 and `BinaryExpr/strcat` +5 against the
+audit's 16 and 7 (the instrument's baseline excludes package selectors,
+hence the small difference).
+
+### THE REAL NEXT RUNG IS A BUNDLE
+
+Not `strconv`. **Methods + string concatenation + `strconv`'s two entry
+points**, which is the conjunctive law for the fifth time — and this time
+the parts are worth **+0 each**, the starkest instance yet.
+
+Priced in advance from the CORRECTED baseline:
+
+> **§G28: 717 → 765 (+48) over all of `$GOROOT/src`;
+> 629 → 657 (+28) over the library.**
+
+Note the destination is the same 765/657 §G26 predicted; what was wrong
+was the baseline and the attribution, not the target. The next report
+should say which of those two was actually being tested.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).

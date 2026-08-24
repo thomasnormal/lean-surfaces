@@ -903,7 +903,7 @@ func runKindSets(files []string, outPath, root string) {
 // Keep in step with the Expr/Stmt constructors; §G19 is its baseline.
 var walkerVocab = []string{
 	// file structure and declarations
-	"File", "Comment", "CommentGroup", "FuncDecl", "FuncType", "Field",
+	"File", "Comment", "CommentGroup", "FuncDecl/plain", "FuncType", "Field",
 	"FieldList", "GenDecl", "ImportSpec", "ValueSpec", "TypeSpec", "DeclStmt",
 	// expressions
 	"Ident", "BasicLit", "ParenExpr", "BinaryExpr", "UnaryExpr", "StarExpr",
@@ -920,6 +920,7 @@ var walkerVocab = []string{
 // property of the CURRENT vocabulary and is not a ranking for any future
 // one, so re-run rather than quoting an old row.
 var frontier = []string{
+	"FuncDecl/method", "BinaryExpr/strcat",
 	"SelectorExpr/pkg", "SelectorExpr/value", "SwitchStmt", "CaseClause", "FuncLit", "MapType",
 	"InterfaceType", "TypeAssertExpr", "TypeSwitchStmt", "DeferStmt",
 	"GoStmt", "ChanType", "SendStmt", "SelectStmt", "CommClause",
@@ -986,6 +987,34 @@ func fileKinds(path string) (map[string]bool, bool) {
 			} else {
 				ks["ArrayType/fixed"] = true
 			}
+			return true
+		case *ast.FuncDecl:
+			// A METHOD is not a function this walker can key: `FuncTable`
+			// maps a plain name to a body and has nowhere to put a
+			// receiver. §G27 found the reach figure over-counting by 16
+			// files on exactly this, because `FuncDecl` is one kind for
+			// two things — the third instance of that shape after
+			// `ArrayType` and `SelectorExpr`.
+			if x.Recv != nil {
+				ks["FuncDecl/method"] = true
+			} else {
+				ks["FuncDecl/plain"] = true
+			}
+			return true
+		case *ast.BinaryExpr:
+			// `+` on strings is CONCATENATION, and `binNum` is
+			// integer-only. Same shape again: one `go/ast` node, two
+			// operations, priced differently.
+			if x.Op == token.ADD {
+				for _, side := range []ast.Expr{x.X, x.Y} {
+					if bl, ok := side.(*ast.BasicLit); ok && bl.Kind == token.STRING {
+						ks["BinaryExpr/strcat"] = true
+					}
+				}
+			}
+			// an ordinary BinaryExpr is still modelled; only the string
+			// case is separated out
+			ks["BinaryExpr"] = true
 			return true
 		case *ast.SelectorExpr:
 			if id, ok := x.X.(*ast.Ident); ok && imports[id.Name] {

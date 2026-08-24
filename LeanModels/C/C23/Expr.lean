@@ -963,4 +963,593 @@ theorem cond_takesOneArm (ctx : Ctx) (c t e : Expr) (ty : CType) (sp : CSpan)
 #print axioms or_shortCircuits
 #print axioms cond_takesOneArm
 
+/-! ## RUNG A — §6.5.3.3p10 / `J.1(16)`: PURITY, and the half of the ∀-order
+obligation a syntax check can pay
+
+`docs/c23-spec-mirror.md` §5.3 states the `J.1(16)` obligation per call
+site as *"can this callee write what these siblings read"*. That is a
+CONJUNCTION, and only its second half needs an effect summary:
+
+1. **the siblings do not WRITE** — decidable from the term, and this
+   section;
+2. the one effectful argument does not write what the siblings READ —
+   the effect-summary argument, which is **Rung B and is not claimed
+   anywhere below.**
+
+**The measurement is why (1) is worth landing on its own.** Over the
+ingested corpus, gated in `Examples/c/sunfish/expr.lean` and reached
+independently by `harness/c_construct_census.py`: of **320** call sites,
+**215** take two or more arguments, and **208 of those 215 have EVERY
+argument pure** — so at 208 of 215 multi-argument sites the ∀-order
+obligation needs no effect summary at all: no order can differ, because
+no order can write. The residue is exactly the **7** sites §5.3 already
+names, and at none of them do two arguments carry an effect. **The
+predicate that prices Rung B is the same predicate that cuts its domain
+from 215 sites to 7.**
+
+**`isPure` is an OVER-approximation, deliberately.** It is `nodeIsPure` at
+EVERY node of the term — through `Expr.subexprs`, so it introduces no new
+recursion, exactly as `Expr.size` does not — which means it calls an
+expression impure whenever a write-capable node occurs anywhere inside
+it, including under a `&&` that would never run it and under a `sizeof`
+whose operand §6.5.4.4p2 does not evaluate at all. A sharper predicate
+exists and is not needed: soundness is what the theorem consumes, and the
+census says the coarseness costs nothing here — **the only impure node
+kind occurring inside any call argument anywhere in the corpus is a
+CALL** (10 occurrences), so the slack misclassifies no argument.
+
+**What `isPure` is NOT.** It is not "has no observable effect". An
+out-of-tier node is classified IMPURE even though this evaluator refuses
+it, because *"the model declines"* is not *"the construct does not
+write"*, and a predicate that pooled the two would silently become
+unsound the day the construct is modelled. Likewise `initList` and
+`compoundLit`, whose §6.7.11 semantics WRITES through the layout
+(`docs/backlog/c.md` 2026-08-23-c-3). -/
+
+/-- The write-capable NODE kinds, and nothing about their operands.
+
+Read this against `evalExpr`'s clauses one for one: `storeAt` is reached
+from exactly three of them — simple assignment (§6.5.17.2), compound
+assignment (§6.5.17.3) and the increments (§6.5.3.5) — and `Ctx.call`
+hands control to a handler this tier cannot see inside. Every other
+clause in the block reaches memory only through `readMem`. -/
+def Expr.nodeIsPure : Expr → Bool
+  -- §6.5.17.2 — the store is `=`, and only `=`. Every other binary
+  -- operator, `&&`/`||`/`,` included, is a value computation.
+  | .binop op _ _ _ _ => op != "="
+  -- §6.5.3.5 — measured: all 63 increment sites in the corpus are postfix,
+  -- and both spellings write.
+  | .unop op _ _ _ _ => op != "++" && op != "--"
+  -- §6.5.17.3 — `a op= b` stores.
+  | .compoundAssign .. => false
+  -- §6.5.3.3 — an opaque callee. This is the constructor that makes the
+  -- J.1(16) domain non-empty, and inch 5's repair is what made it REACHABLE.
+  | .call .. => false
+  -- §6.7.11 — aggregate initialization writes through the layout.
+  | .initList .. | .compoundLit .. => false
+  -- Out of tier: unknown, therefore not pure.
+  | .unsupported .. => false
+  | _ => true
+
+/-- An expression whose evaluation cannot change memory — `nodeIsPure` at
+every node, itself included.
+
+Stated through `Expr.subexprs` so that it introduces **no new recursion**:
+the nested `List Expr` under `call` and `initList` is elaborated there,
+once, which is the same reason `Expr.size` is defined that way
+(`LeanModels/C/Ast.lean`). -/
+def Expr.isPure (e : Expr) : Bool := e.subexprs.all Expr.nodeIsPure
+
+/-! ### Reading a purity fact off a node
+
+One general lemma for the HEAD, and one extraction per constructor the
+evaluator recurses into. Only the forward direction is ever needed, which
+is why none of these is stated as an equivalence. -/
+
+/-- Every `subexprs` clause emits `e` itself, so a pure term has a pure
+head. -/
+theorem Expr.nodeIsPure_of_isPure {e : Expr} (h : Expr.isPure e = true) :
+    Expr.nodeIsPure e = true := by
+  cases e <;>
+    simp_all [Expr.isPure, Expr.subexprs, Expr.nodeIsPure, List.all_cons, List.all_append]
+
+theorem Expr.isPure_paren {s : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.paren s t sp) = true) : Expr.isPure s = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, Bool.and_eq_true] at h ⊢
+  exact h.2
+
+theorem Expr.isPure_implicitCast {ck : String} {s : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.implicitCast ck s t sp) = true) : Expr.isPure s = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, Bool.and_eq_true] at h ⊢
+  exact h.2
+
+theorem Expr.isPure_cast {ck : String} {s : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.cast ck s t sp) = true) : Expr.isPure s = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, Bool.and_eq_true] at h ⊢
+  exact h.2
+
+theorem Expr.isPure_member {b : Expr} {f : String} {a : Bool} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.member b f a t sp) = true) : Expr.isPure b = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, Bool.and_eq_true] at h ⊢
+  exact h.2
+
+theorem Expr.isPure_unop {op : String} {s : Expr} {post : Bool} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.unop op s post t sp) = true) : Expr.isPure s = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, Bool.and_eq_true] at h ⊢
+  exact h.2
+
+theorem Expr.isPure_index_base {b i : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.index b i t sp) = true) : Expr.isPure b = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, List.all_append,
+    Bool.and_eq_true] at h ⊢
+  exact h.2.1
+
+theorem Expr.isPure_index_idx {b i : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.index b i t sp) = true) : Expr.isPure i = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, List.all_append,
+    Bool.and_eq_true] at h ⊢
+  exact h.2.2
+
+theorem Expr.isPure_binop_l {op : String} {l r : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.binop op l r t sp) = true) : Expr.isPure l = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, List.all_append,
+    Bool.and_eq_true] at h ⊢
+  exact h.2.1
+
+theorem Expr.isPure_binop_r {op : String} {l r : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.binop op l r t sp) = true) : Expr.isPure r = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, List.all_append,
+    Bool.and_eq_true] at h ⊢
+  exact h.2.2
+
+theorem Expr.isPure_cond_c {c a b : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.cond c a b t sp) = true) : Expr.isPure c = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, List.all_append,
+    Bool.and_eq_true] at h ⊢
+  exact h.2.1.1
+
+theorem Expr.isPure_cond_t {c a b : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.cond c a b t sp) = true) : Expr.isPure a = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, List.all_append,
+    Bool.and_eq_true] at h ⊢
+  exact h.2.1.2
+
+theorem Expr.isPure_cond_e {c a b : Expr} {t : CType} {sp : CSpan}
+    (h : Expr.isPure (.cond c a b t sp) = true) : Expr.isPure b = true := by
+  simp only [Expr.isPure, Expr.subexprs, List.all_cons, List.all_append,
+    Bool.and_eq_true] at h ⊢
+  exact h.2.2
+
+/-! ### THE RUN SEAM — one opening, and everything below it is a corollary
+
+**§9.3 CONVERGENCE, recorded rather than duplicated in silence.**
+`LeanModels/Go/Obs.lean` §1 lands this same seam for `GoM`, and `GoM` and
+`EvalM` are BOTH `LeanModels.SemMWith` — the proof below is Go's, with
+`GoWorld → Mem`, `Panic → Refusal`, `SpecRef → CDetail`, `Unit → Mem`,
+and **not one line of it mentions either language**. Go's own header says
+*"the ORDER lifts; the CONGRUENCES don't"*, and it is right about
+Python's `Res`, which is a different monad — but not about two tiers that
+share `SemMWith`, and this is the second one. The seam is generic in all
+four parameters and belongs in `LeanModels/Core/Outcome.lean` beside the
+stack it opens; that is a SPINE landing, so it is priced in
+`docs/backlog/c.md` rather than taken unilaterally here. -/
+
+section Seam
+variable {α β : Type}
+
+/-- **THE OPENING.** The only place this tier unfolds the stack by hand:
+run the head, then stop loudly, propagate the refusal with its memory, or
+continue with the value in the memory it left. -/
+theorem EvalM.run_bind (x : EvalM α) (f : α → EvalM β) (m : Mem) :
+    (x >>= f) m
+      = (match x m with
+         | .error h => .error h
+         | .ok (.error e, m') => .ok (.error e, m')
+         | .ok (.ok a, m') => f a m') := by
+  simp [bind, ExceptT.bind, ExceptT.mk, StateT.bind, ExceptT.bindCont]
+  cases hx : x m with
+  | error h => simp [Except.bind]
+  | ok p =>
+    obtain ⟨r, m'⟩ := p
+    cases r <;> simp [Except.bind, pure, StateT.pure, Except.pure]
+
+/-- Stepping a bind from a KNOWN head. Stated on an `x m = …` hypothesis
+rather than as a congruence, because `simp` will not rewrite inside a
+match DISCRIMINANT — the Lean fact `docs/backlog/go.md` §G11 named. -/
+theorem EvalM.run_bind_ok {x : EvalM α} {f : α → EvalM β} {m m' : Mem} {a : α}
+    (h : x m = .ok (.ok a, m')) : (x >>= f) m = f a m' := by rw [EvalM.run_bind, h]
+
+theorem EvalM.run_bind_loud {x : EvalM α} {f : α → EvalM β} {m : Mem}
+    {l : Loud CDetail Mem} (h : x m = .error l) : (x >>= f) m = .error l := by
+  rw [EvalM.run_bind, h]
+
+theorem EvalM.run_bind_refused {x : EvalM α} {f : α → EvalM β} {m m' : Mem} {e : Refusal}
+    (h : x m = .ok (.error e, m')) : (x >>= f) m = .ok (.error e, m') := by
+  rw [EvalM.run_bind, h]
+
+/-! The primitives, one row each, because each is a constant of the tier. -/
+
+theorem EvalM.run_pure (a : α) (m : Mem) : (pure a : EvalM α) m = .ok (.ok a, m) := rfl
+
+theorem EvalM.run_get (m : Mem) : (get : EvalM Mem) m = .ok (.ok m, m) := rfl
+
+/-- The language's own raise is state-RETAINING: this is the `ρ` channel,
+and it is the whole reason for the layer order. -/
+theorem EvalM.run_throw (e : Refusal) (m : Mem) :
+    (throw e : EvalM α) m = .ok (.error e, m) := rfl
+
+/-- An out-of-tier refusal answers in the `Halt` BASE and carries its
+snapshot, so there is no `.ok` for it to produce at all. -/
+theorem EvalM.run_refuseUnsupported (what : String) (m : Mem) :
+    (refuseUnsupported what : EvalM α) m
+      = .error (.unsupported (.unsupported ()) what (some m)) := rfl
+
+end Seam
+
+/-! ### MEMORY INVARIANCE, and the algebra that makes it cheap -/
+
+/-- A computation that cannot change memory: **whatever it answers**, the
+memory it hands back is the memory it was handed.
+
+The quantifier ranges over `r : Except Refusal α`, so this covers the
+refusal branch too — which is not decoration. `ExceptT` OUTSIDE `StateT`
+is the state-RETAINING order (`LeanModels/Core/Outcome.lean`), so a
+refusal carries a memory, and a predicate that spoke only about success
+would say nothing about the branch the layer order exists to keep
+world-aware.
+
+**A STRUCTURE, not a `def` returning `∀`, and the difference cost a
+tenure.** As a `def` it unfolded under `intro` — so the closing tactic's
+`intro` fired on `MemInvariant (…)` itself, stripped the predicate to a
+raw `m' = m`, and every subsequent `apply` matched that instead of the
+computation. Thirteen goals, one cause. A structure is opaque to `intro`
+by construction, which is the property the tactic actually depends on.
+
+> **A tactic that dispatches on a goal's HEAD needs the head to be
+> stable; a `def` that unfolds to a binder has no stable head.** -/
+structure MemInvariant {α : Type} (x : EvalM α) : Prop where
+  /-- Whatever `x` answers, it hands back the memory it was handed. -/
+  out : ∀ (m : Mem) (r : Except Refusal α) (m' : Mem), x m = .ok (r, m') → m' = m
+
+namespace MemInvariant
+
+variable {α β : Type}
+
+theorem pure' (a : α) : MemInvariant (pure a : EvalM α) := by
+  constructor
+  intro m r m' h
+  rw [EvalM.run_pure] at h
+  simp only [Except.ok.injEq, Prod.mk.injEq] at h
+  exact h.2.symm
+
+theorem get' : MemInvariant (get : EvalM Mem) := by
+  constructor
+  intro m r m' h
+  rw [EvalM.run_get] at h
+  simp only [Except.ok.injEq, Prod.mk.injEq] at h
+  exact h.2.symm
+
+theorem throw' (e : Refusal) : MemInvariant (throw e : EvalM α) := by
+  constructor
+  intro m r m' h
+  rw [EvalM.run_throw] at h
+  simp only [Except.ok.injEq, Prod.mk.injEq] at h
+  exact h.2.symm
+
+theorem refuseUB' (f : MemFault) : MemInvariant (refuseUB f : EvalM α) := throw' (.memUB f)
+theorem refuseValue' (u : UB) : MemInvariant (refuseValue u : EvalM α) := throw' (.valueUB u)
+theorem refuseLibc' (n : String) : MemInvariant (refuseLibc n : EvalM α) := throw' (.libc n)
+
+theorem refuseUnsupported' (what : String) :
+    MemInvariant (refuseUnsupported what : EvalM α) := by
+  constructor
+  intro m r m' h
+  rw [EvalM.run_refuseUnsupported] at h
+  simp at h
+
+/-- The composition rule, and the refusal branch is where the layer order
+becomes visible: the head's out-memory is `m` by `hx` applied **to the
+refusal result**, which is exactly the quantifier `MemInvariant` carries. -/
+theorem bind {x : EvalM α} {f : α → EvalM β}
+    (hx : MemInvariant x) (hf : ∀ a, MemInvariant (f a)) : MemInvariant (x >>= f) := by
+  constructor
+  intro m r m' h
+  cases hxm : x m with
+  | error l =>
+      rw [EvalM.run_bind_loud hxm] at h
+      simp at h
+  | ok p =>
+      obtain ⟨r₀, m₀⟩ := p
+      have hm₀ : m₀ = m := hx.out m r₀ m₀ hxm
+      cases r₀ with
+      | error e =>
+          rw [EvalM.run_bind_refused hxm] at h
+          simp only [Except.ok.injEq, Prod.mk.injEq] at h
+          exact h.2.symm.trans hm₀
+      | ok a =>
+          rw [EvalM.run_bind_ok hxm] at h
+          exact ((hf a).out m₀ r m' h).trans hm₀
+
+/-- `map` needs no second opening: it is `pure`-after-`bind`. Present
+because `simp` normalizes `x >>= fun a => pure (g a)` into `g <$> x`, so a
+goal that started as a bind can arrive here wearing the other spelling. -/
+theorem map' {x : EvalM α} (g : α → β) (hx : MemInvariant x) :
+    MemInvariant (g <$> x) := by
+  rw [map_eq_pure_bind]
+  exact bind hx fun _ => pure' _
+
+/-- Reading is invariant, and outside `storeAt` it is the ONLY way this
+block reaches memory at all. -/
+theorem readMem' (f : Mem → MRes α) : MemInvariant (readMem f) := by
+  refine bind get' fun m0 => ?_
+  cases f m0 with
+  | ok a => exact pure' a
+  | error e => exact throw' e
+
+theorem intTyOf' (ty : CType) : MemInvariant (intTyOf ty) := by
+  first | simp only [intTyOf] | rw [intTyOf.eq_def]
+  split
+  · exact pure' _
+  · exact refuseUnsupported' _
+
+theorem truthy' (v : CVal) : MemInvariant (truthy v) := by
+  cases v <;> first | exact pure' _ | exact refuseUB' _
+
+theorem asPtr' (v : CVal) : MemInvariant (asPtr v) := by
+  cases v <;> first | exact pure' _ | exact refuseUnsupported' _ | exact refuseUB' _
+
+theorem asInt' (v : CVal) : MemInvariant (asInt v) := by
+  cases v <;> first | exact pure' _ | exact refuseUnsupported' _ | exact refuseUB' _
+
+theorem loadAt' (p : Ptr) (ty : CType) : MemInvariant (loadAt p ty) := by
+  first | simp only [loadAt] | rw [loadAt.eq_def]
+  split
+  · exact bind (readMem' _) fun _ => pure' _
+  · exact bind (intTyOf' _) fun _ => readMem' _
+
+theorem intBinop' (op : String) (t : IntTy) (a b : Int) :
+    MemInvariant (intBinop op t a b) := by
+  first | simp only [intBinop] | rw [intBinop.eq_def]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseValue' _
+    | exact refuseUB' _
+    | exact refuseUnsupported' _
+
+theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) :
+    MemInvariant (evalArith ctx op lv rv ty) := by
+  cases lv <;> cases rv <;>
+    first | simp only [evalArith] | rw [evalArith.eq_def]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseValue' _
+    | exact refuseUB' _
+    | exact refuseUnsupported' _
+    | exact intBinop' _ _ _ _
+    | exact bind (readMem' _) fun _ => pure' _
+
+end MemInvariant
+
+/-- Close a `MemInvariant` goal for a computation assembled out of the
+memory-READING primitives alone.
+
+Nothing here can unfold a recursive function by accident: the five
+functions of the mutual block are well-founded definitions and therefore
+irreducible, so an `evalExpr` obligation is closed by `assumption` from an
+induction hypothesis, or it is not closed at all.
+
+**Every `apply` runs `with_reducible`, and that is a COST fix, not a
+style one.** At default transparency a failing `apply MemInvariant.evalArith'`
+delta-unfolds `evalArith` and matches its nineteen-way `String` match
+against the goal before giving up — a search this tactic runs at every one
+of its steps, on every goal. Tenure 2 died of it: two `(deterministic)
+timeout at whnf` errors on the two arms whose goals carry the deepest
+terms (`sizeof`'s `Option.bind` through an opaque `Layout` field, and a
+`String.toInt?`). At reducible transparency each of these lemmas matches
+only when the goal's head IS the constant it names, so every failure is
+one comparison instead of one unfolding.
+
+> **A tactic assembled from `first | apply …` pays its whole alternative
+> list at DEFAULT transparency on every goal; if the alternatives name
+> non-reducible constants, the list is a search over their bodies.**
+
+**`contradiction` is in the list for the UNREACHABLE arms.** When a clause
+is opened through `eq_def` rather than its per-clause equation, `split`
+produces one goal per arm of the WHOLE match — nineteen of which carry a
+hypothesis equating two different constructors. They are not hard goals;
+they simply have to be recognised as impossible, and `contradiction` is
+the tactic that does it by `noConfusion`. Without it a fallback path that
+opens more than it needs to leaves goals nothing else in the list can
+speak to. -/
+macro "mem_inv" : tactic => `(tactic|
+  repeat (any_goals (first
+    | assumption
+    | contradiction
+    | (with_reducible apply MemInvariant.pure')
+    | (with_reducible apply MemInvariant.get')
+    | (with_reducible apply MemInvariant.throw')
+    | (with_reducible apply MemInvariant.refuseUB')
+    | (with_reducible apply MemInvariant.refuseValue')
+    | (with_reducible apply MemInvariant.refuseLibc')
+    | (with_reducible apply MemInvariant.refuseUnsupported')
+    | (with_reducible apply MemInvariant.readMem')
+    | (with_reducible apply MemInvariant.intTyOf')
+    | (with_reducible apply MemInvariant.truthy')
+    | (with_reducible apply MemInvariant.asPtr')
+    | (with_reducible apply MemInvariant.asInt')
+    | (with_reducible apply MemInvariant.loadAt')
+    | (with_reducible apply MemInvariant.intBinop')
+    | (with_reducible apply MemInvariant.evalArith')
+    | (with_reducible apply MemInvariant.bind)
+    | (with_reducible apply MemInvariant.map')
+    | (simp only [letFun])
+    | intro _
+    | split)))
+
+/-- Open `evalExpr`'s clause at a KNOWN head. Two spellings because Lean
+generates per-clause equations where the patterns are constructors and a
+GUARDED default where they are not, and only one of the two fires in each
+case; if neither opens the clause the proof below fails loudly. -/
+macro "open_eval" : tactic => `(tactic| first | simp only [evalExpr] | rw [evalExpr.eq_def])
+
+/-- The same for `evalLValue`, whose catch-all *is* the guarded default. -/
+macro "open_lvalue" : tactic => `(tactic| first | simp only [evalLValue] | rw [evalLValue.eq_def])
+
+/-! ### The address helpers
+
+Stated with their sub-evaluations' invariance as HYPOTHESES, so neither
+needs an induction of its own: both take strict SUBTERMS, which is the
+same property that made the termination measure work. -/
+
+theorem MemInvariant.memberAddr' {ctx : Ctx} {base : Expr} {field : String} {arrow : Bool}
+    (hv : MemInvariant (evalExpr ctx base)) (hl : MemInvariant (evalLValue ctx base)) :
+    MemInvariant (memberAddr ctx base field arrow) := by
+  first | simp only [memberAddr] | rw [memberAddr.eq_def]
+  mem_inv
+
+theorem MemInvariant.indexAddr' {ctx : Ctx} {base idx : Expr} {ty : CType}
+    (hb : MemInvariant (evalExpr ctx base)) (hi : MemInvariant (evalExpr ctx idx)) :
+    MemInvariant (indexAddr ctx base idx ty) := by
+  first | simp only [indexAddr] | rw [indexAddr.eq_def]
+  mem_inv
+
+/-! ### THE THEOREM
+
+Strong induction on `Expr.size`, and the two functions are proved TOGETHER
+because they are defined together. `evalArgs` never appears: `nodeIsPure`
+makes a `call` node impure, so the arm that would reach it is vacuous —
+which is the honest shape, since a call is precisely what this theorem
+cannot speak for. -/
+
+-- A twenty-constructor case analysis, each arm running a tactic search: the
+-- default 200 000 is a PER-DECLARATION budget sized for ordinary proofs, and
+-- this declaration is twenty of them. The budget is not the fix — the fix is
+-- `mem_inv`'s `with_reducible`, which is what made the search cheap; this only
+-- stops the sum of twenty cheap searches from hitting a single-proof ceiling.
+set_option maxHeartbeats 1000000 in
+private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size ≤ n →
+    Expr.isPure e = true →
+    MemInvariant (evalExpr ctx e) ∧ MemInvariant (evalLValue ctx e) := by
+  intro n
+  induction n with
+  | zero =>
+      intro e he _
+      exact absurd (Expr.size_pos e) (by omega)
+  | succ n ih =>
+      intro e he hp
+      have hnode := Expr.nodeIsPure_of_isPure hp
+      cases e with
+      | intLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | charLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | strLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | floatLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | declRef _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | typeTrait _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | constExpr _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | paren s _ _ =>
+          obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_paren] at he; omega)
+            (Expr.isPure_paren hp)
+          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | implicitCast _ s _ _ =>
+          obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_implicitCast] at he; omega)
+            (Expr.isPure_implicitCast hp)
+          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | cast _ s _ _ =>
+          obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_cast] at he; omega)
+            (Expr.isPure_cast hp)
+          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | member b f a _ _ =>
+          obtain ⟨i1, i2⟩ := ih b (by simp only [Expr.size_member] at he; omega)
+            (Expr.isPure_member hp)
+          have hma : MemInvariant (memberAddr ctx b f a) := MemInvariant.memberAddr' i1 i2
+          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | index b i ty _ =>
+          obtain ⟨b1, _⟩ := ih b (by simp only [Expr.size_index] at he; omega)
+            (Expr.isPure_index_base hp)
+          obtain ⟨i1, _⟩ := ih i (by simp only [Expr.size_index] at he; omega)
+            (Expr.isPure_index_idx hp)
+          have hia : MemInvariant (indexAddr ctx b i ty) := MemInvariant.indexAddr' b1 i1
+          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | cond cc tt ee _ _ =>
+          obtain ⟨c1, _⟩ := ih cc (by simp only [Expr.size_cond] at he; omega)
+            (Expr.isPure_cond_c hp)
+          obtain ⟨t1, _⟩ := ih tt (by simp only [Expr.size_cond] at he; omega)
+            (Expr.isPure_cond_t hp)
+          obtain ⟨e1, _⟩ := ih ee (by simp only [Expr.size_cond] at he; omega)
+            (Expr.isPure_cond_e hp)
+          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | binop op l r _ _ =>
+          obtain ⟨l1, _⟩ := ih l (by simp only [Expr.size_binop] at he; omega)
+            (Expr.isPure_binop_l hp)
+          obtain ⟨r1, _⟩ := ih r (by simp only [Expr.size_binop] at he; omega)
+            (Expr.isPure_binop_r hp)
+          simp only [Expr.nodeIsPure] at hnode
+          refine ⟨?_, by open_lvalue; mem_inv⟩
+          -- The `=` arm is the one clause of this constructor that stores,
+          -- and `hnode` is exactly the fact that excludes it.
+          open_eval
+          repeat (any_goals split)
+          all_goals first | (mem_inv; done) | simp_all
+      | unop op s post _ _ =>
+          obtain ⟨s1, s2⟩ := ih s (by simp only [Expr.size_unop] at he; omega)
+            (Expr.isPure_unop hp)
+          simp only [Expr.nodeIsPure] at hnode
+          constructor
+          · -- `++`/`--` store; `hnode` excludes both spellings.
+            open_eval
+            repeat (any_goals split)
+            all_goals first | (mem_inv; done) | simp_all
+          · open_lvalue
+            repeat (any_goals split)
+            all_goals first | (mem_inv; done) | simp_all
+      -- The five impure heads. Each arm is vacuous, and each is vacuous for
+      -- a DIFFERENT reason worth keeping: a call is opaque; an assignment
+      -- and an increment store; aggregate initialization writes through the
+      -- layout; an out-of-tier node is unknown rather than harmless.
+      | call _ _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | compoundAssign _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | initList _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | compoundLit _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | unsupported _ _ _ => simp [Expr.nodeIsPure] at hnode
+
+/-- **RUNG A.** A pure expression's evaluation leaves memory exactly as it
+found it — on the value branch AND on the refusal branch. -/
+theorem evalExpr_memInvariant (ctx : Ctx) (e : Expr) (h : Expr.isPure e = true) :
+    MemInvariant (evalExpr ctx e) :=
+  (memInvariant_core ctx e.size e (Nat.le_refl _) h).1
+
+/-- The same in LVALUE position: taking an address does not write either. -/
+theorem evalLValue_memInvariant (ctx : Ctx) (e : Expr) (h : Expr.isPure e = true) :
+    MemInvariant (evalLValue ctx e) :=
+  (memInvariant_core ctx e.size e (Nat.le_refl _) h).2
+
+/-- **The `J.1(16)`-facing corollary**: an argument LIST whose every member
+is pure is evaluated without touching memory. At a call site whose
+siblings are pure, the effectful argument is therefore the only writer —
+whichever order §6.5.3.3p10 lets the implementation choose.
+
+That is the SIBLING half, and it is the half a syntax check decides. The
+other half — that the one effectful argument does not write what the
+siblings READ — is Rung B, and nothing here is evidence for it. -/
+theorem evalArgs_memInvariant (ctx : Ctx) : ∀ (es : List Expr),
+    es.all Expr.isPure = true → MemInvariant (evalArgs ctx es) := by
+  intro es
+  induction es with
+  | nil =>
+      intro _
+      first | simp only [evalArgs] | rw [evalArgs.eq_def]
+      exact MemInvariant.pure' _
+  | cons e es ihs =>
+      intro h
+      simp only [List.all_cons, Bool.and_eq_true] at h
+      first | simp only [evalArgs] | rw [evalArgs.eq_def]
+      exact MemInvariant.bind (evalExpr_memInvariant ctx e h.1) fun _ =>
+        MemInvariant.bind (ihs h.2) fun _ => MemInvariant.pure' _
+
+#print axioms evalExpr_memInvariant
+#print axioms evalLValue_memInvariant
+#print axioms evalArgs_memInvariant
+
 end LeanModels.C.C23

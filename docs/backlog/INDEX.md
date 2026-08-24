@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**295 entries across 17 lanes.** Regenerate with
+**298 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -56,8 +56,11 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-softfloat-16` |  | THE DRIFT GUARD FIRED ON ITS OWN AUTHOR, and the fix is a better instrument | softfloat |
 | `2026-08-24-softfloat-15` |  | `roundQ` LANDS AS AN ALGORITHM WITH EVIDENCE, and says so | softfloat |
 | `2026-08-24-softfloat-14` |  | THE DECLARATIVE ROUNDING SPEC, and it is the half that stops `op_correct` being a tautology | softfloat |
+| `2026-08-24-c-14` | INBOUND | INBOUND FROM THE C LANE: QoL lane's to renumber or close | qol |
 | `2026-08-24-sunfish-rtrack-13` |  | RUNG 3 closes, and rung 5 gets its floor | sunfish-rtrack |
+| `2026-08-24-c-13` | INBOUND | INBOUND FROM THE C LANE: QoL lane's to renumber or close | qol |
 | `2026-08-24-sunfish-rtrack-12` |  | RUNG 1: the flagship is TYPED, and it assembles | sunfish-rtrack |
+| `2026-08-24-c-12` |  | RUNG A: the ∀-order domain was never 215 sites, and measuring it discharged 208 of them | c |
 | `2026-08-24-sunfish-rtrack-11` |  | THE CHAIN DOCUMENT: the flagship becomes a distance | sunfish-rtrack |
 | `2026-08-24-wasm-8` |  | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` |  | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
@@ -265,6 +268,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-architecture-3` |  | NEW LAW — a verdict vocabulary that cannot express a legitimate state fails BOTH ways | architecture |
 | `2026-08-22-wasm-2` |  | INCH 1, STEP 1: the four branches are **ISABELLE**, none is merged, and they prove the **ENTIRE LADDER** — so the engagement is a PORT, not a discovery | wasm |
 | `2026-08-22-sunfish-rtrack-2` |  | PROPOSAL: one round vocabulary for both folds | sunfish-rtrack |
+| `2026-08-22-softfloat-2` | INBOUND | INBOUND FROM THE SOFTFLOAT LANE: C lane's to triage | c |
 | `2026-08-22-qol-2` |  | `docs/statement-cookbook.md`: 21 claim shapes, each with the incident that minted it | qol |
 | `2026-08-22-pycomplete-2` |  | the §9.4 DIVERGE/DIVERGED violation, closed | python-completeness |
 | `2026-08-22-lean-tier-2` |  | M2 OBLIGATION CENSUS: 24 sorries are 3 missing DEFINITIONS, and two of the three are already being written by strangers | lean-tier |
@@ -291,7 +295,6 @@ and every existing `§Lnn` reference still resolves there.
 | `SPEC` |  | the completion metric (standing; updated every landing) | analog |
 | `INBOUND` | INBOUND | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
 | `INBOUND` | INBOUND | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
-| `INBOUND` | INBOUND | `2026-08-22-softfloat-2` (C lane's to triage) | c |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
 | `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
 | `G7` |  | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
@@ -316,4 +319,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**27 heading(s) do not use the §9.5 id scheme** and sort last.
+**26 heading(s) do not use the §9.5 id scheme** and sort last.

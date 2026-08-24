@@ -335,7 +335,7 @@ is the answer. The line, in the standard's own terms:
 
 | J.1 | item | clause | decision | status |
 | ---: | --- | --- | --- | --- |
-| **(16)** | order of evaluation of a call's function designator, arguments and their subexpressions | §6.5.3.3 | **∀ order** (Thomas's ruling); canonical = left-to-right for witness extraction | domain measured: **7 sites** |
+| **(16)** | order of evaluation of a call's function designator, arguments and their subexpressions | §6.5.3.3 | **∀ order** (Thomas's ruling); canonical = left-to-right for witness extraction | reachable; **rung A landed** — siblings proved write-free, domain **7 of 215** multi-argument sites |
 | **(15)** | order of evaluation of subexpressions, and the order in which side effects take place | §6.5.1 | **∀ order**, same discipline | **0** operators with effects in both operands |
 | **(10)** | value of padding bytes when storing into a structure | §6.2.6.1 | **modeling choice: `indet`** — the byte lattice already has the value, and reading one refuses | armed, fires on 0 corpus sites |
 | **(13)** | value of padding bits in an integer representation | §6.2.6.2 | not reachable — the value model stores a mathematical integer, never a representation | not applicable |
@@ -369,6 +369,41 @@ the expression layer's mutual block; the handler takes `List CVal`) makes
 the domain reachable, and only then is the obligation worth stating. This
 is `2026-08-23-c-5`'s law applied to a quantifier: **a claim that cannot
 fail is not a check.**
+
+**RUNG A, LANDED: the SIBLINGS are proved write-free, and that is half the
+obligation.** The per-site discharge above is a CONJUNCTION — *"can this
+callee write what these siblings read"* — and only its second half needs an
+effect summary. `LeanModels/C/C23/Expr.lean` now carries `Expr.isPure`, a
+syntactic predicate over every node of a term, and proves
+`evalExpr_memInvariant`: **a pure expression's evaluation returns the memory
+it was handed, on the value branch and on the refusal branch alike.** The
+list form, `evalArgs_memInvariant`, is the one this register consumes.
+
+The predicate also RE-MEASURES the domain, and it is the model's own
+instrument this time rather than the census's
+(`Examples/c/sunfish/expr.lean`, and `harness/c_construct_census.py` agrees):
+
+| | |
+| --- | ---: |
+| call sites | **320** |
+| …taking two or more arguments — the sites §6.5.3.3p10 can order at all | **215** |
+| …of those, every argument PURE | **208** |
+| …of those, at least one argument impure — **the J.1(16) domain** | **7** |
+| …with TWO impure arguments | **0** |
+| impure node kinds occurring in ANY call argument, corpus-wide | **1** — `CallExpr`, ten times |
+
+**208 of the 215 multi-argument sites need no effect summary at all**: with
+every argument write-free, no order can differ, because no order can write.
+So the ∀-order obligation's real domain was never 215 and is not 320 — it is
+the same **7**, and rung A is what makes that a proved reduction rather than
+a plausible one. The residue is rung B: at each of the seven, one nested
+call, and the question of whether it writes what its siblings read.
+
+**AND ONE THING RUNG A DOES NOT GIVE, named so nobody reads it in.** Even
+where every argument is pure, the two orders can still disagree about
+*which refusal is reported* when more than one argument would refuse.
+Order-independence holds for the value and for the memory; the observable
+that rung B has to name is therefore not "the run", it is "the answer".
 
 **Items not yet reached** are not in the register. An item enters when an
 inch touches it, and it is decided then — never silently.

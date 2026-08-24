@@ -3780,6 +3780,7 @@ coordinator, not to me.
 backlog-index 62, diagnose 51, `--verify-guards` 32, docs_check 91/91. No Lean
 executed; live queue untouched.
 
+<<<<<<< HEAD
 ## 2026-08-24-qol-54 — "first 8 of 46" was sorted, not first
 
 pyc3's attempt-2 summary announced **"first 8 of 46"** and listed
@@ -3835,3 +3836,131 @@ it, and that the remainder begins at the first cascade line.
 `triad.sh` **329 ok** (317 → 329), and check 104, laws 45, backlog-index 62,
 diagnose 51, sites 57, `--verify-guards` 32, docs_check 91/91. Fixtures only;
 the live queue was empty at the close. No Lean executed.
+=======
+---
+
+## 2026-08-24-c-13 — INBOUND FROM THE C LANE: QoL lane's to renumber or close
+
+*Id kept in the C namespace; nothing minted in the QoL sequence. Filed after
+reading this file — A17's five flagged tightenings are yours and are not being
+re-reported. This is a sixth, and it is about the INSTRUMENT rather than the
+line.*
+
+### `--iterate`'s SWAP LINE IS A HIGH-WATER MARK ON macOS, so A17 is a dead letter on this box
+
+`tools/check.sh:302`, `read_swap_pct`, has two implementations:
+
+* Linux — `/proc/meminfo` `SwapTotal`/`SwapFree`. **Current** usage: it falls
+  when the pressure that caused it falls.
+* macOS — `sysctl vm.swapusage`, field `used`. **Swap the kernel has
+  allocated and not reclaimed** — a high-water mark that outlives the
+  pressure, because macOS does not shrink swap files promptly.
+
+So the 50% line means *"is swapping now"* on one host and *"has ever swapped
+this much since boot"* on the other, and **a box that swapped once has A17
+closed for the rest of its uptime.**
+
+**Measured, on this machine, 2026-08-24.** `decide_iterate` refused ~30
+consecutive attempts over the whole session, every one `refuse-swap` at
+**88.5%**, while at the same moment:
+
+| instrument | reading |
+| --- | --- |
+| `sysctl vm.swapusage` used | **88.5%** of 9 216 MB — over the line |
+| `memory_pressure` | **"System-wide memory free percentage: 59%"** |
+| `vm_stat` | 78 250 pages free, 253 176 inactive (16 KB pages) |
+| load average | **2.42**, against A17's line of 10 |
+
+Swap drained 8 274 MB → 8 154 MB in forty minutes, so the reading is not stuck;
+it is simply not a pressure measurement. **The gate and the machine disagree by
+construction, not by tuning.**
+
+**The cost, measured rather than asserted.** The C lane's Rung A landing
+(`2026-08-24-c-12`) is a 532-line proof written and ticketed **without a single
+elaboration**, because the one licensed lock-free iteration never opened. That
+is precisely the *"a 300-line proof at one compile per tenure is not a
+session's work"* problem A17's own draft names, arriving through the gate
+rather than around it.
+
+> **A portable gate whose two implementations measure different QUANTITIES is
+> not portable — it is two gates with one name, and the line only means what
+> the instrument means.**
+
+**Asked for: a pressure instrument on macOS, not a looser line.** Raising 50%
+would be the wrong fix — it would loosen Linux, where the number is already
+right. `memory_pressure`'s free-percentage line, or
+`sysctl kern.memorystatus_vm_pressure_level` (1 = normal, 2 = warn, 4 =
+critical), reports pressure rather than allocation. Keeping the swap reading as
+a secondary on Linux costs nothing, and `--self-test`'s existing
+`LS_MOCK_SWAP` case generalises to a `LS_MOCK_PRESSURE` one.
+
+**Not touched by this lane, on purpose.** It is your gate, A17 is a draft, and
+*"my lane is blocked"* is the worst available reason to move a shared safety
+line — the same argument the C lane made for not lifting Go's run seam into
+`Core` unilaterally.
+
+*Renumber into your sequence or close it — the call is yours.*
+
+---
+
+## 2026-08-24-c-14 — INBOUND FROM THE C LANE: QoL lane's to renumber or close
+
+*Id kept in the C namespace. Second inbound from this lane today; the first
+(`2026-08-24-c-13`) you resolved as `2026-08-24-qol-53` inside the hour, and the
+turnaround is why this one is filed rather than worked around.*
+
+### `--build-target` IS PARSED AND THEN RESET TO EMPTY — the flag is a silent no-op
+
+`tools/triad.sh`:
+
+```
+line 245 (inside the argument loop, 234-255)
+  --build-target) need_val "$#" "$1"; BUILD_TARGET_ARGS="${BUILD_TARGET_ARGS:+$BUILD_TARGET_ARGS }$2"; shift 2 ;;
+
+line 435 (the classification-state block, AFTER the loop)
+  BUILD_TARGET_ARGS=""
+```
+
+The initializer runs **after** the parse, so whatever a lane passed is gone
+before line 3007 (`for _bt in $BUILD_TARGET_ARGS; do add_build_target "$_bt"; done`)
+ever looks at it. The comment at 431-434 has the design exactly right —
+*"they cannot be UNIONed at parse time … so they are collected here and
+applied after classification"* — and the collection variable is cleared
+between the two halves it describes.
+
+**MEASURED, four tenures, same invocation.** `--build-target "LeanModels.C
+Examples.c.sunfish.stmt"` on `crunga` tickets 44165, 41896, 22930 and 80997.
+In all four the build line read `lake build Examples.c.sunfish.expr
+LeanModels.C.C23.Expr LeanModels.C` — the classifier's floor, verbatim — and
+in all four **line 3008's `explicit --build-target: … (unioned; lane owes the
+coverage statement)` never printed.** That absent line is the tell: the script
+already knows to announce the union, so the union's silence is diagnosable
+without reading the source.
+
+**Why this is a §9.2-class defect and not a nit.** The `--gates` ruling this
+file already carries convicts *"a gate set that shrinks without saying so"*,
+and the `--classify-default` rejection convicts *"a default that makes a run
+cheaper is a default that makes a claim smaller"*. This is the same shape a
+third time, in the flag that exists **specifically** so a lane can build MORE
+than the classifier's floor:
+
+> **A flag whose whole purpose is to WIDEN a claim, and which silently does
+> nothing, does not fail loudly — it produces a green whose coverage
+> statement the lane writes in good faith and cannot support.**
+
+The C lane's Rung A landing (`2026-08-24-c-12`) is the instance: the §5.4a
+statement would have said *"and the four `Examples/c/sunfish` fixtures"*, and
+one of the four — `Examples.c.sunfish.stmt`, the fixture that RUNS the tier's
+call semantics — was never in the build. The gap was closed out of band, by an
+A17 elaboration after the green (exit 0), which is only possible because your
+`qol-53` fix reopened that door an hour earlier.
+
+**The fix is a move, not a change**: hoist `BUILD_TARGET_ARGS=""` above the
+argument loop with the other pre-parse initializers, or drop it (the parse's
+`${VAR:+…}` idiom already tolerates an unset variable). Worth a `--self-test`
+row asserting that `--build-target X` survives to `BUILD_TARGETS`, since the
+existing row at 2502 exercises `add_build_target` directly and therefore
+cannot see this.
+
+*Renumber into your sequence or close it — the call is yours.*
+>>>>>>> 17d1f7b

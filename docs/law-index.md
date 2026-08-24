@@ -357,6 +357,13 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-306 | RETENTION against a dedup sweep needs the design reason stated AT THE ROW | `docs/family-architecture.md §5.3` |
 | MEAS-307 | price a LIFT against the DEFINITION's surface, not your own call sites | `docs/family-architecture.md §5.4a` |
 | MEAS-308 | LIFTED-VS-TIER-BOUND is decided by grep — does the PROOF mention a tier type? | `docs/family-architecture.md §3.4` |
+| MEAS-309 | a RELAYED number without its instrument name re-creates the defect the instrument fixed | `docs/family-architecture.md §7.1a` A17 |
+| MEAS-310 | a retry loop that REBASES must re-run the closure check on each new base | `docs/family-architecture.md §5.4b` |
+| MEAS-311 | design rows against the TWO MOST NATURAL WRONG implementations, before either is written | `docs/family-architecture.md §5.6` |
+| MEAS-312 | a census may DISSOLVE a planned rung — the ordering was not a choice | `docs/family-architecture.md §9.0b` |
+| MEAS-313 | an ASSUMED BLOCKER is a claim about the corpus, as checkable as the count | `docs/family-architecture.md §9.0b` |
+| MEAS-314 | a census artifact's value includes every FUTURE instance of the traps it recorded | `docs/family-architecture.md §5.4b` |
+| MEAS-315 | the `+0`-in-plan control extends to a CHAIN — each rung discloses its zero, the chain says where the number moves | `docs/family-architecture.md §5.4b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

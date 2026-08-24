@@ -6444,3 +6444,90 @@ type, not a reminder — here, a grep, not a maxim.*
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-303 … MEAS-308, OPS-87 … OPS-89**.
+
+## 2026-08-24-architecture-76 — A relayed number without its instrument re-creates the defect
+
+Eight from ES (register pushed `c49c244`+`6e85d56`), Go's `fmt` census, and
+Ada's inch-3 census (merged `1260af7`). **One is a correction against the
+coordinating role, and it lands on the amendment this lane wrote yesterday.**
+
+**(5) §7.1a A17 — THE FIX'S OWN FAILURE MODE, ONE DAY LATER, ON THE RELAY.** A
+relayed *"pressure ~31%"* was **`memory_pressure`'s FREE percentage — and
+stale** — while the live reading was **65–70% in use, `kern_level 2`.** Ada
+**measured with the landed instrument before acting** and **declined the spine
+build.**
+
+> **A FREE percentage read as a PRESSURE percentage — same class, opposite
+> polarity.**
+
+**The instrument was right; the prose dropped the label.** Consumer-side
+corollary, which the every-line-names-its-instrument rule was missing:
+
+> **A relayed number without its instrument name RE-CREATES the defect the
+> instrument fixed.**
+
+**A bare percentage is a measurement's shadow — and the shadows of *free* and
+*in-use* are the same shape.** The original defect was a proxy that could not
+come down; **this is a correct reading transported without the sentence saying
+which way it points.** *Fixing an instrument does not fix the channel that
+quotes it.* And the compliant behaviour is the row: **the lane did not act on
+the relay** — *a number arriving without its instrument is a prompt to measure,
+never a measurement.*
+
+**(1) §5.4b — A RETRY LOOP THAT REBASES MUST RE-RUN THE CLOSURE CHECK**, self-
+reported. The loop re-based without re-running the transfer test, pushing atop
+Core's 183-insertion seam lift **on a stale check** — *"low risk, established
+afterwards, is not the transfer test."*
+
+> **A loop is a chain, and every iteration's guard must re-fire.**
+
+**The subtler sibling of `;`-versus-`&&`**: there the verdict was never wired to
+the next step; **here it is wired correctly and computed against a base that no
+longer exists.** *The check ran, passed, and was true of a tree nobody pushed* —
+the wrong-tree family inside a shell loop, invisible because **every individual
+iteration looks disciplined.** The repair is the compliant shape: a verification
+triad **on the pushed state**, which *does not restore the original guarantee —
+it replaces it with a weaker, stated one.*
+
+**(2) §5.6 — ROWS DESIGNED AGAINST IMPLEMENTATIONS NOT YET WRITTEN.** The default
+fires on **`undefined`, not absence** (§8.6.3 tests after the `Get`), and the
+default is **LAZY** (observable only through side effects).
+
+> **Rows built to kill the two most natural WRONG implementations, before either
+> is written.**
+
+***Ask what the wrong model would permit*, run FORWARD** — that method chooses
+between shapes a lane is holding; this **enumerates the shapes a lane will reach
+for.** The tell: it is the row that **cannot be derived from the spec's happy
+path**, only from asking *"what would I have written?"*
+
+**(3,4) §9.0b — A CENSUS CAN DISSOLVE A RUNG, AND AN ASSUMED BLOCKER CAN BE
+ZERO.** Every `fmt` entry point is variadic, so **`fmt` without variadics is not
+a rung at all** — *the census did not rank two options, it dissolved one.* **A
+third thing a scheduling census returns**, beside *worth more* and *already
+done*: **the candidate was never separable from its prerequisite.** And
+variadics are worth **17×** (+52 vs +3), with **38.9% of `fmt`'s selections
+Fprint-family adding +0** — *interfaces were not the binding constraint, and the
+assumption said they were.* **An assumed blocker is a claim about the corpus, as
+checkable as the count.** Prediction called: **687 → 739 / 594 → 644.**
+
+**(6,7,8) §5.4b — THREE FROM ADA.** The **census artifact paid a dividend**: the
+zero-arg `AssocList`-as-leaf trap is **inch 2's encoding trap recurring, caught
+for free** — *a census artifact's value includes every future instance of the
+traps it recorded*, and **a trap in a landing message is learned by whoever reads
+it, while a trap in the census output is applied by whoever runs it.**
+
+**Weight is not where a reader would guess**: 6.4.1 Parameter Associations
+(51 ¶, **271 135 nodes**) outweighs Calls (32 ¶) and Returns (35 ¶) — *the work
+is in the arguments, not the call* — and **both standing-empty refusal classes
+get their first sites at the same subclause, exactly as inch 2's statable-empty
+predicted.** *An empty gate recorded with its reason is a pointer forward; the
+same gate recorded as "no content yet" is rediscovered from scratch.*
+
+**And the `+0` control extended to a CHAIN**: inches 3, 4, 5 each **necessary**,
+none **sufficient**, the row moves at **6**, every zero pre-stated. *The only
+honest way to run three consecutive zero-reach inches* — and **falsifiable: if
+the row does not move at 6, the chain's claim was wrong.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-309 … MEAS-315**.

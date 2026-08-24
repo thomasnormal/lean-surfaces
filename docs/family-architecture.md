@@ -7311,6 +7311,28 @@ verify-then-push chain **printed `DRIFT` and pushed anyway.**
 > **A CHECK WHOSE FAILURE DOES NOT STOP THE NEXT STEP IS NOT A GATE — IT IS A
 > COMMENT.**
 
+**AND ITS SECOND GENUS-MEMBER, SELF-REPORTED: A RETRY LOOP THAT REBASES MUST
+RE-RUN THE CLOSURE CHECK ON EACH NEW BASE** (ES, pushed `c49c244`+`6e85d56`).
+The fetch-rebase-push loop **re-based without re-running the transfer test**,
+pushing atop **Core's 183-insertion seam lift on a stale check.** The lane's own
+words: *"low risk, established afterwards, is not the transfer test."*
+
+> **A LOOP IS A CHAIN, AND EVERY ITERATION'S GUARD MUST RE-FIRE — or the loop
+> silently converts a VERIFIED push into an UNVERIFIED one.**
+
+**Same genus as `;`-versus-`&&` and the more subtle member.** There the guard's
+verdict was **never wired to the next step**; here it is wired correctly **and
+computed against a base that no longer exists.** *The check ran, passed, and was
+true of a tree nobody pushed* — which is the wrong-tree family (§5.4a-i)
+arriving inside a shell loop, and it is invisible precisely because **every
+individual iteration looks disciplined.**
+
+**And the repair is the compliant shape**: the lane **fired a verification triad
+on the pushed state** rather than leaving the gap open, or arguing it closed.
+*A verification run after the fact does not restore the original guarantee — it
+replaces it with a weaker, stated one, which is the honest disposition when the
+stronger one has already been spent.*
+
 **Every chain converted, and the corrective push itself `&&`-gated**, which is
 the detail that makes it a fix rather than a repair.
 
@@ -7498,6 +7520,54 @@ tree-wide red; an instrument that genuinely needs it and merely **skips** turns
 an outage into **silence** (MEAS-9). **The purge is the test that separates
 them**, and this is the first time this tree has had one run over a full
 instrument set.
+
+**AND THE CENSUS ARTIFACT PAID A DIVIDEND — a trap caught FOR FREE** (Ada inch
+3, `1260af7`). The **zero-arg `AssocList`-as-leaf** trap is **inch 2's encoding
+trap RECURRING**, and it was caught **from the census artifact** rather than
+re-discovered.
+
+> **Inch 2 paid to learn it once; inch 3 gets it free — which is what the census
+> artifact is FOR.**
+
+> **A census artifact's value includes EVERY FUTURE INSTANCE of the traps it
+> recorded.**
+
+**Which is the argument for the artifact over the finding.** A trap written into
+a landing message is learned by whoever reads that message; **a trap encoded in
+the census output is applied by whoever runs the census** — and the second
+population is the one that keeps growing.
+
+**AND THE WEIGHT IS NOT WHERE A READER WOULD GUESS.** **6.4.1 Parameter
+Associations (51 ¶, 271 135 nodes)** outweighs **Subprogram Calls (32 ¶)** and
+**Returns (35 ¶)**:
+
+> **The work is in the ARGUMENTS, not the CALL.**
+
+**And BOTH standing-empty refusal classes** — `orderDependence` and
+`undefined`/Erroneous — **get their first real sites at the same subclause,
+exactly as inch 2's statable-empty predicted.**
+
+> **A gate empty FOR A STATABLE REASON named, in advance, the inch that would
+> fill it — and the prediction is now fulfilled.**
+
+**That is the statable-empty disposition earning its keep.** An empty gate
+recorded with *"the subject is refused elsewhere"* is a **pointer forward**; the
+same gate recorded as *"no content yet"* would have been **rediscovered from
+scratch** when the sites arrived. *The difference is one sentence at the time,
+and a whole re-derivation later.*
+
+**AND A +0 STATED ACROSS A MULTI-INCH CHAIN, with a NECESSITY argument.** Inches
+**3, 4 and 5 are each NECESSARY and none SUFFICIENT**; the row moves at **6** —
+and **each inch's zero is pre-stated.**
+
+> **The `+0`-in-plan control extended from one inch to a CHAIN: every rung
+> discloses its own zero, and the chain discloses where the number moves.**
+
+**Which is the only honest way to run three consecutive zero-reach inches.**
+Each one alone looks like a lane not delivering; **the necessity chain is what
+distinguishes three inches of no progress from three quarters of a rung** — and
+it is falsifiable, because *if the row does not move at 6, the chain's claim was
+wrong and the plan owes an explanation.*
 
 **AND A GATE CAN BE EMPTY FOR A STATABLE REASON, which is a fourth thing an
 empty gate can mean** (Ada inch 2). The `orderDependence` gate **has no
@@ -7949,6 +8019,31 @@ model — but **a lane reading "8 rows" as strength has read the wrong number**,
 and the number that answers the question is *how many rows change verdict when
 the model is perturbed.* **§5.3's non-vacuity discipline, used as a measuring
 instrument rather than as a hygiene check.**
+
+**AND A ROW CAN BE DESIGNED AGAINST AN IMPLEMENTATION THAT HAS NOT BEEN WRITTEN
+YET** (ES, node-verified). Two discriminators for object destructuring, **both of
+the passes-every-value-test-and-fails-this-one shape:**
+
+* **the default fires on `undefined`, NOT on absence** — §8.6.3 tests **after
+  the `Get`**, never `HasProperty`, so **the natural absence-based
+  implementation fails `{a=5} = {a:undefined}`**;
+* **the default is LAZY** — observable only through **side effects**, so **a
+  compute-then-override implementation passes everything else.**
+
+> **Rows built to kill the TWO MOST NATURAL WRONG IMPLEMENTATIONS, before either
+> is written.**
+
+**This is *ask what the wrong model would permit* run FORWARD.** That method
+picks between two candidate shapes a lane is holding; **this one enumerates the
+shapes a lane is LIKELY TO REACH FOR and pre-loads the rows that refute them.**
+The cost is the same census either way — *and the difference is whether the
+discriminating row exists before or after somebody writes the plausible thing.*
+
+**The tell that a discriminator is of this kind**: it is the row that **cannot
+be derived from the spec's happy path**, only from asking *"what would I have
+written?"* — `{a:undefined}` and a side-effecting default are both **shapes no
+value-oriented test suite produces**, which is exactly why the natural
+implementation survives every other row.
 
 **AND A FOURTH TIER SITS ATOP IT — THE ROW THAT KILLS TWO WRONG MODELS AT ONCE,
 IN OPPOSITE DIRECTIONS** (Go, `da9a7bc`, on master). `runtime.printuint`'s array
@@ -9167,6 +9262,33 @@ economics set by a proxy that could only ever ratchet.
 
 > **A REFUSAL GATE WHOSE INSTRUMENT MEASURES A MONOTONE PROXY CONVERTS A
 > TRANSIENT CONDITION INTO A PERMANENT ONE.**
+
+**AND THE FIX'S OWN FAILURE MODE ARRIVED WITHIN A DAY, ON THE RELAY RATHER THAN
+THE INSTRUMENT** (Ada's inch-3 census, merged `1260af7`; **fourth coordinator
+hypothesis killed today**). A relayed *"pressure ~31%"* was **`memory_pressure`'s
+FREE percentage — and stale** — while the live reading was **65–70% in use,
+`kern_level 2`.** **Ada measured with the landed instrument before acting** and
+**declined the spine build.**
+
+> **The amendment's own failure mode: a FREE percentage read as a PRESSURE
+> percentage — same class, OPPOSITE POLARITY.**
+
+**The instrument was right; the prose dropped the label.** Which is the
+consumer-side corollary the every-line-names-its-instrument rule was missing:
+
+> **A RELAYED NUMBER WITHOUT ITS INSTRUMENT NAME RE-CREATES THE DEFECT THE
+> INSTRUMENT FIXED.**
+
+**A bare percentage is not a measurement, it is a measurement's shadow** — and
+the shadow of *free* and the shadow of *in-use* are **the same shape**. The
+original A17 defect was a **proxy that could not come down**; this is **a correct
+reading transported without the sentence that says which direction it points.**
+*Fixing an instrument does not fix the channel that quotes it.*
+
+**And the compliant behaviour is the row worth copying**: the lane **did not act
+on the relay.** It **re-measured with the landed instrument**, and the decision
+it then made was the opposite of the one the relay implied. *A number arriving
+without its instrument is a prompt to measure, never a measurement.*
 
 **That is a distinct failure from every other gate defect in this register**,
 and worth separating: the stuck-channel family covers gates that **cannot
@@ -11022,6 +11144,32 @@ instrument that has never predicted has never been tested*, and this lane will
 then have predicted twice and hit twice. **If it lands elsewhere, that is the
 more valuable row**, because a missed prediction with all prerequisites
 discharged says something about the *pricing method* rather than about the work.
+
+**AND A CENSUS CAN RETURN THAT A PLANNED RUNG DOES NOT EXIST AS A RUNG** (Go's
+`fmt` census; §G25 building). **Every `fmt` entry point is variadic**, so:
+
+> **`fmt` without variadics is not a rung at all** — the census **did not rank
+> two options, it DISSOLVED one.**
+
+> **The ordering isn't a choice.**
+
+**A third thing a scheduling census can return**, beside *this is worth more* and
+*this is already done*: **the candidate was never separable from its
+prerequisite.** *A ranking presumes the items are alternatives, and the most
+useful census result is sometimes that they are not.*
+
+**AND AN ASSUMED BLOCKER MEASURED TO ZERO.** Variadics are worth **17× `fmt`'s
+marginal** (**+52 vs +3**), and the surprise is inside the `fmt` number:
+**38.9% of `fmt`'s selections are Fprint-family and add `+0`.**
+
+> **`io.Writer` / interfaces **are not** the binding constraint — and I would
+> have assumed they gated them.**
+
+**Third confirmation that CALL-SITE FREQUENCY IS NOT REACH**, and the sharpest,
+because **the assumed blocker was not merely over-weighted — it contributed
+nothing.** *An assumption about what gates a construct is a claim about the
+corpus, and it is exactly as checkable as the construct's count.* The §G25
+advance prediction is called: **687 → 739 / 594 → 644.**
 
 **AND A CENSUS CAN RETURN THAT THE WORK IS ALREADY DONE — the strongest form of
 the could-have-overturned standard** (pyc inch 3, `3ea2f2a`, ticketed). The

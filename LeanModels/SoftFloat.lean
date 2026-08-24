@@ -22,5 +22,6 @@ SV is dormant).  The move is a named trigger in `docs/backlog/softfloat.md`.
 import LeanModels.SoftFloat.Basic
 import LeanModels.SoftFloat.Round
 import LeanModels.SoftFloat.RoundAlg
+import LeanModels.SoftFloat.Mul
 import LeanModels.SoftFloat.Theorems
 import LeanModels.SoftFloat.Transfer

@@ -1053,3 +1053,89 @@ Every verify-then-push chain here is now `&&`.
 ### §9.0 — STILL 1/12
 
 Unchanged. Nothing in this entry is a theorem.
+
+---
+
+## 2026-08-24-softfloat-19 — `mul_correct` REDUCED TO ONE OBLIGATION, and `roundQ` is not on its path
+
+`LeanModels/SoftFloat/Mul.lean`. `mul_correct_of` and
+`mul_eq_roundWithAccuracy` both depend on **no axioms at all**, from a
+zero-error elaboration. Statement written first, as directed, and it named
+what it needs.
+
+### THE REDUCTION, AND ITS PROOF IS ONE TERM
+
+Stated against `IsNearest` / `TieEven` — never against `roundQ` — so no
+implementation appears on either side of the conclusion. The residual
+obligation is carried as a **hypothesis**, `RoundWithAccuracyIsNearest`, which
+means it is **type-checked rather than described**, and this file carries no
+`sorryAx` to poison its neighbours' receipts (§0.1 II(a)).
+
+The proof is a single term application:
+
+```
+H fmt (s₁ * s₂) (m₁ * m₂) (e₁ + e₂) qr (Nat.mul_pos h₁ h₂) hr
+```
+
+No tactics, no case analysis, no arithmetic beyond `Nat.mul_pos`.
+
+> **Multiplication's entire content beyond the rounding lemma is NOTHING.**
+
+That is the "`mul` is a strict sub-problem of `add`" claim from
+`2026-08-24-softfloat-15` **confirmed by measurement** rather than re-asserted:
+the sub-problem is empty.
+
+### THE SEQUENCING ASSUMPTION IS REFUTED — `roundQ` IS A PARALLEL ARTIFACT
+
+The standing suspicion was that `mul_correct`'s proof would force `roundQ_repr`
+first, making the `Nat.log2` ±1 arithmetic the real inch. **It does not.**
+
+The obligation the statement names is about **core's `roundWithAccuracy`**, not
+about this component's `roundQ`. `roundQ` would be needed only to state
+`mul = roundQ (exact …)` — which is exactly the circular form §3.5.2 warns
+against and which this lane refused to write. So:
+
+* `roundQ_repr` / `roundQ_nearest` are **not** prerequisites for any
+  `op_correct`;
+* the real next inch is `RoundWithAccuracyIsNearest` — the same mathematical
+  content (nearest-ness of a rounding), but about **core's** function;
+* `roundQ` remains valuable as an independently-written cross-check (it agrees
+  with core by `decide` at a 3-bit significand) and as the eventual
+  satisfying implementation, but it is **off the critical path**.
+
+The distinction is not pedantic: it redirects the next inch from proving things
+about our own algorithm to proving them about the one the tiers actually run.
+
+### THE §7.4 OMISSION PAID OFF
+
+`mul_correct_of` needs **no overflow hypothesis**. That is `ReprQ`'s
+deliberately-missing UPPER exponent bound (`2026-08-24-softfloat-14`) doing its
+job: an overflowed result is still `ReprQ`, so the theorem holds
+unconditionally on finite inputs. Had overflow been folded into
+representability, this statement would have needed a side condition it has no
+business carrying — overflow is §7.4, a separate clause with a mode-dependent
+answer.
+
+### SV'S ANSWER LANDS: FOUR INFERRED ROWS RETIRE
+
+The SV lane confirms they do **not** want `real`; the true need is the divider
+— this component's spec layer over `Rat`, against HardFloat's `divSqrtRecFN`.
+So §2.0's SV column narrows to `div` + `sqrt` (one RTL module) plus the `recFN`
+recoding, and **four cells that were this lane's own inference from "R1-exit"
+are retired**: add/sub/mul, the six comparisons, int→float, float→int
+truncation.
+
+The estimate shrinks, which is the right direction: **a consumer table built
+from inference over-prices the component**, and SV was four rows of it. The
+decimal rows already read `—` for SV and are unchanged.
+
+### §9.0 — STILL 1/12, AND `mul_correct_of` DOES NOT MOVE IT
+
+`mul_correct_of` is **conditional**: it proves multiplication correct *given* an
+unproved obligation. A conditional theorem is not a proved `op_correct`, and
+counting it would be exactly the flattering direction this lane has corrected
+three times. The numerator moves when `RoundWithAccuracyIsNearest` is
+discharged — at which point `mul_correct` becomes unconditional in one line,
+and `div`, `sqrt` and `add` all draw on the same lemma.
+
+**28 landed theorems, 1 of which is an unconditional `op_correct`.**

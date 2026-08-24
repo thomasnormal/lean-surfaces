@@ -6726,3 +6726,99 @@ measurement.* It gets its row when the landing supplies one.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-329 … MEAS-338**.
+
+## 2026-08-24-architecture-79 — A frontier measured from behind another frontier is a lower bound on itself
+
+Nine from C's two prediction misses (`7eccf52`, `34ad979`, both merged;
+**24 → 28/300, 267 of 300 reaching the interpreter against 67 two landings
+ago**) and SV's diagnosed red. **One qualifies a law this lane landed
+yesterday; one is the span-col ruling's landing, which I had held pending.**
+
+**(1) §9.0 — YESTERDAY'S SENTENCE NEEDED AN ARITHMETIC QUALIFICATION.**
+
+> **A scoreboard reports the FIRST blocker, never the only one.**
+
+*"199 gated on X"* means **"199 REACH X first"** — **195 of the col-gated tests
+had `name:null` underneath, and four moved.** So *which one thing to fix next*
+stands, and **what a scoreboard cannot tell you is how much fixing it buys**:
+the number on a blocker is **a count of arrivals, not of departures.**
+
+**(2) §9.0 — PREDICTING A BUCKET IS NOT PREDICTING THE RESIDUAL.** The miss
+predicted **the largest bucket within 3** and **missed the score by more than
+the score**, on a bucket (**refused-libc 1 → 38**) that **had never had a chance
+to be observed.** *A residual is a difference, so it inherits the error of every
+bucket you did not predict* — **a prediction can be accurate and useless in the
+same run.** *Predict the thing you will report, or report the thing you
+predicted.*
+
+**(3) §9.0 — AND THE ONE THAT EXPLAINS BOTH.**
+
+> **A frontier measured from behind another frontier is a LOWER BOUND ON ITSELF.
+> Each wall you remove is the first honest measurement of the next one.**
+
+**Third instance of one shape in a single day** — col hid name, ingestion hid
+libc — **named by the lane's own law before the run confirmed it.** This is the
+completion framing's sharpest practical constraint: **a roadmap built from
+today's frontier is not a plan with uncertain estimates, it is a plan whose
+later items have never been observed at all.**
+
+**(4) §9.0 — THE PREDICTION DISCIPLINE RE-FOUNDED.** *Not calibration, but a
+repeatable way of discovering that the thing being predicted was not the thing
+being measured.* **Two of three missed for structurally invisible reasons — and
+that is the YIELD.** So the calibration row's ambition shrinks and its usefulness
+grows: **a miss is not evidence the predictor was sloppy, but that the predicted
+and reported quantities were different quantities.** *A discipline whose failures
+are informative does not need a high hit rate to be worth running.*
+
+**(5) §5.0a — THE SPAN-COL RULING'S LANDING, which is what earns it the row I
+held back.** Three shapes of making constraints load-bearing in **the diff's
+geometry**: *"same order, same effects" is a fact about which FUNCTION the diff
+is in* (**scope is checkable, intent is not**); the allocation **outside the
+match**, so eliding it **requires moving lines rather than deleting a branch**;
+and *"nothing can observe it" is a **theorem about this `Mem`**, not a licence*.
+
+> **A constraint met STRUCTURALLY survives the reader who never saw the ruling.**
+
+**The ruled-idiom-versus-implemented-precedent rule collecting its dividend**:
+the landing did not merely comply — **it showed what compliance looks like in the
+code's shape**, which the next lane can copy without reading the ruling.
+
+**(6) §9.0 — A CHARTER OVERTAKEN BY ITS OWN SCOREBOARD, FLAGGED NOT RE-READ.**
+The *"39-unsupported frontier"* is now **197 items whose top two belong to the
+scoreboard, not the semantics.** **The charitable re-reading is the failure mode
+and it is nearly invisible**: quietly interpreting the charter as *"whatever the
+scoreboard says today"* keeps it true **by making it say less every time the
+number moves.** *A document that survives every measurement has stopped being
+checkable.* **Ruling recorded: the three instrument items land as ONE inch, and
+then the frontier is honestly semantic.**
+
+**(7) §7.2 — AT THE BUILD-SYSTEM LAYER THE MECHANISM CANNOT BE READ, ONLY RUN.**
+*The glob is by PATH, not by import graph* — the hold-out never existed and the
+earlier escape **worked by accident of location.** **Reputation-versus-mechanism
+with the mechanism out of reach**: reading is what produced the wrong answer,
+because *a lakefile describes a selection rule, and which files it selects is a
+fact about the tree.*
+
+**(8) §5.4b — THE CHEAPEST STUCK-CHANNEL MEMBER: THE CHECK THAT WAS NEVER
+INVOKED.** The lane's own clash checker — **vindicated at the previous
+landing** — **was not run**, and **five of six errors were the one collision it
+detects in seconds.**
+
+> **A check that exists and isn't run is not a check; it's a note about a
+> check.**
+
+**Every other member fails while running; this one never starts**, and it is the
+only one with **no artifact at all.** And the aggravating detail: **the tool had
+already proved itself** — *a tool that has worked becomes invisible faster than
+one that has not.*
+
+**(9) §7.1a — THE DECLARATION-SLOT FAMILY'S GRAMMAR, STATED ONCE, seventh
+instance.** *`/--` binds to the next declaration; `/-!` stands alone; `#guard` /
+`#eval` / `#print` are commands, not declarations.* **It took seven because each
+instance looked like a fact about the token that bit that day**, when all were
+facts about **which slot the token was in.** Residue: **the comment-forms gate
+should gain the `#guard` case** — *the clause the gate lacks is exactly the
+incident it will not catch.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-339 … MEAS-346, OPS-91**.

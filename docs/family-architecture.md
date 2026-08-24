@@ -3806,6 +3806,30 @@ implementation**, and a lane that builds the ruled shape blind is **testing the
 ruling with its own inch.** *The register's job is to record which shapes have
 been built, not to make lanes prove designs.*
 
+**AND A RULING'S CONSTRAINTS CAN BE MADE LOAD-BEARING IN THE DIFF'S GEOMETRY,
+RATHER THAN ASSERTED IN ITS PROSE** (C, `7eccf52`; **the span-col ruling's
+landing, which is what earns it a row**). Three shapes, and each converts a
+promise into a fact a reader can check without trusting anyone:
+
+* **"Same order, same effects" is a fact about WHICH FUNCTION THE DIFF IS IN** —
+  not a promise about the diff. *Scope is checkable; intent is not.*
+* **The allocation sits OUTSIDE the match**, so eliding it **would require
+  moving lines rather than deleting a branch.** *A constraint enforced by
+  geometry costs an obvious edit to violate, and an obvious edit is one a
+  reviewer sees.*
+* **"Nothing can observe it" is A THEOREM ABOUT THIS `Mem`, not a licence.**
+  *The scope of the claim travels with it, so the next `Mem` does not inherit
+  permission the first one earned.*
+
+> **A CONSTRAINT MET STRUCTURALLY SURVIVES THE READER WHO NEVER SAW THE RULING.**
+
+**This is the ruled-idiom-versus-implemented-precedent rule collecting its own
+dividend.** The ruling was **held as a design** until a landing tested it; the
+landing **did not merely comply — it showed what compliance looks like in the
+code's shape**, which is the form the next lane can copy without re-reading the
+ruling at all. *A ruling that only lives in prose is obeyed by whoever remembers
+it; one whose constraints are geometric is obeyed by anyone who edits nearby.*
+
 **AND A SPEC'S UNITY IS NOT ITS IMPLEMENTATION'S** (C inch 6). §4.2's spec had
 **three jobs belonging to different machines** — a fetcher, a one-process Lean
 driver, and an independent re-scorer — and was **amended to BUILT with the
@@ -7512,6 +7536,27 @@ verify-then-push chain **printed `DRIFT` and pushed anyway.**
 > **A CHECK WHOSE FAILURE DOES NOT STOP THE NEXT STEP IS NOT A GATE — IT IS A
 > COMMENT.**
 
+**AND THE CHEAPEST MEMBER OF ALL, one step earlier: THE CHECK THAT WAS NEVER
+INVOKED** (SV's red). The lane's **own clash checker** — built after one red,
+**vindicated at the next landing** — **was not run on the new file**, and **five
+of six errors were the one collision it detects in seconds.**
+
+> **A CHECK THAT EXISTS AND ISN'T RUN IS NOT A CHECK; IT'S A NOTE ABOUT A
+> CHECK.**
+
+**The stuck-channel family's members all fail while running**; this one **never
+starts**, and it is the only member with **no artifact at all** — no green, no
+red, no line in a log. *Its absence is indistinguishable from a session in which
+the check was never written.*
+
+**And the aggravating detail is that the tool had already PROVED itself**: the
+checker was not speculative, it was **vindicated** — which is precisely the
+condition under which a lane stops thinking about it. *A tool that has worked
+becomes invisible faster than one that has not.* **The cure is the gate set, not
+the memory** (§5.4b's ladder: a check at `declared` is not at `called`).
+
+
+
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
 
 > **PROSE REPEATED FOUR TIMES IS EXACTLY THE PROSE WORTH TURNING INTO A
@@ -8848,6 +8893,25 @@ declaration** — not a raised limit but **a stated one**, which is the honest
 form: *raising heartbeats trades a wrong answer for a slow one*, and **a budget
 written down with its subject is a measurement of what that declaration costs.**
 
+**AND THE DECLARATION-SLOT FAMILY HAS ITS GRAMMAR STATED ONCE — SEVENTH
+INSTANCE** (SV). Every member of this family has been a token in a position the
+grammar does not admit; the rule that generates all of them:
+
+> **`/--` BINDS TO THE NEXT DECLARATION. `/-!` STANDS ALONE. And `#guard` /
+> `#eval` / `#print` are COMMANDS, NOT DECLARATIONS.**
+
+**Seven incidents, one sentence** — and the reason it took seven is that **each
+instance looked like a fact about the token that bit that day** (a doc comment, a
+`set_option`, a `#guard_msgs`), when all of them were **facts about which slot
+the token was in.** *The family's cost was paid one member at a time because
+nobody had written the generator.*
+
+**And the comment-forms gate should gain the `#guard` case**, which is the
+concrete residue: the gate encodes the incidents it was built from, and **this
+sentence names one it has not met yet.** *A rule stated once is worth a gate row
+per clause — the clause the gate lacks is exactly the incident it will not
+catch.*
+
 **A FIFTH HAZARD, AND IT BITES THE DOCUMENTATION RATHER THAN THE CODE: A
 COMMENT THAT DESCRIBES COMMENT SYNTAX CANNOT QUOTE IT** (analog; verify at
 landing). **Lean comments NEST**, so a comment containing a worked example of a
@@ -9773,6 +9837,21 @@ in the same read.**
 > **A GUARD'S REPUTATION AND ITS MECHANISM DRIFT APART SILENTLY. The lane that
 > reads the mechanism inherits BOTH facts.**
 
+**AND AT THE BUILD-SYSTEM LAYER, THE MECHANISM CANNOT BE READ AT ALL — IT MUST
+BE RUN** (SV's red, diagnosed and re-ticketed). **The glob is by PATH, not by
+import graph**: the hold-out **never existed**, and the earlier escape **worked
+by accident of location.**
+
+> **The way to know which you have is to BUILD, not to reason about the
+> lakefile.**
+
+**Reputation-versus-mechanism with the mechanism out of reach.** The earlier
+rows in this family say *read the implementation rather than obeying the
+reputation*; here **reading is what produced the wrong answer** — a lakefile
+describes a selection rule, and **which files that rule selects is a fact about
+the tree, not about the rule.** *An escape that worked by accident of location
+is indistinguishable, on the page, from one that worked by design.*
+
 **AND THE MECHANISM YOU READ MUST BE THE CURRENT ONE** (Lean tier, same
 closure). The lane's worktree was **pre-fix only because it had not rebased** —
 **the fix had been on master for hours.**
@@ -10682,6 +10761,26 @@ charter, for the reason §7.2 already gives: **a ledger is appended per landing,
 so the number moves with the work, while a number in a charter is a copy the
 code cannot see.**
 
+**AND A CHARTER CAN BE OVERTAKEN BY ITS OWN SCOREBOARD — flagged rather than
+silently re-read** (C, `34ad979`). The charter's *"39-unsupported frontier,
+rung-at-a-time"* is now **a 197-item frontier whose top two entries belong to
+the SCOREBOARD, not the SEMANTICS.**
+
+> **A frontier description written before the instrument existed is a claim the
+> instrument can now refute — and the honest move is to FLAG IT AGAINST THE
+> CHARTER, not to re-read the charter charitably.**
+
+**The charitable re-reading is the failure mode, and it is nearly invisible**: a
+lane that quietly interprets *"39-unsupported"* as *"the semantic frontier,
+whatever the scoreboard says today"* keeps the charter true **by making it say
+less every time the number moves.** *A document that survives every measurement
+has stopped being checkable.*
+
+**Ruling: the three instrument items land as ONE inch — and then the frontier is
+honestly semantic.** *Separating instrument debt from semantic debt is what
+makes the remaining number a statement about the language rather than about the
+harness.*
+
 **THE STANDING TABLE, SNAPSHOT 2026-08-24** — every number moved on this date,
 and it is recorded here as a **dated snapshot**, not as a live figure: **the
 lane ledgers are the live copies** (a number in a charter is a copy the code
@@ -11100,6 +11199,53 @@ decision.**
 > **A SCOREBOARD'S FIRST JOB IS NOT TO BE HIGH — IT IS TO SAY WHICH ONE THING TO
 > FIX NEXT.**
 
+**AND THAT SENTENCE NEEDED A QUALIFICATION THE NEXT LANDING SUPPLIED** (C,
+`7eccf52` + `34ad979`, both merged; **24 → 28/300, with 267 of 300 reaching the
+interpreter against 67 two landings ago**).
+
+> **A SCOREBOARD REPORTS THE FIRST BLOCKER, NEVER THE ONLY ONE.**
+
+*"199 gated on X"* means **"199 REACH X first"** — and **how many were gated on
+X *and something else* is a fact only the run AFTER the fix can produce.**
+Measured: **195 of the col-gated tests had `name:null` underneath**, and **four
+moved.**
+
+**So yesterday's law stands and its arithmetic does not.** *Which one thing to
+fix next* is exactly right; **what a scoreboard cannot tell you is how much
+fixing it buys** — the number attached to a blocker is **a count of arrivals, not
+a count of departures.**
+
+**AND PREDICTING A BUCKET IS NOT PREDICTING THE RESIDUAL.** The second miss
+predicted **the largest bucket within 3** and **missed the score by more than the
+score** — on a bucket (**refused-libc, 1 → 38**) that **had never had a chance to
+be observed.**
+
+> **A RESIDUAL IS A DIFFERENCE, SO IT INHERITS THE ERROR OF EVERY BUCKET YOU DID
+> NOT PREDICT.**
+
+**Which is why a confident prediction can be accurate and useless in the same
+run**: the predicted quantity was right, and **the reported quantity was a
+subtraction over a partition the predictor had only partly enumerated.** *Predict
+the thing you will report, or report the thing you predicted.*
+
+**AND THE STRONGEST OF THE THREE, because it explains the other two:**
+
+> **A FRONTIER MEASURED FROM BEHIND ANOTHER FRONTIER IS A LOWER BOUND ON
+> ITSELF.**
+
+> **Each wall you remove is the FIRST HONEST MEASUREMENT of the next one — and a
+> queue of blockers priced from behind the first of them is measuring its own
+> ignorance.**
+
+**Third instance of one shape in a single day** — *col hid name; ingestion hid
+libc* — and it was **named by the lane's own law before the run confirmed it.**
+**This is the completion framing's sharpest practical constraint**: a roadmap
+built from today's frontier is **not a plan with uncertain estimates, it is a
+plan whose later items have never been observed at all.** *The only way to price
+the second wall is to remove the first.*
+
+
+
 **Which is the answer to the question §9.0's completion framing keeps
 provoking**: a low number is not a problem to be managed, it is **a measurement
 whose value is its resolution.** *24/300 that names one schema decision is worth
@@ -11162,6 +11308,25 @@ row is data.*
   accuracy — as opposed to its output — is ever established. **An instrument
   that has never predicted has never been tested**, and a lane that can hit its
   own forecast to the unit has earned the right to schedule on forecasts.
+
+  **AND THE DISCIPLINE'S PURPOSE IS RE-FOUNDED BY TWO MISSES IN ONE DAY** (C,
+  both merged). The lane's own words:
+
+  > **Not calibration, but a repeatable way of discovering that THE THING BEING
+  > PREDICTED WAS NOT THE THING BEING MEASURED.**
+
+  **Two of three predictions missed for STRUCTURALLY INVISIBLE reasons — and
+  that is the YIELD, not a failure of the predictor.** A prediction that lands
+  confirms an instrument; **a prediction that misses for a reason nobody could
+  have seen names a seam in the measurement**, which is the more valuable
+  return and the one a lane cannot get by being careful.
+
+  **So the calibration row's ambition shrinks and its usefulness grows.** *An
+  instrument that has never predicted has never been tested* stays true; what
+  changes is **what a miss is evidence OF** — not *the predictor was sloppy*
+  but **the predicted quantity and the reported quantity were different
+  quantities**, and the run is what distinguished them. *A discipline whose
+  failures are informative does not need a high hit rate to be worth running.*
 
   **AMENDED, AND BY THE PREDICTING LANE ITSELF — the second exact match was
   DEFLATED BY ITS OWN AUTHOR** (ES, on `+1,249`). *"Both numbers come from the

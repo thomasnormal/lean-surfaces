@@ -387,6 +387,14 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-336 | a sample rule names its POPULATION, not only its ordering — reproducible-and-ambiguous is the worst combination | `docs/family-architecture.md §5.4a` |
 | MEAS-337 | ONE SPEC, THREE PROGRAMS — a spec's unity is not its implementation's | `docs/family-architecture.md §5.0a` |
 | MEAS-338 | a cost judgement made under pressure is re-priceable after the fact — and a decision that PAID is the one nobody re-examines | `docs/family-architecture.md §7.1a` |
+| MEAS-339 | a scoreboard reports the FIRST blocker, never the only one — the number counts ARRIVALS, not departures | `docs/family-architecture.md §9.0` |
+| MEAS-340 | a RESIDUAL inherits the error of every bucket you did NOT predict — predict what you will report | `docs/family-architecture.md §9.0` |
+| MEAS-341 | a FRONTIER measured from behind another frontier is a LOWER BOUND ON ITSELF | `docs/family-architecture.md §9.0` |
+| MEAS-342 | prediction is not calibration — a miss names a seam between the predicted and the measured quantity | `docs/family-architecture.md §9.0` |
+| MEAS-343 | a CONSTRAINT MET STRUCTURALLY survives the reader who never saw the ruling | `docs/family-architecture.md §5.0a` |
+| MEAS-344 | a charter overtaken by its own scoreboard is FLAGGED, never re-read charitably | `docs/family-architecture.md §9.0` |
+| MEAS-345 | the glob is by PATH, not by import graph — BUILD, do not reason about the lakefile | `docs/family-architecture.md §7.2` |
+| MEAS-346 | a check that EXISTS AND ISN'T RUN is not a check; it is a note about a check | `docs/family-architecture.md §5.4b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -688,6 +696,7 @@ numbers below are the register's own.
 | OPS-88 | state cross-spelling claims on MATCH-FREE lemmas — a match over an instantiation is a different constant | `docs/family-architecture.md §7.1a` |
 | OPS-89 | `no-goals` is never about the tactic it names — a discharged goal reads like a hard one | `docs/family-architecture.md §7.1a` |
 | OPS-90 | a trunk proof's `clear` line is INTERFACE, not hygiene — it constrains the induction motive | `docs/family-architecture.md §7.1a` |
+| OPS-91 | `/--` binds to the next DECLARATION; `/-!` stands alone; `#guard`/`#eval`/`#print` are COMMANDS | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

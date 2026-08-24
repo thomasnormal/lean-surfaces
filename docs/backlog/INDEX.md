@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**321 entries across 17 lanes.** Regenerate with
+**322 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-08-24-architecture-79` |  | A frontier measured from behind another frontier is a lower bound on itself | architecture |
 | `2026-08-24-architecture-78` |  | A retired divergence leaves a match where it stood | architecture |
 | `2026-08-24-architecture-77` |  | The count closed the row; no assertion could have | architecture |
 | `2026-08-24-architecture-76` |  | A relayed number without its instrument re-creates the defect | architecture |

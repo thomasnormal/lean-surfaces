@@ -140,83 +140,21 @@ def pyc_div_1_has_not_widened():
                raises, STICKY_CAPABLE_RAISES, qnames))
 
 
-# --- pyc-div-2: the genexp cursor is created at FIRST RESUME, not at genexp
-# construction. PEP 289 evaluates the outermost iterable AND calls iter() on it
-# when the genexp object is made, so CPython's snapshot predates a mutation the
-# tier's does not see. UNLIKE div-1 this is FULLY REACHABLE in tier, so both
-# sides are genuinely RUN here -- the register's first live two-sided probe.
+# pyc-div-2 RETIRED 2026-08-24 (2026-08-24-pycomplete-20). It said the genexp
+# cursor was built at first resume where PEP 289 builds it at construction; the
+# cursor moved, `dict_lab::genexp_bound_then_grow` and the grammar witness
+# `dict.genexp-bound-is-loud` both MATCH, and the row left this register.
 #
-# THE WINDOW IS THE WHOLE OF IT, and CTL is what pins that: move the mutation
-# to AFTER the first `next` and the tier agrees with CPython again, because by
-# then the cursor exists and carries its guards. A row that started describing
-# "genexp cursors are wrong" would be describing a bigger fact than the one
-# measured.
-DIV2_SRC = """d = {1: 'a'}
-g = (k for k in d)
-d[3] = 'c'
-print(next(g))
-"""
-DIV2_CTL_SRC = """d = {1: 'a', 2: 'b'}
-g = (k for k in d)
-print(next(g))
-d[3] = 'c'
-print(next(g))
-"""
-
-
-def _run_both(src):
-    """Run one program under the ORACLE and under the MODEL. Returns
-    ((oracle_rc, oracle_out), (model_rc, model_out)) or None if the model
-    runner is not built -- which is a guard FAILURE, never a skip."""
-    import tempfile
-    d = tempfile.mkdtemp()
-    path = os.path.join(d, "probe_div2.py")
-    with open(path, "w") as f:
-        f.write(src)
-    try:
-        o = subprocess.run([ORACLE, path], capture_output=True, text=True)
-    except FileNotFoundError:
-        return None
-    m = subprocess.run([sys.executable, os.path.join(REPO, "tools", "leanpy"), path],
-                       capture_output=True, text=True, cwd=REPO)
-    if m.returncode == 2:
-        return None
-    return (o.returncode, o.stdout.strip()), (m.returncode, m.stdout.strip())
-
-
-def pyc_div_2_still_divergent():
-    """CPython RAISES; the tier ANSWERS. Both run, every time."""
-    got = _run_both(DIV2_SRC)
-    if got is None:
-        return False, ("could not run both sides (oracle %r missing, or the "
-                       "model runner is not built -- this probe runs as a "
-                       "POST-BUILD gate)" % ORACLE)
-    (orc, oout), (mrc, mout) = got
-    diverges = (orc != 0) and (mrc == 0) and (mout == "1")
-    return diverges, ("oracle exit=%d out=%r ; model exit=%d out=%r "
-                      "(divergent iff oracle raises and model answers 1)"
-                      % (orc, oout, mrc, mout))
-
-
-def pyc_div_2_has_not_widened():
-    """CONFINED to the create-to-first-resume window: with the mutation AFTER
-    the first step, the tier agrees with CPython and both raise."""
-    got = _run_both(DIV2_CTL_SRC)
-    if got is None:
-        return False, "could not run both sides (see still_divergent)"
-    (orc, oout), (mrc, mout) = got
-    agree = (orc != 0) and (mrc != 0) and oout.startswith("1") and mout.startswith("1")
-    return agree, ("control (mutation AFTER first next): oracle exit=%d out=%r ; "
-                   "model exit=%d out=%r -- both must yield 1 then RAISE, or the "
-                   "divergence has widened past the window"
-                   % (orc, oout, mrc, mout))
-
+# ITS GUARD IS WHAT ANNOUNCED THE RETIREMENT. `pyc_div_2_still_divergent` began
+# FAILING the moment the fix landed -- which is the paired-guard law paying out
+# in the direction nobody designs for: not "the divergence widened" but "the
+# divergence is gone, and your declaration is now a false claim about the tier".
+# A stale declaration reads as diligence, so the guard that fails on a silent
+# FIX is the one that keeps the register honest.
 
 GUARDS = {
     "pyc_div_1_still_divergent": pyc_div_1_still_divergent,
     "pyc_div_1_has_not_widened": pyc_div_1_has_not_widened,
-    "pyc_div_2_still_divergent": pyc_div_2_still_divergent,
-    "pyc_div_2_has_not_widened": pyc_div_2_has_not_widened,
 }
 
 

@@ -39,7 +39,46 @@ does not define is UNGATED; a probe defining a guard no row names is ORPHANED �
 the shape a deleted row leaves behind. Either is an error here, because the one
 hole a build cannot see is a row and its guard being removed together.
 
+**THE SCHEMA, WRITTEN DOWN ONCE.** The next tier should read this block, not
+infer the shape from a neighbour's file.
+
+    {
+      "tier":   "<lang>",                     required
+      "schema": "declared-divergences-1",     required (see MIGRATION below)
+      "probe":  "harness/<lang>_probe.py",    OPTIONAL - see PROBE SHAPES
+      "rows": [ {
+        "id":                   "<lang>-div-N",       required
+        "kind":                 "semantic"|"provenance",   required
+        "site":                 "...",                required
+        "oracle":               "...",                required
+        "model":                "...",                required
+        "inherited_from":       "<cite>" | null,      required KEY; null = ORIGINATED
+        "declared":             "YYYY-MM-DD",         required (rows are AGED)
+        "retirement_condition": "...",                required, must name an EVENT
+        "guards":               [ "<still_divergent>", "<has_not_widened>" ]
+      } ]
+    }
+
+Any other key is free-form and preserved; tiers use them for `gated`,
+`blocked_on`, `why_not_a_refusal`, and so on.
+
+**TWO PROBE SHAPES, both satisfying "named in the row".**
+
+  * SCRIPT (sv, python): the file names `probe`, the checker RUNS it with
+    `--json` and reads each guard's `held`. The probe is the run.
+  * DECLARATION (es): no `probe` key; each guard is `"<path>: <name>"`, and the
+    checker verifies the named declaration exists at that path. THE BUILD is
+    the run — a Lean theorem that stops holding fails the tenure, which is a
+    stronger gate than a script, not a weaker one.
+
+**MIGRATION (the §9.5a old-valid clause, applied to schemas).** A shape a lane
+shipped in good faith cannot become a failure the day the canon lands. So
+`declared-divergences-0.1` is ACCEPTED with a warning, and a blank
+`inherited_from` warns rather than fails. Warnings do not change the exit
+status; they name what the next normalisation should fix.
+
 Exit status: 0 = every file valid and every guard held; 1 = any defect.
+Warnings are reported and do not affect the exit status.
 Python 3.9 compatible.
 """
 
@@ -54,12 +93,16 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATTERN = os.path.join(REPO, "docs", "*-declared-divergences.json")
 SCHEMA = "declared-divergences-1"
+# Shapes shipped before the canon landed. Accepted with a warning, never a
+# failure: see MIGRATION in the module docstring.
+LEGACY_SCHEMAS = ("declared-divergences-0.1",)
 
 # The six ruled fields, plus the two the first implementations taught.
 REQUIRED_ROW = ("id", "kind", "site", "oracle", "model",
-                "inherited_from", "declared", "retirement_condition",
-                "guards", "kind")
-REQUIRED_TOP = ("tier", "schema", "probe", "rows")
+                "inherited_from", "declared", "retirement_condition", "guards")
+# `probe` is deliberately NOT required: a tier whose guards are DECLARATIONS
+# names them in the row instead, and the build is its run (see PROBE SHAPES).
+REQUIRED_TOP = ("tier", "schema", "rows")
 KINDS = ("semantic", "provenance")
 # §9's WAITING rule: a retirement condition that names no event is not one.
 NON_CONDITIONS = re.compile(
@@ -71,8 +114,14 @@ def _fail(problems, path, msg):
     problems.append("%s: %s" % (os.path.relpath(path, REPO), msg))
 
 
-def check_file(path, problems):
+def _warn(warnings, path, msg):
+    warnings.append("%s: %s" % (os.path.relpath(path, REPO), msg))
+
+
+def check_file(path, problems, warnings=None):
     """Schema + probe + both-direction guard checks for ONE tier's file."""
+    if warnings is None:
+        warnings = []
     try:
         doc = json.load(open(path))
     except Exception as e:                      # noqa: BLE001 - reported, never hidden
@@ -82,9 +131,13 @@ def check_file(path, problems):
     for k in REQUIRED_TOP:
         if k not in doc:
             _fail(problems, path, "missing top-level field %r" % k)
-    if doc.get("schema") != SCHEMA:
-        _fail(problems, path, "schema is %r, expected %r"
-              % (doc.get("schema"), SCHEMA))
+    sch = doc.get("schema")
+    if sch in LEGACY_SCHEMAS:
+        _warn(warnings, path, "schema is %r; canonical is %r — accepted during "
+              "migration, because a shape a lane shipped in good faith cannot "
+              "become a failure the day the canon lands" % (sch, SCHEMA))
+    elif sch != SCHEMA:
+        _fail(problems, path, "schema is %r, expected %r" % (sch, SCHEMA))
     rows = doc.get("rows") or []
     if not rows:
         _fail(problems, path, "no rows: a register file with nothing in it "
@@ -105,8 +158,8 @@ def check_file(path, problems):
         # from an author who never considered the question.
         if "inherited_from" in row and row["inherited_from"] is not None:
             if not str(row["inherited_from"]).strip():
-                _fail(problems, path, "row %s inherited_from is blank; use "
-                                      "null to mean ORIGINATED here" % rid)
+                _warn(warnings, path, "row %s inherited_from is blank; canonical "
+                                      "is null for ORIGINATED (migration warning)" % rid)
         d = str(row.get("declared", ""))
         if not re.match(r"^\d{4}-\d{2}-\d{2}$", d):
             _fail(problems, path, "row %s declared is %r, expected YYYY-MM-DD "
@@ -129,7 +182,28 @@ def check_file(path, problems):
 
     probe = doc.get("probe")
     if not probe:
-        return {}
+        # DECLARATION SHAPE. No probe script: each guard is "<path>: <name>" and
+        # THE BUILD is the run — a Lean theorem that stops holding fails the
+        # tenure, which is a stronger gate than a script and not a weaker one.
+        # What a build CANNOT see is a guard deleted along with its row, so that
+        # is exactly what is checked here.
+        out = {}
+        for g in sorted(named):
+            if ":" not in g:
+                _fail(problems, path, "no `probe` key, and guard %r is not "
+                      "'<path>: <name>' — a row must name either a probe script "
+                      "or a declaration" % g)
+                continue
+            gpath, gname = (x.strip() for x in g.split(":", 1))
+            full = os.path.join(REPO, gpath)
+            if not os.path.isfile(full):
+                _fail(problems, path, "guard %r names a file that does not exist" % g)
+            elif gname not in open(full, encoding="utf-8").read():
+                _fail(problems, path, "guard %r is not declared in %s" % (gname, gpath))
+            else:
+                out[gname] = {"held": True,
+                              "detail": "declared in %s — the BUILD is the run" % gpath}
+        return {"tier": doc.get("tier"), "rows": len(rows), "guards": out}
     ppath = os.path.join(REPO, probe)
     if not os.path.isfile(ppath):
         _fail(problems, path, "probe %r does not exist" % probe)
@@ -221,6 +295,29 @@ def self_test():
     def missing_probe(d):
         d["probe"] = "harness/no_such_probe.py"
 
+    # DECLARATION SHAPE (ES's): no probe key, guards are "<path>: <name>".
+    # Exercised here as well as by ES's real file, because the day ES
+    # normalises to a script this path would otherwise go ungated.
+    def decl_guard_missing_file(d):
+        d.pop("probe", None)
+        d["rows"][0]["guards"] = ["no/such/file.lean: a_still_divergent",
+                                  "no/such/file.lean: a_has_not_widened"]
+
+    def decl_guard_not_declared(d):
+        # The target must NOT be this file. A substring existence check is
+        # self-referential when pointed at its own source: the first draft of
+        # this case named the fake declarations inside `divergence_register.py`
+        # and the checker duly FOUND them, passing a file it should have
+        # rejected. Caught by the self-test's own expectation, which is the
+        # argument for having one.
+        d.pop("probe", None)
+        d["rows"][0]["guards"] = ["docs/sv-declared-divergences.json: absent_decl_a",
+                                  "docs/sv-declared-divergences.json: absent_decl_b"]
+
+    def decl_guard_unqualified(d):
+        d.pop("probe", None)
+        d["rows"][0]["guards"] = ["bare_name_a", "bare_name_b"]
+
     print("divergence_register --self-test (no Lean, no register file touched)")
     checks = [
         (drop_inherited, "missing inherited_from"),
@@ -233,6 +330,9 @@ def self_test():
         (empty_rows, "file filed with no rows"),
         (wrong_schema, "wrong schema version"),
         (missing_probe, "probe that does not exist"),
+        (decl_guard_missing_file, "declaration guard, file absent"),
+        (decl_guard_not_declared, "declaration guard, name not declared"),
+        (decl_guard_unqualified, "no probe and guards unqualified"),
     ]
     failed = [lbl for fn, lbl in checks if not rejects(fn, lbl)]
     if failed:
@@ -280,8 +380,9 @@ def main(argv=None):
         return 0
 
     summary = {}
+    warnings = []
     for f in files:
-        got = check_file(f, problems)
+        got = check_file(f, problems, warnings)
         if got:
             summary[got["tier"]] = got
 
@@ -306,13 +407,21 @@ def main(argv=None):
                           "tiers": {t: summary[t]["guards"] for t in summary},
                           "problems": problems}, indent=1, sort_keys=True))
 
+    if warnings:
+        # Migration warnings NEVER change the exit status: naming what the next
+        # normalisation should fix is the point, and turning it into a failure
+        # would punish a lane for having shipped before the canon.
+        print("\n%d MIGRATION WARNING(S) — not failures:" % len(warnings))
+        for w in warnings:
+            print("  " + w)
     if problems:
         print("\n%d PROBLEM(S):" % len(problems), file=sys.stderr)
         for p in problems:
             print("  " + p, file=sys.stderr)
         return 1
     print("\ndivergence_register: OK — every row gated both ways, "
-          "declared-divergences: %d" % total_rows)
+          "declared-divergences: %d%s"
+          % (total_rows, " (%d migration warning(s))" % len(warnings) if warnings else ""))
     return 0
 
 

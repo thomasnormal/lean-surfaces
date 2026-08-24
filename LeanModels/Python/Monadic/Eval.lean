@@ -1651,8 +1651,14 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
       -- initial continuation — and returns the object. Every effect in the body
       -- therefore happens only as a consumer steps it, which is exactly the
       -- laziness the search depends on.
+      -- §PEP 289: `genInitCont` seeds a synthesized genexp's continuation with
+      -- its cursor ALREADY pushed, so the outermost iterable is iterated at
+      -- CREATION as CPython does. Every other generator — including every user
+      -- `def` with a `yield` — gets `[.block body]` unchanged, because for
+      -- those CPython has run no code and called no `iter()` either.
       let w ← get
-      let g : Obj := .generator fname (mkCallEnv f.params args) [.block f.body.toList] .created
+      let env := mkCallEnv f.params args
+      let g : Obj := .generator fname env (genInitCont w.heap fname env f.body.toList) .created
       set { w with heap := w.heap.push g }
       pure (.ref w.heap.size)
     else do

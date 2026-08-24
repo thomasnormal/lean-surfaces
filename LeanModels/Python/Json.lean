@@ -900,7 +900,7 @@ private def drainingBuiltins : List String :=
 the implicit function `<genexpr>`; the index keeps several genexps in one
 module apart, and the angle brackets make collision with a real Python
 identifier impossible. -/
-def genExpName (n : Nat) : String := s!"<genexpr@{n}>"
+def genExpName (n : Nat) : String := s!"{genExpPrefix}{n}>"
 
 /-- The FRESH loop target a non-genexp `yield from` inlines through
 (pass 5+, docs/memory-model.md §yield from). `<`/`>` cannot occur in a
@@ -910,7 +910,7 @@ def yieldFromName (n : Nat) : String := s!"<yieldfrom@{n}>"
 
 /-- CPython's own name for the implicit first parameter (the
 already-evaluated outer iterator). No Python identifier contains `.`. -/
-def genExpArg : String := ".0"
+def genExpArg : String := genExpArgName
 
 /-- Wrap a statement in the genexp's filters, innermost last:
 `if c₁: if c₂: <stmt>`. -/

@@ -3962,6 +3962,42 @@ def iterFrame (h : Heap) : RVal → Res GenFrame
       .unsupported "iter() over a range is outside the tier (CPython's `range_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
 
+/-- §PEP 289 — a GENEXP's outermost iterator is created when the genexp OBJECT
+is created, not when it is first stepped. The initial continuation of a
+synthesized `<genexpr@n>` therefore carries the loop's cursor ALREADY, so the
+size and `shapeVersion` it guards against are the ones current at creation.
+
+**THIS IS A GENEXP RULE AND NOT A GENERATOR RULE, and the difference is
+measured.** Calling a generator FUNCTION runs no code, so CPython has called no
+`iter()` — mutate the dict between `g = gen(d)` and the first `next(g)` and
+CPython iterates the MUTATED dict without complaint (measured: answers `1`,
+drains `[1, 3]`). Making every generator eager would break that neighbour;
+`gen_lab`'s mutation-after-create row is the witness that it did not.
+
+**Only the OUTERMOST clause, and only a DICT receiver.** PEP 289 leaves inner
+`for` clauses lazy (measured: `(x for x in d for y in boom())` constructs
+without evaluating `boom`). And of the receivers only a dict carries a
+snapshot — `forList` re-reads live, value sequences are immutable, `forGen`
+holds no counts — so no other receiver can show the difference. Anything this
+does not recognise falls through to the ordinary deferred continuation, which
+is what every other generator gets. -/
+def genInitCont (h : Heap) (qname : String) (env : Env) (body : List Stmt) :
+    GenCont :=
+  if qname.startsWith genExpPrefix then
+    match body with
+    | [.forStmt target (.name arg _) fbody orelse _] =>
+      if arg == genExpArgName && orelse.isEmpty then
+        (match Env.lookup env arg with
+         | some (.ref a) =>
+           (match Heap.get? h a with
+            | some (.dict es sv) =>
+                [.forDict target a 0 es.size sv .keys fbody.toList]
+            | _ => [.block body])
+         | _ => [.block body])
+      else [.block body]
+    | _ => [.block body]
+  else [.block body]
+
 /-- `itertools.count()` / `count(start)` / `count(start, step)`. -/
 def countArgs : List RVal → Option (Int × Int)
   | [] => some (0, 1)

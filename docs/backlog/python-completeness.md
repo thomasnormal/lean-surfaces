@@ -1879,3 +1879,128 @@ Of `bound()`'s four generator expressions exactly one iterates a dict
 expression, so real play never enters `pyc-div-2`'s create-to-first-resume
 window. The `tp_score` line uses `iter()`, which snapshots at creation and is
 unaffected. Had real play entered the window, this discharge would not stand.
+
+## 2026-08-24-pycomplete-20 — the cursor moves to CONSTRUCTION, pyc-div-2 retires by its own condition, and the census that gates the claim corrected itself twice
+
+§pycomplete-19 declared `pyc-div-2`: a genexp's dict cursor was built at FIRST
+RESUME where PEP 289 builds it when the genexp OBJECT is made, so
+`g = (k for k in d)` / mutate `d` / `next(g)` answered where CPython raised.
+The fix lands, the row retires, and the retirement was ANNOUNCED BY ITS OWN
+GUARD rather than by anyone deciding it was time.
+
+### THE PROBE THAT NARROWED THE FIX, and its negative half is the load-bearing one
+
+| shape | CPython 3.9.19 |
+| --- | --- |
+| **genexp**, mutate after create, before first `next` | `RuntimeError` |
+| **generator FUNCTION**, same mutation | **`1`** — no error |
+| generator function, then drained | **`[3]`** — it walks the GROWN dict |
+| `(x for x in boom())` | raises **at creation** — outermost iterable is eager |
+| `(x for x in d for y in boom())` | constructs — **inner clauses stay lazy** |
+
+**So "make generator cursors eager" would have been the wrong fix.** Calling a
+generator FUNCTION runs no code, so CPython has called no `iter()`; the tier's
+deferred behaviour there is CORRECT and a blanket fix would have broken it.
+Eagerness is a **genexp** rule, for the **outermost** clause only. And of the
+receivers only a dict carries a snapshot — `forList` re-reads live, value
+sequences are immutable, `forGen` holds no counts — so no other receiver can
+show the difference.
+
+That narrowing is why the fix is one worker and one call site:
+`genInitCont` (`Semantics.lean`, beside `iterFrame`) seeds a synthesized
+`<genexpr@n>`'s continuation with its cursor already pushed; `callInM` uses it;
+everything else — including every user `def` with a `yield` — still gets
+`[.block body]`. `genExpPrefix`/`genExpArgName` move to `Ast.lean` beside
+`dictDelBuiltinName`, because ingestion mints those names and the evaluator now
+has to recognise them, and a name spelled twice is a name that will drift.
+
+`dict_lab::genfun_mutate_after_create` and `genfun_drain_after_create` are the
+NEIGHBOUR rows, filed beside the fix precisely so a later blanket change flips
+them. This is the `gen_closes` pattern's third use: *the row that proves the
+fix did not fix the wrong thing.*
+
+### THE RETIREMENT WAS ANNOUNCED BY THE GUARD, which is the half nobody designs for
+
+`pyc_div_2_still_divergent` began FAILING the moment the fix compiled. §5.0a's
+paired-guard law is usually read in one direction — *has the divergence
+widened?* — and this is the other one paying out: **the divergence is gone, and
+the declaration is now a false claim about the tier that reads as diligence.**
+The row left the register on that evidence, not on anyone's say-so, which is
+exactly what its retirement condition demanded (*"the row retires by the
+behaviour changing and cannot be closed by assertion"*).
+
+> **A register that only ever grows is a list. This one shrank, on a failing
+> guard.**
+
+The witness moved with it: `dict.genexp-bound-is-loud` measured DIVERGE at
+§pycomplete-19, moved OUT of the census into the register, and **comes back as
+a MATCH**. A row that leaves for the register and returns to the census is the
+whole mechanism working, and the witness is the receipt.
+
+### THE CONSTRUCTION-SITE CENSUS, gated — and it corrected itself twice
+
+§5.2's ruling made *"the trunk never constructs this frame"* measurable rather
+than a docstring. `harness/frame_construction_census.py` pins it:
+
+| frame | route | trunk callers |
+| --- | --- | --- |
+| `iterDict` | `iterFrame` | **0** — MEASURED unreachable |
+| `enumDict` | `enumFrame` | **1** (`Semantics.lean`) — POSITIVE, the correction |
+| `forDict` | `genInitCont` / `K.forDict` / `S.forDict` | **0** |
+
+**Its first draft reported two FALSE drifts, and both said the same thing.** It
+counted `ClockErase`/`PayloadBlind` as trunk callers of `enumFrame` when those
+files only REASON about the trunk; and it flagged a `forDict` construction in
+`Semantics.lean` that is **this inch's own `genInitCont`** — a worker living in
+a trunk file with only rebuild callers. So the measure had to become
+**caller-based, not file-based**, which is the very distinction the enumDict
+correction turned on. *A census whose first run convicts the lane's newest line
+is a census pointed at the right thing.* The `enumDict` row is pinned as a
+POSITIVE expectation so the correction cannot be lost the way the belief was.
+
+### THE SHARED CHECKER GREW A SECOND PROBE SHAPE, and a migration clause
+
+ES's row merged, so the acceptance test finally binds — and it FAILED: ES files
+`declared-divergences-0.1`, no `probe` key, guards as
+`"<path>: <name>"` Lean theorems, and a blank `inherited_from`. None of that is
+wrong; it is a second legitimate shape in which **the build is the run**, and a
+Lean theorem that stops holding fails the tenure — a stronger gate than a
+script, not a weaker one.
+
+* `probe` is now OPTIONAL; absent, guards name declarations and the checker
+  verifies they exist. Both shapes satisfy §5.0a's *"named in the row"*.
+* `declared-divergences-0.1` and blank `inherited_from` are accepted with
+  MIGRATION WARNINGS that do not change exit status — §9.5a's old-valid clause
+  applied to schemas: *a shape a lane shipped in good faith cannot become a
+  failure the day the canon lands.* The schema earned its migration clause on
+  day two.
+* **The schema is written down ONCE**, as a docstring block in the shared
+  checker, so the next tier reads it instead of inferring it from a neighbour's
+  file — which is how the divergence arose.
+* The checker now validates all three tiers' files UNMODIFIED: **4 rows, 8
+  guards, 2 migration warnings, exit 0.**
+
+**And a self-referential trap, caught by the self-test's own expectation.** The
+new declaration-shape case first pointed its fake guard names at
+`divergence_register.py` itself — and the substring existence check duly FOUND
+them, passing a file it should have rejected. *A grep-based existence check is
+self-referential when aimed at its own source.* Self-test: 10 → **13** defect
+classes.
+
+### Census deltas
+
+* grammar census **136 → 138 witnesses**: `dict.genexp-bound-is-loud` returns
+  as MATCH, and `dict.genfun-mutate-after-create` joins it as the negative half.
+* `harness/cases.json` **693 → 697 rows**, four new `match` rows; no new gaps.
+* **declared-divergences: 2 → 1** for this tier (4 across all three).
+* new gate `harness/frame_construction_census.py`; `harness/divergence_register.py`
+  extended for both probe shapes.
+
+### §9.0 after this inch
+
+**3 of 3 flagship-serving pyc surfaces · `declared-divergences: 1`.**
+The scope qualifier on rung 9's discharge WEAKENS as predicted: with the cursor
+built at construction, `pyc-div-2`'s create-to-first-resume window no longer
+exists, so the claim that real play never enters it is moot rather than
+load-bearing. What remains is `pyc-div-1`, whose retirement is blocked upstream
+on `exc_lab::except_builtin`.

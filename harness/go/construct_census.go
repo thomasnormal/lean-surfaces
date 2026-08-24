@@ -1122,6 +1122,7 @@ func runReach(paths []string, root string) {
 type resolution struct {
 	pkg, fn string
 	line    int
+	isConst bool // `pkg.Name` NOT in call position — a constant or var
 }
 
 // binding is a local name in scope from `pos` to the end of its block.
@@ -1225,13 +1226,24 @@ func resolveFile(fset *token.FileSet, f *ast.File) []resolution {
 		return false
 	}
 
+	// Which selectors sit in CALL position. `pkg.F(x)` is a call;
+	// `pkg.Name` alone is a constant or variable reference, and Go
+	// distinguishes them — `bits.UintSize()` does not compile. So the
+	// extractor must too, or the walker would be handed a `callPkg` node
+	// naming something that is not a function (§G24).
+	inCall := map[token.Pos]bool{}
+	ast.Inspect(f, func(n ast.Node) bool {
+		if ce, ok := n.(*ast.CallExpr); ok {
+			if se, ok := ce.Fun.(*ast.SelectorExpr); ok {
+				inCall[se.Pos()] = true
+			}
+		}
+		return true
+	})
+
 	var out []resolution
 	ast.Inspect(f, func(n ast.Node) bool {
-		ce, ok := n.(*ast.CallExpr)
-		if !ok {
-			return true
-		}
-		se, ok := ce.Fun.(*ast.SelectorExpr)
+		se, ok := n.(*ast.SelectorExpr)
 		if !ok {
 			return true
 		}
@@ -1243,7 +1255,11 @@ func resolveFile(fset *token.FileSet, f *ast.File) []resolution {
 		if !isImport || shadowed(id.Name, id.Pos()) {
 			return true
 		}
-		out = append(out, resolution{path, se.Sel.Name, fset.Position(id.Pos()).Line})
+		out = append(out, resolution{
+			pkg: path, fn: se.Sel.Name,
+			line:    fset.Position(id.Pos()).Line,
+			isConst: !inCall[se.Pos()],
+		})
 		return true
 	})
 	return out
@@ -1304,6 +1320,20 @@ func f(x uint64) int {
 
 		{"not an import at all", `package p
 func f(x foo) int { return x.Len64() }`, nil},
+
+		// --- the CONSTANT kind (§G24) ---
+		{"package constant, not a call", `package p
+import "math/bits"
+func f() int { return bits.UintSize }`, []string{"const math/bits.UintSize"}},
+
+		{"constant and call in one expression", `package p
+import "math/bits"
+func f(x uint) int { return bits.UintSize - bits.LeadingZeros(x) }`,
+			[]string{"const math/bits.UintSize", "math/bits.LeadingZeros"}},
+
+		{"a shadowed constant is still not resolved", `package p
+import "math/bits"
+func f(bits int) int { return bits.UintSize }`, nil},
 	}
 
 	pass, fail := 0, 0
@@ -1317,7 +1347,11 @@ func f(x foo) int { return x.Len64() }`, nil},
 		}
 		got := []string{}
 		for _, r := range resolveFile(fset, f) {
-			got = append(got, r.pkg+"."+r.fn)
+			if r.isConst {
+				got = append(got, "const "+r.pkg+"."+r.fn)
+			} else {
+				got = append(got, r.pkg+"."+r.fn)
+			}
 		}
 		ok := len(got) == len(c.want)
 		if ok {

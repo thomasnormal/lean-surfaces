@@ -86,48 +86,144 @@ theorem instead of silently returning 0 where Go returns 64. -/
 theorem trailingZeros_zero_is_special : trailingZerosSpec 0 ≠ 64 := by
   rw [trailingZerosSpec_zero]; decide
 
+/-- What a modelled package function does.
+
+`bits.Div` **panics** — on a zero divisor and on a quotient that will not
+fit — so a plain `Option` cannot express this tier any more. The three
+outcomes are genuinely distinct and must not be collapsed:
+
+* `values` — it computed something;
+* `panics` — Go DEFINES a run-time panic here, which is an outcome of the
+  program, not a limit of the model;
+* `notModelled` — a limit of the model, which becomes an `environment`
+  refusal naming `pkg.fn`.
+
+Folding `panics` into `notModelled` would report a program's own defined
+behaviour as a gap in this tier, which is the §5.2 mis-bucketing §G14
+already paid for once. -/
+inductive PkgOutcome where
+  | values (vs : List GoVal)
+  | panics (msg : String)
+  | notModelled
+  deriving Repr, Inhabited
+
+/-- `uint` is 64-bit on the platforms this tier models, and `bits.UintSize`
+is a package CONSTANT reporting it (`const UintSize = uintSize`) — not a
+function, which is why it needs its own resolution kind (§G24). -/
+def uintSize : Nat := 64
+
+private def u64 (n : Int) : GoVal := GoVal.mkInt IntKind.uint64 n
+private def norm (v : GoVal) : Int :=
+  match v with | .intV _ n => IntKind.uint64.wrap n | _ => 0
+private def modulus : Int := (IntKind.uint64.modulus : Int)
+private def goInt (n : Int) : GoVal := GoVal.mkInt IntKind.int64 n
+
 /-- The modelled package functions.
 
-`none` means NOT MODELLED, and the caller turns that into an
-`environment` refusal naming `pkg.fn`. It never means "undefined": this
-tier's refusal type has no `undefined` constructor (§G10). -/
-def pkgCall (pkg fn : String) (args : List GoVal) : Option (List GoVal) :=
+Every argument is normalised through `uint64` first: these functions'
+PARAMETERS are `uint64`/`uint`, so trusting a caller's `IntKind` would let
+a negative reach a carry or borrow test and invert it — a wrong answer
+rather than a refusal (§G23).
+
+`Add`/`Sub`/`Mul`/`LeadingZeros`/`TrailingZeros` are the `uint`-width
+spellings and are **the same function** as their `64` counterparts at
+`uintSize = 64`; they are listed separately because the corpus calls both
+names and the walker resolves by name. -/
+def pkgCall (pkg fn : String) (args : List GoVal) : PkgOutcome :=
   match pkg, fn, args with
-  | "math/bits", "Len64", [.intV _ n] =>
-      some [GoVal.mkInt IntKind.int64 (bitLenSpec n.toNat)]
-  | "math/bits", "TrailingZeros64", [.intV _ n] =>
-      -- Go: TrailingZeros64(0) == 64. The width, not zero.
-      some [GoVal.mkInt IntKind.int64 (if n = 0 then 64 else trailingZerosSpec n.toNat)]
-  | "math/bits", "Add64", [.intV _ x, .intV _ y, .intV _ c] =>
-      -- `sum, carryOut := Add64(x, y, carry)`. The carry OUT is the whole
-      -- reason this function exists: it is what a caller chains into the
-      -- next limb, and a model that returns only the sum passes every
-      -- single-limb test while failing every ripple (§G23).
-      -- Add64's PARAMETERS are `uint64`, so each argument is normalised
-      -- through that kind before the sum. Trusting the caller's `IntKind`
-      -- would let a negative `int64` reach the carry test and invert it —
-      -- a wrong answer rather than a refusal, which is the shape §G22's
-      -- shadowing gate was built for.
-      let x' := IntKind.uint64.wrap x
-      let y' := IntKind.uint64.wrap y
-      let c' := IntKind.uint64.wrap c
-      let s := x' + y' + c'
-      some [GoVal.mkInt IntKind.uint64 s,
-            GoVal.mkInt IntKind.uint64 (if s ≥ (IntKind.uint64.modulus : Int) then 1 else 0)]
-  | _, _, _ => none
+  | "math/bits", "Len64", [a] | "math/bits", "Len", [a] =>
+      .values [goInt (bitLenSpec (norm a).toNat)]
+  | "math/bits", "TrailingZeros64", [a] =>
+      let x := norm a
+      .values [goInt (if x = 0 then 64 else trailingZerosSpec x.toNat)]
+  | "math/bits", "TrailingZeros", [a] =>
+      let x := norm a
+      .values [goInt (if x = 0 then (uintSize : Int) else trailingZerosSpec x.toNat)]
+  | "math/bits", "LeadingZeros64", [a] =>
+      .values [goInt (64 - (bitLenSpec (norm a).toNat : Int))]
+  | "math/bits", "LeadingZeros", [a] =>
+      .values [goInt ((uintSize : Int) - (bitLenSpec (norm a).toNat : Int))]
+  -- --- carry / borrow chains: the SECOND value is the point ---
+  | "math/bits", "Add64", [a, b, c] | "math/bits", "Add", [a, b, c] =>
+      let s := norm a + norm b + norm c
+      .values [u64 s, u64 (if s ≥ modulus then 1 else 0)]
+  | "math/bits", "Sub64", [a, b, c] | "math/bits", "Sub", [a, b, c] =>
+      let d := norm a - norm b - norm c
+      .values [u64 d, u64 (if d < 0 then 1 else 0)]
+  | "math/bits", "Mul64", [a, b] | "math/bits", "Mul", [a, b] =>
+      let p := norm a * norm b
+      .values [u64 (p / modulus), u64 (p % modulus)]
+  -- --- the one that PANICS ---
+  | "math/bits", "Div64", [h, l, d] | "math/bits", "Div", [h, l, d] =>
+      let hi := norm h
+      let lo := norm l
+      let y := norm d
+      if y = 0 then .panics "runtime error: integer divide by zero"
+      else if y ≤ hi then .panics "runtime error: integer overflow"
+      else
+        let v := hi * modulus + lo
+        .values [u64 (v / y), u64 (v % y)]
+  | _, _, _ => .notModelled
 
-/-- The modelled surface, as data — so "what does this tier support" is a
-value a test can read, not a grep over a match. -/
-def modelledPkgFuncs : List (String × String) :=
-  [("math/bits", "Len64"), ("math/bits", "TrailingZeros64"),
-   ("math/bits", "Add64")]
+/-- Package-level CONSTANTS. A distinct resolution kind: `bits.UintSize`
+is not a call, so no `callPkg` node ever names it. -/
+def pkgConst (pkg name : String) : Option GoVal :=
+  match pkg, name with
+  | "math/bits", "UintSize" => some (goInt (uintSize : Int))
+  | _, _ => none
 
-theorem modelled_iff_some_Len64 :
-    (pkgCall "math/bits" "Len64" [GoVal.mkInt IntKind.uint64 1]).isSome := by
-  simp [pkgCall, GoVal.mkInt]
+/-- The modelled surface, as data — with each function's ARITY, so that
+"what does this tier support" is a claim a test can CHECK rather than a
+comment that can drift.
 
-theorem unmodelled_is_none :
-    pkgCall "math/rand" "Intn" [GoVal.mkInt IntKind.int64 5] = none := by
-  simp [pkgCall, GoVal.mkInt]
+It drifted immediately: the first version of this list named
+`("math/bits", "Len")` while `pkgCall` implemented only `Len64`. Nothing
+caught it, because the list was prose in a different shape. The theorem
+below is what makes it a claim. -/
+def modelledPkgFuncs : List (String × String × Nat) :=
+  [("math/bits", "Len64", 1), ("math/bits", "Len", 1),
+   ("math/bits", "TrailingZeros64", 1), ("math/bits", "TrailingZeros", 1),
+   ("math/bits", "LeadingZeros64", 1), ("math/bits", "LeadingZeros", 1),
+   ("math/bits", "Add64", 3), ("math/bits", "Add", 3),
+   ("math/bits", "Sub64", 3), ("math/bits", "Sub", 3),
+   ("math/bits", "Mul64", 2), ("math/bits", "Mul", 2),
+   ("math/bits", "Div64", 3), ("math/bits", "Div", 3)]
+
+/-- Is `o` anything other than "this tier does not model it"? A defined
+panic COUNTS as modelled — that is the distinction `PkgOutcome` exists
+for. -/
+def PkgOutcome.isModelled : PkgOutcome → Bool
+  | .notModelled => false
+  | _ => true
+
+/-- **Every function this tier CLAIMS to model, it models.** Checked at
+each declared arity, with `1` as the argument (a value for which no
+listed function panics), so a name that appears in the surface list but
+not in `pkgCall` fails here instead of misleading a reader. -/
+theorem surface_is_honest :
+    modelledPkgFuncs.all (fun t =>
+      (pkgCall t.1 t.2.1 (List.replicate t.2.2 (GoVal.mkInt IntKind.uint64 1))).isModelled)
+      = true := by
+  rfl
+
+/-- A modelled function yields VALUES. -/
+theorem modelled_Len64_has_values :
+    ∃ vs, pkgCall "math/bits" "Len64" [GoVal.mkInt IntKind.uint64 1] = .values vs := by
+  exact ⟨_, rfl⟩
+
+/-- An unmodelled package is `notModelled` — the model's limit, which the
+walker turns into an `environment` refusal naming `pkg.fn`. -/
+theorem unmodelled_is_notModelled :
+    pkgCall "math/rand" "Intn" [GoVal.mkInt IntKind.int64 5] = .notModelled := rfl
+
+/-- **`panics` is NOT `notModelled`.** `bits.Div` by zero is behaviour Go
+defines, and reporting it as a gap in this tier would be the §5.2
+mis-bucketing §G14 paid for once already. -/
+theorem div_by_zero_panics_not_unmodelled :
+    pkgCall "math/bits" "Div"
+        [GoVal.mkInt IntKind.uint64 0, GoVal.mkInt IntKind.uint64 5,
+         GoVal.mkInt IntKind.uint64 0]
+      = .panics "runtime error: integer divide by zero" := by
+  rfl
 
 end LeanModels.Go

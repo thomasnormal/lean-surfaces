@@ -22,6 +22,7 @@ rung 1's figures after three inches had widened it; the current state:
 | 8 (§G20) | **fixed arrays `[N]T`**: `arrayLit`, and addressability as the shape of `a[:]` and `a[i] = v` |
 | 9 (§G22) | **resolved package calls** (`callPkg`) — rung E1 of the extractor tier; `LeanModels/Go/Packages.lean` holds the models |
 | 10 (§G23) | **multi-value returns**: n-ary `Flow.returned` and `ret`, `assignCall` destructuring with a real blank `_`, Go's redeclaration rule |
+| 11 (§G24) | `math/bits` completed (14 functions), package CONSTANTS (`pkgConst`), and `PkgOutcome` so a defined panic is not a gap |
 
 **Do not quote a reach figure here.** Two earlier versions of this header
 carried one and both went stale, and §G19 found the second was not even
@@ -178,6 +179,14 @@ inductive Expr where
   claim the extractor has to earn, and its shadowing behaviour is gated
   by `harness/go/construct_census.go --resolve --self-test`. -/
   | callPkg (pkg : String) (fn : String) (args : List Expr)
+  /-- A **resolved package CONSTANT**, `pkg.Name` — `bits.UintSize` and
+  its kind. Not a call, so no `callPkg` ever names it, and the extractor
+  resolves it from the same import table by the same rule (§G24).
+
+  It is its own node rather than a zero-argument `callPkg` because Go
+  distinguishes them: `bits.UintSize()` is an error, and a model that let
+  a constant be called would accept a program `gc` rejects. -/
+  | pkgConst (pkg : String) (name : String)
   deriving Repr, Inhabited
 
 /-- Statements, rung 1. -/
@@ -620,21 +629,31 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
   | f + 1, .callPkg pkg fn args => do
       let vals ← evalArgs prog f args
       match pkgCall pkg fn vals with
-      | some [v] => pure v
-      | some vs =>
+      | .values [v] => pure v
+      | .panics msg =>
+          -- Go DEFINES this panic (`bits.Div` by zero, or an overflowing
+          -- quotient). It is the program's outcome, not this tier's limit.
+          panicWith 0 (GoVal.runtimeErrorV msg)
+      | .values vs =>
           -- A multi-valued call in a SINGLE-value context. Go rejects this
           -- at compile time ("assignment mismatch: 1 variable but
           -- bits.Add64 returns 2 values"), so the model must not quietly
           -- take the first result — that is how a carry gets dropped.
           refuseGo .unsupportedConstruct (SpecRef.spec "Calls")
             s!"{pkg}.{fn} returns {vs.length} values in a single-value context"
-      | none =>
+      | .notModelled =>
           -- ENVIRONMENT, and it NAMES the callee. §5.2 says this bucket
           -- retires by widening the modelled slice, never by climbing a
           -- rung, and a refusal that names `pkg.fn` makes the refusal
           -- stream a ranked worklist instead of undifferentiated noise.
           refuseGo .environment (SpecRef.spec "Packages")
             s!"{pkg}.{fn} is not modelled"
+  | _ + 1, .pkgConst pkg name => do
+      match pkgConst pkg name with
+      | some v => pure v
+      | none =>
+          refuseGo .environment (SpecRef.spec "Constants")
+            s!"{pkg}.{name} is not modelled"
   | f + 1, .call name args => do
       match prog.find? (fun d => d.1 == name) with
       | none =>
@@ -745,8 +764,9 @@ def evalCallValues (prog : FuncTable) : Nat → Expr → GoM (List GoVal)
   | f + 1, .callPkg pkg fn args => do
       let vals ← evalArgs prog f args
       match pkgCall pkg fn vals with
-      | some vs => pure vs
-      | none =>
+      | .values vs => pure vs
+      | .panics msg => panicWith 0 (GoVal.runtimeErrorV msg)
+      | .notModelled =>
           refuseGo .environment (SpecRef.spec "Packages")
             s!"{pkg}.{fn} is not modelled"
   | f + 1, .call name args => do

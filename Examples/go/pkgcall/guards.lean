@@ -112,19 +112,25 @@ modelled by the same `bitLenSpec`, so the package model and the proved
 function are the same function — stated here rather than assumed. -/
 
 #guard (match pkgCall "math/bits" "Len64" [GoVal.mkInt IntKind.uint64 255] with
-        | some [.intV _ v] => v == (bitLenSpec 255 : Nat)
+        | .values [.intV _ v] => v == (bitLenSpec 255 : Nat)
         | _ => false) == true
 
 #guard (match pkgCall "math/bits" "Len64" [GoVal.mkInt IntKind.uint64 0] with
-        | some [.intV _ v] => v == 0        -- gc: Len64(0) = 0
+        | .values [.intV _ v] => v == 0        -- gc: Len64(0) = 0
         | _ => false) == true
 
 /-- The spec half, stated about the spec alone so it is a THEOREM and not
 an evaluation: `Len64`'s model is the same recursion §G15 proved
-`bigmod.bitLen` implements, so the two cannot drift apart silently. -/
+`bigmod.bitLen` implements, so the two cannot drift apart silently.
+
+The `uint64.wrap` is not noise: `Len64`'s PARAMETER is `uint64`, so §G24
+normalises every argument through that kind rather than trusting the
+caller's `IntKind`. Without it a negative `int64` would reach `bitLenSpec`
+through `Int.toNat` and silently read as 0. -/
 theorem len64_model_is_the_proved_spec (k : IntKind) (v : Int) :
     pkgCall "math/bits" "Len64" [.intV k v]
-      = some [GoVal.mkInt IntKind.int64 (bitLenSpec v.toNat)] := by
+      = .values [GoVal.mkInt IntKind.int64
+                  (bitLenSpec (IntKind.uint64.wrap v).toNat)] := by
   rfl
 
 /-! ## An UNMODELLED package refuses as `environment`, NAMING the callee.

@@ -29,7 +29,8 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G19 range / slice family | `5b3602f` | 604 / 3,803 (15.9%) | — |
 | §G20 fixed arrays `[N]T` | `da9a7bc` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G22 rung E1 (`pkg.F` + `math/bits`) | `4a9f9ec` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
-| §G23 multi-value returns | `9a6d6ad` | **680 / 3,803 (17.9%)** | **587 / 2,743 (21.4%)** |
+| §G23 multi-value returns | `9a6d6ad` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
+| §G24 `math/bits` complete + constants | *filled in next* | **687 / 3,803 (18.1%)** | **594 / 2,743 (21.7%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -2927,3 +2928,128 @@ script_corpus; census.sh --resolve'` — **green**.
 * Queued **4,511 s**; build phase **11 s**; `TRIAD DONE` at 01:41:31.
 * `docs_check` 91/91, `diff_test` 0 failed, `script_corpus` 65/0,
   resolver self-test 10/0.
+
+---
+
+## G24 — THE `math/bits` COMPLETION RUNG: +7 predicted, +7 measured (2026-08-24)
+
+§G23 priced this rung **in advance** at +7 files and named every blocker.
+It landed exactly:
+
+| | predicted (§G23) | measured |
+| --- | ---: | ---: |
+| all of `$GOROOT/src` | 680 → **687** | 680 → **687** |
+| the library only | 587 → **594** | 587 → **594** |
+
+The blocker list is now empty for all seven files. This is the second
+exact reach prediction this lane has made (§G20's `[N]T` at +76 was the
+first), and unlike that one it was called a **whole rung** ahead, with
+its prerequisites named and discharged separately.
+
+### THE CONSTANT IS A DIFFERENT KIND
+
+`const UintSize = uintSize` is not a function, and Go enforces the
+difference — `bits.UintSize()` does not compile. So it gets its own node
+(`Expr.pkgConst`) and its own extractor rule: a selector **not in call
+position**. Modelling it as a nullary `callPkg` would let the model accept
+a program `gc` rejects, which is the same test that ruled out tuple values
+in §G23 — *ask what the wrong model would permit*.
+
+The resolver's battery grew to **13 rows**, and the two new ones are
+gated both ways: a resolver that cannot tell a constant from a call fails
+them (verified — 2 failures, exit 6), and a shadowed constant is still
+not resolved.
+
+### `Div` PANICS, so the result type had to widen
+
+`bits.Div` panics on a zero divisor and on a quotient that will not fit —
+`"runtime error: integer divide by zero"` and `"runtime error: integer
+overflow"`, both printed from `gc`. A plain `Option` cannot say that, so
+`pkgCall` now returns `PkgOutcome` with **three** cases:
+
+| case | meaning |
+| --- | --- |
+| `values` | it computed something |
+| `panics` | **Go DEFINES this**; the program's outcome |
+| `notModelled` | this tier's limit → `environment` refusal naming `pkg.fn` |
+
+Folding `panics` into `notModelled` would report a program's own defined
+behaviour as a gap in the model — the §5.2 mis-bucketing §G14 paid for
+once already. `div_by_zero_panics_not_unmodelled` states the distinction
+as a theorem so it cannot be quietly re-collapsed.
+
+### THE SURFACE LIST WAS WRONG THE MOMENT IT WAS WRITTEN
+
+`modelledPkgFuncs` named `("math/bits", "Len")` while `pkgCall`
+implemented only `Len64`. Nothing caught it, because the list was prose
+in the shape of data — a declaration of support that no test read.
+
+It now carries each function's **arity** and is checked:
+
+    theorem surface_is_honest :
+      modelledPkgFuncs.all (fun t => (pkgCall t.1 t.2.1 …).isModelled) = true := by rfl
+
+`rfl`, not `native_decide` — the axiom ledger stays `[propext,
+Quot.sound]`, with no `ofReduceBool`. `Len` is now implemented too.
+
+The general lesson, and it is not specific to Go: **a list that says what
+a model supports is a claim, and an unchecked claim drifts on the first
+edit.** This one drifted within a single rung.
+
+### THE ACCEPTANCE: a carry folded into the high word
+
+`math/big/arith.go`'s `mulAddWWW_g`, vendored verbatim — from one of the
+seven files this rung unblocks:
+
+    func mulAddWWW_g(x, y, c Word) (z1, z0 Word) {
+        hi, lo := bits.Mul(uint(x), uint(y))
+        var cc uint
+        lo, cc = bits.Add(lo, uint(c), 0)
+        return Word(hi + cc), Word(lo)
+    }
+
+The discriminator is `hi + cc`: `Add`'s carry is added INTO the high
+word, so a model that dropped it returns the same low word and a high
+word one too small. At `⟨MAX, MAX, MAX⟩` `gc` gives `⟨MAX, 0⟩`; the
+carry-dropping model gives `⟨MAX-1, 0⟩`.
+
+`Word` is `uintptr` (64-bit here) and the frontend emits its conversions
+as `uint64` — sound for arithmetic, losing only type identity, which
+costs nothing at a rung with no methods.
+
+**50 guards** (counted), every value `printf`-ed from `gc`, **7
+non-vacuity flips run** — including both `Div` panic messages and
+`LeadingZeros(0) = 64` against the tempting `0`.
+
+### NEXT
+
+The reach ladder is back to the extractor. With `math/bits` complete, the
+next packages by the §G21 ranking are `syscall` (3,245 selections — but
+`environment` by nature, so it retires as a refusal that NAMES rather
+than as reach), then `fmt` (2,396), `reflect`, `io`, `errors`. `fmt` is
+the first that needs formatting semantics and variadics, so it should be
+priced against the walker's own frontier before it is assumed next.
+
+The honest note on E2 (`go/types`) is unchanged: it is sized only after
+E1's refusal worklist says which types need resolving, and that worklist
+now exists.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+### VERDICT
+
+`tools/triad.sh --lane go --classify --gates '…docs_check; diff_test;
+script_corpus; census.sh --resolve'` — **green**.
+
+* **Tree certified**: `2c4217cdabc7`, verified equal to this landing's
+  working tree.
+* **Elaboration witness**: **29 Built, 2 Replayed**. `LeanModels.Go.Stmt`,
+  `LeanModels.Go`, `Examples.go.bitspkg.guards` and
+  `Examples.go.pkgcall.guards` are **Built**. `LeanModels.Go.Packages` was
+  NAMED in the build target list and emitted no line — lake found it
+  current from the authoring build of this same tree — and its dependents
+  were Built against it. Saying "all Go modules Built" would be wrong;
+  this is what the log actually witnesses.
+* Queued **2,131 s**; build phase **12 s**.
+* `docs_check` 91/91; `diff_test` **1,475 cases, 0 failed**;
+  `script_corpus` 65/0; resolver self-test **13/13**.

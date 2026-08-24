@@ -15,7 +15,7 @@ import LeanModels.SoftFloat.Basic
 namespace LeanModels.SoftFloat
 
 open Float.Model
-open Float.Model.UnpackedFloat (Sign ExtendedMantissa)
+open Float.Model.UnpackedFloat (Sign ExtendedMantissa Accuracy)
 
 /-! ## Working lemma: the extended-mantissa shift IS division by a power of two -/
 
@@ -80,6 +80,67 @@ theorem em_shift_sticky (m n : Nat) :
       rw [hb] at h
       simp only [ExtendedMantissa.ofMantissaAndAccuracy, hb, Nat.mul_one] at h ⊢
       simp [h]
+
+/-! ## The shifted extended mantissa as an explicit triple, and what core's
+    rounding DOES with it. -/
+
+theorem em_shift_eq (m n : Nat) :
+    ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> (n + 1))
+      = { mantissa := m / 2 ^ (n + 1),
+          roundBit := (m / 2 ^ n) % 2 != 0,
+          stickyBit := m % 2 ^ n != 0 } := by
+  have h1 : ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> (n + 1)).mantissa = m / 2 ^ (n + 1) := by
+    rw [em_shift_mantissa]; rfl
+  have h2 := em_shift_round m n
+  have h3 := em_shift_sticky m n
+  cases hc : ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> (n + 1)) with
+  | mk a b c => rw [hc] at h1 h2 h3; simp_all
+
+/-! ## THE NEARER-NEIGHBOUR CASE ANALYSIS
+
+Core's `roundedMantissa` IS round-half-to-even of `m / 2^(n+1)`.  Stated
+against the RESIDUE, so both sides are exact integer arithmetic.
+-/
+theorem roundedMantissa_eq_roundHalfEven (m n : Nat) :
+    ((ExtendedMantissa.ofMantissaAndAccuracy m .exact) >>> (n + 1)).roundedMantissa
+      = (if 2 * (m % 2 ^ (n + 1)) < 2 ^ (n + 1) then m / 2 ^ (n + 1)
+         else if 2 ^ (n + 1) < 2 * (m % 2 ^ (n + 1)) then m / 2 ^ (n + 1) + 1
+         else m / 2 ^ (n + 1) + (m / 2 ^ (n + 1)) % 2) := by
+  rw [em_shift_eq]
+  have hpow : (2 : Nat) ^ (n + 1) = 2 * 2 ^ n := by rw [Nat.pow_succ]; omega
+  -- state the residue OVER THE SAME POWER the goal will carry, or it never fires
+  have hres : m % (2 * 2 ^ n) = m % 2 ^ n + 2 ^ n * ((m / 2 ^ n) % 2) := by
+    rw [← hpow]; exact Nat.mod_pow_succ
+  have hlt : m % 2 ^ n < 2 ^ n := Nat.mod_lt _ (Nat.two_pow_pos n)
+  rw [hpow]
+  rcases Nat.mod_two_eq_zero_or_one (m / 2 ^ n) with hb | hb
+  · rw [hb] at hres ⊢
+    simp only [Nat.mul_zero, Nat.add_zero] at hres
+    by_cases hs : m % 2 ^ n = 0
+    · -- EXACT: nothing at or below the cut
+      rw [hs] at hres
+      simp [ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hs, hres]
+    · -- STRICTLY BELOW half: round down
+      rw [show (m % 2 ^ n != 0) = true from by simp [hs]]
+      simp [ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hres]
+      omega
+  · rw [hb] at hres ⊢
+    simp only [Nat.mul_one] at hres
+    by_cases hs : m % 2 ^ n = 0
+    · -- EXACTLY half: the TIE, resolved to even
+      rw [hs] at hres
+      simp only [Nat.zero_add] at hres
+      rw [show (m % 2 ^ n != 0) = false from by simp [hs]]
+      simp [ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hres]
+    · -- STRICTLY ABOVE half: round up
+      rw [show (m % 2 ^ n != 0) = true from by simp [hs]]
+      simp [ExtendedMantissa.roundedMantissa, ExtendedMantissa.accuracy,
+            Accuracy.roundToNearestEven, hres]
+      -- `omega` cannot resolve an `if`; discharge both conditions first.
+      rw [if_neg (by omega), if_pos (by omega)]
 
 /-! ## THE ES ROW: core's float→int conversion IS truncation of the exact value
 

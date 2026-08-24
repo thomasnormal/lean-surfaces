@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**349 entries across 17 lanes.** Regenerate with
+**351 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -70,7 +70,9 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-qol-50` |  | nothing checked whether a ticket's base had ever been green | qol |
 | `2026-08-24-qol-49` |  | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
+| `2026-08-24-softfloat-22` |  | THE RED WAS MY VERIFICATION METHOD, NOT A RENAME | softfloat |
 | `2026-08-24-pycomplete-22` |  | `except <builtin>:` lands as a SUBSUMPTION TABLE, and a docstring that argued a case away expires with it | python-completeness |
+| `2026-08-24-softfloat-21` |  | THE NEARER-NEIGHBOUR CASE ANALYSIS: core's rounding IS round-half-to-even | softfloat |
 | `2026-08-24-pycomplete-21` |  | a substring is not a declaration: the register's declaration shape gets an anchor, and the fixture needs no fixture | python-completeness |
 | `2026-08-24-c-21` |  | THE SCOREBOARD INCH: read the oracle, size what is exact, and refuse to invent a struct | c |
 | `2026-08-24-softfloat-20` |  | THE BRIDGE LEMMAS: what core's round and sticky bits MEAN | softfloat |

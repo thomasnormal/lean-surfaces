@@ -1208,3 +1208,146 @@ With the bits now meaning something, the residue is in hand. What is left:
 the `Accuracy`, now that `Accuracy` is pinned to `m % 2^(n+1)` vs `2^n`); the
 second `shiftToTargetExponent` absorbs a rounding carry-out; and the result is
 nearest among **all** representables, which is the interleaving argument.
+
+---
+
+## 2026-08-24-softfloat-21 — THE NEARER-NEIGHBOUR CASE ANALYSIS: core's rounding IS round-half-to-even
+
+`LeanModels/SoftFloat/Theorems.lean`. `em_shift_eq` and
+`roundedMantissa_eq_roundHalfEven`, both `[propext, Classical.choice,
+Quot.sound]`, verdict **TRUSTWORTHY**, zero `sorry`.
+
+### THE STATEMENT
+
+```
+(⟨m, false, false⟩ >>> (n+1)).roundedMantissa
+  = if 2 * (m % 2^(n+1)) < 2^(n+1) then m / 2^(n+1)
+    else if 2^(n+1) < 2 * (m % 2^(n+1)) then m / 2^(n+1) + 1
+    else m / 2^(n+1) + (m / 2^(n+1)) % 2
+```
+
+Both sides are **exact integer arithmetic against the residue**. Core's
+rounding is no longer a bit procedure this component reasons *around*; it is
+round-half-to-even, and the four branches are the four IEEE §4.3.1 cases:
+exact, strictly below half, **exactly half → tie to even**, strictly above.
+
+The step it unlocks is the one it was for: `Accuracy` was pinned to the residue
+by the bridge lemmas, and the case analysis was then closed rather than
+open-ended — four branches, each decided.
+
+### FOUR OBSTACLES, AND EACH IS A GENERAL LESSON
+
+The proof took five iterations. Every failure was mechanical, and all four
+causes recur:
+
+1. **A `match` will not reduce while its scrutinee is symbolic.** Core's
+   `accuracy` matches on `⟨_, roundBit, stickyBit⟩`; leaving
+   `stickyBit := m % 2^n != 0` un-literalised stalled two branches with no
+   error message pointing at the cause. **Both bits must be literal `true`/
+   `false` first** — by `rw [hb]` where a hypothesis is an equation, and by
+   `rw [show (… != 0) = true from by simp [hs]]` where it is a negation.
+2. **A hypothesis stated over `2^(n+1)` never fires against a goal rewritten
+   to `2 * 2^n`.** `hres` had to be *restated* over the same power the goal
+   carries. Rewriting the goal and not the hypothesis is a silent no-op.
+3. **`omega` cannot resolve an `if`.** The last branch failed with a
+   perfectly linear goal still wrapped in a conditional; `rw [if_neg (by
+   omega), if_pos (by omega)]` discharged the conditions and the rest was
+   `rfl`.
+4. **`omega` is linear** — already recorded for `2^n * bit`, and it bit again.
+
+### THE METHOD NOTE FROM THE LAST ENTRY PAID FOR ITSELF, TWICE
+
+`2026-08-24-softfloat-20` recorded *"stop guessing definitional forms; run
+`trace_state` and read the goal."* Two of the four obstacles above were found
+that way in one step each, after guesses had failed repeatedly. The third
+guess-driven attempt made the proof **worse** — an invented `show
+… = decide (1 = …)` rewrite turned 2 failing cases into 8. Reading beat
+guessing every time it was tried.
+
+### §9.0 — STILL 1/12
+
+Lemmas toward `RoundWithAccuracyIsNearest`, not the obligation.
+**32 landed theorems, 1 an unconditional `op_correct`.**
+
+### WHAT REMAINS, in dependency order
+
+Carry-out absorption (the second `shiftToTargetExponent`, for when rounding up
+overflows the significand), then nearest-among-**all**-representables — the
+interleaving argument, which is the genuinely hard one and the last piece.
+
+---
+
+## 2026-08-24-softfloat-22 — THE RED WAS MY VERIFICATION METHOD, NOT A RENAME
+
+Triad on `d98177b` went **RED** in five seconds — build failed, `GATES NOT RUN`.
+`Unknown identifier Accuracy.roundToNearestEven` in
+`LeanModels/SoftFloat/Theorems.lean`. Aborted triad, no landing.
+
+### IT WAS NOT A RENAME, AND NOT A STRANDED CONSUMER
+
+The standing hypothesis was a rename with an unswept consumer — the clash-check
+family in reverse. **Measured: nothing was renamed.** Core's
+`Accuracy.roundToNearestEven` is intact, and the failing references are in the
+block this lane had just *added*, not in older code.
+
+The actual cause is **scope**:
+
+* `Theorems.lean:18` opens `Float.Model.UnpackedFloat (Sign ExtendedMantissa)`
+  — **no `Accuracy`**;
+* the probe the proof was developed in opened `(ExtendedMantissa Accuracy)`.
+
+So the proof compiled in the probe and could not compile in its destination.
+
+### AND THE VERIFICATION THAT SHOULD HAVE CAUGHT IT WAS UNSOUND
+
+Every landing in this lane has been checked by concatenating `Basic.lean` and
+the target file into one scratch file. **That sim merges `open` scopes that
+modules keep separate**, and it did so here in a specific, findable way:
+
+> `Basic.lean:180` carries `open Float.Model.UnpackedFloat (Sign ExtendedMantissa
+> Accuracy)`. The concatenation dropped `Basic`'s `end`, so that open stayed
+> live over the appended `Theorems` content — supplying the very name the real
+> module lacks.
+
+`open` is section-scoped and does not cross a module boundary. The sim erased
+the boundary, so it was testing a file that does not exist.
+
+### THE FIX, BOTH HALVES
+
+**The code:** add `Accuracy` to `Theorems.lean`'s open list. One line.
+
+**The method:** the sim now keeps `Basic.lean`'s `end` and appends the target
+**from its own `namespace` line**, so the target's opens are the only ones in
+scope — which is what the real module sees.
+
+**Both directions RUN, because a check that has never failed is a design and
+not a control:**
+
+| sim | with the fix | without the fix |
+| --- | --- | --- |
+| old (merged scopes) | 0 errors | **0 errors — MISSED IT** |
+| new (faithful) | 0 errors | **8 errors, `Unknown identifier Accuracy.roundToNearestEven`** |
+
+The faithful sim reproduces the triad's red exactly. The old one is why a
+`TRUSTWORTHY` verdict preceded a red build.
+
+### WHY THE TRIAD CAUGHT IT AND NOTHING ELSE DID
+
+Worth naming: `docs_check`, the census gates and all ten probes were green —
+every one of them, before and after. **None of them compiles `LeanModels/**` as
+modules**; only `lake build` does. The probes are core-only by design (that is
+what makes them lock-free), and the sim was standing in for the module build
+and doing it wrongly. **The triad was the only instrument pointed at the real
+artifact**, which is exactly why a red triad is worth its tenure.
+
+### `--iterate` REFUSED, CORRECTLY
+
+The natural fix-verification was `check.sh --iterate` on the real module — the
+new mode built for this. It **refused**: memory pressure 65.0% against a 50%
+line. That is the courtesy protocol working, and it is why the faithful sim was
+built instead of waiting.
+
+### §9.0 — STILL 1/12
+
+Unchanged; the theorems are the same ones, now in a file that compiles.
+**32 landed theorems, 1 an unconditional `op_correct`.**

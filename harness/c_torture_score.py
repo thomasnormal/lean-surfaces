@@ -28,8 +28,8 @@ EXECUTED in `--selftest` rather than described.
 import argparse, sys
 
 SCORED = ("passed", "failed")
-ZEROES = ("refused-unsupported", "refused-libc", "refused-ub",
-          "timeout", "not-parsed", "not-fetched")
+ZEROES = ("refused-unsupported", "refused-libc", "refused-ub", "timeout",
+          "not-ingested", "not-parsed", "runner-error", "not-fetched")
 TOKENS = SCORED + ZEROES
 
 
@@ -123,10 +123,14 @@ def selftest():
 
     # RULE 2: four zeroes, four numbers, and `scored` counts neither.
     log2 = ["a\tnot-fetched\t\n", "b\tnot-parsed\tK&R definition\n",
+            "g\tnot-ingested\tspan: field 'col': Natural number expected\n",
+            "h\trunner-error\tcannot read envelope\n",
             "c\trefused-unsupported\tswitch\n", "d\trefused-libc\tprintf\n",
             "e\trefused-ub\tsignedOverflow\n", "f\ttimeout\t\n"]
     counts, scored, total, ff = summarise(parse(log2))
-    check("six absences, zero scored", (scored, total), (0, 6))
+    check("eight absences, zero scored", (scored, total), (0, 8))
+    check("not-ingested is NOT pooled with not-parsed",
+          (counts["not-ingested"], counts["not-parsed"]), (1, 1))
     check("not-fetched is its own number", counts["not-fetched"], 1)
     check("not-parsed is its own number", counts["not-parsed"], 1)
     check("refused-libc is not pooled with refused-ub",

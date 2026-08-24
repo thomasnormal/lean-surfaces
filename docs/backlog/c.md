@@ -1959,3 +1959,54 @@ is evidence; a disagreement would be a defect in one of the two. Both
 carry `--selftest`, and the scorer's refuses an unknown verdict token
 rather than bucketing it.
 
+### THE FIRST RUN CONVICTED THIS LANDING OF ITS OWN LAW
+
+Tenure 1 came back green with `gcc.c-torture 24/300 scored`, and a line
+under it that did not add up: **`not-parsed 233`**, against a manifest
+that says **30**. The manifest was right. The 203 were envelopes clang
+had ACCEPTED and the `c-0.1` ingester had refused — and this driver was
+labelling both `not-parsed`.
+
+That is the pooling defect **this very entry names**, committed in the
+landing that names it. Two subsystems, one token:
+
+* `not-parsed` — **clang** rejected the source under the pinned profile;
+* `not-ingested` — clang accepted it, and the **extractor's output** was
+  refused by the ingester.
+
+> **The zero-state split is only as good as its finest real seam, and you
+> do not know where that seam is until the instrument runs. A state
+> partition written before the first run is a hypothesis; the first run
+> is what tests it.**
+
+Split in this landing, along with `runner-error` — which §4.2's own spec
+had asked for (*"an unexecutable test emits a `runner-error` row rather
+than no row, so the count stays honest"*) and which the first draft had
+folded into `not-parsed` too.
+
+### AND THE INSTRUMENT PAID FOR ITSELF ON ITS FIRST RUN
+
+Of the 203, **195 are one defect**:
+
+```
+not a c-0.1 envelope: envelope: FunctionDecl: ParmVarDecl: span:
+  field 'col': Natural number expected
+```
+
+`extractors/c/extract.py:146` writes `"col": b.get("col")`, and **clang
+omits `col`** for locations it gives only as a line — an unnamed
+parameter in a prototype is the common case. The extractor passes `null`
+through; the schema says `Nat`; the ingester refuses, correctly. Three
+more are `ParmVarDecl: field 'name': String expected` — C permits a
+prototype parameter with no name and the schema does not — and one is
+`EnumConstantDecl: field 'value'`.
+
+**So 199 of the 300 are gated on one schema decision**: is a span's
+`col` optional, and what does a model with no column do? That is the next
+inch, and it is priced in a decision plus one extractor change rather
+than in effort.
+
+> **A scoreboard's first job is not to be high. It is to say WHICH ONE
+> THING to fix next — and a number that could not do that would not be
+> worth the tenure that produced it.**
+

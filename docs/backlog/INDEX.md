@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**315 entries across 17 lanes.** Regenerate with
+**316 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -60,6 +60,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-pycomplete-19` |  | INCH (3): the flagship's LAST refused line was already retired, and the inch is the MEASUREMENT that proves it | python-completeness |
 | `2026-08-24-softfloat-18` |  | THE GUARD FIRED A SECOND TIME, ON MASTER'S EDIT, AND THE RESOLUTION IS CLEAN | softfloat |
 | `2026-08-24-pycomplete-18` |  | INCH (2) BUILT: `iter(d)` + `next` runs, and the price held except where the census caught it | python-completeness |
+| `2026-08-24-c-18` |  | INCH 6: the scoreboard is BUILT, and §9.0 stops being a promissory note | c |
 | `2026-08-24-softfloat-17` |  | THE TIE RULE IS NOT STATABLE WITHOUT CANONICALITY | softfloat |
 | `2026-08-24-pycomplete-17` |  | INCH (2)'s CENSUS: `iter(d)` arrives at the EVALUATOR, and it is the THIRD generator allocator | python-completeness |
 | `2026-08-24-c-17` |  | RUNG B: the 208 are DISCHARGED, the 7 have a NAME, and the order parameter was never needed | c |

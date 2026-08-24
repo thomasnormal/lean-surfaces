@@ -28,7 +28,9 @@ for all of these is unreadable and, worse, unfalsifiable — it cannot tell
 | state | what happened | whose fact |
 | --- | --- | --- |
 | `not-fetched` | the file was never obtained at the pin | the fetch |
-| `not-parsed` | clang rejected it under the pinned profile | the FRONTEND, not the model |
+| `not-parsed` | clang rejected it under the pinned profile | the FRONTEND |
+| `not-ingested` | clang accepted it and the c-0.1 INGESTER refused the extractor's output | the EXTRACTOR/schema pair — neither the frontend nor the model |
+| `runner-error` | the envelope could not be read at all | the plumbing (§4.2: an unexecutable test emits a row, never no row) |
 | `refused` | the model saw it and declined — cause kept apart | the tier's frontier |
 | `timeout` | fuel ran out | the fuel bound |
 | `failed` | the program reached `abort()` | **scored** |
@@ -56,7 +58,9 @@ inductive Verdict where
   | refusedLibc (name : String)
   | unsupported (what : String)
   | timeout
-  | notParsed (why : String)
+  | notParsed (why : String)      -- clang rejected it: the FRONTEND's fact
+  | notIngested (why : String)    -- the extractor's output; the INGESTER's fact
+  | runnerError (why : String)    -- neither: the plumbing failed
   | notFetched
 deriving Repr, Inhabited, BEq
 
@@ -74,6 +78,8 @@ def Verdict.token : Verdict → String
   | .unsupported _ => "refused-unsupported"
   | .timeout => "timeout"
   | .notParsed _ => "not-parsed"
+  | .notIngested _ => "not-ingested"
+  | .runnerError _ => "runner-error"
   | .notFetched => "not-fetched"
 
 def Verdict.detail : Verdict → String
@@ -82,6 +88,8 @@ def Verdict.detail : Verdict → String
   | .refusedLibc n => n
   | .unsupported w => w
   | .notParsed w => w
+  | .notIngested w => w
+  | .runnerError w => w
 
 /-! ## The layout, from the PROFILE and not from a host
 
@@ -143,13 +151,13 @@ def runEntry (fuel : Nat) (e : Entry) : IO Verdict := do
   match e.status, e.envelope with
   | "absent", _ => pure .notFetched
   | "rejected", _ => pure (.notParsed e.why)
-  | _, none => pure (.notParsed "manifest says parsed but names no envelope")
+  | _, none => pure (.runnerError "manifest says parsed but names no envelope")
   | _, some p =>
       match ← (IO.FS.readFile ⟨p⟩).toBaseIO with
-      | .error err => pure (.notParsed s!"cannot read envelope: {toString err}")
+      | .error err => pure (.runnerError s!"cannot read envelope: {toString err}")
       | .ok contents =>
           match parseEnvelopeString contents with
-          | .error err => pure (.notParsed s!"not a c-0.1 envelope: {err}")
+          | .error err => pure (.notIngested err)
           | .ok envl => pure (scoreEnvelope fuel envl)
 
 /-! ## The summary
@@ -163,7 +171,8 @@ reader cannot tell that it did. -/
 def summarise (rows : List (String × Verdict)) : List String := Id.run do
   let mut passed := 0; let mut failed := 0; let mut refUB := 0
   let mut refLibc := 0; let mut unsup := 0; let mut tmo := 0
-  let mut notParsed := 0; let mut notFetched := 0
+  let mut notParsed := 0; let mut notIngested := 0
+  let mut runnerErr := 0; let mut notFetched := 0
   let mut firstFail : Option (String × Verdict) := none
   for (n, v) in rows do
     match v with
@@ -176,12 +185,14 @@ def summarise (rows : List (String × Verdict)) : List String := Id.run do
     | .unsupported _ => unsup := unsup + 1
     | .timeout => tmo := tmo + 1
     | .notParsed _ => notParsed := notParsed + 1
+    | .notIngested _ => notIngested := notIngested + 1
+    | .runnerError _ => runnerErr := runnerErr + 1
     | .notFetched => notFetched := notFetched + 1
   let total := rows.length
   let scored := passed + failed
   let mut out : List String := []
   out := out ++ [s!"gcc.c-torture {scored}/{total} scored  (passed {passed}, failed {failed})"]
-  out := out ++ [s!"  the zeroes, kept apart: refused-unsupported {unsup}, refused-libc {refLibc}, refused-ub {refUB}, timeout {tmo}, not-parsed {notParsed}, not-fetched {notFetched}"]
+  out := out ++ [s!"  the zeroes, kept apart: refused-unsupported {unsup}, refused-libc {refLibc}, refused-ub {refUB}, timeout {tmo}, not-ingested {notIngested}, not-parsed {notParsed}, runner-error {runnerErr}, not-fetched {notFetched}"]
   match firstFail with
   | none => out := out ++ ["  first failure: none"]
   | some (n, v) =>

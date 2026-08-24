@@ -313,4 +313,107 @@ so the evaluator RESOLVES instead. -/
   (.call (.declRef "abort" "FunctionDecl" "void (void)" noSpan) [] "void" noSpan))
   == .unsupported "call to 'abort' in a context with no program — call it through 'callByName'"
 
+/-! ## RUNG A — `Expr.isPure`, and the `J.1(16)` domain MEASURED BY THE MODEL
+
+`LeanModels/C/C23/Expr.lean` proves that a pure expression's evaluation
+leaves memory alone. This section is the other half of the M1 discipline:
+**two instruments, two paths, one answer.** Every number below is also a
+row of `harness/c_construct_census.py` walking clang's AST, and
+`docs/c23-spec-mirror.md` §5.3 fixed the domain at **7 sites** before
+`Expr.isPure` existed. What is new is that the model reaches the same 7
+through its OWN predicate — the one the theorem consumes — rather than
+through a census's separate notion of "an effect".
+
+The census's own phrase for the domain is *"call sites where two or more
+arguments could carry an effect"*; `isPure` spells that as *"an argument
+containing a write-capable node"*. Two definitions, one number. -/
+
+/-- Every call site in the ingested unit, in document order. `unit.exprs`
+is the same walk `TranslationUnit.indirectCalls` uses, and its 19 is
+already gated in `Examples/c/sunfish/guards.lean`. -/
+private def callSites : List Expr :=
+  sunfishC.unit.exprs.filter fun e => match e with
+    | .call .. => true
+    | _ => false
+
+/-- Each call site as `(line, arity, impure arguments)`. -/
+private def callArgPurity : List (Nat × Nat × Nat) :=
+  callSites.filterMap fun e => match e with
+    | .call _ args _ sp =>
+        some (sp.line, args.length, (args.filter fun a => !Expr.isPure a).length)
+    | _ => none
+
+-- 320 call sites (c-construct-census.json: call_sites).
+#guard callArgPurity.length == 320
+
+-- 215 of them take two or more arguments -- the sites §6.5.3.3p10 can
+-- order at all.  A one-argument call has nothing to sequence.
+#guard (callArgPurity.filter fun t => t.2.1 ≥ 2).length == 215
+
+-- 10 call sites have an argument this model calls IMPURE.
+#guard (callArgPurity.filter fun t => t.2.2 ≥ 1).length == 10
+
+-- THE J.1(16) DOMAIN: two or more arguments, at least one of them impure.
+-- SEVEN -- the number docs/c23-spec-mirror.md §5.3 fixed by census, reached
+-- here by the predicate the memory-invariance theorem is stated about.
+#guard (callArgPurity.filter fun t => t.2.1 ≥ 2 && t.2.2 ≥ 1).length == 7
+
+-- ...and they are the seven the register NAMES, at their own line numbers:
+-- map_find_h L428, fmt_move L978, printf L1301, set_knob L1317/1331/1363/1369.
+#guard (callArgPurity.filter fun t => t.2.1 ≥ 2 && t.2.2 ≥ 1).map (·.1)
+  == [428, 978, 1301, 1317, 1331, 1363, 1369]
+
+-- ZERO call sites have TWO impure arguments.  This is the fact that keeps
+-- the residue an effect-summary question rather than an interference one:
+-- at every one of the seven there is exactly one writer to reason about.
+#guard (callArgPurity.filter fun t => t.2.2 ≥ 2).length == 0
+
+-- 208 of the 215 multi-argument sites have EVERY argument pure.  At those,
+-- Rung A's theorem plus the fact that `evalExpr` is a FUNCTION of the memory
+-- is the whole ∀-order argument: no order can differ, because no order can
+-- write.  Rung B's domain is 7, not 215, and this is the line that says so.
+#guard (callArgPurity.filter fun t => t.2.1 ≥ 2 && t.2.2 == 0).length == 208
+
+/-! ### And what makes an argument impure, corpus-wide
+
+The predicate is an OVER-approximation — it convicts an assignment or an
+increment inside an argument too — so the honest question is whether the
+slack is load-bearing here. It is not: across all 320 call sites and every
+argument of every one of them, **the only impure node kind that occurs is
+a CALL**, ten times. `isPure`'s coarseness misclassifies nothing in this
+corpus, and the day it would, this guard changes. -/
+
+/-- The impure NODES inside call arguments, by clang class name. -/
+private def impureArgNodes : List String :=
+  callSites.flatMap fun e => match e with
+    | .call _ args _ _ =>
+        args.flatMap fun a =>
+          (a.subexprs.filter fun n => !Expr.nodeIsPure n).map (fun n => n.kindName)
+    | _ => []
+
+#guard impureArgNodes.length == 10
+#guard impureArgNodes.all (· == "CallExpr")
+
+/-! ### The predicate on the terms this file already runs
+
+`pyfloordiv`'s condition is the corpus term the rest of this file
+evaluates. It is PURE — four comparisons and two lvalue conversions under
+one `&&` — which is what makes the drain-amendment theorems above and the
+memory-invariance theorem statements about the same expression. -/
+
+#guard Expr.isPure cond
+-- The `q--` of the same function is NOT: §6.5.3.5 stores.
+#guard !(Expr.isPure (.unop "--" (.declRef "q" "VarDecl" "int" noSpan) true "int" noSpan))
+-- Nor is a bare assignment, and nor is anything containing one...
+#guard !(Expr.isPure (.binop "=" (.declRef "r" "VarDecl" "int" noSpan)
+          (lit "7") "int" noSpan))
+#guard !(Expr.isPure (.paren (.binop "=" (.declRef "r" "VarDecl" "int" noSpan)
+          (lit "7") "int" noSpan) "int" noSpan))
+-- ...while `&&`, `||` and `,` are value computations, not stores.
+#guard Expr.isPure (.binop "&&" (lit "1") (lit "2") "int" noSpan)
+#guard Expr.isPure (.binop "," (lit "1") (lit "2") "int" noSpan)
+-- An out-of-tier node is IMPURE, not vacuously pure: "the model declines"
+-- is not "the construct does not write".
+#guard !(Expr.isPure (.unsupported "SwitchExpr" "…" noSpan))
+
 end Examples.c.sunfish.expr

@@ -326,7 +326,7 @@ at this sha. 43 gates in `Examples/c/sunfish/stmt.lean`. No `sorry`, no
 
 ---
 
-## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-2` (C lane's to triage)
+## 2026-08-22-softfloat-2 — INBOUND FROM THE SOFTFLOAT LANE: C lane's to triage
 
 *Filed by the SoftFloat lane during its consumer census
 (`docs/softfloat-charter.md` §2.3). The id is in the SoftFloat namespace on
@@ -1129,3 +1129,333 @@ Quot.sound]`. Their proofs go through `simp [evalExpr, …]`, i.e. through
 `evalExpr`'s equation lemmas, and those were the standing risk in
 enlarging the block. Named here because it was a risk that could have
 cost a tenure and did not.
+
+---
+
+## 2026-08-24-c-12 — RUNG A: the ∀-order domain was never 215 sites, and measuring it discharged 208 of them
+
+The dispatch was Rung A — `Expr.isPure` plus memory-invariance — named in
+`2026-08-23-c-11` as the enabling half of the `J.1(16)` discharge. It
+landed, and the interesting part is not the theorem: it is that **stating
+the predicate re-measured the obligation and most of it went away.**
+
+### The finding, and it is a number the register did not have
+
+`docs/c23-spec-mirror.md` §5.3 has said *"domain measured: 7 sites"* since
+inch 3, against **320** call sites. What it never said is what the 7 are a
+residue OF. `Expr.isPure`, run over the ingested unit by the model itself:
+
+| | |
+| --- | ---: |
+| call sites | **320** |
+| …taking two or more arguments — the sites §6.5.3.3p10 can order at all | **215** |
+| …of those, EVERY argument pure | **208** |
+| …of those, at least one argument impure — the `J.1(16)` domain | **7** |
+| …with TWO impure arguments | **0** |
+| impure node kinds occurring in ANY call argument, corpus-wide | **1** — `CallExpr`, ten times |
+
+**208 of the 215 orderable sites need no effect summary at all**: with
+every argument write-free, no order can differ, because no order can
+write. The seven are the same seven the register names, at the same lines
+(`map_find_h:L428`, `fmt_move:L978`, `printf:L1301`,
+`set_knob:L1317/1331/1363/1369`), reached this time through the predicate
+the theorem is stated about rather than through the census's separate
+notion of *"an effect"*. Two definitions, one number, and the gate asserts
+the line numbers, not just the count.
+
+> **A quantifier's domain is a MEASUREMENT, and measuring it is often most
+> of the discharge: a census that names a residue owes the population the
+> residue is a residue OF.**
+
+Read the two sentences side by side. *"The J.1(16) domain is 7 of 320
+call sites"* invites the reading that 313 sites were somehow already fine;
+*"7 of 215 ORDERABLE sites, and 208 of the other 215 fall to a syntax
+check"* says which fact does the work. The first was true for two inches
+and told nobody that Rung B's real price was 7 sites out of a population
+that a `Bool`-valued function decides.
+
+### What landed
+
+**`Expr.nodeIsPure` / `Expr.isPure`, in the C23 sibling and not on the
+trunk.** `isPure e` is `e.subexprs.all nodeIsPure` — **no new recursion**,
+the same reason `Expr.size` is defined through `subexprs`
+(`2026-08-23-c-11`). It is in `LeanModels/C/C23/Expr.lean` and not in
+`LeanModels/C/Ast.lean` on purpose: the trunk's own docstring says *"this
+file is a TYPE, not a semantics"*, and a predicate whose content is
+*"which operator SPELLINGS reach `storeAt`"* is a claim about this
+evaluator, not a query over the term. The cost of that placement is that
+`Expr.isPure e` does not get dot notation, which is the honest price of
+keeping the boundary where §2.4 put it.
+
+**The memory-invariance theorem**, by strong induction on `Expr.size`
+over `evalExpr` and `evalLValue` together:
+
+```
+theorem evalExpr_memInvariant (ctx) (e) (h : Expr.isPure e = true) :
+    MemInvariant (evalExpr ctx e)
+```
+
+`MemInvariant x` quantifies over `r : Except Refusal α`, so it covers the
+REFUSAL branch too — which is not decoration. `ExceptT` outside `StateT`
+is the state-retaining order, so a refusal carries a memory, and a
+predicate that spoke only about success would say nothing about the one
+branch the layer order exists to keep world-aware.
+
+`evalArgs` never appears in the induction, and that is the honest shape:
+`nodeIsPure` makes a `call` node impure, so the arm that reaches an
+argument walk is vacuous. A call is precisely what this theorem cannot
+speak for, and the proof is structured so that it cannot pretend to.
+
+### The over-approximation, and how a conservative predicate is DEFENDED
+
+`isPure` convicts a write-capable node **anywhere** in the term —
+including under a `&&` that would never run it and under a `sizeof` whose
+operand §6.5.4.4p2 does not evaluate at all. That is slack, and slack is
+usually where a predicate quietly stops being useful.
+
+Measured instead of excused: **across all 320 call sites and every
+argument of every one of them, the only impure node kind that occurs is a
+`CallExpr`** — ten of them. Not one argument in the corpus contains an
+assignment, a compound assignment or an increment, so the coarseness
+misclassifies nothing here, and the gate that says so changes the day it
+would.
+
+> **An over-approximation owes a COUNT of what it over-convicts, not an
+> apology; the defence of a conservative predicate is the measurement of
+> its slack on the corpus it is used on.**
+
+**And one classification that is deliberately not the convenient one.** An
+`unsupported` node is IMPURE, though this evaluator refuses it and a
+refusal can never return `.ok`. Calling it pure would have been sound
+today and would have become unsound the day the construct is modelled,
+silently.
+
+> **"The model declines" is not "the construct does not write."** A
+> predicate that pools the two is a predicate whose soundness expires
+> without a diff.
+
+### §9.3 CONVERGENCE — the run seam is family-level, and this is the second tier to need it
+
+`LeanModels/Go/Obs.lean` §1 lands `run_bind` for `GoM`; this landing needs
+the same lemma for `EvalM`. **`GoM` and `EvalM` are both
+`LeanModels.SemMWith`**, and the C proof is Go's with four substitutions
+— `GoWorld → Mem`, `Panic → Refusal`, `SpecRef → CDetail`, `Unit → Mem` —
+and **not one line of either mentions a language**.
+
+Go's own header says *"the ORDER lifts; the CONGRUENCES don't"*, and it is
+right about Python's `Res`, which really is a different monad with an
+`.exn` arm. It is not right about two tiers that share the substrate.
+
+> **A congruence that is generic in the SUBSTRATE'S parameters is not a
+> per-tier congruence; "the congruences don't lift" is a statement about
+> a different monad, not about a second consumer of the same one.**
+
+**Not taken unilaterally.** Lifting `run_bind` and its four step lemmas to
+`LeanModels/Core/Outcome.lean` is a SPINE landing — a full build under
+§7.1's classification, in a file two other lanes are live in — so it is
+priced here and left for the coordinator: **5 theorems, ~40 lines, zero
+proof change, and Go's rows become one-line instances.** Until it lands,
+the C tier's copy carries this paragraph so that the duplication is
+visible in the code rather than only in an audit.
+
+### A MEASUREMENT THE PROCESS OWES: A17's swap gate is a HIGH-WATER MARK on macOS
+
+This proof — 532 lines — was written and ticketed **without a single
+iteration**, because `tools/check.sh --iterate` refused every one of ~30
+attempts across the session, all with the same verdict:
+
+```
+CASE   refuse-swap
+WHY    swap is 88.5% in use, over the line of 50%
+STATE  load 2.42 (line 10), swap 88.5% (line 50%)
+```
+
+**The machine was not under memory pressure.** At the same moment,
+`memory_pressure` reported **"System-wide memory free percentage: 59%"**,
+`vm_stat` showed 78 250 free plus 253 176 inactive pages, and the load
+average was 2.4 against a line of 10. The gate and the machine disagree by
+construction, and `read_swap_pct` (`tools/check.sh:302`) is where:
+
+* on Linux it reads `/proc/meminfo` `SwapTotal`/`SwapFree` — **current**
+  usage, which falls when pressure falls;
+* on macOS it reads `sysctl vm.swapusage` `used`, which is **swap the
+  kernel has allocated and not reclaimed** — a high-water mark that
+  survives the pressure that caused it, and in this session drained from
+  8 274 MB to 8 154 MB in forty minutes.
+
+So the same 50% line means *"is swapping now"* on one host and *"has ever
+swapped this much since boot"* on the other. **A box that swapped once
+has A17 closed for the rest of its uptime**, which turns the amendment
+that exists to price proof iteration back into the starvation it was
+written to fix.
+
+> **A portable gate whose two implementations measure different
+> QUANTITIES is not portable — it is two gates with one name, and the
+> line only means what the instrument means.**
+
+Not fixed here, and deliberately: it is the QoL lane's gate, A17 is a
+DRAFT with five tightenings already flagged, and *"my lane is blocked"* is
+the worst possible reason to move a shared safety line. Filed as an
+inbound below. The suggested instrument is `memory_pressure`'s free
+percentage or `kern.memorystatus_vm_pressure_level` — both report
+pressure rather than allocation — with the swap reading kept as a
+secondary on Linux where it means what the line says.
+
+### A SMALLER ONE, and it cost twenty minutes: a mirror is validated by an ALREADY-GATED number
+
+The corpus numbers above were measured in Python first (§9.0a,
+census-first — no Lean, no tenure) by mirroring `TranslationUnit.exprs`.
+The first mirror was **wrong**: it handled every statement kind the
+envelope spells with a `kind` field and produced **156** call sites
+instead of 320. The bug is that an expression in statement position has
+**no wrapper kind at all** — `Json.lean:276` falls through to
+`.expr (← parseExpr j)`, so a `CompoundStmt`'s body holds raw
+`BinaryOperator` and `CallExpr` nodes — and a mirror that scanned for
+statement kinds simply did not see them.
+
+Nothing about the wrong mirror looked wrong. What convicted it was
+running it against a number **this repository already gates**:
+`indirectCalls == 19` (`Examples/c/sunfish/guards.lean`). The broken
+mirror said 4.
+
+> **A new instrument is validated against a number that is ALREADY GATED,
+> before it is trusted for a number that is not — otherwise its first
+> output is both the measurement and its own oracle.**
+
+### What this does NOT claim
+
+**The `J.1(16)` obligation is not discharged.** Rung A pays the sibling
+half — *the siblings do not write* — for all seven sites and pays the
+whole obligation for the 208 that have no impure argument at all. Rung B
+is the other half: at each of the seven, one nested call, and whether it
+writes what its siblings read.
+
+**And Rung B's statement is not the obvious one**, which is worth writing
+down before someone tries: even where every argument is pure, two orders
+can still disagree about **which refusal is reported**, when more than one
+argument would refuse. Order-independence holds for the value and for the
+memory, never for the run. The observable Rung B quantifies over has to be
+the ANSWER, not the trace — and `Outcome`, which already has nowhere to
+put a `Mem`, is the type that says so.
+
+### TENURES — and tenure 1's thirteen errors had ONE cause
+
+**Tenure 1 — `crunga 44165`, LOCK ACQUIRED after 2 317 s, RELEASED 15 s
+later. RED, and therefore an ABORTED triad: gates not run.** 13 `unsolved
+goals` errors, every one of them inside the new block, nothing before line
+1357 — so the predicate, the extraction lemmas, the whole run seam and the
+entire `MemInvariant` algebra had elaborated clean.
+
+The thirteen were one defect. `MemInvariant` was a `def` returning a `∀`,
+and the closing tactic's `intro` **unfolds definitions** — so on a goal
+`MemInvariant (…)` the `intro` alternative fired before `split` ever could,
+stripped the predicate down to a bare `m' = m`, and every subsequent
+`apply` then unified against *that*. The signature is unmistakable once
+seen: thirteen goals of the form `⊢ pure m'✝ m✝ = Except.ok (?r, m'✝)`,
+with a metavariable where a computation should be.
+
+> **A tactic that dispatches on a goal's HEAD needs that head to be
+> stable, and a `def` that unfolds to a binder has no stable head.**
+
+The repair is one word: `MemInvariant` is a `structure` with a single
+field. A structure is opaque to `intro` by construction, so the property
+the tactic depends on is now a fact about the TYPE rather than a habit of
+the tactic list. `map'` joined the algebra in the same pass, because `simp`
+normalizes `x >>= fun a => pure (g a)` to `g <$> x` and a goal can arrive
+wearing the other spelling.
+
+**Tenure 2 — `crunga 41896`, LOCK ACQUIRED after 1 944 s, RELEASED 14 s
+later. RED, aborted triad. Thirteen errors became TWO**, and both were
+`(deterministic) timeout at whnf` — the `sizeof` arm and the `constExpr`
+arm, the two whose goals carry the deepest terms (an `Option.bind` through
+an opaque `Layout` field; a `String.toInt?`).
+
+The defect was not in the proof, it was in what the tactic COST. `mem_inv`
+is a `first | apply … | apply … ` list, and `apply` runs at DEFAULT
+transparency — so a failing `apply MemInvariant.evalArith'`
+delta-unfolds `evalArith` and matches its nineteen-way `String` match
+against the goal before giving up, once per alternative, per goal, per
+step.
+
+> **A tactic assembled from `first | apply …` pays its ENTIRE alternative
+> list at default transparency on every goal; if the alternatives name
+> non-reducible constants, that list is a search over their bodies.**
+
+Every `apply` in `mem_inv` now runs `with_reducible`, so each lemma
+matches only when the goal's head IS the constant it names and every
+failure is one comparison. `maxHeartbeats` on the one twenty-arm
+declaration is raised alongside and is labelled in the source as a
+BUDGET rather than the fix — twenty cheap searches still sum.
+
+**Tenure 3 — `crunga 22930`, LOCK ACQUIRED after 1 673 s, RELEASED 14 s
+later. RED, aborted triad. Two errors became ONE**, and it named a third
+kind of defect: not the proof, not the cost, but **how much a fallback
+OPENED.**
+
+`open_eval` is `first | simp only [evalExpr] | rw [evalExpr.eq_def]` —
+per-clause equations where they fire, the whole-function unfolding where
+they do not. On the `sizeof` arm the per-clause equation did not fire, so
+the fallback ran and `split` then produced one goal per arm of the WHOLE
+twenty-arm match. Nineteen of those are impossible — each carries a
+hypothesis equating two different constructors — and nothing in the
+tactic's list could say so, because "this arm cannot happen" is not a
+`MemInvariant` fact.
+
+> **A fallback that opens MORE than the primary path owes the extra goals
+> a closer; otherwise the fallback converts a missing rewrite into a wall
+> of unreachable obligations, and the error you read is about the wrong
+> thing.**
+
+The closer is one word: `contradiction`, which discharges a
+constructor-mismatch hypothesis by `noConfusion`. It is cheap, it is
+precise, and on the primary path it never fires.
+
+### AND THEN THE INBOUND CAME BACK AS AN INSTRUMENT, IN THE SAME SESSION
+
+Between tenure 3 and this landing the QoL lane landed
+**`2026-08-24-qol-53`, "the politeness line was reading a high-water
+mark"** — `--iterate` now gates on `memory_pressure:free%(macos)` instead
+of `vm.swapusage used`. On the first check after rebasing onto it, the
+same box that had refused ~30 consecutive attempts read **memory pressure
+31 %** against the same 50 % line, and permitted the run.
+
+The next two defects were found in **ten seconds each**:
+
+* `contradiction` (above) — confirmed, not guessed;
+* and the last one, which no amount of reading would have produced:
+  `evalExpr`'s `sizeof` clause binds `key` with a **`have`, not a `let`**
+  — Lean elaborates a non-dependent `let` in term position to `letFun` —
+  and **`split` cannot see through a `have`**. One alternative,
+  `simp only [letFun]`, and the file went green.
+
+> **`let` in a definition can elaborate to `have`, and a `have` is opaque
+> to `split`: a tactic that opens `match`es needs an alternative that
+> opens BINDINGS, or a clause disappears behind its own local name.**
+
+**The measurement, and it is the whole argument for A17.** Three defects
+cost **5 934 s of queueing for 43 s of building**. The next two cost
+**20 seconds, total.** The instrument was the difference; nothing about
+the proof changed.
+
+> **A courtesy protocol is worth exactly what its gate's INSTRUMENT is
+> worth: A17 was not too strict, it was reading the wrong quantity, and
+> the two are indistinguishable from inside the lane that is refused.**
+
+**And the process note, because it is the same finding as the inbound
+above from the other end.** Thirteen errors with one cause is exactly what
+a first elaboration is for. This lane paid **2 317 s of queue** to see the
+first cause, **1 944 s** to see the second and **1 673 s** to see the
+third — **5 934 s of queueing for 43 s of building**, three defects each
+one line, each of which a fifteen-second `lake env lean` would have shown —
+because `--iterate` was refused for the whole session on a swap reading
+that is a high-water mark. **The cost of A17 being closed is not the
+iteration; it is that the iteration happens inside the lock.**
+
+### §9.0 — the tier's standing number
+
+**`gcc.c-torture` 0 scored (runner needed).** Unchanged, and it will stay
+unchanged until inch 6 builds the batch runner that creates the
+denominator: the corpus is GPL and is fetched AT PIN by content hash,
+never vendored (`docs/c23-goal.md` §2), so the number is a property of a
+`lean_exe` driver this tier does not yet have. Rung A moved a proof
+obligation, not a score, and says so.

@@ -3779,3 +3779,67 @@ coordinator, not to me.
 `check.sh` **104 ok** (87 → 104), and triad 317, laws 45, sites 57,
 backlog-index 62, diagnose 51, `--verify-guards` 32, docs_check 91/91. No Lean
 executed; live queue untouched.
+
+---
+
+## 2026-08-24-c-13 — INBOUND FROM THE C LANE: QoL lane's to renumber or close
+
+*Id kept in the C namespace; nothing minted in the QoL sequence. Filed after
+reading this file — A17's five flagged tightenings are yours and are not being
+re-reported. This is a sixth, and it is about the INSTRUMENT rather than the
+line.*
+
+### `--iterate`'s SWAP LINE IS A HIGH-WATER MARK ON macOS, so A17 is a dead letter on this box
+
+`tools/check.sh:302`, `read_swap_pct`, has two implementations:
+
+* Linux — `/proc/meminfo` `SwapTotal`/`SwapFree`. **Current** usage: it falls
+  when the pressure that caused it falls.
+* macOS — `sysctl vm.swapusage`, field `used`. **Swap the kernel has
+  allocated and not reclaimed** — a high-water mark that outlives the
+  pressure, because macOS does not shrink swap files promptly.
+
+So the 50% line means *"is swapping now"* on one host and *"has ever swapped
+this much since boot"* on the other, and **a box that swapped once has A17
+closed for the rest of its uptime.**
+
+**Measured, on this machine, 2026-08-24.** `decide_iterate` refused ~30
+consecutive attempts over the whole session, every one `refuse-swap` at
+**88.5%**, while at the same moment:
+
+| instrument | reading |
+| --- | --- |
+| `sysctl vm.swapusage` used | **88.5%** of 9 216 MB — over the line |
+| `memory_pressure` | **"System-wide memory free percentage: 59%"** |
+| `vm_stat` | 78 250 pages free, 253 176 inactive (16 KB pages) |
+| load average | **2.42**, against A17's line of 10 |
+
+Swap drained 8 274 MB → 8 154 MB in forty minutes, so the reading is not stuck;
+it is simply not a pressure measurement. **The gate and the machine disagree by
+construction, not by tuning.**
+
+**The cost, measured rather than asserted.** The C lane's Rung A landing
+(`2026-08-24-c-12`) is a 532-line proof written and ticketed **without a single
+elaboration**, because the one licensed lock-free iteration never opened. That
+is precisely the *"a 300-line proof at one compile per tenure is not a
+session's work"* problem A17's own draft names, arriving through the gate
+rather than around it.
+
+> **A portable gate whose two implementations measure different QUANTITIES is
+> not portable — it is two gates with one name, and the line only means what
+> the instrument means.**
+
+**Asked for: a pressure instrument on macOS, not a looser line.** Raising 50%
+would be the wrong fix — it would loosen Linux, where the number is already
+right. `memory_pressure`'s free-percentage line, or
+`sysctl kern.memorystatus_vm_pressure_level` (1 = normal, 2 = warn, 4 =
+critical), reports pressure rather than allocation. Keeping the swap reading as
+a secondary on Linux costs nothing, and `--self-test`'s existing
+`LS_MOCK_SWAP` case generalises to a `LS_MOCK_PRESSURE` one.
+
+**Not touched by this lane, on purpose.** It is your gate, A17 is a draft, and
+*"my lane is blocked"* is the worst available reason to move a shared safety
+line — the same argument the C lane made for not lifting Go's run seam into
+`Core` unilaterally.
+
+*Renumber into your sequence or close it — the call is yours.*

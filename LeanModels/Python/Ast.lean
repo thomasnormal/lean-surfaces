@@ -648,6 +648,17 @@ kept OUT of it, and — the property that licenses it — it can never appear in
 EXPRESSION position, because ingestion emits it only from a `Delete` node. -/
 def dictDelBuiltinName : String := "<dictdel>"
 
+/-- §PEP 289: the synthesized genexp function's name PREFIX, and its implicit
+first parameter. Ingestion mints the names (`Json.lean`) and the EVALUATOR has
+to recognise them, because PEP 289 gives a genexp a creation-time rule that an
+ordinary generator function does not have — so the vocabulary lives here, with
+the other names both sides read, rather than being spelled twice. -/
+def genExpPrefix : String := "<genexpr@"
+
+/-- CPython's own name for a genexp's implicit first parameter (the
+already-evaluated outer iterable). No Python identifier contains `.`. -/
+def genExpArgName : String := ".0"
+
 /-- Builtins that CONSUME their argument on the spot, so a view handed to one
 cannot outlive the call — which is what licenses the rewrite's snapshot. -/
 def consumesViewArg : String → Bool

@@ -1787,25 +1787,24 @@ for the same reason. `dict_lab::genexp_next_key` and
 `dict_lab::genexp_local_capture_still_loud` are the same construct either side
 of that line, and only the second refuses.
 
-**AND THE CURSOR IS BUILT AT THE WRONG TIME — a DECLARED DIVERGENCE**
-(`pyc-div-2`). A genexp over a dict is LAZY and LIVE: PEP 289 evaluates the
-outermost iterable *and calls `iter()` on it* when the genexp OBJECT is made,
-so CPython's snapshot predates any later mutation. **The tier does not push the
-loop's cursor frame until the FIRST RESUME**, so `g = (k for k in d)` / mutate
-`d` / `next(g)` answers where CPython raises.
+**AND THE CURSOR IS BUILT AT CONSTRUCTION, as PEP 289 requires.** The
+outermost iterable of a genexp is evaluated *and its iterator created* when the
+genexp OBJECT is made, so `g = (k for k in d)` / mutate `d` / `next(g)` raises
+here exactly as in CPython. `genInitCont` seeds a synthesized `<genexpr@n>`'s
+continuation with its cursor already pushed; `dict.genexp-bound-is-loud` is the
+witness. This was `pyc-div-2` between §pycomplete-19 and §pycomplete-20 — the
+tier answered where CPython raised — and the row retired when its own guard
+began failing.
 
-**Two dict cursors in this tier, one right and one wrong, and the difference is
-only WHERE the frame is built.** `iter(d)` snapshots at creation, because
-`iterFrame` runs inside `applyBuiltin` — which is exactly why the
-`dict.iter-escapes` / `dict.iter-resize` pair matches. The genexp path
-snapshots at first resume, because `execGen` pushes the frame. The fix is to
-make the second do what the first already does, and it is a named future inch:
-it touches generator allocation for every genexp.
-
-The divergence is confined to the create-to-first-resume WINDOW — move the
-mutation after the first `next` and the tier agrees again — and real play does
-not enter it: `bound()`'s only dict-iterating genexp creates and steps its
-cursor inside a single expression.
+**IT IS A GENEXP RULE AND NOT A GENERATOR RULE, and the distinction is
+witnessed.** Calling a generator FUNCTION runs no code, so CPython has called
+no `iter()`: mutate the dict between `g = gen(d)` and the first `next(g)` and
+CPython answers `1`, then drains `[3]` — it walks the GROWN dict. That deferred
+behaviour is CORRECT and the tier keeps it; `dict.genfun-mutate-after-create`
+is the row that fails if a later change makes every generator eager. Only the
+OUTERMOST clause is eager (inner `for` clauses stay lazy), and only a DICT
+receiver can show the difference at all — `forList` re-reads live, value
+sequences are immutable, `forGen` holds no counts.
 
 ### The tier this forces
 

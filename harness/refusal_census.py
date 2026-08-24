@@ -686,12 +686,36 @@ print(list(k for k in d if k != root))
   "the same filter under a DRAINING consumer, which is a different lowering "
   "admission path (`list` is in drainingBuiltins, `next` is not) reaching the "
   "same cursor")
-# `dict.genexp-bound-is-loud` LIVED HERE and is now `pyc-div-2` in
-# docs/python-declared-divergences.json. It measured DIVERGE -- CPython raises,
-# the tier answers 1 -- and DIVERGE is the zero-tolerance invariant, so the row
-# does not belong in this census's vocabulary. It moved to the register, whose
-# probe RUNS it both ways every time: strictly more gating than a census row,
-# not less (family-architecture §5.0a).
+# `dict.genexp-bound-is-loud` MEASURED DIVERGE at §pycomplete-19, moved to the
+# register as `pyc-div-2`, and COMES BACK HERE as a MATCH at §pycomplete-20 --
+# the cursor is now created with the genexp object, as PEP 289 requires. A row
+# that leaves for the register and returns to the census is the retirement
+# working: the debt was registered, gated, paid, and the witness is the receipt.
+w("dict.genexp-bound-is-loud", """
+d = {1: 'a'}
+g = (k for k in d)
+d[3] = 'c'
+print(next(g))
+""", "MATCH",
+  "PEP 289 calls `iter()` on the outermost iterable when the genexp OBJECT is "
+  "made, so the cursor's size guard predates this growth and CPython raises "
+  "RuntimeError. The tier answered 1 until the cursor moved to construction "
+  "time; `dict.genfun-mutate-after-create` is the neighbour proving the fix "
+  "did not make every generator eager")
+w("dict.genfun-mutate-after-create", """
+def keys_of(dd):
+    for k in dd:
+        yield k
+d = {1: 'a'}
+g = keys_of(d)
+d[3] = 'c'
+print(next(g))
+print(list(g))
+""", "MATCH",
+  "THE NEGATIVE HALF, and it is why the fix is genexp-only: calling a generator "
+  "FUNCTION runs no code, so CPython has called no `iter()`. Measured: it "
+  "answers 1 and then [3] -- it walks the GROWN dict without complaint. A tier "
+  "that made every generator eager would RAISE here and be wrong")
 w("del.dict-next-iter", """
 d = {1: 'a', 2: 'b'}
 del d[next(iter(d))]

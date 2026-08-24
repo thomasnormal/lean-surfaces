@@ -793,3 +793,53 @@ def genexp_bound_still_loud(a, root):
     d = {1: a, 2: 5}
     g = (k for k in d if k != root)
     return next(g)
+
+
+# §PEP 289 (2026-08-24-pycomplete-20): the genexp cursor is created WITH the
+# genexp object, and the rows below are the pair that keeps that honest --
+# the fix's own row, and the NEIGHBOUR it must not break.
+
+
+def _keys_of(dd):
+    # a module-level generator FUNCTION, deliberately not a genexp
+    for k in dd:
+        yield k
+
+
+def genfun_mutate_after_create(a):
+    # THE NEIGHBOUR. Calling a generator FUNCTION runs no code, so CPython has
+    # called no iter() yet: mutating the dict before the first next() is
+    # silent, and the loop then walks the MUTATED dict. Eagerness is a GENEXP
+    # rule; a fix that made every generator eager would flip this row, which is
+    # exactly why it is filed beside the fix.
+    d = {1: a}
+    g = _keys_of(d)
+    d[3] = 9
+    return next(g)
+
+
+def genfun_drain_after_create(a):
+    # the same neighbour, drained: CPython answers 2 -- it really does iterate
+    # the grown dict, so the deferral is observable and correct
+    d = {1: a}
+    g = _keys_of(d)
+    d[3] = 9
+    return len(list(g))
+
+
+def genexp_bound_then_grow(a, root):
+    # THE FIX'S OWN ROW, and pyc-div-2's retirement witness. PEP 289 calls
+    # iter() on the outermost iterable when the genexp OBJECT is made, so the
+    # cursor's size guard predates this growth and CPython raises. Before the
+    # fix the tier answered 1 here -- the divergence.
+    d = {1: a}
+    g = (k for k in d if k != root)
+    d[3] = 9
+    return next(g)
+
+
+def genexp_bound_no_mutation(a, root):
+    # the control: creating the cursor early must not break the ordinary case
+    d = {1: a, 2: 5}
+    g = (k for k in d if k != root)
+    return next(g)

@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**267 entries across 17 lanes.** Regenerate with
+**268 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-24-architecture-64` | A refusal honest about the model and false about the world | architecture |
 | `2026-08-24-architecture-63` | Duration is a corroborator, not the witness | architecture |
 | `2026-08-24-architecture-62` | The ruling met reality within the hour, and reality had four corrections | architecture |
 | `2026-08-24-architecture-61` | A declared divergence is a debt, not a verdict | architecture |

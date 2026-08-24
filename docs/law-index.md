@@ -280,6 +280,14 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-229 | a ROW COUNT is not acceptance power — the non-vacuity flips measure which rows do the work | `docs/family-architecture.md §5.6` |
 | MEAS-230 | a duplicated SPECIFICATION is found by the namespace, not by review | `docs/family-architecture.md §2.4` |
 | MEAS-231 | a plan that prices its next rung EXACTLY makes a falsifiable claim — the landing calibrates the instrument | `docs/family-architecture.md §9.0b` |
+| MEAS-232 | a refusal can be honest about the MODEL and false about the WORLD — only corpus-derived shapes catch it | `docs/family-architecture.md §5.2` |
+| MEAS-233 | where duplication is tempting, PIN BY `rfl` — not a second implementation that agrees | `docs/family-architecture.md §2.4` |
+| MEAS-234 | "empty for a statable reason" is a third kind of zero — the debt belongs on the refusal, not the gate | `docs/family-architecture.md §5.4b` |
+| MEAS-235 | a DEFERRAL carries its ladder position and its trigger, like a law | `docs/family-architecture.md §5.4b` |
+| MEAS-236 | COUNT DEFECTS AFTER UNIFICATION, never by error lines | `docs/family-architecture.md §7.1a` |
+| MEAS-237 | a library's own WORKAROUNDS are evidence about what it cannot do — the simprocs are the confession | `docs/family-architecture.md §7.1a` |
+| MEAS-238 | NOTHING CHECKS a ticket's base was ever green — the queue outlasts the fix | `docs/family-architecture.md §7.2` |
+| MEAS-239 | THREE STATES: green, red-on-my-work, ABORTED — collapsing the third concedes a defect you do not have | `docs/family-architecture.md §7.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -413,6 +421,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-123 | a hypothesis can change LOUD → QUIET while statement and theorem hold still — observability is not measured | `docs/family-architecture.md §5.3` |
 | STMT-124 | hypothesis KINDS — tier / modelling / bridging — determine the retirement move | `docs/family-architecture.md §5.3` |
 | STMT-125 | a FALLBACK arm returning `true` converts a failing run into a passing row — vacuity by INVERSION | `docs/family-architecture.md §5.3` |
+| STMT-126 | the ATTESTING INSTRUMENT constrains how a definition must be written (`partial` blocks `#guard`) | `docs/family-architecture.md §7.1a` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -565,6 +574,8 @@ numbers below are the register's own.
 | OPS-77 | `set_option autoImplicit false` in model files — a required LOUDNESS guard | `docs/family-architecture.md §7.1a` |
 | OPS-78 | a guard must hash the object the BUILD reads, never the one beside it (the enqueue stamp hashed the INDEX while `lake` built the WORKING TREE; fixed `22ed755`) | `docs/family-architecture.md §7.2`; `tools/triad.sh` |
 | OPS-79 | working within a known-imperfect protocol is DECLARED at enqueue, never relied on silently | `docs/family-architecture.md §7.2` — **SUNSET**: stamp v2 is live; applies only to v1-stamped tickets |
+| OPS-80 | accept-and-log tolerance is for tickets IN FLIGHT — a migration's grace window needs a DIRECTION | `docs/family-architecture.md §7.2` |
+| OPS-81 | the module system is opt-in per ROOT — unfolding proofs are portable only to legacy roots | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

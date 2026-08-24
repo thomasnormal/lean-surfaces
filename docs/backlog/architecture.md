@@ -5157,3 +5157,132 @@ missed prediction with all prerequisites discharged says something about the
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-226 … MEAS-231, STMT-125**, and **MEAS-185
 amended.**
+
+## 2026-08-24-architecture-64 — A refusal honest about the model and false about the world
+
+Ten from three sources, batched: Ada inch 2 (branch `adainch2`, ticketed —
+**verify at its landing**), the Lean tier's fix-plus-intervention, and pyc2's
+aborted attempt 1. **All ten landed.**
+
+**(1) §5.2 — THE LEAF-ENCODING TRAP.** `extract.py` emits `children` when a node
+has children and `text` otherwise, so an `if` with no `elsif` carries
+`ElsifStmtPartList` as **a LEAF WITH EMPTY TEXT** — **30 of 31 fixtures.** A
+walker written from the **grammar** would refuse 30 of 31, and the refusal would
+be correct about the walker and wrong about Ada:
+
+> **The model would have said *"I do not model this"* about a construct it FULLY
+> MODELLED.**
+
+**Worse than a mis-bucketing, because the CLASS is right** — `unsupported` is
+exactly what a walker meeting an unrecognized shape should say; **the defect is
+one layer down, in the ENCODING.** So: **only corpus-derived shapes catch it** —
+*a grammar tells you what the language can say; only the extractor's own output
+tells you what your tier will RECEIVE.* And the arithmetic cross-check is the
+part I'd copy: **31 `IfStmt` − 9 `ElsePart` = 22 nulls** — *a shape found by
+reading is a hypothesis; the same shape arrived at by counting is a
+measurement.*
+
+**(2) §7.1a — THE ATTESTING INSTRUMENT CONSTRAINS THE DEFINITION.** `partial`
+blocks `#guard`, so the tier is structurally recursive on fuel with
+`termination_by` **deliberately absent** — adding it forces well-founded
+recursion and **takes kernel reduction back.** *The recursion style is chosen by
+what must remain checkable, not by what reads best.*
+
+**(3) §2.4 — THE DEDUP LAW'S CONSTRUCTIVE DUAL: PIN BY `rfl`.** Five pins tie
+`applyArith` to inch 1's ops — *so it is not a second implementation that
+agrees.* **Two definitions that AGREE are two definitions**, and agreement must
+be re-established every time either moves; **two tied by `rfl` are one
+definition wearing two names**, checked by the elaborator at no recurring cost.
+**MEAS-28 now has a second discharge**: remove the copy, or **pin the copies
+definitionally** — available exactly when the second copy exists for a
+presentational reason the tier needs. *A lane that cannot delete a duplicate can
+still refuse to let it drift.*
+
+**(4) §5.4b — "EMPTY FOR A STATABLE REASON" IS A THIRD KIND OF ZERO.** The
+`orderDependence` gate has no content because **the only effectful form is
+refused calls**, recorded with the reason **and the debt**. **It is the only one
+of the three zeroes that retires by SOMEONE ELSE'S WORK** — so **the debt
+belongs on the refusal, not on the gate**, and a lane reading the empty gate
+without the pointer prices the wrong inch.
+
+**(5) §5.4b — A14 APPLIES TO A DEFERRAL.** `swap` fails the line by **8×** while
+`load` **passes** — both required, both measured — and the deferral is recorded
+as **POINTED-vs-DECLARED still open**, riding the next quiet window. **Two
+measurements and not one is what makes it a deferral rather than an excuse**: a
+single failing number leaves open whether the whole move is infeasible, while
+`load` passing **localizes the blocker to one half.**
+
+**(6) §7.1a — DOT-NOTATION THEFT RE-TYPES THE OTHER SIDE.** A named abbrev monad
+binds `.run` wrongly and `Except.ok` elaborates as `EST.Out.ok`.
+
+> **One mismatch can print as three unrelated errors. Count defects AFTER
+> UNIFICATION, never by error lines.**
+
+**Third dot-notation entry in this register**, and the new part is the **blast
+radius in the output**: a lane triaging by line count **sees three problems and
+prices three fixes** where the tree has one.
+
+**(7) §7.1a — WALL 2, and its EVIDENCE FORM is the transferable part.** Strings
+in 4.33 are **decidable but not ORDERED BY COMPUTATION** (`compare` runs through
+a well-founded `utf8Decode?`), and **core ships `String.reduce*` simprocs
+precisely because of it** — so a JSON object lookup **can never be computed,
+only rewritten**, and **~20 of the export corner's 27 obligations are ruled
+rewrite-style.**
+
+> **A library's own WORKAROUNDS are evidence about what it cannot do. The
+> simprocs are the confession.**
+
+**Stronger than reading the definition**: a definition says what something *is*;
+**a workaround shipped beside it says what its authors found they could not
+get** — measured by people with every incentive to find a way. *Before pricing a
+computation, look for the library's escape hatch.*
+
+**(8) §7.1a — WALL 1: THE MODULE SYSTEM IS OPT-IN PER ROOT.** A non-module root
+sees every imported body, so **unfolding proofs are portable only to legacy
+roots** — **a portability constraint that depends on the CONSUMER's root, not on
+the proof**, and therefore invisible from where the proof is written. **A tier
+that writes unfolding proofs has silently chosen its consumers.**
+
+**(9) §7.2 — THE GRACE WINDOW NEEDS A DIRECTION.** The lane created a **new**
+ticket under a pre-rebase `v1` stamp with a **196-line rewrite unstaged** — the
+pending green would have **certified the old red tree while building the new
+file.** Caught **before it ran**, from the lane's own honest report; dequeue,
+commit, rebase, re-enqueue.
+
+> **Accept-and-log tolerance is for tickets IN FLIGHT, not a license for new
+> ones.**
+
+**A grace window without a direction is not a migration, it is a second
+protocol** — and self-perpetuating, since the cheapest way to stay inside it is
+to keep minting tickets in the old form. The tolerance is about **when the
+ticket was created**, not **which stamp it carries**. **And the detection
+channel deserves its line**: this came from **the lane's own report**, not a
+gate — *a lane that reports its actual state is doing the one thing no
+instrument in this tree can do for it.*
+
+**(10) §7.2 — A LANE INHERITS ITS BASE'S RED, AND THE QUEUE OUTLASTS THE FIX.**
+Base committed **00:32 already red**; tenure opened **02:27**; **the fix landed
+02:30:54 — 3 m 22 s into the build**; death **03:02** on the one already-fixed
+module at **3 771/3 772 targets.** **116 minutes to rediscover a fixed defect.**
+
+> **Nothing checks that a ticket's BASE was ever green.**
+
+**The wrong-tree family's remaining corner, pointing the opposite way**: the
+others catch a green certifying the wrong tree; **this is a red certifying
+nothing at all, at full price** — and **the longer the queue, the likelier the
+fix lands inside the tenure**, so the tenure is refuting a claim no longer being
+made. Mitigation dispatched to the tools lane.
+
+**COMPANION — THREE STATES, NOT TWO.** The lane reported **"aborted, not
+red-on-my-work"**, convicting from **the other lane's commit message.**
+
+> **Green, red-on-my-work, and ABORTED. A report that collapses the third into
+> the second concedes a defect the lane does not have.**
+
+**And the third state is the one a lane is least motivated to claim**, because
+it reads as an excuse — which is why it needs a name and a standard of evidence.
+**The standard was met here**: the conviction came from another lane's own
+words.
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-232 … MEAS-239, STMT-126, OPS-80, OPS-81**.

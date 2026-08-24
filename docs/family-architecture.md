@@ -856,6 +856,26 @@ rather than two objects a lemma relates.
 > **The best outcome of removing a duplicate is not tidiness; it is that a
 > theorem stops being ABOUT the model and starts being TRUE OF it.**
 
+**AND THE CONSTRUCTIVE DUAL, from Ada inch 2: WHERE DUPLICATION IS TEMPTING, PIN
+BY `rfl`.** The statement layer's `applyArith` is tied to inch 1's ops by **five
+`rfl` pins** —
+
+> **so it is not a second implementation that agrees.**
+
+**The distinction is the whole of it.** Two definitions that **agree** are two
+definitions, and agreement is a fact that must be **re-established every time
+either moves**. Two definitions tied by `rfl` are **one definition wearing two
+names**, and the tie is checked by the elaborator on every build **at no
+recurring cost.**
+
+**So MEAS-28's rule has a second discharge.** Duplication is retired either by
+**removing one copy** — the usual reading — or by **pinning the copies together
+definitionally**, which is available exactly when the second copy exists for a
+presentational reason the tier actually needs. **A lane that cannot delete the
+duplicate can still refuse to let it drift.**
+
+
+
 **AND THE GATE HAS PRODUCED ITS FIRST CONSOLIDATION: `tools/leanlex.sh`, the
 Lean lexing primitives ONCE** (`12386db`). Four tools had grown — or were about
 to grow — the same comment walker, and the 2026-08-23 audit found **three
@@ -3823,6 +3843,33 @@ resolver that cannot be wrong **in its own tests** while being wrong in the
 corpus. It is §5.6's discriminating-row law pointed at resolution: **the row
 that matters is the one a naive resolver gets confidently wrong.**
 
+**AND A REFUSAL CAN BE HONEST ABOUT THE MODEL AND FALSE ABOUT THE WORLD — the
+leaf-encoding trap** (Ada inch 2, branch `adainch2`, ticketed; verify at its
+landing). `extract.py` emits **`children` when a node has children and `text`
+otherwise**, so an `if` with no `elsif` carries `ElsifStmtPartList` as a **LEAF
+WITH EMPTY TEXT** — in **30 of 31 fixtures.**
+
+**A walker written from the GRAMMAR would refuse 30 of 31**, and the refusal
+would be **correct about the walker and wrong about Ada**:
+
+> **The model would have said *"I do not model this"* about a construct it FULLY
+> MODELLED.**
+
+**That is a refusal-correctness shape the four causes do not cover**, and it is
+worse than a mis-bucketing (§5.2's mis-scheduling law) because **the class is
+right**: `unsupported` is exactly what a walker meeting an unrecognized shape
+should say. **The defect is one layer down, in the ENCODING** — and it surfaces
+as a construct the tier believes it lacks.
+
+> **Only CORPUS-DERIVED shapes catch this. A grammar tells you what the language
+> can say; only the extractor's own output tells you what your tier will
+> RECEIVE.**
+
+**And the lane cross-checked it by arithmetic**, which is the part worth
+copying: **31 `IfStmt` − 9 `ElsePart` = 22 nulls**, an independent count of the
+same fact from a different column. *A shape discovered by reading is a
+hypothesis; the same shape arrived at by counting is a measurement.*
+
 **AND THE GATE IS TWO-SIDED, WHICH IS WHAT COMPLETES THE SHAPE** (Go E1,
 `4a9f9ec`, on master; the census found **484 shadowing binding sites across 198
 stdlib files**, so this is a live surface and not a corner). Both error
@@ -6269,6 +6316,35 @@ an outage into **silence** (MEAS-9). **The purge is the test that separates
 them**, and this is the first time this tree has had one run over a full
 instrument set.
 
+**AND A GATE CAN BE EMPTY FOR A STATABLE REASON, which is a fourth thing an
+empty gate can mean** (Ada inch 2). The `orderDependence` gate **has no
+content** — because **the only effectful form is refused calls** — and it is
+recorded **with the reason AND the debt**: inch 3 owes the answer.
+
+> **"Empty for a statable reason" is a THIRD kind of zero at a gate**, beside
+> *empty because the corpus does not reach it* and *empty because the API cannot
+> build it* (§5.2). This one is **empty because the subject is currently
+> refused elsewhere.**
+
+**And it is the only one of the three that RETIRES BY SOMEONE ELSE'S WORK** —
+the gate fills when the refusal that hides its subject is lifted. **So the debt
+belongs on the refusal, not on the gate**, and a lane reading the empty gate
+without the pointer would price the wrong inch.
+
+**AND A14 APPLIES TO A DEFERRAL, NOT ONLY TO A TENURE** (Ada). The spine import
+waits because **`swap` fails the line by 8× while `load` passes** — *both
+required, both measured* — and the deferral is recorded as **POINTED-vs-DECLARED
+still open** (§5.4b's ladder), riding the next quiet window.
+
+> **A deferral carries its LADDER POSITION for the same reason a law does: "we
+> will do this when the machine is quiet" is a plan; "declared, not yet pointed,
+> waiting on A14" is a state with a trigger.**
+
+**Two measurements and not one is what makes it a deferral rather than an
+excuse** — a single failing number would leave open whether the whole move is
+infeasible; **`load` passing and `swap` failing localizes the blocker to one
+half**, which is what a later lane needs to know whether the window has arrived.
+
 **AND THE HONEST GAP BESIDE IT, recorded rather than glossed**: the spec census
 **cannot run** — its LaTeX corpus was purged — but **its baseline is committed
 and its instrument is pinned, so re-fetching restores it.** *"Armed and not
@@ -7125,6 +7201,62 @@ announces itself.**
   first, then `attribute [irreducible]` — otherwise the definition
   disappears underneath the induction that was supposed to be about it.
 
+**A FOURTH HAZARD, AND IT IS A DIAGNOSIS LAW: DOT-NOTATION THEFT RE-TYPES THE
+OTHER SIDE OF THE EQUATION** (Lean tier; fix built, intervention issued before
+its ticket ran). A **named abbrev monad** makes `.run` bind to the **wrong
+function**, and the resulting mismatch **re-types the other side** — `Except.ok`
+elaborated as `EST.Out.ok`.
+
+> **ONE MISMATCH CAN PRINT AS THREE UNRELATED ERRORS.**
+
+> **Count defects AFTER UNIFICATION, never by error lines.**
+
+**This is the third dot-notation entry in this register** (the `def`-alias
+mis-slot above, the arity/position exhibit at §7.1a's loudness clause), and the
+family has a single shape: **dot notation resolves against a type the reader is
+not looking at.** What is new here is the **blast radius in the error output** —
+a lane triaging by line count sees **three problems and prices three fixes**,
+where the tree has one.
+
+**AND A PROOF-STYLE CONSTRAINT IMPOSED BY THE GUARD INSTRUMENT** (Ada inch 2).
+`partial` **blocks `#guard`** — it cannot reduce — so the tier is **structurally
+recursive on fuel with `termination_by` DELIBERATELY ABSENT**: adding it forces
+**well-founded recursion** and **takes kernel reduction back.**
+
+> **The instrument that attests a definition can constrain how the definition
+> must be WRITTEN.** `#guard` is unavailable to `partial`, and well-founded
+> recursion is unavailable to the kernel — so the recursion style is chosen by
+> what must remain checkable, not by what reads best.
+
+**WALL 2 — A PROOF-STYLE RULING FROM CORE'S OWN CONSTRUCTION: STRINGS ARE
+DECIDABLE BUT NOT *ORDERED BY COMPUTATION*** (Lean tier). `compare` runs through
+a well-founded `utf8Decode?`, and **core ships `String.reduce*` simprocs
+precisely because of it.** Consequence: **a JSON object lookup can never be
+COMPUTED, only REWRITTEN** — and **~20 of the export corner's 27 obligations are
+ruled rewrite-style** on that basis.
+
+> **A LIBRARY'S OWN WORKAROUNDS ARE EVIDENCE ABOUT WHAT IT CANNOT DO. The
+> simprocs are the confession.**
+
+**That evidence form is the transferable part**, and it is stronger than reading
+the definition: a definition tells you what something *is*, while **a workaround
+shipped alongside it tells you what its authors found they could not get** —
+measured by people who had every incentive to find a way. **Before pricing a
+computation, look for the library's own escape hatch; if one exists, the
+computation is the road not taken.**
+
+**AND WALL 1 — THE MODULE SYSTEM IS OPT-IN PER *ROOT* FILE**, found before it
+bit. A **non-module root sees every imported body**, so **proofs that unfold core
+definitions are portable only to legacy roots.**
+
+> **A portability constraint that depends on the CONSUMER's root, not on the
+> proof.** The same proof is portable or not according to a property of the file
+> that will import it — which is invisible from where it is written.
+
+**Recorded as a wall rather than as a bug** because nothing is broken: it is a
+**boundary on where a proof style may travel**, and a tier that writes
+unfolding proofs has silently chosen its consumers.
+
 **AND THE ONE-SECOND-BUILD RULE — a positive artifact, not just a positive
 assertion.** `exit 0` with **no `Build completed` line is not evidence**: a
 build that did nothing and a build that did everything exit the same way.
@@ -7802,6 +7934,34 @@ answer to one is not evidence about the other — eight tenures were queued when
 the fix landed. **OPS-79's interim rule therefore SUNSETS: it applies only to
 tenures whose tickets carry v1 stamps.**
 
+**AND THE GRACE WINDOW NEEDS A DIRECTION, ruled on an intervention** (Lean tier;
+caught **before** the ticket ran, from the lane's own honest report line). The
+lane created a **NEW ticket under its worktree's pre-rebase `v1` stamp with a
+196-line rewrite UNSTAGED** — so **the pending green would have certified the
+old red tree while building the new file.** Ordered: **dequeue, commit, rebase,
+re-enqueue.**
+
+**The law already existed** (MEAS-202 plus the working-tree fix). What the
+incident adds is the boundary on the tolerance itself:
+
+> **ACCEPT-AND-LOG TOLERANCE IS FOR TICKETS IN FLIGHT, NOT A LICENSE FOR NEW
+> ONES. A migration's grace window needs a DIRECTION.**
+
+**A grace window without a direction is not a migration, it is a second
+protocol** — and it is self-perpetuating, because the cheapest way to stay
+inside it is to keep minting tickets in the old form. **The tolerance exists to
+avoid killing work that was already queued when the rule changed**, which is a
+statement about *when the ticket was created*, not about *which stamp it
+carries*.
+
+**And the detection channel is worth its own line: this was caught from the
+lane's own report**, not from a gate. **A lane that reports its actual state —
+including the unstaged rewrite — is doing the one thing no instrument in this
+tree can do for it**, and the intervention was possible only because the report
+was honest before it was flattering.
+
+
+
 **AND HOW IT WAS FOUND IS ITS OWN LAW.** The lane **almost deferred a safe
 edit** for fear of the stamp, then **read the stamp's implementation instead of
 obeying its reputation** — and found **the fear unfounded and the guard hollow
@@ -7898,6 +8058,43 @@ distinction is still available: **once `0` is printed, no reader can recover
 whether the question was answered or declined.**
 
 
+
+**AND A HOLE THE STAMP DOES NOT COVER: A LANE INHERITS ITS BASE'S RED, AND THE
+QUEUE IS LONG ENOUGH FOR THE FIX TO LAND INSIDE ITS OWN TENURE** (pyc2, aborted
+attempt 1 — **not its red**). Measured timeline:
+
+| moment | fact |
+| --- | --- |
+| **00:32** | base committed, **already red** for a full build |
+| **02:27** | tenure opens |
+| **02:30:54** | **the fix lands on master — 3 m 22 s into the build** |
+| **03:02** | death, on **the one already-fixed module**, at **3 771/3 772 targets built** |
+
+**Cost: 116 minutes of the machine-wide tenure to rediscover a defect that was
+fixed while the build ran.**
+
+> **NOTHING CHECKS THAT A TICKET'S BASE WAS EVER GREEN.** The enqueue stamp pins
+> *what will be built*; it says nothing about whether that tree ever passed.
+
+**This is the wrong-tree family's remaining corner**, and it points the opposite
+way from all the others: those catch a green certifying **the wrong tree**; this
+is a **red certifying nothing at all**, paid for at full price. **And the
+duration makes it worse rather than better** — the longer the queue, the more
+likely the fix lands *inside* the tenure, so **the tenure is refuting a claim
+that is no longer being made.** Mitigation (fetch-and-warn at enqueue **and** at
+acquire) is dispatched to the tools lane.
+
+**COMPANION — THE ABORT REPORT'S OWN QUALITY, which is why this is legible at
+all.** The lane reported **"aborted, not red-on-my-work"**, with the conviction
+drawn from **the other lane's commit message.**
+
+> **THREE STATES, NOT TWO: green, red-on-my-work, and ABORTED. A report that
+> collapses the third into the second concedes a defect the lane does not have.**
+
+**And the third state is the one a lane is least motivated to claim**, because
+it reads as an excuse — which is exactly why it needs a name and a standard of
+evidence. **The standard here was met**: the conviction came from **another
+lane's own words**, not from the reporting lane's reconstruction.
 
 **AND THE STALENESS HAS NOW BEEN SPLIT, MEASURED — most of it is the QUEUE, not
 the BUILD** (Ada). A tenure came back **53 commits behind**, and the obvious

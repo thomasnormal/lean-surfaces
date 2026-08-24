@@ -15,12 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**352 entries across 17 lanes.** Regenerate with
+**354 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-25-wasm-11` |  | THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported | wasm |
+| `2026-08-24-architecture-85` |  | Where predictor and scorer share an instrument, an exact match is a transcription check | architecture |
 | `2026-08-24-architecture-84` |  | Accidentally correct is worse than wrong | architecture |
 | `2026-08-24-architecture-83` |  | An argument resting on what the tier cannot do has an expiry date nothing tracks | architecture |
 | `2026-08-24-architecture-82` |  | The subject of a verification is immutable to the verifier | architecture |
@@ -354,6 +355,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G5` |  | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` |  | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` |  | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G27` |  | THE `strconv` CENSUS KILLED ITS OWN PREDICTION, AND FOUND THE METRIC OVERSTATED (2026-08-24) | go |
 | `G26` |  | THE RE-CENSUS AFTER VARIADICS: the frontier is spent, and `syscall` is a mirage (2026-08-24) | go |
 | `G25` |  | VARIADICS: packing allocates, spreading does not; +52 predicted, +52 measured (2026-08-24) | go |
 | `G24` |  | THE `math/bits` COMPLETION RUNG: +7 predicted, +7 measured (2026-08-24) | go |
@@ -373,4 +375,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**25 heading(s) do not use the §9.5 id scheme** and sort last.
+**26 heading(s) do not use the §9.5 id scheme** and sort last.

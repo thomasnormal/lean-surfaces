@@ -444,6 +444,18 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-393 | a design choice that ENLARGES a later proof is a cost the lane INCURRED, not a difficulty it discovered | `docs/family-architecture.md §9.0` |
 | MEAS-394 | REFUSING TO PRICE is a legitimate output when the prerequisite for pricing is a named, scheduled artifact | `docs/family-architecture.md §9.0` |
 | MEAS-395 | ANY PROSE ASSERTING A LIMIT EXPIRES — docstring, architecture note, proof prose, witness; four classes, stop qualifying | `docs/family-architecture.md §5.0a` |
+| MEAS-396 | a BLOCKER'S SCOPE is part of the blocker — "nothing gets through" and "nothing that FAILS gets through" price different rungs | `docs/family-architecture.md §9.0` |
+| MEAS-397 | where PREDICTOR AND SCORER SHARE AN INSTRUMENT, an exact match is a TRANSCRIPTION CHECK, not a calibration | `docs/family-architecture.md §9.0` |
+| MEAS-398 | two independent estimates land NEAR each other, not ON each other — an exact streak is the defect's signature | `docs/family-architecture.md §9.0` |
+| MEAS-399 | report whether a miss was in the MAGNITUDE or in the SUBJECT — only the first is calibration data | `docs/family-architecture.md §9.0` |
+| MEAS-400 | A WRONG BASELINE AND A RIGHT DELTA is the honest description — a difference survives an error both sides shared | `docs/family-architecture.md §9.0` |
+| MEAS-401 | a re-run against a CORRECTED BASELINE is a verification, not a new prediction — the lane labels it, not the reader | `docs/family-architecture.md §9.0` |
+| MEAS-402 | a GUARD IN PROSE is obeyed by whoever is reading it, and its AUTHOR is the least likely person to be reading it | `docs/family-architecture.md §9.0` |
+| MEAS-403 | a shape with TWO instances deserves a SWEEP for the third — the second member supplies the query | `docs/family-architecture.md §9.0` |
+| MEAS-404 | a GUESS OFFERED AS A FINDING is a defect even when reasonable — retract to UNKNOWN, never to another mechanism | `docs/family-architecture.md §9.0` |
+| MEAS-405 | an INSTRUMENT carrying an expiring claim is worse than a comment carrying one — it is what a reader trusts | `docs/family-architecture.md §5.0a` |
+| MEAS-406 | an INSTRUMENT FIX is validated by its FIRST CUSTOMER, not by its own suite | `docs/family-architecture.md §5.4` |
+| MEAS-407 | decide what a RED WILL MEAN before the run, and make the output carry the discriminator | `docs/family-architecture.md §5.0a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -588,6 +600,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-134 | a branch structure PROVED to be a spec clause's case split is a spec-conformance fact, not an implementation detail | `docs/family-architecture.md §3.5` |
 | STMT-135 | point the acceptance test at the ALMOST-IDENTICAL WRONG MODEL, not at the design | `docs/family-architecture.md §5.4b` |
 | STMT-136 | a SIMULATOR MUST PRESERVE THE BOUNDARIES IT SIMULATES — a stand-in may drop cost, never structure | `docs/family-architecture.md §5.4` |
+| STMT-137 | a step changing REPRESENTATION and not VALUE owes a LOSSLESSNESS argument, not a correctness one | `docs/family-architecture.md §3.5` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -768,6 +781,9 @@ numbers below are the register's own.
 | OPS-105 | a REPAIR TO A CONTROL IS A CONTROL — it gets the control's audit, not the repair's | `docs/family-architecture.md §9.1` |
 | OPS-106 | where the spec names ONE correct result, a guess is strictly dominated — measured: 2 failing cases became 8 | `docs/family-architecture.md §3.5` |
 | OPS-107 | a control law ships with a WORKED COMPLIANT FORM — a prohibition alone gets re-derived, not copied | `docs/family-architecture.md §9.1` |
+| OPS-108 | a capability landed before its ENABLING CONTEXT is a regression wearing a feature's name — land it gated | `docs/family-architecture.md §5.2` |
+| OPS-109 | a CONTROL is validated against what the program REQUIRES, never against what the control RESEMBLES | `docs/family-architecture.md §5.0a` |
+| OPS-110 | a debt row's BLAST RADIUS is an object-identity claim — write the site at the granularity that is actually true | `docs/family-architecture.md §5.0a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

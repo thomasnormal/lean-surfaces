@@ -2728,6 +2728,23 @@ attempt plus the diagnosis of the six new failures. *Where the spec names one
 correct result, reading it is the fast path, and this is the second measurement
 that says so.*
 
+**AND THE NEXT SHIFT'S WHOLE OBLIGATION REDUCED TO A DISTINCTION WORTH CARRYING
+OUT OF THE TIER** (SoftFloat, ticketed): the carry-out is **REPRESENTATION AND
+NOT VALUE**, with **evenness making the absorption lossless** —
+`RoundWithAccuracyIsNearest` is now **down to the interleaving argument alone.**
+
+> **A STEP THAT CHANGES THE REPRESENTATION AND NOT THE VALUE OWES A LOSSLESSNESS
+> ARGUMENT, NOT A CORRECTNESS ONE — and the two have completely different
+> shapes.**
+
+**Naming which kind a step is collapses the obligation before any tactic runs**,
+because a value-preserving re-encoding is discharged by an invariant while a
+value-changing step needs the spec's own case analysis. *The tier reached one
+remaining argument by classifying its steps rather than by attacking them* —
+which is the analog tier's coordinate discipline in a different substrate, and
+the second measurement this week that says **structure found before the prover
+runs is worth more than the same structure found inside a tactic block.**
+
 **The obstacle was believed to be Lean-internal, and on the pinned
 toolchain it no longer exists.** `docs/completeness.md` §6 records the
 float rung as gated because *"Lean's `Float` is not kernel-reducible, so
@@ -4182,6 +4199,59 @@ inherits the case's authority. *The citable-name remedy applies unchanged — bu
 the population it has to reach is now every string in the tree, which is an
 argument for the grep-by-name mechanism over any register of locations.*
 
+**AND THE FIFTH ARRIVED IN THE WORST HOST YET — INSIDE AN INSTRUMENT** (pyc's
+div-1 witness, `4a40ea8`, ticketed). The probe's own docstring said **"not
+reachable by an in-tier program."**
+
+> **An instrument carrying an expiring claim is WORSE than a comment carrying
+> one, because the instrument is what a reader trusts WHEN THE COMMENTS
+> DISAGREE.**
+
+**The hierarchy of trust is exactly inverted from the hierarchy of maintenance.**
+*A comment is suspected by default; an instrument is the thing consulted to settle
+suspicions* — and its prose is maintained less often than a comment's, because
+nobody re-reads the docstring of a tool that works. **An instrument's prose should
+be held to the standard of its output, not to the standard of a comment.**
+
+**AND A CONTROL DRAFT WAS CAUGHT PRE-TICKET BECAUSE THE LANE ASKED THE RIGHT
+QUESTION** (same inch). The draft **raised `ValueError` — itself a whitelisted
+refusal** — so the control would have been satisfied by the very behaviour it was
+written to detect. *"Caught by asking what the program NEEDS rather than what it
+looks like."*
+
+> **A CONTROL IS VALIDATED AGAINST WHAT THE PROGRAM REQUIRES, NEVER AGAINST WHAT
+> THE CONTROL RESEMBLES.**
+
+**Resemblance is what a draft optimises for, because a draft is written by
+reading the thing it will replace** — and this is the grep-versus-declaration
+defect one more level up: the check looked right and answered a question adjacent
+to the one asked.
+
+**AND A DEBT ROW'S BLAST RADIUS IS AN OBJECT-IDENTITY CLAIM, STATED IN THE ROW**
+(same landing):
+
+> **"The row describes one poisoned OBJECT — not a poisoned dict, not a poisoned
+> interpreter."**
+
+**A divergence's scope is a fact the row must carry, because every reader will
+otherwise supply their own** — and the three readings differ by orders of
+magnitude in what they forbid. *§5.0a's schema already demands a SITE; this says
+the site is a scope claim and must be written at the granularity that is
+actually true.*
+
+**AND A POTENTIAL GUARD FAILURE WAS PRE-DECLARED AS INFORMATIVE IN BOTH
+DIRECTIONS** (same landing), with **the detail line printing BOTH SIDES** so the
+tenure can distinguish **retirement** from **wrong witness** without a re-run.
+
+> **DECIDE WHAT A RED WILL MEAN BEFORE THE RUN, AND MAKE THE OUTPUT CARRY THE
+> DISCRIMINATOR.**
+
+**A red decided after the fact is decided by whoever is tired**, and the
+expensive part is never the failure but **the second run needed to learn which
+failure it was.** *A guard whose output distinguishes its own two explanations is
+worth more than a guard that is merely correct* — and, like the pre-stated zero,
+it converts a possible embarrassment into a planned measurement.
+
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
 belongs**: in the artifact's output, admitted **12 times**, *where the claim is
@@ -4278,6 +4348,27 @@ patch.
 
 > **A MIS-BUCKETED REFUSAL IS NOT MISLABELLED — IT IS MIS-SCHEDULED. The class
 > determines WHO OWES THE WORK.**
+
+**AND A REFUSAL CAN BE RETIRED TOO EARLY, WHICH IS THE ONE DIRECTION THIS SECTION
+HAD NOT PRICED** (ES's realm-gating).
+
+> **"Correct machinery that can never find an iterator would convert today's
+> HONEST REFUSAL into a WRONG ANSWER — the one trade this lane never makes."**
+
+> **A CAPABILITY LANDED BEFORE ITS ENABLING CONTEXT IS A REGRESSION WEARING A
+> FEATURE'S NAME.**
+
+**The scoreboard rewards the trade, which is why it needs a law against it.**
+Machinery that runs moves a row from `refused` to something; **a refusal that
+becomes a wrong answer moves the number in the pleasant direction while making
+the tier worse**, and no verdict in §5.1 distinguishes the two after the fact.
+
+**The test is a question about the CONTEXT, not the code**: *can this machinery
+reach the thing it is written to handle, in this tier, today?* **If not, the
+correct landing is the machinery WITH the refusal still in place** — the code is
+banked, the number does not move, and the row retires when the enabling context
+arrives. *Gating a finished capability is not caution; it is the only way to keep
+a refusal honest while building the thing that will lift it.*
 
 `environment` retires by **widening the modelled slice**; `unsupported` retires
 by **climbing a rung**. Different work, different owners, different schedules —
@@ -8186,6 +8277,21 @@ it defers — *and a fleet of green stand-ins reads exactly like a verified
 artifact.* **The expensive instrument is not redundant with the cheap ones; it is
 the only one whose green is about the thing being shipped.**
 
+**AND THE FIXED INSTRUMENT WAS LOAD-BEARING ON ITS FIRST USE, WHICH IS THE
+VALIDATION A REPAIR ACTUALLY WANTS** (SoftFloat, same thread). The new lemmas
+**need exactly the name the old merged sim handed over for free.**
+
+> **AN INSTRUMENT FIX IS VALIDATED BY ITS FIRST CUSTOMER, NOT BY ITS OWN TEST
+> SUITE.**
+
+**The repair's own suite can only check the cases its author imagined; the first
+real consumer checks the one property that mattered** — *that the thing the
+stand-in was silently supplying is now genuinely absent.* **A fidelity fix is
+confirmed the moment downstream work becomes harder in the specific way the
+boundary predicts**, and that is a strange but reliable signal: *the correct
+instrument makes more work, and the work it makes is the work that was always
+owed.*
+
 **AND ITS COUNTERPART AT THE OTHER EXTREME: A TRANSFORM ON TOO MUCH, REPORTING
 SUCCESS JUST AS QUIETLY** (pyc, `fcb1463`). A **non-greedy regex bounded by a
 blank line** silently removed **TEN witnesses instead of one** — caught **only
@@ -12062,6 +12168,26 @@ X *and something else* is a fact only the run AFTER the fix can produce.**
 Measured: **195 of the col-gated tests had `name:null` underneath**, and **four
 moved.**
 
+**AND THE LAW WAS THEN APPLIED PRE-EMPTIVELY BY A LANE TO ITS OWN CENSUS, WITHIN
+THE HOUR OF PUBLISHING IT** (ES's double redirect; scoreboard approved, landings
+pending). The decisive fact was *"no test can reach a verdict"* — corrected to
+**"no test can reach a FAILURE MESSAGE"**, because the four intrinsics sit
+**entirely in failure formatting**: *a passing test touches no intrinsic at all.*
+
+> **A BLOCKER'S SCOPE IS PART OF THE BLOCKER. "Nothing gets through" and
+> "nothing that FAILS gets through" prescribe different rungs.**
+
+**The correction is small in words and total in consequence** — the first version
+prices the intrinsics as the gate on all scoring; the second prices them as the
+gate on **diagnosis**, which is a different rung at a different position. *And it
+was found by the lane asking the first-blocker question of its own number before
+anyone else could.*
+
+**This is the healthiest form the law takes.** *A first-blocker claim is an
+arrival count, so its scope is exactly the set that ARRIVES* — and a lane that
+states the blocker without stating the traffic has published a number whose
+denominator is implied by a sentence.
+
 **So yesterday's law stands and its arithmetic does not.** *Which one thing to
 fix next* is exactly right; **what a scoreboard cannot tell you is how much
 fixing it buys** — the number attached to a blocker is **a count of arrivals, not
@@ -12120,6 +12246,49 @@ would have called the SHAPE wrong too.**
 > **A band that names its ignorance survives the discovery it could not have
 > made. A point estimate over identical evidence does not.**
 
+**AND A FOURTH OUTCOME JOINS THE TRILOGY: THE PREDICTION KILLED BEFORE ANY CODE
+WAS WRITTEN, WITH THE DIAGNOSIS UPGRADED** (Go `§G27`, `fa625f5`, merged).
+`strconv` alone measures **`+0`** —
+
+> **"My prediction didn't just overshoot; it NAMED THE WRONG CONSTRUCT."**
+
+**25 of 26 files are stringer output needing METHODS plus `strcat`** — *neither
+of which is `strconv`.* **An overshoot is a quantitative miss and a
+wrong-construct is a categorical one**, and the register should not let the
+second hide inside the first: *a number that is too large invites a correction
+factor; a number about the wrong thing invites nothing, because there is no
+factor that fixes it.*
+
+> **REPORT WHETHER A MISS WAS IN THE MAGNITUDE OR IN THE SUBJECT. Only the first
+> is calibration data.**
+
+**AND THE SAME LANE CORRECTED ITS STANDING NUMBER DOWNWARD AND SAID WHAT
+SURVIVED** (739→717, 644→629).
+
+> **A WRONG BASELINE AND A RIGHT DELTA IS THE HONEST DESCRIPTION.**
+
+**The deltas survive because both sides shared the gap** — which is the one
+composition rule that makes a corrected history usable rather than discarded, and
+it needs stating because the instinct on discovering a wrong baseline is to
+withdraw everything built on it. *A difference computed twice through the same
+error is not contaminated by it; a level is.*
+
+**AND THE LANE FLAGGED ITS OWN STREAK BEFORE ANYONE COULD READ ONE**: §G28's
+destination **equals §G26's**, so *"the thing being tested is the corrected
+baseline, not a fourth clean prediction — I'll say which rather than let it read
+as a streak."*
+
+> **A RE-RUN AGAINST A CORRECTED BASELINE IS A VERIFICATION, NOT A NEW
+> PREDICTION. Count it in the column it belongs to.**
+
+*Streaks are the one statistic in this register that accumulate without anyone
+deciding to keep them* — nobody writes down *"prediction #4"*, and yet the fourth
+green reads as one. **Which is why the lane, not the reader, has to label it.**
+
+**And it was killed pre-code, which is where a wrong-construct miss is nearly
+free** — after the code it would have arrived as an inch that landed and moved
+nothing, indistinguishable from a hard problem.
+
 **So the trilogy is complete, and its three outcomes are genuinely distinct**: a
 miss **about the instrument** (predicted and reported were different quantities),
 a miss **about the residual** (a difference inherits every bucket you did not
@@ -12155,7 +12324,36 @@ aliases, packing is fresh — so:
 excuse names a cost, a result names the ROW THE COST FALLS ON and why the other
 choice moves it rather than removes it.* **A known-unwinnable row left visible in
 a scoreboard is worth more than a scoreboard with a code path added to hide
-it.**@@MARK@@
+it.**
+
+**AND THAT LAW IS NECESSARY AND NOT SUFFICIENT — CONFESSED BY THE LANE THAT
+PRODUCED THE STREAK, WHICH IS THE STRONGEST POSSIBLE SOURCE** (ES, same
+landing). *"Every number I have given you so far is a vocabulary proxy…"*
+
+> **"THE FOUR INCHES OF EXACT PREDICTION-VS-ACTUAL HAVE BEEN MEASURING MY OWN
+> INSTRUMENT AGAINST ITSELF."**
+
+> **WHERE PREDICTOR AND SCORER SHARE AN INSTRUMENT, AN EXACT MATCH IS A
+> TRANSCRIPTION CHECK, NOT A CALIBRATION.**
+
+**So pricing before the code is one of TWO conditions, and this register had only
+carried the first.** Ordering removes the fitting; **independence removes the
+tautology** — and the second is invisible in exactly the way the first is
+visible, because *a prediction and a score computed through one instrument agree
+for reasons that have nothing to do with the world.* **An exact match is the
+signature of the defect, not evidence against it:** two independent estimates of
+a real quantity land near each other, **not on each other.**
+
+**Which retires the reflex of reading a streak as calibration, and I am recording
+that this register was reading it that way.** *Four exact inches is the least
+likely outcome of a sound calibration and the most likely outcome of a shared
+proxy* — and the observation was available the whole time, in the digits.
+
+**The remedy is structural and cheap: the predictor and the scorer must not be
+the same instrument.** Predict in one vocabulary and score in another, or predict
+a quantity the instrument does not compute. **A lane that cannot arrange that
+should report its numbers as a proxy's, which is what this lane did** — *the
+confession is the correct output when independence is unavailable.*@@MARK@@
 
 **AND A FRONTIER ENTRY BECOMES ACTIONABLE WHEN ITS INSTRUMENT COMPONENT IS GONE
 AND SAYS SO.** After the layout work, the **54 remaining `no-layout` are ENTIRELY
@@ -12251,6 +12449,32 @@ own output** rather than silently scoring it.
 > the measure can produce **false positives** or **false negatives**, and a
 > measure can do either.
 
+**AND THE SHARPEST VIOLATION OF THAT RULE CAME FROM THE LANE THAT WROTE IT** (Go
+`§G27`). *"The coverage table's own guard says it measures SYNTACTIC coverage, an
+upper bound — and I wrote that guard and then used the number as if it were
+executable."*
+
+> **A GUARD IN PROSE IS OBEYED BY WHOEVER IS READING IT, AND ITS AUTHOR IS THE
+> LEAST LIKELY PERSON TO BE READING IT.**
+
+**This is the docstring-expiry family entered from the instrument side**, and the
+authorship detail is the finding rather than an embarrassment: *writing the
+caveat is what discharges the feeling that produces re-reading it.* **A qualifier
+an author has already internalised is a qualifier that author will never see
+again** — which is the argument for the sign living in the instrument's OUTPUT,
+beside every number it prints, rather than in the table's header.
+
+**AND THE THIRD INSTANCE OF ONE-AST-KIND-TWO-THINGS CAME WITH THE RIGHT STANDING
+CONCLUSION:** *"I should have gone looking for it rather than tripping over
+it."*
+
+> **A SHAPE WITH TWO INSTANCES DESERVES A SWEEP FOR THE THIRD.**
+
+**Two is where a family becomes searchable**, and the sweep is nearly always
+cheaper than the third incident: *the second instance supplies the query.* **This
+register has been recording families and waiting for their members to arrive; the
+rule now is that the second member triggers a search rather than a note.**
+
 **So a coverage number now carries three things, and they fail independently**:
 the **denominator** (what could have disagreed), the **numerator** (what the
 family's definition admits), and the **SIGN** (which way the number is wrong).
@@ -12345,6 +12569,32 @@ register has been collecting the healthy-direction evidence; **this is the first
 instance where the incentive pointed at the FINDING rather than at a person**,
 and the cost of getting it wrong would have been a law minted on an incident that
 never occurred. *Two `printf` lines is the entire price of not doing that.*
+
+**AND THE FAMILY IS COMPLETED BY A LANE RETRACTING ITS OWN MOST INTERESTING
+HYPOTHESIS** (R-track, merged). *"I had one datum — a label string — and produced
+a mechanism from it, then reported the mechanism as a finding. It was checkable
+and I didn't check it before reporting."*
+
+> **A GUESS OFFERED AS A FINDING IS A DEFECT EVEN WHEN THE GUESS IS
+> REASONABLE.**
+
+**Reasonableness is the aggravating factor, not the mitigation.** *An unreasonable
+guess is discarded by the next reader; a reasonable one is adopted*, and it
+propagates with the authority of the report that carried it. **The defect is not
+the inference — it is the CHANNEL**: a mechanism inferred from one datum is a
+hypothesis, and publishing it in the slot reserved for measurements strips the
+one label that would have told anyone to check.
+
+**And the walkback was done properly, which is the part to copy**: the earlier
+readings were re-filed **UNKNOWN, not "artifact."** *Replacing a wrong mechanism
+with a different mechanism is the same defect twice* — **the honest replacement
+for a retracted explanation is the absence of one.**
+
+**So the incentive-at-the-finding family now has all three of its directions**: a
+lane correcting a coordinator, a lane killing a story that flattered both, and **a
+lane retracting the most interesting thing it had said.** *The third is the
+hardest, because nothing external forces it and the finding was the lane's own
+contribution.*
 
 **AND THE INSTRUMENT RETIRED ITSELF IN FAVOUR OF THE MECHANICAL CONTROL** (same
 landing).

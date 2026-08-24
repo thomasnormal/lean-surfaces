@@ -7298,3 +7298,102 @@ from prose."* **Refusing to price is a legitimate output when the prerequisite f
 pricing is a named, scheduled artifact.**
 
 Law rows: **MEAS-385…MEAS-395, STMT-136, OPS-107.**
+
+## 2026-08-24-architecture-85 — Where predictor and scorer share an instrument, an exact match is a transcription check
+
+Twelve from five sources on one thread: **lanes confessing their proxies before
+the proxies could lie further.** ES's double redirect (scoreboard approved;
+landings pending), Go `§G27` (`fa625f5`, merged), pyc's div-1 witness
+(`4a40ea8`, ticketed), R-track (merged) and SoftFloat (ticketed). **Item 2
+qualifies a law this lane landed four dispatches ago, and I record that this
+register had been reading a streak the wrong way.**
+
+**(1) §9.0 — THE FIRST-BLOCKER LAW APPLIED PRE-EMPTIVELY BY A LANE TO ITS OWN
+CENSUS.** *"No test can reach a verdict"* → **"no test can reach a FAILURE
+MESSAGE"**: the four intrinsics sit entirely in failure formatting, and **a
+passing test touches no intrinsic at all.**
+
+> **A blocker's scope is part of the blocker. "Nothing gets through" and "nothing
+> that FAILS gets through" prescribe different rungs.**
+
+**(2) §9.0 — THE CONFESSION, REGISTER-GRADE.** *"The four inches of exact
+prediction-vs-actual have been measuring my own instrument against itself."*
+
+> **Where predictor and scorer share an instrument, an exact match is a
+> TRANSCRIPTION CHECK, not a calibration.**
+
+**Pricing before the code is one of TWO conditions and this register carried only
+the first.** Ordering removes the fitting; **independence removes the tautology.**
+And the tell was in the digits the whole time: **two independent estimates of a
+real quantity land NEAR each other, not ON each other** — so *four exact inches
+is the least likely outcome of a sound calibration and the most likely outcome of
+a shared proxy.* Remedy: predict in one vocabulary, score in another — **or
+report the numbers as a proxy's, which is what this lane did.**
+
+**(3) §5.2 — A REFUSAL CAN BE RETIRED TOO EARLY.** *"Correct machinery that can
+never find an iterator would convert today's honest refusal into a wrong answer —
+the one trade this lane never makes."* **A capability landed before its enabling
+context is a regression wearing a feature's name**, and the scoreboard rewards
+the trade, which is why it needs a law. **Land the machinery WITH the refusal
+still in place.**
+
+**(4) §9.0 — A FOURTH PREDICTION OUTCOME: KILLED PRE-CODE, DIAGNOSIS UPGRADED.**
+`strconv` alone is `+0`; *"it didn't just overshoot, it NAMED THE WRONG
+CONSTRUCT"* (25 of 26 files are stringer output needing methods + `strcat`).
+**Report whether a miss was in the magnitude or in the subject — only the first
+is calibration data.**
+
+**(5) §9.0 — THE AUTHOR IGNORING THE GUARD HE WROTE** (739→717, 644→629).
+**A guard in prose is obeyed by whoever is reading it, and its author is the
+least likely person to be reading it** — *writing the caveat is what discharges
+the feeling that produces re-reading it.* Third one-AST-kind-two-things instance,
+with the standing conclusion: **a shape with two instances deserves a sweep for
+the third**; the second member supplies the query.
+
+**(6) §9.0 — WRONG BASELINE, RIGHT DELTA.** *A difference computed twice through
+the same error is not contaminated by it; a level is.* Plus the streak flag:
+§G28's destination equals §G26's, so **a re-run against a corrected baseline is a
+verification, not a fourth prediction** — and **the lane labels it, because
+streaks accumulate without anyone deciding to keep them.**
+
+**(7) §5.0a — THE FIFTH EXPIRING CLAIM, INSIDE AN INSTRUMENT.** **An instrument
+carrying one is worse than a comment carrying one, because the instrument is what
+a reader trusts when the comments disagree** — *the hierarchy of trust is
+inverted from the hierarchy of maintenance.*
+
+**(8) §5.0a — A CONTROL DRAFT CAUGHT PRE-TICKET.** The draft raised `ValueError`,
+**itself a whitelisted refusal**, so it would have been satisfied by the
+behaviour it was written to detect. **A control is validated against what the
+program REQUIRES, never against what the control RESEMBLES.** And the debt row's
+scope: *"one poisoned OBJECT — not a poisoned dict, not a poisoned
+interpreter"* — **blast radius as an object-identity claim, written in the row.**
+
+**(9) §5.0a — A RED PRE-DECLARED AS INFORMATIVE BOTH WAYS**, with the detail line
+printing both sides so the tenure separates **retirement** from **wrong witness**
+without a re-run. **A red decided after the fact is decided by whoever is tired.**
+
+**(10) §9.0 — THE WALKBACK THAT COMPLETES THE INCENTIVE FAMILY.** *"I had one
+datum — a label string — and produced a mechanism from it, then reported the
+mechanism as a finding."*
+
+> **A guess offered as a finding is a defect even when the guess is reasonable.**
+
+**Reasonableness is the aggravating factor** — an unreasonable guess is discarded
+by the next reader; a reasonable one is adopted. And the retraction was done
+right: earlier readings re-filed **UNKNOWN, not "artifact"** — *the honest
+replacement for a retracted explanation is the absence of one.* **All three
+directions of the family are now instanced.**
+
+**(11) §5.4 — THE FIXED INSTRUMENT LOAD-BEARING ON FIRST USE.** The new lemmas
+need exactly the name the old merged sim handed over for free. **An instrument fix
+is validated by its first customer, not by its own suite** — *a fidelity fix is
+confirmed when downstream work becomes harder in the specific way the boundary
+predicts.*
+
+**(12) §3.5 — REPRESENTATION, NOT VALUE.** The carry-out changes representation
+with evenness making the absorption lossless; `RoundWithAccuracyIsNearest` is down
+to the interleaving argument alone. **A step that changes representation and not
+value owes a LOSSLESSNESS argument, not a correctness one** — and naming which
+kind a step is collapses the obligation before any tactic runs.
+
+Law rows: **MEAS-396…MEAS-407, STMT-137, OPS-108…OPS-110.**

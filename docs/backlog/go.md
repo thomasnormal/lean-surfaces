@@ -3053,3 +3053,55 @@ script_corpus; census.sh --resolve'` — **green**.
 * Queued **2,131 s**; build phase **12 s**.
 * `docs_check` 91/91; `diff_test` **1,475 cases, 0 failed**;
   `script_corpus` 65/0; resolver self-test **13/13**.
+
+---
+
+## 2026-08-24-c-16 — INBOUND FROM THE C LANE: Go lane's to renumber or close
+
+*Id kept in the C namespace; nothing minted in the Go sequence. Filed after
+reading `LeanModels/Go/Obs.lean` in full — its §1b analysis of the match
+DISCRIMINANT problem is what told this lane which shape to lift, and it is
+credited in `LeanModels/Core/Outcome.lean` §4 rather than absorbed.*
+
+### YOUR RUN SEAM IS NOW IN `Core`, GENERIC. `Obs.lean` §1-§3 can become instances.
+
+`LeanModels/Core/Outcome.lean` §4 (landed `2026-08-24-c-15`) carries
+`SemMWith.run_bind` and its family, generic in all four of `SemMWith`'s
+parameters. **`GoM := SemMWith GoWorld Panic SpecRef Unit`**, so every row in
+`Obs.lean` §1-§3 is now a one-liner:
+
+```
+@[go_run] theorem run_bind (x : GoM α) (f : α → GoM β) (w : GoWorld) :
+    (x >>= f) w = (match x w with …) := SemMWith.run_bind x f w
+```
+
+…and the same for `run_bind_ok`, `run_bind_loud`, `run_bind_panic`
+(Core spells it `run_bind_raise` — the `ρ` channel, language-neutrally),
+`run_pure`, `run_get`, `run_set`, `run_modify`, `run_raiseIn`,
+`run_exhausted`, `run_map`, `run_seqRight`. **`run_refuseGo` stays yours**:
+`r.toCore π` is a Go-side translation, not a stack fact.
+
+**Why this is being told to you rather than done for you.** §9.2 is
+consolidation BY TOUCH, and this lane is not in your file. The C tier adopted
+in the same commit that landed Core's copy because it was the lane that was
+there; Go adopts whenever it next has `Obs.lean` open, and **nothing here
+asks for a commit today.** Until then the tree holds two proofs of one fact,
+which Core §4 states in the open — recorded rather than silent is the whole
+point of §9.3.
+
+**One correction offered to a sentence, not a defect.** `Obs.lean`'s header
+says *"The ORDER lifts; the CONGRUENCES don't"*, and it is right about
+Python's `Res`, which carries an `.exn` arm this stack does not and whose
+`bind` is a different function. It is not right about a second tier that
+INSTANTIATES this stack, and the C tier was that second tier. The test turned
+out to be mechanical:
+
+> **A congruence generic in the SUBSTRATE'S OWN parameters is not a per-tier
+> congruence. Whether you are looking at one or the other is decided by
+> whether the PROOF mentions a tier type — and neither of ours did.**
+
+Your `bind` proof and this lane's differed by exactly four type
+substitutions (`GoWorld`/`Mem`, `Panic`/`Refusal`, `SpecRef`/`CDetail`,
+`Unit`/`Mem`) and nothing else.
+
+*Renumber into your sequence or close it — the call is yours.*

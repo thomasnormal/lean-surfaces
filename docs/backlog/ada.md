@@ -31,7 +31,8 @@ Reproduce it, do not quote it:
 | --- | --- | ---: | ---: |
 | M2 inch 1 — the value layer | `9985b05` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
 | M2 Core adoption | `342a1f5` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
-| M2 inch 2 — the statement tier | *this landing* | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+| M2 inch 2 — the statement tier | `9ed43ef` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
+| M2 inch 3 — calls, the frame, `return` | `519baa7` | **0 / 4,188 (0.0%)** | **0 / 3,996 (0.0%)** |
 
 **IT IS ZERO, AND ZERO IS THE HONEST NUMBER.** Nothing has been graded,
 because **no grader has run**: there is no statement tier yet, so no ACATS
@@ -1444,3 +1445,87 @@ loop by driving the walker from a table the builder produced.
 
 ACATS **0 / 4,188** and **0 / 3,996**. Inch 3 gives calls; the 1,374 v0 tests
 call `Report`, which must be MODELLED (inch 5). The row moves at inch 6.
+
+## 2026-08-24-ada-7 — INCH 4's CENSUS: the CHEAPEST rung so far, and it is the one that unlocks the first scorable set
+
+Inch 4 is exceptions — raise, handlers, propagation (ARM 11.1-11.4, 11.4.1).
+Census before build, per §L25. **The range is Ada 2012's**; a paragraph range
+is edition-relative.
+
+### COST AND VALUE ARE INVERTED HERE, and that is the scheduling finding
+
+| rung | ARM paragraphs | corpus nodes | unlocks |
+| --- | ---: | ---: | --- |
+| inch 2 (5.1-5.3) | 58 | 120,563 (4.05%) | 0 tests |
+| inch 3 (6.1-6.5) | 178 | 487,784 (16.39%) | 0 tests |
+| **inch 4 (11.1-11.4.1)** | **77** | **38,497 (1.29%)** | **the 517-test v0 set becomes reachable** |
+
+> **Inch 4 is the CHEAPEST rung by corpus share — 1.29%, a third of inch 2 and
+> a thirteenth of inch 3 — and it is the one the first score depends on.**
+
+`docs/ada-semantics-design.md` §2: v0 is *sequential Ada + exceptions + the
+`Report` surface = 517 tests*. Inches 3 and 4 are both prerequisites; inch 3
+cost 4x more nodes and 2.3x more paragraphs. **A ladder ordered by cost would
+have put inch 4 first**, and the reason it is not is dependency, not size: a
+handler needs a frame to unwind to.
+
+**ARM 11.4 *Exception Handling* is EIGHT paragraphs and carries DYNAMIC
+SEMANTICS ONLY** — no syntax, no legality, no static semantics. The
+propagation rule this whole tier's `ρ` channel was designed around is eight
+paragraphs of pure dynamic semantics, which is why inch 1 could commit to it
+before anything could execute.
+
+### THE TRAP, A THIRD TIME — and this one has a corpus-wide ZERO
+
+| slot | measured |
+| --- | --- |
+| `HandledStmts` arity | **2 of 2**, uniform |
+| `HandledStmts` slot[1] — THE HANDLERS | **`AdaNodeList`, 24 of 24** |
+| `ExceptionHandlerList` corpus-wide | **0** |
+| `AdaNodeList` | 65: **41 leaf-with-text (empty)**, 24 node |
+| `ExceptionHandler` | 3 children: `(name‖null, AlternativesList, StmtList)` |
+
+> **A walker written from the grammar would look for `ExceptionHandlerList`
+> and find it ZERO times in 2,976,861 nodes.** The handlers live in a generic
+> `AdaNodeList`, and when there are none that list is a LEAF with empty text —
+> the same encoding that would have refused 30 of 31 `if`s (inch 2) and every
+> parameterless call (inch 3).
+
+Three rungs, three appearances, one encoding rule: **`extract.py` emits
+`children` when a node has children and `text` otherwise, and libadalang's
+list kinds are generic where the grammar's names are specific.** That pair is
+now the tier's most reliable source of would-be semantics bugs, and it is
+free to check before writing a rule.
+
+### NO `RaiseStmt` WITNESS IN THE FIXTURES — labelled, not glossed
+
+`RaiseStmt` is **1,440 corpus-wide and 0 in both fixtures**. So inch 4's
+`raise` shape has **no local witness**: it must come from the corpus (the
+re-acquire rung) or from a synthetic fixture that is LABELLED as synthetic.
+Inch 3 could read every shape it needed off `report.json`; inch 4 cannot, and
+saying so before building is the difference between a fixture and a guess.
+
+### WHERE THE `undefined` CLASS ACTUALLY LIVES
+
+**ARM 11.5 *Suppressing Checks* is 51 paragraphs and carries an ERRONEOUS
+EXECUTION category** — the concentration the design doc predicted. It is
+**outside** inch 4's range and should stay there: suppressing a check is how a
+program opts into unbounded behaviour, and modelling it is a rung of its own.
+Inch 3 already gave `undefined` its first *site* at 6.4.1; 11.5 is where its
+*mass* is.
+
+**ARM 11.4.2 *Pragmas Assert* carries BOUNDED (RUN-TIME) ERRORS** — a third
+candidate instance for the `BoundedSite` machinery, after 5.1 and 6.2.
+
+### WHAT INCH 4 ACTUALLY ADDS TO THE WALKER
+
+Less than the numbers suggest, because inch 3 already walks `HandledStmts` —
+it reads slot[0] and **ignores slot[1]**. Inch 4 is: read the handler list,
+match an occurrence against `AlternativesList` (`OthersDesignator` is the
+common case — both fixture handlers use it), and run the chosen handler's
+`StmtList` with the frame intact. `RaiseStmt` re-raises on `ρ`, which is
+already the channel `Constraint_Error` travels.
+
+`inFrame`'s third arm is the one that changes: today an exception PROPAGATES
+past a frame; with handlers, a frame may ABSORB it. That is a one-arm edit to
+a function whose three arms were written knowing this rung was coming.

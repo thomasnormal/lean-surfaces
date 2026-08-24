@@ -2004,3 +2004,60 @@ built at construction, `pyc-div-2`'s create-to-first-resume window no longer
 exists, so the claim that real play never enters it is moot rather than
 load-bearing. What remains is `pyc-div-1`, whose retirement is blocked upstream
 on `exc_lab::except_builtin`.
+
+## 2026-08-24-pycomplete-21 — a substring is not a declaration: the register's declaration shape gets an anchor, and the fixture needs no fixture
+
+ES retired its lane-local checker into the shared one and flagged what the
+shared one was missing on the way out. The declaration-shape branch asked
+`gname not in text` — **a plain substring test** — so a guard whose `def` had
+been DELETED but whose name survived in a comment still passed.
+
+**This is the third time this instrument has been bitten by the same shape.**
+The self-test's own first draft aimed its fake guard names at
+`divergence_register.py` and the checker FOUND them (§pycomplete-20); QoL hit
+the self-matching row; and now a name in prose reads as a declaration. *A
+grep-based existence check answers "is this string here", and the question was
+"is this thing declared".*
+
+### What the tightening requires, and why BOTH halves
+
+ES's retired checker required `def <name>` **and** a matching `#guard <name>`,
+and that pair is now the shared instrument's:
+
+* `def <name>` at a line start — the declaration exists, rather than the name
+  appearing in prose;
+* `#guard <name>` at a line start — and the build actually EVALUATES it.
+
+A `def` nobody `#guard`s is **a guard in name only**: the build compiles it and
+nothing ever checks it. A `#guard` with no `def` cannot elaborate. Comments are
+stripped (`/- -/` and `--`) before matching, because anchoring alone is not
+enough — `^\s*def foo` matches happily inside a block comment, which is exactly
+the deleted-declaration case.
+
+### THE FIXTURES NEEDED NO FIXTURE FILE, and that is the nice part
+
+Both new self-test cases point at REAL repository files, so there is nothing to
+create, stage or clean up:
+
+| case | fixture | why it must refuse |
+| --- | --- | --- |
+| name only mentioned | `docs/es-declared-divergences.json: es_div_1_still_divergent` | the name is in ES's own register as DATA and is declared nowhere — **the old substring test returned `True` for exactly this** |
+| `def` without `#guard` | `LeanModels/Python/Ast.lean: isBuiltinName` | a real `def`, genuinely never `#guard`ed |
+
+The first is the sharpest fixture available anywhere in the tree: the string
+that proves the bug is the guard's own name, sitting in the register file that
+names it. Self-test **13 → 15** defect classes.
+
+### The fleet after this
+
+Two probe shapes, both live and both gated: SCRIPT (`python`, `sv`) and
+DECLARATION (`es`, `def` + `#guard`). Schema stable at
+`declared-divergences-1` fleet-wide, **zero migration warnings** — the
+migration clause did its job and is now dormant rather than load-bearing, which
+is the outcome §9.5a's old-valid law is for. Register: 3 files, 4 rows, 8
+guards. `declared-divergences: 1` for this tier.
+
+**Class note.** This landed `docs`-class — no Lean elaborates — but the changed
+file is a GATE, and a gate that lands without being run is the §5.4b shape
+again. So the instrument was added to `--gates` explicitly rather than relying
+on the class floor, which runs only `docs_check`.

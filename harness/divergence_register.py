@@ -67,9 +67,12 @@ Any other key is free-form and preserved; tiers use them for `gated`,
   * SCRIPT (sv, python): the file names `probe`, the checker RUNS it with
     `--json` and reads each guard's `held`. The probe is the run.
   * DECLARATION (es): no `probe` key; each guard is `"<path>: <name>"`, and the
-    checker verifies the named declaration exists at that path. THE BUILD is
-    the run — a Lean theorem that stops holding fails the tenure, which is a
-    stronger gate than a script, not a weaker one.
+    checker verifies BOTH that `def <name>` is declared there and that a
+    `#guard <name>` evaluates it. THE BUILD is the run — a `#guard` that stops
+    holding fails the tenure, which is a stronger gate than a script, not a
+    weaker one. Both halves are required: a `def` nobody `#guard`s is a guard
+    in name only, and a bare substring test passes a name that survives in a
+    COMMENT after its declaration was deleted.
 
 **MIGRATION (the §9.5a old-valid clause, applied to schemas).** A shape a lane
 shipped in good faith cannot become a failure the day the canon lands. So
@@ -112,6 +115,41 @@ NON_CONDITIONS = re.compile(
 
 def _fail(problems, path, msg):
     problems.append("%s: %s" % (os.path.relpath(path, REPO), msg))
+
+
+def _strip_lean_comments(text):
+    """Block/doc comments and line comments out. Anchoring alone is not enough:
+    `^\s*def foo` can match inside a `/- ... -/` block, and a name surviving in
+    a comment after its declaration was DELETED is precisely the case this
+    tightening exists to refuse."""
+    text = re.sub(r"/-.*?-/", " ", text, flags=re.S)
+    text = re.sub(r"--[^\n]*", " ", text)
+    return text
+
+
+def declared_as_guard(text, name):
+    """Is `name` DECLARED and CHECKED here? Two anchored facts, both required —
+    ES's retired lane-local checker required exactly this pair and it is the
+    reason the tightening is worth having:
+
+      * `def <name>`    — the declaration exists at a line start, not in prose;
+      * `#guard <name>` — and the build actually EVALUATES it.
+
+    A `def` with no `#guard` is a definition nobody checks, which is a guard in
+    name only; a `#guard` with no `def` cannot elaborate. Returns (ok, detail)."""
+    code = _strip_lean_comments(text)
+    has_def = re.search(r"^[ \t]*(?:private[ \t]+)?def[ \t]+%s\b"
+                        % re.escape(name), code, re.M) is not None
+    has_guard = re.search(r"^[ \t]*#guard[ \t]+%s\b"
+                          % re.escape(name), code, re.M) is not None
+    if has_def and has_guard:
+        return True, "def + #guard"
+    missing = []
+    if not has_def:
+        missing.append("no `def %s` at a line start" % name)
+    if not has_guard:
+        missing.append("no `#guard %s`" % name)
+    return False, " and ".join(missing)
 
 
 def _warn(warnings, path, msg):
@@ -198,11 +236,16 @@ def check_file(path, problems, warnings=None):
             full = os.path.join(REPO, gpath)
             if not os.path.isfile(full):
                 _fail(problems, path, "guard %r names a file that does not exist" % g)
-            elif gname not in open(full, encoding="utf-8").read():
-                _fail(problems, path, "guard %r is not declared in %s" % (gname, gpath))
+                continue
+            ok, detail = declared_as_guard(open(full, encoding="utf-8").read(), gname)
+            if not ok:
+                _fail(problems, path, "guard %r is not a checked declaration in "
+                      "%s (%s) — a name that survives only in prose is not a guard"
+                      % (gname, gpath, detail))
             else:
                 out[gname] = {"held": True,
-                              "detail": "declared in %s — the BUILD is the run" % gpath}
+                              "detail": "%s in %s — the BUILD is the run"
+                                        % (detail, gpath)}
         return {"tier": doc.get("tier"), "rows": len(rows), "guards": out}
     ppath = os.path.join(REPO, probe)
     if not os.path.isfile(ppath):
@@ -314,6 +357,24 @@ def self_test():
         d["rows"][0]["guards"] = ["docs/sv-declared-divergences.json: absent_decl_a",
                                   "docs/sv-declared-divergences.json: absent_decl_b"]
 
+    def decl_guard_mention_only(d):
+        # THE CASE THE TIGHTENING EXISTS FOR, and it needs no fixture file: this
+        # name appears in ES's register JSON as DATA and is declared nowhere.
+        # The old substring test returned True for exactly this and passed a
+        # file it should have refused — the same shape as the self-referential
+        # bug this suite caught earlier, which is why it is pinned here.
+        d.pop("probe", None)
+        d["rows"][0]["guards"] = [
+            "docs/es-declared-divergences.json: es_div_1_still_divergent",
+            "docs/es-declared-divergences.json: es_div_1_has_not_widened"]
+
+    def decl_guard_def_without_hash_guard(d):
+        # A `def` nobody `#guard`s is a guard in name only: it is declared, so
+        # the build compiles it, and nothing ever EVALUATES it.
+        d.pop("probe", None)
+        d["rows"][0]["guards"] = ["LeanModels/Python/Ast.lean: isBuiltinName",
+                                  "LeanModels/Python/Ast.lean: isPyBuiltinName"]
+
     def decl_guard_unqualified(d):
         d.pop("probe", None)
         d["rows"][0]["guards"] = ["bare_name_a", "bare_name_b"]
@@ -333,6 +394,8 @@ def self_test():
         (decl_guard_missing_file, "declaration guard, file absent"),
         (decl_guard_not_declared, "declaration guard, name not declared"),
         (decl_guard_unqualified, "no probe and guards unqualified"),
+        (decl_guard_mention_only, "declaration guard, name only mentioned"),
+        (decl_guard_def_without_hash_guard, "declaration guard, def but no #guard"),
     ]
     failed = [lbl for fn, lbl in checks if not rejects(fn, lbl)]
     if failed:

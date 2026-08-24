@@ -6353,3 +6353,94 @@ in the case that produced it, **where one party commits on another's behalf.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-300 … MEAS-302, OPS-85, OPS-86**.
+
+## 2026-08-24-architecture-75 — A fast green is honest when the first elaboration is the certified one
+
+Nine from four post-storm sources: the Lean tier's 2/27 (fork `1dc1dfc`),
+R-track (`4ed731e`), C's seam lift (merged), and the Go correction it carried.
+**Two of them correct rulings — one the coordinator's, one this document's.**
+
+**(1) §5.4a-i — THE THIRD RESOLUTION OF THE FAST-GREEN AMBIGUITY, and it
+corrects the warm-cache hypothesis.** There was **no authoring build**: the
+lane's *all-Lean-inside-the-tenure* discipline means the **801 ms gate line was
+the file's first and only elaboration.**
+
+> **A fast green is honest when the first elaboration IS the certified one.**
+
+**Three resolutions, ordered by what they need**: tree identity needs the stamp;
+`Built`/`Replayed` needs the log's right phase; **this needs a fact about the
+lane's PROTOCOL.** It is the cheapest to check, **the only one available before
+the log exists**, and unavailable to any lane that elaborates while drafting —
+*a discipline adopted for lock hygiene turned out to be what makes a fast green
+legible.*
+
+**(2) §5.4a-i — A COVERAGE STATEMENT CAN SUBTRACT.** `Test` was `Replayed`, so:
+*the 22 goldens' green is carried forward from `b23e892`, not re-established
+here.* **Listing what ran is routine; naming what did NOT run and is
+nonetheless relied on requires reading your own log for absences.** *The
+`Replayed` token is where a carried-forward claim announces itself.*
+
+**(3,9) §5.3 — A GREEN CAN CREATE DEBT, AND RETENTION NEEDS ITS REASON.**
+*"It never fired; it is debt in a green file"* — **diagnostic machinery a green
+proves unused becomes debt at the moment of the green**, deleted in the *next*
+landing, since this landing's subject is the proof. And the inverse:
+`EvalM.run_refuseUnsupported` was **retained** against a dedup sweep because the
+capture lives in C's primitive **by design**. **The declined-lemma law's
+inverse** — that one removes an artifact justified by resemblance, this keeps one
+justified by a design decision **and requires the decision written where the next
+sweep arrives.** *A duplicate retained silently is indistinguishable from one
+missed.*
+
+**(4) §5.4a — THE GUARD-RESPECT LAW, completing the family from the OBEYING
+side.** `--iterate` refused on genuine pressure; **plain scratch mode would have
+run**, and the lane declined it.
+
+> **When a guard refuses, the question is whether the GUARD IS WRONG — not
+> whether another door is open. Picking the mode that skips the check is GAMING
+> a courtesy protocol rather than observing it.**
+
+**The three members now cover the whole decision**: *read the mechanism* says
+whether the guard is wrong; *the fix lives with the owner* says who repairs it;
+**this says what to do while it is right** — the case that arises most often and
+had the least guidance, because **a correct guard blocking correct work feels
+like a defect from inside.** The compliant shape is named rather than left to
+taste (retry loop, loud 40-minute giveup): *a protocol depending on voluntary
+compliance needs its obedient form as specific as its violation, or the cheapest
+invention is the open door.*
+
+**(5) §5.4a — THE LIFT-PRICING LAW.** `c-12` priced 5 theorems / ~40 lines;
+reality **12 / 183** — **and the seam half was EXACT.** The whole gap is
+primitive rows the C tier had never used.
+
+> **Price a lift against the DEFINITION's surface, not your own call sites.**
+
+**The estimate was not sloppy — it was accurate about everything the lane could
+see.** A lane prices what it touches; a lift's cost is set by what the definition
+**offers**. *A residue priced without its population, arriving in an estimate
+rather than a count.*
+
+**(6,7) §7.1a — TWO MORE HAZARDS.** **A match over an instantiation is a
+different term from a match over the general type** — two distinct matcher
+constants, so **state cross-spelling claims on MATCH-FREE lemmas or you are
+testing matcher elaboration rather than the fact.** And **a tactic that fails
+because the goal is GONE reads exactly like one that fails because the goal is
+hard**: `rw`'s trailing `rfl` discharged it and the following cases errored
+`no-goals`. *The error names the tactic that had nothing to do, not the one that
+did too much* — and **`no-goals` is never about the tactic it names.**
+
+**(8) §3.4 — THE C LANE CORRECTED THIS DOCUMENT'S OWN RULING, WITH A MECHANICAL
+TEST.** *"The order lifts; the congruences don't"* is **right about Python's
+`Res`** (the `.exn` arm) **and wrong for a second `SemMWith` tier.**
+
+> **The discriminator is whether the PROOF MENTIONS A TIER TYPE. Lifted-vs-
+> tier-bound is decided by GREP, not by judgment.**
+
+**A better form of what I had stated as a principle**: *the congruences don't
+lift* was a **summary of two tiers' circumstances** reading as a property of
+congruences. The real property is **mentions-a-tier-type** — same ruling, correct
+in both directions, **and now checkable by a lane that was not in the
+conversation.** *Where a rule is at risk of re-collapsing, the durable form is a
+type, not a reminder — here, a grep, not a maxim.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-303 … MEAS-308, OPS-87 … OPS-89**.

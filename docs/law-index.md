@@ -351,6 +351,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-300 | a fleet status is THREE NUMBERS — rungs assigned, executing, building — never "N lanes live" | `docs/family-architecture.md §1.2`, §9.0 |
 | MEAS-301 | DURABILITY LIVES IN ARTIFACTS, NOT IN AGENTS | `docs/family-architecture.md §7.2` |
 | MEAS-302 | a certificate over the WORKING TREE makes even uncommitted state recoverable | `docs/family-architecture.md §7.2` |
+| MEAS-303 | a FAST GREEN is honest when the first elaboration IS the certified one | `docs/family-architecture.md §5.4a-i` |
+| MEAS-304 | a green states what it COVERS and what it is CARRYING — a re-used verdict is a citation | `docs/family-architecture.md §5.4a-i` |
+| MEAS-305 | diagnostic machinery a green proves UNUSED becomes DEBT at the moment of the green | `docs/family-architecture.md §5.3` |
+| MEAS-306 | RETENTION against a dedup sweep needs the design reason stated AT THE ROW | `docs/family-architecture.md §5.3` |
+| MEAS-307 | price a LIFT against the DEFINITION's surface, not your own call sites | `docs/family-architecture.md §5.4a` |
+| MEAS-308 | LIFTED-VS-TIER-BOUND is decided by grep — does the PROOF mention a tier type? | `docs/family-architecture.md §3.4` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -647,6 +653,9 @@ numbers below are the register's own.
 | OPS-84 | `with_reducible` per `apply` — each failure is one HEAD COMPARISON, not one unfolding | `docs/family-architecture.md §7.1a` |
 | OPS-85 | REPORT-THEN-CONTINUE — proceed to the named next rung; stop only on a ruling, a merge you consume, or a pending verdict | `docs/family-architecture.md §9.0-pre` |
 | OPS-86 | commit provenance comes from the ENVIRONMENT, never from a flag someone types | `docs/family-architecture.md §7.2` |
+| OPS-87 | when a guard refuses, ask whether the GUARD IS WRONG — never whether another door is open | `docs/family-architecture.md §5.4a` |
+| OPS-88 | state cross-spelling claims on MATCH-FREE lemmas — a match over an instantiation is a different constant | `docs/family-architecture.md §7.1a` |
+| OPS-89 | `no-goals` is never about the tactic it names — a discharged goal reads like a hard one | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

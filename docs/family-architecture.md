@@ -1600,6 +1600,31 @@ reuse something is better evidence than one whose first use is a lane reusing
 it — **the ruling's whole content is where the line falls, and only the
 refusing case tests the line.**
 
+**AND CORRECTED BY THE C LANE, WITH A MECHANICAL TEST THAT REPLACES THE
+JUDGMENT** (C's seam lift, merged). *"The order lifts; the congruences don't"*
+is **right about Python's `Res`** — which carries an `.exn` arm nothing else
+has — **and WRONG for a second `SemMWith` tier**, whose congruences are about
+the same stack and lift fine.
+
+> **The discriminator is whether the PROOF MENTIONS A TIER TYPE.**
+
+> **LIFTED-VS-TIER-BOUND IS DECIDED BY GREP, NOT BY JUDGMENT.**
+
+**Which is the better form of a ruling this document had been stating as a
+principle.** *The congruences don't lift* was a **summary of two tiers'
+circumstances** that read as a property of congruences; the real property is
+**mentions-a-tier-type**, and Python's `Res` congruences have it while a second
+`SemMWith` tier's do not. **Same ruling, correct in both directions, and now
+checkable by a lane that was not in the conversation.**
+
+**And it is this register's own preference applied to itself**: *where a rule is
+at risk of re-collapsing, the durable form is a type, not a reminder* — here the
+durable form is **a grep, not a maxim.** A maxim about congruences invites each
+lane to decide whether theirs are the lifting kind; **a test on the proof text
+does not.**
+
+
+
 
 **STRENGTHENED — the lift now has THREE in-tree instances**, found by the
 duplication incident above: **`Sv.Res.le`, `Python.Res.le`, and `PyLe`.**
@@ -4683,6 +4708,37 @@ violating a law **inside the commit that introduced it.**
 times than anyone**, and no amount of care fixes that: only something that runs
 can. *The gate does not care who wrote the rule.*
 
+**AND A GREEN CAN CREATE DEBT AT THE MOMENT IT IS EARNED** (Lean tier). The
+`trace_state` / first battery **never fired**, and the lane's disposition is the
+row:
+
+> **It never fired; it is DEBT IN A GREEN FILE.**
+
+> **DIAGNOSTIC MACHINERY THAT A GREEN PROVES UNUSED BECOMES DEBT AT THE MOMENT
+> OF THE GREEN.**
+
+**Scheduled for deletion in the next landing, which is the right cadence** — not
+removed in the landing that proved it unused, since **that landing's subject is
+the proof, not the cleanup.** *The green is what converts scaffolding from
+"possibly load-bearing" to "measured inert", and inert scaffolding in a green
+file is the F7 surface this section keeps finding by census — here caught by the
+verdict itself.*
+
+**AND THE INVERSE DISPOSITION, WITH ITS ARGUMENT STATED AT THE ROW** (C's seam
+lift). One row was **RETAINED against a dedup sweep**:
+`EvalM.run_refuseUnsupported`, because **the capture lives in C's primitive BY
+DESIGN, so no call site can forget it.**
+
+> **RETENTION AGAINST A DEDUP SWEEP NEEDS THE DESIGN REASON STATED AT THE ROW.**
+
+**The declined-lemma law's inverse** (*a lemma that cannot fail is not a lemma;
+"the sibling has one" is not a consumer*): that one removes an artifact whose
+justification is a resemblance; **this one keeps an artifact whose justification
+is a design decision — and requires the decision to be written where the sweep
+will next arrive.** *A duplicate retained silently is indistinguishable from a
+duplicate missed, and the next sweep is run by someone who was not in this
+conversation.*
+
 **AND THE FAMILY HAS ITS FIRST CATCH AT CREATION RATHER THAN BY CENSUS**
 (analog A1, ticketed; verify at landing). The lane wrote the sibling-mirroring
 `observation_sound`, **saw the conclusion was definitionally trivial once
@@ -5577,6 +5633,31 @@ owner — and did not touch the gate.**
 
 > **"MY LANE IS BLOCKED" IS THE WORST REASON TO MOVE A SHARED SAFETY LINE.**
 
+**AND THE FAMILY'S THIRD MEMBER, FROM THE OBEYING SIDE — DECLINING AN OPEN
+DOOR** (R-track, `4ed731e`). `--iterate` **refused on genuine pressure**, and
+**plain scratch mode WOULD have run.** The lane did not take it.
+
+> **When a guard refuses, the question is whether the GUARD IS WRONG — not
+> whether ANOTHER DOOR IS OPEN.**
+
+> **Picking the mode that skips the check is GAMING a courtesy protocol rather
+> than OBSERVING it.**
+
+**The three members now cover the whole decision**: *read the mechanism* (§7.2)
+tells you **whether the guard is wrong**; *the fix lives with the gate's owner*
+tells you **who repairs it if it is**; and this tells you **what to do while it
+is right** — which is the case that arises most often and has the least
+guidance, because a correct guard blocking correct work feels like a defect from
+inside.
+
+**And the compliant shape is named rather than left to taste**: a **retry loop
+with a loud 40-minute giveup.** *A protocol that depends on voluntary compliance
+needs its obedient form to be as specific as its violation* — otherwise the lane
+that wants to comply has to invent one, and the cheapest invention is the open
+door.
+
+
+
 **It is the worst reason because it is the most persuasive one available in the
 moment**, and it is **always** available: the lane is stopped, the line is the
 thing stopping it, and the edit is one character. **The reasons that should move
@@ -5846,6 +5927,29 @@ case" was free.**
 
 > **A PREDICTED MAINTENANCE COST INHERITS THE UNIT ERROR OF THE CONSTRUCT IT
 > WAS PREDICTED FOR.**
+
+**AND A THIRD, WHERE THE PREDICTION WAS EXACTLY RIGHT ON THE HALF THE LANE
+OWNED** (C's seam lift, merged). `c-12` priced **5 theorems / ~40 lines**;
+reality was **12 / 183.** But **the seam half was EXACT** — the entire gap is
+**primitive rows the C tier had never used.**
+
+> **A LIFT IS PRICED FROM THE LIFTING TIER'S USE OF THE THING, AND THE THING
+> BELONGS TO THE FAMILY.**
+
+> **Price a lift against the DEFINITION's surface, not your own CALL SITES.**
+
+**What makes this instance instructive is that the lane's estimate was not
+sloppy — it was ACCURATE about everything it could see.** A lane prices what it
+touches, and a lift's cost is set by **what the definition offers**, most of
+which the lifting tier has never called. **The error is invisible from inside
+the lane's own usage**, and no amount of care about one's own call sites reaches
+it.
+
+**Same family as the predicted-maintenance-cost row**: a cost estimate is wrong
+**whenever its population is the wrong one**, however right the per-item figure
+is. Here the per-item figure was **right** and the population was **the lane's
+call sites instead of the definition's surface** — *a residue priced without its
+population* (§9.0), arriving in an estimate rather than in a count.
 
 **AND ITS SECOND INSTANCE NAMES THE UNIT FOR A WHOLE CLASS OF ESTIMATE**
 (R-track chain document). Rung 6's cost was priced at **221** and is **57**,
@@ -6497,6 +6601,38 @@ will not be looked at until after the tenure it was about has finished.
 * **CORROBORATING — build duration.** **4 seconds cannot be a Mathlib-rooted
   adoption.** It is decisive in practice and it is still second, because a
   duration is a fact about *this run* and the claim is about *this tree*.
+
+**AND A THIRD RESOLUTION OF THE FAST-GREEN AMBIGUITY — THE STRONGEST OF THE
+THREE** (Lean tier's 2/27, fork `1dc1dfc`). The coordinator's **warm-cache
+hypothesis was corrected**: there was **NO authoring build.** The lane's own
+discipline — *all Lean inside the tenure* — means the **801 ms gate line was the
+file's FIRST AND ONLY elaboration.**
+
+> **That is what makes the 1 s honest — not a warm cache.**
+
+> **A FAST GREEN IS HONEST WHEN THE FIRST ELABORATION *IS* THE CERTIFIED ONE.**
+
+**Three resolutions now, and they are ordered by what they need**: **tree
+identity** needs the stamp; **`Built`/`Replayed`** needs the log's right phase;
+**this one needs a fact about the lane's PROTOCOL** — that no Lean ran outside
+the tenure. **It is the cheapest to check and the only one available before the
+log exists**, and it is unavailable to any lane that elaborates while drafting.
+*A discipline adopted for lock hygiene turned out to be the thing that makes a
+fast green legible.*
+
+**AND A COVERAGE STATEMENT CAN SUBTRACT WHAT IT DID NOT RE-ESTABLISH.** `Test`
+was **`Replayed`**, so the landing says: *the 22 goldens' green is **carried
+forward from `b23e892`**, not re-established here.*
+
+> **A green states what it covers AND what it is carrying — a re-used verdict is
+> a citation, not a result.**
+
+**This is the §5.4a coverage statement doing subtraction rather than
+enumeration**, and it is the harder half: listing what ran is routine, while
+**naming what did not run and is nonetheless being relied on** requires reading
+your own log for absences. *The `Replayed` token is where a carried-forward
+claim announces itself, and a coverage statement that ignores it silently
+re-asserts somebody else's tenure.*
 
 **AMENDED — DURATION DROPS TO THIRD, AND THE SECOND WITNESS IS `Built` vs
 `Replayed`** (Ada, merged `44ae259`; the lane applied this section's own
@@ -8281,6 +8417,37 @@ announces itself.**
 * **A plain `def` delta-unfolds past the motive.** Prove the `_iff` form
   first, then `attribute [irreducible]` — otherwise the definition
   disappears underneath the induction that was supposed to be about it.
+
+**TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
+*IS*.**
+
+**A MATCH OVER AN INSTANTIATION IS A DIFFERENT TERM FROM A MATCH OVER THE
+GENERAL TYPE.** The cross-spelling example **did not typecheck**: the two sides
+are **two distinct matcher constants.**
+
+> **State cross-spelling claims on MATCH-FREE lemmas, or you are testing MATCHER
+> ELABORATION rather than the fact.**
+
+**A `match` compiles to a generated constant that carries its motive**, so
+instantiating the type produces a **different** matcher — and a claim written
+with matches on both sides is a claim **about those two constants**, which is
+almost never the fact the author meant. *The lemma that survives instantiation
+is the one with no match in it.*
+
+**AND A DIAGNOSIS ROW FOR TACTIC-SCRIPT REDS: A TACTIC THAT FAILS BECAUSE THE
+GOAL IS GONE READS EXACTLY LIKE ONE THAT FAILS BECAUSE THE GOAL IS HARD.**
+`rw`'s **trailing `rfl` discharged the goal**, and the following cases **errored
+`no-goals`.**
+
+> **The error names the tactic that had nothing to do, not the tactic that did
+> too much.**
+
+**Same family as *count defects after unification***: the visible failure is
+**downstream of the cause**, and a lane triaging the reported line **works on
+the wrong tactic.** The tell is specific and cheap — **`no-goals` is never about
+the tactic it names** — and a script whose cases begin failing in sequence is far
+likelier to have lost its goal than to have met several hard ones at once
+(§5.4b's uniformity rule again).
 
 **TWO MORE, BOTH FROM ONE-CAUSE REDS, AND BOTH ABOUT WHAT A TACTIC DISPATCHES
 ON** (C lane; verify at landing).

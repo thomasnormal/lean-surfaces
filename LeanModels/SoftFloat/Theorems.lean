@@ -15,7 +15,7 @@ import LeanModels.SoftFloat.Basic
 namespace LeanModels.SoftFloat
 
 open Float.Model
-open Float.Model.UnpackedFloat (Sign ExtendedMantissa)
+open Float.Model.UnpackedFloat (Sign ExtendedMantissa Accuracy)
 
 /-! ## Working lemma: the extended-mantissa shift IS division by a power of two -/
 

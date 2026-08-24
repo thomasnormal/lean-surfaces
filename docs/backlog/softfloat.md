@@ -1274,3 +1274,80 @@ Lemmas toward `RoundWithAccuracyIsNearest`, not the obligation.
 Carry-out absorption (the second `shiftToTargetExponent`, for when rounding up
 overflows the significand), then nearest-among-**all**-representables — the
 interleaving argument, which is the genuinely hard one and the last piece.
+
+---
+
+## 2026-08-24-softfloat-22 — THE RED WAS MY VERIFICATION METHOD, NOT A RENAME
+
+Triad on `d98177b` went **RED** in five seconds — build failed, `GATES NOT RUN`.
+`Unknown identifier Accuracy.roundToNearestEven` in
+`LeanModels/SoftFloat/Theorems.lean`. Aborted triad, no landing.
+
+### IT WAS NOT A RENAME, AND NOT A STRANDED CONSUMER
+
+The standing hypothesis was a rename with an unswept consumer — the clash-check
+family in reverse. **Measured: nothing was renamed.** Core's
+`Accuracy.roundToNearestEven` is intact, and the failing references are in the
+block this lane had just *added*, not in older code.
+
+The actual cause is **scope**:
+
+* `Theorems.lean:18` opens `Float.Model.UnpackedFloat (Sign ExtendedMantissa)`
+  — **no `Accuracy`**;
+* the probe the proof was developed in opened `(ExtendedMantissa Accuracy)`.
+
+So the proof compiled in the probe and could not compile in its destination.
+
+### AND THE VERIFICATION THAT SHOULD HAVE CAUGHT IT WAS UNSOUND
+
+Every landing in this lane has been checked by concatenating `Basic.lean` and
+the target file into one scratch file. **That sim merges `open` scopes that
+modules keep separate**, and it did so here in a specific, findable way:
+
+> `Basic.lean:180` carries `open Float.Model.UnpackedFloat (Sign ExtendedMantissa
+> Accuracy)`. The concatenation dropped `Basic`'s `end`, so that open stayed
+> live over the appended `Theorems` content — supplying the very name the real
+> module lacks.
+
+`open` is section-scoped and does not cross a module boundary. The sim erased
+the boundary, so it was testing a file that does not exist.
+
+### THE FIX, BOTH HALVES
+
+**The code:** add `Accuracy` to `Theorems.lean`'s open list. One line.
+
+**The method:** the sim now keeps `Basic.lean`'s `end` and appends the target
+**from its own `namespace` line**, so the target's opens are the only ones in
+scope — which is what the real module sees.
+
+**Both directions RUN, because a check that has never failed is a design and
+not a control:**
+
+| sim | with the fix | without the fix |
+| --- | --- | --- |
+| old (merged scopes) | 0 errors | **0 errors — MISSED IT** |
+| new (faithful) | 0 errors | **8 errors, `Unknown identifier Accuracy.roundToNearestEven`** |
+
+The faithful sim reproduces the triad's red exactly. The old one is why a
+`TRUSTWORTHY` verdict preceded a red build.
+
+### WHY THE TRIAD CAUGHT IT AND NOTHING ELSE DID
+
+Worth naming: `docs_check`, the census gates and all ten probes were green —
+every one of them, before and after. **None of them compiles `LeanModels/**` as
+modules**; only `lake build` does. The probes are core-only by design (that is
+what makes them lock-free), and the sim was standing in for the module build
+and doing it wrongly. **The triad was the only instrument pointed at the real
+artifact**, which is exactly why a red triad is worth its tenure.
+
+### `--iterate` REFUSED, CORRECTLY
+
+The natural fix-verification was `check.sh --iterate` on the real module — the
+new mode built for this. It **refused**: memory pressure 65.0% against a 50%
+line. That is the courtesy protocol working, and it is why the faithful sim was
+built instead of waiting.
+
+### §9.0 — STILL 1/12
+
+Unchanged; the theorems are the same ones, now in a file that compiles.
+**32 landed theorems, 1 an unconditional `op_correct`.**

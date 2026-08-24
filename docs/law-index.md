@@ -288,6 +288,11 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-237 | a library's own WORKAROUNDS are evidence about what it cannot do — the simprocs are the confession | `docs/family-architecture.md §7.1a` |
 | MEAS-238 | NOTHING CHECKS a ticket's base was ever green — the queue outlasts the fix | `docs/family-architecture.md §7.2` |
 | MEAS-239 | THREE STATES: green, red-on-my-work, ABORTED — collapsing the third concedes a defect you do not have | `docs/family-architecture.md §7.2` |
+| MEAS-240 | a finding about the TOOL that is also true of your own IN-FLIGHT tenure is an INCIDENT, not a finding | `docs/family-architecture.md §5.4a-i` |
+| MEAS-241 | check whether a tool defect is ALREADY FIXED UPSTREAM before reporting it as residual | `docs/family-architecture.md §7.2` |
+| MEAS-242 | a SOUND NARROWING has residual classes — safe-by-construction bounds what it LOSES, not what it ADMITS | `docs/family-architecture.md §5.4a` |
+| MEAS-243 | hand resolutions are TRAINING DATA for a rule; the rule's acceptance test is reproducing them EXACTLY | `docs/family-architecture.md §5.4a` |
+| MEAS-244 | the tell that an instrument ladder is climbed rather than dismantled: the SELF-TEST GETS LONGER | `docs/family-architecture.md §5.4b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -422,6 +427,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-124 | hypothesis KINDS — tier / modelling / bridging — determine the retirement move | `docs/family-architecture.md §5.3` |
 | STMT-125 | a FALLBACK arm returning `true` converts a failing run into a passing row — vacuity by INVERSION | `docs/family-architecture.md §5.3` |
 | STMT-126 | the ATTESTING INSTRUMENT constrains how a definition must be written (`partial` blocks `#guard`) | `docs/family-architecture.md §7.1a` |
+| STMT-127 | "the RUN is correct" and "the CERTIFICATE is correct" are different claims — only the second is what a green IS | `docs/family-architecture.md §5.4a-i` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

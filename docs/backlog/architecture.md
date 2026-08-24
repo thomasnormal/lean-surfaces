@@ -5286,3 +5286,109 @@ words.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-232 … MEAS-239, STMT-126, OPS-80, OPS-81**.
+
+## 2026-08-24-architecture-65 — The run is correct and the certificate is correct are different claims
+
+Six from the last hour: the Lean tier's hazard closure (wrong-stamp ticket
+cleanly re-minted) and SoftFloat's drift diagnosis (re-ticketed `9e3c235`;
+**verify at landing**). **All six landed.**
+
+**(1) §5.4a-i — THE LADDER'S SUBJECT, STATED PLAINLY.**
+
+> **"The run is correct" and "the certificate is correct" are different claims,
+> and only the SECOND is what a green IS.**
+
+**That is what the three rungs had been circling** — not a commit, not a title,
+and now the general form: **a tenure produces a CERTIFICATE, and every rung is a
+way the certificate can be true of something other than the work.** A run that
+did the right thing under a stamp naming the wrong tree has **done correct work
+and issued a false certificate**, and only one of those is what anybody
+downstream reads.
+
+**And the incident's own lesson is sharper than the hazard**: the lane **wrote
+the evidence of its own hazard into its report without acting on it.**
+
+> **A finding about the TOOL that is also true of your OWN IN-FLIGHT TENURE is
+> not a finding — it is an INCIDENT.**
+
+**Different urgencies, different actions**: a finding goes to a register and
+waits for a lane; **an incident stops what you are doing.** Filing an incident as
+a finding **routes a live problem into a queue** — where it will not be looked at
+until after the tenure it was about has finished.
+
+**(2) §7.2 — THE MECHANISM YOU READ MUST BE THE CURRENT ONE.** The worktree was
+pre-fix **only because it had not rebased**; the fix had been on master for
+hours.
+
+> **The correct reflex on discovering a tool defect is to check whether it is
+> ALREADY FIXED UPSTREAM before reporting it as residual.**
+
+**A third failure mode for the reputation-versus-mechanism row**: there the
+*reputation* drifted from the *mechanism*; here the mechanism was **read
+accurately and was simply old** — the lane's copy of the tool, not the tool. **A
+defect measured in a stale worktree is a fact about the worktree**, and it is
+the tool finding that **costs nothing to check and everything to publish**,
+because a residual-defect report against a fixed tool sends the next lane to
+re-derive a repair that exists. **Two reads: what does it do, and is this the
+one master has** — the second is a `git log` on one file.
+
+**(3) §5.4a — THE THIRD DISGUISE, and the sound narrowing's RESIDUAL CLASS.**
+The coordinator's hypothesis (`Basic.lean` edits) was **corrected by
+measurement**: two **`Nat.log2`** rows matching the opaque-set member `log2`.
+
+**The sharp part is that the narrowing's PRECONDITION WAS SATISFIED** — the file
+genuinely contains the `Float` token, since it opens `Float.Model` — **so the
+recall-preserving filter admitted it correctly and the candidate was still
+spurious.**
+
+> **A sound narrowing has RESIDUAL CLASSES. Safe-by-construction bounds what a
+> filter can LOSE; it says nothing about what it still ADMITS.**
+
+**Which makes the candidate-versus-count discipline load-bearing rather than
+tidy**: holding candidates apart from the total is **what keeps the residue
+visible while its classes are learned one at a time** — *a filter folding its
+survivors into the count would have retired this class as a number.*
+
+**(4) §5.4a — THE FIX IS A RULE, NOT A REGENERATION, and its acceptance test is
+the transferable part.** Uppercase receiver = **namespace**; a namespace that is
+not a float owner is a **definite non-crossing**; lowercase receivers stay
+candidates; **excluded rows are LISTED, never dropped.** Of **15 candidates it
+excludes exactly the 7** the lane had resolved **by hand.**
+
+> **When a human resolves instrument rows by hand, the resolutions are TRAINING
+> DATA for a rule — and the rule's acceptance test is reproducing them EXACTLY.**
+
+**"Exactly" is the operative word**: a rule reproducing *most* of the manual
+resolutions has **found a different rule** and hidden the difference in the rows
+it disagrees about — **which are precisely the interesting ones.** *A
+regeneration produces a fresh number nobody can check; a rule produces a number
+that must agree with work already done.*
+
+**(5) §5.6 — CLAIMS, NOT CLAIMANTS: SECOND DISCHARGE IN A DAY.** Coordinator
+hypotheses on SoftFloat's drift and Wasm's red were **each corrected by lane
+measurement within the hour.** **A rule that only ever runs upward is a
+courtesy** — two corrections in a day, from different lanes, against the role
+that dispatches their work, is what makes it a **practice**, and it stays cheap
+**only while the measurement, not the disagreement, is what gets published.**
+
+**(6) §5.4b — THE INSTRUMENT LADDER TRAVERSED END-TO-END INSIDE ONE RED.** The
+guard that fired was **the lane's own, on the lane's own edit.**
+
+> **A drift guard firing on its own author's edit is the guard WORKING.**
+
+The arc: **guard fires → first hypothesis WRONG → rule extracted → rule
+self-validates against seven prior hand resolutions → self-test extended to
+include the exact defect.** **Every rung is a law in this document, and they were
+walked without anyone consulting it** — the convergence standard at its most
+useful: not two lanes agreeing on a decision, but **one lane independently
+walking a path this register had already mapped.**
+
+**And the direction of the repair is what to check in future instances**: it
+**strengthened the instrument** rather than **suppressing the row**, though the
+suppressing repair was available and cheaper at every step.
+
+> **The tell that an instrument ladder is being CLIMBED rather than DISMANTLED
+> is that the self-test gets LONGER at the end of it.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-240 … MEAS-244, STMT-127**.

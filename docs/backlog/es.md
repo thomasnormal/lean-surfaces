@@ -839,3 +839,53 @@ in an object literal (`2026-08-23-es-1`), shorthand methods (`[[HomeObject]]`,
 the class inch), BigInt increment, and array truncation across a
 non-configurable element — that last one unreachable in this tier, and checked
 rather than assumed.
+
+---
+
+## 2026-08-24-es-2 — the tier's FIRST declared divergence: sloppy-mode `this` answers `undefined`, silently
+
+`docs/es-declared-divergences.json` (new, `declared-divergences-0.1`), gated by
+a paired guard in `Examples/es/statements/guards.lean`.
+
+**§9.0 gains its third quantity: `declared-divergences: 1`.**
+
+### THE FINDING
+
+`instantiateFunction` creates every non-arrow function with
+`[[ThisMode]] = strict`, because the Directive Prologue (§11.2.2) is not read.
+In NON-STRICT code the language says `[[ThisMode]]` is `global`, and
+`OrdinaryCallBindThis` (§10.2.1.2 steps 6.a-6.c) replaces an `undefined`
+thisArgument with the global object. So `function f(){ return this }; f()`
+answers **globalThis** in the language and **`undefined`** in this tier.
+
+### WHY IT IS A DIVERGENCE AND NOT A GAP — the part worth recording
+
+**The refusal for sloppy `this` already exists in `ordinaryCallBindThis`, and
+it is correct.** It is simply UNREACHABLE, because no code path ever selects
+`.global`. This lane has been writing refusals as boundaries all week; this is
+the case where writing one was not enough, because **an unreachable refusal
+guards nothing.** The model answers, and answers differently from the
+language, without saying so.
+
+That is exactly §5.0a's distinction: not a `DIVERGE` verdict (nobody was
+surprised), but a decision the tier has taken and can state. `DIVERGE` stays
+zero.
+
+### GATED IN BOTH DIRECTIONS
+
+* `es_div_1_still_divergent` — fails the day the prologue is read, so the
+  declaration cannot go stale and read as diligence.
+* `es_div_1_has_not_widened` — the `.global` arm must keep REFUSING, so that
+  when it becomes reachable this turns into a loud boundary rather than a
+  second silent answer.
+
+### RETIREMENT CONDITION, and it is not "when someone models it"
+
+Parse the Directive Prologue and let `[[ThisMode]]` be `global` for non-strict
+code. The existing refusal becomes reachable at that moment and the debt
+converts to a boundary. Tracked as `2026-08-23-es-2`.
+
+**The register is the instrument this lane was missing.** Every earlier
+boundary went into prose or a refusal message; this one could go into neither,
+because the tier answers. It is the first row, and the search that produced it
+should be repeated per inch rather than per audit.

@@ -362,4 +362,42 @@ protocol (§7.4). -/
 /- An unsupported node INGESTS and refuses at evaluation, never at ingest. -/
 #guard progRefuses [exprS (Node.unsupported "AwaitExpression" "await x" sp)]
 
+/-! ## DECLARED DIVERGENCE `es-div-1` — §5.0a's paired gate
+
+`docs/es-declared-divergences.json`. The tier creates every function with
+`[[ThisMode]] = strict` because the Directive Prologue (§11.2.2) is not
+read, so in NON-STRICT code `this` in a bare call answers `undefined`
+where the language says the global object.
+
+**It is a debt, not a boundary**, and the reason is precise: the refusal
+for sloppy `this` EXISTS in `ordinaryCallBindThis` and is correct — it is
+simply UNREACHABLE, because nothing ever selects `.global`. An unreachable
+refusal does not guard anything; the model answers, and answers
+differently from the language, without saying so.
+
+§5.0a requires the row be gated in BOTH directions, because the two ways a
+register rots are opposite: a silently FIXED divergence leaves a stale
+declaration that reads as diligence, and a silently WIDENED one leaves the
+same row describing a bigger fact. -/
+
+/-- Direction 1 — **still divergent**. Fails the day the prologue is read,
+which is what stops the declaration going stale. -/
+def es_div_1_still_divergent : Bool :=
+  progIs [funcD "f" [] [ret (some thisE)], exprS (call (ident "f") [])] .undef
+
+#guard es_div_1_still_divergent
+
+/-- Direction 2 — **has not widened**. The `.global` arm must keep
+REFUSING, so that the day it becomes reachable this turns into a loud
+boundary rather than a second silent answer. -/
+def es_div_1_has_not_widened : Bool :=
+  match SemM.run (ρ := Abrupt) (do
+    let f ← ordinaryFunctionCreate none (.builtin "probe") none .global true
+    let e ← newFunctionEnvironment f .undef
+    ordinaryCallBindThis f e .undef) default with
+  | .error (.unsupported c _ _) => c.className == "environment"
+  | _ => false
+
+#guard es_div_1_has_not_widened
+
 end Examples.es.statements

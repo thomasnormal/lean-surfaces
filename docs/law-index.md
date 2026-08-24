@@ -469,6 +469,16 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-418 | an exact RECONCILIATION to an independently known total is the cheapest validation against a known answer | `docs/family-architecture.md §5.4` |
 | MEAS-419 | structure a change so that PERFORMING it MEASURES the unknown its payoff depends on | `docs/family-architecture.md §9.0b` |
 | MEAS-420 | close a COST FLAG OUT LOUD when the cost does not arrive — otherwise the register samples only the flags that were right | `docs/family-architecture.md §7.1a` |
+| MEAS-421 | A CORPUS CAN ONLY CONTRADICT THE RULES IT EXERCISES — one program leaves untested assertions that look verified | `docs/family-architecture.md §5.6` |
+| MEAS-422 | a CONVERSION RATE measured behind one wall does not transfer to the next — a fix frees tests at their own point | `docs/family-architecture.md §9.0` |
+| MEAS-423 | a FLOOR SET BELOW the current number is a REGRESSION INSTRUMENT — it makes "nothing broke" checkable | `docs/family-architecture.md §9.0` |
+| MEAS-424 | `oracle-tests-compiler` — a conformance corpus contains tests a conforming semantics must FAIL; retires by RECLASSIFICATION | `docs/family-architecture.md §9.0` |
+| MEAS-425 | a CACHE-BASED CHECK is strongest on the edits that need it least — A17 is blindest to an interface move | `docs/family-architecture.md §7.1a` |
+| MEAS-426 | a PARTIAL MITIGATION that NAMES its remaining hole is a control; one that covers 90% and reports green is the defect again | `docs/family-architecture.md §7.1a` |
+| MEAS-427 | a kind name with a CORPUS-WIDE ZERO is a name the tier invented — vendor AST granularity is not spec granularity | `docs/family-architecture.md §5.4` |
+| MEAS-428 | a shape comes from the CORPUS or from a fixture MARKED SYNTHETIC — that marking is what separates a fixture from a guess | `docs/family-architecture.md §5.4` |
+| MEAS-429 | a ladder's ORDER and its COST PROFILE are independent facts — publish the pair, or each reader misreads the other | `docs/family-architecture.md §9.0b` |
+| MEAS-430 | a REGISTER IS OPERATIONAL when its rows are RUN, not read — one invocation carrying every probe shape is the proof | `docs/family-architecture.md §5.0a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -804,6 +814,11 @@ numbers below are the register's own.
 | OPS-114 | SHARED QUESTIONS GET ONE READER — two throttles disagreeing is not redundancy, it is a protocol with two truths | `docs/family-architecture.md §7.1a` |
 | OPS-115 | a FIX MUST NOT BE PICKED THE WAY THE DEFECT WAS PICKED — a better-feeling unmeasured value repeats the error | `docs/family-architecture.md §7.1a` |
 | OPS-116 | LABEL DECISIONS WITH THE MEASUREMENT THAT PRODUCED THEM — a bare constant is re-litigated by every reader | `docs/family-architecture.md §7.1a` |
+| OPS-117 | WRITE THE ROW BEFORE YOU UNDERSTAND THE DEFECT — the explaining window is when a divergence gets normalised | `docs/family-architecture.md §5.0a` |
+| OPS-118 | a row may carry a SELF-SET DEADLINE — "must not survive a second landing unchanged" is a tighter clock than the audit's | `docs/family-architecture.md §5.0a` |
+| OPS-119 | a guard that PINS A REFUSAL must go RED when the frontier moves past it — the expiring claim that tracks itself | `docs/family-architecture.md §5.0a` |
+| OPS-120 | FULL-AFTER-RED keys on WHAT THE RED UN-KNOWS — full or out-of-scope → FULL; diagnosed in-scope scoped red → re-ticket SCOPED | `docs/family-architecture.md §7.1a` |
+| OPS-121 | DECLARATION CONVERTS FABRICATION INTO PROFILE — pin it where a disagreeing host is rejected by name | `docs/family-architecture.md §4.2` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

@@ -3542,6 +3542,25 @@ taxonomy that makes it say *I decline*; **the instrument has a column that will
 hold whatever is put in it.** *§4.3's table should be read as binding on every
 artifact a tier publishes, not only on its semantics.*
 
+**RULING — AND IT DRAWS THE FABRICATION FAMILY'S BOUNDARY** (C, alignment).
+**Extend the PROFILE with declared natural alignment.**
+
+> **The fabricated-layout objection was against an UNDECLARED rule. The profile
+> already pins scalar widths — the same kind of choice, DECLARED.**
+
+> **DECLARATION CONVERTS FABRICATION INTO PROFILE.**
+
+**The defect was never that the tier computed a layout; it was that the layout
+rested on what the host happens to do.** *A pinned ABI is a decision the tier
+OWNS and a reader can disagree with by name* — which is precisely what §4.2's
+implementation-defined row is for, and what the scalar widths already are.
+
+**And the boundary is worth stating because it is easy to over-apply the
+fabrication law into paralysis.** **The test is not "did we choose?" — every
+profile is a choice — but "is the choice WRITTEN WHERE A HOST THAT DISAGREES IS
+REJECTED BY NAME?"** *An undeclared rule makes the tier's answer depend on the
+machine; a declared one makes the machine's disagreement a rejection.*
+
 ### 4.3 The behavior-classes → refusal-taxonomy mapping slot
 
 Every spec-mirror tier fills this table before it writes semantics. C's
@@ -4251,6 +4270,54 @@ expensive part is never the failure but **the second run needed to learn which
 failure it was.** *A guard whose output distinguishes its own two explanations is
 worth more than a guard that is merely correct* — and, like the pre-stated zero,
 it converts a possible embarrassment into a planned measurement.
+
+**AND THE ROW IS WRITTEN BEFORE THE DEFECT IS UNDERSTOOD, WHICH INVERTS THE
+INSTINCT** (C, `c-div-2`).
+
+> **WRITE THE ROW BEFORE YOU UNDERSTAND THE DEFECT. A divergence recorded only
+> once EXPLAINED had a window in which it was INVISIBLE — and that window is
+> exactly when it is most likely to be NORMALISED.**
+
+**The instinct is to understand first so the row can be accurate**, and the cost
+of that instinct is the one thing a register exists to prevent: *during the
+window, the difference is a puzzle a lane is living with rather than a debt the
+tree is carrying*, and a puzzle lived with long enough becomes the expected
+behaviour. **A row written from ignorance is amendable; an unwritten row is
+unamendable and invisible.**
+
+**AND THE SAME ROW CARRIED A SELF-SET DEADLINE, which gives the aging mechanism
+a per-row bite it did not have:** *"it must not survive a second landing
+unchanged."* **§9.7's audit ages rows across audits; this ages one row against
+its author's own next landing** — a tighter clock, chosen by the person best
+placed to know what the row is waiting for. *A retirement condition says what
+would close a row; a deadline says when someone will look.*
+
+**AND THE REFUSAL-GUARD IS THE EXPIRY LAW'S MECHANICAL COUNTERPART, PAID ON
+SCHEDULE** (Ada inch 3, `519baa7` + `e475a3a`, merged; **52/53 first-compile on
+the 1 100-line mutual block**). An inch-2 guard pinning a refusal **went red the
+moment inch 3 moved the frontier past it.**
+
+> **A GUARD THAT PINS A REFUSAL MUST GO RED THE MOMENT THE FRONTIER MOVES PAST
+> IT, or the tier keeps claiming not to model something it models.**
+
+**This is the answer to the expiry law's open half.** *Prose asserting a limit
+expires with nothing tracking it; a REFUSAL PINNED BY A GUARD is an expiring
+claim that tracks itself* — the tree fails when the claim stops being true.
+**Where a cannot-claim can be written as a guard, it should be**, and the
+citable-name remedy is for the residue that cannot.
+
+**AND §5.0a IS NOW FULLY OPERATIONAL ACROSS THREE TIERS** (pyc's div-1 probe,
+`4a40ea8`, merged). A debt's model half was **converted from a READING to a
+RUN**, with the widening control confining the row to **one poisoned OBJECT** —
+and **all three probe shapes** (build-is-the-run, claim-site counts, two-sided
+program) **live in a single register invocation.**
+
+> **A REGISTER IS OPERATIONAL WHEN ITS ROWS ARE RUN, NOT READ — and the proof of
+> that is one invocation carrying every probe shape the schema admits.**
+
+*The section was ruled as a design; this is the landing that makes it an
+instrument*, and the three-tier spread is what distinguishes a schema that works
+from one that fits its first author.
 
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
@@ -7996,6 +8063,33 @@ for `--compare`, at the level of *which files* rather than *which rows*.
 doing its second job:* **an exact reconciliation to an independently known total
 is the cheapest available validation of an instrument against a known answer.**
 
+**AND ONE TIER NOW HAS A NAMED, FREE SOURCE OF WOULD-BE SEMANTICS BUGS — THIRD
+APPEARANCE, THIS TIME WITH A CORPUS-WIDE ZERO** (Ada: `ExceptionHandlerList`,
+**0 in 2 976 861 nodes**).
+
+> **libadalang's LIST KINDS are GENERIC where the grammar's names are SPECIFIC.
+> That pair is this tier's most reliable source of would-be semantics bugs, and
+> checking it is FREE.**
+
+**A zero over a corpus of three million nodes is not a small number; it is a
+DIFFERENT KIND OF FACT** — *a name that never occurs is a name the tier invented*
+— and the check costs one census query against an instrument that already runs.
+**The generalizable form**: wherever a tier reads a third-party AST, **the
+vendor's naming granularity and the spec's naming granularity are different
+functions**, and every place they disagree is a place a lane will write a
+plausible kind name that matches nothing.
+
+**AND THE SAME LANDING DREW THE LINE BETWEEN A FIXTURE AND A GUESS** (`RaiseStmt`
+**1 440 corpus-wide, 0 in fixtures**):
+
+> **The shape must come from the CORPUS, or from a fixture EXPLICITLY MARKED
+> SYNTHETIC. That distinction is what separates a fixture from a guess.**
+
+**Neither half alone is enough.** *A corpus-derived shape is evidence; a marked
+synthetic one is an honest hypothesis; an unmarked invented one is a guess
+wearing evidence's clothes* — and the third is indistinguishable from the first
+in a passing suite, which is why the marking is the whole control.
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -8465,6 +8559,27 @@ still open** (§5.4b's ladder), riding the next quiet window.
 > will do this when the machine is quiet" is a plan; "declared, not yet pointed,
 > waiting on A14" is a state with a trigger.**
 
+**RULING — WHAT A FULL-AFTER-RED KEYS ON** (Ada, inch 3, asked rather than
+assumed).
+
+> **FULL-AFTER-RED KEYS ON WHAT THE RED UN-KNOWS.**
+>
+> * **A FULL red, or a red whose implication is OUT OF SCOPE** → the next tenure
+>   is **FULL**: the red removed knowledge the scoped run cannot restore.
+> * **A DIAGNOSED, IN-SCOPE scoped red** → **re-ticket SCOPED.** Master's green
+>   is still the baseline, and nothing about it was invalidated.
+
+**The discriminator is epistemic, not procedural**, which is why it settles cases
+the deadlock argument only gestures at: *the question is not how bad the red was
+but WHAT IS NO LONGER KNOWN*, and a diagnosed in-scope failure leaves the
+surrounding green exactly as trustworthy as it was.
+
+**The deadlock argument CORROBORATES but does not CARRY.** *"A rule that forces a
+full build after every red starves the queue"* is a true cost and a bad
+foundation — **it would license scoped re-tickets whenever the machine is busy,
+which is when a lane most wants to skip the expensive answer.** A rule founded on
+knowledge gives the same answer on a quiet machine.
+
 **Two measurements and not one is what makes it a deferral rather than an
 excuse** — a single failing number would leave open whether the whole move is
 infeasible; **`load` passing and `swap` failing localizes the blocker to one
@@ -8692,6 +8807,31 @@ the suite, not for the program: the suite finds *the same vocabulary* the
 flagship happened to use **plus the remainder**, and it finds the remainder
 in the standard's own order rather than in one author's. A driver program
 can only ever discover its own vocabulary.
+
+**AND THE SEMANTICS-SIDE STATEMENT OF THAT ARGUMENT ARRIVED AS A LANDED DEFECT,
+WHICH IS STRONGER THAN THE COVERAGE ARGUMENT ABOVE** (C's globals landing,
+`ba57137`, merged; **67 → 98/300, failed 2**). `env := []` was **a wrong law, not
+a gap** — and it was invisible because **`sunfish.c` passes everything through
+parameters.**
+
+> **A CORPUS CAN ONLY CONTRADICT THE RULES IT EXERCISES.**
+
+> **A model validated on ONE PROGRAM has, for every rule that program does not
+> use, AN UNTESTED ASSERTION WHERE IT THINKS IT HAS A VERIFIED ONE — and the two
+> are INDISTINGUISHABLE FROM INSIDE.**
+
+**This is the accidentally-correct law's twin on the semantics side**, and the
+pair is worth reading together: *there, an instrument agreed with the truth for
+reasons unrelated to the instrument; here, a rule agreed with the corpus for
+reasons unrelated to the rule.* **Both produce a green whose evidence is a
+coincidence of the corpus, and neither announces the day it ends.**
+
+**And it sharpens the exemplar carve-out below rather than weakening it.** *One
+exemplar is required for the proof library and is disqualifying as a validity
+argument for the SEMANTICS* — **the flagship tells you the rules it uses are
+right, and says nothing at all about the rules it never touches.** A tier
+reporting a green on one program is reporting **the intersection of its model
+with that program's vocabulary**, which is a number about the program.
 
 **The counter-evidence is in the tree too, and it is the Python tier.** Its
 coverage grew **sunfish-shaped**: `>>`, `^`, unary `+` and `~` were absent
@@ -10489,6 +10629,24 @@ there. **And "preserves every certificate" is the constraint that makes a build
 remedy admissible in this family at all**: a faster build that weakens what the
 tree proves is not a remedy, it is a different tree. *Record the constraint with
 the speedup, or the next optimisation will be priced without it.*
+
+**AND A17's OWN INTERFACE BLINDNESS WAS FOUND AND PARTIALLY CLOSED** (C, same
+landing). The check compares against **the tree's LAST BUILD** —
+
+> **So the edit it is BLINDEST TO is the one that moves an INTERFACE — which is
+> the edit most worth checking.**
+
+**The blind spot is anti-correlated with risk, like the misaimed fast loop**, and
+for the same structural reason: *an instrument that compares against a cached
+state is exactly as stale as the thing that changed*, so the larger the change,
+the less the comparison knows. **A cache-based check is strongest on the edits
+that need it least.**
+
+**And the mitigation was landed HONEST rather than complete**: the
+dependency-free extraction is checked, and **the one unverifiable line is NAMED
+rather than rounded away.** *A partial mitigation that names its remaining hole
+is a control; one that quietly covers 90% and reports green is a new instance of
+the defect it was written for.*
 
 **A bare percentage is not a measurement, it is a measurement's shadow** — and
 the shadow of *free* and the shadow of *in-use* are **the same shape**. The
@@ -12434,6 +12592,31 @@ green reads as one. **Which is why the lane, not the reader, has to label it.**
 free** — after the code it would have arrived as an inch that landed and moved
 nothing, indistinguishable from a hard problem.
 
+**AND THE BAND STRUCTURE ABSORBED A MISS IN THE OPPOSITE DIRECTION, WHICH IS
+WHAT MAKES IT A STRUCTURE RATHER THAN A LUCKY WIDTH** (C, same landing:
+**predicted 78, band 62–115, actual 98** — *inside, HIGH*).
+
+> **A CONVERSION RATE MEASURED BEHIND ONE WALL DOES NOT TRANSFER TO THE NEXT.**
+
+**What a fix frees is a test AT A PARTICULAR POINT IN ITS OWN EXECUTION**, so the
+fraction that converts is a property of *where the corpus was standing*, not of
+the fix's quality. **Two bands, two holds, opposite mechanisms** — c-21 landed
+low because a later wall absorbed the freed work; this landed high because the
+freed tests were further along than the previous rate implied. *A band that
+survives both directions is doing the job a point estimate cannot do in either.*
+
+**AND THE FLOOR WAS SET DELIBERATELY BELOW THE CURRENT SCORE, WHICH GIVES A BAND
+A SECOND JOB** (floor below 67 while standing at 67).
+
+> **A FLOOR SET BELOW THE CURRENT NUMBER IS A REGRESSION INSTRUMENT: it makes
+> "no regression occurred" CHECKABLE rather than hoped.**
+
+**Every landing carries regression risk and almost none state it**, so the usual
+report says *the number went up* and leaves the reader to assume nothing broke.
+*Admitting the downside in the band converts an assumption into a prediction that
+was tested* — and it costs nothing, because a floor below the current score is
+the one part of a band a lane can always justify.
+
 **So the trilogy is complete, and its three outcomes are genuinely distinct**: a
 miss **about the instrument** (predicted and reported were different quantities),
 a miss **about the residual** (a difference inherits every bucket you did not
@@ -12596,6 +12779,36 @@ collapsing them costs the denominator its meaning in the direction that flatters
 nobody but confuses everybody. **The scored/unreached line is drawn at
 EXECUTION, not at agreement**, which is the same line the zero-states rule above
 draws and the one a lane re-blurs every time a red feels like a gap.
+
+**AND THE SCOREBOARD MET ITS FIRST HONEST FAILURES, WHICH FORCED A RULING I OWE
+THIS SECTION** (C, `c-div-1`: `llabs` declare-call-define, **passing only if the
+implementation treats it as a builtin**).
+
+> **THE MODEL IS RIGHT AND THE TEST FAILS. The oracle is testing the COMPILER,
+> not the LANGUAGE.**
+
+> **A CONFORMANCE CORPUS CONTAINS TESTS A CONFORMING SEMANTICS MUST FAIL — and a
+> scoreboard that cannot SAY SO will eventually be "fixed" into agreeing with
+> them.**
+
+**RULING, and it is a new named zero-state:** `oracle-tests-compiler`. It is
+**the UB pattern's third member** — *part of what the number MEANS, never
+empties, because it is the product* — and it carries the same admission
+discipline: **membership BY NAME, with a citation to the clause that makes the
+behaviour implementation-defined**, never a bulk exemption.
+
+**The retirement condition is RECLASSIFICATION, not repair.** A row leaves this
+state when someone shows the test does not in fact depend on the implementation's
+choice — *so the row ages against an argument rather than against work*, which is
+the distinction §5.2 already draws between causes that retire on different
+schedules.
+
+**And the reason this needs a NAME rather than a footnote is the pressure, not
+the taxonomy.** *A failing row with no honest home is a standing invitation to
+make the model agree with the oracle* — the one edit that raises the score and
+lowers the tier's truth. **A named state converts that pressure into a
+citation**: the row is not a failure to be fixed, it is a measurement of the
+corpus.
 
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —
@@ -13178,6 +13391,19 @@ to remove the first* — **so choose the first step that both advances and
 observes.** A step chosen this way **pays whether or not the estimate was right**,
 which is the same shape as a band that names its ignorance, moved from the
 prediction into the plan.
+
+**AND A LADDER'S ORDER AND ITS COST PROFILE ARE INDEPENDENT FACTS, BOTH WORTH
+STATING** (Ada, inch 4). It is simultaneously **the CHEAPEST rung by corpus
+share** and **the one the first score depends on** —
+
+> **Fourth by DEPENDENCY, not by size. A handler needs a frame to unwind to.**
+
+**A rung's position and a rung's price answer different questions**, and a plan
+that publishes only one of them will be misread by whichever reader brought the
+other. *"Fourth" invites a lane to assume three larger things come first;
+"cheapest" invites it to ask why the thing was not done already* — **and the
+scheduling inversion, where the cheapest item sits late, is exactly the case both
+readings get wrong.** **Publish the pair.**
 
 **(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
 What it said:** *a construct measuring `+0` is not cheap, it is unreachable —

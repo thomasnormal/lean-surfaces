@@ -7497,3 +7497,106 @@ that makes a build remedy admissible at all**: a faster build that weakens what
 the tree proves is a different tree.
 
 Law rows: **MEAS-408…MEAS-420, STMT-138, OPS-111…OPS-116.**
+
+## 2026-08-24-architecture-87 — A corpus can only contradict the rules it exercises
+
+Twelve from three sources, headlined by the scoreboard's first honest failures.
+C's globals landing (`ba57137`, merged; **67 → 98/300, failed 2**), Ada inch 3
+(`519baa7` + `e475a3a`, merged), pyc's div-1 probe (`4a40ea8`, merged).
+**Three rulings of mine are recorded: a new zero-state, the A14 full-after-red
+key, and the alignment/profile boundary.**
+
+**(1) §5.6 — THE CORPUS-EXERCISE LAW.** `env := []` was **a wrong law, not a
+gap**, invisible because `sunfish.c` passes everything through parameters.
+
+> **A corpus can only contradict the rules it EXERCISES.** A model validated on
+> one program has, for every rule that program does not use, **an untested
+> assertion where it thinks it has a verified one — and the two are
+> indistinguishable from inside.**
+
+**The accidentally-correct law's twin on the semantics side**: *there an
+instrument agreed with the truth for reasons unrelated to the instrument; here a
+rule agreed with the corpus for reasons unrelated to the rule.* It **sharpens the
+exemplar carve-out rather than weakening it** — one exemplar is required for the
+proof library and disqualifying as a validity argument for the semantics.
+
+**(2) §9.0 — THE CONVERSION-RATE LAW** (predicted 78, band 62–115, actual 98 —
+inside, HIGH). **A conversion rate measured behind one wall does not transfer to
+the next**: what a fix frees is a test **at a particular point in its own
+execution**. **Two bands, two holds, opposite mechanisms** — c-21 low because a
+later wall absorbed the work, this high because the freed tests were further
+along. *A band surviving both directions is doing what a point estimate cannot do
+in either.*
+
+**(3) §9.0 — A FLOOR SET BELOW THE CURRENT SCORE IS A REGRESSION INSTRUMENT.**
+No regression occurred, **which the floor is what made checkable rather than
+hoped.** *Every landing carries regression risk and almost none state it.*
+
+**(4) §9.0 — RULING: THE NEW ZERO-STATE `oracle-tests-compiler`.** `c-div-1`
+(`llabs` declare-call-define) passes **only if the implementation treats it as a
+builtin** — **the model is right and the test fails.**
+
+> **A conformance corpus contains tests a conforming semantics must FAIL, and a
+> scoreboard that cannot say so will eventually be "fixed" into agreeing with
+> them.**
+
+**The UB pattern's third member** — part of what the number means, never empties,
+because it is the product. **Membership BY NAME with a citation**; **retirement
+by RECLASSIFICATION, not repair**, so the row ages against an argument rather
+than against work. *The name exists because of the pressure, not the taxonomy: a
+failing row with no honest home is a standing invitation to make the model agree
+with the oracle.*
+
+**(5) §5.0a — WRITE THE ROW BEFORE YOU UNDERSTAND THE DEFECT.** *A divergence
+recorded only once explained had a window in which it was invisible — and that
+window is exactly when it is most likely to be normalised.* **A row written from
+ignorance is amendable; an unwritten row is unamendable and invisible.** Plus the
+**self-set deadline** (*"must not survive a second landing unchanged"*) — the
+aging mechanism given a per-row bite by its own author.
+
+**(6) §7.1a — A17's INTERFACE BLINDNESS, FOUND AND PARTIALLY CLOSED.** It checks
+against the tree's **last build**, so **the edit it is blindest to is the one
+that moves an INTERFACE** — *a cache-based check is strongest on the edits that
+need it least.* Mitigation landed **honest rather than complete**: the one
+unverifiable line **named rather than rounded away**.
+
+**(7) §4.2 — RULING: DECLARATION CONVERTS FABRICATION INTO PROFILE.** Extend the
+profile with **declared natural alignment**; *the fabricated-layout objection was
+against an UNDECLARED rule, and the profile already pins scalar widths — the same
+kind of choice, declared.* **The test is not "did we choose?" but "is the choice
+written where a host that disagrees is rejected by name?"**
+
+**(8) §5.0a — THE REFUSAL-GUARD PAYOFF** (52/53 first-compile on the 1 100-line
+mutual block). An inch-2 guard pinning a refusal **went red when inch 3 moved the
+frontier past it.** **A guard that pins a refusal must go red the moment the
+frontier moves past it, or the tier keeps claiming not to model something it
+models** — *the expiry law's mechanical counterpart: a refusal pinned by a guard
+is an expiring claim that tracks itself.*
+
+**(9) §7.1a — RULING: FULL-AFTER-RED KEYS ON WHAT THE RED UN-KNOWS.** A full red,
+or one whose implication is out of scope → **FULL**. A diagnosed, in-scope scoped
+red → **re-ticket SCOPED**, master's green still the baseline. **The deadlock
+argument corroborates but does not carry** — founded on queue cost it would
+license scoped re-tickets whenever the machine is busy, which is when a lane most
+wants to skip the expensive answer.
+
+**(10) §9.0b — ORDER AND COST PROFILE ARE INDEPENDENT.** Inch 4 is the cheapest
+rung by corpus share **and** the one the first score depends on: **fourth by
+dependency, not by size — a handler needs a frame to unwind to.** *The scheduling
+inversion is exactly the case both single-fact readings get wrong.*
+
+**(11) §5.4 — THE ENCODING TRAP'S THIRD APPEARANCE, WITH A CORPUS-WIDE ZERO**
+(`ExceptionHandlerList`: 0 in 2 976 861 nodes). **libadalang's list kinds are
+GENERIC where the grammar's names are SPECIFIC** — the tier's most reliable source
+of would-be semantics bugs, **and checking it is free.** Plus the fixture line
+(`RaiseStmt` 1 440 corpus-wide, 0 in fixtures): **the shape comes from the corpus
+or from a fixture explicitly marked synthetic** — *an unmarked invented shape is a
+guess wearing evidence's clothes, indistinguishable from the real thing in a
+passing suite.*
+
+**(12) §5.0a — THE REGISTER IS FULLY OPERATIONAL ACROSS THREE TIERS.** A debt's
+model half **converted from a reading to a run**, the row confined to **one
+poisoned OBJECT**, and **all three probe shapes in a single invocation.** **A
+register is operational when its rows are RUN, not read.**
+
+Law rows: **MEAS-421…MEAS-430, OPS-117…OPS-121.**

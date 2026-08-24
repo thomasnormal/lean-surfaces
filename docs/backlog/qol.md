@@ -3835,6 +3835,7 @@ it, and that the remainder begins at the first cascade line.
 `triad.sh` **329 ok** (317 → 329), and check 104, laws 45, backlog-index 62,
 diagnose 51, sites 57, `--verify-guards` 32, docs_check 91/91. Fixtures only;
 the live queue was empty at the close. No Lean executed.
+
 ---
 
 ## 2026-08-24-c-13 — INBOUND FROM THE C LANE: QoL lane's to renumber or close

@@ -6156,3 +6156,115 @@ and the thing typed beside it is not.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-286 … MEAS-291, OPS-83, OPS-84**.
+
+## 2026-08-24-architecture-73 — §5.0a admits no permanent row; and the register's loop closes
+
+A ruling plus nine, closing the night's arc. Master at `0380260`; pyc inch 3,
+crunga Rung A and analog A1 all merged; **the queue is empty and the lock free
+for the first time all day.**
+
+**THE MILESTONE, UNCONDITIONAL.** pyc's green landed: **3 of 3 flagship-serving
+surfaces (scoped), `declared-divergences: 2`, 136 witnesses, 0 DIVERGE**, with
+**the shared checker running IN the gates** — 2 tiers, 4 rows, 8 guards, every
+row gated both ways. And the sentence that justifies the ruling which created
+the register:
+
+> **The invariant holds BECAUSE the divergence was moved into the REGISTER
+> rather than left in the SCOREBOARD.**
+
+**`DIVERGE` is zero AND the tier has two known differences** — which under the
+old vocabulary was a contradiction resolvable only by **lying about the zero** or
+**abandoning the invariant.** *The scoreboard keeps a number that means
+something, and the differences keep an owner, an age, and a gate.*
+
+**THE RULING — §5.0a DOES NOT ADMIT A PERMANENT ROW, because a permanent row is
+NOT A DIVERGENCE.** Two reasons, and the second is structural.
+
+**(1) Wrong category.** A declared divergence says *the model answers
+differently and we decided to carry that.* F1 says **there is no oracle** — the
+validity cannot be established by **any experiment the domain admits.** That is
+the **epistemic boundary** (§5.2, as amended). Filing it as a debt claims a
+disagreement **nobody has measured and nobody can.**
+
+**(2) A row that can never retire destroys the aging signal.** The register's
+enforcement **is** the aging — §9.7 reads an unmoved condition as a finding — so
+a *never* row **trips it forever**, and a signal that always fires is one lanes
+learn to skip (MEAS-135). **One permanent row costs the register its only
+enforcement mechanism.**
+
+> **THE DISCRIMINATOR: can the condition that would close this be NAMED, even if
+> nobody intends to do it?** YES → a row with that condition, however distant.
+> **NO — no experiment exists** → an epistemic boundary, not a debt.
+
+**And the disclosure is not lost**, which was the only real risk: F1 already
+lives where §5.0a's own reasoning puts a standing disclosure — **in the
+artifact's output, admitted 12 times** — and is **named in §9.0's standing line
+as a SCOPE qualifier on the number, not a debt against it.** *A permanent
+admission is part of what the number MEANS; a debt is something the number waits
+on.*
+
+**AND A THIRD CASE THE TAXONOMY NOW NAMES** (analog's underdetermined node):
+witness 5 V, ngspice 3.996 V, **both satisfy the Lean KCL.**
+
+> **An oracle disagreement is not a divergence when the SPEC admits both
+> answers.**
+
+*Precisely why realizability is an ∃ and `DeterminateUnder` is a separate
+obligation this deck does not claim.* **A category error in the other direction
+from F1**: F1 has no oracle; this has **two legitimate answers**, and a row would
+assert the model is wrong **where the spec declines to choose.**
+
+**(1,2) §5.4b — A SAMPLE THAT CANNOT CONTAIN WHAT IT SAMPLES FOR.** *"First 8 of
+46"* sampled in **string order**, and `spec.lean:102` sorts before `:24` — the
+causal first error was **unreachable**, not merely absent. **The failure is not
+probabilistic**, which is what makes it a defect rather than bad luck: *no number
+of reruns would have surfaced it.* And **the self-test rows checked the
+CAPTION** — asserting the preview is *labelled* `first 8 of 15`, **the very
+promise being broken.** Repaired rows assert content **and that a sorted sample
+would have dropped it**: *a fixture built from the incident's shape passes for
+the same reason the code did; only one built to FAIL under the defect stays a
+test after the fix.*
+
+**(3) §7.1a — THE COST-STRUCTURE LAW HAS ITS NUMBERS.** Three defects: **5 934 s
+queueing for 43 s building.** After the pressure fix: **the next two cost 20 s
+total**, including a `have`-vs-`let` defect **no amount of reading would have
+produced.** *The defect rate did not move; the price of finding one did* — and
+the `have`-vs-`let` half is the one that matters most, because **some defects
+are reachable only by running**, so an expensive instrument does not slow them
+down, it **converts them into defects nobody finds.**
+
+**(4,5,6) §5.4b — THREE FROM CRUNGA.** `--build-target` is a **silent no-op**,
+and it is the silent-instrument family's **worst-placed** instance: the others
+made a check weaker than believed; **this makes a CLAIM larger than the run.**
+*An honest lane plus a silent widener produces a false statement nobody
+intended* — and the self-test missed it by **exercising the function, not the
+flag path**: caption-versus-picture in a different tool, same week. **The gap was
+CLOSED, not carried** (elaborated under A17, recorded as *a different check from
+a build*). And **an instrument earns a new number by first reproducing an old one
+already gated** — the mirror said **156** until it reproduced `indirectCalls ==
+19`; *a new instrument's first output has nothing to be wrong against.*
+
+**(7,8) §5.4a — MY OWN GENERALIZATION REFUTED BY RUNNING IT.** *"Token in a
+declaration slot"* **accused 60+ known-green sites.**
+
+> **A WHITELIST of what a docstring may precede is a claim about LEAN'S GRAMMAR;
+> a BLACKLIST of what it may never precede is a claim about a few commands. Only
+> the second is checkable without a parser.**
+
+**The whitelist form is shorter to state and unboundedly larger to defend** — and
+a blacklist is **bounded by the incidents that produced it**, which is the
+register's own standard for minting a law. And the precedent check —
+**membership in the green corpus as a parser proxy**, sound for its purpose and
+**stated as weaker than parsing** — is admissible *because* of that third clause:
+it cannot admit a construct the tree has never seen, **which is the right
+limitation for a guard against a regression.**
+
+**AND THE §9.0 STANDING TABLE, snapshot 2026-08-24**, landed as a **dated
+snapshot** with the lane ledgers as the live copies. **The zeroes are not the
+same zero** — ACATS 0/4 188 is *honest*, c-torture 0 is *no runner yet*, SV's
+`0/N` is *the denominator is not fixed* — **three states wearing one digit**,
+which is what §9.0's counting rules exist to keep apart and **a family table is
+where they are most likely to be read as one.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-292 … MEAS-299**.

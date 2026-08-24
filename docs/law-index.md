@@ -340,6 +340,14 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-289 | "my lane is blocked" is the worst reason to move a shared safety line — the fix lives with the gate's OWNER | `docs/family-architecture.md §5.4a` |
 | MEAS-290 | a requested acceptance clause is a HYPOTHESIS; the implementer's counter-measurement is part of the acceptance | `docs/family-architecture.md §5.0a` |
 | MEAS-291 | isolation demanded of TESTS is demanded of every process the session spawns — the informal ones are the gap | `docs/family-architecture.md §5.0a` |
+| MEAS-292 | §5.0a admits NO PERMANENT ROW — can the closing condition be NAMED? no experiment ⇒ epistemic boundary | `docs/family-architecture.md §5.0a` |
+| MEAS-293 | an oracle DISAGREEMENT is not a divergence when the SPEC admits both answers | `docs/family-architecture.md §5.0a` |
+| MEAS-294 | a SAMPLE whose order differs from its label's order is a different sample wearing the label | `docs/family-architecture.md §5.4b` |
+| MEAS-295 | a row that checks the CAPTION while the picture is wrong is not a test of the picture | `docs/family-architecture.md §5.4b` |
+| MEAS-296 | a WIDENING flag that silently does nothing makes an honest lane state a false coverage claim | `docs/family-architecture.md §5.4b` |
+| MEAS-297 | an instrument earns a NEW number by first reproducing an OLD one already gated | `docs/family-architecture.md §5.4b` |
+| MEAS-298 | a WHITELIST of legal positions claims the grammar; a BLACKLIST claims a few commands — only the second is parser-free | `docs/family-architecture.md §5.4a` |
+| MEAS-299 | MEMBERSHIP IN THE GREEN CORPUS as a parser proxy — admissible only when stated as WEAKER than parsing | `docs/family-architecture.md §5.4a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

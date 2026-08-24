@@ -3815,6 +3815,56 @@ is **SCOPED IN THE ROW rather than implied.**
 > **A row that says what it CANNOT measure is the register's own honesty applied
 > to itself.**
 
+**RULED — §5.0a DOES NOT ADMIT A PERMANENT ROW, and the reason is that a
+permanent row is NOT A DIVERGENCE** (analog's F1: *"model validity: MISSING"*,
+architecturally unclosable, admitted 12× in the artifact; if filed, its
+retirement condition is honestly **"never"**).
+
+**Two things forbid it, and the second is the structural one.**
+
+**(1) IT IS THE WRONG CATEGORY.** A declared divergence says *the model answers
+differently from the oracle, and we decided to carry that.* F1 says **there is
+no oracle** — the model's validity **cannot be established by any experiment the
+domain admits.** That is the **EPISTEMIC BOUNDARY** (§5.2, as amended): *the tier
+cannot construct an experiment that would tell.* Filing it as a debt claims a
+disagreement nobody has measured **and nobody can.**
+
+**(2) A ROW THAT CAN NEVER RETIRE DESTROYS THE AGING SIGNAL.** The register's
+enforcement **is** the aging: §9.7 reads a row past several audits with an
+unmoved retirement condition as **a finding**. A row whose condition is *never*
+**trips that check forever**, and a signal that always fires is one lanes learn
+to skip (MEAS-135). **One permanent row costs the register its only enforcement
+mechanism.**
+
+> **THE DISCRIMINATOR, so nobody has to re-ask: CAN THE CONDITION THAT WOULD
+> CLOSE THIS BE NAMED — even if nobody intends to do it?**
+>
+> * **YES** → a register row, with that condition, however distant.
+> * **NO — no experiment exists** → an **epistemic boundary**, not a debt.
+
+**AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
+way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
+belongs**: in the artifact's output, admitted **12 times**, *where the claim is
+served rather than where the apology is filed.* It is additionally **named in
+§9.0's standing line as a SCOPE qualifier on the coverage number** — not as a
+debt against it. **A permanent admission is part of what the number MEANS**; a
+debt is something the number is waiting on.
+
+**AND A THIRD CASE THE TAXONOMY MUST NAME, so nobody files it either** (analog's
+underdetermined node): the witness says **5 V**, ngspice says **3.996 V**, and
+**BOTH satisfy the Lean KCL.**
+
+> **AN ORACLE DISAGREEMENT IS NOT A DIVERGENCE WHEN THE SPEC ADMITS BOTH
+> ANSWERS.**
+
+**The node is underdetermined in that vector**, which is *precisely why
+realizability is an ∃ and `DeterminateUnder` is a separate obligation this deck
+does not claim.* **Filing it would be a category error in the other direction**
+from F1: F1 has no oracle, this has **two legitimate answers** — and a register
+row would assert the model is wrong where **the spec declines to choose.**
+*Before filing a disagreement, ask whether the SPEC picks a winner; if it does
+not, the disagreement is a fact about the SPEC's latitude.*
+
 **WHY NOT THE ALTERNATIVES.** A *whitelist* would put the row inside the
 scoreboard's own vocabulary and invite exactly the reading the invariant
 forbids — *some DIVERGEs are fine* — and a whitelist is a permission, not a
@@ -5448,6 +5498,37 @@ is affordable exactly when its hits are cheap to adjudicate** — so the answer 
 a noisy cross-lane gate is a **better adjudication path**, never a narrower
 scope.
 
+**AND THE GATE'S OWN SPEC WAS REFUTED BY RUNNING IT — my *"token in a
+declaration slot"* generalization ACCUSED 60+ KNOWN-GREEN SITES** (analog's
+fourth-attempt green, merged). Docstrings **legally precede fields,
+constructors, `#guard_msgs`.**
+
+> **A WHITELIST of what a docstring MAY precede is a claim about LEAN'S
+> GRAMMAR. A BLACKLIST of what it may NEVER precede is a claim about a few
+> commands. Only the second is checkable without a parser.**
+
+**That is the generalization's real cost, and it is mine**: the whitelist form
+is **shorter to state and unboundedly larger to defend** — every legal position
+in the grammar is a case it must know, and the grammar is not a thing a gate
+has. **A blacklist is bounded by the incidents that produced it**, which is
+exactly the register's own standard for minting a law: *the cases you have
+measured, not the cases you can imagine.*
+
+**AND PARSE VALIDATION WITHOUT A TENURE — a proxy that is honest about being
+one.** Nesting-depth count, plus a gate, plus a **PRECEDENT CHECK**: every
+doc-comment follower in touched files must be **∈ the 169 distinct followers in
+green master.**
+
+> **MEMBERSHIP IN THE GREEN CORPUS AS A PARSER PROXY — cheap, sound for its
+> purpose, and stated as WEAKER than parsing.**
+
+**The third clause is what makes it admissible.** A proxy sold as equivalent is
+a lie; **a proxy sold as a proxy is an instrument with a stated scope** — it
+cannot admit a construct the tree has never seen, which is a real limitation and
+**exactly the right one for a gate whose job is to catch a regression rather than
+to bless novelty.** *Every new legal follower is a deliberate widening someone
+must add — which is a feature in a guard against an accident.*
+
 **AND THE OTHER HALF OF THAT RULE ARRIVED FROM THE ANALOG LANE, so the two must
 be read together: FALSE positives on another lane are a different thing
 entirely** (verify at its landing). A gate's **own first draft accused Go and SV
@@ -6722,6 +6803,33 @@ than merely immature**: a reader that under-reads finds **fewer** sites and
 therefore reports **fewer** problems, so its first run looks like good news.
 **The failure mode of a new instrument is congratulation.**
 
+**AND A SAMPLE CAN BE SYSTEMATICALLY UNABLE TO CONTAIN THE THING IT IS SAMPLED
+FOR** (QoL item 9, merged). *"First 8 of 46"* sampled in **STRING order**, and
+`spec.lean:102` **sorts before `:24`** — so **the causal first error was not
+merely missing from the preview, it was UNREACHABLE by it.** The eight lines
+contained it **zero times**, and would have on **no** run.
+
+> **A SAMPLE WHOSE ORDER DIFFERS FROM ITS LABEL'S ORDER IS A DIFFERENT SAMPLE
+> WEARING THE LABEL.**
+
+**"First" is a claim about an ordering**, and `sort -u` supplies one silently.
+The failure is **not probabilistic** — which is what separates it from an
+unlucky sample and makes it a defect: *no number of reruns would have surfaced
+the row*, because the ordering that hid it is the ordering that produces it.
+
+**AND THE SELF-TEST ROWS THAT SHOULD HAVE CAUGHT IT CHECKED THE CAPTION.** Two
+rows asserted **that the preview is LABELLED `first 8 of 15`** — *precisely the
+promise being broken* — and **passed while the output lied.**
+
+> **A ROW THAT CHECKS THE CAPTION WHILE THE PICTURE IS WRONG IS NOT A TEST OF
+> THE PICTURE.**
+
+**The repaired rows assert CONTENT — and that a sorted sample WOULD HAVE DROPPED
+IT**, so **the fixture exercises the trap rather than resembling it.** That
+second clause is the transferable part: a fixture built from the incident's
+*shape* passes for the same reason the original code did; **a fixture built to
+fail under the defect is the only kind that stays a test after the fix.**
+
 **AND THE RESTRAINT RIDER — the pre-existing double-listing was FLAGGED, NOT
 DE-DUPED.**
 
@@ -6950,6 +7058,50 @@ self-test row — rather than **suppressing the row.** The suppressing repair wa
 available and cheaper at every step: widen the filter, drop the candidate, mark
 the row known-noisy. **The tell that an instrument ladder is being climbed
 rather than dismantled is that the self-test gets LONGER at the end of it.**
+
+**AND THE SILENT-INSTRUMENT SHAPE REACHED THE ONE FLAG WHOSE PURPOSE IS TO
+WIDEN A CLAIM** (crunga Rung A). `--build-target` is a **SILENT NO-OP** —
+parsed in the arg loop, and **the initializer resets it afterwards.**
+
+> **A WIDENING FLAG THAT SILENTLY DOES NOTHING PRODUCES AN HONEST LANE MAKING A
+> FALSE COVERAGE STATEMENT.**
+
+**Third instance of the silent-instrument family, and the worst-placed one.**
+The others made a check weaker than believed; this one **makes a CLAIM larger
+than the run** — the lane asked for more coverage, was told nothing, and
+reported the coverage it asked for. *An honest lane plus a silent widener
+produces a false statement that no one in the chain intended.*
+
+**And the self-test could not see it because it exercised the FUNCTION, not the
+FLAG PATH** — **caption-versus-picture in a different tool, in the same week.**
+The row proved the thing the flag *would* have called; **nothing proved the flag
+called it.**
+
+**AND THE GAP IT CAUSED WAS CLOSED, NOT CARRIED.** The unbuilt importer **was
+elaborated under A17 after the green**, and recorded **as what it is — a
+different check from a build.**
+
+> **The honest-disposition ladder applied to a coverage hole: close it if you
+> can, and if the closure is weaker than the thing it replaces, SAY WHICH
+> CHECK YOU RAN.**
+
+**The available alternative was to carry it as a known gap** — legitimate, and
+strictly worse here, because the closure was cheap. *A gap carried is a debt; a
+gap closed by a weaker check is a measurement with a stated scope.*
+
+**AND A NEW INSTRUMENT'S FIRST ASSIGNMENT IS REPRODUCING A NUMBER THE TREE
+ALREADY DEFENDS.** The Python mirror said **156 call sites** until it
+reproduced the landed **`indirectCalls == 19`.**
+
+> **An instrument earns a NEW number by first reproducing an OLD one that is
+> already gated.**
+
+**Because a new instrument's first output has nothing to be wrong against.**
+Every calibration law in this register so far has been about **predictions
+scored later**; this is the cheap version available immediately — **a
+already-defended number is a fixed point the instrument either hits or does
+not**, and the 156 was not a small error, it was a different question being
+answered confidently.
 
 **AND THE SIMPLEST WAY OF ALL, SELF-CAUGHT: A CHECK WIRED WITH `;` INSTEAD OF
 `&&`** (SoftFloat, corrected in `1b526bc`; verify at landing). The
@@ -8809,6 +8961,25 @@ regime had removed the 15-second check.**
 
 > **COST STRUCTURE IS SET BY INSTRUMENTS, NOT BY DEFECTS.**
 
+**AND IT NOW HAS ITS BEFORE/AFTER NUMBERS — the day's closing exhibit** (crunga
+Rung A, merged). **Three defects cost 5 934 seconds of QUEUEING for 43 seconds
+of BUILDING.** After the pressure fix, **the next two cost 20 seconds TOTAL** —
+including a **`have`-vs-`let`/`letFun` defect that no amount of reading would
+have produced.**
+
+> **The instrument was the whole difference.**
+
+**A 300:1 ratio between waiting and working, then a 300× collapse in the price
+of a defect** — same lane, same class of mistake, **no change in anyone's
+care.** That is the law stated in numbers rather than argued: *the defect rate
+did not move; the price of finding one did.*
+
+**And the `have`-vs-`let` case is the half that matters most**, because a
+cheaper instrument does not merely find it faster — **it finds it at all.**
+*Some defects are reachable only by running; an instrument that makes running
+expensive does not slow those down, it converts them into defects nobody
+finds.*
+
 **Neither lane made a new mistake**; the same mistake simply stopped being
 catchable in fifteen seconds. **A defect's rate is a property of how cheaply it
 can be checked**, so an instrument that closes a cheap check does not merely slow
@@ -9807,6 +9978,36 @@ charter, for the reason §7.2 already gives: **a ledger is appended per landing,
 so the number moves with the work, while a number in a charter is a copy the
 code cannot see.**
 
+**THE STANDING TABLE, SNAPSHOT 2026-08-24** — every number moved on this date,
+and it is recorded here as a **dated snapshot**, not as a live figure: **the
+lane ledgers are the live copies** (a number in a charter is a copy the code
+cannot see), and this exists so the family can be read in one place.
+
+| tier | coverage | declared divergences |
+| --- | --- | --- |
+| **Python** | flagship **TYPED + merged**; chain **4/9**; **all 3 serving surfaces done (scoped)** | **2** |
+| **Go** | **687 / 3 803** | — |
+| **ECMAScript** | **38 / 66**, register live | **1** |
+| **WebAssembly** | **4 / 5** | — |
+| **Ada** | statement tier **RUNNING**; **ACATS 0 / 4 188**, honest | — |
+| **SystemVerilog** | **18/21** live envelopes · **11/11** stepper constructors · **0 / N** | **2** |
+| **C** | Rung A landed; **c-torture 0** (runner next) | — |
+| **analog** | **8 / 24** grounded; first inch merged | — |
+| **SoftFloat** | **1 / 12** + declarative spec + `roundQ` | — |
+| **Lean tier** | **0 / 27**, `Name` pairs pending | — |
+
+**Read the zeroes with §9.0's own counting rules and they are not all the same
+zero.** **ACATS 0/4 188** is *honest* — the suite is wired and the tier has not
+scored on it. **c-torture 0** is *the runner does not exist yet*. **`0/N`** in
+SV is *the denominator itself is not yet fixed.* **Three different states
+wearing one digit**, which is precisely the conflation §9.0's denominator, sign
+and numerator rules exist to keep apart — *and a family table is where they are
+most likely to be read as one number.*
+
+**And the `declared-divergences` column is deliberately BESIDE the coverage
+number, never inside it** (§5.0a): **5 rows across 3 tiers**, all gated both
+ways by the shared checker.
+
 **AND IT IS A `###` SECTION, NEVER A `##` ENTRY — a requirement this rule owed
 from the start and did not carry** (found 2026-08-24 by the heading guard, three
 lanes deep). §9.0 asked every lane for a standing block and **said nothing about
@@ -9952,6 +10153,23 @@ carry one, because it IS the certified artifact** — and the difference shows t
 moment someone doubts it: a stamped number sends the reader to a commit to
 check, **a certified number is already inside the thing the reader is checking.**
 *Where the number can ride the tenure, riding it beats stamping it.*
+
+**AND §5.0a HAS CLOSED ITS LOOP OPERATIONALLY — the milestone is
+UNCONDITIONAL** (pyc's green, merged; master at `0380260`). **3 of 3
+flagship-serving surfaces (scoped), `declared-divergences: 2`, 136 witnesses,
+0 DIVERGE** — with **the shared checker running IN the gates: 2 tiers, 4 rows,
+8 guards, every row gated both ways.** And the sentence that is the whole
+justification for the ruling that created the register:
+
+> **The invariant holds BECAUSE the divergence was moved into the REGISTER
+> rather than left in the SCOREBOARD.**
+
+**That is the design being load-bearing rather than tidy.** `DIVERGE` is zero
+**and** the tier has two known differences — which under the old vocabulary was
+a contradiction to be resolved by either **lying about the zero** or
+**abandoning the invariant.** The register makes both unnecessary: **the
+scoreboard keeps a number that means something, and the differences keep an
+owner, an age, and a gate.**
 
 **AND THE PYC DEPENDENCY IS DISCHARGED, pending its green** (`3ea2f2a`,
 ticketed): **`bound()`'s `unsupported` census is ZERO**, closing rung 9's pyc

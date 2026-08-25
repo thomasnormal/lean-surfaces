@@ -623,4 +623,73 @@ theorem instrs_ok2_subtyping {s : store} {c : context} {e : List admininstr}
   rw [hx, hy]
   exact framed
 
+/-- Length is recoverable from `subs<` — it is the constructor's own premise. -/
+theorem rt_sub_len {a b : List valtype} (h : a subs< b) : a.length = b.length := by
+  cases h with | mk_Resulttype_sub _ _ hlen _ => simpa using hlen
+
+/-- Anything `subs<`-below the empty list IS empty. -/
+theorem rt_sub_nil {a : List valtype} (h : a subs< ([] : List valtype)) : a = [] := by
+  have := rt_sub_len h; simpa using this
+
+/-- SUBSUMPTION as an `instrtype_sub`: contravariant in the domain, covariant
+    in the range, with an empty frame.
+    Isabelle counterpart: `Instrtype_sub_sub_rule` (was `instr_subtyping_sub_rule`
+    before the rename this lane's ports predate). -/
+theorem instrtype_sub_sub_rule {ts1 ts2 ts1' ts2' : List valtype}
+    (h1 : ts1' subs< ts1) (h2 : ts2 subs< ts2') :
+    instrtype_sub (mkFunctype ts1 ts2) (mkFunctype ts1' ts2') :=
+  ⟨[], [], ts1', ts2', rfl, rfl, rt_sub_refl [], h1, h2⟩
+
+/-- An empty-to-empty instruction type below `(ts2 → ts3)` forces
+    `ts2 subs< ts3`: both frame remainders are pinned empty by the two
+    `subs< []` premises. Shared by the two `func_sub_app_single` halves. -/
+theorem instrtype_sub_empty_forces {ts2 ts3 : List valtype}
+    (h : instrtype_sub (mkFunctype [] []) (mkFunctype ts2 ts3)) : ts2 subs< ts3 := by
+  obtain ⟨ri, ro, si, no, hx, hy, hio, hsi, hno⟩ := h
+  have hsi' : si = [] := rt_sub_nil hsi
+  -- the fifth component is `[] subs< no`, so LENGTH pins `no` empty too
+  have hno' : no = [] := by have := rt_sub_len hno; simpa using this.symm
+  subst hsi'; subst hno'
+  simp at hx hy
+  subst hx; subst hy
+  exact hio
+
+/-- Isabelle counterpart: `func_sub_app_single_l` — the LEFT half of the split
+    that `func_sub_app_single` became upstream (`2026-08-25-wasm-13`). -/
+theorem func_sub_app_single_l {ts1 ts2 ts3 : List valtype}
+    (h : instrtype_sub (mkFunctype [] []) (mkFunctype ts2 ts3)) :
+    instrtype_sub (mkFunctype ts1 ts2) (mkFunctype ts1 ts3) :=
+  instrtype_sub_sub_rule (rt_sub_refl ts1) (instrtype_sub_empty_forces h)
+
+/-- Isabelle counterpart: `func_sub_app_single_r` — the RIGHT half. -/
+theorem func_sub_app_single_r {ts1 ts2 ts3 : List valtype}
+    (h : instrtype_sub (mkFunctype [] []) (mkFunctype ts1 ts2)) :
+    instrtype_sub (mkFunctype ts2 ts3) (mkFunctype ts1 ts3) :=
+  instrtype_sub_sub_rule (instrtype_sub_empty_forces h) (rt_sub_refl ts3)
+
+/-- Two empty-domain instruction types compose, concatenating their ranges.
+    Isabelle counterpart: `Instrtype_sub_emptyl` — one of the four genuinely
+    new live lemmas the stale pin hid (`2026-08-25-wasm-13`).
+
+    Isabelle proves it by a NESTED `Instrtype_sub.induct`; the definitional
+    ∃-form needs no induction at all — both hypotheses `obtain` directly, and
+    the two `subs< []` premises pin the frame remainders empty by LENGTH. -/
+theorem instrtype_sub_emptyl {l l' t1 t2 t3 : List valtype}
+    (h1 : instrtype_sub (mkFunctype [] l) (mkFunctype t1 t2))
+    (h2 : instrtype_sub (mkFunctype [] l') (mkFunctype t2 t3)) :
+    instrtype_sub (mkFunctype [] (l ++ l')) (mkFunctype t1 t3) := by
+  obtain ⟨ri, ro, si, no, hx, hy, hio, hsi, hno⟩ := h1
+  obtain ⟨ri2, ro2, si2, no2, hx2, hy2, hio2, hsi2, hno2⟩ := h2
+  have e1 : si = [] := rt_sub_nil hsi
+  have e2 : si2 = [] := rt_sub_nil hsi2
+  subst e1; subst e2
+  simp at hx hx2
+  subst hx; subst hx2
+  -- t2 is both `ro ++ no` and `ri2`, so the second frame splits against the first
+  obtain ⟨a, b, ha, hb, hab⟩ := rt_sub_split_right ro no ro2 (hy ▸ hio2)
+  refine ⟨t1, a, [], b ++ no2, by simp, ?_, ?_, rt_sub_refl [], ?_⟩
+  · rw [hy2, hab, List.append_assoc]
+  · exact rt_sub_trans _ _ _ hio ha
+  · exact rt_sub_app _ _ _ _ (rt_sub_trans _ _ _ hno hb) hno2
+
 end SubtypingPort

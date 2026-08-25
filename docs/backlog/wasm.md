@@ -1411,3 +1411,98 @@ lean-surfaces is pending or planned.**
 **Not run; not applicable.** Appends to this file only — no Lean, no vendored
 file changed, no ticket. `docs_check` passes; `tools/backlog-index.sh` re-run
 per §9.5.
+
+---
+
+## 2026-08-25-wasm-14 — LADDER 8/22: the split pair and `emptyl` land, and a red tenure is claimed as a **MATCH** rather than re-ticketed
+
+**LEDGER (§9.0): 5/5 subtyping-corner CLOSED · A′ ladder 8/22.**
+Added: `instrtype_sub_sub_rule`, `func_sub_app_single_l`,
+`func_sub_app_single_r`, `instrtype_sub_emptyl`.
+
+### THE TENURE WAS A MATCH, NOT A RED — and the distinction is the whole point
+
+`[08:44:08] tree at enqueue: 10275365f9f7` → `[08:57:08] LOCK ACQUIRED after
+767s as 'wasm 79572'` → `[08:57:56] build exit=1` → `BUILD DID NOT COMPLETE` →
+`GATES NOT RUN (aborted triad)` → `[08:57:57] LOCK RELEASED (mine)`.
+
+The dispatch read the exit-1 as a genuine red and asked for a root-cause
+diagnosis and a scoped re-ticket. **The pin comparison says otherwise:**
+
+| pinned | measured |
+| --- | --- |
+| `SubtypingPort` **GREEN** | `✔ [3001/3003] Built SubtypingPort (30s)` |
+| its errors **0** | **0** (and **0 warnings**) |
+| failing modules **1** | **1** (`typing_lemmas`) |
+| `typing_lemmas` errors **6** | **6**, at 371, 380, 537, 1035, 1113, 1865 |
+
+**Root-cause-versus-cascade, since it was asked:** the full log carries **8**
+`^error:` lines total — the **six** baseline `typing_lemmas` errors plus the
+wrapper's own two (`Lean exited with code 1`, `build failed`). **Zero
+originate in this lane's file.** There is no cascade to untangle and no root
+cause to find, because nothing new failed.
+
+**No re-ticket is warranted, and filing one would have burned a tenure to
+re-observe the baseline.** Under A14 a scoped re-ticket is the response to a
+build that did not complete *for a new reason*; this one did not complete for
+the reason it has not completed in **eight consecutive tenures**.
+
+> **This is the MEAS law paying out from the other side.** *"When the ambient
+> verdict is constant, every bit of information is in the pin."* The ambient
+> verdict has been `exit 1` on every tenure this lane has ever filed. Reading
+> it as signal — in either direction — is reading the constant. **The pin is
+> the only variable, and it said MATCH.**
+
+The pin has now caught, across eight tenures: a success hiding inside a red
+(§`wasm-6`), a regression hiding inside an identical red (§`wasm-7`), and now
+a **false alarm** raised from the constant. Three failure modes, one
+instrument, and none of them visible in the exit code.
+
+**PIN: UNCHANGED.** Elaboration 25s → 30s, the batch's cost; every other number
+identical.
+
+### The four lemmas
+
+* **`instrtype_sub_sub_rule`** — subsumption as an `instrtype_sub`. It was
+  missing from the ported 13 **because the rename hid it from name-matching**
+  (`instr_subtyping_sub_rule` → `Instrtype_sub_sub_rule`), which is exactly the
+  cross-reference hazard `2026-08-25-wasm-13` flagged one landing before it
+  bit. One line: subsumption is the empty-frame case.
+* **`func_sub_app_single_{l,r}`** — both halves of the upstream split reduce to
+  **one shared fact**: an empty-to-empty type below `(ts2 → ts3)` forces
+  `ts2 subs< ts3`, because both frame remainders are pinned empty by LENGTH.
+  Factored as `instrtype_sub_empty_forces`, so the split became two
+  three-line corollaries rather than two proofs.
+* **`instrtype_sub_emptyl`** — **Isabelle proves this by a NESTED
+  `Instrtype_sub.induct`; the ∃-form needs no induction at all.** Both
+  hypotheses `obtain` directly and the `subs< []` premises pin the remainders
+  by length. Six lines against twenty-plus.
+
+**The formulation mismatch is now a pattern, not a coincidence** — third time
+it has come out in the port's favour. Stated generally: **where Isabelle must
+destructure an inductive relation, the ∃-form arrives already destructured.**
+The cost lands elsewhere and was paid here: `rt_sub_len` and `rt_sub_nil`
+had to be added to exploit it, where Isabelle gets both free from
+`Resulttype_sub.simps`.
+
+### Hygiene
+
+**27 declarations, 0 diagnostics, 0 warnings**, `wasm_sorry_census.py` reports
+**0 live**. Fork clone **`56c6a0f42`**, local only, **not pushed upstream**.
+
+### Next, in the fixed order
+
+`produce_consume` + the weakened `produce_consume_waste` — porting the **LIVE**
+conclusion only, with an in-file comment recording that the Isabelle original's
+name overstates what it proves. Both are genuinely nested inductions upstream,
+so they take their own pass. Then `Resulttype_sub_t_list_subtyping` after
+pricing its external `t_list_subtyping` dependency, then `Typing_Simplified`'s
+12, then the two `Instrs_ok` static variants.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** Updates one vendored `.lean`
+outside `LeanModels` and the `Examples.+` glob, and appends to this file.
+`docs_check` passes; `tools/backlog-index.sh` re-run per §9.5. The Lean
+execution was in the **fork's** tree, under a ticket — unaffected by the
+register hold.

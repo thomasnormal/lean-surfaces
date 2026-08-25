@@ -403,4 +403,31 @@ theorem dram_sense_amp_full_basin_regeneration
 #print axioms dram_sense_amp_small_signal_realizable
 #print axioms dram_sense_amp_small_signal_performance_realizable
 #print axioms dram_sense_amp_full_basin_regeneration
+/-- A14: the witnessing boundary itself, not merely its existence. -/
+theorem dram_sense_amp_small_signal_behavior_at_1ns :
+    DramDifferentialSenseBehavior
+      (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+      (dramDifferentialSenseSmallSignalBoundary
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+        (1 / 10)) () := by proofs
+
+/-- A14: the LAST exp/log certificate in the tier's F2 census.  Both numeric
+hypotheses discharged, so the sense amplifier's performance claim -- a 250 mV
+margin, inside the rail domain, within one nanosecond -- holds outright. -/
+theorem dram_sense_amp_small_signal_performance_at_1ns :
+    ∃ boundary,
+      DramDifferentialSenseBehavior
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+          boundary () ∧
+        DramDifferentialSenseInRailDomain
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+          boundary ∧
+        DramDifferentialSenseReachesMargin
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000))
+          boundary true (1 / 4)
+          (dramDifferentialSenseSmallSignalDeadline (1 / 10) (1 / 4)) := by
+  proofs
+
 #print axioms dram_sense_amp_small_signal_realizable_at_1ns
+#print axioms dram_sense_amp_small_signal_behavior_at_1ns
+#print axioms dram_sense_amp_small_signal_performance_at_1ns

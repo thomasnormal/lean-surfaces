@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**362 entries across 17 lanes.** Regenerate with
+**363 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -111,6 +111,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-wasm-9` |  | `ais_empty_subs` LANDS: the scratch loop finds in four probes what four tenures could not, and the bug was a line the original had already written | wasm |
 | `2026-08-24-wasm-8` |  | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` |  | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
+| `2026-08-24-analog-7` |  | A14: F2 closes at 7/7, and the denominator it closed was not the one I had been quoting | analog |
 | `2026-08-24-ada-7` |  | INCH 4's CENSUS: the CHEAPEST rung so far, and it is the one that unlocks the first scorable set | ada |
 | `2026-08-24-analog-6` |  | A13: the coordinate audit ran first, and found the gap somewhere else entirely | analog |
 | `2026-08-24-ada-6` |  | INCH 3 BUILDS: calls, the frame, `return` — and `orderDependence` EMITS for the first time | ada |

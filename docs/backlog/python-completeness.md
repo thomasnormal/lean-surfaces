@@ -2274,3 +2274,96 @@ exit status and output, so the tenure distinguishes them without a rerun.
 
 **§9.0: `3 of 3` flagship-serving pyc surfaces · `declared-divergences: 1`**
 for this tier, now with both sides measured.
+
+## 2026-08-25-pycomplete-24 — the pins pair is SHARDED, and one of the two barely benefits
+
+`pins_bound` (18.9 min) and `pins_clock` (19.0 min) are together ~85% of every
+full spine build's elaboration. A single module elaborates SERIALLY, so the
+probes inside each — independent `#guard`s — cannot overlap. This is a TOPOLOGY
+change and nothing else: **no probe dropped, no fuel changed, every expected
+value byte-identical.**
+
+### The census corrected the mental model before any edit
+
+Both files are **~250 lines**. The cost is not size, not guard count, but what
+each `#guard` KERNEL-EVALUATES — the interpreter running sunfish at depth. So
+shards must be balanced by guard cost, and "split the big file" was never the
+right description of the problem.
+
+Three facts made the split safe, and all three were measured first:
+
+* **`globs = ["Examples.+"]`** — a new file under `Examples/` is a default
+  target automatically. No lakefile edit, and coverage is unchanged *by
+  construction* rather than by inspection.
+* **Both files are LEAVES.** Nothing imports either, so splitting them cannot
+  disturb another module.
+* **`pins_common` already exported** `board0`/`posH`/`sp0`/`searcherW`; only
+  `boundProbe` (and, for the clock file, `searcherWT`/`boundProbeT`) needed
+  lifting, each moved verbatim.
+
+### `pins_bound` — five leaves, and the boundary names the board
+
+| shard | board | guards |
+| --- | --- | --- |
+| `pins_bound_h` | opening `posH 0`, depths 1–3 | 8 |
+| `pins_bound_mid` | midgame `posMid` | 6 |
+| `pins_bound_tac` | tactical `posTac` + quiet-pawn `posPend` | 5 |
+| `pins_bound_end` | rook endgame `posEnd` | 4 |
+| `pins_bound_searcher` | the trace-clock frontier | 3 |
+
+`pins_bound.lean` survives as the prose home and a facade importing the five —
+the capstone's 23-pair narrative stays in one place, and the module name keeps
+resolving.
+
+### `pins_clock` — three leaves, AND THE SHARDING BUYS LITTLE, which is the finding
+
+`transport` (the ∀-trace theorem, 0 guards), `probe` (5 guards), `walk`
+(1 guard). **That one guard is the module**: a 13-step search generator at fuel
+4 000 000 that crosses node 2048.
+
+> **A certificate cannot be split without changing it.** Splitting the walk in
+> two would re-run its first twelve steps in both halves — doubling the work to
+> halve the wall, which is not a trade. So `_walk` stays whole and stays the
+> critical path.
+
+The win here is real but smaller and differently shaped: `_walk` now overlaps
+`pins_bound`'s five leaves instead of queueing behind the rest of its own file.
+**Amdahl was predicted before the edit and confirmed by the structure**, which
+is why this entry states it rather than leaving a future reader to wonder why
+the second file did not halve.
+
+### `genmoves_ray` is NOT included, and the reason is measured
+
+It is not a leaf: `genmoves_scan`, `genmoves_drain` and `sf_order/transport`
+all `open` it and consume its 173 theorems. Sharding it needs a re-exporting
+facade — a materially riskier change that should be priced on its own rather
+than bundled with a pair that splits cleanly.
+
+### The certificates did not move, and that is CHECKED
+
+Every `#guard` BLOCK (several span a dozen lines) was extracted from the
+pre-shard file and from the shards, sorted, and compared:
+
+    pins_bound   guards 26 -> 26  identical=True
+    pins_clock   guards  6 ->  6  identical=True | theorems 1 -> 1 identical=True
+
+A topology change that cannot prove its certificates are untouched is a
+refactor with a story attached, and this lane has enough of those.
+
+### Ride-along: the checker's own SyntaxWarning
+
+`harness/divergence_register.py`'s `_strip_lean_comments` docstring QUOTES a
+regex — ``^\s*def foo`` — in a plain string, so `\s` is an invalid escape:
+a `DeprecationWarning` on 3.9 and a **`SyntaxWarning` on 3.14, emitted on every
+gate run**. Now an r-string. *Prose that quotes code is still code to the
+lexer* — and an instrument that warns on every invocation trains its readers to
+ignore its output.
+
+### And a note for the checker's ledger, from the fleet red this week
+
+Master's register gate is red on rows using kinds outside §5.0a's enum. The
+root cause is not the rows: **that tier's tenure floor never ran the register
+gate at all, so its data was never exercised** — the corpus-exercise law, one
+layer up, at the GATE rather than at the witness. The checker was right and
+stays exactly as strict as it is; a checker loosened to accommodate unexercised
+data would have converted a loud red into a silent wrong claim.

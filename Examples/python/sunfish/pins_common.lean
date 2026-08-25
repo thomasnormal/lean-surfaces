@@ -77,4 +77,48 @@ def searcherW : Option (World × Addr) :=
   | .ok st (.ref a) => some (st.world, a)
   | _ => Option.none
 
+/-- `(bound, nodes)` of one probe `Searcher().bound(pos, gamma, depth)`
+— fresh searcher per probe, exactly the CPython driver. -/
+def boundProbe (pos : RVal) (gamma depth : Int) :
+    Option (Int × Int) :=
+  match searcherW with
+  | some (w, a) =>
+    (match callIn sunfish 1000000 w "Searcher.bound"
+        #[.ref a, pos, .int gamma, .int depth] with
+     | .ok w' (.int r) =>
+       (match Heap.get? w'.heap a with
+        | some (.instance _ attrs) =>
+          (match Env.lookup attrs.toList "nodes" with
+           | some (.int n) => some (r, n)
+           | _ => Option.none)
+        | _ => Option.none)
+     | _ => Option.none)
+  | Option.none => Option.none
+
+/-- `Searcher()` constructed from `initWorld` with the clock trace
+seeded BEFORE anything runs — the `∀ tr` twin of `pins.searcherW`. -/
+def searcherWT (tr : ClockTrace) : Option (World × Addr) :=
+  match evalExpr sunfish 4096 ⟨(initWorld sunfish).withClock tr, []⟩
+      (.call (.name "Searcher" sp0) #[] #[] Option.none sp0) with
+  | .ok st (.ref a) => some (st.world, a)
+  | _ => Option.none
+
+/-- `(bound, nodes)` of one probe under a seeded trace — the `∀ tr`
+twin of the battery's `boundProbe` (pins_bound.lean). -/
+def boundProbeT (tr : ClockTrace) (pos : RVal) (gamma depth : Int) :
+    Option (Int × Int) :=
+  match searcherWT tr with
+  | some (w, a) =>
+    (match callIn sunfish 1000000 w "Searcher.bound"
+        #[.ref a, pos, .int gamma, .int depth] with
+     | .ok w' (.int r) =>
+       (match Heap.get? w'.heap a with
+        | some (.instance _ attrs) =>
+          (match Env.lookup attrs.toList "nodes" with
+           | some (.int n) => some (r, n)
+           | _ => Option.none)
+        | _ => Option.none)
+     | _ => Option.none)
+  | Option.none => Option.none
+
 end Examples.python.sunfish.pins

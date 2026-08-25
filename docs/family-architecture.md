@@ -11075,9 +11075,38 @@ The generalizing fix is not a better name list:
 names the lakefile declares, and a symlink view of the clone with `.lake`
 **withheld** — and its rows show the distinction is not theoretical: with the
 shims alone, on a warm clone, a leanpy-shaped gate finds the binary, runs it,
-and the no-Lean claim **falsely holds**. `ci.sh`'s layer 3 is **flagged, not
-fixed, here**: it is shared infrastructure, and the same rule that sent
-host-gating to a ruling sends this one.
+and the no-Lean claim **falsely holds**. `ci.sh`'s layer 3 was **flagged, not
+fixed,** in that landing — shared infrastructure, and the same rule that sent
+host-gating to a ruling sent this one. **It was then ruled and fixed**
+(`2026-08-26-qol-80`): layer 3 now runs its self-test children inside the same
+`.lake`-less view, and `lean` joins `lake` on the stub. The pair of rows that
+holds it is the argument — with the stub alone a leanpy-shaped call on a warm
+clone runs the binary and nothing is loud; from the view it exits 97.
+
+**A VIEW THAT HIDES ONE THING MUST NOT QUIETLY CHANGE ANOTHER.** Every entry in
+such a view is a symlink, so `git` inside it calls every tracked file a
+typechange — **1024 phantom changed paths** in this repository, and a fixture
+whose truth was 1 told its gate 5. `triad.sh`'s attested gates therefore pin
+`GIT_DIR`/`GIT_WORK_TREE` to the real clone; `ci.sh`'s children deliberately do
+**not**, because they `git init` their own fixtures and an exported `GIT_DIR`
+would hijack them. Whether a child **reads** the repo or **builds its own**
+decides it, and the asymmetry is measured in both directions.
+
+**AND THE COST PREMISE THAT JUSTIFIED THE FEATURE WAS WRONG.** It landed on
+"4.5 h of tenure for a zero-Lean gated diff"; the lane that supplied the figure
+re-measured its own green and found that spine build **replayed in ~10 seconds
+with zero workers** — the hours came from `.lean`-changing landings and were
+generalized without re-measuring. On a **warm** clone the price of `--gates` on
+a docs diff is a **queue slot**, not a build. The feature stands on its other
+leg, which is the better one: **a lane's "no Lean runs here" was its WORD, and
+this makes it a MEASUREMENT** — A11-class enforcement rather than a
+convenience — with a **cold** clone the remaining case where the saved build is
+real time.
+
+> **A PREMISE NOBODY RE-MEASURES IS A PREMISE NOBODY HOLDS.** This figure
+> passed through three hands before it was checked, and each hand was
+> reasonable to trust the one before it. The estimate is left standing beside
+> what it turned into rather than edited away.
 
 **AND THE COORDINATOR'S RULING ON THE PART THE LANE FLAGGED AS NOT ITS OWN:
 `ci.sh`'s `lake-build` step is HOST-GATED** — ruled, and **implemented in

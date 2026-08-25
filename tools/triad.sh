@@ -1683,11 +1683,27 @@ acquire_check() {               # -> "ok <readings>" | "defer <readings> — <wh
   printf 'ok %s' "$r"
 }
 
-# ---- ENFORCED NO-LEAN ATTESTATION (SV's 4.5 h spine build, 2026-08-26)
+# ---- ENFORCED NO-LEAN ATTESTATION (2026-08-26)
 #
-# A lane had no way to say "this gate starts no Lean", so the honest choice
-# cost a full build and the cheap choice silently skipped the instrument.
-# `--gates-no-lean` says it; this code MEASURES it.
+# WHY, CORRECTED.  This landed on a cost figure that was WRONG: 4.5 h of
+# tenure for a docs-class gated diff.  SV re-measured its own green and the
+# spine build REPLAYED IN ~10 SECONDS with zero workers -- the 4.5 h came
+# from .lean-changing landings and was generalized without re-measuring.
+# The figure travelled through three hands before anyone checked it, which is
+# the finding: a premise nobody re-measures is a premise nobody holds.
+#
+# So the cost argument is DEMOTED, and the real ones stated in its place:
+#
+#   1. INTEGRITY, and it is primary.  A11 says the lock covers all Lean
+#      execution.  "No Lean runs here" was previously a lane's WORD; this
+#      makes it a MEASUREMENT, which is A11-class enforcement rather than a
+#      convenience.  The mechanism is the point, not the minutes.
+#   2. A COLD CLONE, where replay is not free and the saved build is real.
+#
+# On a WARM clone the price of `--gates` on a docs diff is a QUEUE SLOT, not
+# a build.  That is worth avoiding, and it is not hours.
+#
+# `--gates-no-lean` lets a lane say it; this code MEASURES it.
 #
 # > attested = no repo-reachable Lean, plus observation for the rest
 #
@@ -1726,7 +1742,7 @@ SHIM
 }
 
 run_gates_attested() {          # gate list -> sets rc; verifies the attestation
-  local pair d v savedpath savedpwd sampler
+  local pair d v savedpath savedpwd sampler gitdir
   pair="$(attested_env)" || { rc=1; say "ATTESTATION: could not build the shim/view"; return 0; }
   d="${pair%% *}"; v="${pair#* }"
   ATTEST_MARK="$d/violations"; : > "$ATTEST_MARK"; export ATTEST_MARK
@@ -1743,10 +1759,22 @@ run_gates_attested() {          # gate list -> sets rc; verifies the attestation
     done ) 2>/dev/null & sampler=$!
   savedpath="$PATH"; savedpwd="$PWD"
   PATH="$d:$PATH"
+  # THE VIEW WITHHOLDS `.lake`; IT MUST NOT ALSO LIE ABOUT THE TREE.  Every
+  # entry in the view is a SYMLINK, so git run inside it reports each tracked
+  # file as a typechange: a fixture whose truth was 1 changed path told its
+  # gate 5, and the real clone reports 1024.  A gate that consults git — and
+  # `backlog-index.sh` in the floor does — would be gated against fiction.
+  # Pinning both variables to the real clone keeps git answering about the
+  # tree being gated while the filesystem still hides the build products.
+  # `--absolute-git-dir` rather than `$CLONE/.git`, because in a linked
+  # WORKTREE that path is a file and GIT_DIR must be the directory it names.
+  gitdir="$(git -C "$CLONE" rev-parse --absolute-git-dir 2>/dev/null || true)"
+  if [ -n "$gitdir" ]; then export GIT_DIR="$gitdir" GIT_WORK_TREE="$CLONE"; fi
   cd "$v" 2>/dev/null || { rc=1; kill "$sampler" 2>/dev/null; return 0; }
   run_gates "$1"                # NOT in a subshell: rc must survive
   cd "$savedpwd" 2>/dev/null || true
   PATH="$savedpath"
+  unset GIT_DIR GIT_WORK_TREE
   kill "$sampler" 2>/dev/null; wait "$sampler" 2>/dev/null
   if [ -s "$ATTEST_MARK" ]; then
     rc=1
@@ -3593,6 +3621,14 @@ if [ "$SELF_TEST" = "1" ]; then
     "$(printf '%s' "$out" | grep -c 'COVERAGE (§5.4a): docs-only: NO Lean was elaborated')" "1"
   check "  ...and is NOT a chain root"          "$(printf '%s' "$out" | grep -c 'NOT a chain root')" "1"
   check "  ...the LEDGER agrees"                "$(grep -c 'class=docs citable=no full=no' "$fr/.git/triad-greens")" "1"
+  # THE VIEW MUST NOT LIE TO A GATE THAT ASKS GIT.  Every view entry is a
+  # symlink, so an unpinned git inside it calls every tracked file a
+  # typechange — measured as 5 against a truth of 1 in this very fixture, and
+  # 1024 in the real clone.  The gate below prints what git tells it.
+  printf '# d again\n' >> "$fr/docs/a.md"; git -C "$fr" add docs/a.md
+  out="$(flagrun --classify --against HEAD --gates-only 'git status --short | wc -l' --gates-no-lean)"
+  check "  ...and git is told the TRUTH in the view" \
+    "$(printf '%s' "$out" | grep -E '^ *[0-9]+ *$' | head -1 | tr -d ' ')" "1"
   # ...and the static contradiction, refused before any ticket is taken.
   out="$(flagrun --classify --against HEAD --gates-only 'python3 harness/divergence_register.py' --gates-no-lean)"
   check "attested + a RUNNER gate is refused"   "$(printf '%s' "$out" | grep -c 'CONTRADICTS the gate list')" "1"

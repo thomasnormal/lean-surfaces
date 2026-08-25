@@ -82,12 +82,41 @@ selftests() {
   # inherits.  Belt (argv), suspenders (sentinel), and a stub so that even a
   # successful re-entry cannot reach a real build.
   stub="$(mktemp -d "${TMPDIR:-/tmp}/ci-selftest-stub.XXXXXX")" || return 1
-  cat > "$stub/lake" <<'STUB'
+  # `lean` JOINS `lake` ON THE NAME ROUTE.  Both are on PATH via elan, and a
+  # stub covering one of them is a guard with a spelling in it.
+  for b in lake lean; do
+    cat > "$stub/$b" <<STUB
 #!/usr/bin/env bash
-echo "lake: REFUSED — a self-test may not invoke lake (no ticket, A11)." >&2
+echo "$b: REFUSED — a self-test may not invoke $b (no ticket, A11)." >&2
 exit 97
 STUB
-  chmod +x "$stub/lake"
+    chmod +x "$stub/$b"
+  done
+  # AND THE OTHER ROUTE: WITHHOLD THE BUILD PRODUCTS (2026-08-26, qol-80).
+  # A stub on PATH stops Lean reached BY NAME.  It does not stop Lean reached
+  # BY ABSOLUTE PATH, and this repo's own runner is reached that way:
+  # `tools/leanpy` runs REPO_ROOT/.lake/build/bin/leanmodels-run directly and
+  # falls back to `lake` only when that file is ABSENT.  On a COLD clone the
+  # stub catches the fallback and looks sufficient; on a WARM clone — every
+  # working lane's — the binary is there and the stub is stepped around.  That
+  # is the exact route the A11 breach of 2026-08-23 took.
+  #
+  # So the children run inside a symlink view of this tree with `.lake`
+  # WITHHELD, which turns the absolute-path route back into the fallback the
+  # stub can see.  A guard on the name covers one of the two routes; only
+  # withholding the products covers the other.
+  view="$(mktemp -d "${TMPDIR:-/tmp}/ci-selftest-view.XXXXXX")" || return 1
+  for e in $(ls -A .); do
+    [ "$e" = ".lake" ] && continue
+    ln -s "$PWD/$e" "$view/$e" 2>/dev/null || true
+  done
+  # DELIBERATELY NOT PINNING GIT_DIR/GIT_WORK_TREE, which is the opposite of
+  # what triad.sh's attested gates do, and the asymmetry is measured rather
+  # than assumed.  These children `git init` their OWN fixture repos, and an
+  # exported GIT_DIR would hijack every one of them; triad's gates instead
+  # INSPECT the clone, where an unpinned git inside a view of symlinks calls
+  # every tracked file a typechange.  Measured: the tool self-tests are 452
+  # ok, 0 failed run from inside the view with no pin.
   export LS_CI_SELF_TEST=1
   export PATH="$stub:$PATH"
   for t in tools/*.sh; do
@@ -101,22 +130,22 @@ STUB
     grep -qE -- '--self-test\)|= "--self-test"' "$t" || continue
     case "$t" in */ci.sh) continue ;; esac        # belt: never re-enter CI
     # A per-tool timeout, so a future tool that hangs cannot hang CI.
-    if ! timeout 120 bash "$t" --self-test >/dev/null 2>&1; then
+    if ! ( cd "$view" && timeout 120 bash "$t" --self-test ) >/dev/null 2>&1; then
       echo "    SELF-TEST FAILED (or timed out): ${t##*/}"; rc=1
     fi
   done
-  python3 tools/docs_check.py --self-test >/dev/null 2>&1 || {
+  ( cd "$view" && python3 tools/docs_check.py --self-test ) >/dev/null 2>&1 || {
     echo "    SELF-TEST FAILED: docs_check.py"; rc=1; }
   # The comment-form gate's own regression set, run where the other tools'
   # are: a fixture nobody runs is not a fixture.
-  python3 harness/lean_comment_forms.py --self-test >/dev/null 2>&1 || {
+  ( cd "$view" && python3 harness/lean_comment_forms.py --self-test ) >/dev/null 2>&1 || {
     echo "    SELF-TEST FAILED: lean_comment_forms.py"; rc=1; }
   # THE HARNESS'S OWN ROWS, not any tier's corpus.  envelope_fresh is
   # LANE-ADDED per the floor law (the corpora are per-tier), so CI gates the
   # TOOL -- including its refusal path -- while adoption stays each lane's.
-  python3 harness/envelope_fresh.py --self-test >/dev/null 2>&1 || {
+  ( cd "$view" && python3 harness/envelope_fresh.py --self-test ) >/dev/null 2>&1 || {
     echo "    SELF-TEST FAILED: envelope_fresh.py"; rc=1; }
-  rm -rf "$stub"
+  rm -rf "$stub" "$view"
   return "$rc"
 }
 
@@ -372,6 +401,42 @@ VSTUB
   vcheck "lake env lean is gated the same way"    "$(grep -c 'SKIPPED on non-CI host' "$vout")" "1"
   vcheck "  ...and invokes no lake either"        "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "none"
 
+  # ---- THE ABSOLUTE-PATH ROUTE, WHICH IS THE ONE THE A11 BREACH TOOK.
+  # A WARM fake clone, because warm is the only interesting case: on a COLD
+  # clone the binary is absent, the fallback fires, the stub catches it, and
+  # layer 3 looks sufficient while covering only one of the two routes.
+  vwarm="$vstub/warm"; mkdir -p "$vwarm/.lake/build/bin" "$vwarm/tools"
+  printf '#!/bin/sh\ntouch "%s/RAN-THE-BINARY"\n' "$vstub" > "$vwarm/.lake/build/bin/leanmodels-run"
+  chmod +x "$vwarm/.lake/build/bin/leanmodels-run"
+  # leanpy's ACTUAL shape: root from the script's own path without resolving
+  # symlinks, the built binary by ABSOLUTE PATH, `lake` only as the fallback.
+  printf '%s\n' '#!/bin/sh' \
+    'R="$(cd "$(dirname "$0")/.." && pwd)"' \
+    'if [ -x "$R/.lake/build/bin/leanmodels-run" ]; then exec "$R/.lake/build/bin/leanmodels-run"; fi' \
+    'exec lake build' > "$vwarm/tools/leanpy"
+  chmod +x "$vwarm/tools/leanpy"
+
+  # (1) THE GUARD AS IT STOOD.  The stub is on PATH and the sentinel is set,
+  # and neither is consulted, because nothing here is reached by name.
+  rm -f "$vstub/INVOKED" "$vstub/RAN-THE-BINARY"
+  ( cd "$vwarm" && LS_CI_SELF_TEST=1 sh tools/leanpy ) >/dev/null 2>&1
+  vcheck "warm clone: the stub ALONE never sees it" "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "none"
+  vcheck "  ...and Lean RAN — the breach route"     "$( [ -e "$vstub/RAN-THE-BINARY" ] && echo ran || echo no )" "ran"
+
+  # (2) THE SAME CALL FROM A .lake-LESS VIEW.  The product is withheld, so the
+  # absolute path misses, the fallback fires, and the stub that was always
+  # there finally has something to catch.
+  vview="$vstub/view"; mkdir -p "$vview"
+  for e in $(ls -A "$vwarm"); do
+    [ "$e" = ".lake" ] && continue
+    ln -s "$vwarm/$e" "$vview/$e" 2>/dev/null || true
+  done
+  rm -f "$vstub/INVOKED" "$vstub/RAN-THE-BINARY"
+  ( cd "$vview" && LS_CI_SELF_TEST=1 sh tools/leanpy ) >/dev/null 2>&1; rc=$?
+  vcheck "  ...from the VIEW it never reaches Lean" "$( [ -e "$vstub/RAN-THE-BINARY" ] && echo ran || echo no )" "no"
+  vcheck "  ...the stub catches the fallback"       "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "called"
+  vcheck "  ...and it dies LOUDLY, not quietly"     "$rc" "97"
+
   # The marker gate, both directions, against a real tracked file.
   vrepo="$vstub/repo"; mkdir -p "$vrepo"; git init -q "$vrepo" 2>/dev/null
   git -C "$vrepo" config user.email v@e; git -C "$vrepo" config user.name v
@@ -518,7 +583,11 @@ SVNO
   # ANCHORED TO THE INVOCATION LINE.  A bare substring count matched this row
   # itself and read 2 -- the same self-matching trap as the --stdout row, and
   # the third time this session that a row counted its own text.
-  vcheck "the comment-form gate's own rows run"  "$(grep -c '^  python3 harness/lean_comment_forms.py --self-test' "$0")" "1"
+  # RE-ANCHORED when layer 3 gained the view (qol-80): the invocation now
+  # starts with the `cd`, and the row that asserts it runs has to follow it
+  # there.  Still anchored at column 0 of the INVOCATION, so it cannot match
+  # this line -- the self-matching trap this row's own history records.
+  vcheck "the comment-form gate's own rows run"  "$(grep -c '^  ( cd "$view" && python3 harness/lean_comment_forms.py --self-test )' "$0")" "1"
   vcheck "backlog-index-fresh is its own step"     "$(grep -c '^step  \"backlog-index-fresh\" backlog_index_fresh$' "$0")" "1"
   vcheck "  ...checking freshness, not headings"   "$(grep -c 'strict' <<< "$(grep '^backlog_index_fresh()' "$0")")" "0"
   vbi="$vstub/bi"; mkdir -p "$vbi"

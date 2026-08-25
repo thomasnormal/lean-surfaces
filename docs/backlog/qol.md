@@ -5309,11 +5309,26 @@ Python regression-checked after every change: **FRESH 59, STALE 2**, tree clean.
 
 ## 2026-08-26-qol-79 — `--gates-no-lean`: a lane can say its gates start no Lean, and the script MEASURES it
 
-SV spent 4.5 hours holding a tenure for a spine build so that a gate list of
-**prose checks** could run under the lock. The lane had no way to say "none of
-these starts a Lean process", so the honest choice was to pay for a build
-nobody needed and the cheap choice was to skip the instrument entirely. This
-flag lets a lane say it. Nothing here believes it.
+> **AMENDED 2026-08-26 (see `2026-08-26-qol-80`): the cost premise below was
+> WRONG, and the feature stands on its other leg.** SV re-measured the green
+> this entry was justified by: the docs-class gated tenure's spine build
+> **replayed in ~10 seconds with zero workers**. The 4.5 h came from
+> `.lean`-changing landings and was generalized without re-measuring. On a
+> **warm** clone the price of `--gates` on a docs diff is a **queue slot**,
+> not a build. Cost-saving is therefore **demoted**; the primary
+> justification is **integrity** — a lane's claim that no Lean runs was its
+> WORD, and this makes it a MEASUREMENT, which is A11-class enforcement. The
+> remaining real saving is a **cold** clone, where replay is not free. The
+> wrong figure is left standing here rather than edited away, because it
+> travelled through **three hands** — SV's figure, the ruling, my landing —
+> with nobody re-measuring it, and that is the more useful record.
+
+SV was recorded as spending 4.5 hours holding a tenure for a spine build so
+that a gate list of **prose checks** could run under the lock. The lane had no
+way to say "none of these starts a Lean process", so the honest choice was
+believed to be paying for a build nobody needed, and the cheap choice was to
+skip the instrument entirely. This flag lets a lane say it. Nothing here
+believes it.
 
 > **attested = no repo-reachable Lean, plus observation for the rest**
 
@@ -5420,3 +5435,79 @@ executed, no floor changed. `run_gates` moved above the self-test block so the
 rows drive the real gate runner instead of a stub — verified as an exact
 extract-and-reinsert against a line-multiset comparison of the file before and
 after, because a stub would only have tested the stub.
+
+---
+
+## 2026-08-26-qol-80 — `ci.sh`'s layer 3 gains the view, and the attested view stops lying to git
+
+The ruling on qol-79's flagged item: apply the landed mechanism to `ci.sh`'s
+self-test guard. Predictions first, then measurement — and the measurement
+found a defect in **qol-79 itself**.
+
+### The predictions, and what they cost
+
+| | prediction | outcome |
+|---|---|---|
+| **P1** | on a **warm** clone the stub never sees a leanpy-shaped call | **held** — stub uninvoked, the binary RAN |
+| **P2** | from a `.lake`-less view the same call falls back to `lake` and dies loudly | **held** — exit 97, stub invoked, binary never reached |
+| **P3** | the existing self-tests stay green run *from* a view | **held, and it was the risky one** — 452 ok, 0 failed |
+
+P3 was worth predicting out loud because it nearly went the other way, and the
+way it nearly failed is the next section.
+
+### The defect P3 exposed, which is mine and was already merged
+
+Every entry in a view is a **symlink**, so `git` run inside one reports each
+tracked file as a **typechange**. In the real clone that is **1024 phantom
+changed paths**. qol-79 runs attested gates inside exactly such a view, and
+`backlog-index.sh --check` — a **floor** gate — consults git.
+
+Measured in the fixture: the truth was **1** changed path and the gate was
+told **5**.
+
+So `run_gates_attested` now pins `GIT_DIR`/`GIT_WORK_TREE` to the real clone.
+The filesystem still withholds `.lake`; git answers about the tree actually
+being gated. `--absolute-git-dir` rather than `$CLONE/.git`, because in a
+linked **worktree** that path is a file and `GIT_DIR` must be the directory it
+names — the depth-6 worktree that broke an earlier census is the same shape.
+
+**A view that hides one thing must not quietly change another.** Withholding
+`.lake` was the intent; restating the whole worktree as symlinks was a side
+effect, and a gate cannot tell the difference.
+
+### The two callers need OPPOSITE git treatment, and that is measured
+
+- **`triad.sh`'s attested gates: PIN.** They **inspect** the clone. Unpinned,
+  they are gated against fiction.
+- **`ci.sh`'s self-test children: DO NOT PIN.** They `git init` their **own**
+  fixture repos, and an exported `GIT_DIR` would hijack every one of them.
+  Measured: 452 ok, 0 failed from inside the view with no pin.
+
+The asymmetry is not a preference. It follows from whether the child reads the
+repo or builds its own, and both halves are written where they apply.
+
+### `ci.sh`: both routes now
+
+Layer 3 was a `lake` stub on `PATH` — the **name** route only. It now also
+runs its children inside a `.lake`-less view, so the **absolute-path** route
+is answered by withholding the products. `lean` joins `lake` on the stub,
+because a guard that covers one of two names on `PATH` is a guard with a
+spelling in it.
+
+Five rows hold it, and the pair is the argument: with the stub alone a
+leanpy-shaped call on a warm clone **runs the binary and nothing is loud**;
+from the view the same call **never reaches Lean, the stub catches the
+fallback, and it exits 97**. That is the exact route the 2026-08-23 A11 breach
+took — the row the ruling required to exist.
+
+One row had to be **re-anchored**: it asserts the comment-form gate's own rows
+are invoked, by matching the invocation at column 0, and the invocation now
+begins with the `cd`. Still anchored, so it still cannot match itself.
+
+### Triad
+
+`tools/triad.sh --self-test` **453 ok, 0 failed**; `ci.sh --verify-guards`
+**49 ok, 0 failed** (44 → 49). Every tool self-test and all three python
+self-tests re-run **from inside the view**, which is what CI will now do. No
+Lean executed: full `ci.sh` was deliberately **not** run, because its steps
+reach `leanpy` and this lane holds no ticket.

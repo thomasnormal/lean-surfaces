@@ -4,7 +4,7 @@ import LeanModels.Es.Json
 # `load_es_program` — elaboration-time envelope ingestion (`LeanModels.Es`)
 
 The ECMAScript lane's analogue of `load_program` and `load_c_program`:
-read an `es-0.1` envelope at ELABORATION time and define it as a
+read an `es-0.2` envelope at ELABORATION time and define it as a
 **literal** first-order term, so `#guard`s (and later, proofs) can unfold
 it.
 
@@ -34,7 +34,7 @@ deriving instance Lean.ToExpr for SourceType
 deriving instance Lean.ToExpr for Envelope
 
 /-- The schema this ingester reads. -/
-def acceptedSchema : String := "es-0.1"
+def acceptedSchema : String := "es-0.2"
 
 /-- The edition this tier claims. The same string that names
 `LeanModels/Es/ES2026/` and that `docs/es-edition.json` pins, so path,
@@ -43,7 +43,7 @@ def acceptedEdition : String := "ES2026"
 
 open Lean Elab Command in
 /--
-`load_es_program e from "path.json"` reads the `es-0.1` envelope at
+`load_es_program e from "path.json"` reads the `es-0.2` envelope at
 elaboration time and defines `e : Envelope` as a literal term.
 The path resolves against the current working directory — the package
 root under `lake build`.
@@ -59,7 +59,7 @@ elab "load_es_program " name:ident " from " path:str : command => do
   let envl ←
     match parseEnvelopeString contents with
     | .error e =>
-        throwErrorAt path "load_es_program: '{pathStr}' is not a valid es-0.1 envelope: {e}"
+        throwErrorAt path "load_es_program: '{pathStr}' is not a valid es-0.2 envelope: {e}"
     | .ok envl => pure envl
   unless envl.schemaVersion == acceptedSchema do
     throwErrorAt path

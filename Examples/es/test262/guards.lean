@@ -31,16 +31,37 @@ open LeanModels.Es
 
 load_es_program ifCptn from "Examples/es/test262/if_cptn.json"
 load_es_program classDup from "Examples/es/test262/class_dup_binding.json"
+/-- A fixture that CONTAINS DECLARATIONS. Its absence is why `es-0.1`'s
+node-type collision survived: ESTree gives `VariableDeclaration` a property
+called `kind`, the extractor wrote the node TYPE to `kind` as well, and the
+property won — so every `var` serialized with its type gone. Neither existing
+fixture had a declaration in it, and the vocabulary census reads acorn
+directly, so nothing looked. The scoreboard's first real run hit it on
+`assert.js`, which meant no test262 test had ever been ingestible. -/
+load_es_program varDecl from "Examples/es/test262/var_decl.json"
 
 /-! ## The envelope's own claims -/
 
-#guard ifCptn.schemaVersion == "es-0.1"
+#guard ifCptn.schemaVersion == "es-0.2"
 #guard ifCptn.languageVersion == "ES2026"
 #guard ifCptn.specRevision == "es2026-errata"
 #guard ifCptn.sourceType == SourceType.script
 #guard ifCptn.sourceFile == "test/language/statements/if/cptn-else-true-nrml.js"
 
 /-! ## The vocabulary is closed, and its size is the measured one -/
+
+/-! ### The node type survives an ESTree `kind` property — `es-0.2`'s reason -/
+
+#guard varDecl.schemaVersion == "es-0.2"
+/- The declaration ingests AT ALL, which is what `es-0.1` could not do. -/
+#guard match varDecl.parse with | .ok _ => true | .error .. => false
+/- Its type is `VariableDeclaration` and its own `kind` scalar is `"var"` —
+both present, neither having overwritten the other. -/
+#guard match varDecl.parse with
+  | .ok p =>
+    (p.kids "body").any (fun n =>
+      n.kindOf == some NodeKind.variableDeclaration && n.str? "kind" == some "var")
+  | .error .. => false
 
 #guard vocabularySize == 66
 #guard (kindOf? "IfStatement").isSome

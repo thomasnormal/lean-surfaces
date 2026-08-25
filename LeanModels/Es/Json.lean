@@ -107,7 +107,7 @@ an explicit list. -/
 mutual
 
 partial def parseNode (j : Json) : Except String Node := do
-  let kind ← getStr j "kind"
+  let kind ← getStr j "node_kind"
   let span ← parseSpan j
   if kind == "Unsupported" then
     return .unsupported (← getStr j "node_type") (← getStr j "text") span
@@ -119,7 +119,7 @@ partial def parseNode (j : Json) : Except String Node := do
     -- an `Unsupported` leaf.  One arriving here means the extractor and this
     -- ingester DISAGREE about the vocabulary, which is an error and says so
     -- rather than being quietly widened.
-    .error s!"kind '{kind}' is outside the pinned vocabulary — the extractor and the ingester disagree (see harness/es_census.py --check-schema)"
+    .error s!"node_kind '{kind}' is outside the pinned vocabulary — the extractor and the ingester disagree (see harness/es_census.py --check-schema)"
   | some k =>
     -- `Json.getObj?` gives a `Std.TreeMap.Raw String Json`, whose `toList` is
     -- sorted by key.  So both property lists are canonical and do not depend
@@ -130,14 +130,20 @@ partial def parseNode (j : Json) : Except String Node := do
     return .mk k span scalars children
 
 /-- Split a node's JSON fields into SCALARS and CHILDREN (`Ast.lean`'s
-`Node.mk`).  `kind` and `span` are the node's own header and are dropped. -/
+`Node.mk`).  `node_kind` and `span` are the node's own header and are dropped.
+
+**`kind` is NOT dropped** — it is an ordinary ESTree property on
+`VariableDeclaration` ("var"/"let"/"const"), `Property` ("init"/"get"/"set")
+and `MethodDefinition`, and the evaluator reads it as a scalar. The node's own
+type lives in `node_kind` precisely so the two cannot collide; they did, under
+`es-0.1`, and the type was the one that lost. -/
 partial def parseFields :
     List (String × Json) →
     Except String (List (String × Scalar) × List (String × List (Option Node)))
   | [] => .ok ([], [])
   | (name, v) :: rest => do
     let (ss, cs) ← parseFields rest
-    if name == "kind" || name == "span" then
+    if name == "node_kind" || name == "span" then
       return (ss, cs)
     match v with
     | .null => return ((name, .null) :: ss, cs)
@@ -148,12 +154,12 @@ partial def parseFields :
       let ns ← withCtx s!"property '{name}'" (parseNodeOpts a.toList)
       return (ss, (name, ns) :: cs)
     | .obj _ =>
-      match v.getObjVal? "kind" with
+      match v.getObjVal? "node_kind" with
       | .ok _ =>
         let n ← withCtx s!"property '{name}'" (parseNode v)
         return (ss, (name, [some n]) :: cs)
       | .error _ =>
-        .error s!"property '{name}': an object with no 'kind' is not a node"
+        .error s!"property '{name}': an object with no 'node_kind' is not a node"
 
 partial def parseNodeOpts : List Json → Except String (List (Option Node))
   | [] => .ok []

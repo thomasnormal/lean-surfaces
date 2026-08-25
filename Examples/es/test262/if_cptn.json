@@ -17,7 +17,7 @@
             {
               "arguments": [
                 {
-                  "kind": "Literal",
+                  "node_kind": "Literal",
                   "raw": "'1; if (true) { } else { }'",
                   "span": {
                     "col": 22,
@@ -32,8 +32,8 @@
                 }
               ],
               "callee": {
-                "kind": "Identifier",
                 "name": "eval",
+                "node_kind": "Identifier",
                 "span": {
                   "col": 17,
                   "end": 671,
@@ -43,7 +43,7 @@
                   "start": 667
                 }
               },
-              "kind": "CallExpression",
+              "node_kind": "CallExpression",
               "optional": false,
               "span": {
                 "col": 17,
@@ -55,8 +55,8 @@
               }
             },
             {
-              "kind": "Identifier",
               "name": "undefined",
+              "node_kind": "Identifier",
               "span": {
                 "col": 52,
                 "end": 711,
@@ -69,10 +69,10 @@
           ],
           "callee": {
             "computed": false,
-            "kind": "MemberExpression",
+            "node_kind": "MemberExpression",
             "object": {
-              "kind": "Identifier",
               "name": "assert",
+              "node_kind": "Identifier",
               "span": {
                 "col": 0,
                 "end": 656,
@@ -84,8 +84,8 @@
             },
             "optional": false,
             "property": {
-              "kind": "Identifier",
               "name": "sameValue",
+              "node_kind": "Identifier",
               "span": {
                 "col": 7,
                 "end": 666,
@@ -104,7 +104,7 @@
               "start": 650
             }
           },
-          "kind": "CallExpression",
+          "node_kind": "CallExpression",
           "optional": false,
           "span": {
             "col": 0,
@@ -115,7 +115,7 @@
             "start": 650
           }
         },
-        "kind": "ExpressionStatement",
+        "node_kind": "ExpressionStatement",
         "span": {
           "col": 0,
           "end": 713,
@@ -131,7 +131,7 @@
             {
               "arguments": [
                 {
-                  "kind": "Literal",
+                  "node_kind": "Literal",
                   "raw": "'2; if (true) { 3; } else { }'",
                   "span": {
                     "col": 22,
@@ -146,8 +146,8 @@
                 }
               ],
               "callee": {
-                "kind": "Identifier",
                 "name": "eval",
+                "node_kind": "Identifier",
                 "span": {
                   "col": 17,
                   "end": 735,
@@ -157,7 +157,7 @@
                   "start": 731
                 }
               },
-              "kind": "CallExpression",
+              "node_kind": "CallExpression",
               "optional": false,
               "span": {
                 "col": 17,
@@ -169,7 +169,7 @@
               }
             },
             {
-              "kind": "Literal",
+              "node_kind": "Literal",
               "raw": "3",
               "span": {
                 "col": 55,
@@ -185,10 +185,10 @@
           ],
           "callee": {
             "computed": false,
-            "kind": "MemberExpression",
+            "node_kind": "MemberExpression",
             "object": {
-              "kind": "Identifier",
               "name": "assert",
+              "node_kind": "Identifier",
               "span": {
                 "col": 0,
                 "end": 720,
@@ -200,8 +200,8 @@
             },
             "optional": false,
             "property": {
-              "kind": "Identifier",
               "name": "sameValue",
+              "node_kind": "Identifier",
               "span": {
                 "col": 7,
                 "end": 730,
@@ -220,7 +220,7 @@
               "start": 714
             }
           },
-          "kind": "CallExpression",
+          "node_kind": "CallExpression",
           "optional": false,
           "span": {
             "col": 0,
@@ -231,7 +231,7 @@
             "start": 714
           }
         },
-        "kind": "ExpressionStatement",
+        "node_kind": "ExpressionStatement",
         "span": {
           "col": 0,
           "end": 772,
@@ -247,7 +247,7 @@
             {
               "arguments": [
                 {
-                  "kind": "Literal",
+                  "node_kind": "Literal",
                   "raw": "'4; if (true) { } else { 5; }'",
                   "span": {
                     "col": 22,
@@ -262,8 +262,8 @@
                 }
               ],
               "callee": {
-                "kind": "Identifier",
                 "name": "eval",
+                "node_kind": "Identifier",
                 "span": {
                   "col": 17,
                   "end": 794,
@@ -273,7 +273,7 @@
                   "start": 790
                 }
               },
-              "kind": "CallExpression",
+              "node_kind": "CallExpression",
               "optional": false,
               "span": {
                 "col": 17,
@@ -285,8 +285,8 @@
               }
             },
             {
-              "kind": "Identifier",
               "name": "undefined",
+              "node_kind": "Identifier",
               "span": {
                 "col": 55,
                 "end": 837,
@@ -299,10 +299,10 @@
           ],
           "callee": {
             "computed": false,
-            "kind": "MemberExpression",
+            "node_kind": "MemberExpression",
             "object": {
-              "kind": "Identifier",
               "name": "assert",
+              "node_kind": "Identifier",
               "span": {
                 "col": 0,
                 "end": 779,
@@ -314,8 +314,8 @@
             },
             "optional": false,
             "property": {
-              "kind": "Identifier",
               "name": "sameValue",
+              "node_kind": "Identifier",
               "span": {
                 "col": 7,
                 "end": 789,
@@ -334,7 +334,7 @@
               "start": 773
             }
           },
-          "kind": "CallExpression",
+          "node_kind": "CallExpression",
           "optional": false,
           "span": {
             "col": 0,
@@ -345,7 +345,7 @@
             "start": 773
           }
         },
-        "kind": "ExpressionStatement",
+        "node_kind": "ExpressionStatement",
         "span": {
           "col": 0,
           "end": 839,
@@ -361,7 +361,7 @@
             {
               "arguments": [
                 {
-                  "kind": "Literal",
+                  "node_kind": "Literal",
                   "raw": "'6; if (true) { 7; } else { 8; }'",
                   "span": {
                     "col": 22,
@@ -376,8 +376,8 @@
                 }
               ],
               "callee": {
-                "kind": "Identifier",
                 "name": "eval",
+                "node_kind": "Identifier",
                 "span": {
                   "col": 17,
                   "end": 861,
@@ -387,7 +387,7 @@
                   "start": 857
                 }
               },
-              "kind": "CallExpression",
+              "node_kind": "CallExpression",
               "optional": false,
               "span": {
                 "col": 17,
@@ -399,7 +399,7 @@
               }
             },
             {
-              "kind": "Literal",
+              "node_kind": "Literal",
               "raw": "7",
               "span": {
                 "col": 58,
@@ -415,10 +415,10 @@
           ],
           "callee": {
             "computed": false,
-            "kind": "MemberExpression",
+            "node_kind": "MemberExpression",
             "object": {
-              "kind": "Identifier",
               "name": "assert",
+              "node_kind": "Identifier",
               "span": {
                 "col": 0,
                 "end": 846,
@@ -430,8 +430,8 @@
             },
             "optional": false,
             "property": {
-              "kind": "Identifier",
               "name": "sameValue",
+              "node_kind": "Identifier",
               "span": {
                 "col": 7,
                 "end": 856,
@@ -450,7 +450,7 @@
               "start": 840
             }
           },
-          "kind": "CallExpression",
+          "node_kind": "CallExpression",
           "optional": false,
           "span": {
             "col": 0,
@@ -461,7 +461,7 @@
             "start": 840
           }
         },
-        "kind": "ExpressionStatement",
+        "node_kind": "ExpressionStatement",
         "span": {
           "col": 0,
           "end": 901,
@@ -472,7 +472,7 @@
         }
       }
     ],
-    "kind": "Program",
+    "node_kind": "Program",
     "sourceType": "script",
     "span": {
       "col": 0,
@@ -483,7 +483,7 @@
       "start": 0
     }
   },
-  "schema_version": "es-0.1",
+  "schema_version": "es-0.2",
   "source_file": "test/language/statements/if/cptn-else-true-nrml.js",
   "source_sha256": "240a23b9a9fde3972e093d1aeb21b07d4128da031efbaa6c2408749be7913edc",
   "source_type": "script",

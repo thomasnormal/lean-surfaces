@@ -1,4 +1,4 @@
-# The ECMAScript envelope — schema `es-0.1`
+# The ECMAScript envelope — schema `es-0.2`
 
 Normative for `extractors/es/extract.py` and for `LeanModels/Es/Json.lean`.
 Mirrors `docs/envelope-schema.md`, `docs/sv-envelope-schema.md` and
@@ -56,7 +56,7 @@ by a measurement in `docs/es262-census.json`, and none is a preference.
 
 ```json
 {
-  "schema_version": "es-0.1",
+  "schema_version": "es-0.2",
   "language": "ecmascript",
   "language_version": "ES2026",
   "spec_revision": "es2026-errata",

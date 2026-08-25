@@ -17,7 +17,7 @@
     "status": "error"
   },
   "program": null,
-  "schema_version": "es-0.1",
+  "schema_version": "es-0.2",
   "source_file": "test/language/statements/class/syntax/early-errors/class-definition-evaluation-block-duplicate-binding.js",
   "source_sha256": "7abb5ea97cce86a09a2fc5099d0e40fee4213c64a5ef3a436d8defa780d2fbdd",
   "source_type": "script",

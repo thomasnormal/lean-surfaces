@@ -1271,3 +1271,71 @@ for, and the first thing it caught was the harness rather than the model.
 evaluator's own arms — four inches of exact prediction-vs-actual measuring
 the instrument against itself. This is the first instrument in the lane that
 runs the tests.
+
+---
+
+## 2026-08-25-es-2 — the envelope's node type was being overwritten by ESTree's own `kind`, and no test262 test had ever been ingestible
+
+`extractors/es/extract.py`, `LeanModels/Es/{Json,Load}.lean`,
+`docs/es-envelope-schema.md`, `Examples/es/test262/` — **schema `es-0.1` -> `es-0.2`.**
+
+### WHAT THE SECOND SCOREBOARD RUN FOUND
+
+Build GREEN, corpus verified, runner built and RUN — and `attempted 0`, with
+every one of the eleven zero-states genuinely zero. The bucket-level
+conservation held; the population-level check said nobody was ever attempted.
+
+Running the built binary on five tests gave the answer in one line:
+
+    es-score: prelude 'assert-….json' is not an envelope: parse: program:
+    property 'body': property 'body': property 'body': kind 'var' is outside
+    the pinned vocabulary
+
+### THE DEFECT
+
+The extractor wrote the node TYPE into a field called `kind`, then merged the
+node's ESTree properties over it. **ESTree gives `VariableDeclaration` a
+property called `kind`** (`"var"`/`"let"`/`"const"`) — and `Property`
+(`"init"`/`"get"`/`"set"`) and `MethodDefinition` the same. The property won.
+Every declaration serialized as `{"kind": "var", …}` with its type GONE, and
+the ingester refused it as an unknown kind.
+
+So **no test262 test had ever been ingestible**, because `assert.js` is full of
+`var` and every test loads it.
+
+### WHY NOTHING CAUGHT IT FOR FOUR INCHES
+
+Three independent gaps, and each looked reasonable alone:
+
+* **Both round-trip fixtures happened to contain no declaration.**
+  `if_cptn.json` is all `ExpressionStatement`s; `class_dup_binding.json` is a
+  negative parse. The gate was real and simply never saw a `var`.
+* **The vocabulary census reads acorn DIRECTLY**, not through the extractor,
+  so `VariableDeclaration` counted as present at every step.
+* **The evaluator's guards build `Node` terms BY HAND** — `Node.mk
+  .variableDeclaration … [("kind", .str "var")]` — so the Lean side was
+  correct and tested, and the JSON side was never exercised with a
+  declaration.
+
+**Every instrument was measuring something true. None of them was measuring
+the path a test actually takes**, and that path did not exist until the
+scoreboard. This is the first defect in this lane that only a running corpus
+could find, and it is the strongest argument for the scoreboard that could
+have been produced.
+
+### THE FIX
+
+The node type moves to `node_kind`, which is not an ESTree property name, so
+the collision cannot recur for any node type. ESTree's `kind` flows through as
+an ordinary scalar — which is what the evaluator already reads (`n.str?
+"kind"`), so **no evaluator code changed**. Schema bumped to `es-0.2` and the
+ingester pins it.
+
+### THE GATES THAT WERE MISSING, NOW PRESENT
+
+* `extract.py --self-test` lowers a `VariableDeclaration`, a `Property` and a
+  `MethodDefinition` that each carry their own `kind`, and asserts BOTH the
+  node type and the property survive.
+* `Examples/es/test262/var_decl.json` is a new fixture that CONTAINS a
+  declaration, with a guard that its `kindOf` is `variableDeclaration` and its
+  `kind` scalar is `"var"` — the round trip the old fixtures could not test.

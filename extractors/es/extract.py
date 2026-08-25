@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""extract.py — an ECMAScript source -> the es-0.1 envelope (docs/es-envelope-schema.md).
+"""extract.py — an ECMAScript source -> the es-0.2 envelope (docs/es-envelope-schema.md).
 
 The frontend is an ESTree producer (acorn) driven by
 `extractors/es/estree_dump.mjs`, ONE node process for the whole batch; this
@@ -48,7 +48,7 @@ import re
 import subprocess
 import sys
 
-SCHEMA_VERSION = "es-0.1"
+SCHEMA_VERSION = "es-0.2"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -174,10 +174,27 @@ def lower(node, src, stats):
         stats["unsupported_types"].add(ntype)
         s, e = node.get("start"), node.get("end")
         text = src[s:e] if isinstance(s, int) and isinstance(e, int) else ""
-        return {"kind": "Unsupported", "node_type": ntype,
+        return {"node_kind": "Unsupported", "node_type": ntype,
                 "text": text[:UNSUPPORTED_TEXT], "span": span_of(node, src)}
     stats["kinds"][ntype] = stats["kinds"].get(ntype, 0) + 1
-    out = {"kind": ntype, "span": span_of(node, src)}
+    # THE NODE TYPE GOES IN `node_kind`, NOT `kind`.
+    #
+    # ESTree has its OWN `kind` property on VariableDeclaration ("var" /
+    # "let" / "const"), Property ("init" / "get" / "set") and
+    # MethodDefinition. Writing the node type into `kind` and then merging the
+    # node's properties over it SILENTLY OVERWRITES the type: every `var`
+    # declaration serialized as `{"kind": "var", ...}` with its type gone, and
+    # the ingester refused it as an unknown kind.
+    #
+    # It survived to 2026-08-25 because both round-trip fixtures happened to
+    # contain no declaration at all, and because the vocabulary census reads
+    # acorn directly rather than through this file. The first thing that ever
+    # fed the extractor a real corpus — the scoreboard — hit it on `assert.js`,
+    # which means no test262 test had ever been ingestible.
+    #
+    # `node_kind` is not an ESTree property name, so the collision cannot recur
+    # for any node type; `kind` now flows through as an ordinary scalar.
+    out = {"node_kind": ntype, "span": span_of(node, src)}
     if ntype == "Literal":
         lower_literal(node, out)
         return out
@@ -288,13 +305,26 @@ def self_test():
         src = "x"
         node = {"type": "Decorator", "start": 0, "end": 1}
         out = lower(node, src, stats)
-        assert out["kind"] == "Unsupported" and out["node_type"] == "Decorator", out
+        assert out["node_kind"] == "Unsupported" and out["node_type"] == "Decorator", out
         assert stats["unsupported"] == 1
         ok.append("an out-of-vocabulary node becomes an Unsupported leaf")
         num = lower({"type": "Literal", "start": 0, "end": 3, "value": 0.1, "raw": "0.1"},
                     "0.1", stats)
         assert num["value_type"] == "number" and num["value"] == "0.1" and isinstance(num["value"], str), num
         ok.append("a numeric literal keeps its RAW TEXT, never a host double")
+        # THE COLLISION THAT COST THE FIRST SCOREBOARD RUN. ESTree gives
+        # VariableDeclaration, Property and MethodDefinition a property called
+        # `kind`. Under es-0.1 the node TYPE was written to `kind` too, and the
+        # property overwrote it — every `var` serialized with its type gone.
+        # No fixture contained a declaration, so nothing caught it until a real
+        # corpus was fed through and `assert.js` refused to ingest.
+        for ntype, own in (("VariableDeclaration", "var"),
+                           ("Property", "init"),
+                           ("MethodDefinition", "get")):
+            n = lower({"type": ntype, "start": 0, "end": 1, "kind": own}, "x", stats)
+            assert n["node_kind"] == ntype, (ntype, n)
+            assert n["kind"] == own, (ntype, n)
+        ok.append("an ESTree `kind` property cannot overwrite the node type")
     for line in ok:
         print("  ok:", line)
     return 0

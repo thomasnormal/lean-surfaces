@@ -3133,3 +3133,74 @@ landing already measured its shards as independent. **A 1.7× on a splittable
 515 s beats a 1.26× on an unsplittable 962 s**, and the sequencing argument that
 put genmoves_ray first (962 > 515) assumed a splittability the census has now
 refuted.
+
+## 2026-08-25-pycomplete-36 — pricing the d2/d3 pair-split: take the exit, and the reason is stronger than the threshold
+
+### The local numbers, per the discipline
+
+Fitting `time = import + nodes x rate` on the **three d-shards measured in one
+run** (65 s/71, 515 s/826, 454 s/653):
+
+> **per-node 0.6144 s · per-file import 27.2 s**
+
+Pair-split halves: **d2 → 2 x 281 s**, **d3 → 2 x 228 s**. New family path is
+`max(281, 228, 277, 65, 51, 26, 10)` = **281 s**, so **515 → 281 = 1.83x**,
+above the 1.3x line. Import-tax increment is **+2 files x 27.2 s = +54 s** of
+total CPU — on the books, as noted.
+
+**Imbalance target**: the family floor is not d2 at all, it is **`pins_bound_h`
+at 277 s**. Splitting d2/d3 below ~280 s buys nothing, so the family's best
+achievable is **1.86x** no matter how finely the depths divide.
+
+### And it does not matter, because these modules are LEAVES
+
+| module | time |
+|---|---|
+| **`pins_clock_walk`** | **1336 s** ← the ceiling |
+| `genmoves_ray` | 547 s |
+| `pins_bound_mid_d2` | 515 s |
+| `pins_bound_h` | 277 s |
+
+`pins_bound_*` are **leaf modules — nothing imports them.** A leaf is never on
+the dependency critical path: it can always be scheduled beside other work
+whenever a worker is free. **For a leaf, only its TOTAL CPU matters, and
+sharding increases that.**
+
+Both load regimes agree, which is what makes this robust rather than a
+one-measurement artifact:
+
+- **Latency-bound** (12 cores, quiet box): floor is `pins_clock_walk` at
+  **1336 s**. The bound family sits at 515 s, already **2.6x below the
+  ceiling** → splitting saves **exactly zero**.
+- **Throughput-bound** (measured: 4447 s elaboration / 2474 s wall = **1.80
+  effective workers** under contention): splitting adds 54 s CPU ≈ **+30 s
+  wall** → **negative**.
+
+> **Zero in one regime, negative in the other. The exit is the right call.**
+
+### The corollary I have to state about the split I just landed
+
+The same argument applies **retroactively**. The depth split delivered its
+predicted 1.88x on the *family's* critical path — but the bound family was
+**already below the fleet ceiling**, and it is a leaf. So that 1.88x bought
+**no wall-clock time**, while costing **+18% CPU (+159 s)**.
+
+The dispatch's premise — *"pins_clock and pins_bound together are ~85% of every
+full spine build's elaboration"* — is a **throughput** statement. Sharding is a
+**latency** instrument. It improves the quantity that was not binding and
+worsens the one that was.
+
+> **Sharding a leaf optimises a number that cannot be on the critical path.**
+> If 85% of elaboration lives in two families, the throughput fix is to make
+> those proofs *cheaper*, not to spread them across more files.
+
+### Where the remaining win actually is
+
+**`pins_clock_walk` at 1336 s** — the ceiling, 2.6x the next module. In the
+latency-bound regime it *alone* sets the floor, so it is the only module whose
+improvement is guaranteed to move the build. Whether it is splittable is
+**unknown and must be censused before it is priced** — `genmoves_ray` looked
+splittable by name and was not.
+
+**Recommendation: stop the sharding program here**, and re-aim at proof cost
+(throughput) or at `pins_clock_walk` (the one binding latency).

@@ -1200,3 +1200,110 @@ census caught one that had.
 
 **Not run; not applicable.** Appends to this file only; no Lean, no vendored
 file changed. `docs_check` passes; `tools/backlog-index.sh` re-run per §9.5.
+
+---
+
+## 2026-08-25-wasm-12 — **THE A′ CAPSTONE IS PROVED**: subtyping is admissible for `Instrs_ok2`, and the branch re-census fired on its first use
+
+**LEDGER (§9.0): 5/5 subtyping-corner obligations (CLOSED) · A′ ladder 4/23.**
+`instrs_ok2_wf`, `instrs_ok2_wf_instr`, `instrs_ok2_frame_sub`, and the
+capstone **`instrs_ok2_subtyping`**.
+
+`[22:45:35] LOCK ACQUIRED after 6548s as 'wasm 74112'` → `build exit=1` →
+`[22:46:17] GATES NOT RUN (aborted triad)` → `[22:46:18] LOCK RELEASED (mine)`.
+
+**PIN COMPARISON — MATCH on all four rows:**
+
+| pinned | measured |
+| --- | --- |
+| `SubtypingPort` **GREEN** | `✔ [3001/3003] Built SubtypingPort (25s)` |
+| its errors **0** | **0** (and **0 warnings**) |
+| failing modules **1** | **1** (`typing_lemmas`) |
+| `typing_lemmas` errors **6** | **6**, at 371, 380, 537, 1035, 1113, 1865 |
+
+**PIN: UNCHANGED.** `typing_lemmas.lean` untouched; 371/380 stand as
+known-broken; the pre-agreed 6 → 4 remains a recorded non-event. Elaboration
+moved 12s → 25s — the A′ ladder's cost, and the only number that shifted.
+
+### THE CAPSTONE
+
+> **`instrs_ok2_subtyping`** — if `(t1s → t2s) <ti: (t1s' → t2s')` and
+> `Instrs_ok2 s C e (t1s → t2s)`, then `Instrs_ok2 s C e (t1s' → t2s')`.
+
+**Subtyping is admissible for the typing judgment.** This is the theorem the
+19 properties of `Subtyping_Properties.thy` feed — and the lane proved those
+properties for five landings without knowing it existed, because the stale pin
+hid the file it lives in.
+
+### THE BRANCH RE-CENSUS FIRED ON ITS FIRST APPLICATION
+
+The rule adopted last landing (*re-census every branch before porting*) caught
+something immediately: **`lean-backend` had moved**, `b399351f9` (Aug 20) →
+`bf779f96b` (Aug 24), one `savepoint` commit landed mid-port.
+
+**The pin holds, and it was VERIFIED rather than assumed** — the three
+depended-on files are **byte-identical** across the move
+(`typing_lemmas.lean`, `wasm2.0.lean`, `custom_notation.lean`). Recorded for
+the day someone does chase HEAD: the lakefile now globs `sandbox_10`, which
+**would change the pinned "1 failing module" row** — a move to declare, never
+to absorb.
+
+**And an observation worth banking about the field:** that commit is
+*entirely* Lean metaprogramming scratch files — `scratch_motive`,
+`scratch_telescope`, `scratch_scope`, `scratch_debruijn`, `scratch_intro`. The
+backend author is building **eliminator machinery**, which is the same wall
+this lane's `Instrs_ok2.rec` idiom routes around. If it lands, the workaround
+may acquire a supported replacement, and this lane should re-read before
+inventing again.
+
+### THREE FINDINGS, AND EACH MADE THE PORT CHEAPER THAN ITS ORIGINAL
+
+1. **`cases` works where `induction` REFUSES.** The mutual-inductive
+   restriction is `induction`-only — `cases` needs no sibling motives. So
+   `instrs_ok2_wf` is one line: `cases h <;> exact ⟨by assumption, by
+   assumption⟩`. **A fourth idiom for this file**, and the cheapest yet.
+2. **The generated model is better shaped than the Isabelle one, here.**
+   Isabelle's `Instrs_ok2_wf_instr` routes through `wf_admininstr_instr` — an
+   induction over `wf_instr` with a **nested `Ref_ok` induction** — because its
+   `plain` case supplies `wf_instr`. The generated Lean `Instrs_ok2.instr`
+   constructor supplies **`wf_admininstr` directly**, so the whole detour
+   vanishes. *Isabelle-before-scratch is a default, not a ceiling: sometimes
+   the target is the better ground.*
+3. **`cases` REORDERS the premises** — `wf_context` lands last, the `Forall`s
+   mid-context — so **neither positional naming nor `rename_i`-from-the-end is
+   stable under it.** This directly contradicts the `rename_i` discipline that
+   works under `induction`, so the two are now both in the file with a comment
+   saying which applies where. Branches close by `assumption` /
+   `solve_by_elim` instead.
+
+**And the flagged ∃-form adaptation PAID rather than cost.** The definitional
+`instrtype_sub` destructures by `obtain`, where Isabelle must `cases` an
+inductive `Instrtype_sub` via `mk_Instrtype_sub`. The capstone is a handful of
+lines against Isabelle's structured `proof -` block. A formulation mismatch
+flagged in advance as a risk turned out to be an advantage — which is the
+argument for flagging them rather than discovering them.
+
+### Hygiene
+
+**0 diagnostics, 0 warnings, 20 declarations.** `harness/wasm_sorry_census.py`
+reports **0 live / 2 raw, 2 commented out** — both raw hits are prose in this
+lane's own comments, the raw-versus-live split doing its job for the third
+time. Fork clone **`fea8084ba`**, local only, **not pushed upstream**.
+
+### Remaining on the A′ ladder — 19 of 23
+
+* **`Subtyping_Properties.thy`**: 19 lemmas, ~13 already ported → **the
+  13-vs-19 diff is next**, to recover the six complete lemmas the stale pin
+  hid.
+* **`Typing_Simplified.thy`**: 12 of 14 remain.
+* **`Subtyping_Theorem.thy`**: the 2 `Instrs_ok` (static-typing) variants —
+  a relation this lane has not yet touched, so they are a genuinely new
+  surface rather than more of the same.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** Updates one vendored `.lean`
+outside `LeanModels` and the `Examples.+` glob, and appends to this file. No
+gate in this repository can reach the vendored file. `docs_check` passes;
+`tools/backlog-index.sh` re-run per §9.5. The Lean execution was in the
+**fork's** tree, under a ticket.

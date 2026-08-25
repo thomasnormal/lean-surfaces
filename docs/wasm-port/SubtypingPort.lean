@@ -544,4 +544,83 @@ theorem ais_single_typing_inversion (s : store) (c : context) (ai : admininstr)
       exact ⟨p, q, hp, instrtype_sub_frame _ _ _ _ hq⟩
   exact main [ai] (mkFunctype ts1 ts2) h ai ts1 ts2 rfl rfl
 
+/-! ## A′ — the subtyping THEOREM, above the properties
+
+    Ported from `Subtyping_Theorem.thy` and `Typing_Simplified.thy` on
+    `aaron/store_extension/reduction` (`14b78c2bb`) — three files that are
+    GREEN THROUGHOUT (19 + 14 + 4 lemmas, zero `sorry`, zero `oops`), unlike
+    `Properties_Aux.thy` where 7 of 16 are incomplete. -/
+
+/-- `Instrs_ok2` carries its well-formedness side conditions in EVERY
+    constructor, so this needs no induction at all.
+    Isabelle counterpart: `Instrs_ok2_wf` (`Typing_Simplified.thy:35`).
+
+    **`cases` works here where `induction` refuses.** The mutual-inductive
+    restriction that forced the `Instrs_ok2.rec` idiom elsewhere in this file
+    applies to `induction` only; `cases` needs no sibling motives. -/
+theorem instrs_ok2_wf {s : store} {c : context} {e : List admininstr} {ft : functype}
+    (h : Instrs_ok2 s c e ft) : wf_store s ∧ wf_context c := by
+  cases h <;> exact ⟨by assumption, by assumption⟩
+
+/-- Every instruction in a typed sequence is well-formed.
+    Isabelle counterpart: `Instrs_ok2_wf_instr` (`Typing_Simplified.thy:114`).
+
+    **Much cheaper in Lean than in Isabelle, and the model is why.** Isabelle's
+    proof routes through `wf_admininstr_instr` — an induction over `wf_instr`
+    with a nested `Ref_ok` induction — because its `plain` case supplies
+    `wf_instr`. The generated Lean `Instrs_ok2.instr` constructor supplies
+    **`wf_admininstr` directly**, so `cases` plus an append split closes it. -/
+theorem instrs_ok2_wf_instr {s : store} {c : context} {e : List admininstr} {ft : functype}
+    (h : Instrs_ok2 s c e ft) : Forall (fun a => wf_admininstr a) e := by
+  -- `cases` REORDERS the constructor's premises (`wf_context` lands last, the
+  -- `Forall`s in the middle), so neither positional naming nor `rename_i` from
+  -- the end is stable here. Each branch closes by `assumption` instead.
+  cases h with
+  | empty => intro a ha; exact absurd ha (by simp)
+  | instr => intro a ha; simp at ha; subst ha; assumption
+  | seq =>
+    intro a ha
+    rcases List.mem_append.mp ha with h' | h' <;> solve_by_elim
+  | sub => assumption
+  | Instrs_ok2_frame => assumption
+
+/-- A frame may be pushed on, with the two frame halves related by `subs<`.
+    Isabelle counterpart: `Instrs_ok2_frame_sub` (`Subtyping_Theorem.thy:41`). -/
+theorem instrs_ok2_frame_sub {s : store} {c : context} {e : List admininstr}
+    {ts ts' t1 t2 : List valtype}
+    (hts : ts subs< ts')
+    (h : Instrs_ok2 s c e (mkFunctype t1 t2)) :
+    Instrs_ok2 s c e (mkFunctype (ts ++ t1) (ts' ++ t2)) := by
+  obtain ⟨hs, hc⟩ := instrs_ok2_wf h
+  have hw := instrs_ok2_wf_instr h
+  have framed : Instrs_ok2 s c e (mkFunctype (ts ++ t1) (ts ++ t2)) :=
+    Instrs_ok2.Instrs_ok2_frame s c e ts t1 t2 h hs hc hw
+  exact Instrs_ok2.sub s c e (ts ++ t1) (ts' ++ t2) (ts ++ t1) (ts ++ t2) framed
+    (rt_sub_refl _) (rt_sub_app _ _ _ _ hts (rt_sub_refl t2)) hs hc hw
+
+/-- **THE A′ CAPSTONE.** Subtyping is ADMISSIBLE for the typing judgment: a
+    typed instruction sequence may be retyped at any supertype.
+    Isabelle counterpart: `Instrs_ok2_subtyping` (`Subtyping_Theorem.thy:57`).
+
+    **The formulation differs and the adaptation is the interesting part.**
+    Isabelle destructures an INDUCTIVE `Instrtype_sub` via its constructor
+    `mk_Instrtype_sub`; this port carries the DEFINITIONAL ∃-form transcribed
+    from `typing_lemmas.lean:1015`, so the frame decomposition arrives by
+    `obtain` rather than by `cases` — shorter, and it is why the proof below is
+    a handful of lines against Isabelle's structured block. -/
+theorem instrs_ok2_subtyping {s : store} {c : context} {e : List admininstr}
+    {t1s t2s t1s' t2s' : List valtype}
+    (hsub : instrtype_sub (mkFunctype t1s t2s) (mkFunctype t1s' t2s'))
+    (h : Instrs_ok2 s c e (mkFunctype t1s t2s)) :
+    Instrs_ok2 s c e (mkFunctype t1s' t2s') := by
+  obtain ⟨ri, ro, si, no, hx, hy, hio, hsi, hno⟩ := hsub
+  obtain ⟨hs, hc⟩ := instrs_ok2_wf h
+  have hw := instrs_ok2_wf_instr h
+  -- retype the body at (si -> no) by subsumption, then frame with ri/ro
+  have inner : Instrs_ok2 s c e (mkFunctype si no) :=
+    Instrs_ok2.sub s c e si no t1s t2s h hsi hno hs hc hw
+  have framed := instrs_ok2_frame_sub hio inner
+  rw [hx, hy]
+  exact framed
+
 end SubtypingPort

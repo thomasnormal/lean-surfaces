@@ -291,6 +291,11 @@ CLASSIFY_ONLY=0
 FOREIGN=0
 BUILD_CURRENT_TREE=0
 GATES_ONLY=0
+# --gates-no-lean: the lane ATTESTS that its gates start no Lean, and the
+# attestation is MEASURED, never believed.  A declaration is exactly the trust
+# the leanpy chain broke: a comment claimed inert and the gate built anyway.
+GATES_NO_LEAN=0
+ATTEST_HELD=0
 AGAINST=""                                     # merge target; default below
 
 # The header IS the usage text, so print it whole — a `sed -n '1,60p'` goes
@@ -322,6 +327,7 @@ while [ $# -gt 0 ]; do
     --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
     --gates)      need_val "$#" "$1"; GATES="$2"; shift 2 ;;
     --gates-only) need_val "$#" "$1"; GATES="$2"; GATES_ONLY=1; shift 2 ;;
+    --gates-no-lean) GATES_NO_LEAN=1; shift ;;
     --rss-limit)      need_val "$#" "$1"; RSS_CHAIN_LIMIT_KB="$2"; shift 2 ;;
     --rss-proc-limit) need_val "$#" "$1"; RSS_PROC_LIMIT_KB="$2"; shift 2 ;;
     --version)        banner; exit 0 ;;
@@ -1171,6 +1177,16 @@ tenure_needed() {       # class, lane's own --gates -> yes | no
   # shells out to nothing — so a docs-only landing owes no tenure.  A lane
   # that brought its OWN gates keeps the tenure, because this script cannot
   # know whether one of them starts a Lean process.  Never downgrade.
+  #
+  # QOL-72'S LINE, NOW CONDITIONAL — AND ONLY HALF OF IT.  `--gates-no-lean`
+  # lets the script know, so the BUILD is skippable (see SKIP_BUILD).  The
+  # TENURE IS NOT, and that asymmetry is the whole safety argument: the shims
+  # and the view make a violation impossible for Lean reachable by name or by
+  # repo path, but the named residual — an absolute path OUTSIDE the repo —
+  # would be a Lean process running with no lock, which is an A11 breach and
+  # not merely a wrong claim.  Holding the lock costs a lane nothing it was
+  # not already paying, so the residual stays INSIDE the protocol.  Never
+  # downgrade means never downgrade the lock.
   case "$1" in
     docs) if [ -n "$2" ]; then echo yes; else echo no; fi ;;
     *)    echo yes ;;
@@ -1667,6 +1683,82 @@ acquire_check() {               # -> "ok <readings>" | "defer <readings> — <wh
   printf 'ok %s' "$r"
 }
 
+# ---- ENFORCED NO-LEAN ATTESTATION (SV's 4.5 h spine build, 2026-08-26)
+#
+# A lane had no way to say "this gate starts no Lean", so the honest choice
+# cost a full build and the cheap choice silently skipped the instrument.
+# `--gates-no-lean` says it; this code MEASURES it.
+#
+# > attested = no repo-reachable Lean, plus observation for the rest
+#
+# That sentence is the whole claim, and it is deliberately not "proof".  TWO
+# mechanisms, because one is not enough:
+#
+#   PATH SHIMS catch Lean reached BY NAME (`lake`, `lean`, the lake exes).
+#   A .lake-LESS VIEW catches Lean reached BY ABSOLUTE PATH -- which is the
+#   route `tools/leanpy` actually takes: it runs
+#   `REPO_ROOT/.lake/build/bin/leanmodels-run` directly and only falls back to
+#   `lake` when that binary is ABSENT.  A PATH shim alone would have passed it
+#   on every warm clone, which is every lane's.  Same tool as the two-hop
+#   incident, one level down: the recurrence is what proves the class.
+#
+# THE RESIDUAL, NAMED: a gate hardcoding a path OUTSIDE the repo (the toolchain
+# lives in ~/.elan) evades both.  The descendants sampler below is the backstop,
+# and ITS residual is a process short-lived enough to fall between samples.
+attested_env() {                # -> "<shimdir> <viewdir>"
+  local d v e
+  d="$(mktemp -d "${TMPDIR:-/tmp}/attest-shim.XXXXXX")" || return 1
+  v="$(mktemp -d "${TMPDIR:-/tmp}/attest-view.XXXXXX")" || return 1
+  for e in lake lean $(lake_exe_names); do
+    cat > "$d/$e" <<SHIM
+#!/usr/bin/env bash
+printf 'by name: %s\n' "$e" >> "\$ATTEST_MARK"
+echo "ATTESTATION FALSE: a gate invoked '$e' under --gates-no-lean" >&2
+exit 97
+SHIM
+    chmod +x "$d/$e"
+  done
+  for e in $(ls -A "$CLONE" 2>/dev/null); do
+    [ "$e" = ".lake" ] && continue
+    ln -s "$CLONE/$e" "$v/$e" 2>/dev/null || true
+  done
+  printf '%s %s' "$d" "$v"
+}
+
+run_gates_attested() {          # gate list -> sets rc; verifies the attestation
+  local pair d v savedpath savedpwd sampler
+  pair="$(attested_env)" || { rc=1; say "ATTESTATION: could not build the shim/view"; return 0; }
+  d="${pair%% *}"; v="${pair#* }"
+  ATTEST_MARK="$d/violations"; : > "$ATTEST_MARK"; export ATTEST_MARK
+  say "attested run: PATH shims + a .lake-less view of the clone"
+  say "  (attested = no repo-reachable Lean, plus observation for the rest)"
+  # THE BACKSTOP, sampling our own descendants by parentage only.
+  ( while :; do
+      for _p in $(descendants $$ 2>/dev/null); do
+        case "$(ps -o comm= -p "$_p" 2>/dev/null)" in
+          *lean*|*lake*) printf 'observed: pid %s\n' "$_p" >> "$ATTEST_MARK" ;;
+        esac
+      done
+      sleep 2
+    done ) 2>/dev/null & sampler=$!
+  savedpath="$PATH"; savedpwd="$PWD"
+  PATH="$d:$PATH"
+  cd "$v" 2>/dev/null || { rc=1; kill "$sampler" 2>/dev/null; return 0; }
+  run_gates "$1"                # NOT in a subshell: rc must survive
+  cd "$savedpwd" 2>/dev/null || true
+  PATH="$savedpath"
+  kill "$sampler" 2>/dev/null; wait "$sampler" 2>/dev/null
+  if [ -s "$ATTEST_MARK" ]; then
+    rc=1
+    say "ATTESTATION FALSE — --gates-no-lean was claimed and a gate reached Lean:"
+    sort -u "$ATTEST_MARK" | sed 's/^/    /' | while IFS= read -r _l; do say "$_l"; done
+    say "  The attestation is the claim that was wrong, not the gate's verdict."
+  else
+    ATTEST_HELD=1
+  fi
+  return 0
+}
+
 merge_target_ref() {
   # THE A13 CAVEAT, and it has caught four lanes: a seeded clone inherits the
   # peer's REMOTES, so `origin` can be a stale local bundle and
@@ -2041,6 +2133,28 @@ gate_spec_refusal() {   # gate list [origin] -> a reason on stdout, or nothing
 $(gate_split "$1")
 EOF
   return 1
+}
+
+# MOVED ABOVE THE SELF-TEST (2026-08-26) so the rows drive the REAL gate
+# runner instead of a stub.  A stub would have tested the stub: the attested
+# rows below need the actual `sh -c` that the tenure uses, because what they
+# measure is what a gate can REACH from inside it.  Nothing else moved.
+# ------------------------------------------------------- run the gate list
+# Factored out because the docs-only path runs gates WITHOUT a tenure and the
+# normal path runs them INSIDE one.  One implementation, two callers.
+rc=0
+run_gates() {                         # "cmd; cmd" -> sets rc
+  # READ FROM gate_split, never from IFS word splitting: `IFS=';'` knows
+  # nothing about quotes, which is how ONE command became five gates.
+  local g
+  while IFS= read -r g; do
+    g="$(printf '%s' "$g" | sed -e 's/^ *//' -e 's/ *$//')"
+    [ -n "$g" ] || continue        # refused at enqueue; belt for a direct caller
+    say "=== gate: $g ==="
+    nice -n "$NICE" sh -c "$g" || { rc=1; say "  GATE FAILED: $g"; }
+  done <<EOF
+$(gate_split "$1")
+EOF
 }
 
 if [ "$SELF_TEST" = "1" ]; then
@@ -3387,6 +3501,105 @@ if [ "$SELF_TEST" = "1" ]; then
   check "empty targets == one FULL build" "$_n" "0"
   BUILD_TARGETS=""
 
+  # ---- ENFORCED NO-LEAN ATTESTATION, exercised all THREE ways (2026-08-26)
+  # A declaration is worthless unless the code that disproves it is itself
+  # tested, so these rows drive the real `run_gates` through the real shim and
+  # the real view.  The fake clone carries a lakefile and a BUILT binary,
+  # because a warm clone is the only interesting case: the cold one passes by
+  # accident.
+  _sv_clone="$CLONE"; _sv_path="$PATH"; _sv_pwd="$PWD"
+  _fc="$(mktemp -d "${TMPDIR:-/tmp}/attest-fake.XXXXXX")"
+  mkdir -p "$_fc/.lake/build/bin" "$_fc/tools"
+  printf '[[lean_exe]]\nname = "fake-run"\n' > "$_fc/lakefile.toml"
+  printf '#!/bin/sh\necho ran-the-binary\n' > "$_fc/.lake/build/bin/fake-run"
+  chmod +x "$_fc/.lake/build/bin/fake-run"
+  # A FAITHFUL STAND-IN FOR tools/leanpy: root from the script's OWN path
+  # without resolving symlinks (python's abspath, checked, not assumed), the
+  # built binary by ABSOLUTE PATH, and `lake` only as the fallback.
+  printf '%s\n' '#!/bin/sh' \
+    'R="$(cd "$(dirname "$0")/.." && pwd)"' \
+    'if [ -x "$R/.lake/build/bin/fake-run" ]; then exec "$R/.lake/build/bin/fake-run"; fi' \
+    'exec lake build' > "$_fc/tools/fakepy"
+  chmod +x "$_fc/tools/fakepy"
+  CLONE="$_fc"
+  _said() { grep -q "$2" "$1" && echo yes || echo no; }
+
+  # (1) AN HONEST GATE: it passes, and the attestation holds.
+  rc=0; ATTEST_HELD=0
+  run_gates_attested "true" > "$_fc/out1" 2>&1
+  check "attested: honest gate passes" "$rc" "0"
+  check "attested: honest gate -> attestation HELD" "$ATTEST_HELD" "1"
+  check "attested: honest gate says nothing false" "$(_said "$_fc/out1" 'ATTESTATION FALSE')" "no"
+
+  # (2) LEAN BY NAME: the PATH shim catches it, and the failure is LOUD.
+  rc=0; ATTEST_HELD=0
+  run_gates_attested "lake build" > "$_fc/out2" 2>&1
+  check "attested: lake-shelling gate FAILS" "$rc" "1"
+  check "attested: lake-shelling gate -> attestation not held" "$ATTEST_HELD" "0"
+  check "attested: shim names the binary" "$(_said "$_fc/out2" "invoked 'lake'")" "yes"
+  check "attested: the run is loud about it" "$(_said "$_fc/out2" 'ATTESTATION FALSE')" "yes"
+
+  # (3) THE DISTINGUISHING ROW — Lean by ABSOLUTE PATH, which is the route the
+  # real leanpy takes.  A PATH shim cannot see this; the .lake-less view is
+  # what turns it into the fallback that the shim CAN see.
+  rc=0; ATTEST_HELD=0
+  run_gates_attested "sh tools/fakepy" > "$_fc/out3" 2>&1
+  check "attested: absolute-path gate FAILS" "$rc" "1"
+  check "attested: absolute-path gate -> attestation not held" "$ATTEST_HELD" "0"
+  check "attested: it never reached the built binary" "$(_said "$_fc/out3" 'ran-the-binary')" "no"
+
+  # ...and the row that says WHY the view is not redundant: with the shims
+  # ALONE, on a warm clone, that same gate finds the binary and the
+  # attestation would have FALSELY HELD.  This row is the design's argument.
+  _pair="$(attested_env)"; _d="${_pair%% *}"
+  ATTEST_MARK="$_fc/mark-shimonly"; : > "$ATTEST_MARK"; export ATTEST_MARK
+  PATH="$_d:$_sv_path"
+  ( cd "$_fc" && sh tools/fakepy ) > "$_fc/out4" 2>&1
+  PATH="$_sv_path"
+  check "shims ALONE see nothing (why the view exists)" "$(wc -c < "$ATTEST_MARK" | tr -d ' ')" "0"
+  check "shims ALONE let it run the binary" "$(_said "$_fc/out4" 'ran-the-binary')" "yes"
+
+  # The static pre-filter is a FILTER, not the proof: it matches by gate text.
+  check "runner-target pre-filter matches a known gate" \
+    "$([ -n "$(gate_runner_targets 'python3 harness/divergence_register.py')" ] && echo yes || echo no)" "yes"
+  check "runner-target pre-filter is SILENT on an unknown one" \
+    "$([ -n "$(gate_runner_targets 'sh tools/fakepy')" ] && echo yes || echo no)" "no"
+
+  CLONE="$_sv_clone"; PATH="$_sv_path"; cd "$_sv_pwd" || true
+  rm -rf "$_fc"
+
+  # ---- AND THE SAME FLAG END TO END, because the rows above test the
+  # MECHANISM and the mechanism was never the part that broke.  Running the
+  # flag for real turned up three defects the passing rows could not see: the
+  # positive `Build completed successfully` assertion read an empty log and
+  # called a deliberately skipped build RED; then, once green, the run printed
+  # "a green covers every default target at this sha" over a build that never
+  # ran and recorded it as a CHAIN ROOT.  A green that overclaims is the one
+  # failure this lane exists to prevent, and it was mine.
+  echo "  -- attested, end to end"
+  printf '# d edited\n' >> "$fr/docs/a.md"; git -C "$fr" add docs/a.md
+  rm -f "$fr/.git/triad-greens"
+  out="$(flagrun --classify --against HEAD --gates-only 'true' --gates-no-lean)"
+  check "attested docs run is GREEN"            "$(printf '%s' "$out" | grep -c 'gates green')" "1"
+  check "  ...and runs NO build"                "$(printf '%s' "$out" | grep -c '=== lake build')" "0"
+  check "  ...naming WHICH no-build reason"     "$(printf '%s' "$out" | grep -c 'attestation HELD')" "1"
+  check "  ...never reports a build exit"       "$(printf '%s' "$out" | grep -c 'TRIAD DONE (NO BUILD')" "1"
+  check "  ...never claims FULL coverage"       "$(printf '%s' "$out" | grep -c 'every default target')" "0"
+  # ANCHORED TO THE VERDICT, not to the sentence.  The plan banner says
+  # "COVERAGE IF THIS CLASS DRIVES THE BUILD" with the same words in it, so an
+  # unanchored count of 1 failed against a run that was already correct — the
+  # row was wrong, not the tool.
+  check "  ...the VERDICT says NO Lean was elaborated" \
+    "$(printf '%s' "$out" | grep -c 'COVERAGE (§5.4a): docs-only: NO Lean was elaborated')" "1"
+  check "  ...and is NOT a chain root"          "$(printf '%s' "$out" | grep -c 'NOT a chain root')" "1"
+  check "  ...the LEDGER agrees"                "$(grep -c 'class=docs citable=no full=no' "$fr/.git/triad-greens")" "1"
+  # ...and the static contradiction, refused before any ticket is taken.
+  out="$(flagrun --classify --against HEAD --gates-only 'python3 harness/divergence_register.py' --gates-no-lean)"
+  check "attested + a RUNNER gate is refused"   "$(printf '%s' "$out" | grep -c 'CONTRADICTS the gate list')" "1"
+  check "  ...naming the target it maps to"     "$(printf '%s' "$out" | grep -Fc 'target(s) [leanmodels-run]')" "1"
+  check "  ...and takes NO ticket"              "$(printf '%s' "$out" | grep -c 'enqueued')" "0"
+  git -C "$fr" reset -q; git -C "$fr" checkout -q -- docs/a.md 2>/dev/null || true
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
@@ -3456,6 +3669,19 @@ if [ "$CLASSIFY_ONLY" = "0" ]; then
   (The log is not excluded from the stamp: that would blind the A6 drift check
    this stamp exists for, and a .gitignore entry would do the same one level down.)"
 fi
+# A CHEAP STATIC CONTRADICTION, AND NEVER THE PROOF.  A gate that maps to a
+# runner target cannot also start no Lean, so the pair is refused before the
+# ticket -- cheap and early.  But its FAILURE MODE IS SILENCE: this same table
+# matched `divergence_register` not at all until it was added by hand, which is
+# exactly how that gate reached the runner while looking inert.  What MEASURES
+# the attestation is the shim and the view, not this.
+if [ "$GATES_NO_LEAN" = "1" ]; then
+  _rt="$(gate_runner_targets "$GATES")"
+  [ -z "$_rt" ] || die "--gates-no-lean CONTRADICTS the gate list: these gates map to the runner
+  target(s) [$_rt], so they cannot start no Lean.  Drop the flag, or drop the gate.
+  (This check is a cheap pre-filter whose failure mode is SILENCE -- passing it is
+   not evidence; the shim and the .lake-less view are what measure the claim.)"
+fi
 stamp_version_guard      # a NEW ticket from a pre-rebase worktree is refused here
 tool_version_guard       # ...and one from a SUPERSEDED copy of this tool
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
@@ -3478,23 +3704,6 @@ done
 [ -x "$CLONE/tools/backlog-index.sh" ] && \
   "$CLONE/tools/backlog-index.sh" --dir "$CLONE" --ensure-driver 2>/dev/null || true
 
-# ------------------------------------------------------- run the gate list
-# Factored out because the docs-only path runs gates WITHOUT a tenure and the
-# normal path runs them INSIDE one.  One implementation, two callers.
-rc=0
-run_gates() {                         # "cmd; cmd" -> sets rc
-  # READ FROM gate_split, never from IFS word splitting: `IFS=';'` knows
-  # nothing about quotes, which is how ONE command became five gates.
-  local g
-  while IFS= read -r g; do
-    g="$(printf '%s' "$g" | sed -e 's/^ *//' -e 's/ *$//')"
-    [ -n "$g" ] || continue        # refused at enqueue; belt for a direct caller
-    say "=== gate: $g ==="
-    nice -n "$NICE" sh -c "$g" || { rc=1; say "  GATE FAILED: $g"; }
-  done <<EOF
-$(gate_split "$1")
-EOF
-}
 
 
 CLASS=""
@@ -3669,7 +3878,7 @@ if [ "$CLASSIFY" = "1" ]; then
     say "docs-only: NO TENURE TAKEN — nothing here starts a Lean process (A11)"
     gates_only_notice "$FLOOR_USED" "$GATES_ONLY"
     gate_notice "$GATES" "$LANE_GATES"
-    run_gates "$GATES"
+    if [ "$GATES_NO_LEAN" = "1" ]; then run_gates_attested "$GATES"; else run_gates "$GATES"; fi
     say "TRIAD DONE (docs-only, no build; gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
     if [ -n "$SINCE" ]; then
       increment_coverage "$CLASS" | while IFS= read -r _l; do say "COVERAGE (§5.4a-i): $_l"; done
@@ -3854,6 +4063,17 @@ while [ "$DRY_RUN" = "0" ]; do
   DEFER_WAITED=$((DEFER_WAITED + DEFER_INTERVAL))
 done
 
+# QOL-72'S LINE, NOW CONDITIONAL.  "--gates keeps the tenure, and a kept tenure
+# BUILDS" held while this script could not know whether a lane gate starts
+# Lean.  An ATTESTED gate answers that, and the answer is measured, so a docs
+# class with attested gates keeps its tenure and skips the BUILD.
+SKIP_BUILD=0
+if [ "$CLASS" = "docs" ] && [ "$GATES_NO_LEAN" = "1" ]; then
+  SKIP_BUILD=1
+  say "no build: docs class AND gates attested no-Lean — the tenure is KEPT (A11), only the build goes"
+  say "  the attestation is not believed here; it is verified when the gates run, below"
+fi
+
 # ----------------------------------------------------------------- the work
 # DECIDED HERE, ONCE, for the build phase.
 THREAD_CHOICE="$(choose_threads)"
@@ -3877,6 +4097,7 @@ BUILD_LOG="$(mktemp "${TMPDIR:-/tmp}/triad-build.XXXXXX")"
 
 BUILD_EXIT=1
 for attempt in 1 2; do
+  if [ "$SKIP_BUILD" = "1" ]; then BUILD_EXIT=0; break; fi
   say "=== lake build ${BUILD_TARGETS:-<all default targets>} (attempt $attempt) ==="
   watchdog_start                      # A16: a fresh guard for EVERY attempt
   # UNQUOTED on purpose: BUILD_TARGETS is a target LIST, and every element was
@@ -3911,7 +4132,17 @@ done
 # Assert success POSITIVELY.  An argument error and a resource kill both emit
 # no line the failure greps look for, and "no error found" must never read as
 # "the build happened".
-if grep -q 'Build completed successfully' "$BUILD_LOG"; then
+# NO BUILD MEANS NO VERDICT ABOUT A BUILD.  This assertion is POSITIVE by
+# design, so an EMPTY log is red — which is right for every case but one, and
+# skipping only the loop made the first attested run report `BUILD DID NOT
+# COMPLETE (exit 0)` over a build that was deliberately not run.  Found by
+# exercising the flag end to end; the rows never reach this block, which is
+# the standing lesson about what a passing suite does and does not cover.
+if [ "$SKIP_BUILD" = "1" ]; then
+  build_log_header 0 > "$BUILD_LOG" 2>/dev/null || : > "$BUILD_LOG"
+  echo "NO BUILD RAN — docs class with --gates-no-lean.  The gates below are" >> "$BUILD_LOG"
+  echo "attested to start no Lean, and the attestation is VERIFIED as they run." >> "$BUILD_LOG"
+elif grep -q 'Build completed successfully' "$BUILD_LOG"; then
   say "BUILD GREEN"
 else
   build_red_report "$BUILD_LOG" "BUILD DID NOT COMPLETE (exit $BUILD_EXIT)"
@@ -3966,7 +4197,14 @@ fi
 
 gates_only_notice "$FLOOR_USED" "$GATES_ONLY"
 gate_notice "$GATES" "$LANE_GATES"
-run_gates "$GATES"
+if [ "$GATES_NO_LEAN" = "1" ]; then run_gates_attested "$GATES"; else run_gates "$GATES"; fi
+if [ "$SKIP_BUILD" = "1" ]; then
+  if [ "$ATTEST_HELD" = "1" ]; then
+    say "no build: gates attested and attestation HELD"
+  else
+    say "no build was run, and the ATTESTATION DID NOT HOLD — this green covers nothing it claimed"
+  fi
+fi
 
 # A GREEN TENURE MUST NAME ITS LOG TOO.  The file persists either way; what a
 # lane loses is the PATH, and with 56 of them in one TMPDIR the newest is very
@@ -3979,15 +4217,31 @@ if [ "$led_rc" = "2" ]; then
 fi
 say "$(build_log_pointer "$BUILD_LOG")"
 
-say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
+if [ "$SKIP_BUILD" = "1" ]; then
+  say "TRIAD DONE (NO BUILD — gates attested; gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
+else
+  say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
+fi
 # §5.4a: the verdict carries the state it was taken in.  A scoped green that
 # does not say what it covers is a number without its state.
 [ "$FOREIGN" = "1" ] && say "COVERAGE (§5.4a): $(foreign_coverage)"
-if [ -n "$SINCE" ]; then
+# THE SKIPPED BUILD IS CHECKED FIRST, and the reason is the §5.4a law itself.
+# `coverage_from_run` reads the TARGET LIST, and an empty list means "lake was
+# given no targets" — which is true of a FULL build and equally true of NO
+# build.  The first attested run therefore printed "a green covers every
+# default target at this sha" over a build that never ran, and recorded it as
+# a chain ROOT that a later --since could have built on.  qol-76 derived this
+# sentence from what RAN; a skipped build is the case where "what ran" is
+# nothing, and the docs sentence is the one that says so.
+if [ "$SKIP_BUILD" = "1" ]; then
+  say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
+  say "  NO BUILD RAN — the attested gates are the whole of this run's evidence."
+elif [ -n "$SINCE" ]; then
   increment_coverage "$CLASS" | while IFS= read -r _l; do say "COVERAGE (§5.4a-i): $_l"; done
 elif [ "$FOREIGN" = "0" ]; then
-  # DERIVED FROM THE RUN, never from the class.  This path always built, so a
-  # docs classification here does NOT mean nothing was elaborated.
+  # DERIVED FROM THE RUN, never from the class.  This path built (the skipped
+  # case left above), so a docs classification here does NOT mean nothing was
+  # elaborated.
   say "COVERAGE (§5.4a): $(coverage_from_run)"
   [ -n "$CLASS" ] && say "  classification: $CLASS — it chose the build SCOPE; the line above is what RAN"
 fi
@@ -4004,13 +4258,26 @@ if [ "$rc" = "0" ] && [ "$BUILD_EXIT" = "0" ] && [ "$FOREIGN" = "0" ]; then
   # recording it as depth=1 under an older root would send the next lane's
   # increment back to a base it no longer needs — conservative, but wrong, and
   # the merge bar is stated in terms of what the root BUILT.
-  if [ -z "$BUILD_TARGETS" ]; then
+  # A SKIPPED BUILD IS NEVER A ROOT.  Same rule the docs-only path already
+  # keeps, and it has to be tested BEFORE the empty-target test, which cannot
+  # tell "no targets" from "no build".
+  if [ "$SKIP_BUILD" = "1" ]; then
+    if [ -n "$SINCE" ]; then
+      record_green docs no "$SINCE_ROOT" "$(( $(ledger_field "$SINCE_LINE" depth) + 1 ))" ""
+    else
+      record_green docs no unknown 0 ""
+    fi
+  elif [ -z "$BUILD_TARGETS" ]; then
     record_green "${CLASS:-spine}" yes self 0 ""
   elif [ -n "$SINCE" ]; then
     record_green "${CLASS:-tier}" no "$SINCE_ROOT" "$(( $(ledger_field "$SINCE_LINE" depth) + 1 ))" "$BUILD_TARGETS"
   else
     record_green "${CLASS:-tier}" no unknown 0 "$BUILD_TARGETS"
   fi
-  say "green recorded in $(green_ledger_path) — citable as an increment base with --since $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null)"
+  if [ "$SKIP_BUILD" = "1" ]; then
+    say "green recorded in $(green_ledger_path) — NOT a chain root: no build ran"
+  else
+    say "green recorded in $(green_ledger_path) — citable as an increment base with --since $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null)"
+  fi
 fi
 exit "$rc"

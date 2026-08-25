@@ -11053,6 +11053,32 @@ and a self-test has no ticket.*
 > something PASSED.** Depth and argv are exactly what the recursion controls;
 > the environment is what it cannot rewrite.
 
+**AND LAYER 3 GUARDS ONE OF THE TWO ROUTES** (QoL, `2026-08-26-qol-79`). A
+stubbed `lake` on `PATH` stops Lean reached **by name**. It does not stop Lean
+reached **by absolute path** — and this repository's own runner is reached that
+way. `tools/leanpy` builds `REPO_ROOT/.lake/build/bin/leanmodels-run` and, when
+that file **exists**, returns it as the command to execute; `PATH` is never
+consulted, and the `lake` fallback is the **else** branch of
+`if not os.path.exists(BIN)`. On a **cold** clone the stub catches that
+fallback and looks sufficient. On a **warm** clone — which every working lane's
+is — the binary is present and the stub is simply stepped around. Same two-hop
+shape as the A11 breach itself, one level down, which is what makes it a class
+rather than a bug.
+
+The generalizing fix is not a better name list:
+
+> **A GUARD ON THE NAME COVERS ONE OF THE TWO ROUTES.** Lean is reached by
+> NAME and by PATH. A stub answers the first; only **withholding the build
+> products** answers the second.
+
+`tools/triad.sh --gates-no-lean` implements both halves — `PATH` shims for the
+names the lakefile declares, and a symlink view of the clone with `.lake`
+**withheld** — and its rows show the distinction is not theoretical: with the
+shims alone, on a warm clone, a leanpy-shaped gate finds the binary, runs it,
+and the no-Lean claim **falsely holds**. `ci.sh`'s layer 3 is **flagged, not
+fixed, here**: it is shared infrastructure, and the same rule that sent
+host-gating to a ruling sends this one.
+
 **AND THE COORDINATOR'S RULING ON THE PART THE LANE FLAGGED AS NOT ITS OWN:
 `ci.sh`'s `lake-build` step is HOST-GATED** — ruled, and **implemented in
 `a1bb01e`** (`docs/backlog/qol.md` `2026-08-23-qol-37`; `--verify-guards` 14

@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**418 entries across 17 lanes.** Regenerate with
+**419 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-08-26-qol-79` |  | `--gates-no-lean`: a lane can say its gates start no Lean, and the script MEASURES it | qol |
 | `2026-08-26-qol-78` |  | the sv manifest entry had never extracted one envelope | qol |
 | `2026-08-26-c-27` |  | THE REGISTER COMES BACK, and the reversal is recorded rather than tidied | c |
 | `2026-08-25-architecture-91` |  | A watch whose most important signal produces no alarm is not a watch | architecture |

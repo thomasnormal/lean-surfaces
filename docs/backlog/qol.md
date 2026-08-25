@@ -5304,3 +5304,119 @@ Python regression-checked after every change: **FRESH 59, STALE 2**, tree clean.
 
 `envelope_fresh` **27 ok** (13 → 27), `--verify-guards` 44 ok, docs_check
 91/91. No floor changed, no tier adopted, no Lean executed.
+
+---
+
+## 2026-08-26-qol-79 — `--gates-no-lean`: a lane can say its gates start no Lean, and the script MEASURES it
+
+SV spent 4.5 hours holding a tenure for a spine build so that a gate list of
+**prose checks** could run under the lock. The lane had no way to say "none of
+these starts a Lean process", so the honest choice was to pay for a build
+nobody needed and the cheap choice was to skip the instrument entirely. This
+flag lets a lane say it. Nothing here believes it.
+
+> **attested = no repo-reachable Lean, plus observation for the rest**
+
+That sentence is in the tool's own comment, and it is deliberately not the word
+*proof*.
+
+### Two mechanisms, because one of them passes everything
+
+**PATH shims** catch Lean reached **by name** — `lake`, `lean`, and every
+`[[lean_exe]]` the lakefile declares. Each shim records the name and exits 97.
+
+**A `.lake`-less view** catches Lean reached **by absolute path**. This is not
+a hypothetical: `tools/leanpy` line 60 is
+
+```
+BIN = os.path.join(REPO_ROOT, ".lake", "build", "bin", "leanmodels-run")
+```
+
+which it runs **directly**, falling back to `lake` only when that binary is
+absent. A PATH shim never sees it. On a cold clone the shim would have caught
+the fallback and looked sufficient; on a **warm** clone — which is every lane's
+— the binary is there and the attestation would have **falsely held**. The
+gates run inside a symlink farm of the clone with `.lake` withheld (19 of 20
+root entries, **143 ms** on a loaded box), which turns the absolute-path route
+back into the fallback the shim can see.
+
+Same tool as the two-hop incident, one level down. The recurrence is what
+makes it a class rather than a bug.
+
+### The residual, named
+
+A gate hardcoding a path **outside** the repo — the toolchain lives in
+`~/.elan` — evades both. The backstop is a sampler walking our own descendants
+by parentage and matching `lean`/`lake`, and **its** residual is a process
+short-lived enough to fall between two samples. Both residuals are written into
+the code that carries them, not into a footnote.
+
+### The pre-filter that is never the proof
+
+`--gates-no-lean` together with a gate that maps to a runner target is refused
+**at enqueue**, before a ticket. It is a text match, and **its failure mode is
+silence**: this very table matched `divergence_register` not at all until it
+was added by hand, which is exactly how that gate reached the runner while
+looking inert. Passing it is not evidence. Its comment says so, and two rows
+pin both halves — that it matches a known gate, and that it is silent on one it
+has never seen.
+
+### qol-72's line goes conditional — and only half of it
+
+"`--gates` keeps the tenure, and a kept tenure BUILDS" rested on `tenure_needed`
+not being able to know whether a lane gate starts Lean. It can now, so the
+**build** is skippable. The **tenure is not**, and the asymmetry is the safety
+argument: the shims and the view make a violation impossible for Lean reachable
+by name or by repo path, but the named residual would be a Lean process running
+with **no lock** — an A11 breach, not merely a wrong claim. Holding the lock
+costs a lane nothing it was not already paying, so the residual stays inside
+the protocol. A11 is untouched.
+
+The banner distinguishes the two silences it can now produce: `no build: docs
+class` (no tenure, nothing was ever going to run) from `no build: gates
+attested and attestation HELD` (a tenure was held and the claim was checked).
+
+### Running it end to end found three defects the passing rows could not
+
+The mechanism rows were green before any of this surfaced. **The mechanism was
+never the part that broke.**
+
+1. The build verdict asserts success **positively** — `grep -q 'Build completed
+   successfully'` — so an empty log is red. Correct for every case but one:
+   skipping the loop made an attested run report `BUILD DID NOT COMPLETE (exit
+   0)` over a build that was deliberately not run.
+2. Once green, it printed **"a green covers every default target at this sha"**.
+   `coverage_from_run` reads the target LIST, and an empty list means "lake was
+   given no targets" — true of a full build and equally true of **no** build.
+   qol-76 derived that sentence from what RAN; a skipped build is the case
+   where what ran is nothing.
+3. …and recorded that green as a **chain ROOT**, citable by a later `--since`.
+   A no-build green now records `class=docs citable=no full=no root=unknown`,
+   the same rule the docs-only path already kept.
+
+Defect 3 is the one worth naming: a green that overclaims is the single failure
+this lane exists to prevent, and it was mine. Eight rows now hold the claims a
+finished attested run makes, separately from the mechanism that makes them.
+
+### Flagged, not fixed: `ci.sh`'s layer 3 has the same blind spot
+
+`ci.sh`'s self-test guard is a **stubbed `lake` on `PATH`** (`LS_CI_SELF_TEST`,
+qol-37 layer 3). It stops Lean reached by NAME. `tools/leanpy` reaches the
+runner by absolute path and consults `PATH` only in the **else** branch of
+`if not os.path.exists(BIN)` — so on a **warm** clone a self-test that reaches
+leanpy steps around the stub entirely. That is the route my own A11 breach
+took, one level down.
+
+I have **not** touched `ci.sh`: it is shared infrastructure whose guard is a
+machine-wide setting, and the same reasoning that sent `lake-build` host-gating
+to a ruling applies here. The fix, if ruled, is the one this item already
+implements — withhold `.lake`, do not merely rename `lake`. Recorded in
+`docs/family-architecture.md` beside the three-layer passage it qualifies.
+
+### Triad
+
+`tools/triad.sh --self-test` **452 ok, 0 failed** (427 → 452, +25 rows). No Lean
+executed, no floor changed. `run_gates` moved above the self-test block so the
+rows drive the real gate runner instead of a stub — verified as an exact
+extract-and-reinsert against a line-multiset comparison of the file before and
+after, because a stub would only have tested the stub.

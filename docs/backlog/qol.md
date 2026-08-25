@@ -4746,3 +4746,63 @@ of 25 lanes red on its next tenure.
 
 `triad.sh` **379 ok**, docs_check 91/91. One line of floor, five rows
 re-pointed, nothing else touched. No Lean executed.
+
+## 2026-08-25-qol-67 — I breached A11 verifying the gate, and the gate does need the runner
+
+Two corrections to qol-66, one of them mine to own.
+
+### I executed Lean outside a tenure
+
+Verifying the floor gate against merged master, I created a worktree and ran
+`python3 harness/divergence_register.py` in it under `timeout 120`. It hit the
+timeout — **because it had started `lake build leanmodels-run`.** The worktree
+grew a **749 MB partial `.lake`** (mtime 08:59, one minute after the run at
+08:58; `bin/leanmodels-run` absent, so the build never finished), and it ran
+**concurrently with the ES lane's live tenure**.
+
+That is an unticketed Lean invocation — A11, the rule this lane has spent two
+days enforcing on everyone else. Mine.
+
+**What made it possible is a reading error I had already written down as fact.**
+qol-66 asserts the gate "needs no runner and runs no Lean", because
+`divergence_register.py` names lake nowhere and shells out only to a python
+probe. But the probes call `tools/leanpy`, which runs
+`.lake/build/bin/leanmodels-run` and issues `lake build leanmodels-run` when
+that binary is missing.
+
+> **Asking whether the SCRIPT names lake is not asking what the GATE runs.**
+
+The chain is `divergence_register` → `*_divergence_probe` → `tools/leanpy` →
+the runner. Two hops past where I stopped looking — the same wrong-object
+error as the census's `$CLONE/tools/triad.sh`, in the same week.
+
+Cleanup, by path and parentage only: the 749 MB tree removed, the worktree
+removed, **0 processes of mine** remaining. The ES tenure (2 processes) and
+Thomas's `matrix-multiplication` build (1) were identified and **left
+untouched** — attribution first, exactly because a blind sweep here would
+have killed a live tenure and Thomas's own work.
+
+### The technical correction
+
+`divergence_register` is now in `gate_runner_targets`, like `refusal_census`,
+so a narrowed tenure prebuilds `leanmodels-run` in the **gate phase** instead
+of a gate building the tree and surfacing a build defect as a gate failure.
+One row pins it. The false claim in the floor comment is replaced by the
+chain, so the next reader inherits the correction rather than the error.
+
+**A consequence worth stating for the floor decision:** this gate runs the
+model. `diff_test` and `refusal_census` already do, so it is not a new class of
+work in the floor — but it is not free, and the ~38-minute spine builds are the
+context it lands in.
+
+### What I can and cannot attest
+
+I did **not** complete an independent run of the gate: finishing it would mean
+executing Lean without a ticket a second time, knowingly. The coordinator's
+own measurement on the merged tree stands — exit 0, every row gated both ways,
+8/8 guards held. My signal rests on that, and says so.
+
+### Triad
+
+`triad.sh` **380 ok** (379 → 380). No Lean executed after the breach was
+found; nothing enqueued.

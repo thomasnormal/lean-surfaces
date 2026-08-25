@@ -136,9 +136,18 @@
 # guarantees the first adopter pays everyone's red in its own tenure, which is
 # what happened to ES on another lane's rows (es 93342, 08-25 08:17).
 #
-# It needs no runner and runs no Lean: its only subprocess call is a python
-# probe under `sys.executable`, and it names lake nowhere — so it is not in
-# `gate_runner_targets` and owes the gate phase no prebuild.
+# IT DOES NEED THE RUNNER, and the first reading of this said the opposite.
+# `divergence_register.py` names lake nowhere and its only subprocess call is a
+# python probe under `sys.executable` — so the top script looks inert.  But the
+# probes it runs call `tools/leanpy`, which executes
+# `.lake/build/bin/leanmodels-run` and runs `lake build leanmodels-run` when
+# that binary is missing.  So the gate reaches Lean two hops down.
+#
+# > Asking whether the SCRIPT names lake is not asking what the GATE runs.
+#
+# It is therefore in `gate_runner_targets`, exactly like `refusal_census`, so a
+# narrowed tenure prebuilds the runner in the gate phase instead of a gate
+# building the tree and surfacing a build defect as a gate failure.
 #
 # `es_lean_lint` and `c_torture_gate` are lane-specific and correctly stay
 # lane-added: the rule is about the CORPUS a gate reads, not its importance.
@@ -934,7 +943,11 @@ gate_runner_targets() { # gate list -> the exe targets those gates will invoke
       # prebuild working BY ACCIDENT — a lane running the census through
       # --gates-only would have reached `--no-build` with nothing built, and
       # read a missing runner as a census failure.
-      *diff_test*|*script_corpus*|*refusal_census*|*"lake exe"*)
+      # `divergence_register` reaches the runner TRANSITIVELY: its probes call
+      # `tools/leanpy`, which runs `.lake/build/bin/leanmodels-run` and will
+      # `lake build leanmodels-run` when that binary is absent.  Asking whether
+      # the TOP script names lake said no; asking what the GATE runs says yes.
+      *diff_test*|*script_corpus*|*refusal_census*|*divergence_register*|*"lake exe"*)
         out="$(lake_exe_names | head -1)" ;;
     esac
   fi
@@ -2076,6 +2089,11 @@ if [ "$SELF_TEST" = "1" ]; then
   check "the census never builds inside a gate" \
         "$(gate_floor tier | grep -c 'refusal_census.py --whitelist --no-build')" "1"
   # ...which only works if the tenure KNOWS to prebuild the runner for it.
+  # THE REGISTER GATE REACHES THE RUNNER TWO HOPS DOWN (probe -> leanpy ->
+  # leanmodels-run), so a narrowed tenure must prebuild it.  Asking whether the
+  # top script names lake said NO and was wrong.
+  check "the register gate needs the runner too" \
+        "$(gate_runner_targets 'python3 harness/divergence_register.py')" "leanmodels-run"
   check "a census-only gate list still prebuilds" \
         "$(gate_runner_targets 'python3 harness/refusal_census.py --whitelist --no-build')" "leanmodels-run"
   check "  ...and the floor as a whole does"   "$(gate_runner_targets "$DEFAULT_FLOOR")" "leanmodels-run"

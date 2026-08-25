@@ -4613,3 +4613,196 @@ ok, before and after.
 sites 57, dupes 10, diagnose 51, substrate 25, analogues 28, editions 12,
 new-proof 31, a6-guard 8, comment-forms 18, `--verify-guards` 44, docs_check
 91/91. Fixtures only. No Lean executed.
+
+## 2026-08-25-qol-65 — the gate that was never in anyone's floor
+
+Read-only audit. No tool, no lane config, and nothing enqueued.
+
+### The hypothesis is disconfirmed, and the truth is simpler
+
+`harness/divergence_register.py` appears **0 times in `tools/triad.sh` and 0
+times in `tools/ci.sh`** on master. It is in no floor and never was. So C's
+floor did not "predate the register gate's addition" — **there was no
+addition**. Every lane that runs it added it by hand with `--gates`.
+
+And the gate is inherently fleet-wide: `PATTERN = docs/*-declared-divergences.json`
+globs **every tier's** file. A gate that reads the whole fleet's corpus, wired
+as lane-private, guarantees the outcome observed:
+
+> The first lane to adopt a fleet-wide gate discovers everyone else's
+> violations, and pays for them in its own red.
+
+### Who actually runs it — 25 lanes, 1398 logs
+
+Runs it: **es, pyc3, pyc4, pyc5, pyc6, pyc7, sv** (7). Never: analog,
+basecase, cadopt, corder, crunga, go, pyc2, pyc3a, pyc3c, pyc3cib, pyc3cic,
+pycdel, pycomplete, pyfuelmono, pyrebuild, r3c_monadic, softfloat (17).
+`leantier` is `--foreign` in every tenure — gates as given, no floor by design
+(§7.1a) — so it is **not a hole**, and calling it one would repeat the census
+misattribution.
+
+### Floor-version pinning is real, but it is a DIFFERENT defect
+
+`refusal_census` entered `DEFAULT_FLOOR` at `ccdc839`, 08-23 22:02.
+
+* `basecase` (00:29) and `cadopt` (21:32) predate it — correctly missing.
+* **`corder` ran at 22:50, 48 minutes after**, on triad.sh `cac7335` (21:36),
+  which predates the change. Its floor was pinned to its copy.
+
+So pinning exists and is confirmed in one observed case — for `refusal_census`,
+not for the register gate. Two defects, not one.
+
+### My own audit was wrong twice before it was right
+
+`find /tmp -maxdepth 9 -name "*.log"` returns **0 logs**: `/tmp` is a symlink
+to `private/tmp`, and `find` will not traverse a symlinked start point without
+`-H`. The corpus went **61 → 1398** logs when corrected, and the correction
+flipped the `es` row from "MISS MISS" to all-four-yes — the audit would have
+reported **the very lane that caught the bug** as one of the holes.
+
+`glob.glob` resolved the symlink; `find` did not. **Changing tools changed the
+reach, and the reach is part of the claim** — third time this week, and the
+first where the wrong answer would have accused the right lane.
+
+### Proposal — NOT imposed; the ruling is the coordinator's
+
+**(A) The floor should own fleet-wide corpus gates.** `DEFAULT_FLOOR` already
+IS the structural mechanism the *"--gates ADDS to the floor"* line claims: a
+constant in `triad.sh`, read at tenure time by `gates_compose`, which lanes can
+only add to and never subtract from. Nothing is broken about the mechanism —
+this gate was simply never put in it. Adding
+`python3 harness/divergence_register.py` to `DEFAULT_FLOOR` makes it structural
+for all 25 lanes at once, with no per-lane action and no new machinery.
+
+The criterion worth adopting with it, so the next one lands by rule rather
+than by memory: **a gate whose corpus is fleet-wide belongs in the fleet's
+floor.** `divergence_register` globs every tier's file; `refusal_census` and
+`diff_test` are likewise fleet-wide. `es_lean_lint`, `c_torture_gate` and
+friends are lane-specific and correctly stay lane-added.
+
+**Sequencing is load-bearing:** master currently FAILS this gate on C's rows,
+so adding it to the floor before C's reshape merges turns *every* lane red on
+its next tenure. It must land after.
+
+**(B) Pinning is already closed going forward.** Item 15's
+`tool_version_guard` refuses a NEW enqueue from a worktree whose `triad.sh` is
+a superseded published version — precisely corder's case. Its honest limit
+stands: it cannot help a copy older than itself. No new mechanism is needed
+here, and the floor is already read at tenure time; pinning is a
+**tool-version** problem, not a floor-mechanism one.
+
+### A note on why this audit was possible
+
+Every row came from the self-identifying `gates:` and `=== gate:` lines. A
+floor that did not announce itself could not have been audited from logs at
+all.
+
+### Triad
+
+Audit only. No tool changed, no config changed, no Lean executed, nothing
+enqueued.
+
+## 2026-08-25-qol-66 — the floor gains the rule, and waits for C
+
+The ruled one-line addition, **prepared and HELD**. `divergence_register`
+joins `DEFAULT_FLOOR` under the rule the audit produced:
+
+> **A GATE WHOSE CORPUS IS FLEET-WIDE BELONGS IN THE FLEET'S FLOOR.**
+
+Stated where the floor is defined, with why this gate qualifies (`docs/*-declared-divergences.json`
+is every tier's file) and why `es_lean_lint` and `c_torture_gate` do not — the
+rule is about the CORPUS a gate reads, not its importance.
+
+It needs **no runner and runs no Lean**: its only `subprocess` call is a python
+probe under `sys.executable`, and it names lake nowhere. So it is deliberately
+NOT added to `gate_runner_targets` and owes the gate phase no prebuild.
+
+Five rows pinned the old three-gate floor and were re-pointed — the floor
+splits into four, the gate phase runs four, `gate_names` reads four, and the
+label now names the **rule** that admitted the gate rather than a §-number.
+
+### The hold is verified, not assumed
+
+Measured first on my own checkout: the gate **passed**, exit 0 — which was a
+**false pass**. My branch predates `docs/c-declared-divergences.json`, so the
+offending file was not in the tree at all. A gate that globs a corpus reports
+"OK" when the corpus is missing.
+
+Re-run against **current master's** corpus (`bb35792`), materialised into a
+scratch tree: **exit 1**, with C's two rows carrying four violations —
+`kind is 'oracle-shape'` and `'retired-diagnosed'` outside the
+`semantic | provenance` enum, and guards not the two named shapes. So C's
+reshape is **not** on master and the sequencing constraint stands.
+
+Two further complaints in that run named ES's `guards.lean` as missing — an
+**artifact of my minimal tree**, which held only the JSON files. The file is
+present on master. Reported as an artifact rather than a finding, because the
+audit that accused the wrong lane once already is the reason this lane checks.
+
+**Not merged, not signalled ready.** Landing it before C's sha turns every one
+of 25 lanes red on its next tenure.
+
+### Triad
+
+`triad.sh` **379 ok**, docs_check 91/91. One line of floor, five rows
+re-pointed, nothing else touched. No Lean executed.
+
+## 2026-08-25-qol-67 — I breached A11 verifying the gate, and the gate does need the runner
+
+Two corrections to qol-66, one of them mine to own.
+
+### I executed Lean outside a tenure
+
+Verifying the floor gate against merged master, I created a worktree and ran
+`python3 harness/divergence_register.py` in it under `timeout 120`. It hit the
+timeout — **because it had started `lake build leanmodels-run`.** The worktree
+grew a **749 MB partial `.lake`** (mtime 08:59, one minute after the run at
+08:58; `bin/leanmodels-run` absent, so the build never finished), and it ran
+**concurrently with the ES lane's live tenure**.
+
+That is an unticketed Lean invocation — A11, the rule this lane has spent two
+days enforcing on everyone else. Mine.
+
+**What made it possible is a reading error I had already written down as fact.**
+qol-66 asserts the gate "needs no runner and runs no Lean", because
+`divergence_register.py` names lake nowhere and shells out only to a python
+probe. But the probes call `tools/leanpy`, which runs
+`.lake/build/bin/leanmodels-run` and issues `lake build leanmodels-run` when
+that binary is missing.
+
+> **Asking whether the SCRIPT names lake is not asking what the GATE runs.**
+
+The chain is `divergence_register` → `*_divergence_probe` → `tools/leanpy` →
+the runner. Two hops past where I stopped looking — the same wrong-object
+error as the census's `$CLONE/tools/triad.sh`, in the same week.
+
+Cleanup, by path and parentage only: the 749 MB tree removed, the worktree
+removed, **0 processes of mine** remaining. The ES tenure (2 processes) and
+Thomas's `matrix-multiplication` build (1) were identified and **left
+untouched** — attribution first, exactly because a blind sweep here would
+have killed a live tenure and Thomas's own work.
+
+### The technical correction
+
+`divergence_register` is now in `gate_runner_targets`, like `refusal_census`,
+so a narrowed tenure prebuilds `leanmodels-run` in the **gate phase** instead
+of a gate building the tree and surfacing a build defect as a gate failure.
+One row pins it. The false claim in the floor comment is replaced by the
+chain, so the next reader inherits the correction rather than the error.
+
+**A consequence worth stating for the floor decision:** this gate runs the
+model. `diff_test` and `refusal_census` already do, so it is not a new class of
+work in the floor — but it is not free, and the ~38-minute spine builds are the
+context it lands in.
+
+### What I can and cannot attest
+
+I did **not** complete an independent run of the gate: finishing it would mean
+executing Lean without a ticket a second time, knowingly. The coordinator's
+own measurement on the merged tree stands — exit 0, every row gated both ways,
+8/8 guards held. My signal rests on that, and says so.
+
+### Triad
+
+`triad.sh` **380 ok** (379 → 380). No Lean executed after the breach was
+found; nothing enqueued.

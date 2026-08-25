@@ -47,6 +47,10 @@ import LeanModels.Sv.Drive
 -- ever drained) and elabDesign (Design -> SvWorld, the adequacy lemma's third
 -- obligation). always_comb/assign stay LOUD: comb sensitivity has no Trigger.
 import LeanModels.Sv.Load
+-- R1 inch 4b: the adequacy lemma STATED -- clockExpand (the M0 clock is
+-- implicit, so one cycle is TWO region slots) and posedgeSlots, plus the
+-- guard that both models agree on a real design through them.
+import LeanModels.Sv.Adequacy
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

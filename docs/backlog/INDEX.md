@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**400 entries across 17 lanes.** Regenerate with
+**401 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -46,6 +46,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-wasm-12` |  | **THE A′ CAPSTONE IS PROVED**: subtyping is admissible for `Instrs_ok2`, and the branch re-census fired on its first use | wasm |
 | `2026-08-25-wasm-11` |  | THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported | wasm |
 | `2026-08-25-analog-8` |  | A15: F3 needed no new mathematics, and the audit is now 4-for-4 at overturning the census | analog |
+| `2026-08-25-sv-5` |  | THE ADEQUACY LEMMA IS STATABLE, AND STATING IT FOUND TWO MORE OBSTRUCTIONS | sv |
 | `2026-08-25-sv-4` |  | A TENURE THAT REFUSED ITSELF: the progress log is inside the tree it stamps | sv |
 | `2026-08-25-sv-3` |  | THE RED WAS TWO NAMES; BEHIND IT WERE TWO DEFECTS THAT WOULD HAVE PASSED | sv |
 | `2026-08-25-sv-2` |  | RE-ARMING, WAKING, AND LOADING — and a FOURTH gap the same fixture concealed | sv |

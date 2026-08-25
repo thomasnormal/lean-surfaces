@@ -1042,3 +1042,81 @@ the stamp and self-refused a third time, so the order is forced and worth
 stating: **cancel, rebase, re-enqueue** — never rebase a ticket that is
 already in the queue.
 
+
+---
+
+## 2026-08-25-sv-5 — THE ADEQUACY LEMMA IS STATABLE, AND STATING IT FOUND TWO MORE OBSTRUCTIONS
+
+All three obligations were discharged — `cycleOf` exists (inch 4),
+`SvM.exec` projects (inch 4), `elabDesign` loads a `Design` (inch 4a) — so
+the lemma should have been a matter of writing it down. It was not.
+
+### Obstruction 1: the two models do not take the same stimulus
+
+**The M0 clock is IMPLICIT.** `Semantics.lean` says it outright: *every
+`cycleStep` is one posedge of the (single) clock*. A cycle-model stimulus
+drives the DATA inputs and never mentions a clock, so `run d σ fuel stim`
+returns exactly `stim.length` states.
+
+**The region model has no implicit anything.** A process suspended on
+`@(posedge clk)` wakes only when `wakeEdges` sees `clk` go 0 → 1, and
+driving a real edge costs **two** stimulus entries. `runSlots` over the
+same list produces `stim.length` slots with **no posedge among them**.
+
+So `run … = cycleOf (runSlots …)` was never merely unproved — the left
+side counts CYCLES and the right counts TIME SLOTS. Two definitions close
+it: `clockExpand` (2 slots per cycle, low then high) and `posedgeSlots`
+(keep the slot the edge ran in; a trailing unpaired slot is a cycle whose
+clock never rose and is dropped).
+
+### Obstruction 2: found by computing, not by reading
+
+The expansion **introduces a signal the cycle model never has**. `clk` is
+driven 0/1 on the region side and stays `x` on the cycle side forever,
+because nothing in the cycle model ever assigns the clock it is
+implicitly stepping. **A whole-state equality between the two runs is
+therefore false for a reason that has nothing to do with adequacy.**
+
+The comparison must go through an OBSERVATION, and `d.outputNames` is the
+honest one — it is what a cycle-level observer can see, and it is already
+the shape `divResult`/`sampleAtFirst` observe through. This is PINNED, not
+described: three guards assert the two models agree on `n` and *disagree*
+on `clk`, so the reason for the projection cannot be quietly forgotten.
+
+### What is guarded, and what is only stated
+
+**Guarded**: both translations, and — the load-bearing one — that the two
+models AGREE on a real `always_ff` design through the expansion and the
+decimation, each side also pinned separately so a failure says which model
+moved. That is executable evidence the statement is plausible, and it is
+what catches a wrong expansion immediately.
+
+**Stated, not proved**: `CycleAdequacy`, quantified over `∀ σ` with
+`σ.toRegion` on the region side. Its loadability hypothesis is
+`elabDesign d = .ok w` and NOT `d.isCycleFragment`, deliberately: the
+fragment predicate admits `always_comb` and `assign`, which `elabDesign`
+refuses, so stating it over the fragment would make the lemma false for a
+reason already known and named.
+
+### The proof, priced
+
+Induction on `stim` with the world and state generalized, over a per-cycle
+correspondence lemma that needs four pieces:
+
+1. the LOW slot is observably inert — no process is ready, so nothing runs;
+2. `wakeEdges` at the HIGH slot wakes exactly the `alwaysFF` processes,
+   which is `sawEdge`'s §9.4.2 rule meeting `Trigger.atEdge`;
+3. the Active pass runs each woken body exactly once, and its NBA commit
+   agrees with `edgePass`'s commit;
+4. the re-arm's SECOND Active pass is observably inert — it only walks to
+   `waitEvent` and suspends.
+
+Piece 4 is the one the `arm` field created and the one no guard pins as a
+lemma today: `runProcOnce`'s re-arm is currently evidence-by-`#guard`, and
+the proof needs it as a statement. Piece 3 is the real work; 1 and 2 are
+bookkeeping over definitions that now exist.
+
+**Not attempted here**, for the reason this lane has applied three times: a
+proof written against an imagined goal is worth less than a statement
+written against a real one.
+

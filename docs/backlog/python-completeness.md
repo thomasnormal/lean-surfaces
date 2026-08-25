@@ -2608,3 +2608,109 @@ blindness, the self-test's `rows[0]`, and my own review missing both until the
 interpreter and the coordinator caught them. The legality clause 1 introduced
 has a blast radius through every instrument that assumed a non-empty ledger,
 and that radius was not swept when the clause landed.
+
+## 2026-08-25-pycomplete-30 — OPS-148 named negative for the checker, the probe and the polarity test
+
+Per OPS-148 (arch, 9b72995), the four spellings, greped across the three
+instruments this lane owns: `harness/divergence_register.py` (the shared
+checker), `harness/pyc_divergence_probe.py`, `harness/test_divergence_probe.py`.
+**Named negative, not "looks fine": 48 sites, one real defect, one named
+dependency.**
+
+### (a) First-element access — 19 sites, **1 real defect, fixed here**
+
+| shape | n | verdict |
+|---|---|---|
+| `d["rows"][0][...]` fixture mutators | 13 | safe *now* — base guaranteed non-empty, and every file exercised |
+| `with_rows[0]` fixture base | 1 | **DEFECT — fixed** |
+| `label[0]`/`label[1]`, `declared_as_guard(...)[0]` | 4 | fixed-arity tuples, not growable collections |
+| `problems[0][:70] if problems else ""` | 1 | explicitly guarded |
+
+The defect is the one **my own fix for the IndexError left behind**. Selecting
+the first file that *has* rows cured the crash but left the subject floating:
+when ES filed its register, the 15 defect classes silently stopped being
+exercised against the tier that wrote them and began testing **ES's document**.
+No crash, no message — a change of subject.
+
+> Sort order was never the property being asked for. The cure is not a better
+> pick but **no pick**: the fixtures now run against *every* register file with
+> a row — 15 × 3 = 45, and coverage grows with the fleet.
+
+This is arch's generalization at one remove: adding ES to the register set
+changed which document an aggregate *selected*, exactly as adding a category
+changes every fold.
+
+### (b) `if rows` as a proxy for "this tier has a register" — 6 sites, **0 defects**
+
+`rows = doc.get("rows") or []` normalizes; `for row in doc.get("rows", [])`
+iterates; `hasattr(LIVE_GUARDS/RETIRED_GUARDS)` tests partition *presence*, not
+population. `if not rows and not retired` is the clause-2 both-empty error and
+is deliberately **and**-ed — the clause-1-correct spelling. No site treats a
+non-empty `rows` as a proxy for participation.
+
+### (c) Aggregates with unstated identity — 9 sites, 0 defects, **1 named dependency**
+
+- **`ok = True; ok &= …`** (polarity test). Identity `True` means a probe
+  entering *neither* branch passes **vacuously**. The only thing preventing
+  that is the `NO GUARDS AT ALL` rejection above it — **that guard is now
+  load-bearing for the fold's soundness**, recorded so a future edit that
+  removes it knows what it is removing.
+- `all(… for x in g)` over an empty guards list would be vacuously true, but
+  `len(g) != 2` short-circuits first in the same `or` chain: `[]` is rejected
+  as "not two".
+- `any(needle in p for p in problems)` over empty → `False` → reports NOT
+  REJECTED. Correct polarity: empty means fail, not pass.
+- `sum(…)` report folds → 0; reporting only.
+
+### (d) Empty-collection messages that read as verdicts — 14 sites, **1 defect, found by RUNNING the thing**
+
+Every one already discriminates: *"no probes found — nothing asserted"* → FAIL;
+*"A register checker with no data is vacuous. FAIL."*; *"no register file has a
+live row … which is not the same as passing"*; and the two `n/a` lines say
+**"vacuous, not unmet"** and *"asserted the day one is archived"*. Watch item:
+`held = sum(…)` prints 0 as "none held", which would read as good news over an
+empty guard set — unreachable in a valid file only because of the both-empty
+rejection.
+
+**And then I ran the probe, and spelling (d) was in it.** Ninety seconds after
+filing "(d) 0 defects", `pyc_divergence_probe.py` printed **`FAIL`** in a cold
+clone — because `.lake` was cold, the post-build guard correctly declined to
+run, and *"nothing was compared"* was folded into the same `False` as *"the
+divergence regressed"*. Identical word, identical exit code, opposite meanings:
+**a statement about the ENVIRONMENT wearing the costume of a verdict about the
+MODEL.**
+
+> **A named negative produced by grep is a claim about text, not about
+> behaviour.** The sweep read four spellings across three files and certified
+> the one instrument whose defect only appears when it *runs*. Grep cannot see
+> a value folded into the wrong state at runtime.
+
+Fixed with a third state: guards return `held is None` for "could not compare",
+which prints `no-run` per guard and closes with **`COULD NOT VERIFY (no
+comparison ran — not a model verdict)`**. Live guards still fail **closed** —
+rc stays 1, unverified never counts as passed — and `_still_divergent`
+regression detection reads `held`, so an unverified guard cannot raise a false
+alarm either.
+
+### ES's OPS-148 item — named negative, 3 sites, **0 live**
+
+The pre-ruling sentence *"a register file with nothing in it is a claim that the
+tier has no debts, and should be deleted rather than filed empty"* survives at
+exactly three places, **none of them a live assertion**: `docs/backlog/c.md`
+(C's own record of the ruling that superseded it) and
+`docs/family-architecture.md:4394` (the ruling quoting the old canon in order to
+amend it — *"The canon said …"*). The shared checker's live text already carries
+the ruled form verbatim: `rows: []` beside a non-empty `retired_rows` is *"a
+real and useful claim … so it is LEGAL"*, and `DELETE IT` fires only on
+`not rows and not retired`. **Code and text agree; no edit made.** Confirmed
+before ES's row retires rather than on the day it does.
+
+### Recorded from the landing
+
+> **A category added to a set changes every aggregate over that set — every
+> fold written before the ruling silently treats the new kind as the old one.**
+> Relay norm: **the first tier through a new ruling publishes the traps, not
+> just the code.**
+
+The `with_rows[0]` defect is the sharpest evidence for the first half: the fold
+did not fail, it quietly redirected.

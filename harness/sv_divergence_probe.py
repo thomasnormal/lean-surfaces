@@ -30,10 +30,14 @@ Retirement moves a row to the archive; it does not end the watch. The
 shared checker verifies a retired row's guards EXIST and never that they
 pass — a retired `still_divergent` is *supposed* to report not-held.
 
-Exit 0 = every LIVE guard held. Exit 1 = a live guard failed (the report
-says which). Retired guards run and print, and their state is REPORTED,
-never fatal: folding them in would pin this probe at exit 1 forever, and a
-status that is always red says nothing.
+Exit 0 = every LIVE guard held, and every retired row still retired.
+
+Exit 1 = a live guard failed, OR a retired `*_still_divergent` HELD — which
+means the divergence CAME BACK. A retired guard reporting not-held is the
+healthy state and does not gate (folding that in would pin this probe at
+exit 1 forever, and a status that is always red says nothing); a retired
+guard reporting `ok` is the alarm the archive exists to raise. The polarity
+INVERTS at retirement, which is why the two directions are handled apart.
 """
 
 import json
@@ -162,14 +166,37 @@ def main():
               % (name, status, detail, "   [retired row]" if retired else ""))
         if not held and not retired:
             rc = 1
-    if "--json" in sys.argv:
-        print(json.dumps(results, indent=1, sort_keys=True))
     watching = sorted(n for n in RETIRED_GUARDS if not results[n]["held"])
     if watching:
         print("\n%d retired guard(s) reporting not-held: %s"
               % (len(watching), ", ".join(watching)))
         print("Expected while the row stays retired — REPORTED, not fatal "
               "(§5.0a clause 3: existence, not passage).")
+
+    # AND THE OTHER DIRECTION, WHICH IS THE ONE THE WATCH EXISTS FOR.
+    # A retired `*_still_divergent` that HOLDS means the divergence CAME BACK.
+    # Reporting that as a cheerful `ok` and exiting 0 would be a watch that
+    # cannot raise an alarm — the guard runs, the regression happens, and
+    # nothing anywhere goes red. So this direction GATES.
+    #
+    # This file previously NAMED the event in prose ("it flipping to `ok` is
+    # the event worth looking at") and did not gate on it, which is naming a
+    # fire alarm without wiring it to a bell.
+    #
+    # It does not contradict "existence, not passage": that rule governs what
+    # the shared CHECKER may assert about someone else's row. What a tier's own
+    # probe does about its own regression is the tier's business, and a silent
+    # regression is the failure the archive was created to prevent.
+    returned = sorted(n for n in RETIRED_GUARDS
+                      if n.endswith("_still_divergent") and results[n]["held"])
+    if returned:
+        rc = 1
+        print("\n*** REGRESSION: retired guard(s) %s report DIVERGENT again."
+              % ", ".join(returned))
+        print("*** The divergence has RETURNED. The row must leave the archive "
+              "and go back to `rows` — it is a live debt again.")
+    if "--json" in sys.argv:
+        print(json.dumps(results, indent=1, sort_keys=True))
     print("\nsv_divergence_probe: %s" % ("PASS" if rc == 0 else "FAIL"))
     return rc
 

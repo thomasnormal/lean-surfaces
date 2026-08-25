@@ -1294,6 +1294,41 @@ func resolveFile(fset *token.FileSet, f *ast.File) []resolution {
 	return out
 }
 
+// methodKey mangles a METHOD DECLARATION to the name the walker keys on.
+//
+// `FuncTable` maps a plain name to a body and has nowhere for a receiver
+// (§G27 found the reach figure over-counting on exactly this). The fix is
+// §G22's: the EXTRACTOR decides, emitting a method as an ordinary
+// function whose receiver is its first parameter, under `Type.Method`.
+//
+// Pointer and value receivers give the SAME key — Go does not let a type
+// have both, so it cannot collide. Generic receivers key on the bare type.
+//
+// DECLARATION only. Calling one needs `x.M()` dispatch, a value selector,
+// which remains rung E3.
+func methodKey(fd *ast.FuncDecl) (string, bool) {
+	if fd.Recv == nil || len(fd.Recv.List) == 0 {
+		return "", false
+	}
+	t := fd.Recv.List[0].Type
+	for {
+		switch x := t.(type) {
+		case *ast.StarExpr:
+			t = x.X
+			continue
+		case *ast.IndexExpr:
+			t = x.X
+			continue
+		case *ast.IndexListExpr:
+			t = x.X
+			continue
+		case *ast.Ident:
+			return x.Name + "." + fd.Name.Name, true
+		}
+		return "", false
+	}
+}
+
 func runResolveSelfTest() {
 	type tc struct {
 		name string
@@ -1398,6 +1433,34 @@ func f(bits int) int { return bits.UintSize }`, nil},
 			fail++
 		}
 	}
+	// --- METHOD DECLARATION mangling (§G28) ---
+	for _, c := range []struct{ name, src, want string }{
+		{"value receiver", "package p\ntype Kind int\nfunc (i Kind) String() string { return \"\" }", "Kind.String"},
+		{"pointer receiver keys the SAME", "package p\ntype Kind int\nfunc (i *Kind) String() string { return \"\" }", "Kind.String"},
+		{"generic receiver keys on the bare type", "package p\nfunc (s *Stack[T]) Push(v T) {}", "Stack.Push"},
+		{"a plain function is NOT a method", "package p\nfunc String() string { return \"\" }", ""},
+	} {
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, "m.go", c.src, parser.SkipObjectResolution)
+		got := ""
+		if err == nil {
+			for _, d := range f.Decls {
+				if fd, ok := d.(*ast.FuncDecl); ok {
+					if k, isM := methodKey(fd); isM {
+						got = k
+					}
+				}
+			}
+		}
+		if got == c.want {
+			fmt.Printf("  ok    %-38s -> %q\n", c.name, got)
+			pass++
+		} else {
+			fmt.Printf("  FAIL  %-38s -> %q, want %q\n", c.name, got, c.want)
+			fail++
+		}
+	}
+
 	fmt.Printf("\nresolver self-test: %d passed, %d failed\n", pass, fail)
 	if fail > 0 {
 		os.Exit(6)

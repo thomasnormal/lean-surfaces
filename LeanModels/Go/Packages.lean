@@ -118,6 +118,27 @@ private def norm (v : GoVal) : Int :=
 private def modulus : Int := (IntKind.uint64.modulus : Int)
 private def goInt (n : Int) : GoVal := GoVal.mkInt IntKind.int64 n
 
+/-- Decimal digits of a POSITIVE natural, most significant first.
+
+Separate from the sign so that `FormatInt` on `MinInt64` is not a special
+case: Lean's `Int` is unbounded, so `-(-9223372036854775808)` is an
+ordinary number here where in Go it would overflow `int64`. Measured
+against `gc`, `FormatInt(-9223372036854775808, 10)` is
+`"-9223372036854775808"`, and this definition gets it without a guard. -/
+def digitsDec : Nat → List UInt8
+  | 0 => []
+  | n + 1 => digitsDec ((n + 1) / 10) ++ [UInt8.ofNat (48 + (n + 1) % 10)]
+decreasing_by omega
+
+/-- `strconv.FormatInt(n, 10)` as bytes. -/
+def formatIntDec (n : Int) : List UInt8 :=
+  if n = 0 then [48]
+  else if n < 0 then (45 : UInt8) :: digitsDec (-n).toNat
+  else digitsDec n.toNat
+
+@[simp] theorem formatIntDec_zero : formatIntDec 0 = [48] := by
+  simp [formatIntDec]
+
 /-- The modelled package functions.
 
 Every argument is normalised through `uint64` first: these functions'
@@ -163,6 +184,16 @@ def pkgCall (pkg fn : String) (args : List GoVal) : PkgOutcome :=
       else
         let v := hi * modulus + lo
         .values [u64 (v / y), u64 (v % y)]
+  -- --- strconv, base 10 only (§G28: the 26 files that need it all pass 10) ---
+  | "strconv", "FormatInt", [.intV _ n, .intV _ b] =>
+      if b = 10 then .values [GoVal.stringV (formatIntDec n)]
+      else
+        -- an honest refusal, not a wrong answer: bases other than 10 are
+        -- outside this rung's vocabulary and no file that needs them is
+        -- being claimed as reached.
+        .notModelled
+  | "strconv", "Itoa", [.intV _ n] =>
+      .values [GoVal.stringV (formatIntDec n)]
   | _, _, _ => .notModelled
 
 /-- Package-level CONSTANTS. A distinct resolution kind: `bits.UintSize`
@@ -179,15 +210,23 @@ comment that can drift.
 It drifted immediately: the first version of this list named
 `("math/bits", "Len")` while `pkgCall` implemented only `Len64`. Nothing
 caught it, because the list was prose in a different shape. The theorem
-below is what makes it a claim. -/
-def modelledPkgFuncs : List (String × String × Nat) :=
-  [("math/bits", "Len64", 1), ("math/bits", "Len", 1),
-   ("math/bits", "TrailingZeros64", 1), ("math/bits", "TrailingZeros", 1),
-   ("math/bits", "LeadingZeros64", 1), ("math/bits", "LeadingZeros", 1),
-   ("math/bits", "Add64", 3), ("math/bits", "Add", 3),
-   ("math/bits", "Sub64", 3), ("math/bits", "Sub", 3),
-   ("math/bits", "Mul64", 2), ("math/bits", "Mul", 2),
-   ("math/bits", "Div64", 3), ("math/bits", "Div", 3)]
+below is what makes it a claim.
+
+Each entry carries **sample arguments**, not just an arity, because §G28
+added a CONDITIONALLY modelled function: `FormatInt` handles base 10 and
+refuses every other base. An arity-only list would have had to either
+omit it (under-claiming) or assert it at a base it refuses (failing).
+Sample arguments say exactly what is claimed, and `Div`'s `[0,1,1]`
+likewise avoids the divisor it panics on. -/
+def modelledPkgFuncs : List (String × String × List Int) :=
+  [("math/bits", "Len64", [1]), ("math/bits", "Len", [1]),
+   ("math/bits", "TrailingZeros64", [1]), ("math/bits", "TrailingZeros", [1]),
+   ("math/bits", "LeadingZeros64", [1]), ("math/bits", "LeadingZeros", [1]),
+   ("math/bits", "Add64", [1, 1, 1]), ("math/bits", "Add", [1, 1, 1]),
+   ("math/bits", "Sub64", [1, 1, 1]), ("math/bits", "Sub", [1, 1, 1]),
+   ("math/bits", "Mul64", [1, 1]), ("math/bits", "Mul", [1, 1]),
+   ("math/bits", "Div64", [0, 1, 1]), ("math/bits", "Div", [0, 1, 1]),
+   ("strconv", "Itoa", [1]), ("strconv", "FormatInt", [1, 10])]
 
 /-- Is `o` anything other than "this tier does not model it"? A defined
 panic COUNTS as modelled — that is the distinction `PkgOutcome` exists
@@ -197,12 +236,12 @@ def PkgOutcome.isModelled : PkgOutcome → Bool
   | _ => true
 
 /-- **Every function this tier CLAIMS to model, it models.** Checked at
-each declared arity, with `1` as the argument (a value for which no
-listed function panics), so a name that appears in the surface list but
+each declared arity, with sample arguments chosen so no
+listed function panics or refuses, so a name that appears in the surface list but
 not in `pkgCall` fails here instead of misleading a reader. -/
 theorem surface_is_honest :
     modelledPkgFuncs.all (fun t =>
-      (pkgCall t.1 t.2.1 (List.replicate t.2.2 (GoVal.mkInt IntKind.uint64 1))).isModelled)
+      (pkgCall t.1 t.2.1 (t.2.2.map (GoVal.mkInt IntKind.uint64))).isModelled)
       = true := by
   rfl
 

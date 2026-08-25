@@ -32,7 +32,8 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G23 multi-value returns | `9a6d6ad` | 680 / 3,803 (17.9%) | 587 / 2,743 (21.4%) |
 | §G24 `math/bits` complete + constants | `eb1e8b0` | 687 / 3,803 (18.1%) | 594 / 2,743 (21.7%) |
 | §G25 variadics | `9b2129e` | ~~739 / 3,803~~ *overstated, see §G27* | ~~644 / 2,743~~ |
-| §G27 correction (same tree; no rung) | *filled in next* | **717 / 3,803 (18.9%)** | **629 / 2,743 (22.9%)** |
+| §G27 correction (same tree; no rung) | `fa625f5` | 717 / 3,803 (18.9%) | 629 / 2,743 (22.9%) |
+| §G28 bundle (methods, strcat, string slice, `strconv`) | *filled in next* | **765 / 3,803 (20.1%)** | **657 / 2,743 (24.0%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -3398,3 +3399,131 @@ was the baseline and the attribution, not the target. The next report
 should say which of those two was actually being tested.
 
 MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+---
+
+## G28 — THE BUNDLE: four parts, each worth +0, together +48 (2026-08-25)
+
+§G27 priced this against the **corrected** baseline, and said so — the
+test was whether 717/629 was right, not whether a fourth clean prediction
+could be collected. It was right:
+
+| | predicted (§G27) | measured |
+| --- | ---: | ---: |
+| all of `$GOROOT/src` | 717 → **765 (+48)** | 717 → **765 (+48)** |
+| library only | 629 → **657 (+28)** | 629 → **657 (+28)** |
+
+Because the destination was computed independently of the baseline,
+hitting it corroborates the correction rather than the streak.
+
+### A FOURTH MEMBER THE CENSUS MISSED
+
+§G27 named three parts. Building found a fourth: **slicing a string**.
+The generated shape ends `_Kind_name[_Kind_index[i]:_Kind_index[i+1]]`,
+and `SliceExpr` is one `go/ast` node covering two operations this walker
+prices differently — slicing a slice yields a header, slicing a string
+yields a **string**.
+
+That is the shape for the **fourth** time (`ArrayType` §G20,
+`SelectorExpr` §G21, `FuncDecl` §G27, now `SliceExpr`), and it carries a
+limit worth recording: **the first three splits are syntactic and this
+one is not.** `Len == nil`, an import table and `Recv != nil` are all
+decidable from the AST; string-versus-slice needs TYPES. So the census
+instrument can gate the first three and cannot gate this one — the
+residual over-count it leaves is bounded only by `go/types`, which is
+rung E2. The metric's ceiling is now a known quantity rather than an
+open worry.
+
+It did not need gating in the end, because both operations are modelled.
+
+### THE PARTS ARE WORTH +0 EACH
+
+| part | alone |
+| --- | ---: |
+| methods | +0 |
+| string concatenation | +0 |
+| string slicing | +0 |
+| `strconv`'s two entry points | +0 |
+| **all four** | **+48** |
+
+The conjunctive law's starkest instance yet — four parts, every one
+worthless alone. §G19's retraction of the `+0` law is what makes this
+legible: a `+0` is a statement about the current vocabulary, never a
+ranking.
+
+### THE METHOD IS THE EXTRACTOR'S PROBLEM
+
+`FuncTable` maps a plain name to a body and has nowhere for a receiver.
+Rather than widen it, the extractor mangles a method to `Type.Method`
+with the receiver as first parameter — §G22's division of labour, gated
+by four new rows in `census.sh --resolve` (**17/17**): pointer and value
+receivers key the SAME (Go forbids both, so it cannot collide), generics
+key on the bare type, and a plain function is not a method.
+
+This models the DECLARATION. Calling one needs `x.M()` dispatch — a value
+selector, still rung E3 — and the 26 files only declare.
+
+### THE ACCEPTANCE
+
+`go/constant/kind_string.go`'s shape, end to end. 19 guards, every value
+`printf`-ed from `gc`, **6 non-vacuity flips run**. The rows that
+separate models:
+
+| row | what a wrong model gives |
+| --- | --- |
+| `Kind(0)` = `"bool"` | cannot slice a string at all |
+| `Kind(3)` = `"Kind(3)"` | takes the in-range branch |
+| `Kind(-1)` = `"Kind(-1)"` | `"Kind(1)"` — the sign dropped |
+| `FormatInt(MinInt64)` | overflows negating it, as Go's own `int64` would |
+| `"\xff\xfe" + "!"` = `[255,254,33]` | re-encodes to five bytes |
+
+The last is §G15 paying off a second time: a Go string is a `List UInt8`,
+so concatenation is `++` and high bytes survive. A `String`-based model
+would have failed that row without anyone noticing the reason.
+
+### THE SURFACE LIST GOT STRICTER, BECAUSE IT HAD TO
+
+`FormatInt` is **conditionally** modelled — base 10, refusing every other
+base. `surface_is_honest` tested each entry with the argument `1`, which
+would have failed it, so the list would have had to omit `FormatInt`
+(under-claiming) or assert it at a base it refuses (failing).
+
+Entries now carry **sample arguments** instead of an arity. Both lies are
+caught, run: claiming an unimplemented `strconv.Atoi` fails, and claiming
+`FormatInt` at base 16 fails.
+
+### NEXT
+
+Re-census. The bundle closed four gaps at once and `strconv` is now
+modelled at two entry points; the frontier that priced §G27 is stale.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+### VERDICT
+
+`tools/triad.sh --lane go --classify --build-target …×12 --gates '…'` —
+**green**. `LOCK ACQUIRED after 10104s as 'go 53190'` → `BUILD GREEN`
+12:46:41 → `TRIAD DONE (build exit 0, gates green)` 12:47:57.
+
+* **Tree certified**: `e23a64afecf48c07dc1a989a654c61dc3a5172c0`, equal to
+  this landing's working tree.
+* **Coverage**: the union line records all twelve targets entering the
+  build set — the eleven guard modules plus `LeanModels.Go`. This is what
+  the re-ticket existed for: the FIRST tenure auto-scoped to four modules
+  while `Stmt.lean`'s change is imported by eleven, and a green whose
+  scope excludes the importers is not evidence about them.
+* **Elaboration witness**: **0 Built, 15 Replayed.** Every target was
+  replayed, because this lane had already built all eleven locally at the
+  identical tree while checking the post-rebase state, warming the cache
+  before the ticket was enqueued. So the elaboration DID happen at this
+  tree — under authoring, not under tenure — and this run witnesses
+  artifact currency, not fresh elaboration.
+
+  Recorded rather than rounded up: `Built`/`Replayed` is the elaboration
+  witness, and a lane that pre-builds its own targets destroys that
+  witness for its own ticket. **The practical rule this yields: verify
+  post-rebase with a SCOPED build of what you changed, not the whole
+  target set, or purge before enqueueing.** §G24 hit a one-module version
+  of this; at twelve targets it is total.
+* `docs_check` 91/91; `diff_test` **1,508 cases, 0 failed**;
+  `script_corpus` 65/0; resolver self-test **17/17**.

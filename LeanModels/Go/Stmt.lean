@@ -24,6 +24,7 @@ rung 1's figures after three inches had widened it; the current state:
 | 10 (§G23) | **multi-value returns**: n-ary `Flow.returned` and `ret`, `assignCall` destructuring with a real blank `_`, Go's redeclaration rule |
 | 11 (§G24) | `math/bits` completed (14 functions), package CONSTANTS (`pkgConst`), and `PkgOutcome` so a defined panic is not a gap |
 | 12 (§G25) | **variadics**: a `FuncTable` variadic marker, packing into a FRESH slice, and `callDots` spreading the caller's own |
+| 13 (§G28) | **the stringer bundle**: string concatenation, string SLICING (yields a string), `strconv.FormatInt`/`Itoa`, and methods mangled by the extractor |
 
 **Do not quote a reach figure here.** Two earlier versions of this header
 carried one and both went stale, and §G19 found the second was not even
@@ -633,6 +634,38 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
       -- one, and an addressable array supplies its own address with
       -- `off = 0` and `cap = len = N`. A non-addressable array reaches
       -- the `none` branch and is refused, which is also Go's answer.
+      -- **Slicing a STRING yields a STRING**, not a header — Go's rule,
+      -- and a different result TYPE from slicing an array or slice. So
+      -- `SliceExpr` is one `go/ast` node covering two operations this
+      -- walker prices differently: the FOURTH instance of that shape
+      -- after `ArrayType`, `SelectorExpr` and `FuncDecl` (§G28).
+      --
+      -- Resolved before the addressable path because a string has no
+      -- backing address to give `sliceV`, and `_Kind_name[i:j]` — the
+      -- generated `stringer` shape this rung exists for — slices a string
+      -- held in an IDENTIFIER.
+      let asString : Option (List UInt8) ← (do
+        match ← (match x with
+                 | .ident nm => do loadAddr (← lookupLocal nm)
+                 | _ => evalExpr prog f x) with
+        | .stringV bs => pure (some bs)
+        | _ => pure none)
+      match asString with
+      | some bs => do
+          let n := bs.length
+          let lo' ← match lo with
+            | none => pure 0
+            | some e => match ← evalExpr prog f e with
+                        | .intV _ v => pure v.toNat | _ => pure 0
+          let hi' ← match hi with
+            | none => pure n
+            | some e => match ← evalExpr prog f e with
+                        | .intV _ v => pure v.toNat | _ => pure n
+          if lo' ≤ hi' && hi' ≤ n then
+            pure (.stringV ((bs.drop lo').take (hi' - lo')))
+          else
+            panicWith 0 (GoVal.runtimeErrorV "runtime error: slice bounds out of range")
+      | none => do
       let operand : Option (Addr × Nat × Nat × Nat) ← (
         match x with
         | .ident name => do
@@ -794,6 +827,19 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
       let rv ← evalExpr prog f r
       match lv, rv with
       | .intV k x, .intV _ y => binNum op k x y
+      | .stringV a, .stringV b =>
+          -- **String `+` is BYTE concatenation.** §G15 made a Go string a
+          -- `List UInt8` for `rev8tab`'s sake; the payoff here is that
+          -- concatenation is `++` and high bytes survive unchanged —
+          -- measured, `"\xff\xfe" + "!"` is `[255, 254, 33]`, which a
+          -- `String`-based model would have re-encoded.
+          match op with
+          | .add => pure (.stringV (a ++ b))
+          | .eq  => pure (.boolV (a == b))
+          | .ne  => pure (.boolV (a != b))
+          | _ =>
+              refuseGo .unsupportedConstruct (SpecRef.spec "Comparison_operators")
+                "string ordering is a later rung"
       | .ptrV a, .ptrV b =>
           match op with
           | .eq => pure (.boolV (a == b))

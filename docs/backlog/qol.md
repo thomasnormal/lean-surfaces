@@ -5042,3 +5042,104 @@ averaged away.
 sites 57, `--verify-guards` 44. All four paths verified live: docs+gates,
 docs alone, the unioned banner, and an unclassified run keeping its explicit
 target. Fixtures only; no Lean executed.
+
+## 2026-08-25-qol-73 — pricing the acquire-time resource gate (NOT landed)
+
+Priced against a **live instance**: the box was in the described state while
+this was written.
+
+```
+memory_pressure free% ............... 32   -> 68% in use   (current state)
+kern.memorystatus_vm_pressure_level .. 2   (warn)          (current state)
+vm_stat pages free .................. 52 MB                 (current state)
+   ...free + inactive ............... 2349 MB
+vm.swapusage used ................... 12930/14336 = 90%     (HIGH WATER)
+load ................................ 10.00
+```
+
+### Finding 1 — the proposal's `swap 93%` is the retired instrument
+
+`vm.swapusage` "used" is swap **allocated and not reclaimed**: a high-water
+mark for the machine's uptime. Keying a deferral on it rebuilds exactly the
+artifact that closed A17 for a day (~30 consecutive false refusals, C lane).
+Right now it reads **90%** while the kernel's own pressure level reads 2 — the
+two disagree **in kind, not degree**, and only one of them is about now.
+
+**A gate that defers on swap% would defer forever on any box that has ever
+swapped.** That is the single most expensive thing this proposal could get
+wrong, and it is invisible until someone measures the two side by side.
+
+### Finding 2 — "55 MB free" is real but is not, alone, evidence of starvation
+
+macOS keeps free memory low deliberately; `inactive` is reclaimable. Measured
+above: **52 MB free, 2349 MB free+inactive**, on a box that *is* struggling. A
+threshold on raw free MB would fire on healthy boxes too — right symptom,
+wrong dial.
+
+### Proposed instrument, and it is a deliberate OR
+
+Defer when **either**:
+
+* `kern.memorystatus_vm_pressure_level >= 2` — the kernel's own survivability
+  verdict, and the kernel is the thing that reclaims and kills; or
+* in-use% (`memory_pressure:100-free%`) above a high line.
+
+**This is not a reversal of the thread-throttle ruling.** There, kernel level
+was rejected as *looser* (it read normal at 87% in-use) for the question "how
+many threads". Here the question is "will an outside SIGTERM arrive", and an
+OR of both is **strictly stricter than either alone** — it respects that
+ruling rather than contradicting it.
+
+Every line names instrument **and transform**, per the polarity law:
+`memory_pressure:100-free%(macos)`, `memorystatus_vm_pressure_level=2-warn(macos)`.
+
+### Q1 — yes it blocks the queue, and that is the cheaper side
+
+It does block. But the alternative is not "no block": **deferring without the
+lock means the next ticket takes it and dies.** Behind a starved box every
+tenure dies, so holding the lock while deferring converts *N deaths into one
+wait*, and the held lock is a machine-wide "nobody build now" signal that no
+other mechanism currently sends.
+
+### Q2 — thresholds, and what I cannot calibrate
+
+Level `>= 2` is defensible from first principles. The in-use line is **not
+calibratable from the data I have** — I could not isolate the analog-F4 or
+pyc9 logs to confirm the gate would have fired on them, and I will not assert
+it did. Proposal: ship with the **kernel level as the trigger** and the in-use
+line set high (85%) so it rarely binds, then calibrate from the first real
+deferrals.
+
+### Q3 — MAX_WAIT should not absorb deferral, but deferral needs its own clock
+
+`MAX_WAIT` measures **lock contention** — someone else is building. Deferral
+measures **the box being unusable**, a different condition, and charging one
+clock for both makes a starved box look like a busy one. But unbounded
+deferral is its own failure: a permanently starved box would be held forever.
+Proposal: a separate `MAX_DEFER` (~45 min), after which the tenure **releases
+the lock and exits loudly**, naming the readings — the machine goes back to
+the fleet and the decision returns to the lane.
+
+### Cost, measured
+
+One `read_load` + `read_pressure` is **82 ms**. At a 60 s re-check interval a
+30-minute starvation costs ~2.5 s of instrument time total. The cost is not
+the instruments; it is the held lock, priced in Q1.
+
+### The limit worth stating before the ruling
+
+The gate reads at acquire and then starts a build that may run 38+ minutes. A
+box can starve *after* the check. **This reduces dice-rolls; it does not
+guarantee survival** — the honest claim is "do not start into a box already
+known to be starved", and it should not be sold as more.
+
+### Composition with the kill discriminator
+
+They belong in one landing because the gate's give-up message should speak the
+discriminator's vocabulary: `137` + our KILL line = **ours** (the RSS guard);
+`143` in silence = **the box**. The gate prevents; the discriminator explains
+the ones that still happen.
+
+### Triad
+
+Pricing only. No tool changed, nothing landed, no Lean executed.

@@ -1,0 +1,46 @@
+{
+ "schema": "declared-divergences-1",
+ "tier": "C",
+ "probe": "harness/c_divergence_probe.py",
+ "language_version": "C23 (N3220)",
+ "note": "family-architecture.md \u00a75.0a. RESTORED by 2026-08-26-c-27, and the restoration is the point. 2026-08-25-c-25 retired this tier's last live row, which left `rows: []`, which the checker then refused \u2014 so this file and harness/c_divergence_probe.py were DELETED as the canon then read, and that compliance is recorded in docs/backlog/c.md rather than rewritten. Arch ruled the other way (52e9c4b): `rows: []` beside a non-empty `retired_rows` is LEGAL AND REQUIRED TO STAY, because \"no LIVE debts \u2014 and here is how each one closed\" is a STRONGER claim than a file with rows, and a retired row keeps its guards because the guard is what would notice the divergence coming back. THE C TIER DECLARES NO LIVE DIVERGENCE. Both rows below are closed, both keep their two guards, and the probe's `rc` comes entirely from the regression alarm \u2014 a probe whose only job is to notice a return.",
+ "rows": [],
+ "retired_rows": [
+  {
+   "id": "c-div-1",
+   "kind": "semantic",
+   "site": "gcc.c-torture/execute/20021127-1.c at pin 9e54d865. Scoreboard verdict: failed (reached abort()). Committed in docs/c-torture-scoreboard.json.",
+   "oracle": "The test declares `long long llabs (long long);`, calls `llabs(-1)`, and DEFINES `long long llabs (long long b) { abort (); }`. It passes only if the implementation recognises `llabs` as a builtin and folds the call without calling the definition in the file. Reaching the definition is the failure signal the test was written to produce.",
+   "model": "The model does the ordinary thing: `Program.find? \"llabs\"` finds the definition in the translation unit and calls it, so the call reaches `abort()`. THE MODEL IS BEHAVING CORRECTLY -- there is no C rule it is getting wrong. What it lacks is builtin RECOGNITION, which is a compiler optimisation and not a semantics. Filed as `semantic` because the oracle and the model disagree about what the PROGRAM MEANS; nothing about ingestion is involved, which is what separates it from the retired c-div-2.",
+   "inherited_from": null,
+   "declared": "2026-08-24",
+   "retirement_condition": "RETIRED by reclassification. The `oracle-tests-compiler` zero-state landed in 2026-08-25-c-25: membership by name in tools/c_corpus_fetch.py travelling through docs/c-torture-pin.json, the declare-call-define SHAPE re-derived from the ingested AST by LeanModels/C/Torture.lean's hasDeclareCallDefine, and the state printed in the zero-states line beside refused-ub. 20021127-1.c left `failed` for the named state, which is exactly the event this condition named.",
+   "guards": [
+    "c_div_1_still_divergent",
+    "c_div_1_has_not_widened"
+   ],
+   "why_not_a_refusal": "Nothing was out of tier: every construct in the test is modelled, the call ran, and the program reached abort() exactly as a conforming implementation WITHOUT builtin folding would. The oracle is testing the COMPILER rather than the language.",
+   "gated": "harness/c_divergence_probe.py reads docs/c-torture-scoreboard.json, which lists every `failed` test by NAME. Both guards therefore run offline, with no corpus, no toolchain and no lock.",
+   "retired": "2026-08-25",
+   "retired_by": "The state, not a fix. The model still calls the definition and still reaches abort() \u2014 that behaviour is CORRECT and did not change. What changed is that the scoreboard can now say so: the test is no longer counted as a model failure, and it is not silently excluded either, because `oracle-tests-compiler` is printed in the zero-states line as part of what the number MEANS. Modelling the <stdlib.h> builtins was rejected as the path: it would adopt GCC's optimiser behaviour as if it were C semantics. THE GUARD SPRANG AS DESIGNED \u2014 c_div_1_still_divergent goes red the moment the test leaves that column, which is what forced this retirement to be a deliberate act rather than a drain. Verified in the tenure that landed it (crunga 55338, TRIAD DONE, 3786 jobs): scored 98 -> 97, failed 1 -> 0, oracle-tests-compiler 1."
+  },
+  {
+   "id": "c-div-2",
+   "kind": "provenance",
+   "site": "gcc.c-torture/execute/20010224-1.c at pin 9e54d865. Scoreboard verdict at declaration: failed (reached abort()).",
+   "oracle": "`int16_t bndpsd[6]` is filled by `ba_compute_psd(0)`, which reads `masktab[0] == 1`, sets `bndpsd[1] = psd[0] = 50`, then accumulates `psd[1..3]` through `logadd(int16_t*, int16_t*)`. main() requires `bndpsd[1] == 140`; 50+40+30+20 = 140.",
+   "model": "The model was RIGHT; the ENVELOPE described a different program -- which is why this is `provenance` and not `semantic`. clang's JSON dumper puts a PARTIALLY initialised array's elements under `array_filler`, with the implicit filler prepended, and leaves `inner` EMPTY. `extractors/c/extract.py`'s `e_InitListExpr` read only `inner` and emitted `\"inits\": []` for `int16_t masktab[6] = {1,2,3,4,5}`. The tier then correctly zero-filled all six elements per \u00a76.7.11p21 and computed 0 where the test wanted 140.",
+   "inherited_from": null,
+   "inherited_note": "ORIGINATED here. Found by the tier's own scoreboard on its fourth run -- no other instrument in the chain could see it, because clang accepted the source, the extractor exited 0, the schema validated and the ingester parsed.",
+   "declared": "2026-08-24",
+   "retirement_condition": "Diagnosis, then either a fix (the row retires) or a restatement as a real declared divergence. The row set itself a deadline: it must not survive a second landing unchanged.",
+   "guards": [
+    "c_div_2_still_divergent",
+    "c_div_2_has_not_widened"
+   ],
+   "why_not_a_refusal": "The run produced an ANSWER and the answer was wrong. That is the one thing this tier's design is meant to make impossible without saying so, which is why the row was written down BEFORE it was understood rather than after.",
+   "retired": "2026-08-24",
+   "retired_by": "`e_InitListExpr` now reads `array_filler` when `inner` is empty and DROPS the `ImplicitValueInitExpr`, because \u00a76.7.11p21's zero-fill is the model's job (`initElems` performs it from the extent) and carrying clang's filler would be a second answer to one question. Verified end to end before ticketing: masktab[0]=1, masktab[5]=0 (the zero-fill was always correct), psd[3]=20, bndpsd[1]=140. Blast radius measured: 4 of 270 envelopes carried an empty InitListExpr and NONE of them passed, so the standing number was never built on the corruption. The scoreboard's `failed` count fell 2 -> 1 in the tenure that landed it (crunga 38534, TRIAD DONE, 3785 jobs). Its guards are named in the canonical shape but are deliberately NOT defined by the probe: a retired row's guards must not be live, or the probe would be gating a fact that no longer exists."
+  }
+ ]
+}

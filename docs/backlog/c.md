@@ -3140,6 +3140,15 @@ which are not supposed to age.
 
 ### THE REGISTER FILE IS DELETED, and the canon said so before I could argue
 
+> **SUPERSEDED, 2026-08-26 — and the annotation stays rather than the section
+> being rewritten.** Arch ruled (`52e9c4b`) that `rows: []` beside a non-empty
+> `retired_rows` is LEGAL AND REQUIRED TO STAY, and filed the structural defect
+> against itself: §5.0a mandated `retired_rows` while the deletion rule
+> destroyed them. The file and the probe are RESTORED by `2026-08-26-c-27`.
+> What follows was correct as taken — it is the compliance that surfaced the
+> defect — and only its tense is wrong (§5.4b).
+
+
 Retiring `c-div-1` left `docs/c-declared-divergences.json` with **zero live
 rows**, and `harness/divergence_register.py` refuses that in as many words:
 
@@ -3266,4 +3275,83 @@ as a thing the model could have got right.
 > **The day a conformance number goes down because the tier learned what
 > it is allowed to be judged on is the day the number starts being worth
 > quoting.**
+
+
+---
+
+## 2026-08-26-c-27 — THE REGISTER COMES BACK, and the reversal is recorded rather than tidied
+
+`2026-08-25-c-25` retired this tier's last live row, which left `rows: []`,
+which the checker refused in as many words — so the register file and
+`harness/c_divergence_probe.py` were **deleted**, because that is what the
+canon then said. Arch ruled the other way (`52e9c4b`), adopted the
+diagnosis as law, and **filed the structural defect against itself**: §5.0a
+mandated `retired_rows` while the deletion rule destroyed them.
+
+> **A rule about a CONTAINER is untested until the container is empty.**
+> (Arch's wording, and it is the same law this lane keeps meeting from the
+> other side: a corpus can only contradict the rules it exercises.)
+
+The ruling: a file with `rows: []` and a non-empty `retired_rows` is
+**legal and required to stay**, because *"no LIVE debts — and here is how
+each one closed"* is a **stronger** claim than a file with rows.
+Delete-rather-than-file-empty survives only for the never-had-a-row case.
+
+### What came back, and in the fleet's shape
+
+`docs/c-declared-divergences.json` returns with **zero live rows and two
+retired ones**, each keeping **both** its guards — because retirement moves
+a row, it does not end the watch, and *the guard is what would notice the
+divergence coming back*.
+
+`harness/c_divergence_probe.py` returns built to `dfc65dd`'s shape from the
+start, not adapted afterwards:
+
+* **`LIVE_GUARDS` / `RETIRED_GUARDS` partition**, `rc` from live only;
+* retired guards **run, print, and appear in `--json`**, and their failure
+  is reported and never fatal — otherwise every retirement would red its
+  own probe forever, and §5.0a clause 3 asks the checker for a guard's
+  EXISTENCE, not its passage;
+* **and the regression alarm**: a retired `*_still_divergent` that HOLDS
+  means the divergence came back, and that direction GATES.
+
+**This tier has NO live rows at all, which makes the alarm the only thing
+here that can ever set `rc`.** The probe's entire job is to notice a
+return — which is the sharpest possible statement of what an archive that
+is still watched is *for*, and it only became visible because this lane
+was the first to empty.
+
+Polarity, as the run reports it:
+
+```
+c_div_1_still_divergent  FAIL  20021127-1.c is not in `failed`; it sits in
+                               oracle-tests-compiler as the retirement intended
+c_div_2_still_divergent  FAIL  20010224-1.c is not in `failed`; the extractor fix holds
+c_div_1_has_not_widened  ok    membership pinned=['20021127-1.c'] scored=['20021127-1.c']
+c_div_2_has_not_widened  ok    scoreboard failed=0, live register rows=0
+```
+
+Two FAILs that are the CORRECT reading, and the event worth noticing is
+either of them flipping to `ok`.
+
+### The two guards are not decoration — they watch different fixes
+
+`c-div-1` retired by **reclassification**, so its watch asks whether
+`20021127-1.c` is back in `failed` (the `oracle-tests-compiler` state
+stopped holding) and whether that state has acquired members the pin does
+not name. `c-div-2` retired by a **fix**, so its watch asks whether the
+`array_filler` regression returned, and — with zero live rows — whether
+**any** test failed at all, since a failing test with no row is a
+divergence nobody declared.
+
+### And the deleted section is ANNOTATED, not rewritten
+
+`2026-08-25-c-25`'s "THE REGISTER FILE IS DELETED" section keeps its text
+and gains a SUPERSEDED note pointing here. It was correct as taken — it is
+the compliance that surfaced the defect — and only its tense is wrong
+(§5.4b's annotation norm; the same reason `qol-21`'s published table was
+annotated rather than edited).
+
+> **A reversal that erases the reasoning it reverses destroys the only
+> evidence that the rule was tested. The compliance IS the finding.**
 

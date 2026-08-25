@@ -20,10 +20,13 @@
 # (2026-08-25-c-24).  That is this lane's own corpus law arriving one layer
 # up: A GATE CAN ONLY CONTRADICT THE FILES IT RUNS ON.  It is checked
 # before the expensive half, so a malformed row costs seconds, not a build.
-# It is kept even though the C tier now files NO register of its own
-# (2026-08-25-c-25 retired its last row): this lane broke the fleet once by
-# not running a shared checker, and "we have no rows today" is exactly the
-# reasoning that let it happen.
+# It is kept even though the C tier declares NO LIVE divergence: this lane
+# broke the fleet once by not running a shared checker, and "we have no rows
+# today" is exactly the reasoning that let it happen.  The tier's own probe
+# runs beside it, and with zero live rows its `rc` comes entirely from the
+# RETIRED-ROW REGRESSION ALARM — a divergence coming back is the only thing
+# it can report, which is the whole job of an archive that is still watched
+# (2026-08-26-c-27).
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CACHE="${LS_C_CORPUS_CACHE:-${TMPDIR:-/tmp}/ls-c-torture}"
@@ -39,6 +42,7 @@ python3 "$ROOT/tools/c_corpus_fetch.py" --selftest || exit 1
 python3 "$ROOT/harness/c_torture_score.py" --selftest || exit 1
 python3 "$ROOT/extractors/c/extract.py" --selftest || exit 1
 python3 "$ROOT/harness/divergence_register.py" || exit 1
+python3 "$ROOT/harness/c_divergence_probe.py" || exit 1
 # --offline: verifies every cached file's sha256 against docs/c-torture-pin.json
 # and writes the manifest.  No network in a gate, ever.
 python3 "$ROOT/tools/c_corpus_fetch.py" --offline --manifest "$MANIFEST" || exit 1

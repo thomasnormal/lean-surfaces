@@ -121,4 +121,12 @@ def boundProbeT (tr : ClockTrace) (pos : RVal) (gamma depth : Int) :
      | _ => Option.none)
   | Option.none => Option.none
 
+/-- Midgame (Italian-shaped, after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3
+Bc5 — the position the side to move sees). -/
+def posMid : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "         \n         \n r.bqk..r\n pppp.ppp\n ..n..n..\n ..b.p...\n ..B.P...\n ...P.N..\n PPP..PPP\n RNBQK..R\n         \n         \n",
+      .int (-13), .tuple #[.bool true, .bool true],
+      .tuple #[.bool true, .bool true], .int 0, .int 0]
+
 end Examples.python.sunfish.pins

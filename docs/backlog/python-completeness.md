@@ -2368,6 +2368,84 @@ layer up, at the GATE rather than at the witness. The checker was right and
 stays exactly as strict as it is; a checker loosened to accommodate unexercised
 data would have converted a loud red into a silent wrong claim.
 
+## 2026-08-25-pycomplete-25 — the midgame board splits by DEPTH, and the field-collision sweep returns a clean negative
+
+Two items, and the first is the previous inch's own profile turned back on itself.
+
+### `pins_bound_mid` was 74% of its family, and the axis was DEPTH
+
+The five-way shard measured `_mid` at **875 s — 74% of the whole bound
+family**, capping its win at **1.3×** where 2× was hoped. Balancing by guard
+COUNT was the wrong axis; so was balancing by FAMILY. The cost follows depth,
+and **the certificates print the evidence themselves** — each guard's expected
+pair carries its node count:
+
+| depth | guards | nodes | share | predicted |
+| --- | --- | ---: | ---: | ---: |
+| `_mid_d1` | `0 1`, `60 1` | 71 | 4.6% | ~40 s |
+| `_mid_d2` | `0 2`, `60 2` | 826 | 53.3% | ~466 s (7.8 min) |
+| `_mid_d3` | `0 3`, `60 3` | 653 | 42.1% | ~369 s (6.1 min) |
+
+> **PREDICTION, stated before the tenure:** the bound family's critical path
+> falls **14.6 → ~7.8 min (1.88×)**, set by the `_mid_d2` pair. Not the even
+> thirds a guard count would suggest — 53/42/5 is what the node counts say.
+
+**An even split was available and NOT taken.** Mixing depths across shards
+(`0 2` alone; `0 3`+`60 2`; the rest) would balance to ~42% and shave a further
+~1.7 min. It muddies what a red names — the whole point of the boundary — and
+**the fleet floor is `pins_clock_walk` at 19.1 min either way**, so the extra
+balance buys nothing that matters. Optimising below the floor is motion, not
+progress.
+
+`posMid` lifted to `pins_common` verbatim, as `boundProbe` did. Certificates
+re-checked across the whole bound family: **26 → 26, identical**.
+
+### THE FLEET FLOOR, named so nobody re-derives it
+
+`pins_clock_walk` at **19.1 min is irreducible** — one certificate, and a
+certificate cannot be split without changing it. Nothing to do but know it.
+`genmoves_ray` (5.9 min) stays priced separately: it is not a leaf, so it needs
+a re-exporting facade.
+
+### The field-collision sweep: a clean NEGATIVE, checked rather than assumed
+
+The fleet sweep asks whether any field this tier's instrument writes into an
+envelope could be overwritten by the source when properties merge (ES's defect:
+the node type in `kind`, silently beaten by the source's own `kind`).
+
+**Impossible by construction here, because the pyc extractor is hand-built
+rather than merge-based.** Verified mechanism by mechanism:
+
+* no `.update()` on any emitted node — the two in the file operate on
+  name-census *sets*;
+* no `vars(node)`, no `node.__dict__`, no `{**…}` dict-unpack anywhere;
+* `ast.iter_fields` appears **once**, inside `_replace_node`, an AST→AST
+  rewrite (`type(root)(**fields)`) for the hoisted filter — never envelope
+  construction.
+
+**And the specific hazard was real.** CPython's `ast.Constant` *does* own a
+field named `kind` — the string prefix, `'u'` for `u"abc"`. Measured:
+`u"abc"` gives `value='abc', kind='u'`; `"abc"` gives `value='abc', kind=None`.
+The extractor **never reads `node.kind`**, emitting `{"kind": "Constant", …}`
+hand-built, so the source's `kind` is dropped rather than merged — and dropping
+it loses nothing, the `u` prefix being lexical only in Python 3.
+
+**The transferable half:** in `unsupported()` this tier already does what ES's
+fix requires —
+
+    "kind":    "Unsupported",
+    "py_kind": py_kind if py_kind is not None else type(node).__name__,
+
+the source-derived node type gets a **different field name**. *When an
+instrument records what the source IS, the field must not be one the source
+also owns.* Disjoint by naming, not by luck.
+
+### And a process correction, recorded because it is my own law
+
+`pyc-del` was never pushed; the coordinator had to fetch from the worktree.
+Inch 1's rule — *push when the thing you would have to redo becomes green* —
+includes the push, and I had been treating "committed and reported" as done.
+The claim sequence is now **verdict → verify tree → commit → PUSH → report**.
 ## 2026-08-25-pycomplete-26 — the register's three clauses, and a probe that was starting UNLOCKED BUILDS
 
 §5.0a's empty-register ruling (`52e9c4b`) lands in the shared checker, which

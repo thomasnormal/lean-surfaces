@@ -18,6 +18,9 @@ move a certificate.
 
   `pins_bound_h`         the opening board `posH 0`, depths 1-3   (8)
   `pins_bound_mid`       the midgame board `posMid`               (6)
+                         -- itself split by DEPTH after the profile
+                            measured it at 74% of this family:
+                            `_mid_d1` (2) `_mid_d2` (2) `_mid_d3` (2)
   `pins_bound_tac`       tactical `posTac` + quiet-pawn `posPend` (5)
   `pins_bound_end`       rook endgame `posEnd`                    (4)
   `pins_bound_searcher`  the trace-clock frontier                 (3)

@@ -3066,3 +3066,70 @@ Minutes, not survivability. Worth stating plainly rather than quietly letting an
 approved-but-wrong premise carry a tenure — the prediction discipline worked
 exactly as intended, falsifying a claim *within the hour* and *before* the
 tenure was spent on it.
+
+## 2026-08-25-pycomplete-35 — genmoves_ray does NOT shard: a naming convention is not a dependency structure
+
+The dependency census I promised to run **at** the inch rather than guess in the
+registered table **falsifies the inch**. Recording it before a tenure was spent,
+which is what the census was for.
+
+### The registered table read families off NAME PREFIXES
+
+I proposed `pB` ~36, `ray` ~32, `cast` ~26, `pawn` ~25, `rayBody` 21 and a cheap
+`_common` holding "the 31 `def`s". Every one of those numbers came from
+counting **name prefixes**. The reference graph tells a different story.
+
+### First, a flaw in my own split rule, caught before generating files
+
+I classified a declaration as shared when **≥2 families** referenced it. Wrong:
+a declaration used by exactly **one other** family would stay family-local while
+a different file needed it. The correct rule is *referenced by any family other
+than its own* — and it moves the numbers enormously:
+
+| bucket | ≥2-family rule | correct rule |
+|---|---|---|
+| `_common` | 1008 lines (27.6%) | **2549 lines (69.8%)** |
+| largest family (`ray`) | 851 | 346 |
+| `_common` declarations | 52 of 205 | **123 of 198** |
+
+### And then the real obstacle: the families are CYCLIC
+
+`X -> Y` = X uses Y. **11 mutual pairs among 6 families**:
+
+    ray <-> rayBody (53/2)   cast <-> misc (80/11)   cast <-> pB (4/10)
+    cast <-> pawn (4/18)     cast <-> ray (3/10)     pB  <-> pawn (3/36)
+    pawn <-> ray (29/12)     misc <-> ray (23/74)    misc <-> pawn (6/66)
+    misc <-> pB (1/54)       pawn <-> rayBody (1/1)
+
+**Lean modules cannot import cyclically.** The family split is therefore not
+merely suboptimal, it is **structurally impossible as designed**. Collapsing
+every cycle into `_common` is the only legal version, and that is the 69.8%
+figure: critical path `2549 + 346 = 2895` lines = **79.2%**, a paper **1.26×**
+that the import tax (**+18%** measured on the pins 1→3 split, and this is 1→7)
+would erase completely.
+
+### The law
+
+> **A naming convention is not a dependency structure.** `pB`, `ray`, `cast`,
+> `pawn` are how a human grouped 173 theorems for reading. The reference graph
+> says they are **one organism**, and the graph is what the compiler obeys.
+
+This is today's third instance of one root: **text-shaped evidence standing in
+for structural evidence** — the substring grep that invented `genmoves_ray`'s
+importers, the `rows[0]` fold that picked a file by sort order, and now a shard
+plan built from name prefixes. Each time the text was easy to read and wrong.
+
+### Consequence
+
+**The genmoves_ray shard is withdrawn, on the census, before the tenure.** Its
+962 s is topologically irreducible: no arrangement of files makes that theorem
+web cheaper, because the web is the cost. A win there needs **proof-level** work
+(cheaper tactics, weaker lemmas), not file moves — a different kind of inch,
+priced separately.
+
+**The d2/d3 pair-split becomes the next inch.** At 515 s it is smaller than 962 s,
+but it is *known-splittable* — the depth axis is a real parameter, and the
+landing already measured its shards as independent. **A 1.7× on a splittable
+515 s beats a 1.26× on an unsplittable 962 s**, and the sequencing argument that
+put genmoves_ray first (962 > 515) assumed a splittability the census has now
+refuted.

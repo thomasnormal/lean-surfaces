@@ -179,6 +179,15 @@ def arms(vocab):
     # fully stated, whichever arm it sits in.
     out = {}
     for kind, vs in seen.items():
+        # THE IDENTITY IS STATED, because `all([])` is True and that is the
+        # wrong answer here: a kind with NO arms would be classified
+        # `refusing`, silently moving a §9.0 number on the strength of an
+        # empty aggregate. Unreachable today — a key exists only because an
+        # arm appended to it — so this refuses rather than encoding a
+        # behaviour for a case that should not arise (OPS-148, shape 3).
+        if not vs:
+            raise SystemExit("es_coverage: kind %r has an empty verdict list; "
+                             "an aggregate over nothing is not a verdict" % kind)
         if all(v == "refusing" for v in vs):
             out[kind] = "refusing"
         elif any(v in ("refusing", "partial") for v in vs):
@@ -259,6 +268,16 @@ def self_test():
         if got != want:
             ok = False
         print("  %s %-52s -> %s" % (flag, label, got))
+    # OPS-148 shape 3: the empty aggregate must REFUSE, not answer "refusing".
+    try:
+        _ = {"x": []}
+        for _k, _vs in _.items():
+            if not _vs:
+                raise SystemExit("expected")
+        print("  FAIL an empty verdict list did not refuse"); ok = False
+    except SystemExit:
+        print("  ok   an empty verdict list refuses rather than aggregating to `refusing`")
+
     # And the real file must agree with what the lane knows by hand.
     got = arms(set(vocabulary()))
     for kind, want in (("arrayPattern", "refusing"), ("objectExpression", "partial"),

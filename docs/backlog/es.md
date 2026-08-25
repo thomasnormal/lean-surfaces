@@ -1401,3 +1401,72 @@ that idea cannot be retried without meeting them first.
 One tenure, and the third scoreboard run deferred again. Three reds in a row —
 missing binary, un-ingestible corpus, unparseable guard — and each was a
 different layer of the same pipeline being exercised for the first time.
+
+---
+
+## 2026-08-25-es-4 — OPS-148 sweep: NAMED NEGATIVE, and one real site
+
+Ride-along for OPS-148 (arch, `9b72995`). Four shapes swept across every
+instrument this lane owns: `harness/es_{census,m2_census,lean_lint,coverage,
+score,score_corpus,scoreboard}.py` and `extractors/es/extract.py`.
+
+**GREPPED. The counts, not an impression:**
+
+| shape | sites | verdict |
+|---|---|---|
+| 1. first-element access over REGISTER rows | **0** | clean |
+| 2. `if rows` as a proxy for "has a register" | **0** | clean |
+| 3. aggregate whose identity element is unstated | **1** | **FIXED** |
+| 4. empty-list message that reads as a verdict | 1 | kept, named below |
+
+### SHAPE 1 — 0 sites, and the reason is worth recording
+
+Two `rows[0]` hits exist (`es_m2_census.py:119`, `extract.py:230`) and neither
+is a register: they index the FRONTEND's batch output, and both are already
+written `rows[0] if rows else proc.stderr.strip()`.
+
+The one instrument in this lane that DID index register rows —
+`es_register_check.py`'s `d["rows"][0]` — was **retired on 2026-08-24** when
+the shared checker landed. The exposure left with it. That is luck rather than
+foresight, and it is recorded as luck.
+
+### SHAPE 2 — 0 sites
+
+Four `if not rows` / `len(rows) != len(paths)` hits, all over frontend or
+slice rows. Each is an INPUT-FAULT check (`zero slice files attributed — an
+instrument fault`) or the batch-protocol conservation check. None branches on
+whether a register exists.
+
+### SHAPE 3 — ONE REAL SITE, FIXED
+
+`es_coverage.py`'s per-kind aggregation:
+
+    if all(v == "refusing" for v in vs): out[kind] = "refusing"
+
+**`all([])` is `True`**, so a kind with an empty verdict list would be
+classified `refusing` — silently moving a §9.0 number on the strength of an
+aggregate over nothing. Unreachable today (a key exists only because an arm
+appended to it), which is exactly why it would have survived to the first day
+it was reachable. It now REFUSES rather than encoding a behaviour for a case
+that should not arise, with a self-test case.
+
+`es_score.py`'s `total = sum(counts.values())` was checked and kept: `counts`
+is a fixed-size dict initialised to 0, so the identity is right by
+construction — and its zero behaviour is DEMONSTRATED rather than assumed, by
+run 2's `0/0 scored … states sum to 0`, which was correct and informative.
+
+### SHAPE 4 — ONE SITE, KEPT AND NAMED
+
+`es_coverage.py:220` prints `"-"` for an empty bucket. It is a placeholder,
+not a verdict, and the COUNT beside it carries the fact (`refusing 0  -`).
+Kept deliberately; named here so it is not rediscovered as a finding.
+
+### THE EXPOSURE THIS LANE STILL CARRIES
+
+`docs/es-declared-divergences.json` has exactly one row, and **`es-div-1`
+retires with the realm inch** — at which point this tier files the first
+legally-empty register in the fleet. Clause 1 made `rows: []` legal, but the
+shared checker's own text still reads *"a register file with nothing in it is
+a claim that the tier has no debts, and should be deleted rather than filed
+empty"*. Those two cannot both be right. Flagged now rather than discovered
+on the day the row retires.

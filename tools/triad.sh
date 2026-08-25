@@ -122,8 +122,26 @@
 # spelling both the classified and unclassified paths read):
 #
 #   docs      docs_check
-#   anything  docs_check; diff_test; refusal_census --whitelist --no-build
+#   anything  docs_check; diff_test; refusal_census --whitelist --no-build;
+#   else      divergence_register
 #   else
+#
+# THE RULE THAT DECIDES MEMBERSHIP, ruled 2026-08-25 after the floor audit:
+#
+# > A GATE WHOSE CORPUS IS FLEET-WIDE BELONGS IN THE FLEET'S FLOOR.
+#
+# `divergence_register` globs `docs/*-declared-divergences.json` — EVERY tier's
+# file — yet it was wired lane-private, so each lane had to remember it.  Seven
+# of twenty-five did.  A fleet-wide corpus gate wired as lane-private
+# guarantees the first adopter pays everyone's red in its own tenure, which is
+# what happened to ES on another lane's rows (es 93342, 08-25 08:17).
+#
+# It needs no runner and runs no Lean: its only subprocess call is a python
+# probe under `sys.executable`, and it names lake nowhere — so it is not in
+# `gate_runner_targets` and owes the gate phase no prebuild.
+#
+# `es_lean_lint` and `c_torture_gate` are lane-specific and correctly stay
+# lane-added: the rule is about the CORPUS a gate reads, not its importance.
 #
 # REFUSAL_CENSUS JOINED THE FLOOR on 2026-08-23, by ruling.  Its §5.2
 # invariants — every interpreter refusal carries a class, and NO row is
@@ -223,10 +241,10 @@ SINCE=""                # --since <sha>: price the INCREMENT (§5.4a-i)
 SINCE_ROOT=""           # the chain root the increment is actually diffed against
 SINCE_LINE=""           # the base green's ledger line, kept for the coverage line
 DOCS_FLOOR='python3 tools/docs_check.py'
-DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py; python3 harness/refusal_census.py --whitelist --no-build'
+DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py; python3 harness/refusal_census.py --whitelist --no-build; python3 harness/divergence_register.py'
 # The label the announcement carries, so the first lane to see a new gate line
 # reads WHY rather than filing a bug against its own tenure.
-FLOOR_LABEL='floor of 2026-08-23: + refusal_census --whitelist (§5.2 — every refusal carries a class; no row undefined)'
+FLOOR_LABEL='floor of 2026-08-25: + divergence_register (a gate whose corpus is FLEET-WIDE belongs in the fleet floor)'
 CLASSIFY=0
 CLASSIFY_ONLY=0
 FOREIGN=0
@@ -2061,8 +2079,9 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a census-only gate list still prebuilds" \
         "$(gate_runner_targets 'python3 harness/refusal_census.py --whitelist --no-build')" "leanmodels-run"
   check "  ...and the floor as a whole does"   "$(gate_runner_targets "$DEFAULT_FLOOR")" "leanmodels-run"
-  check "the label says WHY the gate appeared" "$(printf '%s' "$FLOOR_LABEL" | grep -c 'refusal_census')" "1"
-  check "  ...and names the invariant"         "$(printf '%s' "$FLOOR_LABEL" | grep -c '§5.2')" "1"
+  check "the label says WHY the gate appeared" "$(printf '%s' "$FLOOR_LABEL" | grep -c 'divergence_register')" "1"
+  # THE RULE, not a §-number: membership is decided by the corpus a gate reads.
+  check "  ...and names the rule that admitted it" "$(printf '%s' "$FLOOR_LABEL" | grep -c 'FLEET-WIDE belongs in the fleet floor')" "1"
 
   # ---- THE CLASS ADVISORY (the fuelMono lane's full tenures on docs diffs)
   echo "  -- class advisory"
@@ -2285,7 +2304,8 @@ if [ "$SELF_TEST" = "1" ]; then
 
   # THE EXISTING SPECS ARE UNCHANGED, which is the half that must not regress:
   # every unquoted ';' is still a separator, including the floor's own two.
-  check "the floor still splits into three"    "$(gate_split "$DEFAULT_FLOOR" | grep -c .)" "3"
+  # FOUR since 2026-08-25: divergence_register joined by the fleet-wide rule.
+  check "the floor splits into four"          "$(gate_split "$DEFAULT_FLOOR" | grep -c .)" "4"
   check "  ...and is NOT refused"              "$(gate_spec_refusal "$DEFAULT_FLOOR" >/dev/null && echo refused || echo accepted)" "accepted"
   check "a single command is one gate"         "$(gate_split 'python3 tools/docs_check.py' | grep -c .)" "1"
   check "  ...and is not refused"              "$(gate_spec_refusal 'python3 tools/docs_check.py' >/dev/null && echo refused || echo accepted)" "accepted"
@@ -2335,7 +2355,7 @@ if [ "$SELF_TEST" = "1" ]; then
   check "plain --classify is not REFUSED"      "$(printf '%s' "$out" | grep -c 'is EMPTY')" "0"
   out="$(flagrun --classify --against HEAD)"
   check "  ...and it plans a NON-EMPTY floor"  "$(printf '%s' "$out" | grep -c 'gate 1 is EMPTY')" "0"
-  check "  ...reaching the gate phase"         "$(printf '%s' "$out" | grep -c '=== gate:')" "3"
+  check "  ...reaching the gate phase"         "$(printf '%s' "$out" | grep -c '=== gate:')" "4"
   # ...while --classify-only keeps taking the gates AS GIVEN.
   saved_c="$CLASSIFY"; saved_co="$CLASSIFY_ONLY"; saved_g="$GATES"; saved_lg="$LANE_GATES"
   CLASSIFY=1; CLASSIFY_ONLY=0; GATES=""; LANE_GATES=""
@@ -3054,7 +3074,7 @@ if [ "$SELF_TEST" = "1" ]; then
   LS_GREP_ROOT=""
 
   # ---- the default-gate-set notice (the ES lane's migration finding)
-  check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test, refusal_census"
+  check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test, refusal_census, divergence_register"
   check "the docs floor names one gate"   "$(gate_names "$(gate_floor docs)")" "docs_check"
   GATE_NOTICE_DONE=0
   check "a DEFAULT invocation warns"      "$(gate_notice "$(gate_floor tier)" "" | grep -c 'DEFAULT GATES')" "1"

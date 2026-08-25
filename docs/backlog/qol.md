@@ -4701,3 +4701,48 @@ all.
 
 Audit only. No tool changed, no config changed, no Lean executed, nothing
 enqueued.
+
+## 2026-08-25-qol-66 — the floor gains the rule, and waits for C
+
+The ruled one-line addition, **prepared and HELD**. `divergence_register`
+joins `DEFAULT_FLOOR` under the rule the audit produced:
+
+> **A GATE WHOSE CORPUS IS FLEET-WIDE BELONGS IN THE FLEET'S FLOOR.**
+
+Stated where the floor is defined, with why this gate qualifies (`docs/*-declared-divergences.json`
+is every tier's file) and why `es_lean_lint` and `c_torture_gate` do not — the
+rule is about the CORPUS a gate reads, not its importance.
+
+It needs **no runner and runs no Lean**: its only `subprocess` call is a python
+probe under `sys.executable`, and it names lake nowhere. So it is deliberately
+NOT added to `gate_runner_targets` and owes the gate phase no prebuild.
+
+Five rows pinned the old three-gate floor and were re-pointed — the floor
+splits into four, the gate phase runs four, `gate_names` reads four, and the
+label now names the **rule** that admitted the gate rather than a §-number.
+
+### The hold is verified, not assumed
+
+Measured first on my own checkout: the gate **passed**, exit 0 — which was a
+**false pass**. My branch predates `docs/c-declared-divergences.json`, so the
+offending file was not in the tree at all. A gate that globs a corpus reports
+"OK" when the corpus is missing.
+
+Re-run against **current master's** corpus (`bb35792`), materialised into a
+scratch tree: **exit 1**, with C's two rows carrying four violations —
+`kind is 'oracle-shape'` and `'retired-diagnosed'` outside the
+`semantic | provenance` enum, and guards not the two named shapes. So C's
+reshape is **not** on master and the sequencing constraint stands.
+
+Two further complaints in that run named ES's `guards.lean` as missing — an
+**artifact of my minimal tree**, which held only the JSON files. The file is
+present on master. Reported as an artifact rather than a finding, because the
+audit that accused the wrong lane once already is the reason this lane checks.
+
+**Not merged, not signalled ready.** Landing it before C's sha turns every one
+of 25 lanes red on its next tenure.
+
+### Triad
+
+`triad.sh` **379 ok**, docs_check 91/91. One line of floor, five rows
+re-pointed, nothing else touched. No Lean executed.

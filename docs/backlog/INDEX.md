@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**400 entries across 17 lanes.** Regenerate with
+**401 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -48,6 +48,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-analog-8` |  | A15: F3 needed no new mathematics, and the audit is now 4-for-4 at overturning the census | analog |
 | `2026-08-25-sv-4` |  | A TENURE THAT REFUSED ITSELF: the progress log is inside the tree it stamps | sv |
 | `2026-08-25-sv-3` |  | THE RED WAS TWO NAMES; BEHIND IT WERE TWO DEFECTS THAT WOULD HAVE PASSED | sv |
+| `2026-08-25-ada-3` |  | INCH 5a: strings, and catenation is N-ARY where a walker would have assumed a BinOp | ada |
 | `2026-08-25-sv-2` |  | RE-ARMING, WAKING, AND LOADING — and a FOURTH gap the same fixture concealed | sv |
 | `2026-08-25-ada-2` |  | INCH 5's CENSUS: `Report` should be EXECUTED, not modelled — and the emitter is already inside it | ada |
 | `2026-08-25-sv-1` |  | THE ADEQUACY LEMMA HAS A THIRD OBLIGATION, and finding it exposed a semantic gap the fixture concealed | sv |

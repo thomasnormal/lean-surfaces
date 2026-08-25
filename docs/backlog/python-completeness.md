@@ -2482,3 +2482,59 @@ silent regression is precisely the failure the archive was created to prevent.
 All three states are unit-tested by stubbing the two guard sets, so the
 polarity cannot drift unnoticed — the test asserts `rc` for each, including the
 regression case that has never yet occurred.
+
+## 2026-08-25-pycomplete-28 — `watch` is not `FAIL`, and the polarity table becomes a file
+
+Two ruled adoptions, both small, both closing gaps the previous inch opened.
+
+### One word, two severities
+
+With the regression alarm live, `FAIL` meant **opposite things** in the same
+column: on a LIVE guard it gates, on a RETIRED one it is the archive behaving.
+A reader scanning a column of `FAIL`s could not tell which was which. Ruled
+fleet-wide and adopted verbatim from `sv_divergence_probe.py`: the healthy
+retired state prints **`watch`**.
+
+    pyc_div_1_still_divergent  FAIL   …              ← gates
+    pyc_div_2_still_divergent  watch  …  [retired row] ← the archive working
+
+*A status word that means "stop" in one row and "carry on" in the next is not a
+status word.*
+
+### The three-state table is now a file, not a stub I ran once
+
+`harness/test_divergence_probe.py`, runnable against **any** tier's probe and
+defaulting to all of them. Stubs the guard callables, runs no Lean, touches no
+register file, and asserts:
+
+| live | retired | rc | meaning |
+| --- | --- | ---: | --- |
+| pass | not-held | 0 | healthy archive |
+| FAIL | not-held | 1 | a live guard gates, as always |
+| pass | **HELD** | **1** | **REGRESSION — the divergence returned** |
+
+The third row is the one worth having in a file. It has **never occurred in any
+tier**, and a case that has never occurred is exactly the one nobody notices is
+missing — it was silent in two tiers simultaneously until it was stubbed and
+asserted. **The empty-container law pointed forwards: do not wait for the event
+to find out whether the alarm is wired.**
+
+A probe that has not adopted the LIVE/RETIRED partition FAILS the test rather
+than being skipped, so the shape spreads by measurement. Both restored tiers
+pass today; C inherits the test with its restoration.
+
+### AN INSTRUMENT LIVES IN THE SPACE IT SEARCHES — third instance
+
+The new test is named `test_divergence_probe.py`, which **ends in
+`_divergence_probe.py`**, so its own glob matched itself and reported it "NOT
+PARTITIONED". That is the third time this family has bitten the register work:
+
+* a grep-based existence check that found its fake guard names **in its own
+  source** (§pycomplete-20);
+* a substring test that found a name in **its own fixture file**
+  (§pycomplete-21);
+* now a glob that found **its own file**.
+
+> **Every pattern an instrument writes must exclude the instrument on purpose.**
+> The bug is never the pattern being wrong about the world; it is the pattern
+> being right about a world that contains the pattern.

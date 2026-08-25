@@ -262,8 +262,17 @@ def main():
         results[name] = {"held": bool(held), "detail": detail, "retired": retired}
         if not held and not retired:
             rc = 1
-        print("%-28s %-4s  %s%s" % (name, "ok" if held else "FAIL", detail,
-                                    "   [retired row]" if retired else ""))
+        # RULED fleet-wide (2026-08-25): `watch`, not `FAIL`, for the healthy
+        # retired state. With the regression alarm live the same word carried
+        # OPPOSITE severities -- on a live guard FAIL gates, on a retired one it
+        # is the archive behaving -- and a reader scanning a column of FAILs
+        # cannot tell which is which. Spelling from sv_divergence_probe.py.
+        if retired:
+            status = "ok" if held else "watch"
+        else:
+            status = "ok" if held else "FAIL"
+        print("%-28s %-5s %s%s"
+              % (name, status, detail, "   [retired row]" if retired else ""))
     watching = sorted(n for n in RETIRED_GUARDS if not results[n]["held"])
     if watching:
         print("\n%d retired guard(s) reporting not-held: %s"

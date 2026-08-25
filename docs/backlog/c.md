@@ -3045,3 +3045,225 @@ exactly the kind of thing that gets copied forward.
 there. Not touched here — two lanes editing one file is how a fleet
 unblock becomes a fleet conflict.)*
 
+
+---
+
+## 2026-08-25-c-25 — `oracle-tests-compiler`: a state that makes the number SMALLER and truer
+
+Ruled after `2026-08-24-c-22` found the C tier's first failing test and
+`2026-08-25-c-24` reshaped its register row: a conformance corpus contains
+tests a **conforming semantics must fail**, and neither available option
+was acceptable. Modelling the `<stdlib.h>` builtins by name would adopt
+GCC's optimiser behaviour as if it were C semantics — a wrong law bought
+to please an oracle. Silently excluding the test is the number-death this
+lane already named. So: a third thing, the UB pattern's shape.
+
+**`oracle-tests-compiler` is a NAMED ZERO-STATE**, printed in the
+zero-states line beside `refused-ub`, and like the UB refusals **it never
+empties, because it is part of what the number MEANS.**
+
+### The number goes DOWN, and that is the point
+
+| bucket | before | predicted |
+| --- | ---: | ---: |
+| `passed` | 97 | **97** |
+| `failed` | 1 | **0** |
+| `oracle-tests-compiler` | — | **1** |
+| **scored** | **98** | **97** (band 97–98) |
+
+`scored = passed + failed`, so moving a test out of `failed` and into a
+zero-state **removes it from the score**: 98 → 97.
+
+> **A named exclusion that makes the number BIGGER is a whitewash; one
+> that makes it smaller is a measurement. `oracle-tests-compiler` costs
+> this tier a point of its headline figure, and that is the strongest
+> evidence available that it is not being used to flatter it.**
+
+The band's upper end is 98 — the value if the SHAPE guard refuses the
+classification and the test stays `failed`. There is no third outcome, and
+no wall behind this one: nothing new runs.
+
+**AND THE PREDICTION IS EXECUTABLE THIS TIME.**
+`docs/c-torture-scoreboard.json` was edited to the predicted counts
+**before** the tenure, and `tools/c_torture_gate.sh` compares the committed
+board against the fresh run. So a miss is a RED GATE, not a paragraph in a
+later entry.
+
+> **A prediction that a gate can check is a claim; one only a human
+> compares afterwards is a hope with a timestamp.**
+
+### TWO LOCKS, because a named state is exactly what gets abused later
+
+**Lock one — membership by NAME, with the citation, in the pin.**
+`tools/c_corpus_fetch.py` carries `ORACLE_TESTS_COMPILER`, keyed by test
+name, valued with the SYMBOL and the citation (`20021127-1.c` →
+`llabs`, §7.24.6.1, the declare-call-define shape). `--write-pin` emits it
+into `docs/c-torture-pin.json`, so membership travels with the fingerprint
+and a reader of the pin can see it.
+
+**Lock two — the SHAPE, re-derived from the ingested AST.**
+`LeanModels/C/Torture.lean`'s `hasDeclareCallDefine` checks, per test, that
+the unit CALLS the symbol, DEFINES it with a body, and that the body
+reaches `abort`. If the shape is absent the classification is refused and
+the verdict stays `failed`.
+
+> **A name on a list cannot stop a state from being used, later and in
+> good faith, to sweep an ordinary failure out of the `failed` column. The
+> two locks fail in different directions: a human name so it cannot widen
+> by accident, a machine shape so it cannot widen by intent.**
+
+And the membership list itself is pinned by `c_torture_gate.sh`, which
+asserts the scoreboard's `oracle_tests_compiler_tests` equals the pin's
+keys — a test entering or leaving this state without the pin changing is
+the state being used to move a number.
+
+### c-div-1 RETIRES BY RECLASSIFICATION, and the trap sprang as designed
+
+`2026-08-25-c-24` wrote `c_div_1_still_divergent` knowing it would go red
+on exactly this landing, and said so in both the probe and the row. It
+did. **The row could not be drained by a change that happened to empty
+it — it had to be retired deliberately**, which is what a two-way gate is
+for.
+
+`docs/c-declared-divergences.json` now has **ZERO live rows** and two
+retired ones. That is a real state, not an empty file: the C tier declares
+no divergence today, the checker still runs on every C tenure
+(`2026-08-25-c-24`), and the probe reports no guards because there is
+nothing live to gate — it derives its guards FROM the live rows rather
+than from a hard-coded list, so a retired row takes its guards with it and
+cannot leave an ORPHANED name behind.
+
+**The membership is deliberately NOT gated by the divergence register.**
+It is not a debt — it is a permanent property of the corpus — and filing a
+permanent property as a debt would put a row in a ledger that ages things
+which are not supposed to age.
+
+### THE REGISTER FILE IS DELETED, and the canon said so before I could argue
+
+Retiring `c-div-1` left `docs/c-declared-divergences.json` with **zero live
+rows**, and `harness/divergence_register.py` refuses that in as many words:
+
+```
+no rows: a register file with nothing in it is a claim that the tier has
+no debts, and should be deleted rather than filed empty
+```
+
+This lane is the first tier to reach zero — es, python and sv all still
+carry one — so the rule had never been exercised against a real file. It
+is right, and it costs something real: **the two retired rows go with the
+file.** `c-div-1` and `c-div-2` survive as prose here (`2026-08-24-c-22`,
+`-c-23`, `2026-08-25-c-24` and this entry), which is §9.5's durable home,
+but they stop being machine-readable.
+
+> **A ledger that may not be empty cannot also be the archive. "Delete it
+> rather than file it empty" is correct about the CLAIM a file makes and
+> silent about the HISTORY it holds — and the tier that empties first is
+> the one that discovers the two were the same file.**
+
+Reported, not fixed: whether a retired-only register should be legal is
+`harness/divergence_register.py`'s owner's call, not this lane's, and
+inventing a `c-retired-divergences.json` to dodge the rule would be
+exactly the shape the rule exists to stop. `harness/c_divergence_probe.py`
+is deleted with it — a probe whose register is gone is the ORPHANED shape
+the checker convicts.
+
+**`divergence_register.py` STAYS in the C gate**, and that is deliberate
+now that this tier files nothing: the lane broke the fleet once by not
+running a shared checker, and *"we have no rows today"* is precisely the
+reasoning that let it happen.
+
+### RIDE-ALONG — the fleet's field-collision sweep, and the answer is NEGATIVE with a check
+
+Arch's two-instance sweep: any field the INSTRUMENT writes that the SOURCE
+it copies from could overwrite. ES's defect was the node type written to
+`kind`, then ESTree properties merged over it, with
+`VariableDeclaration`'s own `kind` winning.
+
+**This extractor has the SHAPE.** `extract.py`'s `node()` read:
+
+```python
+out = {"kind": k, "span": span}
+out.update(fn(n))          # the handler wins
+```
+
+**It does not have the DEFECT.** Checked by parsing the extractor's own
+AST rather than by reading it: of its **36** `e_*` handlers, **none**
+returns a dict literal keyed `kind` or `span`, and **none** builds a dict
+with a non-constant key — so no source-chosen name can reach the merge.
+
+> **A negative sweep result is only worth the check that produced it. "I
+> read the handlers" is worth nothing at 36 of them; "I parsed them and
+> looked at every dict key" is a number a reader can re-derive.**
+
+The channel is closed anyway, because *"no handler does this today"* is a
+fact about 36 functions and not about the 37th: a handler returning `kind`
+or `span` now **dies loudly** instead of overwriting the instrument, and
+`extract.py --selftest` lowers a colliding node through the real
+`Extractor` to prove it — both directions, plus the ordinary path.
+
+The guard is **inert on output, and that was measured, not assumed**:
+regenerating all 270 envelopes leaves `docs/c-torture-pin.json`
+byte-identical. A change to an instrument that produces a measured
+artifact owes that differential.
+
+`extract.py --selftest` joins the C gate beside the other three.
+
+### VERDICT — GREEN, and the EXECUTABLE prediction held
+
+Ticket `1787642655652345000-55338-crunga`:
+
+```
+[09:24:16] base: base c87de73 is AT the origin/master tip
+[10:14:19] LOCK ACQUIRED after 2960s as 'crunga 55338'
+[10:49:49] TRIAD DONE (build exit 0, gates green)
+[10:49:51] LOCK RELEASED (mine)
+```
+
+Spine, tree `6c148259a841`, **3786 jobs, exit 0, 0 `error:` lines**,
+COVERAGE full. docs_check 91/91; diff_test **1508 cases, 0 failed**;
+c_profile_probe 9/9; **divergence_register OK — 3 tier files**; and all
+four instrument self-tests: `c_corpus_fetch`, `c_torture_score`,
+`extract`, plus the register.
+
+```
+gcc.c-torture 97/300 scored  (passed 97, failed 0)
+  the zeroes, kept apart: refused-unsupported 154, refused-libc 5,
+    refused-ub 10, oracle-tests-compiler 1, timeout 2, not-ingested 1,
+    not-parsed 30, runner-error 0, not-fetched 0
+```
+
+`97 + 154 + 5 + 10 + 1 + 2 + 1 + 30 = 300`.
+
+**And the two lines that make this landing different from every prior
+one:**
+
+```
+c_torture_gate: committed scoreboard matches this run (97/300 scored)
+c_torture_gate: oracle-tests-compiler membership matches the pin: ['20021127-1.c']
+```
+
+The first is **the prediction, checked by a gate**. `scored 97, passed 97,
+failed 0, oracle-tests-compiler 1` was committed to
+`docs/c-torture-scoreboard.json` before the tenure ran; the run produced
+exactly that, and had it not, the gate would have gone red rather than a
+later entry explaining the miss.
+
+> **Six predictions in this lane, and this is the first one the machine
+> could adjudicate. A prediction a gate can check is a claim; one only a
+> human compares afterwards is a hope with a timestamp — and the
+> difference is not rigour, it is whether being wrong costs anything.**
+
+The second is the membership lock: the state has exactly the member the
+pin names, so it cannot have been used to move a number.
+
+### §9.0 — the standing number, and it went DOWN
+
+**`gcc.c-torture` 98/300 → 97/300 scored.** The tier did not get worse and
+nothing regressed: `passed` is 97 both before and after. What changed is
+that a test which a conforming semantics MUST fail stopped being counted
+as a thing the model could have got right.
+
+> **The day a conformance number goes down because the tier learned what
+> it is allowed to be judged on is the day the number starts being worth
+> quoting.**
+

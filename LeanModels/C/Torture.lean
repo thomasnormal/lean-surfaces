@@ -32,9 +32,18 @@ for all of these is unreadable and, worse, unfalsifiable — it cannot tell
 | `not-ingested` | clang accepted it and the c-0.1 INGESTER refused the extractor's output | the EXTRACTOR/schema pair — neither the frontend nor the model |
 | `runner-error` | the envelope could not be read at all | the plumbing (§4.2: an unexecutable test emits a row, never no row) |
 | `refused` | the model saw it and declined — cause kept apart | the tier's frontier |
+| `oracle-tests-compiler` | it reached `abort()` and a CONFORMING SEMANTICS MUST — the oracle is testing the compiler | **the ORACLE's shape, not the model's** |
 | `timeout` | fuel ran out | the fuel bound |
 | `failed` | the program reached `abort()` | **scored** |
 | `passed` | `main` returned | **scored** |
+
+**`oracle-tests-compiler` NEVER EMPTIES**, and that is what makes it a
+state rather than a queue. Like the UB refusals it is part of what the
+number MEANS: a conformance corpus contains tests a conforming semantics
+must fail, and a scoreboard that cannot say so will eventually be "fixed"
+into agreeing with them. Membership is by NAME in the pin, with the
+citation, and the shape is re-derived from the AST — see
+`hasDeclareCallDefine`.
 
 **`scored = passed + failed`, and that is the oracle's own reading.**
 `docs/c23-goal.md` §1.2: torture's verdict style is *exit status —
@@ -55,6 +64,9 @@ inductive Verdict where
   | passed
   | passedViaExit                -- reached `exit(0)`: the ORACLE, not a libc model
   | failed                       -- reached `abort()`: the test's own check failed
+  /-- The test reached `abort()` and a CONFORMING SEMANTICS MUST: the oracle is
+  testing the compiler. Never scored, never a model gap. -/
+  | oracleTestsCompiler (why : String)
   | refusedUB (what : String)
   | refusedLibc (name : String)
   | unsupported (what : String)
@@ -75,6 +87,7 @@ def Verdict.token : Verdict → String
   | .passed => "passed"
   | .passedViaExit => "passed"
   | .failed => "failed"
+  | .oracleTestsCompiler _ => "oracle-tests-compiler"
   | .refusedUB _ => "refused-ub"
   | .refusedLibc _ => "refused-libc"
   | .unsupported _ => "refused-unsupported"
@@ -87,6 +100,7 @@ def Verdict.token : Verdict → String
 def Verdict.detail : Verdict → String
   | .passed | .failed | .timeout | .notFetched => ""
   | .passedViaExit => "exit(0) — the oracle's success channel, not a libc model"
+  | .oracleTestsCompiler w => w
   | .refusedUB w => w
   | .refusedLibc n => n
   | .unsupported w => w
@@ -245,6 +259,36 @@ def setupGlobals (fuel : Nat) (lay : Layout) :
                 setupGlobals fuel lay ds ((nm, o) :: acc)
     | _ => setupGlobals fuel lay ds acc
 
+/-- **THE ORACLE-TESTS-COMPILER SHAPE, re-derived from the ingested AST.**
+
+Membership in the state is written by a human in `tools/c_corpus_fetch.py`
+and travels in the pin — but a NAME on a list cannot stop the state from
+being used, later and in good faith, to sweep an ordinary model failure out
+of the `failed` column. So the driver re-derives the structure around that
+exact symbol, and refuses the classification when it is absent:
+
+* the unit CALLS `sym`;
+* the unit DEFINES `sym` with a body — the definition the oracle expects a
+  builtin to shadow;
+* and that body reaches `abort`, which is what makes calling it a failure
+  signal rather than an ordinary call.
+
+Two locks, and they fail in different directions: a name a human wrote down
+(so the state cannot widen by accident) and a structural fact a machine
+checks (so it cannot widen by intent). This is `exitIsAlwaysZero`'s
+discipline applied to the other end of the oracle. -/
+def hasDeclareCallDefine (envl : Envelope) (sym : String) : Bool :=
+  let calls (es : List Expr) (nm : String) : Bool :=
+    es.any fun e => match e with
+      | .call callee _ _ _ => calleeNameOf callee == nm
+      | _ => false
+  let defn? := envl.unit.functionDefns.find? (·.name == sym)
+  match defn? with
+  | none => false
+  | some f =>
+      let body := (f.body.map LeanModels.C.Stmt.substmts).getD []
+      calls envl.unit.exprs sym && calls (body.flatMap LeanModels.C.Stmt.ownExprs) "abort"
+
 /-- Run one ingested test: call its `main` with no arguments, from an
 empty memory, and read the outcome.
 
@@ -252,7 +296,8 @@ empty memory, and read the outcome.
 them into environment refusals, because both are the exit-status oracle
 speaking — `docs/c23-goal.md` §1.2. Neither is modelled and neither ever
 will be by widening the slice. -/
-def scoreEnvelope (fuel : Nat) (envl : Envelope) : Verdict :=
+def scoreEnvelope (fuel : Nat) (envl : Envelope)
+    (oracleSym : Option String) (oracleWhy : String) : Verdict :=
   let lay := layoutFor envl
   let prog : Program := { fns := envl.unit.functionDefns, layout := lay }
   let run : ExecM CVal := do
@@ -260,7 +305,15 @@ def scoreEnvelope (fuel : Nat) (envl : Envelope) : Verdict :=
     callByName fuel { prog with globals := genv } "main" []
   match ExecM.verdict Mem.empty run with
   | .ok _ => .passed
-  | .refused (.libc "abort") => .failed
+  -- `abort` is the oracle's FAILURE channel — unless the test is one the
+  -- oracle wrote to convict a compiler, in which case reaching it is the
+  -- conforming outcome and the row leaves the score entirely.
+  | .refused (.libc "abort") =>
+      match oracleSym with
+      | some sym =>
+          if hasDeclareCallDefine envl sym then .oracleTestsCompiler oracleWhy
+          else .failed
+      | none => .failed
   | .refused (.libc "exit") =>
       if exitIsAlwaysZero envl then .passedViaExit
       else .refusedLibc "exit (an argument is not a literal 0 — which exit was reached is unknown)"
@@ -282,6 +335,11 @@ structure Entry where
   status : String
   envelope : Option String
   why : String
+  /-- The `oracle-tests-compiler` membership, as the PIN records it: the
+  symbol the test declare-call-defines, and the citation. `none` for the
+  overwhelming majority. See `tools/c_corpus_fetch.py`. -/
+  oracleSymbol : Option String
+  oracleWhy : String
 deriving Inhabited
 
 private def str? (j : Lean.Json) (k : String) : String :=
@@ -289,9 +347,13 @@ private def str? (j : Lean.Json) (k : String) : String :=
 
 def parseEntry (j : Lean.Json) : Entry :=
   let env := str? j "envelope"
+  let otc := (j.getObjVal? "oracle_tests_compiler").toOption
+  let sym := (otc.map (str? · "symbol")).getD ""
   { name := str? j "name", status := str? j "status"
     envelope := if env.isEmpty then none else some env
-    why := str? j "why" }
+    why := str? j "why"
+    oracleSymbol := if sym.isEmpty then none else some sym
+    oracleWhy := (otc.map (str? · "citation")).getD "" }
 
 def runEntry (fuel : Nat) (e : Entry) : IO Verdict := do
   match e.status, e.envelope with
@@ -304,7 +366,7 @@ def runEntry (fuel : Nat) (e : Entry) : IO Verdict := do
       | .ok contents =>
           match parseEnvelopeString contents with
           | .error err => pure (.notIngested err)
-          | .ok envl => pure (scoreEnvelope fuel envl)
+          | .ok envl => pure (scoreEnvelope fuel envl e.oracleSymbol e.oracleWhy)
 
 /-! ## The summary
 
@@ -318,11 +380,12 @@ def summarise (rows : List (String × Verdict)) : List String := Id.run do
   let mut passed := 0; let mut failed := 0; let mut refUB := 0
   let mut refLibc := 0; let mut unsup := 0; let mut tmo := 0
   let mut notParsed := 0; let mut notIngested := 0
-  let mut runnerErr := 0; let mut notFetched := 0
+  let mut runnerErr := 0; let mut notFetched := 0; let mut oracleTC := 0
   let mut firstFail : Option (String × Verdict) := none
   for (n, v) in rows do
     match v with
     | .passed | .passedViaExit => passed := passed + 1
+    | .oracleTestsCompiler _ => oracleTC := oracleTC + 1
     | .failed =>
         failed := failed + 1
         if firstFail.isNone then firstFail := some (n, v)
@@ -338,7 +401,7 @@ def summarise (rows : List (String × Verdict)) : List String := Id.run do
   let scored := passed + failed
   let mut out : List String := []
   out := out ++ [s!"gcc.c-torture {scored}/{total} scored  (passed {passed}, failed {failed})"]
-  out := out ++ [s!"  the zeroes, kept apart: refused-unsupported {unsup}, refused-libc {refLibc}, refused-ub {refUB}, timeout {tmo}, not-ingested {notIngested}, not-parsed {notParsed}, runner-error {runnerErr}, not-fetched {notFetched}"]
+  out := out ++ [s!"  the zeroes, kept apart: refused-unsupported {unsup}, refused-libc {refLibc}, refused-ub {refUB}, oracle-tests-compiler {oracleTC}, timeout {tmo}, not-ingested {notIngested}, not-parsed {notParsed}, runner-error {runnerErr}, not-fetched {notFetched}"]
   match firstFail with
   | none => out := out ++ ["  first failure: none"]
   | some (n, v) =>

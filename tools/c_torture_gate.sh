@@ -20,6 +20,10 @@
 # (2026-08-25-c-24).  That is this lane's own corpus law arriving one layer
 # up: A GATE CAN ONLY CONTRADICT THE FILES IT RUNS ON.  It is checked
 # before the expensive half, so a malformed row costs seconds, not a build.
+# It is kept even though the C tier now files NO register of its own
+# (2026-08-25-c-25 retired its last row): this lane broke the fleet once by
+# not running a shared checker, and "we have no rows today" is exactly the
+# reasoning that let it happen.
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CACHE="${LS_C_CORPUS_CACHE:-${TMPDIR:-/tmp}/ls-c-torture}"
@@ -33,8 +37,8 @@ FRESH="${TMPDIR:-/tmp}/c-torture-scoreboard.fresh.json"
 echo "c_torture_gate: pin $REV  cache $CACHE"
 python3 "$ROOT/tools/c_corpus_fetch.py" --selftest || exit 1
 python3 "$ROOT/harness/c_torture_score.py" --selftest || exit 1
+python3 "$ROOT/extractors/c/extract.py" --selftest || exit 1
 python3 "$ROOT/harness/divergence_register.py" || exit 1
-python3 "$ROOT/harness/c_divergence_probe.py" || exit 1
 # --offline: verifies every cached file's sha256 against docs/c-torture-pin.json
 # and writes the manifest.  No network in a gate, ever.
 python3 "$ROOT/tools/c_corpus_fetch.py" --offline --manifest "$MANIFEST" || exit 1
@@ -65,5 +69,28 @@ if sb.get("counts") != fresh.get("counts") or sb.get("failed_tests") != fresh.ge
     raise SystemExit(1)
 print("c_torture_gate: committed scoreboard matches this run (%d/%d scored)"
       % (fresh["scored"], fresh["total"]))
+PY
+# AND THE MEMBERSHIP OF `oracle-tests-compiler` IS PINNED HERE.  The state is
+# not a divergence -- it is part of what the number MEANS -- so it is gated by
+# the tenure rather than by the divergence register, which would file a
+# permanent property as a debt.  Two locks: this list, and the declare-call-
+# define SHAPE that LeanModels/C/Torture.lean re-derives per test.
+python3 - "$ROOT/docs/c-torture-pin.json" "$FRESH" <<'PY' || exit 1
+import json, sys
+pin, fresh = (json.load(open(p)) for p in sys.argv[1:3])
+if fresh["counts"]["not-fetched"] == fresh["total"]:
+    raise SystemExit(0)
+want = sorted((pin.get("oracle_tests_compiler") or {}).keys())
+got = sorted(fresh.get("oracle_tests_compiler_tests") or [])
+if want != got:
+    print("c_torture_gate: THE oracle-tests-compiler MEMBERSHIP MOVED.\n"
+          "  pinned: %r\n  scored: %r\n"
+          "  Membership is by NAME in tools/c_corpus_fetch.py with a citation, and the "
+          "SHAPE is re-derived per test by LeanModels/C/Torture.lean. A test entering or "
+          "leaving this state without the pin changing is the state being used to move a "
+          "number, which is the failure the named state exists to prevent."
+          % (want, got), file=sys.stderr)
+    raise SystemExit(1)
+print("c_torture_gate: oracle-tests-compiler membership matches the pin: %r" % got)
 PY
 echo "c_torture_gate: full log $LOG"

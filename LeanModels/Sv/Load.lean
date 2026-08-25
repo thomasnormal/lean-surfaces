@@ -31,7 +31,9 @@ not thrown away by the pass that caused them. Three edits, one gap: an
 `0→x`, while its own docstring claimed unknowns were never edges — three
 different rules in one definition. `edgeOn` states the clause: an `x`/`z`
 end IS an edge whenever the other end is a level. That is also the rule
-`Sem2.isNegedge` already had, so the tier now agrees with itself.
+`Sem2.isNegedge` already had — and the two are now ONE definition,
+`isPosedge`/`isNegedge` in `Basic`, so the tier agrees with itself by
+construction rather than by inspection.
 
 ## What is deliberately still LOUD
 
@@ -172,7 +174,8 @@ posedges. Only `x→z`/`z→x` and a value against itself are edgeless. -/
 -- a falling clock is a negedge and NOT a posedge — the rule is directional
 #guard sawEdge [("c", LVec.ofNat 1 1)] [("c", LVec.ofNat 1 0)] "c" .pos == false
 #guard sawEdge [("c", LVec.ofNat 1 1)] [("c", LVec.ofNat 1 0)] "c" .neg == true
--- ... and the negedge half is the exact mirror (this is `Sem2.isNegedge`)
+-- ... and the negedge half is the exact mirror (`Basic.isNegedge`, the
+-- same definition the M1 reset phase reads)
 #guard sawEdge [("c", LVec.ofNat 1 1)] [("c", LVec.xVec 1)]    "c" .neg == true
 #guard sawEdge [("c", LVec.xVec 1)]    [("c", LVec.ofNat 1 0)] "c" .neg == true
 -- x -> z is NOT an edge in either direction: neither end is a level

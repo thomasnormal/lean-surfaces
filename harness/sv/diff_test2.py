@@ -177,6 +177,13 @@ def main():
             print("no case named %r" % args.case)
             return 2
 
+    # OPS-148 shape (d): this printed "all 0 case(s) passed" and exited 0.
+    if not cases:
+        print("diff_test2: COULD NOT VERIFY -- the case file has NO cases (%s)"
+              % CASES_JSON)
+        print("Nothing was compared, so this is not a pass.")
+        return 1
+
     ensure_oleans(args.verbose)
 
     base = args.workdir or tempfile.mkdtemp(prefix="sv2diff_")

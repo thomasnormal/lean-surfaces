@@ -128,6 +128,13 @@ def main(argv):
     if not matches:
         sys.stderr.write("no case named '%s'\n" % argv[3])
         return 1
+    # OPS-148 shape (a): guarded for EMPTY but not for DUPLICATES, so two
+    # cases sharing a name silently yielded the first. Refuse the ambiguity
+    # rather than picking, which is what _module_of already does above.
+    if len(matches) != 1:
+        sys.stderr.write("case name '%s' is AMBIGUOUS: %d cases share it\n"
+                         % (argv[3], len(matches)))
+        return 1
     sys.stdout.write(generate_tb(envelope, matches[0]))
     return 0
 

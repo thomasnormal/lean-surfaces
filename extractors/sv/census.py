@@ -609,6 +609,13 @@ def do_recheck(corpus, jobs):
     paths = sorted(records)
     rng = random.Random(SEED)
     sample = rng.sample(paths, min(SAMPLE_SIZE, len(paths)))
+    # OPS-148 shape (d): an empty corpus sampled to zero and then printed
+    # "recheck OK: 0/0 identical classifications" and exited 0 -- a clean
+    # verdict from a run that re-ran nothing.
+    if not sample:
+        print("recheck: COULD NOT VERIFY -- the stored census has NO records "
+              "to re-run (%s)" % CENSUS_JSON)
+        return 1
     print("recheck: re-running %d files (seed %d)" % (len(sample), SEED))
     fresh = run_pool(sample, corpus, jobs)
     bad = 0

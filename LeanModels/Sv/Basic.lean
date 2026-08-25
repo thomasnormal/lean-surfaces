@@ -99,6 +99,59 @@ def merge : Logic → Logic → Logic
 
 end Logic
 
+/-! ## §9.4.2 edges — THE tier's one edge rule
+
+IEEE 1800 §9.4.2, on a 1-bit value:
+
+    posedge : 0→1, 0→x, 0→z, x→1, z→1
+    negedge : 1→0, 1→x, 1→z, x→0, z→0
+
+An `x`/`z` end **is** an edge whenever the other end is a level. Only
+`x→z`, `z→x`, and a value against itself are edgeless.
+
+**These live HERE, at the bottom of the import graph, because two tiers
+need them and neither may import the other.** The M1 cycle model reads
+`isNegedge` for its async-reset phase (`Sem2.resetIndices`); the R1 region
+model reads both through `Slot.edgeOn`, for `@(posedge clk)`.
+
+They were written TWICE — once in each — and **the two spellings
+disagreed**: the region copy had the "into a level" half and was missing
+the "out of a level" half, so `x→1` woke a process and `0→x` did not,
+while its own docstring claimed unknowns were never edges at all. One
+definition makes the agreement hold by CONSTRUCTION instead of by
+inspection, which is the only form of agreement that cannot drift. -/
+def isPosedge (old new : Logic) : Bool :=
+  match old, new with
+  | .l0, .l1 | .l0, .lx | .l0, .lz | .lx, .l1 | .lz, .l1 => true
+  | _, _ => false
+
+/-- §9.4.2 negedge — the mirror of `isPosedge`. -/
+def isNegedge (old new : Logic) : Bool :=
+  match old, new with
+  | .l1, .l0 | .l1, .lx | .l1, .lz | .lx, .l0 | .lz, .l0 => true
+  | _, _ => false
+
+section EdgeGuards
+
+-- all ten §9.4.2 edges, named one by one rather than sampled
+#guard isPosedge .l0 .l1 && isPosedge .l0 .lx && isPosedge .l0 .lz
+#guard isPosedge .lx .l1 && isPosedge .lz .l1
+#guard isNegedge .l1 .l0 && isNegedge .l1 .lx && isNegedge .l1 .lz
+#guard isNegedge .lx .l0 && isNegedge .lz .l0
+
+-- unknown to unknown is NOT an edge in either direction
+#guard !(isPosedge .lx .lz) && !(isPosedge .lz .lx)
+#guard !(isNegedge .lx .lz) && !(isNegedge .lz .lx)
+
+-- nor is any value against itself
+#guard [Logic.l0, .l1, .lx, .lz].all fun a => !(isPosedge a a) && !(isNegedge a a)
+
+-- and the two rules are DISJOINT over the whole 4x4 table: nothing is both
+#guard [Logic.l0, .l1, .lx, .lz].all fun a =>
+         [Logic.l0, .l1, .lx, .lz].all fun b => !(isPosedge a b && isNegedge a b)
+
+end EdgeGuards
+
 /-- A 4-state vector. `bits` is **LSB-first**: `bits[0]` is bit 0 (SV `v[0]`).
 The SV declaration `logic [W-1:0] v` gives `bits.size = W`; a scalar `logic`
 is width 1. -/

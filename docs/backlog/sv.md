@@ -1120,3 +1120,88 @@ bookkeeping over definitions that now exist.
 proof written against an imagined goal is worth less than a statement
 written against a real one.
 
+
+---
+
+## 2026-08-25-sv-6 — ONE EDGE RULE, AND AN OPS-148 SWEEP WHOSE GREP HALF WAS WRONG TWICE
+
+### The dedup: agreement by construction
+
+`isPosedge`/`isNegedge` now live in `Basic`, at the bottom of the import
+graph, and `SvState.bit0` in `Semantics`. Both were written TWICE — the M1
+cycle model had them for its async-reset phase, and the R1 region model
+made copies because `Slot` sits BELOW `Sem2` and reaching them would have
+dragged the whole cycle model into the region tier.
+
+**The two spellings disagreed.** The region copy had §9.4.2's "into a
+level" half and was missing the "out of a level" half, so `x→1` woke a
+process and `0→x` did not — while its own docstring claimed unknowns were
+never edges at all. That was fixed at `sv-3` by restating the rule
+correctly in both places; this entry removes the second place. `Slot.edgeOn`
+is now only the `Edge`-indexed selector over the one rule, which is the
+part `Basic` cannot express (`Edge` is a `SelfCheck` type).
+
+The ten §9.4.2 edges are guarded one by one rather than sampled, plus the
+non-edges (`x↔z`, and every value against itself), plus **disjointness over
+the whole 4×4 table** — nothing is both a posedge and a negedge. Agreement
+between the tiers is now BY CONSTRUCTION, which is the only kind that
+cannot drift.
+
+### The sweep: 9 instruments, ~5 100 lines, filed by shape
+
+**(a) first-element access — 9 sites, 6 correctly guarded, 3 named.** The
+tier's dominant pattern is *refuse ambiguity, don't take the first*:
+`gen_tb._module_of` (`len != 1` → `TbError`), `cv32e40p_census` (`len != 1`),
+and all four `conds[0]` sites refuse a multi-condition `&&&` rather than
+truncating it. Fixed: `gen_tb`'s case lookup was guarded for EMPTY but not
+for DUPLICATES, so two cases sharing a name silently yielded the first.
+Named and left: `extract.py`'s generate-block `entries[0]` (sound for a
+`for`-generate, but the soundness is unstated), and `diff_test2`'s
+`sigmas[0]`, which is presentational only.
+
+**(b) if-collection as a "has a register" proxy — 4 sites, no instance.**
+All four are `--case` filter guards or honest-limit else-branches. The tier
+has no rows-style register inside its own instruments.
+
+**(c) unstated identity — 1 latent site.** `sim_available` is
+`all(which(t) for t in tools)`, and `all([])` is True: a simulator declared
+with an empty tool tuple would report available. Both current entries have
+non-empty tuples, so it is latent, not live. The `sum(...)` aggregates are
+counts, where 0 is the correct identity.
+
+**(d) empty-list message reading as a verdict — and this is where the grep
+was WRONG TWICE.**
+
+Filed by grep: three sites. Then, per pyc's law, they were RUN:
+
+* `sv_divergence_probe.py` — **not in the grep's list at all.** Against a
+  tree where nothing it measures exists it printed four confident guard
+  lines and closed PASS, exit 0. `_grep_count` returned 0 for a missing
+  path, an unreadable tree and a missing `grep` alike, so "nothing was
+  compared" and "compared, found none" were one value. Fixed separately
+  (three-state, COULD NOT VERIFY, live guards failing closed).
+* `diff_test.py`'s `SKIP: no simulator on PATH … exiting 0` — **also not in
+  the list**, and for a structural reason: the grep pattern was
+  `PASS|FAIL|OK|MATCH|clean|green`, and the word is **SKIP**.
+
+> **A grep negative is bounded by the vocabulary you guessed, and the
+> failure mode is that the word you didn't guess is exactly the one a
+> lenient exit uses.**
+
+So (a)–(c) above are TEXT claims and (d) is a RUNTIME claim, filed
+separately because they are not the same kind of evidence.
+
+### The fixes, each verified by RUNNING
+
+    diff_test   zero cases, sim present      rc 1  COULD NOT VERIFY
+    diff_test   cases, no sim (auto)         rc 1  "0 of N cases verified"
+    diff_test   cases, --sim iverilog absent rc 1  FAIL (environment error)
+    diff_test2  zero cases                   rc 1  COULD NOT VERIFY
+    census      recheck with no records      rc 1  COULD NOT VERIFY
+    gen_tb      duplicate case name          rc 1  AMBIGUOUS, refused
+
+`--sim auto` with nothing installed and `--sim iverilog` with it missing are
+DIFFERENT verdicts on purpose: an explicit request that cannot be honoured
+is an environment error, not a result. Neither exits 0, because a skip that
+reads as a verdict is the site this sweep was hunting.
+

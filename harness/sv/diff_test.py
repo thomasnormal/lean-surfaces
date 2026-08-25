@@ -175,20 +175,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--sim", choices=["auto", "xrun", "iverilog"], default="auto",
                     help="simulator backend (auto: xrun if on PATH, else "
-                         "iverilog, else SKIP with exit 0)")
+                         "iverilog; if none, COULD NOT VERIFY with exit 1)")
     ap.add_argument("--case", help="run only the named case")
     ap.add_argument("--workdir", help="simulator work dir (default: mkdtemp under /tmp)")
     ap.add_argument("--keep", action="store_true", help="keep the work dir")
     args = ap.parse_args()
 
-    sim = resolve_sim(args.sim)
-    if sim is None:
-        print("SKIP: no simulator on PATH (want xrun or iverilog+vvp) -- "
-              "nothing verified, exiting 0")
-        return 0
-    run_sim = SIMULATORS[sim][0]
-    print("simulator: %s" % sim)
-
+    # CASES FIRST, SIMULATOR SECOND. The skip below has to say how many cases
+    # it did NOT verify, and it cannot count them before they are loaded.
     with open(CASES_JSON) as f:
         cases_doc = json.load(f)
     cases = cases_doc["cases"]
@@ -197,6 +191,33 @@ def main():
         if not cases:
             print("no case named '%s'" % args.case)
             return 2
+
+    # AN EMPTY CASE FILE IS A BROKEN HARNESS, NEVER A CLEAN RUN. This printed
+    # `overall: PASS` and exited 0 with an empty table -- a verdict about
+    # nothing (OPS-148 shape (d)).
+    if not cases:
+        print("diff_test: COULD NOT VERIFY -- the case file has NO cases (%s)"
+              % CASES_JSON)
+        print("Nothing was compared, so this is not a pass.")
+        return 1
+
+    # THREE STATES, not two. A run that verified nothing must not exit 0.
+    sim = resolve_sim(args.sim)
+    if sim is None:
+        if args.sim != "auto":
+            print("diff_test: FAIL -- simulator %r was requested and is not on "
+                  "PATH (needs %s)"
+                  % (args.sim, " + ".join(SIMULATORS[args.sim][1])))
+            print("An explicit request that cannot be honoured is an "
+                  "environment error, not a result.")
+            return 1
+        print("diff_test: COULD NOT VERIFY -- no simulator on PATH (want xrun "
+              "or iverilog+vvp): 0 of %d cases verified" % len(cases))
+        print("Nothing was compared. This is NOT evidence that the model "
+              "agrees with a simulator.")
+        return 1
+    run_sim = SIMULATORS[sim][0]
+    print("simulator: %s" % sim)
 
     workroot = args.workdir or tempfile.mkdtemp(prefix="sv-diff-", dir="/tmp")
     made_tmp = args.workdir is None
@@ -255,7 +276,7 @@ def main():
             res = "PASS" if sigmas == ["src"] else "PASS (matched %s)" % ("sigma_" + matched)
         print("%-22s %-10s %7d  %-18s %s" % (name, example, ncyc, sig, res))
     print("-" * 72)
-    print("overall: %s" % ("PASS" if all_pass else "FAIL"))
+    print("overall: %s (%d case(s))" % ("PASS" if all_pass else "FAIL", len(cases)))
 
     if made_tmp and not args.keep and all_pass:
         shutil.rmtree(workroot, ignore_errors=True)

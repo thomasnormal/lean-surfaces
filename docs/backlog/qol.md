@@ -5107,3 +5107,46 @@ which the rows themselves (indented inside `check`) cannot match.
 sites 57, diagnose 51, `--verify-guards` 44, comment-forms 18, docs_check
 91/91. Fixtures and a stubbed `lake` only; no Lean executed; the live queue
 untouched.
+
+## 2026-08-25-qol-75 — the index gate joins the floor, and two premises corrected
+
+`bash tools/backlog-index.sh --check` joins `DEFAULT_FLOOR` under the ruled
+law: **a gate whose corpus is fleet-wide belongs in the fleet's floor.**
+`docs/backlog/` is every lane's, and the hole was live — a rebase silently
+dropped pyc's INDEX hunk and **no tenure gate would have caught it**, because
+`docs_check` only NOTEs a stale index. It merged correct only because the lane
+diffed the rebased patch against the pre-rebase remote by hand.
+
+### Verified before landing, not because it was said
+
+* **Green on current master**: `--check` exits 0 on a clean checkout of
+  `20acd5e` — 407 entries, in sync. Checked on the real tree, not my branch,
+  because the last floor landing produced a **false pass** from a checkout
+  whose corpus was missing.
+* **No runner, checked transitively**: the `--check` path is render + rows +
+  diff + grep; the only `bash` invocation in the file is inside its own
+  self-test. The last floor member was asserted inert on the strength of its
+  top script and reached the runner **two hops down**, so this one was traced
+  rather than glanced at. A row asserts `gate_runner_targets` returns nothing
+  for it.
+
+### One premise corrected
+
+The proposal said **sub-second**. Measured on the real corpus: **~1.0 s warm**
+(984/990/1020 ms across three runs) and **~3.1 s cold**. Still negligible
+against a 38-minute build, and still worth saying: the first number I took was
+the cold one, and reporting it as the cost would have been wrong in the
+cheap-looking direction.
+
+### Both ways, on its own fixture
+
+An in-sync index passes; a hand-edited one **fails with exit 1**, names
+`DRIFT`, and carries the regenerate instruction. Verified in a real tenure:
+the floor now runs five gates, with `bash tools/backlog-index.sh --check` last.
+
+### Triad
+
+`triad.sh` **427 ok** (422 → 427), check 113, laws 45, backlog-index 62,
+sites 57, diagnose 51, `--verify-guards` 44, docs_check 91/91. The three rows
+pinning the old four-gate floor were updated — which is what a floor change
+should feel like. Fixtures and a stubbed `lake` only; no Lean executed.

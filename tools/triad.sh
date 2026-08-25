@@ -123,8 +123,24 @@
 #
 #   docs      docs_check
 #   anything  docs_check; diff_test; refusal_census --whitelist --no-build;
-#   else      divergence_register
+#   else      divergence_register; backlog-index --check
 #   else
+#
+# `backlog-index.sh --check` JOINED 2026-08-25 under the same rule.  Its corpus
+# is `docs/backlog/` — every lane's — and the hole was live: a rebase silently
+# dropped pyc's INDEX hunk and NO tenure gate would have caught the stale index
+# (docs_check only NOTEs it).  It merged correct only because the lane diffed
+# the rebased patch against the pre-rebase remote BY HAND.
+#
+# It reaches no runner and no Lean: the `--check` path is render + rows + diff
+# + grep, and the only `bash` invocation in the file is inside its own
+# self-test.  Checked transitively this time, because the last floor member was
+# asserted inert on the strength of its top script and reached the runner two
+# hops down.
+#
+# Cost, measured on the real corpus (407 entries): ~1.0 s warm, ~3.1 s cold —
+# not the "sub-second" the proposal estimated, and still negligible against a
+# 38-minute build.
 #
 # THE RULE THAT DECIDES MEMBERSHIP, ruled 2026-08-25 after the floor audit:
 #
@@ -266,10 +282,10 @@ SINCE=""                # --since <sha>: price the INCREMENT (§5.4a-i)
 SINCE_ROOT=""           # the chain root the increment is actually diffed against
 SINCE_LINE=""           # the base green's ledger line, kept for the coverage line
 DOCS_FLOOR='python3 tools/docs_check.py'
-DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py; python3 harness/refusal_census.py --whitelist --no-build; python3 harness/divergence_register.py'
+DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py; python3 harness/refusal_census.py --whitelist --no-build; python3 harness/divergence_register.py; bash tools/backlog-index.sh --check'
 # The label the announcement carries, so the first lane to see a new gate line
 # reads WHY rather than filing a bug against its own tenure.
-FLOOR_LABEL='floor of 2026-08-25: + divergence_register (a gate whose corpus is FLEET-WIDE belongs in the fleet floor)'
+FLOOR_LABEL='floor of 2026-08-25: + divergence_register + backlog-index --check (a gate whose corpus is FLEET-WIDE belongs in the fleet floor)'
 CLASSIFY=0
 CLASSIFY_ONLY=0
 FOREIGN=0
@@ -2478,8 +2494,25 @@ if [ "$SELF_TEST" = "1" ]; then
   # THE EXISTING SPECS ARE UNCHANGED, which is the half that must not regress:
   # every unquoted ';' is still a separator, including the floor's own two.
   # FOUR since 2026-08-25: divergence_register joined by the fleet-wide rule.
-  check "the floor splits into four"          "$(gate_split "$DEFAULT_FLOOR" | grep -c .)" "4"
+  # FIVE since 2026-08-25: backlog-index --check joined by the fleet-wide rule.
+  check "the floor splits into five"          "$(gate_split "$DEFAULT_FLOOR" | grep -c .)" "5"
   check "  ...and is NOT refused"              "$(gate_spec_refusal "$DEFAULT_FLOOR" >/dev/null && echo refused || echo accepted)" "accepted"
+  # THE INDEX GATE, BOTH WAYS, on its own fixture: a stale index is RED and
+  # says how to fix it; an in-sync one is green.  The hole it closes was live —
+  # a rebase dropped a lane's INDEX hunk and no tenure gate would have caught
+  # it, because docs_check only NOTEs a stale index.
+  bif="$tmp/bifloor"; mkdir -p "$bif/bl"
+  printf '## 2026-01-01-z-1 — an entry\n' > "$bif/bl/z.md"
+  bash "$CLONE/tools/backlog-index.sh" --backlog "$bif/bl" --dir "$bif" >/dev/null 2>&1
+  check "an in-sync index passes --check"     "$(bash "$CLONE/tools/backlog-index.sh" --backlog "$bif/bl" --dir "$bif" --check >/dev/null 2>&1; echo $?)" "0"
+  printf '\nhand-edited\n' >> "$bif/bl/INDEX.md"
+  check "a STALE index fails --check"         "$(bash "$CLONE/tools/backlog-index.sh" --backlog "$bif/bl" --dir "$bif" --check >/dev/null 2>&1; echo $?)" "1"
+  check "  ...naming DRIFT"                   "$(bash "$CLONE/tools/backlog-index.sh" --backlog "$bif/bl" --dir "$bif" --check 2>&1 | grep -c 'DRIFT')" "1"
+  check "  ...and how to fix it"              "$(bash "$CLONE/tools/backlog-index.sh" --backlog "$bif/bl" --dir "$bif" --check 2>&1 | grep -c 'run tools/backlog-index.sh')" "1"
+  # IT REACHES NO RUNNER: checked transitively, because the last floor member
+  # was asserted inert on its top script and reached the runner two hops down.
+  check "the index gate needs no runner"      "$(gate_runner_targets 'bash tools/backlog-index.sh --check')" ""
+
   check "a single command is one gate"         "$(gate_split 'python3 tools/docs_check.py' | grep -c .)" "1"
   check "  ...and is not refused"              "$(gate_spec_refusal 'python3 tools/docs_check.py' >/dev/null && echo refused || echo accepted)" "accepted"
   # A QUOTED ARGUMENT WITHOUT a semicolon was always fine and must stay fine:
@@ -2533,7 +2566,7 @@ if [ "$SELF_TEST" = "1" ]; then
   check "plain --classify is not REFUSED"      "$(printf '%s' "$out" | grep -c 'is EMPTY')" "0"
   out="$(flagrun --classify --against HEAD)"
   check "  ...and it plans a NON-EMPTY floor"  "$(printf '%s' "$out" | grep -c 'gate 1 is EMPTY')" "0"
-  check "  ...reaching the gate phase"         "$(printf '%s' "$out" | grep -c '=== gate:')" "4"
+  check "  ...reaching the gate phase"         "$(printf '%s' "$out" | grep -c '=== gate:')" "5"
   # ...while --classify-only keeps taking the gates AS GIVEN.
   saved_c="$CLASSIFY"; saved_co="$CLASSIFY_ONLY"; saved_g="$GATES"; saved_lg="$LANE_GATES"
   CLASSIFY=1; CLASSIFY_ONLY=0; GATES=""; LANE_GATES=""
@@ -3319,7 +3352,7 @@ if [ "$SELF_TEST" = "1" ]; then
   LS_GREP_ROOT=""
 
   # ---- the default-gate-set notice (the ES lane's migration finding)
-  check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test, refusal_census, divergence_register"
+  check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test, refusal_census, divergence_register, backlog-index"
   check "the docs floor names one gate"   "$(gate_names "$(gate_floor docs)")" "docs_check"
   GATE_NOTICE_DONE=0
   check "a DEFAULT invocation warns"      "$(gate_notice "$(gate_floor tier)" "" | grep -c 'DEFAULT GATES')" "1"

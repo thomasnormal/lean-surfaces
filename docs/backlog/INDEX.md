@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**401 entries across 17 lanes.** Regenerate with
+**402 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -25,6 +25,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-architecture-90` |  | A ledger that may not be empty cannot also be the archive | architecture |
 | `2026-08-25-architecture-89` |  | Absence and success are the same colour on a green board | architecture |
 | `2026-08-25-architecture-88` |  | A gate not in your floor cannot contradict your rows | architecture |
+| `2026-08-25-qol-74` |  | the acquire gate: do not start into a box already known to be starved | qol |
 | `2026-08-25-qol-72` |  | two flags whose pre-tenure line said less than the tenure would do | qol |
 | `2026-08-25-qol-71` |  | a tenure that writes its log into the clone refuses itself | qol |
 | `2026-08-25-qol-69` |  | my census counted checkouts; the risk was about tickets | qol |

@@ -223,6 +223,22 @@ IDLE_LOAD_MAX="${LS_IDLE_LOAD_MAX:-2}"         # "quiet" is defined, not assumed
 IDLE_PRESS_MAX="${LS_IDLE_PRESS_MAX:-40}"
 NICE="${LS_NICE:-19}"                          # amendment 11
 MAX_WAIT="${LS_MAX_WAIT:-14400}"               # 4 h, then give up LOUDLY
+# THE ACQUIRE GATE (priced 2026-08-25, ruled as priced).  Two tenures died by
+# outside SIGTERM 30-60 min into a build on a starved box, each costing the
+# tenure plus a ~2 h re-queue.  A17's line governs iterate loops; tenures
+# acquired regardless and rolled dice.
+#
+# DEFERRAL TIME IS NOT LOCK CONTENTION, so it does not touch MAX_WAIT: that
+# clock measures "someone else is building", this one measures "the box is
+# unusable", and charging one clock for both makes a starved box look busy.
+MAX_DEFER="${LS_MAX_DEFER:-2700}"              # 45 min, then release LOUDLY
+DEFER_INTERVAL="${LS_DEFER_INTERVAL:-60}"
+# SHIPPED ON THE KERNEL LEVEL, calibrated later from real deferrals: level >= 2
+# is defensible from first principles (the kernel is the thing that reclaims
+# and kills), while the in-use line is NOT calibratable from the data we had,
+# so it is set high enough to rarely bind and will be tightened from evidence.
+DEFER_LEVEL_MIN="${LS_DEFER_LEVEL:-2}"
+DEFER_INUSE_MAX="${LS_DEFER_INUSE:-85}"
 STALE_AFTER="${LS_STALE_AFTER:-1800}"          # only then consider a reclaim
 DRY_RUN=0
 SELF_TEST=0
@@ -407,8 +423,10 @@ watchdog_start() {
           vp="$(printf '%s' "$verdict" | awk '{print $2}')"
           vr="$(printf '%s' "$verdict" | awk '{print $3}')"
           echo "RSS KILL LINE (A16, per-process): pid $vp at $((vr / 1024)) MB > $((RSS_PROC_LIMIT_KB / 1024)) MB — killing THAT process" >&2
+          : > "$GUARD_PIDFILE.killed" 2>/dev/null
           kill -9 "$vp" 2>/dev/null ;;
         chain\ *)
+          : > "$GUARD_PIDFILE.killed" 2>/dev/null
           vt="$(printf '%s' "$verdict" | awk '{print $2}')"
           echo "RSS KILL LINE (A16, chain): own chain at $((vt / 1024)) MB > $((RSS_CHAIN_LIMIT_KB / 1024)) MB — killing OUR chain" >&2
           for p in $(descendants $$); do
@@ -1597,6 +1615,42 @@ union_explicit_targets() {      # --build-target values onto whatever is there
   return 0
 }
 
+# ---- IS THIS BOX SURVIVABLE? (the acquire gate)
+#
+# > Do not start into a box already known to be starved.  This reduces
+# > dice-rolls; it guarantees nothing — a box can starve AFTER the check, and a
+# > build runs 38+ minutes.
+#
+# THE INSTRUMENTS ARE AN "OR", AND DELIBERATELY SO.  The kernel level answers
+# the question actually being asked — is the thing that reclaims and kills
+# already under pressure — while in-use% catches a box the kernel has not yet
+# flagged.  Either alone is looser than both; this is the opposite safe
+# direction from the thread throttle, where the level was rejected FOR BEING
+# looser, and the difference is the question, not the instrument.
+#
+# NEVER `vm.swapusage`.  That figure is swap ALLOCATED AND NOT RECLAIMED, a
+# high-water mark for the machine's uptime: a gate keyed on it would defer
+# forever on any box that has ever swapped.  The proposal that produced this
+# gate named it, and measuring the two side by side is the only thing that
+# caught it — 90% swap against a kernel level of 2, disagreeing in KIND.
+#
+# EVERY CHECK PRINTS BOTH READINGS WITH THEIR TRANSFORMS, whether it defers or
+# not, so the calibration data for the in-use line accumulates in the logs by
+# construction rather than by anyone remembering to collect it.
+acquire_check() {               # -> "ok <readings>" | "defer <readings> — <why>"
+  local L P lv pct r
+  L="$(read_pressure_level)"; P="$(read_pressure)"
+  lv="${L%% *}"; pct="${P%% *}"
+  r="level $lv (${L#* }), in-use ${pct}% (${P#* })"
+  case "$lv" in
+    2|4) printf 'defer %s — the kernel is already reclaiming' "$r"; return 0 ;;
+  esac
+  if over "$pct" "$DEFER_INUSE_MAX"; then
+    printf 'defer %s — over the %s%% in-use line' "$r" "$DEFER_INUSE_MAX"; return 0
+  fi
+  printf 'ok %s' "$r"
+}
+
 merge_target_ref() {
   # THE A13 CAVEAT, and it has caught four lanes: a seeded clone inherits the
   # peer's REMOTES, so `origin` can be a stale local bundle and
@@ -2271,6 +2325,46 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a v1 stamp still shortens"           "$(short_tree 'abc123def4567890 HEAD1')" "abc123def456"
   CLONE="$saved_cl"
 
+  # ---- THE ACQUIRE GATE: do not start into a box already known to be starved
+  echo "  -- acquire gate"
+  saved_di="$DEFER_INUSE_MAX"; DEFER_INUSE_MAX=85
+  q="$(LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="20.0 memory_pressure:100-free%(macos)" acquire_check)"
+  check "a quiet box is ok"                   "${q%% *}" "ok"
+  # BOTH INSTRUMENTS, EVERY CHECK, so calibration data accrues by construction.
+  check "  ...and prints the kernel level"    "$(printf '%s' "$q" | grep -c 'level 1 (memorystatus_vm_pressure_level=1-normal(macos))')" "1"
+  check "  ...and the in-use transform"       "$(printf '%s' "$q" | grep -c 'in-use 20.0% (memory_pressure:100-free%(macos))')" "1"
+  w="$(LS_MOCK_PRESSURE_LEVEL=2 LS_MOCK_PRESSURE="20.0 memory_pressure:100-free%(macos)" acquire_check)"
+  check "kernel WARN defers"                  "${w%% *}" "defer"
+  check "  ...naming the kernel as the cause" "$(printf '%s' "$w" | grep -c 'the kernel is already reclaiming')" "1"
+  check "  ...even at low in-use"             "$(printf '%s' "$w" | grep -c 'in-use 20.0%')" "1"
+  c="$(LS_MOCK_PRESSURE_LEVEL=4 LS_MOCK_PRESSURE="20.0 memory_pressure:100-free%(macos)" acquire_check)"
+  check "kernel CRITICAL defers"              "${c%% *}" "defer"
+  # THE OR: in-use catches a box the kernel has not flagged yet.
+  h="$(LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="91.0 memory_pressure:100-free%(macos)" acquire_check)"
+  check "high in-use defers at level 1"       "${h%% *}" "defer"
+  check "  ...naming the line it crossed"     "$(printf '%s' "$h" | grep -c 'over the 85% in-use line')" "1"
+  check "just under the line proceeds"        "$(LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="84.9 memory_pressure:100-free%(macos)" acquire_check | cut -d" " -f1)" "ok"
+  # ABSENCE IS NOT STARVATION: an unreadable instrument must not defer forever.
+  u="$(LS_MOCK_PRESSURE_LEVEL=0 LS_MOCK_PRESSURE="0 unavailable(no-instrument)" acquire_check)"
+  check "unreadable instruments proceed"      "${u%% *}" "ok"
+  DEFER_INUSE_MAX="$saved_di"
+  # NEVER the high-water instrument: a gate keyed on it defers forever on any
+  # box that has ever swapped.
+  check "the gate never reads vm.swapusage"   "$(sed -n '/^acquire_check() {/,/^}/p' "$0" | grep -c 'swapusage')" "0"
+  # THE DEFERRAL CLOCK IS ITS OWN: MAX_WAIT measures lock contention.
+  check "deferral does not touch MAX_WAIT"    "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'MAX_WAIT')" "0"
+  check "  ...and has its own bound"          "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'MAX_DEFER')" "1"
+  check "  ...releasing loudly with readings" "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'last readings')" "1"
+  check "a dry run is exempt"                 "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'DRY_RUN')" "1"
+  # WHOSE KILL: the guard leaves a marker, so "ours" is READ, not inferred.
+  # ANCHORED AT LINE START: a row that greps for a code string CONTAINS that
+  # string, and this is the fourth such self-match this week.  The code lines
+  # begin with the idiom; the rows begin with `check`.
+  check "the RSS guard marks its own kills"   "$(grep -c '^ *: > \"\$GUARD_PIDFILE' "$0")" "2"
+  check "  ...137 with the marker is OURS"    "$(grep -c '^ *say \"exit \$BUILD_EXIT = OURS' "$0")" "1"
+  check "  ...143 in silence is THE BOX"      "$(grep -c '^ *say \"exit \$BUILD_EXIT = THE BOX' "$0")" "1"
+
+
   # ---- THE THREAD THROTTLE IS ADAPTIVE (the build-profile investigation)
   # A11's PURPOSE is the constraint; 2 was the means, chosen for a busy box and
   # charged to an idle one -- ~38 minutes of every spine build.
@@ -2422,7 +2516,12 @@ if [ "$SELF_TEST" = "1" ]; then
   chmod +x "$frstub/lake"
   flagrun() {                   # extra args... -> the run's output
     rm -rf "$tmp/frq" "$tmp/frl"
+    # A FIXTURE CONTROLS ITS OWN MACHINE.  Without these the acquire gate reads
+    # the REAL box, and on a loaded one every fixture run defers for 45 minutes
+    # — the suite became unrunnable the moment the gate landed, which is how
+    # this was found.
     PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 \
+      LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
       TMPDIR="$tmp" timeout 90 bash "$0" --lane fl --dir "$fr" "$@" 2>&1
   }
 
@@ -2499,6 +2598,7 @@ if [ "$SELF_TEST" = "1" ]; then
   # ...and END TO END, both directions, through a real invocation.
   rm -rf "$tmp/frq" "$tmp/frl"
   PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
+    LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
     timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > "$fr/inside.log" 2>&1
   check "a run logging INSIDE the clone refuses" "$(grep -c 'own log is INSIDE the clone' "$fr/inside.log")" "1"
   check "  ...naming the fix"                  "$(grep -c 'Put the log outside the clone' "$fr/inside.log")" "1"
@@ -2506,6 +2606,7 @@ if [ "$SELF_TEST" = "1" ]; then
   rm -f "$fr/inside.log"
   rm -rf "$tmp/frq" "$tmp/frl"
   PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
+    LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
     timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > "$tmp/outside.log" 2>&1
   check "a run logging OUTSIDE proceeds"       "$(grep -c 'own log is INSIDE the clone' "$tmp/outside.log")" "0"
   # THE FORCED ORDERING is stated where a lane meets it.
@@ -3689,6 +3790,37 @@ say "base at acquire: $(base_staleness fresh)"
 # every attempt.  `watchdog_start` is called inside the build loop.
 GUARD_PIDFILE="$(mktemp "${TMPDIR:-/tmp}/triad-guard.XXXXXX")" || die "no temp dir for the guard pid"
 
+# ------------------------------------------------- the acquire gate (deferral)
+#
+# HOLDING THE LOCK WHILE DEFERRING IS THE POINT, not a side effect.  Deferring
+# WITHOUT it means the next ticket takes the lock and dies on the same starved
+# box, so holding converts N deaths into one wait — and the held lock is a
+# machine-wide "nobody build now" signal that nothing else currently sends.
+# It does block the queue behind a starved box; behind a starved box every
+# tenure dies anyway, so waiting is the cheaper side of the trade.
+# A DRY RUN STARTS NO BUILD, so there is nothing to starve and nothing to
+# defer — the same reasoning as "a report has nothing to spend".  Deferring it
+# would make `--dry-run` unusable for exactly the protocol testing it exists
+# for, on exactly the loaded boxes where that testing matters most.
+DEFER_WAITED=0
+while [ "$DRY_RUN" = "0" ]; do
+  _chk="$(acquire_check)"
+  case "$_chk" in
+    ok\ *) [ "$DEFER_WAITED" -gt 0 ] && say "ACQUIRE RESUMED after ${DEFER_WAITED}s — ${_chk#ok }"
+           break ;;
+  esac
+  say "ACQUIRE DEFERRED — ${_chk#defer }"
+  if [ "$DEFER_WAITED" -ge "$MAX_DEFER" ]; then
+    say "ACQUIRE GIVING UP after ${DEFER_WAITED}s deferred: the box never became survivable."
+    say "  last readings: ${_chk#defer }"
+    say "  NO BUILD WAS STARTED, so this is not an outside kill to diagnose — the box was"
+    say "  starved before we began. Releasing the lock so the fleet is not held behind it."
+    exit 2
+  fi
+  sleep "$DEFER_INTERVAL"
+  DEFER_WAITED=$((DEFER_WAITED + DEFER_INTERVAL))
+done
+
 # ----------------------------------------------------------------- the work
 # DECIDED HERE, ONCE, for the build phase.
 THREAD_CHOICE="$(choose_threads)"
@@ -3726,7 +3858,18 @@ for attempt in 1 2; do
   # base rule 2: 143/137 is the OS terminating an oversubscribed job.  It is
   # a resource kill, never a red build, and must never be recorded as one.
   if [ "$BUILD_EXIT" -eq 143 ] || [ "$BUILD_EXIT" -eq 137 ]; then
-    say "exit $BUILD_EXIT = RESOURCE KILL, not a red build — re-running once"
+    # WHOSE KILL WAS IT?  pyc's discriminator: 137 WITH our RSS KILL LINE is
+    # OURS (the A16 guard did it, and the guard leaves a marker so this is
+    # read rather than inferred); 143 IN SILENCE is THE BOX — an outside
+    # SIGTERM, which is the case the acquire gate exists to avoid starting
+    # into.  Both are resource kills and neither is a red build, but they send
+    # the lane to different places.
+    if [ -f "${GUARD_PIDFILE}.killed" ]; then
+      say "exit $BUILD_EXIT = OURS: the A16 RSS guard tripped (see the RSS KILL LINE above) — re-running once"
+    else
+      say "exit $BUILD_EXIT = THE BOX: an outside kill with no RSS KILL LINE of ours — re-running once"
+      say "  box now: $(acquire_check | sed -e 's/^ok //' -e 's/^defer //')"
+    fi
     continue
   fi
   break

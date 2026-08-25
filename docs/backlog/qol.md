@@ -5042,3 +5042,68 @@ averaged away.
 sites 57, `--verify-guards` 44. All four paths verified live: docs+gates,
 docs alone, the unioned banner, and an unclassified run keeping its explicit
 target. Fixtures only; no Lean executed.
+
+## 2026-08-25-qol-74 — the acquire gate: do not start into a box already known to be starved
+
+Landed as priced and ruled.
+
+### What a lane sees, verified live on a starved box
+
+```
+LOCK ACQUIRED after 0s as 't 82523'
+ACQUIRE DEFERRED — level 2 (memorystatus_vm_pressure_level=2-warn(macos)),
+                   in-use 72.0% (memory_pressure:100-free%(macos))
+                   — the kernel is already reclaiming
+ACQUIRE GIVING UP after 0s deferred: the box never became survivable.
+LOCK RELEASED (mine)
+```
+
+and on a quiet box it proceeds straight to `lake build` with no deferral line
+at all. Both directions, plus the `--dry-run` exemption, verified end to end.
+
+### The shape, as ruled
+
+* **The trigger is an OR** — kernel level ≥ 2, or in-use% over a high line.
+  Shipped on the kernel level; the in-use line sits at 85% so it rarely binds
+  and gets tightened from real deferrals.
+* **Never `vm.swapusage`.** A row asserts the gate's own body never names it,
+  because a gate keyed on that high-water mark defers forever on any box that
+  has ever swapped.
+* **Every check prints both readings with their transforms**, deferring or
+  not, so calibration data accrues by construction rather than by anyone
+  remembering to collect it.
+* **`MAX_DEFER` (45 min) is its own clock**, never `MAX_WAIT`: that one
+  measures lock contention, this one measures an unusable box. On give-up the
+  lock is released loudly with the readings named.
+* **The held lock is the point, not a side effect** — deferring *without* it
+  means the next ticket takes it and dies on the same box, so holding converts
+  N deaths into one wait, and is a machine-wide "nobody build now" signal
+  nothing else sends.
+* **A dry run is exempt**: it starts no build, so it has nothing to starve.
+
+### The kill discriminator rides with it
+
+`137` **with our marker** = OURS (the A16 guard tripped — and the watchdog now
+touches a marker file, so "ours" is *read*, not inferred); `143` **in silence**
+= THE BOX, and that branch prints the box's current readings. Both are
+resource kills, neither is a red build, but they send a lane to different
+places.
+
+### Two things the landing taught
+
+**The gate made the suite unrunnable, and that is how it was found.** My
+flag-path rows spawn real sub-invocations; the moment the gate landed they
+began deferring against the *real* box for 45 minutes each. Fixtures now mock a
+quiet machine — **a fixture controls its own machine** — and `--dry-run` is
+exempt on principle rather than for convenience.
+
+**A row that greps for a code string contains that string** — fourth
+self-match this week. The three discriminator rows now anchor at line start,
+which the rows themselves (indented inside `check`) cannot match.
+
+### Triad
+
+`triad.sh` **422 ok** (403 → 422), check 113, laws 45, backlog-index 62,
+sites 57, diagnose 51, `--verify-guards` 44, comment-forms 18, docs_check
+91/91. Fixtures and a stubbed `lake` only; no Lean executed; the live queue
+untouched.

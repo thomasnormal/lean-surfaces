@@ -55,6 +55,29 @@ read_load() {                   # 1-minute load average
 # a uptime-long memory of one bad minute.  Every line below carries the
 # instrument and the platform, so the next person to doubt it can check the
 # same source in one command.
+# THE KERNEL'S OWN SURVIVABILITY VERDICT, as a first-class reading.
+#
+# It exists inside `read_pressure` as a FALLBACK, which is the wrong shape for
+# the acquire gate: there the question is not "how much memory is in use" but
+# "is the thing that reclaims and kills already under pressure", and the kernel
+# is the only instrument that answers it directly.
+#
+#   1 normal | 2 warn | 4 critical
+#
+# Reported with its transform, like every other line: the number alone has been
+# misread twice in this repository.
+read_pressure_level() {         # -> "<level> <instrument>"
+  [ -n "${LS_MOCK_PRESSURE_LEVEL_FULL:-}" ] && { printf '%s\n' "$LS_MOCK_PRESSURE_LEVEL_FULL"; return 0; }
+  local lvl
+  lvl="${LS_MOCK_PRESSURE_LEVEL:-$(sysctl -n kern.memorystatus_vm_pressure_level 2>/dev/null || true)}"
+  case "$lvl" in
+    1) printf '1 memorystatus_vm_pressure_level=1-normal(macos)\n' ;;
+    2) printf '2 memorystatus_vm_pressure_level=2-warn(macos)\n' ;;
+    4) printf '4 memorystatus_vm_pressure_level=4-critical(macos)\n' ;;
+    *) printf 'unknown memorystatus_vm_pressure_level=unavailable\n' ;;
+  esac
+}
+
 read_pressure() {               # -> "<pct-in-use> <instrument>"
   [ -n "${LS_MOCK_PRESSURE:-}" ] && { printf '%s\n' "$LS_MOCK_PRESSURE"; return 0; }
   local mi mp lvl free

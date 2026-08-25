@@ -1557,3 +1557,75 @@ reason is the case it rules out:
 That second bullet is the whole of 4c, and it is a magnitude argument rather
 than an arithmetic identity — the first in this component that reasons about
 where a value SITS rather than what it EQUALS.
+
+---
+
+## 2026-08-25-softfloat-26 — 4c IN PROGRESS: the grid generalised, and distances become INTEGER comparisons
+
+`LeanModels/SoftFloat/Round.lean`. `dyadic_at_lower`, `repr_at_lower`,
+`dyadic_sub` — all `[propext]` or `[propext, Quot.sound]`. **TRUSTWORTHY**,
+zero `sorry`. Two steps of 4c, not 4c.
+
+### STEP 1 — the grid lemma at ANY lower exponent
+
+`repr_on_min_grid` moved everything to `minExponent`. 4c needs the same move to
+the **target** exponent, because that is where the two-grid comparison happens.
+`dyadic_at_lower` generalises it: re-express a dyadic at any exponent at or
+below its own. `repr_on_min_grid` is now the `t = minExponent` case.
+
+### STEP 2 — and it makes 4c much smaller than feared
+
+`roundWithAccuracy`'s input is **dyadic by construction** — its signature is
+`(sign, mantissa : Nat, exponent : Int, accuracy)`, and
+`RoundWithAccuracyIsNearest` states the exact value as `Q.dyadic (s.apply m) e`.
+So the value being rounded, the rounded result, and every representable `z` are
+all dyadic, and `dyadic_at_lower` puts all three on **one** grid.
+
+`dyadic_sub` is the payoff: subtraction at a common exponent acts on the
+**significands**. So on that grid a distance is the grid step times an integer
+difference, and *"nothing is closer"* becomes an **`Int` comparison** rather
+than a rational one.
+
+> **4c does not need general rational ordering.** It needs integer comparison
+> on one grid, which is a much smaller thing than the magnitude argument
+> sketched in `2026-08-25-softfloat-25`.
+
+That earlier sketch is not wrong — the significand bound still rules out the
+finer-grid case — but the reduction reaches it through integers rather than
+through binade magnitudes.
+
+### THE MECHANICAL COST, and it is the same story as before
+
+`dyadic_sub`'s negative-exponent branch took five iterations, every one a
+core-only reflex failing:
+
+* `instSubQ` — an **invented** instance name; the instance is anonymous, and
+  `show Q.Eq (Q.sub …) …` reaches it by defeq instead.
+* `not_le` — Mathlib, again.
+* `simp [Int.neg_mul]` rewrote the goal the **wrong way** (`(-b) * X → -(b * X)`),
+  defeating the factoring the very next step needed. A simp lemma has a
+  direction, and the convenient direction is not always the one you want.
+* The close is four explicit rewrites — `← Int.add_mul`, `← Int.sub_eq_add_neg`,
+  `Int.natCast_mul`, `← Int.mul_assoc` — found by reading the goal at each
+  stage, not by guessing.
+
+### §9.0 — STILL 1/12, and the downstream count CORRECTED
+
+**42 landed theorems, 1 an unconditional `op_correct`.**
+
+**Downstream: 4 named pyc rows, not 6.** A cross-lane note put the figure at
+six — *float, complex, bytes, Div, Pow-negative, MatMult*. `docs/completeness.md`
+says otherwise in its own words: *"Four grammar rows depend on it (`const.float`,
+`op.Div`, `op.Pow-negative`, and `str()`/`repr()` of one)"*.
+
+The six appears to come from reading two TABLE-ROW CLUSTERS as one dependency —
+line 66 `| Constant payload (4) | float bytes complex ellipsis |` and line 67
+`| operator (13) | Div RShift BitXor MatMult |`. `bytes`, `complex` and
+`ellipsis` are unrelated payload types; `MatMult` is costed at *"nothing — no
+operand type"* (line 84).
+
+**And the list omitted `str()`/`repr()`** — which is this component's decimal
+printing, the one item measured as actually blocking. So the figure was
+**over-counted by three and dropped the important one**. Recorded at its real
+size: a lane's leverage inflated is the same flattering direction as a
+consumer count inflated, and this lane has corrected that three times already.

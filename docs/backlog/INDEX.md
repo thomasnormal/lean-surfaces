@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**412 entries across 17 lanes.** Regenerate with
+**414 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -46,7 +46,9 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-pycomplete-29` |  | the zero-live pole: my own test was asymmetric about a legality my own ruling created | python-completeness |
 | `2026-08-25-pycomplete-28` |  | `watch` is not `FAIL`, and the polarity table becomes a file | python-completeness |
 | `2026-08-25-pycomplete-27` |  | pyc-div-2 goes back on the watch, and the watch gains the alarm it was missing | python-completeness |
+| `2026-08-25-softfloat-26` |  | 4c IN PROGRESS: the grid generalised, and distances become INTEGER comparisons | softfloat |
 | `2026-08-25-pycomplete-26` |  | the register's three clauses, and a probe that was starting UNLOCKED BUILDS | python-completeness |
+| `2026-08-25-softfloat-25` |  | THE COMMON-GRID REDUCTION: many grids become one | softfloat |
 | `2026-08-25-pycomplete-25` |  | the midgame board splits by DEPTH, and the field-collision sweep returns a clean negative | python-completeness |
 | `2026-08-25-c-25` |  | `oracle-tests-compiler`: a state that makes the number SMALLER and truer | c |
 | `2026-08-25-softfloat-24` |  | THE INTERLEAVING ARGUMENT IS STARTED, and a WALL I reported was FALSE | softfloat |

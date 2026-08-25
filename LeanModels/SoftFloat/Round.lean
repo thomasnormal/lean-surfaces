@@ -106,6 +106,49 @@ theorem repr_on_min_grid (fmt : Format) (q : Q) (h : ReprQ fmt q) :
   rw [he'] at hscale
   exact Qeq_trans hq hscale
 
+/-! ## 4c, STEP 1 — the grid lemma at ANY lower exponent -/
+
+/-- Re-express a dyadic at any exponent at or below its own.  `repr_on_min_grid`
+    is the `t = minExponent` case; 4c needs the `t = targetExponent` case, which
+    is where the two-grid comparison happens. -/
+theorem dyadic_at_lower (m : Int) (e t : Int) (h : t ≤ e) :
+    Q.Eq (Q.dyadic m e) (Q.dyadic (m * 2 ^ (e - t).toNat) t) := by
+  have hs := dyadic_scale m e (e - t).toNat
+  have ht : e - (((e - t).toNat : Nat) : Int) = t := by omega
+  rwa [ht] at hs
+
+/-- Every representable value re-expressed at any exponent at or below the one
+    its representation uses. -/
+theorem repr_at_lower (fmt : Format) (q : Q) (t : Int)
+    (h : ∃ m e, m.natAbs < 2 ^ fmt.mantissaBits ∧ t ≤ e ∧ Q.Eq q (Q.dyadic m e)) :
+    ∃ j : Int, Q.Eq q (Q.dyadic j t) := by
+  obtain ⟨m, e, _hm, he, hq⟩ := h
+  exact ⟨m * 2 ^ (e - t).toNat, Qeq_trans hq (dyadic_at_lower m e t he)⟩
+
+
+/-! ## 4c, STEP 2 — on a COMMON grid, distance comparison is INTEGER comparison
+
+`roundWithAccuracy`'s input is dyadic by construction, and every representable
+is dyadic; `dyadic_at_lower` puts them all on one grid.  Once there, `Q.dist`
+of two grid points is the grid step times an INTEGER difference, so "nothing is
+closer" becomes an `Int` comparison rather than a rational one. -/
+
+/-- Subtraction at a common exponent acts on the significands. -/
+theorem dyadic_sub (a b : Int) (g : Int) :
+    Q.Eq (Q.dyadic a g - Q.dyadic b g) (Q.dyadic (a - b) g) := by
+  show Q.Eq (Q.sub (Q.dyadic a g) (Q.dyadic b g)) (Q.dyadic (a - b) g)
+  unfold Q.Eq Q.sub Q.add Q.neg Q.dyadic
+  by_cases hg : 0 ≤ g
+  · simp only [if_pos hg]
+    simp [Int.add_mul, Int.neg_mul, Int.mul_comm, Int.mul_left_comm,
+          Int.sub_eq_add_neg]
+  · simp only [if_neg hg]
+    rw [← Int.add_mul, ← Int.sub_eq_add_neg, Int.natCast_mul, ← Int.mul_assoc]
+
+#print axioms dyadic_at_lower
+#print axioms repr_at_lower
+#print axioms dyadic_sub
+
 /-! ## 2. CORRECT ROUNDING — IEEE 754-2019 §4.3, declaratively
 
 No algorithm appears: `y` is representable, nothing representable is strictly

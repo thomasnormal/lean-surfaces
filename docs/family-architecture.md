@@ -4357,6 +4357,37 @@ the scoreboard measures* — **the model.** The row is what carries the failure 
 to its author, and writing it before the diagnosis is what keeps the attribution
 open long enough for the diagnosis to change it.
 
+**AND THE RESHAPE THAT SETTLED THAT ARC GAVE THE SCHEMA THREE PROPERTIES IT
+LACKED** (C, `5f506da`; `c-div-1` live, kind `semantic`).
+
+**RETIREMENT IS AN EVENT, NOT A FORK.** The row **writes `oracle-tests-compiler`
+in as THE path**, and records **builtin-modelling as explicitly NOT the path.**
+
+> **A retirement condition that lists one route and names the rejected one is a
+> DECISION; a condition that lists two is a question deferred to whoever reads it
+> next.**
+
+*The rejected route is the load-bearing half* — without it the row invites a
+later lane to retire the debt by modelling the builtin, **which is the trade the
+row exists to forbid.**
+
+**AND `c-div-2` RETIRED WITH KIND `provenance`** — *the whole diagnosis in one
+field.* **A kind is the row's index into why it happened**, and it is the field a
+cross-tier reader scans before any prose; **a retired row whose kind still says
+`semantic` teaches the fleet the wrong lesson forever.**
+
+**AND `still_divergent` IS A DELIBERATE TRAP, WHICH IS A SHAPE THIS REGISTER
+SHOULD ASK FOR MORE OFTEN**: when the zero-state lands, **the guard goes RED** —
+forcing **deliberate retirement over silent drain.**
+
+> **BUILD THE RETIREMENT TO FAIL. A debt that can drain away unnoticed will, and
+> nobody will be able to say when it stopped being true.**
+
+**The alternative is not an error, it is an absence** — the row simply stops
+applying, no artifact changes, and the register quietly holds a row about a world
+that moved. *A trap converts the retirement into an event with a date and an
+author*, which is the same argument `was_blocked_on` makes from the other end.
+
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
 belongs**: in the artifact's output, admitted **12 times**, *where the claim is
@@ -5517,6 +5548,21 @@ hazard rather than an anecdote: **a lane writing witnesses reaches for the
 simplest input, and the simplest input is the one least likely to reach the new
 code.** *The witness-writing instinct and the certification requirement point in
 opposite directions by default.*
+
+**AND THE VACUITY FAMILY REACHED A CENSUS'S PREMISE, WHICH IS WHERE IT IS MOST
+EXPENSIVE** (analog, A15's overturn). **F3 lacked GROUNDING**: determinacy
+**universally quantified holds of an UNSATISFIABLE DECK.**
+
+> **A ∀-STATEMENT ABOUT A DECK NOBODY HAS SHOWN TO EXIST IS TRUE AND EMPTY. The
+> inhabitant is a separate obligation.**
+
+**And the resolution is the finding**: the inhabitant comes from **A14's
+witness** — *"the lane's founding finding and its latest rung are the same
+finding."* **A tier that proves properties of a structure before exhibiting one
+is building a family of true statements about nothing**, and the tell is exactly
+§5.3's: *nothing in the proof, the gate or the scoreboard distinguishes it from
+the grounded version.* **Pair every universally quantified guarantee with a
+witness obligation, and record them as ONE rung.**
 
 ### 5.4 One census-instrument pattern per tier
 
@@ -8212,6 +8258,90 @@ control is the same shape: **assert the LENGTH, or assert what the last element
 must be.** *Nothing else distinguishes a trace that finished from a trace that
 stopped.*
 
+**AND THE DIFFERENT-PROGRAM-ENVELOPE CLASS TOOK ITS SECOND MEMBER, ONE TIER
+OVER** (ES ingestion). *A class named on Tuesday and reproduced on Wednesday, in
+a different language, by a different lane* — **which is the two-instance
+threshold this register now treats as a sweep trigger**, and the sweep is
+specified: **every tier that extracts an envelope should check the ONE property
+both incidents share — that a field the instrument writes can be overwritten by
+the source it copies from.**
+
+**AND A FALSE WALL REDIRECTED A WORKSTREAM** (SoftFloat, third instance in that
+lane): the grep pattern `Int\.pow_` **missed `protected theorem pow_add` inside
+`namespace Int`.** Core **has** the lemmas.
+
+> **A SEARCH MATCHING A NARROWER THING THAN YOU'RE ASKING ABOUT REPORTS ABSENCE —
+> and ABSENCE IS THE MOST ACTIONABLE-LOOKING ANSWER THERE IS.**
+
+> **A FALSE WALL DOESN'T WASTE A TENURE, IT REDIRECTS A WORKSTREAM.**
+
+**That asymmetry is the reason this belongs beside the grep-versus-declaration
+law rather than under it.** *A false POSITIVE costs a re-read; a false ABSENCE
+costs a plan* — the lane does not investigate further, because absence is exactly
+the answer that terminates investigation. **Adopted rule: search the BARE NAME
+INSIDE ITS NAMESPACE before believing absence**, and treat any absence result
+as provisional until the narrower-pattern hypothesis has been ruled out.
+
+**AND A FAMILY IS RE-DERIVED FROM THE TREE, NEVER FROM THE ROW THAT NAMED IT**
+(analog, A15's overturn). A15's premise **did not survive its own audit** —
+Grönwall was **already landed**, the lift **already proved**.
+
+> **RE-DERIVE A FAMILY FROM THE TREE WHEN YOU START IT, NEVER FROM THE ROW THAT
+> NAMED IT.**
+
+**The F-table was wrong about the frontier in all four audits**, which is what
+promotes this from advice to law: *a row is a dated description, and a plan built
+by reading rows inherits every staleness the rows have accumulated since.* And
+the cause was a vocabulary defect:
+
+> **"NEEDS GRÖNWALL" DESCRIBED THE MATHEMATICS THE THEOREM USES, NOT THE WORK THE
+> THEOREM LACKS. A census that records the TECHNIQUE instead of the GAP will
+> price landed work as outstanding.**
+
+*Technique names are stable and gaps are not*, which is exactly why the technique
+gets written down — **and a census column that never changes is a column that
+stopped measuring.**
+
+**AND A LAW'S PORTABILITY IS NOT ITS INSTRUMENT'S** (Wasm; A′ denominator
+**23 → 22**). The census author **reached for the disproven textual grep on a
+second language.**
+
+> **THE LAW IS ABOUT COMMENTS, NOT ABOUT LEAN — the instrument is
+> language-specific; the discipline it encodes ISN'T.**
+
+**A law learned through one tool arrives filed under that tool**, and the second
+language is where the filing shows: *the lane remembered a Lean gate rather than
+a reading rule.* **State a law's SCOPE in the law** — and the payoff here was not
+merely a count: **the comment-aware reading changed not just WHICH lemmas exist
+but WHAT ONE SAYS** (`produce_consume_waste`'s conclusion was half-commented). *A
+commented-out conclusion leaves a theorem that parses, elaborates and means
+something else.*
+
+**AND A NUMBER CAN BE BROUGHT ACROSS A BOUNDARY DERIVED RATHER THAN PUSHED**
+(Lean tier, `bfab6f5`; **15/26 derived**). Asked to push fork objects to an
+upstream-only remote, the lane **refused correctly**, and instead **counted
+round-trip theorems present in the fork file** — with **two separations kept**:
+
+> **Obligations@pinned-base and proofs@fork-tree are LABELLED APART: one number
+> standing on two states is the §5.4a defect.**
+
+> **An instrument can see that a theorem EXISTS; it cannot see that it
+> ELABORATED.** Derived-count and declared-green-evidence stay separate columns.
+
+*The second separation is the one lanes will want to collapse*, because a
+theorem's presence is so nearly the thing you want — **and "nearly" is where the
+transcription check lives.**
+
+**AND AN ANALOGY HAZARD AT THE ARM LEVEL** (R-track, `delegateBreak`): `break`
+resolves via `genBreak` to the **enclosing frame's end, discarding the block**, so
+
+> **A LEMMA SHAPED LIKE `delegateNext` WOULD HAVE BEEN QUIETLY WRONG.**
+
+**Sibling arms are the most dangerous place to reuse a shape**, because they share
+a name, a file and a reader's expectation, and differ in the one respect the
+proof depends on. *The check is one question per arm — where does control go? —
+asked before the lemma is written rather than discovered when it will not close.*
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -8308,6 +8438,19 @@ enumerable, the floors are enumerable, and **the missing entries are a set
 difference.** *Every gate this family has written is only as wide as the narrowest
 floor that omits it.* **QoL holds the floor-audit dispatch.**
 
+**AND THE LAW IS NOW STRUCTURAL RATHER THAN STATED — CLOSED WITHIN THE DAY**
+(master `3cc251f`). **`DEFAULT_FLOOR` carries `divergence_register` WITH ITS
+RUNNER TARGET**, sequenced exactly as ruled: **C's reshape first, floor second.**
+
+> **A FLOOR LAW THAT LIVES IN A FLOOR IS A CONTROL; THE SAME LAW IN THIS DOCUMENT
+> IS A NOTE ABOUT ONE.**
+
+**And the sequencing is the part worth copying**: *reshaping first meant the
+floor landed green rather than landing a red on every lane at once* — **a control
+added ahead of the work it demands converts one tier's debt into a fleet-wide
+outage**, and the ordering cost nothing because the reshape was owed anyway.
+*Carry the runner target with the gate, or the floor is a gate that cannot run.*
+
 **RULING — AND IT GOES AGAINST THE TIER, NOT THE CHECKER.** **The checker was
 RIGHT and stays strict**; the rows reshape: **`c-div-2` → `retired_rows`**, and
 **`c-div-1` → kind `semantic` with two named executable guards.**
@@ -8349,6 +8492,88 @@ stream.**
 *A machine-readable stdout is a contract*, and the failure is intermittent by
 construction — **the corruption appears exactly when something needed rebuilding**,
 which is to say on the runs least like the one the author tested.
+
+**AND THE COMMITTED SCOREBOARD ANSWERS A DEFECT THIS SECTION HAD NAMED BUT NOT
+CURED** (C, `5f506da`). Failed tests are recorded **BY NAME**, because
+
+> **ABSENCE AND SUCCESS ARE THE SAME COLOUR ON A GREEN BOARD.**
+
+> **A COUNT CANNOT SAY WHICH.**
+
+**Two greens differing only in which tests ran are indistinguishable in a
+total**, so a scoreboard that publishes a number and not a roster **cannot
+support the one question every regression asks**: *is this the same green?* And
+the guard that reads it carries the section's sharpest line about evidence:
+
+> **A GUARD THAT CAN ONLY RUN WHERE THE EVIDENCE WAS PRODUCED IS NOT A GUARD, IT
+> IS A MEMORY OF ONE.**
+
+*Committing the roster is what makes the check portable* — **a gate whose input
+lives only on the machine that generated it has a coverage boundary shaped like
+one host**, which is the floor law's shape at the level of a single gate.
+
+**AND THE ABSENT-CORPUS DEFECT WAS FOUND ONE LEVEL DOWN, IN A GATE THAT CHECKS
+FOR IT** (QoL). Its own sequencing check **false-passed on a branch predating the
+JSON**:
+
+> **A GATE THAT GLOBS A CORPUS REPORTS OK WHEN THE CORPUS IS MISSING — THE SAME
+> SHAPE AS THE HOLE ITSELF, ONE LEVEL DOWN.**
+
+**A glob over nothing iterates zero times and reports success**, and the family
+now has this shape at four depths: an empty census, a transform on nothing, a
+partition of nothing, and **a gate over nothing.** *Every one is a loop whose
+body never ran, and none of them has an error to show.*
+
+**AND THE A11 BREACH ARC NAMES THE READING DEFECT UNDERNEATH IT** (QoL): the gate
+ran Lean **two hops down** — probe → `tools/leanpy` → `lake build` — from **a
+comment stating it ran none.**
+
+> **ASKING WHETHER THE SCRIPT NAMES LAKE IS NOT ASKING WHAT THE GATE RUNS.**
+
+**A one-hop textual answer to a transitive question is the grep-versus-declaration
+defect in the call graph**, and the comment made it durable: *the script's own
+prose was the evidence, and it was written when the claim was true.* **Trace the
+call, or state that you did not.**
+
+**And the cleanup was ATTRIBUTION-FIRST — ES's tenure and Thomas's build
+identified and untouched — with verification deliberately left UNFINISHED rather
+than breach twice.** *"My readiness rests on YOUR measurement."*
+
+> **A LANE THAT HAS BREACHED AN EXCLUSIVE RESOURCE DOES NOT VERIFY ITS OWN FIX BY
+> USING THE RESOURCE AGAIN. It reports the hole and borrows someone else's
+> measurement.**
+
+**AND A NEW REFUSAL WAS EXERCISED RATHER THAN WRITTEN** (Lean tier): appending a
+theorem for the refuted mdata row **→ exit 2, naming it.** *A refusal path that
+has never been walked is a design*, and this is the both-directions rule applied
+at the moment a refusal is added rather than after it has aged.
+
+**AND A HONESTY GATE WAS STRENGTHENED TO SAMPLE ARGUMENTS, WHICH RUNNING CAUGHT
+AND READING WOULD NOT** (Go, `surface_is_honest`). **Both lie-shapes were caught
+by RUNNING** — *arity-only would have passed a conditional `FormatInt`.*
+
+> **A SIGNATURE-SHAPED CHECK ANSWERS A SIGNATURE-SHAPED QUESTION. If the claim is
+> about BEHAVIOUR, the check has to call the thing.**
+
+**AND THE ES INGESTION DEFECT SUPPLIED THE INSTRUMENT LAW OF THE BATCH.**
+`extract.py` wrote the node type into `kind` **and then merged ESTree properties
+OVER it** — and `VariableDeclaration` / `Property` / `MethodDefinition` each carry
+their own `kind`. Since `assert.js` is full of `var`, **no test262 test was ever
+ingestible, and "attempted 0" was correct.**
+
+> **EVERY INSTRUMENT WAS MEASURING SOMETHING TRUE; NONE WAS MEASURING THE PATH A
+> TEST ACTUALLY TAKES — and that path did not exist until the scoreboard.**
+
+**This is the strongest argument this register has for building the end-to-end
+instrument EARLY rather than last.** *A fleet of true partial measurements is not
+an approximation of the real one* — each component answered its own question
+correctly, and **the composition was never anyone's question until something
+executed it.**
+
+**And the pre-flight form is worth copying**: the stale binary was **deleted to
+REMOVE an ambiguity**, rather than its post-red check being scheduled. *Removing
+a possible explanation before the run is cheaper than distinguishing explanations
+after it* — the pre-declared-red discipline, one step earlier.
 
 **AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
 ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
@@ -10022,6 +10247,53 @@ one of the two operations* — and a lane holding the coarse name will either
 give up on a reducible goal or burn a tenure on an irreducible one. **Name walls
 by the OPERATION and the reason, and the routing rule falls out for free.**
 
+**AND THE ∃-FORM PATTERN IS CONFIRMED AT THREE INSTANCES, WITH ITS COST LOCATED**
+(Wasm).
+
+> **WHERE ISABELLE MUST DESTRUCTURE AN INDUCTIVE RELATION, THE ∃-FORM IS ALREADY
+> DESTRUCTURED.**
+
+**The saving is real and it is not free** — *the cost relocates to helper lemmas
+Isabelle gets from `.simps`* — and stating both halves is what makes this a
+portable expectation rather than an advertisement. **A formulation difference
+moves work; it rarely deletes it**, and a port that budgets for the move goes in
+at the price it predicted.
+
+**AND PROSE THAT QUOTES CODE IS STILL CODE TO THE LEXER** (pyc, its own
+`SyntaxWarning`). *A docstring is not a comment* — **the escape rules apply to
+every string in the file, including the ones written for humans** — and the
+warning is the tree telling a lane that its explanatory text has a second reader.
+
+**AND AN ORPHAN-`BEq` TRADE WAS REFUSED A SECOND TIME, ON THE SHAPE RATHER THAN
+THE CASE** (Ada; **same shape as inch 1's `okIs`**). *A second refusal of one
+shape is worth more than the first*, because the first can be a preference and
+the second is a policy — **and the register should record the repeat, since a
+lane that re-refuses is paying a cost it has already paid once and could have
+rationalised away.**
+
+**AND THREE ROWS AGAINST THE COORDINATING ROLE, ALL CLAIMS-NOT-CLAIMANTS.**
+
+* **A HOLD PREMISE OVER-GENERALIZED ONE LANE'S LINE INTO A SHARED FLOOR WITHOUT
+  MEASURING** — *ES's lane-asked gate line* was read as fleet-wide; **Ada and QoL
+  both measured, and SIX LANES HELD NEEDLESSLY.**
+
+  > **A COORDINATING HOLD IS A CLAIM ABOUT EVERY LANE IT STOPS, so it owes a
+  > measurement per lane or a scope that names the one it has.**
+
+  *The cost of an over-broad hold is invisible to the role that issues it* —
+  nothing fails, six lanes simply do not run — **which is the claims-less-errors
+  law arriving at scheduling.**
+* **A "NOT YET PUSHED" CLAIM ABOUT `713268d` / `bc6ef3f` WAS WRONG — they were
+  merged.** *A statement about the state of the tree is a measurement*, and this
+  one was made from memory in the one place a `git log` was authoritative and
+  free.
+* **AND THE ARITHMETIC ROW ABOVE** (`99/300`), recorded in §9.0 because it is
+  about a law rather than about a fact.
+
+**Three in one batch, from three lanes, against the role that dispatches their
+work** — and the register's own standard applies: *the rule is real only while
+the corrections keep arriving in this direction and keep getting published.*
+
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
 
@@ -11451,6 +11723,44 @@ distinction decides who fixes it: a recipe defect is fixed by the role that owns
 the recipe, **a missing gate is owed by the tools lane and covers every future
 merger.** *The scan proving itself on the day it was ruled is the argument for
 promoting it out of a coordinator's habit and into `docs_check`.*
+
+**AND THE SAME RECIPE HAD A SECOND, QUIETER DEFECT — A SILENT REVERT** (`fb506dd`'s
+entry dropped; restored `9d05380`).
+
+> **A THEIRS-RESOLUTION ON A BRANCH CUT BEFORE A LATER MASTER DOCS COMMIT
+> SILENTLY REVERTS IT.**
+
+**This is worse than the marker leak it followed**, and for the opposite reason:
+*the markers were ugly and visible; this produces a clean, well-formed file that
+is simply missing someone else's landing.* **A resolution strategy is a policy
+about whose work wins**, and `theirs` applied to a docs file says *the branch's
+view of history replaces master's* — which is right for a conflicted hunk and
+wrong for a commit the branch never saw.
+
+**AND SV OPERATIONALIZED THE FIX, WHICH IS THE FORM THIS ROLE OWED AND DID NOT
+HAVE — ADOPTED:** **a HEADING-SURVIVAL CHECK, PER MASTER-SIDE COMMIT.** *Every
+heading present on master before the merge must be present after it* — one grep
+per commit in the merge range, cheap, mechanical, and pointed at exactly the class
+of loss a clean file cannot show. **The marker scan and the heading-survival check
+are now this role's two post-merge gates**, and both exist because the recipe
+failed in a way its own author could not see.
+
+**AND DRIFT IS MEASURED AGAINST THE CLOSURE PLUS THE GATE INPUTS BEFORE PUSHING**
+(Ada): *"pushed exactly what was gated rather than rebasing into something
+unmeasured."*
+
+> **A REBASE BEFORE A PUSH REPLACES THE TREE THE GATES RAN ON. Measure the drift
+> against the CLOSURE AND THE GATE INPUTS, or push what was gated.**
+
+**A green is a statement about a tree**, and the rebase that makes a push
+fast-forwardable is precisely an edit to that tree — *usually harmless, never
+free, and never measured.* **Naming which files the gates read turns "is this
+rebase safe?" into a question with an answer.**
+
+**AND COMMIT-BEFORE-REPORT IS ADOPTED** (R-track): *"the report is the last step,
+not the step that displaces the commit."* **An unpushed result is a result the
+fleet does not have**, and the report's cost is paid in exactly the window where
+a session can end — which is the window the report is written to describe.
 
 **And verify before declaring a merge ready: `git log -1 --format=%p` must
 show TWO parents.** That is the check the failure mode demands, because
@@ -13076,6 +13386,64 @@ digest.
 control with two halves* — **the digest pins WHICH files, the conservation pins
 HOW MANY were accounted for, and neither alone can see a corpus that vanished.**
 
+**AND THE INSTRUMENT-IS-PART-OF-THE-CLAIM PRECONDITION HAS A SECOND HALF, FOUND
+BY THE LANE THAT CAUGHT IT** (QoL): `find` on a symlinked `/tmp` **returns 0
+without `-H`.**
+
+> **CHANGING TOOLS CHANGED THE REACH, AND THE REACH IS PART OF THE CLAIM.**
+
+**A validated instrument is not a validated MEASUREMENT if the instrument was
+swapped**, and the swap is invisible in the number: *the new tool ran, exited
+zero, and reported honestly on the files it could see.* **And the corrected table
+had accused the very lane that caught the bug** — which is the false-positive
+asymmetry arriving through a reach defect rather than a logic one, and levied on
+the one lane with the evidence to disprove it.
+
+**AND A ROW AGAINST THE COORDINATING ROLE, WHICH IS THE ARITHMETIC OF A LAW THIS
+SECTION ALREADY CARRIES.** The expectation *99/300* was **an off-by-one**:
+**`failed` IS a score.** `scored = passed + failed`, so **96 + 2 = 97 + 1 = 98** —
+and **the `c-div-2` entry predicted 98 and hit exactly.**
+
+> **A law is not held until its ARITHMETIC is held. "A failure is a verdict, not
+> a zero" and "96 passing means 96 scored" cannot both be believed.**
+
+*The register stated the law and then did the sum the old way* — **which is the
+cheapest possible demonstration that a law lives in the formulas a role writes,
+not in the sentence it published.**
+
+**AND AN ERROR COUNT IS NOT A DEFECT COUNT** (Ada's red-to-green: **10 lines, 2
+root causes, 3 cascade**).
+
+> **THE SUMMARY LOCATES; THE FULL LOG COUNTS.**
+
+**The two artifacts answer different questions and neither substitutes**: a
+summary is optimised to point at a place, and *counting its lines measures the
+compiler's verbosity about one defect.* **Same unit family, at the smallest
+scale the family has reached** — and the same shape as *a count of arrivals, not
+of departures.*
+
+**AND A REAL MILESTONE CAN STILL BE A ZERO, WHICH IS THE DISTINCTION §9.0 EXISTS
+TO KEEP** (Ada): *"the last language-level prerequisite is in place; what remains
+is a library and an emitter, NOT A SEMANTICS."*
+
+> **A MILESTONE NAMES WHAT KIND OF WORK REMAINS. A number names how much. A lane
+> owes both, and neither excuses the other.**
+
+**This is the honest form of a waypoint at a zero score** — *the coverage number
+has not moved and the character of the remaining work has changed completely*,
+and a report that gives only the number hides a real result while a report that
+gives only the milestone hides a real distance.
+
+**AND BOTH OF A LANE'S PROFILE PREDICTIONS WERE PRE-STATED "PRECISELY SO THEY
+COULD FAIL"** (pyc) — *the ordering discipline stated as its own purpose*, which
+is the sharpest one-line defence of it this register has: **a prediction whose
+author cannot describe how it would have failed was not a prediction.**
+
+**AND A DESTINATION COMPUTED INDEPENDENTLY CORROBORATED A CORRECTION RATHER THAN
+EXTENDING A STREAK** (Go, `§G28` matching `§G27`'s corrected destination). *The
+lane labelled it as corroboration* — **the streak-honesty rule doing exactly what
+it was landed for**, one dispatch after it was written.
+
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —
 
@@ -13677,6 +14045,46 @@ inch 4 is **1.29% of the corpus by share** — the cheapest rung on the ladder �
 consequence differ by two orders of magnitude will be scheduled wrongly by any
 plan that publishes one number*, and both numbers were available from the same
 census.
+
+**AND A CERTIFICATE CANNOT BE SPLIT WITHOUT CHANGING IT** (pyc's sharding pair).
+The **13-step fuel-4M walk stays whole and critical**:
+
+> **A CERTIFICATE CANNOT BE SPLIT WITHOUT CHANGING IT. The win is OVERLAP, not
+> DIVISION.**
+
+**Parallelism has two mechanisms and they are not interchangeable** — *dividing a
+unit of work changes what was proved; overlapping units changes only when.* **A
+lane that reaches for sharding on a critical path is proposing a different
+theorem**, and the register should ask which mechanism is on offer before pricing
+the speedup.
+
+**And the premise underneath the plan was wrong in a way worth recording**:
+*"split the big FILES"* — **cost is per-`#guard` KERNEL EVALUATION, not size.**
+*A plausible proxy (bytes) for a real cost (kernel work) picked the wrong unit to
+divide*, which is the unit family arriving in a performance plan.
+
+**AND THE CONJUNCTIVE LAW HAS ITS STARKEST INSTANCE** (Go `§G28`): **four parts,
+each worth `+0` alone, together `+48`.**
+
+> **A REACH CENSUS PARTIALLY ORDERS: four `+0`s whose CONJUNCTION is `+48` cannot
+> be ranked by their individual scores at all.**
+
+*Every ranking instrument this family builds reports marginal value, and marginal
+value is exactly zero for each member of a co-required set* — **so the ranking is
+not merely imprecise on these, it is silent.** The scheduler has to read the
+partial order, not the column.
+
+**AND THE CEILING IS NOW A KNOWN QUANTITY** (same landing): the first three
+split-shapes were **syntactic**; the fourth — **string-vs-slice `SliceExpr`** —
+**needs TYPES**, so the remaining reach is **bounded by `go/types`.** *A frontier
+whose next item names its own prerequisite has stopped being open-ended* —
+**which is the honest end-state of a reach census: not a list of unknowns, but a
+named dependency.**
+
+**AND BLIND-TICKET ECONOMICS GOT A CONDITION** (R-track): it **"only favours it
+when the proofs are already known-green and the queue is the only obstacle."**
+*Blind work is cheap exactly when the uncertainty is scheduling rather than
+mathematics* — and the two feel identical from inside a queue.
 
 **(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
 What it said:** *a construct measuring `+0` is not cheap, it is unreachable —

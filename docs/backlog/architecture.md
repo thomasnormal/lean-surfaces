@@ -7705,3 +7705,124 @@ pending claim; C holds two certified greens plus the reshape; ES/pyc/Ada/SV
 holding enqueues on the register-green signal.
 
 Law rows: **MEAS-431…MEAS-441, STMT-139…STMT-140, OPS-122…OPS-126.**
+
+## 2026-08-25-architecture-89 — Absence and success are the same colour on a green board
+
+The blocker's resolution arc plus the morning's lane findings, twelve sources.
+**The floor law landed in `-88` is now STRUCTURAL** (master `3cc251f`:
+`DEFAULT_FLOOR` carries `divergence_register` with its runner target, sequenced
+as ruled — C's reshape first, floor second). **Three rows against the
+coordinating role.**
+
+**(A) §5.0a + §5.4b — THE RESHAPE** (C, `5f506da`). Retirement is **an EVENT, not
+a fork**: the row writes `oracle-tests-compiler` in as THE path and records
+builtin-modelling as explicitly **NOT** the path — *the rejected route is the
+load-bearing half.* `c-div-2` retired with kind **`provenance`**, *the whole
+diagnosis in one field*. And **`still_divergent` is a DELIBERATE TRAP** — when
+the zero-state lands the guard goes red: **build the retirement to fail**, because
+a debt that can drain away unnoticed will. Plus the committed scoreboard:
+**absence and success are the same colour on a green board**, *a count cannot say
+which*, and **a guard that can only run where the evidence was produced is not a
+guard, it is a memory of one.**
+
+**(B) §5.4b + §9.0 — QoL's TRIPLE.** *"Changing tools changed the reach, and
+**THE REACH IS PART OF THE CLAIM**"* — and the uncorrected table **accused the
+very lane that caught the bug.** **A gate that globs a corpus reports OK when the
+corpus is missing — the same shape as the hole itself, one level down.** And the
+A11 arc: **asking whether the script names lake is not asking what the gate
+runs** (probe → `tools/leanpy` → `lake build`, from a comment saying it ran
+none); cleanup **attribution-first**, verification **deliberately left unfinished
+rather than breach twice** — *"my readiness rests on YOUR measurement."*
+
+**(C) §5.3 + §5.4 — ANALOG'S CENSUS OVERTURN.** F3 lacked **GROUNDING**:
+determinacy universally quantified **holds of an unsatisfiable deck**; the
+inhabitant comes from A14's witness — *"the lane's founding finding and its latest
+rung are the same finding."* **Re-derive a family from the tree when you start it,
+never from the row that named it** (the F-table was wrong about the frontier in
+all four audits), and the cause: *"needs Grönwall" described the MATHEMATICS the
+theorem uses, not the WORK the theorem lacks* — **a census that records the
+technique instead of the gap prices landed work as outstanding.**
+
+**(D) §5.4 — SOFTFLOAT'S FALSE WALL.** `Int\.pow_` missed `protected theorem
+pow_add` inside `namespace Int`. **A search matching a narrower thing than you're
+asking about reports absence — and absence is the most actionable-looking answer
+there is**; **a false wall doesn't waste a tenure, it redirects a workstream.**
+Third instance; adopted rule: **bare name inside its namespace before believing
+absence.**
+
+**(E) §5.4 + §5.4b — LEANTIER'S BOUNDARY SOLUTION.** Refused to push fork objects
+to an upstream-only remote (**row against the coordinator**) and brought the
+number across **DERIVED**: `proofs.proved` counts round-trip theorems in the fork
+file, with **two separations kept** — obligations@pinned-base vs proofs@fork-tree
+(*one number standing on two states is the §5.4a defect*), and derived-count vs
+declared-green-evidence (**an instrument can see a theorem exists; it cannot see
+that it elaborated**). New refusal **EXERCISED, not written**: exit 2, naming it.
+
+**(F) §9.0b + §7.1a — PYC'S SHARDING PAIR.** **A certificate cannot be split
+without changing it** — the 13-step fuel-4M walk stays whole; **the win is
+overlap, not division.** The premise *"split the big FILES"* was wrong: **cost is
+per-`#guard` kernel evaluation, not size.** Plus **prose that quotes code is still
+code to the lexer**, and both profile predictions pre-stated *"precisely so they
+could fail."*
+
+**(G) §9.0b + §9.0 — GO'S §G28.** The conjunctive law's starkest instance: **four
+parts each worth `+0` alone, together `+48`** — *a ranking column is not merely
+imprecise on a co-required set, it is silent.* The destination computed
+independently **CORROBORATES the §G27 correction rather than extending a
+streak** — the streak-honesty rule working one dispatch after landing. New
+boundary: the fourth split-shape needs **TYPES**, so **the ceiling is a known
+quantity** bounded by `go/types`. And `surface_is_honest` now samples
+**ARGUMENTS** — both lie-shapes caught by **RUNNING**.
+
+**(H) §9.0 + §7.1a + §7.2 — ADA'S RED-TO-GREEN.** **An error COUNT is not a defect
+count — the summary locates, the full log counts** (10 lines, 2 root causes, 3
+cascade). The orphan-`BEq` trade **refused a second time** on the shape. Drift
+**measured against closure + gate inputs before pushing**. And the milestone form:
+*"the last language-level prerequisite is in place; what remains is a library and
+an emitter, not a semantics"* — **a real milestone that is still a zero.**
+
+**(I) §5.4 + §5.4b — ES'S INGESTION DEFECT.** `extract.py` wrote the node type
+into `kind`, then merged ESTree properties **over** it; `assert.js` is full of
+`var`, so **no test262 test was ever ingestible and "attempted 0" was correct.**
+**Second member of the different-program-envelope class, one tier over** — and the
+instrument law: **every instrument was measuring something true; none was
+measuring THE PATH A TEST ACTUALLY TAKES — and that path did not exist until the
+scoreboard.** Plus the pre-flight form: **delete the stale binary to remove an
+ambiguity** rather than schedule its post-red check.
+
+**(J) §5.4 + §9.0b + §7.2 — R-TRACK.** The `delegateBreak` arm resolves via
+`genBreak` to the enclosing frame's end, discarding the block: **a lemma shaped
+like `delegateNext` would have been quietly wrong** — *sibling arms share a name,
+a file and a reader's expectation, and differ in the one respect the proof
+depends on.* **Commit-before-report adopted.** Blind-ticket economics **only
+favour it when the proofs are already known-green and the queue is the only
+obstacle.**
+
+**(K) §5.4 + §7.1a — WASM.** **The law is about COMMENTS, not about LEAN — the
+instrument is language-specific; the discipline it encodes isn't** (the census
+author reached for the disproven textual grep on a second language; A′
+denominator 23→22). And the payoff was semantic, not arithmetic:
+`produce_consume_waste`'s conclusion was **half-commented** — *the comment-aware
+reading changed not just which lemmas exist but WHAT ONE SAYS.* ∃-form confirmed
+at three instances, **with its cost located** in helper lemmas Isabelle gets from
+`.simps`.
+
+**(L) §7.2 + §7.1a + §9.0 — THREE ROWS AGAINST ME.** The merge recipe's second,
+quieter defect: **a theirs-resolution on a branch cut before a later master docs
+commit silently reverts it** (`fb506dd` dropped, restored `9d05380`) — *worse than
+the marker leak, because it produces a clean file missing someone else's landing.*
+**SV's heading-survival check per master-side commit is ADOPTED**; with the marker
+scan these are now the role's two post-merge gates. **A hold premise
+over-generalized ES's lane-asked gate line into a shared floor without
+measuring** — Ada and QoL both measured; **six lanes held needlessly**: *a
+coordinating hold is a claim about every lane it stops.* And **the `99/300`
+off-by-one**: `failed` IS a score, `scored = passed + failed`, `96+2 = 97+1 = 98`
+— **a law is not held until its arithmetic is held.**
+
+**Fleet state at landing:** master `3cc251f`; merged this stretch C `5f506da`,
+SoftFloat `ac5662b`, Ada `cec26c7`, QoL `047e55d` chain, R-track `6267f84`,
+Lean tier `bfab6f5` (15/26 derived); floor now structural; in tenure or queued —
+Go (lock), ES third run, pyc sharding, SV re-arming, analog A15 (green 08:57,
+claim pending), Wasm ladder batch.
+
+Law rows: **MEAS-442…MEAS-456, STMT-141…STMT-142, OPS-127…OPS-136.**

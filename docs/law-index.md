@@ -490,6 +490,21 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-439 | a retired row KEEPS `was_blocked_on` — a blocker that silently disappears leaves the instrument describing a vanished world | `docs/family-architecture.md §5.0a` |
 | MEAS-440 | a kind name with a corpus-wide zero: A GRAMMAR-WRITTEN WALKER WOULD LOOK FOR IT FOREVER — it never fails, it never matches | `docs/family-architecture.md §5.4` |
 | MEAS-441 | work aimed at a target nobody could see, landing on it, is evidence about the DECOMPOSITION — not luck | `docs/family-architecture.md §7.1a` |
+| MEAS-442 | ABSENCE AND SUCCESS ARE THE SAME COLOUR ON A GREEN BOARD — a count cannot say WHICH; commit the roster | `docs/family-architecture.md §5.4b` |
+| MEAS-443 | a guard that can only run WHERE THE EVIDENCE WAS PRODUCED is not a guard, it is a MEMORY of one | `docs/family-architecture.md §5.4b` |
+| MEAS-444 | a GATE THAT GLOBS A CORPUS reports OK when the corpus is missing — the absent-corpus hole one level down | `docs/family-architecture.md §5.4b` |
+| MEAS-445 | CHANGING TOOLS CHANGED THE REACH, AND THE REACH IS PART OF THE CLAIM — a swapped instrument re-opens validation | `docs/family-architecture.md §9.0` |
+| MEAS-446 | a ∀-STATEMENT ABOUT A DECK NOBODY HAS EXHIBITED is true and empty — pair the guarantee with a WITNESS obligation | `docs/family-architecture.md §5.3` |
+| MEAS-447 | a SEARCH MATCHING A NARROWER THING reports ABSENCE — and absence is the most actionable-looking answer there is | `docs/family-architecture.md §5.4` |
+| MEAS-448 | a FALSE WALL doesn't waste a tenure, it REDIRECTS A WORKSTREAM — treat absence as provisional | `docs/family-architecture.md §5.4` |
+| MEAS-449 | RE-DERIVE A FAMILY FROM THE TREE WHEN YOU START IT, never from the row that named it | `docs/family-architecture.md §5.4` |
+| MEAS-450 | a census recording the TECHNIQUE instead of the GAP prices landed work as outstanding | `docs/family-architecture.md §5.4` |
+| MEAS-451 | every instrument measuring something true, none measuring THE PATH A TEST TAKES — build the end-to-end one early | `docs/family-architecture.md §5.4b` |
+| MEAS-452 | an ERROR COUNT is not a defect count — the summary LOCATES, the full log COUNTS | `docs/family-architecture.md §9.0` |
+| MEAS-453 | a MILESTONE names what KIND of work remains; a number names HOW MUCH — a lane owes both | `docs/family-architecture.md §9.0` |
+| MEAS-454 | a law is not held until its ARITHMETIC is held — `scored = passed + failed` (row against the coordinator) | `docs/family-architecture.md §9.0` |
+| MEAS-455 | a COORDINATING HOLD is a claim about every lane it stops — measure per lane or scope it to the one measured | `docs/family-architecture.md §7.1a` |
+| MEAS-456 | a FRONTIER whose next item NAMES ITS OWN PREREQUISITE has stopped being open-ended | `docs/family-architecture.md §9.0b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -638,6 +653,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-138 | a GENERATED model can be better shaped than a hand mechanisation for a specific lemma — first datum for extraction | `docs/family-architecture.md §7.1a` |
 | STMT-139 | UNSTATABLE is a verdict, not HARD — with no map between the two sides, build the connective; do not attack the goal | `docs/statement-cookbook.md` entry 25 |
 | STMT-140 | name walls by the OPERATION and the reason, never by the TYPE — one wall's two sides decide reduce-vs-rewrite | `docs/family-architecture.md §7.1a` |
+| STMT-141 | SIBLING ARMS are the most dangerous place to reuse a lemma shape — ask where control goes, per arm, first | `docs/family-architecture.md §5.4` |
+| STMT-142 | where Isabelle must DESTRUCTURE an inductive relation the ∃-form is already destructured — cost moves to helpers | `docs/family-architecture.md §7.1a` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -837,6 +854,16 @@ numbers below are the register's own.
 | OPS-124 | THE GATE BUILDS WHAT THE GATE NEEDS — never put a gate's target in `defaultTargets` | `docs/family-architecture.md §5.4b` |
 | OPS-125 | an instrument's DATA stream and its PROGRESS stream are different channels — merging them makes data conditional on the build | `docs/family-architecture.md §5.4b` |
 | OPS-126 | "Isabelle-before-scratch" is a DEFAULT, NOT A CEILING — a default never beaten is a policy nobody has tested | `docs/family-architecture.md §7.1a` |
+| OPS-127 | BUILD THE RETIREMENT TO FAIL — a debt that can drain away unnoticed will, and nobody can say when | `docs/family-architecture.md §5.0a` |
+| OPS-128 | a retirement condition NAMES THE REJECTED ROUTE, not just the accepted one — otherwise it defers the decision | `docs/family-architecture.md §5.0a` |
+| OPS-129 | ASKING WHETHER THE SCRIPT NAMES LAKE IS NOT ASKING WHAT THE GATE RUNS — trace the call, or say you did not | `docs/family-architecture.md §5.4b` |
+| OPS-130 | a lane that BREACHED an exclusive resource does not verify its own fix with it — borrow another lane's measurement | `docs/family-architecture.md §5.4b` |
+| OPS-131 | a SIGNATURE-SHAPED CHECK answers a signature-shaped question — a behaviour claim must CALL the thing | `docs/family-architecture.md §5.4b` |
+| OPS-132 | a CERTIFICATE CANNOT BE SPLIT WITHOUT CHANGING IT — the win is OVERLAP, not DIVISION | `docs/family-architecture.md §9.0b` |
+| OPS-133 | a THEIRS-RESOLUTION on a branch cut before a later master commit SILENTLY REVERTS IT — heading-survival check, per commit | `docs/family-architecture.md §7.2` |
+| OPS-134 | a REBASE BEFORE A PUSH replaces the tree the gates ran on — measure drift against closure + gate inputs, or push what was gated | `docs/family-architecture.md §7.2` |
+| OPS-135 | COMMIT BEFORE REPORT — the report is the last step, not the step that displaces the commit | `docs/family-architecture.md §7.2` |
+| OPS-136 | a law learned through one tool arrives filed UNDER THAT TOOL — state a law's SCOPE in the law | `docs/family-architecture.md §5.4` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

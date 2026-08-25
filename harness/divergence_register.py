@@ -348,21 +348,24 @@ def self_test():
     if not base:
         print("self-test: no register file to mutate", file=sys.stderr)
         return 1
-    # THE FIXTURE BASE MUST HAVE A LIVE ROW. Every mutation below edits
-    # `rows[0]`, and since §5.0a clause 1 a register file may legally carry
-    # `rows: []` beside a non-empty archive -- C's does. Taking `base[0]`
-    # blindly picked that file the moment it landed (alphabetically first) and
-    # the whole self-test died on IndexError. Pick by the PROPERTY the fixtures
-    # need, never by sort order.
+    # THE FIXTURES RUN AGAINST EVERY FILE THAT HAS A ROW -- not against one
+    # picked by sort order. Two bugs of the same family lived here:
+    #   * `base[0]` crashed the moment C filed `rows: []` (legal under §5.0a
+    #     clause 1) and sorted first -- every mutation edits `rows[0]`.
+    #   * picking the first file that HAS rows fixed the crash but left the
+    #     subject floating: it silently became ES's document when ES landed,
+    #     so 15 defect classes stopped being exercised against the tier that
+    #     wrote them, and nothing said so.
+    # Sort order was never the property being asked for. Running all of them
+    # removes the choice entirely, and coverage now grows with the fleet.
     with_rows = [b for b in base if (json.load(open(b)).get("rows") or [])]
     if not with_rows:
         print("self-test: no register file has a live row to mutate — the "
               "fixtures cannot be built, which is not the same as passing",
               file=sys.stderr)
         return 1
-    good = json.load(open(with_rows[0]))
 
-    def rejects(mutate, label):
+    def rejects(mutate, label, good):
         doc = copy.deepcopy(good)
         mutate(doc)
         d = tempfile.mkdtemp()
@@ -524,14 +527,22 @@ def self_test():
         (decl_guard_mention_only, "declaration guard, name only mentioned"),
         (decl_guard_def_without_hash_guard, "declaration guard, def but no #guard"),
     ]
-    failed = [lbl for fn, lbl in checks if not rejects(fn, lbl)]
+    failed = []
+    for src in with_rows:
+        print("  -- %d defect classes vs %s --"
+              % (len(checks), os.path.basename(src)))
+        good = json.load(open(src))
+        for fn, lbl in checks:
+            if not rejects(fn, lbl, good):
+                failed.append("%s/%s" % (os.path.basename(src).split("-")[0], lbl))
     failed += ["§5.0a clause case"] * clause_ok.count(False)
     if failed:
         print("\nself-test FAILED: accepted %d bad file(s): %s"
               % (len(failed), ", ".join(failed)), file=sys.stderr)
         return 1
-    print("\nself-test: OK — %d defect classes rejected, %d §5.0a clauses honoured"
-          % (len(checks), len(clause_ok)))
+    print("\nself-test: OK — %d defect classes x %d register file(s) rejected, "
+          "%d §5.0a clauses honoured"
+          % (len(checks), len(with_rows), len(clause_ok)))
     return 0
 
 

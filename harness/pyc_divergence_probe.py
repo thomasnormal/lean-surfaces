@@ -155,7 +155,7 @@ def pyc_div_1_still_divergent():
     `GenStatus` -- honest, but a reading of the code rather than a run of it."""
     got = _run_both(DIV1_SRC)
     if got is None:
-        return False, ("could not run both sides (oracle %r missing, or the "
+        return None, ("could not run both sides (oracle %r missing, or the "
                        "model runner is not built -- this probe runs as a "
                        "POST-BUILD gate)" % ORACLE)
     (orc, oout), (mrc, mout) = got
@@ -177,7 +177,7 @@ def pyc_div_1_has_not_widened():
     poisoned dict and not a poisoned interpreter."""
     got = _run_both(DIV1_CTL_SRC)
     if got is None:
-        return False, "could not run both sides (see still_divergent)"
+        return None, "could not run both sides (see still_divergent)"
     (orc, oout), (mrc, mout) = got
     agree = orc == 0 and mrc == 0 and oout.split() == mout.split()
     return agree, ("control (FRESH cursor after the poisoning): oracle exit=%d "
@@ -215,7 +215,7 @@ def pyc_div_2_still_divergent():
     genexp cursor was built at first resume instead of at construction."""
     got = _run_both(DIV2_SRC)
     if got is None:
-        return False, "could not run both sides (post-build gate)"
+        return None, "could not run both sides (post-build gate)"
     (orc, oout), (mrc, mout) = got
     diverges = (orc != 0) and (mrc == 0) and (mout == "1")
     return diverges, ("oracle exit=%d out=%r ; model exit=%d out=%r — divergent "
@@ -228,7 +228,7 @@ def pyc_div_2_has_not_widened():
     first step both sides raise, and they did so before the fix as well."""
     got = _run_both(DIV2_CTL_SRC)
     if got is None:
-        return False, "could not run both sides (post-build gate)"
+        return None, "could not run both sides (post-build gate)"
     (orc, oout), (mrc, mout) = got
     agree = (orc != 0) and (mrc != 0) and oout.startswith("1") and mout.startswith("1")
     return agree, ("control: oracle exit=%d out=%r ; model exit=%d out=%r"
@@ -259,21 +259,35 @@ def main():
     for name in sorted(GUARDS):
         held, detail = GUARDS[name]()
         retired = name in RETIRED_GUARDS
-        results[name] = {"held": bool(held), "detail": detail, "retired": retired}
-        if not held and not retired:
+        # THREE STATES, NOT TWO. `held is None` means NOTHING WAS COMPARED --
+        # `.lake` was cold, so the post-build guard declined to run rather than
+        # start an unlocked build. Folding that into False made "the probe could
+        # not run" print the same word as "the divergence regressed", which is a
+        # statement about the ENVIRONMENT wearing the costume of a verdict about
+        # the MODEL. Live guards still fail CLOSED -- unverified never passes.
+        unverified = held is None
+        results[name] = {"held": bool(held), "verified": not unverified,
+                         "detail": detail, "retired": retired}
+        if unverified:
+            if not retired:
+                rc = 1
+        elif not held and not retired:
             rc = 1
         # RULED fleet-wide (2026-08-25): `watch`, not `FAIL`, for the healthy
         # retired state. With the regression alarm live the same word carried
         # OPPOSITE severities -- on a live guard FAIL gates, on a retired one it
         # is the archive behaving -- and a reader scanning a column of FAILs
         # cannot tell which is which. Spelling from sv_divergence_probe.py.
-        if retired:
+        if unverified:
+            status = "no-run"
+        elif retired:
             status = "ok" if held else "watch"
         else:
             status = "ok" if held else "FAIL"
         print("%-28s %-5s %s%s"
               % (name, status, detail, "   [retired row]" if retired else ""))
-    watching = sorted(n for n in RETIRED_GUARDS if not results[n]["held"])
+    watching = sorted(n for n in RETIRED_GUARDS
+                      if results[n]["verified"] and not results[n]["held"])
     if watching:
         print("\n%d retired guard(s) reporting not-held: %s"
               % (len(watching), ", ".join(watching)))
@@ -300,7 +314,21 @@ def main():
               "and go back to `rows` — it is a live debt again.")
     if "--json" in sys.argv:
         print(json.dumps(results, indent=1, sort_keys=True))
-    print("\npyc_divergence_probe: %s" % ("PASS" if rc == 0 else "FAIL"))
+    unver = sorted(n for n in GUARDS if not results[n]["verified"])
+    if unver:
+        print("\n%d guard(s) COULD NOT RUN — `.lake` is cold and this is a "
+              "post-build gate: %s" % (len(unver), ", ".join(unver)))
+        print("Nothing was compared, so this says nothing about the model. "
+              "Live guards fail CLOSED: unverified never counts as passed.")
+    live_fail = [n for n in LIVE_GUARDS
+                 if results[n]["verified"] and not results[n]["held"]]
+    if rc == 0:
+        verdict = "PASS"
+    elif live_fail or returned:
+        verdict = "FAIL"
+    else:
+        verdict = "COULD NOT VERIFY (no comparison ran — not a model verdict)"
+    print("\npyc_divergence_probe: %s" % verdict)
     return rc
 
 

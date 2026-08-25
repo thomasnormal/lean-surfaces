@@ -289,6 +289,37 @@ sv_round_trip_step() {
   fi
 }
 
+# FRESHNESS is a different question from ROUND-TRIP, and both are needed.
+# sv_round_trip asks "does the committed envelope regenerate byte-identically";
+# envelope_fresh asks "does it regenerate AT ALL from the source in this tree",
+# ignoring the frontend stamp. An envelope can round-trip and still be stale
+# against an edited source, which is the pipeline stage nobody re-runs.
+#
+# Baseline at wiring (measured 2026-08-26, pyslang 11.0.0): FRESH 18, NOT-LIVE 3.
+# The three not-live are sourceless (alu_div, ff_one, popcnt) and cannot become
+# fresh here. ANY STALE row is now a real finding, not harness noise.
+sv_envelope_fresh_step() {
+  local py
+  if py="$(sv_python)"; then
+    step "sv-envelope-fresh" "$py" harness/envelope_fresh.py --tier sv
+    return
+  fi
+  # Same discriminator as sv-round-trip, for the same reason: pyslang is not
+  # tracked here, so its absence is an environment fact off a runner -- and a
+  # BROKEN INSTALL on one, where the workflow installs it.
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    echo "=== [sv-envelope-fresh] FAIL — no python3.12/python3 can import pyslang,"
+    echo "    but .github/workflows/ci.yml installs it on this runner.  A gate"
+    echo "    that cannot run in CI is not a skip, it is a broken install."
+    fail+=("sv-envelope-fresh")
+  else
+    echo "=== [sv-envelope-fresh] SKIP (no python3.12/python3 can import pyslang —"
+    echo "    an environment fact, not envelope staleness; pyslang is not tracked)"
+    echo "    To run it here: python3.12 -m pip install 'pyslang~=11.0'"
+    skip+=("sv-envelope-fresh")
+  fi
+}
+
 # THE GUARDS, VERIFIED — placed after the definitions so it drives the REAL
 # `lake_build_step` rather than a copy of it, and before any step runs.
 if [ "$VERIFY_GUARDS" = "1" ]; then
@@ -440,6 +471,28 @@ SVNO
   vcheck "the gate is called as a full step"       "$(grep -c '^sv_round_trip_step$' "$0")" "1"
   vcheck "  ...and never as a maybe"               "$(grep -cE '^maybe(_lean)? .*sv-round-trip' "$0")" "0"
 
+  # THE FRESHNESS GATE GETS THE SAME COVERAGE, exercised rather than assumed:
+  # it shares a helper and a discriminator with the round-trip gate, and
+  # "it is the same code" is the reasoning this campaign keeps convicting.
+  rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
+  PATH="$vstub/svok:$vpath"; hash -r
+  sv_envelope_fresh_step > "$vout" 2>&1
+  vcheck "a python that imports pyslang RUNS freshness" "$( [ -e "$vstub/SVRAN" ] && echo ran || echo none )" "ran"
+  vcheck "  ...and it is a pass, not a skip"       "${pass[*]}" "sv-envelope-fresh"
+
+  rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
+  PATH="$vstub/svno:$vpath"; hash -r
+  GITHUB_ACTIONS= sv_envelope_fresh_step > "$vout" 2>&1
+  vcheck "no pyslang off a CI host is a named SKIP" "${skip[*]}" "sv-envelope-fresh"
+  vcheck "  ...naming staleness, not drift"        "$(grep -c 'not envelope staleness; pyslang' "$vout")" "1"
+  vcheck "  ...and the harness never ran"          "$( [ -e "$vstub/SVRAN" ] && echo ran || echo none )" "none"
+
+  rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
+  GITHUB_ACTIONS=true sv_envelope_fresh_step > "$vout" 2>&1
+  vcheck "no pyslang ON a runner is a FAILURE"     "${fail[*]}" "sv-envelope-fresh"
+  vcheck "freshness is called as a full step"      "$(grep -c '^sv_envelope_fresh_step$' "$0")" "1"
+  vcheck "  ...and never as a maybe"               "$(grep -cE '^maybe(_lean)? .*sv-envelope-fresh' "$0")" "0"
+
   # THE TWO GATES WIRED 2026-08-24, both directions where a direction exists.
   vcheck "lean-comment-forms is a full step"     "$(grep -c '^step  "lean-comment-forms" python3 harness/lean_comment_forms.py$' "$0")" "1"
   vcheck "  ...and never a maybe"                "$(grep -cE '^maybe(_lean)? .*lean_comment_forms' "$0")" "0"
@@ -496,6 +549,7 @@ step  "extractor-tests" python3 extractors/python/test_extract.py
 step  "leanpy-cache-tests" python3 tools/test_leanpy.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
 sv_round_trip_step
+sv_envelope_fresh_step
 maybe "spice-dram-bank-256x32-source" Examples/spice/dram_bank_256x32/generate.py \
   python3 Examples/spice/dram_bank_256x32/generate.py --check
 maybe_lean "spice-dram-bank-256x32-adversarial" harness/spice/dram_bank_256x32_source_test.lean \

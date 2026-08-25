@@ -1298,3 +1298,63 @@ twelve quiet false negatives became the tier's baseline.** Arming a gate
 whose current state has not been measured is the inverse of the
 unexercised-gate failure, and one run was the whole cost of not doing it.
 
+
+---
+
+## 2026-08-26-sv-8 — THE FRESHNESS GATE IS WIRED, AND ITS BASELINE IS MEASURED, NOT ASSUMED
+
+`sv-7` refused to wire `envelope_fresh --tier sv` because one run said the
+manifest could not read this corpus: `EXTRACT-FAILED 6, NOT-LIVE 15`, zero
+FRESH of 21. QoL owned and fixed the harness (`8593497`) — the two defects
+this lane measured, plus two more found in the fixing: the recorded path is
+CONTENT, so extraction now mirrors per-tier; and a PARTIAL source set now
+fails as `SOURCES-MISSING` instead of wearing the benign `NOT-LIVE` label.
+
+**Re-measured once, with pyslang present, before wiring anything:**
+
+    envelope_fresh[sv]: frontend python3.12 satisfies {'name': 'pyslang', 'family': 'pyslang-11'}
+    NOT-LIVE  alu_div/cv32e40p_alu_div.sv.json  -- recorded sources are not in this tree
+    NOT-LIVE  ff_one/cv32e40p_ff_one.sv.json    -- recorded sources are not in this tree
+    NOT-LIVE  popcnt/cv32e40p_popcnt.sv.json    -- recorded sources are not in this tree
+    envelope_fresh[sv]: FRESH 18, NOT-LIVE 3            exit 0
+
+**FRESH 18 / NOT-LIVE 3, and zero STALE** — so nothing real was hiding
+behind the harness noise, which was worth knowing rather than assuming. The
+three not-live are the sourceless trio and cannot become fresh here. **Any
+STALE row from now on is a finding, not instrument noise**, which is the
+whole point of measuring the baseline before arming the gate.
+
+### Wired with the same coverage its sibling has
+
+`sv_envelope_fresh_step` mirrors `sv_round_trip_step`, including the
+discriminator that matters: no pyslang **off** a CI host is a named SKIP (an
+environment fact — pyslang is not tracked here), and **on** a runner it is a
+FAILURE, because the workflow installs it there and a gate that cannot run
+in CI is a broken install, not a skip.
+
+The two gates ask DIFFERENT questions and both are needed: round-trip asks
+*does the committed envelope regenerate byte-identically*; freshness asks
+*does it regenerate at all from the source in this tree*, ignoring the
+stamp. **An envelope can round-trip and still be stale against an edited
+source** — that is the pipeline stage nobody re-runs, and it is exactly what
+`envelope_fresh` was built to catch.
+
+**Eight new guards, exercised rather than assumed** (`ci.sh --verify-guards`
+44 → 52, 0 failed). The step shares a helper and a discriminator with its
+sibling, and *"it is the same code, so it must work"* is the reasoning this
+campaign keeps convicting — so the new step is driven through the same
+interpreter stubs: it runs under a pyslang-capable python, SKIPs by name off
+a runner without one, FAILs on a runner without one, and never degrades to a
+`maybe`.
+
+### And one duplication left standing, named
+
+`sv_python()` in `ci.sh` is a THIRD spelling of the frontend check — it asks
+"can this interpreter import pyslang", where the instruments now ask "does
+it satisfy the family pin". They cannot disagree today (both resolve
+`python3.12` here), but they could under pyslang 12: `sv_python` would
+succeed and the instruments would refuse. Folding it onto the manifest pin
+means teaching `ci.sh`'s `step` to read exit 3 as SKIP, which is a change to
+the step machinery rather than to this tier — named here rather than done
+quietly, and left for whoever owns that machinery.
+

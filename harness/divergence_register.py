@@ -181,10 +181,17 @@ def check_file(path, problems, warnings=None):
     elif sch != SCHEMA:
         _fail(problems, path, "schema is %r, expected %r" % (sch, SCHEMA))
     rows = doc.get("rows") or []
-    if not rows:
-        _fail(problems, path, "no rows: a register file with nothing in it "
-                              "is a claim that the tier has no debts, and "
-                              "should be deleted rather than filed empty")
+    retired = doc.get("retired_rows") or []
+    # §5.0a (2026-08-25): A FILE'S LEGALITY IS DECIDED BY ITS CLAIM, NOT ITS
+    # LENGTH. `rows: []` beside a non-empty `retired_rows` is a real and useful
+    # claim -- "no LIVE debts, and here is how each one closed" -- so it is
+    # LEGAL. Both empty claims nothing at all, and a file that claims nothing
+    # should not exist.
+    if not rows and not retired:
+        _fail(problems, path, "rows: [] AND retired_rows: [] — this file makes "
+              "no claim at all. DELETE IT: a tier with no live debts and no "
+              "retired ones has no register to keep, and an empty ledger reads "
+              "as diligence while asserting nothing (family-architecture §5.0a)")
 
     named = set()
     for row in rows:
@@ -222,7 +229,49 @@ def check_file(path, problems, warnings=None):
         else:
             named.update(g)
 
+    # §5.0a clause 3: every RETIRED row must name a live guard whose EXISTENCE
+    # this checker verifies. EXISTENCE, NOT PASSAGE -- and the distinction is
+    # the whole design. A retired row's `still_divergent` should now FAIL, and
+    # that failure is the signal a retired divergence has come back; asserting
+    # it holds would invert the meaning, and asserting nothing would let the
+    # guard be deleted with the row and take the watch with it.
+    retired_named = set()
+    for row in retired:
+        rid = row.get("id", "<unnamed>")
+        for k in REQUIRED_ROW:
+            if k not in row:
+                _fail(problems, path, "retired row %s missing field %r" % (rid, k))
+        d = str(row.get("retired", ""))
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", d):
+            _fail(problems, path, "retired row %s has retired=%r, expected "
+                  "YYYY-MM-DD — an archive that cannot be aged is the same "
+                  "defect as a ledger that cannot" % (rid, d))
+        g = row.get("guards")
+        if not isinstance(g, list) or len(g) != 2 or len(set(g)) != 2:
+            _fail(problems, path, "retired row %s must still name TWO distinct "
+                  "guards: retirement moves the row, it does not end the watch"
+                  % rid)
+        else:
+            retired_named.update(g)
+
     probe = doc.get("probe")
+    probe_src = ""
+    if probe and os.path.isfile(os.path.join(REPO, probe)):
+        probe_src = open(os.path.join(REPO, probe), encoding="utf-8").read()
+    for g in sorted(retired_named):
+        if ":" in g:
+            gpath, gname = (x.strip() for x in g.split(":", 1))
+            full = os.path.join(REPO, gpath)
+            ok = os.path.isfile(full) and declared_as_guard(
+                open(full, encoding="utf-8").read(), gname)[0]
+        else:
+            ok = re.search(r"^def[ \t]+%s\b" % re.escape(g), probe_src, re.M) is not None
+        if not ok:
+            _fail(problems, path, "retired row names guard %r and it DOES NOT "
+                  "EXIST — retiring a row moves it to the archive, it does not "
+                  "delete its guard: the guard is what would notice the "
+                  "divergence coming back" % g)
+
     if not probe:
         # DECLARATION SHAPE. No probe script: each guard is "<path>: <name>" and
         # THE BUILD is the run — a Lean theorem that stops holding fails the
@@ -273,9 +322,12 @@ def check_file(path, problems, warnings=None):
     for name in sorted(named - ran):
         _fail(problems, path, "row names guard %r but the probe never ran it "
                               "— the row is UNGATED" % name)
-    for name in sorted(ran - named):
+    for name in sorted(ran - named - retired_named):
         _fail(problems, path, "probe defines guard %r that no row names — "
                               "ORPHANED, the shape a deleted row leaves behind" % name)
+    # PASSAGE is asserted for LIVE rows only. A retired row's guard is verified
+    # to EXIST above; whether it holds is the tier's signal, not this checker's
+    # business -- see clause 3.
     for name in sorted(named & ran):
         if not results[name].get("held"):
             _fail(problems, path, "GUARD FAILED %s: %s"
@@ -383,7 +435,66 @@ def self_test():
         d.pop("probe", None)
         d["rows"][0]["guards"] = ["bare_name_a", "bare_name_b"]
 
+    # --- §5.0a's THREE CLAUSES (2026-08-25). Built EXPLICITLY rather than
+    # mutated from a neighbour's file: these cases must stay deterministic as
+    # tiers come and go, and clause 2 is precisely the one that goes untested
+    # if nobody writes a fixture for it -- the empty-container law's lesson.
+    ES_GUARDS = "Examples/es/statements/guards.lean"
+
+    def _retired_row(guards):
+        return {"id": "selftest-div-1", "kind": "semantic",
+                "site": "s", "oracle": "o", "model": "m",
+                "inherited_from": None, "declared": "2026-08-01",
+                "retired": "2026-08-25",
+                "retirement_condition": "the guard stops firing",
+                "guards": guards}
+
+    def _doc(rows, retired):
+        return {"tier": "selftest", "schema": SCHEMA,
+                "rows": rows, "retired_rows": retired}
+
+    def accepts(doc, label):
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "selftest-declared-divergences.json")
+        with open(path, "w") as f:
+            json.dump(doc, f)
+        problems = []
+        check_file(path, problems, [])
+        ok = not problems
+        print("  %-34s %s" % (label, "accepted" if ok else "*** REJECTED: %s ***"
+                              % (problems[0][:70] if problems else "")))
+        return ok
+
+    def rejects_doc(doc, label, needle=None):
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "selftest-declared-divergences.json")
+        with open(path, "w") as f:
+            json.dump(doc, f)
+        problems = []
+        check_file(path, problems, [])
+        ok = bool(problems) and (needle is None
+                                 or any(needle in p for p in problems))
+        print("  %-34s %s" % (label, "rejected" if ok else "*** ACCEPTED ***"))
+        return ok
+
+    live = ["%s: es_div_1_still_divergent" % ES_GUARDS,
+            "%s: es_div_1_has_not_widened" % ES_GUARDS]
+    if not os.path.isfile(os.path.join(REPO, ES_GUARDS)):
+        print("self-test: fixture file %s is gone — update the fixture rather "
+              "than skipping the case" % ES_GUARDS, file=sys.stderr)
+        return 1
+
     print("divergence_register --self-test (no Lean, no register file touched)")
+    clause_ok = [
+        accepts(_doc([], [_retired_row(live)]),
+                "clause 1: retired-only is LEGAL"),
+        rejects_doc(_doc([], []), "clause 2: both empty ERRORS", "DELETE IT"),
+        rejects_doc(_doc([], [_retired_row(
+                    ["%s: no_such_guard_a" % ES_GUARDS,
+                     "%s: no_such_guard_b" % ES_GUARDS])]),
+                    "clause 3: retired guard absent FAILS"),
+    ]
+
     checks = [
         (drop_inherited, "missing inherited_from"),
         (bad_kind, "kind outside the ruled two"),
@@ -402,11 +513,13 @@ def self_test():
         (decl_guard_def_without_hash_guard, "declaration guard, def but no #guard"),
     ]
     failed = [lbl for fn, lbl in checks if not rejects(fn, lbl)]
+    failed += ["§5.0a clause case"] * clause_ok.count(False)
     if failed:
         print("\nself-test FAILED: accepted %d bad file(s): %s"
               % (len(failed), ", ".join(failed)), file=sys.stderr)
         return 1
-    print("\nself-test: OK — %d defect classes all rejected" % len(checks))
+    print("\nself-test: OK — %d defect classes rejected, %d §5.0a clauses honoured"
+          % (len(checks), len(clause_ok)))
     return 0
 
 

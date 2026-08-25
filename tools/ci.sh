@@ -279,10 +279,12 @@ sv_round_trip_step() {
   else
     echo "=== [sv-round-trip] SKIP (no python3.12/python3 can import pyslang —"
     echo "    an environment fact, not envelope drift; pyslang is not tracked)"
-    # PINNED for the same reason the workflow is: the version is stamped INTO
-    # the compared bytes, so an unpinned hint hands a developer 21 DIVERGEs
-    # and the impression that the envelopes drifted.
-    echo "    To run it here: python3.12 -m pip install pyslang==11.0.0"
+    # UNPINNED (2026-08-26), with the workflow. extract.py stamps the FAMILY
+    # ("pyslang-11"), not the version, so a point release changes no committed
+    # byte -- and sv_round_trip now resolves the pinned frontend before it
+    # compares, refusing by name on a wrong family instead of handing anyone
+    # 18 DIVERGEs and the impression that the envelopes drifted.
+    echo "    To run it here: python3.12 -m pip install 'pyslang~=11.0'"
     skip+=("sv-round-trip")
   fi
 }

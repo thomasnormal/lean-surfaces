@@ -1205,3 +1205,96 @@ DIFFERENT verdicts on purpose: an explicit request that cannot be honoured
 is an environment error, not a result. Neither exits 0, because a skip that
 reads as a verdict is the site this sweep was hunting.
 
+
+---
+
+## 2026-08-26-sv-7 — THE ROUND-TRIP GATE PICKED ITS INTERPRETER BY ACCIDENT, AND THE PIN IT NEEDED IS RETIRED
+
+### The gate had no frontend check, and chose its frontend by accident
+
+`sv_round_trip.py` regenerated every envelope under
+
+    SV_PYTHON = os.environ.get("SV_PYTHON") or sys.executable
+
+— *whatever interpreter happened to invoke it* — and then compared **raw
+bytes**. Two failure modes, both live:
+
+* under a pyslang-less interpreter, every live envelope becomes
+  `REFUSE extractor-failed` — the gate blames the extractor for its own
+  choice of interpreter;
+* under a wrong pyslang FAMILY, every live envelope becomes `DIVERGE` —
+  content drift reported for what is a frontend change. That is
+  `envelope_fresh`'s *"version detector wearing a freshness label"*, alive
+  in the neighbouring instrument.
+
+**Measured, not argued.** The unfixed gate under `python3` (no pyslang) on
+this machine:
+
+    MATCH 0  DIVERGE 0  REFUSE 21  TIMEOUT 0     sv_round_trip: FAIL   exit 1
+
+Twenty-one rows blaming the extractor. The fixed gate, same machine, same
+command:
+
+    frontend: python3.12 ({'name': 'pyslang', 'family': 'pyslang-11'})
+    MATCH 18  DIVERGE 0  REFUSE 3  TIMEOUT 0     sv_round_trip: PASS   exit 0
+
+**The pin is resolved before anything is compared**, and it is IMPORTED
+from `envelope_fresh.MANIFESTS["sv"]` rather than re-spelled — the same
+one-definition discipline the edge rule got at `sv-6`, applied to a pin
+instead of a semantic rule. Absence is a REFUSAL, exit 3:
+
+    sv_round_trip: COULD NOT VERIFY — the pinned frontend is not available:
+    need {'name': 'pyslang', 'family': 'pyslang-11'}, tried [python3 -> no pyslang]
+
+**And the interpreter checked is the interpreter RUN.** Checking one and
+running another would be the same defect in a new costume, so `SV_PYTHON`
+is now resolved from the pin; an explicit override becomes the ONLY
+candidate and is therefore *checked, not obeyed*.
+
+### The `==11.0.0` pin is retired
+
+Its stated condition — *"remove when extract.py stamps the family"* — is
+met, and the evidence is in the tree rather than in anyone's memory:
+
+* `extract.py` stamps `{"name": "pyslang", "family": "pyslang-11"}`;
+* **18** of 21 committed envelopes already carry that family, so a pyslang
+  11.x POINT release changes not one committed byte;
+* the **3** still carrying `"version": "11.0.0"` — `alu_div`, `ff_one`,
+  `popcnt` — are **sourceless**. `sv_round_trip` rows them not-live and
+  excuses them from `bad`; `envelope_fresh` rows them NOT-LIVE. **They
+  cannot affect either verdict**, so they do not hold the pin open;
+* the package index offers nothing above 11.0.0, so unpinning installs
+  what the pin installed.
+
+A major bump is now a NAMED REFUSAL rather than mystery content drift,
+which is the entire job the pin was doing. **A pin protecting nothing is a
+hollow gate**, so it goes — from the workflow and from `ci.sh`'s operator
+hint, whose comment still explained the old reasoning.
+
+### And the freshness adoption is NOT here, because measuring it refused it
+
+`envelope_fresh --tier sv` was run ONCE before wiring it, and the manifest
+entry shipped with the harness does not work on this corpus:
+
+    EXTRACT-FAILED 6, NOT-LIVE 15        zero FRESH of 21, exit 1
+
+Two defects, both in the shared harness rather than in this tier:
+
+1. `_source_for` reads `source_file` (a string). Fifteen envelopes are
+   sv-0.2 and record `source_files` — a list of `{path, sha256}`. **Twelve
+   of them have their sources sitting on disk and are rowed NOT-LIVE.**
+2. the manifest's `extract.py {src} -o {out}` is rejected outright:
+   `-I/-o require --top`. `sv_round_trip` already builds schema-specific
+   commands; a single static `extract` list cannot express that.
+
+**The twelve false negatives are the dangerous half**: `NOT-LIVE` reads as
+benign, so a genuinely stale envelope among them would be silently
+excused — OPS-148 shape (d) *inside the freshness instrument*. Handed to
+QoL as the instrument's owner, with the measurement. The adoption completes
+when that lands and this lane re-measures.
+
+**Wiring it on the text claim would have armed a permanently-red gate whose
+twelve quiet false negatives became the tier's baseline.** Arming a gate
+whose current state has not been measured is the inverse of the
+unexercised-gate failure, and one run was the whole cost of not doing it.
+

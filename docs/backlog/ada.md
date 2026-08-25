@@ -1624,3 +1624,98 @@ Master fails `harness/divergence_register.py` — verified here, exit **1**, on
 distinct named ones are required). That gate is in this lane's class floor, so
 a ticket now would go red on another lane's rows. **Code written, enqueue held
 until master is register-green.** ACATS stands at 0 / 4,188 and 0 / 3,996.
+
+## 2026-08-25-ada-2 — INCH 5's CENSUS: `Report` should be EXECUTED, not modelled — and the emitter is already inside it
+
+Inch 5 is `Report` natively plus the ACAA trace emitter
+(`docs/ada-semantics-design.md` §3 rung 5). **The 517 wait on exactly this.**
+Census before build, and **five predictions were written down before any
+measurement** (`scratchpad/inch5-predictions.md`), because a census that can
+only confirm is not evidence.
+
+### THE PREDICTIONS, SCORED
+
+| # | prediction | outcome |
+| --- | --- | --- |
+| P1 | `Report` has 15 subprograms | **exact** — 15 in the spec, plus 4 body-local helpers (19 total) |
+| P2 | six calls dominate | **held** — `Test` 2,707, `Result` 2,707, `Failed` 2,586, `Ident_Int` 959, `Comment` 493, `Not_Applicable` 308 |
+| P3 | the `Ident_*` family is identity | **held** (7 of the 15) |
+| P4 | `report.a` is >70% within the inch-2/3/4 vocabulary | **held, 78.0%** |
+| P5 | the repo pins row NAMES but not the format | **WRONG, and usefully** — see below |
+
+### THE FINDING: THE EMITTER IS ALREADY INSIDE `Report`
+
+The body's four private helpers are `Convert`, `Inner_Time_Stamp`, `Put_Msg`
+and — **`Put_Event_Trace`**.
+
+> **The ACAA event-trace emitter that §3 schedules this tier to BUILD is
+> already implemented, in Ada, inside the package this tier has to support.**
+
+So the rung's central choice is not *how to write an emitter*. It is: **model
+`Report` in Lean, or EXECUTE the `report.a` the suite ships?** Measured, on
+the body's 2,635 nodes:
+
+| vocabulary | coverage of `report.a`'s body |
+| --- | ---: |
+| today (inch 2/3/4) | **78.0%** |
+| + strings (`StringLiteral`, `OpConcat`, `ConcatOperand(List)`, `CharLiteral`) | **88.4%** |
+| + object declarations (`ObjectDecl`, `SubtypeIndication`, …) | **92.6%** |
+| + dotted names and attributes | **95.4%** |
+
+**Strings alone are 44.7% of the entire gap** — 259 of 580 out-of-vocabulary
+nodes — which is what a package whose job is formatting messages should look
+like. What remains after all three additions is 122 nodes, led by
+`OpDoubleDot` 29 (ranges), `CaseStmtAlternative` 9, `EnumLiteralDecl` 5.
+
+**THE UPPER-BOUND GUARD, applied to this lane's own number.** 78.0% and 95.4%
+are **SYNTACTIC** — kind-set containment, exactly the measure §9.0 says must
+never be banked as executability. **Recognising `OpConcat` is not implementing
+Ada's string concatenation.** These figures rank the work; they do not claim
+`report.a` runs at 95.4% of anything. No syntactic win goes in the coverage
+table.
+
+### P5 WAS WRONG, AND THE INCH-2 CAUTION IS VINDICATED BY IT
+
+`docs/ada-charter.md` §4.4 pins far more than row names: the trace is a **CSV**
+whose records carry **event kind, timestamp, name, line, position, message**,
+over **14 event kinds** — `CSTART/CEND/CERR/CWARN`, `BSTART/BEND/BERR/BWARN`,
+`EXSTART/EXEND/EXFAIL/EXNA/EXSACT`, and `UNKN`.
+
+**Fourteen. The design doc lists ten.** Inch 2 declined to enumerate
+`TraceRow.kind` as constructors, on the grounds that enumerating from a
+secondary source would be a vocabulary claim quoted from memory. That caution
+was right for a reason better than the one given: **the source it would have
+enumerated from was incomplete**, and a ten-constructor type would have been
+missing `CWARN`, `BWARN`, `EXSACT` and `UNKN`. The kind becomes an inductive
+at this rung, from §4.4's fourteen, and the string field retires.
+
+**`GRADE` is RUN, never modelled.** The charter measures the grading toolset at
+4,879 lines needing access types, `goto`, generic instantiation and 10
+predefined units — comprehensively outside this tier. The tier emits the CSV;
+the ACAA's tool issues the verdict. That is the tier's defining decision and
+it is unchanged.
+
+### THE RUNG, PRICED
+
+| step | content | why |
+| --- | --- | --- |
+| **5a** | **strings** — `Val.str`, `&`, `StringLiteral` | the single biggest lever, +10.4pp, and unavoidable either way |
+| **5b** | `ObjectDecl` — declared locals enter the store | +4.2pp; also retires inch 2's "no declaration" refusal at ARM 3.3 |
+| **5c** | the output boundary — `Text_IO` into `W.output` | needed whether `Report` is executed or modelled |
+| **5d** | the trace CSV — 14 kinds, 6 columns, `TraceRow.kind` becomes an inductive | the format is pinned; only the tool is absent |
+
+**The recommendation is EXECUTE, and the reason is falsifiability**: an
+executed `Put_Event_Trace` produces the CSV the ACAA's own code produces,
+while a Lean reimplementation would produce a CSV this machine **cannot check
+against `GRADE`**, since the tools were purged. A reimplementation would be an
+unverifiable claim about a format; executing the shipped code is not.
+
+**What would overturn it**: if 5a–5c come in materially over budget, or if
+`report.a`'s remaining 4.6% turns out to need a rung of its own (ranges and
+`case` are ARM 5.4/5.5 — inch 7's), then modelling 15 subprograms directly
+becomes cheaper. That is a measurement, and it is taken after 5a.
+
+### REACH
+
+Still **0 / 4,188** and **0 / 3,996**. Inch 5 does not score either: the row
+moves when a test is executed and `GRADE` accepts the trace, which is inch 6.

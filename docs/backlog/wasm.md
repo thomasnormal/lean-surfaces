@@ -1307,3 +1307,107 @@ outside `LeanModels` and the `Examples.+` glob, and appends to this file. No
 gate in this repository can reach the vendored file. `docs_check` passes;
 `tools/backlog-index.sh` re-run per §9.5. The Lean execution was in the
 **fork's** tree, under a ticket.
+
+---
+
+## 2026-08-25-wasm-13 — THE 13-vs-19 DIFF: the stale pin hid **FIVE**, not six, and the lane's own census law corrects the lane's own census
+
+**LEDGER (§9.0): 5/5 subtyping-corner CLOSED · A′ ladder 4/22** — denominator
+**corrected from 23**, see below.
+
+The diff was run to recover what the stale pin hid. It recovered them, and it
+also caught an error in the census that recommended the work.
+
+### THE CORRECTION — `empty_sub` is INSIDE A COMMENT
+
+`2026-08-25-wasm-11` priced A′ on *"`Subtyping_Properties.thy`: 19 lemmas, 0
+incomplete"*. **That was a textual `grep`**, and it is wrong by one:
+
+| file | lemmas raw | **lemmas LIVE** | sorry/oops raw | LIVE |
+| --- | ---: | ---: | ---: | ---: |
+| `Subtyping_Properties.thy` | 19 | **18** | 0 | 0 |
+| `Typing_Simplified.thy` | 14 | **14** | 0 | 0 |
+| `Subtyping_Theorem.thy` | 4 | **4** | 0 | 0 |
+
+**`empty_sub` sits inside an Isabelle `(* … *)` block** and is not a lemma the
+file proves.
+
+**This is precisely the error `harness/wasm_sorry_census.py` was built to
+catch**, committed by its own author, on a second language. The instrument's
+founding finding (`2026-08-22-wasm-1`) was that a textual `sorry` count read
+**13** where the comment-aware count read **5**. Censusing Isabelle, this lane
+reached for `grep -cE "^lemma "` and `grep -c "sorry|oops"` — **the exact tool
+it had already proved unfit** — because the law had been internalised for
+`.lean` files and not for the general case.
+
+> **The law is about COMMENTS, not about Lean.** A census instrument is
+> language-specific; the discipline it encodes is not.
+
+Re-measured with an Isabelle-comment-aware stripper (nestable `(* … *)`,
+offset-preserving, the same shape as `strip_lean`). **No new instrument
+landed** — §5.4b is explicit that adding a fourth census to check the third is
+the dense-neighbourhood error; this is recorded as a reading, and the
+discipline is what generalises.
+
+### WHAT THE STALE PIN ACTUALLY HID — five, not six
+
+Comparing live-to-live against the 13 this lane ported from:
+
+* **four renames** — `instr_subtyping_{refl,sub_rule,trans,frame_rule}` →
+  `Instrtype_sub_{refl,sub_rule,trans,frame_rule}`. Not new work; but note the
+  lane's ports carry the OLD names, so any future cross-reference must map
+  them.
+* **one split** — `func_sub_app_single` → **`func_sub_app_single_l`** and
+  **`func_sub_app_single_r`** (+1).
+* **four genuinely new, live** — **`Resulttype_sub_t_list_subtyping`**,
+  **`Instrtype_sub_emptyl`**, **`produce_consume`**, **`produce_consume_waste`**.
+* **one commented out** — `empty_sub`, which the earlier count wrongly credited.
+
+**So the hidden total is 5, and `2026-08-25-wasm-11`'s "six complete lemmas"
+is corrected to five.** The A′ denominator drops 23 → **22**
+(`Subtyping_Properties` 18 + `Subtyping_Theorem` 4); including
+`Typing_Simplified`'s 14 the full ladder is **36**.
+
+### WHAT THE FOUR NEW ONES ARE — and two carry a warning
+
+* **`Resulttype_sub_t_list_subtyping`** — an *iff* between `Resulttype_sub` and
+  a `t_list_subtyping` definition from outside this file. Porting it drags in
+  that definition; **censused as a dependency, not yet priced.**
+* **`Instrtype_sub_emptyl`** — composition of two empty-domain instruction
+  types. Reachable with what the port already holds.
+* **`produce_consume`** / **`produce_consume_waste`** — the interesting pair,
+  about an instruction type that produces `junk @ l` meeting one that consumes
+  `args @ l'`. **`produce_consume_waste`'s conclusion is PARTLY COMMENTED OUT**
+  in the source: the `(mk_instrtype args res <ti: ...)` conjunct is inside
+  `(* … *)`, leaving only the `Resulttype_sub` half live. So the lemma proved
+  there is **weaker than the one its name suggests**, and a port must take the
+  live conclusion, not the commented one.
+
+That last point is the same finding twice in one file: **the comment-aware
+reading changes not only WHICH lemmas exist but WHAT one of them says.**
+
+### Order of the remaining 18
+
+1. the **split pair** `func_sub_app_single_{l,r}` — smallest, and the split is
+   already understood;
+2. **`Instrtype_sub_emptyl`** — needs only held machinery;
+3. **`produce_consume`** and the weakened **`produce_consume_waste`**;
+4. **`Resulttype_sub_t_list_subtyping`** — last of these, because it is the
+   only one with an unpriced external dependency;
+5. then `Typing_Simplified.thy`'s remaining 12, then the two `Instrs_ok`
+   static-typing variants.
+
+### The build hold does not bind this lane
+
+Recorded because it was asked: every ticket this lane files runs
+`--dir /Users/ahle/repos/wasm-soundness/spectec/spectec/test-lean` — **the fork
+clone, never the lean-surfaces tree** (verified in the last tenure's log:
+`dir=…/wasm-soundness/…`). `harness/divergence_register.py` is not in that
+tree and cannot gate it. **Fork-side work proceeds; no enqueue on
+lean-surfaces is pending or planned.**
+
+### Triad
+
+**Not run; not applicable.** Appends to this file only — no Lean, no vendored
+file changed, no ticket. `docs_check` passes; `tools/backlog-index.sh` re-run
+per §9.5.

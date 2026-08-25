@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**411 entries across 17 lanes.** Regenerate with
+**412 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -34,6 +34,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-qol-67` |  | I breached A11 verifying the gate, and the gate does need the runner | qol |
 | `2026-08-25-qol-66` |  | the floor gains the rule, and waits for C | qol |
 | `2026-08-25-qol-65` |  | the gate that was never in anyone's floor | qol |
+| `2026-08-25-pycomplete-38` |  | the refusal frontier, re-derived from the tree | python-completeness |
 | `2026-08-25-pycomplete-37` |  | pins_clock_walk census: NOT splittable, and the blocker is cost, not soundness | python-completeness |
 | `2026-08-25-pycomplete-36` |  | pricing the d2/d3 pair-split: take the exit, and the reason is stronger than the threshold | python-completeness |
 | `2026-08-25-pycomplete-35` |  | genmoves_ray does NOT shard: a naming convention is not a dependency structure | python-completeness |

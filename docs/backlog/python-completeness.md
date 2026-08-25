@@ -3285,3 +3285,54 @@ running the anchored check first this time.
 Unchanged and now sole: **proof cost inside step 13.** That is throughput work
 on the ray/bound web, priced separately by whoever takes it, and it starts from
 this census rather than from scratch.
+
+## 2026-08-25-pycomplete-38 — the refusal frontier, re-derived from the tree
+
+Re-run rather than re-quoted, per the standing correction that analog's law
+applies to one's own ledger. Fresh against the tree at `81fe4ae`:
+
+    GRAMMAR   138 witnesses: 106 MATCH, 32 REFUSE, 0 other
+    WHITELIST 124 rows in 51 classes (unsupported=117, boundary-freeze=7)
+    SCRIPT     15 rows in 10 classes
+    oracle Python 3.9.19 — 0 drifts
+
+**32 of 138 productions refuse.** Grouped by *what kind of thing blocks them*,
+which is the only grouping that tells you what an inch would cost:
+
+| group | n | blocker |
+|---|---|---|
+| **A. Layout-dependent** — 3 dict-churn rows, `Set`, `SetComp` | 5 | **permanent**: entries-array layout / hash order |
+| **B. Async** — `AsyncFunctionDef`, `AsyncFor`, `AsyncWith`, `Await` | 4 | coroutines + event loop; one coherent large project |
+| **C. Numerics** — `float`, `complex`, `bytes`, `Div`, `Pow-negative`, `MatMult` | 6 | IEEE-754; the fleet's `softfloat` lane's tier, not this one |
+| **D. Module system** — `Import`, `ImportFrom` | 2 | real imports vs. the tier's static whitelist binding |
+| **E. Scoping** — `Global`, `Nonlocal` | 2 | pure scoping semantics, no layout dependence |
+| **F. Dict views** — `.keys`, `.values`, `.items`, keys-set-algebra | 4 | a new object kind; set algebra re-enters group A |
+| **G. Near-term** — `iter`-of-list, `del` non-dict, `DictComp`, `With`, `Raise`-expr, 2x `AnnAssign`, `ellipsis`, `RShift`-budget | 9 | ordinary modelling work |
+
+**Group A is the floor.** Five of thirty-two are not "not yet" but "not ever
+without guessing layout" — the honest REFUSEs the charter protects. The
+reachable surface is therefore **27**, not 32.
+
+### The next inch, priced against the tree
+
+**`iter()` over a list** (`dict.iter-of-list` in grammar; `iter.non-dict-receiver`
+in whitelist — **one change, two rows**). Evidence it is small:
+
+- `GenFrame.forList (target) (a : Addr) (i : Nat)` **already exists** — a live
+  index cursor over a list at an address. `enumList` exists too.
+- `iterDict` was built as *"`enumerate`'s frame without the index"*. `iterList`
+  is the same subtraction applied to `enumList`, and the stepper already serves
+  every consumer through `stepIter`.
+- The current refusal says the blocker is that *"CPython's `list_iterator` is
+  its own cursor"* — an object-kind gap, **not** an undecidability.
+
+**And it opens no debt, which is why it goes first.** The dict cursor forced
+`pyc-div-1`/`pyc-div-2` because dict iteration under mutation depends on the
+entries array. A `list_iterator` holds a plain `it_index` and yields
+`seq[it_index]` while `it_index < len(seq)`: its behaviour under mutation is
+**fully determined by index against current length**. So this closes a frontier
+row *without* declaring a divergence — the opposite of the last cursor inch.
+
+Census-first still applies at the inch: the arm placement and the `heapFree` /
+`genAllocFree` allocator censuses must be re-derived before any edit, exactly as
+`iter`-over-dict required two independent census updates.

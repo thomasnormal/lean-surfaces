@@ -3204,3 +3204,84 @@ splittable by name and was not.
 
 **Recommendation: stop the sharding program here**, and re-aim at proof cost
 (throughput) or at `pins_clock_walk` (the one binding latency).
+
+## 2026-08-25-pycomplete-37 — pins_clock_walk census: NOT splittable, and the blocker is cost, not soundness
+
+Bounded question: can the 13-step fuel-4M walk be checkpointed into k
+certificates whose composition implies the original claim? **No.** Two
+independent grounds, either of which is fatal.
+
+### The file, and the checkpoint pattern it already contains
+
+127 lines, two private defs, **one** `#guard` — the 1336 s *is* that one
+certificate. And it already checkpoints **in-file**: it runs
+`searchStepsW sa g 12 w` to get `(rows, w12)`, asserts `w12.clock == [0,0]`,
+then runs `searchStepsW sa g 1 w12` for step 13. The structure the dispatch
+asks for exists. The question is only whether it can cross a **module**
+boundary.
+
+### Ground 1 — the atomic step is 61% of the walk
+
+Node deltas from the guard's own cumulative counts:
+
+    step  6: + 238    step 11: + 190    step 12: +  99
+    step 13: +1258   <- 61.3% of 2053, in ONE `stepIter` call
+
+Step 13 runs the generator to its next yield; **nothing can subdivide it.** So
+even a *free, perfect* split caps the win at `2053/1258` = **1.63x**
+(1336 s → ~819 s). Every checkpoint scheme is bidding against that ceiling
+before it pays for anything.
+
+### Ground 2 — the checkpoint state cannot be written down
+
+To host step 13, another module needs `w12`. Lean modules communicate through
+**terms**, so there are exactly two options:
+
+1. **Recompute `w12`** — file 2 pays 12 steps *plus* step 13 while file 1 pays
+   12 steps: **25 steps against the current 13.** Strictly worse.
+2. **Pin `w12` as a literal.** But `w12` is a whole `World`: the searcher's heap
+   after **795 nodes**, including `tp_score` (keyed `(pos, depth)`) and
+   `tp_move` (keyed `pos`) — dictionaries whose keys are Position objects each
+   carrying a **120-character board string**. Hundreds of entries.
+
+And a `def w12 := …` exported from file 1 does **not** rescue option 2: kernel
+reduction in the consuming module **unfolds the definition and recomputes it**.
+There is no cross-module memoisation of kernel evaluation, so anything short of
+a true normal-form literal is option 1 wearing a different hat.
+
+> **A checkpoint saves work only if the checkpoint state is cheaper to WRITE
+> than to RECOMPUTE.** For a whole-machine state — a heap mid-search — it never
+> is.
+
+### Seed-splittable vs checkpoint-splittable
+
+This is the clean distinction the two targets draw between them:
+
+- `pins_bound_mid` **split by SEED**: every shard re-derives its state from
+  `posMid`, a *tiny board literal*. Cheap to write, so the split was legal and
+  free.
+- `pins_clock_walk` has **no seed at step 12**. Its intermediate state *is* the
+  accumulated search. There is nothing small to write down.
+
+**The obstacle is cost, not soundness.** Pinning `w12` explicitly would be a
+*stronger* conjunction, exactly as the dispatch allows — the certificate would
+improve. It is simply unwritable.
+
+### Not priced, per instruction
+
+`price only if yes` → **not priced.** For the record of what is being given up:
+the 1.63 x ceiling would drop the fleet floor 1336 s → ~819 s, and since
+`pins_clock_walk` is the *ceiling* it is the one module where a split provably
+moves the build. That ~517 s is real and is blocked by an unwritable checkpoint,
+not by a missing lemma.
+
+**Anchored-check correction**: `pins_clock_walk` has **one** real importer
+(`pins_clock.lean:47`); `pins_bound_mid.lean` only names it in prose. A
+substring grep would have reported two — the `genmoves_ray` error, avoided by
+running the anchored check first this time.
+
+### Remaining lever
+
+Unchanged and now sole: **proof cost inside step 13.** That is throughput work
+on the ray/bound web, priced separately by whoever takes it, and it starts from
+this census rather than from scratch.

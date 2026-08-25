@@ -1416,3 +1416,74 @@ else `RoundWithAccuracyIsNearest` needs is now proved: the residue meaning
 (`roundedMantissa_eq_roundHalfEven`), and the carry absorption. What is left is
 the step that quantifies over **other** representable values rather than
 computing this one.
+
+---
+
+## 2026-08-25-softfloat-24 — THE INTERLEAVING ARGUMENT IS STARTED, and a WALL I reported was FALSE
+
+`LeanModels/SoftFloat/Round.lean`. `dyadic_scale` `[propext, Quot.sound]`,
+**TRUSTWORTHY**, zero `sorry`. **Not ticketed** — held per the coordinator's
+register-gate hold.
+
+### THE GATEWAY LEMMA
+
+```
+dyadic_scale (m e : Int) (k : Nat) : Q.Eq (Q.dyadic m e) (Q.dyadic (m * 2^k) (e - k))
+```
+
+Doubling the significand `k` times and lowering the exponent by `k` names the
+**same value**. This is the fact the common-grid route to interleaving needs:
+if every representable can be re-expressed at a single exponent, then
+"nearest among all representables" collapses from a statement about *many
+grids* to one about *one grid*, where the two neighbours already bracket the
+value.
+
+`Q.dyadic` splits on the exponent's sign, so the proof pays that split: three
+real cases and one vacuous (`e < 0 ≤ e - k` is impossible for `k : Nat`,
+closed by `omega`).
+
+### A WALL I ALMOST REPORTED, AND IT DID NOT EXIST
+
+Mid-proof, `ring_nf` and `push_cast` failed — both Mathlib, and this component
+is **core-only by its own declared posture**. I then grepped core for `Int`
+power lemmas and found **none**, and was about to name the wall as *"the
+interleaving argument is dyadic algebra and core has no `Int` power support"*.
+
+**That measurement was wrong, and the cause is the trap this lane has now hit
+three times.** The grep was `theorem Int\.(pow_[a-z_]+)` — fully-qualified —
+while core writes `protected theorem pow_add` **inside `namespace Int`**. The
+real inventory is `Init/Data/Int/Pow.lean`: **`pow_add`, `pow_mul`, `pow_succ`,
+`mul_pow`, `natCast_pow`, `natAbs_pow`, `pow_pos`, `pow_nonneg`** and a dozen
+more.
+
+> **A search that matches a NARROWER thing than you are asking about reports
+> absence, and absence is the most actionable-looking answer there is.**
+
+The first two instances cost a stale census row and a red triad. **This one
+would have sent the coordinator a fabricated blocker on the lane's critical
+path** — the worst placement yet, because a false wall does not just waste a
+tenure, it redirects a workstream. Named here so the next lane greps for the
+BARE name inside a namespace, not the qualified one.
+
+### TWO SMALLER MECHANICAL NOTES
+
+* **`rw [hk]` rewrote `k` everywhere**, including inside the exponent it was
+  meant to leave alone, nesting the goal into `↑(e.toNat + (-(e - ↑k)).toNat)`.
+  The fix is to prove the power identity **at its own occurrence** with a
+  `have`, never by rewriting the variable globally.
+* Two invented lemma names (`Int.natCast_ofNat`, `Nat.cast_one`) — both
+  Mathlib reflexes. Core-only means the reflexes have to be unlearned.
+
+### §9.0 — STILL 1/12
+
+**37 landed theorems, 1 an unconditional `op_correct`.** `dyadic_scale` is the
+first step of the last component, not the component.
+
+### STATE OF `RoundWithAccuracyIsNearest`
+
+| component | status |
+| --- | --- |
+| residue meaning (round/sticky bits) | **proved** |
+| the rounding decision (round-half-to-even) | **proved** |
+| carry-out absorption | **proved** |
+| nearest among ALL representables | **started** — `dyadic_scale` landed; the common-grid reduction and the bracketing step remain |

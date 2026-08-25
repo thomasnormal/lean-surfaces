@@ -42,6 +42,38 @@ def ReprQ (fmt : Format) (q : Q) : Prop :=
   ∃ (m : Int) (e : Int),
     m.natAbs < 2 ^ fmt.mantissaBits ∧ fmt.minExponent ≤ e ∧ Q.Eq q (Q.dyadic m e)
 
+/-! ## SCALING INVARIANCE — the fundamental dyadic fact, and the gateway to a
+    common grid for the interleaving argument.
+
+    Doubling the significand `k` times and lowering the exponent by `k` names
+    the SAME value.  `Q.dyadic` splits on the exponent's sign, so this is where
+    that split is paid: three real cases and one vacuous. -/
+theorem dyadic_scale (m : Int) (e : Int) (k : Nat) :
+    Q.Eq (Q.dyadic m e) (Q.dyadic (m * 2 ^ k) (e - k)) := by
+  unfold Q.Eq Q.dyadic
+  by_cases h1 : 0 ≤ e
+  · by_cases h2 : (0 : Int) ≤ e - k
+    · -- both non-negative: 2^e = 2^k * 2^(e-k)
+      simp only [if_pos h1, if_pos h2]
+      have hk : e.toNat = k + (e - k).toNat := by omega
+      rw [hk, Int.pow_add]
+      simp [Int.mul_assoc]
+    · -- e ≥ 0 but e < k: the denominator absorbs the overshoot
+      simp only [if_pos h1, if_neg h2]
+      -- do NOT `rw [hk]`: it rewrites `k` inside the exponent too and nests it.
+      -- Prove the power identity at its own occurrence instead.
+      have key : (2 : Int) ^ e.toNat * 2 ^ (-(e - (k : Int))).toNat = 2 ^ k := by
+        rw [← Int.pow_add]
+        congr 1
+        omega
+      simp [Int.natCast_pow, Int.mul_assoc, key]
+  · -- e < 0 forces e - k < 0
+    have h2 : ¬ (0 : Int) ≤ e - k := by omega
+    simp only [if_neg h1, if_neg h2]
+    have hk : (-(e - k)).toNat = k + (-e).toNat := by omega
+    rw [hk, Int.natCast_pow, Int.natCast_pow, Int.pow_add]
+    simp [Int.mul_assoc]
+
 /-! ## 2. CORRECT ROUNDING — IEEE 754-2019 §4.3, declaratively
 
 No algorithm appears: `y` is representable, nothing representable is strictly

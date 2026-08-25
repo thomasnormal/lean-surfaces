@@ -15,12 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**369 entries across 17 lanes.** Regenerate with
+**371 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-25-architecture-88` |  | A gate not in your floor cannot contradict your rows | architecture |
+| `2026-08-25-softfloat-24` |  | THE INTERLEAVING ARGUMENT IS STARTED, and a WALL I reported was FALSE | softfloat |
 | `2026-08-25-wasm-13` |  | THE 13-vs-19 DIFF: the stale pin hid **FIVE**, not six, and the lane's own census law corrects the lane's own census | wasm |
 | `2026-08-25-wasm-12` |  | **THE A′ CAPSTONE IS PROVED**: subtyping is admissible for `Instrs_ok2`, and the branch re-census fired on its first use | wasm |
 | `2026-08-25-wasm-11` |  | THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported | wasm |
@@ -78,6 +79,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-qol-50` |  | nothing checked whether a ticket's base had ever been green | qol |
 | `2026-08-24-qol-49` |  | the merge left the model describing a guard that no longer exists | qol |
 | `2026-08-24-qol-48` |  | the stamp was watching the index while lake read the working tree | qol |
+| `2026-08-24-softfloat-23` |  | CARRY-OUT ABSORPTION: the second shift moves the representation, not the value | softfloat |
 | `2026-08-24-pycomplete-23` |  | pyc-div-1's probe gains its second side, and the instrument's own claim expires with it | python-completeness |
 | `2026-08-24-c-23` |  | `c-div-2` DIAGNOSED: the model was right, the ENVELOPE was a different program | c |
 | `2026-08-24-softfloat-22` |  | THE RED WAS MY VERIFICATION METHOD, NOT A RENAME | softfloat |

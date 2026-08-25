@@ -122,6 +122,19 @@ def SvState.set : SvState → String → LVec → SvState
   | (k, w) :: rest, name, v =>
     if k == name then (name, v) :: rest else (k, w) :: SvState.set rest name v
 
+/-- The 1-bit view of a signal, for edge detection: bit 0, with an absent
+or width-0 signal reading `x`.
+
+Lives here, and not in `Sem2` where it was written, because BOTH tiers
+read it — the M1 reset phase and the R1 region model's `sawEdge` — and
+`Slot` sits below `Sem2` in the import graph. It was the second of two
+duplicated spellings the edge rule carried; `isPosedge`/`isNegedge` in
+`Basic` were the first. -/
+def SvState.bit0 (st : SvState) (name : String) : Logic :=
+  match SvState.lookup st name with
+  | some v => v.bits[0]?.getD .lx
+  | none => .lx
+
 /-- Display helper for tests/harness: the `%b` string of `name` in a state
 (`"?"` when absent — cannot happen for declared signals). -/
 def SvState.showSignal (st : SvState) (name : String) : String :=

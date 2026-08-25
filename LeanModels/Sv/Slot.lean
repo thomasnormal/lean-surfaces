@@ -137,38 +137,26 @@ leaving a known 0 is a posedge even if the destination is unknown, and
 arriving at a known 1 is a posedge even if the origin was. Only `x→z`,
 `z→x` and a value to itself are edgeless — neither end is a level.
 
-**This is the same rule as `isNegedge` in `Sem2` (the M1 cycle model),
-written twice on purpose**: `Slot` sits *below* `Sem2` in the import graph,
-and reaching it would mean importing the whole cycle model into the region
-tier. The duplication is named rather than accidental — folding both onto
-one definition low in the graph (`Basic`, where `Logic` lives) is the next
-rung, and it makes the agreement hold by construction instead of by
-inspection. -/
+**The rule itself lives in `Basic`**, as `isPosedge`/`isNegedge`, because
+the M1 cycle model needs the same one for its async-reset phase and sits
+ABOVE this module in the import graph. It was written twice — once here,
+once there — and the two spellings disagreed on `x`/`z`. This function is
+now only the `Edge`-indexed selector over that one rule, which is the part
+`Basic` cannot express: `Edge` is a `SelfCheck` type. -/
 def edgeOn (e : Edge) (old new : Logic) : Bool :=
-  let pos : Bool :=
-    match old, new with
-    | .l0, .l1 | .l0, .lx | .l0, .lz | .lx, .l1 | .lz, .l1 => true
-    | _, _ => false
-  let neg : Bool :=
-    match old, new with
-    | .l1, .l0 | .l1, .lx | .l1, .lz | .lx, .l0 | .lz, .l0 => true
-    | _, _ => false
   match e with
-  | .pos => pos
-  | .neg => neg
-  | .any => pos || neg
+  | .pos => isPosedge old new
+  | .neg => isNegedge old new
+  | .any => isPosedge old new || isNegedge old new
 
 /-- Did `sig` see the given edge between two states?
 
-The clock is read as a **1-bit** value (bit 0), which is what `Sem2` does
-for reset ports; an absent or width-0 signal reads `x`, and `x` against
-`x` is not an edge, so an undeclared name can never wake anything. -/
+Reads the clock through `SvState.bit0` — the same accessor the M1 reset
+phase uses, rather than the private copy this function used to carry. An
+absent or width-0 signal reads `x`, and `x` against `x` is not an edge, so
+an undeclared name can never wake anything. -/
 def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
-  let bitOf : SvState → Logic := fun st =>
-    match SvState.lookup st sig with
-    | some v => v.bits[0]?.getD .lx
-    | none => .lx
-  edgeOn e (bitOf old) (bitOf new)
+  edgeOn e (SvState.bit0 old sig) (SvState.bit0 new sig)
 
 /-- Wake every process whose edge trigger fired between `old` and `new`,
 marking it ready and **enqueueing it in Active**.

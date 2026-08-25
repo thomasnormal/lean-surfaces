@@ -575,18 +575,13 @@ def combSettle2 (d : Design2) (σ : ScheduleOracle) (fuel : Nat) (st : SvState)
 
 /-! ## Reset-event phase -/
 
-/-- §9.4.2 negedge on a 1-bit value: `1→0`, `1→x/z`, `x/z→0`. -/
-def isNegedge (old new : Logic) : Bool :=
-  match old, new with
-  | .l1, .l0 | .l1, .lx | .l1, .lz | .lx, .l0 | .lz, .l0 => true
-  | _, _ => false
-
-/-- 1-bit view of a signal for edge detection (absent/width-0 reads x —
-cannot arise for declared reset ports). -/
-def SvState.bit0 (st : SvState) (name : String) : Logic :=
-  match SvState.lookup st name with
-  | some v => v.bits[0]?.getD .lx
-  | none => .lx
+/-! `isNegedge` and `SvState.bit0` were defined HERE and are now in `Basic`
+and `Semantics` respectively. The region tier needs the same two, and it
+sits BELOW this module in the import graph, so a copy was made — and the
+copy disagreed with this original on the `x`/`z` cases. Moving them down
+is what makes the two tiers agree by construction. Nothing else changes:
+the names are unqualified and identical, so `resetIndices` below reads the
+same rule it always did. -/
 
 /-- Indices of `alwaysFFR` processes whose reset input made a §9.4.2
 negedge between `prev` (end of previous cycle) and `cur` (this cycle's

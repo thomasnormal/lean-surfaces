@@ -6,6 +6,8 @@ Usage (from the repo root):
     python3 harness/sv_round_trip.py            # gate: exit 1 on any drift
     python3 harness/sv_round_trip.py --list     # show what would run, no extraction
 
+Exit: 0 agreement   1 drift   3 instrument refusal (frontend not pinned)
+
 Walks every committed ``Examples/system-verilog/**/*.sv.json``, re-runs
 ``extractors/sv/extract.py`` on its recorded source(s), and compares the
 result BYTE FOR BYTE against the committed file.
@@ -53,18 +55,39 @@ die: pyslang 11.0.0 aborts with SIGTRAP (rc 133, no diagnostic) on
 ```unconnected_drive pull2``.  In-process extraction would take this
 gate down with it; here it is one REFUSE row naming the file.
 
-Requires python3.12 + pyslang 11.x for the extractor subprocess (see
-docs/sv-charter.md §1.1).  Set SV_PYTHON to choose the interpreter;
-defaults to the one running this script.
+THE FRONTEND PIN IS CHECKED BEFORE ANYTHING IS COMPARED, and this gate had
+no such check.  It regenerated under ``sys.executable`` -- whatever
+interpreter happened to invoke it -- and then compared RAW BYTES.  The
+envelopes stamp their frontend family, so under the wrong pyslang every
+live envelope becomes a DIVERGE: content drift is REPORTED for what is
+actually a frontend change, which is `envelope_fresh`'s "version detector
+wearing a freshness label" in this instrument.  Worse, the interpreter was
+never checked for pyslang at all, so a pyslang-less one turned every live
+envelope into `REFUSE extractor-failed`.
+
+So the pin is resolved FIRST, from `envelope_fresh.MANIFESTS["sv"]` -- one
+spelling of the pin, shared with the freshness harness, rather than a
+second copy that can drift from it -- and its absence is a REFUSAL (exit 3),
+never a comparison made anyway.
+
+**The interpreter checked is the interpreter run.**  An explicit SV_PYTHON
+is VALIDATED against the same pin rather than trusted: an override that
+bypassed the check would reintroduce exactly the defect the check exists to
+remove.
 """
 
 import argparse
+import copy
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+
+# `harness/` on the path so the pin is IMPORTED rather than re-spelled.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from envelope_fresh import MANIFESTS, Refuse, resolve_frontend  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXAMPLES = os.path.join(REPO, "Examples", "system-verilog")
@@ -74,7 +97,22 @@ EXTRACT = os.path.join(REPO, "extractors", "sv", "extract.py")
 # about a second, so anything near this is a hang, not slow work.
 TIMEOUT_S = 120
 
-SV_PYTHON = os.environ.get("SV_PYTHON") or sys.executable
+# Resolved in main() against the frontend pin, never at import: resolution
+# can REFUSE, and a refusal at import time would crash instead of reporting.
+SV_PYTHON = None
+
+
+def pinned_frontend():
+    """The interpreter satisfying the SV frontend pin, or `Refuse`.
+
+    An explicit `SV_PYTHON` becomes the ONLY candidate -- so it is checked,
+    not obeyed. Anything else would let an override defeat the pin silently,
+    which is the failure this function exists to prevent."""
+    man = copy.deepcopy(MANIFESTS["sv"])
+    override = os.environ.get("SV_PYTHON")
+    if override:
+        man["frontend"]["candidates"] = [override]
+    return resolve_frontend(man)
 
 
 class Skip(Exception):
@@ -201,6 +239,17 @@ def main():
     if not os.path.exists(EXTRACT):
         print("sv_round_trip: FAIL — extractor missing: %s" % EXTRACT)
         return 1
+
+    # THE PIN, BEFORE ANY COMPARISON. A wrong-family frontend changes envelope
+    # CONTENT, so comparing under one is a version detector wearing a
+    # freshness label. Refusing is not a verdict about the corpus.
+    global SV_PYTHON
+    try:
+        SV_PYTHON = pinned_frontend()
+    except Refuse as exc:
+        print("sv_round_trip: COULD NOT VERIFY — %s" % exc)
+        return 3
+    print("frontend: %s (%s)" % (SV_PYTHON, MANIFESTS["sv"]["frontend"]["expect"]))
 
     rows = []
     n = {"MATCH": 0, "DIVERGE": 0, "REFUSE": 0, "TIMEOUT": 0}

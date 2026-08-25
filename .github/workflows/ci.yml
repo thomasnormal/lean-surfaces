@@ -25,16 +25,25 @@ jobs:
       - name: Notebook dependencies
         run: |
           python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
-          # SV extraction (notebook 03 + extractors/sv) runs under python3.12 + pyslang
-          # PINNED, and TEMPORARY — remove when extract.py stamps the family
-          # (SV Landing A regenerates the envelopes).  extract.py sets
-          # FRONTEND = {"name": "pyslang", "version": pyslang.__version__} and
-          # writes it into every envelope: all 21 committed ones carry
-          # "version": "11.0.0" inside the bytes sv_round_trip.py compares.
-          # Unpinned, the next pyslang release turns every PR red with 21
-          # DIVERGEs unrelated to anyone's change — now that the round-trip
-          # gate is armed in ci.sh.
-          python3.12 -m pip install --user pyslang==11.0.0 || python3 -m pip install --user pyslang==11.0.0
+          # SV extraction (notebook 03 + extractors/sv) runs under python3.12 + pyslang.
+          # THE ==11.0.0 PIN IS RETIRED (2026-08-26). It was TEMPORARY, and its
+          # stated condition — "remove when extract.py stamps the family" — is met:
+          # extract.py sets FRONTEND = {"name": "pyslang", "family": "pyslang-11"},
+          # and the 18 live envelopes carry the family, so a pyslang 11.x POINT
+          # release no longer changes a single committed byte.
+          #
+          # The three envelopes still carrying "version": "11.0.0" (alu_div, ff_one,
+          # popcnt) are SOURCELESS — sv_round_trip rows them not-live and excuses
+          # them from the gate, envelope_fresh rows them NOT-LIVE. They cannot
+          # affect either verdict, so they do not hold the pin open.
+          #
+          # And the pin is no longer what protects the gate: sv_round_trip now
+          # RESOLVES the pinned frontend before it compares anything and REFUSES
+          # (exit 3) on a wrong family, instead of reporting 18 DIVERGEs for what
+          # is a frontend change. A major bump is therefore a named refusal, not
+          # mystery content drift — which is the whole reason the pin existed.
+          # A pin protecting nothing is a hollow gate, so it goes.
+          python3.12 -m pip install --user pyslang || python3 -m pip install --user pyslang
       - name: Circuit simulators (SV and SPICE differential harnesses)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog ngspice
       - name: Restore Mathlib build cache

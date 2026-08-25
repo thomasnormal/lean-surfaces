@@ -3921,15 +3921,17 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
 
 /-- §iter: the initial frame of `iter(v)` — a heap DICT gets the live KEY
-cursor, and nothing else does.
+cursor and a heap LIST gets the live INDEX cursor.
 
 WHY THE OTHER RECEIVERS REFUSE RATHER THAN ANSWER. CPython has a distinct
 iterator TYPE per receiver — `list_iterator`, `str_iterator`,
 `tuple_iterator`, `range_iterator`, `set_iterator`, `dict_keyiterator`, and
 `iter(g) is g` for a generator — and each carries its own mutation regime.
 The dict one is the flagship's (`del d[next(iter(d))]`, sunfish.py:541); the
-others are an inch each, and a REFUSAL where CPython answers is a witnessed
-capability gap, while a guessed cursor is not.
+list one is `list_iterator`, admitted here because it is a plain index cursor
+with NO layout to guess (see `GenFrame.iterList`). The rest are an inch each,
+and a REFUSAL where CPython answers is a witnessed capability gap, while a
+guessed cursor is not.
 
 Unlike `enumFrame` this worker has exactly ONE caller (the monadic rebuild's
 `iter` arm): the trunk has no `iter` arm, so it never builds this frame and
@@ -3940,8 +3942,7 @@ def iterFrame (h : Heap) : RVal → Res GenFrame
   | .ref a =>
     (match Heap.get? h a with
      | some (.dict es sv) => .ok (.iterDict a 0 es.size sv)
-     | some (.list _) =>
-         .unsupported "iter() over a list is outside the tier (CPython's `list_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+     | some (.list _) => .ok (.iterList a 0)
      | some (.generator ..) =>
          .unsupported "iter() over a generator answers the generator ITSELF in CPython (`iter(g) is g`) — outside the tier"
      | some (.pyset _) =>
@@ -4035,7 +4036,7 @@ def genBreak : GenCont → Option GenCont
   -- unwind inside a body, and these frames have no body). Loud, not a
   -- silent pop.
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
-  | .iterDict .. :: _
+  | .iterDict .. :: _ | .iterList .. :: _
   | .countFrom .. :: _ => Option.none
 
 /-- `continue`: drop the pending blocks, KEEP the enclosing loop frame
@@ -4049,7 +4050,7 @@ def genContinue : GenCont → Option GenCont
   | k@(.forGen ..  :: _) => some k
   | k@(.whileLoop .. :: _) => some k
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
-  | .iterDict .. :: _
+  | .iterDict .. :: _ | .iterList .. :: _
   | .countFrom .. :: _ => Option.none
 
 mutual
@@ -6632,6 +6633,10 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
       -- exists to compile and to refuse, and gains no consumers — which is
       -- also why the inch owes no trunk-side capability delta to witness.
       .unsupported "stepping an iter() over a dict is outside this interpreter's tier — the live cursor is the monadic rebuild's (docs/memory-model.md §dict iteration)"
+    | .iterList .. :: _ =>
+      -- §iterList: same arrangement as `iterDict` directly above — the trunk
+      -- has no `iter` arm, so it never builds this frame either.
+      .unsupported "stepping an iter() over a list is outside this interpreter's tier — the live cursor is the monadic rebuild's (docs/memory-model.md §dict iteration)"
     | .forDict .. :: _ =>
       -- THE LEGACY INTERPRETER'S CONTRACT under no-backwards-compat: this
       -- interpreter never CONSTRUCTS a `forDict` frame (only

@@ -651,12 +651,14 @@ print(next(it))
   "The model has no such counter, so the regime stays permanently LOUD")
 w("dict.iter-of-list", """
 print(next(iter([7, 8])))
-""", "REFUSE",
-  "THE RECEIVER BOUNDARY, falsifiable: CPython answers 7 (a `list_iterator`). "
-  "Every non-dict receiver has its own CPython iterator TYPE — "
-  "`str_iterator`, `tuple_iterator`, `range_iterator`, `set_iterator`, and "
-  "`iter(g) is g` — each with its own mutation regime, so each is its own "
-  "inch and none is guessed")
+""", "MATCH",
+  "THE RECEIVER BOUNDARY, now ANSWERED. `list_iterator` is a PLAIN INDEX "
+  "cursor — `it_index` against the CURRENT length, re-read every call — so "
+  "there is no entries-array layout to guess and the row closed without "
+  "declaring a divergence, unlike the dict cursor which owed two. The "
+  "remaining receivers are still an inch each: `str_iterator`, "
+  "`tuple_iterator`, `range_iterator`, `set_iterator` (hash order — group A), "
+  "and `iter(g) is g` for a generator")
 # --- §genexp: `next(<genexp over dict KEYS with a filter>)`, the flagship's
 # OTHER eviction line (2026-08-24-pycomplete-19). At MODULE scope the captured
 # names are module-level, so they are `outer` names and not captures at all --

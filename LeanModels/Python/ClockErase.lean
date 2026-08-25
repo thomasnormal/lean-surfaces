@@ -1096,6 +1096,8 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
     | enumDict i ad cur n sv => simp only [execGen]; exact .unsupported
     -- §iter: the trunk never builds an `iterDict` frame either; its arm refuses
     | iterDict ad cur n sv => simp only [execGen]; exact .unsupported
+    -- §iterList: nor an `iterList` frame; same refusal
+    | iterList ad cur => simp only [execGen]; exact .unsupported
     -- §3a: the trunk never builds a `forDict` frame; its arm refuses
     | forDict tg ad i n sv kd bd => simp only [execGen]; exact .unsupported
     | countFrom cur step => simp only [execGen]; exact .ok h _

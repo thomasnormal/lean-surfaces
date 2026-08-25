@@ -3336,3 +3336,157 @@ row *without* declaring a divergence — the opposite of the last cursor inch.
 Census-first still applies at the inch: the arm placement and the `heapFree` /
 `genAllocFree` allocator censuses must be re-derived before any edit, exactly as
 `iter`-over-dict required two independent census updates.
+
+## 2026-08-25-pycomplete-39 — `iter()` over a list: one change, two rows, no debt
+
+### Census first, and it produced a named negative
+
+Arm placement came from the **15 `iterDict` sites** (the shape to mirror) and
+the **`enumList` sites** (the address+index shape a list cursor needs). Nine
+edits: the constructor and its `WF` arm (`Runtime`), `iterFrame` plus
+`genBreak`/`genContinue`/trunk-`execGen` (`Semantics`), the stepper
+(`Monadic/Eval`), and the three proof-side arms (`Obs`, `ClockErase`,
+`PayloadBlind`).
+
+**Allocator census — checked, no change needed.** `iter`-over-dict required two
+independent updates (`Expr.heapFree`, `Expr.genAllocFree`), so I checked both
+rather than assume this inch was lighter: **both already exclude `"iter"`**
+(`Semantics.lean:4221`, `:4379`). The builtin *name* is unchanged; only its
+accepted receiver widens. A named negative beats a guess in either direction.
+
+### The stepper is `enumList` with the tuple taken off
+
+Exactly as `iterDict` is `enumDict` with the tuple off. `Heap.get?` re-reads
+the list every step and `cur < xs.size` compares against its **current** size —
+precisely `list_iterator.__next__`'s `it_index < PyList_GET_SIZE(seq)`.
+
+### Why this opens no debt
+
+The dict cursor owed `pyc-div-1`/`pyc-div-2` because dict iteration under
+mutation depends on the entries array. **A list cursor consults no layout**:
+its behaviour is determined by index against current length. The row closes
+with **zero** register rows added — the opposite of the last cursor inch.
+
+### Witnesses, and the one honest gap
+
+Three rows, all against the pinned oracle (**CPython 3.9.19**, values measured
+not reasoned):
+
+| witness | oracle |
+|---|---|
+| `iter_list_recv(7)` | **7** |
+| `iter_list_grew(7)` — append after the cursor exists | **16** |
+| `iter_list_exhausted(7)` — dead cursor, `next(it, 100)` | **107** |
+
+**NOT witnessed: the SHRINK direction**, and the reason is upstream rather than
+oversight — writing that witness needs `del xs[i]`, which is *itself* a refused
+frontier row (`del.non-dict-receiver`). The arm handles it by construction, but
+no test reaches it until that row lands, exactly as `pyc-div-1`'s witness waited
+on `except_builtin`. **Named in both docstrings so the gap has an owner rather
+than a hope** — a claim resting on untested code is the defect this lane has
+now catalogued six times.
+
+The lab function was renamed `iter_list_recv_still_loud` → `iter_list_recv`: it
+is no longer loud, and a name that says otherwise is a false claim about the
+tier.
+
+### Frontier movement
+
+`dict.iter-of-list` (grammar) and `iter.non-dict-receiver` (whitelist) —
+**one change, two rows**. Reachable surface **27 → 26**; group A's permanent
+five unchanged.
+
+## 2026-08-25-pycomplete-40 — the gate caught a step I did not know existed, and the corpus has five more of it
+
+`pyc10` came back **BUILD GREEN, gates RED**: `diff_test` failed with
+
+    iter_list_recv(7)       ok: 7    exn: NameError   MISMATCH
+    iter_list_grew(7)       ok: 16   exn: NameError   MISMATCH
+    iter_list_exhausted(7)  ok: 107  exn: NameError   MISMATCH
+
+Oracle right, model `NameError` — **the model could not see the functions at
+all.** The cause is a pipeline step my census never reached: a lab's Python is
+not read by the model. `AGENTS.md` step 1 dumps it to a JSON envelope
+(`extractors/python/extract.py`), and `spec.lean:39` does
+`load_program dict_lab from "…/dict_lab.json"`. **I edited the `.py` and left
+the `.json` a day stale**, so the Lean side still held
+`iter_list_recv_still_loud` and had never heard of the three new functions.
+
+> **A census of "every site that mentions `iterDict`" cannot find a step that
+> mentions nothing.** My arm-placement census was correct and complete for the
+> question it asked, and the missing step was invisible to it because it lives
+> in a *different pipeline stage*, not in a different file.
+
+Regenerated: `−iter_list_recv_still_loud`, `+3` functions, 108 → 110 top-level
+nodes. It also corrected the envelope's **frontend stamp `3.14.5` → `3.9.19`** —
+beyond the inch's scope, but a wrong CPython stamp on a tier that models 3.9.19
+is not something to leave once seen.
+
+### And the corpus has five more, found by asking
+
+Re-extracting all **61** `.py`/`.json` pairs and diffing:
+
+| file | drift |
+|---|---|
+| `assert_lab`, `del_lab`, `exc_lab` | **frontend stamp only** — extracted with CPython **3.14.5**, content identical |
+| `bench_heapq_sift` | **content** — a node `kind` differs |
+| `sunfish` | **content** — current `extract.py` emits a `key` field at `sunfish.py:511` that the committed envelope predates |
+
+`sunfish.py:511` is `del self.tp_move[next(k for k in self.tp_move if k != self.root)]` — the genexp-del line. Both content drifts are **extractor
+evolution, not source drift**: the `.py` files are unmodified in git.
+
+**Nothing gates any of this.** A generated artifact is checked in beside its
+source and nothing checks they still agree; `mtime` is useless (a fresh clone
+randomises it), so the test must be *re-extract and compare content, ignoring
+the frontend stamp*. That is 61 files in seconds. **Not done here** — it would
+red on five files today, and fixing those is someone's inch with its own
+review, not a rider on mine. **Flagged for QoL** as the same shape as the
+`backlog-index --check` hole: a fleet-wide corpus with no gate.
+
+
+### Correction to pycomplete-38's grouping (softfloat verification, 2026-08-25)
+
+**My group C was wrong, and the defect is worse than the count.** I placed
+`const.bytes`, `const.complex` and `op.MatMult` under "Numerics" because they
+*look* numeric. That is grouping by **name**, not by **blocker** — the exact
+error named one entry earlier ("a naming convention is not a dependency
+structure"), committed *inside the instrument offered as its fix*. Proposing
+blocker-kind grouping and then populating it by name is the finding here.
+
+`docs/completeness.md:84` settles `MatMult`: it *"costs a program nothing — no
+operand type in CPython too."* Nothing to do with IEEE-754.
+
+**And a correction back up the chain.** Grepping all three corpora for a
+float-printing refusal returns **nothing**, and it cannot: `const.float`
+refuses, so no float can be constructed to print. The `str()`/`repr()`-of-float
+item is therefore **not a row omitted from the 32** — it is a **latent row**
+that comes into existence only once floats can be constructed. The honest form
+for softfloat's §9.0 is **3 existing pyc rows + 1 latent requirement**, not 4
+named rows: landing float arithmetic *without* decimal printing closes three
+and creates the fourth.
+
+| group | n | change |
+|---|---|---|
+| A. Layout-dependent | 5 | — |
+| B. Async | 4 | — |
+| **C. IEEE-754 → softfloat** | **3** | was 6 |
+| **Payload types** — `bytes`, `complex`, `ellipsis` | **3** | new group |
+| D. Module system | 2 | — |
+| E. Scoping | 2 | — |
+| F. Dict views | 4 | — |
+| G. Near-term | 9 | −`ellipsis`, +`MatMult` |
+
+Sums to 32, checked. **Flag for group G**: `MatMult` closes trivially and buys
+nothing — admitting it moves the count without moving the capability, which is
+"optimising below the floor is motion, not progress" in frontier form. Take it
+last, or knowingly as bookkeeping.
+
+### And the exit-143 metric, corrected by the gate it produced
+
+triad's new pressure gate (`acquire_check`) descends from that finding, and its
+comment rejects the metric the finding led with: *"NEVER `vm.swapusage` … a
+high-water mark … a gate keyed on it would defer forever on any box that has
+ever swapped … 90% swap against a kernel level of 2, disagreeing in KIND."*
+That 90% was my headline number. **The finding stands; the metric in it does
+not** — the condition was real, the instrument was wrong, and only measuring
+both side by side caught it.

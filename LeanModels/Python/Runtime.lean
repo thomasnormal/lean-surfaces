@@ -171,6 +171,20 @@ inductive GenFrame where
   arrangement, not `enumDict`'s: `enumFrame` is SHARED, `iterFrame` has
   exactly one caller). -/
   | iterDict (a : Addr) (cur : Nat) (n : Nat) (sv : Nat)
+  /-- §iterList: `iter(xs)` over a heap LIST — CPython's `list_iterator`.
+
+  A PLAIN INDEX CURSOR, and that is the whole reason this frame carries no
+  version guard where `iterDict` carries two. `list_iterator.__next__`
+  yields `seq[it_index]` while `it_index < len(seq)`, re-reading the length
+  every call, so mutation DURING iteration is decided entirely by index
+  against CURRENT length. There is no entries-array layout to guess here,
+  and therefore no divergence to declare — the dict cursor owed
+  `pyc-div-1`/`pyc-div-2`; this one owes nothing.
+
+  The SHRINK direction is handled by that same comparison but is not
+  witnessable in-tier yet: writing the witness needs `del xs[i]`, which is
+  its own refused row. See the stepper's arm in `Monadic/Eval.lean`. -/
+  | iterList (a : Addr) (i : Nat)
   /-- `itertools.count(start, step)` — never exhausts. -/
   | countFrom (cur : Int) (step : Int)
 deriving Repr, Inhabited, BEq
@@ -330,6 +344,7 @@ def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .enumList _ a _ => a < h.size
   | .enumDict _ a _ _ _ => a < h.size
   | .iterDict a _ _ _ => a < h.size
+  | .iterList a _ => a < h.size
   | .block _ => True
   | .whileLoop .. => True
   | .countFrom .. => True

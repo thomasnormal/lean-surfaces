@@ -5304,3 +5304,81 @@ Python regression-checked after every change: **FRESH 59, STALE 2**, tree clean.
 
 `envelope_fresh` **27 ok** (13 → 27), `--verify-guards` 44 ok, docs_check
 91/91. No floor changed, no tier adopted, no Lean executed.
+
+## 2026-08-26-qol-79 — pricing enforced no-Lean attestation (NOT landed)
+
+The direction is right — measured, never declared — and one premise needs
+correcting before it is ruled.
+
+### The shim is necessary and NOT sufficient
+
+`tools/leanpy` reaches the runner **by absolute path**:
+
+```
+line  60   BIN = os.path.join(REPO_ROOT, ".lake", "build", "bin", "leanmodels-run")
+line 130   subprocess.run(["lake", "build", "leanmodels-run"], ...)   # only if BIN is absent
+line 135   return ["lake", "exe", "leanmodels-run"]
+```
+
+A PATH shim catches lines 130 and 135. **It does not catch line 60**, and line
+60 is the path taken whenever the binary exists — measured present on this box,
+so the hole is live on **every warm clone**, which is every lane's.
+
+That this is the same tool as the two-hop incident is not a coincidence: the
+declaration failed there because nobody traced the chain, and a PATH-only shim
+would fail here for the same reason one level down. *"The shim is the proof"*
+holds only for Lean reached **by name**.
+
+### The second mechanism, measured
+
+Run attested gates against a **`.lake`-less view** of the repo — a symlink farm
+of the root minus `.lake`, built in **263 ms** (19 entries). Then absolute-path
+reach into the built runner finds nothing, and both routes fail loudly:
+
+```
+lake / lean / leanmodels-run   -> refusing shims first on PATH
+.lake/build/bin/leanmodels-run -> does not exist in the view
+```
+
+Cost against the 4.5 h spine build it replaces: not worth measuring further.
+
+**Residual, named rather than hidden:** a gate that hardcodes a path *outside*
+the repo — `~/.elan/bin/lean` is where `lake` and `lean` actually resolve here —
+evades both. Backstop: a post-run descendants check using triad's existing
+`descendants`/watchdog machinery; residual after that is a process short-lived
+enough to fall between samples. So the honest claim is **"attested = no
+repo-reachable Lean, plus observation for the rest"**, not "proof".
+
+### `gate_runner_targets`: refuse the combination, but do not trust it
+
+An attested gate with a non-empty runner target is a contradiction and should
+be refused **at enqueue**, before the shim ever runs — cheap, static, early.
+
+But it must not be the proof: `gate_runner_targets` matched
+`divergence_register` **not at all** until I added it by hand, which is exactly
+how that gate reached the runner two hops down while looking inert. It is a
+pre-filter whose failure mode is silence; the shim and the view are what
+measure.
+
+### Self-tests, three ways
+
+An honest no-Lean gate passes under shim + view; a gate shelling to `lake` dies
+loudly with the attestation named false; **and a gate reaching
+`.lake/build/bin/leanmodels-run` by absolute path dies too** — the third row is
+the one that distinguishes this design from the PATH-only version, and the one
+whose absence would let the leanpy shape through.
+
+### A11 does not need amending; the escalation comment does
+
+A11 says the lock covers all Lean execution. An attested gate runs none, so
+A11 is untouched — and the tenure exists anyway. What changes is the rule I
+wrote at qol-72: *"--gates keeps the tenure, and a kept tenure BUILDS."* That
+becomes conditional — a kept tenure builds **unless every lane gate is
+attested and the attestation held** — and the banner must say which of the two
+it did, since a lane reading "no build" needs to know the attestation is why.
+
+### Triad
+
+Pricing only. Nothing landed, no tool changed, no Lean executed — the
+absolute-path hole was established by inspecting the binary's presence, not by
+running it.

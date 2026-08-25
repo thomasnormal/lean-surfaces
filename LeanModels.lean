@@ -43,6 +43,10 @@ import LeanModels.Sv.Slot
 -- and mutates the world; this drives a stimulus through it and collects a
 -- RegionTrace, which is the left-hand side the adequacy lemma needs.
 import LeanModels.Sv.Drive
+-- R1 inch 4a: wakeEdges (the half stepRegion was missing -- regionQ was only
+-- ever drained) and elabDesign (Design -> SvWorld, the adequacy lemma's third
+-- obligation). always_comb/assign stay LOUD: comb sensitivity has no Trigger.
+import LeanModels.Sv.Load
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

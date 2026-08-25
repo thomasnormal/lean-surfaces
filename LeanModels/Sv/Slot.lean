@@ -73,12 +73,27 @@ def runProcOnce (fuel : Nat) (i : Nat) : SvM StepOutcome := do
   | some ps =>
       let (sigs, nba, out, oc) ←
         liftRes ⟨"4.4"⟩ (stepSStmts fuel w.signals w.nba w.out ps.residual)
-      let ps' : ProcState :=
+      -- RE-ARM or finish. An `always` body completing is the end of one
+      -- iteration, not of the process; an `initial` body completing is the
+      -- end of the process.
+      --
+      -- A re-armed process must also be RE-ENQUEUED. `ProcStatus.ready` is
+      -- not what `stepRegion` reads — it reads `regionQ` — so marking the
+      -- process ready without scheduling it leaves it permanently idle:
+      -- it never reaches its `@(posedge clk)` again, and therefore can
+      -- never be woken again either. The re-entry is what turns "re-armed"
+      -- into "runs a second time".
+      let (ps', reArmed) : ProcState × Bool :=
         match oc with
-        | .done => { residual := [], status := .finished }
-        | .suspended t rest => { residual := rest, status := .suspended t }
-      set { w with signals := sigs, nba := nba, out := out,
-                   procs := w.procs.set! i ps' }
+        | .done =>
+            match ps.arm with
+            | some body => ({ ps with residual := body, status := .ready }, true)
+            | none => ({ ps with residual := [], status := .finished }, false)
+        | .suspended t rest => ({ ps with residual := rest, status := .suspended t }, false)
+      set { w with signals := sigs, nba := nba, out := out
+                 , procs := w.procs.set! i ps'
+                 , regionQ := fun r =>
+                     if reArmed && r == Region.active then w.regionQ r ++ [i] else w.regionQ r }
       pure oc
 
 /-! ## One region's pass -/
@@ -94,15 +109,89 @@ order within one region is. -/
 def stepRegion (σ : RegionOracle) (fuel : Nat) (r : Region) : SvM Bool := do
   let w ← get
   let ready := σ.choose w.k r (w.regionQ r)
-  set { w with k := w.k + 1, curRegion := r }
+  -- DRAIN BEFORE RUNNING, not after. Clearing the queue at the END of the
+  -- pass discards everything scheduled INTO this region *during* it — which
+  -- is exactly what a re-arming `always` process does when its body
+  -- completes. Draining first makes the region's queue mean "work still
+  -- owed", so the pass's own additions survive into `slotStep`'s next
+  -- iteration, which is the §4.4 rule this module's docstring already
+  -- claims ("work scheduled into Active by an NBA commit re-enters Active").
+  set { w with k := w.k + 1, curRegion := r
+             , regionQ := fun r' => if r' == r then [] else w.regionQ r' }
   match ready with
   | [] => pure false
   | _ =>
       for i in ready do
         let _ ← runProcOnce fuel i
-      modify fun w' =>
-        { w' with regionQ := fun r' => if r' == r then [] else w'.regionQ r' }
       pure true
+
+/-! ## Edge detection and waking -/
+
+/-- §9.4.2 edge on a 1-bit value.
+
+    posedge : 0→1, 0→x, 0→z, x→1, z→1
+    negedge : 1→0, 1→x, 1→z, x→0, z→0
+
+So an `x`/`z` transition **is** an edge whenever the other end is a level:
+leaving a known 0 is a posedge even if the destination is unknown, and
+arriving at a known 1 is a posedge even if the origin was. Only `x→z`,
+`z→x` and a value to itself are edgeless — neither end is a level.
+
+**This is the same rule as `isNegedge` in `Sem2` (the M1 cycle model),
+written twice on purpose**: `Slot` sits *below* `Sem2` in the import graph,
+and reaching it would mean importing the whole cycle model into the region
+tier. The duplication is named rather than accidental — folding both onto
+one definition low in the graph (`Basic`, where `Logic` lives) is the next
+rung, and it makes the agreement hold by construction instead of by
+inspection. -/
+def edgeOn (e : Edge) (old new : Logic) : Bool :=
+  let pos : Bool :=
+    match old, new with
+    | .l0, .l1 | .l0, .lx | .l0, .lz | .lx, .l1 | .lz, .l1 => true
+    | _, _ => false
+  let neg : Bool :=
+    match old, new with
+    | .l1, .l0 | .l1, .lx | .l1, .lz | .lx, .l0 | .lz, .l0 => true
+    | _, _ => false
+  match e with
+  | .pos => pos
+  | .neg => neg
+  | .any => pos || neg
+
+/-- Did `sig` see the given edge between two states?
+
+The clock is read as a **1-bit** value (bit 0), which is what `Sem2` does
+for reset ports; an absent or width-0 signal reads `x`, and `x` against
+`x` is not an edge, so an undeclared name can never wake anything. -/
+def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
+  let bitOf : SvState → Logic := fun st =>
+    match SvState.lookup st sig with
+    | some v => v.bits[0]?.getD .lx
+    | none => .lx
+  edgeOn e (bitOf old) (bitOf new)
+
+/-- Wake every process whose edge trigger fired between `old` and `new`,
+marking it ready and **enqueueing it in Active**.
+
+This is the half `stepRegion` was missing: it drains `regionQ`, and this
+is what fills it. -/
+def wakeEdges (old new : SvState) : SvM Unit :=
+  modify fun w =>
+    let woken : List Nat :=
+      (List.range w.procs.size).filter fun i =>
+        match w.procs[i]? with
+        | some ps =>
+            match ps.status with
+            | .suspended (.atEdge sig e) => sawEdge old new sig e
+            | _ => false
+        | none => false
+    let procs' := woken.foldl (fun (ps : Array ProcState) i =>
+        match ps[i]? with
+        | some p => ps.set! i { p with status := .ready }
+        | none => ps) w.procs
+    { w with procs := procs'
+           , regionQ := fun r =>
+               if r == Region.active then w.regionQ r ++ woken else w.regionQ r }
 
 /-! ## The slot -/
 

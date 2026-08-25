@@ -74,6 +74,38 @@ theorem dyadic_scale (m : Int) (e : Int) (k : Nat) :
     rw [hk, Int.natCast_pow, Int.natCast_pow, Int.pow_add]
     simp [Int.mul_assoc]
 
+/-! ## THE COMMON-GRID REDUCTION -/
+
+/-- `Q.Eq` is transitive.  Cross-multiplication equality with positive
+    denominators; the cancellation is `Int.eq_of_mul_eq_mul_right`. -/
+theorem Qeq_trans {a b c : Q} (h1 : Q.Eq a b) (h2 : Q.Eq b c) : Q.Eq a c := by
+  unfold Q.Eq at h1 h2 ⊢
+  have hb : (b.den : Int) ≠ 0 := by have := b.den_pos; omega
+  apply Int.eq_of_mul_eq_mul_right hb
+  calc a.num * (c.den : Int) * (b.den : Int)
+      = (a.num * (b.den : Int)) * (c.den : Int) := by
+        simp [Int.mul_assoc, Int.mul_comm, Int.mul_left_comm]
+    _ = (b.num * (a.den : Int)) * (c.den : Int) := by rw [h1]
+    _ = (b.num * (c.den : Int)) * (a.den : Int) := by
+        simp [Int.mul_assoc, Int.mul_comm, Int.mul_left_comm]
+    _ = (c.num * (b.den : Int)) * (a.den : Int) := by rw [h2]
+    _ = c.num * (a.den : Int) * (b.den : Int) := by
+        simp [Int.mul_assoc, Int.mul_comm, Int.mul_left_comm]
+
+/--
+**EVERY REPRESENTABLE LIES ON ONE GRID.**  Re-expressed at `minExponent` via
+`dyadic_scale`, so "nearest among all representables" stops being a claim about
+many grids and becomes one about a single grid.
+-/
+theorem repr_on_min_grid (fmt : Format) (q : Q) (h : ReprQ fmt q) :
+    ∃ j : Int, Q.Eq q (Q.dyadic j fmt.minExponent) := by
+  obtain ⟨m, e, _hm, he, hq⟩ := h
+  refine ⟨m * 2 ^ (e - fmt.minExponent).toNat, ?_⟩
+  have hscale := dyadic_scale m e (e - fmt.minExponent).toNat
+  have he' : e - (((e - fmt.minExponent).toNat : Nat) : Int) = fmt.minExponent := by omega
+  rw [he'] at hscale
+  exact Qeq_trans hq hscale
+
 /-! ## 2. CORRECT ROUNDING — IEEE 754-2019 §4.3, declaratively
 
 No algorithm appears: `y` is representable, nothing representable is strictly

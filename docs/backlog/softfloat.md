@@ -1487,3 +1487,73 @@ first step of the last component, not the component.
 | the rounding decision (round-half-to-even) | **proved** |
 | carry-out absorption | **proved** |
 | nearest among ALL representables | **started** — `dyadic_scale` landed; the common-grid reduction and the bracketing step remain |
+
+---
+
+## 2026-08-25-softfloat-25 — THE COMMON-GRID REDUCTION: many grids become one
+
+`LeanModels/SoftFloat/Round.lean`. `Qeq_trans` and `repr_on_min_grid`, both
+`[propext, Quot.sound]`, **TRUSTWORTHY**, zero `sorry`.
+
+### WHAT LANDED
+
+```
+repr_on_min_grid (fmt) (q) : ReprQ fmt q → ∃ j : Int, Q.Eq q (Q.dyadic j fmt.minExponent)
+```
+
+Every representable value can be re-expressed at `minExponent`. Since
+`ReprQ` requires `minExponent ≤ e`, `dyadic_scale` shifts each value down to the
+common exponent, and `Qeq_trans` chains that with the value's own
+representation.
+
+> **"Nearest among all representables" stops being a claim about MANY GRIDS and
+> becomes one about ONE.**
+
+`Qeq_trans` is the enabling piece and had to be built: `Q.Eq` is
+cross-multiplication, so transitivity needs a cancellation —
+`Int.eq_of_mul_eq_mul_right` — and, core-only, the three commutation steps are
+`simp [Int.mul_assoc, Int.mul_comm, Int.mul_left_comm]` rather than `ring`.
+
+### ONE SIGNATURE TRAP
+
+`Int.eq_of_mul_eq_mul_right` takes **`a ≠ 0`**, not `0 < a`. Supplying the
+positivity fact produced an application type mismatch, not a "wrong hypothesis"
+message. Cheap to fix, and the general form is the one this lane keeps
+meeting: **read the signature, do not infer it from the name** — `_right` said
+which side cancels but nothing about what it needs.
+
+### §9.0 — STILL 1/12
+
+**39 landed theorems, 1 an unconditional `op_correct`.**
+
+### THE LADDER
+
+| rung | component of `RoundWithAccuracyIsNearest` | status |
+| --- | --- | --- |
+| 1 | residue meaning — round/sticky bits mean `m % 2^(n+1)` vs `2^n` | **proved** (`em_shift_round`, `em_shift_sticky`, `em_shift_eq`) |
+| 2 | the rounding decision — core's rounding IS round-half-to-even | **proved** (`roundedMantissa_eq_roundHalfEven`) |
+| 3 | carry-out absorption — the second shift moves representation, not value | **proved** (`shiftToExponent_exact`, `carry_shift_exact`) |
+| 4a | scaling invariance — the dyadic fact | **proved** (`dyadic_scale`) |
+| 4b | **common-grid reduction** — every representable at one exponent | **proved** (`repr_on_min_grid`) |
+| 4c | **bracketing** — nearest-on-grid is nearest outright | **NOT STARTED** |
+| — | `RoundWithAccuracyIsNearest` | owed |
+| — | `mul_correct` unconditional; then `div`, `sqrt`, `add` | queued behind it |
+
+### 4c, NAMED PRECISELY, because it is the last one
+
+The significand bound `m.natAbs < 2 ^ mantissaBits` has done **no work yet** —
+every lemma so far used only `minExponent ≤ e`. 4c is where it pays, and the
+reason is the case it rules out:
+
+* a representable `z` with exponent `ez ≥ E` (the target exponent) is a
+  multiple of `2^E`, so the two neighbours of `q` on that grid already bracket
+  it and rung 2 picks the nearer — this case is easy;
+* a representable `z` with `ez < E` sits on a **finer** grid, and could a
+  priori be closer. **The significand bound is what stops it**: `|z| <
+  2^mantissaBits · 2^ez ≤ 2^(mantissaBits + E - 1)`, which is the bottom of
+  `q`'s own binade, so such a `z` lies strictly below every candidate and
+  cannot beat the bracketing neighbour.
+
+That second bullet is the whole of 4c, and it is a magnitude argument rather
+than an arithmetic identity — the first in this component that reasons about
+where a value SITS rather than what it EQUALS.

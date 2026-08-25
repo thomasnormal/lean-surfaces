@@ -5150,3 +5150,85 @@ the floor now runs five gates, with `bash tools/backlog-index.sh --check` last.
 sites 57, diagnose 51, `--verify-guards` 44, docs_check 91/91. The three rows
 pinning the old four-gate floor were updated — which is what a floor change
 should feel like. Fixtures and a stubbed `lake` only; no Lean executed.
+
+## 2026-08-25-qol-76 — pricing envelope freshness (NOT landed): the frontend is the load-bearing pin
+
+Measured on the python tier, 61 pairs, twice — and the two runs disagree so
+violently that the disagreement *is* the finding.
+
+```
+interpreter        byte-identical  stamp-only  CONTENT DRIFT  time
+python3.14.5 (mine)        4           53            4        8.4 s
+python3.9.19 (ORACLE)     55            4            2        9.3 s
+```
+
+Same corpus, same script, same comparison — **different interpreter, different
+verdict.** The envelopes stamp `frontend.version`, and under the wrong
+interpreter the gate reports *the interpreter* as staleness: 53 false
+stamp-only rows and **two false content drifts**.
+
+> "Ignore the stamp" is not sufficient. A different frontend changes CONTENT,
+> not just the stamp — so the manifest must PIN the frontend, and the gate must
+> refuse when the available one does not match what the envelopes record.
+
+This is the pyslang lesson in a second tier: the SV extractor stamps pyslang's
+version, the python extractor stamps CPython's, and both make a naive
+comparison a version detector.
+
+### Independent corroboration of pyc
+
+Under the oracle: **2 content drifts — `bench_heapq_sift` and `sunfish`** —
+plus 4 stamp-only. pyc reported 2 content drifts and 3 stamp-only. The content
+count matches exactly and by name; the stamp count differs by one, which is
+what a fix landing between two measurements looks like. The two drifting files
+are named here so the cleanup inch has its targets.
+
+### (1) The shared harness, and what its manifest must carry
+
+`harness/envelope_fresh.py` parameterized per tier, with the manifest holding
+**four** fields, not two:
+
+* the corpus glob and the extractor command;
+* **the frontend pin** — the interpreter/library the envelopes were extracted
+  with, checked before comparing and a REFUSAL when absent, never a warning;
+* the stamp fields to ignore (`frontend` for python; SV's is the same shape);
+* nothing else — an under-specified comparison set is how two people get two
+  verdicts from one corpus.
+
+### (2) Tiers and measured cost
+
+| tier | pairs | cost | state |
+|---|---|---|---|
+| python | 61 | **9.3 s** under the oracle | RED today: 2 drifts + 4 stamp-only |
+| sv | 21 | not timed (no pyslang here) | **already has this gate** — `sv_round_trip.py` |
+| spice | 8 | untimed | lane's call |
+| es | 2 | — | deliberately hashes SOURCES, not envelopes |
+| c | — | — | its selftest regenerates 270 envelopes byte-identical |
+
+**Not `DEFAULT_FLOOR`.** Under the ruled law the corpora are per-tier, so this
+is lane-added — the coordinator's reading is right and my law agrees with it.
+
+### The dividend nobody costed: it retires my pyslang pin
+
+`sv_round_trip.py` compares **byte-identically**, which is precisely why
+`.github/workflows/ci.yml` carries `pyslang==11.0.0` marked *"TEMPORARY —
+remove when extract.py stamps the family"*. A frontend-pinning,
+stamp-ignoring comparison **is** that condition being met. Adopting the shared
+harness in SV lets the pin go, which is a fleet-wide unblock, not a tier
+detail.
+
+### (3) Sequencing
+
+The python tier's gate lands **only after** a cleanup inch resolves
+`bench_heapq_sift` and `sunfish`. That inch is pyc's to price. Landing the
+gate first turns the tier red on a corpus nobody has cleaned — the register
+arc's lesson, and the reason I verified rather than assumed the last time.
+
+No extractor reaches lake or Lean (0 refs across all seven), so nothing here
+needs a tenure.
+
+### Triad
+
+Pricing only. No tool changed, nothing landed, no Lean executed, and the
+extraction ran with companions redirected to a temp dir so the tree stayed
+clean.

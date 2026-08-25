@@ -492,3 +492,161 @@ promised you. The two guards that most needed precision were both written with
 idle machine an hour after it was written. §5.4's "every refusal path RUN, not
 admired" is the rule that caught it: the check had a self-test, the self-test did
 not cover the false-positive direction, and adding that case took one line.
+
+---
+
+## 2026-08-25-basecase-1 — THE BASE CASE'S OWN INDUCTION, and rung 8 was never blocked
+
+Successor lane, predecessor transcript lost, state re-derived from the tree at
+`3cc251f` (418 commits fetched; the clone was at `7c80bbc`, three days behind).
+**The re-derivation is the finding**, so it is stated before the Lean.
+
+### THE BLOCK WAS NOT REAL, and the tree says so in one grep
+
+`docs/sunfish-flagship-chain.md` carried rung 8 — this lane's
+`BoundRefinesW V 0` — as **`BLOCKED (their ledger)`**, and this lane's own §L77
+successor entry agreed: *"`hfall` and `boundRefinesW_zero` wait on inch 4."*
+Both were wrong, and the disagreement is checkable rather than a matter of
+opinion:
+
+* `boundRefinesW_zero` splits the base case four ways. Three arms are proved
+  (`refinesAt_king_capture`, `refinesAt_probe_hit` twice) and `hfall_cut`
+  discharges the fourth arm's CUT half. What remains is the **fail-low arm**.
+* `basecase_depth0.lean`'s own tail says why that arm is not a leaf: at depth 0 a
+  searched move recurses at depth 0 (`qs_child_depth_eq`, and §8's guards measure
+  it — `bd_probe (posH 0) 40 0 = some (4, 34)`, **one call and thirty-four
+  keys**), so the arm consumes a report from a depth-0 child, which is
+  `BoundRefinesW V 0` itself. **Circular under an induction on depth.**
+* And it names the exit in the same breath: *"what closes it is a second
+  induction on the QS termination measure (calmness, not depth)."*
+* **That measure has been in the tree since F2.** `qs_rank.lean` defines
+  `RefinesAtQ`, `qsRank`, the descent theorem `qsRank_lt_of_qsLt` and the
+  totality of the `∃ k` closure. `grep -rn RefinesAtQ Examples/` outside its own
+  file returns **nothing**. It had ZERO consumers for three days.
+
+So rung 8 waited on no artifact owned anywhere else. It waited on somebody
+writing the induction that F2 was built to make writable. **The analog lane's
+warning — a family table "wrong about the frontier every time it was checked
+against the tree" — landed here verbatim, and it was this lane's own table.**
+
+### WHAT LANDED — `qs_rank.lean` §5, four declarations
+
+The base case's `flagship.lean`, and deliberately the same shape:
+
+1. **`BoundRefinesWQ V k`** — `BoundRefinesW V 0` under a rank budget.
+   Character-identical except that the conclusion is `RefinesAtQ`.
+2. **`boundRefinesW_zero_of_forallQ`** — the budgets exhaust the claim, which is
+   §3's closure lifted from one position to the rule.
+3. **`QSRecursionStep V`** and **`boundRefinesW_zero_of_qsStep`** — the step, and
+   the strong induction discharged ONCE, routed through an auxiliary
+   `∀ n, ∀ k ≤ n` exactly as `flagship.lean` routes its own through `d.toNat`.
+   **`BoundRefinesW V 0` is now a theorem with one hypothesis and no proof
+   shape.**
+4. **`refinesAt_child_of_qsStep`** — the anti-circularity result, and the reason
+   the second induction is the RIGHT one: a child passing F1's own `descendsB`
+   test ranks strictly below its parent, so the parent's budget strictly exceeds
+   the child's rank and the hypothesis is in hand at the child. **No interpreter
+   term appears in it.**
+5. **`qsStep_of_hfallQ`** — the step reduced to the fail-low arm alone, and this
+   is the part that is CHECKED rather than asserted: **three of the four arms
+   take the induction hypothesis nowhere**, because none of them runs `moves()`.
+   Only the fall-through is handed `k` and `ih`.
+
+### THE PREDICTION, stated before the tenure
+
+Recorded in advance per §9.0, so the measurement can contradict it:
+
+* the section elaborates with **at most one round of fixes**;
+* the split in `qsStep_of_hfallQ` is the only place where a hypothesis had to be
+  moved, and the three non-fall arms need **no** change from
+  `boundRefinesW_zero`'s spelling;
+* the build is cheap — **nothing imports `qs_rank.lean`**, so the tenure pays for
+  one module's elaboration and no downstream re-check.
+
+### THE CLASS, and why this inch was chosen over F3c inch 3
+
+Thomas's re-founding ruling stands: *this lane starts no new statements against
+the old interpreter.* F3c inches 3–4 are the interpreter half and re-found;
+§L77's handoff said so. **§5 is class 1 — spec-side.** `BoundRefinesWQ`,
+`QSRecursionStep`, the induction and the child bridge mention no `execStmt`, no
+`evalExpr`, no fuel: they are statements about `RefinesAt`, a `Nat` budget and a
+board. They transport across the re-founding unchanged, and they were writable
+today. **The seam §L30 drew — "spec half / interpreter half" — is what made a
+lane with a re-founded interpreter still have something real to prove.**
+
+### A DEBT, named at the moment it was incurred
+
+`qsStep_of_hfallQ` **duplicates** `boundRefinesW_zero`'s four-way split. Both are
+the same arithmetic on `(pos.score, lo, up, gamma)`. Factoring them apart means
+editing `basecase_depth0.lean`, which `flagship.lean` consumes — so it is not
+done in the landing that introduces the second consumer, and it is owed. The
+honest form: a per-position `refinesAt_zero_of_fall` taking `hfall` specialised
+to ONE position, of which both theorems become two-line corollaries.
+
+### The F ladder, from the tree
+
+F1 **DONE** (§L62), F2 **DONE** (§L64) *and now consumed for the first time*,
+F3a **DONE** (§L36), F3b **DONE** (§L73), F3c inches 1–2 **DONE** (§L77,
+`2026-08-22-basecase-1`), inches 3–4 **OWED and re-founding** (interpreter half),
+F5 — the assembly — **is what §5 just did for everything except the fail-low
+arm.**
+
+### Rung 8, in the flagship's terms
+
+`BoundRefinesW V 0` ⟸ `QSRecursionStep V` ⟸ `hfallQ` + `hV` + `hmateV`.
+`hV` and `hmateV` are the model's, named since §L20. **`hfallQ` is the whole of
+what rung 8 still owes**, and its shape is `hfall`'s with two additions: the
+parent's budget, and the hypothesis at every strictly smaller one. The chain
+document's rung-8 row is corrected from `BLOCKED` to `OPEN` in this landing, with
+the reason recorded there.
+
+### What this landing contains, and its triad
+
+1. `Examples/python/sunfish/qs_rank.lean` — §5, and a header amendment so the
+   file's own "what this file does NOT do" stops being false.
+2. `docs/sunfish-flagship-chain.md` — the rung-8 row and its justification.
+3. `docs/backlog/basecase.md` — this entry.
+
+**Triad** (`tools/triad.sh --lane basecase`, tenure `basecase 56208`,
+`LOCK ACQUIRED after 5047s` 10:49:52 → `LOCK RELEASED (mine)` 11:49:09, tree at
+enqueue `0214d377b3e8`, base `3cc251f`):
+
+* `lake build` **exit 0**, and `COVERAGE (§5.4a): full` — no target list was
+  given, so the green covers every default target at this sha;
+* `docs_check` **91/91 marked blocks**, 39 illustrative-exempt;
+* `diff_test` **1508 cases, 0 failed**, 124 whitelisted-unsupported, 1384 matched;
+* `refusal_census --whitelist` **124 rows in 51 classes**;
+* `divergence_register` **OK — every row gated both ways**, 4 declared
+  divergences. (This gate joined the floor on 2026-08-25; this lane's first
+  tenure under it.)
+
+No `sorry`, no `native_decide`, **no warning naming `qs_rank.lean`**, and all four
+new declarations are clean-axiom — `[propext, Classical.choice, Quot.sound]` and
+nothing else.
+
+### The predictions, measured
+
+Stated before the tenure, and all three held — the first one by a margin worth
+recording:
+
+1. *"at most one round of fixes"* — **zero.** The section elaborated first shot.
+2. *"the three non-fall arms need no change from `boundRefinesW_zero`'s
+   spelling"* — held; the split is character-identical but for the added budget.
+3. *"the tenure pays for no downstream re-check"* — held, and the classifier
+   agreed independently: it reported `--classify would build
+   Examples.python.sunfish.qs_rank LeanModels.Python`. **A full tenure was queued
+   anyway**, deliberately: after a 418-commit jump the stronger green is worth
+   the machine time, and the floor needs `leanmodels-run` regardless. The
+   coverage statement §5.4a asks for is the `full` line above.
+
+### AND THE GREEN'S TRANSFER, checked rather than assumed
+
+Master moved 26 commits while this tenure ran, and `git diff --name-only` over
+`*.lean` shows **`pins_common.lean` in this file's dependency chain** (via
+`pins_genmoves`). So the check §L73's precedent asks for was run rather than
+skipped: the change is `e81dedf` *"Shard the pins pair"*, **44 insertions and
+zero deletions**, and `board0` — the only name this file takes from it — is
+untouched. The green therefore transfers, and a re-gate rides with the next
+inch's tenure rather than being claimed here. **A purely additive dependency is
+still a changed dependency; what makes this safe is the diff, not the word
+"additive".**

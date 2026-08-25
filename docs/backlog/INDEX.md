@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**390 entries across 17 lanes.** Regenerate with
+**391 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -44,6 +44,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-analog-8` |  | A15: F3 needed no new mathematics, and the audit is now 4-for-4 at overturning the census | analog |
 | `2026-08-25-ada-2` |  | INCH 5's CENSUS: `Report` should be EXECUTED, not modelled — and the emitter is already inside it | ada |
 | `2026-08-25-sv-1` |  | THE ADEQUACY LEMMA HAS A THIRD OBLIGATION, and finding it exposed a semantic gap the fixture concealed | sv |
+| `2026-08-25-basecase-1` |  | THE BASE CASE'S OWN INDUCTION, and rung 8 was never blocked | basecase |
 | `2026-08-25-ada-1` |  | INCH 4: a frame that ABSORBS, and the handler sees the world AS OF THE RAISE | ada |
 | `2026-08-24-architecture-87` |  | A corpus can only contradict the rules it exercises | architecture |
 | `2026-08-24-architecture-86` |  | The instrument is part of the claim | architecture |

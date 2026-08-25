@@ -78,7 +78,7 @@ unsolved question in it.
 | 5 | R3 fold, interpreter half on the monadic fold | R-track | OPEN (round law landed) |
 | 6 | The ~57 interpreter-facing statement gates of `bound()`, re-proved monadically | R-track | OPEN |
 | 7 | `RecursionStepW V` assembled | R-track | MECHANICAL after 3,5,6 |
-| 8 | Base case `BoundRefinesW V 0` | base-case lane | BLOCKED (their ledger) |
+| 8 | Base case `BoundRefinesW V 0` | base-case lane | OPEN (one arm: `hfallQ`) |
 | 9 | Three tier surfaces for real-play scope | pyc lane | **CLOSED (with scope)** |
 
 **Closed: 5 of 9** — rung 9 (pyc inch 3, `cf13932`: `bound()`'s unsupported
@@ -87,6 +87,18 @@ census is ZERO, all three flagship-serving surfaces landed, scoped by the
 discharged), rung 2 (`GenEmitsM.forGenRound`), rung 3 (`forGenChain`: the
 caller's induction discharged once, over `ForGenRunM`) and rung 4
 (`FoldInv`/`.step`/`.nil`/`.run` in `monadic_fold.lean`).
+
+**Rung 8 is no longer BLOCKED, and the correction is the base-case lane's own**
+(2026-08-25, `qs_rank.lean` §5). The row read `BLOCKED (their ledger)` for a
+dependency that did not exist: the base case's exit was a SECOND induction, on
+the QS rank rather than on depth, and `RefinesAtQ` had been standing ready for it
+since F2 with zero consumers. That induction is now discharged —
+`boundRefinesW_zero_of_qsStep` — and `qsStep_of_hfallQ` checks by machine that
+three of the base case's four arms take the induction hypothesis nowhere. So
+rung 8 is `OPEN` in this document's own vocabulary: one lane owns it, and what is
+left is one named obligation, `hfallQ`, the fail-low arm with the hypothesis at
+every strictly smaller rank in hand. **Same move as rung 1, same finding**: the
+rung that blocked the most had never been anyone's explicit task.
 
 **Rung 5 is the live one, and it has its floor.** `forGen_step` / `forGen_done`
 are the fold's interpreter half at its lowest altitude — one round and

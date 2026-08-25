@@ -20,6 +20,15 @@ not prove any `RefinesAtQ` — it *states* the strengthened proposition, proves 
 two facts that make the strengthening sound (the rank descends where the measure
 descends, and the `∃ k` closure is total), and instantiates both. §L30's own
 words for F2 are "the strengthened statement", not "the strengthened proof".
+
+**§5 ADDS THE INDUCTION ITSELF** (2026-08-25). The strengthened statement was
+written to make an induction possible and then nobody wrote the induction, so
+`RefinesAtQ` sat with ZERO consumers for three days while the chain document
+recorded rung 8 as BLOCKED. §5 discharges it — once, here — so that
+`BoundRefinesW V 0` reduces to exactly ONE named obligation and no proof shape.
+That is `flagship.lean`'s move (rung 1) applied to the base case, and it has the
+same finding attached: the rung that blocked the most was the one nobody had
+made anybody's explicit task.
 -/
 import Examples.python.sunfish.qs_measure
 
@@ -29,7 +38,10 @@ open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
 open Examples.python.sunfish.genmoves_theorem (posOf)
 open Examples.python.sunfish.faillow_census (pieceCount pstTotal d4B e4B)
-open Examples.python.sunfish.basecase_depth0 (RefinesAt)
+open Examples.python.sunfish.basecase_depth0
+  (RefinesAt BoundWF BoundRefinesW IsPosition
+   refinesAt_king_capture refinesAt_probe_hit probe_answer_spelled)
+open Examples.python.sunfish.bound_depth (mateLower mateUpper tpKey entryDefault entryOf)
 open Examples.python.sunfish.qs_measure
 
 set_option maxRecDepth 100000
@@ -190,6 +202,167 @@ consumes. -/
 #guard qsLtB (qsMeasure e4B) (qsMeasure board0)
 #guard qsLtB (qsMeasure noKnightB) (qsMeasure board0)
 
+/-! ## §5 THE INDUCTION, DISCHARGED — and rung 8 reduces to ONE arm
+
+**What was blocking rung 8, stated exactly.** `boundRefinesW_zero`
+(`basecase_depth0.lean` §8) splits the depth-0 base case four ways and proves
+three: the king capture, and the probe hit's two returns. `hfall_cut` then
+discharged the fourth arm's CUT half. What was left is the fail-low arm, and the
+file's own tail says why it is not a leaf: *"a QS node's children store under the
+QS node's OWN key"* — `qs_child_depth_eq` — so the fail-low arm's report consumes
+a report from a depth-0 CHILD, which is `BoundRefinesW V 0` itself. **Circular
+under an induction on depth**, and the guards measure the circle: `bd_probe
+(posH 0) 40 0 = some (4, 34)`. One depth-0 call, thirty-four keys.
+
+**The exit was named three days before it was written, and never written.** F2
+built `RefinesAtQ` precisely so the second induction — on the QS rank, not on
+depth — would be available, and then `RefinesAtQ` sat with **no consumers at
+all**. The chain document recorded rung 8 as `BLOCKED (their ledger)` for
+something that needed nobody else.
+
+**So this is the base case's `flagship.lean`.** The induction is discharged once,
+here; `BoundRefinesW V 0` becomes a theorem with one genuine hypothesis and no
+proof shape, and when that hypothesis lands the base case closes by application.
+
+**Why the budget is a `Nat` and not the pair**: §1's window. Why the induction is
+STRONG and not predecessor-step: a QS child's rank falls by the move's own value
+(`46` and `42` at the fixture, §4) or by a whole `qsSpan` at a capture, never by
+one. -/
+
+/-- **`BoundRefinesW V 0` UNDER A RANK BUDGET.** Character-identical to
+`BoundRefinesW V 0` except that its conclusion is `RefinesAtQ` — the same claim,
+restricted to positions whose board ranks at or below `k`. -/
+def BoundRefinesWQ (V : RVal → Int → Int) (k : Nat) : Prop :=
+  ∀ (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int) (pos : RVal)
+    (es : Array (RVal × RVal)) (sv : Nat),
+    BoundWF V w ci sa ts tm hs n dl sf es sv →
+    IsPosition pos →
+    -mateUpper < gamma → gamma ≤ mateUpper →
+    RefinesAtQ V k 0 w sa ts gamma pos
+
+/-- **THE BUDGETS EXHAUST THE CLAIM**, which is §3's closure lifted from one
+position to the rule. Nothing is restricted away by working at a budget: the
+budget can always be taken to BE the rank. -/
+theorem boundRefinesW_zero_of_forallQ {V : RVal → Int → Int}
+    (h : ∀ k : Nat, BoundRefinesWQ V k) : BoundRefinesW V 0 := by
+  intro w ci sa ts tm hs n dl sf gamma pos es sv hwf hpos hlo hup
+  exact refinesAt_of_forallQ
+    (fun k => h k w ci sa ts tm hs n dl sf gamma pos es sv hwf hpos hlo hup)
+
+/-- **THE QS RECURSION STEP** — the base case's analogue of `RecursionStepW`, and
+strong for the same kind of reason: a depth-0 node's children are at depth 0
+again, so the recursion is on the RANK and the rank falls by a move's value
+rather than by one. -/
+def QSRecursionStep (V : RVal → Int → Int) : Prop :=
+  ∀ k : Nat, (∀ j : Nat, j < k → BoundRefinesWQ V j) → BoundRefinesWQ V k
+
+/-- **AND IT ASSEMBLES.** The base case follows from the step and nothing else.
+The induction is routed through an auxiliary `∀ n, ∀ k ≤ n` exactly as
+`flagship.lean` routes its own through `d.toNat`, so that no part of the
+difficulty lives in the recursion. -/
+theorem boundRefinesW_zero_of_qsStep {V : RVal → Int → Int}
+    (hstep : QSRecursionStep V) : BoundRefinesW V 0 := by
+  have key : ∀ n : Nat, ∀ k : Nat, k ≤ n → BoundRefinesWQ V k := by
+    intro n
+    induction n with
+    | zero => intro k hk; exact hstep k (fun j hj => absurd hj (by omega))
+    | succ n ih => intro k hk; exact hstep k (fun j hj => ih j (by omega))
+  exact boundRefinesW_zero_of_forallQ (fun k => key k k (Nat.le_refl k))
+
+/-- **THE INDUCTION HYPOTHESIS IS APPLICABLE AT EVERY QS CHILD** — the theorem
+the circularity finding asks for, and the reason the second induction is the
+right one. `descendsB` is F1's own QS-child test (the move's value at or above
+the `40` floor, and either a capture or a quiet move whose `pst` swing IS that
+value), and it is enough: a child that passes it ranks strictly below its parent,
+so the parent's budget `k` strictly exceeds the child's rank and the hypothesis
+at `qsRank b'` is in hand.
+
+**No interpreter step appears here**, which is the point of doing it at this
+altitude: the fail-low arm's remaining work is to show the fold's rounds ARE such
+children, not to show that such children are usable. -/
+theorem refinesAt_child_of_qsStep {V : RVal → Int → Int} {k : Nat}
+    (ih : ∀ j : Nat, j < k → BoundRefinesWQ V j)
+    {b b' : String} {v : Int}
+    (hb : PstInWindow b) (hb' : PstInWindow b') (hdesc : descendsB b b' v = true)
+    (hk : qsRank b ≤ k)
+    (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int)
+    (sc' : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (es : Array (RVal × RVal)) (sv : Nat)
+    (hwf : BoundWF V w ci sa ts tm hs n dl sf es sv)
+    (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper) :
+    RefinesAt V 0 w sa ts gamma (posOf b' sc' wc0 wc1 bc0 bc1 ep kp) := by
+  have hfall : qsRank b' < qsRank b :=
+    qsRank_lt_of_qsLt b b' hb hb' (qsMeasure_lt_of_descendsB hdesc)
+  exact ih (qsRank b') (by omega) w ci sa ts tm hs n dl sf gamma _ es sv hwf
+    ⟨b', sc', wc0, wc1, bc0, bc1, ep, kp, rfl⟩ hlo hup
+    (Nat.le_of_eq (congrArg qsRank (boardOf_posOf b' sc' wc0 wc1 bc0 bc1 ep kp)))
+
+/-- **THE STEP REDUCES TO THE FAIL-LOW ARM ALONE**, and this theorem is where
+that is checked by machine rather than asserted in prose. The four-way split is
+`boundRefinesW_zero`'s, re-run at a budget; **three of the four arms take the
+induction hypothesis nowhere**, because none of them runs `moves()`:
+
+* the king capture returns before the probe,
+* the probe's lower return and its upper return both return before the fold.
+
+Only the fall-through — `lo < gamma ≤ up`, where `moves()` finally runs — is
+handed `k` and `ih`. So `hfallQ` is the whole of what rung 8 still owes, and its
+shape is `hfall`'s with two additions: the parent's budget, and the hypothesis at
+every strictly smaller one.
+
+**The split itself is duplicated from `boundRefinesW_zero` and that is a debt,
+not a design.** Both are the same arithmetic on `(pos.score, lo, up, gamma)`;
+factoring them apart means editing `basecase_depth0.lean`, which `flagship.lean`
+consumes, so it is deliberately not done in the landing that introduces the
+second consumer. Recorded on this lane's ledger. -/
+theorem qsStep_of_hfallQ {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    (hmateV : ∀ (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int),
+      sc ≤ -mateLower → V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ -mateUpper)
+    (hfallQ : ∀ (k : Nat), (∀ j : Nat, j < k → BoundRefinesWQ V j) →
+      ∀ (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int)
+        (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+        (es : Array (RVal × RVal)) (sv : Nat) (lo up : Int),
+      BoundWF V w ci sa ts tm hs n dl sf es sv →
+      qsRank b ≤ k →
+      -mateUpper < gamma → gamma ≤ mateUpper → -mateLower < sc →
+      (dictFind es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)).getD entryDefault
+        = entryOf lo up →
+      lo < gamma → gamma ≤ up →
+      RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    QSRecursionStep V := by
+  intro k ih w ci sa ts tm hs n dl sf gamma pos es sv hwf hpos hlo hup hrank
+  obtain ⟨b, sc, wc0, wc1, bc0, bc1, ep, kp, rfl⟩ := hpos
+  -- `boardOf (posOf b …)` is `b` by `rfl` (`boardOf_posOf`), but the budget is
+  -- carried to `hfallQ` explicitly rather than left to the unifier: §L44's rule.
+  have hrankb : qsRank b ≤ k := hrank
+  by_cases hmate : sc ≤ -mateLower
+  · exact refinesAt_king_capture w ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp
+      hwf.self hwf.table hwf.clock hwf.ml hwf.mu hmate hlo
+      (hmateV b sc wc0 wc1 bc0 bc1 ep kp hmate)
+  · obtain ⟨lo, up, hfind⟩ :=
+      probe_answer_spelled (p := posOf b sc wc0 wc1 bc0 bc1 ep kp) (d := 0) hwf.spelled
+    by_cases hA : gamma ≤ lo
+    · exact refinesAt_probe_hit hV w ci sa ts tm hs n dl sf gamma sc lo up
+        b wc0 wc1 bc0 bc1 ep kp es sv hwf.self hwf.score hwf.table hwf.clock hwf.ml hwf.mu
+        (by omega) hlo hup hfind (Or.inl hA)
+    · by_cases hB : up < gamma
+      · exact refinesAt_probe_hit hV w ci sa ts tm hs n dl sf gamma sc lo up
+          b wc0 wc1 bc0 bc1 ep kp es sv hwf.self hwf.score hwf.table hwf.clock hwf.ml hwf.mu
+          (by omega) hlo hup hfind (Or.inr hB)
+      · exact hfallQ k ih w ci sa ts tm hs n dl sf gamma b sc wc0 wc1 bc0 bc1 ep kp es sv
+          lo up hwf hrankb hlo hup (by omega) hfind (by omega) (by omega)
+
+/-! ### The budget really does fall at the fixture's own children
+
+§4 measured the ranks; these say the same thing in the shape the step consumes —
+`descendsB`'s premises hold, and the child's rank is a strictly smaller BUDGET,
+so `ih` applies. The `39` line is the refusal direction: below the QS floor the
+same board pair is not a QS child at all. -/
+#guard descendsB board0 d4B 46 && decide (qsRank d4B < qsRank board0)
+#guard descendsB board0 e4B 42 && decide (qsRank e4B < qsRank board0)
+#guard !descendsB board0 d4B 39
+
 /-! ### The axioms -/
 
 #print axioms pstInWindowB_iff
@@ -199,5 +372,9 @@ consumes. -/
 #print axioms refinesAt_of_forallQ
 #print axioms forallQ_of_refinesAt
 #print axioms refinesAt_iff_forallQ
+#print axioms boundRefinesW_zero_of_forallQ
+#print axioms boundRefinesW_zero_of_qsStep
+#print axioms refinesAt_child_of_qsStep
+#print axioms qsStep_of_hfallQ
 
 end Examples.python.sunfish.qs_rank

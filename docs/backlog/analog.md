@@ -38,7 +38,8 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | `2026-08-24-analog-5` | `2cf53de` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-6` | `130dd20` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-7` | `3e8c41e` | 8 / 24 | 4 / 21 | 9 / 21 |
-| `2026-08-25-analog-8` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-25-analog-8` | `1d1f55e` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-25-analog-9` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
 
 **F2 exp/log certificates discharged: 7 / 7 — THE FAMILY IS CLOSED.**
 
@@ -177,7 +178,7 @@ prose concession across `LeanModels/Circuit/`, `LeanModels/Spice/` and
 | id | family | sites | the single missing thing |
 | --- | --- | ---: | --- |
 | **F2** | **transcendental numeric certificate (`exp`/`log` deadline)** | **12** | **`RatInterval.exp_contains` — a rational two-sided enclosure for `Real.exp`** |
-| F4 | channel-length modulation, `LAMBDA ≠ 0` | 88 | monotonicity of `β/2·(vgs−vt)²·(1+λ·vds)` for `λ > 0` on `vds < 1/λ` |
+| ~~F4~~ | ~~channel-length modulation~~ — **COLLAPSED, `2026-08-25-analog-9`** | ~~88~~ **0** | **none — a declared boundary, enforced once and gated** |
 | F3 | unbalanced latch determinacy / convergence / restore | 8 | Grönwall/ODE uniqueness lifted from the scalar case to the 2-D pair field |
 | F1 | physical-envelope coverage (model ↔ fabricated device) | 19 | **none — not closable in Lean** |
 | F7 | dead framework surface (carriers with zero suppliers) | 9 | nothing; the stated architecture is wider than the discharged one |
@@ -894,3 +895,84 @@ merge-side reasons that have nothing to do with a lane's floor, and that is the
 coordinator's call, not this lane's. Surfacing the premise, not overriding the
 instruction. This landing is committed and pushed but **NOT ticketed**; it will
 be enqueued on signal.
+
+---
+
+## 2026-08-25-analog-9 — F4 COLLAPSES: 88 sites of "missing monotonicity" were one boundary, enforced once, already gated
+
+**Re-derived from the tree before pricing, as the previous landing's law
+requires. Nothing in the F4 row survived.**
+
+| the row said | the tree says |
+| --- | --- |
+| 88 sites | **94** occurrences of `lambda := 0` — and they are the SUPPORTED constant being written, not work |
+| needs `λ`-monotonicity of the square law | needs nothing: **no deck anywhere carries `λ ≠ 0`** (all 22 `.model` declarations are `lambda=0`) |
+| 88 sites of outstanding proof | **11 refusal sites**, of which **1 is reachable** |
+
+**λ ≠ 0 IS REFUSED, NOT UNPROVED.** `LeanModels/Circuit/Spice.lean:499` guards
+`elaborate` — the `SourceCircuit → ElaboratedCircuit` step — with
+`model.level == 1 && model.transconductance > 0 && model.channelLengthModulation
+== 0 && …`. Every per-device projection (`toLoadedInverterNominal`,
+`toDiffPairNominal`, `toCommonSourceNominal`, `toDram1T1CNominal`, and six
+more) repeats the check, but each takes an `ElaboratedCircuit` whose models have
+already passed it.
+
+**Verified by instrument, not by reading.** A probe that mutates a real deck's
+model and asks *which* error comes back:
+
+    elaborate: REFUSED FIRST: MOS model `nmod` is outside the supported typed profile
+      => the per-device lambda check never runs: UNREACHABLE
+
+> **Ten of the eleven checks are DEFENCE IN DEPTH, not gaps. They are worth
+> keeping — if the outer guard were removed they would catch it — but counting
+> them as proof obligations prices a supported constant as outstanding work.**
+
+**And the one live refusal was already gated**, twice, by
+`dram_sense_amp_source_test.lean` and `dram_bank_256x32_source_test.lean` —
+whose `withUnsupportedLambda` checks pass because ELABORATION rejects the deck,
+not because the projection they name does.
+
+### THE INSTRUMENT
+
+`harness/spice/lambda_boundary_test.lean` makes the boundary a checked fact
+across four decks — `loaded_inverter`, `diff_pair`, `cs_amp`, `dram_1t1c` —
+twelve checks, all PASS: the committed deck is accepted, and both halves of the
+named profile (`LAMBDA=0` **and** `IS=0`) are refused **at elaboration**.
+
+**Both directions run.** Removing the mutation makes the same file exit 1 with
+six FAILs, so the checks discriminate rather than always passing. The refusal
+path is exercised, not admired.
+
+**Prediction stated before building, and it held**: no defect would be found,
+because the guard is a simple equality on a parsed field; the value is
+converting a boundary *claim* into a boundary *check*. Zero defects found, nine
+claims retired.
+
+### THE SCOREBOARD IS NOW 5 FOR 5
+
+| audit | expected | found |
+| --- | --- | --- |
+| A11 | monotone-on-box applies | it does not; one `div_le_div₀` |
+| A12 | decks are "pinned-nominal" | supply is FREE; coordinates differ |
+| A13 | a free coordinate blocks the sense amp | the KIT lacked a direction |
+| A15 | F3 needs a Grönwall lift | Grönwall landed; F3 needed grounding |
+| **F4** | **88 sites of missing monotonicity** | **a boundary, enforced once, already gated** |
+
+> **Five families were priced from one early reading. Four were wrong about the
+> frontier and the fifth did not exist. The row that names a family is a
+> hypothesis about the tree, and it decays — because the tree moves and the row
+> does not.**
+
+**Minor finding.** `harness/spice/fixtures/{floating,isource_divider,single_r_across_v}.cir`
+are referenced by nothing in the tree — three dead fixtures, F7's shape at the
+harness layer.
+
+### WHAT IS ACTUALLY LEFT
+
+With F2 closed, F3 landed and F4 collapsed, the tier's remaining families are
+**F5** (2 sites, AC for nonlinear devices), **F6** (1, interval width), **F7**
+(dead surface, now 12 with the fixtures), and **F1**, unclosable by construction
+and admitted 12×. **The lane's real frontier is much nearer than the F-table
+said, and the honest next question is not which family to attack but whether
+the tier's DENOMINATORS — 8/24 grounded, 4/21 circuits — are still the right
+measure of what remains.**

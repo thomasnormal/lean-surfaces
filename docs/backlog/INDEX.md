@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**395 entries across 17 lanes.** Regenerate with
+**397 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -45,6 +45,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-wasm-13` |  | THE 13-vs-19 DIFF: the stale pin hid **FIVE**, not six, and the lane's own census law corrects the lane's own census | wasm |
 | `2026-08-25-wasm-12` |  | **THE A′ CAPSTONE IS PROVED**: subtyping is admissible for `Instrs_ok2`, and the branch re-census fired on its first use | wasm |
 | `2026-08-25-wasm-11` |  | THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported | wasm |
+| `2026-08-25-analog-9` |  | F4 COLLAPSES: 88 sites of "missing monotonicity" were one boundary, enforced once, already gated | analog |
 | `2026-08-25-analog-8` |  | A15: F3 needed no new mathematics, and the audit is now 4-for-4 at overturning the census | analog |
 | `2026-08-25-ada-2` |  | INCH 5's CENSUS: `Report` should be EXECUTED, not modelled — and the emitter is already inside it | ada |
 | `2026-08-25-sv-1` |  | THE ADEQUACY LEMMA HAS A THIRD OBLIGATION, and finding it exposed a semantic gap the fixture concealed | sv |
@@ -396,6 +397,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G5` |  | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` |  | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` |  | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G28` |  | THE BUNDLE: four parts, each worth +0, together +48 (2026-08-25) | go |
 | `G27` |  | THE `strconv` CENSUS KILLED ITS OWN PREDICTION, AND FOUND THE METRIC OVERSTATED (2026-08-24) | go |
 | `G26` |  | THE RE-CENSUS AFTER VARIADICS: the frontier is spent, and `syscall` is a mirage (2026-08-24) | go |
 | `G25` |  | VARIADICS: packing allocates, spreading does not; +52 predicted, +52 measured (2026-08-24) | go |
@@ -416,4 +418,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**26 heading(s) do not use the §9.5 id scheme** and sort last.
+**27 heading(s) do not use the §9.5 id scheme** and sort last.

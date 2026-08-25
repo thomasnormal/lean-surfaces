@@ -2538,3 +2538,73 @@ PARTITIONED". That is the third time this family has bitten the register work:
 > **Every pattern an instrument writes must exclude the instrument on purpose.**
 > The bug is never the pattern being wrong about the world; it is the pattern
 > being right about a world that contains the pattern.
+
+## 2026-08-25-pycomplete-29 — the zero-live pole: my own test was asymmetric about a legality my own ruling created
+
+C's restoration is the polarity test's first real subject, and it found the
+place the test was **wrong** rather than the place C was.
+
+### The defect was mine, and it was an asymmetry
+
+`c_divergence_probe.py` has `LIVE_GUARDS = {}` — four retired rows, no live
+ones. That is the pole §5.0a clause 1 made legal (`rows: []` beside a non-empty
+archive), and C names it sharply: *rc comes entirely from the regression alarm;
+the probe cannot report anything except a return.* My test printed **"no live
+guards to stub"** and counted C as not honouring the table. **Master's fleet
+test went red on a correct probe.**
+
+The shape of the mistake is worth more than the fix. One inch earlier I had
+written an explicit, labeled `n/a` for the **zero-retired** case, with a
+sentence about why a skip would be dishonest. I did not give the **mirror**
+case the same treatment — and the mirror case is one *my own clause-1 reading
+had just made legal*.
+
+> **An instrument that handles one pole explicitly and the other by accident is
+> not symmetric — it is untested at the second pole.** Having written the
+> careful branch, I stopped looking for its twin.
+
+### The zero-live expectation, as ruled
+
+Stub only the retired set; assert `rc = 0` with all retired not-held, and
+`rc = 1` + alarm with any retired HELD. Printed as its own labeled state:
+
+    c_divergence_probe.py    ZERO-LIVE retired=not-held  rc=0  ok — no live rows; rc is the alarm alone
+                             ZERO-LIVE live=FAIL         n/a  no live guards to fail — vacuous, not unmet
+                             any retired=HELD            rc=1  ok (regression alarm rang)
+
+**Vacuous, not unmet** — states 1–2 have no live guard to exercise, which is a
+different fact from failing them, and the line says which.
+
+Fleet result: **all three probes honour the table.**
+
+### The two failure branches are exercised, not asserted
+
+A test about unexercised cases must not ship unexercised branches. Both new
+rejection paths were run against synthetic probes: `NO GUARDS AT ALL` (both
+sets empty — a probe that asserts nothing is not a probe) and `NOT PARTITIONED`
+(no `LIVE_GUARDS`/`RETIRED_GUARDS` at all). Both fail as intended.
+
+### The same bug, twice in one inch — and I pushed on the second one
+
+Committing the fix above, the register self-test died with `IndexError: list
+index out of range`. **I pushed anyway**, because I read the gate output
+instead of gating on its exit code — the exact failure being corrected one
+level up in the same hour.
+
+The cause is the zero-live pole *again*, one layer down. The self-test builds
+its 15 fixtures by mutating `rows[0]` of `sorted(glob(PATTERN))[0]`, and C's
+file — legally `rows: []` under clause 1 — sorts first. The moment it landed,
+every fixture in the shared checker's self-test broke.
+
+> **Pick by the PROPERTY the fixture needs, never by sort order.** `base[0]` was
+> never asking for "a file with a live row to mutate"; it was asking for "any
+> file", and got one that could not serve.
+
+Now selected by `rows` being non-empty, with a loud failure if no file has one
+— because "no fixture base available" must not read as "passed".
+
+**Three occurrences of one root cause in a single inch**: the test's zero-live
+blindness, the self-test's `rows[0]`, and my own review missing both until the
+interpreter and the coordinator caught them. The legality clause 1 introduced
+has a blast radius through every instrument that assumed a non-empty ledger,
+and that radius was not swept when the clause landed.

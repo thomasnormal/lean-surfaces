@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**388 entries across 17 lanes.** Regenerate with
+**390 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-08-26-c-27` |  | THE REGISTER COMES BACK, and the reversal is recorded rather than tidied | c |
 | `2026-08-25-architecture-90` |  | A ledger that may not be empty cannot also be the archive | architecture |
 | `2026-08-25-architecture-89` |  | Absence and success are the same colour on a green board | architecture |
 | `2026-08-25-architecture-88` |  | A gate not in your floor cannot contradict your rows | architecture |
@@ -28,6 +29,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-qol-67` |  | I breached A11 verifying the gate, and the gate does need the runner | qol |
 | `2026-08-25-qol-66` |  | the floor gains the rule, and waits for C | qol |
 | `2026-08-25-qol-65` |  | the gate that was never in anyone's floor | qol |
+| `2026-08-25-pycomplete-29` |  | the zero-live pole: my own test was asymmetric about a legality my own ruling created | python-completeness |
 | `2026-08-25-pycomplete-28` |  | `watch` is not `FAIL`, and the polarity table becomes a file | python-completeness |
 | `2026-08-25-pycomplete-27` |  | pyc-div-2 goes back on the watch, and the watch gains the alarm it was missing | python-completeness |
 | `2026-08-25-pycomplete-26` |  | the register's three clauses, and a probe that was starting UNLOCKED BUILDS | python-completeness |

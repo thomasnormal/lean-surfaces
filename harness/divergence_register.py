@@ -348,7 +348,19 @@ def self_test():
     if not base:
         print("self-test: no register file to mutate", file=sys.stderr)
         return 1
-    good = json.load(open(base[0]))
+    # THE FIXTURE BASE MUST HAVE A LIVE ROW. Every mutation below edits
+    # `rows[0]`, and since §5.0a clause 1 a register file may legally carry
+    # `rows: []` beside a non-empty archive -- C's does. Taking `base[0]`
+    # blindly picked that file the moment it landed (alphabetically first) and
+    # the whole self-test died on IndexError. Pick by the PROPERTY the fixtures
+    # need, never by sort order.
+    with_rows = [b for b in base if (json.load(open(b)).get("rows") or [])]
+    if not with_rows:
+        print("self-test: no register file has a live row to mutate — the "
+              "fixtures cannot be built, which is not the same as passing",
+              file=sys.stderr)
+        return 1
+    good = json.load(open(with_rows[0]))
 
     def rejects(mutate, label):
         doc = copy.deepcopy(good)

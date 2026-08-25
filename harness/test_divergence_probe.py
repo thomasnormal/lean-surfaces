@@ -69,32 +69,49 @@ def check(path):
         print("  %-30s NOT PARTITIONED — no LIVE_GUARDS/RETIRED_GUARDS; the "
               "polarity table cannot be expressed" % name)
         return False
-    if not mod.LIVE_GUARDS:
-        print("  %-30s no live guards to stub" % name)
+    live, retired = mod.LIVE_GUARDS, mod.RETIRED_GUARDS
+    if not live and not retired:
+        print("  %-30s NO GUARDS AT ALL — a probe that asserts nothing is not "
+              "a probe" % name)
         return False
 
     ok = True
-    rc, _ = run_with(mod, True, False)
-    good = (rc == 0)
-    ok &= good
-    print("  %-30s live=pass retired=not-held  rc=%d  %s" % (name, rc, "ok" if good else "*** want 0 ***"))
 
-    rc, _ = run_with(mod, False, False)
-    good = (rc == 1)
-    ok &= good
-    print("  %-30s live=FAIL retired=not-held  rc=%d  %s" % ("", rc, "ok" if good else "*** want 1 ***"))
+    def row(label, got, want, note=""):
+        good = (got == want)
+        print("  %-30s %-27s rc=%s  %s%s"
+              % (label[0], label[1], got,
+                 "ok" if good else "*** want %s ***" % want,
+                 (" " + note) if (good and note) else ""))
+        return good
 
-    if mod.RETIRED_GUARDS:
+    if live:
+        rc, _ = run_with(mod, True, False)
+        ok &= row((name, "live=pass retired=not-held"), rc, 0)
+        rc, _ = run_with(mod, False, False)
+        ok &= row(("", "live=FAIL retired=not-held"), rc, 1)
+    else:
+        # THE ZERO-LIVE POLE. `rows: []` beside a non-empty archive is legal
+        # (§5.0a clause 1), so a probe can have NO live guards at all -- and
+        # then its exit code comes ENTIRELY from the regression alarm: the
+        # probe cannot report anything except a return. States 1-2 are vacuous
+        # rather than unmet, and saying so is not the same as skipping them.
+        rc, _ = run_with(mod, True, False)
+        ok &= row((name, "ZERO-LIVE retired=not-held"), rc, 0,
+                  "— no live rows; rc is the alarm alone")
+        print("  %-30s %-27s n/a  no live guards to fail — vacuous, not unmet"
+              % ("", "ZERO-LIVE live=FAIL"))
+
+    if retired:
         rc, out = run_with(mod, True, True)
         good = (rc == 1) and "REGRESSION" in out
         ok &= good
-        print("  %-30s live=pass retired=HELD      rc=%d  %s" % ("", rc,
+        print("  %-30s %-27s rc=%d  %s" % ("", "any retired=HELD", rc,
               "ok (regression alarm rang)" if good else
               "*** want 1 + a REGRESSION line — a returned divergence would be SILENT ***"))
     else:
-        # Not a skip: say plainly that the row is unexercised and why.
-        print("  %-30s live=pass retired=HELD      n/a  no retired rows yet — "
-              "this row starts being asserted the day one is archived" % "")
+        print("  %-30s %-27s n/a  no retired rows yet — asserted the day one "
+              "is archived" % ("", "any retired=HELD"))
     return ok
 
 

@@ -125,6 +125,17 @@ the statements that still have to run when its trigger fires. -/
 structure ProcState where
   residual : List SStmt
   status : ProcStatus
+  /-- What to reinstate when this process COMPLETES.
+
+  `none` runs once — an `initial` block finishes and stays finished.
+  `some body` RE-ARMS — an `always_ff @(posedge clk) body` is
+  `forever { @(posedge clk); body }`, so completing its body is not the end
+  of the process, it is the end of one iteration.
+
+  Without this field a completed `always` was marked `.finished` forever,
+  which produced a SHORTER TRACE rather than an error — the failure mode
+  nobody notices. -/
+  arm : Option (List SStmt) := none
 deriving Repr, Inhabited
 
 /-- The world — `W`.

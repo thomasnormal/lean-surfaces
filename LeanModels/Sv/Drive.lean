@@ -66,9 +66,14 @@ def runSlots (σ : RegionOracle) (fuel : Nat) : List SvState → SvM RegionTrace
       let w0 ← get
       let sampled := w0.signals
       setInputs inputs
-      slotStep σ fuel
+      -- WAKE before stepping: a process suspended on `@(posedge clk)` becomes
+      -- ready exactly when the stimulus drives that edge. Without this the
+      -- ready sets stay empty forever and every trace is silently short.
       let w1 ← get
-      let s : Slot := { time := w1.time, sampled := sampled, final := w1.signals }
+      wakeEdges sampled w1.signals
+      slotStep σ fuel
+      let w2 ← get
+      let s : Slot := { time := w2.time, sampled := sampled, final := w2.signals }
       let tr ← runSlots σ fuel rest
       pure (s :: tr)
 

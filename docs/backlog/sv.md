@@ -840,3 +840,205 @@ an error, and a short trace is the failure mode nobody notices.
 Stated rather than attempted, which is the same discipline that worked for
 the stepper's subsumption: build the definitions, name the obligation,
 prove it against a real goal instead of an imagined one.
+
+---
+
+## 2026-08-25-sv-2 — RE-ARMING, WAKING, AND LOADING — and a FOURTH gap the same fixture concealed
+
+Three definitions, built together because none is testable without the
+others, and one of them was not on the plan.
+
+**The fourth gap, found the same way as the third.** `regionQ` was only
+ever **DRAINED**: `stepRegion` reads it and clears it, and **nothing in
+the tier ever put an index into it.** So a process suspended on
+`@(posedge clk)` could never become ready again, no scheduler run could
+execute a second iteration of anything, and every trace would have been
+silently short. `sawEdge`/`wakeEdges` are the missing half.
+
+That is the **second** gap the process-free fixture concealed, after the
+re-arm gap — and it is the same mechanism: a fixture chosen so that
+process semantics could not confound the driver also removed the only
+thing that would have exercised the scheduler's other half. Two findings
+from one blind spot is a pattern, not a coincidence.
+
+**What landed.**
+
+* `ProcState.arm : Option (List SStmt)` — `none` runs once (`initial`),
+  `some body` re-arms (`always`). `runProcOnce` now reinstates the body on
+  completion instead of marking the process `.finished` forever.
+* `sawEdge` / `wakeEdges` — edge detection and the `regionQ` fill.
+  Edge detection follows **§9.4.2**: an `x`/`z` end IS an edge whenever
+  the other end is a level (`0→x` and `x→1` are both posedges); only
+  `x→z`, `z→x` and a value against itself are edgeless. *(This bullet
+  originally claimed the opposite — see `2026-08-25-sv-3`, which is the
+  correction and the reason this entry is not to be read as landed.)*
+* `elabDesign : Design → Except String SvWorld` — the adequacy lemma's
+  **third obligation**. `always_ff clk body` becomes
+  `[waitEvent clk .pos, body]` **re-armed to itself**, which is the
+  defunctionalized reading of `forever { @(posedge clk); body }`.
+
+**`always_comb` and `assign` are REFUSED, not approximated**, and this is
+the honest part. Their sensitivity is *"any signal the body reads
+changed"*; `Trigger` offers `atTime`, `atEdge`, `onCond` — **none of which
+expresses it**. The cycle model handles them by running to a fixpoint
+(`combSettle`); the region model needs the same rule, and inventing a
+wrong trigger to make them load would be worse than refusing. So designs
+containing `always_comb` — including the `adder` gallery example — do not
+load yet, while `always_ff` designs do. **The corpus census says that
+order is right**: `initial` 98.8%, `always_*` about 1% each.
+
+**The guard is the one that was specified**: two posedges over a REAL
+loaded design, and the process is **not finished** afterwards — it
+re-armed. Plus the driver produces one slot per stimulus entry over that
+design, and `n` is actually assigned. Before `arm`, this process died
+after its first body and every later slot silently did nothing.
+
+**Not verified locally**: `check.sh --iterate` refused at memory pressure
+**54%** against a 50% line (load was fine at 3.92). The batch was then
+enqueued **blind** and went RED. What the blind enqueue cost is
+`2026-08-25-sv-3`: the two compile errors were the cheap half, and behind
+them sat two defects that would have shipped GREEN.
+
+**And one merge casualty, restored.** `2026-08-25-sv-1` — the third
+obligation entry — was **silently dropped** when the `sv-runslots` branch
+merged: that branch was cut BEFORE `fb506dd`, so resolving the `sv.md`
+conflict "to my side" took the OLDER file and reverted a later master
+commit. `fb506dd` is an ancestor of `HEAD` and its 78 lines were absent
+from the file. Restored byte-identically from `fb506dd`. **A branch cut
+before a docs commit will silently revert it when the conflict resolves
+in the branch's favour** — worth a check at every merge, not just this
+one.
+
+---
+
+## 2026-08-25-sv-3 — THE RED WAS TWO NAMES; BEHIND IT WERE TWO DEFECTS THAT WOULD HAVE PASSED
+
+Blind ticket `1787640148700009000-66640-sv`, tree `a3f3b78d41f3`, lock line
+`[08:55:11] LOCK ACQUIRED as 'sv 66640'` → `[08:56:15] BUILD DID NOT
+COMPLETE (exit 1)`. Claimed, diagnosed, fixed.
+
+**The two root causes, against the real definitions.**
+
+* `Load.lean:79:57` — `Unknown constant LeanModels.Sv.Expr.literal`. The
+  constructor is **`Expr.lit (value : LVec)`** (`Ast.lean:60`). There is no
+  `literal`.
+* `Load.lean:105:32` — `Unknown identifier traceOf`. It exists, at
+  `Drive.lean:91`, and it is **`private`** — so it is not in scope from
+  another module. Not a typo: a visibility error, which is why a
+  name-clash check could not see it.
+
+The three `ffDesign` guard failures at 82-84 were cascade from the first.
+**An error count is not a defect count** — two causes, five messages.
+
+**And the errors were the cheap half.** The batch was enqueued without
+elaborating, so nobody had traced it. Doing that by hand found two defects
+that the fixed batch would have carried **green**:
+
+### 1. Nothing was ever STARTED (the fifth gap, same blind spot as the fourth)
+
+`stepRegion` reads **`regionQ`**. `ProcStatus.ready` is a *different*
+notion of readiness and no rule connected them. `elabDesign` built its
+processes `.ready` — and left `regionQ` at its default `fun _ => []`. So
+every loaded design ran **nothing at all**: no process reached its
+`@(posedge clk)`, and a process that never suspends can never be woken.
+The previous inch added the queue's *fill* for waking and missed its fill
+for *starting*, which is the same gap one step earlier.
+
+Three edits, one gap: `elabDesign` schedules every process in Active at
+time 0 (§4.4); `runProcOnce` re-enqueues a re-armed process; and
+`stepRegion` **drains its queue before the pass instead of clearing it
+after**, because clearing after discards exactly the re-entries the pass
+itself created. The third was pre-existing and its docstring already
+claimed the behaviour it did not have.
+
+**Why the specified guard would not have caught it.** "The process is not
+`.finished` afterwards" is TRUE of a process that never ran — it is still
+`.ready`. The guard was vacuous in precisely the world it was written for.
+It now also asserts the process is **waiting on its clock edge**, which a
+never-run process is not, and `n == some 1`, which is the one that
+actually fails when nothing executes.
+
+### 2. The edge rule was three different rules at once
+
+`sawEdge` was `o != some 1 && n == some 1` over `LVec.toNat?`. That says
+`x→1` **is** a posedge and `0→x` is **not**. Its own docstring said
+unknowns are never edges. The section comment above its guards said "x is
+never an edge". And the fourth guard asserted `x→1 == true` — pinning the
+code against both prose. Whichever you believed, one of the three was
+wrong, and the guard block had been written to *pass* rather than to
+*check*.
+
+**IEEE 1800 §9.4.2 settles it**: posedge is `0→1, 0→x, 0→z, x→1, z→1`;
+negedge the mirror. An `x`/`z` end IS an edge when the other end is a
+level. The old rule had the "into a level" half and was missing the "out
+of a level" half.
+
+**And the tier already knew this.** `Sem2.isNegedge` (`Sem2.lean:579`)
+states §9.4.2 exactly, for the async-reset phase. So the batch introduced
+a *second, disagreeing* edge rule into the same tier — the shape the
+standing rule calls a blocker, not a footnote. `edgeOn` now states the
+clause once, over `Logic` bit 0, matching `isNegedge` case for case.
+
+**The duplication is named, not fixed.** `Slot` sits below `Sem2` in the
+import graph, and reaching `isNegedge` would mean importing the M1 cycle
+model into the region tier — a worse dependency than a stated repetition.
+Folding both onto one definition in `Basic` (where `Logic` lives) is the
+next rung, and it replaces agreement-by-inspection with
+agreement-by-construction.
+
+**The lesson, priced.** The A17 iterate loop refused at 54% against a 50%
+line, and the batch went out blind anyway. A blind enqueue buys a
+*compile* verdict; it buys nothing about whether the definitions mean
+anything. Both defects here were reachable by reading — no build required
+— and both would have been certified green by the guards as written.
+
+
+---
+
+## 2026-08-25-sv-4 — A TENURE THAT REFUSED ITSELF: the progress log is inside the tree it stamps
+
+`sv 80162` waited **8197s** for the lock, acquired it at `[11:49:11]`, and
+refused in one second:
+
+    TREE CHANGED SINCE ENQUEUE (28258373a128 → 95d827a4d4db)
+
+**Nothing was edited.** The tracked tree was byte-identical to the commit
+enqueued, `git status` was clean, and no lane had touched the clone.
+
+**The stamp includes untracked files.** `worktree_tree` builds a temp index
+with `git add -A` and writes a tree from it — so anything not gitignored is
+part of the stamp. The tenure's own progress log lived at
+`scratchpad/sv-red-refix.log` *inside the clone*, and while queued the
+script appends a `queued Ns; head=…; owner=…` line every few seconds. It
+had grown by **75 lines**. Those 75 lines were the "tree change".
+
+Measured, three ways:
+
+    tracked only            566cae7e…   == git rev-parse HEAD^{tree}
+    tracked + small log     28258373…   == the enqueue stamp
+    tracked + grown log     a5ed611e…   == the refusal's "now"
+
+**The failure is self-inflicted by construction and scales with the wait.**
+A short queue hides it — the predecessor's `scratchpad/sv-rearm.log` sat in
+the same place and its lock came 11 seconds after enqueue, so the log had
+not grown yet. The longer a tenure waits, the more its own logging diverges
+the tree from the one it is about to verify. **A machine under load makes
+this MORE likely, which is exactly backwards**: the tenures that waited
+longest are the ones that lose their turn, after paying the full wait.
+
+**Fix taken here**: the log moved OUTSIDE the clone
+(`../sv-logs/`), leaving the clone pristine — its stamp now equals
+`HEAD^{tree}` exactly, so it cannot drift for any wait length.
+
+**Fix worth taking fleet-wide** (arch's call, not this lane's): `scratchpad/`
+is not in `.gitignore`, and lanes are writing tenure logs into it inside
+their clones. Either ignore it, or have `triad.sh` refuse to write its own
+log beneath `$CLONE`. The protocol's own artifact should not be able to
+invalidate the protocol's own ticket.
+
+**And a second refusal behind the first.** The re-enqueue reported
+`BASE STALE: 21 commit(s) behind`. Rebasing while queued would have changed
+the stamp and self-refused a third time, so the order is forced and worth
+stating: **cancel, rebase, re-enqueue** — never rebase a ticket that is
+already in the queue.
+

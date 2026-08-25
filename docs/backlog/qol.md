@@ -4902,3 +4902,65 @@ the lanes that ticket are running it, not when the constant changed.
 ### Triad
 
 Observation only. No tool changed, nothing enqueued, no Lean executed.
+
+## 2026-08-25-qol-70 — the guard fired live, and the wave drained
+
+Two rows from the Go lane, and a re-measurement.
+
+### The wave, re-measured
+
+```
+                    baseline (08-25 09:2x)   now
+current ..................... 3              12
+would-be-refused ........... 12               3   (leantier, pyc4, ada)
+pre-guard ................... 6               6   (dead/superseded clones)
+```
+
+Nine checkouts refreshed in under an hour, `lean-go2` among them. **The
+middle column is the bedding-in condition**, and it is nearly met: three left,
+none of them silent — each will be refused loudly at its next enqueue and
+rebase, exactly as Go did.
+
+### The guard's first live firing, and no exception asked for
+
+Go's §G28 re-ticket was refused — *"SUPERSEDED version: byte-identical to
+master at 8b501ec, 2 published change(s) behind"* — and Go **rebased, then
+enqueued**, per the ruled fix. The mechanism worked end to end on its first
+real contact, which is the whole of what item 15 was for.
+
+### The failure mode that hid it, and it is the third of its family
+
+The refusal was **loud and nobody was listening**: Go announced the ticket as
+queued having read only the **launcher's** exit, not the triad log. A
+coordinator log sweep surfaced it.
+
+triad.sh exited 2 and said why. What swallowed it is the launcher shape —
+`nohup … &` returns the **shell's fork**, not the child's verdict, so `$?` is
+0 no matter what the tenure decided. This lane has now watched that same shape
+three times: the R-track stamp reading the wrong repo (qol-41), the ci.sh
+self-test whose children outlived their parent, and now a refusal announced as
+a success.
+
+> A backgrounded command's exit status is a fact about the fork, not about the
+> work.
+
+Not a tool defect — the guard did its job, and no change to it would have been
+read either. Recorded because the reading habit is the thing that fails, and
+naming it is the only fix available from this side.
+
+### New row, held: the banner under-states the target set
+
+Go's words: the enqueue banner prints `build lake build …` with only the
+**classify-derived** targets, while the explicit `--build-target` union happens
+later, during the tenure, with its own "unioned" line. *"Reading the banner as
+the final target set is a trap; I nearly killed a good run over it."*
+
+Same family as `--gates` class-escalation: **a pre-tenure view that
+under-states what the tenure will do.** Candidate fix, for the same landing:
+the banner prints the union, or marks it `+ --build-target pending union`.
+
+Both held for one landing after the floor beds in, prediction first, as ruled.
+
+### Triad
+
+Observation only. No tool changed, nothing enqueued, no Lean executed.

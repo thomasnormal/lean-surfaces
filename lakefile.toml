@@ -1,5 +1,5 @@
 name = "lean-models"
-defaultTargets = ["LeanModels", "Examples", "leanmodels-run", "circuit-dc-runner"]
+defaultTargets = ["LeanModels", "Examples", "leanmodels-run", "circuit-dc-runner", "c-torture-run"]
 
 [[require]]
 name = "mathlib"

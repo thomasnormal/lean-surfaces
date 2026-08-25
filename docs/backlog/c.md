@@ -3355,3 +3355,222 @@ annotated rather than edited).
 > **A reversal that erases the reasoning it reverses destroys the only
 > evidence that the rule was tested. The compliance IS the finding.**
 
+
+---
+
+## 2026-08-26-c-28 — OPS-148: a NAMED NEGATIVE by grep, and the defect only RUNNING found
+
+### The sweep, counted — **7 instruments**
+
+`harness/c_divergence_probe.py`, `harness/c_torture_score.py`,
+`harness/c_profile_probe.py`, `tools/c_corpus_fetch.py`,
+`tools/c_torture_gate.sh`, `extractors/c/extract.py`,
+`LeanModels/C/Torture.lean`.
+
+| shape | grepped | found |
+| --- | ---: | --- |
+| first-element access over rows | **29 sites** | **none unguarded, and none over register rows** |
+| `if rows:` as a proxy for "has a register" | **0 sites** | — |
+| folds whose identity element is unstated | **8 sites** | **none — every identity is written at the call** |
+| empty-collection messages that read as verdicts | **0 sites** | 3 text hits, all docstring prose or a selftest label |
+
+**On (1)**, the 29 are all one of four safe shapes and it is worth naming
+which, because "0 unguarded" is only meaningful if the reader can see what
+guarded them: `c[0] if c else None` (17 sites in the extractor),
+`next(…, None)` with an explicit default (3), an index preceded by a
+length test (`len(parts) >= 2`, `"\t" in line`) (4), and — the nicest —
+`e_ForStmt`'s `c = nonempty(n) + [None] * 5`, which **pads before it
+indexes**, so the absent-slot identity is `None` by construction rather
+than by a branch anybody has to keep.
+
+**On (3)**, the two Lean folds are the ones the ride-along asked about and
+both state their identity in the call: `foldl step (some (0, 1))` — offset
+0, **alignment 1**, the only value that leaves `roundUp` a no-op for an
+empty aggregate — and `foldl step (none, some 0)` — not-found, offset 0.
+The Python folds are `sum(1 for …)` (identity 0) and `all(…)` over a fixed
+non-empty tuple.
+
+> **A named negative has to name what made it negative. "0 unguarded" is a
+> claim; "29 sites, of four shapes, and here they are" is a claim a reader
+> can falsify.**
+
+### AND THE ONE GREP COULD NOT HAVE FOUND
+
+pyc's addendum — *a named negative produced by grep is a claim about
+TEXT, not about BEHAVIOUR* — and it landed on this lane directly. Running
+`c_divergence_probe.py` against a **deleted** and then a **malformed**
+scoreboard found exactly the fold pyc predicted, and it was **worse here
+than anywhere else in the fleet**:
+
+Every guard read `_load(SCOREBOARD)`; a missing file returned `None`; each
+guard folded that into `(False, "no committed scoreboard")`. For a RETIRED
+`still_divergent`, `False` means *"the divergence is gone"* — so a deleted
+scoreboard printed the healthy picture. And because the regression alarm
+fires on `held == True`, **an absent artifact silently disarmed the only
+thing this probe does.**
+
+> **In a tier with no live rows, "nothing was compared" and "all clear"
+> are the same two words — and the alarm is the thing that goes quiet.
+> The fail-closed rule protects the fleet through its LIVE guards; where
+> there are none, it protects nothing unless you say so.**
+
+Fixed in pyc's shape, one shape fleet-wide: three states, `held is None`
+meaning nothing was compared, `no-run` / `watch` / `ok` / `FAIL` statuses,
+and the verdict line `COULD NOT VERIFY (no comparison ran — not a model
+verdict)`. `_load` now also treats a MALFORMED file as unverifiable rather
+than raising, because a traceback is loud about the environment while
+wearing the costume of a crash in the probe.
+
+**Plus one corollary this tier needed and the fleet shape does not
+express.** pyc's rule is *"live guards fail CLOSED"* — but with zero live
+guards that clause has nothing to bite on, and an unverified probe would
+still exit 0. So: **where there are no live guards, "could not verify"
+gates directly.** The principle is fleet-wide; the mechanism was not, and
+this is the pole where the difference is visible. Offered to arch as an
+addendum rather than a fork.
+
+### The three states, RUN
+
+| scoreboard | verdict | `rc` |
+| --- | --- | ---: |
+| present | `PASS` | **0** |
+| **deleted** | `COULD NOT VERIFY (no comparison ran — not a model verdict)`, 4 guards `no-run` | **1** |
+| **malformed** | same | **1** |
+
+Before the fix, rows 2 and 3 both printed the healthy picture and exited
+**0**.
+
+
+---
+
+## 2026-08-26-c-29 — STRUCT LAYOUT, from a rule the profile now DECLARES
+
+`2026-08-25-c-25` refused to lay out a `struct` and gave the reason: *"a
+layout computed from an UNDECLARED rule is a FABRICATED layout — the same
+defect as a fabricated column, one abstraction up."* That objection was to
+the rule being undeclared, not to computing one.
+
+### The profile declares it, and PROBES it
+
+`docs/c-profile.md` §4a and the fact `natural_alignment`, alongside
+`char_bit_8`, `int_32` and `long_64` — implementation-defined in exactly
+the same sense, pinned in exactly the same way. The expression:
+
+```
+_Alignof(int) == 4 && sizeof(struct { char c; int i; }) == 8 &&
+_Alignof(struct { char c; int i; }) == 4 && sizeof(struct { char a; char b; }) == 2
+```
+
+Four conjuncts for the four halves of the rule — a scalar's alignment, the
+padding BEFORE a member, the aggregate's own alignment, and the absence of
+padding where none is needed — and **both profiled hosts fold it true**
+(`arm64-apple-darwin`, `x86_64-unknown-linux-gnu`).
+`c_profile_probe --check` now satisfies **9** depended-on facts, up from 8.
+
+> **A profile does not make an implementation-defined choice go away; it
+> makes it ATTRIBUTABLE. The distance between "we may not compute this"
+> and "we compute it from a stated rule" is one probed fact.**
+
+### `torLayout` computes it
+
+`sizeAlign` returns size and alignment **together**, because they are one
+recursion: a structure's size needs its members' alignments and a member's
+alignment may itself be a structure's. Splitting them would be two walks
+that must agree. `fieldOffIn` walks the same rule for `offsetof`, peeling
+the qualifiers and one pointer level because the base spelling arrives as
+the EXPRESSION's type (`Pos` for `x.f`, `const Pos *` for `p->f`).
+
+**Union-ness is read from the SPELLING**, and that is a named limit rather
+than a hidden one: the `c-0.1` envelope does not carry clang's `tagUsed`,
+so `Decl.record` has a name and fields and no struct/union bit. Exact for
+the type being sized; a translation unit declaring BOTH `struct u` and
+`union u` would collide on the tag. Nothing in the corpus does.
+
+Still a named zero, and still deliberately: `_Alignas`, `#pragma pack` and
+bit-fields are outside the pin AND outside the modelled vocabulary, so
+they arrive as `unsupported` and never as a wrong offset.
+
+### THE PREDICTION — and this one is adjudicated by a gate
+
+| bucket | now | predicted |
+| --- | ---: | ---: |
+| `passed` | 97 | **110** |
+| `refused-unsupported` | 154 | **141** |
+| **scored** | **97** | **110**, band **97 – 135** |
+| `failed` | 0 | **0** |
+
+54 of the 154 `unsupported` are `no layout for declared type`, all
+struct/union. Of those I expect **~25 %** to reach a verdict — between the
+array-layout landing's 10 % (freed at a declaration, everything after
+unmeasured) and the globals landing's 50 % (freed tests were otherwise
+ready). The floor is **97** because nothing can regress: the change only
+ADDS layout answers.
+
+**`failed = 0` is the load-bearing half of this prediction.** A newly
+runnable test that FAILS would be a divergence nobody declared, and
+`c_div_2_has_not_widened` — *failed ≤ live rows*, and there are zero live
+rows — would go red and take the gate with it. That is the archive doing
+its job on its first real test: a new failure cannot land silently, it
+must be written down as a row first.
+
+**AND A COST THIS INTRODUCES, named before it is paid.** The committed
+scoreboard is compared by the gate, so a landing that INTENDS to move the
+number must predict it exactly or go red. For `2026-08-25-c-25` that was
+free — the delta was deterministic. Here it is not, and an exact hit on a
+nine-bucket vector is unlikely.
+
+> **A drift gate and a prediction adjudicator are the same mechanism
+> pointed at two different questions, and the mechanism cannot tell them
+> apart. When a landing means to move the number, "drift" is the wrong
+> reading of the same comparison.**
+
+The protocol that falls out, and it is not a workaround: **a frontier
+landing's first tenure may red on the comparison, and that red PRINTS BOTH
+VECTORS — so the red IS the measurement.** The board is then committed
+from the gate's own output and the second tenure is green. Deterministic
+landings still cost one. Named here rather than discovered by whoever
+lands next.
+
+
+## 2026-08-26-c-30 — THE SCORER WAS NEVER IN THE BUILD, and `--classify` is not a dry run
+
+Two findings, both caught by `triad.sh` BEFORE a tenure was spent, and both
+paid for by the same pre-enqueue habit: classify, then read what it says.
+
+**Finding 1 — `lean_exe c-torture-run` was never a default target.** Inch 6
+(1ef4a02) added the executable to `lakefile.toml` and did not add it to
+`defaultTargets`. Nothing imports `LeanModels/C/Torture.lean` either: the C
+tier reaches the build graph only through `Examples/c/sunfish/guards.lean`
+importing `LeanModels.C`, and `Torture` is on no path from there. So `lake
+build` has never compiled the scorer, and **every green triad since inch 6
+was green about nothing where the scoreboard's own program is concerned** —
+including the three landings that edited that file. The §9.0 number was
+produced by a binary CI does not build. Fixed in this landing by adding
+`c-torture-run` to `defaultTargets`; the classification moves from `tier` to
+`spine` as a result, and that cost is the honest price of the check.
+
+  The law: **an executable is in the build only if it is in `defaultTargets`
+  — being in `lakefile.toml` is registration, not coverage.** The ES lane's
+  2026-08-22-es-1 states the general shape (a landing that takes a default
+  can land green against FEWER checks than the one before it); this is the
+  same shape arriving from the other direction, where the check was never
+  added rather than quietly retired. `triad.sh`'s IMPORTED-BY-NOTHING warning
+  names it in one line and it had been printing, unread, for three landings.
+
+**Finding 2 — `--classify` RUNS; `--classify-only` prints.** Reading
+`--classify` as a dry run enqueued two calign tickets in eight minutes,
+neither of them detached. Both were killed by PID with parentage verified to
+this session (`claude --resume`, PID 12455 — no process of Thomas's was
+touched) and both tickets removed from `/tmp/ls-build-queue`; the queue was
+left exactly as found, five lanes, lock held by `es`. The cost was the queue
+position, not a tenure.
+
+  The law: **the flag that scopes a tenure and the flag that describes one
+  differ by a suffix; `tools/triad.sh --classify-only` is the one that runs
+  nothing.** It is documented at line 166 of the script, one line below the
+  spelling that does run. A lane reaching for a dry run should reach for the
+  longer name.
+
+**Standing number unchanged by this landing: `gcc.c-torture` 97/300 scored
+(passed 97, failed 0).** The committed prediction for the alignment rung's
+tenure is `passed 110, refused-unsupported 141, scored 110, failed 0`.

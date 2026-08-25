@@ -156,32 +156,141 @@ def resolve (tds : List (CType × CType)) : Nat → CType → CType
       | some p => resolve tds n p.2
       | none => t
 
-/-- A size the instrument can compute EXACTLY, or `none`.
+/-! ### The instrument's layout, from the profile's DECLARED rules
 
-Scalars come from the profile; an array is `n × elem` and §6.2.5p20 says
-so with no padding to guess; typedefs and qualifiers are lookups.
+`2026-08-25-c-25` sized scalars, arrays, typedefs and qualifiers here and
+left `struct` a named zero, on the ground that laying one out needs an
+ALIGNMENT RULE and *"a layout computed from an undeclared rule is a
+FABRICATED layout — the same defect as a fabricated column, one abstraction
+up."*
 
-**A `struct` gets `none`, and that is the item rather than a shortfall in
-it.** Laying one out needs an ALIGNMENT RULE: C leaves the padding
-implementation-defined (§6.7.2.1p18), the natural-alignment convention
-everyone reaches for is an ABI this project has not pinned, and a layout
-computed from an undeclared rule is a FABRICATED layout — the same defect
-as a fabricated column, one abstraction up. Structs stay a named zero
-until `docs/c-profile.md` pins the rule. -/
-def sizeIn (tds : List (CType × CType)) : Nat → CType → Option Nat
+That objection was to the rule being UNDECLARED, not to computing one. It
+is declared now: `docs/c-profile.md` §4a pins natural alignment as the
+profile fact `natural_alignment`, with a `_Static_assert` expression both
+profiled hosts fold true, exactly as `int_32` and `long_64` are pinned.
+
+> **A profile does not make an implementation-defined choice go away; it
+> makes it ATTRIBUTABLE — and the distance between "we may not compute
+> this" and "we compute it from a stated rule" is one probed fact.**
+
+What is still a named zero: `_Alignas`, `#pragma pack` and bit-fields are
+outside the pin and outside the modelled vocabulary, so they arrive as
+`unsupported` and never as a wrong offset. -/
+
+/-- Round `off` up to a multiple of `al`. `al = 0` is not a alignment and is
+returned unchanged rather than dividing by zero. -/
+def roundUp (off al : Nat) : Nat :=
+  if al == 0 then off else ((off + al - 1) / al) * al
+
+/-- The unit's record declarations, tag → members in DECLARATION ORDER.
+§6.7.2.1p18 requires increasing addresses in declaration order, so the order
+is the standard's and not a convenience. -/
+def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
+  envl.unit.items.filterMap fun i => match i with
+    | .decl (.record (some nm) fields _) =>
+        some (nm, fields.filterMap fun d => match d with
+                    | .field fn fty _ => some (fn, fty)
+                    | _ => none)
+    | _ => none
+
+/-- `struct s` / `union u` → the tag. -/
+def recordTag (t : CType) : Option String :=
+  if t.startsWith "struct " then some (t.drop 7).toString
+  else if t.startsWith "union " then some (t.drop 6).toString
+  else none
+
+/-- **SIZE AND ALIGNMENT TOGETHER**, under the profile's declared
+`natural_alignment` rule (`docs/c-profile.md` §4a, J.3.9(1)).
+
+They are one function because they are one recursion: a structure's size
+needs its members' ALIGNMENTS, and a member's alignment may itself be a
+structure's. Splitting them would be two walks that must agree.
+
+* a scalar is its own alignment — the profile's rule, probed on both hosts;
+* an array is `n × elem`, aligned as its element (§6.2.5p20: no padding);
+* a **struct** places each member at the next offset satisfying that
+  member's alignment, in declaration order, and its size is rounded up to
+  its widest member's alignment so that arrays of it stay aligned;
+* a **union** puts every member at 0 and takes the largest size, rounded up
+  the same way.
+
+**Union-ness is read from the SPELLING**, because the `c-0.1` envelope does
+not carry clang's `tagUsed` — `Decl.record` has a name and fields and no
+struct/union bit. That is exact for the type being sized and has one
+failure mode worth naming rather than hiding: a translation unit declaring
+BOTH `struct u` and `union u` would collide on the tag. Nothing in the
+corpus does; if one did, the tag lookup would find whichever came first,
+so this is a named limit and not a silent one.
+
+A tag with no declaration in the unit gets `none` — a loud refusal at the
+use site, which is what an incomplete type deserves. -/
+def sizeAlign (tds : List (CType × CType))
+    (recs : List (String × List (String × CType))) :
+    Nat → CType → Option (Nat × Nat)
   | 0, _ => none
   | n + 1, t0 =>
       let t := resolve tds 8 t0
       match torScalarSize t with
-      | some s => some s
-      | none => (arrayOf t).bind fun p => (sizeIn tds n p.1).map (· * p.2)
+      | some sz => some (sz, sz)
+      | none =>
+        match arrayOf t with
+        | some (e, k) => (sizeAlign tds recs n e).map fun p => (p.1 * k, p.2)
+        | none =>
+          match recordTag t with
+          | none => none
+          | some tag =>
+            match recs.find? (·.1 == tag) with
+            | none => none
+            | some r =>
+                let isUnion := t.startsWith "union "
+                let step := fun (acc : Option (Nat × Nat)) (m : String × CType) =>
+                  match acc, sizeAlign tds recs n m.2 with
+                  | some (off, al), some (msz, mal) =>
+                      if isUnion then some (Nat.max off msz, Nat.max al mal)
+                      else some (roundUp off mal + msz, Nat.max al mal)
+                  | _, _ => none
+                (r.2.foldl step (some (0, 1))).map fun p => (roundUp p.1 p.2, p.2)
+
+/-- A member's byte offset, by the same rule and the same walk.
+
+The base spelling arrives as the EXPRESSION's type — `Pos` for `x.f` and
+`const Pos *` for `p->f` — so the qualifiers and one level of pointer are
+peeled before the tag is read. -/
+def fieldOffIn (tds : List (CType × CType))
+    (recs : List (String × List (String × CType)))
+    (fuel : Nat) (base : CType) (fld : String) : Option Nat :=
+  let t0 := stripQuals 8 base
+  let t1 := if t0.endsWith "*" then stripQuals 8 (t0.dropEnd 1).toString.trimAsciiEnd.toString else t0
+  let t := resolve tds 8 t1
+  match recordTag t with
+  | none => none
+  | some tag =>
+    match recs.find? (·.1 == tag) with
+    | none => none
+    | some r =>
+        let isUnion := t.startsWith "union "
+        let step := fun (acc : Option Nat × Option Nat) (m : String × CType) =>
+          match acc with
+          | (some _, _) => acc                     -- already found
+          | (none, off?) =>
+            match off?, sizeAlign tds recs fuel m.2 with
+            | some off, some (msz, mal) =>
+                let here := if isUnion then 0 else roundUp off mal
+                if m.1 == fld then (some here, none)
+                else (none, some (if isUnion then 0 else here + msz))
+            | _, _ => (none, none)
+        (r.2.foldl step (none, some 0)).1
 
 /-- The layout for ONE test, built from its own envelope. -/
 def layoutFor (envl : Envelope) : Layout :=
   let tds := typedefsOf envl
-  { Layout.unknown with
-      size := fun t => sizeIn tds 16 t
-      elem := fun t => arrayOf (resolve tds 8 t) }
+  let recs := recordsOf envl
+  { size := fun t => (sizeAlign tds recs 16 t).map (·.1)
+    elem := fun t => arrayOf (resolve tds 8 t)
+    fieldOff := fun t f => fieldOffIn tds recs 16 t f
+    members := fun t =>
+      (recordTag (resolve tds 8 (stripQuals 8 t))).bind fun tag =>
+        (recs.find? (·.1 == tag)).map (·.2) }
 
 /-- Peel the conversions a value arrives wrapped in. -/
 def peelVal : Expr → Expr

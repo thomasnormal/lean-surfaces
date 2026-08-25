@@ -51,10 +51,20 @@ C_DIV_2_TEST = "20010224-1.c"     # the emptied InitListExpr
 
 
 def _load(path):
+    """The artifact, or None when it is ABSENT OR UNREADABLE.
+
+    A malformed file is the same "nothing was compared" as a missing one, and
+    letting `json.load` raise here would turn an unverifiable state into a
+    traceback — loud, but a statement about the ENVIRONMENT wearing the costume
+    of a crash in the probe.
+    """
     if not os.path.isfile(path):
         return None
-    with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (ValueError, OSError):
+        return None
 
 
 def _failed_tests():
@@ -79,7 +89,8 @@ def c_div_1_still_divergent():
     """
     failed, sb = _failed_tests()
     if failed is None:
-        return False, "no committed scoreboard — the number was never published"
+        return None, ("docs/c-torture-scoreboard.json is absent or unreadable — "
+                      "NOTHING WAS COMPARED")
     held = C_DIV_1_TEST in failed
     if held:
         return True, ("%s is in `failed` again — the oracle-tests-compiler "
@@ -101,7 +112,8 @@ def c_div_1_has_not_widened():
     sb = _load(SCOREBOARD)
     pin = _load(PIN)
     if sb is None or pin is None:
-        return False, "scoreboard or pin missing"
+        return None, ("scoreboard or pin absent/unreadable — NOTHING WAS "
+                      "COMPARED")
     want = sorted((pin.get("oracle_tests_compiler") or {}).keys())
     got = sorted(sb.get("oracle_tests_compiler_tests") or [])
     return (want == got,
@@ -119,7 +131,8 @@ def c_div_2_still_divergent():
     """
     failed, _ = _failed_tests()
     if failed is None:
-        return False, "no committed scoreboard — the number was never published"
+        return None, ("docs/c-torture-scoreboard.json is absent or unreadable — "
+                      "NOTHING WAS COMPARED")
     held = C_DIV_2_TEST in failed
     if held:
         return True, ("%s is in `failed` again — the array_filler fix in "
@@ -136,9 +149,10 @@ def c_div_2_has_not_widened():
     or a regression to fix. Either way it must not pass unnoticed.
     """
     failed, sb = _failed_tests()
-    if failed is None:
-        return False, "no committed scoreboard"
-    reg = _load(REGISTER) or {}
+    reg = _load(REGISTER)
+    if failed is None or reg is None:
+        return None, ("scoreboard or register absent/unreadable — NOTHING WAS "
+                      "COMPARED")
     live = len(reg.get("rows") or [])
     n = int((sb.get("counts") or {}).get("failed", len(failed)))
     return (n <= live,
@@ -171,12 +185,32 @@ def main():
     for name in sorted(GUARDS):
         held, detail = GUARDS[name]()
         retired = name in RETIRED_GUARDS
-        results[name] = {"held": bool(held), "detail": detail, "retired": retired}
-        if not held and not retired:
+        # THREE STATES, NOT TWO. `held is None` means NOTHING WAS COMPARED --
+        # this tier's guards read a COMMITTED artifact, so the unverifiable case
+        # is a scoreboard that is missing or malformed. Folding that into False
+        # made "the probe could not run" print the same word as "the divergence
+        # is gone" -- and with EVERY row here retired, that False also silently
+        # disarmed the regression alarm, which is this probe's only job. Live
+        # guards fail CLOSED; unverified never passes. (pyc's third state,
+        # OPS-148 addendum; one shape fleet-wide.)
+        unverified = held is None
+        results[name] = {"held": bool(held), "verified": not unverified,
+                         "detail": detail, "retired": retired}
+        if unverified:
+            if not retired:
+                rc = 1
+        elif not held and not retired:
             rc = 1
-        print("%-28s %-4s  %s%s" % (name, "ok" if held else "FAIL", detail,
-                                    "   [retired row]" if retired else ""))
-    watching = sorted(n for n in RETIRED_GUARDS if not results[n]["held"])
+        if unverified:
+            status = "no-run"
+        elif retired:
+            status = "ok" if held else "watch"
+        else:
+            status = "ok" if held else "FAIL"
+        print("%-28s %-5s %s%s"
+              % (name, status, detail, "   [retired row]" if retired else ""))
+    watching = sorted(n for n in RETIRED_GUARDS
+                      if results[n]["verified"] and not results[n]["held"])
     if watching:
         print("\n%d retired guard(s) reporting not-held: %s"
               % (len(watching), ", ".join(watching)))
@@ -186,10 +220,10 @@ def main():
     # AND THE OTHER DIRECTION, WHICH IS THE ONE THE WATCH EXISTS FOR.
     # A retired `*_still_divergent` that HOLDS means the divergence CAME BACK.
     # Reporting that as a cheerful `ok` and exiting 0 would be a watch that
-    # cannot raise an alarm — the guard runs, the regression happens, and
-    # nothing anywhere goes red. So this direction GATES.
+    # cannot raise an alarm. So this direction GATES.
     returned = sorted(n for n in RETIRED_GUARDS
-                      if n.endswith("_still_divergent") and results[n]["held"])
+                      if n.endswith("_still_divergent")
+                      and results[n]["verified"] and results[n]["held"])
     if returned:
         rc = 1
         print("\n*** REGRESSION: retired guard(s) %s report DIVERGENT again."
@@ -198,7 +232,33 @@ def main():
               "and go back to `rows` — it is a live debt again.")
     if "--json" in sys.argv:
         print(json.dumps(results, indent=1, sort_keys=True))
-    print("\nc_divergence_probe: %s" % ("PASS" if rc == 0 else "FAIL"))
+    unver = sorted(n for n in GUARDS if not results[n]["verified"])
+    if unver:
+        print("\n%d guard(s) COULD NOT RUN — the committed scoreboard is "
+              "absent or unreadable: %s" % (len(unver), ", ".join(unver)))
+        print("Nothing was compared, so this says nothing about the model — and "
+              "in particular the REGRESSION ALARM did not run. With every row "
+              "here retired, an unverified probe is a disarmed one.")
+    # AND THE ZERO-LIVE-ROW COROLLARY, which is where the fleet shape's
+    # mechanism runs out. "Live guards fail CLOSED" is HOW the shape stops an
+    # unverified run counting as a pass -- but this tier has NO live guards, so
+    # that clause has nothing to bite on and an unverified probe would exit 0
+    # with its regression alarm silently disarmed. The PRINCIPLE is what is
+    # fleet-wide, not the mechanism: where there are no live guards, "could not
+    # verify" gates directly, because there is nothing else left to.
+    if unver and not LIVE_GUARDS:
+        rc = 1
+    live_fail = [n for n in LIVE_GUARDS
+                 if results[n]["verified"] and not results[n]["held"]]
+    if rc == 0 and unver:
+        verdict = "COULD NOT VERIFY (no comparison ran — not a model verdict)"
+    elif rc == 0:
+        verdict = "PASS"
+    elif live_fail or returned:
+        verdict = "FAIL"
+    else:
+        verdict = "COULD NOT VERIFY (no comparison ran — not a model verdict)"
+    print("\nc_divergence_probe: %s" % verdict)
     return rc
 
 

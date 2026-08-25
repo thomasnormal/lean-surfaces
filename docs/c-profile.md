@@ -195,6 +195,60 @@ The `<<` side is likewise clean: the shifts are on `uint64_t` or on
 non-negative small `int`s (`1 << 12`, `4 << pi` for `pi` in 0..5), so no
 signed left-shift overflow.
 
+## 4a STRUCTURE LAYOUT — natural alignment, DECLARED (`natural_alignment`)
+
+C23 §6.7.2.1p18 leaves the padding between structure members, and after the
+last one, **implementation-defined**. The tier needs it: `torLayout` cannot
+size a `struct` or answer `offsetof` without a rule, and **54 of 300
+`gcc.c-torture` tests were refused for `no layout for declared type` with
+`struct`/`union` the entire remainder** once the arrays and typedefs were
+handled (`docs/backlog/c.md` 2026-08-25-c-25).
+
+`2026-08-25-c-25` refused to compute one, and the refusal was right for the
+reason it gave — **a layout computed from an UNDECLARED rule is a fabricated
+layout, the same defect as a fabricated column one abstraction up.** The
+answer is not to keep refusing; it is to stop the rule being undeclared.
+That is what this file already does for `CHAR_BIT`, `sizeof(int)` and
+`sizeof(long)`, which are implementation-defined in exactly the same sense.
+
+**THE RULE, pinned:**
+
+* every member is placed at the next offset satisfying **its own**
+  alignment, which for a scalar is its size and for an array is its
+  element's;
+* members are **not reordered** — §6.7.2.1p18 requires increasing addresses
+  in declaration order, so this half is the standard's and not the
+  profile's;
+* the aggregate's alignment is its **widest member's**, and its size is
+  rounded **up** to that alignment, so arrays of it stay aligned;
+* a `union`'s members all sit at offset 0; its size is the largest member's,
+  rounded up to the widest member's alignment.
+
+**PROBED, not assumed.** `natural_alignment` is a `depended_on` fact with a
+`_Static_assert` expression like every other, and both profiled hosts fold
+it true:
+
+```
+_Alignof(int) == 4 && sizeof(struct { char c; int i; }) == 8 &&
+_Alignof(struct { char c; int i; }) == 4 && sizeof(struct { char a; char b; }) == 2
+```
+
+The four conjuncts are chosen to pin the four halves of the rule: a scalar's
+alignment, the padding BEFORE a member, the aggregate's own alignment, and
+the absence of padding where none is needed.
+
+> **A profile does not make an implementation-defined choice go away; it
+> makes it ATTRIBUTABLE. The objection to a fabricated layout was never
+> "computing one is wrong" — it was "computing one from a rule nobody wrote
+> down is wrong", and the distance between those is one probed fact.**
+
+**J.3 index**: J.3.9(1), the alignment requirements of structure and union
+members and the padding between them. **HONEST LIMIT**: this is the SysV /
+AAPCS shape. A host that packs differently — or a translation unit using
+`_Alignas`, `#pragma pack` or bit-fields — is outside the pin, and the tier
+refuses rather than guessing: none of the three is in the modelled
+vocabulary, so they arrive as `unsupported` and never as a wrong offset.
+
 ## 5 The guard
 
 The `#guard` of the C lane. Any host, in under a second, without running

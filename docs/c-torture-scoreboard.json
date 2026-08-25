@@ -6,18 +6,18 @@
   "not-ingested": 1,
   "not-parsed": 30,
   "oracle-tests-compiler": 1,
-  "passed": 97,
+  "passed": 110,
   "refused-libc": 5,
   "refused-ub": 10,
-  "refused-unsupported": 154,
+  "refused-unsupported": 141,
   "runner-error": 0,
   "timeout": 2
  },
  "failed_tests": [],
- "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log. The pin is docs/c-torture-pin.json. This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published. THIS REVISION WAS WRITTEN BEFORE ITS TENURE, as the PREDICTION for 2026-08-25-c-25 \u2014 tools/c_torture_gate.sh compares it against the fresh run, so the prediction is executable and a miss is a red gate rather than a paragraph.",
+ "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log. The pin is docs/c-torture-pin.json. This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published. THIS REVISION IS A PREDICTION, written before its tenure for 2026-08-26-c-29 (struct/union layout from the profile's declared natural_alignment). tools/c_torture_gate.sh compares it against the fresh run, so the prediction is adjudicated by a gate rather than by a later paragraph \u2014 and a MISS IS A RED GATE whose failure message prints both vectors, which makes the red the measurement.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"
  ],
- "scored": 97,
+ "scored": 110,
  "total": 300
 }

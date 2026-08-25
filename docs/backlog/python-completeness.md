@@ -2913,3 +2913,78 @@ Two caveats recorded beside every figure rather than discovered later:
    regimes is therefore *not fair*, so load and swap are recorded at every
    peak, and a cross-regime comparison will be reported as **inconclusive**
    rather than quietly averaged.
+
+## 2026-08-25-pycomplete-34 — the depth-split verdict, and the memory premise falsified by my own instrument
+
+### The verdict: the critical path prediction holds
+
+`pins_bound_*` elaboration, from the killed run's log (it built these before it
+died, and the green re-run reused their `.olean`s):
+
+| shard | nodes | time | s/node |
+|---|---|---|---|
+| `pins_bound_mid_d1` | 71 | **65 s** | 0.92 |
+| `pins_bound_mid_d2` | 826 | **515 s** | 0.62 |
+| `pins_bound_mid_d3` | 653 | **454 s** | 0.69 |
+| `pins_bound_h` | — | 277 s | |
+| `pins_bound_tac` / `searcher` / `end` | — | 51 / 26 / 10 s | |
+
+**Predicted critical path ~7.8 min (468 s) set by `_mid_d2`; actual 515 s —
+within 10%.** The node-count model (71/826/653) predicted the split well;
+s/node is near-constant, which is why counting nodes beat counting guards.
+
+### And the cost the prediction ALSO named: the total went up
+
+`65 + 515 + 454 = 1034 s` against the **875 s** previously measured for the
+unsplit `posMid` — **~18% more total CPU**. Splitting lowers the critical path
+and *raises* the total, because each shard re-pays the import cost. That is the
+**same mechanism I registered for memory** hours earlier, showing up in time.
+*Soft*: 875 s came from a different run under different load, so this is a
+cross-regime comparison and I am reporting it as directional, not exact.
+
+`_d3` at 454 s is nearly `_d2`'s equal, so the split is **not balanced** — a
+further win needs the d2/d3 pair split again, not a fourth sibling.
+
+### THE MEMORY PREMISE IS FALSIFIED — and my own instrument did it
+
+Peak RSS, sampled during the green run (**scope: only the ~15 modules this run
+actually rebuilt**, since `.lake` was warm — not the full 911):
+
+     1989.88 MB  bound_depth.lean
+     1590.55 MB  move_gate.lean
+     1465.55 MB  move_residue.lean
+     1383.64 MB  genmoves_drain.lean
+     1318.58 MB  value_bound.lean
+      ...
+      589.94 MB  genmoves_ray.lean
+
+> **`genmoves_ray` is not the memory cliff. `bound_depth` is 3.4× larger in the
+> same run, same regime — a fair comparison.**
+
+`genmoves_ray` died in the first tenure not because it is the largest, but
+because it was **the module that happened to be running when the box ran out**.
+
+> **Under machine-wide starvation the victim is chosen by TIMING, not by SIZE.**
+> Every "this module is the fragile one" conclusion drawn from *which module
+> died* is an artifact of scheduling.
+
+### And the lane never had a memory problem at all
+
+Concurrent aggregate peak **2301.78 MB** against a **10240 MB** chain cap and a
+**5120 MB** per-process cap. The lane used **22%** of its chain budget at peak.
+**No topology change to any fleet file would have prevented that kill** — it was
+external oversubscription by another repository, and sharding cannot fix a
+machine-wide shortage.
+
+### So the approved justification is wrong, and I have to say so
+
+I reframed the `genmoves_ray` shard as **"survivability, not minutes"** and it
+was approved on that basis. **The measurement refutes the reframe.** But the
+same run makes the *original* case strongly: `genmoves_ray` took **962 s** — the
+single largest elaboration in the tree, ahead of `_mid_d2`'s 515 s.
+
+**The inch survives; its justification reverts to the one I talked us out of.**
+Minutes, not survivability. Worth stating plainly rather than quietly letting an
+approved-but-wrong premise carry a tenure — the prediction discipline worked
+exactly as intended, falsifying a claim *within the hour* and *before* the
+tenure was spent on it.

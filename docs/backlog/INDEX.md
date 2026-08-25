@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**400 entries across 17 lanes.** Regenerate with
+**401 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -32,6 +32,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-25-qol-67` |  | I breached A11 verifying the gate, and the gate does need the runner | qol |
 | `2026-08-25-qol-66` |  | the floor gains the rule, and waits for C | qol |
 | `2026-08-25-qol-65` |  | the gate that was never in anyone's floor | qol |
+| `2026-08-25-pycomplete-34` |  | the depth-split verdict, and the memory premise falsified by my own instrument | python-completeness |
 | `2026-08-25-pycomplete-33` |  | genmoves_ray shard: the prediction, registered before the tenure | python-completeness |
 | `2026-08-25-pycomplete-32` |  | genmoves_ray DOES shard; my earlier "no" came from a substring grep | python-completeness |
 | `2026-08-25-pycomplete-31` |  | exit 143: the RSS discipline is machine-scoped in its claim and lane-scoped in its mechanism | python-completeness |

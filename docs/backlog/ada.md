@@ -1529,3 +1529,98 @@ already the channel `Constraint_Error` travels.
 `inFrame`'s third arm is the one that changes: today an exception PROPAGATES
 past a frame; with handlers, a frame may ABSORB it. That is a one-arm edit to
 a function whose three arms were written knowing this rung was coming.
+
+## 2026-08-25-ada-1 — INCH 4: a frame that ABSORBS, and the handler sees the world AS OF THE RAISE
+
+`LeanModels/Ada/Ada2012/Stmt.lean` to 1286 lines and 70 guards. Built to
+§2026-08-24-ada-7's census. **Not yet ticketed** — see the hold at the end.
+
+### THE EDIT IS ONE ARM, AS THE CENSUS PREDICTED
+
+Inch 3's `inFrame` had three arms and was written knowing this rung was
+coming. Inch 4 replaces it with the same shape plus one decision:
+
+* **`.ret` — CAUGHT.** ARM 6.5. Unchanged.
+* **`.raised` — caught IFF a handler covers it** (ARM 11.2); otherwise it
+  **propagates** (ARM 11.4). **Either way the frame is popped**: an exception
+  leaving a subprogram still leaves it.
+* **a refusal — does not come back at all.** There is no world on `π`, and an
+  arm that restored one would be inventing it. Unchanged.
+
+**THE STATE RULE IS THE PART WORTH GUARDING.** The handler runs on `w'` — the
+world **as of the raise**, with the frame still pushed — not on the world the
+call started in. ARM 11.4 hands a handler the state the raise happened in, and
+that is precisely the property the adoption's state-RETAINING `ρ` channel was
+chosen for at inch 1. The guard makes it visible rather than asserting it: the
+body writes `X := 5` and then raises, the `others` handler does `X := X + 1`,
+and **X ends at 6**. A handler that saw the entry world would leave 1.
+
+### THE LIST-ENCODING TRAP, HANDLED ON FIRST CONTACT
+
+Handlers are read from `HandledStmts` slot[1], which is a generic
+**`AdaNodeList`** — 24 of 24 — and never an `ExceptionHandlerList`, a kind
+that occurs **zero times in 2,976,861 corpus nodes**. An empty handler list is
+a **LEAF** with empty text (41 of 65). Both are guarded. Inch 2 paid to learn
+this encoding, inch 3 paid nothing, and inch 4 paid nothing.
+
+### THE SYNTHETIC FIXTURE IS LABELLED IN THE SOURCE
+
+`RaiseStmt` is **1,440 corpus-wide and 0 in both envelopes** — the first
+construct this tier has modelled with **no witness in the tree**. Two
+consequences, both taken:
+
+1. The rule is written **not to depend on the arity**: child 0 is the
+   exception name whatever else follows. A guessed arity is exactly what the
+   three list-encoding traps punished.
+2. The fixtures carry a **SYNTHETIC** label in the file, saying they pin the
+   rule's behaviour and not the frontend's encoding, and that the label comes
+   off when the re-acquire rung checks it against the corpus.
+
+### THE SLICE
+
+`others` and named choices (matched case-blind per ARM 2.3); a raise inside a
+handler **propagates** and is not re-handled (ARM 11.4 — a handler is not its
+own handler); a **bare `raise`** refuses at 11.3, because re-raising needs the
+current occurrence in `W` and inch 4 has no occurrence type. Handlers on
+BLOCKS (ARM 5.6) are out: blocks are not on the ladder yet.
+
+### THE FIRST TENURE CAME BACK RED — TWO ROOT CAUSES, TEN ERROR LINES
+
+The summary said *10 distinct error lines*; the full log says **two root
+causes**, and three of the ten were cascade. Worth recording because the ratio
+is the point: **an error COUNT is not a defect count**, which is why A14 says
+the summary LOCATES and the full log COUNTS.
+
+**1. A MULTI-LINE STRUCTURE UPDATE DOES NOT PARSE.** Three fixtures written as
+
+    { caught with name := "caughtbyname",
+      handlers := [...] }
+
+each produced `unexpected identifier; expected '}'`, and the three `#guard`s
+that used them then failed as **cascade** — `sorryAx` evaluating to the wrong
+answer, not a semantics error. Diagnosed from evidence already in this file
+rather than guessed: **one-line** updates compile here (`TrueOnly` in inch 2,
+`outMode` in inch 3, both green), and a **multi-line plain instance** compiles
+(`caught` itself is three lines and elaborates). Only the multi-line UPDATE
+fails. The fixtures are spelled out in plain form, and the note lives in the
+source next to them so the next author does not re-derive it.
+
+**2. `Node` DOES NOT DERIVE `BEq`.** `s.handlers == []` asked for
+`BEq (List Node)` and `LeanModels/Ada/Ast.lean` derives only
+`Repr, Inhabited` on `Node`. Fixed with `List.isEmpty`, which needs no
+instance. **Deliberately NOT fixed by deriving `BEq` on `Node`**: that file is
+the version-neutral TRUNK, and a derived structural equality on a nested
+inductive with `Array` children is a global instance bought for one guard —
+the same trade inch 1 refused when it wrote `okIs` by hand rather than
+declaring an orphan `BEq (Except Abrupt Val)`.
+
+Neither root cause was in the semantics. **Every rule this rung added
+elaborated**; what failed was two pieces of Lean surface syntax in the gate.
+
+### HELD, NOT SHIPPED
+
+Master fails `harness/divergence_register.py` — verified here, exit **1**, on
+`docs/c-declared-divergences.json` row `c-div-2` (three guards where two
+distinct named ones are required). That gate is in this lane's class floor, so
+a ticket now would go red on another lane's rows. **Code written, enqueue held
+until master is register-green.** ACATS stands at 0 / 4,188 and 0 / 3,996.

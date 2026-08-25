@@ -365,29 +365,43 @@ structure Subp where
   right place for the next rung to start. -/
   modesOk : Bool
   body : List Node
+  /-- **Inch 4.** The exception handlers, ARM 11.2 — read from
+  `HandledStmts`' SECOND slot, which is a generic `AdaNodeList` and **not** an
+  `ExceptionHandlerList`: that kind occurs **zero times in 2,976,861 corpus
+  nodes** (`docs/backlog/ada.md` §2026-08-24-ada-7). Inch 3 read slot[0] and
+  ignored this one. -/
+  handlers : List Node
   deriving Repr, Inhabited
 
 abbrev SubpTable := List (String × Subp)
 
-/-- **WHAT A FRAME ABSORBS, and it is the two-channel mapping deciding.**
+/-- ARM 11.2: does this handler's choice list cover an occurrence of `exc`?
 
-Run `x` in a NEW frame and come back:
+`others` is an `OthersDesignator` LEAF and is the shape both fixture handlers
+use. A named choice is matched case-INSENSITIVELY, per ARM 2.3 — an exception
+name is an identifier like any other. -/
+def handlerCovers (exc : String) : Node → Bool
+  | .node "ExceptionHandler" _ ch =>
+      if ch.size != 3 then false else
+      match ch[1]! with
+      | .node "AlternativesList" _ alts =>
+          alts.any fun a =>
+            match a with
+            | .leaf "OthersDesignator" _ _ => true
+            | .leaf "Identifier" _ nm => foldId nm == foldId exc
+            | _ => false
+      | _ => false
+  | _ => false
 
-* **`.ret` is CAUGHT** — that is what a frame is FOR (ARM 6.5).
-* **any other Ada exception PROPAGATES, and the frame is still POPPED.** ARM
-  11.4: an exception leaving a subprogram still leaves it, so the frame dies
-  with the call rather than with the success.
-* **a REFUSAL does not come back at all** — there is no world on `π`, which is
-  the state-discarding channel, so there is nothing to pop. That asymmetry is
-  not an omission: it is the adoption's mapping showing through at the frame
-  boundary, and a `π` arm that restored a world would be inventing one. -/
-def inFrame (locals : List (String × Val)) (x : AdaM AdaWorld Unit) :
-    AdaM AdaWorld (Option Val) := fun w =>
-  match x { w with frames := locals :: w.frames } with
-  | .error h => .error h
-  | .ok (.ok _, w') => .ok (.ok none, { w' with frames := w.frames })
-  | .ok (.error (.ret v), w') => .ok (.ok v, { w' with frames := w.frames })
-  | .ok (.error e, w') => .ok (.error e, { w' with frames := w.frames })
+/-- The statements a handler runs. `ExceptionHandler` is 3 children, measured. -/
+def handlerBody : Node → List Node
+  | .node "ExceptionHandler" _ ch =>
+      if ch.size == 3 then
+        match ch[2]! with
+        | .node "StmtList" _ ss => ss.toList
+        | other => [other]
+      else []
+  | _ => []
 
 /-- Does this subtree contain a call? **Out of fuel answers `true`**, because
 the only consumer refuses on `true` and a refusal is the safe direction — a
@@ -453,7 +467,13 @@ def subpOf : Node → Option Subp
                    params := ps, modesOk := ok,
                    body := match hs[0]! with
                            | .node "StmtList" _ ss => ss.toList
-                           | other => [other] }
+                           | other => [other],
+                   -- An EMPTY handler list is a LEAF with empty text (41 of
+                   -- 65 `AdaNodeList` nodes in the fixtures), so a non-node
+                   -- here means "no handlers" and never "malformed".
+                   handlers := match hs[1]! with
+                               | .node "AdaNodeList" _ hs2 => hs2.toList
+                               | _ => [] }
       | _, _ => none
   | _ => none
 
@@ -676,8 +696,35 @@ def callSubp (prog : SubpTable) : Nat → Subp → List Val → AdaM AdaWorld (O
     else if s.params.length != args.length then
       refuse (.unsupported (clauseRef "6.4.1"))
         s!"'{s.name}' takes {s.params.length} parameters and was given {args.length} arguments — inch 3 models no default expression"
-    else
-      inFrame (s.params.zip args) (execStmts prog fuel s.body)
+    else fun w =>
+      -- **WHAT A FRAME ABSORBS**, and the arms are the laws:
+      --   `.ret`      CAUGHT -- that is what a frame is for (ARM 6.5).
+      --   `.raised`   caught IFF a handler covers it (ARM 11.2); otherwise it
+      --               PROPAGATES (ARM 11.4). Either way the frame is popped:
+      --               an exception leaving a subprogram still leaves it.
+      --   a refusal   does not come back at all -- there is no world on pi,
+      --               and an arm that restored one would be inventing it.
+      -- The handler runs on `w'`, the world AS OF THE RAISE and with the frame
+      -- still pushed, because ARM 11.4 hands the handler the state the raise
+      -- happened in -- not the state the call started in.
+      let entered := { w with frames := (s.params.zip args) :: w.frames }
+      let pop := fun (x : AdaWorld) => { x with frames := w.frames }
+      match execStmts prog fuel s.body entered with
+      | .error h => .error h
+      | .ok (.ok _, w') => .ok (.ok none, pop w')
+      | .ok (.error (.ret v), w') => .ok (.ok v, pop w')
+      | .ok (.error (.raised n m), w') =>
+        match s.handlers.find? (handlerCovers n) with
+        | none => .ok (.error (.raised n m), pop w')
+        | some hd =>
+          match execStmts prog fuel (handlerBody hd) w' with
+          | .error h2 => .error h2
+          | .ok (.ok _, w2) => .ok (.ok none, pop w2)
+          | .ok (.error (.ret v), w2) => .ok (.ok v, pop w2)
+          -- A raise INSIDE a handler propagates; it is not re-handled here
+          -- (ARM 11.4: a handler is not its own handler).
+          | .ok (.error e2, w2) => .ok (.error e2, pop w2)
+      | .ok (.error e, w') => .ok (.error e, pop w')
 
 /-- Execute a sequence of statements (ARM 5.1).
 
@@ -691,6 +738,10 @@ def execStmts (prog : SubpTable) : Nat → List Node → AdaM AdaWorld Unit
     | .leaf k _ _ =>
       match k with
       | "NullStmt" => execStmts prog fuel rest
+      -- A childless `raise;` reaches us as a LEAF, per the same encoding rule.
+      | "RaiseStmt" =>
+        refuse (.unsupported (clauseRef "11.3"))
+          "a bare `raise` re-raises the current occurrence, which needs an occurrence in W — outside inch 4's slice"
       | _ =>
         refuse (.unsupported (clauseRef "5.1"))
           s!"statement leaf '{k}' is outside this tier's vocabulary"
@@ -716,6 +767,24 @@ def execStmts (prog : SubpTable) : Nat → List Node → AdaM AdaWorld Unit
           | e => do
             let v ← evalExpr prog fuel e
             raiseIn (.ret (some v))
+      -- ARM 11.3, *Raise Statements*. **NO CORPUS WITNESS**: `RaiseStmt` is
+      -- 1,440 nodes corpus-wide and **0 in both fixtures**, so its ARITY is
+      -- unverified here. The rule is deliberately written not to depend on
+      -- it — child 0 is the exception name whatever else follows — because a
+      -- guessed arity is exactly what the three list-encoding traps punished.
+      | "RaiseStmt" =>
+        if ch.size == 0 then
+          refuse (.unsupported (clauseRef "11.3"))
+            "a bare `raise` re-raises the current occurrence, which needs an occurrence in W — outside inch 4's slice"
+        else
+          match ch[0]! with
+          | .leaf "Identifier" _ nm => raiseIn (.raised nm "")
+          | .absent =>
+            refuse (.unsupported (clauseRef "11.3"))
+              "a bare `raise` re-raises the current occurrence, which needs an occurrence in W — outside inch 4's slice"
+          | other =>
+            refuse (.unsupported (clauseRef "11.3"))
+              s!"raising a '{kindOf other}' is outside inch 4's slice"
       | "AssignStmt" =>
         if ch.size != 2 then refuse (.unsupported (clauseRef "5.2")) "AssignStmt: unexpected arity"
         else
@@ -982,17 +1051,17 @@ private def retStmt (e : Node) : Node := .node "ReturnStmt" sp0 #[e]
 argument list is a LEAF. -/
 private def bump : Subp :=
   { name := "bump", isFunction := false, params := [], modesOk := true,
-    body := [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))] }
+    body := [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))], handlers := [] }
 
 /-- `procedure SetX (N : Integer) is begin X := N; end;` -/
 private def setX : Subp :=
   { name := "setx", isFunction := false, params := ["n"], modesOk := true,
-    body := [assign (ident "X") (ident "N")] }
+    body := [assign (ident "X") (ident "N")], handlers := [] }
 
 /-- `function Twice (N : Integer) return Integer is begin return N + N; end;` -/
 private def twice : Subp :=
   { name := "twice", isFunction := true, params := ["n"], modesOk := true,
-    body := [retStmt (bin "OpPlus" (ident "N") (ident "N"))] }
+    body := [retStmt (bin "OpPlus" (ident "N") (ident "N"))], handlers := [] }
 
 /-- The same, but its parameter has a mode outside the slice. -/
 private def outMode : Subp := { setX with name := "outmode", modesOk := false }
@@ -1000,7 +1069,7 @@ private def outMode : Subp := { setX with name := "outmode", modesOk := false }
 /-- A procedure that raises rather than returning — ARM 11.4's case. -/
 private def blowUp : Subp :=
   { name := "blowup", isFunction := false, params := ["n"], modesOk := true,
-    body := [assign (ident "X") (lit "200")] }
+    body := [assign (ident "X") (lit "200")], handlers := [] }
 
 private def prog0 : SubpTable :=
   [("bump", bump), ("setx", setX), ("twice", twice), ("outmode", outMode), ("blowup", blowUp)]
@@ -1102,5 +1171,125 @@ private def bodyOfBump : Node :=
 -- was written expecting an empty bucket. It is no longer vacuous.
 #guard !orderDependenceGate [.orderDependence (clauseRef "6.4.1")]
 #guard orderDependenceGate [.unsupported (clauseRef "6.4"), .undefined erroneousExecution]
+
+/-! ### INCH 4 — handlers, propagation, and `raise`
+
+**THE `RaiseStmt` FIXTURES BELOW ARE SYNTHETIC AND SAID TO BE.** `RaiseStmt`
+is 1,440 nodes corpus-wide and **0 in both envelopes**, so unlike every shape
+inch 3 used, this one has no witness in the tree. The rule it drives was
+written not to depend on the arity for that reason, and these fixtures pin the
+rule's behaviour rather than the frontend's encoding. When the corpus returns
+(the re-acquire rung) the encoding gets checked and this label comes off. -/
+
+private def othersChoice : Node := .leaf "OthersDesignator" sp0 "others"
+private def namedChoice (n : String) : Node := ident n
+private def handler (choices : List Node) (ss : List Node) : Node :=
+  .node "ExceptionHandler" sp0
+    #[.absent, .node "AlternativesList" sp0 choices.toArray, seq ss]
+/-- SYNTHETIC — see the note above. -/
+private def raiseOf (n : String) : Node := .node "RaiseStmt" sp0 #[ident n]
+
+private def boom : String := "Boom"
+
+/-- `begin X := 5; raise Boom; exception when others => X := X + 1; end;` -/
+private def caught : Subp :=
+  { name := "caught", isFunction := false, params := [], modesOk := true,
+    body := [assign (ident "X") (lit "5"), raiseOf boom],
+    handlers := [handler [othersChoice] [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))]] }
+
+/-- The same, handled by NAME rather than by `others`.
+
+**Spelled out rather than `{ caught with … }`**, and the reason is measured
+rather than stylistic: a multi-line structure UPDATE does not parse here,
+while a multi-line plain instance does (`caught`, just above, is three lines
+and elaborates). One-line updates are fine — `TrueOnly` and `outMode` are
+both one-liners and both compiled green. -/
+private def caughtByName : Subp :=
+  { name := "caughtbyname", isFunction := false, params := [], modesOk := true,
+    body := [assign (ident "X") (lit "5"), raiseOf boom],
+    handlers := [handler [namedChoice "BOOM"] [assign (ident "X") (lit "7")]] }
+
+/-- A handler that does not cover what was raised. -/
+private def notCovered : Subp :=
+  { name := "notcovered", isFunction := false, params := [], modesOk := true,
+    body := [assign (ident "X") (lit "5"), raiseOf boom],
+    handlers := [handler [namedChoice "Other_Error"] [assign (ident "X") (lit "7")]] }
+
+/-- A handler that raises again — ARM 11.4: a handler is not its own handler. -/
+private def reraises : Subp :=
+  { name := "reraises", isFunction := false, params := [], modesOk := true,
+    body := [assign (ident "X") (lit "5"), raiseOf boom],
+    handlers := [handler [othersChoice] [raiseOf "Second"]] }
+
+private def prog4 : SubpTable :=
+  [("caught", caught), ("caughtbyname", caughtByName),
+   ("notcovered", notCovered), ("reraises", reraises)]
+
+-- ARM 11.2: an `others` handler CATCHES, and the subprogram then completes
+-- normally. X is 6, not 5 -- so THE HANDLER SAW THE WORLD AS OF THE RAISE
+-- (X had already become 5), which is ARM 11.4's state rule and not merely
+-- "a handler ran".
+#guard endsWith "x" (.int int8 6) [callStmt "Caught" []] prog4
+
+-- ...and the frame is popped on the HANDLED path too.
+#guard framesEmptyAfter [callStmt "Caught" []] prog4
+
+-- ARM 11.2 + 2.3: a NAMED choice matches case-insensitively -- an exception
+-- name is an identifier like any other.
+#guard endsWith "x" (.int int8 7) [callStmt "CaughtByName" []] prog4
+
+-- ...and a handler that does NOT cover it lets the exception PROPAGATE
+-- (ARM 11.4), with the world the raise left behind: X is 5, the write that
+-- preceded the raise, and the trace still holds its row.
+#guard raisesKeeping boom "x" (.int int8 5) [callStmt "NotCovered" []] prog4
+#guard framesEmptyAfter [callStmt "NotCovered" []] prog4
+
+-- ARM 11.4: a raise INSIDE a handler propagates and is NOT re-handled by the
+-- same handler. The caller sees `Second`, never `Boom`.
+#guard raisesKeeping "Second" "x" (.int int8 5) [callStmt "Reraises" []] prog4
+#guard !raisesKeeping boom "x" (.int int8 5) [callStmt "Reraises" []] prog4
+
+-- ARM 11.3: `raise Foo;` raises Foo. (Synthetic fixture -- see the note.)
+#guard raisesKeeping boom "x" (.int int8 0) [raiseOf boom]
+
+-- ...and a BARE `raise` refuses: re-raising needs the current occurrence in W.
+#guard refusedAtClause "11.3" [.leaf "RaiseStmt" sp0 "raise;"]
+#guard refusedAtClause "11.3" [.node "RaiseStmt" sp0 #[.absent]]
+
+-- `handlerCovers`: `others` covers anything, a name covers itself
+-- case-blind, and a different name covers nothing.
+#guard handlerCovers boom (handler [othersChoice] [])
+#guard handlerCovers boom (handler [namedChoice "boom"] [])
+#guard !handlerCovers boom (handler [namedChoice "Other_Error"] [])
+
+-- THE ENCODING, THIRD TIME: the handlers come out of `HandledStmts` slot[1]
+-- as a generic `AdaNodeList`, and an EMPTY one is a LEAF. `bodyOfBump` has
+-- exactly that, so its handler list must read as empty rather than as
+-- malformed.
+#guard match subpOf bodyOfBump with
+       | some s => s.handlers.isEmpty
+       | none => false
+
+/-- The same body, now WITH a handler in slot[1] — an `AdaNodeList`, which is
+what the corpus emits, and never an `ExceptionHandlerList` (0 occurrences in
+2,976,861 nodes). -/
+private def bodyOfCaught : Node :=
+  .node "SubpBody" sp0
+    #[.leaf "OverridingUnspecified" sp0 "",
+      .node "SubpSpec" sp0
+        #[.leaf "SubpKindProcedure" sp0 "procedure", defName "Caught2", .absent, .absent],
+      .absent,
+      .node "DeclarativePart" sp0 #[.leaf "AdaNodeList" sp0 ""],
+      .node "HandledStmts" sp0
+        #[.node "StmtList" sp0 #[assign (ident "X") (lit "5"), raiseOf boom],
+          .node "AdaNodeList" sp0
+            #[handler [othersChoice] [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))]]],
+      .leaf "EndName" sp0 "Caught2"]
+
+#guard match subpOf bodyOfCaught with
+       | some s => s.handlers.length == 1
+       | none => false
+-- ...and a table built by the BUILDER drives the handled path end to end.
+#guard endsWith "x" (.int int8 6) [callStmt "Caught2" []] (collectSubps 32 [bodyOfCaught])
 
 end LeanModels.Ada.Ada2012

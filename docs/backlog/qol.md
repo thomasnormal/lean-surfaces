@@ -4902,3 +4902,76 @@ the lanes that ticket are running it, not when the constant changed.
 ### Triad
 
 Observation only. No tool changed, nothing enqueued, no Lean executed.
+
+## 2026-08-25-qol-71 — a tenure that writes its log into the clone refuses itself
+
+SV paid **8,197 seconds** to find this, and measured it three ways:
+tracked-only == HEAD tree; tracked + small log == the enqueue stamp; tracked +
+grown log == the refusal's "now".
+
+The v2 stamp hashes the working tree through `git add -A`, which **includes
+untracked files** — deliberately, since a new `.lean` nobody staged is exactly
+what must not slip into a tenure. But a tenure writing its own progress log
+beneath `$CLONE` grows that log by a `queued Ns` line every few seconds, so the
+tree drifts from the stamp by exactly the log's growth and the tenure
+**refuses itself at acquire**. It scales with the wait: the tenures that wait
+longest lose their turn *after* paying the full wait, and a loaded machine
+makes it worse.
+
+> The protocol's own artifact should not be able to invalidate the protocol's
+> own ticket. (SV)
+
+### Refused at enqueue, not excluded from the stamp
+
+As ruled. Excluding the log would blind exactly the A6 drift-detection the
+stamp exists for, and a `.gitignore` entry does the same thing one level down:
+both make the guard blind to a real class of change in order to hide one
+artifact. **The log moves instead.**
+
+```
+triad.sh: this tenure's own log is INSIDE the clone:
+  …/scratchpad/sv-red-refix.log
+  …the tenure then refuses ITSELF at acquire, after paying the whole wait.
+  Put the log outside the clone and re-run, e.g.
+    bash tools/triad.sh --lane sv ... > "${TMPDIR:-/tmp}/sv-triad.log" 2>&1
+```
+
+### Prediction first, and all three held
+
+Written down before the code: the check must **resolve symlinks** (this box
+reaches `/private/tmp` through `/tmp`, and a log named through the symlink
+would otherwise read as outside), must **skip pipes and ttys** (a piped run has
+no file to blame), and must **not fire for `--classify-only`** — a report takes
+no ticket, so its log cannot drift a stamp, which is item 12's rule reapplied.
+All three are rows, and all three passed on the first run.
+
+### The forced ordering, recorded where a lane meets it
+
+SV derived it the expensive way *behind* the first refusal, so it now prints in
+the TREE CHANGED refusal itself: **a queued ticket is never rebased in place** —
+that moves the tree under your own ticket and the next acquire refuses again,
+for the same reason. Cancel first (by PID, ownership confirmed, never blind),
+then rebase, then re-enqueue.
+
+### Interaction with the held rows: none
+
+My lines are the precondition block and `tree_change_report`; the banner row
+lives at the classify report (line ~3398) and the `--gates` escalation at the
+class decision (~2462). **No overlap, so they stay separate**, as ruled.
+
+### Bedding-in, re-measured
+
+```
+current 15 | local-work 1 | would-be-refused 1 (leantier) | pre-guard 6
+```
+
+The wave is done bar one. The first count of this said "would-be-refused 2"
+and named **this lane** — because the quick counter had no **local-work**
+bucket and read my own edited copy as superseded. The census learned that
+distinction once already; a throwaway re-count dropped it. **A bucket omitted
+is a claim made.**
+
+### Triad
+
+`triad.sh` **392 ok** (380 → 392). Fixtures only; live queue untouched; no
+Lean executed.

@@ -1046,6 +1046,48 @@ choose_threads() {      # -> "<n> <the readings that chose it>"
          "$THREADS_IDLE" "$l" "$IDLE_LOAD_MAX" "$pct" "$IDLE_PRESS_MAX" "$src"
 }
 
+# ---- THE PROTOCOL'S OWN ARTIFACT MUST NOT INVALIDATE ITS OWN TICKET (SV)
+#
+# The v2 stamp hashes the WORKING TREE through `git add -A`, which INCLUDES
+# UNTRACKED files -- deliberately, because a new `.lean` nobody staged is
+# exactly what must not slip into a tenure.  But a tenure that writes its own
+# progress log beneath $CLONE grows that log by a "queued Ns" line every few
+# seconds while it waits, so the tree drifts from the enqueue stamp by exactly
+# the log's growth and the tenure REFUSES ITSELF at acquire.
+#
+# SV pinned it three ways: tracked-only == HEAD tree; tracked + small log ==
+# the enqueue stamp; tracked + grown log == the refusal's "now".  8,197 seconds
+# to find, and it SCALES WITH THE WAIT -- the tenures that wait longest are the
+# ones that lose their turn after paying the full wait.
+#
+# > The protocol's own artifact should not be able to invalidate the protocol's
+# > own ticket.  (SV)
+#
+# REFUSED AT ENQUEUE, NOT EXCLUDED FROM THE STAMP.  Excluding the log would
+# weaken exactly the A6 drift-detection the stamp exists for, and a .gitignore
+# entry would do the same thing one level down: both make the guard blind to a
+# real class of change in order to hide one artifact.  The log moves instead.
+resolve_under_clone() {         # path -> prints it, resolved, when beneath CLONE
+  local p="$1" d b rp cp
+  case "$p" in ''|'->'*|/dev/*|pipe*|*'[eventfd]'*) return 1 ;; esac
+  d="$(dirname "$p")"; b="$(basename "$p")"
+  # RESOLVED, because `/tmp` is a symlink to `/private/tmp` on this box and a
+  # log named through the symlink would otherwise read as outside the clone.
+  rp="$(cd "$d" 2>/dev/null && pwd -P)" || return 1
+  cp="$(cd "$CLONE" 2>/dev/null && pwd -P)" || return 1
+  case "$rp/$b" in "$cp"/*) printf '%s' "$rp/$b"; return 0 ;; esac
+  return 1
+}
+
+log_under_clone() {             # -> the offending log path, or nothing
+  local fd p
+  for fd in 1 2; do
+    p="$(lsof -a -p $$ -d "$fd" -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
+    resolve_under_clone "$p" && return 0
+  done
+  return 1
+}
+
 gates_planned() {       # -> the gate list this tenure will run
   # A foreign tree and a CLASSIFY-ONLY pass run the gates AS GIVEN: there is no
   # floor to add, because the floor is a claim about THIS repository.
@@ -1423,6 +1465,14 @@ tree_change_report() {                # enq, now, override -> 0 proceed / 1 refu
       echo "  A queued tenure reads the source at BUILD time, so this run would verify a" >&2
       echo "  tree nobody asked it to. Re-enqueue, or pass --build-current-tree if you" >&2
       echo "  batched the edit deliberately." >&2
+      # THE ORDERING IS FORCED, and SV derived it the expensive way behind this
+      # very refusal: a QUEUED TICKET IS NEVER REBASED.  Rebasing in place moves
+      # the tree under your own ticket, so the next acquire refuses for the same
+      # reason -- a third refusal for the same cause.
+      echo "  AND IF YOU MEANT TO REBASE: cancel first, then rebase, then re-enqueue." >&2
+      echo "  A queued ticket is never rebased in place — that moves the tree under your" >&2
+      echo "  own ticket and the next acquire refuses again, for the same reason." >&2
+      echo "  Cancel by PID with ownership confirmed (the ticket names it), never blind." >&2
       return 1 ;;
   esac
 }
@@ -2419,6 +2469,38 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...and takes NO tenure"             "$(printf '%s' "$out" | grep -c 'NO TENURE TAKEN')" "1"
   check "  ...so no why-a-tenure banner"       "$(printf '%s' "$out" | grep -c 'TENURE TAKEN ANYWAY')" "0"
 
+
+  # ---- A TENURE'S OWN LOG MUST NOT LIVE IN THE CLONE (SV, 8197 seconds)
+  # The stamp includes untracked files by design, so a log under $CLONE grows
+  # while the ticket waits and the tenure refuses ITSELF at acquire.
+  saved_cl2="$CLONE"; CLONE="$fr"
+  check "a log INSIDE the clone is caught"     "$(resolve_under_clone "$fr/run.log" | grep -c 'run.log')" "1"
+  check "  ...one outside is not"              "$(resolve_under_clone "$tmp/run.log" >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...a pipe is not a file"            "$(resolve_under_clone '->0xdeadbeef' >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...nor is a tty"                    "$(resolve_under_clone /dev/ttys000 >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...nor an empty fd"                 "$(resolve_under_clone '' >/dev/null && echo caught || echo clear)" "clear"
+  # THE SYMLINK CASE, which would otherwise hide a log that IS in the clone:
+  # this box reaches /private/tmp through /tmp, and the check resolves both.
+  ln -sfn "$fr" "$tmp/frlink" 2>/dev/null
+  check "a symlinked path still resolves in"   "$(resolve_under_clone "$tmp/frlink/run.log" | grep -c "$(cd "$fr" && pwd -P)")" "1"
+  CLONE="$saved_cl2"
+
+  # ...and END TO END, both directions, through a real invocation.
+  rm -rf "$tmp/frq" "$tmp/frl"
+  PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
+    timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > "$fr/inside.log" 2>&1
+  check "a run logging INSIDE the clone refuses" "$(grep -c 'own log is INSIDE the clone' "$fr/inside.log")" "1"
+  check "  ...naming the fix"                  "$(grep -c 'Put the log outside the clone' "$fr/inside.log")" "1"
+  check "  ...and taking NO ticket"            "$(ls "$tmp/frq" 2>/dev/null | grep -c .)" "0"
+  rm -f "$fr/inside.log"
+  rm -rf "$tmp/frq" "$tmp/frl"
+  PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
+    timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > "$tmp/outside.log" 2>&1
+  check "a run logging OUTSIDE proceeds"       "$(grep -c 'own log is INSIDE the clone' "$tmp/outside.log")" "0"
+  # THE FORCED ORDERING is stated where a lane meets it.
+  check "the tree refusal names the ordering"  "$(tree_change_report 'v2 aaa H1' 'v2 bbb H1' 0 2>&1 | grep -c 'never rebased in place')" "1"
+  check "  ...cancel, rebase, re-enqueue"      "$(tree_change_report 'v2 aaa H1' 'v2 bbb H1' 0 2>&1 | grep -c 'cancel first, then rebase, then re-enqueue')" "1"
+
   CLASSIFY="$saved_c"; CLASSIFY_ONLY="$saved_co"; GATES="$saved_g"; LANE_GATES="$saved_lg"
 
   # ITEM 12: THE BARE REPORT, which is the Ada lane's most common invocation
@@ -3182,6 +3264,19 @@ if [ -n "$LANE_GATES" ]; then
 fi
 if [ "$CLASSIFY_ONLY" = "0" ]; then
   gate_reason="$(gate_spec_refusal "$(gates_planned)" plan)" && die "$gate_reason"
+fi
+# A REPORT HAS NOTHING TO SPEND: --classify-only takes no ticket, so its log
+# cannot drift a stamp and this does not apply to it.
+if [ "$CLASSIFY_ONLY" = "0" ]; then
+  _log="$(log_under_clone)" && die "this tenure's own log is INSIDE the clone:
+  $_log
+  The enqueue stamp hashes the WORKING TREE including untracked files, so this log
+  grows a line every few seconds while you wait and the tree drifts from your own
+  ticket — the tenure then refuses ITSELF at acquire, after paying the whole wait.
+  Put the log outside the clone and re-run, e.g.
+    bash tools/triad.sh --lane $LANE ... > \"\${TMPDIR:-/tmp}/$LANE-triad.log\" 2>&1
+  (The log is not excluded from the stamp: that would blind the A6 drift check
+   this stamp exists for, and a .gitignore entry would do the same one level down.)"
 fi
 stamp_version_guard      # a NEW ticket from a pre-rebase worktree is refused here
 tool_version_guard       # ...and one from a SUPERSEDED copy of this tool

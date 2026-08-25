@@ -2,7 +2,7 @@
   "tier": "python",
   "schema": "declared-divergences-1",
   "probe": "harness/pyc_divergence_probe.py",
-  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py (founded by this tier); PROBE is per-tier and named above. pyc-div-1 remains: its probe can run only the ORACLE side, because the divergence is not reachable by an in-tier program. pyc-div-2 (the genexp cursor built at first resume instead of at construction) RETIRED on 2026-08-24 at 2026-08-24-pycomplete-20, by its own condition and not by assertion: the cursor moved to construction time and dict_lab::genexp_bound_then_grow flips to MATCH. Its guard failing is what announced the retirement -- a register that only ever grows is a list, and this one shrank on evidence.",
+  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py (founded by this tier); PROBE is per-tier and named above. pyc-div-1 remains: its probe can run only the ORACLE side, because the divergence is not reachable by an in-tier program. pyc-div-2 is in retired_rows below, RETIRED 2026-08-24 by its own condition and not by assertion: the cursor moved to construction time and dict_lab::genexp_bound_then_grow flips to MATCH. Its guard failing is what announced the retirement -- a register that only ever grows is a list, and this one shrank on evidence.",
   "rows": [
     {
       "id": "pyc-div-1",
@@ -20,6 +20,28 @@
       ],
       "must_not_move": "exc_lab::gen_closes must stay MATCH through any fix. Closing on exception is CORRECT for a user generator -- CPython closes those too -- and only the C-level cursor frames change. A fix that flips gen_closes has fixed the wrong thing.",
       "was_blocked_on": "exc_lab::except_builtin, RESOLVED 2026-08-24 (2026-08-24-pycomplete-22). The witness needs `except RuntimeError:` to survive the first raise, and the tier's admitted handler shape named user classes only; builtin handler classes are now admitted and the refusal left the whitelist. Recorded rather than deleted, because the row's own probe carried the claim 'THE DIVERGENCE IS NOT REACHABLE BY AN IN-TIER PROGRAM' for a day and a half, and a blocker that silently disappears leaves an instrument still describing the world it was written in."
+    }
+  ],
+  "retired_rows": [
+    {
+      "id": "pyc-div-2",
+      "kind": "semantic",
+      "site": "The generator-expression construction path: ingestion lowers a genexp to a synthesized generator function whose body is `for k in .0: ...`, and the loop's cursor frame is pushed by execGen at the FIRST RESUME (LeanModels/Python/Monadic/Eval.lean, the `.ref`-to-dict arm of the generator-body `for`). Spelling: `g = (k for k in d)` / mutate `d` / `next(g)`.",
+      "oracle": "CPython 3.9.19 raises RuntimeError: dictionary changed size during iteration. PEP 289 evaluates the outermost iterable AND calls iter() on it when the genexp OBJECT is created, so the dict iterator's size snapshot predates the mutation. MEASURED by the probe on every run.",
+      "model": "The tier answers 1. The forDict frame -- and with it the size and shapeVersion the cursor guards against -- is not created until the generator is first stepped, by which time the mutation has already happened, so the guard compares the dict against itself. MEASURED by the probe on every run, through tools/leanpy: this row is FULLY REACHABLE in tier and both sides are genuinely run.",
+      "inherited_from": null,
+      "inherited_note": "ORIGINATED here, and found by this lane's own witness rather than by an audit. It was invisible to every prior genexp witness in the tree because they all iterate a range (immutable, so the deferral is unobservable) or a generator (whose own laziness masks it). It took the dict composition -- the one thing 2026-08-24-pycomplete-19 actually added -- to expose it.",
+      "declared": "2026-08-24",
+      "retirement_condition": "The cursor is created at genexp CONSTRUCTION rather than at first resume -- what iterFrame already does for `iter(d)` (Eval.lean, applyBuiltin) and what the genexp path does not -- and the witness program in pyc_div_2_still_divergent flips to MATCH, both sides raising. The guard runs that exact program, so the row retires by the behaviour changing and cannot be closed by assertion.",
+      "guards": [
+        "pyc_div_2_still_divergent",
+        "pyc_div_2_has_not_widened"
+      ],
+      "the_asymmetry_that_names_the_fix": "Two dict cursors in one tier, one right and one wrong, and the difference is only WHERE the frame is built. `iter(d)` snapshots at creation because iterFrame runs inside applyBuiltin -- which is why 2026-08-24-pycomplete-18's dict.iter-escapes / dict.iter-resize pair MATCHES. The genexp path snapshots at first resume because execGen pushes the frame. The fix is to make the second do what the first already does.",
+      "scope_against_real_play": "MEASURED by reading bound(): of its four generator expressions, exactly ONE iterates a dict (sunfish.py:511, the tp_move eviction), and it creates and steps the cursor inside a single expression -- `<dictdel>` receives already-evaluated arguments, so the key is computed before any deletion runs. Nothing mutates the dict inside the create-to-first-resume window, so real play does not enter the divergent regime and rung 9's discharge is scoped honestly. The tp_score line uses iter(), which snapshots at creation and is not affected at all.",
+      "retired": "2026-08-24",
+      "retired_by": "2026-08-24-pycomplete-20 — the genexp cursor moved to CONSTRUCTION time (genInitCont, PEP 289), and dict_lab::genexp_bound_then_grow plus the grammar witness dict.genexp-bound-is-loud both flipped to MATCH. The row left on a FAILING guard: pyc_div_2_still_divergent began failing the moment the fix compiled, which is the paired-guard law paying out in the direction nobody designs for.",
+      "restored_to_archive": "2026-08-25-pycomplete-26/27. At retirement the row AND its two guards were deleted, to avoid the checker ORPHAN rule. §5.0a clause 3 ruled that wrong: retirement moves a row to the archive, it does not end the watch. Both guards are live again in harness/pyc_divergence_probe.py, reporting FAIL and not gating — and the day still_divergent flips back to ok, this divergence has RETURNED and the row leaves the archive."
     }
   ]
 }

@@ -186,10 +186,71 @@ def pyc_div_1_has_not_widened():
                    % (orc, oout, mrc, mout))
 
 
-GUARDS = {
+# --- pyc-div-2, RETIRED 2026-08-24 and STILL WATCHED -----------------------
+# §5.0a clause 3 (2026-08-25): retiring a row moves it to the archive; it does
+# NOT end the watch. These two guards were DELETED at §pycomplete-20 to avoid
+# the checker's ORPHAN rule, and that was the wrong move -- the guard is the
+# only thing that would notice the divergence coming back.
+#
+# `still_divergent` now reports FAIL, and that is CORRECT: the cursor moved to
+# construction time and the tier agrees with CPython. It is REPORTED, never
+# fatal (see main) -- the day it flips back to ok, the divergence has returned
+# and the row must leave the archive.
+DIV2_SRC = """d = {1: 'a'}
+g = (k for k in d)
+d[3] = 'c'
+print(next(g))
+"""
+
+DIV2_CTL_SRC = """d = {1: 'a', 2: 'b'}
+g = (k for k in d)
+print(next(g))
+d[3] = 'c'
+print(next(g))
+"""
+
+
+def pyc_div_2_still_divergent():
+    """RETIRED. Was: CPython raises where the tier answered 1, because the
+    genexp cursor was built at first resume instead of at construction."""
+    got = _run_both(DIV2_SRC)
+    if got is None:
+        return False, "could not run both sides (post-build gate)"
+    (orc, oout), (mrc, mout) = got
+    diverges = (orc != 0) and (mrc == 0) and (mout == "1")
+    return diverges, ("oracle exit=%d out=%r ; model exit=%d out=%r — divergent "
+                      "iff oracle raises and model answers 1 (retired: expected "
+                      "NOT divergent)" % (orc, oout, mrc, mout))
+
+
+def pyc_div_2_has_not_widened():
+    """RETIRED. The create-to-first-resume window: with the mutation AFTER the
+    first step both sides raise, and they did so before the fix as well."""
+    got = _run_both(DIV2_CTL_SRC)
+    if got is None:
+        return False, "could not run both sides (post-build gate)"
+    (orc, oout), (mrc, mout) = got
+    agree = (orc != 0) and (mrc != 0) and oout.startswith("1") and mout.startswith("1")
+    return agree, ("control: oracle exit=%d out=%r ; model exit=%d out=%r"
+                   % (orc, oout, mrc, mout))
+
+
+LIVE_GUARDS = {
     "pyc_div_1_still_divergent": pyc_div_1_still_divergent,
     "pyc_div_1_has_not_widened": pyc_div_1_has_not_widened,
 }
+
+# A retired row's `still_divergent` SHOULD fail — the divergence is gone. Its
+# failure is REPORTED and does not gate, or every retirement would red its own
+# probe forever; the checker verifies these guards EXIST and never asserts they
+# pass (§5.0a clause 3). Same partition as `sv_divergence_probe.py`, so the
+# shape a third tier copies is one shape.
+RETIRED_GUARDS = {
+    "pyc_div_2_still_divergent": pyc_div_2_still_divergent,
+    "pyc_div_2_has_not_widened": pyc_div_2_has_not_widened,
+}
+
+GUARDS = dict(LIVE_GUARDS, **RETIRED_GUARDS)
 
 
 def main():
@@ -197,10 +258,37 @@ def main():
     results = {}
     for name in sorted(GUARDS):
         held, detail = GUARDS[name]()
-        results[name] = {"held": bool(held), "detail": detail}
-        if not held:
+        retired = name in RETIRED_GUARDS
+        results[name] = {"held": bool(held), "detail": detail, "retired": retired}
+        if not held and not retired:
             rc = 1
-        print("%-28s %-4s  %s" % (name, "ok" if held else "FAIL", detail))
+        print("%-28s %-4s  %s%s" % (name, "ok" if held else "FAIL", detail,
+                                    "   [retired row]" if retired else ""))
+    watching = sorted(n for n in RETIRED_GUARDS if not results[n]["held"])
+    if watching:
+        print("\n%d retired guard(s) reporting not-held: %s"
+              % (len(watching), ", ".join(watching)))
+        print("Expected while the row stays retired — REPORTED, not fatal "
+              "(§5.0a clause 3: existence, not passage).")
+
+    # AND THE OTHER DIRECTION, WHICH IS THE ONE THE WATCH EXISTS FOR.
+    # A retired `*_still_divergent` that HOLDS means the divergence CAME BACK.
+    # Reporting that as a cheerful `ok` and exiting 0 would be a watch that
+    # cannot raise an alarm — the guard runs, the regression happens, and
+    # nothing anywhere goes red. So this direction GATES.
+    #
+    # It does not contradict "existence, not passage": that rule governs what
+    # the shared CHECKER may assert about someone else's row. What a tier's own
+    # probe does about its own regression is the tier's business, and a silent
+    # regression is the failure the archive was created to prevent.
+    returned = sorted(n for n in RETIRED_GUARDS
+                      if n.endswith("_still_divergent") and results[n]["held"])
+    if returned:
+        rc = 1
+        print("\n*** REGRESSION: retired guard(s) %s report DIVERGENT again."
+              % ", ".join(returned))
+        print("*** The divergence has RETURNED. The row must leave the archive "
+              "and go back to `rows` — it is a live debt again.")
     if "--json" in sys.argv:
         print(json.dumps(results, indent=1, sort_keys=True))
     print("\npyc_divergence_probe: %s" % ("PASS" if rc == 0 else "FAIL"))

@@ -2431,3 +2431,54 @@ and never build.
 Self-test: **15 defect classes + 3 clause cases**, the clause fixtures built
 explicitly rather than mutated from a neighbour's file so they stay
 deterministic as tiers come and go.
+
+## 2026-08-25-pycomplete-27 — pyc-div-2 goes back on the watch, and the watch gains the alarm it was missing
+
+§5.0a clause 3 shipped, so this tier's own file gets corrected against the
+instrument rather than against my memory of it.
+
+### The correction
+
+At §pycomplete-20 I retired `pyc-div-2` by deleting the row **and its two
+guards** — deliberately, to avoid the checker's ORPHAN error. Clause 3 ruled
+that wrong: **retirement moves a row to the archive; it does not end the
+watch.** The row is now in `retired_rows` with `retired`/`retired_by`, and
+`pyc_div_2_still_divergent` / `pyc_div_2_has_not_widened` are live again in the
+probe, reporting FAIL and not gating.
+
+The `LIVE_GUARDS` / `RETIRED_GUARDS` partition is copied from
+`sv_divergence_probe.py` deliberately — **one shape for a third tier to copy,
+not two.**
+
+### AND THE WATCH COULD NOT RAISE AN ALARM
+
+Unit-testing the partition surfaced the case nobody had covered. For a retired
+row the polarity of `still_divergent` **inverts**: FAIL means the divergence is
+gone (healthy), and `ok` means it **came back**. Measured on the shipped shape:
+
+| live | retired | rc | meaning |
+| --- | --- | ---: | --- |
+| pass | FAIL | 0 | healthy archive — correct |
+| FAIL | FAIL | 1 | live guard gates — correct |
+| pass | **ok** | **0** | **the divergence RETURNED, and nothing went red** |
+
+The third row is the one the archive exists for, and it was **silent** — the
+guard prints a cheerful `ok`, does not appear in the "reporting not-held"
+summary, and the probe exits 0. SV's file names the event in prose (*"it
+flipping to `ok` is the event worth looking at"*) and does not gate on it
+either, so this is a fleet-wide gap rather than a local slip.
+
+> **A watch whose most important signal produces no alarm is not a watch.**
+> Keeping the guard alive was the ruled half; making its regression *fire* is
+> the half that makes the guard worth keeping.
+
+So a retired `*_still_divergent` that HOLDS now sets `rc = 1` with an explicit
+REGRESSION message saying the row must leave the archive and become a live debt
+again. **This does not contradict "existence, not passage"** — that rule
+governs what the shared CHECKER may assert about another tier's row. What a
+tier's own probe does about its own regression is the tier's business, and a
+silent regression is precisely the failure the archive was created to prevent.
+
+All three states are unit-tested by stubbing the two guard sets, so the
+polarity cannot drift unnoticed — the test asserts `rc` for each, including the
+regression case that has never yet occurred.

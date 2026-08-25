@@ -429,5 +429,15 @@ theorem dram_sense_amp_small_signal_performance_at_1ns :
   proofs
 
 #print axioms dram_sense_amp_small_signal_realizable_at_1ns
+/-- A15 / F3 GROUNDED: the determinacy theorem's rail-domain premises are
+inhabited, so determinacy is a claim that could have failed. -/
+theorem dram_sense_amp_determinacy_grounded_at_1ns :
+    ∃ boundary,
+      DramDifferentialSenseBehavior
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) boundary () ∧
+        DramDifferentialSenseInRailDomain
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) boundary := by proofs
+
 #print axioms dram_sense_amp_small_signal_behavior_at_1ns
 #print axioms dram_sense_amp_small_signal_performance_at_1ns
+#print axioms dram_sense_amp_determinacy_grounded_at_1ns

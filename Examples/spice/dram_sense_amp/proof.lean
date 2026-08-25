@@ -971,4 +971,44 @@ theorem dram_sense_amp_small_signal_performance_at_1ns :
     (by norm_num) dram_sense_amp_small_signal_deadline_1ns
     dram_sense_amp_small_signal_cap_1ns
 
+/-- A15 / F3 GROUNDED.  `dram_sense_amp_vector_determinate_on_domain` says any
+two rail-domain trajectories agree.  That is universally quantified over the
+domain premises, so it would hold just as well of a deck no trajectory can
+satisfy.  A14's performance witness supplies the missing inhabitant, which is
+the same two-link chain `2026-08-24-analog-1` established for assurance cases,
+arriving now at a determinacy theorem. -/
+theorem dram_sense_amp_determinacy_grounded_at_1ns :
+    ∃ boundary,
+      DramDifferentialSenseBehavior
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) boundary () ∧
+        DramDifferentialSenseInRailDomain
+          (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) boundary := by
+  obtain ⟨boundary, hbehavior, hdomain, -⟩ :=
+    dram_sense_amp_small_signal_performance_at_1ns
+  exact ⟨boundary, hbehavior, hdomain⟩
+
+/-- A15: determinacy with the horizon instantiated to one nanosecond.  The
+domain premises remain, because they are properties of the two trajectories
+being COMPARED rather than of the deck -- and the theorem above shows they are
+satisfiable. -/
+theorem dram_sense_amp_determinate_at_1ns
+    {first second : DramDifferentialSenseBoundary}
+    (hfirst :
+      DramDifferentialSenseBehavior
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) first ())
+    (hsecond :
+      DramDifferentialSenseBehavior
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) second ())
+    (hfirstDomain :
+      DramDifferentialSenseInRailDomain
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) first)
+    (hsecondDomain :
+      DramDifferentialSenseInRailDomain
+        (dramSenseWorld (5 / 2 + 1 / 10) (5 / 2 - 1 / 10) (1 / 1000000000)) second)
+    {time : ℝ} (htime0 : 0 ≤ time)
+    (htimeHorizon : time ≤ 1 / 1000000000) :
+    first.voltage time = second.voltage time :=
+  dram_sense_amp_vector_determinate_on_domain hfirst hsecond hfirstDomain
+    hsecondDomain htime0 htimeHorizon
+
 end Examples.spice.dram_sense_amp.proof

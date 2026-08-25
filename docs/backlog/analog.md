@@ -37,7 +37,8 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | `2026-08-24-analog-4` | `494b850` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-5` | `2cf53de` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-6` | `130dd20` | 8 / 24 | 4 / 21 | 9 / 21 |
-| `2026-08-24-analog-7` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-24-analog-7` | `3e8c41e` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-25-analog-8` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
 
 **F2 exp/log certificates discharged: 7 / 7 — THE FAMILY IS CLOSED.**
 
@@ -817,3 +818,79 @@ only that.
 lifted from the scalar case to the 2-D pair field. That is the first item in
 this lane's queue that is genuinely new mathematics rather than instantiation,
 and the coordinate/direction audits go first.
+
+---
+
+## 2026-08-25-analog-8 — A15: F3 needed no new mathematics, and the audit is now 4-for-4 at overturning the census
+
+**F3 was censused as "unbalanced latch determinacy — 8 sites — needs Grönwall
+lifted from the scalar case to the 2-D pair field," and named as the first
+genuinely new mathematics in this lane's queue. The audit says it is none of
+those things.**
+
+Three checks, before any proof was attempted:
+
+* **Grönwall is already landed.** `LeanModels/Spice/LoadedInverter.lean:1401`
+  applies Mathlib's `le_gronwallBound_of_liminf_deriv_right_le` directly.
+* **The scalar→2-D lift is already proved.**
+  `dramDifferentialSenseNominalClampedPairRate_determinate`
+  (`DramDifferentialSenseUnbalanced.lean:2175`) is a complete tactic proof over
+  the pair field, and `..._nominal_unbalanced_determinate_on_domain` builds on
+  it.
+* **It is consumed and pinned.** `dram_sense_amp_vector_determinate_on_domain`
+  uses it in `Examples/`, with a `#print axioms` pin showing the standard three.
+
+> **The family was named for a lemma it already had. "Needs Grönwall" described
+> the MATHEMATICS the theorem uses, not the WORK the theorem lacks — and a
+> census that records the technique instead of the gap will price landed work
+> as outstanding.**
+
+**What F3 actually lacked was grounding.** Determinacy reads *any two
+rail-domain trajectories agree*, universally quantified over the domain
+premises — so it holds just as well of a deck no trajectory can satisfy.
+`dram_sense_amp_determinacy_grounded_at_1ns` supplies the inhabitant from A14's
+performance witness. **This is `2026-08-24-analog-1`'s two-link chain arriving at
+a determinacy theorem**: the lane's founding finding and its latest rung are the
+same finding.
+
+`dram_sense_amp_determinate_at_1ns` instantiates the horizon. The domain
+premises stay, correctly — they are properties of the two trajectories being
+COMPARED, not of the deck — and the grounding theorem is what shows they are
+satisfiable. Axioms `[propext, Classical.choice, Quot.sound]`.
+
+### THE CENSUS SCOREBOARD, kept honestly
+
+Four consecutive audits have overturned the thing they were sent to confirm:
+
+| audit | expected | found |
+| --- | --- | --- |
+| A11 | monotone-on-box vocabulary applies | it does not; one `div_le_div₀` |
+| A12 | decks are "pinned-nominal" | supply is FREE; each coordinate differs |
+| A13 | a free coordinate blocks the sense amp | the KIT was missing a direction |
+| A15 | F3 needs a Grönwall lift | Grönwall landed; F3 needed grounding |
+
+Plus two bad denominators (F2's `12`, and the regex recount that missed
+`loaded_rc`).
+
+> **The F-family table was built once, early, from reading — and has been wrong
+> about the FRONTIER every time it was checked against the tree. It was a fine
+> instrument for finding where to look and a poor one for saying what is left.
+> Re-derive a family from the tree at the moment you start it, never from the
+> row that named it.**
+
+### FOR THE COORDINATOR — the hold's premise does not hold for this lane
+
+The ticket hold was issued because "your floor runs the register gate". **It
+does not.** Verified three ways: `harness/divergence_register.py` appears
+**zero** times in `tools/triad.sh` and **zero** times in `tools/ci.sh`; this
+lane's `DEFAULT_FLOOR` is `docs_check; diff_test; refusal_census`; and the
+`gates:` line in this lane's last tenure log reads exactly
+`docs_check; diff_test; refusal_census; lean_comment_forms`. Its only callers
+in the tree are `harness/sv_divergence_probe.py` and
+`harness/pyc_divergence_probe.py`.
+
+**The hold is being respected regardless** — a coordinator may hold tickets for
+merge-side reasons that have nothing to do with a lane's floor, and that is the
+coordinator's call, not this lane's. Surfacing the premise, not overriding the
+instruction. This landing is committed and pushed but **NOT ticketed**; it will
+be enqueued on signal.

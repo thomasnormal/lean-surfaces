@@ -3574,3 +3574,98 @@ position, not a tenure.
 **Standing number unchanged by this landing: `gcc.c-torture` 97/300 scored
 (passed 97, failed 0).** The committed prediction for the alignment rung's
 tenure is `passed 110, refused-unsupported 141, scored 110, failed 0`.
+
+## 2026-08-26-c-31 — THE PREDICTION MISSED BY 7, and the red printed a two-year-old lie
+
+The alignment rung's tenure went **build exit 0, gates RED**, and the red was
+the scoreboard comparison. Both vectors, from the gate's own output:
+
+| | passed | failed | refused-unsupported | refused-libc | refused-ub |
+|---|---|---|---|---|---|
+| committed (prediction) | 110 | 0 | 141 | 5 | 10 |
+| fresh (truth) | 103 | **2** | 140 | 9 | 12 |
+
+**THE PREDICTION FAILED BY 7 ON `passed`, and it was wrong in the worse
+direction: it predicted `failed 0` and got `failed 2`.** Say it plainly —
+the rung shipped a soundness regression. `failed 0` is this lane's whole
+claim (the model refuses or it is right; it does not answer wrongly), and
+the layout rung broke it by routing 14 tests past the "no layout" refusal
+into code that could not carry them. The accounting is exact: 154 → 140
+`refused-unsupported`, and the 14 went 6 → passed, 4 → libc, 2 → ub, 2 →
+**failed**.
+
+**FINDING 1 — `p + n` HAS BEEN ADVANCING EIGHT BYTES, ALWAYS.** Bisected on
+the tenure's own binary against hand-written probes (no rebuild: the driver
+takes any manifest, so the probes are envelopes in a scratch directory).
+`p[1]` passes; `*(p+1)` fails — on `int *` as surely as on a struct
+pointer. `evalArith` asks `ctx.layout.size ty` where `ty` is the
+EXPRESSION's type, which for `p + n` is the POINTER, and `torScalarSize`
+answers 8 for anything ending in `*`. Its neighbour `indexAddr` uses the
+identical phrase correctly, because clang types `a[i]` as the ELEMENT.
+
+  The law: **when one accessor is asked for two different types by two
+  callers, the call sites must say which — `layout.size ty` meant "element"
+  at a subscript and "pointer" at a `+`, and the idiom read the same at
+  both.** Fixed with `pointeeOf`, which makes the peel explicit and named.
+
+  This was never a regression of the layout rung. It was ALWAYS wrong, and
+  the corpus hid it: of the 15 tests containing pointer `+`/`-`, the nine
+  distinct pointee spellings are `char`, `const char`, `int`, `unsigned
+  int`, `short`, `unsigned short`, and three structs — **not one of them is
+  eight bytes wide**, so every site was wrong and no passing test happened
+  to observe it. Five tests were refusing as `refused-ub` with
+  `outOfBounds` faults that DECODE AS THIS BUG: `20030218-1` reports
+  `off 8, elemSize 8, size 2` on a `short`, and `20020503-1` reports
+  `off 1016` for `buf + 127` into a `char[128]`. **The model was accusing
+  correct programs of undefined behaviour**, which is worse than refusing
+  them: a refusal says "I cannot"; a UB report says "you did".
+
+**FINDING 2 — THE EXTRACTOR DROPPED BIT-FIELD WIDTHS.** `20031211-1.c`
+stores `0xbeef` into a `unsigned int b : 1` and expects to read 1. The
+envelope said `{"name":"bitfield","type":"unsigned int"}`: clang's
+`isBitfield` and its width were never read, so the model laid the member
+out full-width, read `0xbeef` back, and reported a FAILURE. **Exactly the
+shape of c-div-2** (2026-08-24-c-23), where the dropped key was
+`array_filler` — an extractor that drops a key hands the model a different
+program, and the model is then correct about the wrong one.
+
+  The law: **a model that cannot represent a construct must DECLINE it, not
+  approximate it** — the AST now carries `bits`, the extractor DIES on a
+  bit-field whose width it cannot read rather than degrading to "not a
+  bit-field", and a record with any bit-field is omitted from the layout,
+  which makes every use of it refuse.
+
+  **This costs a pass, and the pass deserved to go.** `20000113-1.c` has
+  three bit-fields (`1`, `2`, `3` bits) holding 1, 2 and 5 — every value
+  fits, so full-width layout gives the same answer and the test PASSED for
+  a reason that was not true. 23 of the 300 tests contain a bit-field; 7
+  never parse and 13 already refuse, so exactly two change bucket. This is
+  2026-08-25-c-25's rule again: a state that makes the number SMALLER and
+  truer.
+
+**THE NEXT PREDICTION IS DERIVED, NOT GUESSED.** The 15 pointer-arithmetic
+tests were enumerated from the envelopes, joined to the previous run's
+per-test verdicts, and each read: `20030218-1` and `20030828-2` pass
+(`offsetPtr` already permits one-past-the-end, so the corrected strides land
+in bounds); `20000412-6`, `20000801-1` and `20020503-1` still refuse,
+because past the stride they hit `tmp++`, `*bp++` and `*--p`, and pointer
+increment is unsupported.
+
+  `passed 105, failed 0, refused-unsupported 145, refused-libc 9,
+  refused-ub 7, oracle-tests-compiler 1, timeout 2, not-ingested 1,
+  not-parsed 30`. Scored stays 105 and every point of it becomes a pass.
+  The band lives here rather than in the file: the two new passes are the
+  soft part, since each must clear its whole body once the stride stops
+  lying.
+
+**A COST THIS LANDING CREATES, NAMED.** Adding `c-torture-run` to
+`defaultTargets` (2026-08-26-c-30) put `LeanModels/C/Torture.lean` into the
+build graph, and `tools/check.sh` refuses `--iterate` on library files. The
+file that was the lane's fast loop now costs a tenure to check. That is the
+right trade — coverage beats convenience — but it is a real loss and the
+next hand should know it was bought, not lost.
+
+**§9.0 standing number: `gcc.c-torture` 105/300 scored (passed 103, failed
+2)** — the first C number ever produced by a `lake build` that compiled the
+scorer, and the first with a non-zero `failed`. Both halves are fixed in
+this landing; the number above is what is TRUE until its tenure runs.

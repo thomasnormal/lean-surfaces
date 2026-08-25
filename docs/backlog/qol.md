@@ -5511,3 +5511,25 @@ begins with the `cd`. Still anchored, so it still cannot match itself.
 self-tests re-run **from inside the view**, which is what CI will now do. No
 Lean executed: full `ci.sh` was deliberately **not** run, because its steps
 reach `leanpy` and this lane holds no ticket.
+## 2026-08-26-qol-76 — IMPORTED BY NOTHING does not know about `lean_exe` roots (from the C lane)
+
+`triad.sh --classify`'s IMPORTED-BY-NOTHING check reads the import graph
+only, so a file that is a `lean_exe` ROOT listed in `defaultTargets` is
+reported as built by nothing. `LeanModels/C/Torture.lean` is exactly that
+since 2026-08-26-c-30, and the warning still fires on every C landing.
+
+**The check was RIGHT for three landings and is now wrong, which is the
+dangerous half.** `c-torture-run` really was outside `defaultTargets` from
+inch 6 until c-30, and this warning said so, correctly, every time — and
+was read past every time. Now that it is a false positive for the same
+file, the next real one is even likelier to be scrolled by. A warning that
+has cried wolf once is cheaper to fix than to remember.
+
+Suggested rule: a file is covered if it is reachable in the import graph
+**or** it is the `root` of a `lean_exe`/`lean_lib` named in
+`defaultTargets`. Both facts are already in `lakefile.toml`, which the
+check parses for globs, so this is a second lookup and not a new source.
+
+Filed by the C lane; not fixed here because `tools/` is not this lane's to
+change mid-tenure. The C lane's own landing says why the file is
+deliberate, which is what the current warning asks for.

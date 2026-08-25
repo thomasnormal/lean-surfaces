@@ -184,12 +184,32 @@ def roundUp (off al : Nat) : Nat :=
 
 /-- The unit's record declarations, tag → members in DECLARATION ORDER.
 §6.7.2.1p18 requires increasing addresses in declaration order, so the order
-is the standard's and not a convenience. -/
+is the standard's and not a convenience.
+
+**A RECORD WITH A BIT-FIELD IS OMITTED, and omission is the refusal.** This
+layout places whole members at byte offsets; §6.7.2.1p11's bit-fields share
+a storage unit and their width is not modelled here. A record that is
+absent from this list has no size and no member offsets, so every use of it
+refuses — which is the honest zero. The alternative is what this lane
+actually shipped: laying `unsigned int b : 1` out as a full `unsigned int`,
+which made 20031211-1.c store `0xbeef` into a one-bit field and read
+`0xbeef` back, and report a FAILURE rather than a refusal. A model that
+cannot represent a construct must decline it, not approximate it.
+
+The refusal surfaces at the use site as `no size for …` naming the type
+rather than the bit-field; that message is honest but not yet specific, and
+making `Layout` carry a reason is its own inch. -/
+def recordHasBitfield (fields : List Decl) : Bool :=
+  fields.any fun d => match d with
+    | .field _ _ (some _) _ => true
+    | _ => false
+
 def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
   envl.unit.items.filterMap fun i => match i with
     | .decl (.record (some nm) fields _) =>
-        some (nm, fields.filterMap fun d => match d with
-                    | .field fn fty _ => some (fn, fty)
+        if recordHasBitfield fields then none
+        else some (nm, fields.filterMap fun d => match d with
+                    | .field fn fty _ _ => some (fn, fty)
                     | _ => none)
     | _ => none
 

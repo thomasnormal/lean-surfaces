@@ -6,18 +6,18 @@
   "not-ingested": 1,
   "not-parsed": 30,
   "oracle-tests-compiler": 1,
-  "passed": 110,
-  "refused-libc": 5,
-  "refused-ub": 10,
-  "refused-unsupported": 141,
+  "passed": 105,
+  "refused-libc": 9,
+  "refused-ub": 7,
+  "refused-unsupported": 145,
   "runner-error": 0,
   "timeout": 2
  },
  "failed_tests": [],
- "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log. The pin is docs/c-torture-pin.json. This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published. THIS REVISION IS A PREDICTION, written before its tenure for 2026-08-26-c-29 (struct/union layout from the profile's declared natural_alignment). tools/c_torture_gate.sh compares it against the fresh run, so the prediction is adjudicated by a gate rather than by a later paragraph \u2014 and a MISS IS A RED GATE whose failure message prints both vectors, which makes the red the measurement.",
+ "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log. The pin is docs/c-torture-pin.json. This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published. THIS REVISION IS A PREDICTION, written before its tenure for 2026-08-26-c-31 (the pointee-size fix in evalArith and the bit-field refusal). It is DERIVED, not guessed: the 15 tests containing pointer +/- were enumerated from the envelopes and each one's current verdict read from the previous run's log, then each was decided by reading its source. Scored is unchanged at 105 while `failed` goes 2 -> 0: the tenure's claim is that the same number becomes entirely passes. tools/c_torture_gate.sh compares it against the fresh run, so the prediction is adjudicated by a gate rather than by a later paragraph \u2014 and a MISS IS A RED GATE whose failure message prints both vectors, which makes the red the measurement.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"
  ],
- "scored": 110,
+ "scored": 105,
  "total": 300
 }

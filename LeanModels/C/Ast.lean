@@ -139,7 +139,13 @@ inductive Decl where
   absence is decided in exactly ONE place, `C23.bindParams`
   (`docs/backlog/c.md` 2026-08-24-c-20). -/
   | param (name : Option String) (ty : CType) (span : CSpan)
-  | field (name : String) (ty : CType) (span : CSpan)
+  /-- A member declarator. `bits` is the BIT-FIELD WIDTH (§6.7.2.1p4) and
+  `none` means "not a bit-field" — the two are different declarations, not
+  a present/absent spelling of one. It is carried because `unsigned int b :
+  1` and `unsigned int b` are DIFFERENT PROGRAMS with different observable
+  behaviour, and an AST that cannot tell them apart makes the model answer
+  correctly about whichever one it happened to build. -/
+  | field (name : String) (ty : CType) (bits : Option Nat) (span : CSpan)
   | record (name : Option String) (fields : List Decl) (span : CSpan)
   | typedef (name : String) (ty : CType) (underlying : Option TypeNode) (span : CSpan)
   | enum (name : Option String) (constants : List Decl) (span : CSpan)

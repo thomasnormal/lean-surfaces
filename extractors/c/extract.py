@@ -270,7 +270,28 @@ class Extractor:
         return out
 
     def e_FieldDecl(self, n):
-        return {"name": n.get("name"), "type": qual(n)}
+        # A BIT-FIELD IS NOT ITS DECLARED TYPE.  clang marks the declarator
+        # `isBitfield` and puts the width in an inner ConstantExpr; the
+        # `qualType` stays `unsigned int`.  Dropping the width -- which this
+        # handler did -- hands the model `unsigned int bitfield;`, a DIFFERENT
+        # PROGRAM, and the model then answers correctly about the wrong one:
+        # 20031211-1.c stored 0xbeef into a one-bit field and read 0xbeef back.
+        # Same shape as c-div-2 (docs/backlog/c.md 2026-08-24-c-23), where the
+        # dropped key was `array_filler`.
+        #
+        # An unreadable width DIES rather than degrading to "not a bit-field",
+        # because that degradation is exactly the silence this is fixing.
+        out = {"name": n.get("name"), "type": qual(n)}
+        if n.get("isBitfield"):
+            w = next((c for c in kids(n) if c.get("kind") == "ConstantExpr"), None)
+            v = None if w is None else w.get("value")
+            if v is None or not str(v).isdigit():
+                raise SystemExit(
+                    "extract.py: FieldDecl %r is a bit-field and its width is not a "
+                    "readable constant (%r). The width cannot be dropped: a bit-field "
+                    "laid out as its declared type is a different program." % (n.get("name"), v))
+            out["bits"] = int(v)
+        return out
 
     def e_RecordDecl(self, n):
         return {"name": n.get("name"),

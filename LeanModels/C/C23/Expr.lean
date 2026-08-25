@@ -464,6 +464,23 @@ the tier carries clang's `qualType` string rather than a type tree
 spellings on expression nodes, every one ending in `*` or `]`. -/
 def isPtrType (ty : CType) : Bool := ty.endsWith "*"
 
+/-- The POINTEE spelling of a pointer type: `int *` → `int`, `const S *` →
+`const S`. `none` when the spelling is not a pointer at all.
+
+This exists because `layout.size` is asked for two DIFFERENT types by two
+neighbouring callers, and the difference is invisible at the call site.
+At a subscript, clang types `a[i]` as the ELEMENT, so `layout.size ty` is
+the stride. At `p + n`, clang types the expression as the POINTER, so the
+same phrase asks for the size of a pointer — 8, on every pointee — and
+§6.5.7p8's scaling silently became "advance eight bytes". An `int *` walked
+in strides of 8 and a 12-byte struct pointer in strides of 8; `a[i]` was
+right the whole time, which is why the corpus never showed it. The peel is
+one level only: `int **` → `int *`, which is the pointee and is itself a
+pointer, exactly as §6.2.5p20 has it. -/
+def pointeeOf (ty : CType) : Option CType :=
+  if ty.endsWith "*" then some (ty.dropEnd 1).toString.trimAsciiEnd.toString
+  else none
+
 /-- Load whatever an lvalue of this type holds — an integer or a pointer.
 §6.3.2.1p2, the lvalue conversion: **1837 sites, the load-bearing
 implicit of the whole corpus.** -/
@@ -520,7 +537,7 @@ def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal
   -- whenever either operand is one. Measured: 8 `+`, 4 `-`.
   | .ptr p, .int _ i =>
       if op == "+" || op == "-" then
-        match ctx.layout.size ty with
+        match (pointeeOf ty).bind ctx.layout.size with
         | some esz => do
             let d := if op == "+" then i else -i
             let q ← readMem (fun m => Mem.offsetPtr m p esz d)
@@ -529,7 +546,7 @@ def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal
       else refuseUnsupported s!"operator '{op}' on a pointer and an integer"
   | .int _ i, .ptr p =>
       if op == "+" then
-        match ctx.layout.size ty with
+        match (pointeeOf ty).bind ctx.layout.size with
         | some esz => do
             let q ← readMem (fun m => Mem.offsetPtr m p esz i)
             pure (.ptr q)

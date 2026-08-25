@@ -68,7 +68,7 @@ private def posFields : Option (List (String × CType)) :=
   (sunfishC.unit.items.filterMap fun i => match i with
     | .decl (.record _ fs _) =>
         let named := fs.filterMap fun f => match f with
-          | .field n t _ => some (n, t)
+          | .field n t _ _ => some (n, t)
           | _ => none
         if named.any (fun p => p.1 == "score") then some named else none
     | _ => none).head?
@@ -84,7 +84,7 @@ private def kcctxFields : Option (List (String × CType)) :=
   (sunfishC.unit.items.filterMap fun i => match i with
     | .decl (.record (some "kcctx") fs _) =>
         some (fs.filterMap fun f => match f with
-          | .field n t _ => some (n, t)
+          | .field n t _ _ => some (n, t)
           | _ => none)
     | _ => none).head?
 

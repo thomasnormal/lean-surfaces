@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**422 entries across 17 lanes.** Regenerate with
+**427 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -23,6 +23,11 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-26-qol-80` |  | `ci.sh`'s layer 3 gains the view, and the attested view stops lying to git | qol |
 | `2026-08-26-qol-79` |  | `--gates-no-lean`: a lane can say its gates start no Lean, and the script MEASURES it | qol |
 | `2026-08-26-qol-78` |  | the sv manifest entry had never extracted one envelope | qol |
+| `2026-08-26-qol-76` |  | IMPORTED BY NOTHING does not know about `lean_exe` roots (from the C lane) | qol |
+| `2026-08-26-c-31` |  | THE PREDICTION MISSED BY 7, and the red printed a two-year-old lie | c |
+| `2026-08-26-c-30` |  | THE SCORER WAS NEVER IN THE BUILD, and `--classify` is not a dry run | c |
+| `2026-08-26-c-29` |  | STRUCT LAYOUT, from a rule the profile now DECLARES | c |
+| `2026-08-26-c-28` |  | OPS-148: a NAMED NEGATIVE by grep, and the defect only RUNNING found | c |
 | `2026-08-26-c-27` |  | THE REGISTER COMES BACK, and the reversal is recorded rather than tidied | c |
 | `2026-08-26-sv-8` |  | THE FRESHNESS GATE IS WIRED, AND ITS BASELINE IS MEASURED, NOT ASSUMED | sv |
 | `2026-08-26-sv-7` |  | THE ROUND-TRIP GATE PICKED ITS INTERPRETER BY ACCIDENT, AND THE PIN IT NEEDED IS RETIRED | sv |

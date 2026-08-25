@@ -64,6 +64,17 @@ def _run_both(src):
         o = subprocess.run([ORACLE, path], capture_output=True, text=True)
     except FileNotFoundError:
         return None
+    # NEVER TRIGGER A BUILD. `leanpy` builds `leanmodels-run` when `.lake` is
+    # cold, so a probe that called it unconditionally would start an UNLOCKED
+    # Lean build in whatever clone happened to run the shared checker -- exactly
+    # what amendment A11's lock exists to prevent, and it would compete with
+    # whichever lane holds the tenure. Measured the hard way: this probe kicked
+    # off a build in a fresh worktree while another lane held the lock.
+    #
+    # This file's own docstring already promised it "runs as a POST-BUILD gate";
+    # this is that promise made true rather than asserted.
+    if not os.path.isfile(os.path.join(REPO, ".lake", "build", "bin", "leanmodels-run")):
+        return None
     m = subprocess.run([sys.executable, os.path.join(REPO, "tools", "leanpy"), path],
                        capture_output=True, text=True, cwd=REPO)
     if m.returncode == 2:

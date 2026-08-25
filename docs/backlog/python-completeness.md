@@ -2367,3 +2367,67 @@ gate at all, so its data was never exercised** — the corpus-exercise law, one
 layer up, at the GATE rather than at the witness. The checker was right and
 stays exactly as strict as it is; a checker loosened to accommodate unexercised
 data would have converted a loud red into a silent wrong claim.
+
+## 2026-08-25-pycomplete-26 — the register's three clauses, and a probe that was starting UNLOCKED BUILDS
+
+§5.0a's empty-register ruling (`52e9c4b`) lands in the shared checker, which
+this lane owns. **A file's legality is decided by its CLAIM, not its LENGTH.**
+
+1. `rows: []` is LEGAL iff `retired_rows` is non-empty — the claim being *"no
+   LIVE debts, and here is how each one closed."*
+2. `rows: []` **and** `retired_rows: []` is an ERROR whose message says to
+   DELETE the file: it makes no claim at all, and an empty ledger reads as
+   diligence while asserting nothing.
+3. Every retired row must name a guard whose **EXISTENCE** the checker
+   verifies.
+
+### Clause 3 inverts the retirement discipline, and that is the point
+
+**EXISTENCE, NOT PASSAGE** — and the distinction carries the design. A retired
+row's `still_divergent` should now FAIL; that failure is the signal the
+divergence has come back. Asserting it *holds* would invert the meaning;
+asserting nothing would let the guard be deleted along with the row and take
+the watch with it. So the checker requires the guard to exist, does not
+require it to pass, and excludes retired guards from the ORPHAN rule.
+
+**This corrects my own retirement of `pyc-div-2`** (§pycomplete-20), where I
+deleted the row *and* its guards precisely to avoid the orphan error. Under the
+ruled contract that was the wrong move: retirement moves a row to the archive,
+it does not end the watch. Restoring `pyc-div-2` as a retired row with its
+guards live is owed and is not in this commit — it is a data change to this
+tier's own file, and the checker lands first so the fleet has one instrument.
+
+### Blast radius, measured before landing
+
+| tier | result |
+| --- | --- |
+| `es` | 0 problems |
+| `python` | 0 schema problems (its probe is post-build) |
+| `sv` | **2 problems** — `sv-div-2`'s two retired guards do not exist |
+
+C's file is absent from master pending its restore, so **clause 3 reds SV, not
+C** — and SV has no dispatch. Reported rather than softened: the migration
+clause was for shapes shipped before a canon, and these guards were *deleted*,
+which is the thing clause 3 exists to catch.
+
+### AND THE PROBE WAS STARTING UNLOCKED LEAN BUILDS — my defect, found by tripping it
+
+Running the shared checker in a fresh worktree kicked off a **`lake build` with
+no tenure**, competing with the lane that held the lock. Cause: §pycomplete-23
+made `pyc_div_1`'s probe two-sided, so it calls `tools/leanpy` — and `leanpy`
+BUILDS when `.lake` is cold. Every tier whose floor runs the shared checker
+would have paid that, in whatever clone they happened to be in.
+
+> **Making a probe two-sided turned a Lean-free check into a Lean-executing
+> one, and the instrument is shared.** The blast radius of a probe change is
+> every lane that runs the checker, not just the tier that owns the row.
+
+The probe now checks for `.lake/build/bin/leanmodels-run` and, when it is
+absent, FAILS with the post-build-gate message instead of building. That file's
+docstring already *claimed* it "runs as a POST-BUILD gate"; this is the claim
+made true rather than asserted — a guard that cannot run must fail, never skip,
+and never build.
+
+Self-test: **15 defect classes + 3 clause cases**, the clause fixtures built
+explicitly rather than mutated from a neighbour's file so they stay
+deterministic as tiers come and go.

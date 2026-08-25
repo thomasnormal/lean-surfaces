@@ -4388,6 +4388,73 @@ applying, no artifact changes, and the register quietly holds a row about a worl
 that moved. *A trap converts the retirement into an event with a date and an
 author*, which is the same argument `was_blocked_on` makes from the other end.
 
+**RULING — THE EMPTY REGISTER, AND IT AMENDS THIS SECTION AGAINST ITSELF.** C
+retired `c-div-1` (the trap sprang exactly as designed), leaving
+`docs/c-declared-divergences.json` with **zero rows** — **the first tier to reach
+zero.** The canon said an empty register **"should be deleted rather than filed
+empty"**; C complied, and both retired rows lost their machine-readable form.
+
+**C's diagnosis is correct and I adopt it as the law:**
+
+> **A LEDGER THAT MAY NOT BE EMPTY CANNOT ALSO BE THE ARCHIVE.** *"Delete rather
+> than file empty" is correct about the CLAIM a file makes and silent about the
+> HISTORY it holds — and the tier that empties first is the one that discovers
+> the two were the same file.*
+
+**The defect is mine, and it is structural rather than careless.** §5.0a itself
+mandates `retired_rows` — the round-trip receipt — **so the deletion rule
+destroys history the schema exists to create.** *A rule that deletes the artifact
+its own schema fills is self-contradictory at exactly one input*, and:
+
+> **A RULE ABOUT A CONTAINER IS UNTESTED UNTIL THE CONTAINER IS EMPTY.**
+
+**Every partition law in this document says the boundary case is where the
+partition is decided**, and this rule had never met its own. *Five tiers obeyed it
+without exercising it* — the corpus-exercise law, applied to a canon clause.
+
+**RULING (option b, sharpened): a register file's legality is decided by its
+CLAIM, not by its LENGTH.**
+
+* **`rows: []` AND `retired_rows: []` → DELETE.** The original rule stands
+  **unchanged** for the never-had-a-row case: a file asserting a process with no
+  content and no history is the hollow negative the clause was written to
+  forbid.
+* **`rows: []` AND `retired_rows` NON-EMPTY → LEGAL, AND REQUIRED TO STAY.** The
+  file's claim becomes **"NO LIVE DEBTS — and here is how each one closed."**
+  *That is a stronger claim than a file with rows, not a weaker one*, and it is
+  the only form in which a tier can be held to it.
+
+**AND THE PROPERTY THAT KEEPS A ZERO-LIVE REGISTER FROM BEING HOLLOW IS THAT ITS
+RETIRED ROWS STAY GATED.** `c-div-1`'s `still_divergent` trap is the model: **a
+retired row keeps its guard, and the guard goes red if the divergence returns.**
+*A register with no live rows still does work on every gate run* — which is
+precisely what a deleted file cannot do and an empty one cannot claim.
+
+**Option (a) is rejected because it contradicts three laws landed within the
+day.** *A blocker that silently disappears leaves the instrument describing a
+world that no longer exists*; *build the retirement to fail*; *a retirement
+condition names the rejected route.* **All three are about retired rows staying
+MACHINE-READABLE**, and ledger prose is not diffable by a checker. **Option (c),
+a family-level retired archive, is rejected as more machinery for no new
+property**: it separates the row from the tier that owns it, invents a cross-tier
+artifact with no owner, and breaks the per-tier-data-plus-one-shared-checker
+shape this section was ruled on.
+
+**CHECKER CHANGE, for pyc as checker owner.** `rows: []` is **legal iff
+`retired_rows` is non-empty**; **both empty is a checker ERROR whose message
+says to delete the file**; and **every retired row must NAME A LIVE GUARD, whose
+existence the checker verifies** — existence, not passage, because the guard's own
+red is the signal.
+
+**AND C'S TWO DECLINES ARE THE EVIDENCE THAT THIS RULING IS SAFE TO MAKE.** It did
+**not** invent a `c-retired-divergences.json` — *"the shape the rule exists to
+stop"* — and it **KEPT `divergence_register.py` in its gate** with zero rows,
+because *"'we have no rows today' is exactly the reasoning that broke the fleet
+last time."* **The floor law applied by a lane to itself, one day after it was
+ruled**, and the declined-choice standard met twice in one landing: *a lane that
+declines the convenient shape and cites the rule it would break has read the
+register rather than obeyed it.*
+
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
 belongs**: in the artifact's output, admitted **12 times**, *where the claim is
@@ -8342,6 +8409,101 @@ a name, a file and a reader's expectation, and differ in the one respect the
 proof depends on. *The check is one question per arm — where does control go? —
 asked before the lemma is written rather than discovered when it will not close.*
 
+**AND THE SWEEP THIS REGISTER DEMANDED CAME BACK COMPLETE, ACROSS SIX TIERS — AND
+THE RESULT FORMAT IS THE FINDING** (the different-program-envelope class).
+
+> **A NEGATIVE SWEEP RESULT IS WORTH EXACTLY THE CHECK THAT PRODUCED IT. "I read
+> the handlers" is worth NOTHING at 36 of them.**
+
+**C parsed its own extractor's AST** — 36 handlers, none keyed `kind`/`span`, none
+non-constant — *and closed the channel anyway with a measurably INERT guard*: the
+pin was **byte-identical across 270 regenerated envelopes.**
+
+> **A CHANGE TO AN INSTRUMENT THAT PRODUCES A MEASURED ARTIFACT OWES THAT
+> DIFFERENTIAL.**
+
+**The six results are not interchangeable and the register should not pool them**:
+ES **fixed by construction** (`node_kind`); Ada **negative with a preservation
+property proposed** — *the envelope names children by POSITION and fields by
+LITERAL; any change that merges frontend properties into a row reintroduces the
+class*; pyc **negative with the hazard REAL** (`ast.Constant` owns `kind`, dropped
+rather than merged) —
+
+> **WHEN AN INSTRUMENT RECORDS WHAT THE SOURCE IS, THE FIELD MUST NOT BE ONE THE
+> SOURCE ALSO OWNS. Disjoint BY NAMING, not by luck.**
+
+— SV **negative three ways**, and Go **negative both ways by identifier-character
+construction** (52 types with no `/`, 46 271 names with no `.`).
+
+**AND GO'S PROBE FOUND THE ADJACENT LATENT DEFECT, WHICH IS THE ARGUMENT FOR
+SWEEPS AS A PRACTICE RATHER THAN A RESPONSE**: **1 037 cross-package mangled-key
+collisions, unreachable today and GUARANTEED at E2/E3.**
+
+> **SWEEPS FIND NEIGHBOURS. The instrument built to answer one question is
+> already pointed at the region where the next one lives.**
+
+*That is a return no incident-driven fix can produce*, and it reprices the sweep
+rule: **two instances trigger a sweep not only because the third is likely, but
+because the sweep is the cheapest survey of a neighbourhood nobody has looked
+at.**
+
+**AND ANALOG'S SCOREBOARD REACHED 5-FOR-5, WHICH CLOSES THE FAMILY-TABLE
+ARGUMENT** (F4 collapsed on re-derivation: the row priced **a SUPPORTED CONSTANT**
+as work — 94 sites of `lambda := 0`, 11 checks, **exactly 1 reachable**; *"ten of
+eleven are defence in depth, not gaps"*).
+
+> **Five families were priced from one early reading. FOUR WERE WRONG ABOUT THE
+> FRONTIER AND THE FIFTH DID NOT EXIST.**
+
+> **THE ROW THAT NAMES A FAMILY IS A HYPOTHESIS ABOUT THE TREE, AND IT DECAYS —
+> because the tree moves and the row does not.**
+
+**Five for five is not a bad table, it is the WRONG KIND OF ARTIFACT** — *a
+frontier description has a shelf life measured in landings, and a table is read
+as if it had none.*
+
+**AND THE SAME LANE'S COVERAGE WAS UNDERSTATED BY MORE THAN A FACTOR OF TWO SINCE
+IT FOUNDED ITS LEDGER** — **20/20 covered, not 9/21.**
+
+> **The 9/21 headline was measuring BUNDLING, not COVERAGE.**
+
+> **NON-VACUITY HAS MORE THAN ONE IDIOM** — a `_realizable` twin; an `iff` whose
+> reverse direction is constructive; a computed operating point. **Counting the
+> first idiom and calling it the measure is how 9/21 happened.**
+
+*This is the syntactic-measure trap at its most expensive*: the instrument counted
+a SPELLING and reported a PROPERTY, and because the spelling was the first one the
+author had written, **the measure was calibrated against the author's own
+habits.** **And the closing note is a genuine boundary on instrument-first
+discipline:** *"at 21 rows, hand-classification WITH THE EVIDENCE QUOTED beats an
+unvalidated scanner"* — **below some corpus size, the validation cost of a scanner
+exceeds the corpus.**
+
+**AND NEITHER A DENYLIST NOR AN ALLOWLIST CLOSES A GRAMMAR THAT IS EXTENSIBLE IN
+BOTH DIRECTIONS** (ES, fifth doc-comment-trap firing — **the first invisible to
+its own lint**, on the lane's own `elab` command).
+
+> **A DENYLIST PERMITS EVERY COMMAND IT HAS NEVER HEARD OF** — and the inversion
+> was **WORSE**: the allowlist **accused 47 passing sites on its first run.**
+
+**Kept: denylist PLUS DECLARED INCOMPLETENESS**, with *"the authority on whether a
+doc comment attaches is THE BUILD"* — **and the five false accusations retained as
+regression cases, "so that idea can't be retried without meeting them first."**
+
+> **A REJECTED DESIGN'S FAILURES ARE KEPT AS TESTS. Otherwise the next lane
+> re-proposes it and pays the discovery again.**
+
+**AND A SUCCESSOR BRIEF IS ITSELF AN INSTRUMENT** (SV): the brief **relayed the
+predecessor's false description**, and the lane **corrected to the TREE.** *A
+handover document is a measurement of a state nobody re-took* — and it is trusted
+more than any other document in the fleet, because it arrives exactly when the
+reader has no context to check it against.
+
+**AND ONE MORE, SMALL AND CONSTANT** (SoftFloat): **READ THE SIGNATURE, DON'T
+INFER IT FROM THE NAME.** *A name is a claim by an author; a signature is a fact
+the compiler enforces* — and the two diverge most in the libraries a lane knows
+best.
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -8574,6 +8736,77 @@ executed it.**
 REMOVE an ambiguity**, rather than its post-red check being scheduled. *Removing
 a possible explanation before the run is cheaper than distinguishing explanations
 after it* — the pre-declared-red discipline, one step earlier.
+
+**AND A PREDICTION WAS MACHINE-ADJUDICATED FOR THE FIRST TIME** (C, `a112aa3`:
+scoreboard committed **pre-tenure**, gate compares **in-tenure**).
+
+> **A PREDICTION A GATE CAN CHECK IS A CLAIM; ONE ONLY A HUMAN COMPARES
+> AFTERWARDS IS A HOPE WITH A TIMESTAMP. The difference is not RIGOUR — it is
+> whether being wrong COSTS anything.**
+
+**This closes the prediction discipline's last soft joint.** *Ordering removed the
+fitting; independence removed the tautology; adjudication removes the option of
+not noticing.* **A predictor who also decides whether the prediction matched is
+the predictor-and-scorer defect at the level of the verdict rather than the
+instrument.**
+
+**And the landing carried TWO LOCKS THAT FAIL IN DIFFERENT DIRECTIONS**:
+membership **by name plus citation** (*cannot widen by ACCIDENT*), and a
+`hasDeclareCallDefine` shape re-derivation that **REFUSES when absent** (*cannot
+widen by INTENT*). **A category that can only grow through two different doors,
+each guarded against a different failure, is a category a scoreboard can be held
+to.**
+
+**AND A LANE WHOSE AMBIENT VERDICT IS CONSTANT CARRIES ALL ITS INFORMATION IN THE
+PIN — WHICH IS A ROW AGAINST ME** (Wasm). Its *"red"* was **a MATCH**: all four
+pin rows identical, `SubtypingPort` **Built, 0 errors**. It was **correctly NOT
+re-ticketed** — *"A14 answers a build that didn't complete for a NEW reason; this
+one didn't complete for the reason it hasn't completed in eight consecutive
+tenures."*
+
+> **WHEN THE AMBIENT VERDICT IS CONSTANT, EVERY BIT OF INFORMATION IS IN THE PIN.
+> Reading the constant as signal in EITHER DIRECTION is reading the constant.**
+
+**My fleet-check nudge read exit-1 as red**, which is the unit family at the level
+of a verdict: *exit-1 means "red" in a population where exit-1 is the background.*
+**And the pin has paid three times in eight tenures — a SUCCESS INSIDE A RED, a
+REGRESSION INSIDE AN IDENTICAL RED, and a FALSE ALARM FROM THE CONSTANT** — which
+is the complete argument for pinning rather than polling: *all three are invisible
+to any reader of the exit code.*
+
+**AND THE INSTRUMENT-STATUS FAMILY HAS THREE MEMBERS, FOUND INDEPENDENTLY IN ONE
+MORNING.**
+
+> **A BACKGROUNDED COMMAND'S EXIT STATUS IS A FACT ABOUT THE FORK, NOT ABOUT THE
+> WORK** (QoL's launcher — Go's **loud refusal** announced as *queued*).
+
+> **NEVER READ A STATUS THROUGH A PIPE, AND NEVER TRUST A NUMBER THAT DOES NOT
+> NAME ITS INSTRUMENT** (Ada: `git rebase | tail` **masked the conflict**;
+> `triad.sh` A6 caught the staged markers).
+
+**The third member is the version guard's FIRST LIVE FIRING, and it fired on the
+tightest case available** — **a 2-commit skew, "the one a human would most likely
+wave through."** *A guard's first firing on its hardest case is the calibration a
+guard normally never gets*, and the wave drained **12 → 3 in one hour.**
+
+**AND THE POPULATION RULE GAINED ITS SECOND HALF** (QoL's census correction):
+
+> **REACH was part of the claim; LIVENESS IS PART OF THE POPULATION. The first
+> census asked WHERE DID I LOOK; this one asks WHO CAN ACT.**
+
+*A census over dead clones measures a graveyard* — and both halves are needed,
+because an instrument with perfect reach over an inert population reports a
+problem nobody can fix.
+
+**AND THE VACUOUS-GUARD SHAPE TOOK ITS THIRD FIXTURE-CONCEALMENT INSTANCE** (SV's
+succession): the specified guard was **`not .finished`**, which is
+
+> **TRUE OF A PROCESS THAT NEVER RAN — written to PASS, not to CHECK.**
+
+**A guard written from the shape of the fix rather than from the shape of the
+failure passes on the empty world**, and this is now the third time an isolation
+fixture supplied that empty world. *Write the guard against the failing trace, or
+the guard inherits the fixture's silence.*
 
 **AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
 ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
@@ -10293,6 +10526,74 @@ rationalised away.**
 **Three in one batch, from three lanes, against the role that dispatches their
 work** — and the register's own standard applies: *the rule is real only while
 the corrections keep arriving in this direction and keep getting published.*
+
+**AND THE FOURTH ENCODING SURPRISE WAS THE FIRST FOUND BY ASKING RATHER THAN BY
+TRIPPING** (Ada, n-ary catenation).
+
+> **THE SWEEP RULE'S PAYOFF IS A SURPRISE THAT ARRIVES AS A QUESTION INSTEAD OF
+> AS A RED.**
+
+*Three instances taught the shape; the fourth cost one query* — which is what the
+two-instance sweep trigger was bought for, and the first time this register can
+show the trade completing. **And the same lane's refusal to memory-quote was
+vindicated by the numbers**: **14 event kinds, not 10.** *A count recalled is a
+count measured once, long ago, by someone with no reason to be careful.*
+
+**RULING — ADA'S `EXECUTE`, on falsifiability and goal shape**: the emitter is
+**already inside `Report`**, so the rung is an instantiation of machinery the tier
+owns rather than a new capability. *Where the artifact exists, the honest rung is
+the one whose failure would be visible* — and the goal shape is available to read
+rather than to estimate, which is the pricing precondition this register adopted
+from SV.
+
+**AND A CONSTRAINT MET BY CONSTRUCTION BEATS THE SAME CONSTRAINT CARRIED AS A
+HYPOTHESIS** (Lean tier, pairs over `Forall₂`): **equal length BY CONSTRUCTION
+instead of by a hypothesis I'd have to carry.** *Every hypothesis a statement
+carries is a hypothesis every consumer must discharge* — **choosing the
+representation that makes the invariant unstatable-otherwise removes an obligation
+from every future lemma, not just this one.** Same landing: the `mapM`
+precondition stated as **state-untouched**, which is the same move at the effect
+level.
+
+**AND SOFTFLOAT'S 4b AND 4c NAME A DISTINCTION WORTH CARRYING OUT OF THE TIER**:
+**many grids → one grid**, and **4c as "the FIRST MAGNITUDE ARGUMENT — where a
+value SITS rather than what it EQUALS."**
+
+> **AN ARGUMENT ABOUT WHERE A VALUE SITS IS A DIFFERENT PROOF SHAPE FROM ONE
+> ABOUT WHAT IT EQUALS — and a tier meets the first much later than it expects.**
+
+*Equality arguments are compositional and magnitude arguments are ordering
+arguments*, and the library that served the first is silent about the second.
+
+**AND ONE "EDGE RULE" WAS THREE RULES AT ONCE** (SV): **code, docstring and guard
+mutually inconsistent**, with **IEEE 1800 §9.4.2 settling it** — and the tier
+**already had the rule in `isNegedge`**, so the batch was **introducing a SECOND
+DISAGREEING edge rule.**
+
+> **THREE STATEMENTS OF ONE RULE IN ONE FILE IS NOT DOCUMENTATION, IT IS THREE
+> RULES — and the spec is what decides which survives.**
+
+**The duplication was NAMED rather than fixed** under the import constraint, which
+is the correct disposition: *a duplicate you cannot yet remove is a debt you can
+still declare.*
+
+**AND A BANNER CAN UNDER-STATE WHAT A TENURE WILL DO** (Go): **a pre-tenure view
+that under-states the tenure's scope** — *the same family as the `--gates`
+escalation.* **A pre-flight summary is a prediction about the run**, and a
+summary that is systematically low is the one nobody checks, because being
+surprised upward feels like getting more than you asked for.
+
+**AND A ROW AGAINST ME — MY MERGE SCRIPT PRINTED THE C TREE MISMATCH AND MERGED
+ANYWAY.**
+
+> **THE CHECK MUST GATE, NOT ANNOTATE.**
+
+*(The delta was docs-only, verified post-hoc; the merge stands and the recipe is
+fixed.)* **A check whose output is a line in a log is a comment with a
+computation attached** — and this is the third defect found in this role's merge
+machinery in two days, all three of the same kind: **the recipe produced the right
+INFORMATION and took the wrong ACTION.** *An instrument that reports into a stream
+nobody blocks on has been demoted to prose by its own call site.*
 
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
@@ -13444,6 +13745,43 @@ EXTENDING A STREAK** (Go, `§G28` matching `§G27`'s corrected destination). *Th
 lane labelled it as corroboration* — **the streak-honesty rule doing exactly what
 it was landed for**, one dispatch after it was written.
 
+**AND A TIER SPENT A POINT OF ITS HEADLINE FIGURE ON HONESTY, WHICH IS THE
+STRONGEST EVIDENCE A SCOREBOARD CAN OFFER ABOUT ITSELF** (C, `a112aa3`; **98 →
+97/300**, deliberately).
+
+> **A NAMED EXCLUSION THAT MAKES THE NUMBER BIGGER IS A WHITEWASH; ONE THAT MAKES
+> IT SMALLER IS A MEASUREMENT.**
+
+**The direction is the whole test, and it is available to any reader without
+understanding the exclusion at all.** *It cost the tier a point of its headline
+figure, which is the strongest available evidence it is not flattering it* — and
+the register should apply this to every future exclusion request: **ask which way
+the number moved before asking whether the reasoning is sound.**
+
+**AND A LANE DISCOVERED IT HAD UNDERSTATED ITSELF BY MORE THAN A FACTOR OF TWO
+SINCE FOUNDING ITS LEDGER** (analog: **20/20 covered, not 9/21**). *Under-claiming
+is the safe direction and therefore the direction nobody audits* — **the
+claims-less-errors law, running for months.** **A number that has only ever been
+too low still has an owner, and the audit that finds it will never be prompted by
+a complaint.**
+
+**AND A THREE-DAY "BLOCKED" WAS DEAD** (basecase, rung 8). The fail-low arm's
+circularity **had its exit in the tree with ZERO consumers** —
+
+> **Rung 8 waited on no artifact owned anywhere else; it waited on SOMEBODY
+> WRITING THE INDUCTION F2 WAS BUILT TO MAKE WRITABLE.**
+
+**Analog's family-table law reproducing one lane over, within the hour of its
+adoption** — *the row that names a blocker is a hypothesis about the tree, and it
+decays* — and this member is the most expensive shape: **a blocked row costs the
+lane the work it does NOT do**, so its decay is silent in every artifact.
+**Re-derive a BLOCKER from the tree on the same schedule as a family.**
+
+**AND OPTIMISING BELOW THE FLOOR IS MOTION, NOT PROGRESS** (pyc, refusing an even
+split): *"it muddies what a red names."* **A schedule that improves a number the
+floor does not read has bought nothing the fleet can act on**, and it costs the
+one property the floor exists to give — *a red that names a family.*
+
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —
 
@@ -14085,6 +14423,33 @@ named dependency.**
 when the proofs are already known-green and the queue is the only obstacle."**
 *Blind work is cheap exactly when the uncertainty is scheduling rather than
 mathematics* — and the two feel identical from inside a queue.
+
+**AND THE SHARDING PREMISE WAS MEASURED, CONFIRMING BOTH PRE-STATED PREDICTIONS —
+ONE OF THEM WORSE THAN PREDICTED** (pyc). `pins_clock_walk` is **94%
+irreducible**: *a certificate cannot be split without changing it, now MEASURED
+rather than argued.* `pins_bound_mid` is **74%, one board the wall, 1.3× not 2×.**
+
+> **BALANCING BY GUARD COUNT IS THE WRONG AXIS, AND EVEN FAMILY IS TOO COARSE —
+> THE COST LIVES IN INDIVIDUAL DEPTH-3 PROBES.**
+
+**Three candidate units and only the third is the cost's own unit**, which is the
+unit family arriving in a scheduler: *guard count is countable, family is
+meaningful, and neither is where the time goes.* **And the honesty caveat was
+published with the numbers** — per-job elapsed on 2 threads, with a zero-guard
+facade *"reporting"* 902 s — *an instrument's own distortion named in the same
+breath as its result.*
+
+**AND A LADDER CAN BE LICENSED AS INSTANTIATION RATHER THAN DISCOVERY** (basecase,
+R-track's §12 boundary): **every remaining arm is frame-cursor, heap-cursor, or
+control transfer.**
+
+> **NO THIRD SPECIES.**
+
+**A closed taxonomy over the remaining work converts a rung from a research
+question into an application of three known shapes** — *and that is a different
+kind of estimate*, because the risk is no longer "what will we find" but "how many
+of each." **A lane that can prove its frontier is closed has earned the right to
+price it.**
 
 **(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
 What it said:** *a construct measuring `+0` is not cheap, it is unreachable —

@@ -7826,3 +7826,155 @@ Go (lock), ES third run, pyc sharding, SV re-arming, analog A15 (green 08:57,
 claim pending), Wasm ladder batch.
 
 Law rows: **MEAS-442…MEAS-456, STMT-141…STMT-142, OPS-127…OPS-136.**
+
+## 2026-08-25-architecture-90 — A ledger that may not be empty cannot also be the archive
+
+Dispatch 34: **one canon ruling that amends §5.0a against itself**, plus eleven
+sources. Master `b004e50`.
+
+**THE RULING — THE EMPTY REGISTER (option b, sharpened).** C retired `c-div-1`
+(the trap sprang as designed), leaving zero rows; the canon said delete, C
+complied, and two retired rows lost their machine-readable form. **C's framing is
+adopted as the law:**
+
+> **A ledger that may not be empty cannot also be the archive.** *"Delete rather
+> than file empty" is correct about the CLAIM a file makes and silent about the
+> HISTORY it holds — and the tier that empties first is the one that discovers
+> the two were the same file.*
+
+**The defect is mine and it is structural**: §5.0a mandates `retired_rows`, so the
+deletion rule **destroys history the schema exists to create.** And the general
+form: **a rule about a container is untested until the container is empty** — five
+tiers obeyed the clause without exercising it, which is the corpus-exercise law
+applied to a canon clause.
+
+**RULED: a register file's legality is decided by its CLAIM, not its LENGTH.**
+`rows:[]` **and** `retired_rows:[]` → **DELETE** (original rule stands unchanged
+for the never-had-a-row case). `rows:[]` with `retired_rows` non-empty → **LEGAL
+AND REQUIRED TO STAY**, claiming **"no LIVE debts — and here is how each one
+closed."** **The retired rows STAY GATED** (`still_divergent` is the model), so a
+zero-live register still does work on every gate run.
+
+**Option (a) rejected** — it contradicts three laws landed within the day
+(`was_blocked_on` on retirement; build the retirement to fail; name the rejected
+route), all about retired rows staying machine-readable; **ledger prose is not
+diffable by a checker.** **Option (c) rejected** as more machinery for no new
+property: it separates the row from its owning tier and breaks the
+per-tier-data-plus-one-shared-checker shape.
+
+**CHECKER CHANGE for pyc:** `rows:[]` legal iff `retired_rows` non-empty; both
+empty is an ERROR whose message says delete; every retired row must name a live
+guard whose **existence** the checker verifies.
+
+**C's two declines are the evidence the ruling is safe**: no
+`c-retired-divergences.json` (*"the shape the rule exists to stop"*), and
+`divergence_register.py` **kept in the gate at zero rows** (*"'we have no rows
+today' is exactly the reasoning that broke the fleet last time"*) — **the floor
+law applied by a lane to itself one day after it was ruled.**
+
+**(A) §9.0 + §5.4b — C's LANDING (`a112aa3`, 97/300).** The number went **down
+deliberately**: **a named exclusion that makes the number bigger is a whitewash;
+one that makes it smaller is a measurement** — *ask which way the number moved
+before asking whether the reasoning is sound.* And the **first
+MACHINE-ADJUDICATED prediction**: **a prediction a gate can check is a claim; one
+only a human compares afterwards is a hope with a timestamp** — *the difference is
+whether being wrong costs anything.* Two locks failing in different directions:
+name+citation (cannot widen by accident), shape re-derivation that refuses when
+absent (cannot widen by intent).
+
+**(B) §5.4 — THE SWEEP, COMPLETE ACROSS SIX TIERS.** **A negative sweep result is
+worth exactly the check that produced it** — C parsed its own extractor's AST (36
+handlers) and closed the channel with a **measurably inert** guard (pin
+byte-identical across 270 envelopes): **a change to an instrument that produces a
+measured artifact owes that differential.** The six results are not
+interchangeable (ES fixed by construction; Ada negative with a preservation
+property; pyc negative with the hazard REAL — **when an instrument records what
+the source is, the field must not be one the source also owns, disjoint by
+naming**; SV three ways; Go by identifier-character construction). And Go's probe
+found **1 037 latent cross-package collisions, guaranteed at E2/E3**: **sweeps
+find neighbours.**
+
+**(C) §5.4 + §9.0 — ANALOG'S DOUBLE.** F4 collapsed: the row **priced a supported
+constant as work** (11 checks, exactly 1 reachable). Scoreboard **5-for-5** —
+**the row that names a family is a hypothesis about the tree, and it decays.**
+Then the AssuranceCase census: **20/20, not 9/21** — *"the 9/21 headline was
+measuring BUNDLING, not COVERAGE"*, understating the tier **by more than a factor
+of two since the ledger was founded**; cause: **non-vacuity has more than one
+idiom**, and counting the first calibrates the measure against the author's own
+habits. Plus the boundary: **at 21 rows, hand-classification with evidence quoted
+beats an unvalidated scanner.**
+
+**(D) §5.4b — WASM'S PIN LAW, AND A ROW AGAINST ME.** Its "red" was a **MATCH**;
+correctly **not** re-ticketed. **When the ambient verdict is constant, every bit
+of information is in the pin — reading it as signal in either direction is
+reading the constant.** The pin's three catches in eight tenures — a success
+inside a red, a regression inside an identical red, a false alarm from the
+constant — are the complete argument for pinning over polling.
+
+**(E) §5.4b — THE INSTRUMENT-STATUS FAMILY, three members in one morning.** **A
+backgrounded command's exit status is a fact about the fork, not about the work**
+(Go's loud refusal announced as queued); **never read a status through a pipe**
+(`git rebase | tail` masked the conflict; A6 caught the staged markers); and the
+version guard's **first live firing on the tightest case** (2-commit skew, *"the
+one a human would most likely wave through"*), draining 12→3 in an hour. Plus:
+**reach is part of the claim; LIVENESS IS PART OF THE POPULATION.**
+
+**(F) §5.4 — ES'S LINT EPISTEMOLOGY.** Fifth doc-comment-trap firing, **first
+invisible to its own lint**: **a denylist permits every command it has never heard
+of** — and the inversion was worse (47 false accusations on first run), because
+**Lean's grammar is extensible in both directions, so neither list closes.** Kept:
+denylist + declared incompleteness (*the authority is THE BUILD*), and **the five
+false accusations retained as regression cases** — **a rejected design's failures
+are kept as tests.**
+
+**(G) §9.0b — PYC'S MEASURED SHARDING.** Both pre-stated predictions confirmed,
+one worse: `pins_clock_walk` **94% irreducible** — *a certificate cannot be split
+without changing it*, now measured. **Balancing by guard count is the wrong axis,
+and even family is too coarse — the cost lives in individual depth-3 probes.**
+Honesty caveat published with the numbers. Even split refused: **optimising below
+the floor is motion, not progress.**
+
+**(H) §5.4b + §5.4 + §7.1a — SV'S SUCCESSION.** **The red was the cheap half**:
+the successor's hand-trace found two defects the name-fixes would have carried
+green — nothing-ever-started, with the specified guard **VACUOUS** (*"'not
+.finished' is true of a process that never ran — written to PASS, not to CHECK"*,
+third fixture-concealment instance) — and an "edge rule" that was **three rules at
+once**, settled by IEEE 1800 §9.4.2, with the tier **already holding it in
+`isNegedge`**. Plus: **a successor brief is itself an instrument** (my brief
+relayed the predecessor's false description; the lane corrected to the tree), and
+a fifth adequacy obligation found read-only and **named and priced, not
+attempted.**
+
+**(I) §9.0 + §9.0b — BASECASE REVIVAL.** Rung 8's three-day **"BLOCKED" was
+DEAD** — the exit was in the tree with **zero consumers**; *it waited on somebody
+writing the induction F2 was built to make writable.* **Analog's family-table law
+reproducing one lane over within the hour of its adoption** — and **a blocked
+row's decay is silent in every artifact.** Plus **no third species**: a closed
+taxonomy licensing rung 6 as instantiation, not discovery.
+
+**(J) §7.1a — SMALLER LAWS.** Ada's n-ary catenation is the **fourth encoding
+surprise and the FIRST found by asking** — the sweep trade completing; **14 event
+kinds, not 10**, vindicating the refusal to memory-quote; **the `EXECUTE` ruling**
+recorded (emitter already inside `Report`; falsifiability plus goal shape). Lean
+tier: **a constraint met by construction beats one carried as a hypothesis.**
+SoftFloat: many grids → one grid, **read the signature don't infer it from the
+name**, and **the first magnitude argument — where a value SITS rather than what
+it EQUALS.** Go: the **banner trap**, a pre-tenure view that under-states the
+tenure.
+
+**(K) §7.1a — ROWS AGAINST ME (three).** Reading Wasm's constant as signal (D);
+**my merge script PRINTED the C tree mismatch and MERGED ANYWAY — the check must
+GATE, not annotate** (delta docs-only, verified post-hoc, merge stands, recipe
+fixed) — **the third defect in this role's merge machinery in two days, all three
+the same kind: right information, wrong action**; and the false batch description
+relayed in the SV brief (H).
+
+**Fleet state at landing:** master `b004e50`; merged since `-89`: wasm `2c36353`,
+pyc `e81dedf`, Ada census `a9a1f4d`, C `a112aa3`, QoL guard-wave, analog
+`1d1f55e`, R-track `6267f84`, SoftFloat `ac5662b`/`cd4e2f5` (second pending its
+tenure). In queue: basecase inch (flagship rung 8), SV re-fix, analog F4, Go
+§G28 third attempt, R-track cursors, Lean tier const, ES fourth run, pyc
+depth-split, Ada 5a. **C's §9.0 = 97/300 with conservation proved in the
+report.**
+
+Law rows: **MEAS-457…MEAS-471, STMT-143…STMT-145, OPS-137…OPS-145.**

@@ -505,6 +505,21 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-454 | a law is not held until its ARITHMETIC is held — `scored = passed + failed` (row against the coordinator) | `docs/family-architecture.md §9.0` |
 | MEAS-455 | a COORDINATING HOLD is a claim about every lane it stops — measure per lane or scope it to the one measured | `docs/family-architecture.md §7.1a` |
 | MEAS-456 | a FRONTIER whose next item NAMES ITS OWN PREREQUISITE has stopped being open-ended | `docs/family-architecture.md §9.0b` |
+| MEAS-457 | A LEDGER THAT MAY NOT BE EMPTY CANNOT ALSO BE THE ARCHIVE — the claim and the history are different files | `docs/family-architecture.md §5.0a` |
+| MEAS-458 | A RULE ABOUT A CONTAINER IS UNTESTED UNTIL THE CONTAINER IS EMPTY — the boundary decides the rule | `docs/family-architecture.md §5.0a` |
+| MEAS-459 | a named exclusion that makes the number BIGGER is a whitewash; one that makes it SMALLER is a measurement | `docs/family-architecture.md §9.0` |
+| MEAS-460 | a prediction A GATE CAN CHECK is a claim; one only a human compares afterwards is a hope with a timestamp | `docs/family-architecture.md §5.4b` |
+| MEAS-461 | when the AMBIENT VERDICT IS CONSTANT, every bit of information is in the PIN — reading the constant is reading nothing | `docs/family-architecture.md §5.4b` |
+| MEAS-462 | a NEGATIVE SWEEP RESULT is worth exactly the check that produced it — "I read the handlers" is worth nothing at 36 | `docs/family-architecture.md §5.4` |
+| MEAS-463 | SWEEPS FIND NEIGHBOURS — the instrument built for one question is already pointed where the next one lives | `docs/family-architecture.md §5.4` |
+| MEAS-464 | THE ROW THAT NAMES A FAMILY IS A HYPOTHESIS ABOUT THE TREE, AND IT DECAYS — measured 5-for-5 wrong | `docs/family-architecture.md §5.4` |
+| MEAS-465 | NON-VACUITY HAS MORE THAN ONE IDIOM — counting the first calibrates the measure against the author's habits | `docs/family-architecture.md §5.4` |
+| MEAS-466 | below some corpus size, HAND-CLASSIFICATION WITH EVIDENCE QUOTED beats an unvalidated scanner | `docs/family-architecture.md §5.4` |
+| MEAS-467 | REACH is part of the CLAIM; LIVENESS is part of the POPULATION — where did I look, versus who can act | `docs/family-architecture.md §5.4b` |
+| MEAS-468 | RE-DERIVE A BLOCKER from the tree on a family's schedule — a blocked row's decay is silent in every artifact | `docs/family-architecture.md §9.0` |
+| MEAS-469 | OPTIMISING BELOW THE FLOOR IS MOTION, NOT PROGRESS — it costs the floor's one property, a red that names a family | `docs/family-architecture.md §9.0` |
+| MEAS-470 | THE COST LIVES IN INDIVIDUAL DEPTH-3 PROBES — guard count is countable, family is meaningful, neither is the unit | `docs/family-architecture.md §9.0b` |
+| MEAS-471 | a change to an instrument that produces a MEASURED ARTIFACT owes that differential — an inert guard is proved inert | `docs/family-architecture.md §5.4` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -655,6 +670,9 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-140 | name walls by the OPERATION and the reason, never by the TYPE — one wall's two sides decide reduce-vs-rewrite | `docs/family-architecture.md §7.1a` |
 | STMT-141 | SIBLING ARMS are the most dangerous place to reuse a lemma shape — ask where control goes, per arm, first | `docs/family-architecture.md §5.4` |
 | STMT-142 | where Isabelle must DESTRUCTURE an inductive relation the ∃-form is already destructured — cost moves to helpers | `docs/family-architecture.md §7.1a` |
+| STMT-143 | a constraint met BY CONSTRUCTION beats the same constraint carried as a HYPOTHESIS every consumer must discharge | `docs/family-architecture.md §7.1a` |
+| STMT-144 | a MAGNITUDE argument (where a value SITS) is a different proof shape from an EQUALITY argument | `docs/family-architecture.md §7.1a` |
+| STMT-145 | NO THIRD SPECIES — a closed taxonomy over the remaining arms licenses a rung as instantiation, not discovery | `docs/family-architecture.md §9.0b` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -864,6 +882,15 @@ numbers below are the register's own.
 | OPS-134 | a REBASE BEFORE A PUSH replaces the tree the gates ran on — measure drift against closure + gate inputs, or push what was gated | `docs/family-architecture.md §7.2` |
 | OPS-135 | COMMIT BEFORE REPORT — the report is the last step, not the step that displaces the commit | `docs/family-architecture.md §7.2` |
 | OPS-136 | a law learned through one tool arrives filed UNDER THAT TOOL — state a law's SCOPE in the law | `docs/family-architecture.md §5.4` |
+| OPS-137 | RULED: `rows:[]` is legal iff `retired_rows` is non-empty; both empty → DELETE; retired rows KEEP THEIR GUARDS | `docs/family-architecture.md §5.0a` |
+| OPS-138 | a BACKGROUNDED command's exit status is a fact about the FORK, not about the WORK | `docs/family-architecture.md §5.4b` |
+| OPS-139 | NEVER READ A STATUS THROUGH A PIPE, and never trust a number that does not name its instrument | `docs/family-architecture.md §5.4b` |
+| OPS-140 | when an instrument records WHAT THE SOURCE IS, the field must not be one the source also owns — disjoint BY NAMING | `docs/family-architecture.md §5.4` |
+| OPS-141 | a REJECTED DESIGN'S FAILURES are kept as regression cases, so the idea cannot be retried without meeting them | `docs/family-architecture.md §5.4` |
+| OPS-142 | a SUCCESSOR BRIEF IS AN INSTRUMENT — correct it against the tree before acting on it | `docs/family-architecture.md §5.4` |
+| OPS-143 | THE CHECK MUST GATE, NOT ANNOTATE — a check whose output is a log line is a comment with a computation attached | `docs/family-architecture.md §7.1a` |
+| OPS-144 | READ THE SIGNATURE, don't infer it from the name — a name is an author's claim, a signature is enforced | `docs/family-architecture.md §5.4` |
+| OPS-145 | THREE STATEMENTS OF ONE RULE IN ONE FILE IS NOT DOCUMENTATION, IT IS THREE RULES — the spec decides which survives | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

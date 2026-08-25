@@ -168,6 +168,39 @@ REFUTED = {
 }
 
 
+# The corner's PROVED count is derived from the fork's `Verify.lean`, which does
+# NOT exist at the pinned upstream base — it is a fork addition.  So it is
+# measured against the WORKING TREE and reported under its own `measured_at`,
+# never folded into `obligations` (which stays upstream-base-derived).  Mixing
+# two measurement bases under one number is the §5.4a defect: a figure quoted
+# without the state it was taken in.
+#
+# The instrument can see that a theorem EXISTS.  It cannot see that it
+# elaborated, or that its axioms were clean — that is a tenure's evidence, and a
+# tenure is not reproducible from a source tree.  So the green is DECLARED here,
+# with its fork sha and certified tree, and the count is DERIVED.  The two are
+# labelled differently on purpose.
+GREEN_EVIDENCE = {
+    "fork_sha": "d0e5b02",
+    "certified_tree": "7515f4e549a7",
+    "gate": "lake build Test Verify",
+    "witness": "Built Verify (3.3s); 15 x #print axioms, no sorryAx",
+    "log": "scratchpad/leantier-triad16.log",
+    "note": "fork commits are LOCAL by lane charter — the fork's only remote is "
+            "upstream leanprover/lean4export, and pushing there is Thomas's "
+            "decision alone.  This block is the merge-side record of a tenure "
+            "whose objects the lean-surfaces remote cannot hold.",
+}
+
+_PROOF_RE = re.compile(r"^theorem\s+parse(\w+)_roundtrip\b", re.M)
+
+
+def _proof_sites(src: str) -> dict[str, int]:
+    """`theorem parse<Suffix>_roundtrip` in the fork's Verify.lean — anchored at
+    line start, so a mention inside a comment or a docstring is not a proof."""
+    return {m.group(1): src[:m.start()].count("\n") + 1 for m in _PROOF_RE.finditer(src)}
+
+
 def _emit_sites(src: str) -> dict[str, int]:
     """`("<kind>",` at a JSON-object position — anchored, not a bare substring."""
     out: dict[str, int] = {}
@@ -290,6 +323,22 @@ def census(root: Path) -> dict:
     if missing:
         raise CensusRefusal("declared item kinds not found where they belong: " + "; ".join(missing))
 
+    # PROVED, from the working tree (see GREEN_EVIDENCE).
+    vpath = root / "Verify.lean"
+    proofs = _proof_sites(_read(vpath)) if vpath.is_file() else {}
+    for r in rows:
+        psuf = r["parse_fn"].removeprefix("parse")
+        line = proofs.get(psuf)
+        r["proof_fn"] = f"parse{psuf}_roundtrip" if line else None
+        r["proof_line"] = line
+    stray = [r["key"] for r in rows if r["proof_line"] and not r["round_trip_obligation"]]
+    if stray:
+        raise CensusRefusal(
+            "a round-trip theorem exists for a kind that is NOT an obligation: "
+            + ", ".join(stray) +
+            " — either the exclusion is wrong or the theorem proves something else"
+        )
+
     oblig = [r for r in rows if r["round_trip_obligation"]]
     by_cat: dict[str, int] = {}
     for r in oblig: by_cat[r["category"]] = by_cat.get(r["category"], 0) + 1
@@ -308,6 +357,17 @@ def census(root: Path) -> dict:
         },
         "not_emitted_by_design": dict(sorted(NOT_EMITTED.items())),
         "refuted_not_counted": dict(sorted(REFUTED.items())),
+        "proofs": {
+            "measured_at": "fork WORKING TREE (Verify.lean is a fork addition, "
+                           "absent at the pinned base) — not the same base as `obligations`",
+            "proved": sum(1 for r in oblig if r["proof_line"]),
+            "of": len(oblig),
+            "by_category": {c: sum(1 for r in oblig
+                                   if r["category"] == c and r["proof_line"])
+                            for c in sorted({r["category"] for r in oblig})},
+            "unproved": sorted(r["key"] for r in oblig if not r["proof_line"]),
+            "green_evidence_declared": GREEN_EVIDENCE,
+        },
         "rows": sorted(rows, key=lambda r: (r["category"], r["key"])),
     }
 

@@ -5232,3 +5232,75 @@ what makes the `pyslang==11.0.0` retirement reachable at all.
 
 `envelope_fresh` **13 ok** (new), `--verify-guards` 44 ok. No tool's floor
 changed, no tier adopted, no Lean executed — no extractor reaches lake.
+
+## 2026-08-26-qol-78 — the sv manifest entry had never extracted one envelope
+
+Both defects SV measured are mine, plus a third I found while fixing them and
+a fourth the fix itself introduced. The entry was written from the python
+entry's **shape** — and python is single-schema, single-source, mirror-hostile,
+while sv is none of those. **A copied shape invites copied content** (C's law),
+and here it invited an entry that had never extracted one real envelope.
+
+### 1. `source_files` — a list of dicts, not a string
+
+`_recorded_sources` now reads `source_file` (str, sv-0.1/python) **and**
+`source_files` (list of `{"path": …}` dicts, sv-0.2). The old code read the
+string key only, so twelve live sv-0.2 envelopes were rowed **NOT-LIVE** — and
+NOT-LIVE reads as benign, so a genuinely stale envelope among them would have
+been **silently excused**. OPS-148 shape (d) inside the freshness instrument
+itself.
+
+A partial source set is now `SOURCES-MISSING` and **fails**: some present and
+some absent means the envelope cannot be faithfully re-extracted, and calling
+that NOT-LIVE would excuse it too.
+
+### 2. Schema dispatch
+
+`extract` is a **table keyed by schema**, not one static argv: sv-0.1 takes a
+bare invocation and writes `<source>.json` beside its input; sv-0.2 needs
+`--top` with `-o`. An unknown schema is `NO-RECIPE` and fails, rather than
+being run with the wrong command.
+
+### 3. The recorded path is content (found while fixing 1 and 2)
+
+The extractor must be given the path **as the envelope spells it**, or the
+comparison differs by the path alone. That is why sv needs a mirror — the same
+thing `sv_round_trip` learned the expensive way — and it also keeps sv-0.1's
+`<source>.json` out of the repository.
+
+### 4. …and the mirror broke python, twice
+
+Mirroring universally cost **all 61 python pairs**, in two different ways:
+first `EXTRACT-FAILED 61` (cwd=mirror made the repo-relative extractor path
+unopenable — the script is absolute, the sources are not), then `STALE 61`
+(the python extractor **absolutizes** `source_file`, so running anywhere but
+the repo root rewrites the very field being compared).
+
+So `mirror` is a **per-tier manifest field**, false for python and true for sv.
+Whether a mirror helps depends on whether the extractor rewrites the recorded
+path and where it puts its output — a per-tier fact, and the manifest is where
+per-tier facts live.
+
+**The regression check is what caught both.** Nothing else would have: the
+self-test's synthetic tier passed throughout, because the fixture extractor is
+well-behaved in exactly the ways the real ones are not.
+
+### What is verified, and what is not
+
+Against the **real sv corpus**, the resolution stage now reports
+**18 live / 3 not-live / 0 without a recipe** — 6 sv-0.1 and 12 sv-0.2 live,
+matching SV's decomposition exactly, where before it was 6 EXTRACT-FAILED and
+12 false NOT-LIVE.
+
+**I cannot verify sv's extraction or comparison here**: pyslang is not
+installed on this box, so `--tier sv` correctly refuses. The dispatch is
+exercised end to end against a **synthetic two-schema tier** instead, and SV
+re-measures the real corpus after this lands. Saying which half is verified is
+the point — the entry that failed was one nobody had run.
+
+Python regression-checked after every change: **FRESH 59, STALE 2**, tree clean.
+
+### Triad
+
+`envelope_fresh` **27 ok** (13 → 27), `--verify-guards` 44 ok, docs_check
+91/91. No floor changed, no tier adopted, no Lean executed.

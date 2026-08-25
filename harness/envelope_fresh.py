@@ -45,6 +45,7 @@ import copy
 import glob
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -58,8 +59,20 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFESTS = {
     "python": {
         "corpus": "Examples/python/*/*.json",
-        "extract": ["{frontend}", "extractors/python/extract.py", "{src}",
-                    "--out", "{out}", "--companion-dir", "{tmp}"],
+        "schema_key": "schema_version",
+        # NO MIRROR: this extractor ABSOLUTIZES `source_file` in its output, so
+        # running it anywhere but the repo root rewrites the very field being
+        # compared -- measured, all 61 pairs went STALE on one key.  It also
+        # honours --out, so nothing is written into the tree.
+        "mirror": False,
+        # SINGLE-SCHEMA TIER: one command serves every envelope, which is why
+        # this entry worked from the day it was written -- and why copying its
+        # SHAPE to a multi-schema tier produced an entry that had never
+        # extracted one real envelope.
+        "extract": {"*": {"argv": ["{frontend}", "{repo}/extractors/python/extract.py",
+                                   "{src}", "--out", "{out}",
+                                   "--companion-dir", "{tmp}"],
+                          "out": "{out}"}},
         "frontend": {
             "kind": "interpreter",
             "candidates": ["python3.9"],
@@ -69,8 +82,24 @@ MANIFESTS = {
     },
     "sv": {
         "corpus": "Examples/system-verilog/**/*.sv.json",
-        "extract": ["{frontend}", "extractors/sv/extract.py", "{src}",
-                    "-o", "{out}"],
+        "schema_key": "schema_version",
+        # MIRROR REQUIRED, for two independent reasons: the recorded path
+        # string is part of the envelope (sv_round_trip found this the
+        # expensive way), and an sv-0.1 invocation writes `<source>.json`
+        # BESIDE its input -- which without a mirror is inside the repository.
+        "mirror": True,
+        # TWO SCHEMAS, TWO COMMANDS.  sv-0.1 takes a bare invocation and writes
+        # `<source>.json` BESIDE the source; sv-0.2 is symbolic and requires
+        # `--top` with `-o`.  A single static argv cannot express that, and the
+        # first version of this entry was rejected by the extractor for all six
+        # sv-0.1 envelopes.
+        "extract": {
+            "sv-0.1": {"argv": ["{frontend}", "{repo}/extractors/sv/extract.py", "{src}"],
+                       "out": "{src}.json"},
+            "sv-0.2": {"argv": ["{frontend}", "{repo}/extractors/sv/extract.py",
+                                "--top", "{top}", "{srcs}", "-o", "{out}"],
+                       "out": "{out}"},
+        },
         "frontend": {
             "kind": "interpreter-module",
             "candidates": ["python3.12", "python3"],
@@ -137,46 +166,130 @@ def _strip(env: dict, stamp: list) -> dict:
     return e
 
 
-def _source_for(envpath: str, env: dict, root: str) -> str | None:
-    src = env.get("source_file")
-    if isinstance(src, list):
-        src = src[0] if src else None
-    if not src:
-        return None
-    cand = src if os.path.isabs(src) else os.path.join(root, src)
+def _recorded_sources(env: dict) -> list:
+    """The source paths AS THE ENVELOPE RECORDS THEM, both shapes.
+
+    sv-0.1 and python record `source_file`: a string.  sv-0.2 records
+    `source_files`: a LIST OF DICTS, `{"path": ..., "sha256": ...}`.  Reading
+    only the string key rowed twelve live sv-0.2 envelopes NOT-LIVE -- and
+    NOT-LIVE reads as benign, so a genuinely stale envelope among them would
+    have been SILENTLY EXCUSED.  Two instruments, one corpus, two verdicts:
+    the failure this file's own docstring names.
+
+    THE RECORDED STRING IS RETURNED, never a resolved absolute path: the path
+    as written is part of the envelope's content, so re-extraction must be
+    given the same spelling or the comparison differs by the path alone.
+    """
+    out = []
+    one = env.get("source_file")
+    if isinstance(one, str) and one:
+        out.append(one)
+    many = env.get("source_files")
+    if isinstance(many, list):
+        for item in many:
+            if isinstance(item, dict):
+                p = item.get("path")
+            else:
+                p = item
+            if isinstance(p, str) and p:
+                out.append(p)
+    return out
+
+
+def _resolve(recorded: str, envpath: str, root: str) -> str | None:
+    """The file a recorded path names in THIS tree, or None."""
+    if os.path.isabs(recorded):
+        # An absolute path is a run from another machine: it can never be
+        # mirrored faithfully here.  That is the genuine NOT-LIVE case.
+        return recorded if os.path.isfile(recorded) else None
+    cand = os.path.join(root, recorded)
     if os.path.isfile(cand):
         return cand
-    sib = os.path.join(os.path.dirname(envpath), os.path.basename(src))
+    sib = os.path.join(os.path.dirname(envpath), os.path.basename(recorded))
     return sib if os.path.isfile(sib) else None
+
+
+def _argv_for(man: dict, env: dict) -> dict | None:
+    """The extract recipe for THIS envelope's schema, or None if unhandled."""
+    table = man["extract"]
+    if isinstance(table, list):                 # legacy single-command form
+        return {"argv": table, "out": "{out}"}
+    schema = env.get(man.get("schema_key", "schema_version"))
+    return table.get(schema) or table.get("*")
 
 
 def check_tier(man: dict, root: str, frontend: str) -> tuple[int, list]:
     rows = []
-    tmp = tempfile.mkdtemp(prefix="envfresh.")
     for envpath in sorted(glob.glob(os.path.join(root, man["corpus"]), recursive=True)):
         rel = os.path.relpath(envpath, root)
         try:
             env = json.load(open(envpath, encoding="utf-8"))
         except Exception as e:                                  # noqa: BLE001
             rows.append(("UNREADABLE", rel, str(e))); continue
-        src = _source_for(envpath, env, root)
-        if not src:
-            # NOT LIVE, and not a failure: an envelope whose source is not in
-            # this tree records a run that cannot be repeated here.
-            rows.append(("NOT-LIVE", rel, "source not in tree")); continue
-        out = os.path.join(tmp, os.path.basename(envpath))
-        cmd = [p.format(frontend=frontend, src=src, out=out, tmp=tmp)
-               for p in man["extract"]]
-        r = subprocess.run(cmd, capture_output=True, text=True, cwd=root)
-        if r.returncode != 0 or not os.path.isfile(out):
+
+        recorded = _recorded_sources(env)
+        if not recorded:
+            rows.append(("NOT-LIVE", rel, "the envelope records no source")); continue
+        resolved = [_resolve(r, envpath, root) for r in recorded]
+        if all(r is None for r in resolved):
+            rows.append(("NOT-LIVE", rel, "recorded sources are not in this tree")); continue
+        if any(r is None for r in resolved):
+            # PARTIAL IS NOT BENIGN: some sources present and some absent means
+            # the envelope cannot be faithfully re-extracted, and calling that
+            # NOT-LIVE would excuse it.
+            missing = [c for c, r in zip(recorded, resolved) if r is None]
+            rows.append(("SOURCES-MISSING", rel, "absent: %s" % ", ".join(missing[:3])))
+            continue
+
+        recipe = _argv_for(man, env)
+        if recipe is None:
+            rows.append(("NO-RECIPE", rel, "no extract command for schema %r"
+                         % env.get(man.get("schema_key", "schema_version"))))
+            continue
+
+        # A MIRROR OF THE RECORDED LAYOUT.  The extractor is run with the paths
+        # SPELLED AS THE ENVELOPE RECORDS THEM, inside a scratch tree, so the
+        # path string in the output matches -- and so nothing is ever written
+        # into the repository, including the `<source>.json` an sv-0.1
+        # invocation drops beside its input.
+        tmp = tempfile.mkdtemp(prefix="envfresh.")
+        # WHETHER TO MIRROR IS A PER-TIER FACT, not a universal one: it depends
+        # on whether the extractor rewrites the recorded path and on where it
+        # puts its output.  The manifest is where per-tier facts live.
+        cwd = tmp if man.get("mirror") else root
+        if man.get("mirror"):
+            for rec, real in zip(recorded, resolved):
+                dst = os.path.join(tmp, rec)
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copyfile(real, dst)
+        # THE SCRIPT IS ABSOLUTE, THE SOURCES ARE NOT.  Extraction runs with
+        # cwd=mirror so the recorded path strings reproduce; that same cwd
+        # makes a repo-relative extractor path unopenable, which turned all 61
+        # python pairs into EXTRACT-FAILED the moment the mirror landed.
+        subst = {"frontend": frontend, "repo": os.path.abspath(root),
+                 "src": recorded[0], "out": os.path.join(tmp, "_out.json"),
+                 "tmp": tmp, "top": str(env.get("top") or "")}
+        argv = []
+        for part in recipe["argv"]:
+            if part == "{srcs}":
+                argv.extend(recorded)
+            else:
+                argv.append(part.format(**subst))
+        outp = recipe["out"].format(**subst)
+        if not os.path.isabs(outp):
+            outp = os.path.join(tmp, outp)
+        r = subprocess.run(argv, capture_output=True, text=True, cwd=cwd)
+        if r.returncode != 0 or not os.path.isfile(outp):
             tail = (r.stderr or "").strip().splitlines()
             rows.append(("EXTRACT-FAILED", rel, tail[-1] if tail else "rc=%d" % r.returncode))
             continue
-        new = json.load(open(out, encoding="utf-8"))
-        if _strip(env, man["stamp"]) == _strip(new, man["stamp"]):
-            rows.append(("FRESH", rel, "")); continue
-        rows.append(("STALE", rel, "content differs from a re-extraction"))
-    bad = sum(1 for v, _, _ in rows if v in ("STALE", "EXTRACT-FAILED", "UNREADABLE"))
+        new_env = json.load(open(outp, encoding="utf-8"))
+        if _strip(env, man["stamp"]) == _strip(new_env, man["stamp"]):
+            rows.append(("FRESH", rel, ""))
+        else:
+            rows.append(("STALE", rel, "content differs from a re-extraction"))
+    bad = sum(1 for v, _, _ in rows
+              if v in ("STALE", "EXTRACT-FAILED", "UNREADABLE", "SOURCES-MISSING", "NO-RECIPE"))
     return bad, rows
 
 
@@ -323,6 +436,70 @@ def self_test() -> int:
         n, rows = check_tier(man, t, resolve_frontend(man))
         check("an off-tree source is NOT-LIVE", rows[0][0], "NOT-LIVE")
         check("  ...and does not fail the gate", n, 0)
+
+    # 7. THE SHAPE THAT WAS WRONG: sv-0.2 records `source_files`, a LIST OF
+    #    DICTS.  Reading only the string key rowed twelve live envelopes
+    #    NOT-LIVE -- benign-looking, so a stale one among them was excused.
+    check("a string source_file is read",
+          _recorded_sources({"source_file": "a/b.sv"}), ["a/b.sv"])
+    check("a LIST OF DICTS is read too",
+          _recorded_sources({"source_files": [{"path": "a/x.sv", "sha256": "z"},
+                                              {"path": "a/y.sv"}]}),
+          ["a/x.sv", "a/y.sv"])
+    check("  ...and a list of plain strings",
+          _recorded_sources({"source_files": ["a/x.sv"]}), ["a/x.sv"])
+    check("an envelope with neither records nothing",
+          _recorded_sources({"top": "m"}), [])
+
+    # 8. SCHEMA DISPATCH: one static argv cannot serve two schemas.
+    man2 = {"schema_key": "schema_version",
+            "extract": {"sv-0.1": {"argv": ["one"], "out": "{out}"},
+                        "sv-0.2": {"argv": ["two"], "out": "{out}"}}}
+    check("sv-0.1 gets its own command",
+          _argv_for(man2, {"schema_version": "sv-0.1"})["argv"], ["one"])
+    check("sv-0.2 gets a different one",
+          _argv_for(man2, {"schema_version": "sv-0.2"})["argv"], ["two"])
+    check("an unknown schema has NO recipe",
+          _argv_for(man2, {"schema_version": "sv-9.9"}), None)
+    check("a single-schema tier still works",
+          _argv_for({"extract": {"*": {"argv": ["any"], "out": "{out}"}}}, {})["argv"], ["any"])
+
+    # 9. A TWO-SCHEMA TIER, EXTRACTED END TO END.  A manifest entry that has
+    #    never extracted one envelope is the unexercised-gate shape, so the
+    #    dispatch is exercised rather than asserted -- synthetically, because
+    #    the real sv corpus needs pyslang, which this box does not have.
+    with tempfile.TemporaryDirectory() as t:
+        man = _fixture(t, live)
+        ex = os.path.join(t, "two_schema.py")
+        open(ex, "w").write(
+            "import json,sys\n"
+            "mode=sys.argv[1]; src=sys.argv[2]; out=sys.argv[sys.argv.index('--out')+1]\n"
+            "json.dump({'frontend':{'name':'fake','version':'9.9.9'},'schema':mode,\n"
+            "           'source_file':'Examples/fake/a/a.py','body':open(src).read()},\n"
+            "          open(out,'w'), indent=2)\n")
+        man["schema_key"] = "schema"
+        man["extract"] = {"A": {"argv": [sys.executable, ex, "A", "{src}", "--out", "{out}"], "out": "{out}"},
+                          "B": {"argv": [sys.executable, ex, "B", "{src}", "--out", "{out}"], "out": "{out}"}}
+        env = json.load(open(os.path.join(t, "Examples", "fake", "a", "a.json")))
+        for mode in ("A", "B"):
+            env["schema"] = mode
+            open(os.path.join(t, "Examples", "fake", "a", "a.json"), "w").write(json.dumps(env, indent=2))
+            n, r = check_tier(man, t, resolve_frontend(man))
+            check("schema %s extracts and matches" % mode, (r[0][0], n), ("FRESH", 0))
+        env["schema"] = "C"
+        open(os.path.join(t, "Examples", "fake", "a", "a.json"), "w").write(json.dumps(env, indent=2))
+        n, r = check_tier(man, t, resolve_frontend(man))
+        check("an unhandled schema is NO-RECIPE", r[0][0], "NO-RECIPE")
+        check("  ...and fails the gate", n, 1)
+
+    # 10. PARTIAL SOURCES ARE NOT BENIGN: some present, some absent means the
+    #     envelope cannot be faithfully re-extracted, and NOT-LIVE would excuse it.
+    with tempfile.TemporaryDirectory() as t:
+        man = _fixture(t, dict(live, source_files=[{"path": "Examples/fake/a/a.py"},
+                                                   {"path": "Examples/fake/a/gone.py"}]))
+        n, r = check_tier(man, t, resolve_frontend(man))
+        check("a partially-present source set FAILS", r[0][0], "SOURCES-MISSING")
+        check("  ...and is not excused", n, 1)
 
     print("self-test: %d ok, %d failed" % (ok, bad))
     return 1 if bad else 0

@@ -4855,3 +4855,50 @@ these seven need the one thing the guard cannot do — being told.
 
 Observation only. No tool changed, nothing enqueued, no Lean executed.
 `triad.sh` 380 ok on master.
+
+## 2026-08-25-qol-69 — my census counted checkouts; the risk was about tickets
+
+The coordinator's liveness triage turned my "7 lanes will silently run an old
+floor" into **one** — and the correction is an instrument lesson, not a
+detail.
+
+I enumerated **copies of a tool**. The claim I attached to that number was
+about **lanes that will enqueue**. Those are different populations, and only
+the second can run a floor at all:
+
+> A checkout that never tickets cannot run any floor, old or new.
+
+So six of my seven were dead or superseded clones — arch2-scratch (arch runs
+from `~/repos/arch2`, already in the refused-12), pyc3 (superseded by the live
+pyc checkout), and four utility clones from past phases. The seventh,
+**basecase**, was the whole risk, and it was also the fleet's one unstaffed
+flagship dependency.
+
+**Reach was part of the claim; liveness is part of the population.** Same
+family, one turn further out: the first census asked *where did I look*, this
+one asks *who can act*. A number that answers neither is a number about
+nothing.
+
+### Verified, not taken on trust
+
+Re-measured after the revival: **`lean-basecase` is CURRENT** — the successor's
+refresh-first brief landed before any enqueue, so the silent-old-floor case is
+closed for the only checkout that would have ticketed. The six remaining
+pre-guard copies are exactly the triaged clones, and each stays harmless for
+the reason given rather than by assumption.
+
+### Bedding-in baseline
+
+```
+current .............. 3  (coord, qol, basecase)
+would-be-refused .... 12  (behind, carrying the guard — the wave, working)
+pre-guard ............ 6  (dead/superseded clones; cannot ticket)
+```
+
+The `--gates` escalation landing waits on the middle column draining, which is
+the honest read of "after the floor is bedded in": the floor is bedded in when
+the lanes that ticket are running it, not when the constant changed.
+
+### Triad
+
+Observation only. No tool changed, nothing enqueued, no Lean executed.

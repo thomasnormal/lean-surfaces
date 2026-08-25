@@ -2714,3 +2714,82 @@ before ES's row retires rather than on the day it does.
 
 The `with_rows[0]` defect is the sharpest evidence for the first half: the fold
 did not fail, it quietly redirected.
+
+## 2026-08-25-pycomplete-31 — exit 143: the RSS discipline is machine-scoped in its claim and lane-scoped in its mechanism
+
+pyc9's depth-split tenure died at 13:30:31 after 41 minutes of build:
+
+    ✖ [884/911] Building Examples.python.sunfish.genmoves_ray (547s)
+    error: Lean exited with code 143
+    [13:30:31] GATES NOT RUN (build red — aborted triad)
+
+**It was not a red build, and `genmoves_ray` is a file this commit never
+touches.**
+
+### Ruling out the fleet's own guard, by mechanism not by guess
+
+triad's A16 guard kills with **`kill -9`** (→ exit **137**) and prints
+**`RSS KILL LINE (A16, per-process)`** before it does. The log contains
+**zero** KILL LINEs, and 143 is **SIGTERM**, not SIGKILL. So the guard did not
+fire — which also means `lean` stayed **under** the 5 GB/proc cap. Nothing the
+fleet measures was exceeded.
+
+### What was actually true of the box
+
+| | at failure |
+|---|---|
+| physical free | **~56 MB** |
+| swap | **12002 M / 13312 M used (90%)** |
+| load (2 cores) | **15.40** |
+| `genmoves_ray` | **547 s**, against **18 s** in `lm_build.log` — **30×** |
+
+And the cause is **outside the fleet entirely**: `lake build
+AlgebraicComplexity …` out of `~/repos/matrix-m…`, a different repository,
+running throughout and still running after.
+
+*Honest limit on this claim*: I could not find a jetsam record naming the
+`lean` process, so an OS-level memory kill is **inference from convergent
+evidence** (SIGTERM, no KILL LINE, 30× slowdown on an untouched file, 90% swap),
+not a log citation.
+
+### The finding, and it is in triad's own header two rules apart
+
+> line 110 — *"the lock, the ticket, the RSS discipline are about **THE
+> MACHINE**, not about the repository"*
+> base rule 6 — *"never kill another lane's processes — kills by **PARENTAGE**
+> only"*
+
+Both are right, and together they leave a gap:
+
+> **The RSS discipline protects the machine FROM a lane; it cannot protect a
+> lane FROM the machine.** Its claim is machine-scoped, its measurement is
+> subtree-scoped, and a resource is only as governed as it is *measured*.
+
+Base rule 6 should not change — never killing another lane's processes is
+correct, and doubly so when the competitor is another repository whose work is
+none of the fleet's business.
+
+### The word was wrong, and it is the defect I fixed in my own probe an hour ago
+
+`GATES NOT RUN (build red — aborted triad)` — **the build was not red, it was
+killed.** triad already distinguishes *"resource kill, not a red build"*
+(header line 21), but **only for kills it performs itself**. A kill from
+outside lands in the same channel as a genuine compile error.
+
+That is precisely the shape I fixed in `pyc_divergence_probe.py` at
+`8e4ebaf`: *a statement about the ENVIRONMENT wearing the costume of a verdict
+about the code.* Same defect, one level up, in the instrument every lane trusts.
+
+**Proposed (arch's call, not mine):** on a nonzero build exit whose code is
+signal-shaped (**137/143**) with **no KILL LINE of our own**, sample machine
+memory and report `BUILD KILLED FROM OUTSIDE — box at N MB free, swap X%` rather
+than `build red`. The distinction is worth real time: this cost one tenure plus
+a **4593 s** queue wait, and any lane can lose the same.
+
+### Re-queued, not retried blind
+
+Rebased onto master tip `9c5b3f8` first (safe to do: the lock was released, and
+master now carries **both** C's `rows: []` register **and** the fixed checker,
+so the self-test gate passes for the right reason). Verified before enqueue:
+self-test green at **15 × 3**, and the six certificates **byte-identical** to
+pre-split after the rebase. Ticket `…-21614-pyc9`, tree `4a4501494f46`.

@@ -4975,3 +4975,70 @@ is a claim made.**
 
 `triad.sh` **392 ok** (380 → 392). Fixtures only; live queue untouched; no
 Lean executed.
+
+## 2026-08-25-qol-72 — two flags whose pre-tenure line said less than the tenure would do
+
+The held `--gates`/banner landing, taken as one. Both rows are the same family:
+**a pre-tenure view that under-states what the tenure will do.**
+
+### Predictions, written before the code
+
+1. The `--build-target` union is computable at classify time, and nothing
+   between the banner and the old union site reads `BUILD_TARGETS`, so moving
+   it is safe. **Confirmed** — the check found zero readers in that range.
+2. `--gates` does not change the CLASS; it changes the BUILD SCOPE. So the
+   honest line names the cost in build terms. **Confirmed, and sharper than
+   expected**: the classify report printed `build none (no Lean)` for a docs
+   class while the tenure built every default target.
+
+### Two things I did not predict, and how each was caught
+
+**The union inside the classify block.** My first placement put it where only
+`--classify` runs reach it, so an unclassified run lost `--build-target`
+entirely — item 10's defect, restored by the fix for item 10's sibling. The
+item-10 rows caught it **within a minute**, which is exactly what they exist
+for.
+
+**`classify_list` RESETS `BUILD_TARGETS`.** So a union performed before the
+block is wiped by the classification that follows. Every row still passed —
+they exercise the union function, and the function was fine. What was wrong
+was the **order**, and order is invisible to a unit row. The live output is
+what showed it: `build lake build <all default targets>` where
+`LeanModels.Extra` belonged.
+
+> A row can pass while the picture is wrong when the row tests the part and the
+> defect is in the sequence.
+
+Hence one function, `union_explicit_targets`, called at **two** sites — after
+`classify_list` (before the report displays the set) and once outside the block
+for the unclassified path — with the announcement said once. `add_build_target`
+is a union, so the second call is idempotent.
+
+### What a lane sees now
+
+```
+  build     lake build LeanModels.Extra   <- NOT "none"
+            --gates keeps the tenure (this script cannot know whether a lane gate
+            starts Lean, A11), and a kept tenure BUILDS. Drop --gates for a
+            docs-only landing, or accept the build.
+            forcing gate needs the runner: leanmodels-run
+```
+
+and without `--gates`, a docs landing still says `build none (no Lean)` — the
+escalation is named only when it is real.
+
+### The drain condition, closed as reasoned rather than rounded
+
+The one remaining would-be-refused checkout is **leantier**, whose tenures are
+fork-side `--foreign`: they run gates as given with no standard floor, so the
+floor's arrival is not what gates them. Its rare lean-surfaces-side enqueue
+would hit the version guard loudly and rebase — **the guard working, not a
+reason to hold**. The condition is met with that one exception named, not
+averaged away.
+
+### Triad
+
+`triad.sh` **403 ok** (392 → 403), check 113, laws 45, backlog-index 62,
+sites 57, `--verify-guards` 44. All four paths verified live: docs+gates,
+docs alone, the unioned banner, and an unclassified run keeping its explicit
+target. Fixtures only; no Lean executed.

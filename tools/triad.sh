@@ -1586,6 +1586,17 @@ since_resolve() {               # uses SINCE; sets SINCE_ROOT/SINCE_LINE; 1 + re
   return 0
 }
 
+UNION_SAID=0
+union_explicit_targets() {      # --build-target values onto whatever is there
+  local _bt
+  for _bt in $BUILD_TARGET_ARGS; do add_build_target "$_bt"; done
+  [ -n "$BUILD_TARGET_ARGS" ] && [ "$UNION_SAID" = "0" ] && {
+    UNION_SAID=1
+    say "explicit --build-target: $BUILD_TARGET_ARGS (unioned onto the classifier floor; lane owes the coverage statement)"
+  }
+  return 0
+}
+
 merge_target_ref() {
   # THE A13 CAVEAT, and it has caught four lanes: a seeded clone inherits the
   # peer's REMOTES, so `origin` can be a stale local bundle and
@@ -2501,6 +2512,39 @@ if [ "$SELF_TEST" = "1" ]; then
   check "the tree refusal names the ordering"  "$(tree_change_report 'v2 aaa H1' 'v2 bbb H1' 0 2>&1 | grep -c 'never rebased in place')" "1"
   check "  ...cancel, rebase, re-enqueue"      "$(tree_change_report 'v2 aaa H1' 'v2 bbb H1' 0 2>&1 | grep -c 'cancel first, then rebase, then re-enqueue')" "1"
 
+
+  # ---- THE PRE-TENURE VIEW MUST NOT UNDER-STATE THE TENURE (Go + C rows)
+  # Two flags each made a pre-tenure line say less than the tenure would do:
+  # --build-target arrived AFTER the banner, and a docs class printed
+  # "build none (no Lean)" while --gates forced a full build.
+  # A docs-only commit, so the class is docs and the escalation is visible.
+  printf '# more\n' >> "$fr/docs/a.md"; git -C "$fr" add -A
+  git -C "$fr" -c user.email=q@e -c user.name=q commit -qm docs-only-2
+  out="$(flagrun --classify-only --against HEAD~1 --gates 'python3 harness/diff_test.py')"
+  check "a docs class with --gates says NOT none" "$(printf '%s' "$out" | grep -c 'NOT \"none\"')" "1"
+  check "  ...naming what it will build"       "$(printf '%s' "$out" | grep -c 'build     lake build')" "1"
+  check "  ...why the tenure is kept"          "$(printf '%s' "$out" | grep -c 'a kept tenure BUILDS')" "1"
+  check "  ...and the forcing gate's runner"   "$(printf '%s' "$out" | grep -c 'forcing gate needs the runner: leanmodels-run')" "1"
+  # ...and WITHOUT the flag the honest answer is still "none".
+  out="$(flagrun --classify-only --against HEAD~1)"
+  check "a true docs-only landing still says none" "$(printf '%s' "$out" | grep -c 'build     none (no Lean)')" "1"
+  check "  ...and shows no escalation"         "$(printf '%s' "$out" | grep -c 'NOT \"none\"')" "0"
+  # THE BANNER SHOWS THE UNION, not the classify-derived set alone.
+  out="$(flagrun --classify-only --against HEAD~1 --gates 'true' --build-target LeanModels.Extra)"
+  check "the banner shows the UNIONED target"  "$(printf '%s' "$out" | grep -c 'build     lake build LeanModels.Extra')" "1"
+  check "  ...and says it was unioned"         "$(printf '%s' "$out" | grep -c 'explicit --build-target: LeanModels.Extra')" "1"
+  check "  ...saying it ONCE, not twice"       "$(printf '%s' "$out" | grep -c 'explicit --build-target:')" "1"
+  # THE RESET THAT MADE IT NEED TWO CALL SITES: classify_list clears the list,
+  # so a union performed only before the block is wiped by the classification.
+  saved_bt2="$BUILD_TARGETS"; saved_bta="$BUILD_TARGET_ARGS"; saved_us="$UNION_SAID"
+  BUILD_TARGET_ARGS="LeanModels.X"; BUILD_TARGETS=""; UNION_SAID=1
+  union_explicit_targets
+  check "the union applies the explicit target" "$BUILD_TARGETS" "LeanModels.X"
+  BUILD_TARGETS=""            # what classify_list does at its start
+  union_explicit_targets
+  check "  ...and re-applies after a reset"    "$BUILD_TARGETS" "LeanModels.X"
+  BUILD_TARGETS="$saved_bt2"; BUILD_TARGET_ARGS="$saved_bta"; UNION_SAID="$saved_us"
+
   CLASSIFY="$saved_c"; CLASSIFY_ONLY="$saved_co"; GATES="$saved_g"; LANE_GATES="$saved_lg"
 
   # ITEM 12: THE BARE REPORT, which is the Ada lane's most common invocation
@@ -3321,6 +3365,28 @@ EOF
 
 CLASS=""
 FLOOR_USED=""
+# THE UNION HAPPENS BEFORE ANYTHING DISPLAYS THE TARGET SET (Go, 2026-08-25),
+# and OUTSIDE the classify block, because an unclassified run takes explicit
+# targets too.  The first cut put it inside, and the item-10 rows caught it
+# within a minute: a widening flag silently doing nothing, the very defect
+# those rows exist for.
+#
+# It used to run inside the tenure, ~230 lines below, so the banner printed the
+# CLASSIFY-DERIVED targets while --build-target arrived later with its own
+# "unioned" line — "reading the banner as the final target set is a trap; I
+# nearly killed a good run over it."  One set, computed once, before it is
+# shown: the display cannot understate what the tenure will do.
+
+# CALLED TWICE, AND THE REASON IS `classify_list`.  It RESETS BUILD_TARGETS at
+# its start, so a union performed before the classify block is wiped by the
+# classification that follows — the live output showed `<all default targets>`
+# where `LeanModels.Extra` belonged, while every row still passed.  So the
+# union runs INSIDE the block after classify_list (before the report displays
+# it), and again HERE for the unclassified path, which never enters the block.
+# `add_build_target` is a union, so the second call is idempotent; the
+# announcement is said once.
+union_explicit_targets
+
 if [ "$CLASSIFY" = "1" ]; then
   if [ -n "$SINCE" ]; then
     # THE INCREMENT'S BASE IS THE CHAIN ROOT, NEVER THE NAMED GREEN (§5.4a-i).
@@ -3370,6 +3436,9 @@ if [ "$CLASSIFY" = "1" ]; then
   UNIMPORTED_NEW="$(printf '%s\n' "$CHANGED" | unimported_new_modules)"
 
   classify_list <<< "$CHANGED"
+  # classify_list RESET BUILD_TARGETS; re-apply the explicit ones before the
+  # report below displays the set.
+  union_explicit_targets
   CLASS="$(class_name "$CLASS_RANK")"
 
   # A census with nothing to say must not be answered quietly.  An empty diff
@@ -3393,7 +3462,20 @@ if [ "$CLASSIFY" = "1" ]; then
          "$( [ "$N_UNSTAGED_LEAN" = "0" ] || printf ' (+%s UNSTAGED .lean NOT classified — stage them or they are not in this green)' "$N_UNSTAGED_LEAN" )"
   printf '  tiers     %s\n' "${CLASS_TIERS:-none}"
   case "$CLASS" in
-    docs) printf '  build     none (no Lean)\n' ;;
+    docs) if [ -n "$LANE_GATES" ]; then
+            # C's row: `--gates` on a docs landing pays a FULL build, and this
+            # line used to say "none (no Lean)" while the tenure built
+            # everything.  The class does not change; the BUILD SCOPE does, and
+            # that is the cost a lane needs before the ticket, not after.
+            printf '  build     lake build %s   <- NOT "none"\n' "${BUILD_TARGETS:-<all default targets>}"
+            printf '            --gates keeps the tenure (this script cannot know whether a lane gate\n'
+            printf '            starts Lean, A11), and a kept tenure BUILDS. Drop --gates for a\n'
+            printf '            docs-only landing, or accept the build.\n'
+            _dr="$(gate_runner_targets "$GATES")"
+            [ -n "$_dr" ] && printf '            forcing gate needs the runner: %s\n' "$_dr"
+          else
+            printf '  build     none (no Lean)\n'
+          fi ;;
     none) printf '  build     n/a — nothing was classified\n' ;;
     *)    printf '  build     lake build %s\n' "${BUILD_TARGETS:-<all default targets>}" ;;
   esac
@@ -3622,10 +3704,11 @@ if [ "$DRY_RUN" = "1" ]; then
 fi
 
 BUILD_LOG="$(mktemp "${TMPDIR:-/tmp}/triad-build.XXXXXX")"
-# Explicit targets UNION onto the classifier's floor (never replace it).
-# (the header is written per attempt, just below — the redirect truncates)
-for _bt in $BUILD_TARGET_ARGS; do add_build_target "$_bt"; done
-[ -n "$BUILD_TARGET_ARGS" ] && say "explicit --build-target: $BUILD_TARGET_ARGS (unioned; lane owes the coverage statement)"
+# Explicit targets UNION onto the classifier's floor (never replace it) — done
+# ABOVE, with the classification, so the banner shows the final set.  Repeating
+# it here would be harmless (add_build_target is a union) but would restate a
+# decision already made, which is how two spellings drift apart.
+# (the build-log header is written per attempt, just below — the redirect truncates)
 
 BUILD_EXIT=1
 for attempt in 1 2; do

@@ -111,6 +111,11 @@ STUB
   # are: a fixture nobody runs is not a fixture.
   python3 harness/lean_comment_forms.py --self-test >/dev/null 2>&1 || {
     echo "    SELF-TEST FAILED: lean_comment_forms.py"; rc=1; }
+  # THE HARNESS'S OWN ROWS, not any tier's corpus.  envelope_fresh is
+  # LANE-ADDED per the floor law (the corpora are per-tier), so CI gates the
+  # TOOL -- including its refusal path -- while adoption stays each lane's.
+  python3 harness/envelope_fresh.py --self-test >/dev/null 2>&1 || {
+    echo "    SELF-TEST FAILED: envelope_fresh.py"; rc=1; }
   rm -rf "$stub"
   return "$rc"
 }

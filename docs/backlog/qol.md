@@ -5150,3 +5150,85 @@ the floor now runs five gates, with `bash tools/backlog-index.sh --check` last.
 sites 57, diagnose 51, `--verify-guards` 44, docs_check 91/91. The three rows
 pinning the old four-gate floor were updated — which is what a floor change
 should feel like. Fixtures and a stubbed `lake` only; no Lean executed.
+
+## 2026-08-25-qol-77 — envelope freshness, with the pin checked before anything is compared
+
+`harness/envelope_fresh.py`, landed as priced and ruled. **Not** in
+`DEFAULT_FLOOR`: the corpora are per-tier, so under the ruled law this is
+lane-added, and adoption stays each lane's.
+
+### Four fields, and the fourth is the one people forget
+
+```
+corpus    where the envelopes are
+extract   how to regenerate one
+frontend  WHAT MUST BE TRUE of the extracting frontend — checked FIRST
+stamp     which keys are stamp, excluded from the comparison
+```
+
+The pin is resolved **before any envelope is read**, and its absence is a
+refusal, never a comparison made anyway:
+
+```
+envelope_fresh[sv]: REFUSING -- the pinned frontend is not available:
+  need {'name': 'pyslang', 'family': 'pyslang-11'}, tried [...]
+  REFUSING rather than comparing: a different frontend changes envelope
+  CONTENT, not just the stamp. A comparison made anyway is
+  a version detector wearing a freshness label.
+```
+
+That is live output from this box, where pyslang is not installed — the
+refusal path demonstrated rather than described.
+
+### The path that had to be exercised, and what it caught
+
+The ruling asked for the pinned-frontend-absent path to be **exercised, not
+written**. It was, and it **crashed instead of refusing**: `subprocess.run`
+raises `FileNotFoundError` for a missing executable, which escaped and killed
+the run. A probe helper now returns `None` on `OSError`.
+
+> A refusal path that has never been executed is a comment with a `raise` in
+> it.
+
+Writing that row is what found it. Nothing else would have.
+
+### Verified end to end on the real corpus
+
+Predicted before running: with the stamp excluded, the python tier should show
+exactly the two content drifts and nothing else. Measured:
+
+```
+envelope_fresh[python]: frontend python3.9 satisfies {'name': 'cpython-ast', 'version': '3.9.19'}
+STALE   Examples/python/bench_heapq_sift/bench_heapq_sift.json
+STALE   Examples/python/sunfish/sunfish.json
+envelope_fresh[python]: FRESH 59, STALE 2      exit 1
+```
+
+The four stamp-only rows became FRESH, which is the whole point of the stamp
+field — without it a fresh clone reads 53 of 61 stale. Extraction runs with
+companions redirected to a temp dir; the tree was clean afterwards, checked.
+
+### Thirteen rows, six shapes
+
+fresh passes; a source that moved on is STALE; a stamp-only difference is
+FRESH; an absent frontend refuses **naming what it needed, what it tried, and
+why it did not compare**; a *mismatched* frontend refuses too (present is not
+pinned); and an off-tree source is NOT-LIVE rather than a failure — SV's three
+CV32E40P phase-1 envelopes are exactly that shape.
+
+CI gates the **harness**, not any tier's corpus: its self-test joins
+`selftests()` beside `lean_comment_forms`.
+
+### For the SV rider, measured
+
+SV's extractor already stamps `family: pyslang-11`, but **three envelopes still
+carry an exact `version: 11.0.0`** — `alu_div`, `ff_one`, `popcnt`, the same
+three `sv_round_trip` marks not-live because their sources point off-machine.
+So they cannot be regenerated in-tree, and a byte-identical comparison can
+never clear them. **A stamp-ignoring comparison sidesteps all three**, which is
+what makes the `pyslang==11.0.0` retirement reachable at all.
+
+### Triad
+
+`envelope_fresh` **13 ok** (new), `--verify-guards` 44 ok. No tool's floor
+changed, no tier adopted, no Lean executed — no extractor reaches lake.

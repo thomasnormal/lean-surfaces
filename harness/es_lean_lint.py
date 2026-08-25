@@ -27,8 +27,24 @@ from pathlib import Path
 # compiles.  That false positive fired on `harness/es/float_probe.lean`,
 # which is on master and green, so the lint would have accused a passing
 # file on its first run.  Verified illegal on v4.33.0-rc1:
+# A DENYLIST, and it cannot be complete — said plainly because the alternative
+# was tried and is worse.
+#
+# A doc comment attaches to a DECLARATION; everything else is illegal. That
+# suggests an ALLOWLIST of legal heads, which was written on 2026-08-25 and
+# accused 47 PASSING sites on its first run: modifiers share a line with their
+# declaration (`private def f`), `| ctor` inside an `inductive` takes a doc
+# comment legally, and `register_label_attr` is a perfectly good command the
+# list had never heard of. Lean's grammar is extensible in BOTH directions, so
+# neither list closes.
+#
+# So this stays a cheap heuristic over the traps this lane has actually hit,
+# and the AUTHORITY on whether a doc comment attaches is the BUILD. Every entry
+# below was toolchain-verified; `load_es_program` was added after a doc comment
+# in front of it passed this lint and then failed the build with "unexpected
+# token", costing a tenure. **Any new custom command belongs here.**
 BAD_FOLLOWERS = ("#guard", "mutual", "#print", "#check", "#eval",
-                 "open", "namespace")
+                 "open", "namespace", "load_es_program")
 
 DEFAULT_PATHS = ["LeanModels/Es", "Examples/es", "harness/es"]
 
@@ -125,6 +141,20 @@ def self_test():
     # attached the verdict to a LATER line's follower.
     bad5 = "/-- a -/ def f := 1\n/-- b\nspanning -/\nmutual\n"
     assert offenders(bad5) == [(2, "mutual")], offenders(bad5)
+    # THE CASE THAT COST A TENURE. `load_es_program` is this tier's own `elab`
+    # command; a doc comment cannot attach to it, and the denylist this file
+    # used to be had never heard of it, so the lint passed and the BUILD failed
+    # with "unexpected token 'load_es_program'".
+    bad6 = '/-- doc -/\nload_es_program p from "x.json"\n'
+    assert offenders(bad6) == [(1, "load_es_program")], offenders(bad6)
+    # The shapes the ALLOWLIST attempt wrongly accused, kept as regression
+    # cases so that idea cannot be retried without meeting them first.
+    for legal in ("/-- doc -/\n@[simp]\ntheorem t : True := trivial\n",
+                  "/-- doc -/\nprivate def f := 1\n",
+                  "/-- doc -/\nnoncomputable def g := 1\n",
+                  "/-- doc -/\nregister_label_attr es_spec\n",
+                  "/-- a constructor's doc comment -/\n  | ctor (x : Nat)\n"):
+        assert offenders(legal) == [], (legal, offenders(legal))
     print("  ok: a doc comment before #guard is caught")
     print("  ok: a doc comment before `mutual` is caught")
     print("  ok: intervening blank lines do not hide it")
@@ -134,6 +164,8 @@ def self_test():
     print("  ok: `/-- doc -/ def f := 1` (one-line, trailing decl) is NOT flagged")
     print("  ok: `/-- doc -/ #guard` (one-line, trailing #guard) IS caught")
     print("  ok: a one-liner does not swallow the NEXT doc comment's verdict")
+    print("  ok: `load_es_program` (a CUSTOM command) IS caught — the denylist missed it")
+    print("  ok: five shapes an ALLOWLIST wrongly accused stay unflagged")
     return 0
 
 

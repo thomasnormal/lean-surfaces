@@ -31,7 +31,7 @@ open LeanModels.Es
 
 load_es_program ifCptn from "Examples/es/test262/if_cptn.json"
 load_es_program classDup from "Examples/es/test262/class_dup_binding.json"
-/-- A fixture that CONTAINS DECLARATIONS. Its absence is why `es-0.1`'s
+/- A fixture that CONTAINS DECLARATIONS. Its absence is why `es-0.1`'s
 node-type collision survived: ESTree gives `VariableDeclaration` a property
 called `kind`, the extractor wrote the node TYPE to `kind` as well, and the
 property won — so every `var` serialized with its type gone. Neither existing

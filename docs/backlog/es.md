@@ -1339,3 +1339,65 @@ ingester pins it.
 * `Examples/es/test262/var_decl.json` is a new fixture that CONTAINS a
   declaration, with a guard that its `kindOf` is `variableDeclaration` and its
   `kind` scalar is `"var"` — the round trip the old fixtures could not test.
+
+---
+
+## 2026-08-25-es-3 — the doc-comment lint was a DENYLIST, and a denylist over extensible syntax cannot close
+
+`harness/es_lean_lint.py`, `Examples/es/test262/guards.lean`.
+
+### THE BUILD-RED
+
+The third scoreboard tenure never reached the scoreboard:
+
+    Examples/es/test262/guards.lean:40:69: unexpected token 'load_es_program';
+    expected '#guard_msgs', …
+
+`es-0.2`'s new fixture guard was introduced with a `/-- … -/` doc comment
+explaining WHY the fixture exists — placed directly before
+`load_es_program varDecl from …`. `load_es_program` is this tier's own `elab`
+command, not a declaration, so nothing can attach to it.
+
+**This is the doc-comment trap's FIFTH firing in this lane, and the first that
+`es_lean_lint.py` — written specifically to gate it — let through.** The lint
+reported "1 files clean".
+
+### WHY IT LET IT THROUGH
+
+`BAD_FOLLOWERS` was seven tokens: `#guard`, `mutual`, `#print`, `#check`,
+`#eval`, `open`, `namespace`. A denylist **permits every command it has never
+heard of**, and Lean's grammar is extensible — this lane's own `elab` command
+was invisible to it by construction.
+
+### THE ALLOWLIST WAS TRIED, AND IT WAS WORSE
+
+The obvious repair is to invert: a doc comment attaches to a DECLARATION, so
+allow `def`/`theorem`/`structure`/… and flag the rest. Written, and its first
+run **accused 47 passing sites**:
+
+* modifiers share a LINE with their declaration (`private def f := 1`), so a
+  line-wise skip landed past the head;
+* `| ctor` inside an `inductive` takes a doc comment perfectly legally;
+* `register_label_attr` is a real command the allowlist had never heard of —
+  the same hole as the denylist, pointing the other way.
+
+**Lean's grammar is extensible in BOTH directions, so neither list closes.**
+And this lane already has the law for what just happened: *a lint's first run
+accusing a passing file is the lint being wrong.*
+
+### THE RESOLUTION, STATED RATHER THAN PAPERED OVER
+
+It stays a denylist, `load_es_program` is added, and the file now SAYS it
+cannot be complete — the authority on whether a doc comment attaches is the
+BUILD. What the lint buys is catching the traps this lane has actually hit,
+cheaply, before a tenure. What it does not buy is completeness, and pretending
+otherwise is how it passed a file that could not compile.
+
+The five shapes the allowlist wrongly accused are kept as regression cases, so
+that idea cannot be retried without meeting them first.
+
+### THE COST
+
+One tenure, and the third scoreboard run deferred again. Three reds in a row —
+missing binary, un-ingestible corpus, unparseable guard — and each was a
+different layer of the same pipeline being exercised for the first time.

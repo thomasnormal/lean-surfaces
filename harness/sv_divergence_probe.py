@@ -38,6 +38,13 @@ healthy state and does not gate (folding that in would pin this probe at
 exit 1 forever, and a status that is always red says nothing); a retired
 guard reporting `ok` is the alarm the archive exists to raise. The polarity
 INVERTS at retirement, which is why the two directions are handled apart.
+
+**And a THIRD close: COULD NOT VERIFY.** A guard whose tree is unreadable
+has not held and has not failed -- it has not RUN. That was folded into
+`0 matches` until 2026-08-25, so a probe pointed at a cold or partial
+clone printed a confident PASS about a tree it never opened. Live guards
+now fail CLOSED on it, and the regression alarm reads `is True` rather
+than truthiness so an unverified guard can never raise a false one.
 """
 
 import json
@@ -61,26 +68,47 @@ DIV2_CLAIM_SITES = 10     # 'Xcelium-verified outcomes' in Examples/system-veril
 
 
 def _grep_count(pattern, path, flags=""):
-    """Count matching LINES under `path`. Returns an int, never raises."""
-    cmd = ["grep", "-rc" + flags, pattern, path]
-    if os.path.isdir(path):
-        cmd = ["grep", "-r" + flags, "-o", pattern, path, "--include=*.lean"]
-        out = subprocess.run(cmd, capture_output=True, text=True)
-        return len([l for l in out.stdout.splitlines() if l.strip()])
-    out = subprocess.run(["grep", "-c" + flags, pattern, path],
-                         capture_output=True, text=True)
+    """Count matching LINES under `path`.
+
+    Returns an int when the measurement HAPPENED, and None when it could
+    NOT -- a missing path, an unreadable tree, no `grep` on PATH.
+
+    These were the same value (0) until 2026-08-25, so "nothing was
+    compared" and "compared, found nothing" were indistinguishable, and
+    every guard reading `n <= pin` answered a confident `ok` about a tree
+    it had never opened. grep's exit status already separates the two:
+    0 = found, 1 = searched and found none, >= 2 = could not search.
+    """
     try:
+        if os.path.isdir(path):
+            out = subprocess.run(
+                ["grep", "-r" + flags, "-o", pattern, path, "--include=*.lean"],
+                capture_output=True, text=True)
+            if out.returncode >= 2:
+                return None
+            return len([l for l in out.stdout.splitlines() if l.strip()])
+        if not os.path.isfile(path):
+            return None
+        out = subprocess.run(["grep", "-c" + flags, pattern, path],
+                             capture_output=True, text=True)
+        if out.returncode >= 2:
+            return None
         return int(out.stdout.strip() or 0)
-    except ValueError:
-        return 0
+    except (OSError, ValueError):
+        return None
 
 
 def sv_div_1_still_divergent():
     """DIV-1 is 'the Xcelium operator table is unverified from any reachable
     host'. It is FIXED when a committed Xcelium fixture exists to diff the
     tables against. So: still divergent iff no such fixture is in the tree."""
+    root = os.path.join(REPO, "harness", "sv")
+    if not os.path.isdir(root):
+        return (None, "COULD NOT VERIFY: %s is not a readable directory "
+                      "(os.walk on a missing tree yields nothing, which read "
+                      "as '0 found' = still divergent)" % root)
     hits = []
-    for dp, _, fs in os.walk(os.path.join(REPO, "harness", "sv")):
+    for dp, _, fs in os.walk(root):
         for f in fs:
             if "xcelium" in f.lower() or "xrun" in f.lower():
                 hits.append(os.path.join(dp, f))
@@ -92,6 +120,8 @@ def sv_div_1_has_not_widened():
     """Widens if the unsupported Xcelium-verification claim spreads to more
     sites in the design memo."""
     n = _grep_count("xcelium", os.path.join(REPO, "docs", "sv-design-m0.md"), "i")
+    if n is None:
+        return (None, "COULD NOT VERIFY: docs/sv-design-m0.md could not be searched")
     return (n <= DIV1_CLAIM_SITES,
             "sv-design-m0.md xcelium claim sites: %d (pinned <= %d)"
             % (n, DIV1_CLAIM_SITES))
@@ -111,6 +141,8 @@ def sv_div_2_still_divergent():
     """
     n = _grep_count("Xcelium-verified outcomes",
                     os.path.join(REPO, "Examples", "system-verilog"))
+    if n is None:
+        return (None, "COULD NOT VERIFY: Examples/system-verilog could not be searched")
     return (n > 0, "'Xcelium-verified outcomes' sites: %d" % n)
 
 
@@ -122,6 +154,8 @@ def sv_div_2_has_not_widened():
     ever undone past the pin."""
     n = _grep_count("Xcelium-verified outcomes",
                     os.path.join(REPO, "Examples", "system-verilog"))
+    if n is None:
+        return (None, "COULD NOT VERIFY: Examples/system-verilog could not be searched")
     return (n <= DIV2_CLAIM_SITES,
             "'Xcelium-verified outcomes' sites: %d (pinned <= %d)"
             % (n, DIV2_CLAIM_SITES))
@@ -154,19 +188,28 @@ GUARDS = dict(LIVE_GUARDS, **RETIRED_GUARDS)
 
 def main():
     results, rc = {}, 0
+    unverified = []
     for name in sorted(GUARDS):
         held, detail = GUARDS[name]()
         retired = name in RETIRED_GUARDS
         results[name] = {"held": held, "detail": detail, "retired": retired}
-        if retired:
-            status = "ok" if held else "watch"
+        # THREE states, not two. `held is None` means the guard could not
+        # MEASURE -- which is not evidence either way and must never be
+        # folded into "held" or "not held".
+        if held is None:
+            status = "?"
+            unverified.append(name)
+        elif held:
+            status = "ok"
         else:
-            status = "ok" if held else "FAIL"
+            status = "watch" if retired else "FAIL"
         print("%-28s %-5s %s%s"
               % (name, status, detail, "   [retired row]" if retired else ""))
-        if not held and not retired:
+        # LIVE GUARDS FAIL CLOSED, in both directions: a live guard that did
+        # not hold gates, and so does one that could not be checked.
+        if not retired and held is not True:
             rc = 1
-    watching = sorted(n for n in RETIRED_GUARDS if not results[n]["held"])
+    watching = sorted(n for n in RETIRED_GUARDS if results[n]["held"] is False)
     if watching:
         print("\n%d retired guard(s) reporting not-held: %s"
               % (len(watching), ", ".join(watching)))
@@ -179,25 +222,33 @@ def main():
     # cannot raise an alarm — the guard runs, the regression happens, and
     # nothing anywhere goes red. So this direction GATES.
     #
-    # This file previously NAMED the event in prose ("it flipping to `ok` is
-    # the event worth looking at") and did not gate on it, which is naming a
-    # fire alarm without wiring it to a bell.
-    #
-    # It does not contradict "existence, not passage": that rule governs what
-    # the shared CHECKER may assert about someone else's row. What a tier's own
-    # probe does about its own regression is the tier's business, and a silent
-    # regression is the failure the archive was created to prevent.
+    # It reads `is True` and not truthiness ON PURPOSE: an UNVERIFIED guard
+    # must not be able to raise a false alarm. "Could not measure" is not
+    # "the divergence returned", and an alarm nobody can trust is worse than
+    # no alarm.
     returned = sorted(n for n in RETIRED_GUARDS
-                      if n.endswith("_still_divergent") and results[n]["held"])
+                      if n.endswith("_still_divergent")
+                      and results[n]["held"] is True)
     if returned:
         rc = 1
         print("\n*** REGRESSION: retired guard(s) %s report DIVERGENT again."
               % ", ".join(returned))
         print("*** The divergence has RETURNED. The row must leave the archive "
               "and go back to `rows` — it is a live debt again.")
+
+    # THE THIRD CLOSE. A probe that could not read what it measures has not
+    # passed and has not failed -- it has not RUN, and saying PASS there is
+    # the unexercised-gate failure this campaign is named after.
+    if unverified:
+        rc = 1
+        print("\n*** COULD NOT VERIFY: %s" % ", ".join(unverified))
+        print("*** The tree these guards measure was not readable. This is "
+              "NOT evidence that the divergence is gone, and NOT evidence "
+              "that it returned — nothing was compared.")
     if "--json" in sys.argv:
         print(json.dumps(results, indent=1, sort_keys=True))
-    print("\nsv_divergence_probe: %s" % ("PASS" if rc == 0 else "FAIL"))
+    verdict = "COULD NOT VERIFY" if unverified else ("PASS" if rc == 0 else "FAIL")
+    print("\nsv_divergence_probe: %s" % verdict)
     return rc
 
 

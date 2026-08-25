@@ -15,12 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**393 entries across 17 lanes.** Regenerate with
+**394 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-26-c-27` |  | THE REGISTER COMES BACK, and the reversal is recorded rather than tidied | c |
+| `2026-08-25-architecture-91` |  | A watch whose most important signal produces no alarm is not a watch | architecture |
 | `2026-08-25-architecture-90` |  | A ledger that may not be empty cannot also be the archive | architecture |
 | `2026-08-25-architecture-89` |  | Absence and success are the same colour on a green board | architecture |
 | `2026-08-25-architecture-88` |  | A gate not in your floor cannot contradict your rows | architecture |

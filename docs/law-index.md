@@ -520,6 +520,15 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-469 | OPTIMISING BELOW THE FLOOR IS MOTION, NOT PROGRESS — it costs the floor's one property, a red that names a family | `docs/family-architecture.md §9.0` |
 | MEAS-470 | THE COST LIVES IN INDIVIDUAL DEPTH-3 PROBES — guard count is countable, family is meaningful, neither is the unit | `docs/family-architecture.md §9.0b` |
 | MEAS-471 | a change to an instrument that produces a MEASURED ARTIFACT owes that differential — an inert guard is proved inert | `docs/family-architecture.md §5.4` |
+| MEAS-472 | A WATCH WHOSE MOST IMPORTANT SIGNAL PRODUCES NO ALARM IS NOT A WATCH — the probe gates its own tier's regression | `docs/family-architecture.md §5.0a` |
+| MEAS-473 | AN INSTRUMENT LIVES IN THE SPACE IT SEARCHES — the pattern is right about a world that contains the pattern | `docs/family-architecture.md §5.4` |
+| MEAS-474 | an instrument handling one pole explicitly and the other by accident is UNTESTED AT THE SECOND POLE | `docs/family-architecture.md §5.4` |
+| MEAS-475 | PICK A FIXTURE BASE BY THE PROPERTY IT NEEDS, NEVER BY SORT ORDER; "no fixture base" must not read as "passed" | `docs/family-architecture.md §5.4` |
+| MEAS-476 | a ROW CAN PASS WHILE THE PICTURE IS WRONG when the row tests the PART and the defect is in the SEQUENCE | `docs/family-architecture.md §5.4` |
+| MEAS-477 | A BUCKET OMITTED IS A CLAIM MADE — a missing bucket does not read as missing, it reads as empty | `docs/family-architecture.md §5.4` |
+| MEAS-478 | a CATEGORY ADDED TO A SET changes every AGGREGATE over that set — taxonomy changes land in folds, invisibly | `docs/family-architecture.md §5.4b` |
+| MEAS-479 | a RUNG REDUCED IS NOT A RUNG CLOSED — reporting a waypoint as a score borrows against the rung you eased | `docs/family-architecture.md §9.0` |
+| MEAS-480 | a PURELY ADDITIVE DEPENDENCY IS STILL A CHANGED DEPENDENCY — what makes it safe is THE DIFF, not the word | `docs/family-architecture.md §9.0` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -673,6 +682,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-143 | a constraint met BY CONSTRUCTION beats the same constraint carried as a HYPOTHESIS every consumer must discharge | `docs/family-architecture.md §7.1a` |
 | STMT-144 | a MAGNITUDE argument (where a value SITS) is a different proof shape from an EQUALITY argument | `docs/family-architecture.md §7.1a` |
 | STMT-145 | NO THIRD SPECIES — a closed taxonomy over the remaining arms licenses a rung as instantiation, not discovery | `docs/family-architecture.md §9.0b` |
+| STMT-146 | a SHAPE is portable, a CONDITION is not — a copied shape invites copied content | `docs/family-architecture.md §5.0a` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -891,6 +901,13 @@ numbers below are the register's own.
 | OPS-143 | THE CHECK MUST GATE, NOT ANNOTATE — a check whose output is a log line is a comment with a computation attached | `docs/family-architecture.md §7.1a` |
 | OPS-144 | READ THE SIGNATURE, don't infer it from the name — a name is an author's claim, a signature is enforced | `docs/family-architecture.md §5.4` |
 | OPS-145 | THREE STATEMENTS OF ONE RULE IN ONE FILE IS NOT DOCUMENTATION, IT IS THREE RULES — the spec decides which survives | `docs/family-architecture.md §7.1a` |
+| OPS-146 | a STATUS WORD must carry ONE SEVERITY across everything it labels — `watch` for a healthy archive, `FAIL` for a breach | `docs/family-architecture.md §5.0a` |
+| OPS-147 | a REVERSAL is recorded as a SUPERSEDED NOTE — erasing the reasoning destroys the evidence the rule was tested | `docs/family-architecture.md §5.0a` |
+| OPS-148 | SWEEP SPEC: grep each tier's instruments for branches assuming a non-empty register; deliver a NAMED NEGATIVE | `docs/family-architecture.md §5.0a` |
+| OPS-149 | the FIRST TIER THROUGH A NEW RULING publishes the TRAPS, not just the code — relay before the next implementer fires | `docs/family-architecture.md §5.4b` |
+| OPS-150 | THE PROTOCOL'S OWN ARTIFACT must not be able to invalidate its own ticket — refuse at ENQUEUE, never stamp-exclude | `docs/family-architecture.md §7.1a` |
+| OPS-151 | a REFUSAL THAT PRINTS THE RECOVERY ORDERING is a control; one that prints only the problem is an obstacle | `docs/family-architecture.md §7.1a` |
+| OPS-152 | a GATE WITH A BYPASS AT THE CALL SITE is the gate-not-annotate defect wearing the gate as a costume | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

@@ -4455,6 +4455,80 @@ ruled**, and the declined-choice standard met twice in one landing: *a lane that
 declines the convenient shape and cites the rule it would break has read the
 register rather than obeyed it.*
 
+**AND THE RULING WAS IMPLEMENTED FLEET-WIDE IN ONE AFTERNOON, WITH EACH OWNER
+CATCHING THE NEXT TIER'S TRAP BEFORE IT FIRED** (pyc `a46ada5`, SV `7374c02` +
+`d039544`, C `9b79b97`, shared test `9ed84de`; master `a59e9f8`).
+
+**RATIFIED — THE BOUNDARY REFINEMENT TO "EXISTENCE, NOT PASSAGE."** pyc unit-tested
+the partition and found **the silent regression**: a retired `still_divergent`
+flipping to OK — *the divergence RETURNED* — **exited 0.**
+
+> **A WATCH WHOSE MOST IMPORTANT SIGNAL PRODUCES NO ALARM IS NOT A WATCH.**
+
+**The two rules are not in tension and the seam is worth stating once**:
+*existence-not-passage* bounds **what the SHARED CHECKER may assert about another
+tier's rows** — it may not adjudicate a foreign guard's verdict. **A tier's own
+probe gating on its OWN regression is the tier's business**, and it is exactly
+what *build the retirement to fail* demands **at the probe layer.** *The checker
+is a librarian; the probe is a smoke alarm; neither can do the other's job and
+neither excuses it.*
+
+**AND THE STATUS-WORD RULING** (SV's `watch` beating `FAIL` for the healthy
+retired state; pyc adopted):
+
+> **A STATUS WORD MUST CARRY ONE SEVERITY ACROSS EVERYTHING IT LABELS.**
+
+> **A status word that means "stop" in one row and "carry on" in the next is not
+> a status word.**
+
+**This is the vacuous-guard defect in the REPORTING layer**, which is SV's own
+generalization and the right one: *a label reused across severities trains the
+reader to check the row before believing the word*, and a reader who must check
+every row is a reader with no summary. **`watch` for a healthy archive, `FAIL`
+for a live breach — one word, one meaning, fleet-wide.**
+
+**AND C HOLDS THE ZERO-LIVE POLE, WHICH IS WHERE THE RULING IS ACTUALLY TESTED**
+(`LIVE_GUARDS = {}`): *"rc comes entirely from the regression alarm; an archive
+that is still watched has exactly one job… the probe cannot report anything
+except a return."* **The two watches ask DIFFERENT questions — reclassification
+versus fix — and the lane resisted the copy**: *"a copied shape invites copied
+content."* **A shape is portable; a condition is not.**
+
+**AND THE REVERSAL WAS RECORDED AS A SUPERSEDED NOTE RATHER THAN A REWRITE:**
+
+> **A reversal that erases the reasoning it reverses destroys the only evidence
+> that the rule was TESTED. THE COMPLIANCE IS THE FINDING.**
+
+*The register's most valuable rows are now the ones that were obeyed and then
+amended* — **deleting the obedience leaves a rule that merely looks
+well-designed**, and this document's whole claim to being measured rather than
+asserted rests on those rows being legible.
+
+**THE SWEEP, SPECIFIED — clause 1's legality has a blast radius through every
+instrument that assumed a non-empty ledger** (three hits in one inch; pyc
+recommends, and I concur).
+
+> **SPEC: each tier greps its own instruments for a branch that assumes the
+> register has rows.**
+
+**Concretely, and the list is short because the shape is one shape:**
+
+* **`rows[0]` or any first-element access**, including `sorted(...)[0]` and
+  `next(iter(...))` — *the fixture-base defect below is exactly this.*
+* **`if rows:` / `if not rows:` used as a PROXY for "this tier has a register"** —
+  the two questions came apart at clause 1 and every such branch now answers the
+  wrong one.
+* **any aggregate whose identity element is unstated** — a max, a min, an "all"
+  over an empty list, and any `rc` folded over rows.
+* **any message that reads as a verdict when the list is empty** — *"no rows
+  checked"* must not print where *"passed"* is read.
+
+**Two minutes per tier, the same bug each time, and the deliverable is a NAMED
+NEGATIVE**: the sweep's result is *"greped, N sites, none/these"*, not *"looks
+fine"* — **a negative sweep result is worth exactly the check that produced
+it.** *File the result in each tier's ledger; the shape spreads by measurement,
+not by memo.*
+
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
 belongs**: in the artifact's output, admitted **12 times**, *where the claim is
@@ -8504,6 +8578,72 @@ INFER IT FROM THE NAME.** *A name is a claim by an author; a signature is a fact
 the compiler enforces* — and the two diverge most in the libraries a lane knows
 best.
 
+**AND AN INSTRUMENT LIVES IN THE SPACE IT SEARCHES — THIRD INSTANCE OF ONE BUG**
+(the committed polarity test's own filename matched its glob).
+
+> **EVERY PATTERN AN INSTRUMENT WRITES MUST EXCLUDE THE INSTRUMENT ON PURPOSE.**
+
+> **The bug is never the pattern being WRONG ABOUT THE WORLD — it is the pattern
+> being RIGHT ABOUT A WORLD THAT CONTAINS THE PATTERN.**
+
+**That second sentence is why this keeps recurring**: the author tests the
+pattern against the corpus they are thinking about, and *the instrument is not in
+that corpus until it is written.* **The self-reference arrives at the moment of
+landing**, after every test has passed — which is also when the three-corpora law
+found source strings inside a census tool. *Same family, and the standing form is
+one line: name the exclusion, do not rely on the instrument being somewhere
+else.*
+
+**AND A SECOND POLE CAN BE UNTESTED WHILE THE FIRST IS CAREFUL** (pyc's fix
+`9ed84de`, exposed by C's correct shape).
+
+> **AN INSTRUMENT THAT HANDLES ONE POLE EXPLICITLY AND THE OTHER BY ACCIDENT
+> ISN'T SYMMETRIC — IT IS UNTESTED AT THE SECOND POLE.**
+
+> **"Having written the careful branch, I stopped looking for its twin."**
+
+**This is the register's sharpest statement yet of where attention goes wrong**,
+and it pairs exactly with the misaimed fast loop: *effort spent on a branch is
+what makes the other branch feel handled.* **The mechanical form is a question
+per conditional — what is the other value, and which test covers it?** — and
+states 1–2 were then correctly reclassified as **vacuous, not unmet.**
+
+**AND A FIXTURE BASE MUST BE PICKED BY THE PROPERTY IT NEEDS** (the shared
+checker's self-test built fixtures from `sorted(glob)[0]`; **C's legally-empty
+`rows` sorted first and all 15 fixtures broke the moment C landed**).
+
+> **PICK BY THE PROPERTY THE FIXTURE NEEDS, NEVER BY SORT ORDER.**
+
+> **"No fixture base available" must not read as "passed."**
+
+*Sort order is a stable-looking proxy for "any valid example"*, and it is stable
+only while the corpus is — **so a fixture chosen by sort order is a fixture whose
+validity depends on facts nobody wrote down.** This is the first instance in this
+register of **one tier's legal landing breaking another tier's tests through a
+shared instrument**, and it is worth noting that the sequence was healthy: *C was
+right, the test was wrong, and the test was fixed.*
+
+**AND A ROW CAN PASS WHILE THE PICTURE IS WRONG** (QoL's `--gates` landing,
+`a59e9f8`): `classify_list` **RESET the union, and every row still passed.**
+
+> **A ROW CAN PASS WHILE THE PICTURE IS WRONG WHEN THE ROW TESTS THE PART AND THE
+> DEFECT IS IN THE SEQUENCE.**
+
+**Order is invisible to unit rows by construction** — each row supplies its own
+inputs, so *nothing in a suite of parts can see the composition* — and **the live
+output was what showed it.** Same law as the integration-seam finding, arriving
+in a sequencing defect rather than an argument one: **where the defect can live
+in the ORDER, the only witness is a run.**
+
+**AND A BUCKET OMITTED IS A CLAIM MADE** (QoL's throwaway counter, self-caught —
+it lacked the local-work bucket and **named ITSELF as would-be-refused**).
+
+*A partition's missing bucket does not read as missing; it reads as empty* —
+**the omission asserts that nothing falls there**, and the counter proved it by
+mis-classifying its own author. **A throwaway instrument is still an instrument**,
+and this one is the cheapest possible demonstration that the zero-state
+vocabulary's completeness is a claim like any other.
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -8807,6 +8947,26 @@ succession): the specified guard was **`not .finished`**, which is
 failure passes on the empty world**, and this is now the third time an isolation
 fixture supplied that empty world. *Write the guard against the failing trace, or
 the guard inherits the fixture's silence.*
+
+**AND A SECOND-ORDER TRAP WAS CAUGHT BEFORE MERGE AND RELAYED BEFORE IT FIRED
+ELSEWHERE** (pyc, then SV). Restoring a retired guard **turns every probe's exit
+permanently red**, because probes derived `rc` over **ALL** guards.
+
+> **A CATEGORY ADDED TO A SET CHANGES EVERY AGGREGATE OVER THAT SET. The fix is
+> the PARTITION — `rc` from LIVE only; RETIRED run, print and report.**
+
+**This is the shape a ruling produces and a checker cannot**: *the ruling created
+a second kind of row, and every fold written before the ruling silently treats the
+new kind as the old one.* **Aggregates are where a taxonomy change lands**, and
+they are invisible in the schema — nothing in the JSON says which sums it
+participates in.
+
+**And the relay is the part worth institutionalising**: pyc caught it in its own
+tenure and **told SV before SV's restore** — *"turns a confusing red into a
+one-line change."* **A trap found in the first implementation of a shared ruling
+is owed to every later implementer**, and the cost of relaying is a sentence
+against a tenure of confusion. *The register should expect the first tier through
+a new ruling to publish the traps, not just the code.*
 
 **AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
 ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
@@ -10594,6 +10754,52 @@ computation attached** — and this is the third defect found in this role's mer
 machinery in two days, all three of the same kind: **the recipe produced the right
 INFORMATION and took the wrong ACTION.** *An instrument that reports into a stream
 nobody blocks on has been demoted to prose by its own call site.*
+
+**AND THE PROTOCOL'S OWN ARTIFACT INVALIDATED THE PROTOCOL'S OWN TICKET** (SV
+paid **8 197 s**; QoL landed the fix, `7839344`). Stamp-v2 includes **untracked**
+files, so a tenure log under `$CLONE` **grows "queued Ns" lines** and the tenure
+**REFUSES ITSELF at acquire** — pinned three ways.
+
+> **THE PROTOCOL'S OWN ARTIFACT SHOULD NOT BE ABLE TO INVALIDATE THE PROTOCOL'S
+> OWN TICKET.**
+
+**And the cost SCALES WITH THE WAIT, which is exactly backwards**: *the longer a
+ticket queues, the more log it writes, the more certainly it is refused* — a
+failure mode that grows with the thing it punishes.
+
+**RULED: refusal AT ENQUEUE, never stamp-exclusion.** *Excluding the log blinds
+the A6 detection the stamp exists for*, and `.gitignore` does the same thing one
+level down — **an exclusion written to fix a false positive is a permanent hole
+in a detector, traded for one convenience.** **QoL's landing held three pre-stated
+edge predictions** (symlink resolution, pipe/tty skip, classify exemption) **and
+printed the recovery ordering IN the refusal**: *a queued ticket is never rebased
+in place — cancel by pid, rebase, re-enqueue.*
+
+> **A REFUSAL THAT PRINTS THE RECOVERY ORDERING IS A CONTROL; ONE THAT PRINTS THE
+> PROBLEM IS AN OBSTACLE.** *And the ordering is the part a lane gets wrong under
+> time pressure, which is the only condition under which it reads the message.*
+
+**AND TWO MORE ROWS AGAINST THE COORDINATING ROLE, BOTH IN THE SAME MACHINERY,
+BOTH WITHIN THE HOUR OF BANKING A RULING ABOUT IT.**
+
+* **I PUSHED A RED FLEET TEST** — the merge script ran its checks **AFTER** the
+  push ordering. **Third gate-not-annotate instance**, and the structural fix is
+  `coord-merge.sh`, *where every check gates the push.*
+* **AND MY `||` FALLBACK BYPASSED MY OWN SCRIPT'S TREE-MISMATCH REFUSAL.**
+
+  > **A GATE WITH A BYPASS AT THE CALL SITE IS THE GATE-NOT-ANNOTATE DEFECT
+  > WEARING THE GATE AS A COSTUME.**
+
+  *(The push proved legitimate on blob forensics — the `qs_rank` blob certified
+  verbatim — and the recipe now forbids fallback invocations.)*
+
+**Four defects in this role's merge machinery in three days, and the pattern is
+now unmistakable and worth stating against myself**: *every one produced correct
+information and took the wrong action.* **The recipe was never wrong about the
+tree; it was wrong about what a check is for** — and the fix in every case was to
+move a computation from the output into the exit status. **A role that dispatches
+gate audits and exempts its own tooling has been running the corpus-exercise law
+against itself the whole time.**
 
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
@@ -13781,6 +13987,32 @@ lane the work it does NOT do**, so its decay is silent in every artifact.
 split): *"it muddies what a red names."* **A schedule that improves a number the
 floor does not read has bought nothing the fleet can act on**, and it costs the
 one property the floor exists to give — *a red that names a family.*
+
+**AND THE FLAGSHIP'S RUNG-8 INDUCTION LANDED, ZERO-FIX ON FIRST ELABORATION,
+AGAINST A PREDICTION OF "AT MOST ONE ROUND"** (basecase, `86ab41e`). Rung 8 is
+**reduced to `hfallQ` alone**; **F2 was consumed after three days at zero
+consumers.**
+
+**And the number was held honestly at 5/9**: *"reduced, not closed, and I am not
+claiming otherwise."*
+
+> **A RUNG REDUCED IS NOT A RUNG CLOSED, AND THE SCOREBOARD IS WHERE THE
+> DIFFERENCE IS EASIEST TO LOSE.**
+
+**The temptation at a first-shot success is to let the milestone move the
+number**, and this is the milestone-versus-number rule paying on the good day
+rather than the bad one — *a lane that reports a waypoint as a score is
+borrowing against the rung it just made easier.*
+
+**AND ITS TRANSFER DISCIPLINE IS THE LINE TO CARRY FLEET-WIDE:**
+
+> **A PURELY ADDITIVE DEPENDENCY IS STILL A CHANGED DEPENDENCY. What makes it
+> safe is THE DIFF, not the word "additive."**
+
+*"Additive" is a claim about a diff, made without reading it* — and it is the
+most-used safety word in this fleet precisely because it sounds like a proof.
+**The word describes the intent; the diff describes the change**, and only one of
+them is checkable.
 
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —

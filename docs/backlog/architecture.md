@@ -7978,3 +7978,111 @@ depth-split, Ada 5a. **C's §9.0 = 97/300 with conservation proved in the
 report.**
 
 Law rows: **MEAS-457…MEAS-471, STMT-143…STMT-145, OPS-137…OPS-145.**
+
+## 2026-08-25-architecture-91 — A watch whose most important signal produces no alarm is not a watch
+
+Dispatch 35: **two cohesive arcs plus the flagship.** Master `a59e9f8`.
+**Arc one is my empty-register ruling implemented fleet-wide in one afternoon**,
+with each owner catching the next tier's trap before it fired; **arc two is the
+protocol**; and **four defects in this role's merge machinery in three days now
+have one diagnosis.**
+
+**ARC ONE — §5.0a.**
+
+**RATIFIED, the boundary refinement to "existence, not passage."** pyc's
+unit-test found **the silent regression**: a retired `still_divergent` flipping to
+OK — *the divergence RETURNED* — **exited 0.**
+
+> **A watch whose most important signal produces no alarm is not a watch.**
+
+**The seam, stated once:** *existence-not-passage* bounds what the **SHARED
+CHECKER** may assert about another tier's rows; **a tier's own probe gating on its
+OWN regression is the tier's business** and is exactly what *build the retirement
+to fail* demands at the probe layer. **The checker is a librarian; the probe is a
+smoke alarm.**
+
+**THE STATUS-WORD RULING** (SV's `watch` beating `FAIL`; pyc adopted): **a status
+word must carry one severity across everything it labels** — *a word meaning
+"stop" in one row and "carry on" in the next is not a status word.* SV's own
+generalization, and the right one: **the vacuous-guard defect in the reporting
+layer.**
+
+**C holds the zero-live pole** (`LIVE_GUARDS={}`) — *"an archive that is still
+watched has exactly one job… the probe cannot report anything except a return"* —
+with **two watches asking DIFFERENT questions** (reclassification vs fix) and the
+copy resisted: **a shape is portable; a condition is not.** And the reversal was a
+**superseded note, not a rewrite**: *a reversal that erases the reasoning it
+reverses destroys the only evidence the rule was tested* — **the compliance is the
+finding.**
+
+**THE SWEEP, SPECIFIED** (clause 1's blast radius; three hits in one inch). Each
+tier greps its own instruments for: **`rows[0]` / `sorted(...)[0]` / `next(iter)`
+first-element access**; **`if rows:` used as a proxy for "this tier has a
+register"** (the two questions came apart at clause 1); **any aggregate whose
+identity element is unstated**, including every `rc` folded over rows; and **any
+message that reads as a verdict when the list is empty.** Two minutes per tier;
+**the deliverable is a NAMED NEGATIVE, filed in the tier's ledger** — *"greped, N
+sites, none/these"*, never *"looks fine."*
+
+**Implementation laws landed with it.** **A category added to a set changes every
+aggregate over that set** (pyc's second-order catch: `rc` derived over ALL guards;
+fix is the LIVE/RETIRED partition) — *aggregates are where a taxonomy change
+lands, and they are invisible in the schema.* Plus the relay norm: pyc told SV
+before SV's restore, *"turns a confusing red into a one-line change"* — **the
+first tier through a new ruling publishes the TRAPS, not just the code.**
+
+**And three instrument laws from the same afternoon.** **An instrument lives in
+the space it searches** (the polarity test's own filename matched its glob; third
+instance) — *the bug is never the pattern being wrong about the world, it is the
+pattern being right about a world that contains the pattern.* **Untested at the
+second pole** (pyc `9ed84de`, exposed by C's correct shape) — *"having written the
+careful branch, I stopped looking for its twin"*; states 1–2 reclassified
+**vacuous, not unmet**. And **pick a fixture base by the property it needs, never
+by sort order** — C's legally-empty `rows` sorted first and broke all 15 fixtures;
+*"no fixture base available" must not read as "passed."*
+
+**ARC TWO — §7.1a.** **The protocol's own artifact should not be able to
+invalidate the protocol's own ticket** (SV paid 8 197 s; stamp-v2 includes
+untracked files, so a queued tenure's log refuses the tenure at acquire) — and
+**the cost scales with the wait, which is exactly backwards.** **RULED: refusal at
+ENQUEUE, never stamp-exclusion** — *excluding blinds the A6 detection the stamp
+exists for, and `.gitignore` does the same one level down.* QoL landed it
+(`7839344`) with three pre-stated edge predictions held and **the recovery
+ordering printed IN the refusal**: **a refusal that prints the recovery ordering
+is a control; one that prints the problem is an obstacle.**
+
+**Plus two QoL findings.** **A row can pass while the picture is wrong when the
+row tests the PART and the defect is in the SEQUENCE** (`classify_list` reset the
+union; every row still passed; the live output showed it) — *order is invisible to
+unit rows by construction.* And **a bucket omitted is a claim made** — the
+throwaway counter lacked the local-work bucket and **named itself as
+would-be-refused.**
+
+**COORDINATOR ROWS (two new, both mine).** **I pushed a red fleet test** — the
+merge script ran its checks after the push ordering, **the third gate-not-annotate
+instance, within the hour of banking the ruling on it**; structural fix is
+`coord-merge.sh`, where every check gates the push. **And my `||` fallback
+bypassed my own script's tree-mismatch refusal**: **a gate with a bypass at the
+call site is the gate-not-annotate defect wearing the gate as a costume** (push
+legitimate on blob forensics; fallback invocations now forbidden). **Four defects
+in three days, one diagnosis: every one produced correct information and took the
+wrong action** — *the recipe was never wrong about the tree, it was wrong about
+what a check is for*, and **a role that dispatches gate audits while exempting its
+own tooling has been running the corpus-exercise law against itself.**
+
+**THE FLAGSHIP — §9.0.** Basecase's rung-8 induction **landed zero-fix on first
+elaboration** against a predicted *"at most one round"* (`86ab41e`); rung 8
+reduced to `hfallQ` alone; **F2 consumed after three days at zero consumers.** The
+chain was held honestly at **5/9** — *"reduced, not closed, and I am not claiming
+otherwise"*: **a rung reduced is not a rung closed**, and this is the
+milestone-versus-number rule paying on the good day. And its transfer discipline:
+**a purely additive dependency is still a changed dependency; what makes it safe
+is THE DIFF, not the word "additive."**
+
+**Fleet state at landing:** tip `a59e9f8`; register instruments uniform across
+three restored tiers + shared checker + committed polarity test, all green; queue
+~7 deep (SV head, then analog / go / r3c / leantier / softfloat / ada-5a /
+pyc-9); ES's fourth run pending; C's alignment WIP correctly parked over the A17
+line.
+
+Law rows: **MEAS-472…MEAS-480, STMT-146, OPS-146…OPS-152.**

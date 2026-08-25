@@ -8,14 +8,27 @@ Part of the pass-7 SPEC-POLE SPLIT (docs/backlog.md §Pass 7): the
 program and shared probe defs come from `pins_common.lean` — after an
 envelope re-extraction, edit THAT file (the JSON trap note there); this
 file rebuilds through the import.
+
+THE BATTERY IS SHARDED (2026-08-25). This file keeps the prose and the
+map; the probes live in five leaves that elaborate in PARALLEL, because
+a single module elaborates serially and this pair plus `pins_clock` was
+~85% of every full spine build. NO probe was dropped, NO fuel changed,
+and every expected value is byte-identical — a topology change must not
+move a certificate.
+
+  `pins_bound_h`         the opening board `posH 0`, depths 1-3   (8)
+  `pins_bound_mid`       the midgame board `posMid`               (6)
+  `pins_bound_tac`       tactical `posTac` + quiet-pawn `posPend` (5)
+  `pins_bound_end`       rook endgame `posEnd`                    (4)
+  `pins_bound_searcher`  the trace-clock frontier                 (3)
+
+The boundary is by POSITION so a red names its board.
 -/
-import LeanModels
-import Examples.python.sunfish.pins_common
-
-namespace Examples.python.sunfish.pins_bound
-
-open LeanModels LeanModels.Python
-open Examples.python.sunfish.pins
+import Examples.python.sunfish.pins_bound_h
+import Examples.python.sunfish.pins_bound_mid
+import Examples.python.sunfish.pins_bound_tac
+import Examples.python.sunfish.pins_bound_end
+import Examples.python.sunfish.pins_bound_searcher
 
 /-! ### THE PASS-4 CAPSTONE: `Searcher().bound()` runs END TO END on
 the shipped file
@@ -70,180 +83,3 @@ measurement:
   than repaired: it is CPython's answer, checked directly.
 * the endgame rows still walk the correction (depth 3 at gamma 0
   answers the repetition/stalemate-corrected 0). -/
-
--- (`sp0`/`searcherW` come from `pins_common.lean`)
-
-/-- `(bound, nodes)` of one probe `Searcher().bound(pos, gamma, depth)`
-— fresh searcher per probe, exactly the CPython driver. -/
-private def boundProbe (pos : RVal) (gamma depth : Int) :
-    Option (Int × Int) :=
-  match searcherW with
-  | some (w, a) =>
-    (match callIn sunfish 1000000 w "Searcher.bound"
-        #[.ref a, pos, .int gamma, .int depth] with
-     | .ok w' (.int r) =>
-       (match Heap.get? w'.heap a with
-        | some (.instance _ attrs) =>
-          (match Env.lookup attrs.toList "nodes" with
-           | some (.int n) => some (r, n)
-           | _ => Option.none)
-        | _ => Option.none)
-     | _ => Option.none)
-  | Option.none => Option.none
-
-/-- Midgame (Italian-shaped, after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3
-Bc5 — the position the side to move sees). -/
-private def posMid : RVal :=
-  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
-    #[.str "         \n         \n r.bqk..r\n pppp.ppp\n ..n..n..\n ..b.p...\n ..B.P...\n ...P.N..\n PPP..PPP\n RNBQK..R\n         \n         \n",
-      .int (-13), .tuple #[.bool true, .bool true],
-      .tuple #[.bool true, .bool true], .int 0, .int 0]
-
-/-- Tactical (a Scholar's-mate-shaped attack: the side to move has a
-mate-band line — the king-capture sentinel path). -/
-private def posTac : RVal :=
-  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
-    #[.str "         \n         \n r.bqkb.r\n pppp.ppp\n ..n..n..\n ....p..Q\n ..B.P...\n ........\n PPPP.PPP\n RNB.K.NR\n         \n         \n",
-      .int (-38), .tuple #[.bool true, .bool true],
-      .tuple #[.bool true, .bool true], .int 0, .int 0]
-
-/-- Rook endgame (KRK-shaped — the mop-up/correction territory). -/
-private def posEnd : RVal :=
-  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
-    #[.str "         \n         \n ....k...\n ........\n ....K...\n ........\n .R......\n ........\n ........\n ........\n         \n         \n",
-      .int 0, .tuple #[.bool false, .bool false],
-      .tuple #[.bool false, .bool false], .int 0, .int 0]
-
-/-- Quiet pawn endgame (kings and one pawn each). -/
-private def posPend : RVal :=
-  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
-    #[.str "         \n         \n ....k...\n .....p..\n ........\n ........\n .....P..\n ........\n ....K...\n         \n         \n         \n",
-      .int 0, .tuple #[.bool false, .bool false],
-      .tuple #[.bool false, .bool false], .int 0, .int 0]
-
--- the opening board, depths 1-3 across failing-low and failing-high windows
-#guard boundProbe (posH 0) 0 1 == some (0, 2)
-#guard boundProbe (posH 0) 40 1 == some (37, 34)
-#guard boundProbe (posH 0) (-100) 1 == some (0, 2)
-#guard boundProbe (posH 0) 0 2 == some (0, 2)
-#guard boundProbe (posH 0) 40 2 == some (36, 138)
-#guard boundProbe (posH 0) 0 3 == some (0, 34)
-#guard boundProbe (posH 0) 40 3 == some (39, 197)
-#guard boundProbe (posH 0) (-100) 3 == some ((-46), 2)
-
--- midgame
-#guard boundProbe posMid 0 1 == some (2, 66)
-#guard boundProbe posMid 60 1 == some (35, 5)
-#guard boundProbe posMid 0 2 == some ((-1), 586)
-#guard boundProbe posMid 60 2 == some (59, 240)
-#guard boundProbe posMid 0 3 == some (2, 413)
-#guard boundProbe posMid 60 3 == some (59, 240)
-
--- tactical: pass 7 answered MATE_LOWER exactly here; engine master
--- settles on the futility cap first (see the header)
-#guard boundProbe posTac 0 2 == some (277, 3)
-#guard boundProbe posTac 0 3 == some (417, 24)
-
--- endgames: the correction arms
-#guard boundProbe posEnd 0 1 == some (111, 5)
-#guard boundProbe posEnd 0 2 == some (91, 5)
-#guard boundProbe posEnd 0 3 == some (0, 2)
-#guard boundProbe posEnd 60 3 == some (137, 13)
-#guard boundProbe posPend 0 2 == some (19, 2)
-#guard boundProbe posPend 60 2 == some (50, 13)
-#guard boundProbe posPend 0 3 == some (50, 14)
-
-/-! ### The wall-clock frontier under THE TRACE CLOCK (pass 6)
-
-Post-#158 `time.time()` is dynamically LIVE: `bound()` evaluates it
-whenever `self.nodes % 2048 == 0`. Pass 6 made time an INPUT
-(memory-model §the trace clock): the call POPS the world's clock
-trace; the EMPTY trace refuses loudly at that exact consultation
-point — the pass-5 frontier pin's shape, with the underrun message
-(the pinned battery rows above never reach the wall: max 587 nodes,
-no reading consumed). The frontier is pinned CHEAPLY as before: a
-searcher whose `nodes` is pre-set to 2047, so the very NEXT entry is
-the 2048th — one node in, never a 2048-node fresh run per build. And
-the wall now OPENS: the armed pair below (deadline pre-set through
-`Heap.update` like `nodes`; readings CPython-derived) pins BOTH
-directions — a reading `≤ deadline` continues to CPython's exact
-`(bound, nodes) = (0, 2049)` with the trace consumed, a reading
-`> deadline` raises `Stop` at node 2048 with the world retained,
-exactly where CPython stops (the raise-through-the-clock composition
-with the pass-4 exceptions tier, on the shipped file). -/
-
-private def searcherAt2047 : Option (World × Addr) :=
-  match searcherW with
-  | some (w, a) =>
-    (match Heap.get? w.heap a with
-     | some (.instance cid attrs) =>
-       (match Heap.update w.heap a (.instance cid (attrs.map
-            (fun p => if p.1 == "nodes" then (p.1, RVal.int 2047) else p))) with
-        | some h' => some ({ w with heap := h' }, a)
-        | Option.none => Option.none)
-     | _ => Option.none)
-  | Option.none => Option.none
-
-#guard (match searcherAt2047 with
-        | some (w, a) =>
-          (match callIn sunfish 1000000 w "Searcher.bound"
-              #[.ref a, posH 0, .int 0, .int 1] with
-           | .unsupported msg =>
-             msg == "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
-           | _ => false)
-        | Option.none => false)
-
-/-- The 2047-searcher with an ARMED deadline (both attributes pre-set
-through `Heap.update` — the pass-5 frontier trick): the very next
-entry is the 2048th, where the guard consults the clock against
-`deadline`. -/
-private def searcherArmed (nodes deadline : Int) : Option (World × Addr) :=
-  match searcherW with
-  | some (w, a) =>
-    (match Heap.get? w.heap a with
-     | some (.instance cid attrs) =>
-       (match Heap.update w.heap a (.instance cid (attrs.map
-            (fun p => if p.1 == "nodes" then (p.1, RVal.int nodes)
-                      else if p.1 == "deadline" then (p.1, RVal.int deadline)
-                      else p))) with
-        | some h' => some ({ w with heap := h' }, a)
-        | Option.none => Option.none)
-     | _ => Option.none)
-  | Option.none => Option.none
-
--- reading 999 ≤ deadline 1000: the 2048th node consults the clock and
--- CONTINUES — the whole depth-1 bound completes, CPython-exact
--- ((0, 2049): 2047 pre-set + the 2 nodes of the fresh depth-1 probe),
--- the reading consumed (`w'.clock = []`)
-#guard (match searcherArmed 2047 1000 with
-        | some (w, a) =>
-          (match callIn sunfish 1000000 { w with clock := [999] }
-              "Searcher.bound" #[.ref a, posH 0, .int 0, .int 1] with
-           | .ok w' (.int r) =>
-             r == 0
-               && (match Heap.get? w'.heap a with
-                   | some (.instance _ attrs) =>
-                     Env.lookup attrs.toList "nodes" == some (.int 2049)
-                   | _ => false)
-               && w'.clock.isEmpty
-           | _ => false)
-        | Option.none => false)
-
--- reading 1001 > deadline 1000: `raise Stop` fires at node 2048 — the
--- model raises at the SAME node CPython does, the world retained on
--- `.exn` (the H1 covenant), the reading consumed
-#guard (match searcherArmed 2047 1000 with
-        | some (w, a) =>
-          (match callIn sunfish 1000000 { w with clock := [1001] }
-              "Searcher.bound" #[.ref a, posH 0, .int 0, .int 1] with
-           | .exn w' (.user _ nm) =>
-             nm == "Stop"
-               && (match Heap.get? w'.heap a with
-                   | some (.instance _ attrs) =>
-                     Env.lookup attrs.toList "nodes" == some (.int 2048)
-                   | _ => false)
-               && w'.clock.isEmpty
-           | _ => false)
-        | Option.none => false)
-
-end Examples.python.sunfish.pins_bound

@@ -118,7 +118,11 @@ def _fail(problems, path, msg):
 
 
 def _strip_lean_comments(text):
-    """Block/doc comments and line comments out. Anchoring alone is not enough:
+    # NOTE the r-prefix: this docstring QUOTES a regex, and `\s` in a plain
+    # string is an invalid escape -- a DeprecationWarning on 3.9 and a
+    # SyntaxWarning on 3.14, emitted on EVERY gate run. Prose that quotes code
+    # is still code to the lexer.
+    r"""Block/doc comments and line comments out. Anchoring alone is not enough:
     `^\s*def foo` can match inside a `/- ... -/` block, and a name surviving in
     a comment after its declaration was DELETED is precisely the case this
     tightening exists to refuse."""

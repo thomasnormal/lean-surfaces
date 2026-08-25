@@ -204,6 +204,16 @@ inductive Val where
   /-- ARM 3.5.4 — `universal_integer`: exact, unbounded, and converted at
   its point of use. -/
   | univInt (v : Int)
+  /-- ARM 3.6.3, *String Types* — **a FRAGMENT of Ada's `String`, and the gap
+  is named rather than blurred.** Ada's `String` is
+  `array (Positive range <>) of Character`, so a faithful value carries
+  BOUNDS; this one does not. What it supports is what inch 5a needs to run
+  `Report`: literals (ARM 2.6) and catenation (ARM 4.5.3). **Indexing,
+  slicing, `'Length`, `'First` and any constrained-subtype length check are
+  therefore NOT modelled and must refuse** — a value that cannot say its
+  bounds cannot answer them, and answering anyway would be the wrong kind of
+  cheap. Bounds arrive with the array rung. -/
+  | str (s : String)
   deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- `Standard.Boolean` — an enumeration type, per ARM 3.5.3. -/

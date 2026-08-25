@@ -2792,3 +2792,277 @@ before ES's row retires rather than on the day it does.
 
 The `with_rows[0]` defect is the sharpest evidence for the first half: the fold
 did not fail, it quietly redirected.
+
+## 2026-08-25-pycomplete-31 — exit 143: the RSS discipline is machine-scoped in its claim and lane-scoped in its mechanism
+
+pyc9's depth-split tenure died at 13:30:31 after 41 minutes of build:
+
+    ✖ [884/911] Building Examples.python.sunfish.genmoves_ray (547s)
+    error: Lean exited with code 143
+    [13:30:31] GATES NOT RUN (build red — aborted triad)
+
+**It was not a red build, and `genmoves_ray` is a file this commit never
+touches.**
+
+### Ruling out the fleet's own guard, by mechanism not by guess
+
+triad's A16 guard kills with **`kill -9`** (→ exit **137**) and prints
+**`RSS KILL LINE (A16, per-process)`** before it does. The log contains
+**zero** KILL LINEs, and 143 is **SIGTERM**, not SIGKILL. So the guard did not
+fire — which also means `lean` stayed **under** the 5 GB/proc cap. Nothing the
+fleet measures was exceeded.
+
+### What was actually true of the box
+
+| | at failure |
+|---|---|
+| physical free | **~56 MB** |
+| swap | **12002 M / 13312 M used (90%)** |
+| load (2 cores) | **15.40** |
+| `genmoves_ray` | **547 s**, against **18 s** in `lm_build.log` — **30×** |
+
+And the cause is **outside the fleet entirely**: `lake build
+AlgebraicComplexity …` out of `~/repos/matrix-m…`, a different repository,
+running throughout and still running after.
+
+*Honest limit on this claim*: I could not find a jetsam record naming the
+`lean` process, so an OS-level memory kill is **inference from convergent
+evidence** (SIGTERM, no KILL LINE, 30× slowdown on an untouched file, 90% swap),
+not a log citation.
+
+### The finding, and it is in triad's own header two rules apart
+
+> line 110 — *"the lock, the ticket, the RSS discipline are about **THE
+> MACHINE**, not about the repository"*
+> base rule 6 — *"never kill another lane's processes — kills by **PARENTAGE**
+> only"*
+
+Both are right, and together they leave a gap:
+
+> **The RSS discipline protects the machine FROM a lane; it cannot protect a
+> lane FROM the machine.** Its claim is machine-scoped, its measurement is
+> subtree-scoped, and a resource is only as governed as it is *measured*.
+
+Base rule 6 should not change — never killing another lane's processes is
+correct, and doubly so when the competitor is another repository whose work is
+none of the fleet's business.
+
+### The word was wrong, and it is the defect I fixed in my own probe an hour ago
+
+`GATES NOT RUN (build red — aborted triad)` — **the build was not red, it was
+killed.** triad already distinguishes *"resource kill, not a red build"*
+(header line 21), but **only for kills it performs itself**. A kill from
+outside lands in the same channel as a genuine compile error.
+
+That is precisely the shape I fixed in `pyc_divergence_probe.py` at
+`8e4ebaf`: *a statement about the ENVIRONMENT wearing the costume of a verdict
+about the code.* Same defect, one level up, in the instrument every lane trusts.
+
+**Proposed (arch's call, not mine):** on a nonzero build exit whose code is
+signal-shaped (**137/143**) with **no KILL LINE of our own**, sample machine
+memory and report `BUILD KILLED FROM OUTSIDE — box at N MB free, swap X%` rather
+than `build red`. The distinction is worth real time: this cost one tenure plus
+a **4593 s** queue wait, and any lane can lose the same.
+
+### Re-queued, not retried blind
+
+Rebased onto master tip `9c5b3f8` first (safe to do: the lock was released, and
+master now carries **both** C's `rows: []` register **and** the fixed checker,
+so the self-test gate passes for the right reason). Verified before enqueue:
+self-test green at **15 × 3**, and the six certificates **byte-identical** to
+pre-split after the rebase. Ticket `…-21614-pyc9`, tree `4a4501494f46`.
+
+## 2026-08-25-pycomplete-32 — genmoves_ray DOES shard; my earlier "no" came from a substring grep
+
+`genmoves_ray` killed pyc9's first tenure (pycomplete-31). Re-censused it while
+the re-run built, and **the verdict I gave the coordinator was wrong.**
+
+### What I reported before, and what is actually true
+
+I reported *"`genmoves_ray` is not a leaf — `genmoves_scan`, `genmoves_drain`
+and `sf_order/transport` all `open` it, so it does not shard naturally without
+a facade."* That came from `grep -rln 'genmoves_ray'` — **a substring match,
+which counts a prose mention as a dependency.** Anchored on real syntax:
+
+| file | relationship |
+|---|---|
+| `genmoves_scan.lean` | **the only true `import`** |
+| `genmoves_drain.lean`, `sf_order/transport.lean` | `open` the namespace, reached transitively |
+| `genmoves_theorem.lean`, `LeanModels/Python/PayloadBlind.lean` | **prose mentions only — not dependents** |
+
+> **I made the exact error the register checker was hardened against.** ES
+> flagged the substring test one day ago; I replaced it with anchored `def` +
+> `#guard` and wrote a fixture where the name lives only in a comment. Then I
+> ran a census whose evidence was a bare `grep -rln` — and two of its five hits
+> were names living only in a comment.
+>
+> **Hardening an instrument does not harden the hand that reaches past it.**
+
+### It shards, and the constraint is the NAMESPACE, not the import
+
+One direct importer makes a facade trivial. The real constraint is the two
+transitive `open`ers: `open Examples.python.sunfish.genmoves_ray` must keep
+resolving, so **the shards must declare INTO the parent namespace** rather than
+into their own. Lean permits many modules to contribute to one namespace, so
+every current `open` and `import` site stays byte-identical.
+
+Seams are already there — 173 theorems in clean families:
+
+    pB 36 | rayBody 21 | ray 20 | cast 22 (rCast 8 + castH 7 + castA 7)
+    pawn 18 (pawn 11 + pProm 7) | remainder ~56
+
+with the 31 `def`s lifting into a `genmoves_ray_common.lean` exactly as
+`boundProbe`/`posMid` lifted into `pins_common.lean`.
+
+### And the reason to do it is MEMORY, not minutes
+
+The sharding task was dispatched on **build time**. `genmoves_ray` is the case
+where it is **build survivability**: a 3740-line module elaborating 173
+theorems in ONE `lean` process is the fleet's memory cliff, and splitting it
+lowers peak RSS per process whether or not it saves a second of CPU. **A shard
+that saves no time and prevents an OOM is still worth landing** — which is not
+what the original framing would have predicted, and is the reason to revisit a
+target that was correctly de-prioritised on speed alone.
+
+## 2026-08-25-pycomplete-33 — genmoves_ray shard: the prediction, registered before the tenure
+
+### The family split, named
+
+Full prefix census of the 173 theorems (the earlier "top 8" truncated prefixes
+and undercounted `pB*` and `cast*`):
+
+| shard | families | theorems |
+|---|---|---|
+| `genmoves_ray_pB` | `pB0` 10, `pB1` 11, `pB2` 9, `pB3` 5, `pB3Test` | ~36 |
+| `genmoves_ray_ray` | `ray` 20, `rYield`/`rPawn`/`rCrawl`/`rStop`/`rRest`/`rYieldVal`/`rPawnTest` | ~32 |
+| `genmoves_ray_cast` | `castH` 7, `castA` 7, `rCastH` 3, `rCastA` 3, `cH`/`cA`/`cHVal`/`cAVal`, tests | ~26 |
+| `genmoves_ray_pawn` | `pawn` 11, `pawnQ`, `pawnBody`, `prom*` 7, `pProm*` 6 | ~25 |
+| `genmoves_ray_rayBody` | `rayBody` | 21 |
+| `genmoves_ray_common` | the 31 `def`s + shared `open Ref` blocks | — |
+| `genmoves_ray` (facade) | imports the five; keeps the 37 `#guard`s | — |
+
+~30 structural singletons (`Heap`, `heapEq`, `flatten`, `absInt`, `RayLocals`,
+`RayFrame`, `SlotOnly`, …) land in `_common` or the facade **by a dependency
+census at the inch, not by this table** — I have not verified which are
+infrastructure for the families and will not guess.
+
+**Namespace continuity is the load-bearing constraint**: every shard declares
+into `Examples.python.sunfish.genmoves_ray`, so `genmoves_scan`'s `import` and
+`genmoves_drain`/`transport`'s `open` stay byte-identical.
+
+### The memory prediction, and it points TWO ways
+
+> **Largest single-process peak: DOWN. Concurrent aggregate: UP or flat.**
+
+Not a hedge — a consequence. Each new `lean` process **re-pays Lean's constant
+import baseline**, so the per-process peak falls only by the *module-specific*
+portion (never by 1/6), while N shards building concurrently can cost **more**
+in aggregate than one large module. Under a per-process cap that is a win;
+**on a starved box, which is what actually killed pyc9, it could be a loss.**
+Registering both directions is what makes the inch falsifiable rather than
+self-confirming.
+
+### The evidence — and why neither named proxy can supply it
+
+Both proxies the dispatch offered are **too weak for this claim**, and saying so
+is the point:
+
+- **Job count** (911 → ~917) is uninformative about memory *by construction*.
+- **Largest module's elaboration time** is a *weak* proxy: Lean modules can be
+  slow-and-small (deep unification, little allocation) or fast-and-large.
+
+So I am supplying the missing instrument rather than reading a proxy that
+cannot answer. `/private/tmp/rss_sampler.py` samples `ps` every 10 s, attributes
+by **tree path** (excluding the external `AlgebraicComplexity` build competing
+for the same RAM), and records **per-module peak** *and* **concurrent
+aggregate** — the two numbers the prediction splits on. It is not Lean
+execution, so it touches no lock, and it writes nothing to the frozen tree.
+
+**The baseline is being captured NOW, during this unsharded run** — that window
+closes when the build ends and cannot be reopened without another tenure.
+First samples: `genmoves_ray.lean` **469.59 MB** and climbing.
+
+Two caveats recorded beside every figure rather than discovered later:
+
+1. A sampled maximum misses spikes shorter than the interval — **every number
+   is a lower bound.**
+2. **Under swap pressure RSS measures what the OS *let* the process keep, not
+   what it wanted.** A before/after comparison across different pressure
+   regimes is therefore *not fair*, so load and swap are recorded at every
+   peak, and a cross-regime comparison will be reported as **inconclusive**
+   rather than quietly averaged.
+
+## 2026-08-25-pycomplete-34 — the depth-split verdict, and the memory premise falsified by my own instrument
+
+### The verdict: the critical path prediction holds
+
+`pins_bound_*` elaboration, from the killed run's log (it built these before it
+died, and the green re-run reused their `.olean`s):
+
+| shard | nodes | time | s/node |
+|---|---|---|---|
+| `pins_bound_mid_d1` | 71 | **65 s** | 0.92 |
+| `pins_bound_mid_d2` | 826 | **515 s** | 0.62 |
+| `pins_bound_mid_d3` | 653 | **454 s** | 0.69 |
+| `pins_bound_h` | — | 277 s | |
+| `pins_bound_tac` / `searcher` / `end` | — | 51 / 26 / 10 s | |
+
+**Predicted critical path ~7.8 min (468 s) set by `_mid_d2`; actual 515 s —
+within 10%.** The node-count model (71/826/653) predicted the split well;
+s/node is near-constant, which is why counting nodes beat counting guards.
+
+### And the cost the prediction ALSO named: the total went up
+
+`65 + 515 + 454 = 1034 s` against the **875 s** previously measured for the
+unsplit `posMid` — **~18% more total CPU**. Splitting lowers the critical path
+and *raises* the total, because each shard re-pays the import cost. That is the
+**same mechanism I registered for memory** hours earlier, showing up in time.
+*Soft*: 875 s came from a different run under different load, so this is a
+cross-regime comparison and I am reporting it as directional, not exact.
+
+`_d3` at 454 s is nearly `_d2`'s equal, so the split is **not balanced** — a
+further win needs the d2/d3 pair split again, not a fourth sibling.
+
+### THE MEMORY PREMISE IS FALSIFIED — and my own instrument did it
+
+Peak RSS, sampled during the green run (**scope: only the ~15 modules this run
+actually rebuilt**, since `.lake` was warm — not the full 911):
+
+     1989.88 MB  bound_depth.lean
+     1590.55 MB  move_gate.lean
+     1465.55 MB  move_residue.lean
+     1383.64 MB  genmoves_drain.lean
+     1318.58 MB  value_bound.lean
+      ...
+      589.94 MB  genmoves_ray.lean
+
+> **`genmoves_ray` is not the memory cliff. `bound_depth` is 3.4× larger in the
+> same run, same regime — a fair comparison.**
+
+`genmoves_ray` died in the first tenure not because it is the largest, but
+because it was **the module that happened to be running when the box ran out**.
+
+> **Under machine-wide starvation the victim is chosen by TIMING, not by SIZE.**
+> Every "this module is the fragile one" conclusion drawn from *which module
+> died* is an artifact of scheduling.
+
+### And the lane never had a memory problem at all
+
+Concurrent aggregate peak **2301.78 MB** against a **10240 MB** chain cap and a
+**5120 MB** per-process cap. The lane used **22%** of its chain budget at peak.
+**No topology change to any fleet file would have prevented that kill** — it was
+external oversubscription by another repository, and sharding cannot fix a
+machine-wide shortage.
+
+### So the approved justification is wrong, and I have to say so
+
+I reframed the `genmoves_ray` shard as **"survivability, not minutes"** and it
+was approved on that basis. **The measurement refutes the reframe.** But the
+same run makes the *original* case strongly: `genmoves_ray` took **962 s** — the
+single largest elaboration in the tree, ahead of `_mid_d2`'s 515 s.
+
+**The inch survives; its justification reverts to the one I talked us out of.**
+Minutes, not survivability. Worth stating plainly rather than quietly letting an
+approved-but-wrong premise carry a tenure — the prediction discipline worked
+exactly as intended, falsifying a claim *within the hour* and *before* the
+tenure was spent on it.

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**352 entries across 17 lanes.** Regenerate with
+**353 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -104,6 +104,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-24-wasm-9` |  | `ais_empty_subs` LANDS: the scratch loop finds in four probes what four tenures could not, and the bug was a line the original had already written | wasm |
 | `2026-08-24-wasm-8` |  | **O2 AND O4 PROVED**: the ledger is 4/5, and the last obligation's one prerequisite turns out to be BROKEN ITSELF | wasm |
 | `2026-08-24-wasm-7` |  | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
+| `2026-08-24-sv-6` |  | `runSlots`: the adequacy lemma's missing left-hand side | sv |
 | `2026-08-24-analog-6` |  | A13: the coordinate audit ran first, and found the gap somewhere else entirely | analog |
 | `2026-08-24-sv-5` |  | `slotStep`: the Active/Inactive/NBA loop, and the clash check ran FIRST this time | sv |
 | `2026-08-24-es-5` |  | the ledger number was wrong, and the instrument that says so | es |

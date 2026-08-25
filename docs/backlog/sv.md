@@ -711,3 +711,54 @@ This is the check whose *absence* cost a tenure on `Prim.lean`
 (`commitNba`, five errors from one collision) and whose presence caught
 `Res.timeout_le` a tenure early on `World.lean`. Running it first is now
 the habit, not the lesson.
+
+---
+
+## 2026-08-24-sv-6 — `runSlots`: the adequacy lemma's missing left-hand side
+
+`LeanModels/Sv/Drive.lean` — `setInputs`, `runSlots`, and six end-to-end
+guards.
+
+**Why this and not the transfer itself.** The transfer of the estate (162
+trace-shaped declarations, 23 of them the fuel ladder) goes through
+
+    cycleOf (runSlots …) = run …        on the cycle fragment
+
+and **both sides have to exist before it can be stated.** The right-hand
+side has existed since M0. `slotStep` runs one slot and mutates the world
+— it produces no trace — so the left-hand side did not exist and there was
+nothing for `cycleOf` to project. This file is that side. The third
+ingredient, the oracle correspondence, landed at inch 2 as
+`ScheduleOracle.toRegion` with `toRegion_choose := rfl`, for an unrelated
+reason.
+
+**The lemma is deliberately not attempted yet**, and the reason is now
+sharper than "it is big": it carries **two** obligations at once — a
+trace-type change AND a monad change, because the estate is stated over
+`Res`-valued `run` while `runSlots` is in `SvM`. That second obligation is
+this lane's own doing, from writing `slotStep` on the substrate first, and
+it was the right trade for new code but it is a real cost and should be
+named as one rather than discovered inside the proof.
+
+**The Preponed sample is taken here and it is not decoration.**
+`Slot.sampled` is read **before the stimulus lands**, which is what §4.4
+means by Preponed: clocking blocks and concurrent assertions see values as
+of before anything in the slot changed them. Nothing consumes it at this
+inch. Taking it at the wrong moment would be invisible until the reactive
+regions arrive and then very hard to find, so it is guarded now:
+`sampled` reads `[1, 2]` where `final` reads `[2, 3]` — slot 1 samples
+what slot 0 left.
+
+**The adequacy PREREQUISITE is itself guarded**, which is the point of the
+inch: `cycleOf` applied to a real `runSlots` trace yields the sequence of
+slot `final` states — the exact shape the transfer will equate with `run`.
+Not the lemma; the evidence that both its sides now exist and compose.
+
+Fixture is a process-free world on purpose: `slotStep`'s ready sets are
+empty, the loop closes immediately, and what is pinned is the DRIVER's
+shape with no process semantics confounding it. Fuel exhaustion is guarded
+too — zero fuel cannot close a slot, and the run is loud rather than
+silently short.
+
+Clash check ran first again: `runSlots`, `setInputs`, `traceOf` free;
+`initWorld` taken by Python's namespace and avoided rather than shadowed.

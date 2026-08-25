@@ -15,12 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**376 entries across 17 lanes.** Regenerate with
+**377 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-25-architecture-88` |  | A gate not in your floor cannot contradict your rows | architecture |
+| `2026-08-25-qol-68` |  | the floor merge armed the guard for twelve lanes, and left seven behind it | qol |
 | `2026-08-25-qol-67` |  | I breached A11 verifying the gate, and the gate does need the runner | qol |
 | `2026-08-25-qol-66` |  | the floor gains the rule, and waits for C | qol |
 | `2026-08-25-qol-65` |  | the gate that was never in anyone's floor | qol |

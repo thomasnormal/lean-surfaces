@@ -33,7 +33,7 @@ widens the walker** (§G19, after the previous table proved unreproducible).
 | §G24 `math/bits` complete + constants | `eb1e8b0` | 687 / 3,803 (18.1%) | 594 / 2,743 (21.7%) |
 | §G25 variadics | `9b2129e` | ~~739 / 3,803~~ *overstated, see §G27* | ~~644 / 2,743~~ |
 | §G27 correction (same tree; no rung) | `fa625f5` | 717 / 3,803 (18.9%) | 629 / 2,743 (22.9%) |
-| §G28 bundle (methods, strcat, string slice, `strconv`) | *filled in next* | **765 / 3,803 (20.1%)** | **657 / 2,743 (24.0%)** |
+| §G28 bundle (methods, strcat, string slice, `strconv`) | `5fca2f5` | **765 / 3,803 (20.1%)** | **657 / 2,743 (24.0%)** |
 
 E1 moved the mechanism, not the metric: **+0 files** (§G22). The table is
 unchanged on purpose — a mechanism rung that unlocks nothing must not be
@@ -3527,3 +3527,62 @@ MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
   of this; at twelve targets it is total.
 * `docs_check` 91/91; `diff_test` **1,508 cases, 0 failed**;
   `script_corpus` 65/0; resolver self-test **17/17**.
+
+---
+
+## G29 — THE FLEET FIELD-COLLISION SWEEP: absent here, and the check found a different one (2026-08-25)
+
+The sweep asked whether any field this lane's extractor writes could be
+overwritten by `go/ast`'s own property set when source is copied in — ES's
+defect, where a source's own `kind` property silently won over the node
+type written into `kind`.
+
+### THE ANSWER IS NO, AND HERE IS WHAT PROVED IT
+
+The extractor writes into two namespaces that both mix instrument-written
+keys with source-derived ones, so both were tested rather than argued:
+
+| namespace | check | result |
+| --- | --- | ---: |
+| kind tags (`fileKinds`) — bare `go/ast` type names **and** synthetic sub-kinds | do any of the 52 `go/ast` node type names contain `/`? | **0** |
+| `FuncTable` keys — plain function names **and** mangled `Type.Method` | do any of 46,271 function declarations have `.` in the name? | **0** |
+
+Disjoint **by construction** in both: `go/ast` type names and Go function
+names are identifiers, and neither `/` nor `.` is an identifier
+character. A source-derived value cannot land on an instrument-written
+key, in either direction.
+
+Negative results, with the runs that established them.
+
+### BUT THE SAME PROBE FOUND A REAL COLLISION OF AN ADJACENT SHAPE
+
+Asking *"can two declarations mangle to the same key?"* — not the sweep's
+question, but one step along the same axis:
+
+    distinct mangled keys 14,513 ; claimed by MORE THAN ONE package 1,037
+
+`Scope.String` in three packages, `Label.String` in two,
+`response.writeCGIHeader`, `dumper.printf`. Not reachable while the
+extractor ingests one package at a time — every acceptance case is
+single-package — and **guaranteed** the moment E2 or E3 ingests more,
+which is precisely what they are for.
+
+So the sweep's shape was absent and the sweep still paid, because the
+check that proves a namespace safe is the same check that finds it
+unsafe one axis over. That is the argument for running these against
+lanes that expect to pass.
+
+### THE FIX IS THE SWEEP'S OWN LESSON
+
+A namespace that must stay disjoint is made disjoint **by construction**,
+not left disjoint by luck. Keys are now qualified by the package's import
+path — unique per package by Go's module rules — so they cannot collide:
+
+    go/types.Scope.String   vs   cmd/compile/internal/types2.Scope.String
+
+Measured after: **15,809 qualified keys, 0 claimed by more than one
+package.** Gated by two new rows in `census.sh --resolve` (**19/19**),
+one asserting the qualification and one asserting that the same
+`Type.Method` in a different package yields a different key.
+
+MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).

@@ -1306,7 +1306,19 @@ func resolveFile(fset *token.FileSet, f *ast.File) []resolution {
 //
 // DECLARATION only. Calling one needs `x.M()` dispatch, a value selector,
 // which remains rung E3.
-func methodKey(fd *ast.FuncDecl) (string, bool) {
+// The key is qualified by the package's IMPORT PATH, and that is not
+// cosmetic. The fleet's field-collision sweep measured the unqualified
+// form: **14,513 distinct `Type.Method` keys, of which 1,037 were claimed
+// by more than one package** — `Scope.String` in three, `Label.String` in
+// two, `response.writeCGIHeader`, `dumper.printf`. Unreachable while the
+// extractor ingests one package at a time, and guaranteed the moment E2
+// or E3 ingests more, which is exactly what they do.
+//
+// The sweep's own lesson, applied to its own finding: a namespace that
+// must stay disjoint is made disjoint BY CONSTRUCTION, not left disjoint
+// by luck. An import path is unique per package by Go's own module
+// rules, so the qualified key cannot collide.
+func methodKey(fd *ast.FuncDecl, pkgPath string) (string, bool) {
 	if fd.Recv == nil || len(fd.Recv.List) == 0 {
 		return "", false
 	}
@@ -1323,7 +1335,10 @@ func methodKey(fd *ast.FuncDecl) (string, bool) {
 			t = x.X
 			continue
 		case *ast.Ident:
-			return x.Name + "." + fd.Name.Name, true
+			if pkgPath == "" {
+				return x.Name + "." + fd.Name.Name, true
+			}
+			return pkgPath + "." + x.Name + "." + fd.Name.Name, true
 		}
 		return "", false
 	}
@@ -1434,11 +1449,14 @@ func f(bits int) int { return bits.UintSize }`, nil},
 		}
 	}
 	// --- METHOD DECLARATION mangling (§G28) ---
-	for _, c := range []struct{ name, src, want string }{
-		{"value receiver", "package p\ntype Kind int\nfunc (i Kind) String() string { return \"\" }", "Kind.String"},
-		{"pointer receiver keys the SAME", "package p\ntype Kind int\nfunc (i *Kind) String() string { return \"\" }", "Kind.String"},
-		{"generic receiver keys on the bare type", "package p\nfunc (s *Stack[T]) Push(v T) {}", "Stack.Push"},
-		{"a plain function is NOT a method", "package p\nfunc String() string { return \"\" }", ""},
+	for _, c := range []struct{ name, pkg, src, want string }{
+		{"value receiver", "", "package p\ntype Kind int\nfunc (i Kind) String() string { return \"\" }", "Kind.String"},
+		{"pointer receiver keys the SAME", "", "package p\ntype Kind int\nfunc (i *Kind) String() string { return \"\" }", "Kind.String"},
+		{"generic receiver keys on the bare type", "", "package p\nfunc (s *Stack[T]) Push(v T) {}", "Stack.Push"},
+		{"a plain function is NOT a method", "", "package p\nfunc String() string { return \"\" }", ""},
+		// --- the package-path qualification (the sweep's 1,037 collisions) ---
+		{"qualified by import path", "go/types", "package p\ntype Scope int\nfunc (s Scope) String() string { return \"\" }", "go/types.Scope.String"},
+		{"the SAME Type.Method in another package differs", "cmd/compile/internal/types2", "package p\ntype Scope int\nfunc (s Scope) String() string { return \"\" }", "cmd/compile/internal/types2.Scope.String"},
 	} {
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, "m.go", c.src, parser.SkipObjectResolution)
@@ -1446,7 +1464,7 @@ func f(bits int) int { return bits.UintSize }`, nil},
 		if err == nil {
 			for _, d := range f.Decls {
 				if fd, ok := d.(*ast.FuncDecl); ok {
-					if k, isM := methodKey(fd); isM {
+					if k, isM := methodKey(fd, c.pkg); isM {
 						got = k
 					}
 				}

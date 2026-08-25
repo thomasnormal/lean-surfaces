@@ -1308,3 +1308,46 @@ by this lane while it waited.
 ### Status
 
 Verdict pending.
+
+## 2026-08-24-sunfish-rtrack-16 — the sequence cursors, and how cheap an arm can be
+
+`monadic_gen.lean` §11, four theorems. **§9.0 stays 5 / 9.**
+
+`for x in <list | tuple | str | range>` runs on the `.forSeq` frame and
+`enumerate` on `.enumSeq`; both are pure list recursion with no heap read and no
+expression evaluation. **Three of the four arms take no interpreter premise at
+all**, and `genStep_enumSeqCons` — a PRODUCING arm, the kind that yields — has no
+hypotheses whatsoever, because the pair it yields is computed from the frame's
+own fields.
+
+That is the rung-6 repricing at its clearest: an arm's cost is set by how much of
+its behaviour the FRAME already determines, and for a cursor that is nearly all
+of it. The expensive part of a statement gate is the sub-runs the statement
+makes, and many statements make none.
+
+### The instrument, and a correction to this lane's own guess
+
+A fleet census reported this worktree's `check.sh` as predating the pressure fix
+and still reading `vm.swapusage` (a high-water mark). **That was not true here**,
+and the check is cheap enough to be worth doing before acting: `git diff
+origin/master -- tools/check.sh tools/triad.sh` is empty and the blob hashes are
+identical, because re-syncing to `origin/master` sweeps both tools forward. In
+this worktree `vm.swapusage` appears only in the comment explaining its
+retirement and in a self-test mock.
+
+This lane then over-reached in the other direction, and that is the part worth
+recording. Seeing an older label (`memory_pressure:free%`) reporting its number
+as "in use", this lane hypothesised an inverted transform and called the earlier
+refusals "plausibly artifacts". The later evidence does not support it: the
+run that finally permitted reported 43% in use under `memory_pressure:100-free%`
+while the live instrument read 57% free — coherent arithmetic, no inversion. The
+earlier readings cannot now be re-derived, so the honest verdict is UNKNOWN, not
+"artifact".
+
+**A guess offered as a finding is a defect even when the guess is reasonable.**
+The lane had one datum (a label string) and produced a mechanism from it; the
+mechanism was checkable and was not checked before being reported.
+
+### Status
+
+Verdict pending.

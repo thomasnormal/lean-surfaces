@@ -2845,3 +2845,71 @@ lowers peak RSS per process whether or not it saves a second of CPU. **A shard
 that saves no time and prevents an OOM is still worth landing** — which is not
 what the original framing would have predicted, and is the reason to revisit a
 target that was correctly de-prioritised on speed alone.
+
+## 2026-08-25-pycomplete-33 — genmoves_ray shard: the prediction, registered before the tenure
+
+### The family split, named
+
+Full prefix census of the 173 theorems (the earlier "top 8" truncated prefixes
+and undercounted `pB*` and `cast*`):
+
+| shard | families | theorems |
+|---|---|---|
+| `genmoves_ray_pB` | `pB0` 10, `pB1` 11, `pB2` 9, `pB3` 5, `pB3Test` | ~36 |
+| `genmoves_ray_ray` | `ray` 20, `rYield`/`rPawn`/`rCrawl`/`rStop`/`rRest`/`rYieldVal`/`rPawnTest` | ~32 |
+| `genmoves_ray_cast` | `castH` 7, `castA` 7, `rCastH` 3, `rCastA` 3, `cH`/`cA`/`cHVal`/`cAVal`, tests | ~26 |
+| `genmoves_ray_pawn` | `pawn` 11, `pawnQ`, `pawnBody`, `prom*` 7, `pProm*` 6 | ~25 |
+| `genmoves_ray_rayBody` | `rayBody` | 21 |
+| `genmoves_ray_common` | the 31 `def`s + shared `open Ref` blocks | — |
+| `genmoves_ray` (facade) | imports the five; keeps the 37 `#guard`s | — |
+
+~30 structural singletons (`Heap`, `heapEq`, `flatten`, `absInt`, `RayLocals`,
+`RayFrame`, `SlotOnly`, …) land in `_common` or the facade **by a dependency
+census at the inch, not by this table** — I have not verified which are
+infrastructure for the families and will not guess.
+
+**Namespace continuity is the load-bearing constraint**: every shard declares
+into `Examples.python.sunfish.genmoves_ray`, so `genmoves_scan`'s `import` and
+`genmoves_drain`/`transport`'s `open` stay byte-identical.
+
+### The memory prediction, and it points TWO ways
+
+> **Largest single-process peak: DOWN. Concurrent aggregate: UP or flat.**
+
+Not a hedge — a consequence. Each new `lean` process **re-pays Lean's constant
+import baseline**, so the per-process peak falls only by the *module-specific*
+portion (never by 1/6), while N shards building concurrently can cost **more**
+in aggregate than one large module. Under a per-process cap that is a win;
+**on a starved box, which is what actually killed pyc9, it could be a loss.**
+Registering both directions is what makes the inch falsifiable rather than
+self-confirming.
+
+### The evidence — and why neither named proxy can supply it
+
+Both proxies the dispatch offered are **too weak for this claim**, and saying so
+is the point:
+
+- **Job count** (911 → ~917) is uninformative about memory *by construction*.
+- **Largest module's elaboration time** is a *weak* proxy: Lean modules can be
+  slow-and-small (deep unification, little allocation) or fast-and-large.
+
+So I am supplying the missing instrument rather than reading a proxy that
+cannot answer. `/private/tmp/rss_sampler.py` samples `ps` every 10 s, attributes
+by **tree path** (excluding the external `AlgebraicComplexity` build competing
+for the same RAM), and records **per-module peak** *and* **concurrent
+aggregate** — the two numbers the prediction splits on. It is not Lean
+execution, so it touches no lock, and it writes nothing to the frozen tree.
+
+**The baseline is being captured NOW, during this unsharded run** — that window
+closes when the build ends and cannot be reopened without another tenure.
+First samples: `genmoves_ray.lean` **469.59 MB** and climbing.
+
+Two caveats recorded beside every figure rather than discovered later:
+
+1. A sampled maximum misses spikes shorter than the interval — **every number
+   is a lower bound.**
+2. **Under swap pressure RSS measures what the OS *let* the process keep, not
+   what it wanted.** A before/after comparison across different pressure
+   regimes is therefore *not fair*, so load and swap are recorded at every
+   peak, and a cross-regime comparison will be reported as **inconclusive**
+   rather than quietly averaged.

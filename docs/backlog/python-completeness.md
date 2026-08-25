@@ -2793,3 +2793,55 @@ master now carries **both** C's `rows: []` register **and** the fixed checker,
 so the self-test gate passes for the right reason). Verified before enqueue:
 self-test green at **15 × 3**, and the six certificates **byte-identical** to
 pre-split after the rebase. Ticket `…-21614-pyc9`, tree `4a4501494f46`.
+
+## 2026-08-25-pycomplete-32 — genmoves_ray DOES shard; my earlier "no" came from a substring grep
+
+`genmoves_ray` killed pyc9's first tenure (pycomplete-31). Re-censused it while
+the re-run built, and **the verdict I gave the coordinator was wrong.**
+
+### What I reported before, and what is actually true
+
+I reported *"`genmoves_ray` is not a leaf — `genmoves_scan`, `genmoves_drain`
+and `sf_order/transport` all `open` it, so it does not shard naturally without
+a facade."* That came from `grep -rln 'genmoves_ray'` — **a substring match,
+which counts a prose mention as a dependency.** Anchored on real syntax:
+
+| file | relationship |
+|---|---|
+| `genmoves_scan.lean` | **the only true `import`** |
+| `genmoves_drain.lean`, `sf_order/transport.lean` | `open` the namespace, reached transitively |
+| `genmoves_theorem.lean`, `LeanModels/Python/PayloadBlind.lean` | **prose mentions only — not dependents** |
+
+> **I made the exact error the register checker was hardened against.** ES
+> flagged the substring test one day ago; I replaced it with anchored `def` +
+> `#guard` and wrote a fixture where the name lives only in a comment. Then I
+> ran a census whose evidence was a bare `grep -rln` — and two of its five hits
+> were names living only in a comment.
+>
+> **Hardening an instrument does not harden the hand that reaches past it.**
+
+### It shards, and the constraint is the NAMESPACE, not the import
+
+One direct importer makes a facade trivial. The real constraint is the two
+transitive `open`ers: `open Examples.python.sunfish.genmoves_ray` must keep
+resolving, so **the shards must declare INTO the parent namespace** rather than
+into their own. Lean permits many modules to contribute to one namespace, so
+every current `open` and `import` site stays byte-identical.
+
+Seams are already there — 173 theorems in clean families:
+
+    pB 36 | rayBody 21 | ray 20 | cast 22 (rCast 8 + castH 7 + castA 7)
+    pawn 18 (pawn 11 + pProm 7) | remainder ~56
+
+with the 31 `def`s lifting into a `genmoves_ray_common.lean` exactly as
+`boundProbe`/`posMid` lifted into `pins_common.lean`.
+
+### And the reason to do it is MEMORY, not minutes
+
+The sharding task was dispatched on **build time**. `genmoves_ray` is the case
+where it is **build survivability**: a 3740-line module elaborating 173
+theorems in ONE `lean` process is the fleet's memory cliff, and splitting it
+lowers peak RSS per process whether or not it saves a second of CPU. **A shard
+that saves no time and prevents an OOM is still worth landing** — which is not
+what the original framing would have predicted, and is the reason to revisit a
+target that was correctly de-prioritised on speed alone.

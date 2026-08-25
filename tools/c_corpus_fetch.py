@@ -33,6 +33,42 @@ CENSUS = REPO / "docs" / "c23-suite-census.json"
 PIN_OUT = REPO / "docs" / "c-torture-pin.json"
 SUBDIR = "gcc/testsuite/gcc.c-torture/execute"
 
+# ---------------------------------------------------------------------------
+# `oracle-tests-compiler` — tests a CONFORMING SEMANTICS MUST FAIL.
+#
+# `docs/c23-goal.md` §1.2 scores this corpus by exit status, and a handful of
+# its tests are written to check the COMPILER rather than the language: they
+# declare a standard-library function, call it, and then DEFINE it with a body
+# that aborts, so the test passes only if the implementation recognises the
+# name as a BUILTIN and never calls the definition sitting in the same
+# translation unit.  A semantics that does the ordinary, correct thing reaches
+# `abort()`.
+#
+# MEMBERSHIP IS BY NAME, HERE, WITH THE CITATION — never inferred at scoring
+# time.  `LeanModels/C/Torture.lean` additionally re-derives the SHAPE from the
+# ingested AST and refuses the classification when the shape is absent, so this
+# list can widen the state only for programs that really have it.  Two locks:
+# a name a human wrote down, and a structural fact a machine checks.
+#
+# It never empties.  Like the UB refusals, it is part of what the number MEANS
+# rather than a gap waiting to close (2026-08-25-c-25).
+# The value carries the SYMBOL as well as the citation, because the citation is
+# for a reader and the symbol is for the machine: `LeanModels/C/Torture.lean`
+# re-derives the shape around that exact name.
+ORACLE_TESTS_COMPILER = {
+    "20021127-1.c": {
+        "symbol": "llabs",
+        "citation": (
+            "declare-call-define of `llabs` (§7.24.6.1): the file declares "
+            "`long long llabs (long long);`, calls `llabs(-1)`, and defines "
+            "`long long llabs (long long b) { abort (); }`. It passes only "
+            "under builtin recognition, which is a compiler optimisation and "
+            "not a rule of C. Modelling the <stdlib.h> builtins by name to "
+            "satisfy it would adopt GCC's optimiser behaviour as if it were C "
+            "semantics."),
+    },
+}
+
 
 def die(msg, code=2):
     print("c_corpus_fetch: " + msg, file=sys.stderr)
@@ -142,6 +178,8 @@ def main():
             die("%s: sha256 MISMATCH against the committed pin (want %s, got %s)"
                 % (n, exp["sha256"], s))
         rec.update(blob_sha1=b, sha256=s)
+        if n in ORACLE_TESTS_COMPILER:
+            rec["oracle_tests_compiler"] = ORACLE_TESTS_COMPILER[n]
         out = env / (n[:-2] + ".json")
         r = subprocess.run([sys.executable, str(REPO / "extractors" / "c" / "extract.py"),
                             str(f), "--source-name", "%s/%s" % (SUBDIR, n),
@@ -165,6 +203,7 @@ def main():
             {"pin": manifest["pin"],
              "note": "hashes only — gcc.c-torture is GPL-3.0-or-later and is never vendored "
                      "(docs/c23-goal.md §2). These lines are a fingerprint, not the corpus.",
+             "oracle_tests_compiler": ORACLE_TESTS_COMPILER,
              "tests": [{"name": t["name"], "blob_sha1": t.get("blob_sha1"),
                         "sha256": t.get("sha256"), "status": t["status"]} for t in tests]},
             indent=1) + "\n")

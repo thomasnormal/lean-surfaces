@@ -5,6 +5,12 @@
   "subdir": "gcc/testsuite/gcc.c-torture/execute"
  },
  "note": "hashes only \u2014 gcc.c-torture is GPL-3.0-or-later and is never vendored (docs/c23-goal.md \u00a72). These lines are a fingerprint, not the corpus.",
+ "oracle_tests_compiler": {
+  "20021127-1.c": {
+   "symbol": "llabs",
+   "citation": "declare-call-define of `llabs` (\u00a77.24.6.1): the file declares `long long llabs (long long);`, calls `llabs(-1)`, and defines `long long llabs (long long b) { abort (); }`. It passes only under builtin recognition, which is a compiler optimisation and not a rule of C. Modelling the <stdlib.h> builtins by name to satisfy it would adopt GCC's optimiser behaviour as if it were C semantics."
+  }
+ },
  "tests": [
   {
    "name": "20000112-1.c",

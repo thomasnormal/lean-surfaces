@@ -28,7 +28,8 @@ EXECUTED in `--selftest` rather than described.
 import argparse, sys
 
 SCORED = ("passed", "failed")
-ZEROES = ("refused-unsupported", "refused-libc", "refused-ub", "timeout",
+ZEROES = ("refused-unsupported", "refused-libc", "refused-ub",
+          "oracle-tests-compiler", "timeout",
           "not-ingested", "not-parsed", "runner-error", "not-fetched")
 TOKENS = SCORED + ZEROES
 
@@ -107,6 +108,8 @@ def main():
             "scored": scored, "total": total,
             "counts": {k: counts[k] for k in TOKENS},
             "failed_tests": [n for n, t, _ in rows if t == "failed"],
+            "oracle_tests_compiler_tests":
+                [n for n, t, _ in rows if t == "oracle-tests-compiler"],
         }, open(a.emit, "w"), indent=1, sort_keys=True)
         open(a.emit, "a").write("\n")
         print("c_torture_score: scoreboard written to %s" % a.emit)
@@ -146,11 +149,14 @@ def selftest():
     # RULE 2: four zeroes, four numbers, and `scored` counts neither.
     log2 = ["a\tnot-fetched\t\n", "b\tnot-parsed\tK&R definition\n",
             "g\tnot-ingested\tspan: field 'col': Natural number expected\n",
+            "i\toracle-tests-compiler\tdeclare-call-define of llabs\n",
             "h\trunner-error\tcannot read envelope\n",
             "c\trefused-unsupported\tswitch\n", "d\trefused-libc\tprintf\n",
             "e\trefused-ub\tsignedOverflow\n", "f\ttimeout\t\n"]
     counts, scored, total, ff = summarise(parse(log2))
-    check("eight absences, zero scored", (scored, total), (0, 8))
+    check("nine absences, zero scored", (scored, total), (0, 9))
+    check("oracle-tests-compiler is its own number and is NOT a failure",
+          (counts["oracle-tests-compiler"], counts["failed"]), (1, 0))
     check("not-ingested is NOT pooled with not-parsed",
           (counts["not-ingested"], counts["not-parsed"]), (1, 1))
     check("not-fetched is its own number", counts["not-fetched"], 1)

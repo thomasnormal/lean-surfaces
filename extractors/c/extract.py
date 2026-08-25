@@ -218,8 +218,26 @@ class Extractor:
         fn = getattr(self, "e_" + k, None)
         if fn is None:
             return self.unsupported_leaf(n, span)
+        # THE INSTRUMENT'S OWN FIELDS ARE NOT MERGEABLE.  `kind` and `span`
+        # are written HERE, by the extractor, about the node; everything else
+        # comes from the handler.  `update` let a handler silently overwrite
+        # them, which is the field-collision shape the ES lane hit for real
+        # (node type written to `kind`, then source properties merged over it,
+        # and a `VariableDeclaration`'s own `kind` won).
+        #
+        # Measured on this extractor at the sweep (2026-08-25-c-25): NO
+        # handler returns `kind` or `span`, and none builds a dict with a
+        # source-chosen key -- so no collision exists.  The channel is closed
+        # anyway, LOUDLY, because "no handler does this today" is a fact about
+        # 36 functions and not about the next one.
+        payload = fn(n)
+        clash = sorted(set(payload) & {"kind", "span"})
+        if clash:
+            die("internal: handler e_%s returned %s, which are the "
+                "EXTRACTOR's fields for this node. A handler that names them "
+                "is overwriting the instrument with its subject." % (k, clash))
         out = {"kind": k, "span": span}
-        out.update(fn(n))
+        out.update(payload)
         return out
 
     def seq(self, ns):
@@ -541,15 +559,60 @@ def extract(path, source_name=None):
     }, ex.unsupported
 
 
+def selftest():
+    """The field-collision guard, EXECUTED — the sweep's own check.
+
+    A negative result ("no handler collides") is a claim about the 36
+    handlers that exist. This lowers a node through a handler that DOES
+    collide and requires the extractor to die, so the claim stays true for
+    the 37th.
+    """
+    ok = True
+
+    def check(name, got, want):
+        nonlocal ok
+        good = got == want
+        ok = ok and good
+        print("  %-54s %s" % (name, "ok" if good else "FAIL got=%r" % (got,)))
+
+    ex = Extractor("selftest.c", "")
+    node = {"kind": "ParenExpr", "range": {}, "type": {"qualType": "int"}}
+
+    # 1. the ordinary path still assembles kind/span from the INSTRUMENT
+    ex.e_ParenExpr = lambda n: {"sub": None, "type": "int"}
+    out = ex.node(node)
+    check("instrument writes `kind` for a normal handler", out.get("kind"), "ParenExpr")
+    check("instrument writes `span` for a normal handler", "span" in out, True)
+
+    # 2. a handler that names the instrument's fields DIES rather than winning
+    for bad in ({"kind": "NotThis", "sub": None}, {"span": {"line": 999}, "sub": None}):
+        ex.e_ParenExpr = lambda n, b=bad: b
+        label = "kind" if "kind" in bad else "span"
+        try:
+            ex.node(node)
+            check("a handler returning %r is refused" % label, "accepted", "refused")
+        except SystemExit:
+            check("a handler returning %r is refused" % label, "refused", "refused")
+
+    print("extract --selftest:", "ok" if ok else "FAILED")
+    return 0 if ok else 1
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("source")
+    ap.add_argument("source", nargs="?")
     ap.add_argument("-o", "--output")
     ap.add_argument("--source-name", metavar="PATH",
                     help="the path to record as source_file (the corpus lives "
                          "in another repository, so its own path is not "
                          "relative to this one)")
+    ap.add_argument("--selftest", action="store_true",
+                    help="run the instrument's own checks; no clang, no source")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
+    if not args.source:
+        die("no source given (and --selftest was not requested)")
     if not os.path.exists(args.source):
         die("no such file: %s" % args.source)
     env, unsup = extract(args.source, args.source_name)

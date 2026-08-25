@@ -15,12 +15,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**369 entries across 17 lanes.** Regenerate with
+**370 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-25-architecture-88` |  | A gate not in your floor cannot contradict your rows | architecture |
+| `2026-08-25-c-24` |  | THE REGISTER RESHAPED, and a gate that could not contradict its own tier | c |
 | `2026-08-25-wasm-13` |  | THE 13-vs-19 DIFF: the stale pin hid **FIVE**, not six, and the lane's own census law corrects the lane's own census | wasm |
 | `2026-08-25-wasm-12` |  | **THE A′ CAPSTONE IS PROVED**: subtyping is admissible for `Instrs_ok2`, and the branch re-census fired on its first use | wasm |
 | `2026-08-25-wasm-11` |  | THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported | wasm |

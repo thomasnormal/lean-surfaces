@@ -1,0 +1,21 @@
+{
+ "corpus": "gcc.c-torture/execute",
+ "counts": {
+  "failed": 1,
+  "not-fetched": 0,
+  "not-ingested": 1,
+  "not-parsed": 30,
+  "passed": 97,
+  "refused-libc": 5,
+  "refused-ub": 10,
+  "refused-unsupported": 154,
+  "runner-error": 0,
+  "timeout": 2
+ },
+ "failed_tests": [
+  "20021127-1.c"
+ ],
+ "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published.",
+ "scored": 98,
+ "total": 300
+}

@@ -2936,3 +2936,112 @@ That is the cleanest possible state to hand the `oracle-tests-compiler`
 ruling: the state has exactly one member, its membership is already
 argued in the register, and nothing else is hiding in the column.
 
+
+---
+
+## 2026-08-25-c-24 — THE REGISTER RESHAPED, and a gate that could not contradict its own tier
+
+`harness/divergence_register.py` exits 1 on master, on **this lane's two
+rows**, and every tenure whose floor runs it is red. ES, pyc, Ada, SV and
+wasm are holding enqueues. Four problems, all mine:
+
+```
+row c-div-1 kind is 'oracle-shape', expected one of semantic | provenance
+row c-div-1 guards must be TWO distinct named guards, got [one pin sentence]
+row c-div-2 kind is 'retired-diagnosed', expected one of semantic | provenance
+row c-div-2 guards must be TWO distinct named guards, got [three sentences]
+```
+
+### The root cause is not the rows. It is which gate the C floor runs.
+
+`2026-08-24-c-22` invented `oracle-shape` and `retired-diagnosed` in good
+faith and wrote guard *sentences* where the canon wants guard *names* —
+and **no C tenure could contradict it**, because this lane's floor runs
+`docs_check`, `diff_test`, `refusal_census`, `c_profile_probe` and
+`c_torture_gate`, and never `divergence_register.py`. Other tiers had it;
+this one did not; the rows sailed through four green tenures and detonated
+on somebody else's floor.
+
+That is `2026-08-24-c-22`'s own law arriving one layer up, and it is worse
+here because a gate is supposed to be the thing that cannot be fooled:
+
+> **A CORPUS can only contradict the rules it exercises; a GATE can only
+> contradict the files it runs on. A lane that writes into a shared schema
+> without running the shared checker has not been passing that check — it
+> has been ABSENT from it, and absence and success are the same colour on
+> a green board.**
+
+The fix has to be both halves, and the second is the one that lasts:
+**`harness/divergence_register.py` and `harness/c_divergence_probe.py` now
+run in `tools/c_torture_gate.sh`, before the expensive half**, so a
+malformed row costs seconds rather than a build — and so this class can
+never again go unexercised in this lane.
+
+### The rows, reshaped
+
+**`c-div-1` stays LIVE, `kind: semantic`.** The oracle and the model
+disagree about what the program MEANS — nothing about ingestion is
+involved, which is exactly what separates it from `c-div-2`. Its
+retirement condition is now an EVENT rather than a fork: the coordinator's
+ruling authorises the `oracle-tests-compiler` zero-state, so the row
+retires on the landing that adds the state, moves `20021127-1.c` into it
+by name and pins the membership list. Modelling the `<stdlib.h>` builtins
+is explicitly recorded as NOT the path — it would adopt GCC's optimiser
+behaviour as if it were C semantics.
+
+**`c-div-2` moves to `retired_rows`, `kind: provenance`** — the canonical
+shape, all live fields plus `retired` and `retired_by`, with the
+end-to-end evidence travelling with it. `provenance` rather than
+`semantic` is the whole diagnosis in one field: the model was right and
+the ENVELOPE described a different program.
+
+### Two guards that run with no corpus, no toolchain and no lock
+
+The canon wants `..._still_divergent` and `..._has_not_widened` as NAMES a
+probe defines. The C tier's difficulty is that its divergence lives in a
+scoreboard produced under the build lock from a GPL corpus — none of which
+a checker may assume. So the number became a committed artifact:
+
+* `harness/c_torture_score.py --emit` writes
+  **`docs/c-torture-scoreboard.json`** — the counts, and **every `failed`
+  test BY NAME**, because a count cannot say which;
+* `harness/c_divergence_probe.py` reads it offline. `c_div_1_still_divergent`
+  asks whether `20021127-1.c` is still in `failed_tests`;
+  `c_div_1_has_not_widened` asks whether the `failed` count is still ≤ the
+  number of live rows — **a failing test with no row is a divergence
+  nobody declared**;
+* and `c_torture_gate.sh` compares the committed scoreboard against the
+  fresh run, so the published number cannot rot (qol-21's law), skipping
+  the comparison only when the machine has no corpus at all — failing
+  there would punish a lane for not holding a cache it is forbidden to
+  vendor.
+
+> **A guard that can only run where the evidence was produced is not a
+> guard, it is a memory of one. Publish the evidence and the guard becomes
+> portable — which is the same move that turned §9.0 from a log line into
+> a file.**
+
+**And the still_divergent guard is a trap this row walks into on purpose.**
+`c-div-1`'s retirement path is reclassification, so the day
+`oracle-tests-compiler` lands, `20021127-1.c` leaves `failed` and **this
+guard goes red.** That is correct and is written into both the probe and
+the row: the row must then be retired DELIBERATELY, not drained by a
+change that happened to empty it.
+
+### The number, and a correction to the expected one
+
+**`gcc.c-torture` 98/300 scored (passed 97, failed 1)** — unchanged by
+this landing, which touches no Lean.
+
+The dispatch expected **99**, from `20010224-1.c` flipping failed→passed.
+The flip happened; the total did not move, because **`failed` is already
+a score**. `scored = passed + failed`, so a test moving from `failed` to
+`passed` changes the composition and not the sum — 96+2 and 97+1 are both
+98. The landing's own entry said so when it predicted 98 and hit it
+exactly; repeating it here because an off-by-one in a headline number is
+exactly the kind of thing that gets copied forward.
+
+*(The checker's `SyntaxWarning` at line ~122 is pyc's and is dispatched
+there. Not touched here — two lanes editing one file is how a fleet
+unblock becomes a fleet conflict.)*
+

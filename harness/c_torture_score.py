@@ -79,6 +79,7 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("log", nargs="?", help="c-torture-run output (default: stdin)")
     ap.add_argument("--expect", help="N/total — fail if the number moved")
+    ap.add_argument("--emit", help="write the scoreboard as JSON to this path")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -88,6 +89,27 @@ def main():
     counts, scored, total, ff = summarise(rows)
     for l in render(counts, scored, total, ff):
         print(l)
+    if a.emit:
+        # THE NUMBER AS A COMMITTED ARTIFACT.  A §9.0 figure that lives only in
+        # a tenure log cannot be read by anything offline -- not by a reviewer,
+        # and not by `harness/c_divergence_probe.py`, which has to ask "is this
+        # test still failing?" on a machine with no corpus.  Every `failed` row
+        # is listed by NAME, because a count cannot say WHICH.
+        import json as _json
+        _json.dump({
+            "note": ("Written by harness/c_torture_score.py --emit, from a "
+                     "`lake exe c-torture-run` log.  The pin is "
+                     "docs/c-torture-pin.json.  This file is the tier's §9.0 "
+                     "number as a second artifact: correcting the instrument "
+                     "corrects the next run, and the published figure is "
+                     "corrected where it was published."),
+            "corpus": "gcc.c-torture/execute",
+            "scored": scored, "total": total,
+            "counts": {k: counts[k] for k in TOKENS},
+            "failed_tests": [n for n, t, _ in rows if t == "failed"],
+        }, open(a.emit, "w"), indent=1, sort_keys=True)
+        open(a.emit, "a").write("\n")
+        print("c_torture_score: scoreboard written to %s" % a.emit)
     if a.expect:
         want = a.expect.strip()
         got = "%d/%d" % (scored, total)

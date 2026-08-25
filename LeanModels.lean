@@ -39,6 +39,10 @@ import LeanModels.Sv.Prim
 -- Inactive / NBA loop over the SvM primitives, ITERATING rather than falling
 -- through, because work an NBA commit schedules re-enters Active.
 import LeanModels.Sv.Slot
+-- R1 inch 4a: runSlots -- the trace-producing driver. slotStep runs ONE slot
+-- and mutates the world; this drives a stimulus through it and collects a
+-- RegionTrace, which is the left-hand side the adequacy lemma needs.
+import LeanModels.Sv.Drive
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

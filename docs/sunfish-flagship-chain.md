@@ -123,19 +123,27 @@ scratch iteration. `delegateNext` is the high-frequency one — most of `moves()
 is assignments and calls, not control flow — so the arm that covers the most
 statements is already in hand.
 
-**The arm ladder, as it stands.** Five silent arms (`block_nil`, `while`,
-`branch'`, `delegateNext`, and the two `forGen` frame steps) and three producing
-arms (`yield`, `nilCont`, `returnNone`). The producing three matter
-disproportionately: they are what `GenYieldsM`'s constructors consume, so with
-them the drain relation is INHABITED from the interpreter side rather than
-merely well-formed. Before them a `GenYieldsM` derivation could only be
-introduced by hand.
+**The arm ladder, as it stands.** Ten silent arms — `block_nil`, `while`,
+`branch` and its general form `branch'`, `delegateNext`, the two `forGen` frame
+steps, `forSeqNil`, `forSeqCons`, `enumSeqNil` — and four producing arms:
+`yield`, `nilCont`, `returnNone`, `enumSeqCons`. The producing four matter
+disproportionately, because they are what `GenYieldsM`'s constructors consume:
+with them the drain relation is INHABITED from the interpreter side rather than
+merely well-formed.
 
-What the ladder still owes for rung 6: the `.forHere` setup arm, the remaining
-frame arms (`whileLoop`, `forSeq`, `forList`, `forDict`, `enumSeq`), and the
-delegate arm's `.brk`/`.cont` unwinds. None of them is a new SHAPE — each is the
-same recipe against a different constructor — which is why the rung is priced as
-instantiations rather than proofs.
+**The repricing, now visible in the arms themselves.** An arm's cost is set by
+how much of its behaviour the FRAME already determines, and for a cursor the
+frame determines almost everything: three of §11's four arms take NO interpreter
+premise at all, and `genStep_enumSeqCons` — a PRODUCING arm — has no hypotheses
+whatsoever, because the pair it yields is computed from the frame's own fields.
+That is why rung 6 is priced as instantiations: the expensive part of a statement
+gate is the sub-runs a statement makes, and many statements make none.
+
+What the ladder still owes: the `.forHere` setup arm, the heap-reading frame
+cursors (`forList`, `forDict`, `enumList`), and the delegate arm's `.brk`/`.cont`
+unwinds. The heap-readers are the only ones with genuinely new content — they
+consult `Heap.get?` and so carry a real premise — and none of the rest is a new
+SHAPE.
 
 It also exposed a defect in this lane's own earlier work: §5's `genSilent_branch`
 hard-codes `Stmt.ifStmt`, which is the right shape for proving an arm EXISTS and

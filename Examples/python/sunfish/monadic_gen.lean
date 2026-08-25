@@ -543,4 +543,57 @@ theorem genStep_returnNone (m : Module) (st st₁ : FrameState) (s : Stmt)
 #print axioms genStep_nilCont
 #print axioms genStep_returnNone
 
+/-! ## §11 THE SEQUENCE CURSORS — and how cheap an arm can be
+
+`for x in <list | tuple | str | range>` runs on the `.forSeq` frame, and
+`enumerate` on `.enumSeq`. Both are pure list recursion: no heap read, no
+expression evaluation, nothing the interpreter has to be asked about.
+
+**Three of the four arms below take NO interpreter premise at all.** That is the
+rung-6 repricing at its clearest: an arm's cost is set by how much of its
+behaviour the FRAME already determines, and for a cursor the frame determines
+almost everything. `genStep_enumSeqCons` is the extreme case — a PRODUCING arm,
+the kind that yields a value, with no hypotheses whatsoever, because the pair it
+yields is computed from the frame's own fields. -/
+
+/-- `for x in <seq>` EXHAUSTED: the cursor pops. -/
+theorem genSilent_forSeqNil (m : Module) (st : FrameState) (target : Expr)
+    (body : List Stmt) (k' : GenCont) :
+    GenSilentM m st st (.forSeq target [] body :: k') k' :=
+  ⟨1, fun F => by simp only [kont, execGenAt]⟩
+
+/-- …and one element consumed: bind the target, push the body under the advanced
+cursor. The single `assignM` premise is the whole of this arm's interpreter
+contact. -/
+theorem genSilent_forSeqCons (m : Module) (st st₁ : FrameState) (target : Expr)
+    (x : RVal) (rest : List RVal) (body : List Stmt) (k' : GenCont)
+    (hasg : toRun (assignM target x) st = .ok st₁ ()) :
+    GenSilentM m st st₁ (.forSeq target (x :: rest) body :: k')
+      (.block body :: .forSeq target rest body :: k') :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt]
+    rw [toRun_bind, hasg]
+    rfl⟩
+
+/-- `enumerate` over a spent sequence pops too. -/
+theorem genSilent_enumSeqNil (m : Module) (st : FrameState) (i : Int)
+    (k' : GenCont) :
+    GenSilentM m st st (.enumSeq i [] :: k') k' :=
+  ⟨1, fun F => by simp only [kont, execGenAt]⟩
+
+/-- **`enumerate` YIELDS with no premises at all.** The cheapest producing arm in
+the layer: the pair is computed from the frame, so the interpreter is not
+consulted about anything. -/
+theorem genStep_enumSeqCons (m : Module) (st : FrameState) (i : Int)
+    (x : RVal) (rest : List RVal) (k' : GenCont) (F : Nat) :
+    toRun ((kont m (F + 1)).execGen (.enumSeq i (x :: rest) :: k')) st
+      = .ok st (some (.tuple #[.int i, x], .enumSeq (i + 1) rest :: k')) := by
+  simp only [kont, execGenAt]
+  exact toRun_pure _ _
+
+#print axioms genSilent_forSeqNil
+#print axioms genSilent_forSeqCons
+#print axioms genSilent_enumSeqNil
+#print axioms genStep_enumSeqCons
+
 end Examples.python.sunfish.monadic_gen

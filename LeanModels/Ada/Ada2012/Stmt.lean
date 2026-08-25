@@ -260,7 +260,11 @@ def kindOf : Node → String
 def Val.asInt : Val → Option Int
   | .int _ v => some v
   | .univInt v => some v
-  | .enum _ _ => none
+  -- A CATCH-ALL, not an enumeration of the other arms: adding `Val.str` at
+  -- inch 5a turned the enumerated version non-exhaustive, and a projection
+  -- that must be revisited every time the value type grows is a maintenance
+  -- trap with no upside -- nothing that is not an integer has an integer.
+  | _ => none
 
 /-- The Boolean behind a value. `Boolean` IS an enumeration type (ARM 3.5.3),
 so this reads a position and does not need a constructor of its own — which
@@ -268,6 +272,21 @@ is inch 1's representation decision paying out at its first use. -/
 def Val.asBool : Val → Option Bool
   | .enum sub pos => if sub.typeName == "Boolean" then some (pos == 1) else none
   | _ => none
+
+/-- The `String` behind a value, or `none`. -/
+def Val.asStr : Val → Option String
+  | .str s => some s
+  | _ => none
+
+/-- ARM 2.6, *String Literals*. The envelope keeps a leaf's SOURCE SPELLING,
+so the text arrives WITH its quotation marks — `StringLiteral('""')` is the
+empty string, not a two-character one. **An embedded quotation mark is
+written TWICE** and is undoubled here; a tier that forgot would silently
+double every quote inside a message `Report` prints. -/
+def decodeStringLit (t : String) : Option String :=
+  if t.length < 2 then none
+  else if t.front != '"' || t.back != '"' then none
+  else some (((t.drop 1).dropRight 1).replace "\"\"" "\"")
 
 /-- The two operands of a binary arithmetic operation, plus the subtype that
 GOVERNS it. `none` for the subtype means both operands were universal, and the
@@ -507,6 +526,11 @@ def convertTo (target v : Val) : AdaM W Val :=
       if sub.typeName == sub'.typeName then ofAbrupt (constrain sub n)
       else refuse (.unsupported (clauseRef "4.6"))
         s!"assigning a '{sub'.typeName}' into a '{sub.typeName}' needs the type resolution inch 2 does not have"
+  -- ARM 5.2 for a String target. **No length check**, because `Val.str`
+  -- carries no bounds -- see its docstring. A constrained String subtype
+  -- would raise Constraint_Error on a length mismatch, and that check
+  -- arrives with the array rung, not here.
+  | .str _, .str s => pure (Val.str s)
   | .enum sub _, .enum sub' p =>
       if sub.typeName == sub'.typeName then ofAbrupt (constrainEnum sub p)
       else refuse (.unsupported (clauseRef "4.6"))
@@ -537,6 +561,21 @@ def evalExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld Val
     | .leaf k _ t =>
       match k with
       | "IntLiteral" => intLiteral t
+      | "StringLiteral" =>
+        match decodeStringLit t with
+        | some s => pure (Val.str s)
+        | none =>
+          refuse (.unsupported (clauseRef "2.6"))
+            s!"string literal {t} is not in the ARM 2.6 form"
+      -- ARM 3.5.2: **`Character` IS an enumeration type**, which is inch 1's
+      -- recorded representation decision. Giving it a bespoke `Val` arm here
+      -- would contradict that decision, and building the 256-literal
+      -- enumeration is its own step -- so it refuses, deliberately, with the
+      -- price measured: `CharLiteral` appears in 7 of `Report`'s 23
+      -- catenations (30%).
+      | "CharLiteral" =>
+        refuse (.unsupported (clauseRef "3.5.2"))
+          s!"character literal {t} needs Character as the ENUMERATION it is (ARM 3.5.2), which is a step of its own"
       | "Identifier" => do
         let w ← get
         match lookupObj w t with
@@ -565,7 +604,9 @@ def evalExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld Val
             match v with
             | .int s x => ofAbrupt (constrain s (-x))
             | .univInt x => pure (Val.univInt (-x))
-            | .enum _ _ => refuse (.unsupported (clauseRef "4.5.4")) "unary '-' on an enumeration"
+            | _ =>
+              refuse (.unsupported (clauseRef "4.5.4"))
+                "unary '-' applied to a value that is not numeric"
           | u =>
             refuse (.unsupported (clauseRef "4.5"))
               s!"unary operator '{u}' is outside this tier's vocabulary"
@@ -601,6 +642,27 @@ def evalExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld Val
           | _, _ =>
             refuse (.unsupported (clauseRef "4.5.2"))
               s!"relational operator '{op}' on non-integer operands is outside this tier's vocabulary"
+      -- ARM 4.5.3, catenation. **Measured shape, and it is NOT a nested
+      -- BinOp**: `A & B & C` is n-ary --
+      -- `ConcatOp(A, ConcatOperandList(ConcatOperand(&, B), ...))` -- with
+      -- `ConcatOp` 2 children (23 of 23) and `ConcatOperand` 2 (73 of 73).
+      -- A walker that assumed `BinOp "OpConcat"` would match nothing.
+      | "ConcatOp" =>
+        if ch.size != 2 then refuse (.unsupported (clauseRef "4.5.3")) "ConcatOp: unexpected arity"
+        else do
+          let hd ← evalExpr prog fuel ch[0]!
+          match hd.asStr with
+          | none =>
+            refuse (.unsupported (clauseRef "4.5.3"))
+              "the left operand of '&' is not a String — inch 5a models String catenation only"
+          | some s0 =>
+            match ch[1]! with
+            | .node "ConcatOperandList" _ ops => do
+              let s ← concatFold prog fuel s0 ops.toList
+              pure (Val.str s)
+            | other =>
+              refuse (.unsupported (clauseRef "4.5.3"))
+                s!"'{kindOf other}' is not a concat operand list"
       -- ARM 6.4: a FUNCTION call in expression position.
       | "CallExpr" => do
         let r ← callExpr prog fuel n
@@ -661,6 +723,25 @@ def callExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld (Option Val)
             s!"callee '{kindOf callee}' is not a simple name — inch 3 has no name resolution"
     | other =>
       refuse (.unsupported (clauseRef "6.4")) s!"'{kindOf other}' is not a call"
+
+/-- ARM 4.5.3: fold the catenation operands left to right onto `acc`. -/
+def concatFold (prog : SubpTable) : Nat → String → List Node → AdaM AdaWorld String
+  | 0, _, _ => exhausted
+  | _ + 1, acc, [] => pure acc
+  | fuel + 1, acc, o :: rest =>
+    match o with
+    | .node "ConcatOperand" _ oc =>
+      if oc.size != 2 then refuse (.unsupported (clauseRef "4.5.3")) "ConcatOperand: unexpected arity"
+      else do
+        let v ← evalExpr prog fuel oc[1]!
+        match v.asStr with
+        | some s => concatFold prog fuel (acc ++ s) rest
+        | none =>
+          refuse (.unsupported (clauseRef "4.5.3"))
+            "an operand of '&' is not a String — inch 5a models String catenation only"
+    | other =>
+      refuse (.unsupported (clauseRef "4.5.3"))
+        s!"'{kindOf other}' is not a concat operand"
 
 /-- ARM 6.4.1, *Parameter Associations* — 51 paragraphs, the biggest subclause
 in the rung. `ParamAssoc` is 2 children (139 of 139) and a **`null` designator
@@ -875,7 +956,8 @@ private def row0 : TraceRow := { kind := "CSTART", span := sp0, detail := "fixtu
 /-- The store's keys are folded; the fixtures below refer to `X` and `Y` in
 upper case, so every guard also exercises ARM 2.3's case insensitivity. -/
 private def w0 : AdaWorld :=
-  { objects := [("x", .int int8 0), ("y", .int int8 10), ("b", Val.ofBool false)],
+  { objects := [("x", .int int8 0), ("y", .int int8 10), ("b", Val.ofBool false),
+                ("s", Val.str "")],
     trace := [row0] }
 
 private def endsWith (name : String) (v : Val) (ss : List Node)
@@ -1291,5 +1373,76 @@ private def bodyOfCaught : Node :=
        | none => false
 -- ...and a table built by the BUILDER drives the handled path end to end.
 #guard endsWith "x" (.int int8 6) [callStmt "Caught2" []] (collectSubps 32 [bodyOfCaught])
+
+/-! ### INCH 5a — strings (ARM 2.6, 3.6.3, 4.5.3)
+
+The lever the inch-5 census measured: **44.7% of the gap between this walker
+and `report.a`**, and the step that decides whether `Report` is EXECUTED
+rather than modelled. -/
+
+private def strLit (src : String) : Node := .leaf "StringLiteral" sp0 src
+private def catOperand (e : Node) : Node :=
+  .node "ConcatOperand" sp0 #[.leaf "OpConcat" sp0 "&", e]
+/-- `A & B & C` in the frontend's own N-ARY shape, measured off `report.a`. -/
+private def cat (first : Node) (rest : List Node) : Node :=
+  .node "ConcatOp" sp0
+    #[first, .node "ConcatOperandList" sp0 (rest.map catOperand).toArray]
+
+-- ARM 2.6: a literal's SOURCE SPELLING carries its quotes, so the envelope's
+-- text is `"abc"` and the VALUE is `abc`.
+#guard endsWith "s" (Val.str "abc") [assign (ident "S") (strLit "\"abc\"")]
+
+-- ...and the empty literal is `""` in the source: two characters of spelling,
+-- ZERO of value. `report.a` contains this exact node.
+#guard endsWith "s" (Val.str "") [assign (ident "S") (strLit "\"\"")]
+
+-- ...and AN EMBEDDED QUOTE IS WRITTEN TWICE (ARM 2.6). A tier that skipped
+-- the undoubling would print every internal quote twice, in every message
+-- `Report` emits -- silently, and only visible in a graded diff.
+#guard endsWith "s" (Val.str "say \"hi\"")
+         [assign (ident "S") (strLit "\"say \"\"hi\"\"\"")]
+
+-- ARM 4.5.3: catenation, in the frontend's N-ARY shape and not a nested
+-- BinOp. Three operands fold left to right.
+#guard endsWith "s" (Val.str "abc")
+         [assign (ident "S") (cat (strLit "\"a\"") [strLit "\"b\"", strLit "\"c\""])]
+
+-- ...and an operand may be a variable, which is how `Report` builds messages.
+#guard endsWith "s" (Val.str "ab")
+         [assign (ident "S") (strLit "\"a\""),
+          assign (ident "S") (cat (ident "S") [strLit "\"b\""])]
+
+-- ...and a single-operand list is the degenerate case, not a special one.
+#guard endsWith "s" (Val.str "ab")
+         [assign (ident "S") (cat (strLit "\"a\"") [strLit "\"b\""])]
+
+-- THE PRICED DEFERRAL: a character literal refuses at ARM 3.5.2, because
+-- Character is an ENUMERATION (inch 1's decision) and a bespoke Val arm would
+-- contradict it. Measured cost: 7 of `Report`'s 23 catenations.
+#guard refusedAtClause "3.5.2" [assign (ident "S") (.leaf "CharLiteral" sp0 "'X'")]
+
+-- ...and the guard ABOVE used to say `strLit "'X'"`, which builds a
+-- StringLiteral node whose SPELLING is a character literal. It refused at
+-- ARM 2.6, not 3.5.2, and the gate caught the fixture rather than the rule.
+-- The case is worth keeping on its own: a leaf that CLAIMS to be a string
+-- literal but is not spelled like one is rejected, never trimmed into
+-- something plausible.
+#guard refusedAtClause "2.6" [assign (ident "S") (strLit "'X'")]
+#guard refusedAtClause "3.5.2"
+         [assign (ident "S") (cat (.leaf "CharLiteral" sp0 "'X'") [strLit "\"b\""])]
+
+-- ...and catenating a non-String refuses at 4.5.3 rather than inventing a
+-- coercion. Ada defines `&` over String and Character, not over Integer.
+#guard refusedAtClause "4.5.3" [assign (ident "S") (cat (lit "1") [strLit "\"b\""])]
+#guard refusedAtClause "4.5.3" [assign (ident "S") (cat (strLit "\"a\"") [lit "1"])]
+
+-- The decoder itself, apart from the walker.
+#guard decodeStringLit "\"abc\"" == some "abc"
+#guard decodeStringLit "\"\"" == some ""
+#guard decodeStringLit "\"say \"\"hi\"\"\"" == some "say \"hi\""
+-- ...and a leaf whose spelling is not a string literal is REJECTED rather
+-- than trimmed into something plausible.
+#guard decodeStringLit "abc" == none
+#guard decodeStringLit "\"" == none
 
 end LeanModels.Ada.Ada2012

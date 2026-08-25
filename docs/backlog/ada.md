@@ -1719,3 +1719,54 @@ becomes cheaper. That is a measurement, and it is taken after 5a.
 
 Still **0 / 4,188** and **0 / 3,996**. Inch 5 does not score either: the row
 moves when a test is executed and `GRADE` accepts the trace, which is inch 6.
+
+## 2026-08-25-ada-3 — INCH 5a: strings, and catenation is N-ARY where a walker would have assumed a BinOp
+
+`Stmt.lean` to 1440 lines and 85 guards; `Val` gains `str`. This is the census's
+biggest lever — **44.7% of the gap** between the walker and `report.a` — and
+the step the EXECUTE ruling rests on.
+
+### THE SHAPE, MEASURED BEFORE WRITING
+
+`A & B & C` is **not** a nested `BinOp`. libadalang emits it N-ARY:
+
+    ConcatOp(A, ConcatOperandList(ConcatOperand(&, B), ConcatOperand(&, C)))
+
+`ConcatOp` is 2 children (23 of 23), `ConcatOperand` 2 (73 of 73), and
+`OpConcat` is a LEAF. **A walker that matched `BinOp "OpConcat"` would have
+matched nothing at all** — the fourth encoding surprise in five rungs, and the
+first found by asking before writing rather than by a red tenure.
+
+### ARM 2.6: THE QUOTES ARE PART OF THE SPELLING
+
+A leaf keeps its SOURCE text, so `""` is the empty literal — two characters of
+spelling, zero of value — and **an embedded quote is written twice**. Both are
+guarded. A tier that skipped the undoubling would print every internal quote
+twice in every message `Report` emits: silent, and visible only in a graded
+diff.
+
+### THE PRICED DEFERRAL
+
+`CharLiteral` **refuses** at ARM 3.5.2. Not an oversight: inch 1 ruled that
+**Character IS an enumeration**, so a bespoke `Val` arm would contradict a
+recorded decision, and building the 256-literal enumeration is a step of its
+own. The cost is measured rather than hand-waved: `CharLiteral` appears in
+**7 of `Report`'s 23 catenations (30%)**.
+
+### THE GAP IN `Val.str` IS NAMED IN ITS OWN DOCSTRING
+
+Ada's `String` is `array (Positive range <>) of Character`; `Val.str` carries
+**no bounds**. So indexing, slicing, `'Length`, `'First` and a constrained
+subtype's length check are **not modelled and must refuse** — a value that
+cannot say its bounds cannot answer them. Bounds arrive with the array rung.
+ARM 5.2 assignment to a String target therefore performs **no length check**,
+and says so where the code is.
+
+### TWO NON-EXHAUSTIVE MATCHES, CAUGHT BEFORE THE TENURE
+
+Adding a `Val` arm silently broke two matches that ENUMERATED the old arms —
+`Val.asInt` and unary `OpMinus`. Found by grepping for them before staging
+rather than by a red build. `Val.asInt` is now a catch-all, with the reason in
+the source: **a projection that must be revisited every time the value type
+grows is a maintenance trap with no upside**, because nothing that is not an
+integer has an integer.

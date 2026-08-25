@@ -40,6 +40,7 @@ incident**.
 | 22 | opening the monad stack | ONCE, where the stack is DEFINED — and only a STACK needs one |
 | 23 | rewriting past a dependent match | never touch the SCRUTINEE — rewrite the whole BIND from a head equation |
 | 24 | op_correct for a spec'd operation | the statement names NO algorithm; omissions are STATED, not completed |
+| 25 | an obligation with no connective | UNSTATABLE is a verdict, not HARD — build the map, do not attack the goal |
 
 ---
 
@@ -629,6 +630,31 @@ and the spec file mentions no algorithm anywhere. Related:
 `docs/family-architecture.md` §0.1 principle I (the definition is never weakened
 for provability) and §8's implication rule (a guarantee inside an implication
 guarantees nothing when the antecedent fails).
+
+---
+
+### 25. UNSTATABLE is a verdict, and it is not HARD
+
+**Incident.** SV's third obligation, `cycleOf_runRegion`. No
+`Design → SvWorld` builder existed, so — in the lane's words — **"the two sides
+can't be said to be about the same design."** The goal was not difficult; it
+was **not yet a statement**.
+
+**The shape.** Before pricing a proof, ask what CONNECTS the two sides. If the
+statement quantifies over objects from two worlds with **no map between them**,
+the goal is *unstatable*, and the rung is **build the missing connective** — not
+attack the goal.
+
+**The tell, available before any tactic runs.** Write the statement and look for
+the term that mentions both sides. If there isn't one — or if it exists only in
+prose (*"the same design"*) — the statement is a description of an intention.
+
+**Why it earns an entry.** *Hard* and *unstatable* prescribe different work and
+are indistinguishable from a failed proof attempt: both look like a goal that
+will not close. A lane that cannot tell them apart spends tenures on tactics for
+a theorem that has no statement. Related: `docs/family-architecture.md` §5.4
+(census-first applied to a statement), and the frontier law — an obligation
+priced from behind a missing connective has never been observed at all.
 
 ---
 

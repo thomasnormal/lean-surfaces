@@ -7600,3 +7600,108 @@ poisoned OBJECT**, and **all three probe shapes in a single invocation.** **A
 register is operational when its rows are RUN, not read.**
 
 Law rows: **MEAS-421…MEAS-430, OPS-117…OPS-121.**
+
+## 2026-08-25-architecture-88 — A gate not in your floor cannot contradict your rows
+
+The accumulated `c-div-2` arc plus the overnight batch, eight sources. **The
+headline is a LIVE FLEET BLOCKER with a ruling attached; six items in the
+dispatch were already landed in `-86` and `-87` and are not re-landed here.**
+
+**(A) §5.4 — THE `c-div-2` ARC, AND A FAILURE CLASS THIS REGISTER LACKED.**
+
+> **The envelope was a well-formed description of a DIFFERENT program.**
+
+clang's `array_filler` + empty inner made `extract.py` emit `inits: []`; the
+model **correctly zero-filled per §6.7.11p21** and computed the wrong program's
+answer. **Nothing malfunctioned** — envelope well-formed, model right, proof
+sound, scoreboard honest — *and the only place it could be caught is the
+extraction boundary, against the original artifact.* The fix's shape is an
+authority rule: **carrying clang's filler would be a second answer to one
+question.** And the arithmetic is clean because the fix **rode no other change**:
+**2 → 1 measures exactly one thing.**
+
+**(B) §5.4b — THE GATE-FLOOR HOLE, AND THE RULING.**
+`harness/divergence_register.py` exits 1 on master; **C's tenure floor never ran
+the register gate**, so **no C tenure could ever have contradicted its own rows.**
+ES's floor ran it and found all four problems.
+
+> **A gate not in your floor cannot contradict your rows.**
+
+**§5.6's corpus-exercise law one level up, literally**: a corpus can only
+contradict the rules it exercises; **a floor can only contradict the rows its
+gates read** — and in both cases *the untested assertion is indistinguishable
+from the verified one from inside.* **A floor is a claim about which artifacts
+are checked, so it owes an audit of its own COVERAGE**, and that audit is a set
+difference. QoL holds the dispatch.
+
+**RULING: the checker was RIGHT and stays strict; the rows reshape** (`c-div-2` →
+`retired_rows`; `c-div-1` → kind `semantic` + two named executable guards). **A
+tier that mints a private kind has left the register and kept its syntax.** *The
+first instinct on a red from a shared checker is to widen the checker* — which
+would have converted a strict instrument into a permissive one to preserve two
+rows: **the make-the-model-agree-with-the-oracle pressure, arriving at the
+register instead of the scoreboard.**
+
+**(C) §5.4 — SV, THREE.** **`cycleOf_runRegion` is UNSTATABLE, not hard** — no
+`Design → SvWorld` builder, so *"the two sides can't be said to be about the same
+design"*; **build the missing connective, do not attack the goal** (also
+`docs/statement-cookbook.md` entry 25). **The fixture chosen for isolation
+concealed the gap it was isolating from** — the process-free world that stopped
+process semantics confounding the driver also made re-arming unexercisable;
+**isolation fixtures owe a companion that puts the variable back.** And the hidden
+failure mode: a process finishing when it should re-arm yields **a shorter trace,
+not an error** — *the absence family's temporal member; assert the LENGTH.*
+
+**(D) §7.1a — WASM'S CAPSTONE, FOUR.** **"Isabelle-before-scratch is a DEFAULT,
+not a CEILING"** (the generated model supplies `wf_admininstr` directly; the
+nested-`Ref_ok` detour vanishes) — *a default never beaten is a policy nobody has
+tested.* **Both eliminator disciplines now live in the file with
+which-applies-where.** The flagged ∃-mismatch **paid**. And **the capstone was
+proved BLIND — five landings fed a theorem the stale pin hid**: work aimed at an
+unseeable target landing on it is **evidence about the decomposition, not luck**,
+and simultaneously the stale-source law's price tag.
+
+**(E) §7.1a — ONE WALL, TWO SIDES.** String **equality reduces** (`String.decEq`
+destructures; core says expensive, never impossible); string **order does not**
+(`ByteArray.utf8Decode?` sticks on `Acc.rec`). **A literal match reduces while a
+`TreeMap` lookup does not**, and **which side a construct sits on is exactly what
+decides reduce-vs-rewrite.** *A wall named after a TYPE is named at the wrong
+granularity* — name it by the operation and the reason, and the routing rule falls
+out.
+
+**(F) §9.0 + §5.4b — ES, TWO REDS AND TWO FIX-SHAPES.** First red: the scoreboard
+**refusing on its own unbuilt runner** — *an instrument's missing INPUT and
+missing SELF are the same defect at different depths.* Second red: **POPULATION
+MOVED** (attempted 0 vs expected 1 816, all zero-states honestly zero, states
+summing to 0) — **conservation moves from the bucket level to the population
+level**, because *zero is the value at which every bucket-level check passes
+trivially.* Fix-shapes: **the gate builds what the gate needs** (`es-score` kept
+out of `defaultTargets` — a fleet-wide cost imposed by one lane's gate), and
+**not `lake exe`**, because build progress on stdout would corrupt the
+tab-separated stream — **data and progress are different channels.**
+
+**(G) §5.0a — `was_blocked_on` KEPT ON RETIREMENT.** *A blocker that silently
+disappears leaves the instrument describing a world that no longer exists* —
+**retirement is an amendment, not a deletion.** Plus the write-the-row-first
+rule's payment: had `failed = 2` stayed a number it *"would have read as two model
+defects, and the real defect was in the instrument"* — **an unrowed failure is
+attributed by its location in the pipeline.**
+
+**(H) §5.0a + §5.4 + §9.0b — ADA, THREE ANNOTATIONS.** The **single red in 52/53
+was an EXPIRED GUARD CLAIM** — the expiry law firing inside the lane's own
+fixture, *tracking mechanism and expiring claim the same object.* The
+corpus-wide zero's consequence: **a grammar-written walker would look for it
+forever** — *the wrong kind name never fails, it never matches.* And the inch-4
+pair is unusually wide: **1.29% of the corpus and the SOLE UNLOCK of the 517-test
+set** — two orders of magnitude apart, both from one census.
+
+**Already landed, not re-landed:** Ada's 52/53 and the inch-4 inversion and the
+`ExceptionHandlerList` zero (`-87`), pyc's div-1 two-sided and the fifth expiring
+claim (`-85`, `-87`), Wasm's premise reordering and the ∃-mismatch (`-86`).
+
+**Fleet state at landing:** master `e856ae1`; merged this batch pyc `4a40ea8`,
+Ada `519baa7`+`e475a3a`, SV `8159743`; wasm `90adc1e` prior; Lean tier 15/26
+pending claim; C holds two certified greens plus the reshape; ES/pyc/Ada/SV
+holding enqueues on the register-green signal.
+
+Law rows: **MEAS-431…MEAS-441, STMT-139…STMT-140, OPS-122…OPS-126.**

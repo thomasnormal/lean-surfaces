@@ -479,6 +479,17 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-428 | a shape comes from the CORPUS or from a fixture MARKED SYNTHETIC — that marking is what separates a fixture from a guess | `docs/family-architecture.md §5.4` |
 | MEAS-429 | a ladder's ORDER and its COST PROFILE are independent facts — publish the pair, or each reader misreads the other | `docs/family-architecture.md §9.0b` |
 | MEAS-430 | a REGISTER IS OPERATIONAL when its rows are RUN, not read — one invocation carrying every probe shape is the proof | `docs/family-architecture.md §5.0a` |
+| MEAS-431 | a WELL-FORMED ENVELOPE DESCRIBING A DIFFERENT PROGRAM is caught by nothing downstream — check at the extraction boundary | `docs/family-architecture.md §5.4` |
+| MEAS-432 | an UNROWED FAILURE is attributed by its LOCATION IN THE PIPELINE, which is almost never where it came from | `docs/family-architecture.md §5.0a` |
+| MEAS-433 | A GATE NOT IN YOUR FLOOR CANNOT CONTRADICT YOUR ROWS — a floor owes an audit of its own COVERAGE | `docs/family-architecture.md §5.4b` |
+| MEAS-434 | every gate is only as wide as the NARROWEST FLOOR THAT OMITS IT — the missing entries are a set difference | `docs/family-architecture.md §5.4b` |
+| MEAS-435 | THE FIXTURE CHOSEN FOR ISOLATION CONCEALS THE GAP IT ISOLATES FROM — isolation fixtures come in pairs | `docs/family-architecture.md §5.4` |
+| MEAS-436 | a SHORT TRACE is the failure mode nobody notices — assert the LENGTH, or what the last element must be | `docs/family-architecture.md §5.4` |
+| MEAS-437 | CONSERVATION AT THE POPULATION LEVEL — a partition can be internally perfect and be a partition OF NOTHING | `docs/family-architecture.md §9.0` |
+| MEAS-438 | an instrument's missing INPUT and its missing SELF are the same defect at different depths | `docs/family-architecture.md §9.0` |
+| MEAS-439 | a retired row KEEPS `was_blocked_on` — a blocker that silently disappears leaves the instrument describing a vanished world | `docs/family-architecture.md §5.0a` |
+| MEAS-440 | a kind name with a corpus-wide zero: A GRAMMAR-WRITTEN WALKER WOULD LOOK FOR IT FOREVER — it never fails, it never matches | `docs/family-architecture.md §5.4` |
+| MEAS-441 | work aimed at a target nobody could see, landing on it, is evidence about the DECOMPOSITION — not luck | `docs/family-architecture.md §7.1a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -625,6 +636,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-136 | a SIMULATOR MUST PRESERVE THE BOUNDARIES IT SIMULATES — a stand-in may drop cost, never structure | `docs/family-architecture.md §5.4` |
 | STMT-137 | a step changing REPRESENTATION and not VALUE owes a LOSSLESSNESS argument, not a correctness one | `docs/family-architecture.md §3.5` |
 | STMT-138 | a GENERATED model can be better shaped than a hand mechanisation for a specific lemma — first datum for extraction | `docs/family-architecture.md §7.1a` |
+| STMT-139 | UNSTATABLE is a verdict, not HARD — with no map between the two sides, build the connective; do not attack the goal | `docs/statement-cookbook.md` entry 25 |
+| STMT-140 | name walls by the OPERATION and the reason, never by the TYPE — one wall's two sides decide reduce-vs-rewrite | `docs/family-architecture.md §7.1a` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -819,6 +832,11 @@ numbers below are the register's own.
 | OPS-119 | a guard that PINS A REFUSAL must go RED when the frontier moves past it — the expiring claim that tracks itself | `docs/family-architecture.md §5.0a` |
 | OPS-120 | FULL-AFTER-RED keys on WHAT THE RED UN-KNOWS — full or out-of-scope → FULL; diagnosed in-scope scoped red → re-ticket SCOPED | `docs/family-architecture.md §7.1a` |
 | OPS-121 | DECLARATION CONVERTS FABRICATION INTO PROFILE — pin it where a disagreeing host is rejected by name | `docs/family-architecture.md §4.2` |
+| OPS-122 | ONE QUESTION, ONE OWNER at the extraction boundary — two answers is a silent disagreement awaiting one input | `docs/family-architecture.md §5.4` |
+| OPS-123 | a tier that mints a PRIVATE KIND has left the register and kept its syntax — a new kind is a family ruling | `docs/family-architecture.md §5.4b` |
+| OPS-124 | THE GATE BUILDS WHAT THE GATE NEEDS — never put a gate's target in `defaultTargets` | `docs/family-architecture.md §5.4b` |
+| OPS-125 | an instrument's DATA stream and its PROGRESS stream are different channels — merging them makes data conditional on the build | `docs/family-architecture.md §5.4b` |
+| OPS-126 | "Isabelle-before-scratch" is a DEFAULT, NOT A CEILING — a default never beaten is a policy nobody has tested | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

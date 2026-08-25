@@ -4306,6 +4306,20 @@ claim that tracks itself* — the tree fails when the claim stops being true.
 **Where a cannot-claim can be written as a guard, it should be**, and the
 citable-name remedy is for the residue that cannot.
 
+**AND IT FIRED INSIDE THE LANE'S OWN FIXTURE ON THE SAME BLOCK** (Ada: **52/53
+first-compile on 1 100 lines**, and **the single red was an EXPIRED GUARD
+CLAIM**).
+
+> **A 52/53 whose ONE failure is an expiring claim is the healthiest red shape
+> this register has recorded: the tier's own tripwire, firing on schedule,
+> inside the tier's own work.**
+
+*The expiry law's whole difficulty is that nothing tracks the expiry* — and here
+the tracking mechanism and the expiring claim were **the same object**, so the
+cost of the expiry was one compile rather than one wrong belief carried
+indefinitely. **Read the single red as the guard working, not as a defect in the
+block.**
+
 **AND §5.0a IS NOW FULLY OPERATIONAL ACROSS THREE TIERS** (pyc's div-1 probe,
 `4a40ea8`, merged). A debt's model half was **converted from a READING to a
 RUN**, with the widening control confining the row to **one poisoned OBJECT** —
@@ -4318,6 +4332,30 @@ program) **live in a single register invocation.**
 *The section was ruled as a design; this is the landing that makes it an
 instrument*, and the three-tier spread is what distinguishes a schema that works
 from one that fits its first author.
+
+**AND A RETIRED ROW KEEPS `was_blocked_on`, WHICH IS A RULE ABOUT THE
+INSTRUMENT'S PICTURE OF THE WORLD** (pyc, div-1).
+
+> **A BLOCKER THAT SILENTLY DISAPPEARS LEAVES THE INSTRUMENT DESCRIBING A WORLD
+> THAT NO LONGER EXISTS.**
+
+*The retirement is the event worth recording, and the field that made the row
+necessary is the only thing that explains why it existed* — **a retired row with
+its blocker erased reads as a row that was never needed.** This is the
+annotate-never-rewrite discipline reaching the register's own schema: **retirement
+is an amendment, not a deletion.**
+
+**AND THE WRITE-THE-ROW-FIRST RULE COLLECTED ITS PAYMENT IN THE SAME BATCH** (C,
+`c-div-2`). Had `failed = 2` been left as a number, it **"would have read as two
+model defects, and the real defect was in the instrument."**
+
+> **AN UNROWED FAILURE IS ATTRIBUTED BY ITS LOCATION IN THE PIPELINE, WHICH IS
+> ALMOST NEVER WHERE IT CAME FROM.**
+
+*A bare count sits at the scoreboard, so the reader attributes it to the thing
+the scoreboard measures* — **the model.** The row is what carries the failure back
+to its author, and writing it before the diagnosis is what keeps the attribution
+open long enough for the diagnosis to change it.
 
 **AND THE DISCLOSURE IS NOT LOST, which was the only real risk in ruling this
 way.** F1 already lives **where §5.0a's own reasoning says a standing disclosure
@@ -8079,6 +8117,16 @@ vendor's naming granularity and the spec's naming granularity are different
 functions**, and every place they disagree is a place a lane will write a
 plausible kind name that matches nothing.
 
+**And the consequence, stated by the lane in the form that makes it urgent:**
+
+> **A GRAMMAR-WRITTEN WALKER WOULD LOOK FOR IT FOREVER.**
+
+*The wrong kind name does not fail — it never matches*, so the walker runs
+green, handles every node it recognises, and **silently skips a construct the
+tier believes it models.** **A zero over a corpus is the only cheap signal that
+distinguishes "this never occurs" from "we are asking for it by the wrong
+name"** — which is why the check belongs in the census rather than in review.
+
 **AND THE SAME LANDING DREW THE LINE BETWEEN A FIXTURE AND A GUESS** (`RaiseStmt`
 **1 440 corpus-wide, 0 in fixtures**):
 
@@ -8089,6 +8137,80 @@ plausible kind name that matches nothing.
 synthetic one is an honest hypothesis; an unmarked invented one is a guess
 wearing evidence's clothes* — and the third is indistinguishable from the first
 in a passing suite, which is why the marking is the whole control.
+
+**AND THE ARC THAT CLOSED `c-div-2` NAMED A FAILURE CLASS THIS REGISTER HAD NOT
+CARRIED** (C tier, closed).
+
+> **THE ENVELOPE WAS A WELL-FORMED DESCRIPTION OF A DIFFERENT PROGRAM.**
+
+clang's `array_filler` plus an empty inner made `extract.py` emit **`inits: []`
+for a partially-initialized array**; the model then **correctly zero-filled per
+§6.7.11p21** and computed **the wrong program's answer.** *The defect was in the
+instrument that FEEDS the model, and every downstream artifact was impeccable.*
+
+**This is the hardest instrument defect to see, because nothing malfunctions.**
+The envelope is well-formed, the model is right, the proof is sound, the
+scoreboard is honest — **and the whole chain is answering a question nobody
+asked.** *A malformed input is caught by a parser; a well-formed input describing
+the wrong subject is caught by nothing downstream of it, because everything
+downstream is entitled to trust it.* **The only place it can be caught is at the
+extraction boundary, against the original artifact.**
+
+**AND THE FIX'S SHAPE IS A RULE ABOUT AUTHORITY, NOT ABOUT ZERO-FILLING**: the
+extractor now **drops clang's `ImplicitValueInitExpr` filler, because zero-fill is
+the MODEL's job.**
+
+> **CARRYING CLANG'S WOULD BE A SECOND ANSWER TO ONE QUESTION.**
+
+**Wherever an instrument and a model can both supply a fact, exactly one of them
+must** — and the duplicate is not merely redundant, it is **a silent
+disagreement waiting for the one input where the two differ.** *Assign each
+question an owner at the boundary; an envelope carries what the model cannot
+derive, and nothing else.*
+
+**AND THE LANDED-ALONE LAW IS REAFFIRMED BY THIS ARC'S ARITHMETIC**: the
+extractor fix **rode no other change**, so **the count drop 2 → 1 measures
+exactly one thing.** *A number that moves in a bundled landing is evidence about
+the bundle.*
+
+**AND A THIRD OBLIGATION TURNED OUT TO BE UNSTATABLE RATHER THAN HARD** (SV,
+`cycleOf_runRegion`). No `Design → SvWorld` builder exists, so
+
+> **THE TWO SIDES CAN'T BE SAID TO BE ABOUT THE SAME DESIGN.**
+
+> **"UNSTATABLE" IS A DIFFERENT VERDICT FROM "HARD", AND IT PRESCRIBES A
+> DIFFERENT RUNG: build the missing connective, do not attack the goal.**
+
+**A lane that cannot tell these apart spends tenures on tactics for a theorem
+that has no statement**, and the tell is available before any proof attempt: *the
+two sides quantify over objects with no map between them.* **This is the
+census-first discipline applied to a statement — ask what connects the sides
+before asking how to close the gap.**
+
+**AND THE FIXTURE CHOSEN FOR ISOLATION CONCEALED THE GAP IT WAS ISOLATING FROM**
+(same tenure). The **process-free world** that kept process semantics from
+confounding the driver **also made re-arming unexercisable.**
+
+> **THE FIXTURE CHOSEN FOR ISOLATION CONCEALED THE GAP IT WAS ISOLATING FROM.**
+
+**Isolation removes a variable by removing its behaviour**, so a fixture built to
+isolate X is **guaranteed** not to exercise anything that depends on X — *which
+is the point, and is also why the isolated run cannot be read as evidence about
+the whole.* **Every isolation fixture owes a companion that puts the variable
+back**, and the register should expect them in pairs.
+
+**AND THE FAILURE MODE IT HID IS THE ONE NOBODY NOTICES:** a process that
+**finishes when it should re-arm** yields
+
+> **A SHORTER TRACE, NOT AN ERROR — and a short trace is the failure mode nobody
+> notices.**
+
+**A truncated output has no defect in it**; every element is correct and the
+absence is at the end, where nothing looks wrong. *This is the absence family's
+temporal member* — beside an empty census and a transform on nothing — and the
+control is the same shape: **assert the LENGTH, or assert what the last element
+must be.** *Nothing else distinguishes a trace that finished from a trace that
+stopped.*
 
 
 
@@ -8157,6 +8279,76 @@ ones**: a gate's return is *frequency × latency saved*, so **a keystroke-fast
 check on a common defect beats a queue-long check on a rare one**, even when the
 second is more rigorous. *Rank proposed gates by where they move discovery TO,
 not by what they catch.*
+
+**AND THE CORPUS-EXERCISE LAW LIFTS TO THE GATE LAYER, WHERE IT IS CURRENTLY A
+LIVE FLEET BLOCKER** (`harness/divergence_register.py` exits 1 on master; C's
+rows carry kinds `oracle-shape` / `retired-diagnosed` outside §5.0a's enum).
+
+> **A GATE NOT IN YOUR FLOOR CANNOT CONTRADICT YOUR ROWS.**
+
+**C's tenure floor never ran the register gate** — `docs_check`, `diff_test`,
+`refusal_census`, `c_profile_probe`, `c_torture_gate` and nothing else — **so no
+C tenure could ever have contradicted its own register rows.** *ES's floor ran it
+and found all four problems.* **The rows were not unchecked because anyone
+decided they were fine; they were unchecked because the checker was not in the
+room.**
+
+**This is exactly §5.6's law one level up, and the parallel is worth reading
+literally.** *A corpus can only contradict the rules it exercises* — **a floor can
+only contradict the rows its gates read.** In both cases the tier holds *an
+untested assertion where it thinks it has a verified one*, and in both cases
+**the two are indistinguishable from inside**: a lane running a green floor has
+no signal that the floor is short.
+
+> **A FLOOR IS A CLAIM ABOUT WHICH ARTIFACTS ARE CHECKED, so it owes an audit of
+> its own COVERAGE — not of its individual gates.**
+
+**And the audit is cheap and nobody was doing it**: the shared gates are
+enumerable, the floors are enumerable, and **the missing entries are a set
+difference.** *Every gate this family has written is only as wide as the narrowest
+floor that omits it.* **QoL holds the floor-audit dispatch.**
+
+**RULING — AND IT GOES AGAINST THE TIER, NOT THE CHECKER.** **The checker was
+RIGHT and stays strict**; the rows reshape: **`c-div-2` → `retired_rows`**, and
+**`c-div-1` → kind `semantic` with two named executable guards.**
+
+**The enum is not a formality and I decline to widen it on demand.** *A row's
+KIND is what the shared checker and every cross-tier reader reason with*, and a
+tier that mints a private kind has **left the register and kept its syntax** —
+the schema still parses, the checker still runs, and the row means something only
+its author knows. **A new kind is a family decision with a ruling, exactly as
+`oracle-tests-compiler` was**; a kind invented at landing time is a fork.
+
+*And the direction of this ruling matters more than its content.* **The first
+instinct on a red from a shared checker is to widen the checker**, because the
+lane's work is real and the enum looks like paperwork. **Widening would have
+converted a strict instrument into a permissive one to preserve two rows** —
+which is the make-the-model-agree-with-the-oracle pressure, arriving at the
+register instead of the scoreboard.
+
+**AND A GATE'S BUILD COST BELONGS TO THE GATE, NOT TO THE FLEET** (ES, same
+batch). `es-score` was deliberately **NOT added to `defaultTargets`**:
+
+> **A fleet-wide build cost imposed by ONE LANE'S GATE is the wrong place to put
+> it. THE GATE BUILDS WHAT THE GATE NEEDS.**
+
+**Adding a gate's target to the default build is the cheapest way to write the
+gate and the most expensive way to run the tree** — *the cost is levied on every
+lane, including every lane that will never read the gate's output*, which is the
+cross-lane asymmetry the false-positive table already prices, arriving as build
+minutes instead of re-reads.
+
+**AND IT IS NOT A `lake exe`, FOR A REASON THAT IS INSTRUMENT DISCIPLINE RATHER
+THAN PACKAGING**: **build progress on stdout would corrupt the tab-separated data
+stream.**
+
+> **AN INSTRUMENT'S DATA STREAM AND ITS PROGRESS STREAM ARE DIFFERENT CHANNELS,
+> and a wrapper that merges them makes the data conditional on the build's
+> mood.**
+
+*A machine-readable stdout is a contract*, and the failure is intermittent by
+construction — **the corruption appears exactly when something needed rebuilding**,
+which is to say on the runs least like the one the author tested.
 
 **AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
 ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
@@ -9782,6 +9974,53 @@ structured block.**
 the asymmetry is structural: **a realized risk announces itself and an
 unrealized one is silent.** **Recording the cheap resolution is what keeps the
 next mismatch from being priced off a biased sample.**
+
+**AND THE CAPSTONE CERTIFIED THE OTHER HALF OF THE PORTING RULE** (Wasm,
+`instrs_ok2_subtyping`, `90adc1e`).
+
+> **"ISABELLE-BEFORE-SCRATCH" IS A DEFAULT, NOT A CEILING.**
+
+The generated model's `Instrs_ok2.instr` **supplies `wf_admininstr` directly**,
+and **Isabelle's nested-`Ref_ok` detour vanishes.** *The rule already had a
+failure mode — it degrades silently to scratch when counterparts are incomplete —
+and this is its opposite defect: **following it past the point where the local
+artifact is better.*** **A default that is never beaten is not a default, it is a
+policy nobody has tested.**
+
+**AND BOTH ELIMINATOR DISCIPLINES NOW LIVE IN THE FILE WITH WHICH-APPLIES-WHERE**
+— because `cases` reorders premises, **neither positional naming nor
+`rename_i`-from-the-end survives it.** *The idiom table indexed by eliminator,
+built rather than described*, and written where the next reader is standing
+rather than in a register they may not open.
+
+**AND THE CAPSTONE WAS PROVED BLIND, WHICH IS THE BATCH'S QUIETEST FINDING AND
+NOT ITS SMALLEST**: **five landings fed a theorem the stale pin hid.**
+
+> **WORK AIMED AT A TARGET NOBODY COULD SEE ARRIVED ON IT ANYWAY — which is
+> evidence about the DECOMPOSITION, not about luck.**
+
+*Five inches chosen from the spec's own structure landed exactly under a theorem
+the lane did not know was there* — **the strongest available argument that
+spec-shaped decomposition is doing real work**, since no feedback from the target
+could have steered it. **And it is simultaneously the stale-source law's price
+tag**: the same pin that hid the capstone cost the lane the ability to aim.
+
+**AND ONE WALL HAS TWO SIDES, WHICH IS WHAT DECIDES REDUCE-VERSUS-REWRITE**
+(Lean tier; corner at **15/26**, claim pending; aux closed). String **EQUALITY
+reduces** — `String.decEq` destructures, and core says *expensive, never
+impossible*. String **ORDER does not** — `ByteArray.utf8Decode?` sticks on
+`Acc.rec`.
+
+> **A LITERAL MATCH REDUCES WHILE A `TreeMap` LOOKUP DOES NOT: same wall,
+> OPPOSITE SIDES.**
+
+> **WHICH SIDE A CONSTRUCT SITS ON IS EXACTLY WHAT DECIDES REDUCE-VS-REWRITE.**
+
+**A "wall" named after a TYPE is a wall named at the wrong granularity.** *The
+tier's blocker was never strings; it was well-founded recursion reachable from
+one of the two operations* — and a lane holding the coarse name will either
+give up on a reducible goal or burn a tenure on an irreducible one. **Name walls
+by the OPERATION and the reason, and the routing rule falls out for free.**
 
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
@@ -12810,6 +13049,33 @@ lowers the tier's truth. **A named state converts that pressure into a
 citation**: the row is not a failure to be fixed, it is a measurement of the
 corpus.
 
+**AND TWO INSTRUMENTS FIRED IN SEQUENCE, EACH CATCHING WHAT THE OTHER COULD NOT**
+(ES, this batch).
+
+**The first red was the scoreboard refusing on its OWN UNBUILT RUNNER** — *the
+absent-corpus rule one layer up.* **An instrument's missing INPUT and an
+instrument's missing SELF are the same defect at different depths**, and the
+second is the one a lane assumes away, because the instrument is the thing doing
+the asking.
+
+**The second red is the one worth the section**: **POPULATION MOVED** — attempted
+**0** against an expected **1 816**, with **every zero-state honestly zero and the
+states summing to 0.**
+
+> **CONSERVATION MOVES FROM THE BUCKET LEVEL TO THE POPULATION LEVEL: the
+> partition can be internally perfect and be a partition OF NOTHING.**
+
+**A sum that reconciles proves the rows are consistent with each other; it says
+nothing about whether they are consistent with the WORLD.** *Zero is the one
+value at which every bucket-level check passes trivially* — nothing is
+double-counted, nothing is dropped, and the table is impeccable. **The second
+anchor has to be external**: an expected population, carried as data, with a
+digest.
+
+*Which is the digest rule and the conservation rule discovering they are one
+control with two halves* — **the digest pins WHICH files, the conservation pins
+HOW MANY were accounted for, and neither alone can see a corpus that vanished.**
+
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —
 
@@ -13404,6 +13670,13 @@ other. *"Fourth" invites a lane to assume three larger things come first;
 "cheapest" invites it to ask why the thing was not done already* — **and the
 scheduling inversion, where the cheapest item sits late, is exactly the case both
 readings get wrong.** **Publish the pair.**
+
+**And the pair here is unusually wide, which is what makes it a good exemplar**:
+inch 4 is **1.29% of the corpus by share** — the cheapest rung on the ladder —
+**and the SOLE UNLOCK of the 517-test set.** *A rung whose cost and whose
+consequence differ by two orders of magnitude will be scheduled wrongly by any
+plan that publishes one number*, and both numbers were available from the same
+census.
 
 **(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
 What it said:** *a construct measuring `+0` is not cheap, it is unreachable —

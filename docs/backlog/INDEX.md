@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**355 entries across 17 lanes.** Regenerate with
+**356 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-08-25-qol-65` |  | the gate that was never in anyone's floor | qol |
 | `2026-08-25-wasm-11` |  | THE NEXT-CORNER CENSUS: the scoreboard is BLOCKED, progress/preservation is unproved in Isabelle too, and 37 complete lemmas sit in three files nobody has ported | wasm |
 | `2026-08-24-architecture-85` |  | Where predictor and scorer share an instrument, an exact match is a transcription check | architecture |
 | `2026-08-24-architecture-84` |  | Accidentally correct is worse than wrong | architecture |

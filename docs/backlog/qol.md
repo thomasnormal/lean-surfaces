@@ -4613,3 +4613,91 @@ ok, before and after.
 sites 57, dupes 10, diagnose 51, substrate 25, analogues 28, editions 12,
 new-proof 31, a6-guard 8, comment-forms 18, `--verify-guards` 44, docs_check
 91/91. Fixtures only. No Lean executed.
+
+## 2026-08-25-qol-65 — the gate that was never in anyone's floor
+
+Read-only audit. No tool, no lane config, and nothing enqueued.
+
+### The hypothesis is disconfirmed, and the truth is simpler
+
+`harness/divergence_register.py` appears **0 times in `tools/triad.sh` and 0
+times in `tools/ci.sh`** on master. It is in no floor and never was. So C's
+floor did not "predate the register gate's addition" — **there was no
+addition**. Every lane that runs it added it by hand with `--gates`.
+
+And the gate is inherently fleet-wide: `PATTERN = docs/*-declared-divergences.json`
+globs **every tier's** file. A gate that reads the whole fleet's corpus, wired
+as lane-private, guarantees the outcome observed:
+
+> The first lane to adopt a fleet-wide gate discovers everyone else's
+> violations, and pays for them in its own red.
+
+### Who actually runs it — 25 lanes, 1398 logs
+
+Runs it: **es, pyc3, pyc4, pyc5, pyc6, pyc7, sv** (7). Never: analog,
+basecase, cadopt, corder, crunga, go, pyc2, pyc3a, pyc3c, pyc3cib, pyc3cic,
+pycdel, pycomplete, pyfuelmono, pyrebuild, r3c_monadic, softfloat (17).
+`leantier` is `--foreign` in every tenure — gates as given, no floor by design
+(§7.1a) — so it is **not a hole**, and calling it one would repeat the census
+misattribution.
+
+### Floor-version pinning is real, but it is a DIFFERENT defect
+
+`refusal_census` entered `DEFAULT_FLOOR` at `ccdc839`, 08-23 22:02.
+
+* `basecase` (00:29) and `cadopt` (21:32) predate it — correctly missing.
+* **`corder` ran at 22:50, 48 minutes after**, on triad.sh `cac7335` (21:36),
+  which predates the change. Its floor was pinned to its copy.
+
+So pinning exists and is confirmed in one observed case — for `refusal_census`,
+not for the register gate. Two defects, not one.
+
+### My own audit was wrong twice before it was right
+
+`find /tmp -maxdepth 9 -name "*.log"` returns **0 logs**: `/tmp` is a symlink
+to `private/tmp`, and `find` will not traverse a symlinked start point without
+`-H`. The corpus went **61 → 1398** logs when corrected, and the correction
+flipped the `es` row from "MISS MISS" to all-four-yes — the audit would have
+reported **the very lane that caught the bug** as one of the holes.
+
+`glob.glob` resolved the symlink; `find` did not. **Changing tools changed the
+reach, and the reach is part of the claim** — third time this week, and the
+first where the wrong answer would have accused the right lane.
+
+### Proposal — NOT imposed; the ruling is the coordinator's
+
+**(A) The floor should own fleet-wide corpus gates.** `DEFAULT_FLOOR` already
+IS the structural mechanism the *"--gates ADDS to the floor"* line claims: a
+constant in `triad.sh`, read at tenure time by `gates_compose`, which lanes can
+only add to and never subtract from. Nothing is broken about the mechanism —
+this gate was simply never put in it. Adding
+`python3 harness/divergence_register.py` to `DEFAULT_FLOOR` makes it structural
+for all 25 lanes at once, with no per-lane action and no new machinery.
+
+The criterion worth adopting with it, so the next one lands by rule rather
+than by memory: **a gate whose corpus is fleet-wide belongs in the fleet's
+floor.** `divergence_register` globs every tier's file; `refusal_census` and
+`diff_test` are likewise fleet-wide. `es_lean_lint`, `c_torture_gate` and
+friends are lane-specific and correctly stay lane-added.
+
+**Sequencing is load-bearing:** master currently FAILS this gate on C's rows,
+so adding it to the floor before C's reshape merges turns *every* lane red on
+its next tenure. It must land after.
+
+**(B) Pinning is already closed going forward.** Item 15's
+`tool_version_guard` refuses a NEW enqueue from a worktree whose `triad.sh` is
+a superseded published version — precisely corder's case. Its honest limit
+stands: it cannot help a copy older than itself. No new mechanism is needed
+here, and the floor is already read at tenure time; pinning is a
+**tool-version** problem, not a floor-mechanism one.
+
+### A note on why this audit was possible
+
+Every row came from the self-identifying `gates:` and `=== gate:` lines. A
+floor that did not announce itself could not have been audited from logs at
+all.
+
+### Triad
+
+Audit only. No tool changed, no config changed, no Lean executed, nothing
+enqueued.

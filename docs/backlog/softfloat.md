@@ -1351,3 +1351,139 @@ built instead of waiting.
 
 Unchanged; the theorems are the same ones, now in a file that compiles.
 **32 landed theorems, 1 an unconditional `op_correct`.**
+
+---
+
+## 2026-08-24-softfloat-23 — CARRY-OUT ABSORPTION: the second shift moves the representation, not the value
+
+`LeanModels/SoftFloat/Theorems.lean`. `shiftToExponent_exp` (no axioms),
+`shiftToExponent_mantissa` `[propext]`, `shiftToExponent_exact` `[propext]`,
+`carry_shift_exact` `[propext, Quot.sound]`. **TRUSTWORTHY**, zero `sorry`.
+
+### WHAT THE SECOND SHIFT IS FOR
+
+`roundWithAccuracy` shifts **twice**. The first shift brings the significand to
+the target exponent and produces the round/sticky bits; the second exists for
+one reason, and core says so in its own comment: *rounding the mantissa may
+have overflowed it*. Rounding up can carry the significand past
+`2 ^ mantissaBits`, and the second shift puts it back.
+
+**So the obligation is not that the second shift computes something — it is
+that it changes the REPRESENTATION and not the VALUE.**
+
+### THE LEMMAS
+
+* `shiftToExponent_mantissa` — the shifted significand is `m / 2^k`, where
+  `k = (t - e).toNat`.
+* `shiftToExponent_exp` — the exponent is `e + k`. By `rfl`.
+* **`shiftToExponent_exact`** — when the dropped bits are zero
+  (`m % 2^k = 0`), the shift is exact: `significand × 2^k = m`. The value
+  survives.
+* **`carry_shift_exact`** — the carry case itself: a significand that rounding
+  carried to exactly `2^k` (`k > 0`) is **even**, so the one-place shift the
+  carry triggers drops only a zero bit. The carry-out is absorbed without loss.
+
+### TWO MECHANICAL OBSTACLES, BOTH RECURRING
+
+1. **`cases a` is not enough for `Accuracy`.** `ofMantissaAndAccuracy` matches
+   **three** `.inexact` sub-patterns (`.lt`, `.eq`, `.gt`), so splitting only on
+   `Accuracy`'s two constructors leaves the `Ordering` symbolic and the match
+   stuck — the same "a `match` will not reduce while its scrutinee is symbolic"
+   failure as `2026-08-24-softfloat-21`, one constructor deeper. `rcases a with
+   _ | o` then `cases o` clears it.
+2. **`<;> [t₁; t₂]` is not valid tactic syntax at this pin.** Explicit
+   `·` bullets instead.
+
+### AND THE FAITHFUL SIM WAS USED FROM THE START
+
+This is the first landing verified with the corrected method from
+`2026-08-24-softfloat-22` — `Basic.lean` **with its `end`**, then `Theorems.lean`
+**from its own `namespace` line**, so only the target's opens are in scope. The
+new lemmas use `Accuracy`, which is exactly the name the old merged sim would
+have supplied for free from `Basic.lean:180` and the real module would not.
+The method change was load-bearing on its very next use.
+
+### §9.0 — STILL 1/12
+
+**36 landed theorems, 1 an unconditional `op_correct`.** Carry-out absorption
+is a component of `RoundWithAccuracyIsNearest`, not the obligation.
+
+### WHAT REMAINS: ONE PIECE
+
+Nearest-among-**all**-representables — the interleaving argument. Everything
+else `RoundWithAccuracyIsNearest` needs is now proved: the residue meaning
+(`em_shift_round`/`em_shift_sticky`), the rounding decision
+(`roundedMantissa_eq_roundHalfEven`), and the carry absorption. What is left is
+the step that quantifies over **other** representable values rather than
+computing this one.
+
+---
+
+## 2026-08-25-softfloat-24 — THE INTERLEAVING ARGUMENT IS STARTED, and a WALL I reported was FALSE
+
+`LeanModels/SoftFloat/Round.lean`. `dyadic_scale` `[propext, Quot.sound]`,
+**TRUSTWORTHY**, zero `sorry`. **Not ticketed** — held per the coordinator's
+register-gate hold.
+
+### THE GATEWAY LEMMA
+
+```
+dyadic_scale (m e : Int) (k : Nat) : Q.Eq (Q.dyadic m e) (Q.dyadic (m * 2^k) (e - k))
+```
+
+Doubling the significand `k` times and lowering the exponent by `k` names the
+**same value**. This is the fact the common-grid route to interleaving needs:
+if every representable can be re-expressed at a single exponent, then
+"nearest among all representables" collapses from a statement about *many
+grids* to one about *one grid*, where the two neighbours already bracket the
+value.
+
+`Q.dyadic` splits on the exponent's sign, so the proof pays that split: three
+real cases and one vacuous (`e < 0 ≤ e - k` is impossible for `k : Nat`,
+closed by `omega`).
+
+### A WALL I ALMOST REPORTED, AND IT DID NOT EXIST
+
+Mid-proof, `ring_nf` and `push_cast` failed — both Mathlib, and this component
+is **core-only by its own declared posture**. I then grepped core for `Int`
+power lemmas and found **none**, and was about to name the wall as *"the
+interleaving argument is dyadic algebra and core has no `Int` power support"*.
+
+**That measurement was wrong, and the cause is the trap this lane has now hit
+three times.** The grep was `theorem Int\.(pow_[a-z_]+)` — fully-qualified —
+while core writes `protected theorem pow_add` **inside `namespace Int`**. The
+real inventory is `Init/Data/Int/Pow.lean`: **`pow_add`, `pow_mul`, `pow_succ`,
+`mul_pow`, `natCast_pow`, `natAbs_pow`, `pow_pos`, `pow_nonneg`** and a dozen
+more.
+
+> **A search that matches a NARROWER thing than you are asking about reports
+> absence, and absence is the most actionable-looking answer there is.**
+
+The first two instances cost a stale census row and a red triad. **This one
+would have sent the coordinator a fabricated blocker on the lane's critical
+path** — the worst placement yet, because a false wall does not just waste a
+tenure, it redirects a workstream. Named here so the next lane greps for the
+BARE name inside a namespace, not the qualified one.
+
+### TWO SMALLER MECHANICAL NOTES
+
+* **`rw [hk]` rewrote `k` everywhere**, including inside the exponent it was
+  meant to leave alone, nesting the goal into `↑(e.toNat + (-(e - ↑k)).toNat)`.
+  The fix is to prove the power identity **at its own occurrence** with a
+  `have`, never by rewriting the variable globally.
+* Two invented lemma names (`Int.natCast_ofNat`, `Nat.cast_one`) — both
+  Mathlib reflexes. Core-only means the reflexes have to be unlearned.
+
+### §9.0 — STILL 1/12
+
+**37 landed theorems, 1 an unconditional `op_correct`.** `dyadic_scale` is the
+first step of the last component, not the component.
+
+### STATE OF `RoundWithAccuracyIsNearest`
+
+| component | status |
+| --- | --- |
+| residue meaning (round/sticky bits) | **proved** |
+| the rounding decision (round-half-to-even) | **proved** |
+| carry-out absorption | **proved** |
+| nearest among ALL representables | **started** — `dyadic_scale` landed; the common-grid reduction and the bracketing step remain |

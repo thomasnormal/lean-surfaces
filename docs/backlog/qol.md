@@ -4806,3 +4806,99 @@ own measurement on the merged tree stands — exit 0, every row gated both ways,
 
 `triad.sh` **380 ok** (379 → 380). No Lean executed after the breach was
 found; nothing enqueued.
+
+## 2026-08-25-qol-68 — the floor merge armed the guard for twelve lanes, and left seven behind it
+
+Observation duty, taken as a prediction rather than a wait. Census of all 21
+lane checkouts against master `3cc251f`, by content identity:
+
+```
+REFUSED at next enqueue (behind, and their copy HAS the guard) ...... 12
+  analog, ctier2, es, go2, leantier, monadic, pyc4, sv (scratch)
+  ada, arch2, softfloat, surfaces-wasm (~/repos)
+PROCEED on an OLD floor (behind, copy PREDATES the guard) ............ 7
+  arch2(scratch, 19), basecase(24), merged(34), pyc3(34),
+  audit(31), research(34), surfaces(14)
+CURRENT ............................................................. 2
+  coord, qol
+```
+
+**"Behind 2" is exactly `d0fad67` + `047e55d` — my own floor landing.** So the
+wave is not incidental to the floor change; it *is* the floor change arriving.
+The guard is what turns "the floor is structural" from a claim about a
+constant into a fact about what lanes run: a floor nobody fetches is still
+remembered, not structural.
+
+Twelve refusals are therefore the mechanism working, and the fix is the one
+already ruled — **rebase, then enqueue**, never an exception:
+
+```
+git -C <checkout> fetch origin && git -C <checkout> checkout master -- tools/triad.sh
+```
+
+### The finding that is not good news
+
+**Seven lanes will proceed on the OLD floor**, silently, because their copies
+predate the guard and so cannot refuse themselves. Those are exactly the
+checkouts that will keep running *without* `divergence_register` — the hole
+the floor change was made to close.
+
+> The floor law's reach is bounded by the guard's reach, and the guard cannot
+> reach a copy older than itself.
+
+That limit was recorded when the guard landed (qol-60). This is the first time
+it has a **number**: 7 of 21, and they are the oldest checkouts (14–34 behind),
+which is to say the ones least likely to notice. The guard closes the future;
+these seven need the one thing the guard cannot do — being told.
+
+### Triad
+
+Observation only. No tool changed, nothing enqueued, no Lean executed.
+`triad.sh` 380 ok on master.
+
+## 2026-08-25-qol-69 — my census counted checkouts; the risk was about tickets
+
+The coordinator's liveness triage turned my "7 lanes will silently run an old
+floor" into **one** — and the correction is an instrument lesson, not a
+detail.
+
+I enumerated **copies of a tool**. The claim I attached to that number was
+about **lanes that will enqueue**. Those are different populations, and only
+the second can run a floor at all:
+
+> A checkout that never tickets cannot run any floor, old or new.
+
+So six of my seven were dead or superseded clones — arch2-scratch (arch runs
+from `~/repos/arch2`, already in the refused-12), pyc3 (superseded by the live
+pyc checkout), and four utility clones from past phases. The seventh,
+**basecase**, was the whole risk, and it was also the fleet's one unstaffed
+flagship dependency.
+
+**Reach was part of the claim; liveness is part of the population.** Same
+family, one turn further out: the first census asked *where did I look*, this
+one asks *who can act*. A number that answers neither is a number about
+nothing.
+
+### Verified, not taken on trust
+
+Re-measured after the revival: **`lean-basecase` is CURRENT** — the successor's
+refresh-first brief landed before any enqueue, so the silent-old-floor case is
+closed for the only checkout that would have ticketed. The six remaining
+pre-guard copies are exactly the triaged clones, and each stays harmless for
+the reason given rather than by assumption.
+
+### Bedding-in baseline
+
+```
+current .............. 3  (coord, qol, basecase)
+would-be-refused .... 12  (behind, carrying the guard — the wave, working)
+pre-guard ............ 6  (dead/superseded clones; cannot ticket)
+```
+
+The `--gates` escalation landing waits on the middle column draining, which is
+the honest read of "after the floor is bedded in": the floor is bedded in when
+the lanes that ticket are running it, not when the constant changed.
+
+### Triad
+
+Observation only. No tool changed, nothing enqueued, no Lean executed.

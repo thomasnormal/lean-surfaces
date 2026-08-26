@@ -3586,3 +3586,69 @@ That is the case for QoL's mechanism (a) or (b) rather than a third prose note.
 This pass is logged as **pass 9** in both loaders, and it is a different KIND
 from passes 7–8: those were re-pins to a new engine `sunfish.py`; this one has
 an unchanged source and a changed **extractor**.
+
+## 2026-08-26-pycomplete-42 — the prediction was WRONG, and the forced rebuild is what proved it
+
+I predicted **"every certificate is byte-identical after this change; if one
+moves, the argument was wrong and the inch stops."** Three moved. The inch
+stops here, re-priced.
+
+    error: Examples/python/sunfish/spec.lean:63:0      #guard sunfish.functions.map (f.name, f.argsOk, f.localsOk)
+    error: Examples/python/sunfish/spec.lean:128:0     #guard sunfish.functions.map (f.name, f.isGenerator)
+    error: Examples/python/sunfish/init_chain.lean:1671:0
+
+Exit **1**, not 143 — real elaboration failures, on attempt 2 after the box
+killed attempt 1.
+
+### Why the argument failed, precisely
+
+My reachability argument was sound *about what it covered*: both `del`
+statements sit behind `len(...) > 10**6` and no pinned walk reaches 2053 nodes,
+so **no runtime value can change**. That is still true. What it missed:
+
+> **Unreachable at runtime is not invisible to the model.** The certificates
+> that moved are **structural** — they census the module's *function table*,
+> which changes the moment a statement lowers, whether or not it ever executes.
+
+`spec.lean:63` pins `(name, argsOk, localsOk)` for every lowered function.
+Lowering line 511 adds one. No execution required.
+
+### And the sharp edge: genexp indices are POSITIONAL, so they RENUMBER
+
+| index | OLD site | NEW site |
+|---|---|---|
+| `@0`–`@6` | 85, 86, 96, 239, 313, 444, 449 | **unchanged** |
+| **`@7`** | **line 515** | **line 511** ← *different construct, same name* |
+| `@8` | — | line 515 |
+
+The `del` at 511 was an `Unsupported` leaf carrying source text, so its genexp
+was **not a node at all**. Lowering it inserts a node *before* line 515's and
+shifts everything after.
+
+> **A certificate that still elaborates but now names a different construct is
+> worse than one that fails.** `@0`–`@6` are safe; **`@7` silently changes
+> meaning**, and the tree has **4 mentions** of it.
+
+### Re-price: this is a renumbering migration, not a cleanup
+
+Third pricing of the same inch, each one larger, each from measurement:
+
+1. *cleanup* → wrong: it is a capability change
+2. *capability delivery* → wrong: it is also a structural census change
+3. **renumbering migration** — what it actually is
+
+Scope: **128 `genexpr@n` mentions across 10 `Examples` files**, of which
+`@7`'s **4** must be audited for meaning-shift, plus three censuses re-pinned
+to **measured** values (measuring needs a tenure, so this iterates).
+
+**Branch held unmerged.** The envelope regeneration is correct and the tier
+wants it; landing it requires the migration, which is its own inch with its own
+review — exactly the "someone's inch, not a rider on mine" line I drew for the
+other four envelopes, now applying to my own.
+
+### What worked
+
+The forcing edit did its job: attempt 1 rebuilt `pins_bound_mid_d3` and 48
+minutes of real spine before the box killed it, and attempt 2 reached the
+failure. **pyc13's 5-second green would have merged this silently** — a broken
+tree behind a green tenure, discovered by whoever next touched the pins.

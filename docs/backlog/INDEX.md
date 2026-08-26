@@ -31,6 +31,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-26-qol-80` |  | `ci.sh`'s layer 3 gains the view, and the attested view stops lying to git | qol |
 | `2026-08-26-qol-79` |  | `--gates-no-lean`: a lane can say its gates start no Lean, and the script MEASURES it | qol |
 | `2026-08-26-qol-78` |  | the sv manifest entry had never extracted one envelope | qol |
+| `2026-08-26-pycomplete-42` |  | the prediction was WRONG, and the forced rebuild is what proved it | python-completeness |
 | `2026-08-26-pycomplete-41` |  | the envelope cleanup is not cleanup: it is the delivery step for four earlier inches | python-completeness |
 | `2026-08-26-c-35` |  | PARKED, and the one thing that will mislead you | c |
 | `2026-08-26-c-34` |  | A TYPE NAME IS NOT A TYPE, and the prediction was READ rather than reasoned | c |

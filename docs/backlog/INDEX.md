@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**440 entries across 17 lanes.** Regenerate with
+**441 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -34,6 +34,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-26-c-31` |  | THE PREDICTION MISSED BY 7, and the red printed a two-year-old lie | c |
 | `2026-08-26-c-30` |  | THE SCORER WAS NEVER IN THE BUILD, and `--classify` is not a dry run | c |
 | `2026-08-26-c-29` |  | STRUCT LAYOUT, from a rule the profile now DECLARES | c |
+| `2026-08-26-softfloat-28` |  | PARKED. This entry is what resumption reads. | softfloat |
 | `2026-08-26-c-28` |  | OPS-148: a NAMED NEGATIVE by grep, and the defect only RUNNING found | c |
 | `2026-08-26-softfloat-27` |  | 4c's MACHINERY IS COMPLETE: nothing beats the two neighbours | softfloat |
 | `2026-08-26-c-27` |  | THE REGISTER COMES BACK, and the reversal is recorded rather than tidied | c |

@@ -1707,3 +1707,121 @@ exists. What remains is *assembly* — instantiating `multiple_dist_ge` at the
 target exponent with the rounded significand from rung 2, discharging `repr`
 from the significand bound, and discharging `tie` from `TieEven`. No new
 mathematics is expected; if any appears, it will be named rather than absorbed.
+
+---
+
+## 2026-08-26-softfloat-28 — PARKED. This entry is what resumption reads.
+
+Thomas paused the campaign to save tokens and free Lean resources. No new work
+from here. **This entry is written to be the only thing a resuming lane needs.**
+
+### TICKET CANCELLED, AND THE MACHINE LEFT CLEAN
+
+The queued tenure for `cba3693` was cancelled by pid, ownership verified first:
+the ticket was `…-15010-softfloat`, the two processes (`15008` wrapper, `15010`
+child) were both this lane's by parentage, and **the lock was held by another
+lane (`es`), not by us** — so nothing of anyone else's was touched. After: no
+runner, no ticket, lock owner unchanged, no `lake` in this clone.
+
+**`cba3693` is merged on the coordinator's gates. Its own tenure certification
+is PENDING RESUMPTION** — the work is in, the triad that would have certified
+it did not run. A resuming lane should re-ticket it once before building on it,
+or treat the next tenure as covering it.
+
+### WHERE THE PROOF STANDS
+
+`RoundWithAccuracyIsNearest` is the one obligation between here and an
+unconditional `mul_correct`. Its ladder:
+
+| rung | component | status |
+| --- | --- | --- |
+| 1 | residue meaning — round/sticky bits mean `m % 2^(n+1)` vs `2^n` | **proved** |
+| 2 | the rounding decision — core's rounding IS round-half-to-even | **proved** |
+| 3 | carry-out absorption — the second shift moves representation, not value | **proved** |
+| 4a | scaling invariance — `dyadic_scale` | **proved** |
+| 4b | common-grid reduction — `repr_on_min_grid`, `dyadic_at_lower` | **proved** |
+| 4c-i | ordering and distance reduce to `Int` — `dyadic_le_iff`, `dist_dyadic` | **proved** |
+| 4c-ii | nearest-multiple — `multiple_dist_ge` | **proved** |
+| **4c-iii** | **assembly into `IsNearest`'s three fields** | **NOT STARTED** |
+
+**4c-iii is assembly, and that is a prediction, not a hope.** Every
+mathematical fact the three fields need now exists:
+
+* `repr` — discharge from the significand bound `m.natAbs < 2 ^ mantissaBits`,
+  which is the one hypothesis that has done **no work anywhere in the ladder
+  yet**; 4c-iii is where it pays;
+* `nearest` — instantiate `multiple_dist_ge` at the target exponent, with the
+  rounded significand supplied by rung 2;
+* `tie` — discharge from `TieEven`, which is stated at the canonical exponent
+  precisely so parity is well-defined (`2026-08-24-softfloat-17`).
+
+> **If new mathematics appears in 4c-iii, NAME IT rather than absorb it.** The
+> prediction that it is pure assembly is this lane's, and it should be
+> falsifiable.
+
+Then: `RoundWithAccuracyIsNearest` discharged ⟹ `mul_correct` becomes
+unconditional **in one line** (it is already proved modulo that hypothesis,
+`Mul.lean`), and `div`, `sqrt` and `add` all draw on the same lemma. `add` is
+strictly harder than `mul` — measured, not guessed: `mul`'s finite branch is
+one line, `add`'s is five with a signed sum and a three-way sign trichotomy.
+
+### §9.0 AT PARK
+
+**`op_correct`: 1 of 12.** 47 landed theorems, exactly one of which is an
+unconditional `op_correct` (`toInt_eq_truncate`, float→int). The other 46 are
+real but are lemmas, transfers, special-value rows and acid tests — counting
+them would be the flattering direction this lane corrected four times.
+
+**Downstream: 3 existing pyc rows + 1 latent requirement.**
+`const.float`, `op.Div`, `op.Pow-negative` exist and are blocked. The fourth,
+`str()`/`repr()` of a float, **cannot exist yet** — `const.float` refuses, so
+no float exists to print.
+
+> **THE SEQUENCING HAZARD, and it is the most actionable thing in this entry:
+> landing float arithmetic WITHOUT decimal printing closes 3 rows and CREATES
+> the 4th.** Price decimal printing inside the arithmetic landing, not after
+> it.
+
+### WHAT ELSE IS OWED, in priority order
+
+1. **Decimal printing** (plan step 3) — the only item any tier is *blocked* on.
+   Two half-inches, and **parse is the cheaper one** because core's
+   `ofScientific` already exists, so it is an `op_correct` in the shape already
+   built; printing is greenfield (Dragon4-style exact, fuel-shaped —
+   `2026-08-23-softfloat-10`).
+2. **Thomas's NaN ruling** (`docs/softfloat-charter.md` §7 item 1) — core
+   cannot express a NaN payload, so §3.5.4's ∀-parameter has no domain. Nothing
+   else waits on it; it gates only the Wasm rows.
+3. `roundQ_repr` / `roundQ_nearest` — **off the critical path**
+   (`2026-08-24-softfloat-19`): `mul_correct`'s obligation is about **core's**
+   `roundWithAccuracy`, not our `roundQ`.
+
+### THE METHOD NOTES A RESUMING LANE SHOULD READ FIRST
+
+Four of them cost real tenures:
+
+* **The faithful sim.** Verify a landing by keeping `Basic.lean`'s `end` and
+  appending the target **from its own `namespace` line**. The old merged-scope
+  sim reported 0 errors on code that failed as a module, because `open` does
+  not cross a module boundary (`2026-08-24-softfloat-22`).
+* **`omega` is linear.** Turn a nonlinear product into a bounded atom with a
+  `have`, then let `omega` finish. And it treats `-(x)*s` and `x*s` as
+  **unrelated atoms** — normalise through `Int.neg_mul` first.
+* **Grep the BARE name inside its namespace.** Core writes
+  `protected theorem pow_add` inside `namespace Int`, so `theorem Int.pow_*`
+  finds nothing and reports a wall that is not there. This nearly sent a
+  fabricated blocker upstream (`2026-08-24-softfloat-24`).
+* **`#guard` is not a kernel oracle.** It runs the untrusted evaluator, so it
+  passes identically whether a declaration reduces or is `opaque`. A reduction
+  gate is `rfl` or `decide` (`2026-08-22-softfloat-1`).
+
+### THE GATES A RESUMING LANE INHERITS
+
+`harness/softfloat_consumer_census.py` has four modes, all wired into this
+lane's `--gates`: `--self-test` (16 rows, every refusal path RUN), `--compare`
+(drift against the committed census), `--check-transcriptions` (asserts the
+probes' quotations of **other lanes' files** are still true — it caught a
+six-minute staleness), and `--decimal-demand` (the two ES refusal sites). Plus
+ten probes, of which two are **expected to error**: `probe_es_unblock` (2) and
+`probe_walls` (9), both pinned by count so a change goes red rather than
+silent.

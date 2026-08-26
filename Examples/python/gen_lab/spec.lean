@@ -64,7 +64,11 @@ load_program gen_lab from "Examples/python/gen_lab/gen_lab.json"
 the filter's `(v := m * m)` becomes a local of the synthesized frame;
 the leak/statement shapes stay loudly out (the envelope was
 RE-EXTRACTED for the walrus tier — this comment is the required real
-edit, `load_program` does not track its JSON). -/
+edit, `load_program` does not track its JSON).
+SUPERSEDED 2026-08-26 (qol-83): the lakefile declares
+`Examples/python` as an `input_dir` in `Examples.needs`, so lake now
+tracks this envelope as a build input. The real-edit ritual above is
+HISTORY, not instruction. -/
 #py_check gen_lab.walrus_filter(4) = 30201206
 #py_check gen_lab.walrus_filter(0) = 3020120602
 #py_check gen_lab.walrus_filter(26) = 0

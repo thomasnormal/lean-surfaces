@@ -7,7 +7,11 @@ Concrete regressions for the string tier (docs/memory-model.md §string
 semantics), pinned two ways: differential rows in `harness/cases.json`
 (every function runs against CPython 3.9) and the `/- pass 8 (§the cast tier): int(<str>) / str(…) — the envelope was
 RE-EXTRACTED for the cast-lab rows; this comment is the required real
-edit (`load_program` does not track its JSON). -/
+edit (`load_program` does not track its JSON).
+SUPERSEDED 2026-08-26 (qol-83): the lakefile declares
+`Examples/python` as an `input_dir` in `Examples.needs`, so lake now
+tracks this envelope as a build input. The real-edit ritual above is
+HISTORY, not instruction. -/
 #py_check str_lab.cast_int(" 42 ") = 42
 #py_check str_lab.cast_int("-0") = 0
 #py_check str_lab.cast_str(-3) = "-3"

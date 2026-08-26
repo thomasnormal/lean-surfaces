@@ -9,16 +9,47 @@ rev = "v4.33.0-rc1"
 [[lean_lib]]
 name = "LeanModels"
 
+# ENVELOPES ARE BUILD INPUTS.  `load_program` reads a JSON envelope at
+# ELABORATION time, and lake knew nothing about it: editing an envelope
+# re-elaborated NOTHING, so a correct envelope fix looked green unchecked --
+# and so would a broken one.  A gate that cannot fail is worse than no gate,
+# because it is read as evidence.  `needs` mixes each named target's trace
+# into every module of this library (Lake/Build/Module.lean: the extraDep
+# job's trace is recovered by `getTrace` and mixed into `depTrace`, which is
+# added to the module trace), so a changed envelope now invalidates the
+# modules that load it.
+#
+# COST, ACCEPTED KNOWINGLY: `needs` is per-LIBRARY, not per-module, so ONE
+# envelope edit invalidates ALL 206 Examples modules.  That is acceptable
+# because an envelope edit always warranted its consumers' re-elaboration --
+# it is the case we were failing to do at all.  If it ever proves
+# intolerable the escape is a per-tier library split, not a narrower trace.
+#
+# ALSO ACCEPTED: over-coverage.  These directories hold 61 python and 8 spice
+# JSON files while only 51 are loaded by `load_program`, so editing a JSON
+# nothing loads also rebuilds.  Over-invalidation is the safe direction.
 [[lean_lib]]
 name = "Examples"
 globs = ["Examples.+"]
-needs = ["circuitSources", "verilogASources"]
+needs = ["circuitSources", "verilogASources", "pythonEnvelopes"]
 
 [[input_dir]]
 name = "circuitSources"
 path = "Examples/spice"
 text = true
-filter = { extension = ["cir"] }
+# `json` JOINS `cir` HERE, and the omission was the same inversion one level
+# up: this directory HAD a declaration that looked like coverage while
+# filtering its 8 JSON files out of it.  A partial filter reads as tracked.
+filter = { extension = ["cir", "json"] }
+
+# THE 51 LOADED ENVELOPES.  This tier had no declaration at all, which is why
+# every `load_program` site in it was untracked.  Of the three tiers only
+# verilog-a was genuinely covered.
+[[input_dir]]
+name = "pythonEnvelopes"
+path = "Examples/python"
+text = true
+filter = { extension = ["json"] }
 
 [[input_dir]]
 name = "verilogASources"

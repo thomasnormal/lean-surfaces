@@ -24,6 +24,9 @@ open LeanModels LeanModels.Python
 -- the `rotate_fields`/`rotate_null_fields` differential wrappers — H5
 -- strings; `load_program` does not track the JSON as a build input, so this
 -- comment is also the content change that forces the rebuild)
+-- SUPERSEDED 2026-08-26 (qol-83): the lakefile declares `Examples/python` as
+-- an `input_dir` in `Examples.needs`, so lake now tracks this envelope as a
+-- build input. The real-edit ritual above is HISTORY, not instruction.
 load_program sf_position from "Examples/python/sf_position/sf_position.json"
 
 /-- The fresh world of every public call: the whole top level is the

@@ -14,11 +14,21 @@ batteries now live in per-capstone files —
 probe defs. `Examples/python/sunfish/spec.lean` keeps the census and
 the rotate theorems (with `proof.lean`, the three-file layout).
 
-ENVELOPE NOTE (the standing trap): `load_program` does not track its
-JSON as a build input and lake hashes CONTENT — after re-extracting
-`sunfish.json`, make a real edit HERE (this comment is the place); the
-import chain then rebuilds every pin file. The pin files themselves
-need no touch.
+ENVELOPE NOTE (the standing trap, NOW CLOSED): `load_program` does not
+track its JSON as a build input and lake hashes CONTENT — after
+re-extracting `sunfish.json`, make a real edit HERE (this comment is the
+place); the import chain then rebuilds every pin file. The pin files
+themselves need no touch.
+
+SUPERSEDED 2026-08-26 (qol-83): the lakefile declares `Examples/python`
+as an `input_dir` in `Examples.needs`, so lake tracks this envelope as a
+build input and the ritual above is HISTORY, not instruction. The note is
+kept because SIX of these existed fleet-wide, this one carried a numbered
+re-extraction log to pass 7, and a lane still lost a green to the trap:
+the record of a discipline that did not hold is worth more than its
+deletion. VERIFICATION IS PENDING — see qol-83; the falsifiable test is a
+python envelope edited with zero `.lean` changes, whose loaders must come
+back Built, not Replayed.
 
 Re-extraction log: pass 7 — the RE-PIN to current engine master (the
 QS walrus filter now lowers, §the walrus filter; explicit castling

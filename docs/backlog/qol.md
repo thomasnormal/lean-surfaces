@@ -5693,3 +5693,96 @@ collision it cites did not exist.
 
 Comment- and prose-only. `triad.sh --self-test` 454 ok, 0 failed;
 `--verify-guards` 57 ok; docs_check 91/91; index in sync. No Lean executed.
+
+---
+
+## 2026-08-26-qol-83 — envelopes become build inputs, and the tier that only looked covered
+
+Layer 3 of the generated-artifact class, found by pyc holding its own vacuous
+green: `load_program` reads a JSON envelope at **elaboration** time, and lake
+knew nothing about it. pyc13 changed `sunfish.json` and the 5-second "green"
+re-elaborated nothing. **This inverts the gate's meaning** — a correct envelope
+fix looks green unchecked, and so would a broken one.
+
+### All three of my predictions were wrong
+
+| | predicted | measured |
+|---|---|---|
+| **P1** Lake has no data-file→module input | **refuted** | `needs` mixes into the module trace |
+| **P2** computed paths make a grep map lossy | **refuted** | the grammar forbids a computed path |
+| **P3** 51 envelopes → few loader modules | **refuted** | → **97** modules, 1.7 refs each |
+
+P1 is the one worth keeping. `Module.recFetchPreSetup` does
+`discard extraDepJob.await`, which reads exactly like a dependency awaited for
+ordering and then thrown away — and on that line alone I was about to report
+that Lake could not do this. The trace is recovered **34 lines later**:
+
+```
+let depTrace := BuildTrace.nil "deps" |>.mix extraDepJob.getTrace |>.mix info.trace
+… addTrace depTrace          -- on all three platformIndependent branches
+```
+
+**A discard is not the end of a value's life.** Reading to the end of the chain
+rather than to the end of the line reversed the finding and the ruling with it.
+
+### The tier that only looked covered
+
+Of **70** JSON files on disk under `Examples`, exactly **one** was tracked:
+
+| tier | JSON on disk | `input_dir` | in its filter |
+|---|---|---|---|
+| `Examples/python` | 61 (51 loaded) | none | no |
+| `Examples/spice` | 8 | **yes** | **no — `cir` only** |
+| `Examples/verilog-a` | 1 | yes | yes |
+
+`spice` is **the same class one level up**: a declaration that looks like
+coverage and filters the JSON out. A partial filter reads as tracked, and
+nothing distinguishes it from the real thing at a glance — which is exactly why
+the python tier's *absence* was easier to spot than spice's *presence*.
+
+Now: `Examples/python` declared, `spice`'s filter extended, both in
+`Examples.needs`. Checked mechanically against the strict
+`load_program … from "…"` syntax: **51 envelopes, 51 covered, 0 uncovered.**
+
+### The costs, accepted rather than discovered later
+
+**Blast radius.** `needs` is per-**library**, so one envelope edit invalidates
+all **206** Examples modules. Accepted: an envelope edit always warranted its
+consumers' re-elaboration — that is the case we were failing to do at all. The
+escape, if it ever proves intolerable, is a **per-tier library split**, not a
+narrower trace.
+
+**Over-coverage.** 61 python and 8 spice JSON on disk against 51 loaded, so
+editing a JSON nothing loads also rebuilds. Over-invalidation is the safe
+direction.
+
+### VERIFICATION IS PENDING — this entry does not claim the property
+
+My own landing's tenure proves nothing here: a lakefile change invalidates
+everything, so of course it rebuilds. **The decisive test is pyc re-running
+pyc13's exact scenario after this merges** — edit a python envelope with zero
+`.lean` changes; the loaders must come back **Built, not Replayed**. Routed to
+pyc's next tenure. Until it reports, the correct reading of this landing is *a
+mechanism that should track envelopes, argued from Lake's source*, not *a
+mechanism that does*.
+
+I could not run it here: rebuild behaviour needs `lake build`, and this lane
+holds no ticket (A11).
+
+### The six prose notes, kept
+
+Six comments fleet-wide warned about the trap; `pins_common.lean` carried a
+numbered re-extraction log to **pass 7** — and a lane still lost a green to it.
+Each now carries a `SUPERSEDED` line pointing at the mechanism, and **none was
+deleted**. Six notes, one numbered log, and a lost green: the record of a
+discipline that did not hold is worth more than its deletion, and a seventh
+note was never the answer.
+
+**(b) — the triad-level json→loader map — is held unbuilt**, named as the
+fallback if the blast radius proves intolerable.
+
+### Triad
+
+No Lean executed. `lean_comment_forms` 407 files / 0 defects; lakefile parses
+with every `needs` target declared; docs_check 91/91; index in sync;
+`--verify-guards` 57 ok; `triad.sh --self-test` 454 ok.

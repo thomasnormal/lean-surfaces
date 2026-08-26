@@ -41,7 +41,10 @@ verification, the `not live` correction gate, `deadline = 1 << 63`).
 theorems and their proofs are untouched; this comment is the content
 edit that forces re-elaboration (`load_program` does not track its
 JSON as a build input).
--/
+SUPERSEDED 2026-08-26 (qol-83): the lakefile declares
+`Examples/python` as an `input_dir` in `Examples.needs`, so lake now
+tracks this envelope as a build input. The real-edit ritual above is
+HISTORY, not instruction. -/
 import LeanModels
 
 namespace Examples.python.sunfish.proof
@@ -104,6 +107,10 @@ private theorem hswap :
 tier — `raise Stop`/`main()`'s try now structure and `Stop` carries
 `exception_base`; this comment is the required real edit, since
 `load_program` does not track its JSON as a build input).
+SUPERSEDED 2026-08-26 (qol-83): the lakefile declares
+`Examples/python` as an `input_dir` in `Examples.needs`, so lake now
+tracks this envelope as a build input. The real-edit ritual above is
+HISTORY, not instruction. 
 pass 3 (the envelope was re-extracted for the module-scope
 lambda): the resolution arms and the
 G1 fold grew (the diverged

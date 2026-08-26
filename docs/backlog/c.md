@@ -3669,3 +3669,32 @@ next hand should know it was bought, not lost.
 2)** — the first C number ever produced by a `lake build` that compiled the
 scorer, and the first with a non-zero `failed`. Both halves are fixed in
 this landing; the number above is what is TRUE until its tenure runs.
+
+## 2026-08-26-c-32 — THE PREDICTION WAS EXACT, and `failed` is back to zero
+
+`TRIAD DONE (build exit 0, gates green)`; lock ACQUIRED 01:41:30 after 166s,
+RELEASED 04:05:51, one tenure, no second state.
+
+**`gcc.c-torture 105/300 scored (passed 105, failed 0)` — `first failure:
+none`,** and `c_torture_gate: committed scoreboard matches this run`. Every
+bucket landed on the committed vector: `refused-unsupported 145,
+refused-libc 9, refused-ub 7, oracle-tests-compiler 1, timeout 2,
+not-ingested 1, not-parsed 30, runner-error 0, not-fetched 0`.
+
+The difference between this prediction and the one that missed by 7 is not
+care, it is METHOD. The 110 was a point estimate reasoned from a bucket
+total: 54 struct refusals exist, the rung addresses struct layout, so some
+number of them pass. The 105 was DERIVED — the 15 tests containing pointer
+`+`/`-` enumerated from the envelopes, joined to the previous run's per-test
+verdicts, and each one read: two pass, three still refuse at `tmp++`,
+`*bp++` and `*--p`. **A prediction over a corpus is arithmetic on named
+tests, not an estimate of a total**, and the corpus is right there to be
+enumerated. That is the whole lesson of the pair.
+
+Scored did not move (105 both times) and the landing is still worth its
+tenure: the two `failed` became a pass and a refusal, five false
+`refused-ub` accusations became two passes and three honest refusals, and
+the number stopped containing any claim the model could not support.
+
+**§9.0 standing number: `gcc.c-torture` 105/300 scored (passed 105,
+failed 0).**

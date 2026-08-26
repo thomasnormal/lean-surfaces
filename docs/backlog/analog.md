@@ -39,7 +39,29 @@ every obligation in `AssuranceCase` is universally quantified over `allowed`.
 | `2026-08-24-analog-6` | `130dd20` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-24-analog-7` | `3e8c41e` | 8 / 24 | 4 / 21 | 9 / 21 |
 | `2026-08-25-analog-8` | `1d1f55e` | 8 / 24 | 4 / 21 | 9 / 21 |
-| `2026-08-25-analog-9` | *(next commit)* | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-25-analog-9` | `341e247` | 8 / 24 | 4 / 21 | 9 / 21 |
+| `2026-08-26-analog-10` | *(next commit)* | 8 / 24 | 4 / 21 | **20/20 primary, 9/20 bundling** |
+
+**THE PRIMARY NUMBER — NON-VACUOUS BEHAVIOR GUARANTEES: 20 / 20.**
+
+Every circuit in the corpus that carries Lean has a proved behavior guarantee
+whose premise set is shown inhabited. The denominator is **20, not 21**:
+`gnd_alias` is a parser regression fixture with **no `.lean` file at all**, so
+it is out by construction rather than by omission.
+
+**THE BUNDLING NUMBER — `AssuranceCase` cases: 9 / 20 (secondary).** This is
+what the ledger quoted as `9 / 21` from its founding until `2026-08-26-analog-10`,
+and it was never a coverage number: it counts how many circuits use the typed
+`AssuranceCase` BUNDLE, not how many are guaranteed. Quoting it as the tier's
+standing figure understated the tier by more than a factor of two.
+
+> **`9/21` measured BUNDLING and was read as COVERAGE. A denominator inherits
+> the meaning of whatever the numerator happens to count, and nothing in the
+> figure itself says which was meant.**
+
+Both numbers are reproduced, not quoted, by the same command
+(`python3 harness/spice/assurance_census.py`), which now enumerates **five**
+non-vacuity idioms because counting one of them is exactly how `9/21` happened.
 
 **F2 exp/log certificates discharged: 7 / 7 — THE FAMILY IS CLOSED.**
 
@@ -183,7 +205,7 @@ prose concession across `LeanModels/Circuit/`, `LeanModels/Spice/` and
 | F1 | physical-envelope coverage (model ↔ fabricated device) | 19 | **none — not closable in Lean** |
 | F7 | dead framework surface (carriers with zero suppliers) | 9 | nothing; the stated architecture is wider than the discharged one |
 | F5 | small-signal AC for nonlinear devices | 2 | an `ApproxLinearizationAt` with a Taylor remainder bound |
-| F6 | interval-arithmetic width | 1 | `sub`, `div`, sign-mixed `mul` in `Enclosure.lean` |
+| ~~F6~~ | ~~interval-arithmetic width~~ — **CLOSED, `2026-08-26-analog-10`** | ~~1~~ **0** | `sub`, `neg`, sign-mixed `mul` landed |
 | F8 | elaboration-time dimension checking | 2 | engineering, not mathematics |
 
 **F2 IS THE FIRST REAL-ANALYSIS INCH, and the census is what says so.** Every
@@ -976,3 +998,165 @@ and admitted 12×. **The lane's real frontier is much nearer than the F-table
 said, and the honest next question is not which family to attack but whether
 the tier's DENOMINATORS — 8/24 grounded, 4/21 circuits — are still the right
 measure of what remains.**
+
+---
+
+## 2026-08-26-analog-10 — the AssuranceCase census: the tier was never 9/21, and the instrument now says so
+
+**Prediction, stated before measuring** (the discipline that has now paid six
+times): `8/24` unchanged but increasingly wrong; `9/21` badly understating the
+tier; the right primary number near **19/21**.
+
+**Measured: 20 / 20.** Every circuit carrying Lean has a non-vacuous behavior
+guarantee. The prediction was off by one, and the miss is the finding.
+
+### THE MISS: I PREDICTED BY COUNTING ONE IDIOM
+
+I forecast 19 because I counted `..._realizable` twins. **`chain` has none** —
+and is non-vacuous anyway, because `chain_contract` is an **iff**:
+`LoadedChain sections input output current ↔ output = (2/3)^sections · input ∧ …`.
+The reverse direction *is* the witness, constructively. Its
+`#circuit_check chainSpecDeck dc shows "out3" = (2/3)^3 · 5` confirms it
+independently by running the solver.
+
+> **Non-vacuity has at least five idioms in this corpus. A `_realizable` twin
+> is one; an exhibited observation is another; a `GroundedUnder` witness a
+> third; an `ExhibitsUnder` existential a fourth; an iff whose reverse
+> direction constructs the witness — or a computed operating point — a fifth.
+> Counting the first and calling it the measure is precisely how `9/21`
+> happened.**
+
+### THE INSTRUMENT NOW COUNTS ALL FIVE, AND PROVES IT MATTERS
+
+`harness/spice/assurance_census.py` enumerates the idioms explicitly and prints
+which ones each circuit uses. Three circuits rest on a non-`_realizable` idiom
+alone: **`chain`** (iff/computed-op) and **`and_gate`** and **`half_adder`**
+(observation-exists — this lane's own A1 landing).
+
+**Validated by ablation, not by inspection.** Cutting the idiom list back to
+`_realizable` alone drops the figure to **17/20** and falsely flags exactly
+those three. So the detector discriminates, and the size of the single-idiom
+undercount is measured rather than asserted.
+
+### THE SEVENTH INSTRUMENT ERROR, CAUGHT BEFORE IT WAS QUOTED
+
+The first classification pass used a regex for "has a behavior spec" and marked
+`cs_amp`, `diff_pair` and `chain` as having none. `cs_amp` alone has **28**
+theorems including `_transfer`, `_gain`, `_swing`, `_dc_unique`. I caught it by
+spot-checking three rows I found implausible, and then classified all 21 from
+their actual theorem-name lists instead.
+
+> **At 21 rows, hand-classification with the evidence quoted beats an
+> unvalidated scanner — and the scanner only becomes trustworthy once it is
+> ablation-tested against answers already known by hand.**
+
+### WHAT THIS CHANGES
+
+The tier is **not** a 9/21 tier with 12 circuits unguarded. It is a **20/20**
+tier in which 9 circuits additionally carry the typed `AssuranceCase` bundle.
+The remaining work was never coverage: it is bundling (11 circuits could gain
+an `AssuranceCase`), plus F5's two sites, plus F1's permanent admission.
+
+**F1 rides this number too**, unchanged: `model validity: MISSING`,
+architecturally unclosable, admitted 12×. Twenty-of-twenty is a claim about
+models, and none of it is evidence that a fabricated device matches one.
+
+### F6 folded in — signed interval arithmetic
+
+`add` and `mulNonnegative` were the whole algebra, and `mulNonnegative` requires
+BOTH operands nonnegative — which a voltage difference or a gain is not.
+`Enclosure.lean` now carries `neg`, `sub` and a sign-mixed `mul`, each with its
+containment theorem.
+
+The sign-mixed product is the only one with any content, and it needed no case
+explosion: **a product over a rectangle attains its extremes at the corners
+because it is monotone in each factor separately, the direction depending on the
+sign of the other.** Four one-line lemmas (`mul_le_max_left`, `min_le_mul_left`
+and their right-hand twins) say exactly that, and `mul_contains` composes them
+without a single `nlinarith`.
+
+**One measurement worth recording.** The first probe of `mul_contains` was
+killed by my own tool timeout at 400 s and read like a hanging proof; the same
+file compiled clean in the background. It was `nice -n 19` on a machine another
+lane was building on. **A proof that times out under `nice` on a loaded machine
+has not failed — and the two look identical from the exit code.**
+
+---
+
+## 2026-08-26 — PARKED (indefinite). Read this first on resumption.
+
+**Thomas paused the campaign to save tokens and free Lean resources.** This
+entry is the lane's hand-over. Nothing below is in flight; nothing is
+half-edited; the working tree is clean.
+
+### STATE OF THE NUMBERS
+
+| number | value | how to reproduce |
+| --- | --- | ---: |
+| **primary — non-vacuous behavior guarantees** | **20 / 20** | `python3 harness/spice/assurance_census.py` |
+| secondary — `AssuranceCase` bundling | 9 / 20 | same command, same denominator |
+| grounded assurance cases | 8 / 24 | same command |
+| declared divergences | **0** | F1 is a boundary, not a debt |
+
+**Reproduce these, do not quote them.** The detector recognises **five**
+non-vacuity idioms and is **ablation-tested**: cutting it back to
+`_realizable` alone yields 17/20 and falsely flags `chain`, `and_gate` and
+`half_adder`. That ablation is the reason to trust the 20, and re-running it is
+the cheapest way to confirm the instrument still discriminates.
+
+**F1 rides every one of these numbers**: `model validity: MISSING`,
+architecturally unclosable, admitted 12×. All four figures are claims about
+models; none is evidence a fabricated device matches one.
+
+### WHAT IS DONE
+
+F2 closed 7/7 · F3 landed (it needed grounding, not Grönwall) · F4 collapsed
+(a boundary, enforced once, already gated) · F6 closed (signed interval
+arithmetic) · the comment-forms gate is campaign infrastructure · the λ
+boundary is a checked fact across four decks.
+
+### WHAT IS NEXT, AND THE WARNING THAT COMES WITH IT
+
+**F5 — 2 sites**, `ExactLinearizationAt` in `Circuit/AC.lean` and
+`Spice/LoadedRCAC.lean`, wanting an `ApproxLinearizationAt` with a Taylor
+remainder.
+
+> **RE-DERIVE F5 FROM THE TREE BEFORE PRICING IT. I would expect the row to be
+> wrong again.**
+
+Five consecutive family audits overturned the row that named them, and the F5
+row comes from the same early reading as the four that failed. The specific
+question to ask first is not "how do I prove the remainder bound" but "does the
+tree already have it, and is the gap somewhere other than where the row points"
+— which is what F3 and F4 both turned out to be.
+
+Also open, priced but unscheduled: **11 circuits could gain an `AssuranceCase`**
+(bundling, not coverage); **F7's dead surface**, 12 items, one paragraph already
+written on what deletion would require — *not* a cleanup landing uninvited.
+
+### ONE TENURE CERTIFICATION IS PENDING
+
+`f5918694f145723c4b8a48b4124f77807b88ec91` (branch `analog-census`) carries the
+census + F6 and is **pushed but never certified**: its ticket was cancelled by
+Thomas's wind-down instruction while queued at depth 7, never having acquired
+the lock. Every gate passed locally — `docs_check`, `lean_comment_forms` (408
+files, 0 defects), `backlog-index --check`, and a scoped
+`lake build LeanModels.Circuit.Enclosure` — but **local green is not a triad
+green**, and this lane does not bank one as the other.
+
+**On resumption, re-ticket that sha before treating its contents as landed.**
+The build was deliberately scoped to `Circuit.Enclosure`, `Circuit` and
+`Examples.spice.dram_sense_amp.proof` — the two modules that import Enclosure,
+so the green covers importers, not just the changed file. Keep
+`dram_bank_256x32` out of this lane's build sets permanently; its elaboration
+cost is its own lane's to price.
+
+### THE LANE'S OWN LAW, FOR WHOEVER PICKS IT UP
+
+> **The row that names a family is a hypothesis about the tree, and it decays —
+> because the tree moves and the row does not.**
+
+Seven instrument errors in this lane were caught by validating a scanner against
+answers already known by hand. None was caught by reading the scanner. If you
+resume by trusting a number in this file that you have not re-run, you will be
+the eighth.

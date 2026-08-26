@@ -65,6 +65,82 @@ theorem RatInterval.mulNonnegative_contains
   exact ⟨mul_le_mul hxl hyl (by exact_mod_cast hrightNonnegative) hx,
     mul_le_mul hxu hyu hy (le_trans hx hxu)⟩
 
+/-! ## Signed interval arithmetic (family F6)
+
+`add` and `mulNonnegative` were the whole algebra until this landing, and
+`mulNonnegative` needs BOTH operands nonnegative -- which a voltage difference
+or a gain is not. The four lemmas below vary one factor at a time, which is the
+entire content of sign-mixed multiplication: a product over a rectangle attains
+its extremes at the corners because it is monotone in each factor separately,
+the direction depending on the sign of the other.
+-/
+
+/-- Varying the LEFT factor over an interval: the product is bounded by the
+value at one endpoint or the other, whichever way the right factor points. -/
+theorem mul_le_max_left {a b x t : ℝ} (hax : a ≤ x) (hxb : x ≤ b) :
+    x * t ≤ max (a * t) (b * t) := by
+  rcases le_or_gt 0 t with ht | ht
+  · exact le_max_of_le_right (mul_le_mul_of_nonneg_right hxb ht)
+  · exact le_max_of_le_left (mul_le_mul_of_nonpos_right hax ht.le)
+
+theorem min_le_mul_left {a b x t : ℝ} (hax : a ≤ x) (hxb : x ≤ b) :
+    min (a * t) (b * t) ≤ x * t := by
+  rcases le_or_gt 0 t with ht | ht
+  · exact le_trans (min_le_left _ _) (mul_le_mul_of_nonneg_right hax ht)
+  · exact le_trans (min_le_right _ _) (mul_le_mul_of_nonpos_right hxb ht.le)
+
+/-- Varying the RIGHT factor, with the left one fixed. -/
+theorem mul_le_max_right {c d y s : ℝ} (hcy : c ≤ y) (hyd : y ≤ d) :
+    s * y ≤ max (s * c) (s * d) := by
+  rcases le_or_gt 0 s with hs | hs
+  · exact le_max_of_le_right (mul_le_mul_of_nonneg_left hyd hs)
+  · exact le_max_of_le_left (mul_le_mul_of_nonpos_left hcy hs.le)
+
+theorem min_le_mul_right {c d y s : ℝ} (hcy : c ≤ y) (hyd : y ≤ d) :
+    min (s * c) (s * d) ≤ s * y := by
+  rcases le_or_gt 0 s with hs | hs
+  · exact le_trans (min_le_left _ _) (mul_le_mul_of_nonneg_left hcy hs)
+  · exact le_trans (min_le_right _ _) (mul_le_mul_of_nonpos_left hyd hs.le)
+
+def RatInterval.neg (i : RatInterval) : RatInterval := ⟨-i.upper, -i.lower⟩
+
+def RatInterval.sub (left right : RatInterval) : RatInterval :=
+  ⟨left.lower - right.upper, left.upper - right.lower⟩
+
+/-- Sign-mixed product: the four corner products, min and max.  Unlike
+`mulNonnegative` this needs no sign hypothesis on either operand. -/
+def RatInterval.mul (left right : RatInterval) : RatInterval :=
+  ⟨min (min (left.lower * right.lower) (left.lower * right.upper))
+       (min (left.upper * right.lower) (left.upper * right.upper)),
+   max (max (left.lower * right.lower) (left.lower * right.upper))
+       (max (left.upper * right.lower) (left.upper * right.upper))⟩
+
+theorem RatInterval.neg_contains {i : RatInterval} {x : ℝ}
+    (h : i.Contains x) : i.neg.Contains (-x) := by
+  rcases h with ⟨hl, hu⟩
+  simp only [Contains, neg, Rat.cast_neg]
+  constructor <;> linarith
+
+theorem RatInterval.sub_contains
+    {left right : RatInterval} {x y : ℝ}
+    (hleft : left.Contains x) (hright : right.Contains y) :
+    (left.sub right).Contains (x - y) := by
+  rcases hleft with ⟨hxl, hxu⟩
+  rcases hright with ⟨hyl, hyu⟩
+  simp only [Contains, sub, Rat.cast_sub]
+  constructor <;> linarith
+
+theorem RatInterval.mul_contains
+    {left right : RatInterval} {x y : ℝ}
+    (hleft : left.Contains x) (hright : right.Contains y) :
+    (left.mul right).Contains (x * y) := by
+  rcases hleft with ⟨hxl, hxu⟩
+  rcases hright with ⟨hyl, hyu⟩
+  simp only [Contains, mul, Rat.cast_min, Rat.cast_max, Rat.cast_mul]
+  refine ⟨le_trans ?_ (min_le_mul_left hxl hxu), le_trans (mul_le_max_left hxl hxu) ?_⟩
+  · exact min_le_min (min_le_mul_right hyl hyu) (min_le_mul_right hyl hyu)
+  · exact max_le_max (mul_le_max_right hyl hyu) (mul_le_max_right hyl hyu)
+
 /-- Tight independent-corner enclosure for
 `supply * bottom / (top + bottom)`.
 

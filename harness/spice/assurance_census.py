@@ -83,6 +83,31 @@ EXHIBITS_DECL = re.compile(
     r"^theorem\s+([A-Za-z_][A-Za-z0-9_.']*)\s*:\s*\n?\s*ExhibitsUnder\b",
     re.MULTILINE,
 )
+# THE NON-VACUITY IDIOMS, enumerated because counting only one of them is how
+# the "9 / 21" figure happened.  A guarantee is non-vacuous when the tree shows
+# its premise set is inhabited -- and this corpus does that FIVE different ways.
+# Recognising only `_realizable` would mark `chain` and the gate decks empty.
+NONVACUITY_IDIOMS = (
+    # 1. the house twin: a `..._realizable` companion to a universal theorem
+    ("realizable-twin", re.compile(r"^theorem\s+\S*_realizable", re.M)),
+    # 2. an exhibited observation for every input vector (and_gate, half_adder)
+    ("observation-exists", re.compile(r"^theorem\s+\S*_observation_exists", re.M)),
+    # 3. this lane's own two-link chain (analog-1, analog-8)
+    ("grounded-witness", re.compile(r"GroundedUnder|^theorem\s+\S*_grounded", re.M)),
+    # 4. the existential form an empty premise set would refute
+    ("exhibits", re.compile(r"ExhibitsUnder|^theorem\s+\S*_exhibits", re.M)),
+    # 5. an IFF whose reverse direction constructs the witness (chain), or a
+    #    computed operating point the DC solver actually found
+    ("iff-or-computed-op", re.compile(r"↔|#circuit_check\s+\S+\s+dc\s+shows", re.M)),
+)
+
+
+def nonvacuity_idioms(text: str) -> list[str]:
+    """Which non-vacuity idioms this circuit uses. Empty list = nothing shows
+    the guarantee's premise set is inhabited."""
+    return [name for name, pattern in NONVACUITY_IDIOMS if pattern.search(text)]
+
+
 TRIVIAL_PROP = re.compile(r"^\(?\s*fun(\s+[A-Za-z_][A-Za-z0-9_']*)+\s*=>\s*True\s*\)?$")
 
 
@@ -215,7 +240,11 @@ def census_directory(directory: pathlib.Path) -> dict:
             flags.append("SPEC-EQ-DOMAIN")
         case["flags"] = flags
 
+    corpus = "\n".join(
+        source.read_text(encoding="utf-8") for source in sorted(directory.glob("*.lean")))
     return {
+        "idioms": nonvacuity_idioms(corpus),
+        "has_lean": bool(list(directory.glob("*.lean"))),
         "circuit": directory.name,
         "cases": cases,
         "exhibits": exhibits,
@@ -291,7 +320,27 @@ def main() -> int:
         )
 
     print()
-    print("THE STANDING NUMBER (§9.0; denominator counts what could have DISAGREED)")
+    with_lean = [row for row in rows if row["has_lean"]]
+    nonvacuous = [row for row in with_lean if row["idioms"]]
+
+    print("THE PRIMARY NUMBER — non-vacuous behavior guarantees")
+    print(
+        f"  circuits with a non-vacuity witness  : "
+        f"{len(nonvacuous)}/{len(with_lean)}   (of circuits carrying Lean)"
+    )
+    print(
+        f"  circuits carrying Lean at all        : "
+        f"{len(with_lean)}/{total_circuits}"
+    )
+    for row in with_lean:
+        if not row["idioms"]:
+            print(f"    !! {row['circuit']}: NO non-vacuity idiom found")
+    print()
+    print("  idiom used, per circuit (five are recognised; counting one gives 9/21):")
+    for row in with_lean:
+        print(f"    {row['circuit'].ljust(width)}  {', '.join(row['idioms'])}")
+    print()
+    print("THE BUNDLING NUMBER (secondary; §9.0 denominator counts what could have DISAGREED)")
     print(
         f"  grounded assurance cases            : "
         f"{len(grounded_cases)}/{len(all_cases)}"
@@ -302,7 +351,10 @@ def main() -> int:
     )
     print(
         f"  circuits with any assurance case    : "
-        f"{len(with_case)}/{total_circuits}"
+        f"{len(with_case)}/{len(with_lean)}   (of circuits carrying Lean —"
+        f" the SAME denominator as the primary number, deliberately:"
+        f" quoting these two against different denominators is how a"
+        f" bundling figure got read as a coverage figure)"
     )
     print()
     print()

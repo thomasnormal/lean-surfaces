@@ -123,27 +123,33 @@ scratch iteration. `delegateNext` is the high-frequency one — most of `moves()
 is assignments and calls, not control flow — so the arm that covers the most
 statements is already in hand.
 
-**The arm ladder, as it stands.** Ten silent arms — `block_nil`, `while`,
-`branch` and its general form `branch'`, `delegateNext`, the two `forGen` frame
-steps, `forSeqNil`, `forSeqCons`, `enumSeqNil` — and four producing arms:
-`yield`, `nilCont`, `returnNone`, `enumSeqCons`. The producing four matter
-disproportionately, because they are what `GenYieldsM`'s constructors consume:
-with them the drain relation is INHABITED from the interpreter side rather than
-merely well-formed.
+**The arm ladder, as it stands.** Thirteen silent arms and five producing ones.
+The silent: `block_nil`, `while`, `branch` and its general form `branch'`,
+`delegateNext`, the two `forGen` frame steps, `forSeqNil`/`forSeqCons`,
+`enumSeqNil`, `forListDone`/`forListCons`, `enumListDone`. The producing:
+`yield`, `nilCont`, `returnNone`, `enumSeqCons`, `enumListCons`. The producing
+ones are what `GenYieldsM`'s constructors consume, so the drain relation is
+inhabited from the interpreter side rather than merely well-formed.
 
-**The repricing, now visible in the arms themselves.** An arm's cost is set by
-how much of its behaviour the FRAME already determines, and for a cursor the
-frame determines almost everything: three of §11's four arms take NO interpreter
-premise at all, and `genStep_enumSeqCons` — a PRODUCING arm — has no hypotheses
-whatsoever, because the pair it yields is computed from the frame's own fields.
-That is why rung 6 is priced as instantiations: the expensive part of a statement
-gate is the sub-runs a statement makes, and many statements make none.
+**The repricing, visible in the arms themselves.** An arm's cost is set by how
+much of its behaviour the FRAME already determines. §11's cursors carry their
+sequence in the frame, so three of its four arms take NO interpreter premise at
+all and `enumSeqCons` — a producing arm — has no hypotheses whatsoever. §12's
+cursors carry an ADDRESS, so they must read the heap first, and that read is
+their whole new content: a `Heap.get?` premise plus an in-range side condition.
+`toRun_frameHeap`, the lemma they all route through, is `rfl` and AXIOM-FREE.
 
-What the ladder still owes: the `.forHere` setup arm, the heap-reading frame
-cursors (`forList`, `forDict`, `enumList`), and the delegate arm's `.brk`/`.cont`
-unwinds. The heap-readers are the only ones with genuinely new content — they
-consult `Heap.get?` and so carry a real premise — and none of the rest is a new
-SHAPE.
+**And §12 is the boundary of the new material.** Every remaining frame arm is
+either a cursor of one of those two kinds — frame-carried or heap-carried — or a
+control transfer. There is no third species, which is what lets rung 6 be priced
+as instantiation rather than discovery.
+
+What the ladder still owes: `forDict` (the live dict cursor, whose three
+mutation regimes `dictStep` already decides), the remaining `.forHere` setup
+cases, and the delegate arm's `.brk`/`.cont` unwinds. The unwinds are written and
+carry real content — `break` does NOT fall through to the next statement, it asks
+`genBreak` where the enclosing loop ends and discards the rest of the block, so a
+lemma shaped like `delegateNext` would be quietly wrong.
 
 It also exposed a defect in this lane's own earlier work: §5's `genSilent_branch`
 hard-codes `Stmt.ifStmt`, which is the right shape for proving an arm EXISTS and

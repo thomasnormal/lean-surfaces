@@ -1400,3 +1400,172 @@ step that displaces the commit.
 ### Status
 
 Verdict pending.
+
+## 2026-08-26-sunfish-rtrack-18 — PARKED: the R-track's state at the wind-down
+
+The campaign is pausing to save tokens and free Lean resources. The park is
+indefinite. **This entry and `docs/sunfish-flagship-chain.md` are what resumption
+should read**, in that order: the chain document says how far there is to go, and
+this says exactly where the tools were put down.
+
+### §9.0 — 5 / 9
+
+Closed: rung 1 (flagship typed and assembling), rung 2 (generator judgment
+layer), rung 3 (`forGenChain`), rung 4 (`FoldInv` over `RoundOK`), rung 9 (the
+three tier surfaces, pyc's). Open: rung 5 and rung 6 (this lane's, entangled) and
+rung 8 (`BoundRefinesW V 0`, the base-case lane's). **The chain is wholly
+internal** — nothing waits on anyone outside the two proof lanes.
+
+### What is MERGED and needs nothing
+
+`monadic_gen.lean` through §12, last merged at `96f2653`: the `toRun` seam's
+consumers, the single-witness primitives, the drain's introduction rules,
+`GenSilentM` and its arms, `GenEmitsM` with `forGenRound` and `forGenChain`, the
+producing arms, the sequence cursors, and the heap-reading cursors. Eighteen arms
+in all — thirteen silent, five producing — plus `bound()`'s own fold round law
+(`forGen_step` / `forGen_done`, which live on `forGenAt`, NOT the `execGenAt`
+frame, because `bound()` is not itself a generator).
+
+### What is WRITTEN and NOT ELABORATED — the WIP
+
+Two batches were authored and never got a quiet enough machine. **They are
+preserved in the appendix below rather than under `Examples/`, deliberately: any
+file matching the `Examples.+` glob is BUILT, so committing unproven proofs there
+would break master for whoever resumes.** They are text in the ledger until
+someone elaborates them.
+
+1. **The `.brk`/`.cont` unwinds.** These carry real content and are the one place
+   in the remaining ladder where reasoning by analogy would produce a WRONG
+   lemma: `break` does not fall through to the next statement — the delegate
+   arm's `.brk` asks `genBreak` where the enclosing loop's frame ends and resumes
+   THERE, discarding the rest of the block. A lemma shaped like `delegateNext`
+   would be quietly false. `continue` is the same shape with `genContinue`; the
+   whole difference lives in the resolver, not in the interpreter's step.
+2. **The `forDict` live-dict cursor**, plus `toRun_dictStepM` — the step reads
+   the heap and decides but never moves the state, which is what lets every
+   `forDict` arm be stated against `st` alone.
+
+### What remains after those, and why it is cheap
+
+The remaining `.forHere` sub-cases (`.tuple`, `.ntuple`, `.str`, `.rangeV`, and
+the `.ref` cases for list / generator / dict) are **genuinely mechanical**: each
+is `genSilent_forHereList` with a different scrutinee and no new content.
+
+**Deliberately NOT stated, with the reason:** the `forDict` arm's `.resized` and
+`.rekeyed` cases. Those are LOUD outcomes — a `RuntimeError` for a dict that
+changed size mid-iteration, and a refusal for the key-set change whose answer
+depends on CPython's entries-array layout. They belong to the divergence story,
+not to the chain, and writing silent-transition lemmas for arms that are not
+silent would be a category error that reads as coverage.
+
+### Rung 6, once the ladder closes
+
+Rung 6 becomes **instantiation, not discovery**. Every frame arm is now one of
+exactly three species — frame-carried cursor, heap-carried cursor, or control
+transfer — so `bound()`'s ~57 interpreter-facing statements are ~57 applications
+of the arm lemmas, each supplying a `genPlan` equation (`rfl` on a slice) plus
+whatever sub-runs that statement makes. Many statements make none. The count 57
+is `docs/python-refounding-plan.md` §2.6's, counting only interpreter-facing
+statements; the raw 221-theorem and 63-slice figures are the wrong set.
+
+### Appendix — the WIP proofs, verbatim and unelaborated
+
+Neither block has been through Lean. Elaborate in a scratch file with
+`tools/check.sh --iterate` before moving either into `monadic_gen.lean`.
+
+    -- BATCH 1: the .brk / .cont unwinds  (UNELABORATED)
+    theorem genSilent_delegateBreak (m : Module) (st st₁ : FrameState) (s : Stmt)
+        (ss : List Stmt) (k' k'' : GenCont)
+        (hplan : genPlan s = .delegate)
+        (hbrk : genBreak k' = some k'')
+        (hrun : ∀ F, toRun (execOpen (kont m F) m s) st = .ok st₁ .brk) :
+        GenSilentM m st st₁ (.block (s :: ss) :: k') k'' :=
+      ⟨1, fun F => by
+        simp only [kont, execGenAt, hplan]
+        rw [toRun_bind, hrun F]
+        dsimp only [Run.bind]
+        simp only [hbrk]⟩
+
+    theorem genSilent_delegateContinue (m : Module) (st st₁ : FrameState) (s : Stmt)
+        (ss : List Stmt) (k' k'' : GenCont)
+        (hplan : genPlan s = .delegate)
+        (hcont : genContinue k' = some k'')
+        (hrun : ∀ F, toRun (execOpen (kont m F) m s) st = .ok st₁ .cont) :
+        GenSilentM m st st₁ (.block (s :: ss) :: k') k'' :=
+      ⟨1, fun F => by
+        simp only [kont, execGenAt, hplan]
+        rw [toRun_bind, hrun F]
+        dsimp only [Run.bind]
+        simp only [hcont]⟩
+
+    theorem genSilent_forHereList (m : Module) (st st₁ : FrameState) (s : Stmt)
+        (target iter : Expr) (body ss : List Stmt) (k' : GenCont) (xs : Array RVal)
+        (hplan : genPlan s = .forHere target iter body)
+        (hview : dictViewCall iter = Option.none)
+        (hev : ∀ F, toRun (evalOpen (kont m F) m iter) st = .ok st₁ (.listV xs)) :
+        GenSilentM m st st₁ (.block (s :: ss) :: k')
+          (.forSeq target xs.toList body :: .block ss :: k') :=
+      ⟨1, fun F => by
+        simp only [kont, execGenAt, hplan, hview]
+        rw [toRun_bind, hev F]
+        rfl⟩
+
+    -- BATCH 2: the live dict cursor  (UNELABORATED)
+    theorem toRun_dictStepM (st : FrameState) (ad i n sv : Nat)
+        (kind : DictViewKind) (es : Array (RVal × RVal)) (sv' : Nat)
+        (hheap : Heap.get? st.world.heap ad = some (.dict es sv')) :
+        toRun (dictStepM ad i n sv kind) st
+          = .ok st (some (dictStep es sv' i n sv kind)) := by
+      simp only [dictStepM]
+      rw [toRun_bind, toRun_frameHeap]
+      dsimp only [Run.bind]
+      simp only [hheap]
+      exact toRun_pure _ _
+
+    theorem genSilent_forDictDone (m : Module) (st : FrameState) (target : Expr)
+        (ad i n sv : Nat) (kind : DictViewKind) (body : List Stmt) (k' : GenCont)
+        (es : Array (RVal × RVal)) (sv' : Nat)
+        (hheap : Heap.get? st.world.heap ad = some (.dict es sv'))
+        (hstep : dictStep es sv' i n sv kind = .done) :
+        GenSilentM m st st (.forDict target ad i n sv kind body :: k') k' :=
+      ⟨1, fun F => by
+        simp only [kont, execGenAt]
+        rw [toRun_bind, toRun_dictStepM st ad i n sv kind es sv' hheap]
+        dsimp only [Run.bind]
+        simp only [hstep]⟩
+
+    theorem genSilent_forDictYield (m : Module) (st st₁ : FrameState) (target : Expr)
+        (ad i n sv : Nat) (kind : DictViewKind) (body : List Stmt) (k' : GenCont)
+        (es : Array (RVal × RVal)) (sv' : Nat) (kv : RVal)
+        (hheap : Heap.get? st.world.heap ad = some (.dict es sv'))
+        (hstep : dictStep es sv' i n sv kind = .yieldVal kv)
+        (hasg : toRun (assignM target kv) st = .ok st₁ ()) :
+        GenSilentM m st st₁ (.forDict target ad i n sv kind body :: k')
+          (.block body :: .forDict target ad (i + 1) n sv kind body :: k') :=
+      ⟨1, fun F => by
+        simp only [kont, execGenAt]
+        rw [toRun_bind, toRun_dictStepM st ad i n sv kind es sv' hheap]
+        dsimp only [Run.bind]
+        simp only [hstep]
+        rw [toRun_bind, hasg]
+        rfl⟩
+
+### The two laws this stretch paid for, for whoever resumes
+
+**A ported lemma can be true, green, and unusable.** §5's `genSilent_branch`
+hard-codes `Stmt.ifStmt`; a real statement slice presents as an opaque `Stmt`
+with a computed `genPlan`. The re-founding copied the trunk's PROOF without
+copying its INTERFACE. Before landing a re-founded lemma, name the first caller
+it must serve and confirm the shapes meet.
+
+**Commit before reporting — and re-check any ticket you could not watch.** Twice
+a green tenure sat staged-uncommitted while this lane wrote its report; once it
+sat 24 hours because the verdict arrived only when the session resumed. The rule
+"verdict → commit → push → report" cannot fire if the verdict never reaches you,
+so its second half is: open every turn by checking for an unclaimed verdict
+before doing anything else.
+
+### Status
+
+PARKED. Nothing of this lane's is running: no ticket queued, no lock held, no
+Lean process in `scratchpad/lean-monadic`.

@@ -357,11 +357,33 @@ structure Layout where
   §6.7.11p9 initializes members in order, so the order is load-bearing and
   not a convenience. `none` for a non-structure type. -/
   members : CType → Option (List (String × CType)) := fun _ => none
+  /-- **The spelling, normalized: qualifiers stripped and typedefs resolved.**
+
+  A type name in the corpus is not a type. `ull` is `unsigned long` in
+  20000402-1.c and `unsigned long long` in 20041011-1.c — THE SAME SPELLING,
+  TWO TYPES, because a typedef is per-translation-unit. That is why this is a
+  field on the layout (which is built from one unit's own typedefs) and not
+  another row in `intTyOf?`'s table: a table would have to pick one of the two
+  and be wrong about the other program. The bit-field and `array_filler`
+  findings say the same thing from the extractor's side — a per-program fact
+  must be read per program.
+
+  Stripping the qualifiers is §6.2.5p28: qualified and unqualified versions
+  of a type have the same representation and alignment, which is exactly and
+  only what a WIDTH question needs. It is not a claim that `volatile` has no
+  meaning; the tier does not model volatile access ordering, and this field
+  does not pretend otherwise.
+
+  The default is `id`, so a layout that knows nothing normalizes nothing and
+  every refusal stays exactly as loud as it was. -/
+  normalizeTy : CType → CType := id
 
 /-- A layout that knows nothing: every query refuses. The DEFAULT, so a
 missing layout fact is a loud refusal rather than a guessed offset. -/
 def Layout.unknown : Layout :=
-  ⟨fun _ => none, fun _ _ => none, fun _ => none, fun _ => none⟩
+  { size := fun _ => none, fieldOff := fun _ _ => none
+    elem := fun _ => none, members := fun _ => none
+    normalizeTy := id }
 
 /-! ## The evaluation context
 
@@ -566,7 +588,7 @@ def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal
       -- Shifts take the LEFT operand's type (§6.5.8p3); every other
       -- operator has already had both operands converted to a common type.
       if op == "<<" || op == ">>" then intBinop op t a b
-      else match intTyOf? ty with
+      else match intTyOf? (ctx.layout.normalizeTy ty) with
         | some rt => intBinop op rt a b
         | none => intBinop op t a b        -- a comparison: the result is `int`
   | _, _ => refuseUB (.indetAutomatic 0 0)
@@ -624,7 +646,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       if ck == "LValueToRValue" then do
         -- §6.3.2.1p2 — 1837 sites, the load-bearing implicit of the corpus.
         let p ← evalLValue ctx sub
-        loadAt p ty
+        loadAt p (ctx.layout.normalizeTy ty)
       else if ck == "ArrayToPointerDecay" then do
         -- §6.3.2.1p3 — 405 sites, the LARGEST pointer producer there is.
         let p ← evalLValue ctx sub
@@ -637,7 +659,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- answer to `J.3.6(3)`, not the standard's (see `Value.convert`).
         let v ← evalExpr ctx sub
         let (_, n) ← asInt v
-        let t ← intTyOf ty
+        let t ← intTyOf (ctx.layout.normalizeTy ty)
         pure (convert t n)
       else if ck == "NoOp" then
         -- A qualifier or typedef change: the VALUE is untouched. 217 sites,
@@ -684,7 +706,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- expressions by inspection (`docs/c-semantics-design.md` §4.4).
         let p ← evalLValue ctx l
         let v ← evalExpr ctx r
-        storeAt p l.ty v
+        storeAt p (ctx.layout.normalizeTy l.ty) v
         pure v
       else do
         let lv ← evalExpr ctx l
@@ -707,7 +729,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- §6.5.4.2p4 — indirection reaching value position directly.
         let v ← evalExpr ctx sub
         let p ← asPtr v
-        loadAt p ty
+        loadAt p (ctx.layout.normalizeTy ty)
       else if op == "!" then do
         -- §6.5.4.3p5 — `!x` is `(0 == x)`. 80 sites.
         let v ← evalExpr ctx sub
@@ -726,12 +748,12 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- POSTFIX; it never writes `++i`. Postfix yields the value BEFORE
         -- the update, and the update itself can overflow (`J.2(35)`).
         let p ← evalLValue ctx sub
-        let old ← loadAt p sub.ty
+        let old ← loadAt p (ctx.layout.normalizeTy sub.ty)
         let (t, n) ← asInt old
         match (if op == "++" then addOp t n 1 else subOp t n 1) with
         | .ub u => refuseValue u
         | .ok nv => do
-            storeAt p sub.ty nv
+            storeAt p (ctx.layout.normalizeTy sub.ty) nv
             pure (if post then old else nv)
       else refuseUnsupported s!"unary operator '{op}'"
 
@@ -739,10 +761,10 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- lvalue evaluated ONCE. 24 sites (`+=` 10, `|=` 6, `^=` 3, `-=` 3, `*=` 2).
   | .compoundAssign op l r ty _ => do
       let p ← evalLValue ctx l
-      let old ← loadAt p l.ty
+      let old ← loadAt p (ctx.layout.normalizeTy l.ty)
       let rv ← evalExpr ctx r
       let nv ← evalArith ctx (compoundBase op) old rv ty
-      storeAt p l.ty nv
+      storeAt p (ctx.layout.normalizeTy l.ty) nv
       pure nv
 
   -- ===== lvalues reaching value position without a conversion =====
@@ -751,19 +773,19 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- either way (§6.3.2.1p2).
   | .member base field arrow ty _ => do
       let p ← memberAddr ctx base field arrow
-      loadAt p ty
+      loadAt p (ctx.layout.normalizeTy ty)
   | .index base idx ty _ => do
       let p ← indexAddr ctx base idx ty
-      loadAt p ty
+      loadAt p (ctx.layout.normalizeTy ty)
 
   -- ===== §6.4.4 — constants =====
   | .intLit v ty _ => do
-      let t ← intTyOf ty
+      let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with
       | some n => pure (.int t n)
       | none => refuseUnsupported s!"integer literal spelling '{v}'"
   | .charLit v ty _ => do
-      let t ← intTyOf ty
+      let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with
       | some n => pure (.int t n)
       | none => refuseUnsupported s!"character literal spelling '{v}'"
@@ -775,7 +797,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .declRef name declKind ty _ =>
       if declKind == "EnumConstantDecl" then
         match (ctx.enums.find? (·.1 == name)).map (·.2) with
-        | some n => do let t ← intTyOf ty; pure (.int t n)
+        | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t n)
         | none => refuseUnsupported s!"unknown enum constant '{name}'"
       else refuseUnsupported s!"name '{name}' in value position without a conversion"
 
@@ -794,11 +816,11 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
                    | some a => some a
                    | none => sub.map Expr.ty
         match key.bind ctx.layout.size with
-        | some n => do let t ← intTyOf ty; pure (.int t (n : Int))
+        | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t (n : Int))
         | none => refuseUnsupported "sizeof: no layout for the operand type"
 
   | .constExpr v _ ty _ => do
-      let t ← intTyOf ty
+      let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with
       | some n => pure (.int t n)
       | none => refuseUnsupported s!"constant expression '{v}'"

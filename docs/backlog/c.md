@@ -3698,3 +3698,157 @@ the number stopped containing any claim the model could not support.
 
 **§9.0 standing number: `gcc.c-torture` 105/300 scored (passed 105,
 failed 0).**
+
+## 2026-08-26-c-34 — A TYPE NAME IS NOT A TYPE, and the prediction was READ rather than reasoned
+
+The frontier the ledger named — "54 of the 154 unsupported are struct/union
+`no layout`" — is stale, and the first act of this inch was re-measuring it.
+After 2026-08-26-c-31 the unsupported bucket is 145, and `no layout` is
+**19**, not 54: the alignment rung already took most of that bucket. The
+largest bucket is now `not an integer type` at 21. **A frontier is a
+measurement with a date on it, and this one had been overtaken by our own
+landing.**
+
+**THE FINDING.** Of those 21, thirteen are structs (correctly refused — a
+struct is not an integer). The rest are not exotic at all: `ull`, `u8`,
+`CORE_ADDR`, `uint64`, `volatile short`. `intTyOf?` is a TABLE, deliberately
+so, and its docstring says why: *"these four are the ONLY qualified integer
+spellings on an expression node in the corpus … zero `volatile`."* That
+measurement is now false — `20030128-1.c` reaches evaluation with a
+`volatile short` because c-31's pointer fix let it get that far. **A table
+justified by a census expires when the census does.**
+
+The typedefs cannot be tabled at all, and the corpus proves it rather than
+suggesting it:
+
+    20000402-1.c   typedef unsigned long       ull
+    20041011-1.c   typedef unsigned long long  ull
+
+**The same spelling is two different types in two programs.** A row in a
+table would have to pick one and be wrong about the other. This is the
+extractor findings (`array_filler`, bit-field widths) arriving from the
+other side of the same law: **a per-program fact must be read per program.**
+So the normalizer is a field on `Layout`, which is built from one unit's own
+typedefs, and `intTyOf?`'s table is left exactly as it is.
+
+Qualifier stripping is §6.2.5p28 — a qualified type has the same
+representation and alignment as its unqualified version — which is precisely
+and only what a WIDTH or SIZE question is entitled to assume. It is not a
+claim that `volatile` means nothing; the tier does not model volatile access
+ordering and the field does not pretend it does.
+
+**THE PREDICTION WAS MEASURED, NOT DERIVED.** c-32 recorded that a corpus can
+be counted rather than estimated. This inch goes one better, because the fix
+happens to be a transformation that can be applied to the ENVELOPES: strip
+the qualifiers and resolve the typedefs in 270 copies, and the PREVIOUS
+tenure's binary answers the question directly. 6434 spellings rewritten, one
+run, no build, no lock:
+
+    105/300 (passed 105, failed 0)  ->  109/300 (passed 109, failed 0)
+
+Four flip: `20000314-2` (`const uint64`), `20000402-1` (`ull`),
+`20020904-1` (`u8`), `20030128-1` (`volatile short`). Six get a truer
+refusal message (`'trio'` -> `'struct trio'`). **Three do NOT flip, and that
+is the part worth having**: `20020108-1` stops at `out of tier: NullStmt`,
+`20020402-3` at `ImplicitValueInitExpr`, `20041011-1` at unary `'~'`. I had
+scanned those same envelopes statically for exactly this and scored them
+clean — the static scan said "no risky kinds" for all three. **The scan was
+wrong and the run was right**, and had I shipped the scan's answer the
+prediction would have missed by three.
+
+  The law: **when the fix is a transformation, apply it to the INPUT and
+  read the answer off — do not reason about it.** A prediction you can run
+  is not a prediction.
+
+**A GAP NAMED, NOT CARRIED.** `__attribute__((packed))` is dropped by the
+extractor — the third instance of the same law, after `array_filler` and
+bit-field widths. Censused: 7 of the 300 tests have a packed record; 6
+refuse or do not parse, and the one that PASSES (`20040625-1`) is a
+single-pointer struct whose only member is at offset 0 under either rule, so
+**no wrong answer exists today, measured.** That is a gap to name, not a
+divergence to carry, and it gets no register row because there is nothing
+diverging. It becomes live the moment a named packed record with two members
+reaches layout, and the fix is the same shape as the bit-field one.
+
+**RIDE-ALONG: the C envelope was a build input tracked by nothing.**
+`Examples/c/sunfish/guards.lean` does `load_c_program … from
+"Examples/c/sunfish/sunfish.json"` at elaboration time, and `Examples`'
+`needs` listed circuit, verilog-a and python — not C. 754572e closed exactly
+this for python; the C tier had the same hole one directory over. Declared
+now as `cEnvelopes`. **A byte-identical regeneration selftest proves the file
+is REPRODUCIBLE; only the lakefile makes a CHANGED file rebuild** — the
+selftest this lane already had covers the other half. The 270 torture
+envelopes are not and cannot be tracked this way (GPL, outside the tree by
+§2); they are pinned by content hash, which buys the same guarantee
+differently.
+
+**Predicted vector, committed before the tenure:** `passed 109, failed 0,
+refused-unsupported 141, refused-libc 9, refused-ub 7,
+oracle-tests-compiler 1, timeout 2, not-ingested 1, not-parsed 30`.
+
+**§9.0 standing number until it runs: `gcc.c-torture` 105/300 scored
+(passed 105, failed 0).**
+
+## 2026-08-26-c-35 — PARKED, and the one thing that will mislead you
+
+The campaign is paused. This entry is written for whoever resumes, and the
+first paragraph is the one that matters.
+
+**THE BRANCH'S SCOREBOARD IS A PREDICTION THAT NEVER RAN.** Master is at
+`gcc.c-torture 105/300 scored (passed 105, failed 0)`, adjudicated green
+(2026-08-26-c-32). The `c-align` branch carries one further commit whose
+`docs/c-torture-scoreboard.json` says **109**, and **no tenure ever
+adjudicated it** — the ticket was cancelled at wind-down while queued
+seventh, before it reached the lock. So:
+
+* **105 is the standing §9.0 number.** Quote that one.
+* 109 is a committed prediction with evidence behind it (below), not a
+  result. Do not quote it as a number.
+* **The mechanism will catch this by itself.** `tools/c_torture_gate.sh`
+  compares the committed board against every fresh run, so the first tenure
+  that runs on `c-align` either goes green (the prediction was right) or goes
+  RED and prints both vectors (the prediction was wrong, and the red is the
+  measurement). Nothing here can rot silently. **That is the whole point of
+  committing the vector before the tenure, and it is worth more when a lane
+  is parked than when it is running.**
+
+**FLOOR STATE.** 105 passed / 0 failed / 145 refused-unsupported / 9 libc /
+7 ub / 1 oracle-tests-compiler / 2 timeout / 1 not-ingested / 30 not-parsed.
+`failed 0` is the property to protect: the model refuses or it is right.
+Twice now a landing broke it (c-31) and the gate caught it.
+
+**WHAT IS ON `c-align`, UNADJUDICATED.** A `normalizeTy` field on `Layout`
+— qualifiers stripped (§6.2.5p28) and typedefs resolved from the unit's own
+table — applied at 19 call sites where `ctx`/`lay` was already in scope, so
+no signature and no proof changed. Plus `sizeAlign` stripping qualifiers,
+plus the `cEnvelopes` lakefile input. The predicted vector is `passed 109,
+failed 0, refused-unsupported 141`, and it was **measured, not reasoned**:
+the fix is a transformation, so it was applied to 270 copies of the
+envelopes and the previous tenure's binary was run against them. See c-34.
+
+**THE NEXT STEP, sized.** The bucket motion the ledger has been carrying as
+"54 struct/union" is stale — after the alignment rung it is **19** `no
+layout`, of which 8 are floats (a named decision, not this lane's), leaving
+~11 real struct/union cases: anonymous records behind a typedef
+(`20010518-2`, `20031201-1`), `int[2][1]` (multi-dimensional — `arrayOf` is
+single-dimension BY DESIGN and says so), and `Data[4]`/`struct A`. The
+largest bucket is no longer struct/union at all: it is `not an integer type`
+at 21, thirteen of which are structs correctly refused.
+
+**THE DISCIPLINE, in one line, because it is the thing this lane actually
+learned.** A prediction over a corpus is arithmetic on NAMED TESTS, never an
+estimate of a bucket total — 110 was estimated and missed by 7; 105 was
+enumerated and was exact; 109 was RUN and is the strongest of the three.
+When the fix is a transformation, apply it to the input and read the answer
+off. And when a static scan and a run disagree, the run is right: the scan
+scored three tests clean that the run showed stopping at `NullStmt`,
+`ImplicitValueInitExpr` and unary `~`.
+
+**KNOWN GAPS, named and measured, none of them divergences.**
+`__attribute__((packed))` is dropped by the extractor (7 tests carry it; the
+one that passes is rule-independent, so no wrong answer exists today).
+`triad.sh`'s IMPORTED-BY-NOTHING warning is a false positive for
+`LeanModels/C/Torture.lean` since it became a `lean_exe` root in
+`defaultTargets` — filed as 2026-08-26-c-33 in QoL's ledger. That same change
+means `check.sh --iterate` refuses the file, so the lane's fast loop now
+costs a tenure.

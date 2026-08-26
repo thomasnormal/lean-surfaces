@@ -249,7 +249,13 @@ def sizeAlign (tds : List (CType × CType))
     Nat → CType → Option (Nat × Nat)
   | 0, _ => none
   | n + 1, t0 =>
-      let t := resolve tds 8 t0
+      -- QUALIFIERS COME OFF BEFORE THE TYPEDEF IS RESOLVED, and both come off
+      -- before anything is asked about the type. §6.2.5p28: a qualified type
+      -- has the SAME representation and alignment as its unqualified version,
+      -- so a size question is entitled to ignore the qualifier -- and only a
+      -- size question is. Without this, a file-scope `volatile short` has no
+      -- size and its whole program refuses (20030128-1.c).
+      let t := resolve tds 8 (stripQuals 8 t0)
       match torScalarSize t with
       | some sz => some (sz, sz)
       | none =>
@@ -310,7 +316,12 @@ def layoutFor (envl : Envelope) : Layout :=
     fieldOff := fun t f => fieldOffIn tds recs 16 t f
     members := fun t =>
       (recordTag (resolve tds 8 (stripQuals 8 t))).bind fun tag =>
-        (recs.find? (·.1 == tag)).map (·.2) }
+        (recs.find? (·.1 == tag)).map (·.2)
+    -- The evaluator's own normalizer, built from THIS unit's typedefs. The
+    -- table in `intTyOf?` cannot do this job: `ull` is `unsigned long` in one
+    -- test and `unsigned long long` in another, so the answer is a property
+    -- of the translation unit and not of the spelling.
+    normalizeTy := fun t => resolve tds 8 (stripQuals 8 t) }
 
 /-- Peel the conversions a value arrives wrapped in. -/
 def peelVal : Expr → Expr

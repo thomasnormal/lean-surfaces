@@ -31,7 +31,7 @@ name = "LeanModels"
 [[lean_lib]]
 name = "Examples"
 globs = ["Examples.+"]
-needs = ["circuitSources", "verilogASources", "pythonEnvelopes"]
+needs = ["circuitSources", "verilogASources", "pythonEnvelopes", "cEnvelopes"]
 
 [[input_dir]]
 name = "circuitSources"
@@ -48,6 +48,22 @@ filter = { extension = ["cir", "json"] }
 [[input_dir]]
 name = "pythonEnvelopes"
 path = "Examples/python"
+text = true
+filter = { extension = ["json"] }
+
+# THE C TIER'S OWN ENVELOPE, and the same omission one tier over.  754572e
+# closed this for python and named the shape; `Examples/c/sunfish/guards.lean`
+# does `load_c_program sunfishC from "Examples/c/sunfish/sunfish.json"` at
+# ELABORATION time, so that file is a build input and was tracked by nothing.
+# Regenerating the envelope did not invalidate the guards that read it, which
+# is the half a byte-identical regeneration selftest cannot cover: the selftest
+# proves the file is REPRODUCIBLE, this makes a CHANGED file rebuild.
+# (The 270 gcc.c-torture envelopes are NOT here and cannot be: the corpus is
+# GPL and lives outside the tree by docs/c23-goal.md §2. They are pinned by
+# content hash instead, which is the same guarantee bought a different way.)
+[[input_dir]]
+name = "cEnvelopes"
+path = "Examples/c"
 text = true
 filter = { extension = ["json"] }
 

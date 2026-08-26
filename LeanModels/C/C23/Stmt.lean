@@ -182,7 +182,7 @@ storage duration. Type-directed: see the section note. -/
 def zeroInit : Nat → Ctx → Ptr → CType → ExecM Unit
   | 0, _, _, _ => exhausted
   | fuel + 1, ctx, p, ty =>
-    match intTyOf? ty with
+    match intTyOf? (ctx.layout.normalizeTy ty) with
     -- an integer member: the value zero at its own width
     | some t => liftEval (writeMem (fun m => Mem.storeInt m p t 0))
     | none =>
@@ -249,7 +249,7 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
     -- §6.7.11p11 — a scalar initializer is a single expression.
     | _ => do
         let v ← evalE ctx e
-        liftEval (storeAt p ty v)
+        liftEval (storeAt p (ctx.layout.normalizeTy ty) v)
 
 /-- Array elements, then zero-fill (§6.7.11p10). -/
 def initElems : Nat → Ctx → Ptr → CType → Nat → Nat → Nat → List Expr → ExecM Unit
@@ -527,7 +527,7 @@ def bindParams (lay : Layout) : Ctx → List LeanModels.C.Decl → List CVal →
             let m ← get
             let (m', o) := m.alloc .automatic sz (some ty)
             set m'
-            liftEval (storeAt (Ptr.toObject o) ty v)
+            liftEval (storeAt (Ptr.toObject o) (lay.normalizeTy ty) v)
             -- …and the ONLY difference an unnamed parameter makes is that
             -- no identifier denotes the object, which in this model is
             -- exactly one thing: no environment entry. This is the single

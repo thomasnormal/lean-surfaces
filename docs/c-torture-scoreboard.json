@@ -6,18 +6,18 @@
   "not-ingested": 1,
   "not-parsed": 30,
   "oracle-tests-compiler": 1,
-  "passed": 105,
+  "passed": 109,
   "refused-libc": 9,
   "refused-ub": 7,
-  "refused-unsupported": 145,
+  "refused-unsupported": 141,
   "runner-error": 0,
   "timeout": 2
  },
  "failed_tests": [],
- "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log. The pin is docs/c-torture-pin.json. This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published. THIS VECTOR WAS PREDICTED BEFORE ITS TENURE and the tenure ADJUDICATED IT EXACTLY -- every bucket, `c_torture_gate: committed scoreboard matches this run (105/300 scored)`. It was derived rather than guessed: the 15 tests containing pointer +/- were enumerated from the envelopes, joined to the previous run's per-test verdicts, and each decided by reading its source. Scored is unchanged at 105 while `failed` went 2 -> 0, so the same number became entirely passes. tools/c_torture_gate.sh compares this file against every fresh run, so the next drift is a red gate that prints both vectors rather than a paragraph written later.",
+ "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log. The pin is docs/c-torture-pin.json. This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published. THIS VECTOR WAS MEASURED BEFORE ITS TENURE, not estimated: the fix normalizes type spellings (qualifiers stripped, typedefs resolved per translation unit), and that is exactly the transformation a pre-pass can apply to the ENVELOPES, so the previous tenure's own binary was run against 270 rewritten envelopes to read the answer off. It moved 105 -> 109 passed with failed still 0, and it named the next refusal for the three tests that do NOT flip -- NullStmt, ImplicitValueInitExpr and unary '~' -- which a static scan of the same envelopes had missed. tools/c_torture_gate.sh compares this file against the fresh run, so a miss is a red gate that prints both vectors.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"
  ],
- "scored": 105,
+ "scored": 109,
  "total": 300
 }

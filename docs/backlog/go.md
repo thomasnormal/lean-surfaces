@@ -8,6 +8,65 @@ The founding charter is `docs/go-charter.md`; the founding landing is
 
 ---
 
+### PARKED — where the Go lane stands (standing; read this first on resumption)
+
+**Paused 2026-08-26** by Thomas's wind-down. Nothing is in flight: no
+ticket queued, no work in progress, the tree clean at `f9814df` and every
+landing on master. There is no half-built rung to recover — §G31 was
+named and priced, never started.
+
+**§9.0: 765 / 3,803 (20.1%) all of `$GOROOT/src`; 657 / 2,743 (24.0%) the
+library.** Reproduce, do not quote — `harness/go/census.sh --reach`, and
+see the two-instrument caveat below.
+
+**THE TIER'S SHAPE, which is the one thing to read before choosing work.**
+§G30 re-derived the frontier and it is no longer a ranking of comparable
+options:
+
+| sole blocker | files blocked by it ALONE |
+| --- | ---: |
+| **`SelectorExpr/value`** — method and field access | **716** |
+| `MapType` | 24 |
+| `FuncLit` | 15 |
+| `InterfaceType` | 14 |
+| everything else | ≤ 4 |
+
+**Rung E2 (`go/types`-backed selector resolution) is not the largest item
+left; it is the only large one.** Every remaining construct rung is a
+rounding error beside it — the whole construct frontier except
+`SelectorExpr/value` is worth +75, and `SelectorExpr/value` alone is
++131. A resumption that picks the next construct off a list will be
+picking rounding errors. The tier's completion now runs through the
+extractor.
+
+**THE NEXT RUNG, IF ONE IS WANTED BEFORE E2** — the switch family
+(`SwitchStmt` + `CaseClause`), the largest move that needs no
+`go/types`, priced in advance:
+
+> 765 → **811 (+46)** all `src`; 657 → **701 (+44)** library.
+
+Censused over the 811 files it unlocks: 89 switches, **69 tagless
+(77.5%)**, 20 tagged, 4 with an init; 348 case clauses, 27 `default`, 17
+multi-value, 7 bare `break` — and **5 `fallthrough`**. The tagless form
+is an if-else chain with a shared exit, which is the cheap half. This
+rung **retires `fallthrough`**, deferred since the founding charter at
+"4.0%": that figure was a share of switch statements corpus-wide, not of
+this tier's reachable ones, and the deferral outlived its measurement by
+twelve rungs.
+
+**TWO INSTRUMENTS, TWO QUESTIONS — the trap §G30 caught.**
+`construct_census.go --reach` has no notion of a modelled package, so any
+file containing any package selector is outside its baseline. It prices
+the switch family at **+2**; the package-aware measure prices it at
+**+46** — a 23× understatement, and it had been quoted as a ranking since
+§G26. **`--reach` ranks constructs in isolation; only the package-aware
+measure ranks rungs.** Do not resume by reading the `--reach` frontier.
+
+**Standing debts, unchanged.** The MM-oracle is untouched and Thomas's to
+rule on. Method DECLARATIONS are modelled (mangled by the extractor,
+package-path qualified since §G29); method CALLS are not, and are the
+same `SelectorExpr/value` that dominates the table above.
+
 ### SPEC COVERAGE — the completion metric (standing; updated every landing)
 
 The tier's goal is COMPLETION, and this is the number that measures it:

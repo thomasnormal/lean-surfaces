@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**436 entries across 17 lanes.** Regenerate with
+**437 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -435,6 +435,7 @@ and every existing `§Lnn` reference still resolves there.
 | `G6` |  | INCH 3: the model reproduces a REAL crypto function, 35 rows, and the expected column was generated (2026-08-23) | go |
 | `G5` |  | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` |  | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
+| `G30` |  | THE RE-CENSUS AFTER THE BUNDLE: a figure I had been carrying was wrong by 23× (2026-08-26) | go |
 | `G3` |  | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G29` |  | THE FLEET FIELD-COLLISION SWEEP: absent here, and the check found a different one (2026-08-25) | go |
 | `G28` |  | THE BUNDLE: four parts, each worth +0, together +48 (2026-08-25) | go |
@@ -458,4 +459,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**28 heading(s) do not use the §9.5 id scheme** and sort last.
+**29 heading(s) do not use the §9.5 id scheme** and sort last.

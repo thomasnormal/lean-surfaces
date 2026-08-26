@@ -22,6 +22,7 @@ and every existing `§Lnn` reference still resolves there.
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-26-architecture-92` |  | A premise nobody re-measures is a premise nobody holds | architecture |
+| `2026-08-26-qol-85` |  | PARKED: the protocol stack as it stands | qol |
 | `2026-08-26-qol-84` |  | the retry path walked past the acquire gate | qol |
 | `2026-08-26-qol-83` |  | envelopes become build inputs, and the tier that only looked covered | qol |
 | `2026-08-26-qol-82` |  | a dangling citation, in the ledger AND in the code | qol |
@@ -224,8 +225,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-45` |  | the shape set's fourth member, and a log that says whose it is | qol |
 | `2026-08-23-architecture-45` |  | A list is maintained by the attention that wrote the defect; and a new reader under-reads | architecture |
 | `2026-08-23-qol-44` |  | a flag written last spun forever, in eleven tools | qol |
-| `2026-08-23-architecture-44` |  | The quirk that blocks direct reuse can fund the crossing | architecture |
 | `2026-08-23-architecture-44` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: Wasm lane's to renumber or close | wasm |
+| `2026-08-23-architecture-44` |  | The quirk that blocks direct reuse can fund the crossing | architecture |
 | `2026-08-23-qol-43` |  | arming a byte-comparing gate arms the pins it does not have | qol |
 | `2026-08-23-architecture-43` |  | Wrong by answering; and a predicted cost inherits its construct's unit error | architecture |
 | `2026-08-23-qol-42` |  | the SV round-trip gate joins CI, and qol-40's orphan was half instrument | qol |
@@ -257,8 +258,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-29` |  | the merge driver configures itself, and a green build's axiom ledger survives | qol |
 | `2026-08-23-architecture-29` |  | An instrument optimization is proved by output equality; and §5.4b's first two catches | architecture |
 | `2026-08-23-qol-28` |  | `--axioms` dropped the last name, and the absence was silent | qol |
-| `2026-08-23-architecture-28` |  | The guard was never in those processes; and a correct refusal is not a mitigation | architecture |
 | `2026-08-23-architecture-28` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close | qol |
+| `2026-08-23-architecture-28` |  | The guard was never in those processes; and a correct refusal is not a mitigation | architecture |
 | `2026-08-23-qol-27` |  | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
 | `2026-08-23-architecture-27` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close | qol |
 | `2026-08-23-architecture-27` | INBOUND | INBOUND FROM THE FAMILY-ARCHITECTURE LANE: QoL lane's to renumber or close | qol |
@@ -441,8 +442,9 @@ and every existing `§Lnn` reference still resolves there.
 | `G6` |  | INCH 3: the model reproduces a REAL crypto function, 35 rows, and the expected column was generated (2026-08-23) | go |
 | `G5` |  | INCH 2: the §3.3 acceptance test PASSES, and one program means two things (2026-08-23) | go |
 | `G4` |  | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
-| `G30` |  | THE RE-CENSUS AFTER THE BUNDLE: a figure I had been carrying was wrong by 23× (2026-08-26) | go |
 | `G3` |  | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
+| `G30` |  | THE RE-CENSUS AFTER THE BUNDLE: a figure I had been carrying was wrong by 23× (2026-08-26) | go |
+| `G2` |  | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 | `G29` |  | THE FLEET FIELD-COLLISION SWEEP: absent here, and the check found a different one (2026-08-25) | go |
 | `G28` |  | THE BUNDLE: four parts, each worth +0, together +48 (2026-08-25) | go |
 | `G27` |  | THE `strconv` CENSUS KILLED ITS OWN PREDICTION, AND FOUND THE METRIC OVERSTATED (2026-08-24) | go |
@@ -453,7 +455,6 @@ and every existing `§Lnn` reference still resolves there.
 | `G22` |  | RUNG E1: the mechanism works, and it is worth +0 files (2026-08-23) | go |
 | `G21` |  | THE EXTRACTOR TIER, chartered: authorized on a figure that is 2.5× too big, and sized on the one that is not (2026-08-23) | go |
 | `G20` |  | FIXED ARRAYS: the value model that needed no new constructor, and the frontier stops being a construct (2026-08-23) | go |
-| `G2` |  | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 | `G19` |  | RANGE IS NOT A SECOND LOOP; and the census retracts the `+0` law (2026-08-23) | go |
 | `G18` |  | THE SLICE RUNG: a header, not a list, and the row a copy model cannot state (2026-08-23) | go |
 | `G17` |  | THE SLICE RUNG'S ACCEPTANCE PICK: the discriminator lives in the CALL (2026-08-23) | go |

@@ -5840,3 +5840,101 @@ people's fixtures.
 `triad.sh --self-test` **462 ok, 0 failed** (454 → 462). No Lean executed: the
 deferral is exercised against mocked instruments, and `MAX_DEFER=0` makes the
 give-up path return without sleeping.
+
+---
+
+## 2026-08-26-qol-85 — PARKED: the protocol stack as it stands
+
+The campaign is pausing indefinitely to save tokens and free Lean resources.
+This entry is the resumption state. Written to be read by someone — possibly
+me — with **no memory of this session**.
+
+### State at park
+
+Master is `312a1a3`. Every landing of this lane is merged; nothing is
+outstanding, no branch is unpushed. **This lane holds no tickets and never
+did** (A11: it writes no Lean and runs none). At park the live queue held four
+tickets — basecase, calign, analog, softfloat — **none of them qol**, and no
+lock was held by this lane. Nothing of mine was running, verified by clone path
+rather than by name.
+
+### The stack a lane inherits today
+
+**Floors.** Non-docs, five gates:
+
+```
+python3 tools/docs_check.py; python3 harness/diff_test.py;
+python3 harness/refusal_census.py --whitelist --no-build;
+python3 harness/divergence_register.py; bash tools/backlog-index.sh --check
+```
+
+Docs, two: `docs_check` **+ `backlog-index.sh --check`** — the second because a
+backlog entry is a docs-class landing, so the index gate has to live in the
+floor that sees it.
+
+**The box gates.** `acquire_check` refuses to start into a starved box, and
+`defer_until_survivable` now runs before **every** build attempt, not only the
+first — the retry path used to walk past it and buy two dead builds where one
+deferral was owed.
+
+**Refusals that cost nothing when idle.** A tenure whose log lives inside the
+clone refuses itself; a stale generated index refuses at enqueue when the
+landing touches `docs/backlog/`; stamp version guards refuse a tool that is
+superseded by content hash rather than by ancestry.
+
+**Attested gates.** `--gates-no-lean` — *attested = no repo-reachable Lean, plus
+observation for the rest*. PATH shims catch Lean by name, a `.lake`-less view
+catches it by absolute path, a descendants sampler is the backstop, and the
+residual (a path outside the repo, or a process between samples) is named in
+the code that carries it. The tenure is never skipped, only the build.
+
+**ci hardened the same way.** Layer 3 withholds the build products, not just
+the name; `lean` joins `lake` on the stub.
+
+**The INDEX driver merges rows**, because git hands a driver three versions of
+one file and never the merged sources. Ours whole, plus theirs' extras
+(`comm`, not `sort -u` — the live index carries byte-identical row pairs). It
+never exits non-zero, and `|| true` lives in the *configured command* because
+version skew replaces the script itself.
+
+**`envelope_fresh`** checks the frontend pin before comparing anything, with
+per-tier manifests (`mirror` is a per-tier fact).
+
+**Envelope build-inputs.** `Examples/python` and spice's JSON are now
+`input_dir`s in `Examples.needs`: 51 envelopes, 51 covered.
+
+### Pending — and what "pending" means for each
+
+1. **`754572e` is argued, not verified.** The envelope mechanism is reasoned
+   from Lake's source, and my own tenure cannot test it (a lakefile change
+   invalidates everything). **The decisive test at resumption is pyc's: edit a
+   python envelope with zero `.lean` changes; the loaders must come back
+   BUILT, not REPLAYED.** Until that reports, the correct reading is *should
+   track*, not *does*. If it comes back Replayed, the fallback is (b) — the
+   triad-level json→loader map, priced and deliberately unbuilt.
+2. **The citation gate is parked under the two-instance rule.** One dangling
+   citation in 24, zero after. If a second ever surfaces, price it then, using
+   that sweep as the census.
+
+### Observation duty
+
+No lane is being watched by me and no timer of mine is set. Anything I would
+have noticed is instead written down: the entries are the instrument.
+
+### Numbers to diff against on resumption
+
+`triad.sh --self-test` **462**, `backlog-index.sh --self-test` **86**,
+`ci.sh --verify-guards` **57**, `lean_comment_forms` 407 files / 0 defects,
+docs_check **91/91**, index in sync. A different count at resumption means
+something moved underneath — start there, not with new work.
+
+### What this lane learned that outlived its landings
+
+- A green that overclaims is the only failure worth this much machinery.
+- Rows and end-to-end runs catch different things; the mechanism is never the
+  part that breaks.
+- A guard inside an artifact cannot protect the case where the artifact is the
+  wrong version.
+- A discard is not the end of a value's life — read to the end of the chain.
+- A measurement taken and not acted on is the most expensive kind.
+- Verify a push by reading the remote, never by the command's exit.

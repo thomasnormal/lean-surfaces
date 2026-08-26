@@ -51,6 +51,17 @@ path = "Examples/python"
 text = true
 filter = { extension = ["json"] }
 
+# The ES tier has the same shape: `load_es_program` reads
+# `Examples/es/test262/*.json` at ELABORATION time, so those envelopes are
+# build inputs and lake could not see them either. Added when 754572e covered
+# python and verilog-a — this tier was the third one the comment above counts
+# as uncovered.
+[[input_dir]]
+name = "esEnvelopes"
+path = "Examples/es"
+text = true
+filter = { extension = ["json"] }
+
 [[input_dir]]
 name = "verilogASources"
 path = "Examples/verilog-a"

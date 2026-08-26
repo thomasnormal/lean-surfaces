@@ -1470,3 +1470,51 @@ shared checker's own text still reads *"a register file with nothing in it is
 a claim that the tier has no debts, and should be deleted rather than filed
 empty"*. Those two cannot both be right. Flagged now rather than discovered
 on the day the row retires.
+
+---
+
+## 2026-08-26-es-1 — the fifth build-red, and the ES tier's share of the untracked-envelope defect
+
+### THE RED
+
+    Examples/es/test262/guards.lean:102: Expression
+      classDup.schemaVersion == "es-0.1" did not evaluate to `true`
+
+The `es-0.2` bump regenerated all three fixtures and updated **two of the
+three** schema guards. `classDup` was missed — a targeted replace with
+`count=1` where there were two occurrences.
+
+**The fix is not the missing line.** The literal was written three times, so
+it COULD be half-updated, and was. All three guards now compare against
+`acceptedSchema`, the ingester's own constant: a constant cannot be
+half-updated, and the next bump touches one definition rather than four
+places.
+
+Swept the tier for prose describing the CURRENT schema as `es-0.1` — six
+sites in `LeanModels/Es{,/Json,/Ast}.lean`, `docs/es-envelope-schema.md` and
+`docs/es-charter.md`. The five remaining mentions were checked one by one and
+are HISTORICAL: each describes what `es-0.1` did, or a decision taken under it
+that still holds, and renumbering them would make the record wrong.
+
+### THE FLEET DEFECT THIS TIER STILL HAD
+
+`754572e` tracked envelope build-inputs in the lakefile, and its own comment
+says *"Of the three tiers only verilog-a was genuinely covered"* — it added
+`pythonEnvelopes`. **`Examples/es` was still untracked.**
+
+`load_es_program` reads `Examples/es/test262/*.json` at ELABORATION time, so
+those envelopes are build inputs exactly as the python tier's are, and lake
+could not see them: regenerate a fixture without touching the `.lean` file and
+nothing rebuilds. Added `esEnvelopes`.
+
+This tier was the third one that comment counts as uncovered, and it did not
+notice on its own — the fleet's fix is what made it visible.
+
+### THE ARC SO FAR
+
+Five reds, five different layers: a missing binary (lakefile targets), an
+un-ingestible corpus (extractor/ingester schema collision), an unparseable
+guard (the doc-comment lint's denylist), a killed-while-queued ticket (no
+verdict), and a half-updated literal. **Not one was in the evaluator.** Every
+one was in the path a test takes to reach the evaluator — the path that did
+not exist until the scoreboard was built.

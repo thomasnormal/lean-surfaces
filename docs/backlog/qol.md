@@ -5403,8 +5403,8 @@ never the part that broke.**
 2. Once green, it printed **"a green covers every default target at this sha"**.
    `coverage_from_run` reads the target LIST, and an empty list means "lake was
    given no targets" — true of a full build and equally true of **no** build.
-   qol-76 derived that sentence from what RAN; a skipped build is the case
-   where what ran is nothing.
+   `2026-08-24-qol-61` derived that sentence from what RAN; a skipped build is
+   the case where what ran is nothing.
 3. …and recorded that green as a **chain ROOT**, citable by a later `--since`.
    A no-build green now records `class=docs citable=no full=no root=unknown`,
    the same rule the docs-only path already kept.
@@ -5657,3 +5657,39 @@ artifact itself is the wrong version.**
 Sequencing verified before landing: master's index was in sync against master's
 own sources, and the generator was byte-identical to master's. No Lean
 executed.
+
+---
+
+## 2026-08-26-qol-82 — a dangling citation, in the ledger AND in the code
+
+C's renumber (`7cdd73f`) made a pre-existing defect of mine visible: qol-79
+cited **`qol-76`**, and no such heading has ever existed in this lane.
+
+**It was a typo, not a renumbered entry** — established rather than assumed.
+No commit reachable from any ref carries a `-qol-76 ` heading in `qol.md`
+except my own rebase, which briefly carried C's filing under that number
+before C renumbered it. The citation first appears in `fec1f31`, my
+`--gates-no-lean` landing. The entry it meant is **`2026-08-24-qol-61`**,
+whose own subheading is *"Derived from what ran"* and which introduced
+`coverage_from_run`.
+
+**The same wrong id was also in `tools/triad.sh`**, in the comment explaining
+why `coverage_from_run` cannot be trusted for a skipped build — the durable
+half, and the half nobody was looking at. A citation defect in the ledger is a
+broken link; the same defect in a comment is a reader sent to a law that does
+not exist, at the exact spot where the code is doing something subtle. Both now
+carry the full dated id rather than a bare number.
+
+Swept the rest while here: **24 distinct `qol-NN` citations, one dangling** —
+this one. Zero after.
+
+**One correction to the record, not mine to edit.** C's renumber note says
+`qol-76` was *"which QoL had already used"*. QoL had never **used** it: there
+is no such heading, only my dangling citation of one. The renumber is right for
+the reason that matters — a cross-lane filing carries the sender's id — but the
+collision it cites did not exist.
+
+### Triad
+
+Comment- and prose-only. `triad.sh --self-test` 454 ok, 0 failed;
+`--verify-guards` 57 ok; docs_check 91/91; index in sync. No Lean executed.

@@ -4279,9 +4279,9 @@ fi
 # given no targets" — which is true of a FULL build and equally true of NO
 # build.  The first attested run therefore printed "a green covers every
 # default target at this sha" over a build that never ran, and recorded it as
-# a chain ROOT that a later --since could have built on.  qol-76 derived this
-# sentence from what RAN; a skipped build is the case where "what ran" is
-# nothing, and the docs sentence is the one that says so.
+# a chain ROOT that a later --since could have built on.  2026-08-24-qol-61
+# derived this sentence from what RAN; a skipped build is the case where "what
+# ran" is nothing, and the docs sentence is the one that says so.
 if [ "$SKIP_BUILD" = "1" ]; then
   say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
   say "  NO BUILD RAN — the attested gates are the whole of this run's evidence."

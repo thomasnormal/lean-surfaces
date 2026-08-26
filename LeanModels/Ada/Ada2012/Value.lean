@@ -214,6 +214,20 @@ inductive Val where
   bounds cannot answer them, and answering anyway would be the wrong kind of
   cheap. Bounds arrive with the array rung. -/
   | str (s : String)
+  /-- **ARM 3.3.1 — DECLARED BUT NOT YET ASSIGNED**, carrying the subtype
+  name it was declared with. Measured: **12 of 29 `ObjectDecl`s in the
+  fixtures have no initialiser**, so this is the common case and not a corner.
+
+  It exists so the model can tell *"never declared"* from *"declared, unset"*
+  — two different faults with two different citations, which a store that
+  simply omitted the object could not distinguish. **Reading one REFUSES**
+  (ARM 13.9.1, *Data Validity*): Ada makes reading an uninitialised scalar a
+  BOUNDED ERROR with a bounded set of outcomes, and this tier cannot yet
+  enumerate that set — the ARM text is off this machine. So the refusal is a
+  pending measurement, and the site becomes a `BoundedSite` with a real
+  permitted set when the re-acquire rung lands. Assigning INTO one is
+  ordinary and defined. -/
+  | uninit (typeName : String)
   deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- `Standard.Boolean` — an enumeration type, per ARM 3.5.3. -/

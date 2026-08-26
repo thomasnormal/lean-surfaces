@@ -1770,3 +1770,67 @@ rather than by a red build. `Val.asInt` is now a catch-all, with the reason in
 the source: **a projection that must be revisited every time the value type
 grows is a maintenance trap with no upside**, because nothing that is not an
 integer has an integer.
+
+## 2026-08-26-ada-1 — INCH 5b: declarations, and "declared but unset" is a DIFFERENT fault from "never declared"
+
+`Stmt.lean` to 1682 lines and 103 guards; `Val` gains `uninit`. Retires inch 2's
+ARM 3.3 refusal for everything the tier now declares, and gives **ARM 13.9.1
+its first site**. Carries the `dropRight` → `dropEnd` deprecation 5a's own
+green reported, under consolidation-by-touch.
+
+### THE SHAPE, MEASURED FIRST
+
+`ObjectDecl` is **arity 8, uniform (29 of 29)**: slot[0] the names, slot[2]
+`ConstantPresent`/`ConstantAbsent`, slot[4] the `SubtypeIndication`, **slot[5]
+the initialiser or `null`**. Declarative parts hold `ObjectDecl` 25,
+`SubpBody` 19, `ConcreteTypeDecl` 6, `SubtypeDecl` 4, `NumberDecl` 2.
+
+**12 of the 29 declarations have NO initialiser** — the common case, not a
+corner — which is what makes the next decision the rung's real content.
+
+### `Val.uninit`: TWO FAULTS, TWO CITATIONS
+
+A store that simply omitted an unset object could not tell *"never declared"*
+from *"declared, unset"*. They are different faults and they cite different
+clauses, so the value type carries the distinction:
+
+* **reading one REFUSES at ARM 13.9.1** — Ada makes reading an uninitialised
+  scalar a **bounded error** with a bounded outcome set, and this tier cannot
+  yet enumerate that set because the ARM text is off this machine. So it is a
+  pending measurement, and **the site becomes a `BoundedSite` with a real
+  permitted set when re-acquire lands**. It is emphatically not silently zero.
+* **assigning INTO one is ordinary and defined**, the target's declared type
+  supplying the shape.
+
+Inch 2's ARM 3.3 refusal survives, **narrowed**: it now means *"not declared
+in any enclosing scope"* rather than *"this tier models no declarations"*.
+
+### CONSTANT-NESS IS NOT CHECKED, and that is the charter's division of labour
+
+7 of the 29 declarations are `constant`. Assigning to one is a **LEGALITY**
+error (ARM 3.3.1), and in this tier legality is graded by the ACAA's `GRADE`
+from `CERR` rows, never by the interpreter — *"Every other tier in this family
+grades itself. The Ada tier does not."* Recorded so the gap is a decision
+rather than an oversight.
+
+### `Integer` IS A PROFILE CHOICE, STATED
+
+ARM 3.5.4 makes `Integer`'s range implementation-defined, requiring only
+`-(2**15)+1 .. +(2**15)-1`. This profile is 32-bit, guarded so the bound is
+visible rather than buried, and re-acquire can check it against the host's
+`Integer'First`/`Integer'Last`. `Integer`, `Boolean` and `String` cover
+**16 of 29 (55%)**; user types refuse at ARM 3.2.1.
+
+### TWO RED TENURES AVOIDED BY CHECKING BEFORE STAGING
+
+1. **`convertTo` would have become self-recursive.** The `uninit` unwrap
+   needs one conversion into the declared shape; putting it inside
+   `convertTo` makes that function recursive and costs it the structural
+   proof it does not otherwise need. The unwrap moved to the call site.
+2. **`w0`'s `X` is an `Int8`.** Four guards assigned a declared `Integer`
+   into it, which correctly refuses at ARM 4.6 — the fixture, not the rule.
+   `X` stays narrow because inch 2's overflow guards need it, so the
+   declaration guards got an `Integer` target of their own.
+
+Both were found by reading the code against the change rather than by a build,
+which on this queue is worth about five hours apiece.

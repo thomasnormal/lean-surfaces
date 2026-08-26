@@ -75,7 +75,7 @@ first-class top-level field beside `language`, the ingester REFUSES a
 mismatch, and `frontend.version` keeps its separate job as the FRONTEND's
 family (`acorn-8`, not a point release). This charter's earlier drafts
 called that field `edition_id` by analogy with `c-0.1`'s `profile_id`;
-the family's name wins, and the schema version (`es-0.1`) stays
+the family's name wins, and the schema version (`es-0.2`) stays
 orthogonal.
 
 ### 0.2 The pin is LANDED, and it refuses
@@ -1237,7 +1237,7 @@ and none touching `lakefile.toml`, `LeanModels.lean` or `lean-toolchain`.
    mechanical: make `ES2026` a constant the census, the envelope and the
    module path all read, so a future re-census cannot silently compare
    across editions. Confirmation-only from §6's first item.
-3. **`docs/es-envelope-schema.md`**, schema `es-0.1`, mirroring
+3. **`docs/es-envelope-schema.md`**, schema `es-0.2`, mirroring
    `docs/envelope-schema.md`, `docs/sv-envelope-schema.md` and
    `docs/c-envelope-schema.md`. **Every vocabulary table DERIVED from
    `docs/es262-census.json`** — the 66 node types — rather than chosen, so

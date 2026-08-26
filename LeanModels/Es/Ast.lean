@@ -1,7 +1,7 @@
 /-!
 # The ECMAScript tier's deep-embedded AST (`LeanModels.Es`)
 
-The Lean image of the `es-0.1` envelope (`docs/es-envelope-schema.md`).
+The Lean image of the `es-0.2` envelope (`docs/es-envelope-schema.md`).
 
 **This file is a TYPE, not a semantics.** Nothing here evaluates anything;
 the evaluator, the completion records and the refusal taxonomy are M2 and
@@ -208,7 +208,7 @@ inductive SourceType where
   | module
   deriving Repr, DecidableEq, Inhabited
 
-/-- The whole `es-0.1` envelope. `languageVersion` is retained because the
+/-- The whole `es-0.2` envelope. `languageVersion` is retained because the
 edition is an INPUT to the AST, so a mismatch has to be refusable
 downstream — the C lane's `profile_id` reasoning. `frontend` is accepted
 and not retained. -/

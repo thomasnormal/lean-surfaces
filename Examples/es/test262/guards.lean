@@ -42,7 +42,11 @@ load_es_program varDecl from "Examples/es/test262/var_decl.json"
 
 /-! ## The envelope's own claims -/
 
-#guard ifCptn.schemaVersion == "es-0.2"
+/- Against `acceptedSchema`, NOT a repeated literal. The es-0.2 bump updated
+two of the three schema guards in this file and missed `classDup`, which cost
+a tenure: the build died on `classDup.schemaVersion == "es-0.1"`. A constant
+cannot be half-updated. -/
+#guard ifCptn.schemaVersion == acceptedSchema
 #guard ifCptn.languageVersion == "ES2026"
 #guard ifCptn.specRevision == "es2026-errata"
 #guard ifCptn.sourceType == SourceType.script
@@ -52,7 +56,7 @@ load_es_program varDecl from "Examples/es/test262/var_decl.json"
 
 /-! ### The node type survives an ESTree `kind` property — `es-0.2`'s reason -/
 
-#guard varDecl.schemaVersion == "es-0.2"
+#guard varDecl.schemaVersion == acceptedSchema
 /- The declaration ingests AT ALL, which is what `es-0.1` could not do. -/
 #guard match varDecl.parse with | .ok _ => true | .error .. => false
 /- Its type is `VariableDeclaration` and its own `kind` scalar is `"var"` —
@@ -99,7 +103,7 @@ both present, neither having overwritten the other. -/
 
 #guard !classDup.accepted
 #guard classDup.program?.isNone
-#guard classDup.schemaVersion == "es-0.1"
+#guard classDup.schemaVersion == acceptedSchema
 #guard classDup.languageVersion == "ES2026"
 
 /- The error class is the only one a parse-phase failure can be, and

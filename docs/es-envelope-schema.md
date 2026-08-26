@@ -287,7 +287,7 @@ The `#guard`s the M1 fixture will carry, every one a fact
 `docs/es262-census.json` independently knows — which is why the census
 landed as an instrument, and landed first:
 
-1. `schema_version = "es-0.1"`, `language = "ecmascript"`.
+1. `schema_version = "es-0.2"`, `language = "ecmascript"`.
 2. `language_version = "ES2026"` and it MATCHES `docs/es-edition.json`.
 3. The envelope's `source_sha256` matches the bytes on disk.
 4. Every `kind` in the tree is one of the 66.

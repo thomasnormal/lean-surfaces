@@ -20,7 +20,7 @@ SystemVerilog and C. The charter is `docs/es-charter.md`; the family row
 it ratifies is `docs/family-architecture.md` §1.2.
 
 **M1 (ingestion) is complete; M2 has begun.** The lane contains the
-deep-embedded AST of the `es-0.1` envelope
+deep-embedded AST of the `es-0.2` envelope
 (`docs/es-envelope-schema.md`), the ingester that builds it, and — as M2's
 first inch — the VALUE model (`Value.lean`: the eight language types and
 the conversions that cannot throw), COMPLETION RECORDS on the family's

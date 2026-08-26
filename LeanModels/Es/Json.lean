@@ -2,7 +2,7 @@ import Lean
 import LeanModels.Es.Ast
 
 /-!
-# `es-0.1` envelope ingestion (`LeanModels.Es`)
+# `es-0.2` envelope ingestion (`LeanModels.Es`)
 
 Parses the envelope of `docs/es-envelope-schema.md` from `Lean.Json` into
 the types of `Ast.lean`. All parsers are pure and return

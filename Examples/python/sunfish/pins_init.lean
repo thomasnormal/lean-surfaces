@@ -118,7 +118,7 @@ private def pstAt (p : String) (sq : Nat) : Option RVal :=
 centralization gradient — both 120 wide, both live-view bindings from
 the ONE #158 tuple-target assign, whose right-hand side runs through
 the live pipeline: a subscript read of the live `pst` AND
-`tuple(<genexpr@7>(range(120)))` — the drained module-scope genexp.
+`tuple(<genexpr@8>(range(120)))` — the drained module-scope genexp.
 The #158 formula covers all 120 squares (no zero padding ring
 anymore): the corner value 59870 = 60000 + 70 − 10·(11 + 9) is
 CPython's own answer at 0 and 119. -/

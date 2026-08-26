@@ -3800,3 +3800,59 @@ mechanism decision.
   kernel pressure level.
 - `MatMult` closes trivially and **buys nothing** (`completeness.md:84`); take
   it last or knowingly as bookkeeping.
+
+## 2026-08-26-pycomplete-45 — the migration, on a MEASURED map (resumed)
+
+### The map, from the model itself
+
+Measured by `check.sh` SCRATCH — a file that `load_program`s each envelope
+directly and `#eval`s `(name, span.lineno)`, so neither envelope needed a
+rebuild and nothing was derived:
+
+| index | OLD site | NEW site | |
+|---|---|---|---|
+| `@0` `@1` `@3` | 313, 444, 449 | same | unchanged |
+| — | — | **511** | **new `@4`** (the `del`) |
+| `@4` | 515 | → `@5` | shifts |
+| `@5` | 85 | → `@6` | shifts |
+| `@6` | 86 | → `@7` | shifts |
+| `@7` | 96 | → `@8` | shifts |
+
+**My document-order derivation was wrong in kind, not degree.** The model's
+lowering traversal takes *function bodies first, then module scope*, so
+`@5`–`@7` are the module-scope genexps (85, 86, 96) — which is exactly what
+`pins_init.lean:121` said when it called `<genexpr@7>` *"the drained
+module-scope genexp"*. **The tree's prose was right and my derivation was
+wrong**; it also disproves my earlier claim that only `@7` moved. **Four
+indices shift, not one.** `@2` is consumed but never lowered, which is the gap
+the census always showed and document order could never explain.
+
+### The sweep, and it is smaller than the 128 I feared
+
+Only **3 files** hold a shifting index — all sunfish-module, which matters
+because `gen_lab` and `sf_order` carry their *own* `genexpr@n` namespaces that
+must not be touched:
+
+    spec.lean        @4=2 @5=2 @6=2 @7=2
+    pins_init.lean                  @7=1
+    init_chain.lean       @5=54 @6=6 @7=1
+
+**70 mentions**, shifted **descending** (`@7→@8`, `@6→@7`, `@5→@6`, `@4→@5`) so
+no name is shifted twice. The other 58 mentions are `@0`–`@3` or other modules
+and were correctly left alone — *sweeping all 128 on principle would have
+corrupted two other tiers' certificates.*
+
+### The two censuses, re-pinned to MEASURED values
+
+`spec.lean:63` and `:128` each gain `("<genexpr@4>", true, true)` and
+`("<genexpr@4>", true)` — values read off `#eval`, not inferred from the
+neighbours.
+
+### qol-83's pending evidence rides along
+
+The lakefile now declares `Examples/python` as an `input_dir`, so the
+forcing-edit ritual is history — I **removed** my pass-9 notes from
+`pins_common.lean` and `proof.lean` rather than keep obsolete instructions.
+Both loaders are therefore **byte-identical to master**, and the tenure's
+Built-not-Replayed on those two is the falsifiable test qol-83 asked for: an
+envelope changed with zero `.lean` changes *to those files*.

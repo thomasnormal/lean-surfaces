@@ -98,9 +98,9 @@ pinned below; every battery row stays under 2048 nodes). -/
     -- extraction-unsupported `del` statements, dead under the
     -- TABLE_SIZE guard, so they never reach the lowering.
     ("<genexpr@0>", true, true), ("<genexpr@1>", true, true),
-    ("<genexpr@3>", true, true), ("<genexpr@4>", true, true),
-    ("<genexpr@5>", true, true), ("<genexpr@6>", true, true),
-    ("<genexpr@7>", true, true)]
+    ("<genexpr@3>", true, true), ("<genexpr@4>", true, true), ("<genexpr@5>", true, true),
+    ("<genexpr@6>", true, true), ("<genexpr@7>", true, true),
+    ("<genexpr@8>", true, true)]
 
 /-! ### The H4 generator census on the shipped file
 
@@ -132,8 +132,8 @@ cannot tell), which sunfish already was, having classes. -/
     ("Searcher.bound", false), ("Searcher.search", true),
     ("parse", false), ("render", false), ("main", false),
     ("<genexpr@0>", true), ("<genexpr@1>", true),
-    ("<genexpr@3>", true), ("<genexpr@4>", true), ("<genexpr@5>", true),
-    ("<genexpr@6>", true), ("<genexpr@7>", true)]
+    ("<genexpr@3>", true), ("<genexpr@4>", true), ("<genexpr@5>", true), ("<genexpr@6>", true),
+    ("<genexpr@7>", true), ("<genexpr@8>", true)]
 #guard !moduleGenFree sunfish
 
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded

@@ -1080,3 +1080,83 @@ killed by my own tool timeout at 400 s and read like a hanging proof; the same
 file compiled clean in the background. It was `nice -n 19` on a machine another
 lane was building on. **A proof that times out under `nice` on a loaded machine
 has not failed — and the two look identical from the exit code.**
+
+---
+
+## 2026-08-26 — PARKED (indefinite). Read this first on resumption.
+
+**Thomas paused the campaign to save tokens and free Lean resources.** This
+entry is the lane's hand-over. Nothing below is in flight; nothing is
+half-edited; the working tree is clean.
+
+### STATE OF THE NUMBERS
+
+| number | value | how to reproduce |
+| --- | --- | ---: |
+| **primary — non-vacuous behavior guarantees** | **20 / 20** | `python3 harness/spice/assurance_census.py` |
+| secondary — `AssuranceCase` bundling | 9 / 20 | same command, same denominator |
+| grounded assurance cases | 8 / 24 | same command |
+| declared divergences | **0** | F1 is a boundary, not a debt |
+
+**Reproduce these, do not quote them.** The detector recognises **five**
+non-vacuity idioms and is **ablation-tested**: cutting it back to
+`_realizable` alone yields 17/20 and falsely flags `chain`, `and_gate` and
+`half_adder`. That ablation is the reason to trust the 20, and re-running it is
+the cheapest way to confirm the instrument still discriminates.
+
+**F1 rides every one of these numbers**: `model validity: MISSING`,
+architecturally unclosable, admitted 12×. All four figures are claims about
+models; none is evidence a fabricated device matches one.
+
+### WHAT IS DONE
+
+F2 closed 7/7 · F3 landed (it needed grounding, not Grönwall) · F4 collapsed
+(a boundary, enforced once, already gated) · F6 closed (signed interval
+arithmetic) · the comment-forms gate is campaign infrastructure · the λ
+boundary is a checked fact across four decks.
+
+### WHAT IS NEXT, AND THE WARNING THAT COMES WITH IT
+
+**F5 — 2 sites**, `ExactLinearizationAt` in `Circuit/AC.lean` and
+`Spice/LoadedRCAC.lean`, wanting an `ApproxLinearizationAt` with a Taylor
+remainder.
+
+> **RE-DERIVE F5 FROM THE TREE BEFORE PRICING IT. I would expect the row to be
+> wrong again.**
+
+Five consecutive family audits overturned the row that named them, and the F5
+row comes from the same early reading as the four that failed. The specific
+question to ask first is not "how do I prove the remainder bound" but "does the
+tree already have it, and is the gap somewhere other than where the row points"
+— which is what F3 and F4 both turned out to be.
+
+Also open, priced but unscheduled: **11 circuits could gain an `AssuranceCase`**
+(bundling, not coverage); **F7's dead surface**, 12 items, one paragraph already
+written on what deletion would require — *not* a cleanup landing uninvited.
+
+### ONE TENURE CERTIFICATION IS PENDING
+
+`f5918694f145723c4b8a48b4124f77807b88ec91` (branch `analog-census`) carries the
+census + F6 and is **pushed but never certified**: its ticket was cancelled by
+Thomas's wind-down instruction while queued at depth 7, never having acquired
+the lock. Every gate passed locally — `docs_check`, `lean_comment_forms` (408
+files, 0 defects), `backlog-index --check`, and a scoped
+`lake build LeanModels.Circuit.Enclosure` — but **local green is not a triad
+green**, and this lane does not bank one as the other.
+
+**On resumption, re-ticket that sha before treating its contents as landed.**
+The build was deliberately scoped to `Circuit.Enclosure`, `Circuit` and
+`Examples.spice.dram_sense_amp.proof` — the two modules that import Enclosure,
+so the green covers importers, not just the changed file. Keep
+`dram_bank_256x32` out of this lane's build sets permanently; its elaboration
+cost is its own lane's to price.
+
+### THE LANE'S OWN LAW, FOR WHOEVER PICKS IT UP
+
+> **The row that names a family is a hypothesis about the tree, and it decays —
+> because the tree moves and the row does not.**
+
+Seven instrument errors in this lane were caught by validating a scanner against
+answers already known by hand. None was caught by reading the scanner. If you
+resume by trusting a number in this file that you have not re-run, you will be
+the eighth.

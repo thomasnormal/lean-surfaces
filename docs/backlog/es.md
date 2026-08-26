@@ -1518,3 +1518,87 @@ guard (the doc-comment lint's denylist), a killed-while-queued ticket (no
 verdict), and a half-updated literal. **Not one was in the evaluator.** Every
 one was in the path a test takes to reach the evaluator — the path that did
 not exist until the scoreboard was built.
+
+---
+
+## 2026-08-26-es-2 — PARKED. The scoreboard is one green from the first test262 number
+
+**Campaign paused by Thomas's instruction. This entry is what resumption
+reads.**
+
+### §9.0 AT THE PARK
+
+    node kinds stated : 33/66  (partial 8, refusing 2, absent 23)
+    vocabulary        : 5,464 tests
+    runnable          : 1,816 tests  (the scoreboard's pinned population)
+    test262 scored    : 0 — NEVER YET RUN TO A VERDICT
+    declared-divergences : 1  (es-div-1, gated both ways)
+
+`vocabulary` and `runnable` are two axes deliberately, because "vocabulary
+stopped being the binding constraint" is exactly the fact a single number
+hides. `scored` is the only one of the three that is a verdict rather than a
+prediction, and it is the one that has never moved.
+
+### THE SIXTH RUN IS STAGED, NOT RUN
+
+Everything the run needs is built, committed and pushed. It was enqueued,
+acquired the lock, and was CANCELLED mid-build by the wind-down — the ticket
+was cancelled by pid with ownership verified, and the tenure released through
+its own trap rather than being force-killed, so no lock was leaked.
+
+**To resume, in order:**
+
+1. corpora are fetched under the scratchpad and pinned BY CONTENT —
+   `docs/es-scoreboard-corpus.json`, test262 `3655e746…`, manifest sha256
+   `b29c7da0…`, 1,816 admitted. If the scratchpad is gone, rebuild with
+   `harness/es_score_corpus.py --tests <test262> --acorn <acorn.mjs>
+   --manifest <m> -o docs/es-scoreboard-corpus.json` and the digest must
+   match or the population moved.
+2. re-extract envelopes (`extractors/es/extract.py --batch`) — schema
+   **es-0.2**.
+3. `python3 harness/es_scoreboard.py --corpus <dir> --expect 1816` as a gate.
+4. `--expect-passed` is **deliberately unset**. The first green establishes
+   it; setting it now would be inventing the number the run exists to find.
+
+**The named allowance stands**: `prelude-failed` and `threw-other` are the two
+zero-states never yet reachable on real input. If `assert.js` exercises
+anything the evaluator refuses, all 1,816 land in `prelude-failed` and the
+answer is 0 with a NAMED reason and a first-failure line — a different and far
+more useful zero than the three that came before.
+
+### THE FIVE-REDS ARC, AND WHAT IT ACTUALLY MEASURED
+
+Five reds, five distinct layers, and **not one was in the evaluator**:
+
+| # | layer | defect |
+|---|---|---|
+| 1 | lakefile targets | `es-score` not in `defaultTargets`; never built |
+| 2 | extractor ↔ ingester | ESTree's own `kind` overwrote the node type — **no test262 test had ever been ingestible** |
+| 3 | the lane's own lint | a DENYLIST let `/-- -/` before a custom command through |
+| 4 | the queue | ticket killed while queued — no verdict at all |
+| 5 | a repeated literal | `es-0.2` bump updated 2 of 3 schema guards |
+
+Every one lived in **the path a test takes to reach the evaluator** — a path
+that did not exist until the scoreboard was built, and which four inches of
+green had therefore never exercised. Defect 2 is the headline: four inches
+reported exact prediction-vs-actual while the corpus could not be ingested at
+all, because the vocabulary census reads acorn DIRECTLY, the guards build
+`Node` terms BY HAND, and both fixtures happened to contain no declaration.
+**Three independent instruments, each measuring something true, none measuring
+the real path.**
+
+### THE STANDING LESSON FOR RESUMPTION
+
+Every number this lane produced before the scoreboard is a proxy computed from
+the evaluator's own arms. `+1,249`, `+1,036`, `33/66`, `5,464`, `1,816` are
+predictions about what COULD run. The scoreboard is the only instrument that
+runs the tests, and **its first honest line is still owed.**
+
+### NEXT AFTER THE NUMBER
+
+The realm inch, with its triple payoff intact minus the scoreboard claim:
+iterator-cluster prerequisite, runnable 1,816 → 2,852, and `es-div-1`'s
+retirement by that row's own stated condition — which would be §5.0a's first
+retirement driven by an infrastructure inch, and would make this tier the
+fleet's first legally-empty register (flagged in `2026-08-25-es-4`; clause 1
+and the shared checker's own text disagree about whether that is legal).

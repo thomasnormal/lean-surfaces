@@ -45,6 +45,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-26-sv-9` |  | PARKED: what is certified, what is named, and what the A17 line cost | sv |
 | `2026-08-26-sv-8` |  | THE FRESHNESS GATE IS WIRED, AND ITS BASELINE IS MEASURED, NOT ASSUMED | sv |
 | `2026-08-26-sv-7` |  | THE ROUND-TRIP GATE PICKED ITS INTERPRETER BY ACCIDENT, AND THE PIN IT NEEDED IS RETIRED | sv |
+| `2026-08-26-es-2` |  | PARKED. The scoreboard is one green from the first test262 number | es |
 | `2026-08-26-basecase-2` |  | PARKED, indefinitely. What resumption needs and nothing else | basecase |
 | `2026-08-26-es-1` |  | the fifth build-red, and the ES tier's share of the untracked-envelope defect | es |
 | `2026-08-26-basecase-1` |  | THE DESCENT'S PRODUCER, and what `hfallQ` is now down to | basecase |

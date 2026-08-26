@@ -3788,3 +3788,67 @@ oracle-tests-compiler 1, timeout 2, not-ingested 1, not-parsed 30`.
 
 **§9.0 standing number until it runs: `gcc.c-torture` 105/300 scored
 (passed 105, failed 0).**
+
+## 2026-08-26-c-35 — PARKED, and the one thing that will mislead you
+
+The campaign is paused. This entry is written for whoever resumes, and the
+first paragraph is the one that matters.
+
+**THE BRANCH'S SCOREBOARD IS A PREDICTION THAT NEVER RAN.** Master is at
+`gcc.c-torture 105/300 scored (passed 105, failed 0)`, adjudicated green
+(2026-08-26-c-32). The `c-align` branch carries one further commit whose
+`docs/c-torture-scoreboard.json` says **109**, and **no tenure ever
+adjudicated it** — the ticket was cancelled at wind-down while queued
+seventh, before it reached the lock. So:
+
+* **105 is the standing §9.0 number.** Quote that one.
+* 109 is a committed prediction with evidence behind it (below), not a
+  result. Do not quote it as a number.
+* **The mechanism will catch this by itself.** `tools/c_torture_gate.sh`
+  compares the committed board against every fresh run, so the first tenure
+  that runs on `c-align` either goes green (the prediction was right) or goes
+  RED and prints both vectors (the prediction was wrong, and the red is the
+  measurement). Nothing here can rot silently. **That is the whole point of
+  committing the vector before the tenure, and it is worth more when a lane
+  is parked than when it is running.**
+
+**FLOOR STATE.** 105 passed / 0 failed / 145 refused-unsupported / 9 libc /
+7 ub / 1 oracle-tests-compiler / 2 timeout / 1 not-ingested / 30 not-parsed.
+`failed 0` is the property to protect: the model refuses or it is right.
+Twice now a landing broke it (c-31) and the gate caught it.
+
+**WHAT IS ON `c-align`, UNADJUDICATED.** A `normalizeTy` field on `Layout`
+— qualifiers stripped (§6.2.5p28) and typedefs resolved from the unit's own
+table — applied at 19 call sites where `ctx`/`lay` was already in scope, so
+no signature and no proof changed. Plus `sizeAlign` stripping qualifiers,
+plus the `cEnvelopes` lakefile input. The predicted vector is `passed 109,
+failed 0, refused-unsupported 141`, and it was **measured, not reasoned**:
+the fix is a transformation, so it was applied to 270 copies of the
+envelopes and the previous tenure's binary was run against them. See c-34.
+
+**THE NEXT STEP, sized.** The bucket motion the ledger has been carrying as
+"54 struct/union" is stale — after the alignment rung it is **19** `no
+layout`, of which 8 are floats (a named decision, not this lane's), leaving
+~11 real struct/union cases: anonymous records behind a typedef
+(`20010518-2`, `20031201-1`), `int[2][1]` (multi-dimensional — `arrayOf` is
+single-dimension BY DESIGN and says so), and `Data[4]`/`struct A`. The
+largest bucket is no longer struct/union at all: it is `not an integer type`
+at 21, thirteen of which are structs correctly refused.
+
+**THE DISCIPLINE, in one line, because it is the thing this lane actually
+learned.** A prediction over a corpus is arithmetic on NAMED TESTS, never an
+estimate of a bucket total — 110 was estimated and missed by 7; 105 was
+enumerated and was exact; 109 was RUN and is the strongest of the three.
+When the fix is a transformation, apply it to the input and read the answer
+off. And when a static scan and a run disagree, the run is right: the scan
+scored three tests clean that the run showed stopping at `NullStmt`,
+`ImplicitValueInitExpr` and unary `~`.
+
+**KNOWN GAPS, named and measured, none of them divergences.**
+`__attribute__((packed))` is dropped by the extractor (7 tests carry it; the
+one that passes is rule-independent, so no wrong answer exists today).
+`triad.sh`'s IMPORTED-BY-NOTHING warning is a false positive for
+`LeanModels/C/Torture.lean` since it became a `lean_exe` root in
+`defaultTargets` — filed as 2026-08-26-c-33 in QoL's ledger. That same change
+means `check.sh --iterate` refuses the file, so the lane's fast loop now
+costs a tenure.

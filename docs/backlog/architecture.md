@@ -8086,3 +8086,111 @@ pyc-9); ES's fourth run pending; C's alignment WIP correctly parked over the A17
 line.
 
 Law rows: **MEAS-472…MEAS-480, STMT-146, OPS-146…OPS-152.**
+
+## 2026-08-26-architecture-92 — A premise nobody re-measures is a premise nobody holds
+
+Dispatch 36: **three complete campaign arcs plus C's headline landing.** Master
+`0890c92`. **Four rows against the coordinating role, one of them the heaviest
+this lane has filed.**
+
+**(A) §9.0 + §5.4 + §5.4b — C'S ALIGNMENT LANDING** (**105/300, failed 0**;
+inherited 97 → measured 103+2 → fixed → 105+0). **The interim failures were the
+point** — both defects were invisible while the number was stationary, and each
+surfaced in the window a lane is most tempted to close before publishing.
+**Publish the interim.** The defects: pointer arithmetic advancing **8 bytes for
+every pointee** (*always wrong, never observed by a passing test*), with five
+`refused-ub` rows meaning the model was **accusing correct programs of undefined
+behaviour** — **a false UB accusation is worse than a refusal: a refusal is about
+the model, an accusation is about the program**; and the extractor **dropping
+bit-field widths**, the **third member of the different-program-envelope class**,
+where one test *"passed for a reason that was not true"* — **a model that cannot
+represent a construct must DECLINE it, not approximate it.** Plus **registration
+is not coverage** (`c-torture-run` never a `defaultTarget` since inch 6, so every
+green since was green about nothing where the §9.0 program is concerned), and the
+prediction upgrade: **a prediction over a corpus is arithmetic on named tests, not
+an estimate of a total** — derived 105 exact, point-estimate 110 off by 7.
+
+**(B) §9.0b — THE SHARDING CAMPAIGN, CLOSED BY FOUR NEGATIVE CENSUSES.** **A
+naming convention is not a dependency structure** — the prefixes are how a human
+grouped 173 theorems; **the graph is what the compiler obeys.** **Under
+machine-wide starvation the victim is chosen by timing, not size** (590 MB vs
+1 990 MB in one run; the lane at 22% of its cap never had a memory problem) —
+*this retires a genre of fleet folklore: a crash names a moment, not a cause.*
+**Sharding a leaf optimises a number that cannot be on the critical path**
+(landed depth split retroactively convicted, and the lane recorded it). **A
+checkpoint saves work only if the state is cheaper to write than to recompute** —
+never for a whole-machine state — with the transferable half: **a computation is
+splittable at its inputs, not at its progress.** Meta: **three same-day instances
+of text-shaped evidence standing for structural**, *each time easy to read and
+wrong* — and pyc committed name-grouping **inside the instrument it offered as
+name-grouping's fix.**
+
+**(C) §9.0b + §5.4 — THE FRONTIER RE-DERIVATION CHAIN.** **Blocker-kind grouping
+is the only grouping that says what an inch would cost.** **A latent row comes
+into existence with the capability** (3 EXISTING + 1 LATENT). `MatMult` flagged
+as **motion-not-progress in frontier form**; `iterList` landed **107/31 with zero
+register rows.** And the pipeline-stage law: **a census of every site that
+mentions `iterDict` cannot find a step that mentions nothing — the missing step
+lives in a different PIPELINE STAGE, not a different file** (`.py` edited, `.json`
+a day stale, every census passing).
+
+**(D) §5.4b — THE ENVELOPE-FRESHNESS ARC.** **A naive comparison is a version
+detector wearing a freshness label**; **present is not pinned**; and **a refusal
+path that has never been executed is a comment with a `raise` in it.** **My sweep
+spec paid inside a day, inside the freshness instrument itself** — OPS-148 shape
+(d), **12 false NOT-LIVEs** — and the sequencing rule got its proof case:
+*"had I wired the gate on the text claim, I'd have armed a permanently-red gate
+whose 12 quiet false negatives would have been read as the tier's baseline."*
+**Arming an unmeasured gate is the inverse of the unexercised-gate failure.** And
+**the regression check caught both; the self-test never would have — the fixture
+extractor is well-behaved in exactly the ways the real ones are not.**
+
+**(E) §5.4b + §7.1a — THE ATTESTED-GATES ARC AND THE PREMISE FALL.** My *"the shim
+is the proof"* was corrected: **a guard on the name covers one of the two routes;
+only withholding the build products answers the other.** Running the flag found
+three defects its passing rows could not, including **a false chain root a later
+`--since` could have built on.** And **a view that hides one thing must not
+quietly change another** (1 024 phantom typechanges; `GIT_DIR` pinned; both
+directions measured). **THEN THE PREMISE FELL**: SV's *"4.5h cost"* was wrong — a
+docs-class gated spine build **replays in 10 s** — and the figure travelled **SV's
+estimate → my ruling → QoL's landing with nobody re-measuring.**
+
+> **A premise nobody re-measures is a premise nobody holds.**
+
+*Each hand was reasonable and the chain was not* — **an estimate acquires
+authority by being cited, and every citation is cheaper than the measurement it
+replaces.** Disposition copied verbatim: **the feature stands on integrity
+grounds, the rationale is amended in all three places, and the wrong figure is
+left standing beside its correction.**
+
+**(F) §7.1a — SIX PROTOCOL SMALLS.** **Enumerate terminal states from the source,
+not from memory of what the tool prints**; **a grep negative is bounded by the
+vocabulary you guessed**; **a push is not landed until `git ls-remote` says so**
+(the new floor gate caught the stale ref as designed); **hardening an instrument
+does not harden the hand that reaches past it**; **an alarm nobody can trust is
+worse than no alarm**; **the finding stands, the metric in it does not.** Plus the
+positive case: the acquire gate's **780 s deferral resumed into a healthy
+kernel** — *the difference between a bounded wait and a wasted 3-hour queue
+position*, the first time this register has priced a wait against its
+alternative.
+
+**(G) §9.0 — SV'S TIER PROGRESS.** `CycleAdequacy` **stated with executable
+evidence** — *"the first executable evidence that it is a TRUE statement and not
+just a well-typed one"*: **a well-typed statement and a true one are different
+claims, and only one needs a witness.** And the edge rule is now **one definition
+with a 4×4 disjointness guard** — **the property the two disagreeing spellings
+could never have stated about each other**: *a merged definition can carry a guard
+the split form cannot express, which is the real argument for deduplication.*
+
+**MY ROWS (four).** The premise chain above; the **survivability approval granted
+on a premise the lane's own instrument falsified within hours**; and **both proxy
+suggestions rightly rejected** (job count uninformative by construction; module
+time confounds slow-and-small with fast-and-large) — **a proxy proposed by someone
+who will not run it is a hypothesis with a schedule attached.**
+
+**Fleet state at landing:** tip `0890c92`; today's §9.0 line — C **105/300 · 0
+failed**; pyc frontier **107/31** (reachable 26); SV **18/21 · 3/15 · FRESH
+18/3**; verdicts pending pyc-11 and Lean-tier const; SV on adequacy pieces 3+4;
+**all fourteen lanes on named rungs.**
+
+Law rows: **MEAS-481…MEAS-499, STMT-147…STMT-149, OPS-153…OPS-161.**

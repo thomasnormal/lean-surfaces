@@ -8644,6 +8644,76 @@ mis-classifying its own author. **A throwaway instrument is still an instrument*
 and this one is the cheapest possible demonstration that the zero-state
 vocabulary's completeness is a claim like any other.
 
+**AND THE DIFFERENT-PROGRAM-ENVELOPE CLASS TOOK ITS THIRD MEMBER, IN THE TIER
+THAT NAMED IT** (C: the extractor **dropped bit-field widths**, and one test
+**"passed for a reason that was not true"**).
+
+> **A MODEL THAT CANNOT REPRESENT A CONSTRUCT MUST DECLINE IT, NOT APPROXIMATE
+> IT.**
+
+**Approximation is the failure mode a refusal taxonomy exists to prevent, and it
+re-enters through the EXTRACTOR every time** — *the semantics were never asked;
+the envelope simply described a narrower program the model could handle.* **A
+dropped field is an approximation with no site, no row and no verdict**, and it
+converts an honest `unsupported` into a green.
+
+**And the class's three members now span three tiers and three mechanisms** —
+overwritten by a merge, silently zero-filled, silently narrowed — *with one
+invariant: the envelope was well-formed every time.* **Whatever else an extraction
+boundary checks, it must check that what it emitted can still be READ BACK as the
+artifact it came from.**
+
+**AND ONE ACCESSOR ASKED FOR TWO TYPES BY TWO CALLERS** (C: pointer arithmetic
+advanced **8 bytes for EVERY pointee** — *always wrong, never observed by a
+passing test*).
+
+> **WHEN ONE ACCESSOR IS ASKED FOR TWO DIFFERENT TYPES BY TWO CALLERS, THE CALL
+> SITES MUST SAY WHICH.**
+
+*A single accessor serving two questions is a silent disagreement with a default
+answer*, and the default is right for whichever caller the author had in mind.
+**The fix is at the call sites, not in the accessor** — an accessor that guesses
+has no way to be wrong loudly.
+
+**AND THE MODEL WAS ACCUSING CORRECT PROGRAMS OF UNDEFINED BEHAVIOUR — five
+`refused-ub` rows.**
+
+> **A FALSE UB ACCUSATION IS WORSE THAN A REFUSAL: a refusal says the tier cannot
+> answer; an accusation says the PROGRAM is wrong.**
+
+**A refusal is a statement about the model and an accusation is a statement about
+the world**, and only the second can be a libel. *This is the one direction in
+which a refusal taxonomy can do positive harm*, and it argues for the same
+treatment §5.1 gives DIVERGE: **an accusation needs evidence a reader can check,
+not merely a bucket.**
+
+**AND A CENSUS CANNOT FIND A STEP THAT MENTIONS NOTHING** (pyc's gates-red: the
+`.py` edited, the `.json` envelope **a day stale**, the model blind, and **every
+census passing**).
+
+> **A CENSUS OF EVERY SITE THAT MENTIONS `iterDict` CANNOT FIND A STEP THAT
+> MENTIONS NOTHING. THE MISSING STEP LIVES IN A DIFFERENT PIPELINE STAGE, NOT A
+> DIFFERENT FILE.**
+
+**This extends the three-corpora law along the other axis.** *There, the corpus
+had shapes a glob could not see; here, the PIPELINE has stages a grep cannot
+reach* — and a census is scoped to text, so **a stage that holds no text about
+the subject is outside every census that will ever be written for it.** **Ask
+what the pipeline's stages are before asking what the corpus's shapes are;** the
+answer bounds what any textual instrument can conclude.
+
+**AND THREE SAME-DAY INSTANCES OF TEXT-SHAPED EVIDENCE STANDING FOR STRUCTURAL**
+(pyc: substring importers, sort-order fixture, prefix shard plan).
+
+> **Each time the text was EASY TO READ and WRONG.**
+
+**Legibility is the hazard, not carelessness** — *a name, a sort order and a
+prefix are all instantly readable and none of them is the structure they resemble*
+— and the register should note the aggravating detail the lane recorded against
+itself: **pyc committed name-grouping INSIDE the instrument it offered as
+name-grouping's fix.** *The shape you have just refuted is the shape most
+available to your hands.*
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -8967,6 +9037,85 @@ one-line change."* **A trap found in the first implementation of a shared ruling
 is owed to every later implementer**, and the cost of relaying is a sentence
 against a tenure of confusion. *The register should expect the first tier through
 a new ruling to publish the traps, not just the code.*
+
+**AND REGISTRATION IS NOT COVERAGE** (C: `c-torture-run` **was never a
+`defaultTarget` since inch 6**).
+
+> **AN EXECUTABLE IS IN THE BUILD ONLY IF IT IS IN `defaultTargets`. BEING IN
+> `lakefile.toml` IS REGISTRATION, NOT COVERAGE.**
+
+**So every green since inch 6 was green about nothing where the §9.0 number's own
+program is concerned** — *the floor law's exact shape at the level of a build
+manifest*: **a gate not in your floor cannot contradict your rows; a target not
+in your default build cannot contradict anything at all.** *Declaring a thing to a
+build system and asking the build system to build it are different acts, and only
+one of them has a verdict.*
+
+**AND MY SWEEP SPEC PAID INSIDE A DAY, IN THE INSTRUMENT MEANT TO PREVENT THIS
+CLASS** (SV's one measured run: the `sv` manifest entry **non-functional — 12
+FALSE NOT-LIVEs**).
+
+> **OPS-148 shape (d) — a message that reads as a verdict when the list is empty
+> — INSIDE THE FRESHNESS INSTRUMENT ITSELF.**
+
+**And the sequencing rule got its proof case, stated by the lane**: *"had I wired
+the gate on the text claim, I'd have armed a permanently-red gate whose 12 quiet
+false negatives would have been read as the tier's baseline."* **A gate armed on
+an unmeasured claim does not fail loudly — it establishes a baseline**, and:
+
+> **ARMING AN UNMEASURED GATE IS THE INVERSE OF THE UNEXERCISED-GATE FAILURE.**
+> *One never runs; the other runs from birth on a claim nobody checked, and its
+> noise becomes the tier's normal.*
+
+**AND A NAIVE FRESHNESS COMPARISON IS A VERSION DETECTOR WEARING A FRESHNESS
+LABEL** (QoL + SV: same corpus, same script, **two verdicts** from two
+interpreters). The fix is **frontend pins with refuse-if-absent** —
+
+> **PRESENT IS NOT PINNED.**
+
+— and the pinned-absent path **crashed on first exercise**, which is the whole
+lesson in one line:
+
+> **A REFUSAL PATH THAT HAS NEVER BEEN EXECUTED IS A COMMENT WITH A RAISE IN
+> IT.**
+
+**Two more defects fell out of the fix** — *the recorded path IS CONTENT*, and **a
+universal mirror broke python twice**, settling that **the manifest is where
+per-tier facts live.** And the decisive observation about which instrument found
+them:
+
+> **THE REGRESSION CHECK CAUGHT BOTH; THE SELF-TEST NEVER WOULD HAVE — the
+> fixture extractor is well-behaved in exactly the ways the real ones are not.**
+
+**A self-test's fixture is authored by the person the self-test protects**, so it
+inherits every assumption the code makes; *the regression corpus is the only input
+in the room that was not written to be handled.* **Where an instrument reads the
+world, its suite must include something from the world.**
+
+**AND A GUARD ON THE NAME COVERS ONE OF TWO ROUTES** (the attested-gates arc; my
+*"the shim is the proof"* corrected — **a `PATH` shim covers Lean reached BY NAME,
+and the `leanpy` ABSOLUTE PATH is the same tool one level down from the two-hop
+incident**). Ruled and landed on QoL's exact sentence — **attested = no
+repo-reachable Lean, plus observation for the rest** — with the general form:
+
+> **A GUARD ON THE NAME COVERS ONE OF THE TWO ROUTES; ONLY WITHHOLDING THE BUILD
+> PRODUCTS ANSWERS THE OTHER.**
+
+*Name-based containment is defeated by any caller that already knows where the
+thing is*, and the second route is the one a mature tree accumulates. **Running
+the flag found three defects its passing rows could not** — including **a FALSE
+CHAIN ROOT a later `--since` could have built on**, which is the compounding case:
+*a wrong root is not one wrong answer, it is the origin of every later one.*
+
+**AND A VIEW THAT HIDES ONE THING MUST NOT QUIETLY CHANGE ANOTHER** (the view's
+git side-effect: **1 024 phantom typechanges**, fixed by pinning `GIT_DIR`, with
+**opposite treatment for fixture-building children measured both ways**).
+
+> **A VIEW THAT HIDES ONE THING MUST NOT QUIETLY CHANGE ANOTHER.**
+
+*An instrument that alters the state it observes has stopped being a view*, and
+the tell here was a number nobody asked for. **Measuring both directions before
+choosing is what turned a plausible fix into a decided one.**
 
 **AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
 ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
@@ -10800,6 +10949,70 @@ tree; it was wrong about what a check is for** — and the fix in every case was
 move a computation from the output into the exit status. **A role that dispatches
 gate audits and exempts its own tooling has been running the corpus-exercise law
 against itself the whole time.**
+
+**AND THE PREMISE FELL AFTER PASSING THROUGH THREE HANDS WITHOUT ONE
+RE-MEASUREMENT — THE HEAVIEST ROW AGAINST ME IN THIS BATCH.** SV's **"4.5h cost"**
+was wrong: **a docs-class gated spine build REPLAYS IN 10 s**; the real cost is
+**a queue slot.** The figure travelled **SV's estimate → my ruling → QoL's
+landing.**
+
+> **A PREMISE NOBODY RE-MEASURES IS A PREMISE NOBODY HOLDS.**
+
+**Each hand was reasonable and the chain was not.** *An estimate acquires
+authority by being cited, and every citation is cheaper than the measurement it
+replaces* — so **the number hardened at exactly the rate it was reused.** This is
+the stale-relay law with a longer fuse: not a statement that aged in flight, but
+**one that was never taken and became load-bearing anyway.**
+
+**And the disposition is the part to copy: the feature STANDS on integrity
+grounds, the rationale is amended in all three places, and THE WRONG FIGURE IS
+LEFT STANDING BESIDE ITS CORRECTION.** *A decision whose stated reason collapses
+is not automatically wrong — it is unjustified until re-argued*, and re-arguing it
+on the surviving ground is a different act from pretending the first ground held.
+
+**AND THE SAME BATCH CARRIED A SECOND ROW OF THE SAME SHAPE**: I granted the
+**survivability approval on a premise the lane's own instrument falsified within
+hours**, and **both of my proxy suggestions were rightly rejected** — *job count
+uninformative by construction; module time confounds slow-and-small with
+fast-and-large.*
+
+> **A PROXY PROPOSED BY SOMEONE WHO WILL NOT RUN IT IS A HYPOTHESIS WITH A
+> SCHEDULE ATTACHED.** *The lane that would have executed it is the one holding
+> the counter-example.*
+
+**AND SIX PROTOCOL SMALLS, EACH A DIFFERENT WAY TO BE WRONG ABOUT A TOOL'S
+OUTPUT.**
+
+* **ENUMERATE TERMINAL STATES FROM THE SOURCE, NOT FROM MEMORY OF WHAT THE TOOL
+  PRINTS** (SV's filter law, completing the terminal-state class). *Pattern-matching
+  on strings you have seen BY CONSTRUCTION excludes the paths you have never
+  hit.*
+* **A GREP NEGATIVE IS BOUNDED BY THE VOCABULARY YOU GUESSED** — *and the failure
+  mode is that the word you did not guess is exactly the one a lenient exit
+  uses.*
+* **A PUSH IS NOT LANDED UNTIL `git ls-remote` SAYS SO** (QoL's
+  branch-never-checked-out wrong-subject push; **the new floor gate caught the
+  stale ref as designed** — a gate paying on the day it was armed).
+* **HARDENING AN INSTRUMENT DOES NOT HARDEN THE HAND THAT REACHES PAST IT** (pyc's
+  substring census after the anchored checker). *A better tool does not remove the
+  worse habit; it removes the excuse.*
+* **AN ALARM NOBODY CAN TRUST IS WORSE THAN NO ALARM** (the is-`True` read) — the
+  status-word ruling's cost side.
+* **THE FINDING STANDS, THE METRIC IN IT DOES NOT** (pyc's 90%-swap headline
+  against the retired high-water instrument, with **my proposal keyed on that
+  instrument as the row**). *A conclusion and the number that prompted it retire
+  separately*, and saying which survives is the whole discipline.
+
+**AND THE ACQUIRE GATE'S LIVE CYCLES ARE THE POSITIVE CASE**: a deferral of
+**780 s** resumed into a healthy kernel — *"the difference between a bounded wait
+and a wasted 3-hour queue position."* **A control that costs a measured, bounded
+wait is not a tax; it is the cheapest of the available outcomes**, and this is the
+first instance in the register where a wait was priced against the alternative
+rather than felt.
+
+**AND C'S `--classify` / `--classify-only` MISREAD produced two tickets, killed by
+PARENTAGE** — *the process-attribution discipline doing its job on a naming
+collision rather than on a workload.*
 
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
@@ -14069,6 +14282,52 @@ most-used safety word in this fleet precisely because it sounds like a proof.
 **The word describes the intent; the diff describes the change**, and only one of
 them is checkable.
 
+**AND A NUMBER THAT MOVED FOUND TWO REAL DEFECTS NO PASSING TEST HAD EVER SEEN**
+(C, `0890c92`; **§9.0 = 105/300, failed 0** — *inherited 97 → measured 103+2 →
+fixed → 105+0*).
+
+> **THE INTERIM FAILURES WERE THE POINT. A scoreboard that only ever goes up is
+> not measuring; it is reporting.**
+
+*Both defects were invisible while the number was stationary*, and each surfaced
+in the window between measuring and fixing — **which is the window a lane is most
+tempted to close before publishing.** **Publish the interim.**
+
+**AND THE PREDICTION METHOD WAS UPGRADED, WITH THE COMPARISON DONE IN THE OPEN**:
+the **derived 105 landed exact** where the **point-estimate 110 missed by 7.**
+
+> **A PREDICTION OVER A CORPUS IS ARITHMETIC ON NAMED TESTS, NOT AN ESTIMATE OF A
+> TOTAL.**
+
+**This is the band discipline's terminal form** — *where the corpus is enumerable
+and the fix's reach is nameable, the honest prediction is a SUM, and a band is
+what you use when you cannot name the members.* **A point estimate over a
+nameable set is a refusal to do the arithmetic**, and it will be beaten by the
+sum every time the set is finite.
+
+**AND SV'S TIER NUMBERS ARRIVED WITH A FIGURE IT HAD NEVER HAD**: `CycleAdequacy`
+**stated with executable evidence** — *"the first executable evidence that
+`CycleAdequacy` is a TRUE statement and not just a well-typed one"* — and
+envelopes **FRESH 18 / NOT-LIVE 3.**
+
+> **A WELL-TYPED STATEMENT AND A TRUE ONE ARE DIFFERENT CLAIMS, AND ONLY ONE OF
+> THEM NEEDS A WITNESS.**
+
+*The vacuity family's positive form*: a tier that can exhibit its statement
+holding on a real input has ruled out the whole class of theorems that typecheck
+about nothing.
+
+**AND THE THREE-RULES-AT-ONCE ITEM CLOSED IN THE STRONGEST AVAILABLE FORM**: the
+edge rule is now **ONE definition with a 4×4 disjointness guard** —
+
+> **the property the two disagreeing spellings COULD NEVER HAVE STATED ABOUT EACH
+> OTHER.**
+
+**A duplicate cannot assert its own agreement**; only a single definition can be
+given a property that would fail if it were two. *Deduplication is usually argued
+on tidiness and this is the argument that actually holds: the merged form can
+carry a guard the split form cannot express.*
+
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —
 
@@ -14737,6 +14996,73 @@ question into an application of three known shapes** — *and that is a differen
 kind of estimate*, because the risk is no longer "what will we find" but "how many
 of each." **A lane that can prove its frontier is closed has earned the right to
 price it.**
+
+**AND THE SHARDING CAMPAIGN WAS CLOSED BY FOUR CENSUSES, EVERY ONE OF THEM
+NEGATIVE** (pyc) — *which is a result, and the register should say so plainly: a
+campaign that ends by proving its own premise false has produced the cheapest
+possible version of the work it cancelled.*
+
+**(1) A NAMING CONVENTION IS NOT A DEPENDENCY STRUCTURE.** `genmoves_ray`'s
+families are **CYCLIC**.
+
+> **The prefixes are how a HUMAN grouped 173 theorems for reading; the reference
+> graph says they are ONE ORGANISM — AND THE GRAPH IS WHAT THE COMPILER OBEYS.**
+
+**(2) UNDER MACHINE-WIDE STARVATION THE VICTIM IS CHOSEN BY TIMING, NOT SIZE**
+(`genmoves_ray` **590 MB** vs `bound_depth` **1 990 MB** in the same run; the
+lane's aggregate was **22% of its cap** — *it never had a memory problem at
+all*).
+
+> **Every "this module is the fragile one" conclusion drawn from WHICH MODULE
+> DIED is an artifact of SCHEDULING.**
+
+**This retires a whole genre of fleet folklore.** *A crash names a moment, not a
+cause*, and the module that dies under starvation is the one that asked next —
+**so the entire class of conclusions drawn from OOM identity is unfounded unless
+the sampler ran.** The lane built the sampler and the premise fell in hours.
+
+**(3) SHARDING A LEAF OPTIMISES A NUMBER THAT CANNOT BE ON THE CRITICAL PATH**
+(`pins_bound_*` are leaves; both regimes measured negative).
+
+> **The throughput fix is to make those proofs CHEAPER, not to spread them across
+> more files.**
+
+*Parallelism moves work in time; it cannot move work off a path it was never
+on* — and this convicts the landed depth split retroactively, which the lane
+recorded rather than quietly kept.
+
+**(4) A CHECKPOINT SAVES WORK ONLY IF THE STATE IS CHEAPER TO WRITE THAN TO
+RECOMPUTE** — and for **a whole-machine state it never is** (step 13 is **61.3%
+in one `stepIter` call**; the checkpoint state is a heap after **795 nodes**;
+kernel reduction unfolds cross-module defs, so there is **no memoisation escape**).
+
+**And the seed distinction is the transferable half**: `pins_bound` splits **BY
+SEED** — *a tiny literal* — while **the walk has no seed**, because **its
+intermediate state IS the accumulated search.**
+
+> **A COMPUTATION IS SPLITTABLE AT ITS INPUTS, NOT AT ITS PROGRESS. Ask what the
+> smallest thing is that regenerates the rest.**
+
+**AND A FRONTIER IS GROUPED BY BLOCKER KIND** (pyc↔SoftFloat, three links):
+
+> **BLOCKER-KIND GROUPING IS THE ONLY GROUPING THAT SAYS WHAT AN INCH WOULD
+> COST.**
+
+*Alphabetical, by-file and by-feature groupings all read well and none of them
+prices anything.* The chain also produced **honest-REFUSE discipline** — *"the
+reachable surface is 27, not 32"* — and settled a cross-lane dependency at **3
+EXISTING + 1 LATENT** rows:
+
+> **A LATENT ROW COMES INTO EXISTENCE WITH THE CAPABILITY.** *If they land
+> arithmetic without printing, they close 3 and CREATE the 4th* — **a debt a
+> capability MINTS is owed by the lane that lands the capability, and it can be
+> named before the capability exists.**
+
+**And `MatMult` was flagged as motion-not-progress IN FRONTIER FORM** — *"moves
+the count without moving the capability"* — which is the below-the-floor law
+arriving at a frontier table rather than a scheduler. **`iterList` landed the
+frontier 107/31 with ZERO register rows**: *the anti-dict-cursor, and the cleanest
+possible demonstration that a capability can land owing nothing.*
 
 **(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
 What it said:** *a construct measuring `+0` is not cheap, it is unreachable —

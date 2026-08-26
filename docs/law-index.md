@@ -529,6 +529,25 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-478 | a CATEGORY ADDED TO A SET changes every AGGREGATE over that set — taxonomy changes land in folds, invisibly | `docs/family-architecture.md §5.4b` |
 | MEAS-479 | a RUNG REDUCED IS NOT A RUNG CLOSED — reporting a waypoint as a score borrows against the rung you eased | `docs/family-architecture.md §9.0` |
 | MEAS-480 | a PURELY ADDITIVE DEPENDENCY IS STILL A CHANGED DEPENDENCY — what makes it safe is THE DIFF, not the word | `docs/family-architecture.md §9.0` |
+| MEAS-481 | THE INTERIM FAILURES WERE THE POINT — a scoreboard that only ever goes up is reporting, not measuring | `docs/family-architecture.md §9.0` |
+| MEAS-482 | a PREDICTION OVER A CORPUS is ARITHMETIC ON NAMED TESTS, not an estimate of a total | `docs/family-architecture.md §9.0` |
+| MEAS-483 | a WELL-TYPED statement and a TRUE one are different claims — only one needs a witness | `docs/family-architecture.md §9.0` |
+| MEAS-484 | REGISTRATION IS NOT COVERAGE — an executable is in the build only if it is in `defaultTargets` | `docs/family-architecture.md §5.4b` |
+| MEAS-485 | ARMING AN UNMEASURED GATE is the inverse of the unexercised-gate failure — its noise becomes the tier's baseline | `docs/family-architecture.md §5.4b` |
+| MEAS-486 | a naive freshness comparison is A VERSION DETECTOR WEARING A FRESHNESS LABEL — PRESENT IS NOT PINNED | `docs/family-architecture.md §5.4b` |
+| MEAS-487 | where an instrument reads THE WORLD, its suite must include something FROM the world — a fixture is well-behaved | `docs/family-architecture.md §5.4b` |
+| MEAS-488 | A NAMING CONVENTION IS NOT A DEPENDENCY STRUCTURE — the reference graph is what the compiler obeys | `docs/family-architecture.md §9.0b` |
+| MEAS-489 | UNDER MACHINE-WIDE STARVATION THE VICTIM IS CHOSEN BY TIMING, NOT SIZE — OOM identity concludes nothing | `docs/family-architecture.md §9.0b` |
+| MEAS-490 | SHARDING A LEAF optimises a number that cannot be on the critical path — make the proof cheaper instead | `docs/family-architecture.md §9.0b` |
+| MEAS-491 | a CHECKPOINT saves work only if the state is cheaper to WRITE than to RECOMPUTE — never for a whole-machine state | `docs/family-architecture.md §9.0b` |
+| MEAS-492 | a computation is SPLITTABLE AT ITS INPUTS, not at its PROGRESS — ask what regenerates the rest | `docs/family-architecture.md §9.0b` |
+| MEAS-493 | BLOCKER-KIND GROUPING is the only grouping that says what an inch would cost | `docs/family-architecture.md §9.0b` |
+| MEAS-494 | a LATENT ROW comes into existence WITH THE CAPABILITY — it can be named before the capability exists | `docs/family-architecture.md §9.0b` |
+| MEAS-495 | A PREMISE NOBODY RE-MEASURES IS A PREMISE NOBODY HOLDS — an estimate hardens at the rate it is cited | `docs/family-architecture.md §7.1a` |
+| MEAS-496 | a PROXY proposed by someone who will not run it is a hypothesis with a schedule attached | `docs/family-architecture.md §7.1a` |
+| MEAS-497 | THE FINDING STANDS, THE METRIC IN IT DOES NOT — a conclusion and its prompting number retire separately | `docs/family-architecture.md §7.1a` |
+| MEAS-498 | A CENSUS CANNOT FIND A STEP THAT MENTIONS NOTHING — the missing step is a PIPELINE STAGE, not a file | `docs/family-architecture.md §5.4` |
+| MEAS-499 | TEXT-SHAPED EVIDENCE STANDING FOR STRUCTURAL: names, sort orders and prefixes read easily and are not the structure | `docs/family-architecture.md §5.4` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -683,6 +702,9 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-144 | a MAGNITUDE argument (where a value SITS) is a different proof shape from an EQUALITY argument | `docs/family-architecture.md §7.1a` |
 | STMT-145 | NO THIRD SPECIES — a closed taxonomy over the remaining arms licenses a rung as instantiation, not discovery | `docs/family-architecture.md §9.0b` |
 | STMT-146 | a SHAPE is portable, a CONDITION is not — a copied shape invites copied content | `docs/family-architecture.md §5.0a` |
+| STMT-147 | a model that CANNOT REPRESENT a construct must DECLINE it, not APPROXIMATE it — a dropped field has no verdict | `docs/family-architecture.md §5.4` |
+| STMT-148 | a FALSE UB ACCUSATION is worse than a refusal — a refusal is about the model, an accusation is about the program | `docs/family-architecture.md §5.4` |
+| STMT-149 | a MERGED definition can carry a guard the SPLIT form cannot express — the real argument for deduplication | `docs/family-architecture.md §9.0` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -908,6 +930,15 @@ numbers below are the register's own.
 | OPS-150 | THE PROTOCOL'S OWN ARTIFACT must not be able to invalidate its own ticket — refuse at ENQUEUE, never stamp-exclude | `docs/family-architecture.md §7.1a` |
 | OPS-151 | a REFUSAL THAT PRINTS THE RECOVERY ORDERING is a control; one that prints only the problem is an obstacle | `docs/family-architecture.md §7.1a` |
 | OPS-152 | a GATE WITH A BYPASS AT THE CALL SITE is the gate-not-annotate defect wearing the gate as a costume | `docs/family-architecture.md §7.1a` |
+| OPS-153 | when ONE ACCESSOR is asked for two types by two callers, THE CALL SITES MUST SAY WHICH | `docs/family-architecture.md §5.4` |
+| OPS-154 | a REFUSAL PATH THAT HAS NEVER BEEN EXECUTED is a comment with a `raise` in it | `docs/family-architecture.md §5.4b` |
+| OPS-155 | a GUARD ON THE NAME covers one of two routes; only WITHHOLDING THE BUILD PRODUCTS answers the other | `docs/family-architecture.md §5.4b` |
+| OPS-156 | A VIEW THAT HIDES ONE THING MUST NOT QUIETLY CHANGE ANOTHER — pin `GIT_DIR`; measure both directions | `docs/family-architecture.md §5.4b` |
+| OPS-157 | ENUMERATE TERMINAL STATES FROM THE SOURCE, not from memory of what the tool prints | `docs/family-architecture.md §7.1a` |
+| OPS-158 | a GREP NEGATIVE is bounded by the vocabulary you guessed — the unguessed word is the one a lenient exit uses | `docs/family-architecture.md §7.1a` |
+| OPS-159 | A PUSH IS NOT LANDED UNTIL `git ls-remote` SAYS SO | `docs/family-architecture.md §7.1a` |
+| OPS-160 | HARDENING AN INSTRUMENT DOES NOT HARDEN THE HAND THAT REACHES PAST IT | `docs/family-architecture.md §7.1a` |
+| OPS-161 | AN ALARM NOBODY CAN TRUST IS WORSE THAN NO ALARM | `docs/family-architecture.md §7.1a` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

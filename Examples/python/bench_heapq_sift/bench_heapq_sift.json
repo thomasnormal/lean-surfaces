@@ -187,15 +187,60 @@
                   }
                 ],
                 "value": {
-                  "kind": "Unsupported",
+                  "kind": "BinOp",
                   "span": {
                     "lineno": 38,
                     "col_offset": 20,
                     "end_lineno": 38,
                     "end_col_offset": 34
                   },
-                  "py_kind": "BinOp:RShift",
-                  "text": "pos - 1 >> 1"
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 38,
+                      "col_offset": 21,
+                      "end_lineno": 38,
+                      "end_col_offset": 28
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 38,
+                        "col_offset": 21,
+                        "end_lineno": 38,
+                        "end_col_offset": 24
+                      },
+                      "id": "pos"
+                    },
+                    "op": "Sub",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 38,
+                        "col_offset": 27,
+                        "end_lineno": 38,
+                        "end_col_offset": 28
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  },
+                  "op": "RShift",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 38,
+                      "col_offset": 33,
+                      "end_lineno": 38,
+                      "end_col_offset": 34
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
                 }
               },
               {

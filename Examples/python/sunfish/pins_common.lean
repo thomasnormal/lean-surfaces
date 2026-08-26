@@ -54,6 +54,27 @@ STRUCTURED (Pass 0 import forms); frontend stamp moves to CPython
 3.9.25, the pinned-oracle family (body-identical to the 3.14 stamps
 everywhere the extractor did not change -- measured, 84/96 envelopes
 version-line-only).
+
+Re-extraction log: pass 9 -- NOT a re-pin. `sunfish.py` is UNCHANGED;
+this pass is the EXTRACTOR catching up. Two statements the envelope
+recorded as `Unsupported` now lower as real `DeleteSubscript` nodes:
+
+  511  del self.tp_move[next(k for k in self.tp_move if k != self.root)]
+  541  del self.tp_score[next(iter(self.tp_score))]
+
+Those are the two table evictions, and the tier gained the capability to
+model them on 2026-08-24/25 (`iter(d)`+`next`; the genexp-over-keys
+cursor) -- but the ENVELOPE was never re-extracted, so the model kept
+ingesting both as `Unsupported` while `dict_lab`'s corpus rows exercised
+the capability and passed. A capability is delivered when the artifact
+the model LOADS is re-extracted, not when the model supports it.
+
+NO CERTIFICATE CAN MOVE, and it is checkable rather than asserted: both
+statements sit inside `if len(...) > TABLE_SIZE` with
+`TABLE_SIZE = 10**6`, while the deepest pinned walk reaches 2053 nodes,
+so neither branch is reachable. The refusal is LAZY, not eager -- this
+battery already runs `bound()` today with those `Unsupported` nodes
+inside it. If a pin moves, that argument was wrong and the change stops.
 -/
 import LeanModels
 

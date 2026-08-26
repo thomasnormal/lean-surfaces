@@ -22594,15 +22594,152 @@
                             },
                             "body": [
                               {
-                                "kind": "Unsupported",
+                                "kind": "DeleteSubscript",
                                 "span": {
                                   "lineno": 511,
                                   "col_offset": 24,
                                   "end_lineno": 511,
                                   "end_col_offset": 89
                                 },
-                                "py_kind": "Delete",
-                                "text": "del self.tp_move[next((k for k in self.tp_move if k != self.root))]"
+                                "recv": {
+                                  "kind": "Attribute",
+                                  "span": {
+                                    "lineno": 511,
+                                    "col_offset": 28,
+                                    "end_lineno": 511,
+                                    "end_col_offset": 40
+                                  },
+                                  "value": {
+                                    "kind": "Name",
+                                    "span": {
+                                      "lineno": 511,
+                                      "col_offset": 28,
+                                      "end_lineno": 511,
+                                      "end_col_offset": 32
+                                    },
+                                    "id": "self"
+                                  },
+                                  "attr": "tp_move"
+                                },
+                                "key": {
+                                  "kind": "Call",
+                                  "span": {
+                                    "lineno": 511,
+                                    "col_offset": 41,
+                                    "end_lineno": 511,
+                                    "end_col_offset": 88
+                                  },
+                                  "func": {
+                                    "kind": "Name",
+                                    "span": {
+                                      "lineno": 511,
+                                      "col_offset": 41,
+                                      "end_lineno": 511,
+                                      "end_col_offset": 45
+                                    },
+                                    "id": "next"
+                                  },
+                                  "args": [
+                                    {
+                                      "kind": "GeneratorExp",
+                                      "span": {
+                                        "lineno": 511,
+                                        "col_offset": 45,
+                                        "end_lineno": 511,
+                                        "end_col_offset": 88
+                                      },
+                                      "elt": {
+                                        "kind": "Name",
+                                        "span": {
+                                          "lineno": 511,
+                                          "col_offset": 46,
+                                          "end_lineno": 511,
+                                          "end_col_offset": 47
+                                        },
+                                        "id": "k"
+                                      },
+                                      "target": {
+                                        "kind": "Name",
+                                        "span": {
+                                          "lineno": 511,
+                                          "col_offset": 52,
+                                          "end_lineno": 511,
+                                          "end_col_offset": 53
+                                        },
+                                        "id": "k"
+                                      },
+                                      "iter": {
+                                        "kind": "Attribute",
+                                        "span": {
+                                          "lineno": 511,
+                                          "col_offset": 57,
+                                          "end_lineno": 511,
+                                          "end_col_offset": 69
+                                        },
+                                        "value": {
+                                          "kind": "Name",
+                                          "span": {
+                                            "lineno": 511,
+                                            "col_offset": 57,
+                                            "end_lineno": 511,
+                                            "end_col_offset": 61
+                                          },
+                                          "id": "self"
+                                        },
+                                        "attr": "tp_move"
+                                      },
+                                      "ifs": [
+                                        {
+                                          "kind": "Compare",
+                                          "span": {
+                                            "lineno": 511,
+                                            "col_offset": 73,
+                                            "end_lineno": 511,
+                                            "end_col_offset": 87
+                                          },
+                                          "left": {
+                                            "kind": "Name",
+                                            "span": {
+                                              "lineno": 511,
+                                              "col_offset": 73,
+                                              "end_lineno": 511,
+                                              "end_col_offset": 74
+                                            },
+                                            "id": "k"
+                                          },
+                                          "ops": [
+                                            "NotEq"
+                                          ],
+                                          "comparators": [
+                                            {
+                                              "kind": "Attribute",
+                                              "span": {
+                                                "lineno": 511,
+                                                "col_offset": 78,
+                                                "end_lineno": 511,
+                                                "end_col_offset": 87
+                                              },
+                                              "value": {
+                                                "kind": "Name",
+                                                "span": {
+                                                  "lineno": 511,
+                                                  "col_offset": 78,
+                                                  "end_lineno": 511,
+                                                  "end_col_offset": 82
+                                                },
+                                                "id": "self"
+                                              },
+                                              "attr": "root"
+                                            }
+                                          ]
+                                        }
+                                      ],
+                                      "walrus": []
+                                    }
+                                  ],
+                                  "keywords": [],
+                                  "call_unsupported": null
+                                }
                               }
                             ],
                             "orelse": []
@@ -23410,15 +23547,99 @@
                 },
                 "body": [
                   {
-                    "kind": "Unsupported",
+                    "kind": "DeleteSubscript",
                     "span": {
                       "lineno": 541,
                       "col_offset": 12,
                       "end_lineno": 541,
                       "end_col_offset": 56
                     },
-                    "py_kind": "Delete",
-                    "text": "del self.tp_score[next(iter(self.tp_score))]"
+                    "recv": {
+                      "kind": "Attribute",
+                      "span": {
+                        "lineno": 541,
+                        "col_offset": 16,
+                        "end_lineno": 541,
+                        "end_col_offset": 29
+                      },
+                      "value": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 541,
+                          "col_offset": 16,
+                          "end_lineno": 541,
+                          "end_col_offset": 20
+                        },
+                        "id": "self"
+                      },
+                      "attr": "tp_score"
+                    },
+                    "key": {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 541,
+                        "col_offset": 30,
+                        "end_lineno": 541,
+                        "end_col_offset": 55
+                      },
+                      "func": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 541,
+                          "col_offset": 30,
+                          "end_lineno": 541,
+                          "end_col_offset": 34
+                        },
+                        "id": "next"
+                      },
+                      "args": [
+                        {
+                          "kind": "Call",
+                          "span": {
+                            "lineno": 541,
+                            "col_offset": 35,
+                            "end_lineno": 541,
+                            "end_col_offset": 54
+                          },
+                          "func": {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 541,
+                              "col_offset": 35,
+                              "end_lineno": 541,
+                              "end_col_offset": 39
+                            },
+                            "id": "iter"
+                          },
+                          "args": [
+                            {
+                              "kind": "Attribute",
+                              "span": {
+                                "lineno": 541,
+                                "col_offset": 40,
+                                "end_lineno": 541,
+                                "end_col_offset": 53
+                              },
+                              "value": {
+                                "kind": "Name",
+                                "span": {
+                                  "lineno": 541,
+                                  "col_offset": 40,
+                                  "end_lineno": 541,
+                                  "end_col_offset": 44
+                                },
+                                "id": "self"
+                              },
+                              "attr": "tp_score"
+                            }
+                          ],
+                          "keywords": [],
+                          "call_unsupported": null
+                        }
+                      ],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
                   }
                 ],
                 "orelse": []

@@ -3490,3 +3490,99 @@ ever swapped … 90% swap against a kernel level of 2, disagreeing in KIND."*
 That 90% was my headline number. **The finding stands; the metric in it does
 not** — the condition was real, the instrument was wrong, and only measuring
 both side by side caught it.
+
+## 2026-08-26-pycomplete-41 — the envelope cleanup is not cleanup: it is the delivery step for four earlier inches
+
+### Priced before doing, and the price changed once measured
+
+`envelope_fresh --tier python` on master: **FRESH 59, STALE 2**. The three
+stamp-only files pass it already (the manifest excludes stamp keys), so the
+gate's blocking set was two files. What those two contain is the whole story:
+
+| envelope | transition | count |
+|---|---|---|
+| `bench_heapq_sift` | `Unsupported → BinOp` | 1 |
+| `sunfish` | **`Unsupported → DeleteSubscript`** | **2** |
+
+**These are not cosmetic.** A stale envelope was recording *supported* syntax as
+`Unsupported`, so regenerating is a **capability change**, not a refresh.
+
+### And the two sunfish nodes are my own inches' lines
+
+    line 511  del self.tp_move[next(k for k in self.tp_move if k != self.root)]
+    line 541  del self.tp_score[next(iter(self.tp_score))]
+
+Line 541 is the `iter(d)`+`next` flagship line (`bdd96d7`); line 511 is the
+genexp-over-keys eviction (`cf13932`). **The tier gained both capabilities and
+the flagship's envelope never picked them up** — the model has been ingesting
+both eviction lines as `Unsupported` the entire time, while the corpus rows in
+`dict_lab` exercised the capability and passed.
+
+> **A capability is not delivered when the model supports it. It is delivered
+> when the artifact the model actually loads is re-extracted.** Four inches
+> landed green against a flagship that never saw them.
+
+### Why no certificate can move, and it is checkable
+
+Both statements sit inside `if len(self.tp_move) > TABLE_SIZE` /
+`if len(self.tp_score) > TABLE_SIZE`, and **`TABLE_SIZE = 10**6`**. The deepest
+pinned walk reaches **2053 nodes**, so neither branch is reachable by any
+certificate in the tree. The model's refusal is demonstrably **lazy**, not
+eager: the pins battery already runs `bound()` today with those `Unsupported`
+nodes inside it.
+
+**Falsifiable prediction: every certificate is byte-identical after this
+change.** If one moves, this argument was wrong and the inch stops.
+
+Corroborating: **zero** `Unsupported` mentions anywhere in `Examples/python/sunfish/*.lean`, so no proof pattern-matches the stale shape.
+
+### The price
+
+- **Work**: 5 envelopes regenerated (2 content, 3 stamp), gate wired. Mechanical.
+- **Build**: a **full SPINE tenure** — `sunfish.json` feeds `pins_common.lean`,
+  which has **13 direct importers** (the whole pins battery, `pins_clock_walk`
+  at 1336 s included).
+- **Risk**: low *and argued*, not asserted — see the reachability argument.
+- **Value**: corrective rather than capability-adding. No *new* certificate
+  becomes provable: witnessing an eviction needs 10⁶ table entries, which
+  kernel evaluation will never reach. What it buys is **the model matching the
+  program**, which is a standing law here, plus it unblocks `--tier python`.
+
+Result after cleanup: **FRESH 61, STALE 0, exit 0.**
+
+### A third instance of the under-specified selector
+
+Verifying `source_file`, my `find Examples -name "sunfish.json" | head -1`
+matched **the C tier's** envelope and reported `tools/ctwin/sunfish.c` — a
+false alarm on my own change. There are two `sunfish.json` files. Same shape as
+the substring grep that invented `genmoves_ray`'s importers and the `rows[0]`
+fold that picked a file by sort order: **a selector that does not say which one
+it means will eventually mean the wrong one.**
+
+### Correction: the trap was documented at the exact site I edited
+
+My "discovery" that `load_program` is an untracked build input was a
+**rediscovery**. `pins_common.lean:17` has said so all along:
+
+> *ENVELOPE NOTE (the standing trap): `load_program` does not track its JSON as
+> a build input and lake hashes CONTENT — after re-extracting `sunfish.json`,
+> make a real edit HERE (this comment is the place); the import chain then
+> rebuilds every pin file.*
+
+There is even a numbered **re-extraction log** to append to, and `proof.lean`
+carries per-pass notes saying *"this comment is the content edit that forces
+re-elaboration."* The convention exists, names its own place, and I regenerated
+the envelope without reading the file that loads it.
+
+> **Census-first means reading the file you are about to invalidate, not only
+> the files you are about to edit.** My blast-radius census found the three
+> loaders and counted their importers — and did not read what they said.
+
+So layer 3 is not "nobody knew". It is **a documented convention with no gate**,
+which is the weaker and more interesting claim: the trap was written down by
+someone who hit it, and writing it down did not stop the next person hitting it.
+That is the case for QoL's mechanism (a) or (b) rather than a third prose note.
+
+This pass is logged as **pass 9** in both loaders, and it is a different KIND
+from passes 7–8: those were re-pins to a new engine `sunfish.py`; this one has
+an unchanged source and a changed **extractor**.

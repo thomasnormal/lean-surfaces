@@ -3652,3 +3652,74 @@ The forcing edit did its job: attempt 1 rebuilt `pins_bound_mid_d3` and 48
 minutes of real spine before the box killed it, and attempt 2 reached the
 failure. **pyc13's 5-second green would have merged this silently** — a broken
 tree behind a green tenure, discovered by whoever next touched the pins.
+
+## 2026-08-26-pycomplete-43 — the migration's own premise was derived, not measured; and the structural fix is priced NO
+
+### First, a correction to my own re-price
+
+I reported *"`@7` was line 515, now line 511"*. **That is not established.** I
+derived it by walking `GeneratorExp` nodes in document order. The model does
+not do that: `Json.lean:1197` mints the name from a **state-monad counter
+threaded through the LOWERING traversal** (`let (n, fns) ← get`), which visits
+in its own order and consumes indices under its own conditions — which is why
+the committed census reads `@0, @1, @3, @4, @5, @6, @7` with **a gap at `@2`**
+that document order cannot explain.
+
+The proof that it disagrees is already in the tree: `pins_init.lean:121`
+describes `<genexpr@7>` as *"the drained **module-scope** genexp"* doing
+`tuple(...(range(120)))`, but line 515 — my derived `@7` — sits at indent 8
+inside `Searcher.bound`. **My mapping contradicts the tree's own prose.**
+
+> **The renumbering is proven (three certificates moved). The index→site
+> mapping is not.** I made the derived-not-measured error *inside the inch
+> whose whole lesson was that a prediction must be tested — one entry after
+> writing it down.
+
+**Consequence for the plan**: the migration cannot begin from a derived
+mapping. Step one is a **measuring tenure** — a temporary
+`#eval sunfish.functions.map (fun f => (f.name, f.span))` — because the model's
+own answer is the only admissible source. Replicating the lowering in Python to
+derive it would repeat this exact mistake with more machinery.
+
+### The structural fix, priced: NO, and the census says why
+
+| scheme | insertion-stable? | verdict |
+|---|---|---|
+| **positional** (today) | no | the proven hazard |
+| **span** (`line:col`) | no — *any* edit above shifts it | **strictly worse** |
+| **scope + ordinal** (`<genexpr@Searcher.bound#1>`) | **no** | readable, and **does not fix this case** |
+| **content hash of the genexp text** | yes | unreadable; needs a collision policy |
+
+The scope census kills the readable candidate outright: lines **511 and 515 are
+both in `Searcher.bound`**, so inserting 511 renumbers 515 *within its own
+scope*. Scoping shrinks the blast radius; it does not retire the hazard — and
+`<module>` likewise holds three.
+
+That leaves content-hashing as the only scheme that actually works, and it buys
+insertion-stability with **unreadable certificate names** plus a collision
+policy for genexps with identical text (9 sites here, and identical short
+comprehensions are entirely plausible).
+
+> **Taking it: MIGRATION-ONLY.** A naming redesign whose sole working variant
+> degrades every certificate's readability is not a rider on a migration that
+> has already falsified one prediction and one mapping. It is its own inch,
+> with its own review, and it should be decided when someone can weigh
+> unreadable names against a hazard whose true frequency we now know how to
+> measure.
+
+**Stated cost of that choice**: if a structural fix later lands, the affected
+mentions are touched twice. I am accepting that rather than bundling an
+unsettled naming decision into a migration — the same call I made for the other
+four envelopes, and the same one I applied against myself at pycomplete-42.
+
+### The plan, in order
+
+1. **Measuring tenure** — temporary `#eval` of `(name, span)` per lowered
+   function, before and after the envelope swap. Yields the *real* index→site
+   map and the *real* shift set.
+2. **`@7` audit** against that map, per site: `spec.lean:103` and `:136` are
+   whole-table enumerations (they gain a row, no meaning-shift);
+   `pins_init.lean:121` and `init_chain.lean:1285` name a *specific* construct
+   and must be checked for which one they intend.
+3. **Re-pin the three censuses** to measured values, sweep only the mentions the
+   map says moved — not all 128 on principle.

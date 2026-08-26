@@ -31,7 +31,7 @@ name = "LeanModels"
 [[lean_lib]]
 name = "Examples"
 globs = ["Examples.+"]
-needs = ["circuitSources", "verilogASources", "pythonEnvelopes", "cEnvelopes"]
+needs = ["circuitSources", "verilogASources", "pythonEnvelopes", "cEnvelopes", "esEnvelopes"]
 
 [[input_dir]]
 name = "circuitSources"
@@ -64,6 +64,16 @@ filter = { extension = ["json"] }
 [[input_dir]]
 name = "cEnvelopes"
 path = "Examples/c"
+text = true
+filter = { extension = ["json"] }
+
+# THE ES TIER'S ENVELOPES (restored after a merge dropped 56bf840's addition:
+# the c-align branch predated it and a theirs-resolution reverted it — the
+# heading-survival class in a non-docs file). `load_es_program` reads these
+# fixtures at ELABORATION time.
+[[input_dir]]
+name = "esEnvelopes"
+path = "Examples/es"
 text = true
 filter = { extension = ["json"] }
 

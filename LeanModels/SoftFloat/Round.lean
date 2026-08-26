@@ -149,6 +149,102 @@ theorem dyadic_sub (a b : Int) (g : Int) :
 #print axioms repr_at_lower
 #print axioms dyadic_sub
 
+/-! ## 4c, STEP 3 — ORDERING at a common exponent is INTEGER ordering -/
+
+theorem dyadic_le_iff (a b : Int) (g : Int) :
+    Q.Le (Q.dyadic a g) (Q.dyadic b g) ↔ a ≤ b := by
+  unfold Q.Le Q.dyadic
+  by_cases hg : 0 ≤ g
+  · simp only [if_pos hg]
+    have hp : (0 : Int) < 2 ^ g.toNat := Int.pow_pos (by decide)
+    constructor
+    · intro h
+      have h' : a * 2 ^ g.toNat ≤ b * 2 ^ g.toNat := by simpa using h
+      exact Int.le_of_mul_le_mul_right h' hp
+    · intro h
+      have h' : a * 2 ^ g.toNat ≤ b * 2 ^ g.toNat :=
+        Int.mul_le_mul_of_nonneg_right h (Int.le_of_lt hp)
+      simpa using h'
+  · simp only [if_neg hg]
+    have hp : (0 : Int) < ((2 ^ (-g).toNat : Nat) : Int) := by
+      have := Nat.two_pow_pos (-g).toNat; omega
+    constructor
+    · intro h; exact Int.le_of_mul_le_mul_right h hp
+    · intro h; exact Int.mul_le_mul_of_nonneg_right h (Int.le_of_lt hp)
+
+
+/-! ## 4c, STEP 4 — DISTANCE at a common exponent is |Δsignificand| times the step -/
+
+/--  — the one fact both branches of  need. -/
+theorem natAbs_mul_pow (d : Int) (k : Nat) :
+    (d * 2 ^ k).natAbs = d.natAbs * 2 ^ k := by
+  rw [Int.natAbs_mul]
+  congr 1
+
+theorem dist_dyadic (x y : Int) (g : Int) :
+    Q.Eq (Q.dist (Q.dyadic x g) (Q.dyadic y g)) (Q.dyadic (((x - y).natAbs : Nat) : Int) g) := by
+  show Q.Eq (Q.abs (Q.sub (Q.dyadic x g) (Q.dyadic y g))) _
+  unfold Q.Eq Q.abs Q.sub Q.add Q.neg Q.dyadic
+  by_cases hg : 0 <= g
+  . simp only [if_pos hg]
+    simp
+    rw [show x * 2 ^ g.toNat + -(y * 2 ^ g.toNat) = (x - y) * 2 ^ g.toNat from by
+          rw [Int.sub_mul, Int.sub_eq_add_neg]]
+    rw [natAbs_mul_pow]
+    simp [Int.natCast_mul]
+  . simp only [if_neg hg]
+    simp
+    rw [show x * 2 ^ (-g).toNat + -y * 2 ^ (-g).toNat = (x - y) * 2 ^ (-g).toNat from by
+          rw [Int.sub_eq_add_neg, Int.add_mul]]
+    rw [natAbs_mul_pow]
+    simp [Int.natCast_mul, Int.mul_assoc]
+
+#print axioms dyadic_le_iff
+#print axioms natAbs_mul_pow
+#print axioms dist_dyadic
+
+/-! ## 4c, STEP 5 — NEAREST MULTIPLE, on integers -/
+
+/-- A nonzero multiple of a positive step is at least one step away from zero. -/
+theorem step_le_mul (m s : Int) (hs : 0 < s) (hm : 1 <= m) : s <= m * s := by
+  have := Int.mul_le_mul_of_nonneg_right hm (Int.le_of_lt hs)
+  simpa using this
+
+/-- **Nothing beats the two neighbours.**  For any multiple `j * s` of the step,
+    the distance from `v` is at least `min r (s - r)`, where `r = v % s` — and
+    that minimum is exactly what rounding to the nearer neighbour achieves. -/
+theorem multiple_dist_ge (v s j : Int) (hs : 0 < s) :
+    min (v % s) (s - v % s) <= (v - j * s).natAbs := by
+  have hr0 : 0 <= v % s := Int.emod_nonneg v (by omega)
+  have hrs : v % s < s := Int.emod_lt_of_pos v hs
+  have hdiv : v / s * s + v % s = v := Int.ediv_mul_add_emod v s
+  have hkey : v - j * s = (v / s - j) * s + v % s := by
+    rw [Int.sub_mul]; omega
+  have habs : ((v - j * s).natAbs : Int)
+      = if 0 <= v - j * s then v - j * s else -(v - j * s) := by
+    by_cases h : 0 <= v - j * s
+    . rw [if_pos h, Int.natAbs_of_nonneg h]
+    . rw [if_neg h, ← Int.natAbs_neg, Int.natAbs_of_nonneg (by omega)]
+  by_cases h : v / s - j < 0
+  . -- omega treats `-(x) * s` and `x * s` as UNRELATED atoms; normalise first
+      -- so both facts speak about the same one.
+      have h2 : (v / s - j) * s <= -s := by
+        have hx := step_le_mul (-(v / s - j)) s hs (by omega)
+        rw [Int.neg_mul] at hx
+        omega
+      rw [habs, if_neg (by omega)]
+      omega
+  . by_cases h0 : v / s - j = 0
+    . rw [h0] at hkey
+      rw [habs, if_pos (by omega)]
+      omega
+    . have h2 : s <= (v / s - j) * s := step_le_mul _ s hs (by omega)
+      rw [habs, if_pos (by omega)]
+      omega
+
+#print axioms step_le_mul
+#print axioms multiple_dist_ge
+
 /-! ## 2. CORRECT ROUNDING — IEEE 754-2019 §4.3, declaratively
 
 No algorithm appears: `y` is representable, nothing representable is strictly

@@ -1629,3 +1629,81 @@ printing, the one item measured as actually blocking. So the figure was
 **over-counted by three and dropped the important one**. Recorded at its real
 size: a lane's leverage inflated is the same flattering direction as a
 consumer count inflated, and this lane has corrected that three times already.
+
+---
+
+## 2026-08-26-softfloat-27 — 4c's MACHINERY IS COMPLETE: nothing beats the two neighbours
+
+`LeanModels/SoftFloat/Round.lean`. Five new theorems, **TRUSTWORTHY**, zero
+`sorry`: `dyadic_le_iff`, `natAbs_mul_pow`, `dist_dyadic`, `step_le_mul`,
+`multiple_dist_ge`.
+
+### THE REDUCTION, AND THEN THE REMAINDER
+
+Two landings ago 4c looked like a magnitude argument over rationals. It is not,
+and these five say why:
+
+| lemma | what it buys |
+| --- | --- |
+| `dyadic_le_iff` | ordering at a common exponent **is** `Int` ordering |
+| `dist_dyadic` | distance at a common exponent is `|Δsignificand|` × the step |
+| `natAbs_mul_pow` | `|Δ · 2^k| = |Δ| · 2^k`, the fact both branches of the above need |
+| `step_le_mul` | a nonzero multiple of a positive step is ≥ one step from zero |
+| **`multiple_dist_ge`** | **for ANY multiple `j·s`, `min r (s−r) ≤ |v − j·s|`** |
+
+The last is the nearest-multiple remainder itself: `r = v % s` is the residue,
+`min r (s − r)` is what rounding to the nearer neighbour achieves, and **no
+multiple of the step does better**. Three cases on `v/s − j` — below, equal,
+above — each closed by bounding the product and letting `omega` finish.
+
+### THE RECURRING TECHNIQUE, NOW NAMED
+
+Every hard step in this component has had the same shape:
+
+> **`omega` is linear. Turn the nonlinear product into a BOUNDED ATOM with a
+> `have`, then let `omega` finish.**
+
+Third use: `2^n * bit` (softfloat-20), `2^k` at four widths (softfloat-21), and
+now `(v/s − j) · s`. And a sharper corollary this time — **omega treats
+`-(x) * s` and `x * s` as UNRELATED atoms**, so the negated branch had to be
+normalised through `Int.neg_mul` before the two facts spoke about the same
+atom. A bound omega cannot connect is a bound omega does not have.
+
+### FOUR NAME FAILURES, ALL THE SAME CLASS
+
+`Int.ediv_add_emod` (real name: **`Int.ediv_mul_add_emod`**), `set` (Mathlib),
+`lt_trichotomy` (not reachable unqualified — replaced by `by_cases`, which
+needs no lemma at all), and an unquoted heredoc letting the shell eat a
+docstring containing `|`. The core-only posture keeps costing reflexes, and
+the fix each time was to **grep the bare name across all of `Init`** rather
+than the qualified name in one directory — this lane's own rule from
+softfloat-24, applied and paying.
+
+### §9.0 — STILL 1/12
+
+**47 landed theorems, 1 an unconditional `op_correct`.** Downstream: **3
+existing pyc rows + 1 latent requirement** — and the latent one is the
+sequencing hazard: landing float arithmetic WITHOUT decimal printing closes 3
+rows and CREATES the 4th, so decimal printing should be priced inside the
+arithmetic landing rather than after it.
+
+### THE LADDER
+
+| rung | component of `RoundWithAccuracyIsNearest` | status |
+| --- | --- | --- |
+| 1 | residue meaning — round/sticky bits | **proved** |
+| 2 | the rounding decision — round-half-to-even | **proved** |
+| 3 | carry-out absorption | **proved** |
+| 4a | scaling invariance | **proved** |
+| 4b | common-grid reduction | **proved** |
+| 4c-i | ordering + distance reduce to `Int` | **proved** |
+| 4c-ii | **nearest-multiple: nothing beats the neighbours** | **proved** |
+| 4c-iii | assembling those into `IsNearest`'s three fields | **remaining** |
+| — | `RoundWithAccuracyIsNearest` | owed |
+| — | `mul_correct` unconditional → `div`, `sqrt`, `add` | queued behind |
+
+**What 4c-iii is, precisely:** every mathematical fact `IsNearest` needs now
+exists. What remains is *assembly* — instantiating `multiple_dist_ge` at the
+target exponent with the rounded significand from rung 2, discharging `repr`
+from the significand bound, and discharging `tie` from `TieEven`. No new
+mathematics is expected; if any appears, it will be named rather than absorbed.

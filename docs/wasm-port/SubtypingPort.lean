@@ -178,7 +178,16 @@ theorem rt_sub_split_right (ts1 ts2 ts : List valtype)
     applies through a one-time bridge, and the bridge's premise is already in
     every `Resulttype_sub`.** Paying it once restores the whole library for
     everything downstream — which is what `rt_sub_trans` and `rt_sub_app`
-    below spend it on. -/
+    below spend it on.
+
+    **RECLASSIFIED 2026-08-25**: this IS the A′ ladder's
+    `Resulttype_sub_t_list_subtyping` (`Subtyping_Properties.thy:214`), whose
+    statement is `Resulttype_sub rt1 rt2 ↔ t_list_subtyping rt1 rt2` with
+    `t_list_subtyping` defined one line above it as `list_all2 Valtype_sub`.
+    Mathlib's `List.Forall₂` is Isabelle's `list_all2`, so the two are the same
+    theorem. It was proved here from NEED, before the ladder was enumerated —
+    and the lane's own census twice mispriced it as blocked on an "external
+    dependency" that is defined in the same file. -/
 theorem rt_bridge (ts1 ts2 : List valtype) :
     ts1 subs< ts2 ↔ List.Forall₂ Valtype_sub ts1 ts2 := by
   unfold resulttypeSub
@@ -691,5 +700,69 @@ theorem instrtype_sub_emptyl {l l' t1 t2 t3 : List valtype}
   · rw [hy2, hab, List.append_assoc]
   · exact rt_sub_trans _ _ _ hio ha
   · exact rt_sub_app _ _ _ _ (rt_sub_trans _ _ _ hno hb) hno2
+
+/-- The shared core of `produce_consume` and `produce_consume_waste`.
+
+    Isabelle proves each by a NESTED `Instrtype_sub.induct` and re-derives the
+    length bookkeeping in both. In the ∃-form a single argument serves both,
+    and it avoids Isabelle's case analysis entirely:
+
+    * the produced block splits as `no = c ++ d` with `l subs< d`;
+    * the consumed block splits as `SI = a ++ b` with `b subs< l'`;
+    * `t2` is both `RI ++ SI` and `ro ++ no`, so
+      `(RI ++ a) ++ b = (ro ++ c) ++ d` — and since `|b| = |l'| = |l| = |d|`,
+      **append-injectivity on the RIGHT gives `b = d` outright**, with no
+      ordering assumption between `|args|` and `|pre|`.
+
+    That last point is why one lemma covers both callers: `pre` is `[]` for
+    `produce_consume` and `junk` for the waste variant, and the argument never
+    compares their lengths. -/
+theorem produce_consume_core {pre l args l' res t1 t2 t3 : List valtype}
+    (h1 : instrtype_sub (mkFunctype [] (pre ++ l)) (mkFunctype t1 t2))
+    (h2 : instrtype_sub (mkFunctype (args ++ l') res) (mkFunctype t2 t3))
+    (hlen : l.length = l'.length) : l subs< l' := by
+  obtain ⟨ri, ro, si, no, hx, hy, hio, hsi, hno⟩ := h1
+  obtain ⟨ri2, ro2, si2, no2, hx2, hy2, hio2, hsi2, hno2⟩ := h2
+  obtain ⟨c, d, hc, hd, hcd⟩ := rt_sub_split_right pre l no hno
+  obtain ⟨a, b, ha, hb, hab⟩ := rt_sub_split_left si2 args l' hsi2
+  have hlen_b : b.length = l'.length := rt_sub_len hb
+  have hlen_d : l.length = d.length := rt_sub_len hd
+  -- t2 read two ways, regrouped so the two equal-length tails meet
+  have heq : (ri2 ++ a) ++ b = (ro ++ c) ++ d := by
+    rw [List.append_assoc, List.append_assoc, ← hab, ← hcd, ← hx2, ← hy]
+  have hbd : b = d := List.append_inj_right' heq (by omega)
+  exact rt_sub_trans _ _ _ (hbd ▸ hd) hb
+
+/-- Isabelle counterpart: `produce_consume`. Only the `Resulttype_sub` half is
+    ported; see the note on the waste variant below for why the instruction-type
+    half is not taken from that source. -/
+theorem produce_consume {l args l' res t1 t2 t3 : List valtype}
+    (h1 : instrtype_sub (mkFunctype [] l) (mkFunctype t1 t2))
+    (h2 : instrtype_sub (mkFunctype (args ++ l') res) (mkFunctype t2 t3))
+    (hlen : l.length = l'.length) : l subs< l' :=
+  produce_consume_core (pre := []) (by simpa using h1) h2 hlen
+
+/-- Isabelle counterpart: `produce_consume_waste`.
+
+    **THE ORIGINAL'S NAME OVERSTATES WHAT IT PROVES.** In
+    `Subtyping_Properties.thy` the conclusion is written
+
+    ```
+    shows
+    (* "(mk_instrtype (mk_list args) (mk_list res) <ti: mk_instrtype t1 t3) \<and>  *)
+      "Resulttype_sub (mk_list l) (mk_list l')"
+    ```
+
+    — the instruction-type conjunct is **inside `(* … *)`**, so the lemma that
+    file actually proves is the `Resulttype_sub` half alone. This port takes
+    the LIVE conclusion, deliberately, and records the discrepancy here rather
+    than silently porting the stronger name.
+    (`docs/backlog/wasm.md` `2026-08-25-wasm-13`: the comment-aware reading
+    changed not only which lemmas exist but what one of them says.) -/
+theorem produce_consume_waste {junk l args l' res t1 t2 t3 : List valtype}
+    (h1 : instrtype_sub (mkFunctype [] (junk ++ l)) (mkFunctype t1 t2))
+    (h2 : instrtype_sub (mkFunctype (args ++ l') res) (mkFunctype t2 t3))
+    (hlen : l.length = l'.length) : l subs< l' :=
+  produce_consume_core h1 h2 hlen
 
 end SubtypingPort

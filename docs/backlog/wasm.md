@@ -1506,3 +1506,128 @@ outside `LeanModels` and the `Examples.+` glob, and appends to this file.
 `docs_check` passes; `tools/backlog-index.sh` re-run per §9.5. The Lean
 execution was in the **fork's** tree, under a ticket — unaffected by the
 register hold.
+
+---
+
+## 2026-08-26-wasm-15 — **PARKED (indefinite)**: ladder 11/22, the pair proved but UNCERTIFIED, and three finished artifacts standing for Thomas's upstream decision
+
+Thomas paused the campaign to save tokens and free Lean resources. This entry
+is the parked state, written so a resuming lane needs nothing but this file.
+
+### LEDGER AT PARK
+
+**§9.0: 5/5 subtyping-corner obligations (CLOSED) · A′ ladder 11/22.**
+
+**And 11/22 carries an honest asterisk.** Nine of the eleven are
+tenure-certified against the pin. **Two — `produce_consume` and
+`produce_consume_waste` — are NOT.** They elaborate clean under the scratch
+loop (`lake env lean`, RC=0, 0 diagnostics), and the tenure that would have
+certified them under the lock **was cancelled unrun** at the wind-down. A
+scratch green is a real green about a smaller claim (§7): it says the file
+elaborates, not that the tree builds. **Do not carry them as certified.**
+
+| ladder item | state |
+| --- | --- |
+| `Instrtype_sub_refl` (O1) | certified |
+| `Instrtype_sub_trans` (O3) | certified |
+| `instr_subtyping_weaken2` (O2) | certified |
+| `instr_subtyping_strengthen2` (O4) | certified |
+| `ais_single_typing_inversion` (O5) | certified |
+| `Instrs_ok2_wf`, `Instrs_ok2_wf_instr` | certified |
+| `Instrs_ok2_frame_sub`, `Instrs_ok2_subtyping` (capstone) | certified |
+| `Instrtype_sub_sub_rule` | certified |
+| `func_sub_app_single_l`, `func_sub_app_single_r` | certified |
+| `Instrtype_sub_emptyl` | certified |
+| `Resulttype_sub_t_list_subtyping` (= `rt_bridge`, reclassified) | certified |
+| **`produce_consume`** | **scratch-green, UNCERTIFIED** |
+| **`produce_consume_waste`** | **scratch-green, UNCERTIFIED** |
+
+**First act on resume: file one `--foreign` tenure and certify those two
+against the pin.** Nothing else should be attempted before the ledger is
+honest again.
+
+### THE PIN, unchanged and still the lane's only variable
+
+**`SubtypingPort` GREEN with 0 errors; 1 failing module (`typing_lemmas`); 6
+errors at 371, 380, 537, 1035, 1113, 1865.** The pre-agreed 6 → 4 move remains
+a **recorded non-event** — the broken original is routed around, never through,
+and `typing_lemmas.lean` has never been modified by this lane. The declined
+repair and its price are in the port file's comment block.
+
+Exit code has been `1` on **every** tenure this lane ever filed. Per MEAS,
+**the pin is the only variable**, and it has caught three distinct things
+across those tenures: a success hiding inside a red, a regression hiding
+inside an identical red, and a false alarm raised from the constant.
+
+### AN OPERATIONAL CORRECTION THE NEXT LANE MUST INHERIT
+
+`tools/triad.sh` grew a **gate floor** on 2026-08-25 including
+`divergence_register`, and plain `--gates` **ADDS** to the floor rather than
+replacing it. This lane had been filing tenures **without `--foreign`**, which
+would have run a fleet-wide gate against a foreign checkout where it does not
+apply — and `divergence_register` was red on the C tier's rows at the time.
+
+**Every tenure this lane files must be:**
+
+```
+tools/triad.sh --lane wasm --foreign --dir <fork>/spectec/test-lean --gates "true"
+```
+
+`--foreign` implies `--gates-only`, skips classification (which is
+our-repo-only by construction and would give a confident wrong answer on a
+foreign tree), and prints `delta vs master: n/a (foreign tree)`. **The
+wrapper's own documentation names this lane** — *"the Wasm lane works in a
+`spectec` fork"* — so the flag was written for exactly this case.
+
+**The earlier claim that the register hold did not bind this lane was right
+about `--dir` and wrong about gates.** The hold would have bitten through the
+floor; only `--foreign` prevents it.
+
+### REMAINING WORK, in the fixed order
+
+1. **certify the two uncertified lemmas** (one `--foreign` tenure);
+2. **`Typing_Simplified.thy`** — 12 of 14 remain (2 ported as the wf pair);
+3. **the two `Instrs_ok` static-typing variants** of `Subtyping_Theorem.thy` —
+   genuinely new surface, since this lane has only ever touched `Instrs_ok2`.
+
+That completes the A′ ladder at 22. **Beyond it, `2026-08-25-wasm-11`'s census
+stands unchanged**: the suite scoreboard is BLOCKED (the generated model is
+relational — 0 `Decidable` instances, 0 step functions — so scoring needs an
+executable interpreter the charter declined to build), and progress/
+preservation is charter-scale (Isabelle's own `Wasm2_Type_Soundness.thy` is
+10 lemmas / 77 incomplete, so there is no ladder to port).
+
+### STANDING RULES THIS LANE ADOPTED
+
+* **Re-census every branch before porting.** It fired on its first use:
+  `lean-backend` had moved mid-port. The pin held only because the three
+  depended-on files were verified byte-identical.
+* **The law is about comments, not about Lean.** A textual `grep` for
+  `^lemma` / `sorry` is unfit for *any* commented language; this lane's own
+  instrument caught its author making that error on Isabelle.
+* **Isabelle-before-scratch is a default, not a ceiling** — twice the
+  generated Lean model was the better ground.
+* **Declare pin moves, never absorb them.**
+
+### THE THREE FINISHED ARTIFACTS — Thomas's decision, not this lane's
+
+Standing for an upstream-engagement decision, **all local, none pushed**:
+
+1. **`SubtypingPort.lean`** — fork clone **`a0a7c7a7a281eecdd83af0b336ff37495a248014`**, 768 lines,
+   **0 `sorry`, 0 warnings**, vendored here at `docs/wasm-port/SubtypingPort.lean`.
+   Every proof carries its Isabelle counterpart by name, branch and commit, per
+   the attribution law.
+2. **The declined repair**, priced in-file: what a `typing_lemmas.lean:295-412`
+   fix would cost (pin 6 → 4) and why it was routed around.
+3. **The census record** — `docs/wasm-charter.md`, `docs/wasm-soundness-census.md`,
+   `docs/wasm-{spec,suite,sorry}-census.json` and this ledger.
+
+**No upstream contact of any kind has been made, and none should be without
+Thomas's word.**
+
+### Triad
+
+**Not run; not applicable.** Updates one vendored `.lean` outside `LeanModels`
+and the `Examples.+` glob, and appends to this file. `docs_check` passes;
+`tools/backlog-index.sh` re-run per §9.5. **No ticket is queued and this lane
+holds no lock** — verified at 0 processes before parking.

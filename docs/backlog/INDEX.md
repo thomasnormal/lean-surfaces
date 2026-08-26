@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**445 entries across 17 lanes.** Regenerate with
+**446 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -40,6 +40,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-26-softfloat-27` |  | 4c's MACHINERY IS COMPLETE: nothing beats the two neighbours | softfloat |
 | `2026-08-26-c-27` |  | THE REGISTER COMES BACK, and the reversal is recorded rather than tidied | c |
 | `2026-08-26-sunfish-rtrack-18` |  | PARKED: the R-track's state at the wind-down | sunfish-rtrack |
+| `2026-08-26-wasm-15` |  | **PARKED (indefinite)**: ladder 11/22, the pair proved but UNCERTIFIED, and three finished artifacts standing for Thomas's upstream decision | wasm |
 | `2026-08-26-sv-9` |  | PARKED: what is certified, what is named, and what the A17 line cost | sv |
 | `2026-08-26-sv-8` |  | THE FRESHNESS GATE IS WIRED, AND ITS BASELINE IS MEASURED, NOT ASSUMED | sv |
 | `2026-08-26-sv-7` |  | THE ROUND-TRIP GATE PICKED ITS INTERPRETER BY ACCIDENT, AND THE PIN IT NEEDED IS RETIRED | sv |

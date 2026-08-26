@@ -5511,7 +5511,13 @@ begins with the `cd`. Still anchored, so it still cannot match itself.
 self-tests re-run **from inside the view**, which is what CI will now do. No
 Lean executed: full `ci.sh` was deliberately **not** run, because its steps
 reach `leanpy` and this lane holds no ticket.
-## 2026-08-26-qol-76 — IMPORTED BY NOTHING does not know about `lean_exe` roots (from the C lane)
+## 2026-08-26-c-33 — IMPORTED BY NOTHING does not know about `lean_exe` roots (from the C lane)
+
+*Filed by the C lane into QoL's ledger, and carrying the C lane's own id.*
+*A cross-lane filing numbered in the HOST lane's sequence collides with it:*
+*this entry was first written as `2026-08-26-qol-76`, which QoL had already*
+*used, in a file whose ids exist to be unique. The sender's prefix is the*
+*fix, and it is the same rule the softfloat inbounds already follow.*
 
 `triad.sh --classify`'s IMPORTED-BY-NOTHING check reads the import graph
 only, so a file that is a `lean_exe` ROOT listed in `defaultTargets` is

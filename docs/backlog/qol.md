@@ -5533,3 +5533,121 @@ check parses for globs, so this is a second lookup and not a new source.
 Filed by the C lane; not fixed here because `tools/` is not this lane's to
 change mid-tenure. The C lane's own landing says why the file is
 deliberate, which is what the current warning asks for.
+
+---
+
+## 2026-08-26-qol-81 — the index gate joins the floor that needs it, and the driver merges ROWS
+
+Ruled: (0) and (4) together, (1) rejected on the measurement, (2) rejected on
+the pricing. Both halves are one landing because **neither is sound alone** —
+see the fallback below.
+
+### (0) The gate that catches a stale index now runs for the landings that make one
+
+`backlog-index.sh --check` lived in `DEFAULT_FLOOR` — the **non-docs** floor.
+A backlog entry is a **docs-class** landing, whose floor was `docs_check`
+alone, and `docs_check` only **NOTES** a stale index (exit 0, measured).
+
+**MY PRICING OVERSTATED THIS, AND THE END-TO-END RUN CORRECTED ME.** triad
+already refuses a stale index **at enqueue** — that guard is what produced the
+three "pre-enqueue catches", so those landings were never in danger of reaching
+master. But it is **scoped**: it fires only when the landing itself touches
+`docs/backlog/*.md`.
+
+What (0) actually closes is the case that guard does not see: **a docs landing
+that does not touch the backlog while the index is stale** — left that way by a
+rebase, or by another lane. Measured end to end: `docs_check` runs, passes, and
+prints its NOTE; then the new gate fails the run. Before, that landed green.
+
+So the honest claim is narrower than the one I priced: (0) does not prevent
+pyc's case, which was already prevented — it prevents the **silent** one. Fixes
+live in gates, at floor granularity; the gate existed and was wired to a floor
+that could not see this.
+
+### (4) The driver merges the rows, because it cannot merge the sources
+
+Git hands a merge driver **three versions of one file** — `%A` ours, `%O` base,
+`%B` theirs — and nothing else. It does not hand it the merged per-lane
+sources, and it runs **before** merged sources reach the working tree
+(measured: mid-rebase the tree still held the onto side's files). So option (1)
+regenerates from the onto side and reproduces the drop it was written to fix —
+**3 rows of 4, identical to the old behaviour and harder to doubt because it
+looks authoritative.**
+
+What the three versions *do* contain is every row. Measured:
+
+| | old driver (`true`) | row-merge |
+|---|---|---|
+| rebase | 3 of 4 — drops the **rebasing lane's own** rows | **4 of 4** |
+| pull | 3 of 4 — drops the **other lanes'** rows | **4 of 4** |
+
+One driver, two directions, two different silent wrong answers. That is pyc's
+drop and basecase's mirror image as a single mechanism.
+
+**Named failure mode: a retitle leaves a stale SUPERSET** (old and new row),
+never a subset. Nothing is lost, and regenerating fixes it exactly. That is the
+deliberate trade, and it is stated in the driver's own comment.
+
+### Why it never exits non-zero, and why that needs (0)
+
+Measured: **a driver that fails HALTS the rebase** — git treats a non-zero
+driver as a conflict and does *not* fall back. A broken driver would stop every
+lane's rebase in every clone. So every failure path leaves **our** side and
+returns 0, which is exactly the old behaviour: never worse than before.
+
+That is safe **only because (0) exists**. The stale index the fallback leaves
+is refused by the docs floor. Neither half stands alone, which is why they are
+one landing. The failure is never silent — it says so on stderr and names the
+gate that will refuse it.
+
+### Three defects found while building it
+
+1. **`sort -u` deleted real rows.** The live index carries **two byte-identical
+   row pairs** — two lanes wrote entries that render the same. Deduping by row
+   text silently deleted them: **424 owed, 422 delivered.** It is a *three-way*
+   merge and `%O` is available, so it now takes ours whole (multiplicity and
+   all) and adds only what theirs has that ours lacks; `comm` respects
+   multiplicity, `sort -u` cannot. **Found against the live 422-row index — no
+   fixture could see it,** because a synthetic index has no accidental
+   duplicates.
+2. **The old fixture could not exercise the mechanism.** It used a plain-text
+   `INDEX.md`, which has no table header — so under a row-merging driver every
+   row would have passed through the **fallback** path and asserted nothing. A
+   fixture that cannot reach the mechanism tests the fixture.
+3. **The installer set a key nothing read.** `--install-merge-driver` wrote
+   `merge.ours.driver` while `.gitattributes` named `backlog-index` and the
+   gate configured *that*. Only the gate path ever worked.
+
+### The upgrade path is the part that reaches anybody
+
+Every clone that ran an earlier gate carries `driver=true` — the setting that
+drops rows — and **config is per-clone**, so nothing else would ever replace
+it. `ensure_driver` now **upgrades** as well as installs, naming what it
+replaced and why. An install-only version would have looked fixed in a fresh
+clone and left the bug in every existing one.
+
+### The rebase that landed this taught it one more thing
+
+Rebasing this very commit **halted**: git ran the driver from the **working
+tree**, which mid-rebase holds the **onto** side's script — master's, which has
+never heard of `--merge-driver`. It exited 2, and a non-zero driver halts.
+
+`ensure_driver` upgrades config from any gate run, so every clone would have
+been configured for a flag that older history's script rejects, and **every
+rebase onto pre-landing history would have halted, in every clone**. The
+never-halt rule could not live only inside the script, because **the script is
+exactly what version skew replaces**. It now lives in the configured command —
+`… || true` — where skew cannot reach it: an old script resolves to ours, as it
+did before, and the stderr line still prints.
+
+I found this by hitting it, not by predicting it. The lesson is the general
+one: **a guard written inside an artifact does not protect the case where the
+artifact itself is the wrong version.**
+
+### Triad
+
+`backlog-index.sh --self-test` **86 ok, 0 failed** (62 → 86);
+`triad.sh --self-test` **454 ok, 0 failed**; `ci.sh --verify-guards` **57 ok**.
+Sequencing verified before landing: master's index was in sync against master's
+own sources, and the generator was byte-identical to master's. No Lean
+executed.

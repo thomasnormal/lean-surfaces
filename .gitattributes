@@ -6,12 +6,24 @@
 # lanes appending entries on the same day both regenerate it, and their diffs
 # overlap.  The ES lane hit exactly that.
 #
-# MERGING A GENERATED FILE IS ALWAYS WRONG — a merged index is a THIRD version
-# that matches neither tree.  The correct resolution is to take either side
-# and REGENERATE, which is what this driver does: `ours` resolves without a
-# conflict, and the result is stale-but-valid until `tools/backlog-index.sh`
-# runs.  `tools/triad.sh` refuses to take a tenure with a stale index when the
-# landing touches `docs/backlog/`, and `tools/docs_check.py` reports one.
+# TEXT-MERGING A GENERATED FILE IS ALWAYS WRONG — a line-merged index is a
+# THIRD version that matches neither tree.  Resolving to ONE SIDE is also
+# wrong, and that is what this driver used to do: measured, a rebase kept the
+# ONTO side and dropped the rebasing lane's own rows, while a pull kept the
+# branch and dropped the OTHER lanes' rows.  One driver, two directions, two
+# different wrong answers, both silent.
+#
+# SO THE DRIVER MERGES THE ROWS.  Git hands a driver only the three versions of
+# THIS file, never the merged sources — and it runs before the merged sources
+# reach the working tree, so a driver that re-ran the generator would rebuild
+# from the onto side and reproduce the drop.  Every row is present across the
+# two sides, so the union of the rows is the correct merge.  Measured 4-of-4 in
+# both directions where the old driver gave two different 3-of-4s.
+#
+# A retitle leaves a stale SUPERSET (old and new row), never a subset: nothing
+# is lost and the next `tools/backlog-index.sh` regenerates it exactly.
+# `tools/triad.sh`'s DOCS floor runs `--check`, so a stale index is refused
+# rather than landed.
 #
 # THIS LINE ALONE IS NOT ENOUGH.  `ours` is NOT one of git's built-in merge
 # drivers (those are `text`, `binary` and `union`); it must also be defined in

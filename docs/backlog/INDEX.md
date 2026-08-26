@@ -4,23 +4,25 @@
 index generated rather than maintained, which is §5.5's *"generated and
 checked, never hand-maintained"* applied to the repository's own record.
 
-**CONFLICT? REGENERATE with `tools/backlog-index.sh` — never merge.** A
-merged generated file is a third version that matches neither tree;
-`.gitattributes` marks this file `merge=ours` so a rebase resolves without
-one (install the driver once with
-`tools/backlog-index.sh --install-merge-driver`).
+**CONFLICT? REGENERATE with `tools/backlog-index.sh` — never hand-merge.** A
+line-merged generated file is a third version that matches neither tree.
+`.gitattributes` marks this file `merge=backlog-index`, a driver that merges
+the table's ROWS so no lane's entries are dropped (the gates configure it; by
+hand it is `tools/backlog-index.sh --install-merge-driver`).  A retitle can
+leave a stale superset — regenerating fixes it exactly.
 
 Entries live in `docs/backlog/<lane>.md`, appended only by their own lane,
 with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**429 entries across 17 lanes.** Regenerate with
+**430 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-08-26-architecture-92` |  | A premise nobody re-measures is a premise nobody holds | architecture |
+| `2026-08-26-qol-81` |  | the index gate joins the floor that needs it, and the driver merges ROWS | qol |
 | `2026-08-26-qol-80` |  | `ci.sh`'s layer 3 gains the view, and the attested view stops lying to git | qol |
 | `2026-08-26-qol-79` |  | `--gates-no-lean`: a lane can say its gates start no Lean, and the script MEASURES it | qol |
 | `2026-08-26-qol-78` |  | the sv manifest entry had never extracted one envelope | qol |

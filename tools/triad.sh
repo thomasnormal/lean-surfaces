@@ -281,7 +281,14 @@ BUILD_TARGET_ARGS=""
 SINCE=""                # --since <sha>: price the INCREMENT (§5.4a-i)
 SINCE_ROOT=""           # the chain root the increment is actually diffed against
 SINCE_LINE=""           # the base green's ledger line, kept for the coverage line
-DOCS_FLOOR='python3 tools/docs_check.py'
+# THE GATE THAT CATCHES A STALE INDEX MUST RUN FOR THE LANDINGS THAT PRODUCE
+# ONE (2026-08-26).  `backlog-index.sh --check` was in DEFAULT_FLOOR — the
+# NON-docs floor — while a backlog entry is a DOCS-class landing whose floor
+# was `docs_check` alone, and docs_check only NOTES a stale index (exit 0,
+# measured).  So the one gate that refuses a stale index never ran for the one
+# kind of landing that generates it, and three drops in a day reached a human
+# instead of a refusal.  Fixes live in gates — at floor granularity.
+DOCS_FLOOR='python3 tools/docs_check.py; bash tools/backlog-index.sh --check'
 DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py; python3 harness/refusal_census.py --whitelist --no-build; python3 harness/divergence_register.py; bash tools/backlog-index.sh --check'
 # The label the announcement carries, so the first lane to see a new gate line
 # reads WHY rather than filing a bug against its own tenure.
@@ -2353,7 +2360,7 @@ if [ "$SELF_TEST" = "1" ]; then
   # A DOCS LANDING OWES NO LEAN, so a gate that runs the model has no place in
   # its floor — that is the whole reason the docs class exists.
   check "the DOCS floor does not"              "$(gate_floor docs | grep -c 'refusal_census')" "0"
-  check "  ...and is docs_check alone"         "$(gate_floor docs)" "python3 tools/docs_check.py"
+  check "  ...and is docs_check + the index gate" "$(gate_floor docs)" "$DOCS_FLOOR"
   # ONE SPELLING: the classified path (gate_floor) and the unclassified path
   # (DEFAULT_FLOOR) must not be able to run different gates.
   check "both paths read ONE floor"            "$(gate_floor tier)" "$DEFAULT_FLOOR"
@@ -3355,7 +3362,9 @@ if [ "$SELF_TEST" = "1" ]; then
   check "docs-only diff -> docs"            "$(class_name "$CLASS_RANK")" "docs"
   check "docs-only builds nothing"          "$BUILD_TARGETS" ""
   check "docs-only owes NO tenure"          "$(tenure_needed docs "")" "no"
-  check "docs-only gates: docs_check alone" "$(gate_floor docs)" "python3 tools/docs_check.py"
+  # NO LONGER "docs_check alone": a backlog entry is a docs landing, so the
+  # index gate has to live in THIS floor (2026-08-26).
+  check "docs-only gates: docs_check + index" "$(gate_floor docs)" "$DOCS_FLOOR"
 
   cls LeanModels/Sv/Obs.lean Examples/system-verilog/toggle/proof.lean
   check "tier-local diff -> tier"           "$(class_name "$CLASS_RANK")" "tier"
@@ -3495,7 +3504,11 @@ if [ "$SELF_TEST" = "1" ]; then
 
   # ---- the default-gate-set notice (the ES lane's migration finding)
   check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test, refusal_census, divergence_register, backlog-index"
-  check "the docs floor names one gate"   "$(gate_names "$(gate_floor docs)")" "docs_check"
+  # THE DOCS FLOOR NOW NAMES TWO, and the second one is the point: a backlog
+  # entry is a DOCS-class landing, so the index gate has to be in THIS floor or
+  # it never runs for the landings that generate the index.
+  check "the docs floor names two gates"  "$(gate_names "$(gate_floor docs)")" "docs_check, backlog-index"
+  check "  ...including the index gate"   "$(gate_floor docs | grep -c 'backlog-index.sh --check')" "1"
   GATE_NOTICE_DONE=0
   check "a DEFAULT invocation warns"      "$(gate_notice "$(gate_floor tier)" "" | grep -c 'DEFAULT GATES')" "1"
   GATE_NOTICE_DONE=0
@@ -3893,7 +3906,7 @@ if [ "$CLASSIFY" = "1" ]; then
     if [ "$CLASSIFY_ONLY" = "1" ]; then
       echo "     (--classify-only: reported, not refused — no tenure is being taken)" >&2
     else
-      die "this landing touches docs/backlog/ and the generated index is stale. Run tools/backlog-index.sh and re-stage. Refused HERE rather than at the docs_check gate because base rule 4 makes a triad one-per-landing: a red at the gate would cost the whole tenure, this costs one command. (A rebase leaves the index stale BY DESIGN — .gitattributes resolves it to one side rather than merging a generated file.)"
+      die "this landing touches docs/backlog/ and the generated index is stale. Run tools/backlog-index.sh and re-stage. Refused HERE rather than at the docs_check gate because base rule 4 makes a triad one-per-landing: a red at the gate would cost the whole tenure, this costs one command. (A rebase used to leave the index stale BY DESIGN, when the driver resolved to one side; it now MERGES THE ROWS, so a rebase should no longer produce this — if you are reading this line after one, that is worth reporting.)"
     fi
   fi
 

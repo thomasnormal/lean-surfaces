@@ -548,6 +548,14 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-497 | THE FINDING STANDS, THE METRIC IN IT DOES NOT — a conclusion and its prompting number retire separately | `docs/family-architecture.md §7.1a` |
 | MEAS-498 | A CENSUS CANNOT FIND A STEP THAT MENTIONS NOTHING — the missing step is a PIPELINE STAGE, not a file | `docs/family-architecture.md §5.4` |
 | MEAS-499 | TEXT-SHAPED EVIDENCE STANDING FOR STRUCTURAL: names, sort orders and prefixes read easily and are not the structure | `docs/family-architecture.md §5.4` |
+| MEAS-500 | A MEASUREMENT TAKEN AND NOT ACTED ON IS THE MOST EXPENSIVE KIND — audit CALL SITES before auditing checks | `docs/family-architecture.md §5.4b` |
+| MEAS-501 | A DENOMINATOR INHERITS THE MEANING OF WHATEVER THE NUMERATOR COUNTS — state what one unit IS | `docs/family-architecture.md §9.0` |
+| MEAS-502 | UNREACHABLE AT RUNTIME IS NOT INVISIBLE TO THE MODEL — structural certificates census the function table | `docs/family-architecture.md §5.4` |
+| MEAS-503 | a certificate that STILL ELABORATES but names a DIFFERENT CONSTRUCT is worse than one that fails | `docs/family-architecture.md §5.4` |
+| MEAS-504 | a NICE TIMEOUT and a HANG are indistinguishable from outside — "did not finish" is a fact about the clock | `docs/family-architecture.md §9.0` |
+| MEAS-505 | a DEFERRAL IS A DATED DECISION — measured gap at park: twelve rungs between a reason and its re-checking | `docs/family-architecture.md §7.1a` |
+| MEAS-506 | A PAUSE IS A MEASUREMENT OCCASION — write the park state while the instruments are warm; re-derive it on resumption | `docs/family-architecture.md §9.0 PARK` |
+| MEAS-507 | A LANE THAT ALWAYS ANSWERS THE COORDINATOR NEVER PROVES ANYTHING — rider load costs the register its testability | `docs/family-architecture.md §7.1a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -705,6 +713,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-147 | a model that CANNOT REPRESENT a construct must DECLINE it, not APPROXIMATE it — a dropped field has no verdict | `docs/family-architecture.md §5.4` |
 | STMT-148 | a FALSE UB ACCUSATION is worse than a refusal — a refusal is about the model, an accusation is about the program | `docs/family-architecture.md §5.4` |
 | STMT-149 | a MERGED definition can carry a guard the SPLIT form cannot express — the real argument for deduplication | `docs/family-architecture.md §9.0` |
+| STMT-150 | a REWRITE RULE and the GOAL must agree on one NORMAL FORM, and the GOAL'S is the one that wins | `docs/family-architecture.md §7.1a` |
+| STMT-151 | A CONSTANT CANNOT BE HALF-UPDATED — independently edited parts are not a constant, whatever it is called | `docs/family-architecture.md §5.4` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 
@@ -939,6 +949,7 @@ numbers below are the register's own.
 | OPS-159 | A PUSH IS NOT LANDED UNTIL `git ls-remote` SAYS SO | `docs/family-architecture.md §7.1a` |
 | OPS-160 | HARDENING AN INSTRUMENT DOES NOT HARDEN THE HAND THAT REACHES PAST IT | `docs/family-architecture.md §7.1a` |
 | OPS-161 | AN ALARM NOBODY CAN TRUST IS WORSE THAN NO ALARM | `docs/family-architecture.md §7.1a` |
+| OPS-162 | ABLATION-VALIDATE a detector — break it on purpose to confirm it notices | `docs/family-architecture.md §9.0` |
 
 ## E. CLONE-IDENTITY RULES — branch, remotes, push, staging
 

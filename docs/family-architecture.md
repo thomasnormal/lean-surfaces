@@ -8714,6 +8714,35 @@ itself: **pyc committed name-grouping INSIDE the instrument it offered as
 name-grouping's fix.** *The shape you have just refuted is the shape most
 available to your hands.*
 
+**AND A LAST SET BEFORE THE PAUSE, EACH ONE A DIFFERENT WAY AN ARTIFACT CAN BE
+TRUE AND MISLEADING.**
+
+> **UNREACHABLE AT RUNTIME IS NOT INVISIBLE TO THE MODEL** (pyc). *Structural
+> certificates census the FUNCTION TABLE*, so dead code is still evidence — and a
+> prediction that it could be ignored failed in the useful direction.
+
+> **A CERTIFICATE THAT STILL ELABORATES BUT NOW NAMES A DIFFERENT CONSTRUCT IS
+> WORSE THAN ONE THAT FAILS.** *A red is a message; a silently re-aimed green is
+> a claim about something nobody asked about.*
+
+**And the arc's shape is worth the register's last word on prediction**: **three
+re-prices — cleanup → capability → migration — each from MEASUREMENT**, and the
+derived-not-measured `@7` mapping **caught by the tree's own prose, one entry
+after writing it down.** *A lane that writes the mapping down is a lane that can
+be contradicted by the next line it reads.* The structural rename was then
+**priced NO by census** — *scope+ordinal does not fix the case; 511 and 515 share
+a scope* — **a proposal killed by the same instrument that would have implemented
+it.**
+
+> **A CONSTANT CANNOT BE HALF-UPDATED** (ES). *An artifact whose parts are edited
+> independently is not a constant, whatever it is called* — and the fix is one
+> definition, which is the disjointness-guard argument again.
+
+**AND ES'S FIVE-REDS ARC CLOSES A THEME THIS DOCUMENT OPENED**: *not one was in
+the evaluator.* **Every red was a layer of the pipeline exercised for the first
+time**, which is what a first end-to-end run buys and what no amount of component
+green can substitute for.
+
 
 
 **AND A COUNTING RULE FOR WHICH PROSE TO PROMOTE** (SV, `$finish` layer-order).
@@ -9116,6 +9145,23 @@ git side-effect: **1 024 phantom typechanges**, fixed by pinning `GIT_DIR`, with
 *An instrument that alters the state it observes has stopped being a view*, and
 the tell here was a number nobody asked for. **Measuring both directions before
 choosing is what turned a plausible fix into a decided one.**
+
+**AND THE GATE-NOT-ANNOTATE FAMILY REACHES ITS LIMIT CASE, WHICH IS THE ONE THIS
+REGISTER SHOULD PARK ON** (QoL): the retry path **already CALLED `acquire_check`
+to PRINT it, then launched anyway.**
+
+> **A MEASUREMENT TAKEN AND NOT ACTED ON IS THE MOST EXPENSIVE KIND.**
+
+**Every earlier member failed to look; this one looked, paid the cost, and threw
+the answer away.** *The instrument ran, the number was right, the operator was
+informed, and the outcome was identical to having no instrument at all* — except
+that the cost was paid twice, in the measurement and in the consequence. **And
+the lane's own line-range rows were re-pointed in the same landing**: *a vacuous
+green, this time in its own suite.*
+
+> **PARKING RULE, from the whole family: on resumption, audit CALL SITES before
+> auditing checks. The fleet's checks are good; the question is which of them
+> anything blocks on.**
 
 **AND THE SHARPEST TARGET AN ACCEPTANCE TEST CAN HAVE IS THE MODEL THAT READS
 ALMOST THE SAME AND IS WRONG** (SV's `slotStep`, in tenure).
@@ -11013,6 +11059,29 @@ rather than felt.
 **AND C'S `--classify` / `--classify-only` MISREAD produced two tickets, killed by
 PARENTAGE** — *the process-attribution discipline doing its job on a naming
 collision rather than on a workload.*
+
+**AND THREE LAST ITEMS, PARKED WITH THE REST.**
+
+> **A DEFERRAL OUTLIVED ITS MEASUREMENT BY TWELVE RUNGS** (Go, alongside a **23×
+> instrument-scope correction** — *the PACKAGE-AWARE instrument is the one that
+> ranks rungs*). **A deferral is a dated decision**, and nothing in a plan makes
+> it expire; *twelve rungs is the register's largest measured gap between a
+> reason and its re-checking.*
+
+> **A REWRITE RULE AND THE GOAL MUST AGREE ON ONE NORMAL FORM, AND THE GOAL'S IS
+> THE ONE THAT WINS** (Lean tier, with an honest abstraction ledger carrying **a
+> self-imposed exit**). *The rule is a proposal; the goal is the fact.*
+
+**AND A ROW AGAINST ME, WHICH IS THE RIGHT ONE TO PARK ON** (SV's rider load):
+
+> **A LANE THAT ALWAYS ANSWERS THE COORDINATOR NEVER PROVES ANYTHING.**
+
+**A dispatch is cheap to send and expensive to serve**, and a lane whose tenures
+are all responses has no measurement of its own to contradict anyone with — *which
+is the condition under which every law in this document stops being testable.*
+**The corrections that made this register worth keeping came from lanes doing
+their own work and finding the coordinator wrong**, and that only happens where
+there is room for work nobody asked for.
 
 **TWO MORE FROM THE C LANE'S SEAM LIFT, AND THE FIRST IS ABOUT WHAT A TERM
 *IS*.**
@@ -13346,6 +13415,10 @@ honestly semantic.** *Separating instrument debt from semantic debt is what
 makes the remaining number a statement about the language rather than about the
 harness.*
 
+**SUPERSEDED BY THE PARK SNAPSHOT BELOW (2026-08-26). Kept, not rewritten** —
+it is the record the day's laws were measured against, and a reader comparing the
+two tables is reading two days of the campaign.
+
 **THE STANDING TABLE, SNAPSHOT 2026-08-24** — every number moved on this date,
 and it is recorded here as a **dated snapshot**, not as a live figure: **the
 lane ledgers are the live copies** (a number in a charter is a copy the code
@@ -13426,6 +13499,47 @@ CONTENT while leaving its SYNTAX to taste has left the syntax to be decided
 three times.* **Say the level, or three lanes will each pick one.**
 
 
+
+### 9.0 PARK SNAPSHOT — 2026-08-26, THE RESUMPTION BASELINE
+
+**The campaign is PAUSED on Thomas's instruction, to save tokens and free Lean
+resources.** This block is the **cold reader's starting point**: every tier's
+number as it stands at park, **each with its sha where it has one.** *The lane
+ledgers remain the live copies; this is a dated snapshot, and it is the one to
+re-derive from — not to trust.*
+
+| tier | number at park | sha |
+| --- | --- | --- |
+| **C** | **105 / 300, failed 0** | `0890c92` |
+| **pyc** | frontier **107 / 31**, reachable **26** | — |
+| **Lean tier** | corner **17 / 26**; `expr` closed **9/9** | `fe644ae` |
+| **Go** | **765 / 3 803** · **657 / 2 743** | — |
+| **WebAssembly** | **11 / 22**, pending | — |
+| **SoftFloat** | **47 theorems**; 4c-iii from `IsNearest` | — |
+| **SystemVerilog** | adequacy **STATED**; envelopes **FRESH 18 / 3** | — |
+| **analog** | **20 / 20** primary | — |
+| **Ada** | **5b staged** | — |
+| **ECMAScript** | **sixth run staged** | — |
+| **basecase** | **§6 staged** | — |
+| **R-track** | **5 / 9** | — |
+| **flagship** | rung 8 = **`hfallQ`** | — |
+
+**READ THIS TABLE WITH §9.0's OWN COUNTING RULES AND IT IS NOT ONE KIND OF
+NUMBER.** *Some are scored corpora (C, Go), some are frontiers (pyc), some are
+proof counts (SoftFloat), some are STAGED work with no verdict yet (Ada, ES,
+basecase).* **A resumption baseline that pools them would hand the next reader the
+unit defect on line one**, so the column says *number at park* and never *coverage*.
+
+> **A PAUSE IS A MEASUREMENT OCCASION. The state you park in is the state you will
+> be accused of remembering, so write it down while the instruments are still
+> warm.**
+
+**AND THE FIRST ACT ON RESUMPTION IS NOT TO READ THIS TABLE — IT IS TO RE-DERIVE
+IT.** *The row that names a family is a hypothesis about the tree, and it decays;
+a table of thirteen of them, parked, decays thirteen ways at once.* **Every law in
+this document about stale rows applies to this block with the most force, because
+nothing will move while it sits.** *Its value is as a DIFF BASE — what the tree
+said on 2026-08-26 — not as a description of whatever tree the reader has.*
 
 **AND THIS IS WHAT THE INSTRUMENTS WERE FOR.** Everything this document has been
 minting — suites driving scope (§5.6), coverage as
@@ -14327,6 +14441,23 @@ edge rule is now **ONE definition with a 4×4 disjointness guard** —
 given a property that would fail if it were two. *Deduplication is usually argued
 on tidiness and this is the argument that actually holds: the merged form can
 carry a guard the split form cannot express.*
+
+**AND ONE MORE COUNTING LAW ARRIVED AT THE PAUSE, AND IT IS THE ONE TO READ THE
+PARK TABLE WITH** (analog, 20/20 primary):
+
+> **A DENOMINATOR INHERITS THE MEANING OF WHATEVER THE NUMERATOR COUNTS.**
+
+*You cannot fix a denominator by choosing a better total* — **the numerator's
+definition has already decided what the ratio is about**, which is why the 9/21
+correction was a numerator finding wearing a denominator's clothes. **State what
+one unit of the numerator IS, and the denominator follows or is exposed.**
+
+**And the detector was ABLATION-VALIDATED** — *broken on purpose to confirm it
+notices* — which is the both-directions rule under its proper name, plus:
+
+> **A NICE TIMEOUT AND A HANG ARE INDISTINGUISHABLE FROM THE OUTSIDE.** *An
+> instrument that reports "did not finish" has reported a fact about the clock,
+> not about the subject.*
 
 **AND A REFUSAL-BASED TIER'S HONEST NUMBER READS DIFFERENTLY FROM A PASS
 RATE.** **24 scored, 0 failed** —

@@ -8194,3 +8194,99 @@ failed**; pyc frontier **107/31** (reachable 26); SV **18/21 · 3/15 · FRESH
 **all fourteen lanes on named rungs.**
 
 Law rows: **MEAS-481…MEAS-499, STMT-147…STMT-149, OPS-153…OPS-161.**
+
+## 2026-08-26-architecture-93 — PAUSE MARKER: the campaign parks, and this is where a cold reader starts
+
+**Thomas's direct instruction: the campaign is pausing to save tokens and free
+Lean resources.** This is dispatch 37, the pause-marker entry, and it is written
+to be read FIRST on resumption.
+
+**START HERE:** `docs/family-architecture.md` **§9.0 PARK SNAPSHOT — 2026-08-26**
+carries every tier's number at park with its sha. The 2026-08-24 standing table
+above it is **superseded and kept, not rewritten** — two tables, two days, and
+the diff between them is the campaign's last stretch.
+
+> **A PAUSE IS A MEASUREMENT OCCASION. The state you park in is the state you
+> will be accused of remembering, so write it down while the instruments are
+> still warm.**
+
+**AND THE FIRST ACT ON RESUMPTION IS NOT TO READ THAT TABLE — IT IS TO RE-DERIVE
+IT.** *The row that names a family is a hypothesis about the tree, and it decays;
+thirteen parked rows decay thirteen ways at once.* **Its value is as a DIFF
+BASE — what the tree said on 2026-08-26 — not as a description of whatever tree
+the reader has.** Every stale-row law in this document applies to it with the
+most force, because nothing will move while it sits.
+
+**THE PARK STATE** (also in §9.0 PARK): C **105/300 · 0 failed** (`0890c92`);
+pyc frontier **107/31**, reachable **26**; Lean tier **17/26**, `expr` closed 9/9
+(`fe644ae`); Go **765/3 803 · 657/2 743**; wasm **11/22** pending; SoftFloat **47
+theorems**, 4c-iii from `IsNearest`; SV adequacy **STATED** + envelopes **FRESH
+18/3**; analog **20/20** primary; Ada **5b staged**; ES **sixth run staged**;
+basecase **§6 staged**; R-track **5/9**; flagship rung 8 = **`hfallQ`**.
+
+**THE ITEMS SINCE `-92`, filed in the doc and indexed.**
+
+**(1) §5.4 — pyc's failed-prediction-as-victory arc.** **Unreachable at runtime is
+not invisible to the model** (structural certificates census the function table),
+and **a certificate that still elaborates but now names a different construct is
+worse than one that fails.** Three re-prices — *cleanup → capability → migration*,
+**each from measurement**; the derived-not-measured `@7` mapping **caught by the
+tree's own prose, one entry after writing it down**; and the structural rename
+**priced NO by census** (511 and 515 share a scope) — *a proposal killed by the
+same instrument that would have implemented it.*
+
+**(2) §5.4b — QoL's unconsulted gate, the family's limit case.** The retry path
+**called `acquire_check` to PRINT it, then launched anyway.**
+
+> **A measurement taken and not acted on is the most expensive kind.**
+
+*Every earlier member failed to look; this one looked, paid the cost, and threw
+the answer away.* **Parking rule: on resumption, audit CALL SITES before auditing
+checks** — the fleet's checks are good; the question is which of them anything
+blocks on.
+
+**(3) §7.1a — Lean tier's normal-form law.** **A rewrite rule and the goal must
+agree on one normal form, and the goal's is the one that wins** — *the rule is a
+proposal; the goal is the fact* — landed with an honest abstraction ledger
+carrying **a self-imposed exit.**
+
+**(4) §9.0 — analog's denominator law, and it is how to read the park table.**
+**A denominator inherits the meaning of whatever the numerator counts** — *you
+cannot fix a denominator by choosing a better total*, which is why 9/21 was a
+numerator finding in a denominator's clothes. Plus **ablation validation** (break
+the detector on purpose) and **a nice timeout and a hang are indistinguishable
+from the outside.**
+
+**(5) Assorted, filed to their sections.** SoftFloat's **bounded-atom omega**
+technique named at its third use, 4c machinery complete; wasm's derived-from-need
+rung and the `--foreign` floor catch; **Go's 23× instrument-scope correction**
+(*the package-aware instrument is the one that ranks rungs*) and **a deferral
+outlived its measurement by twelve rungs**; **ES's five reds, not one in the
+evaluator**, and **a constant cannot be half-updated**; R-track's ticket-recheck
+rule and deliberately-unstated loud arms; basecase's §6 kind-not-count narrowing
+of `hfallQ`; Ada's census-decided rung; C's measured 105.
+
+**(6) MY ROW, AND THE RIGHT ONE TO PARK ON** (SV's rider load):
+
+> **A lane that always answers the coordinator never proves anything.**
+
+**A dispatch is cheap to send and expensive to serve.** A lane whose tenures are
+all responses has no measurement of its own to contradict anyone with — **which
+is the condition under which every law in this document stops being testable.**
+*The corrections that made this register worth keeping came from lanes doing
+their own work and finding the coordinator wrong*, and that only happens where
+there is room for work nobody asked for. **On resumption, protect that room
+first.**
+
+**THIS LANE'S PARKED STATE.** Architecture lane, event-driven by charter (§9.0-pre
+exception (a)). Owns `docs/family-architecture.md`, `docs/backlog/architecture.md`,
+`docs/law-index.md`, and `docs/statement-cookbook.md` entries. **Nothing in
+flight, no open ruling, no unlanded dispatch.** Ledger runs `-26` … `-93`; law
+index at **MEAS-507 / STMT-151 / OPS-162**; `docs_check` **91/91 marked blocks**;
+INDEX in sync. **Standing residues, unchanged and owned elsewhere:** the INBOUND
+in `docs/backlog/wasm.md` on §9.5a's original spelling (old-valid); three
+`## SPEC COVERAGE` headers awaiting demotion by their lanes; **OPS-148's
+clause-1 sweep, specified and outstanding per tier**; the marker scan and
+heading-survival check standing for whoever runs merges next.
+
+Law rows: **MEAS-500…MEAS-507, STMT-150…STMT-151, OPS-162.**

@@ -16,11 +16,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**444 entries across 17 lanes.** Regenerate with
+**445 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-08-26-architecture-93` |  | PAUSE MARKER: the campaign parks, and this is where a cold reader starts | architecture |
 | `2026-08-26-architecture-92` |  | A premise nobody re-measures is a premise nobody holds | architecture |
 | `2026-08-26-qol-85` |  | PARKED: the protocol stack as it stands | qol |
 | `2026-08-26-qol-84` |  | the retry path walked past the acquire gate | qol |

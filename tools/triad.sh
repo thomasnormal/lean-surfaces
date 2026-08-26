@@ -1690,6 +1690,40 @@ acquire_check() {               # -> "ok <readings>" | "defer <readings> — <wh
   printf 'ok %s' "$r"
 }
 
+# ONE DEFERRAL, TWO CALLERS (pyc14, 2026-08-26).  The gate used to run at
+# ACQUIRE ONLY, so the RETRY path walked straight past it: attempt 1 died at
+# exit 143 (the box), and attempt 2 launched into 14 MB free and 92% swap
+# without re-asking.  A starved box therefore bought TWO dead builds instead
+# of one deferral -- the gate defeated on precisely the condition it exists
+# for.  Worse, the retry path already CALLED acquire_check to print `box now:`
+# and then launched anyway: it had the reading in hand and did nothing with
+# it.  A measurement taken and not acted on is the most expensive kind.
+#
+# Returns 0 to proceed, 1 when the box never became survivable.  The CALLER
+# decides what giving up means, because it differs: at acquire no build has
+# started, at a retry one already died.
+defer_until_survivable() {      # phase-label -> 0 proceed | 1 gave up
+  local phase="$1" waited=0 chk
+  # A DRY RUN STARTS NO BUILD, so there is nothing to starve and nothing to
+  # defer -- the same reasoning as "a report has nothing to spend".
+  [ "$DRY_RUN" = "1" ] && return 0
+  while :; do
+    chk="$(acquire_check)"
+    case "$chk" in
+      ok\ *) [ "$waited" -gt 0 ] && say "$phase RESUMED after ${waited}s — ${chk#ok }"
+             return 0 ;;
+    esac
+    say "$phase DEFERRED — ${chk#defer }"
+    if [ "$waited" -ge "$MAX_DEFER" ]; then
+      say "$phase GIVING UP after ${waited}s deferred: the box never became survivable."
+      say "  last readings: ${chk#defer }"
+      return 1
+    fi
+    sleep "$DEFER_INTERVAL"
+    waited=$((waited + DEFER_INTERVAL))
+  done
+}
+
 # ---- ENFORCED NO-LEAN ATTESTATION (2026-08-26)
 #
 # WHY, CORRECTED.  This landed on a cost figure that was WRONG: 4.5 h of
@@ -2517,10 +2551,36 @@ if [ "$SELF_TEST" = "1" ]; then
   # box that has ever swapped.
   check "the gate never reads vm.swapusage"   "$(sed -n '/^acquire_check() {/,/^}/p' "$0" | grep -c 'swapusage')" "0"
   # THE DEFERRAL CLOCK IS ITS OWN: MAX_WAIT measures lock contention.
-  check "deferral does not touch MAX_WAIT"    "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'MAX_WAIT')" "0"
-  check "  ...and has its own bound"          "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'MAX_DEFER')" "1"
-  check "  ...releasing loudly with readings" "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'last readings')" "1"
-  check "a dry run is exempt"                 "$(sed -n '/^DEFER_WAITED=0/,/^done$/p' "$0" | grep -c 'DRY_RUN')" "1"
+  # (Re-pointed at the FUNCTION when the loop became shared -- one deferral,
+  # two callers -- so these keep testing the thing rather than a dead region.)
+  _dfn() { sed -n '/^defer_until_survivable() {/,/^}$/p' "$0"; }
+  check "deferral does not touch MAX_WAIT"    "$(_dfn | grep -c 'MAX_WAIT')" "0"
+  check "  ...and has its own bound"          "$(_dfn | grep -c 'MAX_DEFER')" "1"
+  check "  ...releasing loudly with readings" "$(_dfn | grep -c 'last readings')" "1"
+  check "a dry run is exempt"                 "$(_dfn | grep -c 'DRY_RUN')" "1"
+
+  # ---- THE RETRY PATH USED TO WALK PAST THE GATE (pyc14, 2026-08-26).
+  # Attempt 1 died at 143, and attempt 2 launched into 14 MB free / 92% swap
+  # without re-asking: two dead builds where one deferral was owed.
+  _sv_dry="$DRY_RUN"; _sv_md="$MAX_DEFER"
+  DRY_RUN=0; MAX_DEFER=0                    # give up immediately: no sleeping
+  out="$(LS_MOCK_PRESSURE_LEVEL=2 LS_MOCK_PRESSURE="95.0 memory_pressure:100-free%(macos)" \
+         defer_until_survivable RETRY 2>&1)"; rc=$?
+  check "a starved box DEFERS rather than launching" "$rc" "1"
+  check "  ...saying which phase deferred"           "$(printf '%s' "$out" | grep -c 'RETRY DEFERRED')" "1"
+  check "  ...and naming its own bound"              "$(printf '%s' "$out" | grep -c 'GIVING UP')" "1"
+  check "  ...with the readings that decided it"     "$(printf '%s' "$out" | grep -c 'last readings')" "1"
+  MAX_DEFER="$_sv_md"
+  check "a quiet box proceeds"                       "$(LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" defer_until_survivable RETRY >/dev/null 2>&1; echo $?)" "0"
+  DRY_RUN=1
+  check "a DRY RUN is exempt even when starved"      "$(LS_MOCK_PRESSURE_LEVEL=4 LS_MOCK_PRESSURE="99.0 memory_pressure:100-free%(macos)" defer_until_survivable RETRY >/dev/null 2>&1; echo $?)" "0"
+  DRY_RUN="$_sv_dry"
+  # THE STRUCTURAL ROW, which is the one that would have caught pyc14: the
+  # gate must be INSIDE the attempt loop, not only before it.
+  check "EVERY attempt is gated, not just the first" \
+        "$(sed -n '/^for attempt in 1 2; do/,/^done$/p' "$0" | grep -c 'defer_until_survivable')" "1"
+  check "  ...and the acquire path shares that code" \
+        "$(grep -c '^if ! defer_until_survivable ACQUIRE; then' "$0")" "1"
   # WHOSE KILL: the guard leaves a marker, so "ours" is READ, not inferred.
   # ANCHORED AT LINE START: a row that greps for a code string CONTAINS that
   # string, and this is the fourth such self-match this week.  The code lines
@@ -4093,24 +4153,11 @@ GUARD_PIDFILE="$(mktemp "${TMPDIR:-/tmp}/triad-guard.XXXXXX")" || die "no temp d
 # defer — the same reasoning as "a report has nothing to spend".  Deferring it
 # would make `--dry-run` unusable for exactly the protocol testing it exists
 # for, on exactly the loaded boxes where that testing matters most.
-DEFER_WAITED=0
-while [ "$DRY_RUN" = "0" ]; do
-  _chk="$(acquire_check)"
-  case "$_chk" in
-    ok\ *) [ "$DEFER_WAITED" -gt 0 ] && say "ACQUIRE RESUMED after ${DEFER_WAITED}s — ${_chk#ok }"
-           break ;;
-  esac
-  say "ACQUIRE DEFERRED — ${_chk#defer }"
-  if [ "$DEFER_WAITED" -ge "$MAX_DEFER" ]; then
-    say "ACQUIRE GIVING UP after ${DEFER_WAITED}s deferred: the box never became survivable."
-    say "  last readings: ${_chk#defer }"
-    say "  NO BUILD WAS STARTED, so this is not an outside kill to diagnose — the box was"
-    say "  starved before we began. Releasing the lock so the fleet is not held behind it."
-    exit 2
-  fi
-  sleep "$DEFER_INTERVAL"
-  DEFER_WAITED=$((DEFER_WAITED + DEFER_INTERVAL))
-done
+if ! defer_until_survivable ACQUIRE; then
+  say "  NO BUILD WAS STARTED, so this is not an outside kill to diagnose — the box was"
+  say "  starved before we began. Releasing the lock so the fleet is not held behind it."
+  exit 2
+fi
 
 # QOL-72'S LINE, NOW CONDITIONAL.  "--gates keeps the tenure, and a kept tenure
 # BUILDS" held while this script could not know whether a lane gate starts
@@ -4147,6 +4194,19 @@ BUILD_LOG="$(mktemp "${TMPDIR:-/tmp}/triad-build.XXXXXX")"
 BUILD_EXIT=1
 for attempt in 1 2; do
   if [ "$SKIP_BUILD" = "1" ]; then BUILD_EXIT=0; break; fi
+  # BEFORE EACH ATTEMPT, not just the first.  For attempt 1 this is a cheap
+  # re-read that also covers the time spent waiting in the queue; for attempt
+  # 2 it is the whole fix.
+  if ! defer_until_survivable "PRE-BUILD (attempt $attempt)"; then
+    say "  attempt $attempt WAS NOT STARTED: the box is still starved."
+    if [ "$attempt" -gt 1 ]; then
+      say "  Attempt $((attempt - 1)) died a resource death and the box never recovered, so a"
+      say "  second build would die the same way. Releasing rather than spending it."
+    else
+      say "  NO BUILD WAS STARTED — the box was starved before we began."
+    fi
+    exit 2
+  fi
   say "=== lake build ${BUILD_TARGETS:-<all default targets>} (attempt $attempt) ==="
   watchdog_start                      # A16: a fresh guard for EVERY attempt
   # UNQUOTED on purpose: BUILD_TARGETS is a target LIST, and every element was
@@ -4171,6 +4231,8 @@ for attempt in 1 2; do
       say "exit $BUILD_EXIT = OURS: the A16 RSS guard tripped (see the RSS KILL LINE above) — re-running once"
     else
       say "exit $BUILD_EXIT = THE BOX: an outside kill with no RSS KILL LINE of ours — re-running once"
+      # THIS READING IS NOW ACTED ON, not merely printed: the loop head defers
+      # before the next attempt.  It used to be reported here and ignored.
       say "  box now: $(acquire_check | sed -e 's/^ok //' -e 's/^defer //')"
     fi
     continue

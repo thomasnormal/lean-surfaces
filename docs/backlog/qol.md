@@ -5786,3 +5786,57 @@ fallback if the blast radius proves intolerable.
 No Lean executed. `lean_comment_forms` 407 files / 0 defects; lakefile parses
 with every `needs` target declared; docs_check 91/91; index in sync;
 `--verify-guards` 57 ok; `triad.sh --self-test` 454 ok.
+
+---
+
+## 2026-08-26-qol-84 — the retry path walked past the acquire gate
+
+Found live by pyc14. Attempt 1 died at **exit 143**; the discriminator named it
+THE BOX and retried, which is the tooling working exactly as designed. Attempt
+2 then launched at 13:01:38 into **14 MB free and 92% swap** — because
+`acquire_check` ran at **acquire time only**. A starved box bought **two dead
+builds where one deferral was owed**, defeating the gate on precisely the
+condition it exists for.
+
+### The part worth keeping
+
+The retry path already called `acquire_check` — to **print** it:
+
+```
+say "  box now: $(acquire_check | sed -e 's/^ok //' -e 's/^defer //')"
+```
+
+It had the reading in hand, wrote it into the log, and launched anyway. **A
+measurement taken and not acted on is the most expensive kind**: it produces
+the evidence of the mistake at the moment of making it, and reads afterwards
+like the tool knew better. The gate was never missing here — only unconsulted.
+
+### One deferral, two callers
+
+`defer_until_survivable <phase>` now holds the loop, and it runs **before every
+attempt**, not just the first. For attempt 1 that is a cheap re-read which also
+covers time spent waiting in the queue; for attempt 2 it is the whole fix.
+
+Giving up means different things to the two callers, so the **caller** decides
+rather than the function: at acquire no build has started, so the log must not
+invite an outside-kill diagnosis; at a retry one already died a resource death
+and the box never recovered, so a second build would die the same way and is
+released rather than spent.
+
+### Rows
+
+Eight, including the one that would have caught this: **the gate must be INSIDE
+the attempt loop**, not merely before it — a structural row, because the
+behavioural one needs a build that dies at 143 and this lane runs none.
+
+Four existing rows scanned the old inline loop by line range; that region
+ceased to exist, so they are re-pointed at the function. They were testing a
+shape, and the shape moved — had they been left, they would have passed
+against nothing, which is the failure mode this lane keeps finding in other
+people's fixtures.
+
+### Triad
+
+`triad.sh --self-test` **462 ok, 0 failed** (454 → 462). No Lean executed: the
+deferral is exercised against mocked instruments, and `MAX_DEFER=0` makes the
+give-up path return without sleeping.

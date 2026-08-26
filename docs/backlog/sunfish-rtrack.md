@@ -1351,3 +1351,52 @@ mechanism was checkable and was not checked before being reported.
 ### Status
 
 Verdict pending.
+
+## 2026-08-25-sunfish-rtrack-17 — the heap-reading cursors, and the boundary of rung 6's new material
+
+`monadic_gen.lean` §12, five theorems. **§9.0 stays 5 / 9.**
+
+§11's cursors carry their sequence in the frame; §12's carry an ADDRESS, so they
+must read the heap before deciding anything. That read is their whole new
+content: each arm takes `Heap.get? st.world.heap ad = some (.list xs)` plus an
+in-range or past-end side condition. `toRun_frameHeap`, the lemma they all route
+through, is `rfl` and reports **no axioms at all**.
+
+### Why this batch is the boundary rather than just the next batch
+
+Every remaining frame arm is now either a cursor of one of two kinds —
+frame-carried (§11) or heap-carried (§12) — or a control transfer. There is no
+third species. That is what licenses pricing rung 6 as INSTANTIATION rather than
+discovery: the shapes are enumerated, and what is left is applying them to
+`bound()`'s actual statements.
+
+### The unwinds, written and not yet elaborated
+
+`break` does NOT fall through to the next statement. The delegate arm's `.brk`
+asks `genBreak` where the enclosing loop's frame ends and resumes THERE,
+discarding the rest of the block — so a lemma shaped like `delegateNext` would
+have been quietly wrong, and the analogy is exactly what would have produced it.
+`continue` is the same shape with `genContinue`; the entire difference between
+the two lives in the resolver, not in the interpreter's step.
+
+### The iterate loop, honestly
+
+Thirty-seven attempts over thirty-seven minutes before the machine permitted, on
+a genuinely loaded box (the permitting run reported load 7.43 and 37% pressure;
+refusals before it ran 51–68% in use). No giveup fired. The loop cost nothing but
+waiting and the machine was never made worse by this lane while it waited — which
+is the whole argument for obeying a courtesy guard rather than picking the door
+that skips it.
+
+### A rule adopted, after two occurrences
+
+**Commit before reporting.** Twice now a green tenure has sat staged-uncommitted
+while this lane wrote its report, and the first was only claimed because the
+coordinator verified `git write-tree` before touching the worktree. A green
+sitting staged is one crash from being an unclaimed tenure. The order is verdict
+→ verify tree → commit → push → report; the report is the last step, never the
+step that displaces the commit.
+
+### Status
+
+Verdict pending.

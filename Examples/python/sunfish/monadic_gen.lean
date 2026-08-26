@@ -596,4 +596,80 @@ theorem genStep_enumSeqCons (m : Module) (st : FrameState) (i : Int)
 #print axioms genSilent_enumSeqNil
 #print axioms genStep_enumSeqCons
 
+/-! ## §12 THE HEAP-READING CURSORS — the first arms that ASK the interpreter
+
+§11's cursors carry their sequence in the frame. These carry an ADDRESS, so they
+must read the heap before they can decide anything, and that read is their new
+content: every arm below takes a `Heap.get? st.world.heap ad = some (.list xs)`
+premise plus an in-range or past-end side condition.
+
+That makes them the genuinely new rung-6 material, and also the boundary of it.
+Once these are in hand every remaining frame arm is either a cursor of one of
+these two kinds or a control transfer — no third species. -/
+
+/-- Reading the frame's heap decides nothing and changes nothing. Axiom-free:
+the whole lemma is `rfl`. -/
+theorem toRun_frameHeap (st : FrameState) :
+    toRun frameHeap st = .ok st st.world.heap := rfl
+
+/-- `for x in <list>` with the cursor PAST the end: the frame pops. -/
+theorem genSilent_forListDone (m : Module) (st : FrameState) (target : Expr)
+    (ad : Addr) (i : Nat) (body : List Stmt) (k' : GenCont) (xs : Array RVal)
+    (hheap : Heap.get? st.world.heap ad = some (.list xs))
+    (hge : ¬ i < xs.size) :
+    GenSilentM m st st (.forList target ad i body :: k') k' :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt]
+    rw [toRun_bind, toRun_frameHeap]
+    dsimp only [Run.bind]
+    simp only [hheap, hge, if_false]⟩
+
+/-- …and one element consumed: bind the target, advance the cursor. -/
+theorem genSilent_forListCons (m : Module) (st st₁ : FrameState) (target : Expr)
+    (ad : Addr) (i : Nat) (body : List Stmt) (k' : GenCont) (xs : Array RVal)
+    (hheap : Heap.get? st.world.heap ad = some (.list xs))
+    (hlt : i < xs.size)
+    (hasg : toRun (assignM target (xs.getD i .none)) st = .ok st₁ ()) :
+    GenSilentM m st st₁ (.forList target ad i body :: k')
+      (.block body :: .forList target ad (i + 1) body :: k') :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt]
+    rw [toRun_bind, toRun_frameHeap]
+    dsimp only [Run.bind]
+    simp only [hheap, hlt, if_true]
+    rw [toRun_bind, hasg]
+    rfl⟩
+
+/-- `enumerate(<list>)` past the end pops. -/
+theorem genSilent_enumListDone (m : Module) (st : FrameState) (i : Int)
+    (ad : Addr) (cur : Nat) (k' : GenCont) (xs : Array RVal)
+    (hheap : Heap.get? st.world.heap ad = some (.list xs))
+    (hge : ¬ cur < xs.size) :
+    GenSilentM m st st (.enumList i ad cur :: k') k' :=
+  ⟨1, fun F => by
+    simp only [kont, execGenAt]
+    rw [toRun_bind, toRun_frameHeap]
+    dsimp only [Run.bind]
+    simp only [hheap, hge, if_false]⟩
+
+/-- …and YIELDS the indexed pair while in range. -/
+theorem genStep_enumListCons (m : Module) (st : FrameState) (i : Int)
+    (ad : Addr) (cur : Nat) (k' : GenCont) (xs : Array RVal) (F : Nat)
+    (hheap : Heap.get? st.world.heap ad = some (.list xs))
+    (hlt : cur < xs.size) :
+    toRun ((kont m (F + 1)).execGen (.enumList i ad cur :: k')) st
+      = .ok st (some (.tuple #[.int i, xs.getD cur .none],
+                      .enumList (i + 1) ad (cur + 1) :: k')) := by
+  simp only [kont, execGenAt]
+  rw [toRun_bind, toRun_frameHeap]
+  dsimp only [Run.bind]
+  simp only [hheap, hlt, if_true]
+  exact toRun_pure _ _
+
+#print axioms toRun_frameHeap
+#print axioms genSilent_forListDone
+#print axioms genSilent_forListCons
+#print axioms genSilent_enumListDone
+#print axioms genStep_enumListCons
+
 end Examples.python.sunfish.monadic_gen

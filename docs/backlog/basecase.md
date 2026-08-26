@@ -650,3 +650,233 @@ untouched. The green therefore transfers, and a re-gate rides with the next
 inch's tenure rather than being claimed here. **A purely additive dependency is
 still a changed dependency; what makes this safe is the diff, not the word
 "additive".**
+
+---
+
+## 2026-08-26-basecase-1 — THE DESCENT'S PRODUCER, and what `hfallQ` is now down to
+
+§5 discharged the base case's own induction and left `hfallQ` as rung 8's only
+obligation. It also left something smaller and sharper: `refinesAt_child_of_qsStep`
+took `descendsB b b' v` as a **hypothesis**, and
+
+    grep -rn 'descendsB' Examples/ | grep -v qs_measure.lean
+
+returned nothing but §5's own use. **`descendsB` had no producer.** `qs_measure.lean`
+states it, proves what it implies (`qsMeasure_lt_of_descendsB`), and instantiates
+it on the fixture by `#guard` — nothing derived it from a move. A hypothesis
+nobody can discharge is a proof that has moved rather than progressed, so this
+inch discharges it.
+
+### THE SPLIT IS THE ENGINE'S, not a convenience
+
+`Position.value` is a `pst` delta plus a capture term, and the two arms fall out
+of that shape rather than out of what was easy to prove:
+
+* **`descendsB_plainMove`** — the QUIET arm. `pieceCount_plainMove` fixes the
+  high digit and `pstTotal_plainMove` moves the low one by exactly
+  `pstCell p j - pstCell p i`, which **is** the move's value. So the second
+  disjunct holds as an EQUATION, not as a bound. Four lines.
+* **`descendsB_plainMove_capture`** — the CAPTURE arm, and what it does *not*
+  take is the finding: **no `pstTotal`, no equation relating `v` to the board at
+  all.** A capture descends because a piece left the board. That is what makes
+  the arm usable at the shipped `value`, whose capture term this file therefore
+  never has to model — the high digit dominating (§4's `noKnightB` refutation)
+  is what buys that, three sections later.
+* **`refinesAt_quietChild_of_qsStep`** — the composition with §5, so the child
+  bridge is *applicable* and not merely true.
+
+**The QS floor is the engine's constant, checked and not guessed**: `QS = 40` at
+`sunfish.py:163`, and at depth 0 the filter is exactly `v >= QS` because the
+`or depth` disjunct is falsy. That is the `40` `descendsB` was written with.
+
+### HOW §6 NARROWS `hfallQ` — stated in the flagship's terms
+
+Rung 8 is `BoundRefinesW V 0` ⟸ `QSRecursionStep V` ⟸ `hfallQ` + `hV` + `hmateV`,
+unchanged. What changed is `hfallQ`'s **interior**. Before §6, discharging it
+needed two different kinds of thing: a fold argument, AND a reason the children
+it recurses into are reachable from the induction hypothesis. **The second kind
+is now gone.** For a plain QS move — quiet or capture — the child is covered, by
+composition, from the parent's budget and nothing else.
+
+So `hfallQ`'s residue is now exactly three things, and only one of them is large:
+
+1. **The depth-0 fold's rounds** — that the rounds the loop presents ARE moves of
+   this shape, with their values. Interpreter half; re-founds; the large one.
+2. **The non-plain moves** — promotions, en passant, castling. `Position.move`'s
+   board is `plainMoveBoard` only under `move_residue.lean`'s `PlainBoard`, so
+   this residue has a predicate already written for it. Named, not hidden.
+3. **The window premise** at the child, `PstInWindow (plainMoveBoard b i j)` —
+   §1's side condition, discharged by the caller as it always was.
+
+**That is the narrowing, and it is a change in KIND rather than in count.** The
+circularity §L27 found — a depth-0 node's children being depth-0 nodes — is now
+answered twice over: §5 said the induction can reach them, §6 says the shipped
+move puts them where the induction can reach.
+
+### The home question, decided against the instinct
+
+`descendsB` lives in `qs_measure.lean` and the lowest-common-ancestor rule this
+lane agreed for `FoldInv` would put its producer there. **The consumer decides**:
+`refinesAt_child_of_qsStep` is in `qs_rank.lean`, it is the only caller, and the
+LCA of the two is here. Moving it down would also have re-elaborated
+`move_residue` and the 2 090-line `move_gate` for no second consumer. It moves
+the moment one appears below. **LCA is a rule about the consumers a theorem
+actually has, not about where its vocabulary was first defined.**
+
+### A triangle closed, and a debt paid
+
+`#guard plainMoveBoard board0 84 64 == d4B` (and `85 65 == e4B`). `d4B` is a
+LITERAL in `faillow_census.lean` pinned to the interpreter by
+`#guard ply (some (posH 0)) 84 64 == some d4Pos`; F1a's `plainMoveBoard` was
+proved equal to the interpreter's `moveStr` in `move_residue.lean`. **Both edges
+existed and the triangle had never been closed by a machine.** Now it is.
+
+And §5's naming debt is paid in the same touch: the local `have hfall` inside
+`refinesAt_child_of_qsStep` — which reused the campaign's most loaded name for an
+unrelated rank inequality — is `hlt`. Recorded because it was recorded as owed:
+a debt named in one landing and paid in the next is the cheapest kind there is.
+
+**Still owed**: the duplicated four-way split between `qsStep_of_hfallQ` and
+`boundRefinesW_zero`. Deliberately deferred again — factoring it means editing
+`basecase_depth0.lean` and re-elaborating everything under it, and rung 8's
+remaining work is `hfallQ`, not the split.
+
+### THE PREDICTIONS, stated before the tenure
+
+Per §9.0, and one of them can genuinely fail:
+
+1. **§6 elaborates with at most one round of fixes.** The two arms are four lines
+   each over lemmas whose hypotheses are already spelled; the risk is in the
+   `simp only [descendsB, …]` unfolding, not in the arithmetic.
+2. **The triangle closes** — `plainMoveBoard board0 84 64 == d4B` holds. This is
+   the falsifiable one. Both edges are proved separately and neither was ever
+   composed, so if the index conventions disagree by so much as an orientation
+   this guard turns the tenure red and the finding is worth more than the green.
+3. **The tenure re-gates `pins_common`'s sharding** for this file's chain, which
+   `2026-08-25-basecase-1` owed and could not pay from a build base of `3cc251f`.
+
+### What this landing contains, and its triad
+
+1. `Examples/python/sunfish/qs_rank.lean` — §6, the `hlt` rename, and a header
+   amendment so the file's own summary stays true.
+2. `docs/backlog/basecase.md` — this entry.
+
+**Triad**: ENQUEUED AND THEN CANCELLED — ticket
+`1787741071577721000-81410-basecase`, 12:44:33, which had reached the HEAD of the
+FIFO (`head=…-81410-basecase; owner=es 76250`) without ever acquiring. Cancelled
+at 13:30 on Thomas's wind-down instruction, to free the tenure for the lanes
+behind it. **So §6 IS STAGED-UNVERIFIED: no `lake build` has ever seen it.**
+The re-gate this tenure was also going to pay — `2026-08-25-basecase-1`'s green
+was certified at base `3cc251f` while `pins_common.lean`, in this file's chain,
+was sharded underneath it — is therefore **still owed** and is the first thing
+resumption should buy.
+
+
+---
+
+## 2026-08-26-basecase-2 — PARKED, indefinitely. What resumption needs and nothing else
+
+Thomas paused the campaign to save tokens and free Lean resources. This entry is
+written to be the **only** thing a successor has to read to restart this lane,
+because the last handover lost its transcript and the successor had to
+re-derive the frontier from the tree — which is how the "blocked" rung turned out
+not to be blocked. That re-derivation is now written down instead.
+
+### THE STATE, in one table
+
+| thing | state | sha |
+|---|---|---|
+| §5 — the base case's own induction | **MERGED, green, clean-axiom** | `86ab41e` |
+| §6 — the descent's producer | **STAGED, UNVERIFIED** — never built | this landing |
+| rung 8 | `OPEN`, one arm: `hfallQ` | chain doc row 81 |
+| chain | **5 / 9** — unchanged, and not to be advanced by this entry | — |
+
+### RUNG 8, and it is now ONE hypothesis
+
+    BoundRefinesW V 0  ⟸  QSRecursionStep V  ⟸  hfallQ + hV + hmateV
+
+`hV` and `hmateV` are the MODEL's, named since §L20 and not this lane's to close.
+**`hfallQ` is the whole of the remainder.** It is `hfall`'s shape plus two
+additions: the parent's rank budget, and the induction hypothesis at every
+strictly smaller rank.
+
+### THE `hfallQ` RESIDUE IS THREEFOLD, and only one part is large
+
+This is the sentence resumption should start from:
+
+1. **The depth-0 fold's rounds** — that the rounds `bound()`'s
+   `for val, move in moves():` presents ARE plain QS moves with their values.
+   **This is the interpreter half, it is the big one, and it RE-FOUNDS** under
+   Thomas's 2026-08-22 ruling: it must be written on the monadic interpreter, not
+   the old one. Its floor already exists and is somebody else's landed work —
+   `forGen_step` / `forGen_done` in `monadic_gen.lean` §8, which are the
+   `forGenAt`/`execOpen` path (**not** the `execGenAt` frame arm rungs 2–3 use;
+   a lane that assumes the frame arm covers the loop arm has a gap exactly where
+   the fold lives). The spec side is landed too: `RoundOK` / `FoldInv` in
+   `monadic_fold.lean`.
+2. **The non-plain moves** — promotions, en passant, castling. `Position.move`'s
+   board is `plainMoveBoard` only under `move_residue.lean`'s **`PlainBoard`**,
+   which is already written. This is a named residue, not a hole.
+3. **The window premise at the child** — `PstInWindow (plainMoveBoard b i j)`,
+   §1's standing side condition, discharged by the caller as it always was.
+
+### §6'S FALSIFIABLE PREDICTION, ON THE RECORD AND UNMEASURED
+
+The staged §6 carries a guard that has **never been run**:
+
+    #guard plainMoveBoard board0 84 64 == d4B
+    #guard plainMoveBoard board0 85 65 == e4B
+
+Both edges are proved separately and were never composed: `d4B` is a literal in
+`faillow_census.lean` pinned to the interpreter by
+`#guard ply (some (posH 0)) 84 64 == some d4Pos`, and `moveStr_eq_plainMoveBoard`
+equates F1a's board function with the interpreter's `moveStr`. **If the index
+conventions disagree by so much as an orientation, this turns the first
+resumption tenure RED, and that finding is worth more than the green.** Predicted
+before the park: it holds. Nobody has checked.
+
+The other two predictions for §6, also unmeasured: it elaborates with at most one
+round of fixes, and the tenure pays the `pins_common` re-gate.
+
+### WHAT RESUMPTION SHOULD DO FIRST, in order
+
+1. `git fetch && reset --hard origin/master`; take master's `tools/triad.sh` (the
+   floor grows almost daily — it gained `divergence_register` on 08-25 and
+   `backlog-index.sh --check` on 08-26, and an old copy silently runs the old
+   floor).
+2. **Verify `.lake` before the first build.** A warm cache is what makes a purge
+   recoverable at all; `lake exe cache get` is not an optimisation. Do NOT run
+   `lake` outside a tenure — other lanes' A16.3 check reads a live `lake` as a
+   foreign build and backs off.
+3. **Enqueue §6 unchanged and let the machine answer the triangle.** Do not
+   "fix" the guard first. It is the cheapest real measurement on the board.
+4. Then `hfallQ` residue item 1, monadically.
+
+### STANDING DEBTS, carried
+
+* **The duplicated four-way split** between `qsStep_of_hfallQ` and
+  `boundRefinesW_zero`. The honest repair is a per-position
+  `refinesAt_zero_of_fall` taking `hfall` specialised to ONE position, of which
+  both become two-line corollaries. Deferred twice, deliberately: it means
+  editing `basecase_depth0.lean` and re-elaborating everything under it including
+  the 2 090-line `move_gate`, and rung 8's remaining work is `hfallQ`, not the
+  split.
+* **`harness/qs_cut_census.py`** — still owed, still §5.1-conformant from the
+  first line when it is rebuilt. Lost to `/private/tmp` before it was ever
+  pushed; §L73's numbers survive only because they were written into prose.
+
+### THE TWO FINDINGS THIS LANE WOULD MOST LIKE KEPT
+
+1. **A family table can be wrong about the frontier every time it is checked
+   against the tree.** Rung 8 read `BLOCKED (their ledger)` for three days over a
+   dependency that did not exist: the exit was a second induction on the QS rank,
+   and `RefinesAtQ` had been sitting in the tree since F2 with **zero consumers**.
+   `grep` settled in one command what the table had been asserting for days.
+   **Re-derive the frontier from the tree, never from the document that names
+   it** — including from this one.
+2. **The seam between the spec half and the interpreter half is what kept this
+   lane alive across a re-founding.** §L30 drew it for unrelated reasons. When
+   Thomas retired the interpreter, everything class-1 — `qsRank`, `RefinesAtQ`,
+   the induction, the child bridge, `descendsB`'s producer — transported
+   unchanged and was writable the same day. A lane whose whole ladder had been
+   interpreter-facing would have had nothing to do.

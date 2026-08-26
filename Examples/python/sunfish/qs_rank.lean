@@ -29,6 +29,12 @@ recorded rung 8 as BLOCKED. §5 discharges it — once, here — so that
 That is `flagship.lean`'s move (rung 1) applied to the base case, and it has the
 same finding attached: the rung that blocked the most was the one nobody had
 made anybody's explicit task.
+
+**§6 ADDS THE DESCENT'S PRODUCER** (2026-08-26). §5's child bridge takes
+`descendsB` as a hypothesis and `descendsB` had no producer anywhere — it was
+stated, consumed, and instantiated by `#guard`, never derived. §6 derives it from
+a shipped plain move, in the engine's own two cases, so the child bridge is
+applicable rather than merely true.
 -/
 import Examples.python.sunfish.qs_measure
 
@@ -291,7 +297,7 @@ theorem refinesAt_child_of_qsStep {V : RVal → Int → Int} {k : Nat}
     (hwf : BoundWF V w ci sa ts tm hs n dl sf es sv)
     (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper) :
     RefinesAt V 0 w sa ts gamma (posOf b' sc' wc0 wc1 bc0 bc1 ep kp) := by
-  have hfall : qsRank b' < qsRank b :=
+  have hlt : qsRank b' < qsRank b :=
     qsRank_lt_of_qsLt b b' hb hb' (qsMeasure_lt_of_descendsB hdesc)
   exact ih (qsRank b') (by omega) w ci sa ts tm hs n dl sf gamma _ es sv hwf
     ⟨b', sc', wc0, wc1, bc0, bc1, ep, kp, rfl⟩ hlo hup
@@ -363,6 +369,110 @@ same board pair is not a QS child at all. -/
 #guard descendsB board0 e4B 42 && decide (qsRank e4B < qsRank board0)
 #guard !descendsB board0 d4B 39
 
+/-! ## §6 THE DESCENT'S PRODUCER — `descendsB` at a shipped plain move
+
+§5's `refinesAt_child_of_qsStep` takes `descendsB b b' v` as a HYPOTHESIS, and a
+hypothesis nobody can discharge is a proof that has moved rather than progressed.
+`descendsB` had **no producer at all**: `qs_measure.lean` states it, proves what
+it implies (`qsMeasure_lt_of_descendsB`), and instantiates it on the fixture's
+two boards by `#guard`. Nothing derived it from a move.
+
+**This section is that derivation, and it splits where the shipped engine
+splits.** `Position.value` is a `pst` delta plus a capture term, so:
+
+* a QUIET move descends because the LOW digit falls by the move's own value, and
+  that value IS `pstCell p j - pstCell p i` — an EQUATION, not a bound;
+* a CAPTURE descends because the HIGH digit falls, and it needs no arithmetic
+  about the value at all — only that the QS floor was cleared.
+
+`QS = 40` in the shipped source (`sunfish.py:163`), and at depth 0 the filter is
+exactly `v >= QS` because the `or depth` disjunct is falsy. That is the `40`
+`descendsB` was written with, so the constant is the engine's and not a guess.
+
+**Home.** `descendsB` lives in `qs_measure.lean` and the instinct is to put its
+producer beside it. The CONSUMER decides: `refinesAt_child_of_qsStep` is in this
+file, it is the only caller, and the lowest common ancestor of the two is here.
+It moves down the moment a second consumer appears below — and the cost of
+moving it up front would have been re-elaborating `move_residue` and the
+2 090-line `move_gate` for nothing.
+
+**What this does NOT cover, named rather than hidden**: promotions, en passant
+and castling. `Position.move`'s board is `plainMoveBoard` only under
+`move_residue.lean`'s `PlainBoard`, and these theorems are stated about
+`plainMoveBoard` for exactly that reason. The non-plain moves are a residue with
+a predicate already written for them. -/
+
+/-- **THE QUIET ARM.** The count does not move and the `pst` total rises by
+exactly the move's own value, so `descendsB`'s second disjunct holds as an
+equation. -/
+theorem descendsB_plainMove (b : String) (i j : Nat) (p : Char)
+    (hlen : b.toList.length = 120)
+    (hchars : ∀ c ∈ b.toList, c ∈ boardChars)
+    (hi : i < 120) (hj : j < 120) (hij : i ≠ j)
+    (halpha : p.isAlpha = true)
+    (hpi : b.toList[i]? = some p) (hqj : b.toList[j]? = some '.')
+    (hqs : 40 ≤ pstCell p j - pstCell p i) :
+    descendsB b (plainMoveBoard b i j) (pstCell p j - pstCell p i) = true := by
+  have hpc := pieceCount_plainMove b i j p hlen hchars hi hj hij halpha hpi hqj
+  have hpt := pstTotal_plainMove b i j p hlen hchars hi hj hij hpi hqj
+  simp only [descendsB, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨hqs, Or.inr ⟨hpc, hpt⟩⟩
+
+/-- **THE CAPTURE ARM**, and note what it does NOT take: no `pstTotal`, no
+equation relating `v` to the board at all. A capture descends because a piece
+left the board, so `v` is free above the floor — which is what makes this arm
+usable at the shipped `value`, whose capture term this file never has to
+model. -/
+theorem descendsB_plainMove_capture (b : String) (i j : Nat) (p q : Char) (v : Int)
+    (hlen : b.toList.length = 120)
+    (hchars : ∀ c ∈ b.toList, c ∈ boardChars)
+    (hi : i < 120) (hj : j < 120) (hij : i ≠ j)
+    (halpha : p.isAlpha = true) (hqa : q.isAlpha = true)
+    (hpi : b.toList[i]? = some p) (hqj : b.toList[j]? = some q)
+    (hqs : 40 ≤ v) :
+    descendsB b (plainMoveBoard b i j) v = true := by
+  have hpc := pieceCount_plainMove_capture b i j p q hlen hchars hi hj hij halpha hqa hpi hqj
+  simp only [descendsB, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨hqs, Or.inl (by omega)⟩
+
+/-- **AND THE CHAIN CLOSES AT THE BOARD.** The quiet arm composed with §5: at a
+depth-0 node whose budget is `k`, the child produced by a quiet QS move is
+covered by the induction hypothesis, with no `descendsB` left to assume.
+
+**No interpreter term and no fold appears here**, which is the point of working
+at this altitude. What is left between this and `hfallQ` is showing that the
+depth-0 fold's rounds ARE these moves — the interpreter half, which re-founds. -/
+theorem refinesAt_quietChild_of_qsStep {V : RVal → Int → Int} {k : Nat}
+    (ih : ∀ e : Nat, e < k → BoundRefinesWQ V e)
+    {b : String} {i j : Nat} {p : Char}
+    (hlen : b.toList.length = 120)
+    (hchars : ∀ c ∈ b.toList, c ∈ boardChars)
+    (hi : i < 120) (hj : j < 120) (hij : i ≠ j)
+    (halpha : p.isAlpha = true)
+    (hpi : b.toList[i]? = some p) (hqj : b.toList[j]? = some '.')
+    (hqs : 40 ≤ pstCell p j - pstCell p i)
+    (hb : PstInWindow b) (hb' : PstInWindow (plainMoveBoard b i j))
+    (hk : qsRank b ≤ k)
+    (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int)
+    (sc' : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (es : Array (RVal × RVal)) (sv : Nat)
+    (hwf : BoundWF V w ci sa ts tm hs n dl sf es sv)
+    (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper) :
+    RefinesAt V 0 w sa ts gamma
+      (posOf (plainMoveBoard b i j) sc' wc0 wc1 bc0 bc1 ep kp) :=
+  refinesAt_child_of_qsStep ih hb hb'
+    (descendsB_plainMove b i j p hlen hchars hi hj hij halpha hpi hqj hqs) hk
+    w ci sa ts tm hs n dl sf gamma sc' wc0 wc1 bc0 bc1 ep kp es sv hwf hlo hup
+
+/-! ### The producer answers on the fixture's own move
+
+`d4B` is a LITERAL in `faillow_census.lean`, pinned to the interpreter by
+`#guard ply (some (posH 0)) 84 64 == some d4Pos`. So these two guards close a
+triangle that was previously two unconnected edges: the engine's own ply, the
+cached literal, and F1a's `plainMoveBoard` are the same board. -/
+#guard plainMoveBoard board0 84 64 == d4B
+#guard plainMoveBoard board0 85 65 == e4B
+
 /-! ### The axioms -/
 
 #print axioms pstInWindowB_iff
@@ -376,5 +486,8 @@ same board pair is not a QS child at all. -/
 #print axioms boundRefinesW_zero_of_qsStep
 #print axioms refinesAt_child_of_qsStep
 #print axioms qsStep_of_hfallQ
+#print axioms descendsB_plainMove
+#print axioms descendsB_plainMove_capture
+#print axioms refinesAt_quietChild_of_qsStep
 
 end Examples.python.sunfish.qs_rank

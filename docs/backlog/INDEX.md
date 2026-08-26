@@ -16,7 +16,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**440 entries across 17 lanes.** Regenerate with
+**442 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
@@ -40,6 +40,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-26-sv-9` |  | PARKED: what is certified, what is named, and what the A17 line cost | sv |
 | `2026-08-26-sv-8` |  | THE FRESHNESS GATE IS WIRED, AND ITS BASELINE IS MEASURED, NOT ASSUMED | sv |
 | `2026-08-26-sv-7` |  | THE ROUND-TRIP GATE PICKED ITS INTERPRETER BY ACCIDENT, AND THE PIN IT NEEDED IS RETIRED | sv |
+| `2026-08-26-basecase-2` |  | PARKED, indefinitely. What resumption needs and nothing else | basecase |
+| `2026-08-26-basecase-1` |  | THE DESCENT'S PRODUCER, and what `hfallQ` is now down to | basecase |
 | `2026-08-25-architecture-91` |  | A watch whose most important signal produces no alarm is not a watch | architecture |
 | `2026-08-25-architecture-90` |  | A ledger that may not be empty cannot also be the archive | architecture |
 | `2026-08-25-architecture-89` |  | Absence and success are the same colour on a green board | architecture |

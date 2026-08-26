@@ -709,13 +709,33 @@ def iter_churn_still_loud(a):
     return t + next(it)
 
 
-def iter_list_recv_still_loud(a):
-    # THE RECEIVER BOUNDARY, falsifiable: CPython answers 7 (a list_iterator).
-    # Every non-dict receiver has its own CPython iterator TYPE with its own
-    # mutation regime, so the tier refuses rather than guess one.
+def iter_list_recv(a):
+    # THE RECEIVER BOUNDARY, now ANSWERED: CPython's list_iterator is a plain
+    # index cursor, so the tier models it rather than guessing a layout.
     xs = [a, 5]
     it = iter(xs)
     return next(it)
+
+
+def iter_list_grew(a):
+    # MUTATION DURING ITERATION, the grow direction. list_iterator compares
+    # it_index against the CURRENT length every call, so appending after the
+    # cursor was built keeps it yielding. No layout is consulted -- which is
+    # why this receiver owes no divergence where the DICT cursor owed two.
+    xs = [a]
+    it = iter(xs)
+    t = next(it)
+    xs.append(9)
+    return t + next(it)
+
+
+def iter_list_exhausted(a):
+    # THE DEAD-CURSOR BOUNDARY, the same one iter(dict) pins: a cursor stepped
+    # PAST the end is dead, and a later next(it, x) answers x silently.
+    xs = [a]
+    it = iter(xs)
+    t = next(it)
+    return t + next(it, 100)
 
 
 def iter_sentinel_still_loud(a):

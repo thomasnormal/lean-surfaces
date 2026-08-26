@@ -1573,6 +1573,33 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
           pure (some (kv, .iterDict ad (cur + 1) n sv :: k'))
       | some .done => K.execGen k'
       | Option.none => refuse "internal: an iter() cursor over a non-dict object (report this)"
+  -- §iterList: `iter(xs)`. The `enumList` step with the tuple taken OFF —
+  -- CPython's `list_iterator` yields the bare element — exactly as `iterDict`
+  -- is `enumDict` with the tuple off.
+  --
+  -- MUTATION NEEDS NO REGIME HERE, and that is the whole difference from the
+  -- dict cursor. `Heap.get?` re-reads the list every step and `cur < xs.size`
+  -- compares against its CURRENT size — precisely what CPython's
+  -- `list_iterator.__next__` does (`it_index < PyList_GET_SIZE(seq)`). A list
+  -- that GREW keeps yielding; one that SHRANK past the cursor exhausts
+  -- silently. Neither is a guess, so this cursor declares NO divergence
+  -- where `iterDict` needed two.
+  --
+  -- WITNESSED: the grow direction (`dict_lab::iter_list_grew`) and the
+  -- dead-cursor boundary (`::iter_list_exhausted`). NOT WITNESSED: the
+  -- SHRINK direction, and the reason is upstream — writing it needs
+  -- `del xs[i]`, itself a refused frontier row (`del.non-dict-receiver`).
+  -- The arm above handles it by construction, but no test reaches it until
+  -- that row lands, exactly as `pyc-div-1`'s witness waited on
+  -- `except_builtin`. Named here so the gap has an owner, not a hope.
+  | .iterList ad cur :: k' => do
+      match Heap.get? (← frameHeap) ad with
+      | some (.list xs) =>
+          if cur < xs.size then
+            pure (some (xs.getD cur .none, .iterList ad (cur + 1) :: k'))
+          else K.execGen k'
+      | some _ => refuse "internal: an iter() cursor over a non-list object (report this)"
+      | Option.none => refuse danglingMsg
   | .countFrom cur step :: k' =>
       -- never exhausts: `count` is the infinite ray of sunfish's move generator,
       -- and a consumer's `break` is what ends it.

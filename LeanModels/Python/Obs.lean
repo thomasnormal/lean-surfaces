@@ -1650,6 +1650,8 @@ theorem fuelMono (fuel : Nat) :
           | enumDict i ad cur n sv => simp only [execGen]; exact Run.le_refl _
           -- §iter: the trunk's `iterDict` arm refuses; both fuels agree
           | iterDict ad cur n sv => simp only [execGen]; exact Run.le_refl _
+          -- §iterList: and its `iterList` arm refuses for the same reason
+          | iterList ad cur => simp only [execGen]; exact Run.le_refl _
           -- §3a: the trunk's `forDict` arm refuses; both fuels agree
           | forDict tg ad i n sv kd bd => simp only [execGen]; exact Run.le_refl _
           | countFrom cur step => simp only [execGen]; exact Run.le_refl _

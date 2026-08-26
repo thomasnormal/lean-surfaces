@@ -3723,3 +3723,80 @@ four envelopes, and the same one I applied against myself at pycomplete-42.
    and must be checked for which one they intend.
 3. **Re-pin the three censuses** to measured values, sweep only the mentions the
    map says moved — not all 128 on principle.
+
+## 2026-08-26-pycomplete-44 — PARKED (indefinite). Read this first on resumption.
+
+The python-completeness lane is parked at Thomas's instruction. No ticket, no
+tenure, no Lean process outstanding — the measuring tenure named below **never
+started**. This entry is the resumption contract.
+
+### 1. Frontier: LANDED and green
+
+    138 witnesses: 107 MATCH, 31 REFUSE, 0 other
+
+`iter()` over a list landed at `6a88769` (merged) — one change, two rows
+(`dict.iter-of-list`, `iter.non-dict-receiver`), **zero divergence-register
+rows added**, because a `list_iterator` is an index cursor with no layout to
+guess. Reachable surface **26**; group A's five (3 dict-churn, `Set`,
+`SetComp`) are the permanent floor — *not ever without guessing layout*, which
+is the charter's honest-REFUSE discipline, not a shortfall.
+
+Next inch per charter was **`expr.DictComp`**, uncensused. Nothing started.
+
+### 2. The envelope migration: PROVEN hazard, UNMEASURED mapping
+
+**Held unmerged**: `a8d7e85` (the failed prediction, recorded) and `49025db`
+(the correction + pricing). `de105c6` carries the envelope regeneration itself.
+**Do not merge any of them without the migration.**
+
+*What is established*: regenerating `sunfish.json` lowers two `del` statements
+(lines 511, 541) that the stale envelope recorded as `Unsupported`, which
+**renumbers genexp indices** and moved three certificates —
+`spec.lean:63`, `spec.lean:128`, `init_chain.lean:1671`. Exit 1, measured.
+
+*What is NOT established*: **the index→site mapping.** My document-order
+derivation contradicts the tree's own prose (`pins_init.lean:121` calls
+`<genexpr@7>` the module-scope genexp; my derivation put it inside
+`Searcher.bound`). `Json.lean:1197` mints indices from a state-monad counter in
+the LOWERING traversal, not document order — hence the unexplained `@2` gap.
+
+**Resume here, in this order:**
+
+1. **Measuring tenure** — temporary `#eval sunfish.functions.map (fun f => (f.name, f.span))`, before and after the envelope swap. The model's own answer
+   is the only admissible source. *Do not re-derive it in Python.*
+2. **`@7` audit** (4 mentions): `spec.lean:103` and `:136` are whole-table
+   enumerations — they gain a row, no meaning-shift. `pins_init.lean:121` and
+   `init_chain.lean:1285` name a **specific** construct and need an intent
+   verdict against the measured map.
+3. **Re-pin** the three censuses to measured values; sweep only the mentions the
+   map says moved — **not** all 128 on principle.
+
+**Structural fix priced NO** (`49025db`): span-addressing is strictly worse;
+scope+ordinal is readable but *does not fix this case* (511 and 515 share
+`Searcher.bound`); content-hashing works but costs readability plus a collision
+policy. Accepted cost: a later structural fix touches those mentions twice.
+
+### 3. Envelope tracking: the pending test
+
+`envelope_fresh --tier python` reports **FRESH 61** on the regenerated corpus
+and is wired into the lane's gate list — but **it has never gated a green
+build**, because the only tenure that reached the gates (`pyc13`) had a vacuous
+5-second build. Its first real exercise is whichever tenure resumes this.
+
+The deeper gap is **layer 3, still open**: `load_program` is an untracked build
+input, so an envelope edit does not invalidate its dependents. The convention
+(`pins_common.lean:17` — *"make a real edit HERE"*) is documented and ungated;
+I used it (pass 9 notes in `pins_common.lean` and `proof.lean`), and that is
+what turned pyc13's silent green into pyc14's honest red. QoL holds the
+mechanism decision.
+
+### 4. Standing corrections carried out of this session
+
+- Group C of the frontier is **3 existing IEEE-754 rows + 1 latent**
+  (`str`/`repr`-of-float cannot be a row until floats can be constructed) —
+  not 4 named rows. Softfloat's downstream count should read that way.
+- The exit-143 finding stands; **the metric in it does not** — `vm.swapusage`
+  is a high-water mark and would defer forever. triad's gate correctly uses the
+  kernel pressure level.
+- `MatMult` closes trivially and **buys nothing** (`completeness.md:84`); take
+  it last or knowingly as bookkeeping.

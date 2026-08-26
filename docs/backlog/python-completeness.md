@@ -3856,3 +3856,45 @@ forcing-edit ritual is history — I **removed** my pass-9 notes from
 Both loaders are therefore **byte-identical to master**, and the tenure's
 Built-not-Replayed on those two is the falsifiable test qol-83 asked for: an
 envelope changed with zero `.lean` changes *to those files*.
+
+## 2026-08-27-pycomplete-46 — two operational notes bought by a mass deletion
+
+### The worktree location is a hazard, and the fix is for resumption
+
+Mid-loop, **563 tracked files vanished** from this clone's working tree. Caught
+because the enqueue line printed a tree hash that did not match the eight
+previous cycles (`8d64d6b2eb64` against `45cf4215b596`) — the ticket carrying
+the corrupted tree was killed by pid before it reached the front, and
+`git checkout -- .` restored everything losslessly (563 pure deletions, 0
+modified, 0 untracked).
+
+The campaign's own history supplies the hypothesis without needing a new
+mechanism: this clone lives under **`/private/tmp`**, which macOS purges by
+access time, and the campaign has lost work to that three times before.
+The signature fits — files no build had read since seeding went, while
+recently-written files (the four migration files, `.git`, every session log)
+stayed.
+
+**Checked, and it neither confirms nor refutes**: every `/private/tmp`
+artifact of mine survived, including logs with atimes up to 37 hours old. A
+purge threshold above 37 h that still took the repo files requires those files
+to have been untouched since seeding — plausible for `Examples/go/…` under a
+python-tier build, but the restore reset every atime, so the discriminating
+evidence is gone. **Recorded as unproven.**
+
+> **Fix on resumption, not mid-loop: move this clone out of `/private/tmp` to
+> `~/repos`,** where wasm's and Ada's already live. The hazard is the LOCATION;
+> nothing hostile is required.
+
+### The tree hash at enqueue is a real check, not a decoration
+
+Eight cycles printed `tree at enqueue: 45cf4215b596`. The ninth printed
+something else, and that single line is the entire reason a corrupted tree did
+not reach a builder.
+
+> **Compare the enqueue tree hash against the last known-good one every cycle.**
+> A re-queue loop re-enqueues *whatever is on disk*, so the thing that never
+> varies is exactly the thing worth asserting — and it costs one `grep`.
+
+Push-on-green is what made the blast radius zero: `fe45bb4` was already on the
+remote, so the worst case was re-cloning, never re-doing the migration.

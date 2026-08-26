@@ -181,11 +181,11 @@ REFUTED = {
 # with its fork sha and certified tree, and the count is DERIVED.  The two are
 # labelled differently on purpose.
 GREEN_EVIDENCE = {
-    "fork_sha": "9d0c560",
-    "certified_tree": "0cd83d5b485a",
+    "fork_sha": "3e9d4a9",
+    "certified_tree": "1055dd8fba06",
     "gate": "lake build Test Verify",
-    "witness": "Built Verify (42s); 16 x #print axioms, no sorryAx, no warnings",
-    "log": "scratchpad/leantier-triad19.log",
+    "witness": "Built Verify (1.3s); 17 x #print axioms, no sorryAx",
+    "log": "scratchpad/leantier-triad23.log",
     "note": "fork commits are LOCAL by lane charter — the fork's only remote is "
             "upstream leanprover/lean4export, and pushing there is Thomas's "
             "decision alone.  This block is the merge-side record of a tenure "

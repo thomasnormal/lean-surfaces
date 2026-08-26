@@ -1358,3 +1358,90 @@ means teaching `ci.sh`'s `step` to read exit 3 as SKIP, which is a change to
 the step machinery rather than to this tier — named here rather than done
 quietly, and left for whoever owns that machinery.
 
+
+---
+
+## 2026-08-26-sv-9 — PARKED: what is certified, what is named, and what the A17 line cost
+
+Campaign paused by instruction. This entry is the resumption point; it is
+written so that whoever picks the lane up needs nothing from a transcript.
+
+### Certified (green, merged, Built-not-Replayed verified)
+
+* **The adequacy lemma is STATED and its instance is EXECUTABLE.**
+  `CycleAdequacy` (`LeanModels/Sv/Adequacy.lean`) plus `clockExpand` and
+  `posedgeSlots`. The guard that matters is not the statement but the
+  agreement: the cycle model and the region model produce the same
+  observation of `n` on a real `always_ff` design *through* the expansion
+  and the decimation, and **disagree on `clk`** — the second obstruction,
+  pinned rather than described, so the reason the lemma compares through
+  `d.outputNames` cannot be quietly forgotten.
+* **One edge rule.** `isPosedge`/`isNegedge` in `Basic`, `SvState.bit0` in
+  `Semantics`; the M1 and R1 tiers agree by CONSTRUCTION. Ten §9.4.2 edges
+  guarded individually, the non-edges, and disjointness over the 4×4 table.
+* **The region scheduler runs.** `ProcState.arm`, `sawEdge`/`wakeEdges`,
+  `elabDesign`, and the three fixes that made a loaded design execute at
+  all (schedule at time 0, re-enqueue on re-arm, drain-before-pass).
+* **Instruments.** `sv_round_trip` resolves the frontend pin before
+  comparing and refuses (exit 3) on a wrong family; the ci.yml
+  `pyslang==11.0.0` pin is retired; `envelope_fresh --tier sv` is wired
+  with a measured baseline of **FRESH 18 / NOT-LIVE 3**. Any STALE row from
+  here is a finding, not instrument noise.
+
+### NOT started: adequacy pieces 3 and 4
+
+Named and priced at `sv-5`; **no code was written for either.** Stated
+plainly because a parked lane that overstates its position costs the next
+tenure more than it saves.
+
+**Piece 4 — the re-arm's second Active pass is observably inert.** This is
+the obligation `ProcState.arm` created, and today it is evidence-by-`#guard`
+rather than a lemma. The shape it should take:
+
+> if a process's residual begins with `.waitEvent sig e`, then
+> `runProcOnce` leaves `signals`, `nba` and `out` **unchanged** and sets
+> that process to `.suspended (.atEdge sig e)`.
+
+`Step.lean:88` gives it almost directly — `.waitEvent sig edge => .ok (st,
+nba, out, .suspended (.atEdge sig edge) [])` threads the triple through
+untouched, and `stepSStmts` then returns `.suspended t ([] ++ rest)` with
+the same triple.
+
+**And the finding that came out of designing it**: unfolding `stepSStmt` at
+`fuel + 1` must pass the `if out.halted` guard first, so **the lemma needs
+`¬ out.halted` as a hypothesis**. The `#guard` evidence never had to
+confront that — a `$finish` earlier in the slot makes the step return
+`.done` instead of suspending, and a re-armed process would then be marked
+finished rather than re-suspended. Whether that is correct behaviour or a
+gap is *the first question the proof forces*, and it is the concrete return
+on promoting a guard to a lemma.
+
+**Piece 3 — Active pass ≡ `edgePass` commit** is the real work and is
+untouched. The full four-piece pricing is in `sv-5`.
+
+### The A17 line, and what it actually cost
+
+`check.sh --iterate` refused **five times across the session**, last
+reading: `load 11.34 (line 10), memory pressure 75.0% (line 50%)`. Pressure
+was never observed under the 50% line all day; both lines were over at the
+end. So local elaboration was unavailable to this lane throughout.
+
+**It is not why pieces 3 and 4 are unwritten** — they were never begun. The
+clash-check plus hand-trace path carried the *statement* to a first-time
+green with the tenure as the test, and it is available for the proofs on
+the same terms. Recorded so that resumption does not mistake an
+environmental constraint for a technical blocker.
+
+### Open, for whoever resumes
+
+* `sv_python()` in `ci.sh` is a THIRD spelling of the frontend check
+  ("can it import pyslang" vs "does it satisfy the family pin"). They
+  cannot disagree today; under pyslang 12 they would. Folding it in means
+  teaching `ci.sh`'s `step` to read exit 3 as SKIP — the step machinery's
+  change, not this tier's.
+* `extract.py`'s generate-block `entries[0]` takes the first instance as
+  the body template. Sound for a `for`-generate, but the soundness is
+  unstated (OPS-148 (a), named at `sv-6`).
+* `sim_available` is `all(...)` over a tool tuple, and `all([])` is True —
+  latent, not live.
+

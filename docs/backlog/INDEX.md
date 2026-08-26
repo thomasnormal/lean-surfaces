@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**381 entries across 17 lanes.** Regenerate with
+**382 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-08-26-sunfish-rtrack-18` |  | PARKED: the R-track's state at the wind-down | sunfish-rtrack |
 | `2026-08-25-architecture-89` |  | Absence and success are the same colour on a green board | architecture |
 | `2026-08-25-architecture-88` |  | A gate not in your floor cannot contradict your rows | architecture |
 | `2026-08-25-qol-69` |  | my census counted checkouts; the risk was about tickets | qol |

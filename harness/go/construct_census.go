@@ -913,6 +913,8 @@ var walkerVocab = []string{
 	"IncDecStmt", "BranchStmt", "LabeledStmt", "EmptyStmt",
 	// the slice family (§G17–§G19), fixed arrays (§G20), variadics (§G25)
 	"SliceExpr", "RangeStmt", "ArrayType/slice", "ArrayType/fixed", "Ellipsis",
+	// §G28: methods are mangled by the extractor; `+` on strings is modelled
+	"FuncDecl/method", "BinaryExpr/strcat",
 }
 
 // frontier is what the walker does NOT step, ranked by this instrument.
@@ -920,7 +922,6 @@ var walkerVocab = []string{
 // property of the CURRENT vocabulary and is not a ranking for any future
 // one, so re-run rather than quoting an old row.
 var frontier = []string{
-	"FuncDecl/method", "BinaryExpr/strcat",
 	"SelectorExpr/pkg", "SelectorExpr/value", "SwitchStmt", "CaseClause", "FuncLit", "MapType",
 	"InterfaceType", "TypeAssertExpr", "TypeSwitchStmt", "DeferStmt",
 	"GoStmt", "ChanType", "SendStmt", "SelectStmt", "CommClause",

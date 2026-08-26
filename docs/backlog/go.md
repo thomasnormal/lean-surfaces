@@ -3586,3 +3586,104 @@ one asserting the qualification and one asserting that the same
 `Type.Method` in a different package yields a different key.
 
 MM-oracle untouched — Thomas's. `fallthrough` deferred (4.0%).
+
+---
+
+## G30 — THE RE-CENSUS AFTER THE BUNDLE: a figure I had been carrying was wrong by 23× (2026-08-26)
+
+Census only. §G28 closed four gaps at once, so the frontier that priced
+§G27 was stale. Re-derived from the tree, with `FuncDecl/method` and
+`BinaryExpr/strcat` moved out of the frontier and into the vocabulary
+(the rule that a rung which widens the walker widens the list in the same
+commit).
+
+### THE CORRECTION: `--reach` CANNOT SEE PAST A PACKAGE SELECTOR
+
+The kinds-only instrument prices the switch family at **+2**. The
+package-aware measure prices it at **+46**. Both are running correctly;
+they are answering different questions.
+
+`--reach` has no notion of a modelled package, so **any file containing
+any package selector is excluded from its baseline** — including every
+file whose only selectors are into `math/bits` or `strconv`, which this
+tier now executes. Switch statements are common in exactly those files,
+so the kinds-only view cannot see them.
+
+I have been quoting the kinds-only frontier since §G26 as though it
+ranked the tier's options. For constructs used mainly in
+package-importing files it understates by more than an order of magnitude
+— here by **23×**. The two instruments are now recorded as answering
+different questions, and **the package-aware one is the one that ranks
+rungs**; `--reach` ranks constructs *in isolation*, which is a narrower
+claim than I was making of it.
+
+### WHAT THE TREE ACTUALLY SAYS
+
+Every row co-requirement-honest — a file counts only when EVERY
+unmodelled construct it uses is in the bundle (§G27's lesson, built into
+the probe):
+
+| candidate | all `src` | library |
+| --- | ---: | ---: |
+| **`SelectorExpr/value` alone** (needs `go/types`) | **+131** | **+109** |
+| **switch family** (`SwitchStmt`+`CaseClause`) | **+46** | **+44** |
+| `errors`+`math`+`io`+`strings` (four packages) | +27 | +26 |
+| `MapType` | +16 | +12 |
+| `errors` alone | +11 | +11 |
+| interfaces (`Interface`+`Assert`+`TypeSwitch`) | +8 | +7 |
+| `FuncLit` | +2 | +2 |
+| every construct EXCEPT `SelectorExpr/value` | +75 | +67 |
+| `SelectorExpr/value` + every construct | +282 | +221 |
+
+And the decisive row — **how many files are blocked by exactly ONE
+construct**:
+
+| sole blocker | files |
+| --- | ---: |
+| **`SelectorExpr/value`** | **716** |
+| `MapType` | 24 |
+| `FuncLit` | 15 |
+| `InterfaceType` | 14 |
+| everything else | ≤ 4 |
+
+**716 files are blocked by method-and-field access alone**, thirty times
+the next construct. Rung E2 is no longer merely the largest item; it is
+the only large one, and every construct rung from here is a rounding
+error beside it. That is the tier's shape now, stated plainly.
+
+### NEXT RUNG: the switch family, and it finally retires `fallthrough`
+
+The largest move that does NOT need `go/types`. Censused over the 811
+files it unlocks:
+
+| form | count |
+| --- | ---: |
+| `switch` statements | 89 |
+| ...**TAGLESS** (`switch { case cond: }`) | **69 (77.5%)** |
+| ...with a tag expression | 20 |
+| ...with an init statement | 4 |
+| `case` clauses | 348 |
+| ...`default` | 27 |
+| ...multi-value (`case a, b:`) | 17 |
+| ...**`fallthrough`** | **5** |
+| bare `break` (may target the switch) | 7 |
+
+The tagless form dominates at 77.5% — a `switch` with no tag is an
+if-else chain with a shared exit, which is the cheap half.
+
+And `fallthrough`, **deferred since the founding charter at "4.0%"**,
+appears **five times** in the whole unlocked set. The deferral was right
+when it was made and is now simply over: it costs one arm and the rung
+that needs it is here. The 4.0% figure was a share of switch statements
+corpus-wide, not of this tier's reachable ones — a distinction worth
+naming, since a deferral outlived its measurement by twelve rungs.
+
+Priced in advance:
+
+> **§G31 the switch family: 765 → 811 (+46) over all of `$GOROOT/src`;
+> 657 → 701 (+44) over the library.**
+
+§9.0 stands at **765 / 3,803 (20.1%) | 657 / 2,743 (24.0%)** — a census
+moves no metric.
+
+MM-oracle untouched — Thomas's.

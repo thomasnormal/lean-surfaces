@@ -273,6 +273,30 @@ def Val.asBool : Val → Option Bool
   | .enum sub pos => if sub.typeName == "Boolean" then some (pos == 1) else none
   | _ => none
 
+/-! ## §7a INCH 5b — the types a declaration may name
+
+**`Integer`'s range is IMPLEMENTATION-DEFINED** (ARM 3.5.4 requires only that
+it span at least `-(2**15)+1 .. +(2**15)-1`). 32-bit is chosen here, stated
+rather than assumed, and it is a PROFILE choice a re-acquired corpus can
+check against the host's `Integer'First`/`Integer'Last`.
+
+Three names cover **16 of the 29 `ObjectDecl`s in the fixtures (55%)**.
+Everything else is a user-declared type (`ConcreteTypeDecl` 6, `SubtypeDecl`
+4 in the same declarative parts) and refuses, because this tier has no type
+table — that is the next rung after 5d, not this one. -/
+def integerSubtype : IntSubtype :=
+  { typeName := "Integer", lo := -2147483648, hi := 2147483647 }
+
+/-- The value a freshly-declared object of this type holds once initialised —
+used to give `convertTo` a target shape. `none` means the tier does not model
+the type. -/
+def shapeOfType (name : String) : Option Val :=
+  match foldId name with
+  | "integer" => some (.int integerSubtype 0)
+  | "boolean" => some (Val.ofBool false)
+  | "string" => some (.str "")
+  | _ => none
+
 /-- The `String` behind a value, or `none`. -/
 def Val.asStr : Val → Option String
   | .str s => some s
@@ -286,7 +310,7 @@ double every quote inside a message `Report` prints. -/
 def decodeStringLit (t : String) : Option String :=
   if t.length < 2 then none
   else if t.front != '"' || t.back != '"' then none
-  else some (((t.drop 1).dropRight 1).replace "\"\"" "\"")
+  else some (((t.drop 1).dropEnd 1).replace "\"\"" "\"")
 
 /-- The two operands of a binary arithmetic operation, plus the subtype that
 GOVERNS it. `none` for the subtype means both operands were universal, and the
@@ -390,6 +414,11 @@ structure Subp where
   nodes** (`docs/backlog/ada.md` §2026-08-24-ada-7). Inch 3 read slot[0] and
   ignored this one. -/
   handlers : List Node
+  /-- **Inch 5b.** The subprogram's `DeclarativePart` (ARM 3.11), elaborated
+  into the frame BEFORE the body runs. Inch 3 read the body and ignored this;
+  measured, these parts hold `ObjectDecl` 25, `SubpBody` 19, `ConcreteTypeDecl`
+  6, `SubtypeDecl` 4, `NumberDecl` 2. -/
+  decls : List Node
   deriving Repr, Inhabited
 
 abbrev SubpTable := List (String × Subp)
@@ -492,7 +521,17 @@ def subpOf : Node → Option Subp
                    -- here means "no handlers" and never "malformed".
                    handlers := match hs[1]! with
                                | .node "AdaNodeList" _ hs2 => hs2.toList
-                               | _ => [] }
+                               | _ => [],
+                   -- ARM 3.11. `DeclarativePart(AdaNodeList(...))`, and an
+                   -- EMPTY list is a LEAF, as everywhere else.
+                   decls := match ch[3]! with
+                            | .node "DeclarativePart" _ dp =>
+                                if dp.size == 1 then
+                                  match dp[0]! with
+                                  | .node "AdaNodeList" _ ds => ds.toList
+                                  | _ => []
+                                else []
+                            | _ => [] }
       | _, _ => none
   | _ => none
 
@@ -531,6 +570,7 @@ def convertTo (target v : Val) : AdaM W Val :=
   -- would raise Constraint_Error on a length mismatch, and that check
   -- arrives with the array rung, not here.
   | .str _, .str s => pure (Val.str s)
+
   | .enum sub _, .enum sub' p =>
       if sub.typeName == sub'.typeName then ofAbrupt (constrainEnum sub p)
       else refuse (.unsupported (clauseRef "4.6"))
@@ -579,10 +619,16 @@ def evalExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld Val
       | "Identifier" => do
         let w ← get
         match lookupObj w t with
+        -- ARM 13.9.1: reading a declared-but-unassigned object is a BOUNDED
+        -- ERROR whose permitted set this tier cannot yet enumerate. It
+        -- refuses, and becomes a `BoundedSite` when the ARM text returns.
+        | some (.uninit ty) =>
+          refuse (.unsupported (clauseRef "13.9.1"))
+            s!"'{t}' is declared as {ty} but never assigned — reading it is ARM 13.9.1's bounded error"
         | some v => pure v
         | none =>
           refuse (.unsupported (clauseRef "3.3"))
-            s!"'{t}' is not in the store — inch 2 models no object declaration"
+            s!"'{t}' is not declared in any enclosing scope"
       | _ =>
         refuse (.unsupported (clauseRef "4.4"))
           s!"expression leaf '{k}' is outside this tier's vocabulary"
@@ -724,6 +770,67 @@ def callExpr (prog : SubpTable) : Nat → Node → AdaM AdaWorld (Option Val)
     | other =>
       refuse (.unsupported (clauseRef "6.4")) s!"'{kindOf other}' is not a call"
 
+/-- Bind a name in the INNERMOST frame, or in the outer store when there is
+no frame. Declaration SHADOWS rather than overwrites: the new binding is
+consed on, so an outer object of the same name is intact when the frame pops. -/
+def declareIn (name : String) (v : Val) : AdaM AdaWorld Unit :=
+  modify fun w =>
+    match w.frames with
+    | f :: rest => { w with frames := ((foldId name, v) :: f) :: rest }
+    | [] => { w with objects := (foldId name, v) :: w.objects }
+
+/-- ARM 3.3.1 / 3.11: elaborate a declarative part.
+
+`ObjectDecl` is arity **8, uniform (29 of 29)**: slot[0] the names, slot[2]
+`ConstantPresent`/`ConstantAbsent`, slot[4] the `SubtypeIndication`, slot[5]
+the initialiser or `null`.
+
+**CONSTANT-NESS IS NOT CHECKED, and that is the charter's division of labour
+rather than a shortcut.** `constant` makes assignment a LEGALITY error (ARM
+3.3.1), and in this tier legality is graded by the ACAA's `GRADE` from `CERR`
+rows, never by the interpreter (`docs/ada-charter.md`: *"Every other tier in
+this family grades itself. The Ada tier does not."*). 7 of the 29 are
+constants. -/
+def elabDecls (prog : SubpTable) : Nat → List Node → AdaM AdaWorld Unit
+  | 0, _ => exhausted
+  | _ + 1, [] => pure ()
+  | fuel + 1, d :: rest =>
+    match d with
+    | .node "ObjectDecl" _ ch =>
+      if ch.size != 8 then refuse (.unsupported (clauseRef "3.3.1")) "ObjectDecl: unexpected arity"
+      else
+        match ch[0]!, ch[4]! with
+        | .node "DefiningNameList" _ ns, .node "SubtypeIndication" _ si =>
+          -- The type is the SubtypeIndication's name child; a constraint on
+          -- it (slot 2) is not modelled and the shape table is the gate.
+          let tyName :=
+            match si.toList.find? (fun c => kindOf c == "Identifier") with
+            | some (.leaf _ _ nm) => nm
+            | _ => ""
+          match shapeOfType tyName with
+          | none =>
+            refuse (.unsupported (clauseRef "3.2.1"))
+              s!"'{tyName}' is a user-declared type — inch 5b models Integer, Boolean and String only"
+          | some proto => do
+            let v ← (match ch[5]! with
+                     | .absent => pure (Val.uninit tyName)
+                     | e => do
+                       let raw ← evalExpr prog fuel e
+                       convertTo proto raw)
+            let names := ns.toList.filterMap definingName
+            if names.length != ns.size then
+              refuse (.unsupported (clauseRef "3.3.1")) "a defining name that is not an identifier"
+            else do
+              let _ ← names.forM (fun nm => declareIn nm v)
+              elabDecls prog fuel rest
+        | _, _ =>
+          refuse (.unsupported (clauseRef "3.3.1")) "ObjectDecl: unexpected slot shapes"
+    -- ARM 3.11 admits much more here. A nested SubpBody needs a static chain
+    -- (inch 3 recorded that); types need a type table. Both refuse by clause.
+    | other =>
+      refuse (.unsupported (clauseRef "3.11"))
+        s!"declaration '{kindOf other}' is outside inch 5b's slice"
+
 /-- ARM 4.5.3: fold the catenation operands left to right onto `acc`. -/
 def concatFold (prog : SubpTable) : Nat → String → List Node → AdaM AdaWorld String
   | 0, _, _ => exhausted
@@ -788,9 +895,17 @@ def callSubp (prog : SubpTable) : Nat → Subp → List Val → AdaM AdaWorld (O
       -- The handler runs on `w'`, the world AS OF THE RAISE and with the frame
       -- still pushed, because ARM 11.4 hands the handler the state the raise
       -- happened in -- not the state the call started in.
+      -- ARM 3.11: the DECLARATIVE PART elaborates first, into the frame the
+      -- parameters were bound in -- so a local may be initialised from a
+      -- parameter, which is the ordinary Ada idiom. An exception raised
+      -- DURING elaboration propagates like any other and still pops.
       let entered := { w with frames := (s.params.zip args) :: w.frames }
       let pop := fun (x : AdaWorld) => { x with frames := w.frames }
-      match execStmts prog fuel s.body entered with
+      match elabDecls prog fuel s.decls entered with
+      | .error hd => .error hd
+      | .ok (.error ed, wd) => .ok (.error ed, pop wd)
+      | .ok (.ok _, wd) =>
+      match execStmts prog fuel s.body wd with
       | .error h => .error h
       | .ok (.ok _, w') => .ok (.ok none, pop w')
       | .ok (.error (.ret v), w') => .ok (.ok v, pop w')
@@ -878,7 +993,20 @@ def execStmts (prog : SubpTable) : Nat → List Node → AdaM AdaWorld Unit
               refuse (.unsupported (clauseRef "3.3"))
                 s!"'{name}' is not in the store — inch 2 models no object declaration"
             | some cur => do
-              let v' ← convertTo cur v
+              -- ARM 5.2 into a declared-but-unassigned object is ordinary and
+              -- defined: the target's DECLARED type supplies the shape. Done
+              -- HERE rather than inside `convertTo`, which would make that
+              -- function self-recursive for a single unwrap and cost it the
+              -- structural-recursion proof it does not otherwise need.
+              let target ← (match cur with
+                            | .uninit ty =>
+                              match shapeOfType ty with
+                              | some proto => pure proto
+                              | none =>
+                                refuse (.unsupported (clauseRef "3.2.1"))
+                                  s!"'{ty}' is a user-declared type — inch 5b models Integer, Boolean and String only"
+                            | other => pure other)
+              let v' ← convertTo target v
               modify (fun w' => updateObj w' name v')
               execStmts prog fuel rest
           | target =>
@@ -957,7 +1085,12 @@ private def row0 : TraceRow := { kind := "CSTART", span := sp0, detail := "fixtu
 upper case, so every guard also exercises ARM 2.3's case insensitivity. -/
 private def w0 : AdaWorld :=
   { objects := [("x", .int int8 0), ("y", .int int8 10), ("b", Val.ofBool false),
-                ("s", Val.str "")],
+                ("s", Val.str ""),
+                -- Inch 5b. `X` stays an `Int8` because inch 2's overflow
+                -- guards need a narrow subtype; a declared `Integer` cannot
+                -- be assigned into it (ARM 4.6, different type names), so the
+                -- declaration guards need a target of their own.
+                ("i", .int integerSubtype 0)],
     trace := [row0] }
 
 private def endsWith (name : String) (v : Val) (ss : List Node)
@@ -1133,17 +1266,17 @@ private def retStmt (e : Node) : Node := .node "ReturnStmt" sp0 #[e]
 argument list is a LEAF. -/
 private def bump : Subp :=
   { name := "bump", isFunction := false, params := [], modesOk := true,
-    body := [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))], handlers := [] }
+    body := [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))], handlers := [], decls := [] }
 
 /-- `procedure SetX (N : Integer) is begin X := N; end;` -/
 private def setX : Subp :=
   { name := "setx", isFunction := false, params := ["n"], modesOk := true,
-    body := [assign (ident "X") (ident "N")], handlers := [] }
+    body := [assign (ident "X") (ident "N")], handlers := [], decls := [] }
 
 /-- `function Twice (N : Integer) return Integer is begin return N + N; end;` -/
 private def twice : Subp :=
   { name := "twice", isFunction := true, params := ["n"], modesOk := true,
-    body := [retStmt (bin "OpPlus" (ident "N") (ident "N"))], handlers := [] }
+    body := [retStmt (bin "OpPlus" (ident "N") (ident "N"))], handlers := [], decls := [] }
 
 /-- The same, but its parameter has a mode outside the slice. -/
 private def outMode : Subp := { setX with name := "outmode", modesOk := false }
@@ -1151,7 +1284,7 @@ private def outMode : Subp := { setX with name := "outmode", modesOk := false }
 /-- A procedure that raises rather than returning — ARM 11.4's case. -/
 private def blowUp : Subp :=
   { name := "blowup", isFunction := false, params := ["n"], modesOk := true,
-    body := [assign (ident "X") (lit "200")], handlers := [] }
+    body := [assign (ident "X") (lit "200")], handlers := [], decls := [] }
 
 private def prog0 : SubpTable :=
   [("bump", bump), ("setx", setX), ("twice", twice), ("outmode", outMode), ("blowup", blowUp)]
@@ -1277,7 +1410,7 @@ private def boom : String := "Boom"
 private def caught : Subp :=
   { name := "caught", isFunction := false, params := [], modesOk := true,
     body := [assign (ident "X") (lit "5"), raiseOf boom],
-    handlers := [handler [othersChoice] [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))]] }
+    handlers := [handler [othersChoice] [assign (ident "X") (bin "OpPlus" (ident "X") (lit "1"))]], decls := [] }
 
 /-- The same, handled by NAME rather than by `others`.
 
@@ -1289,19 +1422,19 @@ both one-liners and both compiled green. -/
 private def caughtByName : Subp :=
   { name := "caughtbyname", isFunction := false, params := [], modesOk := true,
     body := [assign (ident "X") (lit "5"), raiseOf boom],
-    handlers := [handler [namedChoice "BOOM"] [assign (ident "X") (lit "7")]] }
+    handlers := [handler [namedChoice "BOOM"] [assign (ident "X") (lit "7")]], decls := [] }
 
 /-- A handler that does not cover what was raised. -/
 private def notCovered : Subp :=
   { name := "notcovered", isFunction := false, params := [], modesOk := true,
     body := [assign (ident "X") (lit "5"), raiseOf boom],
-    handlers := [handler [namedChoice "Other_Error"] [assign (ident "X") (lit "7")]] }
+    handlers := [handler [namedChoice "Other_Error"] [assign (ident "X") (lit "7")]], decls := [] }
 
 /-- A handler that raises again — ARM 11.4: a handler is not its own handler. -/
 private def reraises : Subp :=
   { name := "reraises", isFunction := false, params := [], modesOk := true,
     body := [assign (ident "X") (lit "5"), raiseOf boom],
-    handlers := [handler [othersChoice] [raiseOf "Second"]] }
+    handlers := [handler [othersChoice] [raiseOf "Second"]], decls := [] }
 
 private def prog4 : SubpTable :=
   [("caught", caught), ("caughtbyname", caughtByName),
@@ -1444,5 +1577,106 @@ private def cat (first : Node) (rest : List Node) : Node :=
 -- than trimmed into something plausible.
 #guard decodeStringLit "abc" == none
 #guard decodeStringLit "\"" == none
+
+/-! ### INCH 5b — declarations (ARM 3.3.1, 3.11)
+
+Retires inch 2's ARM 3.3 refusal for anything the tier now declares, and
+gives ARM 13.9.1 its first site. -/
+
+private def objDecl (names : List String) (ty : String) (init : Node) : Node :=
+  .node "ObjectDecl" sp0
+    #[.node "DefiningNameList" sp0 (names.map defName).toArray,
+      .leaf "AliasedAbsent" sp0 "",
+      .leaf "ConstantAbsent" sp0 "",
+      .leaf "ModeDefault" sp0 "",
+      .node "SubtypeIndication" sp0 #[.leaf "NotNullAbsent" sp0 "", ident ty, .absent],
+      init, .absent, .absent]
+
+private def withDecls (nm : String) (ds : List Node) (body : List Node) : Subp :=
+  { name := foldId nm, isFunction := false, params := [], modesOk := true,
+    body := body, handlers := [], decls := ds }
+
+private def prog5 : SubpTable :=
+  [("declinit", withDecls "DeclInit" [objDecl ["N"] "Integer" (lit "5")]
+      [assign (ident "I") (ident "N")]),
+   ("declbare", withDecls "DeclBare" [objDecl ["N"] "Integer" .absent]
+      [assign (ident "I") (ident "N")]),
+   ("declthenset", withDecls "DeclThenSet" [objDecl ["N"] "Integer" .absent]
+      [assign (ident "N") (lit "7"), assign (ident "I") (ident "N")]),
+   ("declstr", withDecls "DeclStr" [objDecl ["T"] "String" (strLit "\"hi\"")]
+      [assign (ident "S") (ident "T")]),
+   ("declbool", withDecls "DeclBool" [objDecl ["F"] "Boolean" .absent]
+      [assign (ident "X") (lit "1")]),
+   ("shadow", withDecls "Shadow" [objDecl ["X"] "Integer" (lit "99")]
+      [assign (ident "X") (lit "42")]),
+   ("multi", withDecls "Multi" [objDecl ["A", "B"] "Integer" (lit "3")]
+      [assign (ident "I") (bin "OpPlus" (ident "A") (ident "B"))]),
+   ("usertype", withDecls "UserType" [objDecl ["P"] "Ptr1" .absent] []),
+   ("notobj", withDecls "NotObj" [.node "SubtypeDecl" sp0 #[ident "S"]] [])]
+
+-- ARM 3.3.1: a declaration with an initialiser is readable, and the value
+-- takes the DECLARED type -- 5 goes in universal and comes out an Integer.
+#guard endsWith "i" (.int integerSubtype 5) [callStmt "DeclInit" []] prog5
+
+-- ARM 13.9.1: DECLARED BUT NEVER ASSIGNED. Reading it REFUSES -- it is not
+-- silently zero, and it is not "undeclared" either. 12 of the fixtures' 29
+-- ObjectDecls are this shape, so it is the common case.
+#guard refusedAtClause "13.9.1" [callStmt "DeclBare" []] prog5
+
+-- ...but ASSIGNING into one is ordinary and defined, and the read then works.
+#guard endsWith "i" (.int integerSubtype 7) [callStmt "DeclThenSet" []] prog5
+
+-- ARM 3.11: a declaration SHADOWS. The frame's X is written, and the OUTER X
+-- is intact after the frame pops -- 0, not 42.
+#guard endsWith "x" (.int int8 0) [callStmt "Shadow" []] prog5
+#guard framesEmptyAfter [callStmt "Shadow" []] prog5
+
+-- One declaration may define SEVERAL names (ARM 3.3.1), each getting the
+-- value -- so A + B is 6, not 3.
+#guard endsWith "i" (.int integerSubtype 6) [callStmt "Multi" []] prog5
+
+-- String and Boolean are the other two types 5b models; together with Integer
+-- they cover 16 of the fixtures' 29 declarations.
+#guard endsWith "s" (Val.str "hi") [callStmt "DeclStr" []] prog5
+#guard endsWith "x" (.int int8 1) [callStmt "DeclBool" []] prog5
+
+-- A USER-DECLARED type refuses at ARM 3.2.1: this tier has no type table.
+#guard refusedAtClause "3.2.1" [callStmt "UserType" []] prog5
+
+-- ...and a declaration that is not an object declaration refuses at 3.11.
+#guard refusedAtClause "3.11" [callStmt "NotObj" []] prog5
+
+-- inch 2's ARM 3.3 refusal SURVIVES, narrowed: it now means "not declared in
+-- any enclosing scope" rather than "this tier models no declarations".
+#guard refusedAtClause "3.3" [assign (ident "X") (ident "Nope")]
+
+-- The BUILDER reads the declarative part, and an empty one is a LEAF.
+private def bodyWithDecl : Node :=
+  .node "SubpBody" sp0
+    #[.leaf "OverridingUnspecified" sp0 "",
+      .node "SubpSpec" sp0
+        #[.leaf "SubpKindProcedure" sp0 "procedure", defName "Decl3", .absent, .absent],
+      .absent,
+      .node "DeclarativePart" sp0
+        #[.node "AdaNodeList" sp0 #[objDecl ["N"] "Integer" (lit "5")]],
+      .node "HandledStmts" sp0
+        #[.node "StmtList" sp0 #[assign (ident "I") (ident "N")],
+          .leaf "AdaNodeList" sp0 ""],
+      .leaf "EndName" sp0 "Decl3"]
+
+#guard match subpOf bodyWithDecl with
+       | some s => s.decls.length == 1
+       | none => false
+#guard match subpOf bodyOfBump with
+       | some s => s.decls.isEmpty
+       | none => false
+-- ...and a table from the BUILDER drives a declared local end to end.
+#guard endsWith "i" (.int integerSubtype 5) [callStmt "Decl3" []] (collectSubps 32 [bodyWithDecl])
+
+-- ARM 3.5.4: Integer's range is implementation-defined; this profile is
+-- 32-bit and the bound is REACHABLE, so the choice is visible not buried.
+#guard integerSubtype.lo == -2147483648 && integerSubtype.hi == 2147483647
+#guard shapeOfType "INTEGER" == some (.int integerSubtype 0)
+#guard shapeOfType "Ptr1" == none
 
 end LeanModels.Ada.Ada2012

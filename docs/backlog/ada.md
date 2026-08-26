@@ -1770,3 +1770,165 @@ rather than by a red build. `Val.asInt` is now a catch-all, with the reason in
 the source: **a projection that must be revisited every time the value type
 grows is a maintenance trap with no upside**, because nothing that is not an
 integer has an integer.
+
+## 2026-08-26-ada-1 — INCH 5b: declarations, and "declared but unset" is a DIFFERENT fault from "never declared"
+
+`Stmt.lean` to 1682 lines and 103 guards; `Val` gains `uninit`. Retires inch 2's
+ARM 3.3 refusal for everything the tier now declares, and gives **ARM 13.9.1
+its first site**. Carries the `dropRight` → `dropEnd` deprecation 5a's own
+green reported, under consolidation-by-touch.
+
+### THE SHAPE, MEASURED FIRST
+
+`ObjectDecl` is **arity 8, uniform (29 of 29)**: slot[0] the names, slot[2]
+`ConstantPresent`/`ConstantAbsent`, slot[4] the `SubtypeIndication`, **slot[5]
+the initialiser or `null`**. Declarative parts hold `ObjectDecl` 25,
+`SubpBody` 19, `ConcreteTypeDecl` 6, `SubtypeDecl` 4, `NumberDecl` 2.
+
+**12 of the 29 declarations have NO initialiser** — the common case, not a
+corner — which is what makes the next decision the rung's real content.
+
+### `Val.uninit`: TWO FAULTS, TWO CITATIONS
+
+A store that simply omitted an unset object could not tell *"never declared"*
+from *"declared, unset"*. They are different faults and they cite different
+clauses, so the value type carries the distinction:
+
+* **reading one REFUSES at ARM 13.9.1** — Ada makes reading an uninitialised
+  scalar a **bounded error** with a bounded outcome set, and this tier cannot
+  yet enumerate that set because the ARM text is off this machine. So it is a
+  pending measurement, and **the site becomes a `BoundedSite` with a real
+  permitted set when re-acquire lands**. It is emphatically not silently zero.
+* **assigning INTO one is ordinary and defined**, the target's declared type
+  supplying the shape.
+
+Inch 2's ARM 3.3 refusal survives, **narrowed**: it now means *"not declared
+in any enclosing scope"* rather than *"this tier models no declarations"*.
+
+### CONSTANT-NESS IS NOT CHECKED, and that is the charter's division of labour
+
+7 of the 29 declarations are `constant`. Assigning to one is a **LEGALITY**
+error (ARM 3.3.1), and in this tier legality is graded by the ACAA's `GRADE`
+from `CERR` rows, never by the interpreter — *"Every other tier in this family
+grades itself. The Ada tier does not."* Recorded so the gap is a decision
+rather than an oversight.
+
+### `Integer` IS A PROFILE CHOICE, STATED
+
+ARM 3.5.4 makes `Integer`'s range implementation-defined, requiring only
+`-(2**15)+1 .. +(2**15)-1`. This profile is 32-bit, guarded so the bound is
+visible rather than buried, and re-acquire can check it against the host's
+`Integer'First`/`Integer'Last`. `Integer`, `Boolean` and `String` cover
+**16 of 29 (55%)**; user types refuse at ARM 3.2.1.
+
+### TWO RED TENURES AVOIDED BY CHECKING BEFORE STAGING
+
+1. **`convertTo` would have become self-recursive.** The `uninit` unwrap
+   needs one conversion into the declared shape; putting it inside
+   `convertTo` makes that function recursive and costs it the structural
+   proof it does not otherwise need. The unwrap moved to the call site.
+2. **`w0`'s `X` is an `Int8`.** Four guards assigned a declared `Integer`
+   into it, which correctly refuses at ARM 4.6 — the fixture, not the rule.
+   `X` stays narrow because inch 2's overflow guards need it, so the
+   declaration guards got an `Integer` target of their own.
+
+Both were found by reading the code against the change rather than by a build,
+which on this queue is worth about five hours apiece.
+
+## 2026-08-26-ada-2 — PARKED: the Ada tier's state at the wind-down, and what resumption should read first
+
+The campaign is pausing on Thomas's instruction. This entry is the handoff —
+**the ledger is what resumption reads**, so everything a successor needs is
+here rather than in a transcript.
+
+### THE ONE THING TO KNOW FIRST: `0ee778e` IS STAGED AND UNVERIFIED
+
+**Inch 5b has NEVER had a tenure.** Its ticket was enqueued and then
+**cancelled** at the wind-down (`adainch5b`, pid 90042, killed by ownership —
+verified mine, no `lake` descendant, never held the lock, its FIFO ticket
+removed by hand because `KILL` skips the trap). The commit is pushed so no
+work is lost, but:
+
+> **`0ee778e` has NOT been compiled. It is the only Ada commit on any branch
+> in that condition. Do not merge it on the strength of the entries around
+> it — ticket it and read the verdict.**
+
+Everything up to and including **inch 5a (`3e2a47c`) is green and merged**.
+
+### WHAT 5b CONTAINS, so a successor can judge it without re-deriving
+
+* **`Val.uninit (typeName)` — TWO FAULTS, TWO CITATIONS.** A store that
+  omitted an unset object could not distinguish *"never declared"* from
+  *"declared, unset"*. Reading one **refuses at ARM 13.9.1**; assigning into
+  one is ordinary and defined. **12 of the fixtures' 29 `ObjectDecl`s have no
+  initialiser**, so this is the common case.
+* **A `BoundedSite` AWAITING RE-ACQUIRE.** ARM 13.9.1 makes reading an
+  uninitialised scalar a **bounded error with a bounded outcome set**. The
+  tier cannot enumerate that set while the ARM text is off this machine, so
+  the refusal is a **pending measurement**, and the site becomes a real
+  `BoundedSite` when re-acquire lands. The machinery has been present and
+  gated since inch 2 with **no instance**; this is its first candidate, and
+  ARM 6.2 and 11.4.2 are the other two.
+* **PROFILE CHOICES, stated not assumed.** `Integer` is 32-bit — ARM 3.5.4
+  leaves it implementation-defined, requiring only
+  `-(2**15)+1 .. +(2**15)-1` — guarded so the bound is visible, and
+  re-acquire can check it against the host's `Integer'First`/`Integer'Last`.
+  `Integer`, `Boolean` and `String` cover **16 of 29 declarations (55%)**;
+  user types refuse at ARM 3.2.1.
+* **Constant-ness is deliberately unchecked.** 7 of 29 are `constant`;
+  assignment to one is a **legality** error, and legality in this tier is
+  graded by the ACAA's `GRADE` from `CERR` rows, never by the interpreter.
+
+### THE REST OF INCH 5, NAMED AND CENSUSED BUT NOT BUILT
+
+* **5c — the `Text_IO` boundary**: `Put_Line` into `W.output`. `W` has carried
+  the field since inch 2, unwritten, for exactly this.
+* **5d — the trace CSV**: `TraceRow.kind` becomes an inductive from the
+  **charter's FOURTEEN** event kinds
+  (`CSTART/CEND/CERR/CWARN`, `BSTART/BEND/BERR/BWARN`,
+  `EXSTART/EXEND/EXFAIL/EXNA/EXSACT`, `UNKN`), with records carrying
+  *(kind, timestamp, name, line, position, message)*. **The design doc lists
+  only ten** — inch 2's refusal to enumerate from it was right, and the
+  string field retires only against §4.4.
+
+The ruling that governs both: **`Report` is EXECUTED, not modelled.**
+`Put_Event_Trace` is already inside `report.a`, so an executed emitter
+produces the ACAA's own CSV while a Lean reimplementation would produce one
+nothing here can check against `GRADE`. Overturn conditions stand: 5a-5c over
+budget, or the residual 4.6% needing inch 7's ranges and `case`.
+
+### THE COMPLETION NUMBER, HONEST
+
+**ACATS 0 / 4,188 language tests, 0 / 3,996 core.** Five rungs of semantics
+and the number has never moved, exactly as each census predicted before its
+rung was built. The 517-test v0 set needs `Report` executable (5c/5d) and then
+inch 6 to run a test and let `GRADE` accept the trace. **Nothing syntactic has
+ever been banked here.**
+
+### STILL OWED
+
+* **The spine import.** `LeanModels.lean` does not import `LeanModels.Ada`;
+  the tier reaches the default build **only** through the `Examples.+` glob,
+  so a pruned fixture would drop it silently. It is a one-line change that
+  makes its landing **spine**-class, and A14 makes a full build
+  quiet-machine-only (**load < 5**). Every tenure this campaign took logged
+  load 6.7-14.6. **Still owed, still gated on a window that never opened.**
+* **A FULL green.** §5.4a-i's increment chain cannot start on a scoped root,
+  and every Ada green is scoped. One full green in a quiet window retires
+  this and the spine import together.
+* **RE-ACQUIRE** — ACATS 4.2 and the ARM texts, content-pinned on fetch, no
+  vendored ARM prose. It now gates: the corpus-wide assignment-target figure
+  (the 83.7% is a 49-assignment sample), the `RaiseStmt` encoding (1,440
+  corpus-wide, **0 local** — its fixtures are labelled SYNTHETIC in the
+  source), 13.9.1's permitted set, and the `Integer` profile check.
+
+### THE HABIT WORTH KEEPING
+
+Five rungs produced four encoding surprises — an empty list is a LEAF; a
+zero-argument call's `AssocList` is a LEAF; handlers live in a generic
+`AdaNodeList` and `ExceptionHandlerList` occurs **0 times in 2,976,861
+nodes**; catenation is **n-ary**, not a nested `BinOp`. Each would have made
+the model claim *"I do not model this"* about something it modelled. **The
+first cost a red tenure; the last three cost nothing, because the census ran
+first.** On a queue that reached 2h45m, reading the corpus before writing the
+rule was worth more than any other practice this lane adopted.

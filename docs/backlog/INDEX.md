@@ -47,8 +47,10 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-26-sv-7` |  | THE ROUND-TRIP GATE PICKED ITS INTERPRETER BY ACCIDENT, AND THE PIN IT NEEDED IS RETIRED | sv |
 | `2026-08-26-es-2` |  | PARKED. The scoreboard is one green from the first test262 number | es |
 | `2026-08-26-basecase-2` |  | PARKED, indefinitely. What resumption needs and nothing else | basecase |
+| `2026-08-26-ada-2` |  | PARKED: the Ada tier's state at the wind-down, and what resumption should read first | ada |
 | `2026-08-26-es-1` |  | the fifth build-red, and the ES tier's share of the untracked-envelope defect | es |
 | `2026-08-26-basecase-1` |  | THE DESCENT'S PRODUCER, and what `hfallQ` is now down to | basecase |
+| `2026-08-26-ada-1` |  | INCH 5b: declarations, and "declared but unset" is a DIFFERENT fault from "never declared" | ada |
 | `2026-08-25-architecture-91` |  | A watch whose most important signal produces no alarm is not a watch | architecture |
 | `2026-08-25-architecture-90` |  | A ledger that may not be empty cannot also be the archive | architecture |
 | `2026-08-25-architecture-89` |  | Absence and success are the same colour on a green board | architecture |

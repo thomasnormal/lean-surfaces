@@ -27,22 +27,36 @@
   "proofs": {
     "by_category": {
       "aux": 1,
-      "declaration": 1,
+      "declaration": 2,
       "expr": 9,
       "level": 4,
       "name": 2
     },
+    "counts_caveat": "`proved` counts theorems PRESENT in the fork's Verify.lean; `verified` is the count a tenure actually elaborated with clean axioms.  They differ whenever the working tree is ahead of `certified_tree` \u2014 read `verified` as the board.",
     "green_evidence_declared": {
       "certified_tree": "1055dd8fba06",
       "fork_sha": "3e9d4a9",
       "gate": "lake build Test Verify",
       "log": "scratchpad/leantier-triad23.log",
       "note": "fork commits are LOCAL by lane charter \u2014 the fork's only remote is upstream leanprover/lean4export, and pushing there is Thomas's decision alone.  This block is the merge-side record of a tenure whose objects the lean-surfaces remote cannot hold.",
+      "proved_at_this_tree": 17,
       "witness": "Built Verify (1.3s); 17 x #print axioms, no sorryAx"
     },
     "measured_at": "fork WORKING TREE (Verify.lean is a fork addition, absent at the pinned base) \u2014 not the same base as `obligations`",
     "of": 26,
-    "proved": 17,
+    "parked": {
+      "board": "17/26 verified green; lean-surfaces fe644ae; fork green tree 3e9d4a9",
+      "categories": "name 2/2, level 4/4, aux 1/1, expr 9/9-reachable, declaration 1/9",
+      "ceiling": "24/26 until natVal's trigger fires.  natVal is BLOCKED on `String.toNat? (toString i) = some i`, for which core ships no lemma (measured); mdata is refuted-not-counted by the 2026-08-24 ruling.  natVal is severable \u2014 it is a theorem about decimal representation, not about the export format \u2014 so it can be priced and scheduled independently of the corner.",
+      "cost_model": "Each tenure that introduces a NEW MECHANISM costs roughly one red per mechanism; width alone costs none.  Measured: single-mechanism kinds landed in 1-2 tenures; `const` (first unbounded payload) took 3; `axiom` took 5 because it introduced three at once \u2014 state write, freshness hypothesis, mid-chain unbounded payload.  Remaining NEW mechanisms across the seven unproved kinds: `def`'s three-way `hints`, `opaque`'s defaulted `isUnsafe` (`getD`), and the nested `induct`/`types`/`ctors`/`recs` group parsed from arrays inside one object.  `quot`'s string-literal `kind` match reuses the `binderInfo` trick and is not new.",
+      "date": "2026-08-26",
+      "folded_lemma_ledger": "The refactor exists to kill a STRUCTURAL cost: an unbounded payload in the middle of a bind chain freezes everything downstream, so every declaration kind would otherwise need `rw`-then-resimplify with nested bullets, twice over for the kinds carrying two arrays.  Spent so far: ONE red (triad24) on the abstraction itself, zero on the eight kinds it is meant to serve.  EXIT CONDITION: if the next tenure does not land `thm` cleanly, the refactor is not paying \u2014 say so and revert to the per-kind `rw` shape rather than polish it.",
+      "fork_head_parked": "e35b2f8 (tree 015f13c3575c) \u2014 WRITTEN, NEVER ELABORATED GREEN",
+      "in_flight_when_parked": "`thm` (pair 18) plus `run_getNameList_emitted`, the folded name-array lemma. Its one tenure (triad24) was RED; the fix \u2014 restating the lemma in the NORMALISED `\u27e8Int.ofNat n, 0\u27e9` spelling rather than `fromNat` \u2014 is written and reasoned in the docstring but NOT confirmed by elaboration.  Resume by ticketing the parked fork tree unchanged and reading the verdict.",
+      "reason": "campaign-wide pause to save tokens and free Lean resources; indefinite",
+      "resumption_hazards": "1. Fork history is LOCAL: the clone's only remote is upstream leanprover/lean4export and pushing is Thomas's decision alone, so this machine holds the only copy of e35b2f8.  2. The parked tree is AHEAD of the certified one, so `proofs.proved` counts a theorem no tenure has elaborated \u2014 read `proofs.verified` instead.  3. Rebase tools/triad.sh before the first ticket; a stale runner already cost this lane one incident."
+    },
+    "proved": 18,
     "unproved": [
       "ctors",
       "def",
@@ -51,9 +65,11 @@
       "opaque",
       "quot",
       "recs",
-      "thm",
       "types"
-    ]
+    ],
+    "verified": 17,
+    "working_tree": "015f13c3575c",
+    "working_tree_is_certified": false
   },
   "refuted_not_counted": {
     "mdata": "Expr.mdata \u2014 parseExprMdata BINDS AND DISCARDS the metadata (`let some (.obj _dataObj) := data[\"data\"]?`) and returns `.mdata {} expr`, under upstream's own comment \"TODO: Unclear how to perfectly recover with the current output format\".  `parse (dump e) = e` is therefore FALSE for any non-empty KVMap, not merely unproved.  Also unreachable on the default path: dumpExpr strips mdata via removeMData unless --export-mdata is passed."
@@ -81,7 +97,7 @@
       "parse_fn": "parseAxiomInfo",
       "parse_line": 237,
       "proof_fn": "parseAxiomInfo_roundtrip",
-      "proof_line": 664,
+      "proof_line": 685,
       "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,
@@ -178,8 +194,8 @@
       "nested_in": null,
       "parse_fn": "parseThmInfo",
       "parse_line": 280,
-      "proof_fn": null,
-      "proof_line": null,
+      "proof_fn": "parseThmInfo_roundtrip",
+      "proof_line": 745,
       "refuted": null,
       "round_trip_obligation": true,
       "spec_documented": true,

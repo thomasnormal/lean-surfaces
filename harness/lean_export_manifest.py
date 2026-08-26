@@ -186,10 +186,62 @@ GREEN_EVIDENCE = {
     "gate": "lake build Test Verify",
     "witness": "Built Verify (1.3s); 17 x #print axioms, no sorryAx",
     "log": "scratchpad/leantier-triad23.log",
+    "proved_at_this_tree": 17,
     "note": "fork commits are LOCAL by lane charter — the fork's only remote is "
             "upstream leanprover/lean4export, and pushing there is Thomas's "
             "decision alone.  This block is the merge-side record of a tenure "
             "whose objects the lean-surfaces remote cannot hold.",
+}
+
+# PARKED 2026-08-26 by Thomas's instruction (campaign-wide wind-down).  This block
+# is what resumption reads; it is DECLARED, and the counts beside it are DERIVED.
+PARKED = {
+    "date": "2026-08-26",
+    "reason": "campaign-wide pause to save tokens and free Lean resources; indefinite",
+    "board": "17/26 verified green; lean-surfaces fe644ae; fork green tree 3e9d4a9",
+    "fork_head_parked": "e35b2f8 (tree 015f13c3575c) — WRITTEN, NEVER ELABORATED GREEN",
+    "categories": "name 2/2, level 4/4, aux 1/1, expr 9/9-reachable, declaration 1/9",
+    "in_flight_when_parked": (
+        "`thm` (pair 18) plus `run_getNameList_emitted`, the folded name-array lemma. "
+        "Its one tenure (triad24) was RED; the fix — restating the lemma in the "
+        "NORMALISED `⟨Int.ofNat n, 0⟩` spelling rather than `fromNat` — is written and "
+        "reasoned in the docstring but NOT confirmed by elaboration.  Resume by "
+        "ticketing the parked fork tree unchanged and reading the verdict."
+    ),
+    "folded_lemma_ledger": (
+        "The refactor exists to kill a STRUCTURAL cost: an unbounded payload in the "
+        "middle of a bind chain freezes everything downstream, so every declaration "
+        "kind would otherwise need `rw`-then-resimplify with nested bullets, twice over "
+        "for the kinds carrying two arrays.  Spent so far: ONE red (triad24) on the "
+        "abstraction itself, zero on the eight kinds it is meant to serve.  EXIT "
+        "CONDITION: if the next tenure does not land `thm` cleanly, the refactor is not "
+        "paying — say so and revert to the per-kind `rw` shape rather than polish it."
+    ),
+    "cost_model": (
+        "Each tenure that introduces a NEW MECHANISM costs roughly one red per mechanism; "
+        "width alone costs none.  Measured: single-mechanism kinds landed in 1-2 tenures; "
+        "`const` (first unbounded payload) took 3; `axiom` took 5 because it introduced "
+        "three at once — state write, freshness hypothesis, mid-chain unbounded payload.  "
+        "Remaining NEW mechanisms across the seven unproved kinds: `def`'s three-way "
+        "`hints`, `opaque`'s defaulted `isUnsafe` (`getD`), and the nested "
+        "`induct`/`types`/`ctors`/`recs` group parsed from arrays inside one object.  "
+        "`quot`'s string-literal `kind` match reuses the `binderInfo` trick and is not new."
+    ),
+    "ceiling": (
+        "24/26 until natVal's trigger fires.  natVal is BLOCKED on "
+        "`String.toNat? (toString i) = some i`, for which core ships no lemma (measured); "
+        "mdata is refuted-not-counted by the 2026-08-24 ruling.  natVal is severable — it "
+        "is a theorem about decimal representation, not about the export format — so it "
+        "can be priced and scheduled independently of the corner."
+    ),
+    "resumption_hazards": (
+        "1. Fork history is LOCAL: the clone's only remote is upstream "
+        "leanprover/lean4export and pushing is Thomas's decision alone, so this machine "
+        "holds the only copy of e35b2f8.  2. The parked tree is AHEAD of the certified "
+        "one, so `proofs.proved` counts a theorem no tenure has elaborated — read "
+        "`proofs.verified` instead.  3. Rebase tools/triad.sh before the first ticket; a "
+        "stale runner already cost this lane one incident."
+    ),
 }
 
 _PROOF_RE = re.compile(r"^theorem\s+parse(\w+)_roundtrip\b", re.M)
@@ -324,6 +376,9 @@ def census(root: Path) -> dict:
         raise CensusRefusal("declared item kinds not found where they belong: " + "; ".join(missing))
 
     # PROVED, from the working tree (see GREEN_EVIDENCE).
+    _wt = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD^{tree}"],
+                         capture_output=True, text=True)
+    _work_tree = _wt.stdout.strip()[:12] if _wt.returncode == 0 else "unknown"
     vpath = root / "Verify.lean"
     proofs = _proof_sites(_read(vpath)) if vpath.is_file() else {}
     for r in rows:
@@ -366,7 +421,16 @@ def census(root: Path) -> dict:
                                    if r["category"] == c and r["proof_line"])
                             for c in sorted({r["category"] for r in oblig})},
             "unproved": sorted(r["key"] for r in oblig if not r["proof_line"]),
+            "verified": GREEN_EVIDENCE["proved_at_this_tree"],
+            "working_tree": _work_tree,
+            "working_tree_is_certified": _work_tree == GREEN_EVIDENCE["certified_tree"],
+            "counts_caveat": (
+                "`proved` counts theorems PRESENT in the fork's Verify.lean; `verified` is "
+                "the count a tenure actually elaborated with clean axioms.  They differ "
+                "whenever the working tree is ahead of `certified_tree` — read `verified` "
+                "as the board."),
             "green_evidence_declared": GREEN_EVIDENCE,
+            "parked": PARKED,
         },
         "rows": sorted(rows, key=lambda r: (r["category"], r["key"])),
     }

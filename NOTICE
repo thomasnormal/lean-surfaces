@@ -21,6 +21,11 @@ Python tier:
     Functions from python-rsa 4.9.1 (rsa/common.py).
     Copyright 2011 Sybren A. Stuvel. Apache License 2.0.
 
+- vendor/cpython-3.9-lib-test/*.py
+    Test files from CPython 3.9.19 Lib/test, used as a differential
+    corpus (sources and hashes in PROVENANCE.md there).
+    Copyright (c) 2001-2026 Python Software Foundation. PSF-2.0.
+
 Other tiers (research in progress, not part of the Python 0.1.0 release):
 
 - Examples/system-verilog/sem2/*/cv32e40p_*.sv

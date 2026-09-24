@@ -882,14 +882,21 @@ class DeleteTests(unittest.TestCase):
             "    return 0\n")
         self.assertIsNone(fn["locals_unsupported"])
 
-    def test_subscript_and_attribute_del_stay_unsupported(self):
+    def test_single_subscript_del_is_structured(self):
+        # clause 4 widened (2026-08-23-pycomplete-15): `del d[k]` is
+        # admitted syntactically; the evaluator decides the receiver type.
         fn = self._first_fn(
             "def f(d, o):\n    del d['k']\n    return 0\n")
-        self.assertEqual(fn["body"][0]["kind"], "Unsupported")
-        self.assertEqual(fn["body"][0]["py_kind"], "Delete")
-        fn = self._first_fn(
-            "def f(o):\n    del o.attr\n    return 0\n")
-        self.assertEqual(fn["body"][0]["kind"], "Unsupported")
+        self.assertEqual(fn["body"][0]["kind"], "DeleteSubscript")
+        self.assertEqual(fn["body"][0]["recv"]["kind"], "Name")
+
+    def test_slice_attribute_and_mixed_del_stay_unsupported(self):
+        for src in ("def f(xs):\n    del xs[1:]\n    return 0\n",
+                    "def f(o):\n    del o.attr\n    return 0\n",
+                    "def f(d, e):\n    del d['k'], e['k']\n    return 0\n"):
+            fn = self._first_fn(src)
+            self.assertEqual(fn["body"][0]["kind"], "Unsupported", src)
+            self.assertEqual(fn["body"][0]["py_kind"], "Delete", src)
 
     def test_module_scope_del_is_structured(self):
         # the REVISED clause 3: module scope structures; the runtime

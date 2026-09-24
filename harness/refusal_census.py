@@ -901,8 +901,6 @@ WHITELIST_CLASS = {
     # alone and the tier refuses. These are 3c-ii's territory.
     "dict_lab::view_escape_still_loud": "dictview.first-class",
     "dict_lab::view_arg_not_alone_still_loud": "dictview.first-class",
-    "sf_hist::push": "boundary.list-mutation",
-    "sf_hist::rotate_scores": "boundary.list-mutation",
     "cls_lab::attr_on_int": "attr.on-scalar",
     "cls_lab::weird_eq": "class.dunder-protocol",
     "cls_lab::sub_inherits": "class.inheritance",

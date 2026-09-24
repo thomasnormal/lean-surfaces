@@ -12,7 +12,7 @@ Build one with `lake build Examples.python.<name>.spec`. Do not run a bare
 
 Read the ten below in order. Each one adds a single new idea. The other
 directories here are tutorial companions (`tut_*`), semantic regression
-batteries (`*_lab`), and steps along the sunfish arc (`sf_*`). They build
+batteries (`*_lab`), and small benchmark programs (`bench_*`). They build
 and they are checked, but they are not written to be read first.
 
 | # | example | what it shows | headline statement |
@@ -31,7 +31,8 @@ and they are checked, but they are not written to be read first.
 **Sunfish:** the proofs about the unmodified
 [sunfish](https://github.com/thomasahle/sunfish) chess engine (GPL-3.0)
 now live in the sunfish repository, as a Lake package that depends on
-this one.
+this one. That includes the `sf_*` examples, which proved excerpts and
+simplified forms of sunfish functions.
 
 To learn the tactics, start with [docs/tutorial/](../../docs/tutorial/index.md).
 Proofs that fail in instructive ways are collected in

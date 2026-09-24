@@ -35,10 +35,10 @@ change is listed here under **Changed** or **Removed**.
   with a guessed value. The measured table is
   [docs/python-coverage.md](docs/python-coverage.md).
 - **Differential testing.** `harness/diff_test.py` checks the semantics
-  against CPython 3.9: 1419 rows, 1301 agree, 0 disagree, 118 recorded
+  against CPython 3.9: 1335 rows, 1219 agree, 0 disagree, 116 recorded
   refusals. The theorems are about a second definition of the interpreter,
   `LeanModels/Python/Semantics.lean`. `diff_test.py --proof-interpreter`
-  checks that one against the same rows: 1233 agree, 0 disagree, and 186
+  checks that one against the same rows: 1151 agree, 0 disagree, and 184
   refuse because its tier is narrower. CI runs both
   ([docs/python-architecture.md](docs/python-architecture.md)).
 - **Whole programs.** `tools/leanpy FILE.py [--compare]` runs a Python file
@@ -49,7 +49,8 @@ change is listed here under **Changed** or **Removed**.
   `<name>.py`, `spec.lean`, `proof.lean`), including loops (`tri`, `gcd`),
   recursion (`fib`), relational specs (`rsa_inverse`), and code vendored
   from CPython (`bench_bisect`, `bench_statistics`). The sunfish chess
-  engine proofs (GPL-3.0) moved to the sunfish repository before release.
+  engine proofs (GPL-3.0), including the `sf_*` examples built from excerpts
+  of it, moved to the sunfish repository before release.
   CI checks that the ten curated examples' declarations depend on no
   `sorryAx` and no native computation (`harness/lean_axiom_census.py --gate`).
 - **License.** Apache-2.0 ([LICENSE](LICENSE)); vendored third-party example
@@ -64,7 +65,7 @@ change is listed here under **Changed** or **Removed**.
   `docs/python-coverage.md`.
 - The oracle and the tier are pinned to CPython 3.9.
 - Some programs `tools/leanpy` runs cannot yet be the subject of a theorem:
-  of the differential rows, the proof interpreter decides 1233 and the
-  runner 1301.
+  of the differential rows, the proof interpreter decides 1151 and the
+  runner 1219.
 - Only Linux has been timed from a fresh clone; macOS is expected to work
   but is untested.

@@ -23,7 +23,8 @@ dunder guard makes classes with extra dunders uninstantiable (`Weird`);
 inheritance is loudly out of tier (`Sub(Cell)`); a missing attribute is
 the faithful `AttributeError` raised BEFORE arguments evaluate. No
 `proof.lean`: checks-only, like `dict_lab`/`list_lab` — the stateful
-`CallsIn` theorems live in `Examples/python/sf_searcher`.
+`CallsIn` theorems about a sunfish-shaped `Searcher` moved to the sunfish
+repository with the other sunfish proofs (Examples/python/README.md).
 -/
 
 open LeanModels LeanModels.Python

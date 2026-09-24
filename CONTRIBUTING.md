@@ -29,6 +29,8 @@ the [tutorials](docs/tutorial/index.md). How the pieces fit together is on
 These are enforced by review, and several by CI.
 
 1. **No `sorry`, no `admit`.** Not even temporarily in a pull request.
+   CI checks the curated examples' axioms (`py-examples-axioms` in
+   `tools/ci.sh`).
 2. **Never answer wrongly; refuse loudly.** If the model cannot decide a
    construct faithfully, it must return `unsupported` with a message that
    names the construct. It must never return a guessed value or a guessed

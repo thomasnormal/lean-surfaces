@@ -50,6 +50,8 @@ change is listed here under **Changed** or **Removed**.
   recursion (`fib`), relational specs (`rsa_inverse`), and code vendored
   from CPython (`bench_bisect`, `bench_statistics`). The sunfish chess
   engine proofs (GPL-3.0) moved to the sunfish repository before release.
+  CI checks that the ten curated examples' declarations depend on no
+  `sorryAx` and no native computation (`harness/lean_axiom_census.py --gate`).
 - **License.** Apache-2.0 ([LICENSE](LICENSE)); vendored third-party example
   code is listed in [NOTICE](NOTICE).
 - **Docs.** Quickstart in the README, tutorials under `docs/tutorial/`, the

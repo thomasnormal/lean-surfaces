@@ -59,3 +59,26 @@ jobs:
         run: lake exe cache get
       - name: Full check
         run: bash tools/ci.sh
+
+  # The README quickstart, verbatim, on both platforms it promises. Nothing
+  # else: the full check above is Linux-only. A red macOS row here means the
+  # first command a newcomer types is broken there.
+  quickstart:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan (README quickstart, step 1)
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Build the tri example (README quickstart, step 3)
+        run: lake build Examples.python.tri.spec
+      - name: Run a whole Python file and compare with CPython (README, next steps)
+        run: |
+          lake build leanmodels-run
+          tools/leanpy --compare harness/scripts/gen_script.py

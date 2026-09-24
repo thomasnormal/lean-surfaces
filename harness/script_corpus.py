@@ -68,7 +68,9 @@ def _reexec_under_pinned_frontend():
     os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
 
 
-_reexec_under_pinned_frontend()
+# Only as a script: an importer's argv is not ours to re-run.
+if __name__ == "__main__":
+    _reexec_under_pinned_frontend()
 
 # tools/leanpy owns the ONE extraction path (cache-keyed by source,
 # extractor and frontend family). Using it here is not a tidy-up: this

@@ -104,7 +104,9 @@ def _reexec_under_pinned_frontend():
     os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
 
 
-_reexec_under_pinned_frontend()
+# Only as a script: an importer's argv is not ours to re-run.
+if __name__ == "__main__":
+    _reexec_under_pinned_frontend()
 
 # tools/leanpy is the extension-less binary; load it as a module so the
 # survey and the one-file runner share ONE extraction/runner path.

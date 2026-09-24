@@ -110,7 +110,9 @@ def _reexec_under_pinned_frontend():
     os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
 
 
-_reexec_under_pinned_frontend()
+# Only as a script: an importer's argv is not ours to re-run.
+if __name__ == "__main__":
+    _reexec_under_pinned_frontend()
 # Set unconditionally: the imports below reach modules that re-exec on
 # import, and this process has already made the pin decision above.
 os.environ["LEANPY_NO_REEXEC"] = "1"

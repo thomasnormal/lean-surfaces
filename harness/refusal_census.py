@@ -93,7 +93,9 @@ def _reexec_under_pinned_frontend():
     os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
 
 
-_reexec_under_pinned_frontend()
+# Only as a script: an importer's argv is not ours to re-run.
+if __name__ == "__main__":
+    _reexec_under_pinned_frontend()
 
 sys.path.insert(0, os.path.join(REPO_ROOT, "harness"))
 # `harness/leanpy_survey.py` owns the whole-program verdict vocabulary this

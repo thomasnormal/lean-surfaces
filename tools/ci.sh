@@ -614,6 +614,10 @@ step  "py-harness"      python3 harness/diff_test.py --no-build
 # model ran a file and disagreed) — a loud refusal is a result, and the
 # completeness percentage it prints is telemetry, not a gate.
 maybe "leanpy-survey"   harness/leanpy_survey.py  python3 harness/leanpy_survey.py
+# The published coverage page (docs/python-coverage.md) is regenerated from
+# the differential suite and the grammar census; a tier change that moves
+# coverage must move the page too.
+step  "py-coverage-fresh" python3 harness/coverage_page.py --check
 step  "extractor-tests" python3 extractors/python/test_extract.py
 step  "leanpy-cache-tests" python3 tools/test_leanpy.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py

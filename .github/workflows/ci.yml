@@ -17,6 +17,15 @@ jobs:
         run: |
           curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      # The Python differential oracle is pinned to CPython 3.9
+      # (harness/diff_test.py re-execs under python3.9; the coverage page
+      # refuses any other oracle). Listing 3.12 last keeps it the default
+      # python3, as on a stock runner.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.9
+            3.12
       - name: Cache lake build
         uses: actions/cache@v4
         with:

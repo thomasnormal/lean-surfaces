@@ -29,8 +29,10 @@ Next:
   (first theorem). All tutorials: [docs/tutorial/](docs/tutorial/index.md).
 - **Run a whole Python file under the Lean semantics** and compare it with
   CPython: `lake build leanmodels-run`, then `tools/leanpy --compare FILE.py`.
-- **What Python is covered**: constructs outside the modelled tier are refused
-  loudly, never answered wrongly.
+- **What Python is covered**: [docs/python-coverage.md](docs/python-coverage.md),
+  generated from the differential suite and a per-construct census.
+  Constructs outside the modelled tier are refused loudly, never answered
+  wrongly.
 
 Do not start with a bare `lake build`: it builds every language tier and
 example (about 45 minutes, and it compiles Mathlib unless you first run
@@ -602,7 +604,8 @@ Anything outside the modelled tier is representable (it becomes an
 `Unsupported` node) but evaluates to a loud refusal, `Res.unsupported`, with
 a message naming the construct. It is never answered wrongly: the whole tier
 is differentially tested against CPython 3.9
-([harness/diff_test.py](harness/diff_test.py)). The main gaps:
+([harness/diff_test.py](harness/diff_test.py)); the measured, per-construct
+table is [docs/python-coverage.md](docs/python-coverage.md). The main gaps:
 
 - **No floats, bytes or complex numbers.** Their literals and true division
   `/` refuse. Ints are arbitrary precision and exact.

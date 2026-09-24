@@ -75,8 +75,8 @@ list of argument tuples. Real rows:
   differential rows. Also state the concrete runs as `#py_check` lines in
   the spec file.
 - `fuel` (optional, per case) — raises the runner's default fuel (10000)
-  for that case's rows; deep drains (`sf_order.move_order` walks every
-  ray, scores every move, then sorts) need it.
+  for that case's rows; long runs, such as a generator drained and then
+  sorted, need it.
 - `clock` (optional, per case — docs/memory-model.md §the trace clock) —
   either a list of ints (BOTH sides replay it: CPython through a stub
   bound to the module's `time` name for the row, the model through the

@@ -94,6 +94,15 @@ wants and precisely what an extra key breaks. Emitting them by default
 failed 1156 of 1271 cases on the first run — measured, not feared. Without
 the flag the line is byte-identical to what `resJson` always printed.
 
+**`--proof-interpreter`** (2026-09-24, OPT-IN, `--batch` only): run each
+job through `Semantics.lean`'s `callIn` — the interpreter every theorem is
+about — instead of the monadic runner. The line format is unchanged.
+`harness/diff_test.py --proof-interpreter` uses it so that the proof
+interpreter is differentially checked against CPython too; its tier is
+narrower, so a refusal there is expected and only a WRONG answer fails.
+It cannot be combined with `--observations`, whose refusal class and
+world are read off the monadic run.
+
 **Script mode** (`--script <envelope.json> [--fuel N] [--clock i,j,k]`):
 leanpy — execute the module's whole top level, print its stdout, exit
 0 (ok) / 1 (exn) / 3 (unsupported) / 4 (timeout). `--clock` seeds the
@@ -513,7 +522,8 @@ def parseJob (line : String) : Except String BatchJob := do
 /-- `--batch` driver: one canonical line per job, in order, flushed per
 line; envelopes cached by path; runner-level failures are per-row
 `runner-error` lines PLUS a nonzero exit. -/
-def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool) : IO UInt32 := do
+def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
+    (trunk : Bool := false) : IO UInt32 := do
   match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
   | .error e =>
       IO.eprintln s!"leanmodels-run --batch: cannot read '{jobsPath}': {toString e}"
@@ -566,13 +576,19 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool) : IO UInt3
             -- the theorem that `ofHalt raw` IS what this line used to compute
             -- -- so the class is bought without running the interpreter twice
             -- and without the two answers being able to drift.
-            let raw := Monadic.callInRaw m fuel
-              { initWorld m with clock := job.clock.getD [] } job.fname thawed
-            let run := Monadic.ofHalt raw
-            stdout.putStrLn (if obs then
-                               batchResJson fuel job.args thawed
-                                 (Monadic.refusalClass raw) run
-                             else resJson (Run.toPublic fuel run))
+            let w0 := { initWorld m with clock := job.clock.getD [] }
+            if trunk then
+              -- `--proof-interpreter`: the trunk `callIn`, same world, same
+              -- thawed arguments — so this line is `callFunctionClock`'s.
+              stdout.putStrLn
+                (resJson (Run.toPublic fuel (callIn m fuel w0 job.fname thawed)))
+            else
+              let raw := Monadic.callInRaw m fuel w0 job.fname thawed
+              let run := Monadic.ofHalt raw
+              stdout.putStrLn (if obs then
+                                 batchResJson fuel job.args thawed
+                                   (Monadic.refusalClass raw) run
+                               else resJson (Run.toPublic fuel run))
         stdout.flush
       return (if hadError then 1 else 0)
 
@@ -679,13 +695,18 @@ def main (argv : List String) : IO UInt32 := do
       -- failed 1156 of 1271 cases on the first run. So the result line stays
       -- byte-identical for every consumer that did not ask.
       let obs := positional.contains "--observations"
-      let positional := positional.filter (· != "--observations")
+      let trunk := positional.contains "--proof-interpreter"
+      let positional := positional.filter
+        (fun a => a != "--observations" && a != "--proof-interpreter")
       let some jobsPath := (match positional with | [p] => some p | _ => Option.none)
         | do
             IO.eprintln
-              "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N] [--observations]"
+              "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N] [--observations | --proof-interpreter]"
             return 2
-      runBatchMode jobsPath (fuel?.getD 10000) obs
+      if obs && trunk then
+        IO.eprintln "leanmodels-run --batch: --observations and --proof-interpreter cannot be combined"
+        return 2
+      runBatchMode jobsPath (fuel?.getD 10000) obs trunk
   | "--script-batch" :: rest =>
     match splitFuel rest with
     | .error e =>

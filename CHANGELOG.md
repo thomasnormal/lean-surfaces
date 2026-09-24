@@ -36,7 +36,11 @@ change is listed here under **Changed** or **Removed**.
   [docs/python-coverage.md](docs/python-coverage.md).
 - **Differential testing.** `harness/diff_test.py` checks the semantics
   against CPython 3.9: 1510 rows, 1387 agree, 0 disagree, 123 recorded
-  refusals.
+  refusals. The theorems are about a second definition of the interpreter,
+  `LeanModels/Python/Semantics.lean`. `diff_test.py --proof-interpreter`
+  checks that one against the same rows: 1319 agree, 0 disagree, and 191
+  refuse because its tier is narrower. CI runs both
+  ([docs/python-architecture.md](docs/python-architecture.md)).
 - **Whole programs.** `tools/leanpy FILE.py [--compare]` runs a Python file
   end to end under the Lean semantics and compares with CPython.
 - **Coverage page.** `harness/coverage_page.py` generates
@@ -54,5 +58,8 @@ change is listed here under **Changed** or **Removed**.
   most builtins refuse. See the README's limitations list and
   `docs/python-coverage.md`.
 - The oracle and the tier are pinned to CPython 3.9.
+- Some programs `tools/leanpy` runs cannot yet be the subject of a theorem:
+  the proof interpreter refuses 191 of the differential rows that the runner
+  decides.
 - Only Linux has been timed from a fresh clone; macOS is expected to work
   but is untested.

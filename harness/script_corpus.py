@@ -240,7 +240,7 @@ def main(argv=None):
     print("-" * 72)
     ver = subprocess.run([ORACLE, "-V"], capture_output=True, text=True)
     print("oracle: %s" % ((ver.stdout or ver.stderr).strip(),))
-    print("interpreter: LeanModels/Python/Monadic/ (the only one)")
+    print("interpreter: LeanModels/Python/Monadic/ (the runner's; the theorems are about Semantics.lean)")
     print("%d scripts: %d failed, %d completed-and-matched, %d loud-blocked"
           % (total, failures, completed, len(blocked)))
     for src, msg in blocked:

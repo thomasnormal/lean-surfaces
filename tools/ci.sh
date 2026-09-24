@@ -610,6 +610,10 @@ step  "argv-guards"     argv_guards
 step  "tool-self-tests" selftests
 lake_build_step
 step  "py-harness"      python3 harness/diff_test.py --no-build
+# The same rows through the interpreter the THEOREMS are about
+# (Semantics.lean; the runner's is Monadic/). Its tier is narrower, so a
+# refusal passes; a wrong answer fails exactly as above.
+step  "py-proof-interpreter" python3 harness/diff_test.py --no-build --proof-interpreter
 # leanpy: whole PROGRAMS against CPython. Fails only on a DIVERGENCE (the
 # model ran a file and disagreed) — a loud refusal is a result, and the
 # completeness percentage it prints is telemetry, not a gate.

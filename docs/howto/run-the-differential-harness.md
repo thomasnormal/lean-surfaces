@@ -29,7 +29,16 @@ table (`case | cpython | lean | verdict`) and a summary line like:
 
 Exit status is non-zero on any non-whitelisted mismatch. Flags: `--no-build`
 (skip the up-front build), `--fuel N` (pass to the runner; default 10000),
-`--cases FILE`, `--runner CMD`.
+`--cases FILE`, `--runner CMD`, `--proof-interpreter`.
+
+By default the Lean side is the runner's interpreter
+(`LeanModels/Python/Monadic/`). The theorems are about a second definition,
+`LeanModels/Python/Semantics.lean` ([python-architecture.md](../python-architecture.md)).
+`--proof-interpreter` runs the same rows through that one instead. Its
+tier is narrower, so a refusal is reported as `REFUSED` and does not fail
+the run. A wrong answer, meaning a value or exception class that differs
+from CPython's, fails exactly as it does in the default mode. The summary
+line then reads `N cases: F failed, R refused, M matched`.
 
 The harness is one third of the full check triad —
 `lake build && python3 tools/docs_check.py && python3 harness/diff_test.py`

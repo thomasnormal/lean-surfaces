@@ -248,7 +248,7 @@ def run_cpython(mod, fname, args):
         return {"status": "unmappable", "type": str(u)}
 
 
-def run_lean_batch(runner_cmd, jobs, on_result):
+def run_lean_batch(runner_cmd, jobs, on_result, batch_flags=()):
     """Run ALL jobs through one `--batch` runner process.
 
     ``jobs`` is a list of jobs-file lines (`batch_job`; fuel rides on the
@@ -261,7 +261,7 @@ def run_lean_batch(runner_cmd, jobs, on_result):
     jobs_path = os.path.join(REPO_ROOT, "harness", ".batch_jobs.jsonl")
     with open(jobs_path, "w", encoding="utf-8") as f:
         f.write("\n".join(jobs) + "\n")
-    cmd = list(runner_cmd) + ["--batch", jobs_path]
+    cmd = list(runner_cmd) + ["--batch", jobs_path] + list(batch_flags)
     n = 0
     try:
         proc = subprocess.Popen(
@@ -347,10 +347,18 @@ def main(argv=None):
         "--runner", default="lake exe leanmodels-run",
         help="runner command (default: %(default)r)",
     )
+    parser.add_argument(
+        "--proof-interpreter", action="store_true",
+        help="run the rows through the interpreter the THEOREMS are about "
+             "(LeanModels/Python/Semantics.lean) instead of the runner's "
+             "(LeanModels/Python/Monadic/). Its tier is narrower, so a "
+             "refusal is recorded, not failed; a wrong answer still fails.",
+    )
     opts = parser.parse_args(argv)
 
     os.chdir(REPO_ROOT)
     runner_cmd = opts.runner.split()
+    batch_flags = ["--proof-interpreter"] if opts.proof_interpreter else []
 
     # THE AMENDMENT 14 CONTRACT (tools/triad.sh 4d32526): the TENURE builds the
     # runner and exports LS_RUNNER_PREBUILT=1. A gate must never build the tree
@@ -401,7 +409,22 @@ def main(argv=None):
     def on_result(i, lean):
         nonlocal failures, whitelisted
         call, expect, cpy = calls[i]
-        if expect == "unsupported":
+        if opts.proof_interpreter and lean.get("status") in ("unsupported",
+                                                             "timeout"):
+            # Loud, never wrong: the proof interpreter's tier is narrower
+            # than the runner's (docs/python-architecture.md). Counted in
+            # the `whitelisted` column, which the summary names "refused".
+            verdict = "REFUSED"
+            whitelisted += 1
+        elif opts.proof_interpreter and expect == "unsupported":
+            # A row the runner must refuse. Here it must MATCH or refuse
+            # (above): an answer is compared to CPython like any other.
+            if cpy == lean:
+                verdict = "MATCH"
+            else:
+                verdict = "MISMATCH"
+                failures += 1
+        elif expect == "unsupported":
             if lean.get("status") == "unsupported":
                 verdict = "WHITELISTED"
                 whitelisted += 1
@@ -422,7 +445,7 @@ def main(argv=None):
         print("[%d/%d] %-10s %s" % (i + 1, len(jobs), verdict, call),
               file=sys.stderr)
 
-    run_lean_batch(runner_cmd, jobs, on_result)
+    run_lean_batch(runner_cmd, jobs, on_result, batch_flags)
 
     widths = [
         max(len(r[i]) for r in rows + [("case", "cpython", "lean", "verdict")])
@@ -437,10 +460,18 @@ def main(argv=None):
     print("-" * len(header))
     print("oracle: Python %s (the model's tier is specified against 3.9)"
           % (sys.version.split()[0],))
-    print("interpreter: LeanModels/Python/Monadic/ (the only one)")
-    print("%d cases: %d failed, %d whitelisted-unsupported, %d matched"
-          % (len(rows), failures, whitelisted,
-             len(rows) - failures - whitelisted))
+    if opts.proof_interpreter:
+        print("interpreter: LeanModels/Python/Semantics.lean (the one the "
+              "theorems are about)")
+        print("%d cases: %d failed, %d refused, %d matched"
+              % (len(rows), failures, whitelisted,
+                 len(rows) - failures - whitelisted))
+    else:
+        print("interpreter: LeanModels/Python/Monadic/ (the runner's; the "
+              "theorems are about Semantics.lean — see --proof-interpreter)")
+        print("%d cases: %d failed, %d whitelisted-unsupported, %d matched"
+              % (len(rows), failures, whitelisted,
+                 len(rows) - failures - whitelisted))
     return 1 if failures else 0
 
 

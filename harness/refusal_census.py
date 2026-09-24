@@ -1347,7 +1347,7 @@ def main(argv=None):
 
     os.chdir(REPO_ROOT)
     runner_cmd = opts.runner.split()
-    print("interpreter: LeanModels/Python/Monadic/ (the only one)")
+    print("interpreter: LeanModels/Python/Monadic/ (the runner's; the theorems are about Semantics.lean)")
     # THE AMENDMENT 14 CONTRACT (tools/triad.sh 4d32526): the TENURE builds the
     # runner and exports LS_RUNNER_PREBUILT=1. A gate must never build the tree
     # — it defeats --build-target narrowing and surfaces an unrelated build

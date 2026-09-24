@@ -1244,10 +1244,26 @@ def sumFold (acc : RVal) : List RVal → Res RVal
 -- (2026-08-14, docs/memory-model.md §module-level def aliasing): the
 -- ingestion census consults them, and `Json.lean` cannot import this file.
 
+/-- The synthetic builtins ingestion lowers dict views and `del d[k]` to
+(`dictViewBuiltinName`/`dictDelBuiltinName`, Ast.lean), as one test. THIS
+interpreter does not model them — only the runner's (`Monadic/Eval.lean`)
+does — so its `NameError`-deciding arms consult this before deciding: the
+name is unspellable, so CPython never sees it unbound, and a `NameError`
+here is a wrong answer (measured 2026-09-24: 25 rows of `harness/cases.json`
+— `len(d.keys())`, `del d[k]`, … — answered `NameError` when this
+interpreter was run as the runner). Kept separate from `isPyBuiltinName`,
+which stays the pinned CPython `dir(builtins)`. -/
+def isLoweredBuiltinName (id : String) : Bool :=
+  id == dictDelBuiltinName || id == "<dictkeys>" || id == "<dictvalues>" ||
+  id == "<dictitems>"
+
 /-- The refusal a name-resolution arm owes an UNMODELLED CPython builtin
 (see `isPyBuiltinName`) — the message names the construct, never a
 fabricated `NameError`. -/
 def unmodelledBuiltinMsg (id : String) : String :=
+  if isLoweredBuiltinName id then
+    s!"'{id}' (a dict view or `del d[k]`, lowered at ingestion) is not modelled by the proof interpreter — outside its tier"
+  else
   s!"builtin '{id}' exists in CPython but is not modelled — outside the tier (a NameError here would be a wrong answer for a name CPython binds)"
 
 /-! ### `print` — the one effect the interpreter performs
@@ -4773,7 +4789,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             (match Env.lookup st.world.globals id with
              | some v => .ok st v
              | Option.none =>
-               if isPyBuiltinName id then
+               if isPyBuiltinName id || isLoweredBuiltinName id then
                  .unsupported (unmodelledBuiltinMsg id)
                else if (moduleGlobals m).2 then
                  .exn st (.nameError id)
@@ -5444,7 +5460,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                          evalExprs m fuel st args.toList ⤳ fun st _ =>
                          .exn st (.typeError s!"'{v.typeName}' object is not callable")
                      | Option.none =>
-                       if isPyBuiltinName fname then
+                       if isPyBuiltinName fname || isLoweredBuiltinName fname then
                          .unsupported (unmodelledBuiltinMsg fname)
                        else if (moduleGlobals m).2 then
                          .exn st (.nameError fname)
@@ -5664,7 +5680,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        | some _ =>
                          .unsupported s!"calling the live module binding '{fname}' with keyword arguments is outside the tier (docs/memory-model.md §module-init execution)"
                        | Option.none =>
-                         if isPyBuiltinName fname then
+                         if isPyBuiltinName fname || isLoweredBuiltinName fname then
                            .unsupported (unmodelledBuiltinMsg fname)
                          else if (moduleGlobals m).2 then
                            .exn st (.nameError fname)

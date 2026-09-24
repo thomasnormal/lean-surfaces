@@ -599,6 +599,12 @@ TOML
   printf 'SwapTotal:             0 kB\nSwapFree:              0 kB\n' > "$tmp/meminfo0"
   check "  ...a swapless box is 0, not an error" "$(LS_MOCK_MEMINFO="$tmp/meminfo0" read_pressure)" "0 meminfo:no-swap"
 
+  # The macOS rows must not see the HOST's /proc/meminfo: read_pressure takes
+  # the Linux instrument first whenever it is readable, so on a Linux runner
+  # these rows would silently read the real box instead of the recorded text.
+  saved_meminfo="${LS_MOCK_MEMINFO-__unset__}"
+  export LS_MOCK_MEMINFO="$tmp/no-such-meminfo"
+
   # macOS, verbatim from `memory_pressure` on this box: 52% free -> 48% in use,
   # against the same 50% line the high-water reading was failing at 84.3%.
   mp="$(printf 'Pageins: 210948053\nPageouts: 1145554\n\nSystem-wide memory free percentage: 52%%\n')"
@@ -628,6 +634,8 @@ TOML
   check "no instrument at all is NAMED"         "$(LS_MOCK_MEMPRESSURE="$nomp" LS_MOCK_PRESSURE_LEVEL=0 read_pressure)" "0 unavailable(no-instrument)"
   check "  ...and permits rather than blocking" \
         "$(LS_MOCK_PRESSURE="0 unavailable(no-instrument)" machine_is_quiet)" ""
+  if [ "$saved_meminfo" = __unset__ ]; then unset LS_MOCK_MEMINFO
+  else export LS_MOCK_MEMINFO="$saved_meminfo"; fi
   [ -n "$saved_press" ] && export LS_MOCK_PRESSURE="$saved_press"
 
   # THE STOP MIRRORS THE START: one function, asserted on both axes.

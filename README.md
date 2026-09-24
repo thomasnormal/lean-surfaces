@@ -8,6 +8,34 @@ value, and a definitional interpreter gives it meaning. Programs stay
 proofs read against code you recognize, which is what makes AI-assisted proving
 tractable.
 
+## Quickstart (Python tier)
+
+You need git, Python ≥ 3.9, and [elan](https://github.com/leanprover/elan)
+(the Lean toolchain manager). Linux and macOS.
+
+```console
+$ curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+$ git clone https://github.com/thomasnormal/lean-surfaces && cd lean-surfaces
+$ lake build Examples.python.tri.spec
+```
+
+The build fetches the pinned toolchain and the package sources, then compiles
+the Python tier and checks the `tri` example's theorems (about 4 minutes on a
+fresh clone). The source and the proof are shown [below](#example-examplespythontri).
+Next:
+
+- **Prove your own function**: [tutorial 01](docs/tutorial/01-first-run.md)
+  (write, extract, load, run) and [tutorial 02](docs/tutorial/02-first-spec.md)
+  (first theorem). All tutorials: [docs/tutorial/](docs/tutorial/index.md).
+- **Run a whole Python file under the Lean semantics** and compare it with
+  CPython: `lake build leanmodels-run`, then `tools/leanpy --compare FILE.py`.
+- **What Python is covered**: constructs outside the modelled tier are refused
+  loudly, never answered wrongly.
+
+Do not start with a bare `lake build`: it builds every language tier and
+example (about 45 minutes, and it compiles Mathlib unless you first run
+`lake exe cache get`).
+
 ## Design: four decoupled coverage axes
 
 Coverage on each axis grows independently; nothing on a lower axis blocks a
@@ -559,37 +587,40 @@ Verilog-AMS support.
 | `harness/` | Differential tests: Python vs CPython, SV vs Xcelium/Icarus, and circuit semantics vs ngspice/Spectre |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 
-Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned). The Python and
-SystemVerilog lanes use core Lean only. The SPICE proof surface depends on
-the matching Mathlib release for exact algebra automation; its semantics,
-MNA solver, and generated certificates remain computable definitions over
-core `Rat`. Extractor/harness require only Python ≥ 3.9 stdlib.
+Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned). The package depends on
+the matching Mathlib release (`lakefile.toml`). The Python and SystemVerilog
+semantics use core Lean only; Mathlib is imported by the SPICE proof surface
+(exact algebra automation; its semantics, MNA solver, and generated
+certificates remain computable definitions over core `Rat`) and by two Python
+example proofs (`bench_statistics`, `nested_flow`). Extractor/harness require
+only Python ≥ 3.9 stdlib; the differential oracle is pinned to CPython 3.9
+(`python3.9` on `PATH`; `LEANPY_CPYTHON` overrides).
 
-## v0 limitations (honest list)
+## Python tier limitations (honest list)
 
-- **Semantic tier is narrow.** Ints (arbitrary precision, exact), bools, strs,
-  lists, tuples, `None`; `while`/`if`/assignment/tuple-unpacking; `for` over
-  lists and tuples (`break`/`continue`/tuple targets included; `for … else`
-  and `for` over strs are out of tier); calls to module-level functions
-  (positional args) and the builtins `len`, `sorted`, `max`, `min`, `abs`,
-  `int`; recursion. Anything else is representable but evaluates to
-  `Res.unsupported` — loudly, never wrongly.
-- **No floats.** True division `/` and negative `**` exponents are
-  `unsupported`.
-- **Constant globals only (G1); no closures, no module-init effects.**
-  Top-level `NAME = <call-free constant expr>` and tuple-unpack bindings
-  (`A1, H1, A8, H8 = 91, 98, 21, 28`) are evaluated in source order and
-  visible from function bodies; a binding whose RHS is out of tier resolves
-  loudly to `unsupported`, and after any top-level statement that could bind
-  names invisibly (`import`, `class`, `for`, …) an unresolved name is
-  `unsupported` instead of `NameError`. Functions still run in fresh
-  environments (no `global` writes).
-- **No try/raise** — but runtime errors are real and faithful
-  (`TypeError`, `NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`).
-- **Partial correctness via fuel.** Every interpreter function consumes fuel;
-  out of fuel is `.timeout`. Theorems say "if it returns `.ok r`, then …" —
-  termination is not proved (the `#guard` convention keeps this non-vacuous on
-  concrete inputs).
+Anything outside the modelled tier is representable (it becomes an
+`Unsupported` node) but evaluates to a loud refusal, `Res.unsupported`, with
+a message naming the construct. It is never answered wrongly: the whole tier
+is differentially tested against CPython 3.9
+([harness/diff_test.py](harness/diff_test.py)). The main gaps:
+
+- **No floats, bytes or complex numbers.** Their literals and true division
+  `/` refuse. Ints are arbitrary precision and exact.
+- **Imports**: only `import time`, `from itertools import count` and
+  `from collections import namedtuple` are admitted; any other import refuses
+  the program. Most real-world scripts stop here.
+- **Classes**: plain classes with `__init__` and methods, and namedtuples
+  (including `class P(namedtuple(…))`) are modelled. Inheritance,
+  metaclasses, decorators and user-defined dunders beyond `__init__` refuse.
+- **Builtins and methods**: a fixed set is modelled (`len`, `sorted`, `max`,
+  `min`, `abs`, `int`, `print`, `str`, `ord`, `chr`, `range`, `enumerate`,
+  `sum`, `any`, `all`, `list`, `tuple`, `dict`, `set`, `next`, `iter`, …);
+  every other CPython builtin refuses by name. Sets support construction,
+  membership and `len` only, because their iteration order is not modelled.
+- **Fuel.** Runs are fuel-bounded; `==>` theorems prove
+  termination, while `~~>` states the strengthened partial form (every run
+  times out or returns exactly `v`). The bare "if it returns `.ok`" form is
+  deliberately not offered.
 
 ## Roadmap (not built — do not expect it in this tree)
 
@@ -607,6 +638,5 @@ core `Rat`. Extractor/harness require only Python ≥ 3.9 stdlib.
   deep embedding → tiered interpreter).
 - **`mvcgen` integration**: hook the spec layer into Lean's verification
   condition generator instead of hand-rolled Hoare reasoning.
-- **Differential testing at scale**: run the interpreters against reference
-  implementations on real corpora as the standing semantics-validation
-  methodology, with per-tier coverage numbers.
+- **Python beyond the current tier**: floats, a module system (most
+  real-world imports reach C extension modules), class inheritance.

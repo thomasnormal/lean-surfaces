@@ -11,7 +11,8 @@ once, on a file *you* wrote.
 
 The toolchain is pinned in `lean-toolchain`
 (`leanprover/lean4:v4.33.0-rc1`); if you have elan, the first `lake build`
-fetches it automatically. There are no Lean package dependencies. The
+fetches it automatically. `lake` also fetches the declared package
+dependencies (Mathlib); the Python tier itself uses core Lean only. The
 extractor and harness need only Python ≥ 3.9 standard library. Run everything
 from the repository root.
 

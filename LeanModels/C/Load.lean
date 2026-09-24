@@ -8,7 +8,7 @@ envelope at ELABORATION time and define its translation unit as a
 **literal** first-order term, so `#guard`s (and later, proofs) can unfold
 it.
 
-    load_c_program sunfishC from "Examples/c/sunfish/sunfish.json"
+    load_c_program prog from "Examples/c/<name>/<name>.json"
 
 Missing files, malformed envelopes, a wrong `language`, and a wrong
 `schema_version` are all clear elaboration errors, never silent. The

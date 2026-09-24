@@ -14,6 +14,14 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 Of the 1387 rows the model decides, 1387 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
+### What the theorems can see
+
+The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/`). Theorems are stated about a second definition, `LeanModels/Python/Semantics.lean`, whose tier is narrower ([python-architecture.md](python-architecture.md)). `diff_test.py --proof-interpreter` runs the same rows through it; a refusal there is allowed, a wrong answer is not.
+
+| rows | agree with CPython | disagree | refused |
+|---:|---:|---:|---:|
+| 1510 | 1319 | 0 | 191 |
+
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `"ab" * 3` may refuse). REFUSE shows the model's refusal message.

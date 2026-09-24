@@ -7,6 +7,8 @@ Every number on the page is produced by a run, never typed by hand:
 
 * the DIFFERENTIAL PASS RATE is `harness/diff_test.py`'s own summary line
   (every row of `harness/cases.json`, model vs the pinned CPython oracle);
+  it is measured twice, through the runner's interpreter and through the
+  proof interpreter (`--proof-interpreter`), and the page shows both;
 * the GRAMMAR TABLE is `harness/refusal_census.py --grammar` (one witness
   program per CPython 3.9 `ast` production, run through both), verdict and
   refusal message per row;
@@ -75,16 +77,19 @@ def run(cmd, env=None):
     return proc.returncode, proc.stdout, proc.stderr
 
 
-def diff_summary(runner):
-    rc, out, err = run([sys.executable, "harness/diff_test.py", "--no-build",
-                        "--runner", runner])
+def diff_summary(runner, proof=False):
+    cmd = [sys.executable, "harness/diff_test.py", "--no-build",
+           "--runner", runner]
+    if proof:
+        cmd.append("--proof-interpreter")
+    rc, out, err = run(cmd)
     summ = [l for l in out.splitlines() if re.match(r"\d+ cases: ", l)]
     oracle = [l for l in out.splitlines() if l.startswith("oracle: ")]
     if not summ:
         raise SystemExit("coverage_page: diff_test.py printed no summary "
                          "(exit %d)\n%s" % (rc, (out + err)[-2000:]))
-    m = re.match(r"(\d+) cases: (\d+) failed, (\d+) whitelisted-unsupported, "
-                 r"(\d+) matched", summ[-1])
+    m = re.match(r"(\d+) cases: (\d+) failed, (\d+) (?:whitelisted-unsupported"
+                 r"|refused), (\d+) matched", summ[-1])
     cases, failed, white, matched = (int(x) for x in m.groups())
     return {"cases": cases, "failed": failed, "whitelisted": white,
             "matched": matched,
@@ -127,7 +132,7 @@ def cell(s, n=110):
     return s if len(s) <= n else s[:n - 1] + "…"
 
 
-def render(diff, grammar, tables):
+def render(diff, proof, grammar, tables):
     modelled, cpython, catches = tables
     funcs = sorted(n for n in cpython if n[:1].islower())
     consts = {"True", "False", "None"}
@@ -163,6 +168,21 @@ def render(diff, grammar, tables):
              "ever answers instead." % (
                  decided, diff["matched"],
                  100.0 * diff["matched"] / decided if decided else 0.0))
+    L.append("")
+    L.append("### What the theorems can see")
+    L.append("")
+    L.append("The rows above run through the runner's interpreter "
+             "(`LeanModels/Python/Monadic/`). Theorems are stated about a "
+             "second definition, `LeanModels/Python/Semantics.lean`, whose "
+             "tier is narrower "
+             "([python-architecture.md](python-architecture.md)). "
+             "`diff_test.py --proof-interpreter` runs the same rows through "
+             "it; a refusal there is allowed, a wrong answer is not.")
+    L.append("")
+    L.append("| rows | agree with CPython | disagree | refused |")
+    L.append("|---:|---:|---:|---:|")
+    L.append("| %d | %d | %d | %d |" % (proof["cases"], proof["matched"],
+                                        proof["failed"], proof["whitelisted"]))
     L.append("")
     L.append("## Grammar")
     L.append("")
@@ -249,7 +269,8 @@ def main(argv=None):
               "are pinned to %s — install python3.9 (or set LEANPY_CPYTHON)"
               % (diff["oracle"], PINNED_ORACLE), file=sys.stderr)
         return 2
-    page = render(diff, grammar_rows(runner), builtin_tables())
+    proof = diff_summary(runner, proof=True)
+    page = render(diff, proof, grammar_rows(runner), builtin_tables())
     if opts.check:
         try:
             with open(opts.out, encoding="utf-8") as f:

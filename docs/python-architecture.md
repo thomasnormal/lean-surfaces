@@ -81,7 +81,7 @@ In reading order:
 | `Delab.lean` | prints goals back in surface notation |
 | `LoopTactic.lean` | `py_begin`/`py_loop` |
 | `VC.lean`, `VC2.lean`, `VCTactic.lean` | flow-aware Hoare triples, loop and call rules, and the `py_vcgen` walker |
-| `ClockErase.lean`, `PayloadBlind.lean`, `VCGen.lean`, … | meta-theorems used by the sunfish proofs |
+| `ClockErase.lean`, `PayloadBlind.lean`, `VCGen.lean`, … | meta-theorems for stateful and clock-dependent programs (developed for the sunfish proofs, now in the sunfish repository) |
 
 A theorem such as `tri(n) ==> n * (n + 1) / 2` unfolds to
 `∃ fuel, callFunction tri "tri" #[.int n] fuel = .ok (.int …)`. It is a

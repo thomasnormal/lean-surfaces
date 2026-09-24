@@ -8223,7 +8223,7 @@ statement 8; ~102 KB of generated literals), and then:
 * **`gen_moves_eq_ref_of_pst`** — the flagship, from that one hypothesis.
 
 ```lean
--- Examples/python/sunfish/init_chain.lean (excerpt)
+-- Examples/python/sunfish/init_chain.lean (excerpt; illustrative — moved to the sunfish repository at v0.1.0)
 theorem gen_moves_eq_ref_of_pst (hpst : PstPipelineRuns) : GenMovesEqRef :=
   gen_moves_eq_ref_of_dirs (dirs_ref hpst) (dirs_obj hpst)
 ```

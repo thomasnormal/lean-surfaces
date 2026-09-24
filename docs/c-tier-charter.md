@@ -588,7 +588,7 @@ The Python tier's target is `RefinesAt`
 `Report gamma r (V pos d)` where
 
 ```lean
--- Examples/python/sunfish/bound_depth.lean (excerpt)
+-- Examples/python/sunfish/bound_depth.lean (excerpt; illustrative — moved to the sunfish repository at v0.1.0)
 def Report (gamma report value : Int) : Prop :=
   (report < gamma ∧ value ≤ report) ∨ (gamma ≤ report ∧ report ≤ value)
 ```

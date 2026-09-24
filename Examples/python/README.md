@@ -28,13 +28,10 @@ and they are checked, but they are not written to be read first.
 | 9 | [`bench_bisect`](bench_bisect/) | CPython's own `bisect_left`, where a loop variable is created inside the loop | the result is the insertion point on sorted input |
 | 10 | [`bench_statistics`](bench_statistics/) | CPython's `statistics.median_low/high`, through builtin `sorted` | the result is the order statistic |
 
-**Capstone:** [`sunfish`](sunfish/) is the unmodified 673-line
-[sunfish](https://github.com/thomasahle/sunfish) chess engine
-(GPL-3.0, see its header). The whole
-file loads. The flagship theorems are proved over the real opening
-position with a symbolic score, for example
-`Position.rotate` negating the score (`rotate_callsIn`). Its other
-`.lean` files are the research log for the search function.
+**Sunfish:** the proofs about the unmodified
+[sunfish](https://github.com/thomasahle/sunfish) chess engine (GPL-3.0)
+now live in the sunfish repository, as a Lake package that depends on
+this one.
 
 To learn the tactics, start with [docs/tutorial/](../../docs/tutorial/index.md).
 Proofs that fail in instructive ways are collected in

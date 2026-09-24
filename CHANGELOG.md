@@ -35,10 +35,10 @@ change is listed here under **Changed** or **Removed**.
   with a guessed value. The measured table is
   [docs/python-coverage.md](docs/python-coverage.md).
 - **Differential testing.** `harness/diff_test.py` checks the semantics
-  against CPython 3.9: 1510 rows, 1387 agree, 0 disagree, 123 recorded
+  against CPython 3.9: 1419 rows, 1301 agree, 0 disagree, 118 recorded
   refusals. The theorems are about a second definition of the interpreter,
   `LeanModels/Python/Semantics.lean`. `diff_test.py --proof-interpreter`
-  checks that one against the same rows: 1319 agree, 0 disagree, and 191
+  checks that one against the same rows: 1233 agree, 0 disagree, and 186
   refuse because its tier is narrower. CI runs both
   ([docs/python-architecture.md](docs/python-architecture.md)).
 - **Whole programs.** `tools/leanpy FILE.py [--compare]` runs a Python file
@@ -47,8 +47,9 @@ change is listed here under **Changed** or **Removed**.
   `docs/python-coverage.md`; CI fails when it is stale.
 - **Examples.** Proved examples under `Examples/python/` (three-file layout:
   `<name>.py`, `spec.lean`, `proof.lean`), including loops (`tri`, `gcd`),
-  recursion (`fib`), relational specs (`rsa_inverse`), and the real
-  `sunfish.py` chess engine's `Position.rotate`.
+  recursion (`fib`), relational specs (`rsa_inverse`), and code vendored
+  from CPython (`bench_bisect`, `bench_statistics`). The sunfish chess
+  engine proofs (GPL-3.0) moved to the sunfish repository before release.
 - **Docs.** Quickstart in the README, tutorials under `docs/tutorial/`, the
   judgment and tactic reference in `docs/reference.md`.
 
@@ -59,7 +60,7 @@ change is listed here under **Changed** or **Removed**.
   `docs/python-coverage.md`.
 - The oracle and the tier are pinned to CPython 3.9.
 - Some programs `tools/leanpy` runs cannot yet be the subject of a theorem:
-  the proof interpreter refuses 191 of the differential rows that the runner
-  decides.
+  of the differential rows, the proof interpreter decides 1233 and the
+  runner 1301.
 - Only Linux has been timed from a fresh clone; macOS is expected to work
   but is untested.

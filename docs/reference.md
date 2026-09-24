@@ -1,4 +1,4 @@
-# Reference — Python lane (v0)
+# Reference — Python lane
 
 Information-oriented lookup tables for the spec surface, tactics, types, and
 CLI. Everything here is verified against the current tree; the normative
@@ -173,17 +173,38 @@ Notes:
   classes (`.zeroDivisionError`, `.indexError`) are the practical targets
   ([howto](howto/spec-a-raising-function.md)).
 
-## v0 semantic tier — summary
+## Semantic tier — summary
 
-Normative tables: [DESIGN.md](DESIGN.md) ("Python v0 semantic tier" and
-"Semantic decisions"). One paragraph: ints (exact, arbitrary precision),
-bools, strs, lists, tuples, `None`; `while`/`if`/assignment/tuple
-unpacking/`break`/`continue`/`pass`; calls to module-level functions
-(positional args) plus builtin `len`; recursion; chained comparisons,
-short-circuit `and`/`or` returning operand values; floor-division semantics
-(`Int.fdiv`/`Int.fmod`). Outside the tier ⇒ `Res.unsupported` with a message
-naming the construct — never a silently wrong value. Checking a specific
-program: [howto/check-what-the-extractor-supports.md](howto/check-what-the-extractor-supports.md).
+The measured, generated table is [python-coverage.md](python-coverage.md)
+(differential pass rate, one witness per grammar production, modelled vs
+refused builtins). Normative decisions: [DESIGN.md](DESIGN.md) and
+[memory-model.md](memory-model.md). Outside the tier ⇒ `Res.unsupported` with
+a message naming the construct — never a silently wrong value. Checking a
+specific program: `tools/leanpy --compare FILE.py`, or
+[howto/check-what-the-extractor-supports.md](howto/check-what-the-extractor-supports.md).
+
+## Public surface and stability (0.x)
+
+The public surface is what the tutorials use and this page documents:
+
+- **Loading and checking**: `load_program`, `#py_check`.
+- **Judgments**: `==>`, `⇓`, `==>!`, `~~>` (`CallsTo`, `Raises`, `PartialTo`),
+  the `Py*` binder types and `ToVal`.
+- **Tactics**: `py_prove`, `py_vcgen`, `py_begin`/`py_loop`, `py_corollary`,
+  `py_lift`, `py_threshold`, `py_simp`, and `proofs` in three-file examples.
+- **Command line**: `extractors/python/extract.py`, `leanmodels-run`,
+  `tools/leanpy`, `harness/diff_test.py`.
+- **Formats**: the JSON envelope ([envelope-schema.md](envelope-schema.md))
+  and `leanmodels-run`'s result lines.
+
+While the version is 0.x these may change between minor releases; every such
+change is listed in [CHANGELOG.md](../CHANGELOG.md). Anything else under
+`LeanModels/` (interpreter internals, meta-theorems such as `fuelMono`,
+`LeanModels.Python.Monadic.*`) is internal and may change at any time.
+Theorems you state on the public surface keep their meaning across versions
+whenever the semantics of the program does not change: a change to a
+modelled construct's CPython-observable behaviour is treated as a bug fix and
+called out in the changelog.
 
 ## CLI
 
@@ -192,6 +213,8 @@ program: [howto/check-what-the-extractor-supports.md](howto/check-what-the-extra
 | `python3 extractors/python/extract.py <file.py> [more…] [--companion-dir DIR]` | writes `<file>.json` (envelope) next to the source + `<CompanionDir>/<PascalStem>.lean` (default companion dir: the source file's own directory) — the companion only when the source has `# lean[` blocks (block-less three-file sources get the envelope alone), and never over a hand-written file at that path; deterministic; out-of-vocabulary constructs become `Unsupported` nodes — errors on syntax errors, non-identifier stems, unclosed `# lean[` blocks, hand-written file at the companion path |
 | `lake exe leanmodels-run <envelope.json> <function> [args…] [--fuel N]` | one JSON line: `{"status":"ok","value":…}` \| `{"status":"exn","exn":"…"}` \| `{"status":"timeout"}` \| `{"status":"unsupported","msg":"…"}`; args are integer literals or canonical typed JSON values; default fuel 10000; exit 0 for every canonical result |
 | `lake exe leanmodels-run --batch <jobs.jsonl> [--fuel N]` | one process, one job line per row (`{"path":…,"function":…,"args":[…],"fuel":N?,"clock":[…]?}` — `clock` seeds the world's trace, `callFunctionClock`), one canonical result line per job in order, flushed per line; envelopes cached by path; unexecutable jobs emit `runner-error` lines + nonzero exit |
+| `tools/leanpy FILE.py [--compare] [--fuel N] [--clock i,j,k]` | runs a whole Python file under the Lean semantics (extract, then `leanmodels-run --script`), forwarding stdout and the exit status; `--compare` also runs CPython and reports MATCH / LOUD (the model refused) / MISMATCH (exit 5). Needs a built `leanmodels-run` (`lake build leanmodels-run`) |
+| `python3 harness/coverage_page.py [--check]` | regenerates [python-coverage.md](python-coverage.md) from `diff_test.py` and `refusal_census.py --grammar`; `--check` fails if the committed page is stale (CI) |
 | `python3 harness/diff_test.py [--cases F] [--fuel N] [--no-build] [--runner CMD]` | CPython vs Lean on `harness/cases.json` — all rows through ONE `--batch` runner process, per-row progress on stderr; exits non-zero on any non-whitelisted mismatch ([howto](howto/run-the-differential-harness.md)) |
 | `python3 tools/docs_check.py [files…] [--list-unmarked]` | docs drift checker: every path-marked code block in `docs/**`, `README.md`, `AGENTS.md` must match the referenced file (marker convention in the script's header); exits non-zero listing drifted blocks. Full check triad: `lake build && python3 tools/docs_check.py && python3 harness/diff_test.py` |
 

@@ -643,3 +643,9 @@ table is [docs/python-coverage.md](docs/python-coverage.md). The main gaps:
   condition generator instead of hand-rolled Hoare reasoning.
 - **Python beyond the current tier**: floats, a module system (most
   real-world imports reach C extension modules), class inheritance.
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE). Some example programs are
+third-party code vendored verbatim under their own licenses; they are
+listed in [NOTICE](NOTICE).

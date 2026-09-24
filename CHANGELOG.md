@@ -50,6 +50,8 @@ change is listed here under **Changed** or **Removed**.
   recursion (`fib`), relational specs (`rsa_inverse`), and code vendored
   from CPython (`bench_bisect`, `bench_statistics`). The sunfish chess
   engine proofs (GPL-3.0) moved to the sunfish repository before release.
+- **License.** Apache-2.0 ([LICENSE](LICENSE)); vendored third-party example
+  code is listed in [NOTICE](NOTICE).
 - **Docs.** Quickstart in the README, tutorials under `docs/tutorial/`, the
   judgment and tactic reference in `docs/reference.md`.
 

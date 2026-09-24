@@ -98,6 +98,8 @@ changes, add a line to [CHANGELOG.md](CHANGELOG.md) under
 
 ## License
 
-See [LICENSE](LICENSE). Contributions are accepted under the same license.
-`Examples/python/sunfish/sunfish.py` is a vendored copy of the sunfish
-chess engine and keeps its own GPL-3.0 license (see its header).
+The repository is licensed under the Apache License 2.0; see
+[LICENSE](LICENSE) and [NOTICE](NOTICE). Contributions are accepted under
+the same license. Only add third-party code to an example if its license
+is compatible with Apache-2.0, keep its original header, and name it in
+NOTICE.

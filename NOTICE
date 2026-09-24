@@ -1,0 +1,34 @@
+lean-surfaces
+Copyright 2026 Thomas Ahle
+
+Licensed under the Apache License, Version 2.0 (SPDX-License-Identifier:
+Apache-2.0); see LICENSE.
+
+This repository includes third-party code, vendored verbatim as example
+programs. Each such file keeps its original header, which records its
+provenance and license, and stays under that license.
+
+Python tier:
+
+- Examples/python/bench_bisect/bench_bisect.py
+- Examples/python/bench_heapq_sift/bench_heapq_sift.py
+- Examples/python/bench_statistics/bench_statistics.py
+    Functions from the CPython 3.9 standard library (bisect, heapq,
+    statistics). Copyright (c) 2001-2026 Python Software Foundation.
+    Python Software Foundation License Version 2 (SPDX: PSF-2.0).
+
+- Examples/python/rsa_inverse/rsa_inverse.py
+    Functions from python-rsa 4.9.1 (rsa/common.py).
+    Copyright 2011 Sybren A. Stuvel. Apache License 2.0.
+
+Other tiers (research in progress, not part of the Python 0.1.0 release):
+
+- Examples/system-verilog/sem2/*/cv32e40p_*.sv
+    From the OpenHW Group CV32E40P core. Copyright 2018 ETH Zurich and
+    University of Bologna. Solderpad Hardware License 0.51 (SHL-0.51).
+- Examples/go/*/guards.lean, where they quote Go functions
+    From the Go 1.25.6 runtime and standard library. Copyright 2009 The Go
+    Authors. BSD-3-Clause.
+
+The generated *.json envelopes next to these files are syntax trees of
+the same programs and carry the same licenses.

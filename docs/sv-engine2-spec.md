@@ -1,7 +1,8 @@
 # Engine 2 kernel specification: contract census and schema
 
-**Status: partial pure schema, 2026-10-09; regions, normalized time and process
-identity/lifecycle landed, no new transition semantics or implementation proof.**
+**Status: partial pure schema, 2026-10-09; regions, normalized time, process
+identity/lifecycle and wait registrations landed, no transition semantics or
+implementation proof.**
 This document starts from lane `ls-spec`'s contract census and tracks the schema
 as it lands one piece at a time. It identifies the existing SystemVerilog
 scheduler surface and the additional Engine 2 contract. It is not yet a complete
@@ -178,12 +179,19 @@ and event typing belong to the consumer's certified metadata.
 
 Delay waits accept exact known femtoseconds. Event waits copy and validate a
 nonempty dependency set; ordinary edges and named-event occurrence masks are
-different types. The inspected condition-wait service evaluates first,
-continues immediately when true, and otherwise reevaluates on dependency
-wakes. Its predicate purity and known-Boolean requirements are admission
-conditions. Whether that service remains exported or the consumer lowers
-`wait (e)` into event waits is an open boundary, not a reason to omit the
-language-level immediate-test rule.
+different semantic categories, without asserting an ABI mask equivalence.
+The initially inspected README described a registration-owned condition
+predicate service. Later owner decisions retired that service in favor of
+consumer evaluation, operand-change subscriptions and re-entry. IEEE 9.4.3
+still requires an initial condition test, immediate continuation when true,
+and otherwise waiting for truth; a known-Boolean runtime predicate profile
+must not be mistaken for a restriction of source truth semantics.
+
+The owner's October 9, 2026, 20:14 UTC correction records a remaining gap:
+IEEE 9.7 fixes condition truth at the resume call, while later body re-entry
+may observe a same-step reversal and block again. Consumer re-entry does not
+establish resume-time truth latching. The new wait vocabulary does not select
+a predicate ABI, encode a re-entry marker as a source edge, or close this gap.
 
 Fork groups own immediate-child membership and parent incarnations.
 `join_none` children defer until the parent blocks or terminates. A blocking
@@ -202,7 +210,7 @@ are shared and retained by descendants, not copied into process attachments.
 
 ## 4. Planned pure schema
 
-The region, time and process vocabulary below is exported; the remaining
+The region, time, process and wait vocabulary below is exported; the remaining
 pieces are design names.
 The intended home is an additive `LeanModels/Sv/Engine2/` surface. Existing
 cycle/AST definitions and theorem statements remain intact; bridges are proved
@@ -216,7 +224,7 @@ when both sides exist rather than assumed during the schema work.
 | `Engine2.ProcessState Frame` (landed) | Live continuation phase/explicit suspension, or distinct normal/forced termination | Source status is not scheduler readiness; wait/control transitions remain future rules |
 | `Engine2.ProcessRecord Frame` (landed) | Key, body kind, independent control eligibility, lifecycle | Data replacement preserves registration metadata, not a proof of a legal transition |
 | `SignalState` | Typed signal identity, `LVec` value, publication generation | One ordinary value/publication authority; named events use occurrence state |
-| `WaitRegistration` | Owning process key, typed dependencies, resume region | At most one effective continuation wake; cancellation invalidates stale work |
+| `Engine2.WaitRegistration` (landed) | Independent wait/continuation identity, captured reason/dependencies and resume region | Identity recognition only; single-wake consumption, cancellation and region legality remain future rules |
 | `ScheduledEvent` | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions |
 | `PendingUpdates` | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
 | `ForkState` | Group identity, parent key, child keys, deferred release and join barrier | Immediate-child waiting distinct from transitive descendant cancellation |
@@ -352,6 +360,57 @@ Lean source-driver refusals are retained separately, not counted as agreement.
 The owner's recorded resume-time condition-truth-latching gap is not closed by
 this opaque-frame schema; no implementation refinement is claimed. This data
 piece requires no scheduling oracle.
+
+### Landed normalized wait registrations
+
+`LeanModels/Sv/Engine2/Wait.lean` separates ordinary `SignalKey` endpoints
+from `NamedEventKey` synchronization objects. The ordinary edge vocabulary
+distinguishes posedge, negedge, their `edge` union and whole-result value
+change: X/Z exchanges belong only to the last category. Directional edges
+inspect the result's LSB. These are directly monitored values, not a promise
+that arbitrary `@(expression)` can be decomposed into operand-change waits;
+an operand change that leaves the expression result unchanged is not an event.
+
+`WaitDependency` separates ordinary value/edge subscriptions from instantaneous
+named occurrences. It does not represent persistent `.triggered` state.
+`EventDependencies` uses a structural head/tail representation for the admitted
+nonempty subset, retaining order and duplicates. Entries are OR alternatives,
+not wake priorities or a claim of multiple activations/source evaluation order.
+Kernel-checked nonemptiness and list injectivity do not prove single-wake
+consumption. Empty/inferred-empty lists must not silently become forever waits.
+
+`ContinuationKey` couples a durable owner with a mathematical incarnation;
+`WaitKey` independently identifies a registration. `WaitIdentity` contains
+both, and `WaitRegistration.owner` is derived rather than stored twice. The
+incarnation is not a wrapping native generation word, scheduler slot, or
+automatic-variable activation token. Equality recognition and owner/key/epoch
+mismatch lemmas do not establish fresh allocation, active registry membership,
+stale-wake rejection or cancellation. `ProcessState` remains the sole explicit
+suspension authority; the descriptor has no competing suspension flag.
+
+`WaitReason` records an absolute deadline, event alternatives, or independently
+justified forever parking. Absolute deadlines can retain the original due time
+across suspension; no such transition is implemented here. Unsupported
+normalization, failed dependency census and null events are never forever
+fallbacks. Named-event waiting on null is undefined in the standard and excluded
+from admission. Zero is just a mathematical key, not an ABI null encoding;
+registry membership and non-null resolution remain admission obligations.
+`resumeRegion` is explicit data, not a default policy or proof of legality.
+
+Conditional `iff` gates, level-wait predicates and resume-time truth handoff,
+arbitrary event-expression normalization, clocking/sequence events, fork waits
+and process-await descriptors remain outside this partial vocabulary. No native
+mask conversion is asserted: the older EVENT-only README wording and the
+owner's later ANY-on-named-event correction must not be encoded as a source
+semantic theorem. This schema piece introduces no scheduling oracle.
+
+Two ordinary source fixtures in `Examples/system-verilog/engine2_wait/` agree
+exactly between compiled Engine 2 and Icarus on OR alternatives resuming once
+and a later fresh edge wait. A named-event source attempt was explicitly refused
+by compiled Engine 2 during emission; its source, IR and oracle/refusal outputs
+are retained, not counted as agreement. Lean source-driver refusals also remain
+separate from the pure vocabulary proofs. No wake-rule or C++ refinement proof
+is claimed by these observations.
 
 ### 4.1 Consumer body interface
 

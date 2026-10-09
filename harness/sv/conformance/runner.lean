@@ -61,7 +61,7 @@ def main (args : List String) : IO UInt32 := do
       | IO.eprintln "usage: runner.lean --batch <list.txt> [--fuel N]"; return 2
     let listing ← IO.FS.readFile listPath
     for path in listing.splitOn "\n" do
-      let path := path.trim
+      let path := path.trimAscii.toString
       if path.isEmpty then continue
       IO.println s!"=== BEGIN {path}"
       let (status, detail, lines) ← runOne path fuel

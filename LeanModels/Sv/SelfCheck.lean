@@ -53,10 +53,9 @@ Ground truth: Xcelium 24.03 (spot-checked 2026-07-21, see
 the `#guard` tests below: `%0b` of an all-x vector is `"x"`; `%h` renders
 a nibble with mixed known/unknown bits as `X`; `%d` right-justifies to the
 natural decimal width of the *type* (11 chars for signed 32-bit, 10 for
-unsigned); `%s` renders NUL bytes as spaces. The envelope carries no
-signedness, so `SysCall` args come with a parallel `arg_signed` list;
-rendering a *negative* signed value with `%d` is `.unsupported` (loud)
-rather than printing the unsigned reinterpretation.
+unsigned); `%s` renders NUL bytes as spaces. `SysCall` args carry a
+parallel `arg_signed` list, so signed decimal output uses the
+two's-complement interpretation rather than its unsigned bit-pattern value.
 -/
 
 namespace LeanModels.Sv
@@ -72,9 +71,9 @@ def squash2v (v : LVec) : LVec :=
   ⟨v.bits.map fun b => if b == .l1 then .l1 else .l0⟩
 
 /-- Unsigned resize (the `Resize` node): zero-extend on the MSB side, or
-keep the low `w` bits. The extractor emits `Resize` only for *unsigned*
-operands, where the LRM extension rule is zero-fill (x/z bits are kept,
-never extended). -/
+keep the low `w` bits. The extractor emits `Resize` for an unsigned
+propagated conversion context, where the LRM extension rule is zero-fill
+(x/z bits are kept, never extended). -/
 def resizeV (w : Nat) (v : LVec) : LVec :=
   if v.width ≥ w then ⟨v.bits.extract 0 w⟩
   else ⟨v.bits ++ Array.replicate (w - v.width) .l0⟩
@@ -125,6 +124,7 @@ inductive SExpr where
   | logAnd (l r : SExpr)   -- `&&`
   | logOr (l r : SExpr)    -- `||`
   | resize (w : Nat) (a : SExpr)
+  | signedResize (width : Nat) (operand : SExpr)
   | squash2 (a : SExpr)
   | ternary (c t f : SExpr)
   | concat (parts : Array SExpr)
@@ -291,17 +291,16 @@ def renderHex0 (v : LVec) : String :=
   let s := (renderHex v).toList.dropWhile (· == '0')
   if s.isEmpty then "0" else String.ofList s
 
-/-- `%d`/`%0d`. Unknown bits render as the summary char. A fully known
-value prints its unsigned decimal — for signed args only when the sign bit
-is 0; a negative signed value is `.unsupported` (the envelope carries the
-bit pattern, and printing `4294967295` for `-1` would be silently wrong). -/
+/-- `%d`/`%0d`. Unknown bits render as the summary char. Fully known
+signed values use two's-complement decimal; unsigned values use natural
+decimal. The field width comes from the argument's type. -/
 def renderDec (v : LVec) (signed : Bool) (zero : Bool) : Res String :=
   match v.toNat? with
-  | some n =>
-      if signed && msb v == .l1 then
-        .unsupported "negative signed value under %d (envelope carries no sign)"
-      else
-        .ok (if zero then toString n else padLeft (toString n) (dWidth v.width signed))
+  | some unsignedValue =>
+      let number : Int := if signed && msb v == .l1 then
+        (unsignedValue : Int) - (2 ^ v.width : Nat) else unsignedValue
+      let decimal := toString number
+      .ok (if zero then decimal else padLeft decimal (dWidth v.width signed))
   | none =>
       let c := unknownChar v
       .ok (if zero then c else padLeft c (dWidth v.width signed))
@@ -396,6 +395,8 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         return .ofLogic (Logic.or (truthy (← evalSExpr fuel st l)) (truthy (← evalSExpr fuel st r)))
     | .resize w a => do
         return resizeV w (← evalSExpr fuel st a)
+    | .signedResize width operand => do
+        return LVec.resizeSigned (← evalSExpr fuel st operand) width
     | .squash2 a => do
         return squash2v (← evalSExpr fuel st a)
     | .ternary c t f => do
@@ -651,6 +652,8 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       return .mkConcat (← (← getArrF j "parts").mapM parseSExpr)
   | "Resize" =>
       return .resize (← getNatF j "width") (← parseSExpr (← getF j "operand"))
+  | "SignedResize" =>
+      return .signedResize (← getNatF j "width") (← parseSExpr (← getF j "operand"))
   | "Squash2" =>
       return .squash2 (← parseSExpr (← getF j "operand"))
   | "Unsupported" =>
@@ -805,6 +808,10 @@ section Tests
 #guard resizeV 8 (.lit "101x") == .lit "0000101x"
 #guard resizeV 2 (.lit "0110") == .lit "10"
 #guard resizeV 4 (.lit "1111") == .lit "1111"
+#guard LVec.resizeSigned (.lit "101x") 8 == .lit "1111101x"
+#guard LVec.resizeSigned (.lit "x010") 8 == .lit "xxxxx010"
+#guard LVec.resizeSigned (.lit "z010") 8 == .lit "zzzzz010"
+#guard LVec.resizeSigned (.lit "0110") 2 == .lit "10"
 
 -- signed comparison: 4'b1111 (=-1) vs 4'b0000
 #guard evalScmp .lt (.lit "1111") (.lit "0000") == .l1
@@ -844,7 +851,9 @@ section Tests
 #guard renderDec (.ofNat 32 7) false false == .ok "         7"   -- 10 wide
 #guard renderDec (.ofNat 32 7) true false == .ok "          7"   -- 11 wide (signed)
 #guard renderDec (.ofNat 32 7) true true == .ok "7"
-#guard (renderDec (.lit "11111111") true true).toOption == none  -- negative signed: loud
+#guard renderDec (.lit "11111111") true true == .ok "-1"
+#guard renderDec (.lit "11111111") true false == .ok "  -1"
+#guard renderDec (.lit "10000000") true false == .ok "-128"
 
 -- %s (T20–T21: NUL bytes render as spaces) and %c (T29)
 #guard renderStr (.ofNat 24 0x414243) == .ok "ABC"

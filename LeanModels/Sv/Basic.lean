@@ -182,6 +182,19 @@ def ofNat (w n : Nat) : LVec := ⟨.ofFn (n := w) fun i => if n.testBit i then .
 /-- Embed a known `BitVec`. -/
 def ofBitVec {w : Nat} (b : BitVec w) : LVec := ofNat w b.toNat
 
+def resizeSigned (value : LVec) (width : Nat) : LVec :=
+  ⟨.ofFn (n := width) fun index =>
+    value.bits[index.val]?.getD (value.bits.back?.getD .l0)⟩
+
+theorem resizeSigned_width (value : LVec) (width : Nat) :
+    (resizeSigned value width).width = width := by
+  simp [resizeSigned, LVec.width]
+
+theorem resizeSigned_bit (value : LVec) (width : Nat) (index : Fin width) :
+    (resizeSigned value width).bits[index.val]'(by simp [resizeSigned]) =
+      value.bits[index.val]?.getD (value.bits.back?.getD .l0) := by
+  simp [resizeSigned]
+
 /-- Parse a binary digit string written MSB-first (as in SV source:
 `"1x"` = 2'b1x). Underscore separators are skipped. Returns `none` on any
 other character. Width = number of digits (no padding — see `ofBinLit?`). -/

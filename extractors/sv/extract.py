@@ -282,18 +282,16 @@ def svint_bits(sv):
 
 def type_width_2s(t):
     """Self-check-tier type check: `(width, two_state, None)` when `t` is an
-    unsigned scalar or `[W-1:0]` packed vector of a scalar type — 4-state
-    (`logic`/`reg`) or 2-state (`bit`) — else `(None, None, reason)`.
-    Signed types (`int`, `integer`, `byte`, ...) stay out of the tier: the
-    envelope carries no signedness, so admitting them would silently
-    mis-evaluate order comparisons and `%d` (census robustness note 3)."""
+    integral scalar, predefined integer, or `[W-1:0]` packed vector of a
+    scalar type, signed or unsigned, 4-state or 2-state. Other type shapes
+    return `(None, None, reason)`."""
     try:
-        if t.isSigned:
-            return None, None, "signed"
         ct = t.canonicalType
         cname = type(ct).__name__
         if cname == "ScalarType":
             return 1, (not t.isFourState), None
+        if cname == "PredefinedIntegerType":
+            return ct.bitWidth, (not t.isFourState), None
         if cname == "PackedArrayType":
             w = ct.bitWidth
             rng = ct.range
@@ -308,6 +306,13 @@ def type_width_2s(t):
         return None, None, "type"
     except Exception:
         return None, None, "type"
+
+
+def signed_metadata(node, sv_type):
+    """Record signedness without changing existing unsigned envelopes."""
+    if sv_type.isSigned:
+        node["signed"] = True
+    return node
 
 
 def squash2_wrap(d, width):
@@ -391,297 +396,298 @@ def _convert_expr(sm, e):
         return unsupported(sm, e, "InvalidExpression")
 
     cname = type(e).__name__
-
-    # Implicit/propagated conversions that do NOT change the width are
-    # elaboration artifacts (2-state literal -> 4-state context, sign
-    # reinterpretation); unwrap them transparently. A width-CHANGING
-    # implicit conversion is exactly the "width mismatch in source" case
-    # the M0 contract maps to Unsupported.
     if cname == "ConversionExpression":
-        kind = e.conversionKind
-        if kind in (ConversionKind.Implicit, ConversionKind.Propagated):
-            ow, tw = e.operand.type.bitWidth, e.type.bitWidth
-            state_squash = e.operand.type.isFourState and not e.type.isFourState
-            if ow == tw:
-                if state_squash:
-                    # 4-state -> 2-state, same width: x/z |-> 0 (§6.3.1).
-                    return {
-                        "kind": "Squash2",
-                        "span": node_span(sm, e),
-                        "width": tw,
-                        "operand": _convert_expr(sm, e.operand),
-                    }
-                return _convert_expr(sm, e.operand)
-            # Width-changing implicit conversion (self-check tier §f):
-            if _SYM is not None:
-                d = _sym_conversion(sm, e, ow, tw, state_squash)
-                if d is not None:
-                    return d
-            # 1. slang folded it to a constant -> emit the folded Literal
-            #    (correct for signed operands too — slang applied the LRM).
-            lit = const_literal(sm, e)
-            if lit is not None:
-                return lit
-            # 2. unsigned integral operand -> Resize (zero-extend / keep
-            #    low bits). Signed non-constant operands would need
-            #    sign-extension the envelope cannot express -> Unsupported.
-            try:
-                resizable = (
-                    e.operand.type.isIntegral
-                    and e.type.isIntegral
-                    and not e.operand.type.isSigned
-                )
-            except Exception:
-                resizable = False
-            if resizable:
-                inner = _convert_expr(sm, e.operand)
-                if state_squash:
-                    inner = {
-                        "kind": "Squash2",
-                        "span": node_span(sm, e),
-                        "width": ow,
-                        "operand": inner,
-                    }
-                return {
-                    "kind": "Resize",
-                    "span": node_span(sm, e),
-                    "width": tw,
-                    "operand": inner,
-                }
-            return unsupported(sm, e, "ConversionExpression:width")
-        return unsupported(sm, e, "ConversionExpression:" + str(kind).split(".")[-1])
-
+        return _convert_conversion_expr(sm, e)
     if cname == "NamedValueExpression":
-        sym = e.symbol
-        skind = str(sym.kind).split(".")[-1]
-        if _SYM is not None:
-            d = _sym_named_value(sm, e, sym, skind)
-            if d is not None:
-                return d
-        if skind not in ("Variable", "Net"):
-            return unsupported(sm, e, "NamedValueExpression:" + skind)
-        w, _two, reason = type_width_2s(e.type)
-        if w is None and _SYM is not None:
-            ew = _sym_enum_width(e.type)
-            if ew is not None:
-                w = ew
-            elif reason == "range":
-                # Semantic tier: multi-dim packed vectors are in-vocabulary
-                # as ONE bit vector (element selects read/write chunks).
-                # Only descending zero-based dims qualify — the select
-                # semantics' `chunk i at offset i*elemW` law needs them.
-                mw = _multidim_width(e.type)
-                if mw is not None:
-                    w = mw
-        if w is None:
-            # Keep the historical tag for 2-state-but-otherwise-bad types.
-            if reason == "type" and not getattr(e.type, "isFourState", True):
-                reason = "2state"
-            return unsupported(sm, e, "NamedValueExpression:" + reason)
-        return {
-            "kind": "Ident",
-            "span": node_span(sm, e),
-            "width": w,
-            "name": sym.name,
-        }
-
+        return _convert_named_value_expr(sm, e)
     if cname in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
-        if _SYM is not None:
-            d = _sym_literal(sm, e, cname)
-            if d is not None:
-                return d
-        sv = e.value
-        return {
-            "kind": "Literal",
-            "span": node_span(sm, e),
-            "width": sv.bitWidth,
-            "bits": svint_bits(sv),
-        }
-
+        return _convert_integer_expr(sm, e, cname)
     if cname == "StringLiteral":
-        # LRM §11.10.1: a string literal is a constant number, one 8-bit
-        # ASCII code per char, first char most significant; "" is 8'd0.
-        try:
-            data = e.value.encode("latin-1")
-        except (UnicodeEncodeError, Exception):
-            return unsupported(sm, e, "StringLiteral:encoding")
-        w = e.type.bitWidth
-        if w != (8 * len(data) if data else 8):
-            return unsupported(sm, e, "StringLiteral:width")
-        bits = "".join(format(b, "08b") for b in data) if data else "0" * 8
-        return {
-            "kind": "Literal",
-            "span": node_span(sm, e),
-            "width": w,
-            "bits": bits,
-        }
-
+        return _convert_string_expr(sm, e)
     if cname == "UnaryExpression":
-        sym = UNARY_OPS.get(e.op)
-        if sym is None and _SYM is not None:
-            # Semantic tier: reduction operators (1-bit result).
-            rsym = REDUCE_OPS.get(e.op)
-            if rsym is not None:
-                return {
-                    "kind": "Reduce",
-                    "span": node_span(sm, e),
-                    "width": 1,
-                    "op": rsym,
-                    "operand": _convert_expr(sm, e.operand),
-                }
-        if sym is None:
-            return unsupported(
-                sm, e, "UnaryExpression:" + str(e.op).split(".")[-1]
-            )
-        operand = _convert_expr(sm, e.operand)
-        myw = e.type.bitWidth
-        ow = width_of(operand)
-        ok = (myw == 1) if sym == "!" else (ow is None or ow == myw)
-        if not ok:
-            return unsupported(sm, e, "UnaryExpression:width")
-        return {
-            "kind": "Unary",
-            "span": node_span(sm, e),
-            "width": myw,
-            "op": sym,
-            "operand": operand,
-        }
-
+        return _convert_unary_expr(sm, e)
     if cname == "BinaryExpression":
-        sym = BINARY_OPS.get(e.op)
-        if sym is None and _SYM is not None and _SYM.symctx:
-            # Symbolic expression positions (parameter defaults, generate
-            # bounds, ...) admit the elaboration-arithmetic operators.
-            xsym = SYM_BINARY_OPS.get(e.op)
-            if xsym is not None:
-                return {
-                    "kind": "Binary",
-                    "span": node_span(sm, e),
-                    "width": _safe_width(e),
-                    "op": xsym,
-                    "left": _convert_expr(sm, e.left),
-                    "right": _convert_expr(sm, e.right),
-                }
-        if sym is None:
-            return unsupported(
-                sm, e, "BinaryExpression:" + str(e.op).split(".")[-1]
-            )
-        left = _convert_expr(sm, e.left)
-        right = _convert_expr(sm, e.right)
-        myw = e.type.bitWidth
-        lw, rw = width_of(left), width_of(right)
-        if sym in COMPARISON_SYMS:
-            ok = myw == 1 and (lw is None or rw is None or lw == rw)
-        elif sym in LOGICAL_SYMS:
-            # &&/||: operands are self-determined (any widths), result 1 bit.
-            ok = myw == 1
-        else:
-            ok = (lw is None or lw == myw) and (rw is None or rw == myw)
-        if not ok:
-            return unsupported(sm, e, "BinaryExpression:width")
-        if sym in ORDER_CMP_SYMS:
-            try:
-                if e.left.type.isSigned and e.right.type.isSigned:
-                    sym = "s" + sym  # signed comparison (LRM §11.8.1)
-            except Exception:
-                return unsupported(sm, e, "BinaryExpression:signedness")
-        return {
-            "kind": "Binary",
-            "span": node_span(sm, e),
-            "width": myw,
-            "op": sym,
-            "left": left,
-            "right": right,
-        }
-
+        return _convert_binary_expr(sm, e)
     if cname == "ConditionalExpression":
-        conds = e.conditions
-        if len(conds) != 1:
-            return unsupported(sm, e, "ConditionalExpression:multi")
-        if conds[0].pattern is not None:
-            return unsupported(sm, e, "ConditionalExpression:pattern")
-        cond = _convert_expr(sm, conds[0].expr)
-        then = _convert_expr(sm, e.left)
-        els = _convert_expr(sm, e.right)
-        myw = e.type.bitWidth
-        tw, ew = width_of(then), width_of(els)
-        if (tw is not None and tw != myw) or (ew is not None and ew != myw):
-            return unsupported(sm, e, "ConditionalExpression:width")
-        return {
-            "kind": "Ternary",
-            "span": node_span(sm, e),
-            "width": myw,
-            "cond": cond,
-            "then": then,
-            "else": els,
-        }
-
+        return _convert_conditional_expr(sm, e)
     if cname == "ConcatenationExpression":
-        parts = [_convert_expr(sm, o) for o in e.operands]
-        myw = e.type.bitWidth
-        ws = [width_of(p) for p in parts]
-        if all(w is not None for w in ws) and sum(ws) != myw:
-            return unsupported(sm, e, "ConcatenationExpression:width")
-        return {
-            "kind": "Concat",
-            "span": node_span(sm, e),
-            "width": myw,
-            "parts": parts,
-        }
-
+        return _convert_concat_expr(sm, e)
     if cname == "CallExpression" and _SYM is not None:
-        d = _sym_expr_syscall(sm, e)
-        if d is not None:
-            return d
-        d = _sym_cast_call(sm, e)
-        if d is not None:
-            return d
-
-    # ---- semantic-tier nodes (symbolic mode only; sv-0.1 unchanged) ----
-    if _SYM is not None:
-        if cname == "ElementSelectExpression":
-            # Bit select / packed element select. The index is a symbolic
-            # position (genvar arithmetic like `2**level-1+l` is legal
-            # there) — runtime indices parse identically, the extra
-            # operators are simply admitted.
-            with _SymPos():
-                sel = _convert_expr(sm, e.selector)
-            return {
-                "kind": "BitSel",
-                "span": node_span(sm, e),
-                "width": _safe_width(e),
-                "value": _convert_expr(sm, e.value),
-                "index": sel,
-            }
-        if cname == "RangeSelectExpression":
-            skind = str(e.selectionKind).split(".")[-1]
-            if skind != "Simple":
-                # +: / -: indexed part-selects: no CV32E40P rtl/*.sv file
-                # uses them (grep-verified); out of tier, loud.
-                return unsupported(sm, e, "RangeSelectExpression:" + skind)
-            with _SymPos():
-                msb = _convert_expr(sm, e.left)
-                lsb = _convert_expr(sm, e.right)
-            return {
-                "kind": "PartSel",
-                "span": node_span(sm, e),
-                "width": _safe_width(e),
-                "value": _convert_expr(sm, e.value),
-                "msb": msb,
-                "lsb": lsb,
-            }
-        if cname == "ReplicationExpression":
-            with _SymPos():
-                cnt = _convert_expr(sm, e.count)
-            return {
-                "kind": "Repl",
-                "span": node_span(sm, e),
-                "width": _safe_width(e),
-                "count": cnt,
-                "operand": _convert_expr(sm, e.concat),
-            }
-
+        return _convert_sym_call_expr(sm, e)
+    if _SYM is not None and cname in (
+        "ElementSelectExpression", "RangeSelectExpression", "ReplicationExpression"
+    ):
+        return _convert_sym_select_expr(sm, e, cname)
     return unsupported(sm, e)
+
+
+def _convert_conversion_expr(sm, e):
+    """Lower elaborated resizing after context signedness has propagated."""
+    kind = e.conversionKind
+    if kind not in (ConversionKind.Implicit, ConversionKind.Propagated):
+        return unsupported(sm, e, "ConversionExpression:" + str(kind).split(".")[-1])
+    ow, tw = e.operand.type.bitWidth, e.type.bitWidth
+    state_squash = e.operand.type.isFourState and not e.type.isFourState
+    if ow == tw:
+        if state_squash:
+            return {
+                "kind": "Squash2",
+                "span": node_span(sm, e),
+                "width": tw,
+                "operand": _convert_expr(sm, e.operand),
+            }
+        return _convert_expr(sm, e.operand)
+    if _SYM is not None:
+        node = _sym_conversion(sm, e, ow, tw, state_squash)
+        if node is not None:
+            return node
+    lit = const_literal(sm, e)
+    if lit is not None:
+        return lit
+    try:
+        resizable = e.operand.type.isIntegral and e.type.isIntegral
+        signed = e.operand.type.isSigned and e.type.isSigned
+    except Exception:
+        resizable = False
+        signed = False
+    if not resizable or (signed and _SYM is not None):
+        return unsupported(sm, e, "ConversionExpression:width")
+    inner = _convert_expr(sm, e.operand)
+    if state_squash:
+        inner = {
+            "kind": "Squash2",
+            "span": node_span(sm, e),
+            "width": ow,
+            "operand": inner,
+        }
+    return {
+        "kind": "SignedResize" if signed else "Resize",
+        "span": node_span(sm, e),
+        "width": tw,
+        "operand": inner,
+    }
+
+
+def _convert_named_value_expr(sm, e):
+    sym = e.symbol
+    skind = str(sym.kind).split(".")[-1]
+    if _SYM is not None:
+        node = _sym_named_value(sm, e, sym, skind)
+        if node is not None:
+            return node
+    if skind not in ("Variable", "Net"):
+        return unsupported(sm, e, "NamedValueExpression:" + skind)
+    width, _two, reason = type_width_2s(e.type)
+    if width is None and _SYM is not None:
+        enum_width = _sym_enum_width(e.type)
+        if enum_width is not None:
+            width = enum_width
+        elif reason == "range":
+            multidim_width = _multidim_width(e.type)
+            if multidim_width is not None:
+                width = multidim_width
+    if width is None:
+        if reason == "type" and not getattr(e.type, "isFourState", True):
+            reason = "2state"
+        return unsupported(sm, e, "NamedValueExpression:" + reason)
+    return signed_metadata({
+        "kind": "Ident",
+        "span": node_span(sm, e),
+        "width": width,
+        "name": sym.name,
+    }, e.type)
+
+
+def _convert_integer_expr(sm, e, cname):
+    if _SYM is not None:
+        node = _sym_literal(sm, e, cname)
+        if node is not None:
+            return node
+    value = e.value
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, e),
+        "width": value.bitWidth,
+        "bits": svint_bits(value),
+    }
+
+
+def _convert_string_expr(sm, e):
+    try:
+        data = e.value.encode("latin-1")
+    except (UnicodeEncodeError, Exception):
+        return unsupported(sm, e, "StringLiteral:encoding")
+    width = e.type.bitWidth
+    if width != (8 * len(data) if data else 8):
+        return unsupported(sm, e, "StringLiteral:width")
+    bits = "".join(format(byte, "08b") for byte in data) if data else "0" * 8
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, e),
+        "width": width,
+        "bits": bits,
+    }
+
+
+def _convert_unary_expr(sm, e):
+    sym = UNARY_OPS.get(e.op)
+    if sym is None and _SYM is not None:
+        reduction = REDUCE_OPS.get(e.op)
+        if reduction is not None:
+            return {
+                "kind": "Reduce",
+                "span": node_span(sm, e),
+                "width": 1,
+                "op": reduction,
+                "operand": _convert_expr(sm, e.operand),
+            }
+    if sym is None:
+        return unsupported(sm, e, "UnaryExpression:" + str(e.op).split(".")[-1])
+    operand = _convert_expr(sm, e.operand)
+    width = e.type.bitWidth
+    operand_width = width_of(operand)
+    ok = (width == 1) if sym == "!" else (operand_width is None or operand_width == width)
+    if not ok:
+        return unsupported(sm, e, "UnaryExpression:width")
+    return {
+        "kind": "Unary",
+        "span": node_span(sm, e),
+        "width": width,
+        "op": sym,
+        "operand": operand,
+    }
+
+
+def _binary_width_ok(sym, width, left_width, right_width):
+    if sym in COMPARISON_SYMS:
+        return width == 1 and (
+            left_width is None or right_width is None or left_width == right_width
+        )
+    if sym in LOGICAL_SYMS:
+        return width == 1
+    return (left_width is None or left_width == width) and (
+        right_width is None or right_width == width
+    )
+
+
+def _convert_binary_expr(sm, e):
+    sym = BINARY_OPS.get(e.op)
+    if sym is None and _SYM is not None and _SYM.symctx:
+        symbolic = SYM_BINARY_OPS.get(e.op)
+        if symbolic is not None:
+            return {
+                "kind": "Binary",
+                "span": node_span(sm, e),
+                "width": _safe_width(e),
+                "op": symbolic,
+                "left": _convert_expr(sm, e.left),
+                "right": _convert_expr(sm, e.right),
+            }
+    if sym is None:
+        return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
+    left = _convert_expr(sm, e.left)
+    right = _convert_expr(sm, e.right)
+    width = e.type.bitWidth
+    if not _binary_width_ok(sym, width, width_of(left), width_of(right)):
+        return unsupported(sm, e, "BinaryExpression:width")
+    if sym in ORDER_CMP_SYMS:
+        try:
+            if e.left.type.isSigned and e.right.type.isSigned:
+                sym = "s" + sym
+        except Exception:
+            return unsupported(sm, e, "BinaryExpression:signedness")
+    return {
+        "kind": "Binary",
+        "span": node_span(sm, e),
+        "width": width,
+        "op": sym,
+        "left": left,
+        "right": right,
+    }
+
+
+def _convert_conditional_expr(sm, e):
+    conds = e.conditions
+    if len(conds) != 1:
+        return unsupported(sm, e, "ConditionalExpression:multi")
+    if conds[0].pattern is not None:
+        return unsupported(sm, e, "ConditionalExpression:pattern")
+    cond = _convert_expr(sm, conds[0].expr)
+    then = _convert_expr(sm, e.left)
+    els = _convert_expr(sm, e.right)
+    width = e.type.bitWidth
+    then_width, else_width = width_of(then), width_of(els)
+    if (then_width is not None and then_width != width) or (
+        else_width is not None and else_width != width
+    ):
+        return unsupported(sm, e, "ConditionalExpression:width")
+    return {
+        "kind": "Ternary",
+        "span": node_span(sm, e),
+        "width": width,
+        "cond": cond,
+        "then": then,
+        "else": els,
+    }
+
+
+def _convert_concat_expr(sm, e):
+    parts = [_convert_expr(sm, operand) for operand in e.operands]
+    width = e.type.bitWidth
+    widths = [width_of(part) for part in parts]
+    if all(part_width is not None for part_width in widths) and sum(widths) != width:
+        return unsupported(sm, e, "ConcatenationExpression:width")
+    return {
+        "kind": "Concat",
+        "span": node_span(sm, e),
+        "width": width,
+        "parts": parts,
+    }
+
+
+def _convert_sym_call_expr(sm, e):
+    node = _sym_expr_syscall(sm, e)
+    if node is not None:
+        return node
+    node = _sym_cast_call(sm, e)
+    return node if node is not None else unsupported(sm, e)
+
+
+def _convert_sym_select_expr(sm, e, cname):
+    if cname == "ElementSelectExpression":
+        with _SymPos():
+            index = _convert_expr(sm, e.selector)
+        return {
+            "kind": "BitSel",
+            "span": node_span(sm, e),
+            "width": _safe_width(e),
+            "value": _convert_expr(sm, e.value),
+            "index": index,
+        }
+    if cname == "RangeSelectExpression":
+        selection = str(e.selectionKind).split(".")[-1]
+        if selection != "Simple":
+            return unsupported(sm, e, "RangeSelectExpression:" + selection)
+        with _SymPos():
+            msb = _convert_expr(sm, e.left)
+            lsb = _convert_expr(sm, e.right)
+        return {
+            "kind": "PartSel",
+            "span": node_span(sm, e),
+            "width": _safe_width(e),
+            "value": _convert_expr(sm, e.value),
+            "msb": msb,
+            "lsb": lsb,
+        }
+    with _SymPos():
+        count = _convert_expr(sm, e.count)
+    return {
+        "kind": "Repl",
+        "span": node_span(sm, e),
+        "width": _safe_width(e),
+        "count": count,
+        "operand": _convert_expr(sm, e.concat),
+    }
 
 
 def _sym_cast_call(sm, e):
@@ -781,53 +787,9 @@ def _convert_stmt(sm, s):
         }
 
     if cname == "ExpressionStatement":
-        e = s.expr
-        if type(e).__name__ == "CallExpression":
-            return _convert_syscall(sm, s, e)
-        if type(e).__name__ != "AssignmentExpression":
-            return unsupported(sm, s, "ExpressionStatement:" + type(e).__name__)
-        if e.op is not None:  # compound assignment (+=, ...)
-            return unsupported(sm, s, "AssignmentExpression:compound")
-        if e.timingControl is not None:  # intra-assignment delay/event
-            return unsupported(sm, s, "AssignmentExpression:timing")
-        target, ok = select_target(sm, e.left)
-        if not ok:
-            return unsupported(sm, s, "AssignmentExpression:target")
-        value = convert_expr(sm, e.right)
-        try:
-            if not e.left.type.isFourState:
-                value = squash2_wrap(value, e.left.type.bitWidth)
-        except Exception:
-            pass
-        return {
-            "kind": "NonblockingAssign" if e.isNonBlocking else "BlockingAssign",
-            "span": node_span(sm, s),
-            "target": target,
-            "value": value,
-        }
-
+        return _convert_expression_stmt(sm, s)
     if cname == "VariableDeclStatement":
-        # Local variable declaration inside a procedural body (self-check
-        # tier §f). 2-state locals default-init to 0 (§6.8); 4-state to x.
-        sym = s.symbol
-        w, two, reason = type_width_2s(sym.type)
-        if w is None:
-            if reason == "type" and not getattr(sym.type, "isFourState", True):
-                reason = "2state"
-            return unsupported(sm, s, "VariableDeclStatement:" + reason)
-        init = getattr(sym, "initializer", None)
-        init_d = convert_expr(sm, init) if init is not None else None
-        if two and init_d is not None:
-            init_d = squash2_wrap(init_d, w)
-        return {
-            "kind": "LocalDecl",
-            "span": node_span(sm, s),
-            "name": sym.name,
-            "width": w,
-            "two_state": two,
-            "init": init_d,
-        }
-
+        return _convert_local_decl(sm, s)
     if cname == "EmptyStatement":
         return {"kind": "Empty", "span": node_span(sm, s)}
 
@@ -886,6 +848,54 @@ def _convert_stmt(sm, s):
         }
 
     return unsupported(sm, s)
+
+
+def _convert_expression_stmt(sm, stmt):
+    expr = stmt.expr
+    if type(expr).__name__ == "CallExpression":
+        return _convert_syscall(sm, stmt, expr)
+    if type(expr).__name__ != "AssignmentExpression":
+        return unsupported(sm, stmt, "ExpressionStatement:" + type(expr).__name__)
+    if expr.op is not None:
+        return unsupported(sm, stmt, "AssignmentExpression:compound")
+    if expr.timingControl is not None:
+        return unsupported(sm, stmt, "AssignmentExpression:timing")
+    target, ok = select_target(sm, expr.left)
+    if not ok:
+        return unsupported(sm, stmt, "AssignmentExpression:target")
+    value = convert_expr(sm, expr.right)
+    try:
+        if not expr.left.type.isFourState:
+            value = squash2_wrap(value, expr.left.type.bitWidth)
+    except Exception:
+        pass
+    return {
+        "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+        "span": node_span(sm, stmt),
+        "target": target,
+        "value": value,
+    }
+
+
+def _convert_local_decl(sm, stmt):
+    symbol = stmt.symbol
+    width, two_state, reason = type_width_2s(symbol.type)
+    if width is None:
+        if reason == "type" and not getattr(symbol.type, "isFourState", True):
+            reason = "2state"
+        return unsupported(sm, stmt, "VariableDeclStatement:" + reason)
+    initializer = getattr(symbol, "initializer", None)
+    init_node = convert_expr(sm, initializer) if initializer is not None else None
+    if two_state and init_node is not None:
+        init_node = squash2_wrap(init_node, width)
+    return signed_metadata({
+        "kind": "LocalDecl",
+        "span": node_span(sm, stmt),
+        "name": symbol.name,
+        "width": width,
+        "two_state": two_state,
+        "init": init_node,
+    }, symbol.type)
 
 
 def _convert_syscall(sm, s, e):
@@ -1117,13 +1127,13 @@ def convert_var(sm, m):
             init_d = {"kind": "Literal", "span": None, "width": w, "bits": "0" * w}
         else:
             init_d = squash2_wrap(init_d, w)
-    return {
+    return signed_metadata({
         "kind": "Var",
         "span": sym_span(sm, m),
         "name": m.name,
         "width": w,
         "init": init_d,
-    }
+    }, m.type)
 
 
 def convert_net(sm, m):

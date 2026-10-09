@@ -101,6 +101,49 @@ passed" because its summary includes skipped rows; **that summary is
 not the measured coverage**. Per-case outcomes, not exit status alone,
 are the restart scoreboard. The documentation block check also passes.
 
+### Signed integral breadth — 2026-10-09
+
+The first resumed breadth item is the self-check integral family in
+clauses 6 and 11: signed scalar and descending zero-based packed-vector
+variables, plus `byte`, `shortint`, `int`, `longint`, `integer` and
+`time`, including unsigned variants. Declaration widths, default values
+and two-state assignment squashing come from the elaborated type.
+Optional signed metadata does not alter legacy unsigned envelopes.
+
+The new `SignedResize` expression lowers to `LVec.resizeSigned`: retain
+low bits when narrowing, replicate the exact source sign bit when
+widening, including `x` and `z`. Both source and propagated conversion
+types must be signed. Mixed-sign expression contexts can instead demand
+zero extension; assignment to an unsigned destination can still contain
+an inner signed extension. Preserve the frontend's conversion placement,
+not merely the destination's declaration. Known negative `%d` and `%0d`
+output now uses two's-complement decimal and the existing type-width
+padding rule.
+
+`harness/sv/signed_diff_test.py` verifies **six public fixtures, zero
+failures and zero skips**, in one Lean batch against explicit Icarus:
+predefined widths/defaults, extension and
+truncation, signed/mixed-sign comparisons, arithmetic context sizing,
+four-state extension and two-state squashing, and decimal formatting.
+It also accepts external source lists, while keeping generated envelopes
+and logs outside the repository. The CI entry point `./check.sh` delegates
+to the existing `tools/ci.sh`; `SV_SIM` selects the phase-two oracle and
+defaults to the existing `auto` policy when unset.
+
+The value rule has kernel-checked width and per-bit theorems. A separate
+private real-fixture proof checks its parsed artifact against the literal
+design, proves a completed initial body through `stepSStmt`, and derives
+executor agreement through `stepSStmt_done_agrees`. This is a
+non-suspending statement proof, not a new scheduler or a claim that
+`CycleAdequacy` has been discharged. Private corpus records remain
+internal under §6.1.
+
+This item does **not** admit signed M0 ports/nets, symbolic signed
+widening, reversed packed ranges, enums/structures/unpacked arrays,
+explicit casts, shifts, calls or general loops in the self-check tier.
+Its initial-only runner remains initial-only. Each other surface keeps
+its own admission boundary.
+
 ---
 
 ## 0 THE CORRECTION THIS CHARTER OPENS WITH

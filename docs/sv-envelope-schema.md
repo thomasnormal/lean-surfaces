@@ -522,3 +522,35 @@ New `Unsupported` tags of this mode: `Syntax:<SyntaxKind>` /
 (dimension-syntax recovery), `GenerateBlockSymbol:unconditional` (bare
 `begin`/`end` generate block), `GenerateFor:no-template` (zero-instance
 loop body), `TransparentMemberSymbol:<Class>`.
+
+## Self-check signed integral tier (2026-10-09)
+
+The elaborated self-check surface admits signed scalar and descending
+zero-based packed-vector variables, plus `byte`, `shortint`, `int`,
+`longint`, `integer` and `time`, including their unsigned variants.
+Widths and two-/four-state initialization follow the bound frontend
+type. Signed `Var`, `LocalDecl` and `Ident` nodes carry an optional
+`signed: true` field for auditability. Runtime storage remains a bit
+vector: signed relational operations are encoded as `s<`, `s<=`, `s>`
+and `s>=` after context propagation, not inferred from variable names.
+
+`SignedResize` has `kind`, `span`, `width` and `operand`. It retains the
+low `width` bits when narrowing and copies the source's most significant
+bit when widening, including `x` and `z`. The source and propagated
+result types must both be signed; an unsigned context uses the existing
+zero-filling `Resize`. In particular, assignment to an unsigned wider
+destination can contain an inner signed extension followed by a
+same-width unsigned reinterpretation, while mixed-sign arithmetic and
+comparison can propagate an unsigned widening context. Conversion
+placement in the expression tree is significant.
+
+The self-check compiler lowers `SignedResize` to the shared
+`LVec.resizeSigned` value rule. Non-suspending statement execution uses
+the existing `stepSStmt_done_agrees` correspondence, not another
+scheduler. Known signed decimal output uses the two's-complement integer
+and the existing natural field-width rule; unknown output retains the
+existing `x`/`X` rendering.
+
+This extension does not admit signed M0 ports/nets or symbolic signed
+resizing. Enums, structures, unpacked arrays, reversed packed ranges,
+explicit casts and unsupported operators remain loud in this surface.

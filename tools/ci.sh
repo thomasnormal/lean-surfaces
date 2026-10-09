@@ -715,9 +715,15 @@ fi
 # popcnt, alu_div, fifo, register_file_ff). --sim auto uses every simulator
 # on PATH; the case-inside probe is Xcelium-only (Icarus cannot parse it).
 if command -v iverilog >/dev/null 2>&1 || command -v xrun >/dev/null 2>&1; then
-  maybe "sv2-harness" harness/sv/diff_test2.py python3 harness/sv/diff_test2.py --sim auto
+  maybe "sv2-harness" harness/sv/diff_test2.py python3 harness/sv/diff_test2.py --sim "${SV_SIM:-auto}"
 else
   echo "=== [sv2-harness] SKIP (no simulator: neither xrun nor iverilog on PATH)"; skip+=("sv2-harness")
+fi
+
+if command -v iverilog >/dev/null 2>&1 && py="$(sv_python)"; then
+  maybe "sv-signed-harness" harness/sv/signed_diff_test.py "$py" harness/sv/signed_diff_test.py --no-build
+else
+  echo "=== [sv-signed-harness] SKIP (Icarus and a pyslang frontend are required)"; skip+=("sv-signed-harness")
 fi
 
 # SPICE lane: ngspice is the floating-point differential oracle for the exact

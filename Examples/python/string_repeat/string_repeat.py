@@ -21,3 +21,18 @@ def width_offset(offset):
 
 def repeat_live_list(count):
     return [1, 2] * count
+
+
+def repeat_right_length(text, count):
+    result = text * count
+    return len(result)
+
+
+def repeat_left_length(count, text):
+    result = count * text
+    return len(result)
+
+
+def repeat_aug_length(text, count):
+    text *= count
+    return len(text)

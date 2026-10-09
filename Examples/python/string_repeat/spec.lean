@@ -21,6 +21,9 @@ set_option maxRecDepth 8192
 #py_check string_repeat.repeat_aug("xy", 3) = "xyxyxy"
 #py_check string_repeat.repeat_aug("xy", -2) = ""
 #py_check string_repeat.repeat_aug("λ", true) = "λ"
+#py_check string_repeat.repeat_right_length("λ😀", 3) = 6
+#py_check string_repeat.repeat_left_length(3, "ab") = 6
+#py_check string_repeat.repeat_aug_length("xy", 3) = 6
 #py_check string_repeat.decorated("ab", 2) = "[abab]"
 #py_check string_repeat.decorated("ab", -1) = "[]"
 #py_check string_repeat.width_offset(-7) = -1

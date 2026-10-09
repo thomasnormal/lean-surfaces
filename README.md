@@ -23,8 +23,8 @@ grouping and all six integer whitespace characters, with exact invalid-literal
 errors and a configuration-independent 640-digit bound. Non-ASCII integer
 input and explicit bases remain loud. String repetition supports both operand
 orders, boolean counts, and `*=`, under fixed count/output bounds. The executable
-differential suite has 1,630 cases: 1,482 agree with CPython and 148 refuse loudly.
-The narrower proof interpreter agrees on 1,404 cases and refuses 226; neither
+differential suite has 1,642 cases: 1,494 agree with CPython and 148 refuse loudly.
+The narrower proof interpreter agrees on 1,416 cases and refuses 226; neither
 run has a mismatch.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).

@@ -12,6 +12,12 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- A dated [Python production-readiness baseline](docs/python-baseline-2026-10-09.md)
+  distinguishing executable coverage, proof coverage, static refusals,
+  upstream-test prerequisites, and onboarding/documentation gaps.
+
 ## [0.1.0] — unreleased (first community release)
 
 ### Added

@@ -36,8 +36,8 @@ jobs:
           python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
           # SV extraction (notebook 03 + extractors/sv) runs under python3.12 + pyslang.
           python3.12 -m pip install --user 'pyslang>=11,<12' || python3 -m pip install --user 'pyslang>=11,<12'
-      - name: Circuit simulators (SV and SPICE differential harnesses)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog ngspice
+      - name: Native frontend and circuit simulator dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang iverilog ngspice
       - name: Restore Mathlib build cache
         run: lake exe cache get
       - name: Full check

@@ -73,6 +73,16 @@ maybe() { # maybe <name> <required-file> <command...>
   fi
 }
 
+cpp_extractor_step() {
+  local frontend="${LEANCPP_CLANG:-clang++}"
+  if command -v "$frontend" >/dev/null 2>&1; then
+    step "cpp-extractor-tests" env LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_extract.py
+  else
+    echo "=== [cpp-extractor-tests] SKIP ($frontend not found)"
+    skip+=("cpp-extractor-tests")
+  fi
+}
+
 # THE TOOLS' OWN REFUSAL PATHS.  None of them ran in CI, so a gate could rot
 # silently between audits — which is how four of this lane's tools shipped with
 # defects the 2026-08-23 audit had to find by reading.
@@ -621,6 +631,7 @@ fi
 step  "conflict-markers" conflict_markers
 step  "argv-guards"     argv_guards
 step  "ci-entrypoint-tests" python3 tools/test_ci_entrypoint.py
+step  "cpp-ci-wiring-tests" python3 tools/test_cpp_ci.py
 step  "xcelium-probe-tests" python3 harness/sv/test_xcelium_probe.py
 step  "sv-oracle-admission-tests" python3 harness/sv/test_oracle_admission.py
 step  "ci-oracle-admission-tests" python3 harness/sv/test_ci_oracle_admission.py
@@ -658,6 +669,7 @@ py_examples_axioms() {
 }
 step  "py-examples-axioms" py_examples_axioms
 step  "extractor-tests" python3 extractors/python/test_extract.py
+cpp_extractor_step
 step  "leanpy-cache-tests" python3 tools/test_leanpy.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
 sv_round_trip_step

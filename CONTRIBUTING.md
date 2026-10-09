@@ -75,6 +75,11 @@ reported as skips, not checked components.
 `--verify-guards` checks only the driver's safety guards, not the full suite;
 local Lean build skips become failures when `--require-build` is supplied.
 
+CI installs Clang and checks C++ translation envelopes after the Lean build,
+including their artifact-only Lean ingestion. Hosts without `clang++` (or the
+`LEANCPP_CLANG` override) report an explicit skip. These checks do not claim
+C++ runtime semantics or execution coverage.
+
 CI admits Xcelium with a completed SystemVerilog readiness simulation
 (`harness/sv/xcelium_probe.py`). An explicit license-checkout refusal records an
 optional-oracle skip; CI still runs Icarus cases and names Xcelium-only skips.

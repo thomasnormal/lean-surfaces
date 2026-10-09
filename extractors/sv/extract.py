@@ -308,6 +308,17 @@ def type_width_2s(t):
         return None, None, "type"
 
 
+def is_integral_type_alias(symbol):
+    """Admitted bound typedefs have no runtime effect on the legacy path."""
+    if str(symbol.kind) != "SymbolKind.TypeAlias":
+        return False
+    try:
+        _, _, reason = type_width_2s(symbol.declaredType.type)
+        return reason is None
+    except Exception:
+        return False
+
+
 def signed_metadata(node, sv_type):
     """Record signedness without changing existing unsigned envelopes."""
     if sv_type.isSigned:
@@ -1215,6 +1226,8 @@ def convert_module(sm, inst):
                 # Scope artifact for statement-level begin/end blocks; its
                 # contents appear inside the owning process body.
                 continue
+            elif k == "TypeAlias" and is_integral_type_alias(m):
+                continue
             else:
                 others.append(unsupported(sm, m, type(m).__name__ + ":" + k))
         except Exception as exc:
@@ -1239,10 +1252,12 @@ def convert_design(sm, comp):
             modules.append(convert_module(sm, inst))
         except Exception as exc:
             modules.append(internal_error(exc))
-    # $unit-scope members (imports, unit variables, ...) are outside M0.
+    # Runtime $unit-scope members (imports, unit variables, ...) are outside M0.
     try:
         for unit in comp.getCompilationUnits():
             for m in unit:
+                if is_integral_type_alias(m):
+                    continue
                 others.append(unsupported(sm, m, type(m).__name__))
     except Exception as exc:
         others.append(internal_error(exc))

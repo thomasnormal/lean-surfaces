@@ -172,6 +172,31 @@ unsupported declared ranges and symbolic casts remain loud. This is
 not an expansion of the M0 or Design2 loaders' admission boundaries,
 nor an implementation of dynamic `$cast`.
 
+### Integral typedef aliases — 2026-10-09
+
+The legacy/self-check extractor admits module and compilation-unit
+`typedef` declarations whose bound canonical type is an already-admitted
+scalar, predefined integer or descending zero-based packed scalar vector
+(clause 6.18). Slang resolves each use before lowering; the declaration
+has no runtime effect and is omitted. Alias chains retain the canonical
+type's width, signedness and two-state/four-state behavior at declarations,
+assignments, operators and casts. Block-local typedefs are already
+elaboration-only in the bound statement tree; their variables use the
+same existing type admission. This item changes no local-scope admission.
+
+Original fixtures in `harness/sv/typedefs/` cover all three scopes, alias
+chains, predefined integer types, signed cast boundaries, same-width
+reinterpretation and unknown-bit handling. The actual-fixture proof of
+a signed packed typedef uses the shared completed-step/executor rule.
+No value node, parser admission rule or scheduler changes are needed.
+
+This does not admit enum/structure/union/nonintegral typedef declarations,
+unpacked arrays or unsupported packed ranges on the legacy surface.
+Ports and nets keep their existing independent type restrictions; package
+imports, type parameters and forward declarations remain loud. Symbolic
+integral typedef declarations remain unsupported; the existing symbolic
+enum metadata path is unchanged.
+
 ---
 
 ## 0 THE CORRECTION THIS CHARTER OPENS WITH

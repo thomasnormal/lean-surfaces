@@ -578,3 +578,22 @@ Nonintegral and exotic integral type shapes remain
 Bitstream and streaming-concatenation conversion kinds retain their
 own refusals. This lowering changes neither the self-check parser nor
 the scheduler vocabulary.
+
+## Integral typedef declarations (2026-10-09)
+
+On the legacy path, a bound `TypeAlias` member at module or compilation-unit
+scope is omitted only when its bound declared type passes the existing
+`type_width_2s` canonical-shape admission: scalar, predefined integer or
+descending `[W-1:0]` packed scalar vector. The frontend has already
+resolved alias uses, including alias chains, so existing variable and
+expression nodes carry the resulting width, signedness and state kind.
+No `TypeAlias` runtime node is introduced. Block-local typedefs are
+elaboration-only in the bound statement tree, with variable declarations
+lowered through the same canonical type check.
+
+Unsupported module aliases retain `sv_kind = "TypeAliasType:TypeAlias"`;
+unsupported compilation-unit aliases retain `sv_kind = "TypeAliasType"`.
+Enum/structure/union/nonintegral types, unpacked arrays and unsupported
+packed ranges remain outside this admission. Symbolic integral aliases
+retain their existing refusal; symbolic enum metadata is unchanged.
+Runtime compilation-unit members are not erased or admitted by this rule.

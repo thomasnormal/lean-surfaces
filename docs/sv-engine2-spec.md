@@ -226,7 +226,7 @@ when both sides exist rather than assumed during the schema work.
 | `SignalState` | Typed signal identity, `LVec` value, publication generation | One ordinary value/publication authority; named events use occurrence state |
 | `Engine2.WaitRegistration` (landed) | Independent wait/continuation identity, captured reason/dependencies and resume region | Identity recognition only; single-wake consumption, cancellation and region legality remain future rules |
 | `Engine2.ScheduledEvent` (landed) | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions; queue policy remains future |
-| `PendingUpdates` | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
+| `PendingUpdates` (landed) | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
 | `ForkState` | Group identity, parent key, child keys, deferred release and join barrier | Immediate-child waiting distinct from transitive descendant cancellation |
 | `NamedEventState` | Resolved identity or null; last occurrence time/validity | Persistent occurrence never masquerades as ordinary value change |
 | `ControlState` | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
@@ -438,6 +438,19 @@ process resuming after that update. They do not expose the internal action,
 origin or sequence fields and therefore are source evidence only; existing Lean
 source-driver refusals for timing/event controls remain separate from the pure
 schema proof.
+
+### Landed pending-update captures
+
+`LeanModels/Sv/Engine2/Update.lean` defines `PendingUpdateTarget` with two
+well-typed cases: a signal target paired with its captured `LVec` value, or a
+named-event target with no value payload. `PendingUpdate` preserves an
+`EventKey`, absolute due `SimTime`, explicit `Region`, and `EventOrigin`; its
+derived action agrees with the corresponding scheduled signal-update or
+named-occurrence action. `PendingUpdates` is only a list alias for captured
+records. The structural projections and exhaustive kind facts do not define
+queue admission, NBA ordering, publication, cancellation, stale filtering,
+overflow, or scheduler policy. No source fixture can expose these internal
+captures, so this piece adds no differential claim.
 
 ### 4.1 Consumer body interface
 

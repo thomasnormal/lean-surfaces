@@ -90,7 +90,7 @@ stock dump and independent API review check the tooling, not independent
 compiler conformance or C++ program correctness. Focused temporary fixtures
 test tooling behavior; they are neither proof examples nor runtime verdicts.
 
-### Bounded real-source measurement
+### Bounded XML measurement
 
 The external `canonical-probe` receipt dated 2026-10-09 retains two fresh runs
 on unchanged TinyXML2 `321ea883` under its admitted strict profile; all 104
@@ -117,3 +117,7 @@ The analyzer's synthetic assertions and the 15 focused plugin tests pass.
 No declaration-semantic query or C++ runtime becomes admitted. The large json
 corpus and strict-refused Mox corpus receive no new verdict in this bounded
 measurement; full corpus-wide supplement coverage remains future work.
+
+The subsequent [real-artifact pricing receipt](../../docs/cpp-canonical-evidence.md)
+adds two unchanged original json probes. This does not integrate the supplement
+or change either corpus's declaration-semantic/runtime admission status.

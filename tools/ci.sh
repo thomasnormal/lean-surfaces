@@ -624,6 +624,7 @@ step  "ci-entrypoint-tests" python3 tools/test_ci_entrypoint.py
 step  "xcelium-probe-tests" python3 harness/sv/test_xcelium_probe.py
 step  "sv-oracle-admission-tests" python3 harness/sv/test_oracle_admission.py
 step  "ci-oracle-admission-tests" python3 harness/sv/test_ci_oracle_admission.py
+step  "spectre-probe-tests" python3 harness/spice/test_spectre_probe.py
 step  "tool-self-tests" selftests
 step  "ci-selftest-report-tests" python3 tools/test_ci_selftests.py
 step  "ci-instrument-tests" python3 tools/test_instruments.py
@@ -809,6 +810,7 @@ if command -v spectre >/dev/null 2>&1 || \
   if ! command -v spectre >/dev/null 2>&1; then
     export PATH="$(dirname "${SPECTRE_BIN:-/opt/cadence/installs/SPECTRE231/bin/spectre}"):$PATH"
   fi
+  echo "=== [spectre-probe] python3 harness/spice/spectre_probe.py"
   python3 harness/spice/spectre_probe.py
   spectre_probe_status=$?
   if [ "$spectre_probe_status" -eq 0 ]; then

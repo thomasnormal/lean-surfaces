@@ -2608,6 +2608,21 @@ if [ "$SELF_TEST" = "1" ]; then
   echo "  -- adaptive threads"
   saved_t="$THREADS"; saved_ti="$THREADS_IDLE"
   THREADS=2; THREADS_IDLE=4
+  check "a supplied load mock stays supplied" "$(LS_MOCK_LOAD=0.50 read_load)" "0.50"
+  check "a zero load mock is not absent"      "$(LS_MOCK_LOAD=0 read_load)" "0"
+  for fixture_load in 0.50 11.6; do
+    check "an empty load mock ignores host load $fixture_load" "$(
+      awk() { printf '%s\n' "$fixture_load"; }
+      sysctl() { printf '%s\n' "$fixture_load"; }
+      LS_MOCK_LOAD= read_load
+    )" ""
+  done
+  check "an unset load mock reads the instrument" "$(
+    unset LS_MOCK_LOAD
+    awk() { printf '1.25\n'; }
+    sysctl() { printf '1.25\n'; }
+    read_load
+  )" "1.25"
   q="$(LS_MOCK_LOAD=0.50 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" choose_threads)"
   check "a QUIET box raises the ceiling"      "${q%% *}" "4"
   check "  ...naming the load that chose it"  "$(printf '%s' "$q" | grep -c 'load 0.50 under 2')" "1"

@@ -600,7 +600,7 @@ SVNO
   # starts with the `cd`, and the row that asserts it runs has to follow it
   # there.  Still anchored at column 0 of the INVOCATION, so it cannot match
   # this line -- the self-matching trap this row's own history records.
-  vcheck "the comment-form gate's own rows run"  "$(grep -c '^  ( cd "$view" && python3 harness/lean_comment_forms.py --self-test )' "$0")" "1"
+  vcheck "the comment-form gate's own rows run"  "$(grep -c '^  ( cd "$view" && selftest_report lean_comment_forms.py python3 harness/lean_comment_forms.py --self-test )' "$0")" "1"
   vcheck "backlog-index-fresh is its own step"     "$(grep -c '^step  \"backlog-index-fresh\" backlog_index_fresh$' "$0")" "1"
   vcheck "  ...checking freshness, not headings"   "$(grep -c 'strict' <<< "$(grep '^backlog_index_fresh()' "$0")")" "0"
   vbi="$vstub/bi"; mkdir -p "$vbi"

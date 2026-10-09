@@ -18,6 +18,11 @@ change is listed here under **Changed** or **Removed**.
   retains the portable fallback, and refuses when inspection is unavailable.
   Its hostname regression uses an isolated marker, and CI prints failing
   tool self-test transcripts instead of hiding their assertions.
+- Empty load mocks represent an unreadable instrument rather than falling
+  through to the real host, keeping conservative-thread tests deterministic
+  on both quiet CI runners and busy development machines.
+- CI guard verification recognizes the reported comment-form self-test
+  invocation, retaining its exact-once check after diagnostic integration.
 
 ## [0.1.2] — 2026-10-09 (tag publication pending)
 

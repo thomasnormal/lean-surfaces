@@ -225,6 +225,44 @@ An envelope using this new node remains loud if the frontend reports
 any compilation error, including a recovered malformed declaration whose
 bound selected expression itself does not carry an invalid flag.
 
+### Licensed reference status — 2026-10-09
+
+The original public cast, typedef and selected-read fixtures carry
+`// REFERENCE:` records from the licensed fleet reference runner. Each
+record identifies the exact source before the appended provenance comment;
+removing that one trailing line recovers the recorded reference input.
+Annotations do not change statements, expectations or existing source spans.
+
+The six cast and six typedef fixtures pass on Xcelium 24.03-s004. All eight
+selected-read fixtures pass on the same licensed simulator with its documented
+`-ii_val` option, including the predefined integer/time sources and runtime
+index expressions. The option is part of each reference cache key and
+provenance record; the selected-read annotations also name it explicitly.
+The confirmation covers these fixtures, not arbitrary source shapes or nets.
+
+The default-mode disagreement is retained: only the bit-index, unknown-index
+and unsigned-result fixtures pass without `-ii_val`; five partial-overlap
+fixtures print `FAIL` because the simulator returns all-x. Complete diagnostics
+for the constant-part fixture show bounds warnings, normal execution and exit
+zero, not a compilation error. Simulator exit zero alone is not acceptance
+of a self-checking fixture. The installed Xcelium 24.03 SystemVerilog reference,
+"Reading Part-selects of Vectors", documents `-ii_val` for IEEE per-invalid-bit
+behavior on one-dimensional packed bit/logic variables, excluding nets. Its
+"Indexed Vector Part-Selects" documentation acknowledges the default deviation.
+
+IEEE 1800-2023 11.5.1, printed page 296, requires X at the individual
+out-of-range positions of a partially overlapping read. Note 2 on page 297
+permits a compile-time error for an out-of-range index; it does not specify
+an alternative whole-result-X value for accepted execution. The interpreter
+and distinguishing fixture expectations retain the per-bit rule. A separate
+licensed diagnostic with `-ii_val` also confirms exact `xx10` results for
+ordinary, constant-indexed and runtime-indexed partial reads of known and
+mixed-x/z sources, rather than checking only the out-of-range positions.
+No theorem is weakened and no oracle-specific semantic path is introduced to
+disguise the default-mode disagreement. This selected-read family is now
+licensed-reference confirmed in the explicitly recorded IEEE mode; landing
+still requires the ordinary build and CI gates.
+
 ---
 
 ## 0 THE CORRECTION THIS CHARTER OPENS WITH

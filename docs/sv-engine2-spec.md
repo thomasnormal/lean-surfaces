@@ -488,6 +488,18 @@ states, parent ownership and child membership. Spawn, release, join wakeups,
 descendant cancellation, process-slot reuse and scheduler ordering remain
 future rules.
 
+### Landed completion state
+
+`LeanModels/Sv/Engine2/Completion.lean` defines `CompletionState` with explicit
+initialization and current-slot draining facts plus an optional explicit finish
+status. `requestFinish` retains the first supplied status and never clears it;
+`finishStatus` reports zero when no explicit request exists. Natural completion
+is a derived observation over a scheduler-provided queue-exhaustion fact, gated
+by initialization, and is false during a drain. It does not inspect process
+termination, so sensitized registrations may remain after natural exhaustion.
+The state helpers do not implement queue draining, time advancement, external
+reopening, or the scheduler's completion transition.
+
 ### 4.1 Consumer body interface
 
 The body parameter supplies a deterministic transition on an explicit frame

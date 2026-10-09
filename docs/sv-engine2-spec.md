@@ -228,7 +228,7 @@ when both sides exist rather than assumed during the schema work.
 | `Engine2.ScheduledEvent` (landed) | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions; queue policy remains future |
 | `PendingUpdates` (landed) | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
 | `ForkState` | Group identity, parent key, child keys, deferred release and join barrier | Immediate-child waiting distinct from transitive descendant cancellation |
-| `NamedEventState` | Resolved identity or null; last occurrence time/validity | Persistent occurrence never masquerades as ordinary value change |
+| `NamedEventState` (landed) | Resolved identity or null; last occurrence time/validity | Persistent occurrence never masquerades as ordinary value change |
 | `ControlState` | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
 | `CompletionState` | Initialized/draining facts and optional explicit status | Natural completion derived from queues; first explicit request retained |
 | `KernelState Frame` | Current time/phase, processes, signals, current/future events, forks, controls, output | No native addresses, cache, allocator, packed-token shortcut or duplicated authority |
@@ -463,6 +463,18 @@ Named-event occurrence state is intentionally not folded into this record.
 Only construction, token classification and field-preservation facts are
 proved here. Value-change detection, same-value retention, fanout, publication
 timing, queue admission, and wakeups remain later rules.
+
+### Landed named-event occurrence state
+
+`LeanModels/Sv/Engine2/NamedEvent.lean` defines `NamedEventState` with an
+unresolved case and a resolved case carrying a `NamedEventKey` plus an
+optional last-occurrence `SimTime`. The optional time is the occurrence
+validity bit: `triggeredAt` is true exactly when the recorded occurrence time
+equals the queried simulation time, and therefore naturally expires after time
+advance without a reset transition. Structural facts prove null/resolved
+classification and current-slot observation only. Trigger admission, alias
+resolution, wake consumption, NBA/Re-NBA scheduling and time advancement stay
+outside this schema piece.
 
 ### 4.1 Consumer body interface
 

@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-exec bash "$(dirname "$0")/tools/ci.sh" "$@"
+
+exec bash "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/tools/ci.sh" "$@"

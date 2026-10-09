@@ -620,6 +620,7 @@ fi
 
 step  "conflict-markers" conflict_markers
 step  "argv-guards"     argv_guards
+step  "ci-entrypoint-tests" python3 tools/test_ci_entrypoint.py
 step  "tool-self-tests" selftests
 step  "ci-selftest-report-tests" python3 tools/test_ci_selftests.py
 step  "ci-instrument-tests" python3 tools/test_instruments.py

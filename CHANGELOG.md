@@ -12,6 +12,10 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- A repository-root `check.sh` entry point for the existing local CI checks.
+
 ### Fixed
 
 - The build protocol inspects Linux log descriptors without requiring `lsof`,

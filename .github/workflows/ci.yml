@@ -41,7 +41,7 @@ jobs:
       - name: Restore Mathlib build cache
         run: lake exe cache get
       - name: Full check
-        run: bash tools/ci.sh
+        run: ./check.sh
 
   # The README quickstart, verbatim, on both platforms it promises. Nothing
   # else: the full check above is Linux-only. A red macOS row here means the

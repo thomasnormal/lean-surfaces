@@ -68,6 +68,13 @@ under it; set `LEANPY_CPYTHON` to point at a different 3.9 binary. Avoid a
 bare `lake build` while iterating, since it builds every tier. CI runs the
 full build on every push.
 
+Run `./check.sh` for the repository-wide checks used by CI. It delegates to
+`tools/ci.sh`, accepts the same `--require-build` and `--verify-guards` options,
+and can be invoked from outside the checkout. Missing optional tools are
+reported as skips, not checked components.
+`--verify-guards` checks only the driver's safety guards, not the full suite;
+local Lean build skips become failures when `--require-build` is supplied.
+
 ## Adding an example
 
 Each example is a directory `Examples/python/<name>/` with three files:

@@ -2857,8 +2857,10 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a log INSIDE the clone is caught"     "$(resolve_under_clone "$fr/run.log" | grep -c 'run.log')" "1"
   check "  ...one outside is not"              "$(resolve_under_clone "$tmp/run.log" >/dev/null && echo caught || echo clear)" "clear"
   check "  ...a pipe is not a file"            "$(resolve_under_clone '->0xdeadbeef' >/dev/null && echo caught || echo clear)" "clear"
-  check "  ...nor a proc socket"              "$(resolve_under_clone 'socket:[123]' >/dev/null && echo caught || echo clear)" "clear"
-  check "  ...nor an anonymous inode"          "$(resolve_under_clone 'anon_inode:[eventpoll]' >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...nor a Linux socket descriptor"   "$(cd "$fr"; resolve_under_clone 'socket:[123]' >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...nor an anonymous descriptor"     "$(cd "$fr"; resolve_under_clone 'anon_inode:[eventpoll]' >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...a socket-named file is still caught" "$(resolve_under_clone "$fr/socket:[123]" >/dev/null && echo caught || echo clear)" "caught"
+  check "  ...an anon-inode-named file is still caught" "$(resolve_under_clone "$fr/anon_inode:[eventpoll]" >/dev/null && echo caught || echo clear)" "caught"
   check "  ...nor is a tty"                    "$(resolve_under_clone /dev/ttys000 >/dev/null && echo caught || echo clear)" "clear"
   check "  ...nor an empty fd"                 "$(resolve_under_clone '' >/dev/null && echo caught || echo clear)" "clear"
   # THE SYMLINK CASE, which would otherwise hide a log that IS in the clone:
@@ -2907,6 +2909,7 @@ if [ "$SELF_TEST" = "1" ]; then
   PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
     LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
     timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > /dev/null 2> "$fr/inside.log"
+  check "a stderr-only log returns refusal status" "$?" "2"
   check "a stderr-only log INSIDE the clone refuses" "$(grep -c 'own log is INSIDE the clone' "$fr/inside.log")" "1"
   check "  ...and stderr takes NO ticket"       "$(ls "$tmp/frq" 2>/dev/null | grep -c .)" "0"
   rm -f "$fr/inside.log"
@@ -3487,6 +3490,9 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...nor the axiom ledger's verdict" "$(axiom_ledger "$hl" >/dev/null; echo $?)" \
         "$(axiom_ledger "$rl" >/dev/null; echo $?)"
   check "  ...and carries no hostname"        "$(printf '%s' "$hdr" | grep -Fc 'triad-hostname-fixture')" "0"
+  check "  ...and carries no hostname field"  "$(printf '%s' "$hdr" | grep -cE '(^|[[:space:]])(host|hostname)=')" "0"
+  check "  ...a host field is detected"        "$(printf '%s host=fixture' "$hdr" | grep -cE '(^|[[:space:]])(host|hostname)=')" "1"
+  check "  ...a hostname field is detected"    "$(printf '%s hostname=fixture' "$hdr" | grep -cE '(^|[[:space:]])(host|hostname)=')" "1"
   TICKET="$saved_tk"; LANE="$saved_ln"; ENQ_STAMP="$saved_es"
 
   check "the banner names the protocol level" \

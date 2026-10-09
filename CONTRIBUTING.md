@@ -75,6 +75,12 @@ reported as skips, not checked components.
 `--verify-guards` checks only the driver's safety guards, not the full suite;
 local Lean build skips become failures when `--require-build` is supplied.
 
+CI admits Xcelium with a completed SystemVerilog readiness simulation
+(`harness/sv/xcelium_probe.py`). An explicit license-checkout refusal records an
+optional-oracle skip; CI still runs Icarus cases and names Xcelium-only skips.
+Timeouts, unexpected probe failures, and every actual fixture mismatch remain
+failures. Direct simulator requests do not bypass fixture errors.
+
 ## Adding an example
 
 Each example is a directory `Examples/python/<name>/` with three files:

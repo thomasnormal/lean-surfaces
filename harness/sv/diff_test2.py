@@ -144,6 +144,18 @@ def diff_traces(sim_lines, lean_lines):
     return "\n".join(msgs)
 
 
+def requested_simulators(requested):
+    have_xrun = shutil.which("xrun") is not None
+    have_iv = (shutil.which("iverilog") is not None
+               and shutil.which("vvp") is not None)
+    if requested == "xrun":
+        return ["xrun"] if have_xrun else []
+    if requested == "iverilog":
+        return ["iverilog"] if have_iv else []
+    return [name for name, available in (("xrun", have_xrun), ("iverilog", have_iv))
+            if available]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sim", choices=["auto", "xrun", "iverilog", "both"],
@@ -153,20 +165,6 @@ def main():
     ap.add_argument("--keep", action="store_true")
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
-
-    have_xrun = shutil.which("xrun") is not None
-    have_iv = (shutil.which("iverilog") is not None
-               and shutil.which("vvp") is not None)
-    if args.sim == "xrun":
-        sims = ["xrun"] if have_xrun else []
-    elif args.sim == "iverilog":
-        sims = ["iverilog"] if have_iv else []
-    else:  # auto/both: everything available (dual verification)
-        sims = [s for s, ok in (("xrun", have_xrun), ("iverilog", have_iv)) if ok]
-    if not sims:
-        print("SKIP: no requested simulator on PATH (sv phase-2 differential "
-              "harness not exercised)")
-        return 0
 
     with open(CASES_JSON) as f:
         spec = json.load(f)
@@ -184,10 +182,18 @@ def main():
         print("Nothing was compared, so this is not a pass.")
         return 1
 
+    sims = requested_simulators(args.sim)
+    if not sims:
+        print("SKIP: no requested simulator on PATH (sv phase-2 differential "
+              "harness not exercised)")
+        return 0
+
     ensure_oleans(args.verbose)
 
     base = args.workdir or tempfile.mkdtemp(prefix="sv2diff_")
     failures = 0
+    verified = 0
+    skipped = 0
     for case in cases:
         name = case["name"]
         example = case["example"]
@@ -203,7 +209,8 @@ def main():
         case_sims = [s for s in sims
                      if not (case.get("xrun_only") and s == "iverilog")]
         if not case_sims:
-            print("%-24s SKIP (needs xrun; not on PATH)" % name)
+            skipped += 1
+            print("%-24s SKIP (needs xrun; not selected or unavailable)" % name)
             continue
         try:
             lean = {}
@@ -231,6 +238,7 @@ def main():
                 else:
                     results.append("%s:ok(%s)" % (sim, matched))
             if ok:
+                verified += 1
                 print("%-24s PASS  [%s]  (%d cycles)"
                       % (name, ", ".join(results), len(lean[sigmas[0]])))
             else:
@@ -243,8 +251,8 @@ def main():
     if failures:
         print("%d case(s) failed" % failures)
         return 1
-    print("all %d case(s) passed" % len(cases))
-    return 0
+    print("%d case(s) verified, %d skipped" % (verified, skipped))
+    return 0 if verified else 1
 
 
 if __name__ == "__main__":

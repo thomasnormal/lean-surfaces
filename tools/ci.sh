@@ -621,6 +621,9 @@ fi
 step  "conflict-markers" conflict_markers
 step  "argv-guards"     argv_guards
 step  "ci-entrypoint-tests" python3 tools/test_ci_entrypoint.py
+step  "xcelium-probe-tests" python3 harness/sv/test_xcelium_probe.py
+step  "sv-oracle-admission-tests" python3 harness/sv/test_oracle_admission.py
+step  "ci-oracle-admission-tests" python3 harness/sv/test_ci_oracle_admission.py
 step  "tool-self-tests" selftests
 step  "ci-selftest-report-tests" python3 tools/test_ci_selftests.py
 step  "ci-instrument-tests" python3 tools/test_instruments.py
@@ -705,20 +708,39 @@ fi
 
 # SV lane: prefer Icarus when installed (generic CI and license-free local
 # runs); otherwise use Xcelium on lab hosts. A mismatch is a hard failure.
-if command -v iverilog >/dev/null 2>&1; then
+xcelium_ready=0
+if command -v xrun >/dev/null 2>&1; then
+  echo "=== [xcelium-probe] python3 harness/sv/xcelium_probe.py"
+  python3 harness/sv/xcelium_probe.py
+  xcelium_status=$?
+  if [ "$xcelium_status" -eq 0 ]; then
+    pass+=("xcelium-probe")
+    xcelium_ready=1
+  elif [ "$xcelium_status" -eq 77 ]; then
+    echo "=== [xcelium-oracle] SKIP (Xcelium license unavailable)"; skip+=("xcelium-oracle")
+  else
+    fail+=("xcelium-probe")
+  fi
+else
+  echo "=== [xcelium-oracle] SKIP (xrun not found)"; skip+=("xcelium-oracle")
+fi
+
+if command -v iverilog >/dev/null 2>&1 && command -v vvp >/dev/null 2>&1; then
   maybe "sv-harness" harness/sv/diff_test.py python3 harness/sv/diff_test.py --sim iverilog
-elif command -v xrun >/dev/null 2>&1; then
+elif [ "$xcelium_ready" -eq 1 ]; then
   maybe "sv-harness" harness/sv/diff_test.py python3 harness/sv/diff_test.py --sim xrun
 else
-  echo "=== [sv-harness] SKIP (no simulator: neither xrun nor iverilog on PATH)"; skip+=("sv-harness")
+  echo "=== [sv-harness] SKIP (no admitted simulator: Icarus or licensed Xcelium unavailable)"; skip+=("sv-harness")
 fi
 # sv-0.2 semantic tier: per-feature probes + real-core transactions (ff_one,
 # popcnt, alu_div, fifo, register_file_ff). --sim auto uses every simulator
 # on PATH; the case-inside probe is Xcelium-only (Icarus cannot parse it).
-if command -v iverilog >/dev/null 2>&1 || command -v xrun >/dev/null 2>&1; then
+if [ "$xcelium_ready" -eq 1 ]; then
   maybe "sv2-harness" harness/sv/diff_test2.py python3 harness/sv/diff_test2.py --sim "${SV_SIM:-auto}"
+elif command -v iverilog >/dev/null 2>&1 && command -v vvp >/dev/null 2>&1; then
+  maybe "sv2-harness" harness/sv/diff_test2.py python3 harness/sv/diff_test2.py --sim "${SV_SIM:-iverilog}"
 else
-  echo "=== [sv2-harness] SKIP (no simulator: neither xrun nor iverilog on PATH)"; skip+=("sv2-harness")
+  echo "=== [sv2-harness] SKIP (no admitted simulator: Icarus or licensed Xcelium unavailable)"; skip+=("sv2-harness")
 fi
 
 if command -v iverilog >/dev/null 2>&1 && py="$(sv_python)"; then

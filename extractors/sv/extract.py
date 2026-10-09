@@ -424,6 +424,8 @@ def _convert_expr(sm, e):
 def _convert_conversion_expr(sm, e):
     """Lower elaborated resizing after context signedness has propagated."""
     kind = e.conversionKind
+    if kind == ConversionKind.Explicit:
+        return _convert_integral_cast(sm, e)
     if kind not in (ConversionKind.Implicit, ConversionKind.Propagated):
         return unsupported(sm, e, "ConversionExpression:" + str(kind).split(".")[-1])
     ow, tw = e.operand.type.bitWidth, e.type.bitWidth
@@ -466,6 +468,26 @@ def _convert_conversion_expr(sm, e):
         "width": tw,
         "operand": inner,
     }
+
+
+def _convert_integral_cast(sm, expr):
+    """Integral casts resize using the operand's self-determined signedness.
+    Nonintegral/exotic types and symbolic casts remain loud."""
+    source_width, _, source_reason = type_width_2s(expr.operand.type)
+    target_width, two_state, target_reason = type_width_2s(expr.type)
+    if _SYM is not None or source_reason is not None or target_reason is not None:
+        return unsupported(sm, expr, "ConversionExpression:Explicit")
+    operand = _convert_expr(sm, expr.operand)
+    if source_width != target_width:
+        operand = {
+            "kind": "SignedResize" if expr.operand.type.isSigned else "Resize",
+            "span": node_span(sm, expr),
+            "width": target_width,
+            "operand": operand,
+        }
+    if two_state and expr.operand.type.isFourState:
+        operand = squash2_wrap(operand, target_width)
+    return operand
 
 
 def _convert_named_value_expr(sm, e):

@@ -536,10 +536,11 @@ and `s>=` after context propagation, not inferred from variable names.
 
 `SignedResize` has `kind`, `span`, `width` and `operand`. It retains the
 low `width` bits when narrowing and copies the source's most significant
-bit when widening, including `x` and `z`. The source and propagated
-result types must both be signed; an unsigned context uses the existing
-zero-filling `Resize`. In particular, assignment to an unsigned wider
-destination can contain an inner signed extension followed by a
+bit when widening, including `x` and `z`. For an implicit conversion,
+the source and propagated result types must both be signed; an unsigned
+context uses the existing zero-filling `Resize`. In particular,
+assignment to an unsigned wider destination can contain an inner signed
+extension followed by a
 same-width unsigned reinterpretation, while mixed-sign arithmetic and
 comparison can propagate an unsigned widening context. Conversion
 placement in the expression tree is significant.
@@ -552,5 +553,28 @@ and the existing natural field-width rule; unknown output retains the
 existing `x`/`X` rendering.
 
 This extension does not admit signed M0 ports/nets or symbolic signed
-resizing. Enums, structures, unpacked arrays, reversed packed ranges,
-explicit casts and unsupported operators remain loud in this surface.
+resizing. Enums, structures, unpacked arrays, reversed packed ranges
+and unsupported operators remain loud in this surface.
+
+## Integral explicit conversions (2026-10-09)
+
+An elaborated `ConversionExpression:Explicit` whose source and result
+both have admitted integral type shapes lowers to the same existing
+expression nodes on the legacy/self-check path. Scalar, predefined
+integer and descending `[W-1:0]` packed scalar types are admitted;
+symbolic extraction continues to refuse explicit conversions.
+
+The cast operand is self-determined. A width change lowers to
+`SignedResize` when the **source type** is signed, otherwise `Resize`,
+regardless of the result type's signedness. An equal-width conversion
+keeps the operand unchanged. If the source is four-state and the result
+is two-state, an outer `Squash2` maps `x`/`z` to zero at the result width.
+Signing casts therefore need no extra runtime node: slang's elaborated
+result type already determines the signedness of later consumers and
+of any enclosing implicit conversion.
+
+Nonintegral and exotic integral type shapes remain
+`Unsupported` with `sv_kind = "ConversionExpression:Explicit"`.
+Bitstream and streaming-concatenation conversion kinds retain their
+own refusals. This lowering changes neither the self-check parser nor
+the scheduler vocabulary.

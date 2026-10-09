@@ -140,9 +140,37 @@ internal under §6.1.
 
 This item does **not** admit signed M0 ports/nets, symbolic signed
 widening, reversed packed ranges, enums/structures/unpacked arrays,
-explicit casts, shifts, calls or general loops in the self-check tier.
+shifts, calls or general loops in the self-check tier. Integral explicit
+casts are addressed by the following item.
 Its initial-only runner remains initial-only. Each other surface keeps
 its own admission boundary.
+
+### Integral explicit casts — 2026-10-09
+
+The legacy/self-check extractor now lowers integral size, signing and
+data-type casts over the scalar, predefined integer and descending
+zero-based packed-vector types already admitted by this surface
+(clauses 6.24 and 11.7). The operand is self-determined: widening copies
+its sign bit when the **operand** is signed, including when the cast's
+result type is unsigned. This differs from propagated mixed-sign
+arithmetic sizing. Narrowing retains the low bits; equal-width signing
+casts preserve the bits while slang carries the result's signedness
+into subsequent consumers. A four-state-to-two-state cast applies
+`Squash2` after resizing, mapping each `x` and `z` to zero.
+
+No new value operator or scheduler is introduced: the lowering uses
+the existing `Resize`, `SignedResize` and `Squash2` expression rules.
+Original fixtures in `harness/sv/casts/` exercise dynamic operands,
+opposite source/result signedness, nested contexts and unknown bits.
+The existing strict differential harness accepts them through its
+external source-list option; corpus artifacts and logs remain private.
+The actual-fixture proof uses the shared non-suspending step/executor
+correspondence, not a cycle-adequacy assumption.
+
+Real/string/enum/structure casts, bitstream/streaming conversions,
+unsupported declared ranges and symbolic casts remain loud. This is
+not an expansion of the M0 or Design2 loaders' admission boundaries,
+nor an implementation of dynamic `$cast`.
 
 ---
 

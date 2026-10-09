@@ -16,10 +16,13 @@ def selection_block():
     _, marker, suffix = source.partition("\nxcelium_ready=0\n")
     if not marker:
         raise AssertionError("CI driver has no Xcelium readiness admission block")
-    block, marker, _ = suffix.partition("\n# SPICE lane:")
+    before_sv2, marker, sv2 = suffix.partition("\n# sv-0.2 semantic tier:")
     if not marker:
-        raise AssertionError("CI driver has no SPICE boundary after SV admission")
-    return "xcelium_ready=0\n" + block
+        raise AssertionError("CI driver has no SV2 boundary after SV admission")
+    sv2_body, terminator, _ = sv2.partition("\nfi\n")
+    if not terminator:
+        raise AssertionError("CI driver has no SV2 admission terminator")
+    return "xcelium_ready=0\n" + before_sv2 + marker + sv2_body + terminator
 
 
 class CiOracleAdmissionTests(unittest.TestCase):

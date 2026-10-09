@@ -2640,6 +2640,35 @@ if [ "$SELF_TEST" = "1" ]; then
   ul="$(LS_MOCK_LOAD="" LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" choose_threads)"
   check "unreadable load falls back to 2"     "${ul%% *}" "2"
   check "  ...and names the unreadable load" "$(printf '%s' "$ul" | grep -c 'load unreadable')" "1"
+  controlled_load_choice() {
+    local host_load="$1" mock_state="$2" load_receipt="$3"
+    : > "$load_receipt"
+    awk() {
+      if [ "${2:-}" = /proc/loadavg ]; then
+        printf 'read\n' >> "$load_receipt"
+        printf '%s\n' "$host_load"
+      else
+        command awk "$@"
+      fi
+    }
+    sysctl() {
+      printf 'read\n' >> "$load_receipt"
+      printf '{ %s 0 0 }\n' "$host_load"
+    }
+    if [ "$mock_state" = empty ]; then export LS_MOCK_LOAD=""; else unset LS_MOCK_LOAD; fi
+    LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" choose_threads
+  }
+  for host_load in 0.50 11.6; do
+    load_receipt="$tmp/load-instrument"
+    load_choice="$(controlled_load_choice "$host_load" empty "$load_receipt")"
+    check "empty load falls back to 2 on host $host_load" "${load_choice%% *}" "2"
+    check "  ...and reports load unreadable" "$(printf '%s' "$load_choice" | grep -c 'load unreadable')" "1"
+    check "  ...without reading host $host_load" "$(cat "$load_receipt")" ""
+    load_choice="$(controlled_load_choice "$host_load" unset "$load_receipt")"
+    if [ "$host_load" = 0.50 ]; then expected_threads=4; else expected_threads=2; fi
+    check "unset load consults host $host_load" "${load_choice%% *}" "$expected_threads"
+    check "  ...reading the host instrument once" "$(cat "$load_receipt")" "read"
+  done
   # ONCE PER PHASE, NEVER MID-BUILD: two decision sites, and none of them
   # inside the attempt loop, where a changed throttle would make the build's
   # own timings unattributable.

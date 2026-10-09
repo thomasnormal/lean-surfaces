@@ -76,8 +76,24 @@ maybe() { # maybe <name> <required-file> <command...>
 # THE TOOLS' OWN REFUSAL PATHS.  None of them ran in CI, so a gate could rot
 # silently between audits — which is how four of this lane's tools shipped with
 # defects the 2026-08-23 audit had to find by reading.
+selftest_report() {
+  local name="$1" output status
+  shift
+  output="$(mktemp "${TMPDIR:-/tmp}/ci-selftest-output.XXXXXX")" || return 1
+  if "$@" >"$output" 2>&1; then
+    rm -f "$output"
+    return 0
+  else
+    status=$?
+  fi
+  echo "    SELF-TEST FAILED: $name (exit $status)"
+  cat "$output"
+  rm -f "$output"
+  return 1
+}
+
 selftests() {
-  local t rc=0 stub transcript
+  local t rc=0 stub
   # A no-op `lake` in front of PATH, plus the sentinel every descendant
   # inherits.  Belt (argv), suspenders (sentinel), and a stub so that even a
   # successful re-entry cannot reach a real build.
@@ -130,23 +146,18 @@ STUB
     grep -qE -- '--self-test\)|= "--self-test"' "$t" || continue
     case "$t" in */ci.sh) continue ;; esac        # belt: never re-enter CI
     # A per-tool timeout, so a future tool that hangs cannot hang CI.
-    transcript="$stub/transcript"
-    if ! ( cd "$view" && timeout 120 bash "$t" --self-test ) >"$transcript" 2>&1; then
-      echo "    SELF-TEST FAILED (or timed out): ${t##*/}"; rc=1
-      cat "$transcript"
+    if ! ( cd "$view" && selftest_report "${t##*/}" timeout 120 bash "$t" --self-test ); then
+      rc=1
     fi
   done
-  ( cd "$view" && python3 tools/docs_check.py --self-test ) >/dev/null 2>&1 || {
-    echo "    SELF-TEST FAILED: docs_check.py"; rc=1; }
+  ( cd "$view" && selftest_report docs_check.py python3 tools/docs_check.py --self-test ) || rc=1
   # The comment-form gate's own regression set, run where the other tools'
   # are: a fixture nobody runs is not a fixture.
-  ( cd "$view" && python3 harness/lean_comment_forms.py --self-test ) >/dev/null 2>&1 || {
-    echo "    SELF-TEST FAILED: lean_comment_forms.py"; rc=1; }
+  ( cd "$view" && selftest_report lean_comment_forms.py python3 harness/lean_comment_forms.py --self-test ) || rc=1
   # THE HARNESS'S OWN ROWS, not any tier's corpus.  envelope_fresh is
   # LANE-ADDED per the floor law (the corpora are per-tier), so CI gates the
   # TOOL -- including its refusal path -- while adoption stays each lane's.
-  ( cd "$view" && python3 harness/envelope_fresh.py --self-test ) >/dev/null 2>&1 || {
-    echo "    SELF-TEST FAILED: envelope_fresh.py"; rc=1; }
+  ( cd "$view" && selftest_report envelope_fresh.py python3 harness/envelope_fresh.py --self-test ) || rc=1
   rm -rf "$stub" "$view"
   return "$rc"
 }
@@ -610,6 +621,8 @@ fi
 step  "conflict-markers" conflict_markers
 step  "argv-guards"     argv_guards
 step  "tool-self-tests" selftests
+step  "ci-selftest-report-tests" python3 tools/test_ci_selftests.py
+step  "ci-instrument-tests" python3 tools/test_instruments.py
 step  "py-onboarding-imports" python3 tools/test_python_onboarding.py
 step  "py-divergence-probe-tests" python3 harness/test_pyc_divergence_probe.py
 lake_build_step

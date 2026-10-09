@@ -18,7 +18,7 @@
 #   over A B              -> 0 when A > B, in floating point
 
 read_load() {                   # 1-minute load average
-  [ -n "${LS_MOCK_LOAD:-}" ] && { printf '%s\n' "$LS_MOCK_LOAD"; return 0; }
+  [ "${LS_MOCK_LOAD+x}" = x ] && { printf '%s\n' "$LS_MOCK_LOAD"; return 0; }
   if [ -r /proc/loadavg ]; then awk '{print $1}' /proc/loadavg; return 0; fi
   sysctl -n vm.loadavg 2>/dev/null | awk '{ gsub(/[{}]/, ""); print $1 }'
 }

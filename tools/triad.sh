@@ -2624,6 +2624,7 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...and says it could not tell"     "$(printf '%s' "$u" | grep -c 'instruments unreadable')" "1"
   ul="$(LS_MOCK_LOAD="" LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" choose_threads)"
   check "unreadable load falls back to 2"     "${ul%% *}" "2"
+  check "  ...and names the unreadable load" "$(printf '%s' "$ul" | grep -c 'load unreadable')" "1"
   # ONCE PER PHASE, NEVER MID-BUILD: two decision sites, and none of them
   # inside the attempt loop, where a changed throttle would make the build's
   # own timings unattributable.

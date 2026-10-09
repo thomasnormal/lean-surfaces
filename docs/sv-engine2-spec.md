@@ -223,7 +223,7 @@ when both sides exist rather than assumed during the schema work.
 | `Engine2.ProcessKey` (landed) | Natural registration identity, independent of scheduler storage | Fresh allocation and historical retention remain future registry invariants |
 | `Engine2.ProcessState Frame` (landed) | Live continuation phase/explicit suspension, or distinct normal/forced termination | Source status is not scheduler readiness; wait/control transitions remain future rules |
 | `Engine2.ProcessRecord Frame` (landed) | Key, body kind, independent control eligibility, lifecycle | Data replacement preserves registration metadata, not a proof of a legal transition |
-| `SignalState` | Typed signal identity, `LVec` value, publication generation | One ordinary value/publication authority; named events use occurrence state |
+| `SignalState` (landed) | Typed signal identity, `LVec` value, publication generation | One ordinary value/publication authority; named events use occurrence state |
 | `Engine2.WaitRegistration` (landed) | Independent wait/continuation identity, captured reason/dependencies and resume region | Identity recognition only; single-wake consumption, cancellation and region legality remain future rules |
 | `Engine2.ScheduledEvent` (landed) | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions; queue policy remains future |
 | `PendingUpdates` (landed) | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
@@ -451,6 +451,18 @@ records. The structural projections and exhaustive kind facts do not define
 queue admission, NBA ordering, publication, cancellation, stale filtering,
 overflow, or scheduler policy. No source fixture can expose these internal
 captures, so this piece adds no differential claim.
+
+### Landed ordinary signal state
+
+`LeanModels/Sv/Engine2/Signal.lean` defines `SignalState` as one semantic
+ordinary-signal record: a `SignalKey`, its current `LVec`, and a
+`PublicationGeneration`. The generation has an explicit initial state whose
+token is zero and an issued state whose token is nonzero; this captures the
+kernel's read-side distinction without choosing token allocation or rollover.
+Named-event occurrence state is intentionally not folded into this record.
+Only construction, token classification and field-preservation facts are
+proved here. Value-change detection, same-value retention, fanout, publication
+timing, queue admission, and wakeups remain later rules.
 
 ### 4.1 Consumer body interface
 

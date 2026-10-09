@@ -28,6 +28,7 @@ import LeanModels.Sv.Engine2.Process
 import LeanModels.Sv.Engine2.Wait
 import LeanModels.Sv.Engine2.Event
 import LeanModels.Sv.Engine2.Update
+import LeanModels.Sv.Engine2.Signal
 -- R1 inch 4a: the resumable stepper. `stepSStmts` runs a process body to
 -- completion OR to its first suspension point, with the continuation kept as
 -- DATA (the residual statement list) because `SemM` cannot suspend. Carries

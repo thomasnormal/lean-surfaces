@@ -656,12 +656,12 @@ maybe "leanpy-survey"   harness/leanpy_survey.py  python3 harness/leanpy_survey.
 # the differential suite and the grammar census; a tier change that moves
 # coverage must move the page too.
 step  "py-coverage-fresh" python3 harness/coverage_page.py --check
-# Curated examples (Examples/python/README.md), plus scalar-string proofs:
+# Curated examples (Examples/python/README.md), plus scalar and sequence proofs:
 # none of their declarations may rest on `sorryAx` or native computation.
 # Reads the oleans the build step produced.
 py_examples_axioms() {
   local mods=() e lp
-  for e in add my_abs midpoint tri gcd fib nested_flow rsa_inverse bench_bisect bench_statistics int_string string_repeat; do
+  for e in add my_abs midpoint tri gcd fib nested_flow rsa_inverse bench_bisect bench_statistics int_string string_repeat tuple_repeat; do
     mods+=("Examples.python.$e.spec" "Examples.python.$e.proof")
   done
   lp=$(ls -d .lake/build/lib/lean .lake/packages/*/.lake/build/lib/lean 2>/dev/null | paste -sd:)

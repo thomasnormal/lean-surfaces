@@ -412,6 +412,33 @@ cycle DETECTION, never by running out of fuel).
   candidate whose TYPENAME collides with an `ntBase` class name, so in a
   recognized module a value's `tname` names exactly its defining class.
 
+## Tuple repetition (2026-10-09 — current)
+
+Tuple and namedtuple repetition shares the pure `tupleRepeat` worker in both
+interpreters, for either operand order, boolean counts, and `*=`. Admission
+requires BOTH the original signed count's magnitude and the result's element
+count to be at most `seqBudget` (1,048,576). The original-count check happens
+before materialization, including empty tuples and negative counts. CPython
+converts the count to its index-sized representation before those cases can
+return an empty tuple; larger counts refuse rather than guessing the host's
+word size, `OverflowError`, or `MemoryError`. The bounds are fuel-independent.
+
+Admitted non-positive counts produce an empty tuple. Positive counts retain
+the structural `List.replicate`/`flatten`/`toArray` implementation, with no
+cache or special-case fast path. Namedtuple repetition yields a PLAIN tuple,
+and elements that refer to heap objects retain their original references:
+repetition is shallow, not a copy of the referents. Existing operand evaluation
+and sequence-protocol precedence are unchanged; list repetition and custom
+`__index__` protocols remain loud. No recursion point, heap-free predicate,
+or public judgment changes.
+
+`Examples/python/tuple_repeat` proves symbolic lengths for a two-element tuple
+and the empty tuple, with kernel-checked non-vacuity, bounds, error, namedtuple,
+and aliasing checks. Durable large-output comparisons return lengths, not
+million-element renderings. Scripts check admitted operand effects separately
+from oversized-count refusals: a refusal carries no observable world/stdout,
+so it must not be treated as an observation of CPython's partial output.
+
 ## String semantics (H5 strings — BUILT, 2026-08-09)
 
 ### String repetition (2026-10-09 — current)
@@ -2882,7 +2909,9 @@ each construct differential, refusals loud):
   tuples are immediate values, so the slice allocates nothing; LIST
   slices stay loud (they allocate a heap object).
 * **sequence repetition** `tuple * int` / `int * tuple` (bool coerces;
-  `n ≤ 0` → empty). List/str repetition stays loud, recorded.
+  admitted `n ≤ 0` → empty). Original-count magnitude and output size are
+  bounded independently; see the current tuple repetition section. Lists
+  remain loud; strings use the current string repetition tier.
 * **`sum(iterable[, start])`**: the element fold IS `evalBinOp .add`
   (so int and tuple sums are exactly Python's `+`, mixed types its
   faithful `TypeError`); a str `start` is CPython's special

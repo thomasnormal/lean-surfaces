@@ -38,6 +38,12 @@ result for symbolic text and counts. The admission premises bound the original
 count magnitude and output code-point length to 1,048,576; excessive counts
 stay loud even when the string is empty or the count is negative.
 
+[`tuple_repeat`](tuple_repeat/) proves symbolic repeated-tuple lengths and the
+empty-tuple result under the same original-count bound. The output-element
+count also stays within 1,048,576; excessive counts refuse even for negative
+counts and empty tuples. Its concrete checks cover both operand orders, `*=`,
+namedtuple-to-tuple results, and shared heap references.
+
 **Sunfish:** the proofs about the unmodified
 [sunfish](https://github.com/thomasahle/sunfish) chess engine (GPL-3.0)
 now live in the sunfish repository, as a Lake package that depends on

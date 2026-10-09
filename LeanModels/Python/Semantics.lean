@@ -537,13 +537,14 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
         .unsupported
           s!"comparison '{op.symbol}' between '{a.typeName}' and '{b.typeName}' is outside the v0 tier"
 
-/-- Tuple repetition `xs * n` (pass 3): `n ≤ 0` is empty (CPython), the
-result budget-guarded like `rangeVals` (fuel-independent refusal). -/
-def tupleRepeat (xs : Array RVal) (n : Int) : Res RVal :=
-  if xs.size * n.toNat ≤ seqBudget then
-    .ok (.tuple ((List.replicate n.toNat xs.toList).flatten.toArray))
+/-- Tuple repetition with fuel-independent bounds on the original count
+magnitude and the output's element count. Larger counts refuse before
+empty/negative handling rather than guessing CPython's index-sized limit. -/
+def tupleRepeat (xs : Array RVal) (count : Int) : Res RVal :=
+  if count.natAbs ≤ seqBudget ∧ xs.size * count.toNat ≤ seqBudget then
+    .ok (.tuple ((List.replicate count.toNat xs.toList).flatten.toArray))
   else
-    .unsupported "tuple repetition beyond seqBudget is outside the tier (docs/memory-model.md §module-init execution)"
+    .unsupported "tuple repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §tuple repetition)"
 
 /-- String repetition with fuel-independent bounds on the original count
 magnitude and the output's code-point length. Larger counts refuse before

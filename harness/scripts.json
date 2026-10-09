@@ -293,5 +293,18 @@
   {
     "file": "harness/scripts/string_repeat_order_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/tuple_repeat_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/tuple_repeat_effects_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/tuple_repeat_order_script.py",
+    "expect": "unsupported",
+    "note": "Conservative tuple tier: CPython 3.9 evaluates and prints all operand-order and caught-TypeError cases, then raises OverflowError for empty tuple times 2**100; the original-count budget refuses that final operation loudly rather than returning empty or inventing overflow."
   }
 ]

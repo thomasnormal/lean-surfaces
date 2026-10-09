@@ -12,6 +12,17 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Fixed
+
+- Tuple and namedtuple repetition checks the original integer count's magnitude
+  before handling empty sequences or negative counts. Counts beyond 1,048,576
+  refuse loudly instead of returning a wrong empty result or attempting an
+  unbounded allocation; the independent output-element budget is unchanged.
+  Both operand orders and `*=` share this admission, without guessing a host
+  index width, `OverflowError`, or `MemoryError`.
+- The `tuple_repeat` example proves symbolic output lengths under the admission
+  bounds and checks boolean counts, namedtuple erasure, and shallow aliasing.
+
 ## [0.1.3] — 2026-10-09 (tag publication pending)
 
 ### Added

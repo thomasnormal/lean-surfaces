@@ -1,7 +1,8 @@
 # C++ tier charter
 
 2026-10-09 — specification plan; [translation artifact admission](cpp-translation.md)
-is implemented, execution is not. General C++ is
+is implemented; [declaration semantics](cpp-declarations.md) are specified,
+not implemented. Execution is not admitted. General C++ is
 the destination; Engine2 is evidence, not the definition of the language.
 
 ## Contract and trusted boundary

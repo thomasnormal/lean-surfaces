@@ -63,8 +63,9 @@ cleanups and macro spelling/expansion locations.
 The index does **not** infer linkage, merge entities, resolve qualified names,
 check ODR/linking, validate context-link graphs, infer missing template bodies,
 or expand Clang's elided locations. An omitted location stays omitted, not
-an invented source-ownership claim. These are the next rung-0 obligations;
-preserving their inputs is not implementing their rules. Types are compiler
+an invented source-ownership claim. The next rung-0 obligations are specified
+in the [declaration/entity/linkage contract](cpp-declarations.md).
+Preserving their inputs is not implementing their rules. Types are compiler
 metadata, not semantic type-equality proofs.
 
 `LeanModels/Cpp/Translation.lean` refuses **every execution**, including empty

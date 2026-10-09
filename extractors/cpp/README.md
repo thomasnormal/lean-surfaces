@@ -163,3 +163,22 @@ inputs complete. Preflight guards are not protection against adversarial
 concurrent filesystem mutation; real-artifact receipts retain before/after
 hashes. The [pricing receipt](../../docs/cpp-canonical-evidence.md) records the
 bounded original/probe measurement and any remaining refusals.
+
+## Query-local declaration pricing
+
+`price_declarations.py` measures witnessed candidates separately for canonical
+nodes, TU/namespace context chains, declaration-local definition flags and raw
+compiler linkage enums. The [pricing policy](../../docs/cpp-declaration-pricing.md)
+names the common gates, query-specific closures and conservative refusals.
+Each candidate retains explicit semantic barriers; `semantic_admitted_queries`
+is always zero. This tool is not part of extraction or Lean ingestion.
+
+```console
+python3 extractors/cpp/test_price_declarations.py
+python3 extractors/cpp/price_declarations.py probe.json --max-input-mib 2048 --sample-limit 10 --out pricing.json
+```
+
+Reports distinguish per-family counts, encountered wall sets, query intersections
+and bounded evidence examples. Complete-AST pointer closure and local query
+eligibility remain different measurements. Pin input/tool hashes and explicit
+time/memory bounds externally; the default input-byte cap remains 64 MiB.

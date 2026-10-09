@@ -5,6 +5,11 @@ The [translation-artifact tier](cpp-translation.md) retains the inputs below;
 its declaration index does not establish these semantic relationships.
 `LeanModels/Cpp/Translation.lean` still refuses every execution.
 
+The [query-local evidence pricing tool](cpp-declaration-pricing.md) measures
+witnessed candidates separately for canonical nodes, contexts, local definition
+flags and compiler linkage telemetry. It does not implement this semantic
+contract; every result retains explicit semantic barriers.
+
 ## Standard obligations and trusted boundary
 
 Baseline: the charter's C++23 profile and WG21

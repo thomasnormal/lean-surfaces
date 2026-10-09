@@ -285,5 +285,13 @@
   {
     "file": "harness/scripts/int_string_truncated_error_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/string_repeat_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/string_repeat_order_script.py",
+    "expect": "match"
   }
 ]

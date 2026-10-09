@@ -198,8 +198,16 @@ The four the grammar census measured REFUSED while `<<`, `|` and `&` ran. -/
 #guard isUnsupported (ev (bo (.list #[iL 1] sp) .add (.tuple #[iL 2] sp))) -- H2: with `+`-concat
 #guard isTypeError (ev (bo noneL .add (iL 1)))
 #guard isTypeError (ev (bo (sL "a") .sub (sL "a")))
--- Python-valid but out of tier: sequence repetition.
-#guard isUnsupported (ev (bo (sL "ab") .mult (iL 3)))
+#guard ev (bo (sL "ab") .mult (iL 3)) == .ok (.str "ababab")
+#guard ev (bo (iL 3) .mult (sL "ab")) == .ok (.str "ababab")
+#guard ev (bo (sL "λ😀") .mult (bL true)) == .ok (.str "λ😀")
+#guard ev (bo (sL "ab") .mult (iL (-3))) == .ok (.str "")
+#guard ev (bo (sL "ab") .mult (.tuple #[iL 1] sp)) ==
+  .exn (.typeError "can't multiply sequence by non-int of type 'tuple'")
+#guard ev (bo (.tuple #[iL 1] sp) .mult (sL "ab")) ==
+  .exn (.typeError "can't multiply sequence by non-int of type 'str'")
+#guard isUnsupported (ev (bo (sL "") .mult (iL 1048577)))
+#guard isUnsupported (ev (bo (sL "") .mult (iL (-1048577))))
 #guard isUnsupported (ev (bo (iL 3) .mult (.list #[iL 1] sp)))
 -- `%` on a str is the FORMAT operator (§`%`-formatting on strings): the
 -- bare conversions decide (a non-tuple right operand is ONE argument),

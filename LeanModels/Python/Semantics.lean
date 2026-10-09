@@ -63,7 +63,7 @@ The v0 discipline is unchanged:
 
 Tier-boundary decisions refining DESIGN.md (Python supports these, the
 tier does not — so they are `unsupported`, never a fake `TypeError`):
-sequence repetition (`"a" * 2`), `%` string formatting, `str` unpacking
+list repetition (`[1] * 2`), `%` string formatting, `str` unpacking
 (`a, b = "xy"`), nested/starred unpacking targets, `break`/`continue`
 escaping a function body, negative `**` exponents (incl. `0 ** -1`),
 referencing a function (or a builtin — `len`/`sorted`) as a value, calling a
@@ -117,8 +117,8 @@ def RVal.typeName : RVal → String
 
 /-- Is this runtime value one of the value-sequence types
 (`str`/`listV`/`tuple`/namedtuple)? Namedtuples ARE tuples in CPython
-(sequence protocol included), so they answer `true` — which routes
-repetition to the loud sequence-repetition arm, never a fake `TypeError`. -/
+(sequence protocol included), so they answer `true` — multiplication
+dispatches the sequence protocol before the numeric fallback. -/
 def RVal.isSeq : RVal → Bool
   | .str _ | .listV _ | .tuple _ => true
   | .ntuple _ _ _ => true
@@ -545,6 +545,52 @@ def tupleRepeat (xs : Array RVal) (n : Int) : Res RVal :=
   else
     .unsupported "tuple repetition beyond seqBudget is outside the tier (docs/memory-model.md §module-init execution)"
 
+/-- String repetition with fuel-independent bounds on the original count
+magnitude and the output's code-point length. Larger counts refuse before
+empty/negative handling rather than guessing CPython's index-sized limit. -/
+def strRepeat (text : String) (count : Int) : Res RVal :=
+  if count.natAbs ≤ seqBudget ∧ text.length * count.toNat ≤ seqBudget then
+    .ok (.str (String.ofList ((List.replicate count.toNat text.toList).flatten)))
+  else
+    .unsupported "string repetition beyond seqBudget is outside the tier (count magnitude or output code-point length; docs/memory-model.md §string repetition)"
+
+/-- Repeat an admitted immediate sequence; the count's real Python type
+is known before constructing the faithful non-integer `TypeError`. -/
+def sequenceRepeat (sequence count : RVal) : Res RVal :=
+  match sequence, count with
+  | .ref _, _ | _, .ref _ =>
+      .unsupported "sequence repetition with a heap object is outside the tier (docs/memory-model.md §string repetition)"
+  | _, _ =>
+      match asInt count with
+      | some number =>
+          match sequence with
+          | .str text => strRepeat text number
+          | .tuple values | .ntuple _ _ values => tupleRepeat values number
+          | _ => .unsupported "repetition of this sequence is outside the tier"
+      | Option.none =>
+          .exn (.typeError s!"can't multiply sequence by non-int of type '{count.typeName}'")
+
+/-- Value-sequence multiplication preserves the left operand's protocol:
+`str * tuple` and `tuple * str` name different non-integer counts. -/
+def sequenceMult (left right : RVal) : Res RVal :=
+  match left, right with
+  | .ref _, _ | _, .ref _ =>
+      .unsupported "sequence multiplication with a heap object is outside the tier (docs/memory-model.md §string repetition)"
+  | .str _, _ | .tuple _, _ | .ntuple _ _ _, _ => sequenceRepeat left right
+  | .listV _, _ =>
+      if (asInt right).isSome then
+        .unsupported
+          s!"sequence repetition ('list' * '{right.typeName}') is outside the v0 tier"
+      else
+        .exn (.typeError s!"can't multiply sequence by non-int of type '{right.typeName}'")
+  | _, .str _ | _, .tuple _ | _, .ntuple _ _ _ => sequenceRepeat right left
+  | _, _ =>
+      if (left.isSeq && (asInt right).isSome) || ((asInt left).isSome && right.isSeq) then
+        .unsupported
+          s!"sequence repetition ('{left.typeName}' * '{right.typeName}') is outside the v0 tier"
+      else
+        .exn (.typeError s!"unsupported operand type(s) for *: '{left.typeName}' and '{right.typeName}'")
+
 /-- `a &&& ~m` over `Nat`. `Nat.ldiff` does not exist in v4.33.0-rc1, and
 none is needed: every bit of `a` either is or is not in `m`, so removing
 the ones that are IS the difference. Never underflows (the grid instrument
@@ -848,37 +894,7 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | op, _, .ref _ =>
         .unsupported
           s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
-    -- pass 3: TUPLE repetition (`(0,) * 20`) — in-model allocation-free
-    -- (immediate values); a namedtuple repeats as a PLAIN tuple
-    -- (tuple.__mul__); non-int right/left operands keep CPython's
-    -- `can't multiply sequence by non-int` class through the arm below.
-    -- List/str repetition stays loud (a list result allocates; recorded).
-    | .mult, .tuple xs, v =>
-        (match asInt v with
-         | some n => tupleRepeat xs n
-         | Option.none =>
-           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
-    | .mult, .ntuple _ _ xs, v =>
-        (match asInt v with
-         | some n => tupleRepeat xs n
-         | Option.none =>
-           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
-    | .mult, v, .tuple xs =>
-        (match asInt v with
-         | some n => tupleRepeat xs n
-         | Option.none =>
-           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
-    | .mult, v, .ntuple _ _ xs =>
-        (match asInt v with
-         | some n => tupleRepeat xs n
-         | Option.none =>
-           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
-    | .mult, a, b =>
-        if (a.isSeq && (asInt b).isSome) || ((asInt a).isSome && b.isSeq) then
-          .unsupported
-            s!"sequence repetition ('{a.typeName}' * '{b.typeName}') is outside the v0 tier"
-        else
-          .exn (.typeError s!"unsupported operand type(s) for *: '{a.typeName}' and '{b.typeName}'")
+    | .mult, left, right => sequenceMult left right
     | .mod, .str fmt, rhs => strFormat fmt rhs
     | op, a, b =>
         .exn (.typeError

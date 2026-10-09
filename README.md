@@ -20,10 +20,12 @@ statements unchanged. First-proof and tutorial builds stay within Python depende
 native dictionary iterators now retain resize failures without changing
 ordinary generator closure behavior. ASCII decimal strings now admit underscore
 grouping and all six integer whitespace characters, with exact invalid-literal
-errors and a configuration-independent 640-digit bound. Non-ASCII input and
-explicit bases remain loud. The executable differential suite has
-1,412 cases: 1,287 agree with CPython and 125 refuse loudly. The narrower proof
-interpreter agrees on 1,209 cases and refuses 203; neither run has a mismatch.
+errors and a configuration-independent 640-digit bound. Non-ASCII integer
+input and explicit bases remain loud. String repetition supports both operand
+orders, boolean counts, and `*=`, under fixed count/output bounds. The executable
+differential suite has 1,630 cases: 1,482 agree with CPython and 148 refuse loudly.
+The narrower proof interpreter agrees on 1,404 cases and refuses 226; neither
+run has a mismatch.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 

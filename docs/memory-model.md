@@ -414,6 +414,37 @@ cycle DETECTION, never by running out of fuel).
 
 ## String semantics (H5 strings — BUILT, 2026-08-09)
 
+### String repetition (2026-10-09 — current)
+
+`str * int`, `int * str`, boolean counts, and `*=` share the pure
+`strRepeat` worker in both interpreters. Repetition preserves every Unicode
+scalar value, including NUL and combining characters; it does not consult
+ASCII case tables or guess Unicode printability. Non-positive admitted counts
+yield the empty string. Materialization is structural list repetition and
+flattening, followed by `String.ofList`, so concrete checks remain
+kernel-reducible without caches or special-case fast paths.
+
+Admission bounds BOTH the original signed count's magnitude and the result's
+code-point length by the fixed `seqBudget` (1,048,576). The count check comes
+before materialization even for an empty string or negative count: CPython
+must first convert the integer to its platform's index-sized representation,
+and an enormous count can overflow even when the eventual result would be
+empty. Larger counts/output refuse, never guessing a host word size,
+`OverflowError`, or `MemoryError`. These bounds do not depend on interpreter
+fuel. Lone surrogates remain outside Lean's `Char` boundary.
+
+`sequenceMult` preserves the left sequence's multiplication protocol before
+trying the right sequence: `"ab" * (1,)` names `tuple` in its non-integer
+`TypeError`, while `(1,) * "ab"` names `str`. Existing tuple/namedtuple
+repetition uses the same dispatch and keeps its result unchanged. Heap
+operands, including live lists and custom `__index__` objects, stay loud.
+No interpreter recursion point, heap-free predicate, or public judgment
+changes. `Examples/python/string_repeat` gives symbolic totality proofs under
+the two admission bounds; scripts pin both expression and augmented-assignment
+evaluation order.
+
+### Original string tier
+
 Strings are immutable, so the tier is pure VALUE semantics — no heap,
 no aliasing, world-preserving by construction (Semantics.lean §string
 tier).

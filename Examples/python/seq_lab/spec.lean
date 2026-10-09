@@ -9,7 +9,7 @@ str start is CPython's special-cased `TypeError`), `tuple(it)`, and
 `range` as the immediate `RVal.rangeV` — materialize-per-use, which is
 what makes RE-ITERATION exact (`range_reiter`). The loud frontier is
 pinned below: range `==`/indexing/membership/unpacking/boundary, list
-slices, str repetition — every one `unsupported`, never a guessed value
+slices — every one `unsupported`, never a guessed value
 and never a fake `TypeError`.
 -/
 
@@ -91,8 +91,7 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
   | .unsupported _ => true | _ => false)
 #guard (match callFunction seq_lab "list_slice_loud" #[.int 2] 4096 with
   | .unsupported _ => true | _ => false)
-#guard (match callFunction seq_lab "str_repeat_loud" #[.int 2] 4096 with
-  | .unsupported _ => true | _ => false)
+#py_check seq_lab.str_repeat_loud(2) = "abab"
 
 /-! ### pass 5: left shift and bitwise or (docs/memory-model.md §left
 shift and bitwise or) — the post-#158 shipped file's `1 << 63` and

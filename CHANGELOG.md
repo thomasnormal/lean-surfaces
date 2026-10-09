@@ -37,6 +37,11 @@ change is listed here under **Changed** or **Removed**.
   larger digit counts, non-ASCII input, and explicit bases remain loud.
 - The `int_string` example proves symbolic results for grouped and signed
   decimal literals without native axioms.
+- String repetition supports both operand orders, boolean counts, and `*=`,
+  preserving Unicode code points and exact non-integer count errors.
+  Count magnitude and output length have fuel-independent bounds; heap
+  operands and oversized counts remain loud. The `string_repeat` example
+  proves symbolic results for both operand orders and decorated strings.
 
 ## [0.1.2] — 2026-10-09 (tag publication pending)
 

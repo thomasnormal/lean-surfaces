@@ -33,6 +33,11 @@ exception checks with symbolic proofs: `int("1_024") + offset` equals
 `1024 + offset`, and a signed, whitespace-padded literal yields `offset - 2048`.
 Non-ASCII strings, more than 640 decimal digits, and explicit bases stay loud.
 
+[`string_repeat`](string_repeat/) proves both operand orders and a decorated
+result for symbolic text and counts. The admission premises bound the original
+count magnitude and output code-point length to 1,048,576; excessive counts
+stay loud even when the string is empty or the count is negative.
+
 **Sunfish:** the proofs about the unmodified
 [sunfish](https://github.com/thomasahle/sunfish) chess engine (GPL-3.0)
 now live in the sunfish repository, as a Lake package that depends on

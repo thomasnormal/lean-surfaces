@@ -3,7 +3,7 @@
 Tuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),
 and range as an immediate value (materialize-per-use). The loud frontier
 is pinned by refusal probes: range ==/indexing/membership/unpacking/
-boundary, list slices, str repetition.
+boundary and list slices. String repetition now has its own acceptance tier.
 """
 
 from collections import namedtuple

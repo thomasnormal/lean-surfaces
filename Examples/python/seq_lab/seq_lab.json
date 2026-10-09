@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/seq_lab/seq_lab.py",
-  "source_sha256": "f5fcdb9c071fbfc5bc9e9fe77dc17338359de1c7d936ef038fc55a604d83a9c3",
+  "source_sha256": "bade2bf3960c59be7cf2dea8bc340a9d392db49beb0479e6eafc207707bdee25",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "seq_lab \u2014 pass 3's value tiers at FUNCTION level (checks-only).\n\nTuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),\nand range as an immediate value (materialize-per-use). The loud frontier\nis pinned by refusal probes: range ==/indexing/membership/unpacking/\nboundary, list slices, str repetition.\n"
+            "value": "seq_lab \u2014 pass 3's value tiers at FUNCTION level (checks-only).\n\nTuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),\nand range as an immediate value (materialize-per-use). The loud frontier\nis pinned by refusal probes: range ==/indexing/membership/unpacking/\nboundary and list slices. String repetition now has its own acceptance tier.\n"
           }
         }
       },

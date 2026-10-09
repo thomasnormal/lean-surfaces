@@ -188,7 +188,8 @@ This specification supplies a measured reason not to implement a name/ID
 heuristic. The optional [metadata probe](../extractors/cpp/README.md) is a
 separately versioned tooling experiment, not an admitted extractor supplement
 or implementation of this contract. The subsequent
-[two-corpus pricing](cpp-canonical-evidence.md) retains witnessed agreements,
-missing graph evidence and an explicitly refused whole-json-AST comparison;
-it does not discharge all acceptance obligations. There is no interpreter,
+[two-corpus pricing](cpp-canonical-evidence.md) now includes completed full-AST
+payload projection comparisons while retaining explicit pointer-witness and
+declaration-graph refusals; it does not discharge all acceptance obligations.
+There is no interpreter,
 declaration theorem about a prototype, or silent trust-boundary extension.

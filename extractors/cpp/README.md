@@ -121,3 +121,45 @@ measurement; full corpus-wide supplement coverage remains future work.
 The subsequent [real-artifact pricing receipt](../../docs/cpp-canonical-evidence.md)
 adds two unchanged original json probes. This does not integrate the supplement
 or change either corpus's declaration-semantic/runtime admission status.
+
+## Complete parsed-AST comparison
+
+`compare_ast.py` is a separate, standard-library-only diagnostic tool. It reads
+wrapped `ast` objects sequentially, visits **every AST field**, and computes
+versioned, typed, length-framed SHA-256 projections. Object keys are sorted;
+array order, scalar types, Unicode code points, absent fields and explicit nulls
+remain distinct. It does not compare frontend/envelope metadata or execute C++.
+
+The nonpointer projection erases only hexadecimal handles in the ten explicit
+pointer-field families. The witnessed projection replaces each such handle with
+its first deterministic same-process AST occurrence path. Every `id` field
+remains in the complete traversal, so this preserves the full identity partition
+without expanding every occurrence group again at every reference. All nested
+ID-bearing records count, including skeletal reference descriptions; metadata
+cannot manufacture a raw witness. No name/location heuristic or cache is used.
+
+The observed `targetLabelDeclId` field is pinned to Clang 21.1.8's
+`JSONNodeDumper::VisitGotoStmt`, which emits the label's pointer representation;
+`VisitLabelStmt` emits its label through `declId`. Recognizing these as pointer
+slots does not promote either reference into an ID-bearing raw witness.
+
+Unknown pointer-shaped slots retain their literal payload and refuse both
+comparisons. Missing recognized targets refuse the witnessed comparison even
+when its diagnostic digest matches. **Exit 0 means the computation completed,
+not that the ASTs agree**: inspect `nonpointer_comparison_status` and
+`witnessed_comparison_status`. Hash agreement is tooling evidence, not a theorem
+or semantic declaration admission; graph closure is a separate obligation.
+
+```console
+python3 extractors/cpp/test_compare_ast.py
+python3 extractors/cpp/compare_ast.py original.json probe1.json probe2.json --max-input-mib 2048 --out comparison.json
+```
+
+The default input-byte cap is 64 MiB. Larger bounds must be explicit; wall time
+and process memory limits belong to the measurement wrapper. Duplicate JSON
+object fields, non-integer/nonfinite numeric tokens, malformed envelopes and
+input/output aliases refuse loudly. Reports publish atomically only after all
+inputs complete. Preflight guards are not protection against adversarial
+concurrent filesystem mutation; real-artifact receipts retain before/after
+hashes. The [pricing receipt](../../docs/cpp-canonical-evidence.md) records the
+bounded original/probe measurement and any remaining refusals.

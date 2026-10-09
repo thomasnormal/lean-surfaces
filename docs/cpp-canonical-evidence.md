@@ -79,7 +79,7 @@ Aligned nonnull edges agree: canonical 158,891, predecessor 2,940,
 semantic/lexical context 158,596 each, original namespace 707, represented
 class 8,668. These agreements do not establish general entity identity.
 
-## Analysis cost and explicit limits
+## Earlier analysis cost and limits
 
 The existing complete analyzer was bounded to 600 seconds and 16 GiB virtual
 address space with a 2 GiB per-input cap. It **timed out** after 600.361 seconds,
@@ -90,27 +90,96 @@ edge-comparison functions, parses one input at a time and retains declaration
 paths plus metadata states, not entire ASTs. It completes in 92.196 seconds
 with 6,022,956 KiB child maximum RSS under the same bounds. It supplies the
 counts and witnessed relationships above. It deliberately omits expensive
-AST fingerprints: **whole/nonpointer AST comparison and equivalence to the
-original admitted json AST are NOT PERFORMED / REFUSED**, not successful.
-The matching input hashes and declaration observations cannot fill that gap.
+AST fingerprints: that run left **whole/nonpointer AST comparison and
+equivalence to the original admitted json AST NOT PERFORMED / REFUSED**,
+not successful. Matching input hashes and declaration observations could not
+fill that gap. The subsequent complete traversal is recorded separately below.
 
 A separately bounded original-declaration inventory completes in 53.830 seconds
 with 3,882,480 KiB maximum RSS. Its seven aggregate inventory counts, all 46
 declaration-kind counts and complete pointer-independent declaration-path groups
 match a fresh probe. That rules out a changed declaration inventory at this
 projection; it does not establish equality of statement/type/value payloads or
-the whole AST. The original/probe structural-comparison obligation remains open.
+the whole AST. That projection left the structural-comparison obligation open.
 The existing analyzer's 10 assertions, 13 census-fallback assertions and three
 projection tests pass; no successful full comparison is manufactured.
 
 The result prices the supplement as feasible to emit but incomplete to trust
-generally. Before integration, complete the bounded original/probe structural
-comparison, resolve or explicitly refuse required graph gaps, and define each
+generally. Before integration, resolve or explicitly refuse required graph gaps
+and define each
 supported declaration-family/entity rule. Definition evidence remains
 `not-queried` for 52,674 ledger nodes. Template/compiler integer categories,
 null owning-module fields and false context-dependence flags never supply
 missing semantic classifications. No new runtime cache or consumer-specific
 fast path is introduced by this measurement.
+
+## Bounded complete AST traversal
+
+The separate [comparison tool](../extractors/cpp/compare_ast.py) replaces repeated
+full-occurrence-group expansion with one deterministic first-path identity
+index and a complete, typed, length-framed traversal. Every AST field and every
+`id` slot remains observable, so first-path witnesses preserve the complete
+identity partition rather than guessing entities by name or location.
+Dictionary key order is normalized; array order and all nonpointer payloads
+remain significant. Envelope/frontend metadata is not part of this comparison.
+
+A bounded synthetic profile identifies quadratic expansion in the previous
+witness encoding: 256/2,048 repeated occurrences emit 0.84/56.57 MB of witness
+tokens. The replacement visits 1,545/12,297 tokens in 0.00147/0.01088 seconds.
+This diagnoses the scaling defect; it does not attribute every second of the
+earlier 600-second timeout to that defect. No cache or special-case path is
+introduced.
+
+The first full three-input run completes in 211.139 seconds, but refuses on
+42 unknown `targetLabelDeclId` slots per input. Their retained raw handles make
+the diagnostic digests differ; those differences are **not AST drift**.
+Clang 21.1.8's `JSONNodeDumper::VisitGotoStmt` explicitly emits a label pointer
+under that field; `VisitLabelStmt` emits a label pointer under `declId`.
+The exact tagged source is retained with SHA-256 `63574c29…fb81ba3`. Adding this
+documented pointer role produces `cpp-ast-fingerprint-2`, not a guessed witness
+or a relaxed missing-target guard.
+
+The final bounded run compares the original hardened json envelope and both
+unchanged probes in **208.429 seconds / 3,902,212 KiB maximum child RSS**, exit 0.
+Bounds remain 600 seconds, 16 GiB virtual address space and 2 GiB per input;
+inputs parse sequentially, and all before/after input and comparator hashes
+match. Each AST visits 44,051,683 tokens, 1,143,278 ID-bearing records, 613,112
+distinct IDs and 1,251,951 pointer-shaped slots. These are operational timings
+alongside repository validation, not an isolated compiler benchmark.
+
+The original and both probes have matching **complete nonpointer projections**
+(`a6bccce2…c531a5`), with zero unrecognized slots. Their diagnostic witnessed
+digests also match, but **complete pointer comparison REFUSES** on 775 missing
+raw occurrence witnesses per input:
+
+| Pointer field | Unwitnessed positions |
+| --- | ---: |
+| `temp` | 621 |
+| `typeAliasDeclId` | 85 |
+| `targetLabelDeclId` | 42 |
+| `declId` | 18 |
+| `previousDecl` | 9 |
+
+Recognizing label references does not turn them into ID-bearing occurrences.
+Neither metadata nor a `LabelStmt.declId` field manufactures the missing
+witness. Matching diagnostic hashes cannot certify the absent relationships;
+the declaration-ledger closure gaps above also remain unchanged. This is
+completed fingerprint computation, not full graph equivalence or semantic
+declaration admission. Exit 0 alone is never the agreement predicate.
+
+The small original/probe XML regression completes in 3.275 seconds / 126,428 KiB
+RSS under a 90-second wall / 16 GiB address / 64 MiB per-input bound. All three
+nonpointer projections match, and all retain the same one unwitnessed
+`previousDecl`; full pointer comparison still refuses. Each visits 1,043,384
+tokens and 22,936 ID-bearing records / 19,664 IDs. No frontend is rerun.
+
+The 38 focused diagnostic tests cover complete payload changes, scalar types,
+key/array order, alias partitions, forward references, conservative refusals,
+strict input loading, output aliases and atomic publication. An independent
+bounded audit checks 1,369 pairs across 37 small identity-partition/reference
+states. These are tooling tests, not correctness proofs about prototypes or
+executed C++ applications. SHA-256 projection agreement is evidence, not a Lean
+theorem or frontend-conformance claim.
 
 ## Scope and receipts
 
@@ -125,6 +194,10 @@ Receipts are external under `state/ls-cpp/canonical-probe` for XML and
 commands, hashes, process measurements, raw dumps, ledger/edge censuses,
 occurrence witnesses and refusals. Full/skeletal repetitions remain distinct
 positions; fresh-process relationships are never matched by pointer strings.
+The complete-comparison receipts are under
+`state/ls-cpp/canonical-comparison-20261009/{review,measurement,xml-validation}`;
+the final json run is `measurement/labels`. Earlier refused results remain
+archived, with separate format/source pins rather than overwritten headlines.
 
 The strict Mox source remains refused by its four recorded extension errors;
 this item does not relax its profile or rerun it. Neither admitted corpus

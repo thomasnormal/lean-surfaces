@@ -1361,17 +1361,17 @@ down, which is exactly the trunk's `execGen m fuel` recursion re-expressed. That
 is the same trick §2.2 used for the dict lockstep, applied to a genuinely
 fuel-bounded knot rather than a structural one. -/
 
-/-- Resume a generator to its next yield. An exception propagating OUT of a
-resume CLOSES the object — CPython marks the frame finished, so every later
-`next()` is exhaustion; never `suspended` (a resumable post-exception frame is
-unfaithful) and never stuck `running` (a permanent fake `ValueError`). In the
-trunk this needs `Run.bindE`, a bespoke combinator; here it is `tryCatch`. -/
+/-- Resume an iterator to its next yield. An exception escaping an actual
+generator closes its frame; native dictionary cursors retain a permanent
+failure instead. In the trunk the exception continuation uses `Run.bindE`;
+here it is `tryCatch`. -/
 def stepIterAt (K : Kont) (a : Addr) : SemW (Option RVal) := do
   let w ← get
   match Heap.get? w.heap a with
   | some (.generator qname locals cont status) =>
     match status with
     | .closed => pure Option.none
+    | .failed error => raisePy error
     | .running => raisePy (.valueError "generator already executing")
     | _ =>
       match Heap.update w.heap a (.generator qname locals cont .running) with
@@ -1396,7 +1396,7 @@ def stepIterAt (K : Kont) (a : Addr) : SemW (Option RVal) := do
             (fun e => do
               let st ← get
               match Heap.update st.world.heap a
-                  (.generator qname st.locals [] .closed) with
+                  (.generator qname st.locals [] (cont.exceptionStatus e)) with
               | Option.none => refuse danglingMsg
               | some h₂ => do heapPut h₂; raisePy e))
   | some _ =>

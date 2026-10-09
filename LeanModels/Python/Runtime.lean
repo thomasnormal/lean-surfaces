@@ -79,9 +79,12 @@ abbrev ClassId := Nat
 /-- A generator's execution status (CPython's `gi_frame_state`).
 `running` is what makes re-entering a generator that is currently
 executing the faithful `ValueError` instead of a silent re-entry;
-`closed` is exhaustion (every further `next` is `StopIteration`). -/
+`closed` is exhaustion (every further `next` is `StopIteration`). Native
+dictionary cursors instead retain a size-guard failure permanently in
+`failed`, even if the dictionary later returns to its original size. -/
 inductive GenStatus where
   | created | suspended | running | closed
+  | failed (error : PyErr)
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- §3c-i-a: WHICH dict view a cursor is walking. `for k in d` is `.keys`
@@ -192,6 +195,14 @@ deriving Repr, Inhabited, BEq
 /-- A suspended generator's continuation: the frame stack, innermost
 first. `[]` means the body has run off its end (exhaustion). -/
 abbrev GenCont := List GenFrame
+
+/-- Native dictionary iterators retain their failure; an exception escaping
+an actual generator closes its frame. The continuation distinguishes these
+lifecycles without relying on synthesized function names. -/
+def GenCont.exceptionStatus (cont : GenCont) (error : PyErr) : GenStatus :=
+  match cont with
+  | [.iterDict ..] | [.enumDict ..] => .failed error
+  | _ => .closed
 
 /-- Heap objects — identity-bearing, mutated in place. `shapeVersion`
 increments on key insertion/deletion (not value update): the live-iterator

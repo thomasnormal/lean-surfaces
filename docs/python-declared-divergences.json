@@ -2,8 +2,9 @@
   "tier": "python",
   "schema": "declared-divergences-1",
   "probe": "harness/pyc_divergence_probe.py",
-  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py (founded by this tier); PROBE is per-tier and named above. pyc-div-1 remains: its probe can run only the ORACLE side, because the divergence is not reachable by an in-tier program. pyc-div-2 is in retired_rows below, RETIRED 2026-08-24 by its own condition and not by assertion: the cursor moved to construction time and dict_lab::genexp_bound_then_grow flips to MATCH. Its guard failing is what announced the retirement -- a register that only ever grows is a list, and this one shrank on evidence.",
-  "rows": [
+  "note": "family-architecture.md 5.0a. DATA per-tier here; CHECKER is the shared harness/divergence_register.py; PROBE is named above. Both recorded divergences are retired and remain watched by running both oracle and model. pyc-div-1 retired on 2026-10-09 after native dictionary cursors gained persistent failure state; pyc-div-2 retired on 2026-08-24 after genexp cursors moved to construction time. Neither retirement permits a returned divergence to pass silently.",
+  "rows": [],
+  "retired_rows": [
     {
       "id": "pyc-div-1",
       "kind": "semantic",
@@ -19,10 +20,10 @@
         "pyc_div_1_has_not_widened"
       ],
       "must_not_move": "exc_lab::gen_closes must stay MATCH through any fix. Closing on exception is CORRECT for a user generator -- CPython closes those too -- and only the C-level cursor frames change. A fix that flips gen_closes has fixed the wrong thing.",
-      "was_blocked_on": "exc_lab::except_builtin, RESOLVED 2026-08-24 (2026-08-24-pycomplete-22). The witness needs `except RuntimeError:` to survive the first raise, and the tier's admitted handler shape named user classes only; builtin handler classes are now admitted and the refusal left the whitelist. Recorded rather than deleted, because the row's own probe carried the claim 'THE DIVERGENCE IS NOT REACHABLE BY AN IN-TIER PROGRAM' for a day and a half, and a blocker that silently disappears leaves an instrument still describing the world it was written in."
-    }
-  ],
-  "retired_rows": [
+      "was_blocked_on": "exc_lab::except_builtin, RESOLVED 2026-08-24 (2026-08-24-pycomplete-22). The witness needs `except RuntimeError:` to survive the first raise, and the tier's admitted handler shape named user classes only; builtin handler classes are now admitted and the refusal left the whitelist. Recorded rather than deleted, because the row's own probe carried the claim 'THE DIVERGENCE IS NOT REACHABLE BY AN IN-TIER PROGRAM' for a day and a half, and a blocker that silently disappears leaves an instrument still describing the world it was written in.",
+      "retired": "2026-10-09",
+      "retired_by": "GenStatus.failed stores the native dictionary cursor's size-guard exception; stepIterAt replays it on every later advance instead of closing the cursor. Original singleton iterDict/enumDict continuations choose this lifecycle, while exceptions escaping actual generators still close them. The original probe flips from oracle exit 1 / model DEFAULT to both raising; iter_failure adds repeated/default/bare/alias/restored-size/fresh-cursor and generator controls. The retired guard now uses measured behavior only, so the presence of the new constructor cannot hide a returned divergence."
+    },
     {
       "id": "pyc-div-2",
       "kind": "semantic",

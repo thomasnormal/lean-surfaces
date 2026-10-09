@@ -837,6 +837,7 @@ theorem ceStepIter_succ (ih : CE fuel) : CEStepIter (fuel + 1) := by
     | generator qname locals cont status =>
       cases status with
       | closed => exact .ok h _
+      | failed error => exact .exn h _
       | running => exact .exn h _
       | created =>
         dsimp only

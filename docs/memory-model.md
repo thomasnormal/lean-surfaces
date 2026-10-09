@@ -1307,6 +1307,17 @@ forced, each recorded with its reason:**
   discharge note predicted: third step after the exn is now exhaustion
   (`closed`), and `exc_lab.gen_closes` is the try-driven differential
   row.
+
+  Native dictionary cursors have a different exception lifecycle from actual
+  generators. Since 2026-10-09, `GenStatus.failed error` permanently retains a
+  size-guard failure for singleton `iterDict` and `enumDict` continuations.
+  `stepIterAt` re-raises the stored error without consulting the dictionary,
+  including after its original size is restored; aliases observe the same
+  heap object, while fresh cursors remain usable. Generator functions and
+  generator expressions still close when the error escapes their resume.
+  `Examples/python/iter_failure` and the archived `pyc-div-1` probe pin both
+  lifecycles; same-size key-set changes remain a loud refusal, not a guessed
+  exception.
 * **`genPlan` gained the explicit `tryStmt` fork**: a try WITHOUT yield
   delegates to `execStmt` whole (its internal raise/catch is invisible
   to the frame stack); a try WITH a yield anywhere inside is the

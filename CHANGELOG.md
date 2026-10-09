@@ -14,6 +14,11 @@ change is listed here under **Changed** or **Removed**.
 
 ### Changed
 
+- Native dictionary iterators and enumerations retain a resize failure on
+  every later advance, even after the original size is restored. Generator
+  exceptions still close their frames; the recorded `pyc-div-1` divergence
+  is retired with differential regressions and a continuing alarm.
+
 - The Python quickstart and tutorial proofs import only their required Python
   tactics; their targeted builds no longer compile unrelated language tiers.
   First-build commands skip the unused Mathlib cache download, and CI checks

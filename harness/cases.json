@@ -644,5 +644,15 @@
   {"file": "Examples/python/del_lab/del_lab.py", "function": "del_never", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/del_lab/del_lab.py", "function": "double_del", "args": [[2]], "expect": "unsupported"},
   {"file": "Examples/python/del_lab/del_lab.py", "function": "del_sub", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_attr", "args": [[0]], "expect": "unsupported"}
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_attr", "args": [[0]], "expect": "unsupported"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "native_failure_with_default", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "native_failure_without_default", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "native_restored_failure", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "native_alias_failure", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "native_fresh_cursor", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "native_failure_before_first", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "enumerate_restored_failure", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "enumerate_alias_failure", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "generator_closed_default", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/iter_failure/iter_failure.py", "function": "generator_closed_without_default", "args": [[]], "expect": "match"}
 ]

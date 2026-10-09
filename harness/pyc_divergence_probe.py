@@ -19,14 +19,13 @@ lane to expire that way and the first inside an instrument** — each was true
 when written, and each rested on what the tier COULD NOT do, which is the kind
 of premise nothing in the tree tracks.
 
-So `pyc_div_1_still_divergent` now RUNS the program under both, and the model
-half is a measurement rather than a reading of `stepIterAt`:
+`pyc-div-1` retired on 2026-10-09 after both sides re-raised the size-guard
+failure. Its guards still RUN the program under both, so a returned default
+raises a regression alarm even if the persistent-failure constructor remains:
 
   * `..._still_divergent` — CPython poisons the iterator (`di_used = -1`) and
-    re-raises on the second `next` even with a default; the tier CLOSES the
-    generator and the default comes back. The absence of a poisoned
-    `GenStatus` is still checked alongside, because that is the fact the row's
-    RETIREMENT CONDITION names.
+    re-raises on the second `next` even with a default. This guard now reports
+    not-held while both sides raise, and holds if the model returns the default.
   * `..._has_not_widened` — a FRESH cursor over the same dict, made after the
     poisoning, must work on BOTH sides. The row describes one poisoned OBJECT,
     not a poisoned dict and not a poisoned interpreter.
@@ -35,7 +34,8 @@ half is a measurement rather than a reading of `stepIterAt`:
 source-level counts: they answer "could a THIRD site inherit this row", which a
 program cannot ask.
 
-Exit 0 = every guard held. Exit 1 = a guard failed (report says which).
+Exit 0 = live guards held and no archived divergence returned.
+Exit 1 = a live guard failed or an archived divergence returned.
 """
 
 import json
@@ -143,7 +143,7 @@ def _genstatus_constructors():
     for line in m.group(1).splitlines():
         line = line.strip()
         if line.startswith("|"):
-            names += [t for t in re.split(r"[|\s]+", line) if t]
+            names += re.findall(r"\|\s*([A-Za-z_]\w*)", line)
     return names
 
 
@@ -151,8 +151,8 @@ def pyc_div_1_still_divergent():
     """BOTH SIDES RUN, since 2026-08-24-pycomplete-22 put `except RuntimeError:`
     in tier. CPython poisons the iterator and re-raises on the second `next`
     even with a default; the tier CLOSES the generator, so the default comes
-    back. Until this inch the model half was pinned at the absence of a poisoned
-    `GenStatus` -- honest, but a reading of the code rather than a run of it."""
+    back. Retired on 2026-10-09: the stored failure now re-raises. Constructor
+    names are diagnostic only; they must never mask a behavioral regression."""
     got = _run_both(DIV1_SRC)
     if got is None:
         return None, ("could not run both sides (oracle %r missing, or the "
@@ -162,9 +162,7 @@ def pyc_div_1_still_divergent():
     oracle_sticky = orc != 0 and "first-raised" in oout and "DEFAULT" not in oout
     model_answers = mrc == 0 and mout.strip().endswith("DEFAULT")
     cons = _genstatus_constructors()
-    poisoned = [c for c in cons
-                if c.lower() in ("poisoned", "errored", "failed", "invalidated")]
-    return (oracle_sticky and model_answers and not poisoned,
+    return (oracle_sticky and model_answers,
             "oracle exit=%d out=%r (sticky=%s) ; model exit=%d out=%r "
             "(answers the default=%s) ; GenStatus = %s"
             % (orc, oout, oracle_sticky, mrc, mout, model_answers,
@@ -235,10 +233,7 @@ def pyc_div_2_has_not_widened():
                    % (orc, oout, mrc, mout))
 
 
-LIVE_GUARDS = {
-    "pyc_div_1_still_divergent": pyc_div_1_still_divergent,
-    "pyc_div_1_has_not_widened": pyc_div_1_has_not_widened,
-}
+LIVE_GUARDS = {}
 
 # A retired row's `still_divergent` SHOULD fail — the divergence is gone. Its
 # failure is REPORTED and does not gate, or every retirement would red its own
@@ -246,6 +241,8 @@ LIVE_GUARDS = {
 # pass (§5.0a clause 3). Same partition as `sv_divergence_probe.py`, so the
 # shape a third tier copies is one shape.
 RETIRED_GUARDS = {
+    "pyc_div_1_still_divergent": pyc_div_1_still_divergent,
+    "pyc_div_1_has_not_widened": pyc_div_1_has_not_widened,
     "pyc_div_2_still_divergent": pyc_div_2_still_divergent,
     "pyc_div_2_has_not_widened": pyc_div_2_has_not_widened,
 }

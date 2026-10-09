@@ -2058,6 +2058,7 @@ theorem pbStepIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
         | generator qname locals cont status =>
             cases status with
             | closed => exact PBW.ok hslot _
+            | failed error => exact PBW.exn hslot _
             | running => exact PBW.exn hslot _
             | created =>
                 simp only [Heap.update_swapAt_ne hba]

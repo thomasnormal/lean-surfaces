@@ -609,7 +609,9 @@ step  "conflict-markers" conflict_markers
 step  "argv-guards"     argv_guards
 step  "tool-self-tests" selftests
 step  "py-onboarding-imports" python3 tools/test_python_onboarding.py
+step  "py-divergence-probe-tests" python3 harness/test_pyc_divergence_probe.py
 lake_build_step
+step  "py-declared-divergences" python3 harness/pyc_divergence_probe.py
 step  "py-harness"      python3 harness/diff_test.py --no-build
 # The same rows through the interpreter the THEOREMS are about
 # (Semantics.lean; the runner's is Monadic/). Its tier is narrower, so a

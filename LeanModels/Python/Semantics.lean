@@ -6463,6 +6463,7 @@ def stepIter (m : Module) (fuel : Nat) (w : World) (a : Addr) :
     | some (.generator qname locals cont status) =>
       match status with
       | .closed => .ok w Option.none
+      | .failed error => .exn w error
       | .running =>
         .exn w (.valueError "generator already executing")
       | _ =>

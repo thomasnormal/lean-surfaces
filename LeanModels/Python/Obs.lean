@@ -1487,6 +1487,7 @@ theorem fuelMono (fuel : Nat) :
           | generator qn lo kk stt =>
             cases stt with
             | closed => exact Run.le_refl _
+            | failed error => exact Run.le_refl _
             | running => exact Run.le_refl _
             | created =>
               dsimp only

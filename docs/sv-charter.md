@@ -197,6 +197,34 @@ imports, type parameters and forward declarations remain loud. Symbolic
 integral typedef declarations remain unsupported; the existing symbolic
 enum metadata path is unchanged.
 
+### Four-state packed selected reads — 2026-10-09
+
+The legacy/self-check surface admits bit, constant part and indexed
+part reads (`[index]`, `[msb:lsb]`, `[base +: width]`, `[base -: width]`)
+from four-state predefined integers and descending zero-based packed
+scalar vectors (clause 11.5.1). Selected results are unsigned; slang's
+bound conversions preserve that rule in enclosing contexts. Integral
+indices retain their own signedness, with negative and unknown indices
+handled at runtime. Indexed-minus lower bounds use integer subtraction,
+not saturating natural subtraction. Each negative or out-of-bounds bit
+reads `x`, while in-range bits preserve `0`/`1`/`x`/`z`; partial overlap
+therefore preserves the in-range portion rather than becoming all-x.
+
+The new `SelectRead` envelope node and self-check expression add no
+process rule. They use the existing four-state bit-vector value inventory
+and shared completed-step/executor correspondence. Original fixtures in
+`harness/sv/selected_reads/` cover dynamic indices, partial overlap,
+signedness, unknowns and both indexed directions.
+
+Two-state selected sources stay loud: available oracle behavior disagrees
+on out-of-range reads, so this item does not claim their semantics.
+Scalar sources, unsupported declared ranges, multidimensional/unpacked
+elements and selected writes also remain outside this admission.
+The symbolic/Design2 selected-read path and the M0 loader are unchanged.
+An envelope using this new node remains loud if the frontend reports
+any compilation error, including a recovered malformed declaration whose
+bound selected expression itself does not carry an invalid flag.
+
 ---
 
 ## 0 THE CORRECTION THIS CHARTER OPENS WITH

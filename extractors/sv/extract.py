@@ -423,6 +423,8 @@ def _convert_expr(sm, e):
         return _convert_conditional_expr(sm, e)
     if cname == "ConcatenationExpression":
         return _convert_concat_expr(sm, e)
+    if _SYM is None and cname in ("ElementSelectExpression", "RangeSelectExpression"):
+        return _convert_selected_read(sm, e, cname)
     if cname == "CallExpression" and _SYM is not None:
         return _convert_sym_call_expr(sm, e)
     if _SYM is not None and cname in (
@@ -675,6 +677,36 @@ def _convert_concat_expr(sm, e):
         "span": node_span(sm, e),
         "width": width,
         "parts": parts,
+    }
+
+
+def _convert_selected_read(sm, expr, expression_kind):
+    source_type = expr.value.type
+    _, _, source_reason = type_width_2s(source_type)
+    canonical_kind = type(source_type.canonicalType).__name__
+    if (source_reason is not None or not source_type.isFourState
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
+        return unsupported(sm, expr, expression_kind + ":source-type")
+    descending = False
+    if expression_kind == "ElementSelectExpression":
+        index = expr.selector
+    else:
+        selection = str(expr.selectionKind).split(".")[-1]
+        if selection not in ("Simple", "IndexedUp", "IndexedDown"):
+            return unsupported(sm, expr, "RangeSelectExpression:" + selection)
+        index = expr.right if selection == "Simple" else expr.left
+        descending = selection == "IndexedDown"
+    _, _, index_reason = type_width_2s(index.type)
+    if index_reason is not None:
+        return unsupported(sm, expr, expression_kind + ":index-type")
+    return {
+        "kind": "SelectRead",
+        "span": node_span(sm, expr),
+        "width": expr.type.bitWidth,
+        "value": _convert_expr(sm, expr.value),
+        "index": _convert_expr(sm, index),
+        "index_signed": bool(index.type.isSigned),
+        "descending": descending,
     }
 
 
@@ -1244,6 +1276,16 @@ def convert_module(sm, inst):
     }
 
 
+def contains_selected_read(node):
+    if isinstance(node, dict):
+        return node.get("kind") == "SelectRead" or any(
+            contains_selected_read(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_selected_read(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1261,6 +1303,10 @@ def convert_design(sm, comp):
                 others.append(unsupported(sm, m, type(m).__name__))
     except Exception as exc:
         others.append(internal_error(exc))
+    if (any(contains_selected_read(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",
+                                  "frontend rejected source containing a selected read"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

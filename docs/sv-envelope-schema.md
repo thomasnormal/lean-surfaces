@@ -597,3 +597,30 @@ Enum/structure/union/nonintegral types, unpacked arrays and unsupported
 packed ranges remain outside this admission. Symbolic integral aliases
 retain their existing refusal; symbolic enum metadata is unchanged.
 Runtime compilation-unit members are not erased or admitted by this rule.
+
+## Four-state selected reads (2026-10-09)
+
+The legacy `SelectRead` node has `kind`, `span`, `width`, `value`,
+`index`, `index_signed` and `descending`. The source must be an admitted
+four-state predefined integer or descending `[W-1:0]` packed scalar
+vector. The selector must have an admitted integral type; its signedness
+is explicit because interpreting a negative signed index as an unsigned
+natural would change an indexed slice that overlaps bit zero.
+
+For bit reads, `width` is one and `descending` is false. For a constant
+part read, `index` is the bound right endpoint and `width` is the bound
+result width. Indexed-up reads use the left/base operand and false;
+indexed-down reads use the left/base operand and true. The evaluator
+computes the low index as `index - width + 1` for descending reads, else
+`index`, in integer arithmetic. It reads low-to-high into the existing
+LSB-first vector, supplying `x` only for individual invalid positions.
+An unknown selector returns an all-x result of the bound width.
+
+Result signedness is unsigned, with enclosing elaborated conversions
+retained by ordinary lowering. Two-state, scalar and unsupported source
+shapes remain `Unsupported` with `:source-type`; unsupported selector
+types retain `:index-type`. Symbolic `BitSel`/`PartSel` nodes are unchanged;
+`SelectRead` does not admit selected assignment targets.
+A legacy design containing `SelectRead` and any frontend error diagnostic
+also carries `SelectRead:invalid-compilation` in its top-level refusals;
+recovering a typed expression from malformed source is not admission.

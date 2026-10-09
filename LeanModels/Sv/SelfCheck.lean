@@ -107,6 +107,19 @@ def evalScmp : BinOp → LVec → LVec → Logic
 def truthy (v : LVec) : Logic :=
   if v.condTrue then .l1 else if v.isKnownZero then .l0 else .lx
 
+def selectedIndex (signed : Bool) (value : LVec) : Option Int :=
+  if signed then toIntS? value else value.toNat?.map Int.ofNat
+
+def selectedRead (width : Nat) (descending indexSigned : Bool)
+    (value index : LVec) : LVec :=
+  match selectedIndex indexSigned index with
+  | none => LVec.xVec width
+  | some position =>
+      let low := if descending then position - (width : Int) + 1 else position
+      ⟨Array.ofFn (n := width) fun offset =>
+        let position := low + (offset.val : Int)
+        if position < 0 then .lx else value.bits[position.toNat]?.getD .lx⟩
+
 /-! ## Self-check expressions -/
 
 /-- Self-check expressions: M0 `Expr` embedded as a leaf (`.m0`, evaluated
@@ -128,6 +141,7 @@ inductive SExpr where
   | squash2 (a : SExpr)
   | ternary (c t f : SExpr)
   | concat (parts : Array SExpr)
+  | selectRead (width : Nat) (descending indexSigned : Bool) (value index : SExpr)
 deriving Repr, BEq, Inhabited
 
 /-- Collapse-aware constructors: keep pure-M0 subtrees as single `.m0`
@@ -406,6 +420,10 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         return LVec.ternary cv tv fv
     | .concat parts => do
         return LVec.concatMany (← evalSExprs fuel st parts.toList).toArray
+    | .selectRead width descending indexSigned value index => do
+        let source ← evalSExpr fuel st value
+        let position ← evalSExpr fuel st index
+        return selectedRead width descending indexSigned source position
 
 /-- Left-to-right list evaluation (concat parts, source order). -/
 def evalSExprs (fuel : Nat) (st : SvState) (es : List SExpr) : Res (List LVec) :=
@@ -656,6 +674,10 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       return .signedResize (← getNatF j "width") (← parseSExpr (← getF j "operand"))
   | "Squash2" =>
       return .squash2 (← parseSExpr (← getF j "operand"))
+  | "SelectRead" =>
+      return .selectRead (← getNatF j "width")
+        (← getBoolF j "descending") (← getBoolF j "index_signed")
+        (← parseSExpr (← getF j "value")) (← parseSExpr (← getF j "index"))
   | "Unsupported" =>
       return .m0 (.unsupported (← getStrF j "sv_kind") (unsupportedText j))
   | other => .error s!"unknown expression kind '{other}'"

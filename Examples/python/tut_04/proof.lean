@@ -10,7 +10,8 @@ fib pattern — see Examples/python/fib/proof.lean): the twin statements must
 mention the *same* constant, and a recursive definition, unlike the
 program literals, would not bridge by unfolding.
 -/
-import LeanModels
+import LeanModels.Python.LoopTactic
+import LeanModels.Python.Delab
 
 namespace Examples.python.tut_04.proof
 

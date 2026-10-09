@@ -72,12 +72,14 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Check Python-only proof dependencies
+        run: python3 tools/test_python_onboarding.py
       - name: Install elan (README quickstart, step 1)
         run: |
           curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Build the tri example (README quickstart, step 3)
-        run: lake build Examples.python.tri.spec
+        run: MATHLIB_NO_CACHE_ON_UPDATE=1 lake build Examples.python.tri.spec
       - name: Run a whole Python file and compare with CPython (README, next steps)
         run: |
           lake build leanmodels-run

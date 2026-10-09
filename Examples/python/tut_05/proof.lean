@@ -6,7 +6,8 @@ spec side is `:= by proofs`, which resolves `Examples.python.tut_05.proof.<decl>
 (Lean has no forward declarations); the spec-side `:= by proofs` reference
 typechecks the duplication.
 -/
-import LeanModels
+import LeanModels.Python.LoopTactic
+import LeanModels.Python.Delab
 
 namespace Examples.python.tut_05.proof
 

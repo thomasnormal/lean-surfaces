@@ -608,6 +608,7 @@ fi
 step  "conflict-markers" conflict_markers
 step  "argv-guards"     argv_guards
 step  "tool-self-tests" selftests
+step  "py-onboarding-imports" python3 tools/test_python_onboarding.py
 lake_build_step
 step  "py-harness"      python3 harness/diff_test.py --no-build
 # The same rows through the interpreter the THEOREMS are about

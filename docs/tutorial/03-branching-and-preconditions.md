@@ -25,7 +25,8 @@ module in full:
 
 ```lean
 -- Examples/python/tut_03/proof.lean (header comment elided)
-import LeanModels
+import LeanModels.Python.Surface
+import LeanModels.Python.Delab
 
 namespace Examples.python.tut_03.proof
 

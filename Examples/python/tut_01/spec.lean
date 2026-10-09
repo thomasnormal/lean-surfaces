@@ -6,7 +6,8 @@ for the pattern rationale): tut_01.py (pure Python), tut_01.json
 proof.lean either (a spec file only imports its sibling when it has
 `:= by proofs` statements to close).
 -/
-import LeanModels
+import LeanModels.Python.Surface
+import LeanModels.Python.Delab
 
 open LeanModels LeanModels.Python
 

@@ -3,8 +3,8 @@
 A progressive series. Each part builds on the previous one, each ships with
 an executable companion directory `Examples/python/tut_NN/` (the three-file
 layout: the `.py`, its envelope, and hand-written `spec.lean`/`proof.lean`)
-that `lake build` checks — every code block you are meant to type exists in
-the tree and is verified on every build.
+that its module-target build checks — every code block you are meant to type
+exists in the tree and is verified when its companion is built.
 
 | # | Tutorial | You leave having… | Companion |
 |---|---|---|---|
@@ -19,14 +19,26 @@ the tree and is verified on every build.
 
 - A checkout of this repository. The Lean toolchain is pinned in
   `lean-toolchain` (`leanprover/lean4:v4.33.0-rc1`); if you have
-  [elan](https://github.com/leanprover/elan) the first `lake build` fetches it.
-  There are no package dependencies — core Lean only.
-- Python ≥ 3.9 (standard library only) for the extractor and the differential
-  harness.
+  [elan](https://github.com/leanprover/elan) the first targeted build fetches it.
+  Lake also fetches the pinned Mathlib dependency declared in `lakefile.toml`;
+  these first proofs use core Lean only and need no compiled Mathlib modules.
+- Python ≥ 3.9 (standard library only) for the extractor. The differential
+  harness requires CPython 3.9, found as `python3.9` on `PATH` or selected by
+  `LEANPY_CPYTHON` pointing to a CPython 3.9 binary.
 - Basic Lean 4 tactic literacy helps from tutorial 2 on (`intro`, `exact`,
   `omega`); tutorial 1 needs none.
 
 Run every command from the repository root.
+
+Build only the companion you are working through, for example
+`MATHLIB_NO_CACHE_ON_UPDATE=1 lake build Examples.python.tut_02.spec`.
+The initial companions import `LeanModels.Python.Surface`; the loop proofs
+import `LeanModels.Python.LoopTactic`. These Python-only proof modules avoid
+the other language tiers. The companions also import `LeanModels.Python.Delab`
+to retain the typed Python goal and `#check` display. A bare `lake build`
+instead builds the repository's other tiers and examples too. The environment
+variable suppresses Mathlib's unused compiled-cache download when the
+dependency is first fetched.
 
 ## Where this series sits
 

@@ -53,7 +53,8 @@ same names, wrapped in the namespace matching the module path:
 
 ```lean
 -- Examples/python/tut_02/proof.lean (header comment and docstrings elided)
-import LeanModels
+import LeanModels.Python.Surface
+import LeanModels.Python.Delab
 
 namespace Examples.python.tut_02.proof
 
@@ -91,7 +92,7 @@ pure Lean — edit, rebuild:
 
 ```console
 $ python3 extractors/python/extract.py Examples/python/tut_02/tut_02.py
-$ lake build
+$ MATHLIB_NO_CACHE_ON_UPDATE=1 lake build Examples.python.tut_02.spec
 ```
 
 ## 2. Reading the theorem

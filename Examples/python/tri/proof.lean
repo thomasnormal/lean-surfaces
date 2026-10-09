@@ -8,7 +8,8 @@ typechecked by that spec-side reference: a drifted statement fails to
 close. This file loads its own copy of the program literal (same envelope,
 different constant); `proofs` bridges the two constants by unfolding.
 -/
-import LeanModels
+import LeanModels.Python.VCTactic
+import LeanModels.Python.Delab
 
 namespace Examples.python.tri.proof
 

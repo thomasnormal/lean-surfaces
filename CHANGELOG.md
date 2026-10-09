@@ -12,6 +12,13 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Changed
+
+- The Python quickstart and tutorial proofs import only their required Python
+  tactics; their targeted builds no longer compile unrelated language tiers.
+  First-build commands skip the unused Mathlib cache download, and CI checks
+  the examples' transitive import boundary.
+
 ### Added
 
 - A dated [Python production-readiness baseline](docs/python-baseline-2026-10-09.md)

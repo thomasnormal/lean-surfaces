@@ -256,7 +256,8 @@ not bridge by unfolding):
 
 ```lean
 -- Examples/python/tut_04/proof.lean (header comment elided)
-import LeanModels
+import LeanModels.Python.LoopTactic
+import LeanModels.Python.Delab
 
 namespace Examples.python.tut_04.proof
 

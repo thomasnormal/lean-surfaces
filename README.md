@@ -16,12 +16,16 @@ You need git, Python ≥ 3.9, and [elan](https://github.com/leanprover/elan)
 ```console
 $ curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
 $ git clone https://github.com/thomasnormal/lean-surfaces && cd lean-surfaces
-$ lake build Examples.python.tri.spec
+$ MATHLIB_NO_CACHE_ON_UPDATE=1 lake build Examples.python.tri.spec
 ```
 
 The build fetches the pinned toolchain and the package sources, then compiles
-the Python tier and checks the `tri` example's theorems (about 4 minutes on a
-fresh clone). The source and the proof are shown [below](#example-examplespythontri).
+the Python proof dependencies and checks the `tri` example's theorems. It does
+not compile another language tier or any Mathlib library module. The environment
+variable skips Mathlib's automatic cache download: Mathlib is a declared package
+dependency, but these first Python proofs use only Lean's core tactics. The first build
+typically takes a few minutes; downloads depend on your connection. The source
+and the proof are shown [below](#example-examplespythontri).
 Next:
 
 - **Prove your own function**: [tutorial 01](docs/tutorial/01-first-run.md)
@@ -36,7 +40,13 @@ Next:
 
 Do not start with a bare `lake build`: it builds every language tier and
 example (about 45 minutes, and it compiles Mathlib unless you first run
-`lake exe cache get`).
+`lake exe cache get`). Python-only proofs can import the specific tools they
+need: `LeanModels.Python.Surface` for straight-line proofs,
+`LeanModels.Python.LoopTactic` for `py_loop`, or
+`LeanModels.Python.VCTactic` for `py_vcgen`; add `LeanModels.Python.Delab`
+to preserve the typed notation in goal states and `#check` output.
+`LeanModels.Python` imports the whole Python tier; `LeanModels` also imports
+other language tiers.
 
 ## Design: four decoupled coverage axes
 

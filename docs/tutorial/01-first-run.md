@@ -7,14 +7,17 @@ against CPython. No theorems yet — that is [tutorial 02](02-first-spec.md).
 The point of this part is that by the end, every moving piece has moved
 once, on a file *you* wrote.
 
-## 0. Install nothing
+## 0. Prerequisites
 
 The toolchain is pinned in `lean-toolchain`
-(`leanprover/lean4:v4.33.0-rc1`); if you have elan, the first `lake build`
-fetches it automatically. `lake` also fetches the declared package
-dependencies (Mathlib); the Python tier itself uses core Lean only. The
-extractor and harness need only Python ≥ 3.9 standard library. Run everything
-from the repository root.
+(`leanprover/lean4:v4.33.0-rc1`); if you have elan, the first targeted build
+fetches it automatically. Lake also fetches the pinned Mathlib dependency
+declared in `lakefile.toml`; these first proofs use core Lean only and need
+no compiled Mathlib modules.
+The extractor needs Python ≥ 3.9 (standard library only). The differential
+harness specifically needs CPython 3.9 on your `PATH` as `python3.9`, or
+`LEANPY_CPYTHON` set to the path of a CPython 3.9 binary. Run everything from
+the repository root.
 
 The layout, in one breath: every Python example is one directory
 `Examples/python/<name>/` holding the source `<name>.py`, its generated JSON envelope
@@ -61,7 +64,8 @@ output. Create `Examples/python/tut_01/spec.lean`:
 
 ```lean
 -- Examples/python/tut_01/spec.lean (header comment elided)
-import LeanModels
+import LeanModels.Python.Surface
+import LeanModels.Python.Delab
 
 open LeanModels LeanModels.Python
 
@@ -78,6 +82,8 @@ tutorial 02. -/
 - `load_program` reads the envelope at elaboration time and defines
   `tut_01 : Module` as a literal Lean term — your program's AST is now a
   first-class mathematical object.
+- `LeanModels.Python.Delab` keeps goal and `#check` output in the typed
+  Python notation used throughout these tutorials.
 - Each `#py_check` runs the function on concrete inputs through the
   interpreter **at build time** and fails the build if the result is wrong.
   `tut_01.double(…)` is the surface calling convention: module ident (the
@@ -98,11 +104,16 @@ series teaches the three-file layout throughout.
 ## 4. Build
 
 ```console
-$ lake build
+$ MATHLIB_NO_CACHE_ON_UPDATE=1 lake build Examples.python.tut_01.spec
 ```
 
-`lakefile.toml` globs everything under `Examples/`, so the new spec module
-is picked up automatically. During elaboration, each `#py_check` runs
+The module target builds this spec and its imports, not the repository's
+other language tiers. For your own example, replace `tut_01` in the target
+with your directory name. Avoid a bare `lake build`: the default targets
+include every tier and example. `MATHLIB_NO_CACHE_ON_UPDATE=1` suppresses
+Mathlib's automatic download of its unused compiled cache when Lake fetches
+the dependency; it changes neither the Python semantics nor the proofs.
+During elaboration, each `#py_check` runs
 `callFunction tut_01 "double" #[.int …] 4096` — the actual fuel-based
 definitional interpreter ([`LeanModels/Python/Semantics.lean`](../../LeanModels/Python/Semantics.lean))
 executing your actual AST — and `#guard`s the result. A green build means the
@@ -113,6 +124,7 @@ interpreter really computed `42`, `0`, and `-14`.
 The same interpreter is compiled into a CLI:
 
 ```console
+$ lake build leanmodels-run
 $ lake exe leanmodels-run Examples/python/tut_01/tut_01.json double 21
 {"status":"ok","value":{"t":"int","v":"42"}}
 $ lake exe leanmodels-run Examples/python/tut_01/tut_01.json double 21 --fuel 1
@@ -145,7 +157,7 @@ taken relative to the repo root; all flags in the
 [how-to](../howto/run-the-differential-harness.md)). Then:
 
 ```console
-$ python3 harness/diff_test.py
+$ python3 harness/diff_test.py --no-build
 ...
 double(21)        ok: 42                  ok: 42                  MATCH
 double(0)         ok: 0                   ok: 0                   MATCH

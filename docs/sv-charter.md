@@ -190,12 +190,47 @@ reinterpretation and unknown-bit handling. The actual-fixture proof of
 a signed packed typedef uses the shared completed-step/executor rule.
 No value node, parser admission rule or scheduler changes are needed.
 
-This does not admit enum/structure/union/nonintegral typedef declarations,
-unpacked arrays or unsupported packed ranges on the legacy surface.
+Structure/union/nonintegral typedef declarations, unpacked arrays and
+unsupported packed ranges remain outside this admission. Bound integral
+enums are addressed by the following item.
 Ports and nets keep their existing independent type restrictions; package
 imports, type parameters and forward declarations remain loud. Symbolic
 integral typedef declarations remain unsupported; the existing symbolic
 enum metadata path is unchanged.
+
+### Bound integral enumerations — 2026-10-09
+
+The legacy/self-check surface admits enumerated types whose bound base
+type is an already-admitted scalar, predefined integer or descending
+zero-based packed scalar vector (clause 6.19). Slang checks nominal enum
+declarations, assignments and casts before lowering. Enum variables retain
+their base width, signedness, state domain and default value; their initial
+value is not inferred from the first enumerator. Member expressions lower
+to the complete bound bit pattern, preserving negative values, automatic
+increments, generated member names and four-state `x`/`z` members.
+
+Admitted typedefs and transparent enum-member scope bindings have no
+runtime effect and are omitted at module and compilation-unit scope.
+Block-local declarations use the existing elaborated type path. Static
+casts use the existing source-signed resizing and target-state conversion
+rules (clause 6.24), without adding a member-validity check. Enum-bearing
+compilations with frontend errors stay loud: erasure must not turn an
+illegal implicit assignment, duplicate member or overflow into executable
+code. This is an extractor lowering, not a new value domain or scheduler.
+
+Six original fixtures in `harness/sv/enums/` carry licensed reference
+provenance and pass on Xcelium 24.03-s004 in default mode. They cover base
+defaults, signed/unsigned values, generated names, unknowns, static casts
+and all three typedef scopes. A private actual-corpus fixture certificate
+and completed-step proof use the unchanged executor correspondence.
+Fresh extraction over 21,787 corpus files yields 1,463 clean, 20,294
+partial and 30 include-skipped files: 60 previously partial files become
+extractor-clean, with no previously clean file regressing. Extractor-clean
+is not a claim of valid elaboration, live execution or simulator agreement.
+
+Enum methods, dynamic `$cast`, packages/imports, enum ports/nets, unpacked
+containers and unsupported base ranges remain loud. The symbolic
+`sv-0.2` enum identity/metadata path remains unchanged.
 
 ### Four-state packed selected reads — 2026-10-09
 
@@ -227,7 +262,7 @@ bound selected expression itself does not carry an invalid flag.
 
 ### Licensed reference status — 2026-10-09
 
-The original public cast, typedef and selected-read fixtures carry
+The original public cast, typedef, enum and selected-read fixtures carry
 `// REFERENCE:` records from the licensed fleet reference runner. Each
 record identifies the exact source before the appended provenance comment;
 removing that one trailing line recovers the recorded reference input.

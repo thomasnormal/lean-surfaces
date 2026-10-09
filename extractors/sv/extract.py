@@ -292,6 +292,8 @@ def type_width_2s(t):
             return 1, (not t.isFourState), None
         if cname == "PredefinedIntegerType":
             return ct.bitWidth, (not t.isFourState), None
+        if cname == "EnumType" and _SYM is None:
+            return type_width_2s(ct.baseType)
         if cname == "PackedArrayType":
             w = ct.bitWidth
             rng = ct.range
@@ -317,6 +319,41 @@ def is_integral_type_alias(symbol):
         return reason is None
     except Exception:
         return False
+
+
+def is_bound_enum_member(symbol):
+    """An admitted enum's transparent member introduces no runtime binding."""
+    if str(symbol.kind) != "SymbolKind.TransparentMember":
+        return False
+    try:
+        member = symbol.wrapped
+        if str(member.kind) != "SymbolKind.EnumValue":
+            return False
+        width, _, reason = type_width_2s(member.type)
+        value = member.value.value
+        return (reason is None and type(value).__name__ == "SVInt"
+                and value.bitWidth == width)
+    except Exception:
+        return False
+
+
+def contains_bound_enum(comp):
+    """Retain enum admission evidence before nominal information is erased."""
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        sv_type = getattr(node, "type", None)
+        if str(getattr(node, "kind", "")) == "SymbolKind.TypeAlias":
+            sv_type = node.declaredType.type
+        canonical = getattr(sv_type, "canonicalType", None)
+        if type(canonical).__name__ == "EnumType":
+            found = True
+
+    comp.getRoot().visit(inspect)
+    for unit in comp.getCompilationUnits():
+        unit.visit(inspect)
+    return found
 
 
 def signed_metadata(node, sv_type):
@@ -510,6 +547,8 @@ def _convert_named_value_expr(sm, e):
         node = _sym_named_value(sm, e, sym, skind)
         if node is not None:
             return node
+    if _SYM is None and skind == "EnumValue":
+        return _convert_enum_member_expr(sm, e)
     if skind not in ("Variable", "Net"):
         return unsupported(sm, e, "NamedValueExpression:" + skind)
     width, _two, reason = type_width_2s(e.type)
@@ -531,6 +570,24 @@ def _convert_named_value_expr(sm, e):
         "width": width,
         "name": sym.name,
     }, e.type)
+
+
+def _convert_enum_member_expr(sm, expr):
+    """Preserve the exact, already-bound integral enumeration value."""
+    width, _, reason = type_width_2s(expr.type)
+    try:
+        value = expr.symbol.value.value
+        if (reason is not None or type(value).__name__ != "SVInt"
+                or value.bitWidth != width):
+            return unsupported(sm, expr, "NamedValueExpression:EnumValue")
+        return signed_metadata({
+            "kind": "Literal",
+            "span": node_span(sm, expr),
+            "width": width,
+            "bits": svint_bits(value),
+        }, expr.type)
+    except Exception:
+        return unsupported(sm, expr, "NamedValueExpression:EnumValue")
 
 
 def _convert_integer_expr(sm, e, cname):
@@ -1260,6 +1317,8 @@ def convert_module(sm, inst):
                 continue
             elif k == "TypeAlias" and is_integral_type_alias(m):
                 continue
+            elif is_bound_enum_member(m):
+                continue
             else:
                 others.append(unsupported(sm, m, type(m).__name__ + ":" + k))
         except Exception as exc:
@@ -1298,7 +1357,7 @@ def convert_design(sm, comp):
     try:
         for unit in comp.getCompilationUnits():
             for m in unit:
-                if is_integral_type_alias(m):
+                if is_integral_type_alias(m) or is_bound_enum_member(m):
                     continue
                 others.append(unsupported(sm, m, type(m).__name__))
     except Exception as exc:
@@ -1307,6 +1366,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",
                                   "frontend rejected source containing a selected read"))
+    if (any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())
+            and contains_bound_enum(comp)):
+        others.append(unsupported(sm, comp, "Enum:invalid-compilation",
+                                  "frontend rejected source containing an enumeration"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

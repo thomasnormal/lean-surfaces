@@ -89,8 +89,7 @@ on the evidence needed by a requested query, with the following obligations:
    canonical-root guesses discharge all C++ identity conditions. A versioned
    Clang-tooling supplement may report canonical declarations and semantic
    classifications, but joins must identify exact occurrences and all added
-   trusted computations must be documented. Such a supplement is not yet
-   implemented.
+   trusted computations must be documented. No such supplement is admitted.
 5. Check resolved uses against supported targets. Equal spellings, mangled
    names, `qualType` strings, header hashes and source coordinates cannot
    replace declaration correspondence, semantic type relationships or
@@ -185,6 +184,8 @@ Before admitting any semantic declaration query:
   specify any added frontend supplement before trusting it. Report semantic
   admission separately from raw extraction and from actual runtime tests.
 
-This item supplies the contract and a measured reason not to implement a
-name/ID heuristic. It supplies no interpreter, declaration theorem about a
-prototype, or silent extension of the existing trust boundary.
+This specification supplies a measured reason not to implement a name/ID
+heuristic. The optional [metadata probe](../extractors/cpp/README.md) is a
+separately versioned tooling experiment, not an admitted extractor supplement
+or implementation of this contract. It supplies no interpreter, declaration
+theorem about a prototype, or silent extension of the existing trust boundary.

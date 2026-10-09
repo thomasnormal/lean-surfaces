@@ -306,5 +306,20 @@
     "file": "harness/scripts/tuple_repeat_order_script.py",
     "expect": "unsupported",
     "note": "Conservative tuple tier: CPython 3.9 evaluates and prints all operand-order and caught-TypeError cases, then raises OverflowError for empty tuple times 2**100; the original-count budget refuses that final operation loudly rather than returning empty or inventing overflow."
+  },
+  {
+    "file": "harness/scripts/decimal_render_script.py",
+    "expect": "match",
+    "note": "Ordinary rendering and both signs of exactly 640-digit integer magnitudes remain admitted across scalar, percent, f-string, container, namedtuple, and range fields; the minus sign is outside the magnitude budget."
+  },
+  {
+    "file": "harness/scripts/decimal_render_effects_script.py",
+    "expect": "match",
+    "note": "Admitted argument effects and first/second operand exceptions retain CPython's evaluation order; stdout is checked separately from unsupported outcomes, which carry no retained world."
+  },
+  {
+    "file": "harness/scripts/decimal_render_limit_script.py",
+    "expect": "unsupported",
+    "note": "Conservative configurable CPython digit-limit boundary: this 641-digit rendering succeeds at the pinned oracle's default limit 4300 but raises ValueError at its permitted minimum 640. The model refuses loudly rather than inventing either host-dependent answer."
   }
 ]

@@ -2441,6 +2441,43 @@ base arguments remain loud. `decimalDigitsAux` is structural list recursion;
 both interpreters reuse `intCastVal`, and no interpreter recursion point,
 meta-theorem, heap-free predicate, or public judgment changes.
 
+### Decimal integer rendering (2026-10-09)
+
+`intDecimal` is the single pure renderer for integer decimal text. It checks
+`value.natAbs < 10 ^ intDigitBudget` BEFORE `toString`, admitting exactly
+magnitudes with at most 640 decimal digits, including zero; the negative sign
+does not consume the budget. This uses the existing parsing budget, moved
+above the scalar rendering block so the conversion has one source of truth.
+The helper remains kernel-reducible but is opaque to symbolic simplification:
+unrelated interpreter branches must not expand the large closed power while
+walking symbolic programs. A rendering proof unfolds it explicitly when it
+has the magnitude bound.
+Larger magnitudes refuse, never a guessed `ValueError`: CPython 3.9 permits
+the process to set its decimal digit limit to 640, a larger value, or zero
+(disabled), so output above the minimum supported limit is not
+configuration-independent. The model does not consult host configuration.
+
+All integer-producing rendering paths use this admission: `strOfVal` for
+scalar `str`, `%s`, and `%r`; `%d` after its existing bool-to-int coercion;
+and `reprVal` for `print`, heap-aware `str`, f-string interpolation, nested
+tuple/list/dict/namedtuple elements and keys, and every displayed range field.
+`True`/`False`, `None`,
+zero-argument `str`, and string identity (including Unicode and controls)
+are unchanged. No container support, cycle handling, or exception order is
+removed, and no allocation, recursion point, heap-free predicate, or public
+judgment changes. The `decimal_render` artifact supplies a symbolic scalar
+theorem under the magnitude bound and differential boundary rows.
+
+Refusals expose no retained world or stdout at the public runner boundary:
+over-budget scripts do not claim CPython's partial output or exception class.
+Separate admitted-effects fixtures pin left-to-right evaluation and the
+first faithful operand exception.
+
+The audit also found a separate, pre-existing range-constructor bug:
+CPython 3.9 retains Boolean start/stop fields in a range's rendering, while
+`rangeMake` stores their coerced integers. This decimal-budget repair does
+not fix that representation gap or reclassify its wrong answers as refusals.
+
 **THE KERNEL-AFFORDABILITY VERDICT (pass 8, definitive — closes the
 pass-7 open item unless the interpreter's compilation is redesigned):**
 bisected with `decide +kernel`: `initWorld` alone ≈ 10–20 s; the
@@ -3334,6 +3371,11 @@ contains ITSELF prints `[...]` / `{...}`, CPython's own answer, decided
 by an ACTIVE-PATH list rather than by fuel; depth beyond the fixed
 `reprFuel` refuses (a budget refusal must not depend on the caller's
 fuel).
+
+Every displayed integer, including range fields and nested dict keys, also
+obeys the configuration-independent 640-digit magnitude admission described
+in §decimal integer rendering. An over-budget integer makes the rendering
+refuse; it never invents the process-dependent decimal conversion exception.
 
 LOUD, never a plausible-looking line: a SET (its `repr` is hash order,
 which the order doctrine forbids guessing), an instance/closure/generator
@@ -4555,6 +4597,8 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   `print([…])`, and prints raw under `%s` exactly as `print` does: one
   rendering boundary, not two.
 * `%d` is `asInt` (bool coerces), else the faithful `TypeError` above.
+  All three integer conversions share `intDecimal`'s 640-digit magnitude
+  budget (§decimal integer rendering); larger integers refuse loudly.
 * A CONTAINER argument (tuple/namedtuple/list/range) under `%s`/`%r` is
   LOUD: its `repr` is `reprVal`'s heap-recursive walk and this operator
   is a pure function of two values that cannot see the heap. A `.ref`

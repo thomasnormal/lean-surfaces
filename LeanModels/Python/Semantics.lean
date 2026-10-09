@@ -639,11 +639,24 @@ and one of the users is the `%` operator below: `evalBinOp` precedes
 verbatim from §rendering, which keeps the heap-recursive `reprVal`/
 `printOne`/`strOfValH` built on top of them. -/
 
-/-- `str(…)` — value-only (docs/memory-model.md §the cast tier): the
+/-- The smallest configurable CPython 3.9 decimal conversion limit. Beyond
+this digit count the tier refuses rather than guessing the oracle's setting. -/
+def intDigitBudget : Nat := 640
+
+/-- Decimal integer rendering within the configuration-independent budget,
+checked on the magnitude before materializing its digits. Kept opaque to
+symbolic simplification so unrelated branches do not expand the digit bound. -/
+@[irreducible] def intDecimal (value : Int) : Option String :=
+  if value.natAbs < 10 ^ intDigitBudget then some (toString value) else Option.none
+
+/-- `str(…)` — value-only (docs/memory-model.md §the cast tier): budgeted
 exact decimal for ints, `True`/`False`, identity on strs, `None`;
 containers and refs refuse loudly (repr recursion is not guessed). -/
 def strOfVal : RVal → Res RVal
-  | .int n => .ok (.str (toString n))
+  | .int value =>
+    match intDecimal value with
+    | some text => .ok (.str text)
+    | Option.none => .unsupported "integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
   | .bool b => .ok (.str (if b then "True" else "False"))
   | .str s => .ok (.str s)
   | .none => .ok (.str "None")
@@ -726,14 +739,17 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
   | v =>
     if c == 'd' then
       match asInt v with
-      | some n => .ok (toString n)
+      | some value =>
+        match intDecimal value with
+        | some text => .ok text
+        | Option.none => .unsupported "'%d' integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
       -- CPython leaves this type name UNQUOTED (measured against 3.9)
       | Option.none => .exn (.typeError s!"%d format: a number is required, not {v.typeName}")
     else
       match (if c == 'r' then strFormatRepr v else strFormatStr v) with
       | some s => .ok s
       | Option.none =>
-        .unsupported s!"'%{c}' of a '{v.typeName}' is outside the tier (only int/bool/str/None render here; docs/memory-model.md §`%`-formatting on strings)"
+        .unsupported s!"'%{c}' of a '{v.typeName}' is outside the tier (only int/bool/str/None render here, integers within intDigitBudget; docs/memory-model.md §`%`-formatting on strings)"
 
 /-- CPython's `ctx.dict` test, verbatim: `PyMapping_Check(args) &&
 !PyTuple_Check(args) && !PyUnicode_Check(args)` (`PyUnicode_Format`,
@@ -1182,10 +1198,6 @@ def decimalDigitsAux : List Char → Nat → Bool → Option Nat
 def digitsToNat (characters : List Char) : Option Nat :=
   decimalDigitsAux characters 0 false
 
-/-- The smallest configurable CPython 3.9 decimal conversion limit. Beyond
-this digit count the tier refuses rather than guessing the oracle's setting. -/
-def intDigitBudget : Nat := 640
-
 /-- `int(<str>)` decides ASCII decimal syntax within `intDigitBudget`,
 including underscore grouping and all six integer whitespace characters.
 Non-ASCII input and larger digit counts refuse loudly; invalid ASCII input
@@ -1342,7 +1354,7 @@ mutual
   addresses currently being rendered: CPython prints `[...]` / `{...}`
   for a container that contains itself, and so does this. -/
   def reprVal (h : Heap) (fuel : Nat) (active : List Addr) : RVal → Option String
-    | .int n => some (toString n)
+    | .int value => intDecimal value
     | .bool b => some (if b then "True" else "False")
     | .none => some "None"
     | .str t => reprStr t
@@ -1366,9 +1378,13 @@ mutual
       | fuel + 1 =>
         let parts ← reprVals h fuel active xs.toList
         return "[" ++ commaJoin parts ++ "]"
-    | .rangeV lo hi step =>
-      if step == 1 then some ("range(" ++ toString lo ++ ", " ++ toString hi ++ ")")
-      else some ("range(" ++ toString lo ++ ", " ++ toString hi ++ ", " ++ toString step ++ ")")
+    | .rangeV lo hi step => do
+      let start ← intDecimal lo
+      let stop ← intDecimal hi
+      if step == 1 then return "range(" ++ start ++ ", " ++ stop ++ ")"
+      else
+        let stride ← intDecimal step
+        return "range(" ++ start ++ ", " ++ stop ++ ", " ++ stride ++ ")"
     | .ref a =>
       match fuel with
       | 0 => Option.none

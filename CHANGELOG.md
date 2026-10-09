@@ -14,6 +14,14 @@ change is listed here under **Changed** or **Removed**.
 
 ### Fixed
 
+- Decimal integer rendering shares the configuration-independent 640-digit
+  admission used by decimal parsing. `str`, `print`, f-string interpolation,
+  nested container and range rendering, and bare `%s`/`%r`/`%d` refuse larger
+  magnitudes before converting them, rather than guessing CPython's
+  configurable limit or an exception.
+  Signs do not consume the budget; boolean and string rendering is unchanged.
+- The `decimal_render` example proves scalar decimal output symbolically under
+  the magnitude bound and checks the same boundary across rendering routes.
 - Tuple and namedtuple repetition checks the original integer count's magnitude
   before handling empty sequences or negative counts. Counts beyond 1,048,576
   refuse loudly instead of returning a wrong empty result or attempting an

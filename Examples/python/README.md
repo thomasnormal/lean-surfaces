@@ -33,6 +33,11 @@ exception checks with symbolic proofs: `int("1_024") + offset` equals
 `1024 + offset`, and a signed, whitespace-padded literal yields `offset - 2048`.
 Non-ASCII strings, more than 640 decimal digits, and explicit bases stay loud.
 
+[`decimal_render`](decimal_render/) proves that `str(value)` returns the exact
+decimal string when `value.natAbs < 10 ^ 640`. The same magnitude admission
+guards integer fields in container and range rendering and bare `%s`/`%r`/`%d`;
+larger values refuse rather than guessing CPython's configurable digit limit.
+
 [`string_repeat`](string_repeat/) proves both operand orders and a decorated
 result for symbolic text and counts. The admission premises bound the original
 count magnitude and output code-point length to 1,048,576; excessive counts

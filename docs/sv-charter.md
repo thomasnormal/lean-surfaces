@@ -17,6 +17,92 @@ access rather than a decision.
 
 ---
 
+## 2026-10-09 RESTART — surface and kernel ownership
+
+The lane resumes against `e565769`. The dated measurements below are
+historical evidence, not today's coverage: `LeanModels/Sv/` now contains
+**22 Lean files and 9 950 lines**, and `LeanModels.lean` imports the SV
+tests, symbolic ingestion, and scheduler chain. The original claim that
+the umbrella does not build the tier no longer describes the tree.
+
+The surface lane owns clauses 5–8, 10–13, 20–26 and the extractor and
+differential harness. The kernel lane owns clause 4 scheduling and
+clause 9 processes, including event/update queues, nonblocking
+assignments, completion, forks and named events. Surface constructs
+compile to that kernel's rules; missing rules are requests to the kernel
+lane, never a second scheduler. The R1-before-breadth dependency in §8
+remains, but kernel and independent surface work have separate owners.
+
+The fresh private fixture census and its chapter table remain internal
+under §6.1. Its `clean` classification means only that the elaborated
+M0 envelope has no `Unsupported` nodes: it does not establish Lean
+admission, simulator agreement, valid elaboration, or live execution.
+The symbolic `sv-0.2` tier requires its own coverage measurement.
+
+**Proof inventory, with comments excluded.** There are **98 named
+theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
+theorems and 6 examples** in the SV example directories: **235 actual
+declarations**, not 235 distinct claims. Spec restatements and their
+proof-module counterparts count separately. Oracle constructions that
+carry permutation proofs are not added to this declaration count. The
+old line-regex count includes one doc-comment line in `Surface.lean`
+and six example-header lines; comments must not count as theorems.
+A comment/string-aware source scan finds no `sorry`, `admit`, new
+`axiom`, `native_decide` or `bv_decide` identifiers in this estate; that
+scan is not a fresh kernel-axiom audit.
+
+The six M0 fixtures have functional, trace or race theorems anchored to
+their real envelopes by elaboration-time AST equality checks. The three
+CV32E40P ingestion examples establish successful-instance `WFNames`
+and concrete execution guards, not a functional division theorem.
+`Step.lean` proves that non-suspending process stepping agrees with the
+self-check statement evaluator. By contrast, `Adequacy.lean` only
+defines `CycleAdequacy`: **the whole cycle-to-region compilation
+adequacy theorem is still outstanding**. `Load.lean` does not yet load
+continuous assignments or combinational processes, and Design2 is not
+connected to that loader. New surface work must not assume those
+bridges already exist.
+
+**The current surface boundaries are not interchangeable.** M0 has
+packed four-state expressions, identifier assignment, `if`/blocks and
+its cycle-level process fragment; general loops, calls, classes and
+hierarchy remain absent. Design2 adds selected reads/writes, case,
+reductions, resizing and signed comparisons, but nonconstant
+multiply/divide/remainder/power/shifts are not admitted merely because
+their constant expressions can be folded. The self-check vocabulary
+adds local declarations and output/termination tasks, but its current
+runner accepts initial-only execution and does not inherit Design2's
+selected targets or case statements. Extractor, ingestion, evaluator
+and kernel-loader refusal inventories must therefore stay separate.
+
+**Executed restart checks.** A focused local `lake build` of all 22 SV
+modules completes successfully; this is not a claim about every default
+repository target. With Python 3.12 and pyslang 11.0.0, the round-trip
+gate reports **18 live MATCH** (six `sv-0.1`, twelve `sv-0.2`), zero
+divergences and zero timeouts. Three additional archived `sv-0.2`
+envelopes refuse because their recorded absolute source paths are absent;
+they are not silently counted as fresh or live.
+
+Icarus **13.0 (devel), s20250103-64-gdad78d525** is installed with
+`vvp`. Xcelium **24.03-s004** is also installed, but installation is not
+a simulator verdict: a single adder preflight produces zero cycle lines
+and is killed by an external 60-second bound. No explicit licence error
+is emitted and the cause is not established. The restart differential
+measurement therefore selects Icarus explicitly rather than treating
+Xcelium's presence on `PATH` as runtime availability.
+
+The M0 differential harness verifies **10/10 cases**, including the
+race witness that matches the reverse schedule. Phase two verifies
+**15 cases and skips one**, `t2_ci`: the installed Icarus rejects that
+case-inside fixture at compilation, while the Xcelium preflight does
+not establish a usable alternative. There are zero differential
+failures. The phase-two script nevertheless prints "all 16 case(s)
+passed" because its summary includes skipped rows; **that summary is
+not the measured coverage**. Per-case outcomes, not exit status alone,
+are the restart scoreboard. The documentation block check also passes.
+
+---
+
 ## 0 THE CORRECTION THIS CHARTER OPENS WITH
 
 The C tier was chartered onto a blank page: `LeanModels/C/` did not

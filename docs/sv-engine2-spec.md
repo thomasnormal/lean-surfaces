@@ -1,8 +1,8 @@
 # Engine 2 kernel specification: contract census and schema
 
 **Status: partial pure schema, 2026-10-09; regions, normalized time, process
-identity/lifecycle and wait registrations landed, no transition semantics or
-implementation proof.**
+identity/lifecycle, wait registrations and scheduled events landed, no
+transition semantics or implementation proof.**
 This document starts from lane `ls-spec`'s contract census and tracks the schema
 as it lands one piece at a time. It identifies the existing SystemVerilog
 scheduler surface and the additional Engine 2 contract. It is not yet a complete
@@ -225,7 +225,7 @@ when both sides exist rather than assumed during the schema work.
 | `Engine2.ProcessRecord Frame` (landed) | Key, body kind, independent control eligibility, lifecycle | Data replacement preserves registration metadata, not a proof of a legal transition |
 | `SignalState` | Typed signal identity, `LVec` value, publication generation | One ordinary value/publication authority; named events use occurrence state |
 | `Engine2.WaitRegistration` (landed) | Independent wait/continuation identity, captured reason/dependencies and resume region | Identity recognition only; single-wake consumption, cancellation and region legality remain future rules |
-| `ScheduledEvent` | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions |
+| `Engine2.ScheduledEvent` (landed) | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions; queue policy remains future |
 | `PendingUpdates` | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
 | `ForkState` | Group identity, parent key, child keys, deferred release and join barrier | Immediate-child waiting distinct from transitive descendant cancellation |
 | `NamedEventState` | Resolved identity or null; last occurrence time/validity | Persistent occurrence never masquerades as ordinary value change |
@@ -411,6 +411,33 @@ by compiled Engine 2 during emission; its source, IR and oracle/refusal outputs
 are retained, not counted as agreement. Lean source-driver refusals also remain
 separate from the pure vocabulary proofs. No wake-rule or C++ refinement proof
 is claimed by these observations.
+
+### Landed scheduled-event vocabulary
+
+`LeanModels/Sv/Engine2/Event.lean` defines `ScheduledEvent` as a semantic
+calendar entry with an `EventKey`, normalized `SimTime`, explicit `Region`, an
+`EventAction`, an `EventOrigin`, and a sequence number. `EventAction` has three
+non-interchangeable cases: a process resume carrying a `WaitIdentity`, an
+ordinary `SignalKey` update carrying an `LVec` four-state value, and a named
+occurrence carrying a `NamedEventKey`. `EventOrigin` records a process, a wait
+registration, or an external source without treating provenance as a native
+pointer or scheduler queue position. `EventKind` is derived from the action;
+checked theorems are exhaustive kind classification only.
+
+The sequence field is provenance supplied by a future scheduler or policy
+oracle. It does not assert that independent events have a mandated total order.
+Likewise, an event key is semantic identity, not a slot address, packed token,
+allocator result, or proof that cancellation has removed another event. No
+queue admission, stale-event filtering, publication, named-event persistence,
+region legality, or scheduler transition is defined here. Pending-update
+capture and NBA ordering will consume this vocabulary in a later piece.
+
+The fixtures in `Examples/system-verilog/engine2_event/` agree byte-for-byte
+between compiled Engine 2 and Icarus on a delayed signal update and a separate
+process resuming after that update. They do not expose the internal action,
+origin or sequence fields and therefore are source evidence only; existing Lean
+source-driver refusals for timing/event controls remain separate from the pure
+schema proof.
 
 ### 4.1 Consumer body interface
 

@@ -1,7 +1,7 @@
 # Engine 2 kernel specification: contract census and schema
 
-**Status: partial pure schema, 2026-10-09; region vocabulary landed, no new
-transition semantics or implementation proof.**
+**Status: partial pure schema, 2026-10-09; region vocabulary and normalized
+simulation time landed, no new transition semantics or implementation proof.**
 This document starts from lane `ls-spec`'s contract census and tracks the schema
 as it lands one piece at a time. It identifies the existing SystemVerilog
 scheduler surface and the additional Engine 2 contract. It is not yet a complete
@@ -202,14 +202,15 @@ are shared and retained by descendants, not copied into process attachments.
 
 ## 4. Planned pure schema
 
-`Engine2.Region` is exported; the other names below remain design names.
+`Engine2.Region` and `Engine2.SimTime` are exported; the other names below
+remain design names.
 The intended home is an additive `LeanModels/Sv/Engine2/` surface. Existing
 cycle/AST definitions and theorem statements remain intact; bridges are proved
 when both sides exist rather than assumed during the schema work.
 
 | Piece | Proposed contents | Invariant or boundary |
 | --- | --- | --- |
-| `SimTime` | Natural femtoseconds | Monotone occupied-slot advancement; bounded ABI conversion checked separately |
+| `Engine2.SimTime` (landed) | Natural femtoseconds and exact relative-delay arithmetic | Checked 64-bit ABI conversion; occupied-slot advancement remains a future rule |
 | `Engine2.Region` (landed) | Complete clause-4 region inventory and region-set classification | Presentation position is not execution priority; iteration edges remain future rules |
 | `ProcessKey` | Registration identity; optional scheduler-slot projection | Historical identity never aliases slot reuse |
 | `ProcessState Frame` | Kind, frame/continuation, lifecycle, wait ownership, explicit suspension | Runnable, waiting, deferred, running and terminal facts remain distinguishable |
@@ -262,6 +263,45 @@ The reference calendar is a finite semantic collection of events indexed by
 time/region, not a commitment to a heap, wheel or FIFO. Derived eligibility
 and queue-emptiness predicates have one definition. An incarnation in an
 event makes stale cancellation checkable without modelling recycled storage.
+
+### Landed normalized simulation time
+
+`LeanModels/Sv/Engine2/Time.lean` defines `Engine2.SimTime` as a natural
+femtosecond count, with chronological comparison, `zero` and `after time
+delayFs`. The delay argument is already known, nonnegative and normalized to
+femtoseconds. Relative-delay arithmetic is deterministic and needs no oracle.
+Kernel-checked facts establish zero-delay identity, associative delay addition,
+nondecrease, strict increase exactly for positive delays, and monotonicity in
+both the starting time and the delay. These are time facts, not permission to
+advance the scheduler without completing the current slot.
+
+IEEE clauses 3.14 and 3.14.3 permit physical units down to femtoseconds and
+define each design's global precision. This representation does **not** set
+global precision to 1 fs. Source-local precision rounding, defaults, computing
+global precision, unknown/negative delay expressions and `$time`/`$realtime`
+scaling remain lowering obligations. In particular, the source-language
+64-bit four-state `time` type is not this natural-valued internal clock.
+
+`SimTime.ofABI` decodes a runtime `UInt64` exactly. `SimTime.toABI` returns
+`some` only below the exclusive bound `2^64`, and `none` otherwise. Its
+roundtrip and success/failure equivalences prove that conversion never silently
+wraps. `SimTime.checkedAfter` checks the **mathematical sum**, not just two
+individually representable operands; success preserves the exact target and
+failure is equivalent to the target reaching or exceeding the bound.
+
+This is a specification-side admission adapter, **not** an assertion that Mox
+currently refuses overflowing sums. The inspected delay and delayed-update
+paths in `Kernel.h` add unsigned timestamps without a guard; the runtime
+contract does not endorse an overflow meaning. The delay-range question in
+section 6 remains open. No overflow policy or C++ refinement is inferred.
+
+The fixtures in `Examples/system-verilog/engine2_time/` use explicit local
+units and precision. Compiled Engine 2 and Icarus agree exactly on successive
+positive delays and a zero-delay continuation at the same time. They measure
+source behavior separately from these Lean arithmetic proofs. The Lean source
+self-check harness still refuses their `$time`/delay-control shapes; the
+refusals are retained, not counted as agreement. Region placement for `#0`,
+occupied-slot advancement and bounded-run control remain future rules.
 
 ### 4.1 Consumer body interface
 

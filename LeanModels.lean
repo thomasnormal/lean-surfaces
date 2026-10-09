@@ -22,6 +22,7 @@ import LeanModels.Sv.Ingest2
 -- observation is stated through. No semantics — see docs/sv-r1-scheduler.md.
 import LeanModels.Sv.Regions
 import LeanModels.Sv.Engine2.Regions
+import LeanModels.Sv.Engine2.Time
 -- R1 inch 4a: the resumable stepper. `stepSStmts` runs a process body to
 -- completion OR to its first suspension point, with the continuation kept as
 -- DATA (the residual statement list) because `SemM` cannot suspend. Carries

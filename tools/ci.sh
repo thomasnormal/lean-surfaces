@@ -77,7 +77,7 @@ maybe() { # maybe <name> <required-file> <command...>
 # silently between audits — which is how four of this lane's tools shipped with
 # defects the 2026-08-23 audit had to find by reading.
 selftests() {
-  local t rc=0 stub
+  local t rc=0 stub transcript
   # A no-op `lake` in front of PATH, plus the sentinel every descendant
   # inherits.  Belt (argv), suspenders (sentinel), and a stub so that even a
   # successful re-entry cannot reach a real build.
@@ -130,8 +130,10 @@ STUB
     grep -qE -- '--self-test\)|= "--self-test"' "$t" || continue
     case "$t" in */ci.sh) continue ;; esac        # belt: never re-enter CI
     # A per-tool timeout, so a future tool that hangs cannot hang CI.
-    if ! ( cd "$view" && timeout 120 bash "$t" --self-test ) >/dev/null 2>&1; then
+    transcript="$stub/transcript"
+    if ! ( cd "$view" && timeout 120 bash "$t" --self-test ) >"$transcript" 2>&1; then
       echo "    SELF-TEST FAILED (or timed out): ${t##*/}"; rc=1
+      cat "$transcript"
     fi
   done
   ( cd "$view" && python3 tools/docs_check.py --self-test ) >/dev/null 2>&1 || {

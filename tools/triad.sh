@@ -1116,7 +1116,7 @@ choose_threads() {      # -> "<n> <the readings that chose it>"
 # real class of change in order to hide one artifact.  The log moves instead.
 resolve_under_clone() {         # path -> prints it, resolved, when beneath CLONE
   local p="$1" d b rp cp
-  case "$p" in ''|'->'*|/dev/*|pipe*|*'[eventfd]'*) return 1 ;; esac
+  case "$p" in ''|'->'*|/dev/*|pipe*|socket:*|anon_inode:*|*'[eventfd]'*) return 1 ;; esac
   d="$(dirname "$p")"; b="$(basename "$p")"
   # RESOLVED, because `/tmp` is a symlink to `/private/tmp` on this box and a
   # log named through the symlink would otherwise read as outside the clone.
@@ -1126,11 +1126,23 @@ resolve_under_clone() {         # path -> prints it, resolved, when beneath CLON
   return 1
 }
 
+descriptor_target() {
+  local process_id="$1" descriptor="$2" target listing
+  if [ -d "/proc/$process_id/fd" ]; then
+    target="$(readlink "/proc/$process_id/fd/$descriptor" 2>/dev/null)" || return 1
+  else
+    listing="$(lsof -a -p "$process_id" -d "$descriptor" -Fn 2>/dev/null)" || return 1
+    target="$(printf '%s\n' "$listing" | sed -n 's/^n//p' | head -1)"
+  fi
+  [ -n "$target" ] || return 1
+  printf '%s\n' "$target"
+}
+
 log_under_clone() {             # -> the offending log path, or nothing
-  local fd p
-  for fd in 1 2; do
-    p="$(lsof -a -p $$ -d "$fd" -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
-    resolve_under_clone "$p" && return 0
+  local descriptor target
+  for descriptor in 1 2; do
+    target="$(descriptor_target "$$" "$descriptor")" || return 2
+    resolve_under_clone "$target" && return 0
   done
   return 1
 }
@@ -2829,6 +2841,8 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a log INSIDE the clone is caught"     "$(resolve_under_clone "$fr/run.log" | grep -c 'run.log')" "1"
   check "  ...one outside is not"              "$(resolve_under_clone "$tmp/run.log" >/dev/null && echo caught || echo clear)" "clear"
   check "  ...a pipe is not a file"            "$(resolve_under_clone '->0xdeadbeef' >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...nor a proc socket"              "$(resolve_under_clone 'socket:[123]' >/dev/null && echo caught || echo clear)" "clear"
+  check "  ...nor an anonymous inode"          "$(resolve_under_clone 'anon_inode:[eventpoll]' >/dev/null && echo caught || echo clear)" "clear"
   check "  ...nor is a tty"                    "$(resolve_under_clone /dev/ttys000 >/dev/null && echo caught || echo clear)" "clear"
   check "  ...nor an empty fd"                 "$(resolve_under_clone '' >/dev/null && echo caught || echo clear)" "clear"
   # THE SYMLINK CASE, which would otherwise hide a log that IS in the clone:
@@ -2837,11 +2851,38 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a symlinked path still resolves in"   "$(resolve_under_clone "$tmp/frlink/run.log" | grep -c "$(cd "$fr" && pwd -P)")" "1"
   CLONE="$saved_cl2"
 
+  check "descriptor inspection retains the lsof fallback" "$(
+    lsof() { printf 'p0\nf1\nn%s\n' "$tmp/fallback.log"; }
+    descriptor_target 0 1
+  )" "$tmp/fallback.log"
+  check "a failed lsof lookup is not an outside log" "$(
+    lsof() { return 1; }
+    descriptor_target 0 1 >/dev/null; echo $?
+  )" "1"
+  check "an empty lsof result is not an outside log" "$(
+    lsof() { printf 'p0\nf1\n'; }
+    descriptor_target 0 1 >/dev/null; echo $?
+  )" "1"
+  check "unreadable descriptors refuse log inspection" "$(
+    descriptor_target() { return 1; }
+    log_under_clone >/dev/null; echo $?
+  )" "2"
+  if [ -d "/proc/$$/fd" ]; then
+    descriptor_expected="$(readlink "/proc/$$/fd/1")"
+    check "proc descriptors work without lsof" "$(
+      lsof() { return 97; }
+      descriptor_target "$$" 1
+    )" "$descriptor_expected"
+    printf '#!/usr/bin/env bash\nexit 97\n' > "$frstub/lsof"
+    chmod +x "$frstub/lsof"
+  fi
+
   # ...and END TO END, both directions, through a real invocation.
   rm -rf "$tmp/frq" "$tmp/frl"
   PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
     LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
     timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > "$fr/inside.log" 2>&1
+  check "an inside log returns refusal status" "$?" "2"
   check "a run logging INSIDE the clone refuses" "$(grep -c 'own log is INSIDE the clone' "$fr/inside.log")" "1"
   check "  ...naming the fix"                  "$(grep -c 'Put the log outside the clone' "$fr/inside.log")" "1"
   check "  ...and taking NO ticket"            "$(ls "$tmp/frq" 2>/dev/null | grep -c .)" "0"
@@ -2849,8 +2890,28 @@ if [ "$SELF_TEST" = "1" ]; then
   rm -rf "$tmp/frq" "$tmp/frl"
   PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
     LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
+    timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > /dev/null 2> "$fr/inside.log"
+  check "a stderr-only log INSIDE the clone refuses" "$(grep -c 'own log is INSIDE the clone' "$fr/inside.log")" "1"
+  check "  ...and stderr takes NO ticket"       "$(ls "$tmp/frq" 2>/dev/null | grep -c .)" "0"
+  rm -f "$fr/inside.log"
+  rm -rf "$tmp/frq" "$tmp/frl"
+  PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
+    LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
     timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > "$tmp/outside.log" 2>&1
+  check "an outside log completes successfully" "$?" "0"
   check "a run logging OUTSIDE proceeds"       "$(grep -c 'own log is INSIDE the clone' "$tmp/outside.log")" "0"
+  for inspection_tool in readlink lsof; do
+    printf '#!/usr/bin/env bash\nexit 97\n' > "$frstub/$inspection_tool"
+    chmod +x "$frstub/$inspection_tool"
+  done
+  rm -rf "$tmp/frq" "$tmp/frl"
+  PATH="$frstub:$PATH" LS_QUEUE="$tmp/frq" LS_LOCK="$tmp/frl" LS_MAX_WAIT=20 TMPDIR="$tmp" \
+    LS_MOCK_PRESSURE_LEVEL=1 LS_MOCK_PRESSURE="10.0 memory_pressure:100-free%(macos)" \
+    timeout 60 bash "$0" --lane fl --dir "$fr" --gates-only 'true' > "$tmp/unreadable.log" 2>&1
+  check "unreadable descriptors return refusal status" "$?" "2"
+  check "  ...and name the inspection failure"   "$(grep -c 'cannot inspect stdout/stderr log destinations' "$tmp/unreadable.log")" "1"
+  check "  ...and take NO ticket"                "$(ls "$tmp/frq" 2>/dev/null | grep -c .)" "0"
+  rm -f "$frstub/readlink" "$frstub/lsof"
   # THE FORCED ORDERING is stated where a lane meets it.
   check "the tree refusal names the ordering"  "$(tree_change_report 'v2 aaa H1' 'v2 bbb H1' 0 2>&1 | grep -c 'never rebased in place')" "1"
   check "  ...cancel, rebase, re-enqueue"      "$(tree_change_report 'v2 aaa H1' 'v2 bbb H1' 0 2>&1 | grep -c 'cancel first, then rebase, then re-enqueue')" "1"
@@ -3386,7 +3447,11 @@ if [ "$SELF_TEST" = "1" ]; then
   saved_tk="${TICKET:-}"; saved_ln="$LANE"; saved_es="${ENQ_STAMP:-}"
   TICKET="1787500000000000000-999-ctwin"; LANE="ctwin"
   ENQ_STAMP="0123456789abcdef0123456789abcdef01234567 deadbeef"
-  hdr="$(build_log_header 1)"
+  hdr="$(
+    uname() { printf '%s\n' 'triad-hostname-fixture.invalid'; }
+    hostname() { printf '%s\n' 'triad-hostname-fixture.invalid'; }
+    build_log_header 1
+  )"
   check "the header names the TICKET"         "$(printf '%s' "$hdr" | grep -c 'ticket=1787500000000000000-999-ctwin')" "1"
   check "  ...the LANE, which is what is grepped" "$(printf '%s' "$hdr" | grep -c 'lane=ctwin')" "1"
   check "  ...the BRANCH"                     "$(printf '%s' "$hdr" | grep -c 'branch=')" "1"
@@ -3405,7 +3470,7 @@ if [ "$SELF_TEST" = "1" ]; then
         "$(build_failure_report "$rl" | grep 'failed modules')"
   check "  ...nor the axiom ledger's verdict" "$(axiom_ledger "$hl" >/dev/null; echo $?)" \
         "$(axiom_ledger "$rl" >/dev/null; echo $?)"
-  check "  ...and carries no hostname"        "$(printf '%s' "$hdr" | grep -cE "$(uname -n | cut -d. -f1)")" "0"
+  check "  ...and carries no hostname"        "$(printf '%s' "$hdr" | grep -Fc 'triad-hostname-fixture')" "0"
   TICKET="$saved_tk"; LANE="$saved_ln"; ENQ_STAMP="$saved_es"
 
   check "the banner names the protocol level" \
@@ -3768,7 +3833,10 @@ fi
 # A REPORT HAS NOTHING TO SPEND: --classify-only takes no ticket, so its log
 # cannot drift a stamp and this does not apply to it.
 if [ "$CLASSIFY_ONLY" = "0" ]; then
-  _log="$(log_under_clone)" && die "this tenure's own log is INSIDE the clone:
+  _log="$(log_under_clone)"
+  _log_status=$?
+  [ "$_log_status" -lt 2 ] || die "cannot inspect stdout/stderr log destinations; ensure proc descriptor links are readable or lsof is installed"
+  [ "$_log_status" != "0" ] || die "this tenure's own log is INSIDE the clone:
   $_log
   The enqueue stamp hashes the WORKING TREE including untracked files, so this log
   grows a line every few seconds while you wait and the tree drifts from your own

@@ -12,6 +12,13 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Fixed
+
+- The build protocol inspects Linux log descriptors without requiring `lsof`,
+  retains the portable fallback, and refuses when inspection is unavailable.
+  Its hostname regression uses an isolated marker, and CI prints failing
+  tool self-test transcripts instead of hiding their assertions.
+
 ## [0.1.2] — 2026-10-09 (tag publication pending)
 
 ### Fixed

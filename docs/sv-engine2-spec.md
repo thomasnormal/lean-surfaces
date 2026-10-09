@@ -1,7 +1,7 @@
 # Engine 2 kernel specification: contract census and schema
 
-**Status: partial pure schema, 2026-10-09; region vocabulary and normalized
-simulation time landed, no new transition semantics or implementation proof.**
+**Status: partial pure schema, 2026-10-09; regions, normalized time and process
+identity/lifecycle landed, no new transition semantics or implementation proof.**
 This document starts from lane `ls-spec`'s contract census and tracks the schema
 as it lands one piece at a time. It identifies the existing SystemVerilog
 scheduler surface and the additional Engine 2 contract. It is not yet a complete
@@ -202,8 +202,8 @@ are shared and retained by descendants, not copied into process attachments.
 
 ## 4. Planned pure schema
 
-`Engine2.Region` and `Engine2.SimTime` are exported; the other names below
-remain design names.
+The region, time and process vocabulary below is exported; the remaining
+pieces are design names.
 The intended home is an additive `LeanModels/Sv/Engine2/` surface. Existing
 cycle/AST definitions and theorem statements remain intact; bridges are proved
 when both sides exist rather than assumed during the schema work.
@@ -212,8 +212,9 @@ when both sides exist rather than assumed during the schema work.
 | --- | --- | --- |
 | `Engine2.SimTime` (landed) | Natural femtoseconds and exact relative-delay arithmetic | Checked 64-bit ABI conversion; occupied-slot advancement remains a future rule |
 | `Engine2.Region` (landed) | Complete clause-4 region inventory and region-set classification | Presentation position is not execution priority; iteration edges remain future rules |
-| `ProcessKey` | Registration identity; optional scheduler-slot projection | Historical identity never aliases slot reuse |
-| `ProcessState Frame` | Kind, frame/continuation, lifecycle, wait ownership, explicit suspension | Runnable, waiting, deferred, running and terminal facts remain distinguishable |
+| `Engine2.ProcessKey` (landed) | Natural registration identity, independent of scheduler storage | Fresh allocation and historical retention remain future registry invariants |
+| `Engine2.ProcessState Frame` (landed) | Live continuation phase/explicit suspension, or distinct normal/forced termination | Source status is not scheduler readiness; wait/control transitions remain future rules |
+| `Engine2.ProcessRecord Frame` (landed) | Key, body kind, independent control eligibility, lifecycle | Data replacement preserves registration metadata, not a proof of a legal transition |
 | `SignalState` | Typed signal identity, `LVec` value, publication generation | One ordinary value/publication authority; named events use occurrence state |
 | `WaitRegistration` | Owning process key, typed dependencies, resume region | At most one effective continuation wake; cancellation invalidates stale work |
 | `ScheduledEvent` | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions |
@@ -302,6 +303,55 @@ source behavior separately from these Lean arithmetic proofs. The Lean source
 self-check harness still refuses their `$time`/delay-control shapes; the
 refusals are retained, not counted as agreement. Region placement for `#0`,
 occupied-slot advancement and bounded-run control remain future rules.
+
+### Landed process identity and lifecycle
+
+`LeanModels/Sv/Engine2/Process.lean` defines a natural-valued `ProcessKey`,
+the five IEEE clause-9.7 `ProcessStatus` values, and a `ProcessState Frame`
+whose live constructor owns the continuation frame, underlying phase and one
+explicit-suspension flag. Normal completion and forced termination have
+separate constructors, with neither a live frame nor a suspension flag.
+State classification does not cancel external registrations automatically;
+the wait-ownership and cancellation invariants still need their own rules.
+
+Underlying phases distinguish registered, ready, executing, waiting and
+deferred continuations. Registered and deferred are pre-dispatch phases, not
+new source-language status values or evidence that execution has begun.
+Explicit suspension parks the underlying phase, which is not an effective
+wait registration or permission to execute. A deferred child is not thereby
+process-class SUSPENDED; waiting is not explicit suspension. The opaque frame
+must retain original wait information when needed, but this does not implement
+desensitization, resensitization, deadline preservation or condition testing.
+
+`ProcessState.status` gives suspension precedence over a live parked phase,
+and distinguishes WAITING from unblocked RUNNING. Semantic `ready` means
+**unblocked**, not a raw embedding of native `PS_Ready`, especially after
+`#0`. A native-to-source status bridge remains unproved; these constructors
+must not be used to declare the existing C++ status service conformant.
+`ProcessState.isReady` is only a necessary local dispatch condition; region
+eligibility, queue membership and global control are still required. The
+checked theorems are one-way readiness/status facts, exact terminal/suspension
+classifications and live-frame presence, not scheduling or termination proofs.
+
+`ProcessRecord Frame` separates registration identity and immutable consumer
+metadata from the current state. Callback/resume-thunk body kind is admission
+metadata, not the IEEE initial/always classification. `controlAllowed` is
+independent certified provenance, not derived from body kind. `withState` is
+plain data replacement preserving key, body kind and control eligibility; it
+is not a process-control or resurrection transition. No scheduler-slot cast,
+handle packing or allocation policy is introduced. Key uniqueness and durable
+historical retention require future registry invariants, not just this type.
+Original registration attachments are also distinct from continuation frames
+and automatic-variable storage, and remain a consumer boundary.
+
+The source fixtures in `Examples/system-verilog/engine2_process/` agree exactly
+between compiled Engine 2 and Icarus on natural exhaustion with a blocked
+process, and on edge-wait resumption followed by independent body completion.
+They do not query process-class status or measure kill/suspend/resume policy.
+Lean source-driver refusals are retained separately, not counted as agreement.
+The owner's recorded resume-time condition-truth-latching gap is not closed by
+this opaque-frame schema; no implementation refinement is claimed. This data
+piece requires no scheduling oracle.
 
 ### 4.1 Consumer body interface
 

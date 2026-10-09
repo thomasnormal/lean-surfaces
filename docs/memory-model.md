@@ -2307,6 +2307,9 @@ each a narrowing, a mechanical necessity, or a MEASURED correction:
 
 ## The cast tier: `int(str)` and `str(…)` (pass 8 — parse/render; BUILT)
 
+The original pass-8 design is recorded here for provenance. Current decimal
+parsing extends it as specified in the dated ASCII extension below.
+
 The whole-file goal leaves two one-line module functions un-runnable:
 `parse(c)` needs `int(c[1])` (a str) and `render(i)` needs `str(1 - …)`
 (an int). Two gaps, one of them a LOUDNESS BUG:
@@ -2358,6 +2361,27 @@ list; `main()`'s loud refusal at `import sys, sunfish_ui.uci` is
 PINNED as the file's designed boundary — the real UCI interface is an
 EXTERNAL module (shipped in the wheel), so whole-file coverage of
 sunfish.py ends there BY THE FILE'S OWN STRUCTURE, not by a tier gap.
+
+**2026-10-09 ASCII decimal extension (current):** `int(str)` decides the
+complete ASCII decimal grammar: surrounding space, TAB, LF, VT, FF, or CR;
+one optional sign; and one or more digits with single underscores only
+between adjacent digits. Leading zeroes are permitted. Every malformed
+ASCII spelling within the digit bound raises the faithful `ValueError`,
+using the original string's CPython `repr` truncated to 200 rendered
+characters, even when that cuts an escape or the closing quote. Rendering
+reuses `reprStr`, not a second quote/escape implementation.
+
+The tier admits at most **640 ASCII digits in the entire original string**,
+counted before syntax validation. This is the smallest configurable limit
+in the pinned CPython 3.9 family: `PYTHONINTMAXSTRDIGITS` may lower the
+default 4,300 to 640 or disable the limit. Above 640, even an invalid
+spelling's exception depends on that setting and on validation order, so
+the model refuses rather than guesses. Signs, underscores, and surrounding
+whitespace do not consume the digit budget; whitespace length is not
+bounded. Non-ASCII input, including Unicode digits/whitespace, and explicit
+base arguments remain loud. `decimalDigitsAux` is structural list recursion;
+both interpreters reuse `intCastVal`, and no interpreter recursion point,
+meta-theorem, heap-free predicate, or public judgment changes.
 
 **THE KERNEL-AFFORDABILITY VERDICT (pass 8, definitive — closes the
 pass-7 open item unless the interpreter's compilation is redesigned):**

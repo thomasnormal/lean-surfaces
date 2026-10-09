@@ -273,5 +273,17 @@
     "file": "harness/scripts/ann_module_script.py",
     "expect": "unsupported",
     "note": "CPython prints 3; a MODULE-scope annotation IS evaluated and writes __annotations__, so the function-body rewrite does not extend here"
+  },
+  {
+    "file": "harness/scripts/int_string_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_string_error_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_string_truncated_error_script.py",
+    "expect": "match"
   }
 ]

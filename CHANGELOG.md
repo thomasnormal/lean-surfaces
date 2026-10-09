@@ -24,6 +24,16 @@ change is listed here under **Changed** or **Removed**.
 - CI guard verification recognizes the reported comment-form self-test
   invocation, retaining its exact-once check after diagnostic integration.
 
+### Added
+
+- `int(str)` accepts ASCII decimal underscore grouping and all six integer
+  whitespace characters. Invalid ASCII literals raise CPython's exact
+  repr-rendered, truncated `ValueError` instead of refusing or misquoting it.
+- Decimal strings use a configuration-independent 640-digit admission bound;
+  larger digit counts, non-ASCII input, and explicit bases remain loud.
+- The `int_string` example proves symbolic results for grouped and signed
+  decimal literals without native axioms.
+
 ## [0.1.2] — 2026-10-09 (tag publication pending)
 
 ### Fixed

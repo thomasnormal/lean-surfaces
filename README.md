@@ -15,12 +15,15 @@ and release notes are on `master`; publication of the `v0.1.2` Git tag is
 pending. The latest published Python tag is `v0.1.1` (2026-09-24).
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
-This patch keeps the public judgments, tactics, and existing theorem statements
-unchanged. First-proof and tutorial builds stay within Python dependencies;
+The current source keeps the public judgments, tactics, and existing theorem
+statements unchanged. First-proof and tutorial builds stay within Python dependencies;
 native dictionary iterators now retain resize failures without changing
-ordinary generator closure behavior. The executable differential suite has
-1,345 cases: 1,229 agree with CPython and 116 refuse loudly. The narrower proof
-interpreter agrees on 1,151 cases and refuses 194; neither run has a mismatch.
+ordinary generator closure behavior. ASCII decimal strings now admit underscore
+grouping and all six integer whitespace characters, with exact invalid-literal
+errors and a configuration-independent 640-digit bound. Non-ASCII input and
+explicit bases remain loud. The executable differential suite has
+1,412 cases: 1,287 agree with CPython and 125 refuse loudly. The narrower proof
+interpreter agrees on 1,209 cases and refuses 203; neither run has a mismatch.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 

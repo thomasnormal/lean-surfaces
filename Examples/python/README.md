@@ -28,6 +28,11 @@ and they are checked, but they are not written to be read first.
 | 9 | [`bench_bisect`](bench_bisect/) | CPython's own `bisect_left`, where a loop variable is created inside the loop | the result is the insertion point on sorted input |
 | 10 | [`bench_statistics`](bench_statistics/) | CPython's `statistics.median_low/high`, through builtin `sorted` | the result is the order statistic |
 
+For decimal parsing, [`int_string`](int_string/) combines concrete grammar and
+exception checks with symbolic proofs: `int("1_024") + offset` equals
+`1024 + offset`, and a signed, whitespace-padded literal yields `offset - 2048`.
+Non-ASCII strings, more than 640 decimal digits, and explicit bases stay loud.
+
 **Sunfish:** the proofs about the unmodified
 [sunfish](https://github.com/thomasahle/sunfish) chess engine (GPL-3.0)
 now live in the sunfish repository, as a Lake package that depends on

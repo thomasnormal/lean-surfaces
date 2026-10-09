@@ -1145,41 +1145,55 @@ def absVal : RVal → Res RVal
       .unsupported "abs() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"bad operand type for abs(): '{v.typeName}'")
 
-/-- pass 8 (docs/memory-model.md §the cast tier): is `c` one of the
+/-- pass 8 (docs/memory-model.md §the cast tier): is the character one of the
 ASCII whitespace characters `int(<str>)` strips? -/
-def intWs (c : Char) : Bool :=
-  c == ' ' || c == '\t' || c == '\n' || c == '\r'
+def intWs (character : Char) : Bool :=
+  character == ' ' || character == '\t' || character == '\n' ||
+    character == '\r' || character.toNat == 0x0b || character.toNat == 0x0c
 
-/-- ASCII digits to a `Nat`; `none` on empty or any non-digit (a sign
-or space INSIDE the run — CPython's `ValueError` shapes). -/
-def digitsToNat : List Char → Option Nat
-  | [] => Option.none
-  | cs => cs.foldl (init := some 0) fun acc c =>
-      match acc with
-      | some n => if c.isDigit then some (n * 10 + (c.toNat - 48)) else Option.none
-      | Option.none => Option.none
+/-- Structural decimal parser; an underscore requires a digit on both sides. -/
+def decimalDigitsAux : List Char → Nat → Bool → Option Nat
+  | [], value, previousDigit => if previousDigit then some value else Option.none
+  | character :: rest, value, previousDigit =>
+      if character.isDigit then
+        decimalDigitsAux rest (value * 10 + (character.toNat - 48)) true
+      else if character == '_' && previousDigit then
+        decimalDigitsAux rest value false
+      else Option.none
 
-/-- `int(<str>)` — the honest three-way subset (docs/memory-model.md
-§the cast tier): within the SAFE ALPHABET (ASCII whitespace, one sign,
-digits) the parse is exact and the failure is CPython's faithful
-`ValueError`; ANY character outside it refuses loudly (underscore
-grouping, Unicode digits — CPython's exotic acceptances, never
-guessed). -/
-def intOfStr (s : String) : Res RVal :=
-  let cs := s.toList
-  if !cs.all (fun c => intWs c || c == '+' || c == '-' || c.isDigit) then
-    .unsupported "int() of this str is outside the tier (only ASCII digits/sign/whitespace are decided — CPython's exotic acceptances are never guessed; docs/memory-model.md §the cast tier)"
+/-- ASCII decimal digits, optionally grouped by single underscores, to a `Nat`. -/
+def digitsToNat (characters : List Char) : Option Nat :=
+  decimalDigitsAux characters 0 false
+
+/-- The smallest configurable CPython 3.9 decimal conversion limit. Beyond
+this digit count the tier refuses rather than guessing the oracle's setting. -/
+def intDigitBudget : Nat := 640
+
+/-- `int(<str>)` decides ASCII decimal syntax within `intDigitBudget`,
+including underscore grouping and all six integer whitespace characters.
+Non-ASCII input and larger digit counts refuse loudly; invalid ASCII input
+raises CPython's repr-rendered, 200-character-truncated `ValueError`. -/
+def intOfStr (text : String) : Res RVal :=
+  let characters := text.toList
+  if !characters.all (fun character => character.toNat < 128) then
+    .unsupported "int() of a non-ASCII str is outside the tier (Unicode digits and whitespace are not guessed; docs/memory-model.md §the cast tier)"
+  else if characters.countP (fun character => character.isDigit) > intDigitBudget then
+    .unsupported "int() of this str exceeds the tier's 640-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
-    let core := ((cs.dropWhile intWs).reverse.dropWhile intWs).reverse
+    let core := ((characters.dropWhile intWs).reverse.dropWhile intWs).reverse
     let parsed : Option Int :=
       match core with
-      | '+' :: ds => (digitsToNat ds).map Int.ofNat
-      | '-' :: ds => (digitsToNat ds).map (fun n => -(n : Int))
-      | ds => (digitsToNat ds).map Int.ofNat
+      | '+' :: digits => (digitsToNat digits).map Int.ofNat
+      | '-' :: digits => (digitsToNat digits).map (fun value => -(value : Int))
+      | digits => (digitsToNat digits).map Int.ofNat
     match parsed with
-    | some n => .ok (.int n)
+    | some value => .ok (.int value)
     | Option.none =>
-      .exn (.valueError s!"invalid literal for int() with base 10: '{s}'")
+      match reprStr text with
+      | some rendered =>
+          .exn (.valueError s!"invalid literal for int() with base 10: {String.ofList (rendered.toList.take 200)}")
+      | Option.none =>
+          .unsupported "int() cannot render this invalid literal exactly (docs/memory-model.md §the cast tier)"
 
 /-- The `int` constructor builtin: identity on ints, bool coercion,
 `int(<str>)` through the pass-8 honest subset (`intOfStr`); floats stay

@@ -15,8 +15,9 @@ HISTORY, not instruction. -/
 #py_check str_lab.cast_int(" 42 ") = 42
 #py_check str_lab.cast_int("-0") = 0
 #py_check str_lab.cast_str(-3) = "-3"
-#guard callFunction str_lab "cast_int" #[.str "1_2"] 4096 matches .unsupported _
-#guard callFunction str_lab "cast_int" #[.str "12x3"] 4096 matches .unsupported _
+#py_check str_lab.cast_int("1_2") = 12
+#py_check str_lab.cast_int("12x3") raises
+  (.valueError "invalid literal for int() with base 10: '12x3'")
 #guard callFunction str_lab "cast_int" #[.str ""] 4096 matches .exn (.valueError _)
 #guard callFunction str_lab "cast_str" #[.bool true] 4096 == .ok (.str "True")
 
@@ -41,6 +42,10 @@ live in `Examples/python/sunfish`.
 open LeanModels LeanModels.Python
 
 load_program str_lab from "Examples/python/str_lab/str_lab.json"
+
+#py_check str_lab.cast_int("1_2") = 12
+#py_check str_lab.cast_int("12x3") raises
+  (.valueError "invalid literal for int() with base 10: '12x3'")
 
 /-! ### slices: both directions, defaults, clamping, negatives -/
 

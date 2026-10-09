@@ -8,6 +8,22 @@ value, and a definitional interpreter gives it meaning. Programs stay
 proofs read against code you recognize, which is what makes AI-assisted proving
 tractable.
 
+## Python release status
+
+The prepared Python prerelease is **v0.1.2 (2026-10-09)**. Its source changes
+and release notes are on `master`; publication of the `v0.1.2` Git tag is
+pending. The latest published Python tag is `v0.1.1` (2026-09-24).
+See [CHANGELOG.md](CHANGELOG.md) for the version history.
+
+This patch keeps the public judgments, tactics, and existing theorem statements
+unchanged. First-proof and tutorial builds stay within Python dependencies;
+native dictionary iterators now retain resize failures without changing
+ordinary generator closure behavior. The executable differential suite has
+1,345 cases: 1,229 agree with CPython and 116 refuse loudly. The narrower proof
+interpreter agrees on 1,151 cases and refuses 194; neither run has a mismatch.
+See [the measured coverage](docs/python-coverage.md) and
+[the interpreter boundary](docs/python-architecture.md).
+
 ## Quickstart (Python tier)
 
 You need git, Python ≥ 3.9, and [elan](https://github.com/leanprover/elan)
@@ -24,8 +40,12 @@ the Python proof dependencies and checks the `tri` example's theorems. It does
 not compile another language tier or any Mathlib library module. The environment
 variable skips Mathlib's automatic cache download: Mathlib is a declared package
 dependency, but these first Python proofs use only Lean's core tactics. The first build
-typically takes a few minutes; downloads depend on your connection. The source
-and the proof are shown [below](#example-examplespythontri).
+took about **3 minutes 31 seconds** in this release's frozen Linux check, with
+fresh project and package-source directories and an already-installed Lean
+toolchain. No compiled project or package artifacts were copied. Toolchain
+installation is excluded from that timing; downloads and build time depend on
+your machine and connection. The source and the proof are shown
+[below](#example-examplespythontri).
 Next:
 
 - **Prove your own function**: [tutorial 01](docs/tutorial/01-first-run.md)

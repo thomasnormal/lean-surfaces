@@ -2,8 +2,9 @@
 
 Thank you for helping. This repository holds several language tiers:
 Python, SystemVerilog, C/C++, Ada, ECMAScript, and circuits. This guide
-covers the **Python tier**, which is the one released as 0.1.0. The other
-tiers are research in progress, with their own contracts under `docs/`.
+covers the **Python tier**; see [CHANGELOG.md](CHANGELOG.md) for its
+source-version history. The other tiers are research in progress, with
+their own contracts under `docs/`.
 
 Start with the [README quickstart](README.md#quickstart-python-tier) and
 the [tutorials](docs/tutorial/index.md). How the pieces fit together is on

@@ -12,25 +12,73 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
-### Changed
+## [0.1.2] — 2026-10-09 (tag publication pending)
+
+### Fixed
 
 - Native dictionary iterators and enumerations retain a resize failure on
   every later advance, even after the original size is restored. Generator
   exceptions still close their frames; the recorded `pyc-div-1` divergence
   is retired with differential regressions and a continuing alarm.
+- CI installs the admitted `pyslang` major family (`>=11,<12`) for the
+  existing SystemVerilog envelope gates, rather than selecting an incompatible
+  newer major or weakening frontend admission.
+
+### Changed
 
 - The Python quickstart and tutorial proofs import only their required Python
   tactics; their targeted builds no longer compile unrelated language tiers.
   First-build commands skip the unused Mathlib cache download, and CI checks
   the examples' transitive import boundary.
+- Public judgments, tactics, and existing theorem statements are unchanged.
 
 ### Added
 
 - A dated [Python production-readiness baseline](docs/python-baseline-2026-10-09.md)
   distinguishing executable coverage, proof coverage, static refusals,
   upstream-test prerequisites, and onboarding/documentation gaps.
+- Ten dictionary-iterator lifecycle regressions and five kernel-checked
+  concrete theorems of the executable interpreter, preserving the narrower
+  proof interpreter's loud boundary. Ten isolated tests protect the archived
+  divergence alarm from being masked by the presence of a failure constructor.
 
-## [0.1.0] — unreleased (first community release)
+### Validation
+
+- CPython 3.9 differential suite: 1,345 cases, 1,229 matched, 116 recorded
+  refusals, zero mismatches. The same rows through the proof interpreter:
+  1,151 matched, 194 refused, zero mismatches.
+- Both recorded Python divergences are archived and remain watched by their
+  live probes. Curated existing examples and the five new concrete theorems
+  retain kernel-checked proofs without native-computation or `sorry` dependencies.
+- Frozen Linux quickstart: the first `tri` proof builds in 211 seconds, with
+  six tutorial companions taking another 39 seconds. Timing includes fresh
+  package-source clones, excludes the already-installed Lean toolchain, and
+  copies no compiled artifacts; no foreign tier or Mathlib library is built.
+
+## [0.1.1] — 2026-09-24
+
+### Fixed
+
+- Python harnesses re-execute under the pinned frontend only when run as
+  scripts; importing them no longer forwards a caller's unrelated arguments.
+
+### Added
+
+- CI runs the README quickstart on Linux and macOS and checks the curated
+  Python examples for `sorry` and native-computation dependencies.
+
+### Removed
+
+- Remaining Sunfish-derived `sf_*` examples and the C-tier twin moved out of
+  this Apache-2.0 repository to the Sunfish repository.
+
+### Validation
+
+- After the associated corpus rows were removed, the executable suite had
+  1,335 cases: 1,219 matched and 116 refused. The proof interpreter matched
+  1,151 and refused 184. Both runs had zero mismatches.
+
+## [0.1.0] — 2026-09-24
 
 ### Added
 
@@ -53,10 +101,10 @@ change is listed here under **Changed** or **Removed**.
   with a guessed value. The measured table is
   [docs/python-coverage.md](docs/python-coverage.md).
 - **Differential testing.** `harness/diff_test.py` checks the semantics
-  against CPython 3.9: 1335 rows, 1219 agree, 0 disagree, 116 recorded
+  against CPython 3.9: 1419 rows, 1301 agree, 0 disagree, 118 recorded
   refusals. The theorems are about a second definition of the interpreter,
   `LeanModels/Python/Semantics.lean`. `diff_test.py --proof-interpreter`
-  checks that one against the same rows: 1151 agree, 0 disagree, and 184
+  checks that one against the same rows: 1233 agree, 0 disagree, and 186
   refuse because its tier is narrower. CI runs both
   ([docs/python-architecture.md](docs/python-architecture.md)).
 - **Whole programs.** `tools/leanpy FILE.py [--compare]` runs a Python file
@@ -66,11 +114,8 @@ change is listed here under **Changed** or **Removed**.
 - **Examples.** Proved examples under `Examples/python/` (three-file layout:
   `<name>.py`, `spec.lean`, `proof.lean`), including loops (`tri`, `gcd`),
   recursion (`fib`), relational specs (`rsa_inverse`), and code vendored
-  from CPython (`bench_bisect`, `bench_statistics`). The sunfish chess
-  engine proofs (GPL-3.0), including the `sf_*` examples built from excerpts
-  of it, moved to the sunfish repository before release.
-  CI checks that the ten curated examples' declarations depend on no
-  `sorryAx` and no native computation (`harness/lean_axiom_census.py --gate`).
+  from CPython (`bench_bisect`, `bench_statistics`). The remaining
+  Sunfish-derived `sf_*` examples moved out of this repository in 0.1.1.
 - **License.** Apache-2.0 ([LICENSE](LICENSE)); vendored third-party example
   code is listed in [NOTICE](NOTICE).
 - **Docs.** Quickstart in the README, tutorials under `docs/tutorial/`, the
@@ -83,7 +128,7 @@ change is listed here under **Changed** or **Removed**.
   `docs/python-coverage.md`.
 - The oracle and the tier are pinned to CPython 3.9.
 - Some programs `tools/leanpy` runs cannot yet be the subject of a theorem:
-  of the differential rows, the proof interpreter decides 1151 and the
-  runner 1219.
+  of the differential rows, the proof interpreter decides 1233 and the
+  runner 1301.
 - Only Linux has been timed from a fresh clone; macOS is expected to work
   but is untested.

@@ -1,9 +1,11 @@
 # Engine 2 kernel specification: contract census and schema
 
-**Status: design, 2026-10-09; no new Lean semantics or implementation proof.**
-This is the first item of lane `ls-spec`. It identifies the existing SystemVerilog
-scheduler surface, the additional Engine 2 contract, and the schema to formalize
-one piece at a time. It is not yet a normative executable kernel specification.
+**Status: partial pure schema, 2026-10-09; region vocabulary landed, no new
+transition semantics or implementation proof.**
+This document starts from lane `ls-spec`'s contract census and tracks the schema
+as it lands one piece at a time. It identifies the existing SystemVerilog
+scheduler surface and the additional Engine 2 contract. It is not yet a complete
+normative executable kernel specification.
 The eventual Lean relation, not a description of C++ queue mechanics, will be
 the normative core and the source of kernelbench's mandated-order checker.
 
@@ -200,7 +202,7 @@ are shared and retained by descendants, not copied into process attachments.
 
 ## 4. Planned pure schema
 
-Names below are design names, not declarations already exported by Lean.
+`Engine2.Region` is exported; the other names below remain design names.
 The intended home is an additive `LeanModels/Sv/Engine2/` surface. Existing
 cycle/AST definitions and theorem statements remain intact; bridges are proved
 when both sides exist rather than assumed during the schema work.
@@ -208,7 +210,7 @@ when both sides exist rather than assumed during the schema work.
 | Piece | Proposed contents | Invariant or boundary |
 | --- | --- | --- |
 | `SimTime` | Natural femtoseconds | Monotone occupied-slot advancement; bounded ABI conversion checked separately |
-| `KernelRegion` | Complete clause-4 region set, family and phase information | Ordering and permitted iteration edges are rules, not a numeric oracle choice |
+| `Engine2.Region` (landed) | Complete clause-4 region inventory and region-set classification | Presentation position is not execution priority; iteration edges remain future rules |
 | `ProcessKey` | Registration identity; optional scheduler-slot projection | Historical identity never aliases slot reuse |
 | `ProcessState Frame` | Kind, frame/continuation, lifecycle, wait ownership, explicit suspension | Runnable, waiting, deferred, running and terminal facts remain distinguishable |
 | `SignalState` | Typed signal identity, `LVec` value, publication generation | One ordinary value/publication authority; named events use occurrence state |
@@ -220,6 +222,41 @@ when both sides exist rather than assumed during the schema work.
 | `ControlState` | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
 | `CompletionState` | Initialized/draining facts and optional explicit status | Natural completion derived from queues; first explicit request retained |
 | `KernelState Frame` | Current time/phase, processes, signals, current/future events, forks, controls, output | No native addresses, cache, allocator, packed-token shortcut or duplicated authority |
+
+### Landed region vocabulary
+
+`LeanModels/Sv/Engine2/Regions.lean` exports the complete seventeen-constructor
+`LeanModels.Sv.Engine2.Region`, independently of the legacy R1 interpreter.
+Its checked lists contain nine simulation regions and eight additional
+PLI-only regions (clauses 4.4.2 and 4.4.3). PLI-only does not mean every region
+that permits a PLI callback: Preponed and Postponed remain simulation regions.
+Observed does not permit PLI callbacks.
+
+The active and reactive region sets each contain five regions, as defined by
+4.4.1; the iterative set contains fourteen, including Pre-Observed and
+Pre-Postponed. The active set is not the broader Active-through-Post-Observed
+scheduling phase in 4.5. No next-region function or scheduling oracle is
+introduced by this vocabulary-only piece.
+
+`Region.position` records the inventory's presentation order in `Fin 17`.
+There is deliberately no region-order instance, execution-rank monotonicity
+claim, or implicit ABI conversion. Exhaustiveness, no duplicates, partition,
+position injectivity, and agreement of all positions with `List.range 17`
+are Lean-checked. Region order along execution still depends on the future
+queue/phase transition rules, including legal re-entry into Active.
+
+`Region.ofR1` embeds the old fifteen-constructor vocabulary injectively and
+preserves its simulation/PLI-only classification. The exact missing names
+are Pre-Observed and Pre-Postponed. This is a vocabulary bridge, not a claim
+that the old snapshot oracle or AST scheduler implements Engine 2 semantics.
+
+The real source fixtures in `Examples/system-verilog/engine2_regions/` agree
+byte-for-byte between Icarus and Mox's compiled Engine 2 consumer. They measure
+zero-delay/NBA separation and NBA-triggered Active re-entry, not PLI callbacks
+or a refinement of the new Lean type to native code. The existing Lean
+self-check source driver refuses these delay/event-control shapes; that
+boundary is recorded rather than counted as differential agreement. See the
+fixture README for commands and the measured artifact revision.
 
 The reference calendar is a finite semantic collection of events indexed by
 time/region, not a commitment to a heap, wheel or FIFO. Derived eligibility

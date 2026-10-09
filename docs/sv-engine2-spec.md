@@ -227,7 +227,7 @@ when both sides exist rather than assumed during the schema work.
 | `Engine2.WaitRegistration` (landed) | Independent wait/continuation identity, captured reason/dependencies and resume region | Identity recognition only; single-wake consumption, cancellation and region legality remain future rules |
 | `Engine2.ScheduledEvent` (landed) | Event identity, time, region, action, origin and sequencing provenance | Process resume, value update and event occurrence are distinct actions; queue policy remains future |
 | `PendingUpdates` (landed) | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
-| `ForkState` | Group identity, parent key, child keys, deferred release and join barrier | Immediate-child waiting distinct from transitive descendant cancellation |
+| `ForkState` (landed) | Group identity, parent key, child keys, deferred release and join barrier | Immediate-child waiting distinct from transitive descendant cancellation |
 | `NamedEventState` (landed) | Resolved identity or null; last occurrence time/validity | Persistent occurrence never masquerades as ordinary value change |
 | `ControlState` | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
 | `CompletionState` | Initialized/draining facts and optional explicit status | Natural completion derived from queues; first explicit request retained |
@@ -475,6 +475,18 @@ advance without a reset transition. Structural facts prove null/resolved
 classification and current-slot observation only. Trigger admission, alias
 resolution, wake consumption, NBA/Re-NBA scheduling and time advancement stay
 outside this schema piece.
+
+### Landed fork-group state
+
+`LeanModels/Sv/Engine2/Fork.lean` defines `ForkState` with a semantic
+`ForkKey`, parent `ContinuationKey`, direct child `ProcessKey` membership,
+`ForkJoinKind` (`join`, `joinAny`, or `joinNone`), and explicit deferred or
+released state. The child list is membership data only and carries no execution
+priority. Initial constructors capture the kernel's immediate-release versus
+`join_none` deferral distinction; structural facts classify modes, release
+states, parent ownership and child membership. Spawn, release, join wakeups,
+descendant cancellation, process-slot reuse and scheduler ordering remain
+future rules.
 
 ### 4.1 Consumer body interface
 

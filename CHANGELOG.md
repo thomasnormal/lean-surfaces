@@ -12,8 +12,23 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-10-09 (tag publication pending)
+
 ### Added
 
+- `int(str)` accepts ASCII decimal underscore grouping and all six integer
+  whitespace characters. Invalid ASCII literals raise CPython's exact
+  repr-rendered, truncated `ValueError` instead of refusing or misquoting it.
+  Decimal strings admit at most 640 ASCII digits, independently of the host's
+  configuration; larger digit counts, non-ASCII input, and explicit bases
+  remain loud.
+- String repetition supports both operand orders, boolean counts, and `*=`,
+  preserving Unicode code points and exact non-integer count errors. The
+  original signed count's magnitude and the output's code-point length must
+  each be at most 1,048,576; heap operands and oversized counts remain loud.
+- The new `int_string` and `string_repeat` examples prove symbolic results
+  for grouped and signed decimal literals, both repetition operand orders,
+  decorated strings, and width arithmetic.
 - A repository-root `check.sh` entry point for the existing local CI checks.
 
 ### Fixed
@@ -27,21 +42,23 @@ change is listed here under **Changed** or **Removed**.
   on both quiet CI runners and busy development machines.
 - CI guard verification recognizes the reported comment-form self-test
   invocation, retaining its exact-once check after diagnostic integration.
+- Shared CI optional-oracle admission requires completed readiness checks
+  and verified output. Recognized license refusals remain optional skips;
+  timeouts, malformed output, unexpected failures, and fixture mismatches
+  remain hard errors.
 
-### Added
+### Validation
 
-- `int(str)` accepts ASCII decimal underscore grouping and all six integer
-  whitespace characters. Invalid ASCII literals raise CPython's exact
-  repr-rendered, truncated `ValueError` instead of refusing or misquoting it.
-- Decimal strings use a configuration-independent 640-digit admission bound;
-  larger digit counts, non-ASCII input, and explicit bases remain loud.
-- The `int_string` example proves symbolic results for grouped and signed
-  decimal literals without native axioms.
-- String repetition supports both operand orders, boolean counts, and `*=`,
-  preserving Unicode code points and exact non-integer count errors.
-  Count magnitude and output length have fuel-independent bounds; heap
-  operands and oversized counts remain loud. The `string_repeat` example
-  proves symbolic results for both operand orders and decorated strings.
+- CPython 3.9 differential suite: 1,642 cases, 1,494 matched, 148 recorded
+  refusals, zero mismatches. The same rows through the proof interpreter:
+  1,416 matched, 226 refused, zero mismatches.
+- Whole-program corpus: 70 scripts, 55 matched, 15 loud refusals, zero failures.
+- The two new example proof pairs are kernel-checked without
+  native-computation or `sorry` dependencies and join the curated axiom gate.
+- Frozen Linux quickstart: the first `tri` proof builds in 205 seconds, with
+  six tutorial companions taking another 43 seconds. Timing includes fresh
+  package-source clones, excludes the already-installed Lean toolchain, and
+  copies no compiled artifacts; no foreign tier or Mathlib library is built.
 
 ## [0.1.2] — 2026-10-09 (tag publication pending)
 

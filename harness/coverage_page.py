@@ -194,7 +194,7 @@ def render(diff, proof, grammar, tables):
              "per production of CPython 3.9's `ast` grammar, plus edge rows. "
              "MATCH means the model ran the witness and agreed with CPython; "
              "it does not mean every use of the construct is in tier "
-             "(`2 * 3` runs, `\"ab\" * 3` may refuse). REFUSE shows the "
+             "(`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the "
              "model's refusal message.")
     L.append("")
     L.append("%d witnesses: %s." % (n, ", ".join(

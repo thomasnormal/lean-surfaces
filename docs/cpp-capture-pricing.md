@@ -778,6 +778,40 @@ prefix proof would require a separately admitted, input-preserving segmented
 RHS—not merely `List.take` over the complete literal. That segmentation is a
 new organization decision, not silently introduced by this negative probe.
 
+## Input-preserving segmented RHS
+
+The next organization slices the validated in-memory row list **before**
+`Lean.toExpr`, so a segment does not first compile the complete original
+literal. The external measurement command publishes each bounded segment with
+ordinary `Lean.addAndCompile`; it does not alter the production loader or the
+capture inputs. A small eight-row control uses two four-row segments and proves
+both projections and their concatenation by the kernel. On the unchanged XML
+root, direct prefix witnesses pass for 8 and 128 rows:
+
+```lean
+segment_cpp_rows originalFirst128 from "capture" start 0 count 128
+example : GeneratedCapture.capture.probe.declarations.take 128 =
+    originalFirst128 := rfl
+```
+
+| Fixture / witness | Seconds | wait4 peak RSS, KiB | Outcome |
+| --- | ---: | ---: | --- |
+| Small control, two 4-row segments and reconstruction | 35.927 | 1,590,176 | PASS; all three kernel equalities |
+| Original XML prefix, 8 rows | 53.721 | 1,888,440 | PASS |
+| Original XML prefix, 128 rows | 53.721 | 1,888,440 | PASS in the same command |
+| Original XML prefix, 256 rows | 70.221 | 1,822,464 | segment publishes; root `take` equality reaches recursion depth |
+| Original XML prefix, 512 rows | 58.153 | 1,823,820 | segment compilation reaches recursion depth |
+
+All children retain synchronous/default recursion **512**, **200,000**
+heartbeats, `-j1 -M8192`, an **8 GiB** address-space cap and a **180-second**
+watchdog. The 8/128 process sample peaks at **837,928 KiB HWM** and
+**836,624 KiB RSS**; the 256 and 512 samples peak at **835,652** and **833,896
+KiB** HWM respectively. The
+positive 128-row result is a real input-preserving kernel witness, but it does
+not establish whole-list equality: the default reduction boundary appears
+between 128 and 256 rows for the current root organization. No production
+segmentation or semantic admission is promoted from this pricing control.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -848,3 +882,9 @@ The bounded prefix-equality probe is under
 `/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-prefix-equality-20261010/`.
 Its source, result, process samples, diagnostic markers and complete input pins
 are retained; the recursion-depth refusal produced no artifact.
+
+The input-preserving segmented-RHS controls are under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-segmented-rhs-20261010/`.
+They retain the external command, small positive control, 8/128 positive XML
+prefix witnesses, 256/512 recursion-depth negatives, process samples and full
+input/root pins.

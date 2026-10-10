@@ -161,6 +161,11 @@ with eight declaration rows loads successfully but supplies no ordinary-source,
 ISO or runtime admission. These explicit resource refusals do not change the
 historical corpus syntax counts or semantic/runtime admissions of zero.
 
+See [capture-literal resource pricing](../../docs/cpp-capture-pricing.md) for
+whole-original-artifact phase measurements and finite-budget controls. Its
+kernel-only experiment is not completed public-loader compilation or C++
+semantic admission; production loading remains unchanged.
+
 ### Evidence contract
 
 Output is one JSON object with `ast` and `metadata`. The former is Clang's stock

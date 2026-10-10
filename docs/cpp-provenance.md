@@ -327,6 +327,11 @@ without establishing ordinary/nonmodule source admission or executable
 semantics. These are literal resource outcomes, not new compiler or semantic
 verdicts, and no corpus-specific budget or special-case path is introduced.
 
+The later [capture-literal resource pricing](cpp-capture-pricing.md) separates
+XML's compiler limits from JSON's decoding/parsing limits, records finite
+budget controls and an explicitly non-executable kernel-only experiment,
+and keeps the production ingestion and admission boundaries unchanged.
+
 ## Primary references
 
 The baseline remains the charter's C++23/WG21 N4950. The translation discussion

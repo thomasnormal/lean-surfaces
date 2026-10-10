@@ -156,6 +156,75 @@ tooling query eligibility, entity/type/template/linkage, graph consensus,
 cross-TU/ODR and ISO admission remain separate barriers. C++ semantic and
 runtime admissions stay **zero**.
 
+## Whole XML component pricing
+
+A follow-up on 2026-10-10 prices the original XML capture's component
+literals before choosing an organization change. An external command calls
+the unchanged `readDeclarationCapture` first: **every** run reads and validates
+the complete receipt, bound payloads and probe. It then gives just the selected
+projection, or the complete capture, to the same safe `addAndCompile` path.
+The component runs are not reduced-input ingestion. Production loading is
+unchanged, and no complete reconstruction from component constants is tested.
+
+Each run uses Lean 4.33.0-rc1, `-j1 -M8192`, an inherited **8 GiB per-process
+address-space limit**, a **180-second** wall bound and the original elaboration
+and compiler defaults. Durable flushed markers record read, `ToExpr` and
+add/compile API boundaries. Successful rows require the entire Lean process
+to exit zero and a `#eval` sentinel to equal an independently inventoried
+root or count, not just an API-return marker. RSS below is the completed
+controller child's `wait4` high-water measurement; no run hits the wall bound.
+
+| Selected literal | Seconds | Measured RSS, KiB | Outcome |
+| --- | ---: | ---: | --- |
+| Raw AST | 53.486 | 2,595,848 | Recursion-depth refusal at add/compile command |
+| Raw metadata | 37.628 | 1,875,552 | Recursion-depth refusal at add/compile command |
+| Typed declaration rows, retaining each `row.raw` | 44.628 | 1,889,136 | Recursion-depth refusal at add/compile command |
+| Complete probe | 56.386 | 2,803,168 | LCNF 200,000-heartbeat refusal |
+| Complete receipt, without probe | 25.716 | 1,742,320 | PASS; compiled payload count is 14 |
+| Complete capture | 52.263 | 2,846,076 | LCNF 200,000-heartbeat refusal |
+| Complete capture, no evaluation sentinel | 45.496 | 2,759,072 | Same LCNF refusal |
+
+The no-evaluation control confirms that full-capture refusal is not introduced
+solely by the sentinel. The recursion-depth messages do not identify a specific
+compiler subphase; they must not be reported as measured LCNF failures.
+Failed literals also produce noncomputable-dependency diagnostics at their
+evaluation commands. Later elaboration does not repair the failed process.
+These are bounded single samples, including imports, complete reading and
+validation, expression construction and compilation/evaluation. Controls and
+other lanes share the host; neither time subtraction nor an isolated compiler
+speedup is justified.
+
+An import-only evaluation control passes in **17.243 seconds / 1,581,248
+KiB**. The real eight-row module capture passes both its `rfl` length witness
+and compiled length evaluation in **23.390 seconds / 1,641,692 KiB**. Together
+with the receipt projection, these rule out an unconditionally failing
+instrument. They establish executable availability only in those Lean
+processes, not downstream compiled-artifact import or complete-capture equality.
+
+The unchanged XML probe is **32,723,259 bytes**: original AST value span
+**29,223,730**, metadata **3,499,508**, of which the declaration array is
+**3,499,260**, remaining metadata **248**, and outer framing **21**. Independent
+compact Python UTF-8 serialization measures AST **10,194,322 bytes**, metadata
+**3,499,508** and receipt **186,374**; these are not Lean expression, heap or
+compiler sizes and are not replacement artifacts. There are **4,527** metadata
+rows. The AST's **160** immediate children are uneven: the largest two compact
+subtrees are **4,245,430** and **2,764,067** bytes. Its maximum raw JSON depth
+of **61** does not bound the depth of Lean's inductive list scaffolding.
+Bundle bytes, all 104 recorded positive-input pins and all six production
+loader/parser/representation pins remain unchanged. Present-byte agreement
+still does not establish input-world closure.
+
+**Decision:** mere separation into whole AST/metadata/row fields does not
+complete this bounded experiment: each large component already refuses.
+Price a general, size-bounded structural literal organization and **complete
+assembly** next, without pruning observations, replacing original artifacts,
+adding an unprofiled cache or granting source-specific budgets. Component
+failure is not a universal compiler impossibility, and the receipt-only success
+is not completed public capture ingestion. Original full-compilation successes
+remain **zero**; JSON parsing and every previously named ISO, identity and
+execution barrier remain separate. C++ semantic and runtime admissions remain
+**zero**.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -165,3 +234,10 @@ raw markers, sample archives and review notes are under
 under `capture-ingestion-20261010/census/`; these new resource experiments
 do not rewrite its outcomes or promote the observational captures to
 semantic evidence.
+
+The follow-up's exact commands, fixture/instrument hashes, effective toolchain,
+durable markers, process samples, passing controls, independent inventories and
+reviews are under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-organization-20261010/`, split
+into `shared/`, `inputs/` and `review/`. Initial wrapper/build and wrong-toolchain
+import failures are setup diagnostics, excluded from the pricing outcomes.

@@ -19,6 +19,10 @@ obligations for a first function/variable subset. It is not implemented admissio
 and canonical handle, and the result is every matching artifact occurrence.
 Missing/conflicting evidence or an absent target refuses; this remains frontend
 evidence, not an entity-identity theorem or executable admission.
+The same module exposes `functionDefinitionEvidence` for a `FunctionDecl` only
+when all matching rows carry the same parsed local shape; its Boolean is a
+frontend observation, not a proof of an ISO definition, callable body or ODR
+fact.
 
 ## Standard obligations and trusted boundary
 

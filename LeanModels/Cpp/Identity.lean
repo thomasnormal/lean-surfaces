@@ -22,4 +22,23 @@ def canonicalTargetCandidates (artifact : Artifact) (probe : DeclarationProbe)
         else
           .ok candidates
 
+def functionDefinitionEvidence (probe : DeclarationProbe) (declaration : Declaration) :
+    Except String Bool :=
+  let rows := probe.declarations.filter fun row => row.id.value == declaration.id
+  match rows with
+  | [] => .error "function-definition evidence missing for declaration occurrence"
+  | row :: rest =>
+      if declaration.kind != "FunctionDecl" || row.kind != "FunctionDecl" then
+        .error "function-definition evidence requires FunctionDecl"
+      else
+        match row.functionShape with
+        | none => .error "function-definition shape evidence missing"
+        | some shape =>
+            if rest.any (fun other => other.kind != row.kind) then
+              .error "function-definition evidence rows disagree on declaration kind"
+            else if rest.any (fun other => other.functionShape != some shape) then
+              .error "function-definition evidence rows disagree on local shape"
+            else
+              .ok shape.definition
+
 end LeanModels.Cpp

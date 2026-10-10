@@ -84,6 +84,17 @@ def evidenceRow (id kind canonical : String) : DeclarationEvidenceRow := {
   functionShape := none, raw := .object []
 }
 
+def functionShape (definition bodyPresent : Bool) : FunctionShapeEvidence := {
+  definition, bodyPresent, defaulted := false, deletedAsWritten := false
+  skippedBody := false, pendingBody := false, definingAttribute := false
+  lateParsed := false, explicitlyDefaulted := false, attributeCount := 0
+  ownBodyKind := none, ownBodyOwner := none
+}
+
+def functionEvidenceRow (id canonical : String) (shape : FunctionShapeEvidence) :
+    DeclarationEvidenceRow := {evidenceRow id "FunctionDecl" canonical with
+  functionShape := some shape}
+
 def identityProbe : DeclarationProbe := {
   ast := .null, metadata := .null
   declarations := [
@@ -134,6 +145,38 @@ def identityProbe : DeclarationProbe := {
       match canonicalTargetCandidates repeatedProbe repeatedEvidence declaration with
       | .ok candidates => candidates.map Declaration.path == [[1], [2, 1, 0], [3]]
       | .error _ => false
+  | none => false
+
+def definitionProbe : DeclarationProbe := {identityProbe with
+  declarations := [functionEvidenceRow "f1" "f1" (functionShape true true),
+    functionEvidenceRow "f2" "f1" (functionShape false false)]}
+
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match functionDefinitionEvidence definitionProbe declaration with
+      | .ok value => value
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 1] with
+  | some declaration =>
+      match functionDefinitionEvidence definitionProbe declaration with
+      | .ok value => !value
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [1] with
+  | some declaration =>
+      match functionDefinitionEvidence definitionProbe declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let conflicting := {definitionProbe with
+        declarations := [functionEvidenceRow "f1" "f1" (functionShape true true),
+          functionEvidenceRow "f1" "f1" (functionShape false false)]}
+      match functionDefinitionEvidence conflicting declaration with
+      | .ok _ => false
+      | .error _ => true
   | none => false
 
 #guard parseArtifactString "{}" matches .error _

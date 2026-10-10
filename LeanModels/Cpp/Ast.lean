@@ -110,4 +110,7 @@ def Artifact.declarationsById (artifact : Artifact) (id : String) : List Declara
 def Artifact.declarationAtPath (artifact : Artifact) (path : List Nat) : Option Declaration :=
   artifact.declarations.find? fun declaration => declaration.path == path
 
+def Artifact.previousDeclCandidates (artifact : Artifact) (declaration : Declaration) : List Declaration :=
+  declaration.previousDecl.toList.flatMap artifact.declarationsById
+
 end LeanModels.Cpp

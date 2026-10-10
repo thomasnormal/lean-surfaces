@@ -63,7 +63,9 @@ array, including non-declaration siblings and intervening statement nodes.
 These paths are local to this artifact, not canonical-node or entity identities.
 `Artifact.declarationAtPath` is the corresponding occurrence-local lookup;
 lookup by a repeated frontend ID remains a list, not an implicit canonical
-choice.
+choice. `Artifact.previousDeclCandidates` applies the same rule to a retained
+`previousDecl` handle: it returns every matching occurrence, or `[]` for a
+dangling handle, without asserting that any candidate is the same entity.
 The unmodified AST additionally retains namespace aliases, original-namespace
 links, template arguments, instantiated bodies, value categories, conversions,
 cleanups and macro spelling/expansion locations.

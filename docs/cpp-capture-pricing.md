@@ -852,6 +852,28 @@ still refuses. It is a proof-organization control only; it does not establish
 the missing tail beyond row 512, whole-list equality, or a production loader
 design.
 
+## Complete-prefix proof-plan census
+
+To price the remaining organization without pretending to have a theorem, a
+bounded producer enumerates the **entire** 4,527-row declaration spine into
+128-row proof chunks. It reads the unchanged `probe.json`, records exact
+offsets, counts, endpoint identities and per-chunk SHA-256 digests, and emits a
+9,135-byte plan: **36 chunks**, with the final chunk containing **47 rows**.
+An independent second pass verifies every digest, boundary and source hash;
+coverage is exactly 4,527 with zero gaps or overlaps.
+
+| Stage | Seconds | Max RSS, KiB | Result |
+| --- | ---: | ---: | --- |
+| Plan producer | 0.183 | 129,772 | 36 chunks / 4,527 rows / 9,135-byte plan |
+| Independent plan audit | 0.179 | 129,744 | all boundaries and digests PASS |
+
+The source is **32,723,259 bytes** and is pinned by SHA-256; the plan digest is
+also retained. This is a producer/proof-plan census only: it does not compile
+the 36 segment constants, execute a Lean equality, or establish a whole-list
+kernel theorem. It shows that a complete ≤128-row organization is finite and
+input-preserving, while the measured compiler/reduction cost of checking all
+chunks remains an unpriced next experiment.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -933,3 +955,8 @@ The chunked-composition receipt is in the same directory, under the
 `ChunkedComposition.lean` source and `ChunkedCompositionRun/` process archive;
 its two 128-row input segments, positive kernel composition and source pins are
 retained separately from the direct-prefix negatives.
+
+The complete-prefix proof-plan census is under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-proof-plan-20261010/`.
+It retains the producer/auditor sources, exact plan, source and plan digests,
+bounded process receipts and the zero-gap/zero-overlap audit.

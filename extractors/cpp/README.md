@@ -4,6 +4,12 @@
 [the translation contract](../../docs/cpp-translation.md). No C++ execution
 semantics are admitted. `test_extract.py` tests that boundary.
 
+`test_integral.py` independently checks the pure C++23 integral value layer
+against actual Clang-compiled expressions at two optimization levels. It is
+not AST ingestion or program admission; see
+[the value-layer contract](../../docs/cpp-integral.md). Its standalone Lean
+driver is `run_integral.lean` and its compiler oracle is `integral_oracle.cpp`.
+
 ## Optional declaration metadata probe
 
 `canonical_probe.cpp` is an **experimental, tooling-only** Clang plugin. It

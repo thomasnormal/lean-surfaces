@@ -25,6 +25,11 @@ def probe : Artifact := {
 
 #guard probe.ast.text "kind" == some "TranslationUnitDecl"
 #guard probe.declarations.length == 5
+#guard (probe.declarationsById "tu").map Declaration.path == [[]]
+#guard (probe.declarationsById "ns").map Declaration.path == [[0]]
+#guard (probe.declarationsById "f1").map Declaration.path == [[0, 0]]
+#guard (probe.declarationsById "f2").map Declaration.path == [[0, 1]]
+#guard (probe.declarationsById "out").map Declaration.path == [[1]]
 #guard (probe.declarationsById "f1").map Declaration.lexicalParents == [["tu", "ns"]]
 #guard (probe.declarationsById "out").map Declaration.semanticParent == [some "cls"]
 #guard (probe.declarationsById "out").map Declaration.previousDecl == [some "prior"]
@@ -32,6 +37,23 @@ def probe : Artifact := {
 #guard (probe.declarations.filter fun declaration => declaration.name == some "f").length == 2
 #guard execute probe "f1" matches .error _
 #guard execute probe "absent" matches .error _
+
+def repeatedDeclaration : Raw :=
+  .object [("id", .string "shared"), ("kind", .string "VarDecl")]
+
+def repeatedProbe : Artifact := { probe with
+  ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [.null, repeatedDeclaration,
+      .object [("kind", .string "CompoundStmt"), ("inner", .array [.bool false,
+        .object [("kind", .string "FutureDecl"),
+          ("inner", .array [repeatedDeclaration])]])], repeatedDeclaration])]
+}
+
+#guard repeatedProbe.declarations.length == 4
+#guard (repeatedProbe.declarationsById "shared").map Declaration.path == [[1], [2, 1, 0], [3]]
+#guard (repeatedProbe.declarationsById "shared").map Declaration.lexicalParents ==
+  [["tu"], ["tu"], ["tu"]]
+
 #guard parseArtifactString "{}" matches .error _
 #guard parseArtifactString "{\"schema_version\":\"cpp-9\"}" matches .error _
 #guard requireHash "not-a-hash" matches .error _

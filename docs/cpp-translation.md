@@ -51,11 +51,16 @@ or machine-specific envelopes are checked into this repository.
 ## Declaration inspection, not declaration semantics
 
 `Artifact.declarations` is a structurally recursive index over AST `inner`
-children. It records declaration **occurrences**, original TU-local Clang
-IDs, names, types, mangled names, lexical ancestors, semantic-parent and
+children. It records declaration **occurrences**, including each occurrence's
+zero-based path through nested `inner` arrays, original TU-local Clang IDs,
+names, types, mangled names, lexical ancestors, semantic-parent and
 redeclaration links, and raw location/range fields. Reference stubs outside
-`inner` are not new occurrences; repeated IDs inside `inner` are retained.
-IDs are compiler-session handles, never persistent or cross-TU identities.
+`inner` are not new occurrences; repeated IDs inside `inner` are retained as
+separate path-bearing occurrences. IDs are compiler-session handles, never
+persistent or cross-TU identities.
+The root path is `[]`; each subsequent index addresses the original `inner`
+array, including non-declaration siblings and intervening statement nodes.
+These paths are local to this artifact, not canonical-node or entity identities.
 The unmodified AST additionally retains namespace aliases, original-namespace
 links, template arguments, instantiated bodies, value categories, conversions,
 cleanups and macro spelling/expansion locations.
@@ -81,8 +86,10 @@ second Clang dump, check system/transitive/forced includes and mutation, and
 exercise compiler-error/flag/atomic-output refusals. Temporary compiler probes
 test tooling; they are not evidence of C++ execution coverage. Lean guards
 check occurrence indexing, overload distinction, parent/redeclaration links,
-reference-stub exclusion and unconditional refusal. An integration test loads
-a freshly extracted envelope as a literal Lean term, including opaque data.
+reference-stub exclusion, repeated-ID paths, non-declaration traversal and
+unconditional refusal. An integration test loads a freshly extracted envelope
+as a literal Lean term, including opaque data, and compares every declaration
+path with an independent traversal of the retained Clang AST.
 Run `python3 extractors/cpp/test_extract.py` with Clang available on `PATH`.
 
 Example extraction and inspection commands:

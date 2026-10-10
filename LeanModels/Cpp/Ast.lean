@@ -45,6 +45,7 @@ structure Artifact where
 structure Declaration where
   id : String
   kind : String
+  path : List Nat
   name : Option String
   lexicalParents : List String
   semanticParent : Option String
@@ -55,12 +56,12 @@ structure Declaration where
   range : Option Raw
   deriving Repr, BEq, Inhabited, Lean.ToExpr
 
-def declaration? (raw : Raw) (parents : List String) : Option Declaration := do
+def declaration? (raw : Raw) (parents : List String) (path : List Nat) : Option Declaration := do
   let kind ← raw.text "kind"
   if !kind.endsWith "Decl" then none else do
     let id ← raw.text "id"
     pure {
-      id, kind, name := raw.text "name", lexicalParents := parents
+      id, kind, path, name := raw.text "name", lexicalParents := parents
       semanticParent := raw.text "parentDeclContextId"
       previousDecl := raw.text "previousDecl"
       mangledName := raw.text "mangledName", type := raw.field "type"
@@ -68,35 +69,40 @@ def declaration? (raw : Raw) (parents : List String) : Option Declaration := do
     }
 
 mutual
-  def indexNode (raw : Raw) (parents : List String) : List Declaration :=
+  def indexNode (raw : Raw) (parents : List String) (path : List Nat) : List Declaration :=
     match raw with
     | .object fields =>
-        let current := declaration? raw parents
+        let current := declaration? raw parents path
         let nextParents := match current with
           | some declaration => parents ++ [declaration.id]
           | none => parents
-        current.toList ++ indexFields fields nextParents
+        current.toList ++ indexFields fields nextParents path
     | _ => []
 
-  def indexFields (fields : List (String × Raw)) (parents : List String) : List Declaration :=
+  def indexFields (fields : List (String × Raw)) (parents : List String)
+      (path : List Nat) : List Declaration :=
     match fields with
     | [] => []
     | (name, raw) :: rest =>
-        (if name == "inner" then indexArray raw parents else []) ++ indexFields rest parents
+        (if name == "inner" then indexArray raw parents path else []) ++
+          indexFields rest parents path
 
-  def indexArray (raw : Raw) (parents : List String) : List Declaration :=
+  def indexArray (raw : Raw) (parents : List String) (parentPath : List Nat) : List Declaration :=
     match raw with
-    | .array values => indexValues values parents
+    | .array values => indexValues values parents parentPath 0
     | _ => []
 
-  def indexValues (values : List Raw) (parents : List String) : List Declaration :=
+  def indexValues (values : List Raw) (parents : List String)
+      (parentPath : List Nat) (index : Nat) : List Declaration :=
     match values with
     | [] => []
-    | raw :: rest => indexNode raw parents ++ indexValues rest parents
+    | raw :: rest =>
+        indexNode raw parents (parentPath ++ [index]) ++
+          indexValues rest parents parentPath (index + 1)
 end
 
 def Artifact.declarations (artifact : Artifact) : List Declaration :=
-  indexNode artifact.ast []
+  indexNode artifact.ast [] []
 
 def Artifact.declarationsById (artifact : Artifact) (id : String) : List Declaration :=
   artifact.declarations.filter fun declaration => declaration.id == id

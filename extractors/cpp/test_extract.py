@@ -85,6 +85,24 @@ def ast_nodes(ast):
             pending.extend(current)
 
 
+def declaration_occurrence_paths(ast):
+    occurrences = []
+    pending = [(ast, [])]
+    while pending:
+        current, path = pending.pop()
+        if not isinstance(current, dict):
+            continue
+        kind = current.get("kind")
+        identifier = current.get("id")
+        if isinstance(kind, str) and kind.endswith("Decl") and isinstance(identifier, str):
+            occurrences.append((identifier, path))
+        children = current.get("inner", [])
+        if isinstance(children, list):
+            pending.extend((children[index], path + [index])
+                           for index in range(len(children) - 1, -1, -1))
+    return occurrences
+
+
 class ExtractorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -523,6 +541,10 @@ class ExtractorTests(unittest.TestCase):
         self.assertIsNotNone(lake, "Lean integration requires the pinned Lake executable")
         envelope = self.declaration_envelope()
         artifact = self.write("artifact.json", json.dumps(envelope))
+        expected_paths = "[" + ", ".join(
+            "(" + json.dumps(identifier) + ", " + json.dumps(path) + ")"
+            for identifier, path in declaration_occurrence_paths(envelope["ast"])
+        ) + "]"
         declaration_id = next(
             node["id"] for node in ast_nodes(envelope["ast"])
             if node["kind"] == "FunctionDecl" and node.get("name") == "pick"
@@ -540,6 +562,7 @@ class ExtractorTests(unittest.TestCase):
             "#guard probe.sourceSha256 == " + json.dumps(envelope["source_sha256"]),
             '#guard probe.ast.text "kind" == some "TranslationUnitDecl"',
             '#guard probe.declarations.any (fun declaration => declaration.kind == "FunctionDecl" && declaration.name == some "pick")',
+            "#guard probe.declarations.map (fun declaration => (declaration.id, declaration.path)) == " + expected_paths,
             "#guard execute probe " + json.dumps(declaration_id) + " matches .error _",
             "load_cpp_artifact syntheticProbe from " + json.dumps(str(opaque_artifact)),
             '#guard ((syntheticProbe.ast.field "opaque_test_child").bind (fun child => child.text "kind")) == some "OpaqueFutureNode"',

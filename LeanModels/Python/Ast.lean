@@ -613,7 +613,7 @@ locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
   id == "abs" || id == "int" || id == "bool" || id == "divmod" || id == "print" ||
-  id == "str" || id == "input" ||
+  id == "str" || id == "repr" || id == "input" ||
   id == "ord" || id == "chr" || id == "next" ||
   -- §iter: `iter` was in `isPyBuiltinName` and NOT here — the two-table gap
   -- §pycomplete-14 was caught by. It joins DELIBERATELY: a name in this list

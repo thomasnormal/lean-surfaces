@@ -365,5 +365,10 @@
     "file": "Examples/python/exc_ancestors_lab/exc_ancestors_script.py",
     "expect": "match",
     "note": "BaseException catches a missing import and dictionary-size RuntimeError from retained module state; ArithmeticError and LookupError propagate the import to the outer handler."
+  },
+  {
+    "file": "Examples/python/repr_lab/repr_script.py",
+    "expect": "match",
+    "note": "Builtin repr shares exact container rendering, preserves argument effects, and decides arity errors only after all arguments evaluate."
   }
 ]

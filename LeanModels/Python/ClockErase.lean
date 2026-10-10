@@ -1651,9 +1651,9 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       (.ite ?bdivmod
                       (.ite ?bsum (.ite ?btuple (.ite ?blist (.ite ?bdict
                       (.ite ?brange (.ite ?benum (.ite ?bcount (.ite ?bnext
-                      (.ite ?bord (.ite ?bchr (.ite ?bstr (.ite .unsupported
+                      (.ite ?bord (.ite ?bchr (.ite ?bstr (.ite ?brepr (.ite .unsupported
                       (.ite ?bprint
-                        (.ite .unsupported ?blive)))))))))))))))))))))))
+                        (.ite .unsupported ?blive))))))))))))))))))))))))
                     case blen =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -2261,6 +2261,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         -- the same ce_norm every heap-reading arm carries.
                         | nil => ce_norm; exact .liftRes hs2 _
                         | cons d t2 => exact .unsupported
+                    case brepr =>
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      ce_norm
+                      exact .liftRes hs2 _
                     case bprint =>
                       -- 2026-08-13: `print` is an ordinary builtin here. It reads
                       -- no clock and appends one stdout chunk, so the seeded

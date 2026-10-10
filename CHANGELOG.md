@@ -12,6 +12,17 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- Call-only builtin `repr(value)` shares the existing heap-aware renderer with
+  container printing on both interpreter surfaces: scalar values, ASCII string
+  quoting and escapes, tuples, namedtuples, lists, insertion-ordered dictionaries,
+  ranges, and active-path container cycles. Arguments evaluate before exact arity
+  errors. Keyword calls, first-class builtin values, identity-dependent values,
+  hash-ordered sets, non-ASCII repr strings, and existing rendering budgets remain
+  loud. The `repr_lab` artifact proves Boolean and bounded integer rendering
+  symbolically and checks retained argument effects and ordinary shadowing.
+
 ### Fixed
 
 - The refusal census classifies all recorded closed-function and script gaps,

@@ -1457,6 +1457,14 @@ def strOfValH (h : Heap) (v : RVal) : Res RVal :=
     | some s => .ok (.str s)
     | Option.none => .unsupported s!"str() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
 
+def reprArgs (h : Heap) (vs : List RVal) : Res RVal :=
+  match vs with
+  | [v] =>
+    match reprVal h reprFuel [] v with
+    | some text => .ok (.str text)
+    | Option.none => .unsupported s!"repr() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
+  | vs => .exn (.typeError s!"repr() takes exactly one argument ({vs.length} given)")
+
 /-- Space-join `print` arguments (CPython's default `sep`); the first
 unrenderable one wins. `print()` is the empty line. -/
 def strOfArgs (h : Heap) : List RVal → Option String
@@ -5496,6 +5504,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | [] => .ok st (.str "")
                      | [v] => Run.liftRes st (strOfValH st.world.heap v)
                      | _ => .unsupported "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)")
+                  else if fname == "repr" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    Run.liftRes st (reprArgs st.world.heap vs)
                   else if fname == "input" then
                     -- stdin is a RUNNER-boundary effect (§effects) — loud,
                     -- never a fake NameError (the recorded pass-4 gap)

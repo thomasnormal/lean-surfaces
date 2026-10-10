@@ -1055,11 +1055,14 @@ theorem fuelMono (fuel : Nat) :
                         · refine Run.le_ite
                             (Run.le_bind (ihEs m st cargs.toList k hk)
                               fun st _ => Run.le_refl _)
+                            (Run.le_ite
+                              (Run.le_bind (ihEs m st cargs.toList k hk)
+                                fun st _ => Run.le_refl _)
                             (Run.le_ite (Run.le_refl _)
                               (Run.le_ite
                                 (Run.le_bind (ihEs m st cargs.toList k hk)
                                   fun st _ => Run.le_refl _)
-                                (Run.le_ite (Run.le_refl _) ?_)))
+                                (Run.le_ite (Run.le_refl _) ?_))))
                           cases Env.lookup st.world.globals fname with
                           | none => exact Run.le_refl _
                           | some v =>
@@ -2410,8 +2413,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                 (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                     (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                                      (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                                       (.ite .unsupported
-                                        (.ite .unsupported ?_))))))))))
+                                        (.ite .unsupported ?_)))))))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>

@@ -43,9 +43,12 @@ builtins or module definitions. Named `BaseException`, `ArithmeticError`, and
 `LookupError` handlers use the same CPython-measured catch relations in both
 interpreter surfaces; unmeasured OS-error ancestors and dynamic exception
 classes remain loud.
-The executable differential suite has 2,446 cases: 2,130 agree with CPython and
-316 refuse loudly. The narrower proof interpreter agrees on 2,057 cases and
-refuses 389; neither run has a mismatch in the recorded suite.
+Builtin `repr(value)` reuses the same renderer as container printing, including
+ASCII quoting, namedtuples, insertion-ordered dictionaries, and container cycles.
+Identity-dependent values, sets, non-ASCII strings, and over-budget renders stay loud.
+The executable differential suite has 2,631 cases: 2,301 agree with CPython and
+330 refuse loudly. The narrower proof interpreter agrees on 2,228 cases and
+refuses 403; neither run has a mismatch in the recorded suite.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 

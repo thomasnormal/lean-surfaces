@@ -294,6 +294,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | [] => pure (.str "")
     | [v] => do liftRes (strOfValH (← frameHeap) v)
     | _ => refuse "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)"
+  else if fname == "repr" then
+    liftRes (reprArgs (← frameHeap) vs)
   else if fname == "print" then
     -- THE ONE EFFECT: stdout is `World` data, so `print` is an ORDINARY builtin
     -- here — reached only after every shadowing arm, so it works inside function

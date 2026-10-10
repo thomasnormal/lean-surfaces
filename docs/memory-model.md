@@ -3484,6 +3484,30 @@ corpus 25 matched / 4 loud; 998 differential cases, 0 failed.
 
 ## Rendering: `print` of containers (2026-08-13)
 
+### Call-only builtin `repr` (2026-10-10)
+
+`repr(value)` is admitted on both interpreter surfaces through the shared
+`reprArgs` dispatcher and the existing `reprVal` worker. It returns a string
+without allocating or mutating the heap; unlike `str`, it quotes and escapes
+a bare string as well as strings nested in containers. The inventory, active-path
+cycle rule, fixed depth budget, and decimal magnitude budget are exactly those
+of container printing below. Non-ASCII strings, sets, default instance/closure/
+generator identity strings, custom `__repr__` protocols, and first-class builtin
+values remain loud, as do keyword calls. No object address or hash order is guessed.
+
+Arguments run left-to-right before rendering or the measured exact-arity
+`TypeError`, including all argument effects and an argument error that precedes
+an otherwise wrong arity. Name resolution stays shadowable by locals, module
+functions, and captured generator bindings. The value is rendered against the
+post-argument heap, so mutations in an argument are visible in its representation.
+The proof layer gains the pure `reprArgs` simplification and fuel/world/clock/
+payload-blindness arms without changing any theorem statement or `Expr.heapFree`.
+`Examples/python/repr_lab` supplies ordinary symbolic Boolean and bounded integer
+proofs, kernel outcome/refusal checks, all 128 ASCII code-point differential
+controls, container/DAG/cycle cases, and a kernel-checked script for stdout order.
+
+### Container printing
+
 CPython's `print` applies `str()` to its ARGUMENTS and `repr()` to
 everything INSIDE a container — the two differ on exactly one shape
 (`str("a")` is `a`, `repr("a")` is `'a'`), which is why `print("a")` has
@@ -3847,8 +3871,9 @@ REFUSED LOUDLY, each for a stated reason, not for convenience:
 
 * `{x:>5}` / `{x:03d}` — the format mini-language (see above). CPython
   gives `'    3'` / `'003'`.
-* `{x!r}` — asks for `repr()`, and `repr` is only a name in
-  `isPyBuiltinName`, not a tier callable. CPython gives `"'hi'"`.
+* `{x!r}` — the extractor still refuses the `!r` conversion node. The
+  call-only `repr` builtin is admitted, but this separate f-string lowering
+  boundary is unchanged. CPython gives `"'hi'"`.
 * `{x=}` — the 3.8 debug specifier needs the field's SOURCE TEXT, which
   the extracted AST does not carry. CPython gives `'n=3'`.
 * `{ {1, 2} }` — inherits `printOne`'s set refusal (hash order is never

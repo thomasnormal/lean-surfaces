@@ -60,6 +60,12 @@ symbolically. Concrete checks cover heap containers, default instances, closures
 nondraining generator truthiness, argument effects, and excess-argument errors;
 custom truthiness protocols and first-class builtin type values stay loud.
 
+[`repr_lab`](repr_lab/) proves Boolean and bounded integer `repr` results
+symbolically, using the same renderer as container printing. Kernel checks and
+differential cases cover ASCII escapes, containers, cycles, argument effects,
+arity errors, and local/module/generator shadowing; identity, Unicode printability,
+custom protocols, and rendering-budget boundaries remain explicitly loud.
+
 [`decimal_render`](decimal_render/) proves that `str(value)` returns the exact
 decimal string when `value.natAbs < 10 ^ 640`. The same magnitude admission
 guards integer fields in container and range rendering and bare `%s`/`%r`/`%d`;

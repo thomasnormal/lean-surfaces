@@ -997,6 +997,13 @@ theorem strOfValH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTw
     (v : RVal) : strOfValH (Heap.swapAt h pa o) v = strOfValH h v := by
   cases v <;> simp only [strOfValH, printOne_swapAt hslot htwin]
 
+theorem reprArgs_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (vs : List RVal) : reprArgs (Heap.swapAt h pa o) vs = reprArgs h vs := by
+  cases vs with
+  | nil => rfl
+  | cons value rest =>
+    cases rest <;> simp only [reprArgs, reprVal_swapAt hslot htwin]
+
 /-- `print`'s space-joined argument rendering is blind. -/
 theorem strOfArgs_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
     (vs : List RVal) : strOfArgs (Heap.swapAt h pa o) vs = strOfArgs h vs := by
@@ -3605,6 +3612,12 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                             simp only [FrameState.swapAt_world, World.swapAt_heap,
                                               strOfValH_swapAt hs1 htwin]
                                             exact PBF.liftRes hs1 _
+                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                  · refine PBF.bind (ihEs m st args.toList hslot)
+                                      fun s1 vs _ hs1 => ?_
+                                    simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                      reprArgs_swapAt hs1 htwin]
+                                    exact PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                                   -- input
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_

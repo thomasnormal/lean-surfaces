@@ -639,10 +639,12 @@ step  "spectre-probe-tests" python3 harness/spice/test_spectre_probe.py
 step  "tool-self-tests" selftests
 step  "ci-selftest-report-tests" python3 tools/test_ci_selftests.py
 step  "ci-instrument-tests" python3 tools/test_instruments.py
+step  "notebook-cache-tests" python3 tools/test_notebook_cache.py
 step  "py-onboarding-imports" python3 tools/test_python_onboarding.py
 step  "py-divergence-probe-tests" python3 harness/test_pyc_divergence_probe.py
 step  "py-refusal-census-tests" python3 harness/test_refusal_census.py
 lake_build_step
+step  "notebook-dependency-tests" python3 tools/test_notebook_dependencies.py
 step  "py-declared-divergences" python3 harness/pyc_divergence_probe.py
 step  "py-harness"      python3 harness/diff_test.py --no-build
 # The same rows through the interpreter the THEOREMS are about

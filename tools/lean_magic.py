@@ -12,7 +12,11 @@ Magics provided (see notebooks/01-pipeline.ipynb for the guided tour):
     inline: functions found (with parameters) and any ``Unsupported`` nodes
     or per-function restrictions.  On success the persistent import header
     (``NotebookHeader``) is recompiled so subsequent ``%%lean`` cells load
-    every extracted program from a single precompiled ``.olean``.
+    every extracted program from a single precompiled ``.olean``. Reuse also
+    checks the compiler and transitive compiled imports by content, including
+    Lean's split object/IR files; rebuilding the library cannot retain stale
+    constructor encodings. An unverifiable dependency inventory never admits
+    a cached header.
 
 ``%%lean [<name>]``
     Treat the cell as Lean code.  It is wrapped in a temp module
@@ -94,7 +98,6 @@ repo-relative path ``notebooks/work/<name>.py``.
 """
 
 import ast
-import hashlib
 import html
 import json
 import os
@@ -108,6 +111,7 @@ from pathlib import Path
 
 from IPython.core.magic import Magics, cell_magic, line_magic, magics_class
 from IPython.display import HTML, display
+from notebook_cache import cached_header, header_key, store_header
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WORK_DIR = REPO_ROOT / "notebooks" / "work"
@@ -382,14 +386,11 @@ class LeanMagics(Magics):
     # -- the persistent header ---------------------------------------------
 
     def _header_key(self):
-        parts = []
-        for stem, p in self._envelopes():
-            h = hashlib.sha256(p.read_bytes()).hexdigest()
-            parts.append("%s %s" % (stem, h))
-        return "\n".join(parts)
+        environment = self._lake_env()
+        return header_key(self._envelopes(), self._lean_exe, environment, REPO_ROOT)
 
     def _rebuild_header(self, report=True):
-        """(Re)compile NotebookHeader.olean iff the envelope set changed.
+        """(Re)compile when envelopes, compiler, or compiled imports change.
         Returns 'cached' | 'compiled' | 'failed' | 'empty'."""
         envs = self._envelopes()
         if not envs:
@@ -397,13 +398,19 @@ class LeanMagics(Magics):
             return "empty"
         key = self._header_key()
         olean = WORK_DIR / (HEADER_NAME + ".olean")
-        if (
-            olean.exists()
-            and HEADER_CACHE.exists()
-            and HEADER_CACHE.read_text(encoding="utf-8") == key
-        ):
+        if key is None:
+            if HEADER_CACHE.exists():
+                HEADER_CACHE.unlink()
+            self._header_ok = False
+            self._header_err = "Compiled imports could not be verified; Lean cells load envelopes directly."
+            if report:
+                _show(_banner(_SEV_COLOR["warning"], "header cache bypassed", self._header_err))
+            return "failed"
+        if cached_header(HEADER_CACHE, key, olean):
             self._header_ok = True
             return "cached"
+        if HEADER_CACHE.exists():
+            HEADER_CACHE.unlink()
         lines = ["import LeanModels"]
         for stem, p in envs:
             rel = p.relative_to(REPO_ROOT).as_posix()
@@ -413,8 +420,11 @@ class LeanMagics(Magics):
         rc, out, dt = self._run_lean(
             src, extra_args=["--root=" + str(WORK_DIR), "-o", str(olean)]
         )
+        if rc == 0 and self._header_key() != key:
+            rc = 1
+            out = "Notebook dependencies changed during header compilation; retry after the build finishes."
         if rc == 0:
-            HEADER_CACHE.write_text(key, encoding="utf-8")
+            store_header(HEADER_CACHE, key, olean)
             self._header_ok = True
             self._header_err = None
             if report:
@@ -566,8 +576,7 @@ class LeanMagics(Magics):
             self._cell_counter += 1
             name = "cell_%d" % self._cell_counter
 
-        if not self._header_ok:
-            self._rebuild_header(report=False)
+        self._rebuild_header(report=False)
         preamble = []
         if self._header_ok:
             preamble.append("import %s" % HEADER_NAME)

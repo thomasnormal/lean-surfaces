@@ -39,6 +39,11 @@ change is listed here under **Changed** or **Removed**.
 
 ### Fixed
 
+- Notebook headers are invalidated when the compiler or any transitive compiled
+  import changes, even if envelopes and file timestamps stay unchanged. The
+  cache verifies the header bytes, rejects unverifiable dependency inventories,
+  and never publishes a dependency key that changed during compilation.
+
 - The refusal census classifies all recorded closed-function and script gaps,
   including the recent parsing, repetition, rendering, and exception fixtures.
   CI now runs both inventories and checks regressions for missing classifications

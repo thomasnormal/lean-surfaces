@@ -149,6 +149,23 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "UnaryOp" =>
         let op ← parseUnaryOpName (← (← getField j "op").getStr?)
         return .unaryOp op (← parseExpr (← getField j "operand")) span
+    | "JoinedStr" =>
+        let parts ← (← (← getField j "values").getArr?).mapM parseExpr
+        match parts.toList with
+        | [] => return .constant (.str "") span
+        | first :: rest =>
+            return rest.foldl (fun result part => .binOp result .add part span) first
+    | "FormattedValue" =>
+        let conversion ← (← getField j "conversion").getInt?
+        let formatSpec ← getField j "format_spec"
+        if formatSpec != Json.null then
+          let specKind ← (← getField formatSpec "kind").getStr?
+          let specParts ← (← getField formatSpec "values").getArr?
+          if specKind != "JoinedStr" || !specParts.isEmpty then
+            return .unsupported "JoinedStr:format_spec" "" span
+        if conversion != -1 && conversion != 115 && conversion != 114 then
+          return .unsupported "JoinedStr:conversion" "" span
+        return .formattedValue (← parseExpr (← getField j "value")) (conversion == 114) span
     | "BoolOp" =>
         let op ← parseBoolOpName (← (← getField j "op").getStr?)
         let values ← (← (← getField j "values").getArr?).mapM parseExpr
@@ -628,6 +645,7 @@ mutual
     | .namedExpr id v _ => id :: exprRefs v
     | .binOp l _ r _ => exprRefs l ++ exprRefs r
     | .unaryOp _ e _ => exprRefs e
+    | .formattedValue value _ _ => exprRefs value
     | .boolOp _ vs _ => (vs.toList.map exprRefs).flatten
     | .compare l _ cs _ => exprRefs l ++ (cs.toList.map exprRefs).flatten
     | .call f args kwargs _ _ =>
@@ -1053,6 +1071,7 @@ private partial def exprNamesXW : Expr → List String
   | .namedExpr id v _ => id :: exprNamesXW v
   | .binOp l _ r _ => exprNamesXW l ++ exprNamesXW r
   | .unaryOp _ e _ => exprNamesXW e
+  | .formattedValue value _ _ => exprNamesXW value
   | .boolOp _ vs _ => (vs.toList.map exprNamesXW).flatten
   | .compare l _ cs _ => exprNamesXW l ++ (cs.toList.map exprNamesXW).flatten
   | .call f args kwargs _ _ =>
@@ -1119,6 +1138,8 @@ mutual
     | .namedExpr id v sp => return .namedExpr id (← lowerExpr ctx v) sp
     | .binOp l op r sp => return .binOp (← lowerExpr ctx l) op (← lowerExpr ctx r) sp
     | .unaryOp op v sp => return .unaryOp op (← lowerExpr ctx v) sp
+    | .formattedValue value reprConversion sp =>
+        return .formattedValue (← lowerExpr ctx value) reprConversion sp
     | .boolOp op vs sp => return .boolOp op (← lowerExprs ctx vs) sp
     | .compare l ops cs sp => return .compare (← lowerExpr ctx l) ops (← lowerExprs ctx cs) sp
     | .call f args kwargs cu sp =>

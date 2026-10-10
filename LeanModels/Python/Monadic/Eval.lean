@@ -721,6 +721,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
   | .unaryOp op operand _ => do
       let v ← evalOpen K m operand
       unaryOpM op v
+  | .formattedValue expression reprConversion _ => do
+      let value ← evalOpen K m expression
+      liftRes (formatValueH (← frameHeap) value reprConversion)
   | .boolOp op values _ => evalBoolChainM K m op values.toList
   | .compare l ops comparators _ => do
       let a ← evalOpen K m l

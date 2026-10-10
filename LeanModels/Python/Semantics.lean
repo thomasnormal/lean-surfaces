@@ -216,6 +216,7 @@ def Expr.kindName : Expr → String
   | .name .. => "Name"
   | .binOp .. => "BinOp"
   | .unaryOp .. => "UnaryOp"
+  | .formattedValue .. => "FormattedValue"
   | .boolOp .. => "BoolOp"
   | .compare .. => "Compare"
   | .call .. => "Call"
@@ -1464,6 +1465,9 @@ def reprArgs (h : Heap) (vs : List RVal) : Res RVal :=
     | some text => .ok (.str text)
     | Option.none => .unsupported s!"repr() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
   | vs => .exn (.typeError s!"repr() takes exactly one argument ({vs.length} given)")
+
+def formatValueH (heap : Heap) (value : RVal) (reprConversion : Bool) : Res RVal :=
+  if reprConversion then reprArgs heap [value] else strOfValH heap value
 
 /-- Space-join `print` arguments (CPython's default `sep`); the first
 unrenderable one wins. `print()` is the empty line. -/
@@ -3344,6 +3348,10 @@ def evalGlobalExpr (h : Heap) (gs : REnv) (fuel : Nat) (e : Expr) :
         let (h, v) ← evalGlobalExpr h gs fuel operand
         let r ← evalUnaryOpH h op v
         return (h, r)
+    | .formattedValue expression reprConversion _ => do
+        let (heapAfter, value) ← evalGlobalExpr h gs fuel expression
+        let result ← formatValueH heapAfter value reprConversion
+        return (heapAfter, result)
     | .list elts _ => do
         -- H2: module-level list displays allocate into the init heap
         -- (module tables — shared across nested calls within one public
@@ -3625,6 +3633,7 @@ mutual
        | _ => false)
     | .binOp l _ r _ => g1HeapPure acc l && g1HeapPure acc r
     | .unaryOp _ e _ => g1HeapPure acc e
+    | .formattedValue value _ _ => g1HeapPure acc value
     | .boolOp _ vs _ => g1HeapPureList acc vs.toList
     | .compare l _ cs _ => g1HeapPure acc l && g1HeapPureList acc cs.toList
     | .ifExp t b o _ => g1HeapPure acc t && g1HeapPure acc b && g1HeapPure acc o
@@ -4296,6 +4305,7 @@ mutual
     | .namedExpr .. => false
     | .binOp l _ r _ => l.heapFree && r.heapFree
     | .unaryOp _ e _ => e.heapFree
+    | .formattedValue value _ _ => value.heapFree
     | .boolOp _ vs _ => Expr.heapFreeList vs.toList
     | .compare l _ cs _ => l.heapFree && Expr.heapFreeList cs.toList
     -- H2 soundness carve-outs: `sorted` ALLOCATES its result when the
@@ -4474,6 +4484,7 @@ mutual
     | .namedExpr _ v _ => v.genAllocFree
     | .binOp l _ r _ => l.genAllocFree && r.genAllocFree
     | .unaryOp _ e _ => e.genAllocFree
+    | .formattedValue value _ _ => value.genAllocFree
     | .boolOp _ vs _ => Expr.genAllocFreeList vs.toList
     | .compare l _ cs _ => l.genAllocFree && Expr.genAllocFreeList cs.toList
     | .call (.name id _) args kwargs _ _ =>
@@ -4886,6 +4897,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
     | .unaryOp op operand _ =>
         evalExpr m fuel st operand ⤳ fun st v =>
         Run.liftRes st (evalUnaryOpH st.world.heap op v)
+    | .formattedValue expression reprConversion _ =>
+        evalExpr m fuel st expression ⤳ fun nextState value =>
+        Run.liftRes nextState (formatValueH nextState.world.heap value reprConversion)
     | .boolOp op values _ =>
       match values.toList with
       | [] => .unsupported "BoolOp with no operands"
@@ -6897,12 +6911,12 @@ Executed statements run at the fixed `initExecFuel` — like
 /-- Fixed fuel for executed init statements. -/
 def initExecFuel : Nat := 65536
 
-/-- Names an executed init statement may NOT bind: builtins and
-def/class/namedtuple names — a live rebinding would silently shadow the
-resolution arms that fire before the live view. LOUD (the attempt rolls
-back), never a wrong dispatch. -/
+/-- Names an executed init statement may NOT bind: `def`/`class`/namedtuple
+names. Modeled builtins remain ordinary module globals: CPython lets a module
+rebind them, and name/callee resolution consults the live module frame before
+falling back to the builtin arm. -/
 def initBindable (m : Module) (n : String) : Bool :=
-  !(isBuiltinName n) && (findFunction m n).isNone
+  (findFunction m n).isNone
     && (findClass m n).isNone && (findNamedTuple m n).isNone
 
 /-- Flush an executed statement's locals into the live accumulator

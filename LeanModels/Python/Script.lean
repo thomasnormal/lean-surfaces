@@ -137,6 +137,7 @@ mutual
     | .namedExpr id v _ => id :: v.allNames
     | .binOp l _ r _ => l.allNames ++ r.allNames
     | .unaryOp _ e _ => e.allNames
+    | .formattedValue value _ _ => value.allNames
     | .boolOp _ vs _ => Expr.allNamesList vs.toList
     | .compare l _ cs _ => l.allNames ++ Expr.allNamesList cs.toList
     | .call f args kwargs _ _ =>
@@ -387,6 +388,28 @@ def scriptImports (m : Module) : List Stmt :=
     | .unsupported "Import" _ _ | .unsupported "ImportFrom" _ _ => true
     | _ => false
 
+/-! ### Modeled-builtin shadows in the static script view -/
+
+/-- The modeled builtin names bound by the program's top level. The script
+view needs these names in its poisoned static table so the existing
+name/callee resolution arm consults the live module frame before falling back
+to the builtin implementation. -/
+def scriptBuiltinShadowNames (m : Module) : List String :=
+  let names :=
+    (m.topLevel.toList.map (fun s => (s.g1Binds).getD [])).flatten
+  names.foldl (init := []) fun acc n =>
+    if isBuiltinName n && !acc.contains n then acc ++ [n] else acc
+
+/-- A static poisoned binding for one modeled builtin. This statement is only
+in the view used for name resolution; `runScript` still executes the original
+module top level, so the marker is never observable as program code. -/
+def scriptBuiltinShadowStmt (n : String) : Stmt :=
+  let sp : Span := { lineno := 0, colOffset := 0, endLineno := 0, endColOffset := 0 }
+  .assign #[.name n sp] (.unsupported "script-builtin-shadow" n sp) sp
+
+def scriptBuiltinShadowStmts (m : Module) : List Stmt :=
+  (scriptBuiltinShadowNames m).map scriptBuiltinShadowStmt
+
 /-- Names the module's BENIGN-whitelisted imports bind (`time`, `count`,
 `namedtuple`). They bind STATICALLY — never in the script frame's locals
 — so the module-scope `del` arm has nothing to remove and refuses
@@ -414,7 +437,8 @@ position-independent tables and `defsBoundBefore` is what makes that
 agree with CPython's sequential binding. -/
 def scriptView (m : Module) : Module :=
   { m with topLevel :=
-      (scriptNameBinding :: scriptViewMarker :: scriptImports m).toArray }
+      (scriptNameBinding :: scriptViewMarker ::
+        scriptBuiltinShadowStmts m ++ scriptImports m).toArray }
 
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
 CPython evaluates a class's bases and runs its body AT the `class`
@@ -434,11 +458,11 @@ def classesCreationPure (m : Module) : Bool :=
 
 /-! ### The publish (a module frame's locals ARE its globals) -/
 
-/-- The refusal a top-level rebinding of a builtin or a
-`def`/`class`/namedtuple name earns: those resolution arms fire BEFORE
-the live module globals, so the shadow would be silently ignored. -/
+/-- The refusal a top-level rebinding of a `def`/`class`/namedtuple name earns.
+Modeled builtins are ordinary module globals and are resolved through the live
+module frame before the builtin fallback, just as CPython does. -/
 def scriptRebindMsg : String :=
-  "a top-level statement rebinds a builtin or a name this module defines by 'def'/'class'/namedtuple: those resolution arms fire BEFORE the live module globals, so the shadow would be silently ignored"
+  "a top-level statement rebinds a name this module defines by 'def'/'class'/namedtuple: the static definition table would make the shadow ambiguous"
 
 
 /-- PUBLISH the script frame's locals as the module's globals. CPython
@@ -455,10 +479,9 @@ one is `UnboundLocalError`, never a global read) — which is why
 two envs makes the module-scope reading come out right through the very
 same arm.
 
-`none` = a name failing `initBindable` (a builtin, or a
-`def`/`class`/namedtuple name): those resolution arms fire BEFORE the
-live globals, so such a shadow would be silently ignored — loud
-instead. -/
+`none` = a name failing `initBindable` (a `def`/`class`/namedtuple name).
+Modeled builtins are retained as live globals and only fall back to their
+builtin implementation when no module binding exists. -/
 def publishScriptGlobals (m : Module) (st : FrameState) : Option FrameState :=
   if st.locals.all (fun p => initBindable m p.1) then
     some { st with world := { st.world with globals := st.locals } }

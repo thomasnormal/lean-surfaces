@@ -368,11 +368,25 @@ print(len([1, 2]))
 w("expr.JoinedStr", """
 n = 3
 print(f"{n}")
-""", "MATCH", "bare replacement fields only")
+""", "MATCH", "intrinsic str/repr replacement fields; nonempty specs remain a gap")
 w("expr.FormattedValue", """
 n = 3
 print(f"a{n}b")
-""", "MATCH", "same node; the conversion/spec slots are the gap")
+""", "MATCH", "intrinsic conversions; !a and nonempty format specs remain gaps")
+w("expr.FormattedValue-repr", """
+str = 7
+repr = 8
+value = 'quoted'
+print(f"{value!r}")
+""", "MATCH", "repr conversion bypasses shadowed builtin names")
+w("expr.FormattedValue-debug", """
+value = 3
+print(f"{value=}")
+""", "MATCH", "CPython supplies debug text and default repr conversion")
+w("expr.FormattedValue-empty-spec", """
+value = 'quoted'
+print(f"{value!r:}")
+""", "MATCH", "explicit empty format specification")
 w("expr.Constant", """
 print(1, "a", True, None)
 """, "MATCH", "the int/str/bool/None inventory")
@@ -1074,14 +1088,12 @@ WHITELIST_CLASS = {
     "ann_lab::ann_novalue_shadows_global": "annassign.no-value",
     "ann_lab::ann_attr_target": "annassign.non-simple-target",
     "assert_lab::msg_set": "set.order",
-    "fstring_lab::conversion_repr": "fstring.conversion",
     "fstring_lab::conversion_ascii": "fstring.conversion",
     "fstring_lab::format_spec": "fstring.format-spec",
     "fstring_lab::format_spec_num": "fstring.format-spec",
-    "fstring_lab::debug_spec": "fstring.conversion",
     "fstring_lab::set_field": "set.order",
-    "fstring_shadow::shadowed": "shadow.module-census",
-    "fstring_shadow::elsewhere": "shadow.module-census",
+    "fstring_repr::repr_field": "str.non-ascii",
+    "fstring_repr::instance": "render.identity",
     "alias_lab::read_alias": "firstclass.callable",
     "del_lab::read_after": "del.name-set-census",
     "del_lab::rebind_after": "del.name-set-census",

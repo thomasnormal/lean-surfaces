@@ -1004,6 +1004,14 @@ theorem reprArgs_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwi
   | cons value rest =>
     cases rest <;> simp only [reprArgs, reprVal_swapAt hslot htwin]
 
+theorem formatValueH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (value : RVal) (reprConversion : Bool) :
+    formatValueH (Heap.swapAt h pa o) value reprConversion =
+      formatValueH h value reprConversion := by
+  cases reprConversion <;>
+    simp only [formatValueH, Bool.false_eq_true, if_false, if_true,
+      reprArgs_swapAt hslot htwin, strOfValH_swapAt hslot htwin]
+
 /-- `print`'s space-joined argument rendering is blind. -/
 theorem strOfArgs_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
     (vs : List RVal) : strOfArgs (Heap.swapAt h pa o) vs = strOfArgs h vs := by
@@ -2792,6 +2800,12 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       refine PBF.bind (ihE m st operand hslot) fun s1 v _ hs1 => ?_
       simp only [FrameState.swapAt_world, World.swapAt_heap, evalUnaryOpH_swapAt hs1 htwin]
       exact PBF.liftRes hs1 _
+  | formattedValue expression reprConversion span =>
+      simp only [evalExpr]
+      refine PBF.bind (ihE m st expression hslot) fun nextState value _ heapWitness => ?_
+      simp only [FrameState.swapAt_world, World.swapAt_heap,
+        formatValueH_swapAt heapWitness htwin]
+      exact PBF.liftRes heapWitness _
   | boolOp op values sp =>
       simp only [evalExpr]
       cases values.toList with

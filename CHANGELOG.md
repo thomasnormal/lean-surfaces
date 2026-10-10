@@ -14,6 +14,14 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Intrinsic f-string `!r` fields share the existing heap-aware repr renderer.
+  Default debug fields and explicit empty format specifications work, and bare,
+  `!s`, and `!r` conversions bypass local/module/generator `str` and `repr`
+  shadows. The frontend preserves `JoinedStr`/`FormattedValue` instead of
+  synthesizing name calls; symbolic proofs and differential cases cover the
+  intrinsic and retained field effects. `!a`, nonempty format specifications,
+  and custom protocols remain recorded language gaps.
+
 - Call-only builtin `repr(value)` shares the existing heap-aware renderer with
   container printing on both interpreter surfaces: scalar values, ASCII string
   quoting and escapes, tuples, namedtuples, lists, insertion-ordered dictionaries,

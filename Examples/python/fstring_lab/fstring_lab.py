@@ -115,9 +115,6 @@ def nonascii_field(n):
     return f"[{s}]"
 
 
-# ------------------------------------------------- expected REFUSALS
-
-
 def conversion_repr(n):
     # !r asks for repr() explicitly -- a different operation from str()
     s = "hi"
@@ -125,10 +122,6 @@ def conversion_repr(n):
 
 
 def conversion_ascii(n):
-    # !a is repr() then non-ASCII escaping: two operations out of tier,
-    # not one. Added at implementation time -- the design named !r and
-    # forgot !a, and an unnamed conversion must not fall through to the
-    # in-tier path by accident.
     s = "hi"
     return f"{s!a}"
 
@@ -148,13 +141,6 @@ def format_spec_num(n):
 
 
 def debug_spec(n):
-    # 3.8+ `=` specifier. MEASURED CORRECTION at implementation time: the
-    # design predicted this refuses because it "needs the field's SOURCE
-    # TEXT, which the extracted AST does not carry". The AST DOES carry
-    # it -- CPython bakes `n=` in as a literal Constant at parse time, so
-    # `f"{n=}"` and `f"n={n!r}"` have the SAME AST. What refuses is the
-    # specifier's DEFAULT conversion, which is `!r`. The next row proves
-    # it by making the conversion explicit and in-tier.
     return f"{n=}"
 
 

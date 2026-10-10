@@ -1497,6 +1497,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
     refine .bind (ihE m st operand h) fun s1 v hs1 => ?_
     ce_norm
     exact .liftRes hs1 _
+  | formattedValue expression reprConversion span =>
+    simp only [evalExpr]
+    refine .bind (ihE m st expression h) fun nextState value worldEq => ?_
+    ce_norm
+    exact .liftRes worldEq _
   | boolOp op values sp =>
     simp only [evalExpr]
     cases values.toList with

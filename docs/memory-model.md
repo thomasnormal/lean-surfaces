@@ -3142,10 +3142,12 @@ exactly right until the recorded import-semantics decision.
   (Also the guard fix that makes `init_lab.call_pad` — a module lambda
   called from a function body, post-init — dispatch rather than
   misfire into the not-callable `TypeError`.)
-* **Executed statements may not rebind builtins or def/class/namedtuple
-  names** (`initBindable`, checked at flush): those resolution arms
-  fire BEFORE the live view, so a live shadow would be silently
-  ignored. Loud, attempt rolls back.
+* **Executed statements may rebind modeled builtins, but not
+  def/class/namedtuple names** (`initBindable`, checked at flush). The script
+  view poisons a modeled builtin that the module binds, so name and callee
+  resolution consult the live module frame before falling back to the builtin
+  arm. Static definition tables remain loud because they would make a shadow
+  ambiguous.
 * **A keyword call of a live binding is loud** (the kwargs tail
   consults the live view only to REFUSE): closure keywords were already
   out of tier, and the alternative was a fake `NameError`.
@@ -3250,9 +3252,13 @@ identification makes module scope come out right through that very arm;
 draining the locals produced a `NameError` on `tot += 1` at top level, and
 that is how the delta was found.
 
-`initBindable` rides the publish: a top-level rebinding of a builtin or of
-a `def`/`class`/namedtuple name refuses loudly (those resolution arms fire
-before the live globals, so the shadow would be silently ignored).
+`initBindable` rides the publish: a top-level rebinding of a modeled builtin
+is retained in the live module frame, while a `def`/`class`/namedtuple name
+still refuses loudly because the static definition table owns that name. The
+script view adds a poisoned static entry for each modeled builtin the program
+binds, routing both ordinary name reads and calls through the live frame
+before the builtin fallback; f-string `!r`/`!s` conversions remain intrinsic
+and do not consult a shadowable global.
 
 ### What is still refused, and why it is narrow
 
@@ -3791,15 +3797,49 @@ than assumed.
 ### One census, two lowerings (2026-08-16)
 
 The rule this lane extracted — *a lowering that synthesizes a NAME owes a
-census* — now has two payers, and it had two copies of the same code to
-show for it: `binds_str` was `binds_any_name` with `names = {"str"}`
-inlined, line for line. Collapsed to the one function with two named name
-sets, `FSTRING_LOWERING_NAMES` and `DISPLAY_LOWERING_NAMES`, decided
-together in `process_file`. Behaviour-neutral and checked as such: 74/74
-extractor units, and re-extracting every tracked envelope moved nothing
-but the `frontend.version` stamp.
+census* — originally had two payers. The duplicate `binds_str` census was
+collapsed into `binds_any_name`, with separate f-string and starred-display
+name sets. On 2026-10-10 the intrinsic f-string implementation removed its
+synthesized name entirely, so only the starred-display name set remains.
+The older behavior-neutral consolidation passed 74/74 extractor units.
 
-## f-strings (`JoinedStr`, the tail batch, construct 2 — DESIGN)
+## f-strings: intrinsic field conversions (2026-10-10)
+
+The extractor preserves admitted `JoinedStr` and `FormattedValue` nodes,
+including CPython's conversion codes and literal debug text. Ingestion joins
+the pieces with ordinary string addition and represents each field as
+`Expr.formattedValue`. Both interpreters evaluate its expression once and
+apply the shared pure `formatValueH` to the post-expression heap: bare fields
+and `!s` use `strOfValH`, while `!r` uses the same `reprArgs`/`reprVal` renderer
+as the ordinary builtin. Explicit empty format specifications also work.
+
+This conversion is intrinsic: it never looks up `str` or `repr`. Local,
+parameter, module-global, and captured-generator shadows therefore cannot
+change a field's rendering. The old whole-module `str` shadow census is
+removed, not merely relaxed. Explicit calls written in Python still use
+ordinary shadowable name resolution. Existing older, already-lowered
+envelopes remain ingestible; newly extracted f-strings use the intrinsic.
+
+Field expressions and conversions run left-to-right. A field mutation is
+visible in that field's rendering, and an error prevents later fields from
+running. Debug fields such as `{value=}` need no source-text reconstruction:
+CPython supplies a literal `value=` plus a default `!r` conversion in its AST.
+The new expression's heap-free and generator-allocation predicates recurse
+into its operand. Fuel monotonicity, world preservation, clock erasure, and
+payload blindness have ordinary proof arms for the intrinsic node.
+
+`Examples/python/fstring_repr` supplies real programs and symbolic proofs
+for Boolean/bounded-integer repr fields and arbitrary Unicode str fields,
+plus checks for effects, errors, containers, cycles, shadowing, and full script
+stdout. `!a`, nonempty format specifications, custom formatting protocols,
+and the renderer's remaining restrictions are unfinished semantics, not
+permanent exclusions from the Python goal.
+
+The following subsections are historical notes about the **pre-intrinsic**
+implementation. Their old constructor counts, census boundary, and measurements
+are not claims about the current implementation.
+
+### Historical sequencing choice
 
 Chosen over `Delete`, `Constant:bytes`, `Starred` and `With` by the
 SEQUENCING PRINCIPLE (docs/backlog.md), which ranks by proof-layer shape
@@ -3816,7 +3856,7 @@ with the count only as a tiebreak. The measured shapes:
 * `JoinedStr` allocates nothing and mutates nothing: `.str` is an
   IMMEDIATE `RVal` (`| str (s : String)`), not a heap object.
 
-### It is LOWERED, not interpreted — the design's whole point
+### Historical name-call lowering
 
 `f"a{x}b"` is extracted as `"a" + str(x) + "b"`: literal text becomes
 `Expr.constant (.str …)`, each field becomes a `str(…)` call, and the
@@ -3839,7 +3879,7 @@ existing definitions rather than hoped for:
   and the pinned refusals (a set's hash order, an instance's identity)
   come along unchanged.
 
-### Where the lowering is VALID, and why that fixes the tier boundary
+### Historical str-only tier boundary
 
 CPython's `{x}` is `format(x, '')`, not literally `str(x)`. The lowering
 is therefore sound exactly where `format(v, '') == str(v)`, which holds
@@ -3851,7 +3891,7 @@ being drawn by taste — conversions are an EXISTING function applied, the
 format mini-language is a PARALLEL TABLE, and this development refuses
 parallel tables.
 
-### Measured against CPython 3.9.19 before building (`fstring_lab.py`)
+### Historical CPython 3.9.19 measurements (`fstring_lab.py`)
 
 IN TIER — literal text, `{expr}`, several fields, expressions and calls
 inside a field, `{{`/`}}` brace escapes, the empty f-string, and nesting
@@ -3883,16 +3923,7 @@ REFUSED LOUDLY, each for a stated reason, not for convenience:
 identical to `str()`, so it is `printOne` under another spelling and costs
 nothing to admit.
 
-### AS-BUILT — and the design was WRONG about one thing
-
-**UNCOMMITTED-TREE MARKER — DELETE THIS PARAGRAPH WHEN THE TRIAD IS
-GREEN.** The section heading above still says DESIGN and this subsection
-still says AS-BUILT because the landing is HELD: the widening below is a
-`Semantics.lean` edit, and the rebuild it forces was sequenced away from a
-timed match running on this box. Measured in this tree with the OLD `str`:
-1068 differential cases, 2 failed — `list_field` and `tuple_field`, the
-exact two the widening fixes — and 36 scripts, 1 failed, `fstring_script`,
-likewise. Nothing here is a claim about a build that has happened.
+### Historical implementation corrections
 
 The lowering is `convert_fstring` in `extractors/python/extract.py`, and
 it is the whole implementation: no Lean node kind, no `evalExpr` arm, no
@@ -3940,7 +3971,7 @@ recorded reason was not.
 unnamed conversion must never fall through to the in-tier path by
 accident — `conversion_ascii` is the row that says so.
 
-### The lowering's ONE new boundary: the `str` shadow census
+### Historical str shadow census (removed 2026-10-10)
 
 The lowering spells rendering as a call of the NAME `str`, which is a
 lookup the SOURCE NEVER WROTE. CPython's f-string performs no such
@@ -3959,7 +3990,7 @@ extractor, a second table, to buy a file nobody writes.
 refuse (the census is module-wide), while `plain_concat` still runs an
 EXPLICIT `str(n)`, which is subject to CPython's real scoping and agrees.
 
-### Measured, as landed
+### Historical landing measurements
 
 `Examples/python/fstring_lab` is 28 rows — 22 match, 6 refusals
 (`!r`, `!a`, two format specs, `{x=}`, a set field) — plus

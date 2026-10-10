@@ -247,6 +247,50 @@ class ExtractorTests(unittest.TestCase):
         fn = self._first_fn(source)
         return fn["body"][0]["value"]
 
+    def test_fstring_retains_structured_fields_and_conversion_codes(self):
+        expression = self._first_return_expr(
+            "def f(value):\n    return f'a{value}/{value!s}/{value!r}b'\n")
+        self.assertEqual(expression["kind"], "JoinedStr")
+        fields = [part for part in expression["values"]
+                  if part["kind"] == "FormattedValue"]
+        self.assertEqual([field["conversion"] for field in fields], [-1, 115, 114])
+        self.assertTrue(all(field["format_spec"] is None for field in fields))
+        self.assertTrue(all(field["value"]["id"] == "value" for field in fields))
+
+    def test_fstring_conversion_is_not_a_shadowable_name_call(self):
+        for source in (
+                "def f(str, repr):\n    return f'{3!r}/{3!s}/{3}'\n",
+                "str = 7\nrepr = 8\ndef f():\n    return f'{3!r}/{3!s}/{3}'\n"):
+            function = self._envelope_of(source)["module"]["body"][-1]
+            expression = function["body"][0]["value"]
+            self.assertEqual(expression["kind"], "JoinedStr")
+            self.assertEqual(
+                [part["conversion"] for part in expression["values"]
+                 if part["kind"] == "FormattedValue"], [114, 115, -1])
+
+    def test_fstring_debug_retains_text_and_default_repr_conversion(self):
+        expression = self._first_return_expr(
+            "def f(value):\n    return f'{value=}'\n")
+        self.assertEqual(expression["values"][0]["value"],
+                         {"type": "str", "value": "value="})
+        self.assertEqual(expression["values"][1]["conversion"], 114)
+
+    def test_fstring_empty_format_spec_is_structured(self):
+        expression = self._first_return_expr(
+            "def f(value):\n    return f'{value!r:}'\n")
+        specification = expression["values"][0]["format_spec"]
+        self.assertEqual(specification["kind"], "JoinedStr")
+        self.assertEqual(specification["values"], [])
+
+    def test_fstring_ascii_and_nonempty_format_specs_remain_loud(self):
+        for field, kind in (("value!a", "JoinedStr:conversion_a"),
+                            ("value!r:>5", "JoinedStr:format_spec"),
+                            ("value!s:03d", "JoinedStr:format_spec")):
+            expression = self._first_return_expr(
+                "def f(value):\n    return f'{" + field + "}'\n")
+            self.assertEqual(expression["kind"], "Unsupported")
+            self.assertEqual(expression["py_kind"], kind)
+
     def test_is_none_survives_either_side(self):
         for src, ops in (
                 ("def f(x):\n    return x is None\n", ["Is"]),

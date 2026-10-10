@@ -71,6 +71,8 @@ never fails on syntactically valid Python).
 | `Name` | `id`: str |
 | `BinOp` | `left`: expr, `op`: one of `Add Sub Mult FloorDiv Mod Pow`, `right`: expr |
 | `UnaryOp` | `op`: one of `USub Not`, `operand`: expr |
+| `JoinedStr` | `values`: [expr…], preserving CPython's literal text and formatted fields. Ingestion concatenates the admitted parts left-to-right |
+| `FormattedValue` | `value`: expr, `conversion`: CPython's integer code (`-1`, `115` for `!s`, `114` for `!r`), `format_spec`: null or an empty `JoinedStr`. Ingestion uses an intrinsic conversion, never a synthesized `str`/`repr` name lookup. `!a` and nonempty format specifications remain `Unsupported` gaps |
 | `BoolOp` | `op`: one of `And Or`, `values`: [expr…] (≥2) |
 | `Compare` | `left`: expr, `ops`: [one of `Eq NotEq Lt LtE Gt GtE Is IsNot In NotIn`…], `comparators`: [expr…] (same length as ops). Since H1-proper every `is`/`is not` is emitted structurally (identity is decided dynamically: refs by address, `None` by the singleton test; the remaining out-of-tier operand forms are refused loudly by the interpreter, not the extractor) |
 | `Call` | `func`: expr, `args`: [expr…], `call_unsupported`: str \| null (set when keywords/starargs present) |

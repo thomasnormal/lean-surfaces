@@ -78,7 +78,8 @@ deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Expressions. Constructor ↔ schema `kind` mapping:
 `constant` ↔ `Constant`, `name` ↔ `Name`, `binOp` ↔ `BinOp`,
-`unaryOp` ↔ `UnaryOp`, `boolOp` ↔ `BoolOp`, `compare` ↔ `Compare`,
+`unaryOp` ↔ `UnaryOp`, `formattedValue` ↔ `FormattedValue` (str/repr fields),
+`boolOp` ↔ `BoolOp`, `compare` ↔ `Compare`,
 `call` ↔ `Call`, `list` ↔ `List`, `tuple` ↔ `Tuple`,
 `subscript` ↔ `Subscript`, `slice` ↔ `Slice`, `unsupported` ↔ `Unsupported`. -/
 inductive Expr where
@@ -86,6 +87,7 @@ inductive Expr where
   | name (id : String) (span : Span)
   | binOp (left : Expr) (op : BinOp) (right : Expr) (span : Span)
   | unaryOp (op : UnaryOp) (operand : Expr) (span : Span)
+  | formattedValue (value : Expr) (reprConversion : Bool) (span : Span)
   | boolOp (op : BoolOp) (values : Array Expr) (span : Span)
   | compare (left : Expr) (ops : Array CmpOp) (comparators : Array Expr) (span : Span)
   /-- Call. `kwargs` are the structured plain named keywords (H6,

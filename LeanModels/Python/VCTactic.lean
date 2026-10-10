@@ -612,7 +612,7 @@ def interpUnfolds : List Name :=
    ``foldExtremum, ``extremumVal, ``extremumValH, ``sortedValH,
    ``absVal, ``intCastVal, ``boolCastArgs, ``divmodArgs,
    ``importErrorHandlerMatch, ``admittedBuiltinExc, ``builtinExcCatches,
-   ``strOfVal, ``strOfValH, ``reprArgs, ``ordVal, ``chrVal, ``isBuiltinName,
+   ``strOfVal, ``strOfValH, ``reprArgs, ``formatValueH, ``ordVal, ``chrVal, ``isBuiltinName,
    ``enumStart, ``enumFrame, ``countArgs, ``genPlan, ``genBreak, ``genContinue,
    ``moduleGlobals, ``moduleInit, ``globalsFold, ``globalsStep, ``lookupG,
    ``globalsDirty, ``Stmt.g1Dirty, ``Stmt.g1Binds, ``Stmt.g1BindsList,

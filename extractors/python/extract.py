@@ -94,17 +94,15 @@ ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
 UNSUPPORTED_TEXT_LIMIT = 200
 
 # A LOWERING THAT SYNTHESIZES A NAME OWES A CENSUS — the rule the starred
-# lane's implementation extracted, and there are now two lowerings paying
-# it. Each spells source that performs NO name lookup as a call of a name
+# lane's implementation extracted. It spells source that performs NO name
+# lookup as a call of a name
 # the source never wrote, and the interpreter reaches its builtins only
 # AFTER every shadow-resolving arm; so a module that binds the name would
 # run the lowering through the shadow and be SILENTLY WRONG. One census,
 # one flag per lowering, and the name set carries the reason.
-_MODULE_BINDS_STR = False           # f-strings: `{x}` lowers to `str(x)`
 _MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a))`
 _MODULE_ANNOTATIONS_BOUND = False
 
-FSTRING_LOWERING_NAMES = ("str",)
 DISPLAY_LOWERING_NAMES = ("list", "tuple")
 
 
@@ -305,40 +303,31 @@ def literal_const_payload(node):
 
 
 def convert_fstring(node):
-    """Lower an f-string to `"a" + str(x) + "b"` (docs/memory-model.md
-    §f-strings): literal text becomes a str `Constant`, each field becomes a
-    `str(…)` `Call`, and the pieces join left-associatively with `BinOp Add`
-    — CPython's `{x}` IS `format(x, '')`, which equals `str(x)` for every
-    value in this tier. Zero new node kinds, so nothing downstream moves.
+    """Preserve JoinedStr and FormattedValue for admitted str/repr fields.
 
-    The tier line falls out of that equality: a non-empty FORMAT SPEC is
-    where `format(v, spec)` and `str(v)` diverge (a whole mini-language —
-    a parallel table this development refuses), and `!r`/`!a` name
-    operations that are not tier callables. Each is refused LOUDLY on the
-    whole node, never half-lowered. `{x=}` needs no arm of its own: CPython
-    3.8+ compiles it to the text `x=` plus a `!r` field, which is itself
-    the evidence that the AST does not carry the source text."""
-    if _MODULE_BINDS_STR:
-        return unsupported(node, "JoinedStr:str_shadowed")
+    Ingestion concatenates the pieces and uses intrinsic conversions, not
+    shadowable names. Empty format specifications are admitted; nonempty
+    specifications and !a remain recorded gaps. Debug fields retain the
+    literal source text CPython supplies in the AST.
+    """
     parts = []
     for part in node.values:
         if isinstance(part, ast.FormattedValue):
-            if part.format_spec is not None:
+            if (part.format_spec is not None and
+                    not (isinstance(part.format_spec, ast.JoinedStr) and
+                         not part.format_spec.values)):
                 return unsupported(node, "JoinedStr:format_spec")
-            if part.conversion == 114:
-                return unsupported(node, "JoinedStr:conversion_r")
             if part.conversion == 97:
                 return unsupported(node, "JoinedStr:conversion_a")
-            # -1 = no conversion, 115 = `!s`, which IS `str()` spelled out.
-            if part.conversion not in (-1, 115):
+            if part.conversion not in (-1, 115, 114):
                 return unsupported(node, "JoinedStr:conversion")
             parts.append({
-                "kind": "Call",
+                "kind": "FormattedValue",
                 "span": span(part),
-                "func": {"kind": "Name", "span": span(part), "id": "str"},
-                "args": [convert_expr(part.value)],
-                "keywords": [],
-                "call_unsupported": None,
+                "value": convert_expr(part.value),
+                "conversion": part.conversion,
+                "format_spec": (convert_fstring(part.format_spec)
+                                if part.format_spec is not None else None),
             })
         elif isinstance(part, ast.Constant) and isinstance(part.value, str):
             parts.append({
@@ -348,14 +337,7 @@ def convert_fstring(node):
             })
         else:  # not reachable from CPython's parser; loud rather than guessed
             return unsupported(node, "JoinedStr:part:" + type(part).__name__)
-    if not parts:  # `f""` — no fields and no text
-        return {"kind": "Constant", "span": span(node),
-                "value": {"type": "str", "value": ""}}
-    out = parts[0]
-    for p in parts[1:]:
-        out = {"kind": "BinOp", "span": span(node),
-               "left": out, "op": "Add", "right": p}
-    return out
+    return {"kind": "JoinedStr", "span": span(node), "values": parts}
 
 
 def _leftmost_walrus(e):
@@ -1938,8 +1920,7 @@ def process_file(source_path, companion_dir, out=None):
     # The lowerings' shadow censuses (see `binds_any_name`) are
     # whole-module, so they are decided once, here, before any expression
     # is converted.
-    global _MODULE_BINDS_STR, _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
-    _MODULE_BINDS_STR = binds_any_name(tree, FSTRING_LOWERING_NAMES)
+    global _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
     _MODULE_SHADOWS_DISPLAY = binds_any_name(tree, DISPLAY_LOWERING_NAMES)
     _MODULE_ANNOTATIONS_BOUND = binds_any_name(tree, ("__annotations__",))
 

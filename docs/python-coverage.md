@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 2631 | 2301 | 0 | 330 |
+| 2684 | 2355 | 0 | 329 |
 
-Of the 2301 rows the model decides, 2301 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2355 rows the model decides, 2355 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 2631 | 2228 | 0 | 403 |
+| 2684 | 2282 | 0 | 402 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-139 witnesses: 108 MATCH, 31 REFUSE.
+142 witnesses: 111 MATCH, 31 REFUSE.
 
 ### `stmt`
 
@@ -82,8 +82,11 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `YieldFrom` | MATCH | inlined at ingestion |
 | `Compare` | MATCH |  |
 | `Call` | MATCH |  |
-| `JoinedStr` | MATCH | bare replacement fields only |
-| `FormattedValue` | MATCH | same node; the conversion/spec slots are the gap |
+| `JoinedStr` | MATCH | intrinsic str/repr replacement fields; nonempty specs remain a gap |
+| `FormattedValue` | MATCH | intrinsic conversions; !a and nonempty format specs remain gaps |
+| `FormattedValue-repr` | MATCH | repr conversion bypasses shadowed builtin names |
+| `FormattedValue-debug` | MATCH | CPython supplies debug text and default repr conversion |
+| `FormattedValue-empty-spec` | MATCH | explicit empty format specification |
 | `Constant` | MATCH | the int/str/bool/None inventory |
 | `Attribute` | MATCH |  |
 | `Subscript` | MATCH |  |

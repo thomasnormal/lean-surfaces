@@ -1177,37 +1177,36 @@
               "end_col_offset": 21
             },
             "value": {
-              "kind": "Call",
+              "kind": "JoinedStr",
               "span": {
                 "lineno": 55,
                 "col_offset": 11,
                 "end_lineno": 55,
                 "end_col_offset": 21
               },
-              "func": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 55,
-                  "col_offset": 11,
-                  "end_lineno": 55,
-                  "end_col_offset": 21
-                },
-                "id": "str"
-              },
-              "args": [
+              "values": [
                 {
-                  "kind": "Name",
+                  "kind": "FormattedValue",
                   "span": {
                     "lineno": 55,
-                    "col_offset": 14,
+                    "col_offset": 11,
                     "end_lineno": 55,
-                    "end_col_offset": 19
+                    "end_col_offset": 21
                   },
-                  "id": "value"
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 55,
+                      "col_offset": 14,
+                      "end_lineno": 55,
+                      "end_col_offset": 19
+                    },
+                    "id": "value"
+                  },
+                  "conversion": -1,
+                  "format_spec": null
                 }
-              ],
-              "keywords": [],
-              "call_unsupported": null
+              ]
             }
           }
         ]

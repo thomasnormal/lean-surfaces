@@ -66,6 +66,12 @@ differential cases cover ASCII escapes, containers, cycles, argument effects,
 arity errors, and local/module/generator shadowing; identity, Unicode printability,
 custom protocols, and rendering-budget boundaries remain explicitly loud.
 
+[`fstring_repr`](fstring_repr/) proves intrinsic Boolean and bounded-integer
+`!r` fields and Unicode `!s` fields symbolically. Conversions bypass shadowed
+`str`/`repr` names, retain left-to-right field effects, and admit default debug
+fields and explicit empty format specifications. ASCII conversion, nonempty
+format specifications, and custom formatting protocols remain unfinished gaps.
+
 [`decimal_render`](decimal_render/) proves that `str(value)` returns the exact
 decimal string when `value.natAbs < 10 ^ 640`. The same magnitude admission
 guards integer fields in container and range rendering and bare `%s`/`%r`/`%d`;

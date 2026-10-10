@@ -10,10 +10,10 @@ tractable.
 
 ## Python release status
 
-The prepared Python prerelease is **v0.1.6 (2026-10-10)**. Its source changes
-and release notes are on `master`; publication of the `v0.1.2` through
-`v0.1.6` Git tags is pending. The latest published Python tag is `v0.1.1`
-(2026-09-24). See [CHANGELOG.md](CHANGELOG.md) for the version history.
+The Python prerelease is **v0.1.7 (2026-10-10)**. Its Git tag identifies the
+release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
+record source releases whose local Git tags remain unpublished.
+See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 The current source keeps the public judgments, tactics, and existing theorem
 statements unchanged. First-proof and tutorial builds stay within Python dependencies;
@@ -46,9 +46,17 @@ classes remain loud.
 Builtin `repr(value)` reuses the same renderer as container printing, including
 ASCII quoting, namedtuples, insertion-ordered dictionaries, and container cycles.
 Identity-dependent values, sets, non-ASCII strings, and over-budget renders stay loud.
-The executable differential suite has 2,631 cases: 2,301 agree with CPython and
-330 refuse loudly. The narrower proof interpreter agrees on 2,228 cases and
-refuses 403; neither run has a mismatch in the recorded suite.
+Intrinsic f-string `!r` fields share that renderer without consulting shadowed
+`str` or `repr` names; debug fields and explicit empty format specifications
+also work. `...` and the ordinary builtin `Ellipsis` are the same truthy
+singleton, with identity, equality, rendering, literal defaults, hashable keys,
+and argument/result transport. Notebook headers verify their compiler and
+transitive compiled imports by content before reuse.
+The executable differential suite has 2,719 cases: 2,390 agree with CPython and
+329 refuse loudly. The narrower proof interpreter agrees on 2,317 cases and
+refuses 402; neither run has a mismatch in the recorded suite. The grammar
+census has 142 witnesses, with 112 MATCH and 30 REFUSE. These are measured
+examples, not a claim of complete language support; remaining gaps stay in scope.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 
@@ -67,8 +75,13 @@ The build fetches the pinned toolchain and the package sources, then compiles
 the Python proof dependencies and checks the `tri` example's theorems. It does
 not compile another language tier or any Mathlib library module. The environment
 variable skips Mathlib's automatic cache download: Mathlib is a declared package
-dependency, but these first Python proofs use only Lean's core tactics. The first build
-took about **3 minutes 44 seconds** in this release's frozen Linux check, with
+dependency, but these first Python proofs use only Lean's core tactics.
+Fresh-workspace CI at source revision `05d235b` (included in v0.1.7) has no
+Lake build-cache step: [run 38084868848](https://github.com/thomasnormal/lean-surfaces/actions/runs/38084868848)
+passes in **2 minutes 22 seconds on Linux** and **3 minutes 25 seconds on macOS**
+(whole-job elapsed time, including installation, proof build, and script comparison).
+Network and build times vary. Separately, the first proof build
+took about **3 minutes 44 seconds** in a recorded frozen Linux check, with
 fresh project and package-source directories and an already-installed Lean
 toolchain. All six tutorial companions took another **38 seconds**. No compiled
 project or package artifacts were copied. Toolchain installation and preparing

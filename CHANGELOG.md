@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.7] — 2026-10-10
+
 ### Added
 
 - Ellipsis literals (`...`) and the builtin `Ellipsis` value are the same
@@ -37,6 +39,13 @@ change is listed here under **Changed** or **Removed**.
   loud. The `repr_lab` artifact proves Boolean and bounded integer rendering
   symbolically and checks retained argument effects and ordinary shadowing.
 
+### Changed
+
+- `Const`, `Val`, and `RVal` add an `ellipsis` constructor; downstream exhaustive
+  matches must handle it. Public judgments, tactic interfaces, and existing
+  theorem statements retain their signatures. Rebuild downstream Lean artifacts
+  after upgrading; notebook headers now verify their compiled dependencies.
+
 ### Fixed
 
 - Notebook headers are invalidated when the compiler or any transitive compiled
@@ -49,6 +58,17 @@ change is listed here under **Changed** or **Removed**.
   CI now runs both inventories and checks regressions for missing classifications
   and model answers to deliberately loud rows; no interpreter behavior or
   differential expectation changes.
+
+### Validation
+
+- CPython 3.9 differential suite: **2,719 cases / 2,390 matched / 329 recorded
+  refusals / zero mismatches**. The proof interpreter matches **2,317** and
+  refuses **402** on the same cases, also with zero mismatches.
+- Grammar census: **142 witnesses / 112 MATCH / 30 REFUSE**. A matched witness
+  does not claim every use of its construct is supported; remaining refusals
+  are language-coverage work, not permanent scope exclusions.
+- Notebook cache checks: **26 unit/wiring regressions** plus a real Lean
+  transitive-constructor regression; all three tutorial notebooks pass.
 
 ## [0.1.6] — 2026-10-10
 

@@ -159,7 +159,13 @@ kernel-reducible semantic checks. It must not cache answers or consult source
 files during proof reduction. Ingestion may use IO, but must strictly reject
 duplicate JSON fields, invalid domains and noninteger numeric tokens **before**
 lossy conversion. The existing `Lean.Json`/`rawOfJson` artifact loader is not a
-certificate of those new protocol properties. Missing profile/source-form facts
+certificate of those new protocol properties. The separate `load_cpp_probe`
+command now rejects duplicate fields and noninteger tokens before conversion
+and embeds typed common declaration headers and exact FunctionDecl shape
+observations as literal data. It retains repeated rows and complete raw fields;
+it does not validate their relevant consensus, graph closure, source forms or
+original-process provenance. Template and linkage fields remain raw observations.
+This ingestion step does not establish any bridge. Missing profile/source-form facts
 refuse; they are not defaults supplied by a permissive loader.
 
 Checks remain query-local: only required graph closure and facts are consumed;

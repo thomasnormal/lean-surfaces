@@ -3,7 +3,7 @@
 2026-10-10. **Tooling census only; no semantic declaration queries admitted.**
 This prices part of the [declaration contract](cpp-declarations.md), using the
 existing optional [canonical probe](cpp-canonical-evidence.md). It does not
-change extraction, Lean ingestion, entity semantics or execution:
+change extraction, entity semantics or execution:
 `rung-0:no-executable-semantics` remains the execution refusal.
 
 ## Evidence policy
@@ -87,6 +87,39 @@ field; missing, ill-typed or conflicting relevant fields refuse. Null, false,
 zero and absence are distinct. Conflicts in unused definition fields do not
 invalidate a canonical observation, and an unrelated missing graph target
 does not invalidate another declaration's query. No first/last row wins.
+
+### Separate strict literal ingestion
+
+The optional `load_cpp_probe` command in `LeanModels.Cpp.Load` embeds a
+schema-0.3 probe as a literal `DeclarationProbe`. It is not an implementation
+of this pricer or the proposed semantic validator. The complete raw AST and
+metadata, ordered repeated ledger rows and row ordinals remain available.
+Common declaration headers and exact `FunctionDecl` shape fields are typed;
+other family-specific fields and template/linkage enums remain raw. The
+ordered `DeclarationProbe.functions` filter does not merge handles or cache
+answers.
+
+String ingestion rejects duplicate JSON fields throughout the wrapper,
+malformed Unicode and noninteger number tokens before conversion, then checks
+the schema/compiler/runtime/header pins, common domains and function-shape
+types and exact API tags. The existing artifact loader is unchanged. Valid
+unsupported flags, incoherent observations, foreign body owners and conflicting
+repeated rows are retained, not accepted as eligible definition evidence.
+
+The probe wrapper carries no original command or dependency manifest. Its
+successful literal ingestion establishes neither that process provenance nor
+raw witness alignment, relevant-row consensus, graph closure, source-form
+exclusions, ISO interpretation or runtime admission. Those obligations remain
+separate and query-local. All pricing measurements below retain their stated
+tooling-only meaning.
+
+Focused validation is `lake build LeanModels.Cpp.Tests` followed by
+`env LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py`.
+The compiler-to-literal row additionally needs explicitly pinned matching
+`LEANCPP_CLANG` and `LEANCPP_PROBE_LIBRARY`; otherwise it reports an explicit
+skip. No new full-corpus literal-ingestion sweep ran. The historical
+three-corpus pricing, syntax and runtime census remains unchanged and cannot
+be relabeled as typed-ingestion admissions.
 
 ## Four independently priced queries
 

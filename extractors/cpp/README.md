@@ -9,8 +9,9 @@ semantics are admitted. `test_extract.py` tests that boundary.
 `canonical_probe.cpp` is an **experimental, tooling-only** Clang plugin. It
 prices the frontend supplement required by
 [the declaration specification](../../docs/cpp-declarations.md); it does not
-implement that specification. It is not loaded by `extract.py`, Lean ingestion,
-the default build or CI. Its output is not an admitted translation envelope.
+implement that specification. It is not loaded by `extract.py` or required by
+the default build or CI. Its output is not an admitted translation envelope;
+the optional literal evidence loader below is separate from that boundary.
 
 The only supported development headers are **Clang and LLVM 21.1.8**. Compile
 against the matching frontend's libraries, not an unrelated installed
@@ -106,6 +107,54 @@ after witnessed occurrence alignment, and report unalignable targets. A fresh
 stock dump and independent API review check the tooling, not independent
 compiler conformance or C++ program correctness. Focused temporary fixtures
 test tooling behavior; they are neither proof examples nor runtime verdicts.
+
+### Optional strict literal ingestion
+
+`LeanModels.Cpp.Load` provides a separate command for schema-0.3 probe files:
+
+```lean
+import LeanModels.Cpp.Load
+
+load_cpp_probe observations from "probe.json"
+```
+
+The result is a literal `DeclarationProbe`, not an `Artifact` or a semantic
+certificate. Its `ast` and `metadata` retain the complete raw trees. Its
+`declarations` retain ledger order and repeated handles, with original row
+ordinals and raw rows alongside typed common declaration fields. Exact
+`FunctionDecl` rows additionally have typed `FunctionShapeEvidence`;
+`DeclarationProbe.functions` is an ordered filter, not a cache or canonical
+grouping. Other families and template/linkage enums remain raw beyond the
+common header; this is not complete typed schema coverage.
+
+`parseDeclarationProbeString` uses the strict raw JSON parser before field
+conversion. Duplicate fields at any depth, malformed Unicode and noninteger
+number tokens refuse. Schema, compiler/runtime/header pins, common field
+types and handles, and the exact function-shape types/API tags are checked.
+The existing translation-envelope loader is unchanged and does not inherit
+these parser guarantees.
+
+Unsupported or incoherent function-shape observations, foreign body owners
+and conflicting repeated rows remain evidence rather than becoming successful
+query answers. Ingestion establishes no original compiler invocation or
+dependency provenance, raw-occurrence witnesses, graph/group closure,
+source-form exclusions, ISO entity/definition/linkage result or executable
+body. Those require separate query-local checks; the Python pricer remains
+independent and all semantic/runtime admissions remain zero.
+
+Focused validation, after building the Lean modules:
+
+```sh
+lake build LeanModels.Cpp.Tests
+env LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
+```
+
+The actual compiler-to-literal test additionally requires the explicitly
+pinned matching `LEANCPP_CLANG` and `LEANCPP_PROBE_LIBRARY` settings above;
+without them that row reports an explicit skip. These checks add no CI wiring
+or implicit probe build. No new full-corpus literal-ingestion sweep has run.
+The historical three-corpus pricing, syntax and runtime census is unchanged
+and cannot be relabeled as typed-ingestion admissions.
 
 ### Bounded XML measurement
 

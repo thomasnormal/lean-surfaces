@@ -995,3 +995,20 @@ The complete chunk-batch compilation receipts are under
 They retain the external batch command, nine successful segment families,
 nine local-composition families, imported-reuse negatives, final-verifier
 recursion-depth refusal, aggregate audit and complete source/root/input pins.
+
+## Capture-pricing closure
+
+The bounded experiments are now closed as a resource-pricing record. The
+unchanged production loader still has **zero** successful full original-capture
+compilations. Small controls, component reads, helper publication, the complete
+36-chunk plan, all 36 segment publications and all nine local compositions are
+useful positive receipts, but none establishes complete-value equality or
+downstream executable capture ingestion. The final imported verifier remains a
+recursion-depth refusal under the default limits.
+
+**Decision:** do not integrate segmentation, helper caching, source-specific
+budgets, larger default limits, kernel-only registration or a fallback loader.
+Keep the receipts and their negative witnesses as the boundary of the measured
+claim. The capture-pricing thread is complete; the next work returns to the
+clause-indexed C++ rung ladder, with resource changes reconsidered only after a
+semantic rung supplies a separately justified need.

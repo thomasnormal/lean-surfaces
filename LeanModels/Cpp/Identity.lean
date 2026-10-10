@@ -50,6 +50,42 @@ def canonicalRootEvidence (probe : DeclarationProbe) (declaration : Declaration)
             else
               .ok root.id
 
+def canonicalPredecessorChainEvidence (probe : DeclarationProbe) (declaration : Declaration) :
+    Except String (List FrontendHandle) :=
+  go (probe.declarations.length + 1) [] declaration.id none []
+where
+  go (fuel : Nat) (active : List String) (current : String)
+      (expectedRoot : Option String) (chain : List FrontendHandle) :
+      Except String (List FrontendHandle) :=
+    match fuel with
+    | 0 => .error "canonical predecessor chain exceeds artifact bound"
+    | fuel + 1 =>
+        if active.contains current then
+          .error "canonical predecessor chain contains a cycle"
+        else
+          let rows := probe.declarations.filter fun row => row.id.value == current
+          match rows with
+          | [] => .error "canonical predecessor target is absent"
+          | row :: rest =>
+              if row.kind != declaration.kind then
+                .error "canonical predecessor kind disagrees with source declaration"
+              else if rest.any (fun other =>
+                  other.kind != row.kind || other.canonical.value != row.canonical.value ||
+                    other.previous != row.previous) then
+                .error "canonical predecessor rows disagree"
+              else if expectedRoot.any (· != row.canonical.value) then
+                .error "canonical predecessor rows disagree on canonical root"
+              else
+                let chain := chain ++ [row.id]
+                match row.previous with
+                | some previous =>
+                    go fuel (current :: active) previous.value (some row.canonical.value) chain
+                | none =>
+                    if row.canonical.value != row.id.value then
+                      .error "canonical predecessor chain ends before its root"
+                    else
+                      .ok chain
+
 def functionDefinitionEvidence (probe : DeclarationProbe) (declaration : Declaration) :
     Except String Bool :=
   let rows := probe.declarations.filter fun row => row.id.value == declaration.id

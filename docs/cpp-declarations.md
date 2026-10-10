@@ -27,6 +27,10 @@ fact.
 same-family and idempotent with an explicit null predecessor, while a nonroot
 must carry a predecessor. It still does not follow a complete predecessor
 chain or establish an ISO entity.
+`canonicalPredecessorChainEvidence` follows that explicit predecessor chain
+to the root with a finite artifact-bound fuel and refuses cycles, dangling
+targets, inconsistent repeated rows and chains that terminate before the
+canonical root. It remains frontend graph evidence, not an entity proof.
 `semanticContextCandidates` and `lexicalContextCandidates` likewise consume
 only explicit metadata handles and return occurrence candidates; null context
 is `[]`, while conflicting evidence or an absent target refuses. They do not

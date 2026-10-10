@@ -171,6 +171,33 @@ def rootEvidenceProbe : DeclarationProbe := {identityProbe with
       | .ok _ => false
       | .error _ => true
   | none => false
+#guard match probe.declarationAtPath [0, 1] with
+  | some declaration =>
+      match canonicalPredecessorChainEvidence rootEvidenceProbe declaration with
+      | .ok chain => chain.map (·.value) == ["f2", "f1"]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match canonicalPredecessorChainEvidence rootEvidenceProbe declaration with
+      | .ok chain => chain.map (·.value) == ["f1"]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [1] with
+  | some declaration =>
+      match canonicalPredecessorChainEvidence rootEvidenceProbe declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 1] with
+  | some declaration =>
+      let cyclic := {rootEvidenceProbe with
+        declarations := [canonicalEvidenceRow "f1" "FunctionDecl" "f1" (some "f2"),
+          canonicalEvidenceRow "f2" "FunctionDecl" "f1" (some "f1")]}
+      match canonicalPredecessorChainEvidence cyclic declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
 
 def contextProbe : DeclarationProbe := {identityProbe with
   declarations := [contextEvidenceRow "f1" "f1" (some "ns") (some "ns"),

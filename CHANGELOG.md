@@ -12,6 +12,14 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Fixed
+
+- The refusal census classifies all recorded closed-function and script gaps,
+  including the recent parsing, repetition, rendering, and exception fixtures.
+  CI now runs both inventories and checks regressions for missing classifications
+  and model answers to deliberately loud rows; no interpreter behavior or
+  differential expectation changes.
+
 ## [0.1.6] — 2026-10-10
 
 ### Added

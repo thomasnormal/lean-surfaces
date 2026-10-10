@@ -641,6 +641,7 @@ step  "ci-selftest-report-tests" python3 tools/test_ci_selftests.py
 step  "ci-instrument-tests" python3 tools/test_instruments.py
 step  "py-onboarding-imports" python3 tools/test_python_onboarding.py
 step  "py-divergence-probe-tests" python3 harness/test_pyc_divergence_probe.py
+step  "py-refusal-census-tests" python3 harness/test_refusal_census.py
 lake_build_step
 step  "py-declared-divergences" python3 harness/pyc_divergence_probe.py
 step  "py-harness"      python3 harness/diff_test.py --no-build
@@ -648,6 +649,7 @@ step  "py-harness"      python3 harness/diff_test.py --no-build
 # (Semantics.lean; the runner's is Monadic/). Its tier is narrower, so a
 # refusal passes; a wrong answer fails exactly as above.
 step  "py-proof-interpreter" python3 harness/diff_test.py --no-build --proof-interpreter
+step  "py-refusal-census" python3 harness/refusal_census.py --whitelist --scripts --no-build --runner .lake/build/bin/leanmodels-run
 # leanpy: whole PROGRAMS against CPython. Fails only on a DIVERGENCE (the
 # model ran a file and disagreed) — a loud refusal is a result, and the
 # completeness percentage it prints is telemetry, not a gate.

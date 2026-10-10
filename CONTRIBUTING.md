@@ -72,6 +72,9 @@ Run `./check.sh` for the repository-wide checks used by CI. It delegates to
 `tools/ci.sh`, accepts the same `--require-build` and `--verify-guards` options,
 and can be invoked from outside the checkout. Missing optional tools are
 reported as skips, not checked components.
+Every recorded refusal must also be classified in `harness/refusal_census.py`:
+CI runs its `--whitelist --scripts` modes, which fail on unclassified rows or
+unexpected model answers. Add the classification alongside any new loud fixture.
 `--verify-guards` checks only the driver's safety guards, not the full suite;
 local Lean build skips become failures when `--require-build` is supplied.
 

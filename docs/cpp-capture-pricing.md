@@ -622,6 +622,96 @@ as a kernel theorem. Production loader changes, C++ semantic/runtime admissions
 and input-world closure remain **zero**; the ISO, identity, cross-TU/ODR and
 execution barriers are unchanged.
 
+## Bounded kernel count checking
+
+The next experiment changes **proof organization only**, retaining the complete
+original XML capture, all 24 published helper modules and their root, and the
+exact original propositions:
+
+```lean
+GeneratedCapture.capture.probe.declarations.length = 4527
+GeneratedCapture.capture.receipt.payloads.length = 14
+```
+
+Traversing the declaration spine observes 4,527 cons cells and 551 constant-tail
+boundaries. The root, boundaries and nil give **553 named count facts**, with a
+maximum span of **13 cons**; the general producer/checker also caps chunks at 16.
+It works backward from nil. A normally checked polymorphic lemma derives a cons
+count from its tail count using `List.length_cons`, `Eq.trans` and
+`congrArg Nat.succ`. Direct expression applications of that lemma avoid concrete
+length arithmetic during proof assembly. Each composed fact is separately added
+through ordinary checked `Lean.addDecl`, rejecting unresolved term/universe
+metavariables and requiring an actual checked theorem-kind postcondition. Wrong
+numerals are not trusted by the checker. The final declaration theorem references the root count fact;
+the unchanged payload theorem still uses `rfl`.
+
+The final four fresh compiler children **all pass**:
+
+| Stage | Child seconds | wait4 peak RSS, KiB | Artifact bytes |
+| --- | ---: | ---: | ---: |
+| Traverse original spine and emit plan | 18.972 | 1,710,084 | 2,008 |
+| Check and publish all 553 count facts | 23.831 | 1,757,124 | 8,155,800 |
+| Import facts; check exact 4,527/14 statements | 23.594 | 1,730,284 | 7,752 |
+| Fresh reimport; repeat statements and inventories | 24.186 | 1,735,724 | 1,912 |
+
+Summed child execution is **90.583 seconds**, and the four receipt intervals sum
+to **92.968 seconds**, including their post-child pinning/receipt work but not
+pre-child pinning. New artifacts total **8,167,472 bytes**; the emitted plan is
+87,957 bytes / 560 lines. This starts from the **previously published** original
+25-module import closure: it is not a new 90-second whole-capture compilation.
+The separate instrument build takes 20.283 child seconds and produces 814,952
+bytes. All children retain **8 GiB per-process AS / 180 seconds / `-j1 -M8192`**,
+default recursion **512** and heartbeats **200,000**, synchronous elaboration and
+`debug.skipKernelTC=false`. The absolute watchdog bounds child execution only;
+controller pinning/receipt overhead and sampling latency are separate.
+Peak sampled Lean HWM is 1,757,312 KiB and VmSize is 7,345,612 KiB: the AS
+allowance is not an RSS allowance, and these shared-host observations are not
+isolated speedup or dominant-retainer claims.
+
+**Trust boundary:** ordinary Lean CLI import trust is **1025**, not zero. Fresh
+`addDecl` still kernel-checks new proofs with kernel checking enabled; normal
+imports do not recheck every serialized imported proof. Both verification
+processes inspect the existing exported transitive axiom inventories of **all
+553 facts** and report them empty. The generic cons lemma and both final theorems
+also have empty inventories in both processes. No native equality result,
+`native_decide`, new axiom, custom cache or increased checker budget supplies
+these count proofs.
+
+The prior whole-list `rfl` **remains failed** at default recursion depth, and the
+earlier publication pipeline remains **26/27 stages passing, overall FAIL**.
+This experiment also retains an unsuccessful explicit-conversion organization:
+17 facts publish through count 128, then the next count 134 reaches default
+recursion depth (18.055 child seconds, no artifact). The abstract-lemma
+organization passes; the failed log does not isolate the exact internal
+conversion/checking call. Wrong-trust-header guards, command/API setup errors,
+an off-by-one universe instantiation and early strengthened `-t0` controls remain
+archived separately, never promoted to normal-CLI positive receipts.
+
+Independent controls retain the original long-list `rfl` failure while proving
+the same synthetic 1,536-cell count by ordinary induction with empty axioms.
+The final shared commands also pass the original synthetic count through 97
+facts at uniform span 16, and the original small-capture count 8 through two
+facts, with payload count 14 unchanged. All these count inventories are empty;
+a fresh reimport passes in 25.661 wall seconds. An altered final-step count 1,537,
+empty count 1 and false `0 = 1` proof each fail actual kernel type checking,
+exit 1 and publish no artifact; a non-list argument refuses at the API boundary.
+Per-child source/dependency pins and independent receipt audits retain the
+complete original module closure, exact predecessor chain, unchanged count
+statements and earlier failed witness. Generated fact-command lines are
+byte-identical across the depth-failing and final proof organizations.
+Post-primary original-input pins retain both bundles' 21 files / 14 bindings,
+9 small / 112 XML source pins and six production source pins with zero drift.
+Shared and independent instrument functions remain below complexity 30.
+
+**Decision:** bounded kernel checking now proves these two original **metadata
+counts**, not whole-capture value equality, clang AST correctness, C++ execution
+or ISO semantics. The previous full-original native equality is still a separate
+observation, not a substitute for a kernel equality theorem. Price the unchanged
+whole-original equality witness next under the same bounds; do not promote
+production organization or a new semantic/runtime admission from count proofs.
+Production loader changes, input-world closure and semantic admissions remain
+zero, with the ISO, identity, cross-TU/ODR and execution barriers unchanged.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -672,3 +762,12 @@ under
 split into `shared/`, `runs/`, `census/`, `controls/`, `review/` and `validation/`.
 The primary receipts retain the initial driver's nominal-deadline limitation;
 the corrected instrument's mocked controls do not retroactively strengthen them.
+
+The unchanged-count experiment's exact commands, versioned proof instruments,
+complete spine plan, default-bound child receipts and samples, empty axiom
+inventories, independent small/synthetic/negative controls, source/module pins,
+retained failed witnesses and focused validation are under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-kernel-count-20261010/`, split
+into `shared/`, `runs/`, `controls/`, `review/`, `versions/` and `validation/`.
+The passing final organization is V7; earlier setup and depth failures are not
+relabelled, and a fresh reimport does not imply zero-trust import checking.

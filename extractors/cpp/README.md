@@ -167,6 +167,27 @@ whole-original-artifact phase measurements and finite-budget controls. Its
 kernel-only experiment is not completed public-loader compilation or C++
 semantic admission; production loading remains unchanged.
 
+### Runtime probe inspection
+
+`inspect_probe.lean` parses the same strict schema-0.3 evidence at runtime and
+invokes the existing declaration-evidence bridges at selected occurrence paths:
+
+```sh
+lake env lean --run extractors/cpp/inspect_probe.lean /outside/the/repo/probe.json \
+  root 5 5.3.0
+```
+
+`root` denotes `[]`; dotted indices follow nested `inner` arrays. With no
+selected paths it prints only metadata, occurrence and function-row counts.
+Unknown paths, invalid syntax, invalid UTF-8 and schema/parse failures exit
+nonzero. A bridge refusal is printed as `REFUSE`; exit zero means the inspection
+completed, not that every bridge succeeded. The AST view is taken from the same
+probe, without a translation-envelope provenance claim. This runtime tool does
+not register a literal Lean declaration, repair resource-limited literal
+compilation, authenticate a producer, or admit C++ execution. The
+[real-input census](../../docs/cpp-typed-ingestion-census.md) separates runtime
+inspection from literal loading and independent Python aggregate auditing.
+
 ### Evidence contract
 
 Output is one JSON object with `ast` and `metadata`. The former is Clang's stock

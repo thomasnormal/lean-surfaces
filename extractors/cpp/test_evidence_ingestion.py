@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded literal probe-ingestion checks, not C++ semantic admission.
+"""Bounded literal loading and runtime inspection, not C++ semantic admission.
 
 LEANCPP_TEST_LEAN=1 enables the built Lean loader checks. The compiler check
 additionally requires an explicit matching LEANCPP_CLANG and
@@ -248,6 +248,53 @@ class EvidenceIngestionTests(unittest.TestCase):
 #guard evidence.functions.map (fun row => row.functionShape.map (·.bodyPresent)) == [some false, some true, some true]
 #guard evidence.functions.map (fun row => row.functionShape.map (·.attributeCount)) == [some 0, some 0, some 1]
 """)
+
+    def run_inspector(self, fixture, *paths):
+        probe_path = self.root / "inspection.json"
+        probe_path.write_text(json.dumps(fixture), encoding="utf-8")
+        return subprocess.run(
+            [self.lake, "env", "lean", "--run", str(REPO_ROOT / "extractors/cpp/inspect_probe.lean"),
+             str(probe_path), *paths], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60,
+        )
+
+    def test_runtime_inspector_preserves_refusals(self):
+        result = self.run_inspector(document(), "root")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("no artifact provenance, literal compilation or execution admission", result.stdout)
+        self.assertIn("metadata=1 occurrences=1 functions=1", result.stdout)
+        self.assertIn("canonical-target: REFUSE canonical evidence missing", result.stdout)
+        self.assertIn("linkage: REFUSE linkage evidence is not applicable", result.stdout)
+
+    def test_runtime_inspector_keeps_repeated_occurrence_candidates(self):
+        row = function_row()
+        row.update(linkage_internal="External", linkage_formal="External", language_linkage="C++")
+        root = copy.deepcopy(row)
+        root.update(id="0x1", kind="TranslationUnitDecl", canonical="0x1",
+                    semantic_context=None, lexical_context=None)
+        fixture = document([root, row])
+        fixture["ast"]["inner"] = [{"id": "0x2", "kind": "FunctionDecl"}] * 2
+        result = self.run_inspector(fixture, "0")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for expected in (
+            "metadata=2 occurrences=3 functions=1", "canonical-target: OK 2",
+            "canonical-root: OK present", "canonical-chain: OK 1",
+            "semantic-chain: OK 1", "lexical-chain: OK 1",
+            "function-definition: OK false", "linkage: OK External/External/(some C++)",
+        ):
+            self.assertIn(expected, result.stdout)
+
+    def test_runtime_inspector_schema_and_paths_fail_loudly(self):
+        fixture = document()
+        fixture["metadata"]["schema_version"] = "cpp-canonical-probe-0.2"
+        result = self.run_inspector(fixture)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("expected 'cpp-canonical-probe-0.3'", result.stdout + result.stderr)
+        result = self.run_inspector(document(), "invalid")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid occurrence path", result.stdout + result.stderr)
+        result = self.run_inspector(document(), "0")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing declaration occurrence", result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

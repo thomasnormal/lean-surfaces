@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-10-10
+
 ### Fixed
 
 - Range construction retains Boolean start, stop, and step objects instead of
@@ -24,7 +26,24 @@ change is listed here under **Changed** or **Removed**.
   symbolically and adds differential controls for integer fields, numerical
   consumers, and constructor exceptions. Previously loud range APIs remain loud.
 
-## [0.1.4] — 2026-10-10 (tag publication pending)
+### Validation
+
+- CPython 3.9 differential suite: **2,250 cases**, with **1,973 matched** and
+  **277 recorded refusals**, zero mismatches. The proof interpreter matched
+  **1,895 cases**, refused **355**, and reported zero mismatches.
+- Whole-program survey: **136 files**, **109 matched**, **27 loud refusals**,
+  zero divergences. The repository check passed with no native-dependent or
+  sorry-dependent curated Python examples.
+- The release metadata, README coverage counts, range-rendering artifact, and
+  differential controls agree on the Boolean-field behavior; public judgments,
+  tactics, and recorded theorem statements remain unchanged.
+
+### Known Limitations
+
+- Range APIs outside the admitted rendering, iteration, length, and numerical
+  consumer tier remain loud refusals; no unsupported API is guessed.
+
+## [0.1.4] — 2026-10-10
 
 ### Fixed
 

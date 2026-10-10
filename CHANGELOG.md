@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.6] — 2026-10-10
+
 ### Added
 
 - Named `BaseException`, `ArithmeticError`, and `LookupError` handlers use
@@ -54,6 +56,18 @@ change is listed here under **Changed** or **Removed**.
   pin the admitted subset and the annotation-table alias boundary. The `ann_lab`
   artifact proves reads of a string-annotated module global symbolically and
   kernel-checks the refusal of a raising annotation.
+
+### Validation
+
+- CPython 3.9 differential suite: **2,446 cases**, with **2,130 matched** and
+  **316 recorded refusals**, zero mismatches. The proof interpreter matched
+  **2,057 cases**, refused **389**, and reported zero mismatches.
+- Script corpus: **85 files**, with **65 matched**, **20 loud refusals**, and
+  zero failures. Grammar census: **139 witnesses**, with **108 matched** and
+  **31 refusals**; documentation checks stayed **89/89**.
+- The fresh full Lean build and unchanged-budget repository check passed with
+  no curated Python example depending on `sorry` or native axioms. The release
+  keeps public judgments, tactics, and recorded theorem statements unchanged.
 
 ## [0.1.5] — 2026-10-10
 

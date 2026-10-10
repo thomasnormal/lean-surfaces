@@ -10,9 +10,9 @@ tractable.
 
 ## Python release status
 
-The prepared Python prerelease is **v0.1.4 (2026-10-10)**. Its source changes
-and release notes are on `master`; publication of the `v0.1.2`, `v0.1.3`, and
-`v0.1.4` Git tags is pending. The latest published Python tag is `v0.1.1`
+The prepared Python prerelease is **v0.1.6 (2026-10-10)**. Its source changes
+and release notes are on `master`; publication of the `v0.1.2` through
+`v0.1.6` Git tags is pending. The latest published Python tag is `v0.1.1`
 (2026-09-24). See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 The current source keeps the public judgments, tactics, and existing theorem
@@ -38,9 +38,14 @@ including heap containers and nondraining generator checks; builtin type values
 and keyword calls remain loud.
 Integral `divmod` returns the same signed floor quotient and remainder as `//`
 and `%`, including Boolean operands; nonintegral protocols remain loud.
-The executable differential suite has 2,332 cases: 2,042 agree with CPython and
-290 refuse loudly. The narrower proof interpreter agrees on 1,963 cases and
-refuses 369; neither run has a mismatch in the recorded suite.
+Generator-expression capture preserves lexical local bindings when they shadow
+builtins or module definitions. Named `BaseException`, `ArithmeticError`, and
+`LookupError` handlers use the same CPython-measured catch relations in both
+interpreter surfaces; unmeasured OS-error ancestors and dynamic exception
+classes remain loud.
+The executable differential suite has 2,446 cases: 2,130 agree with CPython and
+316 refuse loudly. The narrower proof interpreter agrees on 2,057 cases and
+refuses 389; neither run has a mismatch in the recorded suite.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 

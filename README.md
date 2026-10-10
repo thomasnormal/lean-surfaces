@@ -10,10 +10,10 @@ tractable.
 
 ## Python release status
 
-The prepared Python prerelease is **v0.1.3 (2026-10-09)**. Its source changes
-and release notes are on `master`; publication of the `v0.1.2` and `v0.1.3`
-Git tags is pending. The latest published Python tag is `v0.1.1` (2026-09-24).
-See [CHANGELOG.md](CHANGELOG.md) for the version history.
+The prepared Python prerelease is **v0.1.4 (2026-10-10)**. Its source changes
+and release notes are on `master`; publication of the `v0.1.2`, `v0.1.3`, and
+`v0.1.4` Git tags is pending. The latest published Python tag is `v0.1.1`
+(2026-09-24). See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 The current source keeps the public judgments, tactics, and existing theorem
 statements unchanged. First-proof and tutorial builds stay within Python dependencies;
@@ -23,10 +23,14 @@ grouping and all six integer whitespace characters, with exact invalid-literal
 errors and a configuration-independent 640-digit bound. Non-ASCII integer
 input and explicit bases remain loud. String repetition supports both operand
 orders, boolean counts, and `*=`, with both the original count magnitude and
-output code-point length bounded by 1,048,576. The executable
-differential suite has 1,642 cases: 1,494 agree with CPython and 148 refuse loudly.
-The narrower proof interpreter agrees on 1,416 cases and refuses 226; neither
-run has a mismatch.
+output code-point length bounded by 1,048,576. Tuple and namedtuple repetition
+also checks the original count magnitude before empty-sequence or negative-count
+handling, with the same independent element-count budget. Decimal output shares
+the 640-digit admission across `str`, `print`, f-strings, container and range
+rendering, and bare `%s`/`%r`/`%d`; larger magnitudes refuse before conversion.
+The executable differential suite has 2,167 cases: 1,890 agree with CPython and
+277 refuse loudly. The narrower proof interpreter agrees on 1,812 cases and
+refuses 355; neither run has a mismatch in the recorded suite.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 
@@ -46,12 +50,12 @@ the Python proof dependencies and checks the `tri` example's theorems. It does
 not compile another language tier or any Mathlib library module. The environment
 variable skips Mathlib's automatic cache download: Mathlib is a declared package
 dependency, but these first Python proofs use only Lean's core tactics. The first build
-took about **3 minutes 25 seconds** in this release's frozen Linux check, with
+took about **3 minutes 44 seconds** in this release's frozen Linux check, with
 fresh project and package-source directories and an already-installed Lean
-toolchain. All six tutorial companions took another **43 seconds**. No compiled
-project or package artifacts were copied. Toolchain installation is excluded
-from that timing; downloads and build time depend on
-your machine and connection. The source and the proof are shown
+toolchain. All six tutorial companions took another **38 seconds**. No compiled
+project or package artifacts were copied. Toolchain installation and preparing
+the project-source snapshot are excluded from that timing; downloads and build
+time depend on your machine and connection. The source and the proof are shown
 [below](#example-examplespythontri).
 Next:
 

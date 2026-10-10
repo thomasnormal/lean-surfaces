@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-10-10 (tag publication pending)
+
 ### Fixed
 
 - Decimal integer rendering shares the configuration-independent 640-digit
@@ -30,6 +32,29 @@ change is listed here under **Changed** or **Removed**.
   index width, `OverflowError`, or `MemoryError`.
 - The `tuple_repeat` example proves symbolic output lengths under the admission
   bounds and checks boolean counts, namedtuple erasure, and shallow aliasing.
+
+### Validation
+
+- CPython 3.9 differential suite: 2,167 cases, 1,890 matched, 277 recorded
+  refusals, zero mismatches. The same rows through the proof interpreter:
+  1,812 matched, 355 refused, zero mismatches.
+- Whole-program corpus: 76 scripts, 59 matched, 17 loud refusals, zero failures.
+- The `tuple_repeat` and `decimal_render` artifacts add three symbolic
+  theorem pairs, checked without native-computation or `sorry` dependencies
+  and included in the curated axiom gate. Public judgments, tactics, and
+  previously recorded theorem statements remain unchanged.
+- Frozen Linux quickstart: the first `tri` proof builds in 224 seconds, with
+  six tutorial companions taking another 38 seconds. Timing includes fresh
+  package-source fetching, excludes the already-installed Lean toolchain and
+  preparation of the project-source snapshot, and copies no compiled artifacts;
+  no foreign tier or Mathlib library is built.
+
+### Known Limitations
+
+- The pre-existing rendering mismatch for Boolean range start/stop fields
+  remains unfixed and is not whitelisted as a refusal. The zero-mismatch counts
+  above describe the registered suite, not every Python program; see
+  [the decimal-rendering boundary](docs/memory-model.md).
 
 ## [0.1.3] — 2026-10-09 (tag publication pending)
 

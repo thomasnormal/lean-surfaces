@@ -1,6 +1,9 @@
 # Ordinary C++ declarations — proposed ISO/frontend bridge
 
-2026-10-10. **Specification only. No semantic or runtime admission.**
+2026-10-10. **Ordinary entity bridge: specification only. No runtime admission.**
+The separate [source-local function rule](cpp-local-functions.md) now admits
+four declaration forms, without certifying this entity profile or its linkage
+and type-origin exclusions.
 This refines the [declaration contract](cpp-declarations.md), using the
 [schema-0.2 probe](cpp-declaration-pricing.md) as evidence to price a first
 implementation. The probe is not an admitted supplement, its pricing results

@@ -169,6 +169,16 @@ semantic admission; production loading remains unchanged.
 
 ### Runtime probe inspection
 
+The separate [source-local function rule](../../docs/cpp-local-functions.md)
+admits prototypes, compound/try bodies and deleted definitions as distinct
+local declaration forms. It does not admit entities or execution. Inspect
+every FunctionDecl occurrence and count these forms/refusals with:
+
+```sh
+lake env lean --run extractors/cpp/inspect_probe.lean /outside/the/repo/probe.json \
+  --local-functions
+```
+
 `inspect_probe.lean` parses the same strict schema-0.3 evidence at runtime and
 invokes the existing declaration-evidence bridges at selected occurrence paths:
 

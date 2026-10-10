@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Bounded literal loading and runtime inspection, not C++ semantic admission.
+"""Bounded loading, inspection and source-local function declaration forms.
+
+No entity, program or execution admission is established here.
 
 LEANCPP_TEST_LEAN=1 enables the built Lean loader checks. The compiler check
 additionally requires an explicit matching LEANCPP_CLANG and
@@ -85,7 +87,7 @@ class EvidenceIngestionTests(unittest.TestCase):
             probe_path.write_text(contents, encoding="utf-8")
         lean_path = self.root / "Check.lean"
         lean_path.write_text(
-            "import LeanModels.Cpp.Load\n"
+            "import LeanModels.Cpp\n"
             "open LeanModels.Cpp\n"
             "namespace CppProbeIngestionFixture\n"
             "load_cpp_probe evidence from " + json.dumps(str(probe_path)) + "\n"
@@ -282,6 +284,68 @@ class EvidenceIngestionTests(unittest.TestCase):
             "function-definition: OK false", "linkage: OK External/External/(some C++)",
         ):
             self.assertIn(expected, result.stdout)
+
+    def test_actual_compiler_local_function_source_admission(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        self.assertTrue(pathlib.Path(library).is_file(), "selected probe library must exist")
+        source = self.root / "local.cpp"
+        source.write_text("""int prototype(int);
+int prototype(int value) { return value; }
+int try_body(int value) try { return value; } catch (...) { return -1; }
+int deleted(int) = delete;
+namespace scope { int qualified(int); }
+int scope::qualified(int value) { return value; }
+namespace scope { int reopened() { return 3; } }
+namespace { int anonymous() { return 4; } }
+inline namespace version { int inlined() { return 5; } }
+extern "C" { int linked() { return 6; } }
+[[deprecated]] int attributed() { return 7; }
+template<class Type> Type templated(Type value) { return value; }
+struct Box { int method() { return 8; } };
+""", encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(pathlib.Path(library).resolve()),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        expected = {
+            "prototype": [False, True], "try_body": [True], "deleted": [True],
+            "qualified": [False, True], "reopened": [True],
+            "anonymous": [None], "inlined": [None], "linked": [None],
+            "attributed": [None], "templated": [None], "method": [None],
+        }
+        guards = []
+        counts = dict.fromkeys(expected, 0)
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            name = node.get("name")
+            if node.get("kind") in ("FunctionDecl", "CXXMethodDecl") and name in expected:
+                verdict = expected[name][counts[name]]
+                counts[name] += 1
+                call = "admitLocalFunctionDeclaration evidence " + str(path)
+                if verdict is None:
+                    guards.append("#guard (" + call + ") matches .error _")
+                else:
+                    guards.append("#guard (" + call + ").map (·.form.definesEntity) matches .ok "
+                                  + str(verdict).lower())
+            children = node.get("inner", [])
+            pending.extend((child, path + [index])
+                           for index, child in reversed(list(enumerate(children))))
+        self.assertEqual(counts, {name: len(values) for name, values in expected.items()})
+        self.assert_accepts(result.stdout, "\n".join(guards))
 
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):
         fixture = document()

@@ -173,8 +173,10 @@ Successful linking is neither a complete ODR diagnostic nor an ODR proof.
 
 For the initial semantic admission subset, modules/header units, unsupported
 declaration families, unrepresented linkage rules and unresolved template
-dependence remain named refusals. Raw retention continues unchanged. There is
-no implementation of this subset in this item and no cross-TU admission yet.
+dependence remain named refusals. Raw retention continues unchanged.
+The separate [source-local function rule](cpp-local-functions.md) implements
+only four function declaration forms, not this entity subset or a cross-TU
+admission.
 
 ## Evidence from original artifacts
 

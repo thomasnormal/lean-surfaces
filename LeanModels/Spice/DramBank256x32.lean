@@ -721,7 +721,8 @@ rational parameters, and a typed topology witness. It emits separate
 kernel-checked parameter and topology theorems, then derives the complete
 `SourceCircuit.toDramBank` projection. The row, subarray, and column hierarchy
 keeps each certificate bounded instead of reducing a flattened 8,192-cell
-term.
+term. Each topology equation is checked as an auxiliary lemma, so checking
+the aggregate witness does not repeat all of their reductions together.
 -/
 
 open Lean Elab Command in
@@ -853,25 +854,36 @@ elab "load_dram_bank " name:ident " from " path:str
         rowsPositive := by norm_num
         columnsPositive := by norm_num
         sourceShape := ⟨rfl, rfl, rfl, rfl, rfl⟩
-        senseAmplifierProjected := by circuit_reduce
-        transmissionGateProjected := by circuit_reduce
-        cellProjected := by circuit_reduce
-        rowProjected := by circuit_reduce
-        subarrayProjected := by circuit_reduce
-        columnProjected := by circuit_reduce
-        bankProjected := by circuit_reduce
-        topProjected := by circuit_reduce
-        senseAmplifierValid := by circuit_reduce
-        transmissionGateValid := by circuit_reduce
-        cellValid := by circuit_reduce
-        rowTemplateValid := by circuit_reduce
-        subarrayTemplateValid := by circuit_reduce
-        columnTemplateValid := by circuit_reduce
-        bankHeaderValid := by circuit_reduce
-        bankSubarraysValid := by circuit_reduce
-        bankColumnsValid := by circuit_reduce
-        writeInputValid := by circuit_reduce
-        topValid := by circuit_reduce }
+        senseAmplifierProjected := by as_aux_lemma => circuit_reduce
+        transmissionGateProjected := by as_aux_lemma => circuit_reduce
+        cellProjected := by as_aux_lemma => circuit_reduce
+        rowProjected := by as_aux_lemma => circuit_reduce
+        subarrayProjected := by as_aux_lemma => circuit_reduce
+        columnProjected := by as_aux_lemma => circuit_reduce
+        bankProjected := by as_aux_lemma => circuit_reduce
+        topProjected := by as_aux_lemma => circuit_reduce
+        senseAmplifierValid := by as_aux_lemma => circuit_reduce
+        transmissionGateValid := by as_aux_lemma => circuit_reduce
+        cellValid := by as_aux_lemma => circuit_reduce
+        rowTemplateValid := by as_aux_lemma => circuit_reduce
+        subarrayTemplateValid := by as_aux_lemma => circuit_reduce
+        columnTemplateValid := by as_aux_lemma => circuit_reduce
+        bankHeaderValid := by as_aux_lemma => circuit_reduce
+        bankSubarraysValid := by as_aux_lemma => circuit_reduce
+        bankColumnsValid := by as_aux_lemma => circuit_reduce
+        writeInputValid := by as_aux_lemma => circuit_reduce
+        topValid := by
+          as_aux_lemma =>
+            unfold LeanModels.Spice.matchesSourceInstance
+            have subcircuitMatch : ($topologyId).top.subcircuit =
+                LeanModels.Spice.dramBankName $rowsTerm $columnsTerm := by
+              circuit_reduce
+            have connectionsMatch : ($topologyId).top.connections =
+                ($topologyId).bank.ports := by
+              rfl
+            rw [subcircuitMatch, connectionsMatch]
+            simp only [beq_self_eq_true, Bool.and_true]
+          }
       ))
   elabCommand (← `(theorem $completeProjectionId :
       LeanModels.Circuit.Spice.SourceCircuit.toDramBank

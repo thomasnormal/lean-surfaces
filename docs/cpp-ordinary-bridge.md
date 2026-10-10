@@ -204,8 +204,8 @@ function candidate is the included-library `__is_constant_evaluated`, not an
 application admission. The slice does not reconstruct source ownership or
 reachability, check all missing source-form facts, or establish the ISO bridge.
 The previous all-four tooling intersections 26/616 are different populations.
-Mox remains strict-refused on its four recorded extension diagnostics, with no
-edits or new execution.
+The extension-heavy input remains strict-refused on its four recorded extension
+diagnostics, with no edits or new execution.
 
 The measured pass took 0.636 s / 97,412 KiB RSS for XML and 73.816 s /
 3,923,136 KiB for json; input/tool hashes match before and after. The unchanged

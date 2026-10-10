@@ -258,8 +258,8 @@ policy review, five independent deep-closure audits, bounded original-input runs
 and validation. The 69 focused synthetic diagnostics are tooling tests, not
 correctness theorems about prototype programs. Candidate counts are separate
 from the unchanged corpus declaration/body census and still-zero runtime
-admissions. Strict Mox extraction remains refused by its four previously recorded
-extension diagnostics; no profile is relaxed. These counts and hashes belong to
+admissions. The strict extension-heavy input remains refused by its four
+previously recorded extension diagnostics; no profile is relaxed. These counts and hashes belong to
 schema 0.1 and pricing format 1, not a rerun under the new evidence policy.
 ISO entity/linkage mapping and a semantic validator remain unimplemented.
 
@@ -300,7 +300,7 @@ dependencies. Probe source SHA is `8a17ed7a…00bc7`, pricing source
 `55ce155f…d0d72`, plugin `d39ec63f…1818`. No full AST-fingerprint/equivalence
 rescan was run, and matching aggregate counts do not establish AST equivalence
 or graph closure. The unchanged source declaration/body/declaration-only census
-is XML 205/202/3 and json 1,572/963/609; Mox remains strictly refused.
+is XML 205/202/3 and json 1,572/963/609; the extension-heavy input remains strictly refused.
 
 Receipts under `state/ls-cpp/template-evidence-20261010/{review,tests,measurement}`
 retain exact source/API pins, strict-domain diagnostics, full refusal matrices,
@@ -348,7 +348,7 @@ additional retained-toolchain verification passes **3,529 headers and two
 development packages**. Probe source SHA is `0ba07c0f…925e681`, pricing source
 `15ddc2d3…9f31154f`, plugin `d9ab70dc…626aea`. The source declaration/body/
 declaration-only census remains XML **205/202/3** and json **1,572/963/609**;
-strict Mox refusal is unchanged. **Semantic/runtime admissions remain zero.**
+the strict extension-heavy input's refusal is unchanged. **Semantic/runtime admissions remain zero.**
 
 Receipts under `state/ls-cpp/function-shape-20261010/{review,tests,measurement,gates}`
 retain exact API/tool/source pins, full same-parse field distributions and

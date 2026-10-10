@@ -199,8 +199,8 @@ or ownership theorems. Concrete counterexamples to shortcut rules:
 
 The receipt retains full IDs, paths, metadata, hashes and reproducible commands
 externally; pointer strings are not stable checked-in fixture expectations.
-The json corpus still has an admitted raw artifact, and strict Mox extraction
-still fails on the recorded non-standard declarations. Neither has a new
+The json corpus still has an admitted raw artifact, and strict extraction of
+the extension-heavy input still fails on the recorded non-standard declarations. Neither has a new
 declaration-semantic verdict. Runtime admissions/verdicts remain zero on all
 three corpora, behind `rung-0:no-executable-semantics`.
 

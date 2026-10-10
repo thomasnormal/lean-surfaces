@@ -300,25 +300,25 @@ relabeled as completed literal ingestion or stronger closure:
 | Repeated/conflicting rows and a foreign valid handle | Retain ordered observations; no deduplication, cross-run pointer joins or fabricated semantic consensus. |
 | Bare schema-0.3 probe, missing receipt fields or unsafe output path | Bare data stays observation-only; provenance-required admission refuses explicitly. |
 
-For each of TinyXML2, nlohmann/json and read-only Mox, a later capture census
+For each of TinyXML2, nlohmann/json and the read-only extension-heavy input, a later capture census
 must report attempted TUs, unavailable inputs, strict frontend rejection,
 timeout, parse/binding/stability refusal, successful observed capture and
 literal embedding **separately**, with time/RSS/bytes and complete pin receipts.
 Input-world closure, tooling query eligibility, semantic queries and runtime
 verdicts are separate counters, not relabeled captures. The initial bounded
 capture census attempts one original registered TU/profile per corpus, not all
-TUs: TinyXML2 and nlohmann/json publish observational bundles; strict Mox
+TUs: TinyXML2 and nlohmann/json publish observational bundles; the strict extension-heavy input
 retains its anonymous-struct/nested-anonymous-type frontend rejection. It does
 not perform new literal embedding or establish input-world/source-profile
 closure. Historical source/body/declaration-only counts remain
-XML **205/202/3**, JSON **1,572/963/609**; strict Mox refusal and semantic/runtime
+XML **205/202/3**, JSON **1,572/963/609**; strict extension-heavy input refusal and semantic/runtime
 admissions of **zero** are unchanged.
 
 The separate capture-loader census attempts literal compilation of those two
 published original-profile bundles under `-j1`, an 8 GiB address-space bound
 and a 180-second wall cap. TinyXML2 refuses at Lean's default 200,000-heartbeat
 LCNF deterministic timeout (**41.540 s**); nlohmann/json refuses with internal
-out-of-memory (**23.750 s**). Strict Mox has no successful capture receipt to
+out-of-memory (**23.750 s**). The strict extension-heavy input has no successful capture receipt to
 load. Thus **zero original-profile capture literals complete compilation** in
 this bounded default profile; partial elaboration or printed `#check` output
 is not success. Aggregate measured maximum RSS is **3,324,508 KiB**. A separate

@@ -3,7 +3,7 @@
 2026-10-09 — specification plan; [translation artifact admission](cpp-translation.md)
 is implemented; [declaration semantics](cpp-declarations.md) are specified,
 not implemented. Execution is not admitted. General C++ is
-the destination; Engine2 is evidence, not the definition of the language.
+the destination; the corpora are evidence, not the definition of the language.
 
 ## Contract and trusted boundary
 
@@ -73,14 +73,13 @@ runs detect bugs; they do not define semantics.
 Sources stay external/read-only; drivers call the original declarations.
 Pins are starting evidence snapshots, not claims of admission:
 
-- **Mox Engine2**, local revision `09c3a5234face462c9591c1927db34f61fcdbf6a`:
-  systems/scheduler C++, `lib/Runtime/Engine2/`. Start with
-  `Kernel::signalEdges` and `Stats::trace` in `Kernel.h`: enums, aggregates,
-  unsigned arithmetic, member access and mutation. Next, `ProcessRegistry`
-  and `ActivationStorage` exercise references, moves, containers and lambdas.
-  Whole-kernel execution waits for allocation/lifetime and environment rules:
+- **An extension-heavy systems reference input**: enums, aggregates,
+  unsigned arithmetic, member access and mutation, followed by references,
+  moves, containers and lambdas. Its identifying source details remain outside
+  this public repository. Whole-program execution waits for allocation/lifetime
+  and environment rules:
   `mmap`/`madvise`, pointer/integer casts, anonymous-struct extensions, builtins
-  and external RNG hooks are genuine boundaries, not no-ops. No Mox edits.
+  and external RNG hooks are genuine boundaries, not no-ops. Sources stay read-only.
 - **[TinyXML-2](https://github.com/leethomason/tinyxml2)**, zlib license,
   `10.0.0` / `321ea883b7190d4e85cae5512a12e5eaa8f8731f`: conventional
   object-oriented parser; in-memory parsing/tree traversal exercises heap

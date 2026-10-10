@@ -202,6 +202,10 @@ effectful/nonintegral expressions and default-only cases retain
 adds top-level `CaseStatement:invalid-compilation`. This lowering does not
 change symbolic `sv-0.2` `Case` nodes.
 
+An admitted fixed-size `$bits` query is a pure unevaluated leaf in this
+source-tree check. Its argument subtree is skipped, not admitted as an
+ordinary effectful expression.
+
 | kind | key order / fields |
 |---|---|
 | `Block` | `kind`, `span`, `stmts`: [stmt...] — `begin ... end` (a single-statement body still nests one level: `"stmts": [<stmt>]`) |
@@ -245,6 +249,23 @@ implicit conversions are the M0 "width mismatch in source" case ⇒
 `ConversionExpression:width`.
 
 ### `Literal` — 4-state constants
+
+The legacy/self-check extractor also emits signed 32-bit `Literal` nodes
+for `$bits(expression)` or `$bits(data_type)` with fixed-size bitstream
+arguments (IEEE 1800-2023 §20.6.2). Their `bits` encode the bound type's
+`bitstreamWidth` modulo `2^32`, with `signed: true` and optional provenance
+`fixed_bits_query: true`. The argument is not evaluated or converted;
+pure metadata expressions and unsupported runtime types can be queried.
+Admission deliberately rejects effectful bound operand syntax, including
+calls other than nested admitted queries, assignments and increments.
+IEEE specifies no evaluation even for those operands, but this tier keeps
+them loud after a licensed reference disagreed on a direct increment.
+Context resizing retains this query literal rather than folding away its
+admission evidence. Dynamically sized and non-bitstream arguments remain
+`Unsupported`; a frontend error in a compilation containing an admitted
+query adds top-level `$bits:invalid-compilation`. Existing literal
+ingesters require no new constructor, and symbolic `sv-0.2` `SysCall`
+queries are unchanged.
 
 ```json
 {"kind": "Literal", "span": {...}, "width": 8, "bits": "1x0z1010"}

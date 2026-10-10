@@ -247,7 +247,8 @@ unchanged when no label matches.
 Subject and label expressions must be completely admitted by the existing
 pure integral expression fragment. Re-evaluation during an unsuccessful
 search cannot observe a changed state; calls, assignments, increments and
-other effectful or unsupported expressions stay loud. Nested label tests,
+other effectful or unsupported expressions stay loud, except fixed-size
+`$bits` queries whose operands are not evaluated. Nested label tests,
 not eager logical disjunctions, preserve first-match search. Six original
 fixtures in `harness/sv/ordinary_cases/` carry licensed reference provenance
 for exact `x`/`z`, multiple labels, defaults, whole-case sizing and runtime
@@ -264,6 +265,53 @@ context widening cannot erase a call or increment into an admitted literal.
 Any frontend error in a compilation containing a lowered case adds
 `CaseStatement:invalid-compilation`; recovery cannot silently admit an
 invalid program. The symbolic `sv-0.2` case path is unchanged.
+
+### Fixed-size bitstream queries — 2026-10-10
+
+The legacy/self-check extractor admits `$bits(expression)` and
+`$bits(data_type)` when the bound argument is both fixed-size and a
+bitstream type (IEEE 1800-2023 §§6.24.3, 20.6.2). It reads the type's
+bitstream width, not the runtime-value fragment's integral width. Fixed
+unpacked arrays and structures therefore work as query types even though
+their runtime values remain outside this tier. Bound aliases and enums
+are transparent to the query, and packed aggregates need no new value
+constructor.
+
+The argument is never evaluated or recursively converted: IEEE specifies
+type inspection, not operand execution. An eligible query is a pure leaf for
+ordinary-case admission, without admitting general calls or effects in
+case subjects or labels. The result is a signed 32-bit integer, encoded
+modulo `2^32`, independently of the queried type's width or signedness;
+surrounding arithmetic and assignment conversions retain their existing
+rules. The result compiles to the existing literal expression, so no
+interpreter, process or scheduler rule changes.
+
+Admission currently requires a syntactically pure bound argument:
+calls other than nested admitted `$bits` queries, assignments, increments,
+decrements, allocation and other unrecognized operand forms stay loud.
+This is a tier restriction, not an IEEE evaluation rule. A focused licensed
+Xcelium 24.03-s004 diagnostic returned width 8 but changed an eight-bit
+subject from 7 to 8 for `$bits(subject++)`, contrary to §20.6.2; the model
+does not emulate that effect or count it as agreement. Pure query types,
+operators and selections remain admitted without executing their operands.
+
+Dynamic arrays, queues, associative arrays, string variables/types and
+other dynamically sized arguments remain loud rather than reading live
+storage. Fixed non-bitstream types, including `real` and unpacked unions,
+remain loud too. Invalid interface-class queries are not admitted. Query
+literals retain `fixed_bits_query: true` provenance through context
+conversions; any frontend error in such a compilation adds
+`$bits:invalid-compilation`. The symbolic `sv-0.2` query path is unchanged.
+
+Six original fixtures in `harness/sv/bit_queries/` cover builtin types,
+local aliases/enums, fixed unpacked arrays, packed aggregates, pure metadata
+expressions and result contexts, with licensed reference provenance.
+Fresh final extraction admits 60 previously partial simulation files
+without losing a clean file: 1,577 clean, 20,180 partial and 30
+include-skipped out of 21,787. The exact 3,148-key core grows from 192
+to 196 clean files, with 2,948 partial and four include skips. Both
+censuses report zero extraction errors; these are extractor completeness
+measurements, not whole-corpus simulator agreement.
 
 ### Four-state packed selected reads — 2026-10-09
 

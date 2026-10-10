@@ -42,6 +42,7 @@ from pyslang.ast import (
     StatementBlockKind,
     UnaryOperator,
     UniquePriorityCheck,
+    VisitAction,
 )
 from pyslang.syntax import SyntaxTree
 
@@ -376,6 +377,8 @@ def const_literal(sm, e):
     constant during binding (`e.constant`), else None. Never raises; never
     evaluates on demand (pyslang's EvalContext is crash-prone — only the
     binder-populated attribute is consulted)."""
+    if _SYM is None and _contains_bits_query(e):
+        return None
     try:
         c = e.constant
         if c is None:
@@ -393,6 +396,79 @@ def const_literal(sm, e):
         }
     except Exception:
         return None
+
+
+def _contains_bits_query(expression):
+    """Keep query admission and diagnostic provenance through conversions."""
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        if (type(node).__name__ == "CallExpression" and node.isSystemCall
+                and node.subroutineName == "$bits"):
+            found = True
+            return VisitAction.Skip
+
+    expression.visit(inspect)
+    return found
+
+
+def _bits_argument_source_ok(expression):
+    """Effectful query operands remain outside the licensed-confirmed tier."""
+    pure = True
+
+    def inspect(node):
+        nonlocal pure
+        kind = type(node).__name__
+        if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
+            return VisitAction.Skip
+        pure = pure and not getattr(node, "bad", False) and kind in (
+            "DataTypeExpression", "IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
+            "StringLiteral", "RealLiteral", "NamedValueExpression",
+            "ConversionExpression", "UnaryExpression", "BinaryExpression",
+            "ConditionalExpression", "ConcatenationExpression",
+            "ReplicationExpression", "ElementSelectExpression",
+            "RangeSelectExpression", "MemberAccessExpression",
+        )
+        if kind == "UnaryExpression":
+            pure = pure and node.op not in (
+                UnaryOperator.Preincrement, UnaryOperator.Predecrement,
+                UnaryOperator.Postincrement, UnaryOperator.Postdecrement,
+            )
+
+    expression.visit(inspect)
+    return pure
+
+
+def _fixed_bits_query_width(expression):
+    """Fixed bitstream queries inspect bound types, never operand values."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or expression.bad or not expression.isSystemCall
+                or expression.subroutineName != "$bits"
+                or len(expression.arguments) != 1):
+            return None
+        argument = expression.arguments[0]
+        if (argument.bad or not argument.type.isFixedSize
+                or not argument.type.isBitstreamType()
+                or expression.type.bitWidth != 32
+                or not expression.type.isSigned
+                or not _bits_argument_source_ok(argument)):
+            return None
+        return argument.type.bitstreamWidth
+    except Exception:
+        return None
+
+
+def _convert_fixed_bits_query(sm, expression):
+    width = _fixed_bits_query_width(expression)
+    if width is None:
+        return unsupported(sm, expression)
+    return {
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": 32, "bits": format(width & 0xffffffff, "032b"),
+        "signed": True, "fixed_bits_query": True,
+    }
 
 
 def width_of(d):
@@ -462,7 +538,9 @@ def _convert_expr(sm, e):
         return _convert_concat_expr(sm, e)
     if _SYM is None and cname in ("ElementSelectExpression", "RangeSelectExpression"):
         return _convert_selected_read(sm, e, cname)
-    if cname == "CallExpression" and _SYM is not None:
+    if cname == "CallExpression":
+        if _SYM is None:
+            return _convert_fixed_bits_query(sm, e)
         return _convert_sym_call_expr(sm, e)
     if _SYM is not None and cname in (
         "ElementSelectExpression", "RangeSelectExpression", "ReplicationExpression"
@@ -982,6 +1060,8 @@ def _case_source_expression_ok(expression):
     def check(node):
         nonlocal pure
         kind = type(node).__name__
+        if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
+            return VisitAction.Skip
         pure = pure and not getattr(node, "bad", False) and kind in (
             "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
             "NamedValueExpression", "ConversionExpression", "UnaryExpression",
@@ -1429,6 +1509,16 @@ def contains_lowered_case(node):
     return False
 
 
+def contains_fixed_bits_query(node):
+    if isinstance(node, dict):
+        return node.get("fixed_bits_query", False) or any(
+            contains_fixed_bits_query(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_fixed_bits_query(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1458,6 +1548,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "CaseStatement:invalid-compilation",
                                   "frontend rejected source containing a lowered case"))
+    if (any(contains_fixed_bits_query(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "$bits:invalid-compilation",
+                                  "frontend rejected source containing a fixed-size query"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

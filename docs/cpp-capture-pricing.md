@@ -874,6 +874,34 @@ kernel theorem. It shows that a complete ≤128-row organization is finite and
 input-preserving, while the measured compiler/reduction cost of checking all
 chunks remains an unpriced next experiment.
 
+## Complete chunk-batch compilation
+
+The plan is now priced in **nine bounded four-chunk Lean batches**. Each batch
+reads the validated capture once, publishes four segments with ordinary
+`Lean.addAndCompile`, and checks each local segment length. All **36** segment
+declarations pass, including the final 47-row segment:
+
+| Receipt family | Batches | Child seconds | Artifacts | Max wait4 RSS, KiB |
+| --- | ---: | ---: | ---: | ---: |
+| Segment publication | 9 | 285.284 | 158,339,208 bytes | 1,956,520 |
+| Local four-chunk composition | 9 | 305.079 | 158,340,216 bytes | 1,959,696 |
+
+The local composition proof uses `have` length witnesses while the segment
+constants are still in the same command context, then applies
+`List.length_append`; every batch exits zero. A separate imported-batch probe
+shows why those local facts matter: re-reducing a serialized segment's length
+at default recursion depth fails, and an exported named theorem attempt also
+reaches that depth. Those negative receipts are retained, not folded into the
+positive batch totals.
+
+The final verifier imports the nine successful local modules and asks for
+direct equality between the complete generated declaration list and the
+36-segment concatenation. It exits **1** after **29.890 seconds** at maximum
+recursion depth, with **1,729,880 KiB** wait4 RSS and no artifact. Thus all
+segment values and local compositions compile, but the complete-value equality
+still does not close under default limits. No production loader organization,
+whole-list theorem, cache or semantic/runtime admission is promoted.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -960,3 +988,9 @@ The complete-prefix proof-plan census is under
 `/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-proof-plan-20261010/`.
 It retains the producer/auditor sources, exact plan, source and plan digests,
 bounded process receipts and the zero-gap/zero-overlap audit.
+
+The complete chunk-batch compilation receipts are under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-proof-batches-20261010/`.
+They retain the external batch command, nine successful segment families,
+nine local-composition families, imported-reuse negatives, final-verifier
+recursion-depth refusal, aggregate audit and complete source/root/input pins.

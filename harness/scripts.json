@@ -350,5 +350,15 @@
     "file": "harness/scripts/divmod_script.py",
     "expect": "match",
     "note": "Integral divmod floor semantics, Bool coercion, local shadowing, zero divisors, complete left-to-right argument effects before arity errors, and argument exceptions preceding those errors."
+  },
+  {
+    "file": "Examples/python/exc_handlers_lab/exc_handlers_script.py",
+    "expect": "match",
+    "note": "Builtin TypeError handler retains argument mutations and publishes its assigned module global before a function reads it; the same program is kernel-checked on the proof script surface."
+  },
+  {
+    "file": "Examples/python/exc_handlers_lab/exc_handlers_rebound_script.py",
+    "expect": "unsupported",
+    "note": "A delegated while-else can rebind its handler class before raising without publishing; extraction refuses that binding instead of catching the builtin TypeError namesake."
   }
 ]

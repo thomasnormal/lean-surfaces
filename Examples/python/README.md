@@ -42,8 +42,13 @@ erasure remains independent of that module-scope restriction.
 kernel-checks signed quotient/remainder pairs, Boolean coercions, and errors.
 Its whole-program fixture also pins argument effects and exception precedence;
 nonintegral operands and first-class builtin values remain loud.
-The mutation-and-catch case remains native/script-only because the proof
-interpreter's existing exception tier refuses builtin `TypeError` handlers.
+The mutation-and-catch case is kernel-checked through the retained exception
+state as well as differentially tested on the native and script surfaces.
+
+[`exc_handlers_lab`](exc_handlers_lab/) checks builtin exception matching and
+propagation, retained mutations, and module-global publication. Its symbolic
+proof covers a caught scalar type error. Handler-local bindings and unmeasured
+ancestors remain loud instead of guessing exception-class resolution.
 
 [`bool_lab`](bool_lab/) proves integer nonzero truthiness and Boolean identity
 symbolically. Concrete checks cover heap containers, default instances, closures,

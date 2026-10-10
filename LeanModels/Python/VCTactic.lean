@@ -611,6 +611,7 @@ def interpUnfolds : List Name :=
    ``unpackSeq, ``unpackStoreH,
    ``foldExtremum, ``extremumVal, ``extremumValH, ``sortedValH,
    ``absVal, ``intCastVal, ``boolCastArgs, ``divmodArgs,
+   ``importErrorHandlerMatch, ``admittedBuiltinExc, ``builtinExcCatches,
    ``strOfVal, ``strOfValH, ``ordVal, ``chrVal, ``isBuiltinName,
    ``enumStart, ``enumFrame, ``countArgs, ``genPlan, ``genBreak, ``genContinue,
    ``moduleGlobals, ``moduleInit, ``globalsFold, ``globalsStep, ``lookupG,

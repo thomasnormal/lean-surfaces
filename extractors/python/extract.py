@@ -754,14 +754,16 @@ def convert_param(p, default=None):
     return d
 
 
-def _walk_scope(fn):
+def _walk_scope(fn, include_boundaries=False):
     """All nodes of fn's own scope: descends the body but not into nested
-    scopes (defs/lambdas/classes — Unsupported nodes in v0 anyway)."""
+    scopes. Optionally yields their defining nodes without entering them."""
     stack = list(ast.iter_child_nodes(fn))
     while stack:
         node = stack.pop()
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda,
                              ast.ClassDef)):
+            if include_boundaries:
+                yield node
             continue
         yield node
         stack.extend(ast.iter_child_nodes(node))
@@ -900,6 +902,39 @@ def _shadowed_calls(fn):
             if all(c > ln for c in calls):
                 safe.add(name)
     return sorted(hits - safe)
+
+
+def _scope_binding_names(scope):
+    """Bindings in one scope, including parameters and nested definition names."""
+    names = _assigned_names(scope)
+    for node in _walk_scope(scope, include_boundaries=True):
+        if isinstance(node, ast.arg):
+            names.add(node.arg)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
+                               ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.alias):
+            names.add(node.asname or node.name.split(".")[0])
+        elif isinstance(node, ast.ExceptHandler) and node.name is not None:
+            names.add(node.name)
+        elif isinstance(node, (ast.With, ast.AsyncWith)):
+            for item in node.items:
+                if item.optional_vars is not None:
+                    names.update(_target_bound_names(item.optional_vars))
+    return names
+
+
+def _shadowed_handlers(fn):
+    """Refuse locally-bound handler names without any statement-order exemption.
+
+    Handler names resolve when an exception occurs, whereas the model plans
+    matching before the body. A later binding also creates a static local, so
+    neither initialized shadows nor unbound windows may use builtin matching.
+    """
+    handlers = {node.type.id for node in _walk_scope(fn)
+                if isinstance(node, ast.ExceptHandler)
+                and isinstance(node.type, ast.Name)}
+    return sorted(handlers & _scope_binding_names(fn))
 
 
 def _has_global(node):
@@ -1277,7 +1312,12 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                         "to a module name would be silently wrong): "
                         + ", ".join(delread)
                         if (delread := _del_read_names(node))
-                        else None
+                        else (
+                            "matches locally-bound handler name(s) "
+                            "(static-locals rule): " + ", ".join(handlers)
+                            if (handlers := _shadowed_handlers(node))
+                            else None
+                        )
                     )
                 )
             ),
@@ -1571,6 +1611,10 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             reasons.append("'else' clause")
         if node.finalbody:
             reasons.append("'finally' clause")
+        if module_scope and exc_name:
+            body_scope = ast.Module(body=node.body, type_ignores=[])
+            if exc_name in _scope_binding_names(body_scope):
+                reasons.append("handler name rebound in try body: " + exc_name)
         # Pass 0 (docs/memory-model.md paragraph "Import forms
         # (Pass 0)"): a top-level try whose single handler is literally
         # `except ImportError:` puts its DIRECT body statements in

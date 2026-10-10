@@ -14,6 +14,14 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- The proof interpreter and its module executor now catch the same measured
+  builtin exception classes as the native interpreter, using the shared
+  `builtinExcCatches` table. Handlers resume from the exception's retained
+  state; loud refusals and timeouts are never caught. The `exc_handlers_lab`
+  artifact pins matching, propagation, mutations, and module-global publication.
+  Function-local handler-class bindings refuse under Python's static-locals
+  rule, including assignments after the try, rather than silently catching
+  the unshadowed builtin class.
 - Integral `divmod(numerator, divisor)` uses the same signed floor quotient and
   remainder operations as `//` and `%`, including Boolean operands and faithful
   zero-divisor and arity errors. Argument effects precede conversion/errors;

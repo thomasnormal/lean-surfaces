@@ -2379,6 +2379,43 @@ each a narrowing, a mechanical necessity, or a MEASURED correction:
   the concrete armed pair + underrun pins above; the lab-scale
   `pure_sum_all_traces` is the first trace-quantified theorem.
 
+## Builtin exception handlers on the proof surface (2026-10-10)
+
+The definitional interpreter and its module-level control shell now consult
+the same `admittedBuiltinExc` and `builtinExcCatches` tables as the native
+interpreter. A single named handler admits `Exception`, `TypeError`,
+`NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`, `KeyError`,
+`RuntimeError`, `RecursionError`, `AttributeError`, `AssertionError`, and
+`StopIteration`. `RuntimeError` also catches `RecursionError`;
+`ZeroDivisionError` catches both division-error constructors; `Exception`
+catches every represented Python exception, including admitted user classes
+and import errors. The existing pinned import-error names remain separate,
+and a same-module admitted user class resolves before any builtin table.
+
+The body runs once. A matching Python exception runs the handler from its
+retained frame state, preserving mutations and published module bindings.
+Nonmatching Python exceptions propagate with that same state. A normal return
+skips the handler; `unsupported` and `timeout` propagate and cannot be caught.
+Fuel monotonicity, clock erasure, and payload blindness retain their theorem
+statements. The try statement remains outside `Stmt.heapFree`.
+
+Admission remains statically first and deliberately narrower than Python's
+dynamic exception-class evaluation. Function extraction refuses a named
+handler that Python classifies as a local binding, including an assignment
+after the try or inside its body: those shapes otherwise caught the builtin
+class where CPython raises `UnboundLocalError` or a handler-matching `TypeError`.
+Existing local/global/definition shadow guards remain in force. Module try
+bodies that rebind their handler names also refuse, including compounds that
+can raise before publishing their bindings. Unmeasured ancestor classes
+(`BaseException`, `ArithmeticError`, `LookupError`, and
+OS-error aliases), tuple/attribute patterns, `as` bindings, multiple handlers,
+`else`, `finally`, and builtin exception objects as values remain loud.
+
+`exc_handlers_lab` pins the matching and refusal boundaries in the kernel and
+against CPython 3.9. Its module fixture also pins global publication through a
+handler; the existing `divmod_lab.arity_effects` is now a successful kernel
+check rather than a refusal guard.
+
 ## Integral quotient and remainder (`divmod`, 2026-10-10)
 
 `divmod(numerator, divisor)` admits integer and Boolean operands and returns
@@ -2403,9 +2440,9 @@ mutates and stays inside `Expr.heapFree`; proof-layer invariants gain only a
 builtin dispatch arm. The `divmod_lab` artifact kernel-checks signed arithmetic
 and proves division by one symbolically, while `divmod_script` checks effects
 and exception order on the whole-program surface.
-The narrower proof interpreter still refuses a builtin `TypeError` handler;
-retained mutations through that handler are tested by the native interpreter
-and script, with a kernel refusal guard rather than a fabricated proof result.
+Retained mutations through a builtin `TypeError` handler are tested by the
+native interpreter and script and checked in the kernel through the shared
+exception-matching table described above.
 
 ## Boolean conversion (`bool`, 2026-10-10)
 

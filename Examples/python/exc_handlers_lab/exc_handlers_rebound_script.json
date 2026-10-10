@@ -1,0 +1,190 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/exc_handlers_lab/exc_handlers_rebound_script.py",
+  "source_sha256": "459b843b8871ad3782b0a4c18c5352ce8c98f0c3c0e9d4c72810b1f42b420595",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Try",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 8,
+          "end_col_offset": 36
+        },
+        "body": [
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 12
+            },
+            "test": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 2,
+                "col_offset": 10,
+                "end_lineno": 2,
+                "end_col_offset": 14
+              },
+              "value": {
+                "type": "bool",
+                "value": true
+              }
+            },
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 8,
+                  "end_lineno": 3,
+                  "end_col_offset": 21
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 3,
+                      "col_offset": 8,
+                      "end_lineno": 3,
+                      "end_col_offset": 17
+                    },
+                    "id": "TypeError"
+                  }
+                ],
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 20,
+                    "end_lineno": 3,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              },
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 8,
+                  "end_lineno": 4,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 8,
+                    "end_lineno": 4,
+                    "end_col_offset": 14
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 8,
+                      "end_lineno": 4,
+                      "end_col_offset": 11
+                    },
+                    "id": "len"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 12,
+                        "end_lineno": 4,
+                        "end_col_offset": 13
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "orelse": [
+              {
+                "kind": "Pass",
+                "span": {
+                  "lineno": 6,
+                  "col_offset": 8,
+                  "end_lineno": 6,
+                  "end_col_offset": 12
+                }
+              }
+            ]
+          }
+        ],
+        "exc_name": "TypeError",
+        "handler": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 8,
+              "col_offset": 4,
+              "end_lineno": 8,
+              "end_col_offset": 36
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 8,
+                "col_offset": 4,
+                "end_lineno": 8,
+                "end_col_offset": 36
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 8,
+                  "col_offset": 4,
+                  "end_lineno": 8,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 8,
+                    "col_offset": 10,
+                    "end_lineno": 8,
+                    "end_col_offset": 35
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "not the builtin handler"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "try_unsupported": "handler name rebound in try body: TypeError"
+      }
+    ]
+  },
+  "lean_blocks": []
+}

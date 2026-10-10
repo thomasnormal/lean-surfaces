@@ -205,10 +205,10 @@ inductive Stmt where
   body/handler carried best-effort so censuses stay exact). Matching is
   class IDENTITY on the admitted exception kind, PLUS (Pass 0, §import
   forms) the pinned two-name import-error table
-  (`importErrorHandlerMatch`) when `findClass` misses; a handler naming
-  anything else (other builtin exception names, `Exception` itself)
-  refuses loudly at execution, before the body runs (statically-first —
-  the recorded as-built delta). -/
+  (`importErrorHandlerMatch`) and the measured builtin exception table
+  (`admittedBuiltinExc`/`builtinExcCatches`) when `findClass` misses.
+  Other names refuse before the body runs (statically-first admission).
+  Locally bound handler names refuse under the static-locals census. -/
   | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
       (tryUnsupported : Option String) (span : Span)
   /-- `del name, …` (schema `Delete`, the tail batch — docs/memory-model.md
@@ -511,9 +511,8 @@ inductive PyErr where
 deriving Repr, Inhabited, BEq, DecidableEq
 /-! ### §except-builtin — WHICH BUILTIN EXCEPTION NAMES A HANDLER MAY MATCH
 
-Three tables, and they are DATA rather than logic spread through the two
-`except` matchers (the rebuild has one at function scope and one at module
-scope, and a rule spelled twice is a rule that drifts).
+Three tables, and they are DATA shared by both interpreters' function and
+module `except` matchers rather than duplicated exception-hierarchy logic.
 
 **NOTHING IS INFERRED.** CPython's exception hierarchy is deep and mostly
 irrelevant here; every pair below is one this tier can actually exhibit,

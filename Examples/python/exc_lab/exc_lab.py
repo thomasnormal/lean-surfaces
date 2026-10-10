@@ -19,8 +19,8 @@ end to end.
 
 The refusal battery (whitelisted rows + raw #guards in spec.lean) pins
 the loud frontier: `as` bindings, `finally`, `else`, bare except,
-multiple handlers, tuple patterns, `except Exception`, builtin-name
-matching, raise with arguments, bare raise, value raise, raise-from,
+multiple handlers, tuple patterns, unmeasured builtin ancestors,
+raise with arguments, bare raise, value raise, raise-from,
 shadowed names, exception classes as values, and yield-under-try.
 
 The WALL-CLOCK battery (docs/memory-model.md "Wall-clock time", as
@@ -344,4 +344,3 @@ def except_ancestor_still_loud(n):
         return 1 // n
     except ArithmeticError:
         return -1
-

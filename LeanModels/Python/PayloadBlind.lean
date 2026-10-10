@@ -2669,21 +2669,35 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
           cases findClass m excName with
           | none =>
-              refine PBF.ite (fun _ => ?_) (fun _ => PBF.unsupported)
-              cases hrun : execStmts m fuel st body.toList with
-              | ok st' flow =>
-                  obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).1 st' flow hrun
-                  rw [hy]
-                  exact PBF.ok hslot' _
-              | exn st' e =>
-                  obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).2 st' e hrun
-                  rw [hy]
-                  simp only []
-                  cases e with
-                  | importError _ => exact ihSs m st' handler.toList hslot'
-                  | _ => exact PBF.exn hslot' _
-              | timeout => exact PBF.timeout
-              | unsupported msg => exact PBF.unsupported
+              refine PBF.ite (fun _ => ?_) (fun _ => ?_)
+              · cases hrun : execStmts m fuel st body.toList with
+                | ok st' flow =>
+                    obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).1 st' flow hrun
+                    rw [hy]
+                    exact PBF.ok hslot' _
+                | exn st' e =>
+                    obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).2 st' e hrun
+                    rw [hy]
+                    simp only []
+                    cases e with
+                    | importError _ => exact ihSs m st' handler.toList hslot'
+                    | _ => exact PBF.exn hslot' _
+                | timeout => exact PBF.timeout
+                | unsupported msg => exact PBF.unsupported
+              · refine PBF.ite (fun _ => ?_) (fun _ => ?_)
+                · cases hrun : execStmts m fuel st body.toList with
+                  | ok st' flow =>
+                      obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).1 st' flow hrun
+                      rw [hy]
+                      exact PBF.ok hslot' _
+                  | exn st' e =>
+                      obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).2 st' e hrun
+                      rw [hy]
+                      exact PBF.ite (fun _ => ihSs m st' handler.toList hslot')
+                        (fun _ => PBF.exn hslot' _)
+                  | timeout => exact PBF.timeout
+                  | unsupported msg => exact PBF.unsupported
+                · exact PBF.ite (fun _ => PBF.unsupported) (fun _ => PBF.unsupported)
           | some cic =>
               obtain ⟨ci, c⟩ := cic
               refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_

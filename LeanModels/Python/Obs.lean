@@ -1204,18 +1204,29 @@ theorem fuelMono (fuel : Nat) :
               -- Pass 0 (§import forms): the pinned import-error table
               -- branch — the class branch's body/handler IH shape, with
               -- no cid ite (every `.importError` matches either name)
-              refine Run.le_ite ?_ (Run.le_refl _)
-              rcases ihSs m st body.toList k hk with h | h
-              · rw [h]; exact Or.inl rfl
-              · rw [h]
-                cases execStmts m k st body.toList with
-                | ok st' flow => exact Run.le_refl _
-                | exn st' e =>
-                  cases e <;> try exact Run.le_refl _
-                  case importError mod =>
-                    exact ihSs m st' handler.toList k hk
-                | timeout => exact Run.le_refl _
-                | unsupported msg => exact Run.le_refl _
+              refine Run.le_ite ?_ ?_
+              · rcases ihSs m st body.toList k hk with h | h
+                · rw [h]; exact Or.inl rfl
+                · rw [h]
+                  cases execStmts m k st body.toList with
+                  | ok st' flow => exact Run.le_refl _
+                  | exn st' e =>
+                    cases e <;> try exact Run.le_refl _
+                    case importError mod =>
+                      exact ihSs m st' handler.toList k hk
+                  | timeout => exact Run.le_refl _
+                  | unsupported msg => exact Run.le_refl _
+              · refine Run.le_ite ?_ (Run.le_refl _)
+                rcases ihSs m st body.toList k hk with h | h
+                · rw [h]; exact Or.inl rfl
+                · rw [h]
+                  cases execStmts m k st body.toList with
+                  | ok st' flow => exact Run.le_refl _
+                  | exn st' e =>
+                    exact Run.le_ite (ihSs m st' handler.toList k hk)
+                      (Run.le_refl _)
+                  | timeout => exact Run.le_refl _
+                  | unsupported msg => exact Run.le_refl _
             | some p =>
               obtain ⟨ci, c⟩ := p
               refine Run.le_ite (Run.le_refl _) ?_

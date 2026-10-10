@@ -42,12 +42,12 @@ set_option maxRecDepth 8192
   (.typeError "divmod expected 2 arguments, got 3")
 #py_check divmod_lab.shadow(3) = 5
 #py_check divmod_lab.exception_before_arity() raises .zeroDivisionError
+#py_check divmod_lab.arity_effects() = (Val.list #[.int 0, .int 1, .int 2])
 
 #guard callFunction divmod_lab "pair" #[.str "7", .int 3] 4096 matches .unsupported _
 #guard callFunction divmod_lab "pair" #[.int 7, .none] 4096 matches .unsupported _
 #guard callFunction divmod_lab "kwargs" #[] 4096 matches .unsupported _
 #guard callFunction divmod_lab "first_class" #[] 4096 matches .unsupported _
-#guard callFunction divmod_lab "arity_effects" #[] 4096 matches .unsupported _
 
 theorem by_one_total (value : PyInt) :
     divmod_lab.by_one(value) ==> (Val.tuple #[.int value, .int 0]) := by proofs

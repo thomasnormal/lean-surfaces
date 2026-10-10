@@ -450,6 +450,108 @@ class ExtractorTests(unittest.TestCase):
             fn["locals_unsupported"],
             "calls locally-assigned name(s) (static-locals rule): sorted")
 
+    def test_handler_local_binding_refuses_without_order_exemptions(self):
+        bodies = (
+            "    try:\n        TypeError = 1\n        len(1)\n"
+            "    except TypeError:\n        return 9\n",
+            "    try:\n        len(1)\n"
+            "    except TypeError:\n        return 9\n    TypeError = 1\n",
+            "    if False:\n        TypeError = 1\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n",
+            "    def TypeError():\n        return 1\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n",
+            "    class TypeError:\n        pass\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n",
+            "    import math as TypeError\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n",
+            "    for TypeError in [1]:\n        pass\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n",
+            "    with value as TypeError:\n        pass\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n",
+            "    if (TypeError := 1):\n        pass\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n",
+        )
+        for body in bodies:
+            with self.subTest(body=body):
+                fn = self._first_fn("def f():\n" + body)
+                self.assertEqual(
+                    fn["locals_unsupported"],
+                    "matches locally-bound handler name(s) "
+                    "(static-locals rule): TypeError")
+
+    def test_handler_parameter_binding_refuses(self):
+        for params in ("TypeError", "TypeError, /", "*, TypeError",
+                       "*TypeError", "**TypeError"):
+            with self.subTest(params=params):
+                fn = self._first_fn(
+                    "def f(" + params + "):\n    try:\n        len(1)\n"
+                    "    except TypeError:\n        return 9\n")
+                self.assertIn("locally-bound handler", fn["locals_unsupported"])
+
+    def test_handler_guard_preserves_existing_local_refusal_precedence(self):
+        fn = self._first_fn(
+            "def f():\n    del TypeError\n    try:\n        len(1)\n"
+            "    except TypeError:\n        return 9\n")
+        self.assertIn("reads del'd name(s)", fn["locals_unsupported"])
+        fn = self._first_fn(
+            "def f():\n    len(1)\n    len = 2\n    try:\n        len(1)\n"
+            "    except TypeError:\n        return 9\n    TypeError = 1\n")
+        self.assertEqual(
+            fn["locals_unsupported"],
+            "calls locally-assigned name(s) (static-locals rule): len")
+
+    def test_handler_guard_does_not_cross_nested_scopes(self):
+        fn = self._first_fn(
+            "def f():\n    def helper(TypeError):\n        TypeError = 1\n"
+            "    try:\n        len(1)\n    except TypeError:\n        return 9\n")
+        self.assertIsNone(fn["locals_unsupported"])
+        fn = self._first_fn(
+            "def f(TypeError):\n    def helper():\n        try:\n"
+            "            len(1)\n        except TypeError:\n            return 9\n"
+            "    return 0\n")
+        self.assertIsNone(fn["locals_unsupported"])
+
+    def test_handler_rebinding_oracle_reproductions(self):
+        rows = (
+            ("def f():\n    try:\n        TypeError = 1\n        len(1)\n"
+             "    except TypeError:\n        return 9\n", TypeError),
+            ("def f():\n    try:\n        TypeError = 1\n        1 // 0\n"
+             "    except TypeError:\n        return 9\n", TypeError),
+            ("def f():\n    try:\n        len(1)\n"
+             "    except TypeError:\n        return 9\n    TypeError = 1\n",
+             UnboundLocalError),
+        )
+        for source, exception in rows:
+            with self.subTest(source=source):
+                namespace = {}
+                exec(source, namespace)
+                with self.assertRaises(exception):
+                    namespace["f"]()
+                self.assertIn("locally-bound handler",
+                              self._first_fn(source)["locals_unsupported"])
+
+    def test_module_handler_rebinding_refuses_before_static_matching(self):
+        sources = (
+            "try:\n    TypeError = 1\n    len(1)\n"
+            "except TypeError:\n    pass\n",
+            "try:\n    while True:\n        TypeError = 1\n        len(1)\n"
+            "    else:\n        pass\nexcept TypeError:\n    pass\n",
+            "try:\n    def TypeError():\n        pass\n    len(1)\n"
+            "except TypeError:\n    pass\n",
+        )
+        for source in sources:
+            with self.subTest(source=source):
+                stmt = self._envelope_of(source)["module"]["body"][0]
+                self.assertEqual(stmt["try_unsupported"],
+                                 "handler name rebound in try body: TypeError")
+
+    def test_module_handler_rebinding_guard_stays_scope_local(self):
+        stmt = self._envelope_of(
+            "try:\n    def helper(TypeError):\n        TypeError = 1\n"
+            "    len(1)\nexcept TypeError:\n    pass\n"
+        )["module"]["body"][0]
+        self.assertIsNone(stmt["try_unsupported"])
+
 
     # -- For statements and module constants (sunfish ladder steps 1-2) ----
 

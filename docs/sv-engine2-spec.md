@@ -232,6 +232,7 @@ when both sides exist rather than assumed during the schema work.
 | `ControlState` (landed) | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
 | `CompletionState` (landed) | Initialized/draining facts and optional explicit status | Natural completion derived from queues; first explicit request retained |
 | `KernelState Frame` (landed) | Current time/phase, processes, signals, current/future events, forks, controls, output | No native addresses, cache, allocator, packed-token shortcut or duplicated authority |
+| `SchedulingOracle` | Eligible-event selection with membership and progress proofs | Cannot choose time advance, region order, statement order, NBA order or eligibility |
 
 ### Landed region vocabulary
 
@@ -520,6 +521,16 @@ and completion records with an explicit output-chunk list. Initial state and
 membership/count observations are proved structurally. The collection fields
 are policy-neutral lists: no scheduler order, publication, queue admission,
 time advance, body execution or output rendering is selected here.
+
+### Landed scheduling-oracle boundary
+
+`LeanModels/Sv/Engine2/Oracle.lean` defines `SchedulingOracle` over an explicit
+eligible-event list. Its membership proof prevents selecting an event the
+transition relation did not admit, and its progress proof requires a choice
+whenever the list is nonempty. The supplied head oracle is only a concrete
+policy example. Time advancement, region/phase ordering, sequential body
+order, NBA ordering and eligibility remain mandated transition obligations,
+not oracle parameters.
 
 ### 4.1 Consumer body interface
 

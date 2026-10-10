@@ -101,6 +101,12 @@ def contextEvidenceRow (id canonical : String)
     semanticContext := semantic.map (fun value => {value := value})
     lexicalContext := lexical.map (fun value => {value := value})}
 
+def genericContextEvidenceRow (id kind : String)
+    (semantic lexical : Option String) : DeclarationEvidenceRow :=
+  {evidenceRow id kind id with
+    semanticContext := semantic.map (fun value => {value := value})
+    lexicalContext := lexical.map (fun value => {value := value})}
+
 def linkageEvidenceRow (id kind internal formal : String) (language : Option String) :
     DeclarationEvidenceRow :=
   let languageField := match language with
@@ -204,6 +210,12 @@ def contextProbe : DeclarationProbe := {identityProbe with
     contextEvidenceRow "f2" "f1" (some "ns") (some "ns"),
     contextEvidenceRow "out" "missing" (some "cls") (some "cls")]}
 
+def chainProbe : DeclarationProbe := {identityProbe with
+  declarations := [
+    genericContextEvidenceRow "f1" "FunctionDecl" (some "ns") (some "ns"),
+    genericContextEvidenceRow "ns" "NamespaceDecl" (some "tu") (some "tu"),
+    genericContextEvidenceRow "tu" "TranslationUnitDecl" none none]}
+
 #guard match probe.declarationAtPath [0, 0] with
   | some declaration =>
       match semanticContextCandidates probe contextProbe declaration with
@@ -241,6 +253,55 @@ def contextProbe : DeclarationProbe := {identityProbe with
       match semanticContextCandidates repeatedProbe repeatedContext declaration with
       | .ok candidates => candidates.map Declaration.path == [[1], [2, 1, 0], [3]]
       | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match semanticContextChainEvidence probe chainProbe declaration with
+      | .ok chain => chain.map (·.value) == ["ns", "tu"]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match lexicalContextChainEvidence probe chainProbe declaration with
+      | .ok chain => chain.map (·.value) == ["ns", "tu"]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match semanticContextChainEvidence probe contextProbe declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let cyclic := {chainProbe with
+        declarations := [
+          genericContextEvidenceRow "f1" "FunctionDecl" (some "ns") (some "ns"),
+          genericContextEvidenceRow "ns" "NamespaceDecl" (some "f1") (some "f1")]}
+      match semanticContextChainEvidence probe cyclic declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let nonroot := {chainProbe with
+        declarations := [
+          genericContextEvidenceRow "f1" "FunctionDecl" (some "ns") (some "ns"),
+          genericContextEvidenceRow "ns" "NamespaceDecl" none none]}
+      match semanticContextChainEvidence probe nonroot declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let badRoot := {chainProbe with
+        declarations := [
+          genericContextEvidenceRow "f1" "FunctionDecl" (some "ns") (some "ns"),
+          genericContextEvidenceRow "ns" "NamespaceDecl" (some "tu") (some "tu"),
+          genericContextEvidenceRow "tu" "TranslationUnitDecl" (some "ns") (some "ns")]}
+      match semanticContextChainEvidence probe badRoot declaration with
+      | .ok _ => false
+      | .error _ => true
   | none => false
 
 def linkageProbe : DeclarationProbe := {identityProbe with

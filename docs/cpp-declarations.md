@@ -31,6 +31,10 @@ chain or establish an ISO entity.
 to the root with a finite artifact-bound fuel and refuses cycles, dangling
 targets, inconsistent repeated rows and chains that terminate before the
 canonical root. It remains frontend graph evidence, not an entity proof.
+`semanticContextChainEvidence` and `lexicalContextChainEvidence` follow a
+finite, artifact-backed handle chain to the translation-unit root. Cycles,
+missing metadata or artifact targets, nonroot null parents and nonnull
+translation-unit parents refuse; the returned chain remains frontend evidence.
 `semanticContextCandidates` and `lexicalContextCandidates` likewise consume
 only explicit metadata handles and return occurrence candidates; null context
 is `[]`, while conflicting evidence or an absent target refuses. They do not

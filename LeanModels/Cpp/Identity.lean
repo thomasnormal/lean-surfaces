@@ -136,6 +136,49 @@ def lexicalContextCandidates (artifact : Artifact) (probe : DeclarationProbe)
     (declaration : Declaration) : Except String (List Declaration) :=
   contextTargetCandidates artifact probe declaration false
 
+def contextChainEvidence (artifact : Artifact) (probe : DeclarationProbe)
+    (declaration : Declaration) (semantic : Bool) : Except String (List FrontendHandle) :=
+  let fuel := probe.declarations.length + 1
+  go fuel [] declaration.id []
+where
+  go (fuel : Nat) (active : List String) (current : String)
+      (chain : List FrontendHandle) : Except String (List FrontendHandle) :=
+    match fuel with
+    | 0 => .error "context chain exceeds artifact bound"
+    | fuel + 1 =>
+        if active.contains current then
+          .error "context chain contains a cycle"
+        else if (artifact.declarationsById current).isEmpty then
+          .error "context chain target is absent from artifact"
+        else
+          let rows := probe.declarations.filter fun row => row.id.value == current
+          match rows with
+          | [] => .error "context chain row is absent from metadata"
+          | row :: rest =>
+              let target := if semantic then row.semanticContext else row.lexicalContext
+              if rest.any (fun other =>
+                  other.kind != row.kind ||
+                    (if semantic then other.semanticContext else other.lexicalContext) != target) then
+                .error "context chain rows disagree"
+              else
+                let chain := if current == declaration.id then chain else chain ++ [row.id]
+                if row.kind == "TranslationUnitDecl" then
+                  match target with
+                  | none => .ok chain
+                  | some _ => .error "translation-unit context must be null"
+                else
+                  match target with
+                  | none => .error "nonroot context must have a parent"
+                  | some parent => go fuel (current :: active) parent.value chain
+
+def semanticContextChainEvidence (artifact : Artifact) (probe : DeclarationProbe)
+    (declaration : Declaration) : Except String (List FrontendHandle) :=
+  contextChainEvidence artifact probe declaration true
+
+def lexicalContextChainEvidence (artifact : Artifact) (probe : DeclarationProbe)
+    (declaration : Declaration) : Except String (List FrontendHandle) :=
+  contextChainEvidence artifact probe declaration false
+
 structure LinkageEvidence where
   internal : String
   formal : String

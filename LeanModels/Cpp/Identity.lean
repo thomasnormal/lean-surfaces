@@ -138,17 +138,20 @@ def lexicalContextCandidates (artifact : Artifact) (probe : DeclarationProbe)
 
 def contextChainEvidence (artifact : Artifact) (probe : DeclarationProbe)
     (declaration : Declaration) (semantic : Bool) : Except String (List FrontendHandle) :=
-  let fuel := probe.declarations.length + 1
-  go fuel [] declaration.id []
+  if artifact.declarationAtPath declaration.path != some declaration then
+    .error "context source is not an artifact occurrence"
+  else
+    go (probe.declarations.length + 1) [] declaration.id []
 where
   go (fuel : Nat) (active : List String) (current : String)
       (chain : List FrontendHandle) : Except String (List FrontendHandle) :=
     match fuel with
     | 0 => .error "context chain exceeds artifact bound"
     | fuel + 1 =>
+        let candidates := artifact.declarationsById current
         if active.contains current then
           .error "context chain contains a cycle"
-        else if (artifact.declarationsById current).isEmpty then
+        else if candidates.isEmpty then
           .error "context chain target is absent from artifact"
         else
           let rows := probe.declarations.filter fun row => row.id.value == current
@@ -156,16 +159,21 @@ where
           | [] => .error "context chain row is absent from metadata"
           | row :: rest =>
               let target := if semantic then row.semanticContext else row.lexicalContext
-              if rest.any (fun other =>
+              if candidates.any (fun candidate => candidate.kind != row.kind) then
+                .error "context chain kind disagrees with artifact occurrence"
+              else if rest.any (fun other =>
                   other.kind != row.kind ||
                     (if semantic then other.semanticContext else other.lexicalContext) != target) then
                 .error "context chain rows disagree"
               else
                 let chain := if current == declaration.id then chain else chain ++ [row.id]
                 if row.kind == "TranslationUnitDecl" then
-                  match target with
-                  | none => .ok chain
-                  | some _ => .error "translation-unit context must be null"
+                  if !candidates.any (fun candidate => candidate.path.isEmpty) then
+                    .error "context root is not the artifact translation unit"
+                  else
+                    match target with
+                    | none => .ok chain
+                    | some _ => .error "translation-unit context must be null"
                 else
                   match target with
                   | none => .error "nonroot context must have a parent"

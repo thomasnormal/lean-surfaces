@@ -34,7 +34,12 @@ canonical root. It remains frontend graph evidence, not an entity proof.
 `semanticContextChainEvidence` and `lexicalContextChainEvidence` follow a
 finite, artifact-backed handle chain to the translation-unit root. Cycles,
 missing metadata or artifact targets, nonroot null parents and nonnull
-translation-unit parents refuse; the returned chain remains frontend evidence.
+translation-unit parents refuse. The source must match its actual artifact
+occurrence, every occurrence of each visited handle must agree with the
+metadata's declaration kind, and the terminal translation unit must occur at
+the artifact's root path. A nested node labelled as a translation unit cannot
+close the chain. Repeated same-kind occurrences are retained, not deduplicated;
+the returned chain remains frontend evidence, not validated ISO scope membership.
 `semanticContextCandidates` and `lexicalContextCandidates` likewise consume
 only explicit metadata handles and return occurrence candidates; null context
 is `[]`, while conflicting evidence or an absent target refuses. They do not

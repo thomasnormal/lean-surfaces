@@ -304,6 +304,72 @@ def chainProbe : DeclarationProbe := {identityProbe with
       | .error _ => true
   | none => false
 
+def contextChainsRefuse (artifact : Artifact) (evidence : DeclarationProbe)
+    (declaration : Declaration) : Bool :=
+  match semanticContextChainEvidence artifact evidence declaration,
+      lexicalContextChainEvidence artifact evidence declaration with
+  | .error _, .error _ => true
+  | _, _ => false
+
+def contextOccurrenceArtifact (extraId extraKind : String) : Artifact := {probe with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "ns"), ("kind", .string "NamespaceDecl"),
+        ("inner", .array [
+          .object [("id", .string "f1"), ("kind", .string "FunctionDecl")]])],
+      .object [("id", .string extraId), ("kind", .string extraKind)]])]
+}
+
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      [("f1", "NamespaceDecl"), ("ns", "FunctionDecl"),
+        ("ns", "TranslationUnitDecl"), ("tu", "NamespaceDecl")].all fun change =>
+          let changed := {chainProbe with declarations := chainProbe.declarations.map fun row =>
+            if row.id.value == change.1 then {row with kind := change.2} else row}
+          contextChainsRefuse probe changed declaration
+  | none => false
+
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      [{declaration with path := [99]}, {declaration with kind := "NamespaceDecl"}].all
+        (contextChainsRefuse probe chainProbe)
+  | none => false
+
+#guard
+  let repeated := contextOccurrenceArtifact "ns" "NamespaceDecl"
+  match repeated.declarationAtPath [0, 0] with
+  | some declaration =>
+      match semanticContextChainEvidence repeated chainProbe declaration,
+          lexicalContextChainEvidence repeated chainProbe declaration with
+      | .ok semantic, .ok lexical =>
+          semantic.map (·.value) == ["ns", "tu"] && lexical.map (·.value) == ["ns", "tu"]
+      | _, _ => false
+  | none => false
+
+#guard
+  let conflicting := contextOccurrenceArtifact "ns" "VarDecl"
+  match conflicting.declarationAtPath [0, 0] with
+  | some declaration => contextChainsRefuse conflicting chainProbe declaration
+  | none => false
+
+#guard
+  let nestedRoot := contextOccurrenceArtifact "nested" "TranslationUnitDecl"
+  let changed := {chainProbe with declarations := [
+    genericContextEvidenceRow "f1" "FunctionDecl" (some "nested") (some "nested"),
+    genericContextEvidenceRow "nested" "TranslationUnitDecl" none none]}
+  match nestedRoot.declarationAtPath [0, 0] with
+  | some declaration => contextChainsRefuse nestedRoot changed declaration
+  | none => false
+
+#guard match probe.declarationAtPath [] with
+  | some declaration =>
+      match semanticContextChainEvidence probe chainProbe declaration,
+          lexicalContextChainEvidence probe chainProbe declaration with
+      | .ok [], .ok [] => true
+      | _, _ => false
+  | none => false
+
 def linkageProbe : DeclarationProbe := {identityProbe with
   declarations := [
     linkageEvidenceRow "f1" "FunctionDecl" "External" "External" (some "C++"),

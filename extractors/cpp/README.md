@@ -49,6 +49,11 @@ and memory externally. A zero exit and parseable JSON are required but are not
 semantic admission. Compiler diagnostics prevent successful artifact
 publication; callers must discard output on any nonzero exit or parse failure.
 
+The [proposed capture contract](../../docs/cpp-provenance.md) separates a
+versioned, exact-byte launch/input receipt from stronger input-world closure.
+It is specification only: no capture runner or receipt loader is implemented,
+and the existing schema-0.3 wrapper has not acquired provenance fields.
+
 ### Evidence contract
 
 Output is one JSON object with `ast` and `metadata`. The former is Clang's stock

@@ -8,6 +8,11 @@ are not semantic answers, and `LeanModels/Cpp/Translation.lean` still refuses
 every execution. No compiler-conformance or program-correctness theorem is
 claimed.
 
+The separate [capture provenance contract](cpp-provenance.md) specifies how a
+future observed compiler run may be bound to its literal evidence. Process
+provenance, input-world closure and this ISO/source-form bridge are independent
+obligations; none is inferred from a successful probe load or stable hashes.
+
 ## Sources and initial profile
 
 The normative baseline is the charter's C++23 profile, read through WG21

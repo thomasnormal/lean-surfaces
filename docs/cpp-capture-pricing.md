@@ -750,6 +750,34 @@ production loader change, input-world closure or C++ semantic/runtime
 admission is promoted; ISO, identity, cross-TU/ODR and execution barriers are
 unchanged.
 
+## Prefix equality does not bypass the RHS
+
+As a bounded organization probe, a fresh command imports the same published
+root, loads the exact original declaration-row list, and asks only for the
+first eight rows:
+
+```lean
+example : GeneratedCapture.capture.probe.declarations.take 8 =
+    originalRows.take 8 := rfl
+```
+
+This still reconstructs `originalRows` from the complete input before `take`
+can reduce. Under the unchanged default recursion depth **512**, the
+`price_cpp_capture rows` declaration reaches the recursion-depth limit before
+its API returns. The prefix theorem therefore has no RHS constant and is not a
+positive equality witness.
+
+| Stage | Seconds | wait4 peak RSS, KiB | Outcome |
+| --- | ---: | ---: | --- |
+| Full row literal plus eight-row prefix theorem | 39.041 | 1,952,916 | recursion-depth refusal; no artifact |
+
+Markers reach `add-and-compile-start` but not
+`add-and-compile-api-return`; sampled process peaks are **832,424 KiB
+RSS/HWM** and **5,426,068 KiB VmSize**. The result confirms that a useful
+prefix proof would require a separately admitted, input-preserving segmented
+RHS—not merely `List.take` over the complete literal. That segmentation is a
+new organization decision, not silently introduced by this negative probe.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -815,3 +843,8 @@ The default-bound whole-original equality attempt is under
 Its source, command/result receipt, process samples, diagnostic markers and
 SHA-256 input pins are retained; the expected heartbeat refusal produced no
 artifact.
+
+The bounded prefix-equality probe is under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-prefix-equality-20261010/`.
+Its source, result, process samples, diagnostic markers and complete input pins
+are retained; the recursion-depth refusal produced no artifact.

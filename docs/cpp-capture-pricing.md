@@ -225,6 +225,93 @@ remain **zero**; JSON parsing and every previously named ISO, identity and
 execution barrier remain separate. C++ semantic and runtime admissions remain
 **zero**.
 
+## Generic closed-literal factoring
+
+A second follow-up on 2026-10-10 tests structural organization without changing
+production loading. Its external command first reads and validates the **complete**
+original capture with `readDeclarationCapture`, then traverses every occurrence
+in `Lean.toExpr capture` using an iterative postorder worklist. This constructor-built
+capture term uses application, constant and literal nodes; other expression nodes
+refuse. No observation, duplicate `row.raw`, string, declaration or receipt field
+is pruned, and no deduplication or result cache is introduced.
+
+Each reconstructed application counts its residual expression nodes. At a uniform
+threshold `b`, it becomes a fresh **safe, kernel-unfoldable definition** marked
+compiler `noinline` **before** normal `addAndCompile`. The replacement reference
+counts as one node. Partial constructor applications are allowed: their inferred
+type can be a function type, and safe declaration insertion still performs the
+kernel check. Thus helper bodies have at most **`2b - 1` nodes**, not `b`, and the
+residual root has fewer than `b`. This bounds expression scaffolding, **not string
+byte size**, unfolded helper depth, environment size or total compilation work.
+Thresholds 16, 256 and 4096 are generic organization controls, not per-source
+resource exemptions. Invalid thresholds below two refuse before reading.
+
+All measurements retain Lean 4.33.0-rc1, `-j1 -M8192`, the **8 GiB per-process**
+address-space cap, **180-second** wall bound and default recursion/heartbeat
+limits. Compilation is synchronous; errors propagate rather than being suppressed.
+Durable markers distinguish every helper attempt/API return, assembly, root
+compilation and complete-value evaluation. A positive native control requires
+exit zero, the expected counts and `Meta.evalExpr DeclarationCapture` followed by
+derived `BEq` against the **entire original parsed capture**. This executable
+equality is not a kernel theorem or a downstream compiled-import test.
+
+| Original capture / threshold | Seconds | Measured RSS, KiB | Outcome |
+| --- | ---: | ---: | --- |
+| Eight-row module / 16, native control | 25.016 | 1,918,192 | PASS; complete-value equality, counts 8 / 14 |
+| Eight-row module / 256, native control | 20.885 | 1,697,956 | PASS; complete-value equality, counts 8 / 14 and count/root `rfl` witnesses |
+| Eight-row module / 4096, native control | 19.260 | 1,655,332 | PASS; complete-value equality, counts 8 / 14 |
+| Whole XML / 256 | 40.052 | 2,665,276 | LCNF compiler 200,000-heartbeat refusal; no complete assembly |
+| Whole XML / 4096 | 40.221 | 2,735,804 | LCNF check 200,000-heartbeat refusal; no complete assembly |
+
+RSS is completed controller-child `wait4` accounting. The separate 0.1-second
+thread-aware descendant samples record Lean high-water observations of **2,676,460**
+and **2,745,476 KiB** for the XML rows; they are not substituted for the controller
+figures. No measured row reaches the wall bound. Times include imports, complete
+reading/validation, expression construction, helper organization/compilation and
+the observations actually reached. They are single shared-host samples, not an
+isolated compiler speedup comparison.
+
+The small capture's original expression has **91,025 occurrence-nodes** at all
+three thresholds. Threshold 16 produces **5,156 helpers**, maximum body **31**,
+residual root **5**; threshold 256 produces **319**, maximum **461**, root **1**;
+threshold 4096 produces **20**, maximum **6,299**, root **2,489**. The XML/256
+run records **2,866** helper API returns before its next attempt, zero-based index
+2,866 with **401 nodes**, refuses. XML/4096 records **298** returns before index
+298 with **7,801 nodes** refuses. Neither reaches root compilation or full-value
+equality. These are not counts of a completely organized XML expression.
+
+This instrument adds all helpers in one command's `CoreM` context: its synchronous
+compiler path does not give each helper a fresh heartbeat origin. No heartbeat
+reset or limit increase is used. Consequently the refusal is **not evidence that
+the final bounded helper alone independently consumes 200,000 heartbeats**. It
+prices the whole single-command procedure under the unchanged default budget.
+
+Kernel preservation is measured separately, without deleting a failed witness or
+raising recursion limits. The original eight-row complete-capture `rfl` comparison
+fails at the default recursion depth for thresholds 16 and 256, **after** native
+equality passes: process exit one, **27.942 seconds / 1,960,680 KiB** and **21.695
+seconds / 1,716,348 KiB** respectively. Those kernel-inclusive runs are not counted
+as successful ingestion. At threshold 4096, the unchanged whole-capture equality
+statement **does close by `rfl`**, along with counts/root witnesses and native
+equality: exit zero, **22.488 seconds / 1,675,356 KiB**. A generic 201-node synthetic
+constructor control also passes full `rfl` equality and executable equality at
+16/256, covering duplicate strings, empty/singleton lists, mixed alternatives and
+Unicode/control bytes. Separate zero-budget, free-variable and loose-bound-variable
+controls fail with the intended diagnostics. Named synthetic preservation
+witnesses also report **no axioms**.
+
+**Decision:** bounded helper bodies preserve complete small captures but do not
+complete original XML assembly in this experiment. Next price ordinary separate
+helper elaboration/compilation contexts and complete reconstruction, rather than
+raising a single command's budget, pruning observations or introducing a cache.
+Keep whole-value native equality, kernel equality and downstream artifact use as
+separate measurements. Production loader/parser/embedding pins, both original
+21-file bundles, all 14 payload bindings per bundle, and all **9 / 112** recorded
+source pins remain unchanged before/after, with no unavailable/drifted pins. This
+does not establish input-world closure. Original XML full-compilation successes,
+production public-loader organization changes and C++ semantic/runtime admissions
+remain **zero**; every ISO, identity, cross-TU/ODR and execution barrier remains.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -241,3 +328,11 @@ reviews are under
 `/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-organization-20261010/`, split
 into `shared/`, `inputs/` and `review/`. Initial wrapper/build and wrong-toolchain
 import failures are setup diagnostics, excluded from the pricing outcomes.
+
+The factoring experiment's exact commands, final toolchain/instrument hashes,
+original before/after pins, default-bound process samples, helper markers, native
+and kernel controls, negative fixtures and independent audit are under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-factoring-20261010/`, split into
+`shared/`, `runs/`, `controls/` and `review/`. Early reserved-keyword/command-grammar
+build failures, runtime aborts during those setup attempts and a missing-module
+control are retained as setup diagnostics, not XML pricing or ingestion outcomes.

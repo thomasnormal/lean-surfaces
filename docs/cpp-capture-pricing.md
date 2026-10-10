@@ -503,6 +503,125 @@ implemented here. Original XML full-compilation successes, production loader
 changes and C++ semantic/runtime admissions remain **zero**; all existing
 ISO, identity, cross-TU/ODR, input-world and execution barriers remain.
 
+## Bounded helper-module publication
+
+The next measured organization uses **ordinary separate Lean modules**, not a
+custom environment exporter or an allocator change. It partitions each complete
+producer plan into uniform **128-helper batches**, a final root, and separate
+native and kernel verifiers. Every ordered `cpp_piece` command, global name,
+literal, field and original verifier statement is preserved byte for byte.
+Imports follow the actual prior direct-owner dependency DAG; there is no
+gratuitous previous-module chain. Helpers remain safe, kernel-unfoldable
+`.regular 0` definitions with `noinline`. The production capture loader remains
+unchanged, and no cache, deduplication, pruning or opaque fallback is introduced.
+
+The complete XML plans still contain **14,400,775 occurrence nodes** and
+**14,008,508 string-literal UTF-8 bytes**. Threshold 4096 partitions 2,992 helpers
+into 24 batches, including a final 48-helper remainder; threshold 256 partitions
+47,702 helpers into 373 batches, ending with 86. With root and both verifiers,
+the complete plans have **27 / 376 stages**. Root modules directly import four
+and three owners respectively, not necessarily their whole transitive closure.
+
+The independent exact-text/dependency/conservation audits pass under their own
+**256 MiB address-space / 180-second** bounds. Organization takes **8.269 /
+9.098 s**, peaking at **25,320 / 21,136 KiB**; separate audits take **16.582 /
+17.394 s**, peaking at **25,556 / 63,960 KiB**. These are producer/audit prices,
+not compiled-artifact or complete-value equality outcomes. Synthetic mutation
+and missing-owner-import negatives refuse as intended.
+
+Publication uses normal headerless legacy modules, normal imports and ordinary
+`lean -o`; no external C compilation is performed. Every compiler child retains
+the **8 GiB per-process address-space cap**, **180-second** maximum, `-j1`,
+`-M8192`, and default heartbeat/recursion options. Each output library starts
+empty. Sources, direct dependencies and published artifacts are hashed, and
+native whole-value equality against the complete original capture is separate
+from the unchanged kernel count witnesses. A helper API return alone is not a
+published `.olean`, and a prefix is not root reconstruction.
+
+The initial driver declares a **900-second nominal pipeline allowance**, but
+review finds that pre-spawn pinning is outside its stale remaining-time monitor;
+post-child receipts are also outside that monitor. Thus this version does **not**
+establish a strict 900-second controller bound. Original driver bytes and raw
+measurements are retained rather than silently replaced during a run. A separate
+corrected driver carries an absolute deadline, checks again before spawn,
+rejects nonfinite/nonpositive bounds, enforces manifest stability and re-pins
+all successful artifacts. Its post-child receipt overhead is explicitly outside
+the child-execution deadline. Mocked deadline controls are not capture reruns.
+
+### Complete XML outcome and registered prefix
+
+Threshold **4096** reaches ordinary publication of all **2,992 helpers** and
+the complete root, then imports that root and passes **native whole-value
+equality against the original XML capture**, printing counts **4,527 / 14**.
+The subsequent unchanged kernel declaration-count `rfl` fails at the default
+maximum recursion depth. All **27** planned stages are attempted, **26** succeed,
+and the overall pipeline is **FAIL**, not an all-green proof result.
+
+| XML/4096 fresh processes | Outcome | Seconds | Peak wait4 child RSS KiB | Published artifact bytes |
+| --- | --- | ---: | ---: | ---: |
+| 24 helper batches, summed | PASS | 729.425 | 2,750,680 | 770,776,352 |
+| Root publication | PASS | 22.974 | 1,720,816 | 614,464 |
+| Imported native whole-value verifier | PASS | 38.936 | 2,040,856 | 1,864 |
+| Unchanged kernel count verifier | FAIL: recursion depth | 20.376 | 1,695,624 | none |
+
+Actual wall time through native verification is **793.372 s**, and through the
+failed kernel stage **813.753 s**, below the nominal 900-second value without
+establishing its enforcement. No compiler child times out. These process prices
+include ordinary imports, elaboration, compilation and serialization; they are
+not isolated serializer costs. The two primary runs overlap on a shared host,
+so no isolated speedup is inferred. No failed witness is deleted, weakened,
+assigned a higher recursion limit or replaced by native equality. Whole XML
+kernel equality is **not** claimed.
+
+Threshold **256** is deliberately only the pre-registered **eight-stage
+prefix**: all eight batches publish **1,024 helpers** in **165.126 s**, occupying
+**21,951,800 artifact bytes**. Peak wait4 child RSS is **1,708,012 KiB**; sampled
+Lean HWM is **1,719,104 KiB** and VmSize **6,569,360 KiB**. The other 368 stages
+are not attempted. This is neither a complete-root result nor an estimate of
+the full 376-stage pipeline.
+
+For XML/4096 the final root transitively imports **all 24 helper modules / 2,992
+helpers**, despite directly naming only four owners. Thus a 128-helper module
+does **not** bound its imported closure. Peak sampled Lean HWM is
+**2,756,320 KiB** and VmSize **8,090,652 KiB**; that near-cap virtual size is not
+8 GiB RSS. Successful artifact bytes total **771,392,680**, distinct from live
+heap or imported-region measurements. Ordinary publication/process isolation
+allows this particular full compiler/native verification run to finish where
+the single accumulating environment failed; it does not identify the dominant
+retainer, prove a general memory bound, or make threshold 256 complete.
+
+Independent controls complete the **entire original eight-row capture** through
+four fresh processes: plan generation **19.865 s**, helper publication
+**23.291 s**, root publication **19.461 s**, and imported verification
+**22.683 s**; end to end **86.292 s**, under a separately declared 600-second
+control-pipeline allowance. Native full-value equality, counts **8 / 14**,
+root checking and **whole-capture kernel `rfl`** pass with no axioms. Peak sampled
+Lean HWM is **1,732,752 KiB**. Published helper/root/verifier artifacts occupy
+**7,017,264 / 505,048 / 8,894,048 bytes**. A separate synthetic three-process
+publication/import control passes in **63.612 s** and inspects all 25 imported
+definitions as `.safe`, `.regular 0`, `noinline`; raw naturals, Unicode/control
+strings and partial constructors retain axiom-free preservation witnesses.
+These complete controls are not a complete XML result or one 180-second run.
+
+Independent final audits bind every transitive helper artifact to its successful
+publication hash, retain exact raw logs and confirm stable manifest/source
+bytes. Both original bundles still have **21 files / 14 payload bindings**;
+all **9 small / 112 XML source pins** and **six production pins** match the
+pre-control snapshot after both primary runs. There is zero input drift.
+Six corrected-driver mocked controls pass, including pre-pin expiry, spawn-time
+charging, finite bounds, manifest drift and final-artifact drift; watchdog
+sampling/scheduling latency remains explicit. Instrument function complexity
+stays below 30.
+
+**Decision:** this is the first original complete XML compiler/root/imported
+native-equality positive in these receipts, but the preserved kernel witness
+still refuses. Price bounded kernel checking of the unchanged declaration-count
+statement next, without changing the input, proof statement or default limits.
+Do not integrate an unmeasured production organization or treat native equality
+as a kernel theorem. Production loader changes, C++ semantic/runtime admissions
+and input-world closure remain **zero**; the ISO, identity, cross-TU/ODR and
+execution barriers are unchanged.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -543,3 +662,13 @@ before/after input pins and bounded reproducible analyses are under
 `/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-memory-profile-20261010/`, split
 into `shared/`, `runs/`, `controls/`, `census/`, `review/` and `validation/`.
 These observations do not change the previous uninstrumented pricing receipts.
+
+Exact module-partition commands, complete-plan manifests and streaming audits,
+ordinary publication/import controls, primary stage logs and samples, published
+artifact hashes, version-separated deadline instruments, independent source and
+receipt reviews, before/after original-input pins and focused validation are
+under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-module-publication-20261010/`,
+split into `shared/`, `runs/`, `census/`, `controls/`, `review/` and `validation/`.
+The primary receipts retain the initial driver's nominal-deadline limitation;
+the corrected instrument's mocked controls do not retroactively strengthen them.

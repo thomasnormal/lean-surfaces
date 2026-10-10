@@ -52,7 +52,7 @@ publication; callers must discard output on any nonzero exit or parse failure.
 
 Output is one JSON object with `ast` and `metadata`. The former is Clang's stock
 JSON dump from the **same ASTContext** used for the supplement. The latter has
-schema `cpp-canonical-probe-0.2`, compiled/runtime Clang and LLVM-header versions,
+schema `cpp-canonical-probe-0.3`, compiled/runtime Clang and LLVM-header versions,
 and a declaration ledger from `RecursiveASTVisitor`, with implicit code and
 template instantiations enabled. No declaration family or header is filtered.
 
@@ -73,6 +73,14 @@ template instantiations enabled. No declaration family or header is filtered.
   are **versioned compiler integer enums**, not ISO classifications. Function
   body presence, defaulting and deletion-as-written remain separate evidence.
   Unqueried definition families carry `null` and `not-queried`.
+- Function-shape evidence records all six branches of the local definition
+  predicate, late-template parsing, explicit defaulting and AST attribute count,
+  with exact API tags. `getAttrs()` is guarded by `hasAttrs()`. Own-body kind
+  and owner are queried only when this declaration reports a body and is not
+  late-template-parsed; otherwise both fields are explicit null. The body
+  getter searches redeclarations, so a nonnull body owner must independently
+  match the queried declaration for a local-shape candidate. These observations
+  do not admit source forms, select an executable body or prove entity closure.
 - Own-template evidence names its API in `_api` fields: function
   `function_templated_kind` from `FunctionDecl.getTemplatedKind`; variable/record
   `described_template` from `getDescribedVarTemplate`/`getDescribedClassTemplate`;
@@ -181,8 +189,11 @@ compiler linkage enums. The [pricing policy](../../docs/cpp-declaration-pricing.
 names the common gates, query-specific closures and conservative refusals.
 Each candidate retains explicit semantic barriers; `semantic_admitted_queries`
 is always zero. This tool is not part of extraction or Lean ingestion.
-It requires schema 0.2 and emits pricing format 2; schema 0.1 inputs refuse
-rather than manufacturing missing own-template observations.
+It requires schema 0.3 and emits pricing format 3; schema 0.1 and 0.2 inputs
+refuse rather than manufacturing missing own-template or function-shape
+observations. Function definition queries additionally require exact getter
+branches, empty AST attributes and local own-body evidence; the other three
+queries do not consume these shape fields.
 
 ```console
 python3 extractors/cpp/test_price_declarations.py

@@ -95,6 +95,16 @@ Box<int>::Implicit ordinary_value;
 template<> enum Box<int>::Specialized : int { one };
 """
 
+FUNCTION_SHAPE_SOURCE = """int later_body(int);
+int later_body(int value) { return value; }
+int try_body(int value) try { return value; } catch (...) { return -1; }
+int deleted_function(int) = delete;
+[[deprecated]] int attributed_declaration(int);
+[[nodiscard]] int attributed_body(int value) { return value; }
+int alias_target() { return 1; }
+[[gnu::alias("_Z12alias_targetv")]] int defining_attribute();
+"""
+
 POINTER_ID = re.compile(r"0x[0-9a-fA-F]+\Z")
 DECLARATION_KINDS = {
     "NamespaceDecl", "CXXRecordDecl", "CXXMethodDecl", "CXXConstructorDecl",
@@ -192,11 +202,13 @@ class CanonicalProbeTests(unittest.TestCase):
         self.source = self.root / "input.cpp"
         self.source.write_text(SOURCE, encoding="utf-8")
 
-    def run_frontend(self, plugin=True, plugin_arguments=(), library=None):
+    def run_frontend(self, plugin=True, plugin_arguments=(), library=None,
+                     frontend_arguments=()):
         arguments = [
             self.clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
             "-fsyntax-only", "-x", "c++", str(self.source),
         ]
+        arguments.extend(frontend_arguments)
         if plugin:
             arguments.extend([
                 "-Xclang", "-load", "-Xclang", str(library or self.library),
@@ -241,10 +253,25 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(record["template_specialization_kind_api"],
                          family + ".getTemplateSpecializationKind")
 
+    def assert_function_shape_api(self, record):
+        for field, api in (
+            ("function_has_skipped_body", "FunctionDecl.hasSkippedBody"),
+            ("function_will_have_body", "FunctionDecl.willHaveBody"),
+            ("function_has_defining_attr", "FunctionDecl.hasDefiningAttr"),
+            ("function_late_template_parsed", "FunctionDecl.isLateTemplateParsed"),
+            ("function_explicitly_defaulted", "FunctionDecl.isExplicitlyDefaulted"),
+        ):
+            self.assertIs(type(record[field]), bool)
+            self.assertEqual(record[field + "_api"], api)
+        self.assertIs(type(record["function_attribute_count"]), int)
+        self.assertGreaterEqual(record["function_attribute_count"], 0)
+        self.assertEqual(record["function_attribute_count_api"], "Decl.hasAttrs/Decl.getAttrs.size")
+        self.assertEqual(record["own_body_api"], "FunctionDecl.getBody")
+
     def test_schema_and_frontend_versions_are_explicit(self):
         probe = self.probe()
         metadata = probe["metadata"]
-        self.assertEqual(metadata["schema_version"], "cpp-canonical-probe-0.2")
+        self.assertEqual(metadata["schema_version"], "cpp-canonical-probe-0.3")
         self.assertTrue(metadata["compiled_frontend"])
         self.assertIn(metadata["compiled_frontend"], metadata["runtime_frontend"])
         self.assertTrue(metadata["llvm_headers"])
@@ -355,6 +382,102 @@ class CanonicalProbeTests(unittest.TestCase):
             self.assertTrue(record["definition"])
             self.assertFalse(record["body_present"])
             self.assertEqual(record["definition_api"], "FunctionDecl.isThisDeclarationADefinition")
+            self.assert_function_shape_api(record)
+            self.assertIsNone(record["own_body_kind"])
+            self.assertIsNone(record["own_body_owner"])
+        self.assertTrue(defaulted[0]["function_explicitly_defaulted"])
+        self.assertFalse(deleted[0]["function_explicitly_defaulted"])
+
+    def test_function_shape_fields_are_versioned_and_function_local(self):
+        probe = self.probe()
+        functions = self.records(probe, "FunctionDecl", "pick")
+        for record in functions:
+            self.assert_function_shape_api(record)
+            self.assertFalse(record["function_has_skipped_body"])
+            self.assertFalse(record["function_will_have_body"])
+            self.assertFalse(record["function_has_defining_attr"])
+            self.assertFalse(record["function_late_template_parsed"])
+            self.assertFalse(record["function_explicitly_defaulted"])
+            self.assertEqual(record["function_attribute_count"], 0)
+        for record in self.records(probe, "VarDecl", "defined"):
+            self.assertNotIn("function_has_skipped_body", record)
+            self.assertNotIn("function_attribute_count", record)
+            self.assertNotIn("own_body_kind", record)
+
+    def test_prototype_does_not_inherit_later_body_evidence(self):
+        self.source.write_text(FUNCTION_SHAPE_SOURCE, encoding="utf-8")
+        functions = self.records(self.probe(), "FunctionDecl", "later_body")
+        self.assertEqual(len(functions), 2)
+        declaration = next(record for record in functions if not record["definition"])
+        definition = next(record for record in functions if record["definition"])
+        self.assertEqual(declaration["canonical"], definition["canonical"])
+        self.assertFalse(declaration["body_present"])
+        self.assertIsNone(declaration["own_body_kind"])
+        self.assertIsNone(declaration["own_body_owner"])
+        self.assertTrue(definition["body_present"])
+        self.assertEqual(definition["own_body_kind"], "CompoundStmt")
+        self.assertEqual(definition["own_body_owner"], definition["id"])
+        for record in functions:
+            self.assert_function_shape_api(record)
+
+    def test_function_try_block_reports_own_non_compound_body(self):
+        self.source.write_text(FUNCTION_SHAPE_SOURCE, encoding="utf-8")
+        probe = self.probe()
+        record = self.records(probe, "FunctionDecl", "try_body")[0]
+        self.assert_function_shape_api(record)
+        self.assertTrue(record["definition"])
+        self.assertTrue(record["body_present"])
+        self.assertEqual(record["own_body_kind"], "CXXTryStmt")
+        self.assertEqual(record["own_body_owner"], record["id"])
+        index = pricing.build_index(probe["ast"], probe["metadata"]["declarations"])
+        priced = pricing.price_query(index, record["id"], "definition")
+        self.assertEqual(priced["status"], "eligible-tooling-evidence")
+        self.assertIn("semantic-validator-not-implemented", priced["semantic_barriers"])
+
+    def test_deleted_function_has_definition_without_own_body(self):
+        self.source.write_text(FUNCTION_SHAPE_SOURCE, encoding="utf-8")
+        record = self.records(self.probe(), "FunctionDecl", "deleted_function")[0]
+        self.assert_function_shape_api(record)
+        self.assertTrue(record["definition"])
+        self.assertTrue(record["deleted_as_written"])
+        self.assertFalse(record["body_present"])
+        self.assertIsNone(record["own_body_kind"])
+        self.assertIsNone(record["own_body_owner"])
+        self.assertFalse(record["function_explicitly_defaulted"])
+
+    def test_late_parsed_template_preserves_unmaterialized_own_body(self):
+        self.source.write_text(
+            "template<class Element> Element deferred(Element value) { return value; }\n",
+            encoding="utf-8",
+        )
+        result = self.run_frontend(frontend_arguments=("-fdelayed-template-parsing",))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        record = self.records(probe, "FunctionDecl", "deferred")[0]
+        self.assert_function_shape_api(record)
+        self.assertTrue(record["function_late_template_parsed"])
+        self.assertTrue(record["definition"])
+        self.assertTrue(record["body_present"])
+        self.assertIsNone(record["own_body_kind"])
+        self.assertIsNone(record["own_body_owner"])
+
+    def test_attributed_functions_keep_evidence_without_definition_admission(self):
+        self.source.write_text(FUNCTION_SHAPE_SOURCE, encoding="utf-8")
+        probe = self.probe()
+        index = pricing.build_index(probe["ast"], probe["metadata"]["declarations"])
+        for name in ("attributed_declaration", "attributed_body", "defining_attribute"):
+            record = self.records(probe, "FunctionDecl", name)[0]
+            self.assert_function_shape_api(record)
+            self.assertEqual(record["function_attribute_count"], 1)
+            priced = pricing.price_query(index, record["id"], "definition")
+            self.assertEqual(priced["status"], "refused")
+            self.assertIn("function-attributes-not-supported", priced["reasons"])
+        alias = self.records(probe, "FunctionDecl", "defining_attribute")[0]
+        self.assertTrue(alias["function_has_defining_attr"])
+        self.assertTrue(alias["definition"])
+        self.assertFalse(alias["body_present"])
+        self.assertIsNone(alias["own_body_kind"])
+        self.assertIsNone(alias["own_body_owner"])
 
     def test_variable_definition_kind_is_an_enum_not_a_boolean(self):
         probe = self.probe()

@@ -92,9 +92,11 @@ standard review.
 - For FunctionDecl, use `FunctionDecl.isThisDeclarationADefinition`, with an
   explicit source-body form and the applicable getter branches witnessed.
   Compound and function-try bodies, defaulting and deletion are distinct forms.
-  Deleted/defaulted status is not executable-body availability. The current
-  body/defaulted/deleted flags do not cover skipped bodies, pending bodies or
-  defining attributes, so unknown cases cannot pass the bridge.
+  Deleted/defaulted status is not executable-body availability. The schema-0.2
+  body/defaulted/deleted flags did not cover skipped bodies, pending bodies or
+  defining attributes. The subsequent schema-0.3 shape evidence witnesses those
+  branches and body ownership, but does not implement source-form admission;
+  unknown cases still cannot pass the bridge.
 - For ordinary namespace VarDecl, retain
   `VarDecl.isThisDeclarationADefinition` and its exact enum. Under the checked
   profile and getter-to-§6.2 assumption, **0 DeclarationOnly means this

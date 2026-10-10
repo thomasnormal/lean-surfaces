@@ -13,8 +13,8 @@ from compare_ast import (POINTER_PATTERN, child_path, nested_containers,
                          refuse_output_alias, unique_object)
 
 
-FORMAT = "cpp-declaration-pricing-2"
-SCHEMA = "cpp-canonical-probe-0.2"
+FORMAT = "cpp-declaration-pricing-3"
+SCHEMA = "cpp-canonical-probe-0.3"
 FAMILIES = frozenset(("TranslationUnitDecl", "NamespaceDecl", "FunctionDecl",
                       "VarDecl", "EnumDecl", "CXXRecordDecl"))
 CONTEXTS = frozenset(("TranslationUnitDecl", "NamespaceDecl"))
@@ -306,11 +306,67 @@ def price_canonical(evidence, identifier, kind):
     return {"canonical": root, "predecessor_chain": chain}
 
 
+def function_shape_fields(evidence, identifier):
+    flags = {field: evidence.field(identifier, field, lambda value: type(value) is bool)
+             for field in ("body_present", "defaulted", "deleted_as_written")}
+    for field, api in (
+            ("function_has_skipped_body", "FunctionDecl.hasSkippedBody"),
+            ("function_will_have_body", "FunctionDecl.willHaveBody"),
+            ("function_has_defining_attr", "FunctionDecl.hasDefiningAttr"),
+            ("function_late_template_parsed", "FunctionDecl.isLateTemplateParsed"),
+            ("function_explicitly_defaulted", "FunctionDecl.isExplicitlyDefaulted")):
+        evidence.field(identifier, field + "_api", lambda value: value == api)
+        flags[field] = evidence.field(identifier, field, lambda value: type(value) is bool)
+    evidence.field(identifier, "function_attribute_count_api",
+                   lambda value: value == "Decl.hasAttrs/Decl.getAttrs.size")
+    attributes = evidence.field(identifier, "function_attribute_count",
+                                lambda value: type(value) is int and value >= 0)
+    evidence.field(identifier, "own_body_api", lambda value: value == "FunctionDecl.getBody")
+    body_kind = evidence.field(identifier, "own_body_kind",
+                               lambda value: value is None or isinstance(value, str) and bool(value))
+    owner = evidence.field(identifier, "own_body_owner",
+                           lambda value: value is None or is_handle(value))
+    return flags, attributes, body_kind, owner
+
+
+def price_function_body(evidence, identifier, present, body_kind, owner):
+    if type(present) is not bool:
+        return
+    if present:
+        if body_kind is None or owner is None:
+            evidence.reasons.add("function-body-evidence-mismatch")
+        if owner is not None and owner != identifier:
+            evidence.reasons.add("nonlocal-function-body-owner")
+        if body_kind is not None and body_kind not in ("CompoundStmt", "CXXTryStmt"):
+            evidence.reasons.add("unsupported-function-body-kind")
+    elif body_kind is not None or owner is not None:
+        evidence.reasons.add("function-body-evidence-mismatch")
+
+
+def price_function_shape(evidence, identifier, definition):
+    flags, attributes, body_kind, owner = function_shape_fields(evidence, identifier)
+    excluded = ("function_has_skipped_body", "function_will_have_body",
+                "function_has_defining_attr", "function_late_template_parsed")
+    if any(flags[field] is True for field in excluded):
+        evidence.reasons.add("unsupported-function-definition-branch")
+    if attributes is not None and attributes > 0:
+        evidence.reasons.add("function-attributes-not-supported")
+    if flags["defaulted"] is True and flags["function_explicitly_defaulted"] is False:
+        evidence.reasons.add("implicit-function-defaulting")
+    if flags["function_explicitly_defaulted"] is True and flags["defaulted"] is False:
+        evidence.reasons.add("function-defaulting-evidence-mismatch")
+    defining = [flags[field] for field in (
+        "body_present", "defaulted", "deleted_as_written", "function_has_skipped_body",
+        "function_will_have_body", "function_has_defining_attr")]
+    if type(definition) is bool and all(type(value) is bool for value in defining):
+        if definition != any(defining):
+            evidence.reasons.add("function-definition-predicate-mismatch")
+    price_function_body(evidence, identifier, flags["body_present"], body_kind, owner)
+
+
 def price_definition(evidence, identifier, kind):
     if kind == "FunctionDecl":
         api = "FunctionDecl.isThisDeclarationADefinition"
-        for field in ("body_present", "defaulted", "deleted_as_written"):
-            evidence.field(identifier, field, lambda value: type(value) is bool)
     elif kind in ("EnumDecl", "CXXRecordDecl"):
         api = "TagDecl.isThisDeclarationADefinition"
     elif kind == "VarDecl":
@@ -323,8 +379,10 @@ def price_definition(evidence, identifier, kind):
         evidence.reasons.add("definition-api-not-supported-for-family")
         return {}
     evidence.field(identifier, "definition_api", lambda value: value == api)
-    return {"declaration_local_definition": evidence.field(
-        identifier, "definition", lambda value: type(value) is bool)}
+    definition = evidence.field(identifier, "definition", lambda value: type(value) is bool)
+    if kind == "FunctionDecl":
+        price_function_shape(evidence, identifier, definition)
+    return {"declaration_local_definition": definition}
 
 
 def price_linkage(evidence, identifier, kind):

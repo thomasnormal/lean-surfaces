@@ -26,6 +26,23 @@ FAMILIES = (
     "TranslationUnitDecl", "NamespaceDecl", "FunctionDecl", "VarDecl",
     "EnumDecl", "CXXRecordDecl",
 )
+FUNCTION_SHAPE_BOOLEANS = (
+    "body_present", "defaulted", "deleted_as_written", "function_has_skipped_body",
+    "function_will_have_body", "function_has_defining_attr", "function_late_template_parsed",
+    "function_explicitly_defaulted",
+)
+FUNCTION_SHAPE_APIS = {
+    "function_has_skipped_body_api": "FunctionDecl.hasSkippedBody",
+    "function_will_have_body_api": "FunctionDecl.willHaveBody",
+    "function_has_defining_attr_api": "FunctionDecl.hasDefiningAttr",
+    "function_late_template_parsed_api": "FunctionDecl.isLateTemplateParsed",
+    "function_explicitly_defaulted_api": "FunctionDecl.isExplicitlyDefaulted",
+    "function_attribute_count_api": "Decl.hasAttrs/Decl.getAttrs.size",
+    "own_body_api": "FunctionDecl.getBody",
+}
+FUNCTION_SHAPE_FIELDS = FUNCTION_SHAPE_BOOLEANS + tuple(FUNCTION_SHAPE_APIS) + (
+    "function_attribute_count", "own_body_kind", "own_body_owner",
+)
 
 
 def raw_declaration(identifier, kind, name="item", children=None):
@@ -60,7 +77,12 @@ def metadata_row(identifier, kind, context="0x1"):
                       language_linkage="C++", template_specialization_kind=0,
                       template_specialization_kind_api="FunctionDecl.getTemplateSpecializationKind",
                       function_templated_kind=0,
-                      function_templated_kind_api="FunctionDecl.getTemplatedKind")
+                      function_templated_kind_api="FunctionDecl.getTemplatedKind",
+                      function_has_skipped_body=False, function_will_have_body=False,
+                      function_has_defining_attr=False, function_attribute_count=0,
+                      function_late_template_parsed=False, function_explicitly_defaulted=False,
+                      own_body_kind="CompoundStmt", own_body_owner=identifier)
+        result.update(FUNCTION_SHAPE_APIS)
     if kind == "VarDecl":
         result.update(definition_api="VarDecl.isThisDeclarationADefinition",
                       variable_definition_kind=2, language_linkage="C++")
@@ -95,7 +117,7 @@ def source_node(ast):
 
 def probe_document(ast, rows):
     return {"ast": ast, "metadata": {
-        "schema_version": "cpp-canonical-probe-0.2",
+        "schema_version": "cpp-canonical-probe-0.3",
         "compiled_frontend": "21.1.8",
         "runtime_frontend": "clang version 21.1.8",
         "llvm_headers": "21.1.8", "declarations": rows,
@@ -380,11 +402,15 @@ class DeclarationPricingTests(unittest.TestCase):
                 with self.subTest(kind=kind, value=value):
                     ast, rows = fixture(kind)
                     rows[-1]["definition"] = value
+                    if kind == "FunctionDecl" and not value:
+                        rows[-1].update(body_present=False, own_body_kind=None,
+                                        own_body_owner=None)
                     self.assert_eligible(self.query(ast, rows, "definition"))
 
     def test_definition_true_does_not_require_body_present(self):
         ast, rows = fixture()
-        rows[-1].update(body_present=False, defaulted=True)
+        rows[-1].update(body_present=False, defaulted=True, own_body_kind=None,
+                        own_body_owner=None, function_explicitly_defaulted=True)
         self.assert_eligible(self.query(ast, rows, "definition"))
 
     def test_definition_rejects_nonboolean_and_absent_payload(self):
@@ -743,15 +769,17 @@ class OwnTemplatePricingTests(unittest.TestCase):
     def test_obsolete_schema_is_not_silently_upgraded_with_fabricated_evidence(self):
         ast, rows = fixture()
         document = probe_document(ast, rows)
-        document["metadata"]["schema_version"] = "cpp-canonical-probe-0.1"
-        with self.assertRaisesRegex(ValueError, "unsupported canonical probe schema"):
-            pricing.price_probe(document)
+        for schema in ("cpp-canonical-probe-0.1", "cpp-canonical-probe-0.2"):
+            with self.subTest(schema=schema):
+                document["metadata"]["schema_version"] = schema
+                with self.assertRaisesRegex(ValueError, "unsupported canonical probe schema"):
+                    pricing.price_probe(document)
 
     def test_versioned_census_retains_zero_semantic_admissions(self):
         ast, rows = fixture()
         report = pricing.price_probe(probe_document(ast, rows))
-        self.assertEqual(report["format"], "cpp-declaration-pricing-2")
-        self.assertEqual(report["probe_schema"], "cpp-canonical-probe-0.2")
+        self.assertEqual(report["format"], "cpp-declaration-pricing-3")
+        self.assertEqual(report["probe_schema"], "cpp-canonical-probe-0.3")
         self.assertEqual(report["semantic_admitted_queries"], 0)
         for query in QUERIES:
             result = self.query(ast, rows, query)
@@ -763,6 +791,295 @@ class OwnTemplatePricingTests(unittest.TestCase):
 
 def rows_api(kind, field):
     return metadata_row("0x3", kind)[field]
+
+
+class FunctionDefinitionShapePricingTests(unittest.TestCase):
+    query = DeclarationPricingTests.query
+    assert_eligible = DeclarationPricingTests.assert_eligible
+    assert_refused = DeclarationPricingTests.assert_refused
+
+    def test_missing_shape_fields_refuse_definition(self):
+        for field in FUNCTION_SHAPE_FIELDS:
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                del rows[-1][field]
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("missing-field:" + field, result["reasons"])
+
+    def test_shape_booleans_never_coerce_numbers_strings_or_null(self):
+        for field in FUNCTION_SHAPE_BOOLEANS:
+            for value in (None, 0, 1, 0.0, 1.0, "false", []):
+                with self.subTest(field=field, value=value):
+                    ast, rows = fixture()
+                    rows[-1][field] = value
+                    result = self.query(ast, rows, "definition")
+                    self.assert_refused(result)
+                    self.assertIn("invalid-field:" + field, result["reasons"])
+
+    def test_attribute_count_requires_nonnegative_integer_not_bool(self):
+        for value in (None, True, False, -1, 0.0, "0", []):
+            with self.subTest(value=value):
+                ast, rows = fixture()
+                rows[-1]["function_attribute_count"] = value
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("invalid-field:function_attribute_count", result["reasons"])
+
+    def test_shape_api_provenance_is_exact(self):
+        for field, api in FUNCTION_SHAPE_APIS.items():
+            for value in (None, False, 0, api + "()", "clang." + api, "other-api"):
+                with self.subTest(field=field, value=value):
+                    ast, rows = fixture()
+                    rows[-1][field] = value
+                    result = self.query(ast, rows, "definition")
+                    self.assert_refused(result)
+                    self.assertIn("invalid-field:" + field, result["reasons"])
+
+    def test_body_kind_requires_string_or_explicit_null(self):
+        for value in (True, False, 0, "", [], {}):
+            with self.subTest(value=value):
+                ast, rows = fixture()
+                rows[-1]["own_body_kind"] = value
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("invalid-field:own_body_kind", result["reasons"])
+
+    def test_body_owner_requires_handle_or_explicit_null(self):
+        for value in (True, False, 0, "", "not-a-handle", [], {}):
+            with self.subTest(value=value):
+                ast, rows = fixture()
+                rows[-1]["own_body_owner"] = value
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("invalid-field:own_body_owner", result["reasons"])
+
+    def test_conflicting_shape_rows_refuse_definition(self):
+        for field in FUNCTION_SHAPE_FIELDS:
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                duplicate = copy.deepcopy(rows[-1])
+                duplicate[field] = None if duplicate[field] is not None else False
+                rows.append(duplicate)
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("conflicting-field:" + field, result["reasons"])
+
+    def test_shape_consensus_requires_field_on_every_duplicate_row(self):
+        for field in FUNCTION_SHAPE_FIELDS:
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                duplicate = copy.deepcopy(rows[-1])
+                del duplicate[field]
+                rows.append(duplicate)
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("missing-field:" + field, result["reasons"])
+
+    def test_duplicate_shape_bool_and_integer_do_not_form_consensus(self):
+        for field in FUNCTION_SHAPE_BOOLEANS + ("function_attribute_count",):
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                duplicate = copy.deepcopy(rows[-1])
+                original = duplicate[field]
+                duplicate[field] = int(original) if type(original) is bool else bool(original)
+                rows.append(duplicate)
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("conflicting-field:" + field, result["reasons"])
+
+    def test_consistent_shape_duplicates_preserve_exact_evidence(self):
+        ast, rows = fixture()
+        rows.append(copy.deepcopy(rows[-1]))
+        result = self.query(ast, rows, "definition")
+        self.assert_eligible(result)
+        fields = result["evidence"]["0x3"]["fields"]
+        for field in FUNCTION_SHAPE_FIELDS:
+            with self.subTest(field=field):
+                self.assertEqual(fields[field], rows[-1][field])
+                self.assertIs(type(fields[field]), type(rows[-1][field]))
+
+    def test_prototype_defaulted_deleted_and_body_states(self):
+        for state in ("prototype", "defaulted", "deleted_as_written", "body"):
+            with self.subTest(state=state):
+                ast, rows = fixture()
+                row = rows[-1]
+                row.update(definition=state != "prototype", body_present=state == "body",
+                           defaulted=state == "defaulted", deleted_as_written=state == "deleted_as_written",
+                           function_explicitly_defaulted=state == "defaulted",
+                           own_body_kind="CompoundStmt" if state == "body" else None,
+                           own_body_owner="0x3" if state == "body" else None)
+                result = self.query(ast, rows, "definition")
+                self.assert_eligible(result)
+                self.assertIs(result["observed"]["declaration_local_definition"],
+                              state != "prototype")
+
+    def test_admitted_body_classes_retain_own_body_witness(self):
+        for kind in ("CompoundStmt", "CXXTryStmt"):
+            with self.subTest(kind=kind):
+                ast, rows = fixture()
+                rows[-1]["own_body_kind"] = kind
+                result = self.query(ast, rows, "definition")
+                self.assert_eligible(result)
+                self.assertEqual(result["evidence"]["0x3"]["fields"]["own_body_kind"], kind)
+
+    def test_definition_predicate_must_equal_recorded_shape(self):
+        for body_present in (True, False):
+            with self.subTest(body_present=body_present):
+                ast, rows = fixture()
+                rows[-1].update(definition=not body_present, body_present=body_present,
+                                own_body_kind="CompoundStmt" if body_present else None,
+                                own_body_owner="0x3" if body_present else None)
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("function-definition-predicate-mismatch", result["reasons"])
+                self.assertIs(result["observed"]["declaration_local_definition"],
+                              not body_present)
+
+    def test_defaulted_and_deleted_forms_require_true_definition_predicate(self):
+        for field in ("defaulted", "deleted_as_written"):
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                rows[-1].update(definition=False, body_present=False, own_body_kind=None,
+                                own_body_owner=None)
+                rows[-1][field] = True
+                rows[-1]["function_explicitly_defaulted"] = field == "defaulted"
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("function-definition-predicate-mismatch", result["reasons"])
+
+    def test_skipped_pending_and_defining_attributes_stay_loud(self):
+        for field in ("function_has_skipped_body", "function_will_have_body",
+                      "function_has_defining_attr", "function_late_template_parsed"):
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                rows[-1].update(body_present=False, own_body_kind=None, own_body_owner=None)
+                rows[-1][field] = True
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("unsupported-function-definition-branch", result["reasons"])
+
+    def test_skipped_pending_and_defining_attributes_still_participate_in_predicate(self):
+        for field in ("function_has_skipped_body", "function_will_have_body",
+                      "function_has_defining_attr"):
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                rows[-1].update(definition=False, body_present=False, own_body_kind=None,
+                                own_body_owner=None)
+                rows[-1][field] = True
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("function-definition-predicate-mismatch", result["reasons"])
+
+    def test_late_template_parsing_does_not_fabricate_definition_predicate(self):
+        ast, rows = fixture()
+        rows[-1].update(definition=False, body_present=False, own_body_kind=None,
+                        own_body_owner=None, function_late_template_parsed=True)
+        result = self.query(ast, rows, "definition")
+        self.assert_refused(result)
+        self.assertIn("unsupported-function-definition-branch", result["reasons"])
+        self.assertNotIn("function-definition-predicate-mismatch", result["reasons"])
+
+    def test_defaulting_requires_corresponding_explicit_evidence(self):
+        for defaulted in (True, False):
+            with self.subTest(defaulted=defaulted):
+                ast, rows = fixture()
+                rows[-1].update(defaulted=defaulted, function_explicitly_defaulted=not defaulted)
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                reason = ("implicit-function-defaulting" if defaulted
+                          else "function-defaulting-evidence-mismatch")
+                self.assertIn(reason, result["reasons"])
+
+    def test_present_body_cannot_use_another_redeclaration_owner(self):
+        ast, rows = fixture()
+        ast["inner"][0]["inner"].append(raw_declaration("0x4", "FunctionDecl"))
+        rows.append(metadata_row("0x4", "FunctionDecl", "0x2"))
+        rows[-2]["own_body_owner"] = "0x4"
+        result = self.query(ast, rows, "definition")
+        self.assert_refused(result)
+        self.assertIn("nonlocal-function-body-owner", result["reasons"])
+
+    def test_body_presence_requires_both_owner_and_kind(self):
+        for field in ("own_body_kind", "own_body_owner"):
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                rows[-1][field] = None
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("function-body-evidence-mismatch", result["reasons"])
+
+    def test_absent_body_requires_null_owner_and_kind(self):
+        for field, value in (("own_body_kind", "CompoundStmt"), ("own_body_owner", "0x3")):
+            with self.subTest(field=field):
+                ast, rows = fixture()
+                rows[-1].update(definition=False, body_present=False,
+                                own_body_kind=None, own_body_owner=None)
+                rows[-1][field] = value
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("function-body-evidence-mismatch", result["reasons"])
+
+    def test_unadmitted_body_classes_refuse_without_statement_guessing(self):
+        for kind in ("ReturnStmt", "CoroutineBodyStmt", "UnknownStmt"):
+            with self.subTest(kind=kind):
+                ast, rows = fixture()
+                rows[-1]["own_body_kind"] = kind
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("unsupported-function-body-kind", result["reasons"])
+
+    def test_any_function_attribute_refuses_definition_tooling_eligibility(self):
+        for count in (1, 2, 100):
+            with self.subTest(count=count):
+                ast, rows = fixture()
+                rows[-1]["function_attribute_count"] = count
+                result = self.query(ast, rows, "definition")
+                self.assert_refused(result)
+                self.assertIn("function-attributes-not-supported", result["reasons"])
+
+    def test_refused_shape_census_still_has_zero_semantic_admissions(self):
+        ast, rows = fixture()
+        rows[-1]["function_attribute_count"] = 1
+        report = pricing.price_probe(probe_document(ast, rows))
+        self.assertEqual(report["format"], "cpp-declaration-pricing-3")
+        self.assertEqual(report["probe_schema"], "cpp-canonical-probe-0.3")
+        self.assertEqual(report["semantic_admitted_queries"], 0)
+        self.assertIn("function-attributes-not-supported",
+                      report["queries"]["definition"]["all_wall_counts"])
+
+    def test_nondefinition_queries_do_not_consume_function_shape(self):
+        for mode in ("missing", "malformed", "conflicting"):
+            ast, rows = fixture()
+            if mode == "missing":
+                for field in FUNCTION_SHAPE_FIELDS:
+                    del rows[-1][field]
+            elif mode == "malformed":
+                rows[-1].update({field: [] for field in FUNCTION_SHAPE_FIELDS})
+            else:
+                duplicate = copy.deepcopy(rows[-1])
+                duplicate.update({field: [] for field in FUNCTION_SHAPE_FIELDS})
+                rows.append(duplicate)
+            for query in ("canonical-node", "contexts", "linkage"):
+                with self.subTest(mode=mode, query=query):
+                    result = self.query(ast, rows, query)
+                    self.assert_eligible(result)
+                    fields = result["evidence"]["0x3"]["fields"]
+                    self.assertTrue(set(FUNCTION_SHAPE_FIELDS).isdisjoint(fields))
+
+    def test_tag_and_variable_definition_do_not_consume_function_shape(self):
+        for kind in ("EnumDecl", "CXXRecordDecl", "VarDecl"):
+            with self.subTest(kind=kind):
+                ast, rows = fixture(kind)
+                rows[-1].update({field: [] for field in FUNCTION_SHAPE_FIELDS})
+                result = self.query(ast, rows, "definition")
+                if kind == "VarDecl":
+                    self.assert_refused(result)
+                    self.assertIn("variable-definition-rule-unestablished", result["reasons"])
+                else:
+                    self.assert_eligible(result)
+                fields = result["evidence"]["0x3"]["fields"]
+                self.assertTrue(set(FUNCTION_SHAPE_FIELDS).isdisjoint(fields))
 
 
 class DeclarationPricingCliTests(unittest.TestCase):

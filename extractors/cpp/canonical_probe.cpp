@@ -2,6 +2,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/Stmt.h"
 #include "clang/Basic/Module.h"
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -60,6 +61,33 @@ std::string languageLinkageName(clang::LanguageLinkage linkage) {
   return "unrepresented";
 }
 
+void functionShapeEvidence(const clang::FunctionDecl *function,
+                           llvm::json::Object &record) {
+  record["function_has_skipped_body"] = function->hasSkippedBody();
+  record["function_has_skipped_body_api"] = "FunctionDecl.hasSkippedBody";
+  record["function_will_have_body"] = function->willHaveBody();
+  record["function_will_have_body_api"] = "FunctionDecl.willHaveBody";
+  record["function_has_defining_attr"] = function->hasDefiningAttr();
+  record["function_has_defining_attr_api"] = "FunctionDecl.hasDefiningAttr";
+  record["function_late_template_parsed"] = function->isLateTemplateParsed();
+  record["function_late_template_parsed_api"] = "FunctionDecl.isLateTemplateParsed";
+  record["function_explicitly_defaulted"] = function->isExplicitlyDefaulted();
+  record["function_explicitly_defaulted_api"] = "FunctionDecl.isExplicitlyDefaulted";
+  record["function_attribute_count"] =
+      static_cast<int64_t>(function->hasAttrs() ? function->getAttrs().size() : 0);
+  record["function_attribute_count_api"] = "Decl.hasAttrs/Decl.getAttrs.size";
+  record["own_body_kind"] = nullptr;
+  record["own_body_owner"] = nullptr;
+  record["own_body_api"] = "FunctionDecl.getBody";
+  if (function->doesThisDeclarationHaveABody() && !function->isLateTemplateParsed()) {
+    const clang::FunctionDecl *owner = nullptr;
+    const clang::Stmt *body = function->getBody(owner);
+    record["own_body_owner"] = declarationId(owner);
+    if (body)
+      record["own_body_kind"] = body->getStmtClassName();
+  }
+}
+
 void definitionEvidence(const clang::Decl *declaration,
                         llvm::json::Object &record) {
   record["definition"] = nullptr;
@@ -70,6 +98,7 @@ void definitionEvidence(const clang::Decl *declaration,
     record["body_present"] = function->doesThisDeclarationHaveABody();
     record["defaulted"] = function->isDefaulted();
     record["deleted_as_written"] = function->isDeletedAsWritten();
+    functionShapeEvidence(function, record);
     record["language_linkage"] = languageLinkageName(function->getLanguageLinkage());
   } else if (const auto *variable = llvm::dyn_cast<clang::VarDecl>(declaration)) {
     record["definition_api"] = "VarDecl.isThisDeclarationADefinition";
@@ -175,7 +204,7 @@ public:
       return;
     }
     llvm::json::Object metadata{
-        {"schema_version", "cpp-canonical-probe-0.2"},
+        {"schema_version", "cpp-canonical-probe-0.3"},
         {"compiled_frontend", CLANG_VERSION_STRING},
         {"runtime_frontend", clang::getClangFullVersion()},
         {"llvm_headers", LLVM_VERSION_STRING},

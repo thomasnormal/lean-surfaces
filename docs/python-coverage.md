@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 2386 | 2079 | 0 | 307 |
+| 2446 | 2130 | 0 | 316 |
 
-Of the 2079 rows the model decides, 2079 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2130 rows the model decides, 2130 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 2386 | 2007 | 0 | 379 |
+| 2446 | 2057 | 0 | 389 |
 
 ## Grammar
 
@@ -207,6 +207,6 @@ Read from `LeanModels/Python/Ast.lean`. A modelled name may still refuse some ar
 
 Also modelled: `count` (from `from itertools import count`).
 
-**Exception classes `except` can name (12):** `AssertionError`, `AttributeError`, `Exception`, `IndexError`, `KeyError`, `NameError`, `RecursionError`, `RuntimeError`, `StopIteration`, `TypeError`, `ValueError`, `ZeroDivisionError`. Other exception names refuse, including ancestors such as `LookupError`; user classes `class E(Exception): pass` are admitted.
+**Exception classes `except` can name (15):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `Exception`, `IndexError`, `KeyError`, `LookupError`, `NameError`, `RecursionError`, `RuntimeError`, `StopIteration`, `TypeError`, `ValueError`, `ZeroDivisionError`. Other exception names refuse, including OS-error ancestors such as `OSError`; user classes `class E(Exception): pass` are admitted.
 
-**Other CPython builtin names (56)**, refused when used: `ArithmeticError`, `BaseException`, `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `DeprecationWarning`, `EOFError`, `Ellipsis`, `EnvironmentError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `KeyboardInterrupt`, `LookupError`, `MemoryError`, `ModuleNotFoundError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `OSError`, `OverflowError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `RuntimeWarning`, `StopAsyncIteration`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `SystemExit`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeError`, `UnicodeTranslateError`, `UnicodeWarning`, `UserWarning`, `Warning`.
+**Other CPython builtin names (53)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `DeprecationWarning`, `EOFError`, `Ellipsis`, `EnvironmentError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `KeyboardInterrupt`, `MemoryError`, `ModuleNotFoundError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `OSError`, `OverflowError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `RuntimeWarning`, `StopAsyncIteration`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `SystemExit`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeError`, `UnicodeTranslateError`, `UnicodeWarning`, `UserWarning`, `Warning`.

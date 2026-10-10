@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/exc_lab/exc_lab.py",
-  "source_sha256": "56d99a918c06aad492d2312e36ed4edbf19cdc5964089ec5e497efc2ed1c2de3",
+  "source_sha256": "20f45d76d4b3a6d896264197f7b380d46408373c1aa06c460759f12902235a48",
   "module": {
     "kind": "Module",
     "body": [
@@ -5903,7 +5903,7 @@
         "span": {
           "lineno": 337,
           "col_offset": 0,
-          "end_lineno": 346,
+          "end_lineno": 341,
           "end_col_offset": 17
         },
         "name": "except_ancestor_still_loud",
@@ -5924,34 +5924,34 @@
           {
             "kind": "Try",
             "span": {
-              "lineno": 343,
+              "lineno": 338,
               "col_offset": 4,
-              "end_lineno": 346,
+              "end_lineno": 341,
               "end_col_offset": 17
             },
             "body": [
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 344,
+                  "lineno": 339,
                   "col_offset": 8,
-                  "end_lineno": 344,
+                  "end_lineno": 339,
                   "end_col_offset": 21
                 },
                 "value": {
                   "kind": "BinOp",
                   "span": {
-                    "lineno": 344,
+                    "lineno": 339,
                     "col_offset": 15,
-                    "end_lineno": 344,
+                    "end_lineno": 339,
                     "end_col_offset": 21
                   },
                   "left": {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 344,
+                      "lineno": 339,
                       "col_offset": 15,
-                      "end_lineno": 344,
+                      "end_lineno": 339,
                       "end_col_offset": 16
                     },
                     "value": {
@@ -5963,9 +5963,9 @@
                   "right": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 344,
+                      "lineno": 339,
                       "col_offset": 20,
-                      "end_lineno": 344,
+                      "end_lineno": 339,
                       "end_col_offset": 21
                     },
                     "id": "n"
@@ -5978,26 +5978,26 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 346,
+                  "lineno": 341,
                   "col_offset": 8,
-                  "end_lineno": 346,
+                  "end_lineno": 341,
                   "end_col_offset": 17
                 },
                 "value": {
                   "kind": "UnaryOp",
                   "span": {
-                    "lineno": 346,
+                    "lineno": 341,
                     "col_offset": 15,
-                    "end_lineno": 346,
+                    "end_lineno": 341,
                     "end_col_offset": 17
                   },
                   "op": "USub",
                   "operand": {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 346,
+                      "lineno": 341,
                       "col_offset": 16,
-                      "end_lineno": 346,
+                      "end_lineno": 341,
                       "end_col_offset": 17
                     },
                     "value": {

@@ -516,29 +516,33 @@ module `except` matchers rather than duplicated exception-hierarchy logic.
 
 **NOTHING IS INFERRED.** CPython's exception hierarchy is deep and mostly
 irrelevant here; every pair below is one this tier can actually exhibit,
-cited against CPython 3.9.19's own MRO. An ancestor the tier could compute
+cited against CPython 3.9.25's own MRO. An ancestor the tier could compute
 but has not measured is REFUSED by name, not admitted by derivation. -/
 
-/-- The builtin exception names an `except` clause may name. Exactly the
-classes this tier can RAISE, plus the universal `Exception`. -/
+/-- The builtin exception names an `except` clause may name. The classes
+this tier can raise and their explicitly measured admitted ancestors. -/
 def admittedBuiltinExc : List String :=
-  ["Exception", "TypeError", "NameError", "ZeroDivisionError", "IndexError",
+  ["BaseException", "Exception", "ArithmeticError", "LookupError",
+   "TypeError", "NameError", "ZeroDivisionError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration"]
 
 /-- Ancestors CPython defines and this tier deliberately does NOT admit yet.
 Named so the refusal can say WHAT it would have caught rather than emitting
 the generic message — a frontier that names itself is one the next inch can
-price. `BaseException` additionally differs from `Exception` on classes this
-tier cannot raise at all (`KeyboardInterrupt`, `SystemExit`). -/
+price. OS errors are outside the represented exception inventory. -/
 def refusedAncestorExc : List String :=
-  ["BaseException", "ArithmeticError", "LookupError", "OSError", "EnvironmentError"]
+  ["OSError", "EnvironmentError"]
 
 /-- Does `except <cls>:` catch this error? The SUBSUMPTION relation, as an
 explicit list of pairs.
 
+    BaseException      catches every represented error, like Exception;
+                       SystemExit/KeyboardInterrupt/GeneratorExit stay loud
     Exception          catches everything below, and every admitted user
                        exception class too (`class N(Exception): pass`)
+    ArithmeticError    catches both division-error constructors
+    LookupError        catches IndexError and KeyError
     ZeroDivisionError  catches BOTH `zeroDivisionError` and `zeroDivisionPow`
                        — CPython presents one class with two messages
     RuntimeError       catches `recursionError` as well: CPython's MRO is
@@ -546,7 +550,12 @@ explicit list of pairs.
                        why this is a subsumption relation and not an equality
     everything else    exact, one name to one constructor -/
 def builtinExcCatches : String → PyErr → Bool
+  | "BaseException",     _                   => true
   | "Exception",         _                   => true
+  | "ArithmeticError",   .zeroDivisionError  => true
+  | "ArithmeticError",   .zeroDivisionPow    => true
+  | "LookupError",       .indexError         => true
+  | "LookupError",       .keyError           => true
   | "TypeError",         .typeError _        => true
   | "NameError",         .nameError _        => true
   | "ZeroDivisionError", .zeroDivisionError  => true

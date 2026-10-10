@@ -2383,13 +2383,19 @@ each a narrowing, a mechanical necessity, or a MEASURED correction:
 
 The definitional interpreter and its module-level control shell now consult
 the same `admittedBuiltinExc` and `builtinExcCatches` tables as the native
-interpreter. A single named handler admits `Exception`, `TypeError`,
+interpreter. A single named handler admits `BaseException`, `Exception`,
+`ArithmeticError`, `LookupError`, `TypeError`,
 `NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`, `KeyError`,
 `RuntimeError`, `RecursionError`, `AttributeError`, `AssertionError`, and
 `StopIteration`. `RuntimeError` also catches `RecursionError`;
 `ZeroDivisionError` catches both division-error constructors; `Exception`
 catches every represented Python exception, including admitted user classes
-and import errors. The existing pinned import-error names remain separate,
+and import errors. `BaseException` catches that same represented inventory;
+`SystemExit`, `KeyboardInterrupt`, and `GeneratorExit` cannot be raised in the
+tier, so their different ancestry is not erased. `ArithmeticError` catches both division-error
+constructors, while `LookupError` catches `IndexError` and `KeyError`. These
+pairs are measured against CPython 3.9.25, not inferred from exception names.
+The existing pinned import-error names remain separate,
 and a same-module admitted user class resolves before any builtin table.
 
 The body runs once. A matching Python exception runs the handler from its
@@ -2406,15 +2412,25 @@ after the try or inside its body: those shapes otherwise caught the builtin
 class where CPython raises `UnboundLocalError` or a handler-matching `TypeError`.
 Existing local/global/definition shadow guards remain in force. Module try
 bodies that rebind their handler names also refuse, including compounds that
-can raise before publishing their bindings. Unmeasured ancestor classes
-(`BaseException`, `ArithmeticError`, `LookupError`, and
-OS-error aliases), tuple/attribute patterns, `as` bindings, multiple handlers,
-`else`, `finally`, and builtin exception objects as values remain loud.
+can raise before publishing their bindings. Unmeasured OS-error ancestors
+(`OSError` and `EnvironmentError`), tuple/attribute patterns, `as` bindings,
+multiple handlers, `else`, `finally`, and builtin exception objects as values
+remain loud.
 
 `exc_handlers_lab` pins the matching and refusal boundaries in the kernel and
 against CPython 3.9. Its module fixture also pins global publication through a
 handler; the existing `divmod_lab.arity_effects` is now a successful kernel
 check rather than a refusal guard.
+
+`exc_ancestors_lab` pins ancestor subsumption and nonmatching propagation,
+retained mutation order, and the unchanged lexical-shadow refusals. Its
+symbolic proof returns an arbitrary integer from an arithmetic-error handler.
+Separate namesake-class fixtures check that user classes keep priority over
+the builtin relation on both interpreter surfaces.
+The module fixture catches a dictionary-size `RuntimeError` through the
+items shell. The corresponding `iter(dict)` function matches on the native
+surface but keeps the proof function surface's existing iterator refusal;
+admitting a handler does not expand the inventory of operations that raise.
 
 ## Integral quotient and remainder (`divmod`, 2026-10-10)
 

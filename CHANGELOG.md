@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Named `BaseException`, `ArithmeticError`, and `LookupError` handlers use
+  explicit CPython-measured catch relations on both interpreter surfaces.
+  Arithmetic handlers catch both division-error forms; lookup handlers catch
+  index and key errors. User namesake classes retain priority, lexical shadows
+  remain loud, and OS-error ancestors and exception-class values stay outside
+  the tier. The `exc_ancestors_lab` artifact proves a caught-error identity
+  symbolically and checks subsumption, propagation, and mutation order.
 - The proof interpreter and its module executor now catch the same measured
   builtin exception classes as the native interpreter, using the shared
   `builtinExcCatches` table. Handlers resume from the exception's retained

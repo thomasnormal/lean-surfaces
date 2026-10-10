@@ -48,7 +48,12 @@ state as well as differentially tested on the native and script surfaces.
 [`exc_handlers_lab`](exc_handlers_lab/) checks builtin exception matching and
 propagation, retained mutations, and module-global publication. Its symbolic
 proof covers a caught scalar type error. Handler-local bindings and unmeasured
-ancestors remain loud instead of guessing exception-class resolution.
+OS-error ancestors remain loud instead of guessing exception-class resolution.
+
+[`exc_ancestors_lab`](exc_ancestors_lab/) checks the measured `BaseException`,
+`ArithmeticError`, and `LookupError` catch relations, nonmatching propagation,
+retained mutations, and user namesake-class priority. Its symbolic proof covers
+an arithmetic-error handler returning an arbitrary integer.
 
 [`bool_lab`](bool_lab/) proves integer nonzero truthiness and Boolean identity
 symbolically. Concrete checks cover heap containers, default instances, closures,

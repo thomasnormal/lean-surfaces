@@ -360,5 +360,10 @@
     "file": "Examples/python/exc_handlers_lab/exc_handlers_rebound_script.py",
     "expect": "unsupported",
     "note": "A delegated while-else can rebind its handler class before raising without publishing; extraction refuses that binding instead of catching the builtin TypeError namesake."
+  },
+  {
+    "file": "Examples/python/exc_ancestors_lab/exc_ancestors_script.py",
+    "expect": "match",
+    "note": "BaseException catches a missing import and dictionary-size RuntimeError from retained module state; ArithmeticError and LookupError propagate the import to the outer handler."
   }
 ]

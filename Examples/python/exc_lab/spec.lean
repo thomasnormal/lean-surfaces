@@ -94,6 +94,7 @@ live-clock battery is `clock_lab`). -/
 #py_check exc_lab.except_exception(1) = 1
 #py_check exc_lab.except_builtin(1) = 1
 #py_check exc_lab.except_builtin(0) = -1
+#py_check exc_lab.except_ancestor_still_loud(0) = -1
 #guard callFunction exc_lab "time_live" #[.int 5] 4096
   matches .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
 

@@ -48,9 +48,9 @@ set_option maxRecDepth 8192
 #guard callFunction exc_handlers_lab "body_shadowed_nonmatching" #[] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "late_shadowed_handler" #[] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "nested_def_handler" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "base_exception" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "arithmetic_ancestor" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "lookup_ancestor" #[] 4096 matches .unsupported _
+#py_check exc_handlers_lab.base_exception() = 16
+#py_check exc_handlers_lab.arithmetic_ancestor() = 17
+#py_check exc_handlers_lab.lookup_ancestor() = 18
 #guard callFunction exc_handlers_lab "else_clause" #[] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "finally_clause" #[] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "multiple_handlers" #[] 4096 matches .unsupported _

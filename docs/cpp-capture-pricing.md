@@ -712,6 +712,44 @@ production organization or a new semantic/runtime admission from count proofs.
 Production loader changes, input-world closure and semantic admissions remain
 zero, with the ISO, identity, cross-TU/ODR and execution barriers unchanged.
 
+## Whole-original equality witness
+
+The follow-up keeps the complete published XML root and the exact original
+capture path. A fresh command imports the 25-module publication closure,
+reconstructs the unchanged `DeclarationCapture` with `price_cpp_capture`, and
+then asks the kernel for the direct witness:
+
+```lean
+example : GeneratedCapture.capture = originalCapture := rfl
+```
+
+The run uses the normal Lean limits: synchronous elaboration, default recursion
+depth **512**, **200,000** heartbeats, `-j1 -M8192`, an **8 GiB** per-process
+address-space cap and a **180-second** child watchdog. Reading and `toExpr`
+construction complete, but the fresh full-value declaration reaches the LCNF
+compiler's heartbeat limit before its API returns. The equality declaration is
+therefore not elaborated; the subsequent count checks only report the expected
+dependent errors and are not positive evidence.
+
+| Stage | Seconds | wait4 peak RSS, KiB | Outcome |
+| --- | ---: | ---: | --- |
+| Fresh full-value equality command | 47.682 | 2,873,480 | LCNF compiler heartbeat refusal; no artifact |
+
+The durable markers are `read-start`, `read-complete`, `toexpr-start`,
+`toexpr-complete` and `add-and-compile-start`; there is no
+`add-and-compile-api-return`. Sampled Lean peaks are **2,881,668 KiB RSS/HWM**
+and **8,336,540 KiB VmSize**, below the 8 GiB address-space ceiling. The source
+fixture, published root and command instrument are pinned by SHA-256 in the
+receipt directory. This is a bounded negative result, not evidence that a
+larger budget or a different organization could never close the equality.
+
+The earlier complete-capture native equality remains a separate positive
+observation, and the bounded count facts above remain the only fresh kernel
+theorems for the original XML under default limits. No equality theorem,
+production loader change, input-world closure or C++ semantic/runtime
+admission is promoted; ISO, identity, cross-TU/ODR and execution barriers are
+unchanged.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -771,3 +809,9 @@ retained failed witnesses and focused validation are under
 into `shared/`, `runs/`, `controls/`, `review/`, `versions/` and `validation/`.
 The passing final organization is V7; earlier setup and depth failures are not
 relabelled, and a fresh reimport does not imply zero-trust import checking.
+
+The default-bound whole-original equality attempt is under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-whole-equality-20261010/`.
+Its source, command/result receipt, process samples, diagnostic markers and
+SHA-256 input pins are retained; the expected heartbeat refusal produced no
+artifact.

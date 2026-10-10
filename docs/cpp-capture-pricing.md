@@ -408,6 +408,101 @@ This is not input-world closure. Production organization changes, original XML
 full-compilation successes and C++ semantic/runtime admissions remain **zero**;
 all ISO, identity, cross-TU/ODR and execution barriers remain.
 
+## Compiler and environment memory profile
+
+The next **2026-10-10** item observes the same complete reconstruction, with
+unchanged **8 GiB per-process address space / 180 seconds / `-j1 -M8192`** and
+default heartbeat/recursion bounds. An external diagnostic dynlib samples the
+installed allocator, `/proc/self/status`, `smaps_rollup` and mappings at input
+construction boundaries and every **128 helpers**, uniformly at both thresholds.
+Sampled helpers additionally bracket inference, ordinary `addAndCompile` and
+realization registration. The operation order, safe `.regular 0` definitions,
+`noinline` and final whole-original-capture equality requirement are unchanged.
+No collection, stats reset, allocator-policy change, cache or optimization is
+introduced. The observer consumes time, allocations and potentially heartbeats;
+these instrumented processes are not replacements for the preceding prices.
+
+| Threshold | Result | Seconds | Controller-child wait4 RSS KiB | Sampled Lean HWM KiB | Prior helper returns | Complete snapshots |
+| --- | --- | --- | --- | --- | --- | --- |
+| 256 | FAIL: internal allocation panic | 87.313 | 4,253,608 | 4,265,216 | 8,034 | 381 |
+| 4096 | FAIL: internal allocation panic | 67.856 | 4,218,616 | 4,234,504 | 811 | 45 |
+
+Neither run assembles the root, compiles it or reaches full equality; neither
+times out or reports a heartbeat refusal. The failing attempts are zero-based
+**8,034 / 811**, bodies **353 / 4,461 nodes**. Instrumentation moves the 256
+prefix relative to the earlier 8,204-return observation; do not infer an isolated
+performance change. Sampled/final-error virtual sizes **8,372,740 / 8,372,732 KiB**
+approach the **8,388,608 KiB** cap, still distinct from approximately 4 GiB RSS.
+
+### Occupancy, mappings and retained roots
+
+The native visitor measures **calling-thread default-heap allocated size-class
+slots**, summing `area.used * area.block_size`; it is not logical payload size,
+unique reachable Lean bytes, all heaps or RSS. Independent known-buffer and
+explicit `IO.Ref` lifetime controls validate growth and release in this inventory.
+At 4096, occupied slot bytes progress **90,664,272 → 192,928,560 → 395,947,424**
+through read-start, read-complete and `toExpr`-complete, then **2,585,941,552** after
+sampled helper 768. At 256 the corresponding last sampled helper 7,936 records
+**2,769,406,288** bytes. These are sustained occupancy trajectories, not a
+proven allocation-provenance or retaining-object attribution.
+
+The `.olean` VMA footprint remains exactly **1,668,612,096 bytes** at both
+thresholds; mapping growth is anonymous. Before the 4096 input read, **1,482,412
+KiB** of **1,592,480 KiB** RSS is already file-backed. This separates an imported
+baseline from subsequent anonymous growth. Mapping spans match process `VmSize`
+after excluding the kernel `[vsyscall]` mapping. Snapshot components are read
+sequentially, not atomically. The old process monitor omitted its monotonic
+origin, so its retrospective phase alignment remains conditional; these new
+stage-local observations do not require that alignment.
+
+Installed source shows concrete environment roots: kernel bodies, saved
+base/mono/impure LCNF and IR, and a historical environment retained by each
+`enableRealizationsForConst` context. Persistent sharing does not mean copied
+whole heaps or establish quadratic growth. `IR.compile` registers IR; it is not
+evidence that each helper produces a native LLVM/JIT module. At sampled helpers,
+immediate occupied-slot changes are much larger across the combined compilation
+interval than inference or realization insertion. **A small insertion delta
+does not exclude retention of a large existing graph**; this profile assigns
+neither exact bytes nor dominant causality to those source roots.
+
+### Failing paths, controls and decision
+
+The experimental allocator-error callback records **ENOMEM (12)** and a
+48-frame native backtrace in both failures. At 4096 the stack includes
+`LCNF.getBaseDecl?` and repeated `LCNF.Specialize.visitCode`; at 256 it includes
+array growth in a **phase-extension persistent hash-map insertion while
+closed-term extraction saves a mono declaration**. A `replayFn` symbol name
+alone does not prove whole-extension replay. These identify failing call paths,
+not the major memory
+retainer, a common cause of all earlier failures or a successful remedy.
+
+Independent allocator controls distinguish occupancy from backing reservation:
+known 32/64 MiB buffers produce matching occupied slots, and freeing restores
+**64 slot bytes** while reservation remains **2 GiB**, without collection.
+This binary's detailed `touched`/`pages` counters become negative after known
+frees; their `not all freed` text is **not a leak receipt**. A synthetic 9 GiB
+request under the 8 GiB cap exercises the callback, but does not guarantee
+diagnostic reliability near exhaustion. The complete original small/4096 capture
+passes native equality, counts **8 / 14**, whole kernel `rfl` and an axiom-free
+named theorem: **21.962 seconds / 1,670,204 KiB** controller-child wait4 RSS.
+
+Independent source, receipt and bounded streaming analyses preserve the raw
+observations and unchanged original/production pins. Main driver hashes are
+post-run pins, not an independent pre/post artifact-immutability pair; the
+accepted small control additionally pins its instrument before/after. Initial
+native-symbol lookup failures, a failed rebuild followed by a stale-module smoke
+run, and exploratory lifetime controls remain setup evidence, not profile
+acceptance. No failed witness or diagnostic is silently promoted.
+
+**Decision:** next price ordinary bounded helper/module publication and complete
+root reassembly, to measure compiler/environment lifetimes rather than assuming
+a cache, selectively deleting compiler roots or raising a cap. Keep complete
+input/value equality and normal kernel checking; separately price producer,
+compiler, serialization/import and verification processes. No optimization is
+implemented here. Original XML full-compilation successes, production loader
+changes and C++ semantic/runtime admissions remain **zero**; all existing
+ISO, identity, cross-TU/ODR, input-world and execution barriers remain.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -440,3 +535,11 @@ instrument hashes, source reviews and validation logs are under
 split into `shared/`, `runs/`, `census/`, `controls/`, `review/`, `versions/v1/`
 and `validation/`. The v1 archive pins the instrument used for primary/census
 measurements; current shared sources include the later v2 decoder correction.
+
+The memory-profile item's exact commands, native diagnostic source/binary,
+instrument/module hashes, complete stage logs and process samples, failing-path
+backtraces, source-root inventory, independent allocator/lifetime/capture controls,
+before/after input pins and bounded reproducible analyses are under
+`/var/tmp/thomas-ahle/fleet2/state/ls-cpp/capture-memory-profile-20261010/`, split
+into `shared/`, `runs/`, `controls/`, `census/`, `review/` and `validation/`.
+These observations do not change the previous uninstrumented pricing receipts.

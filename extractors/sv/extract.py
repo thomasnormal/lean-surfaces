@@ -938,6 +938,9 @@ def _convert_stmt(sm, s):
             sm, s, "TimedStatement:" + type(s.timing).__name__
         )
 
+    if cname == "CaseStatement" and _SYM is None:
+        return _convert_ordinary_case(sm, s)
+
     if cname == "CaseStatement" and _SYM is not None:
         check = CASE_CHECKS.get(str(s.check).split(".")[-1])
         cond = CASE_CONDITIONS.get(str(s.condition).split(".")[-1])
@@ -970,6 +973,77 @@ def _convert_stmt(sm, s):
         }
 
     return unsupported(sm, s)
+
+
+def _case_source_expression_ok(expression):
+    """Check bound source operands before constant folding can erase effects."""
+    pure = True
+
+    def check(node):
+        nonlocal pure
+        kind = type(node).__name__
+        pure = pure and not getattr(node, "bad", False) and kind in (
+            "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
+            "NamedValueExpression", "ConversionExpression", "UnaryExpression",
+            "BinaryExpression", "ConditionalExpression", "ConcatenationExpression",
+            "ElementSelectExpression", "RangeSelectExpression",
+        )
+        if kind == "UnaryExpression":
+            pure = pure and node.op in UNARY_OPS
+        if kind == "BinaryExpression":
+            pure = pure and node.op in BINARY_OPS
+
+    expression.visit(check)
+    return pure
+
+
+def _case_expression_ok(node):
+    """Case comparisons may repeat only admitted, pure integral expressions."""
+    if isinstance(node, dict):
+        return node.get("kind") != "Unsupported" and all(
+            _case_expression_ok(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return all(_case_expression_ok(value) for value in node)
+    return True
+
+
+def _convert_ordinary_case(sm, stmt):
+    """Lower pure IEEE 12.5 ordinary cases using bound whole-case sizing."""
+    if stmt.check != UniquePriorityCheck.None_:
+        return unsupported(sm, stmt, "CaseStatement:" + str(stmt.check).split(".")[-1])
+    if str(stmt.condition).split(".")[-1] != "Normal":
+        return unsupported(sm, stmt, "CaseStatement:" + str(stmt.condition).split(".")[-1])
+    if not _case_source_expression_ok(stmt.expr):
+        return unsupported(sm, stmt, "CaseStatement:subject")
+    subject = convert_expr(sm, stmt.expr)
+    width, _, _ = type_width_2s(stmt.expr.type)
+    if width is None or width_of(subject) != width or not _case_expression_ok(subject):
+        return unsupported(sm, stmt, "CaseStatement:subject")
+    branches = []
+    for item in stmt.items:
+        body = convert_stmt(sm, item.stmt)
+        for expression in item.expressions:
+            if not _case_source_expression_ok(expression):
+                return unsupported(sm, stmt, "CaseStatement:pattern")
+            pattern = convert_expr(sm, expression)
+            pattern_width, _, _ = type_width_2s(expression.type)
+            if (pattern_width != width or width_of(pattern) != width
+                    or not _case_expression_ok(pattern)):
+                return unsupported(sm, stmt, "CaseStatement:pattern")
+            branches.append((pattern, body))
+    if not branches:
+        return unsupported(sm, stmt, "CaseStatement:empty")
+    result = convert_stmt(sm, stmt.defaultCase) if stmt.defaultCase is not None else None
+    span = node_span(sm, stmt)
+    for pattern, body in reversed(branches):
+        result = {
+            "kind": "If", "span": span, "case_lowered": True,
+            "cond": {"kind": "Binary", "span": span, "width": 1,
+                     "op": "===", "left": subject, "right": pattern},
+            "then": body, "else": result,
+        }
+    return result
 
 
 def _convert_expression_stmt(sm, stmt):
@@ -1345,6 +1419,16 @@ def contains_selected_read(node):
     return False
 
 
+def contains_lowered_case(node):
+    if isinstance(node, dict):
+        return node.get("case_lowered", False) or any(
+            contains_lowered_case(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_lowered_case(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1370,6 +1454,10 @@ def convert_design(sm, comp):
             and contains_bound_enum(comp)):
         others.append(unsupported(sm, comp, "Enum:invalid-compilation",
                                   "frontend rejected source containing an enumeration"))
+    if (any(contains_lowered_case(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "CaseStatement:invalid-compilation",
+                                  "frontend rejected source containing a lowered case"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

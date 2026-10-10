@@ -187,6 +187,21 @@ statement node (often `Block` or `If`).
 
 ## Statements
 
+The legacy/self-check extractor also lowers unqualified ordinary integral
+`case` statements into nested `If` nodes with `Binary` `===` conditions.
+Each lowered `If` carries optional `case_lowered: true` provenance; the
+existing statement ingesters need no additional constructor. Subject and
+label expressions retain slang's whole-case context conversions and must
+belong entirely to the admitted pure integral fragment. Purity is checked
+over the bound source tree before constant conversion, so a binder-folded
+call or increment cannot disappear into an admitted literal. Source-order
+first-match search ends in the source default (if any), independent of
+its original placement. Unsupported qualifiers, wildcard/pattern forms,
+effectful/nonintegral expressions and default-only cases retain
+`CaseStatement:<reason>` refusals. A frontend error in such a compilation
+adds top-level `CaseStatement:invalid-compilation`. This lowering does not
+change symbolic `sv-0.2` `Case` nodes.
+
 | kind | key order / fields |
 |---|---|
 | `Block` | `kind`, `span`, `stmts`: [stmt...] — `begin ... end` (a single-statement body still nests one level: `"stmts": [<stmt>]`) |

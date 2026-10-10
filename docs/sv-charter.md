@@ -232,6 +232,39 @@ Enum methods, dynamic `$cast`, packages/imports, enum ports/nets, unpacked
 containers and unsupported base ranges remain loud. The symbolic
 `sv-0.2` enum identity/metadata path remains unchanged.
 
+### Pure ordinary case statements — 2026-10-10
+
+The legacy/self-check extractor lowers unqualified integral `case`
+statements (clause 12.5) into existing `if` branches with exact four-state
+`===` comparisons. Slang's bound subject and labels already carry the
+common width and signedness determined by the entire case, including
+later labels. Lowering preserves that context rather than independently
+sizing each comparison. Labels and arms are searched in source order;
+the first match executes once. A default is the terminal fallback,
+wherever it appeared in the source, and an absent default leaves state
+unchanged when no label matches.
+
+Subject and label expressions must be completely admitted by the existing
+pure integral expression fragment. Re-evaluation during an unsuccessful
+search cannot observe a changed state; calls, assignments, increments and
+other effectful or unsupported expressions stay loud. Nested label tests,
+not eager logical disjunctions, preserve first-match search. Six original
+fixtures in `harness/sv/ordinary_cases/` carry licensed reference provenance
+for exact `x`/`z`, multiple labels, defaults, whole-case sizing and runtime
+expressions. No value type, interpreter, process rule or scheduler changes.
+Fresh extraction admits 54 previously partial simulation files without
+losing a previously clean file: 1,517 clean, 20,240 partial and 30
+include-skipped out of 21,787. These are extractor-only measurements,
+not corpus-wide reference or runtime coverage.
+
+Qualified `unique`/`unique0`/`priority` cases, `casez`, `casex`, `inside`,
+patterns, nonintegral expressions and default-only cases remain loud.
+Purity is checked on the bound source tree before constant conversion;
+context widening cannot erase a call or increment into an admitted literal.
+Any frontend error in a compilation containing a lowered case adds
+`CaseStatement:invalid-compilation`; recovery cannot silently admit an
+invalid program. The symbolic `sv-0.2` case path is unchanged.
+
 ### Four-state packed selected reads — 2026-10-09
 
 The legacy/self-check surface admits bit, constant part and indexed

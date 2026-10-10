@@ -36,6 +36,9 @@ def probe : Artifact := {
 #guard match probe.declarationAtPath [1] with
   | some declaration => (probe.previousDeclCandidates declaration).isEmpty
   | none => false
+#guard match probe.declarationAtPath [1] with
+  | some declaration => (probe.semanticParentCandidates declaration).isEmpty
+  | none => false
 #guard (probe.declarationsById "f1").map Declaration.lexicalParents == [["tu", "ns"]]
 #guard (probe.declarationsById "out").map Declaration.semanticParent == [some "cls"]
 #guard (probe.declarationsById "out").map Declaration.previousDecl == [some "prior"]
@@ -49,7 +52,7 @@ def repeatedDeclaration : Raw :=
 
 def repeatedReference : Raw :=
   .object [("id", .string "next"), ("kind", .string "VarDecl"),
-    ("previousDecl", .string "shared")]
+    ("previousDecl", .string "shared"), ("parentDeclContextId", .string "shared")]
 
 def repeatedProbe : Artifact := { probe with
   ast := .object [("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -65,6 +68,10 @@ def repeatedProbe : Artifact := { probe with
 #guard (repeatedProbe.declarationAtPath [2, 1, 0]).map Declaration.id == some "shared"
 #guard match repeatedProbe.declarationAtPath [4] with
   | some declaration => (repeatedProbe.previousDeclCandidates declaration).map Declaration.path ==
+      [[1], [2, 1, 0], [3]]
+  | none => false
+#guard match repeatedProbe.declarationAtPath [4] with
+  | some declaration => (repeatedProbe.semanticParentCandidates declaration).map Declaration.path ==
       [[1], [2, 1, 0], [3]]
   | none => false
 #guard (repeatedProbe.declarationsById "shared").map Declaration.lexicalParents ==

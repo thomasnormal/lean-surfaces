@@ -66,6 +66,8 @@ lookup by a repeated frontend ID remains a list, not an implicit canonical
 choice. `Artifact.previousDeclCandidates` applies the same rule to a retained
 `previousDecl` handle: it returns every matching occurrence, or `[]` for a
 dangling handle, without asserting that any candidate is the same entity.
+`Artifact.semanticParentCandidates` does the same for `parentDeclContextId`;
+these are raw occurrence candidates, not proven semantic-parent relations.
 The unmodified AST additionally retains namespace aliases, original-namespace
 links, template arguments, instantiated bodies, value categories, conversions,
 cleanups and macro spelling/expansion locations.

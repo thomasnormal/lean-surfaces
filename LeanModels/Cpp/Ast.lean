@@ -113,4 +113,7 @@ def Artifact.declarationAtPath (artifact : Artifact) (path : List Nat) : Option 
 def Artifact.previousDeclCandidates (artifact : Artifact) (declaration : Declaration) : List Declaration :=
   declaration.previousDecl.toList.flatMap artifact.declarationsById
 
+def Artifact.semanticParentCandidates (artifact : Artifact) (declaration : Declaration) : List Declaration :=
+  declaration.semanticParent.toList.flatMap artifact.declarationsById
+
 end LeanModels.Cpp

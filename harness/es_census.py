@@ -7,7 +7,7 @@ spec.  Before pricing any of that, this measures the two artifacts:
 
     python3 harness/es_census.py --spec <ecma262>/spec.html \
                                  --tests <test262> \
-                                 --engine <engine262> \
+                                 --engine <reference-checkout> \
                                  --acorn <dir>/node_modules/acorn/dist/acorn.mjs \
                                  -o docs/es262-census.json
     python3 harness/es_census.py --spec … --tests … --compare docs/es262-census.json
@@ -46,7 +46,7 @@ DIRECTION: an over-reject is usually a feature-gated proposal, an
 under-reject is an EARLY-ERROR obligation the parser does not carry.
 
 THE JOIN.  A test's `esid` is a spec clause id.  So is every `#sec-…` anchor
-engine262 writes in a JSDoc comment.  Joining both against the clause ids the
+the reference implementation writes in a JSDoc comment.  Joining both against the clause ids the
 pinned spec actually defines measures two things no single corpus can: how
 much of the suite is addressed at a clause that still exists, and how much of
 the spec a working JS-hosted implementation of it has had to name.
@@ -754,7 +754,7 @@ def census_frontend(tests_root, acorn_path, limit=0):
 
 
 # ---------------------------------------------------------------------------
-# The engine262 census — the JS-implements-the-spec precedent, measured
+# The reference implementation census — the JS-implements-the-spec precedent, measured
 # ---------------------------------------------------------------------------
 
 SEC_ANCHOR = re.compile(r"#(sec-[A-Za-z0-9._%-]*[A-Za-z0-9])")
@@ -764,7 +764,7 @@ def census_engine(root, spec_clause_ids):
     root = Path(root)
     src = root / "src"
     if not src.is_dir():
-        raise Refusal(f"{root}: no src/ — not an engine262 checkout")
+        raise Refusal(f"{root}: no src/ — not a reference implementation checkout")
     files = sorted(p for p in src.rglob("*.mts"))
     if not files:
         raise Refusal(f"{src}: zero .mts files attributed — an instrument fault")
@@ -799,7 +799,7 @@ def rev(path):
 
     §5.4a — quote the number and the state, or quote neither.  The previous
     version returned `""` on any failure, and `docs/es262-census.json` records
-    the result: `"sources": {"ecma262": "", "engine262": "c7939eaf…",
+    the result: `"sources": {"ecma262": "", "reference": "…",
     "test262": "3655e746…"}`.  Two thirds provenanced and one third silently
     blank is the trap the law names — the artifact looks complete, and the
     empty string reads CLEANER than "this measurement has no recoverable
@@ -891,7 +891,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--spec", help="path to ecma262 spec.html")
     ap.add_argument("--tests", help="path to a test262 checkout")
-    ap.add_argument("--engine", help="path to an engine262 checkout")
+    ap.add_argument("--engine", help="path to the reference implementation checkout")
     ap.add_argument("--acorn", help="path to a fetched acorn ESM entry point; "
                                     "enables the frontend probe over --tests")
     ap.add_argument("--frontend-limit", type=int, default=0,
@@ -956,8 +956,8 @@ def main():
             result["test262"] = census_tests(args.tests, clause_ids)
             result["sources"]["test262"] = rev(args.tests)
         if args.engine:
-            result["engine262"] = census_engine(args.engine, clause_ids)
-            result["sources"]["engine262"] = rev(args.engine)
+            result["reference"] = census_engine(args.engine, clause_ids)
+            result["sources"]["reference"] = rev(args.engine)
         if args.acorn:
             if not args.tests:
                 ap.error("--acorn needs --tests")

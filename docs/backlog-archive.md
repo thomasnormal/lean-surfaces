@@ -16494,7 +16494,7 @@ charter is [docs/es-charter.md](es-charter.md); the measurements are in
 revisions. **No semantics built, no Lean written, no existing file changed.**
 
 Pinned: `tc39/ecma262` `ed463bc1` (2026-08-20), `tc39/test262` `3655e746`
-(2026-08-10), `engine262` `c7939eaf` (2026-08-09).
+(2026-08-10), the reference implementation `c7939eaf` (2026-08-09).
 
 **THE FAMILY ROW IS RATIFIED (charter §0).** §L59's
 [docs/family-architecture.md](family-architecture.md) landed while this census
@@ -16577,7 +16577,7 @@ language where the result can be a THEOREM rather than a test pass.
 argument: one Lean definition per typed clause, cited by `(edition,
 clause-id, step)`** — a TRIPLE, because clause ids are not stable (below).
 
-**engine262 is the same experiment already run once, and it is measurable**:
+**A reference implementation is the same experiment already run once, and it is measurable**:
 68,429 lines of JavaScript over 364 files whose directory names are the
 spec's own (`abstract-ops`, `runtime-semantics`, `static-semantics`,
 `intrinsics`, `host-defined`), writing **1,782 distinct `#sec-…` anchors**
@@ -16731,8 +16731,8 @@ not MIT-licensed** (TC39's IP policy puts natural-language text under Ecma's
 alternative copyright notice and only source code under the MIT-style
 software policy), so this lane paraphrases a document it may not
 redistribute. Vendoring the suite while paraphrasing the spec would apply two
-standards to two artifacts from the same committee. engine262 is MIT; acorn
-is MIT and is fetched, never vendored.
+standards to two artifacts from the same committee. The reference implementation
+is MIT; acorn is MIT and is fetched, never vendored.
 
 ### THE CORE SLICE — a measured slicing, on both sides
 
@@ -16868,7 +16868,7 @@ lane's "four productions, near-zero value" ruling: 5,624 tests, clause 27 at
 rather than a number.** Python's oracle is CPython pinned at 3.9, and under
 that arrangement **DIVERGE means the model is wrong**, definitionally,
 because CPython IS the specification of Python. **ECMAScript has no reference
-implementation.** Any engine — V8/node, JSC, SpiderMonkey, engine262 — is
+implementation.** Any engine — V8/node, JSC, or SpiderMonkey — is
 itself only a claimant, so a model-versus-engine disagreement has THREE
 causes: the model is wrong, **the engine is wrong** (not hypothetical — it is
 why test262 exists and why engines carry per-test expectation files), or the
@@ -17004,9 +17004,9 @@ which is the mechanical reason the token and the revision are two strings.
 `--self-test` now covers all three edition paths beside the original three.
 
 **Re-censusing against `ES2026` instead of the draft moves exactly two joins,
-and both are the suite and the engine being AHEAD of the edition:** test262
+and both are the suite and the reference implementation being AHEAD of the edition:** test262
 `esid` rows resolving 21,874 → **21,572** (−302, with `clause-id-absent` +302),
-engine262 anchors resolving 1,152 → **1,141** (−11). **Everything measured on
+reference anchors resolving 1,152 → **1,141** (−11). **Everything measured on
 the SUITE and the FRONTEND is unchanged to the digit** — 53,578 tests, the
 18,114-test core slice, 97.8% parse agreement, 66 ESTree node types — because
 those are edition-independent, and that they did NOT move is the check that the
@@ -21103,7 +21103,7 @@ release printed "NOT RELEASING: not my lock" and removed nothing.
 **THE BLANK-PROVENANCE FINDING IS THIS LANE'S, and the cause is confirmed.**
 `docs/es262-census.json` on master carries `"ecma262": ""` — the `git_rev`
 swallow the instrument-fix pass (28b9f5e) just patched. Diagnosed here rather
-than guessed: `sources.test262` and `sources.engine262` stamped REAL revisions
+than guessed: `sources.test262` and `sources.reference` stamped REAL revisions
 because both were censused from git checkouts, while `--spec` pointed at a
 LOOSE extracted file (`es-editions/es2026-errata-spec.html`), whose directory
 is *"not a git repository"*. **The blank was the path, not the parser** — and
@@ -21120,7 +21120,7 @@ path carries both the bytes and the provenance —
 Confirmed today: at that tag the working-tree `spec.html` is **byte-identical
 to `docs/es-edition.json`'s pin** (`032ecc74…`), so the edition check and the
 provenance stamp are satisfied by one checkout. Not done in this landing
-because regenerating the JSON needs test262, engine262 and acorn re-fetched
+because regenerating the JSON needs test262, the reference implementation, and acorn re-fetched
 (the scratchpad wipe took them) and a partial regeneration would DROP three
 sections to heal one field — a worse artifact than the one it fixes.
 
@@ -21402,7 +21402,7 @@ HEAD:harness/<f>.py`) and running them on the same inputs — not by reading:
 | A3 `wasm_suite_census --compare` | 0 → **0** | **0 → 1** |
 | B1 `wasm_spec_census` revision | 0, `7b854e86…` | **0 + `revision=None` → 2, REFUSED, no file** |
 | B2 `wasm_suite_census` revision | 0, `11614693…` | **0 + `revision=None` → 2, REFUSED, no file** |
-| B3 `es_census` sources | 0, `c1e558cc…` | **0 + `{'engine262': ''}` → 2, REFUSED, no file** |
+| B3 `es_census` sources | 0, `c1e558cc…` | **0 + `{'reference': ''}` → 2, REFUSED, no file** |
 | B4 `lean_independent_check` checker_commit | 0, `702e8110…` | **0 + `""` → 2, REFUSED, no file** |
 
 B4's pass direction ran with a **stub `lake` on `PATH`**, so the Lean
@@ -21410,7 +21410,7 @@ instrument's own code path was exercised with **zero Lean executed** (its
 `DIVERGE` verdict is the stub's exit 3 being classified, not a result).
 
 **The B3 row was never hypothetical.** `docs/es262-census.json` on master
-carries `"sources": {"ecma262": "", "engine262": "c7939eaf…", "test262":
+carries `"sources": {"ecma262": "", "reference": "c7939eaf…", "test262":
 "3655e746…"}` — two thirds provenanced, one third silently blank, from exactly
 this path: §5.4a's failure reading *cleaner than the truth*, in a committed
 artifact. **The fix does not repair that file** (the ES corpora are not on this

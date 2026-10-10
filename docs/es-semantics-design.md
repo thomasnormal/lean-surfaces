@@ -257,7 +257,7 @@ both cheap, both in the M1 pattern where the census is the oracle:
    pinned spec** (the census already parses all 2,262 clause ids) and that
    no two definitions claim the same clause.
 2. **A coverage number**: cited clauses ÷ core-slice clauses, published
-   per rung. This is the ES analogue of `engine262`'s 1,782 `#sec-`
+   per rung. This is the ES analogue of a reference implementation's 1,782 `#sec-`
    anchors, of which 1,141 resolve — a working implementation of this
    spec independently arrived at the same convention, and its coverage is
    measurable, so ours must be too.

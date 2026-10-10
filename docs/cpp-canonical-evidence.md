@@ -206,7 +206,8 @@ The complete-comparison receipts are under
 the final json run is `measurement/labels`. Earlier refused results remain
 archived, with separate format/source pins rather than overwritten headlines.
 
-The strict Mox source remains refused by its four recorded extension errors;
+The strict extension-heavy source remains refused by its four recorded
+extension errors;
 this item does not relax its profile or rerun it. Neither admitted corpus
 gains a declaration query or runtime verdict. Tooling feasibility, semantic
 admission and actual execution remain three separate measurements.

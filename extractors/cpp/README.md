@@ -114,8 +114,8 @@ Lean ingestion. The strict runner validates JSON and wrapper/header pins, not
 all typed declaration fields. No graph/row consensus, ISO declaration query,
 cross-TU entity relation or executable semantics follows. A bounded capture
 census attempted one original registered TU/profile from each of TinyXML2,
-nlohmann/json and read-only Mox: two observational bundles were published;
-strict Mox retained its frontend rejection. This is not a repository-wide TU
+nlohmann/json and a strict extension-heavy corpus: two observational bundles
+were published; the latter retained its frontend rejection. This is not a repository-wide TU
 sweep or new literal/semantic admission. There is no CI wiring in this item;
 the optional real-toolchain test reports an explicit skip when matching
 compiler/plugin inputs are absent.
@@ -155,7 +155,8 @@ A bounded literal-loader census of the two published original-profile captures
 completes **zero** original-corpus literal compilations: TinyXML2 hits Lean's
 default 200,000-heartbeat LCNF timeout (41.540 s), and nlohmann/json reports
 internal out-of-memory (23.750 s), under `-j1`, 8 GiB address-space and 180-second
-wall bounds. Strict Mox has no successful receipt to load. Partial elaboration
+wall bounds. The strict extension-heavy corpus has no successful receipt to
+load. Partial elaboration
 or `#check` output is not completion. A separate small actual-module observation
 with eight declaration rows loads successfully but supplies no ordinary-source,
 ISO or runtime admission. These explicit resource refusals do not change the
@@ -298,7 +299,7 @@ original, but the **complete pointer-witnessed AST comparison refuses** at the
 dangling predecessor; equal partial hashes are not complete graph agreement.
 The analyzer's synthetic assertions and the 15 focused plugin tests pass.
 No declaration-semantic query or C++ runtime becomes admitted. The large json
-corpus and strict-refused Mox corpus receive no new verdict in this bounded
+corpus and strict-refused extension-heavy corpus receive no new verdict in this bounded
 measurement; full corpus-wide supplement coverage remains future work.
 
 The subsequent [real-artifact pricing receipt](../../docs/cpp-canonical-evidence.md)

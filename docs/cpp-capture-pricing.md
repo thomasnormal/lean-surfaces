@@ -3,8 +3,9 @@
 Measured **2026-10-10**, against the unchanged capture loader at `752e733`.
 This prices the literal-ingestion boundary in [capture provenance](cpp-provenance.md),
 not C++ semantics. The original registered TinyXML2 and nlohmann/json
-translation-unit/profile bundles are used whole; read-only Mox still has no
-published successful receipt. This is not a repository-wide census.
+translation-unit/profile bundles are used whole; the strict extension-heavy
+bundle still has no published successful receipt. This is not a repository-wide
+census.
 
 ## Inputs and measurement boundary
 

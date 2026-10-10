@@ -812,6 +812,29 @@ not establish whole-list equality: the default reduction boundary appears
 between 128 and 256 rows for the current root organization. No production
 segmentation or semantic admission is promoted from this pricing control.
 
+## Chunked kernel equality composition
+
+The next control composes two independently published **128-row** witnesses.
+It proves each root projection separately and then rewrites the concatenation
+of those projections to the concatenation of the two exact input segments:
+
+```lean
+example :
+    GeneratedCapture.capture.probe.declarations.take 128 ++
+      (GeneratedCapture.capture.probe.declarations.drop 128).take 128 =
+    first128 ++ second128 := by
+  rw [first_witness, second_witness]
+```
+
+This theorem deliberately does **not** ask the kernel to reduce a concrete
+`take 256` expression. The composition is a genuine bounded equality over the
+unchanged input, while the 256-row direct witness remains the recursion-depth
+negative above. The two-segment command exits zero in **64.585 seconds** with
+**1,873,904 KiB** wait4 peak RSS; both segment declarations return from
+`addAndCompile`, and all three equalities (the two projections and the
+composition) pass. It therefore prices a viable proof shape for larger inputs,
+but not yet the complete 4,527-row list or an integrated loader organization.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,
@@ -888,3 +911,8 @@ The input-preserving segmented-RHS controls are under
 They retain the external command, small positive control, 8/128 positive XML
 prefix witnesses, 256/512 recursion-depth negatives, process samples and full
 input/root pins.
+
+The chunked-composition receipt is in the same directory, under the
+`ChunkedComposition.lean` source and `ChunkedCompositionRun/` process archive;
+its two 128-row input segments, positive kernel composition and source pins are
+retained separately from the direct-prefix negatives.

@@ -14,6 +14,11 @@ of ISO template/entity rules or an executable admission.
 The [ordinary-declaration bridge](cpp-ordinary-bridge.md) now specifies the
 restricted ISO/frontend assumptions, missing evidence and typed-validator
 obligations for a first function/variable subset. It is not implemented admission.
+`LeanModels/Cpp/Identity.lean` now exposes only a conservative
+`canonicalTargetCandidates` bridge: explicit metadata rows must agree on kind
+and canonical handle, and the result is every matching artifact occurrence.
+Missing/conflicting evidence or an absent target refuses; this remains frontend
+evidence, not an entity-identity theorem or executable admission.
 
 ## Standard obligations and trusted boundary
 

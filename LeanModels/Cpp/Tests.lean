@@ -77,6 +77,65 @@ def repeatedProbe : Artifact := { probe with
 #guard (repeatedProbe.declarationsById "shared").map Declaration.lexicalParents ==
   [["tu"], ["tu"], ["tu"]]
 
+def evidenceRow (id kind canonical : String) : DeclarationEvidenceRow := {
+  ordinal := 0, id := {value := id}, kind, canonical := {value := canonical}
+  previous := none, semanticContext := none, lexicalContext := none
+  implicit := false, dependentContext := false, owningModule := none
+  functionShape := none, raw := .object []
+}
+
+def identityProbe : DeclarationProbe := {
+  ast := .null, metadata := .null
+  declarations := [
+    evidenceRow "f1" "FunctionDecl" "f1",
+    evidenceRow "f2" "FunctionDecl" "f1",
+    evidenceRow "out" "CXXMethodDecl" "missing"]
+}
+
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match canonicalTargetCandidates probe identityProbe declaration with
+      | .ok candidates => candidates.map Declaration.path == [[0, 0]]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 1] with
+  | some declaration =>
+      match canonicalTargetCandidates probe identityProbe declaration with
+      | .ok candidates => candidates.map Declaration.path == [[0, 0]]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [1] with
+  | some declaration =>
+      match canonicalTargetCandidates probe identityProbe declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let conflicting := {identityProbe with
+        declarations := [evidenceRow "f1" "FunctionDecl" "f1",
+          evidenceRow "f1" "FunctionDecl" "f2"]}
+      match canonicalTargetCandidates probe conflicting declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let wrongKind := {identityProbe with
+        declarations := [evidenceRow "f1" "VarDecl" "f1"]}
+      match canonicalTargetCandidates probe wrongKind declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match repeatedProbe.declarationAtPath [4] with
+  | some declaration =>
+      let repeatedEvidence := {identityProbe with
+        declarations := [evidenceRow "next" "VarDecl" "shared"]}
+      match canonicalTargetCandidates repeatedProbe repeatedEvidence declaration with
+      | .ok candidates => candidates.map Declaration.path == [[1], [2, 1, 0], [3]]
+      | .error _ => false
+  | none => false
+
 #guard parseArtifactString "{}" matches .error _
 #guard parseArtifactString "{\"schema_version\":\"cpp-9\"}" matches .error _
 #guard requireHash "not-a-hash" matches .error _

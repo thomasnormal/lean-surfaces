@@ -1596,6 +1596,7 @@ theorem fuelMono (fuel : Nat) :
                 refine Run.le_bind (ihE m st iter kf hk) fun st it => ?_
                 cases it with
                 | none => exact Run.le_refl _
+                | ellipsis => exact Run.le_refl _
                 | bool b => exact Run.le_refl _
                 | int n => exact Run.le_refl _
                 | str sv => exact ihGen m st _ kf hk
@@ -1893,6 +1894,7 @@ mutual
       (v : RVal) → ∀ {fuel fuel' : Nat}, fuel ≤ fuel' →
         RVal.freezeB h fuel v ⊑ RVal.freezeB h fuel' v
     | .none, _, _, _ => Res.le_refl _
+    | .ellipsis, _, _, _ => Res.le_refl _
     | .bool b, _, _, _ => Res.le_refl _
     | .int n, _, _, _ => Res.le_refl _
     | .str s, _, _, _ => Res.le_refl _
@@ -2142,7 +2144,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             | some v => exact .okF rfl _
             -- the unmodelled-CPython-builtin refusal (2026-08-13) sits in
             -- front of the analysable/NameError fork
-            | none => exact .ite .unsupported (.ite .exn .unsupported)
+            | none => exact .ite (.okF rfl _) (.ite .unsupported (.ite .exn .unsupported))
       | binOp l op r _ =>
         simp only [Expr.heapFree, Bool.and_eq_true] at hfree
         simp only [evalExpr]
@@ -2746,6 +2748,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           refine .bind (ihE st iter hfree.1.1) fun st₁ it h₁ => ?_
           cases it with
           | none => exact .exn
+          | ellipsis => exact .exn
           | bool b => exact .exn
           | int n => exact .exn
           | str s =>

@@ -211,6 +211,7 @@ DESIGN.md). `partial` only because of the nested `Array Val` recursion;
 this is runtime-only code, nothing proves theorems about it. -/
 partial def valJson : Val → String
   | .none => "{\"t\":\"none\"}"
+  | .ellipsis => "{\"t\":\"ellipsis\"}"
   | .bool b => "{\"t\":\"bool\",\"v\":" ++ (if b then "true" else "false") ++ "}"
   | .int n => "{\"t\":\"int\",\"v\":" ++ jsonStr (toString n) ++ "}"
   | .str s => "{\"t\":\"str\",\"v\":" ++ jsonStr s ++ "}"
@@ -323,6 +324,7 @@ partial def valOfJson (j : Lean.Json) : Except String Val := do
   let tstr ← t.getStr?.mapError (fun _ => s!"\"t\" must be a string: {j.compress}")
   match tstr with
   | "none" => return .none
+  | "ellipsis" => return .ellipsis
   | "bool" => return .bool (← (← j.getObjVal? "v").getBool?)
   | "int" =>
     let v ← j.getObjVal? "v"

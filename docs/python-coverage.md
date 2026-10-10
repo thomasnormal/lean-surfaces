@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 2684 | 2355 | 0 | 329 |
+| 2719 | 2390 | 0 | 329 |
 
-Of the 2355 rows the model decides, 2355 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2390 rows the model decides, 2390 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 2684 | 2282 | 0 | 402 |
+| 2719 | 2317 | 0 | 402 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-142 witnesses: 111 MATCH, 31 REFUSE.
+142 witnesses: 112 MATCH, 30 REFUSE.
 
 ### `stmt`
 
@@ -162,7 +162,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `float` | REFUSE | unsupported expression 'Constant:float' |
 | `bytes` | REFUSE | unsupported expression 'Constant:bytes' |
 | `complex` | REFUSE | unsupported expression 'Constant:complex' |
-| `ellipsis` | REFUSE | unsupported expression 'Constant:ellipsis' |
+| `ellipsis` | MATCH | Ellipsis is a truthy singleton, also available through the builtin name |
 
 ### `op`
 
@@ -210,6 +210,8 @@ Read from `LeanModels/Python/Ast.lean`. A modelled name may still refuse some ar
 
 Also modelled: `count` (from `from itertools import count`).
 
+**Modelled constants:** `Ellipsis`, `False`, `None`, `True`. `Ellipsis` and `...` denote the same singleton; ordinary name shadowing still applies.
+
 **Exception classes `except` can name (15):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `Exception`, `IndexError`, `KeyError`, `LookupError`, `NameError`, `RecursionError`, `RuntimeError`, `StopIteration`, `TypeError`, `ValueError`, `ZeroDivisionError`. Other exception names refuse, including OS-error ancestors such as `OSError`; user classes `class E(Exception): pass` are admitted.
 
-**Other CPython builtin names (53)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `DeprecationWarning`, `EOFError`, `Ellipsis`, `EnvironmentError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `KeyboardInterrupt`, `MemoryError`, `ModuleNotFoundError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `OSError`, `OverflowError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `RuntimeWarning`, `StopAsyncIteration`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `SystemExit`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeError`, `UnicodeTranslateError`, `UnicodeWarning`, `UserWarning`, `Warning`.
+**Other CPython builtin names (52)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `DeprecationWarning`, `EOFError`, `EnvironmentError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `KeyboardInterrupt`, `MemoryError`, `ModuleNotFoundError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `OSError`, `OverflowError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `RuntimeWarning`, `StopAsyncIteration`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `SystemExit`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeError`, `UnicodeTranslateError`, `UnicodeWarning`, `UserWarning`, `Warning`.

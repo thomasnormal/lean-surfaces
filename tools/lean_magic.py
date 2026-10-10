@@ -151,6 +151,8 @@ def canon(v):
         return {"t": "str", "v": v}
     if v is None:
         return {"t": "none"}
+    if v is Ellipsis:
+        return {"t": "ellipsis"}
     if isinstance(v, list):
         return {"t": "list", "v": [canon(x) for x in v]}
     if isinstance(v, tuple):

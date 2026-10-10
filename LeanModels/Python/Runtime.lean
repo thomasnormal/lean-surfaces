@@ -41,6 +41,7 @@ def RangeBound.toInt : RangeBound → Int
 /-- Runtime values (docs/memory-model.md v2). -/
 inductive RVal where
   | none
+  | ellipsis
   | bool  (b : Bool)
   | int   (n : Int)
   | str   (s : String)
@@ -349,7 +350,7 @@ preservation statement is the dict tier's regression case 18). -/
 mutual
   /-- Every `.ref` inside the value points below `h.size`. -/
   def RVal.WF (h : Heap) : RVal → Prop
-    | .none | .bool _ | .int _ | .str _ | .rangeV .. => True
+    | .none | .ellipsis | .bool _ | .int _ | .str _ | .rangeV .. => True
     | .tuple xs => RVal.WFList h xs.toList
     | .listV xs => RVal.WFList h xs.toList
     | .ntuple _ _ xs => RVal.WFList h xs.toList
@@ -615,6 +616,7 @@ mutual
   freshly on the heap per occurrence). -/
   def RVal.thaw : Val → RVal
     | .none => .none
+    | .ellipsis => .ellipsis
     | .bool b => .bool b
     | .int n => .int n
     | .str s => .str s
@@ -637,6 +639,7 @@ mutual
   behind a ref and is already refused. -/
   def RVal.freeze : RVal → Res Val
     | .none => .ok .none
+    | .ellipsis => .ok .ellipsis
     | .bool b => .ok (.bool b)
     | .int n => .ok (.int n)
     | .str s => .ok (.str s)
@@ -673,6 +676,7 @@ mutual
   /-- `freeze ∘ thaw = ok` — thawing never manufactures a ref. -/
   theorem RVal.freeze_thaw : (v : Val) → RVal.freeze (RVal.thaw v) = .ok v
     | .none => rfl
+    | .ellipsis => rfl
     | .bool _ => rfl
     | .int _ => rfl
     | .str _ => rfl
@@ -698,6 +702,8 @@ mutual
       (rv : RVal) → {v : Val} → RVal.freeze rv = .ok v → rv = RVal.thaw v
     | .none, v, h => by
         cases (Res.ok.inj h); rfl
+    | .ellipsis, value, frozen => by
+        cases (Res.ok.inj frozen); rfl
     | .bool _, v, h => by
         cases (Res.ok.inj h); rfl
     | .int _, v, h => by
@@ -743,6 +749,7 @@ mutual
   theorem RVal.freeze_ne_exn : (rv : RVal) → ∀ e, RVal.freeze rv ≠ .exn e
     | .rangeV .., e => by simp [RVal.freeze]
     | .none, e => by simp [RVal.freeze]
+    | .ellipsis, error => by simp [RVal.freeze]
     | .bool _, e => by simp [RVal.freeze]
     | .int _, e => by simp [RVal.freeze]
     | .str _, e => by simp [RVal.freeze]
@@ -851,7 +858,7 @@ mutual
   recursively). On this fragment thawing is pure — the bridge every
   pre-H2 boundary statement rides. Kernel-computable (list-structural). -/
   def Val.listFree : Val → Bool
-    | .none | .bool _ | .int _ | .str _ => true
+    | .none | .ellipsis | .bool _ | .int _ | .str _ => true
     | .list _ => false
     | .tuple xs => Val.listFreeList xs.toList
 
@@ -874,6 +881,7 @@ mutual
   identity-free observations cannot tell anyway). -/
   def RVal.thawH (h : Heap) : Val → Heap × RVal
     | .none => (h, .none)
+    | .ellipsis => (h, .ellipsis)
     | .bool b => (h, .bool b)
     | .int n => (h, .int n)
     | .str s => (h, .str s)
@@ -907,6 +915,7 @@ mutual
   theorem RVal.thawH_of_listFree : (v : Val) → Val.listFree v = true →
       ∀ h, RVal.thawH h v = (h, RVal.thaw v)
     | .none, _, h => rfl
+    | .ellipsis, _, heap => rfl
     | .bool _, _, h => rfl
     | .int _, _, h => rfl
     | .str _, _, h => rfl
@@ -942,7 +951,7 @@ mutual
   frozen recursion points (their fueled unfolding on symbolic operands is
   unbounded, the `execWhile` situation exactly). -/
   def RVal.refFree : RVal → Bool
-    | .none | .bool _ | .int _ | .str _ | .rangeV .. => true
+    | .none | .ellipsis | .bool _ | .int _ | .str _ | .rangeV .. => true
     | .tuple xs => RVal.refFreeList xs.toList
     | .listV xs => RVal.refFreeList xs.toList
     | .ntuple _ _ xs => RVal.refFreeList xs.toList
@@ -971,6 +980,7 @@ mutual
       | fuel + 1 =>
         match v with
         | .none => .ok .none
+        | .ellipsis => .ok .ellipsis
         | .bool b => .ok (.bool b)
         | .int n => .ok (.int n)
         | .str s => .ok (.str s)
@@ -1032,6 +1042,7 @@ mutual
   arms and the heap argument is dropped on every ref-free path. -/
   def RVal.freezeB (h : Heap) (fuel : Nat) : RVal → Res Val
     | .none => .ok .none
+    | .ellipsis => .ok .ellipsis
     | .bool b => .ok (.bool b)
     | .int n => .ok (.int n)
     | .str s => .ok (.str s)
@@ -1065,6 +1076,7 @@ mutual
   theorem RVal.freezeB_thaw (h : Heap) (fuel : Nat) :
       (v : Val) → RVal.freezeB h fuel (RVal.thaw v) = .ok v
     | .none => rfl
+    | .ellipsis => rfl
     | .bool _ => rfl
     | .int _ => rfl
     | .str _ => rfl
@@ -1117,6 +1129,7 @@ mutual
   results on the fuel-free structural paths of `freezeB`. -/
   theorem RVal.refFree_thaw : (v : Val) → RVal.refFree (RVal.thaw v) = true
     | .none => rfl
+    | .ellipsis => rfl
     | .bool _ => rfl
     | .int _ => rfl
     | .str _ => rfl
@@ -1156,6 +1169,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
     · intro path v e hc
       cases v with
       | none => simp [RVal.freezeH] at hc
+      | ellipsis => simp [RVal.freezeH] at hc
       | bool b => simp [RVal.freezeH] at hc
       | int n => simp [RVal.freezeH] at hc
       | str s => simp [RVal.freezeH] at hc
@@ -1227,6 +1241,7 @@ mutual
       (v : RVal) → ∀ e, RVal.freezeB h fuel v ≠ .exn e
     | .rangeV .., e => by simp [RVal.freezeB]
     | .none, e => by simp [RVal.freezeB]
+    | .ellipsis, error => by simp [RVal.freezeB]
     | .bool b, e => by simp [RVal.freezeB]
     | .int n, e => by simp [RVal.freezeB]
     | .str s, e => by simp [RVal.freezeB]
@@ -1299,6 +1314,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
     · intro path rv v hc hlf
       cases rv with
       | none => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
+      | ellipsis => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | bool b => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | int n => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | str s => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
@@ -1364,6 +1380,7 @@ mutual
       (rv : RVal) → {v : Val} → RVal.freezeB h fuel rv = .ok v →
       Val.listFree v = true → rv = RVal.thaw v
     | .none, v, hc, _ => by cases (Res.ok.inj hc); rfl
+    | .ellipsis, value, frozen, _ => by cases (Res.ok.inj frozen); rfl
     | .bool _, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .int _, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .str _, v, hc, _ => by cases (Res.ok.inj hc); rfl

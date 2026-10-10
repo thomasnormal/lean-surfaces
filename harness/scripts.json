@@ -375,5 +375,10 @@
     "file": "Examples/python/fstring_repr/fstring_script.py",
     "expect": "match",
     "note": "Intrinsic f-string str/repr conversions bypass shadowed names, while modeled builtin globals remain visible to function callees; field effects, default debug conversions, and first-error order stay exact."
+  },
+  {
+    "file": "Examples/python/ellipsis_lab/ellipsis_script.py",
+    "expect": "match",
+    "note": "Ellipsis singleton literals and builtin lookup, rendering, truth, identity, dictionary keys, shadowing and restoration after deletion."
   }
 ]

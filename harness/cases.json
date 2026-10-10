@@ -920,5 +920,21 @@
   {"file": "Examples/python/fstring_repr/fstring_repr.py", "function": "repr_field", "args": [[{"t": "str", "v": "\u00e9"}], [{"t": "str", "v": "\ud83d\ude00"}]], "expect": "unsupported"},
   {"file": "Examples/python/fstring_repr/fstring_repr.py", "function": "instance", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/fstring_repr/fstring_shadow.py", "function": "fields", "args": [[0], [3], [{"t": "str", "v": "quoted"}]], "expect": "match"},
-  {"file": "Examples/python/fstring_repr/fstring_shadow.py", "function": "captured", "args": [[]], "expect": "match"}
+  {"file": "Examples/python/fstring_repr/fstring_shadow.py", "function": "captured", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "literal", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "builtin", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "identity", "args": [[{"t": "ellipsis"}], [{"t": "none"}], [0], [1], [{"t": "bool", "v": true}], [{"t": "str", "v": "Ellipsis"}], [{"t": "list", "v": []}]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "equal", "args": [[{"t": "ellipsis"}], [{"t": "none"}], [0], [{"t": "bool", "v": true}], [{"t": "str", "v": "Ellipsis"}], [{"t": "list", "v": []}]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "rendering", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "truth", "args": [[{"t": "ellipsis"}], [{"t": "none"}], [0], [1]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "default", "args": [[], [{"t": "ellipsis"}], [{"t": "none"}], [7]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "branch", "args": [[{"t": "bool", "v": true}], [{"t": "bool", "v": false}]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "keys", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "containers", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "parameter_shadow", "args": [[7], [{"t": "ellipsis"}]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "drain", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "sum_start", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "sum_bad", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "noniterable", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/ellipsis_lab/ellipsis_lab.py", "function": "nonnumeric", "args": [[]], "expect": "match"}
 ]

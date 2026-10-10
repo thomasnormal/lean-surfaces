@@ -299,7 +299,9 @@ def literal_const_payload(node):
         return {"type": "str", "value": v}
     if v is None:
         return {"type": "none"}
-    return None  # float / bytes / complex / Ellipsis: not a tier literal
+    if v is Ellipsis:
+        return {"type": "ellipsis"}
+    return None  # float / bytes / complex: not a tier literal
 
 
 def convert_fstring(node):
@@ -415,7 +417,9 @@ def convert_expr(node):
             const = {"type": "str", "value": v}
         elif v is None:
             const = {"type": "none"}
-        else:  # float / bytes / complex / Ellipsis / ...
+        elif v is Ellipsis:
+            const = {"type": "ellipsis"}
+        else:  # float / bytes / complex / ...
             return unsupported(node, "Constant:" + type(v).__name__)
         return {"kind": "Constant", "span": span(node), "value": const}
 

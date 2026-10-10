@@ -119,6 +119,7 @@ def parseConst (j : Json) : Except String Const :=
     | "bool" => return Const.bool (← (← getField j "value").getBool?)
     | "str" => return Const.str (← (← getField j "value").getStr?)
     | "none" => pure Const.none
+    | "ellipsis" => pure Const.ellipsis
     | other => throw s!"unknown const type {other.quote}"
 
 /-- Parse an expression node. `partial` because the recursion is over the

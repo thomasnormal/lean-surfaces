@@ -135,7 +135,7 @@ def cell(s, n=110):
 def render(diff, proof, grammar, tables):
     modelled, cpython, catches = tables
     funcs = sorted(n for n in cpython if n[:1].islower())
-    consts = {"True", "False", "None"}
+    consts = {"True", "False", "None", "Ellipsis"}
     L = []
     L.append("# Python coverage")
     L.append("")
@@ -233,6 +233,10 @@ def render(diff, proof, grammar, tables):
         len(fr), ", ".join("`%s`" % f for f in fr)))
     L.append("")
     L.append("Also modelled: `count` (from `from itertools import count`).")
+    L.append("")
+    L.append("**Modelled constants:** %s. `Ellipsis` and `...` denote the "
+             "same singleton; ordinary name shadowing still applies." %
+             ", ".join("`%s`" % name for name in sorted(consts)))
     L.append("")
     exc = sorted(catches)
     L.append("**Exception classes `except` can name (%d):** %s. Other "

@@ -55,10 +55,11 @@ inductive CmpOp where
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Literal constants (schema `Constant` payload). Ints are arbitrary precision
-(JSON carries them as decimal strings). Float/bytes/complex/Ellipsis constants
+(JSON carries them as decimal strings). Float/bytes/complex constants
 never reach this type — the extractor emits them as `Unsupported` nodes. -/
 inductive Const where
   | none
+  | ellipsis
   | bool (b : Bool)
   | int (n : Int)
   | str (s : String)
@@ -421,6 +422,7 @@ def benignImportBinds : String → Option (String × Bool)
 /-- Runtime values. -/
 inductive Val where
   | none
+  | ellipsis
   | bool (b : Bool)
   | int (n : Int)
   | str (s : String)

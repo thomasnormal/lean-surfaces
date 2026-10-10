@@ -93,6 +93,7 @@ namespace LeanModels.Python
 messages. -/
 def Val.typeName : Val → String
   | .none => "NoneType"
+  | .ellipsis => "ellipsis"
   | .bool _ => "bool"
   | .int _ => "int"
   | .str _ => "str"
@@ -106,6 +107,7 @@ BEFORE building an error message from `typeName`. A namedtuple names its
 own class (`Move`), exactly as CPython error messages do. -/
 def RVal.typeName : RVal → String
   | .none => "NoneType"
+  | .ellipsis => "ellipsis"
   | .bool _ => "bool"
   | .int _ => "int"
   | .str _ => "str"
@@ -179,6 +181,10 @@ behind `is None` / `is not None` — see `evalCompareOp`.) A heap object is
 never `None`, so the `.ref` arm is a faithful `false`, not a refusal. -/
 def RVal.isNone : RVal → Bool
   | .none => true
+  | _ => false
+
+def RVal.isEllipsis : RVal → Bool
+  | .ellipsis => true
   | _ => false
 
 /-- Python surface syntax of a binary operator (error messages). -/
@@ -269,6 +275,7 @@ a `.ref`'s truthiness lives in the heap (`bool(d)` is `len(d) != 0`) —
 loud until the dict tier reads it there. -/
 def truthy : RVal → Res Bool
   | .none => .ok false
+  | .ellipsis => .ok true
   | .bool b => .ok b
   | .int n => .ok (n != 0)
   | .str s => .ok (!s.isEmpty)
@@ -372,6 +379,7 @@ mutual
   it. On ref-free values it never fails. -/
   def valEq : RVal → RVal → Res Bool
     | .none, .none => .ok true
+    | .ellipsis, .ellipsis => .ok true
     | .bool a, .bool b => .ok (a == b)
     | .bool a, .int m => .ok ((if a then (1 : Int) else 0) == m)
     | .int n, .bool b => .ok (n == (if b then (1 : Int) else 0))
@@ -491,15 +499,9 @@ def ordFromLt (op : CmpOp) (a b : RVal) : Res Bool :=
   | _ => .unsupported "ordFromLt: non-ordering operator (report this)"
 
 /-- One comparison step. `==`/`!=` are `valEq` (`Res`-valued since H1 — see
-there). `is`/`is not` (F2): the extractor admits these ONLY when one side of
-the link is the literal `None`, whose runtime value is always `RVal.none` —
-so identity here is against the `None` singleton and IS value-determined:
-`x is None ⟺ x = RVal.none` (a heap `.ref` is faithfully not `None`). When
-at least one operand is `.none` the result is `a.isNone && b.isNone`; if
-NEITHER side is `.none` — unreachable through the extractor, but reachable
-by hand-built ASTs — identity between two non-None values is
-CPython-implementation-defined (small-int caching, str interning) and
-refused loudly (H1-proper adds the faithful two-ref address equality).
+there). Identity against `None` or `Ellipsis` is value-determined because
+both are singletons. Other immediate identities stay loud (small-int caching,
+str interning); `evalCompareOpH` also decides heap references by address.
 Ordering: int/bool by value (bool→int coercion), str lexicographic;
 ordering any other type combination is outside the tier. -/
 def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
@@ -508,11 +510,13 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
   | .notEq => do let e ← valEq a b; return !e
   | .is =>
     if a.isNone || b.isNone then .ok (a.isNone && b.isNone)
+    else if a.isEllipsis || b.isEllipsis then .ok (a.isEllipsis && b.isEllipsis)
     else
       .unsupported
         s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
   | .isNot =>
     if a.isNone || b.isNone then .ok (!(a.isNone && b.isNone))
+    else if a.isEllipsis || b.isEllipsis then .ok (!(a.isEllipsis && b.isEllipsis))
     else
       .unsupported
         s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
@@ -667,6 +671,7 @@ def strOfVal : RVal → Res RVal
   | .bool b => .ok (.str (if b then "True" else "False"))
   | .str s => .ok (.str s)
   | .none => .ok (.str "None")
+  | .ellipsis => .ok (.str "Ellipsis")
   | v => .unsupported s!"str() of '{v.typeName}' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)"
 
 /-- Lowercase hex digit. -/
@@ -995,6 +1000,7 @@ def delNames : List (String × α) → List String → List (String × α) × Op
 /-- Constant literal → boundary value (G1 freeze side). -/
 def Const.toVal : Const → Val
   | .none => .none
+  | .ellipsis => .ellipsis
   | .bool b => .bool b
   | .int n => .int n
   | .str s => .str s
@@ -1003,6 +1009,7 @@ def Const.toVal : Const → Val
 allocation). -/
 def Const.toRVal : Const → RVal
   | .none => .none
+  | .ellipsis => .ellipsis
   | .bool b => .bool b
   | .int n => .int n
   | .str s => .str s
@@ -1370,6 +1377,7 @@ mutual
     | .int value => intDecimal value
     | .bool b => some (if b then "True" else "False")
     | .none => some "None"
+    | .ellipsis => some "Ellipsis"
     | .str t => reprStr t
     | .tuple xs => do
       match fuel with
@@ -1828,7 +1836,7 @@ mutual
   which is unhashable (H3 instances revisit this arm, heap parameter and
   all). -/
   def hashableKey : RVal → Bool
-    | .none | .bool _ | .int _ | .str _ => true
+    | .none | .ellipsis | .bool _ | .int _ | .str _ => true
     | .tuple xs => hashableKeyList xs.toList
     -- a namedtuple hashes as a tuple (tuple.__hash__): hashable iff its
     -- elements are — sunfish's `(pos, depth, root)` keys stay in tier
@@ -1866,6 +1874,7 @@ mutual
   probe, and stored keys were checked at insertion. -/
   def keyEq : RVal → RVal → Bool
     | .none, .none => true
+    | .ellipsis, .ellipsis => true
     | .bool a, .bool b => a == b
     | .bool a, .int m => (if a then (1 : Int) else 0) == m
     | .int n, .bool b => n == (if b then (1 : Int) else 0)
@@ -2504,6 +2513,7 @@ def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool 
     return !e
   | .is =>
     if a.isNone || b.isNone then .ok (a.isNone && b.isNone)
+    else if a.isEllipsis || b.isEllipsis then .ok (a.isEllipsis && b.isEllipsis)
     else
       match a, b with
       | .ref x, .ref y => .ok (x == y)
@@ -2514,6 +2524,7 @@ def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool 
           s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
   | .isNot =>
     if a.isNone || b.isNone then .ok (!(a.isNone && b.isNone))
+    else if a.isEllipsis || b.isEllipsis then .ok (!(a.isEllipsis && b.isEllipsis))
     else
       match a, b with
       | .ref x, .ref y => .ok (x != y)
@@ -4884,7 +4895,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             (match Env.lookup st.world.globals id with
              | some v => .ok st v
              | Option.none =>
-               if isPyBuiltinName id || isLoweredBuiltinName id then
+               if id == "Ellipsis" then .ok st .ellipsis
+               else if isPyBuiltinName id || isLoweredBuiltinName id then
                  .unsupported (unmodelledBuiltinMsg id)
                else if (moduleGlobals m).2 then
                  .exn st (.nameError id)

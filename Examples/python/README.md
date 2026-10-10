@@ -93,6 +93,11 @@ count also stays within 1,048,576; excessive counts refuse even for negative
 counts and empty tuples. Its concrete checks cover both operand orders, `*=`,
 namedtuple-to-tuple results, and shared heap references.
 
+[`ellipsis_lab`](ellipsis_lab/) models the real `...`/`Ellipsis` singleton,
+with symbolic branch-result and integer-identity proofs. Its concrete checks
+cover builtin lookup, shadowing, defaults, rendering, dictionaries, generators,
+and the nonnumeric/noniterable exceptions.
+
 **Sunfish:** the proofs about the unmodified
 [sunfish](https://github.com/thomasahle/sunfish) chess engine (GPL-3.0)
 now live in the sunfish repository, as a Lake package that depends on

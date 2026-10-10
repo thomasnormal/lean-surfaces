@@ -208,6 +208,13 @@ class ExtractorTests(unittest.TestCase):
     def _first_fn(self, source):
         return self._envelope_of(source)["module"]["body"][0]
 
+    def test_ellipsis_constant_and_default(self):
+        fn = self._first_fn("def f(value=...):\n    return ...\n")
+        self.assertIsNone(fn["args_unsupported"])
+        self.assertEqual(fn["args"][0]["default"], {"type": "ellipsis"})
+        self.assertEqual(fn["body"][0]["value"]["kind"], "Constant")
+        self.assertEqual(fn["body"][0]["value"]["value"], {"type": "ellipsis"})
+
     def test_literal_defaults_emitted_and_in_tier(self):
         fn = self._first_fn(
             "def f(a, i=3, b=True, s='x', n=None):\n    return a\n")

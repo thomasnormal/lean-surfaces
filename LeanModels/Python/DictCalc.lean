@@ -64,6 +64,7 @@ all, themselves included. -/
 
 inductive KeyNF where
   | unit
+  | ellipsis
   | int (n : Int)
   | str (s : String)
   | tup (xs : List KeyNF)
@@ -71,6 +72,7 @@ inductive KeyNF where
 mutual
   def keyNF : RVal → Option KeyNF
     | .none => some .unit
+    | .ellipsis => some .ellipsis
     | .bool b => some (.int (if b then 1 else 0))
     | .int n => some (.int n)
     | .str s => some (.str s)
@@ -104,6 +106,7 @@ mutual
   theorem keyEq_iff_nf : (a b : RVal) →
       (keyEq a b = true ↔ (keyNF a).isSome = true ∧ keyNF a = keyNF b)
     | .none, b => by cases b <;> simp [keyEq, keyNF, some_eq_map_tup]
+    | .ellipsis, other => by cases other <;> simp [keyEq, keyNF, some_eq_map_tup]
     | .bool x, b => by
         cases b
         case bool y => cases x <;> cases y <;> simp [keyEq, keyNF]
@@ -153,6 +156,7 @@ end
 mutual
   theorem hashableKey_iff_nf : (k : RVal) → (hashableKey k = true ↔ (keyNF k).isSome = true)
     | .none => by simp [hashableKey, keyNF]
+    | .ellipsis => by simp [hashableKey, keyNF]
     | .bool _ => by simp [hashableKey, keyNF]
     | .int _ => by simp [hashableKey, keyNF]
     | .str _ => by simp [hashableKey, keyNF]
@@ -469,6 +473,7 @@ def keyInt : RVal → Option Int
 
 theorem keyInt_congr : (a b : RVal) → keyEq a b = true → keyInt a = keyInt b
   | .none, b, h => by cases b <;> simp_all [keyEq, keyInt]
+  | .ellipsis, other, equality => by cases other <;> simp_all [keyEq, keyInt]
   | .bool x, b, h => by cases b <;> cases x <;> simp_all [keyEq, keyInt]
   | .int _, b, h => by cases b <;> simp_all [keyEq, keyInt]
   | .str _, b, h => by cases b <;> simp_all [keyEq, keyInt]

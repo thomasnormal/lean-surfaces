@@ -585,6 +585,7 @@ def interpUnfolds : List Name :=
    ``evalCompareChain, ``evalDictItems, ``findFunction, ``mkCallEnv, ``arityOk,
    ``defaultBindings, ``Env.lookup, ``Env.set,
    ``Const.toVal, ``Const.toRVal, ``truthy, ``truthyH, ``asInt, ``RVal.isNone,
+   ``RVal.isEllipsis,
    ``RVal.thaw, ``RVal.thawList, ``RVal.thawArgs, ``RVal.freeze,
    ``RVal.freezeList, ``RVal.freezeB, ``RVal.freezeListB,
    ``valEq, ``valEqList,

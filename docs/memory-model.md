@@ -5402,6 +5402,33 @@ descriptor protocol and are not a slice.
     when the function returns `None`.
 18. WF preserved by allocation, lookup, update, call, iteration.
 
+## Ellipsis singleton (2026-10-10)
+
+The frontend emits `Constant` with `{"type":"ellipsis"}` for `...`;
+`Ellipsis` stays an ordinary `Name`, so local/module shadowing is never
+erased by extraction. `Const.ellipsis`, `RVal.ellipsis`, and `Val.ellipsis`
+carry the same immutable singleton through both interpreter surfaces and
+the thaw/freeze boundary. Runner argument/result JSON uses
+`{"t":"ellipsis"}`, including nested containers.
+
+The singleton is truthy, renders as `Ellipsis` through str/repr, container
+printing, intrinsic f-strings, and bare `%s`/`%r` conversions, and compares
+equal only to itself in the modelled default-protocol inventory. `is` and
+`is not` against the singleton are value-determined, unlike int caching or
+string interning. Ellipsis is hashable; its distinct `KeyNF.ellipsis`
+normal form keeps dictionary/set keys separate from `None` and other
+scalars. Literal defaults, generators, and public arguments/results retain
+the value rather than substituting a string or `None`.
+
+Builtin lookup supplies `Ellipsis` only after the existing local, module,
+definition, and live-global resolution paths miss. The script fixture
+checks rebinding and deletion restoring the builtin. Existing refusal
+boundaries for unmodelled protocols and consumers remain unchanged;
+ordinary nonnumeric/noniterable uses have the same `TypeError` as CPython.
+`Examples/python/ellipsis_lab` includes symbolic Boolean-branch result
+and integer-identity proofs, alongside differential and script checks.
+No axioms or theorem statements are weakened.
+
 ## Proof-layer covenants (restated)
 
 1. `fuelMono` over the `Run`-typed mutual block; public mono derived

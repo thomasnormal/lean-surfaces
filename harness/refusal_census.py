@@ -839,8 +839,8 @@ print(1j)
 """, "REFUSE", "")
 w("const.ellipsis", """
 x = ...
-print(1)
-""", "REFUSE", "")
+print(x, x is Ellipsis)
+""", "MATCH", "Ellipsis is a truthy singleton, also available through the builtin name")
 
 # --- operator (13) ---------------------------------------------------------
 w("op.Add", "print(1 + 2)\n", "MATCH", "")

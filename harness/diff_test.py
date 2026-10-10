@@ -145,6 +145,8 @@ def to_canonical_value(v):
         return {"t": "str", "v": v}
     if v is None:
         return {"t": "none"}
+    if v is Ellipsis:
+        return {"t": "ellipsis"}
     if isinstance(v, list):
         return {"t": "list", "v": [to_canonical_value(x) for x in v]}
     if isinstance(v, tuple):
@@ -161,6 +163,8 @@ def from_typed(a):
     t = a.get("t")
     if t == "none":
         return None
+    if t == "ellipsis":
+        return Ellipsis
     if t == "bool":
         return bool(a["v"])
     if t == "int":
@@ -301,6 +305,8 @@ def pretty_value(v):
     t = v.get("t")
     if t == "none":
         return "None"
+    if t == "ellipsis":
+        return "Ellipsis"
     if t == "bool":
         return "True" if v["v"] else "False"
     if t == "int":

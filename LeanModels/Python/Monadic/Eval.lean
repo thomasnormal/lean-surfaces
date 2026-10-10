@@ -711,7 +711,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
             match Env.lookup (← frameGlobals) id with
             | some v => pure v
             | Option.none =>
-              if isPyBuiltinName id then refuseEnv (unmodelledBuiltinMsg id)
+              if id == "Ellipsis" then pure .ellipsis
+              else if isPyBuiltinName id then refuseEnv (unmodelledBuiltinMsg id)
               else if (moduleGlobals m).2 then raisePy (.nameError id)
               else refuse s!"name '{id}' may be bound by an out-of-tier module-level statement"
   | .binOp l op r _ => do

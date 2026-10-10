@@ -991,6 +991,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
           | ret v =>
             cases v with
             | none => exact .ok hs2 _
+            | ellipsis => exact .unsupported
             | bool b => exact .unsupported
             | int n => exact .unsupported
             | str sv => exact .unsupported
@@ -1018,6 +1019,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
           refine .bind (ihE m st iter h) fun s2 it hs2 => ?_
           cases it with
           | none => exact .exn hs2 _
+          | ellipsis => exact .exn hs2 _
           | bool b => exact .exn hs2 _
           | int n => exact .exn hs2 _
           | str sv => exact ihGen m s2 _ hs2
@@ -1212,6 +1214,7 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
           ihFor m s3 target xs body.toList hs3
       | ref a => exact ihForL m s2 target a 0 body.toList hs2
       | none => exact .exn hs2 _
+      | ellipsis => exact .exn hs2 _
       | bool b => exact .exn hs2 _
       | int n => exact .exn hs2 _
   | ifStmt test body orelse sp =>
@@ -1487,7 +1490,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
           (.ite .unsupported (.ite .unsupported ?_))))
         cases hlive : Env.lookup st.world.globals id with
         | some v => exact .ok h _
-        | none => exact .ite .unsupported (.ite (.exn h _) .unsupported)
+        | none => exact .ite (.ok h _) (.ite .unsupported (.ite (.exn h _) .unsupported))
   | binOp l op r sp =>
     simp only [evalExpr]
     exact .bind (ihE m st l h) fun s1 a hs1 =>
@@ -1681,6 +1684,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
+                          case ellipsis =>
+                            ce_norm
+                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            obtain ⟨h9, r9⟩ := hr
+                            exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case bool b =>
                             ce_norm
                             refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
@@ -1815,6 +1823,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil =>
                           cases v <;> try (ce_norm; exact .liftRes hs2 _)
                           case none => exact .exn hs2 _
+                          case ellipsis => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
                           case ref a =>
@@ -1858,6 +1867,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             ce_norm
                             refine .bind (.liftRes hs2 _) fun s9 es hs9 => ?_
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
+                          case ellipsis => exact .exn hs2 _
                           case none => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
@@ -1921,176 +1931,29 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       | some pr =>
                         obtain ⟨v, start⟩ := pr
                         try dsimp only
-                        cases start with
-                        | str s0 => exact .exn hs2 _
-                        | none =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
-                        | bool b0 =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
-                        | int n0 =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
-                        | tuple xs0 =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
-                        | listV xs0 =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
-                        | ntuple tn0 fs0 xs0 =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
-                        | rangeV lo0 hi0 st0 =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
-                        | ref a0 =>
-            cases v <;> try exact .liftRes hs2 _
-            case ref a =>
-              ce_norm
-              cases hh : Heap.get? s2.world.heap a with
-              | none => exact .unsupported
-              | some obj =>
-                cases obj <;> try exact .unsupported
-                case list xs => exact .liftRes hs2 _
-                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
-                case dict es sv => exact .liftRes hs2 _
-                case «instance» cid attrs => exact .exn hs2 _
-                case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
-                case generator qn l k stat =>
-                  refine .ite .unsupported ?_
-                  refine .bind (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
-                    fun s3 vals hs3 => ?_
-                  exact .liftRes hs3 _
-            case none => exact .exn hs2 _
-            case bool b => exact .exn hs2 _
-            case int n => exact .exn hs2 _
+                        cases start <;> try exact .exn hs2 _
+                        all_goals
+                          cases v <;> try exact .liftRes hs2 _
+                          case ref address =>
+                            ce_norm
+                            cases hobj : Heap.get? s2.world.heap address with
+                            | none => exact .unsupported
+                            | some obj =>
+                              cases obj <;> try exact .unsupported
+                              case list values => exact .liftRes hs2 _
+                              case dict entries version => exact .liftRes hs2 _
+                              case «instance» classId attrs => exact .exn hs2 _
+                              case closure name params argsOk localsOk global generator body captured =>
+                                exact .exn hs2 _
+                              case generator name locals cont status =>
+                                refine .ite .unsupported ?_
+                                refine .bind (ClockErasedW.withLocals (ihDrain m s2.world address hs2))
+                                  fun s3 values hs3 => ?_
+                                exact .liftRes hs3 _
+                          case none => exact .exn hs2 _
+                          case ellipsis => exact .exn hs2 _
+                          case bool value => exact .exn hs2 _
+                          case int value => exact .exn hs2 _
                     case btuple =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -2101,6 +1964,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil =>
                           cases v <;> try exact .ok hs2 _
                           case none => exact .exn hs2 _
+                          case ellipsis => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
                           case rangeV lo hi step => exact .liftRes hs2 _
@@ -2135,6 +1999,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | nil =>
                           cases v <;> try exact .allocList hs2 _
                           case none => exact .exn hs2 _
+                          case ellipsis => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
                           case rangeV lo hi step =>
@@ -2445,6 +2310,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             refine .bind (.liftRes hs3 _) fun s4 desc hs4 => ?_
                             cases v
                             case none =>
+                              ce_norm
+                              refine .bind (.liftRes hs4 _) fun s9 hr hs9 => ?_
+                              obtain ⟨h9, r9⟩ := hr
+                              exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
+                            case ellipsis =>
                               ce_norm
                               refine .bind (.liftRes hs4 _) fun s9 hr hs9 => ?_
                               obtain ⟨h9, r9⟩ := hr

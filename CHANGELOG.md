@@ -14,6 +14,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Ellipsis literals (`...`) and the builtin `Ellipsis` value are the same
+  truthy singleton. Identity, equality, rendering, parameter defaults,
+  dictionary/set keys, and argument/result transport work on both interpreter
+  surfaces. Ordinary builtin shadowing stays visible. `ellipsis_lab` adds
+  symbolic singleton-return and integer-identity proofs plus differential cases.
+
 - Intrinsic f-string `!r` fields share the existing heap-aware repr renderer.
   Default debug fields and explicit empty format specifications work, and bare,
   `!s`, and `!r` conversions bypass local/module/generator `str` and `repr`

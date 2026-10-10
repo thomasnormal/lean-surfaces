@@ -94,8 +94,10 @@ with that operator's name included in `py_kind` (e.g. `"BinOp:Div"`).
 
 `{"type":"int","repr":"123"}` (decimal string, non-negative — CPython parses `-5`
 as `USub(Constant 5)`) | `{"type":"bool","value":true}` | `{"type":"str","value":"…"}`
-| `{"type":"none"}`. Float/bytes/complex/Ellipsis constants ⇒ the `Constant` node is
-`Unsupported` (`py_kind`: `"Constant:float"` etc.).
+| `{"type":"none"}` | `{"type":"ellipsis"}`. The latter is Python's singleton
+`...`; the builtin name `Ellipsis` remains a `Name` node, preserving shadowing.
+Float/bytes/complex constants ⇒
+the `Constant` node is `Unsupported` (`py_kind`: `"Constant:float"` etc.).
 
 ## Worked example
 

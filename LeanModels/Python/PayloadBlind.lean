@@ -931,15 +931,15 @@ theorem reprVal_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
     (motive3 := fun f act vs =>
       reprVals (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act vs
         = reprVals h f act vs) with
-  | case13 _ a _ _ hb _ =>
+  | case14 _ a _ _ hb _ =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case14 _ a _ _ hb _ ih =>
+  | case15 _ a _ _ hb _ ih =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case15 _ a _ _ _ hb _ =>
+  | case16 _ a _ _ _ hb _ =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case16 _ a _ _ _ hb _ ih =>
+  | case17 _ a _ _ _ hb _ ih =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case17 _ a _ hnl hnd =>
+  | case18 _ a _ hnl hnd =>
       rcases Heap.get?_swapAt_twin (b := a) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heq | ⟨_, _, _, _, _, _, h2⟩
       · simp only [reprVal, heq]
@@ -2788,6 +2788,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
               cases Env.lookup st.world.globals id with
               | some v => exact PBF.ok hslot _
               | none =>
+                  refine PBF.ite (fun _ => PBF.ok hslot _) fun _ => ?_
                   refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                   exact PBF.ite (fun _ => PBF.exn hslot _) (fun _ => PBF.unsupported)
   | binOp l op r sp =>

@@ -107,4 +107,7 @@ def Artifact.declarations (artifact : Artifact) : List Declaration :=
 def Artifact.declarationsById (artifact : Artifact) (id : String) : List Declaration :=
   artifact.declarations.filter fun declaration => declaration.id == id
 
+def Artifact.declarationAtPath (artifact : Artifact) (path : List Nat) : Option Declaration :=
+  artifact.declarations.find? fun declaration => declaration.path == path
+
 end LeanModels.Cpp

@@ -30,6 +30,9 @@ def probe : Artifact := {
 #guard (probe.declarationsById "f1").map Declaration.path == [[0, 0]]
 #guard (probe.declarationsById "f2").map Declaration.path == [[0, 1]]
 #guard (probe.declarationsById "out").map Declaration.path == [[1]]
+#guard (probe.declarationAtPath []).map Declaration.id == some "tu"
+#guard (probe.declarationAtPath [0, 1]).map Declaration.id == some "f2"
+#guard (probe.declarationAtPath [0, 2]).isNone
 #guard (probe.declarationsById "f1").map Declaration.lexicalParents == [["tu", "ns"]]
 #guard (probe.declarationsById "out").map Declaration.semanticParent == [some "cls"]
 #guard (probe.declarationsById "out").map Declaration.previousDecl == [some "prior"]
@@ -51,6 +54,7 @@ def repeatedProbe : Artifact := { probe with
 
 #guard repeatedProbe.declarations.length == 4
 #guard (repeatedProbe.declarationsById "shared").map Declaration.path == [[1], [2, 1, 0], [3]]
+#guard (repeatedProbe.declarationAtPath [2, 1, 0]).map Declaration.id == some "shared"
 #guard (repeatedProbe.declarationsById "shared").map Declaration.lexicalParents ==
   [["tu"], ["tu"], ["tu"]]
 

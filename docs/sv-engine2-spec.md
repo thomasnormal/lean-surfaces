@@ -231,7 +231,7 @@ when both sides exist rather than assumed during the schema work.
 | `NamedEventState` (landed) | Resolved identity or null; last occurrence time/validity | Persistent occurrence never masquerades as ordinary value change |
 | `ControlState` (landed) | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
 | `CompletionState` (landed) | Initialized/draining facts and optional explicit status | Natural completion derived from queues; first explicit request retained |
-| `KernelState Frame` | Current time/phase, processes, signals, current/future events, forks, controls, output | No native addresses, cache, allocator, packed-token shortcut or duplicated authority |
+| `KernelState Frame` (landed) | Current time/phase, processes, signals, current/future events, forks, controls, output | No native addresses, cache, allocator, packed-token shortcut or duplicated authority |
 
 ### Landed region vocabulary
 
@@ -511,6 +511,15 @@ awaiting view does not replace `ProcessState`'s explicit suspension authority.
 Continuation replacement therefore preserves registration identity, while
 cancellation, wakeups, declaration lookup and disable/resume transitions stay
 outside this schema piece.
+
+### Landed aggregate kernel state
+
+`LeanModels/Sv/Engine2/Kernel.lean` defines `KernelState Frame`, combining the
+landed time/region, process, signal, named-event, event/update, fork, control
+and completion records with an explicit output-chunk list. Initial state and
+membership/count observations are proved structurally. The collection fields
+are policy-neutral lists: no scheduler order, publication, queue admission,
+time advance, body execution or output rendering is selected here.
 
 ### 4.1 Consumer body interface
 

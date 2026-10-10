@@ -340,5 +340,10 @@
   {
     "file": "harness/scripts/range_bool_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bool_script.py",
+    "expect": "match",
+    "note": "Builtin bool on ordinary values and live heap objects; generator truth does not drain, argument mutations persist, and arity errors follow all argument effects."
   }
 ]

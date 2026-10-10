@@ -2379,6 +2379,32 @@ each a narrowing, a mechanical necessity, or a MEASURED correction:
   the concrete armed pair + underrun pins above; the lab-scale
   `pure_sum_all_traces` is the first trace-quantified theorem.
 
+## Boolean conversion (`bool`, 2026-10-10)
+
+`bool()` returns `False`; `bool(value)` applies the existing heap-aware
+`truthyH` semantics and returns a Boolean value. The shared `boolCastArgs`
+worker serves both interpreters, so scalar, tuple/namedtuple, range, list,
+dict, set, default instance, closure, and generator truthiness have one source
+of truth. Generators stay truthy even after exhaustion; conversion never steps
+or drains them. Instances with custom truthiness protocols remain outside the
+instantiable class tier rather than silently receiving default truthiness.
+
+All arguments evaluate left to right before conversion or the faithful
+`TypeError: bool expected at most 1 argument, got N`. The heap is read AFTER
+argument evaluation, so mutations performed by an argument are visible.
+Resolution keeps the ordinary local/global/function/class shadowing order.
+Module-level rebinding still obeys the existing publication guard: it refuses
+when the live binding would be hidden behind a builtin resolution arm.
+Keyword calls and referencing the builtin type object as a value stay loud;
+this is call-only support, not a type-object tier.
+
+Conversion itself neither allocates nor mutates, so it remains inside
+`Expr.heapFree`. Fuel monotonicity, world invariance, and clock erasure gain
+only the new builtin dispatch arm; no judgment or theorem statement changes.
+The `bool_lab` artifact carries differential controls and symbolic scalar
+conversion proofs, while `bool_script` pins whole-program output and argument
+evaluation order.
+
 ## The cast tier: `int(str)` and `str(…)` (pass 8 — parse/render; BUILT)
 
 The original pass-8 design is recorded here for provenance. Current decimal

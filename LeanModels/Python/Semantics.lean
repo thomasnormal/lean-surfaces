@@ -2315,6 +2315,13 @@ theorem truthyH_of_truthy {h : Heap} {v : RVal} {b : Bool}
     (ht : truthy v = .ok b) : truthyH h v = .ok b := by
   cases v <;> simp_all [truthy, truthyH]
 
+def boolCastArgs (heap : Heap) : List RVal → Res RVal
+  | [] => .ok (.bool false)
+  | [value] => do
+    let result ← truthyH heap value
+    return .bool result
+  | values => .exn (.typeError s!"bool expected at most 1 argument, got {values.length}")
+
 mutual
   /-- Python `==` over the heap (docs/memory-model.md §identity) — the
   H1-complete equality. Ref/ref: (1) identity shortcut (`d == d` holds
@@ -5221,6 +5228,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [] => .ok st (.int 0)
                     | [v] => Run.liftRes st (intCastVal v)
                     | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                  else if fname == "bool" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    Run.liftRes st (boolCastArgs st.world.heap vs)
                   else if fname == "sum" then
                     -- pass 3 (docs/memory-model.md §module-init
                     -- execution): the element fold IS `evalBinOp .add`;

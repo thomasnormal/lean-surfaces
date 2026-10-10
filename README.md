@@ -33,9 +33,12 @@ numerical consumers use their integer projections.
 Module-scope annotated assignments admit simple targets with scalar literal
 annotations, including forward-reference strings; nonliteral annotations and
 explicit annotation-table bindings remain loud.
-The executable differential suite has 2,253 cases: 1,976 agree with CPython and
-277 refuse loudly. The narrower proof interpreter agrees on 1,898 cases and
-refuses 355; neither run has a mismatch in the recorded suite.
+`bool()` and `bool(value)` use the same truthiness semantics as conditionals,
+including heap containers and nondraining generator checks; builtin type values
+and keyword calls remain loud.
+The executable differential suite has 2,281 cases: 2,001 agree with CPython and
+280 refuse loudly. The narrower proof interpreter agrees on 1,923 cases and
+refuses 358; neither run has a mismatch in the recorded suite.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 

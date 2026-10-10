@@ -757,6 +757,16 @@ theorem truthyH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
       · rw [truthyH, truthyH, h1, h2]
   | _ => rfl
 
+theorem boolCastArgs_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (values : List RVal) :
+    boolCastArgs (Heap.swapAt h pa o) values = boolCastArgs h values := by
+  cases values with
+  | nil => rfl
+  | cons value rest =>
+      cases rest with
+      | nil => simp only [boolCastArgs, truthyH_swapAt hslot htwin]
+      | cons _ _ => rfl
+
 /-- `d.get(k)` is blind. -/
 theorem heapGet_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
     (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
@@ -3266,6 +3276,12 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         cases rest with
                                         | cons _ _ => exact PBF.unsupported
                                         | nil => exact PBF.liftRes hs1 _
+                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                  · refine PBF.bind (ihEs m st args.toList hslot)
+                                      fun s1 vs _ hs1 => ?_
+                                    simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                      boolCastArgs_swapAt hs1 htwin]
+                                    exact PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   -- sum
                                   · refine PBF.bind (ihEs m st args.toList hslot)

@@ -1632,11 +1632,12 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                   | none =>
                     refine .ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
                       (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bint
+                      (.ite ?bbool
                       (.ite ?bsum (.ite ?btuple (.ite ?blist (.ite ?bdict
                       (.ite ?brange (.ite ?benum (.ite ?bcount (.ite ?bnext
                       (.ite ?bord (.ite ?bchr (.ite ?bstr (.ite .unsupported
                       (.ite ?bprint
-                        (.ite .unsupported ?blive)))))))))))))))))))))
+                        (.ite .unsupported ?blive))))))))))))))))))))))
                     case blen =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -1886,6 +1887,9 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         cases t with
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .unsupported
+                    case bbool =>
+                      exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                        .liftRes hs2 _
                     case bsum =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases hsa : sumArgs vs with

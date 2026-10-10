@@ -258,7 +258,7 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
   | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
 
 /-- The builtin table. `isBuiltinName` (Ast.lean) is the AUTHORITATIVE
-implemented set — 23 names — so a name reaching here is one the tier claims, and
+implemented set — so a name reaching here is one the tier claims, and
 a name it does not claim can never fall silently past the table. Arguments are
 already values: `input` is the one builtin that refuses before they evaluate, and
 it is handled in the PLAN, not here. -/
@@ -277,6 +277,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | [] => pure (.int 0)
     | [v] => liftRes (intCastVal v)
     | _ => refuse "int() with a base argument is outside the v0 tier"
+  else if fname == "bool" then
+    liftRes (boolCastArgs (← frameHeap) vs)
   else if fname == "ord" then
     match vs with
     | [v] => liftRes (ordVal v)

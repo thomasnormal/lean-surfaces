@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 2253 | 1976 | 0 | 277 |
+| 2281 | 2001 | 0 | 280 |
 
-Of the 1976 rows the model decides, 1976 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2001 rows the model decides, 2001 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 2253 | 1898 | 0 | 355 |
+| 2281 | 1923 | 0 | 358 |
 
 ## Grammar
 
@@ -201,9 +201,9 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 Read from `LeanModels/Python/Ast.lean`. A modelled name may still refuse some argument shapes (see the grammar and the differential suite); a refused name always refuses, and never raises a fabricated `NameError`.
 
-**Modelled functions (22 of 73):** `abs`, `all`, `any`, `chr`, `dict`, `enumerate`, `input`, `int`, `iter`, `len`, `list`, `max`, `min`, `next`, `ord`, `print`, `range`, `set`, `sorted`, `str`, `sum`, `tuple`
+**Modelled functions (23 of 73):** `abs`, `all`, `any`, `bool`, `chr`, `dict`, `enumerate`, `input`, `int`, `iter`, `len`, `list`, `max`, `min`, `next`, `ord`, `print`, `range`, `set`, `sorted`, `str`, `sum`, `tuple`
 
-**Refused functions (51):** `ascii`, `bin`, `bool`, `breakpoint`, `bytearray`, `bytes`, `callable`, `classmethod`, `compile`, `complex`, `copyright`, `credits`, `delattr`, `dir`, `divmod`, `eval`, `exec`, `exit`, `filter`, `float`, `format`, `frozenset`, `getattr`, `globals`, `hasattr`, `hash`, `help`, `hex`, `id`, `isinstance`, `issubclass`, `license`, `locals`, `map`, `memoryview`, `object`, `oct`, `open`, `pow`, `property`, `quit`, `repr`, `reversed`, `round`, `setattr`, `slice`, `staticmethod`, `super`, `type`, `vars`, `zip`
+**Refused functions (50):** `ascii`, `bin`, `breakpoint`, `bytearray`, `bytes`, `callable`, `classmethod`, `compile`, `complex`, `copyright`, `credits`, `delattr`, `dir`, `divmod`, `eval`, `exec`, `exit`, `filter`, `float`, `format`, `frozenset`, `getattr`, `globals`, `hasattr`, `hash`, `help`, `hex`, `id`, `isinstance`, `issubclass`, `license`, `locals`, `map`, `memoryview`, `object`, `oct`, `open`, `pow`, `property`, `quit`, `repr`, `reversed`, `round`, `setattr`, `slice`, `staticmethod`, `super`, `type`, `vars`, `zip`
 
 Also modelled: `count` (from `from itertools import count`).
 

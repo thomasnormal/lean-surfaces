@@ -822,6 +822,7 @@ theorem fuelMono (fuel : Nat) :
                                 (Run.le_ite ?_                                 -- set
                                  (Run.le_ite (hb _)                            -- abs
                                   (Run.le_ite (hb _)                           -- int
+                                   (Run.le_ite (hb _)
                                    (Run.le_ite ?_                              -- sum
                                     (Run.le_ite ?_                             -- tuple
                                      (Run.le_ite ?_                            -- list
@@ -832,7 +833,7 @@ theorem fuelMono (fuel : Nat) :
                                         (Run.le_ite ?_                         -- next
                                          (Run.le_ite (hb _)                    -- ord
                                             (Run.le_ite (hb _)                 -- chr
-                                             ?_)))))))))))))))))
+                                             ?_))))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -2389,14 +2390,15 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                         -- pair `ord`/`chr`, then print / module dunder /
                         -- NameError / loud
                         refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
-                          (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                          (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
+                           (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                             (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                               (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                                 (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                     (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                       (.ite .unsupported
-                                        (.ite .unsupported ?_))))))))
+                                        (.ite .unsupported ?_)))))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>

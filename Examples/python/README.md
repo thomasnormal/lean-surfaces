@@ -38,6 +38,11 @@ string remains available to ordinary symbolic function proofs. Its kernel checks
 also pin the refusal of effectful module annotations; function-local annotation
 erasure remains independent of that module-scope restriction.
 
+[`bool_lab`](bool_lab/) proves integer nonzero truthiness and Boolean identity
+symbolically. Concrete checks cover heap containers, default instances, closures,
+nondraining generator truthiness, argument effects, and excess-argument errors;
+custom truthiness protocols and first-class builtin type values stay loud.
+
 [`decimal_render`](decimal_render/) proves that `str(value)` returns the exact
 decimal string when `value.natAbs < 10 ^ 640`. The same magnitude admission
 guards integer fields in container and range rendering and bare `%s`/`%r`/`%d`;

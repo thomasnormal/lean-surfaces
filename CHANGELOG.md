@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Builtin `bool()` and `bool(value)` share the interpreter's existing
+  heap-aware truthiness semantics, including containers, default instances,
+  closures, and nondraining generator truthiness. Argument effects precede
+  conversion and excess-argument errors. Keyword calls and first-class builtin
+  type values remain loud; ordinary shadowing remains in force. The `bool_lab`
+  artifact proves integer truthiness and Boolean identity symbolically and
+  kernel-checks the admitted container/protocol boundary.
 - Module-scope annotated assignments with simple targets, values, and scalar
   literal annotations (including forward-reference strings) preserve assignment
   before annotation evaluation, including inside control-flow bodies. Explicit

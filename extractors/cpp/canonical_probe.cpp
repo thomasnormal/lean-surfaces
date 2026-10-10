@@ -1,5 +1,6 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/Module.h"
 #include "clang/Basic/Version.h"
@@ -70,8 +71,6 @@ void definitionEvidence(const clang::Decl *declaration,
     record["defaulted"] = function->isDefaulted();
     record["deleted_as_written"] = function->isDeletedAsWritten();
     record["language_linkage"] = languageLinkageName(function->getLanguageLinkage());
-    record["template_specialization_kind"] =
-        static_cast<int>(function->getTemplateSpecializationKind());
   } else if (const auto *variable = llvm::dyn_cast<clang::VarDecl>(declaration)) {
     record["definition_api"] = "VarDecl.isThisDeclarationADefinition";
     record["variable_definition_kind"] =
@@ -80,6 +79,32 @@ void definitionEvidence(const clang::Decl *declaration,
   } else if (const auto *tag = llvm::dyn_cast<clang::TagDecl>(declaration)) {
     record["definition"] = tag->isThisDeclarationADefinition();
     record["definition_api"] = "TagDecl.isThisDeclarationADefinition";
+  }
+}
+
+void templateEvidence(const clang::Decl *declaration, llvm::json::Object &record) {
+  if (const auto *function = llvm::dyn_cast<clang::FunctionDecl>(declaration)) {
+    record["function_templated_kind"] = static_cast<int>(function->getTemplatedKind());
+    record["function_templated_kind_api"] = "FunctionDecl.getTemplatedKind";
+    record["template_specialization_kind"] =
+        static_cast<int>(function->getTemplateSpecializationKind());
+    record["template_specialization_kind_api"] = "FunctionDecl.getTemplateSpecializationKind";
+  } else if (const auto *variable = llvm::dyn_cast<clang::VarDecl>(declaration)) {
+    record["described_template"] = declarationId(variable->getDescribedVarTemplate());
+    record["described_template_api"] = "VarDecl.getDescribedVarTemplate";
+    record["template_specialization_kind"] =
+        static_cast<int>(variable->getTemplateSpecializationKind());
+    record["template_specialization_kind_api"] = "VarDecl.getTemplateSpecializationKind";
+  } else if (const auto *classDeclaration = llvm::dyn_cast<clang::CXXRecordDecl>(declaration)) {
+    record["described_template"] = declarationId(classDeclaration->getDescribedClassTemplate());
+    record["described_template_api"] = "CXXRecordDecl.getDescribedClassTemplate";
+    record["template_specialization_kind"] =
+        static_cast<int>(classDeclaration->getTemplateSpecializationKind());
+    record["template_specialization_kind_api"] = "CXXRecordDecl.getTemplateSpecializationKind";
+  } else if (const auto *enumeration = llvm::dyn_cast<clang::EnumDecl>(declaration)) {
+    record["template_specialization_kind"] =
+        static_cast<int>(enumeration->getTemplateSpecializationKind());
+    record["template_specialization_kind_api"] = "EnumDecl.getTemplateSpecializationKind";
   }
 }
 
@@ -126,6 +151,7 @@ public:
       record["anonymous_namespace"] = nameSpace->isAnonymousNamespace();
     }
     definitionEvidence(declaration, record);
+    templateEvidence(declaration, record);
     classEvidence(declaration, record);
     records.push_back(std::move(record));
     return true;
@@ -149,7 +175,7 @@ public:
       return;
     }
     llvm::json::Object metadata{
-        {"schema_version", "cpp-canonical-probe-0.1"},
+        {"schema_version", "cpp-canonical-probe-0.2"},
         {"compiled_frontend", CLANG_VERSION_STRING},
         {"runtime_frontend", clang::getClangFullVersion()},
         {"llvm_headers", LLVM_VERSION_STRING},

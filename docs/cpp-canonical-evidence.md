@@ -187,6 +187,8 @@ The subsequent [query-local declaration pricing](cpp-declaration-pricing.md)
 consumes only the witnessed relationships needed by each candidate query.
 Neither its local eligibility nor these complete projection hashes imply
 semantic declaration admission or repair the global dangling-pointer refusal.
+The later schema 0.2 own-template inventory and bounded repricing are recorded
+separately there; they do not reinterpret these schema 0.1 projection receipts.
 
 The prior XML result aligns 4,509 fully witnessed source nodes with zero
 differences; three raw nodes and 17 metadata-only sources remain unalignable.

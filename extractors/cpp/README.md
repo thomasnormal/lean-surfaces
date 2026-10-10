@@ -52,7 +52,7 @@ publication; callers must discard output on any nonzero exit or parse failure.
 
 Output is one JSON object with `ast` and `metadata`. The former is Clang's stock
 JSON dump from the **same ASTContext** used for the supplement. The latter has
-schema `cpp-canonical-probe-0.1`, compiled/runtime Clang and LLVM-header versions,
+schema `cpp-canonical-probe-0.2`, compiled/runtime Clang and LLVM-header versions,
 and a declaration ledger from `RecursiveASTVisitor`, with implicit code and
 template instantiations enabled. No declaration family or header is filtered.
 
@@ -69,10 +69,19 @@ template instantiations enabled. No declaration family or header is filtered.
   API results. Language linkage is queried only for functions and variables;
   it is not a complete classification of function-type language linkage.
 - Definition evidence names its API. Function and tag results are Boolean;
-  variable definition categories and function template-specialization kinds
+  variable definition categories and template-specialization kinds
   are **versioned compiler integer enums**, not ISO classifications. Function
   body presence, defaulting and deletion-as-written remain separate evidence.
   Unqueried definition families carry `null` and `not-queried`.
+- Own-template evidence names its API in `_api` fields: function
+  `function_templated_kind` from `FunctionDecl.getTemplatedKind`; variable/record
+  `described_template` from `getDescribedVarTemplate`/`getDescribedClassTemplate`;
+  function/variable/record/enum `template_specialization_kind` from the applicable
+  `getTemplateSpecializationKind`. Described-template pointers are handles or
+  null; enums retain their exact compiler integers. The
+  [versioned policy](../../docs/cpp-declaration-pricing.md) pins their inventory
+  and ordinary-role gates, including member-enum specializations. Neither a zero
+  specialization kind nor `dependent_context=false` alone proves no own template.
 - `dependent_context` only queries the declaration's context. `owning_module`
   reports its owning module name, if any. Neither field proves a declaration
   is dependence-free or satisfies the initial non-module admission contract.
@@ -92,7 +101,7 @@ test tooling behavior; they are neither proof examples nor runtime verdicts.
 
 ### Bounded XML measurement
 
-The external `canonical-probe` receipt dated 2026-10-09 retains two fresh runs
+The historical schema 0.1 `canonical-probe` receipt dated 2026-10-09 retains two fresh runs
 on unchanged TinyXML2 `321ea883` under its admitted strict profile; all 104
 dependency paths and their hashes match the original envelope. Each probe
 exited zero with empty diagnostics and emitted 31,162,165 bytes. CLI wall times
@@ -172,6 +181,8 @@ compiler linkage enums. The [pricing policy](../../docs/cpp-declaration-pricing.
 names the common gates, query-specific closures and conservative refusals.
 Each candidate retains explicit semantic barriers; `semantic_admitted_queries`
 is always zero. This tool is not part of extraction or Lean ingestion.
+It requires schema 0.2 and emits pricing format 2; schema 0.1 inputs refuse
+rather than manufacturing missing own-template observations.
 
 ```console
 python3 extractors/cpp/test_price_declarations.py

@@ -6,15 +6,24 @@ matching frontend and built probe library. No build or CI registration occurs.
 Temporary translation fixtures establish tooling behavior only.
 """
 
+import importlib.util
 import json
 import os
 import pathlib
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
+
+PRICING_SPEC = importlib.util.spec_from_file_location(
+    "cpp_canonical_probe_pricing_under_test", pathlib.Path(__file__).with_name("price_declarations.py"),
+)
+pricing = importlib.util.module_from_spec(PRICING_SPEC)
+sys.modules[PRICING_SPEC.name] = pricing
+PRICING_SPEC.loader.exec_module(pricing)
 
 SOURCE = """namespace model {
 struct Box;
@@ -39,6 +48,51 @@ namespace model {
 int c_function(int value) { return value; }
 int another() { return 11; }
 }
+"""
+
+TEMPLATE_SOURCE = """namespace evidence {
+int plain(int);
+int plain(int value) { return value; }
+extern int global_value;
+int global_value = 3;
+struct Ordinary;
+struct Ordinary {};
+enum Tag { tag };
+template<class Type> Type templated(Type value) { return value; }
+template<> int templated<int>(int value) { return value; }
+int use_templated() { return static_cast<int>(templated(1.0)); }
+template<class Type> int variable = 1;
+template<> int variable<int> = 2;
+int use_variable() { return variable<double>; }
+template<class Type> struct Record { Type item; };
+template<> struct Record<int> { int item; };
+Record<double> instance;
+template<class Type> struct Outer {
+    static int member;
+    struct Nested { Type value; };
+    enum MemberEnum { member_value };
+    int plain_member() { return 1; }
+    template<class Value> Value member_template(Value value) { return value; }
+};
+template<class Type> int Outer<Type>::member = 1;
+template<> int Outer<int>::member = 2;
+Outer<int>::Nested nested_instance;
+Outer<int>::MemberEnum enum_instance = Outer<int>::member_value;
+int member_call() {
+    Outer<int> value;
+    return value.member_template(3) + value.plain_member() + Outer<double>::member;
+}
+template<class Type> using Alias = Record<Type>;
+Alias<char> alias_instance;
+}
+"""
+
+MEMBER_ENUM_SOURCE = """template<class Element> struct Box {
+    enum Implicit : int { zero };
+    enum Specialized : int;
+};
+Box<int>::Implicit ordinary_value;
+template<> enum Box<int>::Specialized : int { one };
 """
 
 POINTER_ID = re.compile(r"0x[0-9a-fA-F]+\Z")
@@ -177,10 +231,20 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertTrue(records, "no {} records for {}".format(kind, name))
         return records
 
+    def template_probe(self):
+        self.source.write_text(TEMPLATE_SOURCE, encoding="utf-8")
+        return self.probe()
+
+    def assert_specialization_api(self, record, family):
+        self.assertIs(type(record["template_specialization_kind"]), int)
+        self.assertIn(record["template_specialization_kind"], range(5))
+        self.assertEqual(record["template_specialization_kind_api"],
+                         family + ".getTemplateSpecializationKind")
+
     def test_schema_and_frontend_versions_are_explicit(self):
         probe = self.probe()
         metadata = probe["metadata"]
-        self.assertEqual(metadata["schema_version"], "cpp-canonical-probe-0.1")
+        self.assertEqual(metadata["schema_version"], "cpp-canonical-probe-0.2")
         self.assertTrue(metadata["compiled_frontend"])
         self.assertIn(metadata["compiled_frontend"], metadata["runtime_frontend"])
         self.assertTrue(metadata["llvm_headers"])
@@ -314,6 +378,150 @@ class CanonicalProbeTests(unittest.TestCase):
             self.assertEqual(record["linkage_formal"], "External")
         for record in self.records(probe, "FunctionDecl", "pick"):
             self.assertEqual(record["language_linkage"], "C++")
+
+    def test_ordinary_forward_and_body_functions_report_non_template_api(self):
+        functions = self.records(self.template_probe(), "FunctionDecl", "plain")
+        self.assertEqual(len(functions), 2)
+        self.assertEqual({record["definition"] for record in functions}, {False, True})
+        for record in functions:
+            self.assertIs(type(record["function_templated_kind"]), int)
+            self.assertEqual(record["function_templated_kind"], 0)
+            self.assertEqual(record["function_templated_kind_api"], "FunctionDecl.getTemplatedKind")
+            self.assert_specialization_api(record, "FunctionDecl")
+            self.assertEqual(record["template_specialization_kind"], 0)
+
+    def test_ordinary_variable_and_record_forward_definitions_report_explicit_null(self):
+        probe = self.template_probe()
+        variables = self.records(probe, "VarDecl", "global_value")
+        classes = [record for record in self.records(probe, "CXXRecordDecl", "Ordinary")
+                   if not record["injected_class_name"]]
+        self.assertEqual({record["variable_definition_kind"] for record in variables}, {0, 2})
+        self.assertEqual({record["definition"] for record in classes}, {False, True})
+        for family, records, described_api in (
+            ("VarDecl", variables, "VarDecl.getDescribedVarTemplate"),
+            ("CXXRecordDecl", classes, "CXXRecordDecl.getDescribedClassTemplate"),
+        ):
+            for record in records:
+                self.assertIsNone(record["described_template"])
+                self.assertEqual(record["described_template_api"], described_api)
+                self.assert_specialization_api(record, family)
+                self.assertEqual(record["template_specialization_kind"], 0)
+
+    def test_primary_function_specializations_distinguish_template_from_parent_dependence(self):
+        functions = self.records(self.template_probe(), "FunctionDecl", "templated")
+        states = {(record["function_templated_kind"], record["template_specialization_kind"])
+                  for record in functions}
+        self.assertTrue({(1, 0), (3, 1), (3, 2)} <= states)
+        for record in functions:
+            self.assertIs(type(record["function_templated_kind"]), int)
+            self.assertEqual(record["function_templated_kind_api"], "FunctionDecl.getTemplatedKind")
+            self.assert_specialization_api(record, "FunctionDecl")
+            self.assertFalse(record["dependent_context"])
+
+    def test_primary_variable_and_class_templates_report_described_template_handles(self):
+        probe = self.template_probe()
+        variables = self.records(probe, "VarDecl", "variable")
+        classes = [record for record in self.records(probe, "CXXRecordDecl", "Record")
+                   if not record["injected_class_name"]]
+        template_ids = {record["id"] for record in probe["metadata"]["declarations"]
+                        if record["kind"] in ("VarTemplateDecl", "ClassTemplateDecl")}
+        for family, records, described_api in (
+            ("VarDecl", variables, "VarDecl.getDescribedVarTemplate"),
+            ("CXXRecordDecl", classes, "CXXRecordDecl.getDescribedClassTemplate"),
+        ):
+            for record in records:
+                self.assertRegex(record["described_template"], POINTER_ID)
+                self.assertIn(record["described_template"], template_ids)
+                self.assertEqual(record["described_template_api"], described_api)
+                self.assert_specialization_api(record, family)
+                self.assertEqual(record["template_specialization_kind"], 0)
+                self.assertFalse(record["dependent_context"])
+
+    def test_variable_and_class_specialization_subclasses_keep_base_api_provenance(self):
+        probe = self.template_probe()
+        variables = self.records(probe, "VarTemplateSpecializationDecl", "variable")
+        classes = self.records(probe, "ClassTemplateSpecializationDecl", "Record")
+        for family, records, described_api in (
+            ("VarDecl", variables, "VarDecl.getDescribedVarTemplate"),
+            ("CXXRecordDecl", classes, "CXXRecordDecl.getDescribedClassTemplate"),
+        ):
+            self.assertTrue({1, 2} <= {record["template_specialization_kind"] for record in records})
+            for record in records:
+                self.assertIsNone(record["described_template"])
+                self.assertEqual(record["described_template_api"], described_api)
+                self.assert_specialization_api(record, family)
+
+    def test_member_specializations_are_not_ordinary_despite_absent_described_templates(self):
+        probe = self.template_probe()
+        variables = self.records(probe, "VarDecl", "member")
+        classes = [record for record in self.records(probe, "CXXRecordDecl", "Nested")
+                   if not record["injected_class_name"]]
+        for family, records in (("VarDecl", variables), ("CXXRecordDecl", classes)):
+            specialized = [record for record in records if record["template_specialization_kind"] != 0]
+            self.assertTrue(specialized)
+            for record in specialized:
+                self.assertIsNone(record["described_template"])
+                self.assert_specialization_api(record, family)
+                self.assertFalse(record["dependent_context"])
+
+    def test_member_function_templates_and_dependent_members_keep_distinct_classifier(self):
+        probe = self.template_probe()
+        templates = self.records(probe, "CXXMethodDecl", "member_template")
+        ordinary_members = self.records(probe, "CXXMethodDecl", "plain_member")
+        self.assertTrue({1, 3} <= {record["function_templated_kind"] for record in templates})
+        self.assertTrue({0, 2} <= {record["function_templated_kind"] for record in ordinary_members})
+        self.assertTrue(any(record["function_templated_kind"] == 0 and
+                            record["dependent_context"] for record in ordinary_members))
+        for record in templates + ordinary_members:
+            self.assertEqual(record["function_templated_kind_api"], "FunctionDecl.getTemplatedKind")
+            self.assert_specialization_api(record, "FunctionDecl")
+
+    def test_member_enum_instantiation_is_not_hidden_by_ordinary_parent_context(self):
+        probe = self.template_probe()
+        ordinary = self.records(probe, "EnumDecl", "Tag")
+        member = self.records(probe, "EnumDecl", "MemberEnum")
+        self.assertEqual({record["template_specialization_kind"] for record in ordinary}, {0})
+        self.assertTrue({0, 1} <= {record["template_specialization_kind"] for record in member})
+        for record in ordinary + member:
+            self.assert_specialization_api(record, "EnumDecl")
+        self.assertTrue(any(record["template_specialization_kind"] == 1 and
+                            not record["dependent_context"] for record in member))
+
+    def test_explicit_member_enum_specialization_at_translation_unit_refuses_local_queries(self):
+        self.source.write_text(MEMBER_ENUM_SOURCE, encoding="utf-8")
+        probe = self.probe()
+        specialized = [record for record in self.records(probe, "EnumDecl", "Specialized")
+                       if record["template_specialization_kind"] == 2 and record["definition"]]
+        self.assertEqual(len(specialized), 1)
+        record = specialized[0]
+        self.assertFalse(record["implicit"])
+        self.assertFalse(record["dependent_context"])
+        self.assertIsNone(record["owning_module"])
+        self.assert_specialization_api(record, "EnumDecl")
+        direct_ids = {node.get("id") for node in probe["ast"]["inner"]
+                      if node.get("kind") == "EnumDecl"}
+        self.assertIn(record["id"], direct_ids)
+        index = pricing.build_index(probe["ast"], probe["metadata"]["declarations"])
+        for query in ("definition", "linkage"):
+            result = pricing.price_query(index, record["id"], query)
+            self.assertEqual(result["status"], "refused")
+            self.assertIn("specialization-or-unestablished", result["reasons"])
+            self.assertNotIn("template-associated-occurrence", result["reasons"])
+            self.assertNotIn("dependent-or-unestablished", result["reasons"])
+
+    def test_template_alias_context_preserves_raw_template_nodes_and_stock_dump(self):
+        probe = self.template_probe()
+        aliases = self.records(probe, "TypeAliasTemplateDecl", "Alias")
+        self.assertEqual(len(aliases), 1)
+        occurrences = declaration_occurrences(probe["ast"])
+        self.assertIn(aliases[0]["id"], occurrences)
+        for record in self.records(probe, "NamespaceDecl", "evidence"):
+            self.assertNotIn("template_specialization_kind", record)
+            self.assertNotIn("function_templated_kind", record)
+            self.assertNotIn("described_template", record)
+        stock = self.run_frontend(plugin=False)
+        self.assertEqual(stock.returncode, 0, stock.stderr)
+        self.assertEqual(normalize_pointers(probe["ast"]), normalize_pointers(json.loads(stock.stdout)))
 
     def test_syntax_error_does_not_publish_a_json_artifact(self):
         self.source.write_text("int broken( {\n", encoding="utf-8")

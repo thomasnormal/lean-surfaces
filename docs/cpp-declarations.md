@@ -9,6 +9,8 @@ The [query-local evidence pricing tool](cpp-declaration-pricing.md) measures
 witnessed candidates separately for canonical nodes, contexts, local definition
 flags and compiler linkage telemetry. It does not implement this semantic
 contract; every result retains explicit semantic barriers.
+Its versioned own-template API gates are tooling evidence, not an implementation
+of ISO template/entity rules or an executable admission.
 
 ## Standard obligations and trusted boundary
 

@@ -1,6 +1,6 @@
 # Query-local C++ declaration evidence pricing
 
-2026-10-09. **Tooling census only; no semantic declaration queries admitted.**
+2026-10-10. **Tooling census only; no semantic declaration queries admitted.**
 This prices part of the [declaration contract](cpp-declarations.md), using the
 existing optional [canonical probe](cpp-canonical-evidence.md). It does not
 change extraction, Lean ingestion, entity semantics or execution:
@@ -9,7 +9,7 @@ change extraction, Lean ingestion, entity semantics or execution:
 ## Evidence policy
 
 `extractors/cpp/price_declarations.py` accepts the pinned
-`cpp-canonical-probe-0.1` wrapper with Clang and LLVM headers 21.1.8 and matching
+`cpp-canonical-probe-0.2` wrapper with Clang and LLVM headers 21.1.8 and matching
 runtime version. It indexes declaration-shaped ID-bearing records at **every
 dict/list path**, not only `inner`, and preserves repeated raw occurrences and
 metadata row indices. Handles are local to this one input; matching a name is
@@ -21,8 +21,9 @@ Common gates require witnessed raw and metadata records, agreeing kinds,
 explicit `implicit=false`, `dependent_context=false`, `owning_module=null`
 and a string name for named families. Namespace flags are explicit booleans;
 record candidates require `injected_class_name=false` and
-`represented_class=null`. Function candidates require an integer specialization
-kind of zero. None of these observations is a semantic admission rule.
+`represented_class=null`. Applicable own-template API observations below must
+also establish an ordinary compiler role. None of these observations is a
+semantic admission rule.
 
 A richer raw witness has a correctly typed `loc`, `range`, `inner` or
 `completeDefinition` field, or is the actual translation-unit root. These are
@@ -36,10 +37,45 @@ An ancestor kind containing `Template` or `Specialization` yields a named
 an ordinary declaration referenced beneath a template can be excluded too.
 Absent wrappers and a specialization kind of zero **do not establish a
 non-template declaration**. Namespace-level primary patterns can have
-`dependent_context=false`; the probe lacks the complete templated-kind evidence
-needed to discharge this obligation. Every eligible function, variable and
-record therefore retains `non-template-evidence-unestablished` as a semantic
-barrier.
+`dependent_context=false`. Schema 0.2 therefore supplies additional own-template
+API evidence rather than inferring it from an enclosing context or AST shape.
+
+### Versioned own-template evidence
+
+| Family | Required field and exact API provenance | Ordinary-role gate |
+| --- | --- | --- |
+| Function | `function_templated_kind`, `FunctionDecl.getTemplatedKind` | Integer `0` (`TK_NonTemplate`) |
+| Variable | `described_template`, `VarDecl.getDescribedVarTemplate` | Explicit null, not an absent field |
+| C++ record | `described_template`, `CXXRecordDecl.getDescribedClassTemplate` | Explicit null, not an absent field |
+| Function, variable, C++ record, enum | `template_specialization_kind`, the applicable family's `getTemplateSpecializationKind` | Integer `0` (`TSK_Undeclared`) |
+
+Each provenance is carried in the corresponding `_api` field. Described-template
+values are session-local handles or null, not entity identifiers. The function
+enum inventory is 0 non-template, 1 primary template, 2 member specialization,
+3 function-template specialization, 4 dependent specialization, 5 dependent
+non-template. The specialization inventory is 0 undeclared, 1 implicit
+instantiation, 2 explicit specialization, 3 explicit instantiation declaration,
+4 explicit instantiation definition. These are **Clang 21.1.8 enums**, not ISO
+classifications; bool, unknown integers, missing or conflicting fields and wrong
+API labels refuse.
+
+The applicable specialization getter includes member-specialization information;
+Clang's pinned `MemberSpecializationInfo` forbids the undeclared kind. An enum
+cannot itself be a template but can be a specialized member, so its getter is
+required even for local definition/linkage observations that do not walk context
+edges. Class/variable specialization and partial-specialization families remain
+unsupported, including nodes whose specialization getter returns zero. TU and
+namespace families do not consume these inapplicable fields.
+
+This inventory is checked against the exact `llvmorg-21.1.8` headers and
+`Decl.cpp`/`DeclCXX.cpp` implementations, with source pins in the external review
+receipt. Schema 0.1 inputs refuse: no upgrade invents missing evidence. Report
+format `cpp-declaration-pricing-2` removes the earlier missing-own-template
+barrier only because applicable queries now gate on explicit API evidence.
+**Every result still retains `semantic-validator-not-implemented`; semantic
+admissions remain zero.** Raw template-ancestor refusals remain conservative.
+The context guard also remains independent: an uninstantiated ordinary member
+can report function kind zero while its enclosing context is dependent.
 
 Metadata consensus is **query-local**. Every row must supply each consumed
 field; missing, ill-typed or conflicting relevant fields refuse. Null, false,
@@ -79,7 +115,11 @@ Inputs are parsed strictly: duplicate JSON fields and noninteger numeric tokens
 refuse. Output aliases refuse; publication is atomic. `--sample-limit` bounds
 only the included examples, not the census; zero omits examples. The per-ID API
 can recover all consumed evidence for a selected query without treating samples
-as a complete semantic ledger.
+as a complete semantic ledger. `build_index` and `price_query` are low-level
+tooling helpers over already validated pinned-probe rows; `price_probe` checks
+the wrapper schema/compiler versions, and the CLI performs strict JSON decoding.
+Helper callers must establish both preconditions. Calling a helper does not
+itself certify those versions or acquire a semantic admission.
 
 ```sh
 python3 extractors/cpp/test_price_declarations.py
@@ -93,7 +133,7 @@ resource bounds and receipts remain necessary. This item does not repeat the
 unchanged complete-AST fingerprints or reinterpret their global pointer
 closure refusal as either local-query success or universal local-query failure.
 
-## Measurements
+## Historical schema 0.1 measurements
 
 Both original, unchanged probe inputs complete under 600-second wall / 16 GiB
 address-space / 2 GiB input caps. XML: **1.621 seconds / 95,992 KiB RSS**;
@@ -133,5 +173,51 @@ and validation. The 69 focused synthetic diagnostics are tooling tests, not
 correctness theorems about prototype programs. Candidate counts are separate
 from the unchanged corpus declaration/body census and still-zero runtime
 admissions. Strict Mox extraction remains refused by its four previously recorded
-extension diagnostics; no profile is relaxed. Missing own-template evidence and
-ISO mapping still need faithful, versioned rules before semantic admission.
+extension diagnostics; no profile is relaxed. These counts and hashes belong to
+schema 0.1 and pricing format 1, not a rerun under the new evidence policy.
+ISO entity/linkage mapping and a semantic validator remain unimplemented.
+
+## Schema 0.2 measurements
+
+2026-10-10: one freshly compiled pinned probe and one production-pricing
+invocation per unchanged corpus/profile. Compiler runs retain 180-second / 16 GiB
+address-space / 2 GiB output bounds; pricing retains 600-second / 16 GiB / 2 GiB
+input bounds. XML probe: **0.334 seconds / 130,560 KiB RSS / 31,810,905 bytes**;
+json probe: **10.168 seconds / 1,320,136 KiB RSS / 1,812,360,748 bytes**. XML
+pricing: **1.518 seconds / 97,268 KiB RSS**; json pricing: **163.506 seconds /
+3,922,996 KiB RSS**. These are operational receipts, not isolated benchmarks.
+
+| Query | XML eligible / refused | json eligible / refused |
+| --- | ---: | ---: |
+| Canonical node | 60 / 4,469 | 1,172 / 163,713 |
+| Both independent contexts | 61 / 4,468 | 1,430 / 163,455 |
+| Local definition observations | 485 / 4,044 | 2,923 / 161,962 |
+| Compiler linkage telemetry | 774 / 3,755 | 4,143 / 160,742 |
+
+The source-union counts remain 4,529 / 164,885; all-four intersections remain
+26 / 616. Relative to the historical aggregates, json linkage has 18 fewer
+eligible `VarDecl` candidates and 18 fresh candidates whose sole refusal is
+`specialization-or-unestablished`. No cross-session handle join
+identifies those candidates as a per-ID flip set. The other query aggregates are
+unchanged; **semantic/runtime admissions remain zero**.
+
+The focused regression separately pins an explicitly specialized member enum
+emitted directly below the TU, with no template ancestor and with explicit
+nonimplicit/nondependent/nonmodule evidence. Its local definition/linkage queries
+now refuse solely on the specialization gate. Ordinary member patterns can
+still report function kind zero with a dependent context; the independent guards
+remain necessary.
+
+Before/after production, imported-tool, compiler/library/header/package and
+dependency hashes validate. Fresh `-MD` sets match all 104 XML / 350 json original
+dependencies. Probe source SHA is `8a17ed7a…00bc7`, pricing source
+`55ce155f…d0d72`, plugin `d39ec63f…1818`. No full AST-fingerprint/equivalence
+rescan was run, and matching aggregate counts do not establish AST equivalence
+or graph closure. The unchanged source declaration/body/declaration-only census
+is XML 205/202/3 and json 1,572/963/609; Mox remains strictly refused.
+
+Receipts under `state/ls-cpp/template-evidence-20261010/{review,tests,measurement}`
+retain exact source/API pins, strict-domain diagnostics, full refusal matrices,
+API-family field histograms and commands/resources/dependency provenance.
+The focused batteries have 25 compiler-probe and 82 pricing tests. They are
+tooling acceptance/diagnostic cases, not semantic correctness theorems.

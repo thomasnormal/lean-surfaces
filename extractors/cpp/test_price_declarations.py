@@ -57,7 +57,10 @@ def metadata_row(identifier, kind, context="0x1"):
         result.update(definition=True,
                       definition_api="FunctionDecl.isThisDeclarationADefinition",
                       body_present=True, defaulted=False, deleted_as_written=False,
-                      language_linkage="C++", template_specialization_kind=0)
+                      language_linkage="C++", template_specialization_kind=0,
+                      template_specialization_kind_api="FunctionDecl.getTemplateSpecializationKind",
+                      function_templated_kind=0,
+                      function_templated_kind_api="FunctionDecl.getTemplatedKind")
     if kind == "VarDecl":
         result.update(definition_api="VarDecl.isThisDeclarationADefinition",
                       variable_definition_kind=2, language_linkage="C++")
@@ -66,6 +69,13 @@ def metadata_row(identifier, kind, context="0x1"):
                       definition_api="TagDecl.isThisDeclarationADefinition")
     if kind == "CXXRecordDecl":
         result.update(injected_class_name=False, represented_class=None)
+    if kind in ("VarDecl", "CXXRecordDecl"):
+        described_api = ("VarDecl.getDescribedVarTemplate" if kind == "VarDecl"
+                         else "CXXRecordDecl.getDescribedClassTemplate")
+        result.update(described_template=None, described_template_api=described_api)
+    if kind in ("VarDecl", "CXXRecordDecl", "EnumDecl"):
+        result.update(template_specialization_kind=0,
+                      template_specialization_kind_api=kind + ".getTemplateSpecializationKind")
     return result
 
 
@@ -85,7 +95,7 @@ def source_node(ast):
 
 def probe_document(ast, rows):
     return {"ast": ast, "metadata": {
-        "schema_version": "cpp-canonical-probe-0.1",
+        "schema_version": "cpp-canonical-probe-0.2",
         "compiled_frontend": "21.1.8",
         "runtime_frontend": "clang version 21.1.8",
         "llvm_headers": "21.1.8", "declarations": rows,
@@ -610,6 +620,149 @@ class DeclarationPricingDiagnosticsTests(unittest.TestCase):
         ast, rows = canonical_parent_occurrence_fixture()
         del rows[-1]["semantic_context"]
         self.assert_refused(self.query(ast, rows, "contexts"))
+
+
+class OwnTemplatePricingTests(unittest.TestCase):
+    query = DeclarationPricingTests.query
+    assert_eligible = DeclarationPricingTests.assert_eligible
+    assert_refused = DeclarationPricingTests.assert_refused
+
+    def template_fields(self, kind):
+        fields = ("template_specialization_kind", "template_specialization_kind_api")
+        if kind == "FunctionDecl":
+            return fields + ("function_templated_kind", "function_templated_kind_api")
+        if kind in ("VarDecl", "CXXRecordDecl"):
+            return fields + ("described_template", "described_template_api")
+        return fields
+
+    def test_missing_own_template_evidence_refuses_every_query(self):
+        for kind in ("FunctionDecl", "VarDecl", "CXXRecordDecl", "EnumDecl"):
+            for field in self.template_fields(kind):
+                for query in QUERIES:
+                    with self.subTest(kind=kind, field=field, query=query):
+                        ast, rows = fixture(kind)
+                        del rows[-1][field]
+                        self.assert_refused(self.query(ast, rows, query))
+
+    def test_api_provenance_must_match_exact_declaration_family(self):
+        for kind in ("FunctionDecl", "VarDecl", "CXXRecordDecl", "EnumDecl"):
+            for field in self.template_fields(kind):
+                if not field.endswith("_api"):
+                    continue
+                for value in (None, False, 0, "wrong-api", "clang." + rows_api(kind, field)):
+                    with self.subTest(kind=kind, field=field, value=value):
+                        ast, rows = fixture(kind)
+                        rows[-1][field] = value
+                        self.assert_refused(self.query(ast, rows))
+
+    def test_function_templated_kind_never_coerces_bool_or_unknown_enum(self):
+        for value in (None, True, False, 0.0, "0", -1, 6):
+            with self.subTest(value=value):
+                ast, rows = fixture()
+                rows[-1]["function_templated_kind"] = value
+                self.assert_refused(self.query(ast, rows))
+
+    def test_each_function_template_category_is_refused(self):
+        for value in range(1, 6):
+            with self.subTest(value=value):
+                ast, rows = fixture()
+                rows[-1]["function_templated_kind"] = value
+                result = self.query(ast, rows)
+                self.assert_refused(result)
+                self.assertIn("templated-or-unestablished", result["reasons"])
+
+    def test_specialization_enums_have_strict_integer_domains(self):
+        for kind in ("FunctionDecl", "VarDecl", "CXXRecordDecl", "EnumDecl"):
+            for value in (None, True, False, 0.0, "0", -1, 5):
+                with self.subTest(kind=kind, value=value):
+                    ast, rows = fixture(kind)
+                    rows[-1]["template_specialization_kind"] = value
+                    self.assert_refused(self.query(ast, rows))
+
+    def test_each_specialization_category_is_refused_for_all_families(self):
+        for kind in ("FunctionDecl", "VarDecl", "CXXRecordDecl", "EnumDecl"):
+            for value in range(1, 5):
+                with self.subTest(kind=kind, value=value):
+                    ast, rows = fixture(kind)
+                    rows[-1]["template_specialization_kind"] = value
+                    result = self.query(ast, rows)
+                    self.assert_refused(result)
+                    self.assertIn("specialization-or-unestablished", result["reasons"])
+
+    def test_described_template_must_be_explicit_null_for_ordinary_candidate(self):
+        for kind in ("VarDecl", "CXXRecordDecl"):
+            for value in (True, False, 0, "", "not-a-handle", "0x99"):
+                with self.subTest(kind=kind, value=value):
+                    ast, rows = fixture(kind)
+                    rows[-1]["described_template"] = value
+                    self.assert_refused(self.query(ast, rows))
+
+    def test_primary_templates_refuse_even_without_dependent_parent_or_raw_wrapper(self):
+        for kind in ("VarDecl", "CXXRecordDecl"):
+            with self.subTest(kind=kind):
+                ast, rows = fixture(kind)
+                rows[-1]["described_template"] = "0x99"
+                result = self.query(ast, rows)
+                self.assert_refused(result)
+                self.assertIn("described-template-or-unestablished", result["reasons"])
+                self.assertNotIn("dependent-or-unestablished", result["reasons"])
+                self.assertNotIn("template-associated-occurrence", result["reasons"])
+
+    def test_conflicting_own_template_evidence_refuses_all_query_kinds(self):
+        for kind in ("FunctionDecl", "VarDecl", "CXXRecordDecl", "EnumDecl"):
+            for field in self.template_fields(kind):
+                for query in QUERIES:
+                    with self.subTest(kind=kind, field=field, query=query):
+                        ast, rows = fixture(kind)
+                        duplicate = copy.deepcopy(rows[-1])
+                        duplicate[field] = "conflicting-api" if field.endswith("_api") else True
+                        rows.append(duplicate)
+                        self.assert_refused(self.query(ast, rows, query))
+
+    def test_canonical_closure_requires_ordinary_own_template_evidence(self):
+        ast, rows = fixture()
+        predecessor = raw_declaration("0x4", "FunctionDecl")
+        ast["inner"][0]["inner"].append(predecessor)
+        rows[-1].update(canonical="0x4", previous="0x4")
+        rows.append(metadata_row("0x4", "FunctionDecl", "0x2"))
+        del rows[-1]["function_templated_kind"]
+        self.assert_refused(self.query(ast, rows))
+
+    def test_template_fields_are_not_consumed_for_namespace_and_translation_unit(self):
+        ast, rows = fixture("NamespaceDecl")
+        malformed = {"function_templated_kind": False,
+                     "function_templated_kind_api": None,
+                     "template_specialization_kind": True,
+                     "template_specialization_kind_api": "bad-api",
+                     "described_template": 17, "described_template_api": None}
+        rows[0].update(malformed)
+        rows[-1].update(malformed)
+        self.assert_eligible(self.query(ast, rows))
+        self.assert_eligible(self.query(ast, rows, identifier="0x1"))
+
+    def test_obsolete_schema_is_not_silently_upgraded_with_fabricated_evidence(self):
+        ast, rows = fixture()
+        document = probe_document(ast, rows)
+        document["metadata"]["schema_version"] = "cpp-canonical-probe-0.1"
+        with self.assertRaisesRegex(ValueError, "unsupported canonical probe schema"):
+            pricing.price_probe(document)
+
+    def test_versioned_census_retains_zero_semantic_admissions(self):
+        ast, rows = fixture()
+        report = pricing.price_probe(probe_document(ast, rows))
+        self.assertEqual(report["format"], "cpp-declaration-pricing-2")
+        self.assertEqual(report["probe_schema"], "cpp-canonical-probe-0.2")
+        self.assertEqual(report["semantic_admitted_queries"], 0)
+        for query in QUERIES:
+            result = self.query(ast, rows, query)
+            self.assert_eligible(result)
+            self.assertIn("semantic-validator-not-implemented", result["semantic_barriers"])
+            self.assertIn("language-linkage-entity-rules-unestablished", result["semantic_barriers"])
+            self.assertNotIn("non-template-evidence-unestablished", result["semantic_barriers"])
+
+
+def rows_api(kind, field):
+    return metadata_row("0x3", kind)[field]
 
 
 class DeclarationPricingCliTests(unittest.TestCase):

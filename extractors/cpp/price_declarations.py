@@ -13,8 +13,8 @@ from compare_ast import (POINTER_PATTERN, child_path, nested_containers,
                          refuse_output_alias, unique_object)
 
 
-FORMAT = "cpp-declaration-pricing-1"
-SCHEMA = "cpp-canonical-probe-0.1"
+FORMAT = "cpp-declaration-pricing-2"
+SCHEMA = "cpp-canonical-probe-0.2"
 FAMILIES = frozenset(("TranslationUnitDecl", "NamespaceDecl", "FunctionDecl",
                       "VarDecl", "EnumDecl", "CXXRecordDecl"))
 CONTEXTS = frozenset(("TranslationUnitDecl", "NamespaceDecl"))
@@ -123,15 +123,35 @@ class Evidence:
         if kind == "NamespaceDecl":
             for field in ("inline_namespace", "anonymous_namespace"):
                 self.field(identifier, field, lambda value: type(value) is bool)
-        if kind == "FunctionDecl":
-            specialization = self.field(identifier, "template_specialization_kind",
-                                        lambda value: type(value) is int)
-            if specialization != 0:
-                self.reasons.add("specialization-or-unestablished")
+        self.template_status(identifier, kind)
         if kind == "CXXRecordDecl":
             if self.field(identifier, "injected_class_name", lambda value: type(value) is bool) is not False:
                 self.reasons.add("injected-name-or-unestablished")
             self.field(identifier, "represented_class", lambda value: value is None)
+
+    def template_status(self, identifier, kind):
+        if kind not in ("FunctionDecl", "VarDecl", "CXXRecordDecl", "EnumDecl"):
+            return
+        self.field(identifier, "template_specialization_kind_api",
+                   lambda value: value == kind + ".getTemplateSpecializationKind")
+        specialization = self.field(identifier, "template_specialization_kind",
+                                    lambda value: type(value) is int and 0 <= value <= 4)
+        if specialization != 0:
+            self.reasons.add("specialization-or-unestablished")
+        if kind == "FunctionDecl":
+            self.field(identifier, "function_templated_kind_api",
+                       lambda value: value == "FunctionDecl.getTemplatedKind")
+            templated = self.field(identifier, "function_templated_kind",
+                                   lambda value: type(value) is int and 0 <= value <= 5)
+            if templated != 0:
+                self.reasons.add("templated-or-unestablished")
+        elif kind in ("VarDecl", "CXXRecordDecl"):
+            getter = "getDescribedVarTemplate" if kind == "VarDecl" else "getDescribedClassTemplate"
+            self.field(identifier, "described_template_api", lambda value: value == kind + "." + getter)
+            described = self.field(identifier, "described_template",
+                                   lambda value: value is None or is_handle(value))
+            if described is not None:
+                self.reasons.add("described-template-or-unestablished")
 
 
 def canonical_root(evidence, identifier, expected_kind=None):
@@ -335,8 +355,6 @@ def price_query(index, identifier, query):
     else:
         observed = price_linkage(evidence, identifier, kind)
     barriers = ["semantic-validator-not-implemented"]
-    if kind in ("FunctionDecl", "VarDecl", "CXXRecordDecl"):
-        barriers.append("non-template-evidence-unestablished")
     if kind in ("FunctionDecl", "VarDecl"):
         barriers.append("language-linkage-entity-rules-unestablished")
     return {"status": "refused" if evidence.reasons else "eligible-tooling-evidence",

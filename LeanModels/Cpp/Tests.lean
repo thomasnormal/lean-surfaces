@@ -101,6 +101,16 @@ def contextEvidenceRow (id canonical : String)
     semanticContext := semantic.map (fun value => {value := value})
     lexicalContext := lexical.map (fun value => {value := value})}
 
+def linkageEvidenceRow (id kind internal formal : String) (language : Option String) :
+    DeclarationEvidenceRow :=
+  let languageField := match language with
+    | none => []
+    | some value => [("language_linkage", .string value)]
+  {evidenceRow id kind id with
+    raw := .object ([
+      ("linkage_internal", .string internal),
+      ("linkage_formal", .string formal)] ++ languageField)}
+
 def identityProbe : DeclarationProbe := {
   ast := .null, metadata := .null
   declarations := [
@@ -158,6 +168,63 @@ def contextProbe : DeclarationProbe := {identityProbe with
       match semanticContextCandidates repeatedProbe repeatedContext declaration with
       | .ok candidates => candidates.map Declaration.path == [[1], [2, 1, 0], [3]]
       | .error _ => false
+  | none => false
+
+def linkageProbe : DeclarationProbe := {identityProbe with
+  declarations := [
+    linkageEvidenceRow "f1" "FunctionDecl" "External" "External" (some "C++"),
+    linkageEvidenceRow "f2" "FunctionDecl" "Internal" "Internal" (some "C"),
+    linkageEvidenceRow "out" "CXXMethodDecl" "External" "External" none]}
+
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match linkageEvidence linkageProbe declaration with
+      | .ok evidence => evidence.internal == "External" && evidence.formal == "External" &&
+          evidence.language == some "C++"
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 1] with
+  | some declaration =>
+      match linkageEvidence linkageProbe declaration with
+      | .ok evidence => evidence.internal == "Internal" && evidence.language == some "C"
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [1] with
+  | some declaration =>
+      match linkageEvidence linkageProbe declaration with
+      | .ok evidence => evidence.language.isNone
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [] with
+  | some declaration =>
+      match linkageEvidence linkageProbe declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let missing := {linkageProbe with
+        declarations := [evidenceRow "f1" "FunctionDecl" "f1"]}
+      match linkageEvidence missing declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let invalid := {linkageProbe with
+        declarations := [linkageEvidenceRow "f1" "FunctionDecl" "Mystery" "External" (some "C++")]}
+      match linkageEvidence invalid declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let conflicting := {linkageProbe with
+        declarations := [linkageEvidenceRow "f1" "FunctionDecl" "External" "External" (some "C++"),
+          linkageEvidenceRow "f1" "FunctionDecl" "Internal" "External" (some "C++")]}
+      match linkageEvidence conflicting declaration with
+      | .ok _ => false
+      | .error _ => true
   | none => false
 #guard match probe.declarationAtPath [0, 1] with
   | some declaration =>

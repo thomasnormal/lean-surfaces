@@ -27,6 +27,10 @@ fact.
 only explicit metadata handles and return occurrence candidates; null context
 is `[]`, while conflicting evidence or an absent target refuses. They do not
 assert complete scope chains or ISO scope membership.
+`linkageEvidence` similarly retains the pinned compiler internal/formal and
+applicable language-linkage enum strings only when repeated rows agree and all
+required values are in the admitted vocabulary. It is compiler telemetry, not
+an ISO linkage mapping or an entity theorem.
 
 ## Standard obligations and trusted boundary
 

@@ -72,4 +72,64 @@ def lexicalContextCandidates (artifact : Artifact) (probe : DeclarationProbe)
     (declaration : Declaration) : Except String (List Declaration) :=
   contextTargetCandidates artifact probe declaration false
 
+structure LinkageEvidence where
+  internal : String
+  formal : String
+  language : Option String
+  deriving Repr, BEq, Inhabited, Lean.ToExpr
+
+def linkageNames : List String :=
+  ["Invalid", "None", "Internal", "UniqueExternal", "VisibleNone", "Module", "External"]
+
+def languageLinkageNames : List String := ["C", "C++", "None"]
+
+def linkageText (raw : Raw) (name : String) (allowed : List String) : Except String String := do
+  let value ← evidenceText raw name
+  unless allowed.contains value do
+    throw s!"unsupported linkage value for {name}: {value}"
+  return value
+
+def linkageLanguage (raw : Raw) (kind : String) : Except String (Option String) := do
+  if kind == "FunctionDecl" || kind == "VarDecl" then
+    return some (← linkageText raw "language_linkage" languageLinkageNames)
+  match raw.field "language_linkage" with
+  | none => return none
+  | some (.string value) =>
+      unless languageLinkageNames.contains value do
+        throw s!"unsupported linkage value for language_linkage: {value}"
+      return some value
+  | some _ => throw "evidence field language_linkage: expected string"
+
+def linkageObservation (row : DeclarationEvidenceRow) : Except String LinkageEvidence := do
+  let internal ← linkageText row.raw "linkage_internal" linkageNames
+  let formal ← linkageText row.raw "linkage_formal" linkageNames
+  let language ← linkageLanguage row.raw row.kind
+  return {internal, formal, language}
+
+def linkageEvidence (probe : DeclarationProbe) (declaration : Declaration) :
+    Except String LinkageEvidence :=
+  if declaration.kind == "TranslationUnitDecl" then
+    .error "linkage evidence is not applicable to TranslationUnitDecl"
+  else
+    let rows := probe.declarations.filter fun row => row.id.value == declaration.id
+    match rows with
+    | [] => .error "linkage evidence missing for declaration occurrence"
+    | row :: rest =>
+        if row.kind != declaration.kind then
+          .error "linkage evidence kind disagrees with declaration occurrence"
+        else
+          match linkageObservation row with
+          | .error error => .error error
+          | .ok observation =>
+              if rest.any (fun other => other.kind != row.kind) then
+                .error "linkage evidence rows disagree on declaration kind"
+              else
+                match rest.mapM linkageObservation with
+                | .error error => .error error
+                | .ok observations =>
+                    if observations.any (fun other => other != observation) then
+                      .error "linkage evidence rows disagree on observed values"
+                    else
+                      .ok observation
+
 end LeanModels.Cpp

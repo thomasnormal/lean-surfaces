@@ -12,6 +12,18 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Fixed
+
+- Range construction retains Boolean start, stop, and step objects instead of
+  erasing them to integers. Shared rendering now agrees with CPython 3.9 for
+  `str`, `print`, f-strings, and nested containers; iteration, length, and other
+  admitted numerical consumers still use integer projections. A Boolean `True`
+  step is omitted from rendering like integer `1`, and `False` still raises the
+  faithful zero-step `ValueError`.
+- The `range_render` artifact proves the single-argument Boolean rendering
+  symbolically and adds differential controls for integer fields, numerical
+  consumers, and constructor exceptions. Previously loud range APIs remain loud.
+
 ## [0.1.4] — 2026-10-10 (tag publication pending)
 
 ### Fixed

@@ -38,6 +38,11 @@ decimal string when `value.natAbs < 10 ^ 640`. The same magnitude admission
 guards integer fields in container and range rendering and bare `%s`/`%r`/`%d`;
 larger values refuse rather than guessing CPython's configurable digit limit.
 
+[`range_render`](range_render/) proves that `str(range(value))` retains the
+Boolean `True` or `False` spelling for symbolic `value : PyBool`. Constructor
+fields retain their scalar objects; numerical consumers project them to integers.
+Its concrete checks cover rendering routes, numerical consumers, and exceptions.
+
 [`string_repeat`](string_repeat/) proves both operand orders and a decorated
 result for symbolic text and counts. The admission premises bound the original
 count magnitude and output code-point length to 1,048,576; excessive counts

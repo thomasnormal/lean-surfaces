@@ -28,8 +28,10 @@ also checks the original count magnitude before empty-sequence or negative-count
 handling, with the same independent element-count budget. Decimal output shares
 the 640-digit admission across `str`, `print`, f-strings, container and range
 rendering, and bare `%s`/`%r`/`%d`; larger magnitudes refuse before conversion.
-The executable differential suite has 2,167 cases: 1,890 agree with CPython and
-277 refuse loudly. The narrower proof interpreter agrees on 1,812 cases and
+Range construction retains Boolean fields for faithful rendering, while
+numerical consumers use their integer projections.
+The executable differential suite has 2,250 cases: 1,973 agree with CPython and
+277 refuse loudly. The narrower proof interpreter agrees on 1,895 cases and
 refuses 355; neither run has a mismatch in the recorded suite.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).

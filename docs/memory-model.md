@@ -2473,10 +2473,12 @@ over-budget scripts do not claim CPython's partial output or exception class.
 Separate admitted-effects fixtures pin left-to-right evaluation and the
 first faithful operand exception.
 
-The audit also found a separate, pre-existing range-constructor bug:
-CPython 3.9 retains Boolean start/stop fields in a range's rendering, while
-`rangeMake` stores their coerced integers. This decimal-budget repair does
-not fix that representation gap or reclassify its wrong answers as refusals.
+The decimal-budget audit also found a separate, pre-existing range-constructor
+bug: CPython 3.9 retains Boolean start/stop fields in a range's rendering, while
+`rangeMake` then stored their coerced integers. That repair did not fix the gap
+or reclassify its wrong answers as refusals. The subsequent Boolean-range-field
+repair (2026-10-10, `range_render`) closes it by retaining all three constructor
+fields as `RangeBound` int-or-bool values, not by patching rendered strings.
 
 **THE KERNEL-AFFORDABILITY VERDICT (pass 8, definitive — closes the
 pass-7 open item unless the interpreter's compilation is redesigned):**
@@ -2968,6 +2970,13 @@ each construct differential, refusals loud):
   guessed), dict-key/set-element loud via `keyRefusal` (ranges ARE
   hashable in CPython — never a fake unhashable `TypeError`), the
   boundary loud, `next()` the faithful `not an iterator` `TypeError`.
+  Since 2026-10-10, each field is a `RangeBound` retaining its int-or-bool
+  object, as CPython's `PyNumber_Index` does. Rendering uses the canonical
+  scalar renderer; numerical consumers use `RangeBound.toInt`. Thus
+  `range(False, True)` renders those Boolean names but yields integer `0`.
+  A retained Boolean `True` step is numerically one and omitted from rendering;
+  `False` still fails construction. Attribute access, equality, slicing,
+  range-valued `%` conversions, and the public boundary are not newly admitted.
 
 **What stays out, loudly:** `.items()` outside the init shell;
 `dict.keys/.values`; the call-mutation gap where an attempt was REFUSED

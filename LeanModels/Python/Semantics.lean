@@ -274,7 +274,7 @@ def truthy : RVal → Res Bool
   | .listV xs => .ok (xs.size != 0)
   | .tuple xs => .ok (xs.size != 0)
   | .ntuple _ _ xs => .ok (xs.size != 0)
-  | .rangeV lo hi step => .ok (rangeLen lo hi step != 0)
+  | .rangeV lo hi step => .ok (rangeLen lo.toInt hi.toInt step.toInt != 0)
   | .ref _ => .unsupported
       "truthiness of a heap object lives in the heap (`truthyH` decides it; this pure helper is the proof-layer vocabulary)"
 
@@ -316,8 +316,14 @@ def asInt : RVal → Option Int
   | .bool b => some (if b then 1 else 0)
   | _ => Option.none
 
+/-- Admit integer range fields without erasing their bool subtype. -/
+def asRangeBound : RVal → Option RangeBound
+  | .int value => some (.int value)
+  | .bool value => some (.bool value)
+  | _ => Option.none
+
 /-- `range(…)` construction from evaluated arguments: 1–3 int args
-(bool coerces, CPython's `__index__` on bool), `step = 0` the faithful
+(bool objects retained by CPython's `__index__`), `step = 0` the faithful
 `ValueError`, wrong arity/types the faithful `TypeError`s. -/
 def rangeMake (h : Heap) (vs : List RVal) : Res RVal :=
   -- CPython names the OFFENDING OBJECT's type, never range's requirements,
@@ -335,18 +341,18 @@ def rangeMake (h : Heap) (vs : List RVal) : Res RVal :=
   match vs with
   | [] => .exn (.typeError "range expected at least 1 argument, got 0")
   | [v] =>
-    (match asInt v with
-     | some n => .ok (.rangeV 0 n 1)
+    (match asRangeBound v with
+     | some n => .ok (.rangeV (.int 0) n (.int 1))
      | Option.none => bad v)
   | [a, b] =>
-    (match asInt a, asInt b with
-     | some x, some y => .ok (.rangeV x y 1)
+    (match asRangeBound a, asRangeBound b with
+     | some x, some y => .ok (.rangeV x y (.int 1))
      | Option.none, _ => bad a
      | some _, Option.none => bad b)
   | [a, b, c] =>
-    (match asInt a, asInt b, asInt c with
+    (match asRangeBound a, asRangeBound b, asRangeBound c with
      | some x, some y, some z =>
-       if z == 0 then .exn (.valueError "range() arg 3 must not be zero")
+       if z.toInt == 0 then .exn (.valueError "range() arg 3 must not be zero")
        else .ok (.rangeV x y z)
      | Option.none, _, _ => bad a
      | some _, Option.none, _ => bad b
@@ -1008,7 +1014,7 @@ def lenVal : RVal → Res RVal
   | .listV xs => .ok (.int xs.size)
   | .tuple xs => .ok (.int xs.size)
   | .ntuple _ _ xs => .ok (.int xs.size)
-  | .rangeV lo hi step => .ok (.int (rangeLen lo hi step))
+  | .rangeV lo hi step => .ok (.int (rangeLen lo.toInt hi.toInt step.toInt))
   | .ref _ =>
       .unsupported "len() of a heap object lives in the heap (`heapLen` via `lenValH` decides it)"
   | v => .exn (.typeError s!"object of type '{v.typeName}' has no len()")
@@ -1102,7 +1108,7 @@ def sortedVal (v : RVal) (desc : Bool := false) : Res RVal :=
   | .tuple xs => do return .listV (← sortByLt desc xs.toList).toArray
   | .ntuple _ _ xs => do return .listV (← sortByLt desc xs.toList).toArray
   | .rangeV lo hi step => do
-      return .listV (← sortByLt desc (← rangeVals lo hi step)).toArray
+      return .listV (← sortByLt desc (← rangeVals lo.toInt hi.toInt step.toInt)).toArray
   | .ref _ =>
       .unsupported "sorted() on a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
@@ -1160,7 +1166,7 @@ def extremumVal (isMax : Bool) (vs : List RVal) : Res RVal :=
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
       | Option.none => extremumOf isMax name xs.toList
     | .str t => extremumOf isMax name (strCharVals t)
-    | .rangeV lo hi step => do extremumOf isMax name (← rangeVals lo hi step)
+    | .rangeV lo hi step => do extremumOf isMax name (← rangeVals lo.toInt hi.toInt step.toInt)
     | .ref _ =>
         .unsupported s!"{name}() over a heap object is outside the H1 tier (docs/memory-model.md)"
     | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
@@ -1349,6 +1355,12 @@ refusal must not depend on the caller's fuel). Cycles are caught by the
 active-path list instead, faithfully. -/
 def reprFuel : Nat := 64
 
+/-- Render a retained range field through the canonical scalar renderer. -/
+def rangeBoundRepr (bound : RangeBound) : Option String :=
+  match strOfVal bound.toRVal with
+  | .ok (.str text) => some text
+  | _ => Option.none
+
 mutual
   /-- CPython `repr` of an in-tier value. `active` is the chain of heap
   addresses currently being rendered: CPython prints `[...]` / `{...}`
@@ -1379,11 +1391,11 @@ mutual
         let parts ← reprVals h fuel active xs.toList
         return "[" ++ commaJoin parts ++ "]"
     | .rangeV lo hi step => do
-      let start ← intDecimal lo
-      let stop ← intDecimal hi
-      if step == 1 then return "range(" ++ start ++ ", " ++ stop ++ ")"
+      let start ← rangeBoundRepr lo
+      let stop ← rangeBoundRepr hi
+      if step.toInt == 1 then return "range(" ++ start ++ ", " ++ stop ++ ")"
       else
-        let stride ← intDecimal step
+        let stride ← rangeBoundRepr step
         return "range(" ++ start ++ ", " ++ stop ++ ", " ++ stride ++ ")"
     | .ref a =>
       match fuel with
@@ -3966,7 +3978,7 @@ docs/backlog.md). -/
 def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
   | .str s => .ok (.enumSeq i (strCharVals s))
   | .tuple xs => .ok (.enumSeq i xs.toList)
-  | .rangeV lo hi step => do return .enumSeq i (← rangeVals lo hi step)
+  | .rangeV lo hi step => do return .enumSeq i (← rangeVals lo.toInt hi.toInt step.toInt)
   | .listV xs => .ok (.enumSeq i xs.toList)
   | .ntuple _ _ xs => .ok (.enumSeq i xs.toList)
   | .ref a =>
@@ -5101,7 +5113,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                             (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
                         | .rangeV lo hi step =>
                           Run.liftRes st
-                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (← rangeVals lo hi step)))
+                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (← rangeVals lo.toInt hi.toInt step.toInt)))
                         | .ref a =>
                           (match Heap.get? st.world.heap a with
                            | some (.list xs) =>
@@ -5159,7 +5171,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                                   { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
                             (.ref st.world.heap.size)
                         | .rangeV lo hi step =>
-                          Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+                          Run.liftRes st (rangeVals lo.toInt hi.toInt step.toInt) ⤳ fun st xs =>
                           Run.liftRes st (setDedup st.world.heap fuel [] xs) ⤳ fun st es =>
                           .ok { st with world :=
                                   { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
@@ -5231,7 +5243,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | .listV xs => Run.liftRes st (sumFold start xs.toList)
                            | .str t => Run.liftRes st (sumFold start (strCharVals t))
                            | .rangeV lo hi step =>
-                             Run.liftRes st (do sumFold start (← rangeVals lo hi step))
+                             Run.liftRes st (do sumFold start (← rangeVals lo.toInt hi.toInt step.toInt))
                            | .ref a =>
                              (match Heap.get? st.world.heap a with
                               | some (.list xs) => Run.liftRes st (sumFold start xs.toList)
@@ -5269,7 +5281,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         | .ntuple _ _ xs => .ok st (.tuple xs)
                         | .listV xs => .ok st (.tuple xs)
                         | .rangeV lo hi step =>
-                          Run.liftRes st (do return RVal.tuple (← rangeVals lo hi step).toArray)
+                          Run.liftRes st (do return RVal.tuple (← rangeVals lo.toInt hi.toInt step.toInt).toArray)
                         | .ref a =>
                           (match Heap.get? st.world.heap a with
                            | some (.list xs) => .ok st (.tuple xs)
@@ -5313,7 +5325,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         | .ntuple _ _ xs => allocListRun st xs
                         | .listV xs => allocListRun st xs
                         | .rangeV lo hi step =>
-                          Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+                          Run.liftRes st (rangeVals lo.toInt hi.toInt step.toInt) ⤳ fun st xs =>
                           allocListRun st xs.toArray
                         | .ref a =>
                           (match Heap.get? st.world.heap a with
@@ -6143,7 +6155,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         -- snapshot IS the live semantics, and re-iteration is exact
         -- because each `for` materializes afresh)
         | .rangeV lo hi step =>
-          Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+          Run.liftRes st (rangeVals lo.toInt hi.toInt step.toInt) ⤳ fun st xs =>
           execFor m fuel st target xs body.toList
         | .ref a =>
           -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR against the
@@ -6612,7 +6624,7 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
             | .str sv =>
                 execGen m fuel st (.forSeq target (strCharVals sv) body :: .block ss :: k')
             | .rangeV lo hi step =>
-                Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+                Run.liftRes st (rangeVals lo.toInt hi.toInt step.toInt) ⤳ fun st xs =>
                 execGen m fuel st (.forSeq target xs body :: .block ss :: k')
             | .ref ad =>
               (match Heap.get? st.world.heap ad with

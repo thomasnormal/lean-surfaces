@@ -27,6 +27,17 @@ namespace LeanModels.Python
 /-- A heap address (the index into the heap array). -/
 abbrev Addr := Nat
 
+/-- The integer object retained by a range constructor, including bool subclasses. -/
+inductive RangeBound where
+  | int (value : Int)
+  | bool (value : Bool)
+deriving Repr, Inhabited, BEq
+
+/-- The numerical interpretation used by range consumers. -/
+def RangeBound.toInt : RangeBound → Int
+  | .int value => value
+  | .bool value => if value then 1 else 0
+
 /-- Runtime values (docs/memory-model.md v2). -/
 inductive RVal where
   | none
@@ -57,10 +68,16 @@ inductive RVal where
   truthiness are exact; `==`, dict-key/set-element (ranges ARE hashable
   in CPython — `keyRefusal`, never a fake unhashable `TypeError`), and
   the public boundary stay LOUD. `step ≠ 0` by construction (the builtin
-  raises the faithful `ValueError` first). -/
-  | rangeV (lo hi step : Int)
+  raises the faithful `ValueError` first). Constructor fields retain their
+  int-or-bool object; arithmetic consumers use its numerical projection. -/
+  | rangeV (lo hi step : RangeBound)
   | ref   (a : Addr)
 deriving Repr, Inhabited, BEq
+
+/-- The scalar value retained in a range field. -/
+def RangeBound.toRVal : RangeBound → RVal
+  | .int value => .int value
+  | .bool value => .bool value
 
 /-- Runtime environments (locals, and the globals slice of a `World`). -/
 abbrev REnv := List (String × RVal)

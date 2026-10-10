@@ -606,7 +606,7 @@ mutual
           | .ntuple _ _ xs => execScriptFor m fuel st target xs.toList body.toList
           | .str t => execScriptFor m fuel st target (strCharVals t) body.toList
           | .rangeV lo hi step =>
-            Run.bind (Run.liftRes st (rangeVals lo hi step)) fun st xs =>
+            Run.bind (Run.liftRes st (rangeVals lo.toInt hi.toInt step.toInt)) fun st xs =>
             execScriptFor m fuel st target xs body.toList
           | .ref a => execScriptForList m fuel st target a 0 body.toList
           | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable")

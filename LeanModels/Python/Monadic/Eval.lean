@@ -232,7 +232,7 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
   | .tuple xs => pure xs.toList
   | .ntuple _ _ xs => pure xs.toList
   | .listV xs => pure xs.toList
-  | .rangeV lo hi step => liftRes (rangeVals lo hi step)
+  | .rangeV lo hi step => liftRes (rangeVals lo.toInt hi.toInt step.toInt)
   | .ref a => do
       match Heap.get? (← frameHeap) a with
       | some (.list xs) => pure xs.toList
@@ -1134,7 +1134,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
             -- live semantics (strs are immutable).
             | .str s => K.forSeq target (strCharVals s) body.toList
             | .rangeV lo hi step => do
-                let xs ← liftRes (rangeVals lo hi step)
+                let xs ← liftRes (rangeVals lo.toInt hi.toInt step.toInt)
                 K.forSeq target xs body.toList
             -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR, never a snapshot.
             | .ref a => K.forList target a 0 body.toList
@@ -1457,7 +1457,7 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
             | .ntuple _ _ xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
             | .str sv => K.execGen (.forSeq target (strCharVals sv) body :: .block ss :: k')
             | .rangeV lo hi step => do
-                let xs ← liftRes (rangeVals lo hi step)
+                let xs ← liftRes (rangeVals lo.toInt hi.toInt step.toInt)
                 K.execGen (.forSeq target xs body :: .block ss :: k')
             | .ref ad =>
                 match Heap.get? (← frameHeap) ad with

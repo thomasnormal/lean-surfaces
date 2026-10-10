@@ -236,6 +236,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             resolvedG, resolvedGAux, targetNamesG, evalGlobalExpr, evalGlobalExprs,
             evalGlobalDictItems, globalFuel,
             sumArgs, sumFold, rangeLen, rangeValsAux, rangeVals, rangeMake,
+            RangeBound.toInt, RangeBound.toRVal, asRangeBound, rangeBoundRepr,
             seqBudget, shiftBudget, tupleRepeat, seqSlice, seqSliceElems,
             g1DivGate, g1ExecCandidate, g1HeapPure, g1HeapPureList,
             Stmt.defFree, Stmt.defFreeList, topLevelDefFree,

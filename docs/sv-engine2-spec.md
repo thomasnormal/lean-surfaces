@@ -229,8 +229,8 @@ when both sides exist rather than assumed during the schema work.
 | `PendingUpdates` (landed) | Captured target/value or captured named-event target, due time/region | RHS/target capture separated from later publication; origin retained for ordering |
 | `ForkState` (landed) | Group identity, parent key, child keys, deferred release and join barrier | Immediate-child waiting distinct from transitive descendant cancellation |
 | `NamedEventState` (landed) | Resolved identity or null; last occurrence time/validity | Persistent occurrence never masquerades as ordinary value change |
-| `ControlState` | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
-| `CompletionState` | Initialized/draining facts and optional explicit status | Natural completion derived from queues; first explicit request retained |
+| `ControlState` (landed) | Awaiters and named-block activation continuations; derived suspension view | `ProcessState` alone owns explicit suspension; registration survives continuation replacement |
+| `CompletionState` (landed) | Initialized/draining facts and optional explicit status | Natural completion derived from queues; first explicit request retained |
 | `KernelState Frame` | Current time/phase, processes, signals, current/future events, forks, controls, output | No native addresses, cache, allocator, packed-token shortcut or duplicated authority |
 
 ### Landed region vocabulary
@@ -499,6 +499,18 @@ by initialization, and is false during a drain. It does not inspect process
 termination, so sensitized registrations may remain after natural exhaustion.
 The state helpers do not implement queue draining, time advancement, external
 reopening, or the scheduler's completion transition.
+
+### Landed process-control state
+
+`LeanModels/Sv/Engine2/Control.lean` defines await registrations and typed
+named-block activations. Awaiters carry an independent registration key, their
+continuation, target process and resume region. Named-block activations carry a
+declaration/activation identity, entry continuation and saved post-block
+continuation. The `ControlState` lists are membership data only; their derived
+awaiting view does not replace `ProcessState`'s explicit suspension authority.
+Continuation replacement therefore preserves registration identity, while
+cancellation, wakeups, declaration lookup and disable/resume transitions stay
+outside this schema piece.
 
 ### 4.1 Consumer body interface
 

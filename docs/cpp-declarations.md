@@ -11,6 +11,9 @@ flags and compiler linkage telemetry. It does not implement this semantic
 contract; every result retains explicit semantic barriers.
 Its versioned own-template API gates are tooling evidence, not an implementation
 of ISO template/entity rules or an executable admission.
+The [ordinary-declaration bridge](cpp-ordinary-bridge.md) now specifies the
+restricted ISO/frontend assumptions, missing evidence and typed-validator
+obligations for a first function/variable subset. It is not implemented admission.
 
 ## Standard obligations and trusted boundary
 

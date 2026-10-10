@@ -74,6 +74,9 @@ format `cpp-declaration-pricing-2` removes the earlier missing-own-template
 barrier only because applicable queries now gate on explicit API evidence.
 **Every result still retains `semantic-validator-not-implemented`; semantic
 admissions remain zero.** Raw template-ancestor refusals remain conservative.
+The [proposed ordinary bridge](cpp-ordinary-bridge.md) specifies what must be
+established before interpreting these candidates as ISO declaration answers;
+the pricing tool does not implement that bridge.
 The context guard also remains independent: an uninstantiated ordinary member
 can report function kind zero while its enclosing context is dependent.
 

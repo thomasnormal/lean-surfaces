@@ -670,6 +670,7 @@ py_examples_axioms() {
 step  "py-examples-axioms" py_examples_axioms
 step  "extractor-tests" python3 extractors/python/test_extract.py
 cpp_extractor_step
+step "cpp-comparison-tests" python3 extractors/cpp/test_compare_ast.py
 step  "leanpy-cache-tests" python3 tools/test_leanpy.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
 sv_round_trip_step

@@ -6,6 +6,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import unittest
+from unittest.mock import patch
 
 
 CI_DRIVER = Path(__file__).resolve().parent / "ci.sh"
@@ -23,8 +24,34 @@ def driver_function(name):
     return marker + body + terminator
 
 
+def driver_cpp_registration():
+    source = CI_DRIVER.read_text(encoding="utf-8")
+    _, main_marker, main = source.partition(
+        '\nstep  "conflict-markers" conflict_markers\n'
+    )
+    if not main_marker:
+        raise AssertionError("CI driver has no top-level gate sequence")
+    preceding, extractor_marker, following = main.partition("\ncpp_extractor_step\n")
+    if not extractor_marker:
+        raise AssertionError("CI driver has no top-level C++ extractor registration")
+    preceding = preceding.replace(driver_function("py_examples_axioms"), "\n")
+    control_words = {"if", "then", "else", "elif", "fi", "case", "esac",
+                     "for", "while", "until", "select", "do", "done", "function",
+                     "{", "}", "(", ")"}
+    for line in preceding.splitlines():
+        words = shlex.split(line, comments=True)
+        if words and (words[0] in control_words or words[-1] in {"{", "&&", "||", "|", "&"}):
+            raise AssertionError("CI driver C++ registration must be unconditional at top level")
+    comparison = following.splitlines()[0]
+    expected = 'step "cpp-comparison-tests" python3 extractors/cpp/test_compare_ast.py'
+    if comparison != expected:
+        raise AssertionError("CI driver must register the unconditional C++ comparison step")
+    return extractor_marker + comparison + "\n"
+
+
 class CppCiTests(unittest.TestCase):
-    def invoke(self, tools=(), override=None, extractor_status=0):
+    def invoke(self, tools=(), override=None, extractor_status=0,
+               comparison_status=0, include_comparison=False):
         fixtures = """
 set -u
 pass=(); fail=(); skip=(); calls=(); queries=(); env_calls=()
@@ -51,7 +78,11 @@ env() {
 }
 python3() {
   calls+=("${LEANCPP_TEST_LEAN:-}|${LEANCPP_CLANG:-}|$*")
-  return "$CI_EXTRACTOR_STATUS"
+  case "$*" in
+    extractors/cpp/test_extract.py) return "$CI_EXTRACTOR_STATUS" ;;
+    extractors/cpp/test_compare_ast.py) return "$CI_COMPARISON_STATUS" ;;
+    *) echo "unexpected python invocation: $*" >&2; return 98 ;;
+  esac
 }
 """
         report = """
@@ -67,11 +98,14 @@ for invocation in "${env_calls[@]}"; do printf '__ENV__\\t%s\\n' "$invocation"; 
         environment["LEANCPP_TEST_LEAN"] = "0"
         environment["CI_AVAILABLE_TOOLS"] = "|".join(tools)
         environment["CI_EXTRACTOR_STATUS"] = str(extractor_status)
+        environment["CI_COMPARISON_STATUS"] = str(comparison_status)
         if override is not None:
             environment["LEANCPP_CLANG"] = override
+        registration = (driver_cpp_registration() if include_comparison
+                        else "\ncpp_extractor_step\n")
         result = subprocess.run(
             ["bash", "-c", fixtures + driver_function("step")
-             + driver_function("cpp_extractor_step") + "\ncpp_extractor_step\n" + report],
+             + driver_function("cpp_extractor_step") + registration + report],
             env=environment,
             capture_output=True,
             text=True,
@@ -151,6 +185,61 @@ for invocation in "${env_calls[@]}"; do printf '__ENV__\\t%s\\n' "$invocation"; 
         self.assertEqual(observed["pass"], [])
         self.assertEqual(observed["fail"], ["cpp-extractor-tests"])
         self.assertEqual(observed["skip"], [])
+
+    def test_comparison_runs_without_clang_or_lean_admission(self):
+        observed = self.invoke(include_comparison=True)
+        self.assertEqual(observed["queries"], ["clang++"])
+        self.assertEqual(observed["calls"], [
+            ("0", "", ["extractors/cpp/test_compare_ast.py"]),
+        ])
+        self.assertEqual(observed["env_calls"], [])
+        self.assertEqual(observed["pass"], ["cpp-comparison-tests"])
+        self.assertEqual(observed["fail"], [])
+        self.assertEqual(observed["skip"], ["cpp-extractor-tests"])
+        self.assertIn(
+            "=== [cpp-comparison-tests] python3 extractors/cpp/test_compare_ast.py",
+            observed["output"],
+        )
+
+    def test_comparison_failure_is_named_failure_without_clang(self):
+        observed = self.invoke(comparison_status=7, include_comparison=True)
+        self.assertEqual(observed["queries"], ["clang++"])
+        self.assertEqual(observed["calls"], [
+            ("0", "", ["extractors/cpp/test_compare_ast.py"]),
+        ])
+        self.assertEqual(observed["env_calls"], [])
+        self.assertEqual(observed["pass"], [])
+        self.assertEqual(observed["fail"], ["cpp-comparison-tests"])
+        self.assertEqual(observed["skip"], ["cpp-extractor-tests"])
+
+    def test_comparison_still_runs_after_extractor_failure(self):
+        observed = self.invoke(("clang++",), extractor_status=7, include_comparison=True)
+        self.assertEqual(observed["calls"], [
+            ("1", "", ["extractors/cpp/test_extract.py"]),
+            ("0", "", ["extractors/cpp/test_compare_ast.py"]),
+        ])
+        self.assertEqual(observed["env_calls"], [
+            ["LEANCPP_TEST_LEAN=1", "python3", "extractors/cpp/test_extract.py"],
+        ])
+        self.assertEqual(observed["pass"], ["cpp-comparison-tests"])
+        self.assertEqual(observed["fail"], ["cpp-extractor-tests"])
+        self.assertEqual(observed["skip"], [])
+
+    def test_comparison_in_an_unused_helper_is_not_registration(self):
+        source = CI_DRIVER.read_text(encoding="utf-8")
+        comparison = 'step "cpp-comparison-tests" python3 extractors/cpp/test_compare_ast.py\n'
+        changed = "unused_comparison() {\n" + comparison + "}\n" + source.replace(comparison, "")
+        with patch.object(Path, "read_text", return_value=changed):
+            with self.assertRaisesRegex(AssertionError, "unconditional C\\+\\+ comparison"):
+                driver_cpp_registration()
+
+    def test_comparison_inside_a_guard_is_not_unconditional(self):
+        source = CI_DRIVER.read_text(encoding="utf-8")
+        registration = driver_cpp_registration()
+        changed = source.replace(registration, "\nif false; then" + registration + "fi\n")
+        with patch.object(Path, "read_text", return_value=changed):
+            with self.assertRaisesRegex(AssertionError, "unconditional at top level"):
+                driver_cpp_registration()
 
 
 if __name__ == "__main__":

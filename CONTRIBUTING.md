@@ -77,8 +77,11 @@ local Lean build skips become failures when `--require-build` is supplied.
 
 CI installs Clang and checks C++ translation envelopes after the Lean build,
 including their artifact-only Lean ingestion. Hosts without `clang++` (or the
-`LEANCPP_CLANG` override) report an explicit skip. These checks do not claim
-C++ runtime semantics or execution coverage.
+`LEANCPP_CLANG` override) report an explicit skip for that gate. The
+compiler-independent complete-AST diagnostic comparison regressions run on
+every host, even when Clang is missing; a failed comparison test remains a
+failure, not an optional-tool skip. These checks do not claim C++ runtime
+semantics or execution coverage.
 
 CI admits Xcelium with a completed SystemVerilog readiness simulation
 (`harness/sv/xcelium_probe.py`). An explicit license-checkout refusal records an

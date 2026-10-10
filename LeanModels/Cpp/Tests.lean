@@ -95,6 +95,12 @@ def functionEvidenceRow (id canonical : String) (shape : FunctionShapeEvidence) 
     DeclarationEvidenceRow := {evidenceRow id "FunctionDecl" canonical with
   functionShape := some shape}
 
+def contextEvidenceRow (id canonical : String)
+    (semantic lexical : Option String) : DeclarationEvidenceRow :=
+  {evidenceRow id "FunctionDecl" canonical with
+    semanticContext := semantic.map (fun value => {value := value})
+    lexicalContext := lexical.map (fun value => {value := value})}
+
 def identityProbe : DeclarationProbe := {
   ast := .null, metadata := .null
   declarations := [
@@ -107,6 +113,50 @@ def identityProbe : DeclarationProbe := {
   | some declaration =>
       match canonicalTargetCandidates probe identityProbe declaration with
       | .ok candidates => candidates.map Declaration.path == [[0, 0]]
+      | .error _ => false
+  | none => false
+
+def contextProbe : DeclarationProbe := {identityProbe with
+  declarations := [contextEvidenceRow "f1" "f1" (some "ns") (some "ns"),
+    contextEvidenceRow "f2" "f1" (some "ns") (some "ns"),
+    contextEvidenceRow "out" "missing" (some "cls") (some "cls")]}
+
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match semanticContextCandidates probe contextProbe declaration with
+      | .ok candidates => candidates.map Declaration.path == [[0]]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match lexicalContextCandidates probe contextProbe declaration with
+      | .ok candidates => candidates.map Declaration.path == [[0]]
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [1] with
+  | some declaration =>
+      match semanticContextCandidates probe contextProbe declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let conflicting := {contextProbe with
+        declarations := [contextEvidenceRow "f1" "f1" (some "ns") (some "ns"),
+          contextEvidenceRow "f1" "f1" none none]}
+      match semanticContextCandidates probe conflicting declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match repeatedProbe.declarationAtPath [4] with
+  | some declaration =>
+      let repeatedContext := {identityProbe with
+        declarations := [
+          {evidenceRow "next" "VarDecl" "shared" with
+            semanticContext := some {value := "shared"}
+            lexicalContext := some {value := "shared"}}]}
+      match semanticContextCandidates repeatedProbe repeatedContext declaration with
+      | .ok candidates => candidates.map Declaration.path == [[1], [2, 1, 0], [3]]
       | .error _ => false
   | none => false
 #guard match probe.declarationAtPath [0, 1] with

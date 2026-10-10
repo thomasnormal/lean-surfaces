@@ -23,6 +23,10 @@ The same module exposes `functionDefinitionEvidence` for a `FunctionDecl` only
 when all matching rows carry the same parsed local shape; its Boolean is a
 frontend observation, not a proof of an ISO definition, callable body or ODR
 fact.
+`semanticContextCandidates` and `lexicalContextCandidates` likewise consume
+only explicit metadata handles and return occurrence candidates; null context
+is `[]`, while conflicting evidence or an absent target refuses. They do not
+assert complete scope chains or ISO scope membership.
 
 ## Standard obligations and trusted boundary
 

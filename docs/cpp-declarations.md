@@ -23,6 +23,10 @@ The same module exposes `functionDefinitionEvidence` for a `FunctionDecl` only
 when all matching rows carry the same parsed local shape; its Boolean is a
 frontend observation, not a proof of an ISO definition, callable body or ODR
 fact.
+`canonicalRootEvidence` adds the bounded root gate: the root must be
+same-family and idempotent with an explicit null predecessor, while a nonroot
+must carry a predecessor. It still does not follow a complete predecessor
+chain or establish an ISO entity.
 `semanticContextCandidates` and `lexicalContextCandidates` likewise consume
 only explicit metadata handles and return occurrence candidates; null context
 is `[]`, while conflicting evidence or an absent target refuses. They do not

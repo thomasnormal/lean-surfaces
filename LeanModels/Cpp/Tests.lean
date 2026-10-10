@@ -111,6 +111,10 @@ def linkageEvidenceRow (id kind internal formal : String) (language : Option Str
       ("linkage_internal", .string internal),
       ("linkage_formal", .string formal)] ++ languageField)}
 
+def canonicalEvidenceRow (id kind canonical : String) (previous : Option String) :
+    DeclarationEvidenceRow := {evidenceRow id kind canonical with
+  previous := previous.map (fun value => {value := value})}
+
 def identityProbe : DeclarationProbe := {
   ast := .null, metadata := .null
   declarations := [
@@ -119,11 +123,53 @@ def identityProbe : DeclarationProbe := {
     evidenceRow "out" "CXXMethodDecl" "missing"]
 }
 
+def rootEvidenceProbe : DeclarationProbe := {identityProbe with
+  declarations := [canonicalEvidenceRow "f1" "FunctionDecl" "f1" none,
+    canonicalEvidenceRow "f2" "FunctionDecl" "f1" (some "f1"),
+    canonicalEvidenceRow "out" "CXXMethodDecl" "missing" (some "missing")]}
+
 #guard match probe.declarationAtPath [0, 0] with
   | some declaration =>
       match canonicalTargetCandidates probe identityProbe declaration with
       | .ok candidates => candidates.map Declaration.path == [[0, 0]]
       | .error _ => false
+  | none => false
+
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      match canonicalRootEvidence rootEvidenceProbe declaration with
+      | .ok handle => handle.value == "f1"
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [0, 1] with
+  | some declaration =>
+      match canonicalRootEvidence rootEvidenceProbe declaration with
+      | .ok handle => handle.value == "f1"
+      | .error _ => false
+  | none => false
+#guard match probe.declarationAtPath [1] with
+  | some declaration =>
+      match canonicalRootEvidence rootEvidenceProbe declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 1] with
+  | some declaration =>
+      let missingPredecessor := {rootEvidenceProbe with
+        declarations := [canonicalEvidenceRow "f1" "FunctionDecl" "f1" none,
+          canonicalEvidenceRow "f2" "FunctionDecl" "f1" none]}
+      match canonicalRootEvidence missingPredecessor declaration with
+      | .ok _ => false
+      | .error _ => true
+  | none => false
+#guard match probe.declarationAtPath [0, 0] with
+  | some declaration =>
+      let nonIdempotent := {rootEvidenceProbe with
+        declarations := [canonicalEvidenceRow "f1" "FunctionDecl" "f2" none,
+          canonicalEvidenceRow "f2" "FunctionDecl" "f1" (some "f1")]}
+      match canonicalRootEvidence nonIdempotent declaration with
+      | .ok _ => false
+      | .error _ => true
   | none => false
 
 def contextProbe : DeclarationProbe := {identityProbe with

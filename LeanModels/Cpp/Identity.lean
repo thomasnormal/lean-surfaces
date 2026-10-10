@@ -22,6 +22,34 @@ def canonicalTargetCandidates (artifact : Artifact) (probe : DeclarationProbe)
         else
           .ok candidates
 
+def canonicalRootEvidence (probe : DeclarationProbe) (declaration : Declaration) :
+    Except String FrontendHandle :=
+  let rows := probe.declarations.filter fun row => row.id.value == declaration.id
+  match rows with
+  | [] => .error "canonical evidence missing for declaration occurrence"
+  | row :: rest =>
+      if row.kind != declaration.kind then
+        .error "canonical evidence kind disagrees with declaration occurrence"
+      else if rest.any (fun other =>
+          other.kind != row.kind || other.canonical.value != row.canonical.value ||
+            other.previous != row.previous) then
+        .error "canonical evidence rows disagree on root relation"
+      else
+        let roots := probe.declarations.filter fun other => other.id.value == row.canonical.value
+        match roots with
+        | [] => .error "canonical root evidence is absent"
+        | root :: rootRest =>
+            if root.kind != row.kind || root.canonical.value != root.id.value then
+              .error "canonical root evidence is not idempotent"
+            else if root.previous.isSome || rootRest.any (fun other =>
+                other.kind != root.kind || other.canonical.value != root.canonical.value ||
+                  other.previous.isSome) then
+              .error "canonical root must have an explicit null predecessor"
+            else if row.id.value != root.id.value && row.previous.isNone then
+              .error "nonroot canonical evidence requires a predecessor"
+            else
+              .ok root.id
+
 def functionDefinitionEvidence (probe : DeclarationProbe) (declaration : Declaration) :
     Except String Bool :=
   let rows := probe.declarations.filter fun row => row.id.value == declaration.id

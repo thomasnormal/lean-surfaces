@@ -46,13 +46,78 @@ environment into the probe invocation. Do not combine it with another AST dump
 action. Record the full command, dependency hashes before/after translation,
 compiler/header/library/plugin/source hashes, diagnostics, exit status, time
 and memory externally. A zero exit and parseable JSON are required but are not
-semantic admission. Compiler diagnostics prevent successful artifact
+semantic admission. Compiler error diagnostics prevent successful artifact
 publication; callers must discard output on any nonzero exit or parse failure.
 
-The [proposed capture contract](../../docs/cpp-provenance.md) separates a
+The [capture provenance contract](../../docs/cpp-provenance.md) separates a
 versioned, exact-byte launch/input receipt from stronger input-world closure.
-It is specification only: no capture runner or receipt loader is implemented,
-and the existing schema-0.3 wrapper has not acquired provenance fields.
+The optional observational runner below implements positive-input checks;
+no receipt loader or input-world closure mechanism is implemented, and the
+existing schema-0.3 wrapper has not acquired provenance fields.
+
+### Observational capture
+
+`capture_probe.py` runs the pinned plugin in one frontend action and publishes
+a new `cpp-probe-capture-0.1` bundle only after successful completion, strict
+JSON wrapper/header checks and matching positive-input/image checks. It is
+separate from `extract.py`, literal probe ingestion and query pricing. It
+requires Linux, Clang 21.1.8 and an externally built compatible plugin; it does
+not build or download any toolchain image.
+
+```sh
+python3 extractors/cpp/capture_probe.py original.cpp \
+  --clang "$LEANCPP_CLANG" --plugin "$LEANCPP_PROBE_LIBRARY" \
+  --runtime-library "$LEANCPP_LIBS/libclang-cpp.so.21.1" \
+  --runtime-library "$LEANCPP_LIBS/libLLVM.so.21.1" \
+  --out-dir /outside/the/repo/probe-capture \
+  --timeout 300 --memory-mib 16384 -- -I/path/to/subject/includes
+python3 extractors/cpp/test_capture_probe.py
+```
+
+The output directory must not already exist, including as a dangling symlink;
+its parent must exist. Successful publication is an atomic no-overwrite
+directory rename, not an access-controlled immutable snapshot. `probe.json`
+and `stderr.txt` retain exact frontend bytes; `inputs.d`, the discovery depfile,
+per-command outputs/process receipts and `capture.json` retain the observation
+trail. Once staging exists, failures retain it with `failure.json` and never
+publish it as the requested successful bundle. Preflight refusals may happen
+before there is a staging directory.
+
+Subject flags after `--` follow the existing strict single-TU C++23 allow-list,
+with their order preserved. This validates launch flags, not source-form
+exclusion: module syntax may parse, and `ordinary_source_profile` remains
+unestablished even when every observed `owning_module` is null. Source arguments
+starting with `@` or `-` refuse; use `./` for a literal filename with that prefix.
+The effective frontend environment is constructed
+from fixed `PATH`, `LC_ALL=C`, `TZ=UTC` and allowed include/platform variables;
+absent `SOURCE_DATE_EPOCH` becomes `0`, while a present-empty value stays empty.
+Driver overrides and dynamic-loader injection refuse; unrelated inherited
+variables and credentials are not copied into frontend launches or receipts.
+
+Defaults are 300 seconds per subprocess and 16,384 MiB per child address space;
+an inherited per-file size limit is 4 GiB. These are not aggregate disk limits.
+Resource bounds and Linux child RSS measurements do not bound the parent JSON
+parser or establish hermeticity. The supported launcher is the standalone,
+single-threaded CLI; detected additional Python threads refuse before launch.
+This guard does not establish absence of native threads or make concurrent
+library calls supported. Compiler/plugin and the supplied runtime
+library files are **declared images**, not an observed dynamic-loader closure;
+even an empty declared library list leaves image closure unestablished.
+The resource-directory manifest records symlinks without traversing symlink
+directories. All input-world, actual-loaded-image and effective-cc1 closure
+statuses stay unestablished.
+
+Exit 0 means **observed positive-input stability under the trusted launcher**,
+not producer authentication, complete bytes read, replay safety or successful
+Lean ingestion. The strict runner validates JSON and wrapper/header pins, not
+all typed declaration fields. No graph/row consensus, ISO declaration query,
+cross-TU entity relation or executable semantics follows. A bounded capture
+census attempted one original registered TU/profile from each of TinyXML2,
+nlohmann/json and read-only Mox: two observational bundles were published;
+strict Mox retained its frontend rejection. This is not a repository-wide TU
+sweep or new literal/semantic admission. There is no CI wiring in this item;
+the optional real-toolchain test reports an explicit skip when matching
+compiler/plugin inputs are absent.
 
 ### Evidence contract
 

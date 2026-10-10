@@ -1,7 +1,7 @@
-# C++ declaration evidence — proposed capture provenance
+# C++ declaration evidence — capture provenance
 
-2026-10-10. **Specification only; no new capture runner, loader, semantic
-query or runtime admission.** This supplies the missing process/input boundary
+2026-10-10. **Optional observational runner; no receipt loader, semantic query
+or runtime admission.** This specifies the missing process/input boundary
 between [literal probe observations](cpp-declaration-pricing.md) and the
 [ordinary ISO/frontend bridge](cpp-ordinary-bridge.md). The current
 `cpp-canonical-probe-0.3` wrapper and `load_cpp_probe` remain unchanged.
@@ -20,7 +20,7 @@ AST production, predefined macros, version and target are separate processes.
 It passes the inherited environment while storing only a projection, and its
 before/after checks do not establish an immutable filesystem. Neither an
 existing Artifact nor an existing DeclarationProbe can be relabeled as the
-proposed capture below. Their literal-data and execution-refusal behavior stays
+capture below. Their literal-data and execution-refusal behavior stays
 as specified in [the translation contract](cpp-translation.md).
 
 Three obligations must stay separate:
@@ -37,16 +37,16 @@ hash checks must not silently discharge them. Cryptographic digests bind bytes
 under the stated integrity assumption, not a compiler process or a signature.
 No new Lean axiom or theorem about a synthetic program supplies these bridges.
 
-## Proposed versioned capture bundle
+## Versioned capture bundle
 
 The proposed schema is **`cpp-probe-capture-0.1`**, with profile
 **`cpp23-clang-probe-capture-0.1`** and subject edition **C++23**. These names
-are reserved by this specification, not accepted by either current loader.
-Initially it uses the existing Clang/LLVM **21.1.8** plugin schema **0.3**.
+are emitted by the optional runner, not accepted by either current loader.
+The initial runner uses the existing Clang/LLVM **21.1.8** plugin schema **0.3**.
 The plugin build language remains separate from the subject language.
 
 Keep an exact-byte `probe.json` and a separate strict `capture.json` receipt in
-an immutable publication bundle. Retain stderr and dependency output as
+a no-overwrite publication bundle. Retain stderr and dependency output as
 separately bound byte artifacts too. Do not normalize/re-serialize stdout and
 then call its digest the digest of the frontend's original bytes. This avoids
 duplicating a large AST inside two envelopes. Bundle-relative artifact paths
@@ -87,16 +87,87 @@ file, default driver configuration or second source is silently expanded.
 If effective cc1 arguments are not directly witnessed, record that limitation;
 a separate diagnostic driver's rendering is not the actual cc1 transcript.
 
-The initial capture profile follows the existing strict single-TU C++23 flag
-policy, with explicitly pinned plugin options. Modules/header units, PCH/GCH,
-unaccounted VFS remapping and additional frontend actions are outside it.
+The implemented capture profile validates the existing strict single-TU C++23
+**launch flag policy**, with explicitly pinned plugin options. Explicit
+module/header-unit, PCH/GCH, VFS-remapping and additional-action configuration
+flags are not admitted. This is not a source-form exclusion check: a source
+module declaration or other excluded form may still parse under these flags.
+The receipt's `ordinary_source_profile` therefore remains **unestablished**.
+Even uniformly null `owning_module` observations would not prove that the
+translation unit is nonmodule or meets the ordinary bridge's source profile.
 Declarations from templates or headers remain in the complete raw output;
 capture must not filter them away to satisfy a later ordinary-declaration gate.
 Template/source-form exclusions remain query-local semantic obligations.
 
+## Implemented observational slice
+
+The standard-library-only `extractors/cpp/capture_probe.py` runner is optional,
+Linux-only and separate from extraction, pricing and Lean ingestion. It does
+not compile or obtain the plugin, discover its ABI-safe runtime closure or
+execute the subject program. Supply an explicitly pinned compiler/plugin and
+any declared runtime-library paths:
+
+```sh
+python3 extractors/cpp/capture_probe.py subject.cpp \
+  --clang /path/to/clang++ --plugin /path/to/canonical_probe.so \
+  --runtime-library /path/to/libclang-cpp.so.21.1 \
+  --runtime-library /path/to/libLLVM.so.21.1 \
+  --out-dir /path/to/new-capture --timeout 300 --memory-mib 16384 \
+  -- -I/path/to/subject/includes
+python3 extractors/cpp/test_capture_probe.py
+```
+
+The output parent must exist; an existing destination, including a dangling
+symlink, refuses. Publication uses a Linux atomic no-overwrite directory rename
+after validation; it neither makes outputs read-only nor protects against
+adversarial concurrent filesystem mutation. After staging has been created, a
+failure retains it with a named `failure.json` and any available exact outputs
+and process observations. There is no successful requested bundle on failure.
+Earlier preflight failures have no staging artifact to retain.
+
+Successful bundles include exact `probe.json`, `stderr.txt`, actual `inputs.d`,
+discovery depfile, auxiliary observation outputs and per-command process
+receipts, together with `capture.json`. The runner checks strict UTF-8/JSON and
+probe wrapper/header pins before publication; the full typed declaration-row
+validator remains the separate Lean loader. Version, target, resource-directory
+and predefined-macro queries are separate launches with retained command and
+status records, not a transcript of the actual probe cc1 invocation.
+
+The effective environment policy is `controlled-clang-environment-0.1`:
+fixed `PATH`, `LC_ALL=C` and `TZ=UTC`, plus the existing extractor's allowed
+include/platform variables. An absent `SOURCE_DATE_EPOCH` defaults to `0`;
+present-empty remains distinct. Driver overrides and loader-injection variables
+refuse; the rest of the inherited host environment is not passed or serialized.
+Source argument spelling, ordered allowed flags and cwd are retained. A source
+argument beginning with `@` or `-` refuses as a response-file/option/stdin
+ambiguity; a literal filename with that prefix can use `./`. Only the strict
+existing single-TU C++23 subject-flag policy is accepted after `--`; validation
+does not establish the separate ordinary/nonmodule source profile.
+
+The compiler, plugin, declared runtime-library files, producer sources and
+Python executable receive before/after image checks. **Declared images are not
+observed loaded images.** The list can be empty only with image closure still
+unestablished. Resource-directory paths and walked entries are checked too;
+symlink directory targets are not traversed. Inputs absent from discovery,
+actual loader/search state, source-form exclusion and producer authenticity
+remain outside the check.
+No caller claim promotes those limits into closure evidence.
+
+Defaults are 300 seconds per frontend subprocess and 16,384 MiB per process
+address space, with bounds inherited by its descendants. An inherited 4 GiB
+per-file size limit is not an aggregate disk-space bound. Child wait4 resource
+usage is labeled separately from the parent runner. The parent parser's memory
+is not limited by `--memory-mib`; these are not whole-capture resource bounds.
+The supported launcher is the standalone single-threaded CLI. Additional
+detected Python threads refuse before launch because child resource setup uses
+the post-fork callback; this guard neither proves absence of native threads nor
+supports concurrent library calls.
+Exit 0 reports observed positive-input stability, never input-world closure,
+hermetic replay, receipt ingestion, declaration admission or C++ execution.
+
 ## Capture checks and stronger input-world evidence
 
-The proposed observational launcher performs these checks, without claiming
+The observational launcher performs these checks, without claiming
 that they implement a filesystem snapshot:
 
 1. Validate the profile and controlled launch environment. Pin the capture
@@ -113,7 +184,7 @@ that they implement a filesystem snapshot:
    tool images. Missing, unreadable, changed or unparseable inputs refuse.
    A zero exit with malformed output is failure; parseable partial stdout from
    a failed/timed-out process is also failure.
-5. Bind the receipt to the immutable outputs and publish atomically. Failed
+5. Bind the receipt to the exact outputs and publish atomically. Failed
    validation leaves no successful bundle. Output aliases, partial publication,
    mutated referenced artifacts and unsafe relative paths refuse.
 
@@ -155,7 +226,9 @@ ordinary ISO/source-form bridge. None is inferred from provenance, and no
 cross-process/cross-TU entity relation or ODR claim follows from payload hashes.
 Execution remains behind `rung-0:no-executable-semantics`.
 
-Before shipping the observational runner, focused tests must cover:
+The observational runner's focused tests and any later receipt-binding loader
+must distinguish the following cases; capture-only validation must not be
+relabeled as completed literal ingestion or stronger closure:
 
 | Case | Required outcome |
 | --- | --- |
@@ -174,8 +247,12 @@ must report attempted TUs, unavailable inputs, strict frontend rejection,
 timeout, parse/binding/stability refusal, successful observed capture and
 literal embedding **separately**, with time/RSS/bytes and complete pin receipts.
 Input-world closure, tooling query eligibility, semantic queries and runtime
-verdicts are separate counters, not relabeled captures. No new sweep has run
-for this specification. Historical source/body/declaration-only counts remain
+verdicts are separate counters, not relabeled captures. The initial bounded
+capture census attempts one original registered TU/profile per corpus, not all
+TUs: TinyXML2 and nlohmann/json publish observational bundles; strict Mox
+retains its anonymous-struct/nested-anonymous-type frontend rejection. It does
+not perform new literal embedding or establish input-world/source-profile
+closure. Historical source/body/declaration-only counts remain
 XML **205/202/3**, JSON **1,572/963/609**; strict Mox refusal and semantic/runtime
 admissions of **zero** are unchanged.
 
@@ -192,6 +269,6 @@ development branch:
 - [PPCallbacks.h](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/include/clang/Lex/PPCallbacks.h): final include/existence observations are not a complete filesystem lookup trace.
 
 These references support a tooling contract, not independent compiler
-conformance. The next implementation slice is an optional observational
-capture runner and its adversarial tests; strict receipt ingestion and any
-input-world closure mechanism remain separately reviewable items.
+conformance. The initial optional runner remains observational; strict receipt
+ingestion and any input-world closure mechanism are separately reviewable
+future items.

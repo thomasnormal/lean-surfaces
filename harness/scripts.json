@@ -272,7 +272,22 @@
   {
     "file": "harness/scripts/ann_module_script.py",
     "expect": "unsupported",
-    "note": "CPython prints 3; a MODULE-scope annotation IS evaluated and writes __annotations__, so the function-body rewrite does not extend here"
+    "note": "The module-scope annotation evaluates the builtin int type; only scalar literal annotations are admitted"
+  },
+  {
+    "file": "harness/scripts/ann_module_value_script.py",
+    "expect": "match",
+    "note": "Simple module-scope annotated assignments with scalar literal annotations lower to assignment followed by annotation evaluation"
+  },
+  {
+    "file": "harness/scripts/ann_module_effect_script.py",
+    "expect": "unsupported",
+    "note": "Effectful module annotations stay loud because the closed-function initializer cannot propagate annotation failures"
+  },
+  {
+    "file": "harness/scripts/ann_module_table_script.py",
+    "expect": "unsupported",
+    "note": "An explicitly bound annotation table is observable through aliases, so its omitted mutation must remain loud"
   },
   {
     "file": "harness/scripts/int_string_script.py",

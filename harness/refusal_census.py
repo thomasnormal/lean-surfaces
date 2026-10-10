@@ -177,8 +177,15 @@ w("stmt.AnnAssign", """
 x: int = 1
 print(x)
 """, "REFUSE",
-  "MODULE scope: the annotation IS evaluated here and `__annotations__` is "
-  "written, so §L49 rung 2's rewrite deliberately stops short of it")
+  "MODULE scope evaluates its annotation; the builtin type object is not "
+  "a scalar literal annotation and remains outside the value tier")
+w("stmt.AnnAssign-forward", """
+x: "int" = 1
+print(x)
+""", "MATCH",
+  "A forward-reference string annotation evaluates after the value is "
+  "stored; its unobservable annotation-table store is omitted only when "
+  "the module never explicitly binds __annotations__")
 w("stmt.AnnAssign-local", """
 def f(n):
     x: int = n + 1

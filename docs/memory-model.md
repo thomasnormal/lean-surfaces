@@ -1959,7 +1959,8 @@ That is the only pre-existing expectation the inch moves.
 ## Annotated assignment (`AnnAssign`, §L49 rung 2)
 
 `x: int = 1` in a FUNCTION BODY is an ordinary assignment, rewritten to
-one at extraction. Everywhere else it stays loud. The split is not a
+one at extraction. Module scope admits only the scalar-literal subset below;
+class scope stays loud. The split is not a
 narrowing of convenience — it is where CPython itself puts a semantic
 boundary, and the census measured it rather than reading PEP 526 for it.
 
@@ -1999,10 +2000,10 @@ division by zero, all identical, because none of them runs.
   `__annotations__` entry but still evaluate the annotation, so they are
   their own refusal.
 
-**As built.** One extractor clause, no interpreter change, no proof-layer
+**Function-scope lowering.** One extractor clause, no interpreter change, no proof-layer
 change, no new AST node: a function-body `AnnAssign` with `simple == 1`
-and a value converts to the `Assign` node it already is. The refusal
-`py_kind` splits three ways — `AnnAssign:module-scope`,
+and a value converts to the `Assign` node it already is. The original refusal
+`py_kind` split three ways — `AnnAssign:module-scope`,
 `AnnAssign:no-value`, `AnnAssign:non-simple-target` — so the survey's
 static telemetry ranks them separately, which is the point of splitting
 them.
@@ -2024,14 +2025,29 @@ so the census already counted `x` as bound before the rewrite existed —
 the rewrite tells it nothing new, and the value-less form was already
 counted as a binding too, which is exactly CPython's localisation.
 
-**Owed, with its price.** Module scope is admissible as a TWO-statement
-ingestion rewrite — the assign, then the annotation as an expression
-statement, in CPython's measured order — because `__annotations__` is
-unobservable in tier (every module dunder but `__name__` refuses
-loudly). It is not taken here because rewriting one statement into two
-moves `Module.topLevel` indices, which the proof campaign's pins are
-stated against (`nth n sbB`), and that blast radius belongs to a pass
-that budgets for it.
+**As built (module scalar-literal subset, 2026-10-10).** A simple module-scope
+target with a value and a literal string, integer, Boolean, or `None`
+annotation lowers to TWO statements: the assign, then the annotation as an
+expression statement. This preserves CPython's value/store/annotation order.
+Statement-list conversion splices both nodes through module control shells;
+function-local annotations remain erased, including effectful expressions.
+
+The annotation-table store is omitted ONLY if the whole-module binding census
+finds no explicit binding or deletion of `__annotations__`, in any scope or
+binding form. Otherwise `AnnAssign:annotations-bound` refuses the lowering.
+Merely rejecting a dunder read is insufficient: `__annotations__ = table = {}`
+makes the omitted mutation observable through `table`, and rebinding the table
+to `None` changes CPython's exception behavior. Future-annotations imports,
+class annotations, value-less annotations, and nonsimple targets stay loud.
+
+Nonliteral annotations refuse as `AnnAssign:annotation-expression`, even when
+their expression is independently in tier. The closed-function initializer
+rolls back failing expression statements without propagating their exceptions;
+lowering `x: (1 // 0) = 3` would otherwise retain `x = 3` for a subsequent
+function call while CPython fails during import. Restricting annotations to
+scalar literals avoids widening that known initialization boundary. The common
+`x: "int" = 1` spelling is admitted; `x: int = 1` still refuses, since builtin
+type objects are not modeled values. No interpreter or proof judgment changes.
 
 ## `yield from` (pass 5 — the promotion arm returns to gen_moves)
 

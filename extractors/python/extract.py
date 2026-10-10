@@ -102,6 +102,7 @@ UNSUPPORTED_TEXT_LIMIT = 200
 # one flag per lowering, and the name set carries the reason.
 _MODULE_BINDS_STR = False           # f-strings: `{x}` lowers to `str(x)`
 _MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a))`
+_MODULE_ANNOTATIONS_BOUND = False
 
 FSTRING_LOWERING_NAMES = ("str",)
 DISPLAY_LOWERING_NAMES = ("list", "tuple")
@@ -1166,6 +1167,50 @@ def _lambda_nested_def(node, enclosing):
     return out
 
 
+def convert_stmt_list(nodes, enclosing=None, module_scope=False,
+                      import_guard=False, func_scope=False):
+    converted = []
+    for node in nodes:
+        nested = _lambda_nested_def(node, enclosing) if enclosing is not None else None
+        value = nested if nested is not None else convert_stmt(
+            node, enclosing=enclosing, module_scope=module_scope,
+            import_guard=import_guard, func_scope=func_scope)
+        if isinstance(value, list):
+            converted.extend(value)
+        else:
+            converted.append(value)
+    return converted
+
+
+def convert_ann_assign(node, module_scope=False, func_scope=False):
+    if node.simple and node.value is not None:
+        assignment = {
+            "kind": "Assign",
+            "span": span(node),
+            "targets": [convert_expr(node.target)],
+            "value": convert_expr(node.value),
+        }
+        if func_scope:
+            return assignment
+        if module_scope and _MODULE_ANNOTATIONS_BOUND:
+            return unsupported(node, "AnnAssign:annotations-bound")
+        if module_scope and not (
+                isinstance(node.annotation, ast.Constant)
+                and (node.annotation.value is None
+                     or isinstance(node.annotation.value, (str, int, bool)))):
+            return unsupported(node, "AnnAssign:annotation-expression")
+        if module_scope:
+            return [assignment, {
+                "kind": "Expr",
+                "span": span(node.annotation),
+                "value": convert_expr(node.annotation),
+            }]
+    return unsupported(node, "AnnAssign:" + (
+        "no-value" if node.value is None
+        else "non-simple-target" if not node.simple
+        else "module-scope"))
+
+
 def convert_stmt(node, enclosing=None, module_scope=False,
                  import_guard=False, func_scope=False):
     # `import_guard` (Pass 0, docs/memory-model.md paragraph "Import
@@ -1240,9 +1285,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             # (a single-target `name = lambda …` assign likewise); one
             # nested deeper (inside an if/loop) stays a plain
             # FunctionDef/Lambda node, which ingestion refuses loudly
-            "body": [_lambda_nested_def(s, node)
-                     or convert_stmt(s, enclosing=node, func_scope=True)
-                     for s in node.body],
+            "body": convert_stmt_list(node.body, enclosing=node,
+                                       func_scope=True),
         }
         if _has_global(node):
             out["has_global"] = True
@@ -1361,7 +1405,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "name": node.name,
             "class_unsupported": ", ".join(reasons) if reasons else None,
             "creation_effects": creation_effects,
-            "body": [convert_stmt(s) for s in node.body],
+            "body": convert_stmt_list(node.body),
         }
         if namedtuple_base is not None:
             out["namedtuple_base"] = namedtuple_base
@@ -1393,38 +1437,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         }
 
     if isinstance(node, ast.AnnAssign):
-        # §L49 rung 2 (docs/memory-model.md paragraph "annotated
-        # assignment"): in a FUNCTION BODY, PEP 526 does not evaluate the
-        # annotation at all -- MEASURED on CPython 3.9.19, `x: boom() = 1`
-        # inside a def runs clean while the same line at module scope
-        # raises -- so a simple-name annotated assignment WITH a value is
-        # an ordinary `Assign`, exactly, and the rewrite carries no
-        # condition. The static binding census already counts AnnAssign
-        # targets (`_target_bound_names` via the AugAssign/For clause), so
-        # the rewrite tells it nothing new.
-        #
-        # The other three shapes stay LOUD, each for a measured reason:
-        #   module/class scope -- the annotation IS evaluated (its
-        #     NameError/side effect is observable) and `__annotations__`
-        #     is written, AFTER the value is stored;
-        #   no value -- `x: int` binds nothing yet LOCALISES the name, so
-        #     dropping it would read a module global where CPython raises
-        #     UnboundLocalError: a SILENT WRONG ANSWER, the one shape that
-        #     must never be narrowed away quietly;
-        #   non-simple target -- `(x)`, `c.a`, `d[k]` (`simple == 0`) get
-        #     no `__annotations__` entry but still evaluate the
-        #     annotation.
-        if func_scope and node.simple and node.value is not None:
-            return {
-                "kind": "Assign",
-                "span": span(node),
-                "targets": [convert_expr(node.target)],
-                "value": convert_expr(node.value),
-            }
-        return unsupported(node, "AnnAssign:" + (
-            "no-value" if node.value is None
-            else "non-simple-target" if not node.simple
-            else "module-scope"))
+        return convert_ann_assign(node, module_scope=module_scope,
+                                  func_scope=func_scope)
 
     if isinstance(node, ast.AugAssign):
         op = type(node.op).__name__
@@ -1443,8 +1457,10 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "kind": "While",
             "span": span(node),
             "test": convert_expr(node.test),
-            "body": [convert_stmt(s, module_scope=module_scope, func_scope=func_scope) for s in node.body],
-            "orelse": [convert_stmt(s, module_scope=module_scope, func_scope=func_scope) for s in node.orelse],
+            "body": convert_stmt_list(node.body, module_scope=module_scope,
+                                       func_scope=func_scope),
+            "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+                                         func_scope=func_scope),
         }
 
     if isinstance(node, ast.For):
@@ -1455,10 +1471,10 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "span": span(node),
             "target": convert_expr(node.target),
             "iter": convert_expr(node.iter),
-            "body": [convert_stmt(s, module_scope=module_scope, func_scope=func_scope)
-                     for s in node.body],
-            "orelse": [convert_stmt(s, module_scope=module_scope, func_scope=func_scope)
-                       for s in node.orelse],
+            "body": convert_stmt_list(node.body, module_scope=module_scope,
+                                       func_scope=func_scope),
+            "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+                                         func_scope=func_scope),
         }
 
     if isinstance(node, ast.If):
@@ -1466,8 +1482,10 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "kind": "If",
             "span": span(node),
             "test": convert_expr(node.test),
-            "body": [convert_stmt(s, module_scope=module_scope, func_scope=func_scope) for s in node.body],
-            "orelse": [convert_stmt(s, module_scope=module_scope, func_scope=func_scope) for s in node.orelse],
+            "body": convert_stmt_list(node.body, module_scope=module_scope,
+                                       func_scope=func_scope),
+            "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+                                         func_scope=func_scope),
         }
 
     if isinstance(node, ast.Assert):
@@ -1547,8 +1565,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                                "(tuple pattern / attribute)")
             if h.name is not None:
                 reasons.append("'as' binding")
-            handler_body = [convert_stmt(s, module_scope=module_scope, func_scope=func_scope)
-                            for s in h.body]
+            handler_body = convert_stmt_list(h.body, module_scope=module_scope,
+                                             func_scope=func_scope)
         if node.orelse:
             reasons.append("'else' clause")
         if node.finalbody:
@@ -1568,9 +1586,9 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         return {
             "kind": "Try",
             "span": span(node),
-            "body": [convert_stmt(s, module_scope=module_scope, func_scope=func_scope,
-                                  import_guard=guard)
-                     for s in node.body],
+            "body": convert_stmt_list(node.body, module_scope=module_scope,
+                                       func_scope=func_scope,
+                                       import_guard=guard),
             "exc_name": exc_name,
             "handler": handler_body,
             "try_unsupported": ", ".join(reasons) if reasons else None,
@@ -1873,12 +1891,13 @@ def process_file(source_path, companion_dir, out=None):
 
     blocks = scan_lean_blocks(text.splitlines(), source_path)
 
-    # The two lowerings' shadow censuses (see `binds_any_name`): both are
-    # whole-module, so both are decided once, here, before any expression
+    # The lowerings' shadow censuses (see `binds_any_name`) are
+    # whole-module, so they are decided once, here, before any expression
     # is converted.
-    global _MODULE_BINDS_STR, _MODULE_SHADOWS_DISPLAY
+    global _MODULE_BINDS_STR, _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
     _MODULE_BINDS_STR = binds_any_name(tree, FSTRING_LOWERING_NAMES)
     _MODULE_SHADOWS_DISPLAY = binds_any_name(tree, DISPLAY_LOWERING_NAMES)
+    _MODULE_ANNOTATIONS_BOUND = binds_any_name(tree, ("__annotations__",))
 
     source_rel = rel_posix(source_path)
     json_rel = os.path.splitext(source_rel)[0] + ".json"
@@ -1890,8 +1909,7 @@ def process_file(source_path, companion_dir, out=None):
         "source_file": source_rel,
         "source_sha256": source_sha256,
         "module": {"kind": "Module",
-                   "body": [convert_stmt(s, module_scope=True)
-                            for s in tree.body]},
+                   "body": convert_stmt_list(tree.body, module_scope=True)},
         "lean_blocks": blocks,
     }
 

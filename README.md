@@ -30,8 +30,11 @@ the 640-digit admission across `str`, `print`, f-strings, container and range
 rendering, and bare `%s`/`%r`/`%d`; larger magnitudes refuse before conversion.
 Range construction retains Boolean fields for faithful rendering, while
 numerical consumers use their integer projections.
-The executable differential suite has 2,250 cases: 1,973 agree with CPython and
-277 refuse loudly. The narrower proof interpreter agrees on 1,895 cases and
+Module-scope annotated assignments admit simple targets with scalar literal
+annotations, including forward-reference strings; nonliteral annotations and
+explicit annotation-table bindings remain loud.
+The executable differential suite has 2,253 cases: 1,976 agree with CPython and
+277 refuse loudly. The narrower proof interpreter agrees on 1,898 cases and
 refuses 355; neither run has a mismatch in the recorded suite.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).

@@ -33,6 +33,11 @@ exception checks with symbolic proofs: `int("1_024") + offset` equals
 `1024 + offset`, and a signed, whitespace-padded literal yields `offset - 2048`.
 Non-ASCII strings, more than 640 decimal digits, and explicit bases stay loud.
 
+[`ann_lab`](ann_lab/) proves that a module global annotated with a forward-reference
+string remains available to ordinary symbolic function proofs. Its kernel checks
+also pin the refusal of effectful module annotations; function-local annotation
+erasure remains independent of that module-scope restriction.
+
 [`decimal_render`](decimal_render/) proves that `str(value)` returns the exact
 decimal string when `value.natAbs < 10 ^ 640`. The same magnitude admission
 guards integer fields in container and range rendering and bare `%s`/`%r`/`%d`;

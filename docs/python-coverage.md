@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 2250 | 1973 | 0 | 277 |
+| 2253 | 1976 | 0 | 277 |
 
-Of the 1973 rows the model decides, 1973 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 1976 rows the model decides, 1976 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 2250 | 1895 | 0 | 355 |
+| 2253 | 1898 | 0 | 355 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-138 witnesses: 107 MATCH, 31 REFUSE.
+139 witnesses: 108 MATCH, 31 REFUSE.
 
 ### `stmt`
 
@@ -39,7 +39,8 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Delete` | MATCH | bare-name del at module scope |
 | `Assign` | MATCH |  |
 | `AugAssign` | MATCH |  |
-| `AnnAssign` | REFUSE | unsupported statement 'AnnAssign:module-scope' |
+| `AnnAssign` | REFUSE | unsupported statement 'AnnAssign:annotation-expression' |
+| `AnnAssign-forward` | MATCH | A forward-reference string annotation evaluates after the value is stored; its unobservable annotation-table … |
 | `AnnAssign-local` | MATCH | FUNCTION scope: PEP 526 never evaluates the annotation, so this is an ordinary assign — was REFUSE, landed by… |
 | `AnnAssign-novalue` | REFUSE | unsupported statement 'AnnAssign:no-value' |
 | `For` | MATCH |  |

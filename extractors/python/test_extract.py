@@ -489,6 +489,175 @@ class ExtractorTests(unittest.TestCase):
         kinds = [st["kind"] for st in env["module"]["body"]]
         self.assertEqual(kinds, ["Assign", "Assign", "FunctionDef"])
 
+    def test_module_annotation_with_value_splices_assignment_then_annotation(self):
+        env = self._envelope_of(
+            "x: 1 = 1\n"
+            "if True:\n"
+            "    y: 2 = 2\n")
+        body = env["module"]["body"]
+        self.assertEqual([st["kind"] for st in body], ["Assign", "Expr", "If"])
+        self.assertEqual(body[0]["targets"][0]["id"], "x")
+        self.assertEqual(body[1]["value"]["kind"], "Constant")
+        self.assertEqual([st["kind"] for st in body[2]["body"]],
+                         ["Assign", "Expr"])
+
+    def test_module_annotations_flatten_in_compound_statement_bodies(self):
+        for source, branches in (
+                ("if True:\n    x: 1 = 7\nelse:\n    x: 2 = 8\n",
+                 ("body", "orelse")),
+                ("while False:\n    x: 1 = 7\nelse:\n    x: 2 = 8\n",
+                 ("body", "orelse")),
+                ("for index in []:\n    x: 1 = 7\nelse:\n    x: 2 = 8\n",
+                 ("body", "orelse")),
+                ("try:\n    x: 1 = 7\nexcept ValueError:\n    x: 2 = 8\n",
+                 ("body", "handler"))):
+            with self.subTest(source=source):
+                statement = self._envelope_of(source)["module"]["body"][0]
+                for branch in branches:
+                    body = statement[branch]
+                    self.assertEqual([item["kind"] for item in body],
+                                     ["Assign", "Expr"])
+                    self.assertEqual(body[0]["targets"][0]["id"], "x")
+                    self.assertEqual(body[1]["value"]["kind"], "Constant")
+                    self.assertEqual(body[1]["value"]["value"]["type"], "int")
+                    self.assertIn(body[1]["value"]["value"]["repr"], ("1", "2"))
+
+    def test_module_annotation_calls_are_loud_after_value_store(self):
+        source = (
+            "events = []\n"
+            "def value():\n    events.append('value')\n    return 7\n"
+            "def annotation(value):\n    events.append(value)\n    return 9\n"
+            "x: annotation(x) = value()\n")
+        namespace = {}
+        exec(compile(source, "<annotation-order>", "exec"), namespace)
+        self.assertEqual(namespace["events"], ["value", 7])
+        self.assertEqual(namespace["x"], 7)
+        self.assertEqual(namespace["__annotations__"], {"x": 9})
+        body = self._envelope_of(source)["module"]["body"]
+        self.assertEqual(body[-1]["kind"], "Unsupported")
+        self.assertEqual(body[-1]["py_kind"], "AnnAssign:annotation-expression")
+
+    def test_module_scalar_annotations_preserve_rhs_evaluation_order(self):
+        for annotation, value, kind in (("'tag'", "tag", "str"),
+                                        ("42", 42, "int"),
+                                        ("True", True, "bool"),
+                                        ("False", False, "bool"),
+                                        ("None", None, "none")):
+            with self.subTest(annotation=annotation):
+                source = (
+                    "events = []\n"
+                    "def value():\n    events.append('value')\n    return 7\n"
+                    "x: " + annotation + " = value()\n")
+                namespace = {}
+                exec(compile(source, "<scalar-annotation>", "exec"), namespace)
+                self.assertEqual(namespace["events"], ["value"])
+                self.assertEqual(namespace["x"], 7)
+                self.assertEqual(namespace["__annotations__"], {"x": value})
+                body = self._envelope_of(source)["module"]["body"]
+                self.assertEqual([item["kind"] for item in body[-2:]],
+                                 ["Assign", "Expr"])
+                self.assertEqual(body[-2]["targets"][0]["id"], "x")
+                self.assertEqual(body[-2]["value"]["func"]["id"], "value")
+                self.assertEqual(body[-1]["value"]["kind"], "Constant")
+                self.assertEqual(body[-1]["value"]["value"]["type"], kind)
+
+    def test_module_nonscalar_annotation_expressions_remain_loud(self):
+        for annotation in ("int", "x", "boom()", "1 // 0", "[1]", "(1,)",
+                           "{1: 1}", "1.5", "1j", "-1"):
+            with self.subTest(annotation=annotation):
+                source = ("x: " + annotation + " = 3\n"
+                          "def f():\n    return x\n")
+                body = self._envelope_of(source)["module"]["body"]
+                self.assertEqual(body[0]["kind"], "Unsupported")
+                self.assertEqual(body[0]["py_kind"],
+                                 "AnnAssign:annotation-expression")
+        namespace = {}
+        with self.assertRaises(ZeroDivisionError):
+            exec("x: (1 // 0) = 3\n", namespace)
+        self.assertEqual(namespace["x"], 3)
+
+    def test_function_annotations_stay_erased_in_compound_bodies(self):
+        fn = self._first_fn(
+            "def f():\n"
+            "    x: boom() = 1\n"
+            "    if True:\n        x: boom() = 2\n"
+            "    while False:\n        x: boom() = 3\n"
+            "    for index in []:\n        x: boom() = 4\n"
+            "    try:\n        x: boom() = 5\n"
+            "    except ValueError:\n        x: boom() = 6\n"
+            "    return x\n")
+        self.assertEqual([item["kind"] for item in fn["body"]],
+                         ["Assign", "If", "While", "For", "Try", "Return"])
+        for statement in fn["body"][1:5]:
+            self.assertEqual([item["kind"] for item in statement["body"]],
+                             ["Assign"])
+        self.assertEqual([item["kind"] for item in fn["body"][4]["handler"]],
+                         ["Assign"])
+        self.assertNotIn("boom", json.dumps(fn))
+
+    def test_statement_flattening_preserves_direct_closure_recognition(self):
+        fn = self._first_fn(
+            "def outer():\n"
+            "    base: boom() = 7\n"
+            "    callback = lambda: base\n"
+            "    def nested():\n        return base\n"
+            "    return callback() + nested()\n")
+        self.assertEqual([item["kind"] for item in fn["body"]],
+                         ["Assign", "NestedDef", "NestedDef", "Return"])
+        for statement in fn["body"][1:3]:
+            self.assertEqual(statement["captures"], ["base"])
+            self.assertIsNone(statement["closure_unsupported"])
+        self.assertEqual(fn["body"][1]["name"], "callback")
+        self.assertEqual(fn["body"][2]["name"], "nested")
+
+    def test_annotation_refusal_shapes_remain_unsupported(self):
+        for source, reason in (
+                ("x: int\n", "AnnAssign:no-value"),
+                ("(x): int = 7\n", "AnnAssign:non-simple-target"),
+                ("obj.attr: int = 7\n", "AnnAssign:non-simple-target"),
+                ("items[0]: int = 7\n", "AnnAssign:non-simple-target")):
+            with self.subTest(source=source):
+                statement = self._envelope_of(source)["module"]["body"][0]
+                self.assertEqual(statement["kind"], "Unsupported")
+                self.assertEqual(statement["py_kind"], reason)
+                local = self._first_fn("def f():\n    " + source)["body"][0]
+                self.assertEqual(local["kind"], "Unsupported")
+                self.assertEqual(local["py_kind"], reason)
+        cls = self._envelope_of("class C:\n    x: int = 7\n")["module"]["body"][0]
+        self.assertEqual(cls["body"][0]["kind"], "Unsupported")
+        self.assertEqual(cls["body"][0]["py_kind"], "AnnAssign:module-scope")
+
+    def test_module_annotation_explicit_table_bindings_refuse(self):
+        for source, count in (
+                ("__annotations__ = None\nx: 1 = 7\n", 1),
+                ("table = {}\n__annotations__ = table\nx: 1 = 7\n", 1),
+                ("__annotations__: 1 = {}\nx: 1 = 7\n", 2),
+                ("x: 1 = 7\ndel __annotations__\n", 1),
+                ("def f(__annotations__):\n    return 1\nx: 1 = 7\n", 1)):
+            with self.subTest(source=source):
+                body = self._envelope_of(source)["module"]["body"]
+                refused = [item for item in body
+                           if item["kind"] == "Unsupported"]
+                self.assertEqual(len(refused), count)
+                self.assertEqual([item["py_kind"] for item in refused],
+                                 ["AnnAssign:annotations-bound"] * count)
+        body = self._envelope_of("x: 1 = 7\n")["module"]["body"]
+        self.assertEqual([item["kind"] for item in body], ["Assign", "Expr"])
+
+    def test_function_annotation_erasure_ignores_bound_annotation_table(self):
+        for binding in ("__annotations__ = None\n",
+                        "table = {}\n__annotations__ = table\n",
+                        "__annotations__: 1 = {}\n",
+                        "del __annotations__\n"):
+            with self.subTest(binding=binding):
+                env = self._envelope_of(
+                    binding + "def f():\n    x: boom() = 7\n    return x\n")
+                fn = env["module"]["body"][-1]
+                self.assertEqual([item["kind"] for item in fn["body"]],
+                                 ["Assign", "Return"])
+                self.assertEqual(fn["body"][0]["targets"][0]["id"], "x")
+                self.assertNotIn("boom", json.dumps(fn))
+
 
     # -- Dict / Attribute representation (H0, docs/memory-model.md) --------
 

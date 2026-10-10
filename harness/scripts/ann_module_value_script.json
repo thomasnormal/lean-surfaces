@@ -1,0 +1,853 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/scripts/ann_module_value_script.py",
+  "source_sha256": "1e3517d0734ffcf84083a86cc0adfe062ff74050c24c04845af43e10aa8c7559",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 3,
+          "end_col_offset": 16
+        },
+        "name": "mark",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 1,
+              "col_offset": 9,
+              "end_lineno": 1,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 2,
+                "col_offset": 4,
+                "end_lineno": 2,
+                "end_col_offset": 16
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 4,
+                  "end_lineno": 2,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 10,
+                    "end_lineno": 2,
+                    "end_col_offset": 15
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 3,
+                "col_offset": 11,
+                "end_lineno": 3,
+                "end_col_offset": 16
+              },
+              "id": "value"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 6,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 12
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 6,
+              "col_offset": 0,
+              "end_lineno": 6,
+              "end_col_offset": 1
+            },
+            "id": "x"
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 6,
+            "col_offset": 11,
+            "end_lineno": 6,
+            "end_col_offset": 12
+          },
+          "value": {
+            "type": "int",
+            "repr": "3"
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 6,
+          "col_offset": 3,
+          "end_lineno": 6,
+          "end_col_offset": 8
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 6,
+            "col_offset": 3,
+            "end_lineno": 6,
+            "end_col_offset": 8
+          },
+          "value": {
+            "type": "str",
+            "value": "int"
+          }
+        }
+      },
+      {
+        "kind": "If",
+        "span": {
+          "lineno": 8,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 16
+        },
+        "test": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 8,
+            "col_offset": 3,
+            "end_lineno": 8,
+            "end_col_offset": 7
+          },
+          "value": {
+            "type": "bool",
+            "value": true
+          }
+        },
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 16
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 9,
+                  "col_offset": 4,
+                  "end_lineno": 9,
+                  "end_col_offset": 5
+                },
+                "id": "y"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 9,
+                "col_offset": 15,
+                "end_lineno": 9,
+                "end_col_offset": 16
+              },
+              "value": {
+                "type": "int",
+                "repr": "4"
+              }
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 9,
+              "col_offset": 7,
+              "end_lineno": 9,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 9,
+                "col_offset": 7,
+                "end_lineno": 9,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "str",
+                "value": "int"
+              }
+            }
+          }
+        ],
+        "orelse": []
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 11,
+          "col_offset": 0,
+          "end_lineno": 11,
+          "end_col_offset": 12
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 11,
+            "col_offset": 0,
+            "end_lineno": 11,
+            "end_col_offset": 12
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 11,
+              "col_offset": 0,
+              "end_lineno": 11,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 11,
+                "col_offset": 6,
+                "end_lineno": 11,
+                "end_col_offset": 11
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 11,
+                  "col_offset": 6,
+                  "end_lineno": 11,
+                  "end_col_offset": 7
+                },
+                "id": "x"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 11,
+                  "col_offset": 10,
+                  "end_lineno": 11,
+                  "end_col_offset": 11
+                },
+                "id": "y"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 12,
+          "col_offset": 0,
+          "end_lineno": 12,
+          "end_col_offset": 23
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 12,
+              "col_offset": 0,
+              "end_lineno": 12,
+              "end_col_offset": 6
+            },
+            "id": "target"
+          }
+        ],
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 12,
+            "col_offset": 16,
+            "end_lineno": 12,
+            "end_col_offset": 23
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 12,
+              "col_offset": 16,
+              "end_lineno": 12,
+              "end_col_offset": 20
+            },
+            "id": "mark"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 12,
+                "col_offset": 21,
+                "end_lineno": 12,
+                "end_col_offset": 22
+              },
+              "value": {
+                "type": "int",
+                "repr": "8"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 12,
+          "col_offset": 8,
+          "end_lineno": 12,
+          "end_col_offset": 13
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 12,
+            "col_offset": 8,
+            "end_lineno": 12,
+            "end_col_offset": 13
+          },
+          "value": {
+            "type": "str",
+            "value": "int"
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 13,
+          "col_offset": 0,
+          "end_lineno": 13,
+          "end_col_offset": 13
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 13,
+            "col_offset": 0,
+            "end_lineno": 13,
+            "end_col_offset": 13
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 13,
+              "col_offset": 0,
+              "end_lineno": 13,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 13,
+                "col_offset": 6,
+                "end_lineno": 13,
+                "end_col_offset": 12
+              },
+              "id": "target"
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Try",
+        "span": {
+          "lineno": 15,
+          "col_offset": 0,
+          "end_lineno": 19,
+          "end_col_offset": 15
+        },
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 16,
+              "col_offset": 4,
+              "end_lineno": 16,
+              "end_col_offset": 24
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 16,
+                  "col_offset": 4,
+                  "end_lineno": 16,
+                  "end_col_offset": 8
+                },
+                "id": "kept"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 16,
+                "col_offset": 17,
+                "end_lineno": 16,
+                "end_col_offset": 24
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 16,
+                  "col_offset": 17,
+                  "end_lineno": 16,
+                  "end_col_offset": 21
+                },
+                "id": "mark"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 16,
+                    "col_offset": 22,
+                    "end_lineno": 16,
+                    "end_col_offset": 23
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "9"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 16,
+              "col_offset": 10,
+              "end_lineno": 16,
+              "end_col_offset": 14
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 16,
+                "col_offset": 10,
+                "end_lineno": 16,
+                "end_col_offset": 14
+              },
+              "value": {
+                "type": "none"
+              }
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 17,
+              "col_offset": 4,
+              "end_lineno": 17,
+              "end_col_offset": 10
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 17,
+                "col_offset": 4,
+                "end_lineno": 17,
+                "end_col_offset": 10
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 17,
+                  "col_offset": 4,
+                  "end_lineno": 17,
+                  "end_col_offset": 5
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              },
+              "op": "FloorDiv",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 17,
+                  "col_offset": 9,
+                  "end_lineno": 17,
+                  "end_col_offset": 10
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              }
+            }
+          }
+        ],
+        "exc_name": "ZeroDivisionError",
+        "handler": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 19,
+              "col_offset": 4,
+              "end_lineno": 19,
+              "end_col_offset": 15
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 19,
+                "col_offset": 4,
+                "end_lineno": 19,
+                "end_col_offset": 15
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 19,
+                  "col_offset": 4,
+                  "end_lineno": 19,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 19,
+                    "col_offset": 10,
+                    "end_lineno": 19,
+                    "end_col_offset": 14
+                  },
+                  "id": "kept"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "try_unsupported": null
+      },
+      {
+        "kind": "For",
+        "span": {
+          "lineno": 21,
+          "col_offset": 0,
+          "end_lineno": 23,
+          "end_col_offset": 15
+        },
+        "target": {
+          "kind": "Name",
+          "span": {
+            "lineno": 21,
+            "col_offset": 4,
+            "end_lineno": 21,
+            "end_col_offset": 9
+          },
+          "id": "index"
+        },
+        "iter": {
+          "kind": "Call",
+          "span": {
+            "lineno": 21,
+            "col_offset": 13,
+            "end_lineno": 21,
+            "end_col_offset": 21
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 21,
+              "col_offset": 13,
+              "end_lineno": 21,
+              "end_col_offset": 18
+            },
+            "id": "range"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 21,
+                "col_offset": 19,
+                "end_lineno": 21,
+                "end_col_offset": 20
+              },
+              "value": {
+                "type": "int",
+                "repr": "2"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        },
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 22,
+              "col_offset": 4,
+              "end_lineno": 22,
+              "end_col_offset": 22
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 4,
+                  "end_lineno": 22,
+                  "end_col_offset": 8
+                },
+                "id": "item"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 22,
+                "col_offset": 17,
+                "end_lineno": 22,
+                "end_col_offset": 22
+              },
+              "id": "index"
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 22,
+              "col_offset": 10,
+              "end_lineno": 22,
+              "end_col_offset": 14
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 22,
+                "col_offset": 10,
+                "end_lineno": 22,
+                "end_col_offset": 14
+              },
+              "value": {
+                "type": "bool",
+                "value": true
+              }
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 23,
+              "col_offset": 4,
+              "end_lineno": 23,
+              "end_col_offset": 15
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 23,
+                "col_offset": 4,
+                "end_lineno": 23,
+                "end_col_offset": 15
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 23,
+                  "col_offset": 4,
+                  "end_lineno": 23,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 23,
+                    "col_offset": 10,
+                    "end_lineno": 23,
+                    "end_col_offset": 14
+                  },
+                  "id": "item"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "orelse": []
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 25,
+          "col_offset": 0,
+          "end_lineno": 25,
+          "end_col_offset": 16
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 25,
+              "col_offset": 0,
+              "end_lineno": 25,
+              "end_col_offset": 7
+            },
+            "id": "numeric"
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 25,
+            "col_offset": 14,
+            "end_lineno": 25,
+            "end_col_offset": 16
+          },
+          "value": {
+            "type": "int",
+            "repr": "10"
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 25,
+          "col_offset": 9,
+          "end_lineno": 25,
+          "end_col_offset": 11
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 25,
+            "col_offset": 9,
+            "end_lineno": 25,
+            "end_col_offset": 11
+          },
+          "value": {
+            "type": "int",
+            "repr": "42"
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 26,
+          "col_offset": 0,
+          "end_lineno": 26,
+          "end_col_offset": 14
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 26,
+            "col_offset": 0,
+            "end_lineno": 26,
+            "end_col_offset": 14
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 26,
+              "col_offset": 0,
+              "end_lineno": 26,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 26,
+                "col_offset": 6,
+                "end_lineno": 26,
+                "end_col_offset": 13
+              },
+              "id": "numeric"
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

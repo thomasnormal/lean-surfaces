@@ -8,13 +8,17 @@ THE MEASURED SPLIT. In a FUNCTION BODY PEP 526 does not evaluate the
 annotation at all, so `x: T = v` at a plain-name target is an ordinary
 assignment — exactly, with no condition on `T`. The rows below prove that
 by annotating with expressions that would RAISE if anyone evaluated them.
-At MODULE and CLASS scope the annotation IS evaluated and
-`__annotations__` is written, so those stay loud (the script row
-`harness/scripts/ann_module_script.py`), and so does the value-less form,
+At MODULE scope a simple target with a value and scalar literal annotation
+is admitted unless the annotation table is explicitly bound. Other module
+annotations and CLASS annotations stay loud, as does the value-less form,
 which binds nothing yet LOCALISES its name.
 """
 
-g = 5
+g: "int" = 5
+
+
+def ann_module_global(n):
+    return g + n
 
 
 def ann_value(n):

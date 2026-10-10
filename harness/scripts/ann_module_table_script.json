@@ -1,0 +1,111 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/scripts/ann_module_table_script.py",
+  "source_sha256": "6fb9ad4bbb60c3d925395259cc7a502393901372fd35c891381343b235fe0af0",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 28
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 1,
+              "col_offset": 0,
+              "end_lineno": 1,
+              "end_col_offset": 15
+            },
+            "id": "__annotations__"
+          },
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 1,
+              "col_offset": 18,
+              "end_lineno": 1,
+              "end_col_offset": 23
+            },
+            "id": "table"
+          }
+        ],
+        "value": {
+          "kind": "Dict",
+          "span": {
+            "lineno": 1,
+            "col_offset": 26,
+            "end_lineno": 1,
+            "end_col_offset": 28
+          },
+          "keys": [],
+          "values": []
+        }
+      },
+      {
+        "kind": "Unsupported",
+        "span": {
+          "lineno": 2,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 12
+        },
+        "py_kind": "AnnAssign:annotations-bound",
+        "text": "x: 'int' = 3"
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 3,
+          "col_offset": 0,
+          "end_lineno": 3,
+          "end_col_offset": 12
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 3,
+            "col_offset": 0,
+            "end_lineno": 3,
+            "end_col_offset": 12
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 3,
+              "col_offset": 0,
+              "end_lineno": 3,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 3,
+                "col_offset": 6,
+                "end_lineno": 3,
+                "end_col_offset": 11
+              },
+              "id": "table"
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

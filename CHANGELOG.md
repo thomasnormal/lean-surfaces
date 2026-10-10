@@ -12,6 +12,17 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- Module-scope annotated assignments with simple targets, values, and scalar
+  literal annotations (including forward-reference strings) preserve assignment
+  before annotation evaluation, including inside control-flow bodies. Explicit
+  annotation-table bindings and nonliteral annotations remain loud; function-local
+  annotation erasure is unchanged. Extractor and CPython 3.9 script regressions
+  pin the admitted subset and the annotation-table alias boundary. The `ann_lab`
+  artifact proves reads of a string-annotated module global symbolically and
+  kernel-checks the refusal of a raising annotation.
+
 ## [0.1.5] — 2026-10-10
 
 ### Fixed

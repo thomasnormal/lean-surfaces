@@ -405,7 +405,7 @@ def _contains_bits_query(expression):
     def inspect(node):
         nonlocal found
         if (type(node).__name__ == "CallExpression" and node.isSystemCall
-                and node.subroutineName == "$bits"):
+                and node.subroutineName in ("$bits", *BIT_QUERY_CALLS)):
             found = True
             return VisitAction.Skip
 
@@ -469,6 +469,36 @@ def _convert_fixed_bits_query(sm, expression):
         "width": 32, "bits": format(width & 0xffffffff, "032b"),
         "signed": True, "fixed_bits_query": True,
     }
+
+
+BIT_QUERY_CALLS = ("$countbits", "$countones", "$onehot", "$onehot0", "$isunknown")
+
+
+def _bit_query_call(expression):
+    try:
+        return (type(expression).__name__ == "CallExpression"
+                and not expression.bad and expression.isSystemCall
+                and expression.subroutineName in BIT_QUERY_CALLS)
+    except Exception:
+        return False
+
+
+def _convert_bit_query(sm, expression):
+    name = expression.subroutineName
+    arguments = list(expression.arguments)
+    count_query = name in ("$countbits", "$countones")
+    valid_arity = len(arguments) >= 2 if name == "$countbits" else len(arguments) == 1
+    if (not valid_arity or expression.type.bitWidth != (32 if count_query else 1)
+            or expression.type.isSigned != count_query):
+        return unsupported(sm, expression, "BitQuery:signature")
+    if any(type_width_2s(argument.type)[0] is None for argument in arguments):
+        return unsupported(sm, expression, "BitQuery:argument-type")
+    return signed_metadata({
+        "kind": "BitQuery", "span": node_span(sm, expression),
+        "width": expression.type.bitWidth, "op": name,
+        "operand": convert_expr(sm, arguments[0]),
+        "controls": [convert_expr(sm, argument) for argument in arguments[1:]],
+    }, expression.type)
 
 
 def width_of(d):
@@ -540,6 +570,8 @@ def _convert_expr(sm, e):
         return _convert_selected_read(sm, e, cname)
     if cname == "CallExpression":
         if _SYM is None:
+            if _bit_query_call(e):
+                return _convert_bit_query(sm, e)
             return _convert_fixed_bits_query(sm, e)
         return _convert_sym_call_expr(sm, e)
     if _SYM is not None and cname in (
@@ -1062,6 +1094,10 @@ def _case_source_expression_ok(expression):
         kind = type(node).__name__
         if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
             return VisitAction.Skip
+        if kind == "CallExpression" and _bit_query_call(node):
+            pure = pure and all(type_width_2s(argument.type)[0] is not None
+                                for argument in node.arguments)
+            return
         pure = pure and not getattr(node, "bad", False) and kind in (
             "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
             "NamedValueExpression", "ConversionExpression", "UnaryExpression",
@@ -1519,6 +1555,16 @@ def contains_fixed_bits_query(node):
     return False
 
 
+def contains_bit_vector_query(node):
+    if isinstance(node, dict):
+        return node.get("kind") == "BitQuery" or any(
+            contains_bit_vector_query(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_bit_vector_query(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1552,6 +1598,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "$bits:invalid-compilation",
                                   "frontend rejected source containing a fixed-size query"))
+    if (any(contains_bit_vector_query(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "BitQuery:invalid-compilation",
+                                  "frontend rejected source containing a bit-vector query"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

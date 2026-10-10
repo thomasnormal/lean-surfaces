@@ -313,6 +313,49 @@ to 196 clean files, with 2,948 partial and four include skips. Both
 censuses report zero extraction errors; these are extractor completeness
 measurements, not whole-corpus simulator agreement.
 
+### Integral bit-vector queries — 2026-10-10
+
+The legacy/self-check path now admits the five IEEE 1800-2023 §20.9
+functions: `$countbits`, `$countones`, `$onehot`, `$onehot0` and `$isunknown`.
+This addresses the largest computational system-call family in the fresh
+sole-`CallExpression` inventory; delays and hierarchy remain separate
+kernel and surface dependencies, not reasons to invent another scheduler.
+
+Each operand is evaluated at its own bound integral width. `$countbits`
+also evaluates its control expressions, uses each control's least
+significant bit, and counts matching positions once even when controls
+repeat. All four bit values are distinct: x and z can be counted
+independently. `$countones` ignores x/z; the one-hot functions compare the
+number of definite ones with one or at most one, respectively, and
+`$isunknown` detects either x or z. Counts are signed 32-bit integers;
+the three predicates return known one-bit results. Query results retain
+the existing assignment and expression context conversions.
+
+The new `BitQuery` envelope and self-check expression lower to the existing
+`Logic`/`LVec` value authority. No process or scheduler rule changes.
+Ordinary cases can use these pure expressions without admitting general
+calls or effects. Runtime values outside the supported integral fragment,
+including fixed unpacked bitstreams, remain loud; so do effectful operands,
+bad arities and user functions whose escaped names resemble system queries.
+An admitted query in an erroneous compilation retains a
+`BitQuery:invalid-compilation` refusal rather than hiding frontend errors
+through constant folding. The symbolic `sv-0.2` path is unchanged.
+
+Four original fixtures in `harness/sv/bit_vector_queries/` have licensed
+reference provenance and cover four-state values, live controls and their
+truncation/deduplication, integral types and widths, nested expressions,
+result contexts and ordinary cases. The duplicate-control theorem in
+`Examples/system-verilog/bit_vector_queries/` is symbolic over operand and
+control values, with its expression pinned to the real extracted
+`runtime_controls.sv` assignment and concrete non-vacuity checks.
+
+Fresh extraction admits 75 formerly partial files and loses no clean
+file: full **1,652 clean / 20,105 partial / 30 include skips**, out of
+21,787; exact core **199 clean / 2,945 partial / four include skips**, out
+of 3,148. Both report zero extraction errors and every shared core/full
+classification agrees. These are extraction measurements, not a claim of
+whole-corpus simulator agreement.
+
 ### Four-state packed selected reads — 2026-10-09
 
 The legacy/self-check surface admits bit, constant part and indexed

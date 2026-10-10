@@ -126,6 +126,26 @@ def selectedRead (width : Nat) (descending indexSigned : Bool)
 by the existing `evalExpr` — the parser collapses maximal pure-M0 subtrees
 into it) plus the §f extensions. `Expr.unsupported` leaves arrive inside
 `.m0` and stay loud. -/
+inductive BitQuery where
+  | countbits | countones | onehot | onehot0 | isunknown
+deriving Repr, BEq, DecidableEq, Inhabited
+
+def countSelected (value : LVec) (controls : List Logic) : Nat :=
+  value.bits.foldl (fun count bit => count + if controls.contains bit then 1 else 0) 0
+
+theorem countSelected_duplicate (value : LVec) (control : Logic) :
+    countSelected value [control, control] = countSelected value [control] := by
+  simp [countSelected]
+
+def evalBitQuery (query : BitQuery) (value : LVec) (controls : List LVec) : LVec :=
+  match query with
+  | .countbits => .ofNat 32 (countSelected value (controls.map fun control =>
+      control.bits[0]?.getD .l0))
+  | .countones => .ofNat 32 (countSelected value [.l1])
+  | .onehot => .ofLogic (if countSelected value [.l1] == 1 then .l1 else .l0)
+  | .onehot0 => .ofLogic (if countSelected value [.l1] ≤ 1 then .l1 else .l0)
+  | .isunknown => .ofLogic (if countSelected value [.lx, .lz] > 0 then .l1 else .l0)
+
 inductive SExpr where
   | m0 (e : Expr)
   | unary (op : UnaryOp) (a : SExpr)
@@ -142,6 +162,7 @@ inductive SExpr where
   | ternary (c t f : SExpr)
   | concat (parts : Array SExpr)
   | selectRead (width : Nat) (descending indexSigned : Bool) (value index : SExpr)
+  | bitQuery (query : BitQuery) (operand : SExpr) (controls : Array SExpr)
 deriving Repr, BEq, Inhabited
 
 /-- Collapse-aware constructors: keep pure-M0 subtrees as single `.m0`
@@ -413,6 +434,10 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         return LVec.resizeSigned (← evalSExpr fuel st operand) width
     | .squash2 a => do
         return squash2v (← evalSExpr fuel st a)
+    | .bitQuery query operand controls => do
+        let value ← evalSExpr fuel st operand
+        let selected ← evalSExprs fuel st controls.toList
+        return evalBitQuery query value selected
     | .ternary c t f => do
         let cv ← evalSExpr fuel st c
         let tv ← evalSExpr fuel st t
@@ -674,6 +699,20 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       return .signedResize (← getNatF j "width") (← parseSExpr (← getF j "operand"))
   | "Squash2" =>
       return .squash2 (← parseSExpr (← getF j "operand"))
+  | "BitQuery" =>
+      let query ← match ← getStrF j "op" with
+        | "$countbits" => pure BitQuery.countbits
+        | "$countones" => pure BitQuery.countones
+        | "$onehot" => pure BitQuery.onehot
+        | "$onehot0" => pure BitQuery.onehot0
+        | "$isunknown" => pure BitQuery.isunknown
+        | other => .error s!"unknown bit-vector query '{other}'"
+      let controls ← (← getArrF j "controls").mapM parseSExpr
+      if (query == .countbits && controls.isEmpty) ||
+          (query != .countbits && !controls.isEmpty) then
+        .error "invalid bit-vector query control arity"
+      else
+        return .bitQuery query (← parseSExpr (← getF j "operand")) controls
   | "SelectRead" =>
       return .selectRead (← getNatF j "width")
         (← getBoolF j "descending") (← getBoolF j "index_signed")

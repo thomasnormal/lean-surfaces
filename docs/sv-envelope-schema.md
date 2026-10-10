@@ -221,6 +221,17 @@ per LRM: true iff some bit is `1`).
 
 ## Expressions
 
+The legacy/self-check vocabulary also includes `BitQuery` for IEEE
+1800-2023 §20.9. Its fields are `kind`, `span`, `width`, `op`, `operand`
+and `controls` (an expression array). `op` is `$countbits`, `$countones`,
+`$onehot`, `$onehot0` or `$isunknown`; only `$countbits` has controls,
+with at least one. Controls retain their original widths: evaluation
+uses each least-significant bit and ignores repeated control values when
+counting positions. The operand is not widened to the result's width.
+The two count functions have `width: 32` and `signed: true`; predicates
+have `width: 1` and unsigned results. The current admission is integral
+and effect-free; the symbolic `sv-0.2` vocabulary is unchanged.
+
 Every supported expression node carries `width`: its **elaborated result width
 in bits**. (`Unsupported` expression nodes have no `width`.)
 

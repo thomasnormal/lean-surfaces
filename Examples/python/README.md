@@ -38,6 +38,13 @@ string remains available to ordinary symbolic function proofs. Its kernel checks
 also pin the refusal of effectful module annotations; function-local annotation
 erasure remains independent of that module-scope restriction.
 
+[`divmod_lab`](divmod_lab/) proves integral division by one symbolically and
+kernel-checks signed quotient/remainder pairs, Boolean coercions, and errors.
+Its whole-program fixture also pins argument effects and exception precedence;
+nonintegral operands and first-class builtin values remain loud.
+The mutation-and-catch case remains native/script-only because the proof
+interpreter's existing exception tier refuses builtin `TypeError` handlers.
+
 [`bool_lab`](bool_lab/) proves integer nonzero truthiness and Boolean identity
 symbolically. Concrete checks cover heap containers, default instances, closures,
 nondraining generator truthiness, argument effects, and excess-argument errors;

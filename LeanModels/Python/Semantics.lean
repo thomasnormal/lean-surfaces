@@ -2322,6 +2322,16 @@ def boolCastArgs (heap : Heap) : List RVal → Res RVal
     return .bool result
   | values => .exn (.typeError s!"bool expected at most 1 argument, got {values.length}")
 
+def divmodArgs : List RVal → Res RVal
+  | [numerator, divisor] =>
+    match asInt numerator, asInt divisor with
+    | some numeratorValue, some divisorValue =>
+      if divisorValue = 0 then .exn .zeroDivisionError
+      else .ok (.tuple #[.int (Int.fdiv numeratorValue divisorValue),
+        .int (Int.fmod numeratorValue divisorValue)])
+    | _, _ => .unsupported "divmod() on nonintegral operands is outside the tier"
+  | values => .exn (.typeError s!"divmod expected 2 arguments, got {values.length}")
+
 mutual
   /-- Python `==` over the heap (docs/memory-model.md §identity) — the
   H1-complete equality. Ref/ref: (1) identity shortcut (`d == d` holds
@@ -5231,6 +5241,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   else if fname == "bool" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     Run.liftRes st (boolCastArgs st.world.heap vs)
+                  else if fname == "divmod" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    Run.liftRes st (divmodArgs vs)
                   else if fname == "sum" then
                     -- pass 3 (docs/memory-model.md §module-init
                     -- execution): the element fold IS `evalBinOp .add`;

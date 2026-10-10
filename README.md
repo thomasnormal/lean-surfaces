@@ -36,9 +36,11 @@ explicit annotation-table bindings remain loud.
 `bool()` and `bool(value)` use the same truthiness semantics as conditionals,
 including heap containers and nondraining generator checks; builtin type values
 and keyword calls remain loud.
-The executable differential suite has 2,281 cases: 2,001 agree with CPython and
-280 refuse loudly. The narrower proof interpreter agrees on 1,923 cases and
-refuses 358; neither run has a mismatch in the recorded suite.
+Integral `divmod` returns the same signed floor quotient and remainder as `//`
+and `%`, including Boolean operands; nonintegral protocols remain loud.
+The executable differential suite has 2,332 cases: 2,042 agree with CPython and
+290 refuse loudly. The narrower proof interpreter agrees on 1,963 cases and
+refuses 369; neither run has a mismatch in the recorded suite.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
 

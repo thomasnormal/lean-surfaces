@@ -3283,6 +3283,9 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                       boolCastArgs_swapAt hs1 htwin]
                                     exact PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                  · exact PBF.bind (ihEs m st args.toList hslot)
+                                      fun s1 vs _ hs1 => PBF.liftRes hs1 _
+                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   -- sum
                                   · refine PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => ?_

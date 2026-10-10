@@ -604,7 +604,7 @@ INGESTION census (`Json.lean`) consults them too, and `Json.lean` /
 locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
-  id == "abs" || id == "int" || id == "bool" || id == "print" ||
+  id == "abs" || id == "int" || id == "bool" || id == "divmod" || id == "print" ||
   id == "str" || id == "input" ||
   id == "ord" || id == "chr" || id == "next" ||
   -- §iter: `iter` was in `isPyBuiltinName` and NOT here — the two-table gap

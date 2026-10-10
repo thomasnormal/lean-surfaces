@@ -14,6 +14,16 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Integral `divmod(numerator, divisor)` uses the same signed floor quotient and
+  remainder operations as `//` and `%`, including Boolean operands and faithful
+  zero-divisor and arity errors. Argument effects precede conversion/errors;
+  nonintegral operands, keyword calls, and first-class builtin values stay loud.
+  The `divmod_lab` artifact proves division by one symbolically and kernel-checks
+  signed arithmetic and Boolean coercions.
+- Generator-expression capture census preserves lexical local bindings even
+  when their names also name builtins or module definitions. Parameters,
+  assignments, and nested functions shadow builtin calls inside generators;
+  the existing safe-capture admission rules remain unchanged.
 - Builtin `bool()` and `bool(value)` share the interpreter's existing
   heap-aware truthiness semantics, including containers, default instances,
   closures, and nondraining generator truthiness. Argument effects precede

@@ -888,7 +888,7 @@ lists may drift safely in the only direction that matters. -/
 private def lowerBuiltins : List String :=
   ["len", "sorted", "max", "min", "abs", "int", "print", "ord", "chr",
    "next", "iter", "range", "enumerate", "count", "all", "any", "sum",
-   "tuple", "list", "dict", "str", "bool", "set", "reversed", "zip", "map",
+   "tuple", "list", "dict", "str", "bool", "divmod", "set", "reversed", "zip", "map",
    "filter", "True", "False", "None"]
 
 /-- Builtins that DRAIN a directly-passed genexp within the enclosing
@@ -1178,7 +1178,8 @@ mutual
         let refs := dedup (exprRefs elt ++ (ifs.toList.map exprRefs).flatten
           ++ (wb.toList.map (fun p => exprRefs p.2)).flatten)
         let caps := refs.filter fun n =>
-          !tb.contains n && !ctx.outer.contains n && !lowerBuiltins.contains n
+          !tb.contains n && (ctx.params.contains n || ctx.assigned.contains n
+            || (!ctx.outer.contains n && !lowerBuiltins.contains n))
             && n != genExpArg
             -- a synthesized `<genexpr@m>` call inside THIS elt (pass 3:
             -- K_END nests one) resolves through Module.functions — the

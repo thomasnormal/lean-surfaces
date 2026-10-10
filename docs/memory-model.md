@@ -2379,6 +2379,34 @@ each a narrowing, a mechanical necessity, or a MEASURED correction:
   the concrete armed pair + underrun pins above; the lab-scale
   `pure_sum_all_traces` is the first trace-quantified theorem.
 
+## Integral quotient and remainder (`divmod`, 2026-10-10)
+
+`divmod(numerator, divisor)` admits integer and Boolean operands and returns
+a plain two-element tuple of integers. The quotient rounds toward negative
+infinity and the remainder has the divisor's sign, using the same `Int.fdiv`
+and `Int.fmod` operations as `//` and `%`. A zero divisor raises the existing
+`ZeroDivisionError: integer division or modulo by zero`.
+
+All arguments evaluate left to right before operand conversion or the exact
+`TypeError: divmod expected 2 arguments, got N`. An argument exception takes
+precedence over that arity error. Ordinary local/global/function/class
+shadowing remains in force, with the existing module publication guard.
+Nonintegral operands, keyword calls, and first-class builtin values remain
+loud; no reflected or custom `__divmod__` protocol is guessed.
+Generator-expression lowering captures locally bound names before consulting
+module/builtin exemptions, so a parameter, assignment, or nested function named
+`divmod` keeps Python's lexical shadowing. The existing capture-admission checks
+still govern whether capturing each local is safe.
+
+Both interpreters call the pure `divmodArgs` worker. It neither allocates nor
+mutates and stays inside `Expr.heapFree`; proof-layer invariants gain only a
+builtin dispatch arm. The `divmod_lab` artifact kernel-checks signed arithmetic
+and proves division by one symbolically, while `divmod_script` checks effects
+and exception order on the whole-program surface.
+The narrower proof interpreter still refuses a builtin `TypeError` handler;
+retained mutations through that handler are tested by the native interpreter
+and script, with a kernel refusal guard rather than a fabricated proof result.
+
 ## Boolean conversion (`bool`, 2026-10-10)
 
 `bool()` returns `False`; `bool(value)` applies the existing heap-aware

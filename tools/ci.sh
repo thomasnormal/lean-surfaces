@@ -661,7 +661,7 @@ step  "py-coverage-fresh" python3 harness/coverage_page.py --check
 # Reads the oleans the build step produced.
 py_examples_axioms() {
   local mods=() e lp
-  for e in add my_abs midpoint tri gcd fib nested_flow rsa_inverse bench_bisect bench_statistics int_string string_repeat tuple_repeat decimal_render range_render bool_lab; do
+  for e in add my_abs midpoint tri gcd fib nested_flow rsa_inverse bench_bisect bench_statistics int_string string_repeat tuple_repeat decimal_render range_render bool_lab divmod_lab; do
     mods+=("Examples.python.$e.spec" "Examples.python.$e.proof")
   done
   lp=$(ls -d .lake/build/lib/lean .lake/packages/*/.lake/build/lib/lean 2>/dev/null | paste -sd:)

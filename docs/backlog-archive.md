@@ -15341,9 +15341,8 @@ kind. Rule recorded: **read the mode out of the artefact, never assume it.**
 public sv-tests, and the two are DISJOINT.** The memo censuses "sv-tests-2";
 `~/repos/sv-tests` is a clean `chipsalliance/sv-tests`. The decisive test — the
 11 filenames the committed `unlockable.txt` names, looked up upstream —
-returns **present=0, missing=11**. Not one exists. Located read-only,
-`sv-tests-2` lives at `~/repos/mox/sv-conformance/sv-tests-2`, i.e. **inside a
-`normal-computing/mox` clone**: **21 631 `.sv` files across 38 chapter
+returns **present=0, missing=11**. Not one exists. The read-only private
+corpus contains **21 631 `.sv` files across 38 chapter
 directories spanning clauses 3–40**, against the public suite's **1 028 tests
 over clauses 5–26**. It is 21× larger and nearly twice the clause range — the
 better instrument by far — and it has **no LICENSE file at all**, is
@@ -15390,7 +15389,7 @@ minute**, so the gap is unpinned, not unavailable. (2)
 machine-readable results and **that file is not tracked and not present** — its
 headline 21 336-file table survives only as prose. (3)
 `extractors/sv/census.py:58` hard-codes
-`DEFAULT_CORPUS = "/home/thomas-ahle/mox/…"`, a Linux path that does not exist
+`DEFAULT_CORPUS` names a private Linux path that does not exist
 here, and the memo's reproduce-block invokes the script **with no `--corpus`
 flag**, so the documented command cannot run on this machine.
 
@@ -15612,8 +15611,8 @@ EDITION**: -2023 or -2017, named once, since the lane currently mixes them. (6)
 **WHICH ENDGAME**, and whether rung A (the integer divider, nearly free on the
 SV side) is worth taking as a warm-up before the flagship.
 
-**A standing obligation, recorded.** The Xcelium results that make
-`sv-design-m0.md`'s 4-state operator table *"normative — verified on Xcelium"*
+**A standing obligation, recorded.** The simulator results behind
+`sv-design-m0.md`'s 4-state operator table's verification claim
 were taken on a host this charter cannot reach. Icarus reproduces the 10
 harness cases today, but the **operator-level table has not been re-verified
 here**, and no new claim should call it dual-simulator-verified without a
@@ -15627,8 +15626,8 @@ all 14 `LeanModels.Sv.*` built**; two Python-tier targets SIGTERMed (code 143)
 under machine contention — killed, not failed, and not in this lane's tree.
 `docs_check` **73/73 marked blocks ok**, 19 illustrative-exempt. `diff_test.py
 --sim iverilog` **10/10 PASS**. Envelope round-trip **17/18 byte-identical, 1
-absent-input**. Both corpora censused read-only; nothing in `~/repos/mox`,
-`~/repos/sv-tests` or any surveyed design repo was modified.
+absent-input**. Both corpora censused read-only; no corpus or surveyed design
+repository was modified.
 
 **Build-lock compliance.** This lane's `lake build` was started before the
 repo-wide lock protocol was broadcast and was allowed to finish under the
@@ -17255,7 +17254,7 @@ conformance suite is the fixture set; `DRAM_uvm` is an optional showcase. (3)
 **EVERYTHING in scope**, verification tier included — reversing the charter's
 §2.5 proposal — with a **PLUGGABLE oracle**: simulator as a harness parameter,
 **per-test oracle attribution recorded as provenance** exactly as the C tier
-names its interpreter, Icarus the default, Xcelium where Icarus falls short.
+names its interpreter, Icarus the default, another oracle where Icarus falls short.
 (4) **FULL clause-4 scheduler**, sequenced as rungs, with the emphasis that
 *"modelling the scheduler is very important to have full SV support."* (5)
 **BOTH editions, -2023 priority**, adopting the family's sibling-editions
@@ -17514,8 +17513,8 @@ an intuition.
 `lake build` **NOT RUN** — no Lean changed this pass (two docs), and per
 build-lock amendment 2 a speculative build is exactly what the lock prevents.
 `docs_check` **75/75 marked blocks ok**, 20 illustrative-exempt. Corpus counts
-are `rg -l` over read-only checkouts; nothing in `~/repos/mox` or
-`~/repos/sv-tests` was modified. No axioms moved; no `sorry`, no
+are `rg -l` over read-only checkouts; neither surveyed corpus was modified.
+No axioms moved; no `sorry`, no
 `native_decide`.
 
 ## L69 — ADA: THOMAS RULES THE MENU, and M1 inch 2's toolchain half LANDS — the ACAA's own grader runs, and it fails correctly (2026-08-22)

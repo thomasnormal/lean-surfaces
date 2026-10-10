@@ -72,9 +72,9 @@ Each row is owed a fix or an explicit won't-fix note in the owning lane's backlo
 - **MEDIUM** [vacuous] `LeanModels/Sv/Param.lean:997` — `PDesign.crossCheck` — documented at line 913 as 'the ingestion-time differential test against the frontend' — skips every comparison whose `resolved?`/`resolved_count` metadata is absent (same `| none =>` arms at 944 in checkLocals, 962 in checkDecls, and the `.ok _, none => []` arm in checkGenerates) and returns `[]`. It carries no count of comparisons actually made, so 'clean' and 'compared nothing' are the same value.
   - fix: Return a (messages, comparisons_made) pair and have `load_design_sv2` refuse when comparisons_made is 0 (or below a per-envelope floor), reporting VACUOUS rather than accepting.
 - **MEDIUM** [provenance] `Examples/system-verilog/adder/proof.lean:275` — The stimuli these guards use were never run through a simulator: `harness/sv/cases.json`'s adder cases drive 1+2, 255+1, 170+85, 0+0, 127+127, while the guards below use a=5,b=3 and a=200,b=100; xsel's guards use a=0xAA/b=0x55 while the harness drives 0x0F/0xF0 and 0xA5/0x5A. The same sentence appears in counter/xsel/swap_nba/race_blk/toggle spec.lean:36 and proof.lean.
-  - fix: Either add these stimuli as cases in `harness/sv/cases.json` so xrun/iverilog adjudicates them, or reword the claim to 'consistent with the LRM rules the harness verified' rather than 'reproduces the Xcelium-verified outcomes'.
-- **MEDIUM** [provenance] `LeanModels/Sv/SelfCheck.lean:51` — The rendering battery's provenance citation resolves to nothing: `docs/sv-corpus-coverage.md` has sections (a)–(e), 'Extractor robustness notes' and 'Artifacts' — there is no §f — and the fixture ids the guards are labelled with (`Xcelium T01–T06`, `T07–T10`, `T11–T19`, `T20–T21`, `T29`) appear in no other file in the repo.
-  - fix: Either add the §f fixture table (T01–T29 with the recorded Xcelium output) to `docs/sv-corpus-coverage.md`, or commit the .sv decks and regenerate these rows from a simulator run.
+  - fix: Either add these stimuli as cases in `harness/sv/cases.json` so simulators adjudicate them, or reword the claim to 'consistent with the LRM rules the harness verified' rather than claiming reproduced simulator outcomes.
+- **MEDIUM** [provenance] `LeanModels/Sv/SelfCheck.lean:51` — The rendering battery's provenance citation resolves to nothing: `docs/sv-corpus-coverage.md` has sections (a)–(e), 'Extractor robustness notes' and 'Artifacts' — there is no §f — and the fixture ids the guards are labelled with (`T01–T06`, `T07–T10`, `T11–T19`, `T20–T21`, `T29`) appear in no other file in the repo.
+  - fix: Either add the §f fixture table (T01–T29 with recorded simulator output) to `docs/sv-corpus-coverage.md`, or commit the .sv decks and regenerate these rows from a simulator run.
 - **MEDIUM** [provenance] `LeanModels/Sv/Sem2.lean:24` — The whole sv-0.2 differential ledger (pin1 R02–R11, pin2a W01–W08/C01–C05, pin2b I01–I09, pin3 CYCLE rows, pin4 Z01–Z07/S01–S05) cites its oracle rows to `scratchpad/rows/pin1–pin4.sv`, which is not in the repository and not in git; `pin2a`/`pin2b` appear in no docs file, so the row identifiers the #guard comments key on have no register anywhere.
   - fix: Commit the pin decks under `Examples/system-verilog/sem2/probes/` (where t2_*.sv already live) and cite those paths, per family-architecture §7.1a 'Anything a lane must obey belongs in a git-tracked file'.
 
@@ -119,8 +119,8 @@ abandoned.
 the partiality is deliberate.** Both citations are dangling and both will
 be corrected to say so. **Neither will be "fixed" by writing the missing
 table.** The audit's suggested remedy for `SelfCheck.lean:51` — *add the §f
-fixture table with the recorded Xcelium output* — would require Xcelium
-rows this lane does not have and cannot re-derive: the Xcelium host is
+fixture table with recorded simulator output* — would require simulator
+rows this lane does not have and cannot re-derive: the original host is
 unreachable from here, a standing obligation this lane has carried since
 its charter (`sv-charter.md` §9: the 4-state operator table is *unverified
 on any reachable host*). **Inventing those rows to satisfy a provenance
@@ -181,7 +181,7 @@ fix; a fabricated table is not.
 
 ## arch (3)
 
-- **MEDIUM** [coverage] `docs/family-architecture.md:418` — A count derivable by one grep and already wrong: `grep -rl '/Users/ahle\|/home/thomas-ahle' docs/` returns three files, of which at least two are live records rather than discussion — docs/sv-corpus-coverage.md:5 (`/home/thomas-ahle/mox/...`) and docs/sv-construct-census.json:5 (`"corpus_path": "/Users/ahle/repos/mox/sv-conformance/sv-tests-2/tests"`), a committed census provenance field.
+- **MEDIUM** [coverage] `docs/family-architecture.md:418` — A count derivable by one grep and already wrong: `grep -rl '/Users/ahle\|/home/thomas-ahle' docs/` returns three files, of which at least two are live records rather than discussion — docs/sv-corpus-coverage.md:5 and docs/sv-construct-census.json:5 both record private corpus paths, the latter in a committed census provenance field.
   - fix: Name both instances (and add a repo-wide private-path grep to tools/check.sh) so the redaction is complete rather than the one that was noticed.
 - **MEDIUM** [coverage] `docs/family-architecture.md:346` — Both numbers are derivable and now stale, and the row carries no state stamp (MEAS-10). At the commit that wrote them (8f4fd65) LeanModels/Sv was exactly 8,166 lines with 93 theorems + 5 examples = 98; at HEAD it is 8,562 lines with 96 theorems + 10 examples = 106. Line 410 calls the count "SETTLED at 98".
   - fix: Stamp the row with the revision it was measured at, and add the two counts to tools/editions.sh or a --check mode so the registry drifts loudly.
@@ -213,4 +213,4 @@ fix; a fabricated table is not.
 - tools/laws.sh:168 — REFUTED as filed. The quote at tools/laws.sh:168 exists verbatim and the mechanism (per-token sum, no dedup) is real, bu
 - LeanModels/Es/Value.lean:12 — REFUTED. Quote exists verbatim (LeanModels/Es/Value.lean:11-13: "and §1.4 measured why the triple / rather than the id a
 - harness/diff_test.py:67 — REFUTED. The quote exists verbatim at /Users/ahle/repos/lean-coord/harness/diff_test.py:66-68, but the claimed defect is
-- docs/completeness.md:98 — REFUTED — the finding counts in the wrong unit, and the head table it attacks is the explicitly-labelled AS-TAKEN table 
+- docs/completeness.md:98 — REFUTED — the finding counts in the wrong unit, and the head table it attacks is the explicitly-labelled AS-TAKEN table

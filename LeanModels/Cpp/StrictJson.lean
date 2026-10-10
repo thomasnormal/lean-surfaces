@@ -100,104 +100,165 @@ private def integerValue : Parser Raw := do
       return .number token
   | none => return .number token
 
+private def requiredDigits (accumulator : String) : Parser String := do
+  let first ← any
+  if !isDigit first then fail "expected JSON number digit"
+  integerDigits (accumulator.push first)
+
+private def captureInteger : Parser String := do
+  let sign ← if (← peek!) == '-' then skip *> pure "-" else pure ""
+  let first ← any
+  if !isDigit first then fail "expected JSON number digit"
+  if first == '0' then
+    if (← peek?).any isDigit then fail "leading zero in JSON number"
+    return sign.push first
+  else
+    integerDigits (sign.push first)
+
+private def captureFraction (token : String) : Parser String := do
+  if (← peek?) == some '.' then
+    skip
+    requiredDigits (token.push '.')
+  else
+    return token
+
+private def captureExponent (token : String) : Parser String := do
+  match ← peek? with
+  | some marker =>
+    if marker == 'e' || marker == 'E' then
+      skip
+      let exponentToken := token.push marker
+      let signed ← match ← peek? with
+        | some sign =>
+          if sign == '+' || sign == '-' then skip *> pure (exponentToken.push sign)
+          else pure exponentToken
+        | none => pure exponentToken
+      requiredDigits signed
+    else
+      return token
+  | none => return token
+
+private def captureNumber : Parser Raw := do
+  let integer ← captureInteger
+  let fraction ← captureFraction integer
+  return .number (← captureExponent fraction)
+
 mutual
-  private partial def value : Parser Raw := do
+  private partial def value (numberParser : Parser Raw) : Parser Raw := do
     let result ← match ← peek! with
       | '"' => Raw.string <$> stringValue
-      | '[' => arrayValue
-      | '{' => objectValue
+      | '[' => arrayValue numberParser
+      | '{' => objectValue numberParser
       | 't' => skipString "true" *> pure (.bool true)
       | 'f' => skipString "false" *> pure (.bool false)
       | 'n' => skipString "null" *> pure .null
-      | _ => integerValue
+      | _ => numberParser
     ws
     return result
 
-  private partial def arrayBody (accumulator : List Raw) : Parser Raw := do
-    let item ← value
+  private partial def arrayBody (numberParser : Parser Raw)
+      (accumulator : List Raw) : Parser Raw := do
+    let item ← value numberParser
     let delimiter ← any
     if delimiter == ']' then
       return .array (item :: accumulator).reverse
     else if delimiter == ',' then
       ws
-      arrayBody (item :: accumulator)
+      arrayBody numberParser (item :: accumulator)
     else
       fail "expected comma or closing JSON array bracket"
 
-  private partial def arrayValue : Parser Raw := do
+  private partial def arrayValue (numberParser : Parser Raw) : Parser Raw := do
     skipChar '['
     ws
     if (← peek!) == ']' then
       skip
       return .array []
     else
-      arrayBody []
+      arrayBody numberParser []
 
-  private partial def objectBody (accumulator : List (String × Raw))
+  private partial def objectBody (numberParser : Parser Raw)
+      (accumulator : List (String × Raw))
       (keys : Std.HashSet String) : Parser Raw := do
     let key ← stringValue
     if keys.contains key then fail s!"duplicate JSON object key: {key}"
     ws
     skipChar ':'
     ws
-    let item ← value
+    let item ← value numberParser
     let delimiter ← any
     if delimiter == '}' then
       return .object ((key, item) :: accumulator).reverse
     else if delimiter == ',' then
       ws
-      objectBody ((key, item) :: accumulator) (keys.insert key)
+      objectBody numberParser ((key, item) :: accumulator) (keys.insert key)
     else
       fail "expected comma or closing JSON object brace"
 
-  private partial def objectValue : Parser Raw := do
+  private partial def objectValue (numberParser : Parser Raw) : Parser Raw := do
     skipChar '{'
     ws
     if (← peek!) == '}' then
       skip
       return .object []
     else
-      objectBody [] ∅
+      objectBody numberParser [] ∅
 end
 
-private def document : Parser Raw := do
+private def document (numberParser : Parser Raw) : Parser Raw := do
   ws
-  let result ← value
+  let result ← value numberParser
   eof
   return result
 
 end StrictJson
 
 def parseStrictRawString (contents : String) : Except String Raw :=
-  StrictJson.document.run contents
+  (StrictJson.document StrictJson.integerValue).run contents
+
+def parseCaptureRawString (contents : String) : Except String Raw :=
+  (StrictJson.document StrictJson.captureNumber).run contents
 
 private def validateIntegerToken (token : String) : Except String Unit := do
   let _ ← (StrictJson.integerValue <* eof).run token
   return ()
 
+private def validateCaptureToken (token : String) : Except String Unit := do
+  let _ ← (StrictJson.captureNumber <* eof).run token
+  return ()
+
 mutual
-  def validateStrictRaw (raw : Raw) : Except String Unit :=
+  private def validateRaw (validateNumber : String → Except String Unit)
+      (raw : Raw) : Except String Unit :=
     match raw with
-    | .number token => validateIntegerToken token
-    | .array values => validateStrictValues values
-    | .object fields => validateStrictFields fields ∅
+    | .number token => validateNumber token
+    | .array values => validateValues validateNumber values
+    | .object fields => validateFields validateNumber fields ∅
     | _ => .ok ()
 
-  private def validateStrictValues (values : List Raw) : Except String Unit :=
+  private def validateValues (validateNumber : String → Except String Unit)
+      (values : List Raw) : Except String Unit :=
     match values with
     | [] => .ok ()
     | item :: rest => do
-      validateStrictRaw item
-      validateStrictValues rest
+      validateRaw validateNumber item
+      validateValues validateNumber rest
 
-  private def validateStrictFields (fields : List (String × Raw))
+  private def validateFields (validateNumber : String → Except String Unit)
+      (fields : List (String × Raw))
       (keys : Std.HashSet String) : Except String Unit :=
     match fields with
     | [] => .ok ()
     | (key, item) :: rest => do
       if keys.contains key then throw s!"duplicate JSON object key: {key}"
-      validateStrictRaw item
-      validateStrictFields rest (keys.insert key)
+      validateRaw validateNumber item
+      validateFields validateNumber rest (keys.insert key)
 end
+
+def validateStrictRaw (raw : Raw) : Except String Unit :=
+  validateRaw validateIntegerToken raw
+
+def validateCaptureRaw (raw : Raw) : Except String Unit :=
+  validateRaw validateCaptureToken raw
 
 end LeanModels.Cpp

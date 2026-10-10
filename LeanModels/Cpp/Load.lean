@@ -1,5 +1,6 @@
 import LeanModels.Cpp.Json
 import LeanModels.Cpp.Evidence
+import LeanModels.Cpp.CaptureLoad
 
 namespace LeanModels.Cpp
 

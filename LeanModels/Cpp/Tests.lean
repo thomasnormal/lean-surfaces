@@ -1,5 +1,6 @@
 import LeanModels.Cpp
 import LeanModels.Cpp.EvidenceTests
+import LeanModels.Cpp.CaptureTests
 
 namespace LeanModels.Cpp.Tests
 

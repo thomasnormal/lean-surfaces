@@ -1,7 +1,7 @@
 # C++ declaration evidence — capture provenance
 
-2026-10-10. **Optional observational runner; no receipt loader, semantic query
-or runtime admission.** This specifies the missing process/input boundary
+2026-10-10. **Optional observational runner and literal receipt loader; no
+semantic query or runtime admission.** This specifies the process/input boundary
 between [literal probe observations](cpp-declaration-pricing.md) and the
 [ordinary ISO/frontend bridge](cpp-ordinary-bridge.md). The current
 `cpp-canonical-probe-0.3` wrapper and `load_cpp_probe` remain unchanged.
@@ -39,9 +39,10 @@ No new Lean axiom or theorem about a synthetic program supplies these bridges.
 
 ## Versioned capture bundle
 
-The proposed schema is **`cpp-probe-capture-0.1`**, with profile
+The capture schema is **`cpp-probe-capture-0.1`**, with profile
 **`cpp23-clang-probe-capture-0.1`** and subject edition **C++23**. These names
-are emitted by the optional runner, not accepted by either current loader.
+are emitted by the optional runner and accepted by the separate capture loader,
+not by `load_program` or `load_cpp_probe`.
 The initial runner uses the existing Clang/LLVM **21.1.8** plugin schema **0.3**.
 The plugin build language remains separate from the subject language.
 
@@ -165,6 +166,63 @@ supports concurrent library calls.
 Exit 0 reports observed positive-input stability, never input-world closure,
 hermetic replay, receipt ingestion, declaration admission or C++ execution.
 
+## Optional literal receipt binding
+
+`LeanModels.Cpp.CaptureLoad` supplies a separate command for a published bundle:
+
+```lean
+import LeanModels.Cpp.CaptureLoad
+
+load_cpp_capture captured from "path/to/capture-bundle"
+```
+
+The result is a literal `DeclarationCapture`, containing a `CaptureReceipt`
+and the existing `DeclarationProbe`. The receipt retains its complete parsed
+raw tree alongside typed payload-binding records and validated field groups;
+the probe retains its full AST, metadata, ordered rows and typed observations.
+It is not an `Artifact`, a process witness or an ISO declaration certificate.
+Neither command changes the other loaders or supplies execution semantics.
+
+The receipt's JSON parser shares string, array, object, duplicate-decoded-key
+and Unicode checks with the strict probe parser. Capture receipts additionally
+accept the full JSON number grammar as exact `Raw.number` token strings:
+decimals, exponent spelling, huge integers and `-0` are not converted through
+floating point. Typed natural-number fields remain integer-only. Probe parsing
+and `validateStrictRaw` remain integer-only; a receipt's numeric profile does
+not weaken the probe profile.
+
+Loading reads `capture.json`, validates its versioned literal-data contract,
+and checks every declared bundle payload's byte count and SHA-256. The four
+required payloads and each recorded process's stdout/stderr must be bound.
+Mandatory field groups and selected cross-field correspondences are checked;
+unknown fields remain raw observations, not new typed or semantic guarantees.
+Recorded positive manifests are checked for agreement, not reconstructed from
+the dependency payloads or authenticated against filesystem reads.
+The exact in-memory probe bytes checked by the digest are the bytes decoded as
+strict UTF-8 and passed to the existing typed probe parser. Auxiliary payloads
+are checked but their complete bytes are not duplicated in the literal.
+Bundle payload names are ordinary basenames; traversal, absolute names,
+symlinks and non-file payloads refuse. The bundle must be a quiescent directory
+owned by the caller. Before/after metadata checks and real-path checks are not
+an adversarial concurrent-filesystem-mutation guarantee.
+
+The byte-binding boundary explicitly trusts Lean's filesystem and process IO,
+the executable **`/usr/bin/sha256sum`**, and SHA-256 integrity. Hashing is not
+implemented as a kernel theorem. The hashing subprocess receives the same
+in-memory bytes, with a cleared inherited environment and `LC_ALL=C`; a named
+host executable is still a trust assumption, not producer authentication.
+The receipt itself is unsigned, and successful loading cannot distinguish a
+real launch record from a fabricated but internally consistent one.
+
+Original source, positive inputs, producer sources and toolchain images need
+not remain installed when a copied bundle is loaded. Their recorded paths and
+hashes are literal observations, not source/image rechecks or proof of actual
+reads. Portability means retaining and binding the bundle, not replaying the
+frontend or authenticating its process. `input_world`, runtime image closure,
+effective cc1 and ordinary source-profile closure remain **unestablished**;
+semantic and runtime admissions remain **false**. No row consensus, graph
+closure, pointer/entity merge, ISO query, ODR claim or runtime result follows.
+
 ## Capture checks and stronger input-world evidence
 
 The observational launcher performs these checks, without claiming
@@ -256,6 +314,19 @@ closure. Historical source/body/declaration-only counts remain
 XML **205/202/3**, JSON **1,572/963/609**; strict Mox refusal and semantic/runtime
 admissions of **zero** are unchanged.
 
+The separate capture-loader census attempts literal compilation of those two
+published original-profile bundles under `-j1`, an 8 GiB address-space bound
+and a 180-second wall cap. TinyXML2 refuses at Lean's default 200,000-heartbeat
+LCNF deterministic timeout (**41.540 s**); nlohmann/json refuses with internal
+out-of-memory (**23.750 s**). Strict Mox has no successful capture receipt to
+load. Thus **zero original-profile capture literals complete compilation** in
+this bounded default profile; partial elaboration or printed `#check` output
+is not success. Aggregate measured maximum RSS is **3,324,508 KiB**. A separate
+small actual-module observation with eight declaration rows loads successfully,
+without establishing ordinary/nonmodule source admission or executable
+semantics. These are literal resource outcomes, not new compiler or semantic
+verdicts, and no corpus-specific budget or special-case path is introduced.
+
 ## Primary references
 
 The baseline remains the charter's C++23/WG21 N4950. The translation discussion
@@ -269,6 +340,6 @@ development branch:
 - [PPCallbacks.h](https://github.com/llvm/llvm-project/blob/llvmorg-21.1.8/clang/include/clang/Lex/PPCallbacks.h): final include/existence observations are not a complete filesystem lookup trace.
 
 These references support a tooling contract, not independent compiler
-conformance. The initial optional runner remains observational; strict receipt
-ingestion and any input-world closure mechanism are separately reviewable
-future items.
+conformance. The optional runner remains observational and the capture loader
+remains literal-data binding. Any input-world closure mechanism is a separately
+reviewable future item.

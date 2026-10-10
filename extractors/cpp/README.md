@@ -52,8 +52,9 @@ publication; callers must discard output on any nonzero exit or parse failure.
 The [capture provenance contract](../../docs/cpp-provenance.md) separates a
 versioned, exact-byte launch/input receipt from stronger input-world closure.
 The optional observational runner below implements positive-input checks;
-no receipt loader or input-world closure mechanism is implemented, and the
-existing schema-0.3 wrapper has not acquired provenance fields.
+the separate literal capture loader binds bundle payloads without authenticating
+the producer or establishing input-world closure. The existing schema-0.3
+wrapper has not acquired provenance fields.
 
 ### Observational capture
 
@@ -118,6 +119,47 @@ strict Mox retained its frontend rejection. This is not a repository-wide TU
 sweep or new literal/semantic admission. There is no CI wiring in this item;
 the optional real-toolchain test reports an explicit skip when matching
 compiler/plugin inputs are absent.
+
+### Optional literal capture ingestion
+
+For a published `cpp-probe-capture-0.1` bundle, use the directory command:
+
+```lean
+import LeanModels.Cpp.CaptureLoad
+
+load_cpp_capture captured from "path/to/capture-bundle"
+```
+
+This embeds a literal `DeclarationCapture`: the complete parsed receipt with
+typed binding records, and the existing raw/typed `DeclarationProbe`. It checks
+all declared bundle payload byte counts and SHA-256, requires the four core
+payloads and bound process stdout/stderr, and parses the exact checked probe
+bytes. Auxiliary payload bytes are checked, not duplicated in the literal.
+Receipt numeric tokens retain exact decimal/exponent spelling without float
+coercion; the probe parser and typed integer fields stay integer-only.
+
+The loader trusts Lean IO, the host executable `/usr/bin/sha256sum` and SHA-256
+integrity; this is not a kernel hash theorem or producer/process authentication.
+Payload paths are ordinary basenames. Symlinks, traversal and non-file payloads
+refuse, but the caller must provide a quiescent bundle: path/metadata checks do
+not defeat adversarial concurrent filesystem mutation. Original source and
+toolchain paths need not remain installed for this portable literal binding.
+Their hashes remain recorded claims, not new image/source checks or replay.
+
+Successful binding leaves input-world, actual-loaded-image, effective-cc1 and
+ordinary-source-profile closure unestablished, with semantic/runtime admissions
+false. It neither creates an `Artifact` nor enables ISO/entity/ODR queries or
+execution. `load_cpp_probe` remains the separate observation-only command.
+
+A bounded literal-loader census of the two published original-profile captures
+completes **zero** original-corpus literal compilations: TinyXML2 hits Lean's
+default 200,000-heartbeat LCNF timeout (41.540 s), and nlohmann/json reports
+internal out-of-memory (23.750 s), under `-j1`, 8 GiB address-space and 180-second
+wall bounds. Strict Mox has no successful receipt to load. Partial elaboration
+or `#check` output is not completion. A separate small actual-module observation
+with eight declaration rows loads successfully but supplies no ordinary-source,
+ISO or runtime admission. These explicit resource refusals do not change the
+historical corpus syntax counts or semantic/runtime admissions of zero.
 
 ### Evidence contract
 

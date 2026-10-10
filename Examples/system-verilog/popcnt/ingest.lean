@@ -26,7 +26,7 @@ What the pins certify:
   nothing left out;
 * `run2` reproduces the simulator-verified popcount rows (the
   differential harness case `popcnt` in `harness/sv/cases2.json`, green
-  vs **Xcelium and Icarus** on the identical RTL source), including the
+  in independent differential checks on the identical RTL source), including the
   4-state row: one x bit in the input x-poisons the count through the
   adder tree.
 -/

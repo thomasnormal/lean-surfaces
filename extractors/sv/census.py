@@ -61,9 +61,8 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 # ---------------------------------------------------------------------------
 # THE CORPUS REGISTRY — no hard-coded default, and no silent fallback.
 #
-# This module used to carry
-#     DEFAULT_CORPUS = "/home/thomas-ahle/mox/sv-conformance/sv-tests-2/tests"
-# an absolute path on ANOTHER machine, used whenever --corpus was omitted --
+# This module used to carry an absolute host-local default corpus path,
+# used whenever --corpus was omitted --
 # which is exactly how the documented reproduce-block came to be unrunnable
 # on any host but one (docs/sv-charter.md §1.3).  A census that cannot say
 # which corpus it measured is not a measurement.
@@ -75,10 +74,8 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 #
 # 'sv-tests-2'  the corpus every landed SV coverage claim was measured on
 #               (docs/sv-corpus-coverage.md).  ~21.6k files, IEEE 1800-2023
-#               chapters 3-40.  PENDING OWNER DECISION (docs/sv-charter.md
-#               §8.1): it is employer-internal, carries no LICENSE, and
-#               embeds the IEEE standard PDF, so it cannot anchor a public
-#               claim.  Left in place and unrenamed until that is decided.
+#               chapters 3-40. An external corpus requires explicit access
+#               and redistribution permission; its sources are not vendored.
 #
 # 'sv-tests'    public chipsalliance/sv-tests.  1028 tests, uniformly ISC
 #               with per-file SPDX, vendorable (tests/** only).  Wired here
@@ -86,8 +83,8 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 # ---------------------------------------------------------------------------
 KNOWN_CORPORA = {
     "sv-tests-2": [
-        os.path.expanduser("~/repos/mox/sv-conformance/sv-tests-2/tests"),
-        "/home/thomas-ahle/mox/sv-conformance/sv-tests-2/tests",
+        os.path.expanduser("~/repos/sv-tests-2/tests"),
+        os.path.expanduser("~/corpora/sv-tests-2/tests"),
     ],
     "sv-tests": [
         os.path.expanduser("~/repos/sv-tests/tests"),
@@ -650,7 +647,12 @@ def committed_payload(provenance, summary):
     that does not exist. Compare what would be WRITTEN, not what is held.
     """
     lean = {k: v for k, v in summary.items() if k not in VOLATILE_SUMMARY_KEYS}
-    payload = {"schema": "sv-census-1", "provenance": provenance,
+    public_provenance = dict(provenance)
+    if isinstance(public_provenance.get("corpus_path"), str):
+        public_provenance["corpus_path"] = "<corpus>/tests"
+    if isinstance(lean.get("corpus"), str):
+        lean["corpus"] = "<corpus>"
+    payload = {"schema": "sv-census-1", "provenance": public_provenance,
                "summary": lean}
     return json.loads(json.dumps(payload, sort_keys=True))
 

@@ -48,7 +48,7 @@ theorem race_blk_rev :
   decide
 
 /-- **M0 theorem 3** (`docs/sv-design-m0.md`): two legal schedules, same
-1-cycle stimulus, different traces — the Xcelium-verified `(2,2)` vs
+1-cycle stimulus, different traces — the independently checked `(2,2)` vs
 `(1,1)` race, with σ_src/σ_rev as the concrete witnesses. -/
 theorem race_blk_racy :
     ∃ (σ₁ σ₂ : ScheduleOracle) (tr₁ tr₂ : List SvState),

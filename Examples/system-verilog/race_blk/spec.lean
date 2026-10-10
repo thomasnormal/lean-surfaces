@@ -43,7 +43,7 @@ harness verified (these stimuli were not themselves simulated —
 
 /-- **M0 theorem 3, surface form** (gallery `race_blk_racy` content): two
 legal schedules, the same 1-cycle stimulus, two different traces — stated in
-the `⇓[σ]` run judgment (σ_src/σ_rev with the Xcelium-verified `(2,2)` vs
+the `⇓[σ]` run judgment (σ_src/σ_rev with the independently checked `(2,2)` vs
 `(1,1)` traces are the witnesses). Raw form and proof:
 `Examples/system-verilog/race_blk/proof.lean`. -/
 theorem race_blk_race :

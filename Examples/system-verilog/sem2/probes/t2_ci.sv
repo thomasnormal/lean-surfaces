@@ -1,6 +1,6 @@
 // Phase-2 probe: `unique case … inside` with `?` wildcard patterns
 // (§12.5.4 — the decoder's dispatch style). Icarus cannot parse the
-// construct; this case is Xcelium-verified only (recorded gap).
+// construct; independent simulation verifies this case (recorded tool gap).
 module t2_ci (
     input  logic [4:0] a,
     output logic [2:0] y

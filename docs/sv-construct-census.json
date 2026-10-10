@@ -2,7 +2,7 @@
  "provenance": {
   "corpus_files": 21186,
   "corpus_name": "sv-tests-2",
-  "corpus_path": "/Users/ahle/repos/mox/sv-conformance/sv-tests-2/tests",
+  "corpus_path": "<corpus>/tests",
   "frontend": {
    "family": "pyslang-11",
    "name": "pyslang"

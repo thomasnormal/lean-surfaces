@@ -121,7 +121,7 @@ points (selects, `$signed`-marked comparisons, reductions, the FSM
 `case`, and the `@(posedge Clk_CI or negedge Rst_RBI)` async reset all
 run). The replay below is the differential harness case `alu_div_w8`
 (`harness/sv/cases2.json`) — the exact 18-cycle dual-transaction trace,
-green vs **Xcelium and Icarus** on the identical RTL source: an async
+green in independent differential checks on the identical RTL source: an async
 reset cycle, a UDIV transaction (OpA=7, OpB=200 pre-shifted by 1 →
 quotient 0 after the 2-cycle serial loop), then a UREM transaction
 (7 mod 200 = 7), with the `InVld/OutVld` handshake observable. -/

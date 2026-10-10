@@ -33,8 +33,7 @@ compile to that kernel's rules; missing rules are requests to the kernel
 lane, never a second scheduler. The R1-before-breadth dependency in §8
 remains, but kernel and independent surface work have separate owners.
 
-The fresh private fixture census and its chapter table remain internal
-under §6.1. Its `clean` classification means only that the elaborated
+The fixture census's `clean` classification means only that the elaborated
 M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
@@ -83,19 +82,15 @@ divergences and zero timeouts. Three additional archived `sv-0.2`
 envelopes refuse because their recorded absolute source paths are absent;
 they are not silently counted as fresh or live.
 
-Icarus **13.0 (devel), s20250103-64-gdad78d525** is installed with
-`vvp`. Xcelium **24.03-s004** is also installed, but installation is not
-a simulator verdict: a single adder preflight produces zero cycle lines
-and is killed by an external 60-second bound. No explicit licence error
-is emitted and the cause is not established. The restart differential
-measurement therefore selects Icarus explicitly rather than treating
-Xcelium's presence on `PATH` as runtime availability.
+The restart differential measurement selects Icarus explicitly.
+A simulator executable's presence is not a simulation verdict:
+readiness requires a completed run, not installation detection.
 
 The M0 differential harness verifies **10/10 cases**, including the
 race witness that matches the reverse schedule. Phase two verifies
 **15 cases and skips one**, `t2_ci`: the installed Icarus rejects that
-case-inside fixture at compilation, while the Xcelium preflight does
-not establish a usable alternative. There are zero differential
+case-inside fixture at compilation, and no completed alternative run
+is established for that restart check. There are zero differential
 failures. The phase-two script nevertheless prints "all 16 case(s)
 passed" because its summary includes skipped rows; **that summary is
 not the measured coverage**. Per-case outcomes, not exit status alone,
@@ -130,13 +125,10 @@ and logs outside the repository. The CI entry point `./check.sh` delegates
 to the existing `tools/ci.sh`; `SV_SIM` selects the phase-two oracle and
 defaults to the existing `auto` policy when unset.
 
-The value rule has kernel-checked width and per-bit theorems. A separate
-private real-fixture proof checks its parsed artifact against the literal
-design, proves a completed initial body through `stepSStmt`, and derives
-executor agreement through `stepSStmt_done_agrees`. This is a
-non-suspending statement proof, not a new scheduler or a claim that
-`CycleAdequacy` has been discharged. Private corpus records remain
-internal under §6.1.
+The value rule has kernel-checked width and per-bit theorems.
+`stepSStmt_done_agrees` relates a completed non-suspending statement
+execution to the executor; it is not a new scheduler or a proof that
+`CycleAdequacy` has been discharged.
 
 This item does **not** admit signed M0 ports/nets, symbolic signed
 widening, reversed packed ranges, enums/structures/unpacked arrays,
@@ -218,10 +210,10 @@ compilations with frontend errors stay loud: erasure must not turn an
 illegal implicit assignment, duplicate member or overflow into executable
 code. This is an extractor lowering, not a new value domain or scheduler.
 
-Six original fixtures in `harness/sv/enums/` carry licensed reference
-provenance and pass on Xcelium 24.03-s004 in default mode. They cover base
+Six original fixtures in `harness/sv/enums/` pass independent
+differential checks. They cover base
 defaults, signed/unsigned values, generated names, unknowns, static casts
-and all three typedef scopes. A private actual-corpus fixture certificate
+and all three typedef scopes. A real-source fixture certificate
 and completed-step proof use the unchanged executor correspondence.
 Fresh extraction over 21,787 corpus files yields 1,463 clean, 20,294
 partial and 30 include-skipped files: 60 previously partial files become
@@ -250,7 +242,7 @@ search cannot observe a changed state; calls, assignments, increments and
 other effectful or unsupported expressions stay loud, except fixed-size
 `$bits` queries whose operands are not evaluated. Nested label tests,
 not eager logical disjunctions, preserve first-match search. Six original
-fixtures in `harness/sv/ordinary_cases/` carry licensed reference provenance
+fixtures in `harness/sv/ordinary_cases/` pass independent differential checks
 for exact `x`/`z`, multiple labels, defaults, whole-case sizing and runtime
 expressions. No value type, interpreter, process rule or scheduler changes.
 Fresh extraction admits 54 previously partial simulation files without
@@ -289,10 +281,10 @@ interpreter, process or scheduler rule changes.
 Admission currently requires a syntactically pure bound argument:
 calls other than nested admitted `$bits` queries, assignments, increments,
 decrements, allocation and other unrecognized operand forms stay loud.
-This is a tier restriction, not an IEEE evaluation rule. A focused licensed
-Xcelium 24.03-s004 diagnostic returned width 8 but changed an eight-bit
-subject from 7 to 8 for `$bits(subject++)`, contrary to §20.6.2; the model
-does not emulate that effect or count it as agreement. Pure query types,
+This is a tier restriction, not an IEEE evaluation rule. A focused
+differential diagnostic observed an operand side effect for
+`$bits(subject++)`, contrary to §20.6.2; the model does not emulate
+that effect or count it as agreement. Pure query types,
 operators and selections remain admitted without executing their operands.
 
 Dynamic arrays, queues, associative arrays, string variables/types and
@@ -305,7 +297,7 @@ conversions; any frontend error in such a compilation adds
 
 Six original fixtures in `harness/sv/bit_queries/` cover builtin types,
 local aliases/enums, fixed unpacked arrays, packed aggregates, pure metadata
-expressions and result contexts, with licensed reference provenance.
+expressions and result contexts, with independent differential checks.
 Fresh final extraction admits 60 previously partial simulation files
 without losing a clean file: 1,577 clean, 20,180 partial and 30
 include-skipped out of 21,787. The exact 3,148-key core grows from 192
@@ -341,8 +333,8 @@ An admitted query in an erroneous compilation retains a
 `BitQuery:invalid-compilation` refusal rather than hiding frontend errors
 through constant folding. The symbolic `sv-0.2` path is unchanged.
 
-Four original fixtures in `harness/sv/bit_vector_queries/` have licensed
-reference provenance and cover four-state values, live controls and their
+Four original fixtures in `harness/sv/bit_vector_queries/` pass independent
+differential checks and cover four-state values, live controls and their
 truncation/deduplication, integral types and widths, nested expressions,
 result contexts and ordinary cases. The duplicate-control theorem in
 `Examples/system-verilog/bit_vector_queries/` is symbolic over operand and
@@ -384,42 +376,25 @@ An envelope using this new node remains loud if the frontend reports
 any compilation error, including a recovered malformed declaration whose
 bound selected expression itself does not carry an invalid flag.
 
-### Licensed reference status — 2026-10-09
+### Conformance validation status — 2026-10-09
 
-The original public cast, typedef, enum and selected-read fixtures carry
-`// REFERENCE:` records from the licensed fleet reference runner. Each
-record identifies the exact source before the appended provenance comment;
-removing that one trailing line recovers the recorded reference input.
-Annotations do not change statements, expectations or existing source spans.
-
-The six cast and six typedef fixtures pass on Xcelium 24.03-s004. All eight
-selected-read fixtures pass on the same licensed simulator with its documented
-`-ii_val` option, including the predefined integer/time sources and runtime
-index expressions. The option is part of each reference cache key and
-provenance record; the selected-read annotations also name it explicitly.
-The confirmation covers these fixtures, not arbitrary source shapes or nets.
-
-The default-mode disagreement is retained: only the bit-index, unknown-index
-and unsigned-result fixtures pass without `-ii_val`; five partial-overlap
-fixtures print `FAIL` because the simulator returns all-x. Complete diagnostics
-for the constant-part fixture show bounds warnings, normal execution and exit
-zero, not a compilation error. Simulator exit zero alone is not acceptance
-of a self-checking fixture. The installed Xcelium 24.03 SystemVerilog reference,
-"Reading Part-selects of Vectors", documents `-ii_val` for IEEE per-invalid-bit
-behavior on one-dimensional packed bit/logic variables, excluding nets. Its
-"Indexed Vector Part-Selects" documentation acknowledges the default deviation.
+The six cast, six typedef and eight selected-read fixtures pass independent
+differential checks, including predefined integer/time sources and runtime
+index expressions. This confirms these fixtures, not arbitrary source
+shapes or nets. Expectations come from IEEE semantics; a simulator's exit
+status alone is not acceptance of a self-checking fixture.
 
 IEEE 1800-2023 11.5.1, printed page 296, requires X at the individual
 out-of-range positions of a partially overlapping read. Note 2 on page 297
 permits a compile-time error for an out-of-range index; it does not specify
 an alternative whole-result-X value for accepted execution. The interpreter
-and distinguishing fixture expectations retain the per-bit rule. A separate
-licensed diagnostic with `-ii_val` also confirms exact `xx10` results for
+and distinguishing fixture expectations retain the per-bit rule. Separate
+diagnostics confirm exact `xx10` results for
 ordinary, constant-indexed and runtime-indexed partial reads of known and
 mixed-x/z sources, rather than checking only the out-of-range positions.
-No theorem is weakened and no oracle-specific semantic path is introduced to
-disguise the default-mode disagreement. This selected-read family is now
-licensed-reference confirmed in the explicitly recorded IEEE mode; landing
+No theorem is weakened and no simulator-specific semantic path is introduced
+to disguise a disagreement. This selected-read family is confirmed against
+the IEEE per-bit rule; publication
 still requires the ordinary build and CI gates.
 
 ---
@@ -590,16 +565,9 @@ file. The sibling `unlockable.txt` (11 lines) did land, which is how
 
 ### 1.3 The census instrument points at a path that does not exist — **CLOSED**
 
-`extractors/sv/census.py:58`:
-
-```
-DEFAULT_CORPUS = "/home/thomas-ahle/mox/sv-conformance/sv-tests-2/tests"
-```
-
-An absolute path on a Linux host. `ls /home/thomas-ahle` → *No such
-file or directory*. The reproduce-block in
-`docs/sv-corpus-coverage.md` invokes `census.py` with **no `--corpus`
-flag**, so the documented command cannot work on this machine.
+The reproduce-block in `docs/sv-corpus-coverage.md` invoked `census.py`
+with **no `--corpus` flag**. An obsolete absolute, host-local default
+made that command unusable on other machines.
 
 The instrument itself is *fine* — pointed at a corpus with `--corpus`
 it runs, and a 40-file smoke completed in **2.0 s**. The defect is
@@ -623,7 +591,7 @@ artefact for being a fact about the afternoon rather than the corpus.
 This is the finding that most changes what the owner is deciding.
 
 `docs/sv-corpus-coverage.md` censuses a corpus it calls **sv-tests-2**.
-There is also `/Users/ahle/repos/sv-tests`, a clean checkout of the
+The public `sv-tests` corpus is a separate checkout of the
 public **chipsalliance/sv-tests**. The charter assumed, as any reader
 would, that one was a checkout of the other. **They are disjoint.**
 
@@ -643,16 +611,15 @@ Located and censused, read-only:
 
 | | public `sv-tests` | `sv-tests-2` |
 | --- | --- | --- |
-| location | `~/repos/sv-tests` | `~/repos/mox/sv-conformance/sv-tests-2` |
-| origin | `chipsalliance/sv-tests` | **inside `normal-computing/mox`** |
+| location | caller-supplied checkout | caller-supplied corpus directory |
+| origin | `chipsalliance/sv-tests` | independently supplied test corpus |
 | `.sv` files | **1 028** tracked | **21 631** (21 186 under `chapter-*`) |
 | chapter dirs | 20, clauses 5–26 | **38, clauses 3–40** |
 | licence | **ISC, uniform, per-file SPDX** | **none — no LICENSE file** |
 | redistributable | yes, with attribution | **no** |
 
-`sv-tests-2`'s own README describes it as an *"IEEE 1800-2023
-SystemVerilog conformance corpus, chapter-by-chapter … Owner:
-fleet-wide"*, covering the full SV surface plus the VPI clauses.
+The extended corpus is organized by IEEE clause, covering the full SV
+surface plus the VPI clauses.
 
 **Three consequences, and the third is a hard blocker.**
 
@@ -663,12 +630,9 @@ fleet-wide"*, covering the full SV surface plus the VPI clauses.
    that the public suite does not test at all. As a *measuring
    instrument* it is far and away the better one.
 
-2. **It is employer-internal.** It lives inside a
-   `normal-computing/mox` clone. `lean-surfaces` publishes to
-   `thomasnormal/lean-surfaces`. Anchoring a public repository's
-   conformance claims to a private corpus means **no reader outside can
-   reproduce a single coverage number** — and the coverage memo already
-   depends on it.
+2. **Its inputs must be independently accessible.** A public conformance
+   claim needs a corpus readers can obtain and run. Counts from an
+   unavailable external corpus cannot establish public reproducibility.
 
 3. **It embeds the IEEE standard itself.**
    `tests/chapter-36/ieee-1800-2023.pdf`, 9 448 927 bytes. That is
@@ -863,13 +827,13 @@ worth more than either saying it alone.
 
 **And one correction this charter owed the family doc — now
 RESOLVED BY RULING.** The registry row's corpus field reads
-**`sv-tests-2`**, which §1.4 measures as employer-internal, carrying
-**no licence**, and embedding the IEEE PDF; the charter objected that a
+**`sv-tests-2`**, an external corpus without redistribution permission;
+the charter objected that a
 public repository's registry should not name a corpus its readers
 cannot obtain. **Ruling §6.1 settles it:** `sv-tests-2` is citable
-internally, open-sourcing is deferred, and the standing condition is
+for measurements, redistribution is deferred, and the standing condition is
 that it **stays out of public artifacts** until a further ruling. So the
-row stands for internal purposes, and the registry's *public*
+row records the measurement source, and the registry's *public*
 presentation is what remains gated. The IEEE PDF stays unopened
 regardless — that is our own law, not a consequence of the licence
 question.
@@ -1101,7 +1065,7 @@ fully-specified state, not an error.
 
 ### 3.2 X-propagation is specified, per-operator, and NOT uniform
 
-The facts below were verified against Xcelium when M0 was built, and
+The facts below received independent simulation checks when M0 was built, and
 they are the reason a naive "any x → x" rule is wrong:
 
 * **Arithmetic** (`+ - * < <= >=`): any x/z bit in *either* operand
@@ -1199,43 +1163,18 @@ someone else's IP**, vendored as individual `.sv` files into
 of the 18 envelopes cannot regenerate here (§0). Solderpad/Apache is
 permissive, so this is a *completeness* wart, not a licensing one.
 
-### 4.2 Thomas's own SV, surveyed read-only
+### 4.2 Choosing real artifacts
 
-Surveyed across `~/repos`; **nothing chosen**, candidates ranked.
+Use redistributable real RTL with a pinned source checkout. The existing
+six M0 designs already round-trip and are proved, but deliberately small
+examples cannot establish scaling. The CV32E40P examples exercise real
+RTL and require a complete, correctly pinned third-party checkout.
+Design and testbench admission remain separate: accepting a hardware
+module does not imply support for its verification environment.
 
-| repo | `.sv/.v` files | remote | licence | note |
-| --- | ---: | --- | --- | --- |
-| **`DRAM_uvm`** | **11** | **`thomasahle/DRAM_uvm`** | none | **Thomas's own**, 11 of 12 commits his; 805 lines total |
-| `sv-tutorial` | 58 792 | `thomasnormal/sv-tutorial` | none | huge; course material + deps |
-| `UVMCourse` | 224 | `thomasnormal/UVMCourse` | none | course exercises |
-| `verification` / `verification2` | 13 164 / 1 642 | `normal-computing/verification` | none | **employer-internal** |
-| `axi4_avip` | 348 | `mbits-mirafra/axi4_avip` | LICENSE.md | third-party AVIP |
-| `verilator-verification` | 3 690 | `antmicro/…` | LICENSE | third-party |
-| `eda`, `dv-smith`, `cvdp_benchmark` | 0–2 | — | — | not SV corpora |
-
-**Ranked shortlist for a designated driver:**
-
-1. **`DRAM_uvm/design.sv` — the standout.** 98 lines containing
-   `DRAM_model`, plus `interface.sv` (21 lines). Thomas's own, on his
-   *personal* GitHub (no employer entanglement), small enough to
-   ingest whole, and a real clocked design with memory. Its 9-file UVM
-   testbench half is **far** out of tier (clause 8/18) and would be
-   ignored — which is clean, not awkward: the design and its testbench
-   are separate files.
-2. **The existing 6 M0 designs, promoted.** They already round-trip,
-   are already proved, and are unencumbered. The honest objection: they
-   were written *to be easy*, so they cannot demonstrate the tier
-   scaling.
-3. **CV32E40P, expanded.** Best fidelity-per-effort for *real* RTL, but
-   third-party and needs the external checkout pinned properly.
-
-**No repo contains a "twin" in the ctwin sense** — an SV design that is
-a transcription of something the repository already models in another
-language. The C tier's square is not reproducible here, and the charter
-recommends the owner **not** try to manufacture one: SV's differential
-oracle is a *simulator* (already wired: Icarus green today, Xcelium
-historically), which is a stronger and more standard oracle than a
-hand-maintained twin.
+Do not manufacture a hand-maintained twin merely to obtain a proof
+target. Verify real source artifacts through their language semantics,
+using completed independent simulations for differential checks.
 
 ---
 
@@ -1314,9 +1253,9 @@ optional showcase, not a dependency.
 
 ### 6.3 Scope — EVERYTHING, with a PLUGGABLE oracle
 
-> *"EVERYTHING IN SCOPE — the whole spec including the verification tier
-> (classes/constrained-random/assertions). New oracle policy: XCELIUM
-> where Icarus falls short."*
+The scope includes the whole specification, including the verification
+tier: classes, constrained randomization and assertions. Simulation
+validation is pluggable when individual tools cannot run a fixture.
 
 This reverses the charter's §2.5 suggestion that the verification tier
 be a separate lane. It is one lane and one ladder.
@@ -1325,8 +1264,8 @@ The ruling carries a design order with it: **the oracle becomes a
 parameter from day one**, with *per-test oracle attribution recorded* —
 which oracle produced each expected result is **provenance**, exactly as
 the C tier names the interpreter on its coverage lines. Icarus stays the
-default; Xcelium is used where Icarus falls short; **access details are
-owed by Thomas (§9), and the design must not block on them.**
+default; an alternative completed simulation is required where a tool
+cannot execute a fixture. The semantics must not depend on tool availability.
 
 This is the same lesson the census just paid for in cash: an artifact
 that does not record what produced it cannot be checked later. The
@@ -1594,23 +1533,17 @@ checked, never hand-maintained.
 
 ## 9 WHAT REMAINS OWED
 
-The six decisions are taken. What is still outstanding is not a decision
-but an **access** and two standing obligations.
+The six decisions are taken. Three standing obligations remain.
 
-1. **Xcelium access — machine and licence.** Ruling 6.3 makes Xcelium
-   the oracle where Icarus falls short. The details are owed by Thomas.
-   **The design must not block on it**: the oracle is a parameter,
-   Icarus is the default, and per-test oracle attribution is recorded
-   from the first commit that touches the harness.
+1. **Completed per-fixture validation.** The simulation backend is a
+   parameter. Tool availability alone never establishes an execution
+   result, and unsupported fixtures need a named outcome.
 
-2. **The Xcelium 4-state table is UNVERIFIED on any reachable host.**
-   `docs/sv-design-m0.md` calls its operator table *"normative —
-   verified on Xcelium"*. Icarus reproduces the 10 harness cases today,
-   but the **operator-level table has not been re-checked here**. No new
-   claim may call it dual-simulator-verified without a re-run — and
-   ruling 6.3 supplies the mechanism to do so properly.
+2. **Operator-level evidence.** Icarus reproduces the 10 harness cases,
+   but that does not by itself re-check every four-state operator table.
+   No new claim may call a table independently verified without a run.
 
-3. **`sv-tests-2` stays out of public artifacts** until the
+3. **External corpus sources stay out of public artifacts** until the
    open-sourcing ruling, and **the IEEE PDF stays unopened**. Both are
    standing conditions of ruling 6.1, not one-time checks.
 

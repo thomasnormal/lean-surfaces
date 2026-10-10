@@ -2,7 +2,7 @@
 
 Axis-1/2 coverage of the M0 tier (`docs/sv-design-m0.md`, envelope schema
 `sv-0.1`) measured on real code: every `.sv` file under
-`/home/thomas-ahle/mox/sv-conformance/sv-tests-2/tests/chapter-*/`
+`<corpus>/tests/chapter-*/`
 (the IEEE 1800-2023 conformance corpus, self-checking PASS/FAIL tests), run
 through the `extractors/sv/extract.py` pipeline **in-process** by
 `extractors/sv/census.py`.
@@ -10,13 +10,16 @@ through the `extractors/sv/extract.py` pipeline **in-process** by
 Reproduce (from the repo root):
 
 ```
-python3.12 extractors/sv/census.py            # full census, ~4 s at 32 jobs
-python3.12 extractors/sv/census.py --recheck  # fixed-seed 200-file determinism check
+python3.12 extractors/sv/census.py --corpus /path/to/tests            # full census
+python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determinism check
 ```
 
 Machine-readable results: `harness/sv/conformance/census.json`
 (per-file records + this document's aggregates). Census date: 2026-07-21,
 pyslang 11.0.0.
+
+The committed summary uses a portable corpus-layout placeholder, not a
+host-local checkout path. Supply the actual test directory explicitly.
 
 ## Method
 

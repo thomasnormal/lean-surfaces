@@ -105,7 +105,7 @@ and the **semantic tier** (`Design2`, next section) executes them. -/
 (no unsupported nodes survive), and `run2` reproduces the simulator-
 verified traces. Every row below replays a cycle of the differential
 harness cases `ff_one_len8`/`ff_one_len32` (`harness/sv/cases2.json`),
-green vs **Xcelium and Icarus** on the identical RTL source. -/
+green in independent differential checks on the identical RTL source. -/
 
 #guard (cv32e40p_ff_one.pdesign.instantiate2 [8]).toOption.map
         (·.hasUnsupported) == some false

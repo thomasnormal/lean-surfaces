@@ -835,6 +835,23 @@ negative above. The two-segment command exits zero in **64.585 seconds** with
 composition) pass. It therefore prices a viable proof shape for larger inputs,
 but not yet the complete 4,527-row list or an integrated loader organization.
 
+## Four-chunk projection chain
+
+The short-chain control extends the composition to four nested 128-row
+projections at source offsets **0, 128, 256 and 384**. Each projection is
+proved independently and the four chunks are rewritten into one concatenation;
+the proof never asks the kernel to normalize a concrete `take 512` term. The
+command exits zero in **77.925 seconds** with **1,920,292 KiB** wait4 peak RSS
+and sampled **834,612 KiB** RSS/HWM. All four segment declarations return from
+`addAndCompile`, and every projection plus the final concatenation equality
+passes under the unchanged default limits.
+
+This isolates the current wall: nested 128-row `drop` traversal and append
+composition remain viable through four chunks, while direct 256-row reduction
+still refuses. It is a proof-organization control only; it does not establish
+the missing tail beyond row 512, whole-list equality, or a production loader
+design.
+
 ## Receipts
 
 Full commands, limits, diagnostics, source/input pins, instrument sources,

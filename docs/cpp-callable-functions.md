@@ -67,5 +67,6 @@ binary returns plus mismatched evidence, control-flow and function-try
 refusals. `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned
 Clang check for real identity/add bodies and a branch refusal; it requires the
 same explicit compiler/plugin variables as the existing probe tests and skips
-otherwise. The next rung must add a statement/object model before widening the
-body profile or changing `Translation.execute`.
+otherwise. The next rung adds evaluation for this exact one-return profile only; broader
+statements still require a statement model, and `Translation.execute` remains
+refused.

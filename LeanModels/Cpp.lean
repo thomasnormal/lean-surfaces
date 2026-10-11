@@ -8,6 +8,7 @@ import LeanModels.Cpp.ScalarTypes
 import LeanModels.Cpp.CompositeTypes
 import LeanModels.Cpp.ReferenceTypes
 import LeanModels.Cpp.IntegralExpressionTypes
+import LeanModels.Cpp.CallableEvaluation
 import LeanModels.Cpp.ObjectModel
 import LeanModels.Cpp.TypeEvidence
 import LeanModels.Cpp.ExpressionEvidence

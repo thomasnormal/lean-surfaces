@@ -192,13 +192,12 @@ def fmt_hex(n):
 
 
 def fmt_bad(n):
-    # CPython raises ValueError: unsupported format character 'q'; the
-    # model refuses LOUDLY rather than inventing the ValueError
+    # CPython raises ValueError: unsupported format character 'q'.
     return "%q" % (n,)
 
 
 def fmt_trailing(n):
-    # CPython raises ValueError: incomplete format -- loud here too
+    # CPython raises ValueError: incomplete format.
     return "%d%" % (n,)
 
 

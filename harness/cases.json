@@ -459,7 +459,7 @@
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_nonascii_r", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_width", "args": [[3]], "expect": "unsupported"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_hex", "args": [[255]], "expect": "match", "note": "bare %x over the scalar integer/Boolean inventory"},
-  {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_bad", "args": [[3]], "expect": "unsupported"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_bad", "args": [[3]], "expect": "match", "note": "faithful CPython ValueError for an unsupported conversion character"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_trailing", "args": [[3]], "expect": "match", "note": "faithful CPython ValueError for an incomplete format"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_container", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_mapping", "args": [[]], "expect": "unsupported"},

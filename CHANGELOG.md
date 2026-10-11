@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Invalid `%q` string formats now raise CPython's faithful
+  `ValueError: unsupported format character 'q' (0x71) at index 1` instead of
+  refusing. The CPython 3.9 differential suite now has **2,701 / 3,026 rows =
+  89.2% complete** natively and **2,627 / 3,026 = 86.8% complete** in the
+  proof interpreter, with **100% agreement among decided rows** and zero
+  failures.
+
 - Trailing `%` string formats now raise CPython's faithful
   `ValueError: incomplete format` instead of refusing. The CPython 3.9
   differential suite now has **2,700 / 3,026 rows = 89.2% complete**

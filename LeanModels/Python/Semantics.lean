@@ -926,10 +926,9 @@ mid-walk is CPython's `not enough arguments` verbatim, and so are
 leftover arguments at the end — EXCEPT under `mapping`, the `ctx.dict`
 flag above, which is exactly the condition CPython guards that second
 check with. Anything else after a `%` — a flag, a width, a precision, a
-mapping key, another conversion character, or the end of the string — is
-LOUD: the format minilanguage is a second tier, and the forms CPython
-itself rejects (`%q`, a trailing `%`) get a refusal rather than a
-fabricated `ValueError` (recorded restriction). -/
+mapping key, another supported conversion character, or the end of the
+string — is LOUD: the format minilanguage is a second tier. The invalid `%q`
+form and a trailing `%` carry CPython's faithful `ValueError`s. -/
 def strFormatWalk : List Char → List RVal → Bool → String → Res String
   | [], args, mapping, acc =>
       if args.isEmpty || mapping then .ok acc
@@ -949,6 +948,8 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
             | .exn e => .exn e
             | .timeout => .timeout
             | .unsupported msg => .unsupported msg
+      else if c == 'q' then
+        .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
       else
         .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>

@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/float_lab/float_lab.py",
-  "source_sha256": "72b3368c7b042134675d8eeaa378f7ebed0ad65739301c680f9d1555370f3723",
+  "source_sha256": "0197a5bd7c485446bc22df2734b271d744f7db952f0cae5955657b24ff21d963",
   "module": {
     "kind": "Module",
     "body": [
@@ -2359,7 +2359,7 @@
           "end_lineno": 88,
           "end_col_offset": 20
         },
-        "name": "addition_still_loud",
+        "name": "addition",
         "args": [],
         "args_unsupported": null,
         "locals_unsupported": null,
@@ -3030,6 +3030,1121 @@
               ],
               "keywords": [],
               "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 123,
+          "col_offset": 0,
+          "end_lineno": 124,
+          "end_col_offset": 23
+        },
+        "name": "add",
+        "args": [
+          {
+            "arg": "left",
+            "span": {
+              "lineno": 123,
+              "col_offset": 8,
+              "end_lineno": 123,
+              "end_col_offset": 12
+            }
+          },
+          {
+            "arg": "right",
+            "span": {
+              "lineno": 123,
+              "col_offset": 14,
+              "end_lineno": 123,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 124,
+              "col_offset": 4,
+              "end_lineno": 124,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 124,
+                "col_offset": 11,
+                "end_lineno": 124,
+                "end_col_offset": 23
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 124,
+                  "col_offset": 11,
+                  "end_lineno": 124,
+                  "end_col_offset": 15
+                },
+                "id": "left"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 124,
+                  "col_offset": 18,
+                  "end_lineno": 124,
+                  "end_col_offset": 23
+                },
+                "id": "right"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 127,
+          "col_offset": 0,
+          "end_lineno": 128,
+          "end_col_offset": 23
+        },
+        "name": "subtract",
+        "args": [
+          {
+            "arg": "left",
+            "span": {
+              "lineno": 127,
+              "col_offset": 13,
+              "end_lineno": 127,
+              "end_col_offset": 17
+            }
+          },
+          {
+            "arg": "right",
+            "span": {
+              "lineno": 127,
+              "col_offset": 19,
+              "end_lineno": 127,
+              "end_col_offset": 24
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 128,
+              "col_offset": 4,
+              "end_lineno": 128,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 128,
+                "col_offset": 11,
+                "end_lineno": 128,
+                "end_col_offset": 23
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 128,
+                  "col_offset": 11,
+                  "end_lineno": 128,
+                  "end_col_offset": 15
+                },
+                "id": "left"
+              },
+              "op": "Sub",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 128,
+                  "col_offset": 18,
+                  "end_lineno": 128,
+                  "end_col_offset": 23
+                },
+                "id": "right"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 131,
+          "col_offset": 0,
+          "end_lineno": 132,
+          "end_col_offset": 23
+        },
+        "name": "multiply",
+        "args": [
+          {
+            "arg": "left",
+            "span": {
+              "lineno": 131,
+              "col_offset": 13,
+              "end_lineno": 131,
+              "end_col_offset": 17
+            }
+          },
+          {
+            "arg": "right",
+            "span": {
+              "lineno": 131,
+              "col_offset": 19,
+              "end_lineno": 131,
+              "end_col_offset": 24
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 132,
+              "col_offset": 4,
+              "end_lineno": 132,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 132,
+                "col_offset": 11,
+                "end_lineno": 132,
+                "end_col_offset": 23
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 132,
+                  "col_offset": 11,
+                  "end_lineno": 132,
+                  "end_col_offset": 15
+                },
+                "id": "left"
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 132,
+                  "col_offset": 18,
+                  "end_lineno": 132,
+                  "end_col_offset": 23
+                },
+                "id": "right"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 135,
+          "col_offset": 0,
+          "end_lineno": 140,
+          "end_col_offset": 16
+        },
+        "name": "augmented",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 136,
+              "col_offset": 4,
+              "end_lineno": 136,
+              "end_col_offset": 15
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 136,
+                  "col_offset": 4,
+                  "end_lineno": 136,
+                  "end_col_offset": 9
+                },
+                "id": "value"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 136,
+                "col_offset": 12,
+                "end_lineno": 136,
+                "end_col_offset": 15
+              },
+              "value": {
+                "type": "float",
+                "bits": "4602678819172646912"
+              }
+            }
+          },
+          {
+            "kind": "AugAssign",
+            "span": {
+              "lineno": 137,
+              "col_offset": 4,
+              "end_lineno": 137,
+              "end_col_offset": 17
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 137,
+                "col_offset": 4,
+                "end_lineno": 137,
+                "end_col_offset": 9
+              },
+              "id": "value"
+            },
+            "op": "Add",
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 137,
+                "col_offset": 13,
+                "end_lineno": 137,
+                "end_col_offset": 17
+              },
+              "value": {
+                "type": "float",
+                "bits": "4598175219545276416"
+              }
+            }
+          },
+          {
+            "kind": "AugAssign",
+            "span": {
+              "lineno": 138,
+              "col_offset": 4,
+              "end_lineno": 138,
+              "end_col_offset": 18
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 138,
+                "col_offset": 4,
+                "end_lineno": 138,
+                "end_col_offset": 9
+              },
+              "id": "value"
+            },
+            "op": "Sub",
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 138,
+                "col_offset": 13,
+                "end_lineno": 138,
+                "end_col_offset": 18
+              },
+              "value": {
+                "type": "float",
+                "bits": "4593671619917905920"
+              }
+            }
+          },
+          {
+            "kind": "AugAssign",
+            "span": {
+              "lineno": 139,
+              "col_offset": 4,
+              "end_lineno": 139,
+              "end_col_offset": 17
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 139,
+                "col_offset": 4,
+                "end_lineno": 139,
+                "end_col_offset": 9
+              },
+              "id": "value"
+            },
+            "op": "Mult",
+            "value": {
+              "kind": "UnaryOp",
+              "span": {
+                "lineno": 139,
+                "col_offset": 13,
+                "end_lineno": 139,
+                "end_col_offset": 17
+              },
+              "op": "USub",
+              "operand": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 139,
+                  "col_offset": 14,
+                  "end_lineno": 139,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "4611686018427387904"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 140,
+              "col_offset": 4,
+              "end_lineno": 140,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 140,
+                "col_offset": 11,
+                "end_lineno": 140,
+                "end_col_offset": 16
+              },
+              "id": "value"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 143,
+          "col_offset": 0,
+          "end_lineno": 144,
+          "end_col_offset": 33
+        },
+        "name": "mixed_rounding",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 144,
+              "col_offset": 4,
+              "end_lineno": 144,
+              "end_col_offset": 33
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 144,
+                "col_offset": 11,
+                "end_lineno": 144,
+                "end_col_offset": 33
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 144,
+                  "col_offset": 11,
+                  "end_lineno": 144,
+                  "end_col_offset": 27
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "9007199254740993"
+                }
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 144,
+                  "col_offset": 30,
+                  "end_lineno": 144,
+                  "end_col_offset": 33
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "4607182418800017408"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 147,
+          "col_offset": 0,
+          "end_lineno": 148,
+          "end_col_offset": 24
+        },
+        "name": "cancel",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 147,
+              "col_offset": 11,
+              "end_lineno": 147,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 148,
+              "col_offset": 4,
+              "end_lineno": 148,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 148,
+                "col_offset": 11,
+                "end_lineno": 148,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 148,
+                  "col_offset": 11,
+                  "end_lineno": 148,
+                  "end_col_offset": 16
+                },
+                "id": "value"
+              },
+              "op": "Sub",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 148,
+                  "col_offset": 19,
+                  "end_lineno": 148,
+                  "end_col_offset": 24
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 151,
+          "col_offset": 0,
+          "end_lineno": 156,
+          "end_col_offset": 26
+        },
+        "name": "arithmetic_conversion_error",
+        "args": [
+          {
+            "arg": "operation",
+            "span": {
+              "lineno": 151,
+              "col_offset": 32,
+              "end_lineno": 151,
+              "end_col_offset": 41
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 152,
+              "col_offset": 4,
+              "end_lineno": 153,
+              "end_col_offset": 30
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 152,
+                "col_offset": 7,
+                "end_lineno": 152,
+                "end_col_offset": 21
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 152,
+                  "col_offset": 7,
+                  "end_lineno": 152,
+                  "end_col_offset": 16
+                },
+                "id": "operation"
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 152,
+                    "col_offset": 20,
+                    "end_lineno": 152,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 153,
+                  "col_offset": 8,
+                  "end_lineno": 153,
+                  "end_col_offset": 30
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 153,
+                    "col_offset": 15,
+                    "end_lineno": 153,
+                    "end_col_offset": 30
+                  },
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 153,
+                      "col_offset": 15,
+                      "end_lineno": 153,
+                      "end_col_offset": 24
+                    },
+                    "left": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 153,
+                        "col_offset": 15,
+                        "end_lineno": 153,
+                        "end_col_offset": 17
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "10"
+                      }
+                    },
+                    "op": "Pow",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 153,
+                        "col_offset": 21,
+                        "end_lineno": 153,
+                        "end_col_offset": 24
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "400"
+                      }
+                    }
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 153,
+                      "col_offset": 27,
+                      "end_lineno": 153,
+                      "end_col_offset": 30
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "0"
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 154,
+              "col_offset": 4,
+              "end_lineno": 155,
+              "end_col_offset": 30
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 154,
+                "col_offset": 7,
+                "end_lineno": 154,
+                "end_col_offset": 21
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 154,
+                  "col_offset": 7,
+                  "end_lineno": 154,
+                  "end_col_offset": 16
+                },
+                "id": "operation"
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 154,
+                    "col_offset": 20,
+                    "end_lineno": 154,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 155,
+                  "col_offset": 8,
+                  "end_lineno": 155,
+                  "end_col_offset": 30
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 155,
+                    "col_offset": 15,
+                    "end_lineno": 155,
+                    "end_col_offset": 30
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 155,
+                      "col_offset": 15,
+                      "end_lineno": 155,
+                      "end_col_offset": 18
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "0"
+                    }
+                  },
+                  "op": "Sub",
+                  "right": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 155,
+                      "col_offset": 21,
+                      "end_lineno": 155,
+                      "end_col_offset": 30
+                    },
+                    "left": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 155,
+                        "col_offset": 21,
+                        "end_lineno": 155,
+                        "end_col_offset": 23
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "10"
+                      }
+                    },
+                    "op": "Pow",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 155,
+                        "col_offset": 27,
+                        "end_lineno": 155,
+                        "end_col_offset": 30
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "400"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 156,
+              "col_offset": 4,
+              "end_lineno": 156,
+              "end_col_offset": 26
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 156,
+                "col_offset": 11,
+                "end_lineno": 156,
+                "end_col_offset": 26
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 156,
+                  "col_offset": 11,
+                  "end_lineno": 156,
+                  "end_col_offset": 20
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 156,
+                    "col_offset": 11,
+                    "end_lineno": 156,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "10"
+                  }
+                },
+                "op": "Pow",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 156,
+                    "col_offset": 17,
+                    "end_lineno": 156,
+                    "end_col_offset": 20
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "400"
+                  }
+                }
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 156,
+                  "col_offset": 23,
+                  "end_lineno": 156,
+                  "end_col_offset": 26
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "0"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 159,
+          "col_offset": 0,
+          "end_lineno": 164,
+          "end_col_offset": 22
+        },
+        "name": "nan_arithmetic_still_loud",
+        "args": [
+          {
+            "arg": "operation",
+            "span": {
+              "lineno": 159,
+              "col_offset": 30,
+              "end_lineno": 159,
+              "end_col_offset": 39
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 160,
+              "col_offset": 4,
+              "end_lineno": 161,
+              "end_col_offset": 29
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 160,
+                "col_offset": 7,
+                "end_lineno": 160,
+                "end_col_offset": 21
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 160,
+                  "col_offset": 7,
+                  "end_lineno": 160,
+                  "end_col_offset": 16
+                },
+                "id": "operation"
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 160,
+                    "col_offset": 20,
+                    "end_lineno": 160,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 161,
+                  "col_offset": 8,
+                  "end_lineno": 161,
+                  "end_col_offset": 29
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 161,
+                    "col_offset": 15,
+                    "end_lineno": 161,
+                    "end_col_offset": 29
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 161,
+                      "col_offset": 15,
+                      "end_lineno": 161,
+                      "end_col_offset": 20
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "9218868437227405312"
+                    }
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "UnaryOp",
+                    "span": {
+                      "lineno": 161,
+                      "col_offset": 23,
+                      "end_lineno": 161,
+                      "end_col_offset": 29
+                    },
+                    "op": "USub",
+                    "operand": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 161,
+                        "col_offset": 24,
+                        "end_lineno": 161,
+                        "end_col_offset": 29
+                      },
+                      "value": {
+                        "type": "float",
+                        "bits": "9218868437227405312"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 162,
+              "col_offset": 4,
+              "end_lineno": 163,
+              "end_col_offset": 28
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 162,
+                "col_offset": 7,
+                "end_lineno": 162,
+                "end_col_offset": 21
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 162,
+                  "col_offset": 7,
+                  "end_lineno": 162,
+                  "end_col_offset": 16
+                },
+                "id": "operation"
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 162,
+                    "col_offset": 20,
+                    "end_lineno": 162,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 163,
+                  "col_offset": 8,
+                  "end_lineno": 163,
+                  "end_col_offset": 28
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 163,
+                    "col_offset": 15,
+                    "end_lineno": 163,
+                    "end_col_offset": 28
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 163,
+                      "col_offset": 15,
+                      "end_lineno": 163,
+                      "end_col_offset": 20
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "9218868437227405312"
+                    }
+                  },
+                  "op": "Sub",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 163,
+                      "col_offset": 23,
+                      "end_lineno": 163,
+                      "end_col_offset": 28
+                    },
+                    "value": {
+                      "type": "float",
+                      "bits": "9218868437227405312"
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 164,
+              "col_offset": 4,
+              "end_lineno": 164,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 164,
+                "col_offset": 11,
+                "end_lineno": 164,
+                "end_col_offset": 22
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 164,
+                  "col_offset": 11,
+                  "end_lineno": 164,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "0"
+                }
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 164,
+                  "col_offset": 17,
+                  "end_lineno": 164,
+                  "end_col_offset": 22
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "9218868437227405312"
+                }
+              }
             }
           }
         ]

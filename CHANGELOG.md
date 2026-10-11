@@ -12,6 +12,16 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- Binary64 addition, subtraction and multiplication on both Python interpreter
+  surfaces, including mixed integer/Boolean conversion order, augmented
+  assignment, signed zero, subnormal rounding and overflow to infinity. The
+  extracted `float_lab` artifact proves concrete arithmetic results and
+  finite-input cancellation; NaN payload/sign propagation remains explicitly
+  refused pending its oracle model. Language/script differential rows and
+  all-exponent numeric-core sweeps cover the new behavior.
+
 ## [0.1.8] — 2026-10-11
 
 ### Added

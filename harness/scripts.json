@@ -410,5 +410,20 @@
     "file": "Examples/python/float_lab/count_arity_script.py",
     "expect": "match",
     "note": "The count-admission miss distinguishes excessive positional arity from nonnumeric arguments, with the exact exception message and retained stdout."
+  },
+  {
+    "file": "Examples/python/float_lab/arithmetic_script.py",
+    "expect": "match",
+    "note": "Binary64 addition/subtraction/multiplication, signed zeros, overflow/infinity, and module-level augmented assignments published to a function callee."
+  },
+  {
+    "file": "Examples/python/float_lab/arithmetic_overflow_script.py",
+    "expect": "match",
+    "note": "Integer conversion overflow precedes a zero product, retaining stdout and the exact exception class/message."
+  },
+  {
+    "file": "Examples/python/float_lab/nan_arithmetic_script.py",
+    "expect": "unsupported",
+    "note": "An indeterminate infinity difference requires a NaN payload/sign oracle; never invent a platform-specific word."
   }
 ]

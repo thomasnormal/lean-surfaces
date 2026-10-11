@@ -26,7 +26,7 @@ def isInf (value : Float64) : Bool :=
 def isZero (value : Float64) : Bool := value.bits.toNat % 2 ^ 63 == 0
 
 def neg (value : Float64) : Float64 :=
-  ⟨value.bits ^^^ UInt64.ofNat (2 ^ 63)⟩
+  ofBits ((if value.sign then 0 else 2 ^ 63) + value.bits.toNat % 2 ^ 63)
 
 def abs (value : Float64) : Float64 := ofBits (value.bits.toNat % 2 ^ 63)
 
@@ -137,6 +137,85 @@ def toIntegralInt (value : Float64) : Option Int :=
   | none => none
   | some (numerator, denominator) =>
       if numerator % (denominator : Int) == 0 then value.toInt else none
+
+inductive ArithmeticOp where
+  | add
+  | sub
+  | mult
+deriving Repr, BEq, DecidableEq, Lean.ToExpr
+
+inductive ArithmeticError where
+  | conversionOverflow
+  | nanPayload
+deriving Repr, BEq, DecidableEq, Lean.ToExpr
+
+private def addSub (subtract : Bool) (left right : Float64) : Except ArithmeticError Float64 :=
+  if left.isNaN || right.isNaN then .error .nanPayload
+  else
+    let rightNegative := right.sign != subtract
+    if left.isInf then
+      if right.isInf && left.sign != rightNegative then .error .nanPayload
+      else .ok left
+    else if right.isInf then .ok (if subtract then right.neg else right)
+    else
+      let (leftMagnitude, leftDenominator) := left.magnitudeRatio
+      let (rightMagnitude, rightDenominator) := right.magnitudeRatio
+      let leftNumerator : Int := if left.sign then -(leftMagnitude : Int) else leftMagnitude
+      let rightNumerator : Int := if right.sign then -(rightMagnitude : Int) else rightMagnitude
+      let numerator :=
+        if subtract then leftNumerator * rightDenominator - rightNumerator * leftDenominator
+        else leftNumerator * rightDenominator + rightNumerator * leftDenominator
+      let negative := numerator < 0 || numerator == 0 && left.sign && rightNegative
+      match fromRatio negative numerator.natAbs (leftDenominator * rightDenominator) with
+      | none => .error .nanPayload
+      | some value => .ok value
+
+private def multiply (left right : Float64) : Except ArithmeticError Float64 :=
+  if left.isNaN || right.isNaN then .error .nanPayload
+  else if left.isInf && right.isZero || right.isInf && left.isZero then .error .nanPayload
+  else
+    let negative := left.sign != right.sign
+    if left.isInf || right.isInf then
+      .ok (ofBits ((if negative then 2 ^ 63 else 0) + 2047 * 2 ^ 52))
+    else
+      let (leftNumerator, leftDenominator) := left.magnitudeRatio
+      let (rightNumerator, rightDenominator) := right.magnitudeRatio
+      match fromRatio negative (leftNumerator * rightNumerator)
+          (leftDenominator * rightDenominator) with
+      | none => .error .nanPayload
+      | some value => .ok value
+
+def arithmetic (operator : ArithmeticOp) (left right : Float64) : Except ArithmeticError Float64 :=
+  match operator with
+  | .add => addSub false left right
+  | .sub => addSub true left right
+  | .mult => multiply left right
+
+theorem arithmetic_sub_self (value : Float64) (finite : value.exponent ≠ 2047) :
+    arithmetic .sub value value = .ok (ofBits 0) := by
+  have denominatorPositive : 0 < value.magnitudeRatio.2 := by
+    by_cases subnormal : value.exponent = 0
+    · simpa [magnitudeRatio, subnormal] using (Nat.pow_pos (n := 1074) (by decide : 0 < 2))
+    · simp only [magnitudeRatio, beq_iff_eq, subnormal, ite_false]
+      split
+      · exact Nat.zero_lt_one
+      · exact Nat.pow_pos (by decide : 0 < 2)
+  have denominatorNonzero : value.magnitudeRatio.2 * value.magnitudeRatio.2 ≠ 0 :=
+    Nat.ne_of_gt (Nat.mul_pos denominatorPositive denominatorPositive)
+  cases signEquation : value.sign <;>
+    simp [arithmetic, addSub, isNaN, isInf, finite, signEquation, fromRatio, denominatorNonzero]
+
+def arithmeticIntFloat (operator : ArithmeticOp) (left : Int) (right : Float64) :
+    Except ArithmeticError Float64 :=
+  match fromInt left with
+  | none => .error .conversionOverflow
+  | some value => arithmetic operator value right
+
+def arithmeticFloatInt (operator : ArithmeticOp) (left : Float64) (right : Int) :
+    Except ArithmeticError Float64 :=
+  match fromInt right with
+  | none => .error .conversionOverflow
+  | some value => arithmetic operator left value
 
 inductive FloatDivisionError where
   | zeroDivision

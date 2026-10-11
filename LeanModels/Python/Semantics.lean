@@ -900,15 +900,34 @@ def strFormat (fmt : String) (rhs : RVal) : Res RVal := do
   let s ← strFormatWalk fmt.data args (strFormatMappingRhs rhs) ""
   return .str s
 
-/-- Binary operator on already-evaluated operands. int/bool operands are
-coerced to `Int`; arithmetic results are always `int`, never `bool`.
+def floatNumber (value : RVal) : Res Float64 :=
+  match value with
+  | .float number => .ok number
+  | value =>
+    match asInt value with
+    | some integer =>
+      match Float64.fromInt integer with
+      | some number => .ok number
+      | Option.none => .exn (.overflowError "int too large to convert to float")
+    | Option.none => .unsupported "float arithmetic with a nonnumeric operand requires its numeric protocol"
+
+def evalFloatArithmetic (operator : Float64.ArithmeticOp) (left right : RVal) : Res RVal := do
+  let leftNumber ← floatNumber left
+  let rightNumber ← floatNumber right
+  match Float64.arithmetic operator leftNumber rightNumber with
+  | .ok value => return .float value
+  | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+  | .error .nanPayload =>
+    .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
+
+/-- Binary operator on already-evaluated operands. Integer/Boolean `+`, `-`
+and `*` return integers; true division returns binary64. Mixed arithmetic
+converts the integer before computing and preserves signed zero and rounding.
 `//`/`%` floor (`Int.fdiv`/`Int.fmod`); divisor 0 → `ZeroDivisionError`.
 `**` requires a nonnegative exponent (float result otherwise → unsupported).
-`+` concatenates matching sequence types. Python-valid combinations outside
-the tier (sequence repetition) → unsupported; `%` on a str is the format
-operator (`strFormat`, §`%`-formatting above); Python-invalid
-combinations → `TypeError`. A `.ref` operand is refused loudly BEFORE the
-`TypeError` fallback (its type name lives in the heap). -/
+`+` concatenates matching sequence types; `%` on a str is the format operator
+(`strFormat`, §`%`-formatting above). Unresolved protocols and NaN payloads
+remain loud. A `.ref` operand is refused before a fabricated type-name error. -/
 def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
   match asInt a, asInt b with
   | some x, some y =>
@@ -1022,12 +1041,13 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | op, _, .ref _ =>
         .unsupported
           s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
-    | .mult, .float _, _ | .mult, _, .float _ =>
-        .unsupported "float multiplication is outside the tier"
+    | .add, .float _, _ | .add, _, .float _ => evalFloatArithmetic .add a b
+    | .sub, .float _, _ | .sub, _, .float _ => evalFloatArithmetic .sub a b
+    | .mult, .float _, _ | .mult, _, .float _ => evalFloatArithmetic .mult a b
     | .mult, left, right => sequenceMult left right
     | .mod, .str fmt, rhs => strFormat fmt rhs
     | _, .float _, _ | _, _, .float _ =>
-        .unsupported "float arithmetic beyond true division is outside the tier"
+        .unsupported "this float arithmetic operator is not yet modelled"
     | op, a, b =>
         .exn (.typeError
           s!"unsupported operand type(s) for {op.symbol}: '{a.typeName}' and '{b.typeName}'")

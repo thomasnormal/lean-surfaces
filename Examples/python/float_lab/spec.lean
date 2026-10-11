@@ -24,6 +24,12 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.count_head(true, 1) = 1
 #py_check float_lab.count_many() raises
     .typeError "count() takes at most 2 arguments (3 given)"
+#py_check float_lab.addition() = Float64.ofBits 0x4008000000000000
+#py_check float_lab.augmented() = Float64.ofBits 0xbff4000000000000
+#py_check float_lab.mixed_rounding() = Float64.ofBits 0x4340000000000000
+#py_check float_lab.cancel(Float64.ofBits 0xbff0000000000000) = Float64.ofBits 0
+#py_check float_lab.arithmetic_conversion_error(2) raises
+    .overflowError "int too large to convert to float"
 
 theorem tenth :
     float_lab.tenth() ==> Float64.ofBits 0x3fb999999999999a := by proofs
@@ -34,6 +40,22 @@ theorem integer_true :
 theorem default_passthrough (value : PyFloat) :
     float_lab.default(value) ==> value := by proofs
 
+theorem addition :
+    float_lab.addition() ==> Float64.ofBits 0x4008000000000000 := by proofs
+
+theorem augmented :
+    float_lab.augmented() ==> Float64.ofBits 0xbff4000000000000 := by proofs
+
+theorem mixed_rounding :
+    float_lab.mixed_rounding() ==> Float64.ofBits 0x4340000000000000 := by proofs
+
+theorem cancel (value : PyFloat) (finite : value.exponent ≠ 2047) :
+    float_lab.cancel(value) ==> Float64.ofBits 0 := by proofs
+
 #print axioms tenth
 #print axioms integer_true
 #print axioms default_passthrough
+#print axioms addition
+#print axioms augmented
+#print axioms mixed_rounding
+#print axioms cancel

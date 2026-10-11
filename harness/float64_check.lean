@@ -36,8 +36,39 @@ def floatDivisionJson (result : Except Float64.FloatDivisionError Float64) : Exc
       ("error", .str "OverflowError"), ("message", .str "int too large to convert to float")])
   | .error .nonFinite => .error "non-finite float division remains unmodelled"
 
+def arithmeticOperator (input : Json) : Except String Float64.ArithmeticOp := do
+  match ← input.getObjValAs? String "operator" with
+  | "add" => return .add
+  | "sub" => return .sub
+  | "mult" => return .mult
+  | _ => throw "unknown float arithmetic operator"
+
+def arithmeticJson (result : Except Float64.ArithmeticError Float64) : Json :=
+  match result with
+  | .ok value => numberJson value
+  | .error .conversionOverflow => Json.mkObj [
+      ("error", .str "OverflowError"), ("message", .str "int too large to convert to float")]
+  | .error .nanPayload => Json.mkObj [("refused", .str "nan-payload")]
+
 def checkRow (input : Json) : Except String Json := do
   let kind ← input.getObjValAs? String "kind"
+  if kind == "neg" then
+    return numberJson (← floatField input "bits").neg
+  if kind == "float_arithmetic" then
+    let operator ← arithmeticOperator input
+    let left ← floatField input "left"
+    let right ← floatField input "right"
+    return arithmeticJson (Float64.arithmetic operator left right)
+  if kind == "int_float_arithmetic" then
+    let operator ← arithmeticOperator input
+    let left ← integerField input "left"
+    let right ← floatField input "right"
+    return arithmeticJson (Float64.arithmeticIntFloat operator left right)
+  if kind == "float_int_arithmetic" then
+    let operator ← arithmeticOperator input
+    let left ← floatField input "left"
+    let right ← integerField input "right"
+    return arithmeticJson (Float64.arithmeticFloatInt operator left right)
   if kind == "integer_conversion" then
     let value ← floatField input "bits"
     let integerJson (integer : Option Int) : Json :=

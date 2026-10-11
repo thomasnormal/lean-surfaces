@@ -84,7 +84,7 @@ def arithmetic_error(mode):
         return "caught"
 
 
-def addition_still_loud():
+def addition():
     return 1.0 + 2.0
 
 
@@ -118,3 +118,47 @@ def count_head(start, step):
 
 def count_many():
     return count(1, 2, 3)
+
+
+def add(left, right):
+    return left + right
+
+
+def subtract(left, right):
+    return left - right
+
+
+def multiply(left, right):
+    return left * right
+
+
+def augmented():
+    value = 0.5
+    value += 0.25
+    value -= 0.125
+    value *= -2.0
+    return value
+
+
+def mixed_rounding():
+    return 9007199254740993 + 1.0
+
+
+def cancel(value):
+    return value - value
+
+
+def arithmetic_conversion_error(operation):
+    if operation == 0:
+        return 10 ** 400 + 0.0
+    if operation == 1:
+        return 0.0 - 10 ** 400
+    return 10 ** 400 * 0.0
+
+
+def nan_arithmetic_still_loud(operation):
+    if operation == 0:
+        return 1e999 + -1e999
+    if operation == 1:
+        return 1e999 - 1e999
+    return 0.0 * 1e999

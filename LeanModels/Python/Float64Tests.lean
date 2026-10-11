@@ -99,4 +99,59 @@ theorem nan_is_not_integral : (ofBits 0x7ff8000000000000).toIntegralInt = none :
 #print axioms negative_zero_is_integral
 #print axioms nan_is_not_integral
 
+theorem addition_tenths :
+    arithmetic .add (ofBits 0x3fb999999999999a) (ofBits 0x3fc999999999999a) =
+      .ok (ofBits 0x3fd3333333333334) := rfl
+
+theorem negative_zero_sum :
+    arithmetic .add (ofBits 0x8000000000000000) (ofBits 0x8000000000000000) =
+      .ok (ofBits 0x8000000000000000) := rfl
+
+theorem subtraction_cancels_to_positive_zero :
+    arithmetic .sub (ofBits 0xbff0000000000000) (ofBits 0xbff0000000000000) =
+      .ok (ofBits 0) := rfl
+
+theorem negative_zero_difference :
+    arithmetic .sub (ofBits 0x8000000000000000) (ofBits 0) =
+      .ok (ofBits 0x8000000000000000) := rfl
+
+theorem addition_half_ulp_even :
+    arithmetic .add (ofBits 0x3ff0000000000000) (ofBits 0x3ca0000000000000) =
+      .ok (ofBits 0x3ff0000000000000) := rfl
+
+theorem addition_half_ulp_odd :
+    arithmetic .add (ofBits 0x3ff0000000000001) (ofBits 0x3ca0000000000000) =
+      .ok (ofBits 0x3ff0000000000002) := rfl
+
+theorem multiplication_subnormal_even :
+    arithmetic .mult (ofBits 1) (ofBits 0x3fe0000000000000) = .ok (ofBits 0) := rfl
+
+theorem multiplication_subnormal_odd :
+    arithmetic .mult (ofBits 3) (ofBits 0x3fe0000000000000) = .ok (ofBits 2) := rfl
+
+theorem multiplication_overflows_to_infinity :
+    arithmetic .mult (ofBits 0x7fefffffffffffff) (ofBits 0x4000000000000000) =
+      .ok (ofBits 0x7ff0000000000000) := rfl
+
+theorem indeterminate_infinity_requires_nan_oracle :
+    arithmetic .sub (ofBits 0x7ff0000000000000) (ofBits 0x7ff0000000000000) =
+      .error .nanPayload := rfl
+
+theorem mixed_arithmetic_converts_before_nan :
+    arithmeticIntFloat .add (10 ^ 400) (ofBits 0x7ff8000000000001) =
+      .error .conversionOverflow := rfl
+
+#print axioms addition_tenths
+#print axioms negative_zero_sum
+#print axioms subtraction_cancels_to_positive_zero
+#print axioms negative_zero_difference
+#print axioms addition_half_ulp_even
+#print axioms addition_half_ulp_odd
+#print axioms multiplication_subnormal_even
+#print axioms multiplication_subnormal_odd
+#print axioms multiplication_overflows_to_infinity
+#print axioms indeterminate_infinity_requires_nan_oracle
+#print axioms mixed_arithmetic_converts_before_nan
+#print axioms arithmetic_sub_self
+
 end LeanModels.Python.Float64.Tests

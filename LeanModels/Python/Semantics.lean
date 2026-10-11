@@ -876,16 +876,16 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
   | .ref _ =>
       .unsupported "a heap object as a '%'-format argument is outside the tier (its repr lives in the heap, which the operator cannot see; docs/memory-model.md §`%`-formatting on strings)"
   | v =>
-    if c == 'd' then
+    if c == 'd' || c == 'i' then
       match (match v with | .float value => value.toInt | _ => asInt v) with
       | some value =>
         match intDecimal value with
         | some text => .ok text
-        | Option.none => .unsupported "'%d' integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
+        | Option.none => .unsupported s!"'%{c}' integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
       -- CPython leaves this type name UNQUOTED (measured against 3.9)
       | Option.none =>
-        if v.hasFloat then .unsupported "'%d' of a non-finite float is outside the tier"
-        else .exn (.typeError s!"%d format: a number is required, not {v.typeName}")
+        if v.hasFloat then .unsupported s!"'%{c}' of a non-finite float is outside the tier"
+        else .exn (.typeError s!"%{c} format: a number is required, not {v.typeName}")
     else if c == 'x' then
       match asInt v with
       | some value =>
@@ -935,7 +935,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
   | '%' :: c :: cs, args, mapping, acc =>
-      if c == 's' || c == 'r' || c == 'd' || c == 'x' then
+      if c == 's' || c == 'r' || c == 'd' || c == 'i' || c == 'x' then
         match args with
         | [] => .exn (.typeError "not enough arguments for format string")
         -- the conversion is matched OPEN, not bound through `Res`'s
@@ -951,7 +951,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else if c == 'q' then
         .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
       else
-        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
+        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%i/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>
       .exn (.valueError "incomplete format")
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])

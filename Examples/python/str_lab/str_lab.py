@@ -193,6 +193,7 @@ def fmt_hex(n):
 
 def fmt_bad(n):
     # CPython raises ValueError: unsupported format character 'q'.
+    # The tier models this faithful error.
     return "%q" % (n,)
 
 
@@ -252,3 +253,8 @@ def fmt_dict_leftover():
     # LOUD here rather than 'abc': the heap-operand refusal fires before
     # the operator arm, and that is the declared boundary
     return "abc" % {"k": 1}
+
+
+def fmt_int(n):
+    # bare %i is CPython's integer conversion, equivalent to bare %d
+    return "%i" % (n,)

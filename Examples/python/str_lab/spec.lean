@@ -162,15 +162,16 @@ what follows. -/
 #py_check str_lab.fmt_order("x", 1) raises
   (.typeError "%d format: a number is required, not str")
 
-/-! The loud frontier: the minilanguage, every conversion character
-outside the four, the two forms CPython itself rejects (refused rather
-than given a fabricated `ValueError` — recorded restriction), a
-container argument, a non-ASCII `%r`, and a mapping RHS. -/
+/-! The loud frontier: the minilanguage, valid conversion characters not
+yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 
 #guard callFunction str_lab "fmt_width" #[.int 3] 4096 matches .unsupported _
 #py_check str_lab.fmt_hex(255) = "ff"
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")
+#py_check str_lab.fmt_int(255) = "255"
+#py_check str_lab.fmt_int("x") raises
+  (.typeError "%i format: a number is required, not str")
 #py_check str_lab.fmt_bad(3) raises
   (.valueError "unsupported format character 'q' (0x71) at index 1")
 #py_check str_lab.fmt_trailing(3) raises (.valueError "incomplete format")

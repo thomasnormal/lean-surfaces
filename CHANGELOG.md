@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Bare `%i` string formatting now shares the bounded integer conversion and
+  CPython's exact TypeError wording with `%d`, including Boolean and negative
+  values. The CPython 3.9 differential suite now has **2,705 / 3,030 rows =
+  89.3% complete** natively and **2,631 / 3,030 = 86.8% complete** in the
+  proof interpreter, with **100% agreement among decided rows** and zero
+  failures.
+
 - Invalid `%q` string formats now raise CPython's faithful
   `ValueError: unsupported format character 'q' (0x71) at index 1` instead of
   refusing. The CPython 3.9 differential suite now has **2,701 / 3,026 rows =

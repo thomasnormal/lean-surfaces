@@ -4793,7 +4793,7 @@ Measured rows, all differential:
 
 ### The tier: bare conversions on the SCALAR inventory
 
-Admitted conversions are `%s`, `%r`, `%d`, `%x`, `%%` and nothing else — no
+Admitted conversions are `%s`, `%r`, `%d`, `%i`, `%x`, `%%` and nothing else — no
 flag, width, precision, length modifier, or mapping key. Per conversion:
 
 * `%s` is `strOfVal` VERBATIM (str raw; int/bool/None their
@@ -4805,6 +4805,7 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   `print([…])`, and prints raw under `%s` exactly as `print` does: one
   rendering boundary, not two.
 * `%d` is `asInt` (bool coerces), else the faithful `TypeError` above.
+* `%i` is the same integer conversion and error wording as `%d`.
 * `%x` is bounded lowercase hexadecimal over the same `asInt` inventory
   (negative values keep a leading `-`; bools coerce), else the faithful
   integer-required `TypeError`. Its digit count uses the same fixed budget.
@@ -4821,7 +4822,7 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   `%(key)s` mapping protocol over a dict RHS is loud today and stays so.
 
 The minilanguage stays refused, and so does every conversion character
-outside the five: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%i`, `%c`, `%a`.
+outside the six bare forms: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%c`, `%a`.
 The invalid `%q` form now carries CPython's faithful
 `ValueError: unsupported format character 'q' (0x71) at index 1`; a trailing
 `%` likewise carries `ValueError: incomplete format`. The remaining
@@ -4978,7 +4979,7 @@ acceptance signal firing exactly where it should.
 `Examples/python/str_lab` (differential rows + `#py_check`): the opcode
 form `'<%r>' % (op,)` verbatim; `%r` over int/bool/None/str/quote-choice/
 escape; the BARE argument (`'%r' % v`) against the 1-tuple; `%s` over
-the inventory; `%d`/`%x` over int/bool/negative; two conversions in one
+the inventory; `%d`/`%i`/`%x` over int/bool/negative; two conversions in one
 string; the `%%` no-consume rule; the three faithful TypeErrors (short,
 leftover, `%d` on a str) and the left-to-right ORDER row; and the loud
 frontier — `%5d` (minilanguage), a container

@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3025 | 2671 | 0 | 354 |
+| 3025 | 2672 | 0 | 353 |
 
-Of the 2671 rows the model decides, 2671 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2672 rows the model decides, 2672 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3025 | 2597 | 0 | 428 |
+| 3025 | 2598 | 0 | 427 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-142 witnesses: 115 MATCH, 27 REFUSE.
+142 witnesses: 116 MATCH, 26 REFUSE.
 
 ### `stmt`
 
@@ -42,7 +42,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `AnnAssign` | REFUSE | unsupported statement 'AnnAssign:annotation-expression' |
 | `AnnAssign-forward` | MATCH | A forward-reference string annotation evaluates after the value is stored; its unobservable annotation-table … |
 | `AnnAssign-local` | MATCH | FUNCTION scope: PEP 526 never evaluates the annotation, so this is an ordinary assign — was REFUSE, landed by… |
-| `AnnAssign-novalue` | REFUSE | unsupported statement 'AnnAssign:no-value' |
+| `AnnAssign-novalue` | MATCH | an unobserved value-less local annotation is erased safely |
 | `For` | MATCH |  |
 | `AsyncFor` | REFUSE | unsupported statement 'AsyncFunctionDef' |
 | `While` | MATCH |  |

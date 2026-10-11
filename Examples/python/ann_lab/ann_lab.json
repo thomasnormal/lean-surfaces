@@ -1428,15 +1428,13 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "Pass",
             "span": {
               "lineno": 97,
               "col_offset": 4,
               "end_lineno": 97,
               "end_col_offset": 10
-            },
-            "py_kind": "AnnAssign:no-value",
-            "text": "x: int"
+            }
           },
           {
             "kind": "Return",

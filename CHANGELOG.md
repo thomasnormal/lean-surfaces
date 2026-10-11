@@ -57,6 +57,12 @@ change is listed here under **Changed** or **Removed**.
   **2,597 / 3,025 = 85.9% complete**, with **100% agreement among decided
   rows**.
 
+- Function-local value-less annotations are erased when no load or delete can
+  observe their static-local binding; observed forms remain loud to preserve
+  `UnboundLocalError` behavior. Native differential coverage is now **2,672 /
+  3,025 = 88.3% complete**; proof-interpreter coverage is **2,598 / 3,025 =
+  85.9% complete**, with **100% agreement among decided rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

@@ -1209,7 +1209,34 @@ def convert_stmt_list(nodes, enclosing=None, module_scope=False,
     return converted
 
 
-def convert_ann_assign(node, module_scope=False, func_scope=False):
+def _ann_name_used(enclosing, name):
+    """Whether a value-less annotation's name has an observable use.
+
+    Function-local annotations are not evaluated, so annotation expressions
+    themselves do not count. Loads and deletes do: dropping the declaration in
+    either case would lose CPython's static-local ``UnboundLocalError``.
+    """
+    class Uses(ast.NodeVisitor):
+        def __init__(self):
+            self.used = False
+
+        def visit_AnnAssign(self, current):
+            self.visit(current.target)
+            if current.value is not None:
+                self.visit(current.value)
+
+        def visit_Name(self, current):
+            if current.id == name and isinstance(current.ctx,
+                                                 (ast.Load, ast.Del)):
+                self.used = True
+
+    visitor = Uses()
+    visitor.visit(enclosing)
+    return visitor.used
+
+
+def convert_ann_assign(node, module_scope=False, func_scope=False,
+                       enclosing=None):
     if node.simple and node.value is not None:
         assignment = {
             "kind": "Assign",
@@ -1232,6 +1259,10 @@ def convert_ann_assign(node, module_scope=False, func_scope=False):
                 "span": span(node.annotation),
                 "value": convert_expr(node.annotation),
             }]
+    if (node.value is None and func_scope and node.simple
+            and isinstance(node.target, ast.Name) and enclosing is not None
+            and not _ann_name_used(enclosing, node.target.id)):
+        return {"kind": "Pass", "span": span(node)}
     return unsupported(node, "AnnAssign:" + (
         "no-value" if node.value is None
         else "non-simple-target" if not node.simple
@@ -1470,7 +1501,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
 
     if isinstance(node, ast.AnnAssign):
         return convert_ann_assign(node, module_scope=module_scope,
-                                  func_scope=func_scope)
+                                  func_scope=func_scope, enclosing=enclosing)
 
     if isinstance(node, ast.AugAssign):
         op = type(node.op).__name__

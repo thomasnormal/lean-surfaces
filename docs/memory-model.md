@@ -1998,23 +1998,21 @@ division by zero, all identical, because none of them runs.
   before anyone needs it.
 * **A value-less `x: int` binds nothing but LOCALISES its name.** In a
   function, `x: int` followed by `return x` is `UnboundLocalError` — and
-  so is `g: int; return g` where `g` is a module global holding 5. This
-  is the shape that must never be quietly dropped: a model that treated
-  the statement as `pass` would resolve `g` to the module global and
-  answer 5 where CPython raises. It is refused as a SHAPE rather than
-  case by case, and `ann_lab.ann_novalue_shadows_global` is the row that
-  says so.
+  so is `g: int; return g` where `g` is a module global holding 5. The
+  extractor erases the declaration only when no load or delete can observe
+  that binding; `ann_lab.ann_novalue_shadows_global` keeps the silent-wrong-
+  answer case loud.
 * **`simple == 0` targets** (`(x)`, `c.a`, `d[k]`) get no
   `__annotations__` entry but still evaluate the annotation, so they are
   their own refusal.
 
-**Function-scope lowering.** One extractor clause, no interpreter change, no proof-layer
-change, no new AST node: a function-body `AnnAssign` with `simple == 1`
-and a value converts to the `Assign` node it already is. The original refusal
+**Function-scope lowering.** One extractor clause, no interpreter change, no
+proof-layer change, no new AST node: a function-body `AnnAssign` with
+`simple == 1` and a value converts to the `Assign` node it already is; an
+unobserved value-less declaration becomes `Pass`. The original refusal
 `py_kind` split three ways — `AnnAssign:module-scope`,
-`AnnAssign:no-value`, `AnnAssign:non-simple-target` — so the survey's
-static telemetry ranks them separately, which is the point of splitting
-them.
+`AnnAssign:no-value`, `AnnAssign:non-simple-target` — remains useful for the
+observed value-less and nonsimple boundaries.
 
 The one mechanical piece is a `func_scope` flag threaded through
 `convert_stmt` beside the existing `module_scope`, set only by the
@@ -2038,7 +2036,8 @@ target with a value and a literal string, integer, Boolean, or `None`
 annotation lowers to TWO statements: the assign, then the annotation as an
 expression statement. This preserves CPython's value/store/annotation order.
 Statement-list conversion splices both nodes through module control shells;
-function-local annotations remain erased, including effectful expressions.
+function-local annotations remain erased, including effectful expressions;
+value-less declarations are erased only when their local binding is unobserved.
 
 The annotation-table store is omitted ONLY if the whole-module binding census
 finds no explicit binding or deletion of `__annotations__`, in any scope or
@@ -2046,7 +2045,8 @@ binding form. Otherwise `AnnAssign:annotations-bound` refuses the lowering.
 Merely rejecting a dunder read is insufficient: `__annotations__ = table = {}`
 makes the omitted mutation observable through `table`, and rebinding the table
 to `None` changes CPython's exception behavior. Future-annotations imports,
-class annotations, value-less annotations, and nonsimple targets stay loud.
+class annotations, observed value-less annotations, and nonsimple targets stay
+loud.
 
 Nonliteral annotations refuse as `AnnAssign:annotation-expression`, even when
 their expression is independently in tier. The closed-function initializer

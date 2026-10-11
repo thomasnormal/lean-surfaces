@@ -7,6 +7,7 @@ load_program ann_lab from "Examples/python/ann_lab/ann_lab.json"
 #py_check ann_lab.ann_module_global(1) = 6
 #py_check ann_lab.ann_module_global(0) = 5
 #py_check ann_lab.ann_module_global(-5) = 0
+#py_check ann_lab.ann_novalue(3) = 3
 
 load_program annotation_effect from "harness/scripts/ann_module_effect_script.json"
 

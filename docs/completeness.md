@@ -73,8 +73,8 @@ forks on and two measured edge rows.
 **Then rungs 1, 2 and 3b landed**, so the table above is the census AS
 TAKEN; the current numbers come from the instrument (§2's note) and were
 **105 witnesses, 74 MATCH, 31 REFUSE** at that landing: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
-`RShift-budget` joined as an edge row (rung 1); `AnnAssign-local` joined
-as a MATCH and `AnnAssign-novalue` as a refusal, with `stmt.AnnAssign`
+`RShift-budget` joined as an edge row (rung 1); `AnnAssign-local` and the
+unobserved `AnnAssign-novalue` witness joined as MATCH rows, with `stmt.AnnAssign`
 itself staying REFUSE because its witness is module-scope (rung 2); and
 sixteen `dict.*` rows joined as rung 3's acceptance battery, three of
 which measured MATCH and re-scoped the rung, six more flipping when 3b
@@ -277,14 +277,13 @@ never evaluated, so `x: boom() = 1` and `x: Undef = 1` both run clean
 inside a `def` and both raise at module scope. That is what makes the
 rewrite exact with NO condition on the annotation expression.
 
-**Three shapes stay loud, each for a measured reason.** Module and class
+**Three boundaries stay loud, each for a measured reason.** Module and class
 scope evaluate the annotation and write `__annotations__` (after storing
 the value — the order is measured). A value-less `x: int` binds nothing
-but LOCALISES its name, so dropping it would read a module global where
-CPython raises `UnboundLocalError` — the one shape whose quiet narrowing
-would be a silent wrong answer, pinned by
-`ann_lab.ann_novalue_shadows_global`. Non-simple targets still evaluate
-their annotation.
+but LOCALISES its name, so the extractor erases it only when no load or
+delete can observe that binding; `ann_lab.ann_novalue_shadows_global` keeps
+the silent-wrong-answer case loud. Non-simple targets still evaluate their
+annotation.
 
 **Unblocks**: typed application and library code, where a single
 annotated local used to cost the whole module.

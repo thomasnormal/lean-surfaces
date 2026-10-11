@@ -200,9 +200,8 @@ def f(n):
     x: int
     return n
 print(f(1))
-""", "REFUSE",
-  "`x: int` binds nothing yet LOCALISES the name; dropping it would read a "
-  "module global where CPython raises UnboundLocalError")
+""", "MATCH",
+  "an unobserved value-less local annotation is erased safely")
 w("stmt.For", """
 for i in [1, 2]:
     print(i)
@@ -1089,7 +1088,6 @@ WHITELIST_CLASS = {
     "star_lab::star_for": "starred.position",
     "star_shadow::shadowed": "shadow.module-census",
     "star_shadow::elsewhere": "shadow.module-census",
-    "ann_lab::ann_novalue": "annassign.no-value",
     "ann_lab::ann_novalue_read": "annassign.no-value",
     "ann_lab::ann_novalue_shadows_global": "annassign.no-value",
     "ann_lab::ann_attr_target": "annassign.non-simple-target",

@@ -3089,8 +3089,9 @@ each construct differential, refusals loud):
   the value form avoids heap/boundary churn: `for`-iteration and the
   draining consumers materialize FUEL-BOUNDED (a huge range times out,
   never hangs); `len`/truthiness exact. Everything else is loud or
-  faithful: `==` loud (CPython compares ranges as sequences — not
-  guessed), dict-key/set-element loud via `keyRefusal` (ranges ARE
+  faithful: `==` compares the produced integer sequences without
+  materializing them (empty ranges all compare equal; singleton steps are
+  irrelevant), dict-key/set-element loud via `keyRefusal` (ranges ARE
   hashable in CPython — never a fake unhashable `TypeError`), the
   boundary loud, `next()` the faithful `not an iterator` `TypeError`.
   Since 2026-10-10, each field is a `RangeBound` retaining its int-or-bool
@@ -3098,7 +3099,7 @@ each construct differential, refusals loud):
   scalar renderer; numerical consumers use `RangeBound.toInt`. Thus
   `range(False, True)` renders those Boolean names but yields integer `0`.
   A retained Boolean `True` step is numerically one and omitted from rendering;
-  `False` still fails construction. Attribute access, equality, slicing,
+  `False` still fails construction. Attribute access, slicing,
   range-valued `%` conversions, and the public boundary are not newly admitted.
 
 **What stays out, loudly:** `.items()` outside the init shell;

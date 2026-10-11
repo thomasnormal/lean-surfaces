@@ -1,9 +1,10 @@
 """seq_lab — pass 3's value tiers at FUNCTION level (checks-only).
 
 Tuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),
-and range as an immediate value (materialize-per-use). The loud frontier
-is pinned by refusal probes: range ==/indexing/membership/unpacking/
-boundary and list slices. String repetition now has its own acceptance tier.
+and range as an immediate value (materialize-per-use). Range equality now
+compares sequences without materialization; the remaining loud frontier is
+pinned by refusal probes: indexing/membership/unpacking/boundary and list
+slices. String repetition now has its own acceptance tier.
 """
 
 from collections import namedtuple
@@ -151,6 +152,22 @@ def enum_range(n):
 
 def range_eq(n):
     return range(n) == range(n)
+
+
+def range_eq_stop():
+    return range(0, 3, 2) == range(0, 4, 2)
+
+
+def range_eq_single():
+    return range(5, 6, 2) == range(5, 6, 99)
+
+
+def range_eq_empty():
+    return range(4, 4) == range(9, 2, 1)
+
+
+def range_eq_step():
+    return range(0, 6, 2) == range(0, 6, 3)
 
 
 def range_index(n):

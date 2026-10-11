@@ -7,9 +7,10 @@ Tuple/namedtuple slices (a namedtuple slice is a PLAIN tuple), tuple
 repetition, `sum(it[, start])` (the element fold IS `evalBinOp .add`; a
 str start is CPython's special-cased `TypeError`), `tuple(it)`, and
 `range` as the immediate `RVal.rangeV` — materialize-per-use, which is
-what makes RE-ITERATION exact (`range_reiter`). The loud frontier is
-pinned below: range `==`/indexing/membership/unpacking/boundary, list
-slices — every one `unsupported`, never a guessed value
+what makes RE-ITERATION exact (`range_reiter`). Range equality compares the
+integer sequence without materializing it. The remaining loud frontier is
+pinned below: range indexing/membership/unpacking/boundary, list slices —
+every one `unsupported`, never a guessed value
 and never a fake `TypeError`.
 -/
 
@@ -76,11 +77,14 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 #py_check seq_lab.range_empty_max() raises
   (.valueError "max() arg is an empty sequence")
 #py_check seq_lab.enum_range(4) = 32
+#py_check seq_lab.range_eq(3) = true
+#py_check seq_lab.range_eq_stop() = true
+#py_check seq_lab.range_eq_single() = true
+#py_check seq_lab.range_eq_empty() = true
+#py_check seq_lab.range_eq_step() = false
 
-/-! ### the loud frontier (unsupported, never guessed) -/
+/-! ### the remaining loud range frontier (unsupported, never guessed) -/
 
-#guard (match callFunction seq_lab "range_eq" #[.int 3] 4096 with
-  | .unsupported _ => true | _ => false)
 #guard (match callFunction seq_lab "range_index" #[.int 3] 4096 with
   | .unsupported _ => true | _ => false)
 #guard (match callFunction seq_lab "range_in" #[.int 5] 4096 with

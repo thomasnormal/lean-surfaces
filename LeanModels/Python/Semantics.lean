@@ -178,6 +178,23 @@ def rangeVals (lo hi step : Int) : Res (List RVal) :=
   if n ≤ seqBudget then .ok (rangeValsAux n lo step)
   else .unsupported "materializing a range beyond seqBudget is outside the tier (docs/memory-model.md §module-init execution)"
 
+/-- CPython's range equality compares the produced integer sequence, not the
+constructor spelling. Empty ranges are all equal; a singleton only compares
+its first value; longer ranges additionally require equal length and step. -/
+def rangeEq (alo ahi astep blo bhi bstep : Int) : Bool :=
+  let an := rangeLen alo ahi astep
+  let bn := rangeLen blo bhi bstep
+  if an == 0 then
+    bn == 0
+  else if bn == 0 then
+    false
+  else if alo != blo then
+    false
+  else if an == 1 then
+    bn == 1
+  else
+    an == bn && astep == bstep
+
 /-- Is this runtime value Python's `None` singleton? (The value-level test
 behind `is None` / `is not None` — see `evalCompareOp`.) A heap object is
 never `None`, so the `.ref` arm is a faithful `false`, not a refusal. -/
@@ -410,6 +427,8 @@ mutual
     | .str s, .str t => .ok (s == t)
     | .listV xs, .listV ys => valEqList xs.toList ys.toList
     | .tuple xs, .tuple ys => valEqList xs.toList ys.toList
+    | .rangeV alo ahi astep, .rangeV blo bhi bstep =>
+        .ok (rangeEq alo.toInt ahi.toInt astep.toInt blo.toInt bhi.toInt bstep.toInt)
     -- namedtuples compare as plain tuples (CPython: tuple.__eq__ — the
     -- class is IGNORED, even across two different namedtuple classes)
     | .ntuple _ _ xs, .ntuple _ _ ys => valEqList xs.toList ys.toList
@@ -419,13 +438,12 @@ mutual
         "'==' on a heap object lives in the heap (`heapEq` decides it; this pure helper is the proof-layer vocabulary)"
     | _, .ref _ => .unsupported
         "'==' on a heap object lives in the heap (`heapEq` decides it; this pure helper is the proof-layer vocabulary)"
-    -- pass 3: `==` with a range operand stays LOUD — CPython compares
-    -- ranges as SEQUENCES (`range(0) == range(2, 2)` is `True`), and the
-    -- cross-type `False` would invite guessing half the protocol
+    -- pass 3: range/range equality compares the integer sequence; a range
+    -- against another value remains loud because its protocol is separate.
     | .rangeV .., _ => .unsupported
-        "'==' on a range is outside the tier (CPython compares ranges as sequences; docs/memory-model.md §module-init execution)"
+        "'==' on a range against a non-range is outside the tier (docs/memory-model.md §module-init execution)"
     | _, .rangeV .. => .unsupported
-        "'==' on a range is outside the tier (CPython compares ranges as sequences; docs/memory-model.md §module-init execution)"
+        "'==' on a non-range against a range is outside the tier (docs/memory-model.md §module-init execution)"
     | _, _ => .ok false
 
   /-- Elementwise `valEq`, short-circuiting on the first mismatch;

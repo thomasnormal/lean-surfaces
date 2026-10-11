@@ -1081,7 +1081,6 @@ WHITELIST_CLASS = {
     "set_lab::iter_is_loud": "set.order",
     "set_lab::sorted_is_loud": "set.order",
     "seq_lab::band_set": "set.order",
-    "seq_lab::range_eq": "range.observation",
     "seq_lab::range_index": "range.observation",
     "seq_lab::range_in": "range.observation",
     "seq_lab::range_boundary": "boundary.range",

@@ -809,6 +809,7 @@ def parseSBinOp (op : String) (l r : SExpr) : Except String SExpr :=
   match op with
   | "+" => .ok (.mkBinary .add l r)
   | "-" => .ok (.mkBinary .sub l r)
+  | "*" => .ok (.mkBinary .mul l r)
   | "&" => .ok (.mkBinary .and l r)
   | "|" => .ok (.mkBinary .or l r)
   | "^" => .ok (.mkBinary .xor l r)

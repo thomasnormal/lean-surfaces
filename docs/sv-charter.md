@@ -66,13 +66,46 @@ bridges already exist.
 packed four-state expressions, identifier assignment, `if`/blocks and
 its cycle-level process fragment; general loops, calls, classes and
 hierarchy remain absent. Design2 adds selected reads/writes, case,
-reductions, resizing and signed comparisons, but nonconstant
-multiply/divide/remainder/power/shifts are not admitted merely because
+reductions, resizing, signed comparisons and multiplication, but nonconstant
+divide/remainder/power/shifts are not admitted merely because
 their constant expressions can be folded. The self-check vocabulary
 adds local declarations and output/termination tasks, but its current
 runner accepts initial-only execution and does not inherit Design2's
 selected targets or case statements. Extractor, ingestion, evaluator
 and kernel-loader refusal inventories must therefore stay separate.
+
+## Integral multiplication (IEEE 1800-2023, 11.4.3 and 11.8.2)
+
+Runtime `*` reaches the existing four-state `LVec.mul` authority through
+M0, the self-check executor, and both symbolic instantiation paths.
+The frontend's elaborated operand conversions preserve common-context
+sizing: operands extend before multiplication, a wider destination can
+retain more product bits, and a narrower destination truncates afterward.
+Signed operands sign-extend only in signed contexts; mixed-sign contexts
+zero-extend. Any x/z operand collapses the entire result to x, including
+`0 * x`; two-state destinations then apply the existing squash conversion.
+Plain scalar `*=` shares this operator path; selected compound targets
+and division, remainder, power and shifts remain outside this item.
+
+Symbolic constant multiplication retains its integer elaboration and
+literal AST shape. Nonconstant symbolic multiplication lowers to the same
+runtime operator with common/target operand sizing. The width-parametric
+`multiplication_modular` theorem consumes the extracted multiplier's real
+expression and proves the `BitVec` modular product at every width.
+Four public self-check fixtures cover overflow, widened products,
+precedence, signed/mixed-sign extension, unknowns and compound updates.
+Invalid frontend compilations carrying admitted products remain loud.
+
+Measured on the same 21,863 corpus paths: clean extraction increases from
+1,692 to 1,731, with 39 newly clean rows and no losses. All 39 newly admitted
+rows and all four new self-check fixtures agree with independent simulation
+on output and status. The extractor battery has 97 passing tests; envelope
+regeneration reports 27 live matches, zero divergences and three archived
+not-live rows. These are admission and selected-execution measurements,
+not a claim that every clean corpus row executes or that the language is
+complete. The detailed operator contract is `docs/sv-multiplication.md`.
+
+## Restart validation baseline
 
 **Executed restart checks.** A focused local `lake build` of all 22 SV
 modules completes successfully; this is not a claim about every default

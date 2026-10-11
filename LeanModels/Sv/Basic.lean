@@ -292,9 +292,7 @@ def sub (a b : LVec) : LVec :=
   | some x, some y => ofNat w (x + (2 ^ w - y))
   | _, _ => xVec w
 
-/-- Vector `*` (mod `2^w`), §11.4.3 collapse rule as `add`. (In the M0
-normative operator tables but not in the M0 expression tier — the extractor
-does not emit it; provided for completeness.) -/
+/-- Vector `*` (mod `2^w`), §11.4.3 collapse rule as `add`. -/
 def mul (a b : LVec) : LVec :=
   match a.toNat?, b.toNat? with
   | some x, some y => ofNat (arithWidth a b) (x * y)

@@ -178,6 +178,13 @@ theorem LVec.add_ofBitVec {w : Nat} (x y : BitVec w) :
     LVec.width_ofNat, Nat.max_self, Nat.mod_eq_of_lt x.isLt, Nat.mod_eq_of_lt y.isLt]
   rw [← LVec.ofNat_emod, ← BitVec.toNat_add]
 
+theorem LVec.mul_ofBitVec {width : Nat} (left right : BitVec width) :
+    (LVec.ofBitVec left).mul (LVec.ofBitVec right) = LVec.ofBitVec (left * right) := by
+  simp only [LVec.ofBitVec, LVec.mul, LVec.toNat?_ofNat, LVec.arithWidth,
+    LVec.width_ofNat, Nat.max_self, Nat.mod_eq_of_lt left.isLt,
+    Nat.mod_eq_of_lt right.isLt]
+  rw [← LVec.ofNat_emod, ← BitVec.toNat_mul]
+
 /-! ## Schedule-oracle facts
 
 `choose_perm` pins each oracle invocation to a permutation of the ready

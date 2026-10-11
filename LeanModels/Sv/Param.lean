@@ -129,8 +129,8 @@ def LVec.ofInt (w : Nat) (v : Int) : LVec := .ofNat w (v.emod ((2 : Int) ^ w)).t
 
 /-! ## The symbolic vocabulary -/
 
-/-- Binary operators of the sv-0.2 envelope: the M0 set (`.m0`), the
-symbolic-position extras (`* / % ** << >> <<< >>>`), signed order
+/-- Binary operators of the sv-0.2 envelope: the M0 set (`.m0`), integer
+and runtime multiplication (`*`), constant-position extras (`/ % ** << >> <<< >>>`), signed order
 comparisons (spelled `s<` … by the extractor), and the self-check-tier
 extras (`=== !== && ||`, representable but outside the M0 value core). -/
 inductive SymBinOp where
@@ -155,7 +155,8 @@ deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- Envelope spelling of a `SymBinOp` (error messages / parser table). -/
 def SymBinOp.sym : SymBinOp → String
-  | .m0 .add => "+" | .m0 .sub => "-" | .m0 .and => "&" | .m0 .or => "|"
+  | .m0 .add => "+" | .m0 .sub => "-" | .m0 .mul => "*"
+  | .m0 .and => "&" | .m0 .or => "|"
   | .m0 .xor => "^" | .m0 .eq => "==" | .m0 .ne => "!=" | .m0 .lt => "<"
   | .m0 .le => "<=" | .m0 .gt => ">" | .m0 .ge => ">="
   | .mul => "*" | .div => "/" | .mod => "%" | .pow => "**"
@@ -456,7 +457,7 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .cne => .ok (b2i (a != b))
       | .land => .ok (b2i (a != 0 && b != 0))
       | .lor => .ok (b2i (a != 0 || b != 0))
-      | .mul => .ok (a * b)
+      | .m0 .mul | .mul => .ok (a * b)
       | .div => if b == 0 then .error "division by zero" else .ok (a.tdiv b)
       | .mod => if b == 0 then .error "modulo by zero" else .ok (a.tmod b)
       | .pow =>
@@ -640,7 +641,12 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
       | _ =>
           match evalInt env (.binary op l r) with
           | .ok v => intLit ctx v
-          | .error e => .unsupported s!"BinaryExpression:{op.sym}" e
+          | .error e =>
+              match op with
+              | .m0 .mul | .mul =>
+                  let octx := maxW ctx (maxW (selfWidth env l) (selfWidth env r))
+                  .binary .mul (instExpr env octx l) (instExpr env octx r)
+              | _ => .unsupported s!"BinaryExpression:{op.sym}" e
   | .ternary c t e =>
       let actx := match ctx with
         | some w => some w

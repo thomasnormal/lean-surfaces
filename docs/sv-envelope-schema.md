@@ -110,7 +110,7 @@ emits:
 | `ConditionalStatement:Unique` / `:Unique0` / `:Priority` / `:multi` / `:pattern` | `unique`/`priority` if, multiple `&&&` conditions, `matches` pattern |
 | `ConditionalExpression:multi` / `:pattern` | same, for `?:` |
 | `BlockStatement:JoinAll` / `:JoinAny` / `:JoinNone` | `fork ... join*` |
-| `BinaryExpression:<Op>` / `UnaryExpression:<Op>` | operator outside the M0 set, slang enum name (e.g. `BinaryExpression:Multiply`, `BinaryExpression:CaseEquality`, `UnaryExpression:Plus`) |
+| `BinaryExpression:<Op>` / `UnaryExpression:<Op>` | operator outside the M0 set, slang enum name (e.g. `BinaryExpression:Divide`, `BinaryExpression:CaseEquality`, `UnaryExpression:Plus`) |
 | `ConversionExpression:width` | **width mismatch in source**: an implicit conversion that changes bit width (M0 has no implicit extension/truncation rules) |
 | `ConversionExpression:Explicit` / `:BitstreamCast` / `:StreamingConcat` | explicit casts |
 | `NamedValueExpression:<SymbolKind>` | identifier that does not name a variable/net (e.g. `:Parameter`) |
@@ -274,18 +274,28 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Ident` | `kind`, `span`, `width`, `name` (string) | declared width of the named var/net/port |
 | `Literal` | `kind`, `span`, `width`, `bits` (string) | `len(bits) == width` |
 | `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"-"`), `operand` (expr) | `~`,`-`: `width == operand.width`; `!`: `width == 1` |
-| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | `+ - & \| ^`: `width == left.width == right.width`; comparisons: `width == 1` and `left.width == right.width` |
+| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | `+ - * & \| ^`: `width == left.width == right.width`; comparisons: `width == 1` and `left.width == right.width` |
 | `Ternary` | `kind`, `span`, `width`, `cond`, `then`, `else` (exprs) | `width == then.width == else.width`; `cond` any width |
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
-`Binary` `op` ∈ `"+" "-" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
+`Binary` `op` ∈ `"+" "-" "*" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
 `==`/`!=` are *logical* equality — case equality `===` is
 `BinaryExpression:CaseEquality` → Unsupported). The width invariants hold
 whenever the children are supported nodes — the extractor enforces them and
 demotes violators to `Unsupported`; if a child is itself `Unsupported` its
 width is unknown and the parent keeps its structure (the interpreter goes
 `.unsupported` on reaching the child).
+
+Integral `*` uses the same elaborated common-width invariant as `+` and
+`-`. Operand `Resize`/`SignedResize` nodes act before multiplication;
+destination narrowing acts after it. A four-state unknown in either
+operand makes the entire product unknown. Plain scalar `*=` lowers to a
+`Binary *` reading the original target, while selected compound targets
+stay loud. `Multiplication:invalid-compilation` prevents a frontend error
+elsewhere in a product-containing module from being silently discarded.
+In sv-0.2, constant multiplication still elaborates to an integer literal;
+nonconstant multiplication instantiates the runtime `.mul` operator.
 
 The extractor transparently unwraps slang's **same-width implicit/propagated
 conversions** (elaboration artifacts: 2-state literal into a 4-state context,

@@ -33,13 +33,14 @@ inductive UnaryOp where
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- M0 binary operators (`docs/sv-design-m0.md` expression tier):
-`+ - & | ^ == != < <= > >=`. Case equality `===`/`!==` is NOT in the M0
+`+ - * & | ^ == != < <= > >=`. Case equality `===`/`!==` is NOT in the M0
 expression tier (source uses of it arrive as `Expr.unsupported`); `LVec`
-still implements it for the proof layer. Evaluated by `LVec.add/sub/and/or/
+still implements it for the proof layer. Evaluated by `LVec.add/sub/mul/and/or/
 xor/eqLogical/neLogical/lt/le/gt/ge`. -/
 inductive BinOp where
   | add   -- `+`
   | sub   -- `-`
+  | mul
   | and   -- `&`
   | or    -- `|`
   | xor   -- `^`

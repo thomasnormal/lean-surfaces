@@ -123,6 +123,7 @@ expression tier; the extractor emits them as `Unsupported`. -/
 def parseBinOpName : String → Except String BinOp
   | "+" | "Add" => .ok .add
   | "-" | "Subtract" | "Sub" => .ok .sub
+  | "*" | "Multiply" | "Mul" => .ok .mul
   | "&" | "BinaryAnd" | "And" => .ok .and
   | "|" | "BinaryOr" | "Or" => .ok .or
   | "^" | "BinaryXor" | "Xor" => .ok .xor

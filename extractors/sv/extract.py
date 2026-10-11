@@ -70,6 +70,7 @@ UNSUPPORTED_TEXT_LIMIT = 200
 BINARY_OPS = {
     BinaryOperator.Add: "+",
     BinaryOperator.Subtract: "-",
+    BinaryOperator.Multiply: "*",
     BinaryOperator.BinaryAnd: "&",
     BinaryOperator.BinaryOr: "|",
     BinaryOperator.BinaryXor: "^",
@@ -1732,6 +1733,16 @@ def contains_signing_cast(node):
     return False
 
 
+def contains_multiplication(node):
+    if isinstance(node, dict):
+        return (node.get("kind") == "Binary" and node.get("op") == "*") or any(
+            contains_multiplication(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_multiplication(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1773,6 +1784,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SigningCast:invalid-compilation",
                                   "frontend rejected source containing a signing cast"))
+    if (any(contains_multiplication(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Multiplication:invalid-compilation",
+                                  "frontend rejected source containing multiplication"))
     if (any(contains_selected_target(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectTarget:invalid-compilation",
@@ -1822,7 +1837,6 @@ SYM_SYSCALLS = ("$clog2", "$bits", "$high", "$size")
 # Extra operators admitted in symbolic expression positions only
 # (parameter defaults, localparam exprs, generate headers/conds, dims).
 SYM_BINARY_OPS = {
-    BinaryOperator.Multiply: "*",
     BinaryOperator.Divide: "/",
     BinaryOperator.Mod: "%",
     BinaryOperator.Power: "**",

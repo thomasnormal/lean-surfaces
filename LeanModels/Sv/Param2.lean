@@ -221,7 +221,13 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
       | _ =>
           match evalInt env (.binary op l r) with
           | .ok v => intLit2 ctx v
-          | .error e => .unsupported s!"BinaryExpression:{op.sym}" e
+          | .error e =>
+              match op with
+              | .m0 .mul | .mul =>
+                  let octx := maxW2 ctx
+                    (maxW2 (selfWidth2 env elems l) (selfWidth2 env elems r))
+                  .binary .mul (fitExpr2 env elems octx l) (fitExpr2 env elems octx r)
+              | _ => .unsupported s!"BinaryExpression:{op.sym}" e
   | .ternary c t e =>
       let actx := match ctx with
         | some w => some w

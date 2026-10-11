@@ -202,6 +202,7 @@ def evalUnaryOp : UnaryOp → LVec → LVec
 def evalBinOp : BinOp → LVec → LVec → LVec
   | .add, a, b => a.add b
   | .sub, a, b => a.sub b
+  | .mul, left, right => left.mul right
   | .and, a, b => a.and b
   | .or, a, b => a.or b
   | .xor, a, b => a.xor b

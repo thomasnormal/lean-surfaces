@@ -1,0 +1,186 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "signed_divider",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/division/signed_divider.sv",
+      "sha256": "6436280e8b2d0af70b8b8fdaf8897ad5a2ae0470db5dee056dab2d22b5daa22e"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "signed_divider",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 2,
+              "col": 17,
+              "end_line": 2,
+              "end_col": 22
+            },
+            "name": "W",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 17,
+                      "end_line": 2,
+                      "end_col": 22
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 17,
+                      "end_line": 2,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 2,
+                "col": 21,
+                "end_line": 2,
+                "end_col": 22
+              },
+              "value": 8,
+              "resolved_width": 32
+            },
+            "resolved": 8
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 4,
+              "col": 30,
+              "end_line": 4,
+              "end_col": 39
+            },
+            "sv_kind": "PortSymbol:signed",
+            "text": "numerator"
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 5,
+              "col": 30,
+              "end_line": 5,
+              "end_col": 41
+            },
+            "sv_kind": "PortSymbol:signed",
+            "text": "denominator"
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 6,
+              "col": 31,
+              "end_line": 6,
+              "end_col": 39
+            },
+            "sv_kind": "PortSymbol:signed",
+            "text": "quotient"
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 44
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 18
+              },
+              "width": 8,
+              "name": "quotient",
+              "signed": true
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 8,
+                "col": 21,
+                "end_line": 8,
+                "end_col": 44
+              },
+              "width": 8,
+              "op": "s/",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 8,
+                  "col": 21,
+                  "end_line": 8,
+                  "end_col": 30
+                },
+                "width": 8,
+                "name": "numerator",
+                "signed": true
+              },
+              "right": {
+                "kind": "Ident",
+                "span": {
+                  "line": 8,
+                  "col": 33,
+                  "end_line": 8,
+                  "end_col": 44
+                },
+                "width": 8,
+                "name": "denominator",
+                "signed": true
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

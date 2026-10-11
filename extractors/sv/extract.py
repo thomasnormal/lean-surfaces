@@ -71,6 +71,7 @@ BINARY_OPS = {
     BinaryOperator.Add: "+",
     BinaryOperator.Subtract: "-",
     BinaryOperator.Multiply: "*",
+    BinaryOperator.Divide: "/",
     BinaryOperator.BinaryAnd: "&",
     BinaryOperator.BinaryOr: "|",
     BinaryOperator.BinaryXor: "^",
@@ -185,6 +186,7 @@ _SOURCE_BYTES = None
 # Every symbolic-mode behavior change in the shared converters is guarded
 # by `_SYM is not None`, keeping single-file output byte-identical.
 _SYM = None
+_DIV_CONTEXT = 0
 
 
 def source_text(node):
@@ -624,6 +626,10 @@ def _convert_conversion_expr(sm, e):
         return unsupported(sm, e, "ConversionExpression:" + str(kind).split(".")[-1])
     ow, tw = e.operand.type.bitWidth, e.type.bitWidth
     state_squash = e.operand.type.isFourState and not e.type.isFourState
+    if _SYM is not None and _DIV_CONTEXT and not _SYM.symctx:
+        node = _sym_conversion(sm, e, ow, tw, state_squash)
+        if node is not None:
+            return node
     if ow == tw:
         if state_squash:
             return {
@@ -770,16 +776,21 @@ def _convert_unary_expr(sm, e):
     if sym is None and _SYM is not None:
         reduction = REDUCE_OPS.get(e.op)
         if reduction is not None:
+            operand = _convert_expr(sm, e.operand)
+            if _DIV_CONTEXT and not _SYM.symctx:
+                operand = _division_self_operand(sm, e.operand, operand)
             return {
                 "kind": "Reduce",
                 "span": node_span(sm, e),
                 "width": 1,
                 "op": reduction,
-                "operand": _convert_expr(sm, e.operand),
+                "operand": operand,
             }
     if sym is None:
         return unsupported(sm, e, "UnaryExpression:" + str(e.op).split(".")[-1])
     operand = _convert_expr(sm, e.operand)
+    if sym == "!" and _DIV_CONTEXT and not _SYM.symctx:
+        operand = _division_self_operand(sm, e.operand, operand)
     width = e.type.bitWidth
     operand_width = width_of(operand)
     ok = (width == 1) if sym == "!" else (operand_width is None or operand_width == width)
@@ -806,6 +817,22 @@ def _binary_width_ok(sym, width, left_width, right_width):
     )
 
 
+def _division_self_operand(sm, expression, operand):
+    return {"kind": "SignedResize" if expression.type.isSigned else "Resize",
+            "span": node_span(sm, expression), "width": expression.type.bitWidth,
+            "operand": operand}
+
+
+def _convert_division_operand(sm, expression):
+    global _DIV_CONTEXT
+    previous = _DIV_CONTEXT
+    _DIV_CONTEXT += 1
+    try:
+        return _convert_expr(sm, expression)
+    finally:
+        _DIV_CONTEXT = previous
+
+
 def _convert_binary_expr(sm, e):
     sym = BINARY_OPS.get(e.op)
     if sym is None and _SYM is not None and _SYM.symctx:
@@ -821,11 +848,22 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
-    left = _convert_expr(sm, e.left)
-    right = _convert_expr(sm, e.right)
+    if sym == "/" and _SYM is not None and not _SYM.symctx:
+        left = _convert_division_operand(sm, e.left)
+        right = _convert_division_operand(sm, e.right)
+    else:
+        left = _convert_expr(sm, e.left)
+        right = _convert_expr(sm, e.right)
+    if _DIV_CONTEXT and not _SYM.symctx and sym in ("==", "!=", "<", "<=", ">", ">=", "&&", "||"):
+        left = _division_self_operand(sm, e.left, left)
+        right = _division_self_operand(sm, e.right, right)
     width = e.type.bitWidth
     if not _binary_width_ok(sym, width, width_of(left), width_of(right)):
         return unsupported(sm, e, "BinaryExpression:width")
+    if sym == "/" and not (_SYM is not None and _SYM.symctx):
+        if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
+            return unsupported(sm, e, "BinaryExpression:Divide-type")
+        sym = "s/" if e.left.type.isSigned and e.right.type.isSigned else "u/"
     if sym in ORDER_CMP_SYMS:
         try:
             if e.left.type.isSigned and e.right.type.isSigned:
@@ -849,6 +887,8 @@ def _convert_conditional_expr(sm, e):
     if conds[0].pattern is not None:
         return unsupported(sm, e, "ConditionalExpression:pattern")
     cond = _convert_expr(sm, conds[0].expr)
+    if _DIV_CONTEXT and not _SYM.symctx:
+        cond = _division_self_operand(sm, conds[0].expr, cond)
     then = _convert_expr(sm, e.left)
     els = _convert_expr(sm, e.right)
     width = e.type.bitWidth
@@ -869,6 +909,9 @@ def _convert_conditional_expr(sm, e):
 
 def _convert_concat_expr(sm, e):
     parts = [_convert_expr(sm, operand) for operand in e.operands]
+    if _DIV_CONTEXT and not _SYM.symctx:
+        parts = [_division_self_operand(sm, operand, converted)
+                 for operand, converted in zip(e.operands, parts)]
     width = e.type.bitWidth
     widths = [width_of(part) for part in parts]
     if all(part_width is not None for part_width in widths) and sum(widths) != width:
@@ -972,6 +1015,8 @@ def _sym_cast_call(sm, e):
     if len(args) != 1:
         return unsupported(sm, e, "CallExpression:arity")
     operand = _convert_expr(sm, args[0])
+    if _DIV_CONTEXT and not _SYM.symctx:
+        operand = _division_self_operand(sm, args[0], operand)
     ow = width_of(operand)
     myw = _safe_width(e)
     if ow is not None and myw is not None and ow != myw:
@@ -1295,6 +1340,8 @@ def _convert_expression_stmt(sm, stmt):
         if width is None or not _binary_width_ok(sym, width,
                                                  width_of(left), width_of(right)):
             return unsupported(sm, stmt, "AssignmentExpression:compound-width")
+        if sym == "/":
+            sym = "s/" if expr.left.type.isSigned and rhs.type.isSigned else "u/"
         value = {
             "kind": "Binary",
             "span": node_span(sm, expr),
@@ -1743,6 +1790,16 @@ def contains_multiplication(node):
     return False
 
 
+def contains_division(node):
+    if isinstance(node, dict):
+        return (node.get("kind") == "Binary" and node.get("op") in ("/", "u/", "s/")) or any(
+            contains_division(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_division(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1788,6 +1845,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Multiplication:invalid-compilation",
                                   "frontend rejected source containing multiplication"))
+    if (any(contains_division(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Division:invalid-compilation",
+                                  "frontend rejected source containing division"))
     if (any(contains_selected_target(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectTarget:invalid-compilation",
@@ -1837,7 +1898,6 @@ SYM_SYSCALLS = ("$clog2", "$bits", "$high", "$size")
 # Extra operators admitted in symbolic expression positions only
 # (parameter defaults, localparam exprs, generate headers/conds, dims).
 SYM_BINARY_OPS = {
-    BinaryOperator.Divide: "/",
     BinaryOperator.Mod: "%",
     BinaryOperator.Power: "**",
     BinaryOperator.LogicalShiftLeft: "<<",
@@ -2108,6 +2168,13 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
     no symbolic references)."""
     op = e.operand
     ocname = type(op).__name__
+    if _DIV_CONTEXT and not _SYM.symctx and op.type.isIntegral and e.type.isIntegral:
+        inner = _convert_expr(sm, op)
+        if state_squash:
+            inner = {"kind": "Squash2", "span": node_span(sm, e), "width": ow,
+                     "operand": inner}
+        return {"kind": "SignedResize" if op.type.isSigned and e.type.isSigned else "Resize",
+                "span": node_span(sm, e), "width": tw, "operand": inner}
     if ocname == "UnbasedUnsizedIntegerLiteral":
         sv = op.value
         bits = svint_bits(sv)
@@ -2965,6 +3032,9 @@ def process_symbolic(top, sources, incdirs, out_path):
     try:
         try:
             module = convert_module_sym(sm, inst)
+            if contains_division(module) and nerr:
+                module["others"].append(unsupported(sm, comp, "Division:invalid-compilation",
+                                                  "frontend rejected source containing division"))
         except Exception as exc:
             module = internal_error(exc)
         envelope = {

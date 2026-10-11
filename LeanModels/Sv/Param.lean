@@ -156,6 +156,7 @@ deriving Repr, BEq, DecidableEq, Inhabited
 /-- Envelope spelling of a `SymBinOp` (error messages / parser table). -/
 def SymBinOp.sym : SymBinOp → String
   | .m0 .add => "+" | .m0 .sub => "-" | .m0 .mul => "*"
+  | .m0 .div => "u/" | .m0 .sdiv => "s/"
   | .m0 .and => "&" | .m0 .or => "|"
   | .m0 .xor => "^" | .m0 .eq => "==" | .m0 .ne => "!=" | .m0 .lt => "<"
   | .m0 .le => "<=" | .m0 .gt => ">" | .m0 .ge => ">="
@@ -212,6 +213,7 @@ inductive PExpr where
   `width` is the default-elaborated target width (envelope limitation —
   see module docstring). -/
   | resize (width : Nat) (arg : PExpr)
+  | signedResize (width : Nat) (arg : PExpr)
   /-- 4-state → 2-state squash (self-check-tier node; outside M0). -/
   | squash2 (width : Nat) (arg : PExpr)
   | sysCall (fn : SysFn) (arg : PExpr)
@@ -458,6 +460,7 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .land => .ok (b2i (a != 0 && b != 0))
       | .lor => .ok (b2i (a != 0 || b != 0))
       | .m0 .mul | .mul => .ok (a * b)
+      | .m0 .div | .m0 .sdiv => .error "vector division requires operand widths"
       | .div => if b == 0 then .error "division by zero" else .ok (a.tdiv b)
       | .mod => if b == 0 then .error "modulo by zero" else .ok (a.tmod b)
       | .pow =>
@@ -478,6 +481,7 @@ def evalInt (env : IEnv) : PExpr → Except String Int
   | .resize w a => do
       let v ← evalInt env a
       .ok (v.emod ((2 : Int) ^ w))
+  | .signedResize .. => .error "signed vector resize in a constant context"
   | .squash2 _ a => evalInt env a
   | .sysCall fn a =>
       match fn, a with
@@ -545,6 +549,9 @@ private def maxW : Option Nat → Option Nat → Option Nat
   | none, some b => some b
   | none, none => none
 
+@[simp] theorem maxW_some (left right : Nat) :
+    maxW (some left) (some right) = some (max left right) := rfl
+
 mutual
 /-- Self-determined width of a value-position expression (LRM §11.6
 restricted to this vocabulary), under the instantiated declaration
@@ -565,10 +572,11 @@ def selfWidth (env : IEnv) : PExpr → Option Nat
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth env l
+      | .m0 .div | .m0 .sdiv | .div => maxW (divOperandWidth env l) (divOperandWidth env r)
       | _ => maxW (selfWidth env l) (selfWidth env r)
   | .ternary _ t e => maxW (selfWidth env t) (selfWidth env e)
   | .concat parts => selfWidthSum env parts
-  | .resize w _ => some w
+  | .resize w _ | .signedResize w _ => some w
   | .squash2 w _ => some w
   -- Semantic-tier nodes: the M0 layer does not know element widths
   -- (`Param2.lean`'s `selfWidth2` does); `none` = unknowable here.
@@ -583,7 +591,47 @@ def selfWidthSum (env : IEnv) : List PExpr → Option Nat
       match selfWidth env p, selfWidthSum env rest with
       | some a, some b => some (a + b)
       | _, _ => none
+
+def divOperandWidth (env : IEnv) : PExpr → Option Nat
+  | .resize _ operand | .signedResize _ operand => divOperandWidth env operand
+  | .lit value => some value.width
+  | .ident name => env.widths.lookup name
+  | .paramRef name _ => some ((env.pwidths.lookup name).getD 32)
+  | .genvarRef _ | .int _ | .sysCall .. => some 32
+  | .enumRef name _ _ => env.enums.lookup name
+  | .fill _ => none
+  | .unary (.m0 .lnot) _ => some 1
+  | .unary (.m0 _) operand | .unary .plus operand => divOperandWidth env operand
+  | .unary _ _ => none
+  | .binary operator left right =>
+      match operator with
+      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
+      | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth env left
+      | _ => maxW (divOperandWidth env left) (divOperandWidth env right)
+  | .ternary _ left right => maxW (divOperandWidth env left) (divOperandWidth env right)
+  | .concat parts => divOperandWidthSum env parts
+  | .squash2 width _ => some width
+  | .reduce .. => some 1
+  | .cast _ operand => divOperandWidth env operand
+  | .bitSel .. | .partSel .. | .repl .. | .unsupported .. => none
+
+def divOperandWidthSum (env : IEnv) : List PExpr → Option Nat
+  | [] => some 0
+  | operand :: rest =>
+      match divOperandWidth env operand, divOperandWidthSum env rest with
+      | some left, some right => some (left + right)
+      | _, _ => none
 end
+
+def fitDivOperand (signed : Bool) (context sourceWidth : Option Nat) (operand : Expr) : Expr :=
+  match context, sourceWidth with
+  | some target, some source =>
+      if target == source then operand
+      else if signed then .resizeSigned target operand
+      else if source < target then .concat #[.lit (.replicate (target - source) .l0), operand]
+      else .unsupported "Division:operand-width" s!"{source} -> {target}"
+  | _, _ => operand
 
 /-- An integer constant materialized at the context width (32 — the SV
 int width — when no context width is known). -/
@@ -624,6 +672,11 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
       | .inc | .dec => .unsupported "UnaryExpression:incdec" ""
   | .binary op l r =>
       match op with
+      | .m0 .div | .m0 .sdiv =>
+          let octx := maxW ctx (maxW (divOperandWidth env l) (divOperandWidth env r))
+          .binary (match op with | .m0 .sdiv => .sdiv | _ => .div)
+            (instDivOperand env (op == .m0 .sdiv) octx l)
+            (instDivOperand env (op == .m0 .sdiv) octx r)
       | .m0 .add | .m0 .sub | .m0 .and | .m0 .or | .m0 .xor =>
           let octx := match ctx with
             | some w => some w
@@ -666,6 +719,8 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
               .concat #[.lit (LVec.replicate (w - ow) .l0), instExpr env (some ow) a]
             else .unsupported "Resize:truncate" s!"{ow} -> {w}"
   | .squash2 .. => .unsupported "Squash2" "2-state squash outside the M0 value core"
+  | .signedResize width operand =>
+      .resizeSigned (ctx.getD width) (instExpr env (selfWidth env operand) operand)
   | .sysCall fn a =>
       match evalInt env (.sysCall fn a) with
       | .ok v => intLit ctx v
@@ -685,6 +740,41 @@ concats). -/
 def instParts (env : IEnv) : List PExpr → List Expr
   | [] => []
   | p :: rest => instExpr env (selfWidth env p) p :: instParts env rest
+
+def instDivOperand (env : IEnv) (signed : Bool) (ctx : Option Nat) : PExpr → Expr
+  | .unary (.m0 .lnot) operand =>
+      fitDivOperand signed ctx (some 1)
+        (.unary .lnot (instDivOperand env false (divOperandWidth env operand) operand))
+  | .unary (.m0 operator) operand =>
+      .unary operator (instDivOperand env signed (maxW ctx (divOperandWidth env operand)) operand)
+  | .unary .plus operand => instDivOperand env signed ctx operand
+  | .binary (.m0 operator) left right =>
+      let own := maxW (divOperandWidth env left) (divOperandWidth env right)
+      let comparison := match operator with | .eq | .ne | .lt | .le | .gt | .ge => true | _ => false
+      let common := if comparison then own else maxW ctx own
+      let value := Expr.binary operator
+        (instDivOperand env signed common left) (instDivOperand env signed common right)
+      if comparison then fitDivOperand signed ctx (some 1) value else value
+  | .binary .mul left right =>
+      let common := maxW ctx (maxW (divOperandWidth env left) (divOperandWidth env right))
+      .binary .mul (instDivOperand env signed common left) (instDivOperand env signed common right)
+  | .resize width operand => instDivOperand env false (ctx.orElse (fun _ => some width)) operand
+  | .signedResize width operand => instDivOperand env true (ctx.orElse (fun _ => some width)) operand
+  | .ternary condition left right =>
+      let common := maxW ctx (maxW (divOperandWidth env left) (divOperandWidth env right))
+      .ternary (instDivOperand env false (divOperandWidth env condition) condition)
+        (instDivOperand env signed common left) (instDivOperand env signed common right)
+  | .concat parts =>
+      fitDivOperand signed ctx (divOperandWidthSum env parts)
+        (.concat (instDivParts env parts).toArray)
+  | operand =>
+      let source := divOperandWidth env operand
+      fitDivOperand signed ctx source (instExpr env (source.orElse (fun _ => ctx)) operand)
+
+def instDivParts (env : IEnv) : List PExpr → List Expr
+  | [] => []
+  | operand :: rest =>
+      instDivOperand env false (divOperandWidth env operand) operand :: instDivParts env rest
 end
 
 /-! ## Statements, processes, declarations -/

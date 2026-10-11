@@ -66,13 +66,45 @@ bridges already exist.
 packed four-state expressions, identifier assignment, `if`/blocks and
 its cycle-level process fragment; general loops, calls, classes and
 hierarchy remain absent. Design2 adds selected reads/writes, case,
-reductions, resizing, signed comparisons and multiplication, but nonconstant
-divide/remainder/power/shifts are not admitted merely because
+reductions, resizing, signed comparisons, multiplication and integral division,
+but nonconstant remainder/power/shifts are not admitted merely because
 their constant expressions can be folded. The self-check vocabulary
 adds local declarations and output/termination tasks, but its current
 runner accepts initial-only execution and does not inherit Design2's
 selected targets or case statements. Extractor, ingestion, evaluator
 and kernel-loader refusal inventories must therefore stay separate.
+
+## Integral division (IEEE 1800-2023, 11.4.3 and 11.8.2)
+
+Runtime integral `/` and plain scalar `/=` now use the shared four-state
+value core through M0, self-check execution and both symbolic compilers.
+Unsigned operands use natural-number division; signed operands truncate
+toward zero at their common width. A zero divisor or any x/z operand
+produces all x. Mixed-sign contexts divide unsigned bit patterns, and
+destination narrowing follows division rather than narrowing its operands.
+
+Symbolic runtime division preserves unfolded operand conversions, including
+signed constants, so parameter changes recompute the arithmetic width
+instead of reusing a default-width quotient. Comparisons, logical operands
+and ternary conditions retain their own self-determined widths. Extracted
+families with defaults of both 8 and 16 verify the two directions of width
+change against independent simulation. Concatenation, replication,
+reduction and sign-cast boundaries also retain their intrinsic sizing.
+The `unsigned_division` and
+`signed_division` theorems consume real extracted divider expressions and
+prove width-parametric `BitVec` quotients for nonzero divisors. Zero and
+unknown cases have concrete execution checks, not a weakened bridge to
+two-state division.
+
+Measured on the same 21,864 corpus paths: clean extraction rises from
+1,731 to 1,764, with 33 newly clean rows and no losses. This path set includes
+one additional corpus file since the multiplication measurement; both ends
+of this comparison include it. All 33 gains and four public self-check
+fixtures agree with independent simulation on output and status. These
+admission and selected-execution checks do not claim whole-corpus execution.
+Real division, remainder and selected compound assignment remain loud;
+M0's existing selected-expression and unsigned-narrowing boundaries remain.
+The operator and symbolic-sizing contract is `docs/sv-division.md`.
 
 ## Integral multiplication (IEEE 1800-2023, 11.4.3 and 11.8.2)
 

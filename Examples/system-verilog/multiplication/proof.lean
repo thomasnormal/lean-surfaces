@@ -23,7 +23,12 @@ def productExpr (width : Nat) : Expr :=
     (some width) sourceProduct
 
 theorem product_instantiation (width : Nat) :
-    productExpr width = .binary .mul (.ident "left") (.ident "right") := rfl
+    productExpr width = .binary .mul (.ident "left") (.ident "right") := by
+  change instExpr { widths := [("left", width), ("right", width)] }
+    (some width) sourceProduct = _
+  rw [source_product]
+  simp [instExpr, evalInt, selfWidth, List.lookup]
+  rfl
 
 def runProduct {width : Nat} (left right : BitVec width) : Res LVec :=
   evalExpr 8 [("left", .ofBitVec left), ("right", .ofBitVec right)]

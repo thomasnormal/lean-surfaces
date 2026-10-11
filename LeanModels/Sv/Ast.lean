@@ -33,14 +33,16 @@ inductive UnaryOp where
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- M0 binary operators (`docs/sv-design-m0.md` expression tier):
-`+ - * & | ^ == != < <= > >=`. Case equality `===`/`!==` is NOT in the M0
+`+ - * / & | ^ == != < <= > >=` (division carries signedness). Case equality `===`/`!==` is NOT in the M0
 expression tier (source uses of it arrive as `Expr.unsupported`); `LVec`
-still implements it for the proof layer. Evaluated by `LVec.add/sub/mul/and/or/
+still implements it for the proof layer. Evaluated by `LVec.add/sub/mul/div/sdiv/and/or/
 xor/eqLogical/neLogical/lt/le/gt/ge`. -/
 inductive BinOp where
   | add   -- `+`
   | sub   -- `-`
   | mul
+  | div
+  | sdiv
   | and   -- `&`
   | or    -- `|`
   | xor   -- `^`
@@ -61,6 +63,7 @@ inductive Expr where
   | lit (value : LVec)
   | ident (name : String)
   | unary (op : UnaryOp) (arg : Expr)
+  | resizeSigned (width : Nat) (arg : Expr)
   | binary (op : BinOp) (left right : Expr)
   | ternary (cond thenE elseE : Expr)
   | concat (parts : Array Expr)
@@ -136,7 +139,7 @@ where
   exprHas : Expr → Bool
     | .unsupported _ _ => true
     | .lit _ | .ident _ => false
-    | .unary _ a => exprHas a
+    | .unary _ a | .resizeSigned _ a => exprHas a
     | .binary _ a b => exprHas a || exprHas b
     | .ternary c a b => exprHas c || exprHas a || exprHas b
     | .concat ps => ps.attach.any fun ⟨p, _⟩ => exprHas p

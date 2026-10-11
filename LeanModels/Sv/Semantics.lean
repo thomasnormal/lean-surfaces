@@ -203,6 +203,8 @@ def evalBinOp : BinOp → LVec → LVec → LVec
   | .add, a, b => a.add b
   | .sub, a, b => a.sub b
   | .mul, left, right => left.mul right
+  | .div, left, right => left.div right
+  | .sdiv, left, right => left.sdiv right
   | .and, a, b => a.and b
   | .or, a, b => a.or b
   | .xor, a, b => a.xor b
@@ -234,6 +236,8 @@ def evalExpr (fuel : Nat) (st : SvState) (e : Expr) : Res LVec :=
     | .ident name => readSignal st name
     | .unary op a => do
         return evalUnaryOp op (← evalExpr fuel st a)
+    | .resizeSigned width operand => do
+        return (← evalExpr fuel st operand).resizeSigned width
     | .binary op l r => do
         let a ← evalExpr fuel st l
         let b ← evalExpr fuel st r

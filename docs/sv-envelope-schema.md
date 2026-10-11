@@ -274,18 +274,28 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Ident` | `kind`, `span`, `width`, `name` (string) | declared width of the named var/net/port |
 | `Literal` | `kind`, `span`, `width`, `bits` (string) | `len(bits) == width` |
 | `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"-"`), `operand` (expr) | `~`,`-`: `width == operand.width`; `!`: `width == 1` |
-| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | `+ - * & \| ^`: `width == left.width == right.width`; comparisons: `width == 1` and `left.width == right.width` |
+| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | `+ - * u/ s/ & \| ^`: `width == left.width == right.width`; comparisons: `width == 1` and `left.width == right.width` |
 | `Ternary` | `kind`, `span`, `width`, `cond`, `then`, `else` (exprs) | `width == then.width == else.width`; `cond` any width |
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
-`Binary` `op` ∈ `"+" "-" "*" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
+`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
 `==`/`!=` are *logical* equality — case equality `===` is
 `BinaryExpression:CaseEquality` → Unsupported). The width invariants hold
 whenever the children are supported nodes — the extractor enforces them and
 demotes violators to `Unsupported`; if a child is itself `Unsupported` its
 width is unknown and the parent keeps its structure (the interpreter goes
 `.unsupported` on reaching the child).
+
+Runtime integral division uses `u/` for unsigned operands and `s/` when
+both elaborated operands are signed. Zero divisors and x/z operands give
+all x; known signed quotients truncate toward zero at the common width.
+Plain scalar `/=` lowers to the same operator. Symbolic constant positions
+retain `/` for integer elaboration, while runtime vector division retains
+typed operators and unfolded `Resize`/`SignedResize` operands. Instantiation
+recomputes their context widths, including signed constants, without
+widening self-determined Boolean operands or ternary conditions. Real
+division and selected compound targets stay loud. See `docs/sv-division.md`.
 
 Integral `*` uses the same elaborated common-width invariant as `+` and
 `-`. Operand `Resize`/`SignedResize` nodes act before multiplication;

@@ -171,6 +171,7 @@ semantics — the extractor marks a comparison signed only when BOTH operands
 are signed (§11.8.1); `$signed` casts at equal width change no bits and
 vanish at instantiation. -/
 inductive Expr2 where
+  | resizeSigned (width : Nat) (operand : Expr2)
   | lit (value : LVec)
   | ident (name : String)
   | unary (op : UnaryOp) (arg : Expr2)
@@ -274,7 +275,7 @@ where
   exprHas : Expr2 → Bool
     | .unsupported _ _ => true
     | .lit _ | .ident _ => false
-    | .unary _ a | .repl _ a | .reduce _ a | .resize _ a => exprHas a
+    | .unary _ a | .repl _ a | .reduce _ a | .resize _ a | .resizeSigned _ a => exprHas a
     | .binary _ a b | .scmp _ a b | .logical _ a b => exprHas a || exprHas b
     | .ternary c a b => exprHas c || exprHas a || exprHas b
     | .slice a _ _ => exprHas a
@@ -340,6 +341,8 @@ def evalExpr2 (fuel : Nat) (st : SvState) (e : Expr2) : Res LVec :=
     | .ident name => readSignal st name
     | .unary op a => do
         return evalUnaryOp op (← evalExpr2 fuel st a)
+    | .resizeSigned width operand => do
+        return (← evalExpr2 fuel st operand).resizeSigned width
     | .binary op l r => do
         let a ← evalExpr2 fuel st l
         let b ← evalExpr2 fuel st r

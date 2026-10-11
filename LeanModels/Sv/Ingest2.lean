@@ -145,6 +145,7 @@ def parseSymBinOp : String → Except String SymBinOp
   | "<" => .ok (.m0 .lt) | "<=" => .ok (.m0 .le)
   | ">" => .ok (.m0 .gt) | ">=" => .ok (.m0 .ge)
   | "*" => .ok .mul | "/" => .ok .div | "%" => .ok .mod | "**" => .ok .pow
+  | "u/" => .ok (.m0 .div) | "s/" => .ok (.m0 .sdiv)
   | "<<" => .ok .shl | ">>" => .ok .shr | "<<<" => .ok .ashl | ">>>" => .ok .ashr
   | "s<" => .ok .slt | "s<=" => .ok .sle | "s>" => .ok .sgt | "s>=" => .ok .sge
   | "===" => .ok .ceq | "!==" => .ok .cne | "&&" => .ok .land | "||" => .ok .lor
@@ -216,6 +217,8 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         return .concat (← (← (← getField j "parts").getArr?).toList.mapM parsePExpr)
     | "Resize" =>
         return .resize (← getNatField j "width") (← parsePExpr (← getField j "operand"))
+    | "SignedResize" =>
+        return .signedResize (← getNatField j "width") (← parsePExpr (← getField j "operand"))
     | "Squash2" =>
         -- 4-state → 2-state squash (2-state parameter/localparam types,
         -- e.g. `parameter int unsigned`): value-preserving in the constant

@@ -124,6 +124,8 @@ def parseBinOpName : String → Except String BinOp
   | "+" | "Add" => .ok .add
   | "-" | "Subtract" | "Sub" => .ok .sub
   | "*" | "Multiply" | "Mul" => .ok .mul
+  | "u/" => .ok .div
+  | "s/" => .ok .sdiv
   | "&" | "BinaryAnd" | "And" => .ok .and
   | "|" | "BinaryOr" | "Or" => .ok .or
   | "^" | "BinaryXor" | "Xor" => .ok .xor
@@ -150,6 +152,9 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "Unary" | "UnaryOp" =>
         let op ← parseUnaryOpName (← getStrField j ["op"])
         return .unary op (← parseExpr (← getField j ["arg", "operand"]))
+    | "SignedResize" =>
+        return .resizeSigned (← getNatField j ["width"])
+          (← parseExpr (← getField j ["operand"]))
     | "Binary" | "BinaryOp" | "BinOp" =>
         let op ← parseBinOpName (← getStrField j ["op"])
         return .binary op (← parseExpr (← getField j ["left"]))

@@ -185,6 +185,23 @@ theorem LVec.mul_ofBitVec {width : Nat} (left right : BitVec width) :
     Nat.mod_eq_of_lt right.isLt]
   rw [← LVec.ofNat_emod, ← BitVec.toNat_mul]
 
+theorem LVec.div_ofBitVec {width : Nat} (left right : BitVec width)
+    (nonzero : right.toNat ≠ 0) :
+    (LVec.ofBitVec left).div (LVec.ofBitVec right) = LVec.ofBitVec (left / right) := by
+  simp [LVec.ofBitVec, LVec.div, LVec.toNat?_ofNat, LVec.arithWidth,
+    LVec.width_ofNat, Nat.mod_eq_of_lt left.isLt, Nat.mod_eq_of_lt right.isLt,
+    nonzero, BitVec.toNat_udiv]
+
+theorem LVec.sdiv_ofBitVec {width : Nat} (left right : BitVec width)
+    (nonzero : right.toNat ≠ 0) :
+    (LVec.ofBitVec left).sdiv (LVec.ofBitVec right) = LVec.ofBitVec (left.sdiv right) := by
+  have common : LVec.arithWidth (LVec.ofBitVec left) (LVec.ofBitVec right) = width := by
+    simp [LVec.arithWidth, LVec.ofBitVec, LVec.width_ofNat]
+  unfold LVec.sdiv
+  rw [common]
+  simp [LVec.ofBitVec, LVec.toNat?_ofNat, Nat.mod_eq_of_lt left.isLt,
+    Nat.mod_eq_of_lt right.isLt, nonzero]
+
 /-! ## Schedule-oracle facts
 
 `choose_perm` pins each oracle invocation to a permutation of the ready
@@ -331,6 +348,9 @@ theorem fuelMono (fuel : Nat) :
         | unary op a =>
           simp only [evalExpr]
           exact Res.le_bind (ihE st a k hk) fun v => Res.le_refl _
+        | resizeSigned width operand =>
+          simp only [evalExpr]
+          exact Res.le_bind (ihE st operand k hk) fun value => Res.le_refl _
         | binary op l r =>
           simp only [evalExpr]
           exact Res.le_bind (ihE st l k hk) fun a =>

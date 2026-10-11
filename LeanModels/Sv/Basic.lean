@@ -298,6 +298,24 @@ def mul (a b : LVec) : LVec :=
   | some x, some y => ofNat (arithWidth a b) (x * y)
   | _, _ => xVec (arithWidth a b)
 
+/-- Unsigned integral division; zero or unknown divisors give all x. -/
+def div (left right : LVec) : LVec :=
+  let width := arithWidth left right
+  match left.toNat?, right.toNat? with
+  | some numerator, some denominator =>
+      if denominator == 0 then xVec width
+      else ofNat width (numerator / denominator)
+  | _, _ => xVec width
+
+/-- Signed integral division, truncated toward zero at the common width. -/
+def sdiv (left right : LVec) : LVec :=
+  let width := arithWidth left right
+  match left.toNat?, right.toNat? with
+  | some numerator, some denominator =>
+      if denominator == 0 then xVec width
+      else ofBitVec ((BitVec.ofNat width numerator).sdiv (BitVec.ofNat width denominator))
+  | _, _ => xVec width
+
 /-- Unary `-`: two's complement (mod `2^w`) with the §11.4.3 collapse rule. -/
 def neg (a : LVec) : LVec :=
   match a.toNat? with

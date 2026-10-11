@@ -40,7 +40,7 @@ class CompoundAssignments(unittest.TestCase):
                             for statement in compounds))
 
     def test_unsupported_compound_operator_stays_loud(self):
-        statements = body("value /= delta;")
+        statements = body("value %= delta;")
         self.assertEqual(statements[0]["sv_kind"], "AssignmentExpression:compound")
 
     def test_conversion_wrapped_compound_width_stays_loud(self):

@@ -1,12 +1,12 @@
 # Python binary64 floats and true division
 
 Implementation tracking: issue #10. Float literals, addition, subtraction,
-multiplication, `float(...)` and integer/bool, finite float and mixed true division connect
+multiplication, `float(...)` and integer/bool, float and mixed true division connect
 to the same kernel-reducible binary64 core on both interpreter surfaces.
 The `float_lab` real extracted artifact has kernel proofs, differential rows
 and script transcripts. This is not complete float-language support:
-remaining operators, constructor protocols, NaN payload propagation, non-finite
-division, hashing and identity are still language-coverage work.
+remaining operators, constructor protocols, NaN payload propagation,
+hashing and identity are still language-coverage work.
 
 ## Representation and specification
 
@@ -30,12 +30,19 @@ adapters must retain their distinct Python exception classes and messages.
 Mixed integer/float division is different: CPython first converts the integer,
 then divides the two floats. `10**400 / 0.0` therefore raises the conversion
 `OverflowError`, not `ZeroDivisionError`. The core provides conversion plus
-finite-operand division separately, and retains that evaluation order. A
+float division separately, and retains that evaluation order. A
 finite float quotient can overflow to infinity without raising the integer
-division overflow exception. Non-finite division currently returns a distinct
-unmodelled-result marker, except when a zero denominator already decides the
-faithful exception. That marker must become a loud interpreter refusal, never
-a Python exception invented by the adapter.
+division overflow exception. A nonzero finite denominator and infinite
+numerator produce signed infinity; a finite numerator and infinite denominator
+produce signed zero. Both signs use the operands' sign XOR, including signed
+zero and subnormal inputs. A zero denominator raises `ZeroDivisionError` even
+when the numerator is infinite or NaN. Mixed integer conversion still happens
+first, including overflow with an infinite or NaN operand. NaN inputs and
+infinity divided by infinity return an unresolved NaN-payload marker, after
+these exception checks. The adapter must refuse that marker loudly, never
+invent a Python exception or a portable NaN word. The legacy
+`Float64.divideFinite` helper name is retained; its shared dispatch now also
+admits the determined infinity cases without a second interpreter path.
 
 Addition, subtraction and multiplication compute with exact rational operands
 and round once to nearest-even binary64. Mixed integer/Boolean operands are
@@ -156,7 +163,7 @@ only Lean's standard `propext`, `Classical.choice` and `Quot.sound`, not native
 computation or new axioms.
 
 `python3.9 harness/float64_test.py` compares the core against CPython's bit
-patterns, `repr`, integer and finite float division, addition/subtraction/
+patterns, `repr`, integer and float division, addition/subtraction/
 multiplication, unary negation, mixed comparisons, conversions and exception
 messages in a single Lean
 process. Decimal parsing tests also compare the complete Unicode decimal-zero

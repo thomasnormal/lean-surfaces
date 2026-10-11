@@ -45,6 +45,17 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.constructor_overflow() raises
     .overflowError "int too large to convert to float"
 #py_check float_lab.constructor_shadow() = 8
+#py_check float_lab.nonfinite_division_still_loud() = Float64.ofBits 0x7ff0000000000000
+#py_check float_lab.infinite_quotient() = Float64.ofBits 0xfff0000000000000
+#py_check float_lab.infinite_denominator() = Float64.ofBits 0x8000000000000000
+#py_check float_lab.infinite_augmented() = Float64.ofBits 0
+#py_check float_lab.infinite_zero_caught() = 19
+#py_check float_lab.division_nonfinite_overflow(0) raises
+    .overflowError "int too large to convert to float"
+#py_check float_lab.division_nonfinite_overflow(1) raises
+    .overflowError "int too large to convert to float"
+#py_check float_lab.divide(Float64.ofBits 0x7ff0000000000001, false) raises
+    .floatZeroDivisionError
 
 theorem tenth :
     float_lab.tenth() ==> Float64.ofBits 0x3fb999999999999a := by proofs
@@ -85,6 +96,26 @@ theorem constructor_rounding :
 theorem constructor_invalid_caught :
     float_lab.constructor_invalid_caught() ==> (17 : PyInt) := by proofs
 
+theorem infinity_literal :
+    float_lab.nonfinite_division_still_loud() ==> Float64.ofBits 0x7ff0000000000000 := by proofs
+
+theorem infinite_quotient :
+    float_lab.infinite_quotient() ==> Float64.ofBits 0xfff0000000000000 := by proofs
+
+theorem infinite_denominator :
+    float_lab.infinite_denominator() ==> Float64.ofBits 0x8000000000000000 := by proofs
+
+theorem infinite_augmented :
+    float_lab.infinite_augmented() ==> Float64.ofBits 0 := by proofs
+
+theorem infinite_zero_caught :
+    float_lab.infinite_zero_caught() ==> (19 : PyInt) := by proofs
+
+#print axioms infinity_literal
+#print axioms infinite_quotient
+#print axioms infinite_denominator
+#print axioms infinite_augmented
+#print axioms infinite_zero_caught
 #print axioms constructor_identity
 #print axioms constructor_zero
 #print axioms constructor_tenth

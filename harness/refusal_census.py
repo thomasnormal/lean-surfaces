@@ -919,7 +919,8 @@ WHITELIST_CLASS = {
     "float_lab::constructor_heap": "float.constructor-protocols",
     "tut_06::negative_power": "op.Pow-negative",
     "float_lab::nan_arithmetic_still_loud": "float.nan-payload",
-    "float_lab::nonfinite_division_still_loud": "float.nonfinite-division",
+    "float_lab::divide": "float.nan-payload",
+    "float_lab::indeterminate_division_still_loud": "float.nan-payload",
     "float_lab::keys_still_loud": "float.hashing",
     "float_lab::nested_keys_still_loud": "float.hashing",
     "float_lab::attribute_still_loud": "float.attributes",
@@ -1160,6 +1161,7 @@ WHITELIST_CLASS = {
 # the adjudicator is just diff_test now.
 
 SCRIPT_CLASS = {
+    "nan_division_script": "float.nan-payload",
     "constructor_nan_script": "float.text-nan-payload",
     "nan_arithmetic_script": "float.nan-payload",
     "call_before_def": "script.definition-order",

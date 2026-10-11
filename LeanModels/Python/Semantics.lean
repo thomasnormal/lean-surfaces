@@ -1002,31 +1002,31 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         | .ok value => .ok (.float value)
         | .error .zeroDivision => .exn .floatZeroDivisionError
         | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .div, .int left, .float right =>
         match Float64.divideIntFloat left right with
         | .ok value => .ok (.float value)
         | .error .zeroDivision => .exn .floatZeroDivisionError
         | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .div, .float left, .int right =>
         match Float64.divideFloatInt left right with
         | .ok value => .ok (.float value)
         | .error .zeroDivision => .exn .floatZeroDivisionError
         | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .div, .bool left, .float right =>
         match Float64.divideIntFloat (if left then 1 else 0) right with
         | .ok value => .ok (.float value)
         | .error .zeroDivision => .exn .floatZeroDivisionError
         | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .div, .float left, .bool right =>
         match Float64.divideFloatInt left (if right then 1 else 0) with
         | .ok value => .ok (.float value)
         | .error .zeroDivision => .exn .floatZeroDivisionError
         | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .add, .str s, .str t => .ok (.str (s ++ t))
     | .add, .listV xs, .listV ys => .ok (.listV (xs ++ ys))
     | .add, .tuple xs, .tuple ys => .ok (.tuple (xs ++ ys))

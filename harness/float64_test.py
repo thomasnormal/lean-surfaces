@@ -51,7 +51,7 @@ def binary_arithmetic_output(operation):
         if math.isnan(result):
             return {"refused": "nan-payload"}
         return oracle_output(result)
-    except OverflowError as error:
+    except (ZeroDivisionError, OverflowError) as error:
         return {"error": type(error).__name__, "message": str(error)}
 
 
@@ -148,6 +148,11 @@ def rows(samples):
             records.append({"kind": "float_arithmetic", "operator": name,
                             "left": str(word), "right": str(right_word)})
             expected.append(binary_arithmetic_output(lambda: operation(value, right)))
+        for infinity in (math.inf, -math.inf):
+            for left, right in ((value, infinity), (infinity, value)):
+                records.append({"kind": "float_division", "left": str(bits_of(left)),
+                                "right": str(bits_of(right))})
+                expected.append(binary_arithmetic_output(lambda: left / right))
 
     special_arithmetic = [
         (0.1, 0.2), (0.0, -0.0), (-0.0, -0.0), (-1.0, -1.0),
@@ -182,27 +187,34 @@ def rows(samples):
         right_word = generator.getrandbits(64)
         left = struct.unpack(">d", struct.pack(">Q", left_word))[0]
         right = struct.unpack(">d", struct.pack(">Q", right_word))[0]
-        if math.isfinite(left) and math.isfinite(right):
-            division_pairs.append((left, right))
+        division_pairs.append((left, right))
+    nonfinite_values = [struct.unpack(">d", struct.pack(">Q", word))[0]
+                        for word in sorted(bit_patterns)
+                        if word >> 52 & 2047 == 2047]
+    division_pairs.extend((left, right) for left in nonfinite_values
+                          for right in nonfinite_values + [0.0, -0.0, 1.0, -1.0])
+    division_pairs.extend((left, right) for left in (0.0, -0.0, 1.0, -1.0)
+                          for right in nonfinite_values)
     for left, right in division_pairs:
         records.append({"kind": "float_division", "left": str(bits_of(left)),
                         "right": str(bits_of(right))})
-        expected.append(arithmetic_output(lambda: left / right))
+        expected.append(binary_arithmetic_output(lambda: left / right))
 
     mixed_pairs = [(10 ** 400, 0.0), (10 ** 400, 1.0), (0, -2.0), (-5, 2.0),
                    (2 ** 53 + 1, 3.0), (-10 ** 400, -0.0)]
     for integer in integers:
         word = generator.getrandbits(64)
         value = struct.unpack(">d", struct.pack(">Q", word))[0]
-        if math.isfinite(value):
-            mixed_pairs.append((integer, value))
+        mixed_pairs.append((integer, value))
+    mixed_pairs.extend((integer, value) for integer in integers[:9]
+                       for value in nonfinite_values)
     for integer, value in mixed_pairs:
         records.append({"kind": "int_float_division", "left": str(integer),
                         "right": str(bits_of(value))})
-        expected.append(arithmetic_output(lambda: integer / value))
+        expected.append(binary_arithmetic_output(lambda: integer / value))
         records.append({"kind": "float_int_division", "left": str(bits_of(value)),
                         "right": str(integer)})
-        expected.append(arithmetic_output(lambda: value / integer))
+        expected.append(binary_arithmetic_output(lambda: value / integer))
 
     mixed_arithmetic = mixed_pairs + [
         (10 ** 400, math.nan), (10 ** 400, math.inf), (-10 ** 400, -math.inf),

@@ -102,6 +102,31 @@ theorem constructor_invalid_caught :
   rw [callIn.eq_2]
   py_simp [float_lab, failure]
 
+theorem infinity_literal :
+    float_lab.nonfinite_division_still_loud() ==> Float64.ofBits 0x7ff0000000000000 := by
+  exact ⟨32, rfl⟩
+
+theorem infinite_quotient :
+    float_lab.infinite_quotient() ==> Float64.ofBits 0xfff0000000000000 := by
+  exact ⟨32, rfl⟩
+
+theorem infinite_denominator :
+    float_lab.infinite_denominator() ==> Float64.ofBits 0x8000000000000000 := by
+  exact ⟨32, rfl⟩
+
+theorem infinite_augmented :
+    float_lab.infinite_augmented() ==> Float64.ofBits 0 := by
+  exact ⟨32, rfl⟩
+
+theorem infinite_zero_caught :
+    float_lab.infinite_zero_caught() ==> (19 : PyInt) := by
+  exact ⟨32, rfl⟩
+
+#print axioms infinity_literal
+#print axioms infinite_quotient
+#print axioms infinite_denominator
+#print axioms infinite_augmented
+#print axioms infinite_zero_caught
 #print axioms constructor_identity
 #print axioms constructor_zero
 #print axioms constructor_tenth

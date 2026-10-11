@@ -34,7 +34,7 @@ def floatDivisionJson (result : Except Float64.FloatDivisionError Float64) : Exc
       ("error", .str "ZeroDivisionError"), ("message", .str "float division by zero")])
   | .error .conversionOverflow => .ok (Json.mkObj [
       ("error", .str "OverflowError"), ("message", .str "int too large to convert to float")])
-  | .error .nonFinite => .error "non-finite float division remains unmodelled"
+  | .error .nanPayload => .ok (Json.mkObj [("refused", .str "nan-payload")])
 
 def arithmeticOperator (input : Json) : Except String Float64.ArithmeticOp := do
   match ← input.getObjValAs? String "operator" with

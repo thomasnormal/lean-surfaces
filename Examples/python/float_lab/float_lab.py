@@ -92,6 +92,37 @@ def nonfinite_division_still_loud():
     return 1e999 / 2.0
 
 
+def infinite_quotient():
+    return float("inf") / -2.0
+
+
+def infinite_denominator():
+    return 5.0 / float("-inf")
+
+
+def infinite_augmented():
+    value = -0.0
+    value /= float("-inf")
+    return value
+
+
+def infinite_zero_caught():
+    try:
+        return float("inf") / -0.0
+    except ZeroDivisionError:
+        return 19
+
+
+def division_nonfinite_overflow(mode, value=1e999):
+    if mode == 0:
+        return 10 ** 400 / value
+    return value / 10 ** 400
+
+
+def indeterminate_division_still_loud():
+    return float("inf") / float("-inf")
+
+
 def keys_still_loud():
     return {1.0: "one"}
 

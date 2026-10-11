@@ -328,19 +328,24 @@ def arithmeticFloatInt (operator : ArithmeticOp) (left : Float64) (right : Int) 
 inductive FloatDivisionError where
   | zeroDivision
   | conversionOverflow
-  | nonFinite
+  | nanPayload
 deriving Repr, BEq, DecidableEq, Lean.ToExpr
 
 def divideFinite (left right : Float64) : Except FloatDivisionError Float64 :=
   if right.isZero then .error .zeroDivision
-  else if left.exponent == 2047 || right.exponent == 2047 then .error .nonFinite
+  else if left.isNaN || right.isNaN || left.isInf && right.isInf then .error .nanPayload
   else
-    let (leftNumerator, leftDenominator) := left.magnitudeRatio
-    let (rightNumerator, rightDenominator) := right.magnitudeRatio
-    match fromRatio (left.sign != right.sign)
-        (leftNumerator * rightDenominator) (leftDenominator * rightNumerator) with
-    | none => .error .zeroDivision
-    | some value => .ok value
+    let negative := left.sign != right.sign
+    if left.isInf then
+      .ok (ofBits ((if negative then 2 ^ 63 else 0) + 2047 * 2 ^ 52))
+    else if right.isInf then .ok (ofBits (if negative then 2 ^ 63 else 0))
+    else
+      let (leftNumerator, leftDenominator) := left.magnitudeRatio
+      let (rightNumerator, rightDenominator) := right.magnitudeRatio
+      match fromRatio negative
+          (leftNumerator * rightDenominator) (leftDenominator * rightNumerator) with
+      | none => .error .zeroDivision
+      | some value => .ok value
 
 def divideIntFloat (left : Int) (right : Float64) : Except FloatDivisionError Float64 :=
   match fromInt left with

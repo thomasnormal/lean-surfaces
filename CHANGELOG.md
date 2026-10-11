@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Determined infinity results for float and mixed true division on both Python
+  interpreter surfaces: signed infinity and signed zero use the operands' sign
+  XOR, zero denominators raise before NaN classification, and mixed integer
+  conversion overflow keeps its priority. Kernel proofs, real-artifact
+  language/script tests and all-exponent differential sweeps cover the new
+  behavior. NaN results remain explicit unfinished oracle/model work.
+
 - Binary64 addition, subtraction and multiplication on both Python interpreter
   surfaces, including mixed integer/Boolean conversion order, augmented
   assignment, signed zero, subnormal rounding and overflow to infinity. The

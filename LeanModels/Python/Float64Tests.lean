@@ -48,6 +48,52 @@ theorem mixed_division_converts_before_zero :
 theorem nan_divided_by_zero :
     divideFinite (ofBits 0x7ff8000000000000) (ofBits 0) = .error .zeroDivision := rfl
 
+theorem infinity_division_negative :
+    divideFinite (ofBits 0x7ff0000000000000) (ofBits 0xc000000000000000) =
+      .ok (ofBits 0xfff0000000000000) := rfl
+
+theorem negative_infinity_division_subnormal :
+    divideFinite (ofBits 0xfff0000000000000) (ofBits 0x8000000000000001) =
+      .ok (ofBits 0x7ff0000000000000) := rfl
+
+theorem infinity_denominator_negative_zero :
+    divideFinite (ofBits 0x7fefffffffffffff) (ofBits 0xfff0000000000000) =
+      .ok (ofBits 0x8000000000000000) := rfl
+
+theorem negative_zero_divided_by_negative_infinity :
+    divideFinite (ofBits 0x8000000000000000) (ofBits 0xfff0000000000000) =
+      .ok (ofBits 0) := rfl
+
+theorem infinity_divided_by_negative_zero :
+    divideFinite (ofBits 0x7ff0000000000000) (ofBits 0x8000000000000000) =
+      .error .zeroDivision := rfl
+
+theorem infinity_division_indeterminate :
+    divideFinite (ofBits 0x7ff0000000000000) (ofBits 0xfff0000000000000) =
+      .error .nanPayload := rfl
+
+theorem signaling_nan_division_unresolved :
+    divideFinite (ofBits 0x7ff0000000000001) (ofBits 0x3ff0000000000000) =
+      .error .nanPayload := rfl
+
+theorem mixed_division_converts_before_infinity :
+    divideIntFloat (10 ^ 400) (ofBits 0x7ff0000000000000) =
+      .error .conversionOverflow := rfl
+
+theorem mixed_division_converts_before_nan :
+    divideFloatInt (ofBits 0x7ff8000000000000) (10 ^ 400) =
+      .error .conversionOverflow := rfl
+
+#print axioms infinity_division_negative
+#print axioms negative_infinity_division_subnormal
+#print axioms infinity_denominator_negative_zero
+#print axioms negative_zero_divided_by_negative_infinity
+#print axioms infinity_divided_by_negative_zero
+#print axioms infinity_division_indeterminate
+#print axioms signaling_nan_division_unresolved
+#print axioms mixed_division_converts_before_infinity
+#print axioms mixed_division_converts_before_nan
+
 theorem equal_large_integer :
     (ofBits 0x4340000000000000).eqInt 9007199254740992 = true := rfl
 

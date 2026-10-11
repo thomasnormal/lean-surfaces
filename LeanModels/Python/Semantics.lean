@@ -1702,6 +1702,15 @@ def normIndex (i : Int) (len : Nat) : Option Nat :=
   let j := if i < 0 then i + (len : Int) else i
   if 0 ≤ j ∧ j < (len : Int) then some j.toNat else Option.none
 
+def rangeIndex (lo hi step : Int) (index : RVal) : Res RVal :=
+  match asInt index with
+  | some i =>
+    match normIndex i (rangeLen lo hi step) with
+    | some n => .ok (.int (lo + step * (n : Int)))
+    | Option.none => .exn .indexError
+  | Option.none =>
+    .exn (.typeError s!"range indices must be integers or slices, not {index.typeName}")
+
 /-- `container[index]` for `listV`/`tuple`/`str` (str yields a 1-char str).
 Index must be int/bool (bool coerces: `"ab"[True] == "b"`), else `TypeError`;
 out of range → `IndexError`; non-subscriptable container → `TypeError`.
@@ -1714,8 +1723,7 @@ def indexVal (container index : RVal) : Res RVal :=
       .unsupported "a heap object as a subscript index is outside this pure helper (`indexValH` decides it faithfully)"
   | .ref _, _ =>
       .unsupported "subscripting a heap object is outside this pure helper (`heapIndex` via `indexValH` decides it)"
-  | .rangeV .., _ =>
-      .unsupported "indexing a range is outside the tier (CPython computes the element; docs/memory-model.md §module-init execution)"
+  | .rangeV lo hi step, index => rangeIndex lo.toInt hi.toInt step.toInt index
   | .listV xs, index =>
     match asInt index with
     | some i =>

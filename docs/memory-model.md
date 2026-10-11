@@ -3091,8 +3091,10 @@ each construct differential, refusals loud):
   never hangs); `len`/truthiness exact. Everything else is loud or
   faithful: `==` compares the produced integer sequences without
   materializing them (empty ranges all compare equal; singleton steps are
-  irrelevant), dict-key/set-element loud via `keyRefusal` (ranges ARE
-  hashable in CPython — never a fake unhashable `TypeError`), the
+  irrelevant), integer subscripting computes the selected element with
+  negative-index normalization and faithful `IndexError`/`TypeError`,
+  dict-key/set-element loud via `keyRefusal` (ranges ARE hashable in CPython
+  — never a fake unhashable `TypeError`), the
   boundary loud, `next()` the faithful `not an iterator` `TypeError`.
   Since 2026-10-10, each field is a `RangeBound` retaining its int-or-bool
   object, as CPython's `PyNumber_Index` does. Rendering uses the canonical

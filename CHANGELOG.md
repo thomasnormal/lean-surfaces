@@ -20,6 +20,12 @@ change is listed here under **Changed** or **Removed**.
   suite now has **2,652 / 3,016 rows = 87.9% matched**, or **87.9% complete**,
   with **100% agreement among decided rows**.
 
+- Integer subscripting on `range` now follows CPython's sequence indexing,
+  including negative indices, stepped ranges, faithful `IndexError`, and the
+  range-specific non-integer `TypeError`. The differential suite now has
+  **2,657 / 3,020 rows = 88.0% matched**, or **88.0% complete**, with **100%
+  agreement among decided rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

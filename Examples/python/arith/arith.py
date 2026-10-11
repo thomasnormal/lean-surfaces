@@ -10,6 +10,14 @@ def powi(a, b):
     return a ** b
 
 
+def builtin_powi(a, b):
+    return pow(a, b)
+
+
+def builtin_pow_mod(a, b, m):
+    return pow(a, b, m)
+
+
 def choose(a, b):
     return a or b
 

@@ -642,6 +642,7 @@ def isBuiltinName (id : String) : Bool :=
   id == "abs" || id == "int" || id == "float" || id == "bool" || id == "divmod" || id == "print" ||
   id == "str" || id == "repr" || id == "input" ||
   id == "ord" || id == "chr" || id == "next" ||
+  id == "pow" ||
   -- §iter: `iter` was in `isPyBuiltinName` and NOT here — the two-table gap
   -- §pycomplete-14 was caught by. It joins DELIBERATELY: a name in this list
   -- is one every `NameError` decision treats as bound, and one a bare-name

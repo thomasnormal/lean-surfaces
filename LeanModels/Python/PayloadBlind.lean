@@ -3330,6 +3330,22 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                   · exact PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                  -- pow
+                                  · refine PBF.bind (ihEs m st args.toList hslot)
+                                      fun s1 vs _ hs1 => ?_
+                                    cases vs with
+                                    | nil => exact PBF.exn hs1 _
+                                    | cons _ rest =>
+                                        cases rest with
+                                        | nil => exact PBF.exn hs1 _
+                                        | cons _ rest =>
+                                            cases rest with
+                                            | nil => exact PBF.liftRes hs1 _
+                                            | cons _ rest =>
+                                                cases rest with
+                                                | nil => exact PBF.unsupported
+                                                | cons _ _ => exact PBF.exn hs1 _
+                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   -- sum
                                   · refine PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => ?_

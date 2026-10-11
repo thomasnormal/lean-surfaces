@@ -283,6 +283,11 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     liftRes (boolCastArgs (← frameHeap) vs)
   else if fname == "divmod" then
     liftRes (divmodArgs vs)
+  else if fname == "pow" then
+    match vs with
+    | [base, exponent] => liftRes (evalBinOp .pow base exponent)
+    | [_, _, _] => refuse "pow() with a modulus is outside the v0 tier"
+    | vs => raisePy (.typeError s!"pow() expected 2 or 3 arguments, got {vs.length}")
   else if fname == "ord" then
     match vs with
     | [v] => liftRes (ordVal v)

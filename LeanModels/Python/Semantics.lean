@@ -5487,6 +5487,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   else if fname == "divmod" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     Run.liftRes st (divmodArgs vs)
+                  else if fname == "pow" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [base, exponent] => Run.liftRes st (evalBinOp .pow base exponent)
+                     | [_, _, _] =>
+                       .unsupported "pow() with a modulus is outside the v0 tier"
+                     | vs =>
+                       .exn st (.typeError s!"pow() expected 2 or 3 arguments, got {vs.length}"))
                   else if fname == "sum" then
                     -- pass 3 (docs/memory-model.md §module-init
                     -- execution): the element fold IS `evalBinOp .add`;

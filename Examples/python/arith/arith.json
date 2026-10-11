@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.12.14"
   },
   "source_file": "Examples/python/arith/arith.py",
-  "source_sha256": "73562d42abae3f928143c883a0c3f4c8f75d21b3278462b075e249c99e90fd46",
+  "source_sha256": "4456b4d31d094423175ae16afa1319fbfd393b586b63d4428d847ca0c7888fb2",
   "module": {
     "kind": "Module",
     "body": [
@@ -235,26 +235,26 @@
           "lineno": 13,
           "col_offset": 0,
           "end_lineno": 14,
-          "end_col_offset": 17
+          "end_col_offset": 20
         },
-        "name": "choose",
+        "name": "builtin_powi",
         "args": [
           {
             "arg": "a",
             "span": {
               "lineno": 13,
-              "col_offset": 11,
+              "col_offset": 17,
               "end_lineno": 13,
-              "end_col_offset": 12
+              "end_col_offset": 18
             }
           },
           {
             "arg": "b",
             "span": {
               "lineno": 13,
-              "col_offset": 14,
+              "col_offset": 20,
               "end_lineno": 13,
-              "end_col_offset": 15
+              "end_col_offset": 21
             }
           }
         ],
@@ -267,25 +267,34 @@
               "lineno": 14,
               "col_offset": 4,
               "end_lineno": 14,
-              "end_col_offset": 17
+              "end_col_offset": 20
             },
             "value": {
-              "kind": "BoolOp",
+              "kind": "Call",
               "span": {
                 "lineno": 14,
                 "col_offset": 11,
                 "end_lineno": 14,
-                "end_col_offset": 17
+                "end_col_offset": 20
               },
-              "op": "Or",
-              "values": [
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 14,
+                  "col_offset": 11,
+                  "end_lineno": 14,
+                  "end_col_offset": 14
+                },
+                "id": "pow"
+              },
+              "args": [
                 {
                   "kind": "Name",
                   "span": {
                     "lineno": 14,
-                    "col_offset": 11,
+                    "col_offset": 15,
                     "end_lineno": 14,
-                    "end_col_offset": 12
+                    "end_col_offset": 16
                   },
                   "id": "a"
                 },
@@ -293,13 +302,15 @@
                   "kind": "Name",
                   "span": {
                     "lineno": 14,
-                    "col_offset": 16,
+                    "col_offset": 18,
                     "end_lineno": 14,
-                    "end_col_offset": 17
+                    "end_col_offset": 19
                   },
                   "id": "b"
                 }
-              ]
+              ],
+              "keywords": [],
+              "call_unsupported": null
             }
           }
         ]
@@ -310,35 +321,35 @@
           "lineno": 17,
           "col_offset": 0,
           "end_lineno": 18,
-          "end_col_offset": 20
+          "end_col_offset": 23
         },
-        "name": "chain",
+        "name": "builtin_pow_mod",
         "args": [
           {
             "arg": "a",
             "span": {
               "lineno": 17,
-              "col_offset": 10,
+              "col_offset": 20,
               "end_lineno": 17,
-              "end_col_offset": 11
+              "end_col_offset": 21
             }
           },
           {
             "arg": "b",
             "span": {
               "lineno": 17,
-              "col_offset": 13,
+              "col_offset": 23,
               "end_lineno": 17,
-              "end_col_offset": 14
+              "end_col_offset": 24
             }
           },
           {
-            "arg": "c",
+            "arg": "m",
             "span": {
               "lineno": 17,
-              "col_offset": 16,
+              "col_offset": 26,
               "end_lineno": 17,
-              "end_col_offset": 17
+              "end_col_offset": 27
             }
           }
         ],
@@ -351,31 +362,27 @@
               "lineno": 18,
               "col_offset": 4,
               "end_lineno": 18,
-              "end_col_offset": 20
+              "end_col_offset": 23
             },
             "value": {
-              "kind": "Compare",
+              "kind": "Call",
               "span": {
                 "lineno": 18,
                 "col_offset": 11,
                 "end_lineno": 18,
-                "end_col_offset": 20
+                "end_col_offset": 23
               },
-              "left": {
+              "func": {
                 "kind": "Name",
                 "span": {
                   "lineno": 18,
                   "col_offset": 11,
                   "end_lineno": 18,
-                  "end_col_offset": 12
+                  "end_col_offset": 14
                 },
-                "id": "a"
+                "id": "pow"
               },
-              "ops": [
-                "Lt",
-                "Lt"
-              ],
-              "comparators": [
+              "args": [
                 {
                   "kind": "Name",
                   "span": {
@@ -384,19 +391,31 @@
                     "end_lineno": 18,
                     "end_col_offset": 16
                   },
+                  "id": "a"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 18,
+                    "col_offset": 18,
+                    "end_lineno": 18,
+                    "end_col_offset": 19
+                  },
                   "id": "b"
                 },
                 {
                   "kind": "Name",
                   "span": {
                     "lineno": 18,
-                    "col_offset": 19,
+                    "col_offset": 21,
                     "end_lineno": 18,
-                    "end_col_offset": 20
+                    "end_col_offset": 22
                   },
-                  "id": "c"
+                  "id": "m"
                 }
-              ]
+              ],
+              "keywords": [],
+              "call_unsupported": null
             }
           }
         ]
@@ -407,17 +426,26 @@
           "lineno": 21,
           "col_offset": 0,
           "end_lineno": 22,
-          "end_col_offset": 26
+          "end_col_offset": 17
         },
-        "name": "idx",
+        "name": "choose",
         "args": [
           {
-            "arg": "i",
+            "arg": "a",
             "span": {
               "lineno": 21,
-              "col_offset": 8,
+              "col_offset": 11,
               "end_lineno": 21,
-              "end_col_offset": 9
+              "end_col_offset": 12
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 21,
+              "col_offset": 14,
+              "end_lineno": 21,
+              "end_col_offset": 15
             }
           }
         ],
@@ -430,31 +458,194 @@
               "lineno": 22,
               "col_offset": 4,
               "end_lineno": 22,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "BoolOp",
+              "span": {
+                "lineno": 22,
+                "col_offset": 11,
+                "end_lineno": 22,
+                "end_col_offset": 17
+              },
+              "op": "Or",
+              "values": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 22,
+                    "col_offset": 11,
+                    "end_lineno": 22,
+                    "end_col_offset": 12
+                  },
+                  "id": "a"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 22,
+                    "col_offset": 16,
+                    "end_lineno": 22,
+                    "end_col_offset": 17
+                  },
+                  "id": "b"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 25,
+          "col_offset": 0,
+          "end_lineno": 26,
+          "end_col_offset": 20
+        },
+        "name": "chain",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 25,
+              "col_offset": 10,
+              "end_lineno": 25,
+              "end_col_offset": 11
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 25,
+              "col_offset": 13,
+              "end_lineno": 25,
+              "end_col_offset": 14
+            }
+          },
+          {
+            "arg": "c",
+            "span": {
+              "lineno": 25,
+              "col_offset": 16,
+              "end_lineno": 25,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 26,
+              "col_offset": 4,
+              "end_lineno": 26,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 26,
+                "col_offset": 11,
+                "end_lineno": 26,
+                "end_col_offset": 20
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 11,
+                  "end_lineno": 26,
+                  "end_col_offset": 12
+                },
+                "id": "a"
+              },
+              "ops": [
+                "Lt",
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 15,
+                    "end_lineno": 26,
+                    "end_col_offset": 16
+                  },
+                  "id": "b"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 19,
+                    "end_lineno": 26,
+                    "end_col_offset": 20
+                  },
+                  "id": "c"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 29,
+          "col_offset": 0,
+          "end_lineno": 30,
+          "end_col_offset": 26
+        },
+        "name": "idx",
+        "args": [
+          {
+            "arg": "i",
+            "span": {
+              "lineno": 29,
+              "col_offset": 8,
+              "end_lineno": 29,
+              "end_col_offset": 9
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 30,
+              "col_offset": 4,
+              "end_lineno": 30,
               "end_col_offset": 26
             },
             "value": {
               "kind": "Subscript",
               "span": {
-                "lineno": 22,
+                "lineno": 30,
                 "col_offset": 11,
-                "end_lineno": 22,
+                "end_lineno": 30,
                 "end_col_offset": 26
               },
               "value": {
                 "kind": "List",
                 "span": {
-                  "lineno": 22,
+                  "lineno": 30,
                   "col_offset": 11,
-                  "end_lineno": 22,
+                  "end_lineno": 30,
                   "end_col_offset": 23
                 },
                 "elts": [
                   {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 22,
+                      "lineno": 30,
                       "col_offset": 12,
-                      "end_lineno": 22,
+                      "end_lineno": 30,
                       "end_col_offset": 14
                     },
                     "value": {
@@ -465,9 +656,9 @@
                   {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 22,
+                      "lineno": 30,
                       "col_offset": 16,
-                      "end_lineno": 22,
+                      "end_lineno": 30,
                       "end_col_offset": 18
                     },
                     "value": {
@@ -478,9 +669,9 @@
                   {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 22,
+                      "lineno": 30,
                       "col_offset": 20,
-                      "end_lineno": 22,
+                      "end_lineno": 30,
                       "end_col_offset": 22
                     },
                     "value": {
@@ -493,9 +684,9 @@
               "index": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 22,
+                  "lineno": 30,
                   "col_offset": 24,
-                  "end_lineno": 22,
+                  "end_lineno": 30,
                   "end_col_offset": 25
                 },
                 "id": "i"

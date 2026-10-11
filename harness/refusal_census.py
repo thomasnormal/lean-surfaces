@@ -931,6 +931,8 @@ WHITELIST_CLASS = {
     "float_lab::subtract": "float.nan-payload",
     "float_lab::multiply": "float.nan-payload",
     "arith::powi": "op.Pow",
+    "arith::builtin_powi": "builtin.pow-negative",
+    "arith::builtin_pow_mod": "builtin.pow-modulus",
     "rsa_inverse::inverse": "exc.raise",
     "bench_bisect::bisect_left": "exc.raise",
     "dict_lab::ret_dict": "boundary.heap-value",

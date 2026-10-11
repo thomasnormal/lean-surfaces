@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Two-argument integer `pow` calls now share the pure integer exponentiation
+  worker with `**` on both Python interpreter surfaces. Negative exponents stay
+  loud, `pow(0, -1)` preserves its faithful zero-division exception, and the
+  three-argument modulus form refuses explicitly rather than guessing modular
+  arithmetic. The differential suite now has **2,647 / 3,012 rows = 87.9%
+  matched** with **100% agreement among decided rows**.
+
 - Float floor division, remainder and `divmod` through a shared pure binary64
   worker on both Python interpreter surfaces, preserving rounded operation
   order, quotient snapping, signed zeros, determined infinite-divisor results

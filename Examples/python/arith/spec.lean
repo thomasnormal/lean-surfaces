@@ -30,6 +30,10 @@ full differential matrix against CPython lives in harness/cases.json. -/
 -- carries its own constructor (docs/backlog.md §the payload-free
 -- constructors): `0.0 cannot be raised to a negative power`
 #py_check arith.powi(0, -1) raises .zeroDivisionPow
+#py_check arith.builtin_powi(2, 0) = 1
+#py_check arith.builtin_powi(-2, 3) = -8
+#guard (callFunction arith "builtin_powi" #[.int 2, .int (-1)] 20 matches .unsupported _)
+#guard (callFunction arith "builtin_pow_mod" #[.int 2, .int 3, .int 5] 20 matches .unsupported _)
 #py_check arith.choose(0, 5) = 5
 #py_check arith.choose(3, 7) = 3
 #py_check arith.chain(1, 2, 3) = true

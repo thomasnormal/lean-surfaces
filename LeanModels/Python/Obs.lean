@@ -828,6 +828,7 @@ theorem fuelMono (fuel : Nat) :
                                    (Run.le_ite (hb _)
                                    (Run.le_ite (hb _)
                                    (Run.le_ite (hb _)
+                                   (Run.le_ite ?_                              -- pow
                                    (Run.le_ite ?_                              -- sum
                                     (Run.le_ite ?_                             -- tuple
                                      (Run.le_ite ?_                            -- list
@@ -838,7 +839,7 @@ theorem fuelMono (fuel : Nat) :
                                         (Run.le_ite ?_                         -- next
                                          (Run.le_ite (hb _)                    -- ord
                                             (Run.le_ite (hb _)                 -- chr
-                                             ?_))))))))))))))))))))
+                                             ?_)))))))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -961,6 +962,18 @@ theorem fuelMono (fuel : Nat) :
                                       fun st vals => ?_
                                     exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
                                       fun st es => Run.le_refl _
+                        -- pow: argument evaluation followed by the pure
+                        -- binary operation, or the loud modulus refusal
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases vs with
+                          | nil => exact Run.le_refl _
+                          | cons _ rest =>
+                            cases rest with
+                            | nil => exact Run.le_refl _
+                            | cons _ rest =>
+                              cases rest with
+                              | nil => exact Run.le_refl _
+                              | cons _ _ => exact Run.le_refl _
                         -- sum (pass 3): arity fork, the str-start fork,
                         -- then the receiver — every value arm is the pure
                         -- fold; the single-generator arm drains behind the
@@ -2418,8 +2431,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                         -- NameError / loud
                         refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
                           (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
-                          (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                            (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
+                           (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
+                           (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                            (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                             (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                               (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
@@ -2427,14 +2441,26 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                     (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                       (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
-                                      (.ite .unsupported
-                                        (.ite .unsupported ?_))))))))))))
+                                        (.ite .unsupported
+                                        (.ite .unsupported ?_)))))))))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>
                             cases rest with
                             | nil => exact .liftResF h₁ _
                             | cons _ _ => exact .unsupported
+                        · cases vs with
+                          | nil => exact .exn
+                          | cons _ rest =>
+                            cases rest with
+                            | nil => exact .exn
+                            | cons _ rest =>
+                              cases rest with
+                              | nil => exact .liftResF h₁ _
+                              | cons _ rest =>
+                                cases rest with
+                                | nil => exact .unsupported
+                                | cons _ _ => exact .exn
                         · -- sum
                           cases sumArgs vs with
                           | none => exact .exn

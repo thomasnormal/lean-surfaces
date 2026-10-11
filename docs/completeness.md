@@ -128,8 +128,8 @@ then 3 rows each for `builtin.int-of-str`, `fstring.conversion`,
 `attr.on-scalar`, `boundary.generator`, `boundary.heap-value`,
 `boundary.list-mutation`, `boundary.namedtuple`, `clock.underrun`,
 `del.non-name-target`, `fstring.format-spec`, `iter.dict`,
-`kwargs.callee-kind`, `namedtuple.protocol`, `op.Is-immediates`,
-`slice.allocating`; and 1 each for 17 more.
+`kwargs.callee-kind`, `namedtuple.protocol`, and `op.Is-immediates`; and 1
+each for 17 more.
 
 **Two readings the classification forces.**
 
@@ -359,24 +359,27 @@ arms fall out.
 **Unblocks**: `try/except` at large — a substantial fraction of stdlib
 and application code — and rung 6 (`with`) behind it.
 
-### Rung 5 — allocating slices and sequence repetition. Price: SMALL.
+### Rung 5 — sequence repetition remains. Allocating slices landed.
 
-`xs[a:b]` on a LIST, and `"ab" * 3` / `[0] * n`. Three interpreter
-messages plus `op.Mult-repetition`. The tuple halves of both are ALREADY
-in tier — `seqSlice` slices a tuple/namedtuple and `tupleRepeat` repeats
-one under a budget, and the shipped sunfish's padding line
+The list half of `xs[a:b]` landed on 2026-10-11. Heap-list slices now use
+the same fresh-object path as `list(iterable)`, with CPython's step-first
+validation and a `Val.list` boundary snapshot. The native differential
+surface is **2,668 / 3,025 = 88.2% complete**; the proof interpreter is
+**2,594 / 3,025 = 85.8% complete**, with zero disagreements among decided
+rows. The tuple/namedtuple and string halves remain value-level, and the
+shipped sunfish's padding line
 (`(0,) * 20 + pst[k] + (0,) * 20` over `table[i*8 : i*8+8]`) runs
-through exactly those. What is missing is the half whose result is a
-fresh HEAP object.
+through exactly those. What remains in this rung is `"ab" * 3` / `[0] * n`:
+sequence repetition still needs an allocation-aware operator arm.
 
-That is also why the price is small: the shape is already paid for.
-`list(iterable)` allocates and left `Expr.heapFree`, with `worldInv`
-gaining one `hlstx` conjunct, `fuelMono` one `bind` arm and `clockErase`
-one `allocList` leaf. A list slice is that pattern again over a computed
-index range, and the bound validation is `strSlice`'s, verbatim.
+The list-slice price was small because the allocation shape was already
+paid for: `list(iterable)` left `Expr.heapFree`, added one `worldInv`
+conjunct, one `fuelMono` bind arm and one `clockErase` allocation leaf.
+List slicing reuses that geometry over a computed index range, with
+`strSlice`'s validation verbatim.
 
-**Unblocks**: `xs[1:]`, `xs[:-1]`, `[0] * n` — the ordinary spelling of
-half of all list manipulation.
+**Unblocks**: `xs[1:]` and `xs[:-1]` — ordinary list manipulation. The
+remaining repetition forms stay loud until the next item.
 
 ### Named, and deliberately NOT in the top five
 

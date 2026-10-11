@@ -43,6 +43,13 @@ change is listed here under **Changed** or **Removed**.
   88.1% matched**, or **88.1% complete** (proof interpreter: **2,592 / 3,025
   = 85.7%**), with **100% agreement among decided rows**.
 
+- Heap-list slices now follow CPython's step-first validation, allocate a
+  fresh list object, and cross the public boundary as `Val.list` snapshots;
+  tuple, namedtuple, string, and value-list slices retain their value-level
+  behavior. The native differential suite now has **2,668 / 3,025 rows =
+  88.2% matched**, or **88.2% complete**; the proof interpreter has **2,594 /
+  3,025 = 85.8% complete**, with **100% agreement among decided rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

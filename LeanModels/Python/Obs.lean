@@ -2578,17 +2578,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         exact .ite ((ihE st₂ b hfree.1.2).mono (wtrans st st₂ h₂))
           ((ihE st₂ o hfree.2).mono (wtrans st st₂ h₂))
       | slice v l u stp _ =>
-        -- H5 strings: components bind, then the PURE `sliceVal` (str
-        -- slices are values; allocating receivers refuse loudly)
-        simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-        simp only [evalExpr]
-        refine .bind (ihE st v hfree.1.1.1) fun st₁ cv h₁ => ?_
-        refine .bind ((ihE st₁ l hfree.1.1.2).mono (wtrans st st₁ h₁))
-          fun st₂ lv h₂ => ?_
-        refine .bind ((ihE st₂ u hfree.1.2).mono (wtrans st st₂ h₂))
-          fun st₃ uv h₃ => ?_
-        exact .bind ((ihE st₃ stp hfree.2).mono (wtrans st st₃ h₃))
-          fun st₄ sv h₄ => .liftResF h₄ _
+        simp [Expr.heapFree] at hfree
       | «attribute» recv attr _ =>
         -- attribute READ (H3): a pure heap read — world-preserving; the
         -- bound-method/AttributeError forks are all ok-free or pinned

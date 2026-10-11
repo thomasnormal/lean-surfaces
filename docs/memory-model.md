@@ -241,9 +241,7 @@ cycle DETECTION, never by running out of fuel).
 * Loud, deliberately: list concatenation `+` and repetition (allocating
   operators would evict every `BinOp` from the heap-free fragment — they
   need an allocation-aware frame story first), `+=`/`.extend`,
-  `.remove/.index/.sort/...`, slices (STR slices are BUILT —
-  §string semantics; LIST slices allocate and stay loud pending the
-  allocation-aware frame story), `del lst[i]`, comprehensions,
+  `.remove/.index/.sort/...`, `del lst[i]`, comprehensions,
   `.get`-style method calls on lists (a faithful `AttributeError`
   awaiting a `PyErr` form).
 
@@ -3066,10 +3064,11 @@ genexp reads `piece`/`k` the same way.
 **New value tiers riding the pass** (general — function bodies too;
 each construct differential, refusals loud):
 
-* **tuple/namedtuple SLICES** (`table[i*8 : i*8+8]`): CPython's
-  `tuple.__getitem__` — a namedtuple slice is a PLAIN tuple. In-model
-  tuples are immediate values, so the slice allocates nothing; LIST
-  slices stay loud (they allocate a heap object).
+* **sequence SLICES** (`table[i*8 : i*8+8]`): CPython's
+  `__getitem__` slice rules, including a namedtuple slice as a PLAIN tuple.
+  Tuple/namedtuple and value-list slices use immediate values in the proof
+  interpreter; heap-list slices allocate a fresh `Obj.list` in the runner and
+  freeze to a `Val.list` snapshot at the boundary.
 * **sequence repetition** `tuple * int` / `int * tuple` (bool coerces;
   admitted `n ≤ 0` → empty). Original-count magnitude and output size are
   bounded independently; see the current tuple repetition section. Lists

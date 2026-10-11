@@ -806,8 +806,9 @@ it. Two of the ten are the boundary:
 * `view_escape_still_loud` — `k = d.keys()` then use. Not a consuming
   position, so ingestion leaves it alone and the tier refuses. CPython
   answers 1; the refusal is what keeps the snapshot honest.
-* `view_arg_not_alone_still_loud` — a view that is not the sole argument of a
-  consuming builtin is not the recognised shape either.
+The `view_arg_not_alone_still_loud` spelling now matches: the consuming
+`list(d.keys())` call is the sole view argument, and its resulting list slice
+is live. Only the escaping-view shape remains loud here.
 
 **The shape is what licenses the snapshot**, and these two rows are how that
 claim is falsifiable rather than asserted.

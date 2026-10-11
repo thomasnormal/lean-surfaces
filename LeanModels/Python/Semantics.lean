@@ -1945,7 +1945,7 @@ semantics, the `strSlice` validation VERBATIM (step first — `TypeError`
 for a non-index, `ValueError` for 0 — then lower, then upper; the
 duplication is deliberate: `strSlice` is a frozen proof-layer worker and
 must stay byte-identical). Result: a PLAIN tuple. -/
-def seqSlice (xs : Array RVal) (lv uv sv : RVal) : Res RVal :=
+def seqSliceValues (xs : Array RVal) (lv uv sv : RVal) : Res (List RVal) :=
   match asSliceIdx sv with
   | Option.none =>
     .exn (.typeError "slice indices must be integers or None or have an __index__ method")
@@ -1969,23 +1969,29 @@ def seqSlice (xs : Array RVal) (lv uv sv : RVal) : Res RVal :=
           let stop := match u with
             | some i => sliceAdj i len pos
             | Option.none => if pos then len else -1
-          .ok (.tuple (seqSliceElems xs (sliceCount start stop step) start step).toArray)
+          .ok (seqSliceElems xs (sliceCount start stop step) start step)
+
+def seqSlice (xs : Array RVal) (lv uv sv : RVal) : Res RVal :=
+  seqSliceValues xs lv uv sv >>= fun values =>
+    .ok (.tuple values.toArray)
+
+def seqSliceList (xs : Array RVal) (lv uv sv : RVal) : Res RVal :=
+  seqSliceValues xs lv uv sv >>= fun values =>
+    .ok (.listV values.toArray)
 
 /-- `container[l:u:st]` — the slice RECEIVER dispatch (the components
 have already evaluated: CPython builds the slice object before
-`BINARY_SUBSCR` looks at the receiver). STRINGS are the tier (value
-semantics); slicing a heap list — or a value list/tuple/namedtuple —
-succeeds in CPython and ALLOCATES, so those stay loudly out (H5 keeps
-list slices with the allocation-aware story — docs/memory-model.md
-§list semantics); a non-subscriptable receiver is the faithful
+`BINARY_SUBSCR` looks at the receiver). STRINGS and value lists are handled
+by pure workers; heap-list receivers are copied by the monadic runner into a
+fresh list object. Tuple/namedtuple slices remain immediate values; a
+non-subscriptable receiver is the faithful
 `TypeError`. -/
 def sliceVal (v lv uv sv : RVal) : Res RVal :=
   match v with
   | .str s => strSlice s lv uv sv
   | .ref _ =>
     .unsupported "slicing a heap object is outside the tier (a list slice allocates; docs/memory-model.md §string semantics)"
-  | .listV _ =>
-    .unsupported "slicing a list is outside the tier (the result is a fresh heap object; docs/memory-model.md §string semantics)"
+  | .listV xs => seqSliceList xs lv uv sv
   -- pass 3 (docs/memory-model.md §module-init execution): tuple slices
   -- are IN-MODEL allocation-free (tuples are immediate values), so the
   -- H5 refusal reason never applied to them; CPython's tuple.__getitem__
@@ -1996,6 +2002,18 @@ def sliceVal (v lv uv sv : RVal) : Res RVal :=
   | .rangeV .. =>
     .unsupported "slicing a range is outside the tier (CPython yields a range; docs/memory-model.md §module-init execution)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
+
+/-- Heap-aware slice dispatch. Heap-list slices allocate a fresh list object;
+all value receivers reuse the pure worker above. -/
+def sliceValH (h : Heap) (v lv uv sv : RVal) : Res (Heap × RVal) :=
+  match v with
+  | .ref a =>
+      match Heap.get? h a with
+      | some (.list xs) =>
+          seqSliceValues xs lv uv sv >>= fun values =>
+            .ok (h.push (.list values.toArray), .ref h.size)
+      | _ => sliceVal v lv uv sv >>= fun r => .ok (h, r)
+  | _ => sliceVal v lv uv sv >>= fun r => .ok (h, r)
 
 /-- The decision of a method CALL on a str receiver (H5 strings) — the
 `ntupleCallPlan` discipline: a PURE plan decided from the attribute name
@@ -4616,10 +4634,10 @@ mutual
     | .dict .. => false                 -- ALLOCATES
     | .attribute v _ _ => v.heapFree    -- as a bare value: loud, never `.ok`
     | .ifExp t b o _ => t.heapFree && b.heapFree && o.heapFree
-    -- H5 strings: slices decide only on strs (pure) — every allocating
-    -- receiver (heap lists) refuses loudly, so the node stays in the
-    -- fragment
-    | .slice v l u st _ => v.heapFree && l.heapFree && u.heapFree && st.heapFree
+    -- Slices may allocate when the receiver is a heap list; syntax cannot
+    -- distinguish that case from strings or value tuples, so every slice
+    -- expression leaves the world-preservation fragment.
+    | .slice _ _ _ _ _ => false
     | .genExp .. => false               -- ALLOCATES a generator (H4)
     | .unsupported .. => true           -- loud, never decides `.ok`
 
@@ -6188,14 +6206,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         Run.liftRes st (truthyH st.world.heap tv) ⤳ fun st cond =>
         if cond then evalExpr m fuel st b else evalExpr m fuel st o
     | .slice v l u stp _ =>
-        -- H5 strings: CPython order — the receiver, then the slice
-        -- components lower/upper/step (`BUILD_SLICE`), then the subscript
-        -- application (`sliceVal`, pure — the tier is str receivers)
+        -- CPython order — receiver, slice components, then subscript
+        -- application; heap-list receivers allocate their copy here.
         evalExpr m fuel st v ⤳ fun st cv =>
         evalExpr m fuel st l ⤳ fun st lv =>
         evalExpr m fuel st u ⤳ fun st uv =>
         evalExpr m fuel st stp ⤳ fun st sv =>
-        Run.liftRes st (sliceVal cv lv uv sv)
+        Run.liftRes st (sliceValH st.world.heap cv lv uv sv) ⤳ fun st (h', r) =>
+          .ok { st with world := { st.world with heap := h' } } r
     | .genExp .. =>
         -- Ingestion LOWERS every genexp it can into a generator function
         -- (`lowerGenExps`, Json.lean); one that survives to evaluation is

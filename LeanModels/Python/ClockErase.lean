@@ -1550,10 +1550,18 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
     exact .ite (ihE m s2 b hs2) (ihE m s2 o hs2)
   | slice v l u stp sp =>
     simp only [evalExpr]
-    exact .bind (ihE m st v h) fun s1 cv hs1 =>
-      .bind (ihE m s1 l hs1) fun s2 lv hs2 =>
-      .bind (ihE m s2 u hs2) fun s3 uv hs3 =>
-      .bind (ihE m s3 stp hs3) fun s4 sv hs4 => .liftRes hs4 _
+    refine .bind (ihE m st v h) fun s1 cv hs1 => ?_
+    refine .bind (ihE m s1 l hs1) fun s2 lv hs2 => ?_
+    refine .bind (ihE m s2 u hs2) fun s3 uv hs3 => ?_
+    refine .bind (ihE m s3 stp hs3) fun s4 sv hs4 => ?_
+    refine .bind (.liftRes hs4 (sliceValH s4.world.heap cv lv uv sv))
+      fun s5 hr hs5 => ?_
+    obtain ⟨h', r⟩ := hr
+    exact .of_seed (fun tr => by
+      cases s5 with
+      | mk w l => cases w with
+        | mk hp g so c => rfl)
+      (by first | rfl | simp [FrameState.withClock_self hs5, hs5])
   | genExp elt target iter ifs wb sp => simp only [evalExpr]; exact .unsupported
   | unsupported pyKind txt sp => simp only [evalExpr]; exact .unsupported
   | call f args kwargs cu sp =>

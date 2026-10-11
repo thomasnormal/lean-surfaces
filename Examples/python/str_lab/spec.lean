@@ -97,7 +97,7 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
 
 /-! ### the loud frontier, pinned raw (no surface form for
 `unsupported` — deliberate): out-of-tier str methods are never a fake
-`AttributeError`; allocating slices and `index` bounds refuse. -/
+`AttributeError`; `index` bounds refuse. -/
 
 #py_check str_lab.upper_of("abc") = "ABC"
 #py_check str_lab.upper_of("nN1.") = "NN1."
@@ -105,23 +105,23 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
 #py_check str_lab.lower_flag("pQ") = false
 #guard callFunction str_lab "upper_of" #[.str "é"] 4096
   matches .unsupported _
-#guard callFunction str_lab "list_slice_is_loud" #[] 4096
-  matches .unsupported _
+#guard callFunction str_lab "list_slice_is_loud" #[] 4096 ==
+  .ok (.list #[.int 3, .int 2, .int 1])
 #guard callFunction str_lab "idx_start_is_loud" #[.str "abcab", .str "b", .int 2] 4096
   matches .unsupported _
 #guard callFunction str_lab "swap" #[.str "é"] 4096 matches .unsupported _
 #guard callFunction str_lab "isup" #[.str "É"] 4096 matches .unsupported _
 
-/-! ### the slice NODE stays in the heap-free fragment (H5: str slices
-are pure values; allocating receivers refuse loudly) — pinned per
-function, since the module is not heap-free (`list_slice_is_loud`'s
-display allocates). Str METHOD calls conservatively leave the fragment
+/-! ### the slice NODE stays outside the heap-free fragment when needed
+(H5: str and value-container slices are pure values; heap-list slices
+allocate). Pinned per function, since the module is not heap-free
+(`list_slice_is_loud`'s display allocates). Str METHOD calls conservatively leave the fragment
 for now, exactly like every `sorted` call (the attribute whitelist is
 still `.get`-only — recorded gap, docs/backlog.md), so `swap`/
 `board_flip` are deliberately not pinned here. -/
 
-#guard (findFunction str_lab "rev").any FunctionDefn.heapFree
-#guard (findFunction str_lab "put").any FunctionDefn.heapFree
+#guard !((findFunction str_lab "rev").any FunctionDefn.heapFree)
+#guard !((findFunction str_lab "put").any FunctionDefn.heapFree)
 
 /-! ### `%`-formatting (docs/memory-model.md §`%`-formatting on strings)
 

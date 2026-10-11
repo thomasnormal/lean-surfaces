@@ -99,6 +99,12 @@ def indexM (c i : RVal) : SemF RVal := do
 
 def sliceM (cv lv uv sv : RVal) : SemF RVal := liftRes (sliceVal cv lv uv sv)
 
+def sliceHeapM (cv lv uv sv : RVal) : SemF RVal := do
+  let h ← frameHeap
+  let (h', r) ← liftRes (sliceValH h cv lv uv sv)
+  heapPut h'
+  pure r
+
 def truthyM (v : RVal) : SemF Bool := do
   liftRes (truthyH (← frameHeap) v)
 

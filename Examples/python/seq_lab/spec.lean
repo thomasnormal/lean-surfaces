@@ -9,9 +9,8 @@ str start is CPython's special-cased `TypeError`), `tuple(it)`, and
 `range` as the immediate `RVal.rangeV` — materialize-per-use, which is
 what makes RE-ITERATION exact (`range_reiter`). Range equality compares the
 integer sequence without materializing it. Range values also cross the public
-boundary as `Val.range`; list slices remain pinned below as `unsupported`,
-never a guessed value
-and never a fake `TypeError`.
+boundary as `Val.range`; heap-list slices allocate a fresh list and cross the
+boundary as a `Val.list` snapshot.
 -/
 
 open LeanModels LeanModels.Python
@@ -101,8 +100,8 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 #py_check seq_lab.range_unpack_step() = 5
 #py_check seq_lab.range_unpack_bad() raises
   (.valueError "not enough values to unpack (expected 2, got 1)")
-#guard (match callFunction seq_lab "list_slice_loud" #[.int 2] 4096 with
-  | .unsupported _ => true | _ => false)
+#guard callFunction seq_lab "list_slice_loud" #[.int 2] 4096 ==
+  .ok (.list #[.int 1, .int 2])
 #py_check seq_lab.str_repeat_loud(2) = "abab"
 
 /-! ### pass 5: left shift and bitwise or (docs/memory-model.md §left

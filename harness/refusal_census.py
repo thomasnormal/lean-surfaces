@@ -938,11 +938,10 @@ WHITELIST_CLASS = {
     "dict_lab::ret_dict": "boundary.heap-value",
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
-    # §3c-i-b: a view that ESCAPES its call, and one that is not the sole
-    # argument — neither is the recognised shape, so ingestion leaves both
-    # alone and the tier refuses. These are 3c-ii's territory.
+    # §3c-i-b: a view that ESCAPES its call is not the recognised shape, so
+    # ingestion leaves it alone and the tier refuses. This is 3c-ii's
+    # territory. A consuming list call followed by a list slice is live.
     "dict_lab::view_escape_still_loud": "dictview.first-class",
-    "dict_lab::view_arg_not_alone_still_loud": "dictview.first-class",
     "cls_lab::attr_on_int": "attr.on-scalar",
     "cls_lab::weird_eq": "class.dunder-protocol",
     "cls_lab::sub_inherits": "class.inheritance",
@@ -953,7 +952,6 @@ WHITELIST_CLASS = {
     "str_lab::cast_int": "builtin.int-of-str",
     "str_lab::swap": "str.non-ascii",
     "str_lab::isup": "str.non-ascii",
-    "str_lab::list_slice_is_loud": "slice.allocating",
     "str_lab::idx_start_is_loud": "strmethod.arity",
     "str_lab::fmt_nonascii_r": "str.non-ascii",
     "str_lab::fmt_width": "format.percent-minilanguage",
@@ -1081,7 +1079,6 @@ WHITELIST_CLASS = {
     "set_lab::iter_is_loud": "set.order",
     "set_lab::sorted_is_loud": "set.order",
     "seq_lab::band_set": "set.order",
-    "seq_lab::list_slice_loud": "slice.allocating",
     "seq_lab::str_repeat_loud": "op.Mult-repetition",
     "seq_lab::shl": "op.LShift-budget",
     "seq_lab::shr": "op.LShift-budget",

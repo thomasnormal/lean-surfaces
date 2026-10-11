@@ -1095,6 +1095,90 @@ def Res.mapOk {α β : Type} (f : α → β) : Res α → Res β
   | .timeout => .timeout
   | .unsupported msg => .unsupported msg
 
+/-! ### Slice allocation
+
+Heap-list slices allocate exactly like `sorted` and `list(…)`; all other
+slice receivers merely thread the heap they were given. -/
+
+theorem sliceValH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (v lv uv sv : RVal) :
+    sliceValH (Heap.swapAt h pa o) v lv uv sv
+      = Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (sliceValH h v lv uv sv) := by
+  have hlt := Heap.lt_size_of_get? hslot
+  have hpass (r : Res RVal) :
+      (r >>= fun x => .ok (Heap.swapAt h pa o, x)) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (r >>= fun x => .ok (h, x)) := by
+    cases r <;> rfl
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | twin
+      · cases hget : Heap.get? h b with
+        | none =>
+            simp only [sliceValH, heq, hget]
+            apply hpass
+        | some obj =>
+            cases obj with
+            | list xs =>
+                cases hs : seqSliceValues xs lv uv sv with
+                | ok values =>
+                    simp only [sliceValH, heq, hget, hs, Res.ok_bind,
+                      Res.pure_eq, Res.mapOk, Heap.swapAt_push hlt,
+                      Heap.size_swapAt]
+                | exn e => simp only [sliceValH, heq, hget, hs,
+                    Res.exn_bind, Res.mapOk, Res.pure_eq]
+                | timeout => simp only [sliceValH, heq, hget, hs,
+                    Res.timeout_bind, Res.mapOk, Res.pure_eq]
+                | unsupported msg => simp only [sliceValH, heq, hget, hs,
+                    Res.unsupported_bind, Res.mapOk, Res.pure_eq]
+            | _ =>
+                simp only [sliceValH, heq, hget]
+                apply hpass
+      · rcases twin with ⟨q, l₀, c₀, l₁, c₁, h1, h2⟩
+        simp only [sliceValH, h1, h2]
+        apply hpass
+  | _ =>
+      simp only [sliceValH]
+      apply hpass
+
+theorem sliceValH_slot (hslot : Heap.get? h pa = some o₀)
+    {v lv uv sv : RVal} {p : Heap × RVal}
+    (hw : sliceValH h v lv uv sv = .ok p) :
+    Heap.get? p.1 pa = some o₀ := by
+  cases v with
+  | ref b =>
+      cases hget : Heap.get? h b with
+      | none =>
+          simp only [sliceValH, hget, Res.bind_eq_ok, Res.pure_eq,
+            Res.ok.injEq] at hw
+          obtain ⟨r, -, hr⟩ := hw
+          subst hr
+          exact hslot
+      | some obj =>
+          cases obj with
+          | list xs =>
+              cases hs : seqSliceValues xs lv uv sv with
+              | ok values =>
+                  simp only [sliceValH, hget, hs, Res.ok_bind,
+                    Res.pure_eq, Res.ok.injEq] at hw
+                  subst hw
+                  exact Heap.get?_push_of_get? _ hslot
+              | exn e => simp [sliceValH, hget, hs] at hw
+              | timeout => simp [sliceValH, hget, hs] at hw
+              | unsupported msg => simp [sliceValH, hget, hs] at hw
+          | _ =>
+              simp only [sliceValH, hget, Res.bind_eq_ok, Res.pure_eq,
+                Res.ok.injEq] at hw
+              obtain ⟨r, -, hr⟩ := hw
+              subst hr
+              exact hslot
+  | _ =>
+      simp only [sliceValH, Res.bind_eq_ok, Res.pure_eq, Res.ok.injEq] at hw
+      obtain ⟨r, -, hr⟩ := hw
+      subst hr
+      exact hslot
+
 /-- The key refusal never DECIDES a value, so a result-map leaves it
 alone — what closes the `unhashable` arm of a heap-returning helper's
 equation. -/
@@ -2859,7 +2943,11 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       refine PBF.bind (ihE m s1 lE hs1) fun s2 lv _ hs2 => ?_
       refine PBF.bind (ihE m s2 uE hs2) fun s3 uv _ hs3 => ?_
       refine PBF.bind (ihE m s3 stp hs3) fun s4 sv _ hs4 => ?_
-      exact PBF.liftRes hs4 _
+      simp only [FrameState.swapAt_world, World.swapAt_heap,
+        sliceValH_swapAt hs4 htwin]
+      refine PBF.liftMapOk hs4 fun x hw => ?_
+      obtain ⟨h', r⟩ := x
+      exact PBF.okWrite (sliceValH_slot hs4 hw) _
   | genExp elt target iter ifs sp => simp only [evalExpr]; exact PBF.unsupported
   | unsupported pyKind text sp => simp only [evalExpr]; exact PBF.unsupported
   | call f args kwargs callUnsupported sp =>

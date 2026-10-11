@@ -10,6 +10,10 @@ not AST ingestion or program admission; see
 [the value-layer contract](../../docs/cpp-integral.md). Its standalone Lean
 driver is `run_integral.lean` and its compiler oracle is `integral_oracle.cpp`.
 
+`test_type_resolution.py` separately checks the named-integer target-profile
+bridge against Clang's C++23 `decltype` rules; this remains type/value-layer
+evidence rather than AST or execution admission.
+
 ## Optional declaration metadata probe
 
 `canonical_probe.cpp` is an **experimental, tooling-only** Clang plugin. It

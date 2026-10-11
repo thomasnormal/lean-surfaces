@@ -3095,6 +3095,8 @@ each construct differential, refusals loud):
   negative-index normalization and faithful `IndexError`/`TypeError`,
   membership tests exact arithmetic progression containment for ints,
   bools, and integral floats,
+  tuple/list unpacking eagerly materializes a bounded range and preserves
+  exact arity errors,
   dict-key/set-element loud via `keyRefusal` (ranges ARE hashable in CPython
   — never a fake unhashable `TypeError`), the
   boundary loud, `next()` the faithful `not an iterator` `TypeError`.

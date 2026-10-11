@@ -3,8 +3,8 @@
 Tuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),
 and range as an immediate value (materialize-per-use). Range equality now
 compares sequences without materialization; the remaining loud frontier is
-pinned by refusal probes: membership/unpacking/boundary and list slices.
-String repetition now has its own acceptance tier.
+pinned by refusal probes: boundary and list slices. String repetition now
+has its own acceptance tier.
 """
 
 from collections import namedtuple
@@ -212,6 +212,16 @@ def range_boundary(n):
 
 def range_unpack():
     a, b = range(2)
+    return a
+
+
+def range_unpack_step():
+    a, b = range(2, 6, 3)
+    return b
+
+
+def range_unpack_bad():
+    a, b = range(1)
     return a
 
 

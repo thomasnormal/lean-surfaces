@@ -3083,8 +3083,15 @@ def assignTo (env : Env) (target : Expr) (v : RVal) : Res Env :=
           .exn (.valueError
             s!"not enough values to unpack (expected {names.length}, got {xs.size})")
       | .str _ => .unsupported "unpacking a str is outside the v0 tier"
-      | .rangeV .. =>
-          .unsupported "unpacking a range is outside the tier (docs/memory-model.md §module-init execution)"
+      | .rangeV lo hi step =>
+          rangeVals lo.toInt hi.toInt step.toInt >>= fun values =>
+          let xs := values.toArray
+          if xs.size = names.length then .ok (bindAll env names xs.toList)
+          else if names.length < xs.size then
+            .exn (.valueError s!"too many values to unpack (expected {names.length})")
+          else
+            .exn (.valueError
+              s!"not enough values to unpack (expected {names.length}, got {xs.size})")
       | .ref _ =>
           .unsupported "unpacking a heap object is outside the H1 tier (dict unpacking iterates keys — with the live iterator; docs/memory-model.md)"
       | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
@@ -3176,8 +3183,14 @@ def unpackSeq (h : Heap) (n : Nat) : RVal → Res (List RVal)
        .unsupported "unpacking a set is outside the tier (hash order; docs/memory-model.md)"
      | Option.none => .unsupported danglingMsg)
   | .str _ => .unsupported "unpacking a str is outside the v0 tier"
-  | .rangeV .. =>
-    .unsupported "unpacking a range is outside the tier (docs/memory-model.md §module-init execution)"
+  | .rangeV lo hi step =>
+    rangeVals lo.toInt hi.toInt step.toInt >>= fun values =>
+    let xs := values.toArray
+    if xs.size = n then .ok xs.toList
+    else if n < xs.size then
+      .exn (.valueError s!"too many values to unpack (expected {n})")
+    else
+      .exn (.valueError s!"not enough values to unpack (expected {n}, got {xs.size})")
   | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
 
 /-- Store unpacked values into tuple-target ELEMENTS left to right,

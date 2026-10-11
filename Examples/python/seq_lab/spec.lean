@@ -97,8 +97,10 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 
 #guard (match callFunction seq_lab "range_boundary" #[.int 3] 4096 with
   | .unsupported _ => true | _ => false)
-#guard (match callFunction seq_lab "range_unpack" #[] 4096 with
-  | .unsupported _ => true | _ => false)
+#py_check seq_lab.range_unpack() = 0
+#py_check seq_lab.range_unpack_step() = 5
+#py_check seq_lab.range_unpack_bad() raises
+  (.valueError "not enough values to unpack (expected 2, got 1)")
 #guard (match callFunction seq_lab "list_slice_loud" #[.int 2] 4096 with
   | .unsupported _ => true | _ => false)
 #py_check seq_lab.str_repeat_loud(2) = "abab"

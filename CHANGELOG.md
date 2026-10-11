@@ -31,6 +31,11 @@ change is listed here under **Changed** or **Removed**.
   differential suite now has **2,661 / 3,023 rows = 88.0% matched**, or
   **88.0% complete**, with **100% agreement among decided rows**.
 
+- Range unpacking now uses the bounded materializer for ordinary tuple/list
+  targets, preserving stepped values and CPython's exact arity errors. The
+  differential suite now has **2,664 / 3,025 rows = 88.1% matched**, or
+  **88.1% complete**, with **100% agreement among decided rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

@@ -101,7 +101,8 @@ emits:
 | `SignalEventControl:NegEdge` / `:BothEdges` / `:None_` | edge other than `posedge` |
 | `SignalEventControl:iff` | `@(posedge clk iff ...)` |
 | `SignalEventControl:clock` | posedge expression that is not a 1-bit identifier |
-| `AssignmentExpression:compound` | `+=`-style compound assignment |
+| `AssignmentExpression:compound` | compound assignment whose scalar binary operator is outside the admitted set or whose target is not a plain identifier |
+| `AssignmentExpression:compound-width` | compound assignment whose elaborated operands do not share the destination width |
 | `AssignmentExpression:timing` | intra-assignment timing (`a <= #3 b`) |
 | `AssignmentExpression:target` | assignment LHS that is not a plain identifier (bit/part-select, concat LHS, ...) |
 | `ExpressionStatement:<Class>` | expression statement that is not an assignment (`i++;`, void call, ...) |

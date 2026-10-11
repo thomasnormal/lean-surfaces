@@ -958,6 +958,28 @@ def ident_target(sm, lhs):
     return t, (t is not None and t.get("kind") == "Ident")
 
 
+def _compound_rhs(expr):
+    """Peel pyslang's synthetic read-modify-write expression from a compound
+    assignment. The frontend may wrap it in a conversion for unsized literals.
+    """
+    candidate = expr
+    while type(candidate).__name__ == "ConversionExpression":
+        operand = getattr(candidate, "operand", None)
+        if operand is None:
+            return expr
+        candidate = operand
+    if type(candidate).__name__ == "BinaryExpression":
+        left = candidate.left
+        while type(left).__name__ == "ConversionExpression":
+            operand = getattr(left, "operand", None)
+            if operand is None:
+                return expr
+            left = operand
+        if type(left).__name__ == "LValueReferenceExpression":
+            return candidate.right
+    return expr
+
+
 def _target_shape_ok(t):
     """Semantic-tier LHS shapes: Ident, or a single BitSel/PartSel whose
     base is an Ident (no nested selects, no concat LHS — the CV32E40P
@@ -1220,20 +1242,41 @@ def _convert_expression_stmt(sm, stmt):
         return _convert_syscall(sm, stmt, expr)
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, stmt, "ExpressionStatement:" + type(expr).__name__)
-    if expr.op is not None:
-        return unsupported(sm, stmt, "AssignmentExpression:compound")
     if expr.timingControl is not None:
         return unsupported(sm, stmt, "AssignmentExpression:timing")
-    if _SYM is None:
-        target, ok = legacy_blocking_target(sm, expr.left)
+    if expr.op is not None:
+        if _SYM is not None:
+            return unsupported(sm, stmt, "AssignmentExpression:compound")
+        target, ok = ident_target(sm, expr.left)
+        sym = BINARY_OPS.get(expr.op)
+        if not ok or sym is None:
+            return unsupported(sm, stmt, "AssignmentExpression:compound")
+        left = target
+        rhs = _compound_rhs(expr.right)
+        right = convert_expr(sm, rhs)
+        width = getattr(expr.type, "bitWidth", None)
+        if width is None or not _binary_width_ok(sym, width,
+                                                 width_of(left), width_of(right)):
+            return unsupported(sm, stmt, "AssignmentExpression:compound-width")
+        value = {
+            "kind": "Binary",
+            "span": node_span(sm, expr),
+            "width": width,
+            "op": sym,
+            "left": left,
+            "right": right,
+        }
     else:
-        target, ok = select_target(sm, expr.left)
-    if not ok:
-        return unsupported(sm, stmt, "AssignmentExpression:target")
-    if (target.get("kind") in ("SelectTarget", "ConcatTarget")
-            and not _case_source_expression_ok(expr.right)):
-        return unsupported(sm, stmt, "AssignmentExpression:selected-effects")
-    value = convert_expr(sm, expr.right)
+        if _SYM is None:
+            target, ok = legacy_blocking_target(sm, expr.left)
+        else:
+            target, ok = select_target(sm, expr.left)
+        if not ok:
+            return unsupported(sm, stmt, "AssignmentExpression:target")
+        if (target.get("kind") in ("SelectTarget", "ConcatTarget")
+                and not _case_source_expression_ok(expr.right)):
+            return unsupported(sm, stmt, "AssignmentExpression:selected-effects")
+        value = convert_expr(sm, expr.right)
     try:
         if not expr.left.type.isFourState:
             value = squash2_wrap(value, expr.left.type.bitWidth)

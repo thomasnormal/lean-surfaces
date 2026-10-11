@@ -438,6 +438,35 @@ and `concat_nba_snapshots` proves the whole-value queue order
 `second := 0101`, then `first := 1010`, while the active frame remains at
 zero. Invalid destination permutations remain loud.
 
+### Scalar compound assignments — 2026-10-11
+
+The legacy/self-check surface now lowers whole-signal compound assignments
+on plain scalar identifiers to its existing blocking-assignment and
+binary-expression nodes. The admitted
+operators are `+=`, `-=`, `&=`, `|=`, and `^=`; the left operand is read once
+through the ordinary identifier path, and the elaborated result width is
+checked against both operands before lowering. This reuses the established
+four-state arithmetic/bitwise value rules and two-state destination
+conversion rather than adding a second compound-assignment evaluator.
+
+Selected and concatenated destinations, unsupported compound operators,
+timed assignments and elaborated width mismatches remain loud. The actual
+`harness/sv/compound_assignments/updates.sv` fixture exercises the complete
+five-operator sequence against the licensed simulator and the generated
+envelope is pinned in `Examples/system-verilog/compound_assignments/`;
+`compound_updates` proves the complete update sequence through the shared
+self-check executor. The extractor regression suite covers the admitted
+lowering and the principal refusal cases.
+Symbolic compound assignments keep their previous loud boundary; this item
+does not extend parameterized compound sizing.
+
+Fresh extraction over the current 21,843-file corpus yields **1,662 clean /
+20,115 partial / 66 include skips**, with zero extraction errors. All seven
+classification changes are partial-to-clean; no previously clean file
+regresses. Each newly clean row also prints `PASS` in both the model and
+an independent external simulator. This is a seven-row runtime check, not
+whole-corpus runtime agreement.
+
 ### Four-state packed selected reads — 2026-10-09
 
 The legacy/self-check surface admits bit, constant part and indexed

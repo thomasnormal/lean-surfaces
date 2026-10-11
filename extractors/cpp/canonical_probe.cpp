@@ -373,7 +373,7 @@ public:
 
   void emitBinaryExpression(const clang::BinaryOperator *expression) {
     llvm::json::Object row{
-        {"expression_api", "Clang::BinaryOperator typed operand projection v1"},
+        {"expression_api", "Clang::BinaryOperator typed operand projection v2"},
         {"occurrence", pointerId(expression)},
         {"kind", "BinaryOperator"},
         {"operator", expression->getOpcodeStr().str()}};
@@ -384,7 +384,13 @@ public:
       llvm::json::Object operandRow{
           {"occurrence", pointerId(operand)},
           {"kind", operand->getStmtClassName()}};
+      const clang::Expr *source = operand->IgnoreParenImpCasts();
+      auto sourceType = structuredType(source->getType(), *astContext, 0);
       auto operandType = structuredType(operand->getType(), *astContext, 0);
+      if (sourceType && structuredReferencesWitnessed(*sourceType, declarationIds))
+        operandRow["source"] = std::move(*sourceType);
+      else
+        supported = false;
       if (operandType && structuredReferencesWitnessed(*operandType, declarationIds))
         operandRow["type"] = std::move(*operandType);
       else
@@ -455,7 +461,7 @@ public:
         {"type_evidence_api", "Clang::QualType structured type projection v1"},
         {"type_evidence", std::move(visitor.typeEvidence)},
         {"type_refusals", std::move(visitor.typeRefusals)},
-        {"expression_evidence_api", "Clang::BinaryOperator typed operand projection v1"},
+        {"expression_evidence_api", "Clang::BinaryOperator typed operand projection v2"},
         {"expression_evidence", std::move(visitor.expressionEvidence)},
         {"expression_refusals", std::move(visitor.expressionRefusals)},
         {"declarations", std::move(visitor.records)}};

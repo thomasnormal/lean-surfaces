@@ -265,7 +265,7 @@ class EvidenceIngestionTests(unittest.TestCase):
         clang = shutil.which(requested)
         self.assertIsNotNone(clang, "selected compiler must exist")
         source = self.root / "expression.cpp"
-        source.write_text("int arithmetic(int left, int right) { return left + right; }\n",
+        source.write_text("short arithmetic(short left, short right) { return left + right; }\n",
                           encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -281,7 +281,11 @@ class EvidenceIngestionTests(unittest.TestCase):
         probe = json.loads(result.stdout)
         self.assertEqual([row["operator"] for row in probe["metadata"]["expression_evidence"]], ["+"])
         self.assert_accepts(result.stdout, """#guard match parseValidatedBinaryExpressionEvidence evidence with
-  | .ok rows => rows.length == 1
+  | .ok [row] => match validateBinaryIntegralTyping TargetProfile.lp64 row with
+    | .ok _ => row.operands.all (fun operand => operand.sourceType == .builtin .short &&
+        operand.type == .builtin .int)
+    | .error _ => false
+  | .ok _ => false
   | .error _ => false
 """)
 

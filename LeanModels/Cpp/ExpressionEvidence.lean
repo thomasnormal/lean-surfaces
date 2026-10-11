@@ -5,6 +5,7 @@ namespace LeanModels.Cpp
 structure CppExpressionOperandEvidence where
   occurrence : FrontendHandle
   kind : String
+  sourceType : CppTypeEvidence
   type : CppTypeEvidence
   deriving Repr, BEq, Inhabited
 
@@ -20,12 +21,13 @@ private def parseExpressionOperand (raw : Raw) : Except String CppExpressionOper
   return {
     occurrence := ← evidenceHandle raw "occurrence"
     kind := ← evidenceText raw "kind"
+    sourceType := ← parseCppTypeEvidence (← evidenceField raw "source")
     type := ← parseCppTypeEvidence (← evidenceField raw "type")
   }
 
 private def parseBinaryExpressionRow (ordinal : Nat) (raw : Raw) :
     Except String CppBinaryExpressionEvidence := do
-  requireEvidenceText raw "expression_api" "Clang::BinaryOperator typed operand projection v1"
+  requireEvidenceText raw "expression_api" "Clang::BinaryOperator typed operand projection v2"
   unless (← evidenceText raw "kind") == "BinaryOperator" do
     throw "expression evidence kind is not BinaryOperator"
   let operands ← match ← evidenceField raw "operands" with
@@ -78,6 +80,58 @@ private def sameExpression (left right : CppBinaryExpressionEvidence) : Bool :=
   left.occurrence == right.occurrence && left.operator == right.operator &&
     left.result == right.result && left.operands == right.operands
 
+private def builtinType? : CppTypeEvidence → Option CppIntType
+  | .builtin type => some type
+  | _ => none
+
+private def integralOperator (operator : String) : Bool :=
+  ["+", "-", "*", "/", "%", "&", "|", "^", "==", "!=", "<", "<=", ">", ">="].contains operator
+
+private def shiftOperator (operator : String) : Bool :=
+  operator == "<<" || operator == ">>"
+
+private def comparisonOperator (operator : String) : Bool :=
+  ["==", "!=", "<", "<=", ">", ">="].contains operator
+
+def validateBinaryIntegralTyping (profile : TargetProfile)
+    (row : CppBinaryExpressionEvidence) : Except String Unit := do
+  let some leftOperand := row.operands[0]?
+    | throw "integral expression typing requires a left operand"
+  let some rightOperand := row.operands[1]?
+    | throw "integral expression typing requires a right operand"
+  let some leftSource := builtinType? leftOperand.sourceType
+    | throw "integral expression typing requires a builtin left source type"
+  let some rightSource := builtinType? rightOperand.sourceType
+    | throw "integral expression typing requires a builtin right source type"
+  let some leftType := builtinType? leftOperand.type
+    | throw "integral expression typing requires a builtin left converted type"
+  let some rightType := builtinType? rightOperand.type
+    | throw "integral expression typing requires a builtin right converted type"
+  let some resultType := builtinType? row.result
+    | throw "integral expression typing requires a builtin result type"
+  if integralOperator row.operator then
+    let common ← match usualArithmeticType profile leftSource rightSource with
+      | .ok type => pure type
+      | .error _ => throw "integral expression usual arithmetic type is unresolved"
+    unless leftType == common && rightType == common do
+      throw "integral expression operands disagree with usual arithmetic type"
+    let expectedResult := if comparisonOperator row.operator then .boolean else common
+    unless resultType == expectedResult do
+      throw "integral expression result disagrees with operator typing"
+  else if shiftOperator row.operator then
+    let expectedLeft ← match integralPromotion profile leftSource with
+      | .ok type => pure type
+      | .error _ => throw "integral shift left promotion is unresolved"
+    let expectedRight ← match integralPromotion profile rightSource with
+      | .ok type => pure type
+      | .error _ => throw "integral shift right promotion is unresolved"
+    unless leftType == expectedLeft && rightType == expectedRight do
+      throw "integral shift operands disagree with promotions"
+    unless resultType == expectedLeft do
+      throw "integral shift result disagrees with promoted left type"
+  else
+    throw "expression operator is outside integral promotion typing"
+
 def validateBinaryExpressionEvidence (probe : DeclarationProbe)
     (rows : List CppBinaryExpressionEvidence) : Except String Unit := do
   let rec validate (remaining : List CppBinaryExpressionEvidence)
@@ -115,7 +169,7 @@ def parseValidatedBinaryExpressionEvidence (probe : DeclarationProbe) :
     Except String (List CppBinaryExpressionEvidence) := do
   let metadata := probe.metadata
   requireEvidenceText metadata "expression_evidence_api"
-    "Clang::BinaryOperator typed operand projection v1"
+    "Clang::BinaryOperator typed operand projection v2"
   let rows ← parseBinaryExpressionEvidenceRows (← evidenceField metadata "expression_evidence")
   validateBinaryExpressionEvidence probe rows
   return rows

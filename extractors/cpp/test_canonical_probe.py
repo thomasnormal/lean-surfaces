@@ -120,6 +120,7 @@ int variadic(int value, ...);
 """
 
 EXPRESSION_EVIDENCE_SOURCE = """int add(int left, int right) { return left + right; }
+short narrow(short left, short right) { return left + right; }
 int run() { int value = add(1, 2); return value * 3; }
 """
 
@@ -360,9 +361,9 @@ class CanonicalProbeTests(unittest.TestCase):
         probe = self.probe()
         metadata = probe["metadata"]
         self.assertEqual(metadata["expression_evidence_api"],
-                         "Clang::BinaryOperator typed operand projection v1")
+                         "Clang::BinaryOperator typed operand projection v2")
         rows = metadata["expression_evidence"]
-        self.assertEqual([row["operator"] for row in rows], ["+", "*"])
+        self.assertEqual([row["operator"] for row in rows], ["+", "+", "*"])
         ast_nodes = {}
 
         def walk(node):
@@ -383,11 +384,20 @@ class CanonicalProbeTests(unittest.TestCase):
             self.assertEqual(len(row["operands"]), 2)
             self.assertEqual([child["id"] for child in node["inner"]],
                              [operand["occurrence"] for operand in row["operands"]])
+            source_name = row["operands"][0]["source"]["name"]
             for operand in row["operands"]:
+                self.assertEqual(operand["source"], {"kind": "builtin", "name": source_name})
                 self.assertEqual(operand["type"], {"kind": "builtin", "name": "int"})
             self.assertEqual(row["result"], {"kind": "builtin", "name": "int"})
             self.assertNotIn("qualType", json.dumps(row))
         self.assertEqual(metadata["expression_refusals"], [])
+
+        narrow = next(row for row in rows if row["operator"] == "+" and
+                      row["operands"][0]["source"]["name"] == "short")
+        self.assertEqual([operand["source"] for operand in narrow["operands"]],
+                         [{"kind": "builtin", "name": "short"}] * 2)
+        self.assertEqual([operand["type"] for operand in narrow["operands"]],
+                         [{"kind": "builtin", "name": "int"}] * 2)
 
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(

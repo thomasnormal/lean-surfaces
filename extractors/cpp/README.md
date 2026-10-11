@@ -22,8 +22,9 @@ supplement; unsupported type families are omitted, never reconstructed from
 the declaration rows before any later admission layer consumes it.
 `LeanModels/Cpp/ExpressionEvidence.lean` separately validates the probe's
 ordered `BinaryOperator` operand rows against the same AST occurrence and
-direct-child handles; unsupported operand/result families stay in the explicit
-refusal ledger.
+direct-child handles, preserving both source and converted types so the
+explicit `TargetProfile` promotion bridge can check builtin integral rows;
+unsupported operand/result families stay in the refusal ledger.
 
 ## Optional declaration metadata probe
 
@@ -232,7 +233,9 @@ template instantiations enabled. It also carries an additive
 declaration family or header is filtered from the raw ledger.
 The `expression_evidence_api`/`expression_evidence` supplement carries only
 Clang builtin `BinaryOperator` nodes: the operator, structured result type and
-two ordered direct-child handles/types. `expression_refusals` records rows
+two ordered direct-child handles with source/converted types. The Lean bridge
+checks integral promotions and usual arithmetic conversion types when the row
+is builtin integral. `expression_refusals` records rows
 whose operand or result type is outside that vocabulary. This is typed frontend
 evidence, not expression evaluation or executable admission.
 

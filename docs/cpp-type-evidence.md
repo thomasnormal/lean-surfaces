@@ -37,10 +37,13 @@ callable-body admission, and no program execution is admitted by this item.
 The same probe now emits a separate `expression_evidence` supplement for
 builtin `BinaryOperator` nodes. Each row carries the AST occurrence handle,
 operator spelling, structured result type, and the two ordered direct-child
-handles with their structured types. Lean checks the occurrence kind, opcode,
-child order and child kinds against the retained AST, and checks every record
-or enumeration reference against the declaration ledger. Unsupported operand
-or result type families remain in `expression_refusals`; no `qualType` text is
+handles with both their pre-conversion source types and Clang's converted
+types. Lean checks the occurrence kind, opcode, child order and child kinds
+against the retained AST, and checks every record or enumeration reference
+against the declaration ledger. For builtin integral rows, the explicit
+`TargetProfile` bridge can check promotions and usual arithmetic conversion
+types; this is a type check, not value evaluation. Unsupported operand or
+result type families remain in `expression_refusals`; no `qualType` text is
 used and no overloaded operator, conversion or executable expression is
 admitted.
 

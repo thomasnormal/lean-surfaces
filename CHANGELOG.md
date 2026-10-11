@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Bare `%x` string formatting now renders bounded lowercase hexadecimal for
+  integers and Booleans, including negative values, with CPython's faithful
+  integer-required `TypeError` for other scalar types. The CPython 3.9
+  differential suite now has **2,699 / 3,026 rows = 89.2% complete** natively
+  and **2,625 / 3,026 = 86.7% complete** in the proof interpreter, with
+  **100% agreement among decided rows** and zero failures.
+
 - Empty and non-positive string, tuple, and namedtuple repetitions now
   short-circuit after the pinned 64-bit `Py_ssize_t` conversion instead of
   tripping the materialization budget. Positive nonempty results remain

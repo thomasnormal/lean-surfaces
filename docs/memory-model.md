@@ -4770,6 +4770,9 @@ Measured rows, all differential:
   choice), `'%r' % '\n'` → `"'\\n'"`; `'%s' % 'x'` → `'x'`.
 * `'%d' % True` → `'1'` while `'%s' % True` → `'True'` (bool is an int
   for `%d` and a bool for `str`); `'%d' % -7` → `'-7'`.
+* `'%x' % 255` → `'ff'`, `'%x' % -255` → `'-ff'`, and Boolean values use
+  their integer form (`'%x' % True` → `'1'`). Non-integer operands retain
+  CPython's faithful `%x format: an integer is required, not …` error.
 * `'%d%%' % (5,)` → `'5%'`; `'%%' % (1,)` is the leftover TypeError —
   `%%` consumes nothing.
 * Arity, both directions, verbatim: `'%d %d' % (1,)` →
@@ -4790,7 +4793,7 @@ Measured rows, all differential:
 
 ### The tier: bare conversions on the SCALAR inventory
 
-Admitted conversions are `%s`, `%r`, `%d`, `%%` and nothing else — no
+Admitted conversions are `%s`, `%r`, `%d`, `%x`, `%%` and nothing else — no
 flag, width, precision, length modifier, or mapping key. Per conversion:
 
 * `%s` is `strOfVal` VERBATIM (str raw; int/bool/None their
@@ -4802,7 +4805,10 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   `print([…])`, and prints raw under `%s` exactly as `print` does: one
   rendering boundary, not two.
 * `%d` is `asInt` (bool coerces), else the faithful `TypeError` above.
-  All three integer conversions share `intDecimal`'s 640-digit magnitude
+* `%x` is bounded lowercase hexadecimal over the same `asInt` inventory
+  (negative values keep a leading `-`; bools coerce), else the faithful
+  integer-required `TypeError`. Its digit count uses the same fixed budget.
+  All integer conversions share `intDecimal`/`intHex`'s 640-digit magnitude
   budget (§decimal integer rendering); larger integers refuse loudly.
 * A CONTAINER argument (tuple/namedtuple/list/range) under `%s`/`%r` is
   LOUD: its `repr` is `reprVal`'s heap-recursive walk and this operator
@@ -4815,7 +4821,7 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   `%(key)s` mapping protocol over a dict RHS is loud today and stays so.
 
 The minilanguage stays refused, and so does every conversion character
-outside the four: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%x`, `%i`, `%c`, `%a`.
+outside the five: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%i`, `%c`, `%a`.
 RECORDED RESTRICTION: the two forms CPython itself REJECTS — `%q`
 (`ValueError: unsupported format character 'q' (0x71) at index 1`) and a
 trailing `%` (`ValueError: incomplete format`) — are refused LOUDLY here
@@ -4973,10 +4979,10 @@ acceptance signal firing exactly where it should.
 `Examples/python/str_lab` (differential rows + `#py_check`): the opcode
 form `'<%r>' % (op,)` verbatim; `%r` over int/bool/None/str/quote-choice/
 escape; the BARE argument (`'%r' % v`) against the 1-tuple; `%s` over
-the inventory; `%d` over int/bool/negative; two conversions in one
+the inventory; `%d`/`%x` over int/bool/negative; two conversions in one
 string; the `%%` no-consume rule; the three faithful TypeErrors (short,
 leftover, `%d` on a str) and the left-to-right ORDER row; and the loud
-frontier — `%5d` (minilanguage), `%x` (unmodelled character), `%q`
+frontier — `%5d` (minilanguage), `%q`
 (CPython's own ValueError, refused), a trailing `%`, a container
 argument, `%r` of a non-ASCII str (with `%s` of it MATCHING beside it),
 and a dict RHS (the pre-existing heap-operand refusal). `seq_lab` gains

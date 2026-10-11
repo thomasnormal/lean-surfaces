@@ -776,6 +776,13 @@ symbolic simplification so unrelated branches do not expand the digit bound. -/
 @[irreducible] def intDecimal (value : Int) : Option String :=
   if value.natAbs < 10 ^ intDigitBudget then some (toString value) else Option.none
 
+/-- Lowercase hexadecimal rendering for the bounded `%x` conversion. -/
+def intHex (value : Int) : Option String :=
+  if value.natAbs < 16 ^ intDigitBudget then
+    let digits := String.ofList (Nat.toDigits 16 value.natAbs)
+    some (if value < 0 then "-" ++ digits else digits)
+  else Option.none
+
 /-- `str(…)` — value-only (docs/memory-model.md §the cast tier): budgeted
 exact decimal for ints, `True`/`False`, identity on strs, `None`;
 containers and refs refuse loudly (repr recursion is not guessed). -/
@@ -879,6 +886,13 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
       | Option.none =>
         if v.hasFloat then .unsupported "'%d' of a non-finite float is outside the tier"
         else .exn (.typeError s!"%d format: a number is required, not {v.typeName}")
+    else if c == 'x' then
+      match asInt v with
+      | some value =>
+          match intHex value with
+          | some text => .ok text
+          | Option.none => .unsupported "'%x' integer rendering beyond intDigitBudget is outside the tier (docs/memory-model.md §decimal integer rendering)"
+      | Option.none => .exn (.typeError s!"%x format: an integer is required, not {v.typeName}")
     else
       match (if c == 'r' then strFormatRepr v else strFormatStr v) with
       | some s => .ok s
@@ -907,7 +921,7 @@ def strFormatMappingRhs : RVal → Bool
   | _ => false
 
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
-consumes NOTHING; `%s`/`%r`/`%d` consume the next argument. Running out
+consumes NOTHING; `%s`/`%r`/`%d`/`%x` consume the next argument. Running out
 mid-walk is CPython's `not enough arguments` verbatim, and so are
 leftover arguments at the end — EXCEPT under `mapping`, the `ctx.dict`
 flag above, which is exactly the condition CPython guards that second
@@ -922,7 +936,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
   | '%' :: c :: cs, args, mapping, acc =>
-      if c == 's' || c == 'r' || c == 'd' then
+      if c == 's' || c == 'r' || c == 'd' || c == 'x' then
         match args with
         | [] => .exn (.typeError "not enough arguments for format string")
         -- the conversion is matched OPEN, not bound through `Res`'s
@@ -936,7 +950,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
             | .timeout => .timeout
             | .unsupported msg => .unsupported msg
       else
-        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
+        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>
       .unsupported "a format string ending in '%' is outside the tier (CPython's `incomplete format` ValueError is not modelled; docs/memory-model.md §`%`-formatting on strings)"
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])

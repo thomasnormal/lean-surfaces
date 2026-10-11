@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3026 | 2698 | 0 | 328 |
+| 3026 | 2699 | 0 | 327 |
 
-Of the 2698 rows the model decides, 2698 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2699 rows the model decides, 2699 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3026 | 2624 | 0 | 402 |
+| 3026 | 2625 | 0 | 401 |
 
 ## Grammar
 
@@ -173,7 +173,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Mult` | MATCH | int only; str/list repetition refuses |
 | `Div` | MATCH | true division rounds directly to binary64 |
 | `FloorDiv` | MATCH | Int.fdiv |
-| `Mod` | MATCH | Int.fmod; `str % args` is a second tier |
+| `Mod` | MATCH | Int.fmod; bare `%` string formatting is a second tier |
 | `Pow` | MATCH | MEASURED CORRECTION: `**` is in tier; bounded negative integer exponents now return binary64 |
 | `Pow-negative` | MATCH | bounded negative integer exponent returns binary64 |
 | `LShift` | MATCH | budget-capped shift width |

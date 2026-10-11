@@ -168,7 +168,9 @@ than given a fabricated `ValueError` — recorded restriction), a
 container argument, a non-ASCII `%r`, and a mapping RHS. -/
 
 #guard callFunction str_lab "fmt_width" #[.int 3] 4096 matches .unsupported _
-#guard callFunction str_lab "fmt_hex" #[.int 255] 4096 matches .unsupported _
+#py_check str_lab.fmt_hex(255) = "ff"
+#py_check str_lab.fmt_hex("x") raises
+  (.typeError "%x format: an integer is required, not str")
 #guard callFunction str_lab "fmt_bad" #[.int 3] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_trailing" #[.int 3] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_container" #[] 4096 matches .unsupported _

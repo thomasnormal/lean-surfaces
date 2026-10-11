@@ -848,7 +848,7 @@ w("op.Sub", "print(3 - 1)\n", "MATCH", "")
 w("op.Mult", "print(2 * 3)\n", "MATCH", "int only; str/list repetition refuses")
 w("op.Div", "print(6 / 2)\n", "MATCH", "true division rounds directly to binary64")
 w("op.FloorDiv", "print(7 // 2)\n", "MATCH", "Int.fdiv")
-w("op.Mod", "print(7 % 2)\n", "MATCH", "Int.fmod; `str % args` is a second tier")
+w("op.Mod", "print(7 % 2)\n", "MATCH", "Int.fmod; bare `%` string formatting is a second tier")
 w("op.Pow", "print(2 ** 3)\n", "MATCH",
   "MEASURED CORRECTION: `**` is in tier; bounded negative integer "
   "exponents now return binary64")

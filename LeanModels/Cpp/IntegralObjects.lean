@@ -67,6 +67,16 @@ private def checkValue (profile : TargetProfile) (type : CppTypeEvidence)
   if let some reason := value.invalid? then throw (.invalidValue reason)
   unless value.format == format do throw .valueTypeMismatch
 
+private def convertValue (profile : TargetProfile) (sourceType destinationType : CppTypeEvidence)
+    (value : IntegralValue) : Except IntegralObjectError IntegralValue := do
+  let _ ← checkValue profile sourceType value
+  let destination ← formatFor profile destinationType
+  match integralConvert destination value with
+  | .ok converted => pure converted
+  | .invalid reason => .error (.invalidValue reason)
+  | .undefined _ => .error (.invalidValue .outOfRange)
+  | .unsupported _ => .error .valueTypeMismatch
+
 private def requireAlive (object : CppObject) : Except IntegralObjectError Unit :=
   match object.phase with
   | .storageOnly => .error (.lifetime .lifetimeNotStarted)
@@ -101,6 +111,13 @@ def initializeValue (store : IntegralObjectStore) (object : ObjectId) (value : I
   let started ← (store.objects.beginLifetime object).mapError IntegralObjectError.lifetime
   let objects ← (started.initializeObject object).mapError IntegralObjectError.lifetime
   pure {store with objects, values := store.values.modify object (fun _ => some value)}
+
+def initializeConverted (store : IntegralObjectStore) (object : ObjectId)
+    (sourceType : CppTypeEvidence) (value : IntegralValue) :
+    Except IntegralObjectError IntegralObjectStore := do
+  let entry ← store.metadata object
+  let converted ← convertValue store.profile sourceType entry.type value
+  initializeValue store object converted
 
 def defaultInitialize (store : IntegralObjectStore) (object : ObjectId) :
     Except IntegralObjectError IntegralObjectStore := do
@@ -137,6 +154,20 @@ def assign (store : IntegralObjectStore) (access : IntegralObjectRef) (value : I
         (store.objects.initializeObject access.object).mapError IntegralObjectError.lifetime
     | _ => pure store.objects
   pure {store with objects, values := store.values.modify access.object (fun _ => some value)}
+
+def assignConverted (store : IntegralObjectStore) (access : IntegralObjectRef)
+    (sourceType : CppTypeEvidence) (value : IntegralValue) :
+    Except IntegralObjectError IntegralObjectStore := do
+  let entry ← store.validateAccess access
+  let (_, objectConst) ← descriptor entry.type
+  let (_, accessConst) ← descriptor access.type
+  if objectConst || accessConst then throw .constWrite
+  let converted ← convertValue store.profile sourceType entry.type value
+  let objects ← match entry.phase with
+    | .aliveUninitialized =>
+        (store.objects.initializeObject access.object).mapError IntegralObjectError.lifetime
+    | _ => pure store.objects
+  pure {store with objects, values := store.values.modify access.object (fun _ => some converted)}
 
 def endLifetime (store : IntegralObjectStore) (object : ObjectId) :
     Except IntegralObjectError IntegralObjectStore := do

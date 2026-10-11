@@ -63,6 +63,33 @@ class IntegralObjectDifferentialTests(unittest.TestCase):
                 self.assertEqual(model, oracle)
         print(f"integral object differential: {len(rows)} traces at -O0/-O2")
 
+    def test_converted_object_traces(self):
+        formats = ("b", "s16", "u16", "s32", "u32")
+        rows = [(destination, source, initial, replacement)
+                for destination in formats
+                for source in formats
+                for initial, replacement in itertools.product(values(source), repeat=2)]
+        input_text = "".join("\t".join(map(str, row)) + "\n" for row in rows)
+        model = self.checked_run([
+            self.lake, "env", "lean", "--run",
+            str(ROOT / "extractors/cpp/run_integral_object_conversions.lean"),
+        ], input_text)
+        oracle_source = ROOT / "extractors/cpp/integral_object_conversion_oracle.cpp"
+        binaries = {}
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / f"convert{optimization[1:]}"
+            self.checked_run([
+                self.compiler, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle_source), "-o", str(binary),
+            ])
+            binaries[optimization] = binary
+        self.assertEqual(len(model), len(rows))
+        for optimization, binary in binaries.items():
+            with self.subTest(optimization=optimization):
+                self.assertEqual(model, self.checked_run([str(binary)], input_text))
+        print(f"integral object conversion differential: {len(rows)} traces at -O0/-O2")
+
 
 if __name__ == "__main__":
     unittest.main()

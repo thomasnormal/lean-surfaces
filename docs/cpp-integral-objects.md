@@ -24,6 +24,13 @@ slot. Two accesses to that object observe the same write; a distinct object does
 not. Base integer type identity is checked independently of value width, so
 equal-width `long` and `long long` are not interchangeable access types.
 
+`initializeConverted` and `assignConverted` additionally model the scalar
+conversion at an initialization or assignment boundary. They require source
+type/value agreement, select the destination format from the target profile, and
+publish the converted destination value. This is not overload resolution or an
+implicit-conversion engine: only the already-admitted builtin-integral source
+and destination pair is available.
+
 Ending lifetime discards the readable value but retains metadata as a tombstone.
 Dynamic storage can then be released. Expired accesses refuse on every use;
 allocation appends a fresh identity rather than reusing the tombstone.
@@ -49,7 +56,7 @@ lake build LeanModels.Cpp.IntegralObjectTests
 python3 extractors/cpp/test_integral_objects.py
 ```
 
-Kernel guards cover initialization, assignment after vacuous initialization,
+Kernel guards cover exact and converted initialization, assignment after vacuous initialization,
 alias-visible writes, distinct objects, const objects/accesses, stale accesses,
 dynamic release, invalid values/profiles and incoherent externally supplied
 slots. The optional compiled oracle compares defined automatic and dynamic

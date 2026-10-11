@@ -45,7 +45,9 @@ against the declaration ledger. For builtin integral rows, the explicit
 types; this is a type check, not value evaluation. Unsupported operand or
 result type families remain in `expression_refusals`; no `qualType` text is
 used and no overloaded operator, conversion or executable expression is
-admitted.
+admitted by this supplement. The separate [typed callable bridge](cpp-callable-functions.md)
+consumes these rows only for its direct-return body profile; it performs no
+body execution and leaves `Translation.execute` refused.
 
 ```sh
 lake build LeanModels.Cpp.TypeEvidenceTests

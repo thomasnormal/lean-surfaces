@@ -385,6 +385,55 @@ struct Box { int method() { return 8; } };
         self.assertEqual(counts, {name: len(values) for name, values in expected.items()})
         self.assert_accepts(result.stdout, "\n".join(guards))
 
+    def test_actual_compiler_typed_callable_body_admission(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        self.assertTrue(pathlib.Path(library).is_file(), "selected probe library must exist")
+        source = self.root / "callable.cpp"
+        source.write_text("""int identity(int value) { return value; }
+int add(int left, int right) { return left + right; }
+int branch(int value) { if (value) return value; return 0; }
+""", encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(pathlib.Path(library).resolve()),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        paths = {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in {
+                "identity", "add", "branch",
+            }:
+                paths[node["name"]] = path
+            children = node.get("inner", [])
+            pending.extend((child, path + [index])
+                           for index, child in reversed(list(enumerate(children))))
+        self.assertEqual(set(paths), {"identity", "add", "branch"})
+        guards = []
+        for name in ("identity", "add"):
+            guards.append(
+                "#guard (admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
+                + str(paths[name]) + ").isOk"
+            )
+        guards.append(
+            "#guard (admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
+            + str(paths["branch"]) + ") matches .error _"
+        )
+        self.assert_accepts(json.dumps(probe), "\n".join(guards))
+
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):
         fixture = document()
         fixture["metadata"]["schema_version"] = "cpp-canonical-probe-0.2"

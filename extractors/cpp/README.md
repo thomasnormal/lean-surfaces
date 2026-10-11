@@ -221,6 +221,12 @@ compilation, authenticate a producer, or admit C++ execution. The
 [real-input census](../../docs/cpp-typed-ingestion-census.md) separates runtime
 inspection from literal loading and independent Python aggregate auditing.
 
+The typed callable bridge is a separate ingestion step documented in
+[`cpp-callable-functions.md`](../../docs/cpp-callable-functions.md). It consumes
+the same validated type and binary-expression supplements and admits only a
+single direct-return body; it is not enabled by `--local-functions` and does
+not change the execution refusal.
+
 ### Evidence contract
 
 Output is one JSON object with `ast` and `metadata`. The former is Clang's stock

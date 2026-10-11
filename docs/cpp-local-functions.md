@@ -49,7 +49,10 @@ normalization, canonical entity relation, ODR result, full program admission
 or capture provenance. Inherited linkage does not change the supported
 source-local definition rule; linkage-specification AST contexts are still
 conservatively refused. Retained parameter/body JSON is not a typed or
-executable embedding. `execute` remains unconditionally refused.
+executable embedding. The separate [typed callable slice](cpp-callable-functions.md)
+consumes only a stricter direct-return subset of these compound bodies; this
+local rule itself still admits no typed callable or execution. `execute` remains
+unconditionally refused.
 
 ## Validation and corpus inspection
 

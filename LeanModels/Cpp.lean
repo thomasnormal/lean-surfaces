@@ -7,6 +7,7 @@ import LeanModels.Cpp.Types
 import LeanModels.Cpp.ScalarTypes
 import LeanModels.Cpp.CompositeTypes
 import LeanModels.Cpp.ReferenceTypes
+import LeanModels.Cpp.IntegralExpressionTypes
 import LeanModels.Cpp.ObjectModel
 import LeanModels.Cpp.TypeEvidence
 import LeanModels.Cpp.ExpressionEvidence

@@ -7,6 +7,7 @@ import LeanModels.Cpp.TypeTests
 import LeanModels.Cpp.ScalarTypeTests
 import LeanModels.Cpp.CompositeTypeTests
 import LeanModels.Cpp.ReferenceTypeTests
+import LeanModels.Cpp.IntegralExpressionTypeTests
 import LeanModels.Cpp.ObjectModelTests
 import LeanModels.Cpp.TypeEvidenceTests
 import LeanModels.Cpp.CallableTests

@@ -138,6 +138,9 @@ def errName : PyErr → String
   | .zeroDivisionError => "ZeroDivisionError"
   | .trueZeroDivisionError => "ZeroDivisionError"
   | .floatZeroDivisionError => "ZeroDivisionError"
+  | .floatFloorZeroDivisionError => "ZeroDivisionError"
+  | .floatModuloZeroDivisionError => "ZeroDivisionError"
+  | .floatDivmodZeroDivisionError => "ZeroDivisionError"
   | .overflowError _ => "OverflowError"
   -- the same CLASS as the above; only the message differs
   | .zeroDivisionPow => "ZeroDivisionError"
@@ -192,6 +195,9 @@ def errMessage : PyErr → Option String
   | .trueZeroDivisionError => some "division by zero"
   | .zeroDivisionPow => some "0.0 cannot be raised to a negative power"
   | .floatZeroDivisionError => some "float division by zero"
+  | .floatFloorZeroDivisionError => some "float floor division by zero"
+  | .floatModuloZeroDivisionError => some "float modulo"
+  | .floatDivmodZeroDivisionError => some "float divmod()"
   | .overflowError msg => some msg
   -- STILL payload-free, and deliberately so: these texts carry RUNTIME
   -- DATA the constructor does not hold, so no split can supply them —

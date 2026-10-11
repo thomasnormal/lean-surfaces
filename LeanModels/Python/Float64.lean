@@ -357,6 +357,67 @@ def divideFloatInt (left : Float64) (right : Int) : Except FloatDivisionError Fl
   | none => .error .conversionOverflow
   | some value => divideFinite left value
 
+private def divisionArithmetic (operator : ArithmeticOp) (left right : Float64) :
+    Except FloatDivisionError Float64 :=
+  match arithmetic operator left right with
+  | .ok value => .ok value
+  | .error .conversionOverflow => .error .conversionOverflow
+  | .error .nanPayload => .error .nanPayload
+
+private def floorIntegral (value : Float64) : Except FloatDivisionError Float64 :=
+  if value.isInf || value.isZero then .ok value
+  else
+    match value.toRatio with
+    | none => .error .nanPayload
+    | some (numerator, denominator) =>
+      match fromInt (Int.fdiv numerator denominator) with
+      | none => .error .nanPayload
+      | some result => .ok result
+
+def floorRem (left right : Float64) : Except FloatDivisionError (Float64 × Float64) := do
+  if right.isZero then throw .zeroDivision
+  if left.isNaN || right.isNaN || left.isInf then throw .nanPayload
+  let remainder ← if right.isInf then pure left else do
+    let (leftNumerator, leftDenominator) := left.magnitudeRatio
+    let (rightNumerator, rightDenominator) := right.magnitudeRatio
+    match fromRatio left.sign
+        ((leftNumerator * rightDenominator) % (rightNumerator * leftDenominator))
+        (leftDenominator * rightDenominator) with
+    | none => throw .nanPayload
+    | some value => pure value
+  let difference ← divisionArithmetic .sub left remainder
+  let quotient ← divideFinite difference right
+  let (quotient, remainder) ←
+    if remainder.isZero then
+      pure (quotient, ofBits (if right.sign then 2 ^ 63 else 0))
+    else if remainder.sign != right.sign then do
+      let correctedRemainder ← divisionArithmetic .add remainder right
+      let correctedQuotient ← divisionArithmetic .sub quotient (ofBits 0x3ff0000000000000)
+      pure (correctedQuotient, correctedRemainder)
+    else pure (quotient, remainder)
+  let floored ←
+    if quotient.isZero then pure (ofBits (if left.sign != right.sign then 2 ^ 63 else 0))
+    else if quotient.isInf then pure quotient
+    else do
+      let integral ← floorIntegral quotient
+      let fraction ← divisionArithmetic .sub quotient integral
+      if (ofBits 0x3fe0000000000000).lt fraction then
+        divisionArithmetic .add integral (ofBits 0x3ff0000000000000)
+      else pure integral
+  return (floored, remainder)
+
+def floorRemIntFloat (left : Int) (right : Float64) :
+    Except FloatDivisionError (Float64 × Float64) :=
+  match fromInt left with
+  | none => .error .conversionOverflow
+  | some value => floorRem value right
+
+def floorRemFloatInt (left : Float64) (right : Int) :
+    Except FloatDivisionError (Float64 × Float64) :=
+  match fromInt right with
+  | none => .error .conversionOverflow
+  | some value => floorRem left value
+
 private def logarithm10 : Nat → Nat → Nat
   | 0, _ => 0
   | fuel + 1, value =>

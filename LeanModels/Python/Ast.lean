@@ -453,6 +453,9 @@ inductive PyErr where
   | trueZeroDivisionError
   /-- `/` with a float zero denominator. -/
   | floatZeroDivisionError
+  | floatFloorZeroDivisionError
+  | floatModuloZeroDivisionError
+  | floatDivmodZeroDivisionError
   /-- A numeric result cannot be represented by binary64. -/
   | overflowError (msg : String)
   /-- `0 ** <negative>` — the SAME CPython class with a DIFFERENT text,
@@ -568,6 +571,9 @@ def builtinExcCatches : String → PyErr → Bool
   | "ArithmeticError",   .zeroDivisionPow    => true
   | "ArithmeticError",   .trueZeroDivisionError => true
   | "ArithmeticError",   .floatZeroDivisionError => true
+  | "ArithmeticError",   .floatFloorZeroDivisionError => true
+  | "ArithmeticError",   .floatModuloZeroDivisionError => true
+  | "ArithmeticError",   .floatDivmodZeroDivisionError => true
   | "ArithmeticError",   .overflowError _     => true
   | "LookupError",       .indexError         => true
   | "LookupError",       .keyError           => true
@@ -577,6 +583,9 @@ def builtinExcCatches : String → PyErr → Bool
   | "ZeroDivisionError", .zeroDivisionPow    => true
   | "ZeroDivisionError", .trueZeroDivisionError => true
   | "ZeroDivisionError", .floatZeroDivisionError => true
+  | "ZeroDivisionError", .floatFloorZeroDivisionError => true
+  | "ZeroDivisionError", .floatModuloZeroDivisionError => true
+  | "ZeroDivisionError", .floatDivmodZeroDivisionError => true
   | "OverflowError",     .overflowError _     => true
   | "IndexError",        .indexError         => true
   | "ValueError",        .valueError _       => true

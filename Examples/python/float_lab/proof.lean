@@ -1,4 +1,5 @@
 import LeanModels.Python.Surface
+import LeanModels.Python.Float64Tests
 
 namespace Examples.python.float_lab.proof
 
@@ -122,6 +123,84 @@ theorem infinite_zero_caught :
     float_lab.infinite_zero_caught() ==> (19 : PyInt) := by
   exact ⟨32, rfl⟩
 
+theorem floor_tenth :
+    float_lab.floor_tenth() ==> Float64.ofBits 0x4022000000000000 := by
+  have floorStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
+      .ok (⟨0x4022000000000000⟩, ⟨0x3fb9999999999996⟩) :=
+    Float64.Tests.floor_remainder_tenth
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
+
+theorem remainder_tenth :
+    float_lab.remainder_tenth() ==> Float64.ofBits 0x3fb9999999999996 := by
+  have floorStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
+      .ok (⟨0x4022000000000000⟩, ⟨0x3fb9999999999996⟩) :=
+    Float64.Tests.floor_remainder_tenth
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
+
+theorem floor_infinite :
+    float_lab.floor_infinite() ==> Float64.ofBits 0xbff0000000000000 := by
+  have floorStep : Float64.floorRem ⟨0x4014000000000000⟩ ⟨0xfff0000000000000⟩ =
+      .ok (⟨0xbff0000000000000⟩, ⟨0xfff0000000000000⟩) :=
+    Float64.Tests.floor_remainder_opposite_infinity
+  have parsed : Float64.fromText "-inf" = .ok (Float64.ofBits 0xfff0000000000000) := rfl
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
+    Float64.ofBits, floorStep, parsed]
+
+theorem remainder_infinite :
+    float_lab.remainder_infinite() ==> Float64.ofBits 0xfff0000000000000 := by
+  have floorStep : Float64.floorRem ⟨0x4014000000000000⟩ ⟨0xfff0000000000000⟩ =
+      .ok (⟨0xbff0000000000000⟩, ⟨0xfff0000000000000⟩) :=
+    Float64.Tests.floor_remainder_opposite_infinity
+  have parsed : Float64.fromText "-inf" = .ok (Float64.ofBits 0xfff0000000000000) := rfl
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
+    Float64.ofBits, floorStep, parsed]
+
+private theorem remainder_nine_four :
+    Float64.floorRem (Float64.ofBits 0x4022000000000000)
+      (Float64.ofBits 0x4010000000000000) =
+      .ok (Float64.ofBits 0x4000000000000000, Float64.ofBits 0x3ff0000000000000) := rfl
+
+theorem floor_augmented :
+    float_lab.floor_augmented() ==> Float64.ofBits 0x3ff0000000000000 := by
+  have floorStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
+      .ok (⟨0x4022000000000000⟩, ⟨0x3fb9999999999996⟩) :=
+    Float64.Tests.floor_remainder_tenth
+  have remainderStep : Float64.floorRem ⟨0x4022000000000000⟩ ⟨0x4010000000000000⟩ =
+      .ok (⟨0x4000000000000000⟩, ⟨0x3ff0000000000000⟩) := remainder_nine_four
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep, remainderStep]
+
+theorem floor_zero_caught :
+    float_lab.floor_zero_caught(2) ==> (23 : PyInt) := by
+  have negateStep : (⟨0⟩ : Float64).neg = ⟨0x8000000000000000⟩ := rfl
+  have zeroStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x8000000000000000⟩ =
+      .error .zeroDivision := rfl
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, divmodArgs, evalFloatDivmod, floatNumber, negateStep, zeroStep]
+
+#print axioms floor_tenth
+#print axioms remainder_tenth
+#print axioms floor_infinite
+#print axioms remainder_infinite
+#print axioms floor_augmented
+#print axioms floor_zero_caught
+#print axioms remainder_nine_four
 #print axioms infinity_literal
 #print axioms infinite_quotient
 #print axioms infinite_denominator

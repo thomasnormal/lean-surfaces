@@ -1001,5 +1001,16 @@
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_shadow", "args": [[]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_keyword", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_heap", "args": [[]], "expect": "unsupported"},
-  {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_comprehension", "args": [[]], "expect": "match"}
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_comprehension", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_pair", "args": [[1.0, 0.1], [-1.0, 0.1], [1.0, -0.1], [-1.0, -0.1], [0.3, 0.1], [0.0, -2.0], [-0.0, -2.0], [5e-324, -2.0], [1e308, 1e-308], [5, 2.0], [5.0, -2], [true, 0.3], [-0.1, true], [false, -2.0], [0.0, false], [7, -3], [{"t": "float", "bits": "9218868437227405312"}, 0.0], [1.0, {"t": "float", "bits": "9218868437227405312"}], [1.0, {"t": "float", "bits": "18442240474082181120"}], [-1.0, {"t": "float", "bits": "9218868437227405312"}], [-0.0, {"t": "float", "bits": "18442240474082181120"}], [{"t": "float", "bits": "9221120237041090560"}, -0.0]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_pair", "args": [[{"t": "float", "bits": "9218868437227405312"}, 1.0], [1.0, {"t": "float", "bits": "9221120237041090561"}]], "expect": "unsupported"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_tenth", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "remainder_tenth", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_infinite", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "remainder_infinite", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_augmented", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_zero", "args": [[0], [1], [2]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_zero_caught", "args": [[0], [1], [2]], "expect": "match"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_conversion_order", "args": [[0], [1], [2], [0, -0.0], [1, -0.0], [2, -0.0], [0, {"t": "float", "bits": "9221120237041090560"}], [1, {"t": "float", "bits": "9221120237041090560"}], [2, {"t": "float", "bits": "9221120237041090560"}]], "expect": "match"},
+  {"file": "Examples/python/divmod_lab/divmod_lab.py", "function": "pair", "args": [[1.0, 0.1], [-1.0, 0.1], [0.0, -2.0], [5.0, 0], [true, 0.1]], "expect": "match"}
 ]

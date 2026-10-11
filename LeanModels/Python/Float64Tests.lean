@@ -26,6 +26,31 @@ theorem integer_division_negative_zero :
 
 theorem integer_division_by_zero : divideInt 5 0 = .error .zeroDivision := rfl
 
+theorem floor_remainder_tenth :
+    floorRem (ofBits 0x3ff0000000000000) (ofBits 0x3fb999999999999a) =
+      .ok (ofBits 0x4022000000000000, ofBits 0x3fb9999999999996) := rfl
+
+theorem floor_remainder_negative_zero :
+    floorRem (ofBits 0) (ofBits 0xc000000000000000) =
+      .ok (ofBits 0x8000000000000000, ofBits 0x8000000000000000) := rfl
+
+theorem floor_remainder_opposite_infinity :
+    floorRem (ofBits 0x4014000000000000) (ofBits 0xfff0000000000000) =
+      .ok (ofBits 0xbff0000000000000, ofBits 0xfff0000000000000) := rfl
+
+theorem floor_remainder_nan_zero_priority :
+    floorRem (ofBits 0x7ff8000000000000) (ofBits 0) = .error .zeroDivision := rfl
+
+theorem floor_remainder_conversion_priority :
+    floorRemFloatInt (ofBits 0x7ff8000000000000) (10 ^ 400) =
+      .error .conversionOverflow := rfl
+
+#print axioms floor_remainder_tenth
+#print axioms floor_remainder_negative_zero
+#print axioms floor_remainder_opposite_infinity
+#print axioms floor_remainder_nan_zero_priority
+#print axioms floor_remainder_conversion_priority
+
 theorem signed_zeros_equal : (ofBits 0).eqv (ofBits 0x8000000000000000) = true := rfl
 
 theorem nan_is_not_equal : (ofBits 0x7ff8000000000000).eqv (ofBits 0x7ff8000000000000) = false := rfl

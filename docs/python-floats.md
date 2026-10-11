@@ -76,6 +76,31 @@ display in the [CPython 3.9 floating-point tutorial](https://github.com/python/c
 The implementation is checked against the actual pinned interpreter, not
 just a reading of that explanation.
 
+## Floor division, remainder and divmod
+
+Float `//`, `%` and `divmod` share a pure binary64 quotient/remainder worker.
+Mixed integer/Boolean operands convert before the arithmetic, retaining
+conversion overflow even when the other operand is NaN or the divisor is zero.
+All-integer/Boolean operations keep their existing arbitrary-precision path.
+
+The remainder starts with the exact magnitude remainder, with the numerator's
+sign. The quotient then uses binary64-rounded subtraction and division, not
+the mathematical floor of the original rational ratio: `1.0 // 0.1` is 9.0.
+A nonzero remainder with the wrong sign is corrected by rounded addition of
+the divisor, alongside rounded subtraction of one from the quotient. The
+quotient is snapped to an integral binary64 value after these corrections.
+Zero remainders take the divisor's sign; zero quotients take the true quotient's
+sign. Finite operands can produce an infinite quotient without an exception.
+
+A finite numerator with an infinite divisor has a determined result, including
+the opposite-sign correction to quotient -1.0 and an infinite remainder.
+Infinite numerators and NaN-result cases remain explicit unresolved payload
+work. Zero-divisor exceptions come first after mixed conversion, and `//`, `%`
+and `divmod` preserve their distinct CPython messages and common exception
+class, including `ArithmeticError`/`ZeroDivisionError` handlers. The source
+oracle is CPython 3.9's float operation sequence, with differential checks
+against the actual pinned interpreter; this is not an exact-rational shortcut.
+
 ## Interpreter integration
 
 The extractor records a float literal/default as an unsigned decimal binary64

@@ -254,3 +254,57 @@ def constructor_heap():
 
 def constructor_comprehension():
     return [float(value) for value in ("0.1", "1.5")]
+
+
+def floor_pair(left, right):
+    return left // right, left % right, divmod(left, right)
+
+
+def floor_tenth():
+    return 1.0 // 0.1
+
+
+def remainder_tenth():
+    return 1.0 % 0.1
+
+
+def floor_infinite():
+    return 5.0 // float("-inf")
+
+
+def remainder_infinite():
+    return 5.0 % float("-inf")
+
+
+def floor_augmented():
+    value = 1.0
+    value //= 0.1
+    value %= 4.0
+    return value
+
+
+def floor_zero(mode):
+    if mode == 0:
+        return 1.0 // -0.0
+    if mode == 1:
+        return 1.0 % -0.0
+    return divmod(1.0, -0.0)
+
+
+def floor_zero_caught(mode):
+    try:
+        if mode == 0:
+            return 1.0 // -0.0
+        if mode == 1:
+            return 1.0 % -0.0
+        return divmod(1.0, -0.0)
+    except ArithmeticError:
+        return 23
+
+
+def floor_conversion_order(mode, value=1e999):
+    if mode == 0:
+        return 10 ** 400 // value
+    if mode == 1:
+        return value % 10 ** 400
+    return divmod(value, 10 ** 400)

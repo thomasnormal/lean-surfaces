@@ -50,6 +50,15 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.infinite_denominator() = Float64.ofBits 0x8000000000000000
 #py_check float_lab.infinite_augmented() = Float64.ofBits 0
 #py_check float_lab.infinite_zero_caught() = 19
+#py_check float_lab.floor_tenth() = Float64.ofBits 0x4022000000000000
+#py_check float_lab.remainder_tenth() = Float64.ofBits 0x3fb9999999999996
+#py_check float_lab.floor_infinite() = Float64.ofBits 0xbff0000000000000
+#py_check float_lab.remainder_infinite() = Float64.ofBits 0xfff0000000000000
+#py_check float_lab.floor_augmented() = Float64.ofBits 0x3ff0000000000000
+#py_check float_lab.floor_zero(0) raises .floatFloorZeroDivisionError
+#py_check float_lab.floor_zero(1) raises .floatModuloZeroDivisionError
+#py_check float_lab.floor_zero(2) raises .floatDivmodZeroDivisionError
+#py_check float_lab.floor_zero_caught(2) = 23
 #py_check float_lab.division_nonfinite_overflow(0) raises
     .overflowError "int too large to convert to float"
 #py_check float_lab.division_nonfinite_overflow(1) raises
@@ -111,6 +120,30 @@ theorem infinite_augmented :
 theorem infinite_zero_caught :
     float_lab.infinite_zero_caught() ==> (19 : PyInt) := by proofs
 
+theorem floor_tenth :
+    float_lab.floor_tenth() ==> Float64.ofBits 0x4022000000000000 := by proofs
+
+theorem remainder_tenth :
+    float_lab.remainder_tenth() ==> Float64.ofBits 0x3fb9999999999996 := by proofs
+
+theorem floor_infinite :
+    float_lab.floor_infinite() ==> Float64.ofBits 0xbff0000000000000 := by proofs
+
+theorem remainder_infinite :
+    float_lab.remainder_infinite() ==> Float64.ofBits 0xfff0000000000000 := by proofs
+
+theorem floor_augmented :
+    float_lab.floor_augmented() ==> Float64.ofBits 0x3ff0000000000000 := by proofs
+
+theorem floor_zero_caught :
+    float_lab.floor_zero_caught(2) ==> (23 : PyInt) := by proofs
+
+#print axioms floor_tenth
+#print axioms remainder_tenth
+#print axioms floor_infinite
+#print axioms remainder_infinite
+#print axioms floor_augmented
+#print axioms floor_zero_caught
 #print axioms infinity_literal
 #print axioms infinite_quotient
 #print axioms infinite_denominator

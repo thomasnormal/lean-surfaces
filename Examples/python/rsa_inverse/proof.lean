@@ -194,8 +194,13 @@ same for `a < 0`); it is kept because it is what makes the *reading*
 `a = gcd(a, 0)` with Bezout `1·a + 0·0 = a` true (statement discipline:
 hypotheses document the spec's domain, AGENTS.md). -/
 theorem extended_gcd_zero (a : PyInt) (ha : 0 ≤ a) :
-    rsa_inverse.extended_gcd(a, 0) ==> ((a, 1, 0) : PyInt × PyInt × PyInt) :=
-  CallsTo.intro 32 (by py_simp [callFunction, callIn, execWhile, rsa_inverse])
+    rsa_inverse.extended_gcd(a, 0) ==> ((a, 1, 0) : PyInt × PyInt × PyInt) := by
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [rsa_inverse]
+  rw [execWhile.eq_2]
+  py_simp [rsa_inverse]
 
 /-- `Int`-typed core of `inverse_spec` — TOTAL correctness on coprime
 inputs. Coprimality rewrites the callee fact's gcd to 1, and the closing

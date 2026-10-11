@@ -920,6 +920,16 @@ def evalFloatArithmetic (operator : Float64.ArithmeticOp) (left right : RVal) : 
   | .error .nanPayload =>
     .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
 
+def evalFloatDivmod (zeroError : PyErr) (left right : RVal) : Res (Float64 × Float64) := do
+  let leftNumber ← floatNumber left
+  let rightNumber ← floatNumber right
+  match Float64.floorRem leftNumber rightNumber with
+  | .ok pair => return pair
+  | .error .zeroDivision => .exn zeroError
+  | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+  | .error .nanPayload =>
+    .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
+
 /-- Binary operator on already-evaluated operands. Integer/Boolean `+`, `-`
 and `*` return integers; true division returns binary64. Mixed arithmetic
 converts the integer before computing and preserves signed zero and rounding.
@@ -1046,6 +1056,12 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .mult, .float _, _ | .mult, _, .float _ => evalFloatArithmetic .mult a b
     | .mult, left, right => sequenceMult left right
     | .mod, .str fmt, rhs => strFormat fmt rhs
+    | .floorDiv, .float _, _ | .floorDiv, _, .float _ => do
+        let (quotient, _) ← evalFloatDivmod .floatFloorZeroDivisionError a b
+        return .float quotient
+    | .mod, .float _, _ | .mod, _, .float _ => do
+        let (_, remainder) ← evalFloatDivmod .floatModuloZeroDivisionError a b
+        return .float remainder
     | _, .float _, _ | _, _, .float _ =>
         .unsupported "this float arithmetic operator is not yet modelled"
     | op, a, b =>
@@ -2510,7 +2526,12 @@ def divmodArgs : List RVal → Res RVal
       if divisorValue = 0 then .exn .zeroDivisionError
       else .ok (.tuple #[.int (Int.fdiv numeratorValue divisorValue),
         .int (Int.fmod numeratorValue divisorValue)])
-    | _, _ => .unsupported "divmod() on nonintegral operands is outside the tier"
+    | _, _ =>
+      match numerator, divisor with
+      | .float _, _ | _, .float _ => do
+        let (quotient, remainder) ← evalFloatDivmod .floatDivmodZeroDivisionError numerator divisor
+        return .tuple #[.float quotient, .float remainder]
+      | _, _ => .unsupported "divmod() nonnumeric operand protocols remain unmodelled"
   | values => .exn (.typeError s!"divmod expected 2 arguments, got {values.length}")
 
 mutual

@@ -450,6 +450,14 @@
     "expect": "unsupported"
   },
   {
+    "file": "Examples/python/float_lab/floor_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/nan_floor_script.py",
+    "expect": "unsupported"
+  },
+  {
     "file": "Examples/python/float_lab/nan_arithmetic_script.py",
     "expect": "unsupported",
     "note": "An indeterminate infinity difference requires a NaN payload/sign oracle; never invent a platform-specific word."

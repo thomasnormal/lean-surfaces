@@ -59,6 +59,16 @@ def comparison_output(left, right):
     return {"equal": left == right, "less": left < right, "greater": left > right}
 
 
+def floor_rem_output(left, right):
+    try:
+        quotient, remainder = divmod(left, right)
+        if math.isnan(quotient) or math.isnan(remainder):
+            return {"refused": "nan-payload"}
+        return {"quotient": oracle_output(quotient), "remainder": oracle_output(remainder)}
+    except (ZeroDivisionError, OverflowError) as error:
+        return {"error": type(error).__name__, "message": str(error)}
+
+
 def constructor_rows(generator, samples):
     zeroes = [code for code in range(0x110000)
               if unicodedata.decimal(chr(code), None) == 0]
@@ -144,6 +154,8 @@ def rows(samples):
         right = struct.unpack(">d", struct.pack(">Q", right_word))[0]
         records.append({"kind": "float_compare", "left": str(word), "right": str(right_word)})
         expected.append(comparison_output(value, right))
+        records.append({"kind": "float_divmod", "left": str(word), "right": str(right_word)})
+        expected.append(floor_rem_output(value, right))
         for name, operation in operators:
             records.append({"kind": "float_arithmetic", "operator": name,
                             "left": str(word), "right": str(right_word)})
@@ -220,6 +232,21 @@ def rows(samples):
         (10 ** 400, math.nan), (10 ** 400, math.inf), (-10 ** 400, -math.inf),
         (0, math.inf), (0, math.nan), (2 ** 53 + 1, 1.0),
     ]
+    special_divmod = [0.0, -0.0, 0.1, -0.1, 0.3, -0.3, 1.0, -1.0,
+                      5e-324, -5e-324, 1e-308, -1e-308, 1e308, -1e308,
+                      math.inf, -math.inf, math.nan]
+    for left in special_divmod:
+        for right in special_divmod:
+            records.append({"kind": "float_divmod", "left": str(bits_of(left)),
+                            "right": str(bits_of(right))})
+            expected.append(floor_rem_output(left, right))
+    for integer, value in mixed_arithmetic:
+        records.append({"kind": "int_float_divmod", "left": str(integer),
+                        "right": str(bits_of(value))})
+        expected.append(floor_rem_output(integer, value))
+        records.append({"kind": "float_int_divmod", "left": str(bits_of(value)),
+                        "right": str(integer)})
+        expected.append(floor_rem_output(value, integer))
     for integer, value in mixed_arithmetic:
         for name, operation in operators:
             records.append({"kind": "int_float_arithmetic", "operator": name,

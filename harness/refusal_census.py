@@ -913,6 +913,7 @@ w("op.Or", "print(0 or 2)\n", "MATCH", "")
 SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
 
 WHITELIST_CLASS = {
+    "float_lab::floor_pair": "float.nan-payload",
     "float_lab::count_head": "iter.count-numeric-frame",
     "float_lab::constructor": "float.text-nan-or-unicode-repr",
     "float_lab::constructor_keyword": "float.constructor-keywords",
@@ -1161,6 +1162,7 @@ WHITELIST_CLASS = {
 # the adjudicator is just diff_test now.
 
 SCRIPT_CLASS = {
+    "nan_floor_script": "float.nan-payload",
     "nan_division_script": "float.nan-payload",
     "constructor_nan_script": "float.text-nan-payload",
     "nan_arithmetic_script": "float.nan-payload",

@@ -70,6 +70,8 @@ class ToVal (α : Type) where
 instance : ToVal Val := ⟨id⟩
 instance : ToVal Int := ⟨.int⟩
 instance : ToVal Float64 := ⟨.float⟩
+instance : ToVal (Float64 × Float64) :=
+  ⟨fun pair => .tuple #[.float pair.1, .float pair.2]⟩
 instance : ToVal Nat := ⟨fun n => .int n⟩
 instance : ToVal Bool := ⟨.bool⟩
 instance : ToVal String := ⟨.str⟩

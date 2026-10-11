@@ -43,6 +43,16 @@ def arithmeticOperator (input : Json) : Except String Float64.ArithmeticOp := do
   | "mult" => return .mult
   | _ => throw "unknown float arithmetic operator"
 
+def floorRemJson (result : Except Float64.FloatDivisionError (Float64 × Float64)) : Json :=
+  match result with
+  | .ok (quotient, remainder) => Json.mkObj [
+      ("quotient", numberJson quotient), ("remainder", numberJson remainder)]
+  | .error .zeroDivision => Json.mkObj [
+      ("error", .str "ZeroDivisionError"), ("message", .str "float divmod()")]
+  | .error .conversionOverflow => Json.mkObj [
+      ("error", .str "OverflowError"), ("message", .str "int too large to convert to float")]
+  | .error .nanPayload => Json.mkObj [("refused", .str "nan-payload")]
+
 def arithmeticJson (result : Except Float64.ArithmeticError Float64) : Json :=
   match result with
   | .ok value => numberJson value
@@ -52,6 +62,12 @@ def arithmeticJson (result : Except Float64.ArithmeticError Float64) : Json :=
 
 def checkRow (input : Json) : Except String Json := do
   let kind ← input.getObjValAs? String "kind"
+  if kind == "float_divmod" then
+    return floorRemJson (Float64.floorRem (← floatField input "left") (← floatField input "right"))
+  if kind == "int_float_divmod" then
+    return floorRemJson (Float64.floorRemIntFloat (← integerField input "left") (← floatField input "right"))
+  if kind == "float_int_divmod" then
+    return floorRemJson (Float64.floorRemFloatInt (← floatField input "left") (← integerField input "right"))
   if kind == "decimal_zeroes" then
     return toJson Float64.decimalZeroes
   if kind == "text" then

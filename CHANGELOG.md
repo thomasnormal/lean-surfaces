@@ -14,6 +14,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Float floor division, remainder and `divmod` through a shared pure binary64
+  worker on both Python interpreter surfaces, preserving rounded operation
+  order, quotient snapping, signed zeros, determined infinite-divisor results
+  and the distinct zero-divisor messages. Mixed integer conversion retains
+  its priority; unresolved NaN payload results remain explicit coverage work.
+
 - Determined infinity results for float and mixed true division on both Python
   interpreter surfaces: signed infinity and signed zero use the operands' sign
   XOR, zero denominators raise before NaN classification, and mixed integer

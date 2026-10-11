@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.8] — 2026-10-11
+
 ### Added
 
 - Binary64 float literals/defaults and true division on both Python interpreter
@@ -39,6 +41,27 @@ change is listed here under **Changed** or **Removed**.
   start's first-value subtype under non-unit stepping. Those unmodelled
   frames refuse explicitly; integer/unit-step cases and invalid-argument
   exceptions retain their checked behavior.
+
+- The refusal census shares the differential harness's exact argument transport,
+  preserving binary64 words, signed zero, nested values, and Boolean/integer
+  distinctions. Importing that transport no longer re-executes an importer's
+  arguments. Runner errors remain census failures, not semantic refusals.
+
+### Validation
+
+- CPython 3.9 differential suite: **2,810 cases / 2,466 matched / 344 recorded
+  refusals / zero mismatches**. The proof interpreter matches **2,393** and
+  refuses **417** on the same cases, also with zero mismatches.
+- Grammar census: **142 witnesses / 114 MATCH / 28 REFUSE**. A matched witness
+  does not claim every use of a construct is supported; remaining refusals
+  are unfinished language-coverage work.
+- Float/counter integration: **86 calls / 71 matched / 15 loud / zero failures**
+  on each interpreter surface. The standalone numeric-core sweep checks
+  **79,716 rows / zero failures** against CPython bit patterns and messages.
+- Script corpus: **94 cases / 74 completed-and-matched / 20 loud / zero failures**.
+  Extractor **103/103**, refusal-census regressions **9/9**, and documentation
+  **89/89** pass. Typed proofs against the real `float_lab` artifact are
+  kernel-checked without new or native proof axioms; all three notebooks pass.
 
 ## [0.1.7] — 2026-10-10
 

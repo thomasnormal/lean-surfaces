@@ -10,7 +10,7 @@ tractable.
 
 ## Python release status
 
-The Python prerelease is **v0.1.7 (2026-10-10)**. Its Git tag identifies the
+The Python prerelease is **v0.1.8 (2026-10-11)**. Its Git tag identifies the
 release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
 record source releases whose local Git tags remain unpublished.
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
@@ -52,10 +52,18 @@ also work. `...` and the ordinary builtin `Ellipsis` are the same truthy
 singleton, with identity, equality, rendering, literal defaults, hashable keys,
 and argument/result transport. Notebook headers verify their compiler and
 transitive compiled imports by content before reuse.
-The executable differential suite has 2,719 cases: 2,390 agree with CPython and
-329 refuse loudly. The narrower proof interpreter agrees on 2,317 cases and
-refuses 402; neither run has a mismatch in the recorded suite. The grammar
-census has 142 witnesses, with 112 MATCH and 30 REFUSE. These are measured
+Binary64 literals/defaults and integer, Boolean, and finite-float true division
+use exact words and kernel-reducible rounding, including signed zero and
+faithful conversion/error order. Mixed numeric comparisons, rendering, unary
+signs, `abs`, and `int` share the same core. Other float arithmetic, unresolved
+non-finite division, float keys, and identity-dependent NaN operations remain
+loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
+downstream exhaustive matches must handle the new value/operator/error
+constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
+The executable differential suite has 2,810 cases: 2,466 agree with CPython and
+344 refuse loudly. The narrower proof interpreter agrees on 2,393 cases and
+refuses 417; neither run has a mismatch in the recorded suite. The grammar
+census has 142 witnesses, with 114 MATCH and 28 REFUSE. These are measured
 examples, not a claim of complete language support; remaining gaps stay in scope.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
@@ -76,9 +84,10 @@ the Python proof dependencies and checks the `tri` example's theorems. It does
 not compile another language tier or any Mathlib library module. The environment
 variable skips Mathlib's automatic cache download: Mathlib is a declared package
 dependency, but these first Python proofs use only Lean's core tactics.
-Fresh-workspace CI at source revision `05d235b` (included in v0.1.7) has no
-Lake build-cache step: [run 38084868848](https://github.com/thomasnormal/lean-surfaces/actions/runs/38084868848)
-passes in **2 minutes 22 seconds on Linux** and **3 minutes 25 seconds on macOS**
+Fresh-workspace CI at source revision `405fea6` (included in v0.1.8) has no
+Lake build-cache step: the quickstart jobs in
+[run 38103319725](https://github.com/thomasnormal/lean-surfaces/actions/runs/38103319725)
+pass in **4 minutes 13 seconds on Linux** and **4 minutes 59 seconds on macOS**
 (whole-job elapsed time, including installation, proof build, and script comparison).
 Network and build times vary. Separately, the first proof build
 took about **3 minutes 44 seconds** in a recorded frozen Linux check, with

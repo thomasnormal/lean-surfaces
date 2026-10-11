@@ -1719,6 +1719,16 @@ guaranteed to be short by however many `cases` sites exist.
 3.9.19 over a 95481-pair XOR grid and a 24720-pair shift grid (plus the
 `~`/`+` identities and the bool-type rules), 0 mismatches.
 
+## Negative integer powers
+
+`x ** -n` for integer `x` now returns the exact binary64 reciprocal of the
+bounded integer power, using `Float64.divideInt` after `x ^ n`. The zero base
+keeps CPython's distinct `ZeroDivisionError` message. `floatPowBudget = 1024`
+is a fixed admission bound: larger negative exponents refuse before an
+unbounded kernel `Int.pow`, rather than risking an internal abort or inventing
+a floating result. The builtin `pow(x, n)` shares this path; the three-
+argument modulus form remains a separate loud boundary.
+
 ## Dict iteration — the census, and the tier it forces (§L51 rung 3)
 
 The H1 inventory left `for k in d` out with "no snapshot shortcut", and

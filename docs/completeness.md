@@ -26,8 +26,9 @@ refusing. It is a regression check on the census, not a report.
 A grammar witness that matches claims exactly this: *the production is
 reachable, and the model agreed with CPython on this program.* It does
 not claim the production is wholly in tier — `op.Mult` matches on
-`2 * 3` and refuses on `"ab" * 3`; `op.Pow` matches on `2 ** 3` and
-refuses on `2 ** -1`. Both boundaries are themselves witnesses here
+`2 * 3` and refuses on `"ab" * 3`; `op.Pow` matches on `2 ** 3` and its
+bounded negative-integer path. Larger negative powers remain a loud budget
+refusal. Both boundaries are themselves witnesses here
 (`op.Mult-repetition`, `op.Pow-negative`), which is the discipline: when
 a match is known to have an edge, the edge gets its own row rather than
 a footnote.

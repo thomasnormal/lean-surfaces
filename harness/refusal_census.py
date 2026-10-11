@@ -851,10 +851,10 @@ w("op.Div", "print(6 / 2)\n", "MATCH", "true division rounds directly to binary6
 w("op.FloorDiv", "print(7 // 2)\n", "MATCH", "Int.fdiv")
 w("op.Mod", "print(7 % 2)\n", "MATCH", "Int.fmod; `str % args` is a second tier")
 w("op.Pow", "print(2 ** 3)\n", "MATCH",
-  "MEASURED CORRECTION: `**` is in tier; only the float-valued negative "
-  "exponent refuses (op.Pow-negative)")
-w("op.Pow-negative", "print(2 ** -1)\n", "REFUSE",
-  "the boundary op.Pow's witness does not reach")
+  "MEASURED CORRECTION: `**` is in tier; bounded negative integer "
+  "exponents now return binary64")
+w("op.Pow-negative", "print(2 ** -1)\n", "MATCH",
+  "bounded negative integer exponent returns binary64")
 w("op.LShift", "print(1 << 4)\n", "MATCH", "budget-capped shift width")
 w("op.RShift", "print(16 >> 2)\n", "MATCH",
   "was REFUSE; §L39 rung 1 landed it (op.RShift-budget is its edge)")
@@ -918,7 +918,6 @@ WHITELIST_CLASS = {
     "float_lab::constructor": "float.text-nan-or-unicode-repr",
     "float_lab::constructor_keyword": "float.constructor-keywords",
     "float_lab::constructor_heap": "float.constructor-protocols",
-    "tut_06::negative_power": "op.Pow-negative",
     "float_lab::nan_arithmetic_still_loud": "float.nan-payload",
     "float_lab::divide": "float.nan-payload",
     "float_lab::indeterminate_division_still_loud": "float.nan-payload",
@@ -930,8 +929,6 @@ WHITELIST_CLASS = {
     "float_lab::add": "float.nan-payload",
     "float_lab::subtract": "float.nan-payload",
     "float_lab::multiply": "float.nan-payload",
-    "arith::powi": "op.Pow",
-    "arith::builtin_powi": "builtin.pow-negative",
     "arith::builtin_pow_mod": "builtin.pow-modulus",
     "rsa_inverse::inverse": "exc.raise",
     "bench_bisect::bisect_left": "exc.raise",

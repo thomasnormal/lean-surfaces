@@ -173,6 +173,11 @@ CPython performs happily (`1 << 10^9` is a real 125 MB integer there): a
 declared tier gap, never a claim that CPython raises. -/
 def shiftBudget : Nat := 1048576
 
+/-- The largest negative integer exponent whose reciprocal power is built as
+an exact integer ratio before binary64 rounding. Larger exponents remain loud
+rather than forcing an unbounded kernel `Int.pow`. -/
+def floatPowBudget : Nat := 1024
+
 /-- Materialize a range value, budget-guarded (see the section comment). -/
 def rangeVals (lo hi step : Int) : Res (List RVal) :=
   let n := rangeLen lo hi step
@@ -970,7 +975,8 @@ def evalFloatDivmod (zeroError : PyErr) (left right : RVal) : Res (Float64 × Fl
 and `*` return integers; true division returns binary64. Mixed arithmetic
 converts the integer before computing and preserves signed zero and rounding.
 `//`/`%` floor (`Int.fdiv`/`Int.fmod`); divisor 0 → `ZeroDivisionError`.
-`**` requires a nonnegative exponent (float result otherwise → unsupported).
+`**` with a negative integer exponent returns a binary64 reciprocal when the
+exponent is within `floatPowBudget`; larger exponents remain unsupported.
 `+` concatenates matching sequence types; `%` on a str is the format operator
 (`strFormat`, §`%`-formatting above). Unresolved protocols and NaN payloads
 remain loud. A `.ref` operand is refused before a fabricated type-name error. -/
@@ -992,13 +998,14 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         if y = 0 then .exn .zeroDivisionError else .ok (.int (Int.fmod x y))
     | .pow =>
         if y < 0 then
-          -- CPython: 0 ** -1 raises (no float involved); other negative
-          -- exponents produce floats, which are outside the v0 tier.
-          -- Same CLASS as `//`/`%` but a different TEXT, so it carries its
-          -- own constructor (Ast.lean `zeroDivisionPow`) — measured
-          -- `0.0 cannot be raised to a negative power`.
           if x = 0 then .exn .zeroDivisionPow
-          else .unsupported "'**' with a negative exponent (float result) is outside the v0 tier"
+          else if y.natAbs > floatPowBudget then
+            .unsupported "'**' with a negative exponent beyond floatPowBudget is outside the tier (docs/memory-model.md §power)"
+          else
+            match Float64.divideInt 1 (x ^ y.natAbs) with
+            | .ok value => .ok (.float value)
+            | .error .zeroDivision => .exn .zeroDivisionPow
+            | .error .overflow => .exn (.overflowError "integer power result too large for a float")
         else .ok (.int (x ^ y.toNat))
     -- pass 5 (docs/memory-model.md §left shift and bitwise or):
     -- `x << n` is EXACT on all ints as `x * 2^n` (unbounded ints, sign

@@ -41,12 +41,9 @@ theorem count_up_total (n : PyInt) (hn : 0 ≤ n) : tut_06.count_up(n) ==> n := 
 #py_check tut_06.count_up(5) = 5
 #py_check tut_06.count_up(0) = 0
 ...
-/-! True division now returns binary64; negative powers remain unfinished
-coverage work. The interpreter refuses *loudly* (`Res.unsupported`,
-never a wrong value); `unsupported` has no surface arrow on purpose, so
-the check stays a raw `#guard … matches`. -/
+/-! True division and bounded negative powers return binary64 values. -/
 #py_check tut_06.true_div(7, 2) = Float64.ofBits 0x400c000000000000
-#guard (callFunction tut_06 "negative_power" #[.int 2] 100 matches .unsupported _)
+#py_check tut_06.negative_power(2) = Float64.ofBits 0x3fe0000000000000
 ```
 
 ## 1. py_prove leaves a goal full of interpreter noise — there is a loop

@@ -25,14 +25,17 @@ full differential matrix against CPython lives in harness/cases.json. -/
 #py_check arith.mod(7, 0) raises .zeroDivisionError
 #py_check arith.powi(2, 0) = 1
 #py_check arith.powi(-2, 3) = -8
-#guard (callFunction arith "powi" #[.int 2, .int (-1)] 20 matches .unsupported _)
+#py_check arith.powi(2, -1) = Float64.ofBits 0x3fe0000000000000
+#py_check arith.powi(-2, -3) = Float64.ofBits 0xbfc0000000000000
+#guard (callFunction arith "powi" #[.int 2, .int (-1025)] 20 matches .unsupported _)
 -- `0 ** -1` raises the SAME CLASS as `//`/`%` with a DIFFERENT text, so it
 -- carries its own constructor (docs/backlog.md §the payload-free
 -- constructors): `0.0 cannot be raised to a negative power`
 #py_check arith.powi(0, -1) raises .zeroDivisionPow
 #py_check arith.builtin_powi(2, 0) = 1
 #py_check arith.builtin_powi(-2, 3) = -8
-#guard (callFunction arith "builtin_powi" #[.int 2, .int (-1)] 20 matches .unsupported _)
+#py_check arith.builtin_powi(2, -1) = Float64.ofBits 0x3fe0000000000000
+#guard (callFunction arith "builtin_powi" #[.int 2, .int (-1025)] 20 matches .unsupported _)
 #guard (callFunction arith "builtin_pow_mod" #[.int 2, .int 3, .int 5] 20 matches .unsupported _)
 #py_check arith.choose(0, 5) = 5
 #py_check arith.choose(3, 7) = 3

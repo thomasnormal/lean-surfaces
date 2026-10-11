@@ -50,6 +50,13 @@ change is listed here under **Changed** or **Removed**.
   88.2% matched**, or **88.2% complete**; the proof interpreter has **2,594 /
   3,025 = 85.8% complete**, with **100% agreement among decided rows**.
 
+- Negative integer powers now return rounded binary64 reciprocals through the
+  shared pure worker, including the faithful `0 ** -1` exception; exponents
+  beyond the fixed `floatPowBudget` remain loud. Native differential coverage
+  is now **2,671 / 3,025 = 88.3% complete**; proof-interpreter coverage is
+  **2,597 / 3,025 = 85.9% complete**, with **100% agreement among decided
+  rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

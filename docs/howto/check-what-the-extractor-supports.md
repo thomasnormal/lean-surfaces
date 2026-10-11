@@ -77,12 +77,12 @@ jq '.module.body[] | select(.kind == "FunctionDef") | {name, args_unsupported, l
 
 Representable is not runnable: an `Unsupported` node only matters if
 execution reaches it, and some in-vocabulary programs still leave the tier
-at runtime (e.g. `2 ** -1`). The runner's `unsupported` status is the ground
-truth, message included:
+at runtime (e.g. a negative power beyond `floatPowBudget`). The runner's
+`unsupported` status is the ground truth, message included:
 
 ```
-lake exe leanmodels-run Examples/python/arith/arith.json powi 2 -1
-{"status":"unsupported","msg":"'**' with a negative exponent (float result) is outside the v0 tier"}
+lake exe leanmodels-run Examples/python/arith/arith.json powi 2 -1025
+{"status":"unsupported","msg":"'**' with a negative exponent beyond floatPowBudget is outside the tier (docs/memory-model.md §power)"}
 ```
 
 In Lean, the same check is a raw `#guard` (the `unsupported` outcome is a
@@ -90,7 +90,7 @@ tier gap, not a Python result, so it deliberately has no `#py_check` form):
 
 ```lean
 -- Examples/python/arith/spec.lean (excerpt)
-#guard (callFunction arith "powi" #[.int 2, .int (-1)] 20 matches .unsupported _)
+#guard (callFunction arith "powi" #[.int 2, .int (-1025)] 20 matches .unsupported _)
 ```
 
 In the differential harness, documented gaps are whitelisted per input row

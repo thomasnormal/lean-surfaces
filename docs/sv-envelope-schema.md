@@ -209,17 +209,46 @@ ordinary effectful expression.
 | kind | key order / fields |
 |---|---|
 | `Block` | `kind`, `span`, `stmts`: [stmt...] — `begin ... end` (a single-statement body still nests one level: `"stmts": [<stmt>]`) |
-| `BlockingAssign` | `kind`, `span`, `target` (expr, always `Ident`), `value` (expr) — `=` |
+| `BlockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `=` |
 | `NonblockingAssign` | `kind`, `span`, `target` (expr, always `Ident`), `value` (expr) — `<=` |
 | `If` | `kind`, `span`, `cond` (expr), `then` (stmt), `else` (stmt \| `null`) — `else if` chains nest as `If` inside `else` |
 | `Unsupported` | see above |
 
-Assignment targets are whole-signal identifiers only; a bit-select, part-select
+M0 assignment targets are whole-signal identifiers only; a bit-select, part-select
 or concatenation LHS makes the *statement* `Unsupported`
 (`AssignmentExpression:target`). `If` conditions may be any width (truthiness
 per LRM: true iff some bit is `1`).
 
 ## Expressions
+
+The legacy/self-check blocking path additionally emits `SelectTarget` for
+a packed bit or part destination. Its fields are `kind`, `span`, `width`,
+`value` (an `Ident` base), `index` (an expression), `index_signed`,
+`descending` and `two_state` (booleans). Simple parts use their low bound;
+indexed-down parts use their high base and set `descending`. The bound
+index retains its original width and signedness, and each destination
+retains its own two-state conversion. This node is an assignment target,
+not a readable expression.
+
+`ConcatTarget` has `kind`, `span`, `width` and `parts` (source-ordered
+targets), with nested `ConcatTarget` nodes retained. Whole `Ident` leaves
+add a `two_state` boolean; selected leaves retain the fields above.
+Ingestion flattens nested concatenations to width-bearing `PackedTarget`
+leaves and checks every recorded aggregate width. RHS slices are assigned
+from the low end of the rightmost leaf. `AssignmentOrder` is an evaluator
+parameter, not an extractor field or a compiler-selected order; the named
+default is right-to-left. The RHS is captured once, and each index is
+evaluated against the then-current frame at its chosen destination step.
+An order must be a permutation of all leaf indices, or execution refuses.
+
+Nonblocking selected and concatenated targets remain pending; neither is
+silently lowered to a whole-variable store. Invalid compilations containing
+an admitted target retain `SelectTarget:invalid-compilation` or
+`ConcatTarget:invalid-compilation`. The blocking packed-target family is
+complete for the legacy/self-check surface; selected nonblocking lowering
+belongs to the next assignment family. Partly out-of-range writes follow
+the per-bit rule in the value primitive, with simulator disagreements kept
+as diagnostics rather than hidden by a second semantic path.
 
 The legacy/self-check vocabulary also includes `BitQuery` for IEEE
 1800-2023 §20.9. Its fields are `kind`, `span`, `width`, `op`, `operand`

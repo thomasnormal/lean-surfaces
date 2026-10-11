@@ -348,6 +348,59 @@ of 3,148. Both report zero extraction errors and every shared core/full
 classification agrees. These are extraction measurements, not a claim of
 whole-corpus simulator agreement.
 
+### Packed blocking assignment targets — 2026-10-11
+
+The next family addresses the identifier-only destination boundary, not a
+new scheduler. The selected-write foundation now preserves bit, simple
+part and indexed-up/down geometry, live signed indices, x/z index no-ops,
+four-state data and per-destination two-state conversion. It reuses
+`selectedIndex` and the existing `LVec.insertAt`/`extract` value authority.
+The resumable stepper delegates the new leaf to the same executor.
+
+Concatenated and nested concatenated blocking destinations now compile to
+ordered packed leaves, retaining each leaf's width, live index and
+two-state conversion. The RHS is captured once; each destination's index
+is evaluated against the frame at that destination's write. An explicit
+`AssignmentOrder` parameter selects a permutation of leaves; invalid
+permutations refuse rather than skip or duplicate a destination. The
+named default is `rightToLeftAssignmentOrder`, matching the observed
+licensed reference, not a claim that IEEE mandates that order. The
+statement, block and initial-process drivers thread this policy; the
+existing resumable stepper instantiates the named default.
+
+`harness/sv/packed_assignment_targets/runtime_updates.sv` is an actual
+licensed self-check fixture. Its unknown-index store is pinned to the
+extracted statement in `Examples/system-verilog/packed_assignment_targets/`,
+with a value-symbolic state-preservation theorem. Focused builds and the
+ordinary simulator comparison set pass; this is not a full repository
+qualification.
+
+`concat_updates.sv` is a second licensed fixture covering nested/mixed
+leaves, per-leaf conversion, RHS snapshots, overlapping aliases and an
+index that observes an earlier destination write. Its actual extracted
+alias statement is pinned to a value-symbolic theorem under the named
+reference order, with a separate invalid-oracle refusal theorem. The
+focused build recompiles the stepper's subsumption proof unchanged;
+51 byte-bound licensed comparisons and 58 extractor tests pass.
+
+The qualification probes exposed a disagreement on partly out-of-range
+part destinations: one available simulator leaves them unchanged, while
+the IEEE 1800-2023 §11.5.1 per-bit rule retains the in-range writes. The
+staged value helper therefore follows the standard rule through the
+existing value primitive; no simulator-specific path or rewritten
+expectation is used. The diagnostic remains recorded as a known oracle
+disagreement, outside the acceptance fixture. Selected nonblocking
+targets remain loud because the shared kernel queue currently resolves
+one write window at a time; they are the next assignment family, not a
+silent whole-variable fallback.
+
+Fresh extraction is **1,680 clean / 20,077 partial / 30 include skips**
+over the full 21,787 files, and **209 clean / 2,935 partial / four include
+skips** over the exact 3,148-file core. There are zero extraction errors,
+zero lost clean files and no shared-record discrepancy. These gains
+(seventeen full, nine core since the selected-write foundation) measure extraction, not agreement on the disputed
+runtime cases.
+
 ### Four-state packed selected reads — 2026-10-09
 
 The legacy/self-check surface admits bit, constant part and indexed

@@ -982,6 +982,58 @@ def select_target(sm, lhs):
     return t, _target_shape_ok(t)
 
 
+def legacy_blocking_target(sm, lhs, concat_leaf=False):
+    expression_kind = type(lhs).__name__
+    if expression_kind == "ConcatenationExpression":
+        parts = [legacy_blocking_target(sm, operand, True) for operand in lhs.operands]
+        if not parts or not all(admitted for _, admitted in parts):
+            return unsupported(sm, lhs, expression_kind + ":target-operand"), False
+        return {
+            "kind": "ConcatTarget",
+            "span": node_span(sm, lhs),
+            "width": lhs.type.bitWidth,
+            "parts": [target for target, _ in parts],
+        }, True
+    if expression_kind not in ("ElementSelectExpression", "RangeSelectExpression"):
+        target, admitted = ident_target(sm, lhs)
+        if concat_leaf:
+            width, two_state, reason = type_width_2s(lhs.type)
+            if not admitted or reason is not None or width is None:
+                return unsupported(sm, lhs, expression_kind + ":target-type"), False
+            target["two_state"] = two_state
+        return target, admitted
+    base, admitted = ident_target(sm, lhs.value)
+    source_width, _, source_reason = type_width_2s(lhs.value.type)
+    canonical_kind = type(lhs.value.type.canonicalType).__name__
+    if (not admitted or source_reason is not None or source_width is None
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
+        return unsupported(sm, lhs, expression_kind + ":target-source"), False
+    descending = False
+    if expression_kind == "ElementSelectExpression":
+        index = lhs.selector
+    else:
+        selection = str(lhs.selectionKind).split(".")[-1]
+        if selection not in ("Simple", "IndexedUp", "IndexedDown"):
+            return unsupported(sm, lhs, expression_kind + ":target-selection"), False
+        index = lhs.right if selection == "Simple" else lhs.left
+        descending = selection == "IndexedDown"
+    _, _, index_reason = type_width_2s(index.type)
+    converted_index = convert_expr(sm, index)
+    if (index_reason is not None or not _case_source_expression_ok(index)
+            or not _case_expression_ok(converted_index)):
+        return unsupported(sm, lhs, expression_kind + ":target-index"), False
+    return {
+        "kind": "SelectTarget",
+        "span": node_span(sm, lhs),
+        "width": lhs.type.bitWidth,
+        "value": base,
+        "index": converted_index,
+        "index_signed": bool(index.type.isSigned),
+        "descending": descending,
+        "two_state": not lhs.type.isFourState,
+    }, True
+
+
 # ---------------------------------------------------------------------------
 # Statements
 # ---------------------------------------------------------------------------
@@ -1172,9 +1224,15 @@ def _convert_expression_stmt(sm, stmt):
         return unsupported(sm, stmt, "AssignmentExpression:compound")
     if expr.timingControl is not None:
         return unsupported(sm, stmt, "AssignmentExpression:timing")
-    target, ok = select_target(sm, expr.left)
+    if _SYM is None and not expr.isNonBlocking:
+        target, ok = legacy_blocking_target(sm, expr.left)
+    else:
+        target, ok = select_target(sm, expr.left)
     if not ok:
         return unsupported(sm, stmt, "AssignmentExpression:target")
+    if (target.get("kind") in ("SelectTarget", "ConcatTarget")
+            and not _case_source_expression_ok(expr.right)):
+        return unsupported(sm, stmt, "AssignmentExpression:selected-effects")
     value = convert_expr(sm, expr.right)
     try:
         if not expr.left.type.isFourState:
@@ -1535,6 +1593,26 @@ def contains_selected_read(node):
     return False
 
 
+def contains_selected_target(node):
+    if isinstance(node, dict):
+        return node.get("kind") == "SelectTarget" or any(
+            contains_selected_target(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_selected_target(value) for value in node)
+    return False
+
+
+def contains_concat_target(node):
+    if isinstance(node, dict):
+        return node.get("kind") == "ConcatTarget" or any(
+            contains_concat_target(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_concat_target(value) for value in node)
+    return False
+
+
 def contains_lowered_case(node):
     if isinstance(node, dict):
         return node.get("case_lowered", False) or any(
@@ -1602,6 +1680,14 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "BitQuery:invalid-compilation",
                                   "frontend rejected source containing a bit-vector query"))
+    if (any(contains_selected_target(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "SelectTarget:invalid-compilation",
+                                  "frontend rejected source containing a selected assignment"))
+    if (any(contains_concat_target(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "ConcatTarget:invalid-compilation",
+                                  "frontend rejected source containing a concatenated assignment"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

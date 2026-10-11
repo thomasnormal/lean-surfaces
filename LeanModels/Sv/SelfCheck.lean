@@ -1,5 +1,6 @@
 import Lean
 import LeanModels.Sv.Semantics
+import LeanModels.Sv.Sem2
 
 /-!
 # SV self-check tier (`LeanModels.Sv.SelfCheck`)
@@ -120,6 +121,24 @@ def selectedRead (width : Nat) (descending indexSigned : Bool)
         let position := low + (offset.val : Int)
         if position < 0 then .lx else value.bits[position.toNat]?.getD .lx⟩
 
+def selectedWrite (width : Nat) (descending indexSigned : Bool)
+    (value index replacement : LVec) : LVec :=
+  match selectedIndex indexSigned index with
+  | none => value
+  | some position =>
+      let low := if descending then position - (width : Int) + 1 else position
+      let replacement := replacement.resizeU width
+      if low < 0 then
+        let skipped := (-low).toNat
+        value.insertAt 0 (replacement.extract skipped (width - skipped))
+      else value.insertAt low.toNat replacement
+
+abbrev AssignmentOrder := Nat → List Nat
+
+def rightToLeftAssignmentOrder : AssignmentOrder := fun count => (List.range count).reverse
+
+def leftToRightAssignmentOrder : AssignmentOrder := List.range
+
 /-! ## Self-check expressions -/
 
 /-- Self-check expressions: M0 `Expr` embedded as a leaf (`.m0`, evaluated
@@ -196,6 +215,23 @@ inductive Edge where
   | pos | neg | any
 deriving Repr, BEq, DecidableEq, Inhabited
 
+inductive PackedTarget where
+  | whole (name : String) (width : Nat) (twoState : Bool)
+  | selected (name : String) (width : Nat)
+      (descending indexSigned twoState : Bool) (index : SExpr)
+  deriving Repr, BEq, Inhabited
+
+def PackedTarget.width : PackedTarget → Nat
+  | .whole _ width _ | .selected _ width _ _ _ _ => width
+
+def packedTargetSlices : List PackedTarget → List (PackedTarget × Nat)
+  | [] => []
+  | target :: rest =>
+      (target, rest.foldl (fun width part => width + part.width) 0) :: packedTargetSlices rest
+
+def validAssignmentOrder (count : Nat) (order : List Nat) : Bool :=
+  order.length == count && order.all (· < count) && order.eraseDups.length == count
+
 /-- Self-check statements: M0 `Stmt` embedded as a leaf (`.m0`, executed by
 the existing `execStmt`; statement-level `Unsupported` arrives as
 `.m0 (.unsupported …)`) plus the §f extensions. `sysCall` args carry the
@@ -203,6 +239,9 @@ envelope's `arg_signed` flag. -/
 inductive SStmt where
   | m0 (s : Stmt)
   | assign (nonblocking : Bool) (target : String) (value : SExpr)
+  | selectedAssign (target : String) (width : Nat)
+      (descending indexSigned twoState : Bool) (index value : SExpr)
+  | packedAssign (targets : List PackedTarget) (value : SExpr)
   | ifStmt (cond : SExpr) (thenB : SStmt) (elseB : Option SStmt)
   | block (body : Array SStmt)
   | localDecl (name : String) (width : Nat) (twoState : Bool) (init : Option SExpr)
@@ -475,11 +514,41 @@ def evalArgs (fuel : Nat) (st : SvState) (args : List (SExpr × Bool)) :
         let vs ← evalArgs fuel st rest
         return (v, sg) :: vs
 
+def execPackedTargets (fuel : Nat) (st : SvState) (replacement : LVec)
+    (targets : List (PackedTarget × Nat)) (order : List Nat) : Res SvState :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+      match order with
+      | [] => .ok st
+      | position :: rest => do
+          let (target, offset) ← match targets[position]? with
+            | some target => pure target
+            | none => .unsupported "concatenated assignment order selected an invalid destination"
+          let part := replacement.extract offset target.width
+          let updated ← match target with
+            | .whole name width twoState => do
+                let old ← match SvState.lookup st name with
+                  | some old => pure old
+                  | none => .unsupported s!"unknown packed assignment target '{name}'"
+                if old.width != width then
+                  .unsupported s!"packed assignment target '{name}' has inconsistent width"
+                else pure (SvState.set st name (if twoState then squash2v part else part))
+            | .selected name width descending indexSigned twoState index => do
+                let position ← evalSExpr fuel st index
+                let old ← match SvState.lookup st name with
+                  | some old => pure old
+                  | none => .unsupported s!"unknown selected assignment target '{name}'"
+                let part := if twoState then squash2v part else part
+                pure (SvState.set st name (selectedWrite width descending indexSigned old position part))
+          execPackedTargets fuel updated replacement targets rest
+
 /-- Execute one self-check statement, threading state, NBA queue, and
 output. A halted `Out` short-circuits (`$finish` skips the rest of the
 run). `.m0` subtrees run under the existing `execStmt`. -/
 def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
-    (stmt : SStmt) : Res (SvState × NbaQueue × Out) :=
+    (stmt : SStmt) (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) :
+    Res (SvState × NbaQueue × Out) :=
   match fuel with
   | 0 => .timeout
   | fuel + 1 =>
@@ -493,15 +562,34 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           let v ← evalSExpr fuel st value
           if nonblocking then return (st, nba ++ [(target, v)], out)
           else return (SvState.set st target v, nba, out)
+      | .selectedAssign target width descending indexSigned twoState index value => do
+          let replacement ← evalSExpr fuel st value
+          let position ← evalSExpr fuel st index
+          let old ← match SvState.lookup st target with
+            | some old => pure old
+            | none => .unsupported s!"unknown selected assignment target '{target}'"
+          let replacement := if twoState then squash2v replacement else replacement
+          let updated := selectedWrite width descending indexSigned old position replacement
+          return (SvState.set st target updated, nba, out)
+      | .packedAssign targets value => do
+          let replacement ← evalSExpr fuel st value
+          let order := assignmentOrder targets.length
+          if !validAssignmentOrder targets.length order then
+            .unsupported "concatenated assignment order must be a permutation of destinations"
+          else
+            let width := targets.foldl (fun width target => width + target.width) 0
+            let updated ← execPackedTargets fuel st (replacement.resizeU width)
+              (packedTargetSlices targets) order
+            return (updated, nba, out)
       | .ifStmt cond thenB elseB => do
           let c ← evalSExpr fuel st cond
           if c.condTrue then
-            execSStmt fuel st nba out thenB
+            execSStmt fuel st nba out thenB assignmentOrder
           else
             match elseB with
-            | some s => execSStmt fuel st nba out s
+            | some s => execSStmt fuel st nba out s assignmentOrder
             | none => .ok (st, nba, out)
-      | .block body => execSStmts fuel st nba out body.toList
+      | .block body => execSStmts fuel st nba out body.toList assignmentOrder
       | .delay _ =>
           .unsupported "#delay: the self-check tier runs at time 0 (no scheduler)"
       | .waitEvent _ _ =>
@@ -523,15 +611,16 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
 
 /-- Execute statements in order. -/
 def execSStmts (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
-    (ss : List SStmt) : Res (SvState × NbaQueue × Out) :=
+    (ss : List SStmt) (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) :
+    Res (SvState × NbaQueue × Out) :=
   match fuel with
   | 0 => .timeout
   | fuel + 1 =>
     match ss with
     | [] => .ok (st, nba, out)
     | s :: rest => do
-        let (st', nba', out') ← execSStmt fuel st nba out s
-        execSStmts fuel st' nba' out' rest
+        let (st', nba', out') ← execSStmt fuel st nba out s assignmentOrder
+        execSStmts fuel st' nba' out' rest assignmentOrder
 
 end
 
@@ -575,26 +664,28 @@ def initDecls (fuel : Nat) : List SDecl → SvState → Res SvState
 /-- Run the initial processes once each, in source order, at time 0.
 Any non-initial process is loud. A halt (`$finish`) stops the fold. -/
 def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
+    (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) →
     Res (SvState × NbaQueue × Out)
-  | [], st, nba, out => .ok (st, nba, out)
-  | .other svKind _ :: _, _, _, _ =>
+  | [], st, nba, out, _ => .ok (st, nba, out)
+  | .other svKind _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process '{svKind}' (self-check tier runs initial-only designs)"
-  | .initial body :: rest, st, nba, out => do
-      let (st', nba', out') ← execSStmt fuel st nba out body
+  | .initial body :: rest, st, nba, out, assignmentOrder => do
+      let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
       if out'.halted then .ok (st', nba', out')
-      else runInits fuel rest st' nba' out'
+      else runInits fuel rest st' nba' out' assignmentOrder
 
 /-- The self-check entry point: execute every `initial` process once at
 time 0 (source order), collecting the rendered `$display` output lines.
 `$finish` ends the run cleanly. The time-0 NBA queue commits after all
 initials — after the last possible output, so it is dropped here. -/
-def runSelfCheck (d : Design) (fuel : Nat) : Res (List String) := do
+def runSelfCheck (d : Design) (fuel : Nat)
+    (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) : Res (List String) := do
   if let some tag := d.procs.findSome? fun p =>
       match p with | .other svKind _ => some svKind | _ => none then
     return ← .unsupported
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
   let st ← initDecls fuel d.decls.toList []
-  let (_, _, out) ← runInits fuel d.procs.toList st [] {}
+  let (_, _, out) ← runInits fuel d.procs.toList st [] {} assignmentOrder
   return out.flush
 
 /-! ## Envelope ingestion (schema `sv-0.1` + the §f self-check vocabulary)
@@ -728,13 +819,42 @@ def targetName (j : Json) : Except String String := do
   | .m0 (.unsupported svKind _) => .error s!"unsupported assignment target ({svKind})"
   | _ => .error "assignment target is not a plain identifier"
 
+partial def parsePackedTargets (j : Json) : Except String (List PackedTarget) := do
+  let width ← getNatF j "width"
+  if width == 0 then throw "packed assignment target has zero width"
+  match ← getStrF j "kind" with
+  | "Ident" =>
+      return [.whole (← targetName j) width (← getBoolF j "two_state")]
+  | "SelectTarget" =>
+      return [.selected (← targetName (← getF j "value")) width
+        (← getBoolF j "descending") (← getBoolF j "index_signed")
+        (← getBoolF j "two_state") (← parseSExpr (← getF j "index"))]
+  | "ConcatTarget" =>
+      let parts ← (← getArrF j "parts").toList.mapM parsePackedTargets
+      let targets := parts.flatten
+      if targets.foldl (fun total target => total + target.width) 0 != width then
+        throw "concatenated assignment target has inconsistent width"
+      return targets
+  | other => throw s!"unknown packed assignment target kind '{other}'"
+
 partial def parseSStmt (j : Json) : Except String SStmt := do
   let kind ← getStrF j "kind"
   match kind with
   | "Block" => return .mkBlock (← (← getArrF j "stmts").mapM parseSStmt)
   | "BlockingAssign" =>
-      return .mkAssign false (← targetName (← getF j "target"))
-        (← parseSExpr (← getF j "value"))
+      let target ← getF j "target"
+      let targetKind ← getStrF target "kind"
+      if targetKind == "ConcatTarget" then
+        return .packedAssign (← parsePackedTargets target) (← parseSExpr (← getF j "value"))
+      else if targetKind == "SelectTarget" then
+        let width ← getNatF target "width"
+        if width == 0 then throw "selected assignment target has zero width"
+        return .selectedAssign (← targetName (← getF target "value")) width
+          (← getBoolF target "descending") (← getBoolF target "index_signed")
+          (← getBoolF target "two_state") (← parseSExpr (← getF target "index"))
+          (← parseSExpr (← getF j "value"))
+      else
+        return .mkAssign false (← targetName target) (← parseSExpr (← getF j "value"))
   | "NonblockingAssign" =>
       return .mkAssign true (← targetName (← getF j "target"))
         (← parseSExpr (← getF j "value"))

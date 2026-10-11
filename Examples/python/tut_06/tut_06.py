@@ -7,3 +7,7 @@ def count_up(n):
 
 def true_div(a, b):
     return a / b
+
+
+def negative_power(a):
+    return a ** -1

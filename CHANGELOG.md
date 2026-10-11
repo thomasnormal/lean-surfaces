@@ -12,6 +12,34 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- Binary64 float literals/defaults and true division on both Python interpreter
+  surfaces, backed by a kernel-reducible word/rational core rather than native
+  floating-point axioms, with typed `PyFloat`/`ToVal` marshalling. Integer ratios
+  round directly; mixed division preserves
+  integer-conversion order. Signed zero, subnormal ties, overflow, exact mixed
+  comparisons, rendering, unary signs, `abs` and `int` have differential tests.
+  The extracted `float_lab` artifact has concrete kernel proofs and script tests.
+  Other float arithmetic, non-finite division, float keys, methods and NaN
+  identity/container ordering remain explicit unfinished coverage work.
+
+### Changed
+
+- `Const`, `Val` and `RVal` add `float`; `BinOp` adds `div`; `PyErr` adds
+  distinct true/float zero-division forms and an overflow message. Downstream
+  exhaustive matches must handle these constructors. Binary64 boundary values
+  use decimal word strings, rejecting out-of-range words rather than truncating.
+  Existing judgment and theorem statements retain their signatures.
+
+### Fixed
+
+- Numeric `itertools.count` admission no longer fabricates a nonnumeric
+  `TypeError` for floating-point arguments or silently erases a Boolean
+  start's first-value subtype under non-unit stepping. Those unmodelled
+  frames refuse explicitly; integer/unit-step cases and invalid-argument
+  exceptions retain their checked behavior.
+
 ## [0.1.7] — 2026-10-10
 
 ### Added

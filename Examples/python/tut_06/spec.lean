@@ -24,8 +24,9 @@ the exit goal (tutorial 06 shows the stuck state;
 `Examples/python/tut_06/proof.lean`). -/
 theorem count_up_total (n : PyInt) (hn : 0 ≤ n) : tut_06.count_up(n) ==> n := by proofs
 
-/-! Failure mode 6: `a / b` is true division — a float, outside the v0
-semantic tier. The interpreter refuses *loudly* (`Res.unsupported`,
+/-! True division now returns binary64; negative powers remain unfinished
+coverage work. The interpreter refuses *loudly* (`Res.unsupported`,
 never a wrong value); `unsupported` has no surface arrow on purpose, so
 the check stays a raw `#guard … matches`. -/
-#guard (callFunction tut_06 "true_div" #[.int 7, .int 2] 100 matches .unsupported _)
+#py_check tut_06.true_div(7, 2) = Float64.ofBits 0x400c000000000000
+#guard (callFunction tut_06 "negative_power" #[.int 2] 100 matches .unsupported _)

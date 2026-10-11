@@ -44,6 +44,7 @@ inductive RVal where
   | ellipsis
   | bool  (b : Bool)
   | int   (n : Int)
+  | float (value : Float64)
   | str   (s : String)
   /-- Tuples may contain refs: aliasing through a tuple is faithful. -/
   | tuple (xs : Array RVal)
@@ -350,7 +351,7 @@ preservation statement is the dict tier's regression case 18). -/
 mutual
   /-- Every `.ref` inside the value points below `h.size`. -/
   def RVal.WF (h : Heap) : RVal → Prop
-    | .none | .ellipsis | .bool _ | .int _ | .str _ | .rangeV .. => True
+    | .none | .ellipsis | .bool _ | .int _ | .float _ | .str _ | .rangeV .. => True
     | .tuple xs => RVal.WFList h xs.toList
     | .listV xs => RVal.WFList h xs.toList
     | .ntuple _ _ xs => RVal.WFList h xs.toList
@@ -619,6 +620,7 @@ mutual
     | .ellipsis => .ellipsis
     | .bool b => .bool b
     | .int n => .int n
+    | .float value => .float value
     | .str s => .str s
     | .list xs => .listV (RVal.thawList xs.toList).toArray
     | .tuple xs => .tuple (RVal.thawList xs.toList).toArray
@@ -642,6 +644,7 @@ mutual
     | .ellipsis => .ok .ellipsis
     | .bool b => .ok (.bool b)
     | .int n => .ok (.int n)
+    | .float value => .ok (.float value)
     | .str s => .ok (.str s)
     | .listV xs => do
         let vs ← RVal.freezeList xs.toList
@@ -679,6 +682,7 @@ mutual
     | .ellipsis => rfl
     | .bool _ => rfl
     | .int _ => rfl
+    | .float _ => rfl
     | .str _ => rfl
     | .list xs => by
         simp [RVal.thaw, RVal.freeze, RVal.freezeList_thawList xs.toList]
@@ -707,6 +711,8 @@ mutual
     | .bool _, v, h => by
         cases (Res.ok.inj h); rfl
     | .int _, v, h => by
+        cases (Res.ok.inj h); rfl
+    | .float _, v, h => by
         cases (Res.ok.inj h); rfl
     | .str _, v, h => by
         cases (Res.ok.inj h); rfl
@@ -752,6 +758,7 @@ mutual
     | .ellipsis, error => by simp [RVal.freeze]
     | .bool _, e => by simp [RVal.freeze]
     | .int _, e => by simp [RVal.freeze]
+    | .float _, e => by simp [RVal.freeze]
     | .str _, e => by simp [RVal.freeze]
     | .listV xs, e => by
         simp only [RVal.freeze]
@@ -858,7 +865,7 @@ mutual
   recursively). On this fragment thawing is pure — the bridge every
   pre-H2 boundary statement rides. Kernel-computable (list-structural). -/
   def Val.listFree : Val → Bool
-    | .none | .ellipsis | .bool _ | .int _ | .str _ => true
+    | .none | .ellipsis | .bool _ | .int _ | .float _ | .str _ => true
     | .list _ => false
     | .tuple xs => Val.listFreeList xs.toList
 
@@ -884,6 +891,7 @@ mutual
     | .ellipsis => (h, .ellipsis)
     | .bool b => (h, .bool b)
     | .int n => (h, .int n)
+    | .float value => (h, .float value)
     | .str s => (h, .str s)
     | .tuple xs =>
       match RVal.thawListH h xs.toList with
@@ -918,6 +926,7 @@ mutual
     | .ellipsis, _, heap => rfl
     | .bool _, _, h => rfl
     | .int _, _, h => rfl
+    | .float _, _, h => rfl
     | .str _, _, h => rfl
     | .tuple xs, hf, h => by
         simp only [RVal.thawH, RVal.thaw,
@@ -951,7 +960,7 @@ mutual
   frozen recursion points (their fueled unfolding on symbolic operands is
   unbounded, the `execWhile` situation exactly). -/
   def RVal.refFree : RVal → Bool
-    | .none | .ellipsis | .bool _ | .int _ | .str _ | .rangeV .. => true
+    | .none | .ellipsis | .bool _ | .int _ | .float _ | .str _ | .rangeV .. => true
     | .tuple xs => RVal.refFreeList xs.toList
     | .listV xs => RVal.refFreeList xs.toList
     | .ntuple _ _ xs => RVal.refFreeList xs.toList
@@ -983,6 +992,7 @@ mutual
         | .ellipsis => .ok .ellipsis
         | .bool b => .ok (.bool b)
         | .int n => .ok (.int n)
+        | .float value => .ok (.float value)
         | .str s => .ok (.str s)
         | .listV xs => do
             let vs ← RVal.freezeListH h fuel path xs.toList
@@ -1045,6 +1055,7 @@ mutual
     | .ellipsis => .ok .ellipsis
     | .bool b => .ok (.bool b)
     | .int n => .ok (.int n)
+    | .float value => .ok (.float value)
     | .str s => .ok (.str s)
     | .listV xs => do
         let vs ← RVal.freezeListB h fuel xs.toList
@@ -1079,6 +1090,7 @@ mutual
     | .ellipsis => rfl
     | .bool _ => rfl
     | .int _ => rfl
+    | .float _ => rfl
     | .str _ => rfl
     | .list xs => by
         simp only [RVal.thaw, RVal.freezeB,
@@ -1132,6 +1144,7 @@ mutual
     | .ellipsis => rfl
     | .bool _ => rfl
     | .int _ => rfl
+    | .float _ => rfl
     | .str _ => rfl
     | .list xs => by
         simpa [RVal.thaw, RVal.refFree] using
@@ -1172,6 +1185,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
       | ellipsis => simp [RVal.freezeH] at hc
       | bool b => simp [RVal.freezeH] at hc
       | int n => simp [RVal.freezeH] at hc
+      | float value => simp [RVal.freezeH] at hc
       | str s => simp [RVal.freezeH] at hc
       | rangeV lo hi step => simp [RVal.freezeH] at hc
       | listV xs =>
@@ -1244,6 +1258,7 @@ mutual
     | .ellipsis, error => by simp [RVal.freezeB]
     | .bool b, e => by simp [RVal.freezeB]
     | .int n, e => by simp [RVal.freezeB]
+    | .float value, e => by simp [RVal.freezeB]
     | .str s, e => by simp [RVal.freezeB]
     | .listV xs, e => by
         simp only [RVal.freezeB]
@@ -1317,6 +1332,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
       | ellipsis => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | bool b => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | int n => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
+      | float value => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | str s => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | rangeV lo hi step => simp [RVal.freezeH] at hc
       | listV xs =>
@@ -1383,6 +1399,7 @@ mutual
     | .ellipsis, value, frozen, _ => by cases (Res.ok.inj frozen); rfl
     | .bool _, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .int _, v, hc, _ => by cases (Res.ok.inj hc); rfl
+    | .float _, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .str _, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .listV xs, v, hc, hlf => by
         simp only [RVal.freezeB, Res.bind_eq_ok, Res.pure_eq] at hc

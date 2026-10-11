@@ -994,6 +994,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
             | ellipsis => exact .unsupported
             | bool b => exact .unsupported
             | int n => exact .unsupported
+            | float value => exact .unsupported
             | str sv => exact .unsupported
             | tuple xs => exact .unsupported
             | listV xs => exact .unsupported
@@ -1022,6 +1023,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
           | ellipsis => exact .exn hs2 _
           | bool b => exact .exn hs2 _
           | int n => exact .exn hs2 _
+          | float value => exact .exn hs2 _
           | str sv => exact ihGen m s2 _ hs2
           | tuple xs => exact ihGen m s2 _ hs2
           | listV xs => exact ihGen m s2 _ hs2
@@ -1217,6 +1219,7 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
       | ellipsis => exact .exn hs2 _
       | bool b => exact .exn hs2 _
       | int n => exact .exn hs2 _
+      | float value => exact .exn hs2 _
   | ifStmt test body orelse sp =>
     simp only [execStmt]
     refine .bind (ihE m st test h) fun s2 t hs2 => ?_
@@ -1699,6 +1702,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
+                          case float value =>
+                            ce_norm
+                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            obtain ⟨h9, r9⟩ := hr
+                            exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case str s0 =>
                             ce_norm
                             refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
@@ -1826,6 +1834,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           case ellipsis => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
+                          case float value => exact .exn hs2 _
                           case ref a =>
                             ce_norm
                             cases hh : Heap.get? s2.world.heap a with
@@ -1871,6 +1880,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           case none => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
+                          case float value => exact .exn hs2 _
                           case rangeV lo hi step =>
                             ce_norm
                             refine .bind (.liftRes hs2 _) fun s3 xs hs3 => ?_
@@ -1954,6 +1964,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           case ellipsis => exact .exn hs2 _
                           case bool value => exact .exn hs2 _
                           case int value => exact .exn hs2 _
+                          case float value => exact .exn hs2 _
                     case btuple =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -1967,6 +1978,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           case ellipsis => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
+                          case float value => exact .exn hs2 _
                           case rangeV lo hi step => exact .liftRes hs2 _
                           case ref a =>
                             ce_norm
@@ -2002,6 +2014,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           case ellipsis => exact .exn hs2 _
                           case bool b => exact .exn hs2 _
                           case int n => exact .exn hs2 _
+                          case float value => exact .exn hs2 _
                           case rangeV lo hi step =>
                             exact .bind (.liftRes hs2 _) fun s3 xs hs3 => .allocList hs3 _
                           case ref a =>
@@ -2069,7 +2082,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     case bcount =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases hca : countArgs vs with
-                      | none => exact .exn hs2 _
+                      | none => exact .liftRes hs2 _
                       | some pr =>
                         obtain ⟨start, step⟩ := pr
                         exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs2, hs2])
@@ -2325,6 +2338,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                               obtain ⟨h9, r9⟩ := hr
                               exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                             case int n =>
+                              ce_norm
+                              refine .bind (.liftRes hs4 _) fun s9 hr hs9 => ?_
+                              obtain ⟨h9, r9⟩ := hr
+                              exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
+                            case float value =>
                               ce_norm
                               refine .bind (.liftRes hs4 _) fun s9 hr hs9 => ?_
                               obtain ⟨h9, r9⟩ := hr

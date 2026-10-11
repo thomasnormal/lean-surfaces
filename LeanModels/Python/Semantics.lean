@@ -96,6 +96,7 @@ def Val.typeName : Val → String
   | .ellipsis => "ellipsis"
   | .bool _ => "bool"
   | .int _ => "int"
+  | .float _ => "float"
   | .str _ => "str"
   | .list _ => "list"
   | .tuple _ => "tuple"
@@ -110,6 +111,7 @@ def RVal.typeName : RVal → String
   | .ellipsis => "ellipsis"
   | .bool _ => "bool"
   | .int _ => "int"
+  | .float _ => "float"
   | .str _ => "str"
   | .listV _ => "list"
   | .tuple _ => "tuple"
@@ -192,6 +194,7 @@ def BinOp.symbol : BinOp → String
   | .add => "+"
   | .sub => "-"
   | .mult => "*"
+  | .div => "/"
   | .floorDiv => "//"
   | .mod => "%"
   | .pow => "**"
@@ -278,6 +281,7 @@ def truthy : RVal → Res Bool
   | .ellipsis => .ok true
   | .bool b => .ok b
   | .int n => .ok (n != 0)
+  | .float value => .ok (!value.isZero)
   | .str s => .ok (!s.isEmpty)
   | .listV xs => .ok (xs.size != 0)
   | .tuple xs => .ok (xs.size != 0)
@@ -323,6 +327,17 @@ def asInt : RVal → Option Int
   | .int n => some n
   | .bool b => some (if b then 1 else 0)
   | _ => Option.none
+
+mutual
+  def RVal.hasFloat : RVal → Bool
+    | .float _ => true
+    | .tuple values | .listV values | .ntuple _ _ values => RVal.hasFloatList values.toList
+    | _ => false
+
+  def RVal.hasFloatList : List RVal → Bool
+    | [] => false
+    | value :: rest => value.hasFloat || RVal.hasFloatList rest
+end
 
 /-- Admit integer range fields without erasing their bool subtype. -/
 def asRangeBound : RVal → Option RangeBound
@@ -384,6 +399,14 @@ mutual
     | .bool a, .int m => .ok ((if a then (1 : Int) else 0) == m)
     | .int n, .bool b => .ok (n == (if b then (1 : Int) else 0))
     | .int n, .int m => .ok (n == m)
+    | .float a, .float b =>
+        if a.isNaN || b.isNaN then
+          .unsupported "NaN equality requires object identity for container comparisons"
+        else .ok (a.eqv b)
+    | .float a, .int n => .ok (a.eqInt n)
+    | .int n, .float a => .ok (a.eqInt n)
+    | .float a, .bool b => .ok (a.eqInt (if b then 1 else 0))
+    | .bool b, .float a => .ok (a.eqInt (if b then 1 else 0))
     | .str s, .str t => .ok (s == t)
     | .listV xs, .listV ys => valEqList xs.toList ys.toList
     | .tuple xs, .tuple ys => valEqList xs.toList ys.toList
@@ -462,6 +485,21 @@ mutual
     | .bool a, .int m => .ok ((if a then (1 : Int) else 0) < m)
     | .int n, .bool b => .ok (n < (if b then (1 : Int) else 0))
     | .int n, .int m => .ok (n < m)
+    | .float left, .float right =>
+        if left.isNaN || right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
+        else .ok (left.lt right)
+    | .float left, .int right =>
+        if left.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
+        else .ok (left.ltInt right)
+    | .int left, .float right =>
+        if right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
+        else .ok (Float64.intLt left right)
+    | .float left, .bool right =>
+        if left.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
+        else .ok (left.ltInt (if right then 1 else 0))
+    | .bool left, .float right =>
+        if right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
+        else .ok (Float64.intLt (if left then 1 else 0) right)
     | .str s, .str t => .ok (strCmp .lt s t)
     | .tuple xs, .tuple ys => rvalLtList xs.toList ys.toList
     | .tuple xs, .ntuple _ _ ys => rvalLtList xs.toList ys.toList
@@ -498,6 +536,14 @@ def ordFromLt (op : CmpOp) (a b : RVal) : Res Bool :=
   | .gtE => do let l ← rvalLt a b; return !l
   | _ => .unsupported "ordFromLt: non-ordering operator (report this)"
 
+def floatOrder (op : CmpOp) (equal less greater : Bool) : Bool :=
+  match op with
+  | .lt => less
+  | .ltE => less || equal
+  | .gt => greater
+  | .gtE => greater || equal
+  | _ => false
+
 /-- One comparison step. `==`/`!=` are `valEq` (`Res`-valued since H1 — see
 there). Identity against `None` or `Ellipsis` is value-determined because
 both are singletons. Other immediate identities stay loud (small-int caching,
@@ -531,6 +577,18 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
     | some x, some y => .ok (intCmp op x y)
     | _, _ =>
       match a, b with
+      | .float left, .float right =>
+        .ok (floatOrder op (left.eqv right) (left.lt right) (right.lt left))
+      | .float left, .int right =>
+        .ok (floatOrder op (left.eqInt right) (left.ltInt right) (Float64.intLt right left))
+      | .int left, .float right =>
+        .ok (floatOrder op (right.eqInt left) (Float64.intLt left right) (right.ltInt left))
+      | .float left, .bool right =>
+        let integer := if right then 1 else 0
+        .ok (floatOrder op (left.eqInt integer) (left.ltInt integer) (Float64.intLt integer left))
+      | .bool left, .float right =>
+        let integer := if left then 1 else 0
+        .ok (floatOrder op (right.eqInt integer) (Float64.intLt integer right) (right.ltInt integer))
       | .str s, .str t => .ok (strCmp op s t)
       -- H6: tuple/namedtuple ordering, class-erased and lexicographic —
       -- ONE relation with `sorted` (`rvalLt`, via `ordFromLt`)
@@ -668,6 +726,10 @@ def strOfVal : RVal → Res RVal
     match intDecimal value with
     | some text => .ok (.str text)
     | Option.none => .unsupported "integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
+  | .float value =>
+    match value.repr with
+    | some text => .ok (.str text)
+    | none => .unsupported "float rendering is outside the tier"
   | .bool b => .ok (.str (if b then "True" else "False"))
   | .str s => .ok (.str s)
   | .none => .ok (.str "None")
@@ -750,13 +812,15 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
       .unsupported "a heap object as a '%'-format argument is outside the tier (its repr lives in the heap, which the operator cannot see; docs/memory-model.md §`%`-formatting on strings)"
   | v =>
     if c == 'd' then
-      match asInt v with
+      match (match v with | .float value => value.toInt | _ => asInt v) with
       | some value =>
         match intDecimal value with
         | some text => .ok text
         | Option.none => .unsupported "'%d' integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
       -- CPython leaves this type name UNQUOTED (measured against 3.9)
-      | Option.none => .exn (.typeError s!"%d format: a number is required, not {v.typeName}")
+      | Option.none =>
+        if v.hasFloat then .unsupported "'%d' of a non-finite float is outside the tier"
+        else .exn (.typeError s!"%d format: a number is required, not {v.typeName}")
     else
       match (if c == 'r' then strFormatRepr v else strFormatStr v) with
       | some s => .ok s
@@ -852,6 +916,11 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .add => .ok (.int (x + y))
     | .sub => .ok (.int (x - y))
     | .mult => .ok (.int (x * y))
+    | .div =>
+        match Float64.divideInt x y with
+        | .ok value => .ok (.float value)
+        | .error .zeroDivision => .exn .trueZeroDivisionError
+        | .error .overflow => .exn (.overflowError "integer division result too large for a float")
     | .floorDiv =>
         if y = 0 then .exn .zeroDivisionError else .ok (.int (Int.fdiv x y))
     | .mod =>
@@ -909,6 +978,36 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
          | _, _ => .ok (.int (intAnd x y)))
   | _, _ =>
     match op, a, b with
+    | .div, .float left, .float right =>
+        match Float64.divideFinite left right with
+        | .ok value => .ok (.float value)
+        | .error .zeroDivision => .exn .floatZeroDivisionError
+        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+    | .div, .int left, .float right =>
+        match Float64.divideIntFloat left right with
+        | .ok value => .ok (.float value)
+        | .error .zeroDivision => .exn .floatZeroDivisionError
+        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+    | .div, .float left, .int right =>
+        match Float64.divideFloatInt left right with
+        | .ok value => .ok (.float value)
+        | .error .zeroDivision => .exn .floatZeroDivisionError
+        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+    | .div, .bool left, .float right =>
+        match Float64.divideIntFloat (if left then 1 else 0) right with
+        | .ok value => .ok (.float value)
+        | .error .zeroDivision => .exn .floatZeroDivisionError
+        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
+    | .div, .float left, .bool right =>
+        match Float64.divideFloatInt left (if right then 1 else 0) with
+        | .ok value => .ok (.float value)
+        | .error .zeroDivision => .exn .floatZeroDivisionError
+        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+        | .error .nonFinite => .unsupported "division involving a non-finite float is outside the tier"
     | .add, .str s, .str t => .ok (.str (s ++ t))
     | .add, .listV xs, .listV ys => .ok (.listV (xs ++ ys))
     | .add, .tuple xs, .tuple ys => .ok (.tuple (xs ++ ys))
@@ -923,8 +1022,12 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | op, _, .ref _ =>
         .unsupported
           s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
+    | .mult, .float _, _ | .mult, _, .float _ =>
+        .unsupported "float multiplication is outside the tier"
     | .mult, left, right => sequenceMult left right
     | .mod, .str fmt, rhs => strFormat fmt rhs
+    | _, .float _, _ | _, _, .float _ =>
+        .unsupported "float arithmetic beyond true division is outside the tier"
     | op, a, b =>
         .exn (.typeError
           s!"unsupported operand type(s) for {op.symbol}: '{a.typeName}' and '{b.typeName}'")
@@ -941,6 +1044,7 @@ def evalUnaryOp (op : UnaryOp) (v : RVal) : Res RVal :=
   | .not => do let b ← truthy v; return .bool (!b)
   | .usub =>
     match v with
+    | .float value => .ok (.float value.neg)
     | .ref _ =>
         .unsupported "unary '-' on a heap object is outside the H1 tier (docs/memory-model.md)"
     | v =>
@@ -949,6 +1053,7 @@ def evalUnaryOp (op : UnaryOp) (v : RVal) : Res RVal :=
       | Option.none => .exn (.typeError s!"bad operand type for unary -: '{v.typeName}'")
   | .uadd =>
     match v with
+    | .float value => .ok (.float value)
     | .ref _ =>
         .unsupported "unary '+' on a heap object is outside the H1 tier (docs/memory-model.md)"
     | v =>
@@ -1003,6 +1108,7 @@ def Const.toVal : Const → Val
   | .ellipsis => .ellipsis
   | .bool b => .bool b
   | .int n => .int n
+  | .float value => .float value
   | .str s => .str s
 
 /-- Constant literal → runtime value (constants are scalars — no
@@ -1012,6 +1118,7 @@ def Const.toRVal : Const → RVal
   | .ellipsis => .ellipsis
   | .bool b => .bool b
   | .int n => .int n
+  | .float value => .float value
   | .str s => .str s
 
 /-- `len(v)` for `str`/`listV`/`tuple` (str counts code points), else
@@ -1188,6 +1295,7 @@ before the `TypeError` fallback. -/
 def absVal : RVal → Res RVal
   | .int n => .ok (.int (if n < 0 then -n else n))
   | .bool b => .ok (.int (if b then 1 else 0))
+  | .float value => .ok (.float value.abs)
   | .ref _ =>
       .unsupported "abs() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"bad operand type for abs(): '{v.typeName}'")
@@ -1245,6 +1353,12 @@ fallback. -/
 def intCastVal : RVal → Res RVal
   | .int n => .ok (.int n)
   | .bool b => .ok (.int (if b then 1 else 0))
+  | .float value =>
+    match value.toInt with
+    | some integer => .ok (.int integer)
+    | none =>
+      if value.isNaN then .exn (.valueError "cannot convert float NaN to integer")
+      else .exn (.overflowError "cannot convert float infinity to integer")
   | .str s => intOfStr s
   | .ref _ =>
       .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
@@ -1375,6 +1489,7 @@ mutual
   for a container that contains itself, and so does this. -/
   def reprVal (h : Heap) (fuel : Nat) (active : List Addr) : RVal → Option String
     | .int value => intDecimal value
+    | .float value => value.repr
     | .bool b => some (if b then "True" else "False")
     | .none => some "None"
     | .ellipsis => some "Ellipsis"
@@ -1837,6 +1952,7 @@ mutual
   all). -/
   def hashableKey : RVal → Bool
     | .none | .ellipsis | .bool _ | .int _ | .str _ => true
+    | .float _ => false
     | .tuple xs => hashableKeyList xs.toList
     -- a namedtuple hashes as a tuple (tuple.__hash__): hashable iff its
     -- elements are — sunfish's `(pos, depth, root)` keys stay in tier
@@ -1957,7 +2073,8 @@ actually failed. `getD` supplies the key's own name for the arm the
 caller's precondition makes unreachable — `keyRefusal` is only reached
 when `hashableKey k = false`, and then the search always finds one. -/
 def keyRefusal (h : Heap) (k : RVal) : Res α :=
-  if keyHasInstanceRef h k then
+  if k.hasFloat then .unsupported "float dictionary and set keys are outside the tier"
+  else if keyHasInstanceRef h k then
     .unsupported "a class instance or generator as a dict key (identity hash) is outside the tier (docs/memory-model.md)"
   else
     .exn (.typeError
@@ -4125,9 +4242,34 @@ def countArgs : List RVal → Option (Int × Int)
   | [s] => (asInt s).map (fun a => (a, 1))
   | [s, d] =>
     (match asInt s, asInt d with
-     | some a, some b => some (a, b)
+     | some a, some b =>
+       match s with
+       | .bool _ => if b = 1 then some (a, b) else Option.none
+       | _ => some (a, b)
      | _, _ => Option.none)
   | _ => Option.none
+
+/-- Classify an integer-only count-frame admission miss without inventing
+a nonnumeric exception for a valid floating-point counter. -/
+def countRefusal (values : List RVal) : Res RVal :=
+  if values.length > 2 then
+    .exn (.typeError s!"count() takes at most 2 arguments ({values.length} given)")
+  else if values.all (fun
+      | .int _ | .bool _ | .float _ => true
+      | _ => false) && values.any (fun
+      | .float _ => true
+      | _ => false) then
+    .unsupported "float stepping in itertools.count is not yet modelled"
+  else
+    match values with
+    | [.bool _, step] =>
+      match asInt step with
+      | some integer =>
+        if integer != 1 then
+          .unsupported "itertools.count with a bool start and non-unit step must preserve its first bool value; this is not yet modelled"
+        else .exn (.typeError "a number is required")
+      | Option.none => .exn (.typeError "a number is required")
+    | _ => .exn (.typeError "a number is required")
 
 /-! ## Generator continuations (H4, docs/memory-model.md §generator
 semantics)
@@ -5481,7 +5623,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     (match countArgs vs with
                      | Option.none =>
-                       .exn st (.typeError "a number is required")
+                       Run.liftRes st (countRefusal vs)
                      | some (start, step) =>
                        let g : Obj :=
                          .generator "<count>" [] [.countFrom start step] .suspended

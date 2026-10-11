@@ -1,9 +1,11 @@
 # Python binary64 floats and true division
 
-Implementation tracking: issue #10. This work remains unfinished. The binary64
-core is not yet connected to the Python AST or either interpreter; the current
-coverage page still correctly records float constants and true division as
-refused. A successful core test is not evidence that a Python program runs.
+Implementation tracking: issue #10. Float literals and integer/bool, finite
+float and mixed true division connect to the same kernel-reducible binary64
+core on both interpreter surfaces. The `float_lab` real extracted artifact
+has concrete kernel proofs, differential rows and script transcripts. This
+is not complete float-language support: remaining arithmetic, constructors,
+non-finite division, hashing and identity are still language-coverage work.
 
 ## Representation and specification
 
@@ -54,24 +56,44 @@ display in the [CPython 3.9 floating-point tutorial](https://github.com/python/c
 The implementation is checked against the actual pinned interpreter, not
 just a reading of that explanation.
 
-## Integration requirements
+## Interpreter integration
 
-The following are required before this item is complete:
+The extractor records a float literal/default as an unsigned decimal binary64
+word using `struct.pack`, without evaluating a program expression. Ingestion
+validates `0 <= bits < 2^64`; boundary JSON uses
+`{"t":"float","bits":"<unsigned decimal word>"}` and rejects an invalid
+word rather than truncating it. `Const.float`, `Val.float` and `RVal.float`
+preserve the word through reflection, thaw/freeze and heap-boundary proofs.
+The typed proof surface supplies `PyFloat` (definitionally `Float64`) and exact
+`ToVal` marshalling, so artifact theorem statements need not expose `Val`.
 
-- Extract float constants as their exact bit pattern without evaluating any
-  program expression; validate the full bit width on ingestion.
-- Add literal, runtime and boundary value forms, and a true-division operator,
-  with coherent thaw/freeze, JSON transport and elaborator reflection.
-- Connect both the executable and proof interpreters to the same numeric core.
-- Implement truthiness, unary signs, rendering, mixed numeric comparisons and
-  division error ordering; audit every fallback for fabricated exceptions.
-- Keep currently unmodelled float operations loud. In particular, a known
-  numeric operation must not fall into an integer-only `TypeError`, and an
-  existing float attribute must not be reported as missing.
-- Preserve the existing theorem statements, frame invariants, fuel monotonicity
-  and clock-erasure results; add kernel proofs against an extracted Python file.
-- Extend the existing differential and grammar corpora, classify remaining
-  refusals, regenerate coverage, and pass the full repository landing gates.
+Both interpreters share the numeric adapters in `Semantics.lean`. Truthiness,
+unary signs, `abs`, `int`, scalar/container rendering, bare `%s`/`%r`/finite
+`%d`, f-string conversions and exact mixed comparisons are wired. `int(nan)`
+and `int(inf)` retain their distinct exception classes/messages. Integer true
+division and float division have distinct zero-division messages, and the
+`ArithmeticError` handler relation covers both plus `OverflowError`.
+
+Finite numeric `sorted`/`max`/`min` use the shared exact order. NaN comparisons
+with `<`/`<=`/`>`/`>=` are false, but ordering NaNs inside containers refuses:
+the insertion-sort implementation cannot claim CPython's results for a
+non-total order. NaN equality and float dictionary/set keys (including nested
+tuple keys) also refuse. Existing float attributes remain loud rather than
+fabricating missing-attribute exceptions. Other float arithmetic must not fall
+into an integer-only `TypeError`.
+
+The `itertools.count` frame currently supports integer stepping. Valid float
+starts/steps therefore refuse at admission rather than fabricating the
+nonnumeric `TypeError`. Boolean starts with a non-unit step also refuse:
+CPython preserves the initial Boolean in that case, unlike its unit-step
+integer path. Invalid nonnumeric arguments and excessive positional arity
+retain their faithful exceptions. These counter-frame limitations remain
+unfinished work, not scope exclusions.
+
+The new value forms add scalar proof cases without changing existing theorem
+statements. `float_lab` proves concrete results against its extracted Python
+file by kernel reduction. These proofs do not claim general symbolic float
+automation; the global walker has no numeric-literal shortcuts.
 
 NaN introduces an additional object-identity issue: its numerical comparison
 is false, but container element comparison can shortcut on object identity.

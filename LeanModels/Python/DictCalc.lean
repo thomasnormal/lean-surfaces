@@ -75,6 +75,7 @@ mutual
     | .ellipsis => some .ellipsis
     | .bool b => some (.int (if b then 1 else 0))
     | .int n => some (.int n)
+    | .float _ => Option.none
     | .str s => some (.str s)
     | .tuple xs => (keyNFList xs.toList).map .tup
     | .ntuple _ _ xs => (keyNFList xs.toList).map .tup
@@ -115,6 +116,7 @@ mutual
         cases b
         case bool y => cases y <;> simp [keyEq, keyNF]
         all_goals simp [keyEq, keyNF, some_eq_map_tup]
+    | .float _, other => by cases other <;> simp [keyEq, keyNF]
     | .str s, b => by cases b <;> simp [keyEq, keyNF, some_eq_map_tup]
     | .listV _, b => by cases b <;> simp [keyEq, keyNF]
     | .rangeV .., b => by cases b <;> simp [keyEq, keyNF]
@@ -159,6 +161,7 @@ mutual
     | .ellipsis => by simp [hashableKey, keyNF]
     | .bool _ => by simp [hashableKey, keyNF]
     | .int _ => by simp [hashableKey, keyNF]
+    | .float _ => by simp [hashableKey, keyNF]
     | .str _ => by simp [hashableKey, keyNF]
     | .listV _ => by simp [hashableKey, keyNF]
     | .rangeV .. => by simp [hashableKey, keyNF]
@@ -379,7 +382,9 @@ theorem hashableKey_of_heapStore {h h' : Heap} {a : Addr} {k v : RVal}
   · exact hk
   · exfalso
     simp only [heapStore, hg, if_neg hk, keyRefusal] at hs
-    split at hs <;> simp at hs
+    split at hs
+    · cases hs
+    · split at hs <;> cases hs
 
 /-- **The heap-level preservation**: `self.tp_score[key] = entry`. -/
 theorem Bracket.TableAt.store {S : Bracket} (hd : S.KeyDetermined)
@@ -427,7 +432,10 @@ theorem Bracket.TableAt.get {S : Bracket} (hd : S.KeyDetermined)
       have : v = w := by simpa using (Res.ok.inj hg).symm
       exact Or.inr (this ▸ hok.find hd hf)
   · rw [if_neg hk, keyRefusal] at hg
-    exfalso; split at hg <;> simp at hg
+    exfalso
+    split at hg
+    · cases hg
+    · split at hg <;> cases hg
 
 /-! ## §5 Pair keys, and the depth separation -/
 
@@ -476,6 +484,7 @@ theorem keyInt_congr : (a b : RVal) → keyEq a b = true → keyInt a = keyInt b
   | .ellipsis, other, equality => by cases other <;> simp_all [keyEq, keyInt]
   | .bool x, b, h => by cases b <;> cases x <;> simp_all [keyEq, keyInt]
   | .int _, b, h => by cases b <;> simp_all [keyEq, keyInt]
+  | .float _, other, equality => by cases other <;> simp_all [keyEq, keyInt]
   | .str _, b, h => by cases b <;> simp_all [keyEq, keyInt]
   | .listV _, b, h => by cases b <;> simp_all [keyEq]
   | .rangeV .., b, h => by cases b <;> simp_all [keyEq]

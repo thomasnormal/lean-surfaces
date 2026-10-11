@@ -90,7 +90,7 @@ don't hide).
 |---|---|
 | Integers | Arbitrary precision → Lean `Int`, exact. JSON carries them as decimal strings. |
 | `//`, `%` | Python floors: use `Int.fdiv` / `Int.fmod` (NOT `/`, `Int.div`, `%`, `Int.emod`). Divisor 0 → `ZeroDivisionError`. |
-| `/` | True division yields float → `unsupported` in v0. |
+| `/` | Integer/bool ratios round directly to binary64, without separately converting the operands. Finite float and mixed numeric division use the same exact rounding core; mixed division first converts the integer. Signed zero, subnormal rounding, overflow and distinct zero-division messages are preserved. Non-finite operand division stays loud. See [python-floats.md](python-floats.md). |
 | `**` | Exponent ≥ 0 only (`Int` result); negative exponent → `unsupported` (float in Python), EXCEPT `0 ** negative` → `ZeroDivisionError` (CPython raises, no float involved). |
 | bool/int coercion | Python's `bool` is an `int` subtype. In arithmetic AND comparisons, coerce `Val.bool b` to `Int` (`True`→1). So `True + 1 = 2 : int`, `True == 1` is `True`, `True < 2` is `True`. Results of arithmetic are always `int`, never `bool`. |
 | `+` | int/bool + int/bool → int; str+str; list+list; tuple+tuple. Else `TypeError`. |

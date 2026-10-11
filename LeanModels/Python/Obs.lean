@@ -1599,6 +1599,7 @@ theorem fuelMono (fuel : Nat) :
                 | ellipsis => exact Run.le_refl _
                 | bool b => exact Run.le_refl _
                 | int n => exact Run.le_refl _
+                | float value => exact Run.le_refl _
                 | str sv => exact ihGen m st _ kf hk
                 | listV xs => exact ihGen m st _ kf hk
                 | tuple xs => exact ihGen m st _ kf hk
@@ -1897,6 +1898,7 @@ mutual
     | .ellipsis, _, _, _ => Res.le_refl _
     | .bool b, _, _, _ => Res.le_refl _
     | .int n, _, _, _ => Res.le_refl _
+    | .float value, _, _, _ => Res.le_refl _
     | .str s, _, _, _ => Res.le_refl _
     | .listV xs, _, _, hf => by
         simp only [RVal.freezeB]
@@ -2751,6 +2753,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | ellipsis => exact .exn
           | bool b => exact .exn
           | int n => exact .exn
+          | float value => exact .exn
           | str s =>
             -- H5 iteration: a str's code points are a pure snapshot —
             -- the loop preserves the world exactly when the body does

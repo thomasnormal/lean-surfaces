@@ -56,6 +56,7 @@ import json
 import os
 import platform
 import re
+import struct
 import sys
 
 SCHEMA_VERSION = "0.1"
@@ -66,7 +67,7 @@ LEAN_OPEN_RE = re.compile(r"^\s*#\s*lean\[\s*$")
 LEAN_CLOSE_RE = re.compile(r"^\s*#\s*\]\s*$")
 COMMENT_PREFIX_RE = re.compile(r"^\s*#")
 
-ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow",
+ALLOWED_BINOPS = ("Add", "Sub", "Mult", "Div", "FloorDiv", "Mod", "Pow",
                   # pass 5 (docs/memory-model.md "Left shift and bitwise
                   # or"): `1 << 63` and `live |= ...` in the post-#158
                   # shipped file; the interpreter owns the value tier
@@ -295,13 +296,15 @@ def literal_const_payload(node):
         return {"type": "bool", "value": v}
     if isinstance(v, int):
         return {"type": "int", "repr": str(v)}
+    if isinstance(v, float):
+        return {"type": "float", "bits": str(struct.unpack(">Q", struct.pack(">d", v))[0])}
     if isinstance(v, str):
         return {"type": "str", "value": v}
     if v is None:
         return {"type": "none"}
     if v is Ellipsis:
         return {"type": "ellipsis"}
-    return None  # float / bytes / complex: not a tier literal
+    return None
 
 
 def convert_fstring(node):
@@ -415,6 +418,9 @@ def convert_expr(node):
             const = {"type": "int", "repr": str(v)}
         elif isinstance(v, str):
             const = {"type": "str", "value": v}
+        elif isinstance(v, float):
+            bits = struct.unpack(">Q", struct.pack(">d", v))[0]
+            const = {"type": "float", "bits": str(bits)}
         elif v is None:
             const = {"type": "none"}
         elif v is Ellipsis:

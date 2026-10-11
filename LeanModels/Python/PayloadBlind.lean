@@ -931,15 +931,15 @@ theorem reprVal_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
     (motive3 := fun f act vs =>
       reprVals (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act vs
         = reprVals h f act vs) with
-  | case14 _ a _ _ hb _ =>
+  | case15 _ a _ _ hb _ =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case15 _ a _ _ hb _ ih =>
+  | case16 _ a _ _ hb _ ih =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case16 _ a _ _ _ hb _ =>
+  | case17 _ a _ _ _ hb _ =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case17 _ a _ _ _ hb _ ih =>
+  | case18 _ a _ _ _ hb _ ih =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case18 _ a _ hnl hnd =>
+  | case19 _ a _ hnl hnd =>
       rcases Heap.get?_swapAt_twin (b := a) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heq | ⟨_, _, _, _, _, _, h2⟩
       · simp only [reprVal, heq]
@@ -1100,7 +1100,10 @@ alone — what closes the `unhashable` arm of a heap-returning helper's
 equation. -/
 theorem Res.mapOk_keyRefusal {α β : Type} (f : α → β) (h : Heap) (k : RVal) :
     Res.mapOk f (keyRefusal h k) = keyRefusal h k := by
-  unfold keyRefusal; split <;> rfl
+  unfold keyRefusal
+  split
+  · rfl
+  · split <;> rfl
 
 /-- `lst.append(x)` is blind up to the swap it carries along. -/
 theorem heapAppend_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
@@ -1370,7 +1373,9 @@ theorem heapStore_slot (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
                     exact (Heap.get?_update_ne hu hne).trans hslot
               · simp [heapStore, hget, hds, if_neg hk] at hw
                 unfold keyRefusal at hw
-                split at hw <;> simp [] at hw
+                split at hw
+                · cases hw
+                · split at hw <;> simp [] at hw
       | list xs =>
           have hne : pa ≠ b := Heap.ne_slot_of_get? hslot hget (by simp)
           cases hai : asInt k with
@@ -3556,7 +3561,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                   · refine PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => ?_
                                     cases countArgs vs with
-                                    | none => exact PBF.exn hs1 _
+                                    | none => exact PBF.liftRes hs1 _
                                     | some sst => exact PBF.pushRef hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   -- next

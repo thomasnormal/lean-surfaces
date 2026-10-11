@@ -19,6 +19,18 @@ namespace LeanModels.Python.Tests
 
 private def sp : Span := default
 
+#guard parseBinOpName "Div" matches .ok .div
+#guard match parseConst (Lean.Json.mkObj [("type", Lean.toJson "float"),
+    ("bits", Lean.toJson "9223372036854775808")]) with
+  | .ok (.float value) => value.bits.toNat == 0x8000000000000000
+  | _ => false
+#guard parseConst (Lean.Json.mkObj [("type", Lean.toJson "float"),
+    ("bits", Lean.toJson "18446744073709551616")]) matches .error _
+#guard parseConst (Lean.Json.mkObj [("type", Lean.toJson "float"),
+    ("bits", Lean.toJson "-1")]) matches .error _
+#guard parseConst (Lean.Json.mkObj [("type", Lean.toJson "float"),
+    ("bits", Lean.toJson "1.5")]) matches .error _
+
 private def iL (n : Int) : Expr := .constant (.int n) sp
 private def bL (b : Bool) : Expr := .constant (.bool b) sp
 private def sL (s : String) : Expr := .constant (.str s) sp

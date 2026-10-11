@@ -103,6 +103,7 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "harness"))
 # CLASS comparison and the leanpy module load. Reuse them rather than
 # growing a second copy that can drift from the survey's own verdicts.
 import leanpy_survey  # noqa: E402
+from diff_test import batch_job
 
 leanpy = leanpy_survey.leanpy
 lean_stdout = leanpy_survey.lean_stdout
@@ -830,7 +831,7 @@ print('unreachable')
 # --- Constant payloads the extractor forks on ------------------------------
 w("const.float", """
 print(1.5)
-""", "REFUSE", "NO FLOATS AT ALL — the single largest gap")
+""", "MATCH", "binary64 float literal and shortest decimal rendering")
 w("const.bytes", """
 print(len(b"ab"))
 """, "REFUSE", "no bytes type")
@@ -846,7 +847,7 @@ print(x, x is Ellipsis)
 w("op.Add", "print(1 + 2)\n", "MATCH", "")
 w("op.Sub", "print(3 - 1)\n", "MATCH", "")
 w("op.Mult", "print(2 * 3)\n", "MATCH", "int only; str/list repetition refuses")
-w("op.Div", "print(6 / 2)\n", "REFUSE", "true division makes a float")
+w("op.Div", "print(6 / 2)\n", "MATCH", "true division rounds directly to binary64")
 w("op.FloorDiv", "print(7 // 2)\n", "MATCH", "Int.fdiv")
 w("op.Mod", "print(7 % 2)\n", "MATCH", "Int.fmod; `str % args` is a second tier")
 w("op.Pow", "print(2 ** 3)\n", "MATCH",
@@ -912,8 +913,16 @@ w("op.Or", "print(0 or 2)\n", "MATCH", "")
 SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
 
 WHITELIST_CLASS = {
+    "float_lab::count_head": "iter.count-numeric-frame",
+    "tut_06::negative_power": "op.Pow-negative",
+    "float_lab::addition_still_loud": "float.arithmetic",
+    "float_lab::nonfinite_division_still_loud": "float.nonfinite-division",
+    "float_lab::keys_still_loud": "float.hashing",
+    "float_lab::nested_keys_still_loud": "float.hashing",
+    "float_lab::attribute_still_loud": "float.attributes",
+    "float_lab::nan_equality_still_loud": "float.nan-identity",
+    "float_lab::nan_sort_still_loud": "float.nan-ordering",
     "arith::powi": "op.Pow",
-    "tut_06::true_div": "op.Div",
     "rsa_inverse::inverse": "exc.raise",
     "bench_bisect::bisect_left": "exc.raise",
     "dict_lab::ret_dict": "boundary.heap-value",
@@ -1325,10 +1334,7 @@ def whitelist_census(runner_cmd):
             continue
         env = os.path.splitext(case["file"])[0] + ".json"
         for args in case["args"]:
-            job = {"path": env, "function": case["function"], "args": args}
-            if case.get("fuel"):
-                job["fuel"] = case["fuel"]
-            jobs.append(json.dumps(job, separators=(",", ":")))
+            jobs.append(batch_job(env, case["function"], args, case.get("fuel")))
             keys.append(key)
     # `--observations` is what carries the model's OWN refusal class. Without
     # it the table below is a hand-maintained claim that nothing can falsify;

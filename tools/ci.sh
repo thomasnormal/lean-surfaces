@@ -644,6 +644,7 @@ step  "py-onboarding-imports" python3 tools/test_python_onboarding.py
 step  "py-divergence-probe-tests" python3 harness/test_pyc_divergence_probe.py
 step  "py-refusal-census-tests" python3 harness/test_refusal_census.py
 lake_build_step
+step  "py-float-boundary-tests" python3 harness/test_float_boundary.py
 step  "notebook-dependency-tests" python3 tools/test_notebook_dependencies.py
 step  "py-declared-divergences" python3 harness/pyc_divergence_probe.py
 step  "py-harness"      python3 harness/diff_test.py --no-build
@@ -665,7 +666,7 @@ step  "py-coverage-fresh" python3 harness/coverage_page.py --check
 # Reads the oleans the build step produced.
 py_examples_axioms() {
   local mods=() e lp
-  for e in add my_abs midpoint tri gcd fib nested_flow rsa_inverse bench_bisect bench_statistics int_string string_repeat tuple_repeat decimal_render range_render bool_lab divmod_lab repr_lab fstring_repr ellipsis_lab exc_handlers_lab exc_ancestors_lab; do
+  for e in add my_abs midpoint tri gcd fib nested_flow rsa_inverse bench_bisect bench_statistics int_string string_repeat tuple_repeat decimal_render range_render bool_lab divmod_lab repr_lab fstring_repr ellipsis_lab float_lab exc_handlers_lab exc_ancestors_lab; do
     mods+=("Examples.python.$e.spec" "Examples.python.$e.proof")
   done
   lp=$(ls -d .lake/build/lib/lean .lake/packages/*/.lake/build/lib/lean 2>/dev/null | paste -sd:)

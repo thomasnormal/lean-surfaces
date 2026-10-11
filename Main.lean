@@ -136,6 +136,9 @@ def errName : PyErr → String
   | .typeError _ => "TypeError"
   | .nameError _ => "NameError"
   | .zeroDivisionError => "ZeroDivisionError"
+  | .trueZeroDivisionError => "ZeroDivisionError"
+  | .floatZeroDivisionError => "ZeroDivisionError"
+  | .overflowError _ => "OverflowError"
   -- the same CLASS as the above; only the message differs
   | .zeroDivisionPow => "ZeroDivisionError"
   | .indexError => "IndexError"
@@ -186,7 +189,10 @@ def errMessage : PyErr → Option String
   -- CPython 3.9.19 — 13 of the 14 raising cases in `harness/cases.json`
   -- take the first, `0 ** -1` the second.
   | .zeroDivisionError => some "integer division or modulo by zero"
+  | .trueZeroDivisionError => some "division by zero"
   | .zeroDivisionPow => some "0.0 cannot be raised to a negative power"
+  | .floatZeroDivisionError => some "float division by zero"
+  | .overflowError msg => some msg
   -- STILL payload-free, and deliberately so: these texts carry RUNTIME
   -- DATA the constructor does not hold, so no split can supply them —
   -- `IndexError` distinguishes list/tuple/assignment/pop (4 measured
@@ -214,6 +220,7 @@ partial def valJson : Val → String
   | .ellipsis => "{\"t\":\"ellipsis\"}"
   | .bool b => "{\"t\":\"bool\",\"v\":" ++ (if b then "true" else "false") ++ "}"
   | .int n => "{\"t\":\"int\",\"v\":" ++ jsonStr (toString n) ++ "}"
+  | .float value => "{\"t\":\"float\",\"bits\":" ++ jsonStr (toString value.bits.toNat) ++ "}"
   | .str s => "{\"t\":\"str\",\"v\":" ++ jsonStr s ++ "}"
   | .list xs => "{\"t\":\"list\",\"v\":[" ++ ",".intercalate (xs.toList.map valJson) ++ "]}"
   | .tuple xs => "{\"t\":\"tuple\",\"v\":[" ++ ",".intercalate (xs.toList.map valJson) ++ "]}"
@@ -336,6 +343,13 @@ partial def valOfJson (j : Lean.Json) : Except String Val := do
     | .error _ =>  -- accept a plain JSON number too (harness convenience)
       return .int (← v.getInt?)
   | "str" => return .str (← (← j.getObjVal? "v").getStr?)
+  | "float" =>
+    let bits ← (← j.getObjVal? "bits").getStr?
+    match bits.toNat? with
+    | some value =>
+      if value < 2 ^ 64 then return .float (Float64.ofBits value)
+      else throw "float bits exceed binary64 width"
+    | none => throw s!"\"float\" bits are not a decimal string: {bits}"
   | "list" =>
     let elts ← (← j.getObjVal? "v").getArr?
     return .list (← elts.mapM valOfJson)

@@ -380,5 +380,35 @@
     "file": "Examples/python/ellipsis_lab/ellipsis_script.py",
     "expect": "match",
     "note": "Ellipsis singleton literals and builtin lookup, rendering, truth, identity, dictionary keys, shadowing and restoration after deletion."
+  },
+  {
+    "file": "Examples/python/float_lab/float_script.py",
+    "expect": "match",
+    "note": "Binary64 literals and true division, signed zero, subnormal/infinity rendering, exact mixed comparison and ArithmeticError catches."
+  },
+  {
+    "file": "Examples/python/float_lab/float_error_script.py",
+    "expect": "match",
+    "note": "Retained stdout and the exact float division by zero exception class/message."
+  },
+  {
+    "file": "Examples/python/float_lab/integer_division_error_script.py",
+    "expect": "match",
+    "note": "Integer true division's distinct division by zero message and retained stdout."
+  },
+  {
+    "file": "Examples/python/float_lab/integer_overflow_script.py",
+    "expect": "match",
+    "note": "Integer ratio overflow class/message rather than a finite-float overflow result."
+  },
+  {
+    "file": "Examples/python/float_lab/conversion_overflow_script.py",
+    "expect": "match",
+    "note": "Mixed division converts the integer before inspecting the zero denominator, preserving its overflow message."
+  },
+  {
+    "file": "Examples/python/float_lab/count_arity_script.py",
+    "expect": "match",
+    "note": "The count-admission miss distinguishes excessive positional arity from nonnumeric arguments, with the exact exception message and retained stdout."
   }
 ]

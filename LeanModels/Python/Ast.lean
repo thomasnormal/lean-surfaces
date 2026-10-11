@@ -1,4 +1,5 @@
 import LeanModels.Core.Basic
+import LeanModels.Python.Float64
 
 /-!
 # Python AST (`LeanModels.Python`)
@@ -20,12 +21,12 @@ itself lives in a later phase (`Semantics.lean`).
 namespace LeanModels.Python
 
 /-- Binary operators. 1:1 with CPython `ast` operator class names:
-`add` ↔ `Add`, `sub` ↔ `Sub`, `mult` ↔ `Mult`, `floorDiv` ↔ `FloorDiv`,
+`add` ↔ `Add`, `sub` ↔ `Sub`, `mult` ↔ `Mult`, `div` ↔ `Div`, `floorDiv` ↔ `FloorDiv`,
 `mod` ↔ `Mod`, `pow` ↔ `Pow`, `lshift` ↔ `LShift`, `bitOr` ↔ `BitOr`
 (pass 5 — docs/memory-model.md §left shift and bitwise or), `bitAnd` ↔
 `BitAnd` (the tail batch — docs/memory-model.md §bitwise `&`). -/
 inductive BinOp where
-  | add | sub | mult | floorDiv | mod | pow | lshift | rshift
+  | add | sub | mult | div | floorDiv | mod | pow | lshift | rshift
   | bitOr | bitXor | bitAnd
 deriving Repr, Inhabited, BEq, DecidableEq
 
@@ -55,13 +56,14 @@ inductive CmpOp where
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Literal constants (schema `Constant` payload). Ints are arbitrary precision
-(JSON carries them as decimal strings). Float/bytes/complex constants
-never reach this type — the extractor emits them as `Unsupported` nodes. -/
+(JSON carries them as decimal strings). Float constants carry their exact
+binary64 representation; bytes and complex constants remain unsupported. -/
 inductive Const where
   | none
   | ellipsis
   | bool (b : Bool)
   | int (n : Int)
+  | float (value : Float64)
   | str (s : String)
 deriving Repr, Inhabited, BEq, DecidableEq
 
@@ -425,6 +427,7 @@ inductive Val where
   | ellipsis
   | bool (b : Bool)
   | int (n : Int)
+  | float (value : Float64)
   | str (s : String)
   | list (xs : Array Val)
   | tuple (xs : Array Val)
@@ -447,6 +450,11 @@ inductive PyErr where
   /-- `x // 0` and `x % 0` — CPython's
   `integer division or modulo by zero`. -/
   | zeroDivisionError
+  | trueZeroDivisionError
+  /-- `/` with a float zero denominator. -/
+  | floatZeroDivisionError
+  /-- A numeric result cannot be represented by binary64. -/
+  | overflowError (msg : String)
   /-- `0 ** <negative>` — the SAME CPython class with a DIFFERENT text,
   `0.0 cannot be raised to a negative power` (2026-08-15).
 
@@ -527,7 +535,7 @@ but has not measured is REFUSED by name, not admitted by derivation. -/
 this tier can raise and their explicitly measured admitted ancestors. -/
 def admittedBuiltinExc : List String :=
   ["BaseException", "Exception", "ArithmeticError", "LookupError",
-   "TypeError", "NameError", "ZeroDivisionError", "IndexError",
+   "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration"]
 
@@ -558,12 +566,18 @@ def builtinExcCatches : String → PyErr → Bool
   | "Exception",         _                   => true
   | "ArithmeticError",   .zeroDivisionError  => true
   | "ArithmeticError",   .zeroDivisionPow    => true
+  | "ArithmeticError",   .trueZeroDivisionError => true
+  | "ArithmeticError",   .floatZeroDivisionError => true
+  | "ArithmeticError",   .overflowError _     => true
   | "LookupError",       .indexError         => true
   | "LookupError",       .keyError           => true
   | "TypeError",         .typeError _        => true
   | "NameError",         .nameError _        => true
   | "ZeroDivisionError", .zeroDivisionError  => true
   | "ZeroDivisionError", .zeroDivisionPow    => true
+  | "ZeroDivisionError", .trueZeroDivisionError => true
+  | "ZeroDivisionError", .floatZeroDivisionError => true
+  | "OverflowError",     .overflowError _     => true
   | "IndexError",        .indexError         => true
   | "ValueError",        .valueError _       => true
   | "KeyError",          .keyError           => true

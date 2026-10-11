@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/tut_06/tut_06.py",
-  "source_sha256": "0bd30ab879e9bb9d149aa0fd53c2d43f7d742f84012969808493d90b92730594",
+  "source_sha256": "2425e04eb10060180635b8808d7b4dd2d6e9bfc7a257981a4c6745e41ac900b5",
   "module": {
     "kind": "Module",
     "body": [
@@ -208,15 +208,111 @@
               "end_col_offset": 16
             },
             "value": {
-              "kind": "Unsupported",
+              "kind": "BinOp",
               "span": {
                 "lineno": 9,
                 "col_offset": 11,
                 "end_lineno": 9,
                 "end_col_offset": 16
               },
-              "py_kind": "BinOp:Div",
-              "text": "a / b"
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 9,
+                  "col_offset": 11,
+                  "end_lineno": 9,
+                  "end_col_offset": 12
+                },
+                "id": "a"
+              },
+              "op": "Div",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 9,
+                  "col_offset": 15,
+                  "end_lineno": 9,
+                  "end_col_offset": 16
+                },
+                "id": "b"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 12,
+          "col_offset": 0,
+          "end_lineno": 13,
+          "end_col_offset": 18
+        },
+        "name": "negative_power",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 12,
+              "col_offset": 19,
+              "end_lineno": 12,
+              "end_col_offset": 20
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 13,
+              "col_offset": 4,
+              "end_lineno": 13,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 13,
+                "col_offset": 11,
+                "end_lineno": 13,
+                "end_col_offset": 18
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 13,
+                  "col_offset": 11,
+                  "end_lineno": 13,
+                  "end_col_offset": 12
+                },
+                "id": "a"
+              },
+              "op": "Pow",
+              "right": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 13,
+                  "col_offset": 16,
+                  "end_lineno": 13,
+                  "end_col_offset": 18
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 13,
+                    "col_offset": 17,
+                    "end_lineno": 13,
+                    "end_col_offset": 18
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
             }
           }
         ]

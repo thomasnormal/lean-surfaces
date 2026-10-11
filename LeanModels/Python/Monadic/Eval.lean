@@ -493,7 +493,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- `itertools.count` — INFINITE by construction; a consumer's `break` is
     -- what ends it (sunfish's ray loop `for j in count(i + d, d)`).
     match countArgs vs with
-    | Option.none => raisePy (.typeError "a number is required")
+    | Option.none => liftRes (countRefusal vs)
     | some (start, step) => do
         let a ← heapPush (.generator "<count>" [] [.countFrom start step] .suspended)
         pure (.ref a)

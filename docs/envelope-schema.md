@@ -69,7 +69,7 @@ never fails on syntactically valid Python).
 |---|---|
 | `Constant` | `value`: const (below) |
 | `Name` | `id`: str |
-| `BinOp` | `left`: expr, `op`: one of `Add Sub Mult FloorDiv Mod Pow`, `right`: expr |
+| `BinOp` | `left`: expr, `op`: one of `Add Sub Mult Div FloorDiv Mod Pow LShift RShift BitOr BitXor BitAnd`, `right`: expr |
 | `UnaryOp` | `op`: one of `USub Not`, `operand`: expr |
 | `JoinedStr` | `values`: [expr…], preserving CPython's literal text and formatted fields. Ingestion concatenates the admitted parts left-to-right |
 | `FormattedValue` | `value`: expr, `conversion`: CPython's integer code (`-1`, `115` for `!s`, `114` for `!r`), `format_spec`: null or an empty `JoinedStr`. Ingestion uses an intrinsic conversion, never a synthesized `str`/`repr` name lookup. `!a` and nonempty format specifications remain `Unsupported` gaps |
@@ -86,9 +86,10 @@ never fails on syntactically valid Python).
 | `Unsupported` | `py_kind`: str, `text`: str (≤200 chars) |
 
 Operator names are CPython's class names verbatim (`Mult` not `Mul`, `LtE` not `Le`).
-Unlisted operator (e.g. `Div`, `BitOr`, `In`) — or `Is`/`IsNot` without a
-literal-`None` side — ⇒ the *containing* node is emitted as `Unsupported`
-with that operator's name included in `py_kind` (e.g. `"BinOp:Div"`).
+An unlisted binary operator (e.g. `MatMult`) makes the containing node
+`Unsupported`, with that operator's name included in `py_kind`
+(e.g. `"BinOp:MatMult"`). Every comparison operator is emitted structurally;
+the interpreter owns dynamic operand restrictions.
 
 ## Constants
 
@@ -96,8 +97,10 @@ with that operator's name included in `py_kind` (e.g. `"BinOp:Div"`).
 as `USub(Constant 5)`) | `{"type":"bool","value":true}` | `{"type":"str","value":"…"}`
 | `{"type":"none"}` | `{"type":"ellipsis"}`. The latter is Python's singleton
 `...`; the builtin name `Ellipsis` remains a `Name` node, preserving shadowing.
-Float/bytes/complex constants ⇒
-the `Constant` node is `Unsupported` (`py_kind`: `"Constant:float"` etc.).
+Float constants use `{"type":"float","bits":"4591870180066957722"}`:
+the decimal string is the exact unsigned 64-bit binary64 representation,
+not a decimal approximation. Ingestion rejects words outside `[0, 2^64)`.
+Bytes and complex constants remain `Unsupported` (`"Constant:bytes"` etc.).
 
 ## Worked example
 

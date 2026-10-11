@@ -17,6 +17,10 @@ def count_up(n):
 
 def true_div(a, b):
     return a / b
+
+
+def negative_power(a):
+    return a ** -1
 ```
 
 ```lean
@@ -37,11 +41,12 @@ theorem count_up_total (n : PyInt) (hn : 0 ≤ n) : tut_06.count_up(n) ==> n := 
 #py_check tut_06.count_up(5) = 5
 #py_check tut_06.count_up(0) = 0
 ...
-/-! Failure mode 6: `a / b` is true division — a float, outside the v0
-semantic tier. The interpreter refuses *loudly* (`Res.unsupported`,
+/-! True division now returns binary64; negative powers remain unfinished
+coverage work. The interpreter refuses *loudly* (`Res.unsupported`,
 never a wrong value); `unsupported` has no surface arrow on purpose, so
 the check stays a raw `#guard … matches`. -/
-#guard (callFunction tut_06 "true_div" #[.int 7, .int 2] 100 matches .unsupported _)
+#py_check tut_06.true_div(7, 2) = Float64.ofBits 0x400c000000000000
+#guard (callFunction tut_06 "negative_power" #[.int 2] 100 matches .unsupported _)
 ```
 
 ## 1. py_prove leaves a goal full of interpreter noise — there is a loop
@@ -177,7 +182,7 @@ checks) fail the build with the *same-shaped* message:
 -- (illustrative — broken)
 #py_check tut_01.double(21) = 43        -- value simply wrong
 #py_check tut_06.count_up(5000) = 5000  -- fuel too small (fixed 4096)
-#py_check tut_06.true_div(7, 2) = 3     -- unsupported construct
+#py_check tut_06.negative_power(2) = 0 -- unsupported construct
 ```
 
 ```
@@ -188,7 +193,7 @@ error: Expression
   callFunction tut_06 "count_up" #[ToVal.toVal 5000] 4096 == Res.ok (ToVal.toVal 5000)
 did not evaluate to `true`
 error: Expression
-  callFunction tut_06 "true_div" #[ToVal.toVal 7, ToVal.toVal 2] 4096 == Res.ok (ToVal.toVal 3)
+  callFunction tut_06 "negative_power" #[ToVal.toVal 2] 4096 == Res.ok (ToVal.toVal 0)
 did not evaluate to `true`
 ```
 
@@ -198,13 +203,13 @@ did not evaluate to `true`
 -- (illustrative — diagnosis snippet, delete after use)
 #eval callFunction tut_01 "double" #[.int 21] 4096
 #eval callFunction tut_06 "count_up" #[.int 5000] 4096
-#eval callFunction tut_06 "true_div" #[.int 7, .int 2] 4096
+#eval callFunction tut_06 "negative_power" #[.int 2] 4096
 ```
 
 ```
 LeanModels.Python.Res.ok (LeanModels.Python.Val.int 42)
 LeanModels.Python.Res.timeout
-LeanModels.Python.Res.unsupported "unsupported expression 'BinOp:Div'"
+LeanModels.Python.Res.unsupported "'**' with a negative exponent (float result) is outside the v0 tier"
 ```
 
 **Fix**, per disease: `.ok` with a different value — your expectation is
@@ -297,36 +302,38 @@ statement over `x : Int` closes. Switch the closer: `grind` proves both.
 shows
 
 ```
-LeanModels.Python.Res.unsupported "unsupported expression 'BinOp:Div'"
+LeanModels.Python.Res.unsupported "'**' with a negative exponent (float result) is outside the v0 tier"
 ```
 
 or the runner says
 
 ```console
-$ lake exe leanmodels-run Examples/python/tut_06/tut_06.json true_div 7 2
-{"status":"unsupported","msg":"unsupported expression 'BinOp:Div'"}
+$ lake exe leanmodels-run Examples/python/tut_06/tut_06.json negative_power 2
+{"status":"unsupported","msg":"'**' with a negative exponent (float result) is outside the v0 tier"}
 ```
 
 **Diagnosis.** This is not an error in your proof and not a Python
-exception: the construct (here true division `/`, which is float-valued) is
-**representable but outside the v0 semantic tier**. The interpreter refuses
+exception: the construct (here a negative power, which is float-valued) is
+**representable but not yet supported by the semantic tier**. The interpreter refuses
 loudly rather than approximating — `Res.unsupported` is a distinct outcome,
 it propagates like an exception through the run, and *no arrow can state
 it*: you cannot accidentally prove anything about an off-tier program (a
 `~~>` spec is refutable against it, mode 4 of the
 [`Surface.lean`](../../LeanModels/Python/Surface.lean) `PartialTo.iff_obs`
 docstring — the `stuck` outcome). The message names the construct
-(`'BinOp:Div'`); the tier boundary is the "v0 limitations" list in the
+(`'**' with a negative exponent`); current tier gaps are the "v0 limitations" list in the
 [README](../../README.md#v0-limitations-honest-list) and the supported-tier
 table in [../DESIGN.md](../DESIGN.md). Check what the extractor kept vs
 flagged: [../howto/check-what-the-extractor-supports.md](../howto/check-what-the-extractor-supports.md).
 
-**Fix.** Stay on the tier (rewrite `a / b` as `a // b` if integer division
-was meant), or record the gap honestly: keep the function, assert the
+**Fix.** Use an equivalent supported construct when one is available, or
+record the gap honestly: keep the function, assert the
 refusal (`#guard … matches .unsupported _`, as `Examples/python/tut_06/spec.lean`
 does), and whitelist it in the harness with `"expect": "unsupported"`
 ([`harness/cases.json`](../../harness/cases.json) does exactly this for
-`true_div`).
+`negative_power`). True division itself now returns binary64 and has a
+successful check in that same example; refusing a remaining case does not
+exclude it from future language coverage.
 
 ## 7. py_prove on two sequential ifs — the branch recipe runs out
 

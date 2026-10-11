@@ -10,8 +10,8 @@ docstring), bench_statistics.json (generated envelope), THIS FILE
 BENCHMARK FLAGSHIP (Band C, docs/benchmark.md rows 4-5): CPython's own
 `median_low`/`median_high`, proved totally correct against their ACTUAL
 shipped source through the builtin `sorted` — the call:sorted tier
-feature. `median` (row 3) stays honestly blocked: its even-length branch
-is float division (`(a+b)/2`), out of `Val` v0.
+feature. `median` (row 3) now executes its even-length branch through the
+binary64 true-division core; its general correctness proof is still pending.
 
 Tier facts (envelope, unchanged since vendoring — call:sorted needed NO
 extractor or envelope change, `sorted(data)` was always a plain in-tier

@@ -60,6 +60,37 @@ class RefusalCensusTests(unittest.TestCase):
             self.assertEqual(refusal_census.whitelist_census(["stub"]), 1)
         self.assertIn("model answered", output.getvalue())
 
+    def test_runner_error_whitelisted_row_fails(self):
+        case = {"file": "fixture.py", "function": "loud", "args": [[]],
+                "expect": "unsupported"}
+        with patch("builtins.open", mock_open(read_data=json.dumps([case]))), \
+                patch.dict(refusal_census.WHITELIST_CLASS, {"fixture::loud": "test"}), \
+                patch.object(refusal_census, "run_batch", return_value=[{"status": "runner-error"}]), \
+                redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(refusal_census.whitelist_census(["stub"]), 1)
+        self.assertIn("model answered runner-error", output.getvalue())
+
+    def test_float_whitelist_jobs_use_exact_transport(self):
+        case = {"file": "fixture.py", "function": "loud", "fuel": 32,
+                "args": [[1.5, -0.0, True,
+                          {"t": "tuple", "v": [-0.0, {"t": "float", "bits": "1"}]}]],
+                "expect": "unsupported"}
+        with patch("builtins.open", mock_open(read_data=json.dumps([case]))), \
+                patch.dict(refusal_census.WHITELIST_CLASS, {"fixture::loud": "test"}), \
+                patch.object(refusal_census, "run_batch", return_value=[{"status": "unsupported"}]) as batch, \
+                redirect_stdout(io.StringIO()):
+            self.assertEqual(refusal_census.whitelist_census(["stub"]), 0)
+        jobs = batch.call_args.args[1]
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(json.loads(jobs[0]), {
+            "path": "fixture.json", "function": "loud", "fuel": 32,
+            "args": [{"t": "float", "bits": "4609434218613702656"},
+                     {"t": "float", "bits": "9223372036854775808"},
+                     {"t": "bool", "v": True},
+                     {"t": "tuple", "v": [
+                         {"t": "float", "bits": "9223372036854775808"},
+                         {"t": "float", "bits": "1"}]}]})
+
     def test_decided_loud_script_fails(self):
         script = {"file": "fixture.py", "expect": "unsupported"}
         with patch("builtins.open", mock_open(read_data=json.dumps([script]))), \

@@ -53,6 +53,7 @@ namespace LeanModels.Python
 
 /-- Python `int` — exactly mathematical `Int`. -/
 abbrev PyInt := Int
+abbrev PyFloat := Float64
 /-- Python `bool`. -/
 abbrev PyBool := Bool
 /-- Python `str` (caveat lector: CPython admits lone surrogates; a faithful
@@ -68,6 +69,7 @@ class ToVal (α : Type) where
 
 instance : ToVal Val := ⟨id⟩
 instance : ToVal Int := ⟨.int⟩
+instance : ToVal Float64 := ⟨.float⟩
 instance : ToVal Nat := ⟨fun n => .int n⟩
 instance : ToVal Bool := ⟨.bool⟩
 instance : ToVal String := ⟨.str⟩
@@ -76,6 +78,8 @@ instance {α} [ToVal α] : ToVal (List α) :=
 
 @[simp] theorem toVal_val (v : Val) : (ToVal.toVal v : Val) = v := rfl
 @[simp] theorem toVal_int (n : Int) : (ToVal.toVal n : Val) = .int n := rfl
+@[simp] theorem toVal_float (value : Float64) :
+    (ToVal.toVal value : Val) = .float value := rfl
 @[simp] theorem toVal_nat (n : Nat) : (ToVal.toVal n : Val) = .int n := rfl
 @[simp] theorem toVal_bool (b : Bool) : (ToVal.toVal b : Val) = .bool b := rfl
 @[simp] theorem toVal_str (s : String) : (ToVal.toVal s : Val) = .str s := rfl
@@ -92,6 +96,8 @@ form (`RVal.int n`, `…listV (xs.map (thaw ∘ toVal))`), and the
 
 @[simp] theorem thaw_toVal_int (n : Int) :
     RVal.thaw (ToVal.toVal n) = .int n := rfl
+@[simp] theorem thaw_toVal_float (value : Float64) :
+    RVal.thaw (ToVal.toVal value) = .float value := rfl
 @[simp] theorem thaw_toVal_nat (n : Nat) :
     RVal.thaw (ToVal.toVal n) = .int n := rfl
 @[simp] theorem thaw_toVal_bool (b : Bool) :

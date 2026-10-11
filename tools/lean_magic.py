@@ -140,7 +140,7 @@ CPYTHON_TIMEOUT = 15
 # Canonicalizing CPython driver run in a subprocess by %pydiff (mirrors
 # harness/diff_test.py: bool before int, UnboundLocalError -> NameError).
 _CPY_DRIVER = r"""
-import importlib.util, json, sys
+import importlib.util, json, struct, sys
 path, fn = sys.argv[1], sys.argv[2]
 args = [int(a) for a in sys.argv[3:]]
 spec = importlib.util.spec_from_file_location("nbdiff_mod", path)
@@ -151,6 +151,8 @@ def canon(v):
         return {"t": "bool", "v": v}
     if isinstance(v, int):
         return {"t": "int", "v": str(v)}
+    if isinstance(v, float):
+        return {"t": "float", "bits": str(struct.unpack(">Q", struct.pack(">d", v))[0])}
     if isinstance(v, str):
         return {"t": "str", "v": v}
     if v is None:

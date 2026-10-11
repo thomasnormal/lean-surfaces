@@ -71,6 +71,7 @@ def parseBinOpName : String → Except String BinOp
   | "Add" => .ok .add
   | "Sub" => .ok .sub
   | "Mult" => .ok .mult
+  | "Div" => .ok .div
   | "FloorDiv" => .ok .floorDiv
   | "Mod" => .ok .mod
   | "Pow" => .ok .pow
@@ -116,6 +117,15 @@ def parseConst (j : Json) : Except String Const :=
         match r.toInt? with
         | some n => pure (Const.int n)
         | Option.none => throw s!"invalid int repr {r.quote}"
+    | "float" =>
+        let raw ← getField j "bits"
+        let bits ← match raw.getStr? with
+          | .ok text => match text.toNat? with
+            | some value => pure value
+            | none => throw s!"invalid float bits {text.quote}"
+          | .error _ => raw.getNat?
+        if bits < 2 ^ 64 then pure (Const.float (Float64.ofBits bits))
+        else throw "float bits exceed binary64 width"
     | "bool" => return Const.bool (← (← getField j "value").getBool?)
     | "str" => return Const.str (← (← getField j "value").getStr?)
     | "none" => pure Const.none

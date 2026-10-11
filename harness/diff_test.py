@@ -14,7 +14,7 @@ its rows — deep drains like `sf_order.move_order` need it):
   1. imports the ``.py`` source by path (importlib) and calls the function,
      mapping the return value / raised exception to the canonical JSON form
      of DESIGN.md "Runner + differential harness" (ints/bools/str/None/
-     list/tuple only; anything else is recorded as unmappable and can never
+     list/tuple/binary64 floats; anything else is recorded as unmappable and can never
      match);
   2. runs the Lean side of ALL rows through ONE
      ``lake exe leanmodels-run --batch <jobs.jsonl>`` process (one job line
@@ -53,6 +53,7 @@ import importlib.util
 import json
 import os
 import subprocess
+import struct
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -91,11 +92,12 @@ def _reexec_under_pinned_cpython():
     os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
 
 
-_reexec_under_pinned_cpython()
+if __name__ == "__main__":
+    _reexec_under_pinned_cpython()
 
 
 class Unmappable(Exception):
-    """A CPython value outside the canonical set (e.g. float)."""
+    """A CPython value outside the canonical set."""
 
 
 class ClockTraceUnderrun(Exception):
@@ -141,6 +143,9 @@ def to_canonical_value(v):
         return {"t": "bool", "v": v}
     if isinstance(v, int):
         return {"t": "int", "v": str(v)}
+    if isinstance(v, float):
+        bits = struct.unpack(">Q", struct.pack(">d", v))[0]
+        return {"t": "float", "bits": str(bits)}
     if isinstance(v, str):
         return {"t": "str", "v": v}
     if v is None:
@@ -169,6 +174,9 @@ def from_typed(a):
         return bool(a["v"])
     if t == "int":
         return int(a["v"])
+    if t == "float":
+        bits = int(a["bits"])
+        return struct.unpack(">d", struct.pack(">Q", bits))[0]
     if t == "str":
         return a["v"]
     if t == "list":
@@ -180,11 +188,12 @@ def from_typed(a):
 
 def batch_job(json_path, fname, args, fuel, clock=None):
     """One jobs-file line for `leanmodels-run --batch` (compact JSON).
-    cases.json argument encoding is already the runner's own: plain ints
-    stay JSON numbers, typed values ride unchanged. `clock` (a list of
+    Canonicalize arguments before JSON transport, preserving float words,
+    signed zero and bool-vs-int types. `clock` (a list of
     ints) seeds the model world's clock trace — the replay half of the
     record-replay protocol (docs/memory-model.md §the trace clock)."""
-    job = {"path": json_path, "function": fname, "args": args}
+    job = {"path": json_path, "function": fname,
+           "args": [to_canonical_value(from_typed(arg)) for arg in args]}
     if fuel is not None:
         job["fuel"] = fuel
     if clock is not None:
@@ -311,6 +320,8 @@ def pretty_value(v):
         return "True" if v["v"] else "False"
     if t == "int":
         return v["v"]
+    if t == "float":
+        return repr(from_typed(v))
     if t == "str":
         return repr(v["v"])
     if t in ("list", "tuple"):

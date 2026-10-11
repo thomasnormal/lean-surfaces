@@ -215,6 +215,23 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(fn["body"][0]["value"]["kind"], "Constant")
         self.assertEqual(fn["body"][0]["value"]["value"], {"type": "ellipsis"})
 
+    def test_float_constant_default_and_true_division(self):
+        fn = self._first_fn("def f(value=0.1):\n    return value / 2.0\n")
+        self.assertIsNone(fn["args_unsupported"])
+        self.assertEqual(fn["args"][0]["default"],
+                         {"type": "float", "bits": "4591870180066957722"})
+        expression = fn["body"][0]["value"]
+        self.assertEqual(expression["kind"], "BinOp")
+        self.assertEqual(expression["op"], "Div")
+        self.assertEqual(expression["right"]["value"],
+                         {"type": "float", "bits": "4611686018427387904"})
+
+    def test_float_subnormal_and_infinity_bits(self):
+        fn = self._first_fn("def f():\n    return 5e-324, 1e999\n")
+        values = [element["value"] for element in fn["body"][0]["value"]["elts"]]
+        self.assertEqual(values, [{"type": "float", "bits": "1"},
+                                  {"type": "float", "bits": "9218868437227405312"}])
+
     def test_literal_defaults_emitted_and_in_tier(self):
         fn = self._first_fn(
             "def f(a, i=3, b=True, s='x', n=None):\n    return a\n")
@@ -235,7 +252,7 @@ class ExtractorTests(unittest.TestCase):
         for src in ("def f(a, m=EASTER_WESTERN):\n    return a\n",
                     "def f(a, lo=-1):\n    return a\n",
                     "def f(a, b=1, c=NAMED):\n    return a\n",
-                    "def f(a, x=1.5):\n    return a\n"):
+                    "def f(a, x=b'abc'):\n    return a\n"):
             fn = self._first_fn(src)
             self.assertEqual(fn["args_unsupported"], "defaults", src)
             self.assertTrue(

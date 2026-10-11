@@ -98,6 +98,12 @@ with symbolic branch-result and integer-identity proofs. Its concrete checks
 cover builtin lookup, shadowing, defaults, rendering, dictionaries, generators,
 and the nonnumeric/noniterable exceptions.
 
+[`float_lab`](float_lab/) proves concrete binary64 quotients against its real
+extracted Python source. Differential rows cover exact mixed comparisons,
+signed zero, rounding boundaries, numeric conversion, rendering and exceptions;
+script transcripts cover retained output and exception messages. Broader float
+arithmetic, non-finite division, hashing and NaN identity remain recorded gaps.
+
 **Sunfish:** the proofs about the unmodified
 [sunfish](https://github.com/thomasahle/sunfish) chess engine (GPL-3.0)
 now live in the sunfish repository, as a Lake package that depends on

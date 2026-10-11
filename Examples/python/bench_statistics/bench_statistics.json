@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/bench_statistics/bench_statistics.py",
   "source_sha256": "285509e5348193604d7f22e6369c933aa2653513f84eae5861c84a9edeea6934",
@@ -474,15 +474,118 @@
                   "end_col_offset": 42
                 },
                 "value": {
-                  "kind": "Unsupported",
+                  "kind": "BinOp",
                   "span": {
                     "lineno": 54,
                     "col_offset": 15,
                     "end_lineno": 54,
                     "end_col_offset": 42
                   },
-                  "py_kind": "BinOp:Div",
-                  "text": "(data[i - 1] + data[i]) / 2"
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 54,
+                      "col_offset": 16,
+                      "end_lineno": 54,
+                      "end_col_offset": 37
+                    },
+                    "left": {
+                      "kind": "Subscript",
+                      "span": {
+                        "lineno": 54,
+                        "col_offset": 16,
+                        "end_lineno": 54,
+                        "end_col_offset": 27
+                      },
+                      "value": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 54,
+                          "col_offset": 16,
+                          "end_lineno": 54,
+                          "end_col_offset": 20
+                        },
+                        "id": "data"
+                      },
+                      "index": {
+                        "kind": "BinOp",
+                        "span": {
+                          "lineno": 54,
+                          "col_offset": 21,
+                          "end_lineno": 54,
+                          "end_col_offset": 26
+                        },
+                        "left": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 54,
+                            "col_offset": 21,
+                            "end_lineno": 54,
+                            "end_col_offset": 22
+                          },
+                          "id": "i"
+                        },
+                        "op": "Sub",
+                        "right": {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 54,
+                            "col_offset": 25,
+                            "end_lineno": 54,
+                            "end_col_offset": 26
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        }
+                      }
+                    },
+                    "op": "Add",
+                    "right": {
+                      "kind": "Subscript",
+                      "span": {
+                        "lineno": 54,
+                        "col_offset": 30,
+                        "end_lineno": 54,
+                        "end_col_offset": 37
+                      },
+                      "value": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 54,
+                          "col_offset": 30,
+                          "end_lineno": 54,
+                          "end_col_offset": 34
+                        },
+                        "id": "data"
+                      },
+                      "index": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 54,
+                          "col_offset": 35,
+                          "end_lineno": 54,
+                          "end_col_offset": 36
+                        },
+                        "id": "i"
+                      }
+                    }
+                  },
+                  "op": "Div",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 54,
+                      "col_offset": 41,
+                      "end_lineno": 54,
+                      "end_col_offset": 42
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  }
                 }
               }
             ]

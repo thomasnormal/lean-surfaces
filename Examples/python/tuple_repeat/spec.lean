@@ -28,6 +28,11 @@ set_option maxRecDepth 8192
 #py_check tuple_repeat.repeat_left_length(3) = 6
 #py_check tuple_repeat.repeat_aug_length(3) = 6
 #py_check tuple_repeat.repeat_empty_length(3) = 0
+#py_check tuple_repeat.repeat_right((Val.tuple #[.int 7]), -1048577) = (Val.tuple #[])
+#py_check tuple_repeat.repeat_left(1048577, (Val.tuple #[])) = (Val.tuple #[])
+#py_check tuple_repeat.repeat_left(-1048577, (Val.tuple #[])) = (Val.tuple #[])
+#py_check tuple_repeat.repeat_aug((Val.tuple #[]), 1048577) = (Val.tuple #[])
+#py_check tuple_repeat.repeat_namedtuple(-1048577) = (Val.tuple #[])
 #py_check tuple_repeat.repeat_namedtuple(2) =
   (Val.tuple #[.int 7, .int 8, .int 7, .int 8])
 #py_check tuple_repeat.repeat_namedtuple_left(2) =
@@ -47,20 +52,11 @@ set_option maxRecDepth 8192
 
 #guard callFunction tuple_repeat "repeat_right" #[.tuple #[.int 7], .int 1048577] 4096
   matches .unsupported _
-#guard callFunction tuple_repeat "repeat_right" #[.tuple #[.int 7], .int (-1048577)] 4096
-  matches .unsupported _
-#guard callFunction tuple_repeat "repeat_left" #[.int 1048577, .tuple #[]] 4096
-  matches .unsupported _
-#guard callFunction tuple_repeat "repeat_left" #[.int (-1048577), .tuple #[]] 4096
-  matches .unsupported _
-#guard callFunction tuple_repeat "repeat_aug" #[.tuple #[], .int 1048577] 4096
-  matches .unsupported _
-#guard callFunction tuple_repeat "repeat_empty_length" #[.int (-1048577)] 4096
+#guard callFunction tuple_repeat "repeat_aug" #[.tuple #[.int 7], .int 1048577] 4096
   matches .unsupported _
 #guard callFunction tuple_repeat "repeat_right_length" #[.int 524289] 4096
   matches .unsupported _
-#guard callFunction tuple_repeat "repeat_namedtuple" #[.int (-1048577)] 4096
-  matches .unsupported _
+#guard callFunction tuple_repeat "repeat_empty_length" #[.int (-1048577)] 4096 matches .ok (.int 0)
 #guard callFunction tuple_repeat "repeat_empty" #[.int 1267650600228229401496703205376] 4096
   matches .unsupported _
 

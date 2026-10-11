@@ -370,8 +370,9 @@ surface is **2,668 / 3,025 = 88.2% complete**; the proof interpreter is
 rows. The tuple/namedtuple and string halves remain value-level, and the
 shipped sunfish's padding line
 (`(0,) * 20 + pst[k] + (0,) * 20` over `table[i*8 : i*8+8]`) runs
-through exactly those. What remains in this rung is `"ab" * 3` / `[0] * n`:
-sequence repetition still needs an allocation-aware operator arm.
+through exactly those. Empty and non-positive tuple/string repetitions now
+short-circuit after index-sized count conversion; positive nonempty results
+still use the fixed materialization budget, and list repetition remains loud.
 
 The list-slice price was small because the allocation shape was already
 paid for: `list(iterable)` left `Expr.heapFree`, added one `worldInv`
@@ -379,8 +380,9 @@ conjunct, one `fuelMono` bind arm and one `clockErase` allocation leaf.
 List slicing reuses that geometry over a computed index range, with
 `strSlice`'s validation verbatim.
 
-**Unblocks**: `xs[1:]` and `xs[:-1]` — ordinary list manipulation. The
-remaining repetition forms stay loud until the next item.
+**Unblocks**: `xs[1:]` and `xs[:-1]` — ordinary list manipulation, plus the
+large-count empty/non-positive repetition cases that CPython answers without
+allocating.
 
 ### Named, and deliberately NOT in the top five
 

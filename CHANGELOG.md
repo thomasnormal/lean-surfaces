@@ -14,6 +14,15 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Empty and non-positive string, tuple, and namedtuple repetitions now
+  short-circuit after the pinned 64-bit `Py_ssize_t` conversion instead of
+  tripping the materialization budget. Positive nonempty results remain
+  bounded by `seqBudget`, and counts too large for the index-sized conversion
+  stay loud. The CPython 3.9 differential suite now has **2,698 / 3,026 rows
+  = 89.2% complete** natively and **2,624 / 3,026 = 86.7% complete** in the
+  proof interpreter, with **100% agreement among decided rows** and zero
+  failures.
+
 - Very large arithmetic right shifts now saturate by the operand's bit length,
   returning `0` for nonnegative operands and `-1` for negative operands instead
   of refusing after `shiftBudget`; negative counts retain the faithful

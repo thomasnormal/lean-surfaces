@@ -24,6 +24,11 @@ set_option maxRecDepth 8192
 #py_check string_repeat.repeat_right_length("λ😀", 3) = 6
 #py_check string_repeat.repeat_left_length(3, "ab") = 6
 #py_check string_repeat.repeat_aug_length("xy", 3) = 6
+#py_check string_repeat.repeat_right("ab", -1048577) = ""
+#py_check string_repeat.repeat_left(1048577, "") = ""
+#py_check string_repeat.repeat_left(-1048577, "") = ""
+#guard callFunction string_repeat "repeat_right"
+  #[.str "", .int 1000000000000000000000000000000] 4096 matches .unsupported _
 #py_check string_repeat.decorated("ab", 2) = "[abab]"
 #py_check string_repeat.decorated("ab", -1) = "[]"
 #py_check string_repeat.width_offset(-7) = -1
@@ -50,12 +55,6 @@ set_option maxRecDepth 8192
   #[.list #[.int 1], .tuple #[.int 1]] 4096 matches .unsupported _
 
 #guard callFunction string_repeat "repeat_right" #[.str "ab", .int 1048577] 4096
-  matches .unsupported _
-#guard callFunction string_repeat "repeat_right" #[.str "ab", .int (-1048577)] 4096
-  matches .unsupported _
-#guard callFunction string_repeat "repeat_left" #[.int 1048577, .str ""] 4096
-  matches .unsupported _
-#guard callFunction string_repeat "repeat_left" #[.int (-1048577), .str ""] 4096
   matches .unsupported _
 #guard callFunction string_repeat "repeat_right" #[.str "ab", .int 1048576] 4096
   matches .unsupported _

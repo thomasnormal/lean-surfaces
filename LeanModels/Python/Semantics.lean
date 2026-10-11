@@ -156,6 +156,11 @@ purpose: budget-refusals must be fuel-INDEPENDENT (`unsupported`, never
 a fuel-varying outcome). -/
 def seqBudget : Nat := 1048576
 
+/-- The pinned CPython 3.9 `Py_ssize_t` magnitude on the 64-bit oracle.
+Repetition may short-circuit an empty/nonpositive result only after this
+index-sized conversion would succeed. -/
+def seqIndexBudget : Nat := 9223372036854775807
+
 /-- The left-shift budget: the largest shift COUNT `<<` will build, so the
 widest result is about a million bits (128 KB). Its own constant rather
 than a reuse of `seqBudget` — they bound different resources and the
@@ -651,20 +656,28 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
         .unsupported
           s!"comparison '{op.symbol}' between '{a.typeName}' and '{b.typeName}' is outside the v0 tier"
 
-/-- Tuple repetition with fuel-independent bounds on the original count
-magnitude and the output's element count. Larger counts refuse before
-empty/negative handling rather than guessing CPython's index-sized limit. -/
+/-- Tuple repetition with fuel-independent bounds on positive nonempty
+results. Empty tuples and nonpositive counts short-circuit exactly as CPython
+does, without constructing or budgeting the requested magnitude. -/
 def tupleRepeat (xs : Array RVal) (count : Int) : Res RVal :=
-  if count.natAbs ≤ seqBudget ∧ xs.size * count.toNat ≤ seqBudget then
+  if count.natAbs > seqIndexBudget then
+    .unsupported "sequence repetition count does not fit CPython's index-sized integer"
+  else if count ≤ 0 || xs.isEmpty then
+    .ok (.tuple #[])
+  else if count.natAbs ≤ seqBudget ∧ xs.size * count.toNat ≤ seqBudget then
     .ok (.tuple ((List.replicate count.toNat xs.toList).flatten.toArray))
   else
     .unsupported "tuple repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §tuple repetition)"
 
-/-- String repetition with fuel-independent bounds on the original count
-magnitude and the output's code-point length. Larger counts refuse before
-empty/negative handling rather than guessing CPython's index-sized limit. -/
+/-- String repetition with fuel-independent bounds on positive nonempty
+results. Empty strings and nonpositive counts short-circuit exactly as CPython
+does, without constructing or budgeting the requested magnitude. -/
 def strRepeat (text : String) (count : Int) : Res RVal :=
-  if count.natAbs ≤ seqBudget ∧ text.length * count.toNat ≤ seqBudget then
+  if count.natAbs > seqIndexBudget then
+    .unsupported "sequence repetition count does not fit CPython's index-sized integer"
+  else if count ≤ 0 || text.isEmpty then
+    .ok (.str "")
+  else if count.natAbs ≤ seqBudget ∧ text.length * count.toNat ≤ seqBudget then
     .ok (.str (String.ofList ((List.replicate count.toNat text.toList).flatten)))
   else
     .unsupported "string repetition beyond seqBudget is outside the tier (count magnitude or output code-point length; docs/memory-model.md §string repetition)"

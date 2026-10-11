@@ -410,16 +410,16 @@ cycle DETECTION, never by running out of fuel).
   candidate whose TYPENAME collides with an `ntBase` class name, so in a
   recognized module a value's `tname` names exactly its defining class.
 
-## Tuple repetition (2026-10-09 — current)
+## Tuple repetition (2026-10-11 — current)
 
 Tuple and namedtuple repetition shares the pure `tupleRepeat` worker in both
 interpreters, for either operand order, boolean counts, and `*=`. Admission
-requires BOTH the original signed count's magnitude and the result's element
-count to be at most `seqBudget` (1,048,576). The original-count check happens
-before materialization, including empty tuples and negative counts. CPython
-converts the count to its index-sized representation before those cases can
-return an empty tuple; larger counts refuse rather than guessing the host's
-word size, `OverflowError`, or `MemoryError`. The bounds are fuel-independent.
+requires the original signed count's magnitude and the result's element count
+to be at most `seqBudget` (1,048,576) for positive, nonempty results. Counts
+must first fit the pinned 64-bit CPython `Py_ssize_t`; once that index-sized
+conversion succeeds, empty tuples and non-positive counts short-circuit to an
+empty tuple. Larger counts remain loud rather than guessing `OverflowError` or
+`MemoryError`. The positive-result bounds are fuel-independent.
 
 Admitted non-positive counts produce an empty tuple. Positive counts retain
 the structural `List.replicate`/`flatten`/`toArray` implementation, with no
@@ -439,7 +439,7 @@ so it must not be treated as an observation of CPython's partial output.
 
 ## String semantics (H5 strings — BUILT, 2026-08-09)
 
-### String repetition (2026-10-09 — current)
+### String repetition (2026-10-11 — current)
 
 `str * int`, `int * str`, boolean counts, and `*=` share the pure
 `strRepeat` worker in both interpreters. Repetition preserves every Unicode
@@ -450,13 +450,13 @@ flattening, followed by `String.ofList`, so concrete checks remain
 kernel-reducible without caches or special-case fast paths.
 
 Admission bounds BOTH the original signed count's magnitude and the result's
-code-point length by the fixed `seqBudget` (1,048,576). The count check comes
-before materialization even for an empty string or negative count: CPython
-must first convert the integer to its platform's index-sized representation,
-and an enormous count can overflow even when the eventual result would be
-empty. Larger counts/output refuse, never guessing a host word size,
-`OverflowError`, or `MemoryError`. These bounds do not depend on interpreter
-fuel. Lone surrogates remain outside Lean's `Char` boundary.
+code-point length by the fixed `seqBudget` (1,048,576) for positive, nonempty
+results. Counts must first fit the pinned 64-bit CPython `Py_ssize_t`; once
+that index-sized conversion succeeds, empty strings and non-positive counts
+short-circuit to the empty string. Larger positive counts/output refuse,
+never guessing a host word size, `OverflowError`, or `MemoryError`. These
+bounds do not depend on interpreter fuel. Lone surrogates remain outside
+Lean's `Char` boundary.
 
 `sequenceMult` preserves the left sequence's multiplication protocol before
 trying the right sequence: `"ab" * (1,)` names `tuple` in its non-integer

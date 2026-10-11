@@ -34,6 +34,16 @@ additive supplement. The output is still tooling evidence: independent fresh
 frontend runs must agree by occurrence witnesses before any operand or
 callable-body admission, and no program execution is admitted by this item.
 
+The same probe now emits a separate `expression_evidence` supplement for
+builtin `BinaryOperator` nodes. Each row carries the AST occurrence handle,
+operator spelling, structured result type, and the two ordered direct-child
+handles with their structured types. Lean checks the occurrence kind, opcode,
+child order and child kinds against the retained AST, and checks every record
+or enumeration reference against the declaration ledger. Unsupported operand
+or result type families remain in `expression_refusals`; no `qualType` text is
+used and no overloaded operator, conversion or executable expression is
+admitted.
+
 ```sh
 lake build LeanModels.Cpp.TypeEvidenceTests
 ```

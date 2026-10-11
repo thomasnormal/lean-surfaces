@@ -119,6 +119,10 @@ int callable(int value, Box *box);
 int variadic(int value, ...);
 """
 
+EXPRESSION_EVIDENCE_SOURCE = """int add(int left, int right) { return left + right; }
+int run() { int value = add(1, 2); return value * 3; }
+"""
+
 POINTER_ID = re.compile(r"0x[0-9a-fA-F]+\Z")
 DECLARATION_KINDS = {
     "NamespaceDecl", "CXXRecordDecl", "CXXMethodDecl", "CXXConstructorDecl",
@@ -350,6 +354,51 @@ class CanonicalProbeTests(unittest.TestCase):
         for row in rows:
             self.assertIn(row["occurrence"], {record["id"] for record in declarations})
             self.assertNotIn("qualType", json.dumps(row))
+
+    def test_binary_expression_rows_bind_ordered_operands_to_ast(self):
+        self.source.write_text(EXPRESSION_EVIDENCE_SOURCE, encoding="utf-8")
+        probe = self.probe()
+        metadata = probe["metadata"]
+        self.assertEqual(metadata["expression_evidence_api"],
+                         "Clang::BinaryOperator typed operand projection v1")
+        rows = metadata["expression_evidence"]
+        self.assertEqual([row["operator"] for row in rows], ["+", "*"])
+        ast_nodes = {}
+
+        def walk(node):
+            if isinstance(node, dict):
+                if isinstance(node.get("id"), str):
+                    ast_nodes[node["id"]] = node
+                for child in node.values():
+                    walk(child)
+            elif isinstance(node, list):
+                for child in node:
+                    walk(child)
+
+        walk(probe["ast"])
+        for row in rows:
+            node = ast_nodes[row["occurrence"]]
+            self.assertEqual(node["kind"], "BinaryOperator")
+            self.assertEqual(node["opcode"], row["operator"])
+            self.assertEqual(len(row["operands"]), 2)
+            self.assertEqual([child["id"] for child in node["inner"]],
+                             [operand["occurrence"] for operand in row["operands"]])
+            for operand in row["operands"]:
+                self.assertEqual(operand["type"], {"kind": "builtin", "name": "int"})
+            self.assertEqual(row["result"], {"kind": "builtin", "name": "int"})
+            self.assertNotIn("qualType", json.dumps(row))
+        self.assertEqual(metadata["expression_refusals"], [])
+
+    def test_binary_expression_unsupported_types_are_refused(self):
+        self.source.write_text(
+            "double arithmetic(double left, double right) { return left + right; }\n",
+            encoding="utf-8",
+        )
+        metadata = self.probe()["metadata"]
+        self.assertEqual(metadata["expression_evidence"], [])
+        self.assertEqual(len(metadata["expression_refusals"]), 1)
+        self.assertEqual(metadata["expression_refusals"][0]["operator"], "+")
+        self.assertIn("unrepresented", metadata["expression_refusals"][0]["reason"])
 
     def test_same_process_joins_preserve_nonempty_coverage_and_raw_gaps(self):
         probe = self.probe()

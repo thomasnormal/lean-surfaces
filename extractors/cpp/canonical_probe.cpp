@@ -322,8 +322,12 @@ public:
   llvm::json::Array records;
   llvm::json::Array typeEvidence;
   llvm::json::Array typeRefusals;
+  llvm::json::Array expressionEvidence;
+  llvm::json::Array expressionRefusals;
   std::vector<const clang::Decl *> typedDeclarations;
+  std::vector<const clang::BinaryOperator *> binaryExpressions;
   std::unordered_set<std::string> declarationIds;
+  const clang::ASTContext *astContext = nullptr;
 
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
@@ -362,6 +366,41 @@ public:
     return true;
   }
 
+  bool VisitBinaryOperator(clang::BinaryOperator *expression) {
+    binaryExpressions.push_back(expression);
+    return true;
+  }
+
+  void emitBinaryExpression(const clang::BinaryOperator *expression) {
+    llvm::json::Object row{
+        {"expression_api", "Clang::BinaryOperator typed operand projection v1"},
+        {"occurrence", pointerId(expression)},
+        {"kind", "BinaryOperator"},
+        {"operator", expression->getOpcodeStr().str()}};
+    auto result = structuredType(expression->getType(), *astContext, 0);
+    llvm::json::Array operands;
+    bool supported = result.has_value();
+    for (const clang::Expr *operand : {expression->getLHS(), expression->getRHS()}) {
+      llvm::json::Object operandRow{
+          {"occurrence", pointerId(operand)},
+          {"kind", operand->getStmtClassName()}};
+      auto operandType = structuredType(operand->getType(), *astContext, 0);
+      if (operandType && structuredReferencesWitnessed(*operandType, declarationIds))
+        operandRow["type"] = std::move(*operandType);
+      else
+        supported = false;
+      operands.push_back(std::move(operandRow));
+    }
+    if (!result || !supported || !structuredReferencesWitnessed(*result, declarationIds)) {
+      row["reason"] = "unrepresented result or operand type";
+      expressionRefusals.push_back(std::move(row));
+      return;
+    }
+    row["result"] = std::move(*result);
+    row["operands"] = std::move(operands);
+    expressionEvidence.push_back(std::move(row));
+  }
+
   void buildTypeEvidence(const clang::ASTContext &context) {
     for (const clang::Decl *declaration : typedDeclarations) {
       const auto type = declarationType(declaration);
@@ -382,6 +421,11 @@ public:
       typeEvidence.push_back(std::move(row));
     }
   }
+
+  void buildExpressionEvidence() {
+    for (const clang::BinaryOperator *expression : binaryExpressions)
+      emitBinaryExpression(expression);
+  }
 };
 
 class ProbeConsumer : public clang::ASTConsumer {
@@ -394,6 +438,7 @@ public:
     if (compiler.getDiagnostics().hasErrorOccurred())
       return;
     DeclarationVisitor visitor;
+    visitor.astContext = &context;
     if (!visitor.TraverseDecl(context.getTranslationUnitDecl())) {
       unsigned diagnostic = compiler.getDiagnostics().getCustomDiagID(
           clang::DiagnosticsEngine::Error, "canonical probe traversal failed");
@@ -401,6 +446,7 @@ public:
       return;
     }
     visitor.buildTypeEvidence(context);
+    visitor.buildExpressionEvidence();
     llvm::json::Object metadata{
         {"schema_version", "cpp-canonical-probe-0.3"},
         {"compiled_frontend", CLANG_VERSION_STRING},
@@ -409,6 +455,9 @@ public:
         {"type_evidence_api", "Clang::QualType structured type projection v1"},
         {"type_evidence", std::move(visitor.typeEvidence)},
         {"type_refusals", std::move(visitor.typeRefusals)},
+        {"expression_evidence_api", "Clang::BinaryOperator typed operand projection v1"},
+        {"expression_evidence", std::move(visitor.expressionEvidence)},
+        {"expression_refusals", std::move(visitor.expressionRefusals)},
         {"declarations", std::move(visitor.records)}};
     llvm::outs() << "{\"metadata\":" << llvm::formatv("{0}", llvm::json::Value(std::move(metadata)))
                  << ",\"ast\":";

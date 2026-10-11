@@ -252,6 +252,37 @@ class EvidenceIngestionTests(unittest.TestCase):
 #guard match parseValidatedTypeEvidence evidence with
   | .ok rows => !rows.isEmpty
   | .error _ => false
+#guard match parseValidatedBinaryExpressionEvidence evidence with
+  | .ok rows => rows.isEmpty
+  | .error _ => false
+""")
+
+    def test_actual_pinned_compiler_expression_evidence_loads(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        source = self.root / "expression.cpp"
+        source.write_text("int arithmetic(int left, int right) { return left + right; }\n",
+                          encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(pathlib.Path(library).resolve()),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        self.assertEqual([row["operator"] for row in probe["metadata"]["expression_evidence"]], ["+"])
+        self.assert_accepts(result.stdout, """#guard match parseValidatedBinaryExpressionEvidence evidence with
+  | .ok rows => rows.length == 1
+  | .error _ => false
 """)
 
     def run_inspector(self, fixture, *paths):

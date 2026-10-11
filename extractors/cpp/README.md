@@ -20,6 +20,10 @@ same recursive tree from `clang::QualType` in its `metadata.type_evidence`
 supplement; unsupported type families are omitted, never reconstructed from
 `qualType` spelling. `parseValidatedTypeEvidence` checks the supplement against
 the declaration rows before any later admission layer consumes it.
+`LeanModels/Cpp/ExpressionEvidence.lean` separately validates the probe's
+ordered `BinaryOperator` operand rows against the same AST occurrence and
+direct-child handles; unsupported operand/result families stay in the explicit
+refusal ledger.
 
 ## Optional declaration metadata probe
 
@@ -226,6 +230,11 @@ template instantiations enabled. It also carries an additive
 `type_evidence_api`/`type_evidence` supplement built from the same
 `clang::QualType` objects; unsupported type families are omitted. No
 declaration family or header is filtered from the raw ledger.
+The `expression_evidence_api`/`expression_evidence` supplement carries only
+Clang builtin `BinaryOperator` nodes: the operator, structured result type and
+two ordered direct-child handles/types. `expression_refusals` records rows
+whose operand or result type is outside that vocabulary. This is typed frontend
+evidence, not expression evaluation or executable admission.
 
 - `id`, `canonical`, `previous`, `semantic_context` and `lexical_context` are
   exact session-local frontend handles, not entity identifiers. Context IDs
@@ -274,6 +283,10 @@ declaration family or header is filtered from the raw ledger.
   represented without guessing (for example, unsupported qualifiers or
   function properties). A refusal is retained as evidence; it is not silently
   turned into a scalar or a spelling-based fallback.
+- `expression_evidence` is validated by `parseValidatedBinaryExpressionEvidence`:
+  the occurrence kind/opcode, direct-child order/kinds and structured type
+  references must agree with the retained AST and declaration ledger. It does
+  not cover overloaded operators, conversions, calls or expression execution.
 
 The visitor can miss declarations that the stock dumper emits as nested type
 references. Canonical/predecessor/context/represented-class targets can also be

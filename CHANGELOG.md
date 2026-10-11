@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.9] — 2026-10-11
+
 ### Added
 
 - Two-argument integer `pow` calls now share the pure integer exponentiation
@@ -53,6 +55,18 @@ change is listed here under **Changed** or **Removed**.
   code-point list, keeping constructor error proofs kernel-reducible. Textual
   NaN payloads, bytes-like inputs, object protocols, keywords and unresolved
   invalid-Unicode repr remain explicit unfinished coverage work.
+
+### Validation
+
+- CPython 3.9 differential suite: **3,012 rows / 2,647 matched / 365 recorded
+  refusals / zero mismatches**, so **87.9% of the suite is complete** and
+  agreement among decided rows is 100%. The proof interpreter matches **2,574**
+  and refuses **438**, also with zero mismatches.
+- Grammar census: **142 witnesses / 114 MATCH / 28 REFUSE**. Whole-program
+  scripts: **106 / 82 completed-and-matched / 24 loud-blocked / zero failures**.
+- The capped full Lake build passed **3,800 jobs**; focused Python proof and
+  runner builds, refusal-census regressions **9/9**, coverage freshness, and
+  exact-head CI run **38153627730** all passed.
 
 ## [0.1.8] — 2026-10-11
 

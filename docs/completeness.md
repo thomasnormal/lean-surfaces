@@ -259,9 +259,10 @@ instrument rather than a reading: `print(5 ^ 3)` needs no index.
 
 **Risk**: none realized. `intXor`'s arms and `Int.fdiv`-as-`>>` were
 checked against CPython 3.9.19 over 95481 + 24720 pairs, 0 mismatches,
-before a line of Lean was written. `>>` takes `<<`'s budget refusal
-rather than CPython's saturation — loud, never a claim CPython raises,
-with saturation recorded as owed.
+before a line of Lean was written. The follow-up width-saturation landing
+now answers counts at or beyond the operand bit length exactly, retiring
+the `RShift-budget` refusal row while retaining the construction budget for
+counts below that width.
 
 ### Rung 2 — `AnnAssign`. Price: SMALL. **LANDED (function bodies).**
 

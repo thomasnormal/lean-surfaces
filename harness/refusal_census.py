@@ -857,8 +857,8 @@ w("op.Pow-negative", "print(2 ** -1)\n", "MATCH",
 w("op.LShift", "print(1 << 4)\n", "MATCH", "budget-capped shift width")
 w("op.RShift", "print(16 >> 2)\n", "MATCH",
   "was REFUSE; §L39 rung 1 landed it (op.RShift-budget is its edge)")
-w("op.RShift-budget", "print(1 >> 10 ** 30)\n", "REFUSE",
-  "`<<`'s budget, for `<<`'s reason: forming 2**b would abort")
+w("op.RShift-budget", "print(1 >> 10 ** 30)\n", "MATCH",
+  "large counts saturate by operand bit length before the shift budget")
 w("op.BitOr", "print(5 | 2)\n", "MATCH", "")
 w("op.BitXor", "print(5 ^ 3)\n", "MATCH",
   "was REFUSE — the one witness that found the whole rung; §L39 landed it")
@@ -1077,7 +1077,6 @@ WHITELIST_CLASS = {
     "seq_lab::band_set": "set.order",
     "seq_lab::str_repeat_loud": "op.Mult-repetition",
     "seq_lab::shl": "op.LShift-budget",
-    "seq_lab::shr": "op.LShift-budget",
     "clock_lab::armed": "exc.handler",
     "clock_lab::read_clock": "clock.underrun",
     "clock_lab::shadowed": "attr.on-scalar",

@@ -118,6 +118,8 @@ and pass 5's refusal is retired here (docs/memory-model.md §bitwise
 #py_check seq_lab.shl(-3, 4) = -48
 #py_check seq_lab.shl_deadline() = 9223372036854775808
 #py_check seq_lab.shl(5, -1) raises (.valueError "negative shift count")
+#py_check seq_lab.shr(1, 1000000000000000000000000000000) = 0
+#py_check seq_lab.shr(-1, 1000000000000000000000000000000) = -1
 #py_check seq_lab.bor(6, 3) = 7
 #py_check seq_lab.bor(0, 0) = 0
 #py_check seq_lab.bor_aug(5) = true

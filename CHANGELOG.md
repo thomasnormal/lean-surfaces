@@ -14,6 +14,14 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Very large arithmetic right shifts now saturate by the operand's bit length,
+  returning `0` for nonnegative operands and `-1` for negative operands instead
+  of refusing after `shiftBudget`; negative counts retain the faithful
+  `ValueError`. The CPython 3.9 differential suite now has **2,674 / 3,026
+  rows = 88.4% complete** natively and **2,600 / 3,026 = 85.9% complete** in
+  the proof interpreter, with **100% agreement among decided rows** and zero
+  failures.
+
 - Range-to-range equality now compares the produced integer sequences without
   materializing them: empty ranges compare equal, singleton steps are ignored,
   and longer ranges require equal starts, lengths, and steps. The differential

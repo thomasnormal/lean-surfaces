@@ -1660,15 +1660,15 @@ hard".**
   exactly `Int.fdiv` by `2 ^ n` — `-5 >> 1 == -3`, not `-2`. Boolness
   DROPS (`type(True >> True)` is `int`), which the shared `asInt` route
   gives for free.
-* **`>>` carries `<<`'s budget, for `<<`'s reason and not a weaker one.**
-  Forming `2 ^ y` to divide by would hit the very
-  `INTERNAL PANIC: Nat.pow exponent is too big` abort the budget exists
-  to prevent. CPython SATURATES above it (a shift past the operand's bit
-  length is `0`, or `-1` when negative) and answers instantly;
-  saturating here would be exact only under a bound on `x`'s bit length
-  that this tier does not have, so the model gives the same loud,
-  fuel-independent refusal `<<` gives — never a claim that CPython
-  raises. **Owed**: saturation behind a width argument.
+* **`>>` uses operand-width saturation before the construction budget.**
+  CPython answers a shift whose count reaches the operand's bit length
+  immediately: a nonnegative operand becomes `0`, and a negative operand
+  becomes `-1`. The model computes that width with `intBitLength`, so even
+  counts such as `10**30` are exact and do not construct `2^n`; only counts
+  below the width reach the existing `shiftBudget`-guarded `Int.fdiv` path.
+  Negative counts still raise the faithful `ValueError` first. This retires
+  the old loud `RShift-budget` gap without claiming that CPython raises for
+  a large valid shift.
 * **`^` is `intXor`, and it is the simplest of the three** bitwise
   helpers, because XOR commutes with complement. `Int.negSucc a` IS
   `~a`; `~p ^ q = ~(p ^ q)` and `~p ^ ~q = p ^ q`, so each of the four

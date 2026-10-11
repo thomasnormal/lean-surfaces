@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3025 | 2672 | 0 | 353 |
+| 3026 | 2674 | 0 | 352 |
 
-Of the 2672 rows the model decides, 2672 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2674 rows the model decides, 2674 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3025 | 2598 | 0 | 427 |
+| 3026 | 2600 | 0 | 426 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-142 witnesses: 116 MATCH, 26 REFUSE.
+142 witnesses: 117 MATCH, 25 REFUSE.
 
 ### `stmt`
 
@@ -178,7 +178,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Pow-negative` | MATCH | bounded negative integer exponent returns binary64 |
 | `LShift` | MATCH | budget-capped shift width |
 | `RShift` | MATCH | was REFUSE; §L39 rung 1 landed it (op.RShift-budget is its edge) |
-| `RShift-budget` | REFUSE | a right shift beyond shiftBudget is outside the tier (docs/memory-model.md §left shift and bitwise or) |
+| `RShift-budget` | MATCH | large counts saturate by operand bit length before the shift budget |
 | `BitOr` | MATCH |  |
 | `BitXor` | MATCH | was REFUSE — the one witness that found the whole rung; §L39 landed it |
 | `BitAnd` | MATCH |  |

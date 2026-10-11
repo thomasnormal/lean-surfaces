@@ -178,6 +178,10 @@ an exact integer ratio before binary64 rounding. Larger exponents remain loud
 rather than forcing an unbounded kernel `Int.pow`. -/
 def floatPowBudget : Nat := 1024
 
+/-- The number of bits needed to represent an integer's magnitude. -/
+def intBitLength (value : Int) : Nat :=
+  if value = 0 then 0 else value.natAbs.log2 + 1
+
 /-- Materialize a range value, budget-guarded (see the section comment). -/
 def rangeVals (lo hi step : Int) : Res (List RVal) :=
   let n := rangeLen lo hi step
@@ -1017,17 +1021,14 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         else .ok (.int (x * (2 : Int) ^ y.toNat))
     -- `>>` is `<<`'s mirror and is CPython's ARITHMETIC shift: it rounds
     -- toward -inf, which is exactly `Int.fdiv` by `2^n` (`-5 >> 1 == -3`).
-    -- The budget is `<<`'s, for the same reason and not a weaker one:
-    -- forming `2 ^ y` to divide by would hit the very `Nat.pow exponent
-    -- is too big` abort the budget exists to prevent. CPython SATURATES
-    -- there (a shift past the operand's bit length is 0, or -1 when
-    -- negative) and answers instantly; saturating here would be exact
-    -- only under a bound on `x`'s bit length that this tier does not
-    -- have, so the honest answer is the same loud, fuel-independent
-    -- refusal `<<` gives — never a claim that CPython raises. Recorded
-    -- as owed: saturation behind a width argument.
+    -- CPython saturates once the count reaches the operand's bit length,
+    -- so huge counts can be answered without constructing `2^n`: nonnegative
+    -- operands become 0 and negative operands become -1. Counts below that
+    -- boundary still use `<<`'s fixed budget to protect kernel reduction.
     | .rshift =>
         if y < 0 then .exn (.valueError "negative shift count")
+        else if y.toNat >= intBitLength x then
+          .ok (.int (if x < 0 then -1 else 0))
         else if y.toNat > shiftBudget then
           .unsupported "a right shift beyond shiftBudget is outside the tier (docs/memory-model.md §left shift and bitwise or)"
         else .ok (.int (Int.fdiv x ((2 : Int) ^ y.toNat)))

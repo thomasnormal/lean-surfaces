@@ -14,6 +14,12 @@ driver is `run_integral.lean` and its compiler oracle is `integral_oracle.cpp`.
 bridge against Clang's C++23 `decltype` rules; this remains type/value-layer
 evidence rather than AST or execution admission.
 
+`LeanModels/Cpp/TypeEvidence.lean` defines the separate structured type-row
+contract and occurrence/canonical validator. Its current guards are synthetic:
+the canonical declaration probe remains unchanged until a matching Clang
+supplement can emit this recursive tree without falling back to `qualType`
+spelling.
+
 ## Optional declaration metadata probe
 
 `canonical_probe.cpp` is an **experimental, tooling-only** Clang plugin. It

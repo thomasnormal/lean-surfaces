@@ -4,6 +4,7 @@ import LeanModels.Cpp.CaptureTests
 import LeanModels.Cpp.LocalFunctionTests
 import LeanModels.Cpp.IntegralTests
 import LeanModels.Cpp.TypeTests
+import LeanModels.Cpp.TypeEvidenceTests
 
 namespace LeanModels.Cpp.Tests
 

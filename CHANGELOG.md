@@ -26,6 +26,11 @@ change is listed here under **Changed** or **Removed**.
   **2,657 / 3,020 rows = 88.0% matched**, or **88.0% complete**, with **100%
   agreement among decided rows**.
 
+- Range membership now checks arithmetic progression containment without
+  materializing the range, including Boolean and integral-float probes. The
+  differential suite now has **2,661 / 3,023 rows = 88.0% matched**, or
+  **88.0% complete**, with **100% agreement among decided rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

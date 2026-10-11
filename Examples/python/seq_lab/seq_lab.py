@@ -194,6 +194,18 @@ def range_in(n):
     return 2 in range(n)
 
 
+def range_in_step():
+    return 6 in range(0, 10, 2)
+
+
+def range_in_float():
+    return 2.0 in range(5)
+
+
+def range_in_fraction():
+    return 2.5 in range(5)
+
+
 def range_boundary(n):
     return range(n)
 

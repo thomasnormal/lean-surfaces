@@ -88,11 +88,13 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 #py_check seq_lab.range_index_oob(3) raises (.indexError)
 #py_check seq_lab.range_index_type() raises
   (.typeError "range indices must be integers or slices, not str")
+#py_check seq_lab.range_in(5) = true
+#py_check seq_lab.range_in_step() = true
+#py_check seq_lab.range_in_float() = true
+#py_check seq_lab.range_in_fraction() = false
 
 /-! ### the remaining loud range frontier (unsupported, never guessed) -/
 
-#guard (match callFunction seq_lab "range_in" #[.int 5] 4096 with
-  | .unsupported _ => true | _ => false)
 #guard (match callFunction seq_lab "range_boundary" #[.int 3] 4096 with
   | .unsupported _ => true | _ => false)
 #guard (match callFunction seq_lab "range_unpack" #[] 4096 with

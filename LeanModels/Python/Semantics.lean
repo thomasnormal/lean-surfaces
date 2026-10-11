@@ -195,6 +195,12 @@ def rangeEq (alo ahi astep blo bhi bstep : Int) : Bool :=
   else
     an == bn && astep == bstep
 
+def rangeContainsInt (lo hi step value : Int) : Bool :=
+  if 0 < step then
+    lo ≤ value && value < hi && (value - lo) % step == 0
+  else
+    hi < value && value ≤ lo && (lo - value) % (-step) == 0
+
 /-- Is this runtime value Python's `None` singleton? (The value-level test
 behind `is None` / `is not None` — see `evalCompareOp`.) A heap object is
 never `None`, so the `.ref` arm is a faithful `false`, not a refusal. -/
@@ -344,6 +350,17 @@ def asInt : RVal → Option Int
   | .int n => some n
   | .bool b => some (if b then 1 else 0)
   | _ => Option.none
+
+def rangeContains (lo hi step : Int) (value : RVal) : Bool :=
+  match value with
+  | .float number =>
+    match number.toIntegralInt with
+    | some integer => rangeContainsInt lo hi step integer
+    | Option.none => false
+  | value =>
+    match asInt value with
+    | some integer => rangeContainsInt lo hi step integer
+    | Option.none => false
 
 mutual
   def RVal.hasFloat : RVal → Bool
@@ -2696,8 +2713,8 @@ def valContains (h : Heap) (fuel : Nat) (a b : RVal) : Res Bool :=
   | .listV xs => heapContainsScan h fuel a xs.toList
   | .tuple xs => heapContainsScan h fuel a xs.toList
   | .ntuple _ _ xs => heapContainsScan h fuel a xs.toList
-  | .rangeV .. =>
-      .unsupported "membership in a range is outside the tier (CPython decides it arithmetically; docs/memory-model.md §module-init execution)"
+  | .rangeV lo hi step =>
+      .ok (rangeContains lo.toInt hi.toInt step.toInt a)
   | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
 
 /-- The heap-aware comparison step (`evalCompareChain` consumes this since

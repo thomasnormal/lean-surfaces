@@ -3093,6 +3093,8 @@ each construct differential, refusals loud):
   materializing them (empty ranges all compare equal; singleton steps are
   irrelevant), integer subscripting computes the selected element with
   negative-index normalization and faithful `IndexError`/`TypeError`,
+  membership tests exact arithmetic progression containment for ints,
+  bools, and integral floats,
   dict-key/set-element loud via `keyRefusal` (ranges ARE hashable in CPython
   — never a fake unhashable `TypeError`), the
   boundary loud, `next()` the faithful `not an iterator` `TypeError`.

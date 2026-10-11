@@ -5,6 +5,7 @@ import LeanModels.Cpp.LocalFunction
 import LeanModels.Cpp.Integral
 import LeanModels.Cpp.Types
 import LeanModels.Cpp.ScalarTypes
+import LeanModels.Cpp.CompositeTypes
 import LeanModels.Cpp.ObjectModel
 import LeanModels.Cpp.TypeEvidence
 import LeanModels.Cpp.ExpressionEvidence

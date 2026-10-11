@@ -5,6 +5,7 @@ import LeanModels.Cpp.LocalFunctionTests
 import LeanModels.Cpp.IntegralTests
 import LeanModels.Cpp.TypeTests
 import LeanModels.Cpp.ScalarTypeTests
+import LeanModels.Cpp.CompositeTypeTests
 import LeanModels.Cpp.ObjectModelTests
 import LeanModels.Cpp.TypeEvidenceTests
 import LeanModels.Cpp.CallableTests

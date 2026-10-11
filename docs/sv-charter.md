@@ -391,8 +391,8 @@ evaluated against the active state; an unknown index enqueues no window.
 For a known index, the self-check queue stores a full-value snapshot formed
 from the last pending snapshot for that signal, so disjoint selected writes
 merge and overlapping writes retain issue order. Whole-value NBAs keep the
-existing queue representation, and concatenated NBAs remain loud rather
-than being silently widened.
+existing queue representation, and concatenated NBAs are admitted through
+the same pending-snapshot queue path.
 
 `harness/sv/packed_assignment_targets/nba_updates.sv` is the concrete
 pre-commit visibility fixture. Its extracted statements are pinned in
@@ -407,10 +407,10 @@ the IEEE 1800-2023 §11.5.1 per-bit rule retains the in-range writes. The
 staged value helper therefore follows the standard rule through the
 existing value primitive; no simulator-specific path or rewritten
 expectation is used. The diagnostic remains recorded as a known oracle
-disagreement, outside the acceptance fixture. Selected nonblocking
-targets remain loud because the shared kernel queue currently resolves
-one write window at a time; they are the next assignment family, not a
-silent whole-variable fallback.
+disagreement, outside the acceptance fixture. The selected family keeps
+one full-value queue window per affected signal; the concatenated family
+below uses the same snapshot rule rather than a silent whole-variable
+fallback.
 
 Fresh extraction is **1,680 clean / 20,077 partial / 30 include skips**
 over the full 21,787 files, and **209 clean / 2,935 partial / four include
@@ -418,6 +418,25 @@ skips** over the exact 3,148-file core. There are zero extraction errors,
 zero lost clean files and no shared-record discrepancy. These gains
 (seventeen full, nine core since the selected-write foundation) measure extraction, not agreement on the disputed
 runtime cases.
+
+### Concatenated nonblocking packed targets — 2026-10-11
+
+Concatenated `<=` destinations now lower to the legacy/self-check
+`packedNbaAssign` form. Nested concatenations are flattened to the same
+width-bearing `PackedTarget` leaves used by blocking assignments, while
+the envelope retains the source nesting. The RHS is evaluated once and
+each destination index is evaluated against the active state; an unknown
+index contributes no queue entry. Each known leaf appends a full-value
+snapshot, based on the latest pending snapshot for that signal, so aliasing
+and disjoint selected leaves preserve the named right-to-left issue order.
+
+`harness/sv/packed_assignment_targets/nba_concat_updates.sv` checks that
+whole, nested and overlapping concatenated writes remain invisible before
+the NBA commit. Its generated envelope is pinned in
+`Examples/system-verilog/packed_assignment_targets/nba_concat_updates.sv.json`,
+and `concat_nba_snapshots` proves the whole-value queue order
+`second := 0101`, then `first := 1010`, while the active frame remains at
+zero. Invalid destination permutations remain loud.
 
 ### Four-state packed selected reads — 2026-10-09
 

@@ -245,9 +245,11 @@ Selected nonblocking targets use the same `SelectTarget` shape in the
 legacy/self-check surface. The RHS and index are sampled against the active
 state; the queue records a full-value snapshot derived from the last pending
 snapshot for that signal, preserving disjoint merges and issue order at
-commit. Concatenated nonblocking targets remain loud rather than being
-silently lowered to a whole-variable store. Invalid compilations containing
-an admitted target retain `SelectTarget:invalid-compilation` or
+commit. Concatenated nonblocking targets use `ConcatTarget` and flatten to
+the same ordered `PackedTarget` leaves as blocking concatenations. Nested
+targets retain their envelope shape, while the self-check parser flattens
+them for queue insertion. Invalid compilations containing an admitted target
+retain `SelectTarget:invalid-compilation` or
 `ConcatTarget:invalid-compilation`. Partly out-of-range writes follow the
 per-bit rule in the value primitive, with simulator disagreements kept as
 diagnostics rather than hidden by a second semantic path.

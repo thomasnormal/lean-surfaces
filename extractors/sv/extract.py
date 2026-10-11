@@ -1226,8 +1226,6 @@ def _convert_expression_stmt(sm, stmt):
         return unsupported(sm, stmt, "AssignmentExpression:timing")
     if _SYM is None:
         target, ok = legacy_blocking_target(sm, expr.left)
-        if expr.isNonBlocking and ok and target.get("kind") == "ConcatTarget":
-            return unsupported(sm, expr.left, "ConcatTarget:nonblocking")
     else:
         target, ok = select_target(sm, expr.left)
     if not ok:

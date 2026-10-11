@@ -118,16 +118,26 @@ class PackedAssignmentTargets(unittest.TestCase):
                                 "initial {first, second}[1:0] = 2'b11; endmodule")
         self.assertFalse(any(node.get("kind") == "ConcatTarget" for node in nodes(design)))
 
-    def test_nonblocking_concat_stays_pending(self):
+    def test_nonblocking_concat_keeps_window_geometry(self):
         design = extract_source("module top; logic first, second; "
                                 "initial {first, second} <= 2'b11; endmodule")
-        self.assertFalse(any(node.get("kind") == "ConcatTarget"
-                             for node in nodes(design)))
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget" and node["width"] == 2]
+        self.assertEqual(target["width"], 2)
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["first", "second"])
 
-    def test_nonblocking_concat_stays_pending(self):
-        design = extract_source("module top; logic first, second; "
-                                "initial {first, second} <= 2'b11; endmodule")
-        self.assertFalse(any(node.get("kind") == "ConcatTarget" for node in nodes(design)))
+    def test_nonblocking_nested_concat_keeps_selected_leaves(self):
+        design = extract_source("module top; logic [1:0] first, second; "
+                                "initial {first[0], {second[1], second[0]}} "
+                                "<= 3'b101; endmodule")
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget" and node["width"] == 3]
+        self.assertEqual(target["width"], 3)
+        self.assertEqual([part["kind"] for part in target["parts"]],
+                         ["SelectTarget", "ConcatTarget"])
+        self.assertEqual([part["kind"] for part in target["parts"][1]["parts"]],
+                         ["SelectTarget", "SelectTarget"])
 
 
 if __name__ == "__main__":

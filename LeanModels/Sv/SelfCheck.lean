@@ -244,6 +244,7 @@ inductive SStmt where
   | selectedNbaAssign (target : String) (width : Nat)
       (descending indexSigned twoState : Bool) (index value : SExpr)
   | packedAssign (targets : List PackedTarget) (value : SExpr)
+  | packedNbaAssign (targets : List PackedTarget) (value : SExpr)
   | ifStmt (cond : SExpr) (thenB : SStmt) (elseB : Option SStmt)
   | block (body : Array SStmt)
   | localDecl (name : String) (width : Nat) (twoState : Bool) (init : Option SExpr)
@@ -562,6 +563,41 @@ def enqueueSelectedNba (st : SvState) (nba : NbaQueue) (target : String)
       let updated := selectedWrite width descending indexSigned base position replacement
       .ok (nba ++ [(target, updated)])
 
+def enqueuePackedNba (fuel : Nat) (st : SvState) (nba : NbaQueue)
+    (replacement : LVec) (targets : List (PackedTarget × Nat))
+    (order : List Nat) : Res NbaQueue :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+      match order with
+      | [] => .ok nba
+      | position :: rest => do
+          let (target, offset) ← match targets[position]? with
+            | some target => pure target
+            | none => .unsupported "concatenated assignment order selected an invalid destination"
+          let part := replacement.extract offset target.width
+          let nba' ← match target with
+            | .whole name width twoState => do
+                let old ← match SvState.lookup st name with
+                  | some old => pure old
+                  | none => .unsupported s!"unknown packed assignment target '{name}'"
+                if old.width != width then
+                  .unsupported s!"packed assignment target '{name}' has inconsistent width"
+                else
+                  let value := if twoState then squash2v part else part
+                  pure (nba ++ [(name, value)])
+            | .selected name width descending indexSigned twoState index => do
+                let position ← evalSExpr fuel st index
+                match SvState.lookup st name, selectedIndex indexSigned position with
+                | none, _ => .unsupported s!"unknown selected assignment target '{name}'"
+                | some _, none => pure nba
+                | some old, some _ =>
+                    let base := (queuedValue name st nba).getD old
+                    let replacement := if twoState then squash2v part else part
+                    let updated := selectedWrite width descending indexSigned base position replacement
+                    pure (nba ++ [(name, updated)])
+          enqueuePackedNba fuel st nba' replacement targets rest
+
 /-- Execute one self-check statement, threading state, NBA queue, and
 output. A halted `Out` short-circuits (`$finish` skips the rest of the
 run). `.m0` subtrees run under the existing `execStmt`. -/
@@ -596,6 +632,15 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           let nba' ← enqueueSelectedNba st nba target width descending indexSigned twoState
             position replacement
           return (st, nba', out)
+      | .packedNbaAssign targets value => do
+          let replacement ← evalSExpr fuel st value
+          let order := assignmentOrder targets.length
+          if !validAssignmentOrder targets.length order then
+            .unsupported "concatenated assignment order must be a permutation of destinations"
+          else
+            let nba' ← enqueuePackedNba fuel st nba replacement
+              (packedTargetSlices targets) order
+            return (st, nba', out)
       | .packedAssign targets value => do
           let replacement ← evalSExpr fuel st value
           let order := assignmentOrder targets.length
@@ -889,6 +934,9 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
         return .selectedNbaAssign (← targetName (← getF target "value")) width
           (← getBoolF target "descending") (← getBoolF target "index_signed")
           (← getBoolF target "two_state") (← parseSExpr (← getF target "index"))
+          (← parseSExpr (← getF j "value"))
+      else if targetKind == "ConcatTarget" then
+        return .packedNbaAssign (← parsePackedTargets target)
           (← parseSExpr (← getF j "value"))
       else
         return .mkAssign true (← targetName target) (← parseSExpr (← getF j "value"))

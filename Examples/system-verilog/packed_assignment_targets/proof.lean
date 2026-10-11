@@ -97,6 +97,22 @@ theorem selected_nba_snapshots :
 
 #print axioms selected_nba_snapshots
 
+def concatNbaStatement : SStmt :=
+  .packedNbaAssign [.whole "first" 4 false, .whole "second" 4 false]
+    (.m0 (.lit (.lit "10100101")))
+
+def writeConcatNba : Res (SvState × NbaQueue × Out) :=
+  execSStmt 32 [ ("first", .lit "0000"), ("second", .lit "0000") ] [] {}
+    concatNbaStatement
+
+theorem concat_nba_snapshots :
+    writeConcatNba = .ok
+      ([ ("first", .lit "0000"), ("second", .lit "0000") ],
+       [("second", .lit "0101"), ("first", .lit "1010")], {}) := by
+  rfl
+
+#print axioms concat_nba_snapshots
+
 #eval do
   let text ← IO.FS.readFile
     "Examples/system-verilog/packed_assignment_targets/nba_updates.sv.json"
@@ -112,6 +128,28 @@ theorem selected_nba_snapshots :
     throw (IO.userError "proved selected-NBA statements differ from the real fixture")
   unless runSelfCheck design 4096 == Res.ok ["PASS"] do
     throw (IO.userError "real selected-NBA fixture did not print PASS")
+
+#eval do
+  let text ← IO.FS.readFile
+    "Examples/system-verilog/packed_assignment_targets/nba_concat_updates.sv.json"
+  let .ok design := loadEnvelopeDesign text
+    | throw (IO.userError "real concatenated-NBA fixture failed to load")
+  let some (SProc.initial (SStmt.block statements)) := design.procs[0]?
+    | throw (IO.userError "real concatenated-NBA process shape changed")
+  let some first := statements[2]?
+    | throw (IO.userError "whole concatenated-NBA statement disappeared")
+  let some second := statements[4]?
+    | throw (IO.userError "nested concatenated-NBA statement disappeared")
+  let some third := statements[6]?
+    | throw (IO.userError "overlapping concatenated-NBA statement disappeared")
+  unless first == concatNbaStatement do
+    throw (IO.userError "proved whole concatenated-NBA statement differs from the real fixture")
+  unless second matches SStmt.packedNbaAssign _ _ do
+    throw (IO.userError "nested concatenated-NBA statement did not lower")
+  unless third matches SStmt.packedNbaAssign _ _ do
+    throw (IO.userError "overlapping concatenated-NBA statement did not lower")
+  unless runSelfCheck design 4096 == Res.ok ["PASS"] do
+    throw (IO.userError "real concatenated-NBA fixture did not print PASS")
 
 #eval do
   let text ← IO.FS.readFile

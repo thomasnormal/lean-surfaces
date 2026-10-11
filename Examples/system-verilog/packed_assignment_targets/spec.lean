@@ -31,8 +31,15 @@ theorem selected_nba_snapshots :
        [("value", .lit "0010"), ("value", .lit "1010")], {}) :=
   proof.selected_nba_snapshots
 
+theorem concat_nba_snapshots :
+    proof.writeConcatNba = .ok
+      ([ ("first", .lit "0000"), ("second", .lit "0000") ],
+       [("second", .lit "0101"), ("first", .lit "1010")], {}) :=
+  proof.concat_nba_snapshots
+
 #print axioms alias_right_to_left
 #print axioms alias_invalid_order_refused
 #print axioms selected_nba_snapshots
+#print axioms concat_nba_snapshots
 
 end Examples.systemVerilog.packedAssignmentTargets

@@ -50,6 +50,26 @@ private def convertTo (profile : TargetProfile) (type : CppTypeEvidence)
   let destination ← formatFor profile type
   pure (integralConvert destination value)
 
+private def convertArguments (profile : TargetProfile) (parameters : List CallableParameter)
+    (arguments : List IntegralValue) :
+    Except CallableEvaluationError (IntegralResult (List IntegralValue)) :=
+  match parameters, arguments with
+  | [], [] => .ok (.ok [])
+  | parameter :: remainingParameters, argument :: remainingArguments => do
+      let converted ← convertTo profile parameter.type argument
+      match converted with
+      | .ok value =>
+          let remaining ← convertArguments profile remainingParameters remainingArguments
+          pure (match remaining with
+            | .ok values => .ok (value :: values)
+            | .invalid reason => .invalid reason
+            | .undefined reason => .undefined reason
+            | .unsupported reason => .unsupported reason)
+      | .invalid reason => pure (.invalid reason)
+      | .undefined reason => pure (.undefined reason)
+      | .unsupported reason => pure (.unsupported reason)
+  | _, _ => .error .arityMismatch
+
 private def operator? (operator : String) : Option IntegralBinary :=
   match operator with
   | "+" => some .add
@@ -136,6 +156,12 @@ def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : Callable
     throw .arityMismatch
   unless function.signature.result == function.body.type do
     throw .resultTypeMismatch
-  evaluateTyped fuel profile function.parameters arguments function.body
+  if fuel == 0 then throw .fuelExhausted
+  let converted ← convertArguments profile function.parameters arguments
+  match converted with
+  | .ok values => evaluateTyped fuel profile function.parameters values function.body
+  | .invalid reason => pure (.invalid reason)
+  | .undefined reason => pure (.undefined reason)
+  | .unsupported reason => pure (.unsupported reason)
 
 end LeanModels.Cpp

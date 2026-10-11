@@ -7,11 +7,89 @@ open LeanModels.Cpp
 open LeanModels.Cpp.CallableTests
 
 private def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
+private def short (value : Int) : IntegralValue := ⟨.signed 16, value⟩
+private def unsigned (value : Int) : IntegralValue := ⟨.unsigned 32, value⟩
+private def boolean (value : Int) : IntegralValue := ⟨.boolean, value⟩
+
+private def admitFirst : Except String CallableFunction :=
+  admitCallableFunction
+    (probeFor (functionSource "first" [parameterRaw "0x10" "left", parameterRaw "0x11" "right"]
+      (body (returnStmt "0x31" (implicitCast "0x32" (declRef "0x10" "left")))))
+      [rootEvidence, functionEvidence "first" "CompoundStmt"])
+    binaryTypes [] .lp64 [0]
+
+private def admitBooleanIdentity : Except String CallableFunction :=
+  admitCallableFunction identityProbe [
+    typeRow "0x2" (.function (.builtin .boolean) [.builtin .boolean] false),
+    typeRow "0x10" (.builtin .boolean)] [] .lp64 [0]
 
 #guard match admitIdentity with
   | .ok function =>
       match evaluateCallable 4 .lp64 function [signed 17] with
       | .ok (.ok value) => value == signed 17
+      | _ => false
+  | .error _ => false
+
+#guard match admitIdentity with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [short 17] with
+      | .ok (.ok value) => value == signed 17
+      | _ => false
+  | .error _ => false
+
+#guard match admitIdentity with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [unsigned 4294967295] with
+      | .ok (.ok value) => value == signed (-1)
+      | _ => false
+  | .error _ => false
+
+#guard match admitIdentity with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [boolean 1] with
+      | .ok (.ok value) => value == signed 1
+      | _ => false
+  | .error _ => false
+
+#guard match admitIdentity with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [⟨.signed 16, 40000⟩] with
+      | .ok (.invalid .outOfRange) => true
+      | _ => false
+  | .error _ => false
+
+#guard match admitFirst with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [short 17, unsigned 4294967295] with
+      | .ok (.ok value) => value == signed 17
+      | _ => false
+  | .error _ => false
+
+#guard match admitFirst with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [signed 17, ⟨.unsigned 0, 0⟩] with
+      | .ok (.invalid .zeroWidth) => true
+      | _ => false
+  | .error _ => false
+
+#guard match admitFirst with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [signed 17, ⟨.signed 16, 40000⟩] with
+      | .ok (.invalid .outOfRange) => true
+      | _ => false
+  | .error _ => false
+
+#guard match admitBooleanIdentity with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [signed (-7)] with
+      | .ok (.ok value) => value == boolean 1
+      | _ => false
+  | .error _ => false
+
+#guard match admitBooleanIdentity with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [signed 0] with
+      | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
@@ -26,6 +104,20 @@ private def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
   | .ok function =>
       match evaluateCallable 4 .lp64 function [signed 4, signed 9] with
       | .ok (.ok value) => value == signed 13
+      | _ => false
+  | .error _ => false
+
+#guard match admitBinary with
+  | .ok function =>
+      match evaluateCallable 4 .lp64 function [short 17, unsigned 4294967295] with
+      | .ok (.ok value) => value == signed 16
+      | _ => false
+  | .error _ => false
+
+#guard match admitIdentity with
+  | .ok function =>
+      match evaluateCallable 4 {TargetProfile.lp64 with intWidth := 16} function [signed 65535] with
+      | .ok (.ok value) => value == ⟨.signed 16, -1⟩
       | _ => false
   | .error _ => false
 

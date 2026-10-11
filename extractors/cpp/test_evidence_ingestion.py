@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Bounded loading, inspection and source-local function declaration forms.
 
-No entity, program or execution admission is established here.
+Callable checks evaluate only admitted direct-return integral bodies; no
+whole-program execution or entity/linkage admission is established here.
 
 LEANCPP_TEST_LEAN=1 enables the built Lean loader checks. The compiler check
 additionally requires an explicit matching LEANCPP_CLANG and
@@ -433,6 +434,109 @@ int branch(int value) { if (value) return value; return 0; }
             + str(paths["branch"]) + ") matches .error _"
         )
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
+
+    def test_callable_argument_conversions_match_compiled_clang(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        probe_library = pathlib.Path(library).resolve()
+        self.assertTrue(probe_library.is_file(), "selected probe library must exist")
+        destinations = (
+            ("int", "signed_identity", ".signed 32"),
+            ("unsigned int", "unsigned_identity", ".unsigned 32"),
+            ("short", "short_identity", ".signed 16"),
+            ("unsigned short", "ushort_identity", ".unsigned 16"),
+            ("bool", "bool_identity", ".boolean"),
+        )
+        subject = self.root / "callable.cpp"
+        subject.write_text("".join(
+            f"{type_name} {name}({type_name} value) {{ return value; }}\n"
+            for type_name, name, _ in destinations
+        ) + "int first(int left, int right) { return left; }\n", encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(subject),
+            "-Xclang", "-load", "-Xclang", str(probe_library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        names = {name for _, name, _ in destinations} | {"first"}
+        paths = {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in names:
+                self.assertNotIn(node["name"], paths)
+                paths[node["name"]] = path
+            pending.extend((child, path + [index])
+                           for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), names)
+        sources = (
+            ("short", ".signed 16", -32768),
+            ("short", ".signed 16", 32767),
+            ("int", ".signed 32", -1),
+            ("int", ".signed 32", 0),
+            ("int", ".signed 32", 65536),
+            ("unsigned int", ".unsigned 32", 4294967295),
+            ("long long", ".signed 64", -9223372036854775808),
+            ("unsigned long long", ".unsigned 64", 18446744073709551615),
+            ("bool", ".boolean", 1),
+        )
+        rows = []
+        expressions = []
+        for _, name, destination in destinations:
+            for type_name, source_format, value in sources:
+                literal = ("(-9223372036854775807LL - 1)" if value == -(1 << 63)
+                           else f"{value}LL" if value < 0 else f"{value}ULL")
+                expressions.append(f"{name}(static_cast<{type_name}>({literal}))")
+                rows.append((name, destination, [(source_format, value)]))
+        expressions.append("first(static_cast<short>(-17), 4294967295U)")
+        rows.append(("first", ".signed 32", [(".signed 16", -17),
+                                            (".unsigned 32", 4294967295)]))
+        oracle = self.root / "oracle.cpp"
+        oracle.write_text(
+            '#include <climits>\n#include <iostream>\n#include "callable.cpp"\n'
+            'static_assert(CHAR_BIT == 8 && sizeof(short) == 2 && sizeof(int) == 4\n'
+            '              && sizeof(long) == 8 && sizeof(long long) == 8);\n'
+            'int main() {\n' + "".join(
+                f"  std::cout << static_cast<long long>({expression}) << '\\n';\n"
+                for expression in expressions
+            ) + "}\n", encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([
+                clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle), "-o", str(binary),
+            ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                      capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append(executed.stdout.splitlines())
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(rows))
+        guards = [f"def {name} := admitCallableFunctionFromProbe evidence "
+                  f"TargetProfile.lp64 {paths[name]}" for name in sorted(names)]
+        for (name, destination, arguments), expected in zip(rows, outputs[0]):
+            values = ", ".join(f"⟨{format_name}, {value}⟩"
+                               for format_name, value in arguments)
+            guards.append(f"""#guard match {name} with
+  | .ok function => match evaluateCallable 4 .lp64 function [{values}] with
+    | .ok (.ok value) => value == ⟨{destination}, {int(expected)}⟩
+    | _ => false
+  | .error _ => false""")
+        self.assert_accepts(json.dumps(probe), "\n".join(guards))
+        print(f"callable argument differential: {len(rows)} rows at -O0/-O2")
 
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):
         fixture = document()

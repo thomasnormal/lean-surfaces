@@ -56,9 +56,10 @@ semantics, object lifetime, linkage/ODR, or body completeness outside this
 profile.
 
 `LeanModels/Cpp/Translation.execute` remains unconditionally refused. The
-callable tree is an admitted input for a future evaluator, not a runtime
-verdict. In particular, no theorem or differential result may claim that an
-admitted body was executed merely because Clang accepted its source.
+callable tree is input to the bounded direct-return evaluator described in
+`docs/cpp-callable-evaluation.md`; admission alone is not a runtime verdict.
+In particular, no theorem or differential result may claim that an admitted
+body was executed merely because Clang accepted its source.
 
 ## Validation
 
@@ -67,6 +68,6 @@ binary returns plus mismatched evidence, control-flow and function-try
 refusals. `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned
 Clang check for real identity/add bodies and a branch refusal; it requires the
 same explicit compiler/plugin variables as the existing probe tests and skips
-otherwise. The next rung adds evaluation for this exact one-return profile only; broader
-statements still require a statement model, and `Translation.execute` remains
-refused.
+otherwise. The evaluator now includes only the profile-checked integral conversion
+at its call boundary; broader conversion rules and statements still require their
+own semantic models, and `Translation.execute` remains refused.

@@ -377,7 +377,7 @@ def const_literal(sm, e):
     constant during binding (`e.constant`), else None. Never raises; never
     evaluates on demand (pyslang's EvalContext is crash-prone — only the
     binder-populated attribute is consulted)."""
-    if _SYM is None and _contains_bits_query(e):
+    if _SYM is None and _contains_guarded_call(e):
         return None
     try:
         c = e.constant
@@ -398,14 +398,14 @@ def const_literal(sm, e):
         return None
 
 
-def _contains_bits_query(expression):
-    """Keep query admission and diagnostic provenance through conversions."""
+def _contains_guarded_call(expression):
+    """Keep call admission and diagnostic provenance through conversions."""
     found = False
 
     def inspect(node):
         nonlocal found
         if (type(node).__name__ == "CallExpression" and node.isSystemCall
-                and node.subroutineName in ("$bits", *BIT_QUERY_CALLS)):
+                and node.subroutineName in ("$bits", *BIT_QUERY_CALLS, *SIGNING_CALLS)):
             found = True
             return VisitAction.Skip
 
@@ -422,6 +422,9 @@ def _bits_argument_source_ok(expression):
         kind = type(node).__name__
         if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
             return VisitAction.Skip
+        if kind == "CallExpression" and _signing_call(node):
+            pure = pure and _signing_signature_ok(node)
+            return
         pure = pure and not getattr(node, "bad", False) and kind in (
             "DataTypeExpression", "IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
             "StringLiteral", "RealLiteral", "NamedValueExpression",
@@ -472,6 +475,34 @@ def _convert_fixed_bits_query(sm, expression):
 
 
 BIT_QUERY_CALLS = ("$countbits", "$countones", "$onehot", "$onehot0", "$isunknown")
+SIGNING_CALLS = ("$signed", "$unsigned")
+
+
+def _signing_call(expression):
+    return (type(expression).__name__ == "CallExpression"
+            and not expression.bad and expression.isSystemCall
+            and expression.subroutineName in SIGNING_CALLS)
+
+
+def _signing_signature_ok(expression):
+    arguments = list(expression.arguments)
+    if len(arguments) != 1:
+        return False
+    argument = arguments[0]
+    return (argument.type.isIntegral and expression.type.isIntegral
+            and argument.type.bitWidth == expression.type.bitWidth
+            and expression.type.isSigned == (expression.subroutineName == "$signed")
+            and expression.type.isFourState == argument.type.isFourState)
+
+
+def _convert_signing_call(sm, expression):
+    if not _signing_signature_ok(expression):
+        return unsupported(sm, expression, "SigningCast:signature")
+    operand = _convert_expr(sm, expression.arguments[0])
+    operand.pop("signed", None)
+    operand["signing_cast"] = expression.subroutineName
+    operand["span"] = node_span(sm, expression)
+    return signed_metadata(operand, expression.type)
 
 
 def _bit_query_call(expression):
@@ -570,6 +601,8 @@ def _convert_expr(sm, e):
         return _convert_selected_read(sm, e, cname)
     if cname == "CallExpression":
         if _SYM is None:
+            if _signing_call(e):
+                return _convert_signing_call(sm, e)
             if _bit_query_call(e):
                 return _convert_bit_query(sm, e)
             return _convert_fixed_bits_query(sm, e)
@@ -1172,6 +1205,9 @@ def _case_source_expression_ok(expression):
             pure = pure and all(type_width_2s(argument.type)[0] is not None
                                 for argument in node.arguments)
             return
+        if kind == "CallExpression" and _signing_call(node):
+            pure = pure and _signing_signature_ok(node)
+            return
         pure = pure and not getattr(node, "bad", False) and kind in (
             "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
             "NamedValueExpression", "ConversionExpression", "UnaryExpression",
@@ -1686,6 +1722,16 @@ def contains_bit_vector_query(node):
     return False
 
 
+def contains_signing_cast(node):
+    if isinstance(node, dict):
+        return bool(node.get("signing_cast")) or any(
+            contains_signing_cast(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_signing_cast(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1723,6 +1769,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "BitQuery:invalid-compilation",
                                   "frontend rejected source containing a bit-vector query"))
+    if (any(contains_signing_cast(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "SigningCast:invalid-compilation",
+                                  "frontend rejected source containing a signing cast"))
     if (any(contains_selected_target(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectTarget:invalid-compilation",

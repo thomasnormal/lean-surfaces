@@ -660,6 +660,34 @@ Bitstream and streaming-concatenation conversion kinds retain their
 own refusals. This lowering changes neither the self-check parser nor
 the scheduler vocabulary.
 
+## Integral signing functions (2026-10-11)
+
+The legacy/self-check path admits the IEEE 1800-2023 §11.7.1 / §20.5
+system functions `$signed` and `$unsigned` with one admitted integral
+operand. The bound argument and result must have equal bit widths and
+the same two-state/four-state classification. Selected integral operands
+retain their packed value width even when the selected source range does
+not start at zero. The operand's expression node is retained unchanged
+at runtime; its optional `signed` metadata is replaced by the function's
+result signedness and `signing_cast` records the function name. Its span
+covers the call. No new executable expression kind is introduced.
+
+Signedness is consumed from the frontend's elaborated types: subsequent
+implicit conversions choose `SignedResize` or `Resize`, comparisons
+choose signed or unsigned operators, and output tasks retain the result's
+signed decimal interpretation. A surrounding mixed-sign expression can
+demand zero extension even when the call itself is `$signed`. The function
+does not inherit an enclosing assignment's width; argument evaluation is
+self-determined. Four-state bits are preserved until an actual two-state
+destination conversion applies `Squash2`.
+
+Pure signing calls also participate in ordinary case statements, selected
+assignments and fixed-size `$bits` queries. Unsupported operands, side
+effects and invalid signatures remain loud. Constant folding cannot erase
+signing-call admission evidence; an erroneous compilation containing an
+admitted call retains `SigningCast:invalid-compilation`. Symbolic `sv-0.2`
+calls keep their existing `Cast` representation and admission boundary.
+
 ## Integral typedef declarations (2026-10-09)
 
 On the legacy path, a bound `TypeAlias` member at module or compilation-unit

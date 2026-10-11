@@ -467,6 +467,43 @@ regresses. Each newly clean row also prints `PASS` in both the model and
 an independent external simulator. This is a seven-row runtime check, not
 whole-corpus runtime agreement.
 
+### Integral signing functions — 2026-10-11
+
+The legacy/self-check path now admits the IEEE 1800-2023 §11.7.1 / §20.5
+functions `$signed` and `$unsigned`. They preserve an admitted integral
+operand's bits, width and two-state/four-state classification, replacing
+only its result signedness. The existing expression is retained: no new
+value operator, evaluator or scheduler rule is introduced. Consumers use
+the frontend's elaborated types to select signed comparisons, decimal
+output and sign or zero extension. The argument remains self-determined;
+an outer assignment cannot widen it before the signing operation. A
+mixed-sign arithmetic context can still demand zero extension, and a
+concatenation remains unsigned.
+
+Selected operands, nested signing functions, integral aliases and enums
+reuse their established lowering. Pure calls participate in ordinary cases,
+selected assignments and `$bits` queries without admitting effectful
+operands. Invalid signatures, unmodelled operand expressions and erroneous
+compilations stay loud; conversion folding cannot hide an admitted call's
+diagnostic provenance. Symbolic `sv-0.2` calls keep their existing `Cast`
+representation; no symbolic sizing extension is claimed.
+
+Four original fixtures in `harness/sv/signing_calls/` are confirmed against
+an independent external simulator and Icarus, covering assignment versus
+mixed-sign contexts, four-state sign extension and two-state destination
+squashing, reinterpretation and output, selected values, nested calls,
+aliases, enums and predefined integral types. The generated real
+`assignment_contexts.sv` envelope is pinned to `signingBody` in
+`Examples/system-verilog/signing_calls/`; `signing_assignment_contexts`
+proves the four assignment results for an arbitrary four-state operand,
+including same-width bit preservation and the distinct widening rules.
+
+On the same 21,843 corpus files, extraction moves **1,662 → 1,692 clean**,
+with **20,085 partial / 66 include skips**, zero extraction/internal errors
+and no clean-to-partial regressions. All 30 newly clean rows agree in
+stdout and status with an independent simulator; this separate 30-row
+runtime check does not claim whole-corpus runtime agreement.
+
 ### Four-state packed selected reads — 2026-10-09
 
 The legacy/self-check surface admits bit, constant part and indexed

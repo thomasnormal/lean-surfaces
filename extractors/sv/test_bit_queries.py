@@ -105,7 +105,7 @@ class FixedBitQueries(unittest.TestCase):
         declarations = ("function automatic byte effect(); $display(\"CALLED\"); "
                         "effect=1; endfunction ")
         self.assert_query_refused(query_source("$bits(effect())", declarations))
-        self.assert_query_refused(query_source("$bits($unsigned(subject))",
+        self.assert_query_refused(query_source("$bits($unsigned(subject++))",
                                               "logic [7:0] subject; "))
 
     def test_effectful_selected_read_indices_stay_loud(self):

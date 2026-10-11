@@ -8,9 +8,9 @@ repetition, `sum(it[, start])` (the element fold IS `evalBinOp .add`; a
 str start is CPython's special-cased `TypeError`), `tuple(it)`, and
 `range` as the immediate `RVal.rangeV` — materialize-per-use, which is
 what makes RE-ITERATION exact (`range_reiter`). Range equality compares the
-integer sequence without materializing it. The remaining loud frontier is
-pinned below: range indexing/membership/unpacking/boundary, list slices —
-every one `unsupported`, never a guessed value
+integer sequence without materializing it. Range values also cross the public
+boundary as `Val.range`; list slices remain pinned below as `unsupported`,
+never a guessed value
 and never a fake `TypeError`.
 -/
 
@@ -93,10 +93,10 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 #py_check seq_lab.range_in_float() = true
 #py_check seq_lab.range_in_fraction() = false
 
-/-! ### the remaining loud range frontier (unsupported, never guessed) -/
+/-! ### range values at the public boundary -/
 
-#guard (match callFunction seq_lab "range_boundary" #[.int 3] 4096 with
-  | .unsupported _ => true | _ => false)
+#guard callFunction seq_lab "range_boundary" #[.int 3] 4096 ==
+  .ok (.range (.int 0) (.int 3) (.int 1))
 #py_check seq_lab.range_unpack() = 0
 #py_check seq_lab.range_unpack_step() = 5
 #py_check seq_lab.range_unpack_bad() raises

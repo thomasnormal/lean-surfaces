@@ -2,8 +2,8 @@
 
 Tuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),
 and range as an immediate value (materialize-per-use). Range equality now
-compares sequences without materialization; the remaining loud frontier is
-pinned by refusal probes: boundary and list slices. String repetition now
+compares sequences without materialization; range values cross the public
+boundary, while list slices remain pinned by a refusal probe. String repetition now
 has its own acceptance tier.
 """
 

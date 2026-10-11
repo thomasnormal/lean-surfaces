@@ -421,6 +421,19 @@ def benignImportBinds : String → Option (String × Bool)
 
 /-! ## Core value / result types (DESIGN.md, normative) -/
 
+/-- The integer object retained by a public `range` value, including bool
+subclasses.  Runtime range values use the same representation, so freezing
+and thawing preserve the constructor fields exactly. -/
+inductive RangeBound where
+  | int (value : Int)
+  | bool (value : Bool)
+deriving Repr, Inhabited, BEq
+
+/-- The numerical interpretation used by range consumers. -/
+def RangeBound.toInt : RangeBound → Int
+  | .int value => value
+  | .bool value => if value then 1 else 0
+
 /-- Runtime values. -/
 inductive Val where
   | none
@@ -429,6 +442,8 @@ inductive Val where
   | int (n : Int)
   | float (value : Float64)
   | str (s : String)
+  /-- A Python `range` value at the public call boundary. -/
+  | range (lo hi step : RangeBound)
   | list (xs : Array Val)
   | tuple (xs : Array Val)
 deriving Repr, Inhabited, BEq

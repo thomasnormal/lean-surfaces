@@ -156,6 +156,9 @@ def to_canonical_value(v):
         return {"t": "list", "v": [to_canonical_value(x) for x in v]}
     if isinstance(v, tuple):
         return {"t": "tuple", "v": [to_canonical_value(x) for x in v]}
+    if isinstance(v, range):
+        return {"t": "range", "lo": str(v.start), "hi": str(v.stop),
+                "step": str(v.step)}
     raise Unmappable(type(v).__name__)
 
 
@@ -329,6 +332,8 @@ def pretty_value(v):
         if t == "tuple":
             return "(%s%s)" % (inner, "," if len(v["v"]) == 1 else "")
         return "[%s]" % inner
+    if t == "range":
+        return "range(%s, %s, %s)" % (v["lo"], v["hi"], v["step"])
     return json.dumps(v)
 
 

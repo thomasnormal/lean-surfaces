@@ -27,17 +27,6 @@ namespace LeanModels.Python
 /-- A heap address (the index into the heap array). -/
 abbrev Addr := Nat
 
-/-- The integer object retained by a range constructor, including bool subclasses. -/
-inductive RangeBound where
-  | int (value : Int)
-  | bool (value : Bool)
-deriving Repr, Inhabited, BEq
-
-/-- The numerical interpretation used by range consumers. -/
-def RangeBound.toInt : RangeBound → Int
-  | .int value => value
-  | .bool value => if value then 1 else 0
-
 /-- Runtime values (docs/memory-model.md v2). -/
 inductive RVal where
   | none
@@ -622,6 +611,7 @@ mutual
     | .int n => .int n
     | .float value => .float value
     | .str s => .str s
+    | .range lo hi step => .rangeV lo hi step
     | .list xs => .listV (RVal.thawList xs.toList).toArray
     | .tuple xs => .tuple (RVal.thawList xs.toList).toArray
 
@@ -646,6 +636,7 @@ mutual
     | .int n => .ok (.int n)
     | .float value => .ok (.float value)
     | .str s => .ok (.str s)
+    | .rangeV lo hi step => .ok (.range lo hi step)
     | .listV xs => do
         let vs ← RVal.freezeList xs.toList
         return .list vs.toArray
@@ -654,8 +645,6 @@ mutual
         return .tuple vs.toArray
     | .ntuple _ _ _ =>
         .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
-    | .rangeV .. =>
-        .unsupported "returning a range through the call boundary is outside the tier (no range observation form in `Val`; docs/memory-model.md §module-init execution)"
     | .ref _ =>
         .unsupported "returning a heap object through the call boundary is outside the tier (H1-proper freeze, docs/memory-model.md)"
 
@@ -684,6 +673,7 @@ mutual
     | .int _ => rfl
     | .float _ => rfl
     | .str _ => rfl
+    | .range _ _ _ => rfl
     | .list xs => by
         simp [RVal.thaw, RVal.freeze, RVal.freezeList_thawList xs.toList]
     | .tuple xs => by
@@ -715,6 +705,8 @@ mutual
     | .float _, v, h => by
         cases (Res.ok.inj h); rfl
     | .str _, v, h => by
+        cases (Res.ok.inj h); rfl
+    | .rangeV lo hi step, v, h => by
         cases (Res.ok.inj h); rfl
     | .listV xs, v, h => by
         simp only [RVal.freeze, Res.bind_eq_ok, Res.pure_eq] at h
@@ -865,7 +857,7 @@ mutual
   recursively). On this fragment thawing is pure — the bridge every
   pre-H2 boundary statement rides. Kernel-computable (list-structural). -/
   def Val.listFree : Val → Bool
-    | .none | .ellipsis | .bool _ | .int _ | .float _ | .str _ => true
+    | .none | .ellipsis | .bool _ | .int _ | .float _ | .str _ | .range _ _ _ => true
     | .list _ => false
     | .tuple xs => Val.listFreeList xs.toList
 
@@ -893,6 +885,7 @@ mutual
     | .int n => (h, .int n)
     | .float value => (h, .float value)
     | .str s => (h, .str s)
+    | .range lo hi step => (h, .rangeV lo hi step)
     | .tuple xs =>
       match RVal.thawListH h xs.toList with
       | (h, vs) => (h, .tuple vs.toArray)
@@ -928,6 +921,7 @@ mutual
     | .int _, _, h => rfl
     | .float _, _, h => rfl
     | .str _, _, h => rfl
+    | .range _ _ _, _, h => rfl
     | .tuple xs, hf, h => by
         simp only [RVal.thawH, RVal.thaw,
           RVal.thawListH_of_listFree xs.toList (by simpa [Val.listFree] using hf) h]
@@ -1002,8 +996,7 @@ mutual
             return .tuple vs.toArray
         | .ntuple _ _ _ =>
             .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
-        | .rangeV .. =>
-            .unsupported "returning a range through the call boundary is outside the tier (no range observation form in `Val`; docs/memory-model.md §module-init execution)"
+        | .rangeV lo hi step => .ok (.range lo hi step)
         | .ref a =>
           if path.contains a then
             .unsupported "returning a CYCLIC heap object through the call boundary is outside the tier (no cyclic observation form in `Val`; docs/memory-model.md §call layering)"
@@ -1065,8 +1058,7 @@ mutual
         return .tuple vs.toArray
     | .ntuple _ _ _ =>
         .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
-    | .rangeV .. =>
-        .unsupported "returning a range through the call boundary is outside the tier (no range observation form in `Val`; docs/memory-model.md §module-init execution)"
+    | .rangeV lo hi step => .ok (.range lo hi step)
     | .ref a => RVal.freezeH h fuel [] (.ref a)
 
   /-- Elementwise `freezeB`, first refusal wins. -/
@@ -1092,6 +1084,7 @@ mutual
     | .int _ => rfl
     | .float _ => rfl
     | .str _ => rfl
+    | .range _ _ _ => rfl
     | .list xs => by
         simp only [RVal.thaw, RVal.freezeB,
           RVal.freezeListB_thawList h fuel xs.toList, Res.ok_bind, Res.pure_eq]
@@ -1146,6 +1139,7 @@ mutual
     | .int _ => rfl
     | .float _ => rfl
     | .str _ => rfl
+    | .range _ _ _ => rfl
     | .list xs => by
         simpa [RVal.thaw, RVal.refFree] using
           RVal.refFreeList_thawList xs.toList
@@ -1334,7 +1328,10 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
       | int n => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | float value => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | str s => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
-      | rangeV lo hi step => simp [RVal.freezeH] at hc
+      | rangeV lo hi step =>
+        simp only [RVal.freezeH] at hc
+        cases (Res.ok.inj hc)
+        rfl
       | listV xs =>
         -- the snapshot is a `.list` — excluded by `hlf`
         simp only [RVal.freezeH, Res.bind_eq_ok, Res.pure_eq] at hc
@@ -1401,6 +1398,7 @@ mutual
     | .int _, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .float _, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .str _, v, hc, _ => by cases (Res.ok.inj hc); rfl
+    | .rangeV lo hi step, v, hc, _ => by cases (Res.ok.inj hc); rfl
     | .listV xs, v, hc, hlf => by
         simp only [RVal.freezeB, Res.bind_eq_ok, Res.pure_eq] at hc
         obtain ⟨vs, _, hv⟩ := hc

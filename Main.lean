@@ -228,6 +228,10 @@ partial def valJson : Val → String
   | .int n => "{\"t\":\"int\",\"v\":" ++ jsonStr (toString n) ++ "}"
   | .float value => "{\"t\":\"float\",\"bits\":" ++ jsonStr (toString value.bits.toNat) ++ "}"
   | .str s => "{\"t\":\"str\",\"v\":" ++ jsonStr s ++ "}"
+  | .range lo hi step =>
+      "{\"t\":\"range\",\"lo\":" ++ jsonStr (toString lo.toInt) ++
+        ",\"hi\":" ++ jsonStr (toString hi.toInt) ++
+        ",\"step\":" ++ jsonStr (toString step.toInt) ++ "}"
   | .list xs => "{\"t\":\"list\",\"v\":[" ++ ",".intercalate (xs.toList.map valJson) ++ "]}"
   | .tuple xs => "{\"t\":\"tuple\",\"v\":[" ++ ",".intercalate (xs.toList.map valJson) ++ "]}"
 

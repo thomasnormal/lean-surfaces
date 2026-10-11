@@ -1081,7 +1081,6 @@ WHITELIST_CLASS = {
     "set_lab::iter_is_loud": "set.order",
     "set_lab::sorted_is_loud": "set.order",
     "seq_lab::band_set": "set.order",
-    "seq_lab::range_boundary": "boundary.range",
     "seq_lab::list_slice_loud": "slice.allocating",
     "seq_lab::str_repeat_loud": "op.Mult-repetition",
     "seq_lab::shl": "op.LShift-budget",

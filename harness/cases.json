@@ -408,7 +408,7 @@
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_in_step", "args": [[]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_in_float", "args": [[]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_in_fraction", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_boundary", "args": [[3]], "expect": "unsupported"},
+  {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_boundary", "args": [[3]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_unpack", "args": [[]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_unpack_step", "args": [[]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_unpack_bad", "args": [[]], "expect": "match"},

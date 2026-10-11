@@ -3105,8 +3105,9 @@ each construct differential, refusals loud):
   scalar renderer; numerical consumers use `RangeBound.toInt`. Thus
   `range(False, True)` renders those Boolean names but yields integer `0`.
   A retained Boolean `True` step is numerically one and omitted from rendering;
-  `False` still fails construction. Attribute access, slicing,
-  range-valued `%` conversions, and the public boundary are not newly admitted.
+  `False` still fails construction. Attribute access, slicing, and
+  range-valued `%` conversions remain loud; ranges now cross the public
+  boundary as a structural `Val.range` snapshot.
 
 **What stays out, loudly:** `.items()` outside the init shell;
 `dict.keys/.values`; the call-mutation gap where an attempt was REFUSED

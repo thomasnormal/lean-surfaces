@@ -98,6 +98,7 @@ def Val.typeName : Val → String
   | .int _ => "int"
   | .float _ => "float"
   | .str _ => "str"
+  | .range _ _ _ => "range"
   | .list _ => "list"
   | .tuple _ => "tuple"
 

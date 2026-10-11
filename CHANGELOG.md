@@ -36,6 +36,13 @@ change is listed here under **Changed** or **Removed**.
   differential suite now has **2,664 / 3,025 rows = 88.1% matched**, or
   **88.1% complete**, with **100% agreement among decided rows**.
 
+- `range` values now cross the public call boundary as structural
+  `Val.range` snapshots. The boundary preserves each constructor field's
+  integer-or-Boolean form while the runner compares CPython's normalized
+  integer attributes. The differential suite now has **2,665 / 3,025 rows =
+  88.1% matched**, or **88.1% complete** (proof interpreter: **2,592 / 3,025
+  = 85.7%**), with **100% agreement among decided rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3026 | 2699 | 0 | 327 |
+| 3026 | 2700 | 0 | 326 |
 
-Of the 2699 rows the model decides, 2699 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2700 rows the model decides, 2700 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3026 | 2625 | 0 | 401 |
+| 3026 | 2626 | 0 | 400 |
 
 ## Grammar
 

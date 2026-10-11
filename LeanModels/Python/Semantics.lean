@@ -952,7 +952,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else
         .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>
-      .unsupported "a format string ending in '%' is outside the tier (CPython's `incomplete format` ValueError is not modelled; docs/memory-model.md §`%`-formatting on strings)"
+      .exn (.valueError "incomplete format")
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])
 
 /-- `str % args`. The argument LIST is the RHS spread when it is a tuple

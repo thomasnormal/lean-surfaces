@@ -14,6 +14,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Trailing `%` string formats now raise CPython's faithful
+  `ValueError: incomplete format` instead of refusing. The CPython 3.9
+  differential suite now has **2,700 / 3,026 rows = 89.2% complete**
+  natively and **2,626 / 3,026 = 86.8% complete** in the proof interpreter,
+  with **100% agreement among decided rows** and zero failures.
+
 - Bare `%x` string formatting now renders bounded lowercase hexadecimal for
   integers and Booleans, including negative values, with CPython's faithful
   integer-required `TypeError` for other scalar types. The CPython 3.9

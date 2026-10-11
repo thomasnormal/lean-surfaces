@@ -4822,12 +4822,10 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
 
 The minilanguage stays refused, and so does every conversion character
 outside the five: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%i`, `%c`, `%a`.
-RECORDED RESTRICTION: the two forms CPython itself REJECTS — `%q`
-(`ValueError: unsupported format character 'q' (0x71) at index 1`) and a
-trailing `%` (`ValueError: incomplete format`) — are refused LOUDLY here
-rather than raised. Deciding them faithfully means pinning CPython's
-complete valid-character set and its index arithmetic; a loud refusal is
-never a wrong answer, an invented `ValueError` would be. The refusal
+RECORDED RESTRICTION: `%q` is refused LOUDLY rather than raised, because
+deciding it faithfully means pinning CPython's complete valid-character set
+and its index arithmetic. A trailing `%` now carries CPython's faithful
+`ValueError: incomplete format`.
 message names the character, so the census can still see the demand.
 
 ### The mapping right operand (a WRONG ANSWER, fixed 2026-08-16)
@@ -4983,7 +4981,7 @@ the inventory; `%d`/`%x` over int/bool/negative; two conversions in one
 string; the `%%` no-consume rule; the three faithful TypeErrors (short,
 leftover, `%d` on a str) and the left-to-right ORDER row; and the loud
 frontier — `%5d` (minilanguage), `%q`
-(CPython's own ValueError, refused), a trailing `%`, a container
+(CPython's own ValueError, refused), a container
 argument, `%r` of a non-ASCII str (with `%s` of it MATCHING beside it),
 and a dict RHS (the pre-existing heap-operand refusal). `seq_lab` gains
 the namedtuple SPREAD pair. Scripts: `fmt_script.py` (the opcode shape

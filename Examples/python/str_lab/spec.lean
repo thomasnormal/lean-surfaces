@@ -172,7 +172,7 @@ container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")
 #guard callFunction str_lab "fmt_bad" #[.int 3] 4096 matches .unsupported _
-#guard callFunction str_lab "fmt_trailing" #[.int 3] 4096 matches .unsupported _
+#py_check str_lab.fmt_trailing(3) raises (.valueError "incomplete format")
 #guard callFunction str_lab "fmt_container" #[] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_nonascii_r" #[] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_mapping" #[] 4096 matches .unsupported _

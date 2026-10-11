@@ -241,6 +241,8 @@ inductive SStmt where
   | assign (nonblocking : Bool) (target : String) (value : SExpr)
   | selectedAssign (target : String) (width : Nat)
       (descending indexSigned twoState : Bool) (index value : SExpr)
+  | selectedNbaAssign (target : String) (width : Nat)
+      (descending indexSigned twoState : Bool) (index value : SExpr)
   | packedAssign (targets : List PackedTarget) (value : SExpr)
   | ifStmt (cond : SExpr) (thenB : SStmt) (elseB : Option SStmt)
   | block (body : Array SStmt)
@@ -543,6 +545,23 @@ def execPackedTargets (fuel : Nat) (st : SvState) (replacement : LVec)
                 pure (SvState.set st name (selectedWrite width descending indexSigned old position part))
           execPackedTargets fuel updated replacement targets rest
 
+def queuedValue (name : String) (st : SvState) (nba : NbaQueue) : Option LVec :=
+  match nba.reverse.find? (fun u => u.1 == name) with
+  | some u => some u.2
+  | none => SvState.lookup st name
+
+def enqueueSelectedNba (st : SvState) (nba : NbaQueue) (target : String)
+    (width : Nat) (descending indexSigned twoState : Bool)
+    (position replacement : LVec) : Res NbaQueue :=
+  match SvState.lookup st target, selectedIndex indexSigned position with
+  | none, _ => .unsupported s!"unknown selected assignment target '{target}'"
+  | some _, none => .ok nba
+  | some old, some _ =>
+      let base := (queuedValue target st nba).getD old
+      let replacement := if twoState then squash2v replacement else replacement
+      let updated := selectedWrite width descending indexSigned base position replacement
+      .ok (nba ++ [(target, updated)])
+
 /-- Execute one self-check statement, threading state, NBA queue, and
 output. A halted `Out` short-circuits (`$finish` skips the rest of the
 run). `.m0` subtrees run under the existing `execStmt`. -/
@@ -571,6 +590,12 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           let replacement := if twoState then squash2v replacement else replacement
           let updated := selectedWrite width descending indexSigned old position replacement
           return (SvState.set st target updated, nba, out)
+      | .selectedNbaAssign target width descending indexSigned twoState index value => do
+          let replacement ← evalSExpr fuel st value
+          let position ← evalSExpr fuel st index
+          let nba' ← enqueueSelectedNba st nba target width descending indexSigned twoState
+            position replacement
+          return (st, nba', out)
       | .packedAssign targets value => do
           let replacement ← evalSExpr fuel st value
           let order := assignmentOrder targets.length
@@ -856,8 +881,17 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
       else
         return .mkAssign false (← targetName target) (← parseSExpr (← getF j "value"))
   | "NonblockingAssign" =>
-      return .mkAssign true (← targetName (← getF j "target"))
-        (← parseSExpr (← getF j "value"))
+      let target ← getF j "target"
+      let targetKind ← getStrF target "kind"
+      if targetKind == "SelectTarget" then
+        let width ← getNatF target "width"
+        if width == 0 then throw "selected assignment target has zero width"
+        return .selectedNbaAssign (← targetName (← getF target "value")) width
+          (← getBoolF target "descending") (← getBoolF target "index_signed")
+          (← getBoolF target "two_state") (← parseSExpr (← getF target "index"))
+          (← parseSExpr (← getF j "value"))
+      else
+        return .mkAssign true (← targetName target) (← parseSExpr (← getF j "value"))
   | "If" =>
       let elseB ← match getFOpt j "else" with
         | none => pure none

@@ -383,6 +383,24 @@ reference order, with a separate invalid-oracle refusal theorem. The
 focused build recompiles the stepper's subsumption proof unchanged;
 51 byte-bound licensed comparisons and 58 extractor tests pass.
 
+### Selected nonblocking packed targets — 2026-10-11
+
+The legacy/self-check surface now admits one selected `<=` destination
+(`SelectTarget`) without changing the scheduler. The RHS and index are
+evaluated against the active state; an unknown index enqueues no window.
+For a known index, the self-check queue stores a full-value snapshot formed
+from the last pending snapshot for that signal, so disjoint selected writes
+merge and overlapping writes retain issue order. Whole-value NBAs keep the
+existing queue representation, and concatenated NBAs remain loud rather
+than being silently widened.
+
+`harness/sv/packed_assignment_targets/nba_updates.sv` is the concrete
+pre-commit visibility fixture. Its extracted statements are pinned in
+`Examples/system-verilog/packed_assignment_targets/nba_updates.sv.json`,
+and `selected_nba_snapshots` proves two live index changes produce the
+ordered `0010`, then `1010` pending snapshots while the active frame stays
+at zero. The theorem uses only the existing value and queue primitives.
+
 The qualification probes exposed a disagreement on partly out-of-range
 part destinations: one available simulator leaves them unchanged, while
 the IEEE 1800-2023 §11.5.1 per-bit rule retains the in-range writes. The

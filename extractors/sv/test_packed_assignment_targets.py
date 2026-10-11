@@ -58,8 +58,9 @@ class PackedAssignmentTargets(unittest.TestCase):
         reasons = [node.get("sv_kind") for node in nodes(design)]
         self.assertIn("AssignmentExpression:selected-effects", reasons)
 
-    def test_nonblocking_selected_target_is_not_claimed(self):
-        self.assertFalse(self.targets("value[0] <= 1'b1;"))
+    def test_nonblocking_selected_target_keeps_window_geometry(self):
+        target, = self.targets("value[0] <= 1'b1;")
+        self.assertEqual(target["kind"], "SelectTarget")
 
     def test_unpacked_base_is_not_a_packed_destination(self):
         self.assertFalse(self.targets("value[0] = 4'b1010;", "logic [3:0] value [2];"))
@@ -116,6 +117,12 @@ class PackedAssignmentTargets(unittest.TestCase):
         design = extract_source("module top; logic [1:0] first, second; "
                                 "initial {first, second}[1:0] = 2'b11; endmodule")
         self.assertFalse(any(node.get("kind") == "ConcatTarget" for node in nodes(design)))
+
+    def test_nonblocking_concat_stays_pending(self):
+        design = extract_source("module top; logic first, second; "
+                                "initial {first, second} <= 2'b11; endmodule")
+        self.assertFalse(any(node.get("kind") == "ConcatTarget"
+                             for node in nodes(design)))
 
     def test_nonblocking_concat_stays_pending(self):
         design = extract_source("module top; logic first, second; "

@@ -241,14 +241,16 @@ default is right-to-left. The RHS is captured once, and each index is
 evaluated against the then-current frame at its chosen destination step.
 An order must be a permutation of all leaf indices, or execution refuses.
 
-Nonblocking selected and concatenated targets remain pending; neither is
+Selected nonblocking targets use the same `SelectTarget` shape in the
+legacy/self-check surface. The RHS and index are sampled against the active
+state; the queue records a full-value snapshot derived from the last pending
+snapshot for that signal, preserving disjoint merges and issue order at
+commit. Concatenated nonblocking targets remain loud rather than being
 silently lowered to a whole-variable store. Invalid compilations containing
 an admitted target retain `SelectTarget:invalid-compilation` or
-`ConcatTarget:invalid-compilation`. The blocking packed-target family is
-complete for the legacy/self-check surface; selected nonblocking lowering
-belongs to the next assignment family. Partly out-of-range writes follow
-the per-bit rule in the value primitive, with simulator disagreements kept
-as diagnostics rather than hidden by a second semantic path.
+`ConcatTarget:invalid-compilation`. Partly out-of-range writes follow the
+per-bit rule in the value primitive, with simulator disagreements kept as
+diagnostics rather than hidden by a second semantic path.
 
 The legacy/self-check vocabulary also includes `BitQuery` for IEEE
 1800-2023 §20.9. Its fields are `kind`, `span`, `width`, `op`, `operand`

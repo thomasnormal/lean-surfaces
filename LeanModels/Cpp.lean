@@ -10,6 +10,7 @@ import LeanModels.Cpp.ReferenceTypes
 import LeanModels.Cpp.IntegralExpressionTypes
 import LeanModels.Cpp.CallableEvaluation
 import LeanModels.Cpp.ObjectModel
+import LeanModels.Cpp.IntegralObjects
 import LeanModels.Cpp.TypeEvidence
 import LeanModels.Cpp.ExpressionEvidence
 import LeanModels.Cpp.Callable

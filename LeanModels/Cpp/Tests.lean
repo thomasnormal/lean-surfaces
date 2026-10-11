@@ -10,6 +10,7 @@ import LeanModels.Cpp.ReferenceTypeTests
 import LeanModels.Cpp.IntegralExpressionTypeTests
 import LeanModels.Cpp.CallableEvaluationTests
 import LeanModels.Cpp.ObjectModelTests
+import LeanModels.Cpp.IntegralObjectTests
 import LeanModels.Cpp.TypeEvidenceTests
 import LeanModels.Cpp.CallableTests
 

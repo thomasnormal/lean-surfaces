@@ -13,14 +13,14 @@ witness after its lifetime ends. Each object retains its `StorageDuration`,
 structured `CppTypeEvidence`, and one of these phases:
 
 - `storageOnly`: storage exists but the object's lifetime has not begun;
-- `aliveUninitialized`: the lifetime has begun, but initialization is not
-  complete;
+- `aliveUninitialized`: the lifetime has begun, but no defined value is
+  available (for example, after vacuous scalar default-initialization);
 - `aliveInitialized`: typed reads are permitted;
 - `ended`: the lifetime has ended but storage is retained as a tombstone; or
 - `released`: dynamic storage has been released.
 
-`allocate` creates storage, `beginLifetime` starts the lifetime,
-`initialize` completes initialization, `endLifetime` ends it, and
+`allocate` creates storage, `beginLifetime` records lifetime start,
+`initializeObject` marks value availability, `endLifetime` ends it, and
 `releaseStorage` releases only dynamic storage after the lifetime has ended.
 `readType` is the single access gate: it succeeds only for an initialized live
 object and refuses missing, not-yet-live, live-but-uninitialized, ended, or
@@ -44,6 +44,11 @@ storage has an explicit release operation in this slice.
 semantic slice must connect this store to a typed expression/statement model
 and add initialization/destruction obligations before any compiled-execution
 claim is made.
+
+`IntegralObjects.lean` supplies the integral-value component above this metadata
+API. Its initialized lifetime start is atomic; its separate vacuous-initialization
+operation supplies no value. The metadata transition primitives alone do not
+claim that an arbitrary C++ initialization has completed.
 
 ## Validation
 

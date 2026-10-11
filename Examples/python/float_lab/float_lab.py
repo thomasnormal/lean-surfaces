@@ -162,3 +162,64 @@ def nan_arithmetic_still_loud(operation):
     if operation == 1:
         return 1e999 - 1e999
     return 0.0 * 1e999
+
+
+def constructor(value):
+    return float(value)
+
+
+def constructor_zero():
+    return float()
+
+
+def constructor_tenth():
+    return float("0.1")
+
+
+def constructor_unicode():
+    return float("\u3000٠.١\u3000")
+
+
+def constructor_rounding():
+    return float(9007199254740993)
+
+
+def constructor_overflow():
+    return float(10 ** 400)
+
+
+def constructor_many():
+    return float(1, 2)
+
+
+def constructor_bad_then_many():
+    return float("bad", 1)
+
+
+def constructor_order():
+    return float(1, 1 // 0)
+
+
+def constructor_invalid_caught():
+    try:
+        return float("1._0")
+    except ValueError:
+        return 17
+
+
+def constructor_shadow():
+    def float(value):
+        return value + 1
+    return float(7)
+
+
+def constructor_keyword():
+    return float(x=1)
+
+
+def constructor_heap():
+    return float([])
+
+
+def constructor_comprehension():
+    return [float(value) for value in ("0.1", "1.5")]

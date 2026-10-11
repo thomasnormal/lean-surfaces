@@ -154,4 +154,33 @@ theorem mixed_arithmetic_converts_before_nan :
 #print axioms mixed_arithmetic_converts_before_nan
 #print axioms arithmetic_sub_self
 
+theorem text_tenth : fromText "0.1" = .ok (ofBits 0x3fb999999999999a) := rfl
+
+theorem text_negative_zero : fromText "-0e999999999999999999999999" =
+    .ok (ofBits 0x8000000000000000) := rfl
+
+theorem text_unicode_digits : fromText "\u3000٠.١\u3000" =
+    .ok (ofBits 0x3fb999999999999a) := rfl
+
+theorem text_underscore : fromText "1_2.3_4e+5_6" =
+    .ok (ofBits 0x4bc929c7d37d0d30) := rfl
+
+theorem text_invalid_underscore : fromText "1._0" = .error .invalid := rfl
+
+theorem text_ascii_control : fromText "\x1c1\x1c" = .error .invalid := rfl
+
+theorem text_overflow : fromText "-1e999999999999999999999999" =
+    .ok (ofBits 0xfff0000000000000) := rfl
+
+theorem text_nan_requires_oracle : fromText "-NaN" = .error .nanPayload := rfl
+
+#print axioms text_tenth
+#print axioms text_negative_zero
+#print axioms text_unicode_digits
+#print axioms text_underscore
+#print axioms text_invalid_underscore
+#print axioms text_ascii_control
+#print axioms text_overflow
+#print axioms text_nan_requires_oracle
+
 end LeanModels.Python.Float64.Tests

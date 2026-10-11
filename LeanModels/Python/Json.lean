@@ -915,7 +915,7 @@ imports nothing from here and this file imports only the AST): a name
 missing from it costs a loud refusal, never a wrong capture, so the two
 lists may drift safely in the only direction that matters. -/
 private def lowerBuiltins : List String :=
-  ["len", "sorted", "max", "min", "abs", "int", "print", "ord", "chr",
+  ["len", "sorted", "max", "min", "abs", "int", "float", "print", "ord", "chr",
    "next", "iter", "range", "enumerate", "count", "all", "any", "sum",
    "tuple", "list", "dict", "str", "bool", "divmod", "set", "reversed", "zip", "map",
    "filter", "True", "False", "None"]

@@ -422,6 +422,26 @@
     "note": "Integer conversion overflow precedes a zero product, retaining stdout and the exact exception class/message."
   },
   {
+    "file": "Examples/python/float_lab/constructor_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_invalid_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_quote_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_both_quotes_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "Examples/python/float_lab/constructor_nan_script.py",
+    "expect": "unsupported"
+  },
+  {
     "file": "Examples/python/float_lab/nan_arithmetic_script.py",
     "expect": "unsupported",
     "note": "An indeterminate infinity difference requires a NaN payload/sign oracle; never invent a platform-specific word."

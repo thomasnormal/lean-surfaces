@@ -52,6 +52,17 @@ def arithmeticJson (result : Except Float64.ArithmeticError Float64) : Json :=
 
 def checkRow (input : Json) : Except String Json := do
   let kind ← input.getObjValAs? String "kind"
+  if kind == "decimal_zeroes" then
+    return toJson Float64.decimalZeroes
+  if kind == "text" then
+    let text ← input.getObjValAs? String "text"
+    match Float64.fromText text with
+    | .ok value => return numberJson value
+    | .error .invalid => return Json.mkObj [("invalid", .bool true)]
+    | .error .nanPayload => return Json.mkObj [("refused", .str "nan-payload")]
+  if kind == "decimal_character" then
+    let code ← naturalField input "code"
+    return Json.mkObj [("normalized", toJson (Float64.normalizeDecimalChar (Char.ofNat code)).toNat)]
   if kind == "neg" then
     return numberJson (← floatField input "bits").neg
   if kind == "float_arithmetic" then

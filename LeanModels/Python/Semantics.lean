@@ -747,7 +747,7 @@ def hex2 (n : Nat) : String :=
 /-- The quote CPython picks for a string's `repr`: `'` unless the string
 contains one and no `"`. -/
 def reprQuote (s : String) : Char :=
-  if s.contains '\'' && !s.contains '"' then '"' else '\''
+  if s.toList.contains '\'' && !s.toList.contains '"' then '"' else '\''
 
 /-- `repr` of one character inside a string literal; `none` = non-ASCII
 (printability is a Unicode table this model does not guess). -/
@@ -1367,8 +1367,8 @@ def intOfStr (text : String) : Res RVal :=
           .unsupported "int() cannot render this invalid literal exactly (docs/memory-model.md §the cast tier)"
 
 /-- The `int` constructor builtin: identity on ints, bool coercion,
-`int(<str>)` through the pass-8 honest subset (`intOfStr`); floats stay
-out of tier; a `.ref` is refused loudly before the `TypeError`
+`int(<str>)` through the pass-8 honest subset (`intOfStr`); finite floats
+truncate toward zero; a `.ref` is refused loudly before the `TypeError`
 fallback. -/
 def intCastVal : RVal → Res RVal
   | .int n => .ok (.int n)
@@ -1383,6 +1383,29 @@ def intCastVal : RVal → Res RVal
   | .ref _ =>
       .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")
+
+def floatCastVal : RVal → Res RVal
+  | .float value => .ok (.float value)
+  | .int integer => floatNumber (.int integer) >>= fun value => .ok (.float value)
+  | .bool boolean => floatNumber (.bool boolean) >>= fun value => .ok (.float value)
+  | .str text =>
+    match Float64.fromText text with
+    | .ok value => .ok (.float value)
+    | .error .nanPayload =>
+      .unsupported "float() textual NaN requires an explicit payload oracle (docs/python-floats.md)"
+    | .error .invalid =>
+      match reprStr text with
+      | some rendered => .exn (.valueError s!"could not convert string to float: {rendered}")
+      | none => .unsupported "float() cannot render this invalid Unicode literal exactly (docs/python-floats.md)"
+  | .ref _ =>
+    .unsupported "float() heap-object conversion protocols remain unmodelled (docs/python-floats.md)"
+  | value => .exn (.typeError s!"float() argument must be a string or a number, not '{value.typeName}'")
+
+def floatCastArgs (arguments : List RVal) : Res RVal :=
+  match arguments with
+  | [] => .ok (.float (Float64.ofBits 0))
+  | [value] => floatCastVal value
+  | _ => .exn (.typeError s!"float expected at most 1 argument, got {arguments.length}")
 
 /-- The `ord` builtin: the CODE POINT of a one-character str. CPython
 measures the length in code points and names the found length in its
@@ -5434,6 +5457,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [] => .ok st (.int 0)
                     | [v] => Run.liftRes st (intCastVal v)
                     | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                  else if fname == "float" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    Run.liftRes st (floatCastArgs vs)
                   else if fname == "bool" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     Run.liftRes st (boolCastArgs st.world.heap vs)

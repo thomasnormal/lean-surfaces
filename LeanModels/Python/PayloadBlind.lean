@@ -3318,6 +3318,9 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         | cons _ _ => exact PBF.unsupported
                                         | nil => exact PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                  · exact PBF.bind (ihEs m st args.toList hslot)
+                                      fun s1 vs _ hs1 => PBF.liftRes hs1 _
+                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   · refine PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => ?_
                                     simp only [FrameState.swapAt_world, World.swapAt_heap,

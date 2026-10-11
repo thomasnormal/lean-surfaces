@@ -914,6 +914,9 @@ SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
 
 WHITELIST_CLASS = {
     "float_lab::count_head": "iter.count-numeric-frame",
+    "float_lab::constructor": "float.text-nan-or-unicode-repr",
+    "float_lab::constructor_keyword": "float.constructor-keywords",
+    "float_lab::constructor_heap": "float.constructor-protocols",
     "tut_06::negative_power": "op.Pow-negative",
     "float_lab::nan_arithmetic_still_loud": "float.nan-payload",
     "float_lab::nonfinite_division_still_loud": "float.nonfinite-division",
@@ -1010,7 +1013,6 @@ WHITELIST_CLASS = {
     "repr_lab::generator": "render.identity",
     "repr_lab::large_length": "render.decimal-limit",
     "repr_lab::deep": "render.depth-limit",
-    "exc_handlers_lab::loud_body": "builtin.float",
     "exc_handlers_lab::handler_binding": "exc.handler",
     "exc_handlers_lab::tuple_handler": "exc.handler",
     "exc_handlers_lab::shadowed_handler": "exc.handler",
@@ -1036,7 +1038,6 @@ WHITELIST_CLASS = {
     "exc_ancestors_lab::first_class_base": "firstclass.callable",
     "exc_ancestors_lab::raise_base_instance": "exc.raise",
     "exc_ancestors_lab::raise_arithmetic_class": "exc.raise",
-    "exc_ancestors_lab::loud_body": "builtin.float",
     "iter_lab::chr_surrogate": "str.surrogate",
     "gen_lab::walrus_leak": "genexp.lowering-admission",
     "gen_lab::upto": "boundary.generator",
@@ -1159,6 +1160,7 @@ WHITELIST_CLASS = {
 # the adjudicator is just diff_test now.
 
 SCRIPT_CLASS = {
+    "constructor_nan_script": "float.text-nan-payload",
     "nan_arithmetic_script": "float.nan-payload",
     "call_before_def": "script.definition-order",
     "cls_effect_script": "class.creation-effect",

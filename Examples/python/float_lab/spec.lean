@@ -30,6 +30,21 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.cancel(Float64.ofBits 0xbff0000000000000) = Float64.ofBits 0
 #py_check float_lab.arithmetic_conversion_error(2) raises
     .overflowError "int too large to convert to float"
+#py_check float_lab.constructor_zero() = Float64.ofBits 0
+#py_check float_lab.constructor_tenth() = Float64.ofBits 0x3fb999999999999a
+#py_check float_lab.constructor_unicode() = Float64.ofBits 0x3fb999999999999a
+#py_check float_lab.constructor_rounding() = Float64.ofBits 0x4340000000000000
+#py_check float_lab.constructor_invalid_caught() = 17
+#py_check float_lab.constructor_many() raises
+    .typeError "float expected at most 1 argument, got 2"
+#py_check float_lab.constructor_bad_then_many() raises
+    .typeError "float expected at most 1 argument, got 2"
+#py_check float_lab.constructor_order() raises .zeroDivisionError
+#py_check float_lab.constructor("1._0") raises
+    .valueError "could not convert string to float: '1._0'"
+#py_check float_lab.constructor_overflow() raises
+    .overflowError "int too large to convert to float"
+#py_check float_lab.constructor_shadow() = 8
 
 theorem tenth :
     float_lab.tenth() ==> Float64.ofBits 0x3fb999999999999a := by proofs
@@ -52,6 +67,30 @@ theorem mixed_rounding :
 theorem cancel (value : PyFloat) (finite : value.exponent ≠ 2047) :
     float_lab.cancel(value) ==> Float64.ofBits 0 := by proofs
 
+theorem constructor_identity (value : PyFloat) :
+    float_lab.constructor(value) ==> value := by proofs
+
+theorem constructor_zero :
+    float_lab.constructor_zero() ==> Float64.ofBits 0 := by proofs
+
+theorem constructor_tenth :
+    float_lab.constructor_tenth() ==> Float64.ofBits 0x3fb999999999999a := by proofs
+
+theorem constructor_unicode :
+    float_lab.constructor_unicode() ==> Float64.ofBits 0x3fb999999999999a := by proofs
+
+theorem constructor_rounding :
+    float_lab.constructor_rounding() ==> Float64.ofBits 0x4340000000000000 := by proofs
+
+theorem constructor_invalid_caught :
+    float_lab.constructor_invalid_caught() ==> (17 : PyInt) := by proofs
+
+#print axioms constructor_identity
+#print axioms constructor_zero
+#print axioms constructor_tenth
+#print axioms constructor_unicode
+#print axioms constructor_rounding
+#print axioms constructor_invalid_caught
 #print axioms tenth
 #print axioms integer_true
 #print axioms default_passthrough

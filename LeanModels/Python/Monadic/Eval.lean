@@ -277,6 +277,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | [] => pure (.int 0)
     | [v] => liftRes (intCastVal v)
     | _ => refuse "int() with a base argument is outside the v0 tier"
+  else if fname == "float" then
+    liftRes (floatCastArgs vs)
   else if fname == "bool" then
     liftRes (boolCastArgs (← frameHeap) vs)
   else if fname == "divmod" then

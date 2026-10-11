@@ -22,6 +22,16 @@ change is listed here under **Changed** or **Removed**.
   refused pending its oracle model. Language/script differential rows and
   all-exponent numeric-core sweeps cover the new behavior.
 
+- `float(...)` construction on both interpreter surfaces: zero arguments,
+  binary64-word identity, integer/Boolean conversion and exact decimal-string
+  parsing with underscores, exponents, Unicode 13.0.0 digits/whitespace,
+  infinities, signed zero and subnormal/overflow rounding. Real-artifact proofs
+  and CPython 3.9 differential checks cover values, exception messages and
+  evaluation order. Shared repr quote selection now traverses the structural
+  code-point list, keeping constructor error proofs kernel-reducible. Textual
+  NaN payloads, bytes-like inputs, object protocols, keywords and unresolved
+  invalid-Unicode repr remain explicit unfinished coverage work.
+
 ## [0.1.8] — 2026-10-11
 
 ### Added

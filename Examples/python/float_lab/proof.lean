@@ -64,6 +64,50 @@ theorem cancel (value : PyFloat) (finite : value.exponent ≠ 2047) :
   rw [callIn.eq_2]
   py_simp [float_lab, evalFloatArithmetic, floatNumber, Float64.arithmetic_sub_self, finite]
 
+theorem constructor_identity (value : PyFloat) :
+    float_lab.constructor(value) ==> value := by
+  exact ⟨32, rfl⟩
+
+theorem constructor_zero :
+    float_lab.constructor_zero() ==> Float64.ofBits 0 := by
+  exact ⟨32, rfl⟩
+
+theorem constructor_tenth :
+    float_lab.constructor_tenth() ==> Float64.ofBits 0x3fb999999999999a := by
+  exact ⟨32, rfl⟩
+
+theorem constructor_unicode :
+    float_lab.constructor_unicode() ==> Float64.ofBits 0x3fb999999999999a := by
+  have parsed : Float64.fromText "\u3000٠.١\u3000" =
+      .ok (Float64.ofBits 0x3fb999999999999a) := rfl
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, floatCastArgs, floatCastVal, parsed]
+
+theorem constructor_rounding :
+    float_lab.constructor_rounding() ==> Float64.ofBits 0x4340000000000000 := by
+  exact ⟨32, rfl⟩
+
+theorem constructor_invalid_caught :
+    float_lab.constructor_invalid_caught() ==> (17 : PyInt) := by
+  have invalid : Float64.fromText "1._0" = .error .invalid := rfl
+  have rendered : LeanModels.Python.reprStr "1._0" = some "'1._0'" := rfl
+  have failure : floatCastArgs [.str "1._0"] =
+      .exn (.valueError "could not convert string to float: '1._0'") := by
+    simp only [floatCastArgs, floatCastVal, invalid, rendered]
+    congr 2
+  refine ⟨32, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  py_simp [float_lab, failure]
+
+#print axioms constructor_identity
+#print axioms constructor_zero
+#print axioms constructor_tenth
+#print axioms constructor_unicode
+#print axioms constructor_rounding
+#print axioms constructor_invalid_caught
 #print axioms tenth
 #print axioms integer_true
 #print axioms default_passthrough

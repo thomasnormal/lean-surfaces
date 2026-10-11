@@ -125,6 +125,114 @@ def fromInt (integer : Int) : Option Float64 :=
   | none => none
   | some value => if value.isInf then none else some value
 
+inductive TextError where
+  | invalid
+  | nanPayload
+deriving Repr, BEq, DecidableEq, Lean.ToExpr
+
+def decimalZeroes : List Nat :=
+  [0x30, 0x660, 0x6f0, 0x7c0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66,
+   0xbe6, 0xc66, 0xce6, 0xd66, 0xde6, 0xe50, 0xed0, 0xf20, 0x1040,
+   0x1090, 0x17e0, 0x1810, 0x1946, 0x19d0, 0x1a80, 0x1a90, 0x1b50,
+   0x1bb0, 0x1c40, 0x1c50, 0xa620, 0xa8d0, 0xa900, 0xa9d0, 0xa9f0,
+   0xaa50, 0xabf0, 0xff10, 0x104a0, 0x10d30, 0x11066, 0x110f0,
+   0x11136, 0x111d0, 0x112f0, 0x11450, 0x114d0, 0x11650, 0x116c0,
+   0x11730, 0x118e0, 0x11950, 0x11c50, 0x11d50, 0x11da0, 0x16a60,
+   0x16b50, 0x1d7ce, 0x1d7d8, 0x1d7e2, 0x1d7ec, 0x1d7f6, 0x1e140,
+   0x1e2f0, 0x1e950, 0x1fbf0]
+
+private def numericWhitespace (character : Char) : Bool :=
+  character == ' ' || character == '\t' || character == '\n' ||
+    character == '\r' || character.toNat == 0x0b || character.toNat == 0x0c
+
+def normalizeDecimalChar (character : Char) : Char :=
+  let code := character.toNat
+  if code < 128 then character
+  else if code == 0x85 || code == 0xa0 || code == 0x1680 ||
+      (0x2000 ≤ code && code ≤ 0x200a) || code == 0x2028 || code == 0x2029 ||
+      code == 0x202f || code == 0x205f || code == 0x3000 then ' '
+  else
+    match decimalZeroes.find? (fun first => first ≤ code && code < first + 10) with
+    | some first => Char.ofNat (48 + code - first)
+    | none => character
+
+private structure DecimalDigits where
+  value : Nat := 0
+  count : Nat := 0
+  significant : Nat := 0
+
+private def scanDecimal : List Char → DecimalDigits → Bool →
+    Option (DecimalDigits × List Char)
+  | [], digits, previousDigit =>
+      if digits.count == 0 || previousDigit then some (digits, []) else none
+  | character :: rest, digits, previousDigit =>
+      if character.isDigit then
+        let digit := character.toNat - 48
+        scanDecimal rest
+          ⟨digits.value * 10 + digit, digits.count + 1,
+           if digits.significant == 0 && digit == 0 then 0 else digits.significant + 1⟩ true
+      else if character == '_' then
+        if previousDigit then scanDecimal rest digits false else none
+      else if digits.count == 0 || previousDigit then some (digits, character :: rest)
+      else none
+
+private def signedDecimal (characters : List Char) : Option Int := do
+  let (negative, characters) := match characters with
+    | '-' :: rest => (true, rest)
+    | '+' :: rest => (false, rest)
+    | _ => (false, characters)
+  let (digits, rest) ← scanDecimal characters {} false
+  if digits.count == 0 || !rest.isEmpty then none
+  else some (if negative then -(digits.value : Int) else (digits.value : Int))
+
+private def decimalRatio (characters : List Char) : Option (Nat × Nat × Int) := do
+  let (whole, rest) ← scanDecimal characters {} false
+  let (fractional, rest) ← match rest with
+    | '.' :: rest => scanDecimal rest {} false
+    | _ => some ({}, rest)
+  if whole.count + fractional.count == 0 then none
+  else
+    let power ← match rest with
+      | [] => some 0
+      | 'e' :: rest => signedDecimal rest
+      | 'E' :: rest => signedDecimal rest
+      | _ => none
+    let significant := if whole.significant == 0 then fractional.significant
+      else whole.significant + fractional.count
+    some (whole.value * 10 ^ fractional.count + fractional.value, significant,
+      power - (fractional.count : Int))
+
+def fromText (text : String) : Except TextError Float64 :=
+  let characters := text.toList.map normalizeDecimalChar
+  let characters := ((characters.dropWhile numericWhitespace).reverse.dropWhile numericWhitespace).reverse
+  let (negative, characters) := match characters with
+    | '-' :: rest => (true, rest)
+    | '+' :: rest => (false, rest)
+    | _ => (false, characters)
+  let folded := characters.map fun character =>
+    if 65 ≤ character.toNat && character.toNat ≤ 90 then Char.ofNat (character.toNat + 32)
+    else character
+  let signBits := if negative then 2 ^ 63 else 0
+  if folded == ['i', 'n', 'f'] || folded == ['i', 'n', 'f', 'i', 'n', 'i', 't', 'y'] then
+    .ok (ofBits (signBits + 2047 * 2 ^ 52))
+  else if folded == ['n', 'a', 'n'] then .error .nanPayload
+  else
+    match decimalRatio characters with
+    | none => .error .invalid
+    | some (coefficient, significant, power) =>
+      if coefficient == 0 then .ok (ofBits signBits)
+      else
+        let order := (significant : Int) - 1 + power
+        if order > 308 then .ok (ofBits (signBits + 2047 * 2 ^ 52))
+        else if order < -324 then .ok (ofBits signBits)
+        else
+          let (numerator, denominator) := if power ≥ 0 then
+            (coefficient * 10 ^ power.toNat, 1)
+          else (coefficient, 10 ^ (-power).toNat)
+          match fromRatio negative numerator denominator with
+          | some value => .ok value
+          | none => .error .invalid
+
 def toInt (value : Float64) : Option Int :=
   match value.toRatio with
   | none => none

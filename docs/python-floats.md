@@ -1,11 +1,11 @@
 # Python binary64 floats and true division
 
 Implementation tracking: issue #10. Float literals, addition, subtraction,
-multiplication and integer/bool, finite float and mixed true division connect
+multiplication, `float(...)` and integer/bool, finite float and mixed true division connect
 to the same kernel-reducible binary64 core on both interpreter surfaces.
 The `float_lab` real extracted artifact has kernel proofs, differential rows
 and script transcripts. This is not complete float-language support:
-remaining operators, constructors, NaN payload propagation, non-finite
+remaining operators, constructor protocols, NaN payload propagation, non-finite
 division, hashing and identity are still language-coverage work.
 
 ## Representation and specification
@@ -118,25 +118,51 @@ equality of finite floats with equal integers and signed zeros. These cases
 remain in scope; refusing an unresolved case is not an exclusion or a reason
 to weaken an existing theorem.
 
-Broader float arithmetic, constructors, formatting specifications, methods,
+Broader float arithmetic, remaining constructor protocols, formatting specifications, methods,
 hashing and identity remain language-coverage work. Undefined or
 platform-dependent numerical details require an explicit model/oracle
 parameter when they cannot be decided from the admitted state.
+
+## Constructor contract
+
+`float()` returns positive zero. One positional argument preserves an existing
+binary64 word, converts an integer or Boolean with nearest-even rounding (and
+the integer-conversion overflow exception), or parses a decimal string.
+Decimal strings admit signs, a decimal point, signed exponents and underscores
+strictly between digits. Unicode decimal digits and surrounding whitespace
+use the pinned CPython 3.9 Unicode 13.0.0 inventory; ASCII control characters
+are not broadened to Unicode `isspace`. `inf` and `infinity` are case-insensitive.
+Decimal overflow produces signed infinity, underflow produces signed zero,
+and finite results use the same exact rational rounding as arithmetic.
+
+Malformed strings raise the repr-rendered `ValueError` when the shared
+string renderer can decide its message exactly. Quote selection traverses
+the structural code-point list, keeping error rendering kernel-reducible.
+Unresolved Unicode repr,
+textual NaN payloads, bytes-like inputs and object conversion protocols remain
+explicit unfinished work. Existing NaN words are preserved without selecting
+a new payload. Positional arity and immediate nonnumeric type errors retain
+CPython's exception classes and messages; keyword construction stays loud
+until its evaluation and positional-only protocol are modeled.
 
 ## Core validation
 
 `lake build LeanModels.Python.Float64Tests` checks closed kernel proofs for
 rounding, signed zero, subnormal ties, numerical equality, conversions,
-division and arithmetic. The closed-check axioms reports must remain empty;
-native execution is not a proof tactic. The general finite-cancellation lemma
-and its symbolic artifact proof use Lean's standard `propext`,
-`Classical.choice` and `Quot.sound`, not native computation or new axioms.
+division, arithmetic and decimal parsing. The closed numeric-arithmetic
+checks have empty axiom reports; native execution is not a proof tactic.
+Text parsing, the general finite-cancellation lemma and artifact proofs use
+only Lean's standard `propext`, `Classical.choice` and `Quot.sound`, not native
+computation or new axioms.
 
 `python3.9 harness/float64_test.py` compares the core against CPython's bit
 patterns, `repr`, integer and finite float division, addition/subtraction/
 multiplication, unary negation, mixed comparisons, conversions and exception
 messages in a single Lean
-process. It covers every finite exponent field at selected fraction
+process. Decimal parsing tests also compare the complete Unicode decimal-zero
+inventory against the pinned `unicodedata`, every decimal digit block,
+Unicode whitespace, malformed syntax, extreme exponents and rounding ties.
+It covers every finite exponent field at selected fraction
 boundaries, both signs, arbitrary-size integer ratios, subnormal and overflow
 ties, non-finite bit patterns and deterministic random samples. This is a
 numeric-core test, not the language-level differential harness. NaN-payload

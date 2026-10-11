@@ -13,6 +13,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import unicodedata
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -56,6 +57,57 @@ def binary_arithmetic_output(operation):
 
 def comparison_output(left, right):
     return {"equal": left == right, "less": left < right, "greater": left > right}
+
+
+def constructor_rows(generator, samples):
+    zeroes = [code for code in range(0x110000)
+              if unicodedata.decimal(chr(code), None) == 0]
+    records = [{"kind": "decimal_zeroes"}]
+    expected = [zeroes]
+    texts = [
+        "", " ", ".", "+", "-", "0", "-0", "+0.0", ".1", "1.",
+        "1.e2", "1_2.3_4e+5_6", "1._0", "._1", "_1", "1_", "1__2",
+        "1e", "1e+", "1e_2", "1e2_", "1e1.0", "1 2", "1\x002",
+        "0x1p0", "Infinity", "+INF", "-inFiniTy", "nan", "-NaN", "+nAn",
+        "in_f", "na_n", "NaN(1)", "\x1c1\x1c", "\x851\x85", "\u3000-1\u3000",
+        "٠.١", "１２.３４e٥", "²", "\t\n\r\v\f 1 \t\n\r\v\f",
+        "1e999999999999999999999999", "-0e999999999999999999999999",
+        "-1e-999999999999999999999999", "1.7976931348623157e308",
+        "1.7976931348623158e308", "1.7976931348623159e308",
+        "2.4703282292062327e-324", "2.4703282292062328e-324",
+        "4.9406564584124654e-324", "1" + "0" * 1000 + "e-1000",
+        "0." + "0" * 1000 + "1e1001", "0" * 1000 + ".1",
+        "1.00000000000000011102230246251565404236316680908203125",
+        "1.00000000000000033306690738754696212708950042724609375",
+    ]
+    for zero in zeroes:
+        texts.extend(chr(zero + digit) + "." + chr(zero + 9 - digit)
+                     for digit in range(10))
+        texts.append(chr(zero + 1) + "_" + chr(zero + 2) + "e" + chr(zero + 3))
+    whitespace = [code for code in range(0x110000) if chr(code).isspace()]
+    for code in whitespace:
+        texts.append(chr(code) + "-1.5" + chr(code))
+    for _ in range(samples):
+        coefficient = str(generator.randrange(10 ** generator.randrange(1, 100)))
+        position = generator.randrange(len(coefficient) + 1)
+        text = coefficient[:position] + "." + coefficient[position:]
+        if generator.randrange(2):
+            text = "-" + text
+        texts.append(text + "e" + str(generator.randrange(-500, 501)))
+        texts.append("".join(generator.choice("0123456789eE+-. _")
+                             for _ in range(generator.randrange(1, 30))))
+    for text in texts:
+        records.append({"kind": "text", "text": text})
+        try:
+            value = float(text)
+            expected.append({"refused": "nan-payload"} if math.isnan(value)
+                            else oracle_output(value))
+        except ValueError:
+            expected.append({"invalid": True})
+    for code in whitespace:
+        records.append({"kind": "decimal_character", "code": str(code)})
+        expected.append({"normalized": 32 if code >= 128 else code})
+    return records, expected
 
 
 def rows(samples):
@@ -205,7 +257,8 @@ def rows(samples):
             expected.append(oracle_output(left / right))
         except (ZeroDivisionError, OverflowError) as error:
             expected.append({"error": type(error).__name__, "message": str(error)})
-    return records, expected
+    text_records, text_expected = constructor_rows(generator, samples)
+    return records + text_records, expected + text_expected
 
 
 def main():
@@ -215,7 +268,8 @@ def main():
     arguments = parser.parse_args()
     if arguments.samples < 0:
         parser.error("--samples must be nonnegative")
-    print("float64 oracle:", sys.implementation.name, sys.version.split()[0], sys.executable, flush=True)
+    print("float64 oracle:", sys.implementation.name, sys.version.split()[0], sys.executable,
+          "Unicode", unicodedata.unidata_version, flush=True)
     if not arguments.no_build:
         subprocess.run(["lake", "build", "LeanModels.Python.Float64Tests"], cwd=ROOT, check=True)
     records, expected = rows(arguments.samples)

@@ -105,6 +105,20 @@ int alias_target() { return 1; }
 [[gnu::alias("_Z12alias_targetv")]] int defining_attribute();
 """
 
+TYPE_EVIDENCE_SOURCE = """struct Box { int field; };
+enum Color { red };
+int scalar;
+const int qualified = 0;
+volatile int volatile_qualified;
+int *pointer;
+int &reference = scalar;
+int &&rreference = 0;
+Box box;
+Color color = red;
+int callable(int value, Box *box);
+int variadic(int value, ...);
+"""
+
 POINTER_ID = re.compile(r"0x[0-9a-fA-F]+\Z")
 DECLARATION_KINDS = {
     "NamespaceDecl", "CXXRecordDecl", "CXXMethodDecl", "CXXConstructorDecl",
@@ -276,6 +290,66 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertIn(metadata["compiled_frontend"], metadata["runtime_frontend"])
         self.assertTrue(metadata["llvm_headers"])
         self.assertEqual(probe["ast"]["kind"], "TranslationUnitDecl")
+
+    def test_structured_type_rows_are_clang_witnessed_and_recursive(self):
+        self.source.write_text(TYPE_EVIDENCE_SOURCE, encoding="utf-8")
+        probe = self.probe()
+        metadata = probe["metadata"]
+        self.assertEqual(metadata["type_evidence_api"],
+                         "Clang::QualType structured type projection v1")
+        rows = metadata["type_evidence"]
+        self.assertTrue(rows)
+        declarations = metadata["declarations"]
+        by_name = {}
+        for declaration in declarations:
+            if declaration.get("name"):
+                by_name.setdefault(declaration["name"], set()).add(declaration["id"])
+        rows_by_occurrence = {row["occurrence"]: row for row in rows}
+
+        def declaration_id(name, kind):
+            return next(record["id"] for record in declarations
+                        if record.get("name") == name and record["kind"] == kind)
+
+        def row_for(name, kind="VarDecl"):
+            return rows_by_occurrence[declaration_id(name, kind)]
+
+        self.assertEqual(row_for("scalar")["type"],
+                         {"kind": "builtin", "name": "int"})
+        self.assertEqual(row_for("qualified")["type"], {
+            "kind": "qualified", "const": True, "volatile": False,
+            "base": {"kind": "builtin", "name": "int"},
+        })
+        self.assertEqual(row_for("volatile_qualified")["type"], {
+            "kind": "qualified", "const": False, "volatile": True,
+            "base": {"kind": "builtin", "name": "int"},
+        })
+        self.assertEqual(row_for("pointer")["type"], {
+            "kind": "pointer", "pointee": {"kind": "builtin", "name": "int"},
+        })
+        self.assertEqual(row_for("reference")["type"], {
+            "kind": "lvalue-reference", "referent": {"kind": "builtin", "name": "int"},
+        })
+        self.assertEqual(row_for("rreference")["type"], {
+            "kind": "rvalue-reference", "referent": {"kind": "builtin", "name": "int"},
+        })
+        box_ids = by_name["Box"]
+        self.assertIn(row_for("box")["type"]["declaration"], box_ids)
+        self.assertEqual(row_for("box")["type"]["kind"], "record")
+        self.assertEqual(row_for("color")["type"]["kind"], "enumeration")
+        self.assertIn(row_for("color")["type"]["declaration"], by_name["Color"])
+        function = row_for("callable", "FunctionDecl")["type"]
+        self.assertEqual(function["kind"], "function")
+        self.assertEqual(function["result"], {"kind": "builtin", "name": "int"})
+        self.assertEqual(function["parameters"][0], {"kind": "builtin", "name": "int"})
+        self.assertEqual(function["parameters"][1]["kind"], "pointer")
+        self.assertEqual(function["parameters"][1]["pointee"]["kind"], "record")
+        self.assertIn(function["parameters"][1]["pointee"]["declaration"], box_ids)
+        variadic = row_for("variadic", "FunctionDecl")["type"]
+        self.assertTrue(variadic["variadic"])
+        self.assertEqual(variadic["parameters"], [{"kind": "builtin", "name": "int"}])
+        for row in rows:
+            self.assertIn(row["occurrence"], {record["id"] for record in declarations})
+            self.assertNotIn("qualType", json.dumps(row))
 
     def test_same_process_joins_preserve_nonempty_coverage_and_raw_gaps(self):
         probe = self.probe()
@@ -704,6 +778,14 @@ class CanonicalProbeTests(unittest.TestCase):
         relationships = witnessed_relationships(first)
         self.assertTrue(relationships)
         self.assertEqual(relationships, witnessed_relationships(second))
+        self.assertEqual(
+            normalize_pointers(first["metadata"]["type_evidence"]),
+            normalize_pointers(second["metadata"]["type_evidence"]),
+        )
+        self.assertEqual(
+            normalize_pointers(first["metadata"]["type_refusals"]),
+            normalize_pointers(second["metadata"]["type_refusals"]),
+        )
         self.assertEqual(normalize_pointers(first["ast"]), normalize_pointers(second["ast"]))
 
 

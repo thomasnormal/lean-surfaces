@@ -249,6 +249,9 @@ class EvidenceIngestionTests(unittest.TestCase):
 #guard evidence.declarations.length == """ + str(len(probe["metadata"]["declarations"])) + """
 #guard evidence.functions.map (fun row => row.functionShape.map (·.bodyPresent)) == [some false, some true, some true]
 #guard evidence.functions.map (fun row => row.functionShape.map (·.attributeCount)) == [some 0, some 0, some 1]
+#guard match parseValidatedTypeEvidence evidence with
+  | .ok rows => !rows.isEmpty
+  | .error _ => false
 """)
 
     def run_inspector(self, fixture, *paths):

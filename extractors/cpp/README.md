@@ -14,11 +14,12 @@ driver is `run_integral.lean` and its compiler oracle is `integral_oracle.cpp`.
 bridge against Clang's C++23 `decltype` rules; this remains type/value-layer
 evidence rather than AST or execution admission.
 
-`LeanModels/Cpp/TypeEvidence.lean` defines the separate structured type-row
-contract and occurrence/canonical validator. Its current guards are synthetic:
-the canonical declaration probe remains unchanged until a matching Clang
-supplement can emit this recursive tree without falling back to `qualType`
-spelling.
+`LeanModels/Cpp/TypeEvidence.lean` defines the structured type-row contract and
+occurrence/canonical validator. The canonical declaration probe now emits the
+same recursive tree from `clang::QualType` in its `metadata.type_evidence`
+supplement; unsupported type families are omitted, never reconstructed from
+`qualType` spelling. `parseValidatedTypeEvidence` checks the supplement against
+the declaration rows before any later admission layer consumes it.
 
 ## Optional declaration metadata probe
 
@@ -204,7 +205,8 @@ lake env lean --run extractors/cpp/inspect_probe.lean /outside/the/repo/probe.js
 ```
 
 `root` denotes `[]`; dotted indices follow nested `inner` arrays. With no
-selected paths it prints only metadata, occurrence and function-row counts.
+selected paths it prints metadata, occurrence/function-row counts and the
+validated structured type-row count.
 Unknown paths, invalid syntax, invalid UTF-8 and schema/parse failures exit
 nonzero. A bridge refusal is printed as `REFUSE`; exit zero means the inspection
 completed, not that every bridge succeeded. The AST view is taken from the same
@@ -220,7 +222,10 @@ Output is one JSON object with `ast` and `metadata`. The former is Clang's stock
 JSON dump from the **same ASTContext** used for the supplement. The latter has
 schema `cpp-canonical-probe-0.3`, compiled/runtime Clang and LLVM-header versions,
 and a declaration ledger from `RecursiveASTVisitor`, with implicit code and
-template instantiations enabled. No declaration family or header is filtered.
+template instantiations enabled. It also carries an additive
+`type_evidence_api`/`type_evidence` supplement built from the same
+`clang::QualType` objects; unsupported type families are omitted. No
+declaration family or header is filtered from the raw ledger.
 
 - `id`, `canonical`, `previous`, `semantic_context` and `lexical_context` are
   exact session-local frontend handles, not entity identifiers. Context IDs
@@ -259,6 +264,16 @@ template instantiations enabled. No declaration family or header is filtered.
 - `dependent_context` only queries the declaration's context. `owning_module`
   reports its owning module name, if any. Neither field proves a declaration
   is dependence-free or satisfies the initial non-module admission contract.
+- `type_evidence` contains rows for typed value/function declarations whose
+  complete recursive tree is in the admitted structured vocabulary. Rows retain
+  occurrence and canonical handles; record/enum nodes point to canonical
+  declaration handles that the visitor witnessed. `parseValidatedTypeEvidence`
+  validates this supplement. It is not a `qualType` parser and it does not
+  admit an operand, callable body or executable program.
+- `type_refusals` records typed declarations whose exact Clang type cannot be
+  represented without guessing (for example, unsupported qualifiers or
+  function properties). A refusal is retained as evidence; it is not silently
+  turned into a scalar or a spelling-based fallback.
 
 The visitor can miss declarations that the stock dumper emits as nested type
 references. Canonical/predecessor/context/represented-class targets can also be

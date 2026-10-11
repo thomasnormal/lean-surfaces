@@ -114,6 +114,14 @@ def validateTypeEvidence (probe : DeclarationProbe) (rows : List TypeEvidenceRow
         validate rest (row :: seen)
   validate rows []
 
+def parseValidatedTypeEvidence (probe : DeclarationProbe) :
+    Except String (List TypeEvidenceRow) := do
+  requireEvidenceText probe.metadata "type_evidence_api"
+    "Clang::QualType structured type projection v1"
+  let rows ← parseTypeEvidenceRows (← evidenceField probe.metadata "type_evidence")
+  validateTypeEvidence probe rows
+  return rows
+
 def typeEvidenceFor (rows : List TypeEvidenceRow) (occurrence : FrontendHandle) :
     Option CppTypeEvidence :=
   rows.find? (fun row => row.occurrence == occurrence) |>.map (·.type)

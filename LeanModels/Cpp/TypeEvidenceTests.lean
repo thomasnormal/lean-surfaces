@@ -27,6 +27,12 @@ private def declarationRow (id canonical : String) : DeclarationEvidenceRow := {
   dependentContext := false, owningModule := none, functionShape := none, raw := .object []}
 private def probe (rows : List DeclarationEvidenceRow) : DeclarationProbe := {
   ast := .object [], metadata := .object [], declarations := rows}
+
+private def typedProbe (declarations : List DeclarationEvidenceRow) (types : List Raw) :
+    DeclarationProbe := {
+  ast := .object [], metadata := object [
+    ("type_evidence_api", text "Clang::QualType structured type projection v1"),
+    ("type_evidence", .array types)], declarations := declarations}
 private def oneRow : Raw := typeRow "0x1" "0x1" (builtin "int")
 private def pointerRow : Raw := typeRow "0x2" "0x2"
   (pointer (qualified true false (builtin "unsigned long")))
@@ -98,6 +104,19 @@ def validationRefuses (declarations : List DeclarationEvidenceRow) (raw : Raw) :
   (.array [typeRow "0x4" "0x4" (recordType "0x5")])
 #guard validationRefuses [declarationRow "0x4" "0x4"]
   (.array [typeRow "0x4" "0x4" (recordType "0x5")])
+def validatedProbeIsOk : Bool :=
+  match parseValidatedTypeEvidence (typedProbe [declarationRow "0x1" "0x1"] [oneRow]) with
+  | .ok rows => rows.length == 1
+  | .error _ => false
+
+#guard validatedProbeIsOk
+
+def validatedProbeRefusesMissingApi : Bool :=
+  match parseValidatedTypeEvidence (probe [declarationRow "0x1" "0x1"]) with
+  | .ok _ => false
+  | .error _ => true
+
+#guard validatedProbeRefusesMissingApi
 def parsedRows : List TypeEvidenceRow :=
   match parseTypeEvidenceRows (.array [oneRow]) with
   | .ok rows => rows

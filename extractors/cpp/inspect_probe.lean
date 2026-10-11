@@ -22,6 +22,8 @@ private def inspect (probe : DeclarationProbe) (paths : List (List Nat)) : IO UI
   let declarations := artifact.declarations
   IO.println "Probe inspection and source-local forms; no artifact provenance, literal compilation or execution admission."
   IO.println s!"metadata={probe.declarations.length} occurrences={declarations.length} functions={probe.functions.length}"
+  report "type-evidence" (parseValidatedTypeEvidence probe)
+    (fun rows => s!"{rows.length} validated rows")
   for path in paths do
     let some declaration := declarations.find? (fun declaration => declaration.path == path)
       | IO.eprintln s!"missing declaration occurrence at {repr path}"; return 1

@@ -165,7 +165,8 @@ what follows. -/
 /-! The loud frontier: the minilanguage, valid conversion characters not
 yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 
-#guard callFunction str_lab "fmt_width" #[.int 3] 4096 matches .unsupported _
+#py_check str_lab.fmt_width(3) = "    3"
+#py_check str_lab.fmt_width(-3) = "   -3"
 #py_check str_lab.fmt_hex(255) = "ff"
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")

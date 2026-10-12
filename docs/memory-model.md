@@ -4831,8 +4831,10 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   `evalBinOp`'s heap-operand refusal already fires, which is why the
   `%(key)s` mapping protocol over a dict RHS is loud today and stays so.
 
-The minilanguage stays refused, and so does every conversion character
-outside the ten bare forms: `%5d`, `%-s`, `%.2f`, `%(k)s`.
+The remaining minilanguage stays refused, and so does every conversion
+character outside the ten bare forms. The fixed `%5d` field is admitted with
+space padding and no truncation; flags, other widths, precision, and mapping
+keys remain loud.
 The invalid `%q` form now carries CPython's faithful
 `ValueError: unsupported format character 'q' (0x71) at index 1`; a trailing
 `%` likewise carries `ValueError: incomplete format`. The remaining
@@ -4992,7 +4994,7 @@ escape; the BARE argument (`'%r' % v`) against the 1-tuple; `%s` over
 the inventory; `%a`/`%c`/`%d`/`%i`/`%o`/`%u`/`%x` over int/bool/negative; two conversions in one
 string; the `%%` no-consume rule; the three faithful TypeErrors (short,
 leftover, `%d` on a str) and the left-to-right ORDER row; and the loud
-frontier — `%5d` (minilanguage), a container
+frontier — other width/precision forms (minilanguage), a container
 argument, `%r` of a non-ASCII str (with `%s` of it MATCHING beside it),
 and a dict RHS (the pre-existing heap-operand refusal). `seq_lab` gains
 the namedtuple SPREAD pair. Scripts: `fmt_script.py` (the opcode shape

@@ -14,6 +14,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Fixed `%5d` string formatting now pads decimal fields with spaces on the
+  left without truncation, including negative values and over-width numbers.
+  The CPython 3.9 differential suite now has **2,728 / 3,053 rows = 89.3%
+  complete** natively and **2,654 / 3,053 = 86.9% complete** in the proof
+  interpreter, with **100% agreement among decided rows** and zero failures.
+
 - Bare `%a` string formatting now uses CPython's ASCII-escaped `repr`,
   including `\\x`, `\\u`, and `\\U` escapes for non-ASCII strings. The CPython
   3.9 differential suite now has **2,725 / 3,051 rows = 89.3% complete**

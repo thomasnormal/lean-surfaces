@@ -991,6 +991,11 @@ def strFormatMappingRhs : RVal → Bool
   | .rangeV _ _ _ => true
   | _ => false
 
+def padFormatField (width : Nat) (s : String) : String :=
+  if s.length < width then
+    String.ofList (List.replicate (width - s.length) ' ') ++ s
+  else s
+
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
 consumes NOTHING; `%s`/`%r`/`%a`/`%c`/`%d`/`%i`/`%u`/`%x`/`%o` consume the next argument. Running out
 mid-walk is CPython's `not enough arguments` verbatim, and so are
@@ -1005,6 +1010,15 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       if args.isEmpty || mapping then .ok acc
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
+  | '%' :: '5' :: 'd' :: cs, args, mapping, acc =>
+      match args with
+      | [] => .exn (.typeError "not enough arguments for format string")
+      | a :: rest =>
+          match strFormatConv 'd' a with
+          | .ok piece => strFormatWalk cs rest mapping (acc ++ padFormatField 5 piece)
+          | .exn e => .exn e
+          | .timeout => .timeout
+          | .unsupported msg => .unsupported msg
   | '%' :: c :: cs, args, mapping, acc =>
       if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
         match args with

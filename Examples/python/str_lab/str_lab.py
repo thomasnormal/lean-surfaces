@@ -182,7 +182,7 @@ def fmt_nonascii_r():
 
 
 def fmt_width(n):
-    # the format minilanguage is a second tier: loud
+    # fixed width decimal formatting pads with spaces on the left
     return "%5d" % (n,)
 
 

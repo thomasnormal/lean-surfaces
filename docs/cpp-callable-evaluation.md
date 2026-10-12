@@ -1,11 +1,11 @@
-# C++ direct-return callable evaluation
+# C++ callable statement evaluation
 
 `LeanModels/Cpp/CallableEvaluation.lean` evaluates the already-admitted
-`CallableFunction` profile without changing the translation execution boundary.
+`CallableFunction` statement profile without changing the translation execution boundary.
 It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references and typed integral
-binary expressions, and returns the existing `IntegralResult` so signed
+binary expressions inside sequences and `if` branches, and returns the existing `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain
 visible rather than becoming host-language behavior.
 
@@ -20,8 +20,9 @@ boundary.
 
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
-not wired to `Translation.execute`, does not admit branches, loops, local
-objects, calls, overload resolution or general implicit-conversion semantics.
+not wired to `Translation.execute`, does not admit loops, local objects, calls,
+overload resolution or general implicit-conversion semantics. Falling through
+without a return is a typed `missingReturn` refusal.
 It does not establish Clang conformance or general compiled-execution coverage.
 
 ## Checks
@@ -33,8 +34,8 @@ LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
 
 The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
-literal and binary addition results, signed overflow, arity/profile refusal and
-fuel exhaustion.
+literal and binary addition results, captured `if` branches, signed overflow,
+arity/profile refusal and fuel exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes real signed, unsigned, short,

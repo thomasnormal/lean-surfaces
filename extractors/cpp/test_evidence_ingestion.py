@@ -431,7 +431,7 @@ int branch(int value) { if (value) return value; return 0; }
             )
         guards.append(
             "#guard (admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
-            + str(paths["branch"]) + ") matches .error _"
+            + str(paths["branch"]) + ").isOk"
         )
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 

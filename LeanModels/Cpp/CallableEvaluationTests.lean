@@ -23,6 +23,27 @@ private def admitBooleanIdentity : Except String CallableFunction :=
     typeRow "0x2" (.function (.builtin .boolean) [.builtin .boolean] false),
     typeRow "0x10" (.builtin .boolean)] [] .lp64 [0]
 
+#guard match admitIf with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [] with
+      | .ok (.ok value) => value == signed 7
+      | _ => false
+  | .error _ => false
+
+#guard match admitIf with
+  | .ok function =>
+      match function.body with
+      | .conditional _ whenTrue whenFalse =>
+          let zero : TypedCallableExpression := {
+            expression := .integer 0, sourceType := .builtin .int, type := .builtin .int}
+          let function := {function with
+            body := .conditional zero whenTrue whenFalse}
+          match evaluateCallable 8 .lp64 function [] with
+          | .ok (.ok value) => value == signed 8
+          | _ => false
+      | _ => false
+  | .error _ => false
+
 #guard match admitIdentity with
   | .ok function =>
       match evaluateCallable 4 .lp64 function [signed 17] with

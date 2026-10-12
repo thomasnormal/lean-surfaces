@@ -11,6 +11,7 @@ inductive CallableEvaluationError where
   | unsupportedOperator (operator : String)
   | expressionTypeMismatch
   | resultTypeMismatch
+  | missingReturn
   | fuelExhausted
   deriving Repr, BEq, Inhabited
 
@@ -148,18 +149,59 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
           | .undefined reason, _ | _, .undefined reason => pure (.undefined reason)
           | .unsupported reason, _ | _, .unsupported reason => pure (.unsupported reason)
 
+private inductive CallableExecution where
+  | normal
+  | returned (result : IntegralResult IntegralValue)
+  | failed (result : IntegralResult IntegralValue)
+
+private def terminalResult : IntegralResult IntegralValue → CallableExecution
+  | .ok _ => .normal
+  | result => .failed result
+
+private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments : List IntegralValue)
+    (statement : CallableStatement) :
+    Except CallableEvaluationError CallableExecution :=
+  match fuel with
+  | 0 => .error .fuelExhausted
+  | fuel + 1 =>
+      match statement with
+      | .skip => .ok .normal
+      | .expression expression =>
+          (evaluateTyped fuel profile parameters arguments expression).map terminalResult
+      | .return_ expression =>
+          (evaluateTyped fuel profile parameters arguments expression).map .returned
+      | .conditional condition whenTrue whenFalse => do
+          let result ← evaluateTyped fuel profile parameters arguments condition
+          match result with
+          | .ok value =>
+              if value.value == 0 then
+                evaluateCallableStatement fuel profile parameters arguments whenFalse
+              else
+                evaluateCallableStatement fuel profile parameters arguments whenTrue
+          | .invalid reason => pure (.failed (.invalid reason))
+          | .undefined reason => pure (.failed (.undefined reason))
+          | .unsupported reason => pure (.failed (.unsupported reason))
+      | .sequence first second => do
+          let firstResult ← evaluateCallableStatement fuel profile parameters arguments first
+          match firstResult with
+          | .normal => evaluateCallableStatement fuel profile parameters arguments second
+          | .returned _ | .failed _ => pure firstResult
+
 def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
     (arguments : List IntegralValue) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
   unless profile.valid do throw .invalidProfile
   if arguments.length != function.parameters.length then
     throw .arityMismatch
-  unless function.signature.result == function.body.type do
-    throw .resultTypeMismatch
   if fuel == 0 then throw .fuelExhausted
   let converted ← convertArguments profile function.parameters arguments
   match converted with
-  | .ok values => evaluateTyped fuel profile function.parameters values function.body
+  | .ok values =>
+      let execution ← evaluateCallableStatement fuel profile function.parameters values function.body
+      match execution with
+      | .normal => .error .missingReturn
+      | .returned result | .failed result => .ok result
   | .invalid reason => pure (.invalid reason)
   | .undefined reason => pure (.undefined reason)
   | .unsupported reason => pure (.unsupported reason)

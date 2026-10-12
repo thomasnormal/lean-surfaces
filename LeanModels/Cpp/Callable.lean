@@ -15,6 +15,15 @@ mutual
     sourceType : CppTypeEvidence
     type : CppTypeEvidence
     deriving Repr, BEq, Inhabited
+
+  inductive CallableStatement where
+    | skip
+    | expression (expression : TypedCallableExpression)
+    | return_ (expression : TypedCallableExpression)
+    | conditional (condition : TypedCallableExpression)
+        (whenTrue whenFalse : CallableStatement)
+    | sequence (first second : CallableStatement)
+    deriving Repr, BEq, Inhabited
 end
 
 structure CallableParameter where
@@ -33,7 +42,7 @@ structure CallableFunction where
   occurrence : Declaration
   signature : CallableSignature
   parameters : List CallableParameter
-  body : TypedCallableExpression
+  body : CallableStatement
   deriving Repr, BEq, Inhabited
 
 private def rawChildren (raw : Raw) : Except String (List Raw) :=
@@ -96,7 +105,7 @@ private def integerLiteral (raw : Raw) (sourceExpected typeExpected : Option Cpp
     throw "callable: integer literal requires an exact int source type"
   unless sourceExpected.all (· == .builtin .int) do
     throw "callable: integer literal source type disagrees with expression evidence"
-  unless typeExpected == some (.builtin .int) do
+  unless typeExpected.all (· == .builtin .int) do
     throw "callable: integer literal requires an exact int result type"
   pure {expression := .integer value, sourceType := .builtin .int, type := .builtin .int}
 
@@ -121,7 +130,8 @@ partial def parseCallableExpression (profile : TargetProfile)
       pure {expression := .parameter declaration, sourceType := parameterType, type}
   | "ImplicitCastExpr" =>
       let castKind ← evidenceText raw "castKind"
-      unless castKind == "LValueToRValue" || castKind == "NoOp" do
+      unless castKind == "LValueToRValue" || castKind == "NoOp" ||
+          (castKind == "IntegralToBoolean" && sourceExpected.isNone && typeExpected.isNone) do
         throw s!"callable: unsupported implicit cast {castKind}"
       let children ← rawChildren raw
       match children with
@@ -160,23 +170,59 @@ partial def parseCallableExpression (profile : TargetProfile)
       | _, _ => throw "callable: binary body expression requires two operands"
   | _ => throw s!"callable: unsupported return expression {kind}"
 
+partial def parseCallableStatement (profile : TargetProfile)
+    (parameters : List CallableParameter)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (resultType : CppTypeEvidence) (statement : Raw) : Except String CallableStatement := do
+  let kind ← evidenceText statement "kind"
+  match kind with
+  | "CompoundStmt" =>
+      let children ← rawChildren statement
+      match children with
+      | [] => .ok .skip
+      | first :: rest =>
+          let first ← parseCallableStatement profile parameters expressionRows resultType first
+          rest.foldlM (init := first) fun accumulated child => do
+            let parsed ← parseCallableStatement profile parameters expressionRows resultType child
+            pure (.sequence accumulated parsed)
+  | "ReturnStmt" =>
+      let values ← rawChildren statement
+      let [value] := values
+        | throw "callable: return statement requires exactly one expression"
+      let expression ← parseCallableExpression profile parameters expressionRows value none
+        (some resultType)
+      unless expression.type == resultType do
+        throw "callable: return expression type disagrees with function result"
+      pure (.return_ expression)
+  | "IfStmt" =>
+      let children ← rawChildren statement
+      match children with
+      | [condition, whenTrue] | [condition, whenTrue, _] =>
+          let condition ← parseCallableExpression profile parameters expressionRows condition none none
+          let whenTrue ← parseCallableStatement profile parameters expressionRows resultType whenTrue
+          let whenFalse ← match children with
+            | [_, _, otherwise] =>
+                parseCallableStatement profile parameters expressionRows resultType otherwise
+            | _ => .ok .skip
+          pure (.conditional condition whenTrue whenFalse)
+      | _ => throw "callable: if statement requires a condition and one or two branches"
+  | "NullStmt" => .ok .skip
+  | "ExprWithCleanups" =>
+      let children ← rawChildren statement
+      let [child] := children
+        | throw "callable: expression cleanup wrapper requires one child"
+      parseCallableStatement profile parameters expressionRows resultType child
+  | "BinaryOperator" | "IntegerLiteral" | "DeclRefExpr" | "ImplicitCastExpr" | "ParenExpr" =>
+      let expression ← parseCallableExpression profile parameters expressionRows statement none none
+      pure (.expression expression)
+  | _ => throw s!"callable: unsupported statement {kind}"
+
 private def callableBody (profile : TargetProfile) (parameters : List CallableParameter)
     (expressionRows : List CppBinaryExpressionEvidence) (resultType : CppTypeEvidence)
-    (body : Raw) : Except String TypedCallableExpression := do
+    (body : Raw) : Except String CallableStatement := do
   unless body.text "kind" == some "CompoundStmt" do
     throw "callable: body is not a compound statement"
-  let statements ← rawChildren body
-  let [statement] := statements
-    | throw "callable: body profile requires exactly one return statement"
-  unless statement.text "kind" == some "ReturnStmt" do
-    throw "callable: body profile admits only a return statement"
-  let values ← rawChildren statement
-  let [value] := values
-    | throw "callable: return statement requires exactly one expression"
-  let expression ← parseCallableExpression profile parameters expressionRows value none (some resultType)
-  unless expression.type == resultType do
-    throw "callable: return expression type disagrees with function result"
-  pure expression
+  parseCallableStatement profile parameters expressionRows resultType body
 
 def admitCallableFunction (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (expressionRows : List CppBinaryExpressionEvidence)

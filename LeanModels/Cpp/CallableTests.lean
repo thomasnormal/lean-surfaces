@@ -62,6 +62,10 @@ def implicitCast (id : String) (child : Raw) : Raw := object [
 def returnStmt (id : String) (value : Raw) : Raw := object [
   ("id", text id), ("kind", text "ReturnStmt"), ("inner", .array [value])]
 
+def integerLiteralRaw (id value : String) : Raw := object [
+  ("id", text id), ("kind", text "IntegerLiteral"),
+  ("type", object [("qualType", text "int")]), ("value", text value)]
+
 def body (statement : Raw) : Raw := object [
   ("id", text "0x30"), ("kind", text "CompoundStmt"), ("inner", .array [statement])]
 
@@ -128,31 +132,69 @@ def admitLiteral : Except String CallableFunction :=
 def admitBinary : Except String CallableFunction :=
   admitCallableFunction binaryProbe binaryTypes binaryEvidence TargetProfile.lp64 [0]
 
+def ifProbe : DeclarationProbe :=
+  probeFor (functionSource "choose" []
+    (body (object [
+      ("id", text "0x33"), ("kind", text "IfStmt"),
+      ("inner", .array [integerLiteralRaw "0x40" "1",
+        body (returnStmt "0x41" (integerLiteralRaw "0x42" "7")),
+        body (returnStmt "0x43" (integerLiteralRaw "0x44" "8"))])])) )
+    [rootEvidence, functionEvidence "choose" "CompoundStmt"]
+
+def ifTypes : List TypeEvidenceRow := [typeRow "0x2" (functionType [])]
+
+def admitIf : Except String CallableFunction :=
+  admitCallableFunction ifProbe ifTypes [] TargetProfile.lp64 [0]
+
 #guard match admitIdentity with
   | .ok function => function.parameters.length == 1
   | .error _ => false
 #guard match admitIdentity with
-  | .ok function => function.body.type == intType
+  | .ok function =>
+      match function.body with
+      | .return_ expression => expression.type == intType
+      | _ => false
   | .error _ => false
 #guard match admitIdentity with
-  | .ok function => function.body.expression == .parameter {value := "0x10"}
+  | .ok function =>
+      match function.body with
+      | .return_ expression => expression.expression == .parameter {value := "0x10"}
+      | _ => false
   | .error _ => false
 #guard match admitIdentity with
-  | .ok function => function.body.sourceType == intType
+  | .ok function =>
+      match function.body with
+      | .return_ expression => expression.sourceType == intType
+      | _ => false
   | .error _ => false
 #guard match admitLiteral with
-  | .ok function => function.body.expression == .integer 7
-  | .error _ => false
-#guard match admitBinary with
-  | .ok function => function.body.expression ==
-      .binary "+" (typedParameter "0x10") (typedParameter "0x11")
+  | .ok function =>
+      match function.body with
+      | .return_ expression => expression.expression == .integer 7
+      | _ => false
   | .error _ => false
 #guard match admitBinary with
   | .ok function =>
-      match function.body.expression with
-      | .binary _ left right =>
+      match function.body with
+      | .return_ expression => expression.expression ==
+          .binary "+" (typedParameter "0x10") (typedParameter "0x11")
+      | _ => false
+  | .error _ => false
+#guard match admitIf with
+  | .ok function =>
+      match function.body with
+      | .conditional condition (.return_ _) (.return_ _) =>
+          condition.expression == .integer 1
+      | _ => false
+  | .error _ => false
+#guard match admitBinary with
+  | .ok function =>
+      match function.body with
+      | .return_ expression => match expression.expression with
+        | .binary _ left right =>
           left.sourceType == intType && left.type == intType &&
             right.sourceType == intType && right.type == intType
+        | _ => false
       | _ => false
   | .error _ => false
 #guard (admitCallableFunction binaryProbe binaryTypes [] TargetProfile.lp64 [0]) matches .error _

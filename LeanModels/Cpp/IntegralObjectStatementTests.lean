@@ -139,6 +139,39 @@ private def whileEmpty : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def doWhileReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let body := .assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1)))
+          let condition := .binary .greater (.read access) (.literal (signed 0))
+          match executeIntegralObjectStatement 20 store (.doWhile condition body) with
+          | .ok store => readValue (signed 0) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
+private def doWhileRunsOnce : Bool :=
+  match IntegralObjectStore.empty .lp64 with
+  | .ok store =>
+      match store.allocate .automatic (.builtin .int) with
+      | .ok (store, object) =>
+          match store.initializeValue object (signed 0) with
+          | .ok store =>
+              match store.borrow object with
+              | .ok access =>
+                  let body := .assign access (.builtin .int) (.literal (signed 9))
+                  match executeIntegralObjectStatement 5 store
+                      (.doWhile (.literal ⟨.boolean, 0⟩) body) with
+                  | .ok store => readValue (signed 9) store access
+                  | .error _ => false
+              | .error _ => false
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
 private def forReady : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -180,6 +213,21 @@ private def continueReady : Bool :=
           let body := .sequence decrement .continue_
           let condition := .binary .greater (.read access) (.literal (signed 0))
           match executeIntegralObjectStatement 16 store (.whileLoop condition body) with
+          | .ok store => readValue (signed 0) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
+private def doWhileContinueReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let decrement := .assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1)))
+          let body := .sequence decrement .continue_
+          let condition := .binary .greater (.read access) (.literal (signed 0))
+          match executeIntegralObjectStatement 16 store (.doWhile condition body) with
           | .ok store => readValue (signed 0) store access
           | .error _ => false
       | .error _ => false
@@ -248,9 +296,12 @@ private def constError : Bool :=
 #guard conditionalFalse
 #guard whileReady
 #guard whileEmpty
+#guard doWhileReady
+#guard doWhileRunsOnce
 #guard forReady
 #guard breakReady
 #guard continueReady
+#guard doWhileContinueReady
 #guard forContinueReady
 #guard divisionError
 #guard staleError

@@ -12,6 +12,7 @@ inductive IntegralObjectStatement where
   | conditional (condition : IntegralObjectExpression)
       (whenTrue whenFalse : IntegralObjectStatement)
   | whileLoop (condition : IntegralObjectExpression) (body : IntegralObjectStatement)
+  | doWhile (condition : IntegralObjectExpression) (body : IntegralObjectStatement)
   | forLoop (initializer : IntegralObjectStatement) (condition : IntegralObjectExpression)
       (step body : IntegralObjectStatement)
   | break_
@@ -106,6 +107,20 @@ mutual
             | .invalid reason => throw (.invalid reason)
             | .undefined reason => throw (.undefined reason)
             | .unsupported reason => throw (.unsupported reason)
+        | .doWhile condition body => do
+            let bodyResult ← executeStep fuel store body
+            match bodyResult with
+            | .break_ store => pure (.normal store)
+            | .normal store | .continue_ store =>
+                let result ← (evaluateIntegralObjectExpression fuel store condition).mapError
+                  mapExpressionError
+                match result with
+                | .ok value =>
+                    if value.value == 0 then pure (.normal store)
+                    else executeStep fuel store (.doWhile condition body)
+                | .invalid reason => throw (.invalid reason)
+                | .undefined reason => throw (.undefined reason)
+                | .unsupported reason => throw (.unsupported reason)
         | .forLoop initializer condition step body => do
             let result ← executeStep fuel store initializer
             match result with

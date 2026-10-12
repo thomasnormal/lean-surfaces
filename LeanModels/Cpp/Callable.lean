@@ -8,6 +8,7 @@ mutual
     | integer (value : Nat)
     | parameter (declaration : FrontendHandle)
     | unary (operator : String) (operand : TypedCallableExpression)
+    | logical (operator : String) (left right : TypedCallableExpression)
     | binary (operator : String) (left right : TypedCallableExpression)
     deriving Repr, BEq, Inhabited
 
@@ -55,6 +56,11 @@ private def rawChildren (raw : Raw) : Except String (List Raw) :=
 
 private def rawId (raw : Raw) : Except String FrontendHandle :=
   evidenceHandle raw "id"
+
+private def callableBuiltin : CppTypeEvidence → Bool
+  | .builtin _ => true
+  | .qualified _ _ base => callableBuiltin base
+  | _ => false
 
 private def callableTypeRow (rows : List TypeEvidenceRow) (handle : FrontendHandle) :
     Except String TypeEvidenceRow :=
@@ -148,7 +154,15 @@ partial def parseCallableExpression (profile : TargetProfile)
       let occurrence ← rawId raw
       let some row := expressionRows.find? (fun row => row.occurrence == occurrence)
         | throw "callable: binary body expression lacks typed evidence"
-      validateBinaryIntegralTyping profile row
+      let logical := row.operator == "&&" || row.operator == "||"
+      if logical then
+        unless row.result == .builtin .boolean do
+          throw "callable: logical expression result is not boolean"
+        unless row.operands.all (fun operand =>
+            callableBuiltin operand.sourceType && callableBuiltin operand.type) do
+          throw "callable: logical expression operands are not builtin integrals"
+      else
+        validateBinaryIntegralTyping profile row
       unless raw.text "opcode" == some row.operator do
         throw "callable: binary body operator disagrees with typed evidence"
       if typeExpected.isSome && typeExpected != some row.result then
@@ -165,7 +179,8 @@ partial def parseCallableExpression (profile : TargetProfile)
           let right ← parseCallableExpression profile parameters expressionRows rightRaw
             (some rightEvidence.sourceType) (some rightEvidence.type)
           pure {
-            expression := .binary row.operator left right
+            expression := if logical then .logical row.operator left right
+              else .binary row.operator left right
             sourceType := sourceExpected.getD row.result
             type := row.result
           }

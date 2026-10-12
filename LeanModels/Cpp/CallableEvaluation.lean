@@ -155,6 +155,27 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
           | .invalid reason => pure (.invalid reason)
           | .undefined reason => pure (.undefined reason)
           | .unsupported reason => pure (.unsupported reason)
+      | .logical operator left right => do
+          unless operator == "&&" || operator == "||" do
+            throw (.unsupportedOperator operator)
+          let leftResult ← evaluateTyped fuel profile parameters arguments left
+          match leftResult with
+          | .ok leftValue =>
+              let leftTrue := leftValue.value != 0
+              if operator == "&&" && !leftTrue then
+                pure (.ok (integralBoolean false))
+              else if operator == "||" && leftTrue then
+                pure (.ok (integralBoolean true))
+              else
+                let rightResult ← evaluateTyped fuel profile parameters arguments right
+                match rightResult with
+                | .ok rightValue => pure (.ok (integralBoolean (rightValue.value != 0)))
+                | .invalid reason => pure (.invalid reason)
+                | .undefined reason => pure (.undefined reason)
+                | .unsupported reason => pure (.unsupported reason)
+          | .invalid reason => pure (.invalid reason)
+          | .undefined reason => pure (.undefined reason)
+          | .unsupported reason => pure (.unsupported reason)
       | .binary operator left right => do
           let some operation := operator? operator
             | .error (.unsupportedOperator operator)

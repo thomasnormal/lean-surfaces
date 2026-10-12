@@ -177,6 +177,26 @@ def unaryTypes : List TypeEvidenceRow := [
 def admitUnary : Except String CallableFunction :=
   admitCallableFunction unaryProbe unaryTypes [] TargetProfile.lp64 [0]
 
+def logicalProbe : DeclarationProbe :=
+  probeFor (functionSource "both" [parameterRaw "0x10" "left", parameterRaw "0x11" "right"]
+    (body (returnStmt "0x31" (object [
+      ("id", text "0x20"), ("kind", text "BinaryOperator"), ("opcode", text "&&"),
+      ("inner", .array [declRef "0x10" "left", declRef "0x11" "right"])]))))
+    [rootEvidence, functionEvidence "both" "CompoundStmt"]
+
+def logicalTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (.function (.builtin .boolean) [intType, intType] false),
+  typeRow "0x10" intType, typeRow "0x11" intType]
+
+def logicalEvidence : List CppBinaryExpressionEvidence := [{
+  ordinal := 0, occurrence := {value := "0x20"}, operator := "&&", result := .builtin .boolean,
+  operands := [
+    {occurrence := {value := "0x10"}, kind := "DeclRefExpr", sourceType := intType, type := intType},
+    {occurrence := {value := "0x11"}, kind := "DeclRefExpr", sourceType := intType, type := intType}]}]
+
+def admitLogical : Except String CallableFunction :=
+  admitCallableFunction logicalProbe logicalTypes logicalEvidence TargetProfile.lp64 [0]
+
 #guard match admitIdentity with
   | .ok function => function.parameters.length == 1
   | .error _ => false
@@ -230,6 +250,15 @@ def admitUnary : Except String CallableFunction :=
       | .return_ expression =>
           match expression.expression with
           | .unary operator _ => operator == "-"
+          | _ => false
+      | _ => false
+  | .error _ => false
+#guard match admitLogical with
+  | .ok function =>
+      match function.body with
+      | .return_ expression =>
+          match expression.expression with
+          | .logical operator _ _ => operator == "&&"
           | _ => false
       | _ => false
   | .error _ => false

@@ -31,6 +31,8 @@ The return-expression profile is:
 - a parameter `DeclRefExpr`, through only `LValueToRValue` or `NoOp`
   `ImplicitCastExpr` wrappers; or
 - a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
+- a logical `&&` or `||` expression whose operands are builtin integral values
+  and whose result is builtin `bool`; or
 - an integral `BinaryOperator` whose ordered children, operator and result are
   witnessed by the validated expression supplement and whose promotions agree
   with the explicit `TargetProfile`.
@@ -70,8 +72,8 @@ body was executed merely because Clang accepted its source.
 ## Validation
 
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
-binary returns, captured `if`/`while` branches, mismatched evidence, control-flow and
-function-try refusals. `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned
+binary and logical returns, captured `if`/`while` branches, mismatched evidence,
+control-flow and function-try refusals. `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned
 Clang check for real identity/add bodies and a branch admission; it requires the
 same explicit compiler/plugin variables as the existing probe tests and skips
 otherwise. The evaluator now includes only the profile-checked integral conversion

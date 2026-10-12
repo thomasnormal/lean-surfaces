@@ -4,9 +4,9 @@
 `CallableFunction` statement profile without changing the translation execution boundary.
 It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
-conversion, evaluates integer literals, parameter references and typed integral
-unary and binary expressions inside sequences, `if` branches and `while`
-loops, and returns the existing `IntegralResult` so signed
+conversion, evaluates integer literals, parameter references, typed integral
+unary and binary expressions, and short-circuiting logical `&&`/`||` inside
+sequences, `if` branches and `while` loops, and returns the existing `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain
 visible rather than becoming host-language behavior.
 
@@ -36,8 +36,8 @@ LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
 
 The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
-literal and binary addition results, captured `if`/`while` branches, signed overflow,
-arity/profile refusal and fuel exhaustion.
+literal, binary addition and logical short-circuit results, captured `if`/`while`
+branches, signed overflow, arity/profile refusal and fuel exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes real signed, unsigned, short,

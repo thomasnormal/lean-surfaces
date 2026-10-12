@@ -44,6 +44,20 @@ private def admitBooleanIdentity : Except String CallableFunction :=
       | _ => false
   | .error _ => false
 
+#guard match admitLogical with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 7, signed 3] with
+      | .ok (.ok value) => value == boolean 1
+      | _ => false
+  | .error _ => false
+
+#guard match admitLogical with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 0, signed 3] with
+      | .ok (.ok value) => value == boolean 0
+      | _ => false
+  | .error _ => false
+
 #guard match admitWhile with
   | .ok function =>
       match evaluateCallable 12 .lp64 function [signed 7] with

@@ -230,6 +230,11 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
               else
                 evaluateTyped fuel profile parameters afterCondition whenTrue
           | result => pure (result, afterCondition)
+      | .comma left right => do
+          let (leftResult, afterLeft) ← evaluateTyped fuel profile parameters arguments left
+          match leftResult with
+          | .ok _ => evaluateTyped fuel profile parameters afterLeft right
+          | result => pure (result, afterLeft)
       | .logical operator left right => do
           unless operator == "&&" || operator == "||" do
             throw (.unsupportedOperator operator)

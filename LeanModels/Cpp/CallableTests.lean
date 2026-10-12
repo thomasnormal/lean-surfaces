@@ -225,10 +225,29 @@ def conditionalProbe : DeclarationProbe :=
 def admitConditional : Except String CallableFunction :=
   admitCallableFunction conditionalProbe incrementTypes [] TargetProfile.lp64 [0]
 
+def commaProbe : DeclarationProbe :=
+  probeFor (functionSource "comma" [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31" (object [
+      ("id", text "0x20"), ("kind", text "BinaryOperator"), ("opcode", text ","),
+      ("inner", .array [
+        incrementRaw "0x21" "++" true (declRefNode "0x22" "0x10" "value"),
+        declRefNode "0x23" "0x10" "value"])]))))
+    [rootEvidence, functionEvidence "comma" "CompoundStmt"]
+
+def commaEvidence : List CppBinaryExpressionEvidence := [{
+  ordinal := 0, occurrence := {value := "0x20"}, operator := ",", result := intType,
+  operands := [
+    {occurrence := {value := "0x21"}, kind := "UnaryOperator", sourceType := intType, type := intType},
+    {occurrence := {value := "0x23"}, kind := "DeclRefExpr", sourceType := intType, type := intType}]}]
+
+def admitComma : Except String CallableFunction :=
+  admitCallableFunction commaProbe incrementTypes commaEvidence TargetProfile.lp64 [0]
+
 #guard admitPrefixIncrement.isOk
 #guard admitPostfixIncrement.isOk
 #guard admitDecrement.isOk
 #guard admitConditional.isOk
+#guard admitComma.isOk
 
 def compoundAssignmentProbe : DeclarationProbe :=
   probeFor (functionSource "bumpBy" [parameterRaw "0x10" "value"] (object [
@@ -402,6 +421,10 @@ def admitLogical : Except String CallableFunction :=
           .binary "+" (typedParameter "0x10") (typedParameter "0x11")
       | _ => false
   | .error _ => false
+#guard CallableExpression.hasEffects
+  (.binary "+"
+    {expression := .increment "++" true {value := "0x10"}, sourceType := intType, type := intType}
+    {expression := .integer 1, sourceType := intType, type := intType})
 #guard match admitAssignment with
   | .ok function =>
       match function.body with

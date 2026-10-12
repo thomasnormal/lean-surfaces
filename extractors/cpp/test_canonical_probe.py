@@ -468,6 +468,25 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(len(conditionals[0].get("inner", [])), 3)
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_comma_expression_is_a_binary_node_with_ordered_children(self):
+        self.source.write_text(
+            "int comma(int value) { return value++, value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "id" in node:
+                nodes[node["id"]] = node
+            pending.extend(node.get("inner", []))
+        commas = [node for node in nodes.values()
+                  if node.get("kind") == "BinaryOperator" and node.get("opcode") == ","]
+        self.assertEqual(len(commas), 1)
+        self.assertEqual(len(commas[0].get("inner", [])), 2)
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(
             "double arithmetic(double left, double right) { return left + right; }\n",

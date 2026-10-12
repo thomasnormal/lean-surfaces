@@ -149,6 +149,20 @@ private def admitBooleanIdentity : Except String CallableFunction :=
       | _ => false
   | .error _ => false
 
+#guard match admitComma with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 4] with
+      | .ok (.ok value) => value == signed 5
+      | _ => false
+  | .error _ => false
+
+#guard match admitComma with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 2147483647] with
+      | .ok (.undefined .signedOverflow) => true
+      | _ => false
+  | .error _ => false
+
 #guard match admitConditional with
   | .ok function =>
       match evaluateCallable 8 .lp64 function [signed 0] with

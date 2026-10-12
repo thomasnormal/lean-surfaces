@@ -11,6 +11,7 @@ mutual
     | convert (operand : TypedCallableExpression)
     | unary (operator : String) (operand : TypedCallableExpression)
     | conditional (condition whenTrue whenFalse : TypedCallableExpression)
+    | comma (left right : TypedCallableExpression)
     | logical (operator : String) (left right : TypedCallableExpression)
     | binary (operator : String) (left right : TypedCallableExpression)
     deriving Repr, BEq, Inhabited
@@ -36,13 +37,19 @@ mutual
     deriving Repr, BEq, Inhabited
 end
 
-def CallableExpression.hasEffects : CallableExpression → Bool
-  | .increment _ _ _ => true
-  | .convert operand | .unary _ operand =>
-      match operand.expression with
-      | .increment _ _ _ => true
-      | _ => false
-  | _ => false
+mutual
+  def CallableExpression.hasEffects : CallableExpression → Bool
+    | .increment _ _ _ => true
+    | .convert operand | .unary _ operand => operand.hasEffects
+    | .conditional condition whenTrue whenFalse =>
+        condition.hasEffects || whenTrue.hasEffects || whenFalse.hasEffects
+    | .comma left right | .logical _ left right | .binary _ left right =>
+        left.hasEffects || right.hasEffects
+    | _ => false
+
+  def TypedCallableExpression.hasEffects : TypedCallableExpression → Bool
+    | ⟨expression, _, _⟩ => expression.hasEffects
+end
 
 structure CallableParameter where
   declaration : FrontendHandle
@@ -117,6 +124,17 @@ private def callableParameters (rawParameters : List Raw) (rows : List TypeEvide
 private def parameterType? (parameters : List CallableParameter) (declaration : FrontendHandle) :
     Option CppTypeEvidence :=
   parameters.find? (fun parameter => parameter.declaration == declaration) |>.map (·.type)
+
+private def validateCommaIntegralTyping (row : CppBinaryExpressionEvidence) : Except String Unit := do
+  let some left := row.operands[0]?
+    | throw "callable: comma expression lacks a left operand"
+  let some right := row.operands[1]?
+    | throw "callable: comma expression lacks a right operand"
+  unless callableBuiltin left.sourceType && callableBuiltin left.type &&
+      callableBuiltin right.sourceType && callableBuiltin right.type do
+    throw "callable: comma expression requires builtin integral operands"
+  unless row.result == right.type do
+    throw "callable: comma expression result must be its right operand type"
 
 private def referencedDeclaration (raw : Raw) : Except String FrontendHandle := do
   let reference ← evidenceField raw "referencedDecl"
@@ -221,7 +239,10 @@ partial def parseCallableExpression (profile : TargetProfile)
       let some row := expressionRows.find? (fun row => row.occurrence == occurrence)
         | throw "callable: binary body expression lacks typed evidence"
       let logical := row.operator == "&&" || row.operator == "||"
-      if logical then
+      let comma := row.operator == ","
+      if comma then
+        validateCommaIntegralTyping row
+      else if logical then
         unless row.result == .builtin .boolean do
           throw "callable: logical expression result is not boolean"
         unless row.operands.all (fun operand =>
@@ -246,10 +267,11 @@ partial def parseCallableExpression (profile : TargetProfile)
           let right ← parseCallableExpression profile parameters expressionRows rightRaw
             (if logical then none else some rightEvidence.sourceType)
             (if logical then none else some rightEvidence.type)
-          unless logical || (!left.expression.hasEffects && !right.expression.hasEffects) do
+          unless logical || comma || (!left.expression.hasEffects && !right.expression.hasEffects) do
             throw "callable: side effects in unsequenced binary operands are outside the body profile"
           pure {
-            expression := if logical then .logical row.operator left right
+            expression := if comma then .comma left right
+              else if logical then .logical row.operator left right
               else .binary row.operator left right
             sourceType := sourceExpected.getD row.result
             type := row.result

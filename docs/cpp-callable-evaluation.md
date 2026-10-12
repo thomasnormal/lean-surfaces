@@ -10,7 +10,9 @@ sequences, `if` branches and `while`/`do` loops. Parameter-targeted `=`,
 integral compound-assignment statements and prefix/postfix parameter
 increment/decrement expressions thread updated argument values through later
 statements. Typed conditional expressions evaluate their condition once and
-only evaluate the selected branch. The evaluator returns the existing
+only evaluate the selected branch. Comma expressions evaluate their left
+operand first, retain its updated parameter state, and evaluate the right
+operand only after a successful left result. The evaluator returns the existing
 `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain visible
 rather than becoming host-language behavior.
@@ -45,6 +47,12 @@ admitted increment/decrement; the unselected arm is not evaluated. The
 evaluator requires both arms to have the same represented builtin type and does
 not guess the usual conditional conversions.
 
+Comma expressions follow the C++ left-to-right sequencing rule. Their operands
+must be builtin integral expressions, and the represented result type must be
+the right operand's type. A failed left operand propagates without evaluating
+the right operand; side effects nested below either operand remain visible to
+the admission check rather than being treated as unsequenced.
+
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
 not wired to `Translation.execute`, does not admit `for` loops, local
@@ -64,16 +72,17 @@ The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
 literal, binary addition and logical short-circuit results, captured
 `if`/`while`/`do` branches, prefix/postfix increment and decrement, conditional
-branch selection, signed overflow, arity/profile refusal and fuel exhaustion.
+branch selection, comma sequencing, signed overflow, arity/profile refusal and
+fuel exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes identity and literal bodies, skipped
 and discarded statements, branches, unary/binary/logical operators, integral
-return casts, parameter assignments, prefix/postfix increment/decrement and
-conditional expressions.
+return casts, parameter assignments, prefix/postfix increment/decrement,
+conditional expressions and comma sequencing.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do` loops. It compares the evaluator with 211 Clang-compiled calls at both
+and `do` loops. It compares the evaluator with 214 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

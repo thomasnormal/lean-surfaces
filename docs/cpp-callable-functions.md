@@ -39,6 +39,8 @@ The return-expression profile is:
   reference; or
 - a `ConditionalOperator` with a builtin integral condition and two branches
   whose represented types agree; or
+- a comma expression whose builtin integral result type is the right operand's
+  represented type; or
 - a logical `&&` or `||` expression whose operands are builtin integral values
   and whose result is builtin `bool`; or
 - an integral `BinaryOperator` whose ordered children, operator and result are
@@ -56,6 +58,11 @@ conflicting evidence all refuse. Increment and decrement are not generalized
 to locals, members, calls or overloaded operators. Conditional expressions with
 an omitted middle operand, unrepresented conversions or mismatched branch
 types remain loud refusals.
+
+Comma expressions retain C++'s left-to-right sequencing boundary. Their left
+operand must complete successfully before the right operand is evaluated, and
+effectful expressions nested beneath either operand are rejected when they
+would otherwise be unsequenced inside a binary expression.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an
@@ -95,7 +102,7 @@ body was executed merely because Clang accepted its source.
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
 binary and logical returns, captured `if`/`while`/`do` branches, parameter stores,
 prefix/postfix increment and decrement admission, conditional-expression
-branch typing, compound-assignment
+branch typing, comma-expression sequencing, compound-assignment
 target/type/evidence mismatches and function-try refusals.
 `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned Clang check for
 real admitted bodies, including every compound operator, unsigned wraparound,

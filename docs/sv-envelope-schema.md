@@ -97,7 +97,7 @@ emits:
 | `InstanceSymbol:Instance`, `SubroutineSymbol:Subroutine`, `ParameterSymbol:Parameter`, ... | module member kinds outside M0 (class name `:` symbol kind) — routed to the module's `others` list |
 | `ProceduralBlockSymbol:Initial` / `:Final` / `:AlwaysLatch` | process kinds outside M0 |
 | `ProceduralBlockSymbol:NoEventControl` | `always` / `always_ff` whose body is not an event-controlled statement |
-| `TimedStatement:<TimingClass>` | timing control other than a plain signal event — supported integral-literal `#d` forms become `Delay`, while unsupported delay expressions, `TimedStatement:EventListControl` for `@(a or b)`, and `TimedStatement:ImplicitEventControl` for `@*` remain loud |
+| `TimedStatement:<TimingClass>` | timing-control classification — supported integral-literal `#d` forms become `Delay`, and simple nested `@(posedge sig)` forms become `WaitEvent`; unsupported delay expressions, other event edges/lists, and `TimedStatement:ImplicitEventControl` for `@*` remain loud |
 | `SignalEventControl:NegEdge` / `:BothEdges` / `:None_` | edge other than `posedge` |
 | `SignalEventControl:iff` | `@(posedge clk iff ...)` |
 | `SignalEventControl:clock` | posedge expression that is not a 1-bit identifier |
@@ -222,6 +222,7 @@ ordinary effectful expression.
 | `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |
 | `Repeat` | legacy/self-check: `kind`, `span`, `count` (expr), `count_signed` (Bool), `body` (stmt) |
 | `Delay` | scheduler: `kind`, `span`, `amount` (Nat below 2^64), `body` (stmt) — a known nonnegative integral-literal delay; ingestion retains the body after the delay checkpoint, and runtime refuses `amount == 0` because Inactive delivery is not in this tier |
+| `WaitEvent` | scheduler: `kind`, `span`, `signal` (1-bit identifier), `edge` (`"posedge"`) — a simple nested edge wait; an enclosing `Block` retains the following body and the self-check runner refuses it |
 | `Break` / `Continue` | legacy/self-check: `kind`, `span`; transfer to the nearest loop |
 | `Unsupported` | see above |
 

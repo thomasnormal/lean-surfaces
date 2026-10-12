@@ -1261,8 +1261,10 @@ def _convert_stmt(sm, s):
         }
 
     if cname == "TimedStatement":  # nested timing control (#10, @(...), ...)
-        if type(s.timing).__name__ == "DelayControl" and _SYM is None:
+        if _SYM is None and type(s.timing).__name__ == "DelayControl":
             return _convert_delay_statement(sm, s)
+        if _SYM is None and type(s.timing).__name__ == "SignalEventControl":
+            return _convert_wait_event_statement(sm, s)
         return unsupported(sm, s, "TimedStatement:" + type(s.timing).__name__)
 
     if cname == "CaseStatement" and _SYM is None:
@@ -1319,6 +1321,33 @@ def _convert_delay_statement(sm, statement):
         "span": node_span(sm, statement),
         "amount": amount,
         "body": convert_stmt(sm, statement.stmt),
+    }
+
+
+def _convert_wait_event_statement(sm, statement):
+    timing = statement.timing
+    if timing.edge != EdgeKind.PosEdge:
+        return unsupported(
+            sm, statement, "SignalEventControl:" + str(timing.edge).split(".")[-1]
+        )
+    if timing.iffCondition is not None:
+        return unsupported(sm, statement, "SignalEventControl:iff")
+    signal = convert_expr(sm, timing.expr)
+    if signal.get("kind") != "Ident" or signal.get("width") != 1:
+        return unsupported(sm, statement, "SignalEventControl:clock")
+    wait = {
+        "kind": "WaitEvent",
+        "span": node_span(sm, statement),
+        "signal": signal["name"],
+        "edge": "posedge",
+    }
+    body = convert_stmt(sm, statement.stmt)
+    if body.get("kind") == "Empty":
+        return wait
+    return {
+        "kind": "Block",
+        "span": node_span(sm, statement),
+        "stmts": [wait, body],
     }
 
 

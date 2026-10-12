@@ -1087,6 +1087,11 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
       return match body with
         | .skip => .delay amount
         | _ => .block #[.delay amount, body]
+  | "WaitEvent" =>
+      let signal ← getStrF j "signal"
+      let edge ← getStrF j "edge"
+      if edge != "posedge" then throw "unsupported WaitEvent edge"
+      return .waitEvent signal .pos
   | "Break" => return .breakLoop
   | "Continue" => return .continueLoop
   | "LocalDecl" =>

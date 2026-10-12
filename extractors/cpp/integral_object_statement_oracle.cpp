@@ -20,6 +20,17 @@ void trace(const std::string &mode, int initial, int delta) {
       --value;
       break;
     }
+  } else if (mode == "continue") {
+    while (value > 0) {
+      --value;
+      continue;
+    }
+  } else if (mode == "for_continue") {
+    value = 3;
+    for (; value > 0; --value) {
+      --value;
+      continue;
+    }
   } else if (mode == "sequence") {
     value = value + delta;
     value = -value;

@@ -33,6 +33,23 @@ private def statementFor (mode : String) (access : IntegralObjectRef) (delta : I
           (.assign access (.builtin .int)
             (.binary .subtract (.read access) (.literal (signed 1))))
           .break_))
+  | "continue" =>
+      .ok (.whileLoop
+        (.binary .greater (.read access) (.literal (signed 0)))
+        (.sequence
+          (.assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1))))
+          .continue_))
+  | "for_continue" =>
+      .ok (.forLoop
+        (.assign access (.builtin .int) (.literal (signed 3)))
+        (.binary .greater (.read access) (.literal (signed 0)))
+        (.assign access (.builtin .int)
+          (.binary .subtract (.read access) (.literal (signed 1))))
+        (.sequence
+          (.assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1))))
+          .continue_))
   | "sequence" =>
       .ok (.sequence assignment
         (.assign access (.builtin .int) (.unary .negate (.read access))))

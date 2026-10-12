@@ -469,10 +469,18 @@ bool logical(int value) { return !value; }
             ("unsigned short", "ushort_identity", ".unsigned 16"),
             ("bool", "bool_identity", ".boolean"),
         )
+        return_casts = (
+            ("bool", "to_bool", "int"),
+            ("int", "to_int", "bool"),
+            ("short", "to_short", "int"),
+        )
         subject = self.root / "callable.cpp"
         subject.write_text("".join(
             f"{type_name} {name}({type_name} value) {{ return value; }}\n"
             for type_name, name, _ in destinations
+        ) + "".join(
+            f"{result} {name}({parameter} value) {{ return value; }}\n"
+            for result, name, parameter in return_casts
         ) + "int first(int left, int right) { return left; }\n"
           "int branch(int value) { if (value) return value; return 0; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
@@ -510,7 +518,7 @@ bool logical(int value) { return !value; }
         ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
-        names = {name for _, name, _ in destinations} | {
+        names = {name for _, name, _ in destinations} | {name for _, name, _ in return_casts} | {
             "first", "branch", "loop", "do_loop", "unary", "compare", "equal_values",
             "not_equal_values", "less_values", "less_equal_values",
             "greater_equal_values", "logical", "add",
@@ -545,6 +553,15 @@ bool logical(int value) { return !value; }
                            else f"{value}LL" if value < 0 else f"{value}ULL")
                 expressions.append(f"{name}(static_cast<{type_name}>({literal}))")
                 rows.append((name, destination, [(source_format, value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"to_bool({value})")
+            rows.append(("to_bool", ".boolean", [(".signed 32", value)]))
+        for value, literal in ((0, "false"), (1, "true")):
+            expressions.append(f"to_int({literal})")
+            rows.append(("to_int", ".signed 32", [(".boolean", value)]))
+        for value in (-32769, 0, 32768):
+            expressions.append(f"to_short({value})")
+            rows.append(("to_short", ".signed 16", [(".signed 32", value)]))
         expressions.append("first(static_cast<short>(-17), 4294967295U)")
         rows.append(("first", ".signed 32", [(".signed 16", -17),
                                             (".unsigned 32", 4294967295)]))

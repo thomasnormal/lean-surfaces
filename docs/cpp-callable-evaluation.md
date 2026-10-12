@@ -42,8 +42,9 @@ exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes real signed, unsigned, short,
-unsigned-short and boolean identity bodies and a two-parameter first-value body,
-then compares the admitted evaluator against their Clang-compiled calls for 115
-rows at both `-O0` and `-O2`, with undefined-behavior sanitization. Width checks
-pin the LP64 target; missing settings skip rather than count as agreement. This
-is evidence for the bounded call profile, not whole-program execution.
+unsigned-short and boolean identity bodies, integral return casts between
+`int`, `bool` and `short`, and a two-parameter first-value body, then compares
+the admitted evaluator against their Clang-compiled calls for 123 rows at both
+`-O0` and `-O2`, with undefined-behavior sanitization. Width checks pin the
+LP64 target; missing settings skip rather than count as agreement. This is
+evidence for the bounded call profile, not whole-program execution.

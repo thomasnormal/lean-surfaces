@@ -65,6 +65,10 @@ remaining body and rechecks the loop condition (with a `do` loop's usual
 post-body check); both transfers retain the current parameter state. A transfer
 that reaches the public callable boundary is a typed refusal.
 
+Logical `&&` and `||` retain their sequencing guarantee even when the right
+operand increments a parameter: the right side is evaluated only when the left
+side selects it, and its updated state contributes to the boolean result.
+
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
 not wired to `Translation.execute`, and does not admit local objects, calls,
@@ -91,10 +95,11 @@ The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes identity and literal bodies, skipped
 and discarded statements, branches, unary/binary/logical operators, integral
 return casts, parameter assignments, prefix/postfix increment/decrement,
-conditional expressions, comma sequencing, `for` loops and loop transfers.
+conditional expressions, comma sequencing, `for` loops, loop transfers and
+effectful logical short-circuiting.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 223 Clang-compiled calls at both
+and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 229 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

@@ -524,6 +524,28 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(nodes.count("ContinueStmt"), 1)
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_logical_effectful_right_operands_keep_boolean_casts(self):
+        self.source.write_text(
+            "bool both_increment(int value) { return value && ++value; }\n"
+            "bool either_increment(int value) { return value || ++value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        logicals = []
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if node.get("kind") == "BinaryOperator" and node.get("opcode") in {"&&", "||"}:
+                logicals.append(node)
+            pending.extend(node.get("inner", []))
+        self.assertEqual(len(logicals), 2)
+        self.assertTrue(all(
+            [child.get("kind") for child in node.get("inner", [])] ==
+            ["ImplicitCastExpr", "ImplicitCastExpr"]
+            for node in logicals
+        ))
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(
             "double arithmetic(double left, double right) { return left + right; }\n",

@@ -480,6 +480,34 @@ def logicalEvidence : List CppBinaryExpressionEvidence := [{
 def admitLogical : Except String CallableFunction :=
   admitCallableFunction logicalProbe logicalTypes logicalEvidence TargetProfile.lp64 [0]
 
+def logicalEffectProbe (operator : String) (name : String) : DeclarationProbe :=
+  probeFor (functionSource name [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31" (object [
+      ("id", text "0x20"), ("kind", text "BinaryOperator"), ("opcode", text operator),
+      ("inner", .array [
+        implicitCastKind "0x21" "IntegralToBoolean" (declRefNode "0x22" "0x10" "value"),
+        implicitCastKind "0x23" "IntegralToBoolean"
+          (incrementRaw "0x24" "++" false (declRefNode "0x25" "0x10" "value"))])]))))
+    [rootEvidence, functionEvidence name "CompoundStmt"]
+
+def logicalEffectTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (.function (.builtin .boolean) [intType] false), typeRow "0x10" intType]
+
+def logicalEffectEvidence (operator : String) : List CppBinaryExpressionEvidence := [{
+  ordinal := 0, occurrence := {value := "0x20"}, operator, result := .builtin .boolean,
+  operands := [
+    {occurrence := {value := "0x21"}, kind := "ImplicitCastExpr", sourceType := intType,
+      type := .builtin .boolean},
+    {occurrence := {value := "0x23"}, kind := "ImplicitCastExpr", sourceType := intType,
+      type := .builtin .boolean}]}]
+
+def admitLogicalEffect (operator : String) (name : String) : Except String CallableFunction :=
+  admitCallableFunction (logicalEffectProbe operator name) logicalEffectTypes
+    (logicalEffectEvidence operator) TargetProfile.lp64 [0]
+
+#guard (admitLogicalEffect "&&" "bothIncrement").isOk
+#guard (admitLogicalEffect "||" "eitherIncrement").isOk
+
 #guard match admitIdentity with
   | .ok function => function.parameters.length == 1
   | .error _ => false

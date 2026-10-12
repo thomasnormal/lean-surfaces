@@ -545,7 +545,9 @@ bool logical(int value) { return !value; }
           "int shift_left(int left, int right) { return left << right; }\n"
           "int shift_right(int left, int right) { return left >> right; }\n"
           "bool both(int left, int right) { return left && right; }\n"
-          "bool either(int left, int right) { return left || right; }\n",
+          "bool either(int left, int right) { return left || right; }\n"
+          "bool both_increment(int value) { return value && ++value; }\n"
+          "bool either_increment(int value) { return value || ++value; }\n",
           encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -569,7 +571,8 @@ bool logical(int value) { return !value; }
             "not_equal_values", "less_values", "less_equal_values",
             "greater_equal_values", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
-            "bit_xor", "shift_left", "shift_right", "both", "either", "positive",
+            "bit_xor", "shift_left", "shift_right", "both", "either", "both_increment",
+            "either_increment", "positive",
             "complement", "compound_unsigned", "compound_self", "compound_while", "compound_do",
             "prefix_increment", "postfix_increment", "prefix_decrement",
             "postfix_decrement", "discarded_increment", "increment_unsigned",
@@ -774,6 +777,12 @@ bool logical(int value) { return !value; }
             expressions.append(f"either({left}, {right})")
             rows.append(("either", ".boolean", [(".signed 32", left),
                                                    (".signed 32", right)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"both_increment({value})")
+            rows.append(("both_increment", ".boolean", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"either_increment({value})")
+            rows.append(("either_increment", ".boolean", [(".signed 32", value)]))
         oracle = self.root / "oracle.cpp"
         oracle.write_text(
             '#include <climits>\n#include <iostream>\n#include "callable.cpp"\n'

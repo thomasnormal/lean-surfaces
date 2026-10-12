@@ -54,7 +54,8 @@ its builtin boolean result as the condition value.
 The result type of the expression must equal the function result type. A
 parameter reference must resolve to one of the function's own parameter
 handles. Missing rows, mismatched handles, changed child order, unsupported
-casts, non-integral operators, unsequenced side effects in binary operands and
+casts, non-integral operators, unsequenced side effects in ordinary binary
+operands and
 conflicting evidence all refuse. Increment and decrement are not generalized
 to locals, members, calls or overloaded operators. Conditional expressions with
 an omitted middle operand, unrepresented conversions or mismatched branch

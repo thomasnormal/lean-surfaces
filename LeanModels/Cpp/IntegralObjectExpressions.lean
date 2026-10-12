@@ -5,6 +5,7 @@ namespace LeanModels.Cpp
 inductive IntegralObjectExpression where
   | literal (value : IntegralValue)
   | read (access : IntegralObjectRef)
+  | unary (operation : IntegralUnary) (operand : IntegralObjectExpression)
   | binary (operation : IntegralBinary)
       (left right : IntegralObjectExpression)
   deriving Repr, BEq, Inhabited
@@ -35,6 +36,13 @@ private def evaluateStep (fuel : Nat) (store : IntegralObjectStore)
       | .read access =>
           (store.read access).mapError (.object)
             |>.map IntegralResult.ok
+      | .unary operation operand => do
+          let result ← evaluateStep fuel store operand
+          pure (match result with
+            | .ok value => integralUnary operation value
+            | .invalid reason => .invalid reason
+            | .undefined reason => .undefined reason
+            | .unsupported reason => .unsupported reason)
       | .binary operation left right => do
           let leftResult ← evaluateStep fuel store left
           let rightResult ← evaluateStep fuel store right

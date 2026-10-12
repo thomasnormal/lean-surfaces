@@ -43,6 +43,33 @@ private def addReady : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def negateReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access => valueIs (signed (-7))
+          (evaluateIntegralObjectExpression 3 store (.unary .negate (.read access)))
+      | .error _ => false
+  | .error _ => false
+
+private def complementReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access => valueIs (signed (-8))
+          (evaluateIntegralObjectExpression 3 store (.unary .complement (.read access)))
+      | .error _ => false
+  | .error _ => false
+
+private def logicalNotReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access => valueIs ⟨.boolean, 0⟩
+          (evaluateIntegralObjectExpression 3 store (.unary .logicalNot (.read access)))
+      | .error _ => false
+  | .error _ => false
+
 private def assignReady : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -103,6 +130,9 @@ private def constWrite : Bool :=
 
 #guard readReady 3
 #guard addReady
+#guard negateReady
+#guard complementReady
+#guard logicalNotReady
 #guard assignReady
 #guard defaultAssign
 #guard staleRead
@@ -132,6 +162,27 @@ private def constWrite : Bool :=
           match evaluateIntegralObjectExpression 1 store
               (.binary .add (.read access) (.literal (signed 1))) with
           | .error .fuelExhausted => true
+          | _ => false
+      | .error _ => false
+  | .error _ => false
+
+#guard match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          match evaluateIntegralObjectExpression 1 store (.unary .negate (.read access)) with
+          | .error .fuelExhausted => true
+          | _ => false
+      | .error _ => false
+  | .error _ => false
+
+#guard match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok _ =>
+          match evaluateIntegralObjectExpression 3 store
+              (.unary .plus (.literal ⟨.boolean, 1⟩)) with
+          | .ok (.unsupported .unpromotedBoolean) => true
           | _ => false
       | .error _ => false
   | .error _ => false

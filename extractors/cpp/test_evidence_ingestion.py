@@ -483,6 +483,9 @@ bool logical(int value) { return !value; }
           "int multiply(int left, int right) { return left * right; }\n"
           "int divide(int left, int right) { return left / right; }\n"
           "int remainder(int left, int right) { return left % right; }\n"
+          "int bit_and(int left, int right) { return left & right; }\n"
+          "int bit_or(int left, int right) { return left | right; }\n"
+          "int bit_xor(int left, int right) { return left ^ right; }\n"
           "bool both(int left, int right) { return left && right; }\n"
           "bool either(int left, int right) { return left || right; }\n",
           encoding="utf-8")
@@ -500,7 +503,8 @@ bool logical(int value) { return !value; }
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {
             "first", "branch", "loop", "unary", "compare", "logical", "add",
-            "subtract", "multiply", "divide", "remainder", "both", "either"}
+            "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
+            "bit_xor", "both", "either"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -568,6 +572,18 @@ bool logical(int value) { return !value; }
             expressions.append(f"remainder({left}, {right})")
             rows.append(("remainder", ".signed 32", [(".signed 32", left),
                                                       (".signed 32", right)]))
+        for left, right in ((5, 3), (7, 2), (8, 1)):
+            expressions.append(f"bit_and({left}, {right})")
+            rows.append(("bit_and", ".signed 32", [(".signed 32", left),
+                                                    (".signed 32", right)]))
+        for left, right in ((5, 3), (7, 2), (8, 1)):
+            expressions.append(f"bit_or({left}, {right})")
+            rows.append(("bit_or", ".signed 32", [(".signed 32", left),
+                                                   (".signed 32", right)]))
+        for left, right in ((5, 3), (7, 2), (8, 1)):
+            expressions.append(f"bit_xor({left}, {right})")
+            rows.append(("bit_xor", ".signed 32", [(".signed 32", left),
+                                                    (".signed 32", right)]))
         for left, right in ((0, 7), (7, 0), (7, 3)):
             expressions.append(f"both({left}, {right})")
             rows.append(("both", ".boolean", [(".signed 32", left),

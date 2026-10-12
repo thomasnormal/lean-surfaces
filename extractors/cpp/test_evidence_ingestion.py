@@ -485,6 +485,7 @@ bool logical(int value) { return !value; }
           "int null_then_literal() { ; return 7; }\n"
           "int first(int left, int right) { return left; }\n"
           "int branch(int value) { if (value) return value; return 0; }\n"
+          "int branch_else(int value) { if (value) return value; else return 7; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
           "int do_loop(int value) { do { if (value) return value; } while (0); return 7; }\n"
           "int unary(int value) { return -value; }\n"
@@ -525,7 +526,7 @@ bool logical(int value) { return !value; }
         names = {name for _, name, _ in destinations} | {name for _, name, _ in return_casts} | {
             "literal",
             "null_then_literal",
-            "first", "branch", "loop", "do_loop", "unary", "compare", "equal_values",
+            "first", "branch", "branch_else", "loop", "do_loop", "unary", "compare", "equal_values",
             "not_equal_values", "less_values", "less_equal_values",
             "greater_equal_values", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
@@ -579,6 +580,9 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 65536):
             expressions.append(f"branch({value})")
             rows.append(("branch", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 65536):
+            expressions.append(f"branch_else({value})")
+            rows.append(("branch_else", ".signed 32", [(".signed 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"loop({value})")
             rows.append(("loop", ".signed 32", [(".signed 32", value)]))

@@ -12,11 +12,11 @@ The candidate must be a named, ordinary `FunctionDecl` accepted by
 `admitLocalFunctionDeclaration` with a direct `CompoundStmt` body. Prototypes,
 deleted declarations and function-try bodies remain loud refusals. The body
 is represented as a sequence of admitted expression statements, `if`
-statements with an optional else branch, `while`/`do` loops, parameter-targeted
+statements with an optional else branch, `while`/`do`/bounded `for` loops, parameter-targeted
 `=`, integral compound assignments, and parameter-targeted prefix/postfix
 increment and decrement expressions. Empty compound
-and null statements are `skip`. `for` loops, declarations, local-variable/member
-assignments, calls, overloaded operations, exceptions, local functions and every
+and null statements are `skip`. Declarations, local-variable/member assignments,
+calls, overloaded operations, exceptions, local functions and every
 other statement form refuse rather than being silently represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
@@ -63,6 +63,11 @@ Comma expressions retain C++'s left-to-right sequencing boundary. Their left
 operand must complete successfully before the right operand is evaluated, and
 effectful expressions nested beneath either operand are rejected when they
 would otherwise be unsequenced inside a binary expression.
+
+The admitted `for` shape has a parameter-only initializer and step, an explicit
+integral condition, and an admitted body. It is lowered to the equivalent
+state-threaded `while` sequence; condition declarations, omitted conditions,
+and loop transfers remain loud refusals.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an

@@ -487,6 +487,25 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(len(commas[0].get("inner", [])), 2)
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_for_statement_retains_initializer_condition_step_and_body(self):
+        self.source.write_text(
+            "int for_loop(int value) { for (value = 0; value < 3; ++value) { value += 1; } return value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "id" in node:
+                nodes[node["id"]] = node
+            pending.extend(node.get("inner", []))
+        loops = [node for node in nodes.values() if node.get("kind") == "ForStmt"]
+        self.assertEqual(len(loops), 1)
+        self.assertEqual(len(loops[0].get("inner", [])), 5)
+        self.assertEqual(loops[0]["inner"][1], {})
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(
             "double arithmetic(double left, double right) { return left + right; }\n",

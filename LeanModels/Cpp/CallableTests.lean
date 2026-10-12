@@ -344,6 +344,48 @@ def doTypes : List TypeEvidenceRow := [
 def admitDo : Except String CallableFunction :=
   admitCallableFunction doProbe doTypes [] TargetProfile.lp64 [0]
 
+def forProbe : DeclarationProbe :=
+  probeFor (functionSource "forLoop" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x31"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x50"), ("kind", text "ForStmt"),
+        ("inner", .array [
+          object [
+            ("id", text "0x51"), ("kind", text "BinaryOperator"), ("opcode", text "="),
+            ("inner", .array [declRefNode "0x52" "0x10" "value", integerLiteralRaw "0x53" "0"])],
+          object [],
+          object [
+            ("id", text "0x54"), ("kind", text "BinaryOperator"), ("opcode", text "<"),
+            ("inner", .array [implicitCast "0x55" (declRefNode "0x56" "0x10" "value"),
+              integerLiteralRaw "0x57" "3"])],
+          incrementRaw "0x58" "++" false (declRefNode "0x59" "0x10" "value"),
+          body (object [
+            ("id", text "0x5a"), ("kind", text "CompoundAssignOperator"),
+            ("opcode", text "+="),
+            ("inner", .array [declRefNode "0x5b" "0x10" "value",
+              integerLiteralRaw "0x5c" "1"])])])],
+      returnStmt "0x5d" (implicitCast "0x5e" (declRefNode "0x5f" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "forLoop" "CompoundStmt"]
+
+def forTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def forEvidence : List CppBinaryExpressionEvidence := [
+  {ordinal := 0, occurrence := {value := "0x54"}, operator := "<", result := .builtin .boolean,
+    operands := [
+      {occurrence := {value := "0x55"}, kind := "ImplicitCastExpr", sourceType := intType, type := intType},
+      {occurrence := {value := "0x57"}, kind := "IntegerLiteral", sourceType := intType, type := intType}]},
+  {ordinal := 1, occurrence := {value := "0x5a"}, operator := "+=", result := intType,
+    operands := [
+      {occurrence := {value := "0x5b"}, kind := "DeclRefExpr", sourceType := intType, type := intType},
+      {occurrence := {value := "0x5c"}, kind := "IntegerLiteral", sourceType := intType, type := intType}]}]
+
+def admitFor : Except String CallableFunction :=
+  admitCallableFunction forProbe forTypes forEvidence TargetProfile.lp64 [0]
+
+#guard admitFor.isOk
+
 def unaryProbe : DeclarationProbe :=
   probeFor (functionSource "negate" [parameterRaw "0x10" "value"]
     (body (returnStmt "0x31" (object [

@@ -355,6 +355,17 @@ partial def parseCallableStatement (profile : TargetProfile)
       let condition ← parseCallableExpression profile parameters expressionRows condition none none
       let body ← parseCallableStatement profile parameters expressionRows resultType body
       pure (.whileLoop condition body)
+  | "ForStmt" =>
+      let children ← rawChildren statement
+      let [initializer, conditionVariable, condition, step, body] := children
+        | throw "callable: for statement requires initializer, condition, step and body"
+      unless conditionVariable == .object [] do
+        throw "callable: for loop condition declarations are outside the body profile"
+      let initializer ← parseCallableStatement profile parameters expressionRows resultType initializer
+      let condition ← parseCallableExpression profile parameters expressionRows condition none none
+      let body ← parseCallableStatement profile parameters expressionRows resultType body
+      let step ← parseCallableStatement profile parameters expressionRows resultType step
+      pure (.sequence initializer (.whileLoop condition (.sequence body step)))
   | "DoStmt" =>
       let children ← rawChildren statement
       let [body, condition] := children

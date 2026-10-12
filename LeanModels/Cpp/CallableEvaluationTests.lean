@@ -163,6 +163,13 @@ private def admitBooleanIdentity : Except String CallableFunction :=
       | _ => false
   | .error _ => false
 
+#guard match admitFor with
+  | .ok function =>
+      match evaluateCallable 64 .lp64 function [signed (-9)] with
+      | .ok (.ok value) => value == signed 4
+      | _ => false
+  | .error _ => false
+
 #guard match admitConditional with
   | .ok function =>
       match evaluateCallable 8 .lp64 function [signed 0] with

@@ -517,6 +517,7 @@ bool logical(int value) { return !value; }
           "int conditional_param(int condition, int value) { return condition ? value : 3; }\n"
           "int conditional_increment(int value) { return value ? ++value : value; }\n"
           "int comma(int value) { return value++, value; }\n"
+          "int for_loop(int value) { for (value = 0; value < 3; ++value) { value += 1; } return value; }\n"
           "short compound_narrow(short value) { value += 1; return value; }\n"
           "int compound_mixed(int value, unsigned int amount) { value += amount; return value; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
@@ -570,7 +571,7 @@ bool logical(int value) { return !value; }
             "complement", "compound_unsigned", "compound_self", "compound_while", "compound_do",
             "prefix_increment", "postfix_increment", "prefix_decrement",
             "postfix_decrement", "discarded_increment", "increment_unsigned",
-            "conditional", "conditional_param", "conditional_increment", "comma"}
+            "conditional", "conditional_param", "conditional_increment", "comma", "for_loop"}
         refusals = {"compound_narrow", "compound_mixed"}
         paths = {}
         pending = [(probe["ast"], [])]
@@ -672,6 +673,9 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 7):
             expressions.append(f"comma({value})")
             rows.append(("comma", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"for_loop({value})")
+            rows.append(("for_loop", ".signed 32", [(".signed 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"loop({value})")
             rows.append(("loop", ".signed 32", [(".signed 32", value)]))
@@ -796,7 +800,8 @@ bool logical(int value) { return !value; }
         for (name, destination, arguments), expected in zip(rows, outputs[0]):
             values = ", ".join(f"⟨{format_name}, {value}⟩"
                                for format_name, value in arguments)
-            fuel = (32 if name in ("compound_while", "compound_do")
+            fuel = (64 if name == "for_loop"
+                    else 32 if name in ("compound_while", "compound_do")
                     else 8 if name == "do_loop" else 4)
             guards.append(f"""#guard match {name} with
   | .ok function => match evaluateCallable {fuel} .lp64 function [{values}] with

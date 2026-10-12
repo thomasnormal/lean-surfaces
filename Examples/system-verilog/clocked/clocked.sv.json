@@ -1,0 +1,111 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/clocked/clocked.sv",
+  "source_sha256": "df66108edf9586ab410a5a6e8f89d069fec4dd1a54b8ee059f256f8465b4b718",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 6,
+          "end_col": 10
+        },
+        "name": "clocked",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 28,
+              "end_line": 1,
+              "end_col": 31
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": 1
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 20
+            },
+            "name": "value",
+            "width": 4,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 5,
+              "end_col": 6
+            },
+            "style": "always",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 5,
+                "end_line": 4,
+                "end_col": 18
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 5,
+                    "end_line": 4,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 5,
+                      "end_line": 4,
+                      "end_col": 10
+                    },
+                    "width": 4,
+                    "name": "value"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 4,
+                      "col": 13,
+                      "end_line": 4,
+                      "end_col": 17
+                    },
+                    "width": 4,
+                    "bits": "0001"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

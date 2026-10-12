@@ -827,6 +827,7 @@ deriving Repr, Inhabited
 its envelope tag — `runSelfCheck` is loud on it, never silently drops). -/
 inductive SProc where
   | initial (body : SStmt)
+  | alwaysPosedge (clock : String) (body : SStmt)
   | other (svKind : String) (text : String)
 deriving Repr, Inhabited
 
@@ -855,6 +856,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
   | [], st, nba, out, _ => .ok (st, nba, out)
   | .other svKind _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process '{svKind}' (self-check tier runs initial-only designs)"
+  | .alwaysPosedge clock _ :: _, _, _, _, _ =>
+      .unsupported s!"non-initial process 'AlwaysPosedge:{clock}' (self-check tier runs initial-only designs)"
   | .initial body :: rest, st, nba, out, assignmentOrder => do
       let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
       if out'.halted then .ok (st', nba', out')
@@ -867,7 +870,10 @@ initials — after the last possible output, so it is dropped here. -/
 def runSelfCheck (d : Design) (fuel : Nat)
     (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) : Res (List String) := do
   if let some tag := d.procs.findSome? fun p =>
-      match p with | .other svKind _ => some svKind | _ => none then
+      match p with
+      | .other svKind _ => some svKind
+      | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
+      | _ => none then
     return ← .unsupported
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
   let st ← initDecls fuel d.decls.toList []
@@ -1124,8 +1130,10 @@ def parseSProc (j : Json) : Except String SProc := do
   let kind ← getStrF j "kind"
   match kind with
   | "Initial" => return .initial (← parseSStmt (← getF j "body"))
-  | "AlwaysPosedge" | "AlwaysComb" | "Assign" =>
-      return .other kind ""
+  | "AlwaysPosedge" =>
+      return .alwaysPosedge (← getStrF j "clock")
+        (← parseSStmt (← getF j "body"))
+  | "AlwaysComb" | "Assign" => return .other kind ""
   | "Unsupported" =>
       return .other (← getStrF j "sv_kind") (unsupportedText j)
   | other => .error s!"unknown process kind '{other}'"

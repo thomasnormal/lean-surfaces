@@ -129,6 +129,11 @@ runner loud. Negedge, any-edge, event-list, `iff`, implicit and non-identifier
 event controls remain unsupported. See
 `Examples/system-verilog/event/proof.lean` for the executable boundary.
 
+Clocked `AlwaysPosedge` processes use the same public representation already
+used by `elabDesign`: an initial `WaitEvent`, the body, and an `arm` copy that
+reinstates the wait after each completed body. `AlwaysComb`, continuous assigns,
+and all other process kinds remain loud in the timed loader.
+
 The paired extraction census compares the same **21,934** source paths:
 clean **1,804 → 1,840**, **36 gains**, and **zero losses**. Gains are
 chapter 12 (29), chapters 6, 34 and 37 (2 each), and chapter 9 (1).

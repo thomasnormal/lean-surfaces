@@ -189,9 +189,10 @@ envelope may instead carry `Initial` processes for the timed loader described
 below. `body` is a single statement node (often `Block` or `If`).
 
 The scheduler-facing timed loader admits one or more `Initial` processes and
-runs them from Active at time zero in source order. The legacy self-check runner
-remains initial/time-zero-only; it refuses `Initial` processes that contain a
-`Delay`.
+`AlwaysPosedge` processes. Initial bodies run from Active at time zero in source
+order; each clocked process is lowered to a retained `WaitEvent` followed by
+its body and re-armed after completion. The legacy self-check runner remains
+initial/time-zero-only and refuses non-initial processes and timed nodes.
 
 ## Statements
 

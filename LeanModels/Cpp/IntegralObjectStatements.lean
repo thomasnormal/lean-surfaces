@@ -11,6 +11,7 @@ inductive IntegralObjectStatement where
       (expression : IntegralObjectExpression)
   | conditional (condition : IntegralObjectExpression)
       (whenTrue whenFalse : IntegralObjectStatement)
+  | whileLoop (condition : IntegralObjectExpression) (body : IntegralObjectStatement)
   | sequence (first second : IntegralObjectStatement)
   deriving Repr, BEq, Inhabited
 
@@ -70,6 +71,18 @@ private def executeStep (fuel : Nat) (store : IntegralObjectStore)
           | .ok value =>
               if value.value == 0 then executeStep fuel store whenFalse
               else executeStep fuel store whenTrue
+          | .invalid reason => throw (.invalid reason)
+          | .undefined reason => throw (.undefined reason)
+          | .unsupported reason => throw (.unsupported reason)
+      | .whileLoop condition body => do
+          let result ← (evaluateIntegralObjectExpression fuel store condition).mapError
+            mapExpressionError
+          match result with
+          | .ok value =>
+              if value.value == 0 then pure store
+              else
+                let store ← executeStep fuel store body
+                executeStep fuel store (.whileLoop condition body)
           | .invalid reason => throw (.invalid reason)
           | .undefined reason => throw (.undefined reason)
           | .unsupported reason => throw (.unsupported reason)

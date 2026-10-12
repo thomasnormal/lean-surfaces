@@ -107,6 +107,38 @@ private def conditionalFalse : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def whileReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let body := .assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1)))
+          match executeIntegralObjectStatement 20 store (.whileLoop (.read access) body) with
+          | .ok store => readValue (signed 0) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
+private def whileEmpty : Bool :=
+  match IntegralObjectStore.empty .lp64 with
+  | .ok store =>
+      match store.allocate .automatic (.builtin .int) with
+      | .ok (store, object) =>
+          match store.initializeValue object (signed 0) with
+          | .ok store =>
+              match store.borrow object with
+              | .ok access =>
+                  let body := .assign access (.builtin .int) (.literal (signed 99))
+                  match executeIntegralObjectStatement 4 store
+                      (.whileLoop (.read access) body) with
+                  | .ok store => readValue (signed 0) store access
+                  | .error _ => false
+              | .error _ => false
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
 private def divisionError : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -151,6 +183,8 @@ private def constError : Bool :=
 #guard aliasOrder
 #guard conditionalTrue
 #guard conditionalFalse
+#guard whileReady
+#guard whileEmpty
 #guard divisionError
 #guard staleError
 #guard constError
@@ -160,6 +194,17 @@ private def constError : Bool :=
       match executeIntegralObjectStatement 0 store (.expression (.literal (signed 1))) with
       | .error .fuelExhausted => true
       | _ => false
+  | .error _ => false
+
+#guard match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          match executeIntegralObjectStatement 3 store
+              (.whileLoop (.literal ⟨.boolean, 1⟩) (.expression (.read access))) with
+          | .error .fuelExhausted => true
+          | _ => false
+      | .error _ => false
   | .error _ => false
 
 #guard match ready with

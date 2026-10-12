@@ -399,6 +399,7 @@ struct Box { int method() { return 8; } };
 int add(int left, int right) { return left + right; }
 int branch(int value) { if (value) return value; return 0; }
 int loop(int value) { while (value) return value; return 0; }
+int unary(int value) { return -value; }
 """, encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -417,13 +418,13 @@ int loop(int value) { while (value) return value; return 0; }
         while pending:
             node, path = pending.pop()
             if node.get("kind") == "FunctionDecl" and node.get("name") in {
-                "identity", "add", "branch", "loop",
+                "identity", "add", "branch", "loop", "unary",
             }:
                 paths[node["name"]] = path
             children = node.get("inner", [])
             pending.extend((child, path + [index])
                            for index, child in reversed(list(enumerate(children))))
-        self.assertEqual(set(paths), {"identity", "add", "branch", "loop"})
+        self.assertEqual(set(paths), {"identity", "add", "branch", "loop", "unary"})
         guards = []
         for name in ("identity", "add"):
             guards.append(
@@ -437,6 +438,10 @@ int loop(int value) { while (value) return value; return 0; }
         guards.append(
             "#guard (admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
             + str(paths["loop"]) + ").isOk"
+        )
+        guards.append(
+            "#guard (admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
+            + str(paths["unary"]) + ").isOk"
         )
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
@@ -462,7 +467,8 @@ int loop(int value) { while (value) return value; return 0; }
             for type_name, name, _ in destinations
         ) + "int first(int left, int right) { return left; }\n"
           "int branch(int value) { if (value) return value; return 0; }\n"
-          "int loop(int value) { while (value) return value; return 0; }\n",
+          "int loop(int value) { while (value) return value; return 0; }\n"
+          "int unary(int value) { return -value; }\n",
           encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -476,7 +482,7 @@ int loop(int value) { while (value) return value; return 0; }
         ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
-        names = {name for _, name, _ in destinations} | {"first", "branch", "loop"}
+        names = {name for _, name, _ in destinations} | {"first", "branch", "loop", "unary"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -515,6 +521,9 @@ int loop(int value) { while (value) return value; return 0; }
         for value in (-1, 0, 7):
             expressions.append(f"loop({value})")
             rows.append(("loop", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"unary({value})")
+            rows.append(("unary", ".signed 32", [(".signed 32", value)]))
         oracle = self.root / "oracle.cpp"
         oracle.write_text(
             '#include <climits>\n#include <iostream>\n#include "callable.cpp"\n'

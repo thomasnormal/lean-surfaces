@@ -240,7 +240,20 @@ lake exe leanmodels-run Examples/python/tri/tri.json tri 10      # one-line JSON
 python3 harness/diff_test.py                              # Lean vs CPython on harness/cases.json
 ```
 
-The full check before you finish any change (proofs *or* docs) is:
+For Python-only work, after building the Python targets, run:
+
+```console
+./check.sh --python-only
+```
+
+This runs both Python interpreters against CPython, whole-file/script tests,
+refusal/coverage/axiom gates, Python tooling tests, shared documentation, and
+the two Python tutorial notebooks without running other language harnesses.
+Its summary explicitly reports the scoped check and any skipped build.
+Local builds continue to use `tools/triad.sh`; see [CONTRIBUTING.md](CONTRIBUTING.md)
+for build and artifact-reuse options.
+
+The repository-wide check used by CI is:
 
 ```
 bash tools/ci.sh

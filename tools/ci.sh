@@ -28,23 +28,44 @@ cd "$(dirname "$0")/.."
 # that a flag existed; it was that an unknown flag was IGNORED.
 REQUIRE_BUILD=0
 VERIFY_GUARDS=0
+PYTHON_ONLY=0
+NO_BUILD=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --require-build) REQUIRE_BUILD=1; shift ;;
     --verify-guards) VERIFY_GUARDS=1; shift ;;
+    --python-only) PYTHON_ONLY=1; shift ;;
+    --no-build) NO_BUILD=1; shift ;;
     *)
       echo "ci.sh: unknown argument (got: $*)" >&2
-      echo "  Accepted: --require-build, --verify-guards.  For a tool's own" >&2
+      echo "  Accepted: --require-build, --verify-guards, --python-only." >&2
+      echo "  --no-build is available only with --python-only. For a tool's own" >&2
       echo "  refusal paths use 'bash tools/<tool>.sh --self-test' directly." >&2
       exit 2 ;;
   esac
 done
+
+if [ "$NO_BUILD" = 1 ] && [ "$PYTHON_ONLY" != 1 ]; then
+  echo "ci.sh: --no-build requires --python-only" >&2
+  exit 2
+fi
+if [ "$PYTHON_ONLY" = 1 ] && [ "$VERIFY_GUARDS" = 1 ]; then
+  echo "ci.sh: --python-only cannot be combined with --verify-guards" >&2
+  exit 2
+fi
 
 if [ -n "${LS_CI_SELF_TEST:-}" ]; then
   echo "ci.sh: REFUSING — LS_CI_SELF_TEST is already set in this environment," >&2
   echo "  so this is a re-entry from a self-test.  CI does not run inside CI," >&2
   echo "  and a build started here would carry no ticket (A11)." >&2
   exit 2
+fi
+
+if [ "$PYTHON_ONLY" = 1 ]; then
+  set --
+  if [ "$REQUIRE_BUILD" = 1 ]; then set -- "$@" --require-build; fi
+  if [ "$NO_BUILD" = 1 ]; then set -- "$@" --no-build; fi
+  exec python3 tools/check_python.py "$@"
 fi
 
 pass=(); fail=(); skip=()
@@ -643,6 +664,7 @@ step  "notebook-cache-tests" python3 tools/test_notebook_cache.py
 step  "py-onboarding-imports" python3 tools/test_python_onboarding.py
 step  "py-divergence-probe-tests" python3 harness/test_pyc_divergence_probe.py
 step  "py-refusal-census-tests" python3 harness/test_refusal_census.py
+step  "python-check-tests" python3 tools/test_python_check.py
 lake_build_step
 step  "py-float-boundary-tests" python3 harness/test_float_boundary.py
 step  "notebook-dependency-tests" python3 tools/test_notebook_dependencies.py

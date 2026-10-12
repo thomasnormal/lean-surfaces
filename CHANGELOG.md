@@ -184,6 +184,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Fixed
 
+- Python development now has `./check.sh --python-only`, covering both
+  interpreters, scripts, refusal/coverage/axiom checks, tooling, docs, and
+  Python notebooks without other language harnesses. Default repository CI
+  stays full-scope. Measured differential completion is unchanged at
+  **2,755 / 3,081 = 89.4%** natively and **2,681 / 3,081 = 87.0%** in the
+  proof interpreter, with **100% agreement among decided rows**.
 - CI regression guards and refusal inventories now reflect the implemented
   negative-power, empty-repetition, fixed-width formatting, and scalar
   `ascii()` tiers. Repetition proofs keep their original statements, and

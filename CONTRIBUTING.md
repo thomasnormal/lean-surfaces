@@ -68,10 +68,24 @@ under it; set `LEANPY_CPYTHON` to point at a different 3.9 binary. Avoid a
 bare `lake build` while iterating, since it builds every tier. CI runs the
 full build on every push.
 
-Run `./check.sh` for the repository-wide checks used by CI. It delegates to
-`tools/ci.sh`, accepts the same `--require-build` and `--verify-guards` options,
-and can be invoked from outside the checkout. Missing optional tools are
-reported as skips, not checked components.
+Run `./check.sh --python-only` for Python work. It checks both interpreters,
+the script corpus, refusal classifications, coverage freshness, curated proof
+axioms, Python extraction/onboarding/cache tests, shared documentation, and
+the two Python notebooks. It never invokes another language's harness or
+simulator. The scope is printed in the final summary; it is not full CI.
+
+Like the full driver, local invocation expects prebuilt artifacts: run a
+scoped build through `tools/triad.sh` first. `--no-build` explicitly reuses
+artifacts, while `--require-build` fails if the initial build is skipped.
+On CI hosts, the initial build targets all Python framework/example sources
+and `leanmodels-run`, including their imported dependencies, not the
+repository's default targets. The notebooks run with `--no-save`.
+
+Run `./check.sh` without a scope flag for the repository-wide checks used by
+CI. It delegates to `tools/ci.sh`, accepts `--require-build` and
+`--verify-guards`, and can be invoked from outside the checkout. Full CI
+keeps the other language gates; missing optional tools are reported as skips,
+not checked components. `--no-build` requires `--python-only`.
 Every recorded refusal must also be classified in `harness/refusal_census.py`:
 CI runs its `--whitelist --scripts` modes, which fail on unclassified rows or
 unexpected model answers. Add the classification alongside any new loud fixture.

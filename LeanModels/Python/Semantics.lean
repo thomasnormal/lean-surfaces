@@ -1001,6 +1001,14 @@ def padFormatFieldLeft (width : Nat) (s : String) : String :=
     s ++ String.ofList (List.replicate (width - s.length) ' ')
   else s
 
+def zeroPadFormatField (width : Nat) (s : String) : String :=
+  if s.length < width then
+    let zeros := String.ofList (List.replicate (width - s.length) '0')
+    match s.toList with
+    | '-' :: cs => "-" ++ zeros ++ String.ofList cs
+    | _ => zeros ++ s
+  else s
+
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
 consumes NOTHING; `%s`/`%r`/`%a`/`%c`/`%d`/`%i`/`%u`/`%x`/`%o` consume the next argument. Running out
 mid-walk is CPython's `not enough arguments` verbatim, and so are
@@ -1021,6 +1029,15 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       | a :: rest =>
           match strFormatConv 'd' a with
           | .ok piece => strFormatWalk cs rest mapping (acc ++ padFormatField 5 piece)
+          | .exn e => .exn e
+          | .timeout => .timeout
+          | .unsupported msg => .unsupported msg
+  | '%' :: '0' :: '5' :: 'd' :: cs, args, mapping, acc =>
+      match args with
+      | [] => .exn (.typeError "not enough arguments for format string")
+      | a :: rest =>
+          match strFormatConv 'd' a with
+          | .ok piece => strFormatWalk cs rest mapping (acc ++ zeroPadFormatField 5 piece)
           | .exn e => .exn e
           | .timeout => .timeout
           | .unsupported msg => .unsupported msg

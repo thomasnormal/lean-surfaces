@@ -283,3 +283,8 @@ def fmt_ascii(value):
 def fmt_left_width(n):
     # the minus flag left-aligns the fixed width field
     return "%-5d" % (n,)
+
+
+def fmt_zero_width(n):
+    # the zero flag pads after the sign for a fixed width field
+    return "%05d" % (n,)

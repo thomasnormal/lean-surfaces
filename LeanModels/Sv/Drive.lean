@@ -71,6 +71,7 @@ def runSlots (σ : RegionOracle) (fuel : Nat) : List SvState → SvM RegionTrace
       -- ready sets stay empty forever and every trace is silently short.
       let w1 ← get
       wakeEdges sampled w1.signals
+      wakeTimers
       slotStep σ fuel
       let w2 ← get
       let s : Slot := { time := w2.time, sampled := sampled, final := w2.signals }

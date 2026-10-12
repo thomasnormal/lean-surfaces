@@ -91,6 +91,19 @@ loops, and explicit process-control suspension/rearming. No timed-source
 extraction or cycle-to-region adequacy extension is claimed. See
 `docs/sv-loops.md` for the exact boundary.
 
+## Retained waiting targets (IEEE 1800-2023, 9.7)
+
+The scheduler retains fixed edge sensitivities and absolute delay deadlines
+alongside each process residual. Supported waiting-target suspension/resume
+desensitizes an edge wait without latching an occurrence; resuming an edge
+wait re-sensitizes it, while a due delay is carried into Active at resume.
+Ordinary dependency waits preserve the existing continuation and queued NBA
+work. Ready-process suspension, level-wait re-entry, terminal/duplicate
+suspension, and other process-control branches remain loud until their rules
+are independently represented.
+
+See `docs/sv-wait-targets.md` for the admitted boundary and guards.
+
 The paired extraction census compares the same **21,934** source paths:
 clean **1,804 → 1,840**, **36 gains**, and **zero losses**. Gains are
 chapter 12 (29), chapters 6, 34 and 37 (2 each), and chapter 9 (1).

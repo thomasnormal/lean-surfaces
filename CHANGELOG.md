@@ -16,6 +16,11 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- The SystemVerilog region world now retains edge and absolute-delay waiting
+  targets. Supported waiting-target suspension/resume preserves residuals,
+  effects, NBA work, and deadlines; unresolved process-control branches remain
+  loud.
+
 - The SystemVerilog self-check tier admits ordered `for` and sampled-count
   `repeat` loops with nearest-loop `break`/`continue`. Retained continuation
   markers preserve loop phases across ordinary dependency waits; explicit

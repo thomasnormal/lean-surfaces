@@ -120,6 +120,26 @@ inductive ProcStatus where
   | finished
 deriving Repr, Inhabited
 
+/-! ## Waiting targets -/
+
+/-- The scheduler-side registration retained with a suspended process.
+
+An edge keeps its fixed sensitivity, while a delay is converted to an
+absolute deadline when the suspension is reached. Level waits are carried
+so that the unsupported re-evaluation branch remains explicit rather than
+being mistaken for an edge wake. -/
+inductive WaitTarget where
+  | edge (signal : String) (edge : Edge)
+  | timer (deadline : Nat)
+  | level (condition : SExpr)
+deriving Repr, Inhabited
+
+/-- Convert a process-local trigger to the retained scheduler target. -/
+def WaitTarget.ofTrigger (now : Nat) : Trigger → WaitTarget
+  | Trigger.atTime amount => WaitTarget.timer (now + amount)
+  | Trigger.atEdge signal edgeKind => WaitTarget.edge signal edgeKind
+  | Trigger.onCond condition => WaitTarget.level condition
+
 /-- One process's state. `residual` is the DEFUNCTIONALIZED CONTINUATION:
 the statements that still have to run when its trigger fires. -/
 structure ProcState where
@@ -136,6 +156,11 @@ structure ProcState where
   which produced a SHORTER TRACE rather than an error — the failure mode
   nobody notices. -/
   arm : Option (List SStmt) := none
+  /-- The target that will make a suspended process runnable. -/
+  registration : Option WaitTarget := none
+  /-- Explicit process-control suspension is distinct from an ordinary wait.
+  Only the waiting edge/timer subset is admitted by the public rule. -/
+  explicitlySuspended : Bool := false
 deriving Repr, Inhabited
 
 /-- The world — `W`.

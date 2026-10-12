@@ -60,6 +60,23 @@ def liftRes {α : Type} (c : SvClause) : Res α → SvM α
 
 /-! ## Stepping one process -/
 
+/-- Recover a retained target for worlds made before `ProcState.registration` was
+introduced. Runtime suspensions always fill the field; the fallback keeps
+the public constructors useful for concrete hand-built worlds. -/
+def targetOf (now : Nat) (ps : ProcState) : Option WaitTarget :=
+  match ps.registration with
+  | some target => some target
+  | none =>
+      match ps.status with
+      | .suspended trigger => some (WaitTarget.ofTrigger now trigger)
+      | _ => none
+
+def withoutIndex (index : Nat) (xs : List Nat) : List Nat :=
+  xs.filter (fun other => other != index)
+
+def removeFromReady (w : SvWorld) (index : Nat) : SvWorld :=
+  { w with regionQ := fun r => withoutIndex index (w.regionQ r) }
+
 /-- Run process `i`'s residual until it completes or suspends, and write
 the result back into the world.
 
@@ -71,30 +88,36 @@ def runProcOnce (fuel : Nat) (i : Nat) : SvM StepOutcome := do
   match w.procs[i]? with
   | none => refuseSv .outOfTier ⟨"4.4"⟩ s!"no process at index {i}"
   | some ps =>
-      let (sigs, nba, out, oc) ←
-        liftRes ⟨"4.4"⟩ (stepSStmts fuel w.signals w.nba w.out ps.residual)
-      -- RE-ARM or finish. An `always` body completing is the end of one
-      -- iteration, not of the process; an `initial` body completing is the
-      -- end of the process.
-      --
-      -- A re-armed process must also be RE-ENQUEUED. `ProcStatus.ready` is
-      -- not what `stepRegion` reads — it reads `regionQ` — so marking the
-      -- process ready without scheduling it leaves it permanently idle:
-      -- it never reaches its `@(posedge clk)` again, and therefore can
-      -- never be woken again either. The re-entry is what turns "re-armed"
-      -- into "runs a second time".
-      let (ps', reArmed) : ProcState × Bool :=
-        match oc with
-        | .done =>
-            match ps.arm with
-            | some body => ({ ps with residual := body, status := .ready }, true)
-            | none => ({ ps with residual := [], status := .finished }, false)
-        | .suspended t rest => ({ ps with residual := rest, status := .suspended t }, false)
-      set { w with signals := sigs, nba := nba, out := out
-                 , procs := w.procs.set! i ps'
-                 , regionQ := fun r =>
-                     if reArmed && r == Region.active then w.regionQ r ++ [i] else w.regionQ r }
-      pure oc
+      if ps.explicitlySuspended then
+        refuseSv .outOfTier ⟨"9.7"⟩ "explicitly suspended process is not runnable"
+      else
+        let (sigs, nba, out, oc) ←
+          liftRes ⟨"4.4"⟩ (stepSStmts fuel w.signals w.nba w.out ps.residual)
+        -- RE-ARM or finish. An `always` body completing is the end of one
+        -- iteration, not of the process; an `initial` body completing is the
+        -- end of the process.
+        --
+        -- A re-armed process must also be RE-ENQUEUED. `ProcStatus.ready` is
+        -- not what `stepRegion` reads — it reads `regionQ` — so marking the
+        -- process ready without scheduling it leaves it permanently idle:
+        -- it never reaches its `@(posedge clk)` again, and therefore can
+        -- never be woken again either. The re-entry is what turns "re-armed"
+        -- into "runs a second time".
+        let (ps', reArmed) : ProcState × Bool :=
+          match oc with
+          | .done =>
+              match ps.arm with
+              | some body =>
+                  ({ ps with residual := body, status := .ready, registration := none, explicitlySuspended := false }, true)
+              | none =>
+                  ({ ps with residual := [], status := .finished, registration := none, explicitlySuspended := false }, false)
+          | .suspended t rest =>
+              ({ ps with residual := rest, status := .suspended t, registration := some (WaitTarget.ofTrigger w.time t) }, false)
+        set { w with signals := sigs, nba := nba, out := out
+                   , procs := w.procs.set! i ps'
+                   , regionQ := fun r =>
+                       if reArmed && r == Region.active then w.regionQ r ++ [i] else w.regionQ r }
+        pure oc
 
 /-! ## One region's pass -/
 
@@ -158,6 +181,85 @@ an undeclared name can never wake anything. -/
 def sawEdge (old new : SvState) (sig : String) (e : Edge) : Bool :=
   edgeOn e (SvState.bit0 old sig) (SvState.bit0 new sig)
 
+def appendActive (w : SvWorld) (indices : List Nat) : SvWorld :=
+  { w with regionQ := fun r =>
+      if r == Region.active then w.regionQ r ++ indices else w.regionQ r }
+
+/-- Deliver delay registrations whose absolute deadline has arrived.
+
+An explicitly suspended timer remains registered but is not delivered.  This
+is the waiting-target rule: advancing time does not erase the deadline, and
+resumption can deliver an already-due timer in the current Active step. -/
+def wakeTimers : SvM Unit :=
+  modify fun w =>
+    let woken : List Nat :=
+      (List.range w.procs.size).filter fun i =>
+        match w.procs[i]? with
+        | some ps =>
+            match ps.status, targetOf w.time ps with
+            | .suspended _, some (.timer deadline) =>
+                !ps.explicitlySuspended && deadline ≤ w.time
+            | _, _ => false
+        | none => false
+    let procs' := woken.foldl (fun (ps : Array ProcState) i =>
+        match ps[i]? with
+        | some p => ps.set! i { p with status := .ready, registration := none }
+        | none => ps) w.procs
+    appendActive { w with procs := procs' } woken
+
+/-- Suspend a process only while it is parked on a fixed edge or timer.
+
+The ready-process, level-wait, terminal, and duplicate-suspension cases are
+deliberately loud until their IEEE 9.7 rules are independently modelled. -/
+def suspendProcess (index : Nat) : SvM Unit := do
+  let w ← get
+  match w.procs[index]? with
+  | none => refuseSv .outOfTier ⟨"9.7"⟩ s!"no process at index {index}"
+  | some ps =>
+      if ps.explicitlySuspended then
+        refuseSv .outOfTier ⟨"9.7"⟩ "process is already explicitly suspended"
+      else
+        match ps.status, targetOf w.time ps with
+        | .suspended _, some target@(.edge _ _)
+        | .suspended _, some target@(.timer _) =>
+            let ps' := { ps with registration := some target, explicitlySuspended := true }
+            set (removeFromReady { w with procs := w.procs.set! index ps' } index)
+        | .suspended _, some (.level _) =>
+            refuseSv .outOfTier ⟨"9.7"⟩ "level-wait re-entry is not admitted"
+        | .ready, _ =>
+            refuseSv .outOfTier ⟨"9.7"⟩ "ready-process suspension is not admitted"
+        | .finished, _ =>
+            refuseSv .outOfTier ⟨"9.7"⟩ "terminal-process suspension is not admitted"
+        | _, none =>
+            refuseSv .outOfTier ⟨"9.7"⟩ "process has no admitted waiting target"
+
+/-- Resume an explicitly suspended edge/timer waiter.
+
+Edge waits are re-sensitized without latching an event that occurred while
+suspended. A timer whose original deadline is due enters Active immediately;
+otherwise its absolute deadline remains unchanged. -/
+def resumeProcess (index : Nat) : SvM Unit := do
+  let w ← get
+  match w.procs[index]? with
+  | none => refuseSv .outOfTier ⟨"9.7"⟩ s!"no process at index {index}"
+  | some ps =>
+      if !ps.explicitlySuspended then
+        refuseSv .outOfTier ⟨"9.7"⟩ "process is not explicitly suspended"
+      else
+        match ps.status, ps.registration with
+        | .suspended _, some (.edge _ _) =>
+            set { w with procs := w.procs.set! index ({ ps with explicitlySuspended := false }) }
+        | .suspended _, some (.timer deadline) =>
+            if deadline ≤ w.time then
+              let ps' := { ps with status := .ready, registration := none, explicitlySuspended := false }
+              set (appendActive { w with procs := w.procs.set! index ps' } [index])
+            else
+              set { w with procs := w.procs.set! index ({ ps with explicitlySuspended := false }) }
+        | .suspended _, some (.level _) =>
+            refuseSv .outOfTier ⟨"9.7"⟩ "level-wait re-entry is not admitted"
+        | _, _ =>
+            refuseSv .outOfTier ⟨"9.7"⟩ "resume target is not an admitted waiter"
+
 /-- Wake every process whose edge trigger fired between `old` and `new`,
 marking it ready and **enqueueing it in Active**.
 
@@ -169,17 +271,16 @@ def wakeEdges (old new : SvState) : SvM Unit :=
       (List.range w.procs.size).filter fun i =>
         match w.procs[i]? with
         | some ps =>
-            match ps.status with
-            | .suspended (.atEdge sig e) => sawEdge old new sig e
-            | _ => false
+            match ps.status, targetOf w.time ps with
+            | .suspended _, some (.edge sig e) =>
+                !ps.explicitlySuspended && sawEdge old new sig e
+            | _, _ => false
         | none => false
     let procs' := woken.foldl (fun (ps : Array ProcState) i =>
         match ps[i]? with
-        | some p => ps.set! i { p with status := .ready }
+        | some p => ps.set! i { p with status := .ready, registration := none }
         | none => ps) w.procs
-    { w with procs := procs'
-           , regionQ := fun r =>
-               if r == Region.active then w.regionQ r ++ woken else w.regionQ r }
+    appendActive { w with procs := procs' } woken
 
 /-! ## The slot -/
 

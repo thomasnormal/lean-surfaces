@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.11] — 2026-10-12
+
 ### Added
 
 - The `round()` builtin now models its one-argument integer and Boolean slice,
@@ -28,6 +30,17 @@ change is listed here under **Changed** or **Removed**.
   differential suite now has **2,770 / 3,097 rows = 89.4% complete** natively
   and **2,696 / 3,097 = 87.1% complete** in the proof interpreter, with **100%
   agreement among decided rows** and zero failures.
+
+- Synchronous `with` now supports explicit zero-argument constructors, multiple
+  items through nested lowering, and body exception unwinding for transparent
+  `__exit__` methods (`pass`, `return None`, or `return False`); the original
+  exception and retained state are preserved. Argument-sensitive suppression,
+  full exception triples, and `async with` remain loud. The CPython 3.9
+  differential suite now has **2,777 / 3,105 rows = 89.4% complete** natively
+  and **2,703 / 3,105 = 87.1% complete** in the proof interpreter, with **100%
+  agreement among decided rows** and zero failures; grammar coverage is
+  **118 / 142 = 83.1% complete** and the script corpus is **84 / 107 = 78.5%
+  complete**.
 
 ## [0.1.10] — 2026-10-12
 

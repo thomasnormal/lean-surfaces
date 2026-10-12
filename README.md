@@ -10,7 +10,7 @@ tractable.
 
 ## Python release status
 
-The Python prerelease is **v0.1.10 (2026-10-12)**. Its Git tag identifies the
+The Python prerelease is **v0.1.11 (2026-10-12)**. Its Git tag identifies the
 release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
 record source releases whose local Git tags remain unpublished.
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
@@ -33,6 +33,9 @@ numerical consumers use their integer projections.
 Module-scope annotated assignments admit simple targets with scalar literal
 annotations, including forward-reference strings; nonliteral annotations and
 explicit annotation-table bindings remain loud.
+Synchronous `with` supports explicit zero-argument constructors, multiple items,
+and transparent body exception unwinding while preserving the original
+exception; argument-sensitive suppression and `async with` remain loud.
 `bool()` and `bool(value)` use the same truthiness semantics as conditionals,
 including heap containers and nondraining generator checks; builtin type values
 and keyword calls remain loud.
@@ -62,10 +65,10 @@ non-finite division, float keys, and identity-dependent NaN operations remain
 loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
 downstream exhaustive matches must handle the new value/operator/error
 constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
-The executable differential suite has 3,081 cases: 2,755 agree with CPython and
-326 refuse loudly (**89.4% complete**). The narrower proof interpreter agrees on
-2,681 cases and refuses 400 (**87.0% complete**); neither run has a mismatch in
-the recorded suite. The grammar census has 142 witnesses, with 117 MATCH and 25
+The executable differential suite has 3,105 cases: 2,777 agree with CPython and
+328 refuse loudly (**89.4% complete**). The narrower proof interpreter agrees on
+2,703 cases and refuses 402 (**87.1% complete**); neither run has a mismatch in
+the recorded suite. The grammar census has 142 witnesses, with 118 MATCH and 24
 REFUSE. These are measured
 examples, not a claim of complete language support; remaining gaps stay in scope.
 See [the measured coverage](docs/python-coverage.md) and

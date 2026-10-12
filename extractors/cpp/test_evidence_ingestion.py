@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bounded loading, inspection and source-local function declaration forms.
 
-Callable checks evaluate only admitted direct-return integral bodies; no
+Callable checks evaluate only admitted integral statement bodies; no
 whole-program execution or entity/linkage admission is established here.
 
 LEANCPP_TEST_LEAN=1 enables the built Lean loader checks. The compiler check
@@ -455,7 +455,9 @@ int branch(int value) { if (value) return value; return 0; }
         subject.write_text("".join(
             f"{type_name} {name}({type_name} value) {{ return value; }}\n"
             for type_name, name, _ in destinations
-        ) + "int first(int left, int right) { return left; }\n", encoding="utf-8")
+        ) + "int first(int left, int right) { return left; }\n"
+          "int branch(int value) { if (value) return value; return 0; }\n",
+          encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
         environment.pop("CCC_ADD_ARGS", None)
@@ -468,7 +470,7 @@ int branch(int value) { if (value) return value; return 0; }
         ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
-        names = {name for _, name, _ in destinations} | {"first"}
+        names = {name for _, name, _ in destinations} | {"first", "branch"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -501,6 +503,9 @@ int branch(int value) { if (value) return value; return 0; }
         expressions.append("first(static_cast<short>(-17), 4294967295U)")
         rows.append(("first", ".signed 32", [(".signed 16", -17),
                                             (".unsigned 32", 4294967295)]))
+        for value in (-1, 0, 65536):
+            expressions.append(f"branch({value})")
+            rows.append(("branch", ".signed 32", [(".signed 32", value)]))
         oracle = self.root / "oracle.cpp"
         oracle.write_text(
             '#include <climits>\n#include <iostream>\n#include "callable.cpp"\n'

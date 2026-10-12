@@ -47,6 +47,34 @@ private def aliasOrder : Bool :=
       | _, _ => false
   | .error _ => false
 
+private def conditionalTrue : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let statement := .conditional (.read access)
+            (.assign access (.builtin .int) (.literal (signed 11)))
+            (.assign access (.builtin .int) (.literal (signed 22)))
+          match executeIntegralObjectStatement 6 store statement with
+          | .ok store => readValue (signed 11) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
+private def conditionalFalse : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let statement := .conditional (.literal ⟨.boolean, 0⟩)
+            (.assign access (.builtin .int) (.literal (signed 11)))
+            (.assign access (.builtin .int) (.literal (signed 22)))
+          match executeIntegralObjectStatement 6 store statement with
+          | .ok store => readValue (signed 22) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
 private def divisionError : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -87,6 +115,8 @@ private def constError : Bool :=
 
 #guard sequenceReady
 #guard aliasOrder
+#guard conditionalTrue
+#guard conditionalFalse
 #guard divisionError
 #guard staleError
 #guard constError
@@ -95,6 +125,16 @@ private def constError : Bool :=
   | .ok (store, _) =>
       match executeIntegralObjectStatement 0 store (.expression (.literal (signed 1))) with
       | .error .fuelExhausted => true
+      | _ => false
+  | .error _ => false
+
+#guard match ready with
+  | .ok (store, _) =>
+      let condition := .binary .divide (.literal (signed 1)) (.literal (signed 0))
+      match executeIntegralObjectStatement 4 store
+          (.conditional condition (.expression (.literal (signed 1)))
+            (.expression (.literal (signed 2)))) with
+      | .error (.undefined .divisionByZero) => true
       | _ => false
   | .error _ => false
 

@@ -6,6 +6,8 @@ inductive IntegralObjectStatement where
   | expression (expression : IntegralObjectExpression)
   | assign (access : IntegralObjectRef) (sourceType : CppTypeEvidence)
       (expression : IntegralObjectExpression)
+  | conditional (condition : IntegralObjectExpression)
+      (whenTrue whenFalse : IntegralObjectStatement)
   | sequence (first second : IntegralObjectStatement)
   deriving Repr, BEq, Inhabited
 
@@ -21,9 +23,9 @@ private def mapExpressionError : IntegralObjectExpressionError → IntegralObjec
   | .fuelExhausted => .fuelExhausted
   | .object reason => .object reason
 
-private def mapResult : IntegralResult IntegralValue →
-    Except IntegralObjectStatementError (Option IntegralValue)
-  | .ok value => .ok (some value)
+private def requireResult : IntegralResult IntegralValue →
+    Except IntegralObjectStatementError Unit
+  | .ok _ => .ok ()
   | .invalid reason => .error (.invalid reason)
   | .undefined reason => .error (.undefined reason)
   | .unsupported reason => .error (.unsupported reason)
@@ -38,13 +40,23 @@ private def executeStep (fuel : Nat) (store : IntegralObjectStore)
       | .expression expression => do
           let result ← (evaluateIntegralObjectExpression fuel store expression).mapError
             mapExpressionError
-          let _ ← mapResult result
+          let _ ← requireResult result
           pure store
       | .assign access sourceType expression => do
           let result ← (evaluateIntegralObjectExpression fuel store expression).mapError
             mapExpressionError
           match result with
           | .ok value => (store.assignConverted access sourceType value).mapError (.object)
+          | .invalid reason => throw (.invalid reason)
+          | .undefined reason => throw (.undefined reason)
+          | .unsupported reason => throw (.unsupported reason)
+      | .conditional condition whenTrue whenFalse => do
+          let result ← (evaluateIntegralObjectExpression fuel store condition).mapError
+            mapExpressionError
+          match result with
+          | .ok value =>
+              if value.value == 0 then executeStep fuel store whenFalse
+              else executeStep fuel store whenTrue
           | .invalid reason => throw (.invalid reason)
           | .undefined reason => throw (.undefined reason)
           | .unsupported reason => throw (.unsupported reason)

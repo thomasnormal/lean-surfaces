@@ -479,6 +479,10 @@ bool logical(int value) { return !value; }
           "int compare(int value) { if (value > 0) return 1; return 0; }\n"
           "bool logical(int value) { return !value; }\n"
           "int add(int left, int right) { return left + right; }\n"
+          "int subtract(int left, int right) { return left - right; }\n"
+          "int multiply(int left, int right) { return left * right; }\n"
+          "int divide(int left, int right) { return left / right; }\n"
+          "int remainder(int left, int right) { return left % right; }\n"
           "bool both(int left, int right) { return left && right; }\n",
           encoding="utf-8")
         environment = dict(os.environ)
@@ -494,7 +498,8 @@ bool logical(int value) { return !value; }
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {
-            "first", "branch", "loop", "unary", "compare", "logical", "add", "both"}
+            "first", "branch", "loop", "unary", "compare", "logical", "add",
+            "subtract", "multiply", "divide", "remainder", "both"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -546,6 +551,22 @@ bool logical(int value) { return !value; }
             expressions.append(f"add({left}, {right})")
             rows.append(("add", ".signed 32", [(".signed 32", left),
                                                 (".signed 32", right)]))
+        for left, right in ((-7, 3), (0, 7), (7, 3)):
+            expressions.append(f"subtract({left}, {right})")
+            rows.append(("subtract", ".signed 32", [(".signed 32", left),
+                                                     (".signed 32", right)]))
+        for left, right in ((-7, 3), (0, 7), (7, 3)):
+            expressions.append(f"multiply({left}, {right})")
+            rows.append(("multiply", ".signed 32", [(".signed 32", left),
+                                                     (".signed 32", right)]))
+        for left, right in ((-7, 3), (7, 3), (7, 2)):
+            expressions.append(f"divide({left}, {right})")
+            rows.append(("divide", ".signed 32", [(".signed 32", left),
+                                                   (".signed 32", right)]))
+        for left, right in ((-7, 3), (7, 3), (7, 2)):
+            expressions.append(f"remainder({left}, {right})")
+            rows.append(("remainder", ".signed 32", [(".signed 32", left),
+                                                      (".signed 32", right)]))
         for left, right in ((0, 7), (7, 0), (7, 3)):
             expressions.append(f"both({left}, {right})")
             rows.append(("both", ".boolean", [(".signed 32", left),

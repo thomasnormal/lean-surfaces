@@ -263,3 +263,8 @@ def fmt_int(n):
 def fmt_char(value):
     # bare %c accepts an integer code point or a one-character string
     return "%c" % (value,)
+
+
+def fmt_oct(n):
+    # bare %o is bounded lowercase octal over integer values
+    return "%o" % (n,)

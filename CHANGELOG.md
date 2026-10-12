@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Bare `%o` string formatting now renders bounded lowercase octal for
+  integers and Booleans, including negative values, with CPython's faithful
+  integer-required `TypeError` for other scalar types. The CPython 3.9
+  differential suite now has **2,715 / 3,041 rows = 89.3% complete** natively
+  and **2,641 / 3,041 = 86.8% complete** in the proof interpreter, with **100%
+  agreement among decided rows** and zero failures.
+
 - Bare `%c` string formatting now accepts integer code points and
   one-character strings, with CPython's exact `OverflowError` and type-error
   behavior. Lone surrogate code points remain a loud Lean-`Char` boundary.

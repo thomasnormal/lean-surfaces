@@ -783,6 +783,13 @@ def intHex (value : Int) : Option String :=
     some (if value < 0 then "-" ++ digits else digits)
   else Option.none
 
+/-- Lowercase octal rendering for the bounded `%o` conversion. -/
+def intOct (value : Int) : Option String :=
+  if value.natAbs < 8 ^ intDigitBudget then
+    let digits := String.ofList (Nat.toDigits 8 value.natAbs)
+    some (if value < 0 then "-" ++ digits else digits)
+  else Option.none
+
 /-- `str(…)` — value-only (docs/memory-model.md §the cast tier): budgeted
 exact decimal for ints, `True`/`False`, identity on strs, `None`;
 containers and refs refuse loudly (repr recursion is not guessed). -/
@@ -913,6 +920,13 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
           | some text => .ok text
           | Option.none => .unsupported "'%x' integer rendering beyond intDigitBudget is outside the tier (docs/memory-model.md §decimal integer rendering)"
       | Option.none => .exn (.typeError s!"%x format: an integer is required, not {v.typeName}")
+    else if c == 'o' then
+      match asInt v with
+      | some value =>
+          match intOct value with
+          | some text => .ok text
+          | Option.none => .unsupported "'%o' integer rendering beyond intDigitBudget is outside the tier (docs/memory-model.md §decimal integer rendering)"
+      | Option.none => .exn (.typeError s!"%o format: an integer is required, not {v.typeName}")
     else
       match (if c == 'r' then strFormatRepr v else strFormatStr v) with
       | some s => .ok s
@@ -955,7 +969,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
   | '%' :: c :: cs, args, mapping, acc =>
-      if c == 's' || c == 'r' || c == 'c' || c == 'd' || c == 'i' || c == 'x' then
+      if c == 's' || c == 'r' || c == 'c' || c == 'd' || c == 'i' || c == 'x' || c == 'o' then
         match args with
         | [] => .exn (.typeError "not enough arguments for format string")
         -- the conversion is matched OPEN, not bound through `Res`'s
@@ -971,7 +985,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else if c == 'q' then
         .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
       else
-        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%c/%d/%i/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
+        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%c/%d/%i/%x/%o/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>
       .exn (.valueError "incomplete format")
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])

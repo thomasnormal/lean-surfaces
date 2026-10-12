@@ -104,7 +104,7 @@ class IntegralObjectDifferentialTests(unittest.TestCase):
 
     def test_statement_traces(self):
         rows = [(mode, initial, delta)
-                for mode in ("add", "branch", "loop", "sequence")
+                for mode in ("add", "branch", "loop", "for", "sequence")
                 for initial in range(17)
                 for delta in range(-8, 9)]
         input_text = "".join("\t".join(map(str, row)) + "\n" for row in rows)

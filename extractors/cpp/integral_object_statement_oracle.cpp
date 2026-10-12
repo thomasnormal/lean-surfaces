@@ -11,6 +11,10 @@ void trace(const std::string &mode, int initial, int delta) {
   } else if (mode == "loop") {
     while (value > 0)
       --value;
+  } else if (mode == "for") {
+    value = delta;
+    for (; value > 0; --value) {
+    }
   } else if (mode == "sequence") {
     value = value + delta;
     value = -value;

@@ -36,6 +36,6 @@ and `forLoop` initialization/step order,
 alias-visible order, division-by-zero, stale-access and const-write refusals,
 plus statement, sequence and loop fuel exhaustion. The independent integral object
 and conversion Clang suites remain the value oracle; this statement layer makes
-no whole-program execution claim. The statement harness compares 1,156 safe
-add, branch, loop and sequence traces against C++23 compiled with Clang at
-`-O0` and `-O2` under UBSan.
+no whole-program execution claim. The statement harness compares 1,445 safe
+add, branch, loop, `forLoop` and sequence traces against C++23 compiled with
+Clang at `-O0` and `-O2` under UBSan.

@@ -72,7 +72,7 @@ their constant expressions can be folded. The self-check vocabulary
 adds local declarations, `for`/`repeat` and output/termination tasks. Its
 time-zero runner remains initial-only and does not inherit Design2's selected
 targets or case statements; the scheduler-facing timed loader is a separate
-path and currently admits one retained `initial` body. Extractor, ingestion,
+path and currently admits retained `initial` bodies in source order. Extractor, ingestion,
 evaluator and kernel-loader refusal inventories must therefore stay separate.
 
 ## Procedural for/repeat (IEEE 1800-2023, 12.7.1–12.7.2 and 12.8)
@@ -109,8 +109,8 @@ See `docs/sv-wait-targets.md` for the admitted boundary and guards.
 
 The scheduler-facing envelope admits a deliberately narrow delay-control
 surface: a known nonnegative integral literal `#d` below `2^64`, retaining its
-original statement body as a `Delay` node. `elabTimedDesign` admits exactly one
-`initial` process, schedules it in Active at time zero, and uses the existing
+original statement body as a `Delay` node. `elabTimedDesign` admits one or more
+`initial` processes, schedules them in Active at time zero in source order, and uses the existing
 retained-continuation scheduler to register a positive delay as an absolute
 timer. Waking the timer returns the same process to Active with its prior
 effects and remaining body; no source prefix is rerun.

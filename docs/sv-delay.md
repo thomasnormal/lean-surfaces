@@ -6,8 +6,8 @@ below 2^64, with its original statement body. The extractor records it as
 `{"kind": "Delay", "amount": d, "body": ...}`. Ingestion lowers it to
 the existing delay checkpoint followed by the original body.
 
-The timed loader admits exactly one initial body and schedules it in Active
-at time zero. Time is measured in that module's time-unit ticks, not an
+The timed loader admits one or more initial bodies and schedules them in Active
+at time zero in source order. Time is measured in that module's time-unit ticks, not an
 inferred physical unit. The
 existing retained-continuation stepper executes the statements before the
 control, stores the remaining body, and turns a positive delay into an

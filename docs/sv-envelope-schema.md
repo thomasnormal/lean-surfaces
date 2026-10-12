@@ -178,19 +178,20 @@ the ingester may treat a `Net` with non-null `init` as it treats `Assign`.
 | `AlwaysPosedge` | `kind`, `span`, `style` (`"always_ff"` \| `"always"`), `clock` (string: the 1-bit clock identifier), `body` (stmt) |
 | `AlwaysComb` | `kind`, `span`, `body` (stmt) |
 | `Assign` | `kind`, `span`, `target` (expr, always an `Ident`), `value` (expr) — continuous `assign` |
-| `Initial` | `kind`, `span`, `body` (stmt) — scheduler-facing retained process; the timed loader admits exactly one |
+| `Initial` | `kind`, `span`, `body` (stmt) — scheduler-facing retained process; the timed loader admits one or more in source order |
 
 `AlwaysPosedge` covers exactly `always_ff @(posedge clk) ...` and
 `always @(posedge clk) ...`; `style` records which keyword the source used —
 **M0 cycle semantics treats both identically** (edge-phase processes). Any
 other sensitivity (negedge, event lists, `@*`, `iff`, delays, always_latch,
 initial, final) makes the whole process `Unsupported` in this list. A scheduler
-envelope may instead carry one `Initial` process for the timed loader described
+envelope may instead carry `Initial` processes for the timed loader described
 below. `body` is a single statement node (often `Block` or `If`).
 
-The scheduler-facing timed loader currently admits exactly one `Initial` process
-and runs it from Active at time zero. The legacy self-check runner remains
-initial/time-zero-only; it refuses `Initial` processes that contain a `Delay`.
+The scheduler-facing timed loader admits one or more `Initial` processes and
+runs them from Active at time zero in source order. The legacy self-check runner
+remains initial/time-zero-only; it refuses `Initial` processes that contain a
+`Delay`.
 
 ## Statements
 

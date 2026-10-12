@@ -14,6 +14,7 @@ inductive IntegralObjectStatement where
   | whileLoop (condition : IntegralObjectExpression) (body : IntegralObjectStatement)
   | forLoop (initializer : IntegralObjectStatement) (condition : IntegralObjectExpression)
       (step body : IntegralObjectStatement)
+  | break_
   | sequence (first second : IntegralObjectStatement)
   deriving Repr, BEq, Inhabited
 
@@ -23,7 +24,12 @@ inductive IntegralObjectStatementError where
   | invalid (reason : InvalidIntegral)
   | undefined (reason : IntegralUB)
   | unsupported (reason : IntegralUnsupported)
+  | breakOutsideLoop
   deriving Repr, BEq, Inhabited
+
+private inductive Execution where
+  | normal (store : IntegralObjectStore)
+  | break_ (store : IntegralObjectStore)
 
 private def mapExpressionError : IntegralObjectExpressionError → IntegralObjectStatementError
   | .fuelExhausted => .fuelExhausted
@@ -38,7 +44,7 @@ private def requireResult : IntegralResult IntegralValue →
 
 private def executeStep (fuel : Nat) (store : IntegralObjectStore)
     (statement : IntegralObjectStatement) :
-    Except IntegralObjectStatementError IntegralObjectStore :=
+    Except IntegralObjectStatementError Execution :=
   match fuel with
   | 0 => .error .fuelExhausted
   | fuel + 1 =>
@@ -47,22 +53,27 @@ private def executeStep (fuel : Nat) (store : IntegralObjectStore)
           let result ← (evaluateIntegralObjectExpression fuel store expression).mapError
             mapExpressionError
           let _ ← requireResult result
-          pure store
+          pure (.normal store)
       | .initialize object sourceType expression => do
           let result ← (evaluateIntegralObjectExpression fuel store expression).mapError
             mapExpressionError
           match result with
-          | .ok value => (store.initializeConverted object sourceType value).mapError (.object)
+          | .ok value =>
+              (store.initializeConverted object sourceType value).mapError (.object)
+                |>.map Execution.normal
           | .invalid reason => throw (.invalid reason)
           | .undefined reason => throw (.undefined reason)
           | .unsupported reason => throw (.unsupported reason)
       | .defaultInitialize object =>
           (store.defaultInitialize object).mapError (.object)
+            |>.map Execution.normal
       | .assign access sourceType expression => do
           let result ← (evaluateIntegralObjectExpression fuel store expression).mapError
             mapExpressionError
           match result with
-          | .ok value => (store.assignConverted access sourceType value).mapError (.object)
+          | .ok value =>
+              (store.assignConverted access sourceType value).mapError (.object)
+                |>.map Execution.normal
           | .invalid reason => throw (.invalid reason)
           | .undefined reason => throw (.undefined reason)
           | .unsupported reason => throw (.unsupported reason)
@@ -81,24 +92,34 @@ private def executeStep (fuel : Nat) (store : IntegralObjectStore)
             mapExpressionError
           match result with
           | .ok value =>
-              if value.value == 0 then pure store
+              if value.value == 0 then pure (.normal store)
               else
-                let store ← executeStep fuel store body
-                executeStep fuel store (.whileLoop condition body)
+                let result ← executeStep fuel store body
+                match result with
+                | .normal store => executeStep fuel store (.whileLoop condition body)
+                | .break_ store => pure (.normal store)
           | .invalid reason => throw (.invalid reason)
           | .undefined reason => throw (.undefined reason)
           | .unsupported reason => throw (.unsupported reason)
       | .forLoop initializer condition step body => do
-          let store ← executeStep fuel store initializer
-          executeStep fuel store
-            (.whileLoop condition (.sequence body step))
+          let result ← executeStep fuel store initializer
+          match result with
+          | .normal store =>
+              executeStep fuel store (.whileLoop condition (.sequence body step))
+          | .break_ store => pure (.break_ store)
+      | .break_ => pure (.break_ store)
       | .sequence first second => do
-          let store ← executeStep fuel store first
-          executeStep fuel store second
+          let result ← executeStep fuel store first
+          match result with
+          | .normal store => executeStep fuel store second
+          | .break_ store => pure (.break_ store)
 
 def executeIntegralObjectStatement (fuel : Nat) (store : IntegralObjectStore)
     (statement : IntegralObjectStatement) :
     Except IntegralObjectStatementError IntegralObjectStore :=
-  executeStep fuel store statement
+  match executeStep fuel store statement with
+  | .ok (.normal store) => .ok store
+  | .ok (.break_ _) => .error .breakOutsideLoop
+  | .error reason => .error reason
 
 end LeanModels.Cpp

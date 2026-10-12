@@ -155,6 +155,21 @@ private def forReady : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def breakReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let decrement := .assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1)))
+          let body := .sequence decrement .break_
+          let condition := .binary .greater (.read access) (.literal (signed 0))
+          match executeIntegralObjectStatement 12 store (.whileLoop condition body) with
+          | .ok store => readValue (signed 6) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
 private def divisionError : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -202,6 +217,7 @@ private def constError : Bool :=
 #guard whileReady
 #guard whileEmpty
 #guard forReady
+#guard breakReady
 #guard divisionError
 #guard staleError
 #guard constError
@@ -210,6 +226,13 @@ private def constError : Bool :=
   | .ok (store, _) =>
       match executeIntegralObjectStatement 0 store (.expression (.literal (signed 1))) with
       | .error .fuelExhausted => true
+      | _ => false
+  | .error _ => false
+
+#guard match ready with
+  | .ok (store, _) =>
+      match executeIntegralObjectStatement 2 store .break_ with
+      | .error .breakOutsideLoop => true
       | _ => false
   | .error _ => false
 

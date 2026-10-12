@@ -9,6 +9,17 @@ class Marker:
         return None
 
 
+class InitMarker:
+    def __init__(self):
+        pass
+
+    def __enter__(self):
+        return 7
+
+    def __exit__(self, exc_type, exc, tb):
+        return None
+
+
 def read_value():
     return value
 
@@ -19,5 +30,8 @@ with Marker() as value:
 with Marker():
     value = 41
     print(read_value())
+
+with InitMarker() as initialized:
+    print(initialized)
 
 print(value)

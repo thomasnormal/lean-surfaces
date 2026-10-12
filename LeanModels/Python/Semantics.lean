@@ -3531,8 +3531,7 @@ def findContextClass (m : Module) (name : String) : Option (Nat × ClassDefn) :=
   match findClass m name with
   | some (ci, c) =>
       if c.ok && !c.isExc && c.ntBase.isNone && hasContextProtocol c
-          && !hasContextExtraDunder c
-          && (findFunction m (name ++ ".__init__")).isNone then
+          && !hasContextExtraDunder c then
         some (ci, c)
       else Option.none
   | Option.none => Option.none

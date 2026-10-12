@@ -82,7 +82,7 @@ def findContextClassM (m : Module) (name : String) : Option (Nat × ClassDefn) :
   match findClass m name with
   | some (ci, c) =>
       if c.ok && !c.isExc && c.ntBase.isNone && hasContextProtocolM c
-          && (findFunction m (name ++ ".__init__")).isNone then
+          then
         some (ci, c)
       else Option.none
   | Option.none => Option.none
@@ -1217,7 +1217,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           refuse s!"with statement uses unsupported features ({reason}) — outside the tier"
       | none, [item] =>
           match item.context with
-          | .call (.name fname _) args kwargs callUnsupported _ =>
+          | .call (.name fname _) _args kwargs callUnsupported _ =>
               if !kwargs.isEmpty || callUnsupported.isSome then
                 refuse "with context calls with keywords or starred arguments are outside the tier"
               else

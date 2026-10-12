@@ -419,9 +419,10 @@ cycle DETECTION, never by running out of fuel).
   `__exit__(None, None, None)` runs after every normal body flow (`next`,
   `return`, `break`, or `continue`). The instance is a normal heap reference,
   so method calls share the same world and heap as the body.
-* Multiple items, explicit `__init__` constructors, non-constructor context
-  expressions, keyword/starred context arguments, and body exception
-  unwinding remain loud. The retained-state `Run` result does not carry the
+* Multiple items, non-constructor context expressions, keyword/starred context
+  arguments, and body exception unwinding remain loud. A supported explicit
+  zero-argument `__init__` now runs through the ordinary class-call path. The
+  retained-state `Run` result does not carry the
   exception triple required to call `__exit__(exc_type, exc, tb)` faithfully;
   this is a boundary to extend, not a permanent exclusion. `async with` is
   likewise still unfinished scope.

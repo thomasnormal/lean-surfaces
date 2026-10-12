@@ -401,6 +401,7 @@ int branch(int value) { if (value) return value; return 0; }
 int loop(int value) { while (value) return value; return 0; }
 int unary(int value) { return -value; }
 int compare(int value) { if (value > 0) return 1; return 0; }
+bool logical(int value) { return !value; }
 """, encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -419,13 +420,14 @@ int compare(int value) { if (value > 0) return 1; return 0; }
         while pending:
             node, path = pending.pop()
             if node.get("kind") == "FunctionDecl" and node.get("name") in {
-                "identity", "add", "branch", "loop", "unary", "compare",
+                "identity", "add", "branch", "loop", "unary", "compare", "logical",
             }:
                 paths[node["name"]] = path
             children = node.get("inner", [])
             pending.extend((child, path + [index])
                            for index, child in reversed(list(enumerate(children))))
-        self.assertEqual(set(paths), {"identity", "add", "branch", "loop", "unary", "compare"})
+        self.assertEqual(set(paths), {
+            "identity", "add", "branch", "loop", "unary", "compare", "logical"})
         guards = []
         for name in ("identity", "add"):
             guards.append(
@@ -474,7 +476,8 @@ int compare(int value) { if (value > 0) return 1; return 0; }
           "int branch(int value) { if (value) return value; return 0; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
           "int unary(int value) { return -value; }\n"
-          "int compare(int value) { if (value > 0) return 1; return 0; }\n",
+          "int compare(int value) { if (value > 0) return 1; return 0; }\n"
+          "bool logical(int value) { return !value; }\n",
           encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -489,7 +492,7 @@ int compare(int value) { if (value > 0) return 1; return 0; }
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {
-            "first", "branch", "loop", "unary", "compare"}
+            "first", "branch", "loop", "unary", "compare", "logical"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -534,6 +537,9 @@ int compare(int value) { if (value > 0) return 1; return 0; }
         for value in (-1, 0, 7):
             expressions.append(f"compare({value})")
             rows.append(("compare", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"logical({value})")
+            rows.append(("logical", ".boolean", [(".signed 32", value)]))
         oracle = self.root / "oracle.cpp"
         oracle.write_text(
             '#include <climits>\n#include <iostream>\n#include "callable.cpp"\n'

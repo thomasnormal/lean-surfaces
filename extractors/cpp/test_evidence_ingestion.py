@@ -478,6 +478,11 @@ bool logical(int value) { return !value; }
           "int loop(int value) { while (value) return value; return 0; }\n"
           "int unary(int value) { return -value; }\n"
           "int compare(int value) { if (value > 0) return 1; return 0; }\n"
+          "bool equal_values(int left, int right) { return left == right; }\n"
+          "bool not_equal_values(int left, int right) { return left != right; }\n"
+          "bool less_values(int left, int right) { return left < right; }\n"
+          "bool less_equal_values(int left, int right) { return left <= right; }\n"
+          "bool greater_equal_values(int left, int right) { return left >= right; }\n"
           "bool logical(int value) { return !value; }\n"
           "int add(int left, int right) { return left + right; }\n"
           "int subtract(int left, int right) { return left - right; }\n"
@@ -505,7 +510,9 @@ bool logical(int value) { return !value; }
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {
-            "first", "branch", "loop", "unary", "compare", "logical", "add",
+            "first", "branch", "loop", "unary", "compare", "equal_values",
+            "not_equal_values", "less_values", "less_equal_values",
+            "greater_equal_values", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
             "bit_xor", "shift_left", "shift_right", "both", "either"}
         paths = {}
@@ -552,6 +559,26 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 7):
             expressions.append(f"compare({value})")
             rows.append(("compare", ".signed 32", [(".signed 32", value)]))
+        for left, right in ((-7, -7), (-7, 3), (7, 3)):
+            expressions.append(f"equal_values({left}, {right})")
+            rows.append(("equal_values", ".boolean", [(".signed 32", left),
+                                                         (".signed 32", right)]))
+        for left, right in ((-7, -7), (-7, 3), (7, 3)):
+            expressions.append(f"not_equal_values({left}, {right})")
+            rows.append(("not_equal_values", ".boolean", [(".signed 32", left),
+                                                            (".signed 32", right)]))
+        for left, right in ((-7, 3), (7, 3), (3, 3)):
+            expressions.append(f"less_values({left}, {right})")
+            rows.append(("less_values", ".boolean", [(".signed 32", left),
+                                                       (".signed 32", right)]))
+        for left, right in ((-7, 3), (3, 3), (7, 3)):
+            expressions.append(f"less_equal_values({left}, {right})")
+            rows.append(("less_equal_values", ".boolean", [(".signed 32", left),
+                                                             (".signed 32", right)]))
+        for left, right in ((-7, 3), (3, 3), (7, 3)):
+            expressions.append(f"greater_equal_values({left}, {right})")
+            rows.append(("greater_equal_values", ".boolean", [(".signed 32", left),
+                                                                (".signed 32", right)]))
         for value in (-1, 0, 7):
             expressions.append(f"logical({value})")
             rows.append(("logical", ".boolean", [(".signed 32", value)]))

@@ -14,6 +14,14 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- The `oct()` builtin now renders bounded integers and Booleans with
+  CPython's lowercase `0o` form, including negative values, faithful
+  one-argument arity errors, and integer-required `TypeError`s; heap objects
+  and oversized integers remain loud. The CPython 3.9 differential suite now
+  has **2,744 / 3,069 rows = 89.4% complete** natively and **2,670 / 3,069 =
+  87.0% complete** in the proof interpreter, with **100% agreement among
+  decided rows** and zero failures.
+
 - The `hex()` builtin now renders bounded integers and Booleans with
   CPython's lowercase `0x` form, including negative values, faithful
   one-argument arity errors, and integer-required `TypeError`s; heap objects

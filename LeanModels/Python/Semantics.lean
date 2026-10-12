@@ -790,6 +790,12 @@ def intOct (value : Int) : Option String :=
     some (if value < 0 then "-" ++ digits else digits)
   else Option.none
 
+def intOctPrefixed (value : Int) : Option String :=
+  if value.natAbs < 8 ^ intDigitBudget then
+    let digits := String.ofList (Nat.toDigits 8 value.natAbs)
+    some (if value < 0 then "-0o" ++ digits else "0o" ++ digits)
+  else Option.none
+
 def intHexPrefixed (value : Int) : Option String :=
   if value.natAbs < 16 ^ intDigitBudget then
     let digits := String.ofList (Nat.toDigits 16 value.natAbs)
@@ -1604,6 +1610,19 @@ def hexVal : RVal → Res RVal
       | some text => .ok (.str text)
       | Option.none =>
         .unsupported "hex() integer rendering beyond intDigitBudget is outside the tier (docs/memory-model.md §the cast tier)"
+    | Option.none =>
+      .exn (.typeError s!"'{v.typeName}' object cannot be interpreted as an integer")
+
+def octVal : RVal → Res RVal
+  | .ref _ =>
+      .unsupported "oct() of a heap object is outside the tier (docs/memory-model.md §the cast tier)"
+  | v =>
+    match asInt v with
+    | some value =>
+      match intOctPrefixed value with
+      | some text => .ok (.str text)
+      | Option.none =>
+        .unsupported "oct() integer rendering beyond intDigitBudget is outside the tier (docs/memory-model.md §the cast tier)"
     | Option.none =>
       .exn (.typeError s!"'{v.typeName}' object cannot be interpreted as an integer")
 
@@ -5983,11 +6002,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     match vs with
                     | [v] => Run.liftRes st (chrVal v)
                     | vs => .exn st (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
-                  else if fname == "hex" then
+                  else if fname == "hex" || fname == "oct" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with
-                    | [v] => Run.liftRes st (hexVal v)
-                    | vs => .exn st (.typeError s!"hex() takes exactly one argument ({vs.length} given)")
+                    | [v] => Run.liftRes st (if fname == "hex" then hexVal v else octVal v)
+                    | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
                   else if fname == "str" then
                     -- pass 8 widened at §rendering: immediates as before,
                     -- containers/refs through printOne (CPython's two-level

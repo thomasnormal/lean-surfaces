@@ -296,3 +296,11 @@ def builtin_hex(n):
 
 def builtin_hex_noargs():
     return hex()
+
+
+def builtin_oct(n):
+    return oct(n)
+
+
+def builtin_oct_noargs():
+    return oct()

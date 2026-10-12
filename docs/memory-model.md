@@ -570,12 +570,16 @@ in-tier container rather than one container at a time.
   heap objects, and other scalar types refuse rather than guessing an
   integer protocol. One-argument arity errors and the integer-required
   `TypeError` are faithful. The call is pure and remains in `heapFree`.
+* **`oct`** follows the same bounded path with lowercase octal and CPython's
+  `0o` prefix, including negative values and Booleans. It shares the loud
+  heap/oversized-integer boundary, faithful arity and integer-required
+  `TypeError`s, and the pure `heapFree` treatment.
 * **Simp doctrine**: the dispatchers (`valContains`, `ordVal`,
-  `chrVal`, `hexVal`) are in `py_simp`/`interpUnfolds`; the value workers
+  `chrVal`, `hexVal`, `octVal`) are in `py_simp`/`interpUnfolds`; the value workers
   (`strContains`, `strCharVals`) stay OUT, like `strSlice` — a
   concrete proof rewrites through one kernel `rfl` fact per
   application.
-* **heapFree**: all three are pure reads, so every node stays in the
+* **heapFree**: all five are pure reads, so every node stays in the
   fragment.
 * Acceptance: `Examples/python/iter_lab` (every function
   differential); leanpy corpus `harness/scripts/iter_script.py`.

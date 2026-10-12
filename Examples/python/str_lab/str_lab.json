@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/str_lab/str_lab.py",
-  "source_sha256": "7e6ab8724f1f137311789dd65cf142a959ad21a23bd2bfe3d84499187bd80b3d",
+  "source_sha256": "e72eece99345132f92816114c1c5b07cd987d9961b1c5e692cc25ae0961a2b93",
   "module": {
     "kind": "Module",
     "body": [
@@ -4520,6 +4520,119 @@
                   "end_col_offset": 14
                 },
                 "id": "hex"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 301,
+          "col_offset": 0,
+          "end_lineno": 302,
+          "end_col_offset": 17
+        },
+        "name": "builtin_oct",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 301,
+              "col_offset": 16,
+              "end_lineno": 301,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 302,
+              "col_offset": 4,
+              "end_lineno": 302,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 302,
+                "col_offset": 11,
+                "end_lineno": 302,
+                "end_col_offset": 17
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 302,
+                  "col_offset": 11,
+                  "end_lineno": 302,
+                  "end_col_offset": 14
+                },
+                "id": "oct"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 302,
+                    "col_offset": 15,
+                    "end_lineno": 302,
+                    "end_col_offset": 16
+                  },
+                  "id": "n"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 305,
+          "col_offset": 0,
+          "end_lineno": 306,
+          "end_col_offset": 16
+        },
+        "name": "builtin_oct_noargs",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 306,
+              "col_offset": 4,
+              "end_lineno": 306,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 306,
+                "col_offset": 11,
+                "end_lineno": 306,
+                "end_col_offset": 16
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 306,
+                  "col_offset": 11,
+                  "end_lineno": 306,
+                  "end_col_offset": 14
+                },
+                "id": "oct"
               },
               "args": [],
               "keywords": [],

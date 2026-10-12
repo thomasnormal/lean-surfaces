@@ -296,10 +296,10 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     match vs with
     | [v] => liftRes (chrVal v)
     | vs => raisePy (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
-  else if fname == "hex" then
+  else if fname == "hex" || fname == "oct" then
     match vs with
-    | [v] => liftRes (hexVal v)
-    | vs => raisePy (.typeError s!"hex() takes exactly one argument ({vs.length} given)")
+    | [v] => liftRes (if fname == "hex" then hexVal v else octVal v)
+    | vs => raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
   else if fname == "str" then
     match vs with
     | [] => pure (.str "")

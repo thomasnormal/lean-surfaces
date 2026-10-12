@@ -462,6 +462,8 @@
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_zero_width", "args": [[3], [-3], [123456]], "expect": "match", "note": "fixed zero-padded width-5 decimal formatting preserves the sign"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_hex", "args": [[255], [-10], [true], [{"t": "str", "v": "x"}]], "expect": "match", "note": "hex() renders bounded integers and booleans with the CPython 0x prefix and errors"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_hex_noargs", "args": [[]], "expect": "match", "note": "hex() keeps CPython's exact zero-argument TypeError"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_oct", "args": [[64], [-10], [true], [{"t": "str", "v": "x"}]], "expect": "match", "note": "oct() renders bounded integers and booleans with the CPython 0o prefix and errors"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_oct_noargs", "args": [[]], "expect": "match", "note": "oct() keeps CPython's exact zero-argument TypeError"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_hex", "args": [[255]], "expect": "match", "note": "bare %x over the scalar integer/Boolean inventory"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_int", "args": [[255], [true], [-7], ["x"]], "expect": "match", "note": "bare %i shares CPython's integer conversion and TypeError wording with %d"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_char", "args": [[65], [true], ["é"], ["xy"], [-1], [1114112]], "expect": "match", "note": "bare %c accepts integer code points or one-character strings with CPython errors"},

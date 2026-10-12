@@ -139,6 +139,22 @@ private def whileEmpty : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def forReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let initializer := .assign access (.builtin .int) (.literal (signed 3))
+          let condition := .binary .greater (.read access) (.literal (signed 0))
+          let step := .assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1)))
+          match executeIntegralObjectStatement 24 store
+              (.forLoop initializer condition step (.expression (.read access))) with
+          | .ok store => readValue (signed 0) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
 private def divisionError : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -185,6 +201,7 @@ private def constError : Bool :=
 #guard conditionalFalse
 #guard whileReady
 #guard whileEmpty
+#guard forReady
 #guard divisionError
 #guard staleError
 #guard constError

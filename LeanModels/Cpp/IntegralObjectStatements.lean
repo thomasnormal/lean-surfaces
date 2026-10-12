@@ -12,6 +12,8 @@ inductive IntegralObjectStatement where
   | conditional (condition : IntegralObjectExpression)
       (whenTrue whenFalse : IntegralObjectStatement)
   | whileLoop (condition : IntegralObjectExpression) (body : IntegralObjectStatement)
+  | forLoop (initializer : IntegralObjectStatement) (condition : IntegralObjectExpression)
+      (step body : IntegralObjectStatement)
   | sequence (first second : IntegralObjectStatement)
   deriving Repr, BEq, Inhabited
 
@@ -86,6 +88,10 @@ private def executeStep (fuel : Nat) (store : IntegralObjectStore)
           | .invalid reason => throw (.invalid reason)
           | .undefined reason => throw (.undefined reason)
           | .unsupported reason => throw (.unsupported reason)
+      | .forLoop initializer condition step body => do
+          let store ← executeStep fuel store initializer
+          executeStep fuel store
+            (.whileLoop condition (.sequence body step))
       | .sequence first second => do
           let store ← executeStep fuel store first
           executeStep fuel store second

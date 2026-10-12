@@ -99,7 +99,7 @@ conditional expressions, comma sequencing, `for` loops, loop transfers and
 effectful logical short-circuiting.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 229 Clang-compiled calls at both
+and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 235 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

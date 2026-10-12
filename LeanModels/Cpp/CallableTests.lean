@@ -447,6 +447,55 @@ def admitContinue : Except String CallableFunction :=
 #guard admitBreak.isOk
 #guard admitContinue.isOk
 
+def doBreakProbe : DeclarationProbe :=
+  probeFor (functionSource "doBreak" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x81"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x80"), ("kind", text "DoStmt"),
+        ("inner", .array [
+          body (object [
+            ("id", text "0x82"), ("kind", text "CompoundStmt"),
+            ("inner", .array [
+              incrementRaw "0x83" "++" false (declRefNode "0x84" "0x10" "value"),
+              object [("id", text "0x85"), ("kind", text "BreakStmt")]])]),
+          object [
+            ("id", text "0x86"), ("kind", text "BinaryOperator"), ("opcode", text "<"),
+            ("inner", .array [implicitCast "0x87" (declRefNode "0x88" "0x10" "value"),
+              integerLiteralRaw "0x89" "3"])]])],
+      returnStmt "0x8a" (implicitCast "0x8b" (declRefNode "0x8c" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "doBreak" "CompoundStmt"]
+
+def doContinueProbe : DeclarationProbe :=
+  probeFor (functionSource "doContinue" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x91"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x90"), ("kind", text "DoStmt"),
+        ("inner", .array [
+          body (object [
+            ("id", text "0x92"), ("kind", text "CompoundStmt"),
+            ("inner", .array [
+              incrementRaw "0x93" "++" false (declRefNode "0x94" "0x10" "value"),
+              object [("id", text "0x95"), ("kind", text "ContinueStmt")]])]),
+          object [
+            ("id", text "0x96"), ("kind", text "BinaryOperator"), ("opcode", text "<"),
+            ("inner", .array [implicitCast "0x97" (declRefNode "0x98" "0x10" "value"),
+              integerLiteralRaw "0x99" "3"])]])],
+      returnStmt "0x9a" (implicitCast "0x9b" (declRefNode "0x9c" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "doContinue" "CompoundStmt"]
+
+def admitDoBreak : Except String CallableFunction :=
+  admitCallableFunction doBreakProbe transferTypes (transferEvidence "0x86" "0x87" "0x89")
+    TargetProfile.lp64 [0]
+
+def admitDoContinue : Except String CallableFunction :=
+  admitCallableFunction doContinueProbe transferTypes (transferEvidence "0x96" "0x97" "0x99")
+    TargetProfile.lp64 [0]
+
+#guard admitDoBreak.isOk
+#guard admitDoContinue.isOk
+
 def unaryProbe : DeclarationProbe :=
   probeFor (functionSource "negate" [parameterRaw "0x10" "value"]
     (body (returnStmt "0x31" (object [

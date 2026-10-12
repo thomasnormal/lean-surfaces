@@ -524,6 +524,32 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(nodes.count("ContinueStmt"), 1)
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_do_loop_transfers_keep_body_then_condition_order(self):
+        self.source.write_text(
+            "int do_break_loop(int value) { do { ++value; break; } while (value < 3); return value; }\n"
+            "int do_continue_loop(int value) { do { ++value; continue; } while (value < 3); return value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        loops = []
+        nodes = []
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "kind" in node:
+                nodes.append(node)
+            if node.get("kind") == "DoStmt":
+                loops.append(node)
+            pending.extend(node.get("inner", []))
+        self.assertEqual(len(loops), 2)
+        for loop in loops:
+            self.assertEqual([child.get("kind") for child in loop.get("inner", [])],
+                             ["CompoundStmt", "BinaryOperator"])
+            self.assertEqual(loop["inner"][1].get("opcode"), "<")
+        self.assertEqual(sum(node.get("kind") == "BreakStmt" for node in nodes), 1)
+        self.assertEqual(sum(node.get("kind") == "ContinueStmt" for node in nodes), 1)
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_logical_effectful_right_operands_keep_boolean_casts(self):
         self.source.write_text(
             "bool both_increment(int value) { return value && ++value; }\n"

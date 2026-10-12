@@ -483,7 +483,8 @@ bool logical(int value) { return !value; }
           "int multiply(int left, int right) { return left * right; }\n"
           "int divide(int left, int right) { return left / right; }\n"
           "int remainder(int left, int right) { return left % right; }\n"
-          "bool both(int left, int right) { return left && right; }\n",
+          "bool both(int left, int right) { return left && right; }\n"
+          "bool either(int left, int right) { return left || right; }\n",
           encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -499,7 +500,7 @@ bool logical(int value) { return !value; }
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {
             "first", "branch", "loop", "unary", "compare", "logical", "add",
-            "subtract", "multiply", "divide", "remainder", "both"}
+            "subtract", "multiply", "divide", "remainder", "both", "either"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -571,6 +572,10 @@ bool logical(int value) { return !value; }
             expressions.append(f"both({left}, {right})")
             rows.append(("both", ".boolean", [(".signed 32", left),
                                                 (".signed 32", right)]))
+        for left, right in ((0, 0), (0, 7), (7, 0)):
+            expressions.append(f"either({left}, {right})")
+            rows.append(("either", ".boolean", [(".signed 32", left),
+                                                   (".signed 32", right)]))
         oracle = self.root / "oracle.cpp"
         oracle.write_text(
             '#include <climits>\n#include <iostream>\n#include "callable.cpp"\n'

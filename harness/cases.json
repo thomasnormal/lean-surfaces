@@ -458,6 +458,7 @@
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_nonascii_s", "args": [[]], "expect": "match"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_nonascii_r", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_width", "args": [[3], [-3], [123456]], "expect": "match", "note": "fixed width-5 decimal formatting pads with spaces without truncation"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_left_width", "args": [[3], [-3], [123456]], "expect": "match", "note": "fixed left-aligned width-5 decimal formatting"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_hex", "args": [[255]], "expect": "match", "note": "bare %x over the scalar integer/Boolean inventory"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_int", "args": [[255], [true], [-7], ["x"]], "expect": "match", "note": "bare %i shares CPython's integer conversion and TypeError wording with %d"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_char", "args": [[65], [true], ["é"], ["xy"], [-1], [1114112]], "expect": "match", "note": "bare %c accepts integer code points or one-character strings with CPython errors"},

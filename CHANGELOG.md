@@ -14,6 +14,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Fixed `%-5d` string formatting now left-aligns decimal fields with spaces,
+  preserving negative values and over-width numbers. The CPython 3.9
+  differential suite now has **2,731 / 3,056 rows = 89.3% complete** natively
+  and **2,657 / 3,056 = 86.9% complete** in the proof interpreter, with **100%
+  agreement among decided rows** and zero failures.
+
 - Fixed `%5d` string formatting now pads decimal fields with spaces on the
   left without truncation, including negative values and over-width numbers.
   The CPython 3.9 differential suite now has **2,728 / 3,053 rows = 89.3%

@@ -278,3 +278,8 @@ def fmt_unsigned(n):
 def fmt_ascii(value):
     # bare %a uses CPython's ASCII-escaped repr conversion
     return "%a" % (value,)
+
+
+def fmt_left_width(n):
+    # the minus flag left-aligns the fixed width field
+    return "%-5d" % (n,)

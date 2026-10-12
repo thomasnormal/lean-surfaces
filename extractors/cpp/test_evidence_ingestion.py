@@ -481,7 +481,8 @@ bool logical(int value) { return !value; }
         ) + "".join(
             f"{result} {name}({parameter} value) {{ return value; }}\n"
             for result, name, parameter in return_casts
-        ) + "int first(int left, int right) { return left; }\n"
+        ) + "int literal() { return 7; }\n"
+          "int first(int left, int right) { return left; }\n"
           "int branch(int value) { if (value) return value; return 0; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
           "int do_loop(int value) { do { if (value) return value; } while (0); return 7; }\n"
@@ -521,6 +522,7 @@ bool logical(int value) { return !value; }
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {name for _, name, _ in return_casts} | {
+            "literal",
             "first", "branch", "loop", "do_loop", "unary", "compare", "equal_values",
             "not_equal_values", "less_values", "less_equal_values",
             "greater_equal_values", "logical", "add",
@@ -565,6 +567,8 @@ bool logical(int value) { return !value; }
         for value in (-32769, 0, 32768):
             expressions.append(f"to_short({value})")
             rows.append(("to_short", ".signed 16", [(".signed 32", value)]))
+        expressions.append("literal()")
+        rows.append(("literal", ".signed 32", []))
         expressions.append("first(static_cast<short>(-17), 4294967295U)")
         rows.append(("first", ".signed 32", [(".signed 16", -17),
                                             (".unsigned 32", 4294967295)]))

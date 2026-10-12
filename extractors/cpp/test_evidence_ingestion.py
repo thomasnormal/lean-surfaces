@@ -80,7 +80,7 @@ class EvidenceIngestionTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.root = pathlib.Path(directory.name)
 
-    def run_loader(self, contents, guards=""):
+    def run_loader(self, contents, guards="", options=""):
         probe_path = self.root / "probe.json"
         if isinstance(contents, bytes):
             probe_path.write_bytes(contents)
@@ -91,7 +91,8 @@ class EvidenceIngestionTests(unittest.TestCase):
             "import LeanModels.Cpp\n"
             "open LeanModels.Cpp\n"
             "namespace CppProbeIngestionFixture\n"
-            "load_cpp_probe evidence from " + json.dumps(str(probe_path)) + "\n"
+            + (options + "\n" if options else "")
+            + "load_cpp_probe evidence from " + json.dumps(str(probe_path)) + "\n"
             + guards + "\nend CppProbeIngestionFixture\n",
             encoding="utf-8",
         )
@@ -100,8 +101,8 @@ class EvidenceIngestionTests(unittest.TestCase):
             capture_output=True, text=True, timeout=60,
         )
 
-    def assert_accepts(self, contents, guards=""):
-        result = self.run_loader(contents, guards)
+    def assert_accepts(self, contents, guards="", options=""):
+        result = self.run_loader(contents, guards, options)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def assert_refuses(self, contents):
@@ -486,6 +487,8 @@ bool logical(int value) { return !value; }
           "int bit_and(int left, int right) { return left & right; }\n"
           "int bit_or(int left, int right) { return left | right; }\n"
           "int bit_xor(int left, int right) { return left ^ right; }\n"
+          "int shift_left(int left, int right) { return left << right; }\n"
+          "int shift_right(int left, int right) { return left >> right; }\n"
           "bool both(int left, int right) { return left && right; }\n"
           "bool either(int left, int right) { return left || right; }\n",
           encoding="utf-8")
@@ -504,7 +507,7 @@ bool logical(int value) { return !value; }
         names = {name for _, name, _ in destinations} | {
             "first", "branch", "loop", "unary", "compare", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
-            "bit_xor", "both", "either"}
+            "bit_xor", "shift_left", "shift_right", "both", "either"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -584,6 +587,14 @@ bool logical(int value) { return !value; }
             expressions.append(f"bit_xor({left}, {right})")
             rows.append(("bit_xor", ".signed 32", [(".signed 32", left),
                                                     (".signed 32", right)]))
+        for left, right in ((3, 1), (5, 2), (8, 1)):
+            expressions.append(f"shift_left({left}, {right})")
+            rows.append(("shift_left", ".signed 32", [(".signed 32", left),
+                                                       (".signed 32", right)]))
+        for left, right in ((3, 1), (5, 2), (8, 1)):
+            expressions.append(f"shift_right({left}, {right})")
+            rows.append(("shift_right", ".signed 32", [(".signed 32", left),
+                                                        (".signed 32", right)]))
         for left, right in ((0, 7), (7, 0), (7, 3)):
             expressions.append(f"both({left}, {right})")
             rows.append(("both", ".boolean", [(".signed 32", left),
@@ -626,7 +637,8 @@ bool logical(int value) { return !value; }
     | .ok (.ok value) => value == ⟨{destination}, {int(expected)}⟩
     | _ => false
   | .error _ => false""")
-        self.assert_accepts(json.dumps(probe), "\n".join(guards))
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+                            options="set_option maxRecDepth 100000 in")
         print(f"callable argument differential: {len(rows)} rows at -O0/-O2")
 
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):

@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "Examples/python/with_lab/with_lab.py",
-  "source_sha256": "26e405d985bdad15ff7b1959871919f1264881a2b092271767c19c40ab1cae72",
+  "source_sha256": "51f2d054ab309d3b57a1bc3c5a47a4c5d7cb94dad69e6eda71305efb46e8211e",
   "module": {
     "kind": "Module",
     "body": [
@@ -835,11 +835,216 @@
         ]
       },
       {
-        "kind": "ClassDef",
+        "kind": "FunctionDef",
         "span": {
           "lineno": 50,
           "col_offset": 0,
-          "end_lineno": 58,
+          "end_lineno": 52,
+          "end_col_offset": 14
+        },
+        "name": "body_exception",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "With",
+            "span": {
+              "lineno": 51,
+              "col_offset": 4,
+              "end_lineno": 52,
+              "end_col_offset": 14
+            },
+            "items": [
+              {
+                "context": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 51,
+                    "col_offset": 9,
+                    "end_lineno": 51,
+                    "end_col_offset": 17
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 51,
+                      "col_offset": 9,
+                      "end_lineno": 51,
+                      "end_col_offset": 15
+                    },
+                    "id": "Marker"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                "target": null
+              }
+            ],
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 52,
+                  "col_offset": 8,
+                  "end_lineno": 52,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 52,
+                    "col_offset": 8,
+                    "end_lineno": 52,
+                    "end_col_offset": 14
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 52,
+                      "col_offset": 8,
+                      "end_lineno": 52,
+                      "end_col_offset": 9
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 52,
+                      "col_offset": 13,
+                      "end_lineno": 52,
+                      "end_col_offset": 14
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 55,
+          "col_offset": 0,
+          "end_lineno": 57,
+          "end_col_offset": 14
+        },
+        "name": "body_exception_target",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "With",
+            "span": {
+              "lineno": 56,
+              "col_offset": 4,
+              "end_lineno": 57,
+              "end_col_offset": 14
+            },
+            "items": [
+              {
+                "context": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 9,
+                    "end_lineno": 56,
+                    "end_col_offset": 17
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 56,
+                      "col_offset": 9,
+                      "end_lineno": 56,
+                      "end_col_offset": 15
+                    },
+                    "id": "Marker"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 21,
+                    "end_lineno": 56,
+                    "end_col_offset": 26
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 57,
+                  "col_offset": 8,
+                  "end_lineno": 57,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 57,
+                    "col_offset": 8,
+                    "end_lineno": 57,
+                    "end_col_offset": 14
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 57,
+                      "col_offset": 8,
+                      "end_lineno": 57,
+                      "end_col_offset": 9
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 57,
+                      "col_offset": 13,
+                      "end_lineno": 57,
+                      "end_col_offset": 14
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 60,
+          "col_offset": 0,
+          "end_lineno": 68,
           "end_col_offset": 30
         },
         "name": "ExtraDunder",
@@ -849,9 +1054,9 @@
           {
             "kind": "FunctionDef",
             "span": {
-              "lineno": 51,
+              "lineno": 61,
               "col_offset": 4,
-              "end_lineno": 52,
+              "end_lineno": 62,
               "end_col_offset": 16
             },
             "name": "__enter__",
@@ -859,9 +1064,9 @@
               {
                 "arg": "self",
                 "span": {
-                  "lineno": 51,
+                  "lineno": 61,
                   "col_offset": 18,
-                  "end_lineno": 51,
+                  "end_lineno": 61,
                   "end_col_offset": 22
                 }
               }
@@ -872,17 +1077,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 52,
+                  "lineno": 62,
                   "col_offset": 8,
-                  "end_lineno": 52,
+                  "end_lineno": 62,
                   "end_col_offset": 16
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 52,
+                    "lineno": 62,
                     "col_offset": 15,
-                    "end_lineno": 52,
+                    "end_lineno": 62,
                     "end_col_offset": 16
                   },
                   "value": {
@@ -896,9 +1101,9 @@
           {
             "kind": "FunctionDef",
             "span": {
-              "lineno": 54,
+              "lineno": 64,
               "col_offset": 4,
-              "end_lineno": 55,
+              "end_lineno": 65,
               "end_col_offset": 19
             },
             "name": "__exit__",
@@ -906,36 +1111,36 @@
               {
                 "arg": "self",
                 "span": {
-                  "lineno": 54,
+                  "lineno": 64,
                   "col_offset": 17,
-                  "end_lineno": 54,
+                  "end_lineno": 64,
                   "end_col_offset": 21
                 }
               },
               {
                 "arg": "exc_type",
                 "span": {
-                  "lineno": 54,
+                  "lineno": 64,
                   "col_offset": 23,
-                  "end_lineno": 54,
+                  "end_lineno": 64,
                   "end_col_offset": 31
                 }
               },
               {
                 "arg": "exc",
                 "span": {
-                  "lineno": 54,
+                  "lineno": 64,
                   "col_offset": 33,
-                  "end_lineno": 54,
+                  "end_lineno": 64,
                   "end_col_offset": 36
                 }
               },
               {
                 "arg": "tb",
                 "span": {
-                  "lineno": 54,
+                  "lineno": 64,
                   "col_offset": 38,
-                  "end_lineno": 54,
+                  "end_lineno": 64,
                   "end_col_offset": 40
                 }
               }
@@ -946,17 +1151,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 55,
+                  "lineno": 65,
                   "col_offset": 8,
-                  "end_lineno": 55,
+                  "end_lineno": 65,
                   "end_col_offset": 19
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 55,
+                    "lineno": 65,
                     "col_offset": 15,
-                    "end_lineno": 55,
+                    "end_lineno": 65,
                     "end_col_offset": 19
                   },
                   "value": {
@@ -969,9 +1174,9 @@
           {
             "kind": "FunctionDef",
             "span": {
-              "lineno": 57,
+              "lineno": 67,
               "col_offset": 4,
-              "end_lineno": 58,
+              "end_lineno": 68,
               "end_col_offset": 30
             },
             "name": "__repr__",
@@ -979,9 +1184,9 @@
               {
                 "arg": "self",
                 "span": {
-                  "lineno": 57,
+                  "lineno": 67,
                   "col_offset": 17,
-                  "end_lineno": 57,
+                  "end_lineno": 67,
                   "end_col_offset": 21
                 }
               }
@@ -992,17 +1197,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 58,
+                  "lineno": 68,
                   "col_offset": 8,
-                  "end_lineno": 58,
+                  "end_lineno": 68,
                   "end_col_offset": 30
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 58,
+                    "lineno": 68,
                     "col_offset": 15,
-                    "end_lineno": 58,
+                    "end_lineno": 68,
                     "end_col_offset": 30
                   },
                   "value": {
@@ -1018,9 +1223,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 61,
+          "lineno": 71,
           "col_offset": 0,
-          "end_lineno": 63,
+          "end_lineno": 73,
           "end_col_offset": 16
         },
         "name": "extra_dunder",
@@ -1031,9 +1236,9 @@
           {
             "kind": "With",
             "span": {
-              "lineno": 62,
+              "lineno": 72,
               "col_offset": 4,
-              "end_lineno": 63,
+              "end_lineno": 73,
               "end_col_offset": 16
             },
             "items": [
@@ -1041,17 +1246,17 @@
                 "context": {
                   "kind": "Call",
                   "span": {
-                    "lineno": 62,
+                    "lineno": 72,
                     "col_offset": 9,
-                    "end_lineno": 62,
+                    "end_lineno": 72,
                     "end_col_offset": 22
                   },
                   "func": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 62,
+                      "lineno": 72,
                       "col_offset": 9,
-                      "end_lineno": 62,
+                      "end_lineno": 72,
                       "end_col_offset": 20
                     },
                     "id": "ExtraDunder"
@@ -1067,17 +1272,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 63,
+                  "lineno": 73,
                   "col_offset": 8,
-                  "end_lineno": 63,
+                  "end_lineno": 73,
                   "end_col_offset": 16
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 63,
+                    "lineno": 73,
                     "col_offset": 15,
-                    "end_lineno": 63,
+                    "end_lineno": 73,
                     "end_col_offset": 16
                   },
                   "value": {

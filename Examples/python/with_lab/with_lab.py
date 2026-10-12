@@ -47,6 +47,16 @@ def explicit_init():
         return 0
 
 
+def body_exception():
+    with Marker():
+        1 // 0
+
+
+def body_exception_target():
+    with Marker() as value:
+        1 // 0
+
+
 class ExtraDunder:
     def __enter__(self):
         return 1

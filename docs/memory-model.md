@@ -421,23 +421,28 @@ cycle DETECTION, never by running out of fuel).
   so method calls share the same world and heap as the body.
 * Multiple items are lowered at ingestion to nested single-item managers, so
   CPython's left-to-right `__enter__` and reverse-order `__exit__` protocol is
-  shared with the one-item executor. Non-constructor context expressions,
-  keyword/starred context arguments, and body exception unwinding remain loud.
-  A supported explicit zero-argument `__init__` now runs through the ordinary
-  class-call path. The retained-state `Run` result does not carry the
-  exception triple required to call `__exit__(exc_type, exc, tb)` faithfully;
-  this is a boundary to extend, not a permanent exclusion. `async with` is
-  likewise still unfinished scope.
+  shared with the one-item executor. Non-constructor context expressions and
+  keyword/starred context arguments remain loud. Body exceptions are admitted
+  only when the selected `__exit__` body is transparent (`pass`, empty, or
+  `return None`/`False`): the model invokes it with the placeholder triple
+  `(None, None, None)` and re-raises the original `PyErr`, which is sound
+  because the admitted body cannot inspect or suppress that triple. Any
+  argument-sensitive, side-effecting, or suppressing `__exit__` remains loud;
+  full exception triples are still a future representation extension. A
+  supported explicit zero-argument `__init__` runs through the ordinary
+  class-call path. `async with` is likewise still unfinished scope.
 * At module scope the script executor owns a matching control shell: the
   `as` target is published before the body, body statements flush one at a
   time, and the target remains a module global after the statement. This keeps
   a function called from inside the body on CPython's module-frame view rather
   than the stale pre-`with` globals.
-* `Examples/python/with_lab` pins normal target binding, unbound use, and
-  fall-through, plus the two deliberate refusals. `harness/scripts/with_script.py`
-  additionally pins module-scope target and body publication. The monadic
-  runner and the trunk proof interpreter agree with CPython on the decided
-  rows.
+* `Examples/python/with_lab` pins normal target binding, unbound use,
+  fall-through, and transparent exception unwinding, plus the deliberate
+  extra-dunder refusal. `harness/scripts/with_script.py` additionally pins
+  module-scope target and body publication, while
+  `harness/scripts/with_exception_script.py` pins an uncaught body exception.
+  The monadic runner and the trunk proof interpreter agree with CPython on the
+  decided rows.
 
 ## Tuple repetition (2026-10-11 — current)
 

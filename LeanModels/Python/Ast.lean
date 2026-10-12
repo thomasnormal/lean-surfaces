@@ -309,6 +309,15 @@ structure FunctionDefn where
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt` has none (nested arrays).
 
+def FunctionDefn.withExitTransparent (f : FunctionDefn) : Bool :=
+  match f.body.toList with
+  | [] => true
+  | [.pass _] => true
+  | [.ret Option.none _] => true
+  | [.ret (some (.constant .none _)) _] => true
+  | [.ret (some (.constant (.bool false) _)) _] => true
+  | _ => false
+
 /-- A module-level namedtuple class (H3+, docs/memory-model.md §class
 semantics — the recorded VALUE-like decision): recognized at INGESTION
 from a top-level `X = namedtuple("T", <fields>)` assignment under the

@@ -197,30 +197,38 @@ def scriptWithAt (S : SKont) (K : Kont) (m : Module) (items : Array WithItem)
             | Option.none =>
                 refuse "with requires an admitted class with __enter__ and __exit__"
             | some _ => do
-                let contextName := "<with-context>"
-                let contextExpr := Expr.name contextName sp
-                let enterExpr :=
-                  Expr.call (Expr.attribute contextExpr "__enter__" sp)
-                    #[] #[] Option.none sp
-                let noneExpr := Expr.constant .none sp
-                let exitExpr :=
-                  Expr.call (Expr.attribute contextExpr "__exit__" sp)
-                    #[noneExpr, noneExpr, noneExpr] #[] Option.none sp
-                let old ← envGet contextName
-                let context ← evalOpen K m item.context
-                envSet contextName context
-                let entered ← evalOpen K m enterExpr
-                match item.target with
-                | some target => bindAndPublish m target entered
-                | none => pure ()
-                let flow ←
-                  tryCatch (S.stmts body.toList) (fun _ =>
-                    refuse "with body raised before __exit__; exception payloads are outside the tier")
-                let _ ← evalOpen K m exitExpr
-                match old with
-                | some value => envSet contextName value
-                | none => envRemove contextName
-                pure flow
+                let exitName := fname ++ ".__exit__"
+                if !((findFunction m exitName).map FunctionDefn.withExitTransparent == some true) then
+                  refuse "with body exceptions require a plain __exit__ body (pass or return None/False)"
+                else do
+                  let contextName := "<with-context>"
+                  let contextExpr := Expr.name contextName sp
+                  let enterExpr :=
+                    Expr.call (Expr.attribute contextExpr "__enter__" sp)
+                      #[] #[] Option.none sp
+                  let noneExpr := Expr.constant .none sp
+                  let exitExpr :=
+                    Expr.call (Expr.attribute contextExpr "__exit__" sp)
+                      #[noneExpr, noneExpr, noneExpr] #[] Option.none sp
+                  let old ← envGet contextName
+                  let context ← evalOpen K m item.context
+                  envSet contextName context
+                  let entered ← evalOpen K m enterExpr
+                  match item.target with
+                  | some target => bindAndPublish m target entered
+                  | none => pure ()
+                  let flow ←
+                    tryCatch (S.stmts body.toList) (fun e => do
+                      let _ ← evalOpen K m exitExpr
+                      match old with
+                      | some value => envSet contextName value
+                      | none => envRemove contextName
+                      raisePy e)
+                  let _ ← evalOpen K m exitExpr
+                  match old with
+                  | some value => envSet contextName value
+                  | none => envRemove contextName
+                  pure flow
       | _ =>
           refuse "with context must be a direct class constructor call"
   | _, _ => refuse "multiple context-manager items are outside the tier"

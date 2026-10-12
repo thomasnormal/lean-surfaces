@@ -6936,45 +6936,54 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
             | Option.none =>
                 .unsupported "with requires an admitted class with __enter__ and __exit__"
             | some (ci, _) =>
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              let enterName := fname ++ ".__enter__"
               let exitName := fname ++ ".__exit__"
-              let a := st.world.heap.size
-              let st' := { st with world :=
-                { st.world with heap := st.world.heap.push (.instance ci #[]) } }
-              match vs with
-              | [] =>
-                Run.withLocals st'.locals
-                    (callIn m fuel st'.world enterName #[.ref a]) ⤳ fun stEnter entered =>
-                  match item.target with
-                    | some target =>
-                        Run.liftRes stEnter
-                          (assignToH stEnter.world.heap stEnter.locals target entered) ⤳
-                          fun stBody env' =>
-                            Run.bindE
-                              (execStmts m fuel { stBody with locals := env' } body.toList)
-                              (fun stAfter flow =>
-                                match flow with
-                                | .next | .ret _ | .brk | .cont =>
-                                    Run.withLocals stAfter.locals
-                                      (callIn m fuel stAfter.world exitName
-                                        #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
-                                    .ok stExit flow)
-                              (fun _ _ =>
-                                .unsupported "with body raised before __exit__; exception payloads are outside the tier")
-                    | none =>
-                        Run.bindE
-                          (execStmts m fuel stEnter body.toList)
-                          (fun stAfter flow =>
-                            match flow with
-                            | .next | .ret _ | .brk | .cont =>
-                                Run.withLocals stAfter.locals
-                                  (callIn m fuel stAfter.world exitName
-                                    #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
-                                .ok stExit flow)
-                          (fun _ _ =>
-                            .unsupported "with body raised before __exit__; exception payloads are outside the tier")
-              | _ => .exn st' (.typeError s!"{fname}() takes no arguments")
+              if !((findFunction m exitName).map FunctionDefn.withExitTransparent == some true) then
+                .unsupported "with body exceptions require a plain __exit__ body (pass or return None/False)"
+              else
+                evalExprs m fuel st args.toList ⤳ fun st vs =>
+                let enterName := fname ++ ".__enter__"
+                let a := st.world.heap.size
+                let st' := { st with world :=
+                  { st.world with heap := st.world.heap.push (.instance ci #[]) } }
+                match vs with
+                | [] =>
+                  Run.withLocals st'.locals
+                      (callIn m fuel st'.world enterName #[.ref a]) ⤳ fun stEnter entered =>
+                    match item.target with
+                      | some target =>
+                          Run.liftRes stEnter
+                            (assignToH stEnter.world.heap stEnter.locals target entered) ⤳
+                            fun stBody env' =>
+                              Run.bindE
+                                (execStmts m fuel { stBody with locals := env' } body.toList)
+                                (fun stAfter flow =>
+                                  match flow with
+                                  | .next | .ret _ | .brk | .cont =>
+                                      Run.withLocals stAfter.locals
+                                        (callIn m fuel stAfter.world exitName
+                                          #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
+                                      .ok stExit flow)
+                                (fun stBody e =>
+                                  Run.withLocals stBody.locals
+                                    (callIn m fuel stBody.world exitName
+                                      #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
+                                    .exn stExit e)
+                      | none =>
+                          Run.bindE
+                            (execStmts m fuel stEnter body.toList)
+                            (fun stAfter flow =>
+                              match flow with
+                              | .next | .ret _ | .brk | .cont =>
+                                  Run.withLocals stAfter.locals
+                                    (callIn m fuel stAfter.world exitName
+                                      #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
+                                  .ok stExit flow)
+                            (fun stBody e =>
+                              Run.withLocals stBody.locals
+                                (callIn m fuel stBody.world exitName
+                                  #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
+                                .exn stExit e)
+                | _ => .exn st' (.typeError s!"{fname}() takes no arguments")
         | _ =>
           .unsupported "with context must be a direct class constructor call"
       | _, _ => .unsupported "multiple context-manager items are outside the tier"

@@ -105,6 +105,8 @@ def waitingRepeat : SStmt :=
 
 #guard repeatCount (.lit "x001") false matches .unsupported _
 #guard repeatCount (.ofNat 64 4294967297) false matches .unsupported _
+#guard repeatCount (.ofNat 4 15) true == .ok 0
+#guard repeatCount (.ofNat 64 3) false == .ok 3
 
 #eval do
   for fixture in ["order", "counts", "transfers"] do

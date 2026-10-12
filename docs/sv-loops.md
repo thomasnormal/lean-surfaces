@@ -22,6 +22,15 @@ admitted. Unknown counts and larger nonnegative values refuse loudly.
 The standard specifies zero iterations for x/z counts, but that boundary
 is not claimed as implemented by this tier.
 
+The source-owned conversion rule is therefore explicit: evaluate the count
+expression once at loop entry, preserve its elaborated width and signedness,
+map a known signed-negative value to zero, and otherwise convert only a known
+nonnegative integral value in the admitted range. No resumed body or loop
+boundary evaluates the count expression again. For loops use the analogous
+source-order rule: initializer statements run once, each header condition is
+evaluated at the header, and each completed body or `continue` runs the step
+list once before the next header.
+
 The process-local stepper stores the unfinished body followed by a loop
 boundary marker. An ordinary delay or event wait retains the current
 state, output, pending nonblocking work, and the loop's next phase.

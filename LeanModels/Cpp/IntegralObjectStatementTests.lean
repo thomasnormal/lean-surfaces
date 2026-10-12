@@ -170,6 +170,38 @@ private def breakReady : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def continueReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let decrement := .assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1)))
+          let body := .sequence decrement .continue_
+          let condition := .binary .greater (.read access) (.literal (signed 0))
+          match executeIntegralObjectStatement 16 store (.whileLoop condition body) with
+          | .ok store => readValue (signed 0) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
+private def forContinueReady : Bool :=
+  match ready with
+  | .ok (store, object) =>
+      match store.borrow object with
+      | .ok access =>
+          let decrement := .assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1)))
+          let body := .sequence decrement .continue_
+          let condition := .binary .greater (.read access) (.literal (signed 0))
+          match executeIntegralObjectStatement 16 store
+              (.forLoop (.assign access (.builtin .int) (.literal (signed 3)))
+                condition decrement body) with
+          | .ok store => readValue (signed (-1)) store access
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
 private def divisionError : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -218,6 +250,8 @@ private def constError : Bool :=
 #guard whileEmpty
 #guard forReady
 #guard breakReady
+#guard continueReady
+#guard forContinueReady
 #guard divisionError
 #guard staleError
 #guard constError
@@ -233,6 +267,13 @@ private def constError : Bool :=
   | .ok (store, _) =>
       match executeIntegralObjectStatement 2 store .break_ with
       | .error .breakOutsideLoop => true
+      | _ => false
+  | .error _ => false
+
+#guard match ready with
+  | .ok (store, _) =>
+      match executeIntegralObjectStatement 2 store .continue_ with
+      | .error .continueOutsideLoop => true
       | _ => false
   | .error _ => false
 

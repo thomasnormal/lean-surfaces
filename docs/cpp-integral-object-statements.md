@@ -15,6 +15,9 @@ the same state-threaded condition/body/step discipline.
 `break_` exits the nearest admitted loop and is refused at the public
 statement boundary when no loop consumes it.
 
+`continue_` re-evaluates a `whileLoop` condition or runs the `forLoop` step
+before its next condition check; it is likewise refused outside a loop.
+
 Errors remain loud and typed: object/lifetime failures, invalid values,
 undefined integral operations, unsupported operations and fuel exhaustion are
 not collapsed into a fabricated value. Aliases therefore observe earlier
@@ -22,8 +25,8 @@ writes, while a stale access refuses at the point of use.
 
 Object allocation and declaration binding remain outside this fragment; the
 caller supplies an allocated `ObjectId`. The admitted loops are integral
-`whileLoop` and preallocated-object `forLoop`; `break_` is the only admitted
-loop transfer; calls, `do`/`while`, pointers,
+`whileLoop` and preallocated-object `forLoop`; `break_` and `continue_` are the
+admitted loop transfers; calls, `do`/`while`, pointers,
 classes, floating values,
 overload resolution and general C++ execution remain outside the fragment.
 
@@ -36,7 +39,8 @@ python3 extractors/cpp/test_integral_objects.py
 
 Kernel guards cover initialization and default initialization, sequencing,
 conditional true/false selection, terminating and empty `whileLoop` cases,
-`forLoop` initialization/step order, and loop-local/public `break_` behavior,
+`forLoop` initialization/step order, and loop-local/public `break_`/`continue_`
+behavior,
 alias-visible order, division-by-zero, stale-access and const-write refusals,
 plus statement, sequence and loop fuel exhaustion. The independent integral object
 and conversion Clang suites remain the value oracle; this statement layer makes

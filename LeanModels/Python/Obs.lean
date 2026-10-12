@@ -811,7 +811,7 @@ theorem fuelMono (fuel : Nat) :
                       | none =>
                         -- len, sorted (drains a generator), max/min (the
                         -- guarded drain), any/all (the short-circuit
-                        -- drain), abs, int, enumerate, count (both
+                        -- drain), abs, round, int, enumerate, count (both
                         -- ALLOCATE an iterator object), NEXT (binds the
                         -- args, then steps the generator), ord, chr
                         -- len → sorted → max → min → any/all → set → abs →
@@ -824,7 +824,8 @@ theorem fuelMono (fuel : Nat) :
                                (Run.le_ite ?_                                  -- any/all
                                 (Run.le_ite ?_                                 -- set
                                  (Run.le_ite (hb _)                            -- abs
-                                  (Run.le_ite (hb _)                           -- int
+                                  (Run.le_ite (hb _)                           -- round
+                                   (Run.le_ite (hb _)                           -- int
                                    (Run.le_ite (hb _)
                                    (Run.le_ite (hb _)
                                    (Run.le_ite (hb _)
@@ -840,7 +841,7 @@ theorem fuelMono (fuel : Nat) :
                                          (Run.le_ite (hb _)                    -- ord
                                             (Run.le_ite (hb _)                 -- chr
                                              (Run.le_ite (hb _)                 -- hex
-                                              ?_))))))))))))))))))))))
+                                              ?_)))))))))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -2423,7 +2424,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                           cases rest with
                           | nil => exact .liftResF h₁ _
                           | cons _ _ => exact .exn
-                      · -- `int`, then the pass-3 trio `sum`/`tuple`/
+                      · -- `round`, then `int`, then the pass-3 trio
+                        -- `sum`/`tuple`/
                         -- `range` (value folds; the generator drains sit
                         -- behind the `moduleGenFree` guard, discharged by
                         -- `heapFree_genFree`), then `next` (rewritten
@@ -2431,6 +2433,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                         -- pair `ord`/`chr`, then print / module dunder /
                         -- NameError / loud
                         refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
+                          (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                           (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                            (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                            (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
@@ -2444,7 +2447,17 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                       (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                         (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                                         (.ite .unsupported
-                                        (.ite .unsupported ?_))))))))))))))
+                                        (.ite .unsupported ?_)))))))))))))))
+                        · cases vs with
+                          | nil => exact .exn
+                          | cons v rest =>
+                            cases rest with
+                            | nil =>
+                              cases v <;>
+                                first
+                                | exact .okF h₁ _
+                                | exact .unsupported
+                            | cons _ _ => exact .unsupported
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>

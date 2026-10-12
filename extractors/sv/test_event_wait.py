@@ -72,7 +72,6 @@ class EventWait(unittest.TestCase):
                     for node in _nodes(lower(source))
                 ))
 
-
 def _nodes(value):
     if isinstance(value, dict):
         yield value

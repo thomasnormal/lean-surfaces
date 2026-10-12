@@ -302,6 +302,19 @@ Its time-zero runner remains initial-only; the separate scheduler-facing
 loader admits only the narrow timed `initial` subset documented above. Each
 other surface keeps its own admission boundary.
 
+### Two-state output ports — 2026-10-12
+
+The legacy/self-check envelope admits an unsigned scalar or descending
+zero-based packed **2-state output** port. Its `two_state` metadata is retained
+through ingestion, and an unconnected output starts at zero as required by
+the port's 2-state variable semantics. This is a declaration-boundary slice;
+the body and output observation still use the existing time-zero runner.
+
+2-state input ports remain loud because an unconnected input is not a faithful
+zero source at this tier. Signed, reversed-range, aggregate, net and symbolic
+2-state port forms remain outside the admission. No scheduler or value-core
+rule changes are introduced.
+
 ### Integral explicit casts — 2026-10-09
 
 The legacy/self-check extractor now lowers integral size, signing and

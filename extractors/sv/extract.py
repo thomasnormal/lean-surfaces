@@ -1754,16 +1754,25 @@ def convert_port(sm, m):
     direction = DIRECTION_MAP.get(d)
     if direction is None:  # InOut / Ref
         return unsupported(sm, m, "PortSymbol:" + d)
-    w, reason = type_width(m.type)
+    if _SYM is None and not m.type.isFourState:
+        if direction != "out" or getattr(m.type, "isSigned", False):
+            return unsupported(sm, m, "PortSymbol:2state")
+        w, two, reason = type_width_2s(m.type)
+    else:
+        w, reason = type_width(m.type)
+        two = False
     if w is None:
         return unsupported(sm, m, "PortSymbol:" + reason)
-    return {
+    port = {
         "kind": "Port",
         "span": sym_span(sm, m),
         "name": m.name,
         "dir": direction,
         "width": w,
     }
+    if two:
+        port["two_state"] = True
+    return port
 
 
 def convert_var(sm, m):

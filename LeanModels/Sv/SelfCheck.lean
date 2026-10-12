@@ -820,6 +820,8 @@ structure SDecl where
   name : String
   width : Nat
   isNet : Bool := false
+  isOutput : Bool := false
+  twoState : Bool := false
   init : Option SExpr := none
 deriving Repr, Inhabited
 
@@ -844,7 +846,9 @@ def initDecls (fuel : Nat) : List SDecl → SvState → Res SvState
   | [], st => .ok st
   | dc :: rest, st => do
       let v ← match dc.init with
-        | none => pure (if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width)
+        | none => pure (if dc.isNet then LVec.replicate dc.width .lz
+                        else if dc.isOutput && dc.twoState then LVec.replicate dc.width .l0
+                        else LVec.xVec dc.width)
         | some e => evalSExpr fuel st e
       initDecls fuel rest (SvState.set st dc.name v)
 
@@ -1146,7 +1150,14 @@ input/output). Unsupported ports poison the design via an `.other` proc. -/
 def parsePortD (j : Json) : Except String (Sum SDecl SProc) := do
   match ← getStrF j "kind" with
   | "Port" =>
-      return .inl { name := ← getStrF j "name", width := ← getNatF j "width" }
+      let dir ← getStrF j "dir"
+      let twoState ← match getFOpt j "two_state" with
+        | none => pure false
+        | some value => match value.getBool? with
+          | .ok b => pure b
+          | .error _ => .error "field 'two_state' must be a Bool"
+      return .inl { name := ← getStrF j "name", width := ← getNatF j "width"
+                    isOutput := dir == "out", twoState }
   | "Unsupported" =>
       return .inr (.other (← getStrF j "sv_kind") (unsupportedText j))
   | k => .error s!"unknown port kind '{k}'"

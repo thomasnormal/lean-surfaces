@@ -12,11 +12,12 @@ The candidate must be a named, ordinary `FunctionDecl` accepted by
 `admitLocalFunctionDeclaration` with a direct `CompoundStmt` body. Prototypes,
 deleted declarations and function-try bodies remain loud refusals. The body
 is represented as a sequence of admitted expression statements, `if`
-statements with an optional else branch, `while`/`do` loops, and return
-statements. Empty compound and null statements are `skip`. `for` loops,
-declarations, assignments, calls, overloaded operations, exceptions, local
-functions and every other statement form refuse rather than being silently
-represented as a callable.
+statements with an optional else branch, `while`/`do` loops, parameter-targeted
+`=` assignments, and return statements. Empty compound and null statements are
+`skip`. `for` loops, declarations, local-variable/member assignments, compound
+assignments, calls, overloaded operations, exceptions, local functions and
+every other statement form refuse rather than being silently represented as a
+callable.
 
 The function type comes from the validated `Clang::QualType structured type
 projection v1` row for the exact occurrence. This slice requires a non-variadic

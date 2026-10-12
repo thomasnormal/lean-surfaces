@@ -55,6 +55,11 @@ def declRef (id name : String) : Raw := object [
   ("id", text id), ("kind", text "DeclRefExpr"),
   ("referencedDecl", object [("id", text id), ("kind", text "ParmVarDecl"), ("name", text name)])]
 
+def declRefNode (id declaration name : String) : Raw := object [
+  ("id", text id), ("kind", text "DeclRefExpr"),
+  ("referencedDecl", object [("id", text declaration), ("kind", text "ParmVarDecl"),
+    ("name", text name)])]
+
 def implicitCastKind (id kind : String) (child : Raw) : Raw := object [
   ("id", text id), ("kind", text "ImplicitCastExpr"),
   ("castKind", text kind), ("inner", .array [child])]
@@ -147,6 +152,31 @@ def admitLiteral : Except String CallableFunction :=
 
 def admitBinary : Except String CallableFunction :=
   admitCallableFunction binaryProbe binaryTypes binaryEvidence TargetProfile.lp64 [0]
+
+def assignmentProbe : DeclarationProbe :=
+  probeFor (functionSource "bump" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x30"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [("id", text "0x50"), ("kind", text "BinaryOperator"), ("opcode", text "="),
+        ("inner", .array [
+          declRefNode "0x51" "0x10" "value",
+          object [("id", text "0x20"), ("kind", text "BinaryOperator"), ("opcode", text "+"),
+            ("inner", .array [
+              declRefNode "0x43" "0x10" "value", integerLiteralRaw "0x44" "1"])]])],
+      returnStmt "0x52" (implicitCast "0x53" (declRefNode "0x54" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "bump" "CompoundStmt"]
+
+def assignmentTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def assignmentEvidence : List CppBinaryExpressionEvidence := [{
+  ordinal := 0, occurrence := {value := "0x20"}, operator := "+", result := intType,
+  operands := [
+    {occurrence := {value := "0x43"}, kind := "DeclRefExpr", sourceType := intType, type := intType},
+    {occurrence := {value := "0x44"}, kind := "IntegerLiteral", sourceType := intType, type := intType}]}]
+
+def admitAssignment : Except String CallableFunction :=
+  admitCallableFunction assignmentProbe assignmentTypes assignmentEvidence TargetProfile.lp64 [0]
 
 def ifProbe : DeclarationProbe :=
   probeFor (functionSource "choose" []
@@ -273,6 +303,13 @@ def admitLogical : Except String CallableFunction :=
       match function.body with
       | .return_ expression => expression.expression ==
           .binary "+" (typedParameter "0x10") (typedParameter "0x11")
+      | _ => false
+  | .error _ => false
+#guard match admitAssignment with
+  | .ok function =>
+      match function.body with
+      | .sequence (.assign declaration expression) (.return_ _) =>
+          declaration == {value := "0x10"} && expression.type == intType
       | _ => false
   | .error _ => false
 #guard match admitIf with

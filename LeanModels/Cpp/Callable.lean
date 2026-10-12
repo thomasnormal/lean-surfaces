@@ -22,6 +22,7 @@ mutual
   inductive CallableStatement where
     | skip
     | expression (expression : TypedCallableExpression)
+    | assign (declaration : FrontendHandle) (expression : TypedCallableExpression)
     | return_ (expression : TypedCallableExpression)
     | conditional (condition : TypedCallableExpression)
         (whenTrue whenFalse : CallableStatement)
@@ -104,6 +105,10 @@ private def callableParameters (rawParameters : List Raw) (rows : List TypeEvide
 private def parameterType? (parameters : List CallableParameter) (declaration : FrontendHandle) :
     Option CppTypeEvidence :=
   parameters.find? (fun parameter => parameter.declaration == declaration) |>.map (·.type)
+
+private def referencedDeclaration (raw : Raw) : Except String FrontendHandle := do
+  let reference ← evidenceField raw "referencedDecl"
+  rawId reference
 
 private def integerLiteral (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence) :
     Except String TypedCallableExpression := do
@@ -278,7 +283,24 @@ partial def parseCallableStatement (profile : TargetProfile)
       let [child] := children
         | throw "callable: expression cleanup wrapper requires one child"
       parseCallableStatement profile parameters expressionRows resultType child
-  | "UnaryOperator" | "BinaryOperator" | "IntegerLiteral" | "DeclRefExpr" |
+  | "BinaryOperator" =>
+      let operator ← evidenceText statement "opcode"
+      if operator == "=" then
+        let children ← rawChildren statement
+        let [target, value] := children
+          | throw "callable: assignment requires a target and value"
+        unless target.text "kind" == some "DeclRefExpr" do
+          throw "callable: assignment target must be a parameter reference"
+        let declaration ← referencedDeclaration target
+        let some targetType := parameterType? parameters declaration
+          | throw "callable: assignment target is not a parameter"
+        let expression ← parseCallableExpression profile parameters expressionRows value none
+          (some targetType)
+        pure (.assign declaration expression)
+      else
+        let expression ← parseCallableExpression profile parameters expressionRows statement none none
+        pure (.expression expression)
+  | "UnaryOperator" | "IntegerLiteral" | "DeclRefExpr" |
       "ImplicitCastExpr" | "ParenExpr" =>
       let expression ← parseCallableExpression profile parameters expressionRows statement none none
       pure (.expression expression)

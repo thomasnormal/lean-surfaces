@@ -6,7 +6,9 @@ It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references, integral casts,
 typed integral unary and binary expressions, and short-circuiting logical `&&`/`||` inside
-sequences, `if` branches and `while`/`do` loops, and returns the existing `IntegralResult` so signed
+sequences, `if` branches and `while`/`do` loops. Parameter-targeted `=` statements
+thread the updated argument values through later statements. The evaluator
+returns the existing `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain
 visible rather than becoming host-language behavior.
 
@@ -44,10 +46,11 @@ The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes real signed, unsigned, short,
 unsigned-short and boolean identity bodies, direct integer-literal and
 null-statement and discarded-expression returns, explicit `if`/`else` branches,
+parameter assignments,
 unary plus/complement,
 integral return casts between
 `int`, `bool` and `short`, and a two-parameter first-value body, then compares
-the admitted evaluator against their Clang-compiled calls for 137 rows at both
+the admitted evaluator against their Clang-compiled calls for 140 rows at both
 `-O0` and `-O2`, with undefined-behavior sanitization. Width checks pin the
 LP64 target; missing settings skip rather than count as agreement. This is
 evidence for the bounded call profile, not whole-program execution.

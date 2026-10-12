@@ -102,6 +102,18 @@ private def unaryOperator? (operator : String) : Option IntegralUnary :=
 private def argumentAt (arguments : List IntegralValue) (index : Nat) : Option IntegralValue :=
   arguments[index]?
 
+private def assignParameter (profile : TargetProfile) (parameters : List CallableParameter)
+    (arguments : List IntegralValue) (declaration : FrontendHandle) (value : IntegralValue) :
+    Except CallableEvaluationError (List IntegralValue) := do
+  let some index := parameters.findIdx? (fun parameter => parameter.declaration == declaration)
+    | .error (.missingParameter declaration)
+  let some parameter := parameters[index]?
+    | .error (.missingParameter declaration)
+  let expected ← formatFor profile parameter.type
+  unless value.format == expected do
+    throw .expressionTypeMismatch
+  pure (arguments.set index value)
+
 private def evaluateInteger (profile : TargetProfile) (value : Nat) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
   let format ← formatFor profile (.builtin .int)
@@ -204,13 +216,14 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
           | .unsupported reason, _ | _, .unsupported reason => pure (.unsupported reason)
 
 private inductive CallableExecution where
-  | normal
-  | returned (result : IntegralResult IntegralValue)
-  | failed (result : IntegralResult IntegralValue)
+  | normal (arguments : List IntegralValue)
+  | returned (result : IntegralResult IntegralValue) (arguments : List IntegralValue)
+  | failed (result : IntegralResult IntegralValue) (arguments : List IntegralValue)
 
-private def terminalResult : IntegralResult IntegralValue → CallableExecution
-  | .ok _ => .normal
-  | result => .failed result
+private def terminalResult (arguments : List IntegralValue) :
+    IntegralResult IntegralValue → CallableExecution
+  | .ok _ => .normal arguments
+  | result => .failed result arguments
 
 private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
     (parameters : List CallableParameter) (arguments : List IntegralValue)
@@ -220,11 +233,22 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
   | 0 => .error .fuelExhausted
   | fuel + 1 =>
       match statement with
-      | .skip => .ok .normal
+      | .skip => .ok (.normal arguments)
       | .expression expression =>
-          (evaluateTyped fuel profile parameters arguments expression).map terminalResult
+          (evaluateTyped fuel profile parameters arguments expression).map (terminalResult arguments)
+      | .assign declaration expression => do
+          let result ← evaluateTyped fuel profile parameters arguments expression
+          match result with
+          | .ok value =>
+              match assignParameter profile parameters arguments declaration value with
+              | .ok updated => pure (.normal updated)
+              | .error error => throw error
+          | .invalid reason => pure (.failed (.invalid reason) arguments)
+          | .undefined reason => pure (.failed (.undefined reason) arguments)
+          | .unsupported reason => pure (.failed (.unsupported reason) arguments)
       | .return_ expression =>
-          (evaluateTyped fuel profile parameters arguments expression).map .returned
+          (evaluateTyped fuel profile parameters arguments expression).map
+            (fun result => .returned result arguments)
       | .conditional condition whenTrue whenFalse => do
           let result ← evaluateTyped fuel profile parameters arguments condition
           match result with
@@ -233,46 +257,46 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
                 evaluateCallableStatement fuel profile parameters arguments whenFalse
               else
                 evaluateCallableStatement fuel profile parameters arguments whenTrue
-          | .invalid reason => pure (.failed (.invalid reason))
-          | .undefined reason => pure (.failed (.undefined reason))
-          | .unsupported reason => pure (.failed (.unsupported reason))
+          | .invalid reason => pure (.failed (.invalid reason) arguments)
+          | .undefined reason => pure (.failed (.undefined reason) arguments)
+          | .unsupported reason => pure (.failed (.unsupported reason) arguments)
       | .whileLoop condition body => do
           let result ← evaluateTyped fuel profile parameters arguments condition
           match result with
           | .ok value =>
               if value.value == 0 then
-                pure .normal
+                pure (.normal arguments)
               else
                 let bodyResult ← evaluateCallableStatement fuel profile parameters arguments body
                 match bodyResult with
-                | .normal =>
-                    evaluateCallableStatement fuel profile parameters arguments
+                | .normal updated =>
+                    evaluateCallableStatement fuel profile parameters updated
                       (.whileLoop condition body)
-                | .returned _ | .failed _ => pure bodyResult
-          | .invalid reason => pure (.failed (.invalid reason))
-          | .undefined reason => pure (.failed (.undefined reason))
-          | .unsupported reason => pure (.failed (.unsupported reason))
+                | .returned _ _ | .failed _ _ => pure bodyResult
+          | .invalid reason => pure (.failed (.invalid reason) arguments)
+          | .undefined reason => pure (.failed (.undefined reason) arguments)
+          | .unsupported reason => pure (.failed (.unsupported reason) arguments)
       | .doWhile body condition => do
           let bodyResult ← evaluateCallableStatement fuel profile parameters arguments body
           match bodyResult with
-          | .normal =>
-              let result ← evaluateTyped fuel profile parameters arguments condition
+          | .normal updated =>
+              let result ← evaluateTyped fuel profile parameters updated condition
               match result with
               | .ok value =>
                   if value.value == 0 then
-                    pure .normal
+                    pure (.normal updated)
                   else
-                    evaluateCallableStatement fuel profile parameters arguments
+                    evaluateCallableStatement fuel profile parameters updated
                       (.doWhile body condition)
-              | .invalid reason => pure (.failed (.invalid reason))
-              | .undefined reason => pure (.failed (.undefined reason))
-              | .unsupported reason => pure (.failed (.unsupported reason))
-          | .returned _ | .failed _ => pure bodyResult
+              | .invalid reason => pure (.failed (.invalid reason) updated)
+              | .undefined reason => pure (.failed (.undefined reason) updated)
+              | .unsupported reason => pure (.failed (.unsupported reason) updated)
+          | .returned _ _ | .failed _ _ => pure bodyResult
       | .sequence first second => do
           let firstResult ← evaluateCallableStatement fuel profile parameters arguments first
           match firstResult with
-          | .normal => evaluateCallableStatement fuel profile parameters arguments second
-          | .returned _ | .failed _ => pure firstResult
+          | .normal updated => evaluateCallableStatement fuel profile parameters updated second
+          | .returned _ _ | .failed _ _ => pure firstResult
 
 def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
     (arguments : List IntegralValue) :
@@ -286,8 +310,8 @@ def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : Callable
   | .ok values =>
       let execution ← evaluateCallableStatement fuel profile function.parameters values function.body
       match execution with
-      | .normal => .error .missingReturn
-      | .returned result | .failed result => .ok result
+      | .normal _ => .error .missingReturn
+      | .returned result _ | .failed result _ => .ok result
   | .invalid reason => pure (.invalid reason)
   | .undefined reason => pure (.undefined reason)
   | .unsupported reason => pure (.unsupported reason)

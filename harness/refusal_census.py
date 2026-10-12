@@ -232,7 +232,7 @@ class C:
         return False
 with C() as v:
     print(v)
-""", "REFUSE", "the context-manager protocol")
+""", "MATCH", "single synchronous context-manager item")
 w("stmt.AsyncWith", """
 async def f(c):
     async with c as v:

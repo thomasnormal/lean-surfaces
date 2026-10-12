@@ -26,7 +26,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-142 witnesses: 117 MATCH, 25 REFUSE.
+142 witnesses: 118 MATCH, 24 REFUSE.
 
 ### `stmt`
 
@@ -47,7 +47,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `AsyncFor` | REFUSE | unsupported statement 'AsyncFunctionDef' |
 | `While` | MATCH |  |
 | `If` | MATCH |  |
-| `With` | REFUSE | unsupported statement 'With' |
+| `With` | MATCH | single synchronous context-manager item |
 | `AsyncWith` | REFUSE | unsupported statement 'AsyncFunctionDef' |
 | `Raise` | REFUSE | 'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.m… |
 | `Try` | MATCH | FLIPPED by §except-builtin: `ValueError` is now an admitted handler class. WHAT THIS ROW PROVES AND DOES NOT:… |

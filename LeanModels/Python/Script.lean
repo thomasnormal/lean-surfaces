@@ -538,10 +538,8 @@ mutual
     -- compound the executor still delegates wholesale
     | .tryStmt b _ h _ _ =>
       Stmt.scriptMidAssignsList b.toList ++ Stmt.scriptMidAssignsList h.toList
-    | .withStmt items b _ _ =>
-      (items.toList.map fun item =>
-        (item.target.map targetBoundNames).getD []).flatten
-        ++ Stmt.assignedNamesList b.toList
+    | .withStmt _ b _ _ =>
+      Stmt.scriptMidAssignsList b.toList
     | _ => []
 
   /-- Elementwise `Stmt.scriptMidAssigns`. -/

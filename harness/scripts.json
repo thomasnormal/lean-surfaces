@@ -120,6 +120,10 @@
     "expect": "unsupported"
   },
   {
+    "file": "harness/scripts/with_script.py",
+    "expect": "match"
+  },
+  {
     "file": "harness/scripts/print_nonascii.py",
     "expect": "unsupported"
   },

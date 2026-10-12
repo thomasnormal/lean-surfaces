@@ -425,9 +425,16 @@ cycle DETECTION, never by running out of fuel).
   exception triple required to call `__exit__(exc_type, exc, tb)` faithfully;
   this is a boundary to extend, not a permanent exclusion. `async with` is
   likewise still unfinished scope.
+* At module scope the script executor owns a matching control shell: the
+  `as` target is published before the body, body statements flush one at a
+  time, and the target remains a module global after the statement. This keeps
+  a function called from inside the body on CPython's module-frame view rather
+  than the stale pre-`with` globals.
 * `Examples/python/with_lab` pins normal target binding, unbound use, and
-  fall-through, plus the two deliberate refusals. The monadic runner and the
-  trunk proof interpreter agree with CPython on the decided rows.
+  fall-through, plus the two deliberate refusals. `harness/scripts/with_script.py`
+  additionally pins module-scope target and body publication. The monadic
+  runner and the trunk proof interpreter agree with CPython on the decided
+  rows.
 
 ## Tuple repetition (2026-10-11 — current)
 

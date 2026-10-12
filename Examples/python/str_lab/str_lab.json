@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/str_lab/str_lab.py",
-  "source_sha256": "30d6db904e6da8ec53028de668fa278dd8a06c16f21821145f9b3710e1992e5c",
+  "source_sha256": "e100a530cd67a600aa3196212c8855f22bc3d5f761dc467cca7e1e97f3f6a25e",
   "module": {
     "kind": "Module",
     "body": [
@@ -4748,6 +4748,190 @@
                 "id": "bin"
               },
               "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 317,
+          "col_offset": 0,
+          "end_lineno": 318,
+          "end_col_offset": 23
+        },
+        "name": "builtin_ascii",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 317,
+              "col_offset": 18,
+              "end_lineno": 317,
+              "end_col_offset": 23
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 318,
+              "col_offset": 4,
+              "end_lineno": 318,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 318,
+                "col_offset": 11,
+                "end_lineno": 318,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 318,
+                  "col_offset": 11,
+                  "end_lineno": 318,
+                  "end_col_offset": 16
+                },
+                "id": "ascii"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 318,
+                    "col_offset": 17,
+                    "end_lineno": 318,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 321,
+          "col_offset": 0,
+          "end_lineno": 322,
+          "end_col_offset": 18
+        },
+        "name": "builtin_ascii_noargs",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 322,
+              "col_offset": 4,
+              "end_lineno": 322,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 322,
+                "col_offset": 11,
+                "end_lineno": 322,
+                "end_col_offset": 18
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 322,
+                  "col_offset": 11,
+                  "end_lineno": 322,
+                  "end_col_offset": 16
+                },
+                "id": "ascii"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 325,
+          "col_offset": 0,
+          "end_lineno": 326,
+          "end_col_offset": 21
+        },
+        "name": "builtin_ascii_container",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 326,
+              "col_offset": 4,
+              "end_lineno": 326,
+              "end_col_offset": 21
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 326,
+                "col_offset": 11,
+                "end_lineno": 326,
+                "end_col_offset": 21
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 326,
+                  "col_offset": 11,
+                  "end_lineno": 326,
+                  "end_col_offset": 16
+                },
+                "id": "ascii"
+              },
+              "args": [
+                {
+                  "kind": "List",
+                  "span": {
+                    "lineno": 326,
+                    "col_offset": 17,
+                    "end_lineno": 326,
+                    "end_col_offset": 20
+                  },
+                  "elts": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 326,
+                        "col_offset": 18,
+                        "end_lineno": 326,
+                        "end_col_offset": 19
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  ]
+                }
+              ],
               "keywords": [],
               "call_unsupported": null
             }

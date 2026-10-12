@@ -192,6 +192,13 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
   (.typeError "'str' object cannot be interpreted as an integer")
 #py_check str_lab.builtin_bin_noargs() raises
   (.typeError "bin() takes exactly one argument (0 given)")
+#py_check str_lab.builtin_ascii(3) = "3"
+#py_check str_lab.builtin_ascii(true) = "True"
+#py_check str_lab.builtin_ascii("héllo") = "'h\\xe9llo'"
+#py_check str_lab.builtin_ascii("€") = "'\\u20ac'"
+#py_check str_lab.builtin_ascii_noargs() raises
+  (.typeError "ascii() takes exactly one argument (0 given)")
+#guard callFunction str_lab "builtin_ascii_container" #[] 4096 matches .unsupported _
 #py_check str_lab.fmt_hex(255) = "ff"
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")

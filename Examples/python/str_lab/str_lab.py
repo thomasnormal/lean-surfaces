@@ -312,3 +312,15 @@ def builtin_bin(n):
 
 def builtin_bin_noargs():
     return bin()
+
+
+def builtin_ascii(value):
+    return ascii(value)
+
+
+def builtin_ascii_noargs():
+    return ascii()
+
+
+def builtin_ascii_container():
+    return ascii([1])

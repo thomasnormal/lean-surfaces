@@ -667,7 +667,7 @@ def isBuiltinName (id : String) : Bool :=
   id == "enumerate" || id == "count" || id == "iter" ||
   id == "any" || id == "all" || id == "set" ||
   id == "sum" || id == "tuple" || id == "range" || id == "list" ||
-  id == "dict" || id == "hex" || id == "oct" || id == "bin"
+  id == "dict" || id == "ascii" || id == "hex" || id == "oct" || id == "bin"
 
 /-- Every name CPython 3.9's `builtins` module binds (`dir(builtins)`,
 minus the dunders — generated from the PINNED reference interpreter).

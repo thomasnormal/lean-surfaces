@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- The `ascii()` builtin now renders scalar values and ASCII-escapes Unicode
+  strings, with CPython's exact one-argument arity error; heap-recursive
+  values remain loud rather than guessing a representation. The CPython 3.9
+  differential suite now has **2,755 / 3,081 rows = 89.4% complete** natively
+  and **2,681 / 3,081 = 87.0% complete** in the proof interpreter, with **100%
+  agreement among decided rows** and zero failures.
+
 - The `bin()` builtin now renders bounded integers and Booleans with
   CPython's lowercase `0b` form, including negative values, faithful
   one-argument arity errors, and integer-required `TypeError`s; heap objects

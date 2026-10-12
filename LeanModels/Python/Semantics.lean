@@ -1645,6 +1645,14 @@ def binVal : RVal → Res RVal
     | Option.none =>
       .exn (.typeError s!"'{v.typeName}' object cannot be interpreted as an integer")
 
+def asciiVal : RVal → Res RVal
+  | .str s => .ok (.str (asciiStr s))
+  | v =>
+    match strFormatRepr v with
+    | some text => .ok (.str text)
+    | Option.none =>
+      .unsupported s!"ascii() of '{v.typeName}' is outside the scalar tier (heap-recursive repr is not guessed; docs/memory-model.md §the cast tier)"
+
 def floatCastVal : RVal → Res RVal
   | .float value => .ok (.float value)
   | .int integer => floatNumber (.int integer) >>= fun value => .ok (.float value)
@@ -6021,12 +6029,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     match vs with
                     | [v] => Run.liftRes st (chrVal v)
                     | vs => .exn st (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
-                  else if fname == "hex" || fname == "oct" || fname == "bin" then
+                  else if fname == "ascii" || fname == "hex" || fname == "oct" || fname == "bin" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with
                     | [v] =>
                       Run.liftRes st
-                        (if fname == "hex" then hexVal v
+                        (if fname == "ascii" then asciiVal v
+                         else if fname == "hex" then hexVal v
                          else if fname == "oct" then octVal v else binVal v)
                     | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
                   else if fname == "str" then

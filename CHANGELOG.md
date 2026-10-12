@@ -21,6 +21,14 @@ change is listed here under **Changed** or **Removed**.
   and **2,686 / 3,086 = 87.0% complete** in the proof interpreter, with **100%
   agreement among decided rows** and zero failures.
 
+- The `format()` builtin now models value-only formatting and an explicit empty
+  specification through the shared scalar/container renderer, with faithful
+  arity and second-argument errors; non-empty format specifications remain
+  loud until the format mini-language is specified. The CPython 3.9
+  differential suite now has **2,770 / 3,097 rows = 89.4% complete** natively
+  and **2,696 / 3,097 = 87.1% complete** in the proof interpreter, with **100%
+  agreement among decided rows** and zero failures.
+
 ## [0.1.10] — 2026-10-12
 
 ### Added

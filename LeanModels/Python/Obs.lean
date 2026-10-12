@@ -816,7 +816,7 @@ theorem fuelMono (fuel : Nat) :
                         -- args, then steps the generator), ord, chr
                         -- len → sorted → max → min → any/all → set → abs →
                         -- int → sum → tuple → list → dict → range →
-                        -- enumerate → count → next → ord → chr → hex → tail
+                        -- enumerate → count → next → ord → chr → hex → format → tail
                         refine Run.le_ite (hb _)                             -- len
                             (Run.le_ite ?_                                     -- sorted
                              (Run.le_ite ?_                                    -- max
@@ -839,9 +839,10 @@ theorem fuelMono (fuel : Nat) :
                                        (Run.le_ite (hb _)                      -- count
                                         (Run.le_ite ?_                         -- next
                                          (Run.le_ite (hb _)                    -- ord
-                                            (Run.le_ite (hb _)                 -- chr
+                                             (Run.le_ite (hb _)                 -- chr
                                              (Run.le_ite (hb _)                 -- hex
-                                              ?_)))))))))))))))))))))))
+                                              (Run.le_ite (hb _)                -- format
+                                              ?_))))))))))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -2445,8 +2446,14 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                     (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                       (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                                        (.ite (.bind hargs fun st₁ vs h₁ => by
+                                          cases vs with
+                                          | nil => exact .okF h₁ _
+                                          | cons v rest =>
+                                            cases rest with
+                                            | nil => exact .liftResF h₁ _
+                                            | cons _ _ => exact .unsupported)
                                         (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
-                                        (.ite .unsupported
                                         (.ite .unsupported ?_)))))))))))))))
                         · cases vs with
                           | nil => exact .exn
@@ -2549,29 +2556,44 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                             cases rest with
                             | nil => exact .liftResF h₁ _
                             | cons _ _ => exact .exn
-                        · -- str (pass 8, §the cast tier): pure worker
+                        · -- format: the empty-spec and value-only forms are
+                          -- pure rendering; non-empty specs and bad arities
+                          -- are decided without changing the world
                           cases vs with
-                          | nil => exact .okF h₁ _
+                          | nil => exact .exn
                           | cons v rest =>
                             cases rest with
                             | nil => exact .liftResF h₁ _
-                            | cons _ _ => exact .unsupported
+                            | cons spec rest' =>
+                              cases rest' with
+                              | nil =>
+                                cases spec <;> try (simp only; exact .exn)
+                                case str spec =>
+                                  dsimp only
+                                  split
+                                  · exact .liftResF h₁ _
+                                  · exact .unsupported
+                              | cons _ _ => simp only; exact .exn
                         · -- the pass-3 absent-arm live view: the guard
                           -- (funs + top-level def-freedom, both from hm)
                           -- kills the closure dispatch
-                          cases Env.lookup st.world.globals fname with
-                          | none => exact .ite .unsupported (.ite .exn .unsupported)
-                          | some v =>
-                            cases v <;>
-                              first
-                                | exact .bind hargs fun st₁ _ h₁ => .exn
-                                | skip
-                            case ref a =>
-                              refine .bind hargs fun st₁ vs h₁ => ?_
-                              simp only [Module.heapFree_funs hm,
-                                Module.heapFree_topDefFree hm,
-                                Bool.and_self, eq_self_iff_true, if_true]
-                              exact .exn
+                          cases hdu : isModuleDunder fname
+                          · simp only [hdu, Bool.false_eq_true, if_false]
+                            cases Env.lookup st.world.globals fname with
+                            | none => exact .ite .unsupported (.ite .exn .unsupported)
+                            | some v =>
+                              cases v <;>
+                                first
+                                  | exact .bind hargs fun st₁ _ h₁ => .exn
+                                  | skip
+                              case ref a =>
+                                refine .bind hargs fun st₁ vs h₁ => ?_
+                                simp only [Module.heapFree_funs hm,
+                                  Module.heapFree_topDefFree hm,
+                                  Bool.and_self, eq_self_iff_true, if_true]
+                                exact .exn
+                          · simp only [hdu, if_true]
+                            exact .unsupported
       | genExp elt tgt it ifs wb _ =>
         -- H4: a genexp ALLOCATES a generator — outside the fragment
         simp [Expr.heapFree] at hfree

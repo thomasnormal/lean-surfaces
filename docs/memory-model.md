@@ -3551,6 +3551,21 @@ payload-blindness arms without changing any theorem statement or `Expr.heapFree`
 proofs, kernel outcome/refusal checks, all 128 ASCII code-point differential
 controls, container/DAG/cycle cases, and a kernel-checked script for stdout order.
 
+### Call-only builtin `format` (2026-10-12)
+
+`format(value)` and `format(value, "")` are admitted through the same pure
+rendering workers as `str(value)`. The value-only form accepts the tier's scalar
+and rendered-container inventory; argument evaluation remains left-to-right,
+and CPython's missing-value, non-string-specification, and too-many-arguments
+errors are retained exactly. A non-empty format specification is refused
+loudly: implementing Python's format mini-language and custom `__format__`
+protocols is a separate unfinished boundary, not an out-of-scope feature.
+
+The call allocates nothing and mutates no world state, so it stays in
+`Expr.heapFree`; the proof layer adds only the ordinary builtin dispatch arms
+for fuel monotonicity and world preservation. `Examples/python/str_lab` pins
+the scalar, empty-specification, refusal, and error cases.
+
 ### Container printing
 
 CPython's `print` applies `str()` to its ARGUMENTS and `repr()` to

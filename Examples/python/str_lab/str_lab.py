@@ -332,3 +332,29 @@ def builtin_round(n):
 
 def builtin_round_noargs():
     return round()
+
+
+def builtin_format(value):
+    # The value-only format() slice shares CPython's default __format__ text
+    # with str(); non-empty specifications remain a loud frontier.
+    return format(value)
+
+
+def builtin_format_empty(value):
+    return format(value, "")
+
+
+def builtin_format_noargs():
+    return format()
+
+
+def builtin_format_bad_spec(value):
+    return format(value, "d")
+
+
+def builtin_format_bad_type(value):
+    return format(value, 1)
+
+
+def builtin_format_toomany(value):
+    return format(value, "", 0)

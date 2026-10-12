@@ -206,6 +206,19 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.builtin_round(false) = 0
 #py_check str_lab.builtin_round_noargs() raises
   (.typeError "round() missing required argument 'number' (pos 1)")
+
+#py_check str_lab.builtin_format(3) = "3"
+#py_check str_lab.builtin_format(true) = "True"
+#py_check str_lab.builtin_format(1.5) = "1.5"
+#py_check str_lab.builtin_format("x") = "x"
+#py_check str_lab.builtin_format_empty(-7) = "-7"
+#py_check str_lab.builtin_format_noargs() raises
+  (.typeError "format expected at least 1 argument, got 0")
+#guard callFunction str_lab "builtin_format_bad_spec" #[.int 3] 4096 matches .unsupported _
+#py_check str_lab.builtin_format_bad_type(3) raises
+  (.typeError "format() argument 2 must be str, not int")
+#py_check str_lab.builtin_format_toomany(3) raises
+  (.typeError "format expected at most 2 arguments, got 3")
 #py_check str_lab.fmt_hex(255) = "ff"
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")

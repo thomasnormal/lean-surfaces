@@ -6054,6 +6054,17 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                          else if fname == "hex" then hexVal v
                          else if fname == "oct" then octVal v else binVal v)
                     | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
+                  else if fname == "format" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [] => .exn st (.typeError "format expected at least 1 argument, got 0")
+                    | [v] => Run.liftRes st (strOfValH st.world.heap v)
+                    | [v, .str spec] =>
+                      if spec == "" then Run.liftRes st (strOfValH st.world.heap v)
+                      else .unsupported "format() with a non-empty format specification is outside the tier"
+                    | [_, spec] =>
+                      .exn st (.typeError s!"format() argument 2 must be str, not {spec.typeName}")
+                    | vs => .exn st (.typeError s!"format expected at most 2 arguments, got {vs.length}")
                   else if fname == "str" then
                     -- pass 8 widened at §rendering: immediates as before,
                     -- containers/refs through printOne (CPython's two-level

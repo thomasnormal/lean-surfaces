@@ -313,6 +313,16 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     match vs with
     | [v] => liftRes (if fname == "ascii" then asciiVal v else if fname == "hex" then hexVal v else if fname == "oct" then octVal v else binVal v)
     | vs => raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
+  else if fname == "format" then
+    match vs with
+    | [] => raisePy (.typeError "format expected at least 1 argument, got 0")
+    | [v] => do liftRes (strOfValH (← frameHeap) v)
+    | [v, .str spec] =>
+        if spec == "" then do liftRes (strOfValH (← frameHeap) v)
+        else refuse "format() with a non-empty format specification is outside the tier"
+    | [_, spec] =>
+        raisePy (.typeError s!"format() argument 2 must be str, not {spec.typeName}")
+    | vs => raisePy (.typeError s!"format expected at most 2 arguments, got {vs.length}")
   else if fname == "str" then
     match vs with
     | [] => pure (.str "")

@@ -220,6 +220,16 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
                   else .error .expressionTypeMismatch
               | result => pure (result, updated)
           | result => pure (result, updated)
+      | .conditional condition whenTrue whenFalse => do
+          let (conditionResult, afterCondition) ←
+            evaluateTyped fuel profile parameters arguments condition
+          match conditionResult with
+          | .ok value =>
+              if value.value == 0 then
+                evaluateTyped fuel profile parameters afterCondition whenFalse
+              else
+                evaluateTyped fuel profile parameters afterCondition whenTrue
+          | result => pure (result, afterCondition)
       | .logical operator left right => do
           unless operator == "&&" || operator == "||" do
             throw (.unsupportedOperator operator)

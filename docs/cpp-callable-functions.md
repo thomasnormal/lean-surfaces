@@ -37,6 +37,8 @@ The return-expression profile is:
 - a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
 - a prefix or postfix `++`/`--` over a direct non-boolean integral parameter
   reference; or
+- a `ConditionalOperator` with a builtin integral condition and two branches
+  whose represented types agree; or
 - a logical `&&` or `||` expression whose operands are builtin integral values
   and whose result is builtin `bool`; or
 - an integral `BinaryOperator` whose ordered children, operator and result are
@@ -51,7 +53,9 @@ parameter reference must resolve to one of the function's own parameter
 handles. Missing rows, mismatched handles, changed child order, unsupported
 casts, non-integral operators, unsequenced side effects in binary operands and
 conflicting evidence all refuse. Increment and decrement are not generalized
-to locals, members, calls or overloaded operators.
+to locals, members, calls or overloaded operators. Conditional expressions with
+an omitted middle operand, unrepresented conversions or mismatched branch
+types remain loud refusals.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an
@@ -90,7 +94,8 @@ body was executed merely because Clang accepted its source.
 
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
 binary and logical returns, captured `if`/`while`/`do` branches, parameter stores,
-prefix/postfix increment and decrement admission, compound-assignment
+prefix/postfix increment and decrement admission, conditional-expression
+branch typing, compound-assignment
 target/type/evidence mismatches and function-try refusals.
 `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned Clang check for
 real admitted bodies, including every compound operator, unsigned wraparound,

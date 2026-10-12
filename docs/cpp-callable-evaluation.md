@@ -9,7 +9,9 @@ typed integral unary and binary expressions, and short-circuiting logical `&&`/`
 sequences, `if` branches and `while`/`do` loops. Parameter-targeted `=`,
 integral compound-assignment statements and prefix/postfix parameter
 increment/decrement expressions thread updated argument values through later
-statements. The evaluator returns the existing `IntegralResult` so signed
+statements. Typed conditional expressions evaluate their condition once and
+only evaluate the selected branch. The evaluator returns the existing
+`IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain visible
 rather than becoming host-language behavior.
 
@@ -37,6 +39,12 @@ the target's profile-resolved integral format, so unsigned wraparound is an
 `IntegralResult.undefined`. An increment nested in an unsequenced binary
 operand is rejected rather than assigning an evaluation order.
 
+Conditional expressions preserve the C++ sequencing boundary between their
+condition and selected arm. A selected arm may update the parameter through an
+admitted increment/decrement; the unselected arm is not evaluated. The
+evaluator requires both arms to have the same represented builtin type and does
+not guess the usual conditional conversions.
+
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
 not wired to `Translation.execute`, does not admit `for` loops, local
@@ -55,16 +63,17 @@ LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
 The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
 literal, binary addition and logical short-circuit results, captured
-`if`/`while`/`do` branches, prefix/postfix increment and decrement, signed
-overflow, arity/profile refusal and fuel exhaustion.
+`if`/`while`/`do` branches, prefix/postfix increment and decrement, conditional
+branch selection, signed overflow, arity/profile refusal and fuel exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes identity and literal bodies, skipped
 and discarded statements, branches, unary/binary/logical operators, integral
-return casts, parameter assignments and prefix/postfix increment/decrement.
+return casts, parameter assignments, prefix/postfix increment/decrement and
+conditional expressions.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do` loops. It compares the evaluator with 202 Clang-compiled calls at both
+and `do` loops. It compares the evaluator with 211 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

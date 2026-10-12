@@ -513,6 +513,9 @@ bool logical(int value) { return !value; }
           "int postfix_decrement(int value) { return value--; }\n"
           "int discarded_increment(int value) { value++; return value; }\n"
           "unsigned int increment_unsigned(unsigned int value) { return ++value; }\n"
+          "int conditional(int value) { return value ? 7 : 3; }\n"
+          "int conditional_param(int condition, int value) { return condition ? value : 3; }\n"
+          "int conditional_increment(int value) { return value ? ++value : value; }\n"
           "short compound_narrow(short value) { value += 1; return value; }\n"
           "int compound_mixed(int value, unsigned int amount) { value += amount; return value; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
@@ -565,7 +568,8 @@ bool logical(int value) { return !value; }
             "bit_xor", "shift_left", "shift_right", "both", "either", "positive",
             "complement", "compound_unsigned", "compound_self", "compound_while", "compound_do",
             "prefix_increment", "postfix_increment", "prefix_decrement",
-            "postfix_decrement", "discarded_increment", "increment_unsigned"}
+            "postfix_decrement", "discarded_increment", "increment_unsigned",
+            "conditional", "conditional_param", "conditional_increment"}
         refusals = {"compound_narrow", "compound_mixed"}
         paths = {}
         pending = [(probe["ast"], [])]
@@ -653,6 +657,17 @@ bool logical(int value) { return !value; }
         for value in (0, 7, 4294967295):
             expressions.append(f"increment_unsigned({value}U)")
             rows.append(("increment_unsigned", ".unsigned 32", [(".unsigned 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"conditional({value})")
+            rows.append(("conditional", ".signed 32", [(".signed 32", value)]))
+        for condition in (-1, 0, 7):
+            expressions.append(f"conditional_param({condition}, 5)")
+            rows.append(("conditional_param", ".signed 32", [
+                (".signed 32", condition), (".signed 32", 5)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"conditional_increment({value})")
+            rows.append(("conditional_increment", ".signed 32", [(
+                ".signed 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"loop({value})")
             rows.append(("loop", ".signed 32", [(".signed 32", value)]))

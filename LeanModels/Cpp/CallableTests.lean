@@ -214,9 +214,21 @@ def admitPostfixIncrement : Except String CallableFunction :=
 def admitDecrement : Except String CallableFunction :=
   admitCallableFunction decrementProbe incrementTypes [] TargetProfile.lp64 [0]
 
+def conditionalProbe : DeclarationProbe :=
+  probeFor (functionSource "select" [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31" (object [
+      ("id", text "0x20"), ("kind", text "ConditionalOperator"),
+      ("inner", .array [declRefNode "0x21" "0x10" "value",
+        integerLiteralRaw "0x22" "7", integerLiteralRaw "0x23" "3"])]))))
+    [rootEvidence, functionEvidence "select" "CompoundStmt"]
+
+def admitConditional : Except String CallableFunction :=
+  admitCallableFunction conditionalProbe incrementTypes [] TargetProfile.lp64 [0]
+
 #guard admitPrefixIncrement.isOk
 #guard admitPostfixIncrement.isOk
 #guard admitDecrement.isOk
+#guard admitConditional.isOk
 
 def compoundAssignmentProbe : DeclarationProbe :=
   probeFor (functionSource "bumpBy" [parameterRaw "0x10" "value"] (object [

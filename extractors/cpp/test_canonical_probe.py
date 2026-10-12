@@ -449,6 +449,25 @@ class CanonicalProbeTests(unittest.TestCase):
                          {("++", False), ("++", True), ("--", True)})
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_conditional_expression_retains_three_ordered_children(self):
+        self.source.write_text(
+            "int select(int value) { return value ? 7 : 3; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "id" in node:
+                nodes[node["id"]] = node
+            pending.extend(node.get("inner", []))
+        conditionals = [node for node in nodes.values()
+                        if node.get("kind") == "ConditionalOperator"]
+        self.assertEqual(len(conditionals), 1)
+        self.assertEqual(len(conditionals[0].get("inner", [])), 3)
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(
             "double arithmetic(double left, double right) { return left + right; }\n",

@@ -10,6 +10,7 @@ mutual
     | increment (operator : String) (isPostfix : Bool) (declaration : FrontendHandle)
     | convert (operand : TypedCallableExpression)
     | unary (operator : String) (operand : TypedCallableExpression)
+    | conditional (condition whenTrue whenFalse : TypedCallableExpression)
     | logical (operator : String) (left right : TypedCallableExpression)
     | binary (operator : String) (left right : TypedCallableExpression)
     deriving Repr, BEq, Inhabited
@@ -199,6 +200,22 @@ partial def parseCallableExpression (profile : TargetProfile)
       match children with
       | [child] => parseCallableExpression profile parameters expressionRows child sourceExpected typeExpected
       | _ => throw "callable: parenthesized expression must have one child"
+  | "ConditionalOperator" =>
+      let children ← rawChildren raw
+      let [conditionRaw, whenTrueRaw, whenFalseRaw] := children
+        | throw "callable: conditional expression requires three operands"
+      let condition ← parseCallableExpression profile parameters expressionRows conditionRaw none none
+      unless callableBuiltin condition.type do
+        throw "callable: conditional condition must be a builtin integral expression"
+      let whenTrue ← parseCallableExpression profile parameters expressionRows whenTrueRaw none typeExpected
+      let whenFalse ← parseCallableExpression profile parameters expressionRows whenFalseRaw none typeExpected
+      unless whenTrue.type == whenFalse.type do
+        throw "callable: conditional branches require one represented type"
+      pure {
+        expression := .conditional condition whenTrue whenFalse
+        sourceType := sourceExpected.getD whenTrue.type
+        type := whenTrue.type
+      }
   | "BinaryOperator" =>
       let occurrence ← rawId raw
       let some row := expressionRows.find? (fun row => row.occurrence == occurrence)

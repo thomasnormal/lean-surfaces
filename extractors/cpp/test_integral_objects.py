@@ -28,6 +28,7 @@ class IntegralObjectDifferentialTests(unittest.TestCase):
         print(subprocess.check_output([cls.compiler, "--version"], text=True).splitlines()[0])
         print("target:", subprocess.check_output([cls.compiler, "-dumpmachine"], text=True).strip())
         cls.checked_run([cls.lake, "build", "LeanModels.Cpp.IntegralObjects"])
+        cls.checked_run([cls.lake, "build", "LeanModels.Cpp.IntegralObjectStatements"])
         cls.binaries = {}
         for optimization in ("-O0", "-O2"):
             binary = cls.root / optimization[1:]
@@ -38,6 +39,17 @@ class IntegralObjectDifferentialTests(unittest.TestCase):
                 str(ROOT / "extractors/cpp/integral_object_oracle.cpp"), "-o", str(binary),
             ])
             cls.binaries[optimization] = binary
+
+        cls.statement_binaries = {}
+        statement_oracle = ROOT / "extractors/cpp/integral_object_statement_oracle.cpp"
+        for optimization in ("-O0", "-O2"):
+            binary = cls.root / f"statements{optimization[1:]}"
+            cls.checked_run([
+                cls.compiler, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(statement_oracle), "-o", str(binary),
+            ])
+            cls.statement_binaries[optimization] = binary
 
     @staticmethod
     def checked_run(command, input_text=None):
@@ -89,6 +101,22 @@ class IntegralObjectDifferentialTests(unittest.TestCase):
             with self.subTest(optimization=optimization):
                 self.assertEqual(model, self.checked_run([str(binary)], input_text))
         print(f"integral object conversion differential: {len(rows)} traces at -O0/-O2")
+
+    def test_statement_traces(self):
+        rows = [(mode, initial, delta)
+                for mode in ("add", "branch", "loop", "sequence")
+                for initial in range(17)
+                for delta in range(-8, 9)]
+        input_text = "".join("\t".join(map(str, row)) + "\n" for row in rows)
+        model = self.checked_run([
+            self.lake, "env", "lean", "--run",
+            str(ROOT / "extractors/cpp/run_integral_object_statements.lean"),
+        ], input_text)
+        self.assertEqual(len(model), len(rows))
+        for optimization, binary in self.statement_binaries.items():
+            with self.subTest(optimization=optimization):
+                self.assertEqual(model, self.checked_run([str(binary)], input_text))
+        print(f"integral object statement differential: {len(rows)} traces at -O0/-O2")
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ overload resolution and general C++ execution remain outside the fragment.
 
 ```sh
 lake build LeanModels.Cpp.IntegralObjectStatementTests
+python3 extractors/cpp/test_integral_objects.py
 ```
 
 Kernel guards cover initialization and default initialization, sequencing,
@@ -32,4 +33,6 @@ conditional true/false selection, terminating and empty `whileLoop` cases,
 alias-visible order, division-by-zero, stale-access and const-write refusals,
 plus statement, sequence and loop fuel exhaustion. The independent integral object
 and conversion Clang suites remain the value oracle; this statement layer makes
-no whole-program execution claim.
+no whole-program execution claim. The statement harness compares 1,156 safe
+add, branch, loop and sequence traces against C++23 compiled with Clang at
+`-O0` and `-O2` under UBSan.

@@ -14,6 +14,13 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Bare `%c` string formatting now accepts integer code points and
+  one-character strings, with CPython's exact `OverflowError` and type-error
+  behavior. Lone surrogate code points remain a loud Lean-`Char` boundary.
+  The CPython 3.9 differential suite now has **2,711 / 3,037 rows = 89.3%
+  complete** natively and **2,637 / 3,037 = 86.8% complete** in the proof
+  interpreter, with **100% agreement among decided rows** and zero failures.
+
 - Bare `%i` string formatting now shares the bounded integer conversion and
   CPython's exact TypeError wording with `%d`, including Boolean and negative
   values. The CPython 3.9 differential suite now has **2,705 / 3,030 rows =

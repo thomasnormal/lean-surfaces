@@ -172,6 +172,10 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.fmt_int(255) = "255"
 #py_check str_lab.fmt_int("x") raises
   (.typeError "%i format: a number is required, not str")
+#py_check str_lab.fmt_char(65) = "A"
+#py_check str_lab.fmt_char("é") = "é"
+#py_check str_lab.fmt_char("xy") raises (.typeError "%c requires int or char")
+#py_check str_lab.fmt_char(-1) raises (.overflowError "%c arg not in range(0x110000)")
 #py_check str_lab.fmt_bad(3) raises
   (.valueError "unsupported format character 'q' (0x71) at index 1")
 #py_check str_lab.fmt_trailing(3) raises (.valueError "incomplete format")

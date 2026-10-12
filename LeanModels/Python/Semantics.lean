@@ -867,6 +867,24 @@ def strFormatRepr (v : RVal) : Option String :=
   | .str s => reprStr s
   | v => strFormatStr v
 
+/-- `%c` accepts an integer code point or a one-character string. -/
+def strFormatChar (v : RVal) : Res String :=
+  match v with
+  | .str s =>
+      match s.toList with
+      | [c] => .ok (String.ofList [c])
+      | _ => .exn (.typeError "%c requires int or char")
+  | v =>
+      match asInt v with
+      | some n =>
+          if n < 0 || 0x10FFFF < n then
+            .exn (.overflowError "%c arg not in range(0x110000)")
+          else if 0xD800 ≤ n && n ≤ 0xDFFF then
+            .unsupported
+              "%c of a surrogate code point is outside the tier (Lean's Char excludes surrogates; docs/memory-model.md §string semantics)"
+          else .ok (String.ofList [Char.ofNat n.toNat])
+      | Option.none => .exn (.typeError "%c requires int or char")
+
 /-- One admitted conversion applied to one argument. A `.ref` argument
 (reachable only nested inside a tuple, since an operand-position `.ref`
 is refused before this arm) is LOUD, never a `TypeError` built from
@@ -876,7 +894,9 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
   | .ref _ =>
       .unsupported "a heap object as a '%'-format argument is outside the tier (its repr lives in the heap, which the operator cannot see; docs/memory-model.md §`%`-formatting on strings)"
   | v =>
-    if c == 'd' || c == 'i' then
+    if c == 'c' then
+      strFormatChar v
+    else if c == 'd' || c == 'i' then
       match (match v with | .float value => value.toInt | _ => asInt v) with
       | some value =>
         match intDecimal value with
@@ -935,7 +955,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
   | '%' :: c :: cs, args, mapping, acc =>
-      if c == 's' || c == 'r' || c == 'd' || c == 'i' || c == 'x' then
+      if c == 's' || c == 'r' || c == 'c' || c == 'd' || c == 'i' || c == 'x' then
         match args with
         | [] => .exn (.typeError "not enough arguments for format string")
         -- the conversion is matched OPEN, not bound through `Res`'s
@@ -951,7 +971,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else if c == 'q' then
         .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
       else
-        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%i/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
+        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%c/%d/%i/%x/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>
       .exn (.valueError "incomplete format")
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])

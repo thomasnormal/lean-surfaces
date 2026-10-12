@@ -258,3 +258,8 @@ def fmt_dict_leftover():
 def fmt_int(n):
     # bare %i is CPython's integer conversion, equivalent to bare %d
     return "%i" % (n,)
+
+
+def fmt_char(value):
+    # bare %c accepts an integer code point or a one-character string
+    return "%c" % (value,)

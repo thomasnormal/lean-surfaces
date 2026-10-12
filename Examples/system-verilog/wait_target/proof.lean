@@ -64,7 +64,8 @@ def duplicateWorld : SvWorld :=
 
 #guard (worldOf (suspendProcess 0) edgeWorld).map
   (fun w => (w.procs[0]?).map
-    (fun p => p.explicitlySuspended && p.residual == [.skip] && w.nba.length == 1))
+    (fun p => p.explicitlySuspended && p.residual == [.skip] &&
+      w.nba.length == 1 && w.regionQ .active == []))
   == some (some true)
 
 #guard (worldOf (do suspendProcess 0; wakeEdges [("clk", .ofNat 1 0)] [("clk", .ofNat 1 1)]) edgeWorld).map
@@ -112,5 +113,8 @@ def duplicateWorld : SvWorld :=
 #guard refused (suspendProcess 0) readyWorld
 #guard refused (suspendProcess 0) levelWorld
 #guard refused (suspendProcess 0) duplicateWorld
+#guard refused (resumeProcess 0) readyWorld
+#guard refused (resumeProcess 0) levelWorld
+#guard refused (do suspendProcess 0; resumeProcess 0; resumeProcess 0) edgeWorld
 
 end Examples.systemVerilog.waitTarget.proof

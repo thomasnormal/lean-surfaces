@@ -29,3 +29,21 @@ Active needs a separate region rule and is not smuggled into this target rule.
 The driver invokes timer delivery at each ordinary slot boundary. It does not
 invent a time advance: callers that model timed slots advance `SvWorld.time`
 through the existing primitive, after which the due-target rule is applied.
+
+## Public transition contract
+
+For the admitted waiting-target subset, an explicit suspend transition has the
+following shape:
+
+* the process remains in its existing suspended phase with the complete
+  residual continuation, signal state, NBA queue, output and registration;
+* an edge registration is desensitized by the explicit flag, so an occurrence
+  while suspended is not remembered as a wake;
+* a timer registration keeps its absolute deadline, including when time
+  advances past that deadline;
+* resume clears only the explicit flag for an edge or future timer, while a
+  due or expired timer is published once into Active at the current time.
+
+The implementation rejects a ready or finished process, a duplicate suspend or
+resume, a level wait, and any target without one of these fixed registrations.
+These are intentional loud boundaries, not alternate approximations of §9.7.

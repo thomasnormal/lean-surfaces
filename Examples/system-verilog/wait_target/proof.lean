@@ -29,14 +29,14 @@ def timerWaiting (p : ProcState) : Bool :=
 
 def edgeWorld : SvWorld :=
   { time := 4
-  , procs := #[{ residual := [], status := .suspended (.atEdge "clk" .pos),
+  , procs := #[{ residual := [.skip], status := .suspended (.atEdge "clk" .pos),
                  registration := some (.edge "clk" .pos) }]
   , nba := [("pending", .ofNat 1 1)]
   , regionQ := fun _ => [] }
 
 def timerWorld : SvWorld :=
   { time := 4
-  , procs := #[{ residual := [], status := .suspended (.atTime 3),
+  , procs := #[{ residual := [.skip], status := .suspended (.atTime 3),
                  registration := some (.timer 7) }]
   , regionQ := fun _ => [] }
 
@@ -63,10 +63,14 @@ def duplicateWorld : SvWorld :=
                  registration := some (.edge "clk" .pos), explicitlySuspended := true }] }
 
 #guard (worldOf (suspendProcess 0) edgeWorld).map
-  (fun w => (w.procs[0]?).map (fun p => p.explicitlySuspended && w.nba.length == 1)) == some (some true)
+  (fun w => (w.procs[0]?).map
+    (fun p => p.explicitlySuspended && p.residual == [.skip] && w.nba.length == 1))
+  == some (some true)
 
 #guard (worldOf (do suspendProcess 0; wakeEdges [("clk", .ofNat 1 0)] [("clk", .ofNat 1 1)]) edgeWorld).map
-  (fun w => (w.procs[0]?).map (fun p => p.explicitlySuspended && edgeWaiting p)) == some (some true)
+  (fun w => (w.procs[0]?).map
+    (fun p => p.explicitlySuspended && p.residual == [.skip] && edgeWaiting p))
+  == some (some true)
 
 #guard (worldOf (do suspendProcess 0; resumeProcess 0) edgeWorld).map
   (fun w => (w.procs[0]?).map (fun p => !p.explicitlySuspended && edgeWaiting p)) == some (some true)
@@ -80,11 +84,25 @@ def duplicateWorld : SvWorld :=
 #guard (worldOf (do suspendProcess 0; resumeProcess 0; advanceTime 3; wakeTimers) timerWorld).map
   (fun w => (w.procs[0]?).map (fun p => match p.status with | .ready => p.registration.isNone && w.regionQ .active == [0] | _ => false)) == some (some true)
 
+#guard (worldOf (do suspendProcess 0; advanceTime 3; resumeProcess 0) timerWorld).map
+  (fun w => (w.procs[0]?).map (fun p =>
+    match p.status with
+    | .ready => p.registration.isNone && p.residual == [.skip] && w.regionQ .active == [0]
+    | _ => false))
+  == some (some true)
+
+#guard (worldOf (do suspendProcess 0; advanceTime 4; resumeProcess 0) timerWorld).map
+  (fun w => (w.procs[0]?).map (fun p =>
+    match p.status with
+    | .ready => p.registration.isNone && p.residual == [.skip] && w.regionQ .active == [0]
+    | _ => false))
+  == some (some true)
+
 #guard (worldOf (do suspendProcess 0; advanceTime 3; wakeTimers) timerWorld).map
   (fun w => (w.procs[0]?).map (fun p => p.explicitlySuspended && timerWaiting p)) == some (some true)
 
 #guard (worldOf (suspendProcess 0) timerWorld).map
-  (fun w => (w.procs[0]?).map timerWaiting) == some (some true)
+  (fun w => (w.procs[0]?).map (fun p => timerWaiting p && p.residual == [.skip])) == some (some true)
 
 #guard (worldOf (runProcOnce 32 0) delayWorld).map
   (fun w => (w.procs[0]?).map timerWaiting) == some (some true)

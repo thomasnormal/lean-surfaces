@@ -13,7 +13,8 @@ The candidate must be a named, ordinary `FunctionDecl` accepted by
 deleted declarations and function-try bodies remain loud refusals. The body
 is represented as a sequence of admitted expression statements, `if`
 statements with an optional else branch, `while`/`do` loops, parameter-targeted
-`=` and integral compound assignments, and return statements. Empty compound
+`=`, integral compound assignments, and parameter-targeted prefix/postfix
+increment and decrement expressions. Empty compound
 and null statements are `skip`. `for` loops, declarations, local-variable/member
 assignments, calls, overloaded operations, exceptions, local functions and every
 other statement form refuse rather than being silently represented as a callable.
@@ -34,6 +35,8 @@ The return-expression profile is:
 - an integral `ImplicitCastExpr` (`IntegralToBoolean` or `IntegralCast`) over
   an admitted operand, with a builtin integral destination; or
 - a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
+- a prefix or postfix `++`/`--` over a direct non-boolean integral parameter
+  reference; or
 - a logical `&&` or `||` expression whose operands are builtin integral values
   and whose result is builtin `bool`; or
 - an integral `BinaryOperator` whose ordered children, operator and result are
@@ -46,7 +49,9 @@ its builtin boolean result as the condition value.
 The result type of the expression must equal the function result type. A
 parameter reference must resolve to one of the function's own parameter
 handles. Missing rows, mismatched handles, changed child order, unsupported
-casts, non-integral operators and conflicting evidence all refuse.
+casts, non-integral operators, unsequenced side effects in binary operands and
+conflicting evidence all refuse. Increment and decrement are not generalized
+to locals, members, calls or overloaded operators.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an
@@ -85,11 +90,13 @@ body was executed merely because Clang accepted its source.
 
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
 binary and logical returns, captured `if`/`while`/`do` branches, parameter stores,
-compound-assignment target/type/evidence mismatches and function-try refusals.
+prefix/postfix increment and decrement admission, compound-assignment
+target/type/evidence mismatches and function-try refusals.
 `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned Clang check for
 real admitted bodies, including every compound operator, unsigned wraparound,
-self-aliasing and assignment-driven loops. It also checks loud refusal of narrow
-and mixed-type compound destinations. The same explicit compiler/plugin settings
+self-aliasing and assignment-driven loops. It also checks prefix/postfix
+increment and decrement, unsigned wraparound, and loud refusal of narrow and
+mixed-type compound destinations. The same explicit compiler/plugin settings
 are required; missing settings skip rather than count as agreement. Broader
 conversions and statements still need semantic models, and `Translation.execute`
 remains refused.

@@ -428,6 +428,27 @@ class CanonicalProbeTests(unittest.TestCase):
                              [operand["occurrence"] for operand in row["operands"]])
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_increment_unary_nodes_preserve_prefix_and_postfix_flags(self):
+        self.source.write_text(
+            "int pre(int value) { return ++value; }\n"
+            "int post(int value) { return value++; }\n"
+            "int dec(int value) { value--; return value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "id" in node:
+                nodes[node["id"]] = node
+            pending.extend(node.get("inner", []))
+        increments = [node for node in nodes.values()
+                      if node.get("kind") == "UnaryOperator"]
+        self.assertEqual({(node["opcode"], node["isPostfix"]) for node in increments},
+                         {("++", False), ("++", True), ("--", True)})
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(
             "double arithmetic(double left, double right) { return left + right; }\n",

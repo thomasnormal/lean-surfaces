@@ -121,6 +121,34 @@ private def admitBooleanIdentity : Except String CallableFunction :=
       | _ => false
   | .error _ => false
 
+#guard match admitPrefixIncrement with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 4] with
+      | .ok (.ok value) => value == signed 5
+      | _ => false
+  | .error _ => false
+
+#guard match admitPostfixIncrement with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 4] with
+      | .ok (.ok value) => value == signed 4
+      | _ => false
+  | .error _ => false
+
+#guard match admitDecrement with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 4] with
+      | .ok (.ok value) => value == signed 3
+      | _ => false
+  | .error _ => false
+
+#guard match admitPrefixIncrement with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 function [signed 2147483647] with
+      | .ok (.undefined .signedOverflow) => true
+      | _ => false
+  | .error _ => false
+
 #guard match admitCompoundAssignment with
   | .ok function =>
       match evaluateCallable 8 .lp64 function [signed 4] with

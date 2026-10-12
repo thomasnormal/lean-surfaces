@@ -6,9 +6,10 @@ It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references, integral casts,
 typed integral unary and binary expressions, and short-circuiting logical `&&`/`||` inside
-sequences, `if` branches and `while`/`do` loops. Parameter-targeted `=` and
-integral compound-assignment statements thread updated argument values through
-later statements. The evaluator returns the existing `IntegralResult` so signed
+sequences, `if` branches and `while`/`do` loops. Parameter-targeted `=`,
+integral compound-assignment statements and prefix/postfix parameter
+increment/decrement expressions thread updated argument values through later
+statements. The evaluator returns the existing `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain visible
 rather than becoming host-language behavior.
 
@@ -28,6 +29,14 @@ result format to equal the destination format, so no implicit narrowing is
 invented here. The updated state feeds subsequent branches and loop conditions;
 arithmetic failures propagate instead of executing later statements.
 
+Prefix and postfix increment/decrement follow the admitted parameter-only shape
+of [expr.pre.incr] and [expr.post.incr]: the target is updated once, prefix
+returns the updated value, and postfix returns the saved value. The update uses
+the target's profile-resolved integral format, so unsigned wraparound is an
+`IntegralResult.ok` result while signed overflow remains
+`IntegralResult.undefined`. An increment nested in an unsequenced binary
+operand is rejected rather than assigning an evaluation order.
+
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
 not wired to `Translation.execute`, does not admit `for` loops, local
@@ -46,15 +55,16 @@ LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
 The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
 literal, binary addition and logical short-circuit results, captured
-`if`/`while`/`do` branches, signed overflow, arity/profile refusal and fuel
-exhaustion.
+`if`/`while`/`do` branches, prefix/postfix increment and decrement, signed
+overflow, arity/profile refusal and fuel exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes identity and literal bodies, skipped
 and discarded statements, branches, unary/binary/logical operators, integral
-return casts and parameter assignments. All ten compound operators are covered,
+return casts, parameter assignments and prefix/postfix increment/decrement.
+All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do` loops. It compares the evaluator with 184 Clang-compiled calls at both
+and `do` loops. It compares the evaluator with 202 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

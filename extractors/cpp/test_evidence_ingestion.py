@@ -97,7 +97,7 @@ class EvidenceIngestionTests(unittest.TestCase):
             encoding="utf-8",
         )
         return subprocess.run(
-            [self.lake, "env", "lean", str(lean_path)], cwd=REPO_ROOT,
+            [self.lake, "env", "lean", "-j", "1", str(lean_path)], cwd=REPO_ROOT,
             capture_output=True, text=True, timeout=timeout,
         )
 
@@ -295,7 +295,7 @@ class EvidenceIngestionTests(unittest.TestCase):
         probe_path = self.root / "inspection.json"
         probe_path.write_text(json.dumps(fixture), encoding="utf-8")
         return subprocess.run(
-            [self.lake, "env", "lean", "--run", str(REPO_ROOT / "extractors/cpp/inspect_probe.lean"),
+            [self.lake, "env", "lean", "-j", "1", "--run", str(REPO_ROOT / "extractors/cpp/inspect_probe.lean"),
              str(probe_path), *paths], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60,
         )
 
@@ -507,6 +507,12 @@ bool logical(int value) { return !value; }
           "int compound_self(int value) { value += value; return value; }\n"
           "int compound_while(int value) { while (value < 3) value += 1; return value; }\n"
           "int compound_do(int value) { do { value += 1; } while (value < 3); return value; }\n"
+          "int prefix_increment(int value) { return ++value; }\n"
+          "int postfix_increment(int value) { return value++; }\n"
+          "int prefix_decrement(int value) { return --value; }\n"
+          "int postfix_decrement(int value) { return value--; }\n"
+          "int discarded_increment(int value) { value++; return value; }\n"
+          "unsigned int increment_unsigned(unsigned int value) { return ++value; }\n"
           "short compound_narrow(short value) { value += 1; return value; }\n"
           "int compound_mixed(int value, unsigned int amount) { value += amount; return value; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
@@ -557,7 +563,9 @@ bool logical(int value) { return !value; }
             "greater_equal_values", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
             "bit_xor", "shift_left", "shift_right", "both", "either", "positive",
-            "complement", "compound_unsigned", "compound_self", "compound_while", "compound_do"}
+            "complement", "compound_unsigned", "compound_self", "compound_while", "compound_do",
+            "prefix_increment", "postfix_increment", "prefix_decrement",
+            "postfix_decrement", "discarded_increment", "increment_unsigned"}
         refusals = {"compound_narrow", "compound_mixed"}
         paths = {}
         pending = [(probe["ast"], [])]
@@ -635,6 +643,16 @@ bool logical(int value) { return !value; }
             for value in (-1, 0, 3, 5):
                 expressions.append(f"{name}({value})")
                 rows.append((name, ".signed 32", [(".signed 32", value)]))
+        for name in (
+            "prefix_increment", "postfix_increment", "prefix_decrement",
+            "postfix_decrement", "discarded_increment",
+        ):
+            for value in (-1, 0, 7):
+                expressions.append(f"{name}({value})")
+                rows.append((name, ".signed 32", [(".signed 32", value)]))
+        for value in (0, 7, 4294967295):
+            expressions.append(f"increment_unsigned({value}U)")
+            rows.append(("increment_unsigned", ".unsigned 32", [(".unsigned 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"loop({value})")
             rows.append(("loop", ".signed 32", [(".signed 32", value)]))

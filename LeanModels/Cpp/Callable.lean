@@ -7,6 +7,7 @@ mutual
   inductive CallableExpression where
     | integer (value : Nat)
     | parameter (declaration : FrontendHandle)
+    | increment (operator : String) (isPostfix : Bool) (declaration : FrontendHandle)
     | convert (operand : TypedCallableExpression)
     | unary (operator : String) (operand : TypedCallableExpression)
     | logical (operator : String) (left right : TypedCallableExpression)
@@ -33,6 +34,14 @@ mutual
     | sequence (first second : CallableStatement)
     deriving Repr, BEq, Inhabited
 end
+
+def CallableExpression.hasEffects : CallableExpression → Bool
+  | .increment _ _ _ => true
+  | .convert operand | .unary _ operand =>
+      match operand.expression with
+      | .increment _ _ _ => true
+      | _ => false
+  | _ => false
 
 structure CallableParameter where
   declaration : FrontendHandle
@@ -220,6 +229,8 @@ partial def parseCallableExpression (profile : TargetProfile)
           let right ← parseCallableExpression profile parameters expressionRows rightRaw
             (if logical then none else some rightEvidence.sourceType)
             (if logical then none else some rightEvidence.type)
+          unless logical || (!left.expression.hasEffects && !right.expression.hasEffects) do
+            throw "callable: side effects in unsequenced binary operands are outside the body profile"
           pure {
             expression := if logical then .logical row.operator left right
               else .binary row.operator left right
@@ -229,6 +240,25 @@ partial def parseCallableExpression (profile : TargetProfile)
       | _, _ => throw "callable: binary body expression requires two operands"
   | "UnaryOperator" =>
       let operator ← evidenceText raw "opcode"
+      if operator == "++" || operator == "--" then
+        let isPostfix ← evidenceBool raw "isPostfix"
+        let children ← rawChildren raw
+        let [target] := children
+          | throw "callable: increment requires exactly one target"
+        unless target.text "kind" == some "DeclRefExpr" do
+          throw "callable: increment target must be a parameter reference"
+        let declaration ← referencedDeclaration target
+        let some targetType := parameterType? parameters declaration
+          | throw "callable: increment target is not a parameter"
+        unless targetType != .builtin .boolean && callableBuiltin targetType do
+          throw "callable: increment requires a non-boolean integral parameter"
+        if typeExpected.isSome && typeExpected != some targetType then
+          throw "callable: increment result type disagrees with expected type"
+        return ({
+          expression := .increment operator isPostfix declaration
+          sourceType := targetType
+          type := targetType
+        } : TypedCallableExpression)
       unless operator == "+" || operator == "-" || operator == "~" || operator == "!" do
         throw s!"callable: unsupported unary operator {operator}"
       let children ← rawChildren raw

@@ -178,6 +178,46 @@ def assignmentEvidence : List CppBinaryExpressionEvidence := [{
 def admitAssignment : Except String CallableFunction :=
   admitCallableFunction assignmentProbe assignmentTypes assignmentEvidence TargetProfile.lp64 [0]
 
+def incrementRaw (id operator : String) (isPostfix : Bool) (child : Raw) : Raw := object [
+  ("id", text id), ("kind", text "UnaryOperator"), ("opcode", text operator),
+  ("isPostfix", .bool isPostfix), ("inner", .array [child])]
+
+def prefixIncrementProbe : DeclarationProbe :=
+  probeFor (functionSource "prefix" [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31"
+      (implicitCast "0x32" (incrementRaw "0x20" "++" false
+        (declRefNode "0x21" "0x10" "value"))))))
+    [rootEvidence, functionEvidence "prefix" "CompoundStmt"]
+
+def postfixIncrementProbe : DeclarationProbe :=
+  probeFor (functionSource "postfix" [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31"
+      (implicitCast "0x32" (incrementRaw "0x20" "++" true
+        (declRefNode "0x21" "0x10" "value"))))))
+    [rootEvidence, functionEvidence "postfix" "CompoundStmt"]
+
+def decrementProbe : DeclarationProbe :=
+  probeFor (functionSource "decrement" [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31"
+      (incrementRaw "0x20" "--" false (declRefNode "0x21" "0x10" "value")))))
+    [rootEvidence, functionEvidence "decrement" "CompoundStmt"]
+
+def incrementTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def admitPrefixIncrement : Except String CallableFunction :=
+  admitCallableFunction prefixIncrementProbe incrementTypes [] TargetProfile.lp64 [0]
+
+def admitPostfixIncrement : Except String CallableFunction :=
+  admitCallableFunction postfixIncrementProbe incrementTypes [] TargetProfile.lp64 [0]
+
+def admitDecrement : Except String CallableFunction :=
+  admitCallableFunction decrementProbe incrementTypes [] TargetProfile.lp64 [0]
+
+#guard admitPrefixIncrement.isOk
+#guard admitPostfixIncrement.isOk
+#guard admitDecrement.isOk
+
 def compoundAssignmentProbe : DeclarationProbe :=
   probeFor (functionSource "bumpBy" [parameterRaw "0x10" "value"] (object [
     ("id", text "0x30"), ("kind", text "CompoundStmt"),

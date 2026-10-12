@@ -816,7 +816,7 @@ theorem fuelMono (fuel : Nat) :
                         -- args, then steps the generator), ord, chr
                         -- len → sorted → max → min → any/all → set → abs →
                         -- int → sum → tuple → list → dict → range →
-                        -- enumerate → count → next → ord → chr → tail
+                        -- enumerate → count → next → ord → chr → hex → tail
                         refine Run.le_ite (hb _)                             -- len
                             (Run.le_ite ?_                                     -- sorted
                              (Run.le_ite ?_                                    -- max
@@ -839,7 +839,8 @@ theorem fuelMono (fuel : Nat) :
                                         (Run.le_ite ?_                         -- next
                                          (Run.le_ite (hb _)                    -- ord
                                             (Run.le_ite (hb _)                 -- chr
-                                             ?_)))))))))))))))))))))
+                                             (Run.le_ite (hb _)                 -- hex
+                                              ?_))))))))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -2440,9 +2441,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                 (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                     (.ite (.bind hargs fun st₁ vs h₁ => ?_)
-                                      (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
+                                      (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                                        (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                                         (.ite .unsupported
-                                        (.ite .unsupported ?_)))))))))))))
+                                        (.ite .unsupported ?_))))))))))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>
@@ -2516,6 +2518,12 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                     simp only [Module.heapFree_genFree hm,
                                       eq_self_iff_true, if_true]
                                     exact .unsupported
+                        · cases vs with
+                          | nil => exact .exn
+                          | cons v rest =>
+                            cases rest with
+                            | nil => exact .liftResF h₁ _
+                            | cons _ _ => exact .exn
                         · cases vs with
                           | nil => exact .exn
                           | cons v rest =>

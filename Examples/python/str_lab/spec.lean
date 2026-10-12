@@ -171,6 +171,13 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.fmt_left_width(-3) = "-3   "
 #py_check str_lab.fmt_zero_width(3) = "00003"
 #py_check str_lab.fmt_zero_width(-3) = "-0003"
+#py_check str_lab.builtin_hex(255) = "0xff"
+#py_check str_lab.builtin_hex(-10) = "-0xa"
+#py_check str_lab.builtin_hex(true) = "0x1"
+#py_check str_lab.builtin_hex("x") raises
+  (.typeError "'str' object cannot be interpreted as an integer")
+#py_check str_lab.builtin_hex_noargs() raises
+  (.typeError "hex() takes exactly one argument (0 given)")
 #py_check str_lab.fmt_hex(255) = "ff"
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")

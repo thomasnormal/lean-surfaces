@@ -563,8 +563,15 @@ in-tier container rather than one container at a time.
   point is refused LOUDLY — CPython builds a lone-surrogate str, which
   Lean's `Char` cannot represent, and substituting anything else would
   be silently wrong.
+* **`hex`** is the bounded integer rendering path: `int` and `bool` values
+  produce lowercase hexadecimal with CPython's `0x` prefix, including the
+  sign before the prefix for negative values. The same fixed
+  `intDigitBudget` used by `%x` admits the conversion; oversized integers,
+  heap objects, and other scalar types refuse rather than guessing an
+  integer protocol. One-argument arity errors and the integer-required
+  `TypeError` are faithful. The call is pure and remains in `heapFree`.
 * **Simp doctrine**: the dispatchers (`valContains`, `ordVal`,
-  `chrVal`) are in `py_simp`/`interpUnfolds`; the value workers
+  `chrVal`, `hexVal`) are in `py_simp`/`interpUnfolds`; the value workers
   (`strContains`, `strCharVals`) stay OUT, like `strSlice` — a
   concrete proof rewrites through one kernel `rfl` fact per
   application.

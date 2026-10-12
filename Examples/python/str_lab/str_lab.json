@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/str_lab/str_lab.py",
-  "source_sha256": "c44999c9c26f646cc6edeee1a09efd0c323e22b054387482cbd75f7f4f6e539f",
+  "source_sha256": "7e6ab8724f1f137311789dd65cf142a959ad21a23bd2bfe3d84499187bd80b3d",
   "module": {
     "kind": "Module",
     "body": [
@@ -4411,6 +4411,119 @@
                   }
                 ]
               }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 293,
+          "col_offset": 0,
+          "end_lineno": 294,
+          "end_col_offset": 17
+        },
+        "name": "builtin_hex",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 293,
+              "col_offset": 16,
+              "end_lineno": 293,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 294,
+              "col_offset": 4,
+              "end_lineno": 294,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 294,
+                "col_offset": 11,
+                "end_lineno": 294,
+                "end_col_offset": 17
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 294,
+                  "col_offset": 11,
+                  "end_lineno": 294,
+                  "end_col_offset": 14
+                },
+                "id": "hex"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 294,
+                    "col_offset": 15,
+                    "end_lineno": 294,
+                    "end_col_offset": 16
+                  },
+                  "id": "n"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 297,
+          "col_offset": 0,
+          "end_lineno": 298,
+          "end_col_offset": 16
+        },
+        "name": "builtin_hex_noargs",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 298,
+              "col_offset": 4,
+              "end_lineno": 298,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 298,
+                "col_offset": 11,
+                "end_lineno": 298,
+                "end_col_offset": 16
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 298,
+                  "col_offset": 11,
+                  "end_lineno": 298,
+                  "end_col_offset": 14
+                },
+                "id": "hex"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
             }
           }
         ]

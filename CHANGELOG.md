@@ -14,6 +14,14 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- The `hex()` builtin now renders bounded integers and Booleans with
+  CPython's lowercase `0x` form, including negative values, faithful
+  one-argument arity errors, and integer-required `TypeError`s; heap objects
+  and oversized integers remain loud. The CPython 3.9 differential suite now
+  has **2,739 / 3,064 rows = 89.4% complete** natively and **2,665 / 3,064 =
+  87.0% complete** in the proof interpreter, with **100% agreement among
+  decided rows** and zero failures.
+
 - Fixed `%05d` string formatting now zero-pads decimal fields after the sign,
   preserving negative values and over-width numbers. The CPython 3.9
   differential suite now has **2,734 / 3,059 rows = 89.3% complete** natively

@@ -288,3 +288,11 @@ def fmt_left_width(n):
 def fmt_zero_width(n):
     # the zero flag pads after the sign for a fixed width field
     return "%05d" % (n,)
+
+
+def builtin_hex(n):
+    return hex(n)
+
+
+def builtin_hex_noargs():
+    return hex()

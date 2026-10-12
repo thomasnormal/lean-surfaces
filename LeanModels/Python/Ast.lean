@@ -150,6 +150,11 @@ deriving Repr, Inhabited, BEq
 `FunctionDef` has no `Stmt` constructor: at module top level it becomes a
 `FunctionDefn` in `Module.functions`; a *nested* `def` is ingested as
 `Stmt.unsupported "FunctionDef" name span` (v0 has no closures anyway). -/
+structure WithItem where
+  context : Expr
+  target : Option Expr
+deriving Repr, Inhabited, BEq
+
 inductive Stmt where
   | ret (value : Option Expr) (span : Span)
   | assign (targets : Array Expr) (value : Expr) (span : Span)
@@ -216,6 +221,12 @@ inductive Stmt where
   Locally bound handler names refuse under the static-locals census. -/
   | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
       (tryUnsupported : Option String) (span : Span)
+  /-- `with` (the context-manager tier): items are evaluated left to right,
+  each `__enter__` result is assigned before the body, and `__exit__` runs
+  after the body. The optional reason is an admission guard for shapes whose
+  exception payload or multi-item lowering is not yet represented. -/
+  | withStmt (items : Array WithItem) (body : Array Stmt)
+      (withUnsupported : Option String) (span : Span)
   /-- `del name, …` (schema `Delete`, the tail batch — docs/memory-model.md
   §the del statement). BARE NAMES only: `del d[k]`, `del o.attr`,
   `del xs[i]` are measured second tables and ship as `Stmt.unsupported`

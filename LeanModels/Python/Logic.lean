@@ -38,6 +38,7 @@ deriving instance Lean.ToExpr for CmpOp
 deriving instance Lean.ToExpr for Const
 deriving instance Lean.ToExpr for Param
 deriving instance Lean.ToExpr for Expr
+deriving instance Lean.ToExpr for WithItem
 deriving instance Lean.ToExpr for Stmt
 deriving instance Lean.ToExpr for FunctionDefn
 deriving instance Lean.ToExpr for NamedTupleDefn

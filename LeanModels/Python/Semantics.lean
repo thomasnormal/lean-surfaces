@@ -293,6 +293,7 @@ def Stmt.kindName : Stmt → String
   | .raiseStmt .. => "Raise"
   | .assertStmt .. => "Assert"
   | .tryStmt .. => "Try"
+  | .withStmt .. => "With"
   | .importFrom .. => "ImportFrom"
   | .delStmt .. => "Delete"
   | .pass _ => "Pass"
@@ -3518,6 +3519,24 @@ the faithful `TypeError`/`AttributeError` arms below correct. -/
 def hasExtraDunder (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n => dunderShaped n && n != "__init__"
 
+def hasContextProtocol (c : ClassDefn) : Bool :=
+  c.methods.toList.contains "__enter__"
+    && c.methods.toList.contains "__exit__"
+
+def hasContextExtraDunder (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n =>
+    dunderShaped n && n != "__init__" && n != "__enter__" && n != "__exit__"
+
+def findContextClass (m : Module) (name : String) : Option (Nat × ClassDefn) :=
+  match findClass m name with
+  | some (ci, c) =>
+      if c.ok && !c.isExc && c.ntBase.isNone && hasContextProtocol c
+          && !hasContextExtraDunder c
+          && (findFunction m (name ++ ".__init__")).isNone then
+        some (ci, c)
+      else Option.none
+  | Option.none => Option.none
+
 /-- The decision of an attribute READ (`x.attr` as a value) on a heap
 receiver, computed PURELY from the referent — the interpreter arm and its
 meta-theorems (`fuelMono`/`worldInv`) fork on this one scrutinee instead
@@ -3949,6 +3968,17 @@ def targetBindsListG : List Expr → Option (List String)
     | some a, some b => some (a ++ b)
     | _, _ => Option.none
 
+def withItemBindsG : WithItem → Option (List String)
+  | { target := none, .. } => some []
+  | { target := some target, .. } => targetBindsG target
+
+def withItemsBindsG : List WithItem → Option (List String)
+  | [] => some []
+  | item :: rest =>
+    match withItemBindsG item, withItemsBindsG rest with
+    | some a, some b => some (a ++ b)
+    | _, _ => Option.none
+
 /-- The PRIMARY name a store target reaches through (`a.b[k]` → `a`);
 `[]` when the chain does not bottom out in a name. -/
 def Expr.g1Primary : Expr → List String
@@ -3986,6 +4016,10 @@ mutual
     -- from the body's retained state)
     | .tryStmt b _ hnd _ _ =>
       Stmt.g1StoresList b.toList ++ Stmt.g1StoresList hnd.toList
+    | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        (item.target.map Expr.g1TargetStores).getD []).flatten
+        ++ Stmt.g1StoresList body.toList
     -- Pass 0 (§import forms): an import stores through no target
     | .importFrom .. => []
     | _ => []
@@ -4031,6 +4065,10 @@ mutual
     -- deleted name's STALE static binding. The recorded "`[]`" note is
     -- superseded by this measurement.
     | .delStmt ns _ => some ns.toList
+    | .withStmt items body _ _ =>
+      match withItemsBindsG items.toList, Stmt.g1BindsList body.toList with
+      | some a, some b => some (a ++ b)
+      | _, _ => Option.none
     | .tryStmt b _ hnd _ _ =>
       match Stmt.g1BindsList b.toList, Stmt.g1BindsList hnd.toList with
       | some c, some d => some (c ++ d)
@@ -4092,6 +4130,7 @@ def g1ExecCandidate : Stmt → Bool
   -- targets (`g1Binds` above) — skipping it would keep them stale.
   | .delStmt .. => true
   | .tryStmt .. => true
+  | .withStmt .. => true
   -- Pass 0 (§import forms): a top-level `importFrom` IS a candidate.
   -- The "imports are not candidates" note above is about `.unsupported`
   -- statements, which execStmt REFUSES (no divergence possible); this
@@ -4693,6 +4732,7 @@ mutual
     -- SUSPENDABLE — seen here so `genPlan` can refuse it precisely
     | .tryStmt body _ handler _ _ =>
         Stmt.hasYieldList body.toList || Stmt.hasYieldList handler.toList
+    | .withStmt _ body _ _ => Stmt.hasYieldList body.toList
     | _ => false
 
   /-- Elementwise `Stmt.hasYield`. -/
@@ -4733,6 +4773,7 @@ def genPlan (s : Stmt) : GenPlan :=
       (match o.toList with
        | [] => .forHere tg it b.toList
        | _ :: _ => .refuse "'for … else' is outside the v0 tier")
+    | .withStmt .. => .refuse "'with' in a generator body is outside the v0 tier"
     -- exceptions tier (docs/memory-model.md §exceptions): a `yield`
     -- under `try` would make the try a SUSPENDABLE construct needing
     -- its own GenFrame — refused in v0. A yield-free try never reaches
@@ -4912,6 +4953,7 @@ mutual
     -- `World` field (the recorded design's pricing, verbatim).
     | .delStmt .. => true
     | .tryStmt .. => false
+    | .withStmt .. => false
     -- Pass 0 (§import forms): IN by the `raiseStmt` argument — the arm
     -- allocates nothing and never decides `.ok` (worldInv is `.ok`-only,
     -- so invariance is vacuous). REVIEW POINT for the future
@@ -4948,6 +4990,7 @@ def Stmt.hasGenDef : Stmt → Bool
       Stmt.hasGenDefList b.toList || Stmt.hasGenDefList o.toList
   | .tryStmt b _ hnd _ _ =>
       Stmt.hasGenDefList b.toList || Stmt.hasGenDefList hnd.toList
+  | .withStmt _ body _ _ => Stmt.hasGenDefList body.toList
   | _ => false
 
 /-- Elementwise `Stmt.hasGenDef`. -/
@@ -5052,6 +5095,7 @@ mutual
     | .delStmt .. => true
     | .tryStmt b _ hnd _ _ =>
       Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList hnd.toList
+    | .withStmt .. => false
     -- Pass 0: no subexpression, allocates nothing (it raises)
     | .importFrom .. => true
     | .pass _ | .brk _ | .cont _ => true
@@ -5102,6 +5146,7 @@ mutual
       Stmt.defFreeList b.toList && Stmt.defFreeList o.toList
     | .tryStmt b _ hnd _ _ =>
       Stmt.defFreeList b.toList && Stmt.defFreeList hnd.toList
+    | .withStmt _ body _ _ => Stmt.defFreeList body.toList
     | _ => true
 
   /-- Elementwise `Stmt.defFree`. -/
@@ -6878,6 +6923,62 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
        | (env, Option.none) => .ok { st with locals := env } .next
        | (_, some n) =>
          .unsupported s!"'del {n}': the name is not a bound local — CPython raises UnboundLocalError here and the model never invents one (docs/memory-model.md §the del statement)")
+    | .withStmt items body withUnsupported _ =>
+      match withUnsupported, items.toList with
+      | some reason, _ =>
+          .unsupported s!"with statement uses unsupported features ({reason}) — outside the tier"
+      | none, [item] =>
+        match item.context with
+        | .call (.name fname _) args kwargs callUnsupported _ =>
+          if !kwargs.isEmpty || callUnsupported.isSome then
+            .unsupported "with context calls with keywords or starred arguments are outside the tier"
+          else
+            match findContextClass m fname with
+            | Option.none =>
+                .unsupported "with requires an admitted class with __enter__ and __exit__"
+            | some (ci, _) =>
+              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              let enterName := fname ++ ".__enter__"
+              let exitName := fname ++ ".__exit__"
+              let a := st.world.heap.size
+              let st' := { st with world :=
+                { st.world with heap := st.world.heap.push (.instance ci #[]) } }
+              match vs with
+              | [] =>
+                Run.withLocals st'.locals
+                    (callIn m fuel st'.world enterName #[.ref a]) ⤳ fun stEnter entered =>
+                  match item.target with
+                    | some target =>
+                        Run.liftRes stEnter
+                          (assignToH stEnter.world.heap stEnter.locals target entered) ⤳
+                          fun stBody env' =>
+                            Run.bindE
+                              (execStmts m fuel { stBody with locals := env' } body.toList)
+                              (fun stAfter flow =>
+                                match flow with
+                                | .next | .ret _ | .brk | .cont =>
+                                    Run.withLocals stAfter.locals
+                                      (callIn m fuel stAfter.world exitName
+                                        #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
+                                    .ok stExit flow)
+                              (fun _ _ =>
+                                .unsupported "with body raised before __exit__; exception payloads are outside the tier")
+                    | none =>
+                        Run.bindE
+                          (execStmts m fuel stEnter body.toList)
+                          (fun stAfter flow =>
+                            match flow with
+                            | .next | .ret _ | .brk | .cont =>
+                                Run.withLocals stAfter.locals
+                                  (callIn m fuel stAfter.world exitName
+                                    #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
+                                .ok stExit flow)
+                          (fun _ _ =>
+                            .unsupported "with body raised before __exit__; exception payloads are outside the tier")
+              | _ => .exn st' (.typeError s!"{fname}() takes no arguments")
+        | _ =>
+          .unsupported "with context must be a direct class constructor call"
+      | _, _ => .unsupported "multiple context-manager items are outside the tier"
     | .tryStmt body excName handler tryUnsupported _ =>
       -- exceptions tier: the v0 single-handler shape on the retained-state
       -- covenant — run the body; `.ok` skips the handler; a MATCHING

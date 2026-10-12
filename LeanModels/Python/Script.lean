@@ -195,6 +195,10 @@ mutual
     | .delStmt ns _ => ns.toList
     | .tryStmt b excName hnd _ _ =>
       excName :: Stmt.allNamesList b.toList ++ Stmt.allNamesList hnd.toList
+    | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        item.context.allNames ++ (item.target.map Expr.allNames).getD []).flatten
+        ++ Stmt.allNamesList body.toList
     -- Pass 0 (§import forms): an import reads no in-module names (its
     -- bound names are the binding censuses' business, `Stmt.g1Binds`)
     | .importFrom .. => []
@@ -229,6 +233,10 @@ mutual
       Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList o.toList
     | .tryStmt b _ hnd _ _ =>
       Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList hnd.toList
+    | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        (item.target.map targetBoundNames).getD []).flatten
+        ++ Stmt.assignedNamesList body.toList
     -- del RECONCILED: a removal is a binding CHANGE — inside a delegated
     -- compound it is exactly as invisible to called functions as a
     -- mid-compound bind, so `scriptFlushCoherent` must see it
@@ -266,6 +274,7 @@ def scriptStmtSpan : Stmt → Span
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
+  | .withStmt _ _ _ sp
   | .importFrom _ _ _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
@@ -529,6 +538,10 @@ mutual
     -- compound the executor still delegates wholesale
     | .tryStmt b _ h _ _ =>
       Stmt.scriptMidAssignsList b.toList ++ Stmt.scriptMidAssignsList h.toList
+    | .withStmt items b _ _ =>
+      (items.toList.map fun item =>
+        (item.target.map targetBoundNames).getD []).flatten
+        ++ Stmt.assignedNamesList b.toList
     | _ => []
 
   /-- Elementwise `Stmt.scriptMidAssigns`. -/

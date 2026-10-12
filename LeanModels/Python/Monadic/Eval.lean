@@ -70,6 +70,23 @@ open LeanModels LeanModels.Python
 
 namespace LeanModels.Python.Monadic
 
+def hasContextProtocolM (c : ClassDefn) : Bool :=
+  c.methods.toList.contains "__enter__"
+    && c.methods.toList.contains "__exit__"
+
+def hasContextExtraDunderM (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n =>
+    dunderShaped n && n != "__init__" && n != "__enter__" && n != "__exit__"
+
+def findContextClassM (m : Module) (name : String) : Option (Nat × ClassDefn) :=
+  match findClass m name with
+  | some (ci, c) =>
+      if c.ok && !c.isExc && c.ntBase.isNone && hasContextProtocolM c
+          && (findFunction m (name ++ ".__init__")).isNone then
+        some (ci, c)
+      else Option.none
+  | Option.none => Option.none
+
 /-! ## §0 THE CALL PLAN — a PURE fork, decided before the arguments evaluate
 
 The tier records this discipline three times already (`attrCallPlan`,
@@ -170,7 +187,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
             -- `__init__` run.
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
-            else if hasExtraDunder c then
+            else if hasContextExtraDunderM c then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else if (findFunction m (fname ++ ".__init__")).isSome then
               .preRefuse s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
@@ -178,7 +195,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
           | Option.none =>
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
-            else if hasExtraDunder c then
+            else if hasContextExtraDunderM c then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else .instantiate ci fname (findFunction m (fname ++ ".__init__")).isSome
       | Option.none =>
@@ -1194,6 +1211,47 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
   | .pass _ => pure .next
   | .brk _ => pure .brk
   | .cont _ => pure .cont
+  | .withStmt items body withUnsupported sp => do
+      match withUnsupported, items.toList with
+      | some reason, _ =>
+          refuse s!"with statement uses unsupported features ({reason}) — outside the tier"
+      | none, [item] =>
+          match item.context with
+          | .call (.name fname _) args kwargs callUnsupported _ =>
+              if !kwargs.isEmpty || callUnsupported.isSome then
+                refuse "with context calls with keywords or starred arguments are outside the tier"
+              else
+                match findContextClassM m fname with
+                | Option.none =>
+                    refuse "with requires an admitted class with __enter__ and __exit__"
+                | some _ => do
+                    let contextName := "<with-context>"
+                    let contextExpr := Expr.name contextName sp
+                    let enterExpr :=
+                      Expr.call (Expr.attribute contextExpr "__enter__" sp)
+                        #[] #[] Option.none sp
+                    let noneExpr := Expr.constant .none sp
+                    let exitExpr :=
+                      Expr.call (Expr.attribute contextExpr "__exit__" sp)
+                        #[noneExpr, noneExpr, noneExpr] #[] Option.none sp
+                    let old ← envGet contextName
+                    let context ← evalOpen K m item.context
+                    envSet contextName context
+                    let entered ← evalOpen K m enterExpr
+                    match item.target with
+                    | some target => assignM target entered
+                    | none => pure ()
+                    let flow ←
+                      tryCatch (execOpenList K m body.toList) (fun _ =>
+                        refuse "with body raised before __exit__; exception payloads are outside the tier")
+                    let _ ← evalOpen K m exitExpr
+                    match old with
+                    | some value => envSet contextName value
+                    | none => envRemove contextName
+                    pure flow
+          | _ =>
+              refuse "with context must be a direct class constructor call"
+      | _, _ => refuse "multiple context-manager items are outside the tier"
   | .unsupported pyKind _ _ => refuse s!"unsupported statement '{pyKind}'"
   | .yieldStmt _ _ =>
       refuse "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"

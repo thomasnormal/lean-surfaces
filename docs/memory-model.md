@@ -410,6 +410,25 @@ cycle DETECTION, never by running out of fuel).
   candidate whose TYPENAME collides with an `ntBase` class name, so in a
   recognized module a value's `tname` names exactly its defining class.
 
+## Synchronous context managers (`with`) (initial slice — BUILT, 2026-10-12)
+
+* The admitted shape is one synchronous item whose context is a direct class
+  constructor with no keywords or starred arguments. The class has an
+  implicit constructor plus `__enter__` and `__exit__`; `__enter__` receives
+  the fresh instance and its result is assigned before the body, while
+  `__exit__(None, None, None)` runs after every normal body flow (`next`,
+  `return`, `break`, or `continue`). The instance is a normal heap reference,
+  so method calls share the same world and heap as the body.
+* Multiple items, explicit `__init__` constructors, non-constructor context
+  expressions, keyword/starred context arguments, and body exception
+  unwinding remain loud. The retained-state `Run` result does not carry the
+  exception triple required to call `__exit__(exc_type, exc, tb)` faithfully;
+  this is a boundary to extend, not a permanent exclusion. `async with` is
+  likewise still unfinished scope.
+* `Examples/python/with_lab` pins normal target binding, unbound use, and
+  fall-through, plus the two deliberate refusals. The monadic runner and the
+  trunk proof interpreter agree with CPython on the decided rows.
+
 ## Tuple repetition (2026-10-11 — current)
 
 Tuple and namedtuple repetition shares the pure `tupleRepeat` worker in both

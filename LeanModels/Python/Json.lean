@@ -337,6 +337,15 @@ partial def parseStmt (j : Json) : Except String Stmt := do
           | .ok jv => do pure (some (← parseExpr jv))
           | .error _ => pure Option.none
         return .assertStmt (← parseExpr (← j.getObjVal? "test")) msg span
+    | "With" =>
+        let items ← (← (← getField j "items").getArr?).mapM fun item => do
+          let context ← parseExpr (← getField item "context")
+          let target ← match item.getObjVal? "target" with
+            | .ok .null | .error _ => pure Option.none
+            | .ok v => pure (some (← parseExpr v))
+          pure { context, target }
+        let body ← (← (← getField j "body").getArr?).mapM parseStmt
+        return .withStmt items body Option.none span
     | "Delete" =>
         -- the tail batch (docs/memory-model.md §the del statement): the
         -- extractor admits BARE NAMES only (clause 4 ships everything
@@ -630,6 +639,13 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
   -- conservative one for every census this feeds (a namedtuple or alias
   -- name that is deleted anywhere must not be recognized).
   | .delStmt ns _ => some ns.toList
+  | .withStmt items body _ _ => do
+    let ib := items.toList.map fun item =>
+      match item.target with
+      | none => []
+      | some target => (targetBinds target).getD []
+    let bb ← body.toList.mapM (stmtBindsWith imp0)
+    return ib.flatten ++ bb.flatten
   | .tryStmt b _ hnd _ _ => do
     let bb ← b.toList.mapM (stmtBindsWith imp0)
     let hb ← hnd.toList.mapM (stmtBindsWith imp0)
@@ -697,6 +713,10 @@ mutual
     | .delStmt ns _ => ns.toList
     | .tryStmt b excName hnd _ _ =>
       excName :: (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
+    | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        exprRefs item.context ++ (item.target.map exprRefs).getD []).flatten
+        ++ (body.toList.map stmtRefs).flatten
     -- Pass 0: an import references no in-module names
     | .importFrom .. => []
     | .pass _ | .brk _ | .cont _ => []
@@ -711,6 +731,7 @@ private def stmtSpanOf : Stmt → Span
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
+  | .withStmt _ _ _ sp
   | .importFrom _ _ _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
@@ -971,6 +992,12 @@ private partial def bodyAssigns : Stmt → List String
   -- exceptions tier: body and handler assigns both count
   | .tryStmt b _ hnd _ _ =>
       (b.toList.map bodyAssigns).flatten ++ (hnd.toList.map bodyAssigns).flatten
+  | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        match item.target with
+        | none => []
+        | some target => (targetBinds target).getD []).flatten
+        ++ (body.toList.map bodyAssigns).flatten
   | _ => []
 
 /-- Every name a statement can OBSERVE or BIND — reads (`exprRefs` of
@@ -1008,6 +1035,10 @@ private partial def yfNames : Stmt → List String
       exprRefs t ++ (m.map exprRefs).getD []
   | .tryStmt b _ hnd _ _ =>
       (b.toList.map yfNames).flatten ++ (hnd.toList.map yfNames).flatten
+  | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        exprRefs item.context ++ (item.target.map exprRefs).getD []).flatten
+        ++ (body.toList.map yfNames).flatten
   -- Pass 0: statement-position only at module top level; observes and
   -- (in Pass 0) binds nothing a yield-from target could collide with
   | .importFrom .. => []
@@ -1124,6 +1155,10 @@ private partial def stmtNamesXW : Stmt → List String
   | .tryStmt b en hnd _ _ =>
       [en] ++ (b.toList.map stmtNamesXW).flatten
         ++ (hnd.toList.map stmtNamesXW).flatten
+  | .withStmt items body _ _ =>
+      (items.toList.map fun item =>
+        exprNamesXW item.context ++ (item.target.map exprNamesXW).getD []).flatten
+        ++ (body.toList.map stmtNamesXW).flatten
   -- Pass 0: the names form's names count as enclosing occurrences (a
   -- future binding arm would look at them — over-reporting refuses a
   -- colliding walrus, the safe direction); star enumerates nothing and
@@ -1318,6 +1353,11 @@ mutual
     | .delStmt ns sp => return .delStmt ns sp
     | .tryStmt b en hnd tu sp =>
         return .tryStmt (← lowerStmts ctx b) en (← lowerStmts ctx hnd) tu sp
+    | .withStmt items body tu sp =>
+        let items ← items.mapM fun item => do
+          pure { context := ← lowerExpr ctx item.context,
+                 target := ← item.target.mapM (lowerExpr ctx) }
+        return .withStmt items (← lowerStmts ctx body) tu sp
     | .defStmt name params ao lo hg ig body captures sp =>
         -- H7: the nested body lowers under its OWN ctx. Closure captures
         -- are never-rebound by admission, so a genexp inside the nested
@@ -1398,6 +1438,8 @@ mutual
         [.ifStmt t (splitChainStmts b) (splitChainStmts o) sp]
     | .tryStmt b en h tu sp =>
         [.tryStmt (splitChainStmts b) en (splitChainStmts h) tu sp]
+    | .withStmt items body tu sp =>
+        [.withStmt items (splitChainStmts body) tu sp]
     | .defStmt n p ao lo hg ig body cap sp =>
         [.defStmt n p ao lo hg ig (splitChainStmts body) cap sp]
     | s => [s]
@@ -1420,6 +1462,7 @@ private partial def delTargets : Stmt → List String
       (b.toList.map delTargets).flatten ++ (o.toList.map delTargets).flatten
   | .tryStmt b _ hnd _ _ =>
       (b.toList.map delTargets).flatten ++ (hnd.toList.map delTargets).flatten
+  | .withStmt _ body _ _ => (body.toList.map delTargets).flatten
   | _ => []
 
 /-- del RECONCILED (docs/backlog.md §`del` RECONCILED with the one

@@ -1354,7 +1354,87 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
           | timeout =>
             simp only [hto hrun]
             exact .timeout
-          | unsupported msg => exact .unsupported
+              | unsupported msg => exact .unsupported
+  | withStmt items body withUnsupported sp =>
+    cases withUnsupported with
+    | some reason => simp only [execStmt]; exact .unsupported
+    | none =>
+      cases hitems : items.toList with
+      | nil => simp only [execStmt, hitems]; exact .unsupported
+      | cons item rest =>
+        cases hrest : rest with
+        | cons item2 rest2 => simp only [execStmt, hitems, hrest]; exact .unsupported
+        | nil =>
+          cases hctx : item.context with
+          | call func args kwargs callUnsupported csp =>
+            cases hfunc : func with
+            | name fname fsp =>
+              cases hkwargs : kwargs.toList with
+              | cons kw kws =>
+                have hkwNonempty : kwargs.isEmpty = false := by
+                  apply Bool.eq_false_iff.mpr
+                  intro he
+                  have hkwEmpty : kwargs = #[] := Array.isEmpty_iff.mp he
+                  simp [hkwEmpty] at hkwargs
+                simp [execStmt, hitems, hrest, hctx, hfunc, hkwNonempty]
+                exact .unsupported
+              | nil =>
+                have hkwEmpty : kwargs = #[] :=
+                  Array.toList_inj.mp (by simpa using hkwargs)
+                cases hcall : callUnsupported with
+                | some reason =>
+                  simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall]
+                  exact .unsupported
+                | none =>
+                  cases hclass : findContextClass m fname with
+                  | none =>
+                    simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
+                    exact .unsupported
+                  | some pr =>
+                    obtain ⟨ci, cdef⟩ := pr
+                    simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
+                    refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                    let a := s2.world.heap.size
+                    let s2' := { s2 with world :=
+                      { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
+                    cases vs with
+                    | nil =>
+                      refine .bind
+                        (ClockErasedW.withLocals
+                          (ihCall m s2'.world (fname ++ ".__enter__") #[.ref a]
+                            (by simpa [s2', a] using hs2)))
+                        fun s4 entered hs4 => ?_
+                      cases htarget : item.target with
+                      | none =>
+                        simp only [htarget]
+                        refine .bindE (ihSs m s4 body.toList hs4)
+                          (fun s5 flow hs5 => ?_)
+                          (fun _ _ _ => .unsupported)
+                        cases flow with
+                        | next | ret _ | brk | cont =>
+                          exact .bind
+                            (ClockErasedW.withLocals
+                              (ihCall m s5.world (fname ++ ".__exit__")
+                                #[.ref a, .none, .none, .none] (by simpa using hs5)))
+                            (fun s6 _ hs6 => .ok hs6 _)
+                      | some target =>
+                        simp only [htarget]
+                        refine .bind (.liftRes hs4 _) fun s5 env' hs5 => ?_
+                        refine .bindE (ihSs m { s5 with locals := env' } body.toList hs5)
+                          (fun s6 flow hs6 => ?_)
+                          (fun _ _ _ => .unsupported)
+                        cases flow with
+                        | next | ret _ | brk | cont =>
+                          exact .bind
+                            (ClockErasedW.withLocals
+                              (ihCall m s6.world (fname ++ ".__exit__")
+                                #[.ref a, .none, .none, .none] (by simpa using hs6)))
+                            (fun s7 _ hs7 => .ok hs7 _)
+                    | cons v rest =>
+                      exact .of_seed (fun tr => by simp [s2', a, Run.seedF])
+                        (by simp [s2', a, FrameState.withClock_self hs2])
+            | _ => simp [execStmt, hitems, hrest, hctx, hfunc]; exact .unsupported
+          | _ => simp [execStmt, hitems, hrest, hctx]; exact .unsupported
   | importFrom mod names star sp =>
     -- Pass 0 (§import forms): fuel-free raise, state unchanged — the
     -- raiseStmt/exn leaf shape
@@ -1665,15 +1745,15 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       .ite (.ok hs2 _) (.exn hs2 _)
                   | none =>
                     refine .ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
-                      (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bint
+                      (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bround (.ite ?bint
                       (.ite ?bfloat (.ite ?bbool
                       (.ite ?bdivmod
                       (.ite ?bpow
                       (.ite ?bsum (.ite ?btuple (.ite ?blist (.ite ?bdict
                       (.ite ?brange (.ite ?benum (.ite ?bcount (.ite ?bnext
-                      (.ite ?bord (.ite ?bchr (.ite ?bhex (.ite ?bstr (.ite ?brepr (.ite .unsupported
+                      (.ite ?bord (.ite ?bchr (.ite ?bhex (.ite ?bformat (.ite ?bstr (.ite ?brepr (.ite .unsupported
                       (.ite ?bprint
-                        (.ite .unsupported ?blive)))))))))))))))))))))))))
+                        (.ite .unsupported ?blive)))))))))))))))))))))))))))
                     ))
                     case blen =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
@@ -1930,6 +2010,16 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         cases t with
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
+                    case bround =>
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      cases vs with
+                      | nil => exact .exn hs2 _
+                      | cons v t =>
+                        cases t with
+                        | nil =>
+                          cases v <;> try exact .unsupported
+                          all_goals exact .ok hs2 _
+                        | cons d t2 => exact .unsupported
                     case bint =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -2168,6 +2258,26 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         cases t with
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
+                    case bformat =>
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      cases vs with
+                      | nil => exact .exn hs2 _
+                      | cons v t =>
+                        cases t with
+                        | nil => ce_norm; exact .liftRes hs2 _
+                        | cons spec t2 =>
+                          cases t2 with
+                          | nil =>
+                            cases spec with
+                            | str spec =>
+                              refine .ite ?_ .unsupported
+                              · ce_norm
+                                exact .liftRes hs2 _
+                            | _ =>
+                              simp only [evalExpr]
+                              exact .exn hs2 _
+                          | cons d t3 =>
+                            cases t3 <;> simp only [evalExpr] <;> exact .exn hs2 _
                     case bstr =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with

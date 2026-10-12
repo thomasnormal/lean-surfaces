@@ -1072,5 +1072,11 @@
   {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_zero", "args": [[0], [1], [2]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_zero_caught", "args": [[0], [1], [2]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_conversion_order", "args": [[0], [1], [2], [0, -0.0], [1, -0.0], [2, -0.0], [0, {"t": "float", "bits": "9221120237041090560"}], [1, {"t": "float", "bits": "9221120237041090560"}], [2, {"t": "float", "bits": "9221120237041090560"}]], "expect": "match"},
-  {"file": "Examples/python/divmod_lab/divmod_lab.py", "function": "pair", "args": [[1.0, 0.1], [-1.0, 0.1], [0.0, -2.0], [5.0, 0], [true, 0.1]], "expect": "match"}
+  {"file": "Examples/python/divmod_lab/divmod_lab.py", "function": "pair", "args": [[1.0, 0.1], [-1.0, 0.1], [0.0, -2.0], [5.0, 0], [true, 0.1]], "expect": "match"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "bound_value", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "unbound_value", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "fallthrough", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "multiple_items", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "explicit_init", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "extra_dunder", "args": [[]], "expect": "unsupported"}
 ]

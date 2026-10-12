@@ -1561,6 +1561,24 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         if node.msg is not None:
             d["msg"] = convert_expr(node.msg)
         return d
+    if isinstance(node, ast.With):
+        # Context-manager tier: preserve every item and let the interpreter
+        # enforce the protocol boundary. AsyncWith remains a separate,
+        # explicitly loud construct below.
+        return {
+            "kind": "With",
+            "span": span(node),
+            "items": [
+                {
+                    "context": convert_expr(item.context_expr),
+                    "target": (convert_expr(item.optional_vars)
+                               if item.optional_vars is not None else None),
+                }
+                for item in node.items
+            ],
+            "body": convert_stmt_list(node.body, module_scope=module_scope,
+                                       func_scope=func_scope),
+        }
     if isinstance(node, ast.Delete):
         # The tail batch (docs/memory-model.md paragraph "the del
         # statement"): BARE NAMES only -- `del d[k]`, `del o.attr`,

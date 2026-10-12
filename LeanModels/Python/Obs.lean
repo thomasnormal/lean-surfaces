@@ -1265,6 +1265,82 @@ theorem fuelMono (fuel : Nat) :
                       (Run.le_refl _)
                 | timeout => exact Run.le_refl _
                 | unsupported msg => exact Run.le_refl _
+        | withStmt items body tu _ =>
+          simp only [execStmt]
+          cases tu with
+          | some reason => exact Run.le_refl _
+          | none =>
+            cases hitems : items.toList with
+            | nil => simp [hitems]; exact Run.le_refl _
+            | cons item rest =>
+              cases hrest : rest with
+              | cons item2 rest2 => simp [hitems, hrest]; exact Run.le_refl _
+              | nil =>
+                cases hctx : item.context with
+                | call func args kwargs callUnsupported csp =>
+                  cases hfunc : func with
+                  | name fname fsp =>
+                    cases hkwargs : kwargs.toList with
+                    | cons kw kws =>
+                      have hkwNonempty : kwargs.isEmpty = false := by
+                        apply Bool.eq_false_iff.mpr
+                        intro he
+                        have hkwEmpty : kwargs = #[] := Array.isEmpty_iff.mp he
+                        simp [hkwEmpty] at hkwargs
+                      simp [hitems, hrest, hctx, hfunc, hkwNonempty]
+                      exact Run.le_refl _
+                    | nil =>
+                      have hkwEmpty : kwargs = #[] :=
+                        Array.toList_inj.mp (by simpa using hkwargs)
+                      cases hcall : callUnsupported with
+                      | some reason => simp [hitems, hrest, hctx, hfunc, hkwEmpty, hcall]; exact Run.le_refl _
+                      | none =>
+                        cases hclass : findContextClass m fname with
+                        | none => simp [hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]; exact Run.le_refl _
+                        | some pr =>
+                          obtain ⟨ci, cdef⟩ := pr
+                          simp [hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
+                          refine Run.le_bind (ihEs m st args.toList k hk) fun s2 vs => ?_
+                          cases vs with
+                          | nil =>
+                            let a := s2.world.heap.size
+                            let s2' := { s2 with world :=
+                              { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
+                            refine Run.le_bind
+                              (Run.le_withLocals
+                                (ihCall m s2'.world (fname ++ ".__enter__") #[.ref a] k hk))
+                              fun sEnter entered => ?_
+                            cases htarget : item.target with
+                            | none =>
+                              simp only [htarget]
+                              refine Run.le_bindE (ihSs m sEnter body.toList k hk)
+                                (fun sAfter flow => ?_)
+                                (fun _ _ => Run.le_refl _)
+                              cases flow with
+                              | next | ret _ | brk | cont =>
+                                exact Run.le_bind
+                                  (Run.le_withLocals
+                                    (ihCall m sAfter.world (fname ++ ".__exit__")
+                                      #[.ref a, .none, .none, .none] k hk))
+                                  (fun sExit _ => Run.le_refl _)
+                            | some target =>
+                              simp only [htarget]
+                              refine Run.le_bind (Run.le_refl _) fun sBody env' => ?_
+                              refine Run.le_bindE (ihSs m { sBody with locals := env' }
+                                body.toList k hk)
+                                (fun sAfter flow => ?_)
+                                (fun _ _ => Run.le_refl _)
+                              cases flow with
+                              | next | ret _ | brk | cont =>
+                                exact Run.le_bind
+                                  (Run.le_withLocals
+                                    (ihCall m sAfter.world (fname ++ ".__exit__")
+                                      #[.ref a, .none, .none, .none] k hk))
+                                  (fun sExit _ => Run.le_refl _)
+                          | cons v rest => exact Run.le_refl _
+                  | _ => simp [hitems, hrest, hctx, hfunc]; exact Run.le_refl _
+                | _ => simp [hitems, hrest, hctx]; exact Run.le_refl _
+
         | importFrom mod names star _ =>
           -- Pass 0 (§import forms): fuel-free — the arm raises
           -- immediately, state unchanged (the raiseStmt shape)
@@ -2689,6 +2765,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         -- OUT of the fragment (as-built delta, docs/memory-model.md
         -- §exceptions): the handler resumes from the body's retained
         -- `.exn` state, invisible to the ok-only invariant
+        simp [Stmt.heapFree] at hfree
+      | withStmt items body tu _ =>
         simp [Stmt.heapFree] at hfree
       | importFrom mod names star _ =>
         -- Pass 0 (§import forms): IN the fragment, vacuously — the arm

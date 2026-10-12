@@ -42,6 +42,9 @@ def envSet (id : String) (v : RVal) : SemF Unit :=
 def envPut (env : Env) : SemF Unit :=
   modify fun st => { st with locals := env }
 
+def envRemove (id : String) : SemF Unit :=
+  modify fun st => { st with locals := Env.remove st.locals id }
+
 /-- Read the world out of the frame. -/
 def frameWorld : SemF World := do
   let st ← get; pure st.world

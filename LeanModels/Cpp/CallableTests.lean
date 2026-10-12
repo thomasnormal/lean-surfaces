@@ -55,9 +55,12 @@ def declRef (id name : String) : Raw := object [
   ("id", text id), ("kind", text "DeclRefExpr"),
   ("referencedDecl", object [("id", text id), ("kind", text "ParmVarDecl"), ("name", text name)])]
 
-def implicitCast (id : String) (child : Raw) : Raw := object [
+def implicitCastKind (id kind : String) (child : Raw) : Raw := object [
   ("id", text id), ("kind", text "ImplicitCastExpr"),
-  ("castKind", text "LValueToRValue"), ("inner", .array [child])]
+  ("castKind", text kind), ("inner", .array [child])]
+
+def implicitCast (id : String) (child : Raw) : Raw :=
+  implicitCastKind id "LValueToRValue" child
 
 def returnStmt (id : String) (value : Raw) : Raw := object [
   ("id", text id), ("kind", text "ReturnStmt"), ("inner", .array [value])]
@@ -93,6 +96,19 @@ def identityProbe : DeclarationProbe :=
 
 def identityTypes : List TypeEvidenceRow := [
   typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def boolCastProbe : DeclarationProbe :=
+  probeFor (functionSource "toBool" [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31"
+      (implicitCastKind "0x32" "IntegralToBoolean"
+        (implicitCast "0x33" (declRef "0x10" "value"))))))
+    [rootEvidence, functionEvidence "toBool" "CompoundStmt"]
+
+def boolCastTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (.function (.builtin .boolean) [intType] false), typeRow "0x10" intType]
+
+def admitBoolCast : Except String CallableFunction :=
+  admitCallableFunction boolCastProbe boolCastTypes [] TargetProfile.lp64 [0]
 
 def literalProbe : DeclarationProbe :=
   probeFor (functionSource "literal" []
@@ -217,6 +233,16 @@ def admitLogical : Except String CallableFunction :=
 
 #guard match admitIdentity with
   | .ok function => function.parameters.length == 1
+  | .error _ => false
+#guard match admitBoolCast with
+  | .ok function =>
+      match function.body with
+      | .return_ expression =>
+          expression.type == .builtin .boolean &&
+            match expression.expression with
+            | .convert _ => true
+            | _ => false
+      | _ => false
   | .error _ => false
 #guard match admitIdentity with
   | .ok function =>

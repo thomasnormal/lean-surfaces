@@ -4,8 +4,8 @@
 `CallableFunction` statement profile without changing the translation execution boundary.
 It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
-conversion, evaluates integer literals, parameter references, typed integral
-unary and binary expressions, and short-circuiting logical `&&`/`||` inside
+conversion, evaluates integer literals, parameter references, integral casts,
+typed integral unary and binary expressions, and short-circuiting logical `&&`/`||` inside
 sequences, `if` branches and `while`/`do` loops, and returns the existing `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain
 visible rather than becoming host-language behavior.

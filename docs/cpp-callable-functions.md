@@ -31,6 +31,8 @@ The return-expression profile is:
 - a nonnegative decimal `IntegerLiteral` returning exact builtin `int`;
 - a parameter `DeclRefExpr`, through only `LValueToRValue` or `NoOp`
   `ImplicitCastExpr` wrappers; or
+- an integral `ImplicitCastExpr` (`IntegralToBoolean` or `IntegralCast`) over
+  an admitted operand, with a builtin integral destination; or
 - a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
 - a logical `&&` or `||` expression whose operands are builtin integral values
   and whose result is builtin `bool`; or
@@ -38,9 +40,8 @@ The return-expression profile is:
   witnessed by the validated expression supplement and whose promotions agree
   with the explicit `TargetProfile`.
 
-Conditions additionally admit Clang's `IntegralToBoolean` wrapper around one
-of those integral expressions; the wrapper is accepted only in condition
-context, where the evaluator uses the resulting integral truth value.
+Conditions additionally retain Clang's `IntegralToBoolean` wrapper and evaluate
+its builtin boolean result as the condition value.
 
 The result type of the expression must equal the function result type. A
 parameter reference must resolve to one of the function's own parameter

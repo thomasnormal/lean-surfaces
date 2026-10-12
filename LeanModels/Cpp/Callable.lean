@@ -7,6 +7,7 @@ mutual
   inductive CallableExpression where
     | integer (value : Nat)
     | parameter (declaration : FrontendHandle)
+    | convert (operand : TypedCallableExpression)
     | unary (operator : String) (operand : TypedCallableExpression)
     | logical (operator : String) (left right : TypedCallableExpression)
     | binary (operator : String) (left right : TypedCallableExpression)
@@ -140,11 +141,28 @@ partial def parseCallableExpression (profile : TargetProfile)
   | "ImplicitCastExpr" =>
       let castKind ← evidenceText raw "castKind"
       unless castKind == "LValueToRValue" || castKind == "NoOp" ||
-          (castKind == "IntegralToBoolean" && sourceExpected.isNone && typeExpected.isNone) do
+          castKind == "IntegralToBoolean" || castKind == "IntegralCast" do
         throw s!"callable: unsupported implicit cast {castKind}"
       let children ← rawChildren raw
       match children with
-      | [child] => parseCallableExpression profile parameters expressionRows child sourceExpected typeExpected
+      | [child] =>
+          if castKind == "IntegralToBoolean" || castKind == "IntegralCast" then
+            let operand ← parseCallableExpression profile parameters expressionRows child none none
+            let destination := if castKind == "IntegralToBoolean" then
+              .builtin .boolean
+            else
+              typeExpected.getD operand.type
+            unless callableBuiltin operand.type && callableBuiltin destination do
+              throw "callable: integral cast requires builtin integral types"
+            if typeExpected.isSome && typeExpected != some destination then
+              throw "callable: integral cast result disagrees with expected type"
+            pure {
+              expression := .convert operand
+              sourceType := operand.sourceType
+              type := destination
+            }
+          else
+            parseCallableExpression profile parameters expressionRows child sourceExpected typeExpected
       | _ => throw "callable: implicit cast must have one child"
   | "ParenExpr" =>
       let children ← rawChildren raw

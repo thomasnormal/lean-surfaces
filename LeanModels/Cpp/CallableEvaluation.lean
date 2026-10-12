@@ -137,6 +137,13 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
       match typed.expression with
       | .integer value => evaluateInteger profile value
       | .parameter declaration => evaluateParameter profile parameters arguments typed declaration
+      | .convert operand => do
+          let operandResult ← evaluateTyped fuel profile parameters arguments operand
+          match operandResult with
+          | .ok operandValue => convertTo profile typed.type operandValue
+          | .invalid reason => pure (.invalid reason)
+          | .undefined reason => pure (.undefined reason)
+          | .unsupported reason => pure (.unsupported reason)
       | .unary operator operand => do
           let some operation := unaryOperator? operator
             | .error (.unsupportedOperator operator)

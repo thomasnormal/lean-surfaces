@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "harness/scripts/with_script.py",
-  "source_sha256": "05628929820ba03a973e341b562aa38c0121974f69abc2ce8820d4b18a11cf38",
+  "source_sha256": "d0168f5fc8b3c33959d2d3248740799a6e8819bb2aee0a83f8441408647d9c98",
   "module": {
     "kind": "Module",
     "body": [
@@ -685,27 +685,170 @@
         ]
       },
       {
-        "kind": "Expr",
+        "kind": "With",
         "span": {
           "lineno": 37,
           "col_offset": 0,
-          "end_lineno": 37,
+          "end_lineno": 38,
+          "end_col_offset": 25
+        },
+        "items": [
+          {
+            "context": {
+              "kind": "Call",
+              "span": {
+                "lineno": 37,
+                "col_offset": 5,
+                "end_lineno": 37,
+                "end_col_offset": 13
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 37,
+                  "col_offset": 5,
+                  "end_lineno": 37,
+                  "end_col_offset": 11
+                },
+                "id": "Marker"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 37,
+                "col_offset": 17,
+                "end_lineno": 37,
+                "end_col_offset": 22
+              },
+              "id": "first"
+            }
+          },
+          {
+            "context": {
+              "kind": "Call",
+              "span": {
+                "lineno": 37,
+                "col_offset": 24,
+                "end_lineno": 37,
+                "end_col_offset": 36
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 37,
+                  "col_offset": 24,
+                  "end_lineno": 37,
+                  "end_col_offset": 34
+                },
+                "id": "InitMarker"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 37,
+                "col_offset": 40,
+                "end_lineno": 37,
+                "end_col_offset": 46
+              },
+              "id": "second"
+            }
+          }
+        ],
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 38,
+              "col_offset": 4,
+              "end_lineno": 38,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 38,
+                "col_offset": 4,
+                "end_lineno": 38,
+                "end_col_offset": 25
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 38,
+                  "col_offset": 4,
+                  "end_lineno": 38,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 38,
+                    "col_offset": 10,
+                    "end_lineno": 38,
+                    "end_col_offset": 24
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 38,
+                      "col_offset": 10,
+                      "end_lineno": 38,
+                      "end_col_offset": 15
+                    },
+                    "id": "first"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 38,
+                      "col_offset": 18,
+                      "end_lineno": 38,
+                      "end_col_offset": 24
+                    },
+                    "id": "second"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 40,
+          "col_offset": 0,
+          "end_lineno": 40,
           "end_col_offset": 12
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 37,
+            "lineno": 40,
             "col_offset": 0,
-            "end_lineno": 37,
+            "end_lineno": 40,
             "end_col_offset": 12
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 37,
+              "lineno": 40,
               "col_offset": 0,
-              "end_lineno": 37,
+              "end_lineno": 40,
               "end_col_offset": 5
             },
             "id": "print"
@@ -714,9 +857,9 @@
             {
               "kind": "Name",
               "span": {
-                "lineno": 37,
+                "lineno": 40,
                 "col_offset": 6,
-                "end_lineno": 37,
+                "end_lineno": 40,
                 "end_col_offset": 11
               },
               "id": "value"

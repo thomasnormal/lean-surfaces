@@ -266,6 +266,14 @@ partial def parseExpr (j : Json) : Except String Expr := do
           (← (← getField j "text").getStr?) span
     | other => throw s!"unknown expression kind {other.quote}"
 
+private def lowerWithItems (items : List WithItem) (body : Array Stmt)
+    (span : Span) : Stmt :=
+  match items with
+  | [] => .withStmt #[] body (some "with statement has no context items") span
+  | [item] => .withStmt #[item] body Option.none span
+  | item :: rest =>
+      .withStmt #[item] #[lowerWithItems rest body span] Option.none span
+
 /-- Parse a statement node (see `parseExpr` for why `partial`). -/
 def parseParam (j : Json) : Except String Param :=
   withCtx "param" do
@@ -345,7 +353,7 @@ partial def parseStmt (j : Json) : Except String Stmt := do
             | .ok v => pure (some (← parseExpr v))
           pure { context, target }
         let body ← (← (← getField j "body").getArr?).mapM parseStmt
-        return .withStmt items body Option.none span
+        return lowerWithItems items.toList body span
     | "Delete" =>
         -- the tail batch (docs/memory-model.md §the del statement): the
         -- extractor admits BARE NAMES only (clause 4 ships everything

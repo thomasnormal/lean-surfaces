@@ -19,6 +19,6 @@ load_program with_lab from "Examples/python/with_lab/with_lab.json"
 #py_check with_lab.unbound_value() = 7
 #py_check with_lab.fallthrough() = 40
 #py_check with_lab.explicit_init() = 0
+#py_check with_lab.multiple_items() = 0
 
-#guard callFunction with_lab "multiple_items" #[] 4096 matches .unsupported _
 #guard callFunction with_lab "extra_dunder" #[] 4096 matches .unsupported _

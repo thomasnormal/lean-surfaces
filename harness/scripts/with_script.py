@@ -34,4 +34,7 @@ with Marker():
 with InitMarker() as initialized:
     print(initialized)
 
+with Marker() as first, InitMarker() as second:
+    print(first + second)
+
 print(value)

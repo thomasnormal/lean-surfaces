@@ -173,7 +173,7 @@ def edgeOn (e : Edge) (old new : Logic) : Bool :=
   match e with
   | .pos => isPosedge old new
   | .neg => isNegedge old new
-  | .any => isPosedge old new || isNegedge old new
+  | .any => old != new
 
 /-- Did `sig` see the given edge between two states?
 

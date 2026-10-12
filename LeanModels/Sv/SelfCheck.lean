@@ -1099,6 +1099,7 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
       match edge with
       | "posedge" => return .waitEvent signal .pos
       | "negedge" => return .waitEvent signal .neg
+      | "any" => return .waitEvent signal .any
       | _ => throw "unsupported WaitEvent edge"
   | "Break" => return .breakLoop
   | "Continue" => return .continueLoop

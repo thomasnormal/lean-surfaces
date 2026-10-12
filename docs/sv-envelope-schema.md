@@ -97,8 +97,8 @@ emits:
 | `InstanceSymbol:Instance`, `SubroutineSymbol:Subroutine`, `ParameterSymbol:Parameter`, ... | module member kinds outside M0 (class name `:` symbol kind) — routed to the module's `others` list |
 | `ProceduralBlockSymbol:Initial` / `:Final` / `:AlwaysLatch` | process kinds outside M0 |
 | `ProceduralBlockSymbol:NoEventControl` | `always` / `always_ff` whose body is not an event-controlled statement |
-| `TimedStatement:<TimingClass>` | timing-control classification — supported integral-literal `#d` forms become `Delay`, and simple nested `@(posedge sig)` / `@(negedge sig)` forms become `WaitEvent`; unsupported delay expressions, other event edges/lists, and `TimedStatement:ImplicitEventControl` for `@*` remain loud |
-| `SignalEventControl:BothEdges` / `:None_` | edge other than `posedge` or `negedge` |
+| `TimedStatement:<TimingClass>` | timing-control classification — supported integral-literal `#d` forms become `Delay`, and simple nested `@(posedge sig)` / `@(negedge sig)` / `@(sig)` forms become `WaitEvent`; unsupported delay expressions, event lists, and `TimedStatement:ImplicitEventControl` for `@*` remain loud |
+| `SignalEventControl:BothEdges` | edge other than `posedge`, `negedge`, or a bare signal expression |
 | `SignalEventControl:iff` | `@(posedge clk iff ...)` |
 | `SignalEventControl:clock` | edge expression that is not a 1-bit identifier |
 | `AssignmentExpression:compound` | compound assignment whose scalar binary operator is outside the admitted set or whose target is not a plain identifier |
@@ -224,7 +224,7 @@ ordinary effectful expression.
 | `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |
 | `Repeat` | legacy/self-check: `kind`, `span`, `count` (expr), `count_signed` (Bool), `body` (stmt) |
 | `Delay` | scheduler: `kind`, `span`, `amount` (Nat below 2^64), `body` (stmt) — a known nonnegative integral-literal delay; ingestion retains the body after the delay checkpoint, and runtime refuses `amount == 0` because Inactive delivery is not in this tier |
-| `WaitEvent` | scheduler: `kind`, `span`, `signal` (1-bit identifier), `edge` (`"posedge"` or `"negedge"`) — a simple nested edge wait; an enclosing `Block` retains the following body and the self-check runner refuses it |
+| `WaitEvent` | scheduler: `kind`, `span`, `signal` (1-bit identifier), `edge` (`"posedge"`, `"negedge"`, or `"any"`) — a simple nested event wait; an enclosing `Block` retains the following body and the self-check runner refuses it |
 | `Break` / `Continue` | legacy/self-check: `kind`, `span`; transfer to the nearest loop |
 | `Unsupported` | see above |
 

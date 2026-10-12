@@ -1326,7 +1326,7 @@ def _convert_delay_statement(sm, statement):
 
 def _convert_wait_event_statement(sm, statement):
     timing = statement.timing
-    if timing.edge != EdgeKind.PosEdge:
+    if timing.edge not in (EdgeKind.PosEdge, EdgeKind.NegEdge):
         return unsupported(
             sm, statement, "SignalEventControl:" + str(timing.edge).split(".")[-1]
         )
@@ -1339,7 +1339,7 @@ def _convert_wait_event_statement(sm, statement):
         "kind": "WaitEvent",
         "span": node_span(sm, statement),
         "signal": signal["name"],
-        "edge": "posedge",
+        "edge": "posedge" if timing.edge == EdgeKind.PosEdge else "negedge",
     }
     body = convert_stmt(sm, statement.stmt)
     if body.get("kind") == "Empty":

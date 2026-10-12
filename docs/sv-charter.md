@@ -122,11 +122,11 @@ event-list and other unsupported timing forms remain unsupported. The legacy sel
 runner stays time-zero-only and refuses timed nodes. See `docs/sv-delay.md` and
 `Examples/system-verilog/delay/proof.lean` for the executable boundary.
 
-The same retained-continuation path admits a simple nested `@(posedge sig)`
-wait for a 1-bit identifier. It lowers to `WaitEvent` inside the enclosing
-block, wakes through the fixed edge registration, and leaves the self-check
-runner loud. Negedge, any-edge, event-list, `iff`, implicit and non-identifier
-event controls remain unsupported. See
+The same retained-continuation path admits a simple nested `@(posedge sig)` or
+`@(negedge sig)` wait for a 1-bit identifier. It lowers to `WaitEvent` inside
+the enclosing block, wakes through the fixed edge registration, and leaves the
+self-check runner loud. Any-edge, event-list, `iff`, implicit and
+non-identifier event controls remain unsupported. See
 `Examples/system-verilog/event/proof.lean` for the executable boundary.
 
 Clocked `AlwaysPosedge` processes use the same public representation already

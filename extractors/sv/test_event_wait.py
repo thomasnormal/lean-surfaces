@@ -40,9 +40,23 @@ class EventWait(unittest.TestCase):
         self.assertEqual(body["stmts"][0]["kind"], "WaitEvent")
         self.assertEqual(body["stmts"][1]["name"], "$finish")
 
+    def test_negedge_wait_is_retained(self):
+        body = first_body(
+            'module e; logic clk; initial begin @(negedge clk); $finish; end endmodule'
+        )
+        self.assertEqual(body["stmts"][0]["kind"], "WaitEvent")
+        self.assertEqual(body["stmts"][0]["edge"], "negedge")
+
+    def test_negedge_wait_body_is_retained_after_checkpoint(self):
+        body = first_body(
+            'module e; logic clk; initial @(negedge clk) $finish; endmodule'
+        )
+        self.assertEqual(body["kind"], "Block")
+        self.assertEqual(body["stmts"][0]["edge"], "negedge")
+        self.assertEqual(body["stmts"][1]["name"], "$finish")
+
     def test_other_event_controls_remain_loud(self):
         for source in (
-            'module e; logic clk; initial begin @(negedge clk); $finish; end endmodule',
             'module e; logic clk; initial begin @(clk); $finish; end endmodule',
             'module e; logic a,b; initial begin @(posedge a or posedge b); $finish; end endmodule',
         ):

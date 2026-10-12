@@ -26,11 +26,11 @@ process activations.
 The zero-delay `#0` path remains loud: delivering it in Inactive rather than
 Active needs a separate region rule and is not smuggled into this target rule.
 
-The extractor and timed loader also admit a simple nested `@(posedge sig)`
-statement for a 1-bit identifier. It lowers to `WaitEvent`, retains the rest
-of the enclosing block as the continuation, and uses the same fixed edge
-registration described above. Negedge, any-edge, event-list, `iff`, implicit
-and non-identifier controls remain loud.
+The extractor and timed loader also admit a simple nested `@(posedge sig)` or
+`@(negedge sig)` statement for a 1-bit identifier. It lowers to `WaitEvent`,
+retains the rest of the enclosing block as the continuation, and uses the
+same fixed edge registration described above. Any-edge, event-list, `iff`,
+implicit and non-identifier controls remain loud.
 
 The driver invokes timer delivery at each ordinary slot boundary. It does not
 invent a time advance: callers that model timed slots advance `SvWorld.time`

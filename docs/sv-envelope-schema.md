@@ -97,7 +97,7 @@ emits:
 | `InstanceSymbol:Instance`, `SubroutineSymbol:Subroutine`, `ParameterSymbol:Parameter`, ... | module member kinds outside M0 (class name `:` symbol kind) — routed to the module's `others` list |
 | `ProceduralBlockSymbol:Initial` / `:Final` / `:AlwaysLatch` | process kinds outside M0 |
 | `ProceduralBlockSymbol:NoEventControl` | `always` / `always_ff` whose body is not an event-controlled statement |
-| `TimedStatement:<TimingClass>` | timing control other than a plain signal event — `TimedStatement:DelayControl` for `#10`, `TimedStatement:EventListControl` for `@(a or b)`, `TimedStatement:ImplicitEventControl` for `@*`; also any *nested* timed statement inside a process body |
+| `TimedStatement:<TimingClass>` | timing control other than a plain signal event — supported integral-literal `#d` forms become `Delay`, while unsupported delay expressions, `TimedStatement:EventListControl` for `@(a or b)`, and `TimedStatement:ImplicitEventControl` for `@*` remain loud |
 | `SignalEventControl:NegEdge` / `:BothEdges` / `:None_` | edge other than `posedge` |
 | `SignalEventControl:iff` | `@(posedge clk iff ...)` |
 | `SignalEventControl:clock` | posedge expression that is not a 1-bit identifier |
@@ -178,13 +178,19 @@ the ingester may treat a `Net` with non-null `init` as it treats `Assign`.
 | `AlwaysPosedge` | `kind`, `span`, `style` (`"always_ff"` \| `"always"`), `clock` (string: the 1-bit clock identifier), `body` (stmt) |
 | `AlwaysComb` | `kind`, `span`, `body` (stmt) |
 | `Assign` | `kind`, `span`, `target` (expr, always an `Ident`), `value` (expr) — continuous `assign` |
+| `Initial` | `kind`, `span`, `body` (stmt) — scheduler-facing retained process; the timed loader admits exactly one |
 
 `AlwaysPosedge` covers exactly `always_ff @(posedge clk) ...` and
 `always @(posedge clk) ...`; `style` records which keyword the source used —
 **M0 cycle semantics treats both identically** (edge-phase processes). Any
 other sensitivity (negedge, event lists, `@*`, `iff`, delays, always_latch,
-initial, final) makes the whole process `Unsupported`. `body` is a single
-statement node (often `Block` or `If`).
+initial, final) makes the whole process `Unsupported` in this list. A scheduler
+envelope may instead carry one `Initial` process for the timed loader described
+below. `body` is a single statement node (often `Block` or `If`).
+
+The scheduler-facing timed loader currently admits exactly one `Initial` process
+and runs it from Active at time zero. The legacy self-check runner remains
+initial/time-zero-only; it refuses `Initial` processes that contain a `Delay`.
 
 ## Statements
 
@@ -215,6 +221,7 @@ ordinary effectful expression.
 | `If` | `kind`, `span`, `cond` (expr), `then` (stmt), `else` (stmt \| `null`) — `else if` chains nest as `If` inside `else` |
 | `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |
 | `Repeat` | legacy/self-check: `kind`, `span`, `count` (expr), `count_signed` (Bool), `body` (stmt) |
+| `Delay` | scheduler: `kind`, `span`, `amount` (Nat below 2^64), `body` (stmt) — a known nonnegative integral-literal delay; ingestion retains the body after the delay checkpoint, and runtime refuses `amount == 0` because Inactive delivery is not in this tier |
 | `Break` / `Continue` | legacy/self-check: `kind`, `span`; transfer to the nearest loop |
 | `Unsupported` | see above |
 

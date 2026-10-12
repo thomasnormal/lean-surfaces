@@ -1080,6 +1080,13 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
   | "Repeat" =>
       return .repeatLoop (← parseSExpr (← getF j "count"))
         (← getBoolF j "count_signed") (← parseSStmt (← getF j "body"))
+  | "Delay" =>
+      let amount ← getNatF j "amount"
+      if amount >= 2 ^ 64 then throw "delay exceeds the admitted integral range"
+      let body ← parseSStmt (← getF j "body")
+      return match body with
+        | .skip => .delay amount
+        | _ => .block #[.delay amount, body]
   | "Break" => return .breakLoop
   | "Continue" => return .continueLoop
   | "LocalDecl" =>

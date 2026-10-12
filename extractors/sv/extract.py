@@ -1261,9 +1261,9 @@ def _convert_stmt(sm, s):
         }
 
     if cname == "TimedStatement":  # nested timing control (#10, @(...), ...)
-        return unsupported(
-            sm, s, "TimedStatement:" + type(s.timing).__name__
-        )
+        if type(s.timing).__name__ == "DelayControl" and _SYM is None:
+            return _convert_delay_statement(sm, s)
+        return unsupported(sm, s, "TimedStatement:" + type(s.timing).__name__)
 
     if cname == "CaseStatement" and _SYM is None:
         return _convert_ordinary_case(sm, s)
@@ -1300,6 +1300,26 @@ def _convert_stmt(sm, s):
         }
 
     return unsupported(sm, s)
+
+
+def _convert_delay_statement(sm, statement):
+    expression = statement.timing.expr
+    if type(expression).__name__ != "IntegerLiteral" or not expression.type.isIntegral:
+        return unsupported(sm, statement, "TimedStatement:DelayControl:expression")
+    bits = svint_bits(expression.value)
+    if not bits or any(bit not in "01" for bit in bits):
+        return unsupported(sm, statement, "TimedStatement:DelayControl:unknown")
+    if expression.type.isSigned and bits[0] == "1":
+        return unsupported(sm, statement, "TimedStatement:DelayControl:negative")
+    amount = int(bits, 2)
+    if amount >= 1 << 64:
+        return unsupported(sm, statement, "TimedStatement:DelayControl:range")
+    return {
+        "kind": "Delay",
+        "span": node_span(sm, statement),
+        "amount": amount,
+        "body": convert_stmt(sm, statement.stmt),
+    }
 
 
 def _case_source_expression_ok(expression):

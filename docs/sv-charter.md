@@ -69,10 +69,11 @@ hierarchy remain absent. Design2 adds selected reads/writes, case,
 reductions, resizing, signed comparisons, multiplication, integral division
 and integral power, but nonconstant remainder/shifts are not admitted merely because
 their constant expressions can be folded. The self-check vocabulary
-adds local declarations, `for`/`repeat` and output/termination tasks, but its current
-runner accepts initial-only execution and does not inherit Design2's
-selected targets or case statements. Extractor, ingestion, evaluator
-and kernel-loader refusal inventories must therefore stay separate.
+adds local declarations, `for`/`repeat` and output/termination tasks. Its
+time-zero runner remains initial-only and does not inherit Design2's selected
+targets or case statements; the scheduler-facing timed loader is a separate
+path and currently admits one retained `initial` body. Extractor, ingestion,
+evaluator and kernel-loader refusal inventories must therefore stay separate.
 
 ## Procedural for/repeat (IEEE 1800-2023, 12.7.1–12.7.2 and 12.8)
 
@@ -87,8 +88,8 @@ theorem is anchored to an extracted source fixture.
 Three original fixtures confirm the admitted count and transfer behavior.
 Unknown repeat counts and positive counts above 2,147,483,647 remain loud,
 as do repeated-body declaration lifetimes, effectful headers, symbolic
-loops, and explicit process-control suspension/rearming. No timed-source
-extraction or cycle-to-region adequacy extension is claimed. See
+loops, and explicit process-control suspension/rearming. No cycle-to-region
+adequacy extension is claimed by this loop surface. See
 `docs/sv-loops.md` for the exact boundary.
 
 ## Retained waiting targets (IEEE 1800-2023, 9.7)
@@ -103,6 +104,23 @@ suspension, and other process-control branches remain loud until their rules
 are independently represented.
 
 See `docs/sv-wait-targets.md` for the admitted boundary and guards.
+
+## Constant procedural delays (IEEE 1800-2023, 9.4)
+
+The scheduler-facing envelope admits a deliberately narrow delay-control
+surface: a known nonnegative integral literal `#d` below `2^64`, retaining its
+original statement body as a `Delay` node. `elabTimedDesign` admits exactly one
+`initial` process, schedules it in Active at time zero, and uses the existing
+retained-continuation scheduler to register a positive delay as an absolute
+timer. Waking the timer returns the same process to Active with its prior
+effects and remaining body; no source prefix is rerun.
+
+This is not a second scheduler and does not claim full timing support. Zero
+delay remains loud because Inactive delivery is not in the public kernel path;
+dynamic, arithmetic, negative, unknown, real/time-literal, intra-assignment,
+event-control and other delay forms remain unsupported. The legacy self-check
+runner stays time-zero-only and refuses timed nodes. See `docs/sv-delay.md` and
+`Examples/system-verilog/delay/proof.lean` for the executable boundary.
 
 The paired extraction census compares the same **21,934** source paths:
 clean **1,804 → 1,840**, **36 gains**, and **zero losses**. Gains are
@@ -267,8 +285,9 @@ This item does **not** admit signed M0 ports/nets, symbolic signed
 widening, reversed packed ranges, enums/structures/unpacked arrays,
 shifts, calls or general loops in the self-check tier. Integral explicit
 casts are addressed by the following item.
-Its initial-only runner remains initial-only. Each other surface keeps
-its own admission boundary.
+Its time-zero runner remains initial-only; the separate scheduler-facing
+loader admits only the narrow timed `initial` subset documented above. Each
+other surface keeps its own admission boundary.
 
 ### Integral explicit casts — 2026-10-09
 
@@ -1217,9 +1236,10 @@ is where every race in every real design lives.
 blocking assigns immediate) → NBA commit → comb-settle again. That is a
 faithful projection of the Active/NBA split *at cycle granularity*, and
 it is enough for the six M0 designs and the CV32E40P modules. It does
-**not** model: `initial`, `#` delays, the Inactive region, Observed /
-Reactive (so no clocking blocks, no program blocks), or Postponed.
-`initial` and `#` are explicitly `Unsupported` today.
+**not** model the full region semantics: the timed loader has only the narrow
+positive-literal `initial`/`#d` bridge documented above; the Inactive region,
+Observed / Reactive (so no clocking blocks, no program blocks), or Postponed.
+Unsupported timing forms remain loud.
 
 **Price to go from the cycle collapse to the full region ladder: this
 is the largest single item in the lane's future**, and it is the one
@@ -1237,7 +1257,7 @@ retires by widening the slice. The SV mapping:
 
 | cause | SV instance | retires by |
 | --- | --- | --- |
-| `unsupported` | out-of-tier construct (`initial`, `#`, classes, `Unsupported` nodes in the envelope) | climbing a rung |
+| `unsupported` | out-of-tier construct (unsupported `initial`/`#` forms, classes, `Unsupported` nodes in the envelope) | climbing a rung |
 | **`nondeterminism`** | **race: two legal schedules, two observable traces** | **NEVER — it is the product** |
 | `x-propagation` | unknown value reaching an observable | never — it is a *value*, not a fault (§3) |
 | `libc`-analogue | unmodelled system task (`$display`, `$random`, DPI import) | widening the slice / axiomatic boundary |

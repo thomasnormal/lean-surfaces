@@ -97,6 +97,25 @@ def elabDesign (d : Design) : Except String SvWorld := do
          , procs := procs
          , regionQ := fun r => if r == Region.active then List.range procs.size else [] }
 
+/-- Build a scheduler world from the self-check envelope vocabulary.
+
+This surface admits a single `initial` process, whose continuation runs
+through the existing scheduler. Time is measured in that module's time-unit
+ticks; physical unit conversion is not inferred. `runSelfCheck` remains
+time-zero-only and continues to refuse timing nodes. -/
+def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld := do
+  let body ← match d.procs with
+    | #[.initial body] => pure body
+    | _ => .error "timed design requires exactly one initial process"
+  let signals ← match SelfCheck.initDecls fuel d.decls.toList [] with
+    | .ok signals => pure signals
+    | .timeout => .error "timed design declaration initialization exhausted fuel"
+    | .unsupported msg => .error s!"timed design declaration initialization: {msg}"
+  let procs : Array ProcState := #[{ residual := [body], status := .ready }]
+  return { signals := signals
+         , procs := procs
+         , regionQ := fun r => if r == Region.active then List.range procs.size else [] }
+
 /-! ## Guards -/
 
 section Guards

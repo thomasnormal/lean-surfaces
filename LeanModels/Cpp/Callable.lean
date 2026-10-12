@@ -25,6 +25,7 @@ mutual
     | conditional (condition : TypedCallableExpression)
         (whenTrue whenFalse : CallableStatement)
     | whileLoop (condition : TypedCallableExpression) (body : CallableStatement)
+    | doWhile (body : CallableStatement) (condition : TypedCallableExpression)
     | sequence (first second : CallableStatement)
     deriving Repr, BEq, Inhabited
 end
@@ -246,6 +247,13 @@ partial def parseCallableStatement (profile : TargetProfile)
       let condition ← parseCallableExpression profile parameters expressionRows condition none none
       let body ← parseCallableStatement profile parameters expressionRows resultType body
       pure (.whileLoop condition body)
+  | "DoStmt" =>
+      let children ← rawChildren statement
+      let [body, condition] := children
+        | throw "callable: do statement requires a body and condition"
+      let body ← parseCallableStatement profile parameters expressionRows resultType body
+      let condition ← parseCallableExpression profile parameters expressionRows condition none none
+      pure (.doWhile body condition)
   | "NullStmt" => .ok .skip
   | "ExprWithCleanups" =>
       let children ← rawChildren statement

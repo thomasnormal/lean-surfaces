@@ -164,6 +164,24 @@ def whileTypes : List TypeEvidenceRow := [
 def admitWhile : Except String CallableFunction :=
   admitCallableFunction whileProbe whileTypes [] TargetProfile.lp64 [0]
 
+def doProbe : DeclarationProbe :=
+  probeFor (functionSource "doLoop" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x31"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x50"), ("kind", text "DoStmt"),
+        ("inner", .array [
+          body (object [("id", text "0x52"), ("kind", text "NullStmt")]),
+          implicitCast "0x51" (declRef "0x10" "value")])],
+      returnStmt "0x54" (integerLiteralRaw "0x55" "7")])]))
+    [rootEvidence, functionEvidence "doLoop" "CompoundStmt"]
+
+def doTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def admitDo : Except String CallableFunction :=
+  admitCallableFunction doProbe doTypes [] TargetProfile.lp64 [0]
+
 def unaryProbe : DeclarationProbe :=
   probeFor (functionSource "negate" [parameterRaw "0x10" "value"]
     (body (returnStmt "0x31" (object [
@@ -242,6 +260,12 @@ def admitLogical : Except String CallableFunction :=
   | .ok function =>
       match function.body with
       | .sequence (.whileLoop _ (.return_ _)) (.return_ _) => true
+      | _ => false
+  | .error _ => false
+#guard match admitDo with
+  | .ok function =>
+      match function.body with
+      | .sequence (.doWhile .skip _) (.return_ _) => true
       | _ => false
   | .error _ => false
 #guard match admitUnary with

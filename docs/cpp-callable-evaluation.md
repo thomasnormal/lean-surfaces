@@ -6,7 +6,7 @@ It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references, typed integral
 unary and binary expressions, and short-circuiting logical `&&`/`||` inside
-sequences, `if` branches and `while` loops, and returns the existing `IntegralResult` so signed
+sequences, `if` branches and `while`/`do` loops, and returns the existing `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain
 visible rather than becoming host-language behavior.
 
@@ -21,7 +21,7 @@ boundary.
 
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
-not wired to `Translation.execute`, does not admit `for`/`do` loops, local
+not wired to `Translation.execute`, does not admit `for` loops, local
 objects, calls, overload resolution or general implicit-conversion semantics.
 Falling through
 without a return is a typed `missingReturn` refusal.
@@ -36,8 +36,9 @@ LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
 
 The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
-literal, binary addition and logical short-circuit results, captured `if`/`while`
-branches, signed overflow, arity/profile refusal and fuel exhaustion.
+literal, binary addition and logical short-circuit results, captured
+`if`/`while`/`do` branches, signed overflow, arity/profile refusal and fuel
+exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes real signed, unsigned, short,

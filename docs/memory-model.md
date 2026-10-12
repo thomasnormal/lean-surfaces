@@ -4793,7 +4793,7 @@ Measured rows, all differential:
 
 ### The tier: bare conversions on the SCALAR inventory
 
-Admitted conversions are `%s`, `%r`, `%c`, `%d`, `%i`, `%x`, `%o`, `%%` and nothing else — no
+Admitted conversions are `%s`, `%r`, `%c`, `%d`, `%i`, `%u`, `%x`, `%o`, `%%` and nothing else — no
 flag, width, precision, length modifier, or mapping key. Per conversion:
 
 * `%s` is `strOfVal` VERBATIM (str raw; int/bool/None their
@@ -4806,6 +4806,8 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   rendering boundary, not two.
 * `%d` is `asInt` (bool coerces), else the faithful `TypeError` above.
 * `%i` is the same integer conversion and error wording as `%d`.
+* `%u` follows the same decimal integer conversion path, including negative
+  values and its `%u`-specific TypeError wording.
 * `%c` accepts an integer code point or a one-character string. Out-of-range
   integers raise CPython's `OverflowError`; lone surrogates remain loud because
   Lean's `Char` cannot represent them.
@@ -4827,7 +4829,7 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   `%(key)s` mapping protocol over a dict RHS is loud today and stays so.
 
 The minilanguage stays refused, and so does every conversion character
-outside the eight bare forms: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%a`.
+outside the nine bare forms: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%a`.
 The invalid `%q` form now carries CPython's faithful
 `ValueError: unsupported format character 'q' (0x71) at index 1`; a trailing
 `%` likewise carries `ValueError: incomplete format`. The remaining
@@ -4984,7 +4986,7 @@ acceptance signal firing exactly where it should.
 `Examples/python/str_lab` (differential rows + `#py_check`): the opcode
 form `'<%r>' % (op,)` verbatim; `%r` over int/bool/None/str/quote-choice/
 escape; the BARE argument (`'%r' % v`) against the 1-tuple; `%s` over
-the inventory; `%c`/`%d`/`%i`/`%o`/`%x` over int/bool/negative; two conversions in one
+the inventory; `%c`/`%d`/`%i`/`%o`/`%u`/`%x` over int/bool/negative; two conversions in one
 string; the `%%` no-consume rule; the three faithful TypeErrors (short,
 leftover, `%d` on a str) and the left-to-right ORDER row; and the loud
 frontier — `%5d` (minilanguage), a container

@@ -268,3 +268,8 @@ def fmt_char(value):
 def fmt_oct(n):
     # bare %o is bounded lowercase octal over integer values
     return "%o" % (n,)
+
+
+def fmt_unsigned(n):
+    # bare %u shares CPython's decimal integer conversion path
+    return "%u" % (n,)

@@ -903,7 +903,7 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
   | v =>
     if c == 'c' then
       strFormatChar v
-    else if c == 'd' || c == 'i' then
+    else if c == 'd' || c == 'i' || c == 'u' then
       match (match v with | .float value => value.toInt | _ => asInt v) with
       | some value =>
         match intDecimal value with
@@ -969,7 +969,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
   | '%' :: c :: cs, args, mapping, acc =>
-      if c == 's' || c == 'r' || c == 'c' || c == 'd' || c == 'i' || c == 'x' || c == 'o' then
+      if c == 's' || c == 'r' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
         match args with
         | [] => .exn (.typeError "not enough arguments for format string")
         -- the conversion is matched OPEN, not bound through `Res`'s
@@ -985,7 +985,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else if c == 'q' then
         .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
       else
-        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%c/%d/%i/%x/%o/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
+        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%c/%d/%i/%u/%x/%o/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>
       .exn (.valueError "incomplete format")
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])

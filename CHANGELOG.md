@@ -14,6 +14,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Bare `%u` string formatting now follows the bounded decimal integer path,
+  preserving negative values and CPython's `%u`-specific TypeError wording.
+  The CPython 3.9 differential suite now has **2,719 / 3,045 rows = 89.3%
+  complete** natively and **2,645 / 3,045 = 86.8% complete** in the proof
+  interpreter, with **100% agreement among decided rows** and zero failures.
+
 - Bare `%o` string formatting now renders bounded lowercase octal for
   integers and Booleans, including negative values, with CPython's faithful
   integer-required `TypeError` for other scalar types. The CPython 3.9

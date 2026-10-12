@@ -244,8 +244,8 @@
   },
   {
     "file": "harness/scripts/fmt_width_script.py",
-    "expect": "unsupported",
-    "note": "CPython prints [    3]; the %-format MINILANGUAGE (flags/width/precision/mapping keys) is a second tier -- only bare %s/%r/%d/%% are modelled"
+    "expect": "match",
+    "note": "CPython's fixed decimal width preserves the exact left padding and surrounding literal text"
   },
   {
     "file": "harness/scripts/cls_deco_script.py",

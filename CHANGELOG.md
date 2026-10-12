@@ -182,6 +182,15 @@ change is listed here under **Changed** or **Removed**.
   3,025 = 88.3% complete**; proof-interpreter coverage is **2,598 / 3,025 =
   85.9% complete**, with **100% agreement among decided rows**.
 
+### Fixed
+
+- CI regression guards and refusal inventories now reflect the implemented
+  negative-power, empty-repetition, fixed-width formatting, and scalar
+  `ascii()` tiers. Repetition proofs keep their original statements, and
+  payload-blindness covers the shared pure builtin arm. Measured differential
+  completion remains **2,755 / 3,081 = 89.4%** natively and **2,681 / 3,081 =
+  87.0%** in the proof interpreter, with **100% agreement among decided rows**.
+
 ## [0.1.9] — 2026-10-11
 
 ### Added

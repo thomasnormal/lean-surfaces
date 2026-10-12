@@ -154,7 +154,8 @@ private def isUnsupported : Res α → Bool
 #guard ev (bo (iL 2) .pow (iL 10)) == .ok (.int 1024)
 #guard ev (bo (iL 0) .pow (iL 0)) == .ok (.int 1)
 #guard ev (bo (.unaryOp .usub (iL 2) sp) .pow (iL 3)) == .ok (.int (-8))
-#guard isUnsupported (ev (bo (iL 2) .pow (.unaryOp .usub (iL 1) sp)))
+#guard ev (bo (iL 2) .pow (.unaryOp .usub (iL 1) sp)) ==
+  .ok (.float (Float64.ofBits 4602678819172646912))
 -- CPython raises, no float involved -- and with its OWN text, so its own
 -- constructor: `0.0 cannot be raised to a negative power`
 #guard ev (bo (iL 0) .pow (iL (-1))) == .exn .zeroDivisionPow
@@ -218,15 +219,15 @@ The four the grammar census measured REFUSED while `<<`, `|` and `&` ran. -/
   .exn (.typeError "can't multiply sequence by non-int of type 'tuple'")
 #guard ev (bo (.tuple #[iL 1] sp) .mult (sL "ab")) ==
   .exn (.typeError "can't multiply sequence by non-int of type 'str'")
-#guard isUnsupported (ev (bo (sL "") .mult (iL 1048577)))
-#guard isUnsupported (ev (bo (sL "") .mult (iL (-1048577))))
+#guard ev (bo (sL "") .mult (iL 1048577)) == .ok (.str "")
+#guard ev (bo (sL "") .mult (iL (-1048577))) == .ok (.str "")
 #guard isUnsupported (ev (bo (iL 3) .mult (.list #[iL 1] sp)))
 -- `%` on a str is the FORMAT operator (§`%`-formatting on strings): the
 -- bare conversions decide (a non-tuple right operand is ONE argument),
 -- the minilanguage stays out of tier.
 #guard ev (bo (sL "%d") .mod (iL 3)) == .ok (.str "3")
 #guard ev (bo (sL "<%r>") .mod (.tuple #[iL 7] sp)) == .ok (.str "<7>")
-#guard isUnsupported (ev (bo (sL "%5d") .mod (iL 3)))
+#guard ev (bo (sL "%5d") .mod (iL 3)) == .ok (.str "    3")
 
 /-! ## `==` / `!=` never raise; bool→int; structural; cross-type is False -/
 

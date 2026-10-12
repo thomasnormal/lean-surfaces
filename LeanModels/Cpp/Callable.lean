@@ -33,9 +33,18 @@ mutual
         (whenTrue whenFalse : CallableStatement)
     | whileLoop (condition : TypedCallableExpression) (body : CallableStatement)
     | doWhile (body : CallableStatement) (condition : TypedCallableExpression)
+    | break_
+    | continue_
     | sequence (first second : CallableStatement)
     deriving Repr, BEq, Inhabited
 end
+
+def CallableStatement.hasLoopTransfer : CallableStatement → Bool
+  | .break_ | .continue_ => true
+  | .conditional _ whenTrue whenFalse => whenTrue.hasLoopTransfer || whenFalse.hasLoopTransfer
+  | .whileLoop _ body | .doWhile body _ => body.hasLoopTransfer
+  | .sequence first second => first.hasLoopTransfer || second.hasLoopTransfer
+  | _ => false
 
 mutual
   def CallableExpression.hasEffects : CallableExpression → Bool
@@ -365,6 +374,8 @@ partial def parseCallableStatement (profile : TargetProfile)
       let condition ← parseCallableExpression profile parameters expressionRows condition none none
       let body ← parseCallableStatement profile parameters expressionRows resultType body
       let step ← parseCallableStatement profile parameters expressionRows resultType step
+      unless !body.hasLoopTransfer do
+        throw "callable: loop transfers in for bodies are outside the lowered profile"
       pure (.sequence initializer (.whileLoop condition (.sequence body step)))
   | "DoStmt" =>
       let children ← rawChildren statement
@@ -373,6 +384,8 @@ partial def parseCallableStatement (profile : TargetProfile)
       let body ← parseCallableStatement profile parameters expressionRows resultType body
       let condition ← parseCallableExpression profile parameters expressionRows condition none none
       pure (.doWhile body condition)
+  | "BreakStmt" => .ok .break_
+  | "ContinueStmt" => .ok .continue_
   | "NullStmt" => .ok .skip
   | "ExprWithCleanups" =>
       let children ← rawChildren statement

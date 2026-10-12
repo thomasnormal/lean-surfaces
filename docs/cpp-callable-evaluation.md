@@ -9,7 +9,8 @@ typed integral unary and binary expressions, and short-circuiting logical `&&`/`
 sequences, `if` branches and `while`/`do`/`for` loops. Parameter-targeted `=`,
 integral compound-assignment statements and prefix/postfix parameter
 increment/decrement expressions thread updated argument values through later
-statements. Typed conditional expressions evaluate their condition once and
+statements. Loop-local `break` and `continue` transfer control to the nearest
+admitted `while`/`do` loop. Typed conditional expressions evaluate their condition once and
 only evaluate the selected branch. Comma expressions evaluate their left
 operand first, retain its updated parameter state, and evaluate the right
 operand only after a successful left result. The evaluator returns the existing
@@ -59,6 +60,11 @@ after each normally completing body. The profile rejects condition declarations,
 omitted conditions and loop transfers, so no hidden control-flow behavior is
 invented by the lowering.
 
+`break` exits the nearest admitted `while`/`do` loop. `continue` skips the
+remaining body and rechecks the loop condition (with a `do` loop's usual
+post-body check); both transfers retain the current parameter state. A transfer
+that reaches the public callable boundary is a typed refusal.
+
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
 not wired to `Translation.execute`, and does not admit local objects, calls,
@@ -78,17 +84,17 @@ The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
 literal, binary addition and logical short-circuit results, captured
 `if`/`while`/`do`/`for` branches, prefix/postfix increment and decrement,
-conditional branch selection, comma sequencing, signed overflow, arity/profile
-refusal and fuel exhaustion.
+conditional branch selection, comma sequencing, loop transfers, signed overflow,
+arity/profile refusal and fuel exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
 `LEANCPP_PROBE_LIBRARY` settings. It probes identity and literal bodies, skipped
 and discarded statements, branches, unary/binary/logical operators, integral
 return casts, parameter assignments, prefix/postfix increment/decrement,
-conditional expressions, comma sequencing and `for` loops.
+conditional expressions, comma sequencing, `for` loops and loop transfers.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for` loops. It compares the evaluator with 217 Clang-compiled calls at both
+and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 223 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

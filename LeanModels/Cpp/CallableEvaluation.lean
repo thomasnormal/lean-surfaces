@@ -12,6 +12,8 @@ inductive CallableEvaluationError where
   | expressionTypeMismatch
   | resultTypeMismatch
   | missingReturn
+  | breakOutsideLoop
+  | continueOutsideLoop
   | unsequencedEffects
   | fuelExhausted
   deriving Repr, BEq, Inhabited
@@ -276,6 +278,8 @@ private inductive CallableExecution where
   | normal (arguments : List IntegralValue)
   | returned (result : IntegralResult IntegralValue) (arguments : List IntegralValue)
   | failed (result : IntegralResult IntegralValue) (arguments : List IntegralValue)
+  | break_ (arguments : List IntegralValue)
+  | continue_ (arguments : List IntegralValue)
 
 private def terminalResult (arguments : List IntegralValue) :
     IntegralResult IntegralValue → CallableExecution
@@ -342,6 +346,10 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
                 | .normal updated =>
                     evaluateCallableStatement fuel profile parameters updated
                       (.whileLoop condition body)
+                | .continue_ updated =>
+                    evaluateCallableStatement fuel profile parameters updated
+                      (.whileLoop condition body)
+                | .break_ updated => pure (.normal updated)
                 | .returned _ _ | .failed _ _ => pure bodyResult
           | result => pure (.failed result afterCondition)
       | .doWhile body condition => do
@@ -357,12 +365,25 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
                     evaluateCallableStatement fuel profile parameters afterCondition
                       (.doWhile body condition)
               | result => pure (.failed result afterCondition)
+          | .continue_ updated =>
+              let (result, afterCondition) ← evaluateTyped fuel profile parameters updated condition
+              match result with
+              | .ok value =>
+                  if value.value == 0 then
+                    pure (.normal afterCondition)
+                  else
+                    evaluateCallableStatement fuel profile parameters afterCondition
+                      (.doWhile body condition)
+              | result => pure (.failed result afterCondition)
+          | .break_ updated => pure (.normal updated)
           | .returned _ _ | .failed _ _ => pure bodyResult
+      | .break_ => pure (.break_ arguments)
+      | .continue_ => pure (.continue_ arguments)
       | .sequence first second => do
           let firstResult ← evaluateCallableStatement fuel profile parameters arguments first
           match firstResult with
           | .normal updated => evaluateCallableStatement fuel profile parameters updated second
-          | .returned _ _ | .failed _ _ => pure firstResult
+          | .returned _ _ | .failed _ _ | .break_ _ | .continue_ _ => pure firstResult
 
 def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
     (arguments : List IntegralValue) :
@@ -378,6 +399,8 @@ def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : Callable
       match execution with
       | .normal _ => .error .missingReturn
       | .returned result _ | .failed result _ => .ok result
+      | .break_ _ => .error .breakOutsideLoop
+      | .continue_ _ => .error .continueOutsideLoop
   | .invalid reason => pure (.invalid reason)
   | .undefined reason => pure (.undefined reason)
   | .unsupported reason => pure (.unsupported reason)

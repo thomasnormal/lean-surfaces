@@ -506,6 +506,24 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(loops[0]["inner"][1], {})
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_loop_transfers_are_retained_as_distinct_statement_nodes(self):
+        self.source.write_text(
+            "int break_loop(int value) { while (value < 3) { ++value; break; } return value; }\n"
+            "int continue_loop(int value) { while (value < 3) { ++value; continue; } return value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        nodes = []
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "kind" in node:
+                nodes.append(node["kind"])
+            pending.extend(node.get("inner", []))
+        self.assertEqual(nodes.count("BreakStmt"), 1)
+        self.assertEqual(nodes.count("ContinueStmt"), 1)
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(
             "double arithmetic(double left, double right) { return left + right; }\n",

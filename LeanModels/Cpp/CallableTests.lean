@@ -386,6 +386,67 @@ def admitFor : Except String CallableFunction :=
 
 #guard admitFor.isOk
 
+def breakProbe : DeclarationProbe :=
+  probeFor (functionSource "breakLoop" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x31"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x50"), ("kind", text "WhileStmt"),
+        ("inner", .array [
+          object [
+            ("id", text "0x51"), ("kind", text "BinaryOperator"), ("opcode", text "<"),
+            ("inner", .array [implicitCast "0x52" (declRefNode "0x53" "0x10" "value"),
+              integerLiteralRaw "0x54" "3"])],
+          body (object [
+            ("id", text "0x55"), ("kind", text "CompoundStmt"),
+            ("inner", .array [
+              incrementRaw "0x56" "++" false (declRefNode "0x57" "0x10" "value"),
+              object [("id", text "0x58"), ("kind", text "BreakStmt")]])])])],
+      returnStmt "0x59" (implicitCast "0x5a" (declRefNode "0x5b" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "breakLoop" "CompoundStmt"]
+
+def continueProbe : DeclarationProbe :=
+  probeFor (functionSource "continueLoop" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x61"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x70"), ("kind", text "WhileStmt"),
+        ("inner", .array [
+          object [
+            ("id", text "0x71"), ("kind", text "BinaryOperator"), ("opcode", text "<"),
+            ("inner", .array [implicitCast "0x72" (declRefNode "0x73" "0x10" "value"),
+              integerLiteralRaw "0x74" "3"])],
+          body (object [
+            ("id", text "0x75"), ("kind", text "CompoundStmt"),
+            ("inner", .array [
+              incrementRaw "0x76" "++" false (declRefNode "0x77" "0x10" "value"),
+              object [("id", text "0x78"), ("kind", text "ContinueStmt")]])])])],
+      returnStmt "0x79" (implicitCast "0x7a" (declRefNode "0x7b" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "continueLoop" "CompoundStmt"]
+
+def transferTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def transferEvidence (occurrence : String) (leftOccurrence : String) (literalOccurrence : String) :
+    List CppBinaryExpressionEvidence := [{
+      ordinal := 0, occurrence := {value := occurrence}, operator := "<", result := .builtin .boolean,
+      operands := [
+        {occurrence := {value := leftOccurrence}, kind := "ImplicitCastExpr",
+          sourceType := intType, type := intType},
+        {occurrence := {value := literalOccurrence}, kind := "IntegerLiteral",
+          sourceType := intType, type := intType}]}]
+
+def admitBreak : Except String CallableFunction :=
+  admitCallableFunction breakProbe transferTypes (transferEvidence "0x51" "0x52" "0x54")
+    TargetProfile.lp64 [0]
+
+def admitContinue : Except String CallableFunction :=
+  admitCallableFunction continueProbe transferTypes (transferEvidence "0x71" "0x72" "0x74")
+    TargetProfile.lp64 [0]
+
+#guard admitBreak.isOk
+#guard admitContinue.isOk
+
 def unaryProbe : DeclarationProbe :=
   probeFor (functionSource "negate" [parameterRaw "0x10" "value"]
     (body (returnStmt "0x31" (object [

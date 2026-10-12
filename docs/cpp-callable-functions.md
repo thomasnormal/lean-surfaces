@@ -12,7 +12,8 @@ The candidate must be a named, ordinary `FunctionDecl` accepted by
 `admitLocalFunctionDeclaration` with a direct `CompoundStmt` body. Prototypes,
 deleted declarations and function-try bodies remain loud refusals. The body
 is represented as a sequence of admitted expression statements, `if`
-statements with an optional else branch, `while`/`do`/bounded `for` loops, parameter-targeted
+statements with an optional else branch, `while`/`do`/bounded `for` loops, loop-local
+`break`/`continue`, parameter-targeted
 `=`, integral compound assignments, and parameter-targeted prefix/postfix
 increment and decrement expressions. Empty compound
 and null statements are `skip`. Declarations, local-variable/member assignments,
@@ -67,7 +68,9 @@ would otherwise be unsequenced inside a binary expression.
 The admitted `for` shape has a parameter-only initializer and step, an explicit
 integral condition, and an admitted body. It is lowered to the equivalent
 state-threaded `while` sequence; condition declarations, omitted conditions,
-and loop transfers remain loud refusals.
+and loop transfers in the body remain loud refusals. `break` and `continue` are
+admitted inside `while` and `do` bodies and remain loud at the public boundary
+when no loop consumes them.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an
@@ -107,7 +110,7 @@ body was executed merely because Clang accepted its source.
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
 binary and logical returns, captured `if`/`while`/`do` branches, parameter stores,
 prefix/postfix increment and decrement admission, conditional-expression
-branch typing, comma-expression sequencing, compound-assignment
+branch typing, comma-expression sequencing, loop transfers, compound-assignment
 target/type/evidence mismatches and function-try refusals.
 `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned Clang check for
 real admitted bodies, including every compound operator, unsigned wraparound,

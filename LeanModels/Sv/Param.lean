@@ -157,6 +157,8 @@ deriving Repr, BEq, DecidableEq, Inhabited
 def SymBinOp.sym : SymBinOp → String
   | .m0 .add => "+" | .m0 .sub => "-" | .m0 .mul => "*"
   | .m0 .div => "u/" | .m0 .sdiv => "s/"
+  | .m0 (.pow signedBase signedExponent) =>
+      (if signedBase then "s" else "u") ++ "**" ++ (if signedExponent then "s" else "u")
   | .m0 .and => "&" | .m0 .or => "|"
   | .m0 .xor => "^" | .m0 .eq => "==" | .m0 .ne => "!=" | .m0 .lt => "<"
   | .m0 .le => "<=" | .m0 .gt => ">" | .m0 .ge => ">="
@@ -461,6 +463,7 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .lor => .ok (b2i (a != 0 || b != 0))
       | .m0 .mul | .mul => .ok (a * b)
       | .m0 .div | .m0 .sdiv => .error "vector division requires operand widths"
+      | .m0 (.pow ..) => .error "vector power requires operand widths"
       | .div => if b == 0 then .error "division by zero" else .ok (a.tdiv b)
       | .mod => if b == 0 then .error "modulo by zero" else .ok (a.tmod b)
       | .pow =>
@@ -572,6 +575,7 @@ def selfWidth (env : IEnv) : PExpr → Option Nat
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth env l
+      | .m0 (.pow ..) => divOperandWidth env l
       | .m0 .div | .m0 .sdiv | .div => maxW (divOperandWidth env l) (divOperandWidth env r)
       | _ => maxW (selfWidth env l) (selfWidth env r)
   | .ternary _ t e => maxW (selfWidth env t) (selfWidth env e)
@@ -608,6 +612,7 @@ def divOperandWidth (env : IEnv) : PExpr → Option Nat
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth env left
+      | .m0 (.pow ..) => divOperandWidth env left
       | _ => maxW (divOperandWidth env left) (divOperandWidth env right)
   | .ternary _ left right => maxW (divOperandWidth env left) (divOperandWidth env right)
   | .concat parts => divOperandWidthSum env parts
@@ -672,6 +677,11 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
       | .inc | .dec => .unsupported "UnaryExpression:incdec" ""
   | .binary op l r =>
       match op with
+      | .m0 (.pow signedBase signedExponent) =>
+          let baseContext := maxW ctx (divOperandWidth env l)
+          .binary (.pow signedBase signedExponent)
+            (instDivOperand env signedBase baseContext l)
+            (instDivOperand env signedExponent (divOperandWidth env r) r)
       | .m0 .div | .m0 .sdiv =>
           let octx := maxW ctx (maxW (divOperandWidth env l) (divOperandWidth env r))
           .binary (match op with | .m0 .sdiv => .sdiv | _ => .div)
@@ -748,6 +758,10 @@ def instDivOperand (env : IEnv) (signed : Bool) (ctx : Option Nat) : PExpr → E
   | .unary (.m0 operator) operand =>
       .unary operator (instDivOperand env signed (maxW ctx (divOperandWidth env operand)) operand)
   | .unary .plus operand => instDivOperand env signed ctx operand
+  | .binary (.m0 (.pow _ signedExponent)) left right =>
+      .binary (.pow signed signedExponent)
+        (instDivOperand env signed (maxW ctx (divOperandWidth env left)) left)
+        (instDivOperand env signedExponent (divOperandWidth env right) right)
   | .binary (.m0 operator) left right =>
       let own := maxW (divOperandWidth env left) (divOperandWidth env right)
       let comparison := match operator with | .eq | .ne | .lt | .le | .gt | .ge => true | _ => false

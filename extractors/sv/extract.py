@@ -72,6 +72,7 @@ BINARY_OPS = {
     BinaryOperator.Subtract: "-",
     BinaryOperator.Multiply: "*",
     BinaryOperator.Divide: "/",
+    BinaryOperator.Power: "**",
     BinaryOperator.BinaryAnd: "&",
     BinaryOperator.BinaryOr: "|",
     BinaryOperator.BinaryXor: "^",
@@ -806,6 +807,8 @@ def _convert_unary_expr(sm, e):
 
 
 def _binary_width_ok(sym, width, left_width, right_width):
+    if sym == "**":
+        return left_width is None or left_width == width
     if sym in COMPARISON_SYMS:
         return width == 1 and (
             left_width is None or right_width is None or left_width == right_width
@@ -848,7 +851,7 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
-    if sym == "/" and _SYM is not None and not _SYM.symctx:
+    if sym in ("/", "**") and _SYM is not None and not _SYM.symctx:
         left = _convert_division_operand(sm, e.left)
         right = _convert_division_operand(sm, e.right)
     else:
@@ -864,6 +867,10 @@ def _convert_binary_expr(sm, e):
         if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
             return unsupported(sm, e, "BinaryExpression:Divide-type")
         sym = "s/" if e.left.type.isSigned and e.right.type.isSigned else "u/"
+    if sym == "**" and not (_SYM is not None and _SYM.symctx):
+        if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
+            return unsupported(sm, e, "BinaryExpression:Power-type")
+        sym = ("s" if e.left.type.isSigned else "u") + "**" + ("s" if e.right.type.isSigned else "u")
     if sym in ORDER_CMP_SYMS:
         try:
             if e.left.type.isSigned and e.right.type.isSigned:
@@ -1800,6 +1807,16 @@ def contains_division(node):
     return False
 
 
+def contains_power(node):
+    if isinstance(node, dict):
+        return (node.get("kind") == "Binary" and node.get("op") in ("**", "u**u", "u**s", "s**u", "s**s")) or any(
+            contains_power(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_power(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1849,6 +1866,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Division:invalid-compilation",
                                   "frontend rejected source containing division"))
+    if (any(contains_power(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Power:invalid-compilation",
+                                  "frontend rejected source containing power"))
     if (any(contains_selected_target(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectTarget:invalid-compilation",
@@ -3035,6 +3056,9 @@ def process_symbolic(top, sources, incdirs, out_path):
             if contains_division(module) and nerr:
                 module["others"].append(unsupported(sm, comp, "Division:invalid-compilation",
                                                   "frontend rejected source containing division"))
+            if contains_power(module) and nerr:
+                module["others"].append(unsupported(sm, comp, "Power:invalid-compilation",
+                                                  "frontend rejected source containing power"))
         except Exception as exc:
             module = internal_error(exc)
         envelope = {

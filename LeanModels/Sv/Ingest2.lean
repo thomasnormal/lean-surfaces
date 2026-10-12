@@ -146,6 +146,8 @@ def parseSymBinOp : String → Except String SymBinOp
   | ">" => .ok (.m0 .gt) | ">=" => .ok (.m0 .ge)
   | "*" => .ok .mul | "/" => .ok .div | "%" => .ok .mod | "**" => .ok .pow
   | "u/" => .ok (.m0 .div) | "s/" => .ok (.m0 .sdiv)
+  | "u**u" => .ok (.m0 (.pow false false)) | "u**s" => .ok (.m0 (.pow false true))
+  | "s**u" => .ok (.m0 (.pow true false)) | "s**s" => .ok (.m0 (.pow true true))
   | "<<" => .ok .shl | ">>" => .ok .shr | "<<<" => .ok .ashl | ">>>" => .ok .ashr
   | "s<" => .ok .slt | "s<=" => .ok .sle | "s>" => .ok .sgt | "s>=" => .ok .sge
   | "===" => .ok .ceq | "!==" => .ok .cne | "&&" => .ok .land | "||" => .ok .lor

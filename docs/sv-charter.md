@@ -66,8 +66,8 @@ bridges already exist.
 packed four-state expressions, identifier assignment, `if`/blocks and
 its cycle-level process fragment; general loops, calls, classes and
 hierarchy remain absent. Design2 adds selected reads/writes, case,
-reductions, resizing, signed comparisons, multiplication and integral division,
-but nonconstant remainder/power/shifts are not admitted merely because
+reductions, resizing, signed comparisons, multiplication, integral division
+and integral power, but nonconstant remainder/shifts are not admitted merely because
 their constant expressions can be folded. The self-check vocabulary
 adds local declarations and output/termination tasks, but its current
 runner accepts initial-only execution and does not inherit Design2's
@@ -105,6 +105,37 @@ admission and selected-execution checks do not claim whole-corpus execution.
 Real division, remainder and selected compound assignment remain loud;
 M0's existing selected-expression and unsigned-narrowing boundaries remain.
 The operator and symbolic-sizing contract is `docs/sv-division.md`.
+
+## Integral power (IEEE 1800-2023, 11.4.3, 11.6 and 11.8.1–11.8.2)
+
+Integral `**` now reaches the shared four-state `LVec.pow` rule through the
+self-check executor and both symbolic instantiation paths. The base follows
+the expression or assignment context width; the exponent remains
+self-determined in both width and signedness. Runtime tags record all four
+base/exponent signedness combinations, while constant-position `**` keeps
+its integer elaboration path.
+
+Known nonnegative exponents use modular repeated squaring at the base width.
+Zero exponents produce one, including `0 ** 0`; unknown operands produce
+all x. For a negative signed exponent, zero produces all x, one produces
+one, signed minus one follows exponent parity, and all other integral bases
+produce zero, matching Table 11-4. Real power and unresolved signed-port
+boundaries remain loud.
+
+`Examples/system-verilog/power/proof.lean` proves a width-parametric
+unsigned power bridge over a real extracted design and checks the signed
+negative-exponent cases directly. The three self-check fixtures cover
+positive/context sizing, signed base behavior and the standard's
+zero-to-negative all-x case. The last case is recorded as a declared
+simulator divergence in the private lane journal because the external
+implementation returns zero; Table 11-4 and the independent open simulator
+support the all-x result. Nonzero negative-exponent disagreements are kept
+out of newly oracle-confirmed fixtures pending a coordinator ruling.
+
+Fresh extraction over the paired 21,934-file corpus rises from 1,764 to
+1,804 clean, with 40 gains and no losses; every gain is in chapter 11.
+These are admission measurements, not a claim that every clean row executes.
+The detailed contract is `docs/sv-power.md`.
 
 ## Integral multiplication (IEEE 1800-2023, 11.4.3 and 11.8.2)
 

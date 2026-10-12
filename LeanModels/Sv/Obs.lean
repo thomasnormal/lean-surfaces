@@ -185,6 +185,46 @@ theorem LVec.mul_ofBitVec {width : Nat} (left right : BitVec width) :
     Nat.mod_eq_of_lt right.isLt]
   rw [← LVec.ofNat_emod, ← BitVec.toNat_mul]
 
+theorem LVec.powMod_eq (width base exponent digits : Nat)
+    (bound : exponent < 2 ^ digits) :
+    LVec.powMod width base exponent digits = base ^ exponent % 2 ^ width := by
+  induction digits generalizing base exponent with
+  | zero =>
+      have zero : exponent = 0 := by simpa using bound
+      subst exponent
+      simp [LVec.powMod]
+  | succ digits inductionHypothesis =>
+      by_cases zero : exponent = 0
+      · subst exponent
+        simp [LVec.powMod]
+      · have smaller : exponent / 2 < 2 ^ digits := by
+          have expanded : exponent < 2 ^ digits * 2 := by simpa [Nat.pow_succ] using bound
+          omega
+        have expansion : base ^ exponent =
+            (base * base) ^ (exponent / 2) * base ^ (exponent % 2) := by
+          calc
+            base ^ exponent = base ^ (2 * (exponent / 2) + exponent % 2) :=
+              congrArg (fun amount => base ^ amount) (Nat.div_add_mod exponent 2).symm
+            _ = (base * base) ^ (exponent / 2) * base ^ (exponent % 2) := by
+              rw [Nat.pow_add, Nat.pow_mul, Nat.pow_two]
+        simp only [LVec.powMod, beq_iff_eq, zero, ↓reduceIte]
+        rw [inductionHypothesis _ _ smaller, ← Nat.pow_mod, expansion]
+        by_cases even : exponent % 2 = 0
+        · simp [even]
+        · have odd : exponent % 2 = 1 := by
+            have remainder := Nat.mod_lt exponent (by decide : 0 < 2)
+            omega
+          simp [odd, Nat.mul_mod, Nat.mul_comm]
+
+theorem LVec.pow_unsigned_ofBitVec {width exponentWidth : Nat}
+    (signedBase : Bool) (base : BitVec width) (exponent : BitVec exponentWidth) :
+    LVec.pow signedBase false (LVec.ofBitVec base) (LVec.ofBitVec exponent) =
+      LVec.ofNat width (base.toNat ^ exponent.toNat) := by
+  simp only [LVec.pow, LVec.ofBitVec, LVec.toNat?_ofNat, LVec.width_ofNat,
+    Nat.mod_eq_of_lt base.isLt, Nat.mod_eq_of_lt exponent.isLt]
+  simp only [Bool.false_and, Bool.false_eq_true, ↓reduceIte]
+  rw [LVec.powMod_eq _ _ _ _ exponent.isLt, LVec.ofNat_emod]
+
 theorem LVec.div_ofBitVec {width : Nat} (left right : BitVec width)
     (nonzero : right.toNat ≠ 0) :
     (LVec.ofBitVec left).div (LVec.ofBitVec right) = LVec.ofBitVec (left / right) := by

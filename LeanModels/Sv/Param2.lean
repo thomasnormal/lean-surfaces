@@ -110,6 +110,7 @@ def selfWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Option Na
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth2 env elems l
+      | .m0 (.pow ..) => divOperandWidth2 env elems l
       | .m0 .div | .m0 .sdiv | .div =>
           maxW2 (divOperandWidth2 env elems l) (divOperandWidth2 env elems r)
       | _ =>
@@ -164,6 +165,7 @@ def divOperandWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Opt
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth2 env elems left
+      | .m0 (.pow ..) => divOperandWidth2 env elems left
       | _ => maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
   | .ternary _ left right => maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
   | .concat parts => divOperandWidthSum2 env elems parts
@@ -249,6 +251,11 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
       | .inc | .dec => .unsupported "UnaryExpression:incdec" ""
   | .binary op l r =>
       match op with
+      | .m0 (.pow signedBase signedExponent) =>
+          let baseContext := maxW2 ctx (divOperandWidth2 env elems l)
+          .binary (.pow signedBase signedExponent)
+            (instDivOperand2 env elems signedBase baseContext l)
+            (instDivOperand2 env elems signedExponent (divOperandWidth2 env elems r) r)
       | .m0 .div | .m0 .sdiv =>
           let octx := maxW2 ctx
             (maxW2 (divOperandWidth2 env elems l) (divOperandWidth2 env elems r))
@@ -363,6 +370,10 @@ def instDivOperand2 (env : IEnv) (elems : List (String × Nat))
       .unary operator
         (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems operand)) operand)
   | .unary .plus operand => instDivOperand2 env elems signed ctx operand
+  | .binary (.m0 (.pow _ signedExponent)) left right =>
+      .binary (.pow signed signedExponent)
+        (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems left)) left)
+        (instDivOperand2 env elems signedExponent (divOperandWidth2 env elems right) right)
   | .binary (.m0 operator) left right =>
       let own := maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
       let comparison := match operator with | .eq | .ne | .lt | .le | .gt | .ge => true | _ => false

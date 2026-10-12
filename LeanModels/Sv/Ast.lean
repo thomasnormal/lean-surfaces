@@ -33,7 +33,7 @@ inductive UnaryOp where
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- M0 binary operators (`docs/sv-design-m0.md` expression tier):
-`+ - * / & | ^ == != < <= > >=` (division carries signedness). Case equality `===`/`!==` is NOT in the M0
+`+ - * / ** & | ^ == != < <= > >=` (division and power carry operand typing). Case equality `===`/`!==` is NOT in the M0
 expression tier (source uses of it arrive as `Expr.unsupported`); `LVec`
 still implements it for the proof layer. Evaluated by `LVec.add/sub/mul/div/sdiv/and/or/
 xor/eqLogical/neLogical/lt/le/gt/ge`. -/
@@ -43,6 +43,7 @@ inductive BinOp where
   | mul
   | div
   | sdiv
+  | pow (signedBase signedExponent : Bool)
   | and   -- `&`
   | or    -- `|`
   | xor   -- `^`

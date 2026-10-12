@@ -126,6 +126,10 @@ def parseBinOpName : String → Except String BinOp
   | "*" | "Multiply" | "Mul" => .ok .mul
   | "u/" => .ok .div
   | "s/" => .ok .sdiv
+  | "u**u" => .ok (.pow false false)
+  | "u**s" => .ok (.pow false true)
+  | "s**u" => .ok (.pow true false)
+  | "s**s" => .ok (.pow true true)
   | "&" | "BinaryAnd" | "And" => .ok .and
   | "|" | "BinaryOr" | "Or" => .ok .or
   | "^" | "BinaryXor" | "Xor" => .ok .xor

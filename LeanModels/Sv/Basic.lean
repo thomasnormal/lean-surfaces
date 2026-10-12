@@ -316,6 +316,29 @@ def sdiv (left right : LVec) : LVec :=
       else ofBitVec ((BitVec.ofNat width numerator).sdiv (BitVec.ofNat width denominator))
   | _, _ => xVec width
 
+/-- Structurally bounded modular exponentiation by repeated squaring. -/
+def powMod (width base exponent : Nat) : Nat → Nat
+  | 0 => 1 % 2 ^ width
+  | remaining + 1 =>
+      if exponent == 0 then 1 % 2 ^ width
+      else
+        let upper := powMod width ((base * base) % 2 ^ width) (exponent / 2) remaining
+        if exponent % 2 == 0 then upper else (base * upper) % 2 ^ width
+
+/-- Integral power, with independently typed base and self-determined exponent. -/
+def pow (signedBase signedExponent : Bool) (left right : LVec) : LVec :=
+  match left.toNat?, right.toNat? with
+  | some base, some exponent =>
+      let negative := signedExponent && (BitVec.ofNat right.width exponent).toInt < 0
+      if negative then
+        if base == 0 then xVec left.width
+        else if base == 1 then ofNat left.width 1
+        else if signedBase && (BitVec.ofNat left.width base).toInt == -1 then
+          ofNat left.width (if exponent % 2 == 0 then 1 else 2 ^ left.width - 1)
+        else ofNat left.width 0
+      else ofNat left.width (powMod left.width base exponent right.width)
+  | _, _ => xVec left.width
+
 /-- Unary `-`: two's complement (mod `2^w`) with the §11.4.3 collapse rule. -/
 def neg (a : LVec) : LVec :=
   match a.toNat? with

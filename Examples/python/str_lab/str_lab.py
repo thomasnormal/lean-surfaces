@@ -273,3 +273,8 @@ def fmt_oct(n):
 def fmt_unsigned(n):
     # bare %u shares CPython's decimal integer conversion path
     return "%u" % (n,)
+
+
+def fmt_ascii(value):
+    # bare %a uses CPython's ASCII-escaped repr conversion
+    return "%a" % (value,)

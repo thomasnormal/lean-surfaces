@@ -183,6 +183,8 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.fmt_unsigned(-7) = "-7"
 #py_check str_lab.fmt_unsigned("x") raises
   (.typeError "%u format: a number is required, not str")
+#py_check str_lab.fmt_ascii(3) = "3"
+#py_check str_lab.fmt_ascii("héllo") = "'h\\xe9llo'"
 #py_check str_lab.fmt_bad(3) raises
   (.valueError "unsupported format character 'q' (0x71) at index 1")
 #py_check str_lab.fmt_trailing(3) raises (.valueError "incomplete format")

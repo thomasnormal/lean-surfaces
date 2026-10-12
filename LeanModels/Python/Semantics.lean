@@ -816,6 +816,16 @@ def hexDigit (n : Nat) : Char :=
 def hex2 (n : Nat) : String :=
   String.mk [hexDigit (n / 16 % 16), hexDigit (n % 16)]
 
+def hex4 (n : Nat) : String :=
+  String.mk [hexDigit (n / 4096 % 16), hexDigit (n / 256 % 16),
+    hexDigit (n / 16 % 16), hexDigit (n % 16)]
+
+def hex8 (n : Nat) : String :=
+  String.mk [hexDigit (n / 0x10000000 % 16), hexDigit (n / 0x1000000 % 16),
+    hexDigit (n / 0x100000 % 16), hexDigit (n / 0x10000 % 16),
+    hexDigit (n / 4096 % 16), hexDigit (n / 256 % 16),
+    hexDigit (n / 16 % 16), hexDigit (n % 16)]
+
 /-- The quote CPython picks for a string's `repr`: `'` unless the string
 contains one and no `"`. -/
 def reprQuote (s : String) : Char :=
@@ -849,6 +859,26 @@ def reprStr (s : String) : Option String := do
   let q := reprQuote s
   let body ← reprChars q s.data
   return String.mk [q] ++ body ++ String.mk [q]
+
+def asciiChar (q : Char) (c : Char) : String :=
+  if c == '\\' then "\\\\"
+  else if c == '\n' then "\\n"
+  else if c == '\r' then "\\r"
+  else if c == '\t' then "\\t"
+  else if c == q then String.mk ['\\', c]
+  else if c.val < 0x20 || c.val == 0x7f then "\\x" ++ hex2 c.val.toNat
+  else if c.val < 0x7f then String.mk [c]
+  else if c.val ≤ 0xff then "\\x" ++ hex2 c.val.toNat
+  else if c.val ≤ 0xffff then "\\u" ++ hex4 c.val.toNat
+  else "\\U" ++ hex8 c.val.toNat
+
+def asciiChars (q : Char) : List Char → String
+  | [] => ""
+  | c :: cs => asciiChar q c ++ asciiChars q cs
+
+def asciiStr (s : String) : String :=
+  let q := reprQuote s
+  String.mk [q] ++ asciiChars q s.data ++ String.mk [q]
 
 /-! ### `%`-formatting (docs/memory-model.md §`%`-formatting on strings)
 
@@ -901,7 +931,14 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
   | .ref _ =>
       .unsupported "a heap object as a '%'-format argument is outside the tier (its repr lives in the heap, which the operator cannot see; docs/memory-model.md §`%`-formatting on strings)"
   | v =>
-    if c == 'c' then
+    if c == 'a' then
+      match v with
+      | .str s => .ok (asciiStr s)
+      | v =>
+          match strFormatRepr v with
+          | some s => .ok s
+          | Option.none => .unsupported s!"'%{c}' of a '{v.typeName}' is outside the tier (only scalar values render here; docs/memory-model.md §`%`-formatting on strings)"
+    else if c == 'c' then
       strFormatChar v
     else if c == 'd' || c == 'i' || c == 'u' then
       match (match v with | .float value => value.toInt | _ => asInt v) with
@@ -955,7 +992,7 @@ def strFormatMappingRhs : RVal → Bool
   | _ => false
 
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
-consumes NOTHING; `%s`/`%r`/`%d`/`%x` consume the next argument. Running out
+consumes NOTHING; `%s`/`%r`/`%a`/`%c`/`%d`/`%i`/`%u`/`%x`/`%o` consume the next argument. Running out
 mid-walk is CPython's `not enough arguments` verbatim, and so are
 leftover arguments at the end — EXCEPT under `mapping`, the `ctx.dict`
 flag above, which is exactly the condition CPython guards that second
@@ -969,7 +1006,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
   | '%' :: c :: cs, args, mapping, acc =>
-      if c == 's' || c == 'r' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+      if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
         match args with
         | [] => .exn (.typeError "not enough arguments for format string")
         -- the conversion is matched OPEN, not bound through `Res`'s
@@ -985,7 +1022,7 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else if c == 'q' then
         .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
       else
-        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%c/%d/%i/%u/%x/%o/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
+        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%a/%c/%d/%i/%u/%x/%o/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
   | ['%'], _, _, _ =>
       .exn (.valueError "incomplete format")
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])

@@ -6,7 +6,7 @@
     "version": "3.9.19"
   },
   "source_file": "Examples/python/str_lab/str_lab.py",
-  "source_sha256": "944bdbf6bc2fe8f745e416f859d214df743ea5029799c718b3e415d89a8b68b9",
+  "source_sha256": "8929c06b08110802290ff9fb3752f6840d8010a93e2f4086796930fbb40f78cd",
   "module": {
     "kind": "Module",
     "body": [
@@ -4174,6 +4174,84 @@
                       "end_col_offset": 20
                     },
                     "id": "n"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 278,
+          "col_offset": 0,
+          "end_lineno": 280,
+          "end_col_offset": 26
+        },
+        "name": "fmt_ascii",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 278,
+              "col_offset": 14,
+              "end_lineno": 278,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 280,
+              "col_offset": 4,
+              "end_lineno": 280,
+              "end_col_offset": 26
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 280,
+                "col_offset": 11,
+                "end_lineno": 280,
+                "end_col_offset": 26
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 280,
+                  "col_offset": 11,
+                  "end_lineno": 280,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%a"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 280,
+                  "col_offset": 18,
+                  "end_lineno": 280,
+                  "end_col_offset": 26
+                },
+                "elts": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 280,
+                      "col_offset": 19,
+                      "end_lineno": 280,
+                      "end_col_offset": 24
+                    },
+                    "id": "value"
                   }
                 ]
               }

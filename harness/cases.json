@@ -464,6 +464,7 @@
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_char", "args": [[55296]], "expect": "unsupported", "note": "Lean Char cannot represent CPython's lone-surrogate result"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_oct", "args": [[8], [true], [-7], ["x"]], "expect": "match", "note": "bare %o over bounded integer and Boolean values with CPython TypeError wording"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_unsigned", "args": [[7], [true], [-7], ["x"]], "expect": "match", "note": "bare %u shares CPython's decimal integer conversion and TypeError wording"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_ascii", "args": [[3], [true], [null], ["héllo"], ["€"], ["😀"]], "expect": "match", "note": "bare %a uses CPython ASCII escapes for scalar values and Unicode strings"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_bad", "args": [[3]], "expect": "match", "note": "faithful CPython ValueError for an unsupported conversion character"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_trailing", "args": [[3]], "expect": "match", "note": "faithful CPython ValueError for an incomplete format"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_container", "args": [[]], "expect": "unsupported"},

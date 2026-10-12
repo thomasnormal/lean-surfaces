@@ -14,6 +14,12 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Bare `%a` string formatting now uses CPython's ASCII-escaped `repr`,
+  including `\\x`, `\\u`, and `\\U` escapes for non-ASCII strings. The CPython
+  3.9 differential suite now has **2,725 / 3,051 rows = 89.3% complete**
+  natively and **2,651 / 3,051 = 86.8% complete** in the proof interpreter,
+  with **100% agreement among decided rows** and zero failures.
+
 - Bare `%u` string formatting now follows the bounded decimal integer path,
   preserving negative values and CPython's `%u`-specific TypeError wording.
   The CPython 3.9 differential suite now has **2,719 / 3,045 rows = 89.3%

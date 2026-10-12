@@ -238,8 +238,10 @@ template instantiations enabled. It also carries an additive
 `clang::QualType` objects; unsupported type families are omitted. No
 declaration family or header is filtered from the raw ledger.
 The `expression_evidence_api`/`expression_evidence` supplement carries only
-Clang builtin `BinaryOperator` nodes: the operator, structured result type and
-two ordered direct-child handles with source/converted types. The Lean bridge
+Clang builtin `BinaryOperator` nodes, including its `CompoundAssignOperator`
+subclass: the operator, structured result type and two ordered direct-child
+handles with source/converted types. The row's `kind` identifies the base
+API family; the raw AST retains the exact subclass kind. The Lean bridge
 checks integral promotions and usual arithmetic conversion types when the row
 is builtin integral. `expression_refusals` records rows
 whose operand or result type is outside that vocabulary. This is typed frontend

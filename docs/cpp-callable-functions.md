@@ -13,11 +13,10 @@ The candidate must be a named, ordinary `FunctionDecl` accepted by
 deleted declarations and function-try bodies remain loud refusals. The body
 is represented as a sequence of admitted expression statements, `if`
 statements with an optional else branch, `while`/`do` loops, parameter-targeted
-`=` assignments, and return statements. Empty compound and null statements are
-`skip`. `for` loops, declarations, local-variable/member assignments, compound
-assignments, calls, overloaded operations, exceptions, local functions and
-every other statement form refuse rather than being silently represented as a
-callable.
+`=` and integral compound assignments, and return statements. Empty compound
+and null statements are `skip`. `for` loops, declarations, local-variable/member
+assignments, calls, overloaded operations, exceptions, local functions and every
+other statement form refuse rather than being silently represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
 projection v1` row for the exact occurrence. This slice requires a non-variadic
@@ -49,6 +48,16 @@ parameter reference must resolve to one of the function's own parameter
 handles. Missing rows, mismatched handles, changed child order, unsupported
 casts, non-integral operators and conflicting evidence all refuse.
 
+The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
+`&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an
+integral parameter. The exact ordered children, operator and structured types
+must agree with the binary-expression supplement, including the left child's
+parameter type. The arithmetic typing check requires the computation result to
+already have the target type; narrowing, promoted narrow targets and mixed-type
+computations needing conversions absent from the direct children remain loud.
+These are statements only: assignment values within larger expressions still
+refuse. No compound computation type is guessed from a `qualType` string.
+
 The admitted value is a `CallableFunction` containing a structured signature,
 parameter handles/types and a small `CallableStatement` tree. Every typed
 expression node retains its source and converted `CppTypeEvidence`; binary
@@ -75,10 +84,12 @@ body was executed merely because Clang accepted its source.
 ## Validation
 
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
-binary and logical returns, captured `if`/`while`/`do` branches, mismatched evidence,
-control-flow and function-try refusals. `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned
-Clang check for real identity/add bodies and a branch admission; it requires the
-same explicit compiler/plugin variables as the existing probe tests and skips
-otherwise. The evaluator now includes only the profile-checked integral conversion
-at its call boundary; broader conversion rules and statements still require their
-own semantic models, and `Translation.execute` remains refused.
+binary and logical returns, captured `if`/`while`/`do` branches, parameter stores,
+compound-assignment target/type/evidence mismatches and function-try refusals.
+`extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned Clang check for
+real admitted bodies, including every compound operator, unsigned wraparound,
+self-aliasing and assignment-driven loops. It also checks loud refusal of narrow
+and mixed-type compound destinations. The same explicit compiler/plugin settings
+are required; missing settings skip rather than count as agreement. Broader
+conversions and statements still need semantic models, and `Translation.execute`
+remains refused.

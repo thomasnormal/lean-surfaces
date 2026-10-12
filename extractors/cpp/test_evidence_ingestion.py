@@ -80,7 +80,7 @@ class EvidenceIngestionTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.root = pathlib.Path(directory.name)
 
-    def run_loader(self, contents, guards="", options=""):
+    def run_loader(self, contents, guards="", options="", timeout=60):
         probe_path = self.root / "probe.json"
         if isinstance(contents, bytes):
             probe_path.write_bytes(contents)
@@ -98,11 +98,11 @@ class EvidenceIngestionTests(unittest.TestCase):
         )
         return subprocess.run(
             [self.lake, "env", "lean", str(lean_path)], cwd=REPO_ROOT,
-            capture_output=True, text=True, timeout=60,
+            capture_output=True, text=True, timeout=timeout,
         )
 
-    def assert_accepts(self, contents, guards="", options=""):
-        result = self.run_loader(contents, guards, options)
+    def assert_accepts(self, contents, guards="", options="", timeout=60):
+        result = self.run_loader(contents, guards, options, timeout)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def assert_refuses(self, contents):
@@ -474,6 +474,17 @@ bool logical(int value) { return !value; }
             ("int", "to_int", "bool"),
             ("short", "to_short", "int"),
         )
+        compound_cases = (
+            ("-=", "compound_subtract", ((-7, 3), (0, 7), (7, 3))),
+            ("*=", "compound_multiply", ((-7, 3), (0, 7), (7, 3))),
+            ("/=", "compound_divide", ((-7, 3), (7, 3), (7, 2))),
+            ("%=", "compound_remainder", ((-7, 3), (7, 3), (7, 2))),
+            ("&=", "compound_bit_and", ((5, 3), (7, 2), (8, 1))),
+            ("|=", "compound_bit_or", ((5, 3), (7, 2), (8, 1))),
+            ("^=", "compound_bit_xor", ((5, 3), (7, 2), (8, 1))),
+            ("<<=", "compound_shift_left", ((3, 1), (5, 2), (8, 1))),
+            (">>=", "compound_shift_right", ((3, 1), (5, 2), (8, 1))),
+        )
         subject = self.root / "callable.cpp"
         subject.write_text("".join(
             f"{type_name} {name}({type_name} value) {{ return value; }}\n"
@@ -481,6 +492,9 @@ bool logical(int value) { return !value; }
         ) + "".join(
             f"{result} {name}({parameter} value) {{ return value; }}\n"
             for result, name, parameter in return_casts
+        ) + "".join(
+            f"int {name}(int value, int amount) {{ value {operator} amount; return value; }}\n"
+            for operator, name, _ in compound_cases
         ) + "int literal() { return 7; }\n"
           "int null_then_literal() { ; return 7; }\n"
           "int first(int left, int right) { return left; }\n"
@@ -488,6 +502,13 @@ bool logical(int value) { return !value; }
           "int branch_else(int value) { if (value) return value; else return 7; }\n"
           "int expression_stmt(int value) { value + 1; return value; }\n"
           "int assign(int value) { value = value + 1; return value; }\n"
+          "int compound_add(int value) { value += 1; return value; }\n"
+          "unsigned int compound_unsigned(unsigned int value, unsigned int amount) { value += amount; return value; }\n"
+          "int compound_self(int value) { value += value; return value; }\n"
+          "int compound_while(int value) { while (value < 3) value += 1; return value; }\n"
+          "int compound_do(int value) { do { value += 1; } while (value < 3); return value; }\n"
+          "short compound_narrow(short value) { value += 1; return value; }\n"
+          "int compound_mixed(int value, unsigned int amount) { value += amount; return value; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
           "int do_loop(int value) { do { if (value) return value; } while (0); return 7; }\n"
           "int unary(int value) { return -value; }\n"
@@ -525,25 +546,29 @@ bool logical(int value) { return !value; }
         ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
-        names = {name for _, name, _ in destinations} | {name for _, name, _ in return_casts} | {
+        names = ({name for _, name, _ in destinations}
+                 | {name for _, name, _ in return_casts}
+                 | {name for _, name, _ in compound_cases}) | {
             "literal",
             "null_then_literal",
-            "first", "branch", "branch_else", "expression_stmt", "assign", "loop", "do_loop", "unary", "compare", "equal_values",
+            "first", "branch", "branch_else", "expression_stmt", "assign", "compound_add",
+            "loop", "do_loop", "unary", "compare", "equal_values",
             "not_equal_values", "less_values", "less_equal_values",
             "greater_equal_values", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
             "bit_xor", "shift_left", "shift_right", "both", "either", "positive",
-            "complement"}
+            "complement", "compound_unsigned", "compound_self", "compound_while", "compound_do"}
+        refusals = {"compound_narrow", "compound_mixed"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
             node, path = pending.pop()
-            if node.get("kind") == "FunctionDecl" and node.get("name") in names:
+            if node.get("kind") == "FunctionDecl" and node.get("name") in (names | refusals):
                 self.assertNotIn(node["name"], paths)
                 paths[node["name"]] = path
             pending.extend((child, path + [index])
                            for index, child in enumerate(node.get("inner", [])))
-        self.assertEqual(set(paths), names)
+        self.assertEqual(set(paths), names | refusals)
         sources = (
             ("short", ".signed 16", -32768),
             ("short", ".signed 16", 32767),
@@ -591,6 +616,25 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 7):
             expressions.append(f"assign({value})")
             rows.append(("assign", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"compound_add({value})")
+            rows.append(("compound_add", ".signed 32", [(".signed 32", value)]))
+        for _, name, cases in compound_cases:
+            for value, amount in cases:
+                expressions.append(f"{name}({value}, {amount})")
+                rows.append((name, ".signed 32", [
+                    (".signed 32", value), (".signed 32", amount)]))
+        for value, amount in ((0, 7), (4294967295, 1), (4294967295, 4294967295)):
+            expressions.append(f"compound_unsigned({value}U, {amount}U)")
+            rows.append(("compound_unsigned", ".unsigned 32", [
+                (".unsigned 32", value), (".unsigned 32", amount)]))
+        for value in (-7, 0, 7):
+            expressions.append(f"compound_self({value})")
+            rows.append(("compound_self", ".signed 32", [(".signed 32", value)]))
+        for name in ("compound_while", "compound_do"):
+            for value in (-1, 0, 3, 5):
+                expressions.append(f"{name}({value})")
+                rows.append((name, ".signed 32", [(".signed 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"loop({value})")
             rows.append(("loop", ".signed 32", [(".signed 32", value)]))
@@ -704,19 +748,26 @@ bool logical(int value) { return !value; }
             outputs.append(executed.stdout.splitlines())
         self.assertEqual(outputs[0], outputs[1])
         self.assertEqual(len(outputs[0]), len(rows))
-        guards = [f"def {name} := admitCallableFunctionFromProbe evidence "
-                  f"TargetProfile.lp64 {paths[name]}" for name in sorted(names)]
+        guards = ["#guard (parseValidatedBinaryExpressionEvidence evidence).isOk"]
+        for name in sorted(names):
+            guards.append(f"def {name} := admitCallableFunctionFromProbe evidence "
+                          f"TargetProfile.lp64 {paths[name]}")
+            guards.append(f"#guard {name}.isOk")
+        for name in sorted(refusals):
+            guards.append(f"#guard (admitCallableFunctionFromProbe evidence "
+                          f"TargetProfile.lp64 {paths[name]}) matches .error _")
         for (name, destination, arguments), expected in zip(rows, outputs[0]):
             values = ", ".join(f"⟨{format_name}, {value}⟩"
                                for format_name, value in arguments)
-            fuel = 8 if name == "do_loop" else 4
+            fuel = (32 if name in ("compound_while", "compound_do")
+                    else 8 if name == "do_loop" else 4)
             guards.append(f"""#guard match {name} with
   | .ok function => match evaluateCallable {fuel} .lp64 function [{values}] with
     | .ok (.ok value) => value == ⟨{destination}, {int(expected)}⟩
     | _ => false
   | .error _ => false""")
         self.assert_accepts(json.dumps(probe), "\n".join(guards),
-                            options="set_option maxRecDepth 100000 in")
+                            options="set_option maxRecDepth 100000 in", timeout=180)
         print(f"callable argument differential: {len(rows)} rows at -O0/-O2")
 
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):

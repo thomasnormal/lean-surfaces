@@ -23,6 +23,8 @@ mutual
     | skip
     | expression (expression : TypedCallableExpression)
     | assign (declaration : FrontendHandle) (expression : TypedCallableExpression)
+    | compoundAssign (operator : String) (declaration : FrontendHandle)
+        (expression : TypedCallableExpression)
     | return_ (expression : TypedCallableExpression)
     | conditional (condition : TypedCallableExpression)
         (whenTrue whenFalse : CallableStatement)
@@ -109,6 +111,20 @@ private def parameterType? (parameters : List CallableParameter) (declaration : 
 private def referencedDeclaration (raw : Raw) : Except String FrontendHandle := do
   let reference ← evidenceField raw "referencedDecl"
   rawId reference
+
+def compoundAssignmentOperator? (operator : String) : Option String :=
+  match operator with
+  | "+=" => some "+"
+  | "-=" => some "-"
+  | "*=" => some "*"
+  | "/=" => some "/"
+  | "%=" => some "%"
+  | "&=" => some "&"
+  | "|=" => some "|"
+  | "^=" => some "^"
+  | "<<=" => some "<<"
+  | ">>=" => some ">>"
+  | _ => none
 
 private def integerLiteral (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence) :
     Except String TypedCallableExpression := do
@@ -300,6 +316,41 @@ partial def parseCallableStatement (profile : TargetProfile)
       else
         let expression ← parseCallableExpression profile parameters expressionRows statement none none
         pure (.expression expression)
+  | "CompoundAssignOperator" =>
+      let operator ← evidenceText statement "opcode"
+      let some arithmeticOperator := compoundAssignmentOperator? operator
+        | throw s!"callable: unsupported compound assignment {operator}"
+      let occurrence ← rawId statement
+      let some row := expressionRows.find? (fun row => row.occurrence == occurrence)
+        | throw "callable: compound assignment lacks typed evidence"
+      unless row.operator == operator do
+        throw "callable: compound assignment operator disagrees with typed evidence"
+      let typedRow := {row with operator := arithmeticOperator}
+      validateBinaryIntegralTyping profile typedRow
+      let children ← rawChildren statement
+      let [target, value] := children
+        | throw "callable: compound assignment requires a target and value"
+      unless target.text "kind" == some "DeclRefExpr" do
+        throw "callable: compound assignment target must be a parameter reference"
+      let declaration ← referencedDeclaration target
+      let some targetType := parameterType? parameters declaration
+        | throw "callable: compound assignment target is not a parameter"
+      unless row.result == targetType do
+        throw "callable: compound assignment result disagrees with target type"
+      let some leftEvidence := row.operands[0]?
+        | throw "callable: compound assignment lacks a left operand"
+      unless target.text "id" == some leftEvidence.occurrence.value &&
+          target.text "kind" == some leftEvidence.kind &&
+          leftEvidence.sourceType == targetType && leftEvidence.type == targetType do
+        throw "callable: compound assignment target disagrees with typed evidence"
+      let some rightEvidence := row.operands[1]?
+        | throw "callable: compound assignment lacks a right operand"
+      unless value.text "id" == some rightEvidence.occurrence.value &&
+          value.text "kind" == some rightEvidence.kind do
+        throw "callable: compound assignment operand disagrees with typed evidence"
+      let expression ← parseCallableExpression profile parameters expressionRows value
+        (some rightEvidence.sourceType) (some rightEvidence.type)
+      pure (.compoundAssign operator declaration expression)
   | "UnaryOperator" | "IntegerLiteral" | "DeclRefExpr" |
       "ImplicitCastExpr" | "ParenExpr" =>
       let expression ← parseCallableExpression profile parameters expressionRows statement none none

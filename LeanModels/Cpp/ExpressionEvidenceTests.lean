@@ -48,6 +48,19 @@ private def wrongMetadata : DeclarationProbe := {
     ("expression_evidence", .array [expression "0x4" "*"])]
 }
 
+private def compoundMetadata (kind : String) : DeclarationProbe := {
+  metadata with
+  ast := object [("id", text "0x1"), ("kind", text "TranslationUnitDecl"),
+    ("inner", .array [object [
+      ("id", text "0x4"), ("kind", text kind), ("opcode", text "+="),
+      ("inner", .array [
+        object [("id", text "0x2"), ("kind", text "IntegerLiteral")],
+        object [("id", text "0x3"), ("kind", text "IntegerLiteral")]])]])]
+  metadata := object [
+    ("expression_evidence_api", text "Clang::BinaryOperator typed operand projection v2"),
+    ("expression_evidence", .array [expression "0x4" "+="])]
+}
+
 def rowsParse : Bool :=
   match parseBinaryExpressionEvidenceRows (.array [expression "0x4" "+"]) with
   | .ok rows => rows.length == 1
@@ -75,5 +88,8 @@ def promotionChecks : Bool :=
 #guard validates
 #guard refusesWrongOperator
 #guard promotionChecks
+#guard (parseValidatedBinaryExpressionEvidence
+  (compoundMetadata "CompoundAssignOperator")).isOk
+#guard (parseValidatedBinaryExpressionEvidence (compoundMetadata "UnaryOperator")) matches .error _
 
 end LeanModels.Cpp.ExpressionEvidenceTests

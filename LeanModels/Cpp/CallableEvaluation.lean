@@ -114,6 +114,15 @@ private def assignParameter (profile : TargetProfile) (parameters : List Callabl
     throw .expressionTypeMismatch
   pure (arguments.set index value)
 
+private def parameterValue (parameters : List CallableParameter)
+    (arguments : List IntegralValue) (declaration : FrontendHandle) :
+    Except CallableEvaluationError IntegralValue := do
+  let some index := parameters.findIdx? (fun parameter => parameter.declaration == declaration)
+    | .error (.missingParameter declaration)
+  let some value := arguments[index]?
+    | .error (.missingParameter declaration)
+  pure value
+
 private def evaluateInteger (profile : TargetProfile) (value : Nat) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
   let format ← formatFor profile (.builtin .int)
@@ -243,6 +252,26 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
               match assignParameter profile parameters arguments declaration value with
               | .ok updated => pure (.normal updated)
               | .error error => throw error
+          | .invalid reason => pure (.failed (.invalid reason) arguments)
+          | .undefined reason => pure (.failed (.undefined reason) arguments)
+          | .unsupported reason => pure (.failed (.unsupported reason) arguments)
+      | .compoundAssign operator declaration expression => do
+          let some arithmeticOperator := compoundAssignmentOperator? operator
+            | throw (.unsupportedOperator operator)
+          let some operation := operator? arithmeticOperator
+            | throw (.unsupportedOperator operator)
+          let result ← evaluateTyped fuel profile parameters arguments expression
+          match result with
+          | .ok rightValue =>
+              let current ← parameterValue parameters arguments declaration
+              match integralBinary operation current rightValue with
+              | .ok value =>
+                  match assignParameter profile parameters arguments declaration value with
+                  | .ok updated => pure (.normal updated)
+                  | .error error => throw error
+              | .invalid reason => pure (.failed (.invalid reason) arguments)
+              | .undefined reason => pure (.failed (.undefined reason) arguments)
+              | .unsupported reason => pure (.failed (.unsupported reason) arguments)
           | .invalid reason => pure (.failed (.invalid reason) arguments)
           | .undefined reason => pure (.failed (.undefined reason) arguments)
           | .unsupported reason => pure (.failed (.unsupported reason) arguments)

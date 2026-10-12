@@ -399,6 +399,35 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual([operand["type"] for operand in narrow["operands"]],
                          [{"kind": "builtin", "name": "int"}] * 2)
 
+    def test_compound_assignments_keep_binary_family_evidence_and_exact_ast_kind(self):
+        self.source.write_text(
+            "int compound(int value) { value += 1; return value; }\n"
+            "short narrow(short value) { value += 1; return value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        rows = probe["metadata"]["expression_evidence"]
+        self.assertEqual(len(rows), 2)
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "id" in node:
+                nodes[node["id"]] = node
+            pending.extend(node.get("inner", []))
+        for row, type_name in zip(rows, ("int", "short")):
+            node = nodes[row["occurrence"]]
+            self.assertEqual(row["kind"], "BinaryOperator")
+            self.assertEqual(node["kind"], "CompoundAssignOperator")
+            self.assertEqual(row["operator"], "+=")
+            self.assertEqual(node["opcode"], row["operator"])
+            self.assertEqual(row["result"], {"kind": "builtin", "name": type_name})
+            self.assertEqual(row["operands"][0]["source"], row["result"])
+            self.assertEqual(row["operands"][0]["type"], row["result"])
+            self.assertEqual([child["id"] for child in node["inner"]],
+                             [operand["occurrence"] for operand in row["operands"]])
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_binary_expression_unsupported_types_are_refused(self):
         self.source.write_text(
             "double arithmetic(double left, double right) { return left + right; }\n",

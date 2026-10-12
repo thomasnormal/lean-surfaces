@@ -6,11 +6,11 @@ It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references, integral casts,
 typed integral unary and binary expressions, and short-circuiting logical `&&`/`||` inside
-sequences, `if` branches and `while`/`do` loops. Parameter-targeted `=` statements
-thread the updated argument values through later statements. The evaluator
-returns the existing `IntegralResult` so signed
-overflow, division errors, shift errors and unsupported arithmetic remain
-visible rather than becoming host-language behavior.
+sequences, `if` branches and `while`/`do` loops. Parameter-targeted `=` and
+integral compound-assignment statements thread updated argument values through
+later statements. The evaluator returns the existing `IntegralResult` so signed
+overflow, division errors, shift errors and unsupported arithmetic remain visible
+rather than becoming host-language behavior.
 
 N4950 §7.6.1.3 [expr.call] initializes every parameter from its corresponding
 argument. This boundary therefore converts and validates all supplied arguments
@@ -20,6 +20,13 @@ argument-expression evaluation order. Integer conversions use §7.3.9
 [conv.integral], with boolean destinations following [conv.bool]. Defaults,
 variadic arguments, references and user-defined conversions remain outside this
 boundary.
+
+Compound assignments evaluate their admitted, side-effect-free RHS, read the
+target parameter once, compute using the shared `integralBinary` operation and
+store only a successful result. The admission profile requires the arithmetic
+result format to equal the destination format, so no implicit narrowing is
+invented here. The updated state feeds subsequent branches and loop conditions;
+arithmetic failures propagate instead of executing later statements.
 
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
@@ -43,14 +50,12 @@ literal, binary addition and logical short-circuit results, captured
 exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and
-`LEANCPP_PROBE_LIBRARY` settings. It probes real signed, unsigned, short,
-unsigned-short and boolean identity bodies, direct integer-literal and
-null-statement and discarded-expression returns, explicit `if`/`else` branches,
-parameter assignments,
-unary plus/complement,
-integral return casts between
-`int`, `bool` and `short`, and a two-parameter first-value body, then compares
-the admitted evaluator against their Clang-compiled calls for 140 rows at both
-`-O0` and `-O2`, with undefined-behavior sanitization. Width checks pin the
-LP64 target; missing settings skip rather than count as agreement. This is
-evidence for the bounded call profile, not whole-program execution.
+`LEANCPP_PROBE_LIBRARY` settings. It probes identity and literal bodies, skipped
+and discarded statements, branches, unary/binary/logical operators, integral
+return casts and parameter assignments. All ten compound operators are covered,
+including unsigned wraparound, self-aliasing and state updates through `while`
+and `do` loops. It compares the evaluator with 184 Clang-compiled calls at both
+`-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
+loud compound-conversion refusals. Width checks pin the LP64 target; missing
+settings skip rather than count as agreement. This is evidence for the bounded
+call profile, not whole-program execution.

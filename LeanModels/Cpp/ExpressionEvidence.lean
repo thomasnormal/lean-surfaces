@@ -141,8 +141,9 @@ def validateBinaryExpressionEvidence (probe : DeclarationProbe)
     | row :: rest =>
         let some node := rawNode probe.ast row.occurrence
           | throw "expression evidence occurrence is absent from AST"
-        unless node.text "kind" == some "BinaryOperator" do
-          throw "expression evidence occurrence is not a BinaryOperator"
+        unless node.text "kind" == some "BinaryOperator" ||
+            node.text "kind" == some "CompoundAssignOperator" do
+          throw "expression evidence occurrence is not a BinaryOperator or CompoundAssignOperator"
         unless node.text "opcode" == some row.operator do
           throw "expression evidence operator disagrees with AST"
         let children := rawChildren node

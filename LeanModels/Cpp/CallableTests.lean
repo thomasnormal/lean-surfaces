@@ -178,6 +178,51 @@ def assignmentEvidence : List CppBinaryExpressionEvidence := [{
 def admitAssignment : Except String CallableFunction :=
   admitCallableFunction assignmentProbe assignmentTypes assignmentEvidence TargetProfile.lp64 [0]
 
+def compoundAssignmentProbe : DeclarationProbe :=
+  probeFor (functionSource "bumpBy" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x30"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x50"), ("kind", text "CompoundAssignOperator"),
+        ("opcode", text "+="), ("inner", .array [
+          declRefNode "0x51" "0x10" "value", integerLiteralRaw "0x44" "1"])
+      ],
+      returnStmt "0x52" (implicitCast "0x53" (declRefNode "0x54" "0x10" "value"))
+    ])
+  ])) [rootEvidence, functionEvidence "bumpBy" "CompoundStmt"]
+
+def compoundAssignmentEvidence : List CppBinaryExpressionEvidence := [{
+  ordinal := 0, occurrence := {value := "0x50"}, operator := "+=", result := intType,
+  operands := [
+    {occurrence := {value := "0x51"}, kind := "DeclRefExpr", sourceType := intType, type := intType},
+    {occurrence := {value := "0x44"}, kind := "IntegerLiteral", sourceType := intType, type := intType}]}]
+
+def admitCompoundAssignment : Except String CallableFunction :=
+  admitCallableFunction compoundAssignmentProbe assignmentTypes compoundAssignmentEvidence
+    TargetProfile.lp64 [0]
+
+private def parseCompoundAssignmentTarget (target : Raw)
+    (rows : List CppBinaryExpressionEvidence) : Except String CallableStatement :=
+  parseCallableStatement .lp64
+    [{declaration := {value := "0x10"}, name := some "value", type := intType}]
+    rows intType (object [
+      ("id", text "0x50"), ("kind", text "CompoundAssignOperator"), ("opcode", text "+="),
+      ("inner", .array [target, integerLiteralRaw "0x44" "1"])])
+
+#guard (parseCompoundAssignmentTarget (declRefNode "0x51" "0x10" "value") []) matches .error _
+#guard (parseCompoundAssignmentTarget (declRefNode "0x51" "0x99" "value")
+  compoundAssignmentEvidence) matches .error _
+#guard (parseCompoundAssignmentTarget (declRefNode "0x99" "0x10" "value")
+  compoundAssignmentEvidence) matches .error _
+#guard (parseCompoundAssignmentTarget (integerLiteralRaw "0x51" "1")
+  compoundAssignmentEvidence) matches .error _
+#guard (parseCompoundAssignmentTarget (declRefNode "0x51" "0x10" "value")
+  (compoundAssignmentEvidence.map fun row => {row with operands := row.operands.reverse}))
+  matches .error _
+#guard (parseCompoundAssignmentTarget (declRefNode "0x51" "0x10" "value")
+  (compoundAssignmentEvidence.map fun row => {row with result := .builtin .unsignedInt}))
+  matches .error _
+
 def ifProbe : DeclarationProbe :=
   probeFor (functionSource "choose" []
     (body (object [
@@ -310,6 +355,13 @@ def admitLogical : Except String CallableFunction :=
       match function.body with
       | .sequence (.assign declaration expression) (.return_ _) =>
           declaration == {value := "0x10"} && expression.type == intType
+      | _ => false
+  | .error _ => false
+#guard match admitCompoundAssignment with
+  | .ok function =>
+      match function.body with
+      | .sequence (.compoundAssign operator declaration _) (.return_ _) =>
+          operator == "+=" && declaration == {value := "0x10"}
       | _ => false
   | .error _ => false
 #guard match admitIf with

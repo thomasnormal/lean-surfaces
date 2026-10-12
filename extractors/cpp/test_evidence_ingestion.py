@@ -476,6 +476,7 @@ bool logical(int value) { return !value; }
         ) + "int first(int left, int right) { return left; }\n"
           "int branch(int value) { if (value) return value; return 0; }\n"
           "int loop(int value) { while (value) return value; return 0; }\n"
+          "int do_loop(int value) { do { if (value) return value; } while (0); return 7; }\n"
           "int unary(int value) { return -value; }\n"
           "int compare(int value) { if (value > 0) return 1; return 0; }\n"
           "bool equal_values(int left, int right) { return left == right; }\n"
@@ -510,7 +511,7 @@ bool logical(int value) { return !value; }
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {
-            "first", "branch", "loop", "unary", "compare", "equal_values",
+            "first", "branch", "loop", "do_loop", "unary", "compare", "equal_values",
             "not_equal_values", "less_values", "less_equal_values",
             "greater_equal_values", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
@@ -553,6 +554,9 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 7):
             expressions.append(f"loop({value})")
             rows.append(("loop", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"do_loop({value})")
+            rows.append(("do_loop", ".signed 32", [(".signed 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"unary({value})")
             rows.append(("unary", ".signed 32", [(".signed 32", value)]))
@@ -659,8 +663,9 @@ bool logical(int value) { return !value; }
         for (name, destination, arguments), expected in zip(rows, outputs[0]):
             values = ", ".join(f"⟨{format_name}, {value}⟩"
                                for format_name, value in arguments)
+            fuel = 8 if name == "do_loop" else 4
             guards.append(f"""#guard match {name} with
-  | .ok function => match evaluateCallable 4 .lp64 function [{values}] with
+  | .ok function => match evaluateCallable {fuel} .lp64 function [{values}] with
     | .ok (.ok value) => value == ⟨{destination}, {int(expected)}⟩
     | _ => false
   | .error _ => false""")

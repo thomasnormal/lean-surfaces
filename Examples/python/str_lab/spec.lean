@@ -199,6 +199,13 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.builtin_ascii_noargs() raises
   (.typeError "ascii() takes exactly one argument (0 given)")
 #guard callFunction str_lab "builtin_ascii_container" #[] 4096 matches .unsupported _
+
+#py_check str_lab.builtin_round(3) = 3
+#py_check str_lab.builtin_round(-7) = -7
+#py_check str_lab.builtin_round(true) = 1
+#py_check str_lab.builtin_round(false) = 0
+#py_check str_lab.builtin_round_noargs() raises
+  (.typeError "round() missing required argument 'number' (pos 1)")
 #py_check str_lab.fmt_hex(255) = "ff"
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")

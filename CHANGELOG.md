@@ -12,6 +12,15 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- The `round()` builtin now models its one-argument integer and Boolean slice,
+  including CPython's exact missing-number `TypeError`; float rounding and
+  `ndigits` remain loud until their oracle is specified. The CPython 3.9
+  differential suite now has **2,760 / 3,086 rows = 89.4% complete** natively
+  and **2,686 / 3,086 = 87.0% complete** in the proof interpreter, with **100%
+  agreement among decided rows** and zero failures.
+
 ## [0.1.10] — 2026-10-12
 
 ### Added

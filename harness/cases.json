@@ -469,6 +469,8 @@
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_ascii", "args": [[3], [true], [3.5], [{"t": "str", "v": "héllo"}], [{"t": "str", "v": "€"}]], "expect": "match", "note": "ascii() renders scalar values and ASCII-escapes Unicode strings"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_ascii_noargs", "args": [[]], "expect": "match", "note": "ascii() keeps CPython's exact zero-argument TypeError"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_ascii_container", "args": [[]], "expect": "unsupported", "note": "ascii() keeps heap-recursive container repr loud until ASCII escaping is modeled"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_round", "args": [[3], [-7], [true], [false]], "expect": "match", "note": "round() returns an int for integer and Boolean inputs"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_round_noargs", "args": [[]], "expect": "match", "note": "round() keeps CPython's exact missing-number TypeError"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_hex", "args": [[255]], "expect": "match", "note": "bare %x over the scalar integer/Boolean inventory"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_int", "args": [[255], [true], [-7], ["x"]], "expect": "match", "note": "bare %i shares CPython's integer conversion and TypeError wording with %d"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_char", "args": [[65], [true], ["é"], ["xy"], [-1], [1114112]], "expect": "match", "note": "bare %c accepts integer code points or one-character strings with CPython errors"},

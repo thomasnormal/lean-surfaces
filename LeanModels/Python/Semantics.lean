@@ -5764,6 +5764,22 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     match vs with
                     | [v] => Run.liftRes st (absVal v)
                     | _ => .exn st (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
+                  else if fname == "round" then
+                    -- The one-argument integer/Boolean slice: CPython's
+                    -- `round(int)` returns the same mathematical integer,
+                    -- while `round(bool)` returns an `int`, not a `bool`.
+                    -- Float and ndigits protocols remain loud until their
+                    -- rounding oracle is modeled.
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [] => .exn st (.typeError "round() missing required argument 'number' (pos 1)")
+                    | [v] =>
+                      (match v with
+                       | .int n => .ok st (.int n)
+                       | .bool b => .ok st (.int (if b then 1 else 0))
+                       | _ => .unsupported "round() over floats and non-integral values is outside the tier (the one-argument integer/Boolean slice is modeled)"
+                      )
+                    | _ => .unsupported "round() with ndigits is outside the tier"
                   else if fname == "int" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with

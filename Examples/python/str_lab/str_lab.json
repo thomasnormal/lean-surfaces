@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.12.14"
   },
   "source_file": "Examples/python/str_lab/str_lab.py",
-  "source_sha256": "e100a530cd67a600aa3196212c8855f22bc3d5f761dc467cca7e1e97f3f6a25e",
+  "source_sha256": "0f372e73a75163e691ed2ba3d2291b51db68ca1fb99693a19d045067642bf39a",
   "module": {
     "kind": "Module",
     "body": [
@@ -4932,6 +4932,119 @@
                   ]
                 }
               ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 329,
+          "col_offset": 0,
+          "end_lineno": 330,
+          "end_col_offset": 19
+        },
+        "name": "builtin_round",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 329,
+              "col_offset": 18,
+              "end_lineno": 329,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 330,
+              "col_offset": 4,
+              "end_lineno": 330,
+              "end_col_offset": 19
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 330,
+                "col_offset": 11,
+                "end_lineno": 330,
+                "end_col_offset": 19
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 330,
+                  "col_offset": 11,
+                  "end_lineno": 330,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 330,
+                    "col_offset": 17,
+                    "end_lineno": 330,
+                    "end_col_offset": 18
+                  },
+                  "id": "n"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 333,
+          "col_offset": 0,
+          "end_lineno": 334,
+          "end_col_offset": 18
+        },
+        "name": "builtin_round_noargs",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 334,
+              "col_offset": 4,
+              "end_lineno": 334,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 334,
+                "col_offset": 11,
+                "end_lineno": 334,
+                "end_col_offset": 18
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 334,
+                  "col_offset": 11,
+                  "end_lineno": 334,
+                  "end_col_offset": 16
+                },
+                "id": "round"
+              },
+              "args": [],
               "keywords": [],
               "call_unsupported": null
             }

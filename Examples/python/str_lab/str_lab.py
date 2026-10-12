@@ -324,3 +324,11 @@ def builtin_ascii_noargs():
 
 def builtin_ascii_container():
     return ascii([1])
+
+
+def builtin_round(n):
+    return round(n)
+
+
+def builtin_round_noargs():
+    return round()

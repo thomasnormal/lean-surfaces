@@ -185,6 +185,13 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
   (.typeError "'str' object cannot be interpreted as an integer")
 #py_check str_lab.builtin_oct_noargs() raises
   (.typeError "oct() takes exactly one argument (0 given)")
+#py_check str_lab.builtin_bin(10) = "0b1010"
+#py_check str_lab.builtin_bin(-10) = "-0b1010"
+#py_check str_lab.builtin_bin(true) = "0b1"
+#py_check str_lab.builtin_bin("x") raises
+  (.typeError "'str' object cannot be interpreted as an integer")
+#py_check str_lab.builtin_bin_noargs() raises
+  (.typeError "bin() takes exactly one argument (0 given)")
 #py_check str_lab.fmt_hex(255) = "ff"
 #py_check str_lab.fmt_hex("x") raises
   (.typeError "%x format: an integer is required, not str")

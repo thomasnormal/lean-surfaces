@@ -574,12 +574,17 @@ in-tier container rather than one container at a time.
   `0o` prefix, including negative values and Booleans. It shares the loud
   heap/oversized-integer boundary, faithful arity and integer-required
   `TypeError`s, and the pure `heapFree` treatment.
+* **`bin`** follows the same bounded path with lowercase binary and CPython's
+  `0b` prefix, including negative values and Booleans. It has the same loud
+  heap/oversized-integer boundary, faithful arity and integer-required
+  `TypeError`s, and pure `heapFree` treatment.
 * **Simp doctrine**: the dispatchers (`valContains`, `ordVal`,
-  `chrVal`, `hexVal`, `octVal`) are in `py_simp`/`interpUnfolds`; the value workers
+  `chrVal`, `hexVal`, `octVal`, `binVal`) are in `py_simp`/`interpUnfolds`;
+  the value workers
   (`strContains`, `strCharVals`) stay OUT, like `strSlice` — a
   concrete proof rewrites through one kernel `rfl` fact per
   application.
-* **heapFree**: all five are pure reads, so every node stays in the
+* **heapFree**: all six are pure reads, so every node stays in the
   fragment.
 * Acceptance: `Examples/python/iter_lab` (every function
   differential); leanpy corpus `harness/scripts/iter_script.py`.

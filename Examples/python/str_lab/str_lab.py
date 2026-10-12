@@ -304,3 +304,11 @@ def builtin_oct(n):
 
 def builtin_oct_noargs():
     return oct()
+
+
+def builtin_bin(n):
+    return bin(n)
+
+
+def builtin_bin_noargs():
+    return bin()

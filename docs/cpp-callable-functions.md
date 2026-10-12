@@ -30,6 +30,7 @@ The return-expression profile is:
 - a nonnegative decimal `IntegerLiteral` returning exact builtin `int`;
 - a parameter `DeclRefExpr`, through only `LValueToRValue` or `NoOp`
   `ImplicitCastExpr` wrappers; or
+- a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
 - an integral `BinaryOperator` whose ordered children, operator and result are
   witnessed by the validated expression supplement and whose promotions agree
   with the explicit `TargetProfile`.

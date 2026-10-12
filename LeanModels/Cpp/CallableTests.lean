@@ -164,6 +164,19 @@ def whileTypes : List TypeEvidenceRow := [
 def admitWhile : Except String CallableFunction :=
   admitCallableFunction whileProbe whileTypes [] TargetProfile.lp64 [0]
 
+def unaryProbe : DeclarationProbe :=
+  probeFor (functionSource "negate" [parameterRaw "0x10" "value"]
+    (body (returnStmt "0x31" (object [
+      ("id", text "0x32"), ("kind", text "UnaryOperator"), ("opcode", text "-"),
+      ("inner", .array [implicitCast "0x33" (declRef "0x10" "value")])]))))
+    [rootEvidence, functionEvidence "negate" "CompoundStmt"]
+
+def unaryTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def admitUnary : Except String CallableFunction :=
+  admitCallableFunction unaryProbe unaryTypes [] TargetProfile.lp64 [0]
+
 #guard match admitIdentity with
   | .ok function => function.parameters.length == 1
   | .error _ => false
@@ -209,6 +222,15 @@ def admitWhile : Except String CallableFunction :=
   | .ok function =>
       match function.body with
       | .sequence (.whileLoop _ (.return_ _)) (.return_ _) => true
+      | _ => false
+  | .error _ => false
+#guard match admitUnary with
+  | .ok function =>
+      match function.body with
+      | .return_ expression =>
+          match expression.expression with
+          | .unary operator _ => operator == "-"
+          | _ => false
       | _ => false
   | .error _ => false
 #guard match admitBinary with

@@ -5,7 +5,8 @@
 It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references and typed integral
-binary expressions inside sequences and `if` branches, and returns the existing `IntegralResult` so signed
+unary and binary expressions inside sequences, `if` branches and `while`
+loops, and returns the existing `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain
 visible rather than becoming host-language behavior.
 

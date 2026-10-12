@@ -7,6 +7,7 @@ mutual
   inductive CallableExpression where
     | integer (value : Nat)
     | parameter (declaration : FrontendHandle)
+    | unary (operator : String) (operand : TypedCallableExpression)
     | binary (operator : String) (left right : TypedCallableExpression)
     deriving Repr, BEq, Inhabited
 
@@ -169,6 +170,20 @@ partial def parseCallableExpression (profile : TargetProfile)
             type := row.result
           }
       | _, _ => throw "callable: binary body expression requires two operands"
+  | "UnaryOperator" =>
+      let operator ← evidenceText raw "opcode"
+      unless operator == "+" || operator == "-" || operator == "~" || operator == "!" do
+        throw s!"callable: unsupported unary operator {operator}"
+      let children ← rawChildren raw
+      let [child] := children
+        | throw "callable: unary body expression requires one operand"
+      let operand ← parseCallableExpression profile parameters expressionRows child none none
+      unless operator == "!" || operand.type != .builtin .boolean do
+        throw "callable: unary integral promotion is outside the body profile"
+      let type := if operator == "!" then .builtin .boolean else operand.type
+      if typeExpected.isSome && typeExpected != some type then
+        throw "callable: unary result type disagrees with expected type"
+      pure {expression := .unary operator operand, sourceType := type, type}
   | _ => throw s!"callable: unsupported return expression {kind}"
 
 partial def parseCallableStatement (profile : TargetProfile)
@@ -220,7 +235,8 @@ partial def parseCallableStatement (profile : TargetProfile)
       let [child] := children
         | throw "callable: expression cleanup wrapper requires one child"
       parseCallableStatement profile parameters expressionRows resultType child
-  | "BinaryOperator" | "IntegerLiteral" | "DeclRefExpr" | "ImplicitCastExpr" | "ParenExpr" =>
+  | "UnaryOperator" | "BinaryOperator" | "IntegerLiteral" | "DeclRefExpr" |
+      "ImplicitCastExpr" | "ParenExpr" =>
       let expression ← parseCallableExpression profile parameters expressionRows statement none none
       pure (.expression expression)
   | _ => throw s!"callable: unsupported statement {kind}"

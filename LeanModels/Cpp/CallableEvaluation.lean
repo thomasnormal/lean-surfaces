@@ -91,6 +91,14 @@ private def operator? (operator : String) : Option IntegralBinary :=
   | ">=" => some .greaterEqual
   | _ => none
 
+private def unaryOperator? (operator : String) : Option IntegralUnary :=
+  match operator with
+  | "+" => some .plus
+  | "-" => some .negate
+  | "~" => some .complement
+  | "!" => some .logicalNot
+  | _ => none
+
 private def argumentAt (arguments : List IntegralValue) (index : Nat) : Option IntegralValue :=
   arguments[index]?
 
@@ -129,6 +137,24 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
       match typed.expression with
       | .integer value => evaluateInteger profile value
       | .parameter declaration => evaluateParameter profile parameters arguments typed declaration
+      | .unary operator operand => do
+          let some operation := unaryOperator? operator
+            | .error (.unsupportedOperator operator)
+          let operandResult ← evaluateTyped fuel profile parameters arguments operand
+          match operandResult with
+          | .ok operandValue =>
+              let result := integralUnary operation operandValue
+              match result with
+              | .ok value =>
+                  let expected ← formatFor profile typed.type
+                  if value.format == expected then pure result
+                  else .error .expressionTypeMismatch
+              | .invalid reason => pure (.invalid reason)
+              | .undefined reason => pure (.undefined reason)
+              | .unsupported reason => pure (.unsupported reason)
+          | .invalid reason => pure (.invalid reason)
+          | .undefined reason => pure (.undefined reason)
+          | .unsupported reason => pure (.unsupported reason)
       | .binary operator left right => do
           let some operation := operator? operator
             | .error (.unsupportedOperator operator)

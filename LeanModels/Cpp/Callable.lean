@@ -175,9 +175,11 @@ partial def parseCallableExpression (profile : TargetProfile)
                 child.text "kind" == some operand.kind do
               throw "callable: binary operand disagrees with typed evidence"
           let left ← parseCallableExpression profile parameters expressionRows leftRaw
-            (some leftEvidence.sourceType) (some leftEvidence.type)
+            (if logical then none else some leftEvidence.sourceType)
+            (if logical then none else some leftEvidence.type)
           let right ← parseCallableExpression profile parameters expressionRows rightRaw
-            (some rightEvidence.sourceType) (some rightEvidence.type)
+            (if logical then none else some rightEvidence.sourceType)
+            (if logical then none else some rightEvidence.type)
           pure {
             expression := if logical then .logical row.operator left right
               else .binary row.operator left right

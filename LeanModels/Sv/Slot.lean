@@ -60,15 +60,14 @@ def liftRes {α : Type} (c : SvClause) : Res α → SvM α
 
 /-! ## Stepping one process -/
 
-/-- Recover a retained target for worlds made before `ProcState.registration` was
-introduced. Runtime suspensions always fill the field; the fallback keeps
-the public constructors useful for concrete hand-built worlds. -/
-def targetOf (now : Nat) (ps : ProcState) : Option WaitTarget :=
+/-- Edge triggers retain their complete target even in legacy process states.
+A relative timer alone cannot recover its original registration time. -/
+def targetOf (ps : ProcState) : Option WaitTarget :=
   match ps.registration with
   | some target => some target
   | none =>
       match ps.status with
-      | .suspended trigger => some (WaitTarget.ofTrigger now trigger)
+      | .suspended (.atEdge signal edgeKind) => some (.edge signal edgeKind)
       | _ => none
 
 def withoutIndex (index : Nat) (xs : List Nat) : List Nat :=
@@ -93,6 +92,10 @@ def runProcOnce (fuel : Nat) (i : Nat) : SvM StepOutcome := do
       else
         let (sigs, nba, out, oc) ←
           liftRes ⟨"4.4"⟩ (stepSStmts fuel w.signals w.nba w.out ps.residual)
+        match oc with
+        | .suspended (.atTime 0) _ =>
+            refuseSv .outOfTier ⟨"9.4.1"⟩ "zero-delay Inactive delivery is not admitted"
+        | _ => pure ()
         -- RE-ARM or finish. An `always` body completing is the end of one
         -- iteration, not of the process; an `initial` body completing is the
         -- end of the process.
@@ -196,8 +199,8 @@ def wakeTimers : SvM Unit :=
       (List.range w.procs.size).filter fun i =>
         match w.procs[i]? with
         | some ps =>
-            match ps.status, targetOf w.time ps with
-            | .suspended _, some (.timer deadline) =>
+            match ps.status, targetOf ps with
+            | .suspended (.atTime (_ + 1)), some (.timer deadline) =>
                 !ps.explicitlySuspended && deadline ≤ w.time
             | _, _ => false
         | none => false
@@ -219,9 +222,9 @@ def suspendProcess (index : Nat) : SvM Unit := do
       if ps.explicitlySuspended then
         refuseSv .outOfTier ⟨"9.7"⟩ "process is already explicitly suspended"
       else
-        match ps.status, targetOf w.time ps with
+        match ps.status, targetOf ps with
         | .suspended _, some target@(.edge _ _)
-        | .suspended _, some target@(.timer _) =>
+        | .suspended (.atTime (_ + 1)), some target@(.timer _) =>
             let ps' := { ps with registration := some target, explicitlySuspended := true }
             set (removeFromReady { w with procs := w.procs.set! index ps' } index)
         | .suspended _, some (.level _) =>
@@ -230,7 +233,7 @@ def suspendProcess (index : Nat) : SvM Unit := do
             refuseSv .outOfTier ⟨"9.7"⟩ "ready-process suspension is not admitted"
         | .finished, _ =>
             refuseSv .outOfTier ⟨"9.7"⟩ "terminal-process suspension is not admitted"
-        | _, none =>
+        | _, _ =>
             refuseSv .outOfTier ⟨"9.7"⟩ "process has no admitted waiting target"
 
 /-- Resume an explicitly suspended edge/timer waiter.
@@ -249,7 +252,7 @@ def resumeProcess (index : Nat) : SvM Unit := do
         match ps.status, ps.registration with
         | .suspended _, some (.edge _ _) =>
             set { w with procs := w.procs.set! index ({ ps with explicitlySuspended := false }) }
-        | .suspended _, some (.timer deadline) =>
+        | .suspended (.atTime (_ + 1)), some (.timer deadline) =>
             if deadline ≤ w.time then
               let ps' := { ps with status := .ready, registration := none, explicitlySuspended := false }
               set (appendActive { w with procs := w.procs.set! index ps' } [index])
@@ -271,7 +274,7 @@ def wakeEdges (old new : SvState) : SvM Unit :=
       (List.range w.procs.size).filter fun i =>
         match w.procs[i]? with
         | some ps =>
-            match ps.status, targetOf w.time ps with
+            match ps.status, targetOf ps with
             | .suspended _, some (.edge sig e) =>
                 !ps.explicitlySuspended && sawEdge old new sig e
             | _, _ => false

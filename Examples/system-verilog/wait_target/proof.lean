@@ -45,6 +45,10 @@ def delayWorld : SvWorld :=
   , procs := #[{ residual := [.delay 3], status := .ready }]
   , regionQ := fun _ => [] }
 
+def zeroDelayWorld : SvWorld :=
+  { procs := #[{ residual := [.delay 0], status := .ready }]
+  , regionQ := fun _ => [] }
+
 def readyWorld : SvWorld :=
   { procs := #[{ residual := [], status := .ready }] }
 
@@ -84,6 +88,8 @@ def duplicateWorld : SvWorld :=
 
 #guard (worldOf (runProcOnce 32 0) delayWorld).map
   (fun w => (w.procs[0]?).map timerWaiting) == some (some true)
+
+#guard refused (runProcOnce 32 0) zeroDelayWorld
 
 #guard refused (suspendProcess 0) readyWorld
 #guard refused (suspendProcess 0) levelWorld

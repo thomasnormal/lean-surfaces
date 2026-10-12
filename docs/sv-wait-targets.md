@@ -23,6 +23,9 @@ current interface. Those branches remain loud rather than being approximated.
 Already queued nonblocking assignments remain in the world queue and are not
 process activations.
 
+The zero-delay `#0` path remains loud: delivering it in Inactive rather than
+Active needs a separate region rule and is not smuggled into this target rule.
+
 The driver invokes timer delivery at each ordinary slot boundary. It does not
 invent a time advance: callers that model timed slots advance `SvWorld.time`
 through the existing primitive, after which the due-target rule is applied.

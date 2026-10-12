@@ -478,6 +478,7 @@ bool logical(int value) { return !value; }
           "int unary(int value) { return -value; }\n"
           "int compare(int value) { if (value > 0) return 1; return 0; }\n"
           "bool logical(int value) { return !value; }\n"
+          "int add(int left, int right) { return left + right; }\n"
           "bool both(int left, int right) { return left && right; }\n",
           encoding="utf-8")
         environment = dict(os.environ)
@@ -493,7 +494,7 @@ bool logical(int value) { return !value; }
         self.assertEqual(result.returncode, 0, result.stderr)
         probe = json.loads(result.stdout)
         names = {name for _, name, _ in destinations} | {
-            "first", "branch", "loop", "unary", "compare", "logical", "both"}
+            "first", "branch", "loop", "unary", "compare", "logical", "add", "both"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -541,6 +542,10 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 7):
             expressions.append(f"logical({value})")
             rows.append(("logical", ".boolean", [(".signed 32", value)]))
+        for left, right in ((-7, 3), (0, 7), (7, 3)):
+            expressions.append(f"add({left}, {right})")
+            rows.append(("add", ".signed 32", [(".signed 32", left),
+                                                (".signed 32", right)]))
         for left, right in ((0, 7), (7, 0), (7, 3)):
             expressions.append(f"both({left}, {right})")
             rows.append(("both", ".boolean", [(".signed 32", left),

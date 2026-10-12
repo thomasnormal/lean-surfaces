@@ -368,6 +368,54 @@ def forProbe : DeclarationProbe :=
       returnStmt "0x5d" (implicitCast "0x5e" (declRefNode "0x5f" "0x10" "value"))])]))
     [rootEvidence, functionEvidence "forLoop" "CompoundStmt"]
 
+def forBreakProbe : DeclarationProbe :=
+  probeFor (functionSource "forBreak" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0xa1"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0xa0"), ("kind", text "ForStmt"),
+        ("inner", .array [
+          object [
+            ("id", text "0xa2"), ("kind", text "BinaryOperator"), ("opcode", text "="),
+            ("inner", .array [declRefNode "0xa3" "0x10" "value",
+              integerLiteralRaw "0xa4" "0"])],
+          object [],
+          object [
+            ("id", text "0xa6"), ("kind", text "BinaryOperator"), ("opcode", text "<"),
+            ("inner", .array [implicitCast "0xa7" (declRefNode "0xa8" "0x10" "value"),
+              integerLiteralRaw "0xa9" "3"])],
+          incrementRaw "0xaa" "++" false (declRefNode "0xab" "0x10" "value"),
+          body (object [
+            ("id", text "0xac"), ("kind", text "CompoundStmt"),
+            ("inner", .array [
+              incrementRaw "0xad" "++" false (declRefNode "0xae" "0x10" "value"),
+              object [("id", text "0xaf"), ("kind", text "BreakStmt")]])])])],
+      returnStmt "0xb0" (implicitCast "0xb1" (declRefNode "0xb2" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "forBreak" "CompoundStmt"]
+
+def forContinueProbe : DeclarationProbe :=
+  probeFor (functionSource "forContinue" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0xc1"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0xc0"), ("kind", text "ForStmt"),
+        ("inner", .array [
+          object [
+            ("id", text "0xc2"), ("kind", text "BinaryOperator"), ("opcode", text "="),
+            ("inner", .array [declRefNode "0xc3" "0x10" "value",
+              integerLiteralRaw "0xc4" "0"])],
+          object [],
+          object [
+            ("id", text "0xc6"), ("kind", text "BinaryOperator"), ("opcode", text "<"),
+            ("inner", .array [implicitCast "0xc7" (declRefNode "0xc8" "0x10" "value"),
+              integerLiteralRaw "0xc9" "3"])],
+          incrementRaw "0xca" "++" false (declRefNode "0xcb" "0x10" "value"),
+          body (object [
+            ("id", text "0xcc"), ("kind", text "CompoundStmt"),
+            ("inner", .array [object [("id", text "0xcd"), ("kind", text "ContinueStmt")]])])])],
+      returnStmt "0xd0" (implicitCast "0xd1" (declRefNode "0xd2" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "forContinue" "CompoundStmt"]
+
 def forTypes : List TypeEvidenceRow := [
   typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
 
@@ -435,6 +483,21 @@ def transferEvidence (occurrence : String) (leftOccurrence : String) (literalOcc
           sourceType := intType, type := intType},
         {occurrence := {value := literalOccurrence}, kind := "IntegerLiteral",
           sourceType := intType, type := intType}]}]
+
+def forBreakEvidence : List CppBinaryExpressionEvidence :=
+  transferEvidence "0xa6" "0xa7" "0xa9"
+
+def forContinueEvidence : List CppBinaryExpressionEvidence :=
+  transferEvidence "0xc6" "0xc7" "0xc9"
+
+def admitForBreak : Except String CallableFunction :=
+  admitCallableFunction forBreakProbe forTypes forBreakEvidence TargetProfile.lp64 [0]
+
+def admitForContinue : Except String CallableFunction :=
+  admitCallableFunction forContinueProbe forTypes forContinueEvidence TargetProfile.lp64 [0]
+
+#guard admitForBreak.isOk
+#guard admitForContinue.isOk
 
 def admitBreak : Except String CallableFunction :=
   admitCallableFunction breakProbe transferTypes (transferEvidence "0x51" "0x52" "0x54")

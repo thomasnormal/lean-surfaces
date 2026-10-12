@@ -68,10 +68,12 @@ would otherwise be unsequenced inside a binary expression.
 
 The admitted `for` shape has a parameter-only initializer and step, an explicit
 integral condition, and an admitted body. It is lowered to the equivalent
-state-threaded `while` sequence; condition declarations, omitted conditions,
-and loop transfers in the body remain loud refusals. `break` and `continue` are
-admitted inside `while` and `do` bodies and remain loud at the public boundary
-when no loop consumes them.
+state-threaded `while` sequence; condition declarations and omitted conditions
+remain loud refusals. A `continue` in the outer body is rewritten to run the
+step before the next condition check, while nested loop transfers remain owned
+by their inner loop. `break` and `continue` are admitted inside `while`, `do`
+and `for` bodies and remain loud at the public boundary when no loop consumes
+them.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an

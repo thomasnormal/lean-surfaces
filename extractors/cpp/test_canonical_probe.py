@@ -506,6 +506,32 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(loops[0]["inner"][1], {})
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_for_loop_transfers_retain_body_nodes(self):
+        self.source.write_text(
+            "int for_break_loop(int value) { for (value = 0; value < 3; ++value) { ++value; break; } return value; }\n"
+            "int for_continue_loop(int value) { for (value = 0; value < 3; ++value) { continue; } return value; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        loops = []
+        nodes = []
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "kind" in node:
+                nodes.append(node)
+            if node.get("kind") == "ForStmt":
+                loops.append(node)
+            pending.extend(node.get("inner", []))
+        self.assertEqual(len(loops), 2)
+        for loop in loops:
+            self.assertEqual(len(loop.get("inner", [])), 5)
+            self.assertEqual(loop["inner"][1], {})
+            self.assertEqual(loop["inner"][4].get("kind"), "CompoundStmt")
+        self.assertEqual(sum(node.get("kind") == "BreakStmt" for node in nodes), 1)
+        self.assertEqual(sum(node.get("kind") == "ContinueStmt" for node in nodes), 1)
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_loop_transfers_are_retained_as_distinct_statement_nodes(self):
         self.source.write_text(
             "int break_loop(int value) { while (value < 3) { ++value; break; } return value; }\n"

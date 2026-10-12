@@ -56,9 +56,10 @@ the admission check rather than being treated as unsequenced.
 
 An admitted `for` loop is evaluated as its initializer followed by a
 state-threaded `while`: the condition runs before each body, and the step runs
-after each normally completing body. The profile rejects condition declarations,
-omitted conditions and loop transfers, so no hidden control-flow behavior is
-invented by the lowering.
+after each normally completing body. The profile rejects condition declarations
+and omitted conditions. A `continue` in the outer `for` body runs the lowered
+loop step before rechecking its condition; nested `while`/`do` transfers remain
+owned by their inner loop.
 
 `break` exits the nearest admitted `while`/`do` loop. `continue` skips the
 remaining body and rechecks the loop condition (with a `do` loop's usual
@@ -99,7 +100,7 @@ conditional expressions, comma sequencing, `for` loops, loop transfers and
 effectful logical short-circuiting.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 235 Clang-compiled calls at both
+and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 241 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

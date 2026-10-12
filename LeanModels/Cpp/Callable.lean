@@ -46,6 +46,16 @@ def CallableStatement.hasLoopTransfer : CallableStatement → Bool
   | .sequence first second => first.hasLoopTransfer || second.hasLoopTransfer
   | _ => false
 
+def CallableStatement.rewriteForContinue :
+    CallableStatement → CallableStatement → CallableStatement
+  | .conditional condition whenTrue whenFalse, step =>
+      .conditional condition (whenTrue.rewriteForContinue step)
+        (whenFalse.rewriteForContinue step)
+  | .sequence first second, step =>
+      .sequence (first.rewriteForContinue step) (second.rewriteForContinue step)
+  | .continue_, step => .sequence step .continue_
+  | statement, _ => statement
+
 mutual
   def CallableExpression.hasEffects : CallableExpression → Bool
     | .increment _ _ _ => true
@@ -374,9 +384,8 @@ partial def parseCallableStatement (profile : TargetProfile)
       let condition ← parseCallableExpression profile parameters expressionRows condition none none
       let body ← parseCallableStatement profile parameters expressionRows resultType body
       let step ← parseCallableStatement profile parameters expressionRows resultType step
-      unless !body.hasLoopTransfer do
-        throw "callable: loop transfers in for bodies are outside the lowered profile"
-      pure (.sequence initializer (.whileLoop condition (.sequence body step)))
+      pure (.sequence initializer
+        (.whileLoop condition (.sequence (body.rewriteForContinue step) step)))
   | "DoStmt" =>
       let children ← rawChildren statement
       let [body, condition] := children

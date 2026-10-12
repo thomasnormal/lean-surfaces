@@ -1184,6 +1184,63 @@ def _convert_stmt(sm, s):
         return _convert_local_decl(sm, s)
     if cname == "EmptyStatement":
         return {"kind": "Empty", "span": node_span(sm, s)}
+    if cname == "BreakStatement":
+        return {"kind": "Break", "span": node_span(sm, s)}
+    if cname == "ContinueStatement":
+        return {"kind": "Continue", "span": node_span(sm, s)}
+
+    if cname == "ForLoopStatement":
+        if _SYM is not None:
+            return unsupported(sm, s)
+        initializers = []
+        for init in s.initializers:
+            converted = _convert_assignment_expr(sm, init)
+            if (converted.get("kind") != "BlockingAssign"
+                    or not _case_expression_ok(converted)):
+                return unsupported(sm, s, "ForLoopStatement:initializer")
+            initializers.append(converted)
+        steps = []
+        for step in s.steps:
+            converted = _convert_for_step(sm, step)
+            if (converted.get("kind") != "BlockingAssign"
+                    or not _case_expression_ok(converted)):
+                return unsupported(sm, s, "ForLoopStatement:step")
+            steps.append(converted)
+        if s.stopExpr is None:
+            condition = {"kind": "Literal", "span": None, "width": 1, "bits": "1"}
+        else:
+            condition = convert_expr(sm, s.stopExpr)
+            if (not _case_expression_ok(condition)
+                    or not _case_source_expression_ok(s.stopExpr)):
+                return unsupported(sm, s, "ForLoopStatement:condition")
+        body = convert_stmt(sm, s.body)
+        if contains_local_decl(body):
+            return unsupported(sm, s, "ForLoopStatement:body-lifetime")
+        return {
+            "kind": "For",
+            "span": node_span(sm, s),
+            "initializers": initializers,
+            "condition": condition,
+            "steps": steps,
+            "body": body,
+        }
+
+    if cname == "RepeatLoopStatement":
+        if _SYM is not None:
+            return unsupported(sm, s)
+        width, _, reason = type_width_2s(s.count.type)
+        if width is None or reason is not None or not _case_source_expression_ok(s.count):
+            return unsupported(sm, s, "RepeatLoopStatement:count")
+        body = convert_stmt(sm, s.body)
+        if contains_local_decl(body):
+            return unsupported(sm, s, "RepeatLoopStatement:body-lifetime")
+        return {
+            "kind": "Repeat",
+            "span": node_span(sm, s),
+            "count": convert_expr(sm, s.count),
+            "count_signed": bool(s.count.type.isSigned),
+            "body": body,
+        }
 
     if cname == "ConditionalStatement":
         if s.check != UniquePriorityCheck.None_:
@@ -1325,28 +1382,60 @@ def _convert_ordinary_case(sm, stmt):
     return result
 
 
-def _convert_expression_stmt(sm, stmt):
-    expr = stmt.expr
-    if type(expr).__name__ == "CallExpression":
-        return _convert_syscall(sm, stmt, expr)
+def _convert_for_step(sm, expression):
+    if type(expression).__name__ == "AssignmentExpression":
+        return _convert_assignment_expr(sm, expression)
+    op = str(getattr(expression, "op", None)).split(".")[-1]
+    if type(expression).__name__ != "UnaryExpression" or op not in (
+            "Preincrement", "Postincrement", "Predecrement", "Postdecrement"):
+        return unsupported(sm, expression, "ForLoopStatement:step")
+    target, ok = ident_target(sm, expression.operand)
+    if not ok:
+        return unsupported(sm, expression, "ForLoopStatement:step-target")
+    width, two_state, reason = type_width_2s(expression.operand.type)
+    if width is None or reason is not None:
+        return unsupported(sm, expression, "ForLoopStatement:step-type")
+    value = {
+        "kind": "Binary", "span": node_span(sm, expression), "width": width,
+        "op": "+" if op.endswith("increment") else "-", "left": target,
+        "right": {"kind": "Literal", "span": None, "width": width,
+                  "bits": "0" * (width - 1) + "1"},
+    }
+    if two_state:
+        value = squash2_wrap(value, width)
+    return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+            "target": target, "value": value}
+
+
+def contains_local_decl(node):
+    if isinstance(node, dict):
+        return node.get("kind") == "LocalDecl" or any(
+            contains_local_decl(value) for value in node.values())
+    if isinstance(node, list):
+        return any(contains_local_decl(value) for value in node)
+    return False
+
+
+def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
-        return unsupported(sm, stmt, "ExpressionStatement:" + type(expr).__name__)
+        return unsupported(sm, span_node or expr,
+                           "AssignmentExpression:" + type(expr).__name__)
     if expr.timingControl is not None:
-        return unsupported(sm, stmt, "AssignmentExpression:timing")
+        return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
     if expr.op is not None:
         if _SYM is not None:
-            return unsupported(sm, stmt, "AssignmentExpression:compound")
+            return unsupported(sm, span_node or expr, "AssignmentExpression:compound")
         target, ok = ident_target(sm, expr.left)
         sym = BINARY_OPS.get(expr.op)
         if not ok or sym is None:
-            return unsupported(sm, stmt, "AssignmentExpression:compound")
+            return unsupported(sm, span_node or expr, "AssignmentExpression:compound")
         left = target
         rhs = _compound_rhs(expr.right)
         right = convert_expr(sm, rhs)
         width = getattr(expr.type, "bitWidth", None)
         if width is None or not _binary_width_ok(sym, width,
                                                  width_of(left), width_of(right)):
-            return unsupported(sm, stmt, "AssignmentExpression:compound-width")
+            return unsupported(sm, span_node or expr, "AssignmentExpression:compound-width")
         if sym == "/":
             sym = "s/" if expr.left.type.isSigned and rhs.type.isSigned else "u/"
         value = {
@@ -1363,10 +1452,10 @@ def _convert_expression_stmt(sm, stmt):
         else:
             target, ok = select_target(sm, expr.left)
         if not ok:
-            return unsupported(sm, stmt, "AssignmentExpression:target")
+            return unsupported(sm, span_node or expr, "AssignmentExpression:target")
         if (target.get("kind") in ("SelectTarget", "ConcatTarget")
                 and not _case_source_expression_ok(expr.right)):
-            return unsupported(sm, stmt, "AssignmentExpression:selected-effects")
+            return unsupported(sm, span_node or expr, "AssignmentExpression:selected-effects")
         value = convert_expr(sm, expr.right)
     try:
         if not expr.left.type.isFourState:
@@ -1375,10 +1464,19 @@ def _convert_expression_stmt(sm, stmt):
         pass
     return {
         "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
-        "span": node_span(sm, stmt),
+        "span": node_span(sm, span_node or expr),
         "target": target,
         "value": value,
     }
+
+
+def _convert_expression_stmt(sm, stmt):
+    expr = stmt.expr
+    if type(expr).__name__ == "CallExpression":
+        return _convert_syscall(sm, stmt, expr)
+    if type(expr).__name__ != "AssignmentExpression":
+        return unsupported(sm, stmt, "ExpressionStatement:" + type(expr).__name__)
+    return _convert_assignment_expr(sm, expr, stmt)
 
 
 def _convert_local_decl(sm, stmt):
@@ -1817,6 +1915,15 @@ def contains_power(node):
     return False
 
 
+def contains_loop(node):
+    if isinstance(node, dict):
+        return node.get("kind") in ("For", "Repeat", "Break", "Continue") or any(
+            contains_loop(value) for value in node.values())
+    if isinstance(node, list):
+        return any(contains_loop(value) for value in node)
+    return False
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -1870,6 +1977,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Power:invalid-compilation",
                                   "frontend rejected source containing power"))
+    if (any(contains_loop(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Loop:invalid-compilation",
+                                  "frontend rejected source containing a loop"))
     if (any(contains_selected_target(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectTarget:invalid-compilation",

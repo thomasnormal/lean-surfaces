@@ -213,6 +213,9 @@ ordinary effectful expression.
 | `BlockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `=` |
 | `NonblockingAssign` | `kind`, `span`, `target` (expr, always `Ident`), `value` (expr) — `<=` |
 | `If` | `kind`, `span`, `cond` (expr), `then` (stmt), `else` (stmt \| `null`) — `else if` chains nest as `If` inside `else` |
+| `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |
+| `Repeat` | legacy/self-check: `kind`, `span`, `count` (expr), `count_signed` (Bool), `body` (stmt) |
+| `Break` / `Continue` | legacy/self-check: `kind`, `span`; transfer to the nearest loop |
 | `Unsupported` | see above |
 
 M0 assignment targets are whole-signal identifiers only; a bit-select, part-select

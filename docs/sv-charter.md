@@ -69,10 +69,34 @@ hierarchy remain absent. Design2 adds selected reads/writes, case,
 reductions, resizing, signed comparisons, multiplication, integral division
 and integral power, but nonconstant remainder/shifts are not admitted merely because
 their constant expressions can be folded. The self-check vocabulary
-adds local declarations and output/termination tasks, but its current
+adds local declarations, `for`/`repeat` and output/termination tasks, but its current
 runner accepts initial-only execution and does not inherit Design2's
 selected targets or case statements. Extractor, ingestion, evaluator
 and kernel-loader refusal inventories must therefore stay separate.
+
+## Procedural for/repeat (IEEE 1800-2023, 12.7.1–12.7.2 and 12.8)
+
+The legacy/self-check tier retains source-ordered initializers, conditions,
+steps and bodies. `for` initializes once; `repeat` samples once. Normal
+body completion and `continue` advance the correct phase; `break` exits
+the nearest loop. Resumable boundary markers use the existing scheduler
+continuation interface without reconstructing an entered loop. The
+executor/stepper correspondence covers these phases, and the ordered-header
+theorem is anchored to an extracted source fixture.
+
+Three original fixtures confirm the admitted count and transfer behavior.
+Unknown repeat counts and positive counts above 2,147,483,647 remain loud,
+as do repeated-body declaration lifetimes, effectful headers, symbolic
+loops, and explicit process-control suspension/rearming. No timed-source
+extraction or cycle-to-region adequacy extension is claimed. See
+`docs/sv-loops.md` for the exact boundary.
+
+The paired extraction census compares the same **21,934** source paths:
+clean **1,804 → 1,840**, **36 gains**, and **zero losses**. Gains are
+chapter 12 (29), chapters 6, 34 and 37 (2 each), and chapter 9 (1).
+Seven newly added external corpus paths are counted separately, not as
+coverage gains. This is an extraction measurement, not whole-corpus
+runtime agreement.
 
 ## Integral division (IEEE 1800-2023, 11.4.3 and 11.8.2)
 

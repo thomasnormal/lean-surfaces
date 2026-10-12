@@ -16,6 +16,11 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- The SystemVerilog self-check tier admits ordered `for` and sampled-count
+  `repeat` loops with nearest-loop `break`/`continue`. Retained continuation
+  markers preserve loop phases across ordinary dependency waits; explicit
+  process-control suspension and disputed count conversions stay loud.
+
 - The `ascii()` builtin now renders scalar values and ASCII-escapes Unicode
   strings, with CPython's exact one-argument arity error; heap-recursive
   values remain loud rather than guessing a representation. The CPython 3.9

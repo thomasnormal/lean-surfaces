@@ -247,6 +247,22 @@ inductive SStmt where
   | packedNbaAssign (targets : List PackedTarget) (value : SExpr)
   | ifStmt (cond : SExpr) (thenB : SStmt) (elseB : Option SStmt)
   | block (body : Array SStmt)
+  /-- `for` source phases. The extra constructors are also the resumable
+  continuation markers used by `Step.lean`; they are not emitted by the
+  extractor. -/
+  | forLoop (initializers : Array SStmt) (condition : SExpr)
+      (steps : Array SStmt) (body : SStmt)
+  | forAfterInit (condition : SExpr) (steps : Array SStmt) (body : SStmt)
+  | forHeader (condition : SExpr) (steps : Array SStmt) (body : SStmt)
+  | forAfterBody (condition : SExpr) (steps : Array SStmt) (body : SStmt)
+  | forAfterStep (condition : SExpr) (steps : Array SStmt) (body : SStmt)
+  /-- `repeat` samples its count once. `repeatAfterBody` commits one
+  iteration only after the body has completed. -/
+  | repeatLoop (count : SExpr) (countSigned : Bool) (body : SStmt)
+  | repeatBody (remaining : Nat) (body : SStmt)
+  | repeatAfterBody (remaining : Nat) (body : SStmt)
+  | breakLoop
+  | continueLoop
   | localDecl (name : String) (width : Nat) (twoState : Bool) (init : Option SExpr)
   /-- `$display` (`write = false`, appends a newline) or `$write`. -/
   | sysCall (write : Bool) (format : Option String) (args : Array (SExpr × Bool))
@@ -288,7 +304,28 @@ def SStmt.mkBlock (body : Array SStmt) : SStmt :=
   let m0s := body.filterMap fun s => match s with | .m0 st => some st | _ => none
   if m0s.size == body.size then .m0 (.block m0s) else .block body
 
+def SStmt.isLoopBoundary : SStmt → Bool
+  | .forAfterBody _ _ _ | .repeatAfterBody _ _ => true
+  | _ => false
+
+def transferRest (statements : List SStmt) : List SStmt :=
+  statements.dropWhile (fun statement => !statement.isLoopBoundary)
+
+def repeatCount (v : LVec) (signed : Bool) : Res Nat :=
+  match v.toNat? with
+  | none => .unsupported "repeat count contains x/z"
+  | some n =>
+      if signed && msb v == .l1 then .ok 0
+      else if n > 2147483647 then .unsupported "repeat count exceeds the admitted integral range"
+      else .ok n
+
 /-! ## Output collection -/
+
+inductive LoopTransfer where
+  | normal
+  | breakLoop
+  | continueLoop
+deriving Repr, BEq, ReflBEq, LawfulBEq, DecidableEq, Inhabited
 
 /-- Collected simulator output: finished `lines`, the unterminated tail
 `cur` (`$write` without a newline), and the `halted` flag set by
@@ -297,6 +334,7 @@ structure Out where
   lines : Array String := #[]
   cur : String := ""
   halted : Bool := false
+  transfer : LoopTransfer := .normal
 deriving Repr, BEq, Inhabited
 
 /-- Append rendered text, splitting completed lines on `'\n'`. -/
@@ -598,8 +636,50 @@ def enqueuePackedNba (fuel : Nat) (st : SvState) (nba : NbaQueue)
                     pure (nba ++ [(name, updated)])
           enqueuePackedNba fuel st nba' replacement targets rest
 
+def execForLoop (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
+    (condition : SExpr) (steps : Array SStmt) (body : SStmt)
+    (assignmentOrder : AssignmentOrder) :
+    Res (SvState × NbaQueue × Out) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 => do
+      if out.halted then return (st, nba, out)
+      let c ← evalSExpr fuel st condition
+      if c.condTrue then
+        let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
+        if out'.halted then
+          .ok (st', nba', out')
+        else if out'.transfer == .breakLoop then
+          .ok (st', nba', { out' with transfer := .normal })
+        else
+          let (st'', nba'', out'') ← execSStmts fuel st' nba'
+            { out' with transfer := .normal }
+            steps.toList assignmentOrder
+          execForLoop fuel st'' nba'' out'' condition steps body assignmentOrder
+      else
+        .ok (st, nba, out)
+
+def execRepeatLoop (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
+    (remaining : Nat) (body : SStmt) (assignmentOrder : AssignmentOrder) :
+    Res (SvState × NbaQueue × Out) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+      if out.halted || remaining == 0 then
+        .ok (st, nba, out)
+      else do
+        let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
+        if out'.halted then
+          .ok (st', nba', out')
+        else if out'.transfer == .breakLoop then
+          .ok (st', nba', { out' with transfer := .normal })
+        else
+          execRepeatLoop fuel st' nba' { out' with transfer := .normal }
+            (remaining - 1) body assignmentOrder
+
 /-- Execute one self-check statement, threading state, NBA queue, and
-output. A halted `Out` short-circuits (`$finish` skips the rest of the
+output. Loop transfers are consumed at their nearest boundary. A halted
+`Out` short-circuits (`$finish` skips the rest of the
 run). `.m0` subtrees run under the existing `execStmt`. -/
 def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
     (stmt : SStmt) (assignmentOrder : AssignmentOrder := rightToLeftAssignmentOrder) :
@@ -660,6 +740,37 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
             | some s => execSStmt fuel st nba out s assignmentOrder
             | none => .ok (st, nba, out)
       | .block body => execSStmts fuel st nba out body.toList assignmentOrder
+      | .forLoop initializers condition steps body => do
+          let (st', nba', out') ← execSStmts fuel st nba out
+            initializers.toList assignmentOrder
+          execForLoop fuel st' nba' out' condition steps body assignmentOrder
+      | .forAfterInit condition steps body =>
+          execForLoop fuel st nba out condition steps body assignmentOrder
+      | .forHeader condition steps body =>
+          execForLoop fuel st nba out condition steps body assignmentOrder
+      | .forAfterBody condition steps body => do
+          if out.transfer == .breakLoop then
+            .ok (st, nba, { out with transfer := .normal })
+          else
+            let (st', nba', out') ← execSStmts fuel st nba
+              { out with transfer := .normal } steps.toList assignmentOrder
+            execForLoop fuel st' nba' out' condition steps body assignmentOrder
+      | .forAfterStep condition steps body =>
+          execForLoop fuel st nba out condition steps body assignmentOrder
+      | .repeatLoop count countSigned body => do
+          let value ← evalSExpr fuel st count
+          let remaining ← repeatCount value countSigned
+          execRepeatLoop fuel st nba out remaining body assignmentOrder
+      | .repeatBody remaining body =>
+          execRepeatLoop fuel st nba out remaining body assignmentOrder
+      | .repeatAfterBody remaining body =>
+          if out.transfer == .breakLoop then
+            .ok (st, nba, { out with transfer := .normal })
+          else
+            execRepeatLoop fuel st nba { out with transfer := .normal }
+              (remaining - 1) body assignmentOrder
+      | .breakLoop => .ok (st, nba, { out with transfer := .breakLoop })
+      | .continueLoop => .ok (st, nba, { out with transfer := .continueLoop })
       | .delay _ =>
           .unsupported "#delay: the self-check tier runs at time 0 (no scheduler)"
       | .waitEvent _ _ =>
@@ -690,7 +801,12 @@ def execSStmts (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
     | [] => .ok (st, nba, out)
     | s :: rest => do
         let (st', nba', out') ← execSStmt fuel st nba out s assignmentOrder
-        execSStmts fuel st' nba' out' rest assignmentOrder
+        if out'.transfer != .normal then
+          match transferRest rest with
+          | [] => .ok (st', nba', out')
+          | boundary :: tail =>
+              execSStmts fuel st' nba' out' (boundary :: tail) assignmentOrder
+        else execSStmts fuel st' nba' out' rest assignmentOrder
 
 end
 
@@ -756,7 +872,10 @@ def runSelfCheck (d : Design) (fuel : Nat)
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
   let st ← initDecls fuel d.decls.toList []
   let (_, _, out) ← runInits fuel d.procs.toList st [] {} assignmentOrder
-  return out.flush
+  if out.transfer != .normal then
+    .unsupported "loop transfer outside a loop"
+  else
+    return out.flush
 
 /-! ## Envelope ingestion (schema `sv-0.1` + the §f self-check vocabulary)
 
@@ -953,6 +1072,16 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
         | some je => pure (some (← parseSStmt je))
       return .mkIf (← parseSExpr (← getF j "cond"))
         (← parseSStmt (← getF j "then")) elseB
+  | "For" =>
+      return .forLoop (← (← getArrF j "initializers").mapM parseSStmt)
+        (← parseSExpr (← getF j "condition"))
+        (← (← getArrF j "steps").mapM parseSStmt)
+        (← parseSStmt (← getF j "body"))
+  | "Repeat" =>
+      return .repeatLoop (← parseSExpr (← getF j "count"))
+        (← getBoolF j "count_signed") (← parseSStmt (← getF j "body"))
+  | "Break" => return .breakLoop
+  | "Continue" => return .continueLoop
   | "LocalDecl" =>
       let init ← match getFOpt j "init" with
         | none => pure none
@@ -1016,6 +1145,12 @@ partial def localNames : SStmt → List String
   | .localDecl name _ _ _ => [name]
   | .block body => body.toList.flatMap localNames
   | .ifStmt _ t e => localNames t ++ (match e with | some s => localNames s | none => [])
+  | .forLoop initializers _ steps body =>
+      initializers.toList.flatMap localNames ++ steps.toList.flatMap localNames ++ localNames body
+  | .forAfterInit _ steps body | .forHeader _ steps body
+  | .forAfterBody _ steps body | .forAfterStep _ steps body =>
+      steps.toList.flatMap localNames ++ localNames body
+  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body => localNames body
   | _ => []
 
 /-- One `Module` payload → self-check `Design`. Ports and vars/nets share

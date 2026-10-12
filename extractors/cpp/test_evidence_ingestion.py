@@ -486,6 +486,8 @@ bool logical(int value) { return !value; }
           "int loop(int value) { while (value) return value; return 0; }\n"
           "int do_loop(int value) { do { if (value) return value; } while (0); return 7; }\n"
           "int unary(int value) { return -value; }\n"
+          "int positive(int value) { return +value; }\n"
+          "int complement(int value) { return ~value; }\n"
           "int compare(int value) { if (value > 0) return 1; return 0; }\n"
           "bool equal_values(int left, int right) { return left == right; }\n"
           "bool not_equal_values(int left, int right) { return left != right; }\n"
@@ -523,7 +525,8 @@ bool logical(int value) { return !value; }
             "not_equal_values", "less_values", "less_equal_values",
             "greater_equal_values", "logical", "add",
             "subtract", "multiply", "divide", "remainder", "bit_and", "bit_or",
-            "bit_xor", "shift_left", "shift_right", "both", "either"}
+            "bit_xor", "shift_left", "shift_right", "both", "either", "positive",
+            "complement"}
         paths = {}
         pending = [(probe["ast"], [])]
         while pending:
@@ -577,6 +580,12 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 7):
             expressions.append(f"unary({value})")
             rows.append(("unary", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"positive({value})")
+            rows.append(("positive", ".signed 32", [(".signed 32", value)]))
+        for value in (-1, 0, 7):
+            expressions.append(f"complement({value})")
+            rows.append(("complement", ".signed 32", [(".signed 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"compare({value})")
             rows.append(("compare", ".signed 32", [(".signed 32", value)]))

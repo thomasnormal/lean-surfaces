@@ -10,7 +10,7 @@ tractable.
 
 ## Python release status
 
-The Python prerelease is **v0.1.9 (2026-10-11)**. Its Git tag identifies the
+The Python prerelease is **v0.1.10 (2026-10-12)**. Its Git tag identifies the
 release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
 record source releases whose local Git tags remain unpublished.
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
@@ -62,10 +62,11 @@ non-finite division, float keys, and identity-dependent NaN operations remain
 loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
 downstream exhaustive matches must handle the new value/operator/error
 constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
-The executable differential suite has 3,012 cases: 2,647 agree with CPython and
-365 refuse loudly (**87.9% complete**). The narrower proof interpreter agrees on
-2,574 cases and refuses 438; neither run has a mismatch in the recorded suite.
-The grammar census has 142 witnesses, with 114 MATCH and 28 REFUSE. These are measured
+The executable differential suite has 3,081 cases: 2,755 agree with CPython and
+326 refuse loudly (**89.4% complete**). The narrower proof interpreter agrees on
+2,681 cases and refuses 400 (**87.0% complete**); neither run has a mismatch in
+the recorded suite. The grammar census has 142 witnesses, with 117 MATCH and 25
+REFUSE. These are measured
 examples, not a claim of complete language support; remaining gaps stay in scope.
 See [the measured coverage](docs/python-coverage.md) and
 [the interpreter boundary](docs/python-architecture.md).
@@ -86,11 +87,11 @@ the Python proof dependencies and checks the `tri` example's theorems. It does
 not compile another language tier or any Mathlib library module. The environment
 variable skips Mathlib's automatic cache download: Mathlib is a declared package
 dependency, but these first Python proofs use only Lean's core tactics.
-Fresh-workspace CI at source revision `4c314cc` (included in v0.1.9) has no
+Fresh-workspace CI at source revision `4aec7f8` (included in v0.1.10) has no
 Lake build-cache step: the quickstart jobs in
-[run 38153627730](https://github.com/thomasnormal/lean-surfaces/actions/runs/38153627730)
-pass in **4 minutes 15 seconds on Linux** and **5 minutes 44 seconds on macOS**;
-the full check job also passes.
+[run 38245607413](https://github.com/thomasnormal/lean-surfaces/actions/runs/38245607413)
+pass in **4 minutes 27 seconds on Linux** and **5 minutes 44 seconds on macOS**;
+the full check job also passes after a transient toolchain-download retry.
 (whole-job elapsed time, including installation, proof build, and script comparison).
 Network and build times vary. Separately, the first proof build
 took about **3 minutes 44 seconds** in a recorded frozen Linux check, with

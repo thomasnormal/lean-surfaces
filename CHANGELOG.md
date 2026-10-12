@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.10] — 2026-10-12
+
 ### Added
 
 - The `ascii()` builtin now renders scalar values and ASCII-escapes Unicode
@@ -196,6 +198,19 @@ change is listed here under **Changed** or **Removed**.
   payload-blindness covers the shared pure builtin arm. Measured differential
   completion remains **2,755 / 3,081 = 89.4%** natively and **2,681 / 3,081 =
   87.0%** in the proof interpreter, with **100% agreement among decided rows**.
+
+### Validation
+
+- CPython 3.9 differential suite: **3,081 rows / 2,755 matched / 326 recorded
+  refusals / zero mismatches**, so **89.4% of the suite is complete**. The proof
+  interpreter matches **2,681 / 3,081 = 87.0%** and refuses 400, also with
+  zero mismatches; agreement among decided rows is **100%**.
+- Grammar census: **142 witnesses / 117 MATCH / 25 REFUSE**. Whole-program
+  scripts: **106 / 83 completed-and-matched / 23 loud-blocked / zero failures**.
+- The Python-only acceptance driver passed **21/21 gates**, including a fresh
+  **974-job targeted build**, refusal/coverage/axiom checks, docs **89/89**, and
+  both Python notebooks (**2/2**, 543.5 seconds). Exact-head hosted CI run
+  **38245607413** passed its full check and both quickstarts.
 
 ## [0.1.9] — 2026-10-11
 

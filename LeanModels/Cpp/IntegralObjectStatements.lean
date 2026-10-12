@@ -4,6 +4,9 @@ namespace LeanModels.Cpp
 
 inductive IntegralObjectStatement where
   | expression (expression : IntegralObjectExpression)
+  | initialize (object : ObjectId) (sourceType : CppTypeEvidence)
+      (expression : IntegralObjectExpression)
+  | defaultInitialize (object : ObjectId)
   | assign (access : IntegralObjectRef) (sourceType : CppTypeEvidence)
       (expression : IntegralObjectExpression)
   | conditional (condition : IntegralObjectExpression)
@@ -42,6 +45,16 @@ private def executeStep (fuel : Nat) (store : IntegralObjectStore)
             mapExpressionError
           let _ ← requireResult result
           pure store
+      | .initialize object sourceType expression => do
+          let result ← (evaluateIntegralObjectExpression fuel store expression).mapError
+            mapExpressionError
+          match result with
+          | .ok value => (store.initializeConverted object sourceType value).mapError (.object)
+          | .invalid reason => throw (.invalid reason)
+          | .undefined reason => throw (.undefined reason)
+          | .unsupported reason => throw (.unsupported reason)
+      | .defaultInitialize object =>
+          (store.defaultInitialize object).mapError (.object)
       | .assign access sourceType expression => do
           let result ← (evaluateIntegralObjectExpression fuel store expression).mapError
             mapExpressionError

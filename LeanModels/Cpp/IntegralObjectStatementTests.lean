@@ -33,6 +33,38 @@ private def sequenceReady : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def initializeReady : Bool :=
+  match IntegralObjectStore.empty .lp64 with
+  | .ok store =>
+      match store.allocate .automatic (.builtin .int) with
+      | .ok (store, object) =>
+          let statement := .initialize object (.builtin .int) (.literal (signed 13))
+          match executeIntegralObjectStatement 4 store statement with
+          | .ok store =>
+              match store.borrow object with
+              | .ok access => readValue (signed 13) store access
+              | .error _ => false
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
+private def defaultInitializeReady : Bool :=
+  match IntegralObjectStore.empty .lp64 with
+  | .ok store =>
+      match store.allocate .automatic (.builtin .int) with
+      | .ok (store, object) =>
+          match executeIntegralObjectStatement 2 store (.defaultInitialize object) with
+          | .ok store =>
+              match store.borrow object with
+              | .ok access =>
+                  match store.read access with
+                  | .error (.lifetime .notInitialized) => true
+                  | _ => false
+              | .error _ => false
+          | .error _ => false
+      | .error _ => false
+  | .error _ => false
+
 private def aliasOrder : Bool :=
   match ready with
   | .ok (store, object) =>
@@ -114,6 +146,8 @@ private def constError : Bool :=
   | .error _ => false
 
 #guard sequenceReady
+#guard initializeReady
+#guard defaultInitializeReady
 #guard aliasOrder
 #guard conditionalTrue
 #guard conditionalFalse

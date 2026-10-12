@@ -182,6 +182,22 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
           | .invalid reason => pure (.failed (.invalid reason))
           | .undefined reason => pure (.failed (.undefined reason))
           | .unsupported reason => pure (.failed (.unsupported reason))
+      | .whileLoop condition body => do
+          let result ← evaluateTyped fuel profile parameters arguments condition
+          match result with
+          | .ok value =>
+              if value.value == 0 then
+                pure .normal
+              else
+                let bodyResult ← evaluateCallableStatement fuel profile parameters arguments body
+                match bodyResult with
+                | .normal =>
+                    evaluateCallableStatement fuel profile parameters arguments
+                      (.whileLoop condition body)
+                | .returned _ | .failed _ => pure bodyResult
+          | .invalid reason => pure (.failed (.invalid reason))
+          | .undefined reason => pure (.failed (.undefined reason))
+          | .unsupported reason => pure (.failed (.unsupported reason))
       | .sequence first second => do
           let firstResult ← evaluateCallableStatement fuel profile parameters arguments first
           match firstResult with

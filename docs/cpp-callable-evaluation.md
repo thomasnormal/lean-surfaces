@@ -20,8 +20,9 @@ boundary.
 
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
-not wired to `Translation.execute`, does not admit loops, local objects, calls,
-overload resolution or general implicit-conversion semantics. Falling through
+not wired to `Translation.execute`, does not admit `for`/`do` loops, local
+objects, calls, overload resolution or general implicit-conversion semantics.
+Falling through
 without a return is a typed `missingReturn` refusal.
 It does not establish Clang conformance or general compiled-execution coverage.
 
@@ -34,7 +35,7 @@ LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
 
 The guards cover identity, short/unsigned/boolean argument conversion, boolean
 destinations, unused-argument validation, invalid argument values, integer
-literal and binary addition results, captured `if` branches, signed overflow,
+literal and binary addition results, captured `if`/`while` branches, signed overflow,
 arity/profile refusal and fuel exhaustion.
 
 The optional compiled check also requires explicit matching `LEANCPP_CLANG` and

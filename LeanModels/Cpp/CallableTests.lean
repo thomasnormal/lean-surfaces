@@ -146,6 +146,24 @@ def ifTypes : List TypeEvidenceRow := [typeRow "0x2" (functionType [])]
 def admitIf : Except String CallableFunction :=
   admitCallableFunction ifProbe ifTypes [] TargetProfile.lp64 [0]
 
+def whileProbe : DeclarationProbe :=
+  probeFor (functionSource "loop" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0x31"), ("kind", text "CompoundStmt"),
+    ("inner", .array [
+      object [
+        ("id", text "0x50"), ("kind", text "WhileStmt"),
+        ("inner", .array [
+          implicitCast "0x51" (declRef "0x10" "value"),
+          body (returnStmt "0x52" (implicitCast "0x53" (declRef "0x10" "value")))])],
+      returnStmt "0x54" (integerLiteralRaw "0x55" "0")])]))
+    [rootEvidence, functionEvidence "loop" "CompoundStmt"]
+
+def whileTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def admitWhile : Except String CallableFunction :=
+  admitCallableFunction whileProbe whileTypes [] TargetProfile.lp64 [0]
+
 #guard match admitIdentity with
   | .ok function => function.parameters.length == 1
   | .error _ => false
@@ -185,6 +203,12 @@ def admitIf : Except String CallableFunction :=
       match function.body with
       | .conditional condition (.return_ _) (.return_ _) =>
           condition.expression == .integer 1
+      | _ => false
+  | .error _ => false
+#guard match admitWhile with
+  | .ok function =>
+      match function.body with
+      | .sequence (.whileLoop _ (.return_ _)) (.return_ _) => true
       | _ => false
   | .error _ => false
 #guard match admitBinary with

@@ -22,6 +22,7 @@ mutual
     | return_ (expression : TypedCallableExpression)
     | conditional (condition : TypedCallableExpression)
         (whenTrue whenFalse : CallableStatement)
+    | whileLoop (condition : TypedCallableExpression) (body : CallableStatement)
     | sequence (first second : CallableStatement)
     deriving Repr, BEq, Inhabited
 end
@@ -206,6 +207,13 @@ partial def parseCallableStatement (profile : TargetProfile)
             | _ => .ok .skip
           pure (.conditional condition whenTrue whenFalse)
       | _ => throw "callable: if statement requires a condition and one or two branches"
+  | "WhileStmt" =>
+      let children ← rawChildren statement
+      let [condition, body] := children
+        | throw "callable: while statement requires a condition and body"
+      let condition ← parseCallableExpression profile parameters expressionRows condition none none
+      let body ← parseCallableStatement profile parameters expressionRows resultType body
+      pure (.whileLoop condition body)
   | "NullStmt" => .ok .skip
   | "ExprWithCleanups" =>
       let children ← rawChildren statement

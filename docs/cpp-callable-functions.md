@@ -13,9 +13,9 @@ The candidate must be a named, ordinary `FunctionDecl` accepted by
 deleted declarations and function-try bodies remain loud refusals. The body
 is represented as a sequence of admitted expression statements, `if`
 statements with an optional else branch, and return statements. Empty compound
-and null statements are `skip`. Loops, declarations, assignments, calls,
-overloaded operations, exceptions, local functions and every other statement
-form refuse rather than being silently represented as a callable.
+and null statements are `skip`. `for`/`do` loops, declarations, assignments,
+calls, overloaded operations, exceptions, local functions and every other
+statement form refuse rather than being silently represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
 projection v1` row for the exact occurrence. This slice requires a non-variadic
@@ -69,7 +69,7 @@ body was executed merely because Clang accepted its source.
 ## Validation
 
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
-binary returns, captured `if` branches, mismatched evidence, control-flow and
+binary returns, captured `if`/`while` branches, mismatched evidence, control-flow and
 function-try refusals. `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned
 Clang check for real identity/add bodies and a branch admission; it requires the
 same explicit compiler/plugin variables as the existing probe tests and skips

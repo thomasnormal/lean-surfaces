@@ -152,7 +152,7 @@ Key order: `kind`, `span`, `name`, `dir`, `width`.
 `dir` ∈ `"in" | "out"`. `width` is the elaborated bit width (scalar `logic` ⇒
 `1`). An unsigned 4-state scalar or `[W-1:0]` vector omits `two_state`;
 an unsigned 2-state **output** port carries `"two_state": true` and starts
-at zero. 2-state inputs, signed, reversed-range, aggregate and other port
+at zero. 2-state inputs, 2-state net outputs, signed, reversed-range, aggregate and other port
 types remain `Unsupported`: an unconnected input does not provide a faithful
 zero value at this tier. Whether the port binds to a variable or a net
 internally is not recorded (irrelevant at M0).

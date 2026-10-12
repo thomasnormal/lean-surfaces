@@ -1755,7 +1755,8 @@ def convert_port(sm, m):
     if direction is None:  # InOut / Ref
         return unsupported(sm, m, "PortSymbol:" + d)
     if _SYM is None and not m.type.isFourState:
-        if direction != "out" or getattr(m.type, "isSigned", False):
+        if (direction != "out" or getattr(m.type, "isSigned", False)
+                or type(getattr(m, "internalSymbol", None)).__name__ != "VariableSymbol"):
             return unsupported(sm, m, "PortSymbol:2state")
         w, two, reason = type_width_2s(m.type)
     else:

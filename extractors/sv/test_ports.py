@@ -42,3 +42,11 @@ class Ports(unittest.TestCase):
         self.assertTrue(any(
             node.get("sv_kind") == "PortSymbol:2state" for node in nodes(design)
         ))
+
+    def test_two_state_net_output_remains_loud(self):
+        design = lower(
+            'module e(output wire bit a); initial begin $finish; end endmodule'
+        )
+        self.assertTrue(any(
+            node.get("sv_kind") == "PortSymbol:2state" for node in nodes(design)
+        ))

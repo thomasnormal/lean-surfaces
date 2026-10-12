@@ -15,6 +15,11 @@ void trace(const std::string &mode, int initial, int delta) {
     value = delta;
     for (; value > 0; --value) {
     }
+  } else if (mode == "break") {
+    while (value > 0) {
+      --value;
+      break;
+    }
   } else if (mode == "sequence") {
     value = value + delta;
     value = -value;

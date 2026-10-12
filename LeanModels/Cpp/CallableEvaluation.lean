@@ -286,7 +286,33 @@ private def terminalResult (arguments : List IntegralValue) :
   | .ok _ => .normal arguments
   | result => .failed result arguments
 
-private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
+private def switchCaseSuffix (value : Int) : List CallableSwitchClause → Option (List CallableSwitchClause)
+  | [] => none
+  | clause :: rest =>
+      match clause.label with
+      | some label => if label == value then some (clause :: rest) else switchCaseSuffix value rest
+      | none => switchCaseSuffix value rest
+
+private def switchDefaultSuffix : List CallableSwitchClause → Option (List CallableSwitchClause)
+  | [] => none
+  | clause :: rest =>
+      match clause.label with
+      | some _ => switchDefaultSuffix rest
+      | none => some (clause :: rest)
+
+mutual
+  private partial def evaluateSwitchClauses (fuel : Nat) (profile : TargetProfile)
+      (parameters : List CallableParameter) (arguments : List IntegralValue)
+      : List CallableSwitchClause → Except CallableEvaluationError CallableExecution
+    | [] => .ok (.normal arguments)
+    | clause :: rest => do
+        let result ← evaluateCallableStatement fuel profile parameters arguments clause.body
+        match result with
+        | .normal updated => evaluateSwitchClauses fuel profile parameters updated rest
+        | .break_ updated => pure (.normal updated)
+        | .returned _ _ | .failed _ _ | .continue_ _ => pure result
+
+  private partial def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
     (parameters : List CallableParameter) (arguments : List IntegralValue)
     (statement : CallableStatement) :
     Except CallableEvaluationError CallableExecution :=
@@ -333,6 +359,14 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
                 evaluateCallableStatement fuel profile parameters afterCondition whenFalse
               else
                 evaluateCallableStatement fuel profile parameters afterCondition whenTrue
+          | result => pure (.failed result afterCondition)
+      | .switch_ condition clauses => do
+          let (result, afterCondition) ← evaluateTyped fuel profile parameters arguments condition
+          match result with
+          | .ok value =>
+              let selected := (switchCaseSuffix value.value clauses).orElse
+                (fun _ => switchDefaultSuffix clauses) |>.getD []
+              evaluateSwitchClauses fuel profile parameters afterCondition selected
           | result => pure (.failed result afterCondition)
       | .whileLoop condition body => do
           let (result, afterCondition) ← evaluateTyped fuel profile parameters arguments condition
@@ -384,6 +418,8 @@ private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
           match firstResult with
           | .normal updated => evaluateCallableStatement fuel profile parameters updated second
           | .returned _ _ | .failed _ _ | .break_ _ | .continue_ _ => pure firstResult
+
+end
 
 def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
     (arguments : List IntegralValue) :

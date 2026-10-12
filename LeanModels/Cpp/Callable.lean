@@ -31,12 +31,18 @@ mutual
     | return_ (expression : TypedCallableExpression)
     | conditional (condition : TypedCallableExpression)
         (whenTrue whenFalse : CallableStatement)
+    | switch_ (condition : TypedCallableExpression) (clauses : List CallableSwitchClause)
     | whileLoop (condition : TypedCallableExpression) (body : CallableStatement)
     | doWhile (body : CallableStatement) (condition : TypedCallableExpression)
     | break_
     | continue_
     | sequence (first second : CallableStatement)
     deriving Repr, BEq, Inhabited
+
+structure CallableSwitchClause where
+  label : Option Int
+  body : CallableStatement
+  deriving Repr, BEq, Inhabited
 end
 
 def CallableStatement.hasLoopTransfer : CallableStatement → Bool
@@ -97,6 +103,61 @@ private def rawChildren (raw : Raw) : Except String (List Raw) :=
 
 private def rawId (raw : Raw) : Except String FrontendHandle :=
   evidenceHandle raw "id"
+
+private partial def rawContainsKind (target : String) : Raw → Bool
+  | .array values => values.any (rawContainsKind target)
+  | .object fields => fields.any (fun field => rawContainsKind target field.2)
+  | _ => false
+
+private def switchLabelKind (raw : Raw) : Except String Bool := do
+  let kind ← evidenceText raw "kind"
+  pure (kind == "CaseStmt" || kind == "DefaultStmt")
+
+private def switchCaseValue (raw : Raw) : Except String Int := do
+  let kind ← evidenceText raw "kind"
+  unless kind == "ConstantExpr" || kind == "IntegerLiteral" do
+    throw "callable: switch case requires an integral constant expression"
+  let type ← evidenceField raw "type"
+  unless type.text "qualType" == some "int" do
+    throw "callable: switch case requires an exact int label"
+  let value ← evidenceText raw "value"
+  match value.toInt? with
+  | some value => pure value
+  | none => throw "callable: switch case label is not an integer"
+
+private def switchClauseRaws (raws : List Raw) : Except String (List Raw × List Raw) :=
+  match raws with
+  | [] => .ok ([], [])
+  | raw :: rest => do
+      if ← switchLabelKind raw then
+        pure ([], raw :: rest)
+      else
+        let (body, remaining) ← switchClauseRaws rest
+        pure (raw :: body, remaining)
+
+private partial def switchClauses (raws : List Raw) : Except String (List (Option Int × List Raw)) := do
+  match raws with
+  | [] => pure []
+  | raw :: rest =>
+      let kind ← evidenceText raw "kind"
+      let inner ← rawChildren raw
+      let (label, initialBody) ← match kind with
+        | "CaseStmt" =>
+            let labelRaw :: body := inner
+              | throw "callable: case statement requires a label"
+            pure (some (← switchCaseValue labelRaw), body)
+        | "DefaultStmt" => pure (none, inner)
+        | _ => throw "callable: switch body must contain only case/default labels"
+      let (tailBody, remaining) ← switchClauseRaws rest
+      let clauses ← switchClauses remaining
+      pure ((label, initialBody ++ tailBody) :: clauses)
+
+private def switchLabelsValid : List (Option Int × List Raw) → Bool
+  | [] => true
+  | (label, _) :: rest =>
+      match label with
+      | none => !rest.any (fun clause => clause.1.isNone)
+      | some value => !rest.any (fun clause => clause.1 == some value)
 
 private def callableBuiltin : CppTypeEvidence → Bool
   | .builtin _ => true
@@ -331,10 +392,22 @@ partial def parseCallableExpression (profile : TargetProfile)
       pure {expression := .unary operator operand, sourceType := type, type}
   | _ => throw s!"callable: unsupported return expression {kind}"
 
-partial def parseCallableStatement (profile : TargetProfile)
-    (parameters : List CallableParameter)
-    (expressionRows : List CppBinaryExpressionEvidence)
-    (resultType : CppTypeEvidence) (statement : Raw) : Except String CallableStatement := do
+mutual
+  private partial def parseCallableSequence (profile : TargetProfile)
+      (parameters : List CallableParameter)
+      (expressionRows : List CppBinaryExpressionEvidence)
+      (resultType : CppTypeEvidence) : List Raw → Except String CallableStatement
+    | [] => .ok .skip
+    | first :: rest => do
+        let first ← parseCallableStatement profile parameters expressionRows resultType first
+        rest.foldlM (init := first) fun accumulated child => do
+          let parsed ← parseCallableStatement profile parameters expressionRows resultType child
+          pure (.sequence accumulated parsed)
+
+  partial def parseCallableStatement (profile : TargetProfile)
+      (parameters : List CallableParameter)
+      (expressionRows : List CppBinaryExpressionEvidence)
+      (resultType : CppTypeEvidence) (statement : Raw) : Except String CallableStatement := do
   let kind ← evidenceText statement "kind"
   match kind with
   | "CompoundStmt" =>
@@ -367,6 +440,25 @@ partial def parseCallableStatement (profile : TargetProfile)
             | _ => .ok .skip
           pure (.conditional condition whenTrue whenFalse)
       | _ => throw "callable: if statement requires a condition and one or two branches"
+  | "SwitchStmt" =>
+      let children ← rawChildren statement
+      let [conditionRaw, bodyRaw] := children
+        | throw "callable: switch statement requires a condition and body"
+      let condition ← parseCallableExpression profile parameters expressionRows conditionRaw none none
+      unless condition.type == .builtin .int do
+        throw "callable: switch condition requires an exact int expression"
+      unless bodyRaw.text "kind" == some "CompoundStmt" do
+        throw "callable: switch body must be a compound statement"
+      unless !rawContainsKind "ContinueStmt" bodyRaw do
+        throw "callable: continue inside switch is outside the body profile"
+      let bodyRaws ← rawChildren bodyRaw
+      let clauseRaws ← switchClauses bodyRaws
+      unless switchLabelsValid clauseRaws do
+        throw "callable: switch labels must be unique with at most one default"
+      let clauses ← clauseRaws.mapM fun (label, raws) => do
+        let body ← parseCallableSequence profile parameters expressionRows resultType raws
+        pure {label, body}
+      pure (.switch_ condition clauses)
   | "WhileStmt" =>
       let children ← rawChildren statement
       let [condition, body] := children
@@ -457,7 +549,8 @@ partial def parseCallableStatement (profile : TargetProfile)
       "ImplicitCastExpr" | "ParenExpr" =>
       let expression ← parseCallableExpression profile parameters expressionRows statement none none
       pure (.expression expression)
-  | _ => throw s!"callable: unsupported statement {kind}"
+    | _ => throw s!"callable: unsupported statement {kind}"
+end
 
 private def callableBody (profile : TargetProfile) (parameters : List CallableParameter)
     (expressionRows : List CppBinaryExpressionEvidence) (resultType : CppTypeEvidence)

@@ -532,6 +532,32 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(sum(node.get("kind") == "ContinueStmt" for node in nodes), 1)
         self.assertEqual(probe["metadata"]["expression_refusals"], [])
 
+    def test_switch_case_default_nodes_retain_order(self):
+        self.source.write_text(
+            "int switch_select(int value) { switch (value) { case 0: return 4; case 1: return 5; default: return 6; } return 7; }\n",
+            encoding="utf-8",
+        )
+        probe = self.probe()
+        switches = []
+        nodes = []
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "kind" in node:
+                nodes.append(node)
+            if node.get("kind") == "SwitchStmt":
+                switches.append(node)
+            pending.extend(node.get("inner", []))
+        self.assertEqual(len(switches), 1)
+        self.assertEqual([child.get("kind") for child in switches[0]["inner"]],
+                         ["ImplicitCastExpr", "CompoundStmt"])
+        switch_body = switches[0]["inner"][1]
+        self.assertEqual([child.get("kind") for child in switch_body["inner"]],
+                         ["CaseStmt", "CaseStmt", "DefaultStmt"])
+        self.assertEqual(sum(node.get("kind") == "CaseStmt" for node in nodes), 2)
+        self.assertEqual(sum(node.get("kind") == "DefaultStmt" for node in nodes), 1)
+        self.assertEqual(probe["metadata"]["expression_refusals"], [])
+
     def test_loop_transfers_are_retained_as_distinct_statement_nodes(self):
         self.source.write_text(
             "int break_loop(int value) { while (value < 3) { ++value; break; } return value; }\n"

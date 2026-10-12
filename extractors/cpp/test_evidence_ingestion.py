@@ -522,6 +522,7 @@ bool logical(int value) { return !value; }
           "int continue_loop(int value) { while (value < 3) { ++value; continue; } return value; }\n"
           "int for_break_loop(int value) { for (value = 0; value < 3; ++value) { ++value; break; } return value; }\n"
           "int for_continue_loop(int value) { for (value = 0; value < 3; ++value) { continue; } return value; }\n"
+          "int switch_select(int value) { switch (value) { case 0: return 4; case 1: return 5; default: return 6; } return 7; }\n"
           "int do_break_loop(int value) { do { ++value; break; } while (value < 3); return value; }\n"
           "int do_continue_loop(int value) { do { ++value; continue; } while (value < 3); return value; }\n"
           "short compound_narrow(short value) { value += 1; return value; }\n"
@@ -582,7 +583,7 @@ bool logical(int value) { return !value; }
             "postfix_decrement", "discarded_increment", "increment_unsigned",
             "conditional", "conditional_param", "conditional_increment", "comma", "for_loop",
             "break_loop", "continue_loop", "for_break_loop", "for_continue_loop",
-            "do_break_loop", "do_continue_loop"}
+            "switch_select", "do_break_loop", "do_continue_loop"}
         refusals = {"compound_narrow", "compound_mixed"}
         paths = {}
         pending = [(probe["ast"], [])]
@@ -699,6 +700,9 @@ bool logical(int value) { return !value; }
         for value in (-1, 0, 7):
             expressions.append(f"for_continue_loop({value})")
             rows.append(("for_continue_loop", ".signed 32", [(".signed 32", value)]))
+        for value in (0, 1, 7):
+            expressions.append(f"switch_select({value})")
+            rows.append(("switch_select", ".signed 32", [(".signed 32", value)]))
         for value in (-1, 0, 7):
             expressions.append(f"do_break_loop({value})")
             rows.append(("do_break_loop", ".signed 32", [(".signed 32", value)]))
@@ -835,7 +839,7 @@ bool logical(int value) { return !value; }
         for (name, destination, arguments), expected in zip(rows, outputs[0]):
             values = ", ".join(f"⟨{format_name}, {value}⟩"
                                for format_name, value in arguments)
-            fuel = (64 if name in ("for_break_loop", "for_continue_loop")
+            fuel = (64 if name in ("for_break_loop", "for_continue_loop", "switch_select")
                     else 32 if name in ("break_loop", "continue_loop", "do_break_loop",
                                         "do_continue_loop")
                     else 64 if name == "for_loop"

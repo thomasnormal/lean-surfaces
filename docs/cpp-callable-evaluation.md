@@ -61,7 +61,14 @@ and omitted conditions. A `continue` in the outer `for` body runs the lowered
 loop step before rechecking its condition; nested `while`/`do` transfers remain
 owned by their inner loop.
 
-`break` exits the nearest admitted `while`/`do` loop. `continue` skips the
+An admitted `switch` has an exact builtin `int` condition and a compound body made
+of literal `case` labels and at most one `default`. Labels are unique. Matching
+starts at the first matching case, or at `default`, and ordinary completion
+falls through later clauses in source order. A `break` exits the switch; return and evaluation failures propagate. `continue`
+inside a switch remains outside the admitted profile. Non-constant labels,
+duplicate labels and malformed clause bodies remain loud refusals.
+
+`break` exits the nearest admitted `while`/`do` loop or `switch`. `continue` skips the
 remaining body and rechecks the loop condition (with a `do` loop's usual
 post-body check); both transfers retain the current parameter state. A transfer
 that reaches the public callable boundary is a typed refusal.
@@ -100,7 +107,7 @@ conditional expressions, comma sequencing, `for` loops, loop transfers and
 effectful logical short-circuiting.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for` loops with `break`/`continue`. It compares the evaluator with 241 Clang-compiled calls at both
+and `do`/`for`/`switch` control flow with `break`/`continue`. It compares the evaluator with 244 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

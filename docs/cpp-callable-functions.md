@@ -12,10 +12,10 @@ The candidate must be a named, ordinary `FunctionDecl` accepted by
 `admitLocalFunctionDeclaration` with a direct `CompoundStmt` body. Prototypes,
 deleted declarations and function-try bodies remain loud refusals. The body
 is represented as a sequence of admitted expression statements, `if`
-statements with an optional else branch, `while`/`do`/bounded `for` loops, loop-local
-`break`/`continue`, parameter-targeted
-`=`, integral compound assignments, and parameter-targeted prefix/postfix
-increment and decrement expressions. Empty compound
+statements with an optional else branch, `while`/`do`/bounded `for` loops,
+integral `switch` statements with literal `case`/`default` labels, loop-local
+`break`/`continue`, parameter-targeted `=`, integral compound assignments, and
+parameter-targeted prefix/postfix increment and decrement expressions. Empty compound
 and null statements are `skip`. Declarations, local-variable/member assignments,
 calls, overloaded operations, exceptions, local functions and every
 other statement form refuse rather than being silently represented as a callable.
@@ -38,7 +38,7 @@ The return-expression profile is:
 - a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
 - a prefix or postfix `++`/`--` over a direct non-boolean integral parameter
   reference; or
-- a `ConditionalOperator` with a builtin integral condition and two branches
+- a `ConditionalOperator` with an exact builtin `int` condition and two branches
   whose represented types agree; or
 - a comma expression whose builtin integral result type is the right operand's
   represented type; or
@@ -74,6 +74,12 @@ step before the next condition check, while nested loop transfers remain owned
 by their inner loop. `break` and `continue` are admitted inside `while`, `do`
 and `for` bodies and remain loud at the public boundary when no loop consumes
 them.
+
+The admitted `switch` shape has an exact builtin `int` condition and a compound body
+whose clauses use unique literal integer `case` labels and at most one `default`.
+Execution starts at the matching case or default and falls through later clauses
+until a `break`, return or failure; `continue` inside a switch, unsupported
+labels and malformed clauses refuse.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an

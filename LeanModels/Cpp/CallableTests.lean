@@ -74,6 +74,23 @@ def integerLiteralRaw (id value : String) : Raw := object [
   ("id", text id), ("kind", text "IntegerLiteral"),
   ("type", object [("qualType", text "int")]), ("value", text value)]
 
+def constantExprRaw (id value : String) : Raw := object [
+  ("id", text id), ("kind", text "ConstantExpr"),
+  ("type", object [("qualType", text "int")]), ("value", text value),
+  ("inner", .array [integerLiteralRaw (id ++ "0") value])]
+
+def caseRaw (id value : String) (body : List Raw) : Raw := object [
+  ("id", text id), ("kind", text "CaseStmt"),
+  ("inner", .array (constantExprRaw (id ++ "1") value :: body))]
+
+def defaultRaw (id : String) (body : List Raw) : Raw := object [
+  ("id", text id), ("kind", text "DefaultStmt"), ("inner", .array body)]
+
+def compoundAssignRaw (id declaration leftId literalId literal : String) : Raw := object [
+  ("id", text id), ("kind", text "CompoundAssignOperator"), ("opcode", text "+="),
+  ("inner", .array [declRefNode leftId declaration "value",
+    integerLiteralRaw literalId literal])]
+
 def body (statement : Raw) : Raw := object [
   ("id", text "0x30"), ("kind", text "CompoundStmt"), ("inner", .array [statement])]
 
@@ -498,6 +515,44 @@ def admitForContinue : Except String CallableFunction :=
 
 #guard admitForBreak.isOk
 #guard admitForContinue.isOk
+
+def switchBody : Raw := object [
+  ("id", text "0xe4"), ("kind", text "CompoundStmt"),
+  ("inner", .array [
+    caseRaw "0xe5" "0" [returnStmt "0xe6" (integerLiteralRaw "0xe7" "4")],
+    caseRaw "0xe8" "1" [compoundAssignRaw "0xe9" "0x10" "0xea" "0xeb" "2"],
+    caseRaw "0xec" "2" [object [("id", text "0xed0"), ("kind", text "BreakStmt")]],
+    defaultRaw "0xee" [compoundAssignRaw "0xef" "0x10" "0xf0" "0xf5" "3"]])]
+
+def switchStatement : Raw := object [
+  ("id", text "0xe0"), ("kind", text "SwitchStmt"),
+  ("inner", .array [implicitCast "0xe2" (declRefNode "0xe3" "0x10" "value"),
+    switchBody])]
+
+def switchProbe : DeclarationProbe :=
+  probeFor (functionSource "switchProbe" [parameterRaw "0x10" "value"] (object [
+    ("id", text "0xe1"), ("kind", text "CompoundStmt"),
+    ("inner", .array [switchStatement,
+      returnStmt "0xf1" (implicitCast "0xf2" (declRefNode "0xf3" "0x10" "value"))])]))
+    [rootEvidence, functionEvidence "switchProbe" "CompoundStmt"]
+
+def switchTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType]), typeRow "0x10" intType]
+
+def switchEvidence : List CppBinaryExpressionEvidence := [
+  {ordinal := 0, occurrence := {value := "0xe9"}, operator := "+=", result := intType,
+    operands := [
+      {occurrence := {value := "0xea"}, kind := "DeclRefExpr", sourceType := intType, type := intType},
+      {occurrence := {value := "0xeb"}, kind := "IntegerLiteral", sourceType := intType, type := intType}]},
+  {ordinal := 1, occurrence := {value := "0xef"}, operator := "+=", result := intType,
+    operands := [
+      {occurrence := {value := "0xf0"}, kind := "DeclRefExpr", sourceType := intType, type := intType},
+      {occurrence := {value := "0xf5"}, kind := "IntegerLiteral", sourceType := intType, type := intType}]}]
+
+def admitSwitch : Except String CallableFunction :=
+  admitCallableFunction switchProbe switchTypes switchEvidence TargetProfile.lp64 [0]
+
+#guard admitSwitch.isOk
 
 def admitBreak : Except String CallableFunction :=
   admitCallableFunction breakProbe transferTypes (transferEvidence "0x51" "0x52" "0x54")

@@ -40,6 +40,18 @@ private def statementFor (mode : String) (access : IntegralObjectRef) (delta : I
           (.assign access (.builtin .int)
             (.binary .subtract (.read access) (.literal (signed 1))))
           .continue_))
+  | "do" =>
+      .ok (.doWhile
+        (.binary .greater (.read access) (.literal (signed 0)))
+        (.assign access (.builtin .int)
+          (.binary .subtract (.read access) (.literal (signed 1)))))
+  | "do_continue" =>
+      .ok (.doWhile
+        (.binary .greater (.read access) (.literal (signed 0)))
+        (.sequence
+          (.assign access (.builtin .int)
+            (.binary .subtract (.read access) (.literal (signed 1))))
+          .continue_))
   | "for_continue" =>
       .ok (.forLoop
         (.assign access (.builtin .int) (.literal (signed 3)))

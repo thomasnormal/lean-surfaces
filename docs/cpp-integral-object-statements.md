@@ -45,6 +45,6 @@ initialization/step order, and loop-local/public `break_`/`continue_` behavior,
 alias-visible order, division-by-zero, stale-access and const-write refusals,
 plus statement, sequence and loop fuel exhaustion. The independent integral object
 and conversion Clang suites remain the value oracle; this statement layer makes
-no whole-program execution claim. The statement harness compares 2,312 safe
-add, branch, loop, `forLoop`, `break_`, `continue_` and sequence traces against
-C++23 compiled with Clang at `-O0` and `-O2` under UBSan.
+no whole-program execution claim. The statement harness compares 2,890 safe
+add, branch, loop, `doWhile`, `forLoop`, `break_`, `continue_` and sequence
+traces against C++23 compiled with Clang at `-O0` and `-O2` under UBSan.

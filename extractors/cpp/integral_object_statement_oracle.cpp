@@ -25,6 +25,15 @@ void trace(const std::string &mode, int initial, int delta) {
       --value;
       continue;
     }
+  } else if (mode == "do") {
+    do {
+      --value;
+    } while (value > 0);
+  } else if (mode == "do_continue") {
+    do {
+      --value;
+      continue;
+    } while (value > 0);
   } else if (mode == "for_continue") {
     value = 3;
     for (; value > 0; --value) {

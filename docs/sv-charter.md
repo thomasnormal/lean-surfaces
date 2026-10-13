@@ -219,11 +219,12 @@ boundaries remain loud.
 unsigned power bridge over a real extracted design and checks the signed
 negative-exponent cases directly. The three self-check fixtures cover
 positive/context sizing, signed base behavior and the standard's
-zero-to-negative all-x case. The last case is recorded as a declared
-simulator divergence in the private lane journal because the external
-implementation returns zero; Table 11-4 and the independent open simulator
-support the all-x result. Nonzero negative-exponent disagreements are kept
-out of newly oracle-confirmed fixtures pending a coordinator ruling.
+zero-to-negative all-x case. The last case is a documented reference
+divergence: IEEE 1800-2023 §11.4.3 Table 11-4 and independent Icarus
+execution require all x, while the separate reference run returns zero. It
+is therefore not counted as a reference confirmation. Nonzero
+negative-exponent disagreements are kept out of newly oracle-confirmed
+fixtures pending a separate ruling.
 
 Fresh extraction over the paired 21,934-file corpus rises from 1,764 to
 1,804 clean, with 40 gains and no losses; every gain is in chapter 11.

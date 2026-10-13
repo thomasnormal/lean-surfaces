@@ -1,4 +1,7 @@
 module top;
+// DIVERGENCE: IEEE 1800-2023 §11.4.3 Table 11-4 requires all x for an
+// integral zero base raised to a negative exponent. Icarus agrees. The
+// separate reference run returns zero, so these rows are not confirmations.
   logic [7:0] unsigned_base;
   logic signed [7:0] signed_base;
   logic signed [3:0] exponent;

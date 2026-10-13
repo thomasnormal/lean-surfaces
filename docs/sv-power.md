@@ -22,3 +22,14 @@ failed folds rather than guessing runtime types.
 Real power and the existing whole-module signed declaration boundaries
 remain loud. This family does not change scheduling or admission of
 symbolic signed ports.
+
+## Oracle record for zero-to-negative power
+
+The three zero-base, negative-integral-exponent rows in
+`harness/sv/power/zero_negative.sv` are a documented reference divergence,
+not reference confirmations. IEEE 1800-2023 §11.4.3, Table 11-4 requires an
+all-x result for integral `0 ** negative`; Icarus Verilog produces the same
+all-x result. The separate reference run returns zero for these rows, so the
+fixture deliberately checks the standard result and records the disagreement
+instead of treating it as an oracle match. The positive, zero-exponent and
+nonzero-base rows remain subject to ordinary reference confirmation.

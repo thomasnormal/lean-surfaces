@@ -6937,8 +6937,12 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                 .unsupported "with requires an admitted class with __enter__ and __exit__"
             | some (ci, _) =>
               let exitName := fname ++ ".__exit__"
-              if !((findFunction m exitName).map FunctionDefn.withExitTransparent == some true) then
-                .unsupported "with body exceptions require a plain __exit__ body (pass or return None/False)"
+              let exitTransparent :=
+                (findFunction m exitName).map FunctionDefn.withExitTransparent == some true
+              let exitSuppresses :=
+                (findFunction m exitName).map FunctionDefn.withExitSuppresses == some true
+              if !exitTransparent && !exitSuppresses then
+                .unsupported "with body exceptions require a plain __exit__ body (pass or return None/False/True)"
               else
                 evalExprs m fuel st args.toList ⤳ fun st vs =>
                 let enterName := fname ++ ".__enter__"
@@ -6967,7 +6971,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                                   Run.withLocals stBody.locals
                                     (callIn m fuel stBody.world exitName
                                       #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
-                                    .exn stExit e)
+                                    if exitSuppresses then .ok stExit .next else .exn stExit e)
                       | none =>
                           Run.bindE
                             (execStmts m fuel stEnter body.toList)
@@ -6982,7 +6986,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                               Run.withLocals stBody.locals
                                 (callIn m fuel stBody.world exitName
                                   #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
-                                .exn stExit e)
+                                if exitSuppresses then .ok stExit .next else .exn stExit e)
                 | _ => .exn st' (.typeError s!"{fname}() takes no arguments")
         | _ =>
           .unsupported "with context must be a direct class constructor call"

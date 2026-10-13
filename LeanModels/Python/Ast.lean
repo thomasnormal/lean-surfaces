@@ -318,6 +318,11 @@ def FunctionDefn.withExitTransparent (f : FunctionDefn) : Bool :=
   | [.ret (some (.constant (.bool false) _)) _] => true
   | _ => false
 
+def FunctionDefn.withExitSuppresses (f : FunctionDefn) : Bool :=
+  match f.body.toList with
+  | [.ret (some (.constant (.bool true) _)) _] => true
+  | _ => false
+
 /-- A module-level namedtuple class (H3+, docs/memory-model.md §class
 semantics — the recorded VALUE-like decision): recognized at INGESTION
 from a top-level `X = namedtuple("T", <fields>)` assignment under the

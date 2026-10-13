@@ -8,8 +8,8 @@ set_option maxRecDepth 65536
 The admitted shape is deliberately narrow: one direct constructor item,
 an implicit or supported explicit constructor, `__enter__`/`__exit__`, and
 normal body flow. Body exceptions are admitted when `__exit__` is transparent
-(`pass` or `return None`/`False`); argument-sensitive suppression and
-`async with` stay loud.
+(`pass` or `return None`/`False`) or a literal `return True` suppression;
+argument-sensitive suppression and `async with` stay loud.
 -/
 
 open LeanModels LeanModels.Python
@@ -23,5 +23,6 @@ load_program with_lab from "Examples/python/with_lab/with_lab.json"
 #py_check with_lab.multiple_items() = 0
 #py_check with_lab.body_exception() raises .zeroDivisionError
 #py_check with_lab.body_exception_target() raises .zeroDivisionError
+#py_check with_lab.suppressed_exception() = 7
 
 #guard callFunction with_lab "extra_dunder" #[] 4096 matches .unsupported _

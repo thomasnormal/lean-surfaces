@@ -57,6 +57,20 @@ def body_exception_target():
         1 // 0
 
 
+class SuppressingExit:
+    def __enter__(self):
+        return 1
+
+    def __exit__(self, exc_type, exc, tb):
+        return True
+
+
+def suppressed_exception():
+    with SuppressingExit():
+        1 // 0
+    return 7
+
+
 class ExtraDunder:
     def __enter__(self):
         return 1

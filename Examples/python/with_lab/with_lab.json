@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "Examples/python/with_lab/with_lab.py",
-  "source_sha256": "51f2d054ab309d3b57a1bc3c5a47a4c5d7cb94dad69e6eda71305efb46e8211e",
+  "source_sha256": "bf7fa94fc6fc76cc27a261d9ed0294d73f8abdbc46aa10b940d849220231a686",
   "module": {
     "kind": "Module",
     "body": [
@@ -1044,10 +1044,10 @@
         "span": {
           "lineno": 60,
           "col_offset": 0,
-          "end_lineno": 68,
-          "end_col_offset": 30
+          "end_lineno": 65,
+          "end_col_offset": 19
         },
-        "name": "ExtraDunder",
+        "name": "SuppressingExit",
         "class_unsupported": null,
         "creation_effects": false,
         "body": [
@@ -1165,6 +1165,261 @@
                     "end_col_offset": 19
                   },
                   "value": {
+                    "type": "bool",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 68,
+          "col_offset": 0,
+          "end_lineno": 71,
+          "end_col_offset": 12
+        },
+        "name": "suppressed_exception",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "With",
+            "span": {
+              "lineno": 69,
+              "col_offset": 4,
+              "end_lineno": 70,
+              "end_col_offset": 14
+            },
+            "items": [
+              {
+                "context": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 69,
+                    "col_offset": 9,
+                    "end_lineno": 69,
+                    "end_col_offset": 26
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 69,
+                      "col_offset": 9,
+                      "end_lineno": 69,
+                      "end_col_offset": 24
+                    },
+                    "id": "SuppressingExit"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                "target": null
+              }
+            ],
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 70,
+                  "col_offset": 8,
+                  "end_lineno": 70,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 70,
+                    "col_offset": 8,
+                    "end_lineno": 70,
+                    "end_col_offset": 14
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 70,
+                      "col_offset": 8,
+                      "end_lineno": 70,
+                      "end_col_offset": 9
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 70,
+                      "col_offset": 13,
+                      "end_lineno": 70,
+                      "end_col_offset": 14
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 71,
+              "col_offset": 4,
+              "end_lineno": 71,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 71,
+                "col_offset": 11,
+                "end_lineno": 71,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "7"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 74,
+          "col_offset": 0,
+          "end_lineno": 82,
+          "end_col_offset": 30
+        },
+        "name": "ExtraDunder",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 75,
+              "col_offset": 4,
+              "end_lineno": 76,
+              "end_col_offset": 16
+            },
+            "name": "__enter__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 75,
+                  "col_offset": 18,
+                  "end_lineno": 75,
+                  "end_col_offset": 22
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 76,
+                  "col_offset": 8,
+                  "end_lineno": 76,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 76,
+                    "col_offset": 15,
+                    "end_lineno": 76,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 78,
+              "col_offset": 4,
+              "end_lineno": 79,
+              "end_col_offset": 19
+            },
+            "name": "__exit__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 17,
+                  "end_lineno": 78,
+                  "end_col_offset": 21
+                }
+              },
+              {
+                "arg": "exc_type",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 23,
+                  "end_lineno": 78,
+                  "end_col_offset": 31
+                }
+              },
+              {
+                "arg": "exc",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 33,
+                  "end_lineno": 78,
+                  "end_col_offset": 36
+                }
+              },
+              {
+                "arg": "tb",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 38,
+                  "end_lineno": 78,
+                  "end_col_offset": 40
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 79,
+                  "col_offset": 8,
+                  "end_lineno": 79,
+                  "end_col_offset": 19
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 79,
+                    "col_offset": 15,
+                    "end_lineno": 79,
+                    "end_col_offset": 19
+                  },
+                  "value": {
                     "type": "none"
                   }
                 }
@@ -1174,9 +1429,9 @@
           {
             "kind": "FunctionDef",
             "span": {
-              "lineno": 67,
+              "lineno": 81,
               "col_offset": 4,
-              "end_lineno": 68,
+              "end_lineno": 82,
               "end_col_offset": 30
             },
             "name": "__repr__",
@@ -1184,9 +1439,9 @@
               {
                 "arg": "self",
                 "span": {
-                  "lineno": 67,
+                  "lineno": 81,
                   "col_offset": 17,
-                  "end_lineno": 67,
+                  "end_lineno": 81,
                   "end_col_offset": 21
                 }
               }
@@ -1197,17 +1452,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 68,
+                  "lineno": 82,
                   "col_offset": 8,
-                  "end_lineno": 68,
+                  "end_lineno": 82,
                   "end_col_offset": 30
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 68,
+                    "lineno": 82,
                     "col_offset": 15,
-                    "end_lineno": 68,
+                    "end_lineno": 82,
                     "end_col_offset": 30
                   },
                   "value": {
@@ -1223,9 +1478,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 71,
+          "lineno": 85,
           "col_offset": 0,
-          "end_lineno": 73,
+          "end_lineno": 87,
           "end_col_offset": 16
         },
         "name": "extra_dunder",
@@ -1236,9 +1491,9 @@
           {
             "kind": "With",
             "span": {
-              "lineno": 72,
+              "lineno": 86,
               "col_offset": 4,
-              "end_lineno": 73,
+              "end_lineno": 87,
               "end_col_offset": 16
             },
             "items": [
@@ -1246,17 +1501,17 @@
                 "context": {
                   "kind": "Call",
                   "span": {
-                    "lineno": 72,
+                    "lineno": 86,
                     "col_offset": 9,
-                    "end_lineno": 72,
+                    "end_lineno": 86,
                     "end_col_offset": 22
                   },
                   "func": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 72,
+                      "lineno": 86,
                       "col_offset": 9,
-                      "end_lineno": 72,
+                      "end_lineno": 86,
                       "end_col_offset": 20
                     },
                     "id": "ExtraDunder"
@@ -1272,17 +1527,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 73,
+                  "lineno": 87,
                   "col_offset": 8,
-                  "end_lineno": 73,
+                  "end_lineno": 87,
                   "end_col_offset": 16
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 73,
+                    "lineno": 87,
                     "col_offset": 15,
-                    "end_lineno": 73,
+                    "end_lineno": 87,
                     "end_col_offset": 16
                   },
                   "value": {

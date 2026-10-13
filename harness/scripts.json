@@ -128,6 +128,10 @@
     "expect": "match"
   },
   {
+    "file": "harness/scripts/with_suppress_script.py",
+    "expect": "match"
+  },
+  {
     "file": "harness/scripts/print_nonascii.py",
     "expect": "unsupported"
   },

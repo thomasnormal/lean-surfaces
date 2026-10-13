@@ -426,9 +426,10 @@ cycle DETECTION, never by running out of fuel).
   only when the selected `__exit__` body is transparent (`pass`, empty, or
   `return None`/`False`): the model invokes it with the placeholder triple
   `(None, None, None)` and re-raises the original `PyErr`, which is sound
-  because the admitted body cannot inspect or suppress that triple. Any
-  argument-sensitive, side-effecting, or suppressing `__exit__` remains loud;
-  full exception triples are still a future representation extension. A
+  because the admitted body cannot inspect or suppress that triple. A literal
+  `return True` is also admitted and suppresses the body error; computed,
+  argument-sensitive, or side-effecting exits remain loud, and full exception
+  triples are still a future representation extension. A
   supported explicit zero-argument `__init__` runs through the ordinary
   class-call path. `async with` is likewise still unfinished scope.
 * At module scope the script executor owns a matching control shell: the

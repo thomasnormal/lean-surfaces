@@ -198,8 +198,12 @@ def scriptWithAt (S : SKont) (K : Kont) (m : Module) (items : Array WithItem)
                 refuse "with requires an admitted class with __enter__ and __exit__"
             | some _ => do
                 let exitName := fname ++ ".__exit__"
-                if !((findFunction m exitName).map FunctionDefn.withExitTransparent == some true) then
-                  refuse "with body exceptions require a plain __exit__ body (pass or return None/False)"
+                let exitTransparent :=
+                  (findFunction m exitName).map FunctionDefn.withExitTransparent == some true
+                let exitSuppresses :=
+                  (findFunction m exitName).map FunctionDefn.withExitSuppresses == some true
+                if !exitTransparent && !exitSuppresses then
+                  refuse "with body exceptions require a plain __exit__ body (pass or return None/False/True)"
                 else do
                   let contextName := "<with-context>"
                   let contextExpr := Expr.name contextName sp
@@ -218,17 +222,23 @@ def scriptWithAt (S : SKont) (K : Kont) (m : Module) (items : Array WithItem)
                   | some target => bindAndPublish m target entered
                   | none => pure ()
                   let flow ←
-                    tryCatch (S.stmts body.toList) (fun e => do
+                    tryCatch (do
+                      let flow ← S.stmts body.toList
+                      pure (Except.ok flow)) (fun e => do
+                        envSet contextName context
+                        let _ ← evalOpen K m exitExpr
+                        match old with
+                        | some value => envSet contextName value
+                        | none => envRemove contextName
+                        if exitSuppresses then pure (Except.error ()) else raisePy e)
+                  match flow with
+                  | Except.ok flow => do
                       let _ ← evalOpen K m exitExpr
                       match old with
                       | some value => envSet contextName value
                       | none => envRemove contextName
-                      raisePy e)
-                  let _ ← evalOpen K m exitExpr
-                  match old with
-                  | some value => envSet contextName value
-                  | none => envRemove contextName
-                  pure flow
+                      pure flow
+                  | Except.error _ => pure .next
       | _ =>
           refuse "with context must be a direct class constructor call"
   | _, _ => refuse "multiple context-manager items are outside the tier"

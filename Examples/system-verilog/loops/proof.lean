@@ -35,21 +35,17 @@ theorem ordered_header :
   have sign4 : msb (LVec.ofNat 32 4) = .l0 := by
     simp [msb, LVec.ofNat, Array.back?_eq_getElem?] <;> decide
   simp [orderLoop, execSStmt, execSStmts, execStmt, evalExpr,
-    evalSExpr, evalBinOp, evalScmp, scmpOp, toIntS?, sign0, sign1, sign2, sign3, sign4, readSignal,
+    evalSExpr, evalForCondition, evalBinOp, evalScmp, scmpOp, toIntS?, sign0, sign1, sign2, sign3, sign4, readSignal,
     SvState.lookup, SvState.set, LVec.add, LVec.toNat?_ofNat,
     LVec.arithWidth, LVec.width_ofNat, LVec.condTrue, LVec.ofLogic,
     transferRest, SStmt.isLoopBoundary]
   repeat
     rw [execForLoop.eq_def]
     simp [execSStmt, execSStmts, execStmt, evalExpr, evalSExpr, evalBinOp,
-      evalScmp, scmpOp, toIntS?, sign0, sign1, sign2, sign3, sign4, readSignal,
+      evalForCondition, evalScmp, scmpOp, toIntS?, sign0, sign1, sign2, sign3, sign4, readSignal,
       SvState.lookup, SvState.set, LVec.add, LVec.toNat?_ofNat,
       LVec.arithWidth, LVec.width_ofNat, LVec.condTrue, LVec.ofLogic,
       transferRest, SStmt.isLoopBoundary]
-
-theorem repeat_negative (value : LVec) (known : value.toNat? = some number)
-    (negative : msb value = .l1) : repeatCount value true = .ok 0 := by
-  simp [repeatCount, known, negative]
 
 theorem for_wait_retains (state : SvState) (pending : NbaQueue) (output : Out)
     (running : output.halted = false) (steps : Array SStmt) (signal : String) (edge : Edge) :
@@ -57,7 +53,7 @@ theorem for_wait_retains (state : SvState) (pending : NbaQueue) (output : Out)
       (.waitEvent signal edge) =
     .ok (state, pending, output, .suspended (.atEdge signal edge)
       [.forAfterBody (.m0 (.lit (.ofLogic .l1))) steps (.waitEvent signal edge)]) := by
-  simp [stepForLoop, stepSStmt, evalSExpr, evalExpr, running, LVec.ofLogic, LVec.condTrue]
+  simp [stepForLoop, stepSStmt, evalSExpr, evalForCondition, evalExpr, running, LVec.ofLogic, LVec.condTrue]
 
 theorem repeat_wait_retains (state : SvState) (pending : NbaQueue) (output : Out)
     (running : output.halted = false) (remaining amount : Nat) :
@@ -103,10 +99,18 @@ def waitingRepeat : SStmt :=
       | _ => false
   | _ => false
 
-#guard repeatCount (.lit "x001") false matches .unsupported _
-#guard repeatCount (.ofNat 64 4294967297) false matches .unsupported _
+#guard repeatCount (.lit "x001") false == .ok 1
+#guard repeatCount (.lit "xxxx") false == .ok 0
+#guard repeatCount (.ofNat 64 4294967297) false == .ok 1
+#guard repeatCount (.ofNat 64 4294967295) false == .ok 0
 #guard repeatCount (.ofNat 4 15) true == .ok 0
 #guard repeatCount (.ofNat 64 3) false == .ok 3
+#guard sampleRepeatCount 8 [("count", .ofNat 64 3)]
+    (.m0 (.ident "count")) false == .ok 3
+#guard sampleRepeatCount 8 [("count", .ofNat 4 15)]
+    (.m0 (.ident "count")) true == .ok 0
+#guard evalForCondition 8 [("count", .ofNat 4 1)]
+    (.m0 (.ident "count")) == .ok (.ofNat 4 1)
 
 #eval do
   for fixture in ["order", "counts", "transfers"] do
@@ -122,7 +126,6 @@ def waitingRepeat : SStmt :=
         throw (IO.userError "ordered loop certificate differs from its source")
 
 #print axioms ordered_header
-#print axioms repeat_negative
 #print axioms for_wait_retains
 #print axioms repeat_wait_retains
 #print axioms stepForLoop_done_agrees

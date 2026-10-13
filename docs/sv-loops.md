@@ -14,22 +14,21 @@ The implicit block for header-local variables retains its declarations;
 the existing flat-state shadow and duplicate-name checks still apply.
 
 `repeat` (§12.7.2) samples its count once, retains a remaining count, and
-decrements it after normal body completion or `continue`. Count width and
-signedness are preserved from the bound expression. Known signed negative
-counts execute no body. Runtime admission currently requires a known
-nonnegative count at most 2,147,483,647; wider values within that range are
-admitted. Unknown counts and larger nonnegative values refuse loudly.
-The standard specifies zero iterations for x/z counts, but that boundary
-is not claimed as implemented by this tier.
+decrements it after normal body completion or `continue`. The sampled
+integral value is first converted to a signed 32-bit count: x/z bits become
+zero, source signedness controls extension before narrowing, and a converted
+nonpositive value executes no body. This includes unknown counts and values
+whose low 32 bits have the sign bit set; they do not create an unbounded
+runtime loop or a fabricated error.
 
-The source-owned conversion rule is therefore explicit: evaluate the count
-expression once at loop entry, preserve its elaborated width and signedness,
-map a known signed-negative value to zero, and otherwise convert only a known
-nonnegative integral value in the admitted range. No resumed body or loop
-boundary evaluates the count expression again. For loops use the analogous
-source-order rule: initializer statements run once, each header condition is
-evaluated at the header, and each completed body or `continue` runs the step
-list once before the next header.
+The source-owned conversion rule is therefore executable and explicit in
+`evalForCondition` and `sampleRepeatCount`: evaluate the count expression once
+at loop entry, preserve its elaborated width and signedness through the
+32-bit conversion, and map a converted nonpositive value to zero. No resumed
+body or loop boundary evaluates the count expression again. For loops use the
+analogous source-order rule: initializer statements run once, each header
+condition is evaluated at the header, and each completed body or `continue`
+runs the step list once before the next header.
 
 The process-local stepper stores the unfinished body followed by a loop
 boundary marker. An ordinary delay or event wait retains the current

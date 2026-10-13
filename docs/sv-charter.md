@@ -86,9 +86,10 @@ executor/stepper correspondence covers these phases, and the ordered-header
 theorem is anchored to an extracted source fixture.
 
 Three original fixtures confirm the admitted count and transfer behavior.
-Unknown repeat counts and positive counts above 2,147,483,647 remain loud,
-as do repeated-body declaration lifetimes, effectful headers, symbolic
-loops, and explicit process-control suspension/rearming. No cycle-to-region
+Repeat counts follow the sampled signed-32-bit conversion (x/z bits become
+zero and nonpositive counts execute no body); repeated-body declaration
+lifetimes, effectful headers, symbolic loops, and explicit process-control
+suspension/rearming remain loud. No cycle-to-region
 adequacy extension is claimed by this loop surface. See
 `docs/sv-loops.md` for the exact boundary.
 

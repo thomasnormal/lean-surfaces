@@ -311,13 +311,16 @@ def SStmt.isLoopBoundary : SStmt → Bool
 def transferRest (statements : List SStmt) : List SStmt :=
   statements.dropWhile (fun statement => !statement.isLoopBoundary)
 
+/-- Convert an integral repeat count to the signed 32-bit loop count used by
+the procedural control. Unknown bits are zero for this conversion; a
+nonpositive converted count executes no iterations. -/
 def repeatCount (v : LVec) (signed : Bool) : Res Nat :=
-  match v.toNat? with
-  | none => .unsupported "repeat count contains x/z"
-  | some n =>
-      if signed && msb v == .l1 then .ok 0
-      else if n > 2147483647 then .unsupported "repeat count exceeds the admitted integral range"
-      else .ok n
+  let known := squash2v v
+  let converted := if signed then known.resizeSigned 32 else known.resizeU 32
+  if msb converted == .l1 then
+    .ok 0
+  else
+    .ok (converted.toNat?.getD 0)
 
 /-! ## Output collection -/
 
@@ -636,6 +639,13 @@ def enqueuePackedNba (fuel : Nat) (st : SvState) (nba : NbaQueue)
                     pure (nba ++ [(name, updated)])
           enqueuePackedNba fuel st nba' replacement targets rest
 
+def evalForCondition (fuel : Nat) (st : SvState) (condition : SExpr) : Res LVec :=
+  evalSExpr fuel st condition
+
+def sampleRepeatCount (fuel : Nat) (st : SvState) (count : SExpr) (signed : Bool) : Res Nat := do
+  let value ← evalSExpr fuel st count
+  repeatCount value signed
+
 def execForLoop (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
     (condition : SExpr) (steps : Array SStmt) (body : SStmt)
     (assignmentOrder : AssignmentOrder) :
@@ -644,7 +654,7 @@ def execForLoop (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
   | 0 => .timeout
   | fuel + 1 => do
       if out.halted then return (st, nba, out)
-      let c ← evalSExpr fuel st condition
+      let c ← evalForCondition fuel st condition
       if c.condTrue then
         let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
         if out'.halted then
@@ -758,8 +768,7 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
       | .forAfterStep condition steps body =>
           execForLoop fuel st nba out condition steps body assignmentOrder
       | .repeatLoop count countSigned body => do
-          let value ← evalSExpr fuel st count
-          let remaining ← repeatCount value countSigned
+          let remaining ← sampleRepeatCount fuel st count countSigned
           execRepeatLoop fuel st nba out remaining body assignmentOrder
       | .repeatBody remaining body =>
           execRepeatLoop fuel st nba out remaining body assignmentOrder

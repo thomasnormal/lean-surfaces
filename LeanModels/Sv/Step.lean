@@ -79,7 +79,7 @@ def stepForLoop (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
   | 0 => .timeout
   | fuel + 1 => do
       if out.halted then return (st, nba, out, .done)
-      let c ← evalSExpr fuel st condition
+      let c ← evalForCondition fuel st condition
       if c.condTrue then
         let (st', nba', out', outcome) ← stepSStmt fuel st nba out body
         match outcome with
@@ -172,8 +172,7 @@ def stepSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
                 .ok (st', nba', out', .suspended trigger
                   (residual ++ [.forAfterStep condition steps body]))
       | .repeatLoop count countSigned body => do
-          let value ← evalSExpr fuel st count
-          let remaining ← repeatCount value countSigned
+          let remaining ← sampleRepeatCount fuel st count countSigned
           stepRepeatLoop fuel st nba out remaining body
       | .repeatBody remaining body => stepRepeatLoop fuel st nba out remaining body
       | .repeatAfterBody remaining body =>
@@ -244,6 +243,7 @@ theorem stepForLoop_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueu
     rw [stepForLoop.eq_def] at h
     rw [SelfCheck.execForLoop.eq_def]
     simp only at h ⊢
+    simp only [evalForCondition] at h ⊢
     split at h
     · next halted => simp_all
     · next running =>
@@ -412,6 +412,7 @@ theorem stepSStmt_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
               exact stepForLoop_done_agrees fuel _ _ _ _ _ _ _ _ _ h
       case h_11 count countSigned body =>
         rw [SelfCheck.execSStmt.eq_def]; simp only [hh, if_false]
+        simp only [sampleRepeatCount] at h ⊢
         cases hc : evalSExpr fuel st count with
         | timeout => simp [hc] at h
         | unsupported message => simp [hc] at h

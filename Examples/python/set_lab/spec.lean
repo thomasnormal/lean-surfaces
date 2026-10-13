@@ -22,6 +22,10 @@ load_program set_lab from "Examples/python/set_lab/set_lab.json"
 #py_check set_lab.from_str("l") = (Val.tuple #[.bool true, .int 4])
 #py_check set_lab.from_tuple(4) = 2
 #py_check set_lab.empty_set(1) = (Val.tuple #[.bool false, .int 0, .int 0])
+#py_check set_lab.literal(2) = (Val.tuple #[.int 2, .bool true])
+#py_check set_lab.literal(1) = (Val.tuple #[.int 1, .bool true])
+#py_check set_lab.literal_unhashable() raises
+  (.typeError "unhashable type: 'list'")
 #py_check set_lab.from_gen(7) = (Val.tuple #[.bool true, .int 3])
 #py_check set_lab.not_in(5) = true
 #py_check set_lab.unhashable_elem() raises

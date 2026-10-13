@@ -517,6 +517,26 @@ def convert_expr(node):
             "elts": [convert_expr(e) for e in node.elts],
         }
 
+    if isinstance(node, ast.Set):
+        if any(isinstance(e, ast.Starred) for e in node.elts):
+            return unsupported(node, "Set:unpack")
+        return {
+            "kind": "Call",
+            "span": span(node),
+            "func": {
+                "kind": "Name",
+                "span": span(node),
+                "id": "set",
+            },
+            "args": [{
+                "kind": "List",
+                "span": span(node),
+                "elts": [convert_expr(e) for e in node.elts],
+            }],
+            "keywords": [],
+            "call_unsupported": None,
+        }
+
     if isinstance(node, ast.Dict):
         # `{k: v, ...}` — structured (H0, docs/memory-model.md). A None key
         # is `**expansion`; keep the whole node Unsupported then.

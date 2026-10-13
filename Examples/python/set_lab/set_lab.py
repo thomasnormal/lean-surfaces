@@ -41,6 +41,15 @@ def empty_set(a):
     return (a in s, len(s), 1 if s else 0)
 
 
+def literal(a):
+    s = {1, True, a}
+    return (len(s), a in s)
+
+
+def literal_unhashable():
+    return len({[1, 2]})
+
+
 def from_gen(n):
     def g():
         i = 0

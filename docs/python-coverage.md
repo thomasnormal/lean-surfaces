@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3108 | 2779 | 0 | 329 |
+| 3111 | 2782 | 0 | 329 |
 
-Of the 2779 rows the model decides, 2779 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2782 rows the model decides, 2782 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3108 | 2705 | 0 | 403 |
+| 3111 | 2708 | 0 | 403 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-142 witnesses: 118 MATCH, 24 REFUSE.
+142 witnesses: 119 MATCH, 23 REFUSE.
 
 ### `stmt`
 
@@ -72,7 +72,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Lambda` | MATCH | module-scope single-target lambda only |
 | `IfExp` | MATCH |  |
 | `Dict` | MATCH |  |
-| `Set` | REFUSE | unsupported expression 'Set' |
+| `Set` | MATCH | lowered to set(list) at ingestion; order remains unobservable |
 | `ListComp` | MATCH | desugared to list(genexp) at ingestion |
 | `SetComp` | REFUSE | unsupported expression 'SetComp' |
 | `DictComp` | REFUSE | unsupported expression 'DictComp' |

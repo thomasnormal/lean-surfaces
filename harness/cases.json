@@ -360,6 +360,8 @@
   {"file": "Examples/python/set_lab/set_lab.py", "function": "from_str", "args": [[{"t": "str", "v": "l"}], [{"t": "str", "v": "z"}]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "from_tuple", "args": [[4]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "empty_set", "args": [[1]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "literal", "args": [[2], [1]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "literal_unhashable", "args": [[]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "from_gen", "args": [[7], [0]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "not_in", "args": [[5]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "unhashable_elem", "args": [[]], "expect": "match"},

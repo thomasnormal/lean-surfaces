@@ -330,7 +330,7 @@ print({1: 2})
 """, "MATCH", "")
 w("expr.Set", """
 print(len({1, 2}))
-""", "REFUSE", "a set display; hash order is never guessed")
+""", "MATCH", "lowered to set(list) at ingestion; order remains unobservable")
 w("expr.ListComp", """
 print([x + 1 for x in [1, 2]])
 """, "MATCH", "desugared to list(genexp) at ingestion")

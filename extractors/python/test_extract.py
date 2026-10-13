@@ -853,6 +853,19 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["kind"], "Unsupported")
         self.assertEqual(e["py_kind"], "Dict:unpack")
 
+    def test_set_display_lowers_to_existing_set_constructor(self):
+        e = self._first_return_expr("def f(a):\n    return {1, True, a}\n")
+        self.assertEqual(e["kind"], "Call")
+        self.assertEqual(e["func"]["kind"], "Name")
+        self.assertEqual(e["func"]["id"], "set")
+        self.assertEqual(e["args"][0]["kind"], "List")
+        self.assertEqual(len(e["args"][0]["elts"]), 3)
+
+    def test_set_display_unpack_stays_unsupported(self):
+        e = self._first_return_expr("def f(xs):\n    return {*xs}\n")
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "Set:unpack")
+
     def test_attribute_load_is_structured(self):
         e = self._first_return_expr(
             "def f(pos):\n    return pos.score\n")

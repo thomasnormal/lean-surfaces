@@ -53,9 +53,27 @@ class Ports(unittest.TestCase):
         self.assertEqual(port["width"], 1)
         self.assertTrue(port["two_state"])
 
+    def test_signed_two_state_output_port_is_admitted(self):
+        design = lower(
+            'module e(output bit signed [3:0] a); '
+            'initial begin if (a == 4\'b0000) $finish; end endmodule'
+        )
+        port = design["modules"][0]["ports"][0]
+        self.assertEqual(port["width"], 4)
+        self.assertTrue(port["two_state"])
+        self.assertTrue(port["signed"])
+
     def test_two_state_input_port_remains_loud(self):
         design = lower(
             'module e(input bit a); initial begin if (a == 1\'b0) $finish; end endmodule'
+        )
+        self.assertTrue(any(
+            node.get("sv_kind") == "PortSymbol:2state" for node in nodes(design)
+        ))
+
+    def test_signed_two_state_input_port_remains_loud(self):
+        design = lower(
+            'module e(input bit signed [3:0] a); initial $finish; endmodule'
         )
         self.assertTrue(any(
             node.get("sv_kind") == "PortSymbol:2state" for node in nodes(design)

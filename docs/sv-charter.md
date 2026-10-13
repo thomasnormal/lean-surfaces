@@ -383,14 +383,24 @@ Icarus differential harness.
 
 The legacy/self-check envelope admits an unsigned scalar or descending
 zero-based packed **2-state output** port. Its `two_state` metadata is retained
-through ingestion, and an unconnected output starts at zero as required by
-the port's 2-state variable semantics. This is a declaration-boundary slice;
-the body and output observation still use the existing time-zero runner.
+through ingestion, and an unconnected output starts at zero as required by the
+port's 2-state variable semantics. This is a declaration-boundary slice; the
+body and output observation still use the existing time-zero runner.
 
 2-state input ports remain loud because an unconnected input is not a faithful
-zero source at this tier. Signed, reversed-range, aggregate, net and symbolic
-2-state port forms remain outside the admission. No scheduler or value-core
-rule changes are introduced.
+zero source at this tier. Signed 2-state output, 2-state nets, reversed-range,
+aggregate and symbolic 2-state forms remain outside the admission. No
+scheduler or value-core rule changes are introduced.
+
+### Signed 2-state output ports — 2026-10-13
+
+The self-check declaration slice now also admits a signed `bit` output port.
+Its `two_state` and `signed` metadata are retained, startup is zero, and
+assignments still squash x/z bits before storage. The fixture
+`signed_two_state_output` checks startup, signed comparison and the
+four-state-to-two-state assignment conversion; a width-parametric zero-default
+theorem anchors the initialization rule. Signed 2-state inputs and nets remain
+loud.
 
 ### Integral explicit casts — 2026-10-09
 

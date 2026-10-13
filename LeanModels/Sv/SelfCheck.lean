@@ -830,6 +830,7 @@ structure SDecl where
   width : Nat
   isNet : Bool := false
   isOutput : Bool := false
+  isSigned : Bool := false
   twoState : Bool := false
   init : Option SExpr := none
 deriving Repr, Inhabited
@@ -1170,13 +1171,16 @@ def parsePortD (j : Json) : Except String (Sum SDecl SProc) := do
   match ← getStrF j "kind" with
   | "Port" =>
       let dir ← getStrF j "dir"
+      let isSigned ← match getFOpt j "signed" with
+        | none => pure false
+        | some _ => getBoolF j "signed"
       let twoState ← match getFOpt j "two_state" with
         | none => pure false
         | some value => match value.getBool? with
           | .ok b => pure b
           | .error _ => .error "field 'two_state' must be a Bool"
       return .inl { name := ← getStrF j "name", width := ← getNatF j "width"
-                    isOutput := dir == "out", twoState }
+                    isOutput := dir == "out", isSigned, twoState }
   | "Unsupported" =>
       return .inr (.other (← getStrF j "sv_kind") (unsupportedText j))
   | k => .error s!"unknown port kind '{k}'"
@@ -1184,11 +1188,14 @@ def parsePortD (j : Json) : Except String (Sum SDecl SProc) := do
 def parseSDecl (j : Json) : Except String (Sum SDecl SProc) := do
   match ← getStrF j "kind" with
   | "Var" | "Net" =>
+      let isSigned ← match getFOpt j "signed" with
+        | none => pure false
+        | some _ => getBoolF j "signed"
       let init ← match getFOpt j "init" with
         | none => pure none
         | some ji => pure (some (← parseSExpr ji))
       return .inl { name := ← getStrF j "name", width := ← getNatF j "width"
-                    isNet := (← getStrF j "kind") == "Net", init }
+                    isNet := (← getStrF j "kind") == "Net", isSigned, init }
   | "Unsupported" =>
       return .inr (.other (← getStrF j "sv_kind") (unsupportedText j))
   | k => .error s!"unknown decl kind '{k}'"

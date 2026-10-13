@@ -115,7 +115,7 @@ emits:
 | `ConversionExpression:Explicit` / `:BitstreamCast` / `:StreamingConcat` | explicit casts |
 | `NamedValueExpression:<SymbolKind>` | identifier that does not name a variable/net (e.g. `:Parameter`) |
 | `PortSymbol:InOut` / `:Ref` | port directions outside in/out |
-| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state outside the admitted unsigned output-port slice, packed range other than `[W-1:0]` (e.g. `[0:7]`, multi-dim), or a non-vector type (enum, struct, real, ...) |
+| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state outside the admitted output-port slice, packed range other than `[W-1:0]` (e.g. `[0:7]`, multi-dim), or a non-vector type (enum, struct, real, ...) |
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |
 
@@ -152,12 +152,12 @@ Key order: `kind`, `span`, `name`, `dir`, `width`, optional `signed`.
 
 `dir` ∈ `"in" | "out"`. `width` is the elaborated bit width (scalar `logic` ⇒
 `1`). An unsigned 4-state scalar or `[W-1:0]` vector omits `two_state`;
-an unsigned 2-state **output** port carries `"two_state": true` and starts
-at zero. 2-state inputs, 2-state net outputs, reversed-range, aggregate and other port
+a 2-state **output** port carries `"two_state": true` and starts at zero.
+2-state inputs, 2-state net outputs, reversed-range, aggregate and other port
 types remain `Unsupported`: an unconnected input does not provide a faithful
-zero value at this tier. Signed four-state ports carry optional `signed: true`
-metadata. Whether the port binds to a variable or a net
-internally is not recorded (irrelevant at M0).
+zero value at this tier. Four-state and admitted 2-state signed ports carry
+optional `signed: true` metadata. Whether the port binds to a variable or a
+net internally is not recorded (irrelevant at M0).
 
 ### Declarations
 

@@ -157,6 +157,7 @@ deriving Repr, BEq, DecidableEq, Inhabited
 def SymBinOp.sym : SymBinOp → String
   | .m0 .add => "+" | .m0 .sub => "-" | .m0 .mul => "*"
   | .m0 .div => "u/" | .m0 .sdiv => "s/"
+  | .m0 .rem => "u%" | .m0 .srem => "s%"
   | .m0 (.pow signedBase signedExponent) =>
       (if signedBase then "s" else "u") ++ "**" ++ (if signedExponent then "s" else "u")
   | .m0 .and => "&" | .m0 .or => "|"
@@ -462,7 +463,8 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .land => .ok (b2i (a != 0 && b != 0))
       | .lor => .ok (b2i (a != 0 || b != 0))
       | .m0 .mul | .mul => .ok (a * b)
-      | .m0 .div | .m0 .sdiv => .error "vector division requires operand widths"
+      | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem =>
+          .error "vector quotient/remainder requires operand widths"
       | .m0 (.pow ..) => .error "vector power requires operand widths"
       | .div => if b == 0 then .error "division by zero" else .ok (a.tdiv b)
       | .mod => if b == 0 then .error "modulo by zero" else .ok (a.tmod b)
@@ -576,7 +578,8 @@ def selfWidth (env : IEnv) : PExpr → Option Nat
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth env l
       | .m0 (.pow ..) => divOperandWidth env l
-      | .m0 .div | .m0 .sdiv | .div => maxW (divOperandWidth env l) (divOperandWidth env r)
+      | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem | .div | .mod =>
+          maxW (divOperandWidth env l) (divOperandWidth env r)
       | _ => maxW (selfWidth env l) (selfWidth env r)
   | .ternary _ t e => maxW (selfWidth env t) (selfWidth env e)
   | .concat parts => selfWidthSum env parts
@@ -682,11 +685,15 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
           .binary (.pow signedBase signedExponent)
             (instDivOperand env signedBase baseContext l)
             (instDivOperand env signedExponent (divOperandWidth env r) r)
-      | .m0 .div | .m0 .sdiv =>
+      | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem =>
           let octx := maxW ctx (maxW (divOperandWidth env l) (divOperandWidth env r))
-          .binary (match op with | .m0 .sdiv => .sdiv | _ => .div)
-            (instDivOperand env (op == .m0 .sdiv) octx l)
-            (instDivOperand env (op == .m0 .sdiv) octx r)
+          .binary (match op with
+            | .m0 .sdiv => .sdiv
+            | .m0 .srem => .srem
+            | .m0 .rem => .rem
+            | _ => .div)
+            (instDivOperand env (op == .m0 .sdiv || op == .m0 .srem) octx l)
+            (instDivOperand env (op == .m0 .sdiv || op == .m0 .srem) octx r)
       | .m0 .add | .m0 .sub | .m0 .and | .m0 .or | .m0 .xor =>
           let octx := match ctx with
             | some w => some w

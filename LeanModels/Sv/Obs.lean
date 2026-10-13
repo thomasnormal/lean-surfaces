@@ -242,6 +242,26 @@ theorem LVec.sdiv_ofBitVec {width : Nat} (left right : BitVec width)
   simp [LVec.ofBitVec, LVec.toNat?_ofNat, Nat.mod_eq_of_lt left.isLt,
     Nat.mod_eq_of_lt right.isLt, nonzero]
 
+theorem LVec.rem_ofBitVec {width : Nat} (left right : BitVec width)
+    (nonzero : right.toNat ≠ 0) :
+    (LVec.ofBitVec left).rem (LVec.ofBitVec right) = LVec.ofBitVec (left % right) := by
+  have right_pos : 0 < right.toNat := Nat.pos_of_ne_zero nonzero
+  have rem_lt : left.toNat % right.toNat < 2 ^ width := by
+    exact Nat.lt_of_lt_of_le (Nat.mod_lt _ right_pos) (Nat.le_of_lt right.isLt)
+  simp [LVec.ofBitVec, LVec.rem, LVec.toNat?_ofNat, LVec.arithWidth,
+    LVec.width_ofNat, Nat.mod_eq_of_lt left.isLt, Nat.mod_eq_of_lt right.isLt,
+    Nat.mod_eq_of_lt rem_lt, nonzero, BitVec.umod_def]
+
+theorem LVec.srem_ofBitVec {width : Nat} (left right : BitVec width)
+    (nonzero : right.toNat ≠ 0) :
+    (LVec.ofBitVec left).srem (LVec.ofBitVec right) = LVec.ofBitVec (left.srem right) := by
+  have common : LVec.arithWidth (LVec.ofBitVec left) (LVec.ofBitVec right) = width := by
+    simp [LVec.arithWidth, LVec.ofBitVec, LVec.width_ofNat]
+  unfold LVec.srem
+  rw [common]
+  simp [LVec.ofBitVec, LVec.toNat?_ofNat, Nat.mod_eq_of_lt left.isLt,
+    Nat.mod_eq_of_lt right.isLt, nonzero]
+
 /-! ## Schedule-oracle facts
 
 `choose_perm` pins each oracle invocation to a permutation of the ready

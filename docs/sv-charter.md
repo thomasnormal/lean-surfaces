@@ -66,8 +66,8 @@ bridges already exist.
 packed four-state expressions, identifier assignment, `if`/blocks and
 its cycle-level process fragment; general loops, calls, classes and
 hierarchy remain absent. Design2 adds selected reads/writes, case,
-reductions, resizing, signed comparisons, multiplication, integral division
-and integral power, but nonconstant remainder/shifts are not admitted merely because
+reductions, resizing, signed comparisons, multiplication, integral division,
+integral remainder and integral power, but nonconstant shifts are not admitted merely because
 their constant expressions can be folded. The self-check vocabulary
 adds local declarations, `for`/`repeat` and output/termination tasks. Its
 time-zero runner remains initial-only and does not inherit Design2's selected
@@ -170,9 +170,33 @@ one additional corpus file since the multiplication measurement; both ends
 of this comparison include it. All 33 gains and four public self-check
 fixtures agree with independent simulation on output and status. These
 admission and selected-execution checks do not claim whole-corpus execution.
-Real division, remainder and selected compound assignment remain loud;
+Real division and selected compound assignment remain loud;
 M0's existing selected-expression and unsigned-narrowing boundaries remain.
 The operator and symbolic-sizing contract is `docs/sv-division.md`.
+
+## Integral remainder (IEEE 1800-2023, 11.4.3 and 11.8.2)
+
+Runtime integral `%` and plain scalar `%=` now use the shared four-state
+value core through the self-check executor and both symbolic instantiation
+paths. Unsigned operands use unsigned remainder; signed operands use the
+paired truncation-toward-zero remainder at their common width, so the result
+has the dividend's sign. A zero divisor or any x/z operand produces all x.
+Mixed-sign contexts use unsigned bit patterns, and destination narrowing
+occurs after the remainder operation.
+
+The extractor emits `u%` for unsigned operands and `s%` when both operands
+are signed. Symbolic constant positions retain `%` for integer elaboration;
+runtime vectors retain the typed operator and the same unfolded
+`Resize`/`SignedResize` sizing boundaries as division. The
+`unsigned_remainder` and `signed_remainder` theorems consume real extracted
+symbolic designs and prove width-parametric `BitVec` remainders for nonzero
+divisors. Unknown and zero-divisor rows are checked as all-x, while real and
+selected compound targets remain loud.
+
+The focused extractor battery and `remainder_directed` Icarus differential
+case cover unsigned, signed, mixed-sign, zero-divisor and unknown operands.
+This is a selected operator-family result, not whole-corpus runtime
+conformance. The detailed contract is `docs/sv-remainder.md`.
 
 ## Integral power (IEEE 1800-2023, 11.4.3, 11.6 and 11.8.1–11.8.2)
 

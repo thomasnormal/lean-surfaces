@@ -39,9 +39,11 @@ class CompoundAssignments(unittest.TestCase):
         self.assertTrue(all(statement["value"]["left"]["kind"] == "Ident"
                             for statement in compounds))
 
-    def test_unsupported_compound_operator_stays_loud(self):
+    def test_remainder_compound_lowers_to_binary_read(self):
         statements = body("value %= delta;")
-        self.assertEqual(statements[0]["sv_kind"], "AssignmentExpression:compound")
+        self.assertEqual(statements[0]["kind"], "BlockingAssign")
+        self.assertEqual(statements[0]["value"]["op"], "u%")
+        self.assertEqual(statements[0]["value"]["left"]["name"], "value")
 
     def test_conversion_wrapped_compound_width_stays_loud(self):
         statement = body("value += 1;")[0]

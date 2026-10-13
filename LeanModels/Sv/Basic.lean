@@ -316,6 +316,28 @@ def sdiv (left right : LVec) : LVec :=
       else ofBitVec ((BitVec.ofNat width numerator).sdiv (BitVec.ofNat width denominator))
   | _, _ => xVec width
 
+/-! Remainder follows division's operand sizing and unknown/zero-divisor
+rule. Signed remainder is the truncation-toward-zero remainder, so its sign
+follows the dividend. -/
+
+/-- Unsigned integral remainder; zero or unknown divisors give all x. -/
+def rem (left right : LVec) : LVec :=
+  let width := arithWidth left right
+  match left.toNat?, right.toNat? with
+  | some numerator, some denominator =>
+      if denominator == 0 then xVec width
+      else ofNat width (numerator % denominator)
+  | _, _ => xVec width
+
+/-- Signed integral remainder, paired with signed division's t-division. -/
+def srem (left right : LVec) : LVec :=
+  let width := arithWidth left right
+  match left.toNat?, right.toNat? with
+  | some numerator, some denominator =>
+      if denominator == 0 then xVec width
+      else ofBitVec ((BitVec.ofNat width numerator).srem (BitVec.ofNat width denominator))
+  | _, _ => xVec width
+
 /-- Structurally bounded modular exponentiation by repeated squaring. -/
 def powMod (width base exponent : Nat) : Nat → Nat
   | 0 => 1 % 2 ^ width
@@ -554,6 +576,11 @@ open Logic
 #guard LVec.sub (.lit "0x") (.lit "01") == .lit "xx"
 #guard LVec.mul (.lit "10") (.lit "11") == .lit "10"                -- 2*3=6 mod 4=2
 #guard LVec.mul (.lit "1x") (.lit "01") == .lit "xx"
+#guard LVec.rem (.lit "1011") (.lit "0011") == .lit "0010"       -- 11 % 3 = 2
+#guard LVec.rem (.lit "1011") (.lit "0000") == .lit "xxxx"
+#guard LVec.rem (.lit "1x11") (.lit "0011") == .lit "xxxx"
+#guard LVec.srem (.ofNat 8 243) (.ofNat 8 5) == .ofNat 8 253
+#guard LVec.srem (.ofNat 8 243) (.ofNat 8 251) == .ofNat 8 253
 #guard LVec.neg (.lit "01") == .lit "11"                            -- -1 = 3 (2 bits)
 #guard LVec.neg (.lit "00") == .lit "00"
 #guard LVec.neg (.lit "10") == .lit "10"                            -- -2 = 2 (2 bits)

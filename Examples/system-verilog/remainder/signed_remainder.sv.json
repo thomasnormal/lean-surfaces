@@ -1,0 +1,186 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "signed_remainder",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/remainder/signed_remainder.sv",
+      "sha256": "1a837663b8e1c06a5dcf36f6ee2d898d3203e4abe2080537aecff9ed1033d993"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "signed_remainder",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 2,
+              "col": 17,
+              "end_line": 2,
+              "end_col": 22
+            },
+            "name": "W",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 17,
+                      "end_line": 2,
+                      "end_col": 22
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 17,
+                      "end_line": 2,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 2,
+                "col": 21,
+                "end_line": 2,
+                "end_col": 22
+              },
+              "value": 8,
+              "resolved_width": 32
+            },
+            "resolved": 8
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 4,
+              "col": 30,
+              "end_line": 4,
+              "end_col": 34
+            },
+            "sv_kind": "PortSymbol:signed",
+            "text": "left"
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 5,
+              "col": 30,
+              "end_line": 5,
+              "end_col": 35
+            },
+            "sv_kind": "PortSymbol:signed",
+            "text": "right"
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 6,
+              "col": 31,
+              "end_line": 6,
+              "end_col": 37
+            },
+            "sv_kind": "PortSymbol:signed",
+            "text": "result"
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 31
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 16
+              },
+              "width": 8,
+              "name": "result",
+              "signed": true
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 8,
+                "col": 19,
+                "end_line": 8,
+                "end_col": 31
+              },
+              "width": 8,
+              "op": "s%",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 8,
+                  "col": 19,
+                  "end_line": 8,
+                  "end_col": 23
+                },
+                "width": 8,
+                "name": "left",
+                "signed": true
+              },
+              "right": {
+                "kind": "Ident",
+                "span": {
+                  "line": 8,
+                  "col": 26,
+                  "end_line": 8,
+                  "end_col": 31
+                },
+                "width": 8,
+                "name": "right",
+                "signed": true
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

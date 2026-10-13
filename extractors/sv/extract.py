@@ -72,6 +72,7 @@ BINARY_OPS = {
     BinaryOperator.Subtract: "-",
     BinaryOperator.Multiply: "*",
     BinaryOperator.Divide: "/",
+    BinaryOperator.Mod: "%",
     BinaryOperator.Power: "**",
     BinaryOperator.BinaryAnd: "&",
     BinaryOperator.BinaryOr: "|",
@@ -851,7 +852,7 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
-    if sym in ("/", "**") and _SYM is not None and not _SYM.symctx:
+    if sym in ("/", "%", "**") and _SYM is not None and not _SYM.symctx:
         left = _convert_division_operand(sm, e.left)
         right = _convert_division_operand(sm, e.right)
     else:
@@ -867,6 +868,10 @@ def _convert_binary_expr(sm, e):
         if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
             return unsupported(sm, e, "BinaryExpression:Divide-type")
         sym = "s/" if e.left.type.isSigned and e.right.type.isSigned else "u/"
+    if sym == "%" and not (_SYM is not None and _SYM.symctx):
+        if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
+            return unsupported(sm, e, "BinaryExpression:Mod-type")
+        sym = "s%" if e.left.type.isSigned and e.right.type.isSigned else "u%"
     if sym == "**" and not (_SYM is not None and _SYM.symctx):
         if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
             return unsupported(sm, e, "BinaryExpression:Power-type")
@@ -1491,6 +1496,8 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             return unsupported(sm, span_node or expr, "AssignmentExpression:compound-width")
         if sym == "/":
             sym = "s/" if expr.left.type.isSigned and rhs.type.isSigned else "u/"
+        if sym == "%":
+            sym = "s%" if expr.left.type.isSigned and rhs.type.isSigned else "u%"
         value = {
             "kind": "Binary",
             "span": node_span(sm, expr),
@@ -1968,6 +1975,16 @@ def contains_division(node):
     return False
 
 
+def contains_remainder(node):
+    if isinstance(node, dict):
+        return (node.get("kind") == "Binary" and node.get("op") in ("%", "u%", "s%")) or any(
+            contains_remainder(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_remainder(value) for value in node)
+    return False
+
+
 def contains_power(node):
     if isinstance(node, dict):
         return (node.get("kind") == "Binary" and node.get("op") in ("**", "u**u", "u**s", "s**u", "s**s")) or any(
@@ -2036,6 +2053,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Division:invalid-compilation",
                                   "frontend rejected source containing division"))
+    if (any(contains_remainder(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Remainder:invalid-compilation",
+                                  "frontend rejected source containing remainder"))
     if (any(contains_power(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Power:invalid-compilation",
@@ -2093,7 +2114,6 @@ SYM_SYSCALLS = ("$clog2", "$bits", "$high", "$size")
 # Extra operators admitted in symbolic expression positions only
 # (parameter defaults, localparam exprs, generate headers/conds, dims).
 SYM_BINARY_OPS = {
-    BinaryOperator.Mod: "%",
     BinaryOperator.Power: "**",
     BinaryOperator.LogicalShiftLeft: "<<",
     BinaryOperator.LogicalShiftRight: ">>",
@@ -3230,6 +3250,9 @@ def process_symbolic(top, sources, incdirs, out_path):
             if contains_division(module) and nerr:
                 module["others"].append(unsupported(sm, comp, "Division:invalid-compilation",
                                                   "frontend rejected source containing division"))
+            if contains_remainder(module) and nerr:
+                module["others"].append(unsupported(sm, comp, "Remainder:invalid-compilation",
+                                                  "frontend rejected source containing remainder"))
             if contains_power(module) and nerr:
                 module["others"].append(unsupported(sm, comp, "Power:invalid-compilation",
                                                   "frontend rejected source containing power"))

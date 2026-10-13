@@ -126,6 +126,8 @@ def parseBinOpName : String → Except String BinOp
   | "*" | "Multiply" | "Mul" => .ok .mul
   | "u/" => .ok .div
   | "s/" => .ok .sdiv
+  | "u%" => .ok .rem
+  | "s%" => .ok .srem
   | "u**u" => .ok (.pow false false)
   | "u**s" => .ok (.pow false true)
   | "s**u" => .ok (.pow true false)

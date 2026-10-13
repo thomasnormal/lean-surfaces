@@ -111,7 +111,7 @@ def selfWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Option Na
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth2 env elems l
       | .m0 (.pow ..) => divOperandWidth2 env elems l
-      | .m0 .div | .m0 .sdiv | .div =>
+      | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem | .div | .mod =>
           maxW2 (divOperandWidth2 env elems l) (divOperandWidth2 env elems r)
       | _ =>
           match selfWidth2 env elems l, selfWidth2 env elems r with
@@ -256,12 +256,16 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
           .binary (.pow signedBase signedExponent)
             (instDivOperand2 env elems signedBase baseContext l)
             (instDivOperand2 env elems signedExponent (divOperandWidth2 env elems r) r)
-      | .m0 .div | .m0 .sdiv =>
+      | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem =>
           let octx := maxW2 ctx
             (maxW2 (divOperandWidth2 env elems l) (divOperandWidth2 env elems r))
-          .binary (match op with | .m0 .sdiv => .sdiv | _ => .div)
-            (instDivOperand2 env elems (op == .m0 .sdiv) octx l)
-            (instDivOperand2 env elems (op == .m0 .sdiv) octx r)
+          .binary (match op with
+            | .m0 .sdiv => .sdiv
+            | .m0 .srem => .srem
+            | .m0 .rem => .rem
+            | _ => .div)
+            (instDivOperand2 env elems (op == .m0 .sdiv || op == .m0 .srem) octx l)
+            (instDivOperand2 env elems (op == .m0 .sdiv || op == .m0 .srem) octx r)
       | .m0 .add | .m0 .sub | .m0 .and | .m0 .or | .m0 .xor =>
           let octx := match ctx with
             | some w => some w

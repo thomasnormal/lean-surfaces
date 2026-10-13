@@ -120,6 +120,18 @@
         {"en": "1"},
         {"rst": "x", "en": "1"}
       ]
+    },
+    {
+      "name": "remainder_directed",
+      "example": "remainder",
+      "signals": ["left", "right", "result"],
+      "stimulus": [
+        {"left": "00001101", "right": "00000101"},
+        {"left": "11111111", "right": "00000101"},
+        {"left": "00000111", "right": "00000011"},
+        {"left": "00000001", "right": "00000000"},
+        {"left": "00000x01", "right": "00000011"}
+      ]
     }
   ]
 }

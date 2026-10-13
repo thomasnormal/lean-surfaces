@@ -290,12 +290,12 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Ident` | `kind`, `span`, `width`, `name` (string) | declared width of the named var/net/port |
 | `Literal` | `kind`, `span`, `width`, `bits` (string) | `len(bits) == width` |
 | `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"-"`), `operand` (expr) | `~`,`-`: `width == operand.width`; `!`: `width == 1` |
-| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | `+ - * u/ s/ & \| ^`: `width == left.width == right.width`; comparisons: `width == 1` and `left.width == right.width` |
+| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | `+ - * u/ s/ u% s% & \| ^`: `width == left.width == right.width`; comparisons: `width == 1` and `left.width == right.width` |
 | `Ternary` | `kind`, `span`, `width`, `cond`, `then`, `else` (exprs) | `width == then.width == else.width`; `cond` any width |
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
-`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
+`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
 `==`/`!=` are *logical* equality — case equality `===` is
 `BinaryExpression:CaseEquality` → Unsupported). The width invariants hold
 whenever the children are supported nodes — the extractor enforces them and
@@ -312,6 +312,15 @@ typed operators and unfolded `Resize`/`SignedResize` operands. Instantiation
 recomputes their context widths, including signed constants, without
 widening self-determined Boolean operands or ternary conditions. Real
 division and selected compound targets stay loud. See `docs/sv-division.md`.
+
+Runtime integral remainder uses `u%` for unsigned operands and `s%` when
+both elaborated operands are signed. Zero divisors and x/z operands give all
+x; signed remainders follow truncation-toward-zero division and therefore
+the dividend's sign. Plain scalar `%=` uses the same typed operator. Constant
+symbolic positions retain `%` for integer elaboration; runtime vector
+remainder retains the typed operators and the same context-width conversion
+rules as division. Real remainder and selected compound targets stay loud.
+See `docs/sv-remainder.md`.
 
 Integral `*` uses the same elaborated common-width invariant as `+` and
 `-`. Operand `Resize`/`SignedResize` nodes act before multiplication;

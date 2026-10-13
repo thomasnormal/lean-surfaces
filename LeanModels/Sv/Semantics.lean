@@ -205,6 +205,8 @@ def evalBinOp : BinOp → LVec → LVec → LVec
   | .mul, left, right => left.mul right
   | .div, left, right => left.div right
   | .sdiv, left, right => left.sdiv right
+  | .rem, left, right => left.rem right
+  | .srem, left, right => left.srem right
   | .pow signedBase signedExponent, left, right => LVec.pow signedBase signedExponent left right
   | .and, a, b => a.and b
   | .or, a, b => a.or b

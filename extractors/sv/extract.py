@@ -1453,16 +1453,20 @@ def _convert_ordinary_case(sm, stmt):
 def _convert_for_step(sm, expression):
     if type(expression).__name__ == "AssignmentExpression":
         return _convert_assignment_expr(sm, expression)
+    return _convert_incdec(sm, expression, "ForLoopStatement:step")
+
+
+def _convert_incdec(sm, expression, context):
     op = str(getattr(expression, "op", None)).split(".")[-1]
     if type(expression).__name__ != "UnaryExpression" or op not in (
             "Preincrement", "Postincrement", "Predecrement", "Postdecrement"):
-        return unsupported(sm, expression, "ForLoopStatement:step")
+        return unsupported(sm, expression, context)
     target, ok = ident_target(sm, expression.operand)
     if not ok:
-        return unsupported(sm, expression, "ForLoopStatement:step-target")
+        return unsupported(sm, expression, context + "-target")
     width, two_state, reason = type_width_2s(expression.operand.type)
     if width is None or reason is not None:
-        return unsupported(sm, expression, "ForLoopStatement:step-type")
+        return unsupported(sm, expression, context + "-type")
     value = {
         "kind": "Binary", "span": node_span(sm, expression), "width": width,
         "op": "+" if op.endswith("increment") else "-", "left": target,
@@ -1546,6 +1550,10 @@ def _convert_expression_stmt(sm, stmt):
     expr = stmt.expr
     if type(expr).__name__ == "CallExpression":
         return _convert_syscall(sm, stmt, expr)
+    if type(expr).__name__ == "UnaryExpression":
+        op = str(getattr(expr, "op", None)).split(".")[-1]
+        if op in ("Preincrement", "Postincrement", "Predecrement", "Postdecrement"):
+            return _convert_incdec(sm, expr, "ExpressionStatement:UnaryExpression")
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, stmt, "ExpressionStatement:" + type(expr).__name__)
     return _convert_assignment_expr(sm, expr, stmt)

@@ -1493,6 +1493,22 @@ the existing `Logic.and`/`Logic.or` tables decide the one-bit result. This is
 distinct from bitwise `&`/`|` and reuses the value-core authority already used
 by the self-check tier.
 
+### 3.2.3 Standalone integral increment and decrement — 2026-10-13
+
+In the self-check tier, standalone `value++`, `++value`, `value--` and
+`--value` statements now lower to the existing blocking-assignment path. The
+lowering reads the identifier once and adds or subtracts a one-bit-width
+literal, so four-state unknown propagation, modulo wraparound and two-state
+squashing remain those of the shared arithmetic operators. Prefix and postfix
+forms have the same observable effect in statement position; their discarded
+expression result is not modeled. Selected, nonintegral and otherwise invalid
+targets remain loud. For-loop steps already use this same lowering, so no new
+scheduler or loop mechanism is introduced.
+
+The extractor test covers all four spellings and selected-target refusal. The
+`Examples/system-verilog/increment/` fixture checks four-state wraparound in
+the self-check runner, Icarus, and the value-core proof.
+
 ### 3.3 X-pessimism, and what it means for MATCH verdicts
 
 **This is the value model's sharpest consequence for differential

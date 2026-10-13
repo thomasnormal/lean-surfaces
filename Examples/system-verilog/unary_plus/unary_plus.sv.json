@@ -1,0 +1,131 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/unary_plus/unary_plus.sv",
+  "source_sha256": "8dee65b68ffea2911c2a01850a2db74b9cd5f9da14a34d67b117116499b62004",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "unary_plus",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 21,
+              "end_line": 2,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": 4
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 22,
+              "end_line": 3,
+              "end_col": 23
+            },
+            "name": "b",
+            "dir": "out",
+            "width": 4
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 22,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "c",
+            "dir": "out",
+            "width": 4
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 5,
+              "col": 10,
+              "end_line": 5,
+              "end_col": 16
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 5,
+                "col": 10,
+                "end_line": 5,
+                "end_col": 11
+              },
+              "width": 4,
+              "name": "b"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 5,
+                "col": 15,
+                "end_line": 5,
+                "end_col": 16
+              },
+              "width": 4,
+              "name": "a"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 6,
+              "col": 10,
+              "end_line": 6,
+              "end_col": 24
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 6,
+                "col": 10,
+                "end_line": 6,
+                "end_col": 11
+              },
+              "width": 4,
+              "name": "c"
+            },
+            "value": {
+              "kind": "Literal",
+              "span": {
+                "line": 6,
+                "col": 16,
+                "end_line": 6,
+                "end_col": 23
+              },
+              "width": 4,
+              "bits": "0101"
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

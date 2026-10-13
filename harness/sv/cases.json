@@ -352,6 +352,21 @@
       ]
     },
     {
+      "name": "unary_plus_directed",
+      "example": "unary_plus",
+      "signals": [
+        "a",
+        "b",
+        "c"
+      ],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "1010"},
+        {"a": "10xz"},
+        {"a": "zzzz"}
+      ]
+    },
+    {
       "name": "logical_ops_directed",
       "example": "logical_ops",
       "signals": [

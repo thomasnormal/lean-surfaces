@@ -779,6 +779,13 @@ def _convert_string_expr(sm, e):
 
 
 def _convert_unary_expr(sm, e):
+    if _SYM is None and e.op == UnaryOperator.Plus:
+        operand = _convert_expr(sm, e.operand)
+        width = e.type.bitWidth
+        operand_width = width_of(operand)
+        if operand_width is not None and operand_width != width:
+            return unsupported(sm, e, "UnaryExpression:width")
+        return operand
     sym = UNARY_OPS.get(e.op)
     if sym is None and _SYM is not None:
         reduction = REDUCE_OPS.get(e.op)

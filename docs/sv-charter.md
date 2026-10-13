@@ -366,6 +366,19 @@ sum and comparison are checked through the M0 runner and Icarus differential
 harness. This is a declaration/operator surface extension, not a scheduler
 change.
 
+### Unary plus identity — 2026-10-13
+
+The legacy M0 extractor admits unary `+` over an already-supported integral
+expression and erases the operator to that operand after checking the
+elaborated width. Unary plus is value-preserving in this surface, so no new
+Lean AST constructor or evaluator branch is needed; x/z bits and signedness
+metadata remain exactly those of the operand. Width-changing implicit
+conversions and every other unary operator boundary remain unchanged.
+
+`Examples/system-verilog/unary_plus/` is a real extracted module whose
+operand, unknown bits and constant unary-plus result are checked by the
+Icarus differential harness.
+
 ### Two-state output ports — 2026-10-12
 
 The legacy/self-check envelope admits an unsigned scalar or descending

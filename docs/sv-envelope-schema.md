@@ -110,12 +110,12 @@ emits:
 | `ConditionalStatement:Unique` / `:Unique0` / `:Priority` / `:multi` / `:pattern` | `unique`/`priority` if, multiple `&&&` conditions, `matches` pattern |
 | `ConditionalExpression:multi` / `:pattern` | same, for `?:` |
 | `BlockStatement:JoinAll` / `:JoinAny` / `:JoinNone` | `fork ... join*` |
-| `BinaryExpression:<Op>` / `UnaryExpression:<Op>` | operator outside the M0 set, slang enum name (e.g. `BinaryExpression:Divide`, `UnaryExpression:Plus`) |
+| `BinaryExpression:<Op>` / `UnaryExpression:<Op>` | operator outside the M0 set, slang enum name (e.g. `BinaryExpression:Divide`) |
 | `ConversionExpression:width` | **width mismatch in source**: an implicit conversion that changes bit width (M0 has no implicit extension/truncation rules) |
 | `ConversionExpression:Explicit` / `:BitstreamCast` / `:StreamingConcat` | explicit casts |
 | `NamedValueExpression:<SymbolKind>` | identifier that does not name a variable/net (e.g. `:Parameter`) |
 | `PortSymbol:InOut` / `:Ref` | port directions outside in/out |
-| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:signed` / `:range` / `:type` | unsupported declared type: 2-state (`bit`/`int`), `signed`, packed range other than `[W-1:0]` (e.g. `[0:7]`, multi-dim), or a non-vector type (enum, struct, real, ...) |
+| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state outside the admitted unsigned output-port slice, packed range other than `[W-1:0]` (e.g. `[0:7]`, multi-dim), or a non-vector type (enum, struct, real, ...) |
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |
 
@@ -318,6 +318,11 @@ width is unknown and the parent keeps its structure (the interpreter goes
 Logical `&&`/`||` also produce a one-bit result. Each operand is converted by
 the four-state truthiness rule before the logical table is applied; they are
 not bitwise aliases for `&`/`|`.
+
+Unary `+` is admitted as a value-preserving identity over the same integral
+fragment, but is erased during extraction after its result and operand widths
+are checked. It therefore has no `Unary` operator tag in the envelope; the
+remaining unary tags are `~`, `!` and `-`.
 
 Runtime integral division uses `u/` for unsigned operands and `s/` when
 both elaborated operands are signed. Zero divisors and x/z operands give

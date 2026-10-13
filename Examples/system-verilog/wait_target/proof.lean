@@ -27,6 +27,12 @@ def timerWaiting (p : ProcState) : Bool :=
   | some (.timer deadline) => deadline == 7
   | _ => false
 
+def worldFramePreserved (before after : SvWorld) : Bool :=
+  before.time == after.time && before.signals == after.signals &&
+    before.nba == after.nba && before.reNba == after.reNba &&
+    before.future == after.future && before.out == after.out &&
+    before.curRegion == after.curRegion && before.k == after.k
+
 def edgeWorld : SvWorld :=
   { time := 4
   , procs := #[{ residual := [.skip], status := .suspended (.atEdge "clk" .pos),
@@ -67,6 +73,12 @@ def duplicateWorld : SvWorld :=
     (fun p => p.explicitlySuspended && p.residual == [.skip] &&
       w.nba.length == 1 && w.regionQ .active == []))
   == some (some true)
+
+#guard (worldOf (suspendProcess 0) edgeWorld).map
+  (worldFramePreserved edgeWorld) == some true
+
+#guard (worldOf (suspendProcess 0) timerWorld).map
+  (worldFramePreserved timerWorld) == some true
 
 #guard (worldOf (do suspendProcess 0; wakeEdges [("clk", .ofNat 1 0)] [("clk", .ofNat 1 1)]) edgeWorld).map
   (fun w => (w.procs[0]?).map

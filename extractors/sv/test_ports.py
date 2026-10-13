@@ -27,6 +27,24 @@ def nodes(value):
 
 
 class Ports(unittest.TestCase):
+    def test_signed_four_state_ports_are_admitted_with_metadata(self):
+        design = lower(
+            'module e(input logic signed [7:0] a, output logic signed [7:0] b); '
+            'assign b = a; endmodule'
+        )
+        ports = design["modules"][0]["ports"]
+        self.assertEqual([port.get("signed", False) for port in ports], [True, True])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_signed_relational_operator_keeps_signed_tag(self):
+        design = lower(
+            'module e(input logic signed [7:0] a, b, output logic lt); '
+            'assign lt = a < b; endmodule'
+        )
+        binary = next(node for node in nodes(design) if node.get("kind") == "Binary")
+        self.assertEqual(binary["op"], "s<")
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
     def test_two_state_output_port_is_admitted(self):
         design = lower(
             'module e(output bit a); initial begin if (a == 1\'b0) $finish; end endmodule'

@@ -63,6 +63,10 @@ inductive BinOp where
   | le    -- `<=`
   | gt    -- `>`
   | ge    -- `>=`
+  | slt   -- signed `<`
+  | sle   -- signed `<=`
+  | sgt   -- signed `>`
+  | sge   -- signed `>=`
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- M0 expressions. `lit` carries the fully resolved 4-state value (width
@@ -115,6 +119,7 @@ Ports have `isInput`/`isOutput` set; internal signals have neither. -/
 structure Decl where
   name : String
   width : Nat
+  isSigned : Bool := false
   isInput : Bool := false
   isOutput : Bool := false
   init : Option LVec := none

@@ -169,6 +169,8 @@ def SymBinOp.sym : SymBinOp → String
   | .m0 .caseEq => "===" | .m0 .caseNe => "!=="
   | .m0 .land => "&&" | .m0 .lor => "||" | .m0 .lt => "<"
   | .m0 .le => "<=" | .m0 .gt => ">" | .m0 .ge => ">="
+  | .m0 .slt => "s<" | .m0 .sle => "s<="
+  | .m0 .sgt => "s>" | .m0 .sge => "s>="
   | .mul => "*" | .div => "/" | .mod => "%" | .pow => "**"
   | .shl => "<<" | .shr => ">>" | .ashl => "<<<" | .ashr => ">>>"
   | .slt => "s<" | .sle => "s<=" | .sgt => "s>" | .sge => "s>="
@@ -464,10 +466,10 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .m0 .caseNe => .ok (b2i (a != b))
       | .m0 .land => .ok (b2i (a != 0 && b != 0))
       | .m0 .lor => .ok (b2i (a != 0 || b != 0))
-      | .m0 .lt | .slt => .ok (b2i (decide (a < b)))
-      | .m0 .le | .sle => .ok (b2i (decide (a ≤ b)))
-      | .m0 .gt | .sgt => .ok (b2i (decide (a > b)))
-      | .m0 .ge | .sge => .ok (b2i (decide (a ≥ b)))
+      | .m0 .lt | .m0 .slt | .slt => .ok (b2i (decide (a < b)))
+      | .m0 .le | .m0 .sle | .sle => .ok (b2i (decide (a ≤ b)))
+      | .m0 .gt | .m0 .sgt | .sgt => .ok (b2i (decide (a > b)))
+      | .m0 .ge | .m0 .sge | .sge => .ok (b2i (decide (a ≥ b)))
       | .ceq => .ok (b2i (a == b))
       | .cne => .ok (b2i (a != b))
       | .land => .ok (b2i (a != 0 && b != 0))
@@ -587,6 +589,7 @@ def selfWidth (env : IEnv) : PExpr → Option Nat
   | .binary op l r =>
       match op with
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth env l
       | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
@@ -626,6 +629,7 @@ def divOperandWidth (env : IEnv) : PExpr → Option Nat
   | .binary operator left right =>
       match operator with
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth env left
       | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
@@ -721,7 +725,8 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
               | .m0 bop => bop
               | _ => .add)  -- unreachable: this arm only matches `.m0`
             (instExpr env octx l) (instExpr env octx r)
-      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge =>
+      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge =>
           let octx := maxW (selfWidth env l) (selfWidth env r)
           .binary (match op with
               | .m0 bop => bop
@@ -868,12 +873,13 @@ def instDecl (env : IEnv) (pd : PDecl) : Res Decl :=
   | .ok w =>
       match pd.init with
       | none =>
-          .ok { name := pd.name, width := w, isInput := pd.isInput, isOutput := pd.isOutput }
+          .ok { name := pd.name, width := w, isSigned := false,
+                isInput := pd.isInput, isOutput := pd.isOutput }
       | some ie =>
           match instExpr env (some w) ie with
           | .lit v =>
-              .ok { name := pd.name, width := w, isInput := pd.isInput,
-                    isOutput := pd.isOutput, init := some v }
+              .ok { name := pd.name, width := w, isSigned := false,
+                    isInput := pd.isInput, isOutput := pd.isOutput, init := some v }
           | _ =>
               .unsupported s!"decl '{pd.name}': non-literal initializer outside the M0 tier"
 

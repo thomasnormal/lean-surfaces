@@ -343,13 +343,28 @@ The value rule has kernel-checked width and per-bit theorems.
 execution to the executor; it is not a new scheduler or a proof that
 `CycleAdequacy` has been discharged.
 
-This item does **not** admit signed M0 ports/nets, symbolic signed
-widening, reversed packed ranges, enums/structures/unpacked arrays,
+This item does **not** admit symbolic signed widening, reversed packed ranges,
+enums/structures/unpacked arrays,
 shifts, calls or general loops in the self-check tier. Integral explicit
 casts are addressed by the following item.
 Its time-zero runner remains initial-only; the separate scheduler-facing
 loader admits only the narrow timed `initial` subset documented above. Each
 other surface keeps its own admission boundary.
+
+### Signed M0 declarations and relational operators — 2026-10-13
+
+The scheduler-facing M0 envelope admits signed four-state scalar and
+descending zero-based packed `logic`/`wire` declarations, including ports.
+Declaration and identifier metadata retain `signed: true`; two signed
+operands lower order comparisons to `s<`, `s<=`, `s>` and `s>=`. The shared
+`LVec` rule compares two's-complement values at each operand width and keeps
+the existing all-x result for unknown operands. Unsigned declarations and
+operators are unchanged, and symbolic signed widening remains loud.
+
+`Examples/system-verilog/signed_m0/` is a real extracted module whose signed
+sum and comparison are checked through the M0 runner and Icarus differential
+harness. This is a declaration/operator surface extension, not a scheduler
+change.
 
 ### Two-state output ports — 2026-10-12
 

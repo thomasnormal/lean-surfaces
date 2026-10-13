@@ -134,9 +134,10 @@ def parsePortE (j : Json) : Except String Decl := do
   | "Port" =>
       let name ← getStrF j "name"
       let width ← getNatF j "width"
+      let isSigned := (getFOpt j "signed").bind (·.getBool?.toOption) |>.getD false
       match ← getStrF j "dir" with
-      | "in" => return { name, width, isInput := true }
-      | "out" => return { name, width, isOutput := true }
+      | "in" => return { name, width, isSigned, isInput := true }
+      | "out" => return { name, width, isSigned, isOutput := true }
       | d => .error s!"port '{name}': unknown dir '{d}'"
   | "Unsupported" =>
       .error s!"unsupported port ({(getStrF j "sv_kind").toOption.getD "?"})"
@@ -150,13 +151,14 @@ def parseDeclE (j : Json) : Except String Decl := do
   | "Var" | "Net" =>
       let name ← getStrF j "name"
       let width ← getNatF j "width"
+      let isSigned := (getFOpt j "signed").bind (·.getBool?.toOption) |>.getD false
       let init ← match getFOpt j "init" with
         | none => pure none
         | some ji =>
             match ← parseExpr ji with
             | .lit v => pure (some v)
             | _ => .error s!"decl '{name}': non-literal initializer (outside M0 harness support)"
-      return { name, width, init }
+      return { name, width, isSigned, init }
   | "Unsupported" =>
       .error s!"unsupported decl ({(getStrF j "sv_kind").toOption.getD "?"})"
   | k => .error s!"unknown decl kind '{k}'"

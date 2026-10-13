@@ -324,17 +324,14 @@ shortest path to a four-digit conformance suite.
    two continuous assigns to one variable — illegal, but every node is M0
    vocabulary). Any conformance harness built on envelopes must gate on
    `:type:` (or on slang diagnostics) before trusting a clean envelope.
-3. **Signedness gap at the expression level** (tier-boundary bug worth a
-   decision): `type_width` rejects *declared* signed types, but signed
-   **expressions** pass through — `if (-1 < 0)` extracts with no
-   `Unsupported` marker (`-1` is a signed 32-bit `IntegerLiteral`, `<`
-   compares signed in SV), yet `LeanModels/Sv/Basic.lean` comparisons are
-   unsigned, so the M0 evaluator would compute `-1 < 0` = false. The
-   envelope's `Literal`/`Binary` nodes carry no signedness. None of the 11
-   ch-4/6/11 unlockable files hits this (verified by inspection: their
-   comparisons are unsigned or non-negative), but the Adapter phase should
-   either mark signed-operand comparisons `Unsupported` in the extractor or
-   add signedness to the envelope before scaling to the corpus.
+3. **Signedness is explicit in the M0 envelope.** Signed four-state ports,
+   variables and nets retain `signed: true`; order comparisons whose two
+   elaborated operands are signed are emitted as `s<`, `s<=`, `s>` or `s>=`.
+   The M0 value core interprets those tags as two's-complement comparisons and
+   still collapses any x/z operand to x. Unsigned comparisons keep their
+   existing tags and behavior. This closes the former `type_width` refusal and
+   the `-1 < 0` mis-evaluation boundary without inferring signedness from
+   names at runtime.
 4. **`InvalidStatement` clusters on unknown system calls**: 797 simulation
    files carry it, 313 of them as their *only* adapter-residual blocker —
    overwhelmingly slang marking statements bad around system functions it

@@ -494,6 +494,23 @@ def land (a b : LVec) : Logic := Logic.and (truthy a) (truthy b)
 /-- Logical disjunction, §11.4.7, after vector-to-Boolean conversion. -/
 def lor (a b : LVec) : Logic := Logic.or (truthy a) (truthy b)
 
+/-! Signed relational operators use the same unknown collapse as their
+unsigned counterparts, but interpret each operand as a two's-complement
+value at its own width. -/
+
+def signedRelOp (cmp : Int → Int → Bool) (a b : LVec) : Logic :=
+  match a.toNat?, b.toNat? with
+  | some x, some y =>
+      let sx := (BitVec.ofNat a.width x).toInt
+      let sy := (BitVec.ofNat b.width y).toInt
+      if cmp sx sy then .l1 else .l0
+  | _, _ => .lx
+
+def slt (a b : LVec) : Logic := signedRelOp (· < ·) a b
+def sle (a b : LVec) : Logic := signedRelOp (· ≤ ·) a b
+def sgt (a b : LVec) : Logic := signedRelOp (· > ·) a b
+def sge (a b : LVec) : Logic := signedRelOp (· ≥ ·) a b
+
 /-- Bit-by-bit merge of the two arms of a conditional with ambiguous
 condition, §11.4.11: per-bit `Logic.merge` (equal known bits kept, all else
 `x`). Width mismatch (out of contract): all-x at the larger width. -/

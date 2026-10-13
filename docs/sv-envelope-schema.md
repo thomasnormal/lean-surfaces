@@ -143,32 +143,35 @@ the owning process body).
 
 ### Port
 
-Key order: `kind`, `span`, `name`, `dir`, `width`.
+Key order: `kind`, `span`, `name`, `dir`, `width`, optional `signed`.
 
 ```json
-{"kind": "Port", "span": {...}, "name": "a", "dir": "in", "width": 8}
+{"kind": "Port", "span": {...}, "name": "a", "dir": "in", "width": 8,
+ "signed": true}
 ```
 
 `dir` ∈ `"in" | "out"`. `width` is the elaborated bit width (scalar `logic` ⇒
 `1`). An unsigned 4-state scalar or `[W-1:0]` vector omits `two_state`;
 an unsigned 2-state **output** port carries `"two_state": true` and starts
-at zero. 2-state inputs, 2-state net outputs, signed, reversed-range, aggregate and other port
+at zero. 2-state inputs, 2-state net outputs, reversed-range, aggregate and other port
 types remain `Unsupported`: an unconnected input does not provide a faithful
-zero value at this tier. Whether the port binds to a variable or a net
+zero value at this tier. Signed four-state ports carry optional `signed: true`
+metadata. Whether the port binds to a variable or a net
 internally is not recorded (irrelevant at M0).
 
 ### Declarations
 
-Key order: `kind`, `span`, `name`, `width`, `init`.
+Key order: `kind`, `span`, `name`, `width`, optional `signed`, `init`.
 
 ```json
-{"kind": "Var", "span": {...}, "name": "a", "width": 8, "init": <expr> | null}
-{"kind": "Net", "span": {...}, "name": "w", "width": 8, "init": <expr> | null}
+{"kind": "Var", "span": {...}, "name": "a", "width": 8, "signed": true, "init": <expr> | null}
+{"kind": "Net", "span": {...}, "name": "w", "width": 8, "signed": true, "init": <expr> | null}
 ```
 
 `Var` = `logic`/`reg` variable; `Net` = `wire`. Same type restrictions as
-ports (4-state, unsigned, scalar or `[W-1:0]`; other net kinds, delays,
-signed/2-state/reversed-range/multi-dim types ⇒ `Unsupported`). `init` is the
+ports (4-state, scalar or `[W-1:0]`; other net kinds, delays,
+2-state/reversed-range/multi-dim types ⇒ `Unsupported`; signedness is retained
+as metadata). `init` is the
 declaration initializer, already width-resolved. LRM note: a **Var** initializer
 is a time-0 assignment (the M0 examples use exactly this); a **Net** initializer
 is per LRM an implicit *continuous assign* driver — no M0 example uses one, and
@@ -691,9 +694,12 @@ scheduler. Known signed decimal output uses the two's-complement integer
 and the existing natural field-width rule; unknown output retains the
 existing `x`/`X` rendering.
 
-This extension does not admit signed M0 ports/nets or symbolic signed
-resizing. Enums, structures, unpacked arrays, reversed packed ranges
-and unsupported operators remain loud in this surface.
+The legacy M0 envelope now also admits signed four-state ports, variables and
+nets. Their declarations and identifier nodes carry optional `signed: true`
+metadata; signed order comparisons use the `s<`/`s<=`/`s>`/`s>=` operator
+tags and the shared two's-complement value rule. Symbolic signed resizing is
+still loud. Enums, structures, unpacked arrays, reversed packed ranges and
+unsupported operators remain loud in this surface.
 
 ## Integral explicit conversions (2026-10-09)
 

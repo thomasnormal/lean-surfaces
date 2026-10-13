@@ -225,6 +225,10 @@ def evalBinOp : BinOp → LVec → LVec → LVec
   | .le, a, b => .ofLogic (a.le b)
   | .gt, a, b => .ofLogic (a.gt b)
   | .ge, a, b => .ofLogic (a.ge b)
+  | .slt, a, b => .ofLogic (a.slt b)
+  | .sle, a, b => .ofLogic (a.sle b)
+  | .sgt, a, b => .ofLogic (a.sgt b)
+  | .sge, a, b => .ofLogic (a.sge b)
 
 section CaseEqualityGuards
 

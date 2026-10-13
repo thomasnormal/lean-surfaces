@@ -256,13 +256,14 @@ def internal_error(exc):
 
 
 def type_width(t):
-    """(width, None) when t is an M0-supported type (unsigned 4-state scalar
-    or [W-1:0] packed vector of a 4-state scalar), else (None, reason)."""
+    """(width, None) for an M0-supported 4-state integral type.
+
+    Signedness is retained as envelope metadata; it does not change the
+    admitted scalar or descending packed-vector shape.
+    """
     try:
         if not t.isFourState:
             return None, "2state"
-        if t.isSigned:
-            return None, "signed"
         ct = t.canonicalType
         cname = type(ct).__name__
         if cname == "ScalarType":
@@ -1798,6 +1799,7 @@ def convert_port(sm, m):
         "dir": direction,
         "width": w,
     }
+    signed_metadata(port, m.type)
     if two:
         port["two_state"] = True
     return port
@@ -1838,13 +1840,13 @@ def convert_net(sm, m):
     if w is None:
         return unsupported(sm, m, "NetSymbol:" + reason)
     init = m.initializer
-    return {
+    return signed_metadata({
         "kind": "Net",
         "span": sym_span(sm, m),
         "name": m.name,
         "width": w,
         "init": convert_expr(sm, init) if init is not None else None,
-    }
+    }, m.type)
 
 
 # ---------------------------------------------------------------------------

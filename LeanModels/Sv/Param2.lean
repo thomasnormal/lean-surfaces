@@ -398,7 +398,10 @@ def instDivOperand2 (env : IEnv) (elems : List (String × Nat))
         (instDivOperand2 env elems false (divOperandWidth2 env elems right) right)
   | .binary (.m0 operator) left right =>
       let own := maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
-      let comparison := match operator with | .eq | .ne | .lt | .le | .gt | .ge => true | _ => false
+      let comparison := match operator with
+        | .eq | .ne | .lt | .le | .gt | .ge
+        | .slt | .sle | .sgt | .sge => true
+        | _ => false
       let common := if comparison then own else maxW2 ctx own
       let value := Expr2.binary operator
         (instDivOperand2 env elems signed common left) (instDivOperand2 env elems signed common right)

@@ -153,6 +153,10 @@ def parseBinOpName : String → Except String BinOp
   | "<=" | "LessThanEqual" | "Le" => .ok .le
   | ">" | "GreaterThan" | "Gt" => .ok .gt
   | ">=" | "GreaterThanEqual" | "Ge" => .ok .ge
+  | "s<" => .ok .slt
+  | "s<=" => .ok .sle
+  | "s>" => .ok .sgt
+  | "s>=" => .ok .sge
   | s => .error s!"unknown binary op {s.quote}"
 
 /-- Parse an expression node. `partial` because the recursion is over the
@@ -240,12 +244,13 @@ def parseDecl (j : Json) : Except String Decl :=
     let name ← getStrField j ["name"]
     withCtx name.quote do
       let width ← getNatField j ["width"]
+      let isSigned ← getBoolFieldD j ["signed", "is_signed", "isSigned"]
       let isInput ← getBoolFieldD j ["is_input", "isInput"]
       let isOutput ← getBoolFieldD j ["is_output", "isOutput"]
       let init ← match getOptField j ["init"] with
         | none => pure none
         | some ji => pure (some (← withCtx "init" (parseLVecValue width ji)))
-      return { name, width, isInput, isOutput, init }
+      return { name, width, isSigned, isInput, isOutput, init }
 
 /-- Parse the `design` payload (a single elaborated M0 module). A `kind`
 field, if present, must be `"Module"` or `"Design"`. -/

@@ -336,6 +336,22 @@
       ]
     },
     {
+      "name": "signed_m0_directed",
+      "example": "signed_m0",
+      "signals": [
+        "a",
+        "b",
+        "sum",
+        "lt"
+      ],
+      "stimulus": [
+        {"a": "11111111", "b": "00000001"},
+        {"a": "10000000", "b": "01111111"},
+        {"a": "00000001", "b": "11111111"},
+        {"a": "xxxxxxxx", "b": "00000001"}
+      ]
+    },
+    {
       "name": "logical_ops_directed",
       "example": "logical_ops",
       "signals": [

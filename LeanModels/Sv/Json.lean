@@ -132,6 +132,14 @@ def parseBinOpName : String → Except String BinOp
   | "u**s" => .ok (.pow false true)
   | "s**u" => .ok (.pow true false)
   | "s**s" => .ok (.pow true true)
+  | "<<" | "u<<" | "LogicalShiftLeft" => .ok (.shl false)
+  | "s<<" => .ok (.shl true)
+  | ">>" | "u>>" | "LogicalShiftRight" => .ok (.shr false)
+  | "s>>" => .ok (.shr true)
+  | "<<<" | "u<<<" | "ArithmeticShiftLeft" => .ok (.ashl false)
+  | "s<<<" => .ok (.ashl true)
+  | "u>>>" => .ok (.ashr false)
+  | "s>>>" | "ArithmeticShiftRight" => .ok (.ashr true)
   | "&" | "BinaryAnd" | "And" => .ok .and
   | "|" | "BinaryOr" | "Or" => .ok .or
   | "^" | "BinaryXor" | "Xor" => .ok .xor

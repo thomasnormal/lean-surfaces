@@ -160,6 +160,10 @@ def SymBinOp.sym : SymBinOp → String
   | .m0 .rem => "u%" | .m0 .srem => "s%"
   | .m0 (.pow signedBase signedExponent) =>
       (if signedBase then "s" else "u") ++ "**" ++ (if signedExponent then "s" else "u")
+  | .m0 (.shl signedLeft) => (if signedLeft then "s" else "u") ++ "<<"
+  | .m0 (.shr signedLeft) => (if signedLeft then "s" else "u") ++ ">>"
+  | .m0 (.ashl signedLeft) => (if signedLeft then "s" else "u") ++ "<<<"
+  | .m0 (.ashr signedLeft) => (if signedLeft then "s" else "u") ++ ">>>"
   | .m0 .and => "&" | .m0 .or => "|"
   | .m0 .xor => "^" | .m0 .eq => "==" | .m0 .ne => "!=" | .m0 .lt => "<"
   | .m0 .le => "<=" | .m0 .gt => ">" | .m0 .ge => ">="
@@ -466,6 +470,8 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem =>
           .error "vector quotient/remainder requires operand widths"
       | .m0 (.pow ..) => .error "vector power requires operand widths"
+      | .m0 (.shl ..) | .m0 (.shr ..) | .m0 (.ashl ..) | .m0 (.ashr ..) =>
+          .error "vector shift requires operand widths"
       | .div => if b == 0 then .error "division by zero" else .ok (a.tdiv b)
       | .mod => if b == 0 then .error "modulo by zero" else .ok (a.tmod b)
       | .pow =>
@@ -577,7 +583,8 @@ def selfWidth (env : IEnv) : PExpr → Option Nat
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth env l
-      | .m0 (.pow ..) => divOperandWidth env l
+      | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
+      | .m0 (.ashl ..) | .m0 (.ashr ..) => divOperandWidth env l
       | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem | .div | .mod =>
           maxW (divOperandWidth env l) (divOperandWidth env r)
       | _ => maxW (selfWidth env l) (selfWidth env r)
@@ -615,7 +622,8 @@ def divOperandWidth (env : IEnv) : PExpr → Option Nat
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth env left
-      | .m0 (.pow ..) => divOperandWidth env left
+      | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
+      | .m0 (.ashl ..) | .m0 (.ashr ..) => divOperandWidth env left
       | _ => maxW (divOperandWidth env left) (divOperandWidth env right)
   | .ternary _ left right => maxW (divOperandWidth env left) (divOperandWidth env right)
   | .concat parts => divOperandWidthSum env parts
@@ -685,6 +693,11 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
           .binary (.pow signedBase signedExponent)
             (instDivOperand env signedBase baseContext l)
             (instDivOperand env signedExponent (divOperandWidth env r) r)
+      | .m0 operator@(.shl signedLeft) | .m0 operator@(.shr signedLeft)
+      | .m0 operator@(.ashl signedLeft) | .m0 operator@(.ashr signedLeft) =>
+          let leftContext := maxW ctx (divOperandWidth env l)
+          .binary operator (instDivOperand env signedLeft leftContext l)
+            (instDivOperand env false (divOperandWidth env r) r)
       | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem =>
           let octx := maxW ctx (maxW (divOperandWidth env l) (divOperandWidth env r))
           .binary (match op with
@@ -769,6 +782,14 @@ def instDivOperand (env : IEnv) (signed : Bool) (ctx : Option Nat) : PExpr → E
       .binary (.pow signed signedExponent)
         (instDivOperand env signed (maxW ctx (divOperandWidth env left)) left)
         (instDivOperand env signedExponent (divOperandWidth env right) right)
+  | .binary (.m0 operator@(.shl _)) left right
+  | .binary (.m0 operator@(.shr _)) left right
+  | .binary (.m0 operator@(.ashl _)) left right
+  | .binary (.m0 operator@(.ashr _)) left right =>
+      let shifted := match operator with | .ashr _ => .ashr signed | _ => operator
+      .binary shifted
+        (instDivOperand env signed (maxW ctx (divOperandWidth env left)) left)
+        (instDivOperand env false (divOperandWidth env right) right)
   | .binary (.m0 operator) left right =>
       let own := maxW (divOperandWidth env left) (divOperandWidth env right)
       let comparison := match operator with | .eq | .ne | .lt | .le | .gt | .ge => true | _ => false

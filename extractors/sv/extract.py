@@ -74,6 +74,10 @@ BINARY_OPS = {
     BinaryOperator.Divide: "/",
     BinaryOperator.Mod: "%",
     BinaryOperator.Power: "**",
+    BinaryOperator.LogicalShiftLeft: "<<",
+    BinaryOperator.LogicalShiftRight: ">>",
+    BinaryOperator.ArithmeticShiftLeft: "<<<",
+    BinaryOperator.ArithmeticShiftRight: ">>>",
     BinaryOperator.BinaryAnd: "&",
     BinaryOperator.BinaryOr: "|",
     BinaryOperator.BinaryXor: "^",
@@ -810,6 +814,8 @@ def _convert_unary_expr(sm, e):
 def _binary_width_ok(sym, width, left_width, right_width):
     if sym == "**":
         return left_width is None or left_width == width
+    if sym in ("<<", ">>", "<<<", ">>>"):
+        return left_width is None or left_width == width
     if sym in COMPARISON_SYMS:
         return width == 1 and (
             left_width is None or right_width is None or left_width == right_width
@@ -852,7 +858,7 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
-    if sym in ("/", "%", "**") and _SYM is not None and not _SYM.symctx:
+    if sym in ("/", "%", "**", "<<", ">>", "<<<", ">>>") and _SYM is not None and not _SYM.symctx:
         left = _convert_division_operand(sm, e.left)
         right = _convert_division_operand(sm, e.right)
     else:
@@ -876,6 +882,10 @@ def _convert_binary_expr(sm, e):
         if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
             return unsupported(sm, e, "BinaryExpression:Power-type")
         sym = ("s" if e.left.type.isSigned else "u") + "**" + ("s" if e.right.type.isSigned else "u")
+    if sym in ("<<", ">>", "<<<", ">>>") and not (_SYM is not None and _SYM.symctx):
+        if not (e.type.isIntegral and e.left.type.isIntegral and e.right.type.isIntegral):
+            return unsupported(sm, e, "BinaryExpression:Shift-type")
+        sym = ("s" if e.left.type.isSigned else "u") + sym
     if sym in ORDER_CMP_SYMS:
         try:
             if e.left.type.isSigned and e.right.type.isSigned:
@@ -1498,6 +1508,8 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             sym = "s/" if expr.left.type.isSigned and rhs.type.isSigned else "u/"
         if sym == "%":
             sym = "s%" if expr.left.type.isSigned and rhs.type.isSigned else "u%"
+        if sym in ("<<", ">>", "<<<", ">>>"):
+            sym = ("s" if expr.left.type.isSigned else "u") + sym
         value = {
             "kind": "Binary",
             "span": node_span(sm, expr),
@@ -1995,6 +2007,18 @@ def contains_power(node):
     return False
 
 
+def contains_shift(node):
+    if isinstance(node, dict):
+        return (node.get("kind") == "Binary" and node.get("op") in (
+            "<<", ">>", "<<<", ">>>", "u<<", "s<<", "u>>", "s>>",
+            "u<<<", "s<<<", "u>>>", "s>>>")) or any(
+            contains_shift(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_shift(value) for value in node)
+    return False
+
+
 def contains_loop(node):
     if isinstance(node, dict):
         return node.get("kind") in ("For", "Repeat", "Break", "Continue") or any(
@@ -2061,6 +2085,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Power:invalid-compilation",
                                   "frontend rejected source containing power"))
+    if (any(contains_shift(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Shift:invalid-compilation",
+                                  "frontend rejected source containing a shift"))
     if (any(contains_loop(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Loop:invalid-compilation",
@@ -3256,6 +3284,9 @@ def process_symbolic(top, sources, incdirs, out_path):
             if contains_power(module) and nerr:
                 module["others"].append(unsupported(sm, comp, "Power:invalid-compilation",
                                                   "frontend rejected source containing power"))
+            if contains_shift(module) and nerr:
+                module["others"].append(unsupported(sm, comp, "Shift:invalid-compilation",
+                                                  "frontend rejected source containing a shift"))
         except Exception as exc:
             module = internal_error(exc)
         envelope = {

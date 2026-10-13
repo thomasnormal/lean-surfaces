@@ -338,6 +338,40 @@ def srem (left right : LVec) : LVec :=
       else ofBitVec ((BitVec.ofNat width numerator).srem (BitVec.ofNat width denominator))
   | _, _ => xVec width
 
+/-! ## Integral shifts (§11.4.10)
+
+The shift amount is self-determined. An unknown amount produces all x; an
+amount at least the left operand width produces zeros for logical and left
+shifts, or sign-fill for arithmetic right shift. The left operand's x/z bits
+are otherwise moved, not collapsed. -/
+
+def shiftAmount? (value : LVec) : Option Nat := value.toNat?
+
+def shl (left right : LVec) : LVec :=
+  match shiftAmount? right with
+  | none => xVec left.width
+  | some amount =>
+      ⟨Array.ofFn (n := left.width) fun index =>
+        if index.val < amount then .l0
+        else left.bits[index.val - amount]?.getD .l0⟩
+
+def shr (left right : LVec) : LVec :=
+  match shiftAmount? right with
+  | none => xVec left.width
+  | some amount =>
+      ⟨Array.ofFn (n := left.width) fun index =>
+        left.bits[index.val + amount]?.getD .l0⟩
+
+def ashl (left right : LVec) : LVec := shl left right
+
+def ashr (signedLeft : Bool) (left right : LVec) : LVec :=
+  match shiftAmount? right with
+  | none => xVec left.width
+  | some amount =>
+      let fill := if signedLeft then left.bits.back?.getD .l0 else .l0
+      ⟨Array.ofFn (n := left.width) fun index =>
+        left.bits[index.val + amount]?.getD fill⟩
+
 /-- Structurally bounded modular exponentiation by repeated squaring. -/
 def powMod (width base exponent : Nat) : Nat → Nat
   | 0 => 1 % 2 ^ width

@@ -90,6 +90,9 @@ private def maxW2 : Option Nat → Option Nat → Option Nat
   | none, some b => some b
   | none, none => none
 
+@[simp] theorem maxW2_some (left right : Nat) :
+    maxW2 (some left) (some right) = some (max left right) := rfl
+
 mutual
 /-- `selfWidth` twin that also knows the semantic-tier nodes (element
 widths from `elems`). -/
@@ -110,7 +113,8 @@ def selfWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Option Na
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth2 env elems l
-      | .m0 (.pow ..) => divOperandWidth2 env elems l
+      | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
+      | .m0 (.ashl ..) | .m0 (.ashr ..) => divOperandWidth2 env elems l
       | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem | .div | .mod =>
           maxW2 (divOperandWidth2 env elems l) (divOperandWidth2 env elems r)
       | _ =>
@@ -165,7 +169,8 @@ def divOperandWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Opt
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth2 env elems left
-      | .m0 (.pow ..) => divOperandWidth2 env elems left
+      | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
+      | .m0 (.ashl ..) | .m0 (.ashr ..) => divOperandWidth2 env elems left
       | _ => maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
   | .ternary _ left right => maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
   | .concat parts => divOperandWidthSum2 env elems parts
@@ -256,6 +261,11 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
           .binary (.pow signedBase signedExponent)
             (instDivOperand2 env elems signedBase baseContext l)
             (instDivOperand2 env elems signedExponent (divOperandWidth2 env elems r) r)
+      | .m0 operator@(.shl signedLeft) | .m0 operator@(.shr signedLeft)
+      | .m0 operator@(.ashl signedLeft) | .m0 operator@(.ashr signedLeft) =>
+          let leftContext := maxW2 ctx (divOperandWidth2 env elems l)
+          .binary operator (instDivOperand2 env elems signedLeft leftContext l)
+            (instDivOperand2 env elems false (divOperandWidth2 env elems r) r)
       | .m0 .div | .m0 .sdiv | .m0 .rem | .m0 .srem =>
           let octx := maxW2 ctx
             (maxW2 (divOperandWidth2 env elems l) (divOperandWidth2 env elems r))
@@ -378,6 +388,14 @@ def instDivOperand2 (env : IEnv) (elems : List (String × Nat))
       .binary (.pow signed signedExponent)
         (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems left)) left)
         (instDivOperand2 env elems signedExponent (divOperandWidth2 env elems right) right)
+  | .binary (.m0 operator@(.shl _)) left right
+  | .binary (.m0 operator@(.shr _)) left right
+  | .binary (.m0 operator@(.ashl _)) left right
+  | .binary (.m0 operator@(.ashr _)) left right =>
+      let shifted := match operator with | .ashr _ => .ashr signed | _ => operator
+      .binary shifted
+        (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems left)) left)
+        (instDivOperand2 env elems false (divOperandWidth2 env elems right) right)
   | .binary (.m0 operator) left right =>
       let own := maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
       let comparison := match operator with | .eq | .ne | .lt | .le | .gt | .ge => true | _ => false

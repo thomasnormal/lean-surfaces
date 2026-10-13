@@ -290,12 +290,20 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Ident` | `kind`, `span`, `width`, `name` (string) | declared width of the named var/net/port |
 | `Literal` | `kind`, `span`, `width`, `bits` (string) | `len(bits) == width` |
 | `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"-"`), `operand` (expr) | `~`,`-`: `width == operand.width`; `!`: `width == 1` |
-| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | `+ - * u/ s/ u% s% & \| ^`: `width == left.width == right.width`; comparisons: `width == 1` and `left.width == right.width` |
+| `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | arithmetic/bitwise operators: common-width children; shifts: `width == left.width`, with a self-determined right operand; comparisons: `width == 1` and equal child widths |
 | `Ternary` | `kind`, `span`, `width`, `cond`, `then`, `else` (exprs) | `width == then.width == else.width`; `cond` any width |
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
 `Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
+`<<` `>>` `<<<` and `>>>` are integral shifts (§11.4.10). Their envelope
+operators are typed as `u<<`/`s<<`, `u>>`/`s>>`, `u<<<`/`s<<<`, and
+`u>>>`/`s>>>`; the prefix records the signedness of the left operand.
+The right operand is always unsigned and self-determined. The result width
+is the left operand width, including assignment-context widening before the
+shift and destination narrowing after it. Unknown shift amounts produce all
+x; overshifts zero-fill, except signed `>>>`, which sign-fills.
+
 `==`/`!=` are *logical* equality — case equality `===` is
 `BinaryExpression:CaseEquality` → Unsupported). The width invariants hold
 whenever the children are supported nodes — the extractor enforces them and

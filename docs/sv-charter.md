@@ -231,6 +231,29 @@ Fresh extraction over the paired 21,934-file corpus rises from 1,764 to
 These are admission measurements, not a claim that every clean row executes.
 The detailed contract is `docs/sv-power.md`.
 
+## Integral shifts (IEEE 1800-2023, 11.4.10)
+
+Runtime `<<`, `>>`, `<<<` and `>>>` now use the shared four-state shift
+primitives in M0, the self-check executor and both symbolic instantiation
+paths. Shift amounts are self-determined and unsigned; an unknown amount
+produces all x. Left and logical-right overshifts zero-fill, while signed
+arithmetic-right overshifts sign-fill. The result width is the left operand
+width, so assignment context widens that operand before shifting and the
+destination narrows afterward. The extractor records independent signedness
+tags for the left operand; the shift amount never controls sign fill.
+
+Plain scalar compound shifts lower to the same typed binary nodes. Selected
+targets and invalid frontend compilations remain loud. Constant-position
+shifts retain symbolic integer elaboration. `Examples/system-verilog/shifts/`
+contains the generated envelope and the width-parametric proof; the detailed
+contract is `docs/sv-shifts.md`.
+
+The focused extractor battery has 14 passing tests. On the paired 21,952-file
+census, clean extraction rises **2,383 → 2,448** with 65 gains and no losses;
+all 65 newly clean rows match the two executable validation paths used for
+the measurement. This is a selected-family result, not whole-corpus runtime
+conformance.
+
 ## Integral multiplication (IEEE 1800-2023, 11.4.3 and 11.8.2)
 
 Runtime `*` reaches the existing four-state `LVec.mul` authority through

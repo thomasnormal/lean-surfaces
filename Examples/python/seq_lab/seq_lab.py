@@ -417,3 +417,7 @@ def invert_mask(a):
 def bitwise_all(a, b):
     # the four together, in the shape hashing code writes them
     return ((a ^ b) >> 2) & ~(+b)
+
+
+def matmul_type_error(a, b):
+    return a @ b

@@ -124,6 +124,8 @@ and pass 5's refusal is retired here (docs/memory-model.md §bitwise
 #py_check seq_lab.bor(0, 0) = 0
 #py_check seq_lab.bor_aug(5) = true
 #py_check seq_lab.bor_aug(2) = false
+#py_check seq_lab.matmul_type_error(1, 2) raises
+  (.typeError "unsupported operand type(s) for @: 'int' and 'int'")
 
 #guard callFunction seq_lab "bor" #[.bool true, .bool false] 4096 == .ok (.bool true)
 #guard callFunction seq_lab "bor" #[.bool true, .int 2] 4096 == .ok (.int 3)

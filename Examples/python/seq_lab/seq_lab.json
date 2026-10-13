@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "Examples/python/seq_lab/seq_lab.py",
-  "source_sha256": "92ba673eace9559c8fb6519dcaba41c55e36fabdeeffb51bd26907bdba942aa9",
+  "source_sha256": "7698235192863c48ddbae211e4f0b59ae035f54add1a220c72f23923dce39343",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "seq_lab \u2014 pass 3's value tiers at FUNCTION level (checks-only).\n\nTuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),\nand range as an immediate value (materialize-per-use). Range equality now\ncompares sequences without materialization; the remaining loud frontier is\npinned by refusal probes: boundary and list slices. String repetition now\nhas its own acceptance tier.\n"
+            "value": "seq_lab \u2014 pass 3's value tiers at FUNCTION level (checks-only).\n\nTuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),\nand range as an immediate value (materialize-per-use). Range equality now\ncompares sequences without materialization; range values cross the public\nboundary, while list slices remain pinned by a refusal probe. String repetition now\nhas its own acceptance tier.\n"
           }
         }
       },
@@ -9262,6 +9262,79 @@
                     "id": "b"
                   }
                 }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 422,
+          "col_offset": 0,
+          "end_lineno": 423,
+          "end_col_offset": 16
+        },
+        "name": "matmul_type_error",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 422,
+              "col_offset": 22,
+              "end_lineno": 422,
+              "end_col_offset": 23
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 422,
+              "col_offset": 25,
+              "end_lineno": 422,
+              "end_col_offset": 26
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 423,
+              "col_offset": 4,
+              "end_lineno": 423,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 423,
+                "col_offset": 11,
+                "end_lineno": 423,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 423,
+                  "col_offset": 11,
+                  "end_lineno": 423,
+                  "end_col_offset": 12
+                },
+                "id": "a"
+              },
+              "op": "MatMult",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 423,
+                  "col_offset": 15,
+                  "end_lineno": 423,
+                  "end_col_offset": 16
+                },
+                "id": "b"
               }
             }
           }

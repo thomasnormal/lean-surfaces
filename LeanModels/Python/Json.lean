@@ -80,6 +80,7 @@ def parseBinOpName : String → Except String BinOp
   | "BitOr" => .ok .bitOr
   | "BitXor" => .ok .bitXor
   | "BitAnd" => .ok .bitAnd
+  | "MatMult" => .ok .matMult
   | s => .error s!"unknown BinOp name {s.quote}"
 
 def parseUnaryOpName : String → Except String UnaryOp

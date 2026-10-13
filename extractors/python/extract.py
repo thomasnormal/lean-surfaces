@@ -81,7 +81,8 @@ ALLOWED_BINOPS = ("Add", "Sub", "Mult", "Div", "FloorDiv", "Mod", "Pow",
                   # over unbounded ints and cost the proof layer nothing
                   # (`fuelMono`/`worldInv`/`clockErase` never case on the
                   # operator — the `BinOp:BitAnd` precedent).
-                  "LShift", "RShift", "BitOr", "BitXor", "BitAnd")
+                  "LShift", "RShift", "BitOr", "BitXor", "BitAnd",
+                  "MatMult")
 ALLOWED_UNARYOPS = ("USub", "Not", "UAdd", "Invert")
 ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
                   "Is", "IsNot", "In", "NotIn")

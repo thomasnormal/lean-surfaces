@@ -1700,10 +1700,8 @@ paragraph.)*
 The grammar census (`harness/refusal_census.py --grammar`,
 docs/completeness.md) ran one witness per production of CPython 3.9's
 `ast` grammar and measured four operators REFUSED whose siblings ran.
-The completing landing, and it completes two inventories: `BinOp` is now
-missing only `Div` and `MatMult` (both out by KIND — a float result and
-an operand type nothing in or out of tier has), and `UnaryOp` is
-complete.
+The completing landing closed the remaining grammar-facing operator gap: `MatMult`
+is admitted as a faithful scalar `TypeError` below, and `UnaryOp` is complete.
 
 **Why each was missing is a different story, and none of them is "it is
 hard".**
@@ -1742,6 +1740,11 @@ hard".**
   boolness (`+True == 1`, `~True == -2`): `bool` has no `__pos__` or
   `__invert__`, so int's slot runs. A `.ref` operand is refused loudly,
   exactly as unary `-` already did.
+* **`@` is a faithful scalar refusal**: the admitted immediate operands
+  have no matrix-multiplication protocol, so CPython raises
+  `TypeError("unsupported operand type(s) for @: 'int' and 'int'")` for the
+  grammar witness. Heap operands remain loud because their user-defined
+  `__matmul__` protocol is outside this tier.
 * **`>>=` and `^=` arrive free**: one `ALLOWED_BINOPS` entry is consulted
   by the `BinOp` clause AND the `AugAssign` clause, as `|=` and `&=`
   were.

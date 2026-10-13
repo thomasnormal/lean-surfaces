@@ -863,8 +863,8 @@ w("op.BitOr", "print(5 | 2)\n", "MATCH", "")
 w("op.BitXor", "print(5 ^ 3)\n", "MATCH",
   "was REFUSE — the one witness that found the whole rung; §L39 landed it")
 w("op.BitAnd", "print(5 & 3)\n", "MATCH", "")
-w("op.MatMult", "print(1 @ 2)\n", "REFUSE",
-  "FAITHFUL: no operand type in or out of tier has it (CPython TypeError)")
+w("op.MatMult", "print(1 @ 2)\n", "MATCH",
+  "faithful TypeError for the admitted scalar operand tier")
 
 # --- unaryop (4) -----------------------------------------------------------
 w("op.UAdd", "print(+3)\n", "MATCH", "was REFUSE; §L39 rung 1")

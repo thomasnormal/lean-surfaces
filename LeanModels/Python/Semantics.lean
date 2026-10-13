@@ -241,6 +241,7 @@ def BinOp.symbol : BinOp → String
   | .bitOr => "|"
   | .bitXor => "^"
   | .bitAnd => "&"
+  | .matMult => "@"
 
 /-- Python surface syntax of a comparison operator (error messages). -/
 def CmpOp.symbol : CmpOp → String
@@ -1212,6 +1213,9 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         (match a, b with
          | .bool p, .bool q => .ok (.bool (p && q))
          | _, _ => .ok (.int (intAnd x y)))
+    | .matMult =>
+        .exn (.typeError
+          s!"unsupported operand type(s) for @: '{a.typeName}' and '{b.typeName}'")
   | _, _ =>
     match op, a, b with
     | .div, .float left, .float right =>
@@ -1258,6 +1262,9 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | op, _, .ref _ =>
         .unsupported
           s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
+    | .matMult, a, b =>
+        .exn (.typeError
+          s!"unsupported operand type(s) for @: '{a.typeName}' and '{b.typeName}'")
     | .add, .float _, _ | .add, _, .float _ => evalFloatArithmetic .add a b
     | .sub, .float _, _ | .sub, _, .float _ => evalFloatArithmetic .sub a b
     | .mult, .float _, _ | .mult, _, .float _ => evalFloatArithmetic .mult a b

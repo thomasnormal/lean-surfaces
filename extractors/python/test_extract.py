@@ -873,6 +873,11 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["func"]["id"], "set")
         self.assertEqual(e["args"][0]["kind"], "GeneratorExp")
 
+    def test_matmul_is_structured(self):
+        e = self._first_return_expr("def f(a, b):\n    return a @ b\n")
+        self.assertEqual(e["kind"], "BinOp")
+        self.assertEqual(e["op"], "MatMult")
+
     def test_attribute_load_is_structured(self):
         e = self._first_return_expr(
             "def f(pos):\n    return pos.score\n")

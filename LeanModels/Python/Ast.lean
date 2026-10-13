@@ -27,7 +27,7 @@ namespace LeanModels.Python
 `BitAnd` (the tail batch — docs/memory-model.md §bitwise `&`). -/
 inductive BinOp where
   | add | sub | mult | div | floorDiv | mod | pow | lshift | rshift
-  | bitOr | bitXor | bitAnd
+  | bitOr | bitXor | bitAnd | matMult
 deriving Repr, Inhabited, BEq, DecidableEq
 
 

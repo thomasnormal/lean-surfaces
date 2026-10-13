@@ -591,6 +591,7 @@
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "invert", "args": [[5], [-1], [0], [-6], [{"t": "bool", "v": true}], [{"t": "bool", "v": false}], [{"t": "str", "v": "a"}], [{"t": "none"}]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "invert_mask", "args": [[15], [-1], [0]], "expect": "match"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "bitwise_all", "args": [[12, 10], [-7, 3], [0, 0]], "expect": "match"},
+  {"file": "Examples/python/seq_lab/seq_lab.py", "function": "matmul_type_error", "args": [[1, 2], [true, false]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_a", "args": [[]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_b", "args": [[]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_total", "args": [[]], "expect": "match"},

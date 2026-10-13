@@ -357,9 +357,9 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         refuseOrder "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §effects"
   else if fname == "dict" then
     -- `dict()` is the empty mapping and `dict(d)` is CPython's shallow COPY (a
-    -- fresh object, never an alias — the whole point of writing it). A pairs
-    -- ITERABLE stays loud: rebuilding it needs the per-insert hashability and
-    -- duplicate-key rules, and guessing them would be silent corruption. The
+    -- fresh object, never an alias — the whole point of writing it). Plain
+    -- sequence inputs stay loud; the generator form used by dict
+    -- comprehensions is drained and passed through the ordered builder. The
     -- keyword form `dict(k=v, …)` lives in the kwargs arm.
     match vs with
     | [] => do let a ← heapPush (.dict #[] 0); pure (.ref a)
@@ -371,8 +371,12 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
               let a ← heapPush (.dict entries 0); pure (.ref a)
           | some (.list _) =>
               refuse "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
-          | some (.generator ..) =>
-              refuse "dict() over a generator of pairs is outside the tier (docs/memory-model.md)"
+          | some (.generator ..) => do
+              let vals ← inFrame (K.drainIter ad)
+              let items ← liftRes (dictPairs (← frameHeap) 0 vals)
+              let entries ← dictBuildM items
+              let a ← heapPush (.dict entries.toArray 0)
+              pure (.ref a)
           | some (.pyset _) =>
               raisePy (.typeError "cannot convert dictionary update sequence element #0 to a sequence")
           | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")

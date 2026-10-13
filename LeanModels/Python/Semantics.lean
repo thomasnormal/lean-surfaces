@@ -2558,6 +2558,34 @@ def dictBuild (h : Heap) (acc : List (RVal × RVal)) : List (RVal × RVal) → R
     if hashableKey k then dictBuild h (dictStore acc k v).1 rest
     else keyRefusal h k
 
+def dictPairValues (h : Heap) : RVal → Option (List RVal)
+  | .tuple xs => some xs.toList
+  | .ntuple _ _ xs => some xs.toList
+  | .listV xs => some xs.toList
+  | .str s => some (strCharVals s)
+  | .ref a =>
+      match Heap.get? h a with
+      | some (.list xs) => some xs.toList
+      | _ => Option.none
+  | _ => Option.none
+
+def dictPair (h : Heap) (index : Nat) (v : RVal) : Res (RVal × RVal) :=
+  match dictPairValues h v with
+  | Option.none => .exn (.typeError
+      s!"cannot convert dictionary update sequence element #{index} to a sequence")
+  | some xs =>
+      match xs with
+      | [k, value] => .ok (k, value)
+      | _ => .exn (.valueError
+          s!"dictionary update sequence element #{index} has length {xs.length}; 2 is required")
+
+def dictPairs (h : Heap) : Nat → List RVal → Res (List (RVal × RVal))
+  | _, [] => .ok []
+  | index, v :: rest => do
+      let pair ← dictPair h index v
+      let pairs ← dictPairs h (index + 1) rest
+      return pair :: pairs
+
 /-- `o[k]` on a heap object. Dicts: unhashable keys raise BEFORE any scan
 (even on an empty dict); a missing key is a faithful `KeyError`. Lists
 (H2): int/bool index, negative indices from the end, out of range a
@@ -5982,11 +6010,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- 2026-08-13: the dict CONSTRUCTOR, positional forms.
                     -- `dict()` is the empty mapping and `dict(d)` is
                     -- CPython's shallow COPY (a fresh object, never an
-                    -- alias — the whole point of writing it). A pairs
-                    -- ITERABLE stays loud: rebuilding it needs the
-                    -- per-insert hashability and duplicate-key rules, and
-                    -- guessing them would be silent corruption. The
-                    -- keyword form `dict(k=v, …)` is in the kwargs arm.
+                    -- alias — the whole point of writing it). Plain sequence
+                    -- inputs stay loud; the generator form used by dict
+                    -- comprehensions is drained and passed through the
+                    -- ordered builder. The keyword form `dict(k=v, …)` is in
+                    -- the kwargs arm.
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     (match vs with
                      | [] => allocDictRun st #[]
@@ -5998,7 +6026,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.list _) =>
                              .unsupported "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
                            | some (.generator ..) =>
-                             .unsupported "dict() over a generator of pairs is outside the tier (docs/memory-model.md)"
+                             Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                             Run.liftRes st (dictPairs st.world.heap 0 vals) ⤳ fun st items =>
+                             Run.liftRes st (dictBuild st.world.heap [] items) ⤳ fun st entries =>
+                             allocDictRun st entries.toArray
                            | some (.pyset _) =>
                              .exn st (.typeError "cannot convert dictionary update sequence element #0 to a sequence")
                            | some (.instance _ _) =>

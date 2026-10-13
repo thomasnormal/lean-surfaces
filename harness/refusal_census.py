@@ -339,7 +339,7 @@ print(len({x for x in [1, 2]}))
 """, "MATCH", "lowered to set(generator) at ingestion")
 w("expr.DictComp", """
 print({x: x for x in [1, 2]})
-""", "REFUSE", "")
+""", "MATCH", "lowered to dict(generator) at ingestion")
 w("expr.GeneratorExp", """
 print(sum(x for x in [1, 2]))
 """, "MATCH", "lowered to a synthesized generator function")

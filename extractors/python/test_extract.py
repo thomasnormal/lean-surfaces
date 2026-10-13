@@ -873,6 +873,21 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["func"]["id"], "set")
         self.assertEqual(e["args"][0]["kind"], "GeneratorExp")
 
+    def test_dict_comprehension_lowers_to_dict_generator(self):
+        e = self._first_return_expr(
+            "def f(xs):\n    return {x: x + 1 for x in xs}\n")
+        self.assertEqual(e["kind"], "Call")
+        self.assertEqual(e["func"]["id"], "dict")
+        self.assertEqual(e["args"][0]["kind"], "GeneratorExp")
+
+    def test_dict_comprehension_shadow_stays_unsupported(self):
+        env = self._envelope_of(
+            "dict = 0\n"
+            "def f(xs):\n    return {x: x for x in xs}\n")
+        e = env["module"]["body"][1]["body"][0]["value"]
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "DictComp:shadowed")
+
     def test_matmul_is_structured(self):
         e = self._first_return_expr("def f(a, b):\n    return a @ b\n")
         self.assertEqual(e["kind"], "BinOp")

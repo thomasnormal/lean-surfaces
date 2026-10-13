@@ -204,10 +204,12 @@ cycle DETECTION, never by running out of fuel).
   KEY cursor as a first-class object), and `next(<genexp over the keys with
   a filter>)`. Loud: the views as
   FIRST-CLASS values (`k = d.keys()` held across statements, set algebra,
-  `reversed`), `.update/.pop/…`, comprehensions, `**kwargs`, `|`,
+  `reversed`), `.update/.pop/…`, `**kwargs`, `|`,
   returning a dict through the boundary, same-size key-set churn
   during iteration, and `iter` over any NON-dict receiver (CPython has a
   distinct iterator type per receiver — each is its own inch).
+  Single-clause dict comprehensions are admitted through the ordered builder;
+  their generated pairs are checked for arity and key hashability.
 
 ## List semantics (H2 inventory — the in-world half is BUILT)
 
@@ -3663,9 +3665,10 @@ MATCH (82.2%)**, 0 DIVERGE.
 `dict()` is the empty mapping; `dict(k=v, …)` builds one in the CALL's own
 order (duplicate keywords are a SyntaxError, so no insert can collide);
 `dict(d)` is CPython's shallow COPY — a fresh object, never an alias,
-which is the whole point of writing it. A pairs ITERABLE stays LOUD:
-rebuilding one needs the per-insert hashability and duplicate-key rules,
-and guessing them would be silent corruption. Like every allocating call,
+which is the whole point of writing it. Plain sequence inputs still stay
+LOUD, but a single-clause comprehension lowers to a generator of 2-tuples
+and uses the same ordered builder; each pair's length and key hashability
+are checked before insertion. Like every allocating call,
 `dict` leaves `Expr.heapFree` (`worldInv` gains `hdctx`, `fuelMono` two
 arms — the positional and the keyword form — and `clockErase` a `bdict`
 and a `bdictkw` case over a new `allocDict` leaf lemma).

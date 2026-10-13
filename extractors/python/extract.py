@@ -105,7 +105,7 @@ UNSUPPORTED_TEXT_LIMIT = 200
 _MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a))`
 _MODULE_ANNOTATIONS_BOUND = False
 
-DISPLAY_LOWERING_NAMES = ("list", "tuple")
+DISPLAY_LOWERING_NAMES = ("list", "tuple", "set", "dict")
 
 
 def binds_any_name(tree, names):
@@ -519,6 +519,8 @@ def convert_expr(node):
         }
 
     if isinstance(node, ast.Set):
+        if _MODULE_SHADOWS_DISPLAY:
+            return unsupported(node, "Set:shadowed")
         if any(isinstance(e, ast.Starred) for e in node.elts):
             return unsupported(node, "Set:unpack")
         return {
@@ -602,7 +604,37 @@ def convert_expr(node):
             "index": convert_expr(sl),
         }
 
+    if isinstance(node, ast.DictComp):
+        if _MODULE_SHADOWS_DISPLAY:
+            return unsupported(node, "DictComp:shadowed")
+        gens = node.generators
+        if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
+            g = gens[0]
+            pair = ast.copy_location(
+                ast.Tuple(elts=[node.key, node.value], ctx=ast.Load()), node)
+            _COMP_DEPTH[0] += 1
+            try:
+                comp = _convert_comprehension(
+                    node, g, kind="GeneratorExp", elt=pair)
+            finally:
+                _COMP_DEPTH[0] -= 1
+            return {
+                "kind": "Call",
+                "span": span(node),
+                "func": {
+                    "kind": "Name",
+                    "span": span(node),
+                    "id": "dict",
+                },
+                "args": [comp],
+                "keywords": [],
+                "call_unsupported": None,
+            }
+        return unsupported(node, "DictComp")
+
     if isinstance(node, ast.SetComp):
+        if _MODULE_SHADOWS_DISPLAY:
+            return unsupported(node, "SetComp:shadowed")
         gens = node.generators
         if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
             g = gens[0]
@@ -666,7 +698,7 @@ def _in_enclosing_scope(e):
         _COMP_DEPTH[0] = saved
 
 
-def _convert_comprehension(node, g, kind=None):
+def _convert_comprehension(node, g, kind=None, elt=None):
     """The single-clause comprehension body, converted INSIDE the
     comprehension scope (`_COMP_DEPTH` is already raised by the caller).
 
@@ -700,7 +732,7 @@ def _convert_comprehension(node, g, kind=None):
                  ("ListComp" if isinstance(node, ast.ListComp)
                   else "GeneratorExp")),
         "span": span(node),
-        "elt": convert_expr(node.elt),
+        "elt": convert_expr(node.elt if elt is None else elt),
         "target": convert_expr(g.target),
         # the OUTER iterable is evaluated eagerly in the ENCLOSING
         # frame (CPython passes it in as `.0`), so a walrus there

@@ -1392,47 +1392,76 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                     exact .unsupported
                   | some pr =>
                     obtain ⟨ci, cdef⟩ := pr
-                    simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
-                    refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
-                    let a := s2.world.heap.size
-                    let s2' := { s2 with world :=
-                      { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
-                    cases vs with
-                    | nil =>
-                      refine .bind
-                        (ClockErasedW.withLocals
-                          (ihCall m s2'.world (fname ++ ".__enter__") #[.ref a]
-                            (by simpa [s2', a] using hs2)))
-                        fun s4 entered hs4 => ?_
-                      cases htarget : item.target with
-                      | none =>
-                        simp only [htarget]
-                        refine .bindE (ihSs m s4 body.toList hs4)
-                          (fun s5 flow hs5 => ?_)
-                          (fun _ _ _ => .unsupported)
-                        cases flow with
-                        | next | ret _ | brk | cont =>
-                          exact .bind
-                            (ClockErasedW.withLocals
-                              (ihCall m s5.world (fname ++ ".__exit__")
-                                #[.ref a, .none, .none, .none] (by simpa using hs5)))
-                            (fun s6 _ hs6 => .ok hs6 _)
-                      | some target =>
-                        simp only [htarget]
-                        refine .bind (.liftRes hs4 _) fun s5 env' hs5 => ?_
-                        refine .bindE (ihSs m { s5 with locals := env' } body.toList hs5)
-                          (fun s6 flow hs6 => ?_)
-                          (fun _ _ _ => .unsupported)
-                        cases flow with
-                        | next | ret _ | brk | cont =>
-                          exact .bind
-                            (ClockErasedW.withLocals
-                              (ihCall m s6.world (fname ++ ".__exit__")
-                                #[.ref a, .none, .none, .none] (by simpa using hs6)))
-                            (fun s7 _ hs7 => .ok hs7 _)
-                    | cons v rest =>
-                      exact .of_seed (fun tr => by simp [s2', a, Run.seedF])
-                        (by simp [s2', a, FrameState.withClock_self hs2])
+                    by_cases hargsfree :
+                        (findFunction m (fname ++ ".__exit__")).map
+                            FunctionDefn.withExitExceptionArgsFree == some true
+                    · simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass,
+                        hargsfree]
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      let a := s2.world.heap.size
+                      let s2' := { s2 with world :=
+                        { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
+                      cases vs with
+                      | nil =>
+                        refine .bind
+                          (ClockErasedW.withLocals
+                            (ihCall m s2'.world (fname ++ ".__enter__") #[.ref a]
+                              (by simpa [s2', a] using hs2)))
+                          fun s4 entered hs4 => ?_
+                        cases htarget : item.target with
+                        | none =>
+                          simp only [htarget]
+                          refine .bindE (ihSs m s4 body.toList hs4)
+                            (fun s5 flow hs5 => ?_)
+                            (fun s5 e hs5 => ?_)
+                          cases flow with
+                          | next | ret _ | brk | cont =>
+                            exact .bind
+                              (ClockErasedW.withLocals
+                                (ihCall m s5.world (fname ++ ".__exit__")
+                                  #[.ref a, .none, .none, .none] (by simpa using hs5)))
+                              (fun s6 _ hs6 => .ok hs6 _)
+                          · refine .bind
+                              (ClockErasedW.withLocals
+                                (ihCall m s5.world (fname ++ ".__exit__")
+                                  #[.ref a, .none, .none, .none] (by simpa using hs5)))
+                              (fun s6 exitValue hs6 => ?_)
+                            refine .bind
+                              (ClockErasedF.liftRes hs6 (truthyH s6.world.heap exitValue))
+                              (fun s7 suppresses hs7 => ?_)
+                            cases suppresses with
+                            | false => exact .exn hs7 _
+                            | true => exact .ok hs7 _
+                        | some target =>
+                          simp only [htarget]
+                          refine .bind (.liftRes hs4 _) fun s5 env' hs5 => ?_
+                          refine .bindE (ihSs m { s5 with locals := env' } body.toList hs5)
+                            (fun s6 flow hs6 => ?_)
+                            (fun s6 e hs6 => ?_)
+                          cases flow with
+                          | next | ret _ | brk | cont =>
+                            exact .bind
+                              (ClockErasedW.withLocals
+                                (ihCall m s6.world (fname ++ ".__exit__")
+                                  #[.ref a, .none, .none, .none] (by simpa using hs6)))
+                              (fun s7 _ hs7 => .ok hs7 _)
+                          · refine .bind
+                              (ClockErasedW.withLocals
+                                (ihCall m s6.world (fname ++ ".__exit__")
+                                  #[.ref a, .none, .none, .none] (by simpa using hs6)))
+                              (fun s7 exitValue hs7 => ?_)
+                            refine .bind
+                              (ClockErasedF.liftRes hs7 (truthyH s7.world.heap exitValue))
+                              (fun s8 suppresses hs8 => ?_)
+                            cases suppresses with
+                            | false => exact .exn hs8 _
+                            | true => exact .ok hs8 _
+                      | cons v rest =>
+                        exact .of_seed (fun tr => by simp [s2', a, Run.seedF])
+                          (by simp [s2', a, FrameState.withClock_self hs2])
+                    · simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass,
+                        hargsfree]
+                      exact .unsupported
             | _ => simp [execStmt, hitems, hrest, hctx, hfunc]; exact .unsupported
           | _ => simp [execStmt, hitems, hrest, hctx]; exact .unsupported
   | importFrom mod names star sp =>

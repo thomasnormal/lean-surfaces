@@ -1300,44 +1300,56 @@ theorem fuelMono (fuel : Nat) :
                         | some pr =>
                           obtain ⟨ci, cdef⟩ := pr
                           simp [hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
-                          refine Run.le_bind (ihEs m st args.toList k hk) fun s2 vs => ?_
-                          cases vs with
-                          | nil =>
-                            let a := s2.world.heap.size
-                            let s2' := { s2 with world :=
-                              { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
-                            refine Run.le_bind
-                              (Run.le_withLocals
-                                (ihCall m s2'.world (fname ++ ".__enter__") #[.ref a] k hk))
-                              fun sEnter entered => ?_
-                            cases htarget : item.target with
-                            | none =>
-                              simp only [htarget]
-                              refine Run.le_bindE (ihSs m sEnter body.toList k hk)
-                                (fun sAfter flow => ?_)
-                                (fun _ _ => Run.le_refl _)
-                              cases flow with
-                              | next | ret _ | brk | cont =>
-                                exact Run.le_bind
-                                  (Run.le_withLocals
-                                    (ihCall m sAfter.world (fname ++ ".__exit__")
-                                      #[.ref a, .none, .none, .none] k hk))
-                                  (fun sExit _ => Run.le_refl _)
-                            | some target =>
-                              simp only [htarget]
-                              refine Run.le_bind (Run.le_refl _) fun sBody env' => ?_
-                              refine Run.le_bindE (ihSs m { sBody with locals := env' }
-                                body.toList k hk)
-                                (fun sAfter flow => ?_)
-                                (fun _ _ => Run.le_refl _)
-                              cases flow with
-                              | next | ret _ | brk | cont =>
-                                exact Run.le_bind
-                                  (Run.le_withLocals
-                                    (ihCall m sAfter.world (fname ++ ".__exit__")
-                                      #[.ref a, .none, .none, .none] k hk))
-                                  (fun sExit _ => Run.le_refl _)
-                          | cons v rest => exact Run.le_refl _
+                          split
+                          · exact Run.le_refl _
+                          · refine Run.le_bind (ihEs m st args.toList k hk) fun s2 vs => ?_
+                            cases vs with
+                            | nil =>
+                              let a := s2.world.heap.size
+                              let s2' := { s2 with world :=
+                                { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
+                              refine Run.le_bind
+                                (Run.le_withLocals
+                                  (ihCall m s2'.world (fname ++ ".__enter__") #[.ref a] k hk))
+                                fun sEnter entered => ?_
+                              cases htarget : item.target with
+                              | none =>
+                                simp only [htarget]
+                                refine Run.le_bindE (ihSs m sEnter body.toList k hk)
+                                  (fun sAfter flow => ?_)
+                                  (fun sBody _ =>
+                                    Run.le_bind
+                                      (Run.le_withLocals
+                                        (ihCall m sBody.world (fname ++ ".__exit__")
+                                          #[.ref a, .none, .none, .none] k hk))
+                                      (fun sExit _ => Run.le_refl _))
+                                cases flow with
+                                | next | ret _ | brk | cont =>
+                                  exact Run.le_bind
+                                    (Run.le_withLocals
+                                      (ihCall m sAfter.world (fname ++ ".__exit__")
+                                        #[.ref a, .none, .none, .none] k hk))
+                                    (fun sExit _ => Run.le_refl _)
+                              | some target =>
+                                simp only [htarget]
+                                refine Run.le_bind (Run.le_refl _) fun sBody env' => ?_
+                                refine Run.le_bindE (ihSs m { sBody with locals := env' }
+                                  body.toList k hk)
+                                  (fun sAfter flow => ?_)
+                                  (fun sBody _ =>
+                                    Run.le_bind
+                                      (Run.le_withLocals
+                                        (ihCall m sBody.world (fname ++ ".__exit__")
+                                          #[.ref a, .none, .none, .none] k hk))
+                                      (fun sExit _ => Run.le_refl _))
+                                cases flow with
+                                | next | ret _ | brk | cont =>
+                                  exact Run.le_bind
+                                    (Run.le_withLocals
+                                      (ihCall m sAfter.world (fname ++ ".__exit__")
+                                        #[.ref a, .none, .none, .none] k hk))
+                                    (fun sExit _ => Run.le_refl _)
+                            | cons v rest => exact Run.le_refl _
                   | _ => simp [hitems, hrest, hctx, hfunc]; exact Run.le_refl _
                 | _ => simp [hitems, hrest, hctx]; exact Run.le_refl _
 

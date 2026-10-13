@@ -426,10 +426,13 @@ cycle DETECTION, never by running out of fuel).
   only when the selected `__exit__` body is transparent (`pass`, empty, or
   `return None`/`False`): the model invokes it with the placeholder triple
   `(None, None, None)` and re-raises the original `PyErr`, which is sound
-  because the admitted body cannot inspect or suppress that triple. A literal
-  `return True` is also admitted and suppresses the body error; computed,
-  argument-sensitive, or side-effecting exits remain loud, and full exception
-  triples are still a future representation extension. A
+  because the admitted body cannot inspect or suppress that triple. The
+  `__exit__` result is evaluated with normal truthiness, so computed returns
+  such as `return not False` can suppress the body error. The three
+  exception-argument parameters remain a static loud boundary: methods that
+  inspect them are refused because the model still calls `__exit__` with the
+  placeholder triple `(None, None, None)`. Full exception triples are still a
+  future representation extension. A
   supported explicit zero-argument `__init__` runs through the ordinary
   class-call path. `async with` is likewise still unfinished scope.
 * At module scope the script executor owns a matching control shell: the
@@ -438,10 +441,12 @@ cycle DETECTION, never by running out of fuel).
   a function called from inside the body on CPython's module-frame view rather
   than the stale pre-`with` globals.
 * `Examples/python/with_lab` pins normal target binding, unbound use,
-  fall-through, and transparent exception unwinding, plus the deliberate
-  extra-dunder refusal. `harness/scripts/with_script.py` additionally pins
+  fall-through, transparent exception unwinding, computed suppression, and
+  the deliberate argument-sensitive and extra-dunder refusals.
+  `harness/scripts/with_script.py` additionally pins
   module-scope target and body publication, while
-  `harness/scripts/with_exception_script.py` pins an uncaught body exception.
+  `harness/scripts/with_exception_script.py` pins an uncaught body exception,
+  while `harness/scripts/with_computed_script.py` pins computed suppression.
   The monadic runner and the trunk proof interpreter agree with CPython on the
   decided rows.
 

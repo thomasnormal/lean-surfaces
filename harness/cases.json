@@ -1081,5 +1081,7 @@
   {"file": "Examples/python/with_lab/with_lab.py", "function": "body_exception", "args": [[]], "expect": "raises"},
   {"file": "Examples/python/with_lab/with_lab.py", "function": "body_exception_target", "args": [[]], "expect": "raises"},
   {"file": "Examples/python/with_lab/with_lab.py", "function": "suppressed_exception", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "computed_suppressed_exception", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/with_lab/with_lab.py", "function": "argument_sensitive_suppression", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/with_lab/with_lab.py", "function": "extra_dunder", "args": [[]], "expect": "unsupported"}
 ]

@@ -309,19 +309,131 @@ structure FunctionDefn where
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt` has none (nested arrays).
 
-def FunctionDefn.withExitTransparent (f : FunctionDefn) : Bool :=
-  match f.body.toList with
-  | [] => true
-  | [.pass _] => true
-  | [.ret Option.none _] => true
-  | [.ret (some (.constant .none _)) _] => true
-  | [.ret (some (.constant (.bool false) _)) _] => true
-  | _ => false
+mutual
+  private def exprMentionsAny (names : List String) : Expr → Bool
+    | .constant .. => false
+    | .name id _ => names.contains id
+    | .binOp left _ right _ => exprMentionsAny names left || exprMentionsAny names right
+    | .unaryOp _ operand _ => exprMentionsAny names operand
+    | .formattedValue value _ _ => exprMentionsAny names value
+    | .boolOp _ values _ => exprListMentionsAny names values.toList
+    | .compare left _ comparators _ =>
+        exprMentionsAny names left || exprListMentionsAny names comparators.toList
+    | .call func args kwargs _ _ =>
+        exprMentionsAny names func
+          || exprListMentionsAny names args.toList
+          || pairExprMentionsAny names kwargs.toList
+    | .list elts _ | .tuple elts _ => exprListMentionsAny names elts.toList
+    | .subscript value index _ =>
+        exprMentionsAny names value || exprMentionsAny names index
+    | .dict keys values _ =>
+        exprListMentionsAny names keys.toList
+          || exprListMentionsAny names values.toList
+    | .attribute value _ _ => exprMentionsAny names value
+    | .ifExp test body orelse _ =>
+        exprMentionsAny names test
+          || exprMentionsAny names body
+          || exprMentionsAny names orelse
+    | .slice value lower upper step _ =>
+        exprMentionsAny names value
+          || exprMentionsAny names lower
+          || exprMentionsAny names upper
+          || exprMentionsAny names step
+    | .genExp elt target iter ifs walrus _ =>
+        exprMentionsAny names elt
+          || exprMentionsAny names target
+          || exprMentionsAny names iter
+          || exprListMentionsAny names ifs.toList
+          || pairExprMentionsAny names walrus.toList
+    | .namedExpr target value _ => names.contains target || exprMentionsAny names value
+    | .unsupported .. => false
 
-def FunctionDefn.withExitSuppresses (f : FunctionDefn) : Bool :=
-  match f.body.toList with
-  | [.ret (some (.constant (.bool true) _)) _] => true
-  | _ => false
+  private def exprListMentionsAny (names : List String) : List Expr → Bool
+    | [] => false
+    | value :: rest => exprMentionsAny names value || exprListMentionsAny names rest
+
+  private def pairExprMentionsAny (names : List String) : List (String × Expr) → Bool
+    | [] => false
+    | (id, value) :: rest =>
+        names.contains id || exprMentionsAny names value || pairExprMentionsAny names rest
+
+  private def stmtMentionsAny (names : List String) : Stmt → Bool
+    | .ret value _ =>
+        match value with
+        | some value => exprMentionsAny names value
+        | none => false
+    | .assign targets value _ =>
+        exprListMentionsAny names targets.toList || exprMentionsAny names value
+    | .augAssign target _ value _ =>
+        exprMentionsAny names target || exprMentionsAny names value
+    | .whileLoop test body orelse _ | .ifStmt test body orelse _ =>
+        exprMentionsAny names test
+          || stmtListMentionsAny names body.toList
+          || stmtListMentionsAny names orelse.toList
+    | .forStmt target iter body orelse _ =>
+        exprMentionsAny names target
+          || exprMentionsAny names iter
+          || stmtListMentionsAny names body.toList
+          || stmtListMentionsAny names orelse.toList
+    | .exprStmt value _ | .yieldStmt value _ | .yieldFromStmt value _ =>
+        exprMentionsAny names value
+    | .defStmt name params _ _ _ _ body captures _ =>
+        names.contains name
+          || paramListMentionsAny names params.toList
+          || stmtListMentionsAny names body.toList
+          || stringListMentionsAny names captures.toList
+    | .raiseStmt exc cause _ =>
+        (match exc with
+        | some value => exprMentionsAny names value
+        | none => false)
+          || (match cause with
+          | some value => exprMentionsAny names value
+          | none => false)
+    | .assertStmt test msg _ =>
+        exprMentionsAny names test
+          || (match msg with
+          | some value => exprMentionsAny names value
+          | none => false)
+    | .tryStmt body excName handler _ _ =>
+        names.contains excName
+          || stmtListMentionsAny names body.toList
+          || stmtListMentionsAny names handler.toList
+    | .withStmt items body _ _ =>
+        withItemListMentionsAny names items.toList
+          || stmtListMentionsAny names body.toList
+    | .delStmt names' _ => stringListMentionsAny names names'.toList
+    | .importFrom module imported _ _ =>
+        names.contains module || stringListMentionsAny names imported.toList
+    | .pass _ | .brk _ | .cont _ | .unsupported .. => false
+
+  private def stmtListMentionsAny (names : List String) : List Stmt → Bool
+    | [] => false
+    | stmt :: rest => stmtMentionsAny names stmt || stmtListMentionsAny names rest
+
+  private def withItemListMentionsAny (names : List String) : List WithItem → Bool
+    | [] => false
+    | item :: rest =>
+        exprMentionsAny names item.context
+          || (match item.target with
+          | some target => exprMentionsAny names target
+          | none => false)
+          || withItemListMentionsAny names rest
+
+  private def paramListMentionsAny (names : List String) : List Param → Bool
+    | [] => false
+    | param :: rest => names.contains param.arg || paramListMentionsAny names rest
+
+  private def stringListMentionsAny (names : List String) : List String → Bool
+    | [] => false
+    | value :: rest => names.contains value || stringListMentionsAny names rest
+end
+
+def FunctionDefn.withExitExceptionArgsFree (f : FunctionDefn) : Bool :=
+  match f.params.toList with
+  | _ :: rest =>
+      let names := rest.map Param.arg
+      !f.body.toList.any (stmtMentionsAny names)
+  | [] => false
 
 /-- A module-level namedtuple class (H3+, docs/memory-model.md §class
 semantics — the recorded VALUE-like decision): recognized at INGESTION

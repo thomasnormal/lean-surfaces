@@ -1218,55 +1218,39 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       | none, [item] =>
           match item.context with
           | .call (.name fname _) _args kwargs callUnsupported _ =>
-              if !kwargs.isEmpty || callUnsupported.isSome then
+              if !((findFunction m (fname ++ ".__exit__")).map
+                  FunctionDefn.withExitExceptionArgsFree == some true) then
+                refuse "with body exceptions require __exit__ not to inspect exception arguments (full exception triples are outside the tier)"
+              else if !kwargs.isEmpty || callUnsupported.isSome then
                 refuse "with context calls with keywords or starred arguments are outside the tier"
               else
                 match findContextClassM m fname with
                 | Option.none =>
                     refuse "with requires an admitted class with __enter__ and __exit__"
                 | some _ => do
-                    let exitName := fname ++ ".__exit__"
-                    let exitTransparent :=
-                      (findFunction m exitName).map FunctionDefn.withExitTransparent == some true
-                    let exitSuppresses :=
-                      (findFunction m exitName).map FunctionDefn.withExitSuppresses == some true
-                    if !exitTransparent && !exitSuppresses then
-                      refuse "with body exceptions require a plain __exit__ body (pass or return None/False/True)"
-                    else do
-                      let contextName := "<with-context>"
-                      let contextExpr := Expr.name contextName sp
-                      let enterExpr :=
-                        Expr.call (Expr.attribute contextExpr "__enter__" sp)
-                          #[] #[] Option.none sp
-                      let noneExpr := Expr.constant .none sp
-                      let exitExpr :=
-                        Expr.call (Expr.attribute contextExpr "__exit__" sp)
-                          #[noneExpr, noneExpr, noneExpr] #[] Option.none sp
-                      let old ← envGet contextName
-                      let context ← evalOpen K m item.context
+                    let contextName := "<with-context>"
+                    let contextExpr := Expr.name contextName sp
+                    let enterExpr :=
+                      Expr.call (Expr.attribute contextExpr "__enter__" sp)
+                        #[] #[] Option.none sp
+                    let noneExpr := Expr.constant .none sp
+                    let exitExpr :=
+                      Expr.call (Expr.attribute contextExpr "__exit__" sp)
+                        #[noneExpr, noneExpr, noneExpr] #[] Option.none sp
+                    let old ← envGet contextName
+                    let context ← evalOpen K m item.context
+                    envSet contextName context
+                    let entered ← evalOpen K m enterExpr
+                    assignTargetM item.target entered
+                    let flow ←
+                      tryCatch (do
+                        let flow ← execOpenList K m body.toList
+                        pure (Except.ok flow)) (fun e => do
                       envSet contextName context
-                      let entered ← evalOpen K m enterExpr
-                      match item.target with
-                      | some target => assignM target entered
-                      | none => pure ()
-                      let flow ←
-                        tryCatch (do
-                          let flow ← execOpenList K m body.toList
-                          pure (Except.ok flow)) (fun e => do
-                            envSet contextName context
-                            let _ ← evalOpen K m exitExpr
-                            match old with
-                            | some value => envSet contextName value
-                            | none => envRemove contextName
-                            if exitSuppresses then pure (Except.error ()) else raisePy e)
-                      match flow with
-                      | Except.ok flow => do
-                          let _ ← evalOpen K m exitExpr
-                          match old with
-                          | some value => envSet contextName value
-                          | none => envRemove contextName
-                          pure flow
-                      | Except.error _ => pure .next
+                      withExitResult (evalOpen K m) exitExpr
+                        (restoreEnvM contextName old) e)
+                    withExitOnFlow (evalOpen K m) exitExpr
+                      (restoreEnvM contextName old) flow
           | _ =>
               refuse "with context must be a direct class constructor call"
       | _, _ => refuse "multiple context-manager items are outside the tier"

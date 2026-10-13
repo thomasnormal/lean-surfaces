@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "Examples/python/with_lab/with_lab.py",
-  "source_sha256": "bf7fa94fc6fc76cc27a261d9ed0294d73f8abdbc46aa10b940d849220231a686",
+  "source_sha256": "14475c21c95fc80d52d5352d8bc42a0f9500cc79f2a526a9dbb3dee0aedbd3d1",
   "module": {
     "kind": "Module",
     "body": [
@@ -1299,10 +1299,10 @@
         "span": {
           "lineno": 74,
           "col_offset": 0,
-          "end_lineno": 82,
-          "end_col_offset": 30
+          "end_lineno": 79,
+          "end_col_offset": 24
         },
-        "name": "ExtraDunder",
+        "name": "ComputedSuppressingExit",
         "class_unsupported": null,
         "creation_effects": false,
         "body": [
@@ -1359,7 +1359,7 @@
               "lineno": 78,
               "col_offset": 4,
               "end_lineno": 79,
-              "end_col_offset": 19
+              "end_col_offset": 24
             },
             "name": "__exit__",
             "args": [
@@ -1409,14 +1409,557 @@
                   "lineno": 79,
                   "col_offset": 8,
                   "end_lineno": 79,
+                  "end_col_offset": 24
+                },
+                "value": {
+                  "kind": "UnaryOp",
+                  "span": {
+                    "lineno": 79,
+                    "col_offset": 15,
+                    "end_lineno": 79,
+                    "end_col_offset": 24
+                  },
+                  "op": "Not",
+                  "operand": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 79,
+                      "col_offset": 19,
+                      "end_lineno": 79,
+                      "end_col_offset": 24
+                    },
+                    "value": {
+                      "type": "bool",
+                      "value": false
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 82,
+          "col_offset": 0,
+          "end_lineno": 85,
+          "end_col_offset": 12
+        },
+        "name": "computed_suppressed_exception",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "With",
+            "span": {
+              "lineno": 83,
+              "col_offset": 4,
+              "end_lineno": 84,
+              "end_col_offset": 14
+            },
+            "items": [
+              {
+                "context": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 83,
+                    "col_offset": 9,
+                    "end_lineno": 83,
+                    "end_col_offset": 34
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 83,
+                      "col_offset": 9,
+                      "end_lineno": 83,
+                      "end_col_offset": 32
+                    },
+                    "id": "ComputedSuppressingExit"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                "target": null
+              }
+            ],
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 84,
+                  "col_offset": 8,
+                  "end_lineno": 84,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 84,
+                    "col_offset": 8,
+                    "end_lineno": 84,
+                    "end_col_offset": 14
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 84,
+                      "col_offset": 8,
+                      "end_lineno": 84,
+                      "end_col_offset": 9
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 84,
+                      "col_offset": 13,
+                      "end_lineno": 84,
+                      "end_col_offset": 14
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 85,
+              "col_offset": 4,
+              "end_lineno": 85,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 85,
+                "col_offset": 11,
+                "end_lineno": 85,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "8"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 88,
+          "col_offset": 0,
+          "end_lineno": 93,
+          "end_col_offset": 35
+        },
+        "name": "ArgumentSensitiveExit",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 89,
+              "col_offset": 4,
+              "end_lineno": 90,
+              "end_col_offset": 16
+            },
+            "name": "__enter__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 89,
+                  "col_offset": 18,
+                  "end_lineno": 89,
+                  "end_col_offset": 22
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 90,
+                  "col_offset": 8,
+                  "end_lineno": 90,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 90,
+                    "col_offset": 15,
+                    "end_lineno": 90,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 92,
+              "col_offset": 4,
+              "end_lineno": 93,
+              "end_col_offset": 35
+            },
+            "name": "__exit__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 92,
+                  "col_offset": 17,
+                  "end_lineno": 92,
+                  "end_col_offset": 21
+                }
+              },
+              {
+                "arg": "exc_type",
+                "span": {
+                  "lineno": 92,
+                  "col_offset": 23,
+                  "end_lineno": 92,
+                  "end_col_offset": 31
+                }
+              },
+              {
+                "arg": "exc",
+                "span": {
+                  "lineno": 92,
+                  "col_offset": 33,
+                  "end_lineno": 92,
+                  "end_col_offset": 36
+                }
+              },
+              {
+                "arg": "tb",
+                "span": {
+                  "lineno": 92,
+                  "col_offset": 38,
+                  "end_lineno": 92,
+                  "end_col_offset": 40
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 93,
+                  "col_offset": 8,
+                  "end_lineno": 93,
+                  "end_col_offset": 35
+                },
+                "value": {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 93,
+                    "col_offset": 15,
+                    "end_lineno": 93,
+                    "end_col_offset": 35
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 93,
+                      "col_offset": 15,
+                      "end_lineno": 93,
+                      "end_col_offset": 23
+                    },
+                    "id": "exc_type"
+                  },
+                  "ops": [
+                    "IsNot"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 93,
+                        "col_offset": 31,
+                        "end_lineno": 93,
+                        "end_col_offset": 35
+                      },
+                      "value": {
+                        "type": "none"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 96,
+          "col_offset": 0,
+          "end_lineno": 99,
+          "end_col_offset": 13
+        },
+        "name": "argument_sensitive_suppression",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "With",
+            "span": {
+              "lineno": 97,
+              "col_offset": 4,
+              "end_lineno": 98,
+              "end_col_offset": 14
+            },
+            "items": [
+              {
+                "context": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 97,
+                    "col_offset": 9,
+                    "end_lineno": 97,
+                    "end_col_offset": 32
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 97,
+                      "col_offset": 9,
+                      "end_lineno": 97,
+                      "end_col_offset": 30
+                    },
+                    "id": "ArgumentSensitiveExit"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                "target": null
+              }
+            ],
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 98,
+                  "col_offset": 8,
+                  "end_lineno": 98,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 98,
+                    "col_offset": 8,
+                    "end_lineno": 98,
+                    "end_col_offset": 14
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 98,
+                      "col_offset": 8,
+                      "end_lineno": 98,
+                      "end_col_offset": 9
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 98,
+                      "col_offset": 13,
+                      "end_lineno": 98,
+                      "end_col_offset": 14
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 99,
+              "col_offset": 4,
+              "end_lineno": 99,
+              "end_col_offset": 13
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 99,
+                "col_offset": 11,
+                "end_lineno": 99,
+                "end_col_offset": 13
+              },
+              "value": {
+                "type": "int",
+                "repr": "10"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 102,
+          "col_offset": 0,
+          "end_lineno": 110,
+          "end_col_offset": 30
+        },
+        "name": "ExtraDunder",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 103,
+              "col_offset": 4,
+              "end_lineno": 104,
+              "end_col_offset": 16
+            },
+            "name": "__enter__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 103,
+                  "col_offset": 18,
+                  "end_lineno": 103,
+                  "end_col_offset": 22
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 104,
+                  "col_offset": 8,
+                  "end_lineno": 104,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 104,
+                    "col_offset": 15,
+                    "end_lineno": 104,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 106,
+              "col_offset": 4,
+              "end_lineno": 107,
+              "end_col_offset": 19
+            },
+            "name": "__exit__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 106,
+                  "col_offset": 17,
+                  "end_lineno": 106,
+                  "end_col_offset": 21
+                }
+              },
+              {
+                "arg": "exc_type",
+                "span": {
+                  "lineno": 106,
+                  "col_offset": 23,
+                  "end_lineno": 106,
+                  "end_col_offset": 31
+                }
+              },
+              {
+                "arg": "exc",
+                "span": {
+                  "lineno": 106,
+                  "col_offset": 33,
+                  "end_lineno": 106,
+                  "end_col_offset": 36
+                }
+              },
+              {
+                "arg": "tb",
+                "span": {
+                  "lineno": 106,
+                  "col_offset": 38,
+                  "end_lineno": 106,
+                  "end_col_offset": 40
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 107,
+                  "col_offset": 8,
+                  "end_lineno": 107,
                   "end_col_offset": 19
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 79,
+                    "lineno": 107,
                     "col_offset": 15,
-                    "end_lineno": 79,
+                    "end_lineno": 107,
                     "end_col_offset": 19
                   },
                   "value": {
@@ -1429,9 +1972,9 @@
           {
             "kind": "FunctionDef",
             "span": {
-              "lineno": 81,
+              "lineno": 109,
               "col_offset": 4,
-              "end_lineno": 82,
+              "end_lineno": 110,
               "end_col_offset": 30
             },
             "name": "__repr__",
@@ -1439,9 +1982,9 @@
               {
                 "arg": "self",
                 "span": {
-                  "lineno": 81,
+                  "lineno": 109,
                   "col_offset": 17,
-                  "end_lineno": 81,
+                  "end_lineno": 109,
                   "end_col_offset": 21
                 }
               }
@@ -1452,17 +1995,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 82,
+                  "lineno": 110,
                   "col_offset": 8,
-                  "end_lineno": 82,
+                  "end_lineno": 110,
                   "end_col_offset": 30
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 82,
+                    "lineno": 110,
                     "col_offset": 15,
-                    "end_lineno": 82,
+                    "end_lineno": 110,
                     "end_col_offset": 30
                   },
                   "value": {
@@ -1478,9 +2021,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 85,
+          "lineno": 113,
           "col_offset": 0,
-          "end_lineno": 87,
+          "end_lineno": 115,
           "end_col_offset": 16
         },
         "name": "extra_dunder",
@@ -1491,9 +2034,9 @@
           {
             "kind": "With",
             "span": {
-              "lineno": 86,
+              "lineno": 114,
               "col_offset": 4,
-              "end_lineno": 87,
+              "end_lineno": 115,
               "end_col_offset": 16
             },
             "items": [
@@ -1501,17 +2044,17 @@
                 "context": {
                   "kind": "Call",
                   "span": {
-                    "lineno": 86,
+                    "lineno": 114,
                     "col_offset": 9,
-                    "end_lineno": 86,
+                    "end_lineno": 114,
                     "end_col_offset": 22
                   },
                   "func": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 86,
+                      "lineno": 114,
                       "col_offset": 9,
-                      "end_lineno": 86,
+                      "end_lineno": 114,
                       "end_col_offset": 20
                     },
                     "id": "ExtraDunder"
@@ -1527,17 +2070,17 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 87,
+                  "lineno": 115,
                   "col_offset": 8,
-                  "end_lineno": 87,
+                  "end_lineno": 115,
                   "end_col_offset": 16
                 },
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 87,
+                    "lineno": 115,
                     "col_offset": 15,
-                    "end_lineno": 87,
+                    "end_lineno": 115,
                     "end_col_offset": 16
                   },
                   "value": {

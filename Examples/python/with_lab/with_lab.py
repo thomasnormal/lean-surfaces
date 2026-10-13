@@ -71,6 +71,34 @@ def suppressed_exception():
     return 7
 
 
+class ComputedSuppressingExit:
+    def __enter__(self):
+        return 1
+
+    def __exit__(self, exc_type, exc, tb):
+        return not False
+
+
+def computed_suppressed_exception():
+    with ComputedSuppressingExit():
+        1 // 0
+    return 8
+
+
+class ArgumentSensitiveExit:
+    def __enter__(self):
+        return 1
+
+    def __exit__(self, exc_type, exc, tb):
+        return exc_type is not None
+
+
+def argument_sensitive_suppression():
+    with ArgumentSensitiveExit():
+        1 // 0
+    return 10
+
+
 class ExtraDunder:
     def __enter__(self):
         return 1

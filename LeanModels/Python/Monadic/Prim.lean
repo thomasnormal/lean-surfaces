@@ -111,6 +111,22 @@ def sliceHeapM (cv lv uv sv : RVal) : SemF RVal := do
 def truthyM (v : RVal) : SemF Bool := do
   liftRes (truthyH (← frameHeap) v)
 
+def withExitResult (eval : Expr → SemF RVal) (exitExpr : Expr)
+    (restore : SemF Unit) (e : PyErr) : SemF (Except Unit RFlow) := do
+  let exitValue ← eval exitExpr
+  let suppresses ← truthyM exitValue
+  restore
+  if suppresses then pure (.error ()) else raisePy e
+
+def withExitOnFlow (eval : Expr → SemF RVal) (exitExpr : Expr)
+    (restore : SemF Unit) (flow : Except Unit RFlow) : SemF RFlow :=
+  match flow with
+  | Except.ok flow => do
+      let _ ← eval exitExpr
+      restore
+      pure flow
+  | Except.error _ => pure .next
+
 def lenM (v : RVal) : SemF RVal := do
   liftRes (lenValH (← frameHeap) v)
 
@@ -118,6 +134,16 @@ def lenM (v : RVal) : SemF RVal := do
 def assignM (target : Expr) (v : RVal) : SemF Unit := do
   let st ← get
   envPut (← liftRes (assignToH st.world.heap st.locals target v))
+
+def assignTargetM (target : Option Expr) (v : RVal) : SemF Unit :=
+  match target with
+  | some target => assignM target v
+  | none => pure ()
+
+def restoreEnvM (name : String) (old : Option RVal) : SemF Unit :=
+  match old with
+  | some value => envSet name value
+  | none => envRemove name
 
 def dictBuildM (items : List (RVal × RVal)) : SemF (List (RVal × RVal)) := do
   liftRes (dictBuild (← frameHeap) [] items)

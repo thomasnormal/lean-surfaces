@@ -6937,12 +6937,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                 .unsupported "with requires an admitted class with __enter__ and __exit__"
             | some (ci, _) =>
               let exitName := fname ++ ".__exit__"
-              let exitTransparent :=
-                (findFunction m exitName).map FunctionDefn.withExitTransparent == some true
-              let exitSuppresses :=
-                (findFunction m exitName).map FunctionDefn.withExitSuppresses == some true
-              if !exitTransparent && !exitSuppresses then
-                .unsupported "with body exceptions require a plain __exit__ body (pass or return None/False/True)"
+              let exitArgsFree :=
+                (findFunction m exitName).map FunctionDefn.withExitExceptionArgsFree == some true
+              if !exitArgsFree then
+                .unsupported "with body exceptions require __exit__ not to inspect exception arguments (full exception triples are outside the tier)"
               else
                 evalExprs m fuel st args.toList ⤳ fun st vs =>
                 let enterName := fname ++ ".__enter__"
@@ -6970,8 +6968,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                                 (fun stBody e =>
                                   Run.withLocals stBody.locals
                                     (callIn m fuel stBody.world exitName
-                                      #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
-                                    if exitSuppresses then .ok stExit .next else .exn stExit e)
+                                      #[.ref a, .none, .none, .none]) ⤳ fun stExit exitValue =>
+                                    Run.liftRes stExit
+                                      (truthyH stExit.world.heap exitValue) ⤳ fun stExit suppresses =>
+                                      if suppresses then .ok stExit .next else .exn stExit e)
                       | none =>
                           Run.bindE
                             (execStmts m fuel stEnter body.toList)
@@ -6985,8 +6985,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                             (fun stBody e =>
                               Run.withLocals stBody.locals
                                 (callIn m fuel stBody.world exitName
-                                  #[.ref a, .none, .none, .none]) ⤳ fun stExit _ =>
-                                if exitSuppresses then .ok stExit .next else .exn stExit e)
+                                  #[.ref a, .none, .none, .none]) ⤳ fun stExit exitValue =>
+                                Run.liftRes stExit
+                                  (truthyH stExit.world.heap exitValue) ⤳ fun stExit suppresses =>
+                                  if suppresses then .ok stExit .next else .exn stExit e)
                 | _ => .exn st' (.typeError s!"{fname}() takes no arguments")
         | _ =>
           .unsupported "with context must be a direct class constructor call"

@@ -214,7 +214,25 @@ macro_rules
            | apply PyLe.zoomOut
            | intro _
            | split)
-         all_goals (first | exact PyLe.refl' _ | ($leaf))))
+         all_goals (first | exact PyLe.refl' _ | (($leaf); done))))
+
+scoped syntax "mono_with_structural" tacticSeq : tactic
+macro_rules
+  | `(tactic| mono_with_structural $leaf) =>
+    `(tactic|
+        (repeat' (first
+           | (with_reducible exact PyLe.refl' _)
+           | (($leaf); done)
+           | apply PyLe.bind
+           | apply PyLe.ite
+           | apply PyLe.tryCatch
+           | apply PyLe.inFrame
+           | apply PyLe.inWorld
+           | apply PyLe.zoomIn
+           | apply PyLe.zoomOut
+           | intro _
+           )
+         all_goals (first | exact PyLe.refl' _ | (($leaf); done) | assumption | contradiction)))
 
 /-! ## §0.6 THE ORDER ON THE CONTINUATION RECORD -/
 
@@ -244,6 +262,13 @@ def KontLe (K K' : Kont) : Prop :=
   (∀ a b, K.anyAllIter a b ⊑ₚ K'.anyAllIter a b)
 
 /-! ## §1 THE PRE-BLOCK HELPERS — in dependency order -/
+
+theorem truthyM_mono (v : RVal) : truthyM v ⊑ₚ truthyM v := by
+  unfold truthyM
+  apply PyLe.bind
+  · exact PyLe.refl' _
+  · intro _
+    exact PyLe.refl' _
 
 set_option maxRecDepth 8000 in
 theorem iterValues_mono (K K' : Kont) (hK : KontLe K K') (m : Module)
@@ -342,12 +367,38 @@ theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
       | exact hforGen _ _ _
       | exact hdrain _
       | exact hanyAll _ _
+      | exact truthyM_mono _
       | exact PyLe.liftRes (evalCompareOpH_mono hfuel)
       | assumption
       | apply_assumption)
 
 theorem evalOpen_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ e : Expr, evalOpen K m e ⊑ₚ evalOpen K' m e := (evalOpen_monoAll K K' hK m).1
+
+set_option maxRecDepth 8000 in
+theorem withExitResult_mono (K K' : Kont) (hK : KontLe K K') (m : Module)
+    (exitExpr : Expr) (restore : SemF Unit) (e : PyErr) :
+    withExitResult (evalOpen K m) exitExpr restore e ⊑ₚ
+      withExitResult (evalOpen K' m) exitExpr restore e := by
+  have hE := evalOpen_mono K K' hK m
+  unfold withExitResult
+  mono_with (first
+    | exact hE _
+    | exact truthyM_mono _
+    | assumption)
+
+theorem withExitOnFlow_mono (K K' : Kont) (hK : KontLe K K') (m : Module)
+    (exitExpr : Expr) (restore : SemF Unit) (flow : Except Unit RFlow) :
+    withExitOnFlow (evalOpen K m) exitExpr restore flow ⊑ₚ
+      withExitOnFlow (evalOpen K' m) exitExpr restore flow := by
+  cases flow with
+  | error _ => exact PyLe.refl' _
+  | ok flow =>
+      unfold withExitOnFlow
+      have hE := evalOpen_mono K K' hK m
+      mono_with (first
+        | exact hE _
+        | assumption)
 
 theorem evalOpenList_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ es : List Expr, evalOpenList K m es ⊑ₚ evalOpenList K' m es :=
@@ -365,6 +416,7 @@ theorem evalBoolChainM_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
 
 /-! ## §3 THE FUEL-FREE STATEMENT HALF -/
 
+set_option maxHeartbeats 1000000 in
 set_option maxRecDepth 8000 in
 theorem execOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
     (∀ st : Stmt, execOpen K m st ⊑ₚ execOpen K' m st) ∧
@@ -373,15 +425,61 @@ theorem execOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
   have hEL := evalOpenList_mono K K' hK m
   have hCC := evalCompareChainM_mono K K' hK m
   have hBC := evalBoolChainM_mono K K' hK m
+  have hW := withExitResult_mono K K' hK m
+  have hF := withExitOnFlow_mono K K' hK m
   have hCP := applyCallPlan_mono K K' hK m
   have hAP := applyAttrPlan_mono K K' hK
   obtain ⟨hfuel, hcall, hcallClo, hdictItems, hkwArgs, hwhile, hforSeq, hforList,
           hforDict, hstepIter, hexecGen, hforGen, hdrain, hanyAll⟩ := hK
-  apply execOpen.mutual_induct
+  apply execOpen.mutual_induct (m := m)
     (motive_1 := fun st => execOpen K m st ⊑ₚ execOpen K' m st)
     (motive_2 := fun ss => execOpenList K m ss ⊑ₚ execOpenList K' m ss)
+  case case22 =>
+    intros
+    try dsimp at *
+    simp_all [execOpen]
+    exact PyLe.refl' _
+  case case23 =>
+    intros
+    try dsimp at *
+    simp_all [execOpen]
+    exact PyLe.refl' _
+  case case24 =>
+    intros
+    try dsimp at *
+    simp_all [execOpen]
+    exact PyLe.refl' _
+  case case25 =>
+    intros
+    simp_all only [execOpen]
+    mono_with_structural (first
+      | exact hW _ _ _
+      | exact hF _ _ _
+      | exact hE _
+      | exact hEL _
+      | exact hCC _ _ _
+      | exact hBC _ _
+      | exact hCP _ _
+      | exact hAP _ _ _ _
+      | exact hcall _ _
+      | exact hcallClo _ _ _
+      | exact hdictItems _ _
+      | exact hkwArgs _
+      | exact hwhile _ _ _
+      | exact hforSeq _ _ _
+      | exact hforList _ _ _ _
+      | exact hforDict _ _ _ _ _ _ _
+      | exact hstepIter _
+      | exact hexecGen _
+      | exact hforGen _ _ _
+      | exact hdrain _
+      | exact hanyAll _ _
+      | exact truthyM_mono _
+      | exact PyLe.liftRes (evalCompareOpH_mono hfuel)
+      | assumption)
   all_goals intros
   all_goals (try simp only [execOpen, execOpenList])
+  all_goals (try simp_all)
   all_goals
     mono_with (first
       | exact hE _
@@ -403,8 +501,11 @@ theorem execOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
       | exact hforGen _ _ _
       | exact hdrain _
       | exact hanyAll _ _
+      | exact truthyM_mono _
       | exact PyLe.liftRes (evalCompareOpH_mono hfuel)
       | assumption
+      | exact hW _ _ _
+      | exact hF _ _ _
       | apply_assumption)
 
 theorem execOpen_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :

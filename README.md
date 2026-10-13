@@ -34,8 +34,10 @@ Module-scope annotated assignments admit simple targets with scalar literal
 annotations, including forward-reference strings; nonliteral annotations and
 explicit annotation-table bindings remain loud.
 Synchronous `with` supports explicit zero-argument constructors, multiple items,
-and transparent body exception unwinding while preserving the original
-exception; argument-sensitive suppression and `async with` remain loud.
+and body exception unwinding while preserving the original exception. A
+computed `__exit__` result is tested with normal truthiness when it does not
+inspect the exception arguments; argument-sensitive suppression and `async
+with` remain loud.
 `bool()` and `bool(value)` use the same truthiness semantics as conditionals,
 including heap containers and nondraining generator checks; builtin type values
 and keyword calls remain loud.
@@ -65,9 +67,9 @@ non-finite division, float keys, and identity-dependent NaN operations remain
 loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
 downstream exhaustive matches must handle the new value/operator/error
 constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
-The executable differential suite has 3,105 cases: 2,777 agree with CPython and
-328 refuse loudly (**89.4% complete**). The narrower proof interpreter agrees on
-2,703 cases and refuses 402 (**87.1% complete**); neither run has a mismatch in
+The executable differential suite has 3,108 cases: 2,779 agree with CPython and
+329 refuse loudly (**89.4% complete**). The narrower proof interpreter agrees on
+2,705 cases and refuses 403 (**87.0% complete**); neither run has a mismatch in
 the recorded suite. The grammar census has 142 witnesses, with 118 MATCH and 24
 REFUSE. These are measured
 examples, not a claim of complete language support; remaining gaps stay in scope.

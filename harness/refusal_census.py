@@ -944,6 +944,7 @@ WHITELIST_CLASS = {
     "cls_lab::class_as_value": "firstclass.callable",
     "with_lab::multiple_items": "with.multiple-items",
     "with_lab::explicit_init": "with.explicit-constructor",
+    "with_lab::argument_sensitive_suppression": "with.exception-arguments",
     "with_lab::extra_dunder": "with.extra-dunder",
     "cls_lab::aug_attr_list": "augassign.container-attr",
     "cls_lab::unpack_subscript_elem": "assign.non-name-target",

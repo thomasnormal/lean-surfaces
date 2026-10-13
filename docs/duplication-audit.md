@@ -969,8 +969,8 @@ path runs with **zero Lean executed**. The `-nogit` variants are copies with
 | B1 | | **unresolvable** | `… <V>/wspec-nogit -o b1x.json` | **0**, `revision=None` ✗ | **2**, REFUSED, no file ✓ |
 | B2 | `wasm_suite_census.py` `git_rev` | resolvable | `… <V>/wsuite -o b2.json` | 0 | **0**, `revision=11614693…` ✓ |
 | B2 | | **unresolvable** | `… <V>/wsuite-nogit -o b2x.json` | **0**, `revision=None` ✗ | **2**, REFUSED, no file ✓ |
-| B3 | `es_census.py` `rev` | resolvable | `… --engine <V>/esfix -o b3.json` | 0 | **0**, `engine262=c1e558cc…` ✓ |
-| B3 | | **unresolvable** | `… --engine <V>/esfix-nogit -o b3x.json` | **0**, `sources={'engine262': ''}` ✗ | **2**, REFUSED, no file ✓ |
+| B3 | `es_census.py` `rev` | resolvable | `… --engine <V>/esfix -o b3.json` | 0 | **0**, `reference_engine=c1e558cc…` ✓ |
+| B3 | | **unresolvable** | `… --engine <V>/esfix-nogit -o b3x.json` | **0**, `sources={'reference_engine': ''}` ✗ | **2**, REFUSED, no file ✓ |
 | B4 | `lean_independent_check.py` `checker_commit` | resolvable | `… --checker-dir <V>/leanfix --modules Init.Core` | 0 | **0**, `checker_commit=702e8110…` ✓ |
 | B4 | | **unresolvable** | `… --checker-dir <V>/leanfix-nogit --modules Init.Core` | **0**, `checker_commit=""` ✗ | **2**, REFUSED, no file ✓ |
 
@@ -981,7 +981,7 @@ fixtures and the same perturbed JSONs.
 **The B3 row is the one that was never hypothetical.**
 `docs/es262-census.json` on master carries
 
-    "sources": {"ecma262": "", "engine262": "c7939eaf…", "test262": "3655e746…"}
+    "sources": {"ecma262": "", "reference_engine": "c7939eaf…", "test262": "3655e746…"}
 
 Two thirds provenanced, one third silently blank, from exactly this code
 path. That is §5.4a's failure reading *cleaner than the truth*, sitting in a

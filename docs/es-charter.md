@@ -29,7 +29,7 @@ reported a plausible zero is recorded in §1.1 as the defect it was.
 | --- | --- | --- |
 | `tc39/ecma262` `spec.html` | `ed463bc10dbeaad0410ce67e541a77ea8e9900a5` | 2026-08-20 |
 | `tc39/test262` | `3655e7464de3d52643ecddd4b5f9f4f3e7f62398` | 2026-08-10 |
-| `engine262/engine262` | `c7939eaf0bcfa292b4a8872e78f4c221bc2477a2` | 2026-08-09 |
+| `reference-engine/reference-engine` | `c7939eaf0bcfa292b4a8872e78f4c221bc2477a2` | 2026-08-09 |
 
 ---
 
@@ -112,7 +112,7 @@ ahead of the edition rather than anything being wrong:
 | --- | ---: | ---: | ---: |
 | test262 `esid` rows resolving to the pinned spec | 21,874 | **21,572** | **−302** |
 | …correspondingly, `clause-id-absent` | 6,776 | **7,078** | +302 |
-| engine262 `#sec-` anchors resolving | 1,152 | **1,141** | −11 |
+| reference-engine `#sec-` anchors resolving | 1,152 | **1,141** | −11 |
 | everything measured on the SUITE and the FRONTEND | — | — | **0** |
 
 **302 suite citations and 11 engine anchors name clauses that exist only
@@ -169,7 +169,7 @@ its own.
 ```
 python3 harness/es_census.py --spec <ecma262>/spec.html \
                              --tests <test262> \
-                             --engine <engine262> \
+                             --engine <reference-engine> \
                              --acorn <dir>/node_modules/acorn/dist/acorn.mjs \
                              -o docs/es262-census.json
 python3 harness/es_census.py --spec … --tests … --compare docs/es262-census.json
@@ -181,7 +181,7 @@ an abstract operation, `<emu-alg>` marks a numbered-step algorithm,
 `<emu-grammar>` marks a grammar production. So *"how many definitions
 would a one-Lean-definition-per-abstract-operation tier owe?"* is a
 COUNT, not an estimate. The instrument takes it, and takes it again for
-test262's YAML frontmatter and for engine262's spec back-references.
+test262's YAML frontmatter and for the reference-engine's spec back-references.
 
 Output is sorted; a double run is byte-identical (verified). It carries a
 `--compare` mode for the same reason the C lane's does: **all three
@@ -225,7 +225,7 @@ frontmatter shapes. It is a candidate `step` for `tools/ci.sh` the day
 this lane touches that file, which this charter does not.
 
 **Reproducing the corpora**, since nothing is vendored (§3.4) — shallow
-clones of `tc39/ecma262`, `tc39/test262` and `engine262/engine262`, plus
+clones of `tc39/ecma262`, `tc39/test262` and `reference-engine/reference-engine`, plus
 `npm install acorn` in a scratch directory for the frontend probe. The
 three clones and the census together take a few minutes; the `test/` tree
 alone is 226 MB, which is the concrete reason it stays out of the
@@ -328,7 +328,7 @@ convention without further argument:
 
 The convention has a mechanical check available on day one, and it is the
 reason `--engine` is a mode of the census rather than a curiosity.
-**engine262 — a JavaScript implementation of ECMA-262 written to mirror
+**The reference engine — a JavaScript implementation of ECMA-262 written to mirror
 the spec's structure — writes 1,782 distinct `#sec-…` anchors in JSDoc
 comments over 1,868 sites, across 68,429 lines and 364 files** whose very
 directory names are the spec's own (`abstract-ops` 54 files,
@@ -379,7 +379,7 @@ sha256. (iii) Pinning `main` makes every re-clone a different
 specification: the C lane's staleness lesson, but continuous instead of
 occasional. (iv) Against pinning an OLDER edition: test262's tree is
 ahead of `es2024`/`es2025` by more, so the feature filter must work
-harder for no gain, and engine262 — the only cross-check with per-clause
+harder for no gain, and the reference engine — the only cross-check with per-clause
 structure — tracks the tip.
 
 **The honest cost of the recommendation, stated:** test262 has no
@@ -779,7 +779,7 @@ Two adaptations forced by the corpus, both stated rather than assumed:
 | --- | --- | --- |
 | **test262** | **BSD 3-clause**, Copyright (C) 2012 Ecma International | yes, with notice |
 | `tc39/ecma262` (spec source) | TC39 IP policy: prose under Ecma's alternative copyright notice; **source code** under Ecma's MIT-style software policy | prose: **NO** |
-| **engine262** | **MIT** | yes, with notice |
+| **reference engine** | **MIT** | yes, with notice |
 | acorn (the frontend probe's parser) | MIT | fetched, never vendored |
 
 **The test262 license is genuinely BSD, and this was verified rather than
@@ -1057,7 +1057,7 @@ is a statement about the model.
 
 **ECMAScript has no reference implementation.** The authority is the
 document. So any engine the tier compares against — V8 through node,
-JavaScriptCore, SpiderMonkey, or engine262 — is itself only a claimant,
+JavaScriptCore, SpiderMonkey, or the reference engine — is itself only a claimant,
 and a disagreement between the model and an engine has THREE possible
 causes, not one:
 
@@ -1071,7 +1071,7 @@ causes, not one:
 **Consequence, and it is a doctrine change this lane must adopt from the
 start: the scoreboard is scored against TEST262'S EXPECTATION, never
 against an engine's behaviour.** An engine may be run as a cross-check —
-and engine262 is the right one, because it is structured per clause and
+and the reference engine is the right one, because it is structured per clause and
 MIT-licensed — but a model-versus-engine disagreement is a QUESTION,
 resolved by reading the cited clause, and it is never automatically a
 model bug. The Python lane never has to do this: it can always just ask.
@@ -1086,7 +1086,7 @@ exactly what an authority-less language needs.
 
 **One refinement this lane owes back.** §4.2 writes that *"Wasm,
 ECMAScript and Ada all have reference implementations."* For ECMAScript
-that is true only in the loose sense: engine262 self-describes as *"an
+that is true only in the loose sense: the reference engine self-describes as *"an
 implementation of ECMA-262 in JavaScript"* with 100% spec compliance as a
 GOAL, and it is neither normative nor privileged by TC39. **There is no
 reference implementation of ECMAScript in the sense CPython is one for
@@ -1157,10 +1157,10 @@ whose feasibility is asserted is not planned.
   multiple independent implementations is exactly what the envelope
   discipline wants: the frontend is replaceable and the envelope is the
   contract.
-* **engine262's own parser** — 15 files, 11,543 lines, producing a
+* **The reference engine's own parser** — 15 files, 11,543 lines, producing a
   spec-shaped tree with the spec's own nonterminal names rather than
   ESTree's. Structurally closer to clause 12-15; ecosystically isolated.
-* **The precedent worth naming: engine262 IS the "implement the spec in a
+* **The precedent worth naming: the reference engine IS the "implement the spec in a
   language" experiment already run once.** 68,429 lines of JavaScript,
   1,782 spec anchors, directory names taken from the spec's clause names.
   A Lean-implements-the-spec tier is the same experiment in a language

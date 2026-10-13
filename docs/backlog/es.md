@@ -656,7 +656,7 @@ can reach the difference and score a pass. It lands with the realm (inch 6).
 
 All four corpora are on disk again and the census REGENERATES: `ecma262`
 `d89c03f2db8a597bc915b363a6518d0cc8acdbc0` (2026-07-27), `test262`
-`3655e7464de3d52643ecddd4b5f9f4f3e7f62398` (2026-08-10), `engine262`
+`3655e7464de3d52643ecddd4b5f9f4f3e7f62398` (2026-08-10), `reference-engine`
 `c7939eaf0bcfa292b4a8872e78f4c221bc2477a2` (2026-08-09), plus `acorn` for the
 frontend probe.
 
@@ -680,7 +680,7 @@ recorded hash.**
 
 ### THE REPRODUCTION
 
-`test262` 26/26 keys identical, `engine262` 6/6, `frontend` 14/14 (18,114
+`test262` 26/26 keys identical, `reference-engine` 6/6, `frontend` 14/14 (18,114
 attempted / 14,045 parsed / 4,069 rejected / **66 node types**, 0 runner
 errors), `spec` 21/23 with `core_slice` exact. Three leaves in the whole
 artifact differed, all three intended: `sources.ecma262` (was `""`),

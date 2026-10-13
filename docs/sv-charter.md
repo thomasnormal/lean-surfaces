@@ -1474,6 +1474,16 @@ generic lifting of a two-state semantics. It must be tabulated
 per-operator. That is the concrete price of the value model, and it is
 already paid in `LeanModels/Sv/Basic.lean`.
 
+### 3.2.1 Case equality in M0 — 2026-10-13
+
+Direct `===` and `!==` expressions now travel through the ordinary M0
+envelope and cycle interpreter. Their operands retain the extractor's
+common-width context, and the result is a definite one-bit `0` or `1` by
+exact four-state comparison (`x` and `z` remain distinct). This is the same
+`LVec.eqCase`/`neCase` authority used by lowered ordinary `case` statements;
+there is no second comparison table. Invalid frontend compilations remain
+loud through the existing extractor provenance gate.
+
 ### 3.3 X-pessimism, and what it means for MATCH verdicts
 
 **This is the value model's sharpest consequence for differential

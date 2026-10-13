@@ -5,58 +5,132 @@
     {
       "name": "adder_directed",
       "example": "adder",
-      "signals": ["a", "b", "s"],
+      "signals": [
+        "a",
+        "b",
+        "s"
+      ],
       "stimulus": [
-        {"a": "00000001", "b": "00000010"},
-        {"a": "11111111", "b": "00000001"},
-        {"a": "10101010", "b": "01010101"},
-        {"a": "00000000", "b": "00000000"},
-        {"a": "01111111", "b": "01111111"}
+        {
+          "a": "00000001",
+          "b": "00000010"
+        },
+        {
+          "a": "11111111",
+          "b": "00000001"
+        },
+        {
+          "a": "10101010",
+          "b": "01010101"
+        },
+        {
+          "a": "00000000",
+          "b": "00000000"
+        },
+        {
+          "a": "01111111",
+          "b": "01111111"
+        }
       ]
     },
     {
       "name": "adder_x",
       "example": "adder",
-      "signals": ["a", "b", "s"],
+      "signals": [
+        "a",
+        "b",
+        "s"
+      ],
       "stimulus": [
-        {"a": "0000000x", "b": "00000001"},
-        {"a": "00000011", "b": "00000100"},
-        {"a": "zzzzzzzz", "b": "00000001"},
-        {"a": "00000001", "b": "000000x0"},
-        {"a": "xxxxxxxx", "b": "xxxxxxxx"}
+        {
+          "a": "0000000x",
+          "b": "00000001"
+        },
+        {
+          "a": "00000011",
+          "b": "00000100"
+        },
+        {
+          "a": "zzzzzzzz",
+          "b": "00000001"
+        },
+        {
+          "a": "00000001",
+          "b": "000000x0"
+        },
+        {
+          "a": "xxxxxxxx",
+          "b": "xxxxxxxx"
+        }
       ]
     },
     {
       "name": "counter_reset",
       "example": "counter",
-      "signals": ["rst", "count"],
+      "signals": [
+        "rst",
+        "count"
+      ],
       "stimulus": [
-        {"rst": "0"},
-        {"rst": "1"},
-        {"rst": "0"},
-        {"rst": "0"},
-        {"rst": "0"},
-        {"rst": "1"},
-        {"rst": "0"},
-        {"rst": "0"}
+        {
+          "rst": "0"
+        },
+        {
+          "rst": "1"
+        },
+        {
+          "rst": "0"
+        },
+        {
+          "rst": "0"
+        },
+        {
+          "rst": "0"
+        },
+        {
+          "rst": "1"
+        },
+        {
+          "rst": "0"
+        },
+        {
+          "rst": "0"
+        }
       ]
     },
     {
       "name": "counter_xrst",
       "example": "counter",
-      "signals": ["rst", "count"],
+      "signals": [
+        "rst",
+        "count"
+      ],
       "stimulus": [
-        {"rst": "1"},
-        {"rst": "x"},
-        {"rst": "0"},
-        {"rst": "z"}
+        {
+          "rst": "1"
+        },
+        {
+          "rst": "x"
+        },
+        {
+          "rst": "0"
+        },
+        {
+          "rst": "z"
+        }
       ]
     },
     {
       "name": "race_blk_one_edge",
       "example": "race_blk",
-      "signals": ["a", "b"],
-      "accept_sigmas": ["src", "rev"],
+      "signals": [
+        "a",
+        "b"
+      ],
+      "accept_sigmas": [
+        "src",
+        "rev"
+      ],
       "stimulus": [
         {}
       ]
@@ -64,7 +138,10 @@
     {
       "name": "swap_nba_swap",
       "example": "swap_nba",
-      "signals": ["a", "b"],
+      "signals": [
+        "a",
+        "b"
+      ],
       "stimulus": [
         {},
         {},
@@ -75,62 +152,187 @@
     {
       "name": "xsel_directed",
       "example": "xsel",
-      "signals": ["sel", "a", "b", "y"],
+      "signals": [
+        "sel",
+        "a",
+        "b",
+        "y"
+      ],
       "stimulus": [
-        {"sel": "1", "a": "00001111", "b": "11110000"},
-        {"sel": "0", "a": "00001111", "b": "11110000"},
-        {"sel": "1", "a": "10100101", "b": "01011010"},
-        {"sel": "0", "a": "10100101", "b": "01011010"}
+        {
+          "sel": "1",
+          "a": "00001111",
+          "b": "11110000"
+        },
+        {
+          "sel": "0",
+          "a": "00001111",
+          "b": "11110000"
+        },
+        {
+          "sel": "1",
+          "a": "10100101",
+          "b": "01011010"
+        },
+        {
+          "sel": "0",
+          "a": "10100101",
+          "b": "01011010"
+        }
       ]
     },
     {
       "name": "xsel_x",
       "example": "xsel",
-      "signals": ["sel", "a", "b", "y"],
+      "signals": [
+        "sel",
+        "a",
+        "b",
+        "y"
+      ],
       "stimulus": [
-        {"sel": "x", "a": "00001111", "b": "11110000"},
-        {"sel": "z", "a": "00001111", "b": "11110000"},
-        {"sel": "1", "a": "0000xx11", "b": "11110000"},
-        {"sel": "0", "a": "00001111", "b": "zzzz0000"}
+        {
+          "sel": "x",
+          "a": "00001111",
+          "b": "11110000"
+        },
+        {
+          "sel": "z",
+          "a": "00001111",
+          "b": "11110000"
+        },
+        {
+          "sel": "1",
+          "a": "0000xx11",
+          "b": "11110000"
+        },
+        {
+          "sel": "0",
+          "a": "00001111",
+          "b": "zzzz0000"
+        }
       ]
     },
     {
       "name": "toggle_directed",
       "example": "toggle",
-      "signals": ["rst", "en", "q"],
+      "signals": [
+        "rst",
+        "en",
+        "q"
+      ],
       "stimulus": [
-        {"rst": "1", "en": "0"},
-        {"rst": "0", "en": "1"},
-        {"en": "1"},
-        {"en": "0"},
-        {"en": "1"},
-        {"rst": "1"},
-        {"rst": "0", "en": "1"}
+        {
+          "rst": "1",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "1"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "en": "0"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "rst": "1"
+        },
+        {
+          "rst": "0",
+          "en": "1"
+        }
       ]
     },
     {
       "name": "toggle_x",
       "example": "toggle",
-      "signals": ["rst", "en", "q"],
+      "signals": [
+        "rst",
+        "en",
+        "q"
+      ],
       "stimulus": [
-        {"rst": "0", "en": "1"},
-        {"rst": "1", "en": "0"},
-        {"rst": "0", "en": "x"},
-        {"en": "z"},
-        {"en": "1"},
-        {"rst": "x", "en": "1"}
+        {
+          "rst": "0",
+          "en": "1"
+        },
+        {
+          "rst": "1",
+          "en": "0"
+        },
+        {
+          "rst": "0",
+          "en": "x"
+        },
+        {
+          "en": "z"
+        },
+        {
+          "en": "1"
+        },
+        {
+          "rst": "x",
+          "en": "1"
+        }
       ]
     },
     {
       "name": "remainder_directed",
       "example": "remainder",
-      "signals": ["left", "right", "result"],
+      "signals": [
+        "left",
+        "right",
+        "result"
+      ],
       "stimulus": [
-        {"left": "00001101", "right": "00000101"},
-        {"left": "11111111", "right": "00000101"},
-        {"left": "00000111", "right": "00000011"},
-        {"left": "00000001", "right": "00000000"},
-        {"left": "00000x01", "right": "00000011"}
+        {
+          "left": "00001101",
+          "right": "00000101"
+        },
+        {
+          "left": "11111111",
+          "right": "00000101"
+        },
+        {
+          "left": "00000111",
+          "right": "00000011"
+        },
+        {
+          "left": "00000001",
+          "right": "00000000"
+        },
+        {
+          "left": "00000x01",
+          "right": "00000011"
+        }
+      ]
+    },
+    {
+      "name": "case_equality_directed",
+      "example": "case_equality",
+      "signals": [
+        "value",
+        "eq",
+        "neq"
+      ],
+      "stimulus": [
+        {
+          "value": "1x"
+        },
+        {
+          "value": "1z"
+        },
+        {
+          "value": "10"
+        },
+        {
+          "value": "1x"
+        }
       ]
     }
   ]

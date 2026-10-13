@@ -217,10 +217,20 @@ def evalBinOp : BinOp → LVec → LVec → LVec
   | .xor, a, b => a.xor b
   | .eq, a, b => .ofLogic (a.eqLogical b)
   | .ne, a, b => .ofLogic (a.neLogical b)
+  | .caseEq, a, b => .ofLogic (a.eqCase b)
+  | .caseNe, a, b => .ofLogic (a.neCase b)
   | .lt, a, b => .ofLogic (a.lt b)
   | .le, a, b => .ofLogic (a.le b)
   | .gt, a, b => .ofLogic (a.gt b)
   | .ge, a, b => .ofLogic (a.ge b)
+
+section CaseEqualityGuards
+
+#guard evalBinOp .caseEq (.lit "1x") (.lit "1x") == .lit "1"
+#guard evalBinOp .caseEq (.lit "1x") (.lit "1z") == .lit "0"
+#guard evalBinOp .caseNe (.lit "z") (.lit "x") == .lit "1"
+
+end CaseEqualityGuards
 
 /-! ## The fueled interpreter core
 

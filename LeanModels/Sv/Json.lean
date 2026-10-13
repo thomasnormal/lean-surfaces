@@ -145,6 +145,8 @@ def parseBinOpName : String → Except String BinOp
   | "^" | "BinaryXor" | "Xor" => .ok .xor
   | "==" | "Equality" | "Eq" => .ok .eq
   | "!=" | "Inequality" | "Ne" => .ok .ne
+  | "===" | "CaseEquality" | "CaseEq" => .ok .caseEq
+  | "!==" | "CaseInequality" | "CaseNe" => .ok .caseNe
   | "<" | "LessThan" | "Lt" => .ok .lt
   | "<=" | "LessThanEqual" | "Le" => .ok .le
   | ">" | "GreaterThan" | "Gt" => .ok .gt

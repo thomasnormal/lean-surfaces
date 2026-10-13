@@ -42,7 +42,7 @@ Single module, no hierarchy/generate/interfaces/classes/functions. Declarations:
 Ports in/out. Processes: `always_ff @(posedge <clk>)`, `always @(posedge <clk>)`,
 `always_comb`, continuous `assign`. Statements: blocking `=`, nonblocking `<=`,
 `if`/`else`, `begin/end`. Expressions: identifiers; sized/unsized literals incl.
-`'0`, `'1`, x/z digits; unary `~ ! -`; binary `+ - & | ^ == != < <= > >=`;
+`'0`, `'1`, x/z digits; unary `~ ! -`; binary `+ - & | ^ == != === !== < <= > >=`;
 ternary `?:`; concatenation `{a, b}`. Everything else: representable as
 `Unsupported`, interpreter returns `.unsupported` (loud) when reached.
 M0 target examples (all already Xcelium-verified in the galleries):
@@ -63,7 +63,8 @@ Operator semantics (IEEE 1800-2017, Xcelium-confirmed):
   else x. `^`: any x/z bit → x, else xor. `~`: ~0=1, ~1=0, ~x=~z=x.
 - **Logical equality `==`/`!=`**: 0 (definite) if some bit position has both bits
   known and unequal; else x if any x/z anywhere; else 1. (NOT "any x → x".)
-- **Case equality `===`/`!==`**: exact 4-state match, always 0/1.
+- **Case equality `===`/`!==`**: exact 4-state match, always 0/1. Unlike
+  logical equality, `x` and `z` are compared as distinct literal states.
 - **`if (c)`**: true iff `c` has at least one `l1` bit; all-zero OR unknown-only
   → else branch (verified: `if (1'bx)`/`if (1'bz)` take else; absent else = no-op,
   so a latch-style `if` with x condition HOLDS the target, never x-poisons it).

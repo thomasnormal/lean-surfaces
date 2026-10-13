@@ -165,7 +165,8 @@ def SymBinOp.sym : SymBinOp → String
   | .m0 (.ashl signedLeft) => (if signedLeft then "s" else "u") ++ "<<<"
   | .m0 (.ashr signedLeft) => (if signedLeft then "s" else "u") ++ ">>>"
   | .m0 .and => "&" | .m0 .or => "|"
-  | .m0 .xor => "^" | .m0 .eq => "==" | .m0 .ne => "!=" | .m0 .lt => "<"
+  | .m0 .xor => "^" | .m0 .eq => "==" | .m0 .ne => "!="
+  | .m0 .caseEq => "===" | .m0 .caseNe => "!==" | .m0 .lt => "<"
   | .m0 .le => "<=" | .m0 .gt => ">" | .m0 .ge => ">="
   | .mul => "*" | .div => "/" | .mod => "%" | .pow => "**"
   | .shl => "<<" | .shr => ">>" | .ashl => "<<<" | .ashr => ">>>"
@@ -458,6 +459,8 @@ def evalInt (env : IEnv) : PExpr → Except String Int
               | _ => x ^^^ y))
       | .m0 .eq => .ok (b2i (a == b))
       | .m0 .ne => .ok (b2i (a != b))
+      | .m0 .caseEq => .ok (b2i (a == b))
+      | .m0 .caseNe => .ok (b2i (a != b))
       | .m0 .lt | .slt => .ok (b2i (decide (a < b)))
       | .m0 .le | .sle => .ok (b2i (decide (a ≤ b)))
       | .m0 .gt | .sgt => .ok (b2i (decide (a > b)))

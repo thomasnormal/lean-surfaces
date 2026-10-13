@@ -110,7 +110,7 @@ emits:
 | `ConditionalStatement:Unique` / `:Unique0` / `:Priority` / `:multi` / `:pattern` | `unique`/`priority` if, multiple `&&&` conditions, `matches` pattern |
 | `ConditionalExpression:multi` / `:pattern` | same, for `?:` |
 | `BlockStatement:JoinAll` / `:JoinAny` / `:JoinNone` | `fork ... join*` |
-| `BinaryExpression:<Op>` / `UnaryExpression:<Op>` | operator outside the M0 set, slang enum name (e.g. `BinaryExpression:Divide`, `BinaryExpression:CaseEquality`, `UnaryExpression:Plus`) |
+| `BinaryExpression:<Op>` / `UnaryExpression:<Op>` | operator outside the M0 set, slang enum name (e.g. `BinaryExpression:Divide`, `UnaryExpression:Plus`) |
 | `ConversionExpression:width` | **width mismatch in source**: an implicit conversion that changes bit width (M0 has no implicit extension/truncation rules) |
 | `ConversionExpression:Explicit` / `:BitstreamCast` / `:StreamingConcat` | explicit casts |
 | `NamedValueExpression:<SymbolKind>` | identifier that does not name a variable/net (e.g. `:Parameter`) |
@@ -295,7 +295,7 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
-`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "<" "<=" ">" ">="` (the M0 set;
+`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "===" "!==" "<" "<=" ">" ">="` (the M0 set;
 `<<` `>>` `<<<` and `>>>` are integral shifts (§11.4.10). Their envelope
 operators are typed as `u<<`/`s<<`, `u>>`/`s>>`, `u<<<`/`s<<<`, and
 `u>>>`/`s>>>`; the prefix records the signedness of the left operand.
@@ -304,8 +304,9 @@ is the left operand width, including assignment-context widening before the
 shift and destination narrowing after it. Unknown shift amounts produce all
 x; overshifts zero-fill, except signed `>>>`, which sign-fills.
 
-`==`/`!=` are *logical* equality — case equality `===` is
-`BinaryExpression:CaseEquality` → Unsupported). The width invariants hold
+`==`/`!=` are *logical* equality. `===`/`!==` are *case* equality: they
+compare every four-state bit exactly and always produce a definite one-bit
+result. The width invariants hold
 whenever the children are supported nodes — the extractor enforces them and
 demotes violators to `Unsupported`; if a child is itself `Unsupported` its
 width is unknown and the parent keeps its structure (the interpreter goes

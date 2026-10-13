@@ -787,12 +787,14 @@ def _convert_unary_expr(sm, e):
             return unsupported(sm, e, "UnaryExpression:width")
         return operand
     sym = UNARY_OPS.get(e.op)
-    if sym is None and _SYM is not None:
+    if sym is None:
         reduction = REDUCE_OPS.get(e.op)
         if reduction is not None:
             operand = _convert_expr(sm, e.operand)
-            if _DIV_CONTEXT and not _SYM.symctx:
+            if _SYM is not None and _DIV_CONTEXT and not _SYM.symctx:
                 operand = _division_self_operand(sm, e.operand, operand)
+            if e.type.bitWidth != 1:
+                return unsupported(sm, e, "UnaryExpression:width")
             return {
                 "kind": "Reduce",
                 "span": node_span(sm, e),
@@ -1401,7 +1403,7 @@ def _case_source_expression_ok(expression):
             "ElementSelectExpression", "RangeSelectExpression",
         )
         if kind == "UnaryExpression":
-            pure = pure and node.op in UNARY_OPS
+            pure = pure and (node.op in UNARY_OPS or node.op in REDUCE_OPS)
         if kind == "BinaryExpression":
             pure = pure and node.op in BINARY_OPS
 

@@ -408,6 +408,9 @@ theorem fuelMono (fuel : Nat) :
         | unary op a =>
           simp only [evalExpr]
           exact Res.le_bind (ihE st a k hk) fun v => Res.le_refl _
+        | reduce op a =>
+          simp only [evalExpr]
+          exact Res.le_bind (ihE st a k hk) fun v => Res.le_refl _
         | resizeSigned width operand =>
           simp only [evalExpr]
           exact Res.le_bind (ihE st operand k hk) fun value => Res.le_refl _

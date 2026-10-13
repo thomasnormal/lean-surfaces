@@ -1,0 +1,369 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/reductions/reductions.sv",
+  "source_sha256": "f7037e157818bd4f1ac6b5fc43035f066fba96a9847a9027c9c07c032838426d",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "reductions",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 21,
+              "end_line": 2,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": 4
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 16,
+              "end_line": 3,
+              "end_col": 22
+            },
+            "name": "red_or",
+            "dir": "out",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 23
+            },
+            "name": "red_and",
+            "dir": "out",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 16,
+              "end_line": 5,
+              "end_col": 23
+            },
+            "name": "red_xor",
+            "dir": "out",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "red_nor",
+            "dir": "out",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 16,
+              "end_line": 7,
+              "end_col": 24
+            },
+            "name": "red_nand",
+            "dir": "out",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "red_xnor",
+            "dir": "out",
+            "width": 1
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 9,
+              "col": 10,
+              "end_line": 9,
+              "end_col": 21
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 9,
+                "col": 10,
+                "end_line": 9,
+                "end_col": 16
+              },
+              "width": 1,
+              "name": "red_or"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 9,
+                "col": 19,
+                "end_line": 9,
+                "end_col": 21
+              },
+              "width": 1,
+              "op": "|",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 9,
+                  "col": 20,
+                  "end_line": 9,
+                  "end_col": 21
+                },
+                "width": 4,
+                "name": "a"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 10,
+              "col": 10,
+              "end_line": 10,
+              "end_col": 22
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 10,
+                "col": 10,
+                "end_line": 10,
+                "end_col": 17
+              },
+              "width": 1,
+              "name": "red_and"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 10,
+                "col": 20,
+                "end_line": 10,
+                "end_col": 22
+              },
+              "width": 1,
+              "op": "&",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 10,
+                  "col": 21,
+                  "end_line": 10,
+                  "end_col": 22
+                },
+                "width": 4,
+                "name": "a"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 22
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 10,
+                "end_line": 11,
+                "end_col": 17
+              },
+              "width": 1,
+              "name": "red_xor"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 11,
+                "col": 20,
+                "end_line": 11,
+                "end_col": 22
+              },
+              "width": 1,
+              "op": "^",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 11,
+                  "col": 21,
+                  "end_line": 11,
+                  "end_col": 22
+                },
+                "width": 4,
+                "name": "a"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 12,
+              "col": 10,
+              "end_line": 12,
+              "end_col": 23
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 12,
+                "col": 10,
+                "end_line": 12,
+                "end_col": 17
+              },
+              "width": 1,
+              "name": "red_nor"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 12,
+                "col": 20,
+                "end_line": 12,
+                "end_col": 23
+              },
+              "width": 1,
+              "op": "~|",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 12,
+                  "col": 22,
+                  "end_line": 12,
+                  "end_col": 23
+                },
+                "width": 4,
+                "name": "a"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 13,
+              "col": 10,
+              "end_line": 13,
+              "end_col": 24
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 13,
+                "col": 10,
+                "end_line": 13,
+                "end_col": 18
+              },
+              "width": 1,
+              "name": "red_nand"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 13,
+                "col": 21,
+                "end_line": 13,
+                "end_col": 24
+              },
+              "width": 1,
+              "op": "~&",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 13,
+                  "col": 23,
+                  "end_line": 13,
+                  "end_col": 24
+                },
+                "width": 4,
+                "name": "a"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 24
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 14,
+                "col": 10,
+                "end_line": 14,
+                "end_col": 18
+              },
+              "width": 1,
+              "name": "red_xnor"
+            },
+            "value": {
+              "kind": "Reduce",
+              "span": {
+                "line": 14,
+                "col": 21,
+                "end_line": 14,
+                "end_col": 24
+              },
+              "width": 1,
+              "op": "~^",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 14,
+                  "col": 23,
+                  "end_line": 14,
+                  "end_col": 24
+                },
+                "width": 4,
+                "name": "a"
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

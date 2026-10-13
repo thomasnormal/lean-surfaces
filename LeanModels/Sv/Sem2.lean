@@ -98,16 +98,6 @@ def insertAt (v : LVec) (lo : Nat) (part : LVec) : LVec :=
     if lo ≤ i.val ∧ i.val < lo + part.width then part.bits[i.val - lo]?.getD .lx
     else v.bits[i.val]?.getD .lx⟩
 
-/-- Reduction `|`: fold of the `Logic.or` table (identity `0`) — `1` if any
-bit is 1, `0` if all bits 0, else `x`; width-0 gives `0`. -/
-def redOr (v : LVec) : Logic := v.bits.foldl Logic.or .l0
-
-/-- Reduction `&`: fold of the `Logic.and` table (identity `1`). -/
-def redAnd (v : LVec) : Logic := v.bits.foldl Logic.and .l1
-
-/-- Reduction `^`: fold of the `Logic.xor` table (identity `0`). -/
-def redXor (v : LVec) : Logic := v.bits.foldl Logic.xor .l0
-
 /-- Two's-complement value if fully known, else `none` (signed compare
 support; width 0 gives 0). -/
 def toInt? (v : LVec) : Option Int :=
@@ -141,20 +131,6 @@ def matchesWild (subj item : LVec) : Bool :=
 end LVec
 
 /-! ## The semantic-tier AST -/
-
-/-- Reduction operators (`| & ^ ~| ~& ~^`). -/
-inductive RedOp where
-  | or | and | xor | nor | nand | xnor
-deriving Repr, BEq, DecidableEq, Inhabited
-
-/-- Evaluate a reduction (negated forms via `Logic.not`). -/
-def evalRedOp : RedOp → LVec → Logic
-  | .or, v => v.redOr
-  | .and, v => v.redAnd
-  | .xor, v => v.redXor
-  | .nor, v => v.redOr.not
-  | .nand, v => v.redAnd.not
-  | .xnor, v => v.redXor.not
 
 /-- `case` statement check qualifier (§12.5.3). Execution-irrelevant in
 this tier (violations are simulator warnings, pinned as such); kept as

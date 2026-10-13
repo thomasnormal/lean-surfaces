@@ -269,6 +269,21 @@ def xor (a b : LVec) : LVec := zipWith Logic.xor a b
 /-- Vector `~` (per-bit `Logic.not`). -/
 def not (a : LVec) : LVec := ⟨a.bits.map Logic.not⟩
 
+/-! ### Reduction operators (§11.4.8) -/
+
+/-- Reduction `|`: `1` if any bit is `1`, `0` if all bits are `0`, and `x`
+otherwise. The empty-vector identity is `0`; zero-width operands are outside
+the extractor contract but keeping the fold total is useful for the value
+core. -/
+def redOr (v : LVec) : Logic := v.bits.foldl Logic.or .l0
+
+/-- Reduction `&`: `0` if any bit is `0`, `1` if all bits are `1`, and `x`
+otherwise. -/
+def redAnd (v : LVec) : Logic := v.bits.foldl Logic.and .l1
+
+/-- Reduction `^`: parity of known bits, or `x` when any bit is unknown. -/
+def redXor (v : LVec) : Logic := v.bits.foldl Logic.xor .l0
+
 /-! ### Arithmetic (whole-vector x-collapse, §11.4.3)
 
 If ANY bit of either operand is `x`/`z`, the ENTIRE result is `x` — never a
@@ -730,5 +745,33 @@ open Logic
 #guard LVec.add ⟨#[]⟩ ⟨#[]⟩ == ⟨#[]⟩
 
 end Tests
+
+/-! The reduction operator tag is shared by the M0 and semantic tiers. -/
+
+/-- Reduction operators (`| & ^ ~| ~& ~^`). -/
+inductive RedOp where
+  | or | and | xor | nor | nand | xnor
+deriving Repr, BEq, DecidableEq, Inhabited
+
+/-- Evaluate a reduction (negated forms via `Logic.not`). -/
+def evalRedOp : RedOp → LVec → Logic
+  | .or, v => v.redOr
+  | .and, v => v.redAnd
+  | .xor, v => v.redXor
+  | .nor, v => v.redOr.not
+  | .nand, v => v.redAnd.not
+  | .xnor, v => v.redXor.not
+
+#guard LVec.redOr (.lit "0000") == .l0
+#guard LVec.redOr (.lit "000x") == .lx
+#guard LVec.redOr (.lit "100x") == .l1
+#guard LVec.redAnd (.lit "1111") == .l1
+#guard LVec.redAnd (.lit "1110") == .l0
+#guard LVec.redAnd (.lit "111x") == .lx
+#guard LVec.redXor (.lit "1011") == .l1
+#guard LVec.redXor (.lit "101x") == .lx
+#guard evalRedOp .nor (.lit "0000") == .l1
+#guard evalRedOp .nand (.lit "1111") == .l0
+#guard evalRedOp .xnor (.lit "1011") == .l0
 
 end LeanModels.Sv

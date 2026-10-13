@@ -71,6 +71,7 @@ deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- M0 expressions. `lit` carries the fully resolved 4-state value (width
 included — the extractor resolves `'0`/unsized literals to context width).
+`reduce` carries a unary reduction and always evaluates to a one-bit vector.
 `concat` parts are in source order: `parts[0]` is the MOST significant
 (evaluate with `LVec.concatMany`). `unsupported` carries the slang node
 class name (`svKind`) and ≤200 chars of source text. -/
@@ -78,6 +79,7 @@ inductive Expr where
   | lit (value : LVec)
   | ident (name : String)
   | unary (op : UnaryOp) (arg : Expr)
+  | reduce (op : RedOp) (arg : Expr)
   | resizeSigned (width : Nat) (arg : Expr)
   | binary (op : BinOp) (left right : Expr)
   | ternary (cond thenE elseE : Expr)
@@ -155,7 +157,7 @@ where
   exprHas : Expr → Bool
     | .unsupported _ _ => true
     | .lit _ | .ident _ => false
-    | .unary _ a | .resizeSigned _ a => exprHas a
+    | .unary _ a | .reduce _ a | .resizeSigned _ a => exprHas a
     | .binary _ a b => exprHas a || exprHas b
     | .ternary c a b => exprHas c || exprHas a || exprHas b
     | .concat ps => ps.attach.any fun ⟨p, _⟩ => exprHas p

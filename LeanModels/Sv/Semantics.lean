@@ -261,6 +261,8 @@ def evalExpr (fuel : Nat) (st : SvState) (e : Expr) : Res LVec :=
     | .ident name => readSignal st name
     | .unary op a => do
         return evalUnaryOp op (← evalExpr fuel st a)
+    | .reduce op a => do
+        return .ofLogic (evalRedOp op (← evalExpr fuel st a))
     | .resizeSigned width operand => do
         return (← evalExpr fuel st operand).resizeSigned width
     | .binary op l r => do

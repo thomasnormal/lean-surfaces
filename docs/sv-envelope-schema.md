@@ -293,6 +293,7 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Ident` | `kind`, `span`, `width`, `name` (string) | declared width of the named var/net/port |
 | `Literal` | `kind`, `span`, `width`, `bits` (string) | `len(bits) == width` |
 | `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"-"`), `operand` (expr) | `~`,`-`: `width == operand.width`; `!`: `width == 1` |
+| `Reduce` | `kind`, `span`, `width`, `op` (`"|"` \| `"&"` \| `"^"` \| `"~|"` \| `"~&"` \| `"~^"`), `operand` (expr) | `width == 1`; operand is any admitted integral expression |
 | `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | arithmetic/bitwise operators: common-width children; shifts: `width == left.width`, with a self-determined right operand; comparisons: `width == 1` and equal child widths |
 | `Ternary` | `kind`, `span`, `width`, `cond`, `then`, `else` (exprs) | `width == then.width == else.width`; `cond` any width |
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
@@ -318,6 +319,12 @@ width is unknown and the parent keeps its structure (the interpreter goes
 Logical `&&`/`||` also produce a one-bit result. Each operand is converted by
 the four-state truthiness rule before the logical table is applied; they are
 not bitwise aliases for `&`/`|`.
+
+Unary reductions `|`, `&`, `^`, `~|`, `~&` and `~^` produce one-bit values.
+The first three fold the operand's bits with the corresponding four-state
+table; the last three negate those results. Unknown bits remain `x` unless a
+definite table result decides the fold (`|4'b100x` is `1`, while `&4'b111x`
+and `^4'b101x` are `x`).
 
 Unary `+` is admitted as a value-preserving identity over the same integral
 fragment, but is erased during extraction after its result and operand widths

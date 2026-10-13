@@ -375,6 +375,16 @@ Lean AST constructor or evaluator branch is needed; x/z bits and signedness
 metadata remain exactly those of the operand. Width-changing implicit
 conversions and every other unary operator boundary remain unchanged.
 
+### Unary reductions — 2026-10-13
+
+The legacy M0 surface now admits the six IEEE 1800 reduction operators
+(`|`, `&`, `^`, `~|`, `~&` and `~^`) over the existing integral expression
+fragment. Each result is a one-bit `Reduce` node. The shared value core folds
+the four-state tables once; negated forms apply `Logic.not`, so definite
+short-circuiting (`|4'b100x == 1`, `&4'b111x == x`) and unknown propagation are
+the same in M0 and the symbolic semantic tier. The `reductions` fixture pins
+all six operators against the Icarus differential harness.
+
 `Examples/system-verilog/unary_plus/` is a real extracted module whose
 operand, unknown bits and constant unary-plus result are checked by the
 Icarus differential harness.

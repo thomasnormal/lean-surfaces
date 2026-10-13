@@ -117,6 +117,16 @@ def parseUnaryOpName : String → Except String UnaryOp
   | "-" | "Minus" | "UnaryMinus" | "Neg" => .ok .neg
   | s => .error s!"unknown unary op {s.quote}"
 
+/-- Parse reduction operator names (canonical symbols plus readable aliases). -/
+def parseRedOpName : String → Except String RedOp
+  | "|" | "ReductionOr" | "Or" => .ok .or
+  | "&" | "ReductionAnd" | "And" => .ok .and
+  | "^" | "ReductionXor" | "Xor" => .ok .xor
+  | "~|" | "ReductionNor" | "Nor" => .ok .nor
+  | "~&" | "ReductionNand" | "Nand" => .ok .nand
+  | "~^" | "^~" | "ReductionXnor" | "Xnor" => .ok .xnor
+  | s => .error s!"unknown reduction op {s.quote}"
+
 /-- M0 binary operator names (canonical: the SV symbol; slang enum-style
 spellings accepted). `===`/`!==` are deliberately absent — not in the M0
 expression tier; the extractor emits them as `Unsupported`. -/
@@ -174,6 +184,9 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "Unary" | "UnaryOp" =>
         let op ← parseUnaryOpName (← getStrField j ["op"])
         return .unary op (← parseExpr (← getField j ["arg", "operand"]))
+    | "Reduce" | "Reduction" =>
+        let op ← parseRedOpName (← getStrField j ["op"])
+        return .reduce op (← parseExpr (← getField j ["arg", "operand"]))
     | "SignedResize" =>
         return .resizeSigned (← getNatField j ["width"])
           (← parseExpr (← getField j ["operand"]))
@@ -399,5 +412,8 @@ private def raceExpected : Design :=
 -- 4-state literal digits (x/z) survive ingestion.
 #guard (parseExpr (Json.mkObj [("kind", "Literal"), ("width", (2 : Nat)), ("value", "1x")])).toOption
         == some (.lit (.lit "1x"))
+#guard (parseExpr (Json.mkObj [("kind", "Reduce"), ("op", "~|"),
+  ("operand", Json.mkObj [("kind", "Literal"), ("width", (2 : Nat)), ("value", "00")])])).toOption
+        == some (.reduce .nor (.lit (.lit "00")))
 
 end LeanModels.Sv

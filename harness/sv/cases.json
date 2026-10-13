@@ -388,6 +388,26 @@
           "value": "10"
         }
       ]
+    },
+    {
+      "name": "reductions_directed",
+      "example": "reductions",
+      "signals": [
+        "a",
+        "red_or",
+        "red_and",
+        "red_xor",
+        "red_nor",
+        "red_nand",
+        "red_xnor"
+      ],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "000x"},
+        {"a": "100x"},
+        {"a": "1111"},
+        {"a": "zzzz"}
+      ]
     }
   ]
 }

@@ -984,6 +984,17 @@ def parseSBinOp (op : String) (l r : SExpr) : Except String SExpr :=
   | "||" => .ok (.logOr l r)
   | other => .error s!"unknown binary op '{other}'"
 
+/-- Envelope `Reduce.op` spellings of this tier. -/
+def parseSRedOp (op : String) : Except String RedOp :=
+  match op with
+  | "|" => .ok .or
+  | "&" => .ok .and
+  | "^" => .ok .xor
+  | "~|" => .ok .nor
+  | "~&" => .ok .nand
+  | "~^" | "^~" => .ok .xnor
+  | other => .error s!"unknown reduction op '{other}'"
+
 partial def parseSExpr (j : Json) : Except String SExpr := do
   let kind ← getStrF j "kind"
   match kind with
@@ -1001,6 +1012,10 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       | "!" => return .mkUnary .lnot a
       | "-" => return .mkUnary .neg a
       | other => .error s!"unknown unary op '{other}'"
+  | "Reduce" =>
+      let a ← parseSExpr (← getF j "operand")
+      return .m0 (.reduce (← parseSRedOp (← getStrF j "op"))
+        (match a with | .m0 e => e | _ => .unsupported "Reduce:operand" "non-M0 operand"))
   | "Binary" =>
       let l ← parseSExpr (← getF j "left")
       let r ← parseSExpr (← getF j "right")

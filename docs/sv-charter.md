@@ -1484,6 +1484,15 @@ exact four-state comparison (`x` and `z` remain distinct). This is the same
 there is no second comparison table. Invalid frontend compilations remain
 loud through the existing extractor provenance gate.
 
+### 3.2.2 Logical conjunction and disjunction in M0 — 2026-10-13
+
+Direct `&&` and `||` expressions now use the ordinary M0 envelope and cycle
+interpreter. Each operand first converts through the four-state truthiness rule
+(`1` if any bit is `1`, `0` if all bits are known zero, otherwise `x`), then
+the existing `Logic.and`/`Logic.or` tables decide the one-bit result. This is
+distinct from bitwise `&`/`|` and reuses the value-core authority already used
+by the self-check tier.
+
 ### 3.3 X-pessimism, and what it means for MATCH verdicts
 
 **This is the value model's sharpest consequence for differential

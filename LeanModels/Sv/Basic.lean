@@ -471,6 +471,29 @@ def lnot (c : LVec) : Logic :=
   else if c.isKnownZero then .l1
   else .lx
 
+def hasKnownOne : List Logic → Bool
+  | [] => false
+  | .l1 :: _ => true
+  | _ :: bits => hasKnownOne bits
+
+def allKnownZero : List Logic → Bool
+  | [] => true
+  | .l0 :: bits => allKnownZero bits
+  | _ :: _ => false
+
+/-- Logical `&&`/`||` operand conversion, §11.4.7: a vector is true when it
+has a known `1` bit, false when every bit is known `0`, and otherwise x. -/
+def truthy (c : LVec) : Logic :=
+  if hasKnownOne c.bits.toList then .l1
+  else if allKnownZero c.bits.toList then .l0
+  else .lx
+
+/-- Logical conjunction, §11.4.7, after vector-to-Boolean conversion. -/
+def land (a b : LVec) : Logic := Logic.and (truthy a) (truthy b)
+
+/-- Logical disjunction, §11.4.7, after vector-to-Boolean conversion. -/
+def lor (a b : LVec) : Logic := Logic.or (truthy a) (truthy b)
+
 /-- Bit-by-bit merge of the two arms of a conditional with ambiguous
 condition, §11.4.11: per-bit `Logic.merge` (equal known bits kept, all else
 `x`). Width mismatch (out of contract): all-x at the larger width. -/

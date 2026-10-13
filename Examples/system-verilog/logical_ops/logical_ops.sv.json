@@ -1,0 +1,209 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/logical_ops/logical_ops.sv",
+  "source_sha256": "9e0a71e8401681504d583a7d084661dfb79666794d98556914100c5df2b5e067",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "logical_ops",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 21,
+              "end_line": 3,
+              "end_col": 26
+            },
+            "name": "value",
+            "dir": "in",
+            "width": 2
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 20
+            },
+            "name": "both",
+            "dir": "out",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 16,
+              "end_line": 5,
+              "end_col": 22
+            },
+            "name": "either",
+            "dir": "out",
+            "width": 1
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 7,
+                "col": 28,
+                "end_line": 10,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 27
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 9
+                    },
+                    "width": 1,
+                    "name": "both"
+                  },
+                  "value": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 12,
+                      "end_line": 8,
+                      "end_col": 26
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 8,
+                        "col": 12,
+                        "end_line": 8,
+                        "end_col": 17
+                      },
+                      "width": 2,
+                      "name": "value"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 8,
+                        "col": 21,
+                        "end_line": 8,
+                        "end_col": 26
+                      },
+                      "width": 2,
+                      "bits": "01"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 29
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 11
+                    },
+                    "width": 1,
+                    "name": "either"
+                  },
+                  "value": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 9,
+                      "col": 14,
+                      "end_line": 9,
+                      "end_col": 28
+                    },
+                    "width": 1,
+                    "op": "||",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 9,
+                        "col": 14,
+                        "end_line": 9,
+                        "end_col": 19
+                      },
+                      "width": 2,
+                      "name": "value"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 9,
+                        "col": 23,
+                        "end_line": 9,
+                        "end_col": 28
+                      },
+                      "width": 2,
+                      "bits": "00"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -295,7 +295,7 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
-`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "===" "!==" "<" "<=" ">" ">="` (the M0 set;
+`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "===" "!==" "&&" "||" "<" "<=" ">" ">="` (the M0 set;
 `<<` `>>` `<<<` and `>>>` are integral shifts (§11.4.10). Their envelope
 operators are typed as `u<<`/`s<<`, `u>>`/`s>>`, `u<<<`/`s<<<`, and
 `u>>>`/`s>>>`; the prefix records the signedness of the left operand.
@@ -311,6 +311,10 @@ whenever the children are supported nodes — the extractor enforces them and
 demotes violators to `Unsupported`; if a child is itself `Unsupported` its
 width is unknown and the parent keeps its structure (the interpreter goes
 `.unsupported` on reaching the child).
+
+Logical `&&`/`||` also produce a one-bit result. Each operand is converted by
+the four-state truthiness rule before the logical table is applied; they are
+not bitwise aliases for `&`/`|`.
 
 Runtime integral division uses `u/` for unsigned operands and `s/` when
 both elaborated operands are signed. Zero divisors and x/z operands give

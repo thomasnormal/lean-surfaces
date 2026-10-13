@@ -334,6 +334,29 @@
           "value": "1x"
         }
       ]
+    },
+    {
+      "name": "logical_ops_directed",
+      "example": "logical_ops",
+      "signals": [
+        "value",
+        "both",
+        "either"
+      ],
+      "stimulus": [
+        {
+          "value": "00"
+        },
+        {
+          "value": "1x"
+        },
+        {
+          "value": "xx"
+        },
+        {
+          "value": "10"
+        }
+      ]
     }
   ]
 }

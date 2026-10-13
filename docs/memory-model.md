@@ -1190,9 +1190,12 @@ surface, and everything order-revealing is loud.
 order. That retained order is UNOBSERVABLE through the admitted
 readers, which is the design invariant that makes the subset honest.
 
-**Construction** — `set()`, `set(iterable)`, and ordinary set displays. The
+**Construction** — `set()`, `set(iterable)`, ordinary set displays, and
+single-clause set comprehensions. The
 extractor lowers `{a, b, …}` to `set([a, b, …])`, reusing the same allocator
-and deduplication worker; starred display unpacking remains loud.
+and deduplication worker, and lowers `{f(x) for x in xs}` to
+`set(f(x) for x in xs)`, reusing the generator drain. Starred display
+unpacking and multi-clause/async set comprehensions remain loud.
 Iterable coverage: a str (its code points), a value tuple, a
 namedtuple (class-erased elements), a boundary list, a heap list,
 another set (a fresh already-deduplicated copy), and a GENERATOR —

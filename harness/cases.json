@@ -362,6 +362,7 @@
   {"file": "Examples/python/set_lab/set_lab.py", "function": "empty_set", "args": [[1]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "literal", "args": [[2], [1]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "literal_unhashable", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "comprehension", "args": [[7, 2], [1, 2]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "from_gen", "args": [[7], [0]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "not_in", "args": [[5]], "expect": "match"},
   {"file": "Examples/python/set_lab/set_lab.py", "function": "unhashable_elem", "args": [[]], "expect": "match"},

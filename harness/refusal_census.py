@@ -336,7 +336,7 @@ print([x + 1 for x in [1, 2]])
 """, "MATCH", "desugared to list(genexp) at ingestion")
 w("expr.SetComp", """
 print(len({x for x in [1, 2]}))
-""", "REFUSE", "")
+""", "MATCH", "lowered to set(generator) at ingestion")
 w("expr.DictComp", """
 print({x: x for x in [1, 2]})
 """, "REFUSE", "")

@@ -866,6 +866,13 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["kind"], "Unsupported")
         self.assertEqual(e["py_kind"], "Set:unpack")
 
+    def test_set_comprehension_lowers_to_set_generator(self):
+        e = self._first_return_expr(
+            "def f(xs):\n    return {x + 1 for x in xs if x > 0}\n")
+        self.assertEqual(e["kind"], "Call")
+        self.assertEqual(e["func"]["id"], "set")
+        self.assertEqual(e["args"][0]["kind"], "GeneratorExp")
+
     def test_attribute_load_is_structured(self):
         e = self._first_return_expr(
             "def f(pos):\n    return pos.score\n")

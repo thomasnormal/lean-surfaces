@@ -1,6 +1,7 @@
 """set_lab — H7+ sets, the honest subset: the acceptance battery.
 
-`self.history` needs exactly: `set(iterable)` construction and `in`
+`self.history` needs exactly: `set(iterable)` and set-comprehension
+construction and `in`
 membership on a frozen-after-build set (plus `len` and truthiness, which
 are order-blind like membership). EVERYTHING else about sets is loud —
 iteration, `add`/`remove`/`pop`, `==`, `sorted(set)` — because a set's
@@ -87,3 +88,8 @@ def unhashable_probe(a):
     # contain it
     s = set([a])
     return [a] in s
+
+
+def comprehension(n, probe):
+    s = {i % 3 for i in range(n)}
+    return (len(s), probe in s)

@@ -601,6 +601,29 @@ def convert_expr(node):
             "index": convert_expr(sl),
         }
 
+    if isinstance(node, ast.SetComp):
+        gens = node.generators
+        if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
+            g = gens[0]
+            _COMP_DEPTH[0] += 1
+            try:
+                comp = _convert_comprehension(node, g, kind="GeneratorExp")
+            finally:
+                _COMP_DEPTH[0] -= 1
+            return {
+                "kind": "Call",
+                "span": span(node),
+                "func": {
+                    "kind": "Name",
+                    "span": span(node),
+                    "id": "set",
+                },
+                "args": [comp],
+                "keywords": [],
+                "call_unsupported": None,
+            }
+        return unsupported(node, "SetComp")
+
     if isinstance(node, (ast.GeneratorExp, ast.ListComp)):
         # A LIST COMPREHENSION rides the same node (2026-08-13): CPython
         # compiles both into an implicit function taking the already-
@@ -642,7 +665,7 @@ def _in_enclosing_scope(e):
         _COMP_DEPTH[0] = saved
 
 
-def _convert_comprehension(node, g):
+def _convert_comprehension(node, g, kind=None):
     """The single-clause comprehension body, converted INSIDE the
     comprehension scope (`_COMP_DEPTH` is already raised by the caller).
 
@@ -672,8 +695,9 @@ def _convert_comprehension(node, g):
         else:
             ifs_out.append(convert_expr(i))
     return {
-        "kind": ("ListComp" if isinstance(node, ast.ListComp)
-                 else "GeneratorExp"),
+        "kind": (kind if kind is not None else
+                 ("ListComp" if isinstance(node, ast.ListComp)
+                  else "GeneratorExp")),
         "span": span(node),
         "elt": convert_expr(node.elt),
         "target": convert_expr(g.target),

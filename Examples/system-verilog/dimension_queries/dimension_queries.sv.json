@@ -6,7 +6,7 @@
     "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/dimension_queries/dimension_queries.sv",
-  "source_sha256": "0cf8044666105938de1c73bfc1d80665f46c45a36f7486c8f332a6df0e8f20c0",
+  "source_sha256": "445939a319c6f5f711562a1a84b8fff241b9e2828215edf41b441732ac50abe3",
   "design": {
     "kind": "Design",
     "modules": [
@@ -15,7 +15,7 @@
         "span": {
           "line": 1,
           "col": 1,
-          "end_line": 17,
+          "end_line": 19,
           "end_col": 10
         },
         "name": "dimension_queries",
@@ -58,7 +58,7 @@
             "span": {
               "line": 5,
               "col": 3,
-              "end_line": 16,
+              "end_line": 18,
               "end_col": 6
             },
             "body": {
@@ -66,7 +66,7 @@
               "span": {
                 "line": 5,
                 "col": 11,
-                "end_line": 16,
+                "end_line": 18,
                 "end_col": 6
               },
               "stmts": [
@@ -75,7 +75,7 @@
                   "span": {
                     "line": 6,
                     "col": 5,
-                    "end_line": 14,
+                    "end_line": 16,
                     "end_col": 24
                   },
                   "cond": {
@@ -83,8 +83,8 @@
                     "span": {
                       "line": 6,
                       "col": 9,
-                      "end_line": 11,
-                      "end_col": 67
+                      "end_line": 13,
+                      "end_col": 49
                     },
                     "width": 1,
                     "op": "&&",
@@ -93,8 +93,8 @@
                       "span": {
                         "line": 6,
                         "col": 9,
-                        "end_line": 11,
-                        "end_col": 33
+                        "end_line": 12,
+                        "end_col": 40
                       },
                       "width": 1,
                       "op": "&&",
@@ -103,8 +103,8 @@
                         "span": {
                           "line": 6,
                           "col": 9,
-                          "end_line": 10,
-                          "end_col": 65
+                          "end_line": 11,
+                          "end_col": 67
                         },
                         "width": 1,
                         "op": "&&",
@@ -113,8 +113,8 @@
                           "span": {
                             "line": 6,
                             "col": 9,
-                            "end_line": 10,
-                            "end_col": 35
+                            "end_line": 11,
+                            "end_col": 33
                           },
                           "width": 1,
                           "op": "&&",
@@ -123,7 +123,7 @@
                             "span": {
                               "line": 6,
                               "col": 9,
-                              "end_line": 9,
+                              "end_line": 10,
                               "end_col": 65
                             },
                             "width": 1,
@@ -133,7 +133,7 @@
                               "span": {
                                 "line": 6,
                                 "col": 9,
-                                "end_line": 9,
+                                "end_line": 10,
                                 "end_col": 35
                               },
                               "width": 1,
@@ -143,8 +143,8 @@
                                 "span": {
                                   "line": 6,
                                   "col": 9,
-                                  "end_line": 8,
-                                  "end_col": 32
+                                  "end_line": 9,
+                                  "end_col": 65
                                 },
                                 "width": 1,
                                 "op": "&&",
@@ -153,8 +153,8 @@
                                   "span": {
                                     "line": 6,
                                     "col": 9,
-                                    "end_line": 7,
-                                    "end_col": 71
+                                    "end_line": 9,
+                                    "end_col": 35
                                   },
                                   "width": 1,
                                   "op": "&&",
@@ -163,8 +163,8 @@
                                     "span": {
                                       "line": 6,
                                       "col": 9,
-                                      "end_line": 7,
-                                      "end_col": 50
+                                      "end_line": 8,
+                                      "end_col": 32
                                     },
                                     "width": 1,
                                     "op": "&&",
@@ -174,7 +174,7 @@
                                         "line": 6,
                                         "col": 9,
                                         "end_line": 7,
-                                        "end_col": 27
+                                        "end_col": 71
                                       },
                                       "width": 1,
                                       "op": "&&",
@@ -183,8 +183,8 @@
                                         "span": {
                                           "line": 6,
                                           "col": 9,
-                                          "end_line": 6,
-                                          "end_col": 49
+                                          "end_line": 7,
+                                          "end_col": 50
                                         },
                                         "width": 1,
                                         "op": "&&",
@@ -193,69 +193,161 @@
                                           "span": {
                                             "line": 6,
                                             "col": 9,
-                                            "end_line": 6,
+                                            "end_line": 7,
                                             "end_col": 27
                                           },
                                           "width": 1,
-                                          "op": "==",
+                                          "op": "&&",
                                           "left": {
-                                            "kind": "Literal",
+                                            "kind": "Binary",
                                             "span": {
                                               "line": 6,
                                               "col": 9,
                                               "end_line": 6,
-                                              "end_col": 22
+                                              "end_col": 49
                                             },
-                                            "width": 32,
-                                            "bits": "00000000000000000000000000001000",
-                                            "signed": true,
-                                            "fixed_dimension_query": "$size"
+                                            "width": 1,
+                                            "op": "&&",
+                                            "left": {
+                                              "kind": "Binary",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 9,
+                                                "end_line": 6,
+                                                "end_col": 27
+                                              },
+                                              "width": 1,
+                                              "op": "==",
+                                              "left": {
+                                                "kind": "Literal",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 9,
+                                                  "end_line": 6,
+                                                  "end_col": 22
+                                                },
+                                                "width": 32,
+                                                "bits": "00000000000000000000000000001000",
+                                                "signed": true,
+                                                "fixed_dimension_query": "$size"
+                                              },
+                                              "right": {
+                                                "kind": "Literal",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 26,
+                                                  "end_line": 6,
+                                                  "end_col": 27
+                                                },
+                                                "width": 32,
+                                                "bits": "00000000000000000000000000001000"
+                                              }
+                                            },
+                                            "right": {
+                                              "kind": "Binary",
+                                              "span": {
+                                                "line": 6,
+                                                "col": 31,
+                                                "end_line": 6,
+                                                "end_col": 49
+                                              },
+                                              "width": 1,
+                                              "op": "==",
+                                              "left": {
+                                                "kind": "Literal",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 31,
+                                                  "end_line": 6,
+                                                  "end_col": 44
+                                                },
+                                                "width": 32,
+                                                "bits": "00000000000000000000000000000111",
+                                                "signed": true,
+                                                "fixed_dimension_query": "$high"
+                                              },
+                                              "right": {
+                                                "kind": "Literal",
+                                                "span": {
+                                                  "line": 6,
+                                                  "col": 48,
+                                                  "end_line": 6,
+                                                  "end_col": 49
+                                                },
+                                                "width": 32,
+                                                "bits": "00000000000000000000000000000111"
+                                              }
+                                            }
                                           },
                                           "right": {
-                                            "kind": "Literal",
+                                            "kind": "Binary",
                                             "span": {
-                                              "line": 6,
-                                              "col": 26,
-                                              "end_line": 6,
+                                              "line": 7,
+                                              "col": 9,
+                                              "end_line": 7,
                                               "end_col": 27
                                             },
-                                            "width": 32,
-                                            "bits": "00000000000000000000000000001000"
+                                            "width": 1,
+                                            "op": "==",
+                                            "left": {
+                                              "kind": "Literal",
+                                              "span": {
+                                                "line": 7,
+                                                "col": 9,
+                                                "end_line": 7,
+                                                "end_col": 22
+                                              },
+                                              "width": 32,
+                                              "bits": "00000000000000000000000000000111",
+                                              "signed": true,
+                                              "fixed_dimension_query": "$left"
+                                            },
+                                            "right": {
+                                              "kind": "Literal",
+                                              "span": {
+                                                "line": 7,
+                                                "col": 26,
+                                                "end_line": 7,
+                                                "end_col": 27
+                                              },
+                                              "width": 32,
+                                              "bits": "00000000000000000000000000000111"
+                                            }
                                           }
                                         },
                                         "right": {
                                           "kind": "Binary",
                                           "span": {
-                                            "line": 6,
+                                            "line": 7,
                                             "col": 31,
-                                            "end_line": 6,
-                                            "end_col": 49
+                                            "end_line": 7,
+                                            "end_col": 50
                                           },
                                           "width": 1,
                                           "op": "==",
                                           "left": {
                                             "kind": "Literal",
                                             "span": {
-                                              "line": 6,
+                                              "line": 7,
                                               "col": 31,
-                                              "end_line": 6,
-                                              "end_col": 44
+                                              "end_line": 7,
+                                              "end_col": 45
                                             },
                                             "width": 32,
-                                            "bits": "00000000000000000000000000000111",
+                                            "bits": "00000000000000000000000000000000",
                                             "signed": true,
-                                            "fixed_dimension_query": "$high"
+                                            "fixed_dimension_query": "$right"
                                           },
                                           "right": {
                                             "kind": "Literal",
                                             "span": {
-                                              "line": 6,
-                                              "col": 48,
-                                              "end_line": 6,
-                                              "end_col": 49
+                                              "line": 7,
+                                              "col": 49,
+                                              "end_line": 7,
+                                              "end_col": 50
                                             },
                                             "width": 32,
-                                            "bits": "00000000000000000000000000000111"
+                                            "bits": "00000000000000000000000000000000"
                                           }
                                         }
                                       },
@@ -263,9 +355,9 @@
                                         "kind": "Binary",
                                         "span": {
                                           "line": 7,
-                                          "col": 9,
+                                          "col": 54,
                                           "end_line": 7,
-                                          "end_col": 27
+                                          "end_col": 71
                                         },
                                         "width": 1,
                                         "op": "==",
@@ -273,142 +365,142 @@
                                           "kind": "Literal",
                                           "span": {
                                             "line": 7,
-                                            "col": 9,
+                                            "col": 54,
                                             "end_line": 7,
-                                            "end_col": 22
+                                            "end_col": 66
                                           },
                                           "width": 32,
-                                          "bits": "00000000000000000000000000000111",
+                                          "bits": "00000000000000000000000000000000",
                                           "signed": true,
-                                          "fixed_dimension_query": "$left"
+                                          "fixed_dimension_query": "$low"
                                         },
                                         "right": {
                                           "kind": "Literal",
                                           "span": {
                                             "line": 7,
-                                            "col": 26,
+                                            "col": 70,
                                             "end_line": 7,
-                                            "end_col": 27
+                                            "end_col": 71
                                           },
                                           "width": 32,
-                                          "bits": "00000000000000000000000000000111"
+                                          "bits": "00000000000000000000000000000000"
                                         }
                                       }
                                     },
                                     "right": {
                                       "kind": "Binary",
                                       "span": {
-                                        "line": 7,
-                                        "col": 31,
-                                        "end_line": 7,
-                                        "end_col": 50
+                                        "line": 8,
+                                        "col": 9,
+                                        "end_line": 8,
+                                        "end_col": 32
                                       },
                                       "width": 1,
                                       "op": "==",
                                       "left": {
                                         "kind": "Literal",
                                         "span": {
-                                          "line": 7,
-                                          "col": 31,
-                                          "end_line": 7,
-                                          "end_col": 45
+                                          "line": 8,
+                                          "col": 9,
+                                          "end_line": 8,
+                                          "end_col": 27
                                         },
                                         "width": 32,
-                                        "bits": "00000000000000000000000000000000",
+                                        "bits": "00000000000000000000000000000001",
                                         "signed": true,
-                                        "fixed_dimension_query": "$right"
+                                        "fixed_dimension_query": "$increment"
                                       },
                                       "right": {
                                         "kind": "Literal",
                                         "span": {
-                                          "line": 7,
-                                          "col": 49,
-                                          "end_line": 7,
-                                          "end_col": 50
+                                          "line": 8,
+                                          "col": 31,
+                                          "end_line": 8,
+                                          "end_col": 32
                                         },
                                         "width": 32,
-                                        "bits": "00000000000000000000000000000000"
+                                        "bits": "00000000000000000000000000000001"
                                       }
                                     }
                                   },
                                   "right": {
                                     "kind": "Binary",
                                     "span": {
-                                      "line": 7,
-                                      "col": 54,
-                                      "end_line": 7,
-                                      "end_col": 71
+                                      "line": 9,
+                                      "col": 9,
+                                      "end_line": 9,
+                                      "end_col": 35
                                     },
                                     "width": 1,
                                     "op": "==",
                                     "left": {
                                       "kind": "Literal",
                                       "span": {
-                                        "line": 7,
-                                        "col": 54,
-                                        "end_line": 7,
-                                        "end_col": 66
+                                        "line": 9,
+                                        "col": 9,
+                                        "end_line": 9,
+                                        "end_col": 29
                                       },
                                       "width": 32,
-                                      "bits": "00000000000000000000000000000000",
+                                      "bits": "00000000000000000000000000100000",
                                       "signed": true,
-                                      "fixed_dimension_query": "$low"
+                                      "fixed_dimension_query": "$size"
                                     },
                                     "right": {
                                       "kind": "Literal",
                                       "span": {
-                                        "line": 7,
-                                        "col": 70,
-                                        "end_line": 7,
-                                        "end_col": 71
+                                        "line": 9,
+                                        "col": 33,
+                                        "end_line": 9,
+                                        "end_col": 35
                                       },
                                       "width": 32,
-                                      "bits": "00000000000000000000000000000000"
+                                      "bits": "00000000000000000000000000100000"
                                     }
                                   }
                                 },
                                 "right": {
                                   "kind": "Binary",
                                   "span": {
-                                    "line": 8,
-                                    "col": 9,
-                                    "end_line": 8,
-                                    "end_col": 32
+                                    "line": 9,
+                                    "col": 39,
+                                    "end_line": 9,
+                                    "end_col": 65
                                   },
                                   "width": 1,
                                   "op": "==",
                                   "left": {
                                     "kind": "Literal",
                                     "span": {
-                                      "line": 8,
-                                      "col": 9,
-                                      "end_line": 8,
-                                      "end_col": 27
+                                      "line": 9,
+                                      "col": 39,
+                                      "end_line": 9,
+                                      "end_col": 59
                                     },
                                     "width": 32,
-                                    "bits": "00000000000000000000000000000001",
+                                    "bits": "00000000000000000000000000011111",
                                     "signed": true,
-                                    "fixed_dimension_query": "$increment"
+                                    "fixed_dimension_query": "$high"
                                   },
                                   "right": {
                                     "kind": "Literal",
                                     "span": {
-                                      "line": 8,
-                                      "col": 31,
-                                      "end_line": 8,
-                                      "end_col": 32
+                                      "line": 9,
+                                      "col": 63,
+                                      "end_line": 9,
+                                      "end_col": 65
                                     },
                                     "width": 32,
-                                    "bits": "00000000000000000000000000000001"
+                                    "bits": "00000000000000000000000000011111"
                                   }
                                 }
                               },
                               "right": {
                                 "kind": "Binary",
                                 "span": {
-                                  "line": 9,
+                                  "line": 10,
                                   "col": 9,
-                                  "end_line": 9,
+                                  "end_line": 10,
                                   "end_col": 35
                                 },
                                 "width": 1,
@@ -416,35 +508,35 @@
                                 "left": {
                                   "kind": "Literal",
                                   "span": {
-                                    "line": 9,
+                                    "line": 10,
                                     "col": 9,
-                                    "end_line": 9,
+                                    "end_line": 10,
                                     "end_col": 29
                                   },
                                   "width": 32,
-                                  "bits": "00000000000000000000000000100000",
+                                  "bits": "00000000000000000000000000011111",
                                   "signed": true,
-                                  "fixed_dimension_query": "$size"
+                                  "fixed_dimension_query": "$left"
                                 },
                                 "right": {
                                   "kind": "Literal",
                                   "span": {
-                                    "line": 9,
+                                    "line": 10,
                                     "col": 33,
-                                    "end_line": 9,
+                                    "end_line": 10,
                                     "end_col": 35
                                   },
                                   "width": 32,
-                                  "bits": "00000000000000000000000000100000"
+                                  "bits": "00000000000000000000000000011111"
                                 }
                               }
                             },
                             "right": {
                               "kind": "Binary",
                               "span": {
-                                "line": 9,
+                                "line": 10,
                                 "col": 39,
-                                "end_line": 9,
+                                "end_line": 10,
                                 "end_col": 65
                               },
                               "width": 1,
@@ -452,179 +544,179 @@
                               "left": {
                                 "kind": "Literal",
                                 "span": {
-                                  "line": 9,
+                                  "line": 10,
                                   "col": 39,
-                                  "end_line": 9,
-                                  "end_col": 59
+                                  "end_line": 10,
+                                  "end_col": 60
                                 },
                                 "width": 32,
-                                "bits": "00000000000000000000000000011111",
+                                "bits": "00000000000000000000000000000000",
                                 "signed": true,
-                                "fixed_dimension_query": "$high"
+                                "fixed_dimension_query": "$right"
                               },
                               "right": {
                                 "kind": "Literal",
                                 "span": {
-                                  "line": 9,
-                                  "col": 63,
-                                  "end_line": 9,
+                                  "line": 10,
+                                  "col": 64,
+                                  "end_line": 10,
                                   "end_col": 65
                                 },
                                 "width": 32,
-                                "bits": "00000000000000000000000000011111"
+                                "bits": "00000000000000000000000000000000"
                               }
                             }
                           },
                           "right": {
                             "kind": "Binary",
                             "span": {
-                              "line": 10,
+                              "line": 11,
                               "col": 9,
-                              "end_line": 10,
-                              "end_col": 35
+                              "end_line": 11,
+                              "end_col": 33
                             },
                             "width": 1,
                             "op": "==",
                             "left": {
                               "kind": "Literal",
                               "span": {
-                                "line": 10,
+                                "line": 11,
                                 "col": 9,
-                                "end_line": 10,
-                                "end_col": 29
+                                "end_line": 11,
+                                "end_col": 28
                               },
                               "width": 32,
-                              "bits": "00000000000000000000000000011111",
+                              "bits": "00000000000000000000000000000000",
                               "signed": true,
-                              "fixed_dimension_query": "$left"
+                              "fixed_dimension_query": "$low"
                             },
                             "right": {
                               "kind": "Literal",
                               "span": {
-                                "line": 10,
-                                "col": 33,
-                                "end_line": 10,
-                                "end_col": 35
+                                "line": 11,
+                                "col": 32,
+                                "end_line": 11,
+                                "end_col": 33
                               },
                               "width": 32,
-                              "bits": "00000000000000000000000000011111"
+                              "bits": "00000000000000000000000000000000"
                             }
                           }
                         },
                         "right": {
                           "kind": "Binary",
                           "span": {
-                            "line": 10,
-                            "col": 39,
-                            "end_line": 10,
-                            "end_col": 65
+                            "line": 11,
+                            "col": 37,
+                            "end_line": 11,
+                            "end_col": 67
                           },
                           "width": 1,
                           "op": "==",
                           "left": {
                             "kind": "Literal",
                             "span": {
-                              "line": 10,
-                              "col": 39,
-                              "end_line": 10,
-                              "end_col": 60
+                              "line": 11,
+                              "col": 37,
+                              "end_line": 11,
+                              "end_col": 62
                             },
                             "width": 32,
-                            "bits": "00000000000000000000000000000000",
+                            "bits": "00000000000000000000000000000001",
                             "signed": true,
-                            "fixed_dimension_query": "$right"
+                            "fixed_dimension_query": "$increment"
                           },
                           "right": {
                             "kind": "Literal",
                             "span": {
-                              "line": 10,
-                              "col": 64,
-                              "end_line": 10,
-                              "end_col": 65
+                              "line": 11,
+                              "col": 66,
+                              "end_line": 11,
+                              "end_col": 67
                             },
                             "width": 32,
-                            "bits": "00000000000000000000000000000000"
+                            "bits": "00000000000000000000000000000001"
                           }
                         }
                       },
                       "right": {
                         "kind": "Binary",
                         "span": {
-                          "line": 11,
+                          "line": 12,
                           "col": 9,
-                          "end_line": 11,
-                          "end_col": 33
+                          "end_line": 12,
+                          "end_col": 40
                         },
                         "width": 1,
                         "op": "==",
                         "left": {
                           "kind": "Literal",
                           "span": {
-                            "line": 11,
+                            "line": 12,
                             "col": 9,
-                            "end_line": 11,
-                            "end_col": 28
+                            "end_line": 12,
+                            "end_col": 35
                           },
                           "width": 32,
-                          "bits": "00000000000000000000000000000000",
+                          "bits": "00000000000000000000000000000001",
                           "signed": true,
-                          "fixed_dimension_query": "$low"
+                          "fixed_dimension_query": "$dimensions"
                         },
                         "right": {
                           "kind": "Literal",
                           "span": {
-                            "line": 11,
-                            "col": 32,
-                            "end_line": 11,
-                            "end_col": 33
+                            "line": 12,
+                            "col": 39,
+                            "end_line": 12,
+                            "end_col": 40
                           },
                           "width": 32,
-                          "bits": "00000000000000000000000000000000"
+                          "bits": "00000000000000000000000000000001"
                         }
                       }
                     },
                     "right": {
                       "kind": "Binary",
                       "span": {
-                        "line": 11,
-                        "col": 37,
-                        "end_line": 11,
-                        "end_col": 67
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 49
                       },
                       "width": 1,
                       "op": "==",
                       "left": {
                         "kind": "Literal",
                         "span": {
-                          "line": 11,
-                          "col": 37,
-                          "end_line": 11,
-                          "end_col": 62
+                          "line": 13,
+                          "col": 9,
+                          "end_line": 13,
+                          "end_col": 44
                         },
                         "width": 32,
-                        "bits": "00000000000000000000000000000001",
+                        "bits": "00000000000000000000000000000000",
                         "signed": true,
-                        "fixed_dimension_query": "$increment"
+                        "fixed_dimension_query": "$unpacked_dimensions"
                       },
                       "right": {
                         "kind": "Literal",
                         "span": {
-                          "line": 11,
-                          "col": 66,
-                          "end_line": 11,
-                          "end_col": 67
+                          "line": 13,
+                          "col": 48,
+                          "end_line": 13,
+                          "end_col": 49
                         },
                         "width": 32,
-                        "bits": "00000000000000000000000000000001"
+                        "bits": "00000000000000000000000000000000"
                       }
                     }
                   },
                   "then": {
                     "kind": "SysCall",
                     "span": {
-                      "line": 12,
+                      "line": 14,
                       "col": 7,
-                      "end_line": 12,
+                      "end_line": 14,
                       "end_col": 24
                     },
                     "name": "$display",
@@ -635,9 +727,9 @@
                   "else": {
                     "kind": "SysCall",
                     "span": {
-                      "line": 14,
+                      "line": 16,
                       "col": 7,
-                      "end_line": 14,
+                      "end_line": 16,
                       "end_col": 24
                     },
                     "name": "$display",
@@ -649,9 +741,9 @@
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 15,
+                    "line": 17,
                     "col": 5,
-                    "end_line": 15,
+                    "end_line": 17,
                     "end_col": 13
                   },
                   "name": "$finish",

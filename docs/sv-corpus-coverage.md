@@ -43,13 +43,19 @@ clean** and **19,354 partial**: eight total chapter-20 gains from the
 `$size`/`$high`/`$left`/`$right`/`$low`/`$increment` family and no losses;
 `CallExpression` falls again to 4,233 files.
 
+The scalar dimension-count follow-up adds `$dimensions` and
+`$unpacked_dimensions` for the same fixed integral declarations. The fresh
+census changes the snapshot to **2,596 clean** and **19,346 partial**: eight
+additional gains (one in chapter 7 and seven in chapter 20), no losses, and
+`CallExpression` falls to **4,207** files.
+
 | Chapter | Total | Clean | Partial | Include skip |
 |---|---:|---:|---:|---:|
 | 3 | 298 | 24 | 273 | 1 |
 | 4 | 427 | 121 | 306 | 0 |
 | 5 | 618 | 325 | 293 | 0 |
 | 6 | 1,184 | 304 | 880 | 0 |
-| 7 | 793 | 13 | 780 | 0 |
+| 7 | 793 | 14 | 779 | 0 |
 | 8 | 841 | 0 | 840 | 1 |
 | 9 | 586 | 60 | 526 | 0 |
 | 10 | 656 | 156 | 500 | 0 |
@@ -62,7 +68,7 @@ clean** and **19,354 partial**: eight total chapter-20 gains from the
 | 17 | 512 | 0 | 512 | 0 |
 | 18 | 851 | 1 | 815 | 35 |
 | 19 | 767 | 0 | 767 | 0 |
-| 20 | 821 | 113 | 708 | 0 |
+| 20 | 821 | 120 | 701 | 0 |
 | 21 | 895 | 8 | 887 | 0 |
 | 22 | 572 | 371 | 173 | 28 |
 | 23 | 850 | 26 | 824 | 0 |
@@ -83,10 +89,10 @@ clean** and **19,354 partial**: eight total chapter-20 gains from the
 | 38 | 340 | 170 | 170 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 4 | 83 | 0 |
-| **Total** | **22,008** | **2,588** | **19,354** | **66** |
+| **Total** | **22,008** | **2,596** | **19,346** | **66** |
 
 The top remaining refusal sets count assignment targets in 4,457 files,
-expression calls in 4,233, instance hierarchy in 3,833, and two-state
+expression calls in 4,207, instance hierarchy in 3,833, and two-state
 declaration shapes in 3,703. Counts overlap: a file may have several walls.
 
 ## Historical method

@@ -20,7 +20,7 @@
    ],
    [
     "CallExpression",
-    4233
+    4207
    ],
    [
     "InstanceSymbol:Instance",
@@ -251,6 +251,10 @@
     82
    ],
    [
+    "CallExpression:dimension:type",
+    81
+   ],
+   [
     "InsideExpression",
     78
    ],
@@ -277,10 +281,6 @@
    [
     "NetSymbol:Tri",
     67
-   ],
-   [
-    "CallExpression:dimension:type",
-    66
    ],
    [
     "NamedValueExpression:ClassProperty",
@@ -499,6 +499,10 @@
     17
    ],
    [
+    "CallExpression:dimension:range",
+    17
+   ],
+   [
     "TransparentMemberSymbol:TransparentMember",
     17
    ],
@@ -544,10 +548,6 @@
    ],
    [
     "PatternCaseStatement",
-    13
-   ],
-   [
-    "CallExpression:dimension:range",
     13
    ],
    [
@@ -828,8 +828,8 @@
    ]
   ],
   "by_status": {
-   "clean": 2588,
-   "partial": 19354,
+   "clean": 2596,
+   "partial": 19346,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -890,7 +890,7 @@
     52
    ],
    "simulation": [
-    2135,
+    2143,
     18645
    ],
    "simulation elaboration": [
@@ -1255,9 +1255,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 113,
+    "clean": 120,
     "error": 0,
-    "partial": 708,
+    "partial": 701,
     "skip_include": 0,
     "total": 821,
     "unlockable": 0
@@ -1455,9 +1455,9 @@
     "unlockable": 1
    },
    "chapter-7": {
-    "clean": 13,
+    "clean": 14,
     "error": 0,
-    "partial": 780,
+    "partial": 779,
     "skip_include": 0,
     "total": 793,
     "unlockable": 0

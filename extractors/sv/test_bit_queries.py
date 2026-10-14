@@ -236,11 +236,13 @@ class FixedBitQueries(unittest.TestCase):
 
     def test_fixed_dimension_queries_fold_from_integral_types(self):
         source = ("module top; logic [7:0] vector; int integer_value; "
-                  "initial $display(\"%0d %0d %0d %0d %0d %0d %0d %0d %0d %0d\", "
+                  "initial $display(\"%0d %0d %0d %0d %0d %0d %0d %0d %0d %0d "
+                  "%0d %0d %0d %0d\", "
                   "$size(vector), $high(vector), $left(vector), $right(vector), "
                   "$low(vector), $increment(vector), $size(integer_value), "
                   "$high(integer_value), $left(integer_value), $right(integer_value), "
-                  "$low(integer_value), $increment(integer_value)); "
+                  "$low(integer_value), $increment(integer_value), "
+                  "$dimensions(integer_value), $unpacked_dimensions(integer_value)); "
                   "endmodule")
         design = lower(source)
         literals = [node for node in nodes(design)
@@ -250,7 +252,8 @@ class FixedBitQueries(unittest.TestCase):
              for node in literals],
             [("$size", 8), ("$high", 7), ("$left", 7), ("$right", 0),
              ("$low", 0), ("$increment", 1), ("$size", 32), ("$high", 31),
-             ("$left", 31), ("$right", 0), ("$low", 0), ("$increment", 1)])
+             ("$left", 31), ("$right", 0), ("$low", 0), ("$increment", 1),
+             ("$dimensions", 1), ("$unpacked_dimensions", 0)])
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
@@ -260,6 +263,8 @@ class FixedBitQueries(unittest.TestCase):
                 ("int values[$];", "$high(values)"),
                 ("int values[$];", "$left(values)"),
                 ("int values[$];", "$increment(values)"),
+                ("int values[];", "$dimensions(values)"),
+                ("int values[];", "$unpacked_dimensions(values)"),
                 ("logic [7:0] value;", "$size(value++)")):
             with self.subTest(declaration=declaration, expression=expression):
                 self.assert_query_refused(query_source(expression, declaration))
@@ -267,6 +272,14 @@ class FixedBitQueries(unittest.TestCase):
     def test_fixed_dimension_query_keeps_invalid_compilation_loud(self):
         source = ("module top; logic [7:0] value; initial $display(\"%0d\", "
                   "$size(value)); endmodule "
+                  "module bad; initial undeclared = 1; endmodule")
+        design = lower(source, require_valid=False)
+        self.assertIn("DimensionQuery:invalid-compilation",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_dimension_count_queries_keep_invalid_compilation_loud(self):
+        source = ("module top; int value; initial $display(\"%0d\", "
+                  "$dimensions(value)); endmodule "
                   "module bad; initial undeclared = 1; endmodule")
         design = lower(source, require_valid=False)
         self.assertIn("DimensionQuery:invalid-compilation",

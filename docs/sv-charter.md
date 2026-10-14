@@ -455,12 +455,13 @@ runtime or simulator agreement.
 ### Fixed integral dimension queries — 2026-10-14
 
 The legacy/self-check extractor now folds `$size`, `$high`, `$left`, `$right`,
-`$low` and `$increment` for fixed admitted integral declarations (IEEE
-1800-2023 §20.7).
+`$low`, `$increment`, `$dimensions` and `$unpacked_dimensions` for fixed
+admitted integral declarations (IEEE 1800-2023 §20.7).
 Results are signed 32-bit literals carrying `fixed_dimension_query` provenance:
 `$size` returns the declared width, `$high`/`$left` return width minus one,
 and `$right`/`$low` return zero; `$increment` returns one for the admitted
-descending packed dimensions. Dynamic/associative/queue dimensions,
+descending packed dimensions; `$dimensions` returns one and
+`$unpacked_dimensions` returns zero. Dynamic/associative/queue dimensions,
 effectful operands, malformed calls and nonintegral arguments remain loud;
 frontend errors retain a
 `DimensionQuery:invalid-compilation` refusal. No interpreter or scheduler
@@ -470,6 +471,13 @@ rule changes.
 self-check runner. On the same **22,008** corpus paths, clean extraction rises
 **2,580 → 2,588** with eight chapter-20 gains and no losses; `CallExpression`
 falls **4,328 → 4,233**.
+
+The scalar dimension-count follow-up admits `$dimensions` and
+`$unpacked_dimensions` for the same fixed integral declarations. Clean
+extraction rises **2,588 → 2,596** with eight additional gains (one in
+chapter 7 and seven in chapter 20), no losses, and `CallExpression` falls
+**4,233 → 4,207**. This remains extractor admission, not whole-corpus runtime
+or simulator agreement.
 
 ### Two-state output ports — 2026-10-12
 

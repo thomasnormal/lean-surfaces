@@ -8,7 +8,9 @@ module dimension_queries;
         $increment(vector) == 1 &&
         $size(integer_value) == 32 && $high(integer_value) == 31 &&
         $left(integer_value) == 31 && $right(integer_value) == 0 &&
-        $low(integer_value) == 0 && $increment(integer_value) == 1)
+        $low(integer_value) == 0 && $increment(integer_value) == 1 &&
+        $dimensions(integer_value) == 1 &&
+        $unpacked_dimensions(integer_value) == 0)
       $display("PASS");
     else
       $display("FAIL");

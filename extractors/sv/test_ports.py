@@ -63,21 +63,65 @@ class Ports(unittest.TestCase):
         self.assertTrue(port["two_state"])
         self.assertTrue(port["signed"])
 
-    def test_two_state_input_port_remains_loud(self):
+    def test_two_state_input_port_is_admitted(self):
         design = lower(
             'module e(input bit a); initial begin if (a == 1\'b0) $finish; end endmodule'
         )
-        self.assertTrue(any(
-            node.get("sv_kind") == "PortSymbol:2state" for node in nodes(design)
-        ))
+        port = design["modules"][0]["ports"][0]
+        self.assertTrue(port["two_state"])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
-    def test_signed_two_state_input_port_remains_loud(self):
+    def test_signed_two_state_input_port_is_admitted(self):
         design = lower(
             'module e(input bit signed [3:0] a); initial $finish; endmodule'
         )
-        self.assertTrue(any(
-            node.get("sv_kind") == "PortSymbol:2state" for node in nodes(design)
-        ))
+        port = design["modules"][0]["ports"][0]
+        self.assertTrue(port["two_state"])
+        self.assertTrue(port["signed"])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_predefined_integral_variable_ports(self):
+        for spelling, width, signed, two_state in [
+            ("byte", 8, True, True), ("shortint", 16, True, True),
+            ("int", 32, True, True), ("longint", 64, True, True),
+            ("integer", 32, True, False), ("time", 64, False, False),
+        ]:
+            for direction in ("input", "output"):
+                with self.subTest(spelling=spelling, direction=direction):
+                    design = lower(f"module e({direction} {spelling} value); endmodule")
+                    port = design["modules"][0]["ports"][0]
+                    self.assertEqual(port["width"], width)
+                    self.assertEqual(port.get("signed", False), signed)
+                    self.assertEqual(port.get("two_state", False), two_state)
+                    self.assertFalse(any(node.get("kind") == "Unsupported"
+                                         for node in nodes(design)))
+
+    def test_two_state_net_input_remains_loud(self):
+        design = lower("module e(input wire bit a); endmodule")
+        self.assertTrue(any(node.get("sv_kind") == "PortSymbol:2state"
+                            for node in nodes(design)))
+
+    def test_port_initializers_are_not_dropped(self):
+        for declaration in ("input bit value = 1", "output bit value = 1",
+                            "input int value = 7", "output integer value = 7"):
+            with self.subTest(declaration=declaration):
+                design = lower(f"module sample({declaration}); endmodule")
+                port = design["modules"][0]["ports"][0]
+                self.assertIn("init", port)
+                self.assertFalse(any(node.get("kind") == "Unsupported"
+                                     for node in nodes(design)))
+
+    def test_output_net_initializer_remains_loud(self):
+        design = lower("module sample(output wire value = 1'b1); endmodule")
+        self.assertTrue(any(node.get("sv_kind") == "PortSymbol:net-initializer"
+                            for node in nodes(design)))
+
+    def test_non_ansi_variable_port_initializer_is_retained(self):
+        design = lower("module sample(value); output value; bit value = 1; endmodule")
+        port = design["modules"][0]["ports"][0]
+        self.assertTrue(port["two_state"])
+        self.assertIn("init", port)
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
     def test_two_state_net_output_remains_loud(self):
         design = lower(

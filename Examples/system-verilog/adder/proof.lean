@@ -64,7 +64,7 @@ theorem applyInputs_adder (inputs : SvState) (a b s : LVec) :
     applyInputs adderDesign inputs [("a", a), ("b", b), ("s", s)] =
       [("a", appIn inputs "a" a), ("b", appIn inputs "b" b), ("s", s)] := by
   cases ha : SvState.lookup inputs "a" <;> cases hb : SvState.lookup inputs "b" <;>
-    simp [applyInputs, adder_inputNames, appIn, ha, hb, SvState.set]
+    simp [applyInputs, adderDesign, appIn, ha, hb, SvState.set]
 
 /-! ## The settle loop (new for comb designs)
 

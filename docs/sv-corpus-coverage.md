@@ -21,7 +21,66 @@ pyslang 11.0.0.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
-## Method
+## Fresh paired census — 2026-10-14
+
+The generated summary in `docs/sv-construct-census.json` now measures
+**22,008** chapter-scoped paths with pyslang 11 on Linux. The older July
+measurements retained after this section are historical, not this snapshot.
+Both sides of the integral-variable-port comparison use the same paths:
+**2,572 → 2,573 clean**, **19,370 → 19,369 partial**, **66 includes skipped**,
+**0 extraction errors**, **2 gains**, **1 loss**. Four paths change their
+refusal sets. Both gains are chapter-23 predefined integer port declarations.
+The loss is a negative fixture with a forbidden output-net port initializer
+that the old extractor silently dropped. An extractor-clean classification
+is not Lean admission or live execution.
+
+| Chapter | Total | Clean | Partial | Include skip |
+|---|---:|---:|---:|---:|
+| 3 | 298 | 24 | 273 | 1 |
+| 4 | 427 | 121 | 306 | 0 |
+| 5 | 618 | 322 | 296 | 0 |
+| 6 | 1,184 | 304 | 880 | 0 |
+| 7 | 793 | 13 | 780 | 0 |
+| 8 | 841 | 0 | 840 | 1 |
+| 9 | 586 | 60 | 526 | 0 |
+| 10 | 656 | 156 | 500 | 0 |
+| 11 | 1,034 | 509 | 525 | 0 |
+| 12 | 627 | 167 | 460 | 0 |
+| 13 | 597 | 1 | 596 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 549 | 0 | 549 | 0 |
+| 16 | 1,542 | 11 | 1,531 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 821 | 101 | 720 | 0 |
+| 21 | 895 | 8 | 887 | 0 |
+| 22 | 572 | 371 | 173 | 28 |
+| 23 | 850 | 26 | 824 | 0 |
+| 24 | 355 | 9 | 346 | 0 |
+| 25 | 478 | 8 | 470 | 0 |
+| 26 | 565 | 1 | 564 | 0 |
+| 27 | 354 | 2 | 352 | 0 |
+| 28 | 737 | 6 | 731 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 93 | 134 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 79 | 338 | 0 |
+| 38 | 340 | 170 | 170 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 4 | 83 | 0 |
+| **Total** | **22,008** | **2,573** | **19,369** | **66** |
+
+The top remaining refusal sets count assignment targets in 4,457 files,
+expression calls in 4,351, instance hierarchy in 3,833, and two-state
+declaration shapes in 3,703. Counts overlap: a file may have several walls.
+
+## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445
   additional `.sv` files sit directly under `tests/` outside any chapter and

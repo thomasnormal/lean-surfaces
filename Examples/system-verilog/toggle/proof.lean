@@ -85,7 +85,7 @@ theorem applyInputs_toggle (inputs : SvState) (c r e v : LVec) :
   cases hclk : SvState.lookup inputs "clk" <;>
     cases hrst : SvState.lookup inputs "rst" <;>
       cases hen : SvState.lookup inputs "en" <;>
-        simp [applyInputs, toggle_inputNames, appIn, hclk, hrst, hen, SvState.set]
+        simp [applyInputs, toggleDesign, appIn, hclk, hrst, hen, SvState.set]
 
 /-! ## Canonical trace -/
 

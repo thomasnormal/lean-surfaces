@@ -1791,10 +1791,8 @@ def convert_port(sm, m):
     direction = DIRECTION_MAP.get(d)
     if direction is None:  # InOut / Ref
         return unsupported(sm, m, "PortSymbol:" + d)
-    if _SYM is None and not m.type.isFourState:
-        if (direction != "out"
-                or type(getattr(m, "internalSymbol", None)).__name__ != "VariableSymbol"):
-            return unsupported(sm, m, "PortSymbol:2state")
+    if (_SYM is None
+            and type(getattr(m, "internalSymbol", None)).__name__ == "VariableSymbol"):
         w, two, reason = type_width_2s(m.type)
     else:
         w, reason = type_width(m.type)
@@ -1811,6 +1809,17 @@ def convert_port(sm, m):
     signed_metadata(port, m.type)
     if two:
         port["two_state"] = True
+    initializer = getattr(m, "initializer", None)
+    if initializer is None:
+        initializer = getattr(getattr(m, "internalSymbol", None), "initializer", None)
+        if initializer is not None and direction == "in":
+            return unsupported(sm, m, "PortSymbol:input-variable-initializer")
+    if initializer is not None:
+        if (direction == "out"
+                and type(getattr(m, "internalSymbol", None)).__name__ != "VariableSymbol"):
+            return unsupported(sm, m, "PortSymbol:net-initializer")
+        value = convert_expr(sm, initializer)
+        port["init"] = squash2_wrap(value, w) if two else value
     return port
 
 

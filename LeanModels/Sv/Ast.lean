@@ -81,6 +81,7 @@ inductive Expr where
   | unary (op : UnaryOp) (arg : Expr)
   | reduce (op : RedOp) (arg : Expr)
   | resizeSigned (width : Nat) (arg : Expr)
+  | squash2 (arg : Expr)
   | binary (op : BinOp) (left right : Expr)
   | ternary (cond thenE elseE : Expr)
   | concat (parts : Array Expr)
@@ -117,11 +118,13 @@ deriving Repr, BEq, Inhabited
 /-- One variable/net declaration. `width` is resolved (scalar `logic` = 1;
 `logic [W-1:0]` = W). `init` is the (rare) declaration initializer, e.g.
 `logic [7:0] a = 8'd1` — variables without one start all-x (§6.8).
-Ports have `isInput`/`isOutput` set; internal signals have neither. -/
+Ports have `isInput`/`isOutput` set; internal signals have neither.
+`twoState` retains the declared conversion at startup and the input boundary. -/
 structure Decl where
   name : String
   width : Nat
   isSigned : Bool := false
+  twoState : Bool := false
   isInput : Bool := false
   isOutput : Bool := false
   init : Option LVec := none
@@ -157,7 +160,7 @@ where
   exprHas : Expr → Bool
     | .unsupported _ _ => true
     | .lit _ | .ident _ => false
-    | .unary _ a | .reduce _ a | .resizeSigned _ a => exprHas a
+    | .unary _ a | .reduce _ a | .resizeSigned _ a | .squash2 a => exprHas a
     | .binary _ a b => exprHas a || exprHas b
     | .ternary c a b => exprHas c || exprHas a || exprHas b
     | .concat ps => ps.attach.any fun ⟨p, _⟩ => exprHas p

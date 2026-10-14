@@ -69,7 +69,7 @@ Applied wherever the extractor inserted a `Squash2` node (assignments and
 initializers whose target is a 2-state variable, and the corresponding
 implicit conversions). -/
 def squash2v (v : LVec) : LVec :=
-  ⟨v.bits.map fun b => if b == .l1 then .l1 else .l0⟩
+  v.toTwoState
 
 /-- Unsigned resize (the `Resize` node): zero-extend on the MSB side, or
 keep the low `w` bits. The extractor emits `Resize` for an unsigned
@@ -822,13 +822,14 @@ end
 /-! ## Designs and the runner -/
 
 /-- One module-level declaration. `init` is the (possibly synthesized —
-2-state vars) initializer; a var without one starts all-x (§6.8), a net
-all-z (undriven). Port direction is irrelevant at time 0 (undriven inputs
-are x, exactly the LRM elaboration of an unconnected top). -/
+2-state vars) initializer; a four-state var without one starts all-x (§6.8),
+a net or unconnected input all-z. Two-state declarations convert those
+unknown/high-impedance startup values to zero. -/
 structure SDecl where
   name : String
   width : Nat
   isNet : Bool := false
+  isInput : Bool := false
   isOutput : Bool := false
   isSigned : Bool := false
   twoState : Bool := false
@@ -856,10 +857,12 @@ def initDecls (fuel : Nat) : List SDecl → SvState → Res SvState
   | [], st => .ok st
   | dc :: rest, st => do
       let v ← match dc.init with
-        | none => pure (if dc.isNet then LVec.replicate dc.width .lz
-                        else if dc.isOutput && dc.twoState then LVec.replicate dc.width .l0
+        | none => pure (if dc.twoState then LVec.replicate dc.width .l0
+                        else if dc.isNet || dc.isInput then LVec.replicate dc.width .lz
                         else LVec.xVec dc.width)
-        | some e => evalSExpr fuel st e
+        | some e => do
+            let value ← evalSExpr fuel st e
+            pure (if dc.twoState then squash2v value else value)
       initDecls fuel rest (SvState.set st dc.name v)
 
 /-- Run the initial processes once each, in source order, at time 0.
@@ -1180,8 +1183,8 @@ def parseSProc (j : Json) : Except String SProc := do
       return .other (← getStrF j "sv_kind") (unsupportedText j)
   | other => .error s!"unknown process kind '{other}'"
 
-/-- `Port` → declaration (starts all-x, exactly an unconnected top-level
-input/output). Unsupported ports poison the design via an `.other` proc. -/
+/-- `Port` → declaration, retaining input direction and two-state conversion.
+Unsupported ports poison the design via an `.other` proc. -/
 def parsePortD (j : Json) : Except String (Sum SDecl SProc) := do
   match ← getStrF j "kind" with
   | "Port" =>
@@ -1194,8 +1197,11 @@ def parsePortD (j : Json) : Except String (Sum SDecl SProc) := do
         | some value => match value.getBool? with
           | .ok b => pure b
           | .error _ => .error "field 'two_state' must be a Bool"
+      let init ← match getFOpt j "init" with
+        | none => pure none
+        | some value => some <$> parseSExpr value
       return .inl { name := ← getStrF j "name", width := ← getNatF j "width"
-                    isOutput := dir == "out", isSigned, twoState }
+                    isInput := dir == "in", isOutput := dir == "out", isSigned, twoState, init }
   | "Unsupported" =>
       return .inr (.other (← getStrF j "sv_kind") (unsupportedText j))
   | k => .error s!"unknown port kind '{k}'"

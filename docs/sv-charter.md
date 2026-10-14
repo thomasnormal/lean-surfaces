@@ -389,6 +389,48 @@ all six operators against the Icarus differential harness.
 operand, unknown bits and constant unary-plus result are checked by the
 Icarus differential harness.
 
+### Integral variable ports — 2026-10-14
+
+The legacy tier now admits integral variable ports in both directions:
+two-state scalar and descending packed types, plus the predefined integer
+types, independently of signedness. `Decl.twoState` survives ingestion;
+the cycle boundary converts each supplied x/z input bit to zero before
+process execution, while absent stimulus entries retain the previous value.
+The ordinary `Squash2` node also reaches the M0 evaluator, sharing the
+same conversion with the self-check tier. No scheduler is added or changed.
+
+Unconnected inputs in the time-zero runner start z for four-state types and
+zero for two-state types; output variables retain their corresponding x/zero
+startup. The extracted `integral_ports` design checks signed comparisons,
+sign extension, mixed port types and output conversion. Its proof validates
+the complete AST against the real envelope before proving input conversion
+precedes its first assignment and conversion is idempotent. Width-parametric
+startup theorems cover both state counts. Two-state nets, noncanonical packed
+ranges, aggregates, and symbolic signed/two-state declarations remain loud.
+Port defaults and variable initializers are retained rather than silently
+dropped. The time-zero runner evaluates them through ordinary declaration
+initialization; the connected cycle boundary ignores input defaults and
+accepts closed output initializers. Invalid output-net port initializers stay
+loud rather than being mistaken for variable startup.
+
+On the same **22,008** corpus paths, extractor-clean rises **2,572 → 2,573**:
+two chapter-23 gains, one newly loud negative fixture, four changed refusal sets. The two gains
+concern predefined integer port declarations; they do not establish
+whole-corpus runtime agreement. The one admission loss rejects a forbidden
+output-net port initializer that was previously dropped. `docs/sv-corpus-coverage.md` records the
+fresh per-chapter table and `docs/sv-construct-census.json` its generated
+summary. The largest residual refusal is assignment targets (4,457 files),
+followed by expression calls (4,351), hierarchy (3,833), and two-state
+declaration shapes (3,703).
+
+The ordinary portable suite includes x/z stimuli and an absent-input cycle:
+all five complete cycle traces agree with both independent simulation and
+Icarus. The separate unconnected startup fixture differs: Icarus 13.0
+development build `dad78d525` retains z in unconnected two-state input ports,
+while independent simulation initializes them to zero. This is recorded as
+a simulator divergence, not a model pass. The new integral-variable-port
+slice supersedes the older input-port refusal below.
+
 ### Two-state output ports — 2026-10-12
 
 The legacy/self-check envelope admits an unsigned scalar or descending

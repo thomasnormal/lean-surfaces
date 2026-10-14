@@ -171,6 +171,10 @@ def ofLogic (b : Logic) : LVec := ⟨#[b]⟩
 /-- Constant vector of width `w`. -/
 def replicate (w : Nat) (b : Logic) : LVec := ⟨.replicate w b⟩
 
+/-- Integral four-state to two-state conversion: preserve 0/1 and map x/z to 0. -/
+def toTwoState (value : LVec) : LVec :=
+  ⟨value.bits.map fun bit => if bit == .l1 then .l1 else .l0⟩
+
 /-- All-`x` vector of width `w` — the LRM startup value of every variable
 without an initializer (§6.8), and the collapsed result of arithmetic on
 unknowns (§11.4.3). -/

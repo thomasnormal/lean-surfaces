@@ -39,6 +39,13 @@ against that doc.
 
 Single module, no hierarchy/generate/interfaces/classes/functions. Declarations:
 `logic`/`wire` (4-state), vector `[W-1:0]` or scalar, with optional initializers.
+Integral variable ports also admit `bit`, `byte`, `shortint`, `int`, `longint`,
+`integer` and `time`, with signedness and state count retained independently.
+Two-state input stimuli convert x/z to zero before processes run; omitted
+inputs hold their prior values. Two-state assignments use the same pure
+`Squash2` conversion. In the time-zero self-check surface, unconnected inputs
+start z for four-state types and zero for two-state types. Two-state nets,
+aggregates and symbolic signed/two-state declarations remain loud.
 Ports in/out. Processes: `always_ff @(posedge <clk>)`, `always @(posedge <clk>)`,
 `always_comb`, continuous `assign`. Statements: blocking `=`, nonblocking `<=`,
 `if`/`else`, `begin/end`. Expressions: identifiers; sized/unsized literals incl.

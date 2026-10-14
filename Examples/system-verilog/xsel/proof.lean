@@ -75,7 +75,7 @@ theorem applyInputs_xsel (inputs : SvState) (s a b y : LVec) :
   cases hsel : SvState.lookup inputs "sel" <;>
     cases ha : SvState.lookup inputs "a" <;>
       cases hb : SvState.lookup inputs "b" <;>
-        simp [applyInputs, xsel_inputNames, appIn, hsel, ha, hb, SvState.set]
+        simp [applyInputs, xselDesign, appIn, hsel, ha, hb, SvState.set]
 
 /-! ## The settle loop
 

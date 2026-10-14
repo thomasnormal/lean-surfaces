@@ -1,0 +1,367 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/integral_ports/integral_ports.sv",
+  "source_sha256": "6dc4984186fe5d63fd9ac49febe1e5432787c68821cd02d7b8621b1adda68c66",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "integral_ports",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 19,
+              "end_line": 2,
+              "end_col": 32
+            },
+            "name": "unsigned_bits",
+            "dir": "in",
+            "width": 4,
+            "two_state": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 26,
+              "end_line": 3,
+              "end_col": 37
+            },
+            "name": "signed_bits",
+            "dir": "in",
+            "width": 4,
+            "signed": true,
+            "two_state": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 13,
+              "end_line": 4,
+              "end_col": 27
+            },
+            "name": "signed_integer",
+            "dir": "in",
+            "width": 32,
+            "signed": true,
+            "two_state": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 17,
+              "end_line": 5,
+              "end_col": 35
+            },
+            "name": "four_state_integer",
+            "dir": "in",
+            "width": 32,
+            "signed": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 20,
+              "end_line": 6,
+              "end_col": 26
+            },
+            "name": "copied",
+            "dir": "out",
+            "width": 4,
+            "two_state": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 22,
+              "end_line": 7,
+              "end_col": 27
+            },
+            "name": "value",
+            "dir": "out",
+            "width": 4
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 24
+            },
+            "name": "negative",
+            "dir": "out",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 23,
+              "end_line": 9,
+              "end_col": 27
+            },
+            "name": "wide",
+            "dir": "out",
+            "width": 32
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 16,
+              "end_line": 10,
+              "end_col": 20
+            },
+            "name": "less",
+            "dir": "out",
+            "width": 1
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 12,
+              "col": 10,
+              "end_line": 12,
+              "end_col": 32
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 12,
+                "col": 10,
+                "end_line": 12,
+                "end_col": 16
+              },
+              "width": 4,
+              "name": "copied"
+            },
+            "value": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 4,
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 12,
+                  "col": 19,
+                  "end_line": 12,
+                  "end_col": 32
+                },
+                "width": 4,
+                "name": "unsigned_bits"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 13,
+              "col": 10,
+              "end_line": 13,
+              "end_col": 29
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 13,
+                "col": 10,
+                "end_line": 13,
+                "end_col": 15
+              },
+              "width": 4,
+              "name": "value"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 13,
+                "col": 18,
+                "end_line": 13,
+                "end_col": 29
+              },
+              "width": 4,
+              "name": "signed_bits",
+              "signed": true
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 36
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 14,
+                "col": 10,
+                "end_line": 14,
+                "end_col": 18
+              },
+              "width": 1,
+              "name": "negative"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 14,
+                "col": 21,
+                "end_line": 14,
+                "end_col": 36
+              },
+              "width": 1,
+              "op": "s<",
+              "left": {
+                "kind": "SignedResize",
+                "span": {
+                  "line": 14,
+                  "col": 21,
+                  "end_line": 14,
+                  "end_col": 32
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 14,
+                    "col": 21,
+                    "end_line": 14,
+                    "end_col": 32
+                  },
+                  "width": 4,
+                  "name": "signed_bits",
+                  "signed": true
+                }
+              },
+              "right": {
+                "kind": "Literal",
+                "span": {
+                  "line": 14,
+                  "col": 35,
+                  "end_line": 14,
+                  "end_col": 36
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000000"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 15,
+              "col": 10,
+              "end_line": 15,
+              "end_col": 31
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 15,
+                "col": 10,
+                "end_line": 15,
+                "end_col": 14
+              },
+              "width": 32,
+              "name": "wide"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 15,
+                "col": 17,
+                "end_line": 15,
+                "end_col": 31
+              },
+              "width": 32,
+              "name": "signed_integer",
+              "signed": true
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 16,
+              "col": 10,
+              "end_line": 16,
+              "end_col": 52
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 10,
+                "end_line": 16,
+                "end_col": 14
+              },
+              "width": 1,
+              "name": "less"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 16,
+                "col": 17,
+                "end_line": 16,
+                "end_col": 52
+              },
+              "width": 1,
+              "op": "s<",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 16,
+                  "col": 17,
+                  "end_line": 16,
+                  "end_col": 31
+                },
+                "width": 32,
+                "name": "signed_integer",
+                "signed": true
+              },
+              "right": {
+                "kind": "Ident",
+                "span": {
+                  "line": 16,
+                  "col": 34,
+                  "end_line": 16,
+                  "end_col": 52
+                },
+                "width": 32,
+                "name": "four_state_integer",
+                "signed": true
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

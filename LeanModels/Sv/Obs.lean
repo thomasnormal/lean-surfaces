@@ -414,6 +414,9 @@ theorem fuelMono (fuel : Nat) :
         | resizeSigned width operand =>
           simp only [evalExpr]
           exact Res.le_bind (ihE st operand k hk) fun value => Res.le_refl _
+        | squash2 operand =>
+          simp only [evalExpr]
+          exact Res.le_bind (ihE st operand k hk) fun value => Res.le_refl _
         | binary op l r =>
           simp only [evalExpr]
           exact Res.le_bind (ihE st l k hk) fun a =>

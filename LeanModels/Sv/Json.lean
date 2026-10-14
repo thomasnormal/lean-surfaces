@@ -190,6 +190,8 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "SignedResize" =>
         return .resizeSigned (← getNatField j ["width"])
           (← parseExpr (← getField j ["operand"]))
+    | "Squash2" =>
+        return .squash2 (← parseExpr (← getField j ["operand"]))
     | "Binary" | "BinaryOp" | "BinOp" =>
         let op ← parseBinOpName (← getStrField j ["op"])
         return .binary op (← parseExpr (← getField j ["left"]))
@@ -258,12 +260,13 @@ def parseDecl (j : Json) : Except String Decl :=
     withCtx name.quote do
       let width ← getNatField j ["width"]
       let isSigned ← getBoolFieldD j ["signed", "is_signed", "isSigned"]
+      let twoState ← getBoolFieldD j ["two_state", "twoState"]
       let isInput ← getBoolFieldD j ["is_input", "isInput"]
       let isOutput ← getBoolFieldD j ["is_output", "isOutput"]
       let init ← match getOptField j ["init"] with
         | none => pure none
         | some ji => pure (some (← withCtx "init" (parseLVecValue width ji)))
-      return { name, width, isSigned, isInput, isOutput, init }
+      return { name, width, isSigned, twoState, isInput, isOutput, init }
 
 /-- Parse the `design` payload (a single elaborated M0 module). A `kind`
 field, if present, must be `"Module"` or `"Design"`. -/

@@ -390,6 +390,18 @@
       ]
     },
     {
+      "name": "integral_ports_directed",
+      "example": "integral_ports",
+      "signals": ["unsigned_bits", "signed_bits", "signed_integer", "four_state_integer", "copied", "value", "negative", "wide", "less"],
+      "stimulus": [
+        {"unsigned_bits": "1xz1", "signed_bits": "x111", "signed_integer": "11111111111111111111111111111111", "four_state_integer": "00000000000000000000000000000001"},
+        {"unsigned_bits": "zzzz", "signed_bits": "1zx0", "signed_integer": "0000000000000000000000000000xxzz", "four_state_integer": "00000000000000000000000000000001"},
+        {"unsigned_bits": "0110", "signed_bits": "0111", "signed_integer": "00000000000000000000000000000010", "four_state_integer": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
+        {},
+        {"unsigned_bits": "1111", "signed_bits": "1000", "signed_integer": "10000000000000000000000000000000", "four_state_integer": "00000000000000000000000000000000"}
+      ]
+    },
+    {
       "name": "reductions_directed",
       "example": "reductions",
       "signals": [

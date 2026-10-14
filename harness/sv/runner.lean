@@ -135,9 +135,20 @@ def parsePortE (j : Json) : Except String Decl := do
       let name ← getStrF j "name"
       let width ← getNatF j "width"
       let isSigned := (getFOpt j "signed").bind (·.getBool?.toOption) |>.getD false
-      match ← getStrF j "dir" with
-      | "in" => return { name, width, isSigned, isInput := true }
-      | "out" => return { name, width, isSigned, isOutput := true }
+      let twoState ← match getFOpt j "two_state" with
+        | none => pure false
+        | some value => value.getBool?
+      let direction ← getStrF j "dir"
+      let init ← match direction, getFOpt j "init" with
+        | "out", some initializer =>
+            match evalExpr 4096 [] (← parseExpr initializer) with
+            | .ok value => pure (some value)
+            | .unsupported message => throw s!"port '{name}' initializer: {message}"
+            | .timeout => throw s!"port '{name}' initializer exhausted fuel"
+        | _, _ => pure none
+      match direction with
+      | "in" => return { name, width, isSigned, twoState, isInput := true }
+      | "out" => return { name, width, isSigned, twoState, isOutput := true, init }
       | d => .error s!"port '{name}': unknown dir '{d}'"
   | "Unsupported" =>
       .error s!"unsupported port ({(getStrF j "sv_kind").toOption.getD "?"})"

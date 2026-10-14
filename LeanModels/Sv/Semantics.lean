@@ -265,6 +265,8 @@ def evalExpr (fuel : Nat) (st : SvState) (e : Expr) : Res LVec :=
         return .ofLogic (evalRedOp op (← evalExpr fuel st a))
     | .resizeSigned width operand => do
         return (← evalExpr fuel st operand).resizeSigned width
+    | .squash2 operand => do
+        return (← evalExpr fuel st operand).toTwoState
     | .binary op l r => do
         let a ← evalExpr fuel st l
         let b ← evalExpr fuel st r
@@ -444,19 +446,25 @@ def commitNba (st : SvState) (nba : NbaQueue) : SvState :=
 /-- Overwrite **declared input ports** from the cycle's stimulus entry.
 Only names in `d.inputNames` are consulted: the stimulus can never touch
 internal state or outputs, and an input absent from the entry holds its
-previous value. -/
+previous value. Two-state input variables convert x/z bits to zero before
+any process evaluates an expression. -/
 def applyInputs (d : Design) (inputs : SvState) (st : SvState) : SvState :=
-  d.inputNames.foldl
-    (fun s name =>
-      match SvState.lookup inputs name with
-      | some v => SvState.set s name v
-      | none => s)
+  d.decls.foldl
+    (fun state declaration =>
+      if declaration.isInput then
+        match SvState.lookup inputs declaration.name with
+        | some value => SvState.set state declaration.name
+            (if declaration.twoState then value.toTwoState else value)
+        | none => state
+      else state)
     st
 
 /-- LRM startup state (§6.8): declaration initializers where present,
-all-x otherwise, in declaration order. -/
+all-x otherwise, converting two-state variables to zero in declaration order. -/
 def initState (d : Design) : SvState :=
-  d.decls.toList.map fun dc => (dc.name, dc.init.getD (LVec.xVec dc.width))
+  d.decls.toList.map fun dc =>
+    let value := dc.init.getD (LVec.xVec dc.width)
+    (dc.name, if dc.twoState then value.toTwoState else value)
 
 /-- One clock cycle — exactly the contract's 5 sub-steps. `k` is the oracle
 invocation counter carried across cycles (default `0` gives the

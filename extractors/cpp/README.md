@@ -457,3 +457,22 @@ Reports distinguish per-family counts, encountered wall sets, query intersection
 and bounded evidence examples. Complete-AST pointer closure and local query
 eligibility remain different measurements. Pin input/tool hashes and explicit
 time/memory bounds externally; the default input-byte cap remains 64 MiB.
+
+## Automatic declaration pricing
+
+`price_local_declarations.py` reads archived source-body inventories, not raw
+translation envelopes. It separates implicit bodies, methods, dependencies and
+ordinary declaration-containing bodies, retaining full remaining raw-kind sets.
+Its permissive kind-only candidates establish neither signature/type admission
+nor execution. The [declaration contract](../../docs/cpp-local-declarations.md)
+records the measured public inventories and the required object/scope bridge.
+
+```console
+python3 extractors/cpp/test_price_local_declarations.py
+python3 extractors/cpp/price_local_declarations.py BODY_INVENTORY.json --out local-pricing.json
+```
+
+Reports pin input bytes/hash and omit corpus labels, source paths and names.
+Ownership comes from the input receipt, not an independent frontend query.
+Schema and integer node counts are strict; input/output aliases refuse and
+reports publish atomically. The default input-byte bound is 64 MiB.

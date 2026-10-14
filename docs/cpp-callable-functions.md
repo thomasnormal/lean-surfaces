@@ -120,6 +120,11 @@ callable tree is input to the bounded statement evaluator described in
 In particular, no theorem or differential result may claim that an admitted
 body was executed merely because Clang accepted its source.
 
+Source-local declarations remain loud. The
+[automatic integral declaration contract](cpp-local-declarations.md) prices
+that next surface and requires object-backed bindings, preserved scopes and
+cleanup-aware loop execution before admission can change.
+
 ## Validation
 
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral

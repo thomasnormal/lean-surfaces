@@ -453,6 +453,104 @@ bool logical(int value) { return !value; }
         )
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
+    def test_actual_compiler_local_declarations_remain_loud(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        self.assertTrue(pathlib.Path(library).is_file(), "selected probe library must exist")
+        source = self.root / "declarations.cpp"
+        functions = {
+            "local_copy": "int local = value; return local;",
+            "local_direct": "int local(value); return local;",
+            "local_list": "int local{value}; return local;",
+            "local_copy_list": "int local = {value}; return local;",
+            "local_zero": "int local{}; return local;",
+            "local_default": "int local; local = value; return local;",
+            "local_const": "const int local = value; return local;",
+            "local_auto": "auto local = value; return local;",
+            "local_chain": "int first = value, second = first; return second;",
+            "local_shadow": "int local = value; { int local = 3; ++local; } return local;",
+            "local_self": "int result = value; { int local = local; } return result;",
+            "local_for": "for (int local = 0; local < value; ++local) { break; } return value;",
+            "local_static": "static int local = value; return local;",
+            "local_thread": "thread_local int local = value; return local;",
+            "local_volatile": "volatile int local = value; return local;",
+            "local_reference": "int &local = value; return local;",
+            "local_array": "int local[1] = {value}; return local[0];",
+            "local_alias": "using Number = int; Number local = value; return local;",
+        }
+        source.write_text("\n".join(
+            "int " + name + "(int value) { " + body + " }"
+            for name, body in functions.items()), encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(pathlib.Path(library).resolve()),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        paths = {}
+        function_nodes = {}
+        variables = []
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in functions:
+                paths[node["name"]] = path
+                function_nodes[node["name"]] = node
+            if node.get("kind") == "VarDecl":
+                variables.append(node)
+            pending.extend((child, path + [index])
+                           for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), set(functions))
+        type_rows = {row["occurrence"]: row for row in probe["metadata"]["type_evidence"]}
+        ordinary = [node for node in variables if node.get("type", {}).get("qualType") == "int"]
+        self.assertTrue(ordinary)
+        for node in ordinary:
+            self.assertEqual(type_rows[node["id"]]["type"], {"kind": "builtin", "name": "int"})
+
+        def references(root):
+            result = []
+            pending = [root]
+            while pending:
+                node = pending.pop()
+                if node.get("kind") == "DeclRefExpr":
+                    result.append(node["referencedDecl"]["id"])
+                pending.extend(node.get("inner", []))
+            return result
+
+        bodies = {name: next(child for child in function["inner"]
+                             if child.get("kind") == "CompoundStmt")
+                  for name, function in function_nodes.items()}
+        shadow = bodies["local_shadow"]["inner"]
+        outer = shadow[0]["inner"][0]
+        inner = shadow[1]["inner"][0]["inner"][0]
+        self.assertNotEqual(outer["id"], inner["id"])
+        self.assertEqual(references(shadow[1]), [inner["id"]])
+        self.assertEqual(references(shadow[2]), [outer["id"]])
+        self_scope = bodies["local_self"]["inner"][1]
+        self_variable = self_scope["inner"][0]["inner"][0]
+        self.assertEqual(references(self_scope), [self_variable["id"]])
+        first, second = bodies["local_chain"]["inner"][0]["inner"]
+        self.assertEqual(references(second), [first["id"]])
+        guards = []
+        for name in sorted(functions):
+            guards.append(
+                "#guard match admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
+                + str(paths[name]) + " with\n"
+                '| .error reason => reason == "callable: unsupported statement DeclStmt"\n'
+                "| .ok _ => false")
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+                            options="set_option maxRecDepth 100000 in")
+
     def test_actual_compiler_switch_continue_admitted(self):
         requested = os.environ.get("LEANCPP_CLANG")
         library = os.environ.get("LEANCPP_PROBE_LIBRARY")

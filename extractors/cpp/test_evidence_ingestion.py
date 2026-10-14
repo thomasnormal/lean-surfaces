@@ -453,7 +453,7 @@ bool logical(int value) { return !value; }
         )
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
-    def test_actual_compiler_switch_continue_refuses(self):
+    def test_actual_compiler_switch_continue_admitted(self):
         requested = os.environ.get("LEANCPP_CLANG")
         library = os.environ.get("LEANCPP_PROBE_LIBRARY")
         if not requested or not library:
@@ -510,12 +510,7 @@ int switch_break(int value) {
         for name in sorted(expected):
             admission = ("admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
                          + str(paths[name]))
-            if name == "switch_break":
-                guards.append("#guard (" + admission + ").isOk")
-            else:
-                guards.append("#guard match (" + admission + ") with\n"
-                              '| .error reason => reason == "callable: continue inside switch '
-                              'is outside the body profile"\n| .ok _ => false')
+            guards.append("#guard (" + admission + ").isOk")
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
     def test_callable_argument_conversions_match_compiled_clang(self):
@@ -588,6 +583,18 @@ int switch_break(int value) {
           "int for_break_loop(int value) { for (value = 0; value < 3; ++value) { ++value; break; } return value; }\n"
           "int for_continue_loop(int value) { for (value = 0; value < 3; ++value) { continue; } return value; }\n"
           "int switch_select(int value) { switch (value) { case 0: return 4; case 1: return 5; default: return 6; } return 7; }\n"
+          "int switch_while(int value) { while (value) { switch (value) { case 1: --value; continue; default: return value; } } return value; }\n"
+          "int switch_for(int value) { for (value = value; value < 3; ++value) { switch (value) { default: continue; } value += 10; } return value; }\n"
+          "int switch_do(int value) { do { switch (value) { default: ++value; continue; } value += 10; } while (value < 3); return value; }\n"
+          "int switch_nested(int value) { switch (value) { default: while (value < 3) { ++value; continue; } } return value; }\n"
+          "int switch_break(int value) { switch (value) { case 0: break; case 1: return 4; default: return 5; } return value; }\n"
+          "int switch_inner_while(int value, int total) { for (value = 0; value < 3; ++value) { switch (value) { default: while (total < 2) { ++total; continue; } } ++total; } return total; }\n"
+          "int switch_inner_do(int value, int total) { for (value = 0; value < 3; ++value) { switch (value) { default: do { ++total; continue; } while (total < 2); } ++total; } return total; }\n"
+          "int switch_inner_for(int value, int inner, int total) { for (value = 0; value < 3; ++value) { switch (value) { default: for (inner = 0; inner < 2; ++inner) { continue; } } ++total; } return total; }\n"
+          "int switch_nested_continue(int value, int total) { for (value = 0; value < 3; ++value) { switch (value) { default: switch (total) { default: ++total; continue; } } total += 10; } return total; }\n"
+          "int switch_fallthrough_continue(int value, int total) { for (value = 0; value < 3; ++value) { switch (value) { case 0: ++total; case 1: ++total; continue; default: break; } total += 10; } return total; }\n"
+          "int switch_for_break(int value, int total) { for (value = 0; value < 3; ++value) { switch (value) { default: break; } ++total; } return total; }\n"
+          "int switch_conditional_continue(int value) { for (value = value; value < 3; ++value) { switch (value) { default: if (value < 2) continue; break; } value += 2; } return value; }\n"
           "int do_break_loop(int value) { do { ++value; break; } while (value < 3); return value; }\n"
           "int do_continue_loop(int value) { do { ++value; continue; } while (value < 3); return value; }\n"
           "short compound_narrow(short value) { value += 1; return value; }\n"
@@ -648,7 +655,11 @@ int switch_break(int value) {
             "postfix_decrement", "discarded_increment", "increment_unsigned",
             "conditional", "conditional_param", "conditional_increment", "comma", "for_loop",
             "break_loop", "continue_loop", "for_break_loop", "for_continue_loop",
-            "switch_select", "do_break_loop", "do_continue_loop"}
+            "switch_select", "do_break_loop", "do_continue_loop",
+            "switch_while", "switch_for", "switch_do", "switch_nested", "switch_break",
+            "switch_inner_while", "switch_inner_do", "switch_inner_for", "switch_nested_continue",
+            "switch_fallthrough_continue", "switch_for_break",
+            "switch_conditional_continue"}
         refusals = {"compound_narrow", "compound_mixed"}
         paths = {}
         pending = [(probe["ast"], [])]
@@ -768,6 +779,21 @@ int switch_break(int value) {
         for value in (0, 1, 7):
             expressions.append(f"switch_select({value})")
             rows.append(("switch_select", ".signed 32", [(".signed 32", value)]))
+        switch_calls = {
+            name: [(value,) for value in (-1, 0, 1, 2, 3, 7)]
+            for name in ("switch_while", "switch_for", "switch_do", "switch_nested", "switch_break",
+                         "switch_conditional_continue")
+        }
+        switch_calls["switch_inner_while"] = [(0, total) for total in (0, 1, 2, 5)]
+        switch_calls["switch_inner_do"] = [(0, total) for total in (0, 1, 2, 5)]
+        switch_calls["switch_inner_for"] = [(0, 0, total) for total in (-1, 0, 2)]
+        switch_calls["switch_nested_continue"] = [(0, total) for total in (-1, 0, 1, 3)]
+        switch_calls["switch_fallthrough_continue"] = [(0, total) for total in (-1, 0, 1, 3)]
+        switch_calls["switch_for_break"] = [(0, total) for total in (-1, 0, 1, 3)]
+        for name, arguments_list in switch_calls.items():
+            for arguments in arguments_list:
+                expressions.append(f"{name}({', '.join(map(str, arguments))})")
+                rows.append((name, ".signed 32", [(".signed 32", value) for value in arguments]))
         for value in (-1, 0, 7):
             expressions.append(f"do_break_loop({value})")
             rows.append(("do_break_loop", ".signed 32", [(".signed 32", value)]))
@@ -893,10 +919,17 @@ int switch_break(int value) {
             outputs.append(executed.stdout.splitlines())
         self.assertEqual(outputs[0], outputs[1])
         self.assertEqual(len(outputs[0]), len(rows))
-        guards = ["#guard (parseValidatedBinaryExpressionEvidence evidence).isOk"]
+        guards = [
+            "def callableTypeRows := parseValidatedTypeEvidence evidence",
+            "def callableExpressionRows := parseValidatedBinaryExpressionEvidence evidence",
+            "#guard callableTypeRows.isOk",
+            "#guard callableExpressionRows.isOk",
+        ]
         for name in sorted(names):
-            guards.append(f"def {name} := admitCallableFunctionFromProbe evidence "
-                          f"TargetProfile.lp64 {paths[name]}")
+            guards.append(f"""def {name} : Except String CallableFunction := do
+  let types ← callableTypeRows
+  let expressions ← callableExpressionRows
+  admitCallableFunction evidence types expressions TargetProfile.lp64 {paths[name]}""")
             guards.append(f"#guard {name}.isOk")
         for name in sorted(refusals):
             guards.append(f"#guard (admitCallableFunctionFromProbe evidence "
@@ -904,7 +937,8 @@ int switch_break(int value) {
         for (name, destination, arguments), expected in zip(rows, outputs[0]):
             values = ", ".join(f"⟨{format_name}, {value}⟩"
                                for format_name, value in arguments)
-            fuel = (64 if name in ("for_break_loop", "for_continue_loop", "switch_select")
+            fuel = (256 if name in switch_calls
+                    else 64 if name in ("for_break_loop", "for_continue_loop", "switch_select")
                     else 32 if name in ("break_loop", "continue_loop", "do_break_loop",
                                         "do_continue_loop")
                     else 64 if name == "for_loop"
@@ -916,7 +950,7 @@ int switch_break(int value) {
     | _ => false
   | .error _ => false""")
         self.assert_accepts(json.dumps(probe), "\n".join(guards),
-                            options="set_option maxRecDepth 100000 in", timeout=180)
+                            options="set_option maxRecDepth 100000 in", timeout=360)
         print(f"callable argument differential: {len(rows)} rows at -O0/-O2")
 
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):

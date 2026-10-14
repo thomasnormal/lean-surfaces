@@ -52,15 +52,29 @@ def CallableStatement.hasLoopTransfer : CallableStatement → Bool
   | .sequence first second => first.hasLoopTransfer || second.hasLoopTransfer
   | _ => false
 
-def CallableStatement.rewriteForContinue :
-    CallableStatement → CallableStatement → CallableStatement
-  | .conditional condition whenTrue whenFalse, step =>
-      .conditional condition (whenTrue.rewriteForContinue step)
-        (whenFalse.rewriteForContinue step)
-  | .sequence first second, step =>
-      .sequence (first.rewriteForContinue step) (second.rewriteForContinue step)
-  | .continue_, step => .sequence step .continue_
-  | statement, _ => statement
+mutual
+  def CallableStatement.rewriteForContinue (statement step : CallableStatement) :
+      CallableStatement :=
+    match statement with
+    | .conditional condition whenTrue whenFalse =>
+        .conditional condition (whenTrue.rewriteForContinue step)
+          (whenFalse.rewriteForContinue step)
+    | .switch_ condition clauses =>
+        .switch_ condition (rewriteSwitchForContinue clauses step)
+    | .sequence first second =>
+        .sequence (first.rewriteForContinue step) (second.rewriteForContinue step)
+    | .continue_ => .sequence step .continue_
+    | statement => statement
+  termination_by structural statement
+
+  private def rewriteSwitchForContinue (clauses : List CallableSwitchClause)
+      (step : CallableStatement) : List CallableSwitchClause :=
+    match clauses with
+    | [] => []
+    | ⟨label, body⟩ :: rest =>
+        {label, body := body.rewriteForContinue step} :: rewriteSwitchForContinue rest step
+  termination_by structural clauses
+end
 
 mutual
   def CallableExpression.hasEffects : CallableExpression → Bool
@@ -103,12 +117,6 @@ private def rawChildren (raw : Raw) : Except String (List Raw) :=
 
 private def rawId (raw : Raw) : Except String FrontendHandle :=
   evidenceHandle raw "id"
-
-private partial def rawContainsKind (target : String) : Raw → Bool
-  | .array values => values.any (rawContainsKind target)
-  | .object fields => fields.any (fun field =>
-      (field.1 == "kind" && field.2 == .string target) || rawContainsKind target field.2)
-  | _ => false
 
 private def switchLabelKind (raw : Raw) : Except String Bool := do
   let kind ← evidenceText raw "kind"
@@ -450,8 +458,6 @@ mutual
         throw "callable: switch condition requires an exact int expression"
       unless bodyRaw.text "kind" == some "CompoundStmt" do
         throw "callable: switch body must be a compound statement"
-      unless !rawContainsKind "ContinueStmt" bodyRaw do
-        throw "callable: continue inside switch is outside the body profile"
       let bodyRaws ← rawChildren bodyRaw
       let clauseRaws ← switchClauses bodyRaws
       unless switchLabelsValid clauseRaws do

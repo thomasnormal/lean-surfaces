@@ -65,10 +65,9 @@ An admitted `switch` has an exact builtin `int` condition and a compound body ma
 of literal `case` labels and at most one `default`. Labels are unique. Matching
 starts at the first matching case, or at `default`, and ordinary completion
 falls through later clauses in source order. A `break` exits the switch; return and evaluation failures propagate. `continue`
-anywhere inside a switch subtree remains outside the admitted profile, even if
-an inner loop would own the transfer. This conservative admission guard is
-necessary because the lowered `for` step is not rewritten inside switch clauses.
-Non-constant labels,
+passes through switches and reaches its nearest enclosing iteration statement.
+An outer `for` runs its step on that path, exactly once; lowering descends through
+switch clauses but leaves inner loops untouched. Non-constant labels,
 duplicate labels and malformed clause bodies remain loud refusals.
 
 `break` exits the nearest admitted `while`/`do` loop or `switch`. `continue` skips the
@@ -110,7 +109,7 @@ conditional expressions, comma sequencing, `for` loops, loop transfers and
 effectful logical short-circuiting.
 All ten compound operators are covered,
 including unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for`/`switch` control flow with `break`/`continue`. It compares the evaluator with 244 Clang-compiled calls at both
+and `do`/`for`/`switch` control flow with `break`/`continue`. It compares the evaluator with 303 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

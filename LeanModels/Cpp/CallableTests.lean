@@ -583,19 +583,41 @@ private def switchRefuses (clauses : List Raw) (message : String) : Bool :=
   defaultRaw "0x100" [], caseRaw "0x110" "1" [], caseRaw "0x120" "1" []]
     "callable: switch labels must be unique with at most one default"
 
-#guard switchRefuses [
-  caseRaw "0x100" "0" [object [("kind", text "ContinueStmt")]]]
-    "callable: continue inside switch is outside the body profile"
+#guard parseSwitchClauses [
+  caseRaw "0x100" "0" [object [("kind", text "ContinueStmt")]]] |>.isOk
 
-#guard switchRefuses [
+#guard parseSwitchClauses [
   defaultRaw "0x100" [object [("kind", text "CompoundStmt"),
     ("inner", .array [object [("kind", text "CompoundStmt"),
-      ("inner", .array [object [("kind", text "ContinueStmt")]])]])]]]
-    "callable: continue inside switch is outside the body profile"
+      ("inner", .array [object [("kind", text "ContinueStmt")]])]])]]] |>.isOk
 
 #guard parseSwitchClauses [
   defaultRaw "0x100" [object [("kind", text "NullStmt"),
     ("annotation", text "ContinueStmt")]]] |>.isOk
+
+example (condition : TypedCallableExpression) (step : CallableStatement) :
+    (CallableStatement.switch_ condition [{label := none, body := .continue_}]).rewriteForContinue
+      step = .switch_ condition [{label := none, body := .sequence step .continue_}] := rfl
+
+example (condition : TypedCallableExpression) (step : CallableStatement) :
+    (CallableStatement.switch_ condition [
+      {label := none, body := .whileLoop condition .continue_}]).rewriteForContinue step =
+      .switch_ condition [{label := none, body := .whileLoop condition .continue_}] := rfl
+
+example (condition : TypedCallableExpression) (step : CallableStatement) :
+    (CallableStatement.switch_ condition [
+      {label := none, body := .doWhile .continue_ condition}]).rewriteForContinue step =
+      .switch_ condition [{label := none, body := .doWhile .continue_ condition}] := rfl
+
+example (condition : TypedCallableExpression) (step : CallableStatement) :
+    (CallableStatement.switch_ condition [
+      {label := some 0, body := .break_},
+      {label := none, body := .switch_ condition [{label := none, body := .continue_}]}]
+      ).rewriteForContinue step =
+      .switch_ condition [
+        {label := some 0, body := .break_},
+        {label := none, body := .switch_ condition [
+          {label := none, body := .sequence step .continue_}]}] := rfl
 
 def admitBreak : Except String CallableFunction :=
   admitCallableFunction breakProbe transferTypes (transferEvidence "0x51" "0x52" "0x54")

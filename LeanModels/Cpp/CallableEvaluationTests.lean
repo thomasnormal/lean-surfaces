@@ -212,6 +212,17 @@ private def admitBooleanIdentity : Except String CallableFunction :=
       | _ => false
   | .error _ => false
 
+#guard match admitIdentity with
+  | .ok function =>
+      let condition : TypedCallableExpression := {
+        expression := .integer 1, sourceType := .builtin .int, type := .builtin .int}
+      let function := {function with
+        body := .switch_ condition [{label := none, body := .continue_}]}
+      match evaluateCallable 8 .lp64 function [signed 0] with
+      | .error .continueOutsideLoop => true
+      | _ => false
+  | .error _ => false
+
 #guard match admitBreak with
   | .ok function =>
       match evaluateCallable 32 .lp64 function [signed (-1)] with

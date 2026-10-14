@@ -390,11 +390,12 @@ produces 32. Dynamic, effectful, malformed and nonintegral calls remain
 call adds `$clog2:invalid-compilation`. No new runtime or scheduler rule is
 introduced.
 
-It also folds `$size`, `$high`, `$left`, `$right` and `$low` for a fixed,
+It also folds `$size`, `$high`, `$left`, `$right`, `$low` and `$increment` for a fixed,
 admitted integral declaration (array-query system functions, §20.7). The
 result is a signed 32-bit `Literal` carrying `fixed_dimension_query` with the
 query name; `$size` is the declared width, `$high`/`$left` are width minus one,
-and `$right`/`$low` are zero. Dynamic/associative/queue arrays, effectful
+and `$right`/`$low` are zero; `$increment` is one for the admitted descending
+packed dimensions. Dynamic/associative/queue arrays, effectful
 operands, malformed calls and nonintegral arguments remain `Unsupported`, with
 `DimensionQuery:invalid-compilation` retained for an admitted query in an
 otherwise erroneous compilation.

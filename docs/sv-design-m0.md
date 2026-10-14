@@ -37,9 +37,9 @@ against that doc.
 
 Pure constant `$clog2` calls are folded by the extractor to signed 32-bit
 literal values; dynamic or effectful calls remain loud.
-Fixed integral `$size`, `$high`, `$left`, `$right` and `$low` queries are
-likewise folded from declared types; dynamic dimensions and effectful operands
-remain loud.
+Fixed integral `$size`, `$high`, `$left`, `$right`, `$low` and `$increment`
+queries are likewise folded from declared types; dynamic dimensions and
+effectful operands remain loud.
 
 ## M0 language tier
 

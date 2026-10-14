@@ -557,7 +557,7 @@ def _dimension_query_call(expression):
         return (type(expression).__name__ == "CallExpression"
                 and not expression.bad and expression.isSystemCall
                 and expression.subroutineName in
-                ("$size", "$high", "$left", "$right", "$low"))
+                ("$size", "$high", "$left", "$right", "$low", "$increment"))
     except Exception:
         return False
 
@@ -582,6 +582,7 @@ def _convert_dimension_query(sm, expression):
         "$left": width - 1,
         "$right": 0,
         "$low": 0,
+        "$increment": 1,
     }[expression.subroutineName]
     return {
         "kind": "Literal",
@@ -2061,7 +2062,7 @@ def contains_fixed_clog2(node):
 def contains_fixed_dimension_query(node):
     if isinstance(node, dict):
         return node.get("fixed_dimension_query") in (
-            "$size", "$high", "$left", "$right", "$low"
+            "$size", "$high", "$left", "$right", "$low", "$increment"
         ) or any(
             contains_fixed_dimension_query(value) for value in node.values()
         )

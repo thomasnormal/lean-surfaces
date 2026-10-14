@@ -20,7 +20,7 @@
    ],
    [
     "CallExpression",
-    4254
+    4233
    ],
    [
     "InstanceSymbol:Instance",
@@ -279,6 +279,10 @@
     67
    ],
    [
+    "CallExpression:dimension:type",
+    66
+   ],
+   [
     "NamedValueExpression:ClassProperty",
     65
    ],
@@ -289,10 +293,6 @@
    [
     "WaitStatement",
     60
-   ],
-   [
-    "CallExpression:dimension:type",
-    59
    ],
    [
     "EmptyMemberSymbol:EmptyMember",
@@ -547,6 +547,10 @@
     13
    ],
    [
+    "CallExpression:dimension:range",
+    13
+   ],
+   [
     "BinaryExpression:LogicalImplication",
     12
    ],
@@ -596,10 +600,6 @@
    ],
    [
     "CheckerSymbol:Checker",
-    9
-   ],
-   [
-    "CallExpression:dimension:range",
     9
    ],
    [
@@ -828,8 +828,8 @@
    ]
   ],
   "by_status": {
-   "clean": 2587,
-   "partial": 19355,
+   "clean": 2588,
+   "partial": 19354,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -890,7 +890,7 @@
     52
    ],
    "simulation": [
-    2134,
+    2135,
     18645
    ],
    "simulation elaboration": [
@@ -1255,9 +1255,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 112,
+    "clean": 113,
     "error": 0,
-    "partial": 709,
+    "partial": 708,
     "skip_include": 0,
     "total": 821,
     "unlockable": 0

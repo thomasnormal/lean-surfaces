@@ -38,10 +38,10 @@ The follow-up constant-`$clog2` admission uses the same paths and changes the
 current snapshot to **2,580 clean** and **19,362 partial**: seven chapter-5/20
 gains, no losses, and `CallExpression` falls from 4,351 to 4,328 files.
 
-The fixed-dimension query follow-up changes the same snapshot to **2,587
-clean** and **19,355 partial**: seven total chapter-20 gains from the
-`$size`/`$high`/`$left`/`$right`/`$low` family and no losses; `CallExpression`
-falls again to 4,254 files.
+The fixed-dimension query follow-up changes the same snapshot to **2,588
+clean** and **19,354 partial**: eight total chapter-20 gains from the
+`$size`/`$high`/`$left`/`$right`/`$low`/`$increment` family and no losses;
+`CallExpression` falls again to 4,233 files.
 
 | Chapter | Total | Clean | Partial | Include skip |
 |---|---:|---:|---:|---:|
@@ -62,7 +62,7 @@ falls again to 4,254 files.
 | 17 | 512 | 0 | 512 | 0 |
 | 18 | 851 | 1 | 815 | 35 |
 | 19 | 767 | 0 | 767 | 0 |
-| 20 | 821 | 112 | 709 | 0 |
+| 20 | 821 | 113 | 708 | 0 |
 | 21 | 895 | 8 | 887 | 0 |
 | 22 | 572 | 371 | 173 | 28 |
 | 23 | 850 | 26 | 824 | 0 |
@@ -83,10 +83,10 @@ falls again to 4,254 files.
 | 38 | 340 | 170 | 170 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 4 | 83 | 0 |
-| **Total** | **22,008** | **2,587** | **19,355** | **66** |
+| **Total** | **22,008** | **2,588** | **19,354** | **66** |
 
 The top remaining refusal sets count assignment targets in 4,457 files,
-expression calls in 4,254, instance hierarchy in 3,833, and two-state
+expression calls in 4,233, instance hierarchy in 3,833, and two-state
 declaration shapes in 3,703. Counts overlap: a file may have several walls.
 
 ## Historical method

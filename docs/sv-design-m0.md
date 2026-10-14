@@ -35,6 +35,9 @@ The extractor agent owns `docs/sv-envelope-schema.md` documenting the exact node
 vocabulary (analogous to the Python schema doc); the Lean ingester is written
 against that doc.
 
+Pure constant `$clog2` calls are folded by the extractor to signed 32-bit
+literal values; dynamic or effectful calls remain loud.
+
 ## M0 language tier
 
 Single module, no hierarchy/generate/interfaces/classes/functions. Declarations:

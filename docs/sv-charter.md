@@ -431,6 +431,27 @@ while independent simulation initializes them to zero. This is recorded as
 a simulator divergence, not a model pass. The new integral-variable-port
 slice supersedes the older input-port refusal below.
 
+### Constant `$clog2` calls — 2026-10-14
+
+The legacy/self-check extractor now admits pure constant `$clog2` calls
+(IEEE 1800-2023 §20.8.1) by folding slang's elaborated result to a signed
+32-bit `Literal` carrying `fixed_clog2: true`. Zero and one return zero, and
+the argument follows the standard's unsigned treatment (`$clog2(-1)` is 32
+for a 32-bit argument). Dynamic, effectful, malformed and nonintegral calls
+remain loud; invalid compilations retain a `$clog2:invalid-compilation`
+refusal. No value-core or scheduler rule changes.
+
+`Examples/system-verilog/clog2` pins zero, one, powers and non-powers together
+with the unsigned-negative boundary. The proof runs the real extracted
+envelope through the self-check runner and proves the corresponding `clog2`
+boundary values. The existing symbolic `SysCall` vocabulary is unchanged.
+
+On the same **22,008** corpus paths, the fresh extractor census rises
+**2,573 → 2,580 clean** with seven gains and no losses, all in chapters 5 and
+20. `CallExpression` falls from 4,351 to 4,328 files; the other leading
+refusal classes are unchanged. This is extractor admission, not whole-corpus
+runtime or simulator agreement.
+
 ### Two-state output ports — 2026-10-12
 
 The legacy/self-check envelope admits an unsigned scalar or descending

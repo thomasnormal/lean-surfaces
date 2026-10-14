@@ -205,9 +205,34 @@ class FixedBitQueries(unittest.TestCase):
                 self.assert_query_refused(query_source(expression), require_valid=False)
 
     def test_general_system_and_function_calls_stay_loud(self):
-        self.assert_query_refused(query_source("$clog2(4)"))
+        self.assert_query_refused(query_source("$clog2(subject)",
+                                              "logic [7:0] subject; "))
         declarations = "function automatic int fixed_value(); fixed_value=4; endfunction "
         self.assert_query_refused(query_source("fixed_value()", declarations))
+
+    def test_constant_clog2_is_folded_to_signed_int(self):
+        source = ("module top; logic [31:0] a, b, c, d, e; "
+                  "assign a = $clog2(0); assign b = $clog2(1); "
+                  "assign c = $clog2(8); assign d = $clog2(9); "
+                  "assign e = $clog2(-1); endmodule")
+        design = lower(source)
+        values = [
+            int(process["value"]["bits"], 2)
+            for process in design["modules"][0]["processes"]
+        ]
+        self.assertEqual(values, [0, 0, 3, 4, 32])
+        for process in design["modules"][0]["processes"]:
+            self.assertIs(process["value"].get("signed"), True)
+            self.assertIs(process["value"].get("fixed_clog2"), True)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_constant_clog2_keeps_invalid_compilation_loud(self):
+        source = ("module top; logic [31:0] value; assign value = $clog2(8); "
+                  "endmodule module bad; initial undeclared = 1; endmodule")
+        design = lower(source, require_valid=False)
+        self.assertIn("$clog2:invalid-compilation",
+                      [node.get("sv_kind") for node in nodes(design)])
 
     def test_invalid_compilation_cannot_become_clean_by_lowering_query(self):
         source = (query_source("$bits(int)") +

@@ -34,11 +34,15 @@ The loss is a negative fixture with a forbidden output-net port initializer
 that the old extractor silently dropped. An extractor-clean classification
 is not Lean admission or live execution.
 
+The follow-up constant-`$clog2` admission uses the same paths and changes the
+current snapshot to **2,580 clean** and **19,362 partial**: seven chapter-5/20
+gains, no losses, and `CallExpression` falls from 4,351 to 4,328 files.
+
 | Chapter | Total | Clean | Partial | Include skip |
 |---|---:|---:|---:|---:|
 | 3 | 298 | 24 | 273 | 1 |
 | 4 | 427 | 121 | 306 | 0 |
-| 5 | 618 | 322 | 296 | 0 |
+| 5 | 618 | 325 | 293 | 0 |
 | 6 | 1,184 | 304 | 880 | 0 |
 | 7 | 793 | 13 | 780 | 0 |
 | 8 | 841 | 0 | 840 | 1 |
@@ -53,7 +57,7 @@ is not Lean admission or live execution.
 | 17 | 512 | 0 | 512 | 0 |
 | 18 | 851 | 1 | 815 | 35 |
 | 19 | 767 | 0 | 767 | 0 |
-| 20 | 821 | 101 | 720 | 0 |
+| 20 | 821 | 105 | 716 | 0 |
 | 21 | 895 | 8 | 887 | 0 |
 | 22 | 572 | 371 | 173 | 28 |
 | 23 | 850 | 26 | 824 | 0 |
@@ -74,10 +78,10 @@ is not Lean admission or live execution.
 | 38 | 340 | 170 | 170 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 4 | 83 | 0 |
-| **Total** | **22,008** | **2,573** | **19,369** | **66** |
+| **Total** | **22,008** | **2,580** | **19,362** | **66** |
 
 The top remaining refusal sets count assignment targets in 4,457 files,
-expression calls in 4,351, instance hierarchy in 3,833, and two-state
+expression calls in 4,328, instance hierarchy in 3,833, and two-state
 declaration shapes in 3,703. Counts overlap: a file may have several walls.
 
 ## Historical method

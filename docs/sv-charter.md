@@ -452,6 +452,22 @@ On the same **22,008** corpus paths, the fresh extractor census rises
 refusal classes are unchanged. This is extractor admission, not whole-corpus
 runtime or simulator agreement.
 
+### Fixed integral dimension queries — 2026-10-14
+
+The legacy/self-check extractor now folds `$size` and `$high` for fixed
+admitted integral declarations (IEEE 1800-2023 §20.6.1). Results are signed
+32-bit literals carrying `fixed_dimension_query` provenance: `$size` returns
+the declared width and `$high` returns width minus one. Dynamic/associative/
+queue dimensions, effectful operands, malformed calls and nonintegral
+arguments remain loud; frontend errors retain a
+`DimensionQuery:invalid-compilation` refusal. No interpreter or scheduler
+rule changes.
+
+`Examples/system-verilog/dimension_queries` runs the real envelope through the
+self-check runner. On the same **22,008** corpus paths, clean extraction rises
+**2,580 → 2,582** with two chapter-20 gains and no losses; `CallExpression`
+falls **4,328 → 4,299**.
+
 ### Two-state output ports — 2026-10-12
 
 The legacy/self-check envelope admits an unsigned scalar or descending

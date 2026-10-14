@@ -234,6 +234,29 @@ class FixedBitQueries(unittest.TestCase):
         self.assertIn("$clog2:invalid-compilation",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_fixed_dimension_queries_fold_from_integral_types(self):
+        source = ("module top; logic [7:0] vector; int integer_value; "
+                  "initial $display(\"%0d %0d %0d %0d\", $size(vector), "
+                  "$high(vector), $size(integer_value), $high(integer_value)); "
+                  "endmodule")
+        design = lower(source)
+        literals = [node for node in nodes(design)
+                    if node.get("fixed_dimension_query")]
+        self.assertEqual(
+            [(node["fixed_dimension_query"], int(node["bits"], 2))
+             for node in literals],
+            [("$size", 8), ("$high", 7), ("$size", 32), ("$high", 31)])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_or_effectful_dimension_queries_stay_loud(self):
+        for declaration, expression in (
+                ("int values[];", "$size(values)"),
+                ("int values[$];", "$high(values)"),
+                ("logic [7:0] value;", "$size(value++)")):
+            with self.subTest(declaration=declaration, expression=expression):
+                self.assert_query_refused(query_source(expression, declaration))
+
     def test_invalid_compilation_cannot_become_clean_by_lowering_query(self):
         source = (query_source("$bits(int)") +
                   " module bad; initial undeclared = 1; endmodule")

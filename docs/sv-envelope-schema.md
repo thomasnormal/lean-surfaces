@@ -303,7 +303,7 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | kind | key order / fields | width invariant |
 |---|---|---|
 | `Ident` | `kind`, `span`, `width`, `name` (string) | declared width of the named var/net/port |
-| `Literal` | `kind`, `span`, `width`, `bits` (string), optional `signed`, `fixed_bits_query`, `fixed_clog2` provenance | `len(bits) == width` |
+| `Literal` | `kind`, `span`, `width`, `bits` (string), optional `signed`, `fixed_bits_query`, `fixed_clog2`, `fixed_dimension_query` provenance | `len(bits) == width` |
 | `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"-"`), `operand` (expr) | `~`,`-`: `width == operand.width`; `!`: `width == 1` |
 | `Reduce` | `kind`, `span`, `width`, `op` (`"|"` \| `"&"` \| `"^"` \| `"~|"` \| `"~&"` \| `"~^"`), `operand` (expr) | `width == 1`; operand is any admitted integral expression |
 | `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | arithmetic/bitwise operators: common-width children; shifts: `width == left.width`, with a self-determined right operand; comparisons: `width == 1` and equal child widths |
@@ -389,6 +389,14 @@ produces 32. Dynamic, effectful, malformed and nonintegral calls remain
 `Unsupported`, and a frontend error in a compilation containing an admitted
 call adds `$clog2:invalid-compilation`. No new runtime or scheduler rule is
 introduced.
+
+It also folds `$size` and `$high` for a fixed, admitted integral declaration
+(§20.6.1). The result is a signed 32-bit `Literal` carrying
+`fixed_dimension_query: "$size"` or `"$high"`; the values are the declared
+width and width minus one, respectively. Dynamic/associative/queue arrays,
+effectful operands, malformed calls and nonintegral arguments remain
+`Unsupported`, with `DimensionQuery:invalid-compilation` retained for an
+admitted query in an otherwise erroneous compilation.
 
 The legacy/self-check extractor also emits signed 32-bit `Literal` nodes
 for `$bits(expression)` or `$bits(data_type)` with fixed-size bitstream

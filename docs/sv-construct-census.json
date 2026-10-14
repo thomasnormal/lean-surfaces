@@ -20,7 +20,7 @@
    ],
    [
     "CallExpression",
-    4328
+    4299
    ],
    [
     "InstanceSymbol:Instance",
@@ -331,6 +331,10 @@
     48
    ],
    [
+    "CallExpression:dimension:type",
+    48
+   ],
+   [
     "ConversionExpression:Explicit",
     44
    ],
@@ -413,6 +417,10 @@
    [
     "CaseStatement:subject",
     33
+   ],
+   [
+    "CallExpression:dimension:arity",
+    29
    ],
    [
     "NetSymbol:delay",
@@ -604,6 +612,10 @@
    ],
    [
     "CaseStatement:Unique0",
+    8
+   ],
+   [
+    "CallExpression:dimension:range",
     8
    ],
    [
@@ -816,8 +828,8 @@
    ]
   ],
   "by_status": {
-   "clean": 2580,
-   "partial": 19362,
+   "clean": 2582,
+   "partial": 19360,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -878,7 +890,7 @@
     52
    ],
    "simulation": [
-    2127,
+    2129,
     18645
    ],
    "simulation elaboration": [
@@ -1086,7 +1098,7 @@
      ],
      [
       "CallExpression",
-      233
+      231
      ],
      [
       "NamedValueExpression:2state",
@@ -1243,9 +1255,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 105,
+    "clean": 107,
     "error": 0,
-    "partial": 716,
+    "partial": 714,
     "skip_include": 0,
     "total": 821,
     "unlockable": 0

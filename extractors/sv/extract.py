@@ -552,6 +552,40 @@ def _convert_clog2(sm, expression):
     return literal
 
 
+def _dimension_query_call(expression):
+    try:
+        return (type(expression).__name__ == "CallExpression"
+                and not expression.bad and expression.isSystemCall
+                and expression.subroutineName in ("$size", "$high"))
+    except Exception:
+        return False
+
+
+def _convert_dimension_query(sm, expression):
+    """Fold `$size`/`$high` for a fixed admitted integral declaration."""
+    try:
+        arguments = list(expression.arguments)
+    except Exception:
+        return unsupported(sm, expression, "CallExpression:dimension:signature")
+    if len(arguments) != 1:
+        return unsupported(sm, expression, "CallExpression:dimension:arity")
+    argument = arguments[0]
+    width, _, reason = type_width_2s(argument.type)
+    if (width is None or not argument.type.isIntegral
+            or not _bits_argument_source_ok(argument)):
+        detail = reason if reason is not None else "argument"
+        return unsupported(sm, expression, "CallExpression:dimension:" + detail)
+    value = width if expression.subroutineName == "$size" else width - 1
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 32,
+        "bits": format(value & 0xffffffff, "032b"),
+        "signed": True,
+        "fixed_dimension_query": expression.subroutineName,
+    }
+
+
 def _convert_bit_query(sm, expression):
     name = expression.subroutineName
     arguments = list(expression.arguments)
@@ -641,6 +675,8 @@ def _convert_expr(sm, e):
         if _SYM is None:
             if _clog2_call(e):
                 return _convert_clog2(sm, e)
+            if _dimension_query_call(e):
+                return _convert_dimension_query(sm, e)
             if _signing_call(e):
                 return _convert_signing_call(sm, e)
             if _bit_query_call(e):
@@ -2015,6 +2051,16 @@ def contains_fixed_clog2(node):
     return False
 
 
+def contains_fixed_dimension_query(node):
+    if isinstance(node, dict):
+        return node.get("fixed_dimension_query") in ("$size", "$high") or any(
+            contains_fixed_dimension_query(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(contains_fixed_dimension_query(value) for value in node)
+    return False
+
+
 def contains_bit_vector_query(node):
     if isinstance(node, dict):
         return node.get("kind") == "BitQuery" or any(
@@ -2133,6 +2179,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "$clog2:invalid-compilation",
                                   "frontend rejected source containing a constant clog2 call"))
+    if (any(contains_fixed_dimension_query(module) for module in modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "DimensionQuery:invalid-compilation",
+                                  "frontend rejected source containing a fixed dimension query"))
     if (any(contains_bit_vector_query(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "BitQuery:invalid-compilation",

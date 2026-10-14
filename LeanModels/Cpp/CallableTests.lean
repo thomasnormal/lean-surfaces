@@ -554,6 +554,49 @@ def admitSwitch : Except String CallableFunction :=
 
 #guard admitSwitch.isOk
 
+private def parseSwitchClauses (clauses : List Raw) : Except String CallableStatement :=
+  parseCallableStatement TargetProfile.lp64
+    [{declaration := {value := "0x10"}, name := some "value", type := intType}]
+    [] intType (fields switchStatement [
+      ("inner", .array [implicitCast "0xe2" (declRefNode "0xe3" "0x10" "value"),
+        fields switchBody [("inner", .array clauses)]])])
+
+private def switchRefuses (clauses : List Raw) (message : String) : Bool :=
+  match parseSwitchClauses clauses with
+  | .error reason => reason == message
+  | .ok _ => false
+
+#guard parseSwitchClauses [
+  caseRaw "0x100" "0" [returnStmt "0x101" (integerLiteralRaw "0x102" "4")],
+  caseRaw "0x110" "1" [returnStmt "0x111" (integerLiteralRaw "0x112" "5")],
+  defaultRaw "0x120" [returnStmt "0x121" (integerLiteralRaw "0x122" "6")]] |>.isOk
+
+#guard switchRefuses [
+  caseRaw "0x100" "0" [], caseRaw "0x110" "1" [], caseRaw "0x120" "1" []]
+    "callable: switch labels must be unique with at most one default"
+
+#guard switchRefuses [
+  caseRaw "0x100" "0" [], defaultRaw "0x110" [], defaultRaw "0x120" []]
+    "callable: switch labels must be unique with at most one default"
+
+#guard switchRefuses [
+  defaultRaw "0x100" [], caseRaw "0x110" "1" [], caseRaw "0x120" "1" []]
+    "callable: switch labels must be unique with at most one default"
+
+#guard switchRefuses [
+  caseRaw "0x100" "0" [object [("kind", text "ContinueStmt")]]]
+    "callable: continue inside switch is outside the body profile"
+
+#guard switchRefuses [
+  defaultRaw "0x100" [object [("kind", text "CompoundStmt"),
+    ("inner", .array [object [("kind", text "CompoundStmt"),
+      ("inner", .array [object [("kind", text "ContinueStmt")]])]])]]]
+    "callable: continue inside switch is outside the body profile"
+
+#guard parseSwitchClauses [
+  defaultRaw "0x100" [object [("kind", text "NullStmt"),
+    ("annotation", text "ContinueStmt")]]] |>.isOk
+
 def admitBreak : Except String CallableFunction :=
   admitCallableFunction breakProbe transferTypes (transferEvidence "0x51" "0x52" "0x54")
     TargetProfile.lp64 [0]

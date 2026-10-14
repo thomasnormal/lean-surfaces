@@ -106,7 +106,8 @@ private def rawId (raw : Raw) : Except String FrontendHandle :=
 
 private partial def rawContainsKind (target : String) : Raw → Bool
   | .array values => values.any (rawContainsKind target)
-  | .object fields => fields.any (fun field => rawContainsKind target field.2)
+  | .object fields => fields.any (fun field =>
+      (field.1 == "kind" && field.2 == .string target) || rawContainsKind target field.2)
   | _ => false
 
 private def switchLabelKind (raw : Raw) : Except String Bool := do
@@ -155,9 +156,9 @@ private partial def switchClauses (raws : List Raw) : Except String (List (Optio
 private def switchLabelsValid : List (Option Int × List Raw) → Bool
   | [] => true
   | (label, _) :: rest =>
-      match label with
+      (match label with
       | none => !rest.any (fun clause => clause.1.isNone)
-      | some value => !rest.any (fun clause => clause.1 == some value)
+      | some value => !rest.any (fun clause => clause.1 == some value)) && switchLabelsValid rest
 
 private def callableBuiltin : CppTypeEvidence → Bool
   | .builtin _ => true

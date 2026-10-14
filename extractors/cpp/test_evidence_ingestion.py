@@ -453,6 +453,71 @@ bool logical(int value) { return !value; }
         )
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
+    def test_actual_compiler_switch_continue_refuses(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        self.assertTrue(pathlib.Path(library).is_file(), "selected probe library must exist")
+        source = self.root / "switch.cpp"
+        source.write_text("""int switch_while(int value) {
+    while (value) { switch (value) { case 1: --value; continue; default: return value; } }
+    return value;
+}
+int switch_for(int value) {
+    for (value = 0; value < 3; ++value) { switch (value) { default: continue; } }
+    return value;
+}
+int switch_do(int value) {
+    do { switch (value) { default: --value; continue; } } while (value);
+    return value;
+}
+int switch_nested(int value) {
+    switch (value) { default: while (value) { --value; continue; } }
+    return value;
+}
+int switch_break(int value) {
+    switch (value) { case 0: break; case 1: return 4; default: return 5; }
+    return value;
+}
+""", encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(pathlib.Path(library).resolve()),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        expected = {"switch_while", "switch_for", "switch_do", "switch_nested", "switch_break"}
+        paths = {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in expected:
+                paths[node["name"]] = path
+            children = node.get("inner", [])
+            pending.extend((child, path + [index])
+                           for index, child in reversed(list(enumerate(children))))
+        self.assertEqual(set(paths), expected)
+        guards = []
+        for name in sorted(expected):
+            admission = ("admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
+                         + str(paths[name]))
+            if name == "switch_break":
+                guards.append("#guard (" + admission + ").isOk")
+            else:
+                guards.append("#guard match (" + admission + ") with\n"
+                              '| .error reason => reason == "callable: continue inside switch '
+                              'is outside the body profile"\n| .ok _ => false')
+        self.assert_accepts(json.dumps(probe), "\n".join(guards))
+
     def test_callable_argument_conversions_match_compiled_clang(self):
         requested = os.environ.get("LEANCPP_CLANG")
         library = os.environ.get("LEANCPP_PROBE_LIBRARY")

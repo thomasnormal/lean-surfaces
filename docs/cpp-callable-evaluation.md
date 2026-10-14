@@ -65,7 +65,10 @@ An admitted `switch` has an exact builtin `int` condition and a compound body ma
 of literal `case` labels and at most one `default`. Labels are unique. Matching
 starts at the first matching case, or at `default`, and ordinary completion
 falls through later clauses in source order. A `break` exits the switch; return and evaluation failures propagate. `continue`
-inside a switch remains outside the admitted profile. Non-constant labels,
+anywhere inside a switch subtree remains outside the admitted profile, even if
+an inner loop would own the transfer. This conservative admission guard is
+necessary because the lowered `for` step is not rewritten inside switch clauses.
+Non-constant labels,
 duplicate labels and malformed clause bodies remain loud refusals.
 
 `break` exits the nearest admitted `while`/`do` loop or `switch`. `continue` skips the

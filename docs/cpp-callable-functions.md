@@ -78,8 +78,11 @@ them.
 The admitted `switch` shape has an exact builtin `int` condition and a compound body
 whose clauses use unique literal integer `case` labels and at most one `default`.
 Execution starts at the matching case or default and falls through later clauses
-until a `break`, return or failure; `continue` inside a switch, unsupported
-labels and malformed clauses refuse.
+until a `break`, return or failure. Label uniqueness is checked over every
+clause, including duplicate cases or defaults after an unrelated first label.
+`continue` anywhere inside a switch subtree, including inside a nested loop,
+remains a conservative refusal: the lowered `for` step is not threaded through
+switch clauses. Unsupported labels and malformed clauses also refuse.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,
 `&=`, `|=`, `^=`, `<<=` and `>>=`. Its target must be a direct reference to an
@@ -119,13 +122,17 @@ body was executed merely because Clang accepted its source.
 `LeanModels/Cpp/CallableTests.lean` covers identity, literal, typed integral
 binary and logical returns, captured `if`/`while`/`do` branches, parameter stores,
 prefix/postfix increment and decrement admission, conditional-expression
-branch typing, comma-expression sequencing, loop transfers, compound-assignment
+branch typing, comma-expression sequencing, loop transfers, complete switch-label
+uniqueness and nested switch-continue refusals, compound-assignment
 target/type/evidence mismatches and function-try refusals.
 `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned Clang check for
 real admitted bodies, including every compound operator, unsigned wraparound,
 self-aliasing and assignment-driven loops. It also checks prefix/postfix
 increment and decrement, unsigned wraparound, and loud refusal of narrow and
-mixed-type compound destinations. The same explicit compiler/plugin settings
-are required; missing settings skip rather than count as agreement. Broader
+mixed-type compound destinations. Real compiler fixtures also check refusal of
+switch-contained `continue` under `while`, `for`, `do` and a nested loop, with an
+ordinary switch/break admission as a positive control. The same explicit
+compiler/plugin settings are required; missing settings skip rather than count
+as agreement. Broader
 conversions and statements still need semantic models, and `Translation.execute`
 remains refused.

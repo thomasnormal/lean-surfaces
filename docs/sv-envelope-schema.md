@@ -390,13 +390,14 @@ produces 32. Dynamic, effectful, malformed and nonintegral calls remain
 call adds `$clog2:invalid-compilation`. No new runtime or scheduler rule is
 introduced.
 
-It also folds `$size` and `$high` for a fixed, admitted integral declaration
-(§20.6.1). The result is a signed 32-bit `Literal` carrying
-`fixed_dimension_query: "$size"` or `"$high"`; the values are the declared
-width and width minus one, respectively. Dynamic/associative/queue arrays,
-effectful operands, malformed calls and nonintegral arguments remain
-`Unsupported`, with `DimensionQuery:invalid-compilation` retained for an
-admitted query in an otherwise erroneous compilation.
+It also folds `$size`, `$high`, `$left`, `$right` and `$low` for a fixed,
+admitted integral declaration (array-query system functions, §20.7). The
+result is a signed 32-bit `Literal` carrying `fixed_dimension_query` with the
+query name; `$size` is the declared width, `$high`/`$left` are width minus one,
+and `$right`/`$low` are zero. Dynamic/associative/queue arrays, effectful
+operands, malformed calls and nonintegral arguments remain `Unsupported`, with
+`DimensionQuery:invalid-compilation` retained for an admitted query in an
+otherwise erroneous compilation.
 
 The legacy/self-check extractor also emits signed 32-bit `Literal` nodes
 for `$bits(expression)` or `$bits(data_type)` with fixed-size bitstream

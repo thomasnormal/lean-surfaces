@@ -236,8 +236,10 @@ class FixedBitQueries(unittest.TestCase):
 
     def test_fixed_dimension_queries_fold_from_integral_types(self):
         source = ("module top; logic [7:0] vector; int integer_value; "
-                  "initial $display(\"%0d %0d %0d %0d\", $size(vector), "
-                  "$high(vector), $size(integer_value), $high(integer_value)); "
+                  "initial $display(\"%0d %0d %0d %0d %0d %0d %0d %0d %0d %0d\", "
+                  "$size(vector), $high(vector), $left(vector), $right(vector), "
+                  "$low(vector), $size(integer_value), $high(integer_value), "
+                  "$left(integer_value), $right(integer_value), $low(integer_value)); "
                   "endmodule")
         design = lower(source)
         literals = [node for node in nodes(design)
@@ -245,7 +247,9 @@ class FixedBitQueries(unittest.TestCase):
         self.assertEqual(
             [(node["fixed_dimension_query"], int(node["bits"], 2))
              for node in literals],
-            [("$size", 8), ("$high", 7), ("$size", 32), ("$high", 31)])
+            [("$size", 8), ("$high", 7), ("$left", 7), ("$right", 0),
+             ("$low", 0), ("$size", 32), ("$high", 31), ("$left", 31),
+             ("$right", 0), ("$low", 0)])
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
@@ -253,9 +257,18 @@ class FixedBitQueries(unittest.TestCase):
         for declaration, expression in (
                 ("int values[];", "$size(values)"),
                 ("int values[$];", "$high(values)"),
+                ("int values[$];", "$left(values)"),
                 ("logic [7:0] value;", "$size(value++)")):
             with self.subTest(declaration=declaration, expression=expression):
                 self.assert_query_refused(query_source(expression, declaration))
+
+    def test_fixed_dimension_query_keeps_invalid_compilation_loud(self):
+        source = ("module top; logic [7:0] value; initial $display(\"%0d\", "
+                  "$size(value)); endmodule "
+                  "module bad; initial undeclared = 1; endmodule")
+        design = lower(source, require_valid=False)
+        self.assertIn("DimensionQuery:invalid-compilation",
+                      [node.get("sv_kind") for node in nodes(design)])
 
     def test_invalid_compilation_cannot_become_clean_by_lowering_query(self):
         source = (query_source("$bits(int)") +

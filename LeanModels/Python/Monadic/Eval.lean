@@ -246,6 +246,7 @@ which is exactly what lets its generator arm drain unguarded. -/
 def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
     RVal → SemF (List RVal)
   | .str t => pure (strCharVals t)
+  | .bytes values => pure (bytesIntVals values)
   | .tuple xs => pure xs.toList
   | .ntuple _ _ xs => pure xs.toList
   | .listV xs => pure xs.toList
@@ -383,7 +384,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
           | some (.cell _) => refuse cellInternal
           | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
           | Option.none => refuse danglingMsg
-      | .listV _ =>
+      | .listV _ | .bytes _ =>
           refuse "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
       | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
     | vs => raisePy (.typeError s!"dict expected at most 1 argument, got {vs.length}")
@@ -430,6 +431,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
       match start with
       | .str _ =>
           raisePy (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
+      | .bytes _ =>
+          do liftRes (sumBytesStart (← frameHeap) v)
       | start => do
           let xs ← iterValues K m "sum" true v
           liftRes (sumFold start xs)
@@ -1005,6 +1008,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
   | .subscript v idx _ => do
       let c ← evalOpen K m v
       let i ← evalOpen K m idx
+      let heap ← frameHeap
+      let _ ← checkBytesIndexM m heap c i
       indexM c i
   | .dict keys values _ => do
       -- CPython `BUILD_MAP`: every key/value expression first (k₁, v₁, k₂, v₂,
@@ -1080,6 +1085,7 @@ def evalCompareChainM (K : Kont) (m : Module) (lhs : RVal) :
   | op :: ops', e :: rest => do
       let rhs ← evalOpen K m e
       let h ← frameHeap
+      let _ ← checkBytesCompareM m h op lhs rhs
       let b ← liftRes (evalCompareOpH h K.fuel op lhs rhs)
       if b then evalCompareChainM K m rhs ops' rest else pure (.bool false)
   | _, _ => refuse "Compare with mismatched ops/comparators"
@@ -1198,6 +1204,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
             -- H5 iteration: a str iterates its CODE POINTS; the snapshot IS the
             -- live semantics (strs are immutable).
             | .str s => K.forSeq target (strCharVals s) body.toList
+            | .bytes xs => K.forSeq target (bytesIntVals xs) body.toList
             | .rangeV lo hi step => do
                 let xs ← liftRes (rangeVals lo.toInt hi.toInt step.toInt)
                 K.forSeq target xs body.toList
@@ -1564,6 +1571,7 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
             | .tuple xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
             | .ntuple _ _ xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
             | .str sv => K.execGen (.forSeq target (strCharVals sv) body :: .block ss :: k')
+            | .bytes xs => K.execGen (.forSeq target (bytesIntVals xs) body :: .block ss :: k')
             | .rangeV lo hi step => do
                 let xs ← liftRes (rangeVals lo.toInt hi.toInt step.toInt)
                 K.execGen (.forSeq target xs body :: .block ss :: k')

@@ -125,6 +125,7 @@ From [Surface.lean](../LeanModels/Python/Surface.lean). The brands are
 | `PyInt` | `abbrev PyInt := Int` | Python `int` is exactly mathematical `Int` |
 | `PyBool` | `abbrev PyBool := Bool` | |
 | `PyStr` | `abbrev PyStr := String` | caveat: CPython admits lone surrogates; may become a distinct type |
+| `PyBytes` | `abbrev PyBytes := Array UInt8` | immutable octets; no Unicode decoding |
 
 `ToVal` instances (spec-to-interpreter marshalling; each has a `@[simp]`
 unfolding lemma `toVal_int`, `toVal_nat`, …):
@@ -136,6 +137,7 @@ unfolding lemma `toVal_int`, `toVal_nat`, …):
 | `ToVal Nat` | `n ↦ .int ↑n` (Nat-valued specs like `Int.gcd`; bridged back by `Int.toNat_of_nonneg`, which `py_corollary` includes by default) |
 | `ToVal Bool` | `b ↦ .bool b` |
 | `ToVal String` | `s ↦ .str s` |
+| `ToVal PyBytes` | `values ↦ .bytes values` |
 | `ToVal (List α)` given `ToVal α` | `xs ↦ .list (xs.map toVal).toArray` |
 
 Gotcha (verified): `omega`'s atom matching is syntactic and does not see
@@ -207,6 +209,10 @@ modelled construct's CPython-observable behaviour is treated as a bug fix and
 called out in the changelog.
 
 ## CLI
+
+Bytes arguments and result values use `{"t":"bytes","v":[0,128,255]}`.
+Each array entry is an integer octet in `[0, 256)`; bytes are not decoded
+to strings or encoded as base64.
 
 | Command | What |
 |---|---|

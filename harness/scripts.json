@@ -477,5 +477,45 @@
     "file": "Examples/python/float_lab/nan_arithmetic_script.py",
     "expect": "unsupported",
     "note": "An indeterminate infinity difference requires a NaN payload/sign oracle; never invent a platform-specific word."
+  },
+  {
+    "file": "harness/scripts/bytes_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_sum_noniterable.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_index_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_contains_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_index_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_contains_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_concat_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_repeat_typename.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_index_classname.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/bytes_contains_classname.py",
+    "expect": "match"
   }
 ]

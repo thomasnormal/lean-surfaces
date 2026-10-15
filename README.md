@@ -710,8 +710,11 @@ is differentially tested against CPython 3.9
 ([harness/diff_test.py](harness/diff_test.py)); the measured, per-construct
 table is [docs/python-coverage.md](docs/python-coverage.md). The main gaps:
 
-- **No floats, bytes or complex numbers.** Their literals and true division
-  `/` refuse. Ints are arbitrary precision and exact.
+- **Numeric gaps.** Ints are arbitrary precision and exact; binary64 floats
+  and true division have an admitted slice. Complex literals still refuse.
+- **Bytes gaps.** Immutable bytes literals and sequence operations are
+  modelled. Numeric parsing, decoding/methods, explicit bytes iterators,
+  and bytes percent formatting remain loud unfinished work.
 - **Imports**: only `import time`, `from itertools import count` and
   `from collections import namedtuple` are admitted; any other import refuses
   the program. Most real-world scripts stop here.

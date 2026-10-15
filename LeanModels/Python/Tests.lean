@@ -20,6 +20,18 @@ namespace LeanModels.Python.Tests
 private def sp : Span := default
 
 #guard parseBinOpName "Div" matches .ok .div
+#guard typeNamePrefix (String.mk (List.replicate 250 'N')) 200 ==
+  String.mk (List.replicate 200 'N')
+#guard typeNamePrefix ("P" ++ String.mk (List.replicate 150 'é')) 200 ==
+  "P" ++ String.mk (List.replicate 99 'é') ++ "�"
+#guard typeNamePrefix ("P" ++ String.mk (List.replicate 150 'é')) 100 ==
+  "P" ++ String.mk (List.replicate 49 'é') ++ "�"
+#guard parseConst (Lean.Json.mkObj [("type", Lean.toJson "bytes"),
+    ("value", Lean.toJson (#[0, 128, 255] : Array Nat))]) matches .ok (.bytes #[0, 128, 255])
+#guard parseConst (Lean.Json.mkObj [("type", Lean.toJson "bytes"),
+    ("value", Lean.toJson (#[256] : Array Nat))]) matches .error _
+#guard parseConst (Lean.Json.mkObj [("type", Lean.toJson "bytes"),
+    ("value", Lean.toJson (#[-1] : Array Int))]) matches .error _
 #guard match parseConst (Lean.Json.mkObj [("type", Lean.toJson "float"),
     ("bits", Lean.toJson "9223372036854775808")]) with
   | .ok (.float value) => value.bits.toNat == 0x8000000000000000

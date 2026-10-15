@@ -148,6 +148,8 @@ def to_canonical_value(v):
         return {"t": "float", "bits": str(bits)}
     if isinstance(v, str):
         return {"t": "str", "v": v}
+    if isinstance(v, bytes):
+        return {"t": "bytes", "v": list(v)}
     if v is None:
         return {"t": "none"}
     if v is Ellipsis:
@@ -182,6 +184,8 @@ def from_typed(a):
         return struct.unpack(">d", struct.pack(">Q", bits))[0]
     if t == "str":
         return a["v"]
+    if t == "bytes":
+        return bytes(a["v"])
     if t == "list":
         return [from_typed(x) for x in a["v"]]
     if t == "tuple":
@@ -327,6 +331,8 @@ def pretty_value(v):
         return repr(from_typed(v))
     if t == "str":
         return repr(v["v"])
+    if t == "bytes":
+        return repr(bytes(v["v"]))
     if t in ("list", "tuple"):
         inner = ", ".join(pretty_value(x) for x in v["v"])
         if t == "tuple":

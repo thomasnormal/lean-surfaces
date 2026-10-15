@@ -232,6 +232,14 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(values, [{"type": "float", "bits": "1"},
                                   {"type": "float", "bits": "9218868437227405312"}])
 
+    def test_bytes_literal_and_default_preserve_octets(self):
+        fn = self._first_fn("def f(value=b'ab\\x00\\xff'):\n    return b'\\x01\\x80'\n")
+        self.assertIsNone(fn["args_unsupported"])
+        self.assertEqual(fn["args"][0]["default"],
+                         {"type": "bytes", "value": [97, 98, 0, 255]})
+        self.assertEqual(fn["body"][0]["value"]["value"],
+                         {"type": "bytes", "value": [1, 128]})
+
     def test_literal_defaults_emitted_and_in_tier(self):
         fn = self._first_fn(
             "def f(a, i=3, b=True, s='x', n=None):\n    return a\n")
@@ -251,8 +259,7 @@ class ExtractorTests(unittest.TestCase):
         # mixed literal/non-literal included.
         for src in ("def f(a, m=EASTER_WESTERN):\n    return a\n",
                     "def f(a, lo=-1):\n    return a\n",
-                    "def f(a, b=1, c=NAMED):\n    return a\n",
-                    "def f(a, x=b'abc'):\n    return a\n"):
+                    "def f(a, b=1, c=NAMED):\n    return a\n"):
             fn = self._first_fn(src)
             self.assertEqual(fn["args_unsupported"], "defaults", src)
             self.assertTrue(

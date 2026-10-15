@@ -54,7 +54,7 @@ Everything Lean lives under namespace `LeanModels` (Python lane under
 Supported (interpreter must implement faithfully):
 
 - Statements: `FunctionDef` (simple positional params; LITERAL defaults —
-  int/bool/str/None `Constant` — are in tier and fill omitted trailing
+  int/bool/str/bytes/None `Constant` — are in tier and fill omitted trailing
   arguments at call time; any non-literal default keeps the whole function
   call-`unsupported`), `Return` (bare `return`
   and fall-off-end yield `Val.none`), `Assign` (single target: `Name` or a
@@ -65,7 +65,7 @@ Supported (interpreter must implement faithfully):
   `While` (with `orelse`: runs on normal exit,
   skipped on `break`), `If`/elif/else, `Expr` (evaluate, discard), `Pass`, `Break`,
   `Continue`.
-- Expressions: `Constant` (int/bool/str/None), `Name`, `BinOp`
+- Expressions: `Constant` (int/bool/str/bytes/None), `Name`, `BinOp`
   (`Add Sub Mult FloorDiv Mod Pow`), `UnaryOp` (`USub Not`), `BoolOp` (`And Or`),
   `Compare` (chained; `is`/`is not` ONLY against the literal `None`), `Call`
   (module-level user functions, positional args only — trailing defaulted
@@ -98,7 +98,7 @@ don't hide).
 | `<` `<=` `>` `>=` | int/bool vs int/bool by value; str vs str lexicographic (Unicode code points, which is Lean `String` `<`); v0: comparing other types → `unsupported`. |
 | Chained compare | `a < b < c` evaluates each operand **once**, left to right, short-circuits on first False (result False without evaluating the rest). |
 | `is` / `is not` | In tier IFF one side of that comparison link is the literal `None` (either side): `None` is a singleton, so `x is None ⟺ x = Val.none` — value-determined. Identity between any other values (small-int caching, str interning) is CPython-implementation-defined → the extractor emits the whole `Compare` node as `Unsupported "Compare:Is[Not]"`; a hand-built AST reaching the interpreter with two non-`None` operands is refused loudly (`unsupported`). |
-| Parameter defaults | LITERAL defaults only (int/bool/str/None `Constant`; `lo=-1` parses as `UnaryOp` → non-literal). Call arity window: `nparams − ndefaults ≤ nargs ≤ nparams` (`arityOk`), violations → canonical arity `TypeError`; omitted trailing params are bound to their defaults in `mkCallEnv`. CPython evaluates defaults ONCE at `def` time in the defining scope — for literals, call-time filling is observationally identical (a literal cannot be mutated, rebound, or scope-dependent); the mutable-default footgun (`def f(x=[])`) is unrepresentable, `[]` being non-literal. Any non-literal default ⇒ whole function `argsOk = false`, calls `unsupported`. |
+| Parameter defaults | LITERAL defaults only (int/bool/str/bytes/None `Constant`; `lo=-1` parses as `UnaryOp` → non-literal). Call arity window: `nparams − ndefaults ≤ nargs ≤ nparams` (`arityOk`), violations → canonical arity `TypeError`; omitted trailing params are bound to their defaults in `mkCallEnv`. CPython evaluates defaults ONCE at `def` time in the defining scope — for literals, call-time filling is observationally identical (a literal cannot be mutated, rebound, or scope-dependent); the mutable-default footgun (`def f(x=[])`) is unrepresentable, `[]` being non-literal. Any non-literal default ⇒ whole function `argsOk = false`, calls `unsupported`. |
 | `and`/`or` | Short-circuit and **return the operand value**, not a bool: `0 or "x"` is `"x"`. |
 | Truthiness | `bool(x)`: None→False; bool→itself; int→`≠0`; str/list/tuple→nonempty. Used by `if`, `while`, `and`/`or`, `not`. |
 | Name resolution | local env → module constant globals (G1: latest top-level binding wins, as in CPython — so an in-tier `X = …` rebinding a `def` or builtin name shadows it; a name whose module-level binding is out of tier resolves to `unsupported`, never a guessed value) → module function table (functions are first-class enough to call by name; referencing a function name as a *value* is `unsupported` in v0) → builtins `len`/`sorted`/`max`/`min`/`abs`/`int` (a module-level `def` of the same name shadows the builtin, as CPython module globals do; referencing a builtin as a value is `unsupported`) → `NameError`. CPython's static-locals rule (a name assigned anywhere in the body is local throughout; early reads raise `UnboundLocalError`) is NOT modeled dynamically: the extractor flags functions that *call* a name they also assign (`locals_unsupported` → `localsOk = false`) and the interpreter refuses them loudly; plain read-before-assign of a local yields `NameError` (harness canonicalizes CPython's `UnboundLocalError`, a `NameError` subclass, to `NameError`). Duplicate top-level `def`s: the LAST definition wins (each `def` rebinds, as in CPython). G1 incompleteness: if any top-level statement could bind names invisibly (`import`, `ClassDef`, `for`, chained/starred targets, …) the final `NameError` weakens to `unsupported` — CPython might have bound the name, so a fake `NameError` would be silently wrong. Calling a G1 value: `TypeError` not-callable (args evaluated first, CPython order); calling a name whose module binding is out of tier: `unsupported`. |
@@ -250,7 +250,8 @@ stdout:
 - `{"status":"timeout"}` | `{"status":"unsupported","msg":"…"}`
 
 where `V` is: `{"t":"none"}` | `{"t":"bool","v":true}` | `{"t":"int","v":"55"}`
-(decimal string) | `{"t":"str","v":"…"}` | `{"t":"list","v":[V…]}` |
+(decimal string) | `{"t":"str","v":"…"}` | `{"t":"bytes","v":[0,128,255]}`
+(integer octets in `[0, 256)`) | `{"t":"list","v":[V…]}` |
 `{"t":"tuple","v":[V…]}`.
 
 `lake exe leanmodels-run --batch <jobs.jsonl> [--fuel N]` is the harness's

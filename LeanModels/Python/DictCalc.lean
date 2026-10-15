@@ -67,6 +67,7 @@ inductive KeyNF where
   | ellipsis
   | int (n : Int)
   | str (s : String)
+  | bytes (values : Array UInt8)
   | tup (xs : List KeyNF)
 
 mutual
@@ -77,6 +78,7 @@ mutual
     | .int n => some (.int n)
     | .float _ => Option.none
     | .str s => some (.str s)
+    | .bytes values => some (.bytes values)
     | .tuple xs => (keyNFList xs.toList).map .tup
     | .ntuple _ _ xs => (keyNFList xs.toList).map .tup
     | .listV _ => Option.none
@@ -118,6 +120,7 @@ mutual
         all_goals simp [keyEq, keyNF, some_eq_map_tup]
     | .float _, other => by cases other <;> simp [keyEq, keyNF]
     | .str s, b => by cases b <;> simp [keyEq, keyNF, some_eq_map_tup]
+    | .bytes values, other => by cases other <;> simp [keyEq, keyNF, some_eq_map_tup]
     | .listV _, b => by cases b <;> simp [keyEq, keyNF]
     | .rangeV .., b => by cases b <;> simp [keyEq, keyNF]
     | .ref _, b => by cases b <;> simp [keyEq, keyNF]
@@ -163,6 +166,7 @@ mutual
     | .int _ => by simp [hashableKey, keyNF]
     | .float _ => by simp [hashableKey, keyNF]
     | .str _ => by simp [hashableKey, keyNF]
+    | .bytes _ => by simp [hashableKey, keyNF]
     | .listV _ => by simp [hashableKey, keyNF]
     | .rangeV .. => by simp [hashableKey, keyNF]
     | .ref _ => by simp [hashableKey, keyNF]
@@ -486,6 +490,7 @@ theorem keyInt_congr : (a b : RVal) → keyEq a b = true → keyInt a = keyInt b
   | .int _, b, h => by cases b <;> simp_all [keyEq, keyInt]
   | .float _, other, equality => by cases other <;> simp_all [keyEq, keyInt]
   | .str _, b, h => by cases b <;> simp_all [keyEq, keyInt]
+  | .bytes _, other, equality => by cases other <;> simp_all [keyEq, keyInt]
   | .listV _, b, h => by cases b <;> simp_all [keyEq]
   | .rangeV .., b, h => by cases b <;> simp_all [keyEq]
   | .ref _, b, h => by cases b <;> simp_all [keyEq]

@@ -209,7 +209,7 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 
 #py_check str_lab.builtin_format(3) = "3"
 #py_check str_lab.builtin_format(true) = "True"
-#py_check str_lab.builtin_format(1.5) = "1.5"
+#py_check str_lab.builtin_format(Float64.ofBits 0x3ff8000000000000) = "1.5"
 #py_check str_lab.builtin_format("x") = "x"
 #py_check str_lab.builtin_format_empty(-7) = "-7"
 #py_check str_lab.builtin_format_noargs() raises

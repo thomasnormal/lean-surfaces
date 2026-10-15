@@ -309,3 +309,11 @@ def chain_attr_first(n):
     cell = Cell(0)
     cell.x = m = n + 1
     return m
+
+
+def bytes_index_instance():
+    return b"a"[Cell(0)]
+
+
+def bytes_contains_instance():
+    return Cell(0) in b"a"

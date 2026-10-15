@@ -747,12 +747,19 @@ theorem fuelMono (fuel : Nat) :
                       cases Env.lookup st.world.globals fname with
                       | none => exact Run.le_refl _
                       | some v =>
-                        cases v <;>
-                          first
-                            | exact Run.le_bind (ihEs m st cargs.toList k hk)
-                                fun st _ => Run.le_refl _
-                            | skip
-                        case ref a =>
+                        cases v with
+                        | none => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | ellipsis => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | bool _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | int _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | float _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | str _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | bytes _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | listV _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | tuple _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | ntuple _ _ _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | rangeV _ _ _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
+                        | ref a =>
                           refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           refine Run.le_ite (Run.le_refl _) ?_
                           cases Heap.get? st.world.heap a with
@@ -833,7 +840,7 @@ theorem fuelMono (fuel : Nat) :
                                    (Run.le_ite ?_                              -- sum
                                     (Run.le_ite ?_                             -- tuple
                                      (Run.le_ite ?_                            -- list
-                                      (Run.le_ite (hb _)                       -- dict
+                                      (Run.le_ite ?_                           -- dict
                                        (Run.le_ite (hb _)                      -- range
                                       (Run.le_ite (hb _)                       -- enumerate
                                        (Run.le_ite (hb _)                      -- count
@@ -1047,6 +1054,28 @@ theorem fuelMono (fuel : Nat) :
                                     exact Run.le_bind
                                       (Run.le_withLocals (ihDrain m st.world a k hk))
                                       fun st vals => Run.le_refl _
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases vs with
+                          | nil => exact Run.le_refl _
+                          | cons value remaining =>
+                            cases remaining with
+                            | cons _ _ => exact Run.le_refl _
+                            | nil =>
+                              dsimp only
+                              cases value <;> try exact Run.le_refl _
+                              case ref address =>
+                                dsimp only
+                                cases Heap.get? st.world.heap address with
+                                | none => exact Run.le_refl _
+                                | some obj =>
+                                  cases obj <;> try exact Run.le_refl _
+                                  case generator kind locals captured status =>
+                                    exact Run.le_bind
+                                      (Run.le_withLocals (ihDrain m st.world address k hk))
+                                      fun st vals =>
+                                        Run.le_bind (Run.le_refl _) fun st items =>
+                                          Run.le_bind (Run.le_refl _) fun st entries =>
+                                            Run.le_refl _
                         -- next
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -1182,6 +1211,7 @@ theorem fuelMono (fuel : Nat) :
           | cons e rest =>
             simp only [evalCompareChain]
             exact Run.le_bind (ihE m st e k hk) fun st rhs =>
+              Run.le_bind (Run.le_refl _) fun st _ =>
               Run.le_bind (Run.le_liftRes (evalCompareOpH_mono hk)) fun st b =>
                 Run.le_ite (ihC m st rhs ops' rest k hk) (Run.le_refl _)
     -- execStmt
@@ -1430,6 +1460,8 @@ theorem fuelMono (fuel : Nat) :
             cases it <;> try exact Run.le_refl _
             case str s =>
               exact ihFor m st target (strCharVals s) body.toList k hk
+            case bytes xs =>
+              exact ihFor m st target (bytesIntVals xs) body.toList k hk
             case listV xs => exact ihFor m st target xs.toList body.toList k hk
             case tuple xs => exact ihFor m st target xs.toList body.toList k hk
             case ntuple tn fs xs => exact ihFor m st target xs.toList body.toList k hk
@@ -1706,6 +1738,7 @@ theorem fuelMono (fuel : Nat) :
                 | int n => exact Run.le_refl _
                 | float value => exact Run.le_refl _
                 | str sv => exact ihGen m st _ kf hk
+                | bytes xs => exact ihGen m st _ kf hk
                 | listV xs => exact ihGen m st _ kf hk
                 | tuple xs => exact ihGen m st _ kf hk
                 | ntuple tn fs xs => exact ihGen m st _ kf hk
@@ -2005,6 +2038,7 @@ mutual
     | .int n, _, _, _ => Res.le_refl _
     | .float value, _, _, _ => Res.le_refl _
     | .str s, _, _, _ => Res.le_refl _
+    | .bytes xs, _, _, _ => Res.le_refl _
     | .listV xs, _, _, hf => by
         simp only [RVal.freezeB]
         exact Res.le_bind (RVal.freezeListB_mono h xs.toList hf)
@@ -2697,7 +2731,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp only [evalExpr]
         exact .bind (ihE st v hfree.1) fun st₁ c h₁ =>
           .bind ((ihE st₁ idx hfree.2).mono (wtrans st st₁ h₁)) fun st₂ i h₂ =>
-            .liftResF h₂ _
+            .bind (.liftResF h₂ _) fun st₃ _ h₃ => .liftResF h₃ _
       | dict keys values _ =>
         -- outside the fragment: `heapFree = false` refutes the hypothesis
         simp [Expr.heapFree] at hfree
@@ -2762,7 +2796,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           simp only [Expr.heapFreeList, Bool.and_eq_true] at hfree
           simp only [evalCompareChain]
           refine .bind (ihE st e hfree.1) fun st₁ rhs h₁ => ?_
-          refine .bind (.liftResF h₁ _) fun st₂ b h₂ => ?_
+          refine .bind (.liftResF h₁ _) fun stChecked _ hChecked => ?_
+          refine .bind (.liftResF hChecked _) fun st₂ b h₂ => ?_
           exact .ite ((ihC st₂ rhs ops' rest hfree.2).mono (wtrans st st₂ h₂))
             (.okF h₂ _)
     -- execStmt
@@ -2905,6 +2940,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | bool b => exact .exn
           | int n => exact .exn
           | float value => exact .exn
+          | bytes xs =>
+            exact (ihFor st₁ target _ body.toList hfree.1.2).mono
+              (wtrans st st₁ h₁)
           | str s =>
             -- H5 iteration: a str's code points are a pure snapshot —
             -- the loop preserves the world exactly when the body does

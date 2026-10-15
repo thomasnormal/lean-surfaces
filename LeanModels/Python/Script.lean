@@ -639,6 +639,7 @@ mutual
           | .tuple xs => execScriptFor m fuel st target xs.toList body.toList
           | .ntuple _ _ xs => execScriptFor m fuel st target xs.toList body.toList
           | .str t => execScriptFor m fuel st target (strCharVals t) body.toList
+          | .bytes xs => execScriptFor m fuel st target (bytesIntVals xs) body.toList
           | .rangeV lo hi step =>
             Run.bind (Run.liftRes st (rangeVals lo.toInt hi.toInt step.toInt)) fun st xs =>
             execScriptFor m fuel st target xs body.toList

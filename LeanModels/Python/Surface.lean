@@ -59,6 +59,7 @@ abbrev PyBool := Bool
 /-- Python `str` (caveat lector: CPython admits lone surrogates; a faithful
 distinct type may replace this abbreviation later). -/
 abbrev PyStr := String
+abbrev PyBytes := Array UInt8
 
 /-! ## Marshalling -/
 
@@ -75,6 +76,7 @@ instance : ToVal (Float64 × Float64) :=
 instance : ToVal Nat := ⟨fun n => .int n⟩
 instance : ToVal Bool := ⟨.bool⟩
 instance : ToVal String := ⟨.str⟩
+instance : ToVal PyBytes := ⟨.bytes⟩
 instance {α} [ToVal α] : ToVal (List α) :=
   ⟨fun xs => .list (xs.map ToVal.toVal).toArray⟩
 
@@ -85,6 +87,7 @@ instance {α} [ToVal α] : ToVal (List α) :=
 @[simp] theorem toVal_nat (n : Nat) : (ToVal.toVal n : Val) = .int n := rfl
 @[simp] theorem toVal_bool (b : Bool) : (ToVal.toVal b : Val) = .bool b := rfl
 @[simp] theorem toVal_str (s : String) : (ToVal.toVal s : Val) = .str s := rfl
+@[simp] theorem toVal_bytes (values : PyBytes) : ToVal.toVal values = .bytes values := rfl
 @[simp] theorem toVal_list {α} [ToVal α] (xs : List α) :
     (ToVal.toVal xs : Val) = .list (xs.map ToVal.toVal).toArray := rfl
 
@@ -106,6 +109,8 @@ form (`RVal.int n`, `…listV (xs.map (thaw ∘ toVal))`), and the
     RVal.thaw (ToVal.toVal b) = .bool b := rfl
 @[simp] theorem thaw_toVal_str (s : String) :
     RVal.thaw (ToVal.toVal s) = .str s := rfl
+@[simp] theorem thaw_toVal_bytes (values : PyBytes) :
+    RVal.thaw (ToVal.toVal values) = .bytes values := rfl
 
 /-- Thawing a marshalled list is the marshalled list of thaws (the
 `List.map`-normal form; `thawList` folded away). -/

@@ -210,6 +210,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             evalUnaryOpH, lenVal, lenValH, sortedVal,
             asIntList, asIntList_map_int, sortInts_length, normIndex,
             indexVal, indexValH, targetNames, bindAll, assignTo, assignToH,
+            checkBytesIndex, checkBytesCompare, bytesOperandCheck,
             unpackSeq, unpackStoreH,
             foldExtremum, extremumVal, extremumValH, absVal, intCastVal, boolCastArgs,
             divmodArgs, importErrorHandlerMatch, admittedBuiltinExc, builtinExcCatches,

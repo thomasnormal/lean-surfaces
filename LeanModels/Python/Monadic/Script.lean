@@ -277,6 +277,7 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
           | .tuple xs => S.forSeq target xs.toList body.toList
           | .ntuple _ _ xs => S.forSeq target xs.toList body.toList
           | .str t => S.forSeq target (strCharVals t) body.toList
+          | .bytes values => S.forSeq target (bytesIntVals values) body.toList
           | .rangeV lo hi step => do
               let xs ← liftRes (rangeVals lo.toInt hi.toInt step.toInt)
               S.forSeq target xs body.toList

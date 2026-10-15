@@ -931,15 +931,15 @@ theorem reprVal_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
     (motive3 := fun f act vs =>
       reprVals (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act vs
         = reprVals h f act vs) with
-  | case15 _ a _ _ hb _ =>
+  | case16 _ a _ _ hb _ =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case16 _ a _ _ hb _ ih =>
+  | case17 _ a _ _ hb _ ih =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case17 _ a _ _ _ hb _ =>
+  | case18 _ a _ _ _ hb _ =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case18 _ a _ _ _ hb _ ih =>
+  | case19 _ a _ _ _ hb _ ih =>
       simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
-  | case19 _ a _ hnl hnd =>
+  | case20 _ a _ hnl hnd =>
       rcases Heap.get?_swapAt_twin (b := a) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heq | ⟨_, _, _, _, _, _, h2⟩
       · simp only [reprVal, heq]
@@ -1078,6 +1078,60 @@ theorem dictBuild_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTw
   | cons kv rest ih =>
       obtain ⟨k, v⟩ := kv
       simp only [dictBuild, keyRefusal_swapAt hslot htwin, ih]
+
+theorem sumBytesStart_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (iterable : RVal) :
+    sumBytesStart (Heap.swapAt h pa o) iterable = sumBytesStart h iterable := by
+  cases iterable <;> try rfl
+  case ref address =>
+    rcases Heap.get?_swapAt_twin (b := address) hslot htwin with
+      equality | ⟨_, _, _, _, _, original, swapped⟩
+    · simp [sumBytesStart, equality]
+    · simp [sumBytesStart, original, swapped]
+
+theorem bytesOperandCheck_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (program : Module) (operand : RVal)
+    (formatName : String → String) :
+    bytesOperandCheck program (Heap.swapAt h pa o) operand formatName =
+      bytesOperandCheck program h operand formatName := by
+  cases operand <;> try rfl
+  case ref address =>
+    rcases Heap.get?_swapAt_twin (b := address) hslot htwin with
+      equality | ⟨_, _, _, _, _, original, swapped⟩
+    · simp [bytesOperandCheck, equality]
+    · simp [bytesOperandCheck, original, swapped]
+
+theorem checkBytesIndex_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (program : Module) (container index : RVal) :
+    checkBytesIndex program (Heap.swapAt h pa o) container index =
+      checkBytesIndex program h container index := by
+  cases container <;> simp [checkBytesIndex, bytesOperandCheck_swapAt hslot htwin]
+
+theorem checkBytesCompare_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (program : Module) (op : CmpOp)
+    (probe container : RVal) :
+    checkBytesCompare program (Heap.swapAt h pa o) op probe container =
+      checkBytesCompare program h op probe container := by
+  cases op <;> cases container <;>
+    simp [checkBytesCompare, bytesOperandCheck_swapAt hslot htwin]
+
+theorem dictPairValues_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (value : RVal) :
+    dictPairValues (Heap.swapAt h pa o) value = dictPairValues h value := by
+  cases value <;> try rfl
+  case ref address =>
+    rcases Heap.get?_swapAt_twin (b := address) hslot htwin with
+      equality | ⟨_, _, _, _, _, original, swapped⟩
+    · simp [dictPairValues, equality]
+    · simp [dictPairValues, original, swapped]
+
+theorem dictPairs_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (index : Nat) (values : List RVal) :
+    dictPairs (Heap.swapAt h pa o) index values = dictPairs h index values := by
+  induction values generalizing index with
+  | nil => rfl
+  | cons value rest inductionHypothesis =>
+    simp only [dictPairs, dictPair, dictPairValues_swapAt hslot htwin, inductionHypothesis]
 
 /-! ### The heap-RETURNING helpers
 
@@ -2009,12 +2063,19 @@ theorem pbEvalCompareChain_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀
       | nil => exact PBF.unsupported
       | cons e rest =>
           refine PBF.bind (ihE m st e hslot) fun s rhs _ hs => ?_
-          have hlift : PBF pa o₀ o
-              (Run.liftRes s (evalCompareOpH s.world.heap fuel op lhs rhs))
+          have hcheck : PBF pa o₀ o
+              (Run.liftRes s (checkBytesCompare m s.world.heap op lhs rhs))
               (Run.liftRes (s.swapAt pa o)
-                (evalCompareOpH (Heap.swapAt s.world.heap pa o) fuel op lhs rhs)) := by
-            rw [evalCompareOpH_swapAt hs htwin]
+                (checkBytesCompare m (Heap.swapAt s.world.heap pa o) op lhs rhs)) := by
+            rw [checkBytesCompare_swapAt hs htwin]
             exact PBF.liftRes hs _
+          refine PBF.bind hcheck fun checked _ _ hChecked => ?_
+          have hlift : PBF pa o₀ o
+              (Run.liftRes checked (evalCompareOpH checked.world.heap fuel op lhs rhs))
+              (Run.liftRes (checked.swapAt pa o)
+                (evalCompareOpH (Heap.swapAt checked.world.heap pa o) fuel op lhs rhs)) := by
+            rw [evalCompareOpH_swapAt hChecked htwin]
+            exact PBF.liftRes hChecked _
           refine PBF.bind hlift fun s2 b _ hs2 => ?_
           exact PBF.ite (fun _ => ihCmp m s2 rhs ops' rest hs2) (fun _ => PBF.ok hs2 _)
 
@@ -2329,6 +2390,7 @@ theorem pbExecGen_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) 
                             | _ => simp only []; exact PBF.unsupported
                       · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
                         exact ihGen m s2 _ hs2
+                  | bytes values => exact ihGen m s2 _ hs2
                   | _ => exact PBF.exn hs2 _
               | refuse msg => exact PBF.unsupported
       | forSeq target xs body =>
@@ -2569,7 +2631,7 @@ each is §Tier C′ over §Tier B; everything else is composition, a pure
 plan, or a `locals`-only rebinding — and `locals` ride the swap. -/
 theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
     PBExecStmt pa o₀ o (fuel + 1) := by
-  obtain ⟨ihE, -, -, -, -, ihSs, ihWhile, -, ihFor, -, ihForList, -⟩ := ih
+  obtain ⟨ihE, ihEs, -, -, -, ihSs, ihWhile, ihCall, ihFor, -, ihForList, -⟩ := ih
   intro m st s hslot
   cases s with
   | ret v sp =>
@@ -2695,6 +2757,7 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           | tuple xs => exact ihFor m s1 target xs.toList body.toList hs1
           | ntuple _ _ xs => exact ihFor m s1 target xs.toList body.toList hs1
           | str sv => exact ihFor m s1 target (strCharVals sv) body.toList hs1
+          | bytes values => exact ihFor m s1 target (bytesIntVals values) body.toList hs1
           | rangeV lo hi step =>
               refine PBF.bind (PBF.liftRes hs1 _) fun s2 xs _ hs2 => ?_
               exact ihFor m s2 target xs body.toList hs2
@@ -2764,6 +2827,95 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           cases printOne s3.world.heap v with
           | some rendered => exact PBF.exn hs3 _
           | none => exact PBF.unsupported
+  | withStmt items body refused span =>
+      simp only [execStmt]
+      cases refused with
+      | some reason => exact PBF.unsupported
+      | none =>
+        cases items.toList with
+        | nil => exact PBF.unsupported
+        | cons item rest =>
+          cases rest with
+          | cons _ _ => exact PBF.unsupported
+          | nil =>
+            simp only []
+            cases contextShape : item.context <;> (try simp only [contextShape]) <;>
+              try exact PBF.unsupported
+            case call context arguments keywords unsupportedCall callSpan =>
+              cases calleeShape : context <;> (try simp only [calleeShape]) <;>
+                try exact PBF.unsupported
+              case name className nameSpan =>
+                refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                cases findContextClass m className with
+                | none => exact PBF.unsupported
+                | some classInfo =>
+                  obtain ⟨classId, definition⟩ := classInfo
+                  refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                  refine PBF.bind (ihEs m st arguments.toList hslot)
+                    fun allocatedFrom values _ invariant => ?_
+                  simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                    World.swapAt_heap, Heap.size_swapAt,
+                    Heap.swapAt_push (Heap.lt_size_of_get? invariant)]
+                  have allocatedInvariant :=
+                    Heap.get?_push_of_get? (.instance classId #[]) invariant
+                  cases values with
+                  | cons _ _ => exact PBF.exn allocatedInvariant _
+                  | nil =>
+                    let allocatedWorld : World := { allocatedFrom.world with
+                      heap := allocatedFrom.world.heap.push (.instance classId #[]) }
+                    refine PBF.bind (PBW.withLocals
+                      (ihCall m allocatedWorld
+                        (className ++ ".__enter__")
+                        #[.ref allocatedFrom.world.heap.size] allocatedInvariant))
+                      fun enteredState entered _ enteredInvariant => ?_
+                    let finish (state : FrameState) :=
+                      Run.bindE (execStmts m fuel state body.toList)
+                        (fun after flow =>
+                          match flow with
+                          | .next | .ret _ | .brk | .cont =>
+                            Run.withLocals after.locals
+                              (callIn m fuel after.world (className ++ ".__exit__")
+                                #[.ref allocatedFrom.world.heap.size, .none, .none, .none]) ⤳
+                              fun exited _ => .ok exited flow)
+                        (fun after error =>
+                          Run.withLocals after.locals
+                            (callIn m fuel after.world (className ++ ".__exit__")
+                              #[.ref allocatedFrom.world.heap.size, .none, .none, .none]) ⤳
+                            fun exited result =>
+                              Run.liftRes exited (truthyH exited.world.heap result) ⤳
+                                fun exited suppresses =>
+                                  if suppresses then .ok exited .next else .exn exited error)
+                    have finishBlind (state : FrameState)
+                        (stateInvariant : Heap.get? state.world.heap pa = some o₀) :
+                        PBF pa o₀ o (finish state) (finish (state.swapAt pa o)) := by
+                      refine PBF.bindE (ihSs m state body.toList stateInvariant)
+                        (fun after flow _ afterInvariant => ?_)
+                        (fun after error _ afterInvariant => ?_)
+                      · cases flow <;>
+                          exact PBF.bind (PBW.withLocals
+                            (ihCall m after.world (className ++ ".__exit__")
+                              #[.ref allocatedFrom.world.heap.size, .none, .none, .none]
+                              afterInvariant))
+                            (fun exited _ _ exitedInvariant => PBF.ok exitedInvariant _)
+                      · refine PBF.bind (PBW.withLocals
+                          (ihCall m after.world (className ++ ".__exit__")
+                            #[.ref allocatedFrom.world.heap.size, .none, .none, .none]
+                            afterInvariant))
+                          fun exited result _ exitedInvariant => ?_
+                        simp only [FrameState.swapAt_world, World.swapAt_heap,
+                          truthyH_swapAt exitedInvariant htwin]
+                        refine PBF.bind (PBF.liftRes exitedInvariant _)
+                          fun exited suppresses _ exitedInvariant => ?_
+                        exact PBF.ite (fun _ => PBF.ok exitedInvariant _)
+                          (fun _ => PBF.exn exitedInvariant _)
+                    cases item.target with
+                    | none => exact finishBlind enteredState enteredInvariant
+                    | some target =>
+                      simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                        World.swapAt_heap, assignToH_swapAt enteredInvariant htwin]
+                      refine PBF.bind (PBF.liftRes enteredInvariant _)
+                        fun bodyState environment _ bodyInvariant => ?_
+                      exact finishBlind { bodyState with locals := environment } bodyInvariant
   | tryStmt body excName handler tryUnsupported sp =>
       simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals,
         World.swapAt_globals]
@@ -2834,6 +2986,7 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
   | cont sp => simp only [execStmt]; exact PBF.ok hslot _
   | unsupported pyKind text sp => simp only [execStmt]; exact PBF.unsupported
 
+set_option maxHeartbeats 1600000 in
 /-- **The block's largest member**, 1047 of its 1976 lines, and the arm
 that reaches every §Tier B equation. The geometry is one case per `Expr`
 constructor; `.call` carries the builtin tier (its own `fname` chain), the
@@ -2916,8 +3069,10 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       simp only [evalExpr]
       refine PBF.bind (ihE m st v hslot) fun s1 c _ hs1 => ?_
       refine PBF.bind (ihE m s1 idx hs1) fun s2 i _ hs2 => ?_
-      simp only [FrameState.swapAt_world, World.swapAt_heap, indexValH_swapAt hs2 htwin]
-      exact PBF.liftRes hs2 _
+      simp only [FrameState.swapAt_world, World.swapAt_heap, checkBytesIndex_swapAt hs2 htwin]
+      refine PBF.bind (PBF.liftRes hs2 _) fun checked _ _ hChecked => ?_
+      simp only [FrameState.swapAt_world, World.swapAt_heap, indexValH_swapAt hChecked htwin]
+      exact PBF.liftRes hChecked _
   | dict keys values sp =>
       simp only [evalExpr]
       refine PBF.bind (ihItems m st keys.toList values.toList hslot) fun s1 items _ hs1 => ?_
@@ -3243,6 +3398,10 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                 simp only [FrameState.swapAt_world,
                                                   World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
                                                 exact PBF.liftRes hs1 _
+                                            | bytes values =>
+                                                simp only [FrameState.swapAt_world,
+                                                  World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
+                                                exact PBF.liftRes hs1 _
                                             | tuple xs =>
                                                 simp only [FrameState.swapAt_world,
                                                   World.swapAt_heap, anyAllScan_swapAt hs1 htwin]
@@ -3311,6 +3470,12 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                 refine PBF.bind (PBF.liftRes hs1 _)
                                                   fun s2 es _ hs2 => ?_
                                                 exact PBF.pushRef hs2 _
+                                            | bytes values =>
+                                                simp only [FrameState.swapAt_world,
+                                                  World.swapAt_heap, setDedup_swapAt hs1 htwin]
+                                                refine PBF.bind (PBF.liftRes hs1 _)
+                                                  fun nextState entries _ invariant => ?_
+                                                exact PBF.pushRef invariant _
                                             | tuple xs =>
                                                 simp only [FrameState.swapAt_world,
                                                   World.swapAt_heap, setDedup_swapAt hs1 htwin]
@@ -3396,7 +3561,18 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         | cons _ _ => exact PBF.exn hs1 _
                                         | nil => exact PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  -- int
+                                  · refine PBF.bind (ihEs m st args.toList hslot)
+                                      fun nextState values _ invariant => ?_
+                                    cases values with
+                                    | nil => exact PBF.exn invariant _
+                                    | cons value rest =>
+                                      cases rest with
+                                      | cons _ _ => exact PBF.unsupported
+                                      | nil =>
+                                        cases value <;> try exact PBF.unsupported
+                                        case int _ => exact PBF.ok invariant _
+                                        case bool _ => exact PBF.ok invariant _
+                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   · refine PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => ?_
                                     cases vs with
@@ -3443,6 +3619,10 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         obtain ⟨v, start⟩ := vstart
                                         cases start with
                                         | str _ => exact PBF.exn hs1 _
+                                        | bytes _ =>
+                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                              sumBytesStart_swapAt hs1 htwin]
+                                            exact PBF.liftRes hs1 _
                                         | _ =>
                                             simp only []
                                             cases v with
@@ -3450,6 +3630,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                             | ntuple _ _ xs => exact PBF.liftRes hs1 _
                                             | listV xs => exact PBF.liftRes hs1 _
                                             | str t => exact PBF.liftRes hs1 _
+                                            | bytes values => exact PBF.liftRes hs1 _
                                             | rangeV lo hi step => exact PBF.liftRes hs1 _
                                             | ref b =>
                                                 rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
@@ -3496,6 +3677,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                             simp only []
                                             cases v with
                                             | str t => exact PBF.ok hs1 _
+                                            | bytes values => exact PBF.ok hs1 _
                                             | tuple xs => exact PBF.ok hs1 _
                                             | ntuple _ _ xs => exact PBF.ok hs1 _
                                             | listV xs => exact PBF.ok hs1 _
@@ -3548,6 +3730,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                             simp only []
                                             cases v with
                                             | str t => exact PBF.allocList hs1 _
+                                            | bytes values => exact PBF.allocList hs1 _
                                             | tuple xs => exact PBF.allocList hs1 _
                                             | ntuple _ _ xs => exact PBF.allocList hs1 _
                                             | listV xs => exact PBF.allocList hs1 _
@@ -3609,6 +3792,21 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                       cases obj with
                                                       | dict entries ver =>
                                                           exact PBF.allocDict hs1 _
+                                                      | generator qname locals continuation status =>
+                                                          refine PBF.bind (PBW.withLocals
+                                                            (ihDrain m s1.world b hs1))
+                                                            fun nextState values _ invariant => ?_
+                                                          simp only [FrameState.swapAt_world,
+                                                            World.swapAt_heap,
+                                                            dictPairs_swapAt invariant htwin]
+                                                          refine PBF.bind (PBF.liftRes invariant _)
+                                                            fun pairState pairs _ pairInvariant => ?_
+                                                          simp only [FrameState.swapAt_world,
+                                                            World.swapAt_heap,
+                                                            dictBuild_swapAt pairInvariant htwin]
+                                                          refine PBF.bind (PBF.liftRes pairInvariant _)
+                                                            fun dictState entries _ dictInvariant => ?_
+                                                          exact PBF.allocDict dictInvariant _
                                                       | pyset xs => exact PBF.exn hs1 _
                                                       | «instance» ci attrs => exact PBF.exn hs1 _
                                                       | closure _ _ _ _ _ _ _ _ =>
@@ -3616,8 +3814,21 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                       | _ => exact PBF.unsupported
                                                 · simp only [FrameState.swapAt_world,
                                                     World.swapAt_heap, h1, h2]
-                                                  exact PBF.unsupported
-                                            | listV _ => exact PBF.unsupported
+                                                  refine PBF.bind (PBW.withLocals
+                                                    (ihDrain m s1.world b hs1))
+                                                    fun nextState values _ invariant => ?_
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictPairs_swapAt invariant htwin]
+                                                  refine PBF.bind (PBF.liftRes invariant _)
+                                                    fun pairState pairs _ pairInvariant => ?_
+                                                  simp only [FrameState.swapAt_world,
+                                                    World.swapAt_heap,
+                                                    dictBuild_swapAt pairInvariant htwin]
+                                                  refine PBF.bind (PBF.liftRes pairInvariant _)
+                                                    fun dictState entries _ dictInvariant => ?_
+                                                  exact PBF.allocDict dictInvariant _
+                                            | listV _ | bytes _ => exact PBF.unsupported
                                             | _ =>
                                                 simp only [FrameState.swapAt_world,
                                                   World.swapAt_heap]
@@ -3735,6 +3946,28 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         cases rest with
                                         | cons _ _ => exact PBF.exn hs1 _
                                         | nil => exact PBF.liftRes hs1 _
+                                  refine PBF.ite (fun _ => ?_) fun _ => ?_
+                                  · refine PBF.bind (ihEs m st args.toList hslot)
+                                      fun nextState values _ invariant => ?_
+                                    cases values with
+                                    | nil => exact PBF.exn invariant _
+                                    | cons value rest =>
+                                      cases rest with
+                                      | nil =>
+                                        simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                          strOfValH_swapAt invariant htwin]
+                                        exact PBF.liftRes invariant _
+                                      | cons specification extra =>
+                                        cases extra with
+                                        | cons _ _ =>
+                                          cases specification <;> exact PBF.exn invariant _
+                                        | nil =>
+                                          cases specification <;> try exact PBF.exn invariant _
+                                          case str text =>
+                                            refine PBF.ite (fun _ => ?_) fun _ => PBF.unsupported
+                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                              strOfValH_swapAt invariant htwin]
+                                            exact PBF.liftRes invariant _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   -- str
                                   · refine PBF.bind (ihEs m st args.toList hslot)

@@ -129,6 +129,12 @@ def parseConst (j : Json) : Except String Const :=
         else throw "float bits exceed binary64 width"
     | "bool" => return Const.bool (← (← getField j "value").getBool?)
     | "str" => return Const.str (← (← getField j "value").getStr?)
+    | "bytes" =>
+        let values ← (← (← getField j "value").getArr?).mapM fun item => do
+          let number ← item.getNat?
+          if number < 256 then pure (UInt8.ofNat number)
+          else throw s!"byte value {number} is outside 0..255"
+        return Const.bytes values
     | "none" => pure Const.none
     | "ellipsis" => pure Const.ellipsis
     | other => throw s!"unknown const type {other.quote}"

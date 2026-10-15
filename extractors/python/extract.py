@@ -301,6 +301,8 @@ def literal_const_payload(node):
         return {"type": "float", "bits": str(struct.unpack(">Q", struct.pack(">d", v))[0])}
     if isinstance(v, str):
         return {"type": "str", "value": v}
+    if isinstance(v, bytes):
+        return {"type": "bytes", "value": list(v)}
     if v is None:
         return {"type": "none"}
     if v is Ellipsis:
@@ -426,7 +428,9 @@ def convert_expr(node):
             const = {"type": "none"}
         elif v is Ellipsis:
             const = {"type": "ellipsis"}
-        else:  # float / bytes / complex / ...
+        elif isinstance(v, bytes):
+            const = {"type": "bytes", "value": list(v)}
+        else:  # complex / ...
             return unsupported(node, "Constant:" + type(v).__name__)
         return {"kind": "Constant", "span": span(node), "value": const}
 

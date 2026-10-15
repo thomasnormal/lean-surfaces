@@ -98,6 +98,7 @@ def Val.typeName : Val → String
   | .int _ => "int"
   | .float _ => "float"
   | .str _ => "str"
+  | .bytes _ => "bytes"
   | .range _ _ _ => "range"
   | .list _ => "list"
   | .tuple _ => "tuple"
@@ -114,6 +115,7 @@ def RVal.typeName : RVal → String
   | .int _ => "int"
   | .float _ => "float"
   | .str _ => "str"
+  | .bytes _ => "bytes"
   | .listV _ => "list"
   | .tuple _ => "tuple"
   | .ntuple tn _ _ => tn
@@ -125,7 +127,7 @@ def RVal.typeName : RVal → String
 (sequence protocol included), so they answer `true` — multiplication
 dispatches the sequence protocol before the numeric fallback. -/
 def RVal.isSeq : RVal → Bool
-  | .str _ | .listV _ | .tuple _ => true
+  | .str _ | .bytes _ | .listV _ | .tuple _ => true
   | .ntuple _ _ _ => true
   | _ => false
 
@@ -323,6 +325,7 @@ def truthy : RVal → Res Bool
   | .int n => .ok (n != 0)
   | .float value => .ok (!value.isZero)
   | .str s => .ok (!s.isEmpty)
+  | .bytes xs => .ok (xs.size != 0)
   | .listV xs => .ok (xs.size != 0)
   | .tuple xs => .ok (xs.size != 0)
   | .ntuple _ _ xs => .ok (xs.size != 0)
@@ -360,6 +363,19 @@ def RVal.typeNameH (h : Heap) : RVal → String
     | some (.pyset _) => "set"
     | Option.none => "object"
   | v => v.typeName
+
+/-- CPython's byte-limited type names decode a truncated UTF-8 character
+with a replacement character. The walk is structural on characters. -/
+def typeNamePrefixChars : List Char → Nat → List Char
+  | [], _ => []
+  | character :: rest, byteLimit =>
+      if character.utf8Size ≤ byteLimit then
+        character :: typeNamePrefixChars rest (byteLimit - character.utf8Size)
+      else if byteLimit = 0 then []
+      else ['�']
+
+def typeNamePrefix (name : String) (byteLimit : Nat) : String :=
+  String.mk (typeNamePrefixChars name.toList byteLimit)
 
 /-- bool→int coercion (Python's `bool` is an `int` subtype): `int` passes
 through, `True`/`False` become `1`/`0`, everything else is `none`. -/
@@ -459,6 +475,7 @@ mutual
     | .float a, .bool b => .ok (a.eqInt (if b then 1 else 0))
     | .bool b, .float a => .ok (a.eqInt (if b then 1 else 0))
     | .str s, .str t => .ok (s == t)
+    | .bytes xs, .bytes ys => .ok (xs == ys)
     | .listV xs, .listV ys => valEqList xs.toList ys.toList
     | .tuple xs, .tuple ys => valEqList xs.toList ys.toList
     | .rangeV alo ahi astep, .rangeV blo bhi bstep =>
@@ -521,6 +538,34 @@ def strCmp : CmpOp → String → String → Bool
   | .inOp, _, _ => false   -- unreachable: membership never reaches strCmp
   | .notIn, _, _ => false  -- (evalCompareOp handles it first; totality arm)
 
+def bytesCmp : List UInt8 → List UInt8 → Bool
+  | [], [] => false
+  | [], _ :: _ => true
+  | _ :: _, [] => false
+  | left :: lefts, right :: rights =>
+      if left == right then bytesCmp lefts rights else left < right
+
+def bytesCmpOp (op : CmpOp) (xs ys : Array UInt8) : Bool :=
+  let equal := xs == ys
+  let less := bytesCmp xs.toList ys.toList
+  match op with
+  | .eq => equal
+  | .notEq => !equal
+  | .lt => less
+  | .ltE => less || equal
+  | .gt => !less && !equal
+  | .gtE => !less
+  | .is => equal
+  | .isNot => !equal
+  | .inOp | .notIn => false
+
+def bytesContains (values probe : List UInt8) : Bool :=
+  if probe.isPrefixOf values then true
+  else match values with
+    | [] => false
+    | _ :: rest => bytesContains rest probe
+termination_by structural values
+
 mutual
   /-- CPython strict `<` on immediate values (H6 draining consumers,
   docs/memory-model.md §draining consumers): int/bool numeric, str
@@ -553,6 +598,7 @@ mutual
         if right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
         else .ok (Float64.intLt (if left then 1 else 0) right)
     | .str s, .str t => .ok (strCmp .lt s t)
+    | .bytes xs, .bytes ys => .ok (bytesCmp xs.toList ys.toList)
     | .tuple xs, .tuple ys => rvalLtList xs.toList ys.toList
     | .tuple xs, .ntuple _ _ ys => rvalLtList xs.toList ys.toList
     | .ntuple _ _ xs, .tuple ys => rvalLtList xs.toList ys.toList
@@ -642,6 +688,7 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
         let integer := if left then 1 else 0
         .ok (floatOrder op (right.eqInt integer) (Float64.intLt integer right) (right.ltInt integer))
       | .str s, .str t => .ok (strCmp op s t)
+      | .bytes xs, .bytes ys => .ok (bytesCmpOp op xs ys)
       -- H6: tuple/namedtuple ordering, class-erased and lexicographic —
       -- ONE relation with `sorted` (`rvalLt`, via `ordFromLt`)
       | .tuple _, .tuple _ => ordFromLt op a b
@@ -671,6 +718,16 @@ def tupleRepeat (xs : Array RVal) (count : Int) : Res RVal :=
   else
     .unsupported "tuple repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §tuple repetition)"
 
+def bytesRepeat (xs : Array UInt8) (count : Int) : Res RVal :=
+  if count.natAbs > seqIndexBudget then
+    .unsupported "sequence repetition count does not fit CPython's index-sized integer"
+  else if count ≤ 0 || xs.isEmpty then
+    .ok (.bytes #[])
+  else if count.natAbs ≤ seqBudget ∧ xs.size * count.toNat ≤ seqBudget then
+    .ok (.bytes ((List.replicate count.toNat xs.toList).flatten.toArray))
+  else
+    .unsupported "bytes repetition beyond seqBudget is outside the tier"
+
 /-- String repetition with fuel-independent bounds on positive nonempty
 results. Empty strings and nonpositive counts short-circuit exactly as CPython
 does, without constructing or budgeting the requested magnitude. -/
@@ -695,10 +752,11 @@ def sequenceRepeat (sequence count : RVal) : Res RVal :=
       | some number =>
           match sequence with
           | .str text => strRepeat text number
+          | .bytes values => bytesRepeat values number
           | .tuple values | .ntuple _ _ values => tupleRepeat values number
           | _ => .unsupported "repetition of this sequence is outside the tier"
       | Option.none =>
-          .exn (.typeError s!"can't multiply sequence by non-int of type '{count.typeName}'")
+          .exn (.typeError s!"can't multiply sequence by non-int of type '{typeNamePrefix count.typeName 200}'")
 
 /-- Value-sequence multiplication preserves the left operand's protocol:
 `str * tuple` and `tuple * str` name different non-integer counts. -/
@@ -706,14 +764,14 @@ def sequenceMult (left right : RVal) : Res RVal :=
   match left, right with
   | .ref _, _ | _, .ref _ =>
       .unsupported "sequence multiplication with a heap object is outside the tier (docs/memory-model.md §string repetition)"
-  | .str _, _ | .tuple _, _ | .ntuple _ _ _, _ => sequenceRepeat left right
+  | .str _, _ | .bytes _, _ | .tuple _, _ | .ntuple _ _ _, _ => sequenceRepeat left right
   | .listV _, _ =>
       if (asInt right).isSome then
         .unsupported
           s!"sequence repetition ('list' * '{right.typeName}') is outside the v0 tier"
       else
         .exn (.typeError s!"can't multiply sequence by non-int of type '{right.typeName}'")
-  | _, .str _ | _, .tuple _ | _, .ntuple _ _ _ => sequenceRepeat right left
+  | _, .str _ | _, .bytes _ | _, .tuple _ | _, .ntuple _ _ _ => sequenceRepeat right left
   | _, _ =>
       if (left.isSeq && (asInt right).isSome) || ((asInt left).isSome && right.isSeq) then
         .unsupported
@@ -810,24 +868,6 @@ def intHexPrefixed (value : Int) : Option String :=
     some (if value < 0 then "-0x" ++ digits else "0x" ++ digits)
   else Option.none
 
-/-- `str(…)` — value-only (docs/memory-model.md §the cast tier): budgeted
-exact decimal for ints, `True`/`False`, identity on strs, `None`;
-containers and refs refuse loudly (repr recursion is not guessed). -/
-def strOfVal : RVal → Res RVal
-  | .int value =>
-    match intDecimal value with
-    | some text => .ok (.str text)
-    | Option.none => .unsupported "integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
-  | .float value =>
-    match value.repr with
-    | some text => .ok (.str text)
-    | none => .unsupported "float rendering is outside the tier"
-  | .bool b => .ok (.str (if b then "True" else "False"))
-  | .str s => .ok (.str s)
-  | .none => .ok (.str "None")
-  | .ellipsis => .ok (.str "Ellipsis")
-  | v => .unsupported s!"str() of '{v.typeName}' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)"
-
 /-- Lowercase hex digit. -/
 def hexDigit (n : Nat) : Char :=
   if n < 10 then Char.ofNat (48 + n) else Char.ofNat (87 + n)
@@ -845,6 +885,49 @@ def hex8 (n : Nat) : String :=
     hexDigit (n / 0x100000 % 16), hexDigit (n / 0x10000 % 16),
     hexDigit (n / 4096 % 16), hexDigit (n / 256 % 16),
     hexDigit (n / 16 % 16), hexDigit (n % 16)]
+
+def bytesQuote (values : List UInt8) : Char :=
+  if values.contains 39 && !values.contains 34 then '"' else '\''
+
+def bytesChar (quote : Char) (byte : UInt8) : String :=
+  let number := byte.toNat
+  if number == 92 then "\\\\"
+  else if number == 10 then "\\n"
+  else if number == 13 then "\\r"
+  else if number == 9 then "\\t"
+  else if number == quote.val.toNat then String.mk ['\\', quote]
+  else if 0x20 ≤ number && number < 0x7f then String.mk [Char.ofNat number]
+  else "\\x" ++ hex2 number
+
+def bytesChars (quote : Char) : List UInt8 → String
+  | [] => ""
+  | byte :: rest => bytesChar quote byte ++ bytesChars quote rest
+
+def bytesRepr (values : Array UInt8) : String :=
+  let quote := bytesQuote values.toList
+  "b" ++ String.mk [quote] ++ bytesChars quote values.toList ++ String.mk [quote]
+
+def bytesIntVals (values : Array UInt8) : List RVal :=
+  values.toList.map (fun byte => .int byte.toNat)
+
+/-- `str(…)` — value-only (docs/memory-model.md §the cast tier): budgeted
+exact decimal for ints, `True`/`False`, identity on strs, `None`, and bytes repr;
+containers and refs refuse loudly (repr recursion is not guessed). -/
+def strOfVal : RVal → Res RVal
+  | .int value =>
+    match intDecimal value with
+    | some text => .ok (.str text)
+    | Option.none => .unsupported "integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
+  | .float value =>
+    match value.repr with
+    | some text => .ok (.str text)
+    | none => .unsupported "float rendering is outside the tier"
+  | .bool boolean => .ok (.str (if boolean then "True" else "False"))
+  | .str text => .ok (.str text)
+  | .bytes values => .ok (.str (bytesRepr values))
+  | .none => .ok (.str "None")
+  | .ellipsis => .ok (.str "Ellipsis")
+  | value => .unsupported s!"str() of '{value.typeName}' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)"
 
 /-- The quote CPython picks for a string's `repr`: `'` unless the string
 contains one and no `"`. -/
@@ -922,6 +1005,7 @@ refuses inside `print([…])`. -/
 def strFormatRepr (v : RVal) : Option String :=
   match v with
   | .str s => reprStr s
+  | .bytes values => some (bytesRepr values)
   | v => strFormatStr v
 
 /-- `%c` accepts an integer code point or a one-character string. -/
@@ -1249,6 +1333,10 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
         | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .add, .str s, .str t => .ok (.str (s ++ t))
+    | .mod, .bytes _, _ => .unsupported "bytes percent formatting is outside the tier"
+    | .add, .bytes xs, .bytes ys => .ok (.bytes (xs ++ ys))
+    | .add, .bytes _, .ref _ => .unsupported "bytes concatenation with heap values requires the buffer protocol"
+    | .add, .bytes _, value => .exn (.typeError s!"can't concat {typeNamePrefix value.typeName 100} to bytes")
     | .add, .listV xs, .listV ys => .ok (.listV (xs ++ ys))
     | .add, .tuple xs, .tuple ys => .ok (.tuple (xs ++ ys))
     -- namedtuple `+` concatenates as tuples and yields a PLAIN tuple
@@ -1360,6 +1448,7 @@ def Const.toVal : Const → Val
   | .int n => .int n
   | .float value => .float value
   | .str s => .str s
+  | .bytes xs => .bytes xs
 
 /-- Constant literal → runtime value (constants are scalars — no
 allocation). -/
@@ -1370,12 +1459,14 @@ def Const.toRVal : Const → RVal
   | .int n => .int n
   | .float value => .float value
   | .str s => .str s
+  | .bytes xs => .bytes xs
 
 /-- `len(v)` for `str`/`listV`/`tuple` (str counts code points), else
 `TypeError`; `len` of a `.ref` is a heap read (dicts) — loud until
 H1-proper. -/
 def lenVal : RVal → Res RVal
   | .str s => .ok (.int s.length)
+  | .bytes xs => .ok (.int xs.size)
   | .listV xs => .ok (.int xs.size)
   | .tuple xs => .ok (.int xs.size)
   | .ntuple _ _ xs => .ok (.int xs.size)
@@ -1470,6 +1561,7 @@ def sortedVal (v : RVal) (desc : Bool := false) : Res RVal :=
       | some ns => .ok (.listV (((sortInts ns).map RVal.int).toArray))
       | Option.none => do return .listV (← sortByLt false xs.toList).toArray
   | .str s => do return .listV (← sortByLt desc (strCharVals s)).toArray
+  | .bytes values => do return .listV (← sortByLt desc (bytesIntVals values)).toArray
   | .tuple xs => do return .listV (← sortByLt desc xs.toList).toArray
   | .ntuple _ _ xs => do return .listV (← sortByLt desc xs.toList).toArray
   | .rangeV lo hi step => do
@@ -1531,6 +1623,7 @@ def extremumVal (isMax : Bool) (vs : List RVal) : Res RVal :=
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
       | Option.none => extremumOf isMax name xs.toList
     | .str t => extremumOf isMax name (strCharVals t)
+    | .bytes values => extremumOf isMax name (bytesIntVals values)
     | .rangeV lo hi step => do extremumOf isMax name (← rangeVals lo.toInt hi.toInt step.toInt)
     | .ref _ =>
         .unsupported s!"{name}() over a heap object is outside the H1 tier (docs/memory-model.md)"
@@ -1610,6 +1703,7 @@ def intCastVal : RVal → Res RVal
       if value.isNaN then .exn (.valueError "cannot convert float NaN to integer")
       else .exn (.overflowError "cannot convert float infinity to integer")
   | .str s => intOfStr s
+  | .bytes _ => .unsupported "int() parsing of bytes is outside the tier"
   | .ref _ =>
       .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")
@@ -1674,6 +1768,7 @@ def floatCastVal : RVal → Res RVal
       match reprStr text with
       | some rendered => .exn (.valueError s!"could not convert string to float: {rendered}")
       | none => .unsupported "float() cannot render this invalid Unicode literal exactly (docs/python-floats.md)"
+  | .bytes _ => .unsupported "float() parsing of bytes is outside the tier"
   | .ref _ =>
     .unsupported "float() heap-object conversion protocols remain unmodelled (docs/python-floats.md)"
   | value => .exn (.typeError s!"float() argument must be a string or a number, not '{value.typeName}'")
@@ -1694,6 +1789,9 @@ def ordVal : RVal → Res RVal
     match s.toList with
     | [c] => .ok (.int c.toNat)
     | cs => .exn (.typeError s!"ord() expected a character, but string of length {cs.length} found")
+  | .bytes values =>
+    if values.size = 1 then .ok (.int (values.getD 0 0).toNat)
+    else .exn (.typeError s!"ord() expected a character, but string of length {values.size} found")
   | .ref _ =>
       .unsupported "ord() of a heap object is outside the tier (docs/memory-model.md §string semantics)"
   | v => .exn (.typeError s!"ord() expected string of length 1, but {v.typeName} found")
@@ -1814,6 +1912,7 @@ mutual
     | .none => some "None"
     | .ellipsis => some "Ellipsis"
     | .str t => reprStr t
+    | .bytes xs => some (bytesRepr xs)
     | .tuple xs => do
       match fuel with
       | 0 => Option.none
@@ -1975,6 +2074,14 @@ def indexVal (container index : RVal) : Res RVal :=
       | Option.none => .exn .indexError
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {index.typeName}")
+  | .bytes xs, index =>
+    match asInt index with
+    | some integer =>
+      match normIndex integer xs.size with
+      | some position => .ok (.int (xs.getD position 0).toNat)
+      | Option.none => .exn .indexError
+    | Option.none =>
+      .exn (.typeError s!"byte indices must be integers or slices, not {typeNamePrefix index.typeName 200}")
   | .tuple xs, index =>
     match asInt index with
     | some i =>
@@ -2204,6 +2311,14 @@ def seqSliceList (xs : Array RVal) (lv uv sv : RVal) : Res RVal :=
   seqSliceValues xs lv uv sv >>= fun values =>
     .ok (.listV values.toArray)
 
+def bytesSlice (xs : Array UInt8) (lv uv sv : RVal) : Res RVal :=
+  let values := xs.toList.map (fun byte => .int byte.toNat)
+  seqSliceValues values.toArray lv uv sv >>= fun selected =>
+    .ok (.bytes (selected.map (fun value =>
+      match value with
+      | .int integer => UInt8.ofNat integer.toNat
+      | _ => 0)).toArray)
+
 /-- `container[l:u:st]` — the slice RECEIVER dispatch (the components
 have already evaluated: CPython builds the slice object before
 `BINARY_SUBSCR` looks at the receiver). STRINGS and value lists are handled
@@ -2214,6 +2329,7 @@ non-subscriptable receiver is the faithful
 def sliceVal (v lv uv sv : RVal) : Res RVal :=
   match v with
   | .str s => strSlice s lv uv sv
+  | .bytes xs => bytesSlice xs lv uv sv
   | .ref _ =>
     .unsupported "slicing a heap object is outside the tier (a list slice allocates; docs/memory-model.md §string semantics)"
   | .listV xs => seqSliceList xs lv uv sv
@@ -2297,7 +2413,7 @@ mutual
   which is unhashable (H3 instances revisit this arm, heap parameter and
   all). -/
   def hashableKey : RVal → Bool
-    | .none | .ellipsis | .bool _ | .int _ | .str _ => true
+    | .none | .ellipsis | .bool _ | .int _ | .str _ | .bytes _ => true
     | .float _ => false
     | .tuple xs => hashableKeyList xs.toList
     -- a namedtuple hashes as a tuple (tuple.__hash__): hashable iff its
@@ -2342,6 +2458,7 @@ mutual
     | .int n, .bool b => n == (if b then (1 : Int) else 0)
     | .int n, .int m => n == m
     | .str s, .str t => s == t
+    | .bytes left, .bytes right => left == right
     | .tuple xs, .tuple ys => keyEqList xs.toList ys.toList
     -- namedtuple keys ARE tuple keys (hash and `==` erase the class):
     -- `d[Move(1,2,"")]` and `d[(1,2,"")]` address one entry, as in CPython
@@ -2393,7 +2510,7 @@ mutual
   arm for arm and reports the first member that fails; `none` means the
   key IS hashable and no message is owed. -/
   def unhashableName? (h : Heap) : RVal → Option String
-    | .none | .bool _ | .int _ | .str _ => Option.none
+    | .none | .bool _ | .int _ | .str _ | .bytes _ => Option.none
     | .tuple xs => unhashableNameList? h xs.toList
     | .ntuple _ _ xs => unhashableNameList? h xs.toList
     | v => some (RVal.typeNameH h v)
@@ -2558,11 +2675,27 @@ def dictBuild (h : Heap) (acc : List (RVal × RVal)) : List (RVal × RVal) → R
     if hashableKey k then dictBuild h (dictStore acc k v).1 rest
     else keyRefusal h k
 
+def sumBytesStart (heap : Heap) (iterable : RVal) : Res RVal :=
+  let rejected := Res.exn
+    (.typeError "sum() can't sum bytes [use b''.join(seq) instead]")
+  match iterable with
+  | .str _ | .bytes _ | .tuple _ | .ntuple .. | .listV _ | .rangeV .. => rejected
+  | .ref address =>
+    match Heap.get? heap address with
+    | some (.list _) | some (.dict ..) | some (.pyset _) | some (.generator ..) => rejected
+    | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+    | some (.instance ..) =>
+      .unsupported "sum() iterable validation for instances with a bytes start is outside the tier"
+    | some (.cell _) => .unsupported cellInternal
+    | none => .unsupported danglingMsg
+  | value => .exn (.typeError s!"'{value.typeName}' object is not iterable")
+
 def dictPairValues (h : Heap) : RVal → Option (List RVal)
   | .tuple xs => some xs.toList
   | .ntuple _ _ xs => some xs.toList
   | .listV xs => some xs.toList
   | .str s => some (strCharVals s)
+  | .bytes xs => some (bytesIntVals xs)
   | .ref a =>
       match Heap.get? h a with
       | some (.list xs) => some xs.toList
@@ -2983,6 +3116,16 @@ def valContains (h : Heap) (fuel : Nat) (a b : RVal) : Res Bool :=
     | a => .exn (.typeError
         s!"'in <string>' requires string as left operand, not {RVal.typeNameH h a}")
   | .listV xs => heapContainsScan h fuel a xs.toList
+  | .bytes values =>
+    match a with
+    | .bytes probe => .ok (bytesContains values.toList probe.toList)
+    | probe =>
+      match asInt probe with
+      | some integer =>
+        if 0 ≤ integer && integer < 256 then
+          .ok (values.contains (UInt8.ofNat integer.toNat))
+        else .exn (.valueError "byte must be in range(0, 256)")
+      | none => .exn (.typeError s!"a bytes-like object is required, not '{typeNamePrefix (RVal.typeNameH h probe) 100}'")
   | .tuple xs => heapContainsScan h fuel a xs.toList
   | .ntuple _ _ xs => heapContainsScan h fuel a xs.toList
   | .rangeV lo hi step =>
@@ -3058,6 +3201,7 @@ def indexValH (h : Heap) (container index : RVal) : Res RVal :=
   | .tuple _, .ref b => .exn (.typeError s!"tuple indices must be integers, not {RVal.typeNameH h (.ref b)}")
   | .ntuple _ _ _, .ref b => .exn (.typeError s!"tuple indices must be integers, not {RVal.typeNameH h (.ref b)}")
   | .str _, .ref b => .exn (.typeError s!"string indices must be integers, not {RVal.typeNameH h (.ref b)}")
+  | .bytes _, .ref address => .exn (.typeError s!"byte indices must be integers or slices, not {typeNamePrefix (RVal.typeNameH h (.ref address)) 200}")
   | c, i => indexVal c i
 
 /-- `sorted(v)` over the heap (H2/H6): a heap-list argument reads its
@@ -3355,6 +3499,14 @@ def assignTo (env : Env) (target : Expr) (v : RVal) : Res Env :=
           .exn (.valueError
             s!"not enough values to unpack (expected {names.length}, got {xs.size})")
       | .str _ => .unsupported "unpacking a str is outside the v0 tier"
+      | .bytes xs =>
+        let values := bytesIntVals xs
+        if values.length = names.length then .ok (bindAll env names values)
+        else if names.length < values.length then
+          .exn (.valueError s!"too many values to unpack (expected {names.length})")
+        else
+          .exn (.valueError
+            s!"not enough values to unpack (expected {names.length}, got {values.length})")
       | .rangeV lo hi step =>
           rangeVals lo.toInt hi.toInt step.toInt >>= fun values =>
           let xs := values.toArray
@@ -3428,6 +3580,12 @@ HEAP-THREADING store path (pass 4: tuple targets with attribute
 elements) shares one set of faithful errors. A heap LIST unpacks as an
 eager snapshot (CPython), everything else exactly as `assignToH`. -/
 def unpackSeq (h : Heap) (n : Nat) : RVal → Res (List RVal)
+  | .bytes values =>
+    if values.size = n then .ok (bytesIntVals values)
+    else if n < values.size then
+      .exn (.valueError s!"too many values to unpack (expected {n})")
+    else
+      .exn (.valueError s!"not enough values to unpack (expected {n}, got {values.size})")
   | .listV xs | .tuple xs | .ntuple _ _ xs =>
     if xs.size = n then .ok xs.toList
     else if n < xs.size then
@@ -3526,6 +3684,34 @@ violation (ids are minted by `findClass`) and every caller reports it
 loudly (`danglingMsg` style). -/
 def getClass? (m : Module) (i : ClassId) : Option ClassDefn :=
   classAt m.classes.toList i
+
+def bytesOperandCheck (program : Module) (heap : Heap) (operand : RVal)
+    (formatName : String → String) : Res Unit :=
+  match operand with
+  | .ref address =>
+    match Heap.get? heap address with
+    | some (.instance classId _) =>
+      match getClass? program classId with
+      | some classDef => .exn (.typeError (formatName classDef.name))
+      | none => .unsupported "bytes operand has an unknown instance class id"
+    | some (.cell _) => .unsupported cellInternal
+    | none => .unsupported danglingMsg
+    | _ => .ok ()
+  | _ => .ok ()
+
+def checkBytesIndex (program : Module) (heap : Heap) (container index : RVal) : Res Unit :=
+  match container with
+  | .bytes _ => bytesOperandCheck program heap index fun name =>
+      s!"byte indices must be integers or slices, not {typeNamePrefix name 200}"
+  | _ => .ok ()
+
+def checkBytesCompare (program : Module) (heap : Heap) (op : CmpOp)
+    (probe container : RVal) : Res Unit :=
+  match op, container with
+  | .inOp, .bytes _ | .notIn, .bytes _ =>
+    bytesOperandCheck program heap probe fun name =>
+      s!"a bytes-like object is required, not '{typeNamePrefix name 100}'"
+  | _, _ => .ok ()
 
 /-- Does the character list end in `__`? (helper of `dunderShaped`;
 list-structural). -/
@@ -4568,6 +4754,7 @@ enumeration would need a second stepper inside this one (recorded gap,
 docs/backlog.md). -/
 def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
   | .str s => .ok (.enumSeq i (strCharVals s))
+  | .bytes xs => .ok (.enumSeq i (bytesIntVals xs))
   | .tuple xs => .ok (.enumSeq i xs.toList)
   | .rangeV lo hi step => do return .enumSeq i (← rangeVals lo.toInt hi.toInt step.toInt)
   | .listV xs => .ok (.enumSeq i xs.toList)
@@ -4619,6 +4806,7 @@ def iterFrame (h : Heap) : RVal → Res GenFrame
      | Option.none => .unsupported danglingMsg)
   | .str _ =>
       .unsupported "iter() over a str is outside the tier (CPython's `str_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
+  | .bytes _ => .unsupported "iter() over bytes requires a bytes_iterator cursor (outside the current tier)"
   | .tuple _ =>
       .unsupported "iter() over a tuple is outside the tier (CPython's `tuple_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
   | .listV _ =>
@@ -5730,6 +5918,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         | .str t =>
                           Run.liftRes st
                             (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (strCharVals t)))
+                        | .bytes values =>
+                          Run.liftRes st
+                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (bytesIntVals values)))
                         | .tuple xs =>
                           Run.liftRes st
                             (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
@@ -5780,6 +5971,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        (match v with
                         | .str t =>
                           Run.liftRes st (setDedup st.world.heap fuel [] (strCharVals t)) ⤳ fun st es =>
+                          .ok { st with world :=
+                                  { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                            (.ref st.world.heap.size)
+                        | .bytes values =>
+                          Run.liftRes st (setDedup st.world.heap fuel [] (bytesIntVals values)) ⤳ fun st es =>
                           .ok { st with world :=
                                   { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
                             (.ref st.world.heap.size)
@@ -5897,12 +6093,15 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        (match start with
                         | .str _ =>
                           .exn st (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
+                        | .bytes _ =>
+                          Run.liftRes st (sumBytesStart st.world.heap v)
                         | start =>
                           (match v with
                            | .tuple xs => Run.liftRes st (sumFold start xs.toList)
                            | .ntuple _ _ xs => Run.liftRes st (sumFold start xs.toList)
                            | .listV xs => Run.liftRes st (sumFold start xs.toList)
                            | .str t => Run.liftRes st (sumFold start (strCharVals t))
+                           | .bytes values => Run.liftRes st (sumFold start (bytesIntVals values))
                            | .rangeV lo hi step =>
                              Run.liftRes st (do sumFold start (← rangeVals lo.toInt hi.toInt step.toInt))
                            | .ref a =>
@@ -5938,6 +6137,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | [v] =>
                        (match v with
                         | .str t => .ok st (.tuple (strCharVals t).toArray)
+                        | .bytes values => .ok st (.tuple (bytesIntVals values).toArray)
                         | .tuple xs => .ok st (.tuple xs)
                         | .ntuple _ _ xs => .ok st (.tuple xs)
                         | .listV xs => .ok st (.tuple xs)
@@ -5982,6 +6182,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | [v] =>
                        (match v with
                         | .str t => allocListRun st (strCharVals t).toArray
+                        | .bytes values => allocListRun st (bytesIntVals values).toArray
                         | .tuple xs => allocListRun st xs
                         | .ntuple _ _ xs => allocListRun st xs
                         | .listV xs => allocListRun st xs
@@ -6038,7 +6239,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
                            | Option.none => .unsupported danglingMsg)
-                        | .listV _ =>
+                        | .listV _ | .bytes _ =>
                           .unsupported "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
                         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
                      | vs => .exn st (.typeError s!"dict expected at most 1 argument, got {vs.length}"))
@@ -6505,6 +6706,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
     | .subscript v idx _ =>
         evalExpr m fuel st v ⤳ fun st c =>
         evalExpr m fuel st idx ⤳ fun st i =>
+        Run.liftRes st (checkBytesIndex m st.world.heap c i) ⤳ fun st _ =>
         Run.liftRes st (indexValH st.world.heap c i)
     | .dict keys values _ =>
         -- CPython `BUILD_MAP`: every key/value expression evaluates first
@@ -6704,6 +6906,7 @@ def evalCompareChain (m : Module) (fuel : Nat) (st : FrameState) (lhs : RVal)
     | [], [] => .ok st (.bool true)
     | op :: ops', e :: rest =>
         evalExpr m fuel st e ⤳ fun st rhs =>
+        Run.liftRes st (checkBytesCompare m st.world.heap op lhs rhs) ⤳ fun st _ =>
         Run.liftRes st (evalCompareOpH st.world.heap fuel op lhs rhs) ⤳ fun st b =>
         if b then evalCompareChain m fuel st rhs ops' rest
         else .ok st (.bool false)
@@ -6838,6 +7041,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         -- the live semantics here — strs are immutable, so unlike a heap
         -- list there is nothing for a cursor to observe (`strCharVals`).
         | .str s => execFor m fuel st target (strCharVals s) body.toList
+        | .bytes xs => execFor m fuel st target (bytesIntVals xs) body.toList
         -- pass 3: `for` over a range MATERIALIZES (immutable — the
         -- snapshot IS the live semantics, and re-iteration is exact
         -- because each `for` materializes afresh)
@@ -7391,6 +7595,8 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
                 execGen m fuel st (.forSeq target xs.toList body :: .block ss :: k')
             | .str sv =>
                 execGen m fuel st (.forSeq target (strCharVals sv) body :: .block ss :: k')
+            | .bytes xs =>
+                execGen m fuel st (.forSeq target (bytesIntVals xs) body :: .block ss :: k')
             | .rangeV lo hi step =>
                 Run.liftRes st (rangeVals lo.toInt hi.toInt step.toInt) ⤳ fun st xs =>
                 execGen m fuel st (.forSeq target xs body :: .block ss :: k')

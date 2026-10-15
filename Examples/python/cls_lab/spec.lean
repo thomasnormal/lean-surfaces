@@ -164,3 +164,8 @@ first target cannot be split without naming the RHS). -/
 #py_check cls_lab.chain_rebind_receiver(4) raises .attributeError
 
 #guard callFunction cls_lab "chain_attr_first" #[.int 5] 4096 matches .unsupported _
+
+#py_check cls_lab.bytes_index_instance() raises
+  (.typeError "byte indices must be integers or slices, not Cell")
+#py_check cls_lab.bytes_contains_instance() raises
+  (.typeError "a bytes-like object is required, not 'Cell'")

@@ -594,6 +594,7 @@ def interpUnfolds : List Name :=
    ``evalUnaryOp, ``evalUnaryOpH,
    ``lenVal, ``lenValH, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
    ``indexValH,
+   ``checkBytesIndex, ``checkBytesCompare, ``bytesOperandCheck,
    ``hashableKey, ``hashableKeyList, ``keyEq, ``keyEqList, ``RVal.unhashName,
    ``keyHasInstanceRef, ``keyHasInstanceRefList, ``keyRefusal,
    ``dictFind, ``dictStore, ``dictBuild, ``heapIndex, ``heapStore, ``heapLen,

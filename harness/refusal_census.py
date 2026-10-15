@@ -833,7 +833,7 @@ print(1.5)
 """, "MATCH", "binary64 float literal and shortest decimal rendering")
 w("const.bytes", """
 print(len(b"ab"))
-""", "REFUSE", "no bytes type")
+""", "MATCH", "immutable bytes literals and sequence operations")
 w("const.complex", """
 print(1j)
 """, "REFUSE", "")
@@ -912,6 +912,11 @@ w("op.Or", "print(0 or 2)\n", "MATCH", "")
 SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
 
 WHITELIST_CLASS = {
+    "bytes_lab::numeric_int_still_loud": "bytes.numeric-parsing",
+    "bytes_lab::numeric_float_still_loud": "bytes.numeric-parsing",
+    "bytes_lab::iterator_still_loud": "bytes.iterator-cursor",
+    "bytes_lab::formatting_still_loud": "bytes.percent-formatting",
+    "bytes_lab::dict_still_loud": "dict.pair-iterable",
     "float_lab::floor_pair": "float.nan-payload",
     "float_lab::count_head": "iter.count-numeric-frame",
     "float_lab::constructor": "float.text-nan-or-unicode-repr",

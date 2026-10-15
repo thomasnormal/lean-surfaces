@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3121 | 2792 | 0 | 329 |
+| 3174 | 2840 | 0 | 334 |
 
-Of the 2792 rows the model decides, 2792 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2840 rows the model decides, 2840 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3121 | 2718 | 0 | 403 |
+| 3174 | 2766 | 0 | 408 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-142 witnesses: 122 MATCH, 20 REFUSE.
+142 witnesses: 123 MATCH, 19 REFUSE.
 
 ### `stmt`
 
@@ -160,7 +160,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | witness | verdict | refusal message / note |
 |---|---|---|
 | `float` | MATCH | binary64 float literal and shortest decimal rendering |
-| `bytes` | REFUSE | unsupported expression 'Constant:bytes' |
+| `bytes` | MATCH | immutable bytes literals and sequence operations |
 | `complex` | REFUSE | unsupported expression 'Constant:complex' |
 | `ellipsis` | MATCH | Ellipsis is a truthy singleton, also available through the builtin name |
 

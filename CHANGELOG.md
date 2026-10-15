@@ -12,6 +12,15 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- Immutable bytes literals and literal defaults now preserve every octet through
+  extraction and the proof boundary. Both interpreters support bytes indexing,
+  slicing, concatenation, repetition, comparisons, membership, rendering,
+  unpacking, iteration in loops/comprehensions, and sequence consumers. Bytes
+  numeric parsing, explicit iterator cursors, decoding, methods, and bytes
+  percent formatting remain loud unfinished work.
+
 ## [0.1.11] — 2026-10-12
 
 ### Added

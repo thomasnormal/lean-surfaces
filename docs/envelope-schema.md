@@ -100,7 +100,10 @@ as `USub(Constant 5)`) | `{"type":"bool","value":true}` | `{"type":"str","value"
 Float constants use `{"type":"float","bits":"4591870180066957722"}`:
 the decimal string is the exact unsigned 64-bit binary64 representation,
 not a decimal approximation. Ingestion rejects words outside `[0, 2^64)`.
-Bytes and complex constants remain `Unsupported` (`"Constant:bytes"` etc.).
+Bytes constants use `{"type":"bytes","value":[0,128,255]}`: an array of
+integer octets in `[0, 256)`, with no Unicode conversion. Ingestion rejects
+negative or out-of-range octets. Complex constants remain `Unsupported`
+(`"Constant:complex"`).
 
 ## Worked example
 

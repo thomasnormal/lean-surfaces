@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/cls_lab/cls_lab.py",
-  "source_sha256": "5d80ba88e262575a8a058dc2f70165654bb1c67a97d939e2a243e347efa15e83",
+  "source_sha256": "7f1c12b8c63bd2c471085fda1a3be4c02914a16abdec3955f8d2037c98fca9a5",
   "module": {
     "kind": "Module",
     "body": [
@@ -7957,6 +7957,179 @@
                 "end_col_offset": 12
               },
               "id": "m"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 314,
+          "col_offset": 0,
+          "end_lineno": 315,
+          "end_col_offset": 24
+        },
+        "name": "bytes_index_instance",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 315,
+              "col_offset": 4,
+              "end_lineno": 315,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 315,
+                "col_offset": 11,
+                "end_lineno": 315,
+                "end_col_offset": 24
+              },
+              "value": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 315,
+                  "col_offset": 11,
+                  "end_lineno": 315,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "type": "bytes",
+                  "value": [
+                    97
+                  ]
+                }
+              },
+              "index": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 315,
+                  "col_offset": 16,
+                  "end_lineno": 315,
+                  "end_col_offset": 23
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 315,
+                    "col_offset": 16,
+                    "end_lineno": 315,
+                    "end_col_offset": 20
+                  },
+                  "id": "Cell"
+                },
+                "args": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 315,
+                      "col_offset": 21,
+                      "end_lineno": 315,
+                      "end_col_offset": 22
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 318,
+          "col_offset": 0,
+          "end_lineno": 319,
+          "end_col_offset": 26
+        },
+        "name": "bytes_contains_instance",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 319,
+              "col_offset": 4,
+              "end_lineno": 319,
+              "end_col_offset": 26
+            },
+            "value": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 319,
+                "col_offset": 11,
+                "end_lineno": 319,
+                "end_col_offset": 26
+              },
+              "left": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 319,
+                  "col_offset": 11,
+                  "end_lineno": 319,
+                  "end_col_offset": 18
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 319,
+                    "col_offset": 11,
+                    "end_lineno": 319,
+                    "end_col_offset": 15
+                  },
+                  "id": "Cell"
+                },
+                "args": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 319,
+                      "col_offset": 16,
+                      "end_lineno": 319,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              },
+              "ops": [
+                "In"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 319,
+                    "col_offset": 22,
+                    "end_lineno": 319,
+                    "end_col_offset": 26
+                  },
+                  "value": {
+                    "type": "bytes",
+                    "value": [
+                      97
+                    ]
+                  }
+                }
+              ]
             }
           }
         ]

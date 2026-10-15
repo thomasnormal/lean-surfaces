@@ -57,7 +57,8 @@ deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Literal constants (schema `Constant` payload). Ints are arbitrary precision
 (JSON carries them as decimal strings). Float constants carry their exact
-binary64 representation; bytes and complex constants remain unsupported. -/
+binary64 representation. Bytes carry their immutable octets; complex
+constants remain unsupported. -/
 inductive Const where
   | none
   | ellipsis
@@ -65,6 +66,7 @@ inductive Const where
   | int (n : Int)
   | float (value : Float64)
   | str (s : String)
+  | bytes (xs : Array UInt8)
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- A function parameter: schema `param` = `{"arg": …, "span": …}`, plus an
@@ -579,6 +581,7 @@ inductive Val where
   | int (n : Int)
   | float (value : Float64)
   | str (s : String)
+  | bytes (xs : Array UInt8)
   /-- A Python `range` value at the public call boundary. -/
   | range (lo hi step : RangeBound)
   | list (xs : Array Val)

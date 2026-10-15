@@ -228,6 +228,9 @@ partial def valJson : Val → String
   | .int n => "{\"t\":\"int\",\"v\":" ++ jsonStr (toString n) ++ "}"
   | .float value => "{\"t\":\"float\",\"bits\":" ++ jsonStr (toString value.bits.toNat) ++ "}"
   | .str s => "{\"t\":\"str\",\"v\":" ++ jsonStr s ++ "}"
+  | .bytes values =>
+      "{\"t\":\"bytes\",\"v\":[" ++
+        ",".intercalate (values.toList.map (fun byte => toString byte.toNat)) ++ "]}"
   | .range lo hi step =>
       "{\"t\":\"range\",\"lo\":" ++ jsonStr (toString lo.toInt) ++
         ",\"hi\":" ++ jsonStr (toString hi.toInt) ++
@@ -353,6 +356,12 @@ partial def valOfJson (j : Lean.Json) : Except String Val := do
     | .error _ =>  -- accept a plain JSON number too (harness convenience)
       return .int (← v.getInt?)
   | "str" => return .str (← (← j.getObjVal? "v").getStr?)
+  | "bytes" =>
+    let elts ← (← j.getObjVal? "v").getArr?
+    return .bytes (← elts.mapM fun item => do
+      let number ← item.getNat?
+      if number < 256 then pure (UInt8.ofNat number)
+      else throw s!"byte value {number} is outside 0..255")
   | "float" =>
     let bits ← (← j.getObjVal? "bits").getStr?
     match bits.toNat? with

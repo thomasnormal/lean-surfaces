@@ -94,6 +94,13 @@ arithmetic. A second `evalBinOp` would be a second thing to keep true. -/
 
 def binOpM (op : BinOp) (a b : RVal) : SemF RVal := liftRes (evalBinOp op a b)
 
+def checkBytesIndexM (program : Module) (heap : Heap) (container index : RVal) : SemF Unit :=
+  liftRes (checkBytesIndex program heap container index)
+
+def checkBytesCompareM (program : Module) (heap : Heap) (operation : CmpOp)
+    (left right : RVal) : SemF Unit :=
+  liftRes (checkBytesCompare program heap operation left right)
+
 def unaryOpM (op : UnaryOp) (v : RVal) : SemF RVal := do
   liftRes (evalUnaryOpH (← frameHeap) op v)
 

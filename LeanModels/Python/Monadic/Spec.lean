@@ -135,6 +135,20 @@ does not leak into the proof layer. -/
     ⦃⇓ r => fun st => ⌜evalBinOp op a b = .ok r ∧ st = st0⌝⦄ := by
   mvcgen [binOpM, liftRes]; all_goals grind
 
+@[spec] theorem checkBytesIndexM_spec (program : Module) (heap : Heap)
+    (container index : RVal) (initial : FrameState)
+    (checked : checkBytesIndex program heap container index = .ok ()) :
+    ⦃fun state => ⌜state = initial⌝⦄ checkBytesIndexM program heap container index
+    ⦃⇓ _ => fun state => ⌜state = initial⌝⦄ := by
+  mvcgen [checkBytesIndexM, liftRes]; all_goals grind
+
+@[spec] theorem checkBytesCompareM_spec (program : Module) (heap : Heap)
+    (operation : CmpOp) (left right : RVal) (initial : FrameState)
+    (checked : checkBytesCompare program heap operation left right = .ok ()) :
+    ⦃fun state => ⌜state = initial⌝⦄ checkBytesCompareM program heap operation left right
+    ⦃⇓ _ => fun state => ⌜state = initial⌝⦄ := by
+  mvcgen [checkBytesCompareM, liftRes]; all_goals grind
+
 @[spec] theorem unaryOpM_spec (op : UnaryOp) (v : RVal) (st0 : FrameState)
     (h : ∃ r, evalUnaryOpH st0.world.heap op v = .ok r) :
     ⦃fun st => ⌜st = st0⌝⦄ unaryOpM op v
@@ -276,7 +290,7 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
     simp [indexValH, heapIndex, hd, hrow, hashableKey]
   have hassign : assignToH w.heap e (.name "row" sp) (.tuple xs)
       = .ok (Env.set e "row" (.tuple xs)) := by simp [assignToH, assignTo]
-  mvcgen [execOpen, evalOpen]
+  mvcgen [execOpen, evalOpen] <;> simp_all [checkBytesIndex]
 
 #print axioms refuse_spec
 #print axioms envGet_spec
@@ -287,6 +301,8 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
 #print axioms heapPush_spec
 #print axioms emit_spec
 #print axioms binOpM_spec
+#print axioms checkBytesIndexM_spec
+#print axioms checkBytesCompareM_spec
 #print axioms unaryOpM_spec
 #print axioms indexM_spec
 #print axioms sliceM_spec

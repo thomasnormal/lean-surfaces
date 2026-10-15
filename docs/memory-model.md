@@ -5551,6 +5551,37 @@ ordinary nonnumeric/noniterable uses have the same `TypeError` as CPython.
 and integer-identity proofs, alongside differential and script checks.
 No axioms or theorem statements are weakened.
 
+## Immutable bytes (2026-10-14)
+
+Bytes constants and literal defaults carry exact octets as `Array UInt8` in
+`Const`, `Val`, and `RVal`. They are immutable immediate values: no heap
+allocation, identity guess, Unicode conversion, or boundary snapshot is needed.
+Thaw/freeze roundtrips and the existing frame/fuel/clock theorem statements
+remain unchanged. Dictionary and set keys compare octets, including recursively
+inside tuple keys, and have their own `KeyNF.bytes` normal form.
+
+Both interpreters implement length/truthiness, integer indexing (including
+negative indices and Boolean indices), slicing, concatenation/repetition,
+lexicographic comparison, integer and bytes-substring membership, unpacking,
+loops, comprehensions, enumeration, and the admitted sequence consumers.
+Rendering follows CPython's bytes quote choice and ASCII/control/high-octet
+escapes; `str(bytes)` is its bytes repr, not decoding. `print`, `repr`, `ascii`,
+f-strings, and string percent conversions share those primitives.
+`sum(iterable, b"")` validates that the input is iterable before rejecting
+the bytes start, without consuming a generator or executing its body.
+Invalid instance indices and membership operands resolve the actual class
+name from the module before entering the module-free scalar workers. Type
+names in bytes errors use CPython's 200-byte index/repetition limit and
+100-byte membership/concatenation limit, including the replacement character
+when a UTF-8 prefix ends inside a character.
+
+Numeric parsing from bytes, explicit `bytes_iterator` cursors, bytes methods,
+decoding, and bytes percent formatting are still unfinished and refuse loudly;
+they never manufacture a numeric-conversion or non-iterable error for a valid
+bytes program. `Examples/python/bytes_lab` and the whole-file bytes fixture
+exercise the native and proof interpreters against CPython 3.9, including
+boundary values, high octets, error paths, consumers, and dictionary keys.
+
 ## Proof-layer covenants (restated)
 
 1. `fuelMono` over the `Run`-typed mutual block; public mono derived

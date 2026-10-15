@@ -10,7 +10,7 @@ tractable.
 
 ## Python release status
 
-The Python prerelease is **v0.1.11 (2026-10-12)**. Its Git tag identifies the
+The Python prerelease is **v0.1.12 (2026-10-15)**. Its Git tag identifies the
 release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
 record source releases whose local Git tags remain unpublished.
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
@@ -30,6 +30,12 @@ the 640-digit admission across `str`, `print`, f-strings, container and range
 rendering, and bare `%s`/`%r`/`%d`; larger magnitudes refuse before conversion.
 Range construction retains Boolean fields for faithful rendering, while
 numerical consumers use their integer projections.
+Immutable bytes literals and literal defaults preserve every octet through
+extraction and the proof boundary. Indexing, slicing, concatenation, repetition,
+comparisons, membership, rendering, unpacking, iteration, and sequence
+consumers are modelled; numeric parsing, decoding, methods, explicit iterator
+cursors, bytes percent formatting, and `dict(bytes)` pair construction remain
+loud.
 Module-scope annotated assignments admit simple targets with scalar literal
 annotations, including forward-reference strings; nonliteral annotations and
 explicit annotation-table bindings remain loud.
@@ -67,10 +73,10 @@ non-finite division, float keys, and identity-dependent NaN operations remain
 loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
 downstream exhaustive matches must handle the new value/operator/error
 constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
-The executable differential suite has 3,108 cases: 2,779 agree with CPython and
-329 refuse loudly (**89.4% complete**). The narrower proof interpreter agrees on
-2,705 cases and refuses 403 (**87.0% complete**); neither run has a mismatch in
-the recorded suite. The grammar census has 142 witnesses, with 118 MATCH and 24
+The executable differential suite has 3,174 cases: 2,840 agree with CPython and
+334 refuse loudly (**89.5% complete**). The narrower proof interpreter agrees on
+2,766 cases and refuses 408 (**87.2% complete**); neither run has a mismatch in
+the recorded suite. The grammar census has 142 witnesses, with 123 MATCH and 19
 REFUSE. These are measured
 examples, not a claim of complete language support; remaining gaps stay in scope.
 See [the measured coverage](docs/python-coverage.md) and

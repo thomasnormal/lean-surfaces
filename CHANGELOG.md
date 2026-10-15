@@ -12,14 +12,20 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.12] — 2026-10-15
+
 ### Added
 
 - Immutable bytes literals and literal defaults now preserve every octet through
   extraction and the proof boundary. Both interpreters support bytes indexing,
   slicing, concatenation, repetition, comparisons, membership, rendering,
   unpacking, iteration in loops/comprehensions, and sequence consumers. Bytes
-  numeric parsing, explicit iterator cursors, decoding, methods, and bytes
-  percent formatting remain loud unfinished work.
+  numeric parsing, explicit iterator cursors, decoding, methods, bytes percent
+  formatting, and `dict(bytes)` pair construction remain loud unfinished work.
+  The CPython 3.9 differential suite now has **2,840 / 3,174 rows = 89.5%
+  complete** natively and **2,766 / 3,174 = 87.2% complete** in the proof
+  interpreter, with **100% agreement among decided rows** and zero failures;
+  grammar coverage is **123 / 142 = 86.6% complete**.
 
 ## [0.1.11] — 2026-10-12
 

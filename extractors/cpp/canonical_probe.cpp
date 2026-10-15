@@ -13,6 +13,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/raw_ostream.h"
+#include "dump_reachability.h"
 
 #include <optional>
 #include <unordered_set>
@@ -27,6 +28,25 @@
 #endif
 
 namespace {
+
+class ObservedDumpStream : public llvm::raw_ostream {
+  llvm::raw_ostream &destination;
+  leancpp::DumpReachability &reachability;
+  uint64_t position = 0;
+
+  void write_impl(const char *data, size_t size) override {
+    destination.write(data, size);
+    reachability.consume(std::string_view(data, size));
+    position += size;
+  }
+
+  uint64_t current_pos() const override { return position; }
+
+public:
+  ObservedDumpStream(llvm::raw_ostream &destination,
+                     leancpp::DumpReachability &reachability)
+      : llvm::raw_ostream(true), destination(destination), reachability(reachability) {}
+};
 
 std::string pointerId(const void *pointer) {
   return "0x" + llvm::utohexstr(reinterpret_cast<uintptr_t>(pointer), true);
@@ -371,7 +391,8 @@ public:
     return true;
   }
 
-  void emitBinaryExpression(const clang::BinaryOperator *expression) {
+  void emitBinaryExpression(const clang::BinaryOperator *expression,
+                            const std::unordered_set<std::string> &visibleExpressions) {
     llvm::json::Object row{
         {"expression_api", "Clang::BinaryOperator typed operand projection v2"},
         {"occurrence", pointerId(expression)},
@@ -397,13 +418,22 @@ public:
         supported = false;
       operands.push_back(std::move(operandRow));
     }
-    if (!result || !supported || !structuredReferencesWitnessed(*result, declarationIds)) {
+    supported = result && supported && structuredReferencesWitnessed(*result, declarationIds);
+    if (result)
+      row["result"] = std::move(*result);
+    row["operands"] = std::move(operands);
+    if (!visibleExpressions.count(pointerId(expression))) {
+      row["dump_visible"] = false;
+      row["projection_supported"] = supported;
+      row["reason"] = "expression occurrence is outside JSON AST dump";
+      expressionRefusals.push_back(std::move(row));
+      return;
+    }
+    if (!supported) {
       row["reason"] = "unrepresented result or operand type";
       expressionRefusals.push_back(std::move(row));
       return;
     }
-    row["result"] = std::move(*result);
-    row["operands"] = std::move(operands);
     expressionEvidence.push_back(std::move(row));
   }
 
@@ -428,9 +458,9 @@ public:
     }
   }
 
-  void buildExpressionEvidence() {
+  void buildExpressionEvidence(const std::unordered_set<std::string> &visibleExpressions) {
     for (const clang::BinaryOperator *expression : binaryExpressions)
-      emitBinaryExpression(expression);
+      emitBinaryExpression(expression, visibleExpressions);
   }
 };
 
@@ -452,7 +482,18 @@ public:
       return;
     }
     visitor.buildTypeEvidence(context);
-    visitor.buildExpressionEvidence();
+    llvm::outs() << "{\"ast\":";
+    leancpp::DumpReachability reachability;
+    ObservedDumpStream dumpStream(llvm::outs(), reachability);
+    context.getTranslationUnitDecl()->dump(dumpStream, false, clang::ADOF_JSON);
+    dumpStream.flush();
+    if (!reachability.complete()) {
+      unsigned diagnostic = compiler.getDiagnostics().getCustomDiagID(
+          clang::DiagnosticsEngine::Error, "canonical probe dump observation failed");
+      compiler.getDiagnostics().Report(diagnostic);
+      return;
+    }
+    visitor.buildExpressionEvidence(reachability.expressionIds());
     llvm::json::Object metadata{
         {"schema_version", "cpp-canonical-probe-0.3"},
         {"compiled_frontend", CLANG_VERSION_STRING},
@@ -465,10 +506,8 @@ public:
         {"expression_evidence", std::move(visitor.expressionEvidence)},
         {"expression_refusals", std::move(visitor.expressionRefusals)},
         {"declarations", std::move(visitor.records)}};
-    llvm::outs() << "{\"metadata\":" << llvm::formatv("{0}", llvm::json::Value(std::move(metadata)))
-                 << ",\"ast\":";
-    context.getTranslationUnitDecl()->dump(llvm::outs(), false, clang::ADOF_JSON);
-    llvm::outs() << "}\n";
+    llvm::outs() << ",\"metadata\":" << llvm::formatv("{0}", llvm::json::Value(std::move(metadata)))
+                 << "}\n";
   }
 };
 

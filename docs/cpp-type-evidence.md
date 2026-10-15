@@ -38,16 +38,20 @@ The same probe now emits a separate `expression_evidence` supplement for
 builtin `BinaryOperator` nodes. Each row carries the AST occurrence handle,
 operator spelling, structured result type, and the two ordered direct-child
 handles with both their pre-conversion source types and Clang's converted
-types. Lean checks the occurrence kind, opcode, child order and child kinds
-against the retained AST, and checks every record or enumeration reference
-against the declaration ledger. For builtin integral rows, the explicit
-`TargetProfile` bridge can check promotions and usual arithmetic conversion
-types; this is a type check, not value evaluation. Unsupported operand or
-result type families remain in `expression_refusals`; no `qualType` text is
-used and no overloaded operator, conversion or executable expression is
-admitted by this supplement. The separate [typed callable bridge](cpp-callable-functions.md)
-consumes these rows only for its direct-return body profile; it performs no
-body execution and leaves `Translation.execute` refused.
+types. The probe observes the JSON dump as it is emitted from the same
+`ASTContext`. Its visitor can see more Clang expression occurrences than
+`-ast-dump=json` serializes (for example, an array-bound expression), so an
+occurrence absent from that dump is a refusal, not an evidence row. Lean checks
+the occurrence kind, opcode, child order and child kinds against the retained
+AST, and checks every record or enumeration reference against the declaration
+ledger. For builtin integral rows, the explicit `TargetProfile` bridge can
+check promotions and usual arithmetic conversion types; this is a type check,
+not value evaluation. Unsupported operand or result type families remain in
+`expression_refusals`; no `qualType` text is used and no overloaded operator,
+conversion or executable expression is admitted by this supplement. The
+separate [typed callable bridge](cpp-callable-functions.md) consumes these
+rows only for its direct-return body profile; it performs no body execution
+and leaves `Translation.execute` refused.
 
 ```sh
 lake build LeanModels.Cpp.TypeEvidenceTests

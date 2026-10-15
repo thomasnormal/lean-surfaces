@@ -124,6 +124,10 @@ short narrow(short left, short right) { return left + right; }
 int run() { int value = add(1, 2); return value * 3; }
 """
 
+OUT_OF_DUMP_EXPRESSION_SOURCE = """int buffer[1 + 1];
+int identity(int value) { return value; }
+"""
+
 POINTER_ID = re.compile(r"0x[0-9a-fA-F]+\Z")
 DECLARATION_KINDS = {
     "NamespaceDecl", "CXXRecordDecl", "CXXMethodDecl", "CXXConstructorDecl",
@@ -634,6 +638,18 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(len(metadata["expression_refusals"]), 1)
         self.assertEqual(metadata["expression_refusals"][0]["operator"], "+")
         self.assertIn("unrepresented", metadata["expression_refusals"][0]["reason"])
+
+    def test_binary_expression_outside_dump_is_refused_explicitly(self):
+        self.source.write_text(OUT_OF_DUMP_EXPRESSION_SOURCE, encoding="utf-8")
+        metadata = self.probe()["metadata"]
+        self.assertEqual(metadata["expression_evidence"], [])
+        self.assertEqual(len(metadata["expression_refusals"]), 1)
+        refusal = metadata["expression_refusals"][0]
+        self.assertEqual(refusal["operator"], "+")
+        self.assertFalse(refusal["dump_visible"])
+        self.assertTrue(refusal["projection_supported"])
+        self.assertEqual(refusal["reason"],
+                         "expression occurrence is outside JSON AST dump")
 
     def test_same_process_joins_preserve_nonempty_coverage_and_raw_gaps(self):
         probe = self.probe()

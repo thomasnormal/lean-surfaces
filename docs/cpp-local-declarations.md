@@ -141,15 +141,16 @@ they do not discharge node shape, conversions, declaration scope or type.
 Full remaining kind sets are retained rather than ranking only the first wall.
 
 A separate recovered 34,496,558-byte XML schema-0.3 probe has 764 expression
-rows, eight of whose occurrence handles are absent from the raw AST. The current
-global expression-evidence validator refuses that entire callable query prefix.
-A fresh runtime check validates 2,015 type rows, then reaches this same refusal
-before selecting any of the 442 ordinary occurrences, dependencies included.
-The compiler control `int buffer[1 + 1]; int identity(int value) { return value; }`
-reproduces the same missing-occurrence prefix refusal with one ordinary function
-and two validated type rows. Its body needs no local-declaration support; the
-array-bound expression is present in the supplement but absent from the dump.
-This is a frontend/join diagnostic, not execution of that control program.
+rows, eight of whose occurrence handles are absent from the raw AST. It remains
+a useful negative control: the strict global expression-evidence validator must
+refuse that unchanged artifact rather than silently repair it. The live probe
+now observes the same-process JSON dump before publishing rows, so fresh runs
+move such occurrences to the `expression_refusals` ledger and validate only
+rows with raw AST witnesses. The compiler control
+`int buffer[1 + 1]; int identity(int value) { return value; }` produces one
+explicit out-of-dump refusal, with no fabricated evidence row; its body needs no
+local-declaration support. This is a frontend/join diagnostic, not execution of
+that control program.
 The JSON full-probe census has a recorded 300-second timeout. Neither result
 may be replaced by agreement on a small projection or counted as execution.
 Automatic declarations are a necessary language milestone, not a promised

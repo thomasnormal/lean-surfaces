@@ -60,6 +60,7 @@ export LEANCPP_PROBE_LIBRARY=/outside/the/repo/canonical_probe.so
   -fsyntax-only -Xclang -load -Xclang "$LEANCPP_PROBE_LIBRARY" \
   -Xclang -plugin -Xclang leancpp-canonical-probe original.cpp > probe.json
 python3 extractors/cpp/test_canonical_probe.py
+python3 extractors/cpp/test_dump_reachability.py
 ```
 
 The plugin's host build language is separate from the subject's C++23 profile.
@@ -241,11 +242,14 @@ The `expression_evidence_api`/`expression_evidence` supplement carries only
 Clang builtin `BinaryOperator` nodes, including its `CompoundAssignOperator`
 subclass: the operator, structured result type and two ordered direct-child
 handles with source/converted types. The row's `kind` identifies the base
-API family; the raw AST retains the exact subclass kind. The Lean bridge
-checks integral promotions and usual arithmetic conversion types when the row
-is builtin integral. `expression_refusals` records rows
-whose operand or result type is outside that vocabulary. This is typed frontend
-evidence, not expression evaluation or executable admission.
+API family; the raw AST retains the exact subclass kind. The probe observes
+the JSON dump while emitting it from the same `ASTContext`; a visited binary
+expression whose handle is absent from that dump is retained in
+`expression_refusals` with `dump_visible: false`, rather than published as
+unverifiable evidence. Other refusals record unsupported operand or result
+types. The Lean bridge checks integral promotions and usual arithmetic
+conversion types when an admitted row is builtin integral. This is typed
+frontend evidence, not expression evaluation or executable admission.
 
 - `id`, `canonical`, `previous`, `semantic_context` and `lexical_context` are
   exact session-local frontend handles, not entity identifiers. Context IDs
@@ -298,6 +302,8 @@ evidence, not expression evaluation or executable admission.
   the occurrence kind/opcode, direct-child order/kinds and structured type
   references must agree with the retained AST and declaration ledger. It does
   not cover overloaded operators, conversions, calls or expression execution.
+  A visitor occurrence absent from the same-process JSON dump is retained only
+  in `expression_refusals` (`dump_visible: false`), never as an evidence row.
 
 The visitor can miss declarations that the stock dumper emits as nested type
 references. Canonical/predecessor/context/represented-class targets can also be

@@ -517,5 +517,25 @@
   {
     "file": "harness/scripts/bytes_contains_classname.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_string_noniterable.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_string_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_bytes_instance.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_start_order.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/sum_string_start.py",
+    "expect": "match"
   }
 ]

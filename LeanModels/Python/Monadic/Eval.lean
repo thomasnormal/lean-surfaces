@@ -430,9 +430,11 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | some (v, start) =>
       match start with
       | .str _ =>
-          raisePy (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
+          do liftRes (sumRejectedStart m (← frameHeap) v
+            "sum() can't sum strings [use ''.join(seq) instead]")
       | .bytes _ =>
-          do liftRes (sumBytesStart (← frameHeap) v)
+          do liftRes (sumRejectedStart m (← frameHeap) v
+            "sum() can't sum bytes [use b''.join(seq) instead]")
       | start => do
           let xs ← iterValues K m "sum" true v
           liftRes (sumFold start xs)

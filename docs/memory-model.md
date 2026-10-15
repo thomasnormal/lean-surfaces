@@ -3157,8 +3157,11 @@ each construct differential, refusals loud):
   remain loud; strings use the current string repetition tier.
 * **`sum(iterable[, start])`**: the element fold IS `evalBinOp .add`
   (so int and tuple sums are exactly Python's `+`, mixed types its
-  faithful `TypeError`); a str `start` is CPython's special
-  `sum() can't sum strings` `TypeError`; a generator argument DRAINS
+  faithful `TypeError`); a str or bytes `start` is CPython's special
+  `sum() can't sum strings` / `sum() can't sum bytes` `TypeError`, but only
+  AFTER iterable validation. This validation does not request any element:
+  a non-iterable's error wins, and a rejected start leaves a generator
+  untouched. A generator argument with an admitted start DRAINS
   (guarded on `moduleGenFree` like `max`/`min`, keeping `sum` in the
   heap-free fragment).
 * **`tuple(iterable)`**: str/tuple/namedtuple(class-erased)/boundary

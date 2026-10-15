@@ -2675,21 +2675,6 @@ def dictBuild (h : Heap) (acc : List (RVal × RVal)) : List (RVal × RVal) → R
     if hashableKey k then dictBuild h (dictStore acc k v).1 rest
     else keyRefusal h k
 
-def sumBytesStart (heap : Heap) (iterable : RVal) : Res RVal :=
-  let rejected := Res.exn
-    (.typeError "sum() can't sum bytes [use b''.join(seq) instead]")
-  match iterable with
-  | .str _ | .bytes _ | .tuple _ | .ntuple .. | .listV _ | .rangeV .. => rejected
-  | .ref address =>
-    match Heap.get? heap address with
-    | some (.list _) | some (.dict ..) | some (.pyset _) | some (.generator ..) => rejected
-    | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
-    | some (.instance ..) =>
-      .unsupported "sum() iterable validation for instances with a bytes start is outside the tier"
-    | some (.cell _) => .unsupported cellInternal
-    | none => .unsupported danglingMsg
-  | value => .exn (.typeError s!"'{value.typeName}' object is not iterable")
-
 def dictPairValues (h : Heap) : RVal → Option (List RVal)
   | .tuple xs => some xs.toList
   | .ntuple _ _ xs => some xs.toList
@@ -3684,6 +3669,26 @@ violation (ids are minted by `findClass`) and every caller reports it
 loudly (`danglingMsg` style). -/
 def getClass? (m : Module) (i : ClassId) : Option ClassDefn :=
   classAt m.classes.toList i
+
+/-- CPython obtains the iterator before rejecting a string or bytes start,
+without requesting an element. In-tier instances have no iteration protocol. -/
+def sumRejectedStart (program : Module) (heap : Heap) (iterable : RVal)
+    (message : String) : Res RVal :=
+  let rejected := Res.exn (.typeError message)
+  match iterable with
+  | .str _ | .bytes _ | .tuple _ | .ntuple .. | .listV _ | .rangeV .. => rejected
+  | .ref address =>
+    match Heap.get? heap address with
+    | some (.list _) | some (.dict ..) | some (.pyset _) | some (.generator ..) => rejected
+    | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+    | some (.instance classId _) =>
+      match getClass? program classId with
+      | some classDef =>
+        .exn (.typeError s!"'{typeNamePrefix classDef.name 200}' object is not iterable")
+      | none => .unsupported "sum() iterable has an unknown instance class id"
+    | some (.cell _) => .unsupported cellInternal
+    | none => .unsupported danglingMsg
+  | value => .exn (.typeError s!"'{value.typeName}' object is not iterable")
 
 def bytesOperandCheck (program : Module) (heap : Heap) (operand : RVal)
     (formatName : String → String) : Res Unit :=
@@ -6092,9 +6097,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | some (v, start) =>
                        (match start with
                         | .str _ =>
-                          .exn st (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
+                          Run.liftRes st (sumRejectedStart m st.world.heap v
+                            "sum() can't sum strings [use ''.join(seq) instead]")
                         | .bytes _ =>
-                          Run.liftRes st (sumBytesStart st.world.heap v)
+                          Run.liftRes st (sumRejectedStart m st.world.heap v
+                            "sum() can't sum bytes [use b''.join(seq) instead]")
                         | start =>
                           (match v with
                            | .tuple xs => Run.liftRes st (sumFold start xs.toList)

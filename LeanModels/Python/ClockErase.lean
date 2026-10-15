@@ -2105,6 +2105,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         obtain ⟨v, start⟩ := pr
                         try dsimp only
                         cases start <;> try exact .exn hs2 _
+                        case str value => exact .liftRes hs2 _
                         case bytes values => exact .liftRes hs2 _
                         all_goals
                           cases v <;> try exact .liftRes hs2 _

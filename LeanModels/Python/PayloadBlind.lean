@@ -1079,15 +1079,16 @@ theorem dictBuild_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTw
       obtain ⟨k, v⟩ := kv
       simp only [dictBuild, keyRefusal_swapAt hslot htwin, ih]
 
-theorem sumBytesStart_swapAt (hslot : Heap.get? h pa = some o₀)
-    (htwin : PayloadTwin o₀ o) (iterable : RVal) :
-    sumBytesStart (Heap.swapAt h pa o) iterable = sumBytesStart h iterable := by
+theorem sumRejectedStart_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (program : Module) (iterable : RVal) (message : String) :
+    sumRejectedStart program (Heap.swapAt h pa o) iterable message =
+      sumRejectedStart program h iterable message := by
   cases iterable <;> try rfl
   case ref address =>
     rcases Heap.get?_swapAt_twin (b := address) hslot htwin with
       equality | ⟨_, _, _, _, _, original, swapped⟩
-    · simp [sumBytesStart, equality]
-    · simp [sumBytesStart, original, swapped]
+    · simp [sumRejectedStart, equality]
+    · simp [sumRejectedStart, original, swapped]
 
 theorem bytesOperandCheck_swapAt (hslot : Heap.get? h pa = some o₀)
     (htwin : PayloadTwin o₀ o) (program : Module) (operand : RVal)
@@ -3618,10 +3619,9 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     | some vstart =>
                                         obtain ⟨v, start⟩ := vstart
                                         cases start with
-                                        | str _ => exact PBF.exn hs1 _
-                                        | bytes _ =>
+                                        | str _ | bytes _ =>
                                             simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                              sumBytesStart_swapAt hs1 htwin]
+                                              sumRejectedStart_swapAt hs1 htwin]
                                             exact PBF.liftRes hs1 _
                                         | _ =>
                                             simp only []

@@ -12,6 +12,13 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Fixed
+
+- `sum(iterable, start)` now validates the iterable before rejecting a string
+  start, matching CPython's error order for non-iterables. String and bytes
+  start validation shares one worker, reports default-protocol instance names
+  faithfully, and never consumes generators before rejecting the start.
+
 ## [0.1.12] — 2026-10-15
 
 ### Added

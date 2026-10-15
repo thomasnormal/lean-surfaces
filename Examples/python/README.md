@@ -45,6 +45,11 @@ nonintegral operands and first-class builtin values remain loud.
 The mutation-and-catch case is kernel-checked through the retained exception
 state as well as differentially tested on the native and script surfaces.
 
+[`sum_order_lab`](sum_order_lab/) proves that non-iterable integer errors precede
+string/bytes start rejection and that rejected starts leave generators untouched.
+Its kernel checks and differential rows cover the iterable inventory, default
+instances, closures, argument effects, and huge ranges without materialization.
+
 [`exc_handlers_lab`](exc_handlers_lab/) checks builtin exception matching and
 propagation, retained mutations, and module-global publication. Its symbolic
 proof covers a caught scalar type error. Handler-local bindings and unmeasured

@@ -1067,6 +1067,74 @@ def _fixed_array_conditional_assignment(sm, expr):
         return None
 
 
+def _fixed_array_slice_pattern_assignment(sm, expr):
+    """Lower an exact positional pattern to a simple constant array slice."""
+    try:
+        if type(expr).__name__ != "AssignmentExpression" or expr.op is not None:
+            return None
+        lhs = expr.left
+        if type(lhs).__name__ != "RangeSelectExpression":
+            return None
+        selection = str(lhs.selectionKind).split(".")[-1]
+        if selection != "Simple":
+            return None
+        shape = _fixed_array_shape(lhs.value)
+        if shape is None:
+            return None
+        name, width, two_state, array_left, array_right = shape
+        start = _constant_dimension_selector(lhs.left)
+        stop = _constant_dimension_selector(lhs.right)
+        if start is None or stop is None:
+            return None
+        lo, hi = min(array_left, array_right), max(array_left, array_right)
+        if start < lo or start > hi or stop < lo or stop > hi:
+            return None
+        step = 1 if stop >= start else -1
+        positions = list(range(start, stop + step, step))
+        pattern = expr.right
+        if type(pattern).__name__ != "SimpleAssignmentPatternExpression":
+            return None
+        elements = list(pattern.elements)
+        if len(elements) != len(positions):
+            return None
+        values = []
+        for element in elements:
+            if not _case_source_expression_ok(element):
+                return None
+            reads_target = False
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ == "NamedValueExpression":
+                    try:
+                        reads_target = reads_target or node.symbol.name == name
+                    except Exception:
+                        reads_target = True
+            element.visit(inspect)
+            if reads_target:
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width or not _case_expression_ok(value)):
+                return None
+            values.append(squash2_wrap(value, width) if two_state else value)
+        stmts = []
+        for position, value in zip(positions, values):
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {
+                    "kind": "Ident",
+                    "span": node_span(sm, lhs),
+                    "width": width,
+                    "name": f"{name}[{position}]",
+                },
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts}
+    except Exception:
+        return None
+
+
 def _convert_dimension_query(sm, expression):
     """Fold fixed array metadata without evaluating the queried operand."""
     try:
@@ -2254,6 +2322,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if expr.timingControl is not None:
         return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
     if expr.op is None and _SYM is None:
+        array_slice = _fixed_array_slice_pattern_assignment(sm, expr)
+        if array_slice is not None:
+            return array_slice
         array_conditional = _fixed_array_conditional_assignment(sm, expr)
         if array_conditional is not None:
             return array_conditional

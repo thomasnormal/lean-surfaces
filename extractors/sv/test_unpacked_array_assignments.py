@@ -108,6 +108,25 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_constant_slice_pattern_writes_selected_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:3]; "
+            "initial begin value[1:2] = '{8'h12, 8'h34}; "
+            "if (value[1] === 8'h12 && value[2] === 8'h34) "
+            "$display(\"PASS\"); end endmodule")
+        targets = [node["target"]["name"] for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(targets, ["value[1]", "value[2]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_slice_pattern_stays_loud(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:3]; integer i; "
+            "initial value[i:i+1] = '{8'h12, 8'h34}; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

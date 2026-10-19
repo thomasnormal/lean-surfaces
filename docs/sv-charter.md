@@ -945,6 +945,21 @@ four files (**3,978 → 3,974**). The committed 22,033-path census remains the
 project snapshot; this local paired measurement is recorded separately because
 the external corpus checkout has four fewer paths.
 
+### Constant fixed-array slice patterns — 2026-10-19
+
+An exact-length positional assignment pattern on a simple in-range constant
+slice of a one-dimensional fixed-unpacked integral array now lowers to one
+blocking or nonblocking assignment per selected cell, in slice source order.
+Dynamic or indexed bounds, out-of-range slices, keyed/default patterns and
+effectful or mismatched patterns remain loud. The `unpacked_slice` fixture
+checks the generated envelope through Lean and the self-check runner.
+
+On the paired **22,029** paths available on this checkout, this rung adds one
+clean file with no losses and lowers `AssignmentExpression:target` by two
+files (**3,974 → 3,972**). The committed 22,033-path census remains the
+project snapshot; this local paired measurement is recorded separately because
+the external corpus checkout has four fewer paths.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

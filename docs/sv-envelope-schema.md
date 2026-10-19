@@ -281,6 +281,11 @@ shared across the cells, so an x condition retains the ordinary per-bit
 conditional merge. Conditional aggregate forms with patterns, calls, unequal
 shapes or unsupported storage remain `Unsupported`.
 
+An exact-length positional pattern on a simple in-range constant slice of an
+eligible fixed array is lowered to the selected cells in source order.
+Dynamic, indexed, out-of-range and keyed/default slice forms remain
+`Unsupported`.
+
 For a one-dimensional fixed-unpacked integral array whose declaration has been
 expanded to cells, a pure integral dynamic index is lowered to a finite
 conditional over the declared cells. Dynamic writes become mutually exclusive

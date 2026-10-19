@@ -265,6 +265,28 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_unpacked_assignment_pattern_lhs_pairs_scalar_targets(self):
+        design = extract_source(
+            "typedef int U3 [0:2]; module top; int source [0:2]; byte a, b, c; "
+            "initial begin U3'{a, b, c} = source; end endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns[-3:]],
+                         ["a", "b", "c"])
+        self.assertEqual([a["value"]["operand"]["operand"]["name"]
+                          for a in assigns[-3:]],
+                         ["source[0]", "source[1]", "source[2]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_unpacked_assignment_pattern_lhs_alias_stays_loud(self):
+        design = extract_source(
+            "typedef int U2 [0:1]; module top; int source [0:1]; "
+            "initial U2'{source[0], source[1]} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

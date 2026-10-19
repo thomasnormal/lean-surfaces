@@ -516,6 +516,17 @@ extraction errors**: nine additional clean files with no losses; the
 `AssignmentExpression:target` wall falls **3,939 → 3,929**. This is not a
 whole-corpus simulator-agreement claim.
 
+## Unpacked assignment-pattern LHS — 2026-10-19
+
+An exact positional unpacked pattern on the LHS now pairs its direct scalar
+targets with cells from an eligible fixed-unpacked integral RHS, preserving
+source-order sampling and destination width/state conversion. Nested,
+effectful, duplicate or aliased targets and aggregate or dynamic RHS forms
+remain loud. The `unpacked_pattern_lhs` fixture and Lean proof pass through the
+self-check runner. The focused rerun cleans the corresponding §10.9.11 target
+row; the committed machine census is unchanged because generated outputs are
+not committed.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

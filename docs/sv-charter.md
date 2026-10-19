@@ -1089,6 +1089,17 @@ errors, nine clean gains and no losses; `AssignmentExpression:target` falls
 **3,939 → 3,929**. The committed machine-readable census remains the prior
 snapshot because it is generated output; this paired result is recorded here.
 
+### Unpacked assignment-pattern LHS — 2026-10-19
+
+A positional unpacked assignment-pattern LHS such as `U3'{a, b, c} = source`
+now lowers to scalar cell assignments when the RHS is an eligible fixed
+unpacked integral array or simple constant slice. Source cells are sampled in
+order and converted to each destination's width and state kind. Nested,
+effectful, duplicate or source-aliasing targets, and aggregate or dynamic RHS
+forms remain loud. The `unpacked_pattern_lhs` fixture checks the real envelope
+through Lean and the self-check runner; focused extraction covers the
+§10.9.11 row, without a new whole-corpus simulator-agreement claim.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

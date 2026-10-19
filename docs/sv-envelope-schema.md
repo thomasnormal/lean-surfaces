@@ -296,6 +296,14 @@ assignments. Scalar operands and existing whole-array/simple-slice operands are
 accepted when their widths match; a source alias of the destination, dynamic
 or aggregate operands, and mismatched lengths remain `Unsupported`.
 
+A positional unpacked assignment-pattern LHS such as `U3'{a, b, c} = source`
+is likewise lowered when its RHS is an eligible fixed-unpacked integral array
+or simple constant slice and every pattern element is a distinct direct scalar
+target. Each source cell is converted to its destination width and state kind
+before the existing blocking or nonblocking assignment is emitted. Nested or
+effectful pattern elements, duplicate targets, source/destination aliases and
+aggregate or dynamic forms remain `Unsupported`.
+
 An assignment whose RHS is a pure one-condition ternary over two eligible
 fixed arrays is lowered cell by cell to `Ternary` values. The condition is
 shared across the cells, so an x condition retains the ordinary per-bit

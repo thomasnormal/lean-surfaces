@@ -1117,6 +1117,102 @@ def _fixed_array_concat_assignment(sm, expr):
         return None
 
 
+def _fixed_array_pattern_lhs_assignment(sm, expr):
+    """Lower a positional unpacked assignment-pattern LHS to scalar cells.
+
+    A pattern such as ``U3'{a, b, c} = values`` is a source-level
+    decomposition of one fixed unpacked array.  The self-check state already
+    stores each array cell independently, so an exact, pure one-dimensional
+    array RHS can be paired with direct scalar destinations.  Do not admit
+    nested patterns, effectful destinations, duplicate targets, width
+    conversions, or an RHS that aliases one of those destinations: the
+    cellwise lowering must preserve the source rule that the whole RHS is
+    sampled before any destination is written; ordinary integral width and
+    four-state-to-two-state conversions remain explicit in the emitted value.
+    """
+    try:
+        if type(expr).__name__ != "AssignmentExpression":
+            return None
+        if expr.op is not None or expr.timingControl is not None:
+            return None
+        pattern = expr.left
+        if type(pattern).__name__ not in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression"):
+            return None
+        rhs_shape = _fixed_array_assignment_shape(expr.right)
+        if rhs_shape is None or not _case_source_expression_ok(expr.right):
+            return None
+        source_name, source_width, _source_two, source_positions = rhs_shape
+        elements = list(pattern.elements)
+        if not elements or len(elements) != len(source_positions):
+            return None
+        destinations = []
+        names = set()
+        for element in elements:
+            if type(element).__name__ != "AssignmentExpression":
+                return None
+            if element.op is not None or element.timingControl is not None:
+                return None
+            element_rhs = element.right
+            while type(element_rhs).__name__ == "ConversionExpression":
+                element_rhs = getattr(element_rhs, "operand", None)
+                if element_rhs is None:
+                    return None
+            if type(element_rhs).__name__ != "EmptyArgumentExpression":
+                return None
+            target, admitted = ident_target(sm, element.left)
+            if not admitted or target.get("kind") != "Ident":
+                return None
+            width = width_of(target)
+            if width is None:
+                return None
+            name = target.get("name")
+            if not name or name in names:
+                return None
+            names.add(name)
+            destinations.append((target, bool(element.left.type.isFourState)))
+        if any(name == source_name or name.startswith(source_name + "[")
+               for name in names):
+            return None
+        source_signed = False
+        try:
+            source_element_type = expr.right.type.canonicalType.elementType
+            source_signed = bool(source_element_type.isSigned)
+        except Exception:
+            pass
+        stmts = []
+        for (target, target_four_state), position in zip(destinations, source_positions):
+            value = {
+                "kind": "Ident",
+                "span": node_span(sm, expr.right),
+                "width": source_width,
+                "name": f"{source_name}[{position}]",
+            }
+            try:
+                target_width = width_of(target)
+                if source_width != target_width:
+                    value = {
+                        "kind": "SignedResize" if source_signed else "Resize",
+                        "span": node_span(sm, expr),
+                        "width": target_width,
+                        "operand": value,
+                    }
+                if not target_four_state:
+                    value = squash2_wrap(value, target_width)
+            except Exception:
+                pass
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": target,
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts}
+    except Exception:
+        return None
+
+
 def _fixed_array_copy_assignment(sm, expr):
     """Lower a whole-array copy when both sides already have cell storage."""
     try:
@@ -2571,6 +2667,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if expr.timingControl is not None:
         return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
     if expr.op is None and _SYM is None:
+        array_pattern_lhs = _fixed_array_pattern_lhs_assignment(sm, expr)
+        if array_pattern_lhs is not None:
+            return array_pattern_lhs
         array_slice = _fixed_array_slice_pattern_assignment(sm, expr)
         if array_slice is not None:
             return array_slice

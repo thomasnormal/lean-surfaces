@@ -1046,6 +1046,19 @@ committed census snapshot is unchanged and this rung makes no fresh
 whole-corpus coverage claim. Focused conditional-slice tests establish the
 admission boundary; the next census rerun will price any newly clean rows.
 
+### Fixed-array equality and inequality — 2026-10-19
+
+Equal-length whole fixed-unpacked arrays and simple constant slices now lower
+their `==` or `!=` comparisons to pairwise cell comparisons joined by logical
+`&&`, reusing the existing four-state scalar operators. Unequal shapes and
+unsupported aggregate types remain loud. The `unpacked_compare` fixture checks
+whole-array and slice comparisons through Lean and the self-check runner.
+
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and this rung makes no fresh
+whole-corpus coverage claim. Focused comparison tests establish the admission
+boundary; the next census rerun will price any newly clean rows.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

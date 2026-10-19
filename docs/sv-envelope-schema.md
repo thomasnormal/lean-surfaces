@@ -284,6 +284,10 @@ Overlapping self-copies remain `Unsupported` because the cell-expanded state
 does not provide a temporary aggregate snapshot; dynamic, indexed and
 out-of-range slices remain loud.
 
+Equality and inequality of equal-length whole arrays or simple constant slices
+are lowered to pairwise cell comparisons joined with logical `&&`. Unequal
+shapes, aliasing forms and unsupported aggregate types remain `Unsupported`.
+
 An assignment whose RHS is a pure one-condition ternary over two eligible
 fixed arrays is lowered cell by cell to `Ternary` values. The condition is
 shared across the cells, so an x condition retains the ordinary per-bit

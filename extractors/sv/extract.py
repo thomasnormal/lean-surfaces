@@ -758,6 +758,49 @@ def _fixed_array_assignment_shape(source):
     return name, width, two_state, list(range(left, right + step, step))
 
 
+def _fixed_array_compare_expr(sm, expression, operator):
+    """Lower equality of equal-length cell-expanded arrays to cell comparisons."""
+    try:
+        if type(expression).__name__ != "BinaryExpression":
+            return None
+        left = _fixed_array_assignment_shape(expression.left)
+        right = _fixed_array_assignment_shape(expression.right)
+        if left is None or right is None:
+            return None
+        left_name, left_width, _left_two, left_positions = left
+        right_name, right_width, _right_two, right_positions = right
+        if (len(left_positions) != len(right_positions)
+                or left_width != right_width or not left_positions):
+            return None
+        comparisons = []
+        for left_position, right_position in zip(left_positions, right_positions):
+            comparisons.append({
+                "kind": "Binary",
+                "span": node_span(sm, expression),
+                "width": 1,
+                "op": operator,
+                "left": {"kind": "Ident", "span": node_span(sm, expression.left),
+                         "width": left_width,
+                         "name": f"{left_name}[{left_position}]"},
+                "right": {"kind": "Ident", "span": node_span(sm, expression.right),
+                          "width": right_width,
+                          "name": f"{right_name}[{right_position}]"},
+            })
+        result = comparisons[0]
+        for comparison in comparisons[1:]:
+            result = {
+                "kind": "Binary",
+                "span": node_span(sm, expression),
+                "width": 1,
+                "op": "&&",
+                "left": result,
+                "right": comparison,
+            }
+        return result
+    except Exception:
+        return None
+
+
 def _fixed_array_dynamic_read(sm, expression):
     """Lower a dynamic read to a finite conditional over expanded cells."""
     try:
@@ -1642,6 +1685,10 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
+    if _SYM is None and sym in ("==", "!="):
+        array_compare = _fixed_array_compare_expr(sm, e, sym)
+        if array_compare is not None:
+            return array_compare
     if sym in ("/", "%", "**", "<<", ">>", "<<<", ">>>") and _SYM is not None and not _SYM.symctx:
         left = _convert_division_operand(sm, e.left)
         right = _convert_division_operand(sm, e.right)

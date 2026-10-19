@@ -822,6 +822,21 @@ The fresh **22,033**-path census adds **63 clean files** without losses
 `AssignmentExpression:target` is again the top refusal at **4,224** files;
 the next item must return to that heterogeneous class after this call rung.
 
+### Constant bit selects on arbitrary packed ranges — 2026-10-19
+
+Constant in-range bit selects on the admitted noncanonical packed ranges now
+map their declared index label to the existing LVec offset. The normalized
+index is recorded as a literal, so both selected reads and writes reuse the
+ordinary self-check evaluator. Dynamic and out-of-range indices, indexed or
+simple part selects, and multidimensional packed arrays remain loud until
+their range geometry is represented directly. The `packed_range_select`
+fixture checks an ascending `[0:7]` write/read pair through Lean.
+
+The fresh **22,033**-path census adds **6 clean files** without losses
+(**2,789 → 2,795**) and lowers `AssignmentExpression:target` by one file to
+**4,223**. This is a narrow geometry rung; the remaining target wall is still
+dominated by arrays, classes, hierarchy and nonintegral values.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

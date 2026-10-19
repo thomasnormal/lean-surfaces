@@ -298,6 +298,17 @@ losses. `CallExpression` falls from **4,226 to 3,565** files, while timed
 processes still retain their delay/event refusals. The `time_zero` fixture and
 Lean proof pass; this is not a whole-corpus simulator-agreement claim.
 
+## Constant bit selects on arbitrary packed ranges — 2026-10-19
+
+The self-check extractor now normalizes in-range constant bit selects on
+one-dimensional noncanonical packed ranges to the existing LVec index
+geometry. Dynamic/out-of-range indices and part-selects remain loud. The
+fresh **22,033**-path run reports **2,795 clean**, **19,172 partial**, **66
+include skips**, and **0 extraction errors**: 6 additional clean files with
+no losses. `AssignmentExpression:target` falls from **4,224 to 4,223 files**.
+The `packed_range_select` fixture and proof pass through Lean; this is not a
+whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

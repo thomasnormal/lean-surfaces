@@ -38,7 +38,21 @@ class PackedRanges(unittest.TestCase):
         self.assertEqual([(decl["name"], decl["width"]) for decl in decls],
                          [("value", 8)])
 
-    def test_selected_ascending_vector_remains_loud(self):
+    def test_constant_selected_ascending_vector_is_normalized(self):
+        design = extract_source(
+            "module top; logic [0:7] value; "
+            "initial begin value[2] = 1'b1; "
+            "if (value[2] === 1'b1) $display(\"PASS\"); end endmodule")
+        targets = [node for node in nodes(design)
+                   if node.get("kind") == "SelectTarget"]
+        reads = [node for node in nodes(design)
+                 if node.get("kind") == "SelectRead"]
+        self.assertEqual(len(targets), 1)
+        self.assertEqual(len(reads), 1)
+        self.assertFalse(targets[0]["index_signed"])
+        self.assertEqual(targets[0]["index"]["bits"], "0" * 29 + "101")
+
+    def test_dynamic_selected_ascending_vector_remains_loud(self):
         design = extract_source(
             "module top; logic [0:7] value; integer index; "
             "initial value[index] = 1'b1; endmodule")

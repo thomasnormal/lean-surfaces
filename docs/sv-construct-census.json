@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    4224
+    4223
    ],
    [
     "InstanceSymbol:Instance",
@@ -83,16 +83,16 @@
     762
    ],
    [
-    "ElementSelectExpression:source-type",
-    733
-   ],
-   [
     "CovergroupType:CovergroupType",
     724
    ],
    [
     "RealLiteral",
     708
+   ],
+   [
+    "ElementSelectExpression:source-type",
+    698
    ],
    [
     "CheckerSymbol",
@@ -820,8 +820,8 @@
    ]
   ],
   "by_status": {
-   "clean": 2789,
-   "partial": 19178,
+   "clean": 2795,
+   "partial": 19172,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -882,7 +882,7 @@
     52
    ],
    "simulation": [
-    2303,
+    2309,
     18669
    ],
    "simulation elaboration": [
@@ -897,9 +897,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 442,
-    "clean": 549,
-    "partial": 442,
+    "blocked_by_more": 441,
+    "clean": 550,
+    "partial": 441,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -960,7 +960,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      23
+      22
      ],
      [
       "MemberAccessExpression",
@@ -1075,9 +1075,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 742,
-    "clean": 299,
-    "partial": 742,
+    "blocked_by_more": 738,
+    "clean": 303,
+    "partial": 738,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1126,7 +1126,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      58
+      54
      ],
      [
       "RealLiteral",
@@ -1175,9 +1175,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 552,
+    "clean": 553,
     "error": 0,
-    "partial": 482,
+    "partial": 481,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0
@@ -1439,17 +1439,17 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 312,
+    "clean": 316,
     "error": 0,
-    "partial": 873,
+    "partial": 869,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 1
    },
    "chapter-7": {
-    "clean": 33,
+    "clean": 34,
     "error": 0,
-    "partial": 763,
+    "partial": 762,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -1185,6 +1185,33 @@ def _canonical_packed_select_source(source_type):
         return False
 
 
+def _packed_constant_index(sm, source_type, index):
+    """Normalize an in-range constant packed label to an LVec offset."""
+    try:
+        ct = source_type.canonicalType
+        if type(ct).__name__ != "PackedArrayType":
+            return None
+        position = _constant_dimension_selector(index)
+        if position is None:
+            return None
+        left, right = int(ct.range.left), int(ct.range.right)
+        lo, hi = min(left, right), max(left, right)
+        if position < lo or position > hi:
+            return None
+        offset = position - right if left > right else right - position
+        width = index.type.bitWidth
+        if offset < 0 or offset >= ct.bitWidth or width <= 0:
+            return None
+        return {
+            "kind": "Literal",
+            "span": node_span(sm, index),
+            "width": width,
+            "bits": format(offset & ((1 << width) - 1), f"0{width}b"),
+        }, False
+    except Exception:
+        return None
+
+
 def _convert_selected_read(sm, expr, expression_kind):
     if expression_kind == "ElementSelectExpression":
         cell = _fixed_array_cell(sm, expr)
@@ -1201,7 +1228,8 @@ def _convert_selected_read(sm, expr, expression_kind):
     canonical_kind = type(source_type.canonicalType).__name__
     if (source_reason is not None or not source_type.isFourState
             or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")
-            or not _canonical_packed_select_source(source_type)):
+            or (not _canonical_packed_select_source(source_type)
+                and expression_kind != "ElementSelectExpression")):
         return unsupported(sm, expr, expression_kind + ":source-type")
     descending = False
     if expression_kind == "ElementSelectExpression":
@@ -1212,16 +1240,27 @@ def _convert_selected_read(sm, expr, expression_kind):
             return unsupported(sm, expr, "RangeSelectExpression:" + selection)
         index = expr.right if selection == "Simple" else expr.left
         descending = selection == "IndexedDown"
-    _, _, index_reason = type_width_2s(index.type)
-    if index_reason is not None:
-        return unsupported(sm, expr, expression_kind + ":index-type")
+    index_signed = bool(index.type.isSigned)
+    converted_index = None
+    if (expression_kind == "ElementSelectExpression"
+            and canonical_kind == "PackedArrayType"
+            and not _canonical_packed_select_source(source_type)):
+        normalized = _packed_constant_index(sm, source_type, index)
+        if normalized is None:
+            return unsupported(sm, expr, expression_kind + ":source-type")
+        converted_index, index_signed = normalized
+    else:
+        _, _, index_reason = type_width_2s(index.type)
+        if index_reason is not None:
+            return unsupported(sm, expr, expression_kind + ":index-type")
+        converted_index = _convert_expr(sm, index)
     return {
         "kind": "SelectRead",
         "span": node_span(sm, expr),
         "width": expr.type.bitWidth,
         "value": _convert_expr(sm, expr.value),
-        "index": _convert_expr(sm, index),
-        "index_signed": bool(index.type.isSigned),
+        "index": converted_index,
+        "index_signed": index_signed,
         "descending": descending,
     }
 
@@ -1393,7 +1432,8 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     canonical_kind = type(lhs.value.type.canonicalType).__name__
     if (not admitted or source_reason is not None or source_width is None
             or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")
-            or not _canonical_packed_select_source(lhs.value.type)):
+            or (not _canonical_packed_select_source(lhs.value.type)
+                and expression_kind != "ElementSelectExpression")):
         return unsupported(sm, lhs, expression_kind + ":target-source"), False
     descending = False
     if expression_kind == "ElementSelectExpression":
@@ -1404,9 +1444,21 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
             return unsupported(sm, lhs, expression_kind + ":target-selection"), False
         index = lhs.right if selection == "Simple" else lhs.left
         descending = selection == "IndexedDown"
-    _, _, index_reason = type_width_2s(index.type)
-    converted_index = convert_expr(sm, index)
-    if (index_reason is not None or not _case_source_expression_ok(index)
+    index_signed = bool(index.type.isSigned)
+    if (expression_kind == "ElementSelectExpression"
+            and canonical_kind == "PackedArrayType"
+            and not _canonical_packed_select_source(lhs.value.type)):
+        normalized = _packed_constant_index(sm, lhs.value.type, index)
+        if normalized is None:
+            return unsupported(sm, lhs, expression_kind + ":target-source"), False
+        converted_index, index_signed = normalized
+    else:
+        _, _, index_reason = type_width_2s(index.type)
+        converted_index = convert_expr(sm, index)
+        if (index_reason is not None or not _case_source_expression_ok(index)
+                or not _case_expression_ok(converted_index)):
+            return unsupported(sm, lhs, expression_kind + ":target-index"), False
+    if (not _case_source_expression_ok(index)
             or not _case_expression_ok(converted_index)):
         return unsupported(sm, lhs, expression_kind + ":target-index"), False
     return {
@@ -1415,7 +1467,7 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
         "width": lhs.type.bitWidth,
         "value": base,
         "index": converted_index,
-        "index_signed": bool(index.type.isSigned),
+        "index_signed": index_signed,
         "descending": descending,
         "two_state": not lhs.type.isFourState,
     }, True

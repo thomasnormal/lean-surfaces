@@ -266,6 +266,12 @@ index retains its original width and signedness, and each destination
 retains its own two-state conversion. This node is an assignment target,
 not a readable expression.
 
+For a one-dimensional packed scalar source with a noncanonical declared range,
+the legacy extractor admits only an in-range constant bit select. It records
+the normalized LVec offset as a `Literal` index and forces unsigned offset
+interpretation; dynamic/out-of-range indices and all part-select forms remain
+`Unsupported` until their declared bounds are represented directly.
+
 `ConcatTarget` has `kind`, `span`, `width` and `parts` (source-ordered
 targets), with nested `ConcatTarget` nodes retained. Whole `Ident` leaves
 add a `two_state` boolean; selected leaves retain the fields above.

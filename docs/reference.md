@@ -224,6 +224,23 @@ to strings or encoded as base64.
 | `python3 harness/diff_test.py [--cases F] [--fuel N] [--no-build] [--runner CMD]` | CPython vs Lean on `harness/cases.json` — all rows through ONE `--batch` runner process, per-row progress on stderr; exits non-zero on any non-whitelisted mismatch ([howto](howto/run-the-differential-harness.md)) |
 | `python3 tools/docs_check.py [files…] [--list-unmarked]` | docs drift checker: every path-marked code block in `docs/**`, `README.md`, `AGENTS.md` must match the referenced file (marker convention in the script's header); exits non-zero listing drifted blocks. Full check triad: `lake build && python3 tools/docs_check.py && python3 harness/diff_test.py` |
 
+## Raising builtin exceptions
+
+Both interpreters admit bare `raise ValueError` and the other names in
+`admittedBuiltinExc` ([Ast.lean](../LeanModels/Python/Ast.lean)). These carry
+`.builtinException "ValueError"`, with no payload and an empty message, so a
+proof may state `f() ==>! (.builtinException "ValueError")`. Handler matching
+uses the measured builtin hierarchy; `Exception` does not catch `BaseException`.
+Names bound locally, including assignments after the raise, refuse rather than
+fall through to a builtin. Exception instances, payloads and chaining remain
+unfinished. See [builtin_raise_lab](../Examples/python/builtin_raise_lab/spec.lean)
+for concrete checks and a symbolic catch theorem.
+
+An uncaught `StopIteration` leaving a generator body closes the generator and
+becomes `.runtimeError "generator raised StopIteration"`, as required by PEP 479.
+Normal exhaustion still returns `StopIteration` to `next`, and a handler inside
+the generator can catch `StopIteration` before it reaches that boundary.
+
 ## File map
 
 | Path | What |

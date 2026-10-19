@@ -239,7 +239,9 @@ def render(diff, proof, grammar, tables):
              ", ".join("`%s`" % name for name in sorted(consts)))
     L.append("")
     exc = sorted(catches)
-    L.append("**Exception classes `except` can name (%d):** %s. Other "
+    L.append("**Exception classes `except` and bare `raise` can name (%d):** %s. "
+             "`ImportError` and `ModuleNotFoundError` additionally work as handler "
+             "names, but their bare raises remain unfinished. Other builtin "
              "exception names refuse, including OS-error ancestors such as `OSError`; "
              "user classes `class E(Exception): pass` are admitted." % (len(exc), ", ".join("`%s`" % e for e in exc)))
     L.append("")

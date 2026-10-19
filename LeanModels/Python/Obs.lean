@@ -1254,32 +1254,35 @@ theorem fuelMono (fuel : Nat) :
             refine Run.le_ite (Run.le_refl _) ?_
             cases findClass m excName with
             | none =>
+              refine Run.le_ite ?_ ?_
+              · exact Run.le_bindE (ihSs m st body.toList k hk)
+                  (fun _ _ => Run.le_refl _) (fun _ _ => Run.le_refl _)
               -- Pass 0 (§import forms): the pinned import-error table
               -- branch — the class branch's body/handler IH shape, with
               -- no cid ite (every `.importError` matches either name)
-              refine Run.le_ite ?_ ?_
-              · rcases ihSs m st body.toList k hk with h | h
-                · rw [h]; exact Or.inl rfl
-                · rw [h]
-                  cases execStmts m k st body.toList with
-                  | ok st' flow => exact Run.le_refl _
-                  | exn st' e =>
-                    cases e <;> try exact Run.le_refl _
-                    case importError mod =>
-                      exact ihSs m st' handler.toList k hk
-                  | timeout => exact Run.le_refl _
-                  | unsupported msg => exact Run.le_refl _
-              · refine Run.le_ite ?_ (Run.le_refl _)
-                rcases ihSs m st body.toList k hk with h | h
-                · rw [h]; exact Or.inl rfl
-                · rw [h]
-                  cases execStmts m k st body.toList with
-                  | ok st' flow => exact Run.le_refl _
-                  | exn st' e =>
-                    exact Run.le_ite (ihSs m st' handler.toList k hk)
-                      (Run.le_refl _)
-                  | timeout => exact Run.le_refl _
-                  | unsupported msg => exact Run.le_refl _
+              · refine Run.le_ite ?_ ?_
+                · rcases ihSs m st body.toList k hk with h | h
+                  · rw [h]; exact Or.inl rfl
+                  · rw [h]
+                    cases execStmts m k st body.toList with
+                    | ok st' flow => exact Run.le_refl _
+                    | exn st' e =>
+                      cases e <;> try exact Run.le_refl _
+                      case importError mod =>
+                        exact ihSs m st' handler.toList k hk
+                    | timeout => exact Run.le_refl _
+                    | unsupported msg => exact Run.le_refl _
+                · refine Run.le_ite ?_ (Run.le_refl _)
+                  rcases ihSs m st body.toList k hk with h | h
+                  · rw [h]; exact Or.inl rfl
+                  · rw [h]
+                    cases execStmts m k st body.toList with
+                    | ok st' flow => exact Run.le_refl _
+                    | exn st' e =>
+                      exact Run.le_ite (ihSs m st' handler.toList k hk)
+                        (Run.le_refl _)
+                    | timeout => exact Run.le_refl _
+                    | unsupported msg => exact Run.le_refl _
             | some p =>
               obtain ⟨ci, c⟩ := p
               refine Run.le_ite (Run.le_refl _) ?_
@@ -2836,7 +2839,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             case name id _ =>
               refine .ite .unsupported ?_
               cases findClass m id with
-              | none => exact .unsupported
+              | none =>
+                refine .ite .exn ?_
+                by_cases hb : admittedBuiltinExc.contains id = true
+                · rw [if_pos hb]
+                  exact .exn
+                · rw [if_neg hb]
+                  exact .unsupported
               | some p =>
                 obtain ⟨ci, c⟩ := p
                 exact .ite .exn .unsupported

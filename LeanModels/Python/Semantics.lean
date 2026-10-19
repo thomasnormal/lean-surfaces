@@ -7128,7 +7128,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                 else
                   .unsupported s!"'raise {id}': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
               | Option.none =>
-                .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)")
+                if (findNamedTuple m id).isSome then
+                  .exn st (.typeError "exceptions must derive from BaseException")
+                else if admittedBuiltinExc.contains id then .exn st (.builtinException id)
+                else
+                  .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)")
          | some _ =>
            .unsupported "'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.md §exceptions)")
     | .assertStmt test msg _ =>
@@ -7271,7 +7275,12 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
              -- propagates; the same retained-state covenant as the
              -- user-class arm below. Consulted only after `findClass`
              -- missed, so a user class named `ImportError` still wins.
-             if importErrorHandlerMatch excName then
+             if (findNamedTuple m excName).isSome then
+               Run.bindE (execStmts m fuel st body.toList)
+                 (fun st' flow => .ok st' flow)
+                 (fun st' _ => .exn st' (.typeError
+                   "catching classes that do not inherit from BaseException is not allowed"))
+             else if importErrorHandlerMatch excName then
                match execStmts m fuel st body.toList with
                | .ok st' flow => .ok st' flow
                | .exn st' e =>
@@ -7536,7 +7545,7 @@ def stepIter (m : Module) (fuel : Nat) (w : World) (a : Addr) :
                     (.generator qname st.locals [] .closed) with
                 | Option.none => .unsupported danglingMsg
                 | some h₂ =>
-                  .exn { st with world := { st.world with heap := h₂ } } e)
+                  .exn { st with world := { st.world with heap := h₂ } } (generatorEscape e))
     | some _ =>
       .exn w (.typeError s!"'{RVal.typeNameH w.heap (.ref a)}' object is not an iterator")
     | Option.none => .unsupported danglingMsg

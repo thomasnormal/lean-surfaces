@@ -242,6 +242,9 @@ print(0)
 w("stmt.Raise", """
 raise ValueError("boom")
 """, "REFUSE", "no exception VALUES; PyErr is not a first-class object")
+w("stmt.Raise-class", """
+raise ValueError
+""", "MATCH", "bare admitted builtin exception class; payload construction remains unfinished")
 w("stmt.Try", """
 try:
     print(1)
@@ -256,7 +259,7 @@ except ValueError:
 w("stmt.Assert", """
 assert 1 == 1
 print("ok")
-""", "MATCH", "assert is in tier; AssertionError is not catchable")
+""", "MATCH", "assertion failure uses the admitted builtin exception hierarchy")
 w("stmt.Import", """
 import math
 print(1)
@@ -1047,7 +1050,11 @@ WHITELIST_CLASS = {
     "exc_ancestors_lab::environment_ancestor": "exc.ancestor-class",
     "exc_ancestors_lab::first_class_base": "firstclass.callable",
     "exc_ancestors_lab::raise_base_instance": "exc.raise",
-    "exc_ancestors_lab::raise_arithmetic_class": "exc.raise",
+    "builtin_raise_lab::parameter_shadow": "exc.raise",
+    "builtin_raise_lab::late_shadow": "exc.raise",
+    "builtin_raise_lab::raised_instance": "exc.raise",
+    "builtin_raise_lab::chained": "exc.raise",
+    "builtin_raise_lab::unsupported_class": "exc.raise",
     "iter_lab::chr_surrogate": "str.surrogate",
     "gen_lab::walrus_leak": "genexp.lowering-admission",
     "gen_lab::upto": "boundary.generator",
@@ -1162,6 +1169,7 @@ WHITELIST_CLASS = {
 # the adjudicator is just diff_test now.
 
 SCRIPT_CLASS = {
+    "builtin_raise_shadow": "exc.raise",
     "nan_floor_script": "float.nan-payload",
     "nan_division_script": "float.nan-payload",
     "constructor_nan_script": "float.text-nan-payload",

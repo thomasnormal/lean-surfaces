@@ -1010,6 +1010,17 @@ def _shadowed_handlers(fn):
     return sorted(handlers & _scope_binding_names(fn))
 
 
+def _shadowed_raises(fn):
+    """A raise name bound anywhere in this scope must not fall through to a class.
+
+    This includes a local assigned only after the raise: CPython reports an
+    unbound local, even though a builtin with the same name exists.
+    """
+    names = {node.exc.id for node in _walk_scope(fn)
+             if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Name)}
+    return sorted(names & _scope_binding_names(fn))
+
+
 def _has_global(node):
     """Does the whole subtree (nested scopes INCLUDED — a nested def's
     ``global`` also rebinds module names when called) contain a ``global``
@@ -1420,7 +1431,12 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                             "matches locally-bound handler name(s) "
                             "(static-locals rule): " + ", ".join(handlers)
                             if (handlers := _shadowed_handlers(node))
-                            else None
+                            else (
+                                "raises locally-bound name(s) "
+                                "(static-locals rule): " + ", ".join(raised)
+                                if (raised := _shadowed_raises(node))
+                                else None
+                            )
                         )
                     )
                 )

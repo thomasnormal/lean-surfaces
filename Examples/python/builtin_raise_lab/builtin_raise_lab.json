@@ -1,0 +1,3379 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py",
+  "source_sha256": "44b7f5c9e4bd731fd8f932edc55e69d2c0a192facd6c8b6f29ab1b1718240a13",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 78
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 78
+          },
+          "value": {
+            "type": "str",
+            "value": "Bare builtin exception classes, hierarchy, retained effects and PEP 479."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 5,
+          "end_col_offset": 23
+        },
+        "name": "raise_BaseException",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 5,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 23
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 5,
+                "col_offset": 10,
+                "end_lineno": 5,
+                "end_col_offset": 23
+              },
+              "id": "BaseException"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 8,
+          "col_offset": 0,
+          "end_lineno": 12,
+          "end_col_offset": 20
+        },
+        "name": "catch_BaseException",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 8,
+              "col_offset": 24,
+              "end_lineno": 8,
+              "end_col_offset": 29
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 12,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 10,
+                  "col_offset": 8,
+                  "end_lineno": 10,
+                  "end_col_offset": 27
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 10,
+                    "col_offset": 14,
+                    "end_lineno": 10,
+                    "end_col_offset": 27
+                  },
+                  "id": "BaseException"
+                }
+              }
+            ],
+            "exc_name": "BaseException",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 12,
+                  "col_offset": 8,
+                  "end_lineno": 12,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 12,
+                    "col_offset": 15,
+                    "end_lineno": 12,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 15,
+          "col_offset": 0,
+          "end_lineno": 16,
+          "end_col_offset": 19
+        },
+        "name": "raise_Exception",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 16,
+              "col_offset": 4,
+              "end_lineno": 16,
+              "end_col_offset": 19
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 16,
+                "col_offset": 10,
+                "end_lineno": 16,
+                "end_col_offset": 19
+              },
+              "id": "Exception"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 19,
+          "col_offset": 0,
+          "end_lineno": 23,
+          "end_col_offset": 20
+        },
+        "name": "catch_Exception",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 19,
+              "col_offset": 20,
+              "end_lineno": 19,
+              "end_col_offset": 25
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 20,
+              "col_offset": 4,
+              "end_lineno": 23,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 21,
+                  "col_offset": 8,
+                  "end_lineno": 21,
+                  "end_col_offset": 23
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 21,
+                    "col_offset": 14,
+                    "end_lineno": 21,
+                    "end_col_offset": 23
+                  },
+                  "id": "Exception"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 23,
+                  "col_offset": 8,
+                  "end_lineno": 23,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 23,
+                    "col_offset": 15,
+                    "end_lineno": 23,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 26,
+          "col_offset": 0,
+          "end_lineno": 27,
+          "end_col_offset": 25
+        },
+        "name": "raise_ArithmeticError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 27,
+              "col_offset": 4,
+              "end_lineno": 27,
+              "end_col_offset": 25
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 27,
+                "col_offset": 10,
+                "end_lineno": 27,
+                "end_col_offset": 25
+              },
+              "id": "ArithmeticError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 30,
+          "col_offset": 0,
+          "end_lineno": 34,
+          "end_col_offset": 20
+        },
+        "name": "catch_ArithmeticError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 30,
+              "col_offset": 26,
+              "end_lineno": 30,
+              "end_col_offset": 31
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 31,
+              "col_offset": 4,
+              "end_lineno": 34,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 32,
+                  "col_offset": 8,
+                  "end_lineno": 32,
+                  "end_col_offset": 29
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 32,
+                    "col_offset": 14,
+                    "end_lineno": 32,
+                    "end_col_offset": 29
+                  },
+                  "id": "ArithmeticError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 8,
+                  "end_lineno": 34,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 34,
+                    "col_offset": 15,
+                    "end_lineno": 34,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 37,
+          "col_offset": 0,
+          "end_lineno": 38,
+          "end_col_offset": 21
+        },
+        "name": "raise_LookupError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 38,
+              "col_offset": 4,
+              "end_lineno": 38,
+              "end_col_offset": 21
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 38,
+                "col_offset": 10,
+                "end_lineno": 38,
+                "end_col_offset": 21
+              },
+              "id": "LookupError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 41,
+          "col_offset": 0,
+          "end_lineno": 45,
+          "end_col_offset": 20
+        },
+        "name": "catch_LookupError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 41,
+              "col_offset": 22,
+              "end_lineno": 41,
+              "end_col_offset": 27
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 42,
+              "col_offset": 4,
+              "end_lineno": 45,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 43,
+                  "col_offset": 8,
+                  "end_lineno": 43,
+                  "end_col_offset": 25
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 43,
+                    "col_offset": 14,
+                    "end_lineno": 43,
+                    "end_col_offset": 25
+                  },
+                  "id": "LookupError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 45,
+                  "col_offset": 8,
+                  "end_lineno": 45,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 45,
+                    "col_offset": 15,
+                    "end_lineno": 45,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 48,
+          "col_offset": 0,
+          "end_lineno": 49,
+          "end_col_offset": 19
+        },
+        "name": "raise_TypeError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 49,
+              "col_offset": 4,
+              "end_lineno": 49,
+              "end_col_offset": 19
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 49,
+                "col_offset": 10,
+                "end_lineno": 49,
+                "end_col_offset": 19
+              },
+              "id": "TypeError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 52,
+          "col_offset": 0,
+          "end_lineno": 56,
+          "end_col_offset": 20
+        },
+        "name": "catch_TypeError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 52,
+              "col_offset": 20,
+              "end_lineno": 52,
+              "end_col_offset": 25
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 53,
+              "col_offset": 4,
+              "end_lineno": 56,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 54,
+                  "col_offset": 8,
+                  "end_lineno": 54,
+                  "end_col_offset": 23
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 54,
+                    "col_offset": 14,
+                    "end_lineno": 54,
+                    "end_col_offset": 23
+                  },
+                  "id": "TypeError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 56,
+                  "col_offset": 8,
+                  "end_lineno": 56,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 15,
+                    "end_lineno": 56,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 59,
+          "col_offset": 0,
+          "end_lineno": 60,
+          "end_col_offset": 19
+        },
+        "name": "raise_NameError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 60,
+              "col_offset": 4,
+              "end_lineno": 60,
+              "end_col_offset": 19
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 60,
+                "col_offset": 10,
+                "end_lineno": 60,
+                "end_col_offset": 19
+              },
+              "id": "NameError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 63,
+          "col_offset": 0,
+          "end_lineno": 67,
+          "end_col_offset": 20
+        },
+        "name": "catch_NameError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 63,
+              "col_offset": 20,
+              "end_lineno": 63,
+              "end_col_offset": 25
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 64,
+              "col_offset": 4,
+              "end_lineno": 67,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 65,
+                  "col_offset": 8,
+                  "end_lineno": 65,
+                  "end_col_offset": 23
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 65,
+                    "col_offset": 14,
+                    "end_lineno": 65,
+                    "end_col_offset": 23
+                  },
+                  "id": "NameError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 67,
+                  "col_offset": 8,
+                  "end_lineno": 67,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 67,
+                    "col_offset": 15,
+                    "end_lineno": 67,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 70,
+          "col_offset": 0,
+          "end_lineno": 71,
+          "end_col_offset": 27
+        },
+        "name": "raise_ZeroDivisionError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 71,
+              "col_offset": 4,
+              "end_lineno": 71,
+              "end_col_offset": 27
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 71,
+                "col_offset": 10,
+                "end_lineno": 71,
+                "end_col_offset": 27
+              },
+              "id": "ZeroDivisionError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 74,
+          "col_offset": 0,
+          "end_lineno": 78,
+          "end_col_offset": 20
+        },
+        "name": "catch_ZeroDivisionError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 74,
+              "col_offset": 28,
+              "end_lineno": 74,
+              "end_col_offset": 33
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 75,
+              "col_offset": 4,
+              "end_lineno": 78,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 76,
+                  "col_offset": 8,
+                  "end_lineno": 76,
+                  "end_col_offset": 31
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 76,
+                    "col_offset": 14,
+                    "end_lineno": 76,
+                    "end_col_offset": 31
+                  },
+                  "id": "ZeroDivisionError"
+                }
+              }
+            ],
+            "exc_name": "ArithmeticError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 8,
+                  "end_lineno": 78,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 78,
+                    "col_offset": 15,
+                    "end_lineno": 78,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 81,
+          "col_offset": 0,
+          "end_lineno": 82,
+          "end_col_offset": 23
+        },
+        "name": "raise_OverflowError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 82,
+              "col_offset": 4,
+              "end_lineno": 82,
+              "end_col_offset": 23
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 82,
+                "col_offset": 10,
+                "end_lineno": 82,
+                "end_col_offset": 23
+              },
+              "id": "OverflowError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 85,
+          "col_offset": 0,
+          "end_lineno": 89,
+          "end_col_offset": 20
+        },
+        "name": "catch_OverflowError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 85,
+              "col_offset": 24,
+              "end_lineno": 85,
+              "end_col_offset": 29
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 86,
+              "col_offset": 4,
+              "end_lineno": 89,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 87,
+                  "col_offset": 8,
+                  "end_lineno": 87,
+                  "end_col_offset": 27
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 87,
+                    "col_offset": 14,
+                    "end_lineno": 87,
+                    "end_col_offset": 27
+                  },
+                  "id": "OverflowError"
+                }
+              }
+            ],
+            "exc_name": "ArithmeticError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 89,
+                  "col_offset": 8,
+                  "end_lineno": 89,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 89,
+                    "col_offset": 15,
+                    "end_lineno": 89,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 92,
+          "col_offset": 0,
+          "end_lineno": 93,
+          "end_col_offset": 20
+        },
+        "name": "raise_IndexError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 93,
+              "col_offset": 4,
+              "end_lineno": 93,
+              "end_col_offset": 20
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 93,
+                "col_offset": 10,
+                "end_lineno": 93,
+                "end_col_offset": 20
+              },
+              "id": "IndexError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 96,
+          "col_offset": 0,
+          "end_lineno": 100,
+          "end_col_offset": 20
+        },
+        "name": "catch_IndexError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 96,
+              "col_offset": 21,
+              "end_lineno": 96,
+              "end_col_offset": 26
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 97,
+              "col_offset": 4,
+              "end_lineno": 100,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 98,
+                  "col_offset": 8,
+                  "end_lineno": 98,
+                  "end_col_offset": 24
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 98,
+                    "col_offset": 14,
+                    "end_lineno": 98,
+                    "end_col_offset": 24
+                  },
+                  "id": "IndexError"
+                }
+              }
+            ],
+            "exc_name": "LookupError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 100,
+                  "col_offset": 8,
+                  "end_lineno": 100,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 100,
+                    "col_offset": 15,
+                    "end_lineno": 100,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 103,
+          "col_offset": 0,
+          "end_lineno": 104,
+          "end_col_offset": 20
+        },
+        "name": "raise_ValueError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 104,
+              "col_offset": 4,
+              "end_lineno": 104,
+              "end_col_offset": 20
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 104,
+                "col_offset": 10,
+                "end_lineno": 104,
+                "end_col_offset": 20
+              },
+              "id": "ValueError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 107,
+          "col_offset": 0,
+          "end_lineno": 111,
+          "end_col_offset": 20
+        },
+        "name": "catch_ValueError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 107,
+              "col_offset": 21,
+              "end_lineno": 107,
+              "end_col_offset": 26
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 108,
+              "col_offset": 4,
+              "end_lineno": 111,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 109,
+                  "col_offset": 8,
+                  "end_lineno": 109,
+                  "end_col_offset": 24
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 109,
+                    "col_offset": 14,
+                    "end_lineno": 109,
+                    "end_col_offset": 24
+                  },
+                  "id": "ValueError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 111,
+                  "col_offset": 8,
+                  "end_lineno": 111,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 111,
+                    "col_offset": 15,
+                    "end_lineno": 111,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 114,
+          "col_offset": 0,
+          "end_lineno": 115,
+          "end_col_offset": 18
+        },
+        "name": "raise_KeyError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 115,
+              "col_offset": 4,
+              "end_lineno": 115,
+              "end_col_offset": 18
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 115,
+                "col_offset": 10,
+                "end_lineno": 115,
+                "end_col_offset": 18
+              },
+              "id": "KeyError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 118,
+          "col_offset": 0,
+          "end_lineno": 122,
+          "end_col_offset": 20
+        },
+        "name": "catch_KeyError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 118,
+              "col_offset": 19,
+              "end_lineno": 118,
+              "end_col_offset": 24
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 119,
+              "col_offset": 4,
+              "end_lineno": 122,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 120,
+                  "col_offset": 8,
+                  "end_lineno": 120,
+                  "end_col_offset": 22
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 120,
+                    "col_offset": 14,
+                    "end_lineno": 120,
+                    "end_col_offset": 22
+                  },
+                  "id": "KeyError"
+                }
+              }
+            ],
+            "exc_name": "LookupError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 122,
+                  "col_offset": 8,
+                  "end_lineno": 122,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 122,
+                    "col_offset": 15,
+                    "end_lineno": 122,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 125,
+          "col_offset": 0,
+          "end_lineno": 126,
+          "end_col_offset": 22
+        },
+        "name": "raise_RuntimeError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 126,
+              "col_offset": 4,
+              "end_lineno": 126,
+              "end_col_offset": 22
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 126,
+                "col_offset": 10,
+                "end_lineno": 126,
+                "end_col_offset": 22
+              },
+              "id": "RuntimeError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 129,
+          "col_offset": 0,
+          "end_lineno": 133,
+          "end_col_offset": 20
+        },
+        "name": "catch_RuntimeError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 129,
+              "col_offset": 23,
+              "end_lineno": 129,
+              "end_col_offset": 28
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 130,
+              "col_offset": 4,
+              "end_lineno": 133,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 131,
+                  "col_offset": 8,
+                  "end_lineno": 131,
+                  "end_col_offset": 26
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 131,
+                    "col_offset": 14,
+                    "end_lineno": 131,
+                    "end_col_offset": 26
+                  },
+                  "id": "RuntimeError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 133,
+                  "col_offset": 8,
+                  "end_lineno": 133,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 133,
+                    "col_offset": 15,
+                    "end_lineno": 133,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 136,
+          "col_offset": 0,
+          "end_lineno": 137,
+          "end_col_offset": 24
+        },
+        "name": "raise_RecursionError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 137,
+              "col_offset": 4,
+              "end_lineno": 137,
+              "end_col_offset": 24
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 137,
+                "col_offset": 10,
+                "end_lineno": 137,
+                "end_col_offset": 24
+              },
+              "id": "RecursionError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 140,
+          "col_offset": 0,
+          "end_lineno": 144,
+          "end_col_offset": 20
+        },
+        "name": "catch_RecursionError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 140,
+              "col_offset": 25,
+              "end_lineno": 140,
+              "end_col_offset": 30
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 141,
+              "col_offset": 4,
+              "end_lineno": 144,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 142,
+                  "col_offset": 8,
+                  "end_lineno": 142,
+                  "end_col_offset": 28
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 142,
+                    "col_offset": 14,
+                    "end_lineno": 142,
+                    "end_col_offset": 28
+                  },
+                  "id": "RecursionError"
+                }
+              }
+            ],
+            "exc_name": "RuntimeError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 144,
+                  "col_offset": 8,
+                  "end_lineno": 144,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 144,
+                    "col_offset": 15,
+                    "end_lineno": 144,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 147,
+          "col_offset": 0,
+          "end_lineno": 148,
+          "end_col_offset": 24
+        },
+        "name": "raise_AttributeError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 148,
+              "col_offset": 4,
+              "end_lineno": 148,
+              "end_col_offset": 24
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 148,
+                "col_offset": 10,
+                "end_lineno": 148,
+                "end_col_offset": 24
+              },
+              "id": "AttributeError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 151,
+          "col_offset": 0,
+          "end_lineno": 155,
+          "end_col_offset": 20
+        },
+        "name": "catch_AttributeError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 151,
+              "col_offset": 25,
+              "end_lineno": 151,
+              "end_col_offset": 30
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 152,
+              "col_offset": 4,
+              "end_lineno": 155,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 153,
+                  "col_offset": 8,
+                  "end_lineno": 153,
+                  "end_col_offset": 28
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 153,
+                    "col_offset": 14,
+                    "end_lineno": 153,
+                    "end_col_offset": 28
+                  },
+                  "id": "AttributeError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 155,
+                  "col_offset": 8,
+                  "end_lineno": 155,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 155,
+                    "col_offset": 15,
+                    "end_lineno": 155,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 158,
+          "col_offset": 0,
+          "end_lineno": 159,
+          "end_col_offset": 24
+        },
+        "name": "raise_AssertionError",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 159,
+              "col_offset": 4,
+              "end_lineno": 159,
+              "end_col_offset": 24
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 159,
+                "col_offset": 10,
+                "end_lineno": 159,
+                "end_col_offset": 24
+              },
+              "id": "AssertionError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 162,
+          "col_offset": 0,
+          "end_lineno": 166,
+          "end_col_offset": 20
+        },
+        "name": "catch_AssertionError",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 162,
+              "col_offset": 25,
+              "end_lineno": 162,
+              "end_col_offset": 30
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 163,
+              "col_offset": 4,
+              "end_lineno": 166,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 164,
+                  "col_offset": 8,
+                  "end_lineno": 164,
+                  "end_col_offset": 28
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 164,
+                    "col_offset": 14,
+                    "end_lineno": 164,
+                    "end_col_offset": 28
+                  },
+                  "id": "AssertionError"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 166,
+                  "col_offset": 8,
+                  "end_lineno": 166,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 166,
+                    "col_offset": 15,
+                    "end_lineno": 166,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 169,
+          "col_offset": 0,
+          "end_lineno": 170,
+          "end_col_offset": 23
+        },
+        "name": "raise_StopIteration",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 170,
+              "col_offset": 4,
+              "end_lineno": 170,
+              "end_col_offset": 23
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 170,
+                "col_offset": 10,
+                "end_lineno": 170,
+                "end_col_offset": 23
+              },
+              "id": "StopIteration"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 173,
+          "col_offset": 0,
+          "end_lineno": 177,
+          "end_col_offset": 20
+        },
+        "name": "catch_StopIteration",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 173,
+              "col_offset": 24,
+              "end_lineno": 173,
+              "end_col_offset": 29
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 174,
+              "col_offset": 4,
+              "end_lineno": 177,
+              "end_col_offset": 20
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 175,
+                  "col_offset": 8,
+                  "end_lineno": 175,
+                  "end_col_offset": 27
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 175,
+                    "col_offset": 14,
+                    "end_lineno": 175,
+                    "end_col_offset": 27
+                  },
+                  "id": "StopIteration"
+                }
+              }
+            ],
+            "exc_name": "Exception",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 177,
+                  "col_offset": 8,
+                  "end_lineno": 177,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 177,
+                    "col_offset": 15,
+                    "end_lineno": 177,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 180,
+          "col_offset": 0,
+          "end_lineno": 187,
+          "end_col_offset": 16
+        },
+        "name": "base_not_exception",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 181,
+              "col_offset": 4,
+              "end_lineno": 187,
+              "end_col_offset": 16
+            },
+            "body": [
+              {
+                "kind": "Try",
+                "span": {
+                  "lineno": 182,
+                  "col_offset": 8,
+                  "end_lineno": 185,
+                  "end_col_offset": 20
+                },
+                "body": [
+                  {
+                    "kind": "Raise",
+                    "span": {
+                      "lineno": 183,
+                      "col_offset": 12,
+                      "end_lineno": 183,
+                      "end_col_offset": 31
+                    },
+                    "exc": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 183,
+                        "col_offset": 18,
+                        "end_lineno": 183,
+                        "end_col_offset": 31
+                      },
+                      "id": "BaseException"
+                    }
+                  }
+                ],
+                "exc_name": "Exception",
+                "handler": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 185,
+                      "col_offset": 12,
+                      "end_lineno": 185,
+                      "end_col_offset": 20
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 185,
+                        "col_offset": 19,
+                        "end_lineno": 185,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  }
+                ],
+                "try_unsupported": null
+              }
+            ],
+            "exc_name": "BaseException",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 187,
+                  "col_offset": 8,
+                  "end_lineno": 187,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 187,
+                    "col_offset": 15,
+                    "end_lineno": 187,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 190,
+          "col_offset": 0,
+          "end_lineno": 197,
+          "end_col_offset": 16
+        },
+        "name": "wrong_sibling",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 191,
+              "col_offset": 4,
+              "end_lineno": 197,
+              "end_col_offset": 16
+            },
+            "body": [
+              {
+                "kind": "Try",
+                "span": {
+                  "lineno": 192,
+                  "col_offset": 8,
+                  "end_lineno": 195,
+                  "end_col_offset": 20
+                },
+                "body": [
+                  {
+                    "kind": "Raise",
+                    "span": {
+                      "lineno": 193,
+                      "col_offset": 12,
+                      "end_lineno": 193,
+                      "end_col_offset": 28
+                    },
+                    "exc": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 193,
+                        "col_offset": 18,
+                        "end_lineno": 193,
+                        "end_col_offset": 28
+                      },
+                      "id": "ValueError"
+                    }
+                  }
+                ],
+                "exc_name": "TypeError",
+                "handler": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 195,
+                      "col_offset": 12,
+                      "end_lineno": 195,
+                      "end_col_offset": 20
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 195,
+                        "col_offset": 19,
+                        "end_lineno": 195,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  }
+                ],
+                "try_unsupported": null
+              }
+            ],
+            "exc_name": "ValueError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 197,
+                  "col_offset": 8,
+                  "end_lineno": 197,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 197,
+                    "col_offset": 15,
+                    "end_lineno": 197,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 200,
+          "col_offset": 0,
+          "end_lineno": 207,
+          "end_col_offset": 15
+        },
+        "name": "retained_state",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 201,
+              "col_offset": 4,
+              "end_lineno": 201,
+              "end_col_offset": 14
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 201,
+                  "col_offset": 4,
+                  "end_lineno": 201,
+                  "end_col_offset": 8
+                },
+                "id": "data"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 201,
+                "col_offset": 11,
+                "end_lineno": 201,
+                "end_col_offset": 14
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 201,
+                    "col_offset": 12,
+                    "end_lineno": 201,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 202,
+              "col_offset": 4,
+              "end_lineno": 206,
+              "end_col_offset": 22
+            },
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 203,
+                  "col_offset": 8,
+                  "end_lineno": 203,
+                  "end_col_offset": 22
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 203,
+                    "col_offset": 8,
+                    "end_lineno": 203,
+                    "end_col_offset": 22
+                  },
+                  "func": {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 203,
+                      "col_offset": 8,
+                      "end_lineno": 203,
+                      "end_col_offset": 19
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 203,
+                        "col_offset": 8,
+                        "end_lineno": 203,
+                        "end_col_offset": 12
+                      },
+                      "id": "data"
+                    },
+                    "attr": "append"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 203,
+                        "col_offset": 20,
+                        "end_lineno": 203,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              },
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 204,
+                  "col_offset": 8,
+                  "end_lineno": 204,
+                  "end_col_offset": 22
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 204,
+                    "col_offset": 14,
+                    "end_lineno": 204,
+                    "end_col_offset": 22
+                  },
+                  "id": "KeyError"
+                }
+              }
+            ],
+            "exc_name": "LookupError",
+            "handler": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 206,
+                  "col_offset": 8,
+                  "end_lineno": 206,
+                  "end_col_offset": 22
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 206,
+                    "col_offset": 8,
+                    "end_lineno": 206,
+                    "end_col_offset": 22
+                  },
+                  "func": {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 206,
+                      "col_offset": 8,
+                      "end_lineno": 206,
+                      "end_col_offset": 19
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 206,
+                        "col_offset": 8,
+                        "end_lineno": 206,
+                        "end_col_offset": 12
+                      },
+                      "id": "data"
+                    },
+                    "attr": "append"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 206,
+                        "col_offset": 20,
+                        "end_lineno": 206,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "try_unsupported": null
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 207,
+              "col_offset": 4,
+              "end_lineno": 207,
+              "end_col_offset": 15
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 207,
+                "col_offset": 11,
+                "end_lineno": 207,
+                "end_col_offset": 15
+              },
+              "id": "data"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 210,
+          "col_offset": 0,
+          "end_lineno": 214,
+          "end_col_offset": 16
+        },
+        "name": "through_call",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 211,
+              "col_offset": 4,
+              "end_lineno": 214,
+              "end_col_offset": 16
+            },
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 212,
+                  "col_offset": 8,
+                  "end_lineno": 212,
+                  "end_col_offset": 29
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 212,
+                    "col_offset": 8,
+                    "end_lineno": 212,
+                    "end_col_offset": 29
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 212,
+                      "col_offset": 8,
+                      "end_lineno": 212,
+                      "end_col_offset": 27
+                    },
+                    "id": "raise_OverflowError"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_name": "ArithmeticError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 214,
+                  "col_offset": 8,
+                  "end_lineno": 214,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 214,
+                    "col_offset": 15,
+                    "end_lineno": 214,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "9"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 217,
+          "col_offset": 0,
+          "end_lineno": 219,
+          "end_col_offset": 23
+        },
+        "name": "stop_generator",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Yield",
+            "span": {
+              "lineno": 218,
+              "col_offset": 4,
+              "end_lineno": 218,
+              "end_col_offset": 11
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 218,
+                "col_offset": 10,
+                "end_lineno": 218,
+                "end_col_offset": 11
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          },
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 219,
+              "col_offset": 4,
+              "end_lineno": 219,
+              "end_col_offset": 23
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 219,
+                "col_offset": 10,
+                "end_lineno": 219,
+                "end_col_offset": 23
+              },
+              "id": "StopIteration"
+            }
+          }
+        ],
+        "is_generator": true
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 222,
+          "col_offset": 0,
+          "end_lineno": 224,
+          "end_col_offset": 15
+        },
+        "name": "empty_generator",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 223,
+              "col_offset": 4,
+              "end_lineno": 224,
+              "end_col_offset": 15
+            },
+            "test": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 223,
+                "col_offset": 7,
+                "end_lineno": 223,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "bool",
+                "value": false
+              }
+            },
+            "body": [
+              {
+                "kind": "Yield",
+                "span": {
+                  "lineno": 224,
+                  "col_offset": 8,
+                  "end_lineno": 224,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 224,
+                    "col_offset": 14,
+                    "end_lineno": 224,
+                    "end_col_offset": 15
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          }
+        ],
+        "is_generator": true
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 227,
+          "col_offset": 0,
+          "end_lineno": 229,
+          "end_col_offset": 27
+        },
+        "name": "next_stop_generator",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Yield",
+            "span": {
+              "lineno": 228,
+              "col_offset": 4,
+              "end_lineno": 228,
+              "end_col_offset": 11
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 228,
+                "col_offset": 10,
+                "end_lineno": 228,
+                "end_col_offset": 11
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 229,
+              "col_offset": 4,
+              "end_lineno": 229,
+              "end_col_offset": 27
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 229,
+                "col_offset": 4,
+                "end_lineno": 229,
+                "end_col_offset": 27
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 229,
+                  "col_offset": 4,
+                  "end_lineno": 229,
+                  "end_col_offset": 8
+                },
+                "id": "next"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 229,
+                    "col_offset": 9,
+                    "end_lineno": 229,
+                    "end_col_offset": 26
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 229,
+                      "col_offset": 9,
+                      "end_lineno": 229,
+                      "end_col_offset": 24
+                    },
+                    "id": "empty_generator"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ],
+        "is_generator": true
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 232,
+          "col_offset": 0,
+          "end_lineno": 238,
+          "end_col_offset": 38
+        },
+        "name": "generator_closed",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 233,
+              "col_offset": 4,
+              "end_lineno": 233,
+              "end_col_offset": 24
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 233,
+                  "col_offset": 4,
+                  "end_lineno": 233,
+                  "end_col_offset": 5
+                },
+                "id": "g"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 233,
+                "col_offset": 8,
+                "end_lineno": 233,
+                "end_col_offset": 24
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 233,
+                  "col_offset": 8,
+                  "end_lineno": 233,
+                  "end_col_offset": 22
+                },
+                "id": "stop_generator"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 234,
+              "col_offset": 4,
+              "end_lineno": 234,
+              "end_col_offset": 19
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 234,
+                  "col_offset": 4,
+                  "end_lineno": 234,
+                  "end_col_offset": 9
+                },
+                "id": "first"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 234,
+                "col_offset": 12,
+                "end_lineno": 234,
+                "end_col_offset": 19
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 234,
+                  "col_offset": 12,
+                  "end_lineno": 234,
+                  "end_col_offset": 16
+                },
+                "id": "next"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 234,
+                    "col_offset": 17,
+                    "end_lineno": 234,
+                    "end_col_offset": 18
+                  },
+                  "id": "g"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 235,
+              "col_offset": 4,
+              "end_lineno": 238,
+              "end_col_offset": 38
+            },
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 236,
+                  "col_offset": 8,
+                  "end_lineno": 236,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 236,
+                    "col_offset": 8,
+                    "end_lineno": 236,
+                    "end_col_offset": 15
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 236,
+                      "col_offset": 8,
+                      "end_lineno": 236,
+                      "end_col_offset": 12
+                    },
+                    "id": "next"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 236,
+                        "col_offset": 13,
+                        "end_lineno": 236,
+                        "end_col_offset": 14
+                      },
+                      "id": "g"
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_name": "RuntimeError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 238,
+                  "col_offset": 8,
+                  "end_lineno": 238,
+                  "end_col_offset": 38
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 238,
+                    "col_offset": 15,
+                    "end_lineno": 238,
+                    "end_col_offset": 38
+                  },
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 238,
+                      "col_offset": 15,
+                      "end_lineno": 238,
+                      "end_col_offset": 25
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 238,
+                        "col_offset": 15,
+                        "end_lineno": 238,
+                        "end_col_offset": 20
+                      },
+                      "id": "first"
+                    },
+                    "op": "Mult",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 238,
+                        "col_offset": 23,
+                        "end_lineno": 238,
+                        "end_col_offset": 25
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "10"
+                      }
+                    }
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Call",
+                    "span": {
+                      "lineno": 238,
+                      "col_offset": 28,
+                      "end_lineno": 238,
+                      "end_col_offset": 38
+                    },
+                    "func": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 238,
+                        "col_offset": 28,
+                        "end_lineno": 238,
+                        "end_col_offset": 32
+                      },
+                      "id": "next"
+                    },
+                    "args": [
+                      {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 238,
+                          "col_offset": 33,
+                          "end_lineno": 238,
+                          "end_col_offset": 34
+                        },
+                        "id": "g"
+                      },
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 238,
+                          "col_offset": 36,
+                          "end_lineno": 238,
+                          "end_col_offset": 37
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "7"
+                        }
+                      }
+                    ],
+                    "keywords": [],
+                    "call_unsupported": null
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 241,
+          "col_offset": 0,
+          "end_lineno": 242,
+          "end_col_offset": 33
+        },
+        "name": "generator_escape",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 242,
+              "col_offset": 4,
+              "end_lineno": 242,
+              "end_col_offset": 33
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 242,
+                "col_offset": 11,
+                "end_lineno": 242,
+                "end_col_offset": 33
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 242,
+                  "col_offset": 11,
+                  "end_lineno": 242,
+                  "end_col_offset": 15
+                },
+                "id": "list"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 242,
+                    "col_offset": 16,
+                    "end_lineno": 242,
+                    "end_col_offset": 32
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 242,
+                      "col_offset": 16,
+                      "end_lineno": 242,
+                      "end_col_offset": 30
+                    },
+                    "id": "stop_generator"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 245,
+          "col_offset": 0,
+          "end_lineno": 246,
+          "end_col_offset": 38
+        },
+        "name": "exhaustion_escape",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 246,
+              "col_offset": 4,
+              "end_lineno": 246,
+              "end_col_offset": 38
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 246,
+                "col_offset": 11,
+                "end_lineno": 246,
+                "end_col_offset": 38
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 246,
+                  "col_offset": 11,
+                  "end_lineno": 246,
+                  "end_col_offset": 15
+                },
+                "id": "list"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 246,
+                    "col_offset": 16,
+                    "end_lineno": 246,
+                    "end_col_offset": 37
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 246,
+                      "col_offset": 16,
+                      "end_lineno": 246,
+                      "end_col_offset": 35
+                    },
+                    "id": "next_stop_generator"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 249,
+          "col_offset": 0,
+          "end_lineno": 254,
+          "end_col_offset": 15
+        },
+        "name": "catches_stop",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 250,
+              "col_offset": 4,
+              "end_lineno": 253,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 251,
+                  "col_offset": 8,
+                  "end_lineno": 251,
+                  "end_col_offset": 27
+                },
+                "exc": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 251,
+                    "col_offset": 14,
+                    "end_lineno": 251,
+                    "end_col_offset": 27
+                  },
+                  "id": "StopIteration"
+                }
+              }
+            ],
+            "exc_name": "StopIteration",
+            "handler": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 253,
+                  "col_offset": 8,
+                  "end_lineno": 253,
+                  "end_col_offset": 17
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 253,
+                      "col_offset": 8,
+                      "end_lineno": 253,
+                      "end_col_offset": 13
+                    },
+                    "id": "value"
+                  }
+                ],
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 253,
+                    "col_offset": 16,
+                    "end_lineno": 253,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "5"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          },
+          {
+            "kind": "Yield",
+            "span": {
+              "lineno": 254,
+              "col_offset": 4,
+              "end_lineno": 254,
+              "end_col_offset": 15
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 254,
+                "col_offset": 10,
+                "end_lineno": 254,
+                "end_col_offset": 15
+              },
+              "id": "value"
+            }
+          }
+        ],
+        "is_generator": true
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 257,
+          "col_offset": 0,
+          "end_lineno": 258,
+          "end_col_offset": 31
+        },
+        "name": "caught_inside_generator",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 258,
+              "col_offset": 4,
+              "end_lineno": 258,
+              "end_col_offset": 31
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 258,
+                "col_offset": 11,
+                "end_lineno": 258,
+                "end_col_offset": 31
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 258,
+                  "col_offset": 11,
+                  "end_lineno": 258,
+                  "end_col_offset": 15
+                },
+                "id": "next"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 258,
+                    "col_offset": 16,
+                    "end_lineno": 258,
+                    "end_col_offset": 30
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 258,
+                      "col_offset": 16,
+                      "end_lineno": 258,
+                      "end_col_offset": 28
+                    },
+                    "id": "catches_stop"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 261,
+          "col_offset": 0,
+          "end_lineno": 262,
+          "end_col_offset": 20
+        },
+        "name": "parameter_shadow",
+        "args": [
+          {
+            "arg": "ValueError",
+            "span": {
+              "lineno": 261,
+              "col_offset": 21,
+              "end_lineno": 261,
+              "end_col_offset": 31
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": "raises locally-bound name(s) (static-locals rule): ValueError",
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 262,
+              "col_offset": 4,
+              "end_lineno": 262,
+              "end_col_offset": 20
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 262,
+                "col_offset": 10,
+                "end_lineno": 262,
+                "end_col_offset": 20
+              },
+              "id": "ValueError"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 265,
+          "col_offset": 0,
+          "end_lineno": 267,
+          "end_col_offset": 18
+        },
+        "name": "late_shadow",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": "raises locally-bound name(s) (static-locals rule): ValueError",
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 266,
+              "col_offset": 4,
+              "end_lineno": 266,
+              "end_col_offset": 20
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 266,
+                "col_offset": 10,
+                "end_lineno": 266,
+                "end_col_offset": 20
+              },
+              "id": "ValueError"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 267,
+              "col_offset": 4,
+              "end_lineno": 267,
+              "end_col_offset": 18
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 267,
+                  "col_offset": 4,
+                  "end_lineno": 267,
+                  "end_col_offset": 14
+                },
+                "id": "ValueError"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 267,
+                "col_offset": 17,
+                "end_lineno": 267,
+                "end_col_offset": 18
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 270,
+          "col_offset": 0,
+          "end_lineno": 271,
+          "end_col_offset": 22
+        },
+        "name": "raised_instance",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 271,
+              "col_offset": 4,
+              "end_lineno": 271,
+              "end_col_offset": 22
+            },
+            "exc": {
+              "kind": "Call",
+              "span": {
+                "lineno": 271,
+                "col_offset": 10,
+                "end_lineno": 271,
+                "end_col_offset": 22
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 271,
+                  "col_offset": 10,
+                  "end_lineno": 271,
+                  "end_col_offset": 20
+                },
+                "id": "ValueError"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 274,
+          "col_offset": 0,
+          "end_lineno": 275,
+          "end_col_offset": 30
+        },
+        "name": "chained",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 275,
+              "col_offset": 4,
+              "end_lineno": 275,
+              "end_col_offset": 30
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 275,
+                "col_offset": 10,
+                "end_lineno": 275,
+                "end_col_offset": 20
+              },
+              "id": "ValueError"
+            },
+            "cause": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 275,
+                "col_offset": 26,
+                "end_lineno": 275,
+                "end_col_offset": 30
+              },
+              "value": {
+                "type": "none"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 278,
+          "col_offset": 0,
+          "end_lineno": 279,
+          "end_col_offset": 17
+        },
+        "name": "unsupported_class",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 279,
+              "col_offset": 4,
+              "end_lineno": 279,
+              "end_col_offset": 17
+            },
+            "exc": {
+              "kind": "Name",
+              "span": {
+                "lineno": 279,
+                "col_offset": 10,
+                "end_lineno": 279,
+                "end_col_offset": 17
+              },
+              "id": "OSError"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

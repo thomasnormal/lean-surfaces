@@ -300,7 +300,11 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
         else
           match findClass m excName with
           | Option.none =>
-              if importErrorHandlerMatch excName then
+              if (findNamedTuple m excName).isSome then
+                tryCatch (S.stmts body.toList) (fun _ =>
+                  raisePy (.typeError
+                    "catching classes that do not inherit from BaseException is not allowed"))
+              else if importErrorHandlerMatch excName then
                 tryCatch (S.stmts body.toList) (fun e =>
                   match e with
                   | .importError _ => S.stmts handler.toList

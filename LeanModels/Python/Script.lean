@@ -672,7 +672,12 @@ mutual
                -- through `execScriptStmts` so their bindings publish per
                -- statement (the quopri shape: the handler's `a2b_qp =
                -- None` must be a live global for later top-level reads).
-               if importErrorHandlerMatch excName then
+               if (findNamedTuple m excName).isSome then
+                 Run.bindE (execScriptStmts m fuel st body.toList)
+                   (fun st' flow => .ok st' flow)
+                   (fun st' _ => .exn st' (.typeError
+                     "catching classes that do not inherit from BaseException is not allowed"))
+               else if importErrorHandlerMatch excName then
                  match execScriptStmts m fuel st body.toList with
                  | .ok st' flow => .ok st' flow
                  | .exn st' e =>

@@ -1311,7 +1311,12 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                   if c.isExc then raisePy (.user ci c.name)
                   else refuse s!"'raise {id}': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
               | Option.none =>
-                  refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
+                  if (findNamedTuple m id).isSome then
+                    raisePy (.typeError "exceptions must derive from BaseException")
+                  else if admittedBuiltinExc.contains id then
+                    raisePy (.builtinException id)
+                  else
+                    refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
         | some _ =>
             refuse "'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.md §exceptions)"
   | .assertStmt test msg _ => do
@@ -1363,7 +1368,11 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           | Option.none =>
               -- The pinned two-name import-error table, consulted only after
               -- `findClass` missed, so a user class named `ImportError` wins.
-              if importErrorHandlerMatch excName then
+              if (findNamedTuple m excName).isSome then
+                tryCatch (execOpenList K m body.toList) (fun _ =>
+                  raisePy (.typeError
+                    "catching classes that do not inherit from BaseException is not allowed"))
+              else if importErrorHandlerMatch excName then
                 tryCatch (execOpenList K m body.toList) (fun e =>
                   match e with
                   | .importError _ => execOpenList K m handler.toList
@@ -1515,7 +1524,7 @@ def stepIterAt (K : Kont) (a : Addr) : SemW (Option RVal) := do
               match Heap.update st.world.heap a
                   (.generator qname st.locals [] (cont.exceptionStatus e)) with
               | Option.none => refuse danglingMsg
-              | some h₂ => do heapPut h₂; raisePy e))
+              | some h₂ => do heapPut h₂; raisePy (generatorEscape e)))
   | some _ =>
       raisePy (.typeError s!"'{RVal.typeNameH w.heap (.ref a)}' object is not an iterator")
   | Option.none => refuse danglingMsg

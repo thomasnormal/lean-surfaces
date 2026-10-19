@@ -12,8 +12,22 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Added
+
+- Bare `raise ValueError` and the other 15 admitted builtin exception class
+  names now work in both interpreters, including ancestor matching, retained
+  effects, and generator closure. `Exception` does not catch `BaseException`;
+  `StopIteration` escaping a generator becomes `RuntimeError` (PEP 479).
+  Exception instances, payloads, chaining and locally shadowed raise names
+  remain loud unfinished work.
+
 ### Fixed
 
+- The axiom census limits its directly invoked Lean process to one worker,
+  avoiding thread exhaustion on hosts with many hardware threads.
+- Recognized namedtuple classes shadow builtin exception names in raises and
+  handlers. Both interpreters preserve CPython's distinct `TypeError` messages;
+  handler validation occurs only after the body raises, keeping its effects.
 - `sum(iterable, start)` now validates the iterable before rejecting a string
   start, matching CPython's error order for non-iterables. String and bytes
   start validation shares one worker, reports default-protocol instance names

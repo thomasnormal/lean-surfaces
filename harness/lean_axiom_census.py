@@ -17,8 +17,8 @@ The three trust extensions it looks for were measured, not recalled
 is tracked SEPARATELY: an incomplete proof and a compiler-trusting proof are
 different failures and pooling them would misreport both.
 
-It runs ONE small `lean` process on a dependency-free file, niced, so it needs
-no `lake` and no build lock (BUILD_LOCK_PROTOCOL rule 3).
+It runs one single-worker `lean` process, niced, inside the caller's triad.
+It reads built oleans and never starts `lake` or rebuilds dependencies.
 
 Usage:
     lean_axiom_census.py --modules Init.Core Init.Prelude [-o OUT]
@@ -57,8 +57,10 @@ def run(modules: list[str], toolchain: Path, lean_path: str | None, timeout: int
                 raise CensusRefusal(f"--lean-path entry is not a directory: {part}")
         env["LEAN_PATH"] = lean_path + ":" + env.get("LEAN_PATH", "")
 
-    # nice -n 19 and a single small process: BUILD_LOCK_PROTOCOL rule 3.
-    cmd = ["nice", "-n", "19", str(lean), "--run", str(SCRIPT), *modules]
+    # This explicit binary bypasses PATH wrappers. Lean otherwise starts one
+    # worker per hardware thread, which can exhaust host resources before the
+    # census even imports its modules. Introspection needs only one worker.
+    cmd = ["nice", "-n", "19", str(lean), "-j1", "--run", str(SCRIPT), *modules]
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
     except subprocess.TimeoutExpired as exc:

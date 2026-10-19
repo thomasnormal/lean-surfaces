@@ -678,6 +678,9 @@ inductive PyErr where
   (args/attrs/`as`-bindings all refuse loudly), which is what makes the
   class-identity representation observationally exact. -/
   | user (cid : Nat) (name : String)
+  /-- A bare raise of an admitted builtin exception class.  The class name is
+  retained, but the instance carries no arguments or attributes in this tier. -/
+  | builtinException (name : String)
 deriving Repr, Inhabited, BEq, DecidableEq
 /-! ### §except-builtin — WHICH BUILTIN EXCEPTION NAMES A HANDLER MAY MATCH
 
@@ -721,6 +724,7 @@ explicit list of pairs.
     everything else    exact, one name to one constructor -/
 def builtinExcCatches : String → PyErr → Bool
   | "BaseException",     _                   => true
+  | "Exception",         .builtinException raised => raised != "BaseException"
   | "Exception",         _                   => true
   | "ArithmeticError",   .zeroDivisionError  => true
   | "ArithmeticError",   .zeroDivisionPow    => true
@@ -751,7 +755,22 @@ def builtinExcCatches : String → PyErr → Bool
   | "AttributeError",    .attributeError     => true
   | "AssertionError",    .assertionError _   => true
   | "StopIteration",     .stopIteration      => true
+  | "ArithmeticError",    .builtinException raised =>
+      raised == "ArithmeticError" || raised == "ZeroDivisionError" ||
+      raised == "OverflowError"
+  | "LookupError",        .builtinException raised =>
+      raised == "LookupError" || raised == "IndexError" || raised == "KeyError"
+  | "RuntimeError",       .builtinException raised =>
+      raised == "RuntimeError" || raised == "RecursionError"
+  | name,                 .builtinException raised => name == raised
   | _,                   _                   => false
+
+/-- PEP 479: StopIteration escaping a generator body becomes RuntimeError.
+Normal iterator exhaustion returns `none` and never reaches this worker. -/
+def generatorEscape : PyErr → PyErr
+  | .stopIteration | .builtinException "StopIteration" =>
+      .runtimeError "generator raised StopIteration"
+  | error => error
 
 /-- Interpreter results. `unsupported` = outside the v0 tier (loud), NOT a Python error. -/
 inductive Res (α : Type) where

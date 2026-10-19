@@ -1290,7 +1290,7 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
         case name id sp2 =>
           refine .ite .unsupported ?_
           cases hfc : findClass m id with
-          | none => exact .unsupported
+          | none => exact .ite (.exn h _) (.ite (.exn h _) .unsupported)
           | some pr =>
             cases pr with
             | mk ci cdef => exact .ite (.exn h _) .unsupported
@@ -1303,41 +1303,45 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
       refine .ite .unsupported ?_
       cases hfc : findClass m excName with
       | none =>
-        -- Pass 0 (§import forms): the pinned import-error table branch —
-        -- the class branch's shape below, with no cid ite (every
-        -- `.importError` matches either pinned name)
         refine .ite ?_ ?_
-        · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
-          cases hrun : execStmts m fuel st body.toList with
-          | ok s2 fl =>
-            obtain ⟨h2, hy⟩ := hok s2 fl hrun
-            simp only [hy]
-            exact .ok h2 _
-          | exn s2 e =>
-            obtain ⟨h2, hy⟩ := hexn s2 e hrun
-            simp only [hy]
-            cases e <;> try exact .exn h2 _
-            case importError mod =>
-              exact ihSs m s2 handler.toList h2
-          | timeout =>
-            simp only [hto hrun]
-            exact .timeout
-          | unsupported msg => exact .unsupported
-        · refine .ite ?_ (.ite .unsupported .unsupported)
-          obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
-          cases hrun : execStmts m fuel st body.toList with
-          | ok s2 fl =>
-            obtain ⟨h2, hy⟩ := hok s2 fl hrun
-            simp only [hy]
-            exact .ok h2 _
-          | exn s2 e =>
-            obtain ⟨h2, hy⟩ := hexn s2 e hrun
-            simp only [hy]
-            exact .ite (ihSs m s2 handler.toList h2) (.exn h2 _)
-          | timeout =>
-            simp only [hto hrun]
-            exact .timeout
-          | unsupported msg => exact .unsupported
+        · exact .bindE (ihSs m st body.toList h)
+            (fun _ _ hs => .ok hs _) (fun _ _ hs => .exn hs _)
+        ·
+          -- Pass 0 (§import forms): the pinned import-error table branch —
+          -- the class branch's shape below, with no cid ite (every
+          -- `.importError` matches either pinned name)
+          refine .ite ?_ ?_
+          · obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
+            cases hrun : execStmts m fuel st body.toList with
+            | ok s2 fl =>
+              obtain ⟨h2, hy⟩ := hok s2 fl hrun
+              simp only [hy]
+              exact .ok h2 _
+            | exn s2 e =>
+              obtain ⟨h2, hy⟩ := hexn s2 e hrun
+              simp only [hy]
+              cases e <;> try exact .exn h2 _
+              case importError mod =>
+                exact ihSs m s2 handler.toList h2
+            | timeout =>
+              simp only [hto hrun]
+              exact .timeout
+            | unsupported msg => exact .unsupported
+          · refine .ite ?_ (.ite .unsupported .unsupported)
+            obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
+            cases hrun : execStmts m fuel st body.toList with
+            | ok s2 fl =>
+              obtain ⟨h2, hy⟩ := hok s2 fl hrun
+              simp only [hy]
+              exact .ok h2 _
+            | exn s2 e =>
+              obtain ⟨h2, hy⟩ := hexn s2 e hrun
+              simp only [hy]
+              exact .ite (ihSs m s2 handler.toList h2) (.exn h2 _)
+            | timeout =>
+              simp only [hto hrun]
+              exact .timeout
+            | unsupported msg => exact .unsupported
       | some pr =>
         cases pr with
         | mk ci cdef =>

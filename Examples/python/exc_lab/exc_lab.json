@@ -5416,7 +5416,7 @@
           }
         ],
         "args_unsupported": null,
-        "locals_unsupported": null,
+        "locals_unsupported": "raises locally-bound name(s) (static-locals rule): n",
         "body": [
           {
             "kind": "Raise",
@@ -5516,7 +5516,7 @@
           }
         ],
         "args_unsupported": null,
-        "locals_unsupported": null,
+        "locals_unsupported": "raises locally-bound name(s) (static-locals rule): Stop",
         "body": [
           {
             "kind": "Assign",

@@ -5595,3 +5595,29 @@ boundary values, high octets, error paths, consumers, and dictionary keys.
 4. `#print axioms` stays `[propext, Classical.choice, Quot.sound]`.
 5. Loudness: `.unsupported` is fuel-independent; `.timeout` is the only
    exhaustion outcome; nothing is ever silently wrong.
+
+
+## Bare builtin raises (2026-10-19)
+
+`raise N` now accepts the same 16 builtin names as `admittedBuiltinExc` when
+no local, module binding, function or user class shadows the name. An admitted
+user exception class resolves first and keeps its class identity. Builtin raises
+use `PyErr.builtinException name`, preserving both the class and the empty
+message without inventing a first-class exception value. The existing explicit
+hierarchy table handles these errors; `Exception` excludes a raised
+`BaseException`. The extractor refuses a bare raise name bound anywhere in its
+function scope, including a later assignment, to close the unbound-local window.
+Recognized namedtuple classes also take precedence over builtin names; raising
+one produces CPython's `TypeError("exceptions must derive from BaseException")`.
+A namedtuple used as a handler class raises the separate catching-class
+`TypeError` only if the body raises; successful bodies remain successful, and
+both script shells retain the body's published effects before the error.
+
+PEP 479 applies at generator exit: `generatorEscape` maps either representation
+of `StopIteration` to `RuntimeError("generator raised StopIteration")` after the
+frame closes. Ordinary exhaustion and caught errors never reach this worker.
+Both interpreters share the worker. Exception instances, payloads, reraising,
+chaining and additional exception classes remain loud unfinished work.
+
+Acceptance lives in `Examples/python/builtin_raise_lab`, with differential
+calls, whole-program scripts, concrete kernel checks and a symbolic theorem.

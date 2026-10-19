@@ -525,6 +525,23 @@ class ExtractorTests(unittest.TestCase):
             fn["locals_unsupported"],
             "calls locally-assigned name(s) (static-locals rule): sorted")
 
+    def test_raise_local_binding_refuses_without_order_exemptions(self):
+        for source in (
+            "def f(ValueError):\n    raise ValueError\n",
+            "def f():\n    raise ValueError\n    ValueError = 1\n",
+            "def f():\n    if False:\n        ValueError = 1\n    raise ValueError\n",
+        ):
+            with self.subTest(source=source):
+                self.assertEqual(self._first_fn(source)["locals_unsupported"],
+                                 "raises locally-bound name(s) "
+                                 "(static-locals rule): ValueError")
+
+    def test_raise_guard_does_not_cross_nested_scopes(self):
+        fn = self._first_fn(
+            "def f():\n    def g(ValueError):\n        return ValueError\n"
+            "    raise ValueError\n")
+        self.assertIsNone(fn["locals_unsupported"])
+
     def test_handler_local_binding_refuses_without_order_exemptions(self):
         bodies = (
             "    try:\n        TypeError = 1\n        len(1)\n"

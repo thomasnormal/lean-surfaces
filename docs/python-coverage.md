@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3224 | 2890 | 0 | 334 |
+| 3313 | 2975 | 0 | 338 |
 
-Of the 2890 rows the model decides, 2890 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2975 rows the model decides, 2975 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3224 | 2816 | 0 | 408 |
+| 3313 | 2901 | 0 | 412 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-142 witnesses: 123 MATCH, 19 REFUSE.
+143 witnesses: 124 MATCH, 19 REFUSE.
 
 ### `stmt`
 
@@ -50,8 +50,9 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `With` | MATCH | single synchronous context-manager item |
 | `AsyncWith` | REFUSE | unsupported statement 'AsyncFunctionDef' |
 | `Raise` | REFUSE | 'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.m… |
+| `Raise-class` | MATCH | bare admitted builtin exception class; payload construction remains unfinished |
 | `Try` | MATCH | FLIPPED by §except-builtin: `ValueError` is now an admitted handler class. WHAT THIS ROW PROVES AND DOES NOT:… |
-| `Assert` | MATCH | assert is in tier; AssertionError is not catchable |
+| `Assert` | MATCH | assertion failure uses the admitted builtin exception hierarchy |
 | `Import` | REFUSE | unsupported statement 'Import' |
 | `ImportFrom` | REFUSE | unsupported statement 'ImportFrom' |
 | `Global` | REFUSE | unsupported statement 'Global' |
@@ -212,6 +213,6 @@ Also modelled: `count` (from `from itertools import count`).
 
 **Modelled constants:** `Ellipsis`, `False`, `None`, `True`. `Ellipsis` and `...` denote the same singleton; ordinary name shadowing still applies.
 
-**Exception classes `except` can name (16):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `Exception`, `IndexError`, `KeyError`, `LookupError`, `NameError`, `OverflowError`, `RecursionError`, `RuntimeError`, `StopIteration`, `TypeError`, `ValueError`, `ZeroDivisionError`. Other exception names refuse, including OS-error ancestors such as `OSError`; user classes `class E(Exception): pass` are admitted.
+**Exception classes `except` and bare `raise` can name (16):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `Exception`, `IndexError`, `KeyError`, `LookupError`, `NameError`, `OverflowError`, `RecursionError`, `RuntimeError`, `StopIteration`, `TypeError`, `ValueError`, `ZeroDivisionError`. `ImportError` and `ModuleNotFoundError` additionally work as handler names, but their bare raises remain unfinished. Other builtin exception names refuse, including OS-error ancestors such as `OSError`; user classes `class E(Exception): pass` are admitted.
 
 **Other CPython builtin names (51)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `DeprecationWarning`, `EOFError`, `EnvironmentError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `KeyboardInterrupt`, `MemoryError`, `ModuleNotFoundError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `OSError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `RuntimeWarning`, `StopAsyncIteration`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `SystemExit`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeError`, `UnicodeTranslateError`, `UnicodeWarning`, `UserWarning`, `Warning`.

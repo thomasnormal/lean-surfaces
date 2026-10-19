@@ -629,6 +629,48 @@ def _constant_dimension_selector(expression):
     return int(value)
 
 
+def _fixed_array_cell(sm, expression):
+    """Return the lowered cell for a constant element of a one-dimensional
+    fixed unpacked integral array.
+
+    The self-check state is a map of vector-valued signals, not a general
+    unpacked-array store.  A constant array element can nevertheless be
+    represented exactly by giving each cell its own state name.  Dynamic
+    indices, nested arrays, whole-array expressions, and initializers remain
+    outside this deliberately narrow lowering and stay loud.
+    """
+    try:
+        source = expression.value
+        if type(source).__name__ != "NamedValueExpression":
+            return None
+        if str(source.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
+            return None
+        source_type = source.type
+        array_type = source_type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        element_type = array_type.elementType
+        if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
+            return None
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        index = (expression.selector if type(expression).__name__ ==
+                 "ElementSelectExpression" else None)
+        if index is None:
+            return None
+        position = _constant_dimension_selector(index)
+        if position is None:
+            return None
+        left, right = int(array_type.range.left), int(array_type.range.right)
+        lo, hi = min(left, right), max(left, right)
+        if position < lo or position > hi:
+            return None
+        return f"{source.symbol.name}[{position}]", width, two_state
+    except Exception:
+        return None
+
+
 def _convert_dimension_query(sm, expression):
     """Fold fixed array metadata without evaluating the queried operand."""
     try:
@@ -1106,6 +1148,16 @@ def _convert_concat_expr(sm, e):
 
 
 def _convert_selected_read(sm, expr, expression_kind):
+    if expression_kind == "ElementSelectExpression":
+        cell = _fixed_array_cell(sm, expr)
+        if cell is not None:
+            name, width, _two_state = cell
+            return signed_metadata({
+                "kind": "Ident",
+                "span": node_span(sm, expr),
+                "width": width,
+                "name": name,
+            }, expr.type)
     source_type = expr.value.type
     _, _, source_reason = type_width_2s(source_type)
     canonical_kind = type(source_type.canonicalType).__name__
@@ -1266,6 +1318,19 @@ def select_target(sm, lhs):
 
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
+    if expression_kind == "ElementSelectExpression":
+        cell = _fixed_array_cell(sm, lhs)
+        if cell is not None:
+            name, width, two_state = cell
+            target = {
+                "kind": "Ident",
+                "span": node_span(sm, lhs),
+                "width": width,
+                "name": name,
+            }
+            if concat_leaf:
+                target["two_state"] = two_state
+            return target, True
     if expression_kind == "ConcatenationExpression":
         parts = [legacy_blocking_target(sm, operand, True) for operand in lhs.operands]
         if not parts or not all(admitted for _, admitted in parts):
@@ -1973,6 +2038,9 @@ def convert_port(sm, m):
 
 
 def convert_var(sm, m):
+    array_decls = convert_fixed_array_vars(sm, m)
+    if array_decls is not None:
+        return array_decls
     w, two, reason = type_width_2s(m.type)
     if w is None:
         if reason == "type" and not getattr(m.type, "isFourState", True):
@@ -1995,6 +2063,50 @@ def convert_var(sm, m):
         "width": w,
         "init": init_d,
     }, m.type)
+
+
+def convert_fixed_array_vars(sm, m):
+    """Lower a narrow fixed-unpacked declaration to independent cells.
+
+    This is the declaration half of `_fixed_array_cell`.  Only a single,
+    constant-range unpacked dimension with an integral scalar/packed element
+    and no aggregate initializer is admitted.  The existing vector state
+    then gives each cell the ordinary 4-state/2-state initialization rules.
+    """
+    try:
+        array_type = m.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        if getattr(m, "initializer", None) is not None:
+            return None
+        element_type = array_type.elementType
+        if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
+            return None
+        width, two, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        left, right = int(array_type.range.left), int(array_type.range.right)
+        count = abs(left - right) + 1
+        # Avoid turning a malformed/hostile bound into an enormous envelope.
+        if count > 1024:
+            return None
+        step = 1 if right >= left else -1
+        decls = []
+        for position in range(left, right + step, step):
+            init = (None if not two else {
+                "kind": "Literal", "span": None, "width": width,
+                "bits": "0" * width,
+            })
+            decls.append(signed_metadata({
+                "kind": "Var",
+                "span": sym_span(sm, m),
+                "name": f"{m.name}[{position}]",
+                "width": width,
+                "init": init,
+            }, element_type))
+        return decls
+    except Exception:
+        return None
 
 
 def convert_net(sm, m):
@@ -2043,7 +2155,11 @@ def convert_module(sm, inst):
                 if m.name in port_names:
                     continue
                 if k == "Variable":
-                    decls.append(convert_var(sm, m))
+                    converted = convert_var(sm, m)
+                    if isinstance(converted, list):
+                        decls.extend(converted)
+                    else:
+                        decls.append(converted)
                 else:
                     decls.append(convert_net(sm, m))
             elif k == "ProceduralBlock":

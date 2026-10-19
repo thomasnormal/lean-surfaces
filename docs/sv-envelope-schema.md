@@ -248,8 +248,12 @@ ordinary effectful expression.
 
 M0 assignment targets are whole-signal identifiers only; a bit-select, part-select
 or concatenation LHS makes the *statement* `Unsupported`
-(`AssignmentExpression:target`). `If` conditions may be any width (truthiness
-per LRM: true iff some bit is `1`).
+(`AssignmentExpression:target`). In the legacy/self-check extractor, a
+constant element of a one-dimensional fixed-unpacked integral array is lowered
+to an identifier cell such as `mem[2]`, and its declaration is expanded to one
+vector `Var` per cell. Dynamic or out-of-range indices, multidimensional or
+aggregate arrays, and whole-array operations remain loud. `If` conditions may
+be any width (truthiness per LRM: true iff some bit is `1`).
 
 ## Expressions
 

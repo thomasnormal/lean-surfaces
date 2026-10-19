@@ -771,6 +771,27 @@ of 3,148. Both report zero extraction errors and every shared core/full
 classification agrees. These are extraction measurements, not a claim of
 whole-corpus simulator agreement.
 
+### Constant fixed-unpacked element cells — 2026-10-19
+
+The legacy/self-check extractor now admits a narrow §10.2 memory-word shape:
+one-dimensional fixed-unpacked arrays whose elements are integral scalars or
+packed vectors, when each runtime element access has a constant in-range
+index. It expands the declaration into vector-valued cells (`mem[0]`,
+`mem[1]`, …), so existing `LVec` state and assignment semantics provide the
+read/write behavior without inventing an aggregate store. Ascending and
+descending constant ranges, 4-state initialization, 2-state zero
+initialization, equality reads, and blocking writes are covered by the real
+`unpacked_cells` fixture and its proof.
+
+Dynamic or out-of-range indices, multidimensional and aggregate arrays,
+whole-array assignment, and array-specific methods remain loud. This is a
+self-check lowering only; symbolic `sv-0.2`, scheduler ownership and the M0
+cycle loader are unchanged. On the fresh **22,033**-path census, clean
+extraction rises **2,628 → 2,691** (63 gains, no losses), while the
+`AssignmentExpression:target` refusal falls **4,473 → 4,314** files. These
+are extractor measurements; only the authored fixture has a Lean execution
+check and independent simulator startup on this host was unavailable.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

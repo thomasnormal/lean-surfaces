@@ -193,9 +193,10 @@ execution or simulator agreement.
 | 40 | 87 | 4 | 83 | 0 |
 | **Total** | **22,030** | **2,628** | **19,336** | **66** |
 
-The top remaining refusal sets count assignment targets in 4,471 files,
-expression calls in 4,222, instance hierarchy in 3,836, and two-state
-declaration shapes in 3,716. Counts overlap: a file may have several walls.
+The turn-one refusal sets counted assignment targets in 4,473 files,
+expression calls in 4,225, instance hierarchy in 3,838, and two-state
+declaration shapes in 3,716. The current 2026-10-19 snapshot is recorded
+below; counts overlap because a file may have several walls.
 
 ## Unary arithmetic correction — 2026-10-19
 
@@ -206,6 +207,62 @@ execution of admitted expressions: partially unknown operands now produce
 all x under §11.4.3. The new source fixture covers scalar, signed, widened,
 65-bit and nested arithmetic uses; extraction cleanliness alone does not
 establish those runtime results. See [the operator contract](sv-unary-arithmetic.md).
+
+## Constant fixed-unpacked element cells — 2026-10-19
+
+The self-check extractor now lowers one-dimensional fixed-unpacked integral
+array elements at constant in-range indices to independent vector cells. A
+fresh chapter-scoped run over the same **22,033** paths reports **2,691 clean**
+and **19,276 partial**, with **66 include skips** and **0 extraction errors**:
+63 clean gains and no losses relative to the turn-one snapshot. The leading
+`AssignmentExpression:target` refusal falls from **4,473 to 4,314 files**.
+The remaining target class is heterogeneous; dynamic/out-of-range indices,
+multidimensional and aggregate arrays, hierarchy, classes, strings and
+floating values remain separate loud boundaries. The real fixture and Lean
+proof are in `Examples/system-verilog/unpacked_cells`; this is an extractor
+and self-check result, not a whole-corpus simulator-agreement claim.
+
+| Chapter | Total | Clean | Partial | Include skip |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 24 | 275 | 1 |
+| 4 | 427 | 122 | 305 | 0 |
+| 5 | 618 | 326 | 292 | 0 |
+| 6 | 1,185 | 307 | 878 | 0 |
+| 7 | 796 | 28 | 768 | 0 |
+| 8 | 842 | 0 | 841 | 1 |
+| 9 | 589 | 60 | 529 | 0 |
+| 10 | 657 | 160 | 497 | 0 |
+| 11 | 1,034 | 541 | 493 | 0 |
+| 12 | 627 | 167 | 460 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1,543 | 11 | 1,532 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 128 | 697 | 0 |
+| 21 | 899 | 8 | 891 | 0 |
+| 22 | 572 | 372 | 172 | 28 |
+| 23 | 851 | 26 | 825 | 0 |
+| 24 | 355 | 9 | 346 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 1 | 564 | 0 |
+| 27 | 354 | 2 | 352 | 0 |
+| 28 | 737 | 6 | 731 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 93 | 134 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 91 | 326 | 0 |
+| 38 | 340 | 189 | 151 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 4 | 83 | 0 |
+| **Total** | **22,033** | **2,691** | **19,276** | **66** |
 
 ## Historical method
 

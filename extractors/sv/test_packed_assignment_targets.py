@@ -62,8 +62,24 @@ class PackedAssignmentTargets(unittest.TestCase):
         target, = self.targets("value[0] <= 1'b1;")
         self.assertEqual(target["kind"], "SelectTarget")
 
-    def test_unpacked_base_is_not_a_packed_destination(self):
-        self.assertFalse(self.targets("value[0] = 4'b1010;", "logic [3:0] value [2];"))
+    def test_constant_unpacked_element_is_a_vector_cell(self):
+        design = extract_source("module top; logic [3:0] value [2]; "
+                                "initial begin value[0] = 4'b1010; "
+                                "if (value[0] === 4'b1010) $display(\"PASS\"); "
+                                "end endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(assigns[0]["target"]["kind"], "Ident")
+        self.assertEqual(assigns[0]["target"]["name"], "value[0]")
+        reads = [node for node in nodes(design)
+                 if node.get("kind") == "Ident" and node.get("name") == "value[0]"]
+        self.assertGreaterEqual(len(reads), 2)
+
+    def test_dynamic_unpacked_element_stays_loud(self):
+        design = extract_source("module top; logic [3:0] value [2]; integer index; "
+                                "initial value[index] = 4'b1010; endmodule")
+        reasons = [node.get("sv_kind") for node in nodes(design)]
+        self.assertIn("AssignmentExpression:target", reasons)
 
     def test_frontend_errors_are_not_erased(self):
         design = extract_source("module top; logic [7:0] value; initial begin "

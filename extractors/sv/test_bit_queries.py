@@ -324,13 +324,15 @@ class FixedBitQueries(unittest.TestCase):
         self.assertEqual([int(node["bits"], 2) for node in queries], [3, 4])
         self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
-    def test_fixed_array_runtime_storage_stays_loud(self):
+    def test_fixed_array_dimension_query_uses_flattened_cells(self):
         source = ("module top; typedef logic [7:0] array_t [1:2]; array_t values; "
                   "initial $display(\"%0d\", $size(values)); endmodule")
         design = lower(source)
         queries = [node for node in nodes(design) if node.get("fixed_dimension_query")]
         self.assertEqual([int(node["bits"], 2) for node in queries], [2])
-        self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        cells = [node for node in nodes(design)
+                 if node.get("kind") == "Var" and node.get("name", "").startswith("values[")]
+        self.assertEqual([node["name"] for node in cells], ["values[1]", "values[2]"])
 
     def test_erasing_fixed_type_alias_keeps_frontend_errors_loud(self):
         sources = (

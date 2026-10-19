@@ -23,6 +23,9 @@ change is listed here under **Changed** or **Removed**.
 
 ### Fixed
 
+- `tools/leanpy --compare` now compares exception classes as well as stdout
+  and exit status, so two different uncaught exceptions cannot be reported as
+  a false `MATCH` merely because CPython maps both to exit 1.
 - The axiom census limits its directly invoked Lean process to one worker,
   avoiding thread exhaustion on hosts with many hardware threads.
 - Recognized namedtuple classes shadow builtin exception names in raises and

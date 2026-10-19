@@ -29,8 +29,9 @@ never guesses a value for a construct it does not model.
 
 ``--compare`` additionally runs the same file under CPython
 (``$LEANPY_CPYTHON`` or ``python3``) and reports MATCH / LOUD / MISMATCH
-on stderr, comparing stdout AND exit code. This is the whole-program
-differential — the typed-call version is ``tools/lean-python --compare``.
+on stderr, comparing stdout, exit code, and exception class when both runs
+raise. This is the whole-program differential — the typed-call version is
+``tools/lean-python --compare``.
 
 ``--clock i,j,k`` seeds the CLOCK TRACE ``time.time()`` consumes in order
 (docs/memory-model.md §the trace clock). Without it the trace is empty
@@ -52,6 +53,7 @@ Python 3.9 compatible.
 import argparse
 import hashlib
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -170,6 +172,26 @@ def runner_command(build, quiet=False):
 
 
 EXTRACTOR = os.path.join(REPO_ROOT, "extractors/python/extract.py")
+
+
+def exception_class(stderr):
+    """Return the uncaught exception class named by a Python stderr stream.
+
+    The model emits the class line directly; CPython prefixes it with a
+    traceback. The last non-empty line is therefore the useful one. A
+    qualified class name is normalized to its final component, matching the
+    model's ``PyErr`` name surface. A missing class is deliberately ``None``:
+    an exit-code match alone must never turn an unclassified exception into a
+    false MATCH.
+    """
+    for line in reversed(stderr.splitlines()):
+        line = line.strip()
+        if not line or line.startswith("Traceback"):
+            continue
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_.]*)", line)
+        if match:
+            return match.group(1).rsplit(".", 1)[-1]
+    return None
 
 
 def frontend_family():
@@ -304,12 +326,23 @@ def main(argv=None):
         sys.stderr.write("leanpy: LOUD (cpython: exit %d, %d stdout bytes)\n"
                          % (ref.returncode, len(ref.stdout)))
         return lean.returncode
-    if lean.stdout == ref.stdout and lean.returncode == ref.returncode:
+    lean_class = exception_class(lean.stderr) if lean.returncode == 1 else None
+    ref_class = exception_class(ref.stderr) if ref.returncode == 1 else None
+    classes_agree = (lean.returncode != 1 or ref.returncode != 1 or
+                     (lean_class is not None and lean_class == ref_class))
+    if (lean.stdout == ref.stdout and lean.returncode == ref.returncode and
+            classes_agree):
         sys.stderr.write("leanpy: MATCH cpython (exit %d)\n" % ref.returncode)
         return lean.returncode
-    sys.stderr.write("leanpy: MISMATCH\n  lean:    exit %d, stdout %r\n"
-                     "  cpython: exit %d, stdout %r\n"
-                     % (lean.returncode, lean.stdout, ref.returncode, ref.stdout))
+    sys.stderr.write("leanpy: MISMATCH\n  lean:    exit %d, stdout %r" %
+                     (lean.returncode, lean.stdout))
+    if lean.returncode == 1:
+        sys.stderr.write(", exception class %r" % lean_class)
+    sys.stderr.write("\n  cpython: exit %d, stdout %r" %
+                     (ref.returncode, ref.stdout))
+    if ref.returncode == 1:
+        sys.stderr.write(", exception class %r" % ref_class)
+    sys.stderr.write("\n")
     return 5
 
 

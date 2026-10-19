@@ -95,7 +95,7 @@ contains no axioms beyond Lean's standard three.
 | differential suite | runner interpreter vs CPython 3.9, per function call | `python3 harness/diff_test.py` |
 | proof-interpreter differential | `Semantics.lean` vs CPython 3.9, same rows | `python3 harness/diff_test.py --proof-interpreter` |
 | grammar census | one witness program per CPython `ast` production | `python3 harness/refusal_census.py --grammar` |
-| script corpus | whole files, stdout and exit status | `python3 harness/script_corpus.py` |
+| script corpus | whole files, stdout, exit status, and exception class | `python3 harness/script_corpus.py` |
 | interpreter smoke tests | `#guard`s over the proof interpreter | built with `LeanModels.Python.Tests` |
 | non-vacuity | concrete runs next to every theorem | `#py_check` lines in each `spec.lean` |
 

@@ -26,6 +26,7 @@ import importlib.util
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -268,6 +269,50 @@ class CompanionPathInvarianceTests(unittest.TestCase):
             self.assertEqual(extract.rel_posix(os.path.join(d, ".", "m.py")), direct)
         finally:
             shutil.rmtree(d, ignore_errors=True)
+
+
+class CompareExceptionTests(unittest.TestCase):
+    def test_exception_class_parser_uses_cpython_traceback_tail(self):
+        stderr = ("Traceback (most recent call last):\n"
+                  "  File \"x.py\", line 1, in <module>\n"
+                  "    raise ValueError\n"
+                  "ValueError: bad\n")
+        self.assertEqual(leanpy.exception_class(stderr), "ValueError")
+        self.assertEqual(leanpy.exception_class("Traceback only\n"), None)
+
+    def test_compare_rejects_same_exit_and_stdout_with_different_classes(self):
+        """Exercise the real CLI and runner with a deliberately disagreeing
+        oracle. Exit code plus stdout alone used to report MATCH here because
+        every uncaught Python exception exits 1."""
+        root = tempfile.mkdtemp(prefix="leanpy-compare-test-")
+        try:
+            source = os.path.join(root, "program.py")
+            with open(source, "w", encoding="utf-8") as f:
+                f.write("print('before')\n[][0]\n")
+            oracle = os.path.join(root, "oracle.py")
+            with open(oracle, "w", encoding="utf-8") as f:
+                f.write("#!%s\n" % sys.executable)
+                f.write("import subprocess, sys\n")
+                f.write("p = subprocess.run([sys.executable, sys.argv[1]], "
+                        "capture_output=True, text=True)\n")
+                f.write("sys.stdout.write(p.stdout)\n")
+                f.write("sys.stderr.write('KeyError\\n' if p.returncode == 1 "
+                        "else p.stderr)\n")
+                f.write("raise SystemExit(p.returncode)\n")
+            os.chmod(oracle, 0o755)
+            env = os.environ.copy()
+            env["LEANPY_CPYTHON"] = oracle
+            result = subprocess.run(
+                [sys.executable, os.path.join(REPO_ROOT, "tools", "leanpy"),
+                 source, "--compare", "--cache", os.path.join(root, "cache")],
+                cwd=REPO_ROOT, env=env, capture_output=True, text=True,
+                timeout=60)
+            self.assertEqual(result.returncode, 5, result.stderr)
+            self.assertIn("exception class 'IndexError'", result.stderr)
+            self.assertIn("exception class 'KeyError'", result.stderr)
+            self.assertNotIn("MATCH cpython", result.stderr)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
 
 
 def leanpy_extract():

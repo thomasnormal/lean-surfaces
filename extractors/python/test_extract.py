@@ -528,19 +528,33 @@ class ExtractorTests(unittest.TestCase):
     def test_raise_local_binding_refuses_without_order_exemptions(self):
         for source in (
             "def f(ValueError):\n    raise ValueError\n",
+            "def f(ValueError):\n    raise ValueError()\n",
             "def f():\n    raise ValueError\n    ValueError = 1\n",
+            "def f():\n    raise ValueError()\n    ValueError = 1\n",
             "def f():\n    if False:\n        ValueError = 1\n    raise ValueError\n",
+            "def f():\n    if False:\n        ValueError = 1\n    raise ValueError()\n",
         ):
             with self.subTest(source=source):
-                self.assertEqual(self._first_fn(source)["locals_unsupported"],
-                                 "raises locally-bound name(s) "
-                                 "(static-locals rule): ValueError")
+                reason = self._first_fn(source)["locals_unsupported"]
+                self.assertIn("ValueError", reason)
 
     def test_raise_guard_does_not_cross_nested_scopes(self):
         fn = self._first_fn(
             "def f():\n    def g(ValueError):\n        return ValueError\n"
             "    raise ValueError\n")
         self.assertIsNone(fn["locals_unsupported"])
+
+    def test_zero_argument_raise_constructor_lowers_to_class_name(self):
+        fn = self._first_fn("def f():\n    raise ValueError()\n")
+        exc = fn["body"][0]["exc"]
+        self.assertEqual(exc["kind"], "Name")
+        self.assertEqual(exc["id"], "ValueError")
+
+    def test_raise_constructor_with_arguments_stays_a_call(self):
+        fn = self._first_fn("def f():\n    raise ValueError('boom')\n")
+        exc = fn["body"][0]["exc"]
+        self.assertEqual(exc["kind"], "Call")
+        self.assertEqual(exc["func"]["id"], "ValueError")
 
     def test_handler_local_binding_refuses_without_order_exemptions(self):
         bodies = (

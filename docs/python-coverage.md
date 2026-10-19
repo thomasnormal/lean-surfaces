@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3315 | 2977 | 0 | 338 |
+| 3315 | 2978 | 0 | 337 |
 
-Of the 2977 rows the model decides, 2977 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 2978 rows the model decides, 2978 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3315 | 2903 | 0 | 412 |
+| 3315 | 2904 | 0 | 411 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-143 witnesses: 124 MATCH, 19 REFUSE.
+144 witnesses: 125 MATCH, 19 REFUSE.
 
 ### `stmt`
 
@@ -50,6 +50,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `With` | MATCH | single synchronous context-manager item |
 | `AsyncWith` | REFUSE | unsupported statement 'AsyncFunctionDef' |
 | `Raise` | REFUSE | 'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.m… |
+| `Raise-empty-constructor` | MATCH | a direct zero-argument exception constructor lowers to the admitted class-identity raise; payload-bearing con… |
 | `Raise-class` | MATCH | bare admitted builtin exception class; payload construction remains unfinished |
 | `Try` | MATCH | FLIPPED by §except-builtin: `ValueError` is now an admitted handler class. WHAT THIS ROW PROVES AND DOES NOT:… |
 | `Assert` | MATCH | assertion failure uses the admitted builtin exception hierarchy |

@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py",
-  "source_sha256": "44b7f5c9e4bd731fd8f932edc55e69d2c0a192facd6c8b6f29ab1b1718240a13",
+  "source_sha256": "ff3956c01a3e928e4537ff65c174f286215fae74946d7c45d70a698ba4a47317",
   "module": {
     "kind": "Module",
     "body": [
@@ -3252,7 +3252,7 @@
         "span": {
           "lineno": 270,
           "col_offset": 0,
-          "end_lineno": 271,
+          "end_lineno": 273,
           "end_col_offset": 22
         },
         "name": "raised_instance",
@@ -3263,32 +3263,20 @@
           {
             "kind": "Raise",
             "span": {
-              "lineno": 271,
+              "lineno": 273,
               "col_offset": 4,
-              "end_lineno": 271,
+              "end_lineno": 273,
               "end_col_offset": 22
             },
             "exc": {
-              "kind": "Call",
+              "kind": "Name",
               "span": {
-                "lineno": 271,
+                "lineno": 273,
                 "col_offset": 10,
-                "end_lineno": 271,
-                "end_col_offset": 22
+                "end_lineno": 273,
+                "end_col_offset": 20
               },
-              "func": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 271,
-                  "col_offset": 10,
-                  "end_lineno": 271,
-                  "end_col_offset": 20
-                },
-                "id": "ValueError"
-              },
-              "args": [],
-              "keywords": [],
-              "call_unsupported": null
+              "id": "ValueError"
             }
           }
         ]
@@ -3296,9 +3284,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 274,
+          "lineno": 276,
           "col_offset": 0,
-          "end_lineno": 275,
+          "end_lineno": 277,
           "end_col_offset": 30
         },
         "name": "chained",
@@ -3309,17 +3297,17 @@
           {
             "kind": "Raise",
             "span": {
-              "lineno": 275,
+              "lineno": 277,
               "col_offset": 4,
-              "end_lineno": 275,
+              "end_lineno": 277,
               "end_col_offset": 30
             },
             "exc": {
               "kind": "Name",
               "span": {
-                "lineno": 275,
+                "lineno": 277,
                 "col_offset": 10,
-                "end_lineno": 275,
+                "end_lineno": 277,
                 "end_col_offset": 20
               },
               "id": "ValueError"
@@ -3327,9 +3315,9 @@
             "cause": {
               "kind": "Constant",
               "span": {
-                "lineno": 275,
+                "lineno": 277,
                 "col_offset": 26,
-                "end_lineno": 275,
+                "end_lineno": 277,
                 "end_col_offset": 30
               },
               "value": {
@@ -3342,9 +3330,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 278,
+          "lineno": 280,
           "col_offset": 0,
-          "end_lineno": 279,
+          "end_lineno": 281,
           "end_col_offset": 17
         },
         "name": "unsupported_class",
@@ -3355,17 +3343,17 @@
           {
             "kind": "Raise",
             "span": {
-              "lineno": 279,
+              "lineno": 281,
               "col_offset": 4,
-              "end_lineno": 279,
+              "end_lineno": 281,
               "end_col_offset": 17
             },
             "exc": {
               "kind": "Name",
               "span": {
-                "lineno": 279,
+                "lineno": 281,
                 "col_offset": 10,
-                "end_lineno": 279,
+                "end_lineno": 281,
                 "end_col_offset": 17
               },
               "id": "OSError"

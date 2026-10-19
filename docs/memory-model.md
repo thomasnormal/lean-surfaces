@@ -1291,7 +1291,10 @@ named `Exception`, body `pass`/docstring only, no methods) — the
 `Stop` shape. Such a class is an exception NAME, not an instantiable
 object: `N()` as a value, attributes, `raise N(args…)` with arguments,
 `raise <expr>` of anything but an admitted class name, `raise … from`,
-and the bare re-raise `raise` all refuse loudly. `raise N` maps to
+and the bare re-raise `raise` all refuse loudly. A direct zero-argument
+constructor in raise position (`raise N()`) is lowered at ingestion to
+the same class-identity path as `raise N`; it carries no inspectable
+instance payload. `raise N` maps to
 `.exn (.user cid)` — CPython's implicit no-arg instantiation of an
 empty subclass is observationally the class identity as long as the
 instance can never be INSPECTED, which the refusals above guarantee.
@@ -1364,7 +1367,10 @@ lab-scale deadline capstone — a MiniSearcher raising on a NODE-COUNT
 budget (`if self.nodes > limit: raise Stop`) consumed through a
 driver `try`/`except Stop`, which exercises the full raise-through-
 resume-into-handler path while leaving `time.time()` exactly where it
-is: deferred, awaiting its own recorded abstraction decision.
+is: deferred, awaiting its own recorded abstraction decision. The
+zero-argument constructor spelling is pinned by
+`builtin_raise_lab.raised_instance`; payload-bearing constructors remain
+the next exception-value boundary.
 
 **Explicitly NOT decided here:** the `time.time()` abstraction,
 `except Exception`, builtin-name matching, `finally`, exception
@@ -1393,8 +1399,10 @@ forced, each recorded with its reason:**
   `Exception` must not recognize as the builtin one.
 * **`Stmt.raiseStmt (exc cause : Option Expr)`** is structured in FULL
   generality (bare `raise`, `raise <expr>`, `raise … from …` all parse);
-  EVALUATION admits exactly `raise N` where `N` names an admitted
-  exception class, everything else the loud refusals of the design.
+  ingestion lowers a direct zero-argument NAME constructor to `raise N`,
+  and EVALUATION admits that shape plus bare `raise N` where `N` names an
+  admitted exception class. Payload-bearing constructors and everything
+  else remain the loud refusals of the design.
 * **`Stmt.tryStmt body excName handler tryUnsupported`** carries the
   v0 single-handler shape plus the `callUnsupported`-style reason
   field: the extractor fills `try_unsupported` for every out-of-v0

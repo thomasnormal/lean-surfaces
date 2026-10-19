@@ -268,6 +268,8 @@ def late_shadow():
 
 
 def raised_instance():
+    # A zero-argument constructor has the same observable class identity as
+    # the admitted bare raise; payload-bearing constructors remain loud.
     raise ValueError()
 
 

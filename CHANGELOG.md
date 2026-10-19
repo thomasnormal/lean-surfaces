@@ -22,8 +22,9 @@ change is listed here under **Changed** or **Removed**.
   names now work in both interpreters, including ancestor matching, retained
   effects, and generator closure. `Exception` does not catch `BaseException`;
   `StopIteration` escaping a generator becomes `RuntimeError` (PEP 479).
-  Exception instances, payloads, chaining and locally shadowed raise names
-  remain loud unfinished work.
+  Direct zero-argument constructors such as `raise ValueError()` now lower to
+  the same class-identity path; payload-bearing exception instances, chaining
+  and locally shadowed raise names remain loud unfinished work.
 
 ### Fixed
 

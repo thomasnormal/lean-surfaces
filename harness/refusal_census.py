@@ -242,6 +242,11 @@ print(0)
 w("stmt.Raise", """
 raise ValueError("boom")
 """, "REFUSE", "no exception VALUES; PyErr is not a first-class object")
+w("stmt.Raise-empty-constructor", """
+raise ValueError()
+""", "MATCH",
+  "a direct zero-argument exception constructor lowers to the admitted "
+  "class-identity raise; payload-bearing constructors remain loud")
 w("stmt.Raise-class", """
 raise ValueError
 """, "MATCH", "bare admitted builtin exception class; payload construction remains unfinished")

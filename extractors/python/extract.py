@@ -1011,13 +1011,27 @@ def _shadowed_handlers(fn):
 
 
 def _shadowed_raises(fn):
-    """A raise name bound anywhere in this scope must not fall through to a class.
+    """A raise class name bound anywhere in this scope must not fall through.
 
-    This includes a local assigned only after the raise: CPython reports an
-    unbound local, even though a builtin with the same name exists.
+    This includes direct zero-argument constructor spelling, which is lowered
+    to the same class-name shape, and a local assigned only after the raise:
+    CPython reports an unbound local (or a shadowed call), even though a
+    builtin with the same name exists.
     """
-    names = {node.exc.id for node in _walk_scope(fn)
-             if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Name)}
+    names = set()
+    for node in _walk_scope(fn):
+        if not isinstance(node, ast.Raise) or node.exc is None:
+            continue
+        exc = node.exc
+        if isinstance(exc, ast.Name):
+            names.add(exc.id)
+        elif (isinstance(exc, ast.Call) and isinstance(exc.func, ast.Name)
+              and not exc.args and not exc.keywords):
+            # The zero-argument constructor is lowered to the same NAME
+            # shape by convert_stmt; apply the static-local guard to that
+            # spelling too, or a shadowed `ValueError()` would silently
+            # resolve as the builtin class.
+            names.add(exc.func.id)
     return sorted(names & _scope_binding_names(fn))
 
 
@@ -1712,9 +1726,20 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # structured in FULL generality -- bare raise, raise <expr>,
         # raise ... from ... all parse; evaluation owns the tier boundary
         # (only `raise N` of an admitted exception class is admitted).
+        # A direct zero-argument NAME constructor is observationally the
+        # same class-identity raise for the represented exception tier:
+        # `raise ValueError()` and `raise ValueError` both create an empty
+        # exception instance, and the model intentionally carries no
+        # instance payload. Lowering here keeps the runtime/proof surface
+        # unchanged while preserving the existing shadow/class checks.
         d = {"kind": "Raise", "span": span(node)}
         if node.exc is not None:
-            d["exc"] = convert_expr(node.exc)
+            if (isinstance(node.exc, ast.Call)
+                    and isinstance(node.exc.func, ast.Name)
+                    and not node.exc.args and not node.exc.keywords):
+                d["exc"] = convert_expr(node.exc.func)
+            else:
+                d["exc"] = convert_expr(node.exc)
         if node.cause is not None:
             d["cause"] = convert_expr(node.cause)
         return d

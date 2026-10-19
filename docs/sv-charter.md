@@ -1125,6 +1125,17 @@ clean / 18,992 partial / 66 include skips** with zero extraction errors: 15
 clean gains and no losses; `AssignmentExpression:target` falls **3,920 →
 3,909**.
 
+### Typed assignment-pattern operands in unpacked concatenations — 2026-10-19
+
+Unpacked-array concatenations now also flatten typed simple assignment-pattern
+operands whose fixed-array elements are pure integral values at the destination
+width. Replicated, nested or mismatched pattern operands remain loud. The
+focused §10.10.1 rows extract cleanly. The fresh **22,033**-path census
+reports **2,979 clean / 18,988 partial / 66 include skips** with zero
+extraction errors: four clean gains and no losses; `AssignmentExpression:target`
+falls **3,909 → 3,904**. This is not a simulator-agreement claim beyond the
+fixture.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

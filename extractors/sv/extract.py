@@ -1079,6 +1079,30 @@ def _fixed_array_concat_assignment(sm, expr):
                         "name": f"{source_name}[{position}]",
                     })
                 continue
+            pattern_kind = type(operand).__name__
+            if pattern_kind == "SimpleAssignmentPatternExpression":
+                pattern_type = operand.type.canonicalType
+                if type(pattern_type).__name__ != "FixedSizeUnpackedArrayType":
+                    return None
+                element_type = pattern_type.elementType
+                pattern_width, _pattern_two, pattern_reason = type_width_2s(element_type)
+                if pattern_width is None or pattern_reason is not None:
+                    return None
+                elements = list(operand.elements)
+                if not elements:
+                    return None
+                for element in elements:
+                    if (not _case_source_expression_ok(element)
+                            or not element.type.isIntegral):
+                        return None
+                    value = convert_expr(sm, element)
+                    if (value is None or value.get("kind") == "Unsupported"
+                            or width_of(value) != pattern_width
+                            or pattern_width != lhs_width
+                            or not _case_expression_ok(value)):
+                        return None
+                    values.append(value)
+                continue
             cell = _fixed_array_cell(sm, operand)
             if cell is not None:
                 cell_name, cell_width, _cell_two = cell

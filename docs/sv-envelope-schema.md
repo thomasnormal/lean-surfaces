@@ -302,7 +302,10 @@ An exact-length unpacked-array concatenation on the RHS of an eligible fixed
 array assignment is flattened in operand order and lowered to the same per-cell
 assignments. Scalar operands and existing whole-array/simple-slice operands are
 accepted when their widths match; a source alias of the destination, dynamic
-or aggregate operands, and mismatched lengths remain `Unsupported`.
+or aggregate operands, and mismatched lengths remain `Unsupported`. A typed
+simple assignment-pattern operand is accepted when its one-dimensional fixed
+array elements are pure integral values of the destination width; replication,
+nested aggregates and mismatched pattern widths remain `Unsupported`.
 
 A positional unpacked assignment-pattern LHS such as `U3'{a, b, c} = source`
 is likewise lowered when its RHS is an eligible fixed-unpacked integral array

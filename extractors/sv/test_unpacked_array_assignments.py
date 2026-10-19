@@ -265,6 +265,24 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_unpacked_concat_accepts_typed_array_pattern_operand(self):
+        design = extract_source(
+            "typedef int AI3 [1:3]; module top; AI3 source; int value [1:9]; "
+            "initial value = {source, 4, AI3'{5, 6, 7}, 8, 9}; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns[-9:]],
+                         [f"value[{i}]" for i in range(1, 10)])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_unpacked_concat_nested_pattern_width_mismatch_stays_loud(self):
+        design = extract_source(
+            "module top; typedef int AI2 [0:1]; AI2 source; int value [0:2]; "
+            "initial value = {source, AI2'{1, 2}}; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
     def test_unpacked_assignment_pattern_lhs_pairs_scalar_targets(self):
         design = extract_source(
             "typedef int U3 [0:2]; module top; int source [0:2]; byte a, b, c; "

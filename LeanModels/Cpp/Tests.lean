@@ -16,6 +16,7 @@ import LeanModels.Cpp.IntegralObjectExpressionTests
 import LeanModels.Cpp.IntegralObjectStatementTests
 import LeanModels.Cpp.IntegralObjectFrameTests
 import LeanModels.Cpp.AutomaticDeclarationsTests
+import LeanModels.Cpp.CallableFrameTests
 import LeanModels.Cpp.TypeEvidenceTests
 import LeanModels.Cpp.VariableEvidenceTests
 import LeanModels.Cpp.CallableTests

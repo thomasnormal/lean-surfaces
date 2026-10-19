@@ -104,6 +104,13 @@ def executeDeclStmt (fuel : Nat) (callable : CallableObjectFrame)
     FrameOutcome (Option IntegralValue) :=
   callable.frame.execute fuel statement.statement
 
+/-- Execute a declaration fragment without closing the surrounding callable
+parameter scope. -/
+def executeDeclStmtInScope (fuel : Nat) (callable : CallableObjectFrame)
+    (statement : AdmittedAutomaticDeclStmt) :
+    FrameOutcome (Option IntegralValue) :=
+  callable.frame.executeOpen fuel statement.statement
+
 end CallableObjectFrame
 
 end LeanModels.Cpp

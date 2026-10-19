@@ -14,6 +14,7 @@ inductive CallableEvaluationError where
   | missingReturn
   | breakOutsideLoop
   | continueOutsideLoop
+  | unsupportedDeclaration
   | unsequencedEffects
   | fuelExhausted
   deriving Repr, BEq, Inhabited
@@ -349,6 +350,7 @@ mutual
   | fuel + 1 =>
       match statement with
       | .skip => .ok (.normal arguments)
+      | .automatic _ => throw .unsupportedDeclaration
       | .block body => evaluateCallableStatement fuel profile parameters arguments body
       | .expression expression =>
           (evaluateTyped fuel profile parameters arguments expression).map

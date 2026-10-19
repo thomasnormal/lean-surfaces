@@ -1,7 +1,10 @@
 import LeanModels.Cpp.LocalFunction
 import LeanModels.Cpp.ExpressionEvidence
+import LeanModels.Cpp.AutomaticDeclarations
 
 namespace LeanModels.Cpp
+
+open AdmittedAutomaticDeclStmt
 
 mutual
   inductive CallableExpression where
@@ -24,6 +27,8 @@ mutual
 
   inductive CallableStatement where
     | skip
+    /-- A frontend-admitted automatic declaration sequence. -/
+    | automatic (declaration : AdmittedAutomaticDeclStmt)
     /-- A retained source compound-statement boundary; declarations remain out of tier. -/
     | block (body : CallableStatement)
     | expression (expression : TypedCallableExpression)
@@ -533,6 +538,244 @@ private def callableBody (profile : TargetProfile) (parameters : List CallablePa
     throw "callable: body is not a compound statement"
   parseCallableStatement profile parameters expressionRows resultType body
 
+private partial def rawHasKind (raw : Raw) (wanted : String) : Bool :=
+  (raw.text "kind" == some wanted) ||
+    match raw with
+    | .array values => values.any (fun value => rawHasKind value wanted)
+    | .object fields => fields.any (fun (_, value) => rawHasKind value wanted)
+    | _ => false
+
+/-! The object-backed parser below is deliberately separate from the original
+value-only parser. Existing callers therefore retain the old loud refusal for
+DeclStmt, while complete callable admission can opt into the same source tree
+with declaration evidence and a lexical handle environment. -/
+
+private def localParameter (declaration : FrontendHandle) (type : CppTypeEvidence) :
+    CallableParameter := {declaration, name := none, type}
+
+private def localParameters (rows : List TypeEvidenceRow)
+    (declarations : List FrontendHandle) : Except String (List CallableParameter) :=
+  declarations.mapM fun declaration => do
+    let found := rows.filter (fun row => row.occurrence == declaration)
+    let some row := found.head?
+      | throw "callable: local declaration lacks structured type evidence"
+    unless found.all (· == row) do
+      throw "callable: conflicting local declaration type evidence"
+    pure (localParameter declaration row.type)
+
+private def admitAutomaticAt (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
+    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (available : List CallableParameter) (statement : Raw) :
+    Except String AdmittedAutomaticDeclStmt := do
+  let localProbe : DeclarationProbe := {probe with ast := statement}
+  admit localProbe typeRows variableRows expressionRows profile
+    (available.map (·.declaration)) []
+
+mutual
+partial def callableSequenceWithLocals (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
+    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (resultType : CppTypeEvidence) (scope : List CallableParameter)
+    (statements : List Raw) :
+    Except String (CallableStatement × List CallableParameter) := do
+  match statements with
+  | [] => pure (.skip, scope)
+  | raw :: rest => do
+      let parsed ← parseCallableStatementWithLocals probe typeRows variableRows
+        expressionRows profile resultType scope raw
+      let (first, updated) := parsed
+      match rest with
+      | [] => pure (first, updated)
+      | _ =>
+          let (tail, finalScope) ← callableSequenceWithLocals probe typeRows variableRows
+            expressionRows profile resultType updated rest
+          pure (.sequence first tail, finalScope)
+
+partial def parseCallableCompoundWithLocals (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
+    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (resultType : CppTypeEvidence) (scope : List CallableParameter) (raw : Raw)
+    (exportLocals : Bool) :
+    Except String (CallableStatement × List CallableParameter) := do
+  let children ← rawChildren raw
+  let (body, updated) ← callableSequenceWithLocals probe typeRows variableRows
+    expressionRows profile resultType scope children
+  pure (.block body, if exportLocals then updated else scope)
+
+partial def parseCallableSubstatementWithLocals (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
+    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (resultType : CppTypeEvidence) (scope : List CallableParameter) (raw : Raw) :
+    Except String (CallableStatement × List CallableParameter) := do
+  let parsed ← parseCallableStatementWithLocals probe typeRows variableRows expressionRows
+    profile resultType scope raw
+  if raw.text "kind" == some "CompoundStmt" then
+    pure parsed
+  else
+    pure (.block parsed.1, scope)
+
+partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
+    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (resultType : CppTypeEvidence) (scope : List CallableParameter) (statement : Raw) :
+    Except String (CallableStatement × List CallableParameter) := do
+  let allParameters := scope
+  let kind ← evidenceText statement "kind"
+  match kind with
+  | "DeclStmt" =>
+      let admitted ← admitAutomaticAt probe typeRows variableRows expressionRows profile
+        allParameters statement
+      let locals ← localParameters typeRows admitted.declarations
+      pure (.automatic admitted, allParameters ++ locals)
+  | "CompoundStmt" =>
+      parseCallableCompoundWithLocals probe typeRows variableRows expressionRows profile
+        resultType scope statement false
+  | "ReturnStmt" =>
+      let values ← rawChildren statement
+      let [value] := values
+        | throw "callable: return statement requires exactly one expression"
+      let expression ← parseCallableExpression profile allParameters expressionRows value none
+        (some resultType)
+      unless expression.type == resultType do
+        throw "callable: return expression type disagrees with function result"
+      pure (.return_ expression, scope)
+  | "IfStmt" =>
+      let children ← rawChildren statement
+      match children with
+      | [condition, whenTrue] | [condition, whenTrue, _] =>
+          let condition ← parseCallableExpression profile allParameters expressionRows condition none none
+          let (whenTrue, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
+            expressionRows profile resultType scope whenTrue
+          let whenFalse ← match children with
+            | [_, _, otherwise] =>
+                (parseCallableSubstatementWithLocals probe typeRows variableRows expressionRows
+                  profile resultType scope otherwise).map Prod.fst
+            | _ => .ok .skip
+          pure (.conditional condition whenTrue whenFalse, scope)
+      | _ => throw "callable: if statement requires a condition and one or two branches"
+  | "SwitchStmt" =>
+      let children ← rawChildren statement
+      let [conditionRaw, bodyRaw] := children
+        | throw "callable: switch statement requires a condition and body"
+      let condition ← parseCallableExpression profile allParameters expressionRows conditionRaw none none
+      unless condition.type == .builtin .int do
+        throw "callable: switch condition requires an exact int expression"
+      unless bodyRaw.text "kind" == some "CompoundStmt" do
+        throw "callable: switch body must be a compound statement"
+      let bodyRaws ← rawChildren bodyRaw
+      let clauseRaws ← switchClauses bodyRaws
+      unless switchLabelsValid clauseRaws do
+        throw "callable: switch labels must be unique with at most one default"
+      let clauses ← clauseRaws.mapM fun (label, raws) => do
+        let (body, _) ← callableSequenceWithLocals probe typeRows variableRows expressionRows
+          profile resultType scope raws
+        pure {label, body}
+      pure (.switch_ condition clauses, scope)
+  | "WhileStmt" =>
+      let children ← rawChildren statement
+      let [condition, body] := children
+        | throw "callable: while statement requires a condition and body"
+      let condition ← parseCallableExpression profile allParameters expressionRows condition none none
+      let (body, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
+        expressionRows profile resultType scope body
+      pure (.whileLoop condition body, scope)
+  | "ForStmt" =>
+      let children ← rawChildren statement
+      let [initializer, conditionVariable, condition, step, body] := children
+        | throw "callable: for statement requires initializer, condition, step and body"
+      unless conditionVariable == .object [] do
+        throw "callable: for loop condition declarations are outside the body profile"
+      let (initializer, loopScope) ← parseCallableStatementWithLocals probe typeRows variableRows
+        expressionRows profile resultType scope initializer
+      let condition ← parseCallableExpression profile loopScope expressionRows condition none none
+      let (body, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
+        expressionRows profile resultType loopScope body
+      let (step, _) ← parseCallableStatementWithLocals probe typeRows variableRows
+        expressionRows profile resultType loopScope step
+      pure (.forLoop initializer condition step body, scope)
+  | "DoStmt" =>
+      let children ← rawChildren statement
+      let [body, condition] := children
+        | throw "callable: do statement requires a body and condition"
+      let (body, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
+        expressionRows profile resultType scope body
+      let condition ← parseCallableExpression profile allParameters expressionRows condition none none
+      pure (.doWhile body condition, scope)
+  | "BreakStmt" => pure (.break_, scope)
+  | "ContinueStmt" => pure (.continue_, scope)
+  | "NullStmt" => pure (.skip, scope)
+  | "ExprWithCleanups" =>
+      let children ← rawChildren statement
+      let [child] := children
+        | throw "callable: expression cleanup wrapper requires one child"
+      parseCallableStatementWithLocals probe typeRows variableRows expressionRows profile
+        resultType scope child
+  | "BinaryOperator" =>
+      let operator ← evidenceText statement "opcode"
+      if operator == "=" then
+        let children ← rawChildren statement
+        let [target, value] := children
+          | throw "callable: assignment requires a target and value"
+        unless target.text "kind" == some "DeclRefExpr" do
+          throw "callable: assignment target must be a bound declaration reference"
+        let declaration ← referencedDeclaration target
+        let some targetParameter := allParameters.find? (fun p => p.declaration == declaration)
+          | throw "callable: assignment target is not a bound declaration"
+        let expression ← parseCallableExpression profile allParameters expressionRows value none
+          (some targetParameter.type)
+        pure (.assign declaration expression, scope)
+      else
+        let expression ← parseCallableExpression profile allParameters expressionRows statement none none
+        pure (.expression expression, scope)
+  | "CompoundAssignOperator" =>
+      let operator ← evidenceText statement "opcode"
+      let some arithmeticOperator := compoundAssignmentOperator? operator
+        | throw s!"callable: unsupported compound assignment {operator}"
+      let occurrence ← rawId statement
+      let some row := expressionRows.find? (fun row => row.occurrence == occurrence)
+        | throw "callable: compound assignment lacks typed evidence"
+      unless row.operator == operator do
+        throw "callable: compound assignment operator disagrees with typed evidence"
+      let typedRow := {row with operator := arithmeticOperator}
+      validateBinaryIntegralTyping profile typedRow
+      let children ← rawChildren statement
+      let [target, value] := children
+        | throw "callable: compound assignment requires a target and value"
+      unless target.text "kind" == some "DeclRefExpr" do
+        throw "callable: compound assignment target must be a bound declaration reference"
+      let declaration ← referencedDeclaration target
+      let some targetParameter := allParameters.find? (fun p => p.declaration == declaration)
+        | throw "callable: compound assignment target is not a bound declaration"
+      let some leftEvidence := row.operands[0]?
+        | throw "callable: compound assignment lacks a left operand"
+      unless target.text "id" == some leftEvidence.occurrence.value &&
+          target.text "kind" == some leftEvidence.kind &&
+          leftEvidence.sourceType == targetParameter.type && leftEvidence.type == targetParameter.type do
+        throw "callable: compound assignment target disagrees with typed evidence"
+      let some rightEvidence := row.operands[1]?
+        | throw "callable: compound assignment lacks a right operand"
+      let expression ← parseCallableExpression profile allParameters expressionRows value
+        (some rightEvidence.sourceType) (some rightEvidence.type)
+      pure (.compoundAssign operator declaration expression, scope)
+  | "UnaryOperator" | "IntegerLiteral" | "DeclRefExpr" |
+      "ImplicitCastExpr" | "ParenExpr" =>
+      let expression ← parseCallableExpression profile allParameters expressionRows statement none none
+      pure (.expression expression, scope)
+  | _ => throw s!"callable: unsupported statement {kind}"
+end
+
+private def callableBodyWithLocals (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
+    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (parameters : List CallableParameter) (resultType : CppTypeEvidence) (body : Raw) :
+    Except String CallableStatement := do
+  unless body.text "kind" == some "CompoundStmt" do
+    throw "callable: body is not a compound statement"
+  let (parsed, _) ← parseCallableCompoundWithLocals probe typeRows variableRows expressionRows
+    profile resultType parameters body true
+  pure parsed
+
 def admitCallableFunction (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (expressionRows : List CppBinaryExpressionEvidence)
     (profile : TargetProfile) (path : List Nat) : Except String CallableFunction := do
@@ -549,7 +792,11 @@ def admitCallableFunction (probe : DeclarationProbe)
     throw "callable: function type canonical handle disagrees with declaration"
   let signature ← callableSignature functionRow.type
   let parameters ← callableParameters admitted.parameters typeRows signature.parameters
-  let typedBody ← callableBody profile parameters expressionRows signature.result body
+  let variableRows ← if rawHasKind body "DeclStmt" then
+      parseValidatedVariableEvidence probe
+    else pure []
+  let typedBody ← callableBodyWithLocals probe typeRows variableRows expressionRows profile
+    parameters signature.result body
   pure {occurrence := admitted.occurrence, signature, parameters, body := typedBody}
 
 def admitCallableFunctionFromProbe (probe : DeclarationProbe) (profile : TargetProfile)

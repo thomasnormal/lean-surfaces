@@ -18,10 +18,23 @@ The parameter declaration handles are the same frontend identities retained by
 the initialized frame. The frame executor closes successful scope exits and
 retains the frame on failures, so a local initializer can observe a parameter,
 and a failed declaration leaves the parameter/local prefix and lifetime
-tombstones available to a stateful caller. The bridge deliberately takes one
-admitted fragment rather than silently changing the existing callable body
-admission: complete callable statements still need a scope-aware frontend
-tree, return handling and control-shell integration.
+tombstones available to a stateful caller. The bridge still takes one admitted
+fragment at a time and does not claim complete C++ callable semantics.
+
+`Callable.lean` now supplies that scope-aware admission for the integral
+callable fragment. It threads parameter and local declaration handles through
+sequential and nested compound statements, admits each `DeclStmt` through the
+validated automatic-declaration evidence, and retains the resulting
+`CallableStatement.automatic` node. Branch and loop shells parse locals in
+their lexical scope; the object evaluator executes the same tree against the
+parameter frame, opening and closing block scopes while preserving retained
+state on errors. The established value-only evaluator remains deliberately
+loud on this node (`unsupportedDeclaration`), so adding object-backed
+execution cannot turn an old value-only result into a guessed one.
+
+The object-backed evaluator is a bounded integral callable surface, not a
+replacement for `Translation.execute`: unsupported calls, conversions,
+non-integral declarations, and other frontend forms continue to refuse.
 
 ## Checks
 

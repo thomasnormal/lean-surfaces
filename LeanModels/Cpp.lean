@@ -16,6 +16,7 @@ import LeanModels.Cpp.IntegralObjectStatements
 import LeanModels.Cpp.IntegralObjectFrame
 import LeanModels.Cpp.AutomaticDeclarations
 import LeanModels.Cpp.CallableFrame
+import LeanModels.Cpp.CallableObjectEvaluation
 import LeanModels.Cpp.TypeEvidence
 import LeanModels.Cpp.VariableEvidence
 import LeanModels.Cpp.ExpressionEvidence

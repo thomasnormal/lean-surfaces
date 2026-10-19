@@ -510,6 +510,21 @@ def execute (fuel : Nat) (frame : IntegralObjectFrame)
     (statement : Statement) : FrameOutcome (Option IntegralValue) :=
   closeExecution (executeStep fuel frame statement)
 
+/-- Execute one object statement while retaining the caller's active scopes.
+This is the embedding boundary used by callable bodies: a declaration
+statement must not close the parameter frame merely because its own fragment
+has completed. -/
+def executeOpen (fuel : Nat) (frame : IntegralObjectFrame)
+    (statement : Statement) : FrameOutcome (Option IntegralValue) :=
+  match executeStep fuel frame statement with
+  | result =>
+      match result.result with
+      | .error reason => failure result.frame reason
+      | .ok .normal => success result.frame none
+      | .ok (.returned value) => success result.frame (some value)
+      | .ok .break_ => failure result.frame .breakOutsideLoop
+      | .ok .continue_ => failure result.frame .continueOutsideLoop
+
 end IntegralObjectFrame
 
 end LeanModels.Cpp

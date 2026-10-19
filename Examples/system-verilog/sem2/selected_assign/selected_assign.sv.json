@@ -1,0 +1,252 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "selected_assign",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/selected_assign/selected_assign.sv",
+      "sha256": "eb69a3932594291611312e44a983686b0de076a2fdcda3efed9c43e212a3e4bf"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "selected_assign",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 24,
+              "end_line": 3,
+              "end_col": 30
+            },
+            "name": "nibble",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 20
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 21,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 24,
+              "end_line": 4,
+              "end_col": 29
+            },
+            "name": "value",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 19,
+                      "end_line": 4,
+                      "end_col": 20
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 21,
+                      "end_line": 4,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 6,
+              "col": 10,
+              "end_line": 6,
+              "end_col": 29
+            },
+            "target": {
+              "kind": "PartSel",
+              "span": {
+                "line": 6,
+                "col": 10,
+                "end_line": 6,
+                "end_col": 20
+              },
+              "width": 4,
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 10,
+                  "end_line": 6,
+                  "end_col": 15
+                },
+                "width": 8,
+                "name": "value"
+              },
+              "msb": {
+                "kind": "Int",
+                "span": {
+                  "line": 6,
+                  "col": 16,
+                  "end_line": 6,
+                  "end_col": 17
+                },
+                "value": 3,
+                "resolved_width": 32
+              },
+              "lsb": {
+                "kind": "Int",
+                "span": {
+                  "line": 6,
+                  "col": 18,
+                  "end_line": 6,
+                  "end_col": 19
+                },
+                "value": 0,
+                "resolved_width": 32
+              }
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 6,
+                "col": 23,
+                "end_line": 6,
+                "end_col": 29
+              },
+              "width": 4,
+              "name": "nibble"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 7,
+              "col": 10,
+              "end_line": 7,
+              "end_col": 27
+            },
+            "target": {
+              "kind": "PartSel",
+              "span": {
+                "line": 7,
+                "col": 10,
+                "end_line": 7,
+                "end_col": 20
+              },
+              "width": 4,
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 10,
+                  "end_line": 7,
+                  "end_col": 15
+                },
+                "width": 8,
+                "name": "value"
+              },
+              "msb": {
+                "kind": "Int",
+                "span": {
+                  "line": 7,
+                  "col": 16,
+                  "end_line": 7,
+                  "end_col": 17
+                },
+                "value": 7,
+                "resolved_width": 32
+              },
+              "lsb": {
+                "kind": "Int",
+                "span": {
+                  "line": 7,
+                  "col": 18,
+                  "end_line": 7,
+                  "end_col": 19
+                },
+                "value": 4,
+                "resolved_width": 32
+              }
+            },
+            "value": {
+              "kind": "Literal",
+              "span": {
+                "line": 7,
+                "col": 23,
+                "end_line": 7,
+                "end_col": 27
+              },
+              "width": 4,
+              "bits": "1010"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

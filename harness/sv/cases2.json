@@ -14,6 +14,17 @@
    ]
   },
   {
+   "name": "selected_assign",
+   "example": "sem2/selected_assign",
+   "top": "selected_assign",
+   "signals": ["nibble", "value"],
+   "stimulus": [
+    {"nibble": "0011"},
+    {"nibble": "1010"},
+    {"nibble": "xxxx"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

@@ -877,6 +877,12 @@ through existing comb-settle windows and therefore makes no whole-corpus
 clean-count claim. `sem2/concat_assign` exercises source-order flattening,
 single-RHS sampling, and x-state propagation through the symbolic runner.
 
+The follow-on `selected_assign` fixture exercises two disjoint constant
+part-select continuous drivers through the same symbolic executor. It is a
+semantic-tier acceptance case only: the legacy target-only census remains
+unchanged because these corpus rows require the scheduler-facing continuous
+assignment surface.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

@@ -350,6 +350,13 @@ MSB-to-LSB slices to the existing packed-vector windows during comb settling;
 aggregate storage and a second scheduler are not introduced. Empty, dynamic,
 aggregate, duplicate, aliased, or effectful forms remain `Unsupported`.
 
+The same symbolic process representation carries a single constant `BitSel`
+or `PartSel` target. Multiple such assignments settle in process order into
+their existing vector windows, so disjoint partial drivers retain undriven
+bits and update live when an input changes. Dynamic or effectful selections,
+overlapping driver resolution, and legacy/self-check selected assignments
+remain outside this surface.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

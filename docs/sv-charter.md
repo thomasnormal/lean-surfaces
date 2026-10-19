@@ -2555,6 +2555,15 @@ Dynamic, aggregate, duplicate, aliased, effectful, and legacy/self-check
 concatenation targets remain loud. The `sem2/concat_assign` fixture is carried
 through the symbolic runner and the `concat_assign` differential case.
 
+### Symbolic constant selected continuous drivers — 2026-10-19
+
+Continuous assignments to disjoint constant bit/part-select windows are now
+carried by the same `Design2` comb-settle path. The `selected_assign` fixture
+checks source-order settling, live low-window updates, and four-state
+propagation while retaining the existing packed-vector storage. Dynamic,
+effectful, overlapping, aggregate, and legacy/self-check selected drivers
+remain loud.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

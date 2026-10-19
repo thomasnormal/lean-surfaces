@@ -75,11 +75,12 @@ class PackedAssignmentTargets(unittest.TestCase):
                  if node.get("kind") == "Ident" and node.get("name") == "value[0]"]
         self.assertGreaterEqual(len(reads), 2)
 
-    def test_dynamic_unpacked_element_stays_loud(self):
+    def test_dynamic_unpacked_element_dispatches_over_cells(self):
         design = extract_source("module top; logic [3:0] value [2]; integer index; "
                                 "initial value[index] = 4'b1010; endmodule")
-        reasons = [node.get("sv_kind") for node in nodes(design)]
-        self.assertIn("AssignmentExpression:target", reasons)
+        self.assertTrue(any(node.get("kind") == "If" for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
 
     def test_frontend_errors_are_not_erased(self):
         design = extract_source("module top; logic [7:0] value; initial begin "

@@ -58,6 +58,26 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_dynamic_index_is_bounded_over_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:1]; int index; "
+            "initial begin index = 1; value[index] = 8'h34; "
+            "if (value[index] === 8'h34) $display(\"PASS\"); end endmodule")
+        self.assertTrue(any(node.get("kind") == "If"
+                            for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Ternary"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_index_requires_fixed_one_dimensional_storage(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:1][0:1]; logic [1:0] index; "
+            "initial value[index][0] = 8'h34; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

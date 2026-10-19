@@ -900,6 +900,23 @@ part-select targets need the scheduler-facing continuous-assignment model, and
 nested/unpacked/class/interface members remain outside the direct packed-struct
 window tier. The next target item must first provide one of those prerequisites.
 
+### Bounded dynamic fixed-array cells — 2026-10-19
+
+Pure integral dynamic indices into an eligible one-dimensional fixed-unpacked
+array now dispatch through a finite chain of case-equality conditions over its
+expanded cells. Writes become mutually exclusive blocking or nonblocking
+branches; reads become a `Ternary` chain with an all-x default. This preserves
+x/z index no-op behavior and out-of-range reads without introducing an
+aggregate runtime store. Associative, dynamic, queue, multidimensional and
+effectful index forms remain loud. The `unpacked_dynamic` fixture checks the
+real envelope through Lean.
+
+On the paired **22,029** paths available on this checkout, the rung adds 17
+clean files with no losses and lowers `AssignmentExpression:target` by 27
+files (**4,026 → 3,999**). The committed 22,033-path census remains the
+project snapshot; this local paired measurement is recorded separately because
+the external corpus checkout has four fewer paths.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

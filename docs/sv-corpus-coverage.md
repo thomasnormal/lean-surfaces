@@ -375,6 +375,18 @@ Reproduce the table with
 instrument reads the source in-process and writes no envelopes beside the
 corpus.
 
+## Bounded dynamic fixed-array cells — 2026-10-19
+
+Pure integral dynamic accesses to one-dimensional fixed-unpacked arrays now
+lower to finite conditional paths over the declaration's expanded vector
+cells. Case-equality dispatch preserves x/z-index no-op writes and all-x
+out-of-range reads. Dynamic/associative/queue storage, multidimensional arrays
+and effectful indices remain loud. The paired **22,029**-path run reports
+**2,906 clean**, **19,057 partial**, **66 include skips**, and **0 extraction
+errors**: 17 clean gains and no losses; `AssignmentExpression:target` falls
+**4,026 → 3,999**. The `unpacked_dynamic` fixture and proof pass through the
+self-check runner. This is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

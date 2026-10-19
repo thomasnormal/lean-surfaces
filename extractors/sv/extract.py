@@ -694,6 +694,162 @@ def _fixed_array_cell(sm, expression):
         return None
 
 
+def _fixed_array_shape(source):
+    """Return the lowered-cell shape for a one-dimensional fixed array."""
+    try:
+        if type(source).__name__ != "NamedValueExpression":
+            return None
+        if str(source.symbol.kind) != "SymbolKind.Variable":
+            return None
+        array_type = source.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        element_type = array_type.elementType
+        if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
+            return None
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        left, right = int(array_type.range.left), int(array_type.range.right)
+        count = abs(left - right) + 1
+        if count <= 0 or count > 1024:
+            return None
+        return source.symbol.name, width, two_state, left, right
+    except Exception:
+        return None
+
+
+def _fixed_array_dynamic_read(sm, expression):
+    """Lower a dynamic read to a finite conditional over expanded cells."""
+    try:
+        if type(expression).__name__ != "ElementSelectExpression":
+            return None
+        shape = _fixed_array_shape(expression.value)
+        if shape is None:
+            return None
+        name, width, _two_state, left, right = shape
+        index = expression.selector
+        if _constant_dimension_selector(index) is not None:
+            return None
+        index_width, _index_two, index_reason = type_width_2s(index.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(index)):
+            return None
+        converted_index = convert_expr(sm, index)
+        if (converted_index is None or not _case_expression_ok(converted_index)
+                or width_of(converted_index) != index_width):
+            return None
+        result = {
+            "kind": "Literal",
+            "span": node_span(sm, expression),
+            "width": width,
+            "bits": "x" * width,
+        }
+        step = 1 if right >= left else -1
+        mask = (1 << index_width) - 1
+        for position in reversed(list(range(left, right + step, step))):
+            literal = {
+                "kind": "Literal",
+                "span": node_span(sm, index),
+                "width": index_width,
+                "bits": format(position & mask, f"0{index_width}b"),
+            }
+            result = {
+                "kind": "Ternary",
+                "span": node_span(sm, expression),
+                "width": width,
+                "cond": {
+                    "kind": "Binary",
+                    "span": node_span(sm, index),
+                    "width": 1,
+                    "op": "===",
+                    "left": converted_index,
+                    "right": literal,
+                },
+                "then": {
+                    "kind": "Ident",
+                    "span": node_span(sm, expression.value),
+                    "width": width,
+                    "name": f"{name}[{position}]",
+                },
+                "else": result,
+            }
+        return result
+    except Exception:
+        return None
+
+
+def _fixed_array_dynamic_assignment(sm, expr):
+    """Lower a dynamic write to mutually exclusive per-cell branches."""
+    try:
+        if type(expr).__name__ != "AssignmentExpression" or expr.op is not None:
+            return None
+        lhs = expr.left
+        if type(lhs).__name__ != "ElementSelectExpression":
+            return None
+        shape = _fixed_array_shape(lhs.value)
+        if shape is None:
+            return None
+        name, width, two_state, left, right = shape
+        index = lhs.selector
+        if _constant_dimension_selector(index) is not None:
+            return None
+        index_width, _index_two, index_reason = type_width_2s(index.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(index)
+                or not _case_source_expression_ok(expr.right)):
+            return None
+        converted_index = convert_expr(sm, index)
+        value = convert_expr(sm, expr.right)
+        if (converted_index is None or value is None
+                or not _case_expression_ok(converted_index)
+                or not _case_expression_ok(value)
+                or width_of(converted_index) != index_width
+                or width_of(value) != width):
+            return None
+        if two_state:
+            value = squash2_wrap(value, width)
+        result = None
+        step = 1 if right >= left else -1
+        mask = (1 << index_width) - 1
+        for position in reversed(list(range(left, right + step, step))):
+            target = {
+                "kind": "Ident",
+                "span": node_span(sm, lhs),
+                "width": width,
+                "name": f"{name}[{position}]",
+            }
+            branch = {
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": target,
+                "value": value,
+            }
+            literal = {
+                "kind": "Literal",
+                "span": node_span(sm, index),
+                "width": index_width,
+                "bits": format(position & mask, f"0{index_width}b"),
+            }
+            result = {
+                "kind": "If",
+                "span": node_span(sm, expr),
+                "cond": {
+                    "kind": "Binary",
+                    "span": node_span(sm, index),
+                    "width": 1,
+                    "op": "===",
+                    "left": converted_index,
+                    "right": literal,
+                },
+                "then": branch,
+                "else": result,
+            }
+        return result
+    except Exception:
+        return None
+
+
 def _fixed_array_pattern_assignment(sm, expr):
     """Lower one exact positional assignment to a fixed-array's cells.
 
@@ -1364,6 +1520,9 @@ def _convert_selected_read(sm, expr, expression_kind):
                 "width": width,
                 "name": name,
             }, expr.type)
+        dynamic_array = _fixed_array_dynamic_read(sm, expr)
+        if dynamic_array is not None:
+            return dynamic_array
     source_type = expr.value.type
     _, _, source_reason = type_width_2s(source_type)
     canonical_kind = type(source_type.canonicalType).__name__
@@ -1972,6 +2131,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if expr.timingControl is not None:
         return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
     if expr.op is None and _SYM is None:
+        dynamic_array = _fixed_array_dynamic_assignment(sm, expr)
+        if dynamic_array is not None:
+            return dynamic_array
         array_assignment = _fixed_array_pattern_assignment(sm, expr)
         if array_assignment is not None:
             return array_assignment

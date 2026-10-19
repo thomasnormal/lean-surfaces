@@ -264,6 +264,30 @@ and self-check result, not a whole-corpus simulator-agreement claim.
 | 40 | 87 | 4 | 83 | 0 |
 | **Total** | **22,033** | **2,691** | **19,276** | **66** |
 
+## Whole-vector arbitrary packed ranges — 2026-10-19
+
+The self-check extractor now admits whole-vector declarations and operations
+over one-dimensional packed scalar ranges with arbitrary left/right bounds.
+Selected reads and writes on noncanonical ranges remain loud because the
+current evaluator still needs explicit bound mapping. The fresh run over the
+same **22,033** paths reports **2,726 clean**, **19,241 partial**, **66 include
+skips**, and **0 extraction errors**: 35 additional clean files with no
+losses. `AssignmentExpression:target` falls from **4,314 to 4,224 files**;
+`CallExpression` is now the leading refusal at **4,226**. The `packed_ranges`
+fixture and proof run through the self-check surface; this is not a simulator
+agreement claim for the corpus.
+
+The chapter deltas from the preceding cell census are:
+
+| Chapter | Clean | Partial | Include skip |
+|---|---:|---:|---:|
+| 6 | 310 | 875 | 0 |
+| 7 | 33 | 763 | 0 |
+| 10 | 165 | 492 | 0 |
+| 11 | 550 | 484 | 0 |
+| 20 | 140 | 685 | 0 |
+| 38 | 190 | 150 | 0 |
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

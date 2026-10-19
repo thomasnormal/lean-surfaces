@@ -792,6 +792,22 @@ extraction rises **2,628 → 2,691** (63 gains, no losses), while the
 are extractor measurements; only the authored fixture has a Lean execution
 check and independent simulator startup on this host was unavailable.
 
+### Whole-vector arbitrary packed ranges — 2026-10-19
+
+Whole-vector declarations and operations now accept a single packed scalar
+range regardless of its left/right direction (for example, `logic [0:7]`).
+LVec values represent the vector's bits independently of the declared index
+labels, so ordinary assignment, equality and rendering need no new storage.
+Selected access on a noncanonical range remains loud until the evaluator
+carries the declared bounds and maps an index explicitly. Multidimensional
+packed arrays and nonintegral aggregates remain outside this rung. The
+`packed_ranges` fixture checks the real envelope through the self-check runner.
+
+The fresh **22,033**-path census adds **35 clean files** without losses
+(**2,691 → 2,726**); `AssignmentExpression:target` falls to **4,224** files.
+The new top refusal is `CallExpression` at **4,226**, so the next family is
+priced from that queue rather than from the stale assignment count.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

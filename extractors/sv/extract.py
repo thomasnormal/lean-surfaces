@@ -310,13 +310,8 @@ def type_width_2s(t):
             return type_width_2s(ct.baseType)
         if cname == "PackedArrayType":
             w = ct.bitWidth
-            rng = ct.range
             elem = ct.elementType.canonicalType
-            if (
-                rng.left == w - 1
-                and rng.right == 0
-                and type(elem).__name__ == "ScalarType"
-            ):
+            if type(elem).__name__ == "ScalarType":
                 return w, (not t.isFourState), None
             return None, None, "range"
         return None, None, "type"
@@ -1147,6 +1142,23 @@ def _convert_concat_expr(sm, e):
     }
 
 
+def _canonical_packed_select_source(source_type):
+    """Whether selected access still has the zero-based packed geometry.
+
+    Whole-vector operations are range-independent, but the legacy selected
+    read/write evaluator currently interprets an index as an LSB offset.
+    Keep noncanonical packed ranges loud until that evaluator carries the
+    declared left/right bounds explicitly.
+    """
+    try:
+        ct = source_type.canonicalType
+        if type(ct).__name__ != "PackedArrayType":
+            return True
+        return int(ct.range.left) == ct.bitWidth - 1 and int(ct.range.right) == 0
+    except Exception:
+        return False
+
+
 def _convert_selected_read(sm, expr, expression_kind):
     if expression_kind == "ElementSelectExpression":
         cell = _fixed_array_cell(sm, expr)
@@ -1162,7 +1174,8 @@ def _convert_selected_read(sm, expr, expression_kind):
     _, _, source_reason = type_width_2s(source_type)
     canonical_kind = type(source_type.canonicalType).__name__
     if (source_reason is not None or not source_type.isFourState
-            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")
+            or not _canonical_packed_select_source(source_type)):
         return unsupported(sm, expr, expression_kind + ":source-type")
     descending = False
     if expression_kind == "ElementSelectExpression":
@@ -1353,7 +1366,8 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     source_width, _, source_reason = type_width_2s(lhs.value.type)
     canonical_kind = type(lhs.value.type.canonicalType).__name__
     if (not admitted or source_reason is not None or source_width is None
-            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")
+            or not _canonical_packed_select_source(lhs.value.type)):
         return unsupported(sm, lhs, expression_kind + ":target-source"), False
     descending = False
     if expression_kind == "ElementSelectExpression":

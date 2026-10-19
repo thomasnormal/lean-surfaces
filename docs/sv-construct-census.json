@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
-    4314
+    "CallExpression",
+    4226
    ],
    [
-    "CallExpression",
-    4225
+    "AssignmentExpression:target",
+    4224
    ],
    [
     "InstanceSymbol:Instance",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    3535
+    3534
    ],
    [
     "TimedStatement:DelayControl",
@@ -84,7 +84,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    735
+    733
    ],
    [
     "CovergroupType:CovergroupType",
@@ -127,10 +127,6 @@
     373
    ],
    [
-    "VariableSymbol:type",
-    322
-   ],
-   [
     "BlockStatement:JoinAll",
     319
    ],
@@ -149,6 +145,10 @@
    [
     "SequenceSymbol:Sequence",
     282
+   ],
+   [
+    "VariableSymbol:type",
+    272
    ],
    [
     "ConfigBlockSymbol",
@@ -203,10 +203,6 @@
     146
    ],
    [
-    "VariableSymbol:range",
-    145
-   ],
-   [
     "TimedStatement:CycleDelayControl",
     142
    ],
@@ -237,10 +233,6 @@
    [
     "ProceduralBlockSymbol:Final",
     85
-   ],
-   [
-    "NamedValueExpression:range",
-    84
    ],
    [
     "ProceduralDeassignStatement",
@@ -316,6 +308,10 @@
    ],
    [
     "RangeSelectExpression:source-type",
+    53
+   ],
+   [
+    "VariableSymbol:range",
     53
    ],
    [
@@ -420,11 +416,15 @@
    ],
    [
     "CaseStatement:subject",
-    32
+    30
    ],
    [
     "NetSymbol:delay",
     27
+   ],
+   [
+    "NamedValueExpression:range",
+    25
    ],
    [
     "ParameterSymbol",
@@ -432,10 +432,6 @@
    ],
    [
     "NetSymbol:type",
-    24
-   ],
-   [
-    "VariableDeclStatement:range",
     24
    ],
    [
@@ -448,6 +444,10 @@
    ],
    [
     "SignalEventControl:NegEdge",
+    22
+   ],
+   [
+    "CaseStatement:pattern",
     22
    ],
    [
@@ -464,10 +464,6 @@
    ],
    [
     "ConditionalStatement:Unique",
-    20
-   ],
-   [
-    "CaseStatement:pattern",
     20
    ],
    [
@@ -495,10 +491,6 @@
     17
    ],
    [
-    "TransparentMemberSymbol:TransparentMember",
-    17
-   ],
-   [
     "TransparentMemberSymbol",
     17
    ],
@@ -507,7 +499,7 @@
     16
    ],
    [
-    "BitQuery:argument-type",
+    "TransparentMemberSymbol:TransparentMember",
     16
    ],
    [
@@ -516,6 +508,10 @@
    ],
    [
     "ForLoopStatement:condition",
+    15
+   ],
+   [
+    "BitQuery:argument-type",
     15
    ],
    [
@@ -541,6 +537,10 @@
    [
     "PatternCaseStatement",
     13
+   ],
+   [
+    "ConversionExpression:BitstreamCast",
+    12
    ],
    [
     "BinaryExpression:LogicalImplication",
@@ -571,10 +571,6 @@
     11
    ],
    [
-    "ConversionExpression:BitstreamCast",
-    11
-   ],
-   [
     "MinTypMaxExpression",
     11
    ],
@@ -584,6 +580,10 @@
    ],
    [
     "PortSymbol:InOut",
+    10
+   ],
+   [
+    "VariableDeclStatement:range",
     10
    ],
    [
@@ -820,13 +820,13 @@
    ]
   ],
   "by_status": {
-   "clean": 2691,
-   "partial": 19276,
+   "clean": 2726,
+   "partial": 19241,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    303,
+    304,
     1387
    ],
    "compilation": [
@@ -882,7 +882,7 @@
     52
    ],
    "simulation": [
-    2207,
+    2241,
     18669
    ],
    "simulation elaboration": [
@@ -897,18 +897,18 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 453,
-    "clean": 538,
-    "partial": 453,
+    "blocked_by_more": 444,
+    "clean": 547,
+    "partial": 444,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
-      "AssignmentExpression:target",
-      189
+      "VariableDeclStatement:2state",
+      186
      ],
      [
-      "VariableDeclStatement:2state",
-      189
+      "AssignmentExpression:target",
+      173
      ],
      [
       "NamedValueExpression:2state",
@@ -1075,18 +1075,18 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 747,
-    "clean": 294,
-    "partial": 747,
+    "blocked_by_more": 744,
+    "clean": 297,
+    "partial": 744,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      291
+      286
      ],
      [
       "VariableSymbol:2state",
-      242
+      241
      ],
      [
       "CallExpression",
@@ -1126,7 +1126,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      59
+      58
      ],
      [
       "RealLiteral",
@@ -1142,7 +1142,7 @@
      ],
      [
       "TypeAliasType",
-      31
+      30
      ],
      [
       "NullLiteral",
@@ -1153,12 +1153,12 @@
       28
      ],
      [
-      "VariableSymbol:range",
+      "NamedValueExpression:Parameter",
       22
      ],
      [
-      "NamedValueExpression:Parameter",
-      22
+      "Call:$fatal",
+      21
      ]
     ],
     "unlockable": 0
@@ -1167,17 +1167,17 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 160,
+    "clean": 165,
     "error": 0,
-    "partial": 497,
+    "partial": 492,
     "skip_include": 0,
     "total": 657,
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 541,
+    "clean": 550,
     "error": 0,
-    "partial": 493,
+    "partial": 484,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0
@@ -1247,9 +1247,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 128,
+    "clean": 140,
     "error": 0,
-    "partial": 697,
+    "partial": 685,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1399,9 +1399,9 @@
     "unlockable": 0
    },
    "chapter-38": {
-    "clean": 189,
+    "clean": 190,
     "error": 0,
-    "partial": 151,
+    "partial": 150,
     "skip_include": 0,
     "total": 340,
     "unlockable": 0
@@ -1439,17 +1439,17 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 307,
+    "clean": 310,
     "error": 0,
-    "partial": 878,
+    "partial": 875,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 1
    },
    "chapter-7": {
-    "clean": 28,
+    "clean": 33,
     "error": 0,
-    "partial": 768,
+    "partial": 763,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

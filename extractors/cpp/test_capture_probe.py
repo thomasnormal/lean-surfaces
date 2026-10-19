@@ -615,6 +615,31 @@ class PinnedFrontendCaptureTests(unittest.TestCase):
             self.assertEqual(receipt["closure_limits"]["runtime_image_closure"], "unestablished")
             self.assertEqual(receipt["closure_limits"]["ordinary_source_profile"], "unestablished")
 
+    def test_real_frontend_keeps_out_of_dump_expression_as_refusal(self):
+        with tempfile.TemporaryDirectory(prefix="cpp-capture-expression-") as directory:
+            root = pathlib.Path(directory)
+            source = root / "input.cpp"
+            source.write_text(
+                "int buffer[1 + 1];\n"
+                "int identity(int value) { return value; }\n",
+                encoding="utf-8",
+            )
+            destination = root / "bundle"
+            with mock.patch.dict(os.environ, {}, clear=True):
+                published = capture.capture(
+                    source, destination, clang=self.clang, plugin=self.plugin,
+                    runtime_libraries=self.runtime_libraries, timeout=30, memory_mib=16384,
+                )
+            metadata = support.strict_probe(published / "probe.json")["metadata"]
+            self.assertEqual(metadata["expression_evidence"], [])
+            self.assertEqual(len(metadata["expression_refusals"]), 1)
+            refusal = metadata["expression_refusals"][0]
+            self.assertEqual(refusal["operator"], "+")
+            self.assertFalse(refusal["dump_visible"])
+            self.assertTrue(refusal["projection_supported"])
+            self.assertEqual(refusal["reason"],
+                             "expression occurrence is outside JSON AST dump")
+
     def test_negative_include_lookup_prevents_replay_closure_claim(self):
         with tempfile.TemporaryDirectory(prefix="cpp-capture-lookup-") as directory:
             root = pathlib.Path(directory)

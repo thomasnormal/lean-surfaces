@@ -53,6 +53,25 @@ separate [typed callable bridge](cpp-callable-functions.md) consumes these
 rows only for its direct-return body profile; it performs no body execution
 and leaves `Translation.execute` refused.
 
+## Fresh capture validation
+
+On 2026-10-19 a fresh pinned capture using Clang/LLVM 21.1.8 produced a
+16,199-byte probe whose SHA-256 is
+`ba01101e6aa903ffa7e07bb4db669cd7696b79984e94b0d68e4920a42e76d86d`.
+The capture receipt binds that payload digest and the probe contains ten
+declaration rows; the same-process inspection accepts its four type rows and
+reports zero expression rows for the declaration-only control. The focused
+capture suite passes **48 tests / 0 failed** with the declared 16 GiB process
+bound.
+
+The unchanged full XML-profile probe remains a negative control for the
+expression join. Its 34,496,558-byte SHA-256 is
+`e8db863c3f2fc3d8aaa44028d243064b7cef0d35ffe1061c9a96efd4f6185d6d`.
+Inspection accepts its 2,015 type rows but refuses the expression supplement
+with `expression evidence occurrence is absent from AST`; the artifact hash is
+unchanged before and after inspection. This preserves the distinction between
+a fresh pinned capture and the earlier full-corpus evidence boundary.
+
 ```sh
 lake build LeanModels.Cpp.TypeEvidenceTests
 ```

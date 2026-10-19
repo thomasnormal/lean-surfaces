@@ -1,10 +1,13 @@
 # C++ automatic integral declarations: specification and price
 
-2026-10-14. **Specification, not executable admission.** The current callable
-profile still refuses `DeclStmt`. This contract connects source declarations to
-[integral objects](cpp-integral-objects.md), rather than introducing another
-value store beside the lifetime model. The pricing tool measures archived
-body inventories; it does not execute a body or validate a function signature.
+2026-10-19. **Strict frontend admission, not general callable execution.** The
+automatic-local adapter now admits a narrow `DeclStmt` shape into the
+object-backed frame. The current callable profile still refuses declarations
+until its whole-body context is threaded through that adapter. This contract
+connects source declarations to [integral objects](cpp-integral-objects.md),
+rather than introducing another value store beside the lifetime model. The
+pricing tool measures archived body inventories; it does not execute a body or
+validate a function signature.
 
 ## Normative anchors
 
@@ -74,9 +77,15 @@ implement scope cleanup.
 `LeanModels/Cpp/IntegralObjectFrame.lean` now supplies the object-backed frame,
 scope state and a small stateful control shell. Its binding API attaches a
 declaration occurrence to a fresh object and retains the frame on every result;
-its `Statement` executor handles blocks, conditions, loops and transfers. This
-is still not `DeclStmt` admission: the next frontend step must attach validated
-Clang declaration nodes and initializer evidence to these operations.
+its `Statement` executor handles blocks, conditions, loops and transfers.
+`LeanModels/Cpp/AutomaticDeclarations.lean` is the frontend step: given a
+validated probe, it joins an exact `DeclStmt` path to direct `VarDecl` children,
+structured type rows, variable storage/initializer rows and binary-expression
+rows. It emits `IntegralObjectFrame.Statement` declarations, so the frame can
+reserve storage before evaluating an initializer and retain self-initialization
+failures. The adapter admits only automatic, nonvolatile integral objects with
+no attributes; unsupported storage, types, calls, multi-element lists and
+implicit operand conversions remain loud.
 
 The frontend adapter must attach these scopes to the retained control
 boundaries:
@@ -199,9 +208,12 @@ explicit `maxRecDepth 100000` caller budget; production defaults are unchanged.
 These are frontend/refusal controls,
 not proofs or execution claims about prototype programs.
 
-The optional [variable-evidence supplement](cpp-variable-evidence.md) now
-records versioned Clang storage, role, initializer, constexpr and attribute
+The optional [variable-evidence supplement](cpp-variable-evidence.md) records
+versioned Clang storage, role, initializer, constexpr and attribute
 observations with strict root/`inner` joins and structured source/converted
-types. The 18-form battery validates those observations and still refuses
-every declaration statement. This completes an evidence prerequisite;
-object-backed declaration execution and frame scopes remain to be built.
+types. `AutomaticDeclarationsTests.lean` covers literal and default/zero
+initialization, multiple declarators, preceding-declarator reads,
+self-initialization with retained storage, unsupported storage and missing
+joins. This is an admitted source fragment and frame proof surface; broad
+callable-body admission, conversions and a three-corpus execution census
+remain separate obligations.

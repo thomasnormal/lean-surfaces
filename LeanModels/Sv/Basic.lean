@@ -414,6 +414,10 @@ def pow (signedBase signedExponent : Bool) (left right : LVec) : LVec :=
       else ofNat left.width (powMod left.width base exponent right.width)
   | _, _ => xVec left.width
 
+/-- Unary `+`, §11.4.3: preserve known bits; any x/z makes the whole result x. -/
+def pos (a : LVec) : LVec :=
+  if a.allKnown then a else xVec a.width
+
 /-- Unary `-`: two's complement (mod `2^w`) with the §11.4.3 collapse rule. -/
 def neg (a : LVec) : LVec :=
   match a.toNat? with

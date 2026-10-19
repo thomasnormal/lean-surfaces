@@ -115,6 +115,7 @@ def parseUnaryOpName : String → Except String UnaryOp
   | "~" | "BitwiseNot" => .ok .bnot
   | "!" | "LogicalNot" => .ok .lnot
   | "-" | "Minus" | "UnaryMinus" | "Neg" => .ok .neg
+  | "+" | "Plus" | "UnaryPlus" | "Pos" => .ok .pos
   | s => .error s!"unknown unary op {s.quote}"
 
 /-- Parse reduction operator names (canonical symbols plus readable aliases). -/

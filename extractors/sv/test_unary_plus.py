@@ -1,55 +1,63 @@
-"""Unary-plus identity admission for the legacy/self-check envelope."""
+"""IEEE 1800-2023 11.4.3: unary plus remains an arithmetic operator."""
 
 import unittest
+from pathlib import Path
 
-import extract
-from pyslang.ast import Compilation
-from pyslang.syntax import SyntaxTree
+from test_bit_queries import lower, nodes
+from test_division import symbolic
 
-
-def lower(source):
-    extract._SYM = None
-    extract._SOURCE_BYTES = source.encode()
-    tree = SyntaxTree.fromText(source)
-    compilation = Compilation()
-    compilation.addSyntaxTree(tree)
-    return extract.convert_design(tree.sourceManager, compilation)
+# SYNTHETIC-ORACLE: tests=UnaryPlus | origin=spec | authority=IEEE-1800-2023#11.4.3 | map=nodes:retain-arithmetic-plus-and-elaborated-width
 
 
-def nodes(value):
-    if isinstance(value, dict):
-        yield value
-        for child in value.values():
-            yield from nodes(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from nodes(child)
+def plus_nodes(design):
+    return [node for node in nodes(design)
+            if node.get("kind") == "Unary" and node.get("op") == "+"]
 
 
 class UnaryPlus(unittest.TestCase):
-    def test_unary_plus_erases_to_the_operand(self):
+    def test_runtime_plus_is_retained(self):
         design = lower(
             'module e(input logic [3:0] a, output logic [3:0] b); '
             'assign b = +a; endmodule'
         )
-        assignment = design["modules"][0]["processes"][0]
-        self.assertEqual(assignment["value"]["kind"], "Ident")
-        self.assertEqual(assignment["value"]["name"], "a")
-        self.assertFalse(any(
-            node.get("sv_kind") == "UnaryExpression:Plus"
-            for node in nodes(design)
-        ))
+        expression = design["modules"][0]["processes"][0]["value"]
+        self.assertEqual(expression["kind"], "Unary")
+        self.assertEqual(expression["op"], "+")
+        self.assertEqual(expression["width"], 4)
+        self.assertEqual(expression["operand"]["name"], "a")
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
-    def test_unary_plus_keeps_unknown_operand_values(self):
-        design = lower(
-            'module e(input logic [3:0] a, output logic [3:0] b); '
-            'assign b = +(a); endmodule'
-        )
-        assignment = design["modules"][0]["processes"][0]
-        self.assertEqual(assignment["value"], {
-            "kind": "Ident",
-            "span": assignment["value"]["span"],
-            "width": 4,
-            "name": "a",
-        })
+    def test_scalar_signed_and_wide_operands(self):
+        for declaration in ("logic", "logic signed [7:0]", "logic [64:0]"):
+            with self.subTest(declaration=declaration):
+                design = lower("module e; " + declaration + " a, b; initial b = +a; endmodule")
+                self.assertEqual(len(plus_nodes(design)), 1)
+                self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
+    def test_symbolic_runtime_plus_is_retained(self):
+        design = symbolic("module divider #(parameter W=8) "
+                          "(input logic [W-1:0] a, output logic [W-1:0] b); "
+                          "assign b = +a; endmodule")
+        self.assertEqual(len(plus_nodes(design)), 1)
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_arithmetic_operand_keeps_plus(self):
+        design = symbolic("module divider #(parameter W=8) "
+                          "(input logic [W-1:0] a, output logic [W-1:0] b); "
+                          "assign b = (+a & 8'h80) / 2; endmodule")
+        self.assertEqual(len(plus_nodes(design)), 1)
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_reference_fixture_is_admitted(self):
+        source = Path(__file__).resolve().parents[2] / "Examples/system-verilog/unary_plus/arithmetic.sv"
+        design = lower(source.read_text())
+        self.assertGreaterEqual(len(plus_nodes(design)), 10)
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_real_operand_stays_loud(self):
+        design = lower("module top; real value, result; initial result = +value; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+
+if __name__ == "__main__":
+    unittest.main()

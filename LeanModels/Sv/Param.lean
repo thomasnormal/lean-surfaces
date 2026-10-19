@@ -180,7 +180,7 @@ def SymBinOp.sym : SymBinOp → String
 `++`/`--` (which are legal only in `GenerateFor.step` position). -/
 inductive SymUnaryOp where
   | m0 (op : UnaryOp)
-  | plus  -- unary `+` (identity)
+  | plus  -- unary `+` (arithmetic x/z collapse at runtime)
   | inc   -- `++` (generate step only)
   | dec   -- `--` (generate step only)
 deriving Repr, BEq, DecidableEq, Inhabited
@@ -442,7 +442,7 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .m0 .neg => .ok (-v)
       | .m0 .lnot => .ok (b2i (v == 0))
       | .m0 .bnot => .error "'~' in a constant context (width-dependent)"
-      | .plus => .ok v
+      | .m0 .pos | .plus => .ok v
       | .inc | .dec => .error "'++'/'--' outside a generate step"
   | .binary op l r => do
       let a ← evalInt env l
@@ -694,7 +694,7 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
       match op with
       | .m0 .lnot => .unary .lnot (instExpr env none a)
       | .m0 uop => .unary uop (instExpr env (maxW ctx (selfWidth env a)) a)
-      | .plus => instExpr env ctx a
+      | .plus => .unary .pos (instExpr env (maxW ctx (selfWidth env a)) a)
       | .inc | .dec => .unsupported "UnaryExpression:incdec" ""
   | .binary op l r =>
       match op with
@@ -788,7 +788,8 @@ def instDivOperand (env : IEnv) (signed : Bool) (ctx : Option Nat) : PExpr → E
         (.unary .lnot (instDivOperand env false (divOperandWidth env operand) operand))
   | .unary (.m0 operator) operand =>
       .unary operator (instDivOperand env signed (maxW ctx (divOperandWidth env operand)) operand)
-  | .unary .plus operand => instDivOperand env signed ctx operand
+  | .unary .plus operand =>
+      .unary .pos (instDivOperand env signed (maxW ctx (divOperandWidth env operand)) operand)
   | .binary (.m0 (.pow _ signedExponent)) left right =>
       .binary (.pow signed signedExponent)
         (instDivOperand env signed (maxW ctx (divOperandWidth env left)) left)

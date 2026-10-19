@@ -304,7 +304,7 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 |---|---|---|
 | `Ident` | `kind`, `span`, `width`, `name` (string) | declared width of the named var/net/port |
 | `Literal` | `kind`, `span`, `width`, `bits` (string), optional `signed`, `fixed_bits_query`, `fixed_clog2`, `fixed_dimension_query` provenance | `len(bits) == width` |
-| `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"-"`), `operand` (expr) | `~`,`-`: `width == operand.width`; `!`: `width == 1` |
+| `Unary` | `kind`, `span`, `width`, `op` (`"~"` \| `"!"` \| `"+"` \| `"-"`), `operand` (expr) | `~`,`+`,`-`: `width == operand.width`; `!`: `width == 1` |
 | `Reduce` | `kind`, `span`, `width`, `op` (`"|"` \| `"&"` \| `"^"` \| `"~|"` \| `"~&"` \| `"~^"`), `operand` (expr) | `width == 1`; operand is any admitted integral expression |
 | `Binary` | `kind`, `span`, `width`, `op` (see below), `left`, `right` (exprs) | arithmetic/bitwise operators: common-width children; shifts: `width == left.width`, with a self-determined right operand; comparisons: `width == 1` and equal child widths |
 | `Ternary` | `kind`, `span`, `width`, `cond`, `then`, `else` (exprs) | `width == then.width == else.width`; `cond` any width |
@@ -338,10 +338,11 @@ table; the last three negate those results. Unknown bits remain `x` unless a
 definite table result decides the fold (`|4'b100x` is `1`, while `&4'b111x`
 and `^4'b101x` are `x`).
 
-Unary `+` is admitted as a value-preserving identity over the same integral
-fragment, but is erased during extraction after its result and operand widths
-are checked. It therefore has no `Unary` operator tag in the envelope; the
-remaining unary tags are `~`, `!` and `-`.
+Unary `+` remains a `Unary` node through extraction and symbolic sizing.
+IEEE 1800-2023 §11.4.3 requires the arithmetic x/z rule: a fully known
+operand is unchanged, while any x/z bit makes the entire result x. The
+shared `LVec.pos` rule applies after context sizing, including when the
+unary expression occurs inside another arithmetic operand.
 
 Runtime integral division uses `u/` for unsigned operands and `s/` when
 both elaborated operands are signed. Zero divisors and x/z operands give

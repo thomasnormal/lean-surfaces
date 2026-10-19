@@ -79,15 +79,26 @@
               "name": "b"
             },
             "value": {
-              "kind": "Ident",
+              "kind": "Unary",
               "span": {
                 "line": 5,
-                "col": 15,
+                "col": 14,
                 "end_line": 5,
                 "end_col": 16
               },
               "width": 4,
-              "name": "a"
+              "op": "+",
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 5,
+                  "col": 15,
+                  "end_line": 5,
+                  "end_col": 16
+                },
+                "width": 4,
+                "name": "a"
+              }
             }
           },
           {
@@ -110,15 +121,26 @@
               "name": "c"
             },
             "value": {
-              "kind": "Literal",
+              "kind": "Unary",
               "span": {
                 "line": 6,
-                "col": 16,
+                "col": 14,
                 "end_line": 6,
-                "end_col": 23
+                "end_col": 24
               },
               "width": 4,
-              "bits": "0101"
+              "op": "+",
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 6,
+                  "col": 16,
+                  "end_line": 6,
+                  "end_col": 23
+                },
+                "width": 4,
+                "bits": "0101"
+              }
             }
           }
         ],

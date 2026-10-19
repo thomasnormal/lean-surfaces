@@ -119,6 +119,16 @@ The top remaining refusal sets count assignment targets in 4,471 files,
 expression calls in 4,222, instance hierarchy in 3,836, and two-state
 declaration shapes in 3,716. Counts overlap: a file may have several walls.
 
+## Unary arithmetic correction — 2026-10-19
+
+A fresh 22,030-path census after retaining unary `+` as an arithmetic node
+has the same chapter counts shown above: **2,599 clean**, **19,365 partial**,
+**66 include skips**, and **zero extraction errors**. This is a correction to
+execution of admitted expressions: partially unknown operands now produce
+all x under §11.4.3. The new source fixture covers scalar, signed, widened,
+65-bit and nested arithmetic uses; extraction cleanliness alone does not
+establish those runtime results. See [the operator contract](sv-unary-arithmetic.md).
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

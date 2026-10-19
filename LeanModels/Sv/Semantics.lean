@@ -196,6 +196,7 @@ def evalUnaryOp : UnaryOp → LVec → LVec
   | .bnot, v => v.not
   | .lnot, v => .ofLogic v.lnot
   | .neg, v => v.neg
+  | .pos, v => v.pos
 
 /-- M0 binary operator on evaluated operands. 1-bit SV results
 (`== != < <= > >=`) are lifted with `LVec.ofLogic`. -/

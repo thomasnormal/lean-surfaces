@@ -1014,6 +1014,7 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       | "~" => return .mkUnary .bnot a
       | "!" => return .mkUnary .lnot a
       | "-" => return .mkUnary .neg a
+      | "+" => return .mkUnary .pos a
       | other => .error s!"unknown unary op '{other}'"
   | "Reduce" =>
       let a ← parseSExpr (← getF j "operand")

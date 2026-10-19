@@ -24,12 +24,13 @@ context-determined width).
 
 namespace LeanModels.Sv
 
-/-- M0 unary operators: `~` (bitwise not), `!` (logical not), `-` (arith
-negation). Evaluated by `LVec.not` / `LVec.lnot` / `LVec.neg`. -/
+/-- M0 unary operators: `~` (bitwise not), `!` (logical not), `+` and `-`
+(arithmetic). Evaluated by the shared `LVec` operator library. -/
 inductive UnaryOp where
   | bnot  -- `~`
   | lnot  -- `!`
   | neg   -- `-`
+  | pos   -- `+`
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- M0 binary operators (`docs/sv-design-m0.md` expression tier):

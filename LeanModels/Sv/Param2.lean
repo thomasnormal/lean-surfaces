@@ -252,7 +252,7 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
       match op with
       | .m0 .lnot => .unary .lnot (instExpr2 env elems none a)
       | .m0 uop => .unary uop (instExpr2 env elems (maxW2 ctx (selfWidth2 env elems a)) a)
-      | .plus => instExpr2 env elems ctx a
+      | .plus => .unary .pos (instExpr2 env elems (maxW2 ctx (selfWidth2 env elems a)) a)
       | .inc | .dec => .unsupported "UnaryExpression:incdec" ""
   | .binary op l r =>
       match op with
@@ -383,7 +383,9 @@ def instDivOperand2 (env : IEnv) (elems : List (String × Nat))
   | .unary (.m0 operator) operand =>
       .unary operator
         (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems operand)) operand)
-  | .unary .plus operand => instDivOperand2 env elems signed ctx operand
+  | .unary .plus operand =>
+      .unary .pos
+        (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems operand)) operand)
   | .binary (.m0 (.pow _ signedExponent)) left right =>
       .binary (.pow signed signedExponent)
         (instDivOperand2 env elems signed (maxW2 ctx (divOperandWidth2 env elems left)) left)

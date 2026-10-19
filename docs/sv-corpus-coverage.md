@@ -540,6 +540,18 @@ census reports **2,960 clean**, **19,007 partial**, **66 include skips** and
 `AssignmentExpression:target` wall falls **3,928 → 3,920**. This is not a
 simulator-agreement claim.
 
+## Nested packed-struct field windows — 2026-10-19
+
+Member reads and writes through a chain of untagged packed structs now flatten
+the fixed declaration offsets into one `SelectRead`/`SelectTarget` window over
+the outer vector. Nested unions, unpacked members, classes, interfaces and
+tagged aggregates remain loud. The `packed_struct_nested` fixture and Lean
+proof pass through the self-check runner. The fresh **22,033**-path census
+reports **2,975 clean**, **18,992 partial**, **66 include skips** and **zero
+extraction errors**: 15 clean gains with no losses; the
+`AssignmentExpression:target` wall falls **3,920 → 3,909**. This is not a
+simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

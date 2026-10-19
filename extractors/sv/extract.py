@@ -1574,7 +1574,7 @@ def _convert_expr(sm, e):
                 "kind": "SelectRead",
                 "span": node_span(sm, e),
                 "width": width,
-                "value": _convert_expr(sm, e.value),
+                "value": _convert_expr(sm, base),
                 "index": {
                     "kind": "Literal",
                     "span": node_span(sm, e),
@@ -2007,20 +2007,34 @@ def _packed_struct_member(sm, expression):
     try:
         if type(expression).__name__ != "MemberAccessExpression":
             return None
-        base = expression.value
-        if type(base).__name__ != "NamedValueExpression":
-            return None
-        aggregate = base.type.canonicalType
-        if type(aggregate).__name__ not in ("PackedStructType", "PackedUnionType"):
-            return None
-        if getattr(aggregate, "isTagged", False):
+        value = expression.value
+        if type(value).__name__ == "NamedValueExpression":
+            base = value
+            aggregate = base.type.canonicalType
+            if type(aggregate).__name__ not in ("PackedStructType", "PackedUnionType"):
+                return None
+            if getattr(aggregate, "isTagged", False):
+                return None
+            parent_offset = 0
+        elif type(value).__name__ == "MemberAccessExpression":
+            parent = _packed_struct_member(sm, value)
+            if parent is None:
+                return None
+            base, _parent_width, parent_offset, _parent_two = parent
+            aggregate = value.type.canonicalType
+            # Nested union layouts can overlap in ways this scalar window
+            # state does not describe. Nested packed structs have a fixed
+            # declaration offset and are safe to add to the parent window.
+            if type(aggregate).__name__ != "PackedStructType":
+                return None
+        else:
             return None
         member = expression.member
         width, two_state, reason = type_width_2s(member.type)
         if width is None or reason is not None:
             return None
-        offset = int(member.bitOffset)
-        if offset < 0 or offset + width > aggregate.bitWidth:
+        offset = parent_offset + int(member.bitOffset)
+        if offset < 0 or offset + width > base.type.canonicalType.bitWidth:
             return None
         return base, width, offset, two_state
     except Exception:
@@ -2231,7 +2245,7 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
                 "kind": "SelectTarget",
                 "span": node_span(sm, lhs),
                 "width": width,
-                "value": convert_expr(sm, lhs.value),
+                "value": convert_expr(sm, _base),
                 "index": {
                     "kind": "Literal",
                     "span": node_span(sm, lhs),

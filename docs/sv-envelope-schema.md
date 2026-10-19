@@ -357,7 +357,8 @@ declared bounds are represented directly.
 
 Direct fields of an untagged packed struct or packed union are represented by
 the same window nodes: the field's fixed `bitOffset` becomes a literal LVec
-index over the aggregate identifier. Nested member chains, unpacked
+index over the aggregate identifier. A chain through nested packed structs is
+flattened to the outer aggregate's fixed bit offset. Nested unions, unpacked
 struct/union fields, classes, interfaces and tagged unions remain unsupported.
 
 `ConcatTarget` has `kind`, `span`, `width` and `parts` (source-ordered

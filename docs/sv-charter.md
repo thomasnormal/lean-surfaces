@@ -1113,6 +1113,18 @@ clean / 19,007 partial / 66 include skips** with zero extraction errors: seven
 clean gains and no losses; `AssignmentExpression:target` falls **3,928 →
 3,920**.
 
+### Nested packed-struct field windows — 2026-10-19
+
+Member reads and writes through untagged nested packed structs now flatten
+their fixed declaration offsets into one vector window over the outer
+aggregate. Nested unions, unpacked members, classes, interfaces and tagged
+aggregates remain loud. The `packed_struct_nested` fixture checks the real
+envelope through Lean and the self-check runner, without a new
+simulator-agreement claim. The fresh **22,033**-path census reports **2,975
+clean / 18,992 partial / 66 include skips** with zero extraction errors: 15
+clean gains and no losses; `AssignmentExpression:target` falls **3,920 →
+3,909**.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

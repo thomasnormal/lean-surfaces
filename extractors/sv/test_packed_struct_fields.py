@@ -41,13 +41,22 @@ class PackedStructFields(unittest.TestCase):
         self.assertEqual(targets[0]["width"], 4)
         self.assertEqual(targets[0]["index"]["bits"], "0" * 29 + "100")
 
-    def test_nested_member_chain_stays_loud(self):
+    def test_nested_member_chain_is_one_window(self):
         design = extract_source(
             "module top; typedef struct packed { logic [3:0] hi;} T; "
             "typedef struct packed { T inner;} U; U value; "
-            "initial value.inner.hi = 4'ha; endmodule")
-        self.assertTrue(any(node.get("kind") == "Unsupported"
-                            for node in nodes(design)))
+            "initial begin value.inner.hi = 4'ha; "
+            "if (value.inner.hi === 4'ha) $display(\"PASS\"); end endmodule")
+        targets = [node for node in nodes(design)
+                   if node.get("kind") == "SelectTarget"]
+        reads = [node for node in nodes(design)
+                 if node.get("kind") == "SelectRead"]
+        self.assertEqual(len(targets), 1)
+        self.assertEqual(len(reads), 1)
+        self.assertEqual(targets[0]["value"]["name"], "value")
+        self.assertEqual(targets[0]["index"]["bits"], "0" * 32)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
 
 
 if __name__ == "__main__":

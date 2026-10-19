@@ -257,9 +257,10 @@ bounded dynamic access and whole-array positional-pattern assignments below.
 `If` conditions may be any width (truthiness per LRM: true iff some bit is `1`).
 
 An eligible cell-expanded declaration may also have an exact-length
-positional assignment-pattern initializer; each element is converted once and
-stored in its corresponding cell. Keyed/default, wrong-length, effectful or
-aggregate initializers remain `Unsupported`.
+assignment-pattern initializer; each element is converted once and stored in
+its corresponding cell. Positional and elaborated keyed/default patterns are
+admitted, as are replicated patterns whose constant count equals the array
+length. Wrong-length, effectful or aggregate initializers remain `Unsupported`.
 
 The same representation admits an exact-length assignment-pattern statement to
 an eligible cell-expanded array. Positional patterns and elaborated

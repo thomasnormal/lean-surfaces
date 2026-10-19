@@ -976,6 +976,20 @@ whole-corpus coverage claim. The focused extractor and harness tests provide
 the measured acceptance boundary; the next census rerun will price any newly
 clean corpus files.
 
+### Structured and replicated fixed-array initializers — 2026-10-19
+
+Fixed-unpacked integral declarations now use the same elaborated structured
+keyed/default cells and exact-length constant replication as assignment
+statements. Each initializer element is converted once into its declaration
+cell; wrong-length, effectful and aggregate initializers remain loud. The
+`unpacked_init_patterns` fixture checks both forms through Lean and the
+self-check runner.
+
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and this rung makes no fresh
+whole-corpus coverage claim. The focused initializer tests establish the
+admission boundary; the next census rerun will price any newly clean rows.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

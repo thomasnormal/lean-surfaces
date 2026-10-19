@@ -432,6 +432,16 @@ runner. The external `sv-tests-2` checkout was unavailable for this turn, so
 the committed census snapshot is unchanged and no fresh whole-corpus gain is
 claimed. This is not a whole-corpus simulator-agreement claim.
 
+## Structured and replicated fixed-array initializers — 2026-10-19
+
+The same elaborated structured keyed/default and exact-length constant
+replicated patterns now populate eligible fixed-unpacked declaration cells.
+Wrong-length, effectful and aggregate initializers remain loud. The
+`unpacked_init_patterns` fixture and proof pass through the self-check runner.
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and no fresh whole-corpus gain is
+claimed. This is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

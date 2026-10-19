@@ -2738,14 +2738,51 @@ def convert_fixed_array_vars(sm, m):
         initializer = getattr(m, "initializer", None)
         values = [None] * count
         if initializer is not None:
-            if type(initializer).__name__ != "SimpleAssignmentPatternExpression":
+            pattern_kind = type(initializer).__name__
+            if pattern_kind not in (
+                    "SimpleAssignmentPatternExpression",
+                    "StructuredAssignmentPatternExpression",
+                    "ReplicatedAssignmentPatternExpression"):
                 return None
-            elements = list(initializer.elements)
-            if len(elements) != count:
+            if getattr(initializer, "bad", False):
                 return None
+            if pattern_kind == "ReplicatedAssignmentPatternExpression":
+                repetition = getattr(getattr(initializer, "count", None),
+                                     "constant", None)
+                try:
+                    if hasattr(repetition, "value"):
+                        repetition = repetition.value
+                    repetition = int(repetition)
+                except (TypeError, ValueError, OverflowError):
+                    return None
+                if repetition != count or repetition <= 0:
+                    return None
+                source_elements = list(initializer.elements)
+                if len(source_elements) != 1:
+                    return None
+                elements = source_elements * repetition
+            else:
+                elements = list(initializer.elements)
+                if len(elements) != count:
+                    return None
             for i, element in enumerate(elements):
+                if not _case_source_expression_ok(element):
+                    return None
                 value = convert_expr(sm, element)
-                if value is None or value.get("kind") == "Unsupported":
+                if (value is None or value.get("kind") == "Unsupported"
+                        or width_of(value) != width
+                        or not _case_expression_ok(value)):
+                    return None
+                reads_target = False
+                def inspect(node):
+                    nonlocal reads_target
+                    if type(node).__name__ == "NamedValueExpression":
+                        try:
+                            reads_target = reads_target or node.symbol.name == m.name
+                        except Exception:
+                            reads_target = True
+                element.visit(inspect)
+                if reads_target:
                     return None
                 values[i] = value
         step = 1 if right >= left else -1

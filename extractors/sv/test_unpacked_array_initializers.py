@@ -37,10 +37,31 @@ class UnpackedArrayInitializers(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_keyed_pattern_stays_loud(self):
+    def test_default_pattern_populates_cells(self):
         design = extract_source(
             "module top; logic [7:0] value [0:1] = '{default:8'h12}; "
             "initial $display(\"%h\", value[0]); endmodule")
+        decls = [node for node in nodes(design) if node.get("kind") == "Var"]
+        self.assertEqual([(d["name"], d["init"]["bits"]) for d in decls],
+                         [("value[0]", "00010010"),
+                          ("value[1]", "00010010")])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_replicated_pattern_populates_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:1] = '{2{8'h34}}; "
+            "initial $display(\"%h\", value[1]); endmodule")
+        decls = [node for node in nodes(design) if node.get("kind") == "Var"]
+        self.assertEqual([d["init"]["bits"] for d in decls],
+                         ["00110100", "00110100"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_wrong_length_replicated_initializer_stays_loud(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:1] = '{3{8'h34}}; "
+            "initial $display(\"%h\", value[1]); endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 

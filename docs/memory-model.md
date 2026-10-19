@@ -787,6 +787,10 @@ understand, the refusal is the LOUD unsupported, never a binding
   loud under H3), not on draining, and is recorded in the backlog; any
   other keyword name on `sorted` is CPython's faithful `TypeError`.
 
+`float(...)` also preserves the ordinary positional-then-keyword evaluation
+order before reporting CPython's faithful `TypeError: float() takes no
+keyword arguments`. Other builtin keyword forms remain loud.
+
 Loud by choice: BUILTIN heap-receiver methods with keywords
 (`.get`/`.append`/`.pop` — positional-only in CPython, and we decline
 to fake the exact `TypeError`), calling an instance ATTRIBUTE value,

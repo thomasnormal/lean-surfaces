@@ -6642,6 +6642,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                             | [_], _ =>
                               .unsupported "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
                             | vs, _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")))
+                    else if fname == "float" then
+                      -- CPython's float constructor accepts no keyword
+                      -- arguments. Evaluate both argument lists before its
+                      -- faithful TypeError, preserving Python's order.
+                      evalExprs m fuel st args.toList ⤳ fun st _ =>
+                      evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                      .exn st (.typeError "float() takes no keyword arguments")
                     else if isBuiltinName fname then
                       .unsupported s!"builtin '{fname}' with keyword arguments is outside the H6 tier"
                     else if isModuleDunder fname then

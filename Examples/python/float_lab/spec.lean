@@ -45,6 +45,8 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.constructor_overflow() raises
     .overflowError "int too large to convert to float"
 #py_check float_lab.constructor_shadow() = 8
+#py_check float_lab.constructor_keyword() raises
+  (.typeError "float() takes no keyword arguments")
 #py_check float_lab.nonfinite_division_still_loud() = Float64.ofBits 0x7ff0000000000000
 #py_check float_lab.infinite_quotient() = Float64.ofBits 0xfff0000000000000
 #py_check float_lab.infinite_denominator() = Float64.ofBits 0x8000000000000000

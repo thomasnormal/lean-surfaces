@@ -928,7 +928,6 @@ WHITELIST_CLASS = {
     "float_lab::floor_pair": "float.nan-payload",
     "float_lab::count_head": "iter.count-numeric-frame",
     "float_lab::constructor": "float.text-nan-or-unicode-repr",
-    "float_lab::constructor_keyword": "float.constructor-keywords",
     "float_lab::constructor_heap": "float.constructor-protocols",
     "float_lab::nan_arithmetic_still_loud": "float.nan-payload",
     "float_lab::divide": "float.nan-payload",

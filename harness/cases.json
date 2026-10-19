@@ -1083,7 +1083,7 @@
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_order", "args": [[]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_invalid_caught", "args": [[]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_shadow", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_keyword", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_keyword", "args": [[]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_heap", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "constructor_comprehension", "args": [[]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "floor_pair", "args": [[1.0, 0.1], [-1.0, 0.1], [1.0, -0.1], [-1.0, -0.1], [0.3, 0.1], [0.0, -2.0], [-0.0, -2.0], [5e-324, -2.0], [1e308, 1e-308], [5, 2.0], [5.0, -2], [true, 0.3], [-0.1, true], [false, -2.0], [0.0, false], [7, -3], [{"t": "float", "bits": "9218868437227405312"}, 0.0], [1.0, {"t": "float", "bits": "9218868437227405312"}], [1.0, {"t": "float", "bits": "18442240474082181120"}], [-1.0, {"t": "float", "bits": "9218868437227405312"}], [-0.0, {"t": "float", "bits": "18442240474082181120"}], [{"t": "float", "bits": "9221120237041090560"}, -0.0]], "expect": "match"},

@@ -41,6 +41,12 @@ form — a statement-level `Unsupported` count is not an ingestion verdict,
 because `yield from` a non-genexp is a STRUCTURED node that refuses at
 EVALUATION. Run the thing.
 
+**Extension (2026-10-19).** The measured `float.constructor-keywords` row
+now matches: `float()` evaluates its positional and keyword values in source
+order, then raises CPython's `TypeError` because the constructor accepts no
+keyword arguments. Other builtin keyword forms retain their existing
+boundaries.
+
 ## 2. The grammar census — 86 witnesses, 60 MATCH, 26 REFUSE *(as taken)*
 
 > **These counts are AS TAKEN and are not maintained here.** Every rung moves

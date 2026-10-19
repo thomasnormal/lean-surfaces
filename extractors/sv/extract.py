@@ -4724,6 +4724,12 @@ def _convert_member_sym(sm, m, k):
             if _sym_enum_width(m.declaredType.type) is not None:
                 register_enum(sm, m.declaredType.type)
                 return None
+            if (type(m.declaredType.type.canonicalType).__name__ ==
+                    "PackedStructType"):
+                # A packed-struct typedef is compile-time metadata only in
+                # this tier; variables still lower to their fixed vector
+                # width and member offsets at each use site.
+                return None
         except Exception:
             pass
         return unsupported(sm, m, type(m).__name__ + ":" + k)

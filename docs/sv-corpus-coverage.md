@@ -894,6 +894,10 @@ packed struct. Fixed field offsets become the same packed windows for writes
 and reads, including an x-bearing source. This remains a semantic-tier
 acceptance case; the legacy target-only census is unchanged.
 
+The `packed_member_typedef` fixture covers the equivalent typedef spelling.
+The alias is discarded as compile-time metadata while the canonical packed
+width and member offsets remain in the emitted vector windows.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

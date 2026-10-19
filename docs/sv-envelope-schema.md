@@ -366,7 +366,10 @@ An untagged packed-struct variable may use a direct integral member as a
 constant window in the symbolic tier. The extractor lowers the member's fixed
 declaration offset to a `PartSel` over the synthetic packed vector, so both
 member writes and reads use the existing storage. Tagged structs, unions,
-unpacked members, dynamic member paths and type-alias metadata remain loud.
+unpacked members and dynamic member paths remain loud. A typedef naming an
+untagged packed struct is compile-time metadata and is skipped after its
+canonical vector width has been checked; `packed_member_typedef` pins that
+case.
 
 ## Expressions
 

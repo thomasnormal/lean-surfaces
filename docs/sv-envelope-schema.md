@@ -260,18 +260,20 @@ bounded dynamic access and whole-array positional-pattern assignments below.
 An eligible cell-expanded declaration may also have an exact-length
 assignment-pattern initializer; each element is converted once and stored in
 its corresponding cell. Positional and elaborated keyed/default patterns are
-admitted, as are replicated patterns whose constant count equals the array
-length. Wrong-length, effectful or aggregate initializers remain `Unsupported`.
+admitted, as are replicated patterns whose constant count times their inner
+element count equals the array length. Wrong-length, effectful or aggregate
+initializers remain `Unsupported`.
 
 The same representation admits an exact-length assignment-pattern statement to
 an eligible cell-expanded array. Positional patterns and elaborated
 keyed/default structured patterns lower to a `Block` of per-cell
 `BlockingAssign` or `NonblockingAssign` nodes, in declared index order. A
-replicated pattern is admitted when its repetition count is a constant equal
-to the array length. Each element must be a pure integral expression and must
-not read the destination array, preserving the source rule that the complete
-RHS is evaluated before any cell is updated. Wrong-length, dynamic, aggregate
-and destination-aliasing patterns remain `Unsupported`.
+replicated pattern is admitted when its constant repetition count times its
+inner element count equals the array length. Each element must be a pure
+integral expression and must not read the destination array, preserving the
+source rule that the complete RHS is evaluated before any cell is updated.
+Wrong-length, dynamic, aggregate and destination-aliasing patterns remain
+`Unsupported`.
 
 A simple right-streaming unpack (`{>> {a, b, ...}} = source`) with no slice
 size and only direct integral identifier targets reuses `ConcatTarget`. The

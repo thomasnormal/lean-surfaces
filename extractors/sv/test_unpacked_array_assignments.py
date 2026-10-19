@@ -56,9 +56,23 @@ class UnpackedArrayAssignments(unittest.TestCase):
         design = extract_source(
             "module top; logic [7:0] value [0:2]; "
             "initial value = '{3{8'h12}}; endmodule")
-        values = [node["value"]["bits"] for node in nodes(design)
+        values = [node["value"].get("bits") or
+                  node["value"].get("operand", {}).get("bits")
+                  for node in nodes(design)
                   if node.get("kind") == "BlockingAssign"]
         self.assertEqual(values, ["00010010"] * 3)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_nested_replicated_pattern_repeats_inner_elements(self):
+        design = extract_source(
+            "module top; int value [1:6]; "
+            "initial value = '{3{4, 5}}; endmodule")
+        values = [node["value"].get("bits") or
+                  node["value"].get("operand", {}).get("bits")
+                  for node in nodes(design)
+                  if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(values, [format(v, "032b") for v in (4, 5, 4, 5, 4, 5)])
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 

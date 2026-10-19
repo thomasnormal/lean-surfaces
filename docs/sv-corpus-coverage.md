@@ -563,6 +563,19 @@ extraction errors**: four clean gains with no losses; the
 `AssignmentExpression:target` wall falls **3,909 → 3,904**. This is not a
 simulator-agreement claim beyond the fixture.
 
+## Nested replicated assignment patterns — 2026-10-19
+
+Fixed-array assignment-pattern replication now repeats an inner positional
+element list when the constant repetition count times that list length equals
+the destination length. Wrong-length, effectful and aggregate forms remain
+loud. The §5.11 nested-replication row and a focused fixture pass through the
+self-check runner; the fresh census below records the paired result.
+
+The fresh **22,033**-path census reports **2,980 clean**, **18,987 partial**,
+**66 include skips** and **zero extraction errors**: one clean gain with no
+losses; the `AssignmentExpression:target` wall falls **3,904 → 3,902**. This
+is not a simulator-agreement claim beyond the fixture.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

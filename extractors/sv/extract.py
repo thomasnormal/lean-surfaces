@@ -994,9 +994,10 @@ def _fixed_array_pattern_assignment(sm, expr):
             except (TypeError, ValueError, OverflowError):
                 return None
             if repetition != count or repetition <= 0:
-                return None
+                if repetition <= 0:
+                    return None
             source_elements = list(pattern.elements)
-            if len(source_elements) != 1:
+            if not source_elements or repetition * len(source_elements) != count:
                 return None
             elements = source_elements * repetition
         else:

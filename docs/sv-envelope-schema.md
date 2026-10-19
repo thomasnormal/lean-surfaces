@@ -440,6 +440,12 @@ query adds top-level `$bits:invalid-compilation`. Existing literal
 ingesters require no new constructor, and symbolic `sv-0.2` `SysCall`
 queries are unchanged.
 
+A zero-argument `$time` expression in the time-zero self-check slice is also
+folded to a 64-bit all-zero `Literal` with `time_zero: true` provenance. The
+self-check runner has no elapsed time; delays, event waits, `$realtime` and
+malformed `$time` calls remain loud. This uses the existing `Literal` node and
+does not add a scheduler rule.
+
 ```json
 {"kind": "Literal", "span": {...}, "width": 8, "bits": "1x0z1010"}
 ```

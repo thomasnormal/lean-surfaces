@@ -808,6 +808,20 @@ The fresh **22,033**-path census adds **35 clean files** without losses
 The new top refusal is `CallExpression` at **4,226**, so the next family is
 priced from that queue rather than from the stale assignment count.
 
+### Time-zero `$time` queries — 2026-10-19
+
+The legacy/self-check extractor folds a zero-argument `$time` expression to a
+64-bit zero literal carrying `time_zero` provenance. The self-check runner has
+no elapsed time, so this is the IEEE time-zero result; delays and event waits
+remain scheduler-owned and loud. Nonzero-argument or malformed calls remain
+unsupported, as do `$realtime` and other time queries. The `time_zero` fixture
+checks the real envelope through Lean's self-check runner.
+
+The fresh **22,033**-path census adds **63 clean files** without losses
+(**2,726 → 2,789**) and reduces `CallExpression` from **4,226 to 3,565**.
+`AssignmentExpression:target` is again the top refusal at **4,224** files;
+the next item must return to that heterogeneous class after this call rung.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

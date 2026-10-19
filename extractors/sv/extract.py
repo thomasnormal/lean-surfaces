@@ -580,6 +580,30 @@ def _dimension_query_call(expression):
         return False
 
 
+def _time_call(expression):
+    """A zero-argument `$time` query in the time-zero self-check slice."""
+    try:
+        return (type(expression).__name__ == "CallExpression"
+                and not expression.bad and expression.isSystemCall
+                and expression.subroutineName == "$time"
+                and len(expression.arguments) == 0
+                and expression.type.isIntegral)
+    except Exception:
+        return False
+
+
+def _convert_time_call(sm, expression):
+    if not _time_call(expression):
+        return unsupported(sm, expression, "CallExpression:$time")
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": expression.type.bitWidth,
+        "bits": "0" * expression.type.bitWidth,
+        "time_zero": True,
+    }
+
+
 def _fixed_query_dimensions(value_type):
     """Declared dimensions, unpacked first, for fixed integral bitstreams."""
     if not value_type.isFixedSize:
@@ -803,6 +827,8 @@ def _convert_expr(sm, e):
                 return _convert_clog2(sm, e)
             if _dimension_query_call(e):
                 return _convert_dimension_query(sm, e)
+            if _time_call(e):
+                return _convert_time_call(sm, e)
             if _signing_call(e):
                 return _convert_signing_call(sm, e)
             if _bit_query_call(e):

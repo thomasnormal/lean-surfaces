@@ -288,6 +288,16 @@ The chapter deltas from the preceding cell census are:
 | 20 | 140 | 685 | 0 |
 | 38 | 190 | 150 | 0 |
 
+## Time-zero `$time` queries — 2026-10-19
+
+The self-check extractor folds zero-argument `$time` expressions to a 64-bit
+zero literal with `time_zero` provenance. A fresh run over the same
+**22,033** paths reports **2,789 clean**, **19,178 partial**, **66 include
+skips**, and **0 extraction errors**: 63 additional clean files and no
+losses. `CallExpression` falls from **4,226 to 3,565** files, while timed
+processes still retain their delay/event refusals. The `time_zero` fixture and
+Lean proof pass; this is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

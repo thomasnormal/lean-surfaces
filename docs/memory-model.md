@@ -789,9 +789,9 @@ understand, the refusal is the LOUD unsupported, never a binding
 
 `float(...)` also preserves the ordinary positional-then-keyword evaluation
 order before reporting CPython's faithful `TypeError: float() takes no
-keyword arguments`. `divmod(...)` and `len(...)` follow the same rule with
-their own faithful positional-only `TypeError` messages. Other builtin keyword
-forms remain loud.
+keyword arguments`. `divmod(...)`, `len(...)`, and `bool(...)` follow the same
+rule with their own faithful positional-only `TypeError` messages. Other
+builtin keyword forms remain loud.
 
 Loud by choice: BUILTIN heap-receiver methods with keywords
 (`.get`/`.append`/`.pop` — positional-only in CPython, and we decline

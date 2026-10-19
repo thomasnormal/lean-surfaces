@@ -635,7 +635,7 @@ theorem fuelMono (fuel : Nat) :
                                         fun st vals => ?_
                                       exact Run.le_bind (Run.le_refl _) fun st s2 =>
                                         Run.le_refl _
-                      -- float, divmod, and len with keywords: both argument lists bind before
+                      -- float, divmod, len, and bool with keywords: both argument lists bind before
                       -- the faithful positional-only TypeError.
                       exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
                         Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>

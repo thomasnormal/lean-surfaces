@@ -6642,15 +6642,17 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                             | [_], _ =>
                               .unsupported "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
                             | vs, _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")))
-                    else if fname == "float" || fname == "len" then
-                      -- CPython's float and len constructors accept no keyword
+                    else if fname == "float" || fname == "len" || fname == "bool" then
+                      -- CPython's float, len, and bool constructors accept no keyword
                       -- arguments. Evaluate both argument lists before their
                       -- faithful TypeErrors, preserving Python's order.
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError (if fname == "float" then
                         "float() takes no keyword arguments"
-                      else "len() takes no keyword arguments"))
+                      else if fname == "len" then
+                        "len() takes no keyword arguments"
+                      else "bool() takes no keyword arguments"))
                     else if fname == "divmod" then
                       -- CPython's divmod constructor accepts no keyword
                       -- arguments. Evaluate both argument lists before its

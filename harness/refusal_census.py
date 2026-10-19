@@ -1014,7 +1014,6 @@ WHITELIST_CLASS = {
     "decimal_render::range_step_length": "render.decimal-limit",
     "decimal_render::namedtuple_length": "render.decimal-limit",
     "decimal_render::fstring_length": "render.decimal-limit",
-    "bool_lab::kwargs": "kwargs.callee-kind",
     "bool_lab::first_class": "firstclass.callable",
     "bool_lab::custom": "class.dunder-protocol",
     "divmod_lab::pair": "builtin.divmod-protocol",

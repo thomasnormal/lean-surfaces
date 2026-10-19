@@ -34,7 +34,8 @@ set_option maxRecDepth 8192
   (.typeError "bool expected at most 1 argument, got 3")
 #py_check bool_lab.shadow(3) = 5
 
-#guard callFunction bool_lab "kwargs" #[] 4096 matches .unsupported _
+#py_check bool_lab.kwargs() raises
+  (.typeError "bool() takes no keyword arguments")
 #guard callFunction bool_lab "first_class" #[] 4096 matches .unsupported _
 #guard callFunction bool_lab "custom" #[] 4096 matches .unsupported _
 

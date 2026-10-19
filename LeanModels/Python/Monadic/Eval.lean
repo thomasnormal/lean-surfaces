@@ -943,6 +943,13 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     let _ ← evalOpenList K m args.toList
                     let _ ← K.kwArgs kwargs.toList
                     raisePy (.typeError "float() takes no keyword arguments")
+                  else if name == "divmod" then
+                    -- CPython's divmod constructor accepts no keyword
+                    -- arguments. Evaluate both argument lists before its
+                    -- faithful TypeError, preserving Python's order.
+                    let _ ← evalOpenList K m args.toList
+                    let _ ← K.kwArgs kwargs.toList
+                    raisePy (.typeError "divmod() takes no keyword arguments")
                   else refuse s!"builtin '{name}' with keyword arguments is outside the H6 tier"
               | .modFun qname =>
                   match findFunction m qname with

@@ -46,7 +46,8 @@ set_option maxRecDepth 8192
 
 #guard callFunction divmod_lab "pair" #[.str "7", .int 3] 4096 matches .unsupported _
 #guard callFunction divmod_lab "pair" #[.int 7, .none] 4096 matches .unsupported _
-#guard callFunction divmod_lab "kwargs" #[] 4096 matches .unsupported _
+#py_check divmod_lab.kwargs() raises
+  (.typeError "divmod() takes no keyword arguments")
 #guard callFunction divmod_lab "first_class" #[] 4096 matches .unsupported _
 
 theorem by_one_total (value : PyInt) :

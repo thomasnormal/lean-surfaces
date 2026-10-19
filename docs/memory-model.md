@@ -2536,8 +2536,10 @@ All arguments evaluate left to right before operand conversion or the exact
 `TypeError: divmod expected 2 arguments, got N`. An argument exception takes
 precedence over that arity error. Ordinary local/global/function/class
 shadowing remains in force, with the existing module publication guard.
-Nonintegral operands, keyword calls, and first-class builtin values remain
-loud; no reflected or custom `__divmod__` protocol is guessed.
+Nonintegral operands and first-class builtin values remain loud; no reflected
+or custom `__divmod__` protocol is guessed. Keyword calls evaluate their
+argument values in source order, then report CPython's faithful
+`TypeError: divmod() takes no keyword arguments`.
 Generator-expression lowering captures locally bound names before consulting
 module/builtin exemptions, so a parameter, assignment, or nested function named
 `divmod` keeps Python's lexical shadowing. The existing capture-admission checks

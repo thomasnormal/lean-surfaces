@@ -345,6 +345,36 @@ files (**4,049 → 4,026**). The `unpacked_assign` fixture and Lean proof pass
 through the self-check runner. This is not a whole-corpus simulator-agreement
 claim.
 
+## Assignment-target repricing — 2026-10-19
+
+The paired target census leaves **87** files whose only recorded blocker is
+`AssignmentExpression:target`, containing **117** target instances. The
+remaining instances split by source shape as follows; a file may occur in more
+than one row.
+
+| residual target shape | instances | files |
+|---|---:|---:|
+| keyed/default/replicated or unpacked-array pattern RHS | 30 | 29 |
+| dynamic element target | 21 | 17 |
+| concatenated or streaming target | 16 | 15 |
+| whole aggregate/array target | 18 | 13 |
+| packed or unpacked part-select target | 13 | 9 |
+| member target (nested packed, union or unsupported member) | 16 | 7 |
+| constant element/bit target in a continuous or unsupported shape | 3 | 3 |
+
+The next broad aggregate tier is not priced as a safe admission: dynamic and
+unpacked aggregate targets require a runtime aggregate store, while the
+continuous concatenation and part-select rows require continuous-assignment
+scheduling. Nested/unpacked/class/interface member targets remain loud, and
+the direct packed-struct window tier stays limited to untagged direct integral
+fields. A future item must name one of those prerequisites and supply its
+representation before lowering any wider target family.
+
+Reproduce the table with
+`python3.9 extractors/sv/target_reprice.py --corpus <corpus>/tests`; the
+instrument reads the source in-process and writes no envelopes beside the
+corpus.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

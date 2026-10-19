@@ -883,6 +883,23 @@ files (**4,049 → 4,026**). The committed 22,033-path census remains the
 project snapshot; this local paired measurement is recorded separately because
 the external corpus checkout has four fewer paths.
 
+### Assignment-target repricing — 2026-10-19
+
+On the paired checkout, **87** files remain blocked solely by
+`AssignmentExpression:target`, covering **117** target instances. The shape
+counts are 30 keyed/default or unpacked-array pattern targets in 29 files, 21
+dynamic element targets in 17 files, 16 concatenated or streaming targets in
+15 files, 18 whole aggregate/array targets in 13 files, 13 packed or unpacked
+part-select targets in 9 files, 16 member targets in 7 files, and 3 constant
+element/bit targets in 3 files; file counts overlap when a file has several
+shapes.
+
+This repricing does not admit another broad target shape. Dynamic and unpacked
+aggregate targets need a runtime aggregate store, continuous concatenation and
+part-select targets need the scheduler-facing continuous-assignment model, and
+nested/unpacked/class/interface members remain outside the direct packed-struct
+window tier. The next target item must first provide one of those prerequisites.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

@@ -6,6 +6,7 @@ namespace LeanModels.Cpp.CallableEvaluationTests
 open LeanModels.Cpp
 open LeanModels.Cpp.CallableTests
 
+-- Fuel budgets include retained source blocks; they bound depth, not executed steps.
 private def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
 private def short (value : Int) : IntegralValue := ⟨.signed 16, value⟩
 private def unsigned (value : Int) : IntegralValue := ⟨.unsigned 32, value⟩
@@ -39,7 +40,7 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 
 #guard match admitIf with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [] with
+      match evaluateCallable 16 .lp64 function [] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
@@ -53,21 +54,21 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 
 #guard match admitUnary with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 7] with
+      match evaluateCallable 16 .lp64 function [signed 7] with
       | .ok (.ok value) => value == signed (-7)
       | _ => false
   | .error _ => false
 
 #guard match admitLogical with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 7, signed 3] with
+      match evaluateCallable 16 .lp64 function [signed 7, signed 3] with
       | .ok (.ok value) => value == boolean 1
       | _ => false
   | .error _ => false
 
 #guard match admitLogical with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 0, signed 3] with
+      match evaluateCallable 16 .lp64 function [signed 0, signed 3] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
@@ -96,12 +97,12 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 #guard match admitIf with
   | .ok function =>
       match function.body with
-      | .conditional _ whenTrue whenFalse =>
+      | .block (.conditional _ whenTrue whenFalse) =>
           let zero : TypedCallableExpression := {
             expression := .integer 0, sourceType := .builtin .int, type := .builtin .int}
           let function := {function with
             body := .conditional zero whenTrue whenFalse}
-          match evaluateCallable 8 .lp64 function [] with
+          match evaluateCallable 16 .lp64 function [] with
           | .ok (.ok value) => value == signed 8
           | _ => false
       | _ => false
@@ -116,49 +117,49 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 
 #guard match admitAssignment with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 4] with
+      match evaluateCallable 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitPrefixIncrement with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 4] with
+      match evaluateCallable 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitPostfixIncrement with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 4] with
+      match evaluateCallable 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 4
       | _ => false
   | .error _ => false
 
 #guard match admitDecrement with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 4] with
+      match evaluateCallable 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitConditional with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 7] with
+      match evaluateCallable 16 .lp64 function [signed 7] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
 
 #guard match admitComma with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 4] with
+      match evaluateCallable 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitComma with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 2147483647] with
+      match evaluateCallable 16 .lp64 function [signed 2147483647] with
       | .ok (.undefined .signedOverflow) => true
       | _ => false
   | .error _ => false
@@ -218,7 +219,7 @@ private def admitBooleanIdentity : Except String CallableFunction :=
         expression := .integer 1, sourceType := .builtin .int, type := .builtin .int}
       let function := {function with
         body := .switch_ condition [{label := none, body := .continue_}]}
-      match evaluateCallable 8 .lp64 function [signed 0] with
+      match evaluateCallable 16 .lp64 function [signed 0] with
       | .error .continueOutsideLoop => true
       | _ => false
   | .error _ => false
@@ -253,63 +254,63 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 
 #guard match admitLogicalEffect "&&" "bothIncrement" with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed (-1)] with
+      match evaluateCallable 16 .lp64 function [signed (-1)] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
 #guard match admitLogicalEffect "&&" "bothIncrement" with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 0] with
+      match evaluateCallable 16 .lp64 function [signed 0] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
 #guard match admitLogicalEffect "||" "eitherIncrement" with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 0] with
+      match evaluateCallable 16 .lp64 function [signed 0] with
       | .ok (.ok value) => value == boolean 1
       | _ => false
   | .error _ => false
 
 #guard match admitConditional with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 0] with
+      match evaluateCallable 16 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitPrefixIncrement with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 2147483647] with
+      match evaluateCallable 16 .lp64 function [signed 2147483647] with
       | .ok (.undefined .signedOverflow) => true
       | _ => false
   | .error _ => false
 
 #guard match admitCompoundAssignment with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 4] with
+      match evaluateCallable 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitCompoundAssignment with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed (-1)] with
+      match evaluateCallable 16 .lp64 function [signed (-1)] with
       | .ok (.ok value) => value == signed 0
       | _ => false
   | .error _ => false
 
 #guard match admitCompoundAssignment with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed 2147483647] with
+      match evaluateCallable 16 .lp64 function [signed 2147483647] with
       | .ok (.undefined .signedOverflow) => true
       | _ => false
   | .error _ => false
 
 #guard match admitAssignment with
   | .ok function =>
-      match evaluateCallable 8 .lp64 function [signed (-1)] with
+      match evaluateCallable 16 .lp64 function [signed (-1)] with
       | .ok (.ok value) => value == signed 0
       | _ => false
   | .error _ => false
@@ -379,7 +380,7 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 
 #guard match admitLiteral with
   | .ok function =>
-      match evaluateCallable 2 .lp64 function [] with
+      match evaluateCallable 4 .lp64 function [] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
@@ -430,6 +431,40 @@ private def admitBooleanIdentity : Except String CallableFunction :=
   | .ok function =>
       match evaluateCallable 4 {TargetProfile.lp64 with intWidth := 8} function [signed 1] with
       | .error .invalidProfile => true
+      | _ => false
+  | .error _ => false
+
+-- These overflow controls are model checks, never defined C++ oracle executions.
+private def one : TypedCallableExpression := {
+  expression := .integer 1, sourceType := intType, type := intType}
+private def increment : TypedCallableExpression := {
+  expression := .increment "++" false {value := "0x10"}, sourceType := intType, type := intType}
+
+private def checkFor (condition : TypedCallableExpression) (step body : CallableStatement)
+    (expected : IntegralResult IntegralValue) : Bool :=
+  match admitIdentity with
+  | .ok function =>
+      let function := {function with body := .block (.sequence
+        (.forLoop .skip condition step (.block body)) (.return_ (typedParameter "0x10")))}
+      match evaluateCallable 64 .lp64 function [signed 2147483647] with
+      | .ok result => result == expected
+      | _ => false
+  | .error _ => false
+
+-- Return and break skip the overflowing step, including through block boundaries.
+#guard checkFor one (.expression increment) (.return_ one) (.ok (signed 1))
+#guard checkFor one (.expression increment) .break_ (.ok (signed 2147483647))
+-- Continue reaches that same step; a failed condition/body never reaches a return.
+#guard checkFor one (.expression increment) .continue_ (.undefined .signedOverflow)
+#guard checkFor increment .skip (.return_ one) (.undefined .signedOverflow)
+#guard checkFor one (.return_ one) (.expression increment) (.undefined .signedOverflow)
+-- A failed step stops iteration, and finite fuel still refuses an unending for.
+#guard checkFor one (.expression increment) .skip (.undefined .signedOverflow)
+#guard match admitIdentity with
+  | .ok function =>
+      match evaluateCallable 8 .lp64 {function with body := .forLoop .skip one .skip .skip}
+          [signed 0] with
+      | .error .fuelExhausted => true
       | _ => false
   | .error _ => false
 

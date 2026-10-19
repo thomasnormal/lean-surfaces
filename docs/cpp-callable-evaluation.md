@@ -10,7 +10,7 @@ sequences, `if` branches and `while`/`do`/`for` loops. Parameter-targeted `=`,
 integral compound-assignment statements and prefix/postfix parameter
 increment/decrement expressions thread updated argument values through later
 statements. Loop-local `break` and `continue` transfer control to the nearest
-admitted `while`/`do` loop. Typed conditional expressions evaluate their condition once and
+admitted `while`/`do`/`for` loop. Typed conditional expressions evaluate their condition once and
 only evaluate the selected branch. Comma expressions evaluate their left
 operand first, retain its updated parameter state, and evaluate the right
 operand only after a successful left result. The evaluator returns the existing
@@ -54,23 +54,30 @@ the right operand's type. A failed left operand propagates without evaluating
 the right operand; side effects nested below either operand remain visible to
 the admission check rather than being treated as unsequenced.
 
-An admitted `for` loop is evaluated as its initializer followed by a
-state-threaded `while`: the condition runs before each body, and the step runs
-after each normally completing body. The profile rejects condition declarations
-and omitted conditions. A `continue` in the outer `for` body runs the lowered
-loop step before rechecking its condition; nested `while`/`do` transfers remain
-owned by their inner loop.
+Ordinary compound statements retain explicit `block` boundaries, including empty
+and singleton blocks. N4950 §8.4 [stmt.block] and §8.6.4 [stmt.for] supply
+the block and loop structure. With declarations still refused, executing a
+block delegates to its body and propagates its outcome. This preserves a future scope entry and
+exit point; it does not yet allocate locals or implement lifetime cleanup.
+
+An admitted `forLoop` executes its initializer once, then tests the condition
+before each body. Normal body completion and `continue` execute the step once
+before the next test. Break, return and failure bypass the step; a failed step
+bypasses the next condition. Nested loops consume their own transfers. The
+profile still rejects condition declarations and omitted conditions. No
+step-before-continue rewrite remains. A separate iteration helper recurs without
+re-entering the initializer, and every iteration checks its fuel budget.
 
 An admitted `switch` has an exact builtin `int` condition and a compound body made
 of literal `case` labels and at most one `default`. Labels are unique. Matching
 starts at the first matching case, or at `default`, and ordinary completion
 falls through later clauses in source order. A `break` exits the switch; return and evaluation failures propagate. `continue`
 passes through switches and reaches its nearest enclosing iteration statement.
-An outer `for` runs its step on that path, exactly once; lowering descends through
-switch clauses but leaves inner loops untouched. Non-constant labels,
-duplicate labels and malformed clause bodies remain loud refusals.
+An outer `for` runs its step on that path, exactly once, after the switch and
+body have propagated the transfer. Inner loops consume their own transfers.
+Non-constant labels, duplicate labels and malformed clause bodies remain loud refusals.
 
-`break` exits the nearest admitted `while`/`do` loop or `switch`. `continue` skips the
+`break` exits the nearest admitted `while`/`do`/`for` loop or `switch`. `continue` skips the
 remaining body and rechecks the loop condition (with a `do` loop's usual
 post-body check); both transfers retain the current parameter state. A transfer
 that reaches the public callable boundary is a typed refusal.
@@ -108,8 +115,9 @@ return casts, parameter assignments, prefix/postfix increment/decrement,
 conditional expressions, comma sequencing, `for` loops, loop transfers and
 effectful logical short-circuiting.
 All ten compound operators are covered,
-including unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for`/`switch` control flow with `break`/`continue`. It compares the evaluator with 303 Clang-compiled calls at both
+including nested and empty blocks, once-only loop initialization, false initial
+conditions, return-before-step, unsigned wraparound, self-aliasing and state updates through `while`
+and `do`/`for`/`switch` control flow with `break`/`continue`. It compares the evaluator with 318 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

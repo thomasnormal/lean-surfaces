@@ -62,16 +62,20 @@ as automatic integral storage.
 
 ## Scopes and control transfers are prerequisites
 
-The existing callable parser flattens `CompoundStmt` to sequences. That loses
-scope boundaries. Its `for` lowering also injects the step before `continue`;
-once body-local objects exist, that location precedes body-scope exit. Merely
-appending locals to `CallableParameter` therefore cannot meet this contract.
+The callable embedding now retains ordinary `CompoundStmt` nodes as `block`
+boundaries (the `switch_` node retains its compound clause boundary) and each
+admitted `ForStmt` as a first-class `forLoop` with separate initializer,
+condition, step and body. The evaluator runs the step after the body returns,
+including a propagated `continue`, and runs the initializer only once. It no
+longer injects the step inside source blocks. These are represented control
+boundaries; with declarations still refused they neither allocate objects nor
+implement scope cleanup.
 
-The next embedding must preserve blocks, declaration statements and a scoped
-`for` node. A `for` initializer scope encloses its condition, step and body;
-each execution of a compound body has its own nested scope. `IntegralObjectStatement`
-already has a first-class loop shape, but it does not allocate or bind locals.
-Its preallocated-object API is not itself a source-declaration executor.
+The next executor must attach object-backed frame scopes to those boundaries:
+a `for` initializer scope encloses its condition, step and body; each execution
+of a compound body has its own nested scope. `IntegralObjectStatement` also has
+a first-class loop shape, but it does not allocate or bind locals. Its
+preallocated-object API is not itself a source-declaration executor.
 
 Declaration-bearing conditions and `if`/`switch` init-statements also need
 scoped control nodes before their source forms can be admitted. Their child

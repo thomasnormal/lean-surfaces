@@ -24,6 +24,8 @@ mutual
 
   inductive CallableStatement where
     | skip
+    /-- A retained source compound-statement boundary; declarations remain out of tier. -/
+    | block (body : CallableStatement)
     | expression (expression : TypedCallableExpression)
     | assign (declaration : FrontendHandle) (expression : TypedCallableExpression)
     | compoundAssign (operator : String) (declaration : FrontendHandle)
@@ -34,6 +36,8 @@ mutual
     | switch_ (condition : TypedCallableExpression) (clauses : List CallableSwitchClause)
     | whileLoop (condition : TypedCallableExpression) (body : CallableStatement)
     | doWhile (body : CallableStatement) (condition : TypedCallableExpression)
+    | forLoop (initializer : CallableStatement) (condition : TypedCallableExpression)
+        (step body : CallableStatement)
     | break_
     | continue_
     | sequence (first second : CallableStatement)
@@ -43,37 +47,6 @@ structure CallableSwitchClause where
   label : Option Int
   body : CallableStatement
   deriving Repr, BEq, Inhabited
-end
-
-def CallableStatement.hasLoopTransfer : CallableStatement → Bool
-  | .break_ | .continue_ => true
-  | .conditional _ whenTrue whenFalse => whenTrue.hasLoopTransfer || whenFalse.hasLoopTransfer
-  | .whileLoop _ body | .doWhile body _ => body.hasLoopTransfer
-  | .sequence first second => first.hasLoopTransfer || second.hasLoopTransfer
-  | _ => false
-
-mutual
-  def CallableStatement.rewriteForContinue (statement step : CallableStatement) :
-      CallableStatement :=
-    match statement with
-    | .conditional condition whenTrue whenFalse =>
-        .conditional condition (whenTrue.rewriteForContinue step)
-          (whenFalse.rewriteForContinue step)
-    | .switch_ condition clauses =>
-        .switch_ condition (rewriteSwitchForContinue clauses step)
-    | .sequence first second =>
-        .sequence (first.rewriteForContinue step) (second.rewriteForContinue step)
-    | .continue_ => .sequence step .continue_
-    | statement => statement
-  termination_by structural statement
-
-  private def rewriteSwitchForContinue (clauses : List CallableSwitchClause)
-      (step : CallableStatement) : List CallableSwitchClause :=
-    match clauses with
-    | [] => []
-    | ⟨label, body⟩ :: rest =>
-        {label, body := body.rewriteForContinue step} :: rewriteSwitchForContinue rest step
-  termination_by structural clauses
 end
 
 mutual
@@ -421,13 +394,8 @@ mutual
   match kind with
   | "CompoundStmt" =>
       let children ← rawChildren statement
-      match children with
-      | [] => .ok .skip
-      | first :: rest =>
-          let first ← parseCallableStatement profile parameters expressionRows resultType first
-          rest.foldlM (init := first) fun accumulated child => do
-            let parsed ← parseCallableStatement profile parameters expressionRows resultType child
-            pure (.sequence accumulated parsed)
+      let body ← parseCallableSequence profile parameters expressionRows resultType children
+      pure (.block body)
   | "ReturnStmt" =>
       let values ← rawChildren statement
       let [value] := values
@@ -483,8 +451,7 @@ mutual
       let condition ← parseCallableExpression profile parameters expressionRows condition none none
       let body ← parseCallableStatement profile parameters expressionRows resultType body
       let step ← parseCallableStatement profile parameters expressionRows resultType step
-      pure (.sequence initializer
-        (.whileLoop condition (.sequence (body.rewriteForContinue step) step)))
+      pure (.forLoop initializer condition step body)
   | "DoStmt" =>
       let children ← rawChildren statement
       let [body, condition] := children

@@ -595,30 +595,6 @@ private def switchRefuses (clauses : List Raw) (message : String) : Bool :=
   defaultRaw "0x100" [object [("kind", text "NullStmt"),
     ("annotation", text "ContinueStmt")]]] |>.isOk
 
-example (condition : TypedCallableExpression) (step : CallableStatement) :
-    (CallableStatement.switch_ condition [{label := none, body := .continue_}]).rewriteForContinue
-      step = .switch_ condition [{label := none, body := .sequence step .continue_}] := rfl
-
-example (condition : TypedCallableExpression) (step : CallableStatement) :
-    (CallableStatement.switch_ condition [
-      {label := none, body := .whileLoop condition .continue_}]).rewriteForContinue step =
-      .switch_ condition [{label := none, body := .whileLoop condition .continue_}] := rfl
-
-example (condition : TypedCallableExpression) (step : CallableStatement) :
-    (CallableStatement.switch_ condition [
-      {label := none, body := .doWhile .continue_ condition}]).rewriteForContinue step =
-      .switch_ condition [{label := none, body := .doWhile .continue_ condition}] := rfl
-
-example (condition : TypedCallableExpression) (step : CallableStatement) :
-    (CallableStatement.switch_ condition [
-      {label := some 0, body := .break_},
-      {label := none, body := .switch_ condition [{label := none, body := .continue_}]}]
-      ).rewriteForContinue step =
-      .switch_ condition [
-        {label := some 0, body := .break_},
-        {label := none, body := .switch_ condition [
-          {label := none, body := .sequence step .continue_}]}] := rfl
-
 def admitBreak : Except String CallableFunction :=
   admitCallableFunction breakProbe transferTypes (transferEvidence "0x51" "0x52" "0x54")
     TargetProfile.lp64 [0]
@@ -746,7 +722,7 @@ def admitLogicalEffect (operator : String) (name : String) : Except String Calla
 #guard match admitBoolCast with
   | .ok function =>
       match function.body with
-      | .return_ expression =>
+      | .block (.return_ expression) =>
           expression.type == .builtin .boolean &&
             match expression.expression with
             | .convert _ => true
@@ -756,31 +732,31 @@ def admitLogicalEffect (operator : String) (name : String) : Except String Calla
 #guard match admitIdentity with
   | .ok function =>
       match function.body with
-      | .return_ expression => expression.type == intType
+      | .block (.return_ expression) => expression.type == intType
       | _ => false
   | .error _ => false
 #guard match admitIdentity with
   | .ok function =>
       match function.body with
-      | .return_ expression => expression.expression == .parameter {value := "0x10"}
+      | .block (.return_ expression) => expression.expression == .parameter {value := "0x10"}
       | _ => false
   | .error _ => false
 #guard match admitIdentity with
   | .ok function =>
       match function.body with
-      | .return_ expression => expression.sourceType == intType
+      | .block (.return_ expression) => expression.sourceType == intType
       | _ => false
   | .error _ => false
 #guard match admitLiteral with
   | .ok function =>
       match function.body with
-      | .return_ expression => expression.expression == .integer 7
+      | .block (.return_ expression) => expression.expression == .integer 7
       | _ => false
   | .error _ => false
 #guard match admitBinary with
   | .ok function =>
       match function.body with
-      | .return_ expression => expression.expression ==
+      | .block (.return_ expression) => expression.expression ==
           .binary "+" (typedParameter "0x10") (typedParameter "0x11")
       | _ => false
   | .error _ => false
@@ -791,40 +767,40 @@ def admitLogicalEffect (operator : String) (name : String) : Except String Calla
 #guard match admitAssignment with
   | .ok function =>
       match function.body with
-      | .sequence (.assign declaration expression) (.return_ _) =>
+      | .block (.sequence (.assign declaration expression) (.return_ _)) =>
           declaration == {value := "0x10"} && expression.type == intType
       | _ => false
   | .error _ => false
 #guard match admitCompoundAssignment with
   | .ok function =>
       match function.body with
-      | .sequence (.compoundAssign operator declaration _) (.return_ _) =>
+      | .block (.sequence (.compoundAssign operator declaration _) (.return_ _)) =>
           operator == "+=" && declaration == {value := "0x10"}
       | _ => false
   | .error _ => false
 #guard match admitIf with
   | .ok function =>
       match function.body with
-      | .conditional condition (.return_ _) (.return_ _) =>
+      | .block (.conditional condition (.block (.return_ _)) (.block (.return_ _))) =>
           condition.expression == .integer 1
       | _ => false
   | .error _ => false
 #guard match admitWhile with
   | .ok function =>
       match function.body with
-      | .sequence (.whileLoop _ (.return_ _)) (.return_ _) => true
+      | .block (.sequence (.whileLoop _ (.block (.return_ _))) (.return_ _)) => true
       | _ => false
   | .error _ => false
 #guard match admitDo with
   | .ok function =>
       match function.body with
-      | .sequence (.doWhile .skip _) (.return_ _) => true
+      | .block (.sequence (.doWhile (.block .skip) _) (.return_ _)) => true
       | _ => false
   | .error _ => false
 #guard match admitUnary with
   | .ok function =>
       match function.body with
-      | .return_ expression =>
+      | .block (.return_ expression) =>
           match expression.expression with
           | .unary operator _ => operator == "-"
           | _ => false
@@ -833,7 +809,7 @@ def admitLogicalEffect (operator : String) (name : String) : Except String Calla
 #guard match admitLogical with
   | .ok function =>
       match function.body with
-      | .return_ expression =>
+      | .block (.return_ expression) =>
           match expression.expression with
           | .logical operator _ _ => operator == "&&"
           | _ => false
@@ -842,7 +818,7 @@ def admitLogicalEffect (operator : String) (name : String) : Except String Calla
 #guard match admitBinary with
   | .ok function =>
       match function.body with
-      | .return_ expression => match expression.expression with
+      | .block (.return_ expression) => match expression.expression with
         | .binary _ left right =>
           left.sourceType == intType && left.type == intType &&
             right.sourceType == intType && right.type == intType
@@ -860,5 +836,26 @@ def admitLogicalEffect (operator : String) (name : String) : Except String Calla
     (object [("id", text "0x30"), ("kind", text "CXXTryStmt"), ("inner", .array [])]))
     [rootEvidence, functionEvidence "try_body" "CXXTryStmt"])
   [typeRow "0x2" (functionType [])] [] TargetProfile.lp64 [0]) matches .error _
+
+-- Compound statements retain every boundary, including empty and singleton blocks.
+#guard (parseCallableStatement .lp64 [] [] intType
+  (object [("kind", text "CompoundStmt"), ("inner", .array [])])).toOption == some (.block .skip)
+#guard (parseCallableStatement .lp64 [] [] intType
+  (body (body (object [("kind", text "NullStmt")])))).toOption == some (.block (.block .skip))
+#guard match admitFor with
+  | .ok function => match function.body with
+    | .block (.sequence (.forLoop (.assign _ _) _ (.expression _) (.block _)) (.return_ _)) => true
+    | _ => false
+  | .error _ => false
+#guard match admitForContinue with
+  | .ok function => match function.body with
+    | .block (.sequence (.forLoop _ _ _ (.block (.block .continue_))) (.return_ _)) => true
+    | _ => false
+  | .error _ => false
+-- Retaining control nodes does not admit declarations, even in nested blocks.
+#guard match parseCallableStatement .lp64 [] [] intType
+    (body (object [("kind", text "DeclStmt")])) with
+  | .error message => message == "callable: unsupported statement DeclStmt"
+  | .ok _ => false
 
 end LeanModels.Cpp.CallableTests

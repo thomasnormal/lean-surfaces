@@ -11,13 +11,15 @@ and retained body all agree in the same Clang probe.
 The candidate must be a named, ordinary `FunctionDecl` accepted by
 `admitLocalFunctionDeclaration` with a direct `CompoundStmt` body. Prototypes,
 deleted declarations and function-try bodies remain loud refusals. The body
-is represented as a sequence of admitted expression statements, `if`
-statements with an optional else branch, `while`/`do`/bounded `for` loops,
+retains ordinary `CompoundStmt` nodes as `block` boundaries containing
+sequences of admitted expression statements, `if` statements with an optional
+else branch, `while`/`do`/bounded `for` loops,
 integral `switch` statements with literal `case`/`default` labels, loop-local
 `break`/`continue`, parameter-targeted `=`, integral compound assignments, and
-parameter-targeted prefix/postfix increment and decrement expressions. Empty compound
-and null statements are `skip`. Declarations, local-variable/member assignments,
-calls, overloaded operations, exceptions, local functions and every
+parameter-targeted prefix/postfix increment and decrement expressions. An empty
+compound is `block skip`; a null statement is `skip`. Declarations,
+local-variable/member assignments, calls, overloaded operations, exceptions,
+local functions and every
 other statement form refuse rather than being silently represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
@@ -67,24 +69,25 @@ effectful expressions nested beneath either operand are rejected when they
 would otherwise be unsequenced inside a binary expression.
 
 The admitted `for` shape has a parameter-only initializer and step, an explicit
-integral condition, and an admitted body. It is lowered to the equivalent
-state-threaded `while` sequence; condition declarations and omitted conditions
-remain loud refusals. A `continue` in the outer body is rewritten to run the
-step before the next condition check, while nested loop transfers remain owned
-by their inner loop. `break` and `continue` are admitted inside `while`, `do`
-and `for` bodies and remain loud at the public boundary when no loop consumes
-them.
+integral condition, and an admitted body. A first-class `forLoop` retains the
+initializer, condition, step and body separately; condition declarations and
+omitted conditions remain loud refusals. The initializer runs once. Normal
+body completion and `continue` reach the step after the body returns; `break`,
+return and failure skip the step. Inner loops consume their own transfers.
+`break` and `continue` remain loud at the public boundary when no loop or
+switch consumes them. No body rewriting inserts a step inside a source block.
 
 The admitted `switch` shape has an exact builtin `int` condition and a compound body
 whose clauses use unique literal integer `case` labels and at most one `default`.
+The `switch_` node retains that compound boundary around the clause list; nested
+compound statements within clauses retain their own `block` nodes.
 Execution starts at the matching case or default and falls through later clauses
 until a `break`, return or failure. Label uniqueness is checked over every
 clause, including duplicate cases or defaults after an unrelated first label.
-`continue` passes through switch clauses to its nearest enclosing loop. Lowering
-an outer `for` rewrites those transfers to run the step before the next condition
-check, including through nested switches, but stops at inner `while`, `do` and
-lowered `for` loops. Those inner loops own their transfers. A switch consumes
-its own `break` without exiting an enclosing loop. Unsupported labels and
+`continue` passes through switch clauses to its nearest enclosing loop. An
+outer `for` then executes its own step once; an inner loop consumes its own
+transfers before returning to that outer body. A switch consumes its own
+`break` without exiting an enclosing loop. Unsupported labels and
 malformed clauses still refuse.
 
 The compound-assignment statement profile covers `+=`, `-=`, `*=`, `/=`, `%=`,

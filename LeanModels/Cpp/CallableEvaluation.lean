@@ -301,6 +301,34 @@ private def switchDefaultSuffix : List CallableSwitchClause → Option (List Cal
       | none => some (clause :: rest)
 
 mutual
+  /-- Iterations exclude the initializer, which the for statement executes once.
+  Body completion (including continue through a switch) reaches the step only
+  after the body has returned. Inner loops consume their own transfers. -/
+  private partial def evaluateForIterations (fuel : Nat) (profile : TargetProfile)
+      (parameters : List CallableParameter) (arguments : List IntegralValue)
+      (condition : TypedCallableExpression) (step body : CallableStatement) :
+      Except CallableEvaluationError CallableExecution := do
+    match fuel with
+    | 0 => throw .fuelExhausted
+    | fuel + 1 =>
+        let (result, afterCondition) ← evaluateTyped fuel profile parameters arguments condition
+        match result with
+        | .ok value =>
+            if value.value == 0 then
+              pure (.normal afterCondition)
+            else
+              let bodyResult ← evaluateCallableStatement fuel profile parameters afterCondition body
+              match bodyResult with
+              | .normal updated | .continue_ updated =>
+                  let stepResult ← evaluateCallableStatement fuel profile parameters updated step
+                  match stepResult with
+                  | .normal afterStep =>
+                      evaluateForIterations fuel profile parameters afterStep condition step body
+                  | _ => pure stepResult
+              | .break_ updated => pure (.normal updated)
+              | .returned _ _ | .failed _ _ => pure bodyResult
+        | result => pure (.failed result afterCondition)
+
   private partial def evaluateSwitchClauses (fuel : Nat) (profile : TargetProfile)
       (parameters : List CallableParameter) (arguments : List IntegralValue)
       : List CallableSwitchClause → Except CallableEvaluationError CallableExecution
@@ -321,6 +349,7 @@ mutual
   | fuel + 1 =>
       match statement with
       | .skip => .ok (.normal arguments)
+      | .block body => evaluateCallableStatement fuel profile parameters arguments body
       | .expression expression =>
           (evaluateTyped fuel profile parameters arguments expression).map
             (fun (result, updated) => terminalResult updated result)
@@ -411,6 +440,11 @@ mutual
               | result => pure (.failed result afterCondition)
           | .break_ updated => pure (.normal updated)
           | .returned _ _ | .failed _ _ => pure bodyResult
+      | .forLoop initializer condition step body => do
+          let initialResult ← evaluateCallableStatement fuel profile parameters arguments initializer
+          match initialResult with
+          | .normal updated => evaluateForIterations fuel profile parameters updated condition step body
+          | _ => pure initialResult
       | .break_ => pure (.break_ arguments)
       | .continue_ => pure (.continue_ arguments)
       | .sequence first second => do

@@ -403,6 +403,9 @@ int loop(int value) { while (value) return value; return 0; }
 int unary(int value) { return -value; }
 int compare(int value) { if (value > 0) return 1; return 0; }
 bool logical(int value) { return !value; }
+int block_identity(int value) { { { return value; } } }
+int empty_blocks(int value) { {} { {} } return value; }
+int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } return value; }
 """, encoding="utf-8")
         environment = dict(os.environ)
         environment.pop("CCC_OVERRIDE_OPTIONS", None)
@@ -422,13 +425,15 @@ bool logical(int value) { return !value; }
             node, path = pending.pop()
             if node.get("kind") == "FunctionDecl" and node.get("name") in {
                 "identity", "add", "branch", "loop", "unary", "compare", "logical",
+                "block_identity", "empty_blocks", "direct_for",
             }:
                 paths[node["name"]] = path
             children = node.get("inner", [])
             pending.extend((child, path + [index])
                            for index, child in reversed(list(enumerate(children))))
         self.assertEqual(set(paths), {
-            "identity", "add", "branch", "loop", "unary", "compare", "logical"})
+            "identity", "add", "branch", "loop", "unary", "compare", "logical",
+            "block_identity", "empty_blocks", "direct_for"})
         guards = []
         for name in ("identity", "add"):
             guards.append(
@@ -451,6 +456,18 @@ bool logical(int value) { return !value; }
             "#guard (admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
             + str(paths["compare"]) + ").isOk"
         )
+        for name, pattern in {
+            "block_identity": ".block (.block (.block (.return_ _)))",
+            "empty_blocks": ".block (.sequence (.sequence (.block .skip) (.block (.block .skip))) (.return_ _))",
+            "direct_for": ".block (.sequence (.forLoop (.assign _ _) _ (.expression _) (.block .continue_)) (.return_ _))",
+        }.items():
+            admission = ("admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
+                         + str(paths[name]))
+            guards.append(f"""#guard match {admission} with
+  | .ok function => match function.body with
+    | {pattern} => true
+    | _ => false
+  | .error _ => false""")
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
     def test_actual_compiler_local_declarations_remain_loud(self):
@@ -676,6 +693,11 @@ int switch_break(int value) {
           "int conditional_increment(int value) { return value ? ++value : value; }\n"
           "int comma(int value) { return value++, value; }\n"
           "int for_loop(int value) { for (value = 0; value < 3; ++value) { value += 1; } return value; }\n"
+          "int for_init_once(int value, int total) { for (++total; value < 3; ++value) { ++total; } return total; }\n"
+          "int for_false(int value, int total) { for (++total; 0; ++total) { ++total; } return total; }\n"
+          "int for_return(int value) { for (value = 0; value < 3; ++value) { { return value; } } return 9; }\n"
+          "int nested_blocks(int value) { { { ++value; } } return value; }\n"
+          "int empty_blocks(int value) { {} { {} } return value; }\n"
           "int break_loop(int value) { while (value < 3) { ++value; break; } return value; }\n"
           "int continue_loop(int value) { while (value < 3) { ++value; continue; } return value; }\n"
           "int for_break_loop(int value) { for (value = 0; value < 3; ++value) { ++value; break; } return value; }\n"
@@ -752,6 +774,7 @@ int switch_break(int value) {
             "prefix_increment", "postfix_increment", "prefix_decrement",
             "postfix_decrement", "discarded_increment", "increment_unsigned",
             "conditional", "conditional_param", "conditional_increment", "comma", "for_loop",
+            "for_init_once", "for_false", "for_return", "nested_blocks", "empty_blocks",
             "break_loop", "continue_loop", "for_break_loop", "for_continue_loop",
             "switch_select", "do_break_loop", "do_continue_loop",
             "switch_while", "switch_for", "switch_do", "switch_nested", "switch_break",
@@ -859,6 +882,16 @@ int switch_break(int value) {
         for value in (-1, 0, 7):
             expressions.append(f"comma({value})")
             rows.append(("comma", ".signed 32", [(".signed 32", value)]))
+        for name, cases in {
+            "for_init_once": [(-1, 0), (0, 4), (3, 7)],
+            "for_false": [(-1, 0), (0, 4), (3, 7)],
+            "for_return": [(-1,), (0,), (7,)],
+            "nested_blocks": [(-1,), (0,), (7,)],
+            "empty_blocks": [(-1,), (0,), (7,)],
+        }.items():
+            for arguments in cases:
+                expressions.append(f"{name}({', '.join(map(str, arguments))})")
+                rows.append((name, ".signed 32", [(".signed 32", value) for value in arguments]))
         for value in (-1, 0, 7):
             expressions.append(f"for_loop({value})")
             rows.append(("for_loop", ".signed 32", [(".signed 32", value)]))
@@ -1039,9 +1072,9 @@ int switch_break(int value) {
                     else 64 if name in ("for_break_loop", "for_continue_loop", "switch_select")
                     else 32 if name in ("break_loop", "continue_loop", "do_break_loop",
                                         "do_continue_loop")
-                    else 64 if name == "for_loop"
+                    else 64 if name in ("for_loop", "for_init_once", "for_false", "for_return")
                     else 32 if name in ("compound_while", "compound_do")
-                    else 8 if name == "do_loop" else 4)
+                    else 16)
             guards.append(f"""#guard match {name} with
   | .ok function => match evaluateCallable {fuel} .lp64 function [{values}] with
     | .ok (.ok value) => value == ⟨{destination}, {int(expected)}⟩

@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22030,
+  "corpus_files": 22033,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -8,7 +8,7 @@
    "name": "pyslang"
   },
   "platform": "linux-x86_64",
-  "python": "3.12",
+  "python": "3.9",
   "walk": "chapter-* only"
  },
  "schema": "sv-census-1",
@@ -16,23 +16,23 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    4471
+    4473
    ],
    [
     "CallExpression",
-    4222
+    4225
    ],
    [
     "InstanceSymbol:Instance",
-    3836
+    3838
+   ],
+   [
+    "ExpressionStatement:CallExpression",
+    3717
    ],
    [
     "VariableSymbol:2state",
     3716
-   ],
-   [
-    "ExpressionStatement:CallExpression",
-    3715
    ],
    [
     "TimedStatement:DelayControl",
@@ -44,7 +44,7 @@
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1637
+    1640
    ],
    [
     "NamedValueExpression:2state",
@@ -821,7 +821,7 @@
   ],
   "by_status": {
    "clean": 2628,
-   "partial": 19336,
+   "partial": 19339,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -883,7 +883,7 @@
    ],
    "simulation": [
     2175,
-    18666
+    18669
    ],
    "simulation elaboration": [
     0,
@@ -1169,9 +1169,9 @@
    "chapter-10": {
     "clean": 156,
     "error": 0,
-    "partial": 500,
+    "partial": 501,
     "skip_include": 0,
-    "total": 656,
+    "total": 657,
     "unlockable": 0
    },
    "chapter-11": {
@@ -1289,9 +1289,9 @@
    "chapter-25": {
     "clean": 8,
     "error": 0,
-    "partial": 470,
+    "partial": 472,
     "skip_include": 0,
-    "total": 478,
+    "total": 480,
     "unlockable": 0
    },
    "chapter-26": {

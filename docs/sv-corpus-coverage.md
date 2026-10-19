@@ -21,6 +21,66 @@ pyslang 11.0.0.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Turn 1 inventory — 2026-10-19
+
+A fresh extractor census over the chapter-scoped `sv-tests-2` corpus used
+pyslang 11 on Linux with Python 3.9. It found **22,033** source paths:
+**2,628 clean**, **19,339 partial**, **66 include skips**, and **0 extraction
+errors**. The include-skipped paths are multi-file tests; no extractor crash
+was observed. The adapter pass marked **4** paths unlockable (two simulation
+rows). This is extractor coverage only: Lean ingestion and execution remain
+separate gates.
+
+| Chapter | Total | Clean | Partial | Include skip |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 24 | 275 | 1 |
+| 4 | 427 | 121 | 306 | 0 |
+| 5 | 618 | 325 | 293 | 0 |
+| 6 | 1,185 | 305 | 880 | 0 |
+| 7 | 796 | 14 | 782 | 0 |
+| 8 | 842 | 0 | 841 | 1 |
+| 9 | 589 | 60 | 529 | 0 |
+| 10 | 657 | 156 | 501 | 0 |
+| 11 | 1,034 | 538 | 496 | 0 |
+| 12 | 627 | 167 | 460 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1,543 | 11 | 1,532 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 122 | 703 | 0 |
+| 21 | 899 | 8 | 891 | 0 |
+| 22 | 572 | 371 | 173 | 28 |
+| 23 | 851 | 26 | 825 | 0 |
+| 24 | 355 | 9 | 346 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 1 | 564 | 0 |
+| 27 | 354 | 2 | 352 | 0 |
+| 28 | 737 | 6 | 731 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 93 | 134 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 79 | 338 | 0 |
+| 38 | 340 | 170 | 170 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 4 | 83 | 0 |
+| **Total** | **22,033** | **2,628** | **19,339** | **66** |
+
+The leading extractor refusal classes are `AssignmentExpression:target`
+(4,473 files), `CallExpression` (4,225), `InstanceSymbol:Instance` (3,838),
+`ExpressionStatement:CallExpression` (3,717), `VariableSymbol:2state`
+(3,716), `TimedStatement:DelayControl` (2,675),
+`VariableDeclStatement:2state` (2,469), `SubroutineSymbol:Subroutine` (1,640),
+`NamedValueExpression:2state` (1,504), `ClassType` (1,326),
+`ProceduralBlockSymbol:NoEventControl` (1,307), and `InvalidStatement` (1,302).
+
 ## Fresh paired census — 2026-10-14
 
 The October 14 summary in `docs/sv-construct-census.json` measured

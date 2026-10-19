@@ -719,6 +719,32 @@ def _fixed_array_shape(source):
         return None
 
 
+def _fixed_array_slice_shape(source):
+    """Return cell shape and source-order positions for a constant simple slice."""
+    try:
+        if type(source).__name__ != "RangeSelectExpression":
+            return None
+        if str(source.selectionKind).split(".")[-1] != "Simple":
+            return None
+        shape = _fixed_array_shape(source.value)
+        if shape is None:
+            return None
+        name, width, two_state, array_left, array_right = shape
+        start = _constant_dimension_selector(source.left)
+        stop = _constant_dimension_selector(source.right)
+        if start is None or stop is None:
+            return None
+        lo, hi = min(array_left, array_right), max(array_left, array_right)
+        if (start < lo or start > hi or stop < lo or stop > hi
+                or abs(start - stop) + 1 <= 0):
+            return None
+        step = 1 if stop >= start else -1
+        positions = list(range(start, stop + step, step))
+        return name, width, two_state, positions
+    except Exception:
+        return None
+
+
 def _fixed_array_dynamic_read(sm, expression):
     """Lower a dynamic read to a finite conditional over expanded cells."""
     try:
@@ -979,22 +1005,37 @@ def _fixed_array_copy_assignment(sm, expr):
             return None
         lhs = expr.left
         rhs = expr.right
-        lhs_shape = _fixed_array_shape(lhs)
-        rhs_shape = _fixed_array_shape(rhs)
-        if lhs_shape is None or rhs_shape is None:
+        lhs_slice = _fixed_array_slice_shape(lhs)
+        rhs_slice = _fixed_array_slice_shape(rhs)
+        lhs_shape = (_fixed_array_shape(lhs) if lhs_slice is None else None)
+        rhs_shape = (_fixed_array_shape(rhs) if rhs_slice is None else None)
+        if lhs_slice is None and lhs_shape is None:
             return None
-        lhs_name, lhs_width, lhs_two, lhs_left, lhs_right = lhs_shape
-        rhs_name, rhs_width, _rhs_two, rhs_left, rhs_right = rhs_shape
-        lhs_count = abs(lhs_left - lhs_right) + 1
-        rhs_count = abs(rhs_left - rhs_right) + 1
+        if rhs_slice is None and rhs_shape is None:
+            return None
+        if lhs_slice is not None:
+            lhs_name, lhs_width, lhs_two, lhs_positions = lhs_slice
+        else:
+            lhs_name, lhs_width, lhs_two, lhs_left, lhs_right = lhs_shape
+            lhs_step = 1 if lhs_right >= lhs_left else -1
+            lhs_positions = list(range(lhs_left, lhs_right + lhs_step, lhs_step))
+        if rhs_slice is not None:
+            rhs_name, rhs_width, _rhs_two, rhs_positions = rhs_slice
+        else:
+            rhs_name, rhs_width, _rhs_two, rhs_left, rhs_right = rhs_shape
+            rhs_step = 1 if rhs_right >= rhs_left else -1
+            rhs_positions = list(range(rhs_left, rhs_right + rhs_step, rhs_step))
+        lhs_count = len(lhs_positions)
+        rhs_count = len(rhs_positions)
         if lhs_count != rhs_count or lhs_width != rhs_width:
+            return None
+        if lhs_name == rhs_name:
+            # Cell-by-cell lowering would expose an earlier destination write
+            # to a later RHS cell.  Keep every overlapping self-copy loud
+            # rather than inventing a temporary aggregate snapshot.
             return None
         if not _case_source_expression_ok(rhs):
             return None
-        lhs_step = 1 if lhs_right >= lhs_left else -1
-        rhs_step = 1 if rhs_right >= rhs_left else -1
-        lhs_positions = list(range(lhs_left, lhs_right + lhs_step, lhs_step))
-        rhs_positions = list(range(rhs_left, rhs_right + rhs_step, rhs_step))
         stmts = []
         for lhs_position, rhs_position in zip(lhs_positions, rhs_positions):
             value = {

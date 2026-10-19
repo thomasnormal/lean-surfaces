@@ -1004,6 +1004,20 @@ committed census snapshot is unchanged and this rung makes no fresh
 whole-corpus coverage claim. The focused range tests establish the admission
 boundary; the next census rerun will price any newly clean rows.
 
+### Constant fixed-array slice copies — 2026-10-19
+
+Equal-length simple constant slices of eligible one-dimensional fixed-unpacked
+integral arrays now pair their expanded vector cells for copy assignments. A
+whole array may appear on either side. Overlapping self-copies remain loud to
+avoid exposing an earlier lowered write to a later source cell; dynamic,
+indexed and out-of-range slices also remain loud. The `unpacked_slice_copy`
+fixture checks the cellwise copy through Lean and the self-check runner.
+
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and this rung makes no fresh
+whole-corpus coverage claim. Focused slice-copy tests establish the admission
+boundary; the next census rerun will price any newly clean rows.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

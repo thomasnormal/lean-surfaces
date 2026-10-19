@@ -452,6 +452,17 @@ self-check runner. The external `sv-tests-2` checkout was unavailable for this
 turn, so the committed census snapshot is unchanged and no fresh whole-corpus
 gain is claimed. This is not a whole-corpus simulator-agreement claim.
 
+## Constant fixed-array slice copies — 2026-10-19
+
+Equal-length simple constant slices of eligible fixed-unpacked integral arrays
+now pair their expanded cells for copies, including a whole-array source or
+destination on either side. Overlapping self-copies, dynamic/indexed and
+out-of-range slices remain loud because no temporary aggregate snapshot is
+introduced. The `unpacked_slice_copy` fixture and proof pass through the
+self-check runner. The external `sv-tests-2` checkout was unavailable for this
+turn, so the committed census snapshot is unchanged and no fresh whole-corpus
+gain is claimed. This is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

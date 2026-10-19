@@ -278,6 +278,12 @@ destination cells in declaration order. Different lengths, incompatible
 element widths, conditional aggregate expressions and unsupported storage
 forms remain `Unsupported`.
 
+An equal-length simple constant slice copy uses the same pairing for the
+selected cells, including a whole-array source or destination on either side.
+Overlapping self-copies remain `Unsupported` because the cell-expanded state
+does not provide a temporary aggregate snapshot; dynamic, indexed and
+out-of-range slices remain loud.
+
 An assignment whose RHS is a pure one-condition ternary over two eligible
 fixed arrays is lowered cell by cell to `Ternary` values. The condition is
 shared across the cells, so an x condition retains the ordinary per-bit

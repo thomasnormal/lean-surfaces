@@ -146,6 +146,26 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_slice_copy_pairs_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] source [0:3]; logic [7:0] value [0:3]; "
+            "initial begin value[1:2] = source[2:3]; end endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value[1]", "value[2]"])
+        self.assertEqual([a["value"]["name"] for a in assigns],
+                         ["source[2]", "source[3]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_overlapping_slice_copy_stays_loud(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:3]; "
+            "initial value[1:2] = value[0:1]; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

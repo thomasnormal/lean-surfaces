@@ -36,6 +36,16 @@
    ]
   },
   {
+   "name": "packed_member_assign",
+   "example": "sem2/packed_member_assign",
+   "top": "packed_member_assign",
+   "signals": ["source", "out", "low"],
+   "stimulus": [
+    {"source": "0011"},
+    {"source": "x010"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

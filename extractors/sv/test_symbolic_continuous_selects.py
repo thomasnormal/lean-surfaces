@@ -38,6 +38,21 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual([p["target"]["index"]["value"] for p in processes],
                          [1, 6])
 
+    def test_untagged_packed_member_is_a_fixed_window(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [7:0] out, "
+            "output logic [3:0] low); "
+            "struct packed { logic [3:0] hi; logic [3:0] lo; } value; "
+            "assign value.lo = source; assign value.hi = 4'ha; "
+            "assign out = value; assign low = value.lo; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([p["target"]["kind"] for p in processes[:2]],
+                         ["PartSel", "PartSel"])
+        self.assertEqual([(p["target"]["msb"]["value"],
+                           p["target"]["lsb"]["value"]) for p in processes[:2]],
+                         [(3, 0), (7, 4)])
+        self.assertEqual(processes[3]["value"]["kind"], "PartSel")
+
 
 if __name__ == "__main__":
     unittest.main()

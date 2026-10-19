@@ -2569,6 +2569,15 @@ selected source bit, an undriven x-state remainder, and x propagation through
 the scalar driver. It uses the same packed-vector window representation and
 does not add a scheduler or driver-resolution rule.
 
+### Symbolic packed-struct member windows — 2026-10-19
+
+Direct integral members of an untagged packed struct now lower to fixed
+`PartSel` windows over the struct's packed vector in the symbolic continuous
+assignment path. `packed_member_assign` checks field writes, a member read and
+x propagation through the resulting vector. Tagged structs, unions, unpacked
+or dynamic members, and alias metadata remain loud; this semantic fixture does
+not claim a legacy census gain or simulator agreement.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

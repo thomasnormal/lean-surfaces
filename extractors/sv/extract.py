@@ -1591,10 +1591,28 @@ def _convert_expr(sm, e):
         return _convert_conditional_expr(sm, e)
     if cname == "ConcatenationExpression":
         return _convert_concat_expr(sm, e)
-    if _SYM is None and cname == "MemberAccessExpression":
+    if cname == "MemberAccessExpression":
         member = _packed_struct_member(sm, e)
         if member is not None:
             base, width, offset, _two_state = member
+            if _SYM is not None:
+                return {
+                    "kind": "PartSel",
+                    "span": node_span(sm, e),
+                    "width": width,
+                    "value": _convert_expr(sm, base),
+                    "msb": {
+                        "kind": "Int",
+                        "span": node_span(sm, e),
+                        "value": offset + width - 1,
+                    },
+                    "lsb": {
+                        "kind": "Int",
+                        "span": node_span(sm, e),
+                        "value": offset,
+                    },
+                }
+
             return {
                 "kind": "SelectRead",
                 "span": node_span(sm, e),
@@ -4329,6 +4347,24 @@ def _dtype_sym(sm, t, type_syntax):
                 "kind": "PackedType",
                 "packed": packed,
                 "resolved": ct.bitWidth,
+            }, None
+        if cname == "PackedStructType":
+            if getattr(ct, "isTagged", False):
+                return None, "tagged-struct"
+            # The semantic tier stores an untagged packed struct as one
+            # fixed vector; member offsets become PartSel windows below.
+            width = int(ct.bitWidth)
+            if width <= 0:
+                return None, "type"
+            return {
+                "kind": "PackedType",
+                "packed": [{
+                    "msb": {"kind": "Int", "span": None,
+                            "value": width - 1, "resolved_width": None},
+                    "lsb": {"kind": "Int", "span": None,
+                            "value": 0, "resolved_width": None},
+                }],
+                "resolved": width,
             }, None
         return None, "type"
     except Exception:

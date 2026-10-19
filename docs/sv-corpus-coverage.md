@@ -889,6 +889,11 @@ Its trace checks live updates, undriven x bits, and x propagation. This is
 also a semantic-tier acceptance case only; the target-only census remains
 unchanged for the same scheduler-facing reason.
 
+The `packed_member_assign` fixture then checks direct members of an untagged
+packed struct. Fixed field offsets become the same packed windows for writes
+and reads, including an x-bearing source. This remains a semantic-tier
+acceptance case; the legacy target-only census is unchanged.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

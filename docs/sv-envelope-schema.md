@@ -362,6 +362,12 @@ drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation
 or scheduler is introduced.
 
+An untagged packed-struct variable may use a direct integral member as a
+constant window in the symbolic tier. The extractor lowers the member's fixed
+declaration offset to a `PartSel` over the synthetic packed vector, so both
+member writes and reads use the existing storage. Tagged structs, unions,
+unpacked members, dynamic member paths and type-alias metadata remain loud.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

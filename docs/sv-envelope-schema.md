@@ -269,6 +269,12 @@ the destination array, preserving the source rule that the complete RHS is
 evaluated before any cell is updated. Keyed/default, wrong-length, dynamic,
 aggregate and destination-aliasing patterns remain `Unsupported`.
 
+An equal-length whole-array assignment from another eligible fixed-unpacked
+integral array is lowered to the same per-cell block, pairing source and
+destination cells in declaration order. Different lengths, incompatible
+element widths, conditional aggregate expressions and unsupported storage
+forms remain `Unsupported`.
+
 For a one-dimensional fixed-unpacked integral array whose declaration has been
 expanded to cells, a pure integral dynamic index is lowered to a finite
 conditional over the declared cells. Dynamic writes become mutually exclusive

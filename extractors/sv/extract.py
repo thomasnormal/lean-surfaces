@@ -944,6 +944,55 @@ def _fixed_array_pattern_assignment(sm, expr):
         return None
 
 
+def _fixed_array_copy_assignment(sm, expr):
+    """Lower a whole-array copy when both sides already have cell storage."""
+    try:
+        if type(expr).__name__ != "AssignmentExpression" or expr.op is not None:
+            return None
+        lhs = expr.left
+        rhs = expr.right
+        lhs_shape = _fixed_array_shape(lhs)
+        rhs_shape = _fixed_array_shape(rhs)
+        if lhs_shape is None or rhs_shape is None:
+            return None
+        lhs_name, lhs_width, lhs_two, lhs_left, lhs_right = lhs_shape
+        rhs_name, rhs_width, _rhs_two, rhs_left, rhs_right = rhs_shape
+        lhs_count = abs(lhs_left - lhs_right) + 1
+        rhs_count = abs(rhs_left - rhs_right) + 1
+        if lhs_count != rhs_count or lhs_width != rhs_width:
+            return None
+        if not _case_source_expression_ok(rhs):
+            return None
+        lhs_step = 1 if lhs_right >= lhs_left else -1
+        rhs_step = 1 if rhs_right >= rhs_left else -1
+        lhs_positions = list(range(lhs_left, lhs_right + lhs_step, lhs_step))
+        rhs_positions = list(range(rhs_left, rhs_right + rhs_step, rhs_step))
+        stmts = []
+        for lhs_position, rhs_position in zip(lhs_positions, rhs_positions):
+            value = {
+                "kind": "Ident",
+                "span": node_span(sm, rhs),
+                "width": rhs_width,
+                "name": f"{rhs_name}[{rhs_position}]",
+            }
+            if lhs_two:
+                value = squash2_wrap(value, lhs_width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {
+                    "kind": "Ident",
+                    "span": node_span(sm, lhs),
+                    "width": lhs_width,
+                    "name": f"{lhs_name}[{lhs_position}]",
+                },
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts}
+    except Exception:
+        return None
+
+
 def _convert_dimension_query(sm, expression):
     """Fold fixed array metadata without evaluating the queried operand."""
     try:
@@ -2131,6 +2180,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if expr.timingControl is not None:
         return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
     if expr.op is None and _SYM is None:
+        array_copy = _fixed_array_copy_assignment(sm, expr)
+        if array_copy is not None:
+            return array_copy
         dynamic_array = _fixed_array_dynamic_assignment(sm, expr)
         if dynamic_array is not None:
             return dynamic_array

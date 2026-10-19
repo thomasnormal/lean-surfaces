@@ -917,6 +917,20 @@ files (**4,026 → 3,999**). The committed 22,033-path census remains the
 project snapshot; this local paired measurement is recorded separately because
 the external corpus checkout has four fewer paths.
 
+### Equal-length fixed-array copies — 2026-10-19
+
+Whole assignment between equal-length one-dimensional fixed-unpacked integral
+arrays now pairs source and destination cells in declaration order, reusing
+the existing vector-cell state. Incompatible lengths or element widths,
+conditional aggregate expressions and unsupported storage forms remain loud.
+The `unpacked_copy` fixture checks the real envelope through Lean.
+
+On the paired **22,029** paths available on this checkout, this rung adds
+nine clean files with no losses and lowers `AssignmentExpression:target` by
+21 files (**3,999 → 3,978**). The committed 22,033-path census remains the
+project snapshot; this local paired measurement is recorded separately because
+the external corpus checkout has four fewer paths.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

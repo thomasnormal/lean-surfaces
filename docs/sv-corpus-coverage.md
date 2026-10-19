@@ -387,6 +387,17 @@ errors**: 17 clean gains and no losses; `AssignmentExpression:target` falls
 **4,026 → 3,999**. The `unpacked_dynamic` fixture and proof pass through the
 self-check runner. This is not a whole-corpus simulator-agreement claim.
 
+## Equal-length fixed-array copies — 2026-10-19
+
+Whole assignment between equal-length one-dimensional fixed-unpacked integral
+arrays now pairs their already expanded cells in declaration order. Different
+lengths, incompatible element widths, conditional aggregate expressions and
+unsupported storage forms remain loud. The paired **22,029**-path run reports
+**2,915 clean**, **19,048 partial**, **66 include skips**, and **0 extraction
+errors**: nine additional clean files with no losses; the target wall falls
+**3,999 → 3,978**. The `unpacked_copy` fixture and proof pass through the
+self-check runner. This is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

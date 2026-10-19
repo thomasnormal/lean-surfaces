@@ -78,6 +78,26 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_whole_array_copy_reuses_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "
+            "initial begin source[0] = 8'h12; source[1] = 8'h34; "
+            "value = source; if (value[1] === 8'h34) $display(\"PASS\"); "
+            "end endmodule")
+        targets = [node["target"]["name"] for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertIn("value[0]", targets)
+        self.assertIn("value[1]", targets)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_mismatched_array_copy_stays_loud(self):
+        design = extract_source(
+            "module top; logic [7:0] source [0:2]; logic [7:0] value [0:1]; "
+            "initial value = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

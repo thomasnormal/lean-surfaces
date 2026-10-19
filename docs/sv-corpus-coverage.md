@@ -331,6 +331,20 @@ no losses. `AssignmentExpression:target` falls **4,223 → 4,051** and
 and proof pass through Lean; this is not a whole-corpus simulator-agreement
 claim.
 
+## Whole-array positional assignment patterns — 2026-10-19
+
+Whole assignments to eligible one-dimensional fixed-unpacked integral arrays
+now admit an exact-length positional pattern. The extractor expands the
+pattern into per-cell assignments over the same vector-cell state used for
+constant element access and declaration initializers. Keyed/default,
+wrong-length, dynamic, aggregate and destination-aliasing patterns remain
+loud. A paired run over **22,029** chapter-scoped paths reports **2,889
+clean**, **19,074 partial**, **66 include skips**, and **0 extraction errors**:
+four clean gains and no losses on that checkout; the target wall falls by 23
+files (**4,049 → 4,026**). The `unpacked_assign` fixture and Lean proof pass
+through the self-check runner. This is not a whole-corpus simulator-agreement
+claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

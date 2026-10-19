@@ -694,6 +694,100 @@ def _fixed_array_cell(sm, expression):
         return None
 
 
+def _fixed_array_pattern_assignment(sm, expr):
+    """Lower one exact positional assignment to a fixed-array's cells.
+
+    The self-check state has no aggregate store: declarations of a narrow
+    one-dimensional fixed unpacked array are already expanded to names such
+    as ``a[0]``.  A whole-array assignment can therefore use the same state
+    by expanding an exact positional pattern into a block of per-cell
+    assignments.  Keep the lowering deliberately strict.  The pattern must
+    be simple and exact-length, every element must be a pure integral
+    expression, and no element may read the destination array.  The last
+    guard preserves the source-level rule that the complete RHS is evaluated
+    before any destination cell is updated; without it, a later element
+    could observe an earlier lowered write.
+    """
+    try:
+        if type(expr).__name__ != "AssignmentExpression":
+            return None
+        if expr.op is not None or expr.timingControl is not None:
+            return None
+        lhs = expr.left
+        if type(lhs).__name__ != "NamedValueExpression":
+            return None
+        if str(lhs.symbol.kind) != "SymbolKind.Variable":
+            return None
+        lhs_type = lhs.type.canonicalType
+        if type(lhs_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        element_type = lhs_type.elementType
+        if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
+            return None
+        if type(element_type.canonicalType).__name__ in ("PackedStructType", "PackedUnionType"):
+            return None
+        element_width, element_two, reason = type_width_2s(element_type)
+        if element_width is None or reason is not None:
+            return None
+        pattern = expr.right
+        if type(pattern).__name__ != "SimpleAssignmentPatternExpression":
+            return None
+        elements = list(pattern.elements)
+        left, right = int(lhs_type.range.left), int(lhs_type.range.right)
+        count = abs(left - right) + 1
+        if count > 1024 or len(elements) != count:
+            return None
+        target_name = lhs.symbol.name
+        converted = []
+        for element in elements:
+            if not _case_source_expression_ok(element):
+                return None
+            # A pure read of the destination would see a different value
+            # after the first lowered cell write.  Reject that aliasing shape
+            # instead of silently changing aggregate-assignment semantics.
+            reads_target = False
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ == "NamedValueExpression":
+                    try:
+                        reads_target = reads_target or node.symbol.name == target_name
+                    except Exception:
+                        reads_target = True
+            element.visit(inspect)
+            if reads_target:
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != element_width
+                    or not _case_expression_ok(value)):
+                return None
+            if element_two:
+                value = squash2_wrap(value, element_width)
+            converted.append(value)
+        step = 1 if right >= left else -1
+        stmts = []
+        for position, value in zip(range(left, right + step, step), converted):
+            target = {
+                "kind": "Ident",
+                "span": node_span(sm, lhs),
+                "width": element_width,
+                "name": f"{target_name}[{position}]",
+            }
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": target,
+                "value": value,
+            })
+        return {
+            "kind": "Block",
+            "span": node_span(sm, expr),
+            "stmts": stmts,
+        }
+    except Exception:
+        return None
+
+
 def _convert_dimension_query(sm, expression):
     """Fold fixed array metadata without evaluating the queried operand."""
     try:
@@ -1877,6 +1971,10 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                            "AssignmentExpression:" + type(expr).__name__)
     if expr.timingControl is not None:
         return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
+    if expr.op is None and _SYM is None:
+        array_assignment = _fixed_array_pattern_assignment(sm, expr)
+        if array_assignment is not None:
+            return array_assignment
     if expr.op is not None:
         if _SYM is not None:
             return unsupported(sm, span_node or expr, "AssignmentExpression:compound")

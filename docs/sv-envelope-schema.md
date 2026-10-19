@@ -252,13 +252,22 @@ or concatenation LHS makes the *statement* `Unsupported`
 constant element of a one-dimensional fixed-unpacked integral array is lowered
 to an identifier cell such as `mem[2]`, and its declaration is expanded to one
 vector `Var` per cell. Dynamic or out-of-range indices, multidimensional or
-aggregate arrays, and whole-array operations remain loud. `If` conditions may
-be any width (truthiness per LRM: true iff some bit is `1`).
+aggregate arrays, and whole-array operations remain loud except for the narrow
+whole-array positional-pattern assignment below. `If` conditions may be any
+width (truthiness per LRM: true iff some bit is `1`).
 
 An eligible cell-expanded declaration may also have an exact-length
 positional assignment-pattern initializer; each element is converted once and
 stored in its corresponding cell. Keyed/default, wrong-length, effectful or
 aggregate initializers remain `Unsupported`.
+
+The same representation admits an exact-length positional assignment-pattern
+statement to an eligible cell-expanded array. The extractor lowers it to a
+`Block` of per-cell `BlockingAssign` or `NonblockingAssign` nodes, in declared
+index order. Each element must be a pure integral expression and must not read
+the destination array, preserving the source rule that the complete RHS is
+evaluated before any cell is updated. Keyed/default, wrong-length, dynamic,
+aggregate and destination-aliasing patterns remain `Unsupported`.
 
 ## Expressions
 

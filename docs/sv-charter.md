@@ -867,6 +867,22 @@ The fresh **22,033**-path census adds **88 clean files** without losses
 and `MemberAccessExpression` falls **1,299 → 1,203**. The target family is
 still led by unsupported array, class, hierarchy and string storage.
 
+### Whole-array positional assignment patterns — 2026-10-19
+
+An eligible one-dimensional fixed-unpacked integral array may now receive an
+exact-length positional assignment pattern. The extractor lowers the
+target-independent pure elements into per-cell blocking or nonblocking
+assignments in declared index order, so the existing vector-cell state and
+self-check evaluator provide the storage and update behavior. Keyed/default,
+wrong-length, dynamic, aggregate and destination-aliasing patterns remain
+loud. The `unpacked_assign` fixture checks the real envelope through Lean.
+
+A paired run over the **22,029** paths available on this checkout adds four
+clean files with no losses and lowers `AssignmentExpression:target` by 23
+files (**4,049 → 4,026**). The committed 22,033-path census remains the
+project snapshot; this local paired measurement is recorded separately because
+the external corpus checkout has four fewer paths.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

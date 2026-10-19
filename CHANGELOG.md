@@ -20,6 +20,9 @@ change is listed here under **Changed** or **Removed**.
 - `divmod(...)` keyword calls now preserve argument evaluation order and report
   CPython's faithful positional-only `TypeError`; other builtin keyword forms
   remain loud.
+- `len(...)` keyword calls now preserve argument evaluation order and report
+  CPython's faithful positional-only `TypeError`; other builtin keyword forms
+  remain loud.
 - Module-scope annotated assignments now admit unshadowed builtin type-name
   annotations such as `x: int = 1`; the value binding is preserved and the
   implicit `__annotations__` update is unobservable in the tier. Shadowed and

@@ -72,8 +72,8 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
 
 #guard (match callFunction kw_lab "ntuple_kw" #[.int 4] 10000 with
   | .unsupported _ => true | _ => false)
-#guard (match callFunction kw_lab "builtin_kw" #[] 10000 with
-  | .unsupported _ => true | _ => false)
+#py_check kw_lab.builtin_kw() raises
+  (.typeError "len() takes no keyword arguments")
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

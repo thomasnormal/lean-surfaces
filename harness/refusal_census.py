@@ -1086,7 +1086,6 @@ WHITELIST_CLASS = {
     "exc_lab::exc_as_value": "firstclass.callable",
     "exc_lab::drive_yield_under_try": "exc.handler",
     "kw_lab::ntuple_kw": "kwargs.callee-kind",
-    "kw_lab::builtin_kw": "kwargs.callee-kind",
     "drain_lab::sorted_mixed": "order.mixed-type",
     "closure_lab::uses_nonlocal": "stmt.Nonlocal",
     "closure_lab::def_in_loop": "closure.admission",

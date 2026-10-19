@@ -52,6 +52,11 @@ now matches: `divmod()` evaluates its positional and keyword values in source
 order, then raises CPython's `TypeError` because the builtin accepts no
 keyword arguments.
 
+**Extension (2026-10-19).** The measured `len.constructor-keywords` row now
+matches: `len()` evaluates its positional and keyword values in source order,
+then raises CPython's `TypeError` because the builtin accepts no keyword
+arguments.
+
 ## 2. The grammar census — 86 witnesses, 60 MATCH, 26 REFUSE *(as taken)*
 
 > **These counts are AS TAKEN and are not maintained here.** Every rung moves

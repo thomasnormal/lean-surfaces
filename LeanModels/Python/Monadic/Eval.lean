@@ -936,13 +936,15 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                           | [_], _ =>
                               refuse "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
                           | vs, _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
-                  else if name == "float" then
-                    -- CPython's float constructor accepts no keyword
-                    -- arguments. Evaluate both argument lists before its
-                    -- faithful TypeError, preserving Python's order.
+                  else if name == "float" || name == "len" then
+                    -- CPython's float and len constructors accept no keyword
+                    -- arguments. Evaluate both argument lists before their
+                    -- faithful TypeErrors, preserving Python's order.
                     let _ ← evalOpenList K m args.toList
                     let _ ← K.kwArgs kwargs.toList
-                    raisePy (.typeError "float() takes no keyword arguments")
+                    raisePy (.typeError (if name == "float" then
+                      "float() takes no keyword arguments"
+                    else "len() takes no keyword arguments"))
                   else if name == "divmod" then
                     -- CPython's divmod constructor accepts no keyword
                     -- arguments. Evaluate both argument lists before its

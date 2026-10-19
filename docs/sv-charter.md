@@ -851,6 +851,22 @@ The fresh **22,033**-path census adds **3 clean files** without losses
 (**2,795 → 2,798**). This initializer rung does not reduce the target wall
 itself; the remaining `AssignmentExpression:target` count is **4,223**.
 
+### Direct packed-struct field windows — 2026-10-19
+
+Direct fields of an untagged packed struct or packed union now reuse the
+aggregate's vector storage: the extractor records each field's fixed bit
+offset as a `SelectRead` or `SelectTarget` window. Whole packed aggregate
+variables therefore retain the ordinary LVec width and four-state behavior.
+Nested member chains, unpacked structs/unions, class and interface members,
+tagged unions, and fields with nonintegral types remain loud. The
+`packed_struct` fixture checks a direct field write/read through the real
+self-check envelope.
+
+The fresh **22,033**-path census adds **88 clean files** without losses
+(**2,798 → 2,886**). `AssignmentExpression:target` falls **4,223 → 4,051**
+and `MemberAccessExpression` falls **1,299 → 1,203**. The target family is
+still led by unsupported array, class, hierarchy and string storage.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

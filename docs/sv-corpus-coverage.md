@@ -319,6 +319,18 @@ skips**, and **0 extraction errors**: 3 additional clean files with no
 losses. The `unpacked_init` fixture and Lean proof pass; this is not a
 whole-corpus simulator-agreement claim.
 
+## Direct packed-struct field windows — 2026-10-19
+
+Direct fields of untagged packed structs and packed unions now lower to fixed
+bit windows over their aggregate vector identifier. Nested/unpacked members,
+classes, interfaces, tagged unions and nonintegral fields remain loud. The
+fresh **22,033**-path run reports **2,886 clean**, **19,081 partial**, **66
+include skips**, and **0 extraction errors**: 88 additional clean files with
+no losses. `AssignmentExpression:target` falls **4,223 → 4,051** and
+`MemberAccessExpression` falls **1,299 → 1,203**. The `packed_struct` fixture
+and proof pass through Lean; this is not a whole-corpus simulator-agreement
+claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

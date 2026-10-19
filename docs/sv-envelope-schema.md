@@ -115,7 +115,7 @@ emits:
 | `ConversionExpression:Explicit` / `:BitstreamCast` / `:StreamingConcat` | explicit casts |
 | `NamedValueExpression:<SymbolKind>` | identifier that does not name a variable/net (e.g. `:Parameter`) |
 | `PortSymbol:InOut` / `:Ref` | port directions outside in/out |
-| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state nets or symbolic declarations, multidimensional packed ranges, or a non-integral type (struct, real, ...); the legacy/self-check path admits one-dimensional packed scalar ranges for whole-vector operations |
+| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state nets or symbolic declarations, multidimensional packed ranges, unpacked/nonintegral types (real, string, ...); the legacy/self-check path admits one-dimensional packed scalar ranges and untagged packed struct/union vectors |
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |
 
@@ -276,6 +276,11 @@ the legacy extractor admits only an in-range constant bit select. It records
 the normalized LVec offset as a `Literal` index and forces unsigned offset
 interpretation; dynamic/out-of-range indices and all part-select forms remain
 `Unsupported` until their declared bounds are represented directly.
+
+Direct fields of an untagged packed struct or packed union are represented by
+the same window nodes: the field's fixed `bitOffset` becomes a literal LVec
+index over the aggregate identifier. Nested member chains, unpacked
+struct/union fields, classes, interfaces and tagged unions remain unsupported.
 
 `ConcatTarget` has `kind`, `span`, `width` and `parts` (source-ordered
 targets), with nested `ConcatTarget` nodes retained. Whole `Ident` leaves

@@ -314,6 +314,10 @@ def type_width_2s(t):
             if type(elem).__name__ == "ScalarType":
                 return w, (not t.isFourState), None
             return None, None, "range"
+        if cname in ("PackedStructType", "PackedUnionType"):
+            if getattr(ct, "isTagged", False):
+                return None, None, "type"
+            return ct.bitWidth, (not t.isFourState), None
         return None, None, "type"
     except Exception:
         return None, None, "type"
@@ -819,6 +823,24 @@ def _convert_expr(sm, e):
         return _convert_conditional_expr(sm, e)
     if cname == "ConcatenationExpression":
         return _convert_concat_expr(sm, e)
+    if _SYM is None and cname == "MemberAccessExpression":
+        member = _packed_struct_member(sm, e)
+        if member is not None:
+            base, width, offset, _two_state = member
+            return {
+                "kind": "SelectRead",
+                "span": node_span(sm, e),
+                "width": width,
+                "value": _convert_expr(sm, e.value),
+                "index": {
+                    "kind": "Literal",
+                    "span": node_span(sm, e),
+                    "width": 32,
+                    "bits": format(offset, "032b"),
+                },
+                "index_signed": False,
+                "descending": False,
+            }
     if _SYM is None and cname in ("ElementSelectExpression", "RangeSelectExpression"):
         return _convert_selected_read(sm, e, cname)
     if cname == "CallExpression":
@@ -1212,6 +1234,31 @@ def _packed_constant_index(sm, source_type, index):
         return None
 
 
+def _packed_struct_member(sm, expression):
+    """Describe one direct integral field of a packed struct/union value."""
+    try:
+        if type(expression).__name__ != "MemberAccessExpression":
+            return None
+        base = expression.value
+        if type(base).__name__ != "NamedValueExpression":
+            return None
+        aggregate = base.type.canonicalType
+        if type(aggregate).__name__ not in ("PackedStructType", "PackedUnionType"):
+            return None
+        if getattr(aggregate, "isTagged", False):
+            return None
+        member = expression.member
+        width, two_state, reason = type_width_2s(member.type)
+        if width is None or reason is not None:
+            return None
+        offset = int(member.bitOffset)
+        if offset < 0 or offset + width > aggregate.bitWidth:
+            return None
+        return base, width, offset, two_state
+    except Exception:
+        return None
+
+
 def _convert_selected_read(sm, expr, expression_kind):
     if expression_kind == "ElementSelectExpression":
         cell = _fixed_array_cell(sm, expr)
@@ -1396,6 +1443,26 @@ def select_target(sm, lhs):
 
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
+    if expression_kind == "MemberAccessExpression":
+        member = _packed_struct_member(sm, lhs)
+        if member is not None:
+            _base, width, offset, two_state = member
+            target = {
+                "kind": "SelectTarget",
+                "span": node_span(sm, lhs),
+                "width": width,
+                "value": convert_expr(sm, lhs.value),
+                "index": {
+                    "kind": "Literal",
+                    "span": node_span(sm, lhs),
+                    "width": 32,
+                    "bits": format(offset, "032b"),
+                },
+                "index_signed": False,
+                "descending": False,
+                "two_state": two_state,
+            }
+            return target, True
     if expression_kind == "ElementSelectExpression":
         cell = _fixed_array_cell(sm, lhs)
         if cell is not None:

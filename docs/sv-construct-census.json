@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    4223
+    4051
    ],
    [
     "InstanceSymbol:Instance",
@@ -28,11 +28,11 @@
    ],
    [
     "CallExpression",
-    3565
+    3575
    ],
    [
     "VariableSymbol:2state",
-    3506
+    3453
    ],
    [
     "TimedStatement:DelayControl",
@@ -40,7 +40,7 @@
    ],
    [
     "VariableDeclStatement:2state",
-    2469
+    2452
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -48,7 +48,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1504
+    1483
    ],
    [
     "ClassType",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1299
+    1203
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -92,7 +92,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    698
+    697
    ],
    [
     "CheckerSymbol",
@@ -136,7 +136,7 @@
    ],
    [
     "NamedValueExpression:Parameter",
-    290
+    291
    ],
    [
     "GenerateBlockArraySymbol:GenerateBlockArray",
@@ -153,10 +153,6 @@
    [
     "NullLiteral",
     267
-   ],
-   [
-    "VariableSymbol:type",
-    266
    ],
    [
     "GenerateBlockSymbol:GenerateBlock",
@@ -201,6 +197,10 @@
    [
     "GenericClassDefSymbol",
     146
+   ],
+   [
+    "VariableSymbol:type",
+    144
    ],
    [
     "TimedStatement:CycleDelayControl",
@@ -255,10 +255,6 @@
     76
    ],
    [
-    "VariableDeclStatement:type",
-    73
-   ],
-   [
     "RandSequenceStatement",
     72
    ],
@@ -272,10 +268,6 @@
    ],
    [
     "NamedValueExpression:ClassProperty",
-    65
-   ],
-   [
-    "NamedValueExpression:type",
     65
    ],
    [
@@ -335,10 +327,6 @@
     48
    ],
    [
-    "ConversionExpression:Explicit",
-    45
-   ],
-   [
     "TimeLiteral",
     45
    ],
@@ -355,11 +343,19 @@
     41
    ],
    [
+    "StructuredAssignmentPatternExpression",
+    40
+   ],
+   [
     "WaitForkStatement",
     40
    ],
    [
     "NetSymbol:UserDefined",
+    39
+   ],
+   [
+    "ConversionExpression:Explicit",
     39
    ],
    [
@@ -420,6 +416,10 @@
    ],
    [
     "NetSymbol:delay",
+    27
+   ],
+   [
+    "VariableDeclStatement:type",
     27
    ],
    [
@@ -511,10 +511,6 @@
     15
    ],
    [
-    "BitQuery:argument-type",
-    15
-   ],
-   [
     "AnonymousProgramSymbol",
     15
    ],
@@ -535,12 +531,12 @@
     14
    ],
    [
-    "PatternCaseStatement",
+    "ConversionExpression:BitstreamCast",
     13
    ],
    [
-    "ConversionExpression:BitstreamCast",
-    12
+    "PatternCaseStatement",
+    13
    ],
    [
     "BinaryExpression:LogicalImplication",
@@ -552,6 +548,10 @@
    ],
    [
     "CaseStatement:Priority",
+    12
+   ],
+   [
+    "SelectTarget:invalid-compilation",
     12
    ],
    [
@@ -575,11 +575,19 @@
     11
    ],
    [
+    "SelectRead:invalid-compilation",
+    11
+   ],
+   [
     "ConditionalStatement:Priority",
     11
    ],
    [
     "PortSymbol:InOut",
+    10
+   ],
+   [
+    "AssignmentExpression:selected-effects",
     10
    ],
    [
@@ -591,7 +599,7 @@
     10
    ],
    [
-    "AssignmentExpression:selected-effects",
+    "SimpleAssignmentPatternExpression",
     9
    ],
    [
@@ -607,19 +615,7 @@
     8
    ],
    [
-    "SelectTarget:invalid-compilation",
-    8
-   ],
-   [
     "NetType:NetType",
-    7
-   ],
-   [
-    "SimpleAssignmentPatternExpression",
-    7
-   ],
-   [
-    "SelectRead:invalid-compilation",
     7
    ],
    [
@@ -703,15 +699,15 @@
     3
    ],
    [
+    "NamedValueExpression:type",
+    3
+   ],
+   [
     "WaitOrderStatement",
     3
    ],
    [
     "MultiPortSymbol:MultiPort",
-    2
-   ],
-   [
-    "StructuredAssignmentPatternExpression",
     2
    ],
    [
@@ -775,6 +771,10 @@
     1
    ],
    [
+    "BitQuery:argument-type",
+    1
+   ],
+   [
     "ConfigBlockSymbol:ConfigBlock",
     1
    ],
@@ -820,13 +820,13 @@
    ]
   ],
   "by_status": {
-   "clean": 2798,
-   "partial": 19169,
+   "clean": 2886,
+   "partial": 19081,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    305,
+    309,
     1387
    ],
    "compilation": [
@@ -882,7 +882,7 @@
     52
    ],
    "simulation": [
-    2312,
+    2396,
     18669
    ],
    "simulation elaboration": [
@@ -897,9 +897,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 440,
-    "clean": 551,
-    "partial": 440,
+    "blocked_by_more": 431,
+    "clean": 560,
+    "partial": 431,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -908,7 +908,7 @@
      ],
      [
       "AssignmentExpression:target",
-      173
+      158
      ],
      [
       "NamedValueExpression:2state",
@@ -916,7 +916,7 @@
      ],
      [
       "VariableSymbol:2state",
-      75
+      73
      ],
      [
       "CallExpression",
@@ -939,11 +939,11 @@
       44
      ],
      [
-      "TypeAliasType:TypeAlias",
-      40
+      "ConversionExpression:width",
+      31
      ],
      [
-      "ConversionExpression:width",
+      "TypeAliasType:TypeAlias",
       31
      ],
      [
@@ -963,24 +963,24 @@
       22
      ],
      [
-      "MemberAccessExpression",
-      21
-     ],
-     [
       "ParameterSymbol:Parameter",
       20
+     ],
+     [
+      "MemberAccessExpression",
+      17
      ],
      [
       "RangeSelectExpression:source-type",
       15
      ],
      [
-      "VariableSymbol:type",
+      "NamedValueExpression:Parameter",
       14
      ],
      [
-      "NamedValueExpression:Parameter",
-      14
+      "BinaryExpression:LogicalImplication",
+      12
      ]
     ],
     "unlockable": 0
@@ -1044,11 +1044,11 @@
       15
      ],
      [
-      "AssignmentExpression:target",
-      13
+      "VariableDeclStatement:2state",
+      12
      ],
      [
-      "VariableDeclStatement:2state",
+      "AssignmentExpression:target",
       12
      ],
      [
@@ -1075,58 +1075,58 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 738,
-    "clean": 303,
-    "partial": 738,
+    "blocked_by_more": 705,
+    "clean": 336,
+    "partial": 705,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      286
+      246
      ],
      [
       "VariableSymbol:2state",
-      241
+      228
      ],
      [
       "CallExpression",
       208
      ],
      [
-      "NamedValueExpression:2state",
-      174
+      "VariableDeclStatement:2state",
+      169
      ],
      [
-      "VariableDeclStatement:2state",
-      173
+      "NamedValueExpression:2state",
+      164
      ],
      [
       "TimedStatement:DelayControl",
       160
      ],
      [
-      "TypeAliasType:TypeAlias",
-      153
-     ],
-     [
       "ConversionExpression:width",
       136
      ],
      [
-      "TransparentMemberSymbol:TransparentMember",
-      83
+      "TypeAliasType:TypeAlias",
+      134
      ],
      [
-      "MemberAccessExpression",
-      78
+      "TransparentMemberSymbol:TransparentMember",
+      82
      ],
      [
       "InstanceSymbol:Instance",
       67
      ],
      [
+      "MemberAccessExpression",
+      58
+     ],
+     [
       "ElementSelectExpression:source-type",
-      54
+      53
      ],
      [
       "RealLiteral",
@@ -1141,16 +1141,8 @@
       33
      ],
      [
-      "TypeAliasType",
-      30
-     ],
-     [
       "NullLiteral",
       30
-     ],
-     [
-      "VariableSymbol:type",
-      28
      ],
      [
       "NamedValueExpression:Parameter",
@@ -1159,6 +1151,14 @@
      [
       "Call:$fatal",
       21
+     ],
+     [
+      "ClassType:ClassType",
+      21
+     ],
+     [
+      "TypeAliasType",
+      18
      ]
     ],
     "unlockable": 0
@@ -1167,17 +1167,17 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 168,
+    "clean": 169,
     "error": 0,
-    "partial": 489,
+    "partial": 488,
     "skip_include": 0,
     "total": 657,
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 554,
+    "clean": 563,
     "error": 0,
-    "partial": 480,
+    "partial": 471,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0
@@ -1247,9 +1247,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 155,
+    "clean": 165,
     "error": 0,
-    "partial": 670,
+    "partial": 660,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1271,9 +1271,9 @@
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 26,
+    "clean": 28,
     "error": 0,
-    "partial": 825,
+    "partial": 823,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
@@ -1327,9 +1327,9 @@
     "unlockable": 0
    },
    "chapter-3": {
-    "clean": 24,
+    "clean": 25,
     "error": 0,
-    "partial": 275,
+    "partial": 274,
     "skip_include": 1,
     "total": 300,
     "unlockable": 0
@@ -1391,9 +1391,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 92,
+    "clean": 96,
     "error": 0,
-    "partial": 325,
+    "partial": 321,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
@@ -1439,17 +1439,17 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 316,
+    "clean": 349,
     "error": 0,
-    "partial": 869,
+    "partial": 836,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 1
    },
    "chapter-7": {
-    "clean": 34,
+    "clean": 62,
     "error": 0,
-    "partial": 762,
+    "partial": 734,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

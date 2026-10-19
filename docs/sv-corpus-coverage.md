@@ -902,6 +902,10 @@ The `packed_member_nested` fixture checks a two-level untagged packed-struct
 chain. Its inner fields flatten to the outer vector's fixed windows, with the
 same four-state trace and no new aggregate store.
 
+The `indexed_part_assign` fixture covers literal indexed part-selects. Both
+`+:` and `-:` forms normalize to the same fixed windows, while dynamic bases
+remain loud; this is a semantic-tier fixture with no legacy census change.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

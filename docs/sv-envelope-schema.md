@@ -376,6 +376,11 @@ the helper accumulates each declaration offset and emits one outer-vector
 `PartSel`. `packed_member_nested` pins this chain; nested unions and other
 aggregate member paths remain unsupported.
 
+Literal indexed part-selects (`base +: width` and `base -: width`) are
+normalized to ordinary constant `PartSel` bounds when the selected window is
+in range. Dynamic or parameter-dependent bases and out-of-range windows remain
+`Unsupported`; `indexed_part_assign` pins the accepted source-order form.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

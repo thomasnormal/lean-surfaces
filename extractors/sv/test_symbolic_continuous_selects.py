@@ -76,6 +76,23 @@ class SymbolicContinuousSelects(unittest.TestCase):
                            p["target"]["lsb"]["value"]) for p in processes[:2]],
                          [(3, 0), (7, 4)])
 
+    def test_literal_indexed_parts_normalize_to_windows(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [7:0] value); "
+            "assign value[0 +: 4] = source; assign value[7 -: 4] = 4'ha; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([(p["target"]["msb"]["value"],
+                           p["target"]["lsb"]["value"]) for p in processes],
+                         [(3, 0), (7, 4)])
+
+    def test_dynamic_indexed_parts_stay_loud(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, input logic [2:0] base, "
+            "output logic [7:0] value); "
+            "assign value[base +: 4] = source; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "Unsupported")
+
 
 if __name__ == "__main__":
     unittest.main()

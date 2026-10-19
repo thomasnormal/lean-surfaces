@@ -66,6 +66,16 @@
    ]
   },
   {
+   "name": "indexed_part_assign",
+   "example": "sem2/indexed_part_assign",
+   "top": "indexed_part_assign",
+   "signals": ["source", "value"],
+   "stimulus": [
+    {"source": "0011"},
+    {"source": "x010"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

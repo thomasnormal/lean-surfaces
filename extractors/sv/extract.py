@@ -2170,15 +2170,48 @@ def _convert_sym_select_expr(sm, e, cname):
         }
     if cname == "RangeSelectExpression":
         selection = str(e.selectionKind).split(".")[-1]
-        if selection != "Simple":
+        if selection == "Simple":
+            with _SymPos():
+                msb = _convert_expr(sm, e.left)
+                lsb = _convert_expr(sm, e.right)
+            return {
+                "kind": "PartSel",
+                "span": node_span(sm, e),
+                "width": _safe_width(e),
+                "value": _convert_expr(sm, e.value),
+                "msb": msb,
+                "lsb": lsb,
+            }
+        if selection not in ("IndexedUp", "IndexedDown"):
             return unsupported(sm, e, "RangeSelectExpression:" + selection)
-        with _SymPos():
-            msb = _convert_expr(sm, e.left)
-            lsb = _convert_expr(sm, e.right)
+        # A literal indexed base and fixed width can be normalized to the
+        # existing constant PartSel executor. Parameter/dynamic bases stay
+        # loud because folding them here would erase a family point.
+        base = _constant_dimension_selector(e.left)
+        width = _safe_width(e)
+        if (base is None or type(e.left).__name__ not in
+                ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
+                or width <= 0):
+            return unsupported(sm, e, "RangeSelectExpression:dynamic-indexed")
+        if selection == "IndexedUp":
+            msb_value, lsb_value = base + width - 1, base
+        else:
+            msb_value, lsb_value = base, base - width + 1
+        source_type = e.value.type.canonicalType
+        if type(source_type).__name__ == "PackedArrayType":
+            left, right = int(source_type.range.left), int(source_type.range.right)
+            low, high = min(left, right), max(left, right)
+            if (lsb_value < low or msb_value > high or
+                    msb_value < low or lsb_value > high):
+                return unsupported(sm, e, "RangeSelectExpression:range")
+        msb = {"kind": "Int", "span": node_span(sm, e),
+               "value": msb_value}
+        lsb = {"kind": "Int", "span": node_span(sm, e),
+               "value": lsb_value}
         return {
             "kind": "PartSel",
             "span": node_span(sm, e),
-            "width": _safe_width(e),
+            "width": width,
             "value": _convert_expr(sm, e.value),
             "msb": msb,
             "lsb": lsb,

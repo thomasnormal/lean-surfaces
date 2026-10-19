@@ -2594,6 +2594,15 @@ declaration offsets and lower to windows over the outer vector. The
 nested unions and other aggregate paths remain loud. This is a symbolic
 fixture result only, with no legacy census or simulator-agreement claim.
 
+### Symbolic literal indexed part-select windows — 2026-10-19
+
+Literal indexed part-selects now normalize to fixed `PartSel` bounds when their
+window is in range. `indexed_part_assign` checks both `base +: width` and
+`base -: width` through the existing comb-settle path. Dynamic or
+parameter-dependent bases and out-of-range windows remain loud; no new storage
+or scheduler is introduced and no legacy census or simulator-agreement claim
+is made.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

@@ -1663,6 +1663,15 @@ def decimalDigitsAux : List Char → Nat → Bool → Option Nat
 def digitsToNat (characters : List Char) : Option Nat :=
   decimalDigitsAux characters 0 false
 
+/-- Parse the shared ASCII decimal syntax after its caller has checked the
+whitespace, digit-budget, and character inventory. -/
+def decimalInt (characters : List Char) : Option Int :=
+  let core := ((characters.dropWhile intWs).reverse.dropWhile intWs).reverse
+  match core with
+  | '+' :: digits => (digitsToNat digits).map Int.ofNat
+  | '-' :: digits => (digitsToNat digits).map (fun value => -(value : Int))
+  | digits => (digitsToNat digits).map Int.ofNat
+
 /-- `int(<str>)` decides ASCII decimal syntax within `intDigitBudget`,
 including underscore grouping and all six integer whitespace characters.
 Non-ASCII input and larger digit counts refuse loudly; invalid ASCII input
@@ -1674,13 +1683,7 @@ def intOfStr (text : String) : Res RVal :=
   else if characters.countP (fun character => character.isDigit) > intDigitBudget then
     .unsupported "int() of this str exceeds the tier's 640-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
-    let core := ((characters.dropWhile intWs).reverse.dropWhile intWs).reverse
-    let parsed : Option Int :=
-      match core with
-      | '+' :: digits => (digitsToNat digits).map Int.ofNat
-      | '-' :: digits => (digitsToNat digits).map (fun value => -(value : Int))
-      | digits => (digitsToNat digits).map Int.ofNat
-    match parsed with
+    match decimalInt characters with
     | some value => .ok (.int value)
     | Option.none =>
       match reprStr text with
@@ -1689,8 +1692,25 @@ def intOfStr (text : String) : Res RVal :=
       | Option.none =>
           .unsupported "int() cannot render this invalid literal exactly (docs/memory-model.md §the cast tier)"
 
+/-- `int(bytes)` shares the ASCII decimal grammar with `int(str)`. Bytes with
+non-ASCII octets remain loud until the tier models decoding; invalid ASCII
+forms still raise CPython's bytes-rendered `ValueError` exactly. -/
+def intOfBytes (values : Array UInt8) : Res RVal :=
+  let octets := values.toList
+  if !octets.all (fun octet => octet.toNat < 128) then
+    .unsupported "int() of bytes containing non-ASCII octets is outside the tier (Unicode decoding is not guessed; docs/memory-model.md §the cast tier)"
+  else if octets.countP (fun octet => (octet.toNat ≥ 48 && octet.toNat ≤ 57)) > intDigitBudget then
+    .unsupported "int() of these bytes exceeds the tier's 640-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
+  else
+    let characters := octets.map (fun octet => Char.ofNat octet.toNat)
+    match decimalInt characters with
+    | some value => .ok (.int value)
+    | Option.none =>
+      .exn (.valueError s!"invalid literal for int() with base 10: {String.ofList ((bytesRepr values).toList.take 200)}")
+
 /-- The `int` constructor builtin: identity on ints, bool coercion,
-`int(<str>)` through the pass-8 honest subset (`intOfStr`); finite floats
+`int(<str>)` and the ASCII `int(bytes)` slice through the pass-8 honest
+subset (`intOfStr`/`intOfBytes`); finite floats
 truncate toward zero; a `.ref` is refused loudly before the `TypeError`
 fallback. -/
 def intCastVal : RVal → Res RVal
@@ -1703,7 +1723,7 @@ def intCastVal : RVal → Res RVal
       if value.isNaN then .exn (.valueError "cannot convert float NaN to integer")
       else .exn (.overflowError "cannot convert float infinity to integer")
   | .str s => intOfStr s
-  | .bytes _ => .unsupported "int() parsing of bytes is outside the tier"
+  | .bytes values => intOfBytes values
   | .ref _ =>
       .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")

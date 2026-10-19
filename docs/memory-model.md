@@ -5578,7 +5578,11 @@ names in bytes errors use CPython's 200-byte index/repetition limit and
 100-byte membership/concatenation limit, including the replacement character
 when a UTF-8 prefix ends inside a character.
 
-Numeric parsing from bytes, explicit `bytes_iterator` cursors, bytes methods,
+`int(bytes)` now accepts the ASCII decimal slice already modelled for
+`int(str)`: the six CPython whitespace characters, signs, single underscores
+between digits, and the tier's digit budget. Invalid ASCII forms raise the
+exact bytes-rendered `ValueError`; non-ASCII octets remain loud until Unicode
+decoding is modelled. Explicit `bytes_iterator` cursors, other bytes methods,
 decoding, and bytes percent formatting are still unfinished and refuse loudly;
 they never manufacture a numeric-conversion or non-iterable error for a valid
 bytes program. `Examples/python/bytes_lab` and the whole-file bytes fixture

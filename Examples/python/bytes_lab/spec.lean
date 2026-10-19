@@ -26,7 +26,9 @@ load_program bytes_lab from "Examples/python/bytes_lab/bytes_lab.json"
   (.typeError "'int' object is not iterable")
 #py_check bytes_lab.sum_start_lazy() raises
   (.typeError "sum() can't sum bytes [use b''.join(seq) instead]")
-
+#py_check bytes_lab.numeric_int() = Val.tuple #[.int 12, .int 0, .int 7]
+#py_check bytes_lab.numeric_int_invalid() raises
+  (.valueError "invalid literal for int() with base 10: b'12x'")
 theorem literal : bytes_lab.literal() ==> (#[97, 98, 0, 255] : PyBytes) := by
   exact CallsTo.intro 64 (by rfl)
 

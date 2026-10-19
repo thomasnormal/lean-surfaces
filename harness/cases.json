@@ -1147,6 +1147,8 @@
   {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "ordinal", "args": [[{"t":"bytes","v":[]}]], "expect": "match"},
   {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "enumerate_bytes", "args": [[{"t":"bytes","v":[128,255]}]], "expect": "match"},
   {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "numeric_int_still_loud", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "numeric_int", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "numeric_int_invalid", "args": [[]], "expect": "match"},
   {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "numeric_float_still_loud", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "iterator_still_loud", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/bytes_lab/bytes_lab.py", "function": "formatting_still_loud", "args": [[]], "expect": "unsupported"},

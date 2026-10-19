@@ -115,7 +115,15 @@ def enumerate_bytes(value):
 
 
 def numeric_int_still_loud():
-    return int(b"12")
+    return int(b"\xff")
+
+
+def numeric_int():
+    return int(b" +1_2\n"), int(b"-0"), int(b"0007")
+
+
+def numeric_int_invalid():
+    return int(b"12x")
 
 
 def numeric_float_still_loud():

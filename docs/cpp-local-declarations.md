@@ -1,13 +1,13 @@
 # C++ automatic integral declarations: specification and price
 
-2026-10-19. **Strict frontend admission, not general callable execution.** The
-automatic-local adapter now admits a narrow `DeclStmt` shape into the
-object-backed frame. The current callable profile still refuses declarations
-until its whole-body context is threaded through that adapter. This contract
-connects source declarations to [integral objects](cpp-integral-objects.md),
-rather than introducing another value store beside the lifetime model. The
-pricing tool measures archived body inventories; it does not execute a body or
-validate a function signature.
+2026-10-19. **Strict frontend admission with bounded callable execution.** The
+automatic-local adapter admits a narrow `DeclStmt` shape into the
+object-backed frame, and the object-backed callable profile now threads those
+declarations through real callable bodies. This contract connects source
+declarations to [integral objects](cpp-integral-objects.md), rather than
+introducing another value store beside the lifetime model. The pricing tool
+measures archived body inventories; it does not execute a body or validate a
+function signature.
 
 ## Normative anchors
 
@@ -199,14 +199,16 @@ belong to the external receipt.
 - Include loop re-entry, nested scopes, nearest-loop/switch transfers and return-before-cleanup in stateful checks.
 - Re-run the three-corpus census with source ownership, full wall sets and extraction/time-budget failures separate from execution verdicts.
 
-The current compiler/Lean regression pins loud `DeclStmt` refusals for 18
-source forms, including supported-target shapes and the still-out-of-tier
-storage, reference, array and alias cases. It checks Clang's distinct shadow
-handles, self-initializer binding and preceding-declarator references without
-executing an undefined self-initialization. The literal-fixture loader uses an
-explicit `maxRecDepth 100000` caller budget; production defaults are unchanged.
-These are frontend/refusal controls,
-not proofs or execution claims about prototype programs.
+The current compiler/Lean regression admits the ordinary integral copy,
+direct, list and default forms, including multiple declarators, `auto`, const
+objects, shadowing, self-initialization and a loop-local declaration. It keeps
+static/thread storage, volatile objects, references, arrays and aliases loud.
+It checks Clang's distinct shadow handles, self-initializer binding and
+preceding-declarator references without executing an undefined
+self-initialization. The literal-fixture loader uses an explicit
+`maxRecDepth 100000` caller budget; production defaults are unchanged. These
+are frontend/refusal controls, not proofs or execution claims about prototype
+programs.
 
 The optional [variable-evidence supplement](cpp-variable-evidence.md) records
 versioned Clang storage, role, initializer, constexpr and attribute

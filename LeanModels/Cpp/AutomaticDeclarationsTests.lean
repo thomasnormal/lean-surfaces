@@ -44,6 +44,10 @@ private def varNode (declaration : String) (init : Option Raw) : Raw :=
     | none => []
     | some value => [("init", text "c"), ("inner", .array [value])])) )
 
+private def varNodeWithStyle (declaration style : String) (values : List Raw) : Raw :=
+  object [("id", text declaration), ("kind", text "VarDecl"),
+    ("init", text style), ("inner", .array values)]
+
 private def declarationStmt (children : List Raw) : Raw := object [
   ("id", text "0x20"), ("kind", text "DeclStmt"), ("inner", .array children)]
 
@@ -141,6 +145,38 @@ private def admitsDefaultAndZero : Bool :=
       | _ => false
   | .error _ => false
 
+private def admitsDirectScalarForms : Bool :=
+  let callDeclaration := handle "0x10"
+  let parenDeclaration := handle "0x20"
+  let callInitializer := initializerEvidence (handle "0x11") "IntegerLiteral"
+  let parenInitializer := initializerEvidence (handle "0x21") "IntegerLiteral"
+  let source := declarationStmt [
+    varNodeWithStyle "0x10" "call" [literal "0x11" "7"],
+    varNodeWithStyle "0x20" "paren-list" [literal "0x21" "9"]]
+  let admitted := admit (probe source)
+    [typeRow callDeclaration intType, typeRow parenDeclaration intType]
+    [variableRow callDeclaration .call (some callInitializer),
+      variableRow parenDeclaration .parenList (some parenInitializer)] []
+    TargetProfile.lp64 [] [0]
+  match admitted with
+  | .ok result =>
+      result.declarations == [callDeclaration, parenDeclaration] &&
+        match result.statement with
+        | .sequence (.declare call _ _ (.literal first))
+            (.declare paren _ _ (.literal second)) =>
+            call == callDeclaration && paren == parenDeclaration &&
+              first.value == 7 && second.value == 9
+        | _ => false
+  | .error _ => false
+
+private def rejectsMultiElementDirectScalar : Bool :=
+  let declaration := handle "0x10"
+  let initializer := initializerEvidence (handle "0x11") "InitListExpr"
+  let source := declarationStmt [varNodeWithStyle "0x10" "paren-list" [
+    literal "0x11" "1", literal "0x12" "2"]]
+  (admit (probe source) [typeRow declaration intType]
+    [variableRow declaration .parenList (some initializer)] [] TargetProfile.lp64 [] [0]) matches .error _
+
 private def rejectsUnsupportedForms : Bool :=
   let declaration := handle "0x10"
   let initializer := initializerEvidence (handle "0x11") "CallExpr"
@@ -165,6 +201,8 @@ private def rejectsBadJoin : Bool :=
 #guard admitsSelfInitializer
 #guard selfInitializerRetainsStorage
 #guard admitsDefaultAndZero
+#guard admitsDirectScalarForms
+#guard rejectsMultiElementDirectScalar
 #guard rejectsUnsupportedForms
 #guard rejectsBadJoin
 

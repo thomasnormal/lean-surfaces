@@ -2,8 +2,9 @@
 
 2026-10-19. `LeanModels/Cpp/IntegralObjectFrame.lean` connects the integral
 object store to a stateful function frame. It is the executable foundation for
-automatic parameter and local declarations; it does not yet admit `DeclStmt`
-from Clang or replace the existing value-only callable evaluator.
+automatic parameter and local declarations, including the validated Clang
+`DeclStmt` fragment; it does not replace the existing value-only callable
+evaluator.
 
 `IntegralObjectFrame` owns one `IntegralObjectStore` and a stack of
 `FrameScope`s. A binding records the declaration occurrence handle, its fresh
@@ -45,10 +46,11 @@ integral operations, missing declarations and lifetime errors retain the
 current frame instead of claiming a successful cleanup.
 
 The expression fragment is deliberately small: literals, declaration-handle
-reads, integral unary operations and integral binary operations. Control-shell
-execution and Clang `DeclStmt` admission remain separate obligations. The
-tests cover parameter and sequential-local initialization, nested lookup and
-shadowing, repeated loop-body allocation, self-initialization, default
-initialization followed by assignment, retained prefix state on division
-failure, reverse cleanup, return-before-cleanup, const writes, and loud
-missing/duplicate bindings.
+reads, integral unary operations and integral binary operations. The frontend
+adapter joins Clang declaration, type, storage and initializer evidence before
+the frame executes it; unsupported declaration forms remain loud. The tests
+cover parameter and sequential-local initialization, copy/direct/list/default
+initialization, nested lookup and shadowing, repeated loop-body allocation,
+self-initialization, default initialization followed by assignment, retained
+prefix state on division failure, reverse cleanup, return-before-cleanup, const
+writes, and loud missing/duplicate bindings.

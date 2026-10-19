@@ -511,7 +511,7 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
   | .error _ => false""")
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
-    def test_actual_compiler_local_declarations_remain_loud(self):
+    def test_actual_compiler_local_declarations_admit_integral_forms_and_keep_walls(self):
         requested = os.environ.get("LEANCPP_CLANG")
         library = os.environ.get("LEANCPP_PROBE_LIBRARY")
         if not requested or not library:
@@ -599,18 +599,118 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
         self.assertEqual(references(self_scope), [self_variable["id"]])
         first, second = bodies["local_chain"]["inner"][0]["inner"]
         self.assertEqual(references(second), [first["id"]])
+        admitted = {
+            "local_copy", "local_direct", "local_list", "local_copy_list",
+            "local_zero", "local_default", "local_const", "local_auto",
+            "local_chain", "local_shadow", "local_self", "local_for",
+        }
         guards = ["""#guard match parseValidatedVariableEvidence evidence with
 | .ok rows => rows.length > 35 && rows.any (fun row => row.initializer.isNone) &&
     rows.any (fun row => row.storageDuration == .thread)
 | .error _ => false"""]
         for name in sorted(functions):
-            guards.append(
-                "#guard match admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
-                + str(paths[name]) + " with\n"
-                '| .error reason => reason == "callable: unsupported statement DeclStmt"\n'
-                "| .ok _ => false")
+            admission = ("admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
+                         + str(paths[name]))
+            if name in admitted:
+                guards.append(f"#guard {admission}.isOk")
+            else:
+                guards.append(f"#guard {admission} matches .error _")
         self.assert_accepts(json.dumps(probe), "\n".join(guards),
                             options="set_option maxRecDepth 100000 in")
+
+    def test_actual_compiler_local_declarations_differential_execution(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        probe_library = pathlib.Path(library).resolve()
+        self.assertTrue(probe_library.is_file(), "selected probe library must exist")
+        functions = {
+            "local_copy": "int local = value; return local;",
+            "local_direct": "int local(value); return local;",
+            "local_list": "int local{value}; return local;",
+            "local_copy_list": "int local = {value}; return local;",
+            "local_zero": "int local{}; return local;",
+            "local_default": "int local; local = value; return local;",
+            "local_const": "const int local = value; return local;",
+            "local_auto": "auto local = value; return local;",
+            "local_chain": "int first = value, second = first; return second;",
+            "local_shadow": "int local = value; { int local = 3; ++local; } return local;",
+            "local_for": "for (int local = 0; local < value; ++local) { break; } return value;",
+        }
+        source = self.root / "locals.cpp"
+        source.write_text("\n".join(
+            "int " + name + "(int value) { " + body + " }"
+            for name, body in functions.items()), encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(probe_library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        paths = {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in functions:
+                paths[node["name"]] = path
+            pending.extend((child, path + [index])
+                           for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), set(functions))
+
+        calls = [(name, value) for name in functions for value in (-7, 0, 9)]
+        oracle = self.root / "locals_oracle.cpp"
+        oracle.write_text(
+            '#include <iostream>\n#include "locals.cpp"\n'
+            "int main() {\n" + "".join(
+                f"  std::cout << {name}({value}) << '\\n';\n"
+                for name, value in calls) + "}\n", encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([
+                clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle), "-o", str(binary),
+            ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                      capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append(executed.stdout.splitlines())
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls))
+
+        guards = [
+            "def callableTypeRows := parseValidatedTypeEvidence evidence",
+            "def callableExpressionRows := parseValidatedBinaryExpressionEvidence evidence",
+            "#guard callableTypeRows.isOk",
+            "#guard callableExpressionRows.isOk",
+        ]
+        for name in functions:
+            guards.append(f"""def {name} : Except String CallableFunction := do
+  let types ← callableTypeRows
+  let expressions ← callableExpressionRows
+  admitCallableFunction evidence types expressions TargetProfile.lp64 {paths[name]}""")
+            guards.append(f"#guard {name}.isOk")
+        for (name, value), expected in zip(calls, outputs[0]):
+            guards.append(f"""#guard match {name} with
+  | .ok function => match evaluateCallableObject 128 .lp64 function [⟨.signed 32, {value}⟩] with
+    | .ok (.ok result) => result == ⟨.signed 32, {int(expected)}⟩
+    | _ => false
+  | .error _ => false""")
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+                            options=("open LeanModels.Cpp.CallableObjectEvaluation\n"
+                                     "set_option maxRecDepth 100000 in"), timeout=360)
+        print(f"local declaration differential: {len(calls)} rows at -O0/-O2")
 
     def test_actual_compiler_switch_continue_admitted(self):
         requested = os.environ.get("LEANCPP_CLANG")

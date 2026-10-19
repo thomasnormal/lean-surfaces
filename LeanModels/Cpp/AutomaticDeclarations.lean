@@ -158,7 +158,8 @@ private partial def parseExpression (profile : TargetProfile)
       parseExpression profile available expressionRows child childExpected
         (if castKind == "IntegralCast" || castKind == "IntegralToBoolean"
           then sourceExpected else typeExpected)
-  | "ParenExpr" | "ConstantExpr" | "ExprWithCleanups" | "MaterializeTemporaryExpr" =>
+  | "ParenExpr" | "ConstantExpr" | "ExprWithCleanups" | "MaterializeTemporaryExpr" |
+      "CXXConstructExpr" | "ParenListExpr" =>
       let children ← rawChildren raw
       let [child] := children
         | throw "automatic declaration: expression wrapper requires one child"
@@ -219,7 +220,16 @@ private def parseInitializer (profile : TargetProfile)
   let _ ← requireIntegralType "initializer source type" evidence.sourceType
   let _ ← requireIntegralType "initializer result type" evidence.type
   match row.initStyle with
-  | .call | .parenList => throw "automatic declaration: call/paren-list initialization is outside the profile"
+  | .call | .parenList =>
+      let value ← if evidence.kind == "InitListExpr" then
+          let children ← rawChildren initializer
+          match children with
+          | [child] => pure child
+          | _ => throw "automatic declaration: direct scalar initialization requires one element"
+        else pure initializer
+      let expression ← parseExpression profile (row.occurrence :: available)
+        expressionRows value (some evidence.sourceType) (some evidence.type)
+      pure (.declare row.occurrence destinationType evidence.sourceType expression)
   | .c | .list =>
       if evidence.kind == "InitListExpr" then
         let children ← rawChildren initializer

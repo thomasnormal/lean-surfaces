@@ -990,6 +990,20 @@ committed census snapshot is unchanged and this rung makes no fresh
 whole-corpus coverage claim. The focused initializer tests establish the
 admission boundary; the next census rerun will price any newly clean rows.
 
+### Constant part selects on arbitrary packed ranges — 2026-10-19
+
+In-range constant simple part selects on one-dimensional noncanonical packed
+ranges now reuse the existing selected-window evaluator. The extractor maps
+the right source label to its LVec offset and retains the selected width for
+both reads and writes. Dynamic, out-of-range and indexed part-selects remain
+loud. The `packed_range_part_select` fixture checks the normalized read/write
+pair through Lean and the self-check runner.
+
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and this rung makes no fresh
+whole-corpus coverage claim. The focused range tests establish the admission
+boundary; the next census rerun will price any newly clean rows.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

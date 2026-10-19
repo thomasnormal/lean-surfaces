@@ -442,6 +442,16 @@ The external `sv-tests-2` checkout was unavailable for this turn, so the
 committed census snapshot is unchanged and no fresh whole-corpus gain is
 claimed. This is not a whole-corpus simulator-agreement claim.
 
+## Constant part selects on arbitrary packed ranges — 2026-10-19
+
+In-range constant simple part selects on one-dimensional noncanonical packed
+scalar ranges now normalize their right bound to the existing LVec offset for
+both reads and writes. Dynamic, out-of-range and indexed part-selects remain
+loud. The `packed_range_part_select` fixture and proof pass through the
+self-check runner. The external `sv-tests-2` checkout was unavailable for this
+turn, so the committed census snapshot is unchanged and no fresh whole-corpus
+gain is claimed. This is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

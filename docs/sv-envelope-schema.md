@@ -309,10 +309,11 @@ retains its own two-state conversion. This node is an assignment target,
 not a readable expression.
 
 For a one-dimensional packed scalar source with a noncanonical declared range,
-the legacy extractor admits only an in-range constant bit select. It records
-the normalized LVec offset as a `Literal` index and forces unsigned offset
-interpretation; dynamic/out-of-range indices and all part-select forms remain
-`Unsupported` until their declared bounds are represented directly.
+the legacy extractor admits in-range constant bit selects and simple
+constant part selects. It records the normalized LVec offset of the right
+bound as a `Literal` index and forces unsigned offset interpretation; dynamic,
+out-of-range and indexed part-selects remain `Unsupported` until their
+declared bounds are represented directly.
 
 Direct fields of an untagged packed struct or packed union are represented by
 the same window nodes: the field's fixed `bitOffset` becomes a literal LVec

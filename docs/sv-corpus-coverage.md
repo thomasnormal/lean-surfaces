@@ -23,9 +23,10 @@ host-local checkout path. Supply the actual test directory explicitly.
 
 ## Fresh paired census — 2026-10-14
 
-The generated summary in `docs/sv-construct-census.json` now measures
+The October 14 summary in `docs/sv-construct-census.json` measured
 **22,008** chapter-scoped paths with pyslang 11 on Linux. The older July
-measurements retained after this section are historical, not this snapshot.
+measurements retained after this section are historical. The current snapshot
+is the October 19 comparison below.
 Both sides of the integral-variable-port comparison use the same paths:
 **2,572 → 2,573 clean**, **19,370 → 19,369 partial**, **66 includes skipped**,
 **0 extraction errors**, **2 gains**, **1 loss**. Four paths change their
@@ -49,29 +50,52 @@ census changes the snapshot to **2,596 clean** and **19,346 partial**: eight
 additional gains (one in chapter 7 and seven in chapter 20), no losses, and
 `CallExpression` falls to **4,207** files.
 
+## Fixed array dimension selection — 2026-10-19
+
+The corpus now contains **22,030** chapter-scoped paths. Both sides of a
+fresh paired run use those same paths and pyslang 11 on Python 3.9. Fixed
+packed/unpacked range metadata and optional static dimension operands remove
+the dimension-arity refusal from **33** files; **67** files lose every
+dimension-query refusal. Metadata-only type aliases also become admissible,
+without admitting runtime array/aggregate storage, while erased aliases in
+rejected compilations retain a diagnostic refusal. The resulting snapshot is
+**2,596 clean → 2,599 clean**, **19,368 partial → 19,365 partial**,
+**66 includes skipped**, **0 extraction errors**, three gains and no losses.
+Two gains are chapter-20 type-operand queries; one is a chapter-6 fixture
+whose unused packed-structure alias has no runtime effect. All three new
+clean fixtures execute through Lean's self-check runner and agree with
+independent source observations. The **22** extra paths
+relative to October 14 are all partial on both sides, not regressions.
+
+The same family corrects `$dimensions` of a plain scalar to zero while
+preserving an implicit packed dimension for predefined integers, enums and
+untagged packed aggregates. Dynamic storage, tagged unions, runtime dimension
+selection and effects remain loud. The table is the fresh snapshot; earlier comparisons are
+historical. Metadata admission is not simulator agreement or live execution.
+
 | Chapter | Total | Clean | Partial | Include skip |
 |---|---:|---:|---:|---:|
-| 3 | 298 | 24 | 273 | 1 |
+| 3 | 300 | 24 | 275 | 1 |
 | 4 | 427 | 121 | 306 | 0 |
 | 5 | 618 | 325 | 293 | 0 |
-| 6 | 1,184 | 304 | 880 | 0 |
-| 7 | 793 | 14 | 779 | 0 |
-| 8 | 841 | 0 | 840 | 1 |
-| 9 | 586 | 60 | 526 | 0 |
+| 6 | 1,185 | 305 | 880 | 0 |
+| 7 | 796 | 14 | 782 | 0 |
+| 8 | 842 | 0 | 841 | 1 |
+| 9 | 589 | 60 | 529 | 0 |
 | 10 | 656 | 156 | 500 | 0 |
 | 11 | 1,034 | 509 | 525 | 0 |
 | 12 | 627 | 167 | 460 | 0 |
-| 13 | 597 | 1 | 596 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
 | 14 | 473 | 1 | 472 | 0 |
-| 15 | 549 | 0 | 549 | 0 |
-| 16 | 1,542 | 11 | 1,531 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1,543 | 11 | 1,532 | 0 |
 | 17 | 512 | 0 | 512 | 0 |
 | 18 | 851 | 1 | 815 | 35 |
 | 19 | 767 | 0 | 767 | 0 |
-| 20 | 821 | 120 | 701 | 0 |
-| 21 | 895 | 8 | 887 | 0 |
+| 20 | 825 | 122 | 703 | 0 |
+| 21 | 899 | 8 | 891 | 0 |
 | 22 | 572 | 371 | 173 | 28 |
-| 23 | 850 | 26 | 824 | 0 |
+| 23 | 851 | 26 | 825 | 0 |
 | 24 | 355 | 9 | 346 | 0 |
 | 25 | 478 | 8 | 470 | 0 |
 | 26 | 565 | 1 | 564 | 0 |
@@ -89,11 +113,11 @@ additional gains (one in chapter 7 and seven in chapter 20), no losses, and
 | 38 | 340 | 170 | 170 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 4 | 83 | 0 |
-| **Total** | **22,008** | **2,596** | **19,346** | **66** |
+| **Total** | **22,030** | **2,599** | **19,365** | **66** |
 
-The top remaining refusal sets count assignment targets in 4,457 files,
-expression calls in 4,207, instance hierarchy in 3,833, and two-state
-declaration shapes in 3,703. Counts overlap: a file may have several walls.
+The top remaining refusal sets count assignment targets in 4,471 files,
+expression calls in 4,222, instance hierarchy in 3,836, and two-state
+declaration shapes in 3,716. Counts overlap: a file may have several walls.
 
 ## Historical method
 

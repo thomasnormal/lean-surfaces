@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22008,
+  "corpus_files": 22030,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -8,7 +8,7 @@
    "name": "pyslang"
   },
   "platform": "linux-x86_64",
-  "python": "3.12",
+  "python": "3.9",
   "walk": "chapter-* only"
  },
  "schema": "sv-census-1",
@@ -16,23 +16,23 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    4457
+    4471
    ],
    [
     "CallExpression",
-    4207
+    4222
    ],
    [
     "InstanceSymbol:Instance",
-    3833
+    3836
    ],
    [
     "VariableSymbol:2state",
-    3703
+    3716
    ],
    [
     "ExpressionStatement:CallExpression",
-    3699
+    3715
    ],
    [
     "TimedStatement:DelayControl",
@@ -40,19 +40,19 @@
    ],
    [
     "VariableDeclStatement:2state",
-    2468
+    2469
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1629
+    1637
    ],
    [
     "NamedValueExpression:2state",
-    1498
+    1504
    ],
    [
     "ClassType",
-    1323
+    1326
    ],
    [
     "ProceduralBlockSymbol:NoEventControl",
@@ -60,15 +60,15 @@
    ],
    [
     "InvalidStatement",
-    1304
+    1302
    ],
    [
     "MemberAccessExpression",
-    1293
+    1297
    ],
    [
     "ElementSelectExpression:source-type",
-    1089
+    1092
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -80,11 +80,11 @@
    ],
    [
     "ConversionExpression:width",
-    771
+    775
    ],
    [
     "PackageSymbol",
-    761
+    762
    ],
    [
     "CovergroupType:CovergroupType",
@@ -96,15 +96,11 @@
    ],
    [
     "VariableSymbol:type",
-    665
+    667
    ],
    [
     "CheckerSymbol",
     565
-   ],
-   [
-    "TypeAliasType:TypeAlias",
-    562
    ],
    [
     "ClockingBlockSymbol:ClockingBlock",
@@ -112,7 +108,7 @@
    ],
    [
     "ParameterSymbol:Parameter",
-    543
+    544
    ],
    [
     "CheckerInstanceSymbol:CheckerInstance",
@@ -139,12 +135,16 @@
     319
    ],
    [
+    "TypeAliasType:TypeAlias",
+    297
+   ],
+   [
     "NamedValueExpression:Parameter",
-    289
+    290
    ],
    [
     "GenerateBlockArraySymbol:GenerateBlockArray",
-    285
+    286
    ],
    [
     "SequenceSymbol:Sequence",
@@ -156,7 +156,7 @@
    ],
    [
     "NullLiteral",
-    266
+    267
    ],
    [
     "GenerateBlockSymbol:GenerateBlock",
@@ -164,11 +164,11 @@
    ],
    [
     "SignalEventControl:clock",
-    237
+    238
    ],
    [
     "BlockStatement:JoinNone",
-    218
+    219
    ],
    [
     "SignalEventControl:None_",
@@ -176,7 +176,7 @@
    ],
    [
     "ImmediateAssertionStatement",
-    209
+    210
    ],
    [
     "GenvarSymbol:Genvar",
@@ -195,12 +195,8 @@
     167
    ],
    [
-    "TypeAliasType",
-    165
-   ],
-   [
     "TimedStatement:DelayControl:expression",
-    163
+    164
    ],
    [
     "GenericClassDefSymbol",
@@ -208,7 +204,7 @@
    ],
    [
     "VariableSymbol:range",
-    143
+    145
    ],
    [
     "TimedStatement:CycleDelayControl",
@@ -223,19 +219,27 @@
     124
    ],
    [
+    "TypeAliasType",
+    116
+   ],
+   [
     "ProceduralAssignStatement",
     109
+   ],
+   [
+    "EventTriggerStatement",
+    108
    ],
    [
     "ExplicitImportSymbol:ExplicitImport",
     107
    ],
    [
-    "EventTriggerStatement",
-    105
+    "ProceduralBlockSymbol:Final",
+    85
    ],
    [
-    "ProceduralBlockSymbol:Final",
+    "NamedValueExpression:range",
     84
    ],
    [
@@ -243,16 +247,8 @@
     82
    ],
    [
-    "NamedValueExpression:range",
-    82
-   ],
-   [
     "WhileLoopStatement",
     82
-   ],
-   [
-    "CallExpression:dimension:type",
-    81
    ],
    [
     "InsideExpression",
@@ -268,7 +264,7 @@
    ],
    [
     "VariableDeclStatement:type",
-    72
+    73
    ],
    [
     "RandSequenceStatement",
@@ -276,7 +272,7 @@
    ],
    [
     "ForeverLoopStatement",
-    70
+    71
    ],
    [
     "NetSymbol:Tri",
@@ -288,19 +284,23 @@
    ],
    [
     "NamedValueExpression:type",
-    64
+    65
    ],
    [
     "WaitStatement",
-    60
+    63
    ],
    [
-    "EmptyMemberSymbol:EmptyMember",
-    58
+    "TypeAlias:invalid-compilation",
+    61
    ],
    [
     "NetSymbol:Supply1",
     57
+   ],
+   [
+    "EmptyMemberSymbol:EmptyMember",
+    56
    ],
    [
     "NetSymbol:WAnd",
@@ -315,12 +315,12 @@
     54
    ],
    [
-    "NetSymbol:WOr",
-    52
+    "RangeSelectExpression:source-type",
+    53
    ],
    [
-    "RangeSelectExpression:source-type",
-    50
+    "NetSymbol:WOr",
+    52
    ],
    [
     "TimedStatement:ImplicitEventControl",
@@ -335,12 +335,16 @@
     48
    ],
    [
+    "CallExpression:dimension:argument",
+    48
+   ],
+   [
     "ConversionExpression:Explicit",
-    44
+    45
    ],
    [
     "TimeLiteral",
-    44
+    45
    ],
    [
     "CaseStatement:Unique",
@@ -419,10 +423,6 @@
     33
    ],
    [
-    "CallExpression:dimension:arity",
-    32
-   ],
-   [
     "NetSymbol:delay",
     27
    ],
@@ -440,7 +440,7 @@
    ],
    [
     "VariableDeclStatement:range",
-    23
+    24
    ],
    [
     "ExpressionStatement:UnaryExpression-target",
@@ -496,10 +496,6 @@
    ],
    [
     "NetSymbol:range",
-    17
-   ],
-   [
-    "CallExpression:dimension:range",
     17
    ],
    [
@@ -599,6 +595,10 @@
     10
    ],
    [
+    "AssignmentExpression:selected-effects",
+    9
+   ],
+   [
     "CheckerSymbol:Checker",
     9
    ],
@@ -608,10 +608,6 @@
    ],
    [
     "BinaryExpression:WildcardInequality",
-    8
-   ],
-   [
-    "AssignmentExpression:selected-effects",
     8
    ],
    [
@@ -783,6 +779,10 @@
     1
    ],
    [
+    "CallExpression:dimension:dynamic",
+    1
+   ],
+   [
     "ConfigBlockSymbol:ConfigBlock",
     1
    ],
@@ -828,14 +828,14 @@
    ]
   ],
   "by_status": {
-   "clean": 2596,
-   "partial": 19346,
+   "clean": 2599,
+   "partial": 19365,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
     272,
-    1386
+    1387
    ],
    "compilation": [
     0,
@@ -890,8 +890,8 @@
     52
    ],
    "simulation": [
-    2143,
-    18645
+    2146,
+    18666
    ],
    "simulation elaboration": [
     0,
@@ -1084,9 +1084,9 @@
    },
    "chapter-6": {
     "blocked_by_more": 749,
-    "clean": 291,
+    "clean": 292,
     "partial": 749,
-    "simulation_tests": 1040,
+    "simulation_tests": 1041,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
@@ -1098,7 +1098,7 @@
      ],
      [
       "CallExpression",
-      231
+      232
      ],
      [
       "NamedValueExpression:2state",
@@ -1110,11 +1110,11 @@
      ],
      [
       "TimedStatement:DelayControl",
-      161
+      162
      ],
      [
       "TypeAliasType:TypeAlias",
-      154
+      153
      ],
      [
       "ConversionExpression:width",
@@ -1134,7 +1134,7 @@
      ],
      [
       "InstanceSymbol:Instance",
-      66
+      67
      ],
      [
       "RealLiteral",
@@ -1201,9 +1201,9 @@
    "chapter-13": {
     "clean": 1,
     "error": 0,
-    "partial": 596,
+    "partial": 597,
     "skip_include": 0,
-    "total": 597,
+    "total": 598,
     "unlockable": 0
    },
    "chapter-14": {
@@ -1217,17 +1217,17 @@
    "chapter-15": {
     "clean": 0,
     "error": 0,
-    "partial": 549,
+    "partial": 550,
     "skip_include": 0,
-    "total": 549,
+    "total": 550,
     "unlockable": 0
    },
    "chapter-16": {
     "clean": 11,
     "error": 0,
-    "partial": 1531,
+    "partial": 1532,
     "skip_include": 0,
-    "total": 1542,
+    "total": 1543,
     "unlockable": 0
    },
    "chapter-17": {
@@ -1255,19 +1255,19 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 120,
+    "clean": 122,
     "error": 0,
-    "partial": 701,
+    "partial": 703,
     "skip_include": 0,
-    "total": 821,
+    "total": 825,
     "unlockable": 0
    },
    "chapter-21": {
     "clean": 8,
     "error": 0,
-    "partial": 887,
+    "partial": 891,
     "skip_include": 0,
-    "total": 895,
+    "total": 899,
     "unlockable": 0
    },
    "chapter-22": {
@@ -1281,9 +1281,9 @@
    "chapter-23": {
     "clean": 26,
     "error": 0,
-    "partial": 824,
+    "partial": 825,
     "skip_include": 0,
-    "total": 850,
+    "total": 851,
     "unlockable": 0
    },
    "chapter-24": {
@@ -1337,9 +1337,9 @@
    "chapter-3": {
     "clean": 24,
     "error": 0,
-    "partial": 273,
+    "partial": 275,
     "skip_include": 1,
-    "total": 298,
+    "total": 300,
     "unlockable": 0
    },
    "chapter-30": {
@@ -1447,35 +1447,35 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 304,
+    "clean": 305,
     "error": 0,
     "partial": 880,
     "skip_include": 0,
-    "total": 1184,
+    "total": 1185,
     "unlockable": 1
    },
    "chapter-7": {
     "clean": 14,
     "error": 0,
-    "partial": 779,
+    "partial": 782,
     "skip_include": 0,
-    "total": 793,
+    "total": 796,
     "unlockable": 0
    },
    "chapter-8": {
     "clean": 0,
     "error": 0,
-    "partial": 840,
+    "partial": 841,
     "skip_include": 1,
-    "total": 841,
+    "total": 842,
     "unlockable": 0
    },
    "chapter-9": {
     "clean": 60,
     "error": 0,
-    "partial": 526,
+    "partial": 529,
     "skip_include": 0,
-    "total": 586,
+    "total": 589,
     "unlockable": 0
    }
   },

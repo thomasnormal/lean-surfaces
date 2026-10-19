@@ -391,14 +391,22 @@ call adds `$clog2:invalid-compilation`. No new runtime or scheduler rule is
 introduced.
 
 It also folds `$size`, `$high`, `$left`, `$right`, `$low`, `$increment`,
-`$dimensions` and `$unpacked_dimensions` for a fixed, admitted integral
-declaration (array-query system functions, §20.7). The result is a signed
+`$dimensions` and `$unpacked_dimensions` for fixed integral types and fixed
+arrays thereof (array-query system functions, §20.7). The result is a signed
 32-bit `Literal` carrying `fixed_dimension_query` with the query name;
-`$size` is the declared width, `$high`/`$left` are width minus one,
-`$right`/`$low` are zero, `$increment` is one for the admitted descending
-packed dimensions, `$dimensions` is one, and `$unpacked_dimensions` is zero.
-Dynamic/associative/queue arrays, effectful
-operands, malformed calls and nonintegral arguments remain `Unsupported`, with
+dimensions are numbered from one, unpacked before packed, retaining each
+declared left/right bound. A predefined integer, enum or packed aggregate
+contributes its implicit packed bit dimension; a plain scalar contributes none.
+Tagged unions are outside this dimension-query slice. `$size` is
+`abs(left - right) + 1`, `$high`/`$low` select the larger/smaller bound,
+and `$increment` is one for descending or equal bounds and minus one for
+ascending bounds. The count queries return total and unpacked dimension counts.
+The six bound/size/direction queries accept an optional pure, frontend-bound
+constant dimension selector, defaulting to one. Literal and parameter/enum
+leaves do not need a cached evaluation; other unbound compound selectors stay
+loud without invoking an evaluation context. Runtime or invalid selectors,
+dynamic/associative/queue arrays, effectful operands, malformed calls and
+nonintegral element types remain `Unsupported`, with
 `DimensionQuery:invalid-compilation` retained for an admitted query in an
 otherwise erroneous compilation.
 
@@ -801,19 +809,23 @@ calls keep their existing `Cast` representation and admission boundary.
 ## Integral typedef declarations (2026-10-09)
 
 On the legacy path, a bound `TypeAlias` member at module or compilation-unit
-scope is omitted only when its bound declared type passes the existing
-`type_width_2s` canonical-shape admission: scalar, predefined integer or
-descending `[W-1:0]` packed scalar vector. The frontend has already
+scope is omitted when its bound declared type passes `type_width_2s` or
+the fixed dimension-query metadata admission: scalar, predefined integer,
+enum, packed structure or untagged packed union, including fixed packed and
+unpacked arrays thereof. The frontend has already
 resolved alias uses, including alias chains, so existing variable and
 expression nodes carry the resulting width, signedness and state kind.
 No `TypeAlias` runtime node is introduced. Block-local typedefs are
 elaboration-only in the bound statement tree, with variable declarations
-lowered through the same canonical type check.
+lowered through the original runtime canonical type check. Erasing a type
+alias does not admit runtime aggregate or unpacked-array storage.
+Frontend errors in a compilation containing an erased alias retain
+`TypeAlias:invalid-compilation` rather than disappearing with the declaration.
 
 Unsupported module aliases retain `sv_kind = "TypeAliasType:TypeAlias"`;
 unsupported compilation-unit aliases retain `sv_kind = "TypeAliasType"`.
-Enum/structure/union/nonintegral types, unpacked arrays and unsupported
-packed ranges remain outside this admission. Symbolic integral aliases
+Dynamic storage, tagged unions and nonintegral element types remain outside
+this metadata admission. Symbolic integral aliases
 retain their existing refusal; symbolic enum metadata is unchanged.
 Runtime compilation-unit members are not erased or admitted by this rule.
 

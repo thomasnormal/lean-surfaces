@@ -257,6 +257,135 @@ class FixedBitQueries(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_explicit_constant_dimension_selectors(self):
+        source = query_source(
+            "$size(vector, 1) + $high(vector, 1 + 0) + $left(vector, DIM) + "
+            "$right(vector, 1) + $low(vector, 1) + $increment(vector, 1)",
+            "logic [7:0] vector; localparam int DIM = 1;")
+        design = lower(source)
+        queries = [node for node in nodes(design) if node.get("fixed_dimension_query")]
+        self.assertEqual([int(node["bits"], 2) for node in queries], [8, 7, 7, 0, 0, 1])
+
+    def test_fixed_type_dimensions_follow_declared_order_and_bounds(self):
+        source = ("module top; initial begin "
+                  "typedef logic [2:4][9:6] packed_t; "
+                  "typedef int array_t [4:1][0:2]; "
+                  "$display(\"%0d\", $dimensions(packed_t), "
+                  "$unpacked_dimensions(packed_t), $size(packed_t, 1), "
+                  "$left(packed_t, 1), $right(packed_t, 1), "
+                  "$low(packed_t, 1), $high(packed_t, 1), "
+                  "$increment(packed_t, 1), $size(packed_t, 2), "
+                  "$increment(packed_t, 2), $dimensions(array_t), "
+                  "$unpacked_dimensions(array_t), $size(array_t, 1), "
+                  "$increment(array_t, 1), $size(array_t, 2), "
+                  "$increment(array_t, 2), $size(array_t, 3), $left(array_t, 3)); "
+                  "end endmodule")
+        design = lower(source)
+        queries = [node for node in nodes(design) if node.get("fixed_dimension_query")]
+        self.assertEqual([int(node["bits"], 2) for node in queries],
+                         [2, 0, 3, 2, 4, 2, 4, 0xffffffff, 4, 1,
+                          3, 2, 4, 1, 3, 0xffffffff, 32, 31])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_unvisited_branch_keeps_static_dimension_selectors(self):
+        source = ("module top; logic [7:0] vector; localparam int DIM = 1; "
+                  "initial begin if ($size(vector) == 8) $display(\"PASS\"); "
+                  "else $display(\"%0d %0d\", $size(vector, 1), $left(vector, DIM)); "
+                  "end endmodule")
+        design = lower(source)
+        queries = [node for node in nodes(design) if node.get("fixed_dimension_query")]
+        self.assertEqual([int(node["bits"], 2) for node in queries], [8, 8, 7])
+
+    def test_unbound_compound_selector_stays_loud(self):
+        source = ("module top; logic [7:0] vector; "
+                  "initial if ($size(vector) == 8) $display(\"PASS\"); "
+                  "else $display(\"%0d\", $size(vector, 1 + 0)); endmodule")
+        design = lower(source)
+        self.assertIn("CallExpression:dimension:dynamic",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_scalar_dimension_counts_are_zero(self):
+        for type_name in ("bit", "logic", "reg"):
+            with self.subTest(type_name=type_name):
+                design = lower(query_source(
+                    "$dimensions(value) + $unpacked_dimensions(value)",
+                    type_name + " value;"))
+                queries = [node for node in nodes(design)
+                           if node.get("fixed_dimension_query")]
+                self.assertEqual([int(node["bits"], 2) for node in queries], [0, 0])
+
+    def test_fixed_dimension_type_aliases_have_no_runtime_effect(self):
+        source = ("module top; typedef logic [2:4][9:6] packed_t; "
+                  "typedef packed_t array_t [1:2]; "
+                  "initial $display(\"%0d %0d\", $dimensions(array_t), "
+                  "$size(array_t, 3)); endmodule")
+        design = lower(source)
+        queries = [node for node in nodes(design) if node.get("fixed_dimension_query")]
+        self.assertEqual([int(node["bits"], 2) for node in queries], [3, 4])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_fixed_array_runtime_storage_stays_loud(self):
+        source = ("module top; typedef logic [7:0] array_t [1:2]; array_t values; "
+                  "initial $display(\"%0d\", $size(values)); endmodule")
+        design = lower(source)
+        queries = [node for node in nodes(design) if node.get("fixed_dimension_query")]
+        self.assertEqual([int(node["bits"], 2) for node in queries], [2])
+        self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_erasing_fixed_type_alias_keeps_frontend_errors_loud(self):
+        sources = (
+            "typedef struct packed {int member = 5;} bad_t; "
+            "module top; initial $finish; endmodule",
+            "module top; typedef logic [2:4] range_t; "
+            "initial undeclared = 1; endmodule",
+        )
+        for source in sources:
+            with self.subTest(source=source):
+                design = lower(source, require_valid=False)
+                self.assertIn("TypeAlias:invalid-compilation",
+                              [node.get("sv_kind") for node in nodes(design)])
+
+    def test_tagged_union_metadata_stays_outside_dimension_tier(self):
+        source = ("module top; typedef union tagged packed {void Invalid; int Valid;} tagged_t; "
+                  "initial $display(\"%0d\", $dimensions(tagged_t)); endmodule")
+        design = lower(source)
+        self.assertFalse(any(node.get("fixed_dimension_query") for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_packed_aggregate_and_enum_dimensions(self):
+        source = ("module top; initial begin "
+                  "typedef struct packed {logic [2:0] first; bit second;} packet_t; "
+                  "typedef enum logic [4:0] {LOW = 5'd3, HIGH = 5'd4} state_t; "
+                  "typedef enum bit {OFF = 0, ON = 1} scalar_state_t; "
+                  "$display(\"%0d\", $dimensions(packet_t), $size(packet_t), "
+                  "$dimensions(state_t), $size(state_t), $dimensions(scalar_state_t)); "
+                  "end endmodule")
+        design = lower(source)
+        queries = [node for node in nodes(design) if node.get("fixed_dimension_query")]
+        self.assertEqual([int(node["bits"], 2) for node in queries], [1, 4, 1, 5, 1])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_runtime_or_effectful_dimension_selectors_stay_loud(self):
+        for selector in ("dimension", "dimension++", "(dimension = 1)"):
+            with self.subTest(selector=selector):
+                source = query_source("$size(value, " + selector + ")",
+                                      "logic [7:0] value; int dimension;")
+                design = lower(source)
+                self.assertFalse(any(node.get("fixed_dimension_query")
+                                     for node in nodes(design)))
+                self.assertTrue(any(node.get("kind") == "Unsupported"
+                                    for node in nodes(design)))
+
+    def test_invalid_dimension_selectors_stay_loud(self):
+        for selector in ("0", "-1", "2", "32'bx", "32'bz"):
+            with self.subTest(selector=selector):
+                design = lower(query_source("$size(value, " + selector + ")",
+                                            "logic [7:0] value;"), require_valid=False)
+                self.assertFalse(any(node.get("fixed_dimension_query")
+                                     for node in nodes(design)))
+                self.assertTrue(any(node.get("kind") == "Unsupported"
+                                    for node in nodes(design)))
+
     def test_dynamic_or_effectful_dimension_queries_stay_loud(self):
         for declaration, expression in (
                 ("int values[];", "$size(values)"),
@@ -282,6 +411,15 @@ class FixedBitQueries(unittest.TestCase):
                   "$dimensions(value)); endmodule "
                   "module bad; initial undeclared = 1; endmodule")
         design = lower(source, require_valid=False)
+        self.assertIn("DimensionQuery:invalid-compilation",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_converted_dimension_query_retains_invalid_compilation_guard(self):
+        source = ("module top; logic [63:0] value; "
+                  "initial value = $dimensions(int); endmodule "
+                  "module bad; initial undeclared = 1; endmodule")
+        design = lower(source, require_valid=False)
+        self.assertTrue(any(node.get("fixed_dimension_query") for node in nodes(design)))
         self.assertIn("DimensionQuery:invalid-compilation",
                       [node.get("sv_kind") for node in nodes(design)])
 

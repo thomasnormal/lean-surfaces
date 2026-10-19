@@ -39,7 +39,11 @@ Pure constant `$clog2` calls are folded by the extractor to signed 32-bit
 literal values; dynamic or effectful calls remain loud.
 Fixed integral `$size`, `$high`, `$left`, `$right`, `$low`, `$increment`,
 `$dimensions` and `$unpacked_dimensions` queries are likewise folded from
-declared types; dynamic dimensions and effectful operands remain loud.
+declared types. Fixed packed/unpacked ranges retain their declared order,
+bounds and direction, including a pure constant dimension selector; scalars
+have zero dimensions. Fixed metadata-only type aliases are erased, but their
+runtime storage still requires the original type admission. Runtime selectors,
+dynamic storage, tagged unions and effectful operands remain loud.
 
 ## M0 language tier
 

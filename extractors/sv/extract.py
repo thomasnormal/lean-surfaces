@@ -327,7 +327,7 @@ def is_integral_type_alias(symbol):
         return False
     try:
         _, _, reason = type_width_2s(symbol.declaredType.type)
-        return reason is None
+        return reason is None or _fixed_query_dimensions(symbol.declaredType.type) is not None
     except Exception:
         return False
 
@@ -359,6 +359,22 @@ def contains_bound_enum(comp):
             sv_type = node.declaredType.type
         canonical = getattr(sv_type, "canonicalType", None)
         if type(canonical).__name__ == "EnumType":
+            found = True
+
+    comp.getRoot().visit(inspect)
+    for unit in comp.getCompilationUnits():
+        unit.visit(inspect)
+    return found
+
+
+def contains_admitted_type_alias(comp):
+    """Keep frontend errors visible when compile-time aliases are erased."""
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        if (str(getattr(node, "kind", "")) == "SymbolKind.TypeAlias"
+                and is_integral_type_alias(node)):
             found = True
 
     comp.getRoot().visit(inspect)
@@ -415,7 +431,8 @@ def _contains_guarded_call(expression):
     def inspect(node):
         nonlocal found
         if (type(node).__name__ == "CallExpression" and node.isSystemCall
-                and node.subroutineName in ("$bits", *BIT_QUERY_CALLS, *SIGNING_CALLS)):
+                and node.subroutineName in
+                ("$bits", *BIT_QUERY_CALLS, *SIGNING_CALLS, *DIMENSION_QUERY_CALLS)):
             found = True
             return VisitAction.Skip
 
@@ -486,6 +503,10 @@ def _convert_fixed_bits_query(sm, expression):
 
 BIT_QUERY_CALLS = ("$countbits", "$countones", "$onehot", "$onehot0", "$isunknown")
 SIGNING_CALLS = ("$signed", "$unsigned")
+DIMENSION_QUERY_CALLS = (
+    "$size", "$high", "$left", "$right", "$low", "$increment",
+    "$dimensions", "$unpacked_dimensions",
+)
 
 
 def _signing_call(expression):
@@ -556,37 +577,91 @@ def _dimension_query_call(expression):
     try:
         return (type(expression).__name__ == "CallExpression"
                 and not expression.bad and expression.isSystemCall
-                and expression.subroutineName in
-                ("$size", "$high", "$left", "$right", "$low", "$increment",
-                 "$dimensions", "$unpacked_dimensions"))
+                and expression.subroutineName in DIMENSION_QUERY_CALLS)
     except Exception:
         return False
 
 
+def _fixed_query_dimensions(value_type):
+    """Declared dimensions, unpacked first, for fixed integral bitstreams."""
+    if not value_type.isFixedSize:
+        return None
+    dimensions = []
+    unpacked = 0
+    current = value_type.canonicalType
+    while True:
+        kind = type(current).__name__
+        if kind in ("FixedSizeUnpackedArrayType", "PackedArrayType"):
+            dimensions.append((current.range.left, current.range.right))
+            unpacked += kind == "FixedSizeUnpackedArrayType"
+            current = current.elementType.canonicalType
+        elif kind in ("PredefinedIntegerType", "EnumType", "PackedStructType", "PackedUnionType"):
+            if kind == "PackedUnionType" and current.isTagged:
+                return None
+            dimensions.append((current.bitWidth - 1, 0))
+            break
+        elif kind == "ScalarType":
+            break
+        else:
+            return None
+    return dimensions, unpacked
+
+
+def _constant_dimension_selector(expression):
+    """Use bound constants or static leaves, never an evaluation context."""
+    constant = expression.constant
+    if constant is not None:
+        value = constant.value
+    elif type(expression).__name__ in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+        value = expression.value
+    elif (type(expression).__name__ == "NamedValueExpression"
+          and str(expression.symbol.kind) in ("SymbolKind.Parameter", "SymbolKind.EnumValue")):
+        value = expression.symbol.value.value
+    else:
+        return None
+    if type(value).__name__ != "SVInt" or value.bitWidth != expression.type.bitWidth:
+        return None
+    if any(bit not in "01" for bit in svint_bits(value)):
+        return None
+    return int(value)
+
+
 def _convert_dimension_query(sm, expression):
-    """Fold array queries for a fixed admitted integral declaration."""
+    """Fold fixed array metadata without evaluating the queried operand."""
     try:
         arguments = list(expression.arguments)
     except Exception:
         return unsupported(sm, expression, "CallExpression:dimension:signature")
-    if len(arguments) != 1:
+    count_query = expression.subroutineName in ("$dimensions", "$unpacked_dimensions")
+    if len(arguments) not in ((1,) if count_query else (1, 2)):
         return unsupported(sm, expression, "CallExpression:dimension:arity")
     argument = arguments[0]
-    width, _, reason = type_width_2s(argument.type)
-    if (width is None or not argument.type.isIntegral
-            or not _bits_argument_source_ok(argument)):
-        detail = reason if reason is not None else "argument"
-        return unsupported(sm, expression, "CallExpression:dimension:" + detail)
-    value = {
-        "$size": width,
-        "$high": width - 1,
-        "$left": width - 1,
-        "$right": 0,
-        "$low": 0,
-        "$increment": 1,
-        "$dimensions": 1,
-        "$unpacked_dimensions": 0,
-    }[expression.subroutineName]
+    shape = _fixed_query_dimensions(argument.type)
+    if shape is None or not _bits_argument_source_ok(argument):
+        return unsupported(sm, expression, "CallExpression:dimension:argument")
+    dimensions, unpacked = shape
+    if count_query:
+        value = len(dimensions) if expression.subroutineName == "$dimensions" else unpacked
+    else:
+        dimension = 1
+        if len(arguments) == 2:
+            selector = arguments[1]
+            if not selector.type.isIntegral or not _bits_argument_source_ok(selector):
+                return unsupported(sm, expression, "CallExpression:dimension:selector")
+            dimension = _constant_dimension_selector(selector)
+            if dimension is None:
+                return unsupported(sm, expression, "CallExpression:dimension:dynamic")
+        if not 1 <= dimension <= len(dimensions):
+            return unsupported(sm, expression, "CallExpression:dimension:index")
+        left, right = dimensions[dimension - 1]
+        value = {
+            "$size": abs(left - right) + 1,
+            "$high": max(left, right),
+            "$left": left,
+            "$right": right,
+            "$low": min(left, right),
+            "$increment": 1 if left >= right else -1,
+        }[expression.subroutineName]
     return {
         "kind": "Literal",
         "span": node_span(sm, expression),
@@ -2064,10 +2139,7 @@ def contains_fixed_clog2(node):
 
 def contains_fixed_dimension_query(node):
     if isinstance(node, dict):
-        return node.get("fixed_dimension_query") in (
-            "$size", "$high", "$left", "$right", "$low", "$increment",
-            "$dimensions", "$unpacked_dimensions"
-        ) or any(
+        return node.get("fixed_dimension_query") in DIMENSION_QUERY_CALLS or any(
             contains_fixed_dimension_query(value) for value in node.values()
         )
     if isinstance(node, list):
@@ -2181,6 +2253,10 @@ def convert_design(sm, comp):
             and contains_bound_enum(comp)):
         others.append(unsupported(sm, comp, "Enum:invalid-compilation",
                                   "frontend rejected source containing an enumeration"))
+    if (any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())
+            and contains_admitted_type_alias(comp)):
+        others.append(unsupported(sm, comp, "TypeAlias:invalid-compilation",
+                                  "frontend rejected source containing an admitted type alias"))
     if (any(contains_lowered_case(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "CaseStatement:invalid-compilation",

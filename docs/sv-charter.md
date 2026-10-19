@@ -454,7 +454,7 @@ runtime or simulator agreement.
 
 ### Fixed integral dimension queries — 2026-10-14
 
-The legacy/self-check extractor now folds `$size`, `$high`, `$left`, `$right`,
+The initial legacy/self-check slice folded `$size`, `$high`, `$left`, `$right`,
 `$low`, `$increment`, `$dimensions` and `$unpacked_dimensions` for fixed
 admitted integral declarations (IEEE 1800-2023 §20.7).
 Results are signed 32-bit literals carrying `fixed_dimension_query` provenance:
@@ -465,7 +465,8 @@ descending packed dimensions; `$dimensions` returns one and
 effectful operands, malformed calls and nonintegral arguments remain loud;
 frontend errors retain a
 `DimensionQuery:invalid-compilation` refusal. No interpreter or scheduler
-rule changes.
+rule changes. These width-derived formulas describe that original
+single-dimension slice, not the extension below.
 
 `Examples/system-verilog/dimension_queries` runs the real envelope through the
 self-check runner. On the same **22,008** corpus paths, clean extraction rises
@@ -478,6 +479,42 @@ extraction rises **2,588 → 2,596** with eight additional gains (one in
 chapter 7 and seven in chapter 20), no losses, and `CallExpression` falls
 **4,233 → 4,207**. This remains extractor admission, not whole-corpus runtime
 or simulator agreement.
+
+### Fixed array dimension selection — 2026-10-19
+
+The same §20.7 family now preserves arbitrary fixed declared packed and
+unpacked ranges over integral elements, including ascending, negative and
+equal bounds. Dimensions are numbered unpacked before packed; predefined
+integers, enums and untagged packed aggregates contribute their implicit bit
+dimension.
+Plain scalar `bit`/`logic`/`reg` values contribute none: this corrects the
+earlier `$dimensions(scalar) = 1` result to zero. Even a one-bit enum still
+contributes one dimension; it is not erased to its scalar base type.
+
+The six bound/size/direction queries accept an optional pure, frontend-bound
+constant dimension selector, defaulting to one. Literal leaves and parameter
+or enum constants also work without a cached evaluation of an unvisited source
+branch. No evaluation context is invoked: compound selectors without a bound
+constant remain loud, as do runtime selectors, invalid dimensions,
+dynamic/associative/queue storage and effectful operands. These
+query provenance markers survive outer constant folding and invalid
+compilations retain the existing refusal. Fixed metadata-only type aliases
+are erased without admitting their runtime storage; rejected compilations
+retain `TypeAlias:invalid-compilation`. Tagged unions remain outside this
+extension. The runtime and scheduler are unchanged.
+
+The expanded real `dimension_queries` fixture checks the selected bounds,
+direction, counts, mixed dimensions, packed aggregates and scalar/enum
+distinction through the self-check runner and independently confirmed source
+observations. The fresh paired **22,030**-path census changes **2,596 → 2,599
+clean** and **19,368 → 19,365 partial**, with **66 includes skipped**,
+**0 extraction errors**, three gains and no losses. Two gains are chapter-20
+type-operand queries and one is a chapter-6 fixture with an unused fixed
+type alias; all three run through the Lean self-check tier and agree with
+independent source observations. The **33** files previously carrying
+`CallExpression:dimension:arity` no longer carry that refusal. This is not a
+claim of whole-corpus runtime coverage. See `docs/sv-corpus-coverage.md` for
+the chapter table.
 
 ### Two-state output ports — 2026-10-12
 

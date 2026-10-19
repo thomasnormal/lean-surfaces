@@ -3,8 +3,10 @@
 `LeanModels/Cpp/VariableEvidence.lean` validates a separate, optional supplement
 from the pinned Clang/LLVM 21.1.8 canonical probe. It supplies observations
 needed by the [automatic-local declaration contract](cpp-local-declarations.md).
-It does not admit declarations, allocate objects, execute initializers or
-establish lifetime properties. Callable ingestion still refuses `DeclStmt`.
+It does not itself admit declarations, allocate objects, execute initializers
+or establish lifetime properties. The object-backed callable profile consumes
+validated rows for its narrow automatic integral `DeclStmt` fragment; storage,
+reference, array, alias and other unsupported forms remain loud.
 
 The base wrapper remains `cpp-canonical-probe-0.3`. The supplement has its own
 exact API tag, `Clang::VarDecl storage and initializer projection v1`, in
@@ -96,9 +98,11 @@ probe tests cover all four initialization styles, absent versus empty-list
 initialization, source/converted types, parameters, TLS/storage, qualifiers,
 shadowing, attributes and explicit type/default refusals. Real Clang-to-Lean
 checks include inherited defaults, variable-template specializations and
-structured bindings. The existing 18-form declaration battery additionally
-validates this supplement while preserving every `DeclStmt` refusal; its
-self-initialization control is parsed but never executed as a defined oracle.
+structured bindings. The existing declaration battery additionally validates
+this supplement while admitting the ordinary copy/direct/list/default integral
+forms and preserving loud refusals for unsupported storage and object shapes;
+its self-initialization control is parsed but never executed as a defined
+oracle.
 
 ```sh
 lake build LeanModels.Cpp.VariableEvidenceTests LeanModels.Cpp.Tests
@@ -108,6 +112,6 @@ python3 extractors/cpp/test_canonical_probe.py
 LEANCPP_TEST_LEAN=1 python3 extractors/cpp/test_evidence_ingestion.py
 ```
 
-This is tool-strength validation, not a new executable rung or a three-corpus
-execution census. It leaves the object-backed local executor and its real
-artifact proofs as separate obligations.
+This is frontend evidence validation, not a complete three-corpus execution
+census. The object-backed local executor and its real-artifact differential
+checks consume the rows only after this strict join succeeds.

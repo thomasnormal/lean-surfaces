@@ -1,10 +1,11 @@
 # Typed source-local callable functions
 
-2026-10-12. `LeanModels/Cpp/Callable.lean` extends the first **callable body
-admission** above the source-local declaration rule. It is intentionally a
-small, typed C++23 profile; it is not a C++ execution engine. A function is
-admitted only when its declaration, direct parameters, structured function type
-and retained body all agree in the same Clang probe.
+2026-10-19. `LeanModels/Cpp/Callable.lean` extends the first **callable body
+admission** through the typed automatic-local declaration rule. It is
+intentionally a small, typed C++23 profile; it is not a C++ execution engine.
+A function is admitted only when its declaration, direct parameters,
+structured function type, declaration evidence and retained body all agree in
+the same Clang probe.
 
 ## Admitted profile
 
@@ -15,12 +16,15 @@ retains ordinary `CompoundStmt` nodes as `block` boundaries containing
 sequences of admitted expression statements, `if` statements with an optional
 else branch, `while`/`do`/bounded `for` loops,
 integral `switch` statements with literal `case`/`default` labels, loop-local
-`break`/`continue`, parameter-targeted `=`, integral compound assignments, and
-parameter-targeted prefix/postfix increment and decrement expressions. An empty
-compound is `block skip`; a null statement is `skip`. Declarations,
-local-variable/member assignments, calls, overloaded operations, exceptions,
-local functions and every
-other statement form refuse rather than being silently represented as a callable.
+`break`/`continue`, parameter/local-targeted `=`, integral compound
+assignments, parameter/local-targeted prefix/postfix increment and decrement
+expressions, and validated automatic integral `DeclStmt` nodes. The latter
+cover copy, direct, list and default scalar initialization, multiple
+declarators and lexical shadowing through the object-backed frame. An empty
+compound is `block skip`; a null statement is `skip`. Unsupported storage,
+references, arrays, aliases, calls, overloaded operations, exceptions, local
+functions and every other statement form refuse rather than being silently
+represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
 projection v1` row for the exact occurrence. This slice requires a non-variadic
@@ -54,8 +58,8 @@ Conditions additionally retain Clang's `IntegralToBoolean` wrapper and evaluate
 its builtin boolean result as the condition value.
 
 The result type of the expression must equal the function result type. A
-parameter reference must resolve to one of the function's own parameter
-handles. Missing rows, mismatched handles, changed child order, unsupported
+parameter or admitted-local reference must resolve to one of the function's
+own declaration handles. Missing rows, mismatched handles, changed child order, unsupported
 casts, non-integral operators, unsequenced side effects in ordinary binary
 operands and
 conflicting evidence all refuse. Increment and decrement are not generalized
@@ -68,10 +72,10 @@ operand must complete successfully before the right operand is evaluated, and
 effectful expressions nested beneath either operand are rejected when they
 would otherwise be unsequenced inside a binary expression.
 
-The admitted `for` shape has a parameter-only initializer and step, an explicit
-integral condition, and an admitted body. A first-class `forLoop` retains the
-initializer, condition, step and body separately; condition declarations and
-omitted conditions remain loud refusals. The initializer runs once. Normal
+The admitted `for` shape has an automatic-local-capable initializer and step,
+an explicit integral condition, and an admitted body. A first-class `forLoop`
+retains the initializer, condition, step and body separately; condition
+declarations and omitted conditions remain loud refusals. The initializer runs once. Normal
 body completion and `continue` reach the step after the body returns; `break`,
 return and failure skip the step. Inner loops consume their own transfers.
 `break` and `continue` remain loud at the public boundary when no loop or
@@ -123,10 +127,11 @@ callable tree is input to the bounded statement evaluator described in
 In particular, no theorem or differential result may claim that an admitted
 body was executed merely because Clang accepted its source.
 
-Source-local declarations remain loud. The
-[automatic integral declaration contract](cpp-local-declarations.md) prices
-that next surface and requires object-backed bindings, preserved scopes and
-cleanup-aware loop execution before admission can change.
+The object-backed callable profile consumes the
+[automatic integral declaration contract](cpp-local-declarations.md). Its
+legacy value-only evaluator remains loud on `CallableStatement.automatic`
+nodes; only the object-backed evaluator executes those declarations with
+preserved bindings, scopes and cleanup.
 
 ## Validation
 
@@ -135,7 +140,8 @@ binary and logical returns, captured `if`/`while`/`do` branches, parameter store
 prefix/postfix increment and decrement admission, conditional-expression
 branch typing, comma-expression sequencing, loop transfers, complete switch-label
 uniqueness and switch/loop transfer ownership, compound-assignment
-target/type/evidence mismatches and function-try refusals.
+target/type/evidence mismatches, automatic local declaration admission and
+function-try refusals.
 `extractors/cpp/test_evidence_ingestion.py` has an opt-in pinned Clang check for
 real admitted bodies, including every compound operator, unsigned wraparound,
 self-aliasing and assignment-driven loops. It also checks prefix/postfix

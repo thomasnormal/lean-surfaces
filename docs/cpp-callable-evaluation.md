@@ -1,7 +1,10 @@
 # C++ callable statement evaluation
 
-`LeanModels/Cpp/CallableEvaluation.lean` evaluates the already-admitted
-`CallableFunction` statement profile without changing the translation execution boundary.
+`LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
+the already-admitted `CallableFunction` statement profile; it does not change
+the translation execution boundary or execute object-backed local nodes.
+`CallableObjectEvaluation.lean` evaluates the same callable tree against an
+`IntegralObjectFrame`, including validated automatic integral declarations.
 It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references, integral casts,
@@ -56,9 +59,9 @@ the admission check rather than being treated as unsequenced.
 
 Ordinary compound statements retain explicit `block` boundaries, including empty
 and singleton blocks. N4950 §8.4 [stmt.block] and §8.6.4 [stmt.for] supply
-the block and loop structure. With declarations still refused, executing a
-block delegates to its body and propagates its outcome. This preserves a future scope entry and
-exit point; it does not yet allocate locals or implement lifetime cleanup.
+the block and loop structure. In this value-only evaluator, a local declaration
+remains a loud refusal; the object-backed evaluator enters and exits the
+corresponding frame scopes and allocates its validated integral objects.
 
 An admitted `forLoop` executes its initializer once, then tests the condition
 before each body. Normal body completion and `continue` execute the step once
@@ -88,7 +91,8 @@ side selects it, and its updated state contributes to the boolean result.
 
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is
-not wired to `Translation.execute`, and does not admit local objects, calls,
+not wired to `Translation.execute`, and does not admit local objects in its
+value-only path, calls,
 overload resolution or general implicit-conversion semantics.
 Falling through
 without a return is a typed `missingReturn` refusal.

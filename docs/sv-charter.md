@@ -931,6 +931,20 @@ nine clean files with no losses and lowers `AssignmentExpression:target` by
 project snapshot; this local paired measurement is recorded separately because
 the external corpus checkout has four fewer paths.
 
+### Conditional fixed-array assignments — 2026-10-19
+
+Pure one-condition ternaries over equal-length fixed-unpacked integral arrays
+now lower each destination cell to a `Ternary` value over the corresponding
+source cells. An x condition preserves the per-bit merge; patterns, calls,
+unequal shapes and unsupported aggregate storage remain loud. The
+`unpacked_conditional` fixture checks the real envelope through Lean.
+
+On the paired **22,029** paths available on this checkout, this rung adds
+three clean files with no losses and lowers `AssignmentExpression:target` by
+four files (**3,978 → 3,974**). The committed 22,033-path census remains the
+project snapshot; this local paired measurement is recorded separately because
+the external corpus checkout has four fewer paths.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

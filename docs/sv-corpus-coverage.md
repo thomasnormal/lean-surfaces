@@ -398,6 +398,18 @@ errors**: nine additional clean files with no losses; the target wall falls
 **3,999 → 3,978**. The `unpacked_copy` fixture and proof pass through the
 self-check runner. This is not a whole-corpus simulator-agreement claim.
 
+## Conditional fixed-array assignments — 2026-10-19
+
+Pure one-condition ternaries over equal-length fixed-unpacked integral arrays
+now lower cell by cell to existing `Ternary` values. An x condition therefore
+keeps the per-bit conditional merge, while patterns, calls, unequal shapes and
+unsupported aggregate storage remain loud. The paired **22,029**-path run
+reports **2,918 clean**, **19,045 partial**, **66 include skips**, and **0
+extraction errors**: three additional clean files with no losses; the target
+wall falls **3,978 → 3,974**. The `unpacked_conditional` fixture and proof
+pass through the self-check runner. This is not a whole-corpus simulator-
+agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

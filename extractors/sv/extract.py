@@ -993,6 +993,80 @@ def _fixed_array_copy_assignment(sm, expr):
         return None
 
 
+def _fixed_array_conditional_assignment(sm, expr):
+    """Lower a pure conditional whole-array assignment cell by cell."""
+    try:
+        if type(expr).__name__ != "AssignmentExpression" or expr.op is not None:
+            return None
+        lhs_shape = _fixed_array_shape(expr.left)
+        if lhs_shape is None or type(expr.right).__name__ != "ConditionalExpression":
+            return None
+        cond_expr = expr.right
+        if len(cond_expr.conditions) != 1 or cond_expr.conditions[0].pattern is not None:
+            return None
+        then_shape = _fixed_array_shape(cond_expr.left)
+        else_shape = _fixed_array_shape(cond_expr.right)
+        if then_shape is None or else_shape is None:
+            return None
+        lhs_name, lhs_width, lhs_two, lhs_left, lhs_right = lhs_shape
+        then_name, then_width, _then_two, then_left, then_right = then_shape
+        else_name, else_width, _else_two, else_left, else_right = else_shape
+        lhs_count = abs(lhs_left - lhs_right) + 1
+        if (lhs_count != abs(then_left - then_right) + 1
+                or lhs_count != abs(else_left - else_right) + 1
+                or lhs_width != then_width or lhs_width != else_width):
+            return None
+        source_cond = cond_expr.conditions[0].expr
+        if not _case_source_expression_ok(source_cond):
+            return None
+        condition = convert_expr(sm, source_cond)
+        if condition is None or not _case_expression_ok(condition):
+            return None
+        lhs_step = 1 if lhs_right >= lhs_left else -1
+        then_step = 1 if then_right >= then_left else -1
+        else_step = 1 if else_right >= else_left else -1
+        lhs_positions = list(range(lhs_left, lhs_right + lhs_step, lhs_step))
+        then_positions = list(range(then_left, then_right + then_step, then_step))
+        else_positions = list(range(else_left, else_right + else_step, else_step))
+        stmts = []
+        for lhs_position, then_position, else_position in zip(
+                lhs_positions, then_positions, else_positions):
+            value = {
+                "kind": "Ternary",
+                "span": node_span(sm, expr.right),
+                "width": lhs_width,
+                "cond": condition,
+                "then": {
+                    "kind": "Ident",
+                    "span": node_span(sm, cond_expr.left),
+                    "width": then_width,
+                    "name": f"{then_name}[{then_position}]",
+                },
+                "else": {
+                    "kind": "Ident",
+                    "span": node_span(sm, cond_expr.right),
+                    "width": else_width,
+                    "name": f"{else_name}[{else_position}]",
+                },
+            }
+            if lhs_two:
+                value = squash2_wrap(value, lhs_width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {
+                    "kind": "Ident",
+                    "span": node_span(sm, expr.left),
+                    "width": lhs_width,
+                    "name": f"{lhs_name}[{lhs_position}]",
+                },
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts}
+    except Exception:
+        return None
+
+
 def _convert_dimension_query(sm, expression):
     """Fold fixed array metadata without evaluating the queried operand."""
     try:
@@ -2180,6 +2254,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if expr.timingControl is not None:
         return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
     if expr.op is None and _SYM is None:
+        array_conditional = _fixed_array_conditional_assignment(sm, expr)
+        if array_conditional is not None:
+            return array_conditional
         array_copy = _fixed_array_copy_assignment(sm, expr)
         if array_copy is not None:
             return array_copy

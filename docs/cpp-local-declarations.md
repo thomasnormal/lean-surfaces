@@ -71,7 +71,15 @@ longer injects the step inside source blocks. These are represented control
 boundaries; with declarations still refused they neither allocate objects nor
 implement scope cleanup.
 
-The next executor must attach object-backed frame scopes to those boundaries:
+`LeanModels/Cpp/IntegralObjectFrame.lean` now supplies the object-backed frame,
+scope state and a small stateful control shell. Its binding API attaches a
+declaration occurrence to a fresh object and retains the frame on every result;
+its `Statement` executor handles blocks, conditions, loops and transfers. This
+is still not `DeclStmt` admission: the next frontend step must attach validated
+Clang declaration nodes and initializer evidence to these operations.
+
+The frontend adapter must attach these scopes to the retained control
+boundaries:
 a `for` initializer scope encloses its condition, step and body; each execution
 of a compound body has its own nested scope. `IntegralObjectStatement` also has
 a first-class loop shape, but it does not allocate or bind locals. Its

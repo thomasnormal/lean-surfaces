@@ -56,6 +56,14 @@ class SymbolicConcatTargets(unittest.TestCase):
                       {"AssignmentExpression:target",
                        "ContinuousAssignSymbol:InvalidExpression"})
 
+    def test_overlapping_leaves_stay_loud(self):
+        envelope = self.extract(
+            "module top(input logic [7:0] source, output logic [7:0] value); "
+            "assign {value[7:4], value[5:0]} = source; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "Unsupported")
+        self.assertEqual(process["sv_kind"], "AssignmentExpression:target")
+
 
 if __name__ == "__main__":
     unittest.main()

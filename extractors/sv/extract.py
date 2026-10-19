@@ -3089,17 +3089,39 @@ def _symbolic_concat_target(sm, lhs):
                 return None
         if target.get("width", 0) <= 0:
             return None
+        if target.get("kind") == "Ident":
+            window = (target.get("name"), None, None)
+        else:
+            base = target.get("value", {}).get("name")
+            if node_kind == "ElementSelectExpression":
+                index = _constant_dimension_selector(node.selector)
+                window = (base, index, index)
+            else:
+                left = _constant_dimension_selector(node.left)
+                right = _constant_dimension_selector(node.right)
+                window = (base, min(left, right), max(left, right))
+        target["_window"] = window
         return [target]
 
     parts = leaves(lhs)
     if not parts:
         return None
     seen = set()
+    windows = []
     for target in parts:
+        window = target.pop("_window", None)
         key = json.dumps(target, sort_keys=True, separators=(",", ":"))
         if key in seen:
             return None
         seen.add(key)
+        if window is not None:
+            base, low, high = window
+            for old_base, old_low, old_high in windows:
+                if old_base != base:
+                    continue
+                if low is None or old_low is None or not (high < old_low or old_high < low):
+                    return None
+            windows.append(window)
     return parts
 
 

@@ -186,6 +186,16 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_slice_conditional_assignment_merges_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] a [0:3]; logic [7:0] b [0:3]; "
+            "logic [7:0] value [0:3]; logic choose; "
+            "initial value[1:2] = choose ? a[2:3] : b[0:1]; endmodule")
+        values = [node for node in nodes(design) if node.get("kind") == "Ternary"]
+        self.assertEqual(len(values), 2)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

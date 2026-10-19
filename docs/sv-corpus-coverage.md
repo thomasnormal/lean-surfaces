@@ -473,6 +473,17 @@ fixture and proof pass through the self-check runner. The external
 snapshot is unchanged and no fresh whole-corpus gain is claimed. This is not a
 whole-corpus simulator-agreement claim.
 
+## Conditional fixed-array slice assignments — 2026-10-19
+
+Equal-length simple constant slices on a fixed-array destination and both
+branches of a pure ternary now lower cellwise to existing `Ternary` nodes.
+Overlapping source/destination names, dynamic/indexed and out-of-range slices
+remain loud. The `unpacked_slice_conditional` fixture and proof pass through
+the self-check runner. The external `sv-tests-2` checkout was unavailable for
+this turn, so the committed census snapshot is unchanged and no fresh
+whole-corpus gain is claimed. This is not a whole-corpus simulator-agreement
+claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

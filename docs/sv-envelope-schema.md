@@ -290,6 +290,11 @@ shared across the cells, so an x condition retains the ordinary per-bit
 conditional merge. Conditional aggregate forms with patterns, calls, unequal
 shapes or unsupported storage remain `Unsupported`.
 
+The same lowering admits equal-length simple constant slices on the
+destination and both branches. Overlapping source/destination array names are
+rejected because the cell-expanded state has no aggregate snapshot; dynamic,
+indexed and out-of-range slice forms remain `Unsupported`.
+
 An exact-length positional pattern on a simple in-range constant slice of an
 eligible fixed array is lowered to the selected cells in source order.
 Elaborated keyed/default patterns and constant replicated patterns whose count

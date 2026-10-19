@@ -745,6 +745,19 @@ def _fixed_array_slice_shape(source):
         return None
 
 
+def _fixed_array_assignment_shape(source):
+    """Whole array or simple constant slice as ordered cell positions."""
+    slice_shape = _fixed_array_slice_shape(source)
+    if slice_shape is not None:
+        return slice_shape
+    shape = _fixed_array_shape(source)
+    if shape is None:
+        return None
+    name, width, two_state, left, right = shape
+    step = 1 if right >= left else -1
+    return name, width, two_state, list(range(left, right + step, step))
+
+
 def _fixed_array_dynamic_read(sm, expression):
     """Lower a dynamic read to a finite conditional over expanded cells."""
     try:
@@ -1067,23 +1080,25 @@ def _fixed_array_conditional_assignment(sm, expr):
     try:
         if type(expr).__name__ != "AssignmentExpression" or expr.op is not None:
             return None
-        lhs_shape = _fixed_array_shape(expr.left)
+        lhs_shape = _fixed_array_assignment_shape(expr.left)
         if lhs_shape is None or type(expr.right).__name__ != "ConditionalExpression":
             return None
         cond_expr = expr.right
         if len(cond_expr.conditions) != 1 or cond_expr.conditions[0].pattern is not None:
             return None
-        then_shape = _fixed_array_shape(cond_expr.left)
-        else_shape = _fixed_array_shape(cond_expr.right)
+        then_shape = _fixed_array_assignment_shape(cond_expr.left)
+        else_shape = _fixed_array_assignment_shape(cond_expr.right)
         if then_shape is None or else_shape is None:
             return None
-        lhs_name, lhs_width, lhs_two, lhs_left, lhs_right = lhs_shape
-        then_name, then_width, _then_two, then_left, then_right = then_shape
-        else_name, else_width, _else_two, else_left, else_right = else_shape
-        lhs_count = abs(lhs_left - lhs_right) + 1
-        if (lhs_count != abs(then_left - then_right) + 1
-                or lhs_count != abs(else_left - else_right) + 1
+        lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
+        then_name, then_width, _then_two, then_positions = then_shape
+        else_name, else_width, _else_two, else_positions = else_shape
+        lhs_count = len(lhs_positions)
+        if (lhs_count != len(then_positions)
+                or lhs_count != len(else_positions)
                 or lhs_width != then_width or lhs_width != else_width):
+            return None
+        if lhs_name in (then_name, else_name):
             return None
         source_cond = cond_expr.conditions[0].expr
         if not _case_source_expression_ok(source_cond):
@@ -1091,12 +1106,6 @@ def _fixed_array_conditional_assignment(sm, expr):
         condition = convert_expr(sm, source_cond)
         if condition is None or not _case_expression_ok(condition):
             return None
-        lhs_step = 1 if lhs_right >= lhs_left else -1
-        then_step = 1 if then_right >= then_left else -1
-        else_step = 1 if else_right >= else_left else -1
-        lhs_positions = list(range(lhs_left, lhs_right + lhs_step, lhs_step))
-        then_positions = list(range(then_left, then_right + then_step, then_step))
-        else_positions = list(range(else_left, else_right + else_step, else_step))
         stmts = []
         for lhs_position, then_position, else_position in zip(
                 lhs_positions, then_positions, else_positions):

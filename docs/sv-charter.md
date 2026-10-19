@@ -1032,6 +1032,20 @@ committed census snapshot is unchanged and this rung makes no fresh
 whole-corpus coverage claim. Focused slice-pattern tests establish the
 admission boundary; the next census rerun will price any newly clean rows.
 
+### Conditional fixed-array slice assignments — 2026-10-19
+
+Equal-length simple constant slices on a fixed-unpacked destination and both
+branches of a pure ternary now lower cellwise to the existing `Ternary` nodes.
+Overlapping source/destination array names remain loud because the cell-expanded
+state has no aggregate snapshot; dynamic, indexed and out-of-range slices also
+remain loud. The `unpacked_slice_conditional` fixture checks the normalized
+cellwise result through Lean and the self-check runner.
+
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and this rung makes no fresh
+whole-corpus coverage claim. Focused conditional-slice tests establish the
+admission boundary; the next census rerun will price any newly clean rows.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

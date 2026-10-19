@@ -42,12 +42,31 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_keyed_pattern_stays_loud(self):
+    def test_default_pattern_writes_all_cells(self):
         design = extract_source(
             "module top; logic [7:0] value [0:1]; "
             "initial value = '{default:8'h12}; endmodule")
+        targets = [node["target"]["name"] for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(targets, ["value[0]", "value[1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_replicated_pattern_writes_all_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:2]; "
+            "initial value = '{3{8'h12}}; endmodule")
+        values = [node["value"]["bits"] for node in nodes(design)
+                  if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(values, ["00010010"] * 3)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_wrong_length_replicated_pattern_stays_loud(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:2]; "
+            "initial value = '{2{8'h12}}; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
-                            and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
     def test_destination_alias_stays_loud(self):

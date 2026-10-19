@@ -960,6 +960,22 @@ files (**3,974 → 3,972**). The committed 22,033-path census remains the
 project snapshot; this local paired measurement is recorded separately because
 the external corpus checkout has four fewer paths.
 
+### Structured and replicated fixed-array patterns — 2026-10-19
+
+Elaborated keyed/default assignment patterns on eligible one-dimensional
+fixed-unpacked integral arrays now lower their per-cell elements in declaration
+order. Constant replicated patterns are admitted when their repetition count
+equals the array length. Every element still must be a pure integral expression
+that does not read the destination array, so wrong-length, dynamic, aggregate
+and destination-aliasing forms remain loud. The `unpacked_patterns` fixture
+checks both forms through Lean and the self-check runner.
+
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and this rung makes no fresh
+whole-corpus coverage claim. The focused extractor and harness tests provide
+the measured acceptance boundary; the next census rerun will price any newly
+clean corpus files.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

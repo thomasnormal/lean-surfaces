@@ -261,13 +261,15 @@ positional assignment-pattern initializer; each element is converted once and
 stored in its corresponding cell. Keyed/default, wrong-length, effectful or
 aggregate initializers remain `Unsupported`.
 
-The same representation admits an exact-length positional assignment-pattern
-statement to an eligible cell-expanded array. The extractor lowers it to a
-`Block` of per-cell `BlockingAssign` or `NonblockingAssign` nodes, in declared
-index order. Each element must be a pure integral expression and must not read
-the destination array, preserving the source rule that the complete RHS is
-evaluated before any cell is updated. Keyed/default, wrong-length, dynamic,
-aggregate and destination-aliasing patterns remain `Unsupported`.
+The same representation admits an exact-length assignment-pattern statement to
+an eligible cell-expanded array. Positional patterns and elaborated
+keyed/default structured patterns lower to a `Block` of per-cell
+`BlockingAssign` or `NonblockingAssign` nodes, in declared index order. A
+replicated pattern is admitted when its repetition count is a constant equal
+to the array length. Each element must be a pure integral expression and must
+not read the destination array, preserving the source rule that the complete
+RHS is evaluated before any cell is updated. Wrong-length, dynamic, aggregate
+and destination-aliasing patterns remain `Unsupported`.
 
 An equal-length whole-array assignment from another eligible fixed-unpacked
 integral array is lowered to the same per-cell block, pairing source and

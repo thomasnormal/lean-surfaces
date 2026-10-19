@@ -421,6 +421,17 @@ clean file with no losses; the target wall falls **3,974 → 3,972**. The
 `unpacked_slice` fixture and proof pass through the self-check runner. This is
 not a whole-corpus simulator-agreement claim.
 
+## Structured and replicated fixed-array patterns — 2026-10-19
+
+Elaborated keyed/default patterns on eligible fixed-unpacked integral arrays
+now lower their per-cell elements in declaration order. Constant replicated
+patterns are admitted when the repetition count exactly equals the array
+length. Wrong-length, dynamic, aggregate and destination-aliasing forms remain
+loud. The `unpacked_patterns` fixture and proof pass through the self-check
+runner. The external `sv-tests-2` checkout was unavailable for this turn, so
+the committed census snapshot is unchanged and no fresh whole-corpus gain is
+claimed. This is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

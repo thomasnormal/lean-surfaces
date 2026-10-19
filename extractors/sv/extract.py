@@ -851,18 +851,19 @@ def _fixed_array_dynamic_assignment(sm, expr):
 
 
 def _fixed_array_pattern_assignment(sm, expr):
-    """Lower one exact positional assignment to a fixed-array's cells.
+    """Lower one exact assignment pattern to a fixed-array's cells.
 
     The self-check state has no aggregate store: declarations of a narrow
     one-dimensional fixed unpacked array are already expanded to names such
     as ``a[0]``.  A whole-array assignment can therefore use the same state
     by expanding an exact positional pattern into a block of per-cell
-    assignments.  Keep the lowering deliberately strict.  The pattern must
-    be simple and exact-length, every element must be a pure integral
-    expression, and no element may read the destination array.  The last
+    assignments.  Keep the lowering deliberately strict.  Simple and
+    elaborated structured patterns must have one pure integral element per
+    cell; a replicated pattern must have a constant repetition count equal to
+    the array length.  No element may read the destination array.  The last
     guard preserves the source-level rule that the complete RHS is evaluated
-    before any destination cell is updated; without it, a later element
-    could observe an earlier lowered write.
+    before any destination cell is updated; without it, a later element could
+    observe an earlier lowered write.
     """
     try:
         if type(expr).__name__ != "AssignmentExpression":
@@ -886,13 +887,40 @@ def _fixed_array_pattern_assignment(sm, expr):
         if element_width is None or reason is not None:
             return None
         pattern = expr.right
-        if type(pattern).__name__ != "SimpleAssignmentPatternExpression":
+        pattern_kind = type(pattern).__name__
+        if pattern_kind not in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression",
+                "ReplicatedAssignmentPatternExpression"):
             return None
-        elements = list(pattern.elements)
         left, right = int(lhs_type.range.left), int(lhs_type.range.right)
         count = abs(left - right) + 1
-        if count > 1024 or len(elements) != count:
+        if count > 1024:
             return None
+        if getattr(pattern, "bad", False):
+            return None
+        if pattern_kind == "ReplicatedAssignmentPatternExpression":
+            # Slang keeps the repetition count as a bound constant.  A
+            # nonconstant count would need a runtime aggregate shape, which
+            # this cell-expanded state does not represent.
+            repetition = getattr(getattr(pattern, "count", None),
+                                 "constant", None)
+            try:
+                if hasattr(repetition, "value"):
+                    repetition = repetition.value
+                repetition = int(repetition)
+            except (TypeError, ValueError, OverflowError):
+                return None
+            if repetition != count or repetition <= 0:
+                return None
+            source_elements = list(pattern.elements)
+            if len(source_elements) != 1:
+                return None
+            elements = source_elements * repetition
+        else:
+            elements = list(pattern.elements)
+            if len(elements) != count:
+                return None
         target_name = lhs.symbol.name
         converted = []
         for element in elements:

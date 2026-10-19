@@ -1161,11 +1161,33 @@ def _fixed_array_slice_pattern_assignment(sm, expr):
         step = 1 if stop >= start else -1
         positions = list(range(start, stop + step, step))
         pattern = expr.right
-        if type(pattern).__name__ != "SimpleAssignmentPatternExpression":
+        pattern_kind = type(pattern).__name__
+        if pattern_kind not in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression",
+                "ReplicatedAssignmentPatternExpression"):
             return None
-        elements = list(pattern.elements)
-        if len(elements) != len(positions):
+        if getattr(pattern, "bad", False):
             return None
+        if pattern_kind == "ReplicatedAssignmentPatternExpression":
+            repetition = getattr(getattr(pattern, "count", None),
+                                 "constant", None)
+            try:
+                if hasattr(repetition, "value"):
+                    repetition = repetition.value
+                repetition = int(repetition)
+            except (TypeError, ValueError, OverflowError):
+                return None
+            if repetition != len(positions) or repetition <= 0:
+                return None
+            source_elements = list(pattern.elements)
+            if len(source_elements) != 1:
+                return None
+            elements = source_elements * repetition
+        else:
+            elements = list(pattern.elements)
+            if len(elements) != len(positions):
+                return None
         values = []
         for element in elements:
             if not _case_source_expression_ok(element):

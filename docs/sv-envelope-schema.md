@@ -292,8 +292,9 @@ shapes or unsupported storage remain `Unsupported`.
 
 An exact-length positional pattern on a simple in-range constant slice of an
 eligible fixed array is lowered to the selected cells in source order.
-Dynamic, indexed, out-of-range and keyed/default slice forms remain
-`Unsupported`.
+Elaborated keyed/default patterns and constant replicated patterns whose count
+equals the slice length use the same lowering. Dynamic, indexed, out-of-range
+and mismatched slice forms remain `Unsupported`.
 
 For a one-dimensional fixed-unpacked integral array whose declaration has been
 expanded to cells, a pure integral dynamic index is lowered to a finite

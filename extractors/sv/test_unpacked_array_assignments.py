@@ -166,6 +166,26 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_slice_default_pattern_writes_selected_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:3]; "
+            "initial value[1:2] = '{default:8'h12}; endmodule")
+        values = [node["value"]["bits"] for node in nodes(design)
+                  if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(values, ["00010010", "00010010"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_slice_replicated_pattern_writes_selected_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:3]; "
+            "initial value[1:2] = '{2{8'h34}}; endmodule")
+        values = [node["value"]["bits"] for node in nodes(design)
+                  if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(values, ["00110100", "00110100"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

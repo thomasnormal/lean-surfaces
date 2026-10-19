@@ -1018,6 +1018,20 @@ committed census snapshot is unchanged and this rung makes no fresh
 whole-corpus coverage claim. Focused slice-copy tests establish the admission
 boundary; the next census rerun will price any newly clean rows.
 
+### Structured and replicated fixed-array slice patterns — 2026-10-19
+
+Simple constant fixed-array slices now accept frontend-elaborated keyed/default
+patterns and constant replicated patterns whose count equals the selected
+slice length. Each selected cell receives the corresponding pure integral
+value; dynamic, indexed, out-of-range and mismatched forms remain loud. The
+`unpacked_slice_patterns` fixture checks both forms through Lean and the
+self-check runner.
+
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and this rung makes no fresh
+whole-corpus coverage claim. Focused slice-pattern tests establish the
+admission boundary; the next census rerun will price any newly clean rows.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

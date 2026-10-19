@@ -770,7 +770,7 @@ class ExtractorTests(unittest.TestCase):
                 self.assertEqual(body[-1]["value"]["value"]["type"], kind)
 
     def test_module_nonscalar_annotation_expressions_remain_loud(self):
-        for annotation in ("int", "x", "boom()", "1 // 0", "[1]", "(1,)",
+        for annotation in ("x", "boom()", "1 // 0", "[1]", "(1,)",
                            "{1: 1}", "1.5", "1j", "-1"):
             with self.subTest(annotation=annotation):
                 source = ("x: " + annotation + " = 3\n"
@@ -783,6 +783,16 @@ class ExtractorTests(unittest.TestCase):
         with self.assertRaises(ZeroDivisionError):
             exec("x: (1 // 0) = 3\n", namespace)
         self.assertEqual(namespace["x"], 3)
+
+    def test_module_builtin_type_annotation_is_a_plain_assignment(self):
+        body = self._envelope_of("x: int = 3\nprint(x)\n")["module"]["body"]
+        self.assertEqual([item["kind"] for item in body], ["Assign", "Expr"])
+        self.assertEqual(body[0]["targets"][0]["id"], "x")
+
+    def test_module_shadowed_builtin_annotation_stays_loud(self):
+        body = self._envelope_of("int = 7\nx: int = 3\n")["module"]["body"]
+        self.assertEqual(body[1]["kind"], "Unsupported")
+        self.assertEqual(body[1]["py_kind"], "AnnAssign:annotation-expression")
 
     def test_function_annotations_stay_erased_in_compound_bodies(self):
         fn = self._first_fn(

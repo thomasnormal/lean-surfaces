@@ -104,8 +104,12 @@ UNSUPPORTED_TEXT_LIMIT = 200
 # one flag per lowering, and the name set carries the reason.
 _MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a))`
 _MODULE_ANNOTATIONS_BOUND = False
+_MODULE_SAFE_ANNOTATIONS = set()
 
 DISPLAY_LOWERING_NAMES = ("list", "tuple", "set", "dict")
+MODULE_SAFE_ANNOTATION_NAMES = (
+    "bool", "bytes", "complex", "dict", "float", "int", "list",
+    "object", "set", "str", "tuple", "type")
 
 
 def binds_any_name(tree, names):
@@ -1354,6 +1358,12 @@ def convert_ann_assign(node, module_scope=False, func_scope=False,
             return assignment
         if module_scope and _MODULE_ANNOTATIONS_BOUND:
             return unsupported(node, "AnnAssign:annotations-bound")
+        if (module_scope and isinstance(node.annotation, ast.Name)
+                and node.annotation.id in _MODULE_SAFE_ANNOTATIONS):
+            # An unshadowed builtin type lookup is pure and cannot fail. The
+            # implicit __annotations__ table is unobservable in this tier, so
+            # retain the value/store and omit only this lookup.
+            return assignment
         if module_scope and not (
                 isinstance(node.annotation, ast.Constant)
                 and (node.annotation.value is None
@@ -2102,8 +2112,13 @@ def process_file(source_path, companion_dir, out=None):
     # whole-module, so they are decided once, here, before any expression
     # is converted.
     global _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
+    global _MODULE_SAFE_ANNOTATIONS
     _MODULE_SHADOWS_DISPLAY = binds_any_name(tree, DISPLAY_LOWERING_NAMES)
     _MODULE_ANNOTATIONS_BOUND = binds_any_name(tree, ("__annotations__",))
+    _MODULE_SAFE_ANNOTATIONS = {
+        name for name in MODULE_SAFE_ANNOTATION_NAMES
+        if not binds_any_name(tree, (name,))
+    }
 
     source_rel = rel_posix(source_path)
     json_rel = os.path.splitext(source_rel)[0] + ".json"

@@ -177,9 +177,9 @@ print(x)
 w("stmt.AnnAssign", """
 x: int = 1
 print(x)
-""", "REFUSE",
-  "MODULE scope evaluates its annotation; the builtin type object is not "
-  "a scalar literal annotation and remains outside the value tier")
+""", "MATCH",
+  "an unshadowed builtin type annotation has no effect observable in the "
+  "tier, so the assignment is admitted")
 w("stmt.AnnAssign-forward", """
 x: "int" = 1
 print(x)

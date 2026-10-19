@@ -14,6 +14,10 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- Module-scope annotated assignments now admit unshadowed builtin type-name
+  annotations such as `x: int = 1`; the value binding is preserved and the
+  implicit `__annotations__` update is unobservable in the tier. Shadowed and
+  effectful annotation expressions remain loud.
 - `int(bytes)` now accepts the ASCII decimal slice shared with `int(str)`,
   including CPython whitespace, signs, underscore grouping, digit-budget
   refusal, and exact bytes-rendered invalid-literal errors. Non-ASCII bytes,

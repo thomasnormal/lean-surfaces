@@ -287,8 +287,8 @@
   },
   {
     "file": "harness/scripts/ann_module_script.py",
-    "expect": "unsupported",
-    "note": "The module-scope annotation evaluates the builtin int type; only scalar literal annotations are admitted"
+    "expect": "match",
+    "note": "An unshadowed builtin type annotation is pure in the tier; the assignment remains and the implicit annotation table is unobservable"
   },
   {
     "file": "harness/scripts/ann_module_value_script.py",

@@ -295,6 +295,13 @@ measured order), because `__annotations__` is unobservable in tier. Not
 taken here because one-statement-into-two moves `Module.topLevel`
 indices that the proof campaign's pins are stated against.
 
+**Extension (2026-10-19).** The common module spelling `x: int = value` is
+now admitted when the annotation name is an unshadowed builtin type. Its
+lookup cannot fail and the implicit annotation-table update is unobservable,
+so ingestion retains only the assignment. Shadowed builtin names and
+effectful annotations remain loud; the grammar census moved from 125/144 to
+126/144 MATCH.
+
 ### Rung 3 — live dict iteration. **CENSUSED; re-scoped into four inches.**
 
 Ten interpreter refusal messages ride on this, and the census corrected

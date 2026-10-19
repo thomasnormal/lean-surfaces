@@ -2041,8 +2041,9 @@ That is the only pre-existing expectation the inch moves.
 ## Annotated assignment (`AnnAssign`, §L49 rung 2)
 
 `x: int = 1` in a FUNCTION BODY is an ordinary assignment, rewritten to
-one at extraction. Module scope admits only the scalar-literal subset below;
-class scope stays loud. The split is not a
+one at extraction. Module scope admits unshadowed builtin type-name
+annotations and scalar-literal annotations below; class scope stays loud.
+The split is not a
 narrowing of convenience — it is where CPython itself puts a semantic
 boundary, and the census measured it rather than reading PEP 526 for it.
 
@@ -2105,10 +2106,13 @@ so the census already counted `x` as bound before the rewrite existed —
 the rewrite tells it nothing new, and the value-less form was already
 counted as a binding too, which is exactly CPython's localisation.
 
-**As built (module scalar-literal subset, 2026-10-10).** A simple module-scope
-target with a value and a literal string, integer, Boolean, or `None`
-annotation lowers to TWO statements: the assign, then the annotation as an
-expression statement. This preserves CPython's value/store/annotation order.
+**As built (module annotation subset, 2026-10-19).** A simple module-scope
+target with a value and an unshadowed builtin type-name annotation (`int`,
+`str`, `list`, and the other builtin type names in the extractor census)
+lowers to the assignment alone: the lookup cannot fail and the implicit
+`__annotations__` table is unobservable. A literal string, integer, Boolean,
+or `None` annotation still lowers to TWO statements: the assign, then the
+annotation expression. This preserves CPython's value/store/annotation order.
 Statement-list conversion splices both nodes through module control shells;
 function-local annotations remain erased, including effectful expressions;
 value-less declarations are erased only when their local binding is unobserved.
@@ -2126,10 +2130,12 @@ Nonliteral annotations refuse as `AnnAssign:annotation-expression`, even when
 their expression is independently in tier. The closed-function initializer
 rolls back failing expression statements without propagating their exceptions;
 lowering `x: (1 // 0) = 3` would otherwise retain `x = 3` for a subsequent
-function call while CPython fails during import. Restricting annotations to
-scalar literals avoids widening that known initialization boundary. The common
-`x: "int" = 1` spelling is admitted; `x: int = 1` still refuses, since builtin
-type objects are not modeled values. No interpreter or proof judgment changes.
+function call while CPython fails during import. Restricting the remaining
+dynamic annotations to scalar literals avoids widening that known initialization
+boundary. The common
+`x: "int" = 1` spelling is admitted; a shadowed builtin type name remains
+loud, since the annotation lookup then observes the module binding. No
+interpreter or proof judgment changes.
 
 ## `yield from` (pass 5 — the promotion arm returns to gen_moves)
 

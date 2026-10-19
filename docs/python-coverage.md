@@ -26,7 +26,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-144 witnesses: 125 MATCH, 19 REFUSE.
+144 witnesses: 126 MATCH, 18 REFUSE.
 
 ### `stmt`
 
@@ -39,7 +39,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Delete` | MATCH | bare-name del at module scope |
 | `Assign` | MATCH |  |
 | `AugAssign` | MATCH |  |
-| `AnnAssign` | REFUSE | unsupported statement 'AnnAssign:annotation-expression' |
+| `AnnAssign` | MATCH | an unshadowed builtin type annotation has no effect observable in the tier, so the assignment is admitted |
 | `AnnAssign-forward` | MATCH | A forward-reference string annotation evaluates after the value is stored; its unobservable annotation-table … |
 | `AnnAssign-local` | MATCH | FUNCTION scope: PEP 526 never evaluates the annotation, so this is an ordinary assign — was REFUSE, landed by… |
 | `AnnAssign-novalue` | MATCH | an unobserved value-less local annotation is erased safely |

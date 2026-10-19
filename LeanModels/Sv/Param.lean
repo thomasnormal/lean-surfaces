@@ -131,8 +131,8 @@ def LVec.ofInt (w : Nat) (v : Int) : LVec := .ofNat w (v.emod ((2 : Int) ^ w)).t
 
 /-- Binary operators of the sv-0.2 envelope: the M0 set (`.m0`), integer
 and runtime multiplication (`*`), constant-position extras (`/ % ** << >> <<< >>>`), signed order
-comparisons (spelled `s<` … by the extractor), and the self-check-tier
-extras (`=== !== && ||`, representable but outside the M0 value core). -/
+comparisons (spelled `s<` … by the extractor), and the legacy spellings of
+case equality and logical operators. Wildcard comparisons use `.m0`. -/
 inductive SymBinOp where
   | m0 (op : BinOp)
   | mul   -- `*`
@@ -167,6 +167,7 @@ def SymBinOp.sym : SymBinOp → String
   | .m0 .and => "&" | .m0 .or => "|"
   | .m0 .xor => "^" | .m0 .eq => "==" | .m0 .ne => "!="
   | .m0 .caseEq => "===" | .m0 .caseNe => "!=="
+  | .m0 .wildEq => "==?" | .m0 .wildNe => "!=?"
   | .m0 .land => "&&" | .m0 .lor => "||" | .m0 .lt => "<"
   | .m0 .le => "<=" | .m0 .gt => ">" | .m0 .ge => ">="
   | .m0 .slt => "s<" | .m0 .sle => "s<="
@@ -464,6 +465,8 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | .m0 .ne => .ok (b2i (a != b))
       | .m0 .caseEq => .ok (b2i (a == b))
       | .m0 .caseNe => .ok (b2i (a != b))
+      | .m0 .wildEq => .ok (b2i (a == b))
+      | .m0 .wildNe => .ok (b2i (a != b))
       | .m0 .land => .ok (b2i (a != 0 && b != 0))
       | .m0 .lor => .ok (b2i (a != 0 || b != 0))
       | .m0 .lt | .m0 .slt | .slt => .ok (b2i (decide (a < b)))
@@ -589,6 +592,7 @@ def selfWidth (env : IEnv) : PExpr → Option Nat
   | .binary op l r =>
       match op with
       | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .wildEq | .m0 .wildNe
       | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth env l
@@ -628,7 +632,8 @@ def divOperandWidth (env : IEnv) : PExpr → Option Nat
   | .unary _ _ => none
   | .binary operator left right =>
       match operator with
-      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .eq | .m0 .ne | .m0 .wildEq | .m0 .wildNe
+      | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth env left
@@ -725,7 +730,8 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
               | .m0 bop => bop
               | _ => .add)  -- unreachable: this arm only matches `.m0`
             (instExpr env octx l) (instExpr env octx r)
-      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .eq | .m0 .ne | .m0 .wildEq | .m0 .wildNe
+      | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .m0 .slt | .m0 .sle | .m0 .sgt | .m0 .sge =>
           let octx := maxW (selfWidth env l) (selfWidth env r)
           .binary (match op with
@@ -804,7 +810,9 @@ def instDivOperand (env : IEnv) (signed : Bool) (ctx : Option Nat) : PExpr → E
         (instDivOperand env false (divOperandWidth env right) right)
   | .binary (.m0 operator) left right =>
       let own := maxW (divOperandWidth env left) (divOperandWidth env right)
-      let comparison := match operator with | .eq | .ne | .lt | .le | .gt | .ge => true | _ => false
+      let comparison := match operator with
+        | .eq | .ne | .wildEq | .wildNe | .lt | .le | .gt | .ge => true
+        | _ => false
       let common := if comparison then own else maxW ctx own
       let value := Expr.binary operator
         (instDivOperand env signed common left) (instDivOperand env signed common right)

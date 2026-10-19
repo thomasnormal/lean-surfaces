@@ -70,8 +70,26 @@ relative to October 14 are all partial on both sides, not regressions.
 The same family corrects `$dimensions` of a plain scalar to zero while
 preserving an implicit packed dimension for predefined integers, enums and
 untagged packed aggregates. Dynamic storage, tagged unions, runtime dimension
-selection and effects remain loud. The table is the fresh snapshot; earlier comparisons are
-historical. Metadata admission is not simulator agreement or live execution.
+selection and effects remain loud. Metadata admission is not simulator
+agreement or live execution.
+
+## Integral wildcard equality — 2026-10-19
+
+A fresh paired run over the same **22,030** paths, with pyslang 11 on
+Python 3.12, changes **2,599 → 2,628 clean** and **19,365 → 19,336 partial**,
+with **66 include skips**, **zero errors**, **29 gains** and **no losses**.
+All gains are in chapter 11. Thirty files lose their wildcard comparison
+refusals; one remains partial because it also uses `$time`. Two gains
+require both equality and inequality, beyond the 27 files with only one
+of those refusal kinds. All 29 newly clean fixtures execute through Lean;
+their complete outputs are checked against independent source runs.
+
+`==?` and `!=?` share the four-state value rule documented in
+[the operator contract](sv-wildcard-equality.md), including cared-left
+unknowns, signed/mixed-width operands and one-bit result sizing. The
+following chapter table is the current snapshot; earlier comparisons
+remain historical. An extractor-clean result alone does not establish
+execution or simulator agreement.
 
 | Chapter | Total | Clean | Partial | Include skip |
 |---|---:|---:|---:|---:|
@@ -83,7 +101,7 @@ historical. Metadata admission is not simulator agreement or live execution.
 | 8 | 842 | 0 | 841 | 1 |
 | 9 | 589 | 60 | 529 | 0 |
 | 10 | 656 | 156 | 500 | 0 |
-| 11 | 1,034 | 509 | 525 | 0 |
+| 11 | 1,034 | 538 | 496 | 0 |
 | 12 | 627 | 167 | 460 | 0 |
 | 13 | 598 | 1 | 597 | 0 |
 | 14 | 473 | 1 | 472 | 0 |
@@ -113,7 +131,7 @@ historical. Metadata admission is not simulator agreement or live execution.
 | 38 | 340 | 170 | 170 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 4 | 83 | 0 |
-| **Total** | **22,030** | **2,599** | **19,365** | **66** |
+| **Total** | **22,030** | **2,628** | **19,336** | **66** |
 
 The top remaining refusal sets count assignment targets in 4,471 files,
 expression calls in 4,222, instance hierarchy in 3,836, and two-state
@@ -122,7 +140,7 @@ declaration shapes in 3,716. Counts overlap: a file may have several walls.
 ## Unary arithmetic correction — 2026-10-19
 
 A fresh 22,030-path census after retaining unary `+` as an arithmetic node
-has the same chapter counts shown above: **2,599 clean**, **19,365 partial**,
+had **2,599 clean**, **19,365 partial**,
 **66 include skips**, and **zero extraction errors**. This is a correction to
 execution of admitted expressions: partially unknown operands now produce
 all x under §11.4.3. The new source fixture covers scalar, signed, widened,

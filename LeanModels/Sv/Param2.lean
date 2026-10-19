@@ -110,7 +110,8 @@ def selfWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Option Na
       | .inc | .dec => none
   | .binary op l r =>
       match op with
-      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .eq | .m0 .ne | .m0 .wildEq | .m0 .wildNe
+      | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => selfWidth2 env elems l
       | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
@@ -166,7 +167,8 @@ def divOperandWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Opt
   | .unary _ _ => none
   | .binary operator left right =>
       match operator with
-      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
+      | .m0 .eq | .m0 .ne | .m0 .wildEq | .m0 .wildNe
+      | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge
       | .slt | .sle | .sgt | .sge | .ceq | .cne | .land | .lor => some 1
       | .shl | .shr | .ashl | .ashr | .pow => divOperandWidth2 env elems left
       | .m0 (.pow ..) | .m0 (.shl ..) | .m0 (.shr ..)
@@ -282,7 +284,8 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
             | none => maxW2 (selfWidth2 env elems l) (selfWidth2 env elems r)
           .binary (match op with | .m0 bop => bop | _ => .add)
             (fitExpr2 env elems octx l) (fitExpr2 env elems octx r)
-      | .m0 .eq | .m0 .ne | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge =>
+      | .m0 .eq | .m0 .ne | .m0 .wildEq | .m0 .wildNe
+      | .m0 .lt | .m0 .le | .m0 .gt | .m0 .ge =>
           let octx := maxW2 (selfWidth2 env elems l) (selfWidth2 env elems r)
           .binary (match op with | .m0 bop => bop | _ => .eq)
             (fitExpr2 env elems octx l) (fitExpr2 env elems octx r)
@@ -401,7 +404,7 @@ def instDivOperand2 (env : IEnv) (elems : List (String × Nat))
   | .binary (.m0 operator) left right =>
       let own := maxW2 (divOperandWidth2 env elems left) (divOperandWidth2 env elems right)
       let comparison := match operator with
-        | .eq | .ne | .lt | .le | .gt | .ge
+        | .eq | .ne | .wildEq | .wildNe | .lt | .le | .gt | .ge
         | .slt | .sle | .sgt | .sge => true
         | _ => false
       let common := if comparison then own else maxW2 ctx own

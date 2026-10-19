@@ -10,7 +10,7 @@ Conventions:
 * `LVec.bits` is **LSB-first**: `bits[0]` is bit 0 (the SV `v[0]`).
 * `Logic.lz` behaves exactly like `Logic.lx` in every operator except the
   case-equality family (`===`/`!==`), per IEEE 1800-2017 (the LRM).
-* Operators whose SV result is a single bit (`== != === !== < <= > >= !`)
+* Operators whose SV result is a single bit (`== != === !== ==? !=? < <= > >= !`)
   return `Logic`; the interpreter lifts with `LVec.ofLogic` where an
   expression value is needed. Whole-vector operators return `LVec`.
 * M0 restricts sources to same-width operands (the extractor emits resolved
@@ -467,6 +467,21 @@ def eqLogical (a b : LVec) : Logic :=
 /-- Logical inequality `!=` = negation of `eqLogical` (so the definite-
 mismatch case gives a definite `1`). -/
 def neLogical (a b : LVec) : Logic := (eqLogical a b).not
+
+/-- Wildcard equality `==?`, IEEE 1800-2023 §11.4.6: x/z bits in the
+right operand match every left bit, while an x/z bit in a cared left
+position makes the result unknown unless another position is a definite
+mismatch. -/
+def eqWildcard (a b : LVec) : Logic :=
+  if a.width ≠ b.width then .lx
+  else
+    let pairs := Array.zip a.bits b.bits
+    if pairs.any fun (x, y) => y.isKnown && x.isKnown && x != y then .l0
+    else if pairs.any fun (x, y) => y.isKnown && !x.isKnown then .lx
+    else .l1
+
+/-- Wildcard inequality `!=?` is the three-valued negation of `==?`. -/
+def neWildcard (a b : LVec) : Logic := (eqWildcard a b).not
 
 /-- Case equality `===`, §11.4.5: exact 4-state match (`x` ≠ `z`!), always a
 definite `0`/`1`. Width mismatch: `0`. -/

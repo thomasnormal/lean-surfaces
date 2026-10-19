@@ -142,6 +142,7 @@ def parseSymBinOp : String → Except String SymBinOp
   | "+" => .ok (.m0 .add) | "-" => .ok (.m0 .sub)
   | "&" => .ok (.m0 .and) | "|" => .ok (.m0 .or) | "^" => .ok (.m0 .xor)
   | "==" => .ok (.m0 .eq) | "!=" => .ok (.m0 .ne)
+  | "==?" => .ok (.m0 .wildEq) | "!=?" => .ok (.m0 .wildNe)
   | "<" => .ok (.m0 .lt) | "<=" => .ok (.m0 .le)
   | ">" => .ok (.m0 .gt) | ">=" => .ok (.m0 .ge)
   | "*" => .ok .mul | "/" => .ok .div | "%" => .ok .mod | "**" => .ok .pow

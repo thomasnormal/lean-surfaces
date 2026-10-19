@@ -220,6 +220,8 @@ def evalBinOp : BinOp → LVec → LVec → LVec
   | .ne, a, b => .ofLogic (a.neLogical b)
   | .caseEq, a, b => .ofLogic (a.eqCase b)
   | .caseNe, a, b => .ofLogic (a.neCase b)
+  | .wildEq, a, b => .ofLogic (a.eqWildcard b)
+  | .wildNe, a, b => .ofLogic (a.neWildcard b)
   | .land, a, b => .ofLogic (a.land b)
   | .lor, a, b => .ofLogic (a.lor b)
   | .lt, a, b => .ofLogic (a.lt b)

@@ -8,7 +8,7 @@
    "name": "pyslang"
   },
   "platform": "linux-x86_64",
-  "python": "3.9",
+  "python": "3.12",
   "walk": "chapter-* only"
  },
  "schema": "sv-census-1",
@@ -427,10 +427,6 @@
     27
    ],
    [
-    "BinaryExpression:WildcardEquality",
-    25
-   ],
-   [
     "ParameterSymbol",
     25
    ],
@@ -604,10 +600,6 @@
    ],
    [
     "UnaryExpression:Postincrement",
-    8
-   ],
-   [
-    "BinaryExpression:WildcardInequality",
     8
    ],
    [
@@ -828,8 +820,8 @@
    ]
   ],
   "by_status": {
-   "clean": 2599,
-   "partial": 19365,
+   "clean": 2628,
+   "partial": 19336,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -890,7 +882,7 @@
     52
    ],
    "simulation": [
-    2146,
+    2175,
     18666
    ],
    "simulation elaboration": [
@@ -905,9 +897,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 485,
-    "clean": 506,
-    "partial": 485,
+    "blocked_by_more": 456,
+    "clean": 535,
+    "partial": 456,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -916,7 +908,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      192
+      189
      ],
      [
       "VariableSymbol:2state",
@@ -967,10 +959,6 @@
       25
      ],
      [
-      "BinaryExpression:WildcardEquality",
-      25
-     ],
-     [
       "ReplicationExpression",
       23
      ],
@@ -989,6 +977,10 @@
      [
       "RangeSelectExpression:source-type",
       15
+     ],
+     [
+      "NamedValueExpression:Parameter",
+      14
      ]
     ],
     "unlockable": 0
@@ -1183,9 +1175,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 509,
+    "clean": 538,
     "error": 0,
-    "partial": 525,
+    "partial": 496,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0

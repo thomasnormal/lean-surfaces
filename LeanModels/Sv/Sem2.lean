@@ -124,9 +124,7 @@ don't-cares; every cared position must hold a *known, equal* subject bit.
 A subject x/z bit in a cared position is a fall-through, exactly like a
 definite mismatch (the `x` result of `==?` does not select a case arm). -/
 def matchesWild (subj item : LVec) : Bool :=
-  subj.width == item.width &&
-  (Array.zip subj.bits item.bits).all fun (s, p) =>
-    !p.isKnown || (s.isKnown && s == p)
+  subj.eqWildcard item == .l1
 
 end LVec
 

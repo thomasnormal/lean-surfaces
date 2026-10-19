@@ -88,13 +88,15 @@ BINARY_OPS = {
     BinaryOperator.GreaterThan: ">",
     BinaryOperator.GreaterThanEqual: ">=",
     # Self-check tier (docs/sv-corpus-coverage.md §f): case equality and
-    # short-circuit-free logical ops. All four yield 1-bit results.
+    # wildcard comparisons and logical ops. All yield 1-bit results.
     BinaryOperator.CaseEquality: "===",
     BinaryOperator.CaseInequality: "!==",
+    BinaryOperator.WildcardEquality: "==?",
+    BinaryOperator.WildcardInequality: "!=?",
     BinaryOperator.LogicalAnd: "&&",
     BinaryOperator.LogicalOr: "||",
 }
-COMPARISON_SYMS = ("==", "!=", "<", "<=", ">", ">=", "===", "!==")
+COMPARISON_SYMS = ("==", "!=", "<", "<=", ">", ">=", "===", "!==", "==?", "!=?")
 LOGICAL_SYMS = ("&&", "||")
 # Order comparisons are SIGNED iff both operand types are signed (LRM
 # §11.8.1). The envelope spells those "s<" etc.; the self-check evaluator
@@ -1020,7 +1022,8 @@ def _convert_binary_expr(sm, e):
     else:
         left = _convert_expr(sm, e.left)
         right = _convert_expr(sm, e.right)
-    if _DIV_CONTEXT and not _SYM.symctx and sym in ("==", "!=", "<", "<=", ">", ">=", "&&", "||"):
+    if _DIV_CONTEXT and not _SYM.symctx and sym in (
+            "==", "!=", "==?", "!=?", "<", "<=", ">", ">=", "&&", "||"):
         left = _division_self_operand(sm, e.left, left)
         right = _division_self_operand(sm, e.right, right)
     width = e.type.bitWidth

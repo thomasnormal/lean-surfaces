@@ -983,6 +983,8 @@ def parseSBinOp (op : String) (l r : SExpr) : Except String SExpr :=
   | "s>=" => .ok (.scmp .ge l r)
   | "===" => .ok (.caseEq l r)
   | "!==" => .ok (.caseNe l r)
+  | "==?" => .ok (.mkBinary .wildEq l r)
+  | "!=?" => .ok (.mkBinary .wildNe l r)
   | "&&" => .ok (.logAnd l r)
   | "||" => .ok (.logOr l r)
   | other => .error s!"unknown binary op '{other}'"

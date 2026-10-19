@@ -311,7 +311,7 @@ in bits**. (`Unsupported` expression nodes have no `width`.)
 | `Concat` | `kind`, `span`, `width`, `parts`: [expr...] | `width == sum(part.width)` |
 | `Unsupported` | see above | — |
 
-`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "===" "!==" "&&" "||" "<" "<=" ">" ">="` (the M0 set;
+`Binary` `op` ∈ `"+" "-" "*" "u/" "s/" "u%" "s%" "&" "|" "^" "==" "!=" "===" "!==" "==?" "!=?" "&&" "||" "<" "<=" ">" ">="` (the M0 set;
 `<<` `>>` `<<<` and `>>>` are integral shifts (§11.4.10). Their envelope
 operators are typed as `u<<`/`s<<`, `u>>`/`s>>`, `u<<<`/`s<<<`, and
 `u>>>`/`s>>>`; the prefix records the signedness of the left operand.
@@ -331,6 +331,14 @@ width is unknown and the parent keeps its structure (the interpreter goes
 Logical `&&`/`||` also produce a one-bit result. Each operand is converted by
 the four-state truthiness rule before the logical table is applied; they are
 not bitwise aliases for `&`/`|`.
+
+Wildcard `==?`/`!=?` produce an unsigned, one-bit self-determined result.
+Right x/z positions match every left value; all other positions use logical
+equality. A definite mismatch dominates an unknown cared-left position.
+Both operand widths agree after the elaborated conversions. Surrounding
+assignment or arithmetic context widens the result after the comparison,
+while its operands retain their own width and signedness. The same spellings
+are retained in symbolic `sv-0.2` expressions.
 
 Unary reductions `|`, `&`, `^`, `~|`, `~&` and `~^` produce one-bit values.
 The first three fold the operand's bits with the corresponding four-state

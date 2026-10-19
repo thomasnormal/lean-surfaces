@@ -128,9 +128,8 @@ def parseRedOpName : String → Except String RedOp
   | "~^" | "^~" | "ReductionXnor" | "Xnor" => .ok .xnor
   | s => .error s!"unknown reduction op {s.quote}"
 
-/-- M0 binary operator names (canonical: the SV symbol; slang enum-style
-spellings accepted). `===`/`!==` are deliberately absent — not in the M0
-expression tier; the extractor emits them as `Unsupported`. -/
+/-- Integral binary operator names (canonical: the SV symbol; slang enum-style
+spellings accepted), including logical, case and wildcard comparisons. -/
 def parseBinOpName : String → Except String BinOp
   | "+" | "Add" => .ok .add
   | "-" | "Subtract" | "Sub" => .ok .sub
@@ -158,6 +157,8 @@ def parseBinOpName : String → Except String BinOp
   | "!=" | "Inequality" | "Ne" => .ok .ne
   | "===" | "CaseEquality" | "CaseEq" => .ok .caseEq
   | "!==" | "CaseInequality" | "CaseNe" => .ok .caseNe
+  | "==?" | "WildcardEquality" | "WildcardEq" => .ok .wildEq
+  | "!=?" | "WildcardInequality" | "WildcardNe" => .ok .wildNe
   | "&&" | "LogicalAnd" | "Land" => .ok .land
   | "||" | "LogicalOr" | "Lor" => .ok .lor
   | "<" | "LessThan" | "Lt" => .ok .lt

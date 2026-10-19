@@ -366,6 +366,24 @@ sum and comparison are checked through the M0 runner and Icarus differential
 harness. This is a declaration/operator surface extension, not a scheduler
 change.
 
+### Integral wildcard equality — 2026-10-19
+
+`==?` and `!=?` are retained in both envelope schemas and run through one
+shared four-state value rule. Right x/z bits are wildcards; a known mismatch
+dominates an unknown cared-left bit, and inequality complements the equality
+result. Both operators produce an unsigned, one-bit self-determined value.
+Both symbolic compilers preserve operand typing and the comparison boundary
+inside surrounding arithmetic. The existing Boolean `case inside` selector
+also calls the shared rule. No scheduler change is involved.
+
+The paired 22,030-path census gains 29 clean chapter-11 files without losses;
+30 files lose wildcard refusals, including one still blocked by `$time`.
+The source fixture exercises all scalar pairs, signed/mixed-width and wide
+vectors, result extension and nested arithmetic. Source-anchored theorems
+cover arbitrary vectors under an all-wildcard right operand. Nonintegral
+value/storage types and integral membership expressions retain their
+existing missing mechanisms. See [the operator contract](sv-wildcard-equality.md).
+
 ### Unary plus arithmetic — corrected 2026-10-19
 
 Integral unary `+` is retained in both envelope schemas and compiled through

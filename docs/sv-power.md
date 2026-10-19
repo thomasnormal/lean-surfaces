@@ -31,5 +31,7 @@ not reference confirmations. IEEE 1800-2023 §11.4.3, Table 11-4 requires an
 all-x result for integral `0 ** negative`; Icarus Verilog produces the same
 all-x result. The separate reference run returns zero for these rows, so the
 fixture deliberately checks the standard result and records the disagreement
-instead of treating it as an oracle match. The positive, zero-exponent and
+instead of treating it as an oracle match. Reference cache
+`c6e89990f6b74c057dad284b` (xrun 24.03-s004, 2026-10-12) records `FAIL` for
+each of the three rows followed by `PASS`; the positive, zero-exponent and
 nonzero-base rows remain subject to ordinary reference confirmation.

@@ -61,6 +61,13 @@ theorem unsigned_power {width exponentWidth : Nat}
 #guard LVec.pow true true (.ofNat 8 255) (.ofNat 4 14) == .ofNat 8 1
 #guard LVec.pow true true (.ofNat 8 1) (.ofNat 4 14) == .ofNat 8 1
 
+/-! IEEE 1800-2023 §11.4.3 Table 11-4: an integral zero base raised to a
+negative signed exponent produces an all-x result. -/
+#guard LVec.pow false true (.ofNat 8 0) (.ofNat 4 15) == .xVec 8
+#guard LVec.pow true true (.ofNat 8 0) (.ofNat 4 15) == .xVec 8
+
+#guard LVec.pow false true (.ofNat 32 0) (.ofNat 32 (2^32 - 1)) == .xVec 32
+
 def contextResults (design : Design2) (exponent : Nat) : List (Res LVec) :=
   design.processes.toList.map fun process =>
     match process with

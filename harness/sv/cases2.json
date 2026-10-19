@@ -25,6 +25,17 @@
    ]
   },
   {
+   "name": "bit_select_assign",
+   "example": "sem2/bit_select_assign",
+   "top": "bit_select_assign",
+   "signals": ["source", "flag", "value"],
+   "stimulus": [
+    {"source": "0000", "flag": "0"},
+    {"source": "0001", "flag": "1"},
+    {"source": "x000", "flag": "x"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

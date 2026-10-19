@@ -883,6 +883,12 @@ semantic-tier acceptance case only: the legacy target-only census remains
 unchanged because these corpus rows require the scheduler-facing continuous
 assignment surface.
 
+The `bit_select_assign` fixture adds the one-bit form: two disjoint constant
+bit-select drivers, one fed by a selected source bit and one by a scalar input.
+Its trace checks live updates, undriven x bits, and x propagation. This is
+also a semantic-tier acceptance case only; the target-only census remains
+unchanged for the same scheduler-facing reason.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

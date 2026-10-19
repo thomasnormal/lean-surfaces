@@ -27,6 +27,17 @@ class SymbolicContinuousSelects(unittest.TestCase):
                            p["target"]["lsb"]["value"]) for p in processes],
                          [(3, 0), (7, 4)])
 
+    def test_disjoint_constant_bits_keep_windows(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, input logic flag, "
+            "output logic [7:0] value); "
+            "assign value[1] = source[0]; assign value[6] = flag; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([p["target"]["kind"] for p in processes],
+                         ["BitSel", "BitSel"])
+        self.assertEqual([p["target"]["index"]["value"] for p in processes],
+                         [1, 6])
+
 
 if __name__ == "__main__":
     unittest.main()

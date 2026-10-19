@@ -2564,6 +2564,11 @@ propagation while retaining the existing packed-vector storage. Dynamic,
 effectful, overlapping, aggregate, and legacy/self-check selected drivers
 remain loud.
 
+The `bit_select_assign` fixture separately pins the one-bit form, including a
+selected source bit, an undriven x-state remainder, and x propagation through
+the scalar driver. It uses the same packed-vector window representation and
+does not add a scheduler or driver-resolution rule.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

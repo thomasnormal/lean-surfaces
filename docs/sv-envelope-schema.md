@@ -357,6 +357,11 @@ bits and update live when an input changes. Dynamic or effectful selections,
 overlapping driver resolution, and legacy/self-check selected assignments
 remain outside this surface.
 
+The `bit_select_assign` fixture exercises two disjoint constant bit-select
+drivers, including a selected read on the RHS and four-state propagation. It
+uses the same `BitSel` window path; no separate scalar-driver representation
+or scheduler is introduced.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

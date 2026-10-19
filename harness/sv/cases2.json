@@ -3,6 +3,17 @@
  "fuel": 2000,
  "cases": [
   {
+   "name": "concat_assign",
+   "example": "sem2/concat_assign",
+   "top": "concat_assign",
+   "signals": ["source", "upper", "lower"],
+   "stimulus": [
+    {"source": "00111100"},
+    {"source": "10100101"},
+    {"source": "xxxx0000"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

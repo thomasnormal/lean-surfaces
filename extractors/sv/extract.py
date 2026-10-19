@@ -3047,6 +3047,78 @@ def _sym_areset_process(sm, m, body, timing, style):
     }
 
 
+def _symbolic_concat_target(sm, lhs):
+    """Lower a continuous-assignment concatenation to direct target leaves.
+
+    The semantic tier already owns continuous comb settling and fixed
+    select windows.  This surface form only admits a statically sized,
+    duplicate-free concatenation of those leaves, and requires the RHS to
+    have no target-name alias so splitting it into windows preserves the
+    single sampled RHS rule.  Aggregate, dynamic and aliased forms remain
+    loud until their storage/driver contracts are explicit.
+    """
+    if type(lhs).__name__ != "ConcatenationExpression":
+        return None
+
+    def leaves(node):
+        if type(node).__name__ == "ConcatenationExpression":
+            out = []
+            for operand in node.operands:
+                nested = leaves(operand)
+                if nested is None:
+                    return None
+                out.extend(nested)
+            return out
+        node_kind = type(node).__name__
+        if node_kind == "ElementSelectExpression":
+            if _constant_dimension_selector(node.selector) is None:
+                return None
+        elif node_kind == "RangeSelectExpression":
+            if (str(node.selectionKind).split(".")[-1] != "Simple"
+                    or _constant_dimension_selector(node.left) is None
+                    or _constant_dimension_selector(node.right) is None):
+                return None
+        target, admitted = select_target(sm, node)
+        if not admitted or target is None:
+            return None
+        if target.get("kind") not in ("Ident", "BitSel", "PartSel"):
+            return None
+        if target.get("kind") != "Ident":
+            base = target.get("value")
+            if base is None or base.get("kind") != "Ident":
+                return None
+        if target.get("width", 0) <= 0:
+            return None
+        return [target]
+
+    parts = leaves(lhs)
+    if not parts:
+        return None
+    seen = set()
+    for target in parts:
+        key = json.dumps(target, sort_keys=True, separators=(",", ":"))
+        if key in seen:
+            return None
+        seen.add(key)
+    return parts
+
+
+def _converted_ident_names(node):
+    if isinstance(node, dict):
+        names = set()
+        if node.get("kind") == "Ident" and node.get("name") is not None:
+            names.add(node["name"])
+        for value in node.values():
+            names.update(_converted_ident_names(value))
+        return names
+    if isinstance(node, list):
+        names = set()
+        for value in node:
+            names.update(_converted_ident_names(value))
+        return names
+    return set()
+
+
 def convert_continuous_assign(sm, m):
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "ContinuousAssignSymbol:delay")
@@ -3056,9 +3128,30 @@ def convert_continuous_assign(sm, m):
     if e.op is not None or e.timingControl is not None or e.isNonBlocking:
         return unsupported(sm, m, "ContinuousAssignSymbol:form")
     target, ok = select_target(sm, e.left)
+    if _SYM is not None and type(e.left).__name__ == "ConcatenationExpression":
+        parts = _symbolic_concat_target(sm, e.left)
+        if parts is None:
+            return unsupported(sm, m, "AssignmentExpression:target")
+        target = {
+            "kind": "ConcatTarget",
+            "span": node_span(sm, e.left),
+            "width": e.left.type.bitWidth,
+            "parts": parts,
+        }
+        ok = True
     if not ok:
         return unsupported(sm, m, "AssignmentExpression:target")
     value = convert_expr(sm, e.right)
+    if (_SYM is not None and target.get("kind") == "ConcatTarget"):
+        if getattr(e.right.type, "bitWidth", None) != target.get("width"):
+            return unsupported(sm, m, "AssignmentExpression:target")
+        target_names = {
+            part.get("name") if part.get("kind") == "Ident"
+            else part.get("value", {}).get("name")
+            for part in target.get("parts", [])
+        }
+        if _converted_ident_names(value) & target_names:
+            return unsupported(sm, m, "AssignmentExpression:target")
     try:
         if not e.left.type.isFourState:
             value = squash2_wrap(value, e.left.type.bitWidth)

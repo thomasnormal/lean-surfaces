@@ -172,18 +172,21 @@ inductive Expr2 where
   | unsupported (svKind : String) (text : String)
 deriving Repr, BEq, Inhabited
 
-/-- Assignment targets: whole signal, constant slice, or dynamic element
-select (index evaluated at execution time; x/z or out-of-range index writes
-nothing — the target holds). -/
+/-- Assignment targets: whole signal, constant slice, dynamic element select,
+or a concatenation of direct leaves. Concatenations are used by continuous
+assignments and are updated from one sampled RHS value. -/
 inductive Lhs2 where
   | ident (name : String)
   | slice (name : String) (lo w : Nat)
   | index (name : String) (idx : Expr2) (elemW : Nat)
+  | concat (parts : List Lhs2)
 deriving Repr, BEq, Inhabited
 
 /-- The written signal's name. -/
 def Lhs2.name : Lhs2 → String
   | .ident n | .slice n _ _ | .index n _ _ => n
+  | .concat (part :: _) => part.name
+  | .concat [] => ""
 
 mutual
 /-- Semantic-tier statements: M0 shapes over `Expr2`/`Lhs2` plus `case`.
@@ -258,6 +261,7 @@ where
   lhsHas : Lhs2 → Bool
     | .ident _ | .slice .. => false
     | .index _ i _ => exprHas i
+    | .concat _ => false
   stmtHas : Stmt2 → Bool
     | .unsupported _ _ => true
     | .blockingAssign t e | .nbaAssign t e => lhsHas t || exprHas e
@@ -407,6 +411,45 @@ def resolveLhs2 (fuel : Nat) (st : SvState) : Lhs2 → Res (String × Option (Na
               else
                 return (n, none)  -- OOB write: no-op (Z05)
           | none => return (n, none)  -- x/z-index write: no-op (W01/W03/W06/W08)
+  | .concat _ => .unsupported "concatenated target requires continuous-assignment execution"
+
+/-- Resolve every leaf of a continuous concatenation. The extractor only
+emits concatenations whose leaves are direct, statically sized targets, but
+the resolver still checks every leaf and rejects a dynamic no-write window:
+continuous concatenation needs one sampled RHS and a definite destination
+width for each slice. -/
+def resolveConcatLhs2 (fuel : Nat) (st : SvState) : Lhs2 →
+    Res (List (String × Nat × Nat))
+  | .concat parts =>
+      parts.foldlM (init := ([] : List (String × Nat × Nat)))
+        (fun acc part => do
+          let windows ← resolveConcatLhs2 fuel st part
+          return acc ++ windows)
+  | target => do
+      let (name, window) ← resolveLhs2 fuel st target
+      match window with
+      | some (lo, width) => return [(name, lo, width)]
+      | none => .unsupported "continuous concatenation target has no fixed window"
+
+/-- Apply a sampled continuous-assignment RHS to concatenated leaves. LVec is
+LSB-first, while a concatenation lists its leaves MSB-first, so the first
+leaf receives the high slice and the remaining width decreases toward zero. -/
+def writeConcatLhs2 (st : SvState) (value : LVec)
+    (windows : List (String × Nat × Nat)) : Res SvState :=
+  let total := windows.foldl (fun n (_, _, width) => n + width) 0
+  let replacement := value.resizeU total
+  let rec go (state : SvState) (remaining : List (String × Nat × Nat))
+      (remainingWidth : Nat) : Res SvState :=
+    match remaining with
+    | [] => .ok state
+    | (name, lo, width) :: rest =>
+        match SvState.lookup state name with
+        | none => .unsupported s!"unknown assign target '{name}'"
+        | some old =>
+            let nextWidth := remainingWidth - width
+            let part := replacement.extract nextWidth width
+            go (SvState.set state name (old.insertAt lo part)) rest nextWidth
+  go st windows total
 
 /-- Execute one statement (blocking hits the state via `insertAt`;
 nonblocking enqueues the resolved window; `case` per `caseHit`, first
@@ -515,13 +558,18 @@ disjoint slices of one signal settle to the union, undriven bits stay x). -/
 def runCombProcess2 (fuel : Nat) (st : SvState) : Process2 → Res SvState
   | .assign target value => do
       let v ← evalExpr2 fuel st value
-      let (n, win) ← resolveLhs2 fuel st target
-      match win with
-      | none => .ok st
-      | some (lo, w) =>
-          match SvState.lookup st n with
-          | some old => .ok (SvState.set st n (old.insertAt lo (v.resizeU w)))
-          | none => .unsupported s!"unknown assign target '{n}'"
+      match target with
+      | .concat _ =>
+          let windows ← resolveConcatLhs2 fuel st target
+          writeConcatLhs2 st v windows
+      | _ =>
+          let (n, win) ← resolveLhs2 fuel st target
+          match win with
+          | none => .ok st
+          | some (lo, w) =>
+              match SvState.lookup st n with
+              | some old => .ok (SvState.set st n (old.insertAt lo (v.resizeU w)))
+              | none => .unsupported s!"unknown assign target '{n}'"
   | .alwaysComb body => do
       let (st', nba) ← execStmt2 fuel st [] body
       match nba with
@@ -881,5 +929,24 @@ private def partialDrv : Design2 :=
 #guard (Res.toOption (run2 partialDrv σ_src 64 [[("a", LVec.lit "11")]])).map
         (fun tr => tr.map fun st => SvState.showSignal st "y")
       == some ["x1x1"]
+
+-- A concatenated continuous driver samples one source vector and distributes
+-- its MSB-first leaves to the existing packed windows.
+private def concatDrv : Design2 :=
+  { name := "concat_drv"
+    decls := #[
+      { name := "source", width := 8, isInput := true },
+      { name := "upper", width := 4 },
+      { name := "lower", width := 4 }]
+    processes := #[
+      .assign (.concat [.ident "upper", .ident "lower"]) (.ident "source")] }
+
+#guard (Res.toOption (run2 concatDrv σ_src 64
+        [[("source", LVec.lit "00111100")],
+         [("source", LVec.lit "10100101")],
+         [("source", LVec.lit "xxxx0000")]])).map
+        (fun tr => tr.map fun st =>
+          (SvState.showSignal st "upper", SvState.showSignal st "lower"))
+      == some [("0011", "1100"), ("1010", "0101"), ("xxxx", "0000")]
 
 end LeanModels.Sv

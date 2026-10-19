@@ -866,6 +866,17 @@ four-construct adapter tier + {`===`, `!==`, `#delay`, width-changing
 implicit conversions, bit/part-select targets, 2-state locals} is the
 shortest path to a four-digit conformance suite.
 
+## Symbolic continuous concatenation targets — 2026-10-19
+
+The fresh paired extractor census remains **2,980 clean / 18,987 partial / 66
+include skips / 0 errors**; `AssignmentExpression:target` remains **3,902**
+files because this item changes only the symbolic `sv-0.2` surface. The
+target-only repricing is **18 files / 27 instances**, all continuous-assignment
+shapes. The new semantic slice admits the direct nested-concatenation subset
+through existing comb-settle windows and therefore makes no whole-corpus
+clean-count claim. `sem2/concat_assign` exercises source-order flattening,
+single-RHS sampling, and x-state propagation through the symbolic runner.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

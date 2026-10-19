@@ -292,15 +292,28 @@ private def parseTarget (j : Json) : Except String (Except String String) := do
   | .ident n => return .ok n
   | _ => return .error "AssignmentExpression:target"
 
-/-- Semantic-tier assignment targets: whole signal, or one `BitSel`/
-`PartSel` over an identifier base (the extractor's `_target_shape_ok`
-contract). Anything else degrades to a loud unsupported statement. -/
-private def parseTargetL (j : Json) : Except String (Except String PLhs) := do
-  match ← parsePExpr j with
-  | .ident n => return .ok (.ident n)
-  | .bitSel (.ident n) idx => return .ok (.bitSel n idx)
-  | .partSel (.ident n) msb lsb => return .ok (.partSel n msb lsb)
-  | _ => return .error "AssignmentExpression:target"
+/-- Semantic-tier assignment targets: whole signal, one `BitSel`/`PartSel`
+over an identifier base, or a concatenation of those leaves. Anything else
+degrades to a loud unsupported statement. -/
+partial def parseTargetL (j : Json) : Except String (Except String PLhs) := do
+  match (← j.getObjVal? "kind") with
+  | .str "ConcatTarget" =>
+      let parts ← match (← j.getObjVal? "parts").getArr? with
+        | .ok xs => xs.toList.mapM parseTargetL
+        | .error _ => throw "ConcatTarget.parts must be an array"
+      if parts.isEmpty then return .error "AssignmentExpression:target"
+      let mut lowered : List PLhs := []
+      for part in parts do
+        match part with
+        | .ok p => lowered := lowered ++ [p]
+        | .error e => return .error e
+      return .ok (.concat lowered)
+  | _ =>
+      match ← parsePExpr j with
+      | .ident n => return .ok (.ident n)
+      | .bitSel (.ident n) idx => return .ok (.bitSel n idx)
+      | .partSel (.ident n) msb lsb => return .ok (.partSel n msb lsb)
+      | _ => return .error "AssignmentExpression:target"
 
 partial def parsePStmt (j : Json) : Except String PStmt := do
   let kind ← getKind j

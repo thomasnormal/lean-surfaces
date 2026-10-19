@@ -2544,6 +2544,17 @@ The six decisions are taken. Three standing obligations remain.
 
 ## 10 WHAT LANDED WITH THIS CHARTER
 
+### Symbolic continuous concatenation targets — 2026-10-19
+
+The semantic `sv-0.2` surface now admits continuous assignments whose LHS is
+a nested concatenation of direct scalar, constant bit-select, or constant
+part-select leaves. Nested concatenations flatten in source order to
+`ConcatTarget`; the existing comb-settle path samples the RHS once and writes
+the corresponding MSB-to-LSB windows into the existing packed-vector state.
+Dynamic, aggregate, duplicate, aliased, effectful, and legacy/self-check
+concatenation targets remain loud. The `sem2/concat_assign` fixture is carried
+through the symbolic runner and the `concat_assign` differential case.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

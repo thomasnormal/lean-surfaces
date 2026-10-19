@@ -319,17 +319,22 @@ structure PDecl where
 deriving Repr, BEq, Inhabited
 
 /-- Assignment targets of the semantic tier: whole signal, bit/element
-select, or constant part select — always over a declared signal name (no
-nested selects, no concat LHS: the CV32E40P provable files use neither). -/
+select, constant part select, or a concatenation of those direct leaves.
+Concatenation targets are used by continuous assignments; their leaves stay
+over declared signal names so the comb driver can update each existing
+vector window without introducing aggregate storage. -/
 inductive PLhs where
   | ident (name : String)
   | bitSel (name : String) (index : PExpr)
   | partSel (name : String) (msb lsb : PExpr)
+  | concat (parts : List PLhs)
 deriving Repr, BEq, Inhabited
 
 /-- The targeted signal's name. -/
 def PLhs.name : PLhs → String
   | .ident n | .bitSel n _ | .partSel n _ _ => n
+  | .concat (part :: _) => part.name
+  | .concat [] => ""
 
 /-- Statements: the M0 shapes over `PExpr` (identifier targets), plus the
 semantic tier's select-target assignments (`…L`) and `case` (plain /

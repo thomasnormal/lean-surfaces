@@ -195,7 +195,7 @@ the ingester may treat a `Net` with non-null `init` as it treats `Assign`.
 |---|---|
 | `AlwaysPosedge` | `kind`, `span`, `style` (`"always_ff"` \| `"always"`), `clock` (string: the 1-bit clock identifier), `body` (stmt) |
 | `AlwaysComb` | `kind`, `span`, `body` (stmt) |
-| `Assign` | `kind`, `span`, `target` (expr, always an `Ident`), `value` (expr) — continuous `assign` |
+| `Assign` | `kind`, `span`, `target` (expr: `Ident`, a select, or semantic-tier `ConcatTarget`), `value` (expr) — continuous `assign` |
 | `Initial` | `kind`, `span`, `body` (stmt) — scheduler-facing retained process; the timed loader admits one or more in source order |
 
 `AlwaysPosedge` covers exactly `always_ff @(posedge clk) ...` and
@@ -341,6 +341,14 @@ conditional over the declared cells. Dynamic writes become mutually exclusive
 the declared index labels makes x/z indices and out-of-range indices perform
 no write and read as all x. Associative, dynamic, queue, multidimensional and
 effectful index forms remain `Unsupported`.
+
+The symbolic `sv-0.2` tier also admits a continuous assignment whose LHS is a
+nested concatenation of direct scalar, constant bit-select, or constant
+part-select leaves. The extractor flattens nested concatenations into a
+`ConcatTarget` in source order. `Design2` samples the RHS once and applies its
+MSB-to-LSB slices to the existing packed-vector windows during comb settling;
+aggregate storage and a second scheduler are not introduced. Empty, dynamic,
+aggregate, duplicate, aliased, or effectful forms remain `Unsupported`.
 
 ## Expressions
 

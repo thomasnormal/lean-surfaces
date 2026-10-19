@@ -477,7 +477,7 @@ end
 /-- Lower an assignment target: `(Lhs2, context width for the RHS)`.
 Loud (`.error`) on non-constant part-select bounds, undeclared names, or
 negative indices — the caller degrades to `Stmt2.unsupported`. -/
-def instLhs2 (env : IEnv) (elems : List (String × Nat)) :
+def instLhsLeaf2 (env : IEnv) (elems : List (String × Nat)) :
     PLhs → Except String (Lhs2 × Nat)
   | .ident n =>
       match env.widths.lookup n with
@@ -502,6 +502,16 @@ def instLhs2 (env : IEnv) (elems : List (String × Nat)) :
           else .error s!"bad part-select bounds [{m}:{l}]"
       | none, _, _ => .error s!"assignment target '{n}' undeclared"
       | _, .error e, _ | _, _, .error e => .error s!"part-select bound: {e}"
+  | .concat _ => .error "nested continuous concatenation target"
+
+def instLhs2 (env : IEnv) (elems : List (String × Nat)) :
+    PLhs → Except String (Lhs2 × Nat)
+  | .concat parts => do
+      if parts.isEmpty then .error "empty continuous concatenation target"
+      let lowered ← parts.mapM (instLhsLeaf2 env elems)
+      let width := lowered.foldl (fun n (_, w) => n + w) 0
+      return (.concat (lowered.map Prod.fst), width)
+  | target => instLhsLeaf2 env elems target
 
 mutual
 /-- Lower a statement to `Stmt2`. -/

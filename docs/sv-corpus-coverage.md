@@ -898,6 +898,10 @@ The `packed_member_typedef` fixture covers the equivalent typedef spelling.
 The alias is discarded as compile-time metadata while the canonical packed
 width and member offsets remain in the emitted vector windows.
 
+The `packed_member_nested` fixture checks a two-level untagged packed-struct
+chain. Its inner fields flatten to the outer vector's fixed windows, with the
+same four-state trace and no new aggregate store.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

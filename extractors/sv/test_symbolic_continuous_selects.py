@@ -64,6 +64,18 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual([proc["kind"] for proc in module["processes"]],
                          ["Assign", "Assign", "Assign"])
 
+    def test_nested_packed_member_flattens_to_outer_window(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [7:0] out); "
+            "struct packed { struct packed { logic [3:0] hi; "
+            "logic [3:0] lo; } inner; } value; "
+            "assign value.inner.lo = source; assign value.inner.hi = 4'ha; "
+            "assign out = value; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([(p["target"]["msb"]["value"],
+                           p["target"]["lsb"]["value"]) for p in processes[:2]],
+                         [(3, 0), (7, 4)])
+
 
 if __name__ == "__main__":
     unittest.main()

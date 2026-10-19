@@ -56,6 +56,16 @@
    ]
   },
   {
+   "name": "packed_member_nested",
+   "example": "sem2/packed_member_nested",
+   "top": "packed_member_nested",
+   "signals": ["source", "out"],
+   "stimulus": [
+    {"source": "0011"},
+    {"source": "x010"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

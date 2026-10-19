@@ -371,6 +371,11 @@ untagged packed struct is compile-time metadata and is skipped after its
 canonical vector width has been checked; `packed_member_typedef` pins that
 case.
 
+Nested untagged packed-struct member chains are flattened in the same way:
+the helper accumulates each declaration offset and emits one outer-vector
+`PartSel`. `packed_member_nested` pins this chain; nested unions and other
+aggregate member paths remain unsupported.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

@@ -2586,6 +2586,14 @@ canonical vector width and fixed member offsets survive alias removal. Tagged,
 union and unresolved type aliases remain loud, and the semantic fixture does
 not claim a legacy census gain or simulator agreement.
 
+### Symbolic nested packed-member windows — 2026-10-19
+
+Nested untagged packed-struct member chains now accumulate their fixed
+declaration offsets and lower to windows over the outer vector. The
+`packed_member_nested` fixture checks both inner fields and x propagation;
+nested unions and other aggregate paths remain loud. This is a symbolic
+fixture result only, with no legacy census or simulator-agreement claim.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

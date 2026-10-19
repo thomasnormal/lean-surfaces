@@ -237,7 +237,7 @@ ordinary effectful expression.
 |---|---|
 | `Block` | `kind`, `span`, `stmts`: [stmt...] — `begin ... end` (a single-statement body still nests one level: `"stmts": [<stmt>]`) |
 | `BlockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `=` |
-| `NonblockingAssign` | `kind`, `span`, `target` (expr, always `Ident`), `value` (expr) — `<=` |
+| `NonblockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `<=` |
 | `If` | `kind`, `span`, `cond` (expr), `then` (stmt), `else` (stmt \| `null`) — `else if` chains nest as `If` inside `else` |
 | `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |
 | `Repeat` | legacy/self-check: `kind`, `span`, `count` (expr), `count_signed` (Bool), `body` (stmt) |
@@ -246,10 +246,11 @@ ordinary effectful expression.
 | `Break` / `Continue` | legacy/self-check: `kind`, `span`; transfer to the nearest loop |
 | `Unsupported` | see above |
 
-M0 assignment targets are whole-signal identifiers only; a bit-select, part-select
-or concatenation LHS makes the *statement* `Unsupported`
-(`AssignmentExpression:target`). In the legacy/self-check extractor, a
-constant element of a one-dimensional fixed-unpacked integral array is lowered
+The plain M0 cycle runner still accepts whole-signal identifier targets only;
+a bit-select, part-select or concatenation LHS makes that *statement*
+`Unsupported` (`AssignmentExpression:target`). In the legacy/self-check
+extractor, a constant element of a one-dimensional fixed-unpacked integral
+array is lowered
 to an identifier cell such as `mem[2]`, and its declaration is expanded to one
 vector `Var` per cell. Dynamic or out-of-range indices, multidimensional or
 aggregate arrays, and whole-array operations remain loud except for the narrow
@@ -271,6 +272,13 @@ to the array length. Each element must be a pure integral expression and must
 not read the destination array, preserving the source rule that the complete
 RHS is evaluated before any cell is updated. Wrong-length, dynamic, aggregate
 and destination-aliasing patterns remain `Unsupported`.
+
+A simple right-streaming unpack (`{>> {a, b, ...}} = source`) with no slice
+size and only direct integral identifier targets reuses `ConcatTarget`. The
+RHS must be at least as wide as the target leaves; excess source MSBs are
+consumed by the existing packed-target resize. Left streaming, nested or
+effectful stream operands, struct/unpacked aggregates and a narrower source
+remain `Unsupported`.
 
 An equal-length whole-array assignment from another eligible fixed-unpacked
 integral array is lowered to the same per-cell block, pairing source and

@@ -527,6 +527,19 @@ self-check runner. The focused rerun cleans the corresponding §10.9.11 target
 row; the committed machine census is unchanged because generated outputs are
 not committed.
 
+## Right-streaming unpack targets — 2026-10-19
+
+Simple right-streaming unpack targets with no slice size and direct integral
+identifier leaves now reuse the existing packed `ConcatTarget` executor. The
+RHS is sampled once and may contain excess MSBs, which the packed resize
+consumes; left streaming, nested/effectful streams, packed-struct or unpacked
+aggregate leaves, and a narrower source remain loud. The `streaming_unpack`
+fixture and Lean proof pass through the self-check runner. The next fresh
+census reports **2,960 clean**, **19,007 partial**, **66 include skips** and
+**zero extraction errors**: seven clean gains with no losses; the
+`AssignmentExpression:target` wall falls **3,928 → 3,920**. This is not a
+simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

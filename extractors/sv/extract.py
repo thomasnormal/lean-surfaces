@@ -2329,6 +2329,73 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     }, True
 
 
+def _streaming_target_assignment(sm, expr):
+    """Lower a simple right-streaming unpack into packed target leaves.
+
+    With no slice size and only direct scalar identifiers, right streaming
+    consumes the source from its MSB into the listed targets.  The existing
+    packed-target executor already samples the RHS once and resizes an excess
+    source to the target width, so this surface case needs no new scheduler or
+    storage.  Structs, nested streams, left streaming and effectful/selected
+    target leaves remain loud.
+    """
+    try:
+        if type(expr).__name__ != "AssignmentExpression":
+            return None
+        if expr.op is not None or expr.timingControl is not None:
+            return None
+        lhs = expr.left
+        if type(lhs).__name__ != "StreamingConcatenationExpression":
+            return None
+        if getattr(lhs, "sliceSize", 0) not in (0, None):
+            return None
+        token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
+        operator = str(getattr(token, "kind", "")).split(".")[-1]
+        if operator != "RightShift":
+            return None
+        parts = []
+        total_width = 0
+        for stream in lhs.streams:
+            operand = getattr(stream, "operand", None)
+            if operand is None or type(operand).__name__ != "NamedValueExpression":
+                return None
+            target_type = operand.type.canonicalType
+            if type(target_type).__name__ not in (
+                    "ScalarType", "PredefinedIntegerType", "PackedArrayType",
+                    "EnumType"):
+                return None
+            target, admitted = legacy_blocking_target(sm, operand, True)
+            if not admitted or target.get("kind") != "Ident":
+                return None
+            width = width_of(target)
+            if width is None or width <= 0:
+                return None
+            parts.append(target)
+            total_width += width
+        if not parts:
+            return None
+        value = convert_expr(sm, expr.right)
+        if (value is None or value.get("kind") == "Unsupported"
+                or not _case_source_expression_ok(expr.right)
+                or width_of(value) is None or width_of(value) < total_width
+                or not _case_expression_ok(value)):
+            return None
+        target = {
+            "kind": "ConcatTarget",
+            "span": node_span(sm, lhs),
+            "width": total_width,
+            "parts": parts,
+        }
+        return {
+            "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+            "span": node_span(sm, expr),
+            "target": target,
+            "value": value,
+        }
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Statements
 # ---------------------------------------------------------------------------
@@ -2670,6 +2737,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_pattern_lhs = _fixed_array_pattern_lhs_assignment(sm, expr)
         if array_pattern_lhs is not None:
             return array_pattern_lhs
+        streaming_target = _streaming_target_assignment(sm, expr)
+        if streaming_target is not None:
+            return streaming_target
         array_slice = _fixed_array_slice_pattern_assignment(sm, expr)
         if array_slice is not None:
             return array_slice

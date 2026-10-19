@@ -156,6 +156,26 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertEqual([part["kind"] for part in target["parts"][1]["parts"]],
                          ["SelectTarget", "SelectTarget"])
 
+    def test_right_streaming_unpack_uses_packed_target_leaves(self):
+        design = extract_source(
+            "module top; bit [7:0] source; bit [3:0] hi, lo; "
+            "initial {>> {hi, lo}} = source; endmodule")
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget"]
+        self.assertEqual(target["width"], 8)
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["hi", "lo"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_left_streaming_unpack_stays_loud(self):
+        design = extract_source(
+            "module top; bit [7:0] source; bit [3:0] hi, lo; "
+            "initial {<< {hi, lo}} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

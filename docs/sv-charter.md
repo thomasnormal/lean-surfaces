@@ -1100,6 +1100,19 @@ forms remain loud. The `unpacked_pattern_lhs` fixture checks the real envelope
 through Lean and the self-check runner; focused extraction covers the
 §10.9.11 row, without a new whole-corpus simulator-agreement claim.
 
+### Right-streaming unpack targets — 2026-10-19
+
+Simple right-streaming unpack targets with no slice size and direct integral
+identifier leaves now reuse the existing packed `ConcatTarget` path. The RHS
+is sampled once; excess source MSBs are consumed by the existing packed resize.
+Left streaming, nested/effectful streams, packed-struct or unpacked aggregate
+leaves, and narrower sources remain loud. The `streaming_unpack` fixture checks
+the real envelope through Lean and the self-check runner, without a new
+simulator-agreement claim. The fresh **22,033**-path census reports **2,960
+clean / 19,007 partial / 66 include skips** with zero extraction errors: seven
+clean gains and no losses; `AssignmentExpression:target` falls **3,928 →
+3,920**.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

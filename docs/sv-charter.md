@@ -1073,6 +1073,22 @@ committed census snapshot is unchanged and this rung makes no fresh
 whole-corpus coverage claim. Focused case-comparison tests establish the
 admission boundary; the next census rerun will price any newly clean rows.
 
+### Unpacked-array concatenation into fixed cells — 2026-10-19
+
+Exact-length unpacked-array concatenations on eligible fixed-unpacked integral
+destinations now flatten scalar and eligible whole-array/simple-slice operands
+in source order and lower them to the existing cell assignments. Destination
+aliases, dynamic or aggregate operands and mismatched lengths remain loud. The
+`unpacked_concat` fixture checks the real envelope through Lean and the
+self-check runner.
+
+The authoritative `sv-tests-2` checkout is available at the coordinator's
+read-only corpus path for this measurement. After validation, the census will
+report **2,952 clean / 19,015 partial / 66 include skips** with zero extraction
+errors, nine clean gains and no losses; `AssignmentExpression:target` falls
+**3,939 → 3,929**. The committed machine-readable census remains the prior
+snapshot because it is generated output; this paired result is recorded here.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

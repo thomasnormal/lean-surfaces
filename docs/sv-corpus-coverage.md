@@ -504,6 +504,18 @@ The external `sv-tests-2` checkout was unavailable for this turn, so the
 committed census snapshot is unchanged and no fresh whole-corpus gain is
 claimed. This is not a whole-corpus simulator-agreement claim.
 
+## Unpacked-array concatenation into fixed cells — 2026-10-19
+
+Exact-length unpacked-array concatenations now flatten scalar and eligible
+whole-array/simple-slice operands in source order and lower them to the
+existing fixed-cell assignments. Destination aliases, dynamic or aggregate
+operands and mismatched lengths remain loud. The `unpacked_concat` fixture and
+proof pass through the self-check runner. The fresh **22,033**-path census
+reports **2,952 clean**, **19,015 partial**, **66 include skips**, and **0
+extraction errors**: nine additional clean files with no losses; the
+`AssignmentExpression:target` wall falls **3,939 → 3,929**. This is not a
+whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

@@ -290,6 +290,12 @@ shapes, aliasing forms and unsupported aggregate types remain `Unsupported`.
 Case equality and inequality (`===`/`!==`) use the same lowering, preserving
 exact x/z comparison through the existing scalar case operators.
 
+An exact-length unpacked-array concatenation on the RHS of an eligible fixed
+array assignment is flattened in operand order and lowered to the same per-cell
+assignments. Scalar operands and existing whole-array/simple-slice operands are
+accepted when their widths match; a source alias of the destination, dynamic
+or aggregate operands, and mismatched lengths remain `Unsupported`.
+
 An assignment whose RHS is a pure one-condition ternary over two eligible
 fixed arrays is lowered cell by cell to `Ternary` values. The condition is
 shared across the cells, so an x condition retains the ordinary per-bit

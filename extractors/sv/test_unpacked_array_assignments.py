@@ -247,6 +247,24 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_unpacked_array_concatenation_fills_cells(self):
+        design = extract_source(
+            "module top; int value [1:3]; "
+            "initial value = {1, 2, 3}; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value[1]", "value[2]", "value[3]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_unpacked_array_concat_alias_stays_loud(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:1]; "
+            "initial value = {value[0], 8'h12}; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

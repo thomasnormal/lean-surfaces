@@ -1054,6 +1054,69 @@ def _fixed_array_pattern_assignment(sm, expr):
         return None
 
 
+def _fixed_array_concat_assignment(sm, expr):
+    """Lower an exact unpacked-array concatenation into cell assignments."""
+    try:
+        if type(expr).__name__ != "AssignmentExpression" or expr.op is not None:
+            return None
+        lhs_shape = _fixed_array_assignment_shape(expr.left)
+        if lhs_shape is None or type(expr.right).__name__ != "ConcatenationExpression":
+            return None
+        lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
+        values = []
+        source_names = set()
+        for operand in expr.right.operands:
+            array_shape = _fixed_array_assignment_shape(operand)
+            if array_shape is not None:
+                source_name, source_width, _source_two, positions = array_shape
+                if source_width != lhs_width:
+                    return None
+                source_names.add(source_name)
+                for position in positions:
+                    values.append({
+                        "kind": "Ident", "span": node_span(sm, operand),
+                        "width": source_width,
+                        "name": f"{source_name}[{position}]",
+                    })
+                continue
+            cell = _fixed_array_cell(sm, operand)
+            if cell is not None:
+                cell_name, cell_width, _cell_two = cell
+                if cell_width != lhs_width:
+                    return None
+                source_names.add(cell_name.split("[", 1)[0])
+                values.append({"kind": "Ident", "span": node_span(sm, operand),
+                               "width": cell_width, "name": cell_name})
+                continue
+            if not _case_source_expression_ok(operand):
+                return None
+            value = convert_expr(sm, operand)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != lhs_width
+                    or not _case_expression_ok(value)):
+                return None
+            values.append(value)
+        if source_names and lhs_name in source_names:
+            return None
+        if len(values) != len(lhs_positions):
+            return None
+        stmts = []
+        for position, value in zip(lhs_positions, values):
+            if lhs_two:
+                value = squash2_wrap(value, lhs_width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": lhs_width,
+                           "name": f"{lhs_name}[{position}]"},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts}
+    except Exception:
+        return None
+
+
 def _fixed_array_copy_assignment(sm, expr):
     """Lower a whole-array copy when both sides already have cell storage."""
     try:
@@ -2511,6 +2574,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_slice = _fixed_array_slice_pattern_assignment(sm, expr)
         if array_slice is not None:
             return array_slice
+        array_concat = _fixed_array_concat_assignment(sm, expr)
+        if array_concat is not None:
+            return array_concat
         array_conditional = _fixed_array_conditional_assignment(sm, expr)
         if array_conditional is not None:
             return array_conditional

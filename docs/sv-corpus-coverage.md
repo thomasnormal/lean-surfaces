@@ -494,6 +494,16 @@ external `sv-tests-2` checkout was unavailable for this turn, so the committed
 census snapshot is unchanged and no fresh whole-corpus gain is claimed. This
 is not a whole-corpus simulator-agreement claim.
 
+## Fixed-array case equality and inequality — 2026-10-19
+
+Equal-length whole arrays and simple constant slices now lower `===` and `!==`
+to pairwise cell case comparisons joined by logical `&&`, preserving exact
+x/z matching. Unequal shapes and unsupported aggregate types remain loud. The
+`unpacked_compare` fixture and proof cover both ordinary and case comparisons.
+The external `sv-tests-2` checkout was unavailable for this turn, so the
+committed census snapshot is unchanged and no fresh whole-corpus gain is
+claimed. This is not a whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

@@ -225,6 +225,28 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_whole_array_case_equality_pairs_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] a [0:1]; logic [7:0] b [0:1]; "
+            "initial if (a === b) $display(\"PASS\"); endmodule")
+        ops = [node.get("op") for node in nodes(design)
+               if node.get("kind") == "Binary"]
+        self.assertIn("&&", ops)
+        self.assertGreaterEqual(ops.count("===",), 2)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_slice_case_inequality_pairs_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] a [0:3]; logic [7:0] b [0:3]; "
+            "initial if (a[1:2] !== b[2:3]) $display(\"PASS\"); endmodule")
+        ops = [node.get("op") for node in nodes(design)
+               if node.get("kind") == "Binary"]
+        self.assertIn("&&", ops)
+        self.assertGreaterEqual(ops.count("!=="), 2)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

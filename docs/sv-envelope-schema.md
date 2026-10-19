@@ -287,6 +287,8 @@ out-of-range slices remain loud.
 Equality and inequality of equal-length whole arrays or simple constant slices
 are lowered to pairwise cell comparisons joined with logical `&&`. Unequal
 shapes, aliasing forms and unsupported aggregate types remain `Unsupported`.
+Case equality and inequality (`===`/`!==`) use the same lowering, preserving
+exact x/z comparison through the existing scalar case operators.
 
 An assignment whose RHS is a pure one-condition ternary over two eligible
 fixed arrays is lowered cell by cell to `Ternary` values. The condition is

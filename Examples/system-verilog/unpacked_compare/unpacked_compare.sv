@@ -16,7 +16,7 @@ module top;
     b[1] = 8'h34;
     b[2] = 8'h56;
     b[3] = 8'h78;
-    if (a == b && a[0:1] != b[2:3])
+    if (a == b && a[0:1] != b[2:3] && a === b && a[0:1] !== b[2:3])
       $display("PASS");
     else
       $display("FAIL");

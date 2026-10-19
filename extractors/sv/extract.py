@@ -1685,7 +1685,7 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
-    if _SYM is None and sym in ("==", "!="):
+    if _SYM is None and sym in ("==", "!=", "===", "!=="):
         array_compare = _fixed_array_compare_expr(sm, e, sym)
         if array_compare is not None:
             return array_compare

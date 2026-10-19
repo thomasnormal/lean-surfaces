@@ -190,3 +190,10 @@ executing an undefined self-initialization. The literal-fixture loader uses an
 explicit `maxRecDepth 100000` caller budget; production defaults are unchanged.
 These are frontend/refusal controls,
 not proofs or execution claims about prototype programs.
+
+The optional [variable-evidence supplement](cpp-variable-evidence.md) now
+records versioned Clang storage, role, initializer, constexpr and attribute
+observations with strict root/`inner` joins and structured source/converted
+types. The 18-form battery validates those observations and still refuses
+every declaration statement. This completes an evidence prerequisite;
+object-backed declaration execution and frame scopes remain to be built.

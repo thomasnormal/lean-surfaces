@@ -76,6 +76,11 @@ private def CppTypeEvidence.containsUnsupportedReference (type : CppTypeEvidence
   type.referencedHandles.any fun handle =>
     !declarations.any fun declaration => declaration.id == handle
 
+/-- Every record/enum reference in a projected type has declaration metadata. -/
+def CppTypeEvidence.referencesKnown (type : CppTypeEvidence)
+    (declarations : List DeclarationEvidenceRow) : Bool :=
+  !type.containsUnsupportedReference declarations
+
 private def parseTypeEvidenceRow (ordinal : Nat) (raw : Raw) : Except String TypeEvidenceRow := do
   requireEvidenceText raw "type_api" "Clang::QualType structured type projection v1"
   return {

@@ -31,15 +31,15 @@ class DumpReachabilityTests(unittest.TestCase):
         if result.returncode != 0:
             raise RuntimeError(result.stdout + result.stderr)
 
-    def observe(self, text, chunk):
-        return subprocess.run([str(self.runner), str(chunk)], input=text,
+    def observe(self, text, chunk, ast=False):
+        return subprocess.run([str(self.runner), str(chunk)] + (["ast"] if ast else []), input=text,
                               capture_output=True, text=True, timeout=10)
 
-    def assert_ids(self, document, expected):
+    def assert_ids(self, document, expected, ast=False):
         text = json.dumps(document, ensure_ascii=True)
         for chunk in (1, 2, 3, 7, 64, 127, len(text) + 1):
             with self.subTest(chunk=chunk):
-                result = self.observe(text, chunk)
+                result = self.observe(text, chunk, ast)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(result.stdout.splitlines(), sorted(expected))
 
@@ -69,6 +69,23 @@ class DumpReachabilityTests(unittest.TestCase):
             {"kind": "BinaryOperator", "id": "0x2", "values": [None, True, 17]},
             {"kind": "CompoundAssignOperator", "id": "0x3"},
         ]}, {"0x2", "0x3"})
+
+    def test_ast_mode_only_witnesses_root_and_direct_inner_edges(self):
+        self.assert_ids({"kind": "TranslationUnitDecl", "id": "0x1", "inner": [
+            {"kind": "VarDecl", "id": "0x2", "inner": [
+                {"kind": "IntegerLiteral", "id": "0x3"}],
+             "type": {"id": "0x4", "kind": "RecordType", "inner": [
+                 {"kind": "VarDecl", "id": "0x5"}]}},
+            {"id": "0x6", "kind": "DeclRefExpr", "referencedDecl": {
+                "id": "0x7", "kind": "VarDecl"}},
+            [{"id": "0x8", "kind": "VarDecl"}],
+        ], "payload": {"id": "0x9", "kind": "VarDecl"}},
+            {"0x1", "0x2", "0x3", "0x6"}, ast=True)
+
+    def test_ast_mode_rejects_non_array_inner_and_array_root(self):
+        self.assert_ids({"id": "0x1", "kind": "VarDecl", "inner": {
+            "id": "0x2", "kind": "IntegerLiteral"}}, {"0x1"}, ast=True)
+        self.assert_ids([{"id": "0x1", "kind": "VarDecl"}], set(), ast=True)
 
     def test_unfinished_strings_containers_and_mismatched_delimiters_fail(self):
         for text in ('{"id": "0x1', '{"inner": [}', '{"inner": [', '}', '[}'):

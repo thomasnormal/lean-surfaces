@@ -291,6 +291,122 @@ class CanonicalProbeTests(unittest.TestCase):
         self.assertEqual(record["function_attribute_count_api"], "Decl.hasAttrs/Decl.getAttrs.size")
         self.assertEqual(record["own_body_api"], "FunctionDecl.getBody")
 
+    def variable_probe(self):
+        self.source.write_text("""struct Pair { int first; int second; };
+int global;
+extern int external;
+thread_local int tls_global = 1;
+int forms(short value = 1) {
+  int copy = value, direct(value), list{value}, copy_list = {value}, zero{}, uninitialized;
+  const int constant = 1;
+  constexpr int fixed = 2;
+  volatile int observed = value;
+  auto inferred = value;
+  static int persistent = value;
+  thread_local int per_thread = value;
+  extern int imported;
+  int &reference = copy;
+  int array[2] = {value};
+  Pair aggregate(1, 2);
+  [[maybe_unused]] int attributed = 1;
+  { int copy = 3; }
+  return copy;
+}
+""", encoding="utf-8")
+        probe = self.probe()
+        metadata = probe["metadata"]
+        self.assertEqual(metadata["variable_evidence_api"],
+                         "Clang::VarDecl storage and initializer projection v1")
+        declarations = {row["id"]: row for row in metadata["declarations"]}
+        rows = {}
+        for row in metadata["variable_evidence"]:
+            rows.setdefault(declarations[row["occurrence"]].get("name", ""), []).append(row)
+            self.assertEqual(row["canonical"], declarations[row["occurrence"]]["canonical"])
+            self.assertEqual(row["kind"], declarations[row["occurrence"]]["kind"])
+        return probe, rows
+
+    def test_variable_storage_duration_tls_and_parameter_roles(self):
+        _, rows = self.variable_probe()
+        for name, local, parameter, storage, duration, tls in (
+            ("global", False, False, "none", "static", "none"),
+            ("external", False, False, "extern", "static", "none"),
+            ("tls_global", False, False, "none", "thread", "dynamic"),
+            ("value", False, True, "none", "automatic", "none"),
+            ("direct", True, True, "none", "automatic", "none"),
+            ("persistent", True, True, "static", "static", "none"),
+            ("per_thread", True, True, "none", "thread", "dynamic"),
+            ("imported", True, True, "extern", "static", "none"),
+        ):
+            with self.subTest(name=name):
+                row = rows[name][0]
+                self.assertEqual((row["local"], row["local_or_parameter"],
+                                  row["storage_class"], row["storage_duration"], row["tls"]),
+                                 (local, parameter, storage, duration, tls))
+
+    def test_variable_initializer_styles_and_source_converted_types(self):
+        probe, rows = self.variable_probe()
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if isinstance(node, dict):
+                if "id" in node:
+                    nodes[node["id"]] = node
+                pending.extend(node.get("inner", []))
+        for name, style, kind in (
+            ("copy", "c", "ImplicitCastExpr"), ("direct", "call", "ImplicitCastExpr"),
+            ("list", "list", "InitListExpr"), ("copy_list", "c", "InitListExpr"),
+            ("zero", "list", "InitListExpr"),
+            ("aggregate", "paren-list", "CXXParenListInitExpr"),
+        ):
+            row = rows[name][0]
+            self.assertTrue(row["has_initializer"])
+            self.assertEqual(row["init_style"], style)
+            self.assertEqual(row["initializer"]["kind"], kind)
+            node = nodes[row["occurrence"]]
+            self.assertEqual(node["init"], style)
+            self.assertEqual(node["inner"][0]["id"], row["initializer"]["occurrence"])
+        for name in ("global", "external", "uninitialized", "imported"):
+            self.assertFalse(rows[name][0]["has_initializer"])
+            self.assertIsNone(rows[name][0]["initializer"])
+        converted = rows["direct"][0]["initializer"]
+        self.assertEqual(converted["source"], {"kind": "builtin", "name": "short"})
+        self.assertEqual(converted["type"], {"kind": "builtin", "name": "int"})
+        self.assertTrue(rows["value"][0]["has_initializer"])
+
+    def test_variable_qualifiers_attributes_and_shadowing_are_retained(self):
+        probe, rows = self.variable_probe()
+        types = {row["occurrence"]: row["type"] for row in probe["metadata"]["type_evidence"]}
+        self.assertEqual(types[rows["constant"][0]["occurrence"]]["const"], True)
+        self.assertEqual(types[rows["observed"][0]["occurrence"]]["volatile"], True)
+        self.assertEqual(types[rows["reference"][0]["occurrence"]]["kind"], "lvalue-reference")
+        self.assertEqual(types[rows["inferred"][0]["occurrence"]], {"kind": "builtin", "name": "short"})
+        self.assertTrue(rows["fixed"][0]["constexpr"])
+        self.assertEqual(rows["attributed"][0]["attribute_count"], 1)
+        self.assertEqual(len(rows["copy"]), 2)
+        self.assertEqual(len({row["occurrence"] for row in rows["copy"]}), 2)
+
+    def test_variable_unsupported_types_and_pending_defaults_are_explicit_refusals(self):
+        probe, rows = self.variable_probe()
+        self.assertNotIn("array", rows)
+        declarations = {row["id"]: row for row in probe["metadata"]["declarations"]}
+        refused = probe["metadata"]["variable_refusals"]
+        array = next(row for row in refused
+                     if declarations[row["occurrence"]].get("name") == "array")
+        self.assertTrue(array["dump_visible"])
+        self.assertFalse(array["projection_supported"])
+        self.source.write_text("""template<class T> struct Defaults {
+  void method(int value = T::value);
+};
+Defaults<int> object;
+template<class T> int dependent(T value) { T local = value; return 1; }
+""", encoding="utf-8")
+        probe = self.probe()
+        refused = probe["metadata"]["variable_refusals"]
+        self.assertTrue(refused)
+        self.assertTrue(any("uninstantiated" in row["reason"] for row in refused))
+        self.assertTrue(any("type/shape" in row["reason"] for row in refused))
+
     def test_schema_and_frontend_versions_are_explicit(self):
         probe = self.probe()
         metadata = probe["metadata"]

@@ -26,6 +26,13 @@ direct-child handles, preserving both source and converted types so the
 explicit `TargetProfile` promotion bridge can check builtin integral rows;
 unsupported operand/result families stay in the refusal ledger.
 
+`LeanModels/Cpp/VariableEvidence.lean` validates a separately versioned,
+optional variable-storage and initializer supplement from the same probe.
+It joins only AST root/`inner` occurrences, requires structured declaration
+types, and retains unsupported types/pending defaults in a refusal ledger.
+See the [getter and validation contract](../../docs/cpp-variable-evidence.md).
+These observations do not admit `DeclStmt` or execute local declarations.
+
 ## Optional declaration metadata probe
 
 `canonical_probe.cpp` is an **experimental, tooling-only** Clang plugin. It

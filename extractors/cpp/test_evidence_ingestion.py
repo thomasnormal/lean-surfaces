@@ -299,6 +299,47 @@ class EvidenceIngestionTests(unittest.TestCase):
              str(probe_path), *paths], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60,
         )
 
+    def test_actual_compiler_variable_evidence_loads_with_default_and_template_shapes(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        source = self.root / "variables.cpp"
+        source.write_text("""struct Pair { int x; int y; };
+int inherited(short value = 3);
+int inherited(short value) { return value; }
+int shapes(short value) {
+  int copy = value, direct(value), list{value}, copy_list = {value}, zero{}, absent;
+  Pair aggregate(1, 2);
+  [[maybe_unused]] constexpr int constant = 2;
+  auto [x, y] = Pair{1, 2};
+  return copy;
+}
+template<class T> int variable = 1;
+int forced = variable<int>;
+template<class T> struct Defaults { void method(int value = T::value); };
+Defaults<int> object;
+""", encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        result = subprocess.run([
+            shutil.which(requested), "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", str(source), "-Xclang", "-load", "-Xclang",
+            str(pathlib.Path(library).resolve()), "-Xclang", "-plugin", "-Xclang",
+            "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_accepts(result.stdout, """#guard match parseValidatedVariableEvidence evidence with
+| .ok rows => rows.length > 10 && rows.any (fun row => row.kind == "DecompositionDecl") &&
+    rows.any (fun row => row.kind == "VarTemplateSpecializationDecl") &&
+    rows.any (fun row => row.initStyle == .parenList) &&
+    rows.any (fun row => row.isConstexpr && row.attributeCount == 1) &&
+    rows.any (fun row => row.initializer.any (fun value =>
+      value.sourceType == .builtin .short && value.type == .builtin .int))
+| .error _ => false
+""", options="set_option maxRecDepth 100000 in")
+
     def test_runtime_inspector_preserves_refusals(self):
         result = self.run_inspector(document(), "root")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -558,7 +599,10 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
         self.assertEqual(references(self_scope), [self_variable["id"]])
         first, second = bodies["local_chain"]["inner"][0]["inner"]
         self.assertEqual(references(second), [first["id"]])
-        guards = []
+        guards = ["""#guard match parseValidatedVariableEvidence evidence with
+| .ok rows => rows.length > 35 && rows.any (fun row => row.initializer.isNone) &&
+    rows.any (fun row => row.storageDuration == .thread)
+| .error _ => false"""]
         for name in sorted(functions):
             guards.append(
                 "#guard match admitCallableFunctionFromProbe evidence TargetProfile.lp64 "

@@ -24,6 +24,8 @@ private def inspect (probe : DeclarationProbe) (paths : List (List Nat)) : IO UI
   IO.println s!"metadata={probe.declarations.length} occurrences={declarations.length} functions={probe.functions.length}"
   report "type-evidence" (parseValidatedTypeEvidence probe)
     (fun rows => s!"{rows.length} validated rows")
+  report "variable-evidence" (parseValidatedVariableEvidence probe)
+    (fun rows => s!"{rows.length} validated rows")
   report "binary-expression-evidence" (parseValidatedBinaryExpressionEvidence probe)
     (fun rows => s!"{rows.length} validated rows")
   for path in paths do

@@ -6,7 +6,7 @@
 #include <vector>
 
 int main(int argc, char **argv) {
-  if (argc != 2)
+  if (argc != 2 && (argc != 3 || std::string(argv[2]) != "ast"))
     return 2;
   std::size_t chunk;
   try {
@@ -22,8 +22,8 @@ int main(int argc, char **argv) {
     reachability.consume(std::string_view(input).substr(offset, chunk));
   if (!reachability.complete())
     return 1;
-  std::vector<std::string> identifiers(reachability.expressionIds().begin(),
-                                       reachability.expressionIds().end());
+  const auto &observed = argc == 3 ? reachability.astNodeIds() : reachability.expressionIds();
+  std::vector<std::string> identifiers(observed.begin(), observed.end());
   std::sort(identifiers.begin(), identifiers.end());
   for (const std::string &identifier : identifiers)
     std::cout << identifier << '\n';

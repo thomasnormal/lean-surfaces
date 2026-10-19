@@ -8,20 +8,24 @@
 namespace leancpp {
 
 class DumpReachability {
-  enum class Field { other, id, kind };
+  enum class Field { other, id, kind, inner };
 
   struct Frame {
     bool object;
     bool wantsKey;
+    bool ast;
     Field field = Field::other;
     std::string id;
+    std::string kind;
     bool binary = false;
 
-    explicit Frame(bool isObject) : object(isObject), wantsKey(isObject) {}
+    Frame(bool isObject, bool onAstPath)
+        : object(isObject), wantsKey(isObject), ast(onAstPath) {}
   };
 
   std::vector<Frame> frames;
   std::unordered_set<std::string> expressions;
+  std::unordered_set<std::string> astNodes;
   std::string token;
   bool inString = false;
   bool escaped = false;
@@ -35,14 +39,17 @@ class DumpReachability {
     if (frame.wantsKey) {
       frame.field = !usableToken ? Field::other
                     : token == "id" ? Field::id
-                    : token == "kind" ? Field::kind : Field::other;
+                    : token == "kind" ? Field::kind
+                    : token == "inner" ? Field::inner : Field::other;
       frame.wantsKey = false;
     } else {
       if (frame.field == Field::id)
         frame.id = usableToken ? token : std::string();
-      if (frame.field == Field::kind)
+      if (frame.field == Field::kind) {
+        frame.kind = usableToken ? token : std::string();
         frame.binary = usableToken &&
             (token == "BinaryOperator" || token == "CompoundAssignOperator");
+      }
       frame.field = Field::other;
     }
   }
@@ -72,7 +79,12 @@ public:
         usableToken = true;
         inString = true;
       } else if (character == '{' || character == '[') {
-        frames.emplace_back(character == '{');
+        const bool ast = frames.empty() ? character == '{' :
+            frames.back().ast &&
+                (frames.back().object
+                     ? frames.back().field == Field::inner && character == '['
+                     : character == '{');
+        frames.emplace_back(character == '{', ast);
       } else if (character == '}' || character == ']') {
         if (frames.empty() || frames.back().object != (character == '}')) {
           valid = false;
@@ -81,6 +93,8 @@ public:
         const Frame &frame = frames.back();
         if (frame.object && frame.binary && !frame.id.empty())
           expressions.insert(frame.id);
+        if (frame.object && frame.ast && !frame.kind.empty() && !frame.id.empty())
+          astNodes.insert(frame.id);
         frames.pop_back();
       } else if (character == ',' && !frames.empty() && frames.back().object) {
         frames.back().wantsKey = true;
@@ -94,6 +108,11 @@ public:
 
   const std::unordered_set<std::string> &expressionIds() const {
     return expressions;
+  }
+
+  // Only the root and `inner` descendants, never referencedDecl/type stubs.
+  const std::unordered_set<std::string> &astNodeIds() const {
+    return astNodes;
   }
 };
 

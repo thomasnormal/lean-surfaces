@@ -86,6 +86,48 @@ std::string languageLinkageName(clang::LanguageLinkage linkage) {
   return "unrepresented";
 }
 
+std::string storageClassName(clang::StorageClass storage) {
+  switch (storage) {
+  case clang::SC_None: return "none";
+  case clang::SC_Extern: return "extern";
+  case clang::SC_Static: return "static";
+  case clang::SC_PrivateExtern: return "private-extern";
+  case clang::SC_Auto: return "auto";
+  case clang::SC_Register: return "register";
+  }
+  return "unrepresented";
+}
+
+std::string storageDurationName(clang::StorageDuration duration) {
+  switch (duration) {
+  case clang::SD_FullExpression: return "full-expression";
+  case clang::SD_Automatic: return "automatic";
+  case clang::SD_Thread: return "thread";
+  case clang::SD_Static: return "static";
+  case clang::SD_Dynamic: return "dynamic";
+  }
+  return "unrepresented";
+}
+
+std::string tlsKindName(clang::VarDecl::TLSKind kind) {
+  switch (kind) {
+  case clang::VarDecl::TLS_None: return "none";
+  case clang::VarDecl::TLS_Static: return "static";
+  case clang::VarDecl::TLS_Dynamic: return "dynamic";
+  }
+  return "unrepresented";
+}
+
+std::string initializationStyleName(clang::VarDecl::InitializationStyle style) {
+  switch (style) {
+  case clang::VarDecl::CInit: return "c";
+  case clang::VarDecl::CallInit: return "call";
+  case clang::VarDecl::ListInit: return "list";
+  case clang::VarDecl::ParenListInit: return "paren-list";
+  }
+  return "unrepresented";
+}
+
 void functionShapeEvidence(const clang::FunctionDecl *function,
                            llvm::json::Object &record) {
   record["function_has_skipped_body"] = function->hasSkippedBody();
@@ -344,6 +386,8 @@ public:
   llvm::json::Array typeRefusals;
   llvm::json::Array expressionEvidence;
   llvm::json::Array expressionRefusals;
+  llvm::json::Array variableEvidence;
+  llvm::json::Array variableRefusals;
   std::vector<const clang::Decl *> typedDeclarations;
   std::vector<const clang::BinaryOperator *> binaryExpressions;
   std::unordered_set<std::string> declarationIds;
@@ -462,6 +506,70 @@ public:
     for (const clang::BinaryOperator *expression : binaryExpressions)
       emitBinaryExpression(expression, visibleExpressions);
   }
+
+  void buildVariableEvidence(const std::unordered_set<std::string> &visibleNodes) {
+    for (const clang::Decl *declaration : typedDeclarations) {
+      const auto *variable = llvm::dyn_cast<clang::VarDecl>(declaration);
+      if (!variable)
+        continue;
+      llvm::json::Object row{
+          {"variable_api", "Clang::VarDecl storage and initializer projection v1"},
+          {"occurrence", pointerId(variable)},
+          {"canonical", declarationId(variable->getCanonicalDecl())},
+          {"kind", std::string(variable->getDeclKindName()) + "Decl"},
+          {"local", variable->isLocalVarDecl()},
+          {"local_or_parameter", variable->isLocalVarDeclOrParm()},
+          {"storage_class", storageClassName(variable->getStorageClass())},
+          {"storage_duration", storageDurationName(variable->getStorageDuration())},
+          {"tls", tlsKindName(variable->getTLSKind())},
+          {"init_style", initializationStyleName(variable->getInitStyle())},
+          {"has_initializer", variable->hasInit()},
+          {"initializer", nullptr},
+          {"constexpr", variable->isConstexpr()},
+          {"attribute_count", static_cast<int64_t>(
+              variable->hasAttrs() ? variable->getAttrs().size() : 0)}};
+      if (const auto *parameter = llvm::dyn_cast<clang::ParmVarDecl>(variable)) {
+        if (parameter->hasUnparsedDefaultArg() || parameter->hasUninstantiatedDefaultArg()) {
+          row["dump_visible"] = bool(visibleNodes.count(pointerId(variable)));
+          row["projection_supported"] = false;
+          row["reason"] = "parameter default argument is unparsed or uninstantiated";
+          variableRefusals.push_back(std::move(row));
+          continue;
+        }
+      }
+      const clang::Expr *initializer = variable->getInit();
+      bool visible = visibleNodes.count(pointerId(variable));
+      bool supported = variable->hasInit() == (initializer != nullptr);
+      auto type = structuredType(variable->getType(), *astContext, 0);
+      supported = supported && type && structuredReferencesWitnessed(*type, declarationIds);
+      if (initializer) {
+        llvm::json::Object init{
+            {"occurrence", pointerId(initializer)},
+            {"kind", initializer->getStmtClassName()}};
+        auto sourceType = structuredType(initializer->IgnoreParenImpCasts()->getType(), *astContext, 0);
+        auto convertedType = structuredType(initializer->getType(), *astContext, 0);
+        visible = visible && visibleNodes.count(pointerId(initializer));
+        if (sourceType && structuredReferencesWitnessed(*sourceType, declarationIds))
+          init["source"] = std::move(*sourceType);
+        else
+          supported = false;
+        if (convertedType && structuredReferencesWitnessed(*convertedType, declarationIds))
+          init["type"] = std::move(*convertedType);
+        else
+          supported = false;
+        row["initializer"] = std::move(init);
+      }
+      if (!visible || !supported) {
+        row["dump_visible"] = visible;
+        row["projection_supported"] = supported;
+        row["reason"] = !visible ? "variable or initializer is outside JSON AST inner tree"
+                                 : "unrepresented variable or initializer type/shape";
+        variableRefusals.push_back(std::move(row));
+      } else {
+        variableEvidence.push_back(std::move(row));
+      }
+    }
+  }
 };
 
 class ProbeConsumer : public clang::ASTConsumer {
@@ -494,6 +602,7 @@ public:
       return;
     }
     visitor.buildExpressionEvidence(reachability.expressionIds());
+    visitor.buildVariableEvidence(reachability.astNodeIds());
     llvm::json::Object metadata{
         {"schema_version", "cpp-canonical-probe-0.3"},
         {"compiled_frontend", CLANG_VERSION_STRING},
@@ -505,6 +614,9 @@ public:
         {"expression_evidence_api", "Clang::BinaryOperator typed operand projection v2"},
         {"expression_evidence", std::move(visitor.expressionEvidence)},
         {"expression_refusals", std::move(visitor.expressionRefusals)},
+        {"variable_evidence_api", "Clang::VarDecl storage and initializer projection v1"},
+        {"variable_evidence", std::move(visitor.variableEvidence)},
+        {"variable_refusals", std::move(visitor.variableRefusals)},
         {"declarations", std::move(visitor.records)}};
     llvm::outs() << ",\"metadata\":" << llvm::formatv("{0}", llvm::json::Value(std::move(metadata)))
                  << "}\n";

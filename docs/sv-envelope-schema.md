@@ -255,6 +255,11 @@ vector `Var` per cell. Dynamic or out-of-range indices, multidimensional or
 aggregate arrays, and whole-array operations remain loud. `If` conditions may
 be any width (truthiness per LRM: true iff some bit is `1`).
 
+An eligible cell-expanded declaration may also have an exact-length
+positional assignment-pattern initializer; each element is converted once and
+stored in its corresponding cell. Keyed/default, wrong-length, effectful or
+aggregate initializers remain `Unsupported`.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

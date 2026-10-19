@@ -2169,8 +2169,6 @@ def convert_fixed_array_vars(sm, m):
         array_type = m.type.canonicalType
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return None
-        if getattr(m, "initializer", None) is not None:
-            return None
         element_type = array_type.elementType
         if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
             return None
@@ -2182,13 +2180,30 @@ def convert_fixed_array_vars(sm, m):
         # Avoid turning a malformed/hostile bound into an enormous envelope.
         if count > 1024:
             return None
+        initializer = getattr(m, "initializer", None)
+        values = [None] * count
+        if initializer is not None:
+            if type(initializer).__name__ != "SimpleAssignmentPatternExpression":
+                return None
+            elements = list(initializer.elements)
+            if len(elements) != count:
+                return None
+            for i, element in enumerate(elements):
+                value = convert_expr(sm, element)
+                if value is None or value.get("kind") == "Unsupported":
+                    return None
+                values[i] = value
         step = 1 if right >= left else -1
         decls = []
-        for position in range(left, right + step, step):
-            init = (None if not two else {
-                "kind": "Literal", "span": None, "width": width,
-                "bits": "0" * width,
-            })
+        for i, position in enumerate(range(left, right + step, step)):
+            init = values[i]
+            if init is None and two:
+                init = {
+                    "kind": "Literal", "span": None, "width": width,
+                    "bits": "0" * width,
+                }
+            elif init is not None and two:
+                init = squash2_wrap(init, width)
             decls.append(signed_metadata({
                 "kind": "Var",
                 "span": sym_span(sm, m),

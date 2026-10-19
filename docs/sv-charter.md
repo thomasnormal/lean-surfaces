@@ -837,6 +837,20 @@ The fresh **22,033**-path census adds **6 clean files** without losses
 **4,223**. This is a narrow geometry rung; the remaining target wall is still
 dominated by arrays, classes, hierarchy and nonintegral values.
 
+### Positional fixed-unpacked initializers — 2026-10-19
+
+Eligible one-dimensional fixed-unpacked integral arrays may now carry an
+exact-length positional assignment pattern at declaration time. The
+extractor converts each element once and installs it in the corresponding
+vector cell, retaining ordinary 4-state and 2-state initialization. Keyed or
+default patterns, wrong-length patterns, effectful elements and aggregate
+element types remain loud. The `unpacked_init` fixture checks the initialized
+cell through the real envelope and self-check runner.
+
+The fresh **22,033**-path census adds **3 clean files** without losses
+(**2,795 → 2,798**). This initializer rung does not reduce the target wall
+itself; the remaining `AssignmentExpression:target` count is **4,223**.
+
 ### Packed blocking assignment targets — 2026-10-11
 
 The next family addresses the identifier-only destination boundary, not a

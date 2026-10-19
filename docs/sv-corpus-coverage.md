@@ -309,6 +309,16 @@ no losses. `AssignmentExpression:target` falls from **4,224 to 4,223 files**.
 The `packed_range_select` fixture and proof pass through Lean; this is not a
 whole-corpus simulator-agreement claim.
 
+## Positional fixed-unpacked initializers — 2026-10-19
+
+Exact-length positional assignment patterns now populate the vector cells of
+eligible one-dimensional fixed-unpacked integral declarations. Keyed/default,
+wrong-length, effectful and aggregate initializers remain loud. The fresh
+**22,033**-path run reports **2,798 clean**, **19,169 partial**, **66 include
+skips**, and **0 extraction errors**: 3 additional clean files with no
+losses. The `unpacked_init` fixture and Lean proof pass; this is not a
+whole-corpus simulator-agreement claim.
+
 ## Historical method
 
 * **Walk**: 21,336 `.sv` files in `tests/chapter-3` … `chapter-40` (445

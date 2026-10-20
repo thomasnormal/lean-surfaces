@@ -32,6 +32,70 @@ private def functionWithLocal (initializer : Expression) : CallableFunction := {
       sourceType := intType, type := intType}))
 }
 
+private def automaticLiteral (declaration : String) (value : Int) : CallableStatement :=
+  .automatic {
+    statement := .declare (handle declaration) intType intType (.literal (signed value))
+    declarations := [handle declaration]}
+
+private def localMutationFunction : CallableFunction :=
+  {functionWithLocal (.literal (signed 4)) with
+    body := .block (.sequence
+      (automaticLiteral "0x11" 4)
+      (.sequence
+        (.assign (handle "0x11")
+          {expression := CallableExpression.binary "+"
+            {expression := CallableExpression.parameter (handle "0x11"),
+              sourceType := intType, type := intType}
+            {expression := CallableExpression.integer 3,
+              sourceType := intType, type := intType},
+            sourceType := intType, type := intType})
+        (.return_ {
+          expression := .parameter (handle "0x11"), sourceType := intType, type := intType}))) }
+
+private def localMutation : Bool :=
+  match evaluateCallableObject 32 .lp64 localMutationFunction [signed 7] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+private def localIncrementFunction : CallableFunction :=
+  {functionWithLocal (.literal (signed 4)) with
+    body := .block (.sequence
+      (automaticLiteral "0x11" 4)
+      (.return_ {
+        expression := CallableExpression.increment "++" false (handle "0x11"),
+        sourceType := intType, type := intType})) }
+
+private def localIncrement : Bool :=
+  match evaluateCallableObject 32 .lp64 localIncrementFunction [signed 7] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+private def loopLocalReentryFunction : CallableFunction :=
+  {functionWithLocal (.literal (signed 0)) with
+    body := .block (.sequence
+      (.whileLoop
+        {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+        (.block (.sequence
+          (automaticLiteral "0x12" 1)
+          (.assign (handle "0x10")
+            {expression := CallableExpression.binary "-"
+              {expression := CallableExpression.parameter (handle "0x10"),
+                sourceType := intType, type := intType}
+              {expression := CallableExpression.integer 1,
+                sourceType := intType, type := intType},
+              sourceType := intType, type := intType}))))
+      (.return_ {
+        expression := .parameter (handle "0x10"), sourceType := intType, type := intType})) }
+
+private def loopLocalReentry : Bool :=
+  match CallableObjectFrame.start .lp64 loopLocalReentryFunction [signed 3] with
+  | .ok callable =>
+      let result := evaluateCallableObjectInFrame 128 callable
+      match result.result with
+      | .ok (.ok value) => value == signed 0 && result.frame.store.objects.objects.length == 4
+      | _ => false
+  | .error _ => false
+
 private def readsParameter : Bool :=
   match evaluateCallableObject 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .ok (.ok value) => value == signed 7
@@ -98,6 +162,9 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard valueOnlyRemainsLoud
 #guard selfInitializerRetainsFrame
 #guard nestedBlockDropsLocal
+#guard localMutation
+#guard localIncrement
+#guard loopLocalReentry
 #guard parserAdmitsAutomaticLocal
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

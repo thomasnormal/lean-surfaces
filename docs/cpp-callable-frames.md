@@ -40,5 +40,9 @@ non-integral declarations, and other frontend forms continue to refuse.
 
 `CallableFrameTests.lean` checks parameter initialization, a frontend-admitted
 local read against that parameter, invalid argument values and unsupported
-parameter types. The aggregate `LeanModels.Cpp.Tests` target includes these
-guards together with the declaration-admission and object-frame suites.
+parameter types. `CallableObjectEvaluationTests.lean` additionally checks
+local assignment, local increment and repeated loop-body declaration
+allocation: each iteration gets a fresh object and the completed frame retains
+the expected object history. The aggregate `LeanModels.Cpp.Tests` target
+includes these guards together with the declaration-admission and object-frame
+suites.

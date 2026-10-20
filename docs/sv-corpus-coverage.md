@@ -556,10 +556,19 @@ The legacy/self-check extractor now lowers constant packed bit/part selects,
 fixed concatenation leaves, and direct untagged packed struct/union members on
 continuous assignments to the existing `SelectTarget` windows. The focused
 extractor tests cover member and vector writes, static overlap refusal, and
-dynamic-index loudness. Tagged, nested, effectful, dynamic fixed-array-cell
-and unsupported net-resolution forms remain loud; a constant cell is an
+dynamic-index loudness. Tagged, nested-union, effectful, dynamic
+fixed-array-cell and unsupported net-resolution forms remain loud; a constant
+cell is an
 ordinary flat identifier. The broad corpus census was not regenerated for this
 focused rung.
+
+## Legacy continuous nested packed-struct windows — 2026-10-20
+
+The focused extractor battery now pins nested untagged packed-struct member
+chains as fixed vector windows on continuous assignments. Nested unions remain
+loud because their overlapping layouts need an aliasing-aware representation;
+tagged, dynamic and unpacked aggregate forms remain outside the tier. No broad
+census or simulator-agreement claim is made for this focused boundary.
 
 ## Legacy continuous fixed-array cell windows — 2026-10-20
 

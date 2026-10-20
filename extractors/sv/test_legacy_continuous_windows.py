@@ -93,6 +93,32 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual(readback["value"]["index"]["bits"],
                          "0" * 30 + "11")
 
+    def test_nested_packed_struct_member_is_a_continuous_window(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "struct packed { struct packed { logic [1:0] hi; "
+            "logic [1:0] lo; } inner; } value; "
+            "assign value.inner.lo = source; "
+            "assign out = value.inner.lo; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target, readback = processes
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["value"]["name"], "value")
+        self.assertEqual(target["target"]["width"], 2)
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["value"]["name"], "value")
+
+    def test_nested_packed_union_member_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "struct packed { union packed { logic [3:0] all; "
+            "logic [1:0] lo; } inner; } value; "
+            "assign value.inner.lo = source; "
+            "assign out = value.inner.lo; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertTrue(all(process["kind"] == "Unsupported"
+                            for process in processes))
+
     def test_overlapping_fixed_array_cell_windows_are_loud(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [3:0] out); "

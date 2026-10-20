@@ -1129,10 +1129,19 @@ Continuous assignments in the legacy/self-check envelope now admit constant
 packed bit/part selects, fixed concatenation leaves, and direct members of
 untagged packed structs or unions as fixed `SelectTarget` windows. Static
 overlapping windows are converted to a loud target refusal before they could
-imply driver resolution; dynamic or effectful selectors, tagged/nested
-aggregates, dynamic fixed-array cells and unsupported nets remain loud. A
+imply driver resolution; dynamic or effectful selectors, tagged aggregates,
+nested unions, dynamic fixed-array cells and unsupported nets remain loud. A
 constant cell is an ordinary flat identifier; the vector executor is reused
 and no net-resolution or scheduler rule is added.
+
+### Legacy continuous nested packed-struct windows — 2026-10-20
+
+Nested untagged packed-struct member chains on continuous assignments now
+flatten their fixed declaration offsets into the same `SelectTarget` and
+`SelectRead` windows over one vector. Nested unions, tagged aggregates,
+dynamic or effectful selections, and unpacked storage remain loud because
+their runtime aliasing is not represented by the flat-vector state. No
+aggregate store, driver-resolution rule or scheduler is added.
 
 ### Legacy continuous fixed-array cell windows — 2026-10-20
 

@@ -3578,6 +3578,10 @@ def convert_continuous_assign(sm, m):
     else:
         target, ok = (legacy_blocking_target(sm, e.left)
                       if _SYM is None else select_target(sm, e.left))
+        if (_SYM is None and ok
+                and target.get("kind") in ("SelectTarget", "ConcatTarget")
+                and _symbolic_target_windows(target) is None):
+            return unsupported(sm, m, "AssignmentExpression:target")
         if _SYM is not None and type(e.left).__name__ == "ConcatenationExpression":
             parts = _symbolic_concat_target(sm, e.left)
             if parts is None:

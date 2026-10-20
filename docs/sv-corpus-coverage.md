@@ -552,12 +552,13 @@ added, and the broad corpus census was not regenerated for this focused rung.
 
 ## Legacy continuous fixed-window targets — 2026-10-20
 
-The legacy/self-check extractor now lowers constant packed bit/part selects and
-direct untagged packed struct/union members on continuous assignments to the
-existing `SelectTarget` windows. The focused extractor tests cover member and
-vector writes, static overlap refusal, and dynamic-index loudness. Tagged,
-nested, effectful and unsupported net-resolution forms remain loud; the broad
-corpus census was not regenerated for this focused rung.
+The legacy/self-check extractor now lowers constant packed bit/part selects,
+fixed concatenation leaves, and direct untagged packed struct/union members on
+continuous assignments to the existing `SelectTarget` windows. The focused
+extractor tests cover member and vector writes, static overlap refusal, and
+dynamic-index loudness. Tagged, nested, effectful and unsupported
+net-resolution forms remain loud; the broad corpus census was not regenerated
+for this focused rung.
 
 ## Symbolic streaming targets over fixed cells — 2026-10-20
 

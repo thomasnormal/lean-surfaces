@@ -37,6 +37,15 @@ class LegacyContinuousWindows(unittest.TestCase):
                          ["SelectTarget", "Ident"])
         self.assertEqual(processes[0]["target"]["width"], 2)
 
+    def test_constant_concatenation_is_a_continuous_window_group(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [3:0] out); "
+            "logic [1:0] hi, lo; assign {hi, lo} = source; "
+            "assign out = {hi, lo}; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[0]["target"]["kind"], "ConcatTarget")
+
     def test_overlapping_continuous_windows_are_loud(self):
         envelope = self.extract(
             "module top(input logic [7:0] source, output logic [7:0] out); "
@@ -52,6 +61,15 @@ class LegacyContinuousWindows(unittest.TestCase):
             "module top(input logic [1:0] index, input logic source, "
             "output logic out); logic [3:0] value; "
             "assign value[index] = source; assign out = value[0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Unsupported")
+
+    def test_dynamic_continuous_concatenation_leaf_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] index, input logic source, "
+            "output logic [3:0] out); logic [3:0] value; logic bit0; "
+            "assign {value[index], bit0} = {source, source}; "
+            "assign out = value; endmodule")
         processes = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(processes[0]["kind"], "Unsupported")
 

@@ -591,6 +591,16 @@ before it could imply driver resolution. Dynamic or effectful packed indices,
 dynamic array indices, and aggregate storage remain loud. This is a focused
 extractor boundary; the broad corpus census was not regenerated.
 
+## Legacy continuous noncanonical indexed windows — 2026-10-20
+
+Focused extraction now admits constant `+:` and `-:` selections on
+noncanonical packed ranges for direct vectors, nested packed-struct members,
+and flattened fixed-array cells. The indexed base is normalized to the
+existing fixed-window offset and direction is retained; dynamic/effectful,
+out-of-range, aggregate and unsupported net-resolution forms remain loud.
+The new boundary tests are extractor-only and do not claim a broad census or
+simulator agreement.
+
 ## Legacy continuous right-streaming cell windows — 2026-10-20
 
 Simple right-streaming continuous targets now have focused coverage for direct

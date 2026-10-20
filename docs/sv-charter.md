@@ -1167,6 +1167,16 @@ resolution. Dynamic or effectful packed indices, out-of-range selections,
 aggregate storage and dynamic array indices remain loud; no aggregate store,
 net-resolution rule or second scheduler is introduced.
 
+### Legacy continuous noncanonical indexed windows — 2026-10-20
+
+Constant `+:` and `-:` selections on noncanonical packed ranges now reuse the
+legacy fixed-window path. Direct vectors, nested untagged packed-struct
+members, and flattened fixed-array cells normalize the indexed base label to
+the existing LVec offset while retaining the indexed direction. Dynamic or
+effectful bases, out-of-range windows, aggregate storage and unsupported
+net-resolution forms remain loud; no declaration-range table, aggregate store,
+or scheduler is added.
+
 ### Legacy continuous right-streaming cell windows — 2026-10-20
 
 Continuous assignments with a simple right-streaming target now reuse the

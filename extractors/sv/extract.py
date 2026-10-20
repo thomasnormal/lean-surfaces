@@ -2047,6 +2047,29 @@ def _packed_constant_simple_index(sm, source_type, left, right, width):
         return None
 
 
+def _packed_constant_indexed_index(sm, source_type, base, width, descending):
+    """Normalize a constant indexed part-select base on any packed range."""
+    try:
+        ct = source_type.canonicalType
+        if type(ct).__name__ != "PackedArrayType" or width <= 0:
+            return None
+        label = _constant_dimension_selector(base)
+        if label is None:
+            return None
+        left, right = int(ct.range.left), int(ct.range.right)
+        lo, hi = min(left, right), max(left, right)
+        end = label - width + 1 if descending else label + width - 1
+        if label < lo or label > hi or end < lo or end > hi:
+            return None
+        normalized = _packed_constant_index(sm, source_type, base)
+        if normalized is None:
+            return None
+        literal, _ = normalized
+        return literal, descending
+    except Exception:
+        return None
+
+
 def _packed_struct_member(sm, expression):
     """Describe one direct integral field of a packed struct/union value."""
     try:
@@ -2127,26 +2150,9 @@ def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
                     sm, expression.value.type, expression.left,
                     expression.right, expression.type.bitWidth)
             elif selection in ("IndexedUp", "IndexedDown"):
-                source_type = expression.value.type.canonicalType
-                index_base = _constant_dimension_selector(expression.left)
-                width = expression.type.bitWidth
-                if (type(source_type).__name__ != "PackedArrayType"
-                        or int(source_type.range.left) != source_type.bitWidth - 1
-                        or int(source_type.range.right) != 0
-                        or index_base is None or width <= 0):
-                    return None
-                if selection == "IndexedUp":
-                    if index_base < 0 or index_base + width > source_type.bitWidth:
-                        return None
-                else:
-                    if index_base < width - 1 or index_base >= source_type.bitWidth:
-                        return None
-                normalized = ({
-                    "kind": "Literal",
-                    "span": node_span(sm, expression.left),
-                    "width": 32,
-                    "bits": format(index_base & ((1 << 32) - 1), "032b"),
-                }, selection == "IndexedDown")
+                normalized = _packed_constant_indexed_index(
+                    sm, expression.value.type, expression.left,
+                    expression.type.bitWidth, selection == "IndexedDown")
             else:
                 return None
         if normalized is None:
@@ -2207,9 +2213,7 @@ def _convert_selected_read(sm, expr, expression_kind):
     canonical_kind = type(source_type.canonicalType).__name__
     canonical_select = _canonical_packed_select_source(source_type)
     if (source_reason is not None or not source_type.isFourState
-            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")
-            or (not canonical_select and expression_kind == "RangeSelectExpression"
-                and str(expr.selectionKind).split(".")[-1] != "Simple")):
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
         return unsupported(sm, expr, expression_kind + ":source-type")
     descending = False
     if expression_kind == "ElementSelectExpression":
@@ -2232,8 +2236,16 @@ def _convert_selected_read(sm, expr, expression_kind):
     elif (expression_kind == "RangeSelectExpression"
           and canonical_kind == "PackedArrayType"
           and not canonical_select):
-        normalized = _packed_constant_simple_index(
-            sm, source_type, expr.left, expr.right, expr.type.bitWidth)
+        selection = str(expr.selectionKind).split(".")[-1]
+        if selection == "Simple":
+            normalized = _packed_constant_simple_index(
+                sm, source_type, expr.left, expr.right, expr.type.bitWidth)
+        elif selection in ("IndexedUp", "IndexedDown"):
+            normalized = _packed_constant_indexed_index(
+                sm, source_type, expr.left, expr.type.bitWidth,
+                selection == "IndexedDown")
+        else:
+            normalized = None
         if normalized is None:
             return unsupported(sm, expr, expression_kind + ":source-type")
         converted_index, index_signed = normalized
@@ -2632,9 +2644,7 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     canonical_kind = type(lhs.value.type.canonicalType).__name__
     canonical_select = _canonical_packed_select_source(lhs.value.type)
     if (not admitted or source_reason is not None or source_width is None
-            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")
-            or (not canonical_select and expression_kind == "RangeSelectExpression"
-                and str(lhs.selectionKind).split(".")[-1] != "Simple")):
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
         return unsupported(sm, lhs, expression_kind + ":target-source"), False
     descending = False
     if expression_kind == "ElementSelectExpression":
@@ -2656,8 +2666,16 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     elif (expression_kind == "RangeSelectExpression"
           and canonical_kind == "PackedArrayType"
           and not canonical_select):
-        normalized = _packed_constant_simple_index(
-            sm, lhs.value.type, lhs.left, lhs.right, lhs.type.bitWidth)
+        selection = str(lhs.selectionKind).split(".")[-1]
+        if selection == "Simple":
+            normalized = _packed_constant_simple_index(
+                sm, lhs.value.type, lhs.left, lhs.right, lhs.type.bitWidth)
+        elif selection in ("IndexedUp", "IndexedDown"):
+            normalized = _packed_constant_indexed_index(
+                sm, lhs.value.type, lhs.left, lhs.type.bitWidth,
+                selection == "IndexedDown")
+        else:
+            normalized = None
         if normalized is None:
             return unsupported(sm, lhs, expression_kind + ":target-source"), False
         converted_index, index_signed = normalized

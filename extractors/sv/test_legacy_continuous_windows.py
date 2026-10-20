@@ -93,6 +93,79 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual(readback["value"]["index"]["bits"],
                          "0" * 30 + "11")
 
+    def test_noncanonical_indexed_direct_windows_normalize(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "logic [10:7] value; assign value[8 +: 2] = source; "
+            "assign out = value[9 -: 2]; endmodule")
+        target, readback = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 31 + "1")
+        self.assertFalse(target["target"]["descending"])
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["index"]["bits"],
+                         "0" * 30 + "10")
+        self.assertTrue(readback["value"]["descending"])
+
+    def test_noncanonical_indexed_nested_member_windows_normalize(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "struct packed { logic [10:7] hi; logic [1:0] lo; } value; "
+            "assign value.hi[8 +: 2] = source; "
+            "assign out = value.hi[9 -: 2]; endmodule")
+        target, readback = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["value"]["name"], "value")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 30 + "11")
+        self.assertFalse(target["target"]["descending"])
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["index"]["bits"],
+                         "0" * 29 + "100")
+        self.assertTrue(readback["value"]["descending"])
+
+    def test_noncanonical_indexed_fixed_array_cell_windows_normalize(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "logic [10:7] value [0:0]; "
+            "assign value[0][8 +: 2] = source; "
+            "assign out = value[0][9 -: 2]; endmodule")
+        target, readback = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["value"]["name"], "value[0]")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 31 + "1")
+        self.assertFalse(target["target"]["descending"])
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["index"]["bits"],
+                         "0" * 30 + "10")
+        self.assertTrue(readback["value"]["descending"])
+
+    def test_noncanonical_indexed_dynamic_effectful_and_out_of_range_stay_loud(self):
+        prefix = (
+            "module top(input logic [1:0] source, input logic [3:0] index, "
+            "output logic [1:0] out); logic [10:7] value; ")
+        dynamic = self.extract(
+            prefix +
+            "assign value[index +: 2] = source; assign out = value[9 -: 2]; "
+            "endmodule")
+        self.assertEqual(dynamic["design"]["modules"][0]["processes"][0]["kind"],
+                         "Unsupported")
+        effectful = self.extract(
+            prefix +
+            "assign value[index++ +: 2] = source; assign out = value[9 -: 2]; "
+            "endmodule")
+        self.assertEqual(effectful["design"]["modules"][0]["processes"][0]["kind"],
+                         "Unsupported")
+        out_of_range = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "logic [10:7] value; assign value[10 +: 2] = source; "
+            "assign out = value[7 -: 2]; endmodule")
+        self.assertEqual(
+            out_of_range["design"]["modules"][0]["processes"][0]["kind"],
+            "Unsupported")
+
     def test_nested_packed_struct_member_is_a_continuous_window(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [1:0] out); "

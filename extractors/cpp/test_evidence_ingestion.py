@@ -953,6 +953,116 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
                     f"#guard admitCallableFunctionFromProbe evidence .lp64 {target_path} matches .error _",
                     options="set_option maxRecDepth 100000", timeout=120)
 
+    def test_actual_compiler_void_results_return_and_fallthrough(self):
+        requested, library = os.environ.get("LEANCPP_CLANG"), os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang)
+        library = pathlib.Path(library).resolve()
+        self.assertTrue(library.is_file())
+        bodies = {
+            "void_fallthrough": "left = copy;",
+            "void_return": "left = copy; return; left = 99;",
+            "void_branch": "if (copy < 0) { left = 7; return; } left = right;",
+            "void_while": "while (left < right) { ++left; if (left == copy) return; }",
+            "void_do": "do { ++left; if (left == copy) return; } while (left < right);",
+            "void_for": "for (int i = 0; i < 3; ++i) { ++left; if (i == copy) return; }",
+            "void_switch": "switch (copy) { case 0: left = 7; return; default: left = right; }",
+            "void_alias": "int &alias = left; alias = copy; left = right;",
+            "void_local": "int local = copy; { int inner = local; left = inner; return; }",
+        }
+        source = self.root / "void_results.cpp"
+        source.write_text("\n".join(f"void {name}(int &left, const int &right, int copy) {{ {body} }}"
+            for name, body in bodies.items()) + """
+void void_empty(int &left, const int &right, int copy) {}
+struct VoidMethods {
+  static void void_static(int &left, const int &right, int copy) { left = copy; }
+};
+void refuse_void_expression(int &left, const int &right, int copy) { return (void)++left; }
+void refuse_void_call(int &left, const int &right, int copy) { return void_return(left, right, copy); }
+void refuse_void_pointer(void *value) {}
+void refuse_void_rvalue(int &&value) {}
+""", encoding="utf-8")
+        names = set(bodies) | {"void_empty", "void_static"}
+        refused = {"refuse_void_expression", "refuse_void_call", "refuse_void_pointer", "refuse_void_rvalue"}
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        captured = subprocess.run([clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", str(source), "-Xclang", "-load", "-Xclang", str(library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe"], cwd=self.root,
+            env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(captured.returncode, 0, captured.stderr)
+        probe = json.loads(captured.stdout)
+        paths = {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") in {"FunctionDecl", "CXXMethodDecl"} and node.get("name") in names | refused:
+                paths[node["name"]] = path
+            pending.extend((child, path + [index]) for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), names | refused)
+        calls = [(name, value, alias) for name in sorted(names)
+                 for value in (-2, -1, 0, 1, 2, 3, 7) for alias in (False, True)]
+        fragments = ['#include <iostream>\n#include "void_results.cpp"\nint main() {\n']
+        for name, value, alias in calls:
+            target = "VoidMethods::" + name if name == "void_static" else name
+            fragments.append(f"{{ int left = 0; const int right = 4; {target}(left, "
+                f"{'left' if alias else 'right'}, {value}); std::cout << left << ' ' << right << '\\n'; }}\n")
+        fragments.append("}\n")
+        oracle = self.root / "oracle.cpp"
+        oracle.write_text("".join(fragments), encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all", "-static-libstdc++",
+                "-static-libgcc", str(oracle), "-o", str(binary)], cwd=self.root, env=environment,
+                capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                      capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append([tuple(map(int, line.split())) for line in executed.stdout.splitlines()])
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls))
+        guards = ["def voidResultChecks : Except String Unit := do",
+            "  let types ← parseValidatedTypeEvidence evidence",
+            "  let binaries ← parseValidatedBinaryExpressionEvidence evidence",
+            "  let expressions ← parseValidatedExpressionTypeEvidence evidence"]
+        for name in sorted(names):
+            guards.append("  let function ← admitCallableFunctionWithExpressionTypes evidence "
+                          f"types binaries expressions .lp64 {paths[name]}")
+            cases = [f"({value}, {str(alias).lower()}, {left}, {right})"
+                for (row, value, alias), (left, right) in zip(calls, outputs[0]) if row == name]
+            guards.append("  let cases : List (Int × Bool × Int × Int) := [" + ", ".join(cases) + "]")
+            guards.append(f'''  unless function.signature.result == .void && cases.all (fun (copy, alias, left, right) =>
+      let empty := (IntegralObjectFrame.empty .lp64).toOption.getD default
+      let first := empty.enterScope.frame.declareParameter ⟨"caller_left"⟩ (.builtin .int) ⟨.signed 32, 0⟩
+      let second := first.frame.declareParameter ⟨"caller_right"⟩
+        (.qualified true false (.builtin .int)) ⟨.signed 32, 4⟩
+      let args : List CallableArgument := [.lvalue ⟨0, .builtin .int⟩,
+        .lvalue ⟨if alias then 0 else 1, .qualified true false (.builtin .int)⟩,
+        .value ⟨.signed 32, copy⟩]
+      let outcome := evaluateCallableObjectResultInStore 256 second.frame.store function args
+      let legacy := evaluateCallableObjectInStore 256 second.frame.store function args
+      (outcome.result matches .ok (.ok none)) && outcome.frame.scopes.isEmpty &&
+        outcome.frame.store.values.take 2 == [some ⟨.signed 32, left⟩, some ⟨.signed 32, right⟩] &&
+        (outcome.frame.store.objects.objects.take 2).all (·.phase == .aliveInitialized) &&
+        (outcome.frame.store.objects.objects.drop 2).all (·.phase == .ended) &&
+        (legacy.result matches .error .voidResultRequiresResultAPI) && legacy.frame.store == second.frame.store) do
+    throw "void native differential: {name}"''')
+        for name in sorted(refused):
+            guards.append(f'''  unless (admitCallableFunctionWithExpressionTypes evidence types binaries expressions
+      .lp64 {paths[name]} matches .error _) do throw "void refusal: {name}"''')
+        guards.extend(["  pure ()", "#eval voidResultChecks", "#guard voidResultChecks.isOk"])
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+            options="open LeanModels.Cpp.CallableObjectEvaluation\nset_option maxRecDepth 100000", timeout=360)
+        print(f"void result differential: {len(calls)} defined rows, -O0/-O2 under UBSan; "
+              "11 functions, alias/distinct, early returns, caller and callee lifetimes; 4 compiled refusals")
+
     def test_actual_compiler_reference_parameters_preserve_caller_identity(self):
         requested, library = os.environ.get("LEANCPP_CLANG"), os.environ.get("LEANCPP_PROBE_LIBRARY")
         if not requested or not library:

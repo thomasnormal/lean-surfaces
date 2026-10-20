@@ -384,6 +384,7 @@ mutual
                   | .error error => throw error
               | result => pure (.failed result afterExpression)
           | result => pure (.failed result afterExpression)
+      | .returnVoid => throw (.unsupportedType .void)
       | .return_ expression =>
           (evaluateTyped fuel profile parameters arguments expression).map
             (fun (result, updated) => .returned result updated)
@@ -468,6 +469,7 @@ def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : Callable
     (arguments : List IntegralValue) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
   unless profile.valid do throw .invalidProfile
+  if function.signature.result == .void then throw (.unsupportedType .void)
   if arguments.length != function.parameters.length then
     throw .arityMismatch
   if fuel == 0 then throw .fuelExhausted

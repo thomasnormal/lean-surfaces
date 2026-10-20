@@ -5,7 +5,7 @@ structured type projection emitted by `extractors/cpp/canonical_probe.cpp`.
 The plugin queries `clang::QualType` in the same AST context as the declaration
 metadata and deliberately does **not** parse `qualType` spelling.
 The payload is a recursive, structured tree whose nodes are builtin integer
-types, pointers, references, cv-qualification, function prototypes, records
+types, void, pointers, references, cv-qualification, function prototypes, records
 and enumerations. Record and enumeration nodes carry frontend declaration
 handles, so the type graph remains tied to witnessed declaration occurrences.
 
@@ -19,7 +19,8 @@ agree. A conflicting repeat is a refusal, not a last-row-wins cache update.
 
 The parser accepts only the following exact node tags: `builtin`, `pointer`,
 `lvalue-reference`, `rvalue-reference`, `qualified`, `function`, `record` and
-`enumeration`. Builtin names map to `CppIntType` identities; equal widths are
+`enumeration`. Integral builtin names map to `CppIntType` identities; `void`
+has a separate constructor. Equal widths are
 not used as a substitute for those identities. Text-only `{ "qualType": … }`
 payloads, unknown builtin names, empty qualifiers, malformed children and
 unrepresented type families refuse loudly.
@@ -109,3 +110,8 @@ only native execution. Kernel `rfl` regressions cover all constructors,
 qualifiers, declaration handles, parameter order and arity, variadic state and
 nested function pointers. This changes equality's reduction behavior, not the
 type evidence admitted from the frontend.
+
+Builtin `void` has its own `CppTypeEvidence.void` constructor; it is distinct
+from all integral evidence. A function result or pointer projection may retain
+it without making a void object or pointer execution admissible. See
+[void callables](cpp-void-callables.md).

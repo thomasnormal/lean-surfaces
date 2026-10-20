@@ -5,6 +5,8 @@ The next callable extension follows N4950 §11.4.9 `[class.static]`,
 A static member function has no `this` parameter. Executing an already-selected
 static integral body therefore uses the ordinary integral callable frame;
 record identity establishes its scope, without allocating an instance.
+Void results use the [void callable result API](cpp-void-callables.md),
+including bare returns and normal fallthrough.
 
 Admission requires an exact `CXXMethodDecl`, a witnessed
 `CXXMethodDecl.isStatic()` result, ordinary nondependent named record/namespace
@@ -16,8 +18,10 @@ the input selects a declaration occurrence already resolved by Clang.
 
 Nonvolatile const integral value parameters keep their const object/access
 view, while lvalue-to-rvalue conversion supplies the unqualified value.
-References, pointers, volatile types and unsupported expressions keep their
-existing boundaries. In particular no unknown call is replaced by a library
+Existing-object integral lvalue-reference parameters use the
+[shared caller store](cpp-reference-parameters.md). Temporary/rvalue bindings,
+pointers, volatile types and unsupported expressions keep their existing
+boundaries. In particular no unknown call is replaced by a library
 name or a guessed value.
 
 The real-artifact obligation is TinyXML-2 10.0.0's unchanged

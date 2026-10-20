@@ -5,6 +5,7 @@ namespace LeanModels.Cpp
 
 inductive CppTypeEvidence where
   | builtin (type : CppIntType)
+  | void
   | pointer (pointee : CppTypeEvidence)
   | lvalueReference (referent : CppTypeEvidence)
   | rvalueReference (referent : CppTypeEvidence)
@@ -18,6 +19,7 @@ mutual
   /-- Structural equality also reduces for types nested in function parameter lists. -/
   def CppTypeEvidence.beq (left right : CppTypeEvidence) : Bool :=
     match left, right with
+    | .void, .void => true
     | .builtin left, .builtin right => left == right
     | .pointer left, .pointer right
     | .lvalueReference left, .lvalueReference right
@@ -67,7 +69,9 @@ private def parseBuiltin (name : String) : Except String CppIntType :=
 partial def parseCppTypeEvidence (raw : Raw) : Except String CppTypeEvidence := do
   let kind ← evidenceText raw "kind"
   match kind with
-  | "builtin" => .ok (.builtin (← parseBuiltin (← evidenceText raw "name")))
+  | "builtin" =>
+      let name ← evidenceText raw "name"
+      if name == "void" then pure .void else pure (.builtin (← parseBuiltin name))
   | "pointer" => .ok (.pointer (← parseCppTypeEvidence (← evidenceField raw "pointee")))
   | "lvalue-reference" =>
       .ok (.lvalueReference (← parseCppTypeEvidence (← evidenceField raw "referent")))
@@ -90,7 +94,7 @@ partial def parseCppTypeEvidence (raw : Raw) : Except String CppTypeEvidence := 
   | _ => .error s!"unsupported structured C++ type kind: {kind}"
 
 private def CppTypeEvidence.referencedHandles : CppTypeEvidence → List FrontendHandle
-  | .builtin _ => []
+  | .void | .builtin _ => []
   | .pointer pointee | .lvalueReference pointee | .rvalueReference pointee =>
       pointee.referencedHandles
   | .qualified _ _ base => base.referencedHandles

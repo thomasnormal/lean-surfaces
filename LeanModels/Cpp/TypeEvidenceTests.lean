@@ -7,6 +7,7 @@ open LeanModels.Cpp
 private def handle (value : String) : FrontendHandle := {value}
 
 private def distinctTypes : List CppTypeEvidence := [
+  .void, .function .void [] false, .pointer .void,
   .builtin .int, .builtin .short, .pointer (.builtin .int),
   .lvalueReference (.builtin .int), .rvalueReference (.builtin .int),
   .qualified true false (.builtin .int), .qualified false true (.builtin .int),
@@ -99,6 +100,7 @@ def validationRefuses (declarations : List DeclarationEvidenceRow) (raw : Raw) :
     | .error _ => true
   | .error _ => true
 
+#guard parsedTypeIs (builtin "void") .void
 #guard parsedTypeIs (builtin "unsigned long long") (.builtin .unsignedLongLong)
 #guard parsedTypeIs (qualified true false (builtin "int"))
   (.qualified true false (.builtin .int))

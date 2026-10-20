@@ -143,7 +143,8 @@ not wired to `Translation.execute`, and does not admit local objects in its
 value-only path, calls,
 overload resolution or general implicit-conversion semantics.
 Falling through
-without a return is a typed `missingReturn` refusal.
+without a return is a typed `missingReturn` refusal for an integral result.
+Void fallthrough succeeds through the result API described below.
 It does not establish Clang conformance or general compiled-execution coverage.
 
 ## Checks
@@ -174,3 +175,7 @@ and `do`/`for`/`switch` control flow with `break`/`continue`. It compares both e
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded
 call profile, not whole-program execution.
+
+Void functions use the [result API](cpp-void-callables.md), where successful
+`none` denotes no value. The integral-only APIs refuse a void result before
+executing the body.

@@ -35,6 +35,7 @@ mutual
     | assign (declaration : FrontendHandle) (expression : TypedCallableExpression)
     | compoundAssign (operator : String) (declaration : FrontendHandle)
         (expression : TypedCallableExpression)
+    | returnVoid
     | return_ (expression : TypedCallableExpression)
     | conditional (condition : TypedCallableExpression)
         (whenTrue whenFalse : CallableStatement)
@@ -169,7 +170,7 @@ private def callableSignature (type : CppTypeEvidence) : Except String CallableS
           | type => integralParameter type) then
         .error "callable: non-integral parameter type is outside the body profile"
       else match result with
-        | .builtin _ => .ok {result, parameters, variadic}
+        | .void | .builtin _ => .ok {result, parameters, variadic}
         | _ => .error "callable: non-integral result type is outside the body profile"
   | _ => .error "callable: declaration type is not a function type"
 where
@@ -470,6 +471,10 @@ mutual
       pure (.block body)
   | "ReturnStmt" =>
       let values ← rawChildren statement
+      if resultType == .void then
+        unless values.isEmpty do
+          throw "callable: void-valued return expressions are outside the body profile"
+        return .returnVoid
       let [value] := values
         | throw "callable: return statement requires exactly one expression"
       let expression ← parseCallableExpression profile parameters expressionRows value none
@@ -712,6 +717,10 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
         resultType scope statement false
   | "ReturnStmt" =>
       let values ← rawChildren statement
+      if resultType == .void then
+        unless values.isEmpty do
+          throw "callable: void-valued return expressions are outside the body profile"
+        return (.returnVoid, scope)
       let [value] := values
         | throw "callable: return statement requires exactly one expression"
       let expression ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes value none

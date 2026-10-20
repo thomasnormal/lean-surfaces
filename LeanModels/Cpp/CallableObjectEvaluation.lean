@@ -10,6 +10,8 @@ inductive CallableObjectEvaluationError where
   | unsupportedArgument (reason : IntegralUnsupported)
   | argumentTypeMismatch (declaration : FrontendHandle)
   | unsupportedOperator (operator : String)
+  | voidResultRequiresResultAPI
+  | returnTypeMismatch
   | missingReturn
   | breakOutsideLoop
   | continueOutsideLoop
@@ -102,6 +104,7 @@ private def literalValue (profile : TargetProfile) (typed : TypedCallableExpress
 
 private inductive Execution where
   | normal
+  | returnedVoid
   | returned (result : IntegralResult IntegralValue)
   | failed (result : IntegralResult IntegralValue)
   | break_
@@ -373,6 +376,7 @@ mutual
                                 | result => success read.frame (.failed result)
                             | .ok result => success read.frame (.failed result)
                 | .ok result => success evaluated.frame (.failed result)
+        | .returnVoid => success frame .returnedVoid
         | .return_ expression =>
             let evaluated := evalExpression fuel profile frame expression
             match evaluated.result with
@@ -473,6 +477,7 @@ mutual
         match bodyResult.result with
         | .error reason => failure bodyResult.frame reason
         | .ok .break_ => success bodyResult.frame .normal
+        | .ok .returnedVoid => success bodyResult.frame .returnedVoid
         | .ok (.returned result) => success bodyResult.frame (.returned result)
         | .ok (.failed result) => success bodyResult.frame (.failed result)
         | .ok .normal | .ok .continue_ =>
@@ -502,6 +507,7 @@ mutual
               match bodyResult.result with
               | .error reason => failure bodyResult.frame reason
               | .ok .break_ => success bodyResult.frame .normal
+              | .ok .returnedVoid => success bodyResult.frame .returnedVoid
               | .ok (.returned result) =>
                   success bodyResult.frame (.returned result)
               | .ok (.failed result) =>
@@ -518,23 +524,62 @@ mutual
 
 end
 
-private def closeCallable (outcome : Outcome Execution) :
+private def liftIntegralResult : IntegralResult IntegralValue →
+    IntegralResult (Option IntegralValue)
+  | .ok value => .ok (some value)
+  | .invalid reason => .invalid reason
+  | .undefined reason => .undefined reason
+  | .unsupported reason => .unsupported reason
+
+private def closeResult (frame : IntegralObjectFrame)
+    (result : IntegralResult (Option IntegralValue)) :
+    Outcome (IntegralResult (Option IntegralValue)) :=
+  let closed := frame.leaveFrame
+  match closed.result with
+  | .error reason => frameFailure closed.frame reason
+  | .ok _ => success closed.frame result
+
+private def closeCallable (resultType : CppTypeEvidence) (outcome : Outcome Execution) :
+    Outcome (IntegralResult (Option IntegralValue)) :=
+  match outcome.result with
+  | .error reason => failure outcome.frame reason
+  | .ok .normal =>
+      if resultType == .void then closeResult outcome.frame (.ok none)
+      else failure outcome.frame .missingReturn
+  | .ok .returnedVoid =>
+      if resultType == .void then closeResult outcome.frame (.ok none)
+      else failure outcome.frame .returnTypeMismatch
+  | .ok .break_ => failure outcome.frame .breakOutsideLoop
+  | .ok .continue_ => failure outcome.frame .continueOutsideLoop
+  | .ok (.failed result) => success outcome.frame (liftIntegralResult result)
+  | .ok (.returned result) =>
+      if resultType == .void then failure outcome.frame .returnTypeMismatch
+      else closeResult outcome.frame (liftIntegralResult result)
+
+/-- Successful `none` denotes a void result, never an invented integral value. -/
+def evaluateCallableObjectResultInFrame (fuel : Nat) (callable : CallableObjectFrame) :
+    Outcome (IntegralResult (Option IntegralValue)) :=
+  closeCallable callable.function.signature.result
+    (evalStatement fuel callable.profile callable.frame callable.function.body)
+
+private def integralOnly (outcome : Outcome (IntegralResult (Option IntegralValue))) :
     Outcome (IntegralResult IntegralValue) :=
   match outcome.result with
   | .error reason => failure outcome.frame reason
-  | .ok .normal => failure outcome.frame .missingReturn
-  | .ok .break_ => failure outcome.frame .breakOutsideLoop
-  | .ok .continue_ => failure outcome.frame .continueOutsideLoop
-  | .ok (.failed result) => success outcome.frame result
-  | .ok (.returned result) =>
-      let closed := outcome.frame.leaveFrame
-      match closed.result with
-      | .error reason => frameFailure closed.frame reason
-      | .ok _ => success closed.frame result
+  | .ok (.ok (some value)) => success outcome.frame (.ok value)
+  | .ok (.ok none) => failure outcome.frame .voidResultRequiresResultAPI
+  | .ok (.invalid reason) => success outcome.frame (.invalid reason)
+  | .ok (.undefined reason) => success outcome.frame (.undefined reason)
+  | .ok (.unsupported reason) => success outcome.frame (.unsupported reason)
 
 def evaluateCallableObjectInFrame (fuel : Nat) (callable : CallableObjectFrame) :
     Outcome (IntegralResult IntegralValue) :=
-  closeCallable (evalStatement fuel callable.profile callable.frame callable.function.body)
+  match fuel with
+  | 0 => frameFailure callable.frame .fuelExhausted
+  | _ + 1 =>
+      if callable.function.signature.result == .void then
+        failure callable.frame .voidResultRequiresResultAPI
+      else integralOnly (evaluateCallableObjectResultInFrame fuel callable)
 
 private def mapStartError : CallableFrameError → CallableObjectEvaluationError
   | .invalidProfile => .invalidProfile
@@ -548,6 +593,7 @@ private def mapStartError : CallableFrameError → CallableObjectEvaluationError
 def evaluateCallableObject (fuel : Nat) (profile : TargetProfile)
     (function : CallableFunction) (arguments : List IntegralValue) :
     Except CallableObjectEvaluationError (IntegralResult IntegralValue) := do
+  if function.signature.result == .void then throw .voidResultRequiresResultAPI
   let callable ← (CallableObjectFrame.start profile function arguments).mapError mapStartError
   let result := evaluateCallableObjectInFrame fuel callable
   result.result
@@ -557,10 +603,40 @@ store. Return the resulting store even on admission/setup/execution failure. -/
 def evaluateCallableObjectInStore (fuel : Nat) (store : IntegralObjectStore)
     (function : CallableFunction) (arguments : List CallableArgument) :
     Outcome (IntegralResult IntegralValue) :=
+  if function.signature.result == .void then
+    failure {store, scopes := []} .voidResultRequiresResultAPI
+  else
+    let started := CallableObjectFrame.startInStore store function arguments
+    match started.result with
+    | .error reason => failure started.frame (mapStartError reason)
+    | .ok callable => evaluateCallableObjectInFrame fuel callable
+
+/-- Execute integral or void results with the same fresh parameter scope. -/
+def evaluateCallableObjectResult (fuel : Nat) (profile : TargetProfile)
+    (function : CallableFunction) (arguments : List IntegralValue) :
+    Except CallableObjectEvaluationError (IntegralResult (Option IntegralValue)) := do
+  let callable ← (CallableObjectFrame.start profile function arguments).mapError mapStartError
+  (evaluateCallableObjectResultInFrame fuel callable).result
+
+/-- Execute with caller-owned objects; retain the store on every failure. -/
+def evaluateCallableObjectResultInStore (fuel : Nat) (store : IntegralObjectStore)
+    (function : CallableFunction) (arguments : List CallableArgument) :
+    Outcome (IntegralResult (Option IntegralValue)) :=
   let started := CallableObjectFrame.startInStore store function arguments
   match started.result with
   | .error reason => failure started.frame (mapStartError reason)
-  | .ok callable => evaluateCallableObjectInFrame fuel callable
+  | .ok callable => evaluateCallableObjectResultInFrame fuel callable
+
+/-- At positive fuel, reaching the closing brace of a void function has exactly
+    the same result and cleanup as a bare return, for every callee frame. -/
+theorem void_fallthrough_eq_return (fuel : Nat) (callable : CallableObjectFrame)
+    (h : callable.function.signature.result = .void) :
+    evaluateCallableObjectResultInFrame (fuel + 1)
+      {callable with function := {callable.function with body := .skip}} =
+    evaluateCallableObjectResultInFrame (fuel + 1)
+      {callable with function := {callable.function with body := .returnVoid}} := by
+  simp only [evaluateCallableObjectResultInFrame, evalStatement, success, closeCallable, h]
+  rfl
 
 end CallableObjectEvaluation
 

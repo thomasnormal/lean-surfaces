@@ -243,6 +243,7 @@ void classEvidence(const clang::Decl *declaration, llvm::json::Object &record) {
 
 std::optional<std::string> builtinTypeName(const clang::BuiltinType *builtin) {
   switch (builtin->getKind()) {
+  case clang::BuiltinType::Void: return "void";
   case clang::BuiltinType::Bool: return "bool";
   case clang::BuiltinType::Char_S:
   case clang::BuiltinType::Char_U: return "char";

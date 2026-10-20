@@ -30,7 +30,7 @@ form refuse rather than being silently represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
 projection v1` row for the exact occurrence. This slice requires a non-variadic
-signature with a builtin integral result and nonvolatile integral value or
+signature with a builtin integral or void result and nonvolatile integral value or
 lvalue-reference parameters. Const value parameters retain their object/access qualification;
 lvalue-to-rvalue conversion removes it before arithmetic.
 Every direct `ParmVarDecl` must have a matching type-evidence row, and its type
@@ -38,7 +38,9 @@ must agree, in order, with the function type's parameter list. The result type
 is retained as structured `CppTypeEvidence`; no `qualType` string is used to
 decide the function signature.
 
-The return-expression profile is:
+A void result admits bare `return;` and fallthrough through the
+[void callable result API](cpp-void-callables.md). Void-valued return expressions
+remain loud. The integral return-expression profile is:
 
 - a nonnegative decimal `IntegerLiteral` with a witnessed builtin integral type
   (legacy captures require exact builtin `int`), or a `CXXBoolLiteralExpr`;

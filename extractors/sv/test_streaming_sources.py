@@ -1,4 +1,4 @@
-"""Packed right-streaming sources preserve order and pad on the right."""
+"""Packed streaming sources reorder whole chunks and pad on the right."""
 import unittest
 
 from test_packed_assignment_targets import extract_source, nodes
@@ -34,7 +34,7 @@ class StreamingSources(unittest.TestCase):
         self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
     def test_unadmitted_stream_forms_stay_loud(self):
-        for expression in ("{<<{hi, lo}}", "{>>{{>>{hi}}, lo}}", "{>>{hi++}}"):
+        for expression in ("{>>{{>>{hi}}, lo}}", "{>>{hi++}}", "{<<3{hi++}}"):
             with self.subTest(expression=expression):
                 self.assertEqual(self.assignment(expression)["kind"], "Unsupported")
         narrow = extract_source(
@@ -66,6 +66,27 @@ class StreamingSources(unittest.TestCase):
             "assign result = {>>{source}}; endmodule")
         self.assertTrue(any(n.get("sv_kind") == "ConversionExpression:StreamingConcat"
                             for n in nodes(envelope)))
+
+    def test_left_stream_final_short_chunk_precedes_destination_padding(self):
+        value = self.assignment("{<<3{hi, lo}}")
+        self.assertEqual([p["width"] for p in value["parts"]], [3, 3, 2, 4])
+        self.assertEqual([int(p["index"]["bits"], 2) for p in value["parts"][:-1]],
+                         [0, 3, 6])
+        self.assertEqual(value["parts"][-1]["bits"], "0000")
+
+    def test_left_stream_wide_slice_preserves_the_whole_source(self):
+        value = self.assignment("{<<16{hi, lo}}")
+        self.assertEqual([p.get("name", p.get("bits")) for p in value["parts"]],
+                         ["hi", "lo", "0000"])
+
+    def test_symbolic_left_stream_default_bit_order(self):
+        envelope = symbolic.SymbolicContinuousSelects().extract(
+            "module top(input logic [3:0] source, output logic [3:0] result); "
+            "assign result = {<<{source}}; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([(p["msb"]["value"], p["lsb"]["value"])
+                          for p in process["value"]["parts"]],
+                         [(0, 0), (1, 1), (2, 2), (3, 3)])
 
 
 if __name__ == "__main__":

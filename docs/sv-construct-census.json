@@ -375,10 +375,6 @@
     37
    ],
    [
-    "ConversionExpression:StreamingConcat",
-    36
-   ],
-   [
     "BlockStatement:JoinAny",
     36
    ],
@@ -493,6 +489,10 @@
    [
     "TransparentMemberSymbol",
     17
+   ],
+   [
+    "ConversionExpression:StreamingConcat",
+    16
    ],
    [
     "CallExpression:$clog2:dynamic",
@@ -820,13 +820,13 @@
    ]
   ],
   "by_status": {
-   "clean": 2998,
-   "partial": 18971,
+   "clean": 3018,
+   "partial": 18951,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    309,
+    310,
     1387
    ],
    "compilation": [
@@ -882,7 +882,7 @@
     52
    ],
    "simulation": [
-    2511,
+    2530,
     18671
    ],
    "simulation elaboration": [
@@ -896,14 +896,14 @@
   },
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 395,
-    "clean": 596,
-    "partial": 395,
+    "blocked_by_more": 376,
+    "clean": 615,
+    "partial": 376,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      175
+      169
      ],
      [
       "AssignmentExpression:target",
@@ -938,12 +938,8 @@
       31
      ],
      [
-      "ConversionExpression:StreamingConcat",
-      28
-     ],
-     [
       "TypeAliasType:TypeAlias",
-      26
+      25
      ],
      [
       "LetDeclSymbol:LetDecl",
@@ -980,6 +976,10 @@
      [
       "BinaryExpression:LogicalImplication",
       12
+     ],
+     [
+      "Call:$fatal",
+      11
      ]
     ],
     "unlockable": 0
@@ -1174,9 +1174,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 599,
+    "clean": 619,
     "error": 0,
-    "partial": 435,
+    "partial": 415,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0

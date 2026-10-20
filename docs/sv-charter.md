@@ -1170,6 +1170,30 @@ effectful sources and destinations smaller than the stream remain loud.
 Symbolic parameter/generate families remain loud until padding has symbolic
 widths. No interpreter, storage or scheduler rule was added.
 
+### Packed left-streaming source expressions — 2026-10-20
+
+Left-streaming sources now lower to fixed packed selects and concatenation.
+Under §11.4.14.2, chunks are taken from the right (default size one), emitted
+low chunk first, and retain their internal bit order. The final short high
+chunk stays short. Destination zero padding follows the complete reordered
+stream. A slice at least as wide as the source preserves the original value.
+The pure-source guard runs before lowering; duplicated selected reads cannot
+hide a source effect. `streaming_left` checks x/z, one-bit reversal, oversized
+slices, short chunks and wider destinations, with a symbolic kernel theorem
+tied to the real extracted chunk expression. `streaming_left_fixed` exercises
+both symbolic assignment paths and execution orders. The symbolic elaborator
+now recognizes concatenations as flat vectors with one-bit elements, reusing
+its existing slice evaluator. Both authored fixtures and all 20 newly clean
+corpus files are checked against completed simulator transcripts.
+
+The paired **22,035**-path census gains **20 clean files** with no losses:
+**2,998 → 3,018 clean**, **18,971 → 18,951 partial**, **66 include skips**,
+zero extraction errors. The streaming-conversion wall falls **36 → 16**
+files. Nested/effectful streams, `with` selectors, unpacked aggregate operands,
+smaller destinations and symbolic parameter/generate families remain loud.
+This is a surface lowering through the existing value evaluator; no storage
+or scheduler rule was added.
+
 ### Legacy continuous fixed-window targets — 2026-10-20
 
 Continuous assignments in the legacy/self-check envelope now admit constant

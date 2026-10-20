@@ -590,6 +590,22 @@ clean losses. `ConversionExpression:StreamingConcat` falls **55 → 36** files;
 one further partial file loses only that wall. The machine-readable summary
 records this snapshot; these are extraction counts.
 
+## Packed left-streaming sources — 2026-10-20
+
+Packed left streams now lower through fixed selects and `Concat`: low chunks
+first, original bit order inside each chunk, and no padding inside a final
+short high chunk (§11.4.14.2). A wider destination receives trailing zeros
+after reordering. `streaming_left` checks the extracted chunk expression with
+a symbolic kernel theorem; `streaming_left_fixed` covers both symbolic process
+orders. All 20 newly clean corpus files match their complete simulator output.
+Nested/effectful streams, `with` selectors, unpacked aggregates, smaller
+destinations and symbolic parameter/generate widths remain loud.
+
+On the same **22,035** paths the pair reports **2,998 → 3,018 clean**,
+**18,971 → 18,951 partial**, **66 include skips**, **zero extraction errors**
+and no losses. `ConversionExpression:StreamingConcat` falls **36 → 16** files.
+The committed summary records this extraction snapshot.
+
 ## Legacy continuous fixed-window targets — 2026-10-20
 
 The legacy/self-check extractor now lowers constant packed bit/part selects,

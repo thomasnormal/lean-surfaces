@@ -311,12 +311,15 @@ source rule that the complete RHS is evaluated before any cell is updated.
 Wrong-length, dynamic, aggregate and destination-aliasing patterns remain
 `Unsupported`.
 
-A fixed-size packed right-streaming source (`target = {>> [slice] {a, b, ...}}`)
-lowers to a source-order `Concat`. Right streaming ignores the slice size
-(IEEE 1800 §11.4.14.2). A wider destination adds a trailing zero literal,
+A fixed-size packed streaming source (`target = {<< [slice] {a, b, ...}}`
+or the `>>` form) lowers to `Concat`. Right streaming retains source order
+and ignores the slice size. Left streaming emits low chunks first using fixed
+`SelectRead`/`PartSel` nodes; each chunk keeps its internal bit order, and the
+final short high chunk keeps its actual width (IEEE 1800 §11.4.14.2). The
+default left slice is one bit. A wider destination adds a trailing zero literal,
 padding on the right under §11.4.14.3; destination two-state conversion follows
 packing. Only pure admitted integral operands are accepted. A destination
-smaller than the stream, left/nested streams, `with` selectors and unpacked
+smaller than the stream, nested streams, `with` selectors and unpacked
 aggregate operands remain `Unsupported`. Symbolic parameter/generate families
 also remain loud because this padding carries a fixed width.
 

@@ -1708,13 +1708,13 @@ def _convert_conversion_expr(sm, e):
 
 
 def _convert_streaming_pack(sm, expr):
-    """IEEE 1800 §11.4.14: right-streaming packed sources, padded at right."""
+    """IEEE 1800 §11.4.14: pure packed source streams, padded at right."""
     source = expr.operand
     token = getattr(getattr(expr, "syntax", None), "operatorToken", None)
     operator = str(getattr(token, "kind", "")).split(".")[-1]
     target_width, two_state, reason = type_width_2s(expr.type)
     if (type(source).__name__ != "StreamingConcatenationExpression"
-            or operator != "RightShift" or not source.isFixedSize
+            or operator not in ("RightShift", "LeftShift") or not source.isFixedSize
             or reason is not None or target_width is None or target_width <= 0):
         return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
     # The padding below has a fixed width. Do not freeze a symbolic family's
@@ -1740,6 +1740,10 @@ def _convert_streaming_pack(sm, expr):
     if (not parts or source_width != source.bitstreamWidth
             or source_width > target_width):
         return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+    if operator == "LeftShift":
+        if source.sliceSize <= 0:
+            return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+        parts = _streaming_left_parts(sm, expr, parts, source_width, source.sliceSize)
     if source_width < target_width:
         parts.append({
             "kind": "Literal", "span": node_span(sm, expr),
@@ -1751,6 +1755,34 @@ def _convert_streaming_pack(sm, expr):
         "width": target_width, "parts": parts,
     }
     return squash2_wrap(value, target_width) if two_state else value
+
+
+def _streaming_left_parts(sm, expr, parts, source_width, slice_size):
+    """Emit low chunks first; the final high chunk keeps its actual width."""
+    if slice_size >= source_width:
+        return parts
+    span = node_span(sm, expr)
+    source = {"kind": "Concat", "span": span,
+              "width": source_width, "parts": parts}
+    chunks = []
+    for offset in range(0, source_width, slice_size):
+        width = min(slice_size, source_width - offset)
+        if _SYM is not None:
+            chunk = {
+                "kind": "PartSel", "span": span, "width": width, "value": source,
+                "msb": {"kind": "Int", "span": span, "value": offset + width - 1},
+                "lsb": {"kind": "Int", "span": span, "value": offset},
+            }
+        else:
+            index_width = max(32, offset.bit_length())
+            chunk = {
+                "kind": "SelectRead", "span": span, "width": width, "value": source,
+                "index": {"kind": "Literal", "span": span, "width": index_width,
+                          "bits": format(offset, "0%db" % index_width)},
+                "index_signed": False, "descending": False,
+            }
+        chunks.append(chunk)
+    return chunks
 
 
 def _convert_integral_cast(sm, expr):

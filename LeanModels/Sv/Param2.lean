@@ -74,9 +74,11 @@ def buildElems (env : IEnv) : List PDecl → Res (List (String × Nat))
 /-- Element width of a select *base* expression: a declared signal's
 `elemW`; one level of select strips one dimension (the provable files are
 at most 2-D, so a chunk's elements are bits); a part-select keeps the
-element shape. `none` = outside the tier (loud at the caller). -/
+element shape. A concatenation is a flat packed vector with bit elements.
+`none` = outside the tier (loud at the caller). -/
 def elemOf (elems : List (String × Nat)) : PExpr → Option Nat
   | .ident n => elems.lookup n
+  | .concat _ => some 1
   | .bitSel .. => some 1
   | .partSel b _ _ => elemOf elems b
   | .cast _ a => elemOf elems a

@@ -438,6 +438,17 @@
    ]
   },
   {
+   "name": "streaming_left_fixed",
+   "example": "sem2/streaming_left_fixed",
+   "top": "streaming_left_fixed",
+   "signals": ["source", "bit_order", "chunks4", "same", "padded", "procedural", "split_chunks"],
+   "stimulus": [
+    {"source": "1011010010"},
+    {"source": "10xz011010"},
+    {"source": "0000111100"}
+   ]
+  },
+  {
    "name": "streaming_pack_fixed",
    "example": "sem2/streaming_pack_fixed",
    "top": "streaming_pack_fixed",

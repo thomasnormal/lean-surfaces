@@ -531,10 +531,6 @@
     13
    ],
    [
-    "BinaryExpression:LogicalImplication",
-    12
-   ],
-   [
     "ConditionalStatement:pattern",
     12
    ],
@@ -583,10 +579,6 @@
     10
    ],
    [
-    "AssignmentExpression:selected-effects",
-    10
-   ],
-   [
     "VariableDeclStatement:range",
     10
    ],
@@ -596,6 +588,10 @@
    ],
    [
     "SimpleAssignmentPatternExpression",
+    9
+   ],
+   [
+    "AssignmentExpression:selected-effects",
     9
    ],
    [
@@ -641,6 +637,10 @@
    [
     "SysCall:format",
     6
+   ],
+   [
+    "BinaryExpression:LogicalImplication:source",
+    5
    ],
    [
     "CovergroupType",
@@ -832,8 +832,8 @@
    ]
   ],
   "by_status": {
-   "clean": 3121,
-   "partial": 18848,
+   "clean": 3128,
+   "partial": 18841,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -894,7 +894,7 @@
     52
    ],
    "simulation": [
-    2633,
+    2640,
     18671
    ],
    "simulation elaboration": [
@@ -909,9 +909,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 322,
-    "clean": 668,
-    "partial": 323,
+    "blocked_by_more": 315,
+    "clean": 675,
+    "partial": 316,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -920,7 +920,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      135
+      132
      ],
      [
       "NamedValueExpression:2state",
@@ -960,7 +960,7 @@
      ],
      [
       "TimedStatement:DelayControl",
-      23
+      22
      ],
      [
       "ParameterSymbol:Parameter",
@@ -979,10 +979,6 @@
       14
      ],
      [
-      "BinaryExpression:LogicalImplication",
-      12
-     ],
-     [
       "Call:$fatal",
       11
      ],
@@ -993,6 +989,10 @@
      [
       "ExpressionStatement:CallExpression",
       10
+     ],
+     [
+      "ConversionExpression:StreamingConcat",
+      9
      ]
     ],
     "unlockable": 1
@@ -1187,9 +1187,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 672,
+    "clean": 679,
     "error": 0,
-    "partial": 362,
+    "partial": 355,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1

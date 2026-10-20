@@ -743,6 +743,10 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
               | .m0 bop => bop
               | _ => .eq)  -- unreachable
             (instExpr env octx l) (instExpr env octx r)
+      | .land | .lor =>
+          .binary (if op == .land then .land else .lor)
+            (instExpr env (selfWidth env l) l)
+            (instExpr env (selfWidth env r) r)
       | _ =>
           match evalInt env (.binary op l r) with
           | .ok v => intLit ctx v

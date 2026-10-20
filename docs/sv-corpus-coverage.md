@@ -22,6 +22,26 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Pure logical implication — 2026-10-20
+
+Pure integral `->` lowers to `!left || right`, preserving each operand's
+self-determined width, four-state truth, one-bit unsigned results and the
+frontend's associativity. Both symbolic compilers reuse the existing logical
+operations. M0's logical conjunction/disjunction compilation now keeps
+self-determined operands, matching the second compiler. Effects, unsupported
+types, frontend errors and `<->` equivalence remain loud, including constant
+contexts. No evaluator or scheduler changed.
+
+The paired **22,035**-path census moves **3,121 → 3,128 clean** and
+**18,848 → 18,841 partial**, with **66 include skips**, zero extraction errors,
+7 gains and no losses. Six gains execute and match complete independent
+transcripts. The seventh combines continuous assignment and delay, so the
+existing runners refuse it; it is counted only as an extraction gain.
+Fixture-bound symbolic proofs establish dominance rules for arbitrary source
+widths. Both compiler paths match the observed 16-pair truth table at widths
+1, 4 and 65; the values fixture also checks vector truth, result/arithmetic
+context and associativity.
+
 ## Pure integral membership — 2026-10-20
 
 Pure integral `inside` expressions lower to wildcard equality for scalar

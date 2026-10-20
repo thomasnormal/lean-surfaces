@@ -435,7 +435,10 @@ def _contains_guarded_expression(expression, *, guard_calls):
 
     def inspect(node):
         nonlocal found
-        if type(node).__name__ == "InsideExpression":
+        if (type(node).__name__ == "InsideExpression"
+                or (type(node).__name__ == "BinaryExpression"
+                    and node.op in (BinaryOperator.LogicalImplication,
+                                    BinaryOperator.LogicalEquivalence))):
             found = True
             return VisitAction.Skip
         if (guard_calls and type(node).__name__ == "CallExpression" and node.isSystemCall
@@ -2011,6 +2014,8 @@ def _convert_division_operand(sm, expression):
 
 
 def _convert_binary_expr(sm, e):
+    if e.op == BinaryOperator.LogicalImplication:
+        return _convert_implication_expr(sm, e)
     sym = BINARY_OPS.get(e.op)
     if sym is None and _SYM is not None and _SYM.symctx:
         symbolic = SYM_BINARY_OPS.get(e.op)
@@ -2074,9 +2079,30 @@ def _convert_binary_expr(sm, e):
     }
 
 
-def _inside_binary(sm, source, op, left, right):
+def _one_bit_binary(sm, source, op, left, right):
     return {"kind": "Binary", "span": node_span(sm, source), "width": 1,
             "op": op, "left": left, "right": right}
+
+
+def _convert_implication_expr(sm, expression):
+    """Pure §11.4.7 implication, with self-determined integral operands."""
+    if (expression.type.bitWidth != 1 or expression.type.isSigned
+            or not expression.left.type.isIntegral
+            or not expression.right.type.isIntegral
+            or not _case_source_expression_ok(expression)):
+        return unsupported(sm, expression, "BinaryExpression:LogicalImplication:source")
+    left = _convert_expr(sm, expression.left)
+    right = _convert_expr(sm, expression.right)
+    if not _case_expression_ok([left, right]):
+        return unsupported(sm, expression, "BinaryExpression:LogicalImplication:operand")
+    if _DIV_CONTEXT and not _SYM.symctx:
+        left = _division_self_operand(sm, expression.left, left)
+        right = _division_self_operand(sm, expression.right, right)
+    negated = {"kind": "Unary", "span": node_span(sm, expression),
+               "width": 1, "op": "!", "operand": left}
+    result = _one_bit_binary(sm, expression, "||", negated, right)
+    result["implication_lowered"] = True
+    return result
 
 
 def _inside_scalar(sm, expression, width):
@@ -2115,9 +2141,9 @@ def _inside_item(sm, expression, subject, width, signed):
         if lower is None or upper is None:
             return None
         prefix = "s" if signed else ""
-        return [_inside_binary(sm, expression, "&&",
-            _inside_binary(sm, expression, prefix + ">=", subject, lower),
-            _inside_binary(sm, expression, prefix + "<=", subject, upper))]
+        return [_one_bit_binary(sm, expression, "&&",
+            _one_bit_binary(sm, expression, prefix + ">=", subject, lower),
+            _one_bit_binary(sm, expression, prefix + "<=", subject, upper))]
     shape = _fixed_array_assignment_shape(expression)
     if shape is not None:
         name, cell_width, _, positions = shape
@@ -2137,7 +2163,7 @@ def _inside_item(sm, expression, subject, width, signed):
         if value is None:
             return None
         values = [value]
-    return [_inside_binary(sm, expression, "==?", subject, value)
+    return [_one_bit_binary(sm, expression, "==?", subject, value)
             for value in values]
 
 
@@ -2161,7 +2187,7 @@ def _convert_inside_expr(sm, expression):
         return unsupported(sm, expression, "InsideExpression:empty")
     result = comparisons[0]
     for comparison in comparisons[1:]:
-        result = _inside_binary(sm, expression, "||", result, comparison)
+        result = _one_bit_binary(sm, expression, "||", result, comparison)
     result["inside_lowered"] = True
     return result
 
@@ -3388,7 +3414,7 @@ def _case_source_expression_ok(expression):
         if kind == "UnaryExpression":
             pure = pure and (node.op in UNARY_OPS or node.op in REDUCE_OPS)
         if kind == "BinaryExpression":
-            pure = pure and node.op in BINARY_OPS
+            pure = pure and (node.op in BINARY_OPS or node.op == BinaryOperator.LogicalImplication)
 
     expression.visit(check)
     return pure
@@ -4476,10 +4502,10 @@ def contains_loop(node):
     return False
 
 
-def _reject_invalid_inside(sm, comp, modules, others):
+def _reject_invalid_lowering(sm, comp, modules, others, marker, kind, description):
     def contains(node):
         if isinstance(node, dict):
-            return node.get("inside_lowered", False) or any(
+            return node.get(marker, False) or any(
                 contains(value) for value in node.values())
         if isinstance(node, list):
             return any(contains(value) for value in node)
@@ -4487,8 +4513,8 @@ def _reject_invalid_inside(sm, comp, modules, others):
 
     if (contains(modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
-        others.append(unsupported(sm, comp, "InsideExpression:invalid-compilation",
-                                  "frontend rejected source containing lowered membership"))
+        others.append(unsupported(sm, comp, kind + ":invalid-compilation",
+                                  "frontend rejected source containing " + description))
 
 
 def convert_design(sm, comp):
@@ -4576,7 +4602,10 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "ConcatTarget:invalid-compilation",
                                   "frontend rejected source containing a concatenated assignment"))
-    _reject_invalid_inside(sm, comp, modules, others)
+    _reject_invalid_lowering(sm, comp, modules, others, "inside_lowered",
+                             "InsideExpression", "lowered membership")
+    _reject_invalid_lowering(sm, comp, modules, others, "implication_lowered",
+                             "LogicalImplication", "lowered implication")
     return {"kind": "Design", "modules": modules, "others": others}
 
 
@@ -5927,6 +5956,9 @@ def process_symbolic(top, sources, incdirs, out_path):
     try:
         try:
             module = convert_module_sym(sm, inst)
+            _reject_invalid_lowering(sm, comp, [module], module["others"],
+                                     "implication_lowered", "LogicalImplication",
+                                     "lowered implication")
             if contains_division(module) and nerr:
                 module["others"].append(unsupported(sm, comp, "Division:invalid-compilation",
                                                   "frontend rejected source containing division"))

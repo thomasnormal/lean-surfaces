@@ -3241,3 +3241,36 @@ all-wildcard membership for arbitrary subject vectors. A paired **22,035**-
 path census gains **38 clean files** with no losses: **3,083 → 3,121 clean**,
 **18,886 → 18,848 partial**, **66 include skips**, and zero extraction errors.
 All 38 newly clean files execute and match complete independent transcripts.
+
+### Pure logical implication — 2026-10-20
+
+IEEE 1800-2023 §11.4.7 integral `a -> b` now lowers to `!a || b`.
+Each operand keeps its self-determined width and truth conversion; the
+result is unsigned and one bit before surrounding extension. Frontend AST
+nesting preserves right associativity and conditional precedence. Only pure,
+fully admitted integral operands are accepted, including nested implication.
+Calls, increments, assignments and unsupported values remain loud even when
+short-circuiting could skip them. Constant folding cannot bypass admission,
+and a frontend error refuses the design in either envelope mode.
+
+Both symbolic compilers use their existing logical vocabulary. M0's
+previously missing `land`/`lor` compilation clause now preserves the same
+self-determined operand widths as the second compiler; both call existing
+four-state value rules. No evaluator or scheduling rule is added. Equivalence
+`<->` remains loud, including constant contexts: the independent simulator
+rejects it in the expression contexts probed here.
+
+The authored `implication` assignment is loaded as a literal AST. Its kernel
+proofs establish false-antecedent and true-consequent dominance at arbitrary
+source widths, and check both symbolic compiler shapes in a wider result
+context. Both compiler paths match all 16 scalar input pairs repeated at
+widths 1, 4 and 65. A separate values fixture checks vector truth, unknowns,
+result extension, wider arithmetic and associativity.
+
+A paired **22,035**-path census gains **7 clean files** without losses:
+**3,121 → 3,128 clean**, **18,848 → 18,841 partial**, **66 include skips**,
+zero extraction errors. Six newly clean files execute and match complete
+independent transcripts. The seventh combines a continuous assignment with
+a delay and remains a runtime refusal: neither the initial-only self-check
+runner nor the timed loader admits that process combination. It is an
+extraction gain, not an execution agreement.

@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    3965
+    3964
    ],
    [
     "InstanceSymbol:Instance",
@@ -319,10 +319,6 @@
     41
    ],
    [
-    "StructuredAssignmentPatternExpression",
-    40
-   ],
-   [
     "ConversionExpression:Explicit",
     40
    ],
@@ -467,16 +463,16 @@
     17
    ],
    [
-    "ConversionExpression:StreamingConcat",
-    16
-   ],
-   [
     "CallExpression:$clog2:dynamic",
     16
    ],
    [
     "Generate:invalid-array",
     16
+   ],
+   [
+    "ConversionExpression:StreamingConcat",
+    15
    ],
    [
     "ProceduralBlockSymbol:AlwaysLatch",
@@ -591,10 +587,6 @@
     10
    ],
    [
-    "SimpleAssignmentPatternExpression",
-    9
-   ],
-   [
     "CheckerSymbol:Checker",
     9
    ],
@@ -641,6 +633,10 @@
    [
     "TypeParameterSymbol:TypeParameter",
     7
+   ],
+   [
+    "AssignmentPattern:integral-shape",
+    6
    ],
    [
     "Package:LetDecl",
@@ -831,6 +827,10 @@
     2
    ],
    [
+    "AssignmentPattern:effects",
+    1
+   ],
+   [
     "InsideExpression:invalid-compilation",
     1
    ],
@@ -919,6 +919,10 @@
     1
    ],
    [
+    "AssignmentPattern:invalid-compilation",
+    1
+   ],
+   [
     "Package:Primitive",
     1
    ],
@@ -956,8 +960,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4011,
-   "partial": 17958,
+   "clean": 4037,
+   "partial": 17932,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1018,7 +1022,7 @@
     52
    ],
    "simulation": [
-    3445,
+    3471,
     18671
    ],
    "simulation elaboration": [
@@ -1033,9 +1037,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 309,
-    "clean": 681,
-    "partial": 310,
+    "blocked_by_more": 308,
+    "clean": 682,
+    "partial": 309,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1079,11 +1083,11 @@
       24
      ],
      [
-      "TypeAliasType:TypeAlias",
-      23
+      "TimedStatement:DelayControl",
+      22
      ],
      [
-      "TimedStatement:DelayControl",
+      "TypeAliasType:TypeAlias",
       22
      ],
      [
@@ -1211,9 +1215,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 641,
-    "clean": 400,
-    "partial": 641,
+    "blocked_by_more": 640,
+    "clean": 401,
+    "partial": 640,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1238,7 +1242,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      156
+      155
      ],
      [
       "ConversionExpression:width",
@@ -1246,7 +1250,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      102
+      101
      ],
      [
       "InstanceSymbol:Instance",
@@ -1303,17 +1307,17 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 226,
+    "clean": 235,
     "error": 0,
-    "partial": 431,
+    "partial": 422,
     "skip_include": 0,
     "total": 657,
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 685,
+    "clean": 686,
     "error": 0,
-    "partial": 349,
+    "partial": 348,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1383,9 +1387,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 196,
+    "clean": 199,
     "error": 0,
-    "partial": 629,
+    "partial": 626,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1463,9 +1467,9 @@
     "unlockable": 0
    },
    "chapter-3": {
-    "clean": 43,
+    "clean": 46,
     "error": 0,
-    "partial": 256,
+    "partial": 253,
     "skip_include": 1,
     "total": 300,
     "unlockable": 0
@@ -1503,9 +1507,9 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 120,
+    "clean": 123,
     "error": 0,
-    "partial": 107,
+    "partial": 104,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
@@ -1567,17 +1571,17 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 354,
+    "clean": 360,
     "error": 0,
-    "partial": 264,
+    "partial": 258,
     "skip_include": 0,
     "total": 618,
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 412,
+    "clean": 413,
     "error": 0,
-    "partial": 773,
+    "partial": 772,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 2

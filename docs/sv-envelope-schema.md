@@ -1351,3 +1351,16 @@ Inactive branches and zero-count loops emit no runtime nodes. Unsupported
 active members, invalid compilations, dependent static initialization and
 expansion-limit violations remain loud. The symbolic schema keeps its existing
 parameter/generate nodes. See [the contract](sv-elaborated-generate.md).
+
+
+### Legacy integral assignment-pattern provenance
+
+Admitted positional, structured and constant-replicated integral patterns
+become ordinary `Concat` expressions with `assignment_pattern_lowered: true`
+and `source_pattern` (the original frontend pattern kind). Parts retain
+bound element conversions and declared packing order. Numeric-index keyed
+inventories are reordered for descending declarations; existing fixed-array
+cell lowerings use the same correspondence helper. Source effects, invalid
+compilations, unsupported shapes and expansion-limit violations remain loud.
+The symbolic schema's packed-pattern admission is unchanged. See
+[the contract](sv-assignment-patterns.md).

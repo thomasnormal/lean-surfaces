@@ -1119,7 +1119,7 @@ def _fixed_array_pattern_assignment(sm, expr):
         element_type = lhs_type.elementType
         if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
             return None
-        if type(element_type.canonicalType).__name__ in ("PackedStructType", "PackedUnionType"):
+        if type(element_type.canonicalType).__name__ == "PackedUnionType":
             return None
         element_width, element_two, reason = type_width_2s(element_type)
         if element_width is None or reason is not None:
@@ -1152,18 +1152,18 @@ def _fixed_array_pattern_assignment(sm, expr):
             if repetition != count or repetition <= 0:
                 if repetition <= 0:
                     return None
-            source_elements = list(pattern.elements)
+            source_elements = _pattern_source_elements(pattern)
             if not source_elements or repetition * len(source_elements) != count:
                 return None
             elements = source_elements * repetition
         else:
-            elements = list(pattern.elements)
+            elements = _pattern_source_elements(pattern)
             if len(elements) != count:
                 return None
         target_name = _array_storage_name(lhs.symbol)
         converted = []
         for element in elements:
-            if not _case_source_expression_ok(element):
+            if not _case_source_expression_ok(element, packed_members=True):
                 return None
             # A pure read of the destination would see a different value
             # after the first lowered cell write.  Reject that aliasing shape
@@ -1325,7 +1325,7 @@ def _fixed_array_pattern_lhs_assignment(sm, expr):
         if rhs_shape is None or not _case_source_expression_ok(expr.right):
             return None
         source_name, source_width, _source_two, source_positions = rhs_shape
-        elements = list(pattern.elements)
+        elements = _pattern_source_elements(pattern)
         if not elements or len(elements) != len(source_positions):
             return None
         destinations = []
@@ -1572,17 +1572,17 @@ def _fixed_array_slice_pattern_assignment(sm, expr):
                 return None
             if repetition != len(positions) or repetition <= 0:
                 return None
-            source_elements = list(pattern.elements)
+            source_elements = _pattern_source_elements(pattern)
             if len(source_elements) != 1:
                 return None
             elements = source_elements * repetition
         else:
-            elements = list(pattern.elements)
+            elements = _pattern_source_elements(pattern)
             if len(elements) != len(positions):
                 return None
         values = []
         for element in elements:
-            if not _case_source_expression_ok(element):
+            if not _case_source_expression_ok(element, packed_members=True):
                 return None
             reads_target = False
             def inspect(node):
@@ -1754,6 +1754,10 @@ def _convert_expr(sm, e):
         return _convert_conditional_expr(sm, e)
     if cname == "ConcatenationExpression":
         return _convert_concat_expr(sm, e)
+    if _SYM is None and cname in (
+            "SimpleAssignmentPatternExpression", "StructuredAssignmentPatternExpression",
+            "ReplicatedAssignmentPatternExpression"):
+        return _convert_packed_pattern(sm, e)
     if cname == "MemberAccessExpression":
         member = _packed_struct_member(sm, e)
         if member is not None:
@@ -2387,6 +2391,68 @@ def _convert_concat_expr(sm, e):
         "width": width,
         "parts": parts,
     }
+
+
+def _pattern_source_elements(pattern):
+    """Map bound keyed inventories from numeric-index to declaration order.
+
+    Positional and replicated patterns already retain source order. Struct
+    inventories retain declaration order; keyed array / integer inventories
+    enumerate increasing numeric indices, regardless of the declared range.
+    """
+    elements = list(pattern.elements)
+    if type(pattern).__name__ == "StructuredAssignmentPatternExpression":
+        shape = pattern.type.canonicalType
+        kind = type(shape).__name__
+        descending = kind == "PredefinedIntegerType" or (
+            kind in ("PackedArrayType", "FixedSizeUnpackedArrayType")
+            and int(shape.range.left) > int(shape.range.right))
+        if descending:
+            elements.reverse()
+    return elements
+
+
+def _convert_packed_pattern(sm, expression):
+    """Pack pure, elaborated integral patterns through the ordinary concat rule."""
+    width, _, reason = type_width_2s(expression.type)
+    shape = expression.type.canonicalType
+    kind = type(shape).__name__
+    if reason is not None or kind not in (
+            "PredefinedIntegerType", "PackedArrayType", "PackedStructType"):
+        return unsupported(sm, expression, "AssignmentPattern:integral-shape")
+    if kind == "PackedStructType":
+        expected = [member.type.bitWidth for member in shape
+                    if str(member.kind) == "SymbolKind.Field"]
+    elif kind == "PackedArrayType":
+        count = abs(int(shape.range.left) - int(shape.range.right)) + 1
+        if count > 1024:
+            return unsupported(sm, expression, "AssignmentPattern:element-limit")
+        expected = [shape.elementType.bitWidth] * count
+    else:
+        if width > 1024:
+            return unsupported(sm, expression, "AssignmentPattern:element-limit")
+        expected = [1] * width
+    elements = _pattern_source_elements(expression)
+    if type(expression).__name__ == "ReplicatedAssignmentPatternExpression":
+        count = _constant_dimension_selector(expression.count)
+        if count is None or count <= 0 or count * len(elements) > 1024:
+            return unsupported(sm, expression, "AssignmentPattern:repetition")
+        elements *= count
+    if (not elements or len(elements) > 1024 or len(elements) != len(expected)
+            or [element.type.bitWidth for element in elements] != expected
+            or sum(expected) != width):
+        return unsupported(sm, expression, "AssignmentPattern:correspondence")
+    if not _case_source_expression_ok(expression, packed_members=True):
+        return unsupported(sm, expression, "AssignmentPattern:effects")
+    parts = [convert_expr(sm, element) for element in elements]
+    if (not _case_expression_ok(parts)
+            or [width_of(part) for part in parts] != expected):
+        return unsupported(sm, expression, "AssignmentPattern:element")
+    return signed_metadata({
+        "kind": "Concat", "span": node_span(sm, expression), "width": width,
+        "parts": parts, "assignment_pattern_lowered": True,
+        "source_pattern": type(expression).__name__,
+    }, expression.type)
 
 
 def _canonical_packed_select_source(source_type):
@@ -3829,6 +3895,8 @@ def _case_source_expression_ok(expression, *, packed_members=False):
             "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
             "NamedValueExpression", "ConversionExpression", "UnaryExpression",
             "BinaryExpression", "ConditionalExpression", "ConcatenationExpression",
+            "SimpleAssignmentPatternExpression", "StructuredAssignmentPatternExpression",
+            "ReplicatedAssignmentPatternExpression",
             "ElementSelectExpression", "RangeSelectExpression",
             "InsideExpression", "ValueRangeExpression", "UnboundedLiteral",
         )
@@ -4847,16 +4915,16 @@ def convert_fixed_array_vars(sm, m):
                     return None
                 if repetition != count or repetition <= 0:
                     return None
-                source_elements = list(initializer.elements)
+                source_elements = _pattern_source_elements(initializer)
                 if len(source_elements) != 1:
                     return None
                 elements = source_elements * repetition
             else:
-                elements = list(initializer.elements)
+                elements = _pattern_source_elements(initializer)
                 if len(elements) != count:
                     return None
             for i, element in enumerate(elements):
-                if not _case_source_expression_ok(element):
+                if not _case_source_expression_ok(element, packed_members=True):
                     return None
                 value = convert_expr(sm, element)
                 if (value is None or value.get("kind") == "Unsupported"
@@ -5477,6 +5545,12 @@ def _convert_design(sm, comp, packages):
                     for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "Elaboration:invalid-compilation",
                                   "frontend rejected an elaborated scope or parameter design"))
+    if (any(_node_marker(module, "assignment_pattern_lowered") for module in modules)
+            and any(diagnostic.isError() or str(diagnostic.code) in (
+                        "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
+                    for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "AssignmentPattern:invalid-compilation",
+                                  "frontend rejected a design containing an assignment pattern"))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",
@@ -6367,17 +6441,17 @@ def convert_fixed_array_vars_sym(sm, m):
                     return None
                 if repetition <= 0:
                     return None
-                source_elements = list(initializer.elements)
+                source_elements = _pattern_source_elements(initializer)
                 if (not source_elements
                         or repetition * len(source_elements) != count):
                     return None
                 elements = source_elements * repetition
             else:
-                elements = list(initializer.elements)
+                elements = _pattern_source_elements(initializer)
                 if len(elements) != count:
                     return None
             for i, element in enumerate(elements):
-                if not _case_source_expression_ok(element):
+                if not _case_source_expression_ok(element, packed_members=True):
                     return None
                 value = convert_expr(sm, element)
                 if (value is None or value.get("kind") == "Unsupported"

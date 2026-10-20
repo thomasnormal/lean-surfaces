@@ -22,6 +22,73 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Integral assignment patterns — 2026-10-20
+
+IEEE §10.9 positional, keyed/member/type/default and constant-replicated
+patterns now lower into existing integral concatenation and storage rules.
+Bound correspondence preserves widths, signedness and X/Z. Live reads, nested
+structs, typed conditional operands, two-state conversion, whole-packed
+self-swaps and NBA capture use the existing evaluator and scheduler. Keyed
+numeric-index inventories map to declared order, including existing unpacked
+cell paths. Effects, invalid source, unsupported storage/types, split-cell
+self-aliases and expansion limits stay loud. Symbolic packed-pattern admission
+is unchanged. See [the contract](sv-assignment-patterns.md).
+
+The paired **22,035** paths gain **26 clean files** without losses:
+**4,011 → 4,037 clean**, **17,958 → 17,932 partial**, **66 include skips**,
+zero extraction errors. **Twenty-four gains match complete independent
+transcripts under both region oracles**; two retain continuous-assignment
+runtime refusals. All 26 independent runs succeed. There are no other
+transcript differences, oracle failures or multi-top absences. A paired design
+comparison finds no changes in the 69 previously clean pattern-bearing sources.
+
+Five authored complete transcripts match both oracles; three more preserve
+effect, storage and self-alias boundaries. Four source-bound kernel proofs
+establish current reads, blocking stores, NBA capture and post-change commit
+visibility. The following table measures extraction, including negative and
+compile-only files, rather than whole-corpus execution conformance.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 46 | 253 | 1 |
+| 4 | 427 | 186 | 241 | 0 |
+| 5 | 618 | 360 | 258 | 0 |
+| 6 | 1185 | 413 | 772 | 0 |
+| 7 | 796 | 106 | 690 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 110 | 479 | 0 |
+| 10 | 657 | 235 | 422 | 0 |
+| 11 | 1034 | 686 | 348 | 0 |
+| 12 | 627 | 290 | 337 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 48 | 1495 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 199 | 626 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 382 | 162 | 28 |
+| 23 | 851 | 59 | 792 | 0 |
+| 24 | 355 | 12 | 343 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 151 | 414 | 0 |
+| 27 | 354 | 165 | 189 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 123 | 104 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 119 | 298 | 0 |
+| 38 | 340 | 204 | 136 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 40 | 47 | 0 |
+
 ## Elaborated generate scopes and integral parameters — 2026-10-20
 
 IEEE clauses 6, 23 and 27 now lower live unconditional/if/case generate scopes

@@ -3618,3 +3618,27 @@ sources retain the named boundaries. Three source-bound kernel proofs certify
 current reads, separation of same-named scopes and the selected branch's real
 blocking assignment. See [the contract](sv-elaborated-generate.md) and
 [the fixtures](../Examples/system-verilog/elaborated_generate/README.md).
+
+
+### Integral assignment patterns — 2026-10-20
+
+IEEE §10.9 positional, member/index/type/default and constant-replicated
+patterns now compile to existing integral concatenation and storage rules.
+Bound element correspondence retains widths, sign and X/Z; keyed numeric-index
+inventories map to declared order in packed values and existing unpacked-cell
+paths. Nested structs, typed conditional operands, live reads, whole-packed
+self-swaps, two-state conversion and NBA capture use the existing evaluator
+and scheduler. Effects, invalid source, unsupported types/storage, split-cell
+self-aliases and expansion limits remain loud. Symbolic packed-pattern
+admission is unchanged.
+
+The paired 22,035-path census rises 4,011 to 4,037 clean (+26), without losses.
+Twenty-four gains match complete independent transcripts under both region
+oracles; two retain continuous-assignment runtime refusals. All 26 independent
+runs succeed, with no other differences or absent observations. All 69
+previously clean pattern-bearing sources retain identical extracted designs.
+Five authored transcripts match both oracles; three more preserve boundaries.
+Four source-bound kernel proofs certify current reads, blocking stores, NBA
+capture and commit visibility after the source changes. See
+[the contract](sv-assignment-patterns.md) and
+[the fixtures](../Examples/system-verilog/assignment_patterns/README.md).

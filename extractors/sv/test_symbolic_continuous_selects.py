@@ -86,13 +86,43 @@ class SymbolicContinuousSelects(unittest.TestCase):
                            p["target"]["lsb"]["value"]) for p in processes[:2]],
                          [(3, 0), (7, 4)])
 
-    def test_nested_packed_union_member_stays_loud(self):
+    def test_nested_packed_union_member_flattens_to_outer_window(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [1:0] out); "
             "struct packed { union packed { logic [3:0] all; "
             "logic [3:0] alt; } inner; } value; "
             "assign value.inner.alt[1 +: 2] = source; "
             "assign out = value.inner.all[1 +: 2]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([process["kind"] for process in processes],
+                         ["Assign", "Assign"])
+        self.assertEqual(processes[0]["target"]["kind"], "PartSel")
+        self.assertEqual(processes[1]["value"]["kind"], "PartSel")
+        self.assertEqual(processes[0]["target"]["msb"]["value"],
+                         processes[1]["value"]["msb"]["value"])
+
+    def test_nested_packed_union_overlapping_windows_stay_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "struct packed { union packed { logic [3:0] all; "
+            "logic [3:0] alt; } inner; } value; "
+            "assign value.inner.all[1:0] = source; "
+            "assign value.inner.alt[1:0] = source; "
+            "assign out = value.inner.all[1:0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[1]["kind"], "Unsupported")
+        self.assertEqual(processes[1]["sv_kind"],
+                         "AssignmentExpression:target")
+
+    def test_dynamic_nested_packed_union_selection_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, input logic [2:0] index, "
+            "output logic [1:0] out); "
+            "struct packed { union packed { logic [3:0] all; "
+            "logic [3:0] alt; } inner; } value; "
+            "assign value.inner.alt[index +: 2] = source; "
+            "assign out = value.inner.all[1:0]; endmodule")
         processes = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(processes[0]["kind"], "Unsupported")
 

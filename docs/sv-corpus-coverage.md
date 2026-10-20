@@ -640,6 +640,15 @@ Dynamic/effectful leaves, left/sized/nested streams, aggregates and overlapping
 windows remain loud. This semantic-only fixture does not change the legacy
 corpus census or claim simulator agreement.
 
+## Symbolic nested packed-union alias windows — 2026-10-20
+
+Nested untagged packed-union member chains now accumulate fixed declaration
+offsets and lower to `PartSel` windows over the outer vector. The focused
+symbolic tests check alternate-field alias visibility and reject overlapping
+constant drivers through the existing guard. Dynamic/effectful, tagged and
+unpacked aggregate paths remain loud; no aggregate store, driver-resolution
+rule or scheduler is added, and the legacy census is unchanged.
+
 ## Nested packed-struct field windows — 2026-10-19
 
 Member reads and writes through a chain of untagged packed structs now flatten
@@ -1004,7 +1013,8 @@ same four-state trace and no new aggregate store.
 
 The `packed_union_assign` fixture checks direct untagged packed-union aliasing:
 one field is driven, while a same-width alternate field and the whole union
-read the same vector bits. Tagged and nested unions remain outside this slice.
+read the same vector bits. Tagged unions remain outside this slice; nested
+untagged union chains use the recursive alias-window slice below.
 
 The `packed_union_typedef` fixture covers the same aliasing through an
 untagged packed-union typedef; the alias is erased while the vector width is

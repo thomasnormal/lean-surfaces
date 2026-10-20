@@ -2109,11 +2109,6 @@ def _packed_struct_member(sm, expression):
             # overlapping windows on the same vector; the static continuous
             # driver guard rejects conflicting windows before they imply
             # resolution. Tagged aggregates remain outside this path.
-            # The symbolic path has a separate, narrower nested-struct rung;
-            # keep nested unions loud there until its alias proof exists.
-            if (_SYM is not None
-                    and type(aggregate).__name__ == "PackedUnionType"):
-                return None
             if type(aggregate).__name__ not in ("PackedStructType",
                                                   "PackedUnionType"):
                 return None

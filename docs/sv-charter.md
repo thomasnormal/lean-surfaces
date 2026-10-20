@@ -2682,8 +2682,9 @@ Direct integral members of untagged packed structs and unions now lower to
 fixed `PartSel` windows over one packed vector in the symbolic continuous
 assignment path. `packed_member_assign` checks struct field writes and reads;
 `packed_union_assign` checks same-width alternate-field aliasing. Tagged
-structs/unions, nested unions, unpacked or dynamic members remain loud; these
-semantic fixtures do not claim a legacy census gain or simulator agreement.
+structs/unions, unpacked or dynamic members remain loud; nested untagged union
+chains are covered by the recursive window section below. These semantic
+fixtures do not claim a legacy census gain or simulator agreement.
 
 ### Symbolic packed-struct typedef metadata — 2026-10-19
 
@@ -2698,8 +2699,18 @@ semantic fixtures do not claim a legacy census gain or simulator agreement.
 Nested untagged packed-struct member chains now accumulate their fixed
 declaration offsets and lower to windows over the outer vector. The
 `packed_member_nested` fixture checks both inner fields and x propagation;
-nested unions and other aggregate paths remain loud. This is a symbolic
-fixture result only, with no legacy census or simulator-agreement claim.
+nested untagged packed unions use the same flat alias windows, while tagged and
+other aggregate paths remain loud. This is a symbolic fixture result only, with
+no legacy census or simulator-agreement claim.
+
+### Symbolic nested packed-union alias windows — 2026-10-20
+
+Nested untagged packed-union member chains now accumulate their fixed
+declaration offsets and lower to `PartSel` windows over the outer vector.
+The focused symbolic tests check alternate-field alias visibility and the
+existing overlap guard rejects conflicting symbolic drivers. Dynamic/effectful,
+tagged and unpacked aggregate paths remain loud; no aggregate store, driver
+resolution or scheduler is added.
 
 ### Symbolic literal indexed part-select windows — 2026-10-19
 

@@ -550,16 +550,18 @@ constant window in the symbolic tier. An untagged packed union uses the same
 single-vector representation, so an alternate field aliases the written
 bits. The extractor lowers each direct member's fixed declaration offset to a
 `PartSel` over the synthetic packed vector, so writes and reads use existing
-storage. Tagged structs/unions, nested unions, unpacked members and dynamic
-member paths remain loud. A typedef naming an untagged packed struct or union
+storage. Tagged structs/unions, unpacked members and dynamic member paths
+remain loud; nested untagged union chains use the recursive window rule below.
+A typedef naming an untagged packed struct or union
 is compile-time metadata and is skipped after its canonical vector width has
 been checked; `packed_member_typedef` and `packed_union_typedef` pin those
 cases.
 
 Nested untagged packed-struct member chains are flattened in the same way:
 the helper accumulates each declaration offset and emits one outer-vector
-`PartSel`. `packed_member_nested` pins this chain; nested unions and other
-aggregate member paths remain unsupported.
+`PartSel`. `packed_member_nested` pins this chain; nested untagged packed-union
+chains use the same outer offsets and alias guard. Other aggregate member
+paths remain unsupported.
 
 Literal indexed part-selects (`base +: width` and `base -: width`) are
 normalized to ordinary constant `PartSel` bounds when the selected window is

@@ -408,7 +408,8 @@ def const_literal(sm, e):
     evaluates on demand (pyslang's EvalContext is crash-prone — only the
     binder-populated attribute is consulted)."""
     if (_contains_guarded_expression(e, guard_calls=_SYM is None)
-            or _contains_disputed_string_escape(e)):
+            or _contains_disputed_string_escape(e)
+            or _contains_unsized_based_widening(e)):
         return None
     try:
         c = e.constant
@@ -742,6 +743,8 @@ def _fixed_query_dimensions(value_type):
 
 def _constant_dimension_selector(expression):
     """Use bound constants or static leaves, never an evaluation context."""
+    if _contains_unsized_based_widening(expression):
+        return None
     constant = expression.constant
     if constant is not None:
         value = constant.value
@@ -1754,6 +1757,8 @@ def _convert_expr(sm, e):
         return _convert_conditional_expr(sm, e)
     if cname == "ConcatenationExpression":
         return _convert_concat_expr(sm, e)
+    if _SYM is None and cname == "ReplicationExpression":
+        return _convert_replication_expr(sm, e)
     if _SYM is None and cname in (
             "SimpleAssignmentPatternExpression", "StructuredAssignmentPatternExpression",
             "ReplicatedAssignmentPatternExpression"):
@@ -1830,6 +1835,9 @@ def _convert_conversion_expr(sm, e):
         return _convert_integral_cast(sm, e)
     if kind not in (ConversionKind.Implicit, ConversionKind.Propagated):
         return unsupported(sm, e, "ConversionExpression:" + str(kind).split(".")[-1])
+    corrected = _convert_unsized_based_widening(sm, e)
+    if corrected is not None:
+        return corrected
     ow, tw = e.operand.type.bitWidth, e.type.bitWidth
     state_squash = e.operand.type.isFourState and not e.type.isFourState
     if _SYM is not None and _DIV_CONTEXT and not _SYM.symctx:
@@ -1961,6 +1969,9 @@ def _convert_integral_cast(sm, expr):
     target_width, two_state, target_reason = type_width_2s(expr.type)
     if _SYM is not None or source_reason is not None or target_reason is not None:
         return unsupported(sm, expr, "ConversionExpression:Explicit")
+    corrected = _convert_unsized_based_widening(sm, expr)
+    if corrected is not None:
+        return corrected
     operand = _convert_expr(sm, expr.operand)
     if source_width != target_width:
         operand = {
@@ -1972,6 +1983,72 @@ def _convert_integral_cast(sm, expr):
     if two_state and expr.operand.type.isFourState:
         operand = squash2_wrap(operand, target_width)
     return operand
+
+
+def _unsized_based_widening_bits(expression):
+    """IEEE 5.7.1: an unsized based literal's leading X/Z fills its context.
+
+    The frontend's bound conversion constant zero-extends this case. Only
+    literal syntax is repaired here; ordinary unsigned values still zero-fill.
+    """
+    if _SYM is not None or type(expression).__name__ != "ConversionExpression":
+        return None
+    source = expression.operand
+    if (type(source).__name__ != "IntegerLiteral" or not source.isDeclaredUnsized
+            or not expression.type.isIntegral):
+        return None
+    target_width, _, reason = type_width_2s(expression.type)
+    bits = svint_bits(source.value)
+    if (reason is not None or target_width <= len(bits) or not bits
+            or bits[0] not in "xz"):
+        return None
+    return bits[0] * (target_width - len(bits)) + bits
+
+
+def _contains_unsized_based_widening(expression):
+    found = False
+    def inspect(node):
+        nonlocal found
+        found = found or _unsized_based_widening_bits(node) is not None
+    expression.visit(inspect)
+    return found
+
+
+def _convert_unsized_based_widening(sm, expression):
+    bits = _unsized_based_widening_bits(expression)
+    if bits is None:
+        return None
+    if not expression.type.isFourState:
+        bits = bits.replace("x", "0").replace("z", "0")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression), "width": len(bits),
+        "bits": bits, "unsized_based_widening": True,
+    }, expression.type)
+
+
+def _unsized_based_constant_gap(comp):
+    """Do not consume a known incorrect parameter/enum/generate constant."""
+    found = False
+    def inspect(node):
+        nonlocal found
+        kind = str(getattr(node, "kind", ""))
+        if kind == "SymbolKind.TransparentMember":
+            node = node.wrapped
+            kind = str(node.kind)
+        expressions = []
+        if kind in ("SymbolKind.Parameter", "SymbolKind.EnumValue"):
+            expressions = [node.initializer]
+        elif kind == "SymbolKind.GenerateBlock":
+            expressions = [node.conditionExpression, *node.caseItemExpressions]
+        elif kind == "SymbolKind.GenerateBlockArray":
+            expressions = [node.initialExpression, node.stopExpression, node.iterExpression]
+        for expression in expressions:
+            if expression is not None and _contains_unsized_based_widening(expression):
+                found = True
+    comp.getRoot().visit(inspect)
+    for unit in comp.getCompilationUnits():
+        unit.visit(inspect)
+    return found
 
 
 def _convert_named_value_expr(sm, e):
@@ -2410,6 +2487,49 @@ def _pattern_source_elements(pattern):
         if descending:
             elements.reverse()
     return elements
+
+
+def _expression_node_cost(node, limit):
+    """Count materialized AST nodes with an early stop at the envelope bound."""
+    if isinstance(node, dict):
+        total, children = int("kind" in node), node.values()
+    elif isinstance(node, list):
+        total, children = 0, node
+    else:
+        return 0
+    for child in children:
+        total += _expression_node_cost(child, max(0, limit - total))
+        if total > limit:
+            return limit + 1
+    return total
+
+
+def _convert_replication_expr(sm, expression):
+    """Replicate a pure self-determined group, including legal empty members."""
+    count = _constant_dimension_selector(expression.count)
+    if count is None or count < 0:
+        return unsupported(sm, expression, "Replication:constant-count")
+    if count > 1024:
+        return unsupported(sm, expression, "Replication:copy-limit")
+    group_width, _, reason = type_width_2s(expression.concat.type)
+    width = expression.type.bitWidth
+    if (reason is not None or group_width <= 0 or count * group_width != width
+            or (count == 0 and type(expression.type.canonicalType).__name__ != "VoidType")
+            or (count > 0 and type_width_2s(expression.type)[0] != width)):
+        return unsupported(sm, expression, "Replication:integral-shape")
+    if not _case_source_expression_ok(expression, packed_members=True):
+        return unsupported(sm, expression, "Replication:effects")
+    group = convert_expr(sm, expression.concat)
+    # Even at count zero, unsupported/effectful source operands stay visible.
+    if not _case_expression_ok(group) or width_of(group) != group_width:
+        return unsupported(sm, expression, "Replication:operand")
+    if count and _expression_node_cost(group, 16384 // count) > 16384 // count:
+        return unsupported(sm, expression, "Replication:expansion-limit")
+    return {
+        "kind": "Concat", "span": node_span(sm, expression), "width": width,
+        "parts": [group] * count, "replication_lowered": True,
+        "replication_count": count,
+    }
 
 
 def _convert_packed_pattern(sm, expression):
@@ -3896,7 +4016,7 @@ def _case_source_expression_ok(expression, *, packed_members=False):
             "NamedValueExpression", "ConversionExpression", "UnaryExpression",
             "BinaryExpression", "ConditionalExpression", "ConcatenationExpression",
             "SimpleAssignmentPatternExpression", "StructuredAssignmentPatternExpression",
-            "ReplicatedAssignmentPatternExpression",
+            "ReplicatedAssignmentPatternExpression", "ReplicationExpression",
             "ElementSelectExpression", "RangeSelectExpression",
             "InsideExpression", "ValueRangeExpression", "UnboundedLiteral",
         )
@@ -5551,6 +5671,15 @@ def _convert_design(sm, comp, packages):
                     for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "AssignmentPattern:invalid-compilation",
                                   "frontend rejected a design containing an assignment pattern"))
+    if (any(_node_marker(module, "replication_lowered") for module in modules)
+            and any(diagnostic.isError() or str(diagnostic.code) in (
+                        "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
+                    for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Replication:invalid-compilation",
+                                  "frontend rejected a design containing a replication"))
+    if _unsized_based_constant_gap(comp):
+        others.append(unsupported(sm, comp, "UnsizedBasedLiteral:constant-context",
+                                  "frontend widening of an unsized X/Z elaboration constant"))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",

@@ -1364,3 +1364,15 @@ cell lowerings use the same correspondence helper. Source effects, invalid
 compilations, unsupported shapes and expansion-limit violations remain loud.
 The symbolic schema's packed-pattern admission is unchanged. See
 [the contract](sv-assignment-patterns.md).
+
+
+### Legacy integral replication provenance
+
+Pure self-determined integral replication lowers to ordinary `Concat` with
+`replication_lowered: true` and an exact `replication_count`. Each part is the
+whole converted group; count zero has width zero and no parts. The metadata
+adds no runtime primitive. Existing integral widths, unsigned result and
+source spans are retained. Expansion and source/compilation checks precede
+admission. Corrected wide unsized based X/Z literal conversions carry
+`unsized_based_widening: true`; affected elaboration constants refuse.
+Symbolic `Repl` remains unchanged. See [the contract](sv-replication.md).

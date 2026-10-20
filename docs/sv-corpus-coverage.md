@@ -22,43 +22,39 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
-## Integral assignment patterns — 2026-10-20
+## Integral replication — 2026-10-20
 
-IEEE §10.9 positional, keyed/member/type/default and constant-replicated
-patterns now lower into existing integral concatenation and storage rules.
-Bound correspondence preserves widths, signedness and X/Z. Live reads, nested
-structs, typed conditional operands, two-state conversion, whole-packed
-self-swaps and NBA capture use the existing evaluator and scheduler. Keyed
-numeric-index inventories map to declared order, including existing unpacked
-cell paths. Effects, invalid source, unsupported storage/types, split-cell
-self-aliases and expansion limits stay loud. Symbolic packed-pattern admission
-is unchanged. See [the contract](sv-assignment-patterns.md).
+IEEE §11.4.12.1 pure integral replication now lowers self-determined groups
+to existing concatenations. Nested groups, X/Z, string bytes, unsigned results,
+later assignment resizing and legal zero members retain their source meaning.
+Effects, unsupported operands/types, invalid compilation and expansion bounds
+stay loud. The comparison also corrected §5.7.1 unsized based X/Z widening;
+affected frontend elaboration constants refuse explicitly.
+See [the contract](sv-replication.md).
 
-The paired **22,035** paths gain **26 clean files** without losses:
-**4,011 → 4,037 clean**, **17,958 → 17,932 partial**, **66 include skips**,
-zero extraction errors. **Twenty-four gains match complete independent
-transcripts under both region oracles**; two retain continuous-assignment
-runtime refusals. All 26 independent runs succeed. There are no other
-transcript differences, oracle failures or multi-top absences. A paired design
-comparison finds no changes in the 69 previously clean pattern-bearing sources.
+The paired **22,035** paths gain **20 clean files** without losses:
+**4,037 → 4,057 clean**, **17,932 → 17,912 partial**, **66 include skips**,
+zero extraction errors. **All 20 gains match complete independent transcripts
+under both region oracles**, including the initially divergent wide X/Z row.
+All 4,037 previously clean extracted designs remain identical. Seven authored
+complete transcripts match both oracles; three further sources preserve
+refusals. Five source-bound kernel proofs establish live reads, blocking
+stores, NBA capture, post-change commit visibility and zero-member identity.
 
-Five authored complete transcripts match both oracles; three more preserve
-effect, storage and self-alias boundaries. Four source-bound kernel proofs
-establish current reads, blocking stores, NBA capture and post-change commit
-visibility. The following table measures extraction, including negative and
-compile-only files, rather than whole-corpus execution conformance.
+The following table measures extraction, including negative and compile-only
+files, rather than whole-corpus execution conformance.
 
 | Chapter | Total | Clean | Partial | Include skips |
 |---|---:|---:|---:|---:|
 | 3 | 300 | 46 | 253 | 1 |
 | 4 | 427 | 186 | 241 | 0 |
-| 5 | 618 | 360 | 258 | 0 |
+| 5 | 618 | 362 | 256 | 0 |
 | 6 | 1185 | 413 | 772 | 0 |
 | 7 | 796 | 106 | 690 | 0 |
 | 8 | 843 | 0 | 842 | 1 |
 | 9 | 589 | 110 | 479 | 0 |
-| 10 | 657 | 235 | 422 | 0 |
-| 11 | 1034 | 686 | 348 | 0 |
+| 10 | 657 | 236 | 421 | 0 |
+| 11 | 1034 | 703 | 331 | 0 |
 | 12 | 627 | 290 | 337 | 0 |
 | 13 | 598 | 1 | 597 | 0 |
 | 14 | 473 | 1 | 472 | 0 |
@@ -88,6 +84,31 @@ compile-only files, rather than whole-corpus execution conformance.
 | 38 | 340 | 204 | 136 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 40 | 47 | 0 |
+
+## Integral assignment patterns — 2026-10-20
+
+IEEE §10.9 positional, keyed/member/type/default and constant-replicated
+patterns now lower into existing integral concatenation and storage rules.
+Bound correspondence preserves widths, signedness and X/Z. Live reads, nested
+structs, typed conditional operands, two-state conversion, whole-packed
+self-swaps and NBA capture use the existing evaluator and scheduler. Keyed
+numeric-index inventories map to declared order, including existing unpacked
+cell paths. Effects, invalid source, unsupported storage/types, split-cell
+self-aliases and expansion limits stay loud. Symbolic packed-pattern admission
+is unchanged. See [the contract](sv-assignment-patterns.md).
+
+The paired **22,035** paths gain **26 clean files** without losses:
+**4,011 → 4,037 clean**, **17,958 → 17,932 partial**, **66 include skips**,
+zero extraction errors. **Twenty-four gains match complete independent
+transcripts under both region oracles**; two retain continuous-assignment
+runtime refusals. All 26 independent runs succeed. There are no other
+transcript differences, oracle failures or multi-top absences. A paired design
+comparison finds no changes in the 69 previously clean pattern-bearing sources.
+
+Five authored complete transcripts match both oracles; three more preserve
+effect, storage and self-alias boundaries. Four source-bound kernel proofs
+establish current reads, blocking stores, NBA capture and post-change commit
+visibility.
 
 ## Elaborated generate scopes and integral parameters — 2026-10-20
 

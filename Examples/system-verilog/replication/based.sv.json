@@ -1,0 +1,402 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/replication/based.sv",
+  "source_sha256": "64f8bfef9e338e70508eb36e99850d0c6e82eb659f244cbfa7219b71a81d0d35",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 16,
+              "end_line": 2,
+              "end_col": 32
+            },
+            "name": "implicit_x",
+            "width": 85,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 2,
+                "col": 29,
+                "end_line": 2,
+                "end_col": 32
+              },
+              "width": 85,
+              "bits": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "unsized_based_widening": true
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 16,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "implicit_z",
+            "width": 85,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 3,
+                "col": 29,
+                "end_line": 3,
+                "end_col": 32
+              },
+              "width": 85,
+              "bits": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+              "unsized_based_widening": true
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 28
+            },
+            "name": "mixed",
+            "width": 85,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 4,
+                "col": 24,
+                "end_line": 4,
+                "end_col": 28
+              },
+              "width": 85,
+              "bits": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0001",
+              "unsized_based_widening": true
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 16,
+              "end_line": 5,
+              "end_col": 29
+            },
+            "name": "sized",
+            "width": 85,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 5,
+                "col": 24,
+                "end_line": 5,
+                "end_col": 29
+              },
+              "width": 85,
+              "bits": "00000000000000000000000000000000000000000000000000000xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 33
+            },
+            "name": "casted",
+            "width": 85,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 6,
+                "col": 25,
+                "end_line": 6,
+                "end_col": 33
+              },
+              "width": 85,
+              "bits": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "unsized_based_widening": true
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 7,
+              "col": 16,
+              "end_line": 7,
+              "end_col": 28
+            },
+            "name": "narrow",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 7,
+                "col": 25,
+                "end_line": 7,
+                "end_col": 28
+              },
+              "width": 32,
+              "bits": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 29
+            },
+            "name": "variable_copy",
+            "width": 85,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 14,
+              "end_line": 9,
+              "end_col": 25
+            },
+            "name": "clean",
+            "width": 85,
+            "init": {
+              "kind": "Squash2",
+              "span": {
+                "line": 9,
+                "col": 22,
+                "end_line": 9,
+                "end_col": 25
+              },
+              "width": 85,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 9,
+                  "col": 22,
+                  "end_line": 9,
+                  "end_col": 25
+                },
+                "width": 85,
+                "bits": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+                "unsized_based_widening": true
+              }
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 28
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 18
+                    },
+                    "width": 85,
+                    "name": "variable_copy"
+                  },
+                  "value": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 11,
+                      "col": 21,
+                      "end_line": 11,
+                      "end_col": 27
+                    },
+                    "width": 85,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 21,
+                        "end_line": 11,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "name": "narrow"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 63
+                  },
+                  "name": "$display",
+                  "format": "based %h %h %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 32,
+                        "end_line": 12,
+                        "end_col": 42
+                      },
+                      "width": 85,
+                      "name": "implicit_x"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 44,
+                        "end_line": 12,
+                        "end_col": 54
+                      },
+                      "width": 85,
+                      "name": "implicit_z"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 56,
+                        "end_line": 12,
+                        "end_col": 61
+                      },
+                      "width": 85,
+                      "name": "mixed"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 75
+                  },
+                  "name": "$display",
+                  "format": "contexts %h %h %h %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 38,
+                        "end_line": 13,
+                        "end_col": 43
+                      },
+                      "width": 85,
+                      "name": "sized"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 45,
+                        "end_line": 13,
+                        "end_col": 51
+                      },
+                      "width": 85,
+                      "name": "casted"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 53,
+                        "end_line": 13,
+                        "end_col": 66
+                      },
+                      "width": 85,
+                      "name": "variable_copy"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 68,
+                        "end_line": 13,
+                        "end_col": 73
+                      },
+                      "width": 85,
+                      "name": "clean"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false,
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

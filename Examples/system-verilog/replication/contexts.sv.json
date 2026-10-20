@@ -1,0 +1,651 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/replication/contexts.sv",
+  "source_sha256": "73ca9bb2a20f6ccb4c3b0a098b5d0bc1f557c3a6d56f1b6bc54304f3677fc411",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 13,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 22,
+              "end_line": 3,
+              "end_col": 33
+            },
+            "name": "narrow",
+            "width": 4,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 3,
+                "col": 31,
+                "end_line": 3,
+                "end_col": 33
+              },
+              "width": 4,
+              "bits": "1111"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 23,
+              "end_line": 4,
+              "end_col": 44
+            },
+            "name": "widened",
+            "width": 12,
+            "init": {
+              "kind": "Resize",
+              "span": {
+                "line": 4,
+                "col": 33,
+                "end_line": 4,
+                "end_col": 44
+              },
+              "width": 12,
+              "operand": {
+                "kind": "Concat",
+                "span": {
+                  "line": 4,
+                  "col": 33,
+                  "end_line": 4,
+                  "end_col": 44
+                },
+                "width": 8,
+                "parts": [
+                  {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 4,
+                      "col": 35,
+                      "end_line": 4,
+                      "end_col": 43
+                    },
+                    "width": 4,
+                    "parts": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 36,
+                          "end_line": 4,
+                          "end_col": 42
+                        },
+                        "width": 4,
+                        "name": "narrow",
+                        "signed": true
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 4,
+                      "col": 35,
+                      "end_line": 4,
+                      "end_col": 43
+                    },
+                    "width": 4,
+                    "parts": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 36,
+                          "end_line": 4,
+                          "end_col": 42
+                        },
+                        "width": 4,
+                        "name": "narrow",
+                        "signed": true
+                      }
+                    ]
+                  }
+                ],
+                "replication_lowered": true,
+                "replication_count": 2
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 36
+            },
+            "name": "truncated",
+            "width": 4,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 5,
+                "col": 27,
+                "end_line": 5,
+                "end_col": 36
+              },
+              "width": 4,
+              "bits": "1001"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 13,
+              "end_line": 6,
+              "end_col": 31
+            },
+            "name": "clean",
+            "width": 8,
+            "init": {
+              "kind": "Squash2",
+              "span": {
+                "line": 6,
+                "col": 21,
+                "end_line": 6,
+                "end_col": 31
+              },
+              "width": 8,
+              "operand": {
+                "kind": "Concat",
+                "span": {
+                  "line": 6,
+                  "col": 21,
+                  "end_line": 6,
+                  "end_col": 31
+                },
+                "width": 8,
+                "parts": [
+                  {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 6,
+                      "col": 23,
+                      "end_line": 6,
+                      "end_col": 30
+                    },
+                    "width": 2,
+                    "parts": [
+                      {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 6,
+                          "col": 24,
+                          "end_line": 6,
+                          "end_col": 29
+                        },
+                        "width": 2,
+                        "bits": "xz"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 6,
+                      "col": 23,
+                      "end_line": 6,
+                      "end_col": 30
+                    },
+                    "width": 2,
+                    "parts": [
+                      {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 6,
+                          "col": 24,
+                          "end_line": 6,
+                          "end_col": 29
+                        },
+                        "width": 2,
+                        "bits": "xz"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 6,
+                      "col": 23,
+                      "end_line": 6,
+                      "end_col": 30
+                    },
+                    "width": 2,
+                    "parts": [
+                      {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 6,
+                          "col": 24,
+                          "end_line": 6,
+                          "end_col": 29
+                        },
+                        "width": 2,
+                        "bits": "xz"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 6,
+                      "col": 23,
+                      "end_line": 6,
+                      "end_col": 30
+                    },
+                    "width": 2,
+                    "parts": [
+                      {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 6,
+                          "col": 24,
+                          "end_line": 6,
+                          "end_col": 29
+                        },
+                        "width": 2,
+                        "bits": "xz"
+                      }
+                    ]
+                  }
+                ],
+                "replication_lowered": true,
+                "replication_count": 4
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 7,
+              "col": 15,
+              "end_line": 7,
+              "end_col": 41
+            },
+            "name": "repeated_unbased",
+            "width": 4,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 7,
+                "col": 34,
+                "end_line": 7,
+                "end_col": 41
+              },
+              "width": 4,
+              "parts": [
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 7,
+                    "col": 36,
+                    "end_line": 7,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "parts": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 37,
+                        "end_line": 7,
+                        "end_col": 39
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 7,
+                    "col": 36,
+                    "end_line": 7,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "parts": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 37,
+                        "end_line": 7,
+                        "end_col": 39
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 7,
+                    "col": 36,
+                    "end_line": 7,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "parts": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 37,
+                        "end_line": 7,
+                        "end_col": 39
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 7,
+                    "col": 36,
+                    "end_line": 7,
+                    "end_col": 40
+                  },
+                  "width": 1,
+                  "parts": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 7,
+                        "col": 37,
+                        "end_line": 7,
+                        "end_col": 39
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  ]
+                }
+              ],
+              "replication_lowered": true,
+              "replication_count": 4
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 52
+            },
+            "name": "chosen",
+            "width": 16,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 8,
+                "col": 25,
+                "end_line": 8,
+                "end_col": 52
+              },
+              "width": 16,
+              "parts": [
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 8,
+                    "col": 27,
+                    "end_line": 8,
+                    "end_col": 51
+                  },
+                  "width": 8,
+                  "parts": [
+                    {
+                      "kind": "Ternary",
+                      "span": {
+                        "line": 8,
+                        "col": 29,
+                        "end_line": 8,
+                        "end_col": 49
+                      },
+                      "width": 8,
+                      "cond": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 29,
+                          "end_line": 8,
+                          "end_col": 33
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      },
+                      "then": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 36,
+                          "end_line": 8,
+                          "end_col": 41
+                        },
+                        "width": 8,
+                        "bits": "10101011"
+                      },
+                      "else": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 44,
+                          "end_line": 8,
+                          "end_col": 49
+                        },
+                        "width": 8,
+                        "bits": "11001101"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 8,
+                    "col": 27,
+                    "end_line": 8,
+                    "end_col": 51
+                  },
+                  "width": 8,
+                  "parts": [
+                    {
+                      "kind": "Ternary",
+                      "span": {
+                        "line": 8,
+                        "col": 29,
+                        "end_line": 8,
+                        "end_col": 49
+                      },
+                      "width": 8,
+                      "cond": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 29,
+                          "end_line": 8,
+                          "end_col": 33
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      },
+                      "then": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 36,
+                          "end_line": 8,
+                          "end_col": 41
+                        },
+                        "width": 8,
+                        "bits": "10101011"
+                      },
+                      "else": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 44,
+                          "end_line": 8,
+                          "end_col": 49
+                        },
+                        "width": 8,
+                        "bits": "11001101"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "replication_lowered": true,
+              "replication_count": 2
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 9,
+              "col": 3,
+              "end_line": 12,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 9,
+                "col": 11,
+                "end_line": 12,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 94
+                  },
+                  "name": "$display",
+                  "format": "contexts %h %h %b %b %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 41,
+                        "end_line": 10,
+                        "end_col": 48
+                      },
+                      "width": 12,
+                      "name": "widened",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 50,
+                        "end_line": 10,
+                        "end_col": 59
+                      },
+                      "width": 4,
+                      "name": "truncated"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 61,
+                        "end_line": 10,
+                        "end_col": 66
+                      },
+                      "width": 8,
+                      "name": "clean"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 68,
+                        "end_line": 10,
+                        "end_col": 84
+                      },
+                      "width": 4,
+                      "name": "repeated_unbased"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 86,
+                        "end_line": 10,
+                        "end_col": 92
+                      },
+                      "width": 16,
+                      "name": "chosen"
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    false,
+                    false,
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [],
+        "elaboration_lowered": true
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

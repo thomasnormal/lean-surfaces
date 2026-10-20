@@ -3642,3 +3642,28 @@ Four source-bound kernel proofs certify current reads, blocking stores, NBA
 capture and commit visibility after the source changes. See
 [the contract](sv-assignment-patterns.md) and
 [the fixtures](../Examples/system-verilog/assignment_patterns/README.md).
+
+
+### Integral replication — 2026-10-20
+
+IEEE §11.4.12.1 pure integral replication lowers whole self-determined groups
+to the existing concatenation rule. Source order, nested groups, X/Z,
+byte-string literals, parameter counts, unsigned results and later assignment
+resizing are retained. Legal zero-count members contribute no bits while
+still checking their source. Effects, unsupported types/operands, invalid
+compilations and bounded expansions stay loud. Symbolic extraction is
+unchanged; no evaluator, storage primitive or scheduler is added.
+
+Independent comparison exposed and corrected §5.7.1 wide unsized based X/Z
+context fill. Sized literals and unsigned values still zero-fill. Affected
+frontend parameter/enum/generate constants and constant selectors refuse
+rather than use an incorrect elaboration result.
+
+The paired 22,035-path census rises 4,037 to 4,057 clean (+20), without losses.
+All 20 gains execute completely and match independent transcripts under both
+region oracles. All 4,037 previously clean designs extract identically.
+Seven authored sources match both oracles; three preserve effect,
+dynamic-string and elaboration-constant refusals. Five kernel proofs certify
+the actual parsed live RHS, blocking store, NBA capture, post-change visibility
+and zero-member identity. See [the contract](sv-replication.md) and
+[the fixtures](../Examples/system-verilog/replication/README.md).

@@ -1,0 +1,270 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/replication/strings.sv",
+  "source_sha256": "3250aa61d8f05cec3c2d74d8383922f30f8404fb8a0ea086ff3483480929abfa",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 16,
+              "end_line": 2,
+              "end_col": 38
+            },
+            "name": "word",
+            "width": 24,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 2,
+                "col": 23,
+                "end_line": 2,
+                "end_col": 38
+              },
+              "width": 24,
+              "parts": [
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 2,
+                    "col": 24,
+                    "end_line": 2,
+                    "end_col": 32
+                  },
+                  "width": 16,
+                  "parts": [
+                    {
+                      "kind": "Concat",
+                      "span": {
+                        "line": 2,
+                        "col": 26,
+                        "end_line": 2,
+                        "end_col": 31
+                      },
+                      "width": 8,
+                      "parts": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 2,
+                            "col": 27,
+                            "end_line": 2,
+                            "end_col": 30
+                          },
+                          "width": 8,
+                          "bits": "01000001"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "Concat",
+                      "span": {
+                        "line": 2,
+                        "col": 26,
+                        "end_line": 2,
+                        "end_col": 31
+                      },
+                      "width": 8,
+                      "parts": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 2,
+                            "col": 27,
+                            "end_line": 2,
+                            "end_col": 30
+                          },
+                          "width": 8,
+                          "bits": "01000001"
+                        }
+                      ]
+                    }
+                  ],
+                  "replication_lowered": true,
+                  "replication_count": 2
+                },
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 2,
+                    "col": 34,
+                    "end_line": 2,
+                    "end_col": 37
+                  },
+                  "width": 8,
+                  "bits": "01000010"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 16,
+              "end_line": 3,
+              "end_col": 37
+            },
+            "name": "controls",
+            "width": 32,
+            "init": {
+              "kind": "Concat",
+              "span": {
+                "line": 3,
+                "col": 27,
+                "end_line": 3,
+                "end_col": 37
+              },
+              "width": 32,
+              "parts": [
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 3,
+                    "col": 29,
+                    "end_line": 3,
+                    "end_col": 36
+                  },
+                  "width": 16,
+                  "parts": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 3,
+                        "col": 30,
+                        "end_line": 3,
+                        "end_col": 35
+                      },
+                      "width": 16,
+                      "bits": "0100000100001010"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 3,
+                    "col": 29,
+                    "end_line": 3,
+                    "end_col": 36
+                  },
+                  "width": 16,
+                  "parts": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 3,
+                        "col": 30,
+                        "end_line": 3,
+                        "end_col": 35
+                      },
+                      "width": 16,
+                      "bits": "0100000100001010"
+                    }
+                  ]
+                }
+              ],
+              "replication_lowered": true,
+              "replication_count": 2
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 11,
+                "end_line": 7,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 47
+                  },
+                  "name": "$display",
+                  "format": "strings %h %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 5,
+                        "col": 31,
+                        "end_line": 5,
+                        "end_col": 35
+                      },
+                      "width": 24,
+                      "name": "word"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 5,
+                        "col": 37,
+                        "end_line": 5,
+                        "end_col": 45
+                      },
+                      "width": 32,
+                      "name": "controls"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

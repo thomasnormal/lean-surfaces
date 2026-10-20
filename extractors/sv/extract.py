@@ -3508,12 +3508,106 @@ def contains_local_decl(node):
     return False
 
 
+def _scan_call(expression):
+    while type(expression).__name__ == "ConversionExpression" and expression.conversionKind in (
+            ConversionKind.Implicit, ConversionKind.Propagated):
+        expression = expression.operand
+    if (type(expression).__name__ == "CallExpression" and expression.isSystemCall
+            and expression.subroutineName == "$sscanf"):
+        return expression
+    return None
+
+
+def _scan_format_count(text):
+    """Admission only; the shared Lean scanner interprets the format."""
+    position, outputs = 0, 0
+    while position < len(text):
+        if text[position] != "%":
+            if ord(text[position]) == 0 or ord(text[position]) > 127:
+                return None
+            position += 1
+            continue
+        position += 1
+        if position < len(text) and text[position] == "%":
+            position += 1
+            continue
+        suppressed = position < len(text) and text[position] == "*"
+        if suppressed:
+            position += 1
+        start = position
+        while position < len(text) and "0" <= text[position] <= "9":
+            position += 1
+        if start != position and int(text[start:position]) == 0:
+            return None
+        if position == len(text) or text[position].lower() not in "bodhxcsv":
+            return None
+        outputs += not suppressed
+        position += 1
+    return outputs
+
+
+def _convert_scan_assignment(sm, expression):
+    call = _scan_call(expression.right)
+    if call is None:
+        return None
+    if _SYM is not None or expression.isNonBlocking or expression.op is not None:
+        return unsupported(sm, expression, "Scanf:assignment-context")
+    arguments = list(call.arguments)
+    if len(arguments) < 2 or call.type.bitWidth != 32 or not call.type.isSigned:
+        return unsupported(sm, call, "Scanf:signature")
+    source, format_expr = arguments[:2]
+    if (type(format_expr).__name__ != "StringLiteral"
+            or _contains_disputed_string_escape(format_expr)):
+        return unsupported(sm, call, "Scanf:format")
+    count = _scan_format_count(format_expr.value)
+    if count is None or count != len(arguments) - 2:
+        return unsupported(sm, call, "Scanf:format-or-arity")
+    if not _case_source_expression_ok(source):
+        return unsupported(sm, call, "Scanf:input-effects")
+    if type(source).__name__ == "StringLiteral":
+        text = source.value
+        if (any(ord(c) > 127 for c in text)
+                or _contains_disputed_string_escape(source)
+                or source.type.bitWidth != max(8, len(text) * 8)):
+            return unsupported(sm, call, "Scanf:input-encoding")
+        width = max(8, len(text) * 8)
+        value = int.from_bytes(text.encode("ascii"), "big")
+        input_node = {"kind": "Literal", "span": node_span(sm, source),
+                      "width": width, "bits": format(value, "0%db" % width)}
+    else:
+        width, _, reason = type_width_2s(source.type)
+        input_node = convert_expr(sm, source)
+        if reason is not None or width is None or not _case_expression_ok(input_node):
+            return unsupported(sm, call, "Scanf:input-type")
+    outputs = []
+    for argument in arguments[2:]:
+        if (type(argument).__name__ != "AssignmentExpression"
+                or type(argument.right).__name__ != "EmptyArgumentExpression"
+                or not _case_source_expression_ok(argument.left)):
+            return unsupported(sm, call, "Scanf:output-effects")
+        target, admitted = legacy_blocking_target(sm, argument.left, True)
+        if not admitted:
+            return unsupported(sm, call, "Scanf:output-target")
+        outputs.append(target)
+    if not _case_source_expression_ok(expression.left):
+        return unsupported(sm, call, "Scanf:result-effects")
+    result, admitted = legacy_blocking_target(sm, expression.left, True)
+    if not admitted:
+        return unsupported(sm, call, "Scanf:result-target")
+    return {"kind": "Scanf", "span": node_span(sm, expression), "input": input_node,
+            "format": format_expr.value, "outputs": outputs, "result": result,
+            "scanf_lowered": True}
+
+
 def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
     if expr.timingControl is not None:
         return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
+    scan = _convert_scan_assignment(sm, expr)
+    if scan is not None:
+        return scan
     if expr.op is None:
         streaming_target = (
             _symbolic_streaming_target_assignment(sm, expr)
@@ -4606,6 +4700,8 @@ def convert_design(sm, comp):
                              "InsideExpression", "lowered membership")
     _reject_invalid_lowering(sm, comp, modules, others, "implication_lowered",
                              "LogicalImplication", "lowered implication")
+    _reject_invalid_lowering(sm, comp, modules, others, "scanf_lowered",
+                             "Scanf", "formatted input")
     return {"kind": "Design", "modules": modules, "others": others}
 
 

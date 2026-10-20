@@ -229,6 +229,17 @@ effectful/nonintegral expressions and default-only cases retain
 adds top-level `CaseStatement:invalid-compilation`. This lowering does not
 change symbolic `sv-0.2` `Case` nodes.
 
+`Scanf` admits the integral `%b/%o/%h/%x/%d/%c/%s/%v` formats,
+optional positive field width, suppression, whitespace, ordinary literals
+and `%%`, with exactly one output per unsuppressed conversion. The input
+is evaluated once. Successful outputs copy back left to right through the
+existing packed-target machinery, resolving each selector after preceding
+writes; unmatched outputs stay unchanged. The return count is assigned last.
+Unknown packed input, literal mismatches requiring diagnostics, nonintegral
+storage, effectful inputs/selectors, general strings, other call contexts
+and symbolic mode remain loud. A frontend error adds
+`Scanf:invalid-compilation` at design level.
+
 An admitted fixed-size `$bits` query is a pure unevaluated leaf in this
 source-tree check. Its argument subtree is skipped, not admitted as an
 ordinary effectful expression.
@@ -237,6 +248,7 @@ ordinary effectful expression.
 |---|---|
 | `Block` | `kind`, `span`, `stmts`: [stmt...] — `begin ... end` (a single-statement body still nests one level: `"stmts": [<stmt>]`) |
 | `BlockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `=` |
+| `Scanf` | legacy/self-check: `kind`, `span`, `input` (packed expression), `format` (literal string), `outputs` (source-ordered packed targets), `result` (packed target), `scanf_lowered: true` — direct blocking assignment of `$sscanf` |
 | `NonblockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `<=` |
 | `If` | `kind`, `span`, `cond` (expr), `then` (stmt), `else` (stmt \| `null`) — `else if` chains nest as `If` inside `else` |
 | `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |

@@ -3274,3 +3274,27 @@ independent transcripts. The seventh combines a continuous assignment with
 a delay and remains a runtime refusal: neither the initial-only self-check
 runner nor the timed loader admits that process combination. It is an
 extraction gain, not an execution agreement.
+
+### Integral formatted input — 2026-10-20
+
+The legacy/self-check tier now admits direct blocking assignments of
+`$sscanf` over pure packed input, literal formats and integral packed
+outputs. The shared pure scanner supports `%b/%o/%h/%x/%d/%c/%s/%v`,
+suppression, positive widths, whitespace, literals and `%%`. Input is
+sampled once; successful outputs copy back left to right, later selectors
+see earlier writes, unmatched destinations stay unchanged, and the return
+count is assigned last. Existing packed-target rules retain neighboring
+bits and two-state conversion. The timed stepper delegates the new leaf to
+the same interpreter; no scheduler changes. General strings, real outputs,
+other contexts/formats, excess arguments, effects and symbolic scanning
+remain loud. Unknown packed input and diagnostic-bearing failures are
+explicit runtime boundaries. Details: [formatted input](sv-formatted-input.md).
+
+The paired **22,035**-path census gains **34 clean files** without losses:
+**3,128 → 3,162 clean**, **18,841 → 18,807 partial**, **66 include skips**,
+zero extraction errors. Thirty newly clean files execute and match complete
+independent transcripts. Four remain runtime refusals: two unknown-input
+diagnostics, one reduction over a selected slice, and one delay-bearing
+copyback fixture. These four are extraction gains only. The authored
+fixtures separately check ordered/partial copyback and integral conversion
+edges, including sign/underscore field-width consumption and strength input.

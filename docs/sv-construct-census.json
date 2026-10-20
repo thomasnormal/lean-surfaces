@@ -28,7 +28,7 @@
    ],
    [
     "CallExpression",
-    3576
+    3522
    ],
    [
     "VariableSymbol:2state",
@@ -575,6 +575,10 @@
     11
    ],
    [
+    "Scanf:input-type",
+    11
+   ],
+   [
     "PortSymbol:InOut",
     10
    ],
@@ -604,6 +608,10 @@
    ],
    [
     "CaseStatement:Unique0",
+    8
+   ],
+   [
+    "Scanf:format-or-arity",
     8
    ],
    [
@@ -783,6 +791,10 @@
     1
    ],
    [
+    "Scanf:output-target",
+    1
+   ],
+   [
     "ConfigBlockSymbol:ConfigBlock",
     1
    ],
@@ -832,8 +844,8 @@
    ]
   ],
   "by_status": {
-   "clean": 3128,
-   "partial": 18841,
+   "clean": 3162,
+   "partial": 18807,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -894,7 +906,7 @@
     52
    ],
    "simulation": [
-    2640,
+    2674,
     18671
    ],
    "simulation elaboration": [
@@ -1267,9 +1279,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 17,
+    "clean": 51,
     "error": 0,
-    "partial": 883,
+    "partial": 849,
     "skip_include": 0,
     "total": 900,
     "unlockable": 0

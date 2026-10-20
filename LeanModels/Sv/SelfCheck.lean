@@ -1,6 +1,7 @@
 import Lean
 import LeanModels.Sv.Semantics
 import LeanModels.Sv.Sem2
+import LeanModels.Sv.FormattedInput
 
 /-!
 # SV self-check tier (`LeanModels.Sv.SelfCheck`)
@@ -245,6 +246,8 @@ inductive SStmt where
       (descending indexSigned twoState : Bool) (index value : SExpr)
   | packedAssign (targets : List PackedTarget) (value : SExpr)
   | packedNbaAssign (targets : List PackedTarget) (value : SExpr)
+  | scanf (input : SExpr) (format : List FormattedInput.Token)
+      (outputs : List (List PackedTarget)) (result : List PackedTarget)
   | ifStmt (cond : SExpr) (thenB : SStmt) (elseB : Option SStmt)
   | block (body : Array SStmt)
   /-- `for` source phases. The extra constructors are also the resumable
@@ -639,6 +642,21 @@ def enqueuePackedNba (fuel : Nat) (st : SvState) (nba : NbaQueue)
                     pure (nba ++ [(name, updated)])
           enqueuePackedNba fuel st nba' replacement targets rest
 
+/-- Successful outputs copy back left to right; later selectors see earlier writes. -/
+def execScanWrites (fuel : Nat) (st : SvState) (outputs : List (List PackedTarget))
+    (values : List LVec) (assignmentOrder : AssignmentOrder) : Res SvState :=
+  match fuel, outputs, values with
+  | 0, _, _ => .timeout
+  | _, _, [] => .ok st
+  | _, [], _ :: _ => .unsupported "Scanf: scanner produced excess outputs"
+  | fuel + 1, targets :: rest, value :: values => do
+      let order := assignmentOrder targets.length
+      if !validAssignmentOrder targets.length order then
+        .unsupported "Scanf: target assignment order must be a permutation"
+      else
+        let updated ← execPackedTargets fuel st value (packedTargetSlices targets) order
+        execScanWrites fuel updated rest values assignmentOrder
+
 def evalForCondition (fuel : Nat) (st : SvState) (condition : SExpr) : Res LVec :=
   evalSExpr fuel st condition
 
@@ -707,6 +725,21 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           let v ← evalSExpr fuel st value
           if nonblocking then return (st, nba ++ [(target, v)], out)
           else return (SvState.set st target v, nba, out)
+      | .scanf input format outputs result => do
+          let input ← evalSExpr fuel st input
+          let widths := outputs.map fun targets => targets.foldl (fun n target => n + target.width) 0
+          let (count, values) ← match FormattedInput.scan input format widths with
+            | .ok value => pure value
+            | .error message => .unsupported message
+          let updated ← execScanWrites fuel st outputs values assignmentOrder
+          let width := result.foldl (fun n target => n + target.width) 0
+          let order := assignmentOrder result.length
+          if !validAssignmentOrder result.length order then
+            .unsupported "Scanf: result assignment order must be a permutation"
+          else
+            let updated ← execPackedTargets fuel updated ((LVec.ofNat 32 count).resizeSigned width)
+              (packedTargetSlices result) order
+            return (updated, nba, out)
       | .selectedAssign target width descending indexSigned twoState index value => do
           let replacement ← evalSExpr fuel st value
           let position ← evalSExpr fuel st index
@@ -1105,6 +1138,13 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
           (← parseSExpr (← getF j "value"))
       else
         return .mkAssign false (← targetName target) (← parseSExpr (← getF j "value"))
+  | "Scanf" =>
+      let format ← FormattedInput.parse (← getStrF j "format")
+      let outputs ← (← getArrF j "outputs").toList.mapM parsePackedTargets
+      if FormattedInput.destinations format != outputs.length then
+        throw "Scanf: output arity requires diagnostics"
+      return .scanf (← parseSExpr (← getF j "input")) format outputs
+        (← parsePackedTargets (← getF j "result"))
   | "NonblockingAssign" =>
       let target ← getF j "target"
       let targetKind ← getStrF target "kind"

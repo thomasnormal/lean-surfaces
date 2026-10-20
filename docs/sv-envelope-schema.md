@@ -452,6 +452,10 @@ declaration-label offset are both accumulated before emitting the outer slice;
 `nested_noncanonical_subrange` pins this case. Direction mismatches, dynamic,
 indexed and effectful paths remain unsupported.
 
+The same recursive and local offsets lower a literal bit-select of a
+noncanonical final member to a one-bit outer window; `nested_noncanonical_bit`
+pins the bit case. Dynamic and effectful paths remain unsupported.
+
 Literal bit-selects through an untagged packed-struct typedef use the same
 noncanonical declaration-label offsets after alias erasure;
 `noncanonical_typedef_bit` pins the accepted case. Dynamic and effectful alias

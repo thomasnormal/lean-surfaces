@@ -2787,6 +2787,14 @@ structs now combine recursive and local declaration offsets before lowering.
 propagation. Direction mismatches, dynamic, indexed and effectful paths remain
 loud; no aggregate store or scheduler is added.
 
+### Symbolic nested noncanonical packed-member bits — 2026-10-20
+
+Literal bits of noncanonical final members in nested untagged packed structs
+now combine recursive and local declaration offsets before lowering.
+`nested_noncanonical_bit` checks `[10]` inside `[10:7]` with four-state
+propagation. Dynamic and effectful paths remain loud; no aggregate store or
+scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

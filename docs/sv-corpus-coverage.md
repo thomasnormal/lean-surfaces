@@ -1022,6 +1022,10 @@ member in the same nested chain. Recursive and local declaration offsets flatten
 to the outer window with x propagation; direction mismatches, dynamic, indexed
 and effectful paths remain loud.
 
+The `nested_noncanonical_bit` fixture checks `[10]` of that `[10:7]` final
+member. Recursive and local offsets flatten to the one-bit outer window with x
+propagation; dynamic and effectful paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

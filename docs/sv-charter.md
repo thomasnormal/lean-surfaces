@@ -1512,8 +1512,8 @@ and shared completed-step/executor correspondence. Original fixtures in
 `harness/sv/selected_reads/` cover dynamic indices, partial overlap,
 signedness, unknowns and both indexed directions.
 
-Two-state selected sources stay loud: available oracle behavior disagrees
-on out-of-range reads, so this item does not claim their semantics.
+Two-state selected sources were initially kept loud; the type-directed
+packed selected-read extension below now admits their zero-filled results.
 Scalar sources, unsupported declared ranges, multidimensional/unpacked
 elements and selected writes also remain outside this admission.
 The symbolic/Design2 selected-read path and the M0 loader are unchanged.
@@ -3124,3 +3124,40 @@ because instrument faults are findings:
 **Not one of the three was visible without executing the thing.** That
 is the entire case for census-first, and this lane has now paid for it
 three times.
+
+
+### Type-directed packed selected reads — 2026-10-20
+
+Legacy selected reads now accept supported two-state predefined integers and
+packed scalar vectors, plus whole untagged packed structs and unions. Whole
+packed aggregates have the implicit descending `[n-1:0]` view (§§7.2.1, 7.3.1).
+The existing selected-read operation supplies each invalid position as `x`;
+the lowering applies the existing two-state conversion to the selected RESULT
+when the whole source is two-state (§11.5.1). This gives zero for unknown or
+out-of-range indices while preserving the valid part of partially overlapping
+reads. Mixed-field aggregates follow their whole four-state type, retaining
+x/z even when some fields are declared `bit`. Selected results remain unsigned.
+
+`selected_types` checks bit, simple-part and both indexed directions, signed
+negative and unknown indices, partial overlap, whole structs/unions, mixed
+fields, ascending constant labels, predefined integers and unsigned widening.
+Three kernel theorems cover arbitrary source values or bits, are tied to the
+real extracted assignments, and include the distinction between two-state and
+mixed-state partial overlap. Its full output and 34 newly clean time-zero
+corpus files agree with completed simulator runs in value-preserving mode. One additional timed NBA-loop file
+agrees through the existing scheduler; two other newly clean files remain
+loud in the time-zero runner (delay and continuous-process limits). The
+value-preserving mode is material: default-mode probes collapse partial invalid reads to an entirely
+unknown/zero result; no default-mode agreement is claimed for those probes.
+
+The paired **22,035**-path census moves **3,018 → 3,054 clean** and
+**18,951 → 18,915 partial**, with **66 include skips**, zero extraction errors
+and **37 clean gains / one clean loss**. The loss corrects an earlier false
+admission: named string control escapes `\a`, `\v` and `\f` disagree between
+frontend decoding and simulator output, and now refuse before constant
+resizing can hide them. Escaped backslashes and numeric byte escapes retain
+their distinct admission. This is extraction coverage; runtime coverage is
+the separate completed comparison above. Tagged/unpacked aggregates,
+multidimensional source elements, dynamic noncanonical ranges, unmodelled effects and the
+existing member-select limits stay loud. The symbolic selected-read surface
+is unchanged. No value evaluator, storage or scheduler operation was added.

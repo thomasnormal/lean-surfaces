@@ -28,7 +28,7 @@
    ],
    [
     "CallExpression",
-    3575
+    3576
    ],
    [
     "VariableSymbol:2state",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1183
+    1185
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -92,7 +92,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    674
+    659
    ],
    [
     "CheckerSymbol",
@@ -319,10 +319,6 @@
     48
    ],
    [
-    "RangeSelectExpression:source-type",
-    46
-   ],
-   [
     "TimeLiteral",
     45
    ],
@@ -391,15 +387,15 @@
     34
    ],
    [
+    "ReplicationExpression",
+    34
+   ],
+   [
     "RandCaseStatement",
     34
    ],
    [
     "NetAliasSymbol:NetAlias",
-    33
-   ],
-   [
-    "ReplicationExpression",
     33
    ],
    [
@@ -735,6 +731,10 @@
     2
    ],
    [
+    "StringLiteral:named-control-escape",
+    2
+   ],
+   [
     "NamedValueExpression:Specparam",
     2
    ],
@@ -817,11 +817,15 @@
    [
     "NetSymbol",
     1
+   ],
+   [
+    "RangeSelectExpression:source-type",
+    1
    ]
   ],
   "by_status": {
-   "clean": 3018,
-   "partial": 18951,
+   "clean": 3054,
+   "partial": 18915,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -882,7 +886,7 @@
     52
    ],
    "simulation": [
-    2530,
+    2566,
     18671
    ],
    "simulation elaboration": [
@@ -896,14 +900,14 @@
   },
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 376,
-    "clean": 615,
-    "partial": 376,
+    "blocked_by_more": 366,
+    "clean": 625,
+    "partial": 366,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      169
+      161
      ],
      [
       "AssignmentExpression:target",
@@ -946,11 +950,11 @@
       25
      ],
      [
-      "TimedStatement:DelayControl",
-      23
+      "ReplicationExpression",
+      24
      ],
      [
-      "ReplicationExpression",
+      "TimedStatement:DelayControl",
       23
      ],
      [
@@ -959,7 +963,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      19
+      17
      ],
      [
       "MemberAccessExpression",
@@ -970,16 +974,16 @@
       14
      ],
      [
-      "RangeSelectExpression:source-type",
-      12
-     ],
-     [
       "BinaryExpression:LogicalImplication",
       12
      ],
      [
       "Call:$fatal",
       11
+     ],
+     [
+      "MinTypMaxExpression",
+      10
      ]
     ],
     "unlockable": 0
@@ -1074,9 +1078,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 699,
-    "clean": 342,
-    "partial": 699,
+    "blocked_by_more": 693,
+    "clean": 348,
+    "partial": 693,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1093,7 +1097,7 @@
      ],
      [
       "TimedStatement:DelayControl",
-      165
+      164
      ],
      [
       "VariableDeclStatement:2state",
@@ -1109,7 +1113,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      130
+      129
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
@@ -1124,12 +1128,12 @@
       54
      ],
      [
-      "ElementSelectExpression:source-type",
+      "RealLiteral",
       51
      ],
      [
-      "RealLiteral",
-      51
+      "ElementSelectExpression:source-type",
+      48
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1166,17 +1170,17 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 212,
+    "clean": 213,
     "error": 0,
-    "partial": 445,
+    "partial": 444,
     "skip_include": 0,
     "total": 657,
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 619,
+    "clean": 629,
     "error": 0,
-    "partial": 415,
+    "partial": 405,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0
@@ -1438,17 +1442,17 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 354,
+    "clean": 360,
     "error": 0,
-    "partial": 831,
+    "partial": 825,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 2
    },
    "chapter-7": {
-    "clean": 73,
+    "clean": 92,
     "error": 0,
-    "partial": 723,
+    "partial": 704,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -1336,3 +1336,28 @@ taken over **21 336** chapter files; the corpus today walks **21 186**. The
 tables are therefore accurate as of their census date and not as of this
 checkout — which is exactly what `--compare` is for, and why it now exits
 non-zero rather than reporting agreement it cannot support.
+
+
+### Type-directed packed selected reads — 2026-10-20
+
+Supported two-state integral vectors and whole untagged packed structs/unions
+now reuse the legacy selected-read operation. Invalid selected positions are
+zero for a two-state whole source and x for a four-state whole source; partial
+overlap retains valid bits. Mixed-field aggregates use their whole state kind.
+The lowering applies two-state conversion to the result, preserving unsigned
+selection and the existing constant-only noncanonical-range normalization.
+Dynamic/effectful and unsupported aggregate shapes retain their prior limits;
+the symbolic selected-read path is unchanged.
+
+On the SAME **22,035** chapter paths, the paired census reports **3,018 → 3,054
+clean**, **18,951 → 18,915 partial**, **66 include skips** and **zero extraction
+errors**, with **37 gains** and **one loss**. The loss closes a prior false admission
+of named string control escapes `\a`, `\v` and `\f`, whose decoded values
+disagree with the simulator; those spellings now refuse before resize folding.
+The authored `selected_types` fixture and 34 newly clean time-zero files match
+complete simulator output in value-preserving mode. A further timed NBA-loop
+file agrees through the existing scheduler. Two newly clean files remain loud
+in the time-zero runner because they need delay or continuous-process support. Default-mode probes disagree on partial invalid reads,
+so this comparison does not assert default-mode agreement there. Three
+fixture-bound kernel theorems cover unknown-index zero fill and symbolic
+partial overlap for both source state kinds. No evaluator or scheduler changed.

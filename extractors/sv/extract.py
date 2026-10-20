@@ -407,7 +407,8 @@ def const_literal(sm, e):
     constant during binding (`e.constant`), else None. Never raises; never
     evaluates on demand (pyslang's EvalContext is crash-prone — only the
     binder-populated attribute is consulted)."""
-    if _SYM is None and _contains_guarded_call(e):
+    if ((_SYM is None and _contains_guarded_call(e))
+            or _contains_disputed_string_escape(e)):
         return None
     try:
         c = e.constant
@@ -1869,7 +1870,42 @@ def _convert_integer_expr(sm, e, cname):
     }
 
 
+def _disputed_string_escape(expression):
+    """Keep named control escapes loud while frontend/simulator disagree.
+
+    Inspect token spelling, not decoded bytes: octal/hex controls and an
+    escaped backslash followed by an ordinary a/v/f are distinct cases.
+    """
+    if type(expression).__name__ != "StringLiteral":
+        return False
+    syntax = getattr(expression, "syntax", None)
+    if syntax is None:
+        return any(char in expression.value for char in "\a\v\f")
+    escaped = False
+    for char in str(syntax):
+        if escaped:
+            if char in "avf":
+                return True
+            escaped = False
+        elif char == "\\":
+            escaped = True
+    return False
+
+
+def _contains_disputed_string_escape(expression):
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        found = found or _disputed_string_escape(node)
+
+    expression.visit(inspect)
+    return found
+
+
 def _convert_string_expr(sm, e):
+    if _disputed_string_escape(e):
+        return unsupported(sm, e, "StringLiteral:named-control-escape")
     try:
         data = e.value.encode("latin-1")
     except (UnicodeEncodeError, Exception):
@@ -2293,11 +2329,12 @@ def _convert_selected_read(sm, expr, expression_kind):
             and _packed_struct_member(sm, expr.value) is not None):
         return unsupported(sm, expr, expression_kind + ":member-select")
     source_type = expr.value.type
-    _, _, source_reason = type_width_2s(source_type)
+    _, source_two_state, source_reason = type_width_2s(source_type)
     canonical_kind = type(source_type.canonicalType).__name__
     canonical_select = _canonical_packed_select_source(source_type)
-    if (source_reason is not None or not source_type.isFourState
-            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
+    if (source_reason is not None
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType",
+                                      "PackedStructType", "PackedUnionType")):
         return unsupported(sm, expr, expression_kind + ":source-type")
     descending = False
     if expression_kind == "ElementSelectExpression":
@@ -2338,7 +2375,7 @@ def _convert_selected_read(sm, expr, expression_kind):
         if index_reason is not None:
             return unsupported(sm, expr, expression_kind + ":index-type")
         converted_index = _convert_expr(sm, index)
-    return {
+    result = {
         "kind": "SelectRead",
         "span": node_span(sm, expr),
         "width": expr.type.bitWidth,
@@ -2347,6 +2384,11 @@ def _convert_selected_read(sm, expr, expression_kind):
         "index_signed": index_signed,
         "descending": descending,
     }
+
+    # IEEE 11.5.1: invalid positions have the selected source's state kind.
+    # Squash the RESULT so x-fill becomes zero for a two-state source;
+    # squashing only the source would leave the evaluator's x-fill intact.
+    return squash2_wrap(result, expr.type.bitWidth) if source_two_state else result
 
 
 def _convert_sym_call_expr(sm, e):

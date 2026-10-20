@@ -176,6 +176,16 @@
    ]
   },
   {
+   "name": "packed_union_indexed",
+   "example": "sem2/packed_union_indexed",
+   "top": "packed_union_indexed",
+   "signals": ["low", "high", "out"],
+   "stimulus": [
+    {"low": "01", "high": "10"},
+    {"low": "x0", "high": "1x"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

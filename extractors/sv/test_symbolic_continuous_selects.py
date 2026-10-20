@@ -188,6 +188,18 @@ class SymbolicContinuousSelects(unittest.TestCase):
         process, = envelope["design"]["modules"][0]["processes"][:1]
         self.assertEqual(process["kind"], "Unsupported")
 
+    def test_union_member_indexed_parts_flatten_to_alias_windows(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] low, input logic [1:0] high, "
+            "output logic [3:0] out); "
+            "union packed { logic [3:0] bytes; logic [3:0] alt; } value; "
+            "assign value.bytes[0 +: 2] = low; "
+            "assign value.bytes[3 -: 2] = high; assign out = value.alt; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([(p["target"]["msb"]["value"],
+                           p["target"]["lsb"]["value"]) for p in processes[:2]],
+                         [(1, 0), (3, 2)])
+
     def test_noncanonical_constant_parts_normalize_offsets(self):
         envelope = self.extract(
             "module top(input logic [10:3] source, output logic [10:3] value); "

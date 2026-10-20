@@ -2673,6 +2673,15 @@ with four-state propagation. Dynamic, parameter-dependent, noncanonical and
 effectful nested selections remain loud; no aggregate store or scheduler is
 added.
 
+### Symbolic indexed packed-union windows — 2026-10-20
+
+Literal indexed part-selects of direct members of an untagged packed union now
+use fixed windows in the union's shared vector. `packed_union_indexed` checks
+both `+:` and `-:` forms through an alternate field, including x propagation.
+Tagged, nested, dynamic, parameter-dependent, noncanonical and effectful union
+paths remain loud; no driver resolution, aggregate store or scheduler is
+added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

@@ -952,6 +952,12 @@ a direct packed-struct member. Both directions flatten to disjoint outer
 windows and preserve x propagation; dynamic, parameter-dependent,
 noncanonical and effectful nested selections remain loud.
 
+The `packed_union_indexed` fixture checks both literal indexed directions on a
+direct untagged packed-union member and reads the shared windows through the
+alternate field. Alias visibility and x propagation are preserved; tagged,
+nested, dynamic, parameter-dependent, noncanonical and effectful union paths
+remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

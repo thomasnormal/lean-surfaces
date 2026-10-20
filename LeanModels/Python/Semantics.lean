@@ -4698,6 +4698,39 @@ def ntArityErrorMsg (fields : Array String) (given : Nat) : String :=
   arityErrorMsg "<lambda>"
     (("_cls", false) :: fields.toList.map (fun f => (f, false))) (given + 1)
 
+/-- Keyword construction for a namedtuple. CPython implements the constructor
+through a synthetic `<lambda>` with `_cls` followed by the fields, so the
+ordinary positional arity message above applies after the hidden parameter is
+accounted for. -/
+def mergeNtKw (fields : Array String) (pos : List RVal)
+    (kws : List (String × RVal)) : Res (Array RVal) :=
+  let names := fields.toList
+  match kwFindDup kws with
+  | some k =>
+    .unsupported s!"duplicate keyword argument '{k}' (unreachable through ingestion — CPython rejects it at compile time)"
+  | Option.none =>
+    if pos.length > fields.size then
+      .exn (.typeError (ntArityErrorMsg fields pos.length))
+    else match kws.find? (fun kv => !names.contains kv.1) with
+    | some (k, _) =>
+      .exn (.typeError s!"<lambda>() got an unexpected keyword argument '{k}'")
+    | Option.none =>
+      match kws.find? (fun kv => (names.take pos.length).contains kv.1) with
+      | some (k, _) =>
+        .exn (.typeError s!"<lambda>() got multiple values for argument '{k}'")
+      | Option.none =>
+        let missing := (names.drop pos.length).filter
+          (fun n => (kws.find? (fun kv => kv.1 == n)).isNone)
+        if !missing.isEmpty then
+          .exn (.typeError
+            (s!"<lambda>() missing {missing.length} required positional argument"
+              ++ (if missing.length == 1 then "" else "s") ++ ": " ++ quoteNames missing))
+        else
+          .ok (pos ++ (names.drop pos.length).map (fun n =>
+            match kws.find? (fun (kv : String × RVal) => kv.1 == n) with
+            | some (_, v) => v
+            | Option.none => .none)).toArray
+
 /-- The names a keyword call leaves unfilled: no keyword supplies them
 and they carry no default. In parameter order, which is the order
 CPython's message lists them in. -/
@@ -6588,7 +6621,15 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     if (findClass m fname).isSome then
                       .unsupported s!"instantiating class '{fname}' with keyword arguments is outside the H6 tier"
                     else if (findNamedTuple m fname).isSome then
-                      .unsupported s!"constructing namedtuple '{fname}' with keyword arguments is outside the H6 tier (a wrong field-order guess would be silent corruption)"
+                      match findNamedTuple m fname with
+                      | some nt =>
+                        evalExprs m fuel st args.toList ⤳ fun st vs =>
+                        evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
+                        Run.liftRes st
+                          (mergeNtKw nt.fields vs
+                            ((kwargs.toList.map (·.1)).zip kvs)) ⤳ fun st full =>
+                        .ok st (.ntuple nt.tname nt.fields full)
+                      | Option.none => .unsupported "internal: namedtuple keyword plan lost its definition (report this)"
                     else if fname == "dict" then
                       -- 2026-08-13: `dict(k=v, …)` — the keyword form is
                       -- the ONLY way to build a mapping whose keys are

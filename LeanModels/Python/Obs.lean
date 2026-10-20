@@ -589,13 +589,19 @@ theorem fuelMono (fuel : Nat) :
                       -- 2026-08-13: `dict(k=v, …)` sits before `sorted`
                       -- — a positional-argument refusal, else the kwarg
                       -- values bind and the allocation is fuel-free
-                      refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+                      refine Run.le_ite (Run.le_refl _) (Run.le_ite ?_
                         (Run.le_ite
                           (Run.le_ite (Run.le_refl _)
                             (Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk)
                               fun st _ => Run.le_refl _))
                           (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite (Run.le_refl _)
                             (Run.le_ite (Run.le_refl _) (Run.le_refl _)))))))))
+                      cases findNamedTuple m fname with
+                      | some nt =>
+                        exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                          Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
+                            Run.le_refl _
+                      | none => exact Run.le_refl _
                       -- sorted with keywords (H6 draining tier): key= is
                       -- a fuel-free refusal; a stray keyword binds then
                       -- raises; reverse= binds, truthiness, then the

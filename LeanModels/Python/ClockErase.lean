@@ -2494,9 +2494,19 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 -- 2026-08-13: `dict(k=v, …)` sits before `sorted` — the
                 -- positional-argument refusal, else the kwarg values bind
                 -- and the ALLOCATION reads no clock
-                refine .ite .unsupported (.ite .unsupported
+                refine .ite .unsupported (.ite ?bntuple
                   (.ite ?bdictkw
-                    (.ite ?bsortedkw (.ite .unsupported (.ite .unsupported ?livekw)))))
+                    (.ite ?bsortedkw
+                      (.ite ?bfloat (.ite ?bdivmod
+                        (.ite ?brepr (.ite .unsupported (.ite .unsupported ?livekw))))))))
+                case bntuple =>
+                  cases findNamedTuple m fname with
+                  | some nt =>
+                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
+                        .bind (.liftRes hs3 _) fun s4 full hs4 =>
+                          .ok hs4 _
+                  | none => exact .unsupported
                 case bdictkw =>
                   refine .ite .unsupported ?_
                   exact .bind (ihEs m st (kwargs.toList.map (·.2)) h)
@@ -2630,6 +2640,18 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                 refine .bind (.liftRes hs4 _) fun s5 hr hs5 => ?_
                                 obtain ⟨h2, r2⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs5, hs5])
+                case bfloat =>
+                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
+                      .exn hs3 _
+                case bdivmod =>
+                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
+                      .exn hs3 _
+                case brepr =>
+                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                    .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
+                      .exn hs3 _
                 case livekw =>
                   cases hlive : Env.lookup st.world.globals fname with
                   | some lv => exact .unsupported

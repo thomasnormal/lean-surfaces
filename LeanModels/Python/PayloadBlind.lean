@@ -4155,7 +4155,17 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                             exact PBW.withLocals (ihIn m s3.world fname full hs3)
                         | none =>
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
-                            refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
+                            refine PBF.ite (fun _ => ?_) fun _ => ?_
+                            · cases findNamedTuple m fname with
+                              | some nt =>
+                                  refine PBF.bind (ihEs m st args.toList hslot)
+                                    fun s1 vs _ hs1 => ?_
+                                  refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
+                                    fun s2 kvs _ hs2 => ?_
+                                  refine PBF.bind (PBF.liftRes hs2 _)
+                                    fun s3 full _ hs3 => ?_
+                                  exact PBF.ok hs3 _
+                              | none => exact PBF.unsupported
                             refine PBF.ite (fun _ => ?_) fun _ => ?_
                             -- dict(k=v, …)
                             · refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
@@ -4244,6 +4254,24 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                       obtain ⟨h', r⟩ := x
                                                       exact PBF.okWrite
                                                         (sortedValH_slot hs3 hw) _
+                            refine PBF.ite (fun _ => ?_) fun _ => ?_
+                            · refine PBF.bind (ihEs m st args.toList hslot)
+                                fun s1 vs _ hs1 => ?_
+                              refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
+                                fun s2 kvs _ hs2 => ?_
+                              exact PBF.exn hs2 _
+                            refine PBF.ite (fun _ => ?_) fun _ => ?_
+                            · refine PBF.bind (ihEs m st args.toList hslot)
+                                fun s1 vs _ hs1 => ?_
+                              refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
+                                fun s2 kvs _ hs2 => ?_
+                              exact PBF.exn hs2 _
+                            refine PBF.ite (fun _ => ?_) fun _ => ?_
+                            · refine PBF.bind (ihEs m st args.toList hslot)
+                                fun s1 vs _ hs1 => ?_
+                              refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
+                                fun s2 kvs _ hs2 => ?_
+                              exact PBF.exn hs2 _
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                             cases Env.lookup st.world.globals fname with

@@ -881,8 +881,11 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                   raisePy (.typeError s!"'{t}' object is not callable")
               | .instantiate _ cname _ =>
                   refuse s!"instantiating class '{cname}' with keyword arguments is outside the H6 tier"
-              | .ntMake .. =>
-                  refuse s!"constructing namedtuple '{fname}' with keyword arguments is outside the H6 tier (a wrong field-order guess would be silent corruption)"
+              | .ntMake tn fields => do
+                  let vs ← evalOpenList K m args.toList
+                  let kvs ← K.kwArgs kwargs.toList
+                  let full ← liftRes (mergeNtKw fields vs kvs)
+                  pure (.ntuple tn fields full)
               | .callClosure _ =>
                   refuse "keyword arguments on a closure call are outside the tier (docs/memory-model.md §nested defs and closures)"
               | .notYetArm arm => notYet s!"{arm} + keyword arguments"

@@ -8,8 +8,8 @@ through which exception fires), the faithful binding TypeErrors
 (unexpected keyword / multiple values / missing required argument), a
 namedtuple-subclass method called with keywords (the shipped file's
 `pos.rotate(nullmove=True)` shape), a keyword call on a shadowed name
-(the callable check comes AFTER argument evaluation), and the LOUD
-refusals: namedtuple keyword CONSTRUCTION and builtin keywords.
+(the callable check comes AFTER argument evaluation), and coverage includes
+namedtuple keyword CONSTRUCTION plus builtin keyword refusals.
 """
 from collections import namedtuple
 
@@ -92,8 +92,8 @@ def shadow_kw(base):
 
 
 def ntuple_kw(a):
-    # namedtuple keyword CONSTRUCTION: loud (a wrong field-order guess
-    # would be silent corruption) — CPython returns a*10+1 here
+    # namedtuple keyword CONSTRUCTION accepts field names in CPython order.
+    # CPython returns a*10+1 here.
     return Pt(x=a, y=1).x * 10 + Pt(x=a, y=1).y
 
 

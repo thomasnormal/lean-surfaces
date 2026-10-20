@@ -772,6 +772,9 @@ understand, the refusal is the LOUD unsupported, never a binding
 **Callee coverage** (everything else with keywords is loud):
 
 * module-level `def`s called by name;
+* recognized module-level namedtuple constructors: positional arguments and
+  field keywords merge in declaration order (`mergeNtKw`), with CPython's
+  faithful arity, unexpected-keyword, and duplicate-value `TypeError`s;
 * namedtuple-subclass method calls (the ntuple receiver prepends `self`,
   then the same merge on the flattened defn's params);
 * instance-method calls (bound() arc pass 1 — BUILT 2026-08-10):
@@ -796,9 +799,7 @@ builtin keyword forms remain loud.
 Loud by choice: BUILTIN heap-receiver methods with keywords
 (`.get`/`.append`/`.pop` — positional-only in CPython, and we decline
 to fake the exact `TypeError`), calling an instance ATTRIBUTE value,
-class instantiation and namedtuple CONSTRUCTION with keywords (CPython
-allows the latter; a wrong guess about field order would be silent
-corruption), str methods, and every other builtin.
+class instantiation, str methods, and every other builtin.
 
 **Fragments**: a call carrying keywords leaves `heapFree` (conservative;
 sunfish's keyword sites live inside method bodies that are already out

@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/kw_lab/kw_lab.py",
-  "source_sha256": "7f244568e0a4eba8b510be1f5877eda14c534bab3388a85c76a922a084f7652f",
+  "source_sha256": "768b5a16740c965af33cc34401f05de6c640c3071d64a0da1f132b23588e1216",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "kw_lab \u2014 call-site keyword arguments (H6): the acceptance battery.\n\nEvery function runs differentially against CPython (harness/cases.json)\nand is pinned by #py_check lines in spec.lean: keyword merges onto module\nfunctions (holes filled from literal defaults), keyword-value EVALUATION\nORDER (positionals first, then keyword values left to right \u2014 observed\nthrough which exception fires), the faithful binding TypeErrors\n(unexpected keyword / multiple values / missing required argument), a\nnamedtuple-subclass method called with keywords (the shipped file's\n`pos.rotate(nullmove=True)` shape), a keyword call on a shadowed name\n(the callable check comes AFTER argument evaluation), and the LOUD\nrefusals: namedtuple keyword CONSTRUCTION and builtin keywords.\n"
+            "value": "kw_lab \u2014 call-site keyword arguments (H6): the acceptance battery.\n\nEvery function runs differentially against CPython (harness/cases.json)\nand is pinned by #py_check lines in spec.lean: keyword merges onto module\nfunctions (holes filled from literal defaults), keyword-value EVALUATION\nORDER (positionals first, then keyword values left to right \u2014 observed\nthrough which exception fires), the faithful binding TypeErrors\n(unexpected keyword / multiple values / missing required argument), a\nnamedtuple-subclass method called with keywords (the shipped file's\n`pos.rotate(nullmove=True)` shape), a keyword call on a shadowed name\n(the callable check comes AFTER argument evaluation), and coverage includes\nnamedtuple keyword CONSTRUCTION plus builtin keyword refusals.\n"
           }
         }
       },

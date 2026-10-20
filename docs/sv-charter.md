@@ -644,8 +644,9 @@ partial and 30 include-skipped files: 60 previously partial files become
 extractor-clean, with no previously clean file regressing. Extractor-clean
 is not a claim of valid elaboration, live execution or simulator agreement.
 
-Enum methods, dynamic `$cast`, packages/imports, enum ports/nets, unpacked
-containers and unsupported base ranges remain loud. The symbolic
+String-valued enum `name()`, dynamic `$cast`, packages/imports, enum ports/nets,
+unpacked containers and unsupported base ranges remain loud. Numeric enum
+methods are admitted by the 2026-10-20 item below. The symbolic
 `sv-0.2` enum identity/metadata path remains unchanged.
 
 ### Pure ordinary case statements — 2026-10-10
@@ -3298,3 +3299,39 @@ diagnostics, one reduction over a selected slice, and one delay-bearing
 copyback fixture. These four are extraction gains only. The authored
 fixtures separately check ordered/partial copyback and integral conversion
 edges, including sign/underscore field-width consumption and strength input.
+
+### Numeric enumeration methods — 2026-10-20
+
+IEEE 1800-2023 §6.19.5 `first`, `last`, `num`, `next` and `prev`
+now lower in the legacy/self-check surface using the bound declaration-order
+member table. Endpoints and traversal results retain the enum's width and
+signedness; `num` returns a signed 32-bit count. Traversal uses the omitted
+step of one or the frontend's unsigned two-state 32-bit argument conversion.
+Steps wrap modulo the member count, including negative, wide and unknown
+source counts after that conversion.
+
+Exact case equality identifies members, including named x/z values. An
+unlisted receiver returns the enum base type's default for every step,
+including zero: all x for a four-state base and zero for a two-state base.
+The methods never mutate the receiver. Pure packed-field and fixed-array-cell
+receivers reuse the existing reads. Source purity is checked before folding
+endpoints or duplicating traversal reads. Effects, unsupported storage,
+frontend errors, string-valued `name()` and symbolic-mode methods remain
+loud through surrounding conversions.
+
+Lowering uses existing literals, case equality, conditional expressions and
+unsigned remainder. Declaration indices are computed during extraction, so
+there is no overflowing runtime index addition. No evaluator, storage model
+or scheduling rule changed.
+
+The authored `enum_methods` fixture checks sparse declaration order,
+nonmembers, named x/z values, step conversion, nested calls, packed fields,
+array cells, generated members and signed result extension. Its complete
+transcript matches an independent simulator run. Fixture-bound kernel proofs
+establish the default for arbitrary nonmembers and the first declaration's
+successor. A paired **22,035**-path census gains **24 clean files** without
+losses: **3,162 → 3,186 clean**, **18,807 → 18,783 partial**, **66 include
+skips**, zero extraction errors. Twenty-two gains match complete independent
+transcripts. Two delay-bearing files remain runtime refusals: the self-check
+runner has no scheduler, and the timed loader rejects their time-zero-only
+`$time` lowering. Those two are extraction gains only.

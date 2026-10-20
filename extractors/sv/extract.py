@@ -441,6 +441,9 @@ def _contains_guarded_expression(expression, *, guard_calls):
                                     BinaryOperator.LogicalEquivalence))):
             found = True
             return VisitAction.Skip
+        if _enum_method_call(node, include_name=True):
+            found = True
+            return VisitAction.Skip
         if (guard_calls and type(node).__name__ == "CallExpression" and node.isSystemCall
                 and node.subroutineName in
                 ("$bits", *BIT_QUERY_CALLS, *SIGNING_CALLS, *DIMENSION_QUERY_CALLS)):
@@ -514,6 +517,7 @@ def _convert_fixed_bits_query(sm, expression):
 
 BIT_QUERY_CALLS = ("$countbits", "$countones", "$onehot", "$onehot0", "$isunknown")
 SIGNING_CALLS = ("$signed", "$unsigned")
+ENUM_NUMERIC_METHODS = ("first", "last", "next", "prev", "num")
 DIMENSION_QUERY_CALLS = (
     "$size", "$high", "$left", "$right", "$low", "$increment",
     "$dimensions", "$unpacked_dimensions",
@@ -524,6 +528,100 @@ def _signing_call(expression):
     return (type(expression).__name__ == "CallExpression"
             and not expression.bad and expression.isSystemCall
             and expression.subroutineName in SIGNING_CALLS)
+
+
+def _enum_method_call(expression, include_name=False):
+    return (type(expression).__name__ == "CallExpression"
+            and expression.isSystemCall
+            and expression.subroutineName in (ENUM_NUMERIC_METHODS + (("name",) if include_name else ()))
+            and len(expression.arguments) > 0
+            and type(expression.arguments[0].type.canonicalType).__name__ == "EnumType")
+
+
+def _enum_literal(sm, expression, sv_type, value):
+    width, _, reason = type_width_2s(sv_type)
+    if (reason is not None or type(value).__name__ != "SVInt"
+            or value.bitWidth != width):
+        return unsupported(sm, expression, "EnumMethod:member-type")
+    return signed_metadata({"kind": "Literal", "span": node_span(sm, expression),
+                            "width": width, "bits": svint_bits(value)}, sv_type)
+
+
+def _enum_nat_literal(sm, expression, width, value):
+    return {"kind": "Literal", "span": node_span(sm, expression), "width": width,
+            "bits": format(value % (1 << width), "0%db" % width)}
+
+
+def _enum_lookup(sm, expression, width, subject, cases, default):
+    result = default
+    for key, value in reversed(cases):
+        result = {"kind": "Ternary", "span": node_span(sm, expression), "width": width,
+                  "cond": _one_bit_binary(sm, expression, "===", subject, key),
+                  "then": value, "else": result}
+    return result
+
+
+def _convert_enum_method(sm, expression):
+    """Pure §6.19.5 declaration-order traversal, using existing value operations."""
+    if _SYM is not None or expression.bad or not _case_source_expression_ok(expression):
+        return unsupported(sm, expression, "EnumMethod:source")
+    arguments = list(expression.arguments)
+    receiver = arguments[0]
+    method = expression.subroutineName
+    enum_type = receiver.type.canonicalType
+    members = _enum_members(enum_type)
+    width, _, reason = type_width_2s(receiver.type)
+    expected = (32, True) if method == "num" else (width, bool(receiver.type.isSigned))
+    if (reason is not None or not members
+            or (expression.type.bitWidth, bool(expression.type.isSigned)) != expected
+            or len(arguments) not in ((1, 2) if method in ("next", "prev") else (1,))):
+        return unsupported(sm, expression, "EnumMethod:signature")
+    subject = convert_expr(sm, receiver)
+    values = [_enum_literal(sm, expression, receiver.type, member.value.value)
+              for member in members]
+    default = _enum_literal(sm, expression, receiver.type, enum_type.defaultValue.value)
+    if not _case_expression_ok([subject, values, default]):
+        return unsupported(sm, expression, "EnumMethod:operand")
+    if method in ("first", "last", "num"):
+        result = (_enum_nat_literal(sm, expression, 32, len(members)) if method == "num"
+                  else dict(values[0 if method == "first" else -1]))
+    else:
+        result = _lower_enum_traversal(sm, expression, arguments, subject, values, default)
+    result["enum_method_lowered"] = method
+    return signed_metadata(result, expression.type)
+
+
+def _lower_enum_traversal(sm, expression, arguments, subject, values, default):
+    if len(arguments) == 1:
+        step = _enum_nat_literal(sm, expression, 32, 1)
+    else:
+        argument = arguments[1]
+        if (argument.type.bitWidth != 32 or argument.type.isSigned
+                or argument.type.isFourState):
+            return unsupported(sm, expression, "EnumMethod:step-type")
+        step = convert_expr(sm, argument)
+        if not _case_expression_ok(step):
+            return unsupported(sm, expression, "EnumMethod:step")
+    count = len(values)
+    direction = -1 if expression.subroutineName == "prev" else 1
+    if step.get("kind") == "Literal" and set(step["bits"]) <= {"0", "1"}:
+        offset = int(step["bits"], 2) % count
+        cases = [(value, values[(index + direction * offset) % count])
+                 for index, value in enumerate(values)]
+        return _enum_lookup(sm, expression, default["width"], subject, cases, default)
+    index_width = max(32, count.bit_length())
+    if index_width != 32:
+        step = {"kind": "Resize", "span": node_span(sm, expression),
+                "width": index_width, "operand": step}
+    reduced = {"kind": "Binary", "span": node_span(sm, expression),
+               "width": index_width, "op": "u%", "left": step,
+               "right": _enum_nat_literal(sm, expression, index_width, count)}
+    cases = []
+    for index, value in enumerate(values):
+        results = [(_enum_nat_literal(sm, expression, index_width, offset),
+                    values[(index + direction * offset) % count]) for offset in range(count)]
+        cases.append((value, _enum_lookup(sm, expression, default["width"], reduced, results, default)))
+    return _enum_lookup(sm, expression, default["width"], subject, cases, default)
 
 
 def _signing_signature_ok(expression):
@@ -1657,6 +1755,8 @@ def _convert_expr(sm, e):
         return _convert_selected_read(sm, e, cname)
     if cname == "CallExpression":
         if _SYM is None:
+            if _enum_method_call(e):
+                return _convert_enum_method(sm, e)
             if _clog2_call(e):
                 return _convert_clog2(sm, e)
             if _dimension_query_call(e):
@@ -3388,7 +3488,7 @@ def _convert_wait_event_statement(sm, statement):
     }
 
 
-def _case_source_expression_ok(expression):
+def _case_source_expression_ok(expression, *, packed_members=False):
     """Check bound source operands before constant folding can erase effects."""
     pure = True
 
@@ -3403,6 +3503,16 @@ def _case_source_expression_ok(expression):
             return
         if kind == "CallExpression" and _signing_call(node):
             pure = pure and _signing_signature_ok(node)
+            return
+        if kind == "CallExpression" and _enum_method_call(node):
+            pure = pure and _SYM is None and all(
+                _case_source_expression_ok(argument, packed_members=True)
+                for argument in node.arguments)
+            return VisitAction.Skip
+        if kind == "MemberAccessExpression" and packed_members:
+            container = node.value.type.canonicalType
+            pure = pure and type(container).__name__ in ("PackedStructType", "PackedUnionType")
+            pure = pure and not getattr(container, "isTagged", False)
             return
         pure = pure and not getattr(node, "bad", False) and kind in (
             "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
@@ -4702,6 +4812,8 @@ def convert_design(sm, comp):
                              "LogicalImplication", "lowered implication")
     _reject_invalid_lowering(sm, comp, modules, others, "scanf_lowered",
                              "Scanf", "formatted input")
+    _reject_invalid_lowering(sm, comp, modules, others, "enum_method_lowered",
+                             "EnumMethod", "numeric enum method")
     return {"kind": "Design", "modules": modules, "others": others}
 
 

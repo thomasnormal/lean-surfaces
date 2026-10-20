@@ -22,6 +22,27 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Numeric enumeration methods — 2026-10-20
+
+Pure integral `first`, `last`, `num`, `next` and `prev` calls now lower
+through the bound declaration-order member table. Traversal uses exact case
+equality, so named x/z members remain distinct. Unsigned two-state 32-bit
+step conversion precedes modular wrapping; a nonmember returns the enum base
+default even at step zero. Width, signedness and receiver storage reuse the
+existing rules. Effects, string-valued `name()`, unsupported storage, invalid
+frontend compilations and symbolic-mode methods remain loud. No evaluator or
+scheduler changed.
+
+The paired **22,035**-path census gains **24 clean files** without losses:
+**3,162 → 3,186 clean**, **18,807 → 18,783 partial**, **66 include skips**,
+zero extraction errors. Twenty-two gains match complete independent
+transcripts. Two delay-bearing files remain runtime refusals, including in
+the timed loader because their `$time` expressions use the time-zero-only
+lowering. They are counted as extraction gains only. The authored fixture
+also matches its complete independent transcript, and kernel proofs bound to
+its extracted assignment establish nonmember defaults and declaration-order
+succession.
+
 ## Integral formatted input — 2026-10-20
 
 The legacy/self-check tier now admits direct blocking assignments of

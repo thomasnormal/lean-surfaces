@@ -121,6 +121,52 @@ class LegacyContinuousWindows(unittest.TestCase):
             process = envelope["design"]["modules"][0]["processes"][0]
             self.assertEqual(process["kind"], "Unsupported")
 
+    def test_right_streaming_fixed_array_cell_is_a_continuous_concat(self):
+        envelope = self.extract(
+            "module top(input logic [4:0] source, output logic out); "
+            "logic [3:0] value [0:1]; "
+            "assign {>>{value[0], out}} = source; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "Assign")
+        self.assertEqual(process["target"]["kind"], "ConcatTarget")
+        self.assertEqual([part["name"] for part in process["target"]["parts"]],
+                         ["value[0]", "out"])
+
+    def test_right_streaming_cell_window_and_member_are_continuous_leaves(self):
+        cell = self.extract(
+            "module top(input logic [2:0] source, output logic out); "
+            "logic [3:0] value [0:1]; "
+            "assign {>>{value[0][3:2], out}} = source; endmodule")
+        process, = cell["design"]["modules"][0]["processes"]
+        self.assertEqual(process["target"]["kind"], "ConcatTarget")
+        self.assertEqual(process["target"]["parts"][0]["kind"],
+                         "SelectTarget")
+        member = self.extract(
+            "module top(input logic [2:0] source, output logic out); "
+            "struct packed { logic [1:0] hi; logic [1:0] lo; } "
+            "value [0:1]; assign {>>{value[0].lo, out}} = source; endmodule")
+        process, = member["design"]["modules"][0]["processes"]
+        self.assertEqual(process["target"]["kind"], "ConcatTarget")
+        self.assertEqual(process["target"]["parts"][0]["kind"],
+                         "SelectTarget")
+
+    def test_nonright_or_dynamic_streaming_cell_stays_loud(self):
+        sources = (
+            "module top(input logic [4:0] source, output logic out); "
+            "logic [3:0] value [0:1]; "
+            "assign {<<{value[0], out}} = source; endmodule",
+            "module top(input logic [4:0] source, output logic out); "
+            "logic [3:0] value [0:1]; "
+            "assign {>>2{value[0], out}} = source; endmodule",
+            "module top(input logic [1:0] index, input logic [4:0] source, "
+            "output logic out); logic [3:0] value [0:1]; "
+            "assign {>>{value[index], out}} = source; endmodule",
+        )
+        for source in sources:
+            envelope = self.extract(source)
+            process, = envelope["design"]["modules"][0]["processes"]
+            self.assertEqual(process["kind"], "Unsupported")
+
     def test_overlapping_continuous_windows_are_loud(self):
         envelope = self.extract(
             "module top(input logic [7:0] source, output logic [7:0] out); "

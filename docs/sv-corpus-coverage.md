@@ -571,6 +571,15 @@ before it could imply driver resolution. Dynamic or effectful packed indices,
 dynamic array indices, and aggregate storage remain loud. This is a focused
 extractor boundary; the broad corpus census was not regenerated.
 
+## Legacy continuous right-streaming cell windows — 2026-10-20
+
+Simple right-streaming continuous targets now have focused coverage for direct
+fixed-array cells, constant packed windows inside cells and direct packed
+members of cells. The existing `ConcatTarget` split samples the RHS once;
+left/sized/nested streams, dynamic or effectful leaves, aggregate storage and
+overlapping windows remain loud. This focused extractor rung does not claim a
+broad census or simulator agreement.
+
 ## Symbolic streaming targets over fixed cells — 2026-10-20
 
 The symbolic `sv-0.2` procedural path now lowers simple right-streaming

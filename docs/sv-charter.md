@@ -1145,6 +1145,16 @@ resolution. Dynamic or effectful packed indices, out-of-range selections,
 aggregate storage and dynamic array indices remain loud; no aggregate store,
 net-resolution rule or second scheduler is introduced.
 
+### Legacy continuous right-streaming cell windows — 2026-10-20
+
+Continuous assignments with a simple right-streaming target now reuse the
+legacy `ConcatTarget` path when every leaf is a direct integral identifier,
+a constant packed window, a fixed-array cell, or a fixed-array cell window.
+The RHS is sampled once and the existing MSB-to-LSB split handles excess
+source bits. Left streaming, explicit slice sizes, nested or effectful
+streams, dynamic array cells, aggregate leaves and overlapping windows remain
+loud; this adds no aggregate storage, driver-resolution rule or scheduler.
+
 ### Symbolic streaming targets over fixed cells — 2026-10-20
 
 The symbolic `sv-0.2` procedural surface now applies the same right-streaming

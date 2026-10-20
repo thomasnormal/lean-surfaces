@@ -3566,10 +3566,13 @@ def convert_continuous_assign(sm, m):
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
     if e.op is not None or e.timingControl is not None or e.isNonBlocking:
         return unsupported(sm, m, "ContinuousAssignSymbol:form")
-    symbolic_streaming = (_SYM is not None
-            and type(e.left).__name__ == "StreamingConcatenationExpression")
-    if symbolic_streaming:
-        lowered = _symbolic_streaming_target_assignment(sm, e)
+    streaming = type(e.left).__name__ == "StreamingConcatenationExpression"
+    legacy_streaming = _SYM is None and streaming
+    symbolic_streaming = _SYM is not None and streaming
+    if streaming:
+        lowered = (_streaming_target_assignment(sm, e)
+                   if legacy_streaming else
+                   _symbolic_streaming_target_assignment(sm, e))
         if lowered is None:
             return unsupported(sm, m, "AssignmentExpression:target")
         target = lowered["target"]

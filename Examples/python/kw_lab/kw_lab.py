@@ -132,6 +132,11 @@ def tuple_kw():
     return tuple(iterable=[1, 2])
 
 
+def list_kw():
+    # list takes no keywords; argument expressions still evaluate first.
+    return list(iterable=(1, 2))
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

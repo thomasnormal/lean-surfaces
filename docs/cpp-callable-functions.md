@@ -24,14 +24,14 @@ expressions, and validated automatic integral `DeclStmt` nodes. The latter
 cover copy, direct, list and default scalar initialization, multiple
 declarators and lexical shadowing through the object-backed frame. An empty
 compound is `block skip`; a null statement is `skip`. Unsupported storage,
-reference parameters/results, temporary/rvalue bindings, arrays, aliases, calls,
+reference results, temporary/rvalue bindings, arrays, aliases, calls,
 overloaded operations, exceptions, local functions and every other statement
 form refuse rather than being silently represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
 projection v1` row for the exact occurrence. This slice requires a non-variadic
-signature with a builtin integral result and nonvolatile integral value
-parameters. Const value parameters retain their object/access qualification;
+signature with a builtin integral result and nonvolatile integral value or
+lvalue-reference parameters. Const value parameters retain their object/access qualification;
 lvalue-to-rvalue conversion removes it before arithmetic.
 Every direct `ParmVarDecl` must have a matching type-evidence row, and its type
 must agree, in order, with the function type's parameter list. The result type
@@ -193,7 +193,8 @@ Automatic integral lvalue references execute through the object-backed frame:
 `int &r = value; ++r; return value;` observes the shared object. Their expression
 types are their referent types. Const views preserve const access, and lexical
 cleanup removes alias bindings without ending the referent. Reference parameters
-and results remain outside the callable signature profile. The value-only
+are supported through the [shared caller-store boundary](cpp-reference-parameters.md);
+reference results remain outside the callable signature profile. The value-only
 evaluator continues to refuse automatic declarations. See
 [reference execution](cpp-reference-types.md#local-reference-execution-boundary).
 

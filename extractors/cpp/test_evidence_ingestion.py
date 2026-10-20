@@ -953,6 +953,143 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
                     f"#guard admitCallableFunctionFromProbe evidence .lp64 {target_path} matches .error _",
                     options="set_option maxRecDepth 100000", timeout=120)
 
+    def test_actual_compiler_reference_parameters_preserve_caller_identity(self):
+        requested, library = os.environ.get("LEANCPP_CLANG"), os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang)
+        library = pathlib.Path(library).resolve()
+        self.assertTrue(library.is_file())
+        types = (
+            ("bool", "bool", ".boolean"), ("char", "char", ".signed 8"),
+            ("signed char", "schar", ".signed 8"), ("unsigned char", "uchar", ".unsigned 8"),
+            ("short", "short", ".signed 16"), ("unsigned short", "ushort", ".unsigned 16"),
+            ("int", "int", ".signed 32"), ("unsigned int", "uint", ".unsigned 32"),
+            ("long", "long", ".signed 64"), ("unsigned long", "ulong", ".unsigned 64"),
+            ("long long", "llong", ".signed 64"),
+            ("unsigned long long", "ullong", ".unsigned 64"),
+        )
+        functions = {"reference_" + key: (cpp, fmt) for cpp, key, fmt in types}
+        source = self.root / "reference_parameters.cpp"
+        source.write_text("\n".join(
+            f"{cpp} reference_{key}({cpp} &left, const {cpp} &right, {cpp} copy) {{ "
+            f"{cpp} &alias = left; alias = copy; return right; }}"
+            for cpp, key, _ in types) + '''
+int reference_loop(int &left, const int &right, int copy) {
+  while (left < right) { ++left; } return left;
+}
+int reference_compound(int &left, const int &right, int copy) {
+  left += right; return left;
+}
+int reference_snapshot(int &left, const int &right, int copy) {
+  left = 7; return copy;
+}
+struct ReferenceMethods {
+  static int reference_static(int &left, const int &right, int copy) {
+    left = copy; return right;
+  }
+};
+int refuse_rvalue(int &&value) { return value; }
+int refuse_volatile(volatile int &value) { return value; }
+int refuse_pointer(int *&value) { return 0; }
+int &refuse_result(int &value) { return value; }
+''', encoding="utf-8")
+        for name in ("reference_loop", "reference_compound", "reference_snapshot", "reference_static"):
+            functions[name] = ("int", ".signed 32")
+        refused = {"refuse_rvalue", "refuse_volatile", "refuse_pointer", "refuse_result"}
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        captured = subprocess.run([clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", str(source), "-Xclang", "-load", "-Xclang", str(library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe"], cwd=self.root,
+            env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(captured.returncode, 0, captured.stderr)
+        probe = json.loads(captured.stdout)
+        paths, nodes = {}, {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") in {"FunctionDecl", "CXXMethodDecl"} and node.get("name") in functions.keys() | refused:
+                paths[node["name"]], nodes[node["name"]] = path, node
+            pending.extend((child, path + [index]) for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), functions.keys() | refused)
+        calls = [(name, value, alias, lvalue_copy) for name in functions
+                 for value in (-7, -1, 0, 9, 31) for alias in (False, True)
+                 for lvalue_copy in (False, True)]
+        fragments = ['#include <climits>\n#include <iostream>\n#include "reference_parameters.cpp"\n',
+            'static_assert(CHAR_BIT == 8 && CHAR_MIN == -128 && sizeof(short) == 2 && '
+            'sizeof(int) == 4 && sizeof(long) == 8 && sizeof(long long) == 8);\nint main() {\n']
+        for name, value, alias, lvalue_copy in calls:
+            cpp, fmt = functions[name]
+            cast = "unsigned long long" if ".unsigned" in fmt else "long long"
+            target = "ReferenceMethods::" + name if name == "reference_static" else name
+            copy = "right" if lvalue_copy else f"static_cast<{cpp}>({value + 1})"
+            fragments.append(f"{{ {cpp} left = static_cast<{cpp}>({value}); const {cpp} right = static_cast<{cpp}>({value + 2}); "
+                f"{cpp} copy = {copy}; std::cout << static_cast<{cast}>(left) << ' ' "
+                f"<< static_cast<{cast}>(right) << ' ' << static_cast<{cast}>(copy) << ' '; "
+                f"auto result = {target}(left, {'left' if alias else 'right'}, {copy}); "
+                f"std::cout << static_cast<{cast}>(result) << ' ' << static_cast<{cast}>(left) "
+                f"<< ' ' << static_cast<{cast}>(right) << '\\n'; }}\n")
+        fragments.append("}\n")
+        oracle = self.root / "oracle.cpp"
+        oracle.write_text("".join(fragments), encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle), "-o", str(binary)], cwd=self.root,
+                env=environment, capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                      capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append([tuple(map(int, line.split())) for line in executed.stdout.splitlines()])
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls))
+        guards = ["def referenceParameterChecks : Except String Unit := do",
+            "  let types ← parseValidatedTypeEvidence evidence",
+            "  let binaries ← parseValidatedBinaryExpressionEvidence evidence",
+            "  let expressions ← parseValidatedExpressionTypeEvidence evidence"]
+        for name, (_, fmt) in functions.items():
+            guards.append("  let function ← admitCallableFunctionWithExpressionTypes evidence "
+                          f"types binaries expressions .lp64 {paths[name]}")
+            cases = [f"({str(alias).lower()}, {str(copy).lower()}, {left}, {right}, {argument}, {result}, {after_left}, {after_right})"
+                for (row, _, alias, copy), (left, right, argument, result, after_left, after_right)
+                in zip(calls, outputs[0]) if row == name]
+            guards.append("  let cases : List (Bool × Bool × Int × Int × Int × Int × Int × Int) := [" + ", ".join(cases) + "]")
+            guards.append(f'''  unless cases.all (fun (alias, copy, left, right, argument, expected, afterLeft, afterRight) =>
+      let type := function.parameters[0]!.type
+      let referent := match type with | .lvalueReference type => type | type => type
+      let empty := (IntegralObjectFrame.empty .lp64).toOption.getD default
+      let caller := empty.enterScope.frame
+      let first := caller.declareParameter ⟨"caller_left"⟩ referent ⟨{fmt}, left⟩
+      let second := first.frame.declareParameter ⟨"caller_right"⟩
+        (.qualified true false referent) ⟨{fmt}, right⟩
+      let arguments : List CallableArgument := [
+        .lvalue ⟨0, referent⟩, .lvalue ⟨if alias then 0 else 1, .qualified true false referent⟩,
+        if copy then .lvalue ⟨1, .qualified true false referent⟩ else .value ⟨{fmt}, argument⟩]
+      let outcome := evaluateCallableObjectInStore 256 second.frame.store function arguments
+      first.result.isOk && second.result.isOk && outcome.frame.scopes.isEmpty &&
+        outcome.frame.store.objects.objects.map (·.phase) == [.aliveInitialized, .aliveInitialized, .ended] &&
+        outcome.frame.store.values == [some ⟨{fmt}, afterLeft⟩, some ⟨{fmt}, afterRight⟩, none] &&
+        (match outcome.result with | .ok (.ok value) => value == ⟨{fmt}, expected⟩ | _ => false)) do
+    throw "reference parameter native differential: {name}"
+  unless (evaluateCallable 32 .lp64 function [⟨{fmt}, 0⟩, ⟨{fmt}, 0⟩, ⟨{fmt}, 0⟩] matches .error _) do
+    throw "value-only reference parameter boundary: {name}"
+''')
+        for name in refused:
+            guards.append(f'''  unless (admitCallableFunctionWithExpressionTypes evidence types binaries expressions
+      .lp64 {paths[name]} matches .error _) do throw "reference parameter refusal: {name}"''')
+        guards.extend(["  pure ()", "#eval referenceParameterChecks", "#guard referenceParameterChecks.isOk"])
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+            options="open LeanModels.Cpp.CallableObjectEvaluation\nset_option maxRecDepth 100000", timeout=360)
+        print(f"reference parameter differential: {len(calls)} defined rows, -O0/-O2 under UBSan; "
+              "12 kinds, alias/distinct, value/lvalue copies, caller lifetimes retained; 4 compiled refusals")
+
     def test_actual_compiler_static_integral_methods_and_const_parameters(self):
         requested, library = os.environ.get("LEANCPP_CLANG"), os.environ.get("LEANCPP_PROBE_LIBRARY")
         if not requested or not library:

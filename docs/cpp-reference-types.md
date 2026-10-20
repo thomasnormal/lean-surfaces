@@ -39,10 +39,31 @@ Admission requires structured reference/referent types, variable evidence,
 typed initializer subexpressions, an exact in-scope declaration handle and
 Clang's lvalue category. Parentheses and qualification-only `NoOp` wrappers
 retain identity. Rvalue references, temporary materialization/lifetime
-extension, reference parameters/results, bit-fields, subobjects, conversions
+extension, reference results, bit-fields, subobjects, conversions
 to a different integral type, volatile referents and constexpr references
 remain explicit boundaries until their rules are represented. This local
 binding rule does not widen the independent exact type/category checker above.
+
+## Reference parameters in a shared object store
+
+N4950 `[dcl.init.ref]` and `[expr.call]` distinguish reference binding from
+initializing a new parameter object. The next execution boundary accepts
+already-evaluated integral values or existing-object lvalue views. An integral
+lvalue reference parameter binds the supplied live identity with the existing
+same-kind, add-const-only rule, without reading or allocating its referent.
+A value parameter reads an lvalue argument and initializes its own object;
+an immediate value cannot silently become a reference temporary.
+
+The caller supplies an explicit `IntegralObjectStore`. The callee has fresh
+declaration scopes over that store, so caller bindings never participate in
+callee name lookup. References may alias each other and a caller-owned object.
+Normal return removes their bindings and ends only callee-owned parameters and
+locals. Setup and execution failures retain their partial state. This surface
+does not execute call syntax, return references, bind temporaries, or supply
+pointer, volatile, subobject or class semantics. Existing value-only entry
+points continue to refuse reference signatures rather than copy them. See
+[the callable reference boundary](cpp-reference-parameters.md) for its API and
+validation evidence.
 
 ## Checks
 

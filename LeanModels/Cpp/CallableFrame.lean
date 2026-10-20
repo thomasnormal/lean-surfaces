@@ -21,6 +21,18 @@ structure CallableObjectFrame where
   frame : IntegralObjectFrame
   deriving Repr, BEq, Inhabited
 
+/-- Evaluated argument category: a prvalue, or an existing-object lvalue view.
+The latter retains both object identity and the caller's const qualification. -/
+inductive CallableArgument where
+  | value (value : IntegralValue)
+  | lvalue (access : IntegralObjectRef)
+  deriving Repr, BEq, Inhabited
+
+structure CallableStartOutcome (α : Type) where
+  frame : IntegralObjectFrame
+  result : Except CallableFrameError α
+  deriving Inhabited
+
 namespace CallableObjectFrame
 
 private def success (frame : IntegralObjectFrame) (value : α) : FrameOutcome α :=
@@ -97,6 +109,72 @@ def start (profile : TargetProfile) (function : CallableFunction)
   match initialized.result with
   | .ok _ => pure {profile, function, frame := initialized.frame}
   | .error reason => throw (CallableFrameError.object reason)
+
+private def validateSuppliedIdentities (store : IntegralObjectStore) :
+    List CallableArgument → Except CallableFrameError Unit
+  | [] => .ok ()
+  | argument :: rest => do
+      match argument with
+      | .value _ => pure ()
+      | .lvalue access =>
+          let _ ← (store.bindReference access access.type).mapError
+            (fun reason => .object (.object reason))
+          pure ()
+      validateSuppliedIdentities store rest
+
+private def initializeSupplied (frame : IntegralObjectFrame)
+    (parameters : List CallableParameter) (arguments : List CallableArgument) :
+    CallableStartOutcome Unit :=
+  match parameters, arguments with
+  | [], [] => {frame, result := .ok ()}
+  | parameter :: parameters, argument :: arguments =>
+      let initialized : CallableStartOutcome Unit :=
+        match parameter.type with
+        | .lvalueReference referent =>
+            match argument with
+            | .value _ => {frame, result := .error (.argumentTypeMismatch parameter.declaration)}
+            | .lvalue access =>
+                let bound := frame.bindReferenceParameter parameter.declaration referent access
+                {frame := bound.frame, result := bound.result.map (fun _ => ()) |>.mapError .object}
+        | _ =>
+            let prepared : Except CallableFrameError IntegralValue := do
+              let value ← match argument with
+                | .value value => pure value
+                | .lvalue access =>
+                    (frame.store.read access).mapError (fun reason => .object (.object reason))
+              convertArgument frame.store.profile parameter value
+            match prepared with
+            | .error reason => {frame, result := .error reason}
+            | .ok value =>
+                let declared := frame.declareParameter parameter.declaration parameter.type value
+                {frame := declared.frame,
+                 result := declared.result.map (fun _ => ()) |>.mapError .object}
+      match initialized.result with
+      | .error reason => {frame := initialized.frame, result := .error reason}
+      | .ok _ => initializeSupplied initialized.frame parameters arguments
+  | _, _ => {frame, result := .error .arityMismatch}
+
+/-- Start fresh callee bindings over a shared store. No caller declaration
+scope is imported. Every setup failure retains the initialized prefix. -/
+def startInStore (store : IntegralObjectStore) (function : CallableFunction)
+    (arguments : List CallableArgument) : CallableStartOutcome CallableObjectFrame :=
+  let frame : IntegralObjectFrame := {store, scopes := []}
+  if !store.profile.valid then {frame, result := .error .invalidProfile}
+  else if store.values.length != store.objects.objects.length then
+    {frame, result := .error (.object (.object .incoherentValues))}
+  else if arguments.length != function.parameters.length then
+    {frame, result := .error .arityMismatch}
+  else
+    -- Validate against the entry store: an invalid argument ID must not become
+    -- valid merely because an earlier value parameter allocates that ID.
+    match validateSuppliedIdentities store arguments with
+    | .error reason => {frame, result := .error reason}
+    | .ok _ =>
+        let initialized := initializeSupplied frame.enterScope.frame function.parameters arguments
+        match initialized.result with
+        | .error reason => {frame := initialized.frame, result := .error reason}
+        | .ok _ => {frame := initialized.frame, result := .ok {
+            profile := store.profile, function, frame := initialized.frame}}
 
 /-- Execute a frontend-admitted declaration fragment in this callable frame. -/
 def executeDeclStmt (fuel : Nat) (callable : CallableObjectFrame)

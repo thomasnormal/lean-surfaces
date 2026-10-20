@@ -247,6 +247,25 @@ def declareParameter (frame : IntegralObjectFrame) (declaration : FrontendHandle
     (type : CppTypeEvidence) (value : IntegralValue) : FrameOutcome ObjectId :=
   reserveInitialized frame declaration type .parameter value
 
+/-- A reference parameter borrows a caller-owned object. Its binding is
+non-owning, including during the callee's normal-return cleanup. -/
+def bindReferenceParameter (frame : IntegralObjectFrame) (declaration : FrontendHandle)
+    (referent : CppTypeEvidence) (source : IntegralObjectRef) : FrameOutcome ObjectId :=
+  match frame.store.bindReference source referent with
+  | .error reason => failure frame (.object reason)
+  | .ok access => addBinding frame {
+      declaration, object := access.object, type := access.type, role := .reference }
+
+/-- Binding a reference parameter never allocates, reads or changes the store. -/
+theorem bindReferenceParameter_store (frame : IntegralObjectFrame)
+    (declaration : FrontendHandle) (referent : CppTypeEvidence) (source : IntegralObjectRef) :
+    (frame.bindReferenceParameter declaration referent source).frame.store = frame.store := by
+  cases h : frame.store.bindReference source referent with
+  | error reason => simp only [bindReferenceParameter, h, failure]
+  | ok access =>
+      simpa only [bindReferenceParameter, h] using addBinding_store frame {
+        declaration, object := access.object, type := access.type, role := .reference }
+
 /-- A local reference owns a binding, not its referent's object or lifetime. -/
 def bindLocalReference (frame : IntegralObjectFrame) (declaration : FrontendHandle)
     (type : CppTypeEvidence) (target : FrontendHandle) : FrameOutcome ObjectId :=

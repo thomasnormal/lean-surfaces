@@ -552,6 +552,16 @@ def evaluateCallableObject (fuel : Nat) (profile : TargetProfile)
   let result := evaluateCallableObjectInFrame fuel callable
   result.result
 
+/-- Execute an already-selected body with evaluated arguments in a caller's
+store. Return the resulting store even on admission/setup/execution failure. -/
+def evaluateCallableObjectInStore (fuel : Nat) (store : IntegralObjectStore)
+    (function : CallableFunction) (arguments : List CallableArgument) :
+    Outcome (IntegralResult IntegralValue) :=
+  let started := CallableObjectFrame.startInStore store function arguments
+  match started.result with
+  | .error reason => failure started.frame (mapStartError reason)
+  | .ok callable => evaluateCallableObjectInFrame fuel callable
+
 end CallableObjectEvaluation
 
 end LeanModels.Cpp

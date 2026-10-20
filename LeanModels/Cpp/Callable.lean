@@ -164,7 +164,9 @@ private def callableSignature (type : CppTypeEvidence) : Except String CallableS
   match type with
   | .function result parameters variadic =>
       if variadic then .error "callable: variadic functions are outside the body profile"
-      else if !parameters.all integralParameter then
+      else if !parameters.all (fun parameter => match parameter with
+          | .lvalueReference referent => integralParameter referent
+          | type => integralParameter type) then
         .error "callable: non-integral parameter type is outside the body profile"
       else match result with
         | .builtin _ => .ok {result, parameters, variadic}
@@ -877,8 +879,14 @@ def admitCallableFunctionWithExpressionTypes (probe : DeclarationProbe)
       parseValidatedVariableEvidence probe
     else pure []
   let expressionTypes := expressionTypes.map (expressionTypeRowsFor body)
+  -- A named reference expression has the referent's type; keep the declared
+  -- reference type in `parameters` for argument binding at frame entry.
+  let expressionParameters := parameters.map fun parameter =>
+    {parameter with type := match parameter.type with
+      | .lvalueReference referent => referent
+      | type => type}
   let typedBody ← callableBodyWithLocals probe typeRows variableRows expressionRows expressionTypes profile
-    parameters signature.result body
+    expressionParameters signature.result body
   pure {occurrence := admitted.occurrence, signature, parameters, body := typedBody}
 
 def admitCallableFunction (probe : DeclarationProbe)

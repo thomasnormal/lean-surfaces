@@ -44,7 +44,8 @@ set_option exponentiation.threshold 1024
 #py_check repr_shadow.captured_generator() = (Val.tuple #[.int 12, .int 13])
 
 #guard callFunction repr_lab "of" #[.str "é"] 4096 matches .unsupported _
-#guard callFunction repr_lab "keyword" #[] 4096 matches .unsupported _
+#py_check repr_lab.keyword() raises
+  .typeError "repr() takes no keyword arguments"
 #guard callFunction repr_lab "first_class" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "instance" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "custom" #[] 4096 matches .unsupported _

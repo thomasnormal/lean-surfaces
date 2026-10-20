@@ -594,8 +594,8 @@ theorem fuelMono (fuel : Nat) :
                           (Run.le_ite (Run.le_refl _)
                             (Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk)
                               fun st _ => Run.le_refl _))
-                          (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite (Run.le_refl _)
-                            (Run.le_ite (Run.le_refl _) (Run.le_refl _))))))))
+                          (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite (Run.le_refl _)
+                            (Run.le_ite (Run.le_refl _) (Run.le_refl _)))))))))
                       -- sorted with keywords (H6 draining tier): key= is
                       -- a fuel-free refusal; a stray keyword binds then
                       -- raises; reverse= binds, truthiness, then the
@@ -635,8 +635,11 @@ theorem fuelMono (fuel : Nat) :
                                         fun st vals => ?_
                                       exact Run.le_bind (Run.le_refl _) fun st s2 =>
                                         Run.le_refl _
-                      -- float, divmod, len, and bool with keywords: both argument lists bind before
+                      -- float, divmod, len, bool, and repr with keywords: both argument lists bind before
                       -- the faithful positional-only TypeError.
+                      exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                        Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
+                          Run.le_refl _
                       exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
                         Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                           Run.le_refl _

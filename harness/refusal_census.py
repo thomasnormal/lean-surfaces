@@ -1019,7 +1019,6 @@ WHITELIST_CLASS = {
     "divmod_lab::pair": "builtin.divmod-protocol",
     "divmod_lab::first_class": "firstclass.callable",
     "repr_lab::of": "str.non-ascii",
-    "repr_lab::keyword": "kwargs.callee-kind",
     "repr_lab::first_class": "firstclass.callable",
     "repr_lab::instance": "render.identity",
     "repr_lab::custom": "class.dunder-protocol",

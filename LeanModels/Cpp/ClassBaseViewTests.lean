@@ -159,9 +159,9 @@ private theorem kernelCastSyntax :
     [
       (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").isOk,
       (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").toOption ==
-        some {sourceType := "D *", targetType := "L *", operand := h "0x1"},
+        some {sourceType := "D *", targetType := "L *", operand := h "0x1", basePath := ["B"]},
       boundSyntax (rawBaseCast "D *" "L *") ==
-        some {sourceType := "D *", targetType := "L *", operand := h "0x1"},
+        some {sourceType := "D *", targetType := "L *", operand := h "0x1", basePath := ["B"]},
       observedAdmittedCast (rawBaseCast "D *" "L *") == some 1,
       syntaxError (rawBaseCast "D *" "L *") "D *" "L *" == none,
       syntaxError (rawBaseCast "D *" "L *") "L *" "L *" == some .malformedType,
@@ -195,6 +195,17 @@ private theorem kernelCastSyntax :
           ("path", .array []),
           ("inner", .array [rawLValue "D *" (rawDeclRef "D *")])]])])
         "D *" "L *" == some .missingBasePath,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawObject [
+          ("kind", rawText "ImplicitCastExpr"),
+          ("castKind", rawText "DerivedToBase"),
+          ("type", rawType "L *"),
+          ("path", .array [rawObject []]),
+          ("inner", .array [rawLValue "D *" (rawDeclRef "D *")])]])])
+        "D *" "L *" == some .malformedChildren,
       syntaxError (rawObject [
         ("kind", rawText "CXXStaticCastExpr"),
         ("castKind", rawText "NoOp"),

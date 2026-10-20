@@ -51,7 +51,9 @@ NoOp`, whose single child is an `ImplicitCastExpr` with
 `castKind: DerivedToBase` and a nonempty base path, followed by one
 `LValueToRValue` child and a direct `DeclRefExpr` operand. The outer and inner
 qualified pointer spellings must agree with the supplied source and target
-spellings, and the operand must carry a valid frontend `referencedDecl` handle.
+spellings, the operand must carry a valid frontend `referencedDecl` handle, and
+each path element must carry its source `name`; the ordered names are retained
+as evidence.
 Reverse `BaseToDerived` casts, member or computed operands, missing handles or
 paths and all other cast forms remain explicit refusals. `bind` attaches this
 validated syntax evidence in an already-resolved `ClassBaseCast`; declaration

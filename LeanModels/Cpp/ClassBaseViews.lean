@@ -30,6 +30,7 @@ structure ClassBaseCastSyntax where
   sourceType : String
   targetType : String
   operand : FrontendHandle
+  basePath : List String
   deriving Repr, BEq, Inhabited
 
 /- An explicit typed nonvirtual base cast. The source and target declarations
@@ -67,6 +68,17 @@ private def oneChild (raw : Raw) : Option Raw := do
   let some (.array [child]) := raw.field "inner" | none
   pure child
 
+private def pathNames (raw : Raw) : Except ClassBaseCastSyntaxError (List String) :=
+  match raw.field "path" with
+  | some (.array values) =>
+      match values with
+      | [] => .error .missingBasePath
+      | _ => values.mapM fun edge =>
+          match edge.text "name" with
+          | some name => .ok name
+          | none => .error .malformedChildren
+  | _ => .error .missingBasePath
+
 private def pointerType (spelling : String) : Bool :=
   match spelling.toList.reverse with
   | '*' :: ' ' :: _ => true
@@ -88,9 +100,7 @@ def admit (raw : Raw) (sourceType targetType : String) :
       child.text "castKind" == some "DerivedToBase" &&
       typeSpelling child == some targetType do
     throw .unsupportedCastKind
-  match child.field "path" with
-  | some (.array (_ :: _)) => pure ()
-  | _ => throw .missingBasePath
+  let basePath ← pathNames child
   let some lvalue := oneChild child | throw .malformedChildren
   unless lvalue.text "kind" == some "ImplicitCastExpr" &&
       lvalue.text "castKind" == some "LValueToRValue" &&
@@ -102,7 +112,7 @@ def admit (raw : Raw) (sourceType targetType : String) :
     throw .unsupportedOperand
   let some referenced := operand.field "referencedDecl" | throw .unsupportedOperand
   let operandHandle ← (evidenceHandle referenced "id").mapError (fun _ => .unsupportedOperand)
-  pure {sourceType, targetType, operand := operandHandle}
+  pure {sourceType, targetType, operand := operandHandle, basePath}
 
 /-- Attach an admitted source-level shape to the already-resolved typed cast.
 The typed cast carries declaration handles and paths; the syntax record carries

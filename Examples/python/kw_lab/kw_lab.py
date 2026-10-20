@@ -147,6 +147,11 @@ def int_kw():
     return int(x=1)
 
 
+def hex_kw():
+    # hex takes no keywords; argument expressions still evaluate first.
+    return hex(number=15)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

@@ -386,6 +386,12 @@ A literal bit-select of a direct untagged packed-union member uses the same
 one-bit outer-vector window and aliasing rule; `packed_union_bit` pins the
 case. Tagged, nested and dynamic union paths remain unsupported.
 
+Literal indexed part-selects (`base +: width` and `base -: width`) of a direct
+packed member are normalized to fixed outer-vector `PartSel` windows when the
+member has a canonical packed range and the window is in bounds;
+`packed_member_indexed` pins both directions. Dynamic, parameter-dependent,
+noncanonical and effectful nested selections remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

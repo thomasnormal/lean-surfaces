@@ -2193,6 +2193,34 @@ def _convert_sym_select_expr(sm, e, cname):
                 }
             if cname == "RangeSelectExpression":
                 selection = str(e.selectionKind).split(".")[-1]
+                if selection in ("IndexedUp", "IndexedDown"):
+                    base_label = _constant_dimension_selector(e.left)
+                    width = _safe_width(e)
+                    canonical = (declared_left == int(member_type.bitWidth) - 1
+                                 and declared_right == 0)
+                    if (not canonical or base_label is None or
+                            type(e.left).__name__ not in
+                            ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral") or
+                            width <= 0):
+                        return unsupported(sm, e,
+                                           "RangeSelectExpression:member-indexed")
+                    if selection == "IndexedUp":
+                        msb_local, lsb_local = base_label + width - 1, base_label
+                    else:
+                        msb_local, lsb_local = base_label, base_label - width + 1
+                    if (lsb_local < 0 or msb_local >= int(member_type.bitWidth)):
+                        return unsupported(sm, e,
+                                           "RangeSelectExpression:member-range")
+                    return {
+                        "kind": "PartSel",
+                        "span": node_span(sm, e),
+                        "width": width,
+                        "value": _convert_expr(sm, base),
+                        "msb": {"kind": "Int", "span": node_span(sm, e),
+                                "value": parent_offset + msb_local},
+                        "lsb": {"kind": "Int", "span": node_span(sm, e),
+                                "value": parent_offset + lsb_local},
+                    }
                 left = _constant_dimension_selector(e.left)
                 right = _constant_dimension_selector(e.right)
                 if (selection != "Simple" or left is None or right is None

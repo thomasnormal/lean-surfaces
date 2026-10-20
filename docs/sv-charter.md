@@ -2664,6 +2664,15 @@ write through one field and read through an alternate field, including x
 propagation. Tagged, nested and dynamic union paths remain loud; no driver
 resolution, aggregate store or scheduler is added.
 
+### Symbolic indexed packed-member windows — 2026-10-20
+
+Literal indexed part-selects of direct packed-struct members now normalize to
+fixed outer-vector windows when the member range is canonical and the selected
+window is in bounds. `packed_member_indexed` checks both `+:` and `-:` forms
+with four-state propagation. Dynamic, parameter-dependent, noncanonical and
+effectful nested selections remain loud; no aggregate store or scheduler is
+added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

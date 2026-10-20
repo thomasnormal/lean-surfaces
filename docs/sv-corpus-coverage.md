@@ -947,6 +947,11 @@ The `packed_union_bit` fixture checks the one-bit form through the same union
 alias. A literal bit write is visible through the alternate field with x
 propagation; tagged, nested and dynamic union paths remain loud.
 
+The `packed_member_indexed` fixture checks literal `+:` and `-:` slices inside
+a direct packed-struct member. Both directions flatten to disjoint outer
+windows and preserve x propagation; dynamic, parameter-dependent,
+noncanonical and effectful nested selections remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

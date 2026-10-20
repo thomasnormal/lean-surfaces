@@ -168,6 +168,26 @@ class SymbolicContinuousSelects(unittest.TestCase):
                           processes[0]["target"]["lsb"]["value"]), (0, 0))
         self.assertEqual(processes[1]["value"]["kind"], "PartSel")
 
+    def test_member_indexed_parts_flatten_to_outer_windows(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] low, input logic [1:0] high, "
+            "output logic [3:0] out); "
+            "struct packed { logic [3:0] hi; logic [3:0] lo; } value; "
+            "assign value.hi[0 +: 2] = low; "
+            "assign value.hi[3 -: 2] = high; assign out = value.hi; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([(p["target"]["msb"]["value"],
+                           p["target"]["lsb"]["value"]) for p in processes[:2]],
+                         [(5, 4), (7, 6)])
+
+    def test_member_indexed_parts_noncanonical_stay_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [3:0] out); "
+            "struct packed { logic [0:3] hi; logic [3:0] lo; } value; "
+            "assign value.hi[0 +: 2] = source; assign out = value.lo; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"][:1]
+        self.assertEqual(process["kind"], "Unsupported")
+
     def test_noncanonical_constant_parts_normalize_offsets(self):
         envelope = self.extract(
             "module top(input logic [10:3] source, output logic [10:3] value); "

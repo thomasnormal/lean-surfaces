@@ -2071,13 +2071,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           all_goals exact .ok hs2 _
                         | cons d t2 => exact .unsupported
                     case bint =>
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
-                      cases vs with
-                      | nil => exact .ok hs2 _
-                      | cons v t =>
-                        cases t with
-                        | nil => exact .liftRes hs2 _
-                        | cons d t2 => exact .unsupported
+                      exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                        .liftRes hs2 _
                     case bfloat =>
                       exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
                         .liftRes hs2 _
@@ -2651,11 +2646,9 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 case brepr =>
                   by_cases hi : fname == "int"
                   · simp only [hi, if_true]
-                    refine .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
-                      .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 => ?_
-                    cases hkws : kwargs.toList with
-                    | nil => exact .unsupported
-                    | cons kv rest => exact .exn hs3 _
+                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
+                        .liftRes hs3 _
                   · simp only [hi, if_false]
                     exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>

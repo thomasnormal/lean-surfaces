@@ -304,10 +304,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         | _ => refuse "round() over floats and non-integral values is outside the tier (the one-argument integer/Boolean slice is modeled)"
     | _ => refuse "round() with ndigits is outside the tier"
   else if fname == "int" then
-    match vs with
-    | [] => pure (.int 0)
-    | [v] => liftRes (intCastVal v)
-    | _ => refuse "int() with a base argument is outside the v0 tier"
+    liftRes (intCastArgs vs)
   else if fname == "float" then
     liftRes (floatCastArgs vs)
   else if fname == "bool" then
@@ -959,15 +956,12 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     raisePy (.typeError "divmod() takes no keyword arguments")
                   else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" || name == "ascii" || name == "tuple" || name == "list" || name == "range" || name == "int" || name == "hex" || name == "oct" || name == "bin" then
                     -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, hex, oct, and bin constructors accept no keyword;
-                    -- int instead reports the first invalid keyword after evaluating its value.
-                    -- arguments. Evaluate both argument lists before its
-                    -- faithful TypeError, preserving Python's order.
-                    let _ ← evalOpenList K m args.toList
+                    -- int accepts base; its shared binder checks arity and keywords.
+                    -- Evaluate both argument lists before validating the call.
+                    let vs ← evalOpenList K m args.toList
                     let kvs ← K.kwArgs kwargs.toList
                     if name == "int" then
-                      match kvs with
-                      | [] => refuse "internal: int keyword plan lost its keyword (report this)"
-                      | (k, _) :: _ => raisePy (.typeError s!"'{k}' is an invalid keyword argument for int()")
+                      liftRes (intCastArgs vs kvs)
                     else
                     raisePy (.typeError (if name == "repr" then
                       "repr() takes no keyword arguments"

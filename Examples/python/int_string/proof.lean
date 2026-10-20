@@ -21,6 +21,14 @@ theorem signed_adjustment_total (offset : PyInt) :
     int_string.signed_adjustment(offset) ==> offset - 2048 := by
   py_prove [int_string, signed_decimal]
 
+private theorem hexadecimal :
+    intCastBase (.str "0x_fF") (.int 0) = .ok (.int 255) := by
+  rfl
+
+theorem hex_offset_total (offset : PyInt) :
+    int_string.hex_offset(offset) ==> 255 + offset := by
+  py_prove [int_string, hexadecimal]
+
 theorem grouped_offset_result (offset result : PyInt)
     (run : int_string.grouped_offset(offset) ⇓ result) : result = 1024 + offset :=
   CallsTo.typed_int_eq run (grouped_offset_total offset)

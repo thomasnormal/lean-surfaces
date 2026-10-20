@@ -1649,64 +1649,105 @@ def intWs (character : Char) : Bool :=
   character == ' ' || character == '\t' || character == '\n' ||
     character == '\r' || character.toNat == 0x0b || character.toNat == 0x0c
 
-/-- Structural decimal parser; an underscore requires a digit on both sides. -/
-def decimalDigitsAux : List Char → Nat → Bool → Option Nat
+/-- ASCII digit value in bases 2–36; 36 is the non-digit sentinel. -/
+def intRadixDigit (character : Char) : Nat :=
+  let code := character.toNat
+  if 48 ≤ code && code ≤ 57 then code - 48
+  else if 65 ≤ code && code ≤ 90 then code - 65 + 10
+  else if 97 ≤ code && code ≤ 122 then code - 97 + 10
+  else 36
+
+/-- Structural radix parser; an underscore requires a digit on both sides. -/
+def radixDigitsAux (base : Nat) : List Char → Nat → Bool → Option Nat
   | [], value, previousDigit => if previousDigit then some value else Option.none
   | character :: rest, value, previousDigit =>
-      if character.isDigit then
-        decimalDigitsAux rest (value * 10 + (character.toNat - 48)) true
+      if intRadixDigit character < base then
+        radixDigitsAux base rest (value * base + intRadixDigit character) true
       else if character == '_' && previousDigit then
-        decimalDigitsAux rest value false
+        radixDigitsAux base rest value false
       else Option.none
+
+/-- The decimal specialization of the shared digit walker. -/
+def decimalDigitsAux := radixDigitsAux 10
 
 /-- ASCII decimal digits, optionally grouped by single underscores, to a `Nat`. -/
 def digitsToNat (characters : List Char) : Option Nat :=
   decimalDigitsAux characters 0 false
 
-/-- Parse the shared ASCII decimal syntax after its caller has checked the
-whitespace, digit-budget, and character inventory. -/
-def decimalInt (characters : List Char) : Option Int :=
+/-- Consume a matching binary/octal/hexadecimal prefix, including its optional
+single underscore. Base zero also rejects nonzero, unprefixed leading zeroes. -/
+def radixUnsigned (characters : List Char) (base : Nat) : Option Nat :=
+  let radixPrefix := match characters with
+    | '0' :: marker :: _ =>
+      if marker == 'b' || marker == 'B' then 2
+      else if marker == 'o' || marker == 'O' then 8
+      else if marker == 'x' || marker == 'X' then 16
+      else 0
+    | _ => 0
+  if radixPrefix != 0 && (base == 0 || base == radixPrefix) then
+    let digits := characters.drop 2
+    let digits := match digits with
+      | '_' :: rest => rest
+      | _ => digits
+    radixDigitsAux radixPrefix digits 0 false
+  else if base == 0 then
+    (radixDigitsAux 10 characters 0 false).bind fun value =>
+      if characters.head? == some '0' && value != 0 then Option.none else some value
+  else radixDigitsAux base characters 0 false
+
+/-- Parse the shared ASCII integer syntax after base validation and the
+caller's character-inventory and digit-budget checks. -/
+def radixInt (characters : List Char) (base : Nat) : Option Int :=
   let core := ((characters.dropWhile intWs).reverse.dropWhile intWs).reverse
   match core with
-  | '+' :: digits => (digitsToNat digits).map Int.ofNat
-  | '-' :: digits => (digitsToNat digits).map (fun value => -(value : Int))
-  | digits => (digitsToNat digits).map Int.ofNat
+  | '+' :: digits => (radixUnsigned digits base).map Int.ofNat
+  | '-' :: digits => (radixUnsigned digits base).map (fun value => -(value : Int))
+  | digits => (radixUnsigned digits base).map Int.ofNat
 
-/-- `int(<str>)` decides ASCII decimal syntax within `intDigitBudget`,
-including underscore grouping and all six integer whitespace characters.
+/-- Decimal specialization, retaining the existing pure parsing surface. -/
+def decimalInt (characters : List Char) : Option Int := radixInt characters 10
+
+/-- Decimal conversion keeps its existing digit count; explicit other bases
+bound all ASCII alphanumeric characters, including a possible prefix. -/
+def intDigitCount (characters : List Char) (base : Nat) : Nat :=
+  characters.countP (fun character =>
+    if base == 10 then character.isDigit else intRadixDigit character < 36)
+
+/-- `int(<str>, base)` decides ASCII integer syntax within `intDigitBudget`,
+including base-zero prefixes, underscore grouping, and six whitespace characters.
 Non-ASCII input and larger digit counts refuse loudly; invalid ASCII input
 raises CPython's repr-rendered, 200-character-truncated `ValueError`. -/
-def intOfStr (text : String) : Res RVal :=
+def intOfStr (text : String) (base : Nat := 10) : Res RVal :=
   let characters := text.toList
   if !characters.all (fun character => character.toNat < 128) then
     .unsupported "int() of a non-ASCII str is outside the tier (Unicode digits and whitespace are not guessed; docs/memory-model.md §the cast tier)"
-  else if characters.countP (fun character => character.isDigit) > intDigitBudget then
+  else if intDigitCount characters base > intDigitBudget then
     .unsupported "int() of this str exceeds the tier's 640-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
-    match decimalInt characters with
+    match radixInt characters base with
     | some value => .ok (.int value)
     | Option.none =>
       match reprStr text with
       | some rendered =>
-          .exn (.valueError s!"invalid literal for int() with base 10: {String.ofList (rendered.toList.take 200)}")
+          .exn (.valueError s!"invalid literal for int() with base {base}: {String.ofList (rendered.toList.take 200)}")
       | Option.none =>
           .unsupported "int() cannot render this invalid literal exactly (docs/memory-model.md §the cast tier)"
 
 /-- `int(bytes)` shares the ASCII decimal grammar with `int(str)`. Bytes with
 non-ASCII octets remain loud until the tier models decoding; invalid ASCII
 forms still raise CPython's bytes-rendered `ValueError` exactly. -/
-def intOfBytes (values : Array UInt8) : Res RVal :=
+def intOfBytes (values : Array UInt8) (base : Nat := 10) : Res RVal :=
   let octets := values.toList
   if !octets.all (fun octet => octet.toNat < 128) then
     .unsupported "int() of bytes containing non-ASCII octets is outside the tier (Unicode decoding is not guessed; docs/memory-model.md §the cast tier)"
-  else if octets.countP (fun octet => (octet.toNat ≥ 48 && octet.toNat ≤ 57)) > intDigitBudget then
+  else if intDigitCount (octets.map (fun octet => Char.ofNat octet.toNat)) base > intDigitBudget then
     .unsupported "int() of these bytes exceeds the tier's 640-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
     let characters := octets.map (fun octet => Char.ofNat octet.toNat)
-    match decimalInt characters with
+    match radixInt characters base with
     | some value => .ok (.int value)
     | Option.none =>
-      .exn (.valueError s!"invalid literal for int() with base 10: {String.ofList ((bytesRepr values).toList.take 200)}")
+      .exn (.valueError s!"invalid literal for int() with base {base}: {String.ofList ((bytesRepr values).toList.take 200)}")
 
 /-- The `int` constructor builtin: identity on ints, bool coercion,
 `int(<str>)` and the ASCII `int(bytes)` slice through the pass-8 honest
@@ -1727,6 +1768,44 @@ def intCastVal : RVal → Res RVal
   | .ref _ =>
       .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")
+
+/-- Explicit-base conversion checks the base's index type and range before
+the input type, matching CPython. Heap protocols remain loud. -/
+def intCastBase (value base : RVal) : Res RVal :=
+  match base with
+  | .ref _ => .unsupported "int() with a heap-object base requires its __index__ protocol"
+  | _ =>
+    match asInt base with
+    | none => .exn (.typeError s!"'{base.typeName}' object cannot be interpreted as an integer")
+    | some radix =>
+      if radix != 0 && (radix < 2 || radix > 36) then
+        .exn (.valueError "int() base must be >= 2 and <= 36, or 0")
+      else
+        match value with
+        | .str text => intOfStr text radix.toNat
+        | .bytes values => intOfBytes values radix.toNat
+        | .ref _ => .unsupported "int() of a heap object with explicit base is outside the tier"
+        | _ => .exn (.typeError "int() can't convert non-string with explicit base")
+
+/-- CPython's `int` call binder. Argument evaluation precedes this pure
+worker; total argument count precedes keyword validation and conversion.
+The string argument is positional-only and only `base` accepts a keyword. -/
+def intCastArgs (values : List RVal) (keywords : List (String × RVal) := []) : Res RVal :=
+  let count := values.length + keywords.length
+  if count > 2 then
+    let kind := if values.isEmpty then "keyword arguments" else "arguments"
+    .exn (.typeError s!"int() takes at most 2 {kind} ({count} given)")
+  else
+    match keywords.find? (fun entry => entry.1 != "base") with
+    | some (name, _) => .exn (.typeError s!"'{name}' is an invalid keyword argument for int()")
+    | none =>
+      match values, keywords with
+      | [], [] => .ok (.int 0)
+      | [], _ => .exn (.typeError "int() missing string argument")
+      | [value], [] => intCastVal value
+      | [value], [(_, base)] => intCastBase value base
+      | [value, base], [] => intCastBase value base
+      | _, _ => .unsupported "internal: int argument binder received duplicate base keywords (report this)"
 
 def hexVal : RVal → Res RVal
   | .ref _ =>
@@ -6115,10 +6194,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | _ => .unsupported "round() with ndigits is outside the tier"
                   else if fname == "int" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    match vs with
-                    | [] => .ok st (.int 0)
-                    | [v] => Run.liftRes st (intCastVal v)
-                    | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                    Run.liftRes st (intCastArgs vs)
                   else if fname == "float" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     Run.liftRes st (floatCastArgs vs)
@@ -6703,15 +6779,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       .exn st (.typeError "divmod() takes no keyword arguments")
                     else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" || fname == "range" || fname == "int" || fname == "hex" || fname == "oct" || fname == "bin" then
                       -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, hex, oct, and bin constructors accept no keyword;
-                      -- int instead reports the first invalid keyword after evaluating its value.
-                      -- arguments. Evaluate both argument lists before its
-                      -- faithful TypeError, preserving Python's order.
-                      evalExprs m fuel st args.toList ⤳ fun st _ =>
-                      evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                      -- int accepts base; its shared binder checks arity and keywords.
+                      -- Evaluate both argument lists before validating the call.
+                      evalExprs m fuel st args.toList ⤳ fun st vs =>
+                      evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                       if fname == "int" then
-                        (match kwargs.toList with
-                         | [] => .unsupported "internal: int keyword plan lost its keyword (report this)"
-                         | (k, _) :: _ => .exn st (.typeError s!"'{k}' is an invalid keyword argument for int()"))
+                        Run.liftRes st (intCastArgs vs ((kwargs.toList.map (·.1)).zip kvs))
                       else
                       .exn st (.typeError (if fname == "repr" then
                         "repr() takes no keyword arguments"

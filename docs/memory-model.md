@@ -2664,10 +2664,37 @@ default 4,300 to 640 or disable the limit. Above 640, even an invalid
 spelling's exception depends on that setting and on validation order, so
 the model refuses rather than guesses. Signs, underscores, and surrounding
 whitespace do not consume the digit budget; whitespace length is not
-bounded. Non-ASCII input, including Unicode digits/whitespace, and explicit
-base arguments remain loud. `decimalDigitsAux` is structural list recursion;
-both interpreters reuse `intCastVal`, and no interpreter recursion point,
-meta-theorem, heap-free predicate, or public judgment changes.
+bounded. Non-ASCII input, including Unicode digits/whitespace, remains loud.
+`decimalDigitsAux` specializes the structural radix walker described below.
+No interpreter recursion point, heap-free predicate, or public judgment changes.
+
+**2026-10-20 explicit-base extension:** `int(text, base)` and
+`int(text, base=base)` share `intCastArgs` in both interpreters. The pure binder
+checks the combined positional/keyword count first, then invalid keyword
+names, then the missing string argument. The string argument is positional
+only; `base` accepts an integer or Boolean, is validated before the input
+type, and must be zero or in 2–36. Argument expressions all evaluate before
+these checks, retaining effects even when the call raises. Duplicate
+positional/keyword bases count as three arguments, matching CPython 3.9.
+
+`radixDigitsAux` and `radixUnsigned` decide ASCII strings and bytes: case
+insensitive digits, optional signs, the six whitespace characters, single
+underscores between digits, and one underscore immediately after a matching
+`0b`, `0o`, or `0x` prefix. Base zero recognizes these prefixes and accepts
+unprefixed leading zeroes only when the result is zero. Other explicit bases
+consume a prefix only when it matches the base. Invalid-literal errors name
+the requested base, including zero, and reuse the original value's repr with
+CPython's 200-character truncation.
+
+Decimal conversion retains the 640-digit count above. Other bases bound all
+ASCII alphanumeric characters in the original input to 640, including the
+prefix; this is a conservative resource bound, also for power-of-two bases
+that CPython exempts from its configurable conversion limit. Unicode input,
+non-ASCII bytes and heap conversion protocols remain unfinished and loud.
+The frame, clock-erasure and payload-blindness proofs use their pure-worker
+rules. `Examples/python/int_string` adds kernel checks and a symbolic offset
+theorem for a real keyword-base call; the differential suite also checks
+all bases, prefix/underscore errors, validation precedence and retained effects.
 
 ### Decimal integer rendering (2026-10-09)
 

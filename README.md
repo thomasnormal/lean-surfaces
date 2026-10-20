@@ -18,12 +18,13 @@ See [CHANGELOG.md](CHANGELOG.md) for the version history.
 The current source keeps the public judgments, tactics, and existing theorem
 statements unchanged. First-proof and tutorial builds stay within Python dependencies;
 native dictionary iterators now retain resize failures without changing
-ordinary generator closure behavior. ASCII decimal strings now admit underscore
-grouping and all six integer whitespace characters, with exact invalid-literal
-errors and a configuration-independent 640-digit bound. Non-ASCII integer
-input and explicit bases remain loud. String repetition supports both operand
-orders, boolean counts, and `*=`, with both the original count magnitude and
-output code-point length bounded by 1,048,576. Tuple and namedtuple repetition
+ordinary generator closure behavior. ASCII strings and bytes now admit
+integer parsing in bases 2–36 and base zero, with prefix detection, underscore
+grouping, all six integer whitespace characters, and exact invalid-literal
+errors within the documented digit budgets. Unicode input and non-ASCII bytes
+remain loud. String repetition supports both operand orders, boolean counts,
+and `*=`, with both the original count magnitude and output code-point length
+bounded by 1,048,576. Tuple and namedtuple repetition
 also checks the original count magnitude before empty-sequence or negative-count
 handling, with the same independent element-count budget. Decimal output shares
 the 640-digit admission across `str`, `print`, f-strings, container and range
@@ -33,9 +34,9 @@ numerical consumers use their integer projections.
 Immutable bytes literals and literal defaults preserve every octet through
 extraction and the proof boundary. Indexing, slicing, concatenation, repetition,
 comparisons, membership, rendering, unpacking, iteration, and sequence
-consumers are modelled; numeric parsing, decoding, methods, explicit iterator
-cursors, bytes percent formatting, and `dict(bytes)` pair construction remain
-loud.
+consumers are modelled, alongside ASCII integer parsing. Decoding, methods,
+explicit iterator cursors, bytes percent formatting, and `dict(bytes)` pair
+construction remain loud.
 Module-scope annotated assignments admit simple targets with scalar literal
 annotations, including forward-reference strings; nonliteral annotations and
 explicit annotation-table bindings remain loud.

@@ -3580,14 +3580,8 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         case int _ => exact PBF.ok invariant _
                                         case bool _ => exact PBF.ok invariant _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                  · refine PBF.bind (ihEs m st args.toList hslot)
-                                      fun s1 vs _ hs1 => ?_
-                                    cases vs with
-                                    | nil => exact PBF.ok hs1 _
-                                    | cons v rest =>
-                                        cases rest with
-                                        | cons _ _ => exact PBF.unsupported
-                                        | nil => exact PBF.liftRes hs1 _
+                                  · exact PBF.bind (ihEs m st args.toList hslot)
+                                      fun s1 vs _ hs1 => PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   · exact PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => PBF.liftRes hs1 _
@@ -4273,9 +4267,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                 fun s2 kvs _ hs2 => ?_
                               by_cases hi : fname == "int"
                               · simp only [hi, if_true]
-                                cases hkws : kwargs.toList with
-                                | nil => exact PBF.unsupported
-                                | cons kv rest => exact PBF.exn hs2 _
+                                exact PBF.liftRes hs2 _
                               · simp only [hi, if_false]
                                 exact PBF.exn hs2 _
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_

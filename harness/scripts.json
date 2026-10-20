@@ -546,5 +546,7 @@
   {"file": "harness/scripts/builtin_raise_base.py", "expect": "match"},
   {"file": "harness/scripts/builtin_raise_generator.py", "expect": "match"},
   {"file": "harness/scripts/builtin_raise_shadow.py", "expect": "unsupported"},
-  {"file": "harness/scripts/builtin_raise_namesake.py", "expect": "match"}
+  {"file": "harness/scripts/builtin_raise_namesake.py", "expect": "match"},
+  {"file": "harness/scripts/int_base_script.py", "expect": "match"},
+  {"file": "harness/scripts/int_base_error_script.py", "expect": "match"}
 ]

@@ -14,10 +14,16 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- `int(text, base)` and `int(text, base=base)` accept ASCII strings and bytes
+  in bases 2–36, plus base-zero prefix detection, signs and underscores.
+  Both interpreters preserve CPython's argument evaluation, arity, keyword,
+  base validation and invalid-literal errors. Unicode parsing, non-ASCII
+  bytes, heap conversion protocols and inputs beyond the digit budget remain
+  unfinished and refuse loudly.
 - `repr`, `abs`, `ord`, `chr`, `next`, `ascii`, `tuple`, `list`, `range`,
   `hex`, `oct`, and `bin` keyword calls now evaluate arguments in Python order
-  before reporting their exact positional-only `TypeError`. `int` reports the
-  first invalid keyword after argument evaluation. Regression cases check
+  before reporting their exact positional-only `TypeError`. `int` validates
+  arity and keyword names after argument evaluation. Regression cases check
   retained argument effects and argument exceptions preceding the call error.
 - `float(...)` keyword calls now preserve Python's argument evaluation order
   and report the faithful `TypeError` that the constructor accepts no keyword

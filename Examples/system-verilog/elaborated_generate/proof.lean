@@ -61,7 +61,8 @@ partial def containsRead (wanted : SExpr) (statement : SStmt) : Bool :=
 -- REFERENCE: c79b8b4c56b4709eeb9895fd 24.03-s004 2026-10-20 | tests=imports | source=Examples/system-verilog/elaborated_generate/imports.sv@sha256:d6e3729343932f827dcd6c662dd7f21ad0536c35815c88f3f9eba9efe05f275d | top=top | args=["-ii_val"] | map=README.md#elaborated-generate-scopes
 -- REFERENCE: a2670b6a5f84739295c7524e 24.03-s004 2026-10-20 | tests=parameters | source=Examples/system-verilog/elaborated_generate/parameters.sv@sha256:6f62e6bc89795379d3687d75d332c983ae8c93580cb6a97614178d2f9c87e112 | top=top | args=["-ii_val"] | map=README.md#elaborated-generate-scopes
 -- REFERENCE: b87baebe0d77de845059fe60 24.03-s004 2026-10-20 | tests=choices | source=Examples/system-verilog/elaborated_generate/choices.sv@sha256:abc0b9f2c9c4ad03acff8f3998d860bd795ac21b4ef5a99972bbc70dd73cc130 | top=top | args=["-ii_val"] | map=README.md#elaborated-generate-scopes
--- SYNTHETIC-ORACLE: tests=fixtureReceipt-boundaries | origin=spec | authority=docs/sv-elaborated-generate.md | map=certificates:parsed-source-subtrees;member:subroutine-frame-required;hierarchy:instance-storage-required;dependent:initialization-order-oracle
+-- REFERENCE: d5eafc43f849efb620a0d48c 24.03-s004 2026-10-20 | tests=hierarchy | source=Examples/system-verilog/elaborated_generate/hierarchy.sv@sha256:d66d2003bc747d98520d1f95ee3a638df1f375862085570e409bdc0bfae0badb | top=top | args=["-ii_val"] | map=../module_hierarchy/README.md#static-module-hierarchy
+-- SYNTHETIC-ORACLE: tests=fixtureReceipt-boundaries | origin=spec | authority=docs/sv-elaborated-generate.md | map=certificates:parsed-source-subtrees;member:subroutine-frame-required;dependent:initialization-order-oracle
 
 def fixtureReceipt : IO Unit := do
   for (name, expected) in [
@@ -71,7 +72,8 @@ def fixtureReceipt : IO Unit := do
       ("captures", ["pending 0 0", "captured 30 31"]),
       ("imports", ["cells 2 8 3 9"]),
       ("parameters", ["parameters 10xz -3 c7 -3"]),
-      ("choices", ["choices 1 2 3"])] do
+      ("choices", ["choices 1 2 3"]),
+      ("hierarchy", ["instance 5"])] do
     let .ok design := loadEnvelopeDesign
         (← IO.FS.readFile s!"Examples/system-verilog/elaborated_generate/{name}.sv.json")
       | throw (IO.userError s!"{name} failed to load")
@@ -88,7 +90,7 @@ def fixtureReceipt : IO Unit := do
             | .initial body => containsRead expression body
             | _ => false) do
           throw (IO.userError "hierarchical read differs from source")
-    if name == "parameters" || name == "choices" then
+    if name == "parameters" || name == "choices" || name == "hierarchy" then
       unless runSelfCheck design 32768 == .ok expected do
         throw (IO.userError s!"{name} time-zero transcript differs")
     for oracle in [ρ_src, ρ_rev] do
@@ -105,7 +107,7 @@ def fixtureReceipt : IO Unit := do
         world := next
       unless world.out.halted && world.out.flush == expected do
         throw (IO.userError s!"{name} complete timed transcript differs")
-  for name in ["member", "hierarchy", "dependent"] do
+  for name in ["member", "dependent"] do
     match loadEnvelopeDesign
         (← IO.FS.readFile s!"Examples/system-verilog/elaborated_generate/{name}.sv.json") with
     | .error _ => pure ()

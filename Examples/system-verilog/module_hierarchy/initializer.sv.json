@@ -1,0 +1,159 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/module_hierarchy/initializer.sv",
+  "source_sha256": "b2c565aa68bb9c8609deb4055fd892f7933f0b479f6318b0ee3a6ba0e7d69b9c",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 7,
+              "end_line": 5,
+              "end_col": 13
+            },
+            "name": "seed",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 5,
+                  "col": 12,
+                  "end_line": 5,
+                  "end_col": 13
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000111"
+              }
+            },
+            "signed": true
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 21
+            },
+            "sv_kind": "Generate:initializer-order",
+            "text": "value=top.seed",
+            "instance_scope": [
+              "$hierarchy",
+              "1",
+              "child"
+            ]
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 71
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 7,
+                "col": 11,
+                "end_line": 7,
+                "end_col": 71
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 7,
+                    "col": 17,
+                    "end_line": 7,
+                    "end_col": 20
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 20,
+                    "end_line": 7,
+                    "end_col": 60
+                  },
+                  "name": "$display",
+                  "format": "initializer %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 47,
+                        "end_line": 7,
+                        "end_col": 58
+                      },
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:1:5:child:19:value",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 60,
+                    "end_line": 7,
+                    "end_col": 68
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [],
+        "hierarchy_lowered": true
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

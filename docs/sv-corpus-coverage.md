@@ -22,6 +22,81 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Static portless module hierarchy — 2026-10-20
+
+IEEE clauses 23/27 elaboration now flattens actual portless module instances,
+including parameter overrides, generated instances, static instance arrays
+and bound parent/child/sibling/upward references. Per-instance storage and
+procedural locals remain distinct, including when the frontend shares a
+canonical template. Package storage is shared once. Existing executors and
+region oracles apply; ports, program/interface kinds, differing timescales,
+new initializer-order dependence and unsupported active members remain loud.
+See [the contract](sv-module-hierarchy.md).
+
+The paired **22,035** paths gain **198 clean files**, no losses:
+**4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
+zero extraction errors. All 4,098 previously clean extracted designs remain
+identical. Of these gains, 193 follow instance lowering and five additionally
+use bound hierarchical type queries. Extraction includes negative and compile-only
+inputs and is not whole-corpus runtime conformance.
+
+Of the 198 gains, 175 match complete independent transcripts under both
+region oracles; nine match one tested legal order. Those nine contain
+same-tick output ordering, early `$finish`, or an initial-write race; their
+other traces are retained rather than counted as both-order matches. Eleven
+retain runtime refusals: three continuous assignments, two procedural-edge
+publication cases, two timed `$time` cases, two designs without procedural
+processes, one zero-delay Inactive delivery and one run without `$finish`.
+Two nested-module sources hit reference-compiler limitations, and one
+multiple-top source has no usable single-top oracle. No successful reference
+transcript falls outside both tested model traces. Eight authored/prior
+fixtures match both orders; four explicit boundary fixtures remain refusals.
+Final-source authentication covers 207 successful independent invocations
+and two compiler refusals. Five kernel theorems certify the parsed
+cross-instance storage and blocking/NBA statements.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 54 | 245 | 1 |
+| 4 | 427 | 187 | 240 | 0 |
+| 5 | 618 | 368 | 250 | 0 |
+| 6 | 1185 | 425 | 760 | 0 |
+| 7 | 796 | 106 | 690 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 111 | 478 | 0 |
+| 10 | 657 | 248 | 409 | 0 |
+| 11 | 1034 | 722 | 312 | 0 |
+| 12 | 627 | 290 | 337 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 50 | 1493 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 214 | 611 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 385 | 159 | 28 |
+| 23 | 851 | 170 | 681 | 0 |
+| 24 | 355 | 12 | 343 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 165 | 400 | 0 |
+| 27 | 354 | 176 | 178 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 123 | 104 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 136 | 281 | 0 |
+| 38 | 340 | 211 | 129 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 40 | 47 | 0 |
+
+
 ## Min typ max expressions — 2026-10-20
 
 IEEE §11.11/§10.8 expressions select one complete bound arm globally at

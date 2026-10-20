@@ -32,8 +32,9 @@ region oracles. No scheduler is added. Runtime reads in generated static
 initializers, or new module initializer reads of generated storage, require an
 initialization-order oracle and remain `Generate:initializer-order`. Closed
 parameter/genvar initialization is admitted. Existing expression, array,
-lifetime, timing and process boundaries still apply. Cross-instance hierarchy,
-ports/connections and unresolved names are not flattened into guessed aliases.
+lifetime, timing and process boundaries still apply. Static portless module
+instances now use the [hierarchy rung](sv-module-hierarchy.md); ports/connections
+and unresolved names are not flattened into guessed aliases.
 The current runner still requires exactly one top module.
 
 Frontend errors and redefinition conflicts in a lowered design prevent
@@ -43,12 +44,13 @@ initializers stay loud. Each declaration/process emitted from a generate scope
 retains `generated_scope` provenance; the module and folded parameter or
 hierarchical-reference nodes carry `elaboration_lowered`.
 
-Seven authored runnable sources match complete independent four-state
+Eight authored runnable sources now match complete independent four-state
 transcripts under both region oracles. They exercise if/else/case/unconditional
 and nested scopes, zero-count and ascending/descending loops, exact parameters,
 four-state choices, qualified reads/stores, packed/fixed-array storage, scoped
-imports, repeated locals and delayed captures/NBAs. Three further sources
-preserve unsupported-member, cross-instance and static-initialization boundaries.
+imports, repeated locals and delayed captures/NBAs. Two further sources
+preserve unsupported-member and static-initialization boundaries. The earlier
+portless hierarchy refusal is admitted by the static hierarchy rung.
 The source-bound kernel proofs certify current reads, separation of nested
 same-named storage, and the selected branch's real blocking assignment.
 

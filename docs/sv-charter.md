@@ -3749,3 +3749,41 @@ theorems bind the parsed live RHS and blocking/NBA statements. The exact
 reference-accepted direct-display-argument frontend refusal is retained.
 See [the contract](sv-min-typ-max.md) and
 [the fixtures](../Examples/system-verilog/min_typ_max/README.md).
+
+### Static portless module hierarchy — 2026-10-20
+
+IEEE clauses 23/27 legacy elaboration now traverses actual concrete module
+bodies, including generated/static-array instances and parameter overrides.
+All supported declarations are bound before expression conversion; distinct
+instance storage and procedural locals retain length-prefixed structural
+routes even when their frontend canonical body is shared. Parent/child/
+sibling/upward references name their original declaration. Package storage
+is shared once. Existing execution, continuations, NBA work and region oracles
+apply. No scheduler change is involved.
+
+Child ports, interface/program kinds, differing timescales, over-budget
+expansion, invalid/redefined source, new static-initializer order dependence
+and unsupported active members stay loud. Symbolic mode is unchanged. This
+is the first hierarchy rung, not connected-port or full hierarchy coverage.
+The paired 22,035 paths gain 198 clean files, no losses: 4,296 clean, 17,673
+partial, 66 include skips, zero errors. All 4,098 previous clean designs remain
+identical. Five kernel theorems bind actual parsed cross-instance storage and
+blocking/NBA statements.
+
+Of the 198 gains, 175 match complete independent transcripts under both
+region oracles; nine match one tested legal order. Those nine contain
+same-tick output ordering, early `$finish`, or an initial-write race; their
+other traces are retained rather than counted as both-order matches. Eleven
+retain runtime refusals: three continuous assignments, two procedural-edge
+publication cases, two timed `$time` cases, two designs without procedural
+processes, one zero-delay Inactive delivery and one run without `$finish`.
+Two nested-module sources hit reference-compiler limitations, and one
+multiple-top source has no usable single-top oracle. No successful reference
+transcript falls outside both tested model traces. Eight authored/prior
+fixtures match both orders; four explicit boundary fixtures remain refusals.
+Final-source authentication covers 207 successful independent invocations
+and two compiler refusals. Five kernel theorems certify the parsed
+cross-instance storage and blocking/NBA statements.
+
+See [the contract](sv-module-hierarchy.md) and
+[the fixtures](../Examples/system-verilog/module_hierarchy/README.md).

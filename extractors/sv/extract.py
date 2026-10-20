@@ -484,6 +484,9 @@ def _bits_argument_source_ok(expression):
     def inspect(node):
         nonlocal pure
         kind = type(node).__name__
+        if (_SYM is None and kind == "HierarchicalValueExpression"
+                and (node.symbol in _ELAB_HIER_VALUES or node.symbol in _ELAB_PARAMETERS)):
+            return
         if _SYM is None and _clog2_call(node):
             pure = pure and len(node.arguments) == 1 and all(
                 argument.type.isIntegral and _bits_argument_source_ok(argument)
@@ -4683,7 +4686,7 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if not ok:
         return unsupported(sm, span_node or expr, "AssignmentExpression:target")
     if (target.get("kind") in ("SelectTarget", "ConcatTarget")
-            and not _case_source_expression_ok(expr.right)):
+            and not _case_source_expression_ok(expr.right, packed_members=_SYM is None)):
         return unsupported(sm, span_node or expr, "AssignmentExpression:selected-effects")
     value = convert_expr(sm, expr.right)
     try:
@@ -5397,14 +5400,51 @@ def _generated_storage_collision(ports, decls, processes, prefix):
     return any(names.count(name) != 1 for name in generated)
 
 
-def _elaborated_members(sm, scope, route=()):
+def _hierarchy_instance_members(sm, instance, route, context, depth):
+    """Traverse the concrete body, never the frontend's shared canonical body."""
+    context["instances"] += 1
+    if context["instances"] > 1024 or depth > 64:
+        yield unsupported(sm, instance, "Hierarchy:instance-limit"), route
+        return
+    if not instance.isModule:
+        yield unsupported(sm, instance, "Hierarchy:module-kind"), route
+        return
+    body = instance.body
+    if any(str(member.kind) in ("SymbolKind.Port", "SymbolKind.MultiPort") for member in body):
+        yield unsupported(sm, instance, "Hierarchy:ports"), route
+        return
+    if str(body.definition.timeScale) != context["timescale"]:
+        yield unsupported(sm, instance, "Hierarchy:timescale"), route
+        return
+    yield from _elaborated_members(sm, body, route, context, depth)
+
+
+def _hierarchy_array_members(sm, array, route, context, depth):
+    elements = list(array.elements)
+    if not elements:
+        yield unsupported(sm, array, "Hierarchy:invalid-array"), route
+        return
+    if depth > 64 or len(elements) > 1024:
+        yield unsupported(sm, array, "Hierarchy:instance-limit"), route
+        return
+    for ordinal, element in enumerate(elements):
+        path = (*route, str(ordinal))
+        if str(element.kind) == "SymbolKind.InstanceArray":
+            yield from _hierarchy_array_members(sm, element, path, context, depth + 1)
+        else:
+            yield from _hierarchy_instance_members(sm, element, path, context, depth + 1)
+        if context["instances"] > 1024:
+            break
+
+
+def _elaborated_members(sm, scope, route=(), context=None, depth=0):
     """Flatten only live elaborated scopes; keep every active member wall."""
     for ordinal, member in enumerate(scope):
         kind = str(member.kind).split(".")[-1]
         if kind == "GenerateBlock":
             if not member.isUninstantiated:
                 path = (*route, str(ordinal), member.name)
-                yield from _elaborated_members(sm, member, path)
+                yield from _elaborated_members(sm, member, path, context, depth)
         elif kind == "GenerateBlockArray":
             if member.isUninstantiated:
                 continue
@@ -5415,7 +5455,14 @@ def _elaborated_members(sm, scope, route=()):
             else:
                 for entry in entries:
                     path = (*route, str(ordinal), member.name, str(entry.arrayIndex))
-                    yield from _elaborated_members(sm, entry, path)
+                    yield from _elaborated_members(sm, entry, path, context, depth)
+        elif context is not None and kind in ("Instance", "InstanceArray"):
+            context["seen"] = True
+            path = ("$hierarchy", *route, str(ordinal), member.name)
+            if kind == "Instance":
+                yield from _hierarchy_instance_members(sm, member, path, context, depth + 1)
+            else:
+                yield from _hierarchy_array_members(sm, member, path, context, depth + 1)
         else:
             yield member, route
 
@@ -5440,7 +5487,8 @@ def _register_elaborated_bindings(members, module_name):
                 _ELAB_HIER_VALUES.add(backing)
         if not route or kind not in ("Variable", "Net", "ProceduralBlock", "StatementBlock"):
             continue
-        prefix = "$generate:" + _scope_key((module_name, *route))
+        family = "$hierarchy:" if route[0] == "$hierarchy" else "$generate:"
+        prefix = family + _scope_key((module_name, *route))
 
         def register(node):
             if str(getattr(node, "kind", "")) in ("SymbolKind.Variable", "SymbolKind.Net"):
@@ -5449,10 +5497,45 @@ def _register_elaborated_bindings(members, module_name):
         member.visit(register)
 
 
+def _module_storage_collisions(ports, decls, processes, span):
+    others = []
+    if _generated_storage_collision(ports, decls, processes, "$intra:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "IntraAssignment:storage-collision",
+                       "text": "generated captured-value storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$compound:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "AssignmentExpression:compound-storage-collision",
+                       "text": "generated operator-assignment storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$plusargs:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "Plusargs:storage-collision",
+                       "text": "generated input-query storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$local_array:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "VariableDeclStatement:array-storage-collision",
+                       "text": "generated local array storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$foreach:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "ForeachLoopStatement:storage-collision",
+                       "text": "generated iterator storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$generate:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "Generate:storage-collision",
+                       "text": "generated scope storage collides with a source binding"})
+    if _generated_storage_collision(ports, decls, processes, "$hierarchy:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "Hierarchy:storage-collision",
+                       "text": "instance storage collides with a source binding"})
+
+    return others
+
+
 def convert_module(sm, inst):
     body = inst.body
     span = sym_span(sm, body) or sym_span(sm, inst)
-    members = list(_elaborated_members(sm, body))
+    hierarchy = {"instances": 0, "seen": False, "timescale": str(body.definition.timeScale)}
+    members = list(_elaborated_members(sm, body, context=hierarchy))
     _register_elaborated_bindings(members, inst.name)
     elaborated = any(str(m.kind) in (
         "SymbolKind.GenerateBlock", "SymbolKind.GenerateBlockArray",
@@ -5487,7 +5570,8 @@ def convert_module(sm, inst):
                     declarations = converted if isinstance(converted, list) else [converted]
                     for declaration in declarations:
                         reads = _converted_ident_names(declaration.get("init"))
-                        if reads and (route or any(name.startswith("$generate:") for name in reads)):
+                        if reads and (route or any(name.startswith(("$generate:", "$hierarchy:"))
+                                                 for name in reads)):
                             decls.append(unsupported(sm, m, "Generate:initializer-order"))
                         else:
                             decls.append(declaration)
@@ -5523,36 +5607,14 @@ def convert_module(sm, inst):
         finally:
             if route:
                 for node in decls[previous_sizes[0]:] + processes[previous_sizes[1]:]:
-                    node["generated_scope"] = list(route)
+                    key = "instance_scope" if route[0] == "$hierarchy" else "generated_scope"
+                    node[key] = list(route)
             _ELAB_CURRENT_SCOPE = ""
 
     processes = _hoist_static_local_arrays(processes, decls)
     processes = _lower_plusargs_processes(processes)
     decls = _lower_plusargs_processes(decls)
-    if _generated_storage_collision(ports, decls, processes, "$intra:"):
-        others.append({"kind": "Unsupported", "span": span,
-                       "sv_kind": "IntraAssignment:storage-collision",
-                       "text": "generated captured-value storage collides with a binding"})
-    if _generated_storage_collision(ports, decls, processes, "$compound:"):
-        others.append({"kind": "Unsupported", "span": span,
-                       "sv_kind": "AssignmentExpression:compound-storage-collision",
-                       "text": "generated operator-assignment storage collides with a binding"})
-    if _generated_storage_collision(ports, decls, processes, "$plusargs:"):
-        others.append({"kind": "Unsupported", "span": span,
-                       "sv_kind": "Plusargs:storage-collision",
-                       "text": "generated input-query storage collides with a binding"})
-    if _generated_storage_collision(ports, decls, processes, "$local_array:"):
-        others.append({"kind": "Unsupported", "span": span,
-                       "sv_kind": "VariableDeclStatement:array-storage-collision",
-                       "text": "generated local array storage collides with a binding"})
-    if _generated_storage_collision(ports, decls, processes, "$foreach:"):
-        others.append({"kind": "Unsupported", "span": span,
-                       "sv_kind": "ForeachLoopStatement:storage-collision",
-                       "text": "generated iterator storage collides with a binding"})
-    if _generated_storage_collision(ports, decls, processes, "$generate:"):
-        others.append({"kind": "Unsupported", "span": span,
-                       "sv_kind": "Generate:storage-collision",
-                       "text": "generated scope storage collides with a source binding"})
+    others.extend(_module_storage_collisions(ports, decls, processes, span))
 
     # Constant continuous windows are storage-only in the legacy runner too;
     # reject static overlap before it could be mistaken for net resolution.
@@ -5569,6 +5631,8 @@ def convert_module(sm, inst):
     }
     if elaborated:
         module["elaboration_lowered"] = True
+    if hierarchy["seen"]:
+        module["hierarchy_lowered"] = True
     return module
 
 
@@ -5892,6 +5956,17 @@ def _selected_compilation_barriers(sm, comp):
     return barriers
 
 
+def _hierarchy_compilation_barriers(sm, comp, modules):
+    if not any(_node_marker(module, "hierarchy_lowered") for module in modules):
+        return []
+    if any(diagnostic.isError() or str(diagnostic.code) in (
+            "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
+           for diagnostic in comp.getAllDiagnostics()):
+        return [unsupported(sm, comp, "Hierarchy:invalid-compilation",
+                            "frontend rejected an elaborated module hierarchy")]
+    return []
+
+
 def _convert_design(sm, comp, packages):
     modules = []
     others = []
@@ -5964,6 +6039,7 @@ def _convert_design(sm, comp, packages):
         others.append(unsupported(sm, comp, "$clog2:constant-context",
                                   "unresolved or unknown clog2 elaboration argument"))
     others.extend(_selected_compilation_barriers(sm, comp))
+    others.extend(_hierarchy_compilation_barriers(sm, comp, modules))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",

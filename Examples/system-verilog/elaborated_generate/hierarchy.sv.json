@@ -20,7 +20,41 @@
         },
         "name": "top",
         "ports": [],
-        "decls": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 16
+            },
+            "name": "$hierarchy:3:top:10:$hierarchy:1:0:14:instance_value:20:value",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 15,
+                  "end_line": 2,
+                  "end_col": 16
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000101"
+              }
+            },
+            "signed": true,
+            "instance_scope": [
+              "$hierarchy",
+              "0",
+              "instance_value"
+            ]
+          }
+        ],
         "processes": [
           {
             "kind": "Initial",
@@ -51,15 +85,17 @@
                   "format": "instance %0d",
                   "args": [
                     {
-                      "kind": "Unsupported",
+                      "kind": "Ident",
                       "span": {
                         "line": 6,
                         "col": 42,
                         "end_line": 6,
                         "end_col": 62
                       },
-                      "sv_kind": "HierarchicalValueExpression",
-                      "text": "instance_value.value"
+                      "width": 32,
+                      "name": "$hierarchy:3:top:10:$hierarchy:1:0:14:instance_value:20:value",
+                      "signed": true,
+                      "elaboration_lowered": true
                     }
                   ],
                   "arg_signed": [
@@ -83,19 +119,8 @@
             }
           }
         ],
-        "others": [
-          {
-            "kind": "Unsupported",
-            "span": {
-              "line": 5,
-              "col": 9,
-              "end_line": 5,
-              "end_col": 25
-            },
-            "sv_kind": "InstanceSymbol:Instance",
-            "text": "instance_value()"
-          }
-        ]
+        "others": [],
+        "hierarchy_lowered": true
       }
     ],
     "others": []

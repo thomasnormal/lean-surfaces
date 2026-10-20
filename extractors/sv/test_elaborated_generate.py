@@ -123,12 +123,12 @@ class ElaboratedGenerate(unittest.TestCase):
                        'module top; parameter int N=1; int x; int x; endmodule'):
             self.assertIn('Elaboration:invalid-compilation', walls(lower(source, require_valid=False)))
 
-    def test_active_unsupported_members_and_cross_instance_hierarchy_stay_loud(self):
+    def test_active_unsupported_members_stay_loud_and_portless_hierarchy_lowers(self):
         d = lower('module top; if(1)begin:g function int f(); return 1; endfunction end endmodule')
         self.assertIn('SubroutineSymbol:Subroutine', walls(d))
         d = lower('module child; int x; endmodule module top; child u(); initial u.x=1; endmodule')
-        self.assertIn('InstanceSymbol:Instance', walls(d))
-        self.assertTrue(any('Hierarchical' in str(w) or 'target' in str(w) for w in walls(d)))
+        self.assertFalse(walls(d))
+        self.assertTrue(d['modules'][0]['hierarchy_lowered'])
 
     def test_generated_storage_collision_cannot_capture_a_source_binding(self):
         source = 'module top; if(1)begin:g int x; end '

@@ -16,39 +16,39 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    3964
-   ],
-   [
-    "InstanceSymbol:Instance",
-    3914
+    4032
    ],
    [
     "ExpressionStatement:CallExpression",
-    3744
+    3785
    ],
    [
     "CallExpression",
-    3463
+    3485
    ],
    [
     "VariableSymbol:2state",
-    3458
+    3481
+   ],
+   [
+    "Hierarchy:ports",
+    2397
    ],
    [
     "VariableDeclStatement:2state",
-    2378
+    2383
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1664
+    1725
    ],
    [
     "NamedValueExpression:2state",
-    1480
+    1486
    ],
    [
     "ConcurrentAssertionStatement",
-    1352
+    1355
    ],
    [
     "ClassType",
@@ -56,23 +56,27 @@
    ],
    [
     "InvalidStatement",
-    1316
+    1326
    ],
    [
     "MemberAccessExpression",
-    1187
+    1190
+   ],
+   [
+    "Hierarchy:module-kind",
+    1165
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
-    1055
-   ],
-   [
-    "HierarchicalValueExpression",
-    864
+    1054
    ],
    [
     "ConversionExpression:width",
-    776
+    781
+   ],
+   [
+    "HierarchicalValueExpression",
+    770
    ],
    [
     "CovergroupType:CovergroupType",
@@ -84,7 +88,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    659
+    661
    ],
    [
     "CheckerSymbol",
@@ -92,19 +96,19 @@
    ],
    [
     "ClockingBlockSymbol:ClockingBlock",
-    560
+    564
    ],
    [
     "CheckerInstanceSymbol:CheckerInstance",
-    541
+    543
    ],
    [
     "ClassType:ClassType",
-    509
+    511
    ],
    [
     "PropertySymbol:Property",
-    470
+    471
    ],
    [
     "PrimitiveSymbol",
@@ -112,19 +116,27 @@
    ],
    [
     "SignalEventControl:clock",
-    320
+    352
+   ],
+   [
+    "Hierarchy:invalid-compilation",
+    333
    ],
    [
     "BlockStatement:JoinAll",
-    319
+    321
    ],
    [
     "TypeAliasType:TypeAlias",
-    297
+    298
    ],
    [
     "SequenceSymbol:Sequence",
     284
+   ],
+   [
+    "InterfacePortSymbol:InterfacePort",
+    282
    ],
    [
     "ConfigBlockSymbol",
@@ -136,43 +148,39 @@
    ],
    [
     "BlockStatement:JoinNone",
-    225
+    226
    ],
    [
     "Always:invalid-compilation",
-    220
+    224
    ],
    [
     "Package:Subroutine",
     193
    ],
    [
-    "InstanceArraySymbol:InstanceArray",
-    192
+    "TimedStatement:DelayControl:expression",
+    168
    ],
    [
     "NamedValueExpression:ClockVar",
-    167
-   ],
-   [
-    "TimedStatement:DelayControl:expression",
-    163
+    168
    ],
    [
     "GenericClassDefSymbol",
     146
    ],
    [
+    "TimedStatement:CycleDelayControl",
+    145
+   ],
+   [
     "Package:invalid-compilation",
     145
    ],
    [
-    "TimedStatement:CycleDelayControl",
-    143
-   ],
-   [
     "VariableSymbol:type",
-    135
+    139
    ],
    [
     "ForeachLoopStatement:array",
@@ -187,24 +195,32 @@
     116
    ],
    [
+    "ProceduralAssignStatement",
+    112
+   ],
+   [
     "EventTriggerStatement",
     110
    ],
    [
-    "ProceduralAssignStatement",
-    109
+    "Elaboration:invalid-compilation",
+    103
    ],
    [
-    "Elaboration:invalid-compilation",
-    99
+    "ExtractorInternal:AttributeError",
+    100
    ],
    [
     "IntraAssignment:publication-or-context",
     95
    ],
    [
+    "Parameter:integral-value",
+    94
+   ],
+   [
     "ProceduralBlockSymbol:Final",
-    88
+    89
    ],
    [
     "ProceduralDeassignStatement",
@@ -215,10 +231,6 @@
     80
    ],
    [
-    "Parameter:integral-value",
-    76
-   ],
-   [
     "VariableSymbol",
     76
    ],
@@ -227,20 +239,20 @@
     72
    ],
    [
-    "NetSymbol:Tri",
-    67
+    "WaitStatement",
+    65
    ],
    [
     "NamedValueExpression:ClassProperty",
     65
    ],
    [
-    "WaitStatement",
-    64
-   ],
-   [
     "TypeAlias:invalid-compilation",
     61
+   ],
+   [
+    "NetSymbol:Tri",
+    59
    ],
    [
     "EmptyMemberSymbol:EmptyMember",
@@ -255,7 +267,15 @@
     55
    ],
    [
+    "TimedStatement:ImplicitEventControl",
+    54
+   ],
+   [
     "WhileLoopStatement:condition",
+    54
+   ],
+   [
+    "SpecifyBlockSymbol:SpecifyBlock",
     54
    ],
    [
@@ -275,11 +295,7 @@
     52
    ],
    [
-    "SpecifyBlockSymbol:SpecifyBlock",
-    50
-   ],
-   [
-    "TimedStatement:ImplicitEventControl",
+    "DefParamSymbol:DefParam",
     49
    ],
    [
@@ -292,10 +308,14 @@
    ],
    [
     "TimeLiteral",
-    46
+    48
    ],
    [
     "Loop:invalid-compilation",
+    45
+   ],
+   [
+    "CaseStatement:Unique",
     45
    ],
    [
@@ -307,11 +327,7 @@
     45
    ],
    [
-    "CaseStatement:Unique",
-    43
-   ],
-   [
-    "DefParamSymbol:DefParam",
+    "WaitForkStatement",
     41
    ],
    [
@@ -323,10 +339,6 @@
     40
    ],
    [
-    "WaitForkStatement",
-    40
-   ],
-   [
     "NetSymbol:UserDefined",
     39
    ],
@@ -335,7 +347,15 @@
     39
    ],
    [
+    "NamedValueExpression:Parameter",
+    39
+   ],
+   [
     "TimedStatement:EventListControl",
+    38
+   ],
+   [
+    "LetDeclSymbol:LetDecl",
     38
    ],
    [
@@ -343,16 +363,8 @@
     38
    ],
    [
-    "NamedValueExpression:Parameter",
-    37
-   ],
-   [
-    "LetDeclSymbol:LetDecl",
-    36
-   ],
-   [
     "BlockStatement:JoinAny",
-    36
+    37
    ],
    [
     "Enum:invalid-compilation",
@@ -380,6 +392,10 @@
    ],
    [
     "NetSymbol:delay",
+    27
+   ],
+   [
+    "Hierarchy:timescale",
     27
    ],
    [
@@ -415,6 +431,10 @@
     21
    ],
    [
+    "InvalidExpression",
+    21
+   ],
+   [
     "Package:storage-type",
     21
    ],
@@ -427,10 +447,6 @@
     20
    ],
    [
-    "InvalidExpression",
-    20
-   ],
-   [
     "RepeatLoopStatement:body-lifetime",
     20
    ],
@@ -439,12 +455,12 @@
     20
    ],
    [
-    "ForwardingTypedefSymbol",
+    "TypeParameterSymbol:TypeParameter",
     18
    ],
    [
-    "NetSymbol:range",
-    17
+    "ForwardingTypedefSymbol",
+    18
    ],
    [
     "TransparentMemberSymbol",
@@ -463,6 +479,10 @@
     16
    ],
    [
+    "NetSymbol:Interconnect",
+    15
+   ],
+   [
     "ConversionExpression:StreamingConcat",
     15
    ],
@@ -479,7 +499,7 @@
     15
    ],
    [
-    "NetSymbol:Interconnect",
+    "ContinuousAssignSymbol:InvalidExpression",
     14
    ],
    [
@@ -523,10 +543,6 @@
     12
    ],
    [
-    "ContinuousAssignSymbol:InvalidExpression",
-    11
-   ],
-   [
     "UnaryExpression:Preincrement",
     11
    ],
@@ -567,6 +583,10 @@
     10
    ],
    [
+    "CheckerSymbol:Checker",
+    10
+   ],
+   [
     "Plusargs:integral-format",
     10
    ],
@@ -576,10 +596,6 @@
    ],
    [
     "AssignmentExpression:selected-effects",
-    9
-   ],
-   [
-    "CheckerSymbol:Checker",
     9
    ],
    [
@@ -619,11 +635,11 @@
     7
    ],
    [
-    "Package:Net",
+    "NetSymbol:range",
     7
    ],
    [
-    "TypeParameterSymbol:TypeParameter",
+    "Package:Net",
     7
    ],
    [
@@ -755,10 +771,6 @@
     3
    ],
    [
-    "InterfacePortSymbol:InterfacePort",
-    3
-   ],
-   [
     "Package:ForwardingTypedef",
     3
    ],
@@ -772,6 +784,10 @@
    ],
    [
     "Package:EmptyMember",
+    3
+   ],
+   [
+    "Generate:initializer-order",
     3
    ],
    [
@@ -895,6 +911,10 @@
     1
    ],
    [
+    "Hierarchy:instance-limit",
+    1
+   ],
+   [
     "PortSymbol:net-initializer",
     1
    ],
@@ -956,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 4098,
-   "partial": 17871,
+   "clean": 4296,
+   "partial": 17673,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    385,
+    411,
     1387
    ],
    "compilation": [
@@ -1018,11 +1038,11 @@
     52
    ],
    "simulation": [
-    3532,
+    3702,
     18671
    ],
    "simulation elaboration": [
-    0,
+    2,
     4
    ],
    "syntax": [
@@ -1033,14 +1053,14 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 273,
-    "clean": 717,
-    "partial": 274,
+    "blocked_by_more": 272,
+    "clean": 718,
+    "partial": 273,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      141
+      140
      ],
      [
       "VariableDeclStatement:2state",
@@ -1122,18 +1142,18 @@
     "unlockable": 1
    },
    "chapter-4": {
-    "blocked_by_more": 238,
-    "clean": 185,
-    "partial": 238,
+    "blocked_by_more": 237,
+    "clean": 186,
+    "partial": 237,
     "simulation_tests": 423,
     "top_residual_blockers": [
      [
       "TimedStatement:DelayControl",
-      183
+      182
      ],
      [
       "InstanceSymbol:Instance",
-      51
+      50
      ],
      [
       "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -1172,11 +1192,11 @@
       15
      ],
      [
-      "StringLiteral:encoding",
-      14
+      "SignalEventControl:None_",
+      13
      ],
      [
-      "SignalEventControl:None_",
+      "StringLiteral:encoding",
       13
      ],
      [
@@ -1211,14 +1231,14 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 640,
-    "clean": 401,
-    "partial": 640,
+    "blocked_by_more": 630,
+    "clean": 411,
+    "partial": 630,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      231
+      230
      ],
      [
       "VariableSymbol:2state",
@@ -1250,7 +1270,7 @@
      ],
      [
       "InstanceSymbol:Instance",
-      67
+      57
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
@@ -1300,20 +1320,71 @@
     "unlockable": 0
    }
   },
-  "extractor_internal_files": [],
+  "extractor_internal_files": [
+   "chapter-28/28.10--pulldown-array-vector-net.sv",
+   "chapter-28/28.10--pullup-array-vector-net.sv",
+   "chapter-28/28.12--gate-array-and.sv",
+   "chapter-28/28.12--gate-array-basic.sv",
+   "chapter-28/28.12--gate-array-bufif1.sv",
+   "chapter-28/28.12--gate-array-nmos.sv",
+   "chapter-28/28.12--gate-array-nor.sv",
+   "chapter-28/28.12--gate-array-or.sv",
+   "chapter-28/28.12--gate-array-with-delay.sv",
+   "chapter-28/28.12--gate-array-xnor.sv",
+   "chapter-28/28.12--gate-array-xor.sv",
+   "chapter-28/28.3.5--equal-range-generates-one-instance.sv",
+   "chapter-28/28.3.5--gate-array-equal-range-one-instance.sv",
+   "chapter-28/28.3.5--gate-array-equal-range-single-instance-v5.sv",
+   "chapter-28/28.3.5--gate-array-lhi-less-than-rhi-legal-v3.sv",
+   "chapter-28/28.3.5--gate-array-lhi-less-than-rhi-v5.sv",
+   "chapter-28/28.3.5--gate-array-nonzero-base-range.sv",
+   "chapter-28/28.3.5--gate-array-range-lhi-equals-rhi-single-instance-v3.sv",
+   "chapter-28/28.3.5--gate-array-range-produces-abs-count-instances.sv",
+   "chapter-28/28.3.5--gate-array-range-reverse-lhi-greater-than-rhi-v3.sv",
+   "chapter-28/28.3.5--gate-array-reversed-range.sv",
+   "chapter-28/28.3.5--primitive-array-four-state-terminal-history.sv",
+   "chapter-28/28.3.5--same-identifier-two-ranges-in-one-decl-is-illegal.sv",
+   "chapter-28/28.3.5--two-unique-gate-arrays-one-declaration.sv",
+   "chapter-28/28.3.6--gate-array-equal-range-single-instance.sv",
+   "chapter-28/28.3.6--gate-array-instance-individual-reference.sv",
+   "chapter-28/28.3.6--gate-array-nand.sv",
+   "chapter-28/28.3.6--gate-array-part-select-v5.sv",
+   "chapter-28/28.3.6--gate-array-port-bit-equals-expr-shared-to-all.sv",
+   "chapter-28/28.3.6--gate-array-range.sv",
+   "chapter-28/28.3.6--gate-array-reversed-range.sv",
+   "chapter-28/28.3.6--gate-array-scalar-broadcast-to-each-instance-v3.sv",
+   "chapter-28/28.3.6--gate-array-scalar-broadcast-v5.sv",
+   "chapter-28/28.3.6--gate-array-shared-input.sv",
+   "chapter-28/28.3.6--gate-array-vector-port-bit-split-lsb-rhi-v3.sv",
+   "chapter-28/28.3.6--lsb-connects-to-rhi-instance.sv",
+   "chapter-28/28.3.6--one-identifier-one-range-only.sv",
+   "chapter-28/28.3.6--selected-and-concatenated-terminal-distribution-four-state-history.sv",
+   "chapter-28/28.3.6--too-few-bits-array-connection-neg.sv",
+   "chapter-28/28.3.6--too-many-bits-array-connection-neg.sv",
+   "chapter-28/28.3.6.1--bufif1-array-output-part-select-control-vector.sv",
+   "chapter-28/28.3.6.1--cmos-array-vector-control-terminals.sv",
+   "chapter-28/28.3.6.1--gate-array-concat-data-scalar-control.sv",
+   "chapter-28/28.3.6.1--gate-array-concat-input-split.sv",
+   "chapter-28/28.3.6.1--gate-array-concat-output-split.sv",
+   "chapter-28/28.3.6.1--gate-array-connection-rules-bit-select.sv",
+   "chapter-28/28.3.6.1--gate-array-control-part-select-connection.sv",
+   "chapter-28/28.3.6.1--gate-array-expression-input-shared.sv",
+   "chapter-28/28.3.6.1--gate-array-input-part-select-split.sv",
+   "chapter-28/28.3.6.1--gate-array-output-part-select-connection.sv"
+  ],
   "per_chapter": {
    "chapter-10": {
-    "clean": 245,
+    "clean": 248,
     "error": 0,
-    "partial": 412,
+    "partial": 409,
     "skip_include": 0,
     "total": 657,
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 721,
+    "clean": 722,
     "error": 0,
-    "partial": 313,
+    "partial": 312,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1351,9 +1422,9 @@
     "unlockable": 0
    },
    "chapter-16": {
-    "clean": 48,
+    "clean": 50,
     "error": 0,
-    "partial": 1495,
+    "partial": 1493,
     "skip_include": 0,
     "total": 1543,
     "unlockable": 0
@@ -1383,9 +1454,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 212,
+    "clean": 214,
     "error": 0,
-    "partial": 613,
+    "partial": 611,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1399,17 +1470,17 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 382,
+    "clean": 385,
     "error": 0,
-    "partial": 162,
+    "partial": 159,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 59,
+    "clean": 170,
     "error": 0,
-    "partial": 792,
+    "partial": 681,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
@@ -1431,17 +1502,17 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 151,
+    "clean": 165,
     "error": 0,
-    "partial": 414,
+    "partial": 400,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 165,
+    "clean": 176,
     "error": 0,
-    "partial": 189,
+    "partial": 178,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1463,9 +1534,9 @@
     "unlockable": 0
    },
    "chapter-3": {
-    "clean": 46,
+    "clean": 54,
     "error": 0,
-    "partial": 253,
+    "partial": 245,
     "skip_include": 1,
     "total": 300,
     "unlockable": 0
@@ -1527,17 +1598,17 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 119,
+    "clean": 136,
     "error": 0,
-    "partial": 298,
+    "partial": 281,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
    },
    "chapter-38": {
-    "clean": 204,
+    "clean": 211,
     "error": 0,
-    "partial": 136,
+    "partial": 129,
     "skip_include": 0,
     "total": 340,
     "unlockable": 0
@@ -1551,9 +1622,9 @@
     "unlockable": 0
    },
    "chapter-4": {
-    "clean": 186,
+    "clean": 187,
     "error": 0,
-    "partial": 241,
+    "partial": 240,
     "skip_include": 0,
     "total": 427,
     "unlockable": 0
@@ -1567,17 +1638,17 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 362,
+    "clean": 368,
     "error": 0,
-    "partial": 256,
+    "partial": 250,
     "skip_include": 0,
     "total": 618,
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 413,
+    "clean": 425,
     "error": 0,
-    "partial": 772,
+    "partial": 760,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 2

@@ -13,12 +13,12 @@ legacy elaborated frontend and existing vector/process semantics.
 | `parameters.sv` | `parameters 10xz -3 c7 -3` | Exact four-state, signed and hierarchical parameter constants |
 | `choices.sv` | `choices 1 2 3` | Definite-one and ambiguous truthiness, exact X/Z case selection |
 | `member.sv` | `active member` | Deliberate active subroutine-member refusal |
-| `hierarchy.sv` | `instance 5` | Deliberate cross-instance storage refusal |
+| `hierarchy.sv` | `instance 5` | Portless instance storage, admitted by the static hierarchy rung |
 | `dependent.sv` | `dependent 6` | Deliberate dependent static-initialization refusal |
 
-Final independent observations dated 2026-10-20 use `["-ii_val"]`. All seven
+Final independent observations dated 2026-10-20 use `["-ii_val"]`. All eight
 runnable sources agree completely under both schedule oracles; `parameters`
-and `choices` also agree with the time-zero runner. The three other sources
+and `choices` plus `hierarchy` also agree with the time-zero runner. The two other sources
 are deliberate model refusals and are not counted as execution matches.
 There is no output projection or additional filtering. Decimal values print
 directly as signed 32-bit integers; binary/hex values retain declared widths.

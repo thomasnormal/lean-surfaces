@@ -1422,3 +1422,18 @@ choice. Typical is the default. A nondefault envelope appends top-level
 this field. Symbolic constant folding is unchanged; nonconstant symbolic
 choices remain loud and the CLI rejects nondefault symbolic modes. See
 [the contract](sv-min-typ-max.md) for selected-only admission and boundaries.
+
+## Static module hierarchy
+
+The legacy `sv-0.1` frontend flattens admitted concrete portless module
+instances into the enclosing module's ordinary declarations/processes. The
+module carries `hierarchy_lowered: true`; emitted declarations and processes
+carry `instance_scope`, a string array describing their structural route.
+Generated storage starts with `$hierarchy:` and a length-prefixed scope key.
+References use bound declaration identity; no runtime hierarchy lookup or port
+copy is implied. Existing expression/statement JSON remains authoritative.
+
+Child ports, interface/program instances, differing timescales, expansion
+limits, invalid source and unsupported active members retain explicit walls.
+The loader still requires one top module. Symbolic extraction is unchanged.
+See [the contract](sv-module-hierarchy.md) for initialization and scope rules.

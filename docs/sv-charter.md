@@ -2581,10 +2581,10 @@ semantic fixtures do not claim a legacy census gain or simulator agreement.
 ### Symbolic packed-struct typedef metadata — 2026-10-19
 
 Typedefs naming an untagged packed struct are now treated as compile-time
-metadata in the same narrow path. `packed_member_typedef` checks that the
-canonical vector width and fixed member offsets survive alias removal. Tagged,
-tagged-union and unresolved type aliases remain loud, and the semantic fixture
-does not claim a legacy census gain or simulator agreement.
+metadata in the same narrow path. `packed_member_typedef` and
+`packed_union_typedef` check that canonical vector widths survive alias
+removal. Tagged, tagged-union and unresolved type aliases remain loud, and the
+semantic fixtures do not claim a legacy census gain or simulator agreement.
 
 ### Symbolic nested packed-member windows — 2026-10-19
 

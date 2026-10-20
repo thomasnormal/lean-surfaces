@@ -906,6 +906,10 @@ The `packed_union_assign` fixture checks direct untagged packed-union aliasing:
 one field is driven, while a same-width alternate field and the whole union
 read the same vector bits. Tagged and nested unions remain outside this slice.
 
+The `packed_union_typedef` fixture covers the same aliasing through an
+untagged packed-union typedef; the alias is erased while the vector width is
+retained.
+
 The `indexed_part_assign` fixture covers literal indexed part-selects. Both
 `+:` and `-:` forms normalize to the same fixed windows, while dynamic bases
 remain loud; this is a semantic-tier fixture with no legacy census change.

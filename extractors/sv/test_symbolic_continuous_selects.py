@@ -105,6 +105,16 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual([proc["kind"] for proc in module["processes"]],
                          ["Assign", "Assign", "Assign"])
 
+    def test_packed_union_typedef_is_compile_time_metadata(self):
+        envelope = self.extract(
+            "module top(input logic [7:0] source, output logic [7:0] out); "
+            "typedef union packed { logic [7:0] bytes; logic [7:0] alt; } U; "
+            "U value; assign value.bytes = source; assign out = value; endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual([decl["kind"] for decl in module["decls"]], ["Var"])
+        self.assertEqual([proc["kind"] for proc in module["processes"]],
+                         ["Assign", "Assign"])
+
 
 if __name__ == "__main__":
     unittest.main()

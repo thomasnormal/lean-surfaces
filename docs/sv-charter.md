@@ -2772,6 +2772,13 @@ now accumulate fixed declaration offsets before emitting an outer window.
 Nested unions, direction mismatches, dynamic and effectful paths remain loud;
 no aggregate store or scheduler is added.
 
+### Symbolic nested packed-member bit selects — 2026-10-20
+
+Literal bit-selects of final members in nested untagged packed-struct chains
+now use accumulated fixed declaration offsets. `nested_member_bit` checks the
+bit window with four-state propagation. Nested unions, dynamic and effectful
+paths remain loud; no aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

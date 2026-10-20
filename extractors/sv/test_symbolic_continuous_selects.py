@@ -325,6 +325,17 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual((processes[0]["target"]["msb"]["value"],
                           processes[0]["target"]["lsb"]["value"]), (5, 4))
 
+    def test_nested_member_bit_flattens_offsets(self):
+        envelope = self.extract(
+            "module top(input logic source, output logic [3:0] out); "
+            "struct packed { struct packed { logic [3:0] hi; "
+            "logic [3:0] lo; } inner; } value; "
+            "assign value.inner.hi[0] = source; "
+            "assign out = value.inner.hi; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual((processes[0]["target"]["msb"]["value"],
+                          processes[0]["target"]["lsb"]["value"]), (4, 4))
+
     def test_noncanonical_constant_parts_normalize_offsets(self):
         envelope = self.extract(
             "module top(input logic [10:3] source, output logic [10:3] value); "

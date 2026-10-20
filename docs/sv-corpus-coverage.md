@@ -1013,6 +1013,10 @@ two-level untagged packed-struct chain. Recursive fixed offsets flatten to the
 outer window with x propagation; nested unions, direction mismatches, dynamic
 and effectful paths remain loud.
 
+The `nested_member_bit` fixture checks a literal bit of the same nested member
+chain. Recursive offsets flatten to the one-bit outer window with x
+propagation; nested unions, dynamic and effectful paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

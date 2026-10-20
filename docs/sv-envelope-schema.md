@@ -443,6 +443,10 @@ before lowering a literal indexed selection of the final member;
 `nested_member_indexed` pins the indexed case. Nested unions, direction
 mismatches, dynamic and effectful paths remain unsupported.
 
+The same accumulated offsets lower a literal bit-select of a final nested
+member to a one-bit outer window; `nested_member_bit` pins the bit case. Nested
+unions, dynamic and effectful paths remain unsupported.
+
 Literal bit-selects through an untagged packed-struct typedef use the same
 noncanonical declaration-label offsets after alias erasure;
 `noncanonical_typedef_bit` pins the accepted case. Dynamic and effectful alias

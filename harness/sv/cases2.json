@@ -296,6 +296,16 @@
    ]
   },
   {
+   "name": "nested_member_bit",
+   "example": "sem2/nested_member_bit",
+   "top": "nested_member_bit",
+   "signals": ["source", "out"],
+   "stimulus": [
+    {"source": "1"},
+    {"source": "x"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

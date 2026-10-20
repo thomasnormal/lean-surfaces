@@ -88,17 +88,29 @@ inductive IntegralMemberCallError where
 
 namespace IntegralMemberCall
 
+private def projectionReceiverType (projection : ClassReceiverProjection) :
+    Except IntegralMemberCallError String := do
+  let slots ← projection.hierarchy.slots.mapError
+    (fun reason => IntegralMemberCallError.projection (.hierarchy reason))
+  let some slot := slots.find? (·.path == projection.receiverPath)
+    | throw (.projection .absentReceiver)
+  let some shape := projection.hierarchy.classes.find? (·.declaration == slot.declaration)
+    | throw (.projection .malformedWorld)
+  unless !shape.name.isEmpty do throw .receiverTypeMismatch
+  pure (shape.name ++ " *")
+
 /-- Bind source handles to an already admitted getter and receiver projection.
 No overload lookup or method selection is performed here. -/
 def bind (evidence : IntegralMemberCallSyntax) (getter : IntegralMemberGetter)
-    (receiver : FrontendHandle) (receiverType : String)
+    (receiver : FrontendHandle)
     (projection : ClassReceiverProjection) :
     Except IntegralMemberCallError IntegralMemberCall := do
   unless evidence.method == ⟨getter.occurrence.id⟩ do throw .methodMismatch
   unless getter.occurrence.name == some evidence.name do throw .nameMismatch
   unless evidence.receiver == receiver do throw .receiverMismatch
-  unless evidence.receiverType == receiverType do throw .receiverTypeMismatch
   projection.check getter |>.mapError .projection
+  let receiverType ← projectionReceiverType projection
+  unless evidence.receiverType == receiverType do throw .receiverTypeMismatch
   pure {getter, projection, syntaxEvidence := evidence}
 
 def invoke (call : IntegralMemberCall) :

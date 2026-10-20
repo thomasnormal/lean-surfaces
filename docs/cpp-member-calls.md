@@ -9,10 +9,12 @@ receiver `DeclRefExpr` with its own handle and qualified type spelling. A second
 refuses as `unsupportedArguments`; missing or computed receiver evidence stays
 loud.
 
-`IntegralMemberCall.bind` takes the expected receiver handle and type, an
-already admitted `IntegralMemberGetter`, and a caller-supplied
-`ClassReceiverProjection`. It checks the method handle, source name, receiver
-handle and receiver type exactly, then checks the projection with the getter. Invocation
+`IntegralMemberCall.bind` takes the expected receiver handle, an already
+admitted `IntegralMemberGetter`, and a caller-supplied
+`ClassReceiverProjection`. It checks the method handle and source name, checks
+the receiver handle, derives the selected class name from the projection's
+receiver path, and compares its pointer spelling to the retained receiver
+type. It then checks the projection with the getter. Invocation
 delegates to `ClassReceiverProjection.invoke`, so the existing object identity,
 constness, lifetime, field ownership, conversion and memory-preservation
 rules remain authoritative. The retained syntax is provenance only.

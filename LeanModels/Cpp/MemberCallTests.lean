@@ -70,7 +70,7 @@ private def observed (raw : Raw) : Option Int :=
   match IntegralMemberCallSyntax.admit raw with
   | .error _ => none
   | .ok evidence =>
-      match IntegralMemberCall.bind evidence getter receiverHandle "Owner *" projection with
+      match IntegralMemberCall.bind evidence getter receiverHandle projection with
       | .error _ => none
       | .ok call =>
           match call.invoke with
@@ -82,16 +82,17 @@ private def bindingError (raw : Raw) : Option IntegralMemberCallError :=
   match IntegralMemberCallSyntax.admit raw with
   | .error _ => none
   | .ok evidence =>
-      match IntegralMemberCall.bind evidence getter receiverHandle "Owner *" projection with
+      match IntegralMemberCall.bind evidence getter receiverHandle projection with
       | .error reason => some reason
       | .ok _ => none
 
-private def bindingTypeError (raw : Raw) (receiverType : String) :
-    Option IntegralMemberCallError :=
+private def bindingTypeError (raw : Raw) : Option IntegralMemberCallError :=
   match IntegralMemberCallSyntax.admit raw with
   | .error _ => none
   | .ok evidence =>
-      match IntegralMemberCall.bind evidence getter receiverHandle receiverType projection with
+      let other := {projection with hierarchy := {hierarchy with classes :=
+        (hierarchy.classes.modify 0 (fun shape => {shape with name := "Other"}))}}
+      match IntegralMemberCall.bind evidence getter receiverHandle other with
       | .error reason => some reason
       | .ok _ => none
 
@@ -129,7 +130,7 @@ private def bindingTypeError (raw : Raw) (receiverType : String) :
 #guard bindingError (rawCall "0xf" receiverHandle.value "read") == some .methodMismatch
 #guard bindingError (rawCall methodHandle.value receiverHandle.value "other") == some .nameMismatch
 #guard bindingError (rawCall methodHandle.value "0xe" "read") == some .receiverMismatch
-#guard bindingTypeError (rawCall methodHandle.value receiverHandle.value "read") "Other *" ==
+#guard bindingTypeError (rawCall methodHandle.value receiverHandle.value "read") ==
   some .receiverTypeMismatch
 
 end LeanModels.Cpp.MemberCallTests

@@ -441,8 +441,10 @@ mutual
               match bodyResult.result with
               | .error reason => failure bodyResult.frame reason
               | .ok .break_ => success bodyResult.frame .normal
-              | .ok (.returned result) | .ok (.failed result) =>
+              | .ok (.returned result) =>
                   success bodyResult.frame (.returned result)
+              | .ok (.failed result) =>
+                  success bodyResult.frame (.failed result)
               | .ok .normal | .ok .continue_ =>
                   let stepResult := evalStatement fuel profile bodyResult.frame step
                   match stepResult.result with

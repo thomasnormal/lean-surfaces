@@ -96,6 +96,28 @@ private def loopLocalReentry : Bool :=
       | _ => false
   | .error _ => false
 
+private def forBodyFailureRetainsFrame : Bool :=
+  let one : TypedCallableExpression := {
+    expression := .integer 1, sourceType := intType, type := intType}
+  let zero : TypedCallableExpression := {
+    expression := .integer 0, sourceType := intType, type := intType}
+  let failingExpression : TypedCallableExpression := {
+    expression := .binary "/" one zero,
+    sourceType := intType, type := intType}
+  let callable : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.forLoop .skip
+        {expression := .integer 1, sourceType := intType, type := intType}
+        .skip (.expression failingExpression))}
+  match CallableObjectFrame.start .lp64 callable [signed 7] with
+  | .ok started =>
+      let result := evaluateCallableObjectInFrame 32 started
+      result.frame.scopeDepth == 1 &&
+        match result.result with
+        | .ok (.undefined .divisionByZero) => true
+        | _ => false
+  | .error _ => false
+
 private def readsParameter : Bool :=
   match evaluateCallableObject 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .ok (.ok value) => value == signed 7
@@ -165,6 +187,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard localMutation
 #guard localIncrement
 #guard loopLocalReentry
+#guard forBodyFailureRetainsFrame
 #guard parserAdmitsAutomaticLocal
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

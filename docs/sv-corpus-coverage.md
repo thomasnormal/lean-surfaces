@@ -1026,6 +1026,11 @@ The `nested_noncanonical_bit` fixture checks `[10]` of that `[10:7]` final
 member. Recursive and local offsets flatten to the one-bit outer window with x
 propagation; dynamic and effectful paths remain loud.
 
+The `nested_member_concat` fixture checks one sampled RHS split across two
+disjoint slices of nested members. Recursive windows receive the high and low
+RHS pieces in source order with x propagation; dynamic, aliased, duplicate,
+overlapping and effectful leaves remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

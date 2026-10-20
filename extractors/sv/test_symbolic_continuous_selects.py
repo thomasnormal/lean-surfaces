@@ -358,6 +358,20 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual((processes[0]["target"]["msb"]["value"],
                           processes[0]["target"]["lsb"]["value"]), (7, 7))
 
+    def test_nested_member_concat_flattens_recursive_windows(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [3:0] hi, "
+            "output logic [3:0] lo); "
+            "struct packed { struct packed { logic [3:0] hi; "
+            "logic [3:0] lo; } inner; } value; "
+            "assign {value.inner.hi[1:0], value.inner.lo[1:0]} = source; "
+            "assign hi = value.inner.hi; assign lo = value.inner.lo; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["target"]["kind"], "ConcatTarget")
+        self.assertEqual([(part["msb"]["value"], part["lsb"]["value"])
+                          for part in processes[0]["target"]["parts"]],
+                         [(5, 4), (1, 0)])
+
     def test_noncanonical_constant_parts_normalize_offsets(self):
         envelope = self.extract(
             "module top(input logic [10:3] source, output logic [10:3] value); "

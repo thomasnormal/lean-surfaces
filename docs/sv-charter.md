@@ -2795,6 +2795,14 @@ now combine recursive and local declaration offsets before lowering.
 propagation. Dynamic and effectful paths remain loud; no aggregate store or
 scheduler is added.
 
+### Symbolic nested packed-member concatenations — 2026-10-20
+
+Nested fixed member selections may now be concatenation leaves. Their
+recursive windows retain one sampled RHS and existing MSB-to-LSB splitting;
+`nested_member_concat` checks disjoint slices and x propagation. Dynamic,
+aliased, duplicate, overlapping and effectful leaves remain loud; no aggregate
+store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

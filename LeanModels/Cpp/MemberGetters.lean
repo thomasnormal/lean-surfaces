@@ -11,6 +11,8 @@ structure IntegralMemberGetter where
   isConst : Bool
   conversions : List CppIntType
   result : CppIntType
+  /-- Canonical declaration identity retained from the validated probe. -/
+  canonical : FrontendHandle := ⟨occurrence.id⟩
   deriving Repr, BEq, Inhabited
 
 def integralMemberViewType (type : CppTypeEvidence) (constant : Bool) : CppTypeEvidence :=
@@ -196,7 +198,8 @@ def withEvidence (probe : DeclarationProbe) (types : List TypeEvidenceRow)
   unless expression.loaded && expression.type == .builtin result do
     throw "member getter: return conversion or value category mismatch"
   pure {
-    occurrence := admitted.occurrence, owner := root, field := expression.field,
+    occurrence := admitted.occurrence, canonical := row.canonical, owner := root,
+    field := expression.field,
     isConst := constant, conversions := expression.conversions, result}
 
 end MemberGetterAdmission

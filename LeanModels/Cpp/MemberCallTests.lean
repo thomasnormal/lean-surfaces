@@ -18,6 +18,21 @@ private def getter : IntegralMemberGetter := {
   field := {declaration := fieldHandle, name := "value", type := .builtin .int, isMutable := false},
   isConst := true, conversions := [], result := .int}
 
+private def declarationRow (id kind canonical : String) : DeclarationEvidenceRow := {
+  ordinal := 0, id := h id, kind, canonical := h canonical,
+  previous := none, semanticContext := none, lexicalContext := none,
+  implicit := false, dependentContext := false, owningModule := none,
+  functionShape := none, raw := .object []}
+
+private def probe (rows : List DeclarationEvidenceRow) : DeclarationProbe :=
+  {ast := .object [], metadata := .object [], declarations := rows}
+
+private def canonicalProbe : DeclarationProbe :=
+  probe [declarationRow methodHandle.value "CXXMethodDecl" "0xc0"]
+
+private def canonicalGetter : IntegralMemberGetter :=
+  {getter with canonical := h "0xc0"}
+
 private def projection : ClassReceiverProjection := {
   hierarchy, objects := [0], receiverPath := [],
   snapshot := {
@@ -119,6 +134,49 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 
 #guard (IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read")).isOk
 #guard observed (rawCall methodHandle.value receiverHandle.value "read") == some 7
+
+private def resolveCanonicalHandle (rows : List DeclarationEvidenceRow) : Option FrontendHandle :=
+  match IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read") with
+  | .error _ => none
+  | .ok evidence =>
+      match IntegralMemberCallSyntax.resolveCanonical (probe rows) evidence with
+      | .error _ => none
+      | .ok resolved => some resolved.canonicalMethod
+
+private def resolveCanonicalError (rows : List DeclarationEvidenceRow) :
+    Option IntegralMemberCallSyntaxError :=
+  match IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read") with
+  | .error reason => some reason
+  | .ok evidence =>
+      match IntegralMemberCallSyntax.resolveCanonical (probe rows) evidence with
+      | .error reason => some reason
+      | .ok _ => none
+
+private def observedCanonical : Option Int :=
+  match IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read") with
+  | .error _ => none
+  | .ok evidence =>
+      match IntegralMemberCallSyntax.resolveCanonical canonicalProbe evidence with
+      | .error _ => none
+      | .ok resolved =>
+          match IntegralMemberCall.bind resolved canonicalGetter receiverHandle projection with
+          | .error _ => none
+          | .ok call =>
+              match call.invoke with
+              | .ok (memory, value) =>
+                  if memory == projection.snapshot.memory then some value.value else none
+              | .error _ => none
+
+#guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0"] == some (h "0xc0")
+#guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
+    declarationRow methodHandle.value "CXXMethodDecl" "0xc0"] == some (h "0xc0")
+#guard resolveCanonicalError [] == some .canonicalMethodMissing
+#guard resolveCanonicalError [declarationRow methodHandle.value "FieldDecl" "0xc0"] ==
+  some .canonicalMethodMissing
+#guard resolveCanonicalError [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
+    declarationRow methodHandle.value "CXXMethodDecl" "0xc1"] == some .canonicalMethodAmbiguous
+#guard observedCanonical == some 7
+
 #guard syntaxError (rawObject []) == some .notMemberCall
 #guard syntaxError (rawObject [
   ("kind", rawText "CXXMemberCallExpr"), ("inner", .array [])]) ==

@@ -11,6 +11,8 @@ structure IntegralMemberCallSyntax where
   receiverType : String
   resultType : String
   name : String
+  /-- Canonical method identity, initially the occurrence handle. -/
+  canonicalMethod : FrontendHandle := method
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberCallSyntaxError where
@@ -20,6 +22,8 @@ inductive IntegralMemberCallSyntaxError where
   | unsupportedArguments
   | missingMethodHandle
   | unsupportedMethod
+  | canonicalMethodMissing
+  | canonicalMethodAmbiguous
   | missingReceiverHandle
   | malformedReceiverType
   | malformedResultType
@@ -83,6 +87,16 @@ def admit (raw : Raw) :
   let resultType ← resultSpelling raw
   pure {method, receiver, receiverType, resultType, name}
 
+/-- Resolve one retained method occurrence to exactly one canonical probe handle. -/
+def resolveCanonical (probe : DeclarationProbe) (evidence : IntegralMemberCallSyntax) :
+    Except IntegralMemberCallSyntaxError IntegralMemberCallSyntax := do
+  let candidates : List FrontendHandle := probe.declarations.filterMap fun row =>
+    if row.id == evidence.method && row.kind == "CXXMethodDecl" then some row.canonical else none
+  match candidates.eraseDups with
+  | [] => throw .canonicalMethodMissing
+  | [canonical] => pure {evidence with canonicalMethod := canonical}
+  | _ => throw .canonicalMethodAmbiguous
+
 end IntegralMemberCallSyntax
 
 structure IntegralMemberCall where
@@ -95,6 +109,7 @@ inductive IntegralMemberCallError where
   | methodMismatch
   | nameMismatch
   | receiverMismatch
+  | canonicalMethodMismatch
   | receiverTypeMismatch
   | resultTypeMismatch
   | projection (reason : ClassProjectionError)
@@ -136,6 +151,7 @@ def bind (evidence : IntegralMemberCallSyntax) (getter : IntegralMemberGetter)
     (projection : ClassReceiverProjection) :
     Except IntegralMemberCallError IntegralMemberCall := do
   unless evidence.method == ⟨getter.occurrence.id⟩ do throw .methodMismatch
+  unless evidence.canonicalMethod == getter.canonical do throw .canonicalMethodMismatch
   unless getter.occurrence.name == some evidence.name do throw .nameMismatch
   unless evidence.receiver == receiver do throw .receiverMismatch
   projection.check getter |>.mapError .projection

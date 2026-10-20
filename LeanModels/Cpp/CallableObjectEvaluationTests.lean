@@ -323,7 +323,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
   match parseCallableStatementWithLocals
       {ast := statement, metadata := .null, declarations := []}
       [{ordinal := 0, occurrence := declaration, canonical := declaration, type := intType}]
-      [localEvidence] [] .lp64 intType [parameter] statement with
+      [localEvidence] [] none .lp64 intType [parameter] statement with
   | .ok (.automatic admitted, scope) =>
       admitted.declarations == [declaration] &&
         scope.any (fun current => current.declaration == declaration)

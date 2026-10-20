@@ -25,6 +25,11 @@ ordered `BinaryOperator` operand rows against the same AST occurrence and
 direct-child handles, preserving both source and converted types so the
 explicit `TargetProfile` promotion bridge can check builtin integral rows;
 unsupported operand/result families stay in the refusal ledger.
+The optional `Clang::Expr type projection v1` supplement additionally retains
+structured types for individual expressions, including implicit cast
+destinations and promoted unary operands. Its strict occurrence/kind join and
+legacy compatibility rule are specified in the
+[type-evidence contract](../../docs/cpp-type-evidence.md).
 
 `LeanModels/Cpp/VariableEvidence.lean` validates a separately versioned,
 optional variable-storage and initializer supplement from the same probe.

@@ -92,4 +92,56 @@ def promotionChecks : Bool :=
   (compoundMetadata "CompoundAssignOperator")).isOk
 #guard (parseValidatedBinaryExpressionEvidence (compoundMetadata "UnaryOperator")) matches .error _
 
+private def expressionTypeRow (id kind : String) (type : Raw) : Raw := object [
+  ("occurrence", text id), ("kind", text kind), ("type", type)]
+
+private def typedProbe (rows : List Raw) : DeclarationProbe := {
+  probe with metadata := object [
+    ("expression_types_api", text "Clang::Expr type projection v1"),
+    ("expression_types", .array rows)]
+}
+
+private def literalType := expressionTypeRow "0x2" "IntegerLiteral" (builtin "int")
+
+-- A missing supplement is legacy; a present-empty supplement is still strict.
+#guard (parseValidatedExpressionTypeEvidence probe).toOption == some none
+#guard (parseValidatedExpressionTypeEvidence (typedProbe [])).toOption == some (some [])
+#guard (parseValidatedExpressionTypeEvidence (typedProbe [literalType, literalType])).isOk
+#guard match parseValidatedExpressionTypeEvidence (typedProbe [literalType]) with
+  | .ok (some rows) =>
+      (expressionTypeFor rows (object [("id", text "0x2"),
+        ("kind", text "IntegerLiteral")])).toOption == some (.builtin .int)
+  | _ => false
+#guard (expressionTypeFor [] (object [("id", text "0x2"),
+  ("kind", text "IntegerLiteral")])) matches .error _
+#guard (parseValidatedExpressionTypeEvidence {probe with metadata := object [
+  ("expression_types_api", text "Clang::Expr type projection v1")]} ) matches .error _
+#guard (parseValidatedExpressionTypeEvidence {probe with metadata := object [
+  ("expression_types", .array [])]} ) matches .error _
+#guard (parseValidatedExpressionTypeEvidence {probe with metadata := object [
+  ("expression_types_api", text "future"), ("expression_types", .array [])]} ) matches .error _
+#guard (parseValidatedExpressionTypeEvidence (typedProbe [
+  expressionTypeRow "0x2" "DeclRefExpr" (builtin "int")])) matches .error _
+#guard (parseValidatedExpressionTypeEvidence (typedProbe [literalType,
+  expressionTypeRow "0x2" "IntegerLiteral" (builtin "long")])) matches .error _
+#guard (parseValidatedExpressionTypeEvidence (typedProbe [
+  expressionTypeRow "0x2" "IntegerLiteral" (object [
+    ("kind", text "record"), ("declaration", text "0x99")])])) matches .error _
+-- A reference stub outside inner is not an occurrence witness.
+#guard (parseValidatedExpressionTypeEvidence {
+  typedProbe [expressionTypeRow "0x99" "IntegerLiteral" (builtin "int")] with
+  ast := object [("referencedDecl", object [("id", text "0x99"),
+    ("kind", text "IntegerLiteral")])]} ) matches .error _
+-- Every repeated AST occurrence must agree on kind.
+#guard (parseValidatedExpressionTypeEvidence {
+  typedProbe [literalType] with
+  ast := object [("inner", .array [
+    object [("id", text "0x2"), ("kind", text "IntegerLiteral")],
+    object [("id", text "0x2"), ("kind", text "DeclRefExpr")]])]} ) matches .error _
+
+#guard (expressionTypeFor [
+  ⟨⟨"0x2"⟩, "IntegerLiteral", .builtin .int⟩,
+  ⟨⟨"0x2"⟩, "IntegerLiteral", .builtin .long⟩]
+  (object [("id", text "0x2"), ("kind", text "IntegerLiteral")])) matches .error _
+
 end LeanModels.Cpp.ExpressionEvidenceTests

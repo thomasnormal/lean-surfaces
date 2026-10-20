@@ -1,6 +1,6 @@
 # Typed source-local callable functions
 
-2026-10-19. `LeanModels/Cpp/Callable.lean` extends the first **callable body
+2026-10-20. `LeanModels/Cpp/Callable.lean` extends the first **callable body
 admission** through the typed automatic-local declaration rule. It is
 intentionally a small, typed C++23 profile; it is not a C++ execution engine.
 A function is admitted only when its declaration, direct parameters,
@@ -36,7 +36,8 @@ decide the function signature.
 
 The return-expression profile is:
 
-- a nonnegative decimal `IntegerLiteral` returning exact builtin `int`;
+- a nonnegative decimal `IntegerLiteral` with a witnessed builtin integral type
+  (legacy captures require exact builtin `int`), or a `CXXBoolLiteralExpr`;
 - a parameter `DeclRefExpr`, through only `LValueToRValue` or `NoOp`
   `ImplicitCastExpr` wrappers; or
 - an integral `ImplicitCastExpr` (`IntegralToBoolean` or `IntegralCast`) over
@@ -44,7 +45,7 @@ The return-expression profile is:
 - a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
 - a prefix or postfix `++`/`--` over a direct non-boolean integral parameter
   reference; or
-- a `ConditionalOperator` with an exact builtin `int` condition and two branches
+- a `ConditionalOperator` with a builtin integral condition and two branches
   whose represented types agree; or
 - a comma expression whose builtin integral result type is the right operand's
   represented type; or
@@ -56,6 +57,32 @@ The return-expression profile is:
 
 Conditions additionally retain Clang's `IntegralToBoolean` wrapper and evaluate
 its builtin boolean result as the condition value.
+
+### Expression type preservation
+
+N4950 §7.3.7 `[conv.prom]`, §7.3.9 `[conv.integral]`, §7.3.15
+`[conv.bool]` and §7.6.2.2 `[expr.unary.op]` govern the conversions before
+unary evaluation. In particular, negating the minimum `short` first promotes
+it to `int`; complementing an `unsigned char` also operates in the promoted
+type. A surrounding boolean conversion must observe that promoted result.
+
+The callable boundary requires a structured type for each lowered value expression
+when the probe supplies `Clang::Expr type projection v1`. Rows join only through
+the retained AST's root/`inner` tree, with occurrence/kind consensus and known
+type references. Casts retain their actual destination types, and unary
+operand/result types must agree with the target profile's promotion rules.
+The whole raw AST remains available; `qualType` spellings do not establish
+these destinations. Missing child rows in a supplied supplement refuse.
+For a batch of functions, `admitCallableFunctionWithExpressionTypes` consumes
+rows already validated from that same probe. The ordinary
+`admitCallableFunction` entry point validates this supplement itself. Each
+body keeps only its own occurrence rows after whole-probe validation; this
+retains the same checks while avoiding unrelated rows during expression lookup.
+
+Legacy captures can retain expressions whose types are established by the
+existing signature and binary evidence. An integral cast with no witnessed
+destination refuses instead of copying its operand's type. This compatibility
+path cannot silently erase promotion before a unary operation.
 
 The result type of the expression must equal the function result type. A
 parameter or admitted-local reference must resolve to one of the function's

@@ -50,8 +50,22 @@ not value evaluation. Unsupported operand or result type families remain in
 `expression_refusals`; no `qualType` text is used and no overloaded operator,
 conversion or executable expression is admitted by this supplement. The
 separate [typed callable bridge](cpp-callable-functions.md) consumes these
-rows only for its direct-return body profile; it performs no body execution
+rows for its admitted integral bodies; it performs no body execution
 and leaves `Translation.execute` refused.
+
+The optional `expression_types_api` supplement has the exact tag
+`Clang::Expr type projection v1`. Its `expression_types` array carries each
+representable expression's occurrence, AST kind and structured `Expr::getType()`;
+`expression_type_refusals` retains unrepresented types and occurrences outside
+the dump. This preserves implicit cast destinations independently of a parent
+binary operation or function signature. `parseValidatedExpressionTypeEvidence`
+joins only the AST root and recursive `inner` children, checks all matching
+kinds and referenced declarations, and requires repeated rows to agree.
+An absent tag and array mean a legacy capture; either alone, an unknown tag,
+or conflicting rows refuse. A present-empty array remains a supplied
+supplement: a consumer requiring an expression type must refuse a missing row.
+The [callable bridge](cpp-callable-functions.md#expression-type-preservation)
+uses this supplement without changing the schema-0.3 wrapper or raw AST.
 
 ## Fresh capture validation
 

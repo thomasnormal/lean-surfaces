@@ -704,14 +704,17 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
         guards = [
             "def callableTypeRows := parseValidatedTypeEvidence evidence",
             "def callableExpressionRows := parseValidatedBinaryExpressionEvidence evidence",
+            "def callableExpressionTypes := parseValidatedExpressionTypeEvidence evidence",
             "#guard callableTypeRows.isOk",
             "#guard callableExpressionRows.isOk",
+            "#guard callableExpressionTypes.isOk",
         ]
         for name in functions:
             guards.append(f"""def {name} : Except String CallableFunction := do
   let types ← callableTypeRows
   let expressions ← callableExpressionRows
-  admitCallableFunction evidence types expressions TargetProfile.lp64 {paths[name]}""")
+  let expressionTypes ← callableExpressionTypes
+  admitCallableFunctionWithExpressionTypes evidence types expressions expressionTypes TargetProfile.lp64 {paths[name]}""")
             guards.append(f"#guard {name}.isOk")
         for (name, value), expected in zip(calls, outputs[0]):
             guards.append(f"""#guard match {name} with
@@ -783,6 +786,132 @@ int switch_break(int value) {
                          + str(paths[name]))
             guards.append("#guard (" + admission + ").isOk")
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
+
+    def test_callable_expression_types_match_compiled_clang(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        probe_library = pathlib.Path(library).resolve()
+        self.assertTrue(probe_library.is_file(), "selected probe library must exist")
+        # name, result C++ type/format, argument C++ type/format, expression, inputs
+        shorts = (-32768, -7, 0, 9, 32767)
+        bytes_ = (0, 1, 127, 128, 255)
+        functions = [
+            ("negated", "bool", ".boolean", "short", ".signed 16", "-value", shorts),
+            ("promoted", "int", ".signed 32", "short", ".signed 16", "-value", shorts),
+            ("narrowed", "short", ".signed 16", "short", ".signed 16", "-value", shorts),
+            ("unsigned_result", "unsigned", ".unsigned 32", "short", ".signed 16",
+             "-value", shorts),
+            ("complemented", "bool", ".boolean", "unsigned char", ".unsigned 8",
+             "~value", bytes_),
+            ("complement_int", "int", ".signed 32", "unsigned char", ".unsigned 8",
+             "~value", bytes_),
+            ("plus_bool", "int", ".signed 32", "bool", ".boolean", "+value", (0, 1)),
+            ("minus_bool", "int", ".signed 32", "bool", ".boolean", "-value", (0, 1)),
+            ("not_minus", "bool", ".boolean", "short", ".signed 16", "!(-value)", shorts),
+            ("nested_parens", "long", ".signed 64", "short", ".signed 16",
+             "(-(+value))", shorts),
+            ("conditional", "bool", ".boolean", "short", ".signed 16",
+             "value ? -value : +value", shorts),
+            ("comma", "bool", ".boolean", "unsigned char", ".unsigned 8",
+             "(value, ~value)", bytes_),
+            ("binary", "unsigned", ".unsigned 32", "short", ".signed 16",
+             "-value + 1u", shorts),
+            ("logical", "bool", ".boolean", "unsigned char", ".unsigned 8",
+             "value && ~value", bytes_),
+            ("bool_literal", "int", ".signed 32", "short", ".signed 16",
+             "true ? -value : 0", shorts),
+            ("wide_literal", "long", ".signed 64", "short", ".signed 16",
+             "value ? 4294967296L : 0L", shorts),
+            ("unsigned_literal", "unsigned long long", ".unsigned 64", "bool", ".boolean",
+             "value ? 18446744073709551615ULL : 0ULL", (0, 1)),
+        ]
+        source = self.root / "typed.cpp"
+        source.write_text("\n".join(
+            f"{result} {name}({argument} value) {{ return {expression}; }}"
+            for name, result, _, argument, _, expression, _ in functions), encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(probe_library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        names = {function[0] for function in functions}
+        paths = {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in names:
+                paths[node["name"]] = path
+            pending.extend((child, path + [index])
+                           for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), names)
+        calls = [(name, result, output_format, argument_format, value)
+                 for name, result, output_format, _, argument_format, _, values in functions
+                 for value in values]
+        oracle = self.root / "typed_oracle.cpp"
+        oracle.write_text(
+            '#include <climits>\n#include <iostream>\n#include "typed.cpp"\n'
+            'static_assert(CHAR_BIT == 8 && sizeof(short) == 2 && sizeof(int) == 4\n'
+            '              && sizeof(long) == 8 && sizeof(long long) == 8);\n'
+            'int main() {\n' + "".join(
+                f"  std::cout << {name}({value}) << '\\n';\n"
+                for name, _, _, _, value in calls) + "}\n", encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([
+                clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle), "-o", str(binary),
+            ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                      capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append(executed.stdout.splitlines())
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls))
+        guards = [
+            "def callableTypeRows := parseValidatedTypeEvidence evidence",
+            "def callableExpressionRows := parseValidatedBinaryExpressionEvidence evidence",
+            "def callableExpressionTypes := parseValidatedExpressionTypeEvidence evidence",
+            "#guard (parseValidatedExpressionTypeEvidence evidence).isOk",
+        ]
+        for name in sorted(names):
+            guards.append(f"""def {name} : Except String CallableFunction := do
+  let types ← callableTypeRows
+  let expressions ← callableExpressionRows
+  let expressionTypes ← callableExpressionTypes
+  admitCallableFunctionWithExpressionTypes evidence types expressions expressionTypes .lp64 {paths[name]}""")
+            guards.append(f"#guard {name}.isOk")
+        for (name, _, output_format, argument_format, value), expected in zip(calls, outputs[0]):
+            for evaluator in ("evaluateCallable", "evaluateCallableObject"):
+                guards.append(f"""#guard match {name} with
+  | .ok function => match {evaluator} 32 .lp64 function [⟨{argument_format}, {value}⟩] with
+    | .ok (.ok result) => result == ⟨{output_format}, {int(expected)}⟩
+    | _ => false
+  | .error _ => false""")
+        # Supplied missing rows cannot fall back to legacy type inference.
+        guards.append(f"""#guard (admitCallableFunctionFromProbe
+  {{evidence with metadata := (match evidence.metadata with
+    | .object fields => .object (fields.map fun (key, value) =>
+        (key, if key == "expression_types" then .array [] else value))
+    | other => other)}}
+  .lp64 {paths['negated']}) matches .error _""")
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+                            options=("open LeanModels.Cpp.CallableObjectEvaluation\n"
+                                     "set_option maxRecDepth 100000 in"), timeout=360)
+        print(f"callable expression typing differential: {len(calls)} rows, two evaluators at -O0/-O2")
 
     def test_callable_argument_conversions_match_compiled_clang(self):
         requested = os.environ.get("LEANCPP_CLANG")
@@ -1206,36 +1335,47 @@ int switch_break(int value) {
             outputs.append(executed.stdout.splitlines())
         self.assertEqual(outputs[0], outputs[1])
         self.assertEqual(len(outputs[0]), len(rows))
+        # Keep the complete supplement and all cases, but validate the shared
+        # capture once per driver, and admit each function once before its rows.
         guards = [
-            "def callableTypeRows := parseValidatedTypeEvidence evidence",
-            "def callableExpressionRows := parseValidatedBinaryExpressionEvidence evidence",
-            "#guard callableTypeRows.isOk",
-            "#guard callableExpressionRows.isOk",
+            "def callableChecks : Except String Unit := do",
+            "  let types ← parseValidatedTypeEvidence evidence",
+            "  let expressions ← parseValidatedBinaryExpressionEvidence evidence",
+            "  let expressionTypes ← parseValidatedExpressionTypeEvidence evidence",
         ]
+        checked_rows = 0
         for name in sorted(names):
-            guards.append(f"""def {name} : Except String CallableFunction := do
-  let types ← callableTypeRows
-  let expressions ← callableExpressionRows
-  admitCallableFunction evidence types expressions TargetProfile.lp64 {paths[name]}""")
-            guards.append(f"#guard {name}.isOk")
+            guards.append(
+                "  let function ← admitCallableFunctionWithExpressionTypes evidence "
+                f"types expressions expressionTypes .lp64 {paths[name]}")
+            cases = []
+            for (row_name, destination, arguments), expected in zip(rows, outputs[0]):
+                if row_name != name:
+                    continue
+                checked_rows += 1
+                values = ", ".join(f"⟨{format_name}, {value}⟩"
+                                   for format_name, value in arguments)
+                fuel = (256 if name in switch_calls
+                        else 64 if name in ("for_break_loop", "for_continue_loop", "switch_select")
+                        else 32 if name in ("break_loop", "continue_loop", "do_break_loop",
+                                            "do_continue_loop")
+                        else 64 if name in ("for_loop", "for_init_once", "for_false", "for_return")
+                        else 32 if name in ("compound_while", "compound_do")
+                        else 16)
+                cases.append(f"({fuel}, [{values}], ⟨{destination}, {int(expected)}⟩)")
+            guards.append("  let cases : List (Nat × List IntegralValue × IntegralValue) := ["
+                          + ", ".join(cases) + "]")
+            guards.append(f"""  unless cases.all (fun (fuel, arguments, expected) =>
+      match evaluateCallable fuel .lp64 function arguments with
+      | .ok (.ok value) => value == expected
+      | _ => false) do
+    throw "callable differential: {name}"
+""")
+        self.assertEqual(checked_rows, len(rows))
+        guards.extend(["  pure ()", "#guard callableChecks.isOk"])
         for name in sorted(refusals):
             guards.append(f"#guard (admitCallableFunctionFromProbe evidence "
                           f"TargetProfile.lp64 {paths[name]}) matches .error _")
-        for (name, destination, arguments), expected in zip(rows, outputs[0]):
-            values = ", ".join(f"⟨{format_name}, {value}⟩"
-                               for format_name, value in arguments)
-            fuel = (256 if name in switch_calls
-                    else 64 if name in ("for_break_loop", "for_continue_loop", "switch_select")
-                    else 32 if name in ("break_loop", "continue_loop", "do_break_loop",
-                                        "do_continue_loop")
-                    else 64 if name in ("for_loop", "for_init_once", "for_false", "for_return")
-                    else 32 if name in ("compound_while", "compound_do")
-                    else 16)
-            guards.append(f"""#guard match {name} with
-  | .ok function => match evaluateCallable {fuel} .lp64 function [{values}] with
-    | .ok (.ok value) => value == ⟨{destination}, {int(expected)}⟩
-    | _ => false
-  | .error _ => false""")
         self.assert_accepts(json.dumps(probe), "\n".join(guards),
                             options="set_option maxRecDepth 100000 in", timeout=600)
         print(f"callable argument differential: {len(rows)} rows at -O0/-O2")

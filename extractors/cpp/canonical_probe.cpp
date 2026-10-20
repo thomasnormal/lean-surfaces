@@ -386,10 +386,13 @@ public:
   llvm::json::Array typeRefusals;
   llvm::json::Array expressionEvidence;
   llvm::json::Array expressionRefusals;
+  llvm::json::Array expressionTypes;
+  llvm::json::Array expressionTypeRefusals;
   llvm::json::Array variableEvidence;
   llvm::json::Array variableRefusals;
   std::vector<const clang::Decl *> typedDeclarations;
   std::vector<const clang::BinaryOperator *> binaryExpressions;
+  std::vector<const clang::Expr *> typedExpressions;
   std::unordered_set<std::string> declarationIds;
   const clang::ASTContext *astContext = nullptr;
 
@@ -433,6 +436,32 @@ public:
   bool VisitBinaryOperator(clang::BinaryOperator *expression) {
     binaryExpressions.push_back(expression);
     return true;
+  }
+
+  bool VisitExpr(clang::Expr *expression) {
+    typedExpressions.push_back(expression);
+    return true;
+  }
+
+  void buildExpressionTypes(const std::unordered_set<std::string> &visibleNodes) {
+    for (const auto *expression : typedExpressions) {
+      llvm::json::Object row{{"occurrence", pointerId(expression)},
+                             {"kind", expression->getStmtClassName()}};
+      auto type = structuredType(expression->getType(), *astContext, 0);
+      const bool visible = visibleNodes.count(pointerId(expression));
+      const bool supported = type && structuredReferencesWitnessed(*type, declarationIds);
+      if (type)
+        row["type"] = std::move(*type);
+      if (visible && supported) {
+        expressionTypes.push_back(std::move(row));
+      } else {
+        row["dump_visible"] = visible;
+        row["projection_supported"] = supported;
+        row["reason"] = !visible ? "expression is outside JSON AST inner tree"
+                                  : "unrepresented expression type";
+        expressionTypeRefusals.push_back(std::move(row));
+      }
+    }
   }
 
   void emitBinaryExpression(const clang::BinaryOperator *expression,
@@ -622,6 +651,7 @@ public:
       return;
     }
     visitor.buildExpressionEvidence(reachability.expressionIds());
+    visitor.buildExpressionTypes(reachability.astNodeIds());
     visitor.buildVariableEvidence(reachability.astNodeIds());
     llvm::json::Object metadata{
         {"schema_version", "cpp-canonical-probe-0.3"},
@@ -634,6 +664,9 @@ public:
         {"expression_evidence_api", "Clang::BinaryOperator typed operand projection v2"},
         {"expression_evidence", std::move(visitor.expressionEvidence)},
         {"expression_refusals", std::move(visitor.expressionRefusals)},
+        {"expression_types_api", "Clang::Expr type projection v1"},
+        {"expression_types", std::move(visitor.expressionTypes)},
+        {"expression_type_refusals", std::move(visitor.expressionTypeRefusals)},
         {"variable_evidence_api", "Clang::VarDecl storage and initializer projection v1"},
         {"variable_evidence", std::move(visitor.variableEvidence)},
         {"variable_refusals", std::move(visitor.variableRefusals)},

@@ -416,6 +416,46 @@ int promoted() { short small = -32768; int local = -small; return local; }
         self.assertTrue(any(node.get("castKind") == "IntegralCast" and
                             node["type"]["qualType"] == "int" for node in nodes.values()))
 
+    def test_expression_types_preserve_callable_promotions_and_refusals(self):
+        self.source.write_text("""bool negated(short value) { return -value; }
+bool complemented(unsigned char value) { return ~value; }
+int promoted(bool value) { return +value; }
+long wide() { return 4294967296L; }
+bool flag() { return true; }
+float floating(float value) { return -value; }
+""", encoding="utf-8")
+        probe = self.probe()
+        self.assertEqual(probe["metadata"]["expression_types_api"],
+                         "Clang::Expr type projection v1")
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            if "id" in node:
+                nodes[node["id"]] = node
+            pending.extend(node.get("inner", []))
+        rows = probe["metadata"]["expression_types"]
+        types = {row["occurrence"]: row for row in rows}
+        self.assertTrue(rows)
+        for row in rows:
+            self.assertEqual(nodes[row["occurrence"]]["kind"], row["kind"])
+        unary = [row for row in rows if row["kind"] == "UnaryOperator"]
+        self.assertEqual(len(unary), 3)
+        for row in unary:
+            self.assertEqual(row["type"], {"kind": "builtin", "name": "int"})
+            operand = nodes[row["occurrence"]]["inner"][0]
+            self.assertEqual(operand["castKind"], "IntegralCast")
+            self.assertEqual(types[operand["id"]]["type"], row["type"])
+        self.assertTrue(any(row["kind"] == "CXXBoolLiteralExpr" and
+                            row["type"] == {"kind": "builtin", "name": "bool"}
+                            for row in rows))
+        self.assertTrue(any(row["kind"] == "IntegerLiteral" and
+                            row["type"] == {"kind": "builtin", "name": "long"}
+                            for row in rows))
+        refused = probe["metadata"]["expression_type_refusals"]
+        self.assertTrue(any(row["kind"] == "UnaryOperator" and
+                            not row["projection_supported"] for row in refused))
+
     def test_variable_unsupported_types_and_pending_defaults_are_explicit_refusals(self):
         probe, rows = self.variable_probe()
         self.assertNotIn("array", rows)

@@ -192,7 +192,7 @@ def duplicateLocalVariableEvidence : CppVariableEvidence := {
 
 #guard match parseCallableStatementWithLocals
     {ast := .null, metadata := .null, declarations := []}
-    [typeRow "0x10" intType] [duplicateLocalVariableEvidence] [] TargetProfile.lp64 intType
+    [typeRow "0x10" intType] [duplicateLocalVariableEvidence] [] none TargetProfile.lp64 intType
     [{declaration := {value := "0x10"}, name := some "value", type := intType}]
     (object [("id", text "0x20"), ("kind", text "DeclStmt"),
       ("inner", .array [duplicateLocalRaw])]) with
@@ -906,5 +906,50 @@ def admitLogicalEffect (operator : String) (name : String) : Except String Calla
     (body (object [("kind", text "DeclStmt")])) with
   | .error message => message == "callable: unsupported statement DeclStmt"
   | .ok _ => false
+
+private def promotedOperand : Raw :=
+  implicitCastKind "0x42" "IntegralCast"
+    (implicitCast "0x43" (declRefNode "0x44" "0x10" "value"))
+
+private def promotedNegation : Raw := object [
+  ("id", text "0x41"), ("kind", text "UnaryOperator"), ("opcode", text "-"),
+  ("inner", .array [promotedOperand])]
+
+private def promotionTypes : List CppExpressionTypeEvidence := [
+  ⟨⟨"0x41"⟩, "UnaryOperator", .builtin .int⟩,
+  ⟨⟨"0x42"⟩, "ImplicitCastExpr", .builtin .int⟩,
+  ⟨⟨"0x43"⟩, "ImplicitCastExpr", .builtin .short⟩,
+  ⟨⟨"0x44"⟩, "DeclRefExpr", .builtin .short⟩]
+
+private def narrowParameter : CallableParameter :=
+  ⟨⟨"0x10"⟩, some "value", .builtin .short⟩
+
+#guard match parseCallableExpressionTyped .lp64 [narrowParameter] []
+    (some promotionTypes) promotedNegation none (some intType) with
+  | .ok result => match result.expression with
+    | .unary "-" operand => operand.type == intType &&
+        operand.sourceType == .builtin .short &&
+        (match operand.expression with | .convert _ => true | _ => false)
+    | _ => false
+  | .error _ => false
+#guard (parseCallableExpression .lp64 [narrowParameter] []
+  promotedNegation none none) matches .error _
+#guard (parseCallableExpressionTyped .lp64 [narrowParameter] []
+  (some (promotionTypes.filter (·.occurrence.value != "0x42")))
+  promotedNegation none none) matches .error _
+#guard (parseCallableExpressionTyped .lp64 [narrowParameter] [] (some [])
+  promotedNegation none none) matches .error _
+-- Result type alone cannot stand in for a missing promotion in the operand.
+#guard (parseCallableExpressionTyped .lp64 [narrowParameter] []
+  (some (promotionTypes.map fun row => if row.occurrence.value == "0x42" then
+    {row with type := .builtin .short} else row))
+  promotedNegation none none) matches .error _
+
+-- A supplied reference type must agree with its bound declaration even when
+-- another expression row supplies the expected source type.
+#guard (parseCallableExpressionTyped .lp64 [narrowParameter] []
+  (some [⟨⟨"0x44"⟩, "DeclRefExpr", intType⟩])
+  (declRefNode "0x44" "0x10" "value") (some (.builtin .short))
+  (some intType)) matches .error _
 
 end LeanModels.Cpp.CallableTests

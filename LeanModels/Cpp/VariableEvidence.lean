@@ -1,4 +1,4 @@
-import LeanModels.Cpp.TypeEvidence
+import LeanModels.Cpp.ExpressionEvidence
 
 namespace LeanModels.Cpp
 
@@ -18,11 +18,7 @@ inductive CppVariableInitStyle where
   | c | call | list | parenList
   deriving Repr, BEq, Inhabited
 
-structure CppInitializerExpressionType where
-  occurrence : FrontendHandle
-  kind : String
-  type : CppTypeEvidence
-  deriving Repr, BEq, Inhabited
+abbrev CppInitializerExpressionType := CppExpressionTypeEvidence
 
 structure CppVariableInitializerEvidence where
   occurrence : FrontendHandle

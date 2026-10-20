@@ -32,6 +32,12 @@ argument-expression evaluation order. Integer conversions use §7.3.9
 variadic arguments, references and user-defined conversions remain outside this
 boundary.
 
+Both evaluators form each admitted literal in its structured source type,
+including `bool`, unsigned integers and integers wider than `int`. An enclosing
+integral conversion remains a separate expression node. Thus `1u` can take
+part in unsigned arithmetic and `4294967296L` does not acquire an artificial
+32-bit range failure in the value-only evaluator.
+
 Compound assignments evaluate their admitted, side-effect-free RHS, read the
 target parameter once, compute using the shared `integralBinary` operation and
 store only a successful result. The operator is validated before the RHS is

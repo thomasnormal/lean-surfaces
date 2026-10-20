@@ -158,9 +158,9 @@ private def evaluateIncrement (profile : TargetProfile) (parameters : List Calla
       | result => pure (result, arguments)
   | result => pure (result, arguments)
 
-private def evaluateInteger (profile : TargetProfile) (value : Nat) :
+private def evaluateInteger (profile : TargetProfile) (typed : TypedCallableExpression) (value : Nat) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do
-  let format ← formatFor profile (.builtin .int)
+  let format ← formatFor profile typed.sourceType
   let literal : IntegralValue := {format, value := Int.ofNat value}
   pure (match literal.invalid? with
     | some reason => .invalid reason
@@ -191,7 +191,7 @@ private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
   | 0 => .error .fuelExhausted
   | fuel + 1 =>
       match typed.expression with
-      | .integer value => (evaluateInteger profile value).map (fun result => (result, arguments))
+      | .integer value => (evaluateInteger profile typed value).map (fun result => (result, arguments))
       | .parameter declaration =>
           (evaluateParameter profile parameters arguments typed declaration).map
             (fun result => (result, arguments))

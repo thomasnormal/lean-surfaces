@@ -19,6 +19,7 @@ import LeanModels.Cpp.AutomaticDeclarationsTests
 import LeanModels.Cpp.CallableFrameTests
 import LeanModels.Cpp.CallableObjectEvaluationTests
 import LeanModels.Cpp.TypeEvidenceTests
+import LeanModels.Cpp.ExpressionEvidenceTests
 import LeanModels.Cpp.VariableEvidenceTests
 import LeanModels.Cpp.CallableTests
 

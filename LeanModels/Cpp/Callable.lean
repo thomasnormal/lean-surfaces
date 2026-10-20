@@ -228,33 +228,56 @@ def compoundAssignmentOperator? (operator : String) : Option String :=
   | ">>=" => some ">>"
   | _ => none
 
-private def integerLiteral (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence) :
-    Except String TypedCallableExpression := do
+private def integerLiteral (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence)
+    (witnessed : Option CppTypeEvidence) : Except String TypedCallableExpression := do
   let value ← evidenceText raw "value"
   let some value := value.toNat?
     | throw "callable: only nonnegative decimal integer literals are admitted"
-  let type ← evidenceField raw "type"
-  unless type.text "qualType" == some "int" do
-    throw "callable: integer literal requires an exact int source type"
-  unless sourceExpected.all (· == .builtin .int) do
-    throw "callable: integer literal source type disagrees with expression evidence"
-  unless typeExpected.all (· == .builtin .int) do
-    throw "callable: integer literal requires an exact int result type"
-  pure {expression := .integer value, sourceType := .builtin .int, type := .builtin .int}
+  let type ← match witnessed with
+    | some (.builtin integer) =>
+        if integer == .boolean then throw "callable: integer literal has boolean type"
+        else pure (.builtin integer)
+    | some _ => throw "callable: integer literal requires a builtin integral type"
+    | none => do
+        let type ← evidenceField raw "type"
+        unless type.text "qualType" == some "int" do
+          throw "callable: legacy integer literal requires an exact int source type"
+        pure (.builtin .int)
+  unless sourceExpected.all (· == type) && typeExpected.all (· == type) do
+    throw "callable: integer literal type disagrees with expression evidence"
+  pure {expression := .integer value, sourceType := type, type}
 
-partial def parseCallableExpression (profile : TargetProfile)
+partial def parseCallableExpressionTyped (profile : TargetProfile)
     (parameters : List CallableParameter)
     (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence))
     (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence) :
     Except String TypedCallableExpression := do
   let kind ← evidenceText raw "kind"
+  let witnessed ← expressionTypes.mapM (fun rows => expressionTypeFor rows raw)
+  if let some type := witnessed then
+    unless typeExpected.all (· == type) do
+      throw "callable: expression type disagrees with expected type"
+  let typeExpected := witnessed.orElse (fun _ => typeExpected)
   match kind with
-  | "IntegerLiteral" => integerLiteral raw sourceExpected typeExpected
+  | "IntegerLiteral" => integerLiteral raw sourceExpected typeExpected witnessed
+  | "CXXBoolLiteralExpr" =>
+      unless sourceExpected.all (· == .builtin .boolean) &&
+          typeExpected.all (· == .builtin .boolean) do
+        throw "callable: boolean literal type disagrees with evidence"
+      let value ← evidenceBool raw "value"
+      pure {
+        expression := .integer (if value then 1 else 0)
+        sourceType := .builtin .boolean
+        type := .builtin .boolean
+      }
   | "DeclRefExpr" =>
       let reference ← evidenceField raw "referencedDecl"
       let declaration ← rawId reference
       let some parameterType := parameterType? parameters declaration
         | throw "callable: expression references a non-parameter declaration"
+      unless witnessed.all (· == parameterType) do
+        throw "callable: reference type disagrees with bound declaration"
       if sourceExpected.isSome && sourceExpected != some parameterType then
         throw "callable: parameter source type disagrees with expression evidence"
       if sourceExpected.isNone && typeExpected.isSome && typeExpected != some parameterType then
@@ -270,7 +293,7 @@ partial def parseCallableExpression (profile : TargetProfile)
       match children with
       | [child] =>
           if castKind == "LValueToRValue" then
-            let operand ← parseCallableExpression profile parameters expressionRows child sourceExpected none
+            let operand ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes child sourceExpected none
             let some destination := integralRValueType operand.type
               | throw "callable: lvalue conversion requires a nonvolatile integral type"
             if typeExpected.isSome && typeExpected != some destination then
@@ -278,11 +301,12 @@ partial def parseCallableExpression (profile : TargetProfile)
             if operand.type == destination then pure operand
             else pure {expression := .convert operand, sourceType := operand.sourceType, type := destination}
           else if castKind == "IntegralToBoolean" || castKind == "IntegralCast" then
-            let operand ← parseCallableExpression profile parameters expressionRows child none none
-            let destination := if castKind == "IntegralToBoolean" then
-              .builtin .boolean
-            else
-              typeExpected.getD operand.type
+            let operand ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes child none none
+            let destination ← if castKind == "IntegralToBoolean" then
+              pure (.builtin .boolean)
+            else match typeExpected with
+              | some type => pure type
+              | none => throw "callable: integral cast lacks destination type evidence"
             unless callableBuiltin operand.type && callableBuiltin destination do
               throw "callable: integral cast requires builtin integral types"
             if typeExpected.isSome && typeExpected != some destination then
@@ -293,22 +317,28 @@ partial def parseCallableExpression (profile : TargetProfile)
               type := destination
             }
           else
-            parseCallableExpression profile parameters expressionRows child sourceExpected typeExpected
+            let operand ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes child sourceExpected none
+            let destination := typeExpected.getD operand.type
+            unless (integralRValueType operand.type).isSome &&
+                integralRValueType operand.type == integralRValueType destination do
+              throw "callable: NoOp cast changes integral type or volatility"
+            if operand.type == destination then pure operand
+            else pure {expression := .convert operand, sourceType := operand.sourceType, type := destination}
       | _ => throw "callable: implicit cast must have one child"
   | "ParenExpr" =>
       let children ← rawChildren raw
       match children with
-      | [child] => parseCallableExpression profile parameters expressionRows child sourceExpected typeExpected
+      | [child] => parseCallableExpressionTyped profile parameters expressionRows expressionTypes child sourceExpected typeExpected
       | _ => throw "callable: parenthesized expression must have one child"
   | "ConditionalOperator" =>
       let children ← rawChildren raw
       let [conditionRaw, whenTrueRaw, whenFalseRaw] := children
         | throw "callable: conditional expression requires three operands"
-      let condition ← parseCallableExpression profile parameters expressionRows conditionRaw none none
+      let condition ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes conditionRaw none none
       unless callableBuiltin condition.type do
         throw "callable: conditional condition must be a builtin integral expression"
-      let whenTrue ← parseCallableExpression profile parameters expressionRows whenTrueRaw none typeExpected
-      let whenFalse ← parseCallableExpression profile parameters expressionRows whenFalseRaw none typeExpected
+      let whenTrue ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes whenTrueRaw none typeExpected
+      let whenFalse ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes whenFalseRaw none typeExpected
       unless whenTrue.type == whenFalse.type do
         throw "callable: conditional branches require one represented type"
       pure {
@@ -343,10 +373,10 @@ partial def parseCallableExpression (profile : TargetProfile)
             unless child.text "id" == some operand.occurrence.value &&
                 child.text "kind" == some operand.kind do
               throw "callable: binary operand disagrees with typed evidence"
-          let left ← parseCallableExpression profile parameters expressionRows leftRaw
+          let left ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes leftRaw
             (if logical then none else some leftEvidence.sourceType)
             (if logical then none else some leftEvidence.type)
-          let right ← parseCallableExpression profile parameters expressionRows rightRaw
+          let right ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes rightRaw
             (if logical then none else some rightEvidence.sourceType)
             (if logical then none else some rightEvidence.type)
           unless logical || comma || (!left.expression.hasEffects && !right.expression.hasEffects) do
@@ -385,14 +415,31 @@ partial def parseCallableExpression (profile : TargetProfile)
       let children ← rawChildren raw
       let [child] := children
         | throw "callable: unary body expression requires one operand"
-      let operand ← parseCallableExpression profile parameters expressionRows child none none
-      unless operator == "!" || operand.type != .builtin .boolean do
-        throw "callable: unary integral promotion is outside the body profile"
+      let operand ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes child none none
+      let some operandType := integralRValueType operand.type
+        | throw "callable: unary operand is not a nonvolatile integral value"
+      let .builtin integer := operandType
+        | throw "callable: unary operand requires a builtin integral type"
+      if operator == "!" then
+        unless witnessed.isNone || integer == .boolean do
+          throw "callable: logical negation lacks contextual boolean conversion"
+      else
+        let promoted ← match integralPromotion profile integer with
+          | .ok type => pure type
+          | .error _ => throw "callable: unary promotion is unresolved"
+        unless operand.type == .builtin promoted do
+          throw "callable: unary operand lacks integral promotion"
       let type := if operator == "!" then .builtin .boolean else operand.type
       if typeExpected.isSome && typeExpected != some type then
         throw "callable: unary result type disagrees with expected type"
       pure {expression := .unary operator operand, sourceType := type, type}
   | _ => throw s!"callable: unsupported return expression {kind}"
+
+/-- Legacy expression entry point. Unknown cast destinations remain loud. -/
+def parseCallableExpression (profile : TargetProfile) (parameters : List CallableParameter)
+    (expressionRows : List CppBinaryExpressionEvidence) (raw : Raw)
+    (sourceExpected typeExpected : Option CppTypeEvidence) : Except String TypedCallableExpression :=
+  parseCallableExpressionTyped profile parameters expressionRows none raw sourceExpected typeExpected
 
 mutual
   private partial def parseCallableSequence (profile : TargetProfile)
@@ -539,7 +586,7 @@ mutual
       let expression ← parseCallableExpression profile parameters expressionRows value
         (some rightEvidence.sourceType) (some rightEvidence.type)
       pure (.compoundAssign operator declaration expression)
-  | "UnaryOperator" | "IntegerLiteral" | "DeclRefExpr" |
+  | "UnaryOperator" | "IntegerLiteral" | "CXXBoolLiteralExpr" | "DeclRefExpr" |
       "ImplicitCastExpr" | "ParenExpr" =>
       let expression ← parseCallableExpression profile parameters expressionRows statement none none
       pure (.expression expression)
@@ -595,7 +642,8 @@ private def admitAutomaticAt (probe : DeclarationProbe)
 mutual
 partial def callableSequenceWithLocals (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
-    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence)) (profile : TargetProfile)
     (resultType : CppTypeEvidence) (scope : List CallableParameter)
     (statements : List Raw) :
     Except String (CallableStatement × List CallableParameter) := do
@@ -603,32 +651,34 @@ partial def callableSequenceWithLocals (probe : DeclarationProbe)
   | [] => pure (.skip, scope)
   | raw :: rest => do
       let parsed ← parseCallableStatementWithLocals probe typeRows variableRows
-        expressionRows profile resultType scope raw
+        expressionRows expressionTypes profile resultType scope raw
       let (first, updated) := parsed
       match rest with
       | [] => pure (first, updated)
       | _ =>
           let (tail, finalScope) ← callableSequenceWithLocals probe typeRows variableRows
-            expressionRows profile resultType updated rest
+            expressionRows expressionTypes profile resultType updated rest
           pure (.sequence first tail, finalScope)
 
 partial def parseCallableCompoundWithLocals (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
-    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence)) (profile : TargetProfile)
     (resultType : CppTypeEvidence) (scope : List CallableParameter) (raw : Raw)
     (exportLocals : Bool) :
     Except String (CallableStatement × List CallableParameter) := do
   let children ← rawChildren raw
   let (body, updated) ← callableSequenceWithLocals probe typeRows variableRows
-    expressionRows profile resultType scope children
+    expressionRows expressionTypes profile resultType scope children
   pure (.block body, if exportLocals then updated else scope)
 
 partial def parseCallableSubstatementWithLocals (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
-    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence)) (profile : TargetProfile)
     (resultType : CppTypeEvidence) (scope : List CallableParameter) (raw : Raw) :
     Except String (CallableStatement × List CallableParameter) := do
-  let parsed ← parseCallableStatementWithLocals probe typeRows variableRows expressionRows
+  let parsed ← parseCallableStatementWithLocals probe typeRows variableRows expressionRows expressionTypes
     profile resultType scope raw
   if raw.text "kind" == some "CompoundStmt" then
     pure parsed
@@ -637,7 +687,8 @@ partial def parseCallableSubstatementWithLocals (probe : DeclarationProbe)
 
 partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
-    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence)) (profile : TargetProfile)
     (resultType : CppTypeEvidence) (scope : List CallableParameter) (statement : Raw) :
     Except String (CallableStatement × List CallableParameter) := do
   let allParameters := scope
@@ -649,13 +700,13 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       let locals ← localParameters typeRows allParameters admitted.declarations
       pure (.automatic admitted, allParameters ++ locals)
   | "CompoundStmt" =>
-      parseCallableCompoundWithLocals probe typeRows variableRows expressionRows profile
+      parseCallableCompoundWithLocals probe typeRows variableRows expressionRows expressionTypes profile
         resultType scope statement false
   | "ReturnStmt" =>
       let values ← rawChildren statement
       let [value] := values
         | throw "callable: return statement requires exactly one expression"
-      let expression ← parseCallableExpression profile allParameters expressionRows value none
+      let expression ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes value none
         (some resultType)
       unless expression.type == resultType do
         throw "callable: return expression type disagrees with function result"
@@ -664,13 +715,13 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       let children ← rawChildren statement
       match children with
       | [condition, whenTrue] | [condition, whenTrue, _] =>
-          let condition ← parseCallableExpression profile allParameters expressionRows condition none none
+          let condition ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes condition none none
           let (whenTrue, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
-            expressionRows profile resultType scope whenTrue
+            expressionRows expressionTypes profile resultType scope whenTrue
           let whenFalse ← match children with
             | [_, _, otherwise] =>
                 (parseCallableSubstatementWithLocals probe typeRows variableRows expressionRows
-                  profile resultType scope otherwise).map Prod.fst
+                  expressionTypes profile resultType scope otherwise).map Prod.fst
             | _ => .ok .skip
           pure (.conditional condition whenTrue whenFalse, scope)
       | _ => throw "callable: if statement requires a condition and one or two branches"
@@ -678,7 +729,7 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       let children ← rawChildren statement
       let [conditionRaw, bodyRaw] := children
         | throw "callable: switch statement requires a condition and body"
-      let condition ← parseCallableExpression profile allParameters expressionRows conditionRaw none none
+      let condition ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes conditionRaw none none
       unless condition.type == .builtin .int do
         throw "callable: switch condition requires an exact int expression"
       unless bodyRaw.text "kind" == some "CompoundStmt" do
@@ -689,16 +740,16 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
         throw "callable: switch labels must be unique with at most one default"
       let clauses ← clauseRaws.mapM fun (label, raws) => do
         let (body, _) ← callableSequenceWithLocals probe typeRows variableRows expressionRows
-          profile resultType scope raws
+          expressionTypes profile resultType scope raws
         pure {label, body}
       pure (.switch_ condition clauses, scope)
   | "WhileStmt" =>
       let children ← rawChildren statement
       let [condition, body] := children
         | throw "callable: while statement requires a condition and body"
-      let condition ← parseCallableExpression profile allParameters expressionRows condition none none
+      let condition ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes condition none none
       let (body, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
-        expressionRows profile resultType scope body
+        expressionRows expressionTypes profile resultType scope body
       pure (.whileLoop condition body, scope)
   | "ForStmt" =>
       let children ← rawChildren statement
@@ -707,20 +758,20 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       unless conditionVariable == .object [] do
         throw "callable: for loop condition declarations are outside the body profile"
       let (initializer, loopScope) ← parseCallableStatementWithLocals probe typeRows variableRows
-        expressionRows profile resultType scope initializer
-      let condition ← parseCallableExpression profile loopScope expressionRows condition none none
+        expressionRows expressionTypes profile resultType scope initializer
+      let condition ← parseCallableExpressionTyped profile loopScope expressionRows expressionTypes condition none none
       let (body, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
-        expressionRows profile resultType loopScope body
+        expressionRows expressionTypes profile resultType loopScope body
       let (step, _) ← parseCallableStatementWithLocals probe typeRows variableRows
-        expressionRows profile resultType loopScope step
+        expressionRows expressionTypes profile resultType loopScope step
       pure (.forLoop initializer condition step body, scope)
   | "DoStmt" =>
       let children ← rawChildren statement
       let [body, condition] := children
         | throw "callable: do statement requires a body and condition"
       let (body, _) ← parseCallableSubstatementWithLocals probe typeRows variableRows
-        expressionRows profile resultType scope body
-      let condition ← parseCallableExpression profile allParameters expressionRows condition none none
+        expressionRows expressionTypes profile resultType scope body
+      let condition ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes condition none none
       pure (.doWhile body condition, scope)
   | "BreakStmt" => pure (.break_, scope)
   | "ContinueStmt" => pure (.continue_, scope)
@@ -729,7 +780,7 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       let children ← rawChildren statement
       let [child] := children
         | throw "callable: expression cleanup wrapper requires one child"
-      parseCallableStatementWithLocals probe typeRows variableRows expressionRows profile
+      parseCallableStatementWithLocals probe typeRows variableRows expressionRows expressionTypes profile
         resultType scope child
   | "BinaryOperator" =>
       let operator ← evidenceText statement "opcode"
@@ -742,11 +793,11 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
         let declaration ← referencedDeclaration target
         let some targetParameter := allParameters.find? (fun p => p.declaration == declaration)
           | throw "callable: assignment target is not a bound declaration"
-        let expression ← parseCallableExpression profile allParameters expressionRows value none
+        let expression ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes value none
           (some targetParameter.type)
         pure (.assign declaration expression, scope)
       else
-        let expression ← parseCallableExpression profile allParameters expressionRows statement none none
+        let expression ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes statement none none
         pure (.expression expression, scope)
   | "CompoundAssignOperator" =>
       let operator ← evidenceText statement "opcode"
@@ -775,29 +826,33 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
         throw "callable: compound assignment target disagrees with typed evidence"
       let some rightEvidence := row.operands[1]?
         | throw "callable: compound assignment lacks a right operand"
-      let expression ← parseCallableExpression profile allParameters expressionRows value
+      let expression ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes value
         (some rightEvidence.sourceType) (some rightEvidence.type)
       pure (.compoundAssign operator declaration expression, scope)
-  | "UnaryOperator" | "IntegerLiteral" | "DeclRefExpr" |
+  | "UnaryOperator" | "IntegerLiteral" | "CXXBoolLiteralExpr" | "DeclRefExpr" |
       "ImplicitCastExpr" | "ParenExpr" =>
-      let expression ← parseCallableExpression profile allParameters expressionRows statement none none
+      let expression ← parseCallableExpressionTyped profile allParameters expressionRows expressionTypes statement none none
       pure (.expression expression, scope)
   | _ => throw s!"callable: unsupported statement {kind}"
 end
 
 private def callableBodyWithLocals (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
-    (expressionRows : List CppBinaryExpressionEvidence) (profile : TargetProfile)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence)) (profile : TargetProfile)
     (parameters : List CallableParameter) (resultType : CppTypeEvidence) (body : Raw) :
     Except String CallableStatement := do
   unless body.text "kind" == some "CompoundStmt" do
     throw "callable: body is not a compound statement"
-  let (parsed, _) ← parseCallableCompoundWithLocals probe typeRows variableRows expressionRows
+  let (parsed, _) ← parseCallableCompoundWithLocals probe typeRows variableRows expressionRows expressionTypes
     profile resultType parameters body true
   pure parsed
 
-def admitCallableFunction (probe : DeclarationProbe)
+/-- Consume already-validated declaration, binary and expression-type rows from
+this probe. `admitCallableFunction` validates the latter for single calls. -/
+def admitCallableFunctionWithExpressionTypes (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence))
     (profile : TargetProfile) (path : List Nat) : Except String CallableFunction := do
   unless profile.valid do throw "callable: invalid target profile"
   let admitted ← admitLocalFunctionDeclaration probe path
@@ -815,9 +870,16 @@ def admitCallableFunction (probe : DeclarationProbe)
   let variableRows ← if rawHasKind body "DeclStmt" then
       parseValidatedVariableEvidence probe
     else pure []
-  let typedBody ← callableBodyWithLocals probe typeRows variableRows expressionRows profile
+  let expressionTypes := expressionTypes.map (expressionTypeRowsFor body)
+  let typedBody ← callableBodyWithLocals probe typeRows variableRows expressionRows expressionTypes profile
     parameters signature.result body
   pure {occurrence := admitted.occurrence, signature, parameters, body := typedBody}
+
+def admitCallableFunction (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (expressionRows : List CppBinaryExpressionEvidence)
+    (profile : TargetProfile) (path : List Nat) : Except String CallableFunction := do
+  let expressionTypes ← parseValidatedExpressionTypeEvidence probe
+  admitCallableFunctionWithExpressionTypes probe typeRows expressionRows expressionTypes profile path
 
 def admitCallableFunctionFromProbe (probe : DeclarationProbe) (profile : TargetProfile)
     (path : List Nat) : Except String CallableFunction := do

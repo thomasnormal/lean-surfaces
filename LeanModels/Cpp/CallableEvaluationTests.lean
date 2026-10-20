@@ -468,4 +468,22 @@ private def checkFor (condition : TypedCallableExpression) (step body : Callable
       | _ => false
   | .error _ => false
 
+-- Typed literal formats are observable even without a surrounding conversion.
+private def checkTypedLiteral (type : CppTypeEvidence) (literal : Nat)
+    (expected : IntegralResult IntegralValue) : Bool :=
+  match admitLiteral with
+  | .ok function =>
+      let function := {function with
+        signature := {function.signature with result := type}
+        body := .return_ {expression := .integer literal, sourceType := type, type}}
+      (evaluateCallable 4 .lp64 function []).toOption == some expected
+  | .error _ => false
+
+#guard checkTypedLiteral (.builtin .boolean) 1 (.ok (boolean 1))
+#guard checkTypedLiteral (.builtin .unsignedInt) 1 (.ok (unsigned 1))
+#guard checkTypedLiteral (.builtin .long) 4294967296 (.ok ⟨.signed 64, 4294967296⟩)
+#guard checkTypedLiteral (.builtin .unsignedLongLong) 18446744073709551615
+  (.ok ⟨.unsigned 64, 18446744073709551615⟩)
+#guard checkTypedLiteral (.builtin .int) 4294967296 (.invalid .outOfRange)
+
 end LeanModels.Cpp.CallableEvaluationTests

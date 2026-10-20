@@ -2,6 +2,47 @@ import LeanModels.Cpp.TypeEvidence
 
 namespace LeanModels.Cpp
 
+structure CppExpressionTypeEvidence where
+  occurrence : FrontendHandle
+  kind : String
+  type : CppTypeEvidence
+  deriving Repr, BEq, Inhabited
+
+def expressionTypeFor (rows : List CppExpressionTypeEvidence) (raw : Raw) :
+    Except String CppTypeEvidence := do
+  let occurrence ← evidenceHandle raw "id"
+  let kind ← evidenceText raw "kind"
+  let matchingRows := rows.filter (·.occurrence == occurrence)
+  let row :: rest := matchingRows | throw "expression type: missing occurrence"
+  unless row.kind == kind && rest.all (fun other => other == row) do
+    throw "expression type: conflicting occurrence/kind/type"
+  pure row.type
+
+mutual
+  private def expressionInnerNodes : Raw → List Raw
+    | node@(.object fields) => node :: expressionInnerFields fields
+    | _ => []
+
+  private def expressionInnerFields : List (String × Raw) → List Raw
+    | [] => []
+    | (name, value) :: rest =>
+        (if name == "inner" then
+          match value with
+          | .array values => expressionInnerValues values
+          | _ => []
+        else []) ++ expressionInnerFields rest
+
+  private def expressionInnerValues : List Raw → List Raw
+    | [] => []
+    | value :: rest => expressionInnerNodes value ++ expressionInnerValues rest
+end
+
+/-- Restrict a validated module supplement to one callable body before parsing. -/
+def expressionTypeRowsFor (raw : Raw) (rows : List CppExpressionTypeEvidence) :
+    List CppExpressionTypeEvidence :=
+  let ids := (expressionInnerNodes raw).filterMap (·.text "id")
+  rows.filter (fun row => ids.contains row.occurrence.value)
+
 structure CppExpressionOperandEvidence where
   occurrence : FrontendHandle
   kind : String
@@ -174,5 +215,28 @@ def parseValidatedBinaryExpressionEvidence (probe : DeclarationProbe) :
   let rows ← parseBinaryExpressionEvidenceRows (← evidenceField metadata "expression_evidence")
   validateBinaryExpressionEvidence probe rows
   return rows
+
+/-- `none` denotes a legacy capture; `some []` still requires types at every use. -/
+def parseValidatedExpressionTypeEvidence (probe : DeclarationProbe) :
+    Except String (Option (List CppExpressionTypeEvidence)) := do
+  match probe.metadata.field "expression_types_api", probe.metadata.field "expression_types" with
+  | none, none => pure none
+  | some (.string "Clang::Expr type projection v1"), some (.array values) =>
+      let rows ← values.mapM fun value => return ({
+        occurrence := ← evidenceHandle value "occurrence"
+        kind := ← evidenceText value "kind"
+        type := ← parseCppTypeEvidence (← evidenceField value "type")
+      } : CppExpressionTypeEvidence)
+      let nodes := expressionInnerNodes probe.ast
+      for row in rows do
+        let matchingNodes := nodes.filter (·.text "id" == some row.occurrence.value)
+        unless !matchingNodes.isEmpty && matchingNodes.all (·.text "kind" == some row.kind) do
+          throw "expression type: occurrence/kind disagrees with AST inner tree"
+        unless row.type.referencesKnown probe.declarations do
+          throw "expression type: absent type declaration"
+        unless rows.all (fun other => other.occurrence != row.occurrence || other == row) do
+          throw "expression type: conflicting repeated row"
+      pure (some rows)
+  | _, _ => throw "expression type: missing or unsupported supplement"
 
 end LeanModels.Cpp

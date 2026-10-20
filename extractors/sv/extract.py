@@ -2158,6 +2158,64 @@ def _convert_sym_call_expr(sm, e):
 
 
 def _convert_sym_select_expr(sm, e, cname):
+    member = None
+    if (cname != "ReplicationExpression" and
+            type(e.value).__name__ == "MemberAccessExpression"):
+        member = _packed_struct_member(sm, e.value)
+    if member is not None:
+        base, _member_width, parent_offset, _two_state = member
+        member_type = e.value.type.canonicalType
+        if type(member_type).__name__ == "PackedArrayType":
+            declared_left = int(member_type.range.left)
+            declared_right = int(member_type.range.right)
+            low, high = min(declared_left, declared_right), max(declared_left, declared_right)
+
+            def offset(label):
+                return (label - declared_right if declared_left > declared_right
+                        else declared_right - label)
+
+            if cname == "ElementSelectExpression":
+                label = _constant_dimension_selector(e.selector)
+                if (label is None or type(e.selector).__name__ not in
+                        ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral") or
+                        label < low or label > high):
+                    return unsupported(sm, e, "ElementSelectExpression:member-index")
+                bit = parent_offset + offset(label)
+                return {
+                    "kind": "PartSel",
+                    "span": node_span(sm, e),
+                    "width": 1,
+                    "value": _convert_expr(sm, base),
+                    "msb": {"kind": "Int", "span": node_span(sm, e),
+                            "value": bit},
+                    "lsb": {"kind": "Int", "span": node_span(sm, e),
+                            "value": bit},
+                }
+            if cname == "RangeSelectExpression":
+                selection = str(e.selectionKind).split(".")[-1]
+                left = _constant_dimension_selector(e.left)
+                right = _constant_dimension_selector(e.right)
+                if (selection != "Simple" or left is None or right is None
+                        or type(e.left).__name__ not in
+                        ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
+                        or type(e.right).__name__ not in
+                        ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
+                        or left < low or left > high or right < low or right > high):
+                    return unsupported(sm, e, "RangeSelectExpression:member-range")
+                msb = parent_offset + offset(left)
+                lsb = parent_offset + offset(right)
+                if msb < lsb:
+                    return unsupported(sm, e, "RangeSelectExpression:member-direction")
+                return {
+                    "kind": "PartSel",
+                    "span": node_span(sm, e),
+                    "width": _safe_width(e),
+                    "value": _convert_expr(sm, base),
+                    "msb": {"kind": "Int", "span": node_span(sm, e),
+                            "value": msb},
+                    "lsb": {"kind": "Int", "span": node_span(sm, e),
+                            "value": lsb},
+                }
     if cname == "ElementSelectExpression":
         index = e.selector
         source_type = e.value.type.canonicalType

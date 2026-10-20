@@ -929,6 +929,10 @@ The `packed_member_concat` fixture checks a sampled RHS split across two
 disjoint packed-struct member windows, with the member outputs read back from
 the same vector.
 
+The `packed_member_subrange` fixture checks a constant `[1:0]` slice inside a
+packed member, flattened to the corresponding outer-vector window with x
+propagation. Dynamic nested selections remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

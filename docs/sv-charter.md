@@ -2632,6 +2632,14 @@ member windows and read back through those members. Overlapping union-member
 leaves remain loud under the same window guard; no aggregate store or new
 scheduler is introduced.
 
+### Symbolic packed-member subranges — 2026-10-20
+
+Constant simple subranges inside packed members now flatten by adding the
+member's fixed offset to the local slice offset. `packed_member_subrange`
+checks the resulting outer-vector window and x propagation. Dynamic nested
+indices and non-simple selections remain loud; no aggregate store or scheduler
+is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

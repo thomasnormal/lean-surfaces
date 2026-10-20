@@ -266,6 +266,16 @@
    ]
   },
   {
+   "name": "noncanonical_typedef_bit",
+   "example": "sem2/noncanonical_typedef_bit",
+   "top": "noncanonical_typedef_bit",
+   "signals": ["source", "out"],
+   "stimulus": [
+    {"source": "1"},
+    {"source": "x"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

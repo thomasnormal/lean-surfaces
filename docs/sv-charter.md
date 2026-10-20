@@ -3589,3 +3589,32 @@ sources retain design-level boundaries. Four source-bound kernel theorems
 cover shared reads, blocking stores, captured NBA updates and commit visibility.
 See [the contract](sv-package-storage.md) and
 [the fixtures](../Examples/system-verilog/package_storage/README.md).
+
+### Elaborated generate scopes and integral parameters — 2026-10-20
+
+IEEE clauses 6, 23 and 27 now compile live unconditional/if/case generate
+scopes and every elaborated loop entry to the existing module declarations
+and processes. Inactive branches and zero-count loops emit no runtime work.
+Original binding identity selects injective generated storage, including
+repeated procedural locals, fixed arrays and delayed captures. Integral
+module/local/genvar parameters become exact typed literals. Bound hierarchical
+reads/stores reuse the original slots. Symbolic mode is unchanged; no scheduler
+changed. Active unsupported members, cross-instance storage, dependent static
+initialization, source errors and expansion limits remain loud.
+
+The paired 22,035-path census rises 3,666 to 4,011 clean (+345), without losses.
+Of the gains, **187 match complete independent transcripts under both region
+oracles**. Three have legal time-zero races: one oracle matches the reference,
+while reversing process order changes the output. Another 146 retain runtime
+refusals (112 continuous assignments, 33 procedural edge-publication cases and
+one time-zero-only clock); four have multiple top modules and remain loader
+refusals. The reference compiler rejects five more sources: four constant
+system-function contexts and one reset-protection pragma. None of those
+refusals is counted as execution agreement. There are no other transcript
+differences from both oracle traces.
+
+Seven authored complete transcripts match both region oracles; three further
+sources retain the named boundaries. Three source-bound kernel proofs certify
+current reads, separation of same-named scopes and the selected branch's real
+blocking assignment. See [the contract](sv-elaborated-generate.md) and
+[the fixtures](../Examples/system-verilog/elaborated_generate/README.md).

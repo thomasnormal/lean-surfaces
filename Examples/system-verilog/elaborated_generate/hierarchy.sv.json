@@ -1,0 +1,104 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/elaborated_generate/hierarchy.sv",
+  "source_sha256": "d66d2003bc747d98520d1f95ee3a638df1f375862085570e409bdc0bfae0badb",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 77
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 6,
+                "end_col": 77
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 17,
+                    "end_line": 6,
+                    "end_col": 64
+                  },
+                  "name": "$display",
+                  "format": "instance %0d",
+                  "args": [
+                    {
+                      "kind": "Unsupported",
+                      "span": {
+                        "line": 6,
+                        "col": 42,
+                        "end_line": 6,
+                        "end_col": 62
+                      },
+                      "sv_kind": "HierarchicalValueExpression",
+                      "text": "instance_value.value"
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 65,
+                    "end_line": 6,
+                    "end_col": 73
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 5,
+              "col": 9,
+              "end_line": 5,
+              "end_col": 25
+            },
+            "sv_kind": "InstanceSymbol:Instance",
+            "text": "instance_value()"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

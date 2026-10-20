@@ -1337,3 +1337,17 @@ exact elaborated literals. Unsupported package members and invalid package
 compilations remain design-level `Unsupported` nodes. Dependent/effectful
 initializers and unpacked/nonintegral package storage remain loud. Symbolic
 mode is unchanged. See [the contract](sv-package-storage.md).
+
+### Legacy elaborated scope provenance
+
+In `sv-0.1`, live generate scopes flatten into ordinary module declarations
+and processes. Each such node carries `generated_scope`, a structural route
+of member ordinals, labels and loop-entry indices. Bound names use injective
+`$generate:` storage identities; repeated locals and source-offset temporaries
+retain their scope. The module carries `elaboration_lowered: true`; folded
+integral module/local/genvar parameter literals and admitted bound hierarchical
+references carry the same marker. Source genvars allocate no runtime slot.
+Inactive branches and zero-count loops emit no runtime nodes. Unsupported
+active members, invalid compilations, dependent static initialization and
+expansion-limit violations remain loud. The symbolic schema keeps its existing
+parameter/generate nodes. See [the contract](sv-elaborated-generate.md).

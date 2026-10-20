@@ -761,11 +761,22 @@ def _constant_dimension_selector(expression):
 
 _PACKAGE_BINDINGS = {}
 _PACKAGE_SCOPES = set()
+_ELAB_BINDINGS = {}
+_ELAB_PARAMETERS = set()
+_ELAB_HIER_VALUES = set()
+_ELAB_CURRENT_SCOPE = ""
 
 
 def _storage_name(symbol):
     """Use the original package declaration even through imports/reexports."""
-    return _PACKAGE_BINDINGS.get(symbol, symbol.name) if _SYM is None else symbol.name
+    if _SYM is not None:
+        return symbol.name
+    return _ELAB_BINDINGS.get(symbol, _PACKAGE_BINDINGS.get(symbol, symbol.name))
+
+
+def _scoped_temp(prefix, offset, suffix=""):
+    scope = _ELAB_CURRENT_SCOPE + ":" if _ELAB_CURRENT_SCOPE else ""
+    return f"{prefix}{scope}{offset}{suffix}"
 
 
 def _array_storage_name(symbol):
@@ -776,6 +787,8 @@ def _array_storage_name(symbol):
     frontend's process-global buffer counter so repeated extraction is stable;
     the module audit refuses collisions across buffers or source identifiers.
     """
+    if _SYM is None and symbol in _ELAB_BINDINGS:
+        return _storage_name(symbol)
     if _SYM is None and symbol.parentScope.isProceduralContext:
         location = symbol.location
         return f"$local_array:{location.offset}:{symbol.name}"
@@ -784,7 +797,14 @@ def _array_storage_name(symbol):
 
 def _foreach_storage_name(symbol):
     """Bind an automatic iterator by its declaration, including anonymous scopes."""
-    return f"$foreach:{symbol.location.offset}:{symbol.name}"
+    return _scoped_temp("$foreach:", symbol.location.offset, ":" + symbol.name)
+
+
+def _storage_expression(expression):
+    kind = type(expression).__name__
+    return kind == "NamedValueExpression" or (
+        _SYM is None and kind == "HierarchicalValueExpression"
+        and expression.symbol in _ELAB_HIER_VALUES)
 
 
 def _fixed_array_cell(sm, expression):
@@ -799,7 +819,7 @@ def _fixed_array_cell(sm, expression):
     """
     try:
         source = expression.value
-        if type(source).__name__ != "NamedValueExpression":
+        if not _storage_expression(source):
             return None
         if str(source.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
             return None
@@ -832,7 +852,7 @@ def _fixed_array_cell(sm, expression):
 def _fixed_array_shape(source):
     """Return the lowered-cell shape for a one-dimensional fixed array."""
     try:
-        if type(source).__name__ != "NamedValueExpression":
+        if not _storage_expression(source):
             return None
         if str(source.symbol.kind) != "SymbolKind.Variable":
             return None
@@ -1089,7 +1109,7 @@ def _fixed_array_pattern_assignment(sm, expr):
         if expr.op is not None or expr.timingControl is not None:
             return None
         lhs = expr.left
-        if type(lhs).__name__ != "NamedValueExpression":
+        if not _storage_expression(lhs):
             return None
         if str(lhs.symbol.kind) != "SymbolKind.Variable":
             return None
@@ -1151,7 +1171,7 @@ def _fixed_array_pattern_assignment(sm, expr):
             reads_target = False
             def inspect(node):
                 nonlocal reads_target
-                if type(node).__name__ == "NamedValueExpression":
+                if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
                     try:
                         reads_target = reads_target or _array_storage_name(node.symbol) == target_name
                     except Exception:
@@ -1567,9 +1587,9 @@ def _fixed_array_slice_pattern_assignment(sm, expr):
             reads_target = False
             def inspect(node):
                 nonlocal reads_target
-                if type(node).__name__ == "NamedValueExpression":
+                if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
                     try:
-                        reads_target = reads_target or node.symbol.name == name
+                        reads_target = reads_target or _array_storage_name(node.symbol) == name
                     except Exception:
                         reads_target = True
             element.visit(inspect)
@@ -1715,6 +1735,11 @@ def _convert_expr(sm, e):
         return _convert_conversion_expr(sm, e)
     if cname == "NamedValueExpression":
         return _convert_named_value_expr(sm, e)
+    if (_SYM is None and cname == "HierarchicalValueExpression"
+            and (e.symbol in _ELAB_HIER_VALUES or e.symbol in _ELAB_PARAMETERS)):
+        node = _convert_named_value_expr(sm, e)
+        node["elaboration_lowered"] = True
+        return node
     if cname in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
         return _convert_integer_expr(sm, e, cname)
     if cname == "StringLiteral":
@@ -1954,8 +1979,12 @@ def _convert_named_value_expr(sm, e):
             return node
     if _SYM is None and skind == "EnumValue":
         return _convert_enum_member_expr(sm, e)
-    if _SYM is None and skind == "Parameter" and sym in _PACKAGE_BINDINGS:
-        return _convert_enum_member_expr(sm, e, "Parameter")
+    if (_SYM is None and skind == "Parameter"
+            and (sym in _PACKAGE_BINDINGS or sym in _ELAB_PARAMETERS)):
+        node = _convert_enum_member_expr(sm, e, "Parameter")
+        if sym in _ELAB_PARAMETERS:
+            node["elaboration_lowered"] = True
+        return node
     iterator = _SYM is None and skind == "Iterator"
     if skind not in ("Variable", "Net") and not iterator:
         return unsupported(sm, e, "NamedValueExpression:" + skind)
@@ -2483,7 +2512,7 @@ def _packed_struct_member(sm, expression):
         if type(expression).__name__ != "MemberAccessExpression":
             return None
         value = expression.value
-        if type(value).__name__ == "NamedValueExpression":
+        if _storage_expression(value):
             base = value
             aggregate = base.type.canonicalType
             if type(aggregate).__name__ not in ("PackedStructType", "PackedUnionType"):
@@ -3602,7 +3631,7 @@ def _convert_intra_assignment(sm, expression):
         return unsupported(sm, expression, "IntraAssignment:timing-control")
     if not _case_expression_ok(wait):
         return wait
-    name = "$intra:" + str(expression.sourceRange.start.offset)
+    name = _scoped_temp("$intra:", expression.sourceRange.start.offset)
     captured = {"kind": "Ident", "span": None, "name": name, "width": width}
     capture = {"kind": "LocalDecl", "span": span, "name": name, "width": width,
                "two_state": False, "init": value, "automatic_intra": True}
@@ -3771,6 +3800,9 @@ def _case_source_expression_ok(expression, *, packed_members=False):
     def check(node):
         nonlocal pure
         kind = type(node).__name__
+        if (_SYM is None and kind == "HierarchicalValueExpression"
+                and (node.symbol in _ELAB_HIER_VALUES or node.symbol in _ELAB_PARAMETERS)):
+            return
         if (_SYM is None and _plusargs_call(node)
                 and node.subroutineName == "$test$plusargs"):
             return VisitAction.Skip
@@ -3899,7 +3931,7 @@ def _convert_foreach_loop(sm, statement):
         return unsupported(sm, statement)
     source = statement.arrayRef
     width, _, reason = type_width_2s(source.type)
-    if (type(source).__name__ != "NamedValueExpression"
+    if (not _storage_expression(source)
             or str(source.symbol.kind) != "SymbolKind.Variable"
             or (_fixed_array_shape(source) is None and
                 (reason is not None or width is None
@@ -3925,7 +3957,7 @@ def _convert_foreach_loop(sm, statement):
     if contains_local_decl(body):
         return unsupported(sm, statement, "ForeachLoopStatement:body-lifetime")
     span = node_span(sm, statement)
-    cursor_name = f"$foreach:{statement.sourceRange.start.offset}:$ordinal"
+    cursor_name = _scoped_temp("$foreach:", statement.sourceRange.start.offset, ":$ordinal")
 
     def literal(value):
         return {"kind": "Literal", "span": span, "width": 32,
@@ -4272,7 +4304,7 @@ def _convert_local_decl(sm, stmt):
     return signed_metadata({
         "kind": "LocalDecl",
         "span": node_span(sm, stmt),
-        "name": symbol.name,
+        "name": _storage_name(symbol),
         "width": width,
         "two_state": two_state,
         "init": init_node,
@@ -4834,9 +4866,9 @@ def convert_fixed_array_vars(sm, m):
                 reads_target = False
                 def inspect(node):
                     nonlocal reads_target
-                    if type(node).__name__ == "NamedValueExpression":
+                    if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
                         try:
-                            reads_target = reads_target or node.symbol.name == m.name
+                            reads_target = reads_target or _array_storage_name(node.symbol) == _array_storage_name(m)
                         except Exception:
                             reads_target = True
                 element.visit(inspect)
@@ -4879,7 +4911,7 @@ def convert_net(sm, m):
     return signed_metadata({
         "kind": "Net",
         "span": sym_span(sm, m),
-        "name": m.name,
+        "name": _storage_name(m),
         "width": w,
         "init": convert_expr(sm, init) if init is not None else None,
     }, m.type)
@@ -4921,9 +4953,66 @@ def _generated_storage_collision(ports, decls, processes, prefix):
     return any(names.count(name) != 1 for name in generated)
 
 
+def _elaborated_members(sm, scope, route=()):
+    """Flatten only live elaborated scopes; keep every active member wall."""
+    for ordinal, member in enumerate(scope):
+        kind = str(member.kind).split(".")[-1]
+        if kind == "GenerateBlock":
+            if not member.isUninstantiated:
+                path = (*route, str(ordinal), member.name)
+                yield from _elaborated_members(sm, member, path)
+        elif kind == "GenerateBlockArray":
+            if member.isUninstantiated:
+                continue
+            entries = list(member.entries)
+            if not member.valid or len(entries) > 1024:
+                reason = "instance-limit" if len(entries) > 1024 else "invalid-array"
+                yield unsupported(sm, member, "Generate:" + reason), route
+            else:
+                for entry in entries:
+                    path = (*route, str(ordinal), member.name, str(entry.arrayIndex))
+                    yield from _elaborated_members(sm, entry, path)
+        else:
+            yield member, route
+
+
+def _scope_key(route):
+    return ":".join(f"{len(part)}:{part}" for part in route)
+
+
+def _register_elaborated_bindings(members, module_name):
+    """Allocate by declaration identity, including repeated procedural locals."""
+    for member, route in members:
+        if isinstance(member, dict):
+            continue
+        kind = str(member.kind).split(".")[-1]
+        if kind == "Parameter":
+            _ELAB_PARAMETERS.add(member)
+        if kind in ("Variable", "Net"):
+            _ELAB_HIER_VALUES.add(member)
+        if kind == "Port":
+            backing = getattr(member, "internalSymbol", None)
+            if backing is not None:
+                _ELAB_HIER_VALUES.add(backing)
+        if not route or kind not in ("Variable", "Net", "ProceduralBlock", "StatementBlock"):
+            continue
+        prefix = "$generate:" + _scope_key((module_name, *route))
+
+        def register(node):
+            if str(getattr(node, "kind", "")) in ("SymbolKind.Variable", "SymbolKind.Net"):
+                _ELAB_BINDINGS[node] = f"{prefix}:{node.location.offset}:{node.name}"
+
+        member.visit(register)
+
+
 def convert_module(sm, inst):
     body = inst.body
     span = sym_span(sm, body) or sym_span(sm, inst)
+    members = list(_elaborated_members(sm, body))
+    _register_elaborated_bindings(members, inst.name)
+    elaborated = any(str(m.kind) in (
+        "SymbolKind.GenerateBlock", "SymbolKind.GenerateBlockArray",
+        "SymbolKind.Parameter", "SymbolKind.Genvar") for m in body)
 
     port_names = set()
     for m in body:
@@ -4934,21 +5023,30 @@ def convert_module(sm, inst):
     decls = []
     processes = []
     others = []
-    for m in body:
+    global _ELAB_CURRENT_SCOPE
+    for m, route in members:
+        if isinstance(m, dict):
+            others.append(m)
+            continue
+        _ELAB_CURRENT_SCOPE = _scope_key((inst.name, *route)) if route else ""
+        previous_sizes = len(decls), len(processes)
         try:
             k = str(m.kind).split(".")[-1]
             if k == "Port":
                 ports.append(convert_port(sm, m))
             elif k in ("Variable", "Net"):
                 # Skip the internal symbol backing an ANSI port (same name).
-                if m.name in port_names:
+                if not route and m.name in port_names:
                     continue
                 if k == "Variable":
                     converted = convert_var(sm, m)
-                    if isinstance(converted, list):
-                        decls.extend(converted)
-                    else:
-                        decls.append(converted)
+                    declarations = converted if isinstance(converted, list) else [converted]
+                    for declaration in declarations:
+                        reads = _converted_ident_names(declaration.get("init"))
+                        if reads and (route or any(name.startswith("$generate:") for name in reads)):
+                            decls.append(unsupported(sm, m, "Generate:initializer-order"))
+                        else:
+                            decls.append(declaration)
                 else:
                     decls.append(convert_net(sm, m))
             elif k == "ProceduralBlock":
@@ -4963,6 +5061,13 @@ def convert_module(sm, inst):
                 continue
             elif is_bound_enum_member(m):
                 continue
+            elif k == "Genvar":
+                continue
+            elif k == "Parameter":
+                width, _, reason = type_width_2s(m.type)
+                value = m.value.value
+                if reason is not None or type(value).__name__ != "SVInt" or value.bitWidth != width:
+                    others.append(unsupported(sm, m, "Parameter:integral-value"))
             elif k in ("ExplicitImport", "WildcardImport") and m.package in _PACKAGE_SCOPES:
                 # Binding is already resolved by the frontend. References keep
                 # the original symbol; importing does not allocate new storage.
@@ -4971,6 +5076,11 @@ def convert_module(sm, inst):
                 others.append(unsupported(sm, m, type(m).__name__ + ":" + k))
         except Exception as exc:
             others.append(internal_error(exc))
+        finally:
+            if route:
+                for node in decls[previous_sizes[0]:] + processes[previous_sizes[1]:]:
+                    node["generated_scope"] = list(route)
+            _ELAB_CURRENT_SCOPE = ""
 
     processes = _hoist_static_local_arrays(processes, decls)
     processes = _lower_plusargs_processes(processes)
@@ -4991,12 +5101,16 @@ def convert_module(sm, inst):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "ForeachLoopStatement:storage-collision",
                        "text": "generated iterator storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$generate:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "Generate:storage-collision",
+                       "text": "generated scope storage collides with a source binding"})
 
     # Constant continuous windows are storage-only in the legacy runner too;
     # reject static overlap before it could be mistaken for net resolution.
     _reject_overlapping_symbolic_drivers(processes)
 
-    return {
+    module = {
         "kind": "Module",
         "span": span,
         "name": inst.name,
@@ -5005,6 +5119,9 @@ def convert_module(sm, inst):
         "processes": processes,
         "others": others,
     }
+    if elaborated:
+        module["elaboration_lowered"] = True
+    return module
 
 
 def contains_selected_read(node):
@@ -5158,16 +5275,16 @@ def contains_loop(node):
     return False
 
 
-def _reject_invalid_lowering(sm, comp, modules, others, marker, kind, description):
-    def contains(node):
-        if isinstance(node, dict):
-            return node.get(marker, False) or any(
-                contains(value) for value in node.values())
-        if isinstance(node, list):
-            return any(contains(value) for value in node)
-        return False
+def _node_marker(node, marker):
+    if isinstance(node, dict):
+        return node.get(marker, False) or any(_node_marker(value, marker) for value in node.values())
+    if isinstance(node, list):
+        return any(_node_marker(value, marker) for value in node)
+    return False
 
-    if (contains(modules)
+
+def _reject_invalid_lowering(sm, comp, modules, others, marker, kind, description):
+    if (_node_marker(modules, marker)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, kind + ":invalid-compilation",
                                   "frontend rejected source containing " + description))
@@ -5185,7 +5302,7 @@ def _closed_package_initializer(expression):
         nonlocal closed
         if type(node).__name__ == "CallExpression":
             closed = False
-        if type(node).__name__ == "NamedValueExpression":
+        if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
             closed = closed and str(node.symbol.kind) in (
                 "SymbolKind.Parameter", "SymbolKind.EnumValue")
 
@@ -5289,7 +5406,10 @@ def convert_design(sm, comp):
     # error path. Symbol objects identify declarations without parsing paths
     # (escaped identifiers themselves may contain :: or punctuation).
     global _PACKAGE_BINDINGS, _PACKAGE_SCOPES
-    previous = _PACKAGE_BINDINGS, _PACKAGE_SCOPES
+    global _ELAB_BINDINGS, _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE
+    previous = (_PACKAGE_BINDINGS, _PACKAGE_SCOPES, _ELAB_BINDINGS,
+                _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE)
+    _ELAB_BINDINGS, _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE = {}, set(), set(), ""
     packages = [member for unit in comp.getCompilationUnits() for member in unit
                 if str(member.kind) == "SymbolKind.Package"]
     _PACKAGE_SCOPES = set(packages)
@@ -5300,7 +5420,8 @@ def convert_design(sm, comp):
     try:
         return _convert_design(sm, comp, packages)
     finally:
-        _PACKAGE_BINDINGS, _PACKAGE_SCOPES = previous
+        (_PACKAGE_BINDINGS, _PACKAGE_SCOPES, _ELAB_BINDINGS,
+         _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE) = previous
 
 
 def _convert_design(sm, comp, packages):
@@ -5351,6 +5472,11 @@ def _convert_design(sm, comp, packages):
                 others.append(unsupported(sm, m, type(m).__name__))
     except Exception as exc:
         others.append(internal_error(exc))
+    if (any(_node_marker(module, "elaboration_lowered") for module in modules)
+            and any(diagnostic.isError() or str(diagnostic.code) == "DiagCode(Redefinition)"
+                    for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "Elaboration:invalid-compilation",
+                                  "frontend rejected an elaborated scope or parameter design"))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",

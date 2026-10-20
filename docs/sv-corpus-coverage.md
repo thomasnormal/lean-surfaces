@@ -22,6 +22,81 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Elaborated generate scopes and integral parameters — 2026-10-20
+
+IEEE clauses 6, 23 and 27 now lower live unconditional/if/case generate scopes
+and elaborated loop entries into the existing module store and process runner.
+Inactive branches and zero-count loops contribute no runtime work. Original
+binding identity keeps sibling/nested variables, fixed arrays, procedural locals
+and delayed captures distinct. Integral module/local/genvar parameters become
+exact typed literals; bound hierarchical reads/stores reuse the original slots.
+Symbolic extraction is unchanged. No scheduler changed. Active unsupported
+members, instance storage, dependent static initialization, invalid source and
+expansion limits stay loud. See [the contract](sv-elaborated-generate.md).
+
+The paired **22,035** paths gain **345 clean files** without losses:
+**3,666 → 4,011 clean**, **18,303 → 17,958 partial**, **66 include skips**,
+zero extraction errors. Chapter 27 rises from 3 to 165 clean files; the other
+gains include parameter-only sources.
+
+Of the gains, **187 match complete independent transcripts under both region
+oracles**. Three have legal time-zero races: one oracle matches the reference,
+while reversing process order changes the output. Another 146 retain runtime
+refusals (112 continuous assignments, 33 procedural edge-publication cases and
+one time-zero-only clock); four have multiple top modules and remain loader
+refusals. The reference compiler rejects five more sources: four constant
+system-function contexts and one reset-protection pragma. None of those
+refusals is counted as execution agreement. There are no other transcript
+differences from both oracle traces.
+
+Seven authored runnable sources match complete independent transcripts under
+both region oracles; three more preserve active-member, instance-storage and
+initialization-order boundaries. Three source-bound kernel proofs establish
+current reads, distinct-scope storage and the selected blocking assignment.
+The following table measures extraction, including negative and compile-only
+paths; it is not whole-corpus execution conformance.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 43 | 256 | 1 |
+| 4 | 427 | 186 | 241 | 0 |
+| 5 | 618 | 354 | 264 | 0 |
+| 6 | 1185 | 412 | 773 | 0 |
+| 7 | 796 | 106 | 690 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 110 | 479 | 0 |
+| 10 | 657 | 226 | 431 | 0 |
+| 11 | 1034 | 685 | 349 | 0 |
+| 12 | 627 | 290 | 337 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 48 | 1495 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 196 | 629 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 382 | 162 | 28 |
+| 23 | 851 | 59 | 792 | 0 |
+| 24 | 355 | 12 | 343 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 151 | 414 | 0 |
+| 27 | 354 | 165 | 189 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 120 | 107 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 119 | 298 | 0 |
+| 38 | 340 | 204 | 136 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 40 | 47 | 0 |
+
 ## Package integral singleton storage — 2026-10-20
 
 IEEE clause 26 source-defined packages now lower scalar/packed integral

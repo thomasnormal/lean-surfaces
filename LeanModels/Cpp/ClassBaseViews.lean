@@ -29,6 +29,7 @@ inductive ClassBaseViewError where
 structure ClassBaseCastSyntax where
   sourceType : String
   targetType : String
+  operand : FrontendHandle
   deriving Repr, BEq, Inhabited
 
 /- An explicit typed nonvirtual base cast. The source and target declarations
@@ -99,7 +100,9 @@ def admit (raw : Raw) (sourceType targetType : String) :
   unless operand.text "kind" == some "DeclRefExpr" &&
       typeSpelling operand == some sourceType do
     throw .unsupportedOperand
-  pure {sourceType, targetType}
+  let some referenced := operand.field "referencedDecl" | throw .unsupportedOperand
+  let operandHandle ← (evidenceHandle referenced "id").mapError (fun _ => .unsupportedOperand)
+  pure {sourceType, targetType, operand := operandHandle}
 
 /-- Attach an admitted source-level shape to the already-resolved typed cast.
 The typed cast carries declaration handles and paths; the syntax record carries

@@ -53,7 +53,9 @@ private def rawType (qualType : String) : Raw :=
 private def rawDeclRef (qualType : String) : Raw :=
   rawObject [
     ("kind", rawText "DeclRefExpr"),
-    ("type", rawType qualType)]
+    ("type", rawType qualType),
+    ("referencedDecl", rawObject [
+      ("kind", rawText "ParmVarDecl"), ("id", rawText "0x1")])]
 
 private def rawLValue (qualType : String) (operand : Raw) : Raw :=
   rawObject [
@@ -157,9 +159,9 @@ private theorem kernelCastSyntax :
     [
       (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").isOk,
       (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").toOption ==
-        some {sourceType := "D *", targetType := "L *"},
+        some {sourceType := "D *", targetType := "L *", operand := h "0x1"},
       boundSyntax (rawBaseCast "D *" "L *") ==
-        some {sourceType := "D *", targetType := "L *"},
+        some {sourceType := "D *", targetType := "L *", operand := h "0x1"},
       observedAdmittedCast (rawBaseCast "D *" "L *") == some 1,
       syntaxError (rawBaseCast "D *" "L *") "D *" "L *" == none,
       syntaxError (rawBaseCast "D *" "L *") "L *" "L *" == some .malformedType,
@@ -210,6 +212,19 @@ private theorem kernelCastSyntax :
           ("path", .array [rawObject [("name", rawText "B")]]),
           ("inner", .array [rawLValue "D *" (rawObject [
             ("kind", rawText "MemberExpr")])])]])])
+        "D *" "L *" == some .unsupportedOperand,
+      syntaxError (rawObject [
+        ("kind", rawText "CXXStaticCastExpr"),
+        ("castKind", rawText "NoOp"),
+        ("type", rawType "L *"),
+        ("inner", .array [rawObject [
+          ("kind", rawText "ImplicitCastExpr"),
+          ("castKind", rawText "DerivedToBase"),
+          ("type", rawType "L *"),
+          ("path", .array [rawObject [("name", rawText "B")]]),
+          ("inner", .array [rawLValue "D *" (rawObject [
+            ("kind", rawText "DeclRefExpr"),
+            ("type", rawType "D *")])])]])])
         "D *" "L *" == some .unsupportedOperand
     ].all id = true := by decide
 

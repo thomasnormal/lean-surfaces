@@ -938,6 +938,11 @@ member. Its one-bit write is flattened to the corresponding outer-vector
 window and read back through the member, including x propagation; dynamic
 nested selections remain loud.
 
+The `packed_union_subrange` fixture applies the same constant-window lowering
+to a direct member of an untagged packed union and reads the written bits
+through its alternate field. The one-vector alias and x propagation are
+preserved; tagged, nested and dynamic union paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

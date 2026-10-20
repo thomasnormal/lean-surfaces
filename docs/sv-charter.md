@@ -2648,6 +2648,14 @@ window. `packed_member_bit` checks the write/read path and x propagation.
 Dynamic nested indices and non-simple selections remain loud; no aggregate
 store or scheduler is added.
 
+### Symbolic packed-union member subranges — 2026-10-20
+
+Literal subranges of direct members of an untagged packed union now flatten to
+fixed windows in the union's shared vector. `packed_union_subrange` checks the
+write through one field and read through an alternate field, including x
+propagation. Tagged, nested and dynamic union paths remain loud; no driver
+resolution, aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

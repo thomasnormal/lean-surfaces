@@ -377,6 +377,11 @@ fixed offset to the selected local bit offset and emitting a one-bit outer
 `PartSel`. Dynamic member indices and non-simple nested selections remain
 unsupported; `packed_member_bit` pins the fixed case.
 
+The same fixed-window lowering applies to a literal subrange of a direct
+untagged packed-union member. The union's alternate direct fields continue to
+alias the one packed vector; `packed_union_subrange` pins this case. Tagged,
+nested and dynamic union paths remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

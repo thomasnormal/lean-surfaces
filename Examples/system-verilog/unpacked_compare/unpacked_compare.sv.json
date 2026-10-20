@@ -596,7 +596,7 @@
                             "end_col": 35
                           },
                           "width": 1,
-                          "op": "&&",
+                          "op": "||",
                           "left": {
                             "kind": "Binary",
                             "span": {
@@ -840,7 +840,7 @@
                         "end_col": 67
                       },
                       "width": 1,
-                      "op": "&&",
+                      "op": "||",
                       "left": {
                         "kind": "Binary",
                         "span": {

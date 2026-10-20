@@ -57,9 +57,13 @@ private def rawMemberNoType (methodId receiverId name : String) : Raw := rawObje
   ("referencedMemberDecl", rawObject [("id", rawText methodId)]),
   ("inner", .array [rawRefNoType receiverId])]
 
-private def rawCall (methodId receiverId name : String) : Raw := rawObject [
+private def rawCallWithResult (methodId receiverId name result : String) : Raw := rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
+  ("type", rawObject [("qualType", rawText result)]),
   ("inner", .array [rawMember methodId receiverId name])]
+
+private def rawCall (methodId receiverId name : String) : Raw :=
+  rawCallWithResult methodId receiverId name "int"
 
 private def syntaxError (raw : Raw) : Option IntegralMemberCallSyntaxError :=
   match IntegralMemberCallSyntax.admit raw with
@@ -96,6 +100,14 @@ private def bindingTypeError (raw : Raw) : Option IntegralMemberCallError :=
       | .error reason => some reason
       | .ok _ => none
 
+private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
+  match IntegralMemberCallSyntax.admit raw with
+  | .error _ => none
+  | .ok evidence =>
+      match IntegralMemberCall.bind evidence getter receiverHandle projection with
+      | .error reason => some reason
+      | .ok _ => none
+
 #guard (IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read")).isOk
 #guard observed (rawCall methodHandle.value receiverHandle.value "read") == some 7
 #guard syntaxError (rawObject []) == some .notMemberCall
@@ -125,6 +137,10 @@ private def bindingTypeError (raw : Raw) : Option IntegralMemberCallError :=
     some .malformedReceiverType
 #guard syntaxError (rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
+  ("inner", .array [rawMember methodHandle.value receiverHandle.value "read"])]) ==
+    some .malformedResultType
+#guard syntaxError (rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
   ("inner", .array [rawMember methodHandle.value receiverHandle.value "bad-name"])]) ==
     some .malformedName
 #guard bindingError (rawCall "0xf" receiverHandle.value "read") == some .methodMismatch
@@ -132,5 +148,7 @@ private def bindingTypeError (raw : Raw) : Option IntegralMemberCallError :=
 #guard bindingError (rawCall methodHandle.value "0xe" "read") == some .receiverMismatch
 #guard bindingTypeError (rawCall methodHandle.value receiverHandle.value "read") ==
   some .receiverTypeMismatch
+#guard bindingResultError (rawCallWithResult methodHandle.value receiverHandle.value "read" "long") ==
+  some .resultTypeMismatch
 
 end LeanModels.Cpp.MemberCallTests

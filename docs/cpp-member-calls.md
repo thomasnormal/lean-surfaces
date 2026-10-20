@@ -5,16 +5,19 @@ source bridge over the existing integral member getter and class receiver
 projection surfaces. `IntegralMemberCallSyntax.admit` accepts a
 `CXXMemberCallExpr` with exactly one `MemberExpr` child, an arrow receiver, a
 validated identifier name, a `referencedMemberDecl` handle, and one direct
-receiver `DeclRefExpr` with its own handle and qualified type spelling. A second child is an argument and
-refuses as `unsupportedArguments`; missing or computed receiver evidence stays
-loud.
+receiver `DeclRefExpr` with its own handle and qualified type spelling. A second
+child is an argument and refuses as `unsupportedArguments`; the call result's
+qualified type spelling is also retained. Missing or computed receiver/result
+evidence stays loud.
 
 `IntegralMemberCall.bind` takes the expected receiver handle, an already
 admitted `IntegralMemberGetter`, and a caller-supplied
 `ClassReceiverProjection`. It checks the method handle and source name, checks
 the receiver handle, derives the selected class name from the projection's
 receiver path, and compares its pointer spelling to the retained receiver
-type. It then checks the projection with the getter. Invocation
+type. It then checks the projection with the getter and matches the result
+spelling against the admitted integral result, including represented builtin
+aliases. Invocation
 delegates to `ClassReceiverProjection.invoke`, so the existing object identity,
 constness, lifetime, field ownership, conversion and memory-preservation
 rules remain authoritative. The retained syntax is provenance only.
@@ -27,8 +30,8 @@ receiver handle never manufactures an object or an ABI address.
 
 Kernel controls cover a successful call and result **7**, missing or malformed
 call children, argument refusal, non-arrow receivers, missing method handles,
-missing receiver types, bad names, method/name/receiver-handle mismatches and
-receiver-type mismatch.
+missing receiver/result types, bad names, method/name/receiver-handle
+mismatches, receiver-type mismatch and result-type mismatch.
 The controls use the existing projection's exact object state; no native
 differential claim is made by this source bridge. Native getter and
 class-subobject batteries remain the separate oracle for the underlying

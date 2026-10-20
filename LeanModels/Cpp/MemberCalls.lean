@@ -9,6 +9,7 @@ structure IntegralMemberCallSyntax where
   method : FrontendHandle
   receiver : FrontendHandle
   receiverType : String
+  resultType : String
   name : String
   deriving Repr, BEq, Inhabited
 
@@ -20,6 +21,7 @@ inductive IntegralMemberCallSyntaxError where
   | missingMethodHandle
   | missingReceiverHandle
   | malformedReceiverType
+  | malformedResultType
   | malformedName
   deriving Repr, BEq, Inhabited
 
@@ -39,6 +41,13 @@ private def callChild (raw : Raw) : Except IntegralMemberCallSyntaxError Raw :=
   | some [child] => .ok child
   | some (_ :: _ :: _) => .error .unsupportedArguments
   | _ => .error .malformedChildren
+
+private def resultSpelling (raw : Raw) : Except IntegralMemberCallSyntaxError String :=
+  match raw.field "type" with
+  | some type => match type.text "qualType" with
+      | some value => if value.isEmpty then .error .malformedResultType else .ok value
+      | none => .error .malformedResultType
+  | none => .error .malformedResultType
 
 def admit (raw : Raw) :
     Except IntegralMemberCallSyntaxError IntegralMemberCallSyntax := do
@@ -68,7 +77,8 @@ def admit (raw : Raw) :
         | some value => if value.isEmpty then throw .malformedReceiverType else pure value
         | none => throw .malformedReceiverType
     | none => throw .malformedReceiverType
-  pure {method, receiver, receiverType, name}
+  let resultType ← resultSpelling raw
+  pure {method, receiver, receiverType, resultType, name}
 
 end IntegralMemberCallSyntax
 
@@ -83,6 +93,7 @@ inductive IntegralMemberCallError where
   | nameMismatch
   | receiverMismatch
   | receiverTypeMismatch
+  | resultTypeMismatch
   | projection (reason : ClassProjectionError)
   deriving Repr, BEq, Inhabited
 
@@ -99,6 +110,22 @@ private def projectionReceiverType (projection : ClassReceiverProjection) :
   unless !shape.name.isEmpty do throw .receiverTypeMismatch
   pure (shape.name ++ " *")
 
+private def resultMatches : CppIntType → String → Bool
+  | .boolean, "bool" => true
+  | .char, "char" => true
+  | .signedChar, "signed char" => true
+  | .unsignedChar, "unsigned char" => true
+  | .short, "short" | .short, "short int" => true
+  | .unsignedShort, "unsigned short" | .unsignedShort, "unsigned short int" => true
+  | .int, "int" => true
+  | .unsignedInt, "unsigned" | .unsignedInt, "unsigned int" => true
+  | .long, "long" | .long, "long int" => true
+  | .unsignedLong, "unsigned long" | .unsignedLong, "unsigned long int" => true
+  | .longLong, "long long" | .longLong, "long long int" => true
+  | .unsignedLongLong, "unsigned long long" |
+      .unsignedLongLong, "unsigned long long int" => true
+  | _, _ => false
+
 /-- Bind source handles to an already admitted getter and receiver projection.
 No overload lookup or method selection is performed here. -/
 def bind (evidence : IntegralMemberCallSyntax) (getter : IntegralMemberGetter)
@@ -111,6 +138,7 @@ def bind (evidence : IntegralMemberCallSyntax) (getter : IntegralMemberGetter)
   projection.check getter |>.mapError .projection
   let receiverType ← projectionReceiverType projection
   unless evidence.receiverType == receiverType do throw .receiverTypeMismatch
+  unless resultMatches getter.result evidence.resultType do throw .resultTypeMismatch
   pure {getter, projection, syntaxEvidence := evidence}
 
 def invoke (call : IntegralMemberCall) :

@@ -96,6 +96,8 @@ that reaches the public callable boundary is a typed refusal.
 Logical `&&` and `||` retain their sequencing guarantee even when the right
 operand increments a parameter: the right side is evaluated only when the left
 side selects it, and its updated state contributes to the boolean result.
+Other logical operator spellings are refused rather than interpreted as one of
+those two short-circuit forms.
 
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
 no recursive execution is hidden behind a partial definition. The evaluator is

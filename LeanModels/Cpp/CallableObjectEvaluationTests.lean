@@ -171,6 +171,21 @@ private def unsupportedIncrementLoud : Bool :=
   | .error (.unsupportedOperator "??") => true
   | _ => false
 
+private def unsupportedLogicalLoud : Bool :=
+  let one : TypedCallableExpression := {
+    expression := .integer 1, sourceType := intType, type := intType}
+  let zero : TypedCallableExpression := {
+    expression := .integer 0, sourceType := intType, type := intType}
+  let expression : TypedCallableExpression := {
+    expression := .logical "??" one zero,
+    sourceType := intType, type := intType}
+  let callable : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.return_ expression)}
+  match evaluateCallableObject 32 .lp64 callable [signed 7] with
+  | .ok (.unsupported .unresolvedArithmeticConversions) => true
+  | _ => false
+
 private def readsParameter : Bool :=
   match evaluateCallableObject 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .ok (.ok value) => value == signed 7
@@ -244,6 +259,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard returnFailureRetainsFrame
 #guard forInitializerFailureRetainsFrame
 #guard unsupportedIncrementLoud
+#guard unsupportedLogicalLoud
 #guard parserAdmitsAutomaticLocal
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

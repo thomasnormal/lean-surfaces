@@ -462,6 +462,12 @@ packed-struct typedef after alias erasure; `typedef_nested_concat` pins the
 metadata spelling. Tagged, unresolved, dynamic, duplicate, overlapping and
 effectful alias leaves remain unsupported.
 
+Nested concatenation leaves may use noncanonical final member ranges when their
+literal labels follow the declaration direction. Recursive and local offsets
+are combined before lowering; `nested_noncanonical_concat` pins this case.
+Direction-mismatched, dynamic, duplicate, overlapping and effectful leaves
+remain unsupported.
+
 The same recursive and local offsets lower a literal bit-select of a
 noncanonical final member to a one-bit outer window; `nested_noncanonical_bit`
 pins the bit case. Dynamic and effectful paths remain unsupported.

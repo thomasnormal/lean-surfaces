@@ -387,6 +387,19 @@ class SymbolicContinuousSelects(unittest.TestCase):
                           for part in processes[0]["target"]["parts"]],
                          [(5, 4), (1, 0)])
 
+    def test_nested_noncanonical_concat_flattens_windows(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [3:0] hi, "
+            "output logic [3:0] lo); "
+            "struct packed { struct packed { logic [10:7] hi; "
+            "logic [10:7] lo; } inner; } value; "
+            "assign {value.inner.hi[10:9], value.inner.lo[10:9]} = source; "
+            "assign hi = value.inner.hi; assign lo = value.inner.lo; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([(part["msb"]["value"], part["lsb"]["value"])
+                          for part in processes[0]["target"]["parts"]],
+                         [(7, 6), (3, 2)])
+
     def test_noncanonical_constant_parts_normalize_offsets(self):
         envelope = self.extract(
             "module top(input logic [10:3] source, output logic [10:3] value); "

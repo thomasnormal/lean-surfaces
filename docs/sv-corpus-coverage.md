@@ -1036,6 +1036,12 @@ an untagged packed-struct typedef. Alias erasure preserves recursive windows,
 source-order splitting and x propagation; tagged, unresolved, dynamic,
 duplicate, overlapping and effectful alias leaves remain loud.
 
+The `nested_noncanonical_concat` fixture checks one sampled RHS split across
+`[10:9]` slices of two `[10:7]` final members in a nested chain. Recursive and
+local declaration offsets preserve source-order splitting and x propagation;
+direction-mismatched, dynamic, duplicate, overlapping and effectful leaves
+remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

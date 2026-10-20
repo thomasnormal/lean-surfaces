@@ -2811,6 +2811,14 @@ checks one sampled RHS and x propagation. Tagged, unresolved, dynamic,
 duplicate, overlapping and effectful alias leaves remain loud; no type table,
 aggregate store or scheduler is added.
 
+### Symbolic nested noncanonical packed-member concatenations — 2026-10-20
+
+Nested concatenation leaves may now use in-direction noncanonical final member
+ranges. Recursive and local declaration offsets combine before lowering;
+`nested_noncanonical_concat` checks disjoint `[10:9]` leaves and x propagation.
+Direction mismatches, dynamic, duplicate, overlapping and effectful leaves
+remain loud; no aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

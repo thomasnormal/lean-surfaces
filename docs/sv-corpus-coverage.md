@@ -572,6 +572,15 @@ aliasing-aware representation; dynamic and unpacked
 aggregate forms remain outside the tier. No broad census or simulator-agreement
 claim is made for this focused boundary.
 
+## Legacy continuous packed-union alias windows — 2026-10-20
+
+Focused extraction now covers direct untagged packed-union members and their
+constant indexed windows through the flat vector state. Alternate members
+share the same static overlap guard, so conflicting continuous windows remain
+loud. Nested/tagged unions, dynamic or effectful selections and unpacked
+storage stay outside this focused rung; no broad census or simulator-agreement
+claim is made.
+
 ## Legacy continuous fixed-array cell windows — 2026-10-20
 
 The legacy continuous-assignment path now has focused coverage for constant

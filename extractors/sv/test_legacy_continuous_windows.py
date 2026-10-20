@@ -172,6 +172,35 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(all(process["kind"] == "Unsupported"
                             for process in processes))
 
+    def test_direct_packed_union_alias_windows_are_continuous(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "union packed { logic [3:0] bytes; logic [3:0] alt; } value; "
+            "assign value.bytes[1 +: 2] = source; "
+            "assign out = value.alt[3 -: 2]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target, readback = processes
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["value"]["name"], "value")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 31 + "1")
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["value"]["name"], "value")
+        self.assertTrue(readback["value"]["descending"])
+
+    def test_overlapping_packed_union_alias_windows_are_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [3:0] out); "
+            "union packed { logic [3:0] bytes; logic [3:0] alt; } value; "
+            "assign value.bytes[3:2] = source; "
+            "assign value.alt[3:2] = source; assign out = value.alt; "
+            "endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[1]["kind"], "Unsupported")
+        self.assertEqual(processes[1]["sv_kind"],
+                         "AssignmentExpression:target")
+
     def test_overlapping_fixed_array_cell_windows_are_loud(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [3:0] out); "

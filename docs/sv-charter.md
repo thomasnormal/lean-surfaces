@@ -1146,6 +1146,16 @@ tagged aggregates and unpacked storage remain loud because their
 runtime aliasing is not represented by the flat-vector state. No aggregate
 store, driver-resolution rule or scheduler is added.
 
+### Legacy continuous packed-union alias windows — 2026-10-20
+
+Direct members of an untagged packed union on continuous assignments now share
+the same fixed-vector windows as struct fields, including constant bit, simple
+part and canonical indexed selections. Alternate-member windows alias the same
+base, so statically overlapping continuous drivers are rejected before they
+could imply resolution. Nested or tagged unions, dynamic/effectful selections
+and unpacked storage remain loud; no alias table, aggregate store or scheduler
+is introduced.
+
 ### Legacy continuous fixed-array cell windows — 2026-10-20
 
 The same legacy continuous-assignment window path now has a pinned boundary

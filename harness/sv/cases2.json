@@ -286,6 +286,16 @@
    ]
   },
   {
+   "name": "nested_member_indexed",
+   "example": "sem2/nested_member_indexed",
+   "top": "nested_member_indexed",
+   "signals": ["source", "out"],
+   "stimulus": [
+    {"source": "01"},
+    {"source": "x0"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

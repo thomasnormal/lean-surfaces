@@ -2764,6 +2764,14 @@ the alternate field with x propagation. Dynamic and effectful union aliases
 remain loud; no type table, driver resolution, aggregate store or scheduler is
 added.
 
+### Symbolic nested packed-member indexed windows — 2026-10-20
+
+Indexed selections of final members in nested untagged packed-struct chains
+now accumulate fixed declaration offsets before emitting an outer window.
+`nested_member_indexed` checks the `+:` form with four-state propagation.
+Nested unions, direction mismatches, dynamic and effectful paths remain loud;
+no aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

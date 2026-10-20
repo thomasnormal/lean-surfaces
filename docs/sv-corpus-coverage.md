@@ -1008,6 +1008,11 @@ through an untagged packed-union typedef and reads the bit through its alternate
 field. Alias visibility and x propagation remain; dynamic and effectful union
 aliases remain loud.
 
+The `nested_member_indexed` fixture checks a `+:` slice of a member inside a
+two-level untagged packed-struct chain. Recursive fixed offsets flatten to the
+outer window with x propagation; nested unions, direction mismatches, dynamic
+and effectful paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

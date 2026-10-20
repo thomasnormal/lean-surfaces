@@ -222,6 +222,16 @@ See [plain always procedures](sv-always.md).
 
 ## Statements
 
+Simple immediate `assert`/`assume`/`cover` checks in the legacy schema lower
+to `If`, with `immediate_assertion: "assert" | "assume" | "cover"` and
+`assertion_lowered: true` provenance. The condition and action statements
+retain source order. An omitted assert/assume failure action becomes an
+`Unsupported` else branch tagged `ImmediateAssertion:implicit-error`;
+unsuccessful cover has no else branch. Deferred checks, null failure actions,
+unsupported conditions/actions and symbolic-mode checks remain loud.
+Frontend errors in a design containing the lowering are a design-level
+barrier. See [the contract](sv-immediate-assertions.md).
+
 The legacy/self-check extractor also lowers unqualified ordinary integral
 `case` statements into nested `If` nodes with `Binary` `===` conditions.
 Each lowered `If` carries optional `case_lowered: true` provenance; the

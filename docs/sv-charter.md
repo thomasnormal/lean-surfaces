@@ -76,6 +76,24 @@ path and currently admits retained `initial`, plain `always`, and canonical
 positive-edge bodies. Extractor, ingestion,
 evaluator and kernel-loader refusal inventories must therefore stay separate.
 
+## Simple immediate assertion actions — 2026-10-20
+
+IEEE §16.3 simple immediate assert/assume/cover now compile to the existing
+conditional executor with source-kind provenance. Conditions evaluate once;
+selected action tails survive waits. Assert/assume with no failure action
+retain a loud implicit-diagnostic branch; unsuccessful cover has no failure
+effect. Deferred/concurrent checks, assertion controls, unsupported effects,
+symbolic mode and invalid source retain their boundaries. Null failure
+actions remain loud pending independent parser agreement. No scheduler changed.
+See [the contract](sv-immediate-assertions.md).
+
+The paired 22,035-path census gains **40 clean files** with no losses
+(**3,461 → 3,501**). Thirty-five gains match complete configured independent
+transcripts under both oracles; four remain runtime refusals and one exposes
+the existing `$finish(0)` source-location observation gap. Four authored
+runnable sources match, three preserve explicit refusals, and four kernel
+theorems bind to actual parsed source bodies.
+
 ## Plain always source repetition — 2026-10-20
 
 Plain `always` (§9.2.2.1) starts at time zero and repeats its complete source

@@ -3403,6 +3403,9 @@ def _convert_stmt(sm, s):
     if cname in ("WhileLoopStatement", "DoWhileLoopStatement"):
         return _convert_test_loop(sm, s, cname)
 
+    if cname == "ImmediateAssertionStatement":
+        return _convert_immediate_assertion(sm, s)
+
     if cname == "ForeverLoopStatement":
         if _SYM is not None:
             return unsupported(sm, s)
@@ -3971,6 +3974,42 @@ def _convert_incdec(sm, expression, context):
         value = squash2_wrap(value, width)
     return {"kind": "BlockingAssign", "span": node_span(sm, expression),
             "target": target, "value": value}
+
+
+def _convert_immediate_assertion(sm, statement):
+    """Simple immediate checks use ordinary conditional action execution.
+
+    A missing assert/assume failure action requests the standard's implicit
+    error diagnostic. Keep that branch loud rather than erasing the effect.
+    Deferred checks require observation-region semantics, not an ordinary If.
+    """
+    if _SYM is not None:
+        return unsupported(sm, statement, "ImmediateAssertion:symbolic")
+    if statement.isDeferred:
+        return unsupported(sm, statement, "ImmediateAssertion:deferred")
+    if (statement.ifFalse is not None
+            and type(statement.ifFalse).__name__ == "EmptyStatement"):
+        return unsupported(sm, statement, "ImmediateAssertion:null-failure")
+    assertion = str(statement.assertionKind).split(".")[-1]
+    names = {"Assert": "assert", "Assume": "assume", "CoverProperty": "cover"}
+    if assertion not in names:
+        return unsupported(sm, statement, "ImmediateAssertion:kind")
+    condition = convert_expr(sm, statement.cond)
+    if (not _case_source_expression_ok(statement.cond)
+            or not _case_expression_ok(condition)):
+        return unsupported(sm, statement, "ImmediateAssertion:condition")
+    success = (convert_stmt(sm, statement.ifTrue) if statement.ifTrue is not None
+               else {"kind": "Empty", "span": None})
+    if statement.ifFalse is not None:
+        failure = convert_stmt(sm, statement.ifFalse)
+    elif assertion == "CoverProperty":
+        failure = None
+    else:
+        failure = unsupported(sm, statement, "ImmediateAssertion:implicit-error",
+                              "implicit assertion failure diagnostic")
+    return {"kind": "If", "span": node_span(sm, statement), "cond": condition,
+            "then": success, "else": failure,
+            "immediate_assertion": names[assertion], "assertion_lowered": True}
 
 
 def contains_local_decl(node):
@@ -5146,6 +5185,8 @@ def convert_design(sm, comp):
                                   "frontend rejected source containing a lowered case"))
     _reject_invalid_lowering(sm, comp, modules, others, "always_lowered",
                              "Always", "a repeating procedural process")
+    _reject_invalid_lowering(sm, comp, modules, others, "assertion_lowered",
+                             "ImmediateAssertion", "a lowered immediate assertion")
     if (any(contains_fixed_bits_query(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "$bits:invalid-compilation",

@@ -22,6 +22,32 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Simple immediate assertion actions — 2026-10-20
+
+IEEE §16.3 simple immediate assert/assume/cover now retain source-kind
+provenance while using the existing conditional executor. Conditions evaluate
+once, and selected action continuations survive waits. Missing assert/assume
+failure actions retain a loud implicit-diagnostic branch. Deferred/concurrent
+checks, assertion controls, unsupported conditions/actions, symbolic mode,
+invalid source and unvalidated null failure actions remain loud. No scheduler
+changed. See [the contract](sv-immediate-assertions.md).
+
+The paired **22,035**-path census gains **40 clean files** without losses:
+**3,461 → 3,501 clean**, **18,508 → 18,468 partial**, **66 include skips**,
+zero extraction errors. Thirty-five gains match complete configured independent
+transcripts under both region oracles. Four gains retain runtime refusals:
+procedural edge publication, time-zero-only clocks, scope-aware `%m` rendering
+and `always_comb`. One runs the assertion actions but differs in the independent
+`$finish(0)` source-location footer; it is not counted as agreement.
+
+Four authored runnable sources match complete transcripts, including every
+two-bit four-state condition, wide truthiness, nested/empty actions, successful
+implicit checks and retained delayed selections. Three preserve the implicit
+diagnostic, deferred-region and null-failure refusals. Independent action
+checks explicitly enable all cover successes and disable extra assertion-engine
+status messages; no additional transcript filtering is applied. Four kernel
+theorems bind to actual compiled source subtrees.
+
 ## Plain always source repetition — 2026-10-20
 
 IEEE §9.2.2.1 plain `always` now retains its complete source body and compiles

@@ -359,9 +359,20 @@ mutual
             match evaluated.result with
             | .error reason => failure evaluated.frame reason
             | .ok (.ok value) =>
-                let selected := (switchCaseSuffix value.value clauses).orElse
-                  (fun _ => switchDefaultSuffix clauses) |>.getD []
-                evalSwitch fuel profile evaluated.frame selected
+                let entered := evaluated.frame.enterScope
+                match entered.result with
+                | .error reason => frameFailure entered.frame reason
+                | .ok _ =>
+                    let selected := (switchCaseSuffix value.value clauses).orElse
+                      (fun _ => switchDefaultSuffix clauses) |>.getD []
+                    let switched := evalSwitch fuel profile entered.frame selected
+                    match switched.result with
+                    | .error reason => failure switched.frame reason
+                    | .ok execution =>
+                        let exited := switched.frame.exitScope
+                        match exited.result with
+                        | .error reason => frameFailure exited.frame reason
+                        | .ok _ => success exited.frame execution
             | .ok result => success evaluated.frame (.failed result)
         | .whileLoop condition body => evalWhile fuel profile frame condition body
         | .doWhile body condition => evalDoWhile fuel profile frame body condition

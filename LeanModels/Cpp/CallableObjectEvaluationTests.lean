@@ -234,6 +234,28 @@ private def unsupportedBinaryLoud : Bool :=
   | .ok (.unsupported .unresolvedArithmeticConversions) => true
   | _ => false
 
+private def switchScopeClosesOnFailure : Bool :=
+  let one : TypedCallableExpression := {
+    expression := .integer 1, sourceType := intType, type := intType}
+  let zero : TypedCallableExpression := {
+    expression := .integer 0, sourceType := intType, type := intType}
+  let failingExpression : TypedCallableExpression := {
+    expression := .binary "/" one zero,
+    sourceType := intType, type := intType}
+  let clause := .sequence
+    (automaticLiteral "0x12" 4) (.expression failingExpression)
+  let callable : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.switch_ one [{label := some 1, body := clause}])}
+  match CallableObjectFrame.start .lp64 callable [signed 7] with
+  | .ok started =>
+      let result := evaluateCallableObjectInFrame 32 started
+      result.frame.scopeDepth == 1 && !result.frame.bound (handle "0x12") &&
+        match result.result with
+        | .ok (.undefined .divisionByZero) => true
+        | _ => false
+  | .error _ => false
+
 private def readsParameter : Bool :=
   match evaluateCallableObject 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .ok (.ok value) => value == signed 7
@@ -311,6 +333,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard unsupportedCompoundLoud
 #guard unsupportedUnaryLoud
 #guard unsupportedBinaryLoud
+#guard switchScopeClosesOnFailure
 #guard parserAdmitsAutomaticLocal
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

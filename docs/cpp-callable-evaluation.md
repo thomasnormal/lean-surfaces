@@ -85,7 +85,9 @@ step-before-continue rewrite remains. A separate iteration helper recurs without
 re-entering the initializer, and every iteration checks its fuel budget.
 
 An admitted `switch` has an exact builtin `int` condition and a compound body made
-of literal `case` labels and at most one `default`. Labels are unique. Matching
+of literal `case` labels and at most one `default`. The switch body gets its own
+lexical frame scope; clause locals are ended on normal, transfer and typed
+failure unwinding. Labels are unique. Matching
 starts at the first matching case, or at `default`, and ordinary completion
 falls through later clauses in source order. A `break` exits the switch; return and evaluation failures propagate. `continue`
 passes through switches and reaches its nearest enclosing iteration statement.

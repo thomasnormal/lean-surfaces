@@ -302,6 +302,18 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual((processes[0]["target"]["msb"]["value"],
                           processes[0]["target"]["lsb"]["value"]), (7, 7))
 
+    def test_noncanonical_typedef_union_bit_flattens_alias(self):
+        envelope = self.extract(
+            "module top(input logic source, output logic [3:0] out); "
+            "typedef union packed { logic [10:7] bytes; logic [3:0] alt; } U; "
+            "U value; assign value.bytes[10] = source; "
+            "assign out = value.alt; endmodule")
+        module = envelope["design"]["modules"][0]
+        processes = module["processes"]
+        self.assertEqual([decl["kind"] for decl in module["decls"]], ["Var"])
+        self.assertEqual((processes[0]["target"]["msb"]["value"],
+                          processes[0]["target"]["lsb"]["value"]), (3, 3))
+
     def test_noncanonical_constant_parts_normalize_offsets(self):
         envelope = self.extract(
             "module top(input logic [10:3] source, output logic [10:3] value); "

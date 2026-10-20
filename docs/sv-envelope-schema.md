@@ -443,6 +443,10 @@ noncanonical declaration-label offsets after alias erasure;
 `noncanonical_typedef_bit` pins the accepted case. Dynamic and effectful alias
 indices remain unsupported.
 
+The same noncanonical bit mapping through an untagged packed-union typedef
+retains alternate-field aliasing; `noncanonical_typedef_union_bit` pins the
+case. Dynamic and effectful union aliases remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

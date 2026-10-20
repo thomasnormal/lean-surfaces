@@ -1003,6 +1003,11 @@ The `noncanonical_typedef_bit` fixture checks a literal `[10]` select through a
 `[10:7]` packed-struct typedef. Alias erasure preserves the one-bit outer
 offset and x propagation; dynamic and effectful alias indices remain loud.
 
+The `noncanonical_typedef_union_bit` fixture applies the same `[10]` mapping
+through an untagged packed-union typedef and reads the bit through its alternate
+field. Alias visibility and x propagation remain; dynamic and effectful union
+aliases remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

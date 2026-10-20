@@ -228,7 +228,13 @@ with `CaseMatch` conditions (`width = 1`, `mode = "casez"` or `"casex"`,
 `left` and `right`); both operands retain whole-case sizing. Z is ignored
 on either side, and `casex` also ignores X on either side. These conditions
 enter `SelfCheck.SExpr.caseMatch`, not the M0 or symbolic expression loader.
-Unsupported qualifiers, inside/pattern forms,
+Unqualified `case … inside` also uses this chain: scalar labels use `Binary`
+`==?`, inclusive ranges use `>= && <=` (signed variants when appropriate),
+and common-width fixed-array labels expand to their scalar elements. A guard
+must return definite one to select its body; unknown guards advance the search.
+Dollar case endpoints and array-element widening remain loud. These reuse the
+existing membership helpers and do not extend the symbolic `Case` path.
+Unsupported qualifiers and pattern forms,
 effectful/nonintegral expressions and default-only cases retain
 `CaseStatement:<reason>` refusals. A frontend error in such a compilation
 adds top-level `CaseStatement:invalid-compilation`. This lowering does not

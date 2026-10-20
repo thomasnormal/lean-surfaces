@@ -439,10 +439,6 @@
     21
    ],
    [
-    "CaseStatement:Inside",
-    21
-   ],
-   [
     "ConditionalStatement:Unique",
     20
    ],
@@ -856,8 +852,8 @@
    ]
   ],
   "by_status": {
-   "clean": 3350,
-   "partial": 18619,
+   "clean": 3371,
+   "partial": 18598,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -918,7 +914,7 @@
     52
    ],
    "simulation": [
-    2851,
+    2872,
     18671
    ],
    "simulation elaboration": [
@@ -1219,9 +1215,9 @@
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 258,
+    "clean": 279,
     "error": 0,
-    "partial": 369,
+    "partial": 348,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1

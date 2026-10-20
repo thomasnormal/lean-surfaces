@@ -3508,3 +3508,26 @@ nearest-loop transfers, nesting, automatic array reinitialization, termination,
 live four-state values across delays and a permanently waiting event body.
 Four fixture-bound kernel theorems establish event/delay retention, resumed
 break and event rearming after body completion. Fuel exhaustion remains timeout.
+
+### Case-inside membership selection — 2026-10-20
+
+IEEE §12.5.4 unqualified integral `case … inside` now uses the existing
+membership predicates and first-match case chain. Scalar labels use asymmetric
+wildcard equality; colon ranges use inclusive signed/unsigned comparisons.
+Only definite one selects an arm. Common-width fixed arrays/slices retain
+source-order elements, and delayed selected arms retain their own continuation.
+No evaluator, storage or scheduler changed. Effects, qualifiers, tolerance
+syntax, unsupported types/storage, dollar case endpoints and array-element
+widening remain loud. The symbolic structural case path is unchanged.
+See [the contract](sv-case-inside.md).
+
+The paired **22,035**-path census gains **21 clean files** without losses:
+**3,350 → 3,371 clean**, **18,619 → 18,598 partial**, **66 include skips**,
+zero extraction errors. All twenty-one gains match complete independent
+transcripts under both source and reverse schedule oracles. Three authored
+sources also match complete transcripts, including all 256 pairs of two-bit
+four-state operands, type/range/array contexts and delayed live-value changes.
+A fourth source explicitly preserves the case-array widening discrepancy as
+a refusal; it is not a runtime match. Three fixture-bound kernel theorems prove
+the scalar equality bridge, ambiguous-item skip with retained selected body,
+and inclusive signed interval guard.

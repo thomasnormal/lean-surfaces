@@ -92,8 +92,10 @@ class OrdinaryCases(unittest.TestCase):
                 self.assert_refused(qualifier + " case(subject) 4'd1:; endcase",
                                     "CaseStatement:" + qualifier.capitalize())
 
-    def test_inside_stays_loud(self):
-        self.assert_refused("case(subject) inside 4'd1:; endcase", "CaseStatement:Inside")
+    def test_inside_uses_existing_membership_comparison(self):
+        design = lower(case_source("case(subject) inside 4'd1:; endcase"))
+        comparison, = [n["cond"] for n in nodes(design) if n.get("case_lowered")]
+        self.assertEqual(comparison["op"], "==?")
 
     def test_nonintegral_subject_stays_loud(self):
         self.assert_refused("case(1.5) 1.5:; endcase", "CaseStatement:subject")

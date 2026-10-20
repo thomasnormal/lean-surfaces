@@ -2223,13 +2223,15 @@ def _inside_scalar(sm, expression, width):
     return value
 
 
-def _inside_bound(sm, expression, width, signed, upper):
+def _inside_bound(sm, expression, width, signed, upper, *, allow_unbounded=True):
     leaf = expression
     while type(leaf).__name__ == "ConversionExpression" and leaf.conversionKind in (
             ConversionKind.Implicit, ConversionKind.Propagated):
         leaf = leaf.operand
     if type(leaf).__name__ != "UnboundedLiteral":
         return _inside_scalar(sm, expression, width)
+    if not allow_unbounded:
+        return None
     # §11.4.13: dollar endpoints are the extrema of the propagated type.
     if signed:
         value = (1 << (width - 1)) - 1 if upper else 1 << (width - 1)
@@ -2239,13 +2241,16 @@ def _inside_bound(sm, expression, width, signed, upper):
             "width": width, "bits": format(value, "0%db" % width)}
 
 
-def _inside_item(sm, expression, subject, width, signed):
+def _inside_item(sm, expression, subject, width, signed, *, allow_unbounded=True,
+                 allow_array_widening=True):
     if type(expression).__name__ == "ValueRangeExpression":
         # Tolerance syntax shares this AST class; it is not a colon range.
         if str(expression.syntax.op.kind).split(".")[-1] != "Colon":
             return None
-        lower = _inside_bound(sm, expression.left, width, signed, False)
-        upper = _inside_bound(sm, expression.right, width, signed, True)
+        lower = _inside_bound(sm, expression.left, width, signed, False,
+                              allow_unbounded=allow_unbounded)
+        upper = _inside_bound(sm, expression.right, width, signed, True,
+                              allow_unbounded=allow_unbounded)
         if lower is None or upper is None:
             return None
         prefix = "s" if signed else ""
@@ -2255,7 +2260,7 @@ def _inside_item(sm, expression, subject, width, signed):
     shape = _fixed_array_assignment_shape(expression)
     if shape is not None:
         name, cell_width, _, positions = shape
-        if cell_width > width:
+        if cell_width > width or (not allow_array_widening and cell_width != width):
             return None
         values = []
         for position in positions:
@@ -3794,12 +3799,12 @@ def _case_expression_ok(node):
 
 
 def _convert_ordinary_case(sm, stmt):
-    """Pure IEEE 12.5/12.5.1 first-match cases, with whole-case sizing."""
+    """Pure IEEE 12.5/12.5.1/12.5.4 cases, with whole-case sizing."""
     if stmt.check != UniquePriorityCheck.None_:
         return unsupported(sm, stmt, "CaseStatement:" + str(stmt.check).split(".")[-1])
     condition = str(stmt.condition).split(".")[-1]
     modes = {"Normal": None, "WildcardJustZ": "casez", "WildcardXOrZ": "casex"}
-    if condition not in modes:
+    if condition not in modes and condition != "Inside":
         return unsupported(sm, stmt, "CaseStatement:" + condition)
     if not _case_source_expression_ok(stmt.expr):
         return unsupported(sm, stmt, "CaseStatement:subject")
@@ -3813,22 +3818,30 @@ def _convert_ordinary_case(sm, stmt):
         for expression in item.expressions:
             if not _case_source_expression_ok(expression):
                 return unsupported(sm, stmt, "CaseStatement:pattern")
-            pattern = convert_expr(sm, expression)
-            pattern_width, _, _ = type_width_2s(expression.type)
-            if (pattern_width != width or width_of(pattern) != width
-                    or not _case_expression_ok(pattern)):
-                return unsupported(sm, stmt, "CaseStatement:pattern")
-            branches.append((pattern, body))
+            if condition == "Inside":
+                comparisons = _inside_item(
+                    sm, expression, subject, width, stmt.expr.type.isSigned,
+                    allow_unbounded=False, allow_array_widening=False)
+                if not comparisons:
+                    return unsupported(sm, stmt, "CaseStatement:pattern")
+            else:
+                pattern = convert_expr(sm, expression)
+                pattern_width, _, _ = type_width_2s(expression.type)
+                if (pattern_width != width or width_of(pattern) != width
+                        or not _case_expression_ok(pattern)):
+                    return unsupported(sm, stmt, "CaseStatement:pattern")
+                comparison = {"kind": "Binary", "span": node_span(sm, stmt), "width": 1,
+                              "op": "===", "left": subject, "right": pattern}
+                if modes[condition] is not None:
+                    comparison = {"kind": "CaseMatch", "span": node_span(sm, stmt), "width": 1,
+                                  "mode": modes[condition], "left": subject, "right": pattern}
+                comparisons = [comparison]
+            branches.extend((comparison, body) for comparison in comparisons)
     if not branches:
         return unsupported(sm, stmt, "CaseStatement:empty")
     result = convert_stmt(sm, stmt.defaultCase) if stmt.defaultCase is not None else None
     span = node_span(sm, stmt)
-    for pattern, body in reversed(branches):
-        comparison = {"kind": "Binary", "span": span, "width": 1,
-                      "op": "===", "left": subject, "right": pattern}
-        if modes[condition] is not None:
-            comparison = {"kind": "CaseMatch", "span": span, "width": 1,
-                          "mode": modes[condition], "left": subject, "right": pattern}
+    for comparison, body in reversed(branches):
         result = {
             "kind": "If", "span": span, "case_lowered": True,
             "cond": comparison,

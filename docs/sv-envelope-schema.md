@@ -253,8 +253,9 @@ also admits constant packed bit/part, concatenation-leaf and untagged
 packed-member windows on continuous assignments, with static overlaps rejected
 before execution; constant bit, simple part and indexed selections through
 nested untagged packed-struct member chains use the same fixed-vector offsets,
-also when the chain starts at a flattened fixed-array cell. Dynamic/effectful
-selections, nested unions and tagged/unpacked aggregate members remain
+also when the chain starts at a flattened fixed-array cell. Nested untagged
+packed-union members use the same accumulated offsets and alias the flat base;
+dynamic/effectful selections and tagged/unpacked aggregate members remain
 unsupported. A
 constant cell of an admitted one-dimensional
 fixed-unpacked array is an ordinary `Ident` leaf, and constant packed
@@ -596,9 +597,11 @@ windows remain `Unsupported`.
 
 Direct fields of an untagged packed struct or packed union are represented by
 the same window nodes: the field's fixed `bitOffset` becomes a literal LVec
-index over the aggregate identifier. A chain through nested packed structs is
-flattened to the outer aggregate's fixed bit offset. Nested unions, unpacked
-struct/union fields, classes, interfaces and tagged unions remain unsupported.
+index over the aggregate identifier. A chain through nested untagged packed
+structs or unions is flattened to the outer aggregate's fixed bit offset;
+alternate union members alias that base and static overlap remains loud.
+Unpacked struct/union fields, classes, interfaces and tagged unions remain
+unsupported.
 
 `ConcatTarget` has `kind`, `span`, `width` and `parts` (source-ordered
 targets), with nested `ConcatTarget` nodes retained. Whole `Ident` leaves

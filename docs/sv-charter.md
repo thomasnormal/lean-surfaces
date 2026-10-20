@@ -1130,7 +1130,7 @@ packed bit/part selects, fixed concatenation leaves, and direct members of
 untagged packed structs or unions as fixed `SelectTarget` windows. Static
 overlapping windows are converted to a loud target refusal before they could
 imply driver resolution; dynamic or effectful selectors, tagged aggregates,
-nested unions, dynamic fixed-array cells and unsupported nets remain loud. A
+dynamic fixed-array cells and unsupported nets remain loud. A
 constant cell is an ordinary flat identifier; the vector executor is reused
 and no net-resolution or scheduler rule is added.
 
@@ -1141,10 +1141,10 @@ packed-struct member chains on continuous assignments now flatten their fixed
 declaration offsets into the same `SelectTarget` and `SelectRead` windows over
 one vector.
 The same composition applies to a constant selection through a flattened
-fixed-array aggregate cell. Dynamic or effectful selections, nested unions,
-tagged aggregates and unpacked storage remain loud because their
-runtime aliasing is not represented by the flat-vector state. No aggregate
-store, driver-resolution rule or scheduler is added.
+fixed-array aggregate cell. Nested untagged packed unions use the same
+flat-vector alias windows; dynamic or effectful selections, tagged aggregates
+and unpacked storage remain loud. No aggregate store, driver-resolution rule
+or scheduler is added.
 
 ### Legacy continuous packed-union alias windows — 2026-10-20
 
@@ -1152,9 +1152,19 @@ Direct members of an untagged packed union on continuous assignments now share
 the same fixed-vector windows as struct fields, including constant bit, simple
 part and canonical indexed selections. Alternate-member windows alias the same
 base, so statically overlapping continuous drivers are rejected before they
-could imply resolution. Nested or tagged unions, dynamic/effectful selections
-and unpacked storage remain loud; no alias table, aggregate store or scheduler
-is introduced.
+could imply resolution. Nested untagged unions use the recursive fixed-window
+path below; tagged unions, dynamic/effectful selections and unpacked storage
+remain loud. No alias table, aggregate store or scheduler is introduced.
+
+### Legacy continuous nested packed-union alias windows — 2026-10-20
+
+Constant selections through nested untagged packed unions now accumulate the
+fixed outer member offsets and flatten to the existing `SelectTarget` and
+`SelectRead` windows. Alternate nested-union members therefore alias one flat
+vector, and the static overlap guard rejects conflicting continuous drivers
+before they could imply resolution. Dynamic/effectful selections, tagged
+aggregates and unpacked storage remain loud; no alias table, aggregate store or
+second scheduler is introduced.
 
 ### Legacy continuous fixed-array cell windows — 2026-10-20
 

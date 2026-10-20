@@ -556,9 +556,8 @@ The legacy/self-check extractor now lowers constant packed bit/part selects,
 fixed concatenation leaves, and direct untagged packed struct/union members on
 continuous assignments to the existing `SelectTarget` windows. The focused
 extractor tests cover member and vector writes, static overlap refusal, and
-dynamic-index loudness. Tagged, nested-union, effectful, dynamic
-fixed-array-cell and unsupported net-resolution forms remain loud; a constant
-cell is an
+dynamic-index loudness. Tagged, effectful, dynamic fixed-array-cell and
+unsupported net-resolution forms remain loud; a constant cell is an
 ordinary flat identifier. The broad corpus census was not regenerated for this
 focused rung.
 
@@ -567,19 +566,28 @@ focused rung.
 The focused extractor battery now pins constant bit, simple part and indexed
 selections through nested untagged packed-struct member chains as fixed vector
 windows on continuous assignments, including flattened fixed-array aggregate
-cells. Nested unions remain loud because their overlapping layouts need an
-aliasing-aware representation; dynamic and unpacked
-aggregate forms remain outside the tier. No broad census or simulator-agreement
-claim is made for this focused boundary.
+cells. Nested untagged packed unions use the same flat-vector alias windows;
+dynamic and unpacked aggregate forms remain outside the tier. No broad census
+or simulator-agreement claim is made for this focused boundary.
 
 ## Legacy continuous packed-union alias windows — 2026-10-20
 
 Focused extraction now covers direct untagged packed-union members and their
 constant indexed windows through the flat vector state. Alternate members
 share the same static overlap guard, so conflicting continuous windows remain
-loud. Nested/tagged unions, dynamic or effectful selections and unpacked
-storage stay outside this focused rung; no broad census or simulator-agreement
-claim is made.
+loud. Nested untagged unions use the recursive window path below; tagged
+unions, dynamic or effectful selections and unpacked storage stay outside this
+focused rung. No broad census or simulator-agreement claim is made.
+
+## Legacy continuous nested packed-union alias windows — 2026-10-20
+
+Constant selections through nested untagged packed unions now accumulate fixed
+outer offsets and flatten to the existing `SelectTarget` and `SelectRead`
+windows. Alternate nested-union members alias one flat vector, while the
+static overlap guard rejects conflicting continuous drivers before they could
+imply resolution. Dynamic/effectful selections, tagged aggregates and unpacked
+storage remain loud; no alias table, aggregate store or second scheduler is
+introduced.
 
 ## Legacy continuous fixed-array cell windows — 2026-10-20
 

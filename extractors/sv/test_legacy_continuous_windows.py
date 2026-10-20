@@ -234,16 +234,47 @@ class LegacyContinuousWindows(unittest.TestCase):
         processes = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(processes[0]["kind"], "Unsupported")
 
-    def test_nested_packed_union_member_stays_loud(self):
+    def test_nested_packed_union_member_windows_alias_flat_vector(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [1:0] out); "
             "struct packed { union packed { logic [3:0] all; "
-            "logic [1:0] lo; } inner; } value; "
-            "assign value.inner.lo = source; "
-            "assign out = value.inner.lo; endmodule")
+            "logic [3:0] alt; } inner; } value; "
+            "assign value.inner.alt[1 +: 2] = source; "
+            "assign out = value.inner.all[1 +: 2]; endmodule")
         processes = envelope["design"]["modules"][0]["processes"]
-        self.assertTrue(all(process["kind"] == "Unsupported"
-                            for process in processes))
+        target, readback = processes
+        self.assertEqual(target["kind"], "Assign")
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["value"]["name"], "value")
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["value"]["name"], "value")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         readback["value"]["index"]["bits"])
+
+    def test_nested_packed_union_overlapping_alias_windows_stay_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [3:0] out); "
+            "struct packed { union packed { logic [3:0] all; "
+            "logic [3:0] alt; } inner; } value; "
+            "assign value.inner.all[3:2] = source; "
+            "assign value.inner.alt[3:2] = source; "
+            "assign out = value.inner.all; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[1]["kind"], "Unsupported")
+        self.assertEqual(processes[1]["sv_kind"],
+                         "AssignmentExpression:target")
+
+    def test_dynamic_nested_packed_union_selection_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, input logic [2:0] index, "
+            "output logic [1:0] out); "
+            "struct packed { union packed { logic [3:0] all; "
+            "logic [3:0] alt; } inner; } value; "
+            "assign value.inner.alt[index +: 2] = source; "
+            "assign out = value.inner.all[1:0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Unsupported")
 
     def test_direct_packed_union_alias_windows_are_continuous(self):
         envelope = self.extract(

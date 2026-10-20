@@ -2104,10 +2104,18 @@ def _packed_struct_member(sm, expression):
                 return None
             base, _parent_width, parent_offset, _parent_two = parent
             aggregate = value.type.canonicalType
-            # Nested union layouts can overlap in ways this scalar window
-            # state does not describe. Nested packed structs have a fixed
-            # declaration offset and are safe to add to the parent window.
-            if type(aggregate).__name__ != "PackedStructType":
+            # Untagged packed structs and unions both have fixed declaration
+            # offsets. A union's alternate members intentionally flatten to
+            # overlapping windows on the same vector; the static continuous
+            # driver guard rejects conflicting windows before they imply
+            # resolution. Tagged aggregates remain outside this path.
+            # The symbolic path has a separate, narrower nested-struct rung;
+            # keep nested unions loud there until its alias proof exists.
+            if (_SYM is not None
+                    and type(aggregate).__name__ == "PackedUnionType"):
+                return None
+            if type(aggregate).__name__ not in ("PackedStructType",
+                                                  "PackedUnionType"):
                 return None
         else:
             return None
@@ -2127,10 +2135,11 @@ def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
     """Flatten a constant selection inside a packed-member chain.
 
     Legacy selected reads/targets store one vector plus an LSB offset. A
-    nested untagged packed-struct member has a fixed outer offset, so a
+    nested untagged packed-struct/union members have fixed outer offsets, so a
     constant bit or simple part select can add its local normalized offset and
-    reuse that representation. Indexed, dynamic and union-member forms stay
-    outside this helper rather than manufacturing a runtime aggregate path.
+    reuse that representation. Indexed, dynamic and tagged aggregate forms
+    stay outside this helper rather than manufacturing a runtime aggregate
+    path.
     """
     try:
         if type(expression.value).__name__ != "MemberAccessExpression":

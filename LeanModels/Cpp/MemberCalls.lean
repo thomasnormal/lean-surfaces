@@ -8,6 +8,7 @@ validated getter and caller-supplied object projection. -/
 structure IntegralMemberCallSyntax where
   method : FrontendHandle
   receiver : FrontendHandle
+  receiverType : String
   name : String
   deriving Repr, BEq, Inhabited
 
@@ -18,6 +19,7 @@ inductive IntegralMemberCallSyntaxError where
   | unsupportedArguments
   | missingMethodHandle
   | missingReceiverHandle
+  | malformedReceiverType
   | malformedName
   deriving Repr, BEq, Inhabited
 
@@ -55,13 +57,18 @@ def admit (raw : Raw) :
   let method ← match member.field "referencedMemberDecl" with
     | some value => (evidenceHandle value "id").mapError (fun _ => .missingMethodHandle)
     | none => throw .missingMethodHandle
-  let receiver ← oneChild member
-  unless receiver.text "kind" == some "DeclRefExpr" do
+  let receiverRaw ← oneChild member
+  unless receiverRaw.text "kind" == some "DeclRefExpr" do
     throw .unsupportedReceiver
-  let some referenced := receiver.field "referencedDecl"
+  let some referenced := receiverRaw.field "referencedDecl"
     | throw .missingReceiverHandle
   let receiver ← (evidenceHandle referenced "id").mapError (fun _ => .missingReceiverHandle)
-  pure {method, receiver, name}
+  let receiverType ← match receiverRaw.field "type" with
+    | some type => match type.text "qualType" with
+        | some value => if value.isEmpty then throw .malformedReceiverType else pure value
+        | none => throw .malformedReceiverType
+    | none => throw .malformedReceiverType
+  pure {method, receiver, receiverType, name}
 
 end IntegralMemberCallSyntax
 
@@ -75,6 +82,7 @@ inductive IntegralMemberCallError where
   | methodMismatch
   | nameMismatch
   | receiverMismatch
+  | receiverTypeMismatch
   | projection (reason : ClassProjectionError)
   deriving Repr, BEq, Inhabited
 
@@ -83,11 +91,13 @@ namespace IntegralMemberCall
 /-- Bind source handles to an already admitted getter and receiver projection.
 No overload lookup or method selection is performed here. -/
 def bind (evidence : IntegralMemberCallSyntax) (getter : IntegralMemberGetter)
-    (receiver : FrontendHandle) (projection : ClassReceiverProjection) :
+    (receiver : FrontendHandle) (receiverType : String)
+    (projection : ClassReceiverProjection) :
     Except IntegralMemberCallError IntegralMemberCall := do
   unless evidence.method == ⟨getter.occurrence.id⟩ do throw .methodMismatch
   unless getter.occurrence.name == some evidence.name do throw .nameMismatch
   unless evidence.receiver == receiver do throw .receiverMismatch
+  unless evidence.receiverType == receiverType do throw .receiverTypeMismatch
   projection.check getter |>.mapError .projection
   pure {getter, projection, syntaxEvidence := evidence}
 

@@ -34,6 +34,11 @@ private def rawText (value : String) : Raw := .string value
 
 private def rawRef (id : String) : Raw := rawObject [
   ("kind", rawText "DeclRefExpr"),
+  ("type", rawObject [("qualType", rawText "Owner *")]),
+  ("referencedDecl", rawObject [("id", rawText id)])]
+
+private def rawRefNoType (id : String) : Raw := rawObject [
+  ("kind", rawText "DeclRefExpr"),
   ("referencedDecl", rawObject [("id", rawText id)])]
 
 private def rawMember (methodId receiverId name : String) : Raw := rawObject [
@@ -43,6 +48,14 @@ private def rawMember (methodId receiverId name : String) : Raw := rawObject [
   ("name", rawText name),
   ("referencedMemberDecl", rawObject [("id", rawText methodId)]),
   ("inner", .array [rawRef receiverId])]
+
+private def rawMemberNoType (methodId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "MemberExpr"),
+  ("isArrow", .bool true),
+  ("valueCategory", rawText "lvalue"),
+  ("name", rawText name),
+  ("referencedMemberDecl", rawObject [("id", rawText methodId)]),
+  ("inner", .array [rawRefNoType receiverId])]
 
 private def rawCall (methodId receiverId name : String) : Raw := rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
@@ -57,7 +70,7 @@ private def observed (raw : Raw) : Option Int :=
   match IntegralMemberCallSyntax.admit raw with
   | .error _ => none
   | .ok evidence =>
-      match IntegralMemberCall.bind evidence getter receiverHandle projection with
+      match IntegralMemberCall.bind evidence getter receiverHandle "Owner *" projection with
       | .error _ => none
       | .ok call =>
           match call.invoke with
@@ -69,7 +82,16 @@ private def bindingError (raw : Raw) : Option IntegralMemberCallError :=
   match IntegralMemberCallSyntax.admit raw with
   | .error _ => none
   | .ok evidence =>
-      match IntegralMemberCall.bind evidence getter receiverHandle projection with
+      match IntegralMemberCall.bind evidence getter receiverHandle "Owner *" projection with
+      | .error reason => some reason
+      | .ok _ => none
+
+private def bindingTypeError (raw : Raw) (receiverType : String) :
+    Option IntegralMemberCallError :=
+  match IntegralMemberCallSyntax.admit raw with
+  | .error _ => none
+  | .ok evidence =>
+      match IntegralMemberCall.bind evidence getter receiverHandle receiverType projection with
       | .error reason => some reason
       | .ok _ => none
 
@@ -98,10 +120,16 @@ private def bindingError (raw : Raw) : Option IntegralMemberCallError :=
     ("inner", .array [rawRef receiverHandle.value])]])]) == some .missingMethodHandle
 #guard syntaxError (rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
+  ("inner", .array [rawMemberNoType methodHandle.value receiverHandle.value "read"])]) ==
+    some .malformedReceiverType
+#guard syntaxError (rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
   ("inner", .array [rawMember methodHandle.value receiverHandle.value "bad-name"])]) ==
     some .malformedName
 #guard bindingError (rawCall "0xf" receiverHandle.value "read") == some .methodMismatch
 #guard bindingError (rawCall methodHandle.value receiverHandle.value "other") == some .nameMismatch
 #guard bindingError (rawCall methodHandle.value "0xe" "read") == some .receiverMismatch
+#guard bindingTypeError (rawCall methodHandle.value receiverHandle.value "read") "Other *" ==
+  some .receiverTypeMismatch
 
 end LeanModels.Cpp.MemberCallTests

@@ -5,14 +5,14 @@ source bridge over the existing integral member getter and class receiver
 projection surfaces. `IntegralMemberCallSyntax.admit` accepts a
 `CXXMemberCallExpr` with exactly one `MemberExpr` child, an arrow receiver, a
 validated identifier name, a `referencedMemberDecl` handle, and one direct
-receiver `DeclRefExpr` with its own handle. A second child is an argument and
+receiver `DeclRefExpr` with its own handle and qualified type spelling. A second child is an argument and
 refuses as `unsupportedArguments`; missing or computed receiver evidence stays
 loud.
 
-`IntegralMemberCall.bind` takes the expected receiver handle, an already
-admitted `IntegralMemberGetter`, and a caller-supplied
-`ClassReceiverProjection`. It checks the method handle, source name and
-receiver handle exactly, then checks the projection with the getter. Invocation
+`IntegralMemberCall.bind` takes the expected receiver handle and type, an
+already admitted `IntegralMemberGetter`, and a caller-supplied
+`ClassReceiverProjection`. It checks the method handle, source name, receiver
+handle and receiver type exactly, then checks the projection with the getter. Invocation
 delegates to `ClassReceiverProjection.invoke`, so the existing object identity,
 constness, lifetime, field ownership, conversion and memory-preservation
 rules remain authoritative. The retained syntax is provenance only.
@@ -25,7 +25,8 @@ receiver handle never manufactures an object or an ABI address.
 
 Kernel controls cover a successful call and result **7**, missing or malformed
 call children, argument refusal, non-arrow receivers, missing method handles,
-bad names, method-handle mismatch, name mismatch and receiver-handle mismatch.
+missing receiver types, bad names, method/name/receiver-handle mismatches and
+receiver-type mismatch.
 The controls use the existing projection's exact object state; no native
 differential claim is made by this source bridge. Native getter and
 class-subobject batteries remain the separate oracle for the underlying

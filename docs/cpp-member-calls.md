@@ -38,6 +38,9 @@ performs both syntax admission and this canonical resolution in one operation.
 retained `CXXMemberCallExpr` in a complete probe and emits an auditable JSON
 admission/refusal census. It is bounded and read-only: no receiver, object
 state, body execution, overload lookup or native agreement is inferred.
+For argument refusals it also reports the retained child-kind shape, so a
+future argument tier can be priced against source evidence before evaluation
+semantics are added.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

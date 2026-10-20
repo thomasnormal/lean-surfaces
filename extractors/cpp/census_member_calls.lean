@@ -30,6 +30,12 @@ private def errorName : IntegralMemberCallSyntaxError → String
 private def counts (values : List String) : Json :=
   jsonObject (values.eraseDups.map fun value => (value, toJson (values.count value)))
 
+private def argumentShape (raw : Raw) : String :=
+  match raw.field "inner" with
+  | some (.array (_ :: arguments)) =>
+      String.intercalate "," (arguments.map (fun argument => argument.text "kind" |>.getD "<missing>"))
+  | _ => "<malformed>"
+
 private def emit (value : Json) : IO Unit := IO.println value.compress
 
 private def refuse (stage reason : String) : IO UInt32 := do
@@ -45,6 +51,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let calls := memberCalls probe.ast
   let mut admitted := 0
   let mut refusals : List String := []
+  let mut argumentShapes : List String := []
   let mut reports : List Json := []
   for (raw, ordinal) in calls.zipIdx do
     match IntegralMemberCallSyntax.admitResolved probe raw with
@@ -60,6 +67,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     | .error reason =>
         let name := errorName reason
         refusals := name :: refusals
+        if reason == .unsupportedArguments then
+          argumentShapes := argumentShape raw :: argumentShapes
         reports := jsonObject [
           ("ordinal", toJson ordinal),
           ("status", toJson "REFUSE"),
@@ -73,6 +82,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("admitted", toJson admitted),
     ("refused", toJson refusals.length),
     ("first_refusals", counts refusals),
+    ("unsupported_argument_shapes", counts argumentShapes),
     ("calls", toJson reports.reverse)])
   return 0
 

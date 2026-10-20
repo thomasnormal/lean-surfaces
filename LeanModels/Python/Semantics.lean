@@ -6701,15 +6701,17 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError "divmod() takes no keyword arguments")
-                    else if fname == "repr" || fname == "abs" then
-                      -- CPython's repr and abs constructors accept no keyword
+                    else if fname == "repr" || fname == "abs" || fname == "ord" then
+                      -- CPython's repr, abs, and ord constructors accept no keyword
                       -- arguments. Evaluate both argument lists before its
                       -- faithful TypeError, preserving Python's order.
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError (if fname == "repr" then
                         "repr() takes no keyword arguments"
-                      else "abs() takes no keyword arguments"))
+                      else if fname == "abs" then
+                        "abs() takes no keyword arguments"
+                      else "ord() takes no keyword arguments"))
                     else if isBuiltinName fname then
                       .unsupported s!"builtin '{fname}' with keyword arguments is outside the H6 tier"
                     else if isModuleDunder fname then

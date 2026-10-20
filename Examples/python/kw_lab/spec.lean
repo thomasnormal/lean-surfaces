@@ -94,6 +94,8 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   (.typeError "'x' is an invalid keyword argument for int()")
 #py_check kw_lab.hex_kw() raises
   (.typeError "hex() takes no keyword arguments")
+#py_check kw_lab.oct_kw() raises
+  (.typeError "oct() takes no keyword arguments")
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

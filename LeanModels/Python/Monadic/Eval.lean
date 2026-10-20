@@ -957,8 +957,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     let _ ← evalOpenList K m args.toList
                     let _ ← K.kwArgs kwargs.toList
                     raisePy (.typeError "divmod() takes no keyword arguments")
-                  else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" || name == "ascii" || name == "tuple" || name == "list" || name == "range" || name == "int" || name == "hex" then
-                    -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, and hex constructors accept no keyword;
+                  else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" || name == "ascii" || name == "tuple" || name == "list" || name == "range" || name == "int" || name == "hex" || name == "oct" then
+                    -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, hex, and oct constructors accept no keyword;
                     -- int instead reports the first invalid keyword after evaluating its value.
                     -- arguments. Evaluate both argument lists before its
                     -- faithful TypeError, preserving Python's order.
@@ -987,7 +987,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                       "list() takes no keyword arguments"
                     else if name == "range" then
                       "range() takes no keyword arguments"
-                    else "hex() takes no keyword arguments"))
+                    else if name == "hex" then
+                      "hex() takes no keyword arguments"
+                    else "oct() takes no keyword arguments"))
                   else refuse s!"builtin '{name}' with keyword arguments is outside the H6 tier"
               | .modFun qname =>
                   match findFunction m qname with

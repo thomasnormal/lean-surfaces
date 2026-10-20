@@ -6701,8 +6701,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError "divmod() takes no keyword arguments")
-                    else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" || fname == "range" || fname == "int" || fname == "hex" then
-                      -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, and hex constructors accept no keyword;
+                    else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" || fname == "range" || fname == "int" || fname == "hex" || fname == "oct" then
+                      -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, hex, and oct constructors accept no keyword;
                       -- int instead reports the first invalid keyword after evaluating its value.
                       -- arguments. Evaluate both argument lists before its
                       -- faithful TypeError, preserving Python's order.
@@ -6731,7 +6731,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         "list() takes no keyword arguments"
                       else if fname == "range" then
                         "range() takes no keyword arguments"
-                      else "hex() takes no keyword arguments"))
+                      else if fname == "hex" then
+                        "hex() takes no keyword arguments"
+                      else "oct() takes no keyword arguments"))
                     else if isBuiltinName fname then
                       .unsupported s!"builtin '{fname}' with keyword arguments is outside the H6 tier"
                     else if isModuleDunder fname then

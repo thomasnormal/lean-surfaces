@@ -152,6 +152,11 @@ def hex_kw():
     return hex(number=15)
 
 
+def oct_kw():
+    # oct takes no keywords; argument expressions still evaluate first.
+    return oct(number=15)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

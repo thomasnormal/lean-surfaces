@@ -265,6 +265,12 @@ out-of-range indices, nested or aggregate arrays, and array initializers stay
 `Unsupported`; the symbolic tier adds no aggregate store or dynamic index
 executor.
 
+An untagged plain packed integral typedef is also compile-time metadata in this
+symbolic cell path. The extractor erases the alias, recovers the canonical
+packed ranges for each emitted cell declaration, and keeps constant element
+reads and writes as those same cell identifiers; unresolved, signed/2-state,
+aggregate and dynamic alias forms remain `Unsupported`.
+
 An eligible cell-expanded declaration may also have an exact-length
 assignment-pattern initializer; each element is converted once and stored in
 its corresponding cell. Positional and elaborated keyed/default patterns are

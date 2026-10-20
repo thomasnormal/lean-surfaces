@@ -2829,6 +2829,15 @@ nested or aggregate arrays, and array initializers remain loud; the semantic
 tier adds no aggregate store or dynamic index executor and makes no legacy
 census or simulator-agreement claim.
 
+### Symbolic fixed-array cells through packed typedefs — 2026-10-20
+
+Plain untagged packed integral typedefs are now erased as compile-time metadata
+when they name the element type of an admitted fixed-unpacked array. The
+`typedef_fixed_array_element` fixture checks that canonical element ranges
+survive on `arr[0]`/`arr[1]` and that a constant cell write and nested read
+propagate four-state values. Signed, 2-state, unresolved and aggregate aliases
+remain loud; no nominal type table or aggregate storage is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

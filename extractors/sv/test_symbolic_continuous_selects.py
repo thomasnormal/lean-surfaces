@@ -458,6 +458,19 @@ class SymbolicContinuousSelects(unittest.TestCase):
         processes = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(processes[0]["kind"], "Unsupported")
 
+    def test_packed_typedef_fixed_array_cell_is_symbolic_vector(self):
+        envelope = self.extract(
+            "module top(input logic source, output logic out); "
+            "typedef logic [3:0] T; T arr [0:1]; "
+            "assign arr[0] = {3'b000, source}; assign out = arr[0][0]; "
+            "endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual([decl["name"] for decl in module["decls"]],
+                         ["arr[0]", "arr[1]"])
+        self.assertEqual(module["others"], [])
+        self.assertEqual(module["decls"][0]["width"]["packed"][0]["msb"]["value"], 3)
+        self.assertEqual(module["processes"][1]["value"]["value"]["name"], "arr[0]")
+
 
 if __name__ == "__main__":
     unittest.main()

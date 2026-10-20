@@ -1,0 +1,244 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "typedef_fixed_array_element",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/typedef_fixed_array_element/typedef_fixed_array_element.sv",
+      "sha256": "a7d3d2423c14587a1c264da1e3897a8e613d30d7ce709517190779295ec2aaa3"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "typedef_fixed_array_element",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 18,
+              "end_line": 3,
+              "end_col": 24
+            },
+            "name": "source",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 18,
+              "end_line": 4,
+              "end_col": 21
+            },
+            "name": "out",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 7,
+              "col": 10,
+              "end_line": 7,
+              "end_col": 19
+            },
+            "name": "arr[0]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": null,
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": null,
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 7,
+              "col": 10,
+              "end_line": 7,
+              "end_col": 19
+            },
+            "name": "arr[1]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": null,
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": null,
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 9,
+              "col": 10,
+              "end_line": 9,
+              "end_col": 35
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 9,
+                "col": 10,
+                "end_line": 9,
+                "end_col": 16
+              },
+              "width": 4,
+              "name": "arr[0]"
+            },
+            "value": {
+              "kind": "Concat",
+              "span": {
+                "line": 9,
+                "col": 19,
+                "end_line": 9,
+                "end_col": 35
+              },
+              "width": 4,
+              "parts": [
+                {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 9,
+                    "col": 20,
+                    "end_line": 9,
+                    "end_col": 26
+                  },
+                  "width": 3,
+                  "bits": "000"
+                },
+                {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 9,
+                    "col": 28,
+                    "end_line": 9,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "name": "source"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 10,
+              "col": 10,
+              "end_line": 10,
+              "end_col": 25
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 10,
+                "col": 10,
+                "end_line": 10,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "out"
+            },
+            "value": {
+              "kind": "BitSel",
+              "span": {
+                "line": 10,
+                "col": 16,
+                "end_line": 10,
+                "end_col": 25
+              },
+              "width": 1,
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 10,
+                  "col": 16,
+                  "end_line": 10,
+                  "end_col": 22
+                },
+                "width": 4,
+                "name": "arr[0]"
+              },
+              "index": {
+                "kind": "Int",
+                "span": {
+                  "line": 10,
+                  "col": 16,
+                  "end_line": 10,
+                  "end_col": 25
+                },
+                "value": 0
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

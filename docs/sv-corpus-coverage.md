@@ -1050,6 +1050,13 @@ while dynamic array indices remain loud. This is a semantic-only fixture: the
 legacy corpus census and its target-only counts are unchanged, and no aggregate
 storage or dynamic array executor is introduced.
 
+The `typedef_fixed_array_element` fixture exercises the same boundary through
+an untagged plain packed integral typedef. Alias metadata is erased and the
+canonical `[3:0]` element range is retained on each emitted cell, so the
+symbolic loader accepts the envelope and the constant write/read trace remains
+`0`, `1`, `x`. Signed, 2-state, unresolved and aggregate aliases remain loud;
+the legacy corpus census is unchanged.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

@@ -4694,6 +4694,27 @@ def convert_fixed_array_vars_sym(sm, m):
         # symbolic PackedType rather than an unrecoverable null-dimension
         # placeholder.
         dtype, dtype_reason = _dtype_sym(sm, element_type, _decl_type_syntax(m))
+        if (dtype is not None and dtype_reason is None
+                and dtype.get("kind") == "PackedType"
+                and dtype.get("packed") is None):
+            # A plain packed typedef has no LogicType syntax at this use
+            # site, but its canonical element type still carries fixed
+            # ranges. Recover those ranges so flattened cells can pass the
+            # symbolic instantiator's width checks without a nominal table.
+            dims = []
+            current = element_type.canonicalType
+            while type(current).__name__ == "PackedArrayType":
+                rng = current.range
+                dims.append({
+                    "msb": {"kind": "Int", "span": None,
+                            "value": int(rng.left), "resolved_width": None},
+                    "lsb": {"kind": "Int", "span": None,
+                            "value": int(rng.right), "resolved_width": None},
+                })
+                current = current.elementType.canonicalType
+            if type(current).__name__ != "ScalarType" or not dims:
+                return None
+            dtype["packed"] = dims
         if dtype is None or dtype_reason is not None:
             return None
         left, right = int(array_type.range.left), int(array_type.range.right)
@@ -5035,6 +5056,11 @@ def _convert_member_sym(sm, m, k):
         try:
             if _sym_enum_width(m.declaredType.type) is not None:
                 register_enum(sm, m.declaredType.type)
+                return None
+            if is_integral_type_alias(m):
+                # Plain packed integral aliases are compile-time metadata in
+                # the same way as packed-struct/union aliases. Uses retain
+                # their canonical dimensions at each declaration site.
                 return None
             if type(m.declaredType.type.canonicalType).__name__ in (
                     "PackedStructType", "PackedUnionType"):

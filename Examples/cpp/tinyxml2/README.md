@@ -131,3 +131,32 @@ exporter, using the actual retained paths (recorded here as `122,15,24` and
 `Examples.cpp.tinyxml2.AttributeGetLineNum`. Publish output only after a
 successful export; regenerate all manifest hashes and rerun the proof and
 differential against the matching sources.
+
+## Complete roots and abstract base receivers
+
+`ElementHierarchy.lean`, `DocumentHierarchy.lean` and `BaseGetLineNum.lean` are
+generated together from one complete capture. The
+[class-subobject manifest](class-subobjects-provenance.json) pins the source,
+capture/plugin, tools, selections and literals. Both concrete classes have the
+abstract `XMLNode` as a nonvirtual base. The receiver path `[0]` selects that
+base, with an identity distinct from its complete root.
+
+`class_subobjects_proof.lean` proves successful original getter execution from
+validated complete/base/member observations, preserving caller memory. Concrete
+kernel examples run both hierarchies and verify the selected base is abstract.
+The native controls independently set/read the original private member in real
+element and document objects, using the standard access waiver described above.
+Native construction, parsing and destruction remain oracle setup.
+
+```sh
+LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+  lake build Examples.cpp.tinyxml2.class_subobjects_proof
+LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+  python3 extractors/cpp/test_class_subobjects.py
+```
+
+Regenerate the two hierarchies with `export_class_hierarchy.lean` at the actual
+complete class paths (recorded as `122,21` and `122,23`), and the base getter with
+`export_member_getter.lean` at `122,15,24`. All three must come from the same
+capture: frontend handles cannot be combined across independent captures.
+Regenerate the manifest hashes, rebuild the proof and rerun the native controls.

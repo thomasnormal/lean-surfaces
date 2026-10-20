@@ -270,6 +270,33 @@ class CanonicalProbeTests(unittest.TestCase):
         self.source.write_text(TEMPLATE_SOURCE, encoding="utf-8")
         return self.probe()
 
+    def test_ordered_base_types_access_virtualness_and_abstractness(self):
+        self.source.write_text("""struct Abstract { virtual void tag() = 0; };
+struct Other {};
+using Alias = Other;
+class Concrete : Abstract, public Alias { void tag() override {} };
+struct Virtual : virtual Abstract {};
+template<class T> struct Dependent : T {};
+""", encoding="utf-8")
+        probe = self.probe()
+        rows = {row["name"]: row for row in probe["metadata"]["declarations"]
+                if row.get("record_complete") and not row.get("implicit")}
+        self.assertTrue(rows["Abstract"]["record_abstract"])
+        self.assertFalse(rows["Concrete"]["record_abstract"])
+        self.assertEqual(rows["Concrete"]["record_bases_api"],
+                         "CXXRecordDecl direct nonvirtual base projection v1")
+        bases = rows["Concrete"]["record_bases"]
+        self.assertEqual([base["type"] for base in bases], [
+            {"kind": "record", "declaration": rows["Abstract"]["canonical"]},
+            {"kind": "record", "declaration": rows["Other"]["canonical"]}])
+        self.assertEqual([base["type_spelling"] for base in bases], ["Abstract", "Alias"])
+        self.assertEqual([base["access"] for base in bases], ["private", "public"])
+        self.assertEqual([base["written_access"] for base in bases], ["none", "public"])
+        self.assertEqual([base["virtual"] for base in bases], [False, False])
+        self.assertTrue(rows["Virtual"]["record_bases"][0]["virtual"])
+        self.assertIsNone(rows["Dependent"]["record_bases"][0]["type"])
+        self.assertEqual(rows["Other"]["record_bases"], [])
+
     def test_method_receiver_and_signature_getters_keep_qualified_methods(self):
         self.source.write_text("""struct Receiver {
   int read(int &value) const { return value; }

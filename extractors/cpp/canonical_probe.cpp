@@ -469,6 +469,28 @@ public:
         record["record_union"] = aggregate->isUnion();
         record["record_aggregate"] = aggregate->isAggregate();
         record["record_base_count"] = static_cast<int64_t>(aggregate->getNumBases());
+        record["record_bases_api"] = "CXXRecordDecl direct nonvirtual base projection v1";
+        record["record_abstract"] = aggregate->isAbstract();
+        llvm::json::Array bases;
+        for (const auto &base : aggregate->bases()) {
+          auto type = structuredType(base.getType(), *astContext, 0);
+          auto access = [](clang::AccessSpecifier value) -> const char * {
+            switch (value) {
+            case clang::AS_public: return "public";
+            case clang::AS_protected: return "protected";
+            case clang::AS_private: return "private";
+            case clang::AS_none: return "none";
+            }
+            return "unknown";
+          };
+          bases.push_back(llvm::json::Object{
+              {"type", type ? std::move(*type) : llvm::json::Value(nullptr)},
+              {"type_spelling", base.getType().getAsString(astContext->getPrintingPolicy())},
+              {"virtual", base.isVirtual()},
+              {"access", access(base.getAccessSpecifier())},
+              {"written_access", access(base.getAccessSpecifierAsWritten())}});
+        }
+        record["record_bases"] = std::move(bases);
         record["record_trivial_destructor"] = aggregate->hasTrivialDestructor();
         record["record_user_destructor"] = aggregate->hasUserDeclaredDestructor();
         record["record_attribute_count"] = static_cast<int64_t>(aggregate->hasAttrs() ? aggregate->getAttrs().size() : 0);

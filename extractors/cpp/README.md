@@ -575,3 +575,25 @@ Missing variables explicitly skip their controls. The
 [original-method example](../../Examples/cpp/tinyxml2/README.md) contains generated
 literals, successful-execution theorems and independent native member-state
 controls. Use the documented 16 GiB process cap and one Lean worker.
+
+## Nonvirtual class subobjects
+
+`ClassHierarchyAdmission.admit` joins ordered base specifiers to concrete class
+definitions and canonical types. `ClassReceiverProjection` checks a complete
+root and every nonvirtual base occurrence before calling a selected getter.
+Abstract bases and repeated nonvirtual bases have explicit, distinct identities;
+abstract complete roots and virtual bases refuse. See the
+[class-subobject contract](../../docs/cpp-class-subobjects.md).
+
+```console
+lake env lean --run extractors/cpp/census_class_hierarchies.lean probe.json --sources source.cpp header.h
+lake env lean --run extractors/cpp/export_class_hierarchy.lean probe.json 0,1,2 Example.Hierarchy
+python3 extractors/cpp/test_class_subobjects.py
+```
+
+Both tools validate a complete bounded probe before selecting definitions.
+The census measures hierarchy admission separately from aggregate schemas and
+executable bodies. Run it from the capture directory for physical source
+ownership. The exported literal represents existing-object class relationships;
+it does not execute constructors, destructors, source casts or virtual dispatch.
+The opt-in compiler/plugin and original-source variables match the getter suite.

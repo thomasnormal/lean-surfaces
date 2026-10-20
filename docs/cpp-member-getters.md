@@ -27,13 +27,17 @@ discard attributes or executable children. Ordinary/static callable admission
 retains its existing source-child policy.
 
 `IntegralMemberSnapshot` is an explicit caller-state projection: an existing
-complete-object ID, its selected member ID/declaration, receiver access constness
+receiver-record ID, its selected member ID/declaration, receiver access constness
 and an `IntegralObjectStore`. The caller supplies the member ownership relation,
 as it supplies the initial object world. The interpreter checks distinct IDs,
 record/member types, equal storage durations, initialized live objects, const
 qualification, memory shape and value formats. It neither derives this relation
 from ABI offsets nor manufactures a class constructor. The projection is not
 an `IntegralRecordSchema` and cannot enter aggregate creation as a full schema.
+The receiver record may itself be a base subobject. The separate
+[class-subobject projection](cpp-class-subobjects.md) validates its enclosing
+concrete complete root and every nonvirtual base occurrence; the member snapshot
+alone supplies no enclosing hierarchy or dynamic complete-object type.
 
 Invocation validates the receiver, reads the member and performs retained
 integral conversions in source order. It returns the original memory alongside

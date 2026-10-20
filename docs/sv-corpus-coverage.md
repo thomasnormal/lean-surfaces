@@ -933,6 +933,11 @@ The `packed_member_subrange` fixture checks a constant `[1:0]` slice inside a
 packed member, flattened to the corresponding outer-vector window with x
 propagation. Dynamic nested selections remain loud.
 
+The `packed_member_bit` fixture checks a literal bit-select inside a packed
+member. Its one-bit write is flattened to the corresponding outer-vector
+window and read back through the member, including x propagation; dynamic
+nested selections remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

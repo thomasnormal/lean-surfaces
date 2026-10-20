@@ -2640,6 +2640,14 @@ checks the resulting outer-vector window and x propagation. Dynamic nested
 indices and non-simple selections remain loud; no aggregate store or scheduler
 is added.
 
+### Symbolic packed-member bit selects — 2026-10-20
+
+Literal bit-selects inside packed members now flatten by adding the member's
+fixed offset to the local bit offset and emitting a one-bit outer-vector
+window. `packed_member_bit` checks the write/read path and x propagation.
+Dynamic nested indices and non-simple selections remain loud; no aggregate
+store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

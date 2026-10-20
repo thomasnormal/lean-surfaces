@@ -409,6 +409,16 @@
    ]
   },
   {
+   "name": "fixed_array_stream_target",
+   "example": "sem2/fixed_array_stream_target",
+   "top": "fixed_array_stream_target",
+   "signals": ["source", "hi", "out"],
+   "stimulus": [
+    {"source": "10101"},
+    {"source": "x0101"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

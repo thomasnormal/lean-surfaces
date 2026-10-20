@@ -1113,6 +1113,18 @@ clean / 19,007 partial / 66 include skips** with zero extraction errors: seven
 clean gains and no losses; `AssignmentExpression:target` falls **3,928 →
 3,920**.
 
+### Symbolic streaming targets over fixed cells — 2026-10-20
+
+The symbolic `sv-0.2` procedural surface now applies the same right-streaming
+`ConcatTarget` lowering to constant packed windows and constant cells of a
+one-dimensional fixed-unpacked integral array. `fixed_array_stream_target`
+checks one sampled five-bit RHS split into `arr[0]` and a scalar output, then
+reads the cell through the existing comb-settle path. Dynamic or effectful
+array indices, dynamic packed bounds, left/sized/nested streams and aggregate
+leaves remain loud; no aggregate store or scheduler behavior is introduced.
+This is a semantic-tier fixture and does not claim a legacy corpus gain or
+simulator agreement on this host.
+
 ### Nested packed-struct field windows — 2026-10-19
 
 Member reads and writes through untagged nested packed structs now flatten

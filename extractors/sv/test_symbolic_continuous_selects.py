@@ -515,6 +515,38 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(module["processes"][0]["target"]["name"], "arr[0]")
         self.assertEqual(module["processes"][1]["value"]["value"]["name"], "arr[0]")
 
+    def test_right_streaming_accepts_constant_array_and_packed_leaves(self):
+        envelope = self.extract(
+            "module top(input logic [4:0] source, output logic [3:0] hi, "
+            "output logic out); logic [3:0] arr [0:1]; "
+            "always_comb begin {>>{arr[0], out}} = source; end "
+            "assign hi = arr[0]; endmodule")
+        module = envelope["design"]["modules"][0]
+        statement = module["processes"][0]["body"]["stmts"][0]
+        target = statement["target"]
+        self.assertEqual(target["kind"], "ConcatTarget")
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["arr[0]", "out"])
+        self.assertEqual(target["width"], 5)
+
+    def test_right_streaming_accepts_constant_cell_slice(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [1:0] out); "
+            "logic [3:0] arr [0:1]; always_comb begin "
+            "{>>{arr[0][3:2], out}} = source; end endmodule")
+        statement = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
+        part = statement["target"]["parts"][0]
+        self.assertEqual(part["kind"], "PartSel")
+        self.assertEqual((part["msb"]["value"], part["lsb"]["value"]), (3, 2))
+
+    def test_right_streaming_dynamic_array_leaf_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [4:0] source, input logic index, "
+            "output logic out); logic [3:0] arr [0:1]; always_comb begin "
+            "{>>{arr[index], out}} = source; end endmodule")
+        statement = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
+        self.assertEqual(statement["kind"], "Unsupported")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -296,6 +296,14 @@ consumed by the existing packed-target resize. Left streaming, nested or
 effectful stream operands, struct/unpacked aggregates and a narrower source
 remain `Unsupported`.
 
+In symbolic `sv-0.2` procedural assignments, the same representation also
+admits constant packed bit/part leaves and constant cells of a flattened
+one-dimensional fixed-unpacked integral array. These leaves are fixed windows
+over ordinary vector state, so the RHS is sampled once and split in source
+order by the existing comb executor. Dynamic or effectful array indices,
+dynamic packed bounds, left/sized/nested streams and aggregate leaves remain
+`Unsupported`.
+
 An equal-length whole-array assignment from another eligible fixed-unpacked
 integral array is lowered to the same per-cell block, pairing source and
 destination cells in declaration order. Different lengths, incompatible

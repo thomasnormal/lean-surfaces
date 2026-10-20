@@ -462,13 +462,19 @@ def execStmt2 (fuel : Nat) (st : SvState) (nba : NbaQueue2) (stmt : Stmt2) :
     match stmt with
     | .blockingAssign target value => do
         let v ← evalExpr2 fuel st value
-        let (n, win) ← resolveLhs2 fuel st target
-        match win with
-        | none => return (st, nba)
-        | some (lo, w) =>
-            match SvState.lookup st n with
-            | some old => return (SvState.set st n (old.insertAt lo (v.resizeU w)), nba)
-            | none => .unsupported s!"unknown assignment target '{n}'"
+        match target with
+        | .concat _ =>
+            let windows ← resolveConcatLhs2 fuel st target
+            let st' ← writeConcatLhs2 st v windows
+            return (st', nba)
+        | _ =>
+            let (n, win) ← resolveLhs2 fuel st target
+            match win with
+            | none => return (st, nba)
+            | some (lo, w) =>
+                match SvState.lookup st n with
+                | some old => return (SvState.set st n (old.insertAt lo (v.resizeU w)), nba)
+                | none => .unsupported s!"unknown assignment target '{n}'"
     | .nbaAssign target value => do
         let v ← evalExpr2 fuel st value
         let (n, win) ← resolveLhs2 fuel st target
@@ -807,6 +813,15 @@ private def wrProbe (idx : String) : Res (SvState × NbaQueue2) :=
           (.blockingAssign (.index "m" (.lit (.ofNat 2 1)) 8) (.lit (.ofNat 8 0xFF)))).toOption.map
         (fun (st, _) => SvState.showSignal st "m")
         == some "00010001001000101111111101000100"
+
+-- A procedural concatenation target uses the same fixed-window splitter as a
+-- continuous assignment. Right streaming in the symbolic surface lowers to
+-- this target shape, including a flattened fixed-array cell.
+#guard (execStmt2 32 [("arr[0]", LVec.xVec 4), ("out", LVec.xVec 1)] []
+          (.blockingAssign (.concat [.ident "arr[0]", .ident "out"])
+            (.lit (.lit "10101")))).toOption.map
+        (fun (st, _) => (SvState.showSignal st "arr[0]", SvState.showSignal st "out"))
+        == some ("1010", "1")
 
 -- pin2a C01–C05: plain case = case equality (x matches x); expression
 -- labels; unique does not change execution (first match; no match+no

@@ -540,6 +540,17 @@ census reports **2,960 clean**, **19,007 partial**, **66 include skips** and
 `AssignmentExpression:target` wall falls **3,928 → 3,920**. This is not a
 simulator-agreement claim.
 
+## Symbolic streaming targets over fixed cells — 2026-10-20
+
+The symbolic `sv-0.2` procedural path now lowers simple right-streaming
+assignments whose leaves are constant packed windows or constant cells of a
+flattened fixed-unpacked integral array. `fixed_array_stream_target` samples a
+five-bit RHS once, writes `arr[0]` and a scalar leaf in source order, and reads
+the cell through the existing comb settle. Dynamic/effectful array indices,
+dynamic packed bounds, left/sized/nested streams and aggregate leaves remain
+loud. This semantic-only fixture does not change the legacy corpus census or
+claim simulator agreement.
+
 ## Nested packed-struct field windows — 2026-10-19
 
 Member reads and writes through a chain of untagged packed structs now flatten

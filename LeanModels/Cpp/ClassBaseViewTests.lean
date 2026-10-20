@@ -36,6 +36,14 @@ private def observed (candidate : ClassBaseView) : Option ObjectId :=
   | .ok (returned, object) => if returned == candidate.memory then some object else none
   | _ => none
 
+private def castOn (candidate : ClassBaseView) (source target : String) : ClassBaseCast :=
+  {view := candidate, sourceDeclaration := h source, targetDeclaration := h target}
+
+private def observedCast (candidate : ClassBaseCast) : Option ObjectId :=
+  match candidate.execute with
+  | .ok (returned, object) => if returned == candidate.view.memory then some object else none
+  | _ => none
+
 set_option maxRecDepth 10000 in
 private theorem kernelViews :
     [
@@ -77,11 +85,21 @@ private theorem kernelViews :
             {shape with bases := [b "L" "protected", b "R"]}))} [] [0] "R") == none,
       observed (contextualOn {hierarchy with classes :=
           (hierarchy.classes.modify 1 (fun shape =>
-            {shape with bases := [b "B" "protected"]}))} [] [0, 0] "D") == some 2
+            {shape with bases := [b "B" "protected"]}))} [] [0, 0] "D") == some 2,
+      observedCast (castOn (view [] [0]) "D" "L") == some 1,
+      observedCast (castOn (view [] [0]) "L" "L") == none,
+      observedCast (castOn (view [] [0]) "D" "B") == none,
+      observedCast (castOn {view [] [0] with hierarchy := {hierarchy with classes :=
+        (hierarchy.classes.modify 0 (fun shape =>
+          {shape with bases := [b "L" "private", b "R"]}))}} "D" "L") == none,
+      observedCast (castOn (contextualOn {hierarchy with classes :=
+        (hierarchy.classes.modify 0 (fun shape =>
+          {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))} [] [0] "F") "D" "L") == some 1
     ].all id = true := by decide
 
 #print axioms kernelViews
 #print axioms ClassBaseView.convert_of_check
 #print axioms ClassBaseView.convert_memory
+#print axioms ClassBaseCast.execute_memory
 
 end LeanModels.Cpp.ClassBaseViewTests

@@ -76,6 +76,19 @@ private theorem original_base_views :
     (baseView DocumentHierarchy.hierarchy).bind (fun (view, _) =>
       view.convert.toOption.map (fun (_, object) => object)) = some 1 := by decide
 
+private def originalCast (hierarchy : ClassHierarchy) : Option ObjectId := do
+  let (view, _) ← baseView hierarchy
+  let some target := hierarchy.classes[1]? | none
+  let cast : ClassBaseCast := {
+    view, sourceDeclaration := hierarchy.root,
+    targetDeclaration := target.declaration}
+  let (memory, object) ← cast.execute.toOption
+  if memory == view.memory then some object else none
+
+private theorem original_base_casts :
+    originalCast ElementHierarchy.hierarchy = some 1 ∧
+    originalCast DocumentHierarchy.hierarchy = some 1 := by decide
+
 private theorem original_friend_shapes :
     ElementHierarchy.hierarchy.classes[0]?.map (·.friends.length) = some 1 ∧
     ElementHierarchy.hierarchy.classes[1]?.map (·.friends.length) = some 2 ∧
@@ -86,4 +99,5 @@ private theorem original_friend_shapes :
 #print axioms live_base_examples
 #print axioms original_base_views
 #print axioms original_friend_shapes
+#print axioms original_base_casts
 end Examples.cpp.tinyxml2

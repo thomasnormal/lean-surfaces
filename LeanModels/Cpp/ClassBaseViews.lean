@@ -26,6 +26,20 @@ inductive ClassBaseViewError where
   | inaccessibleBase
   deriving Repr, BEq, Inhabited
 
+/- An explicit typed nonvirtual base cast. The source and target declarations
+are witnesses for an already selected path; no source expression is parsed. -/
+structure ClassBaseCast where
+  view : ClassBaseView
+  sourceDeclaration : FrontendHandle
+  targetDeclaration : FrontendHandle
+  deriving Repr, BEq, Inhabited
+
+inductive ClassBaseCastError where
+  | view (reason : ClassBaseViewError)
+  | sourceTypeMismatch
+  | targetTypeMismatch
+  deriving Repr, BEq, Inhabited
+
 namespace ClassBaseView
 
 private def isPrefix : List Nat → List Nat → Bool
@@ -33,7 +47,7 @@ private def isPrefix : List Nat → List Nat → Bool
   | _ :: _, [] => false
   | first :: rest, other :: tail => first == other && isPrefix rest tail
 
-private def slotAt (slots : List ClassSubobjectSlot) (path : List Nat) :
+def slotAt (slots : List ClassSubobjectSlot) (path : List Nat) :
     Option (ClassSubobjectSlot × ObjectId) :=
   (slots.zipIdx.find? (fun (slot, _) => slot.path == path)).map
     (fun (slot, index) => (slot, index))
@@ -170,4 +184,47 @@ theorem convert_memory (view : ClassBaseView) (memory : IntegralObjectStore)
               exact h.1.symm
 
 end ClassBaseView
+
+namespace ClassBaseCast
+
+private def slots (cast : ClassBaseCast) :
+    Except ClassBaseCastError (List ClassSubobjectSlot) :=
+  match cast.view.hierarchy.slots with
+  | .ok slots => .ok slots
+  | .error reason => .error (.view (.hierarchy reason))
+
+def check (cast : ClassBaseCast) : Except ClassBaseCastError Unit := do
+  cast.view.check.mapError ClassBaseCastError.view
+  let slots ← cast.slots
+  let some source := ClassBaseView.slotAt slots cast.view.sourcePath
+    | throw (.view .missingSource)
+  let some target := ClassBaseView.slotAt slots cast.view.targetPath
+    | throw (.view .missingTarget)
+  unless source.1.declaration == cast.sourceDeclaration do
+    throw .sourceTypeMismatch
+  unless target.1.declaration == cast.targetDeclaration do
+    throw .targetTypeMismatch
+
+def execute (cast : ClassBaseCast) :
+    Except ClassBaseCastError (IntegralObjectStore × ObjectId) :=
+  match cast.check with
+  | .error reason => .error reason
+  | .ok _ => cast.view.convert.mapError ClassBaseCastError.view
+
+theorem execute_memory (cast : ClassBaseCast)
+    (memory : IntegralObjectStore) (object : ObjectId)
+    (h : cast.execute = .ok (memory, object)) :
+    memory = cast.view.memory := by
+  unfold execute at h
+  cases hc : cast.check with
+  | error reason => simp [hc] at h
+  | ok result =>
+      cases hv : cast.view.convert with
+      | error reason => simp [hc, hv, Except.mapError] at h
+      | ok pair =>
+          simp [hc, hv] at h
+          cases h
+          exact cast.view.convert_memory _ _ hv
+
+end ClassBaseCast
 end LeanModels.Cpp

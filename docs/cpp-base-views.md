@@ -37,6 +37,12 @@ check is a state policy, not a source cast-expression evaluator.
 The explicit path is the identity witness; repeated occurrences therefore stay
 distinct and ambiguous name-only conversions are never silently guessed.
 
+`ClassBaseCast.execute` is the typed source/target boundary over that witness:
+it checks that both supplied declarations are exactly the declarations at the
+selected paths before returning the existing target identity. This executes a
+resolved nonvirtual cast in the state model; it does not parse an AST cast or
+infer a path from class names.
+
 The kernel controls cover complete-root and nested-base views, const roots,
 diamond identity, prefix failures, same-subobject and missing-path refusals,
 duplicate IDs, malformed value stores, non-public-edge refusals, and permitted

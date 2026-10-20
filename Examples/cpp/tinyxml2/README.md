@@ -146,12 +146,15 @@ validated complete/base/member observations, preserving caller memory. Concrete
 kernel examples run both hierarchies and verify the selected base is abstract.
 It also checks the explicit nonvirtual base-view operation on both complete
 roots, returning the existing `XMLNode` object identity without changing memory.
+`original_base_casts` also executes the typed source/target cast boundary for
+both roots and checks the same existing base identity.
 The generated hierarchy retains each base edge's effective and written access
 labels. The base-view policy accepts the two TinyXML-2 paths because their edge
 is public. A supplied declaring-class context can authorize the narrow
 protected/private rule; absent or unrelated contexts return
 `inaccessibleBase`. Friend lookup and source-level cast execution remain
-outside this proof.
+parsing remain outside this proof; the typed resolved-cast boundary is checked
+by `original_base_casts` above.
 The generated hierarchies also retain the class-type friend handles from the
 same capture, and `original_friend_shapes` checks their recorded counts for
 the concrete roots and `XMLNode`.

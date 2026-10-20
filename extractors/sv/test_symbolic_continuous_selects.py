@@ -471,6 +471,18 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(module["decls"][0]["width"]["packed"][0]["msb"]["value"], 3)
         self.assertEqual(module["processes"][1]["value"]["value"]["name"], "arr[0]")
 
+    def test_enum_fixed_array_cell_is_symbolic_vector(self):
+        envelope = self.extract(
+            "module top(output logic [1:0] out); "
+            "typedef enum logic [1:0] {A = 2'b00, B = 2'b01, C = 2'b10} E; "
+            "E arr [0:1]; assign arr[0] = B; assign out = arr[0]; "
+            "endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual([decl["name"] for decl in module["decls"]],
+                         ["arr[0]", "arr[1]"])
+        self.assertEqual(module["processes"][0]["target"]["name"], "arr[0]")
+        self.assertEqual(module["processes"][0]["value"]["kind"], "EnumRef")
+
     def test_fixed_array_cell_can_be_a_concat_target_leaf(self):
         envelope = self.extract(
             "module top(input logic [4:0] source, output logic [3:0] hi, "

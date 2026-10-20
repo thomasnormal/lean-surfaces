@@ -429,6 +429,15 @@
    ]
   },
   {
+   "name": "enum_fixed_array_element",
+   "example": "sem2/enum_fixed_array_element",
+   "top": "enum_fixed_array_element",
+   "signals": ["out"],
+   "stimulus": [
+    {}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

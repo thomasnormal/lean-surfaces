@@ -1078,6 +1078,12 @@ symbolic loader accepts the envelope and the constant write/read trace remains
 `0`, `1`, `x`. Signed, 2-state, unresolved and aggregate aliases remain loud;
 the legacy corpus census is unchanged.
 
+The `enum_fixed_array_element` fixture carries the same flat-cell storage
+through an ordinary four-state enum element type. Each cell keeps its `TypeRef`
+metadata, while the constant enum-member write and cell read produce the
+member's two-bit vector. Signed, 2-state and aggregate enum storage remain
+loud; the legacy corpus census is unchanged.
+
 The `fixed_array_concat_target` fixture makes a cell one leaf of a symbolic
 `ConcatTarget`. Source-order splitting writes the four-bit `arr[0]` cell and
 the one-bit output from one sampled five-bit RHS; the second assignment reads

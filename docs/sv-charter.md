@@ -2861,6 +2861,14 @@ survive on `arr[0]`/`arr[1]` and that a constant cell write and nested read
 propagate four-state values. Signed, 2-state, unresolved and aggregate aliases
 remain loud; no nominal type table or aggregate storage is added.
 
+### Symbolic enum-valued fixed-array cells — 2026-10-20
+
+Ordinary four-state enum element types now retain their `TypeRef` metadata when
+an admitted fixed-unpacked array is flattened into vector cells. The
+`enum_fixed_array_element` fixture writes an enum member to `arr[0]` and reads
+the cell through an ordinary two-bit output. Signed, two-state and aggregate
+enum storage remain loud; no enum runtime table or aggregate store is added.
+
 ### Symbolic fixed-array cells in concatenation targets — 2026-10-20
 
 Constant cells of admitted fixed-unpacked arrays may now be leaves of a

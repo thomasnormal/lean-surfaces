@@ -271,6 +271,11 @@ packed ranges for each emitted cell declaration, and keeps constant element
 reads and writes as those same cell identifiers; unresolved, signed/2-state,
 aggregate and dynamic alias forms remain `Unsupported`.
 
+An ordinary four-state enum element type is likewise retained as a `TypeRef`
+on each flattened cell. Enum members remain typed constant expressions, while
+constant cell reads and writes use the same vector windows; signed, two-state
+and aggregate enum storage remains outside this path.
+
 An eligible cell-expanded declaration may also have an exact-length
 assignment-pattern initializer; each element is converted once and stored in
 its corresponding cell. Positional and elaborated keyed/default patterns are

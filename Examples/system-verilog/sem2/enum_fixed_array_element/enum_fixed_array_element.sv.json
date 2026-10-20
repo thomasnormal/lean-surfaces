@@ -1,0 +1,239 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "enum_fixed_array_element",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/enum_fixed_array_element/enum_fixed_array_element.sv",
+      "sha256": "50fb03aa7a60e811e53202fc5d0bd5b87343921db5b4e840407b4bce992b3aa3"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 10,
+          "end_col": 10
+        },
+        "name": "enum_fixed_array_element",
+        "imports": [],
+        "params": [],
+        "types": [
+          {
+            "kind": "EnumType",
+            "span": {
+              "line": 5,
+              "col": 11,
+              "end_line": 5,
+              "end_col": 63
+            },
+            "name": "E",
+            "from_package": null,
+            "base_width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 23,
+                      "end_line": 5,
+                      "end_col": 24
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 25,
+                      "end_line": 5,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "members": [
+              {
+                "name": "A",
+                "value": 0
+              },
+              {
+                "name": "B",
+                "value": 1
+              },
+              {
+                "name": "C",
+                "value": 2
+              }
+            ]
+          }
+        ],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 24,
+              "end_line": 3,
+              "end_col": 27
+            },
+            "name": "out",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 20
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 21,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 5,
+              "end_line": 6,
+              "end_col": 14
+            },
+            "name": "arr[0]",
+            "width": {
+              "kind": "TypeRef",
+              "name": "E",
+              "from_package": null,
+              "resolved": 2
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 5,
+              "end_line": 6,
+              "end_col": 14
+            },
+            "name": "arr[1]",
+            "width": {
+              "kind": "TypeRef",
+              "name": "E",
+              "from_package": null,
+              "resolved": 2
+            },
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 20
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 16
+              },
+              "width": 2,
+              "name": "arr[0]"
+            },
+            "value": {
+              "kind": "EnumRef",
+              "span": {
+                "line": 8,
+                "col": 19,
+                "end_line": 8,
+                "end_col": 20
+              },
+              "type": "E",
+              "member": "B",
+              "from_package": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 9,
+              "col": 10,
+              "end_line": 9,
+              "end_col": 22
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 9,
+                "col": 10,
+                "end_line": 9,
+                "end_col": 13
+              },
+              "width": 2,
+              "name": "out"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 9,
+                "col": 16,
+                "end_line": 9,
+                "end_col": 22
+              },
+              "width": 2,
+              "name": "arr[0]"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

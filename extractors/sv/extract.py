@@ -306,8 +306,10 @@ def type_width_2s(t):
             return 1, (not t.isFourState), None
         if cname == "PredefinedIntegerType":
             return ct.bitWidth, (not t.isFourState), None
-        if cname == "EnumType" and _SYM is None:
-            return type_width_2s(ct.baseType)
+        if cname == "EnumType":
+            if _SYM is None:
+                return type_width_2s(ct.baseType)
+            return ct.bitWidth, (not t.isFourState), None
         if cname == "PackedArrayType":
             w = ct.bitWidth
             elem = ct.elementType.canonicalType

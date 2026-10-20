@@ -251,9 +251,11 @@ a bit-select, part-select or concatenation LHS makes that *statement*
 `Unsupported` (`AssignmentExpression:target`). The legacy/self-check extractor
 also admits constant packed bit/part, concatenation-leaf and untagged
 packed-member windows on continuous assignments, with static overlaps rejected
-before execution; nested untagged packed-struct member chains use the same
-fixed-vector offsets. Nested unions and tagged/unpacked aggregate members
-remain unsupported. A constant cell of an admitted one-dimensional
+before execution; constant bit and simple part selections through nested
+untagged packed-struct member chains use the same fixed-vector offsets, also
+when the chain starts at a flattened fixed-array cell. Indexed selections,
+nested unions and tagged/unpacked aggregate members remain unsupported. A
+constant cell of an admitted one-dimensional
 fixed-unpacked array is an ordinary `Ident` leaf, and constant packed
 selections inside that cell use the same `SelectTarget`/`SelectRead` fixed-window
 geometry. In the

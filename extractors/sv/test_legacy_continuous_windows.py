@@ -108,6 +108,43 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual(readback["value"]["kind"], "SelectRead")
         self.assertEqual(readback["value"]["value"]["name"], "value")
 
+    def test_nested_packed_noncanonical_member_selection_flattens(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic out); "
+            "struct packed { struct packed { logic [10:7] hi; "
+            "logic [1:0] lo; } inner; } value; "
+            "assign value.inner.hi[10:9] = source; "
+            "assign out = value.inner.hi[10]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target, readback = processes
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 29 + "100")
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["index"]["bits"],
+                         "0" * 29 + "101")
+
+    def test_fixed_array_nested_member_selection_flattens(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "struct packed { logic [3:0] hi; logic [3:0] lo; } "
+            "value [0:0]; assign value[0].lo[3:2] = source; "
+            "assign out = value[0].lo[3:2]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target, readback = processes
+        self.assertEqual(target["target"]["value"]["name"], "value[0]")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 30 + "10")
+        self.assertEqual(readback["value"]["value"]["name"], "value[0]")
+
+    def test_dynamic_nested_member_selection_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, input logic [2:0] index, "
+            "output logic out); struct packed { logic [3:0] hi; "
+            "logic [1:0] lo; } value; assign value.hi[index] = source[0]; "
+            "assign out = value.hi[0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Unsupported")
+
     def test_nested_packed_union_member_stays_loud(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [1:0] out); "

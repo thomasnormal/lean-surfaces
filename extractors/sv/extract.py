@@ -2100,6 +2100,62 @@ def _packed_struct_member(sm, expression):
         return None
 
 
+def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
+    """Flatten a constant selection inside a packed-member chain.
+
+    Legacy selected reads/targets store one vector plus an LSB offset. A
+    nested untagged packed-struct member has a fixed outer offset, so a
+    constant bit or simple part select can add its local normalized offset and
+    reuse that representation. Indexed, dynamic and union-member forms stay
+    outside this helper rather than manufacturing a runtime aggregate path.
+    """
+    try:
+        if type(expression.value).__name__ != "MemberAccessExpression":
+            return None
+        member = _packed_struct_member(sm, expression.value)
+        if member is None:
+            return None
+        base, _member_width, parent_offset, _two_state = member
+        normalized = None
+        if expression_kind == "ElementSelectExpression":
+            normalized = _packed_constant_index(
+                sm, expression.value.type, expression.selector)
+        elif expression_kind == "RangeSelectExpression":
+            selection = str(expression.selectionKind).split(".")[-1]
+            if selection != "Simple":
+                return None
+            normalized = _packed_constant_simple_index(
+                sm, expression.value.type, expression.left,
+                expression.right, expression.type.bitWidth)
+        if normalized is None:
+            return None
+        local_index, _index_signed = normalized
+        bits = local_index.get("bits")
+        if not isinstance(bits, str) or any(bit not in "01" for bit in bits):
+            return None
+        offset = parent_offset + int(bits, 2)
+        index = {
+            "kind": "Literal",
+            "span": node_span(sm, expression),
+            "width": 32,
+            "bits": format(offset & ((1 << 32) - 1), "032b"),
+        }
+        result = {
+            "kind": result_kind,
+            "span": node_span(sm, expression),
+            "width": expression.type.bitWidth,
+            "value": _convert_expr(sm, base),
+            "index": index,
+            "index_signed": False,
+            "descending": False,
+        }
+        if result_kind == "SelectTarget":
+            result["two_state"] = not expression.type.isFourState
+        return result
+    except Exception:
+        return None
+
+
 def _convert_selected_read(sm, expr, expression_kind):
     if expression_kind == "ElementSelectExpression":
         cell = _fixed_array_cell(sm, expr)
@@ -2114,6 +2170,13 @@ def _convert_selected_read(sm, expr, expression_kind):
         dynamic_array = _fixed_array_dynamic_read(sm, expr)
         if dynamic_array is not None:
             return dynamic_array
+    member_window = _legacy_member_select_window(
+        sm, expr, expression_kind, "SelectRead")
+    if member_window is not None:
+        return member_window
+    if (type(expr.value).__name__ == "MemberAccessExpression"
+            and _packed_struct_member(sm, expr.value) is not None):
+        return unsupported(sm, expr, expression_kind + ":member-select")
     source_type = expr.value.type
     _, _, source_reason = type_width_2s(source_type)
     canonical_kind = type(source_type.canonicalType).__name__
@@ -2480,6 +2543,14 @@ def select_target(sm, lhs):
 
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
+    if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
+        member_window = _legacy_member_select_window(
+            sm, lhs, expression_kind, "SelectTarget")
+        if member_window is not None:
+            return member_window, True
+        if (type(lhs.value).__name__ == "MemberAccessExpression"
+                and _packed_struct_member(sm, lhs.value) is not None):
+            return unsupported(sm, lhs, expression_kind + ":member-select"), False
     if expression_kind == "MemberAccessExpression":
         member = _packed_struct_member(sm, lhs)
         if member is not None:

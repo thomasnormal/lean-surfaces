@@ -4,13 +4,16 @@ namespace LeanModels.Cpp
 
 /-- An existing-object nonvirtual base view. Paths identify occurrences in the
 closed hierarchy; no ABI offset, allocation, dynamic cast or source access
-check is inferred here. -/
+check is inferred here. An optional declaring-class context permits the narrow
+protected/private policy below. -/
 structure ClassBaseView where
   hierarchy : ClassHierarchy
   objects : List ObjectId
   sourcePath : List Nat
   targetPath : List Nat
   memory : IntegralObjectStore
+  /-- Optional declaring-class context for protected/private access. -/
+  accessContext : Option FrontendHandle := none
   deriving Repr, BEq, Inhabited
 
 inductive ClassBaseViewError where
@@ -47,8 +50,27 @@ private def suffixOf : List Nat → List Nat → Option (List Nat)
   | first :: rest, other :: tail =>
       if first == other then suffixOf rest tail else none
 
-private def publicEdges (hierarchy : ClassHierarchy)
-    (slots : List ClassSubobjectSlot) : List Nat → List Nat → Bool
+private def derivesFrom : Nat → ClassHierarchy → FrontendHandle → FrontendHandle → Bool
+  | 0, _, _, _ => false
+  | fuel + 1, hierarchy, descendant, ancestor =>
+      descendant == ancestor ||
+        match hierarchy.classes.find? (·.declaration == descendant) with
+        | none => false
+        | some shape => shape.bases.any (fun edge =>
+            derivesFrom fuel hierarchy edge.target ancestor)
+
+private def accessAllowed (hierarchy : ClassHierarchy)
+    (context : Option FrontendHandle) (owner : FrontendHandle) (edge : ClassBaseSpec) : Bool :=
+  edge.access == "public" || match context with
+    | none => false
+    | some current =>
+        if current == owner then true
+        else edge.access == "protected" &&
+          derivesFrom (hierarchy.classes.length + 1) hierarchy current owner
+
+private def accessibleEdges (hierarchy : ClassHierarchy)
+    (context : Option FrontendHandle) (slots : List ClassSubobjectSlot) :
+    List Nat → List Nat → Bool
   | _, [] => true
   | path, index :: rest =>
       match slotAt slots path with
@@ -60,8 +82,8 @@ private def publicEdges (hierarchy : ClassHierarchy)
               match shape.bases[index]? with
               | none => false
               | some edge =>
-                  edge.access == "public" &&
-                    publicEdges hierarchy slots (path ++ [index]) rest
+                  accessAllowed hierarchy context slot.declaration edge &&
+                    accessibleEdges hierarchy context slots (path ++ [index]) rest
 
 /-- Validate the complete root and every supplied nonvirtual occurrence before
     allowing a source-prefix view to select its target identity. -/
@@ -94,7 +116,7 @@ def check (view : ClassBaseView) : Except ClassBaseViewError Unit := do
   unless source.path != target.path && isPrefix source.path target.path do
     throw .nonBasePath
   let some edges := suffixOf source.path target.path | throw .nonBasePath
-  unless publicEdges view.hierarchy slots source.path edges do
+  unless accessibleEdges view.hierarchy view.accessContext slots source.path edges do
     throw .inaccessibleBase
   unless sourceId != targetId && source.declaration != target.declaration do
     throw .sameSubobject

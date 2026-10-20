@@ -1,0 +1,547 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/package_storage/identity.sv",
+  "source_sha256": "0d7964f750258c288cecb9ef086e0af8b6e3d2926d6f31395837910ec51caf27",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 11,
+          "col": 1,
+          "end_line": 27,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 16
+            },
+            "name": "$package:6:Source:count",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 2,
+                  "col": 15,
+                  "end_line": 2,
+                  "end_col": 16
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000000011"
+              }
+            },
+            "signed": true,
+            "package_storage": true,
+            "source_package": "Source",
+            "source_name": "count"
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 7,
+              "end_line": 9,
+              "end_col": 17
+            },
+            "name": "$package:5:Other:count",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 9,
+                  "col": 15,
+                  "end_line": 9,
+                  "end_col": 17
+                },
+                "width": 32,
+                "bits": "00000000000000000000000000010100"
+              }
+            },
+            "signed": true,
+            "package_storage": true,
+            "source_package": "Other",
+            "source_name": "count"
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 13,
+              "col": 7,
+              "end_line": 13,
+              "end_col": 31
+            },
+            "name": "boot",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Binary",
+                "span": {
+                  "line": 13,
+                  "col": 14,
+                  "end_line": 13,
+                  "end_col": 31
+                },
+                "width": 32,
+                "op": "+",
+                "left": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 13,
+                    "col": 14,
+                    "end_line": 13,
+                    "end_col": 27
+                  },
+                  "width": 32,
+                  "name": "$package:6:Source:count",
+                  "signed": true
+                },
+                "right": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 13,
+                    "col": 30,
+                    "end_line": 13,
+                    "end_col": 31
+                  },
+                  "width": 32,
+                  "bits": "00000000000000000000000000000111"
+                }
+              }
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 14,
+              "col": 3,
+              "end_line": 26,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 14,
+                "col": 11,
+                "end_line": 26,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 15,
+                      "col": 5,
+                      "end_line": 15,
+                      "end_col": 10
+                    },
+                    "width": 32,
+                    "name": "$package:6:Source:count",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 15,
+                        "col": 13,
+                        "end_line": 15,
+                        "end_col": 22
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 13,
+                          "end_line": 15,
+                          "end_col": 18
+                        },
+                        "width": 32,
+                        "name": "$package:6:Source:count",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 15,
+                          "col": 21,
+                          "end_line": 15,
+                          "end_col": 22
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000001"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 93
+                  },
+                  "name": "$display",
+                  "format": "bound %0d %0d %0d boot %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 16,
+                        "col": 44,
+                        "end_line": 16,
+                        "end_col": 57
+                      },
+                      "width": 32,
+                      "name": "$package:6:Source:count",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 16,
+                        "col": 59,
+                        "end_line": 16,
+                        "end_col": 71
+                      },
+                      "width": 32,
+                      "name": "$package:6:Source:count",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 16,
+                        "col": 73,
+                        "end_line": 16,
+                        "end_col": 85
+                      },
+                      "width": 32,
+                      "name": "$package:5:Other:count",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 16,
+                        "col": 87,
+                        "end_line": 16,
+                        "end_col": 91
+                      },
+                      "width": 32,
+                      "name": "boot",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true,
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 8
+                  },
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 18,
+                        "col": 11,
+                        "end_line": 18,
+                        "end_col": 16
+                      },
+                      "name": "count",
+                      "width": 32,
+                      "two_state": true,
+                      "init": null,
+                      "signed": true
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 19,
+                        "col": 7,
+                        "end_line": 19,
+                        "end_col": 18
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 7,
+                          "end_line": 19,
+                          "end_col": 12
+                        },
+                        "width": 32,
+                        "name": "count",
+                        "signed": true
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 19,
+                            "col": 15,
+                            "end_line": 19,
+                            "end_col": 17
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000001011"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 20,
+                        "col": 7,
+                        "end_line": 20,
+                        "end_col": 25
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 20,
+                          "col": 7,
+                          "end_line": 20,
+                          "end_col": 20
+                        },
+                        "width": 32,
+                        "name": "$package:6:Source:count",
+                        "signed": true
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 20,
+                            "col": 23,
+                            "end_line": 20,
+                            "end_col": 24
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000110"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "SysCall",
+                      "span": {
+                        "line": 21,
+                        "col": 7,
+                        "end_line": 21,
+                        "end_col": 55
+                      },
+                      "name": "$display",
+                      "format": "shadow %0d %0d",
+                      "args": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 21,
+                            "col": 34,
+                            "end_line": 21,
+                            "end_col": 39
+                          },
+                          "width": 32,
+                          "name": "count",
+                          "signed": true
+                        },
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 21,
+                            "col": 41,
+                            "end_line": 21,
+                            "end_col": 53
+                          },
+                          "width": 32,
+                          "name": "$package:6:Source:count",
+                          "signed": true
+                        }
+                      ],
+                      "arg_signed": [
+                        true,
+                        true
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 23,
+                    "col": 5,
+                    "end_line": 23,
+                    "end_col": 37
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 23,
+                      "col": 5,
+                      "end_line": 23,
+                      "end_col": 17
+                    },
+                    "width": 32,
+                    "name": "$package:5:Other:count",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 23,
+                        "col": 20,
+                        "end_line": 23,
+                        "end_col": 36
+                      },
+                      "width": 32,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 20,
+                          "end_line": 23,
+                          "end_col": 32
+                        },
+                        "width": 32,
+                        "name": "$package:5:Other:count",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 23,
+                          "col": 35,
+                          "end_line": 23,
+                          "end_col": 36
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000010"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 24,
+                    "col": 5,
+                    "end_line": 24,
+                    "end_col": 63
+                  },
+                  "name": "$display",
+                  "format": "distinct %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 24,
+                        "col": 34,
+                        "end_line": 24,
+                        "end_col": 47
+                      },
+                      "width": 32,
+                      "name": "$package:6:Source:count",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 24,
+                        "col": 49,
+                        "end_line": 24,
+                        "end_col": 61
+                      },
+                      "width": 32,
+                      "name": "$package:5:Other:count",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 25,
+                    "col": 5,
+                    "end_line": 25,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

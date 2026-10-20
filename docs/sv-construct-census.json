@@ -75,10 +75,6 @@
     776
    ],
    [
-    "PackageSymbol",
-    762
-   ],
-   [
     "CovergroupType:CovergroupType",
     724
    ],
@@ -119,10 +115,6 @@
     382
    ],
    [
-    "WildcardImportSymbol:WildcardImport",
-    373
-   ],
-   [
     "BlockStatement:JoinAll",
     319
    ],
@@ -133,10 +125,6 @@
    [
     "TypeAliasType:TypeAlias",
     297
-   ],
-   [
-    "NamedValueExpression:Parameter",
-    291
    ],
    [
     "GenerateBlockArraySymbol:GenerateBlockArray",
@@ -159,6 +147,10 @@
     252
    ],
    [
+    "NamedValueExpression:Parameter",
+    227
+   ],
+   [
     "Always:invalid-compilation",
     220
    ],
@@ -169,6 +161,10 @@
    [
     "GenvarSymbol:Genvar",
     199
+   ],
+   [
+    "Package:Subroutine",
+    193
    ],
    [
     "InstanceArraySymbol:InstanceArray",
@@ -185,6 +181,10 @@
    [
     "GenericClassDefSymbol",
     146
+   ],
+   [
+    "Package:invalid-compilation",
+    145
    ],
    [
     "TimedStatement:CycleDelayControl",
@@ -213,10 +213,6 @@
    [
     "ProceduralAssignStatement",
     109
-   ],
-   [
-    "ExplicitImportSymbol:ExplicitImport",
-    107
    ],
    [
     "IntraAssignment:publication-or-context",
@@ -315,12 +311,20 @@
     45
    ],
    [
+    "Package:ClassType",
+    45
+   ],
+   [
     "TimeLiteral",
     45
    ],
    [
     "CaseStatement:Unique",
     43
+   ],
+   [
+    "Package:initializer",
+    41
    ],
    [
     "StructuredAssignmentPatternExpression",
@@ -435,6 +439,10 @@
     21
    ],
    [
+    "Package:storage-type",
+    21
+   ],
+   [
     "ConditionalStatement:Unique",
     20
    ],
@@ -460,6 +468,10 @@
    ],
    [
     "TransparentMemberSymbol",
+    17
+   ],
+   [
+    "Package:TypeAlias",
     17
    ],
    [
@@ -559,11 +571,19 @@
     11
    ],
    [
+    "Package:import-visibility",
+    11
+   ],
+   [
     "PortSymbol:InOut",
     10
    ],
    [
     "VariableDeclStatement:range",
+    10
+   ],
+   [
+    "Package:multiple-modules",
     10
    ],
    [
@@ -595,6 +615,10 @@
     8
    ],
    [
+    "Package:ProceduralBlock",
+    8
+   ],
+   [
     "Scanf:format-or-arity",
     8
    ],
@@ -615,8 +639,16 @@
     7
    ],
    [
+    "Package:Net",
+    7
+   ],
+   [
     "TypeParameterSymbol:TypeParameter",
     7
+   ],
+   [
+    "Package:LetDecl",
+    6
    ],
    [
     "InsideExpression:item",
@@ -627,7 +659,11 @@
     6
    ],
    [
-    "WildcardImportSymbol",
+    "Package:Sequence",
+    6
+   ],
+   [
+    "Package:Property",
     6
    ],
    [
@@ -635,7 +671,23 @@
     6
    ],
    [
+    "Package:AnonymousProgram",
+    6
+   ],
+   [
+    "Package:TransparentMember",
+    6
+   ],
+   [
+    "WildcardImportSymbol:WildcardImport",
+    6
+   ],
+   [
     "BinaryExpression:LogicalImplication:source",
+    5
+   ],
+   [
+    "Package:Checker",
     5
    ],
    [
@@ -644,6 +696,10 @@
    ],
    [
     "CovergroupType",
+    5
+   ],
+   [
+    "Package:GenericClassDef",
     5
    ],
    [
@@ -679,6 +735,10 @@
     4
    ],
    [
+    "Package:Parameter",
+    4
+   ],
+   [
     "EnumMethod:source",
     4
    ],
@@ -691,7 +751,23 @@
     3
    ],
    [
+    "Package:CovergroupType",
+    3
+   ],
+   [
     "InterfacePortSymbol:InterfacePort",
+    3
+   ],
+   [
+    "Package:ForwardingTypedef",
+    3
+   ],
+   [
+    "Package:Instance",
+    3
+   ],
+   [
+    "Package:EmptyMember",
     3
    ],
    [
@@ -787,11 +863,19 @@
     1
    ],
    [
+    "Package:ClockingBlock",
+    1
+   ],
+   [
     "ClockingBlockSymbol",
     1
    ],
    [
     "SequenceSymbol",
+    1
+   ],
+   [
+    "Package:CheckerInstance",
     1
    ],
    [
@@ -819,7 +903,19 @@
     1
    ],
    [
-    "ExplicitImportSymbol",
+    "Package:Genvar",
+    1
+   ],
+   [
+    "Package:ContinuousAssign",
+    1
+   ],
+   [
+    "Package:Package",
+    1
+   ],
+   [
+    "Package:Primitive",
     1
    ],
    [
@@ -860,13 +956,13 @@
    ]
   ],
   "by_status": {
-   "clean": 3501,
-   "partial": 18468,
+   "clean": 3666,
+   "partial": 18303,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    332,
+    337,
     1387
    ],
    "compilation": [
@@ -894,7 +990,7 @@
     4
    ],
    "compile_warning": [
-    2,
+    3,
     17
    ],
    "interactive_stop": [
@@ -922,7 +1018,7 @@
     52
    ],
    "simulation": [
-    2989,
+    3148,
     18671
    ],
    "simulation elaboration": [
@@ -1115,9 +1211,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 666,
-    "clean": 375,
-    "partial": 666,
+    "blocked_by_more": 664,
+    "clean": 377,
+    "partial": 664,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1142,7 +1238,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      157
+      156
      ],
      [
       "ConversionExpression:width",
@@ -1303,17 +1399,17 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 378,
+    "clean": 379,
     "error": 0,
-    "partial": 166,
+    "partial": 165,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 28,
+    "clean": 34,
     "error": 0,
-    "partial": 823,
+    "partial": 817,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
@@ -1335,9 +1431,9 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 1,
+    "clean": 140,
     "error": 0,
-    "partial": 564,
+    "partial": 425,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
@@ -1367,9 +1463,9 @@
     "unlockable": 0
    },
    "chapter-3": {
-    "clean": 25,
+    "clean": 34,
     "error": 0,
-    "partial": 274,
+    "partial": 265,
     "skip_include": 1,
     "total": 300,
     "unlockable": 0
@@ -1407,9 +1503,9 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 102,
+    "clean": 103,
     "error": 0,
-    "partial": 125,
+    "partial": 124,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
@@ -1431,17 +1527,17 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 109,
+    "clean": 111,
     "error": 0,
-    "partial": 308,
+    "partial": 306,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
    },
    "chapter-38": {
-    "clean": 191,
+    "clean": 194,
     "error": 0,
-    "partial": 149,
+    "partial": 146,
     "skip_include": 0,
     "total": 340,
     "unlockable": 0
@@ -1471,17 +1567,17 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 346,
+    "clean": 348,
     "error": 0,
-    "partial": 272,
+    "partial": 270,
     "skip_include": 0,
     "total": 618,
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 387,
+    "clean": 389,
     "error": 0,
-    "partial": 798,
+    "partial": 796,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 2

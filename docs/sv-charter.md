@@ -3570,3 +3570,22 @@ A fourth source explicitly preserves the case-array widening discrepancy as
 a refusal; it is not a runtime match. Three fixture-bound kernel theorems prove
 the scalar equality bridge, ambiguous-item skip with retained selected body,
 and inclusive signed interval guard.
+
+### Package integral singleton storage — 2026-10-20
+
+IEEE clause 26 source-defined packages now compile scalar/packed integral
+variables into one shared vector store, before module initialization. Bound
+qualified/imported/reexported references select the original slot; local
+shadowing and same-named members in other packages retain distinct bindings.
+Integral parameters/enumerators become exact literals; aliases use the existing
+type admission. Default and closed pure initializers preserve four-/two-state
+rules. Unsupported package members, dependent/effectful initialization,
+unpacked/nonintegral storage, external packages, invalid source and multiple
+module stores remain loud. Symbolic mode is unchanged. No scheduler changed.
+
+The paired 22,035-path census rises 3,501 to 3,666 clean (+165), without losses.
+Four authored complete transcripts match both region oracles; three further
+sources retain design-level boundaries. Four source-bound kernel theorems
+cover shared reads, blocking stores, captured NBA updates and commit visibility.
+See [the contract](sv-package-storage.md) and
+[the fixtures](../Examples/system-verilog/package_storage/README.md).

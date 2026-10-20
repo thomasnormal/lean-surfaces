@@ -22,6 +22,72 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Package integral singleton storage — 2026-10-20
+
+IEEE clause 26 source-defined packages now lower scalar/packed integral
+variables into one shared vector store before module initialization. Qualified,
+imported and reexported references bind the original declaration. Defaults,
+closed pure initialization, integral parameters/enums and existing aliases use
+the ordinary value rules. Unsupported members, dependent/effectful initializers,
+unpacked/nonintegral storage, external packages and multiple-module storage
+remain loud. Invalid import conflicts and unexported relay bindings have
+explicit admission barriers. No scheduler changed. See [the contract](sv-package-storage.md).
+
+The paired **22,035** paths gain **165 clean files** without losses:
+**3,501 → 3,666 clean**, **18,468 → 18,303 partial**, **66 include skips**,
+zero extraction errors. **All 165 gains match complete independent transcripts
+under both region oracles.** Sixteen additional initially admitted sources
+were independently rejected by the compiler; generic import-conflict/export
+checks now retain all sixteen as partial. They are not counted as matches.
+
+Four authored runnable sources match complete transcripts under both oracles;
+three further sources preserve dependent-initialization, unpacked-storage and
+subroutine boundaries. Four source-bound kernel proofs establish shared
+reads, immediate blocking stores, NBA capture and visibility after commit.
+The current chapter census is extraction coverage, including negative and
+compile-only paths; it is not whole-corpus execution conformance.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 34 | 265 | 1 |
+| 4 | 427 | 186 | 241 | 0 |
+| 5 | 618 | 348 | 270 | 0 |
+| 6 | 1185 | 389 | 796 | 0 |
+| 7 | 796 | 105 | 691 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 107 | 482 | 0 |
+| 10 | 657 | 225 | 432 | 0 |
+| 11 | 1034 | 679 | 355 | 0 |
+| 12 | 627 | 287 | 340 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 48 | 1495 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 171 | 654 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 379 | 165 | 28 |
+| 23 | 851 | 34 | 817 | 0 |
+| 24 | 355 | 10 | 345 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 140 | 425 | 0 |
+| 27 | 354 | 3 | 351 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 103 | 124 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 111 | 306 | 0 |
+| 38 | 340 | 194 | 146 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 10 | 77 | 0 |
+
 ## Simple immediate assertion actions — 2026-10-20
 
 IEEE §16.3 simple immediate assert/assume/cover now retain source-kind

@@ -1324,3 +1324,16 @@ Nonblocking controls, unsupported destinations, effects, delay/event forms
 and symbolic mode carry `IntraAssignment:<reason>` or the shared timing
 refusal tag. Any invalid compilation containing this lowering also receives
 `IntraAssignment:invalid-compilation`. See [the contract](sv-intra-assignment.md).
+
+### Legacy package storage provenance
+
+Source-defined packages with admitted scalar/packed integral variables lower
+to ordinary `Var` declarations prepended once before the single module's own
+declarations. Each carries `package_storage: true`, `source_package` and
+`source_name`. References use the original bound declaration's canonical
+`$package:<package-name-length>:<package-name>:<member-name>` storage name;
+imports/reexports add no storage. Integral package parameter references become
+exact elaborated literals. Unsupported package members and invalid package
+compilations remain design-level `Unsupported` nodes. Dependent/effectful
+initializers and unpacked/nonintegral package storage remain loud. Symbolic
+mode is unchanged. See [the contract](sv-package-storage.md).

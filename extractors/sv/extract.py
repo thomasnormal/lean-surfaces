@@ -759,6 +759,15 @@ def _constant_dimension_selector(expression):
     return int(value)
 
 
+_PACKAGE_BINDINGS = {}
+_PACKAGE_SCOPES = set()
+
+
+def _storage_name(symbol):
+    """Use the original package declaration even through imports/reexports."""
+    return _PACKAGE_BINDINGS.get(symbol, symbol.name) if _SYM is None else symbol.name
+
+
 def _array_storage_name(symbol):
     """One flat storage name per bound procedural array declaration.
 
@@ -770,7 +779,7 @@ def _array_storage_name(symbol):
     if _SYM is None and symbol.parentScope.isProceduralContext:
         location = symbol.location
         return f"$local_array:{location.offset}:{symbol.name}"
-    return symbol.name
+    return _storage_name(symbol)
 
 
 def _foreach_storage_name(symbol):
@@ -1945,6 +1954,8 @@ def _convert_named_value_expr(sm, e):
             return node
     if _SYM is None and skind == "EnumValue":
         return _convert_enum_member_expr(sm, e)
+    if _SYM is None and skind == "Parameter" and sym in _PACKAGE_BINDINGS:
+        return _convert_enum_member_expr(sm, e, "Parameter")
     iterator = _SYM is None and skind == "Iterator"
     if skind not in ("Variable", "Net") and not iterator:
         return unsupported(sm, e, "NamedValueExpression:" + skind)
@@ -1965,18 +1976,18 @@ def _convert_named_value_expr(sm, e):
         "kind": "Ident",
         "span": node_span(sm, e),
         "width": width,
-        "name": _foreach_storage_name(sym) if iterator else sym.name,
+        "name": _foreach_storage_name(sym) if iterator else _storage_name(sym),
     }, e.type)
 
 
-def _convert_enum_member_expr(sm, expr):
+def _convert_enum_member_expr(sm, expr, kind="EnumValue"):
     """Preserve the exact, already-bound integral enumeration value."""
     width, _, reason = type_width_2s(expr.type)
     try:
         value = expr.symbol.value.value
         if (reason is not None or type(value).__name__ != "SVInt"
                 or value.bitWidth != width):
-            return unsupported(sm, expr, "NamedValueExpression:EnumValue")
+            return unsupported(sm, expr, "NamedValueExpression:" + kind)
         return signed_metadata({
             "kind": "Literal",
             "span": node_span(sm, expr),
@@ -1984,7 +1995,7 @@ def _convert_enum_member_expr(sm, expr):
             "bits": svint_bits(value),
         }, expr.type)
     except Exception:
-        return unsupported(sm, expr, "NamedValueExpression:EnumValue")
+        return unsupported(sm, expr, "NamedValueExpression:" + kind)
 
 
 def _convert_integer_expr(sm, e, cname):
@@ -4745,7 +4756,7 @@ def convert_var(sm, m):
     return signed_metadata({
         "kind": "Var",
         "span": sym_span(sm, m),
-        "name": m.name,
+        "name": _storage_name(m),
         "width": w,
         "init": init_d,
     }, m.type)
@@ -4943,6 +4954,10 @@ def convert_module(sm, inst):
             elif k == "TypeAlias" and is_integral_type_alias(m):
                 continue
             elif is_bound_enum_member(m):
+                continue
+            elif k in ("ExplicitImport", "WildcardImport") and m.package in _PACKAGE_SCOPES:
+                # Binding is already resolved by the frontend. References keep
+                # the original symbol; importing does not allocate new storage.
                 continue
             else:
                 others.append(unsupported(sm, m, type(m).__name__ + ":" + k))
@@ -5150,18 +5165,179 @@ def _reject_invalid_lowering(sm, comp, modules, others, marker, kind, descriptio
                                   "frontend rejected source containing " + description))
 
 
+def _closed_package_initializer(expression):
+    """No runtime reads or calls may cross the static initialization boundary."""
+    if expression is None:
+        return True
+    if not _case_source_expression_ok(expression, packed_members=True):
+        return False
+    closed = True
+
+    def inspect(node):
+        nonlocal closed
+        if type(node).__name__ == "CallExpression":
+            closed = False
+        if type(node).__name__ == "NamedValueExpression":
+            closed = closed and str(node.symbol.kind) in (
+                "SymbolKind.Parameter", "SymbolKind.EnumValue")
+
+    expression.visit(inspect)
+    return closed
+
+
+def _convert_package(sm, package):
+    """Compile a package's integral static store, preserving all other walls."""
+    decls, others = [], []
+    for member in package:
+        kind = str(member.kind).split(".")[-1]
+        if kind in ("ExplicitImport", "WildcardImport") and member.package in _PACKAGE_SCOPES:
+            continue
+        if is_integral_type_alias(member) or is_bound_enum_member(member):
+            continue
+        if kind == "Parameter":
+            width, _, reason = type_width_2s(member.type)
+            value = member.value.value
+            if reason is None and type(value).__name__ == "SVInt" and value.bitWidth == width:
+                continue
+        if kind == "Variable":
+            width, _, reason = type_width_2s(member.type)
+            if reason is not None or width is None:
+                others.append(unsupported(sm, member, "Package:storage-type"))
+                continue
+            if not _closed_package_initializer(member.initializer):
+                others.append(unsupported(sm, member, "Package:initializer"))
+                continue
+            declaration = convert_var(sm, member)
+            declaration.update(package_storage=True, source_package=package.name,
+                               source_name=member.name)
+            decls.append(declaration)
+        else:
+            others.append(unsupported(sm, member, "Package:" + kind))
+    return decls, others
+
+
+def _package_import_sets(package, active=()):
+    """Return in-scope / exported declarations by original symbol identity.
+
+    The frontend exposes unexported explicit imports to subsequent imports.
+    Reconstruct the IEEE export filter rather than trusting that exposure.
+    A cycle is outside this admission check, never permission to invent names.
+    """
+    if package in active:
+        return set(), set()
+    members = list(package)
+    imports = [m for m in members if str(m.kind) in (
+        "SymbolKind.ExplicitImport", "SymbolKind.WildcardImport") and not m.isFromExport]
+    exports = [m for m in members if str(m.kind) in (
+        "SymbolKind.ExplicitImport", "SymbolKind.WildcardImport") and m.isFromExport]
+    own = {getattr(m, "wrapped", m) for m in members if str(m.kind) not in (
+        "SymbolKind.ExplicitImport", "SymbolKind.WildcardImport")}
+    in_scope, visible = set(own), set(own)
+    for binding in imports:
+        source = binding.package
+        if source not in _PACKAGE_SCOPES:
+            continue
+        _, candidates = _package_import_sets(source, (*active, package))
+        if str(binding.kind) == "SymbolKind.ExplicitImport":
+            candidates &= {binding.importedSymbol}
+        in_scope.update(candidates)
+        for symbol in candidates:
+            if package.hasExportAll or any(
+                    export.package == source and (
+                        str(export.kind) == "SymbolKind.WildcardImport"
+                        or export.importedSymbol == symbol) for export in exports):
+                visible.add(symbol)
+    return in_scope, visible
+
+
+def _invalid_package_imports(comp):
+    """Audit the frontend's importable names against the IEEE export filter."""
+    invalid = False
+
+    def inspect(member):
+        nonlocal invalid
+        kind = str(getattr(member, "kind", ""))
+        if kind not in ("SymbolKind.ExplicitImport", "SymbolKind.WildcardImport"):
+            return
+        source = member.package
+        if source not in _PACKAGE_SCOPES:
+            return
+        in_scope, visible = _package_import_sets(source)
+        if kind == "SymbolKind.ExplicitImport":
+            invalid = invalid or member.importedSymbol not in visible
+        else:
+            # Unreferenced wildcard candidates are not declarations imported
+            # into the relay. Reject only hidden names the frontend actually
+            # exposes for import, without admitting them as exported bindings.
+            invalid = invalid or any(source.findForImport(symbol.name) == symbol
+                                     for symbol in in_scope - visible)
+
+    comp.getRoot().visit(inspect)
+    return invalid
+
+
 def convert_design(sm, comp):
+    # Keep the binding environment local to this extraction, including on an
+    # error path. Symbol objects identify declarations without parsing paths
+    # (escaped identifiers themselves may contain :: or punctuation).
+    global _PACKAGE_BINDINGS, _PACKAGE_SCOPES
+    previous = _PACKAGE_BINDINGS, _PACKAGE_SCOPES
+    packages = [member for unit in comp.getCompilationUnits() for member in unit
+                if str(member.kind) == "SymbolKind.Package"]
+    _PACKAGE_SCOPES = set(packages)
+    _PACKAGE_BINDINGS = {
+        member: f"$package:{len(package.name)}:{package.name}:{member.name}"
+        for package in packages for member in package
+        if str(member.kind) in ("SymbolKind.Variable", "SymbolKind.Parameter")}
+    try:
+        return _convert_design(sm, comp, packages)
+    finally:
+        _PACKAGE_BINDINGS, _PACKAGE_SCOPES = previous
+
+
+def _convert_design(sm, comp, packages):
     modules = []
     others = []
+    package_decls = []
+    for package in packages:
+        try:
+            declarations, walls = _convert_package(sm, package)
+            package_decls.extend(declarations)
+            others.extend(walls)
+        except Exception as exc:
+            others.append(internal_error(exc))
     for inst in comp.getRoot().topInstances:
         try:
             modules.append(convert_module(sm, inst))
         except Exception as exc:
             modules.append(internal_error(exc))
-    # Runtime $unit-scope members (imports, unit variables, ...) are outside M0.
+    if package_decls:
+        if len(modules) == 1 and modules[0].get("kind") == "Module":
+            module = modules[0]
+            module["decls"] = package_decls + module["decls"]
+            if _generated_storage_collision(module["ports"], module["decls"],
+                                            module["processes"], "$package:"):
+                others.append(unsupported(sm, comp, "Package:storage-collision",
+                                          "package storage collides with a source binding"))
+        else:
+            others.append(unsupported(sm, comp, "Package:multiple-modules",
+                                      "shared package storage requires the single-module runner"))
+    if packages and _invalid_package_imports(comp):
+        others.append(unsupported(sm, comp, "Package:import-visibility",
+                                  "import exposes an unexported package binding or candidate"))
+    if packages and any(diagnostic.isError() or str(diagnostic.code) == "DiagCode(Redefinition)"
+                        for diagnostic in comp.getAllDiagnostics()):
+        others.append(unsupported(sm, comp, "Package:invalid-compilation",
+                                  "frontend rejected source containing a package"))
+    # Unit variables and other runtime $unit-scope members remain outside M0.
     try:
         for unit in comp.getCompilationUnits():
             for m in unit:
+                if str(m.kind) == "SymbolKind.Package":
+                    continue
+                if (str(m.kind) in ("SymbolKind.ExplicitImport", "SymbolKind.WildcardImport")
+                        and m.package in _PACKAGE_SCOPES):
+                    continue
                 if is_integral_type_alias(m) or is_bound_enum_member(m):
                     continue
                 others.append(unsupported(sm, m, type(m).__name__))

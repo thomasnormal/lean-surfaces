@@ -2714,6 +2714,14 @@ to one-bit windows in the shared vector. `noncanonical_union_bit` checks the
 Dynamic and effectful union indices remain loud; no driver resolution,
 aggregate store or scheduler is added.
 
+### Symbolic typedef packed-member indexed windows — 2026-10-20
+
+Indexed slices through an untagged packed-struct typedef now use the same
+fixed member windows after alias erasure. `typedef_member_indexed` checks the
+`+:` form and four-state propagation. Tagged, unresolved, dynamic and
+effectful alias paths remain loud; no type table, aggregate store or scheduler
+is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

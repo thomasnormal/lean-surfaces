@@ -418,6 +418,11 @@ with the selected write visible through alternate fields;
 `noncanonical_union_bit` pins the aliasing case. Dynamic and effectful union
 indices remain unsupported.
 
+An untagged packed-struct typedef is erased as compile-time metadata before
+indexed member lowering, so its canonical field offsets use the same fixed
+outer windows; `typedef_member_indexed` pins this spelling. Tagged, unresolved,
+dynamic and effectful alias paths remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

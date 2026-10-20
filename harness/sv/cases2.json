@@ -388,6 +388,16 @@
    ]
   },
   {
+   "name": "fixed_array_noncanonical_slice",
+   "example": "sem2/fixed_array_noncanonical_slice",
+   "top": "fixed_array_noncanonical_slice",
+   "signals": ["source", "out"],
+   "stimulus": [
+    {"source": "11"},
+    {"source": "x0"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

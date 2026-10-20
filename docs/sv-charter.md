@@ -2846,6 +2846,14 @@ source split across `arr[0]` and an output bit, then reads the cell back with
 four-state propagation. Dynamic, aliased and overlapping array leaves remain
 loud; the existing flat vector storage and comb-settle path are reused.
 
+### Symbolic noncanonical packed slices inside fixed-array cells — 2026-10-20
+
+Constant packed selections are now composed after cell lowering. The
+`fixed_array_noncanonical_slice` fixture maps `[10:9]` on a `[10:7]` element to
+the `[3:2]` window of `arr[0]`, preserving x propagation through the existing
+`PartSel` executor. Dynamic or effectful packed bounds remain loud; no range
+table, aggregate storage or scheduler is introduced.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

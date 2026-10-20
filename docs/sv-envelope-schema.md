@@ -369,6 +369,11 @@ A constant element of an admitted fixed-unpacked array is also a direct
 so source-order splitting and overlap checks use the same flat vector state;
 dynamic element leaves remain `Unsupported`.
 
+Packed selections applied after a constant array-cell select are normalized
+against the cell's own packed declaration range. Thus a literal
+`arr[0][10:9]` over a `[10:7]` element emits a `PartSel` over `arr[0]` with
+zero-based offsets; dynamic or effectful packed bounds remain `Unsupported`.
+
 The same symbolic process representation carries a single constant `BitSel`
 or `PartSel` target. Multiple such assignments settle in process order into
 their existing vector windows, so disjoint partial drivers retain undriven

@@ -484,6 +484,26 @@ class SymbolicContinuousSelects(unittest.TestCase):
                          ["arr[0]", "lo"])
         self.assertEqual(processes[1]["value"]["name"], "arr[0]")
 
+    def test_fixed_array_cell_preserves_noncanonical_packed_slice(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [3:0] out); "
+            "logic [10:7] arr [0:1]; assign arr[0][10:9] = source; "
+            "assign out = arr[0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target = processes[0]["target"]
+        self.assertEqual((target["msb"]["value"], target["lsb"]["value"]),
+                         (3, 2))
+        self.assertEqual(processes[1]["value"]["name"], "arr[0]")
+
+    def test_fixed_array_cell_dynamic_packed_slice_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, input logic [1:0] base, "
+            "output logic [3:0] out); logic [3:0] arr [0:1]; "
+            "assign arr[0][base +: 2] = source; assign out = arr[0]; "
+            "endmodule")
+        self.assertEqual(envelope["design"]["modules"][0]["processes"][0]["kind"],
+                         "Unsupported")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1063,6 +1063,11 @@ the one-bit output from one sampled five-bit RHS; the second assignment reads
 the same cell back, including x propagation. Dynamic, aliased and overlapping
 array leaves remain loud, and the legacy corpus census is unchanged.
 
+The `fixed_array_noncanonical_slice` fixture composes the two normalizations:
+the constant cell `arr[0]` is emitted first, then its `[10:9]` element slice
+maps to the cell offsets `[3:2]`. The runner observes `11xx` and `x0xx` on the
+whole cell; dynamic packed bounds remain loud and no new storage is needed.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

@@ -1090,6 +1090,13 @@ reuse `PartSel` windows over `sa[0]` and `ua[0]`, including the union's alias
 view. Tagged, nested-unpacked and dynamic aggregate paths remain loud; the
 legacy corpus census is unchanged.
 
+The `fixed_array_initializer` fixture exercises the declaration-time form of
+the same flat storage. A pure positional assignment pattern populates `arr[0]`
+and `arr[1]` before the continuous reads, producing `first=0001` and
+`second=xxxx`; keyed/default and exact replicated patterns are covered by the
+extractor tests. Wrong-length, effectful, nested and packed-aggregate
+initializers remain loud, and the legacy corpus census is unchanged.
+
 The `fixed_array_concat_target` fixture makes a cell one leaf of a symbolic
 `ConcatTarget`. Source-order splitting writes the four-bit `arr[0]` cell and
 the one-bit output from one sampled five-bit RHS; the second assignment reads

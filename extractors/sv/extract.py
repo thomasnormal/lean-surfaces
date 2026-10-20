@@ -4811,8 +4811,9 @@ def convert_fixed_array_vars_sym(sm, m):
 
     The semantic tier has a flat vector store, so each constant-index cell is
     represented by its own declaration name (the same representation used by
-    ``_fixed_array_cell``). Aggregate initializers and nested arrays remain
-    outside this narrow admission.
+    ``_fixed_array_cell``). A pure exact assignment-pattern initializer can
+    populate those cells directly; nested arrays and aggregate initializers
+    remain outside this narrow admission.
     """
     try:
         array_type = m.type.canonicalType
@@ -4821,6 +4822,7 @@ def convert_fixed_array_vars_sym(sm, m):
         element_type = array_type.elementType
         if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
             return None
+        element_kind = type(element_type.canonicalType).__name__
         width, two, reason = type_width_2s(element_type)
         if width is None or reason is not None:
             return None
@@ -4855,13 +4857,75 @@ def convert_fixed_array_vars_sym(sm, m):
             return None
         left, right = int(array_type.range.left), int(array_type.range.right)
         count = abs(left - right) + 1
-        if count <= 0 or count > 1024 or getattr(m, "initializer", None) is not None:
+        if count <= 0 or count > 1024:
             return None
+        initializer = getattr(m, "initializer", None)
+        values = [None] * count
+        if initializer is not None:
+            # A packed aggregate's runtime representation is a vector, but
+            # its nested assignment-pattern syntax needs an aggregate-aware
+            # evaluator. Keep that form loud rather than treating a pattern
+            # as an arbitrary bit vector. The scalar/packed/enum cases below
+            # are already represented by ordinary symbolic expressions.
+            if element_kind in ("PackedStructType", "PackedUnionType"):
+                return None
+            pattern_kind = type(initializer).__name__
+            if pattern_kind not in (
+                    "SimpleAssignmentPatternExpression",
+                    "StructuredAssignmentPatternExpression",
+                    "ReplicatedAssignmentPatternExpression"):
+                return None
+            if getattr(initializer, "bad", False):
+                return None
+            if pattern_kind == "ReplicatedAssignmentPatternExpression":
+                repetition = getattr(getattr(initializer, "count", None),
+                                     "constant", None)
+                try:
+                    if hasattr(repetition, "value"):
+                        repetition = repetition.value
+                    repetition = int(repetition)
+                except (TypeError, ValueError, OverflowError):
+                    return None
+                if repetition <= 0:
+                    return None
+                source_elements = list(initializer.elements)
+                if (not source_elements
+                        or repetition * len(source_elements) != count):
+                    return None
+                elements = source_elements * repetition
+            else:
+                elements = list(initializer.elements)
+                if len(elements) != count:
+                    return None
+            for i, element in enumerate(elements):
+                if not _case_source_expression_ok(element):
+                    return None
+                value = convert_expr(sm, element)
+                if (value is None or value.get("kind") == "Unsupported"
+                        or width_of(value) != width
+                        or not _case_expression_ok(value)):
+                    return None
+                reads_target = False
+
+                def inspect(node):
+                    nonlocal reads_target
+                    if type(node).__name__ == "NamedValueExpression":
+                        try:
+                            reads_target = reads_target or node.symbol.name == m.name
+                        except Exception:
+                            reads_target = True
+
+                element.visit(inspect)
+                if reads_target:
+                    return None
+                values[i] = value
         step = 1 if right >= left else -1
         decls = []
-        for position in range(left, right + step, step):
+        for i, position in enumerate(range(left, right + step, step)):
             init = None
-            if two:
+            if values[i] is not None:
+                init = values[i]
+            if init is None and two:
                 init = {"kind": "Literal", "span": None, "width": width,
                         "bits": "0" * width}
             decls.append({

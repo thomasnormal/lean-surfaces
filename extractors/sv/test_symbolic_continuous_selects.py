@@ -510,6 +510,58 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(envelope["design"]["modules"][0]["processes"][0]["kind"],
                          "Unsupported")
 
+    def test_fixed_array_pattern_initializer_populates_symbolic_cells(self):
+        envelope = self.extract(
+            "module top(output logic [3:0] first, output logic [3:0] second); "
+            "logic [3:0] arr [0:1] = '{4'h1, 4'hx}; "
+            "assign first = arr[0]; assign second = arr[1]; endmodule")
+        module = envelope["design"]["modules"][0]
+        decls = [decl for decl in module["decls"] if decl["kind"] == "Var"]
+        self.assertEqual([decl["name"] for decl in decls], ["arr[0]", "arr[1]"])
+        self.assertEqual([decl["init"]["bits"] for decl in decls],
+                         ["0001", "xxxx"])
+        self.assertEqual([proc["value"]["name"] for proc in module["processes"]],
+                         ["arr[0]", "arr[1]"])
+
+    def test_fixed_array_structured_initializer_is_elaborated_per_cell(self):
+        envelope = self.extract(
+            "module top(output logic [3:0] first, output logic [3:0] second); "
+            "logic [3:0] arr [0:1] = '{default:4'h2}; "
+            "assign first = arr[0]; assign second = arr[1]; endmodule")
+        decls = [decl for decl in envelope["design"]["modules"][0]["decls"]
+                 if decl["kind"] == "Var"]
+        self.assertEqual([decl["init"]["bits"] for decl in decls],
+                         ["0010", "0010"])
+
+    def test_fixed_array_replicated_initializer_populates_each_cell(self):
+        envelope = self.extract(
+            "module top(output logic [3:0] first, output logic [3:0] second); "
+            "logic [3:0] arr [0:1] = '{2{4'h3}}; "
+            "assign first = arr[0]; assign second = arr[1]; endmodule")
+        decls = [decl for decl in envelope["design"]["modules"][0]["decls"]
+                 if decl["kind"] == "Var"]
+        self.assertEqual([decl["init"]["bits"] for decl in decls],
+                         ["0011", "0011"])
+
+    def test_fixed_array_wrong_length_initializer_stays_loud(self):
+        envelope = self.extract(
+            "module top(output logic [3:0] out); "
+            "logic [3:0] arr [0:1] = '{4'h1}; assign out = arr[0]; "
+            "endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertTrue(any(decl["kind"] == "Unsupported"
+                            for decl in module["decls"]))
+
+    def test_fixed_array_aggregate_initializer_stays_loud(self):
+        envelope = self.extract(
+            "module top(output logic [3:0] out); "
+            "typedef struct packed { logic [1:0] hi; logic [1:0] lo; } S; "
+            "S arr [0:1] = '{'{2'b01, 2'b10}, '{2'b11, 2'b00}}; "
+            "assign out = arr[0]; endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertTrue(any(decl["kind"] == "Unsupported"
+                            for decl in module["decls"]))
+
     def test_fixed_array_cell_can_be_a_concat_target_leaf(self):
         envelope = self.extract(
             "module top(input logic [4:0] source, output logic [3:0] hi, "

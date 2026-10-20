@@ -258,12 +258,11 @@ bounded dynamic access and whole-array positional-pattern assignments below.
 `If` conditions may be any width (truthiness per LRM: true iff some bit is `1`).
 
 The symbolic `sv-0.2` extractor uses the same flat cell representation for a
-one-dimensional fixed-unpacked integral array with no initializer: it emits one
-ordinary symbolic `Var` for each declared index (`arr[0]`, `arr[1]`, ...), and a
-constant `arr[k]` read or write becomes an `Ident` naming that cell. Dynamic or
-out-of-range indices, nested-unpacked arrays and array initializers stay
-`Unsupported`; the symbolic tier adds no aggregate store or dynamic index
-executor.
+one-dimensional fixed-unpacked integral array: it emits one ordinary symbolic
+`Var` for each declared index (`arr[0]`, `arr[1]`, ...), and a constant `arr[k]`
+read or write becomes an `Ident` naming that cell. Dynamic or out-of-range
+indices and nested-unpacked arrays stay `Unsupported`; the symbolic tier adds
+no aggregate store or dynamic index executor.
 
 An untagged plain packed integral typedef is also compile-time metadata in this
 symbolic cell path. The extractor erases the alias, recovers the canonical

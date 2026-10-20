@@ -2878,6 +2878,15 @@ checks a struct field write/read and a union alternate-field read. Tagged,
 nested-unpacked and dynamic aggregate paths remain loud; no aggregate runtime
 store or member table is added.
 
+### Symbolic fixed-array initializer cells — 2026-10-20
+
+An admitted one-dimensional fixed-unpacked array may now carry a pure exact
+assignment-pattern initializer. Positional, elaborated keyed/default and exact
+replicated patterns are lowered into the same independent symbolic cells as
+later reads and writes; `fixed_array_initializer` checks the resulting `0001`,
+`xxxx` trace. Wrong-length, effectful, nested and packed-aggregate initializer
+patterns remain loud; no aggregate store or runtime pattern evaluator is added.
+
 ### Symbolic fixed-array cells in concatenation targets — 2026-10-20
 
 Constant cells of admitted fixed-unpacked arrays may now be leaves of a

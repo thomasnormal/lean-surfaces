@@ -43,6 +43,17 @@ selected paths before returning the existing target identity. This executes a
 resolved nonvirtual cast in the state model; it does not parse an AST cast or
 infer a path from class names.
 
+`ClassBaseCastSyntax.admit` is the deliberately narrow source-backed AST gate
+for this operation. It accepts only a `CXXStaticCastExpr` with `castKind:
+NoOp`, whose single child is an `ImplicitCastExpr` with
+`castKind: DerivedToBase` and a nonempty base path, followed by one
+`LValueToRValue` child and a direct `DeclRefExpr` operand. The outer and inner
+qualified pointer spellings must agree with the supplied source and target
+spellings. Reverse `BaseToDerived` casts, member or computed operands, missing
+paths and all other cast forms remain explicit refusals. `bind` attaches this
+validated syntax evidence to an already-resolved `ClassBaseCast`; declaration
+handles and path witnesses still come from the typed state boundary.
+
 The kernel controls cover complete-root and nested-base views, const roots,
 diamond identity, prefix failures, same-subobject and missing-path refusals,
 duplicate IDs, malformed value stores, non-public-edge refusals, and permitted

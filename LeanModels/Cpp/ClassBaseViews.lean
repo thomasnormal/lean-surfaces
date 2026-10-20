@@ -40,6 +40,73 @@ inductive ClassBaseCastError where
   | targetTypeMismatch
   deriving Repr, BEq, Inhabited
 
+structure ClassBaseCastSyntax where
+  sourceType : String
+  targetType : String
+  deriving Repr, BEq, Inhabited
+
+inductive ClassBaseCastSyntaxError where
+  | notStaticCast
+  | unsupportedCastKind
+  | malformedType
+  | malformedChildren
+  | missingBasePath
+  | unsupportedOperand
+  deriving Repr, BEq, Inhabited
+
+namespace ClassBaseCastSyntax
+
+private def typeSpelling (raw : Raw) : Option String := do
+  let type ← raw.field "type"
+  type.text "qualType"
+
+private def oneChild (raw : Raw) : Option Raw := do
+  let some (.array [child]) := raw.field "inner" | none
+  pure child
+
+private def pointerType (spelling : String) : Bool :=
+  match spelling.toList.reverse with
+  | '*' :: ' ' :: _ => true
+  | _ => false
+
+def admit (raw : Raw) (sourceType targetType : String) :
+    Except ClassBaseCastSyntaxError ClassBaseCastSyntax := do
+  unless raw.text "kind" == some "CXXStaticCastExpr" do
+    throw .notStaticCast
+  unless raw.text "castKind" == some "NoOp" do
+    throw .unsupportedCastKind
+  unless pointerType sourceType && pointerType targetType &&
+      sourceType != targetType do
+    throw .malformedType
+  unless typeSpelling raw == some targetType do
+    throw .malformedType
+  let some child := oneChild raw | throw .malformedChildren
+  unless child.text "kind" == some "ImplicitCastExpr" &&
+      child.text "castKind" == some "DerivedToBase" &&
+      typeSpelling child == some targetType do
+    throw .unsupportedCastKind
+  match child.field "path" with
+  | some (.array (_ :: _)) => pure ()
+  | _ => throw .missingBasePath
+  let some lvalue := oneChild child | throw .malformedChildren
+  unless lvalue.text "kind" == some "ImplicitCastExpr" &&
+      lvalue.text "castKind" == some "LValueToRValue" &&
+      typeSpelling lvalue == some sourceType do
+    throw .malformedChildren
+  let some operand := oneChild lvalue | throw .malformedChildren
+  unless operand.text "kind" == some "DeclRefExpr" &&
+      typeSpelling operand == some sourceType do
+    throw .unsupportedOperand
+  pure {sourceType, targetType}
+
+/-- Attach an admitted source-level shape to the already-resolved typed cast.
+The typed cast carries declaration handles and paths; the syntax record carries
+the corresponding frontend spellings, so no runtime field needs to be copied. -/
+def bind (_admitted : ClassBaseCastSyntax) (cast : ClassBaseCast) : ClassBaseCast :=
+  cast
+
+end ClassBaseCastSyntax
+
 namespace ClassBaseView
 
 private def isPrefix : List Nat → List Nat → Bool

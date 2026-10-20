@@ -22,6 +22,31 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Pre- and post-test procedural loops — 2026-10-20
+
+Pure integral `while` and `do…while` now use the existing loop control,
+with a body-first entry for `do…while`. Break, continue, nesting and retained
+delay/event continuations preserve their proper test boundary. The general
+completed-step correspondence includes the new entry. Effects, unsupported
+conditions/storage, unresolved lifetimes and symbolic-mode loops remain loud.
+No scheduler or queue changed.
+
+The paired **22,035**-path census gains **46 clean files** without losses:
+**3,186 → 3,232 clean**, **18,783 → 18,737 partial**, **66 include skips**,
+zero extraction errors. Thirty-six gains match complete time-zero transcripts;
+seven more match in the timed loader under source and reverse schedule
+oracles. Two remain runtime refusals due to time-zero-only `$time` lowering.
+One quiescent fixture differs only by an independent simulator warning;
+the same warning appears in a no-loop control. The raw diagnostic difference
+is retained and is not counted as a match.
+
+The authored values and timer fixtures match complete independent output.
+Four fixture-bound kernel proofs cover entry, assignment, break and first-wait
+retention. A third fixture exposes missing procedural edge publication in the
+kernel: its producer writes an internally watched signal. The timed loader
+now refuses such designs, preserving the counterexample without silently
+losing the waiter. External-stimulus edges retain their existing interface.
+
 ## Numeric enumeration methods — 2026-10-20
 
 Pure integral `first`, `last`, `num`, `next` and `prev` calls now lower

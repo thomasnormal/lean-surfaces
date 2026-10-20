@@ -3358,6 +3358,9 @@ def _convert_stmt(sm, s):
             "body": body,
         }
 
+    if cname in ("WhileLoopStatement", "DoWhileLoopStatement"):
+        return _convert_test_loop(sm, s, cname)
+
     if cname == "RepeatLoopStatement":
         if _SYM is not None:
             return unsupported(sm, s)
@@ -3577,6 +3580,22 @@ def _convert_ordinary_case(sm, stmt):
             "then": body, "else": result,
         }
     return result
+
+
+def _convert_test_loop(sm, statement, kind):
+    if _SYM is not None:
+        return unsupported(sm, statement)
+    width, _, reason = type_width_2s(statement.cond.type)
+    if width is None or reason is not None or not _case_source_expression_ok(statement.cond):
+        return unsupported(sm, statement, kind + ":condition")
+    condition = convert_expr(sm, statement.cond)
+    if not _case_expression_ok(condition):
+        return unsupported(sm, statement, kind + ":condition")
+    body = convert_stmt(sm, statement.body)
+    if contains_local_decl(body):
+        return unsupported(sm, statement, kind + ":body-lifetime")
+    return {"kind": "While" if kind == "WhileLoopStatement" else "DoWhile",
+            "span": node_span(sm, statement), "condition": condition, "body": body}
 
 
 def _convert_for_step(sm, expression):
@@ -4699,7 +4718,7 @@ def contains_shift(node):
 
 def contains_loop(node):
     if isinstance(node, dict):
-        return node.get("kind") in ("For", "Repeat", "Break", "Continue") or any(
+        return node.get("kind") in ("For", "Repeat", "While", "DoWhile", "Break", "Continue") or any(
             contains_loop(value) for value in node.values())
     if isinstance(node, list):
         return any(contains_loop(value) for value in node)

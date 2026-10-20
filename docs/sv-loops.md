@@ -1,4 +1,4 @@
-# Procedural for and repeat loops
+# Procedural loops
 
 IEEE 1800-2023 §12.7.1 orders a `for` loop as initializer, header
 condition, body, and ordered steps. Initializers execute once. A missing
@@ -12,6 +12,19 @@ Assignment steps and discarded integral prefix/postfix increments and
 decrements reuse the ordinary assignment and four-state arithmetic rules.
 The implicit block for header-local variables retains its declarations;
 the existing flat-state shadow and duplicate-name checks still apply.
+
+`while` (§12.7.4) tests its condition before each body. `do…while`
+(§12.7.5) enters the body first and tests only after completion or
+`continue`. A known one bit makes an integral condition true even when
+other bits are x/z; a condition with no known one bit exits. `break`
+exits without evaluating the next test. Nested loops consume transfers at
+their nearest boundary.
+
+The envelope retains `While` and `DoWhile` nodes with their source
+`condition` and `body`. Ingestion maps `While` to the existing `for` control
+with empty initializer and step lists. A body-first `doWhileLoop` entry
+handles the first body and then uses the same empty-step control for all
+subsequent tests and iterations. No synthetic signal or unrolling is needed.
 
 `repeat` (§12.7.2) samples its count once, retains a remaining count, and
 decrements it after normal body completion or `continue`. The sampled
@@ -38,6 +51,18 @@ A resumed `continue` discards the unfinished body tail but still reaches
 the saved boundary. Nested loops consume transfers at their nearest
 boundary. The existing scheduler receives the same retained statement-list
 interface; no region choice, new queue, or second scheduler is introduced.
+The first `do…while` body uses that same retained body boundary, so a wait
+resumes the body before its first post-test. The completed-step
+correspondence includes this body-first entry.
+
+The timed loader refuses a design when a source process can write a signal
+watched by any edge wait, including an implicit clocked-process wait. The
+current kernel delivers external stimulus edges but does not publish each
+procedural blocking/NBA edge. Comparing whole-body before/after states would
+lose intermediate edges, so it is not used as a substitute. The admission
+scan includes ordinary and selected assignments, packed targets, scanner
+copyback, declarations, branches and loop phases. This conservative guard
+prevents silent loss of a waiting continuation; it adds no scheduler rule.
 
 The general executor/stepper correspondence now covers loop phases.
 Three original source fixtures check header ordering, sampled counts,

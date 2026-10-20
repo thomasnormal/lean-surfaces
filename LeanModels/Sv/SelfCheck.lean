@@ -264,6 +264,9 @@ inductive SStmt where
   | repeatLoop (count : SExpr) (countSigned : Bool) (body : SStmt)
   | repeatBody (remaining : Nat) (body : SStmt)
   | repeatAfterBody (remaining : Nat) (body : SStmt)
+  /-- Body-first entry; subsequent tests and iterations use the ordinary
+  empty-step `for` control, including its retained body boundary. -/
+  | doWhileLoop (condition : SExpr) (body : SStmt)
   | breakLoop
   | continueLoop
   | localDecl (name : String) (width : Nat) (twoState : Bool) (init : Option SExpr)
@@ -811,6 +814,15 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           else
             execRepeatLoop fuel st nba { out with transfer := .normal }
               (remaining - 1) body assignmentOrder
+      | .doWhileLoop condition body => do
+          let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
+          if out'.halted then
+            .ok (st', nba', out')
+          else if out'.transfer == .breakLoop then
+            .ok (st', nba', { out' with transfer := .normal })
+          else
+            execForLoop fuel st' nba' { out' with transfer := .normal }
+              condition #[] body assignmentOrder
       | .breakLoop => .ok (st, nba, { out with transfer := .breakLoop })
       | .continueLoop => .ok (st, nba, { out with transfer := .continueLoop })
       | .delay _ =>
@@ -1174,6 +1186,12 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
   | "Repeat" =>
       return .repeatLoop (← parseSExpr (← getF j "count"))
         (← getBoolF j "count_signed") (← parseSStmt (← getF j "body"))
+  | "While" =>
+      return .forLoop #[] (← parseSExpr (← getF j "condition")) #[]
+        (← parseSStmt (← getF j "body"))
+  | "DoWhile" =>
+      return .doWhileLoop (← parseSExpr (← getF j "condition"))
+        (← parseSStmt (← getF j "body"))
   | "Delay" =>
       let amount ← getNatF j "amount"
       if amount >= 2 ^ 64 then throw "delay exceeds the admitted integral range"
@@ -1277,7 +1295,8 @@ partial def localNames : SStmt → List String
   | .forAfterInit _ steps body | .forHeader _ steps body
   | .forAfterBody _ steps body | .forAfterStep _ steps body =>
       steps.toList.flatMap localNames ++ localNames body
-  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body => localNames body
+  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
+  | .doWhileLoop _ body => localNames body
   | _ => []
 
 /-- Preserve time-zero query provenance through envelope ingestion.

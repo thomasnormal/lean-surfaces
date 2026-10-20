@@ -181,6 +181,20 @@ def stepSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           else
             stepRepeatLoop fuel st nba { out with transfer := .normal }
               (remaining - 1) body
+      | .doWhileLoop condition body => do
+          let (st', nba', out', outcome) ← stepSStmt fuel st nba out body
+          match outcome with
+          | .suspended trigger residual =>
+              .ok (st', nba', out', .suspended trigger
+                (residual ++ [.forAfterBody condition #[] body]))
+          | .done =>
+              if out'.halted then
+                .ok (st', nba', out', .done)
+              else if out'.transfer == .breakLoop then
+                .ok (st', nba', { out' with transfer := .normal }, .done)
+              else
+                stepForLoop fuel st' nba' { out' with transfer := .normal }
+                  condition #[] body
       -- Leaves: delegate, so they cannot drift from `execSStmt`.
       | s => do
           let (st', nba', out') ← execSStmt (fuel + 1) st nba out s
@@ -436,7 +450,28 @@ theorem stepSStmt_done_agrees : ∀ (fuel : Nat) (st : SvState) (nba : NbaQueue)
           have haltedFalse : out.halted = false := Bool.eq_false_iff.mpr hh
           simp only [haltedFalse] at h
           exact stepRepeatLoop_done_agrees fuel _ _ _ _ _ _ _ _ h
-      case h_14 =>
+      case h_14 condition body =>
+        rw [SelfCheck.execSStmt.eq_def]; simp only [hh, if_false]
+        cases hs : stepSStmt fuel st nba out body with
+        | timeout => simp [hs] at h
+        | unsupported message => simp [hs] at h
+        | ok result =>
+            obtain ⟨bodySt, bodyNba, bodyOut, outcome⟩ := result
+            simp only [hs, Res.ok_bind] at h
+            cases outcome with
+            | suspended trigger residual => simp at h
+            | done =>
+                have agrees := stepSStmt_done_agrees fuel _ _ _ _ _ _ _ hs
+                simp only [agrees, Res.ok_bind]
+                by_cases halted : bodyOut.halted = true
+                · simp_all
+                · have haltedFalse := Bool.eq_false_iff.mpr halted
+                  simp only [haltedFalse, Bool.false_eq_true, if_false] at h ⊢
+                  by_cases breaking : (bodyOut.transfer == .breakLoop) = true
+                  · simp_all
+                  · simp only [breaking, if_false] at h ⊢
+                    exact stepForLoop_done_agrees fuel _ _ _ _ _ _ _ _ _ h
+      case h_15 =>
         cases he : execSStmt (fuel + 1) st nba out stmt with
         | ok r =>
           obtain ⟨ra, rb, rc⟩ := r

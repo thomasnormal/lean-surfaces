@@ -239,10 +239,6 @@
     82
    ],
    [
-    "WhileLoopStatement",
-    82
-   ],
-   [
     "ConcurrentAssertionStatement",
     76
    ],
@@ -268,7 +264,7 @@
    ],
    [
     "WaitStatement",
-    63
+    64
    ],
    [
     "TypeAlias:invalid-compilation",
@@ -285,6 +281,10 @@
    [
     "NetSymbol:WAnd",
     55
+   ],
+   [
+    "WhileLoopStatement:condition",
+    54
    ],
    [
     "NetSymbol:TriReg",
@@ -323,11 +323,11 @@
     43
    ],
    [
-    "Loop:invalid-compilation",
-    41
+    "DisableStatement",
+    42
    ],
    [
-    "DisableStatement",
+    "Loop:invalid-compilation",
     41
    ],
    [
@@ -360,10 +360,6 @@
    ],
    [
     "TimedStatement:EventListControl",
-    37
-   ],
-   [
-    "DoWhileLoopStatement",
     37
    ],
    [
@@ -487,6 +483,10 @@
     16
    ],
    [
+    "ForLoopStatement:condition",
+    16
+   ],
+   [
     "CallExpression:$clog2:dynamic",
     16
    ],
@@ -496,10 +496,6 @@
    ],
    [
     "ProceduralBlockSymbol:AlwaysLatch",
-    15
-   ],
-   [
-    "ForLoopStatement:condition",
     15
    ],
    [
@@ -536,6 +532,10 @@
    ],
    [
     "CaseStatement:Priority",
+    12
+   ],
+   [
+    "DoWhileLoopStatement:condition",
     12
    ],
    [
@@ -771,6 +771,10 @@
     1
    ],
    [
+    "WhileLoopStatement:body-lifetime",
+    1
+   ],
+   [
     "ForLoopStatement:initializer",
     1
    ],
@@ -848,13 +852,13 @@
    ]
   ],
   "by_status": {
-   "clean": 3186,
-   "partial": 18783,
+   "clean": 3232,
+   "partial": 18737,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    310,
+    318,
     1387
    ],
    "compilation": [
@@ -910,7 +914,7 @@
     52
    ],
    "simulation": [
-    2698,
+    2736,
     18671
    ],
    "simulation elaboration": [
@@ -1211,9 +1215,9 @@
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 174,
+    "clean": 209,
     "error": 0,
-    "partial": 453,
+    "partial": 418,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
@@ -1395,9 +1399,9 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 96,
+    "clean": 99,
     "error": 0,
-    "partial": 131,
+    "partial": 128,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
@@ -1419,17 +1423,17 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 96,
+    "clean": 103,
     "error": 0,
-    "partial": 321,
+    "partial": 314,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
    },
    "chapter-38": {
-    "clean": 190,
+    "clean": 191,
     "error": 0,
-    "partial": 150,
+    "partial": 149,
     "skip_include": 0,
     "total": 340,
     "unlockable": 0

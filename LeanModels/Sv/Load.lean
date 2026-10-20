@@ -97,6 +97,48 @@ def elabDesign (d : Design) : Except String SvWorld := do
          , procs := procs
          , regionQ := fun r => if r == Region.active then List.range procs.size else [] }
 
+private partial def m0Writes : Stmt → List (Bool × String)
+  | .blockingAssign name _ | .nbaAssign name _ => [(false, name)]
+  | .ifStmt _ t e => m0Writes t ++ (e.toList.flatMap m0Writes)
+  | .block body => body.toList.flatMap m0Writes
+  | .unsupported _ _ => []
+
+private def targetWrite : PackedTarget → Bool × String
+  | .whole name _ _ | .selected name _ _ _ _ _ => (false, name)
+
+/-- Possible writes and edge sensitivities. This is conservative across
+branches: the kernel does not yet publish individual procedural edges. -/
+private partial def timedAccesses : SStmt → List (Bool × String)
+  | .m0 body => m0Writes body
+  | .assign _ name _ | .selectedAssign name _ _ _ _ _ _
+  | .selectedNbaAssign name _ _ _ _ _ _ | .localDecl name _ _ _ => [(false, name)]
+  | .packedAssign targets _ | .packedNbaAssign targets _ => targets.map targetWrite
+  | .scanf _ _ outputs result => (outputs.flatten ++ result).map targetWrite
+  | .waitEvent signal _ => [(true, signal)]
+  | .ifStmt _ t e => timedAccesses t ++ (e.toList.flatMap timedAccesses)
+  | .block body => body.toList.flatMap timedAccesses
+  | .forLoop initializers _ steps body =>
+      initializers.toList.flatMap timedAccesses ++ steps.toList.flatMap timedAccesses ++
+        timedAccesses body
+  | .forAfterInit _ steps body | .forHeader _ steps body
+  | .forAfterBody _ steps body | .forAfterStep _ steps body =>
+      steps.toList.flatMap timedAccesses ++ timedAccesses body
+  | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body
+  | .doWhileLoop _ body => timedAccesses body
+  | .breakLoop | .continueLoop | .sysCall _ _ _ | .finish | .skip
+  | .delay _ | .waitCond _ => []
+
+/-- An internally written edge source requires the kernel's per-publication
+wake rule; external stimulus is currently the only integrated edge source. -/
+def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
+  let accesses := d.procs.toList.flatMap fun proc =>
+    match proc with
+    | .initial body => timedAccesses body
+    | .alwaysPosedge clock body => (true, clock) :: timedAccesses body
+    | .other _ _ => []
+  let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
+  accesses.any fun (watched, name) => watched && writes.contains name
+
 /-- Build a scheduler world from the self-check envelope vocabulary.
 
 This surface admits one or more `initial` processes, whose continuations run
@@ -106,6 +148,8 @@ module's time-unit ticks; physical unit conversion is not inferred.
 def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld := do
   if d.requiresTimeZero then
     throw "timed design rejects time-zero-only $time lowering"
+  if requiresInternalEdges d then
+    throw "timed design requires procedural edge publication"
   let procs ← d.procs.toList.mapM fun proc =>
     match proc with
     | .initial body =>
@@ -130,6 +174,13 @@ theorem elabTimedDesign_requiresTimeZero (fuel : Nat) (d : SelfCheck.Design)
     (restricted : d.requiresTimeZero = true) :
     elabTimedDesign fuel d = .error "timed design rejects time-zero-only $time lowering" := by
   simp [elabTimedDesign, restricted]
+  rfl
+
+/-- Internal procedural edges cannot silently lose a waiting continuation. -/
+theorem elabTimedDesign_requiresInternalEdges (fuel : Nat) (d : SelfCheck.Design)
+    (timeOk : d.requiresTimeZero = false) (restricted : requiresInternalEdges d = true) :
+    elabTimedDesign fuel d = .error "timed design requires procedural edge publication" := by
+  simp [elabTimedDesign, timeOk, restricted]
   rfl
 
 /-! ## Guards -/

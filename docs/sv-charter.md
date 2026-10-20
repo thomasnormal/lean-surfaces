@@ -3335,3 +3335,47 @@ skips**, zero extraction errors. Twenty-two gains match complete independent
 transcripts. Two delay-bearing files remain runtime refusals: the self-check
 runner has no scheduler, and the timed loader rejects their time-zero-only
 `$time` lowering. Those two are extraction gains only.
+
+### Pre- and post-test procedural loops — 2026-10-20
+
+IEEE 1800-2023 §§12.7.4–12.7.5 `while` and `do…while` now retain their
+pure integral condition and body in the legacy/self-check envelope.
+`while` tests before every body; `do…while` enters the first body before
+testing. A known one bit admits the body despite other x/z bits; no known
+one bit exits. Normal completion and `continue` reach the next test;
+`break` exits without evaluating it. Nested loops consume their own transfers.
+Effectful/nonintegral conditions, unresolved repeated-body lifetimes,
+unsupported statements, frontend errors and symbolic-mode loops remain loud.
+
+Ingestion maps `while` to the existing empty-initializer/empty-step `for`
+control. A body-first `doWhileLoop` entry reuses that same control for
+subsequent tests and iterations. Its first suspended body retains the
+ordinary body boundary, so resumption completes the unfinished body before
+testing. The completed-step executor correspondence includes this entry.
+No scheduler, queue, synthetic signal or loop unrolling is added.
+
+The authored values fixture matches its complete independent transcript.
+Four fixture-bound kernel theorems establish false pre-test preservation,
+body-first assignment, break without a post-test read, and retention of the
+first event-wait boundary with arbitrary state, pending work and prior
+output. A separate timer fixture matches its complete independent transcript
+under both source and reverse schedule oracles.
+
+The event fixture exposed an existing kernel integration gap: procedural
+writes do not publish edges to registered waiters. The timed loader now
+refuses any design whose processes may write a watched signal, including
+selected/packed targets, scanner copyback and implicit clocked-process waits.
+This conservative admission guard preserves the counterexample as a loud
+fixture. External stimulus edges retain their existing interface. No
+whole-body before/after approximation is used to invent missing intermediate
+edges. See [the loop contract](sv-loops.md).
+
+A paired **22,035**-path census gains **46 clean files** without losses:
+**3,186 → 3,232 clean**, **18,783 → 18,737 partial**, **66 include skips**,
+zero extraction errors. Thirty-six gains match complete time-zero transcripts
+and seven more match through the timed loader under both schedule oracles.
+Two remain runtime refusals because of time-zero-only `$time` lowering.
+One quiescent fixture has a **diagnostic-only transcript divergence**: it
+produces no user output, while the independent simulator emits a quiescence
+warning. A no-loop control produces the same warning. That raw difference is
+retained and is not counted as an execution match.

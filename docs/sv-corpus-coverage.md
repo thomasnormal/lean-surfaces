@@ -983,6 +983,11 @@ packed-struct typedef. The alias disappears while the field's fixed outer
 window and x propagation remain; tagged, unresolved, dynamic and effectful
 alias paths remain loud.
 
+The `typedef_union_indexed` fixture checks the same `+:` slice through an
+untagged packed-union typedef and reads it through the alternate field. Alias
+visibility and x propagation remain; tagged, unresolved, dynamic and effectful
+alias paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

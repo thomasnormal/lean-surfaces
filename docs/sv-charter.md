@@ -2722,6 +2722,14 @@ fixed member windows after alias erasure. `typedef_member_indexed` checks the
 effectful alias paths remain loud; no type table, aggregate store or scheduler
 is added.
 
+### Symbolic typedef packed-union indexed windows — 2026-10-20
+
+Indexed slices through an untagged packed-union typedef now retain shared-vector
+aliasing after compile-time alias erasure. `typedef_union_indexed` checks the
+`+:` form through an alternate field with four-state propagation. Tagged,
+unresolved, dynamic and effectful alias paths remain loud; no type table,
+driver resolution, aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

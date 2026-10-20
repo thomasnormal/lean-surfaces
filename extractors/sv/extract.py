@@ -3480,55 +3480,104 @@ def _convert_stmt(sm, s):
     return unsupported(sm, s)
 
 
-def _convert_delay_statement(sm, statement):
-    expression = statement.timing.expr
+def _literal_delay_amount(sm, expression, node, category):
+    """The common admitted integral delay inventory; units stay explicit/loud."""
     if type(expression).__name__ != "IntegerLiteral" or not expression.type.isIntegral:
-        return unsupported(sm, statement, "TimedStatement:DelayControl:expression")
+        return unsupported(sm, node, category + ":expression")
     bits = svint_bits(expression.value)
     if not bits or any(bit not in "01" for bit in bits):
-        return unsupported(sm, statement, "TimedStatement:DelayControl:unknown")
+        return unsupported(sm, node, category + ":unknown")
     if expression.type.isSigned and bits[0] == "1":
-        return unsupported(sm, statement, "TimedStatement:DelayControl:negative")
+        return unsupported(sm, node, category + ":negative")
     amount = int(bits, 2)
     if amount >= 1 << 64:
-        return unsupported(sm, statement, "TimedStatement:DelayControl:range")
-    return {
-        "kind": "Delay",
-        "span": node_span(sm, statement),
-        "amount": amount,
-        "body": convert_stmt(sm, statement.stmt),
-    }
+        return unsupported(sm, node, category + ":range")
+    return amount
+
+
+def _convert_delay_statement(sm, statement):
+    amount = _literal_delay_amount(sm, statement.timing.expr, statement,
+                                   "TimedStatement:DelayControl")
+    if isinstance(amount, dict):
+        return amount
+    return {"kind": "Delay", "span": node_span(sm, statement),
+            "amount": amount, "body": convert_stmt(sm, statement.stmt)}
+
+
+def _convert_event_wait(sm, timing, node):
+    if timing.edge not in (EdgeKind.PosEdge, EdgeKind.NegEdge, EdgeKind.None_):
+        return unsupported(sm, node, "SignalEventControl:" + str(timing.edge).split(".")[-1])
+    if timing.iffCondition is not None:
+        return unsupported(sm, node, "SignalEventControl:iff")
+    signal = convert_expr(sm, timing.expr)
+    if signal.get("kind") != "Ident" or signal.get("width") != 1:
+        return unsupported(sm, node, "SignalEventControl:clock")
+    return {"kind": "WaitEvent", "span": node_span(sm, node),
+            "signal": signal["name"],
+            "edge": {EdgeKind.PosEdge: "posedge", EdgeKind.NegEdge: "negedge",
+                     EdgeKind.None_: "any"}[timing.edge]}
 
 
 def _convert_wait_event_statement(sm, statement):
-    timing = statement.timing
-    if timing.edge not in (EdgeKind.PosEdge, EdgeKind.NegEdge, EdgeKind.None_):
-        return unsupported(
-            sm, statement, "SignalEventControl:" + str(timing.edge).split(".")[-1]
-        )
-    if timing.iffCondition is not None:
-        return unsupported(sm, statement, "SignalEventControl:iff")
-    signal = convert_expr(sm, timing.expr)
-    if signal.get("kind") != "Ident" or signal.get("width") != 1:
-        return unsupported(sm, statement, "SignalEventControl:clock")
-    wait = {
-        "kind": "WaitEvent",
-        "span": node_span(sm, statement),
-        "signal": signal["name"],
-        "edge": {
-            EdgeKind.PosEdge: "posedge",
-            EdgeKind.NegEdge: "negedge",
-            EdgeKind.None_: "any",
-        }[timing.edge],
-    }
+    wait = _convert_event_wait(sm, statement.timing, statement)
+    if wait.get("kind") == "Unsupported":
+        return wait
     body = convert_stmt(sm, statement.stmt)
     if body.get("kind") == "Empty":
         return wait
-    return {
-        "kind": "Block",
-        "span": node_span(sm, statement),
-        "stmts": [wait, body],
-    }
+    return {"kind": "Block", "span": node_span(sm, statement), "stmts": [wait, body]}
+
+
+def _convert_intra_assignment(sm, expression):
+    """IEEE 10.4.1/9.4.5: capture RHS, wait, then resolve the destination.
+
+    Only the source compiler changes. Timer registration, zero-delay refusal,
+    repeat sampling and residual execution use their existing core rules. A future NBA must never be implemented by a synthetic sleeper.
+    """
+    if _SYM is not None or expression.isNonBlocking or expression.op is not None:
+        return unsupported(sm, expression, "IntraAssignment:publication-or-context")
+    width, _, reason = type_width_2s(expression.left.type)
+    if (reason is not None or width is None or width <= 0
+            or not _case_source_expression_ok(expression.left)
+            or not _case_source_expression_ok(expression.right)):
+        return unsupported(sm, expression, "IntraAssignment:type-or-effects")
+    target, admitted = legacy_blocking_target(sm, expression.left, True)
+    value = convert_expr(sm, expression.right)
+    if not admitted or not _case_expression_ok([target, value]) or width_of(value) != width:
+        return unsupported(sm, expression, "IntraAssignment:packed-target-or-value")
+    timing = expression.timingControl
+    kind = type(timing).__name__
+    span = node_span(sm, expression)
+    if kind == "DelayControl":
+        amount = _literal_delay_amount(sm, timing.expr, expression, "IntraAssignment:delay")
+        if isinstance(amount, dict):
+            return amount
+        wait = {"kind": "Delay", "span": span, "amount": amount,
+                "body": {"kind": "Empty", "span": None}}
+    elif kind == "SignalEventControl":
+        wait = _convert_event_wait(sm, timing, expression)
+    elif kind == "RepeatedEventControl" and type(timing.event).__name__ == "SignalEventControl":
+        count_width, _, count_reason = type_width_2s(timing.expr.type)
+        if count_width is None or count_reason is not None or not _case_source_expression_ok(timing.expr):
+            return unsupported(sm, expression, "IntraAssignment:repeat-count")
+        wait = {"kind": "Repeat", "span": span, "count": convert_expr(sm, timing.expr),
+                "count_signed": bool(timing.expr.type.isSigned),
+                "body": _convert_event_wait(sm, timing.event, expression)}
+    else:
+        return unsupported(sm, expression, "IntraAssignment:timing-control")
+    if not _case_expression_ok(wait):
+        return wait
+    name = "$intra:" + str(expression.sourceRange.start.offset)
+    captured = {"kind": "Ident", "span": None, "name": name, "width": width}
+    capture = {"kind": "LocalDecl", "span": span, "name": name, "width": width,
+               "two_state": False, "init": value, "automatic_intra": True}
+    # A singleton packed target retains width/state conversion for whole and
+    # selected destinations alike. Selectors execute only after the wait.
+    copyback = {"kind": "BlockingAssign", "span": span,
+                "target": {"kind": "ConcatTarget", "span": span, "width": width,
+                           "parts": [target]}, "value": captured}
+    return {"kind": "Block", "span": span, "stmts": [capture, wait, copyback],
+            "intra_assignment_lowered": True}
 
 
 def _plusargs_call(expression):
@@ -3901,7 +3950,8 @@ def contains_local_decl(node):
     if isinstance(node, dict):
         return (node.get("kind") == "LocalDecl"
                 and not node.get("automatic_array", False)
-                and not node.get("automatic_foreach", False)) or any(
+                and not node.get("automatic_foreach", False)
+                and not node.get("automatic_intra", False)) or any(
             contains_local_decl(value) for value in node.values())
     if isinstance(node, list):
         return any(contains_local_decl(value) for value in node)
@@ -4004,7 +4054,7 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
     if expr.timingControl is not None:
-        return unsupported(sm, span_node or expr, "AssignmentExpression:timing")
+        return _convert_intra_assignment(sm, expr)
     scan = _convert_scan_assignment(sm, expr)
     if scan is not None:
         return scan
@@ -4827,6 +4877,10 @@ def convert_module(sm, inst):
     processes = _hoist_static_local_arrays(processes, decls)
     processes = _lower_plusargs_processes(processes)
     decls = _lower_plusargs_processes(decls)
+    if _generated_storage_collision(ports, decls, processes, "$intra:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "IntraAssignment:storage-collision",
+                       "text": "generated captured-value storage collides with a binding"})
     if _generated_storage_collision(ports, decls, processes, "$plusargs:"):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "Plusargs:storage-collision",
@@ -5110,6 +5164,8 @@ def convert_design(sm, comp):
                              "InsideExpression", "lowered membership")
     _reject_invalid_lowering(sm, comp, modules, others, "implication_lowered",
                              "LogicalImplication", "lowered implication")
+    _reject_invalid_lowering(sm, comp, modules, others, "intra_assignment_lowered",
+                             "IntraAssignment", "intra-assignment timing")
     _reject_invalid_lowering(sm, comp, modules, others, "plusargs_lowered",
                              "Plusargs", "command-line input query")
     _reject_invalid_lowering(sm, comp, modules, others, "scanf_lowered",

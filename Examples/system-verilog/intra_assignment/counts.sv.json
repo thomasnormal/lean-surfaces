@@ -1,0 +1,1142 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/intra_assignment/counts.sv",
+  "source_sha256": "2a2074ee7986ea7031c6426d37178a0dee2f42549784d359131173100d0ff59d",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 30,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 7,
+              "end_line": 4,
+              "end_col": 12
+            },
+            "name": "clk",
+            "width": 1,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 1,
+              "operand": {
+                "kind": "Literal",
+                "span": {
+                  "line": 4,
+                  "col": 11,
+                  "end_line": 4,
+                  "end_col": 12
+                },
+                "width": 1,
+                "bits": "0"
+              }
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 27
+            },
+            "name": "source",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 5,
+                "col": 22,
+                "end_line": 5,
+                "end_col": 27
+              },
+              "width": 8,
+              "bits": "00101010"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 15,
+              "end_line": 6,
+              "end_col": 22
+            },
+            "name": "value",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 6,
+                "col": 21,
+                "end_line": 6,
+                "end_col": 22
+              },
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 7,
+              "col": 7,
+              "end_line": 7,
+              "end_col": 15
+            },
+            "name": "count",
+            "width": 32,
+            "init": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 32,
+              "operand": {
+                "kind": "Unary",
+                "span": {
+                  "line": 7,
+                  "col": 13,
+                  "end_line": 7,
+                  "end_col": 15
+                },
+                "width": 32,
+                "op": "-",
+                "operand": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 7,
+                    "col": 14,
+                    "end_line": 7,
+                    "end_col": 15
+                  },
+                  "width": 32,
+                  "bits": "00000000000000000000000000000011"
+                }
+              }
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 23,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 11,
+                "end_line": 23,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 46
+                  },
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 9,
+                        "col": 5,
+                        "end_line": 9,
+                        "end_col": 46
+                      },
+                      "name": "$intra:149",
+                      "width": 8,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 9,
+                          "col": 40,
+                          "end_line": 9,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "name": "source"
+                      },
+                      "automatic_intra": true
+                    },
+                    {
+                      "kind": "Repeat",
+                      "span": {
+                        "line": 9,
+                        "col": 5,
+                        "end_line": 9,
+                        "end_col": 46
+                      },
+                      "count": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 9,
+                          "col": 18,
+                          "end_line": 9,
+                          "end_col": 23
+                        },
+                        "width": 32,
+                        "name": "count",
+                        "signed": true
+                      },
+                      "count_signed": true,
+                      "body": {
+                        "kind": "WaitEvent",
+                        "span": {
+                          "line": 9,
+                          "col": 5,
+                          "end_line": 9,
+                          "end_col": 46
+                        },
+                        "signal": "clk",
+                        "edge": "posedge"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 9,
+                        "col": 5,
+                        "end_line": 9,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "ConcatTarget",
+                        "span": {
+                          "line": 9,
+                          "col": 5,
+                          "end_line": 9,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "parts": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 9,
+                              "col": 5,
+                              "end_line": 9,
+                              "end_col": 10
+                            },
+                            "width": 8,
+                            "name": "value",
+                            "two_state": false
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": null,
+                        "name": "$intra:149",
+                        "width": 8
+                      }
+                    }
+                  ],
+                  "intra_assignment_lowered": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 35
+                  },
+                  "name": "$display",
+                  "format": "negative %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 28,
+                        "end_line": 10,
+                        "end_col": 33
+                      },
+                      "width": 8,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 11
+                    },
+                    "width": 8,
+                    "name": "source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 11,
+                      "col": 12,
+                      "end_line": 11,
+                      "end_col": 17
+                    },
+                    "width": 8,
+                    "bits": "00110101"
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 42
+                  },
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 12,
+                        "col": 5,
+                        "end_line": 12,
+                        "end_col": 42
+                      },
+                      "name": "$intra:249",
+                      "width": 8,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 12,
+                          "col": 36,
+                          "end_line": 12,
+                          "end_col": 42
+                        },
+                        "width": 8,
+                        "name": "source"
+                      },
+                      "automatic_intra": true
+                    },
+                    {
+                      "kind": "Repeat",
+                      "span": {
+                        "line": 12,
+                        "col": 5,
+                        "end_line": 12,
+                        "end_col": 42
+                      },
+                      "count": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 12,
+                          "col": 18,
+                          "end_line": 12,
+                          "end_col": 19
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      },
+                      "count_signed": true,
+                      "body": {
+                        "kind": "WaitEvent",
+                        "span": {
+                          "line": 12,
+                          "col": 5,
+                          "end_line": 12,
+                          "end_col": 42
+                        },
+                        "signal": "clk",
+                        "edge": "posedge"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 12,
+                        "col": 5,
+                        "end_line": 12,
+                        "end_col": 42
+                      },
+                      "target": {
+                        "kind": "ConcatTarget",
+                        "span": {
+                          "line": 12,
+                          "col": 5,
+                          "end_line": 12,
+                          "end_col": 42
+                        },
+                        "width": 8,
+                        "parts": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 12,
+                              "col": 5,
+                              "end_line": 12,
+                              "end_col": 10
+                            },
+                            "width": 8,
+                            "name": "value",
+                            "two_state": false
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": null,
+                        "name": "$intra:249",
+                        "width": 8
+                      }
+                    }
+                  ],
+                  "intra_assignment_lowered": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 31
+                  },
+                  "name": "$display",
+                  "format": "zero %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 24,
+                        "end_line": 13,
+                        "end_col": 29
+                      },
+                      "width": 8,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 14,
+                      "col": 5,
+                      "end_line": 14,
+                      "end_col": 11
+                    },
+                    "width": 8,
+                    "name": "source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 14,
+                      "col": 12,
+                      "end_line": 14,
+                      "end_col": 17
+                    },
+                    "width": 8,
+                    "bits": "01000110"
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 46
+                  },
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 46
+                      },
+                      "name": "$intra:341",
+                      "width": 8,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 40,
+                          "end_line": 15,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "name": "source"
+                      },
+                      "automatic_intra": true
+                    },
+                    {
+                      "kind": "Repeat",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 46
+                      },
+                      "count": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 15,
+                          "col": 18,
+                          "end_line": 15,
+                          "end_col": 23
+                        },
+                        "width": 32,
+                        "bits": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      },
+                      "count_signed": false,
+                      "body": {
+                        "kind": "WaitEvent",
+                        "span": {
+                          "line": 15,
+                          "col": 5,
+                          "end_line": 15,
+                          "end_col": 46
+                        },
+                        "signal": "clk",
+                        "edge": "posedge"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "ConcatTarget",
+                        "span": {
+                          "line": 15,
+                          "col": 5,
+                          "end_line": 15,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "parts": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 15,
+                              "col": 5,
+                              "end_line": 15,
+                              "end_col": 10
+                            },
+                            "width": 8,
+                            "name": "value",
+                            "two_state": false
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": null,
+                        "name": "$intra:341",
+                        "width": 8
+                      }
+                    }
+                  ],
+                  "intra_assignment_lowered": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 36
+                  },
+                  "name": "$display",
+                  "format": "unknown_x %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 16,
+                        "col": 29,
+                        "end_line": 16,
+                        "end_col": 34
+                      },
+                      "width": 8,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 17,
+                      "col": 5,
+                      "end_line": 17,
+                      "end_col": 11
+                    },
+                    "width": 8,
+                    "name": "source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 17,
+                      "col": 12,
+                      "end_line": 17,
+                      "end_col": 17
+                    },
+                    "width": 8,
+                    "bits": "01010111"
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 46
+                  },
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 18,
+                        "col": 5,
+                        "end_line": 18,
+                        "end_col": 46
+                      },
+                      "name": "$intra:442",
+                      "width": 8,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 18,
+                          "col": 40,
+                          "end_line": 18,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "name": "source"
+                      },
+                      "automatic_intra": true
+                    },
+                    {
+                      "kind": "Repeat",
+                      "span": {
+                        "line": 18,
+                        "col": 5,
+                        "end_line": 18,
+                        "end_col": 46
+                      },
+                      "count": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 18,
+                          "col": 18,
+                          "end_line": 18,
+                          "end_col": 23
+                        },
+                        "width": 32,
+                        "bits": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+                      },
+                      "count_signed": false,
+                      "body": {
+                        "kind": "WaitEvent",
+                        "span": {
+                          "line": 18,
+                          "col": 5,
+                          "end_line": 18,
+                          "end_col": 46
+                        },
+                        "signal": "clk",
+                        "edge": "posedge"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 18,
+                        "col": 5,
+                        "end_line": 18,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "ConcatTarget",
+                        "span": {
+                          "line": 18,
+                          "col": 5,
+                          "end_line": 18,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "parts": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 18,
+                              "col": 5,
+                              "end_line": 18,
+                              "end_col": 10
+                            },
+                            "width": 8,
+                            "name": "value",
+                            "two_state": false
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": null,
+                        "name": "$intra:442",
+                        "width": 8
+                      }
+                    }
+                  ],
+                  "intra_assignment_lowered": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 36
+                  },
+                  "name": "$display",
+                  "format": "unknown_z %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 19,
+                        "col": 29,
+                        "end_line": 19,
+                        "end_col": 34
+                      },
+                      "width": 8,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 20,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 13
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 20,
+                      "col": 5,
+                      "end_line": 20,
+                      "end_col": 10
+                    },
+                    "width": 32,
+                    "name": "count",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 20,
+                        "col": 11,
+                        "end_line": 20,
+                        "end_col": 12
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000010"
+                    }
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 21,
+                    "col": 5,
+                    "end_line": 21,
+                    "end_col": 46
+                  },
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 21,
+                        "col": 5,
+                        "end_line": 21,
+                        "end_col": 46
+                      },
+                      "name": "$intra:538",
+                      "width": 8,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 21,
+                          "col": 40,
+                          "end_line": 21,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "name": "source"
+                      },
+                      "automatic_intra": true
+                    },
+                    {
+                      "kind": "Repeat",
+                      "span": {
+                        "line": 21,
+                        "col": 5,
+                        "end_line": 21,
+                        "end_col": 46
+                      },
+                      "count": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 21,
+                          "col": 18,
+                          "end_line": 21,
+                          "end_col": 23
+                        },
+                        "width": 32,
+                        "name": "count",
+                        "signed": true
+                      },
+                      "count_signed": true,
+                      "body": {
+                        "kind": "WaitEvent",
+                        "span": {
+                          "line": 21,
+                          "col": 5,
+                          "end_line": 21,
+                          "end_col": 46
+                        },
+                        "signal": "clk",
+                        "edge": "posedge"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 21,
+                        "col": 5,
+                        "end_line": 21,
+                        "end_col": 46
+                      },
+                      "target": {
+                        "kind": "ConcatTarget",
+                        "span": {
+                          "line": 21,
+                          "col": 5,
+                          "end_line": 21,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "parts": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 21,
+                              "col": 5,
+                              "end_line": 21,
+                              "end_col": 10
+                            },
+                            "width": 8,
+                            "name": "value",
+                            "two_state": false
+                          }
+                        ]
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": null,
+                        "name": "$intra:538",
+                        "width": 8
+                      }
+                    }
+                  ],
+                  "intra_assignment_lowered": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 22,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 29
+                  },
+                  "name": "$display",
+                  "format": "unreachable",
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 24,
+              "col": 3,
+              "end_line": 29,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 24,
+                "col": 11,
+                "end_line": 29,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 25,
+                    "col": 5,
+                    "end_line": 25,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 25,
+                      "col": 7,
+                      "end_line": 25,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 25,
+                    "col": 9,
+                    "end_line": 25,
+                    "end_col": 17
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 25,
+                      "col": 9,
+                      "end_line": 25,
+                      "end_col": 14
+                    },
+                    "width": 32,
+                    "name": "count",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 25,
+                        "col": 15,
+                        "end_line": 25,
+                        "end_col": 16
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 25,
+                    "col": 18,
+                    "end_line": 25,
+                    "end_col": 31
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 25,
+                      "col": 18,
+                      "end_line": 25,
+                      "end_col": 24
+                    },
+                    "width": 8,
+                    "name": "source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 25,
+                      "col": 25,
+                      "end_line": 25,
+                      "end_col": 30
+                    },
+                    "width": 8,
+                    "bits": "10011001"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 26,
+                    "col": 5,
+                    "end_line": 26,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 26,
+                      "col": 7,
+                      "end_line": 26,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 27,
+                    "col": 5,
+                    "end_line": 27,
+                    "end_col": 66
+                  },
+                  "name": "$display",
+                  "format": "parked %h source %h count %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 27,
+                        "col": 46,
+                        "end_line": 27,
+                        "end_col": 51
+                      },
+                      "width": 8,
+                      "name": "value"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 27,
+                        "col": 52,
+                        "end_line": 27,
+                        "end_col": 58
+                      },
+                      "width": 8,
+                      "name": "source"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 27,
+                        "col": 59,
+                        "end_line": 27,
+                        "end_col": 64
+                      },
+                      "width": 32,
+                      "name": "count",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 28,
+                    "col": 5,
+                    "end_line": 28,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

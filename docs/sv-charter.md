@@ -118,7 +118,7 @@ effects and remaining body; no source prefix is rerun.
 
 This is not a second scheduler and does not claim full timing support. Zero
 delay remains loud because Inactive delivery is not in the public kernel path;
-dynamic, arithmetic, negative, unknown, real/time-literal, intra-assignment,
+dynamic, arithmetic, negative, unknown, real/time-literal,
 event-list and other unsupported timing forms remain unsupported. The legacy self-check
 runner stays time-zero-only and refuses timed nodes. See `docs/sv-delay.md` and
 `Examples/system-verilog/delay/proof.lean` for the executable boundary.
@@ -3437,3 +3437,28 @@ one timed fixture retains the existing `$time` boundary. These two are
 extraction gains only. Authored time-zero and timed fixtures separately
 check numeric edges, expression order and selected writes across delays.
 Three kernel theorems bind first-match and copyback rules to the real fixture.
+
+### Blocking intra-assignment timing — 2026-10-20
+
+IEEE §10.4.1/§9.4.5 blocking controls now compile to capture, wait and
+copyback using existing statements. RHS evaluation happens once at encounter;
+destination selection happens after resumption. Packed concatenations,
+state-kind conversion and repeated capture use existing assignment/storage
+rules. Repeated events sample their count once through the existing loop
+rule. No evaluator or scheduler changed. See [the contract](sv-intra-assignment.md).
+
+The paired **22,035**-path census gains **15 clean files** without losses:
+**3,284 → 3,299 clean**, **18,685 → 18,670 partial**, **66 include skips**,
+zero extraction errors. Ten gains match complete independent transcripts
+under both source and reverse schedule oracles. Two gains remain loud at
+zero-delay Inactive delivery, and three retain the timed `$time` boundary.
+Four dynamic unpacked destinations remain partial. Extraction gains are
+separate from execution agreement.
+
+Three authored acceptance sources match complete independent transcripts,
+including resumed selection, X/Z neighbors, two-state concatenated copyback,
+prior NBA work, repeated capture and retained event counts. Two additional
+sources retain explicit zero-delay and procedural edge-publication refusals.
+Three fixture-bound kernel theorems prove capture before wait, resumed-index
+copyback and retained repeat control. Nonblocking controls, unsupported
+effects/storage/delays and symbolic-mode controls remain loud.

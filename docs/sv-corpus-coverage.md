@@ -22,6 +22,31 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Blocking intra-assignment timing — 2026-10-20
+
+IEEE §10.4.1/§9.4.5 blocking controls now compile to capture, wait and
+copyback using existing statements. RHS evaluation happens once at encounter;
+destination selection happens after resumption. Packed concatenations,
+state-kind conversion and repeated capture use existing assignment/storage
+rules. Repeated events sample their count once through the existing loop
+rule. No evaluator or scheduler changed. See [the contract](sv-intra-assignment.md).
+
+The paired **22,035**-path census gains **15 clean files** without losses:
+**3,284 → 3,299 clean**, **18,685 → 18,670 partial**, **66 include skips**,
+zero extraction errors. Ten gains match complete independent transcripts
+under both source and reverse schedule oracles. Two gains remain loud at
+zero-delay Inactive delivery, and three retain the timed `$time` boundary.
+Four dynamic unpacked destinations remain partial. Extraction gains are
+separate from execution agreement.
+
+Three authored acceptance sources match complete independent transcripts,
+including resumed selection, X/Z neighbors, two-state concatenated copyback,
+prior NBA work, repeated capture and retained event counts. Two additional
+sources retain explicit zero-delay and procedural edge-publication refusals.
+Three fixture-bound kernel theorems prove capture before wait, resumed-index
+copyback and retained repeat control. Nonblocking controls, unsupported
+effects/storage/delays and symbolic-mode controls remain loud.
+
 ## Explicit command-line plusargs — 2026-10-20
 
 The §21.6 family admits literal prefix queries and integral value queries

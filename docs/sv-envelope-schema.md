@@ -103,7 +103,7 @@ emits:
 | `SignalEventControl:clock` | edge expression that is not a 1-bit identifier |
 | `AssignmentExpression:compound` | compound assignment whose scalar binary operator is outside the admitted set or whose target is not a plain identifier |
 | `AssignmentExpression:compound-width` | compound assignment whose elaborated operands do not share the destination width |
-| `AssignmentExpression:timing` | intra-assignment timing (`a <= #3 b`) |
+| `IntraAssignment:<reason>` | unsupported intra-assignment control, value, destination or context; blocking controls in the admitted surface lower to capture/wait/copyback, while nonblocking publication remains loud |
 | `AssignmentExpression:target` | assignment LHS that is not a plain identifier (bit/part-select, concat LHS, ...) |
 | `ExpressionStatement:<Class>` | expression statement that is not an assignment (`i++;`, void call, ...) |
 | `ContinuousAssignSymbol:delay` / `:form` | `assign #5 ...` / malformed continuous assign |
@@ -1270,3 +1270,27 @@ existing packed copyback plus return assignments. A miss emits only the return
 assignment. Missing inputs or unsupported conversion observations refuse
 loading. A compilation with frontend errors and any admitted query also
 retains `Plusargs:invalid-compilation`. See [the contract](sv-plusargs.md).
+
+
+## Blocking intra-assignment controls
+
+In legacy mode, an admitted blocking assignment with intra-assignment timing
+lowers to a `Block` marked `intra_assignment_lowered = true`. Its statements
+are a `LocalDecl`, the existing wait, and a `BlockingAssign` with a singleton
+`ConcatTarget`. The local has `automatic_intra = true`, four-state storage,
+the elaborated destination width, the RHS initializer, and a collision-checked
+`$intra:<source-offset>` name. The copyback reads that local. Destination
+selectors remain solely in the final target and execute after resumption.
+The local executes afresh on each visit; loop lifetime checks recognize it.
+
+Waits use `Delay` with an empty body, `WaitEvent`, or `Repeat` with explicit
+`count_signed` and a `WaitEvent` body. Repeated counts use the existing sampled
+loop semantics. There is no new Lean statement or scheduling primitive.
+`Delay 0` remains represented and the timed slot retains its explicit
+Inactive-delivery refusal. Internal procedural clock publication and timed
+`$time` retain their existing runtime guards.
+
+Nonblocking controls, unsupported destinations, effects, delay/event forms
+and symbolic mode carry `IntraAssignment:<reason>` or the shared timing
+refusal tag. Any invalid compilation containing this lowering also receives
+`IntraAssignment:invalid-compilation`. See [the contract](sv-intra-assignment.md).

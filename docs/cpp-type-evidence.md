@@ -86,6 +86,11 @@ with `expression evidence occurrence is absent from AST`; the artifact hash is
 unchanged before and after inspection. This preserves the distinction between
 a fresh pinned capture and the earlier full-corpus evidence boundary.
 
+The [2026-10-20 full callable census](cpp-callable-census.md) uses a fresh
+XML capture: all 2,015 type rows, 756 binary rows and 9,677 expression-type
+rows validate. It keeps the older artifact's refusal unchanged and reports
+the source-body declaration/signature gates separately from this global join.
+
 ```sh
 lake build LeanModels.Cpp.TypeEvidenceTests
 ```

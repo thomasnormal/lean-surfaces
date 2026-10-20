@@ -5,6 +5,7 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Basic/Module.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
@@ -50,6 +51,27 @@ public:
 
 std::string pointerId(const void *pointer) {
   return "0x" + llvm::utohexstr(reinterpret_cast<uintptr_t>(pointer), true);
+}
+
+llvm::json::Value physicalLocation(clang::SourceLocation location,
+                                   const clang::SourceManager &sources) {
+  if (location.isInvalid() || !location.isFileID())
+    return nullptr;
+  const auto filename = sources.getFilename(location);
+  if (filename.empty())
+    return nullptr;
+  return llvm::json::Object{{"file", filename.str()},
+                            {"offset", static_cast<int64_t>(sources.getFileOffset(location))}};
+}
+
+void functionOrigin(const clang::FunctionDecl *function,
+                    const clang::SourceManager &sources,
+                    llvm::json::Object &record) {
+  const auto location = function->getLocation();
+  record["source_origin_api"] = "SourceManager expansion/spelling file locations v1";
+  record["source_origin"] = llvm::json::Object{
+      {"expansion", physicalLocation(sources.getExpansionLoc(location), sources)},
+      {"spelling", physicalLocation(sources.getSpellingLoc(location), sources)}};
 }
 
 llvm::json::Value declarationId(const clang::Decl *declaration) {
@@ -427,6 +449,8 @@ public:
     definitionEvidence(declaration, record);
     templateEvidence(declaration, record);
     classEvidence(declaration, record);
+    if (const auto *function = llvm::dyn_cast<clang::FunctionDecl>(declaration))
+      functionOrigin(function, astContext->getSourceManager(), record);
     records.push_back(std::move(record));
     if (declarationType(declaration))
       typedDeclarations.push_back(declaration);

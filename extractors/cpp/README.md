@@ -31,6 +31,13 @@ destinations and promoted unary operands. Its strict occurrence/kind join and
 legacy compatibility rule are specified in the
 [type-evidence contract](../../docs/cpp-type-evidence.md).
 
+`census_callable.lean` performs a bounded runtime callable census of complete
+probes, with explicit source-file selection and compiler-reported physical
+expansion/spelling origins. It preserves body occurrences, separates
+dependencies and macros, and reports admission's first refusal beside full
+raw body-kind counts. See the [census contract](../../docs/cpp-callable-census.md);
+it claims neither source execution nor original literal compilation.
+
 `LeanModels/Cpp/VariableEvidence.lean` validates a separately versioned,
 optional variable-storage and initializer supplement from the same probe.
 It joins only AST root/`inner` occurrences, requires structured declaration

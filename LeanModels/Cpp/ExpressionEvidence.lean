@@ -96,8 +96,11 @@ private partial def rawObjects : Raw → List Raw
   | .array values => values.flatMap rawObjects
   | _ => []
 
-private def rawNode (ast : Raw) (handle : FrontendHandle) : Option Raw :=
-  (rawObjects ast).find? fun raw => raw.text "id" == some handle.value
+private def firstRawNodes (nodes : List Raw) : Std.HashMap String Raw :=
+  nodes.foldl (init := {}) fun index node =>
+    match node.text "id" with
+    | none => index
+    | some id => if index.contains id then index else index.insert id node
 
 private def rawChildren (raw : Raw) : List Raw :=
   match raw.field "inner" with
@@ -175,12 +178,15 @@ def validateBinaryIntegralTyping (profile : TargetProfile)
 
 def validateBinaryExpressionEvidence (probe : DeclarationProbe)
     (rows : List CppBinaryExpressionEvidence) : Except String Unit := do
+  -- Preserve the original all-object traversal and its first-occurrence rule,
+  -- while constructing that view once rather than once per evidence row.
+  let nodes := firstRawNodes (rawObjects probe.ast)
   let rec validate (remaining : List CppBinaryExpressionEvidence)
       (seen : List CppBinaryExpressionEvidence) : Except String Unit := do
     match remaining with
     | [] => return
     | row :: rest =>
-        let some node := rawNode probe.ast row.occurrence
+        let some node := nodes[row.occurrence.value]?
           | throw "expression evidence occurrence is absent from AST"
         unless node.text "kind" == some "BinaryOperator" ||
             node.text "kind" == some "CompoundAssignOperator" do
@@ -227,14 +233,22 @@ def parseValidatedExpressionTypeEvidence (probe : DeclarationProbe) :
         kind := ← evidenceText value "kind"
         type := ← parseCppTypeEvidence (← evidenceField value "type")
       } : CppExpressionTypeEvidence)
-      let nodes := expressionInnerNodes probe.ast
+      let nodes := (expressionInnerNodes probe.ast).foldl (init :=
+          ({} : Std.HashMap String (List (Option String)))) fun index node =>
+        match node.text "id" with
+        | none => index
+        | some id => index.insert id (node.text "kind" :: index[id]?.getD [])
+      let byOccurrence := rows.foldl (init :=
+          ({} : Std.HashMap String (List CppExpressionTypeEvidence))) fun index row =>
+        let id := row.occurrence.value
+        index.insert id (row :: index[id]?.getD [])
       for row in rows do
-        let matchingNodes := nodes.filter (·.text "id" == some row.occurrence.value)
-        unless !matchingNodes.isEmpty && matchingNodes.all (·.text "kind" == some row.kind) do
+        let matchingKinds := nodes[row.occurrence.value]?.getD []
+        unless !matchingKinds.isEmpty && matchingKinds.all (· == some row.kind) do
           throw "expression type: occurrence/kind disagrees with AST inner tree"
         unless row.type.referencesKnown probe.declarations do
           throw "expression type: absent type declaration"
-        unless rows.all (fun other => other.occurrence != row.occurrence || other == row) do
+        unless (byOccurrence[row.occurrence.value]?.getD []).all (· == row) do
           throw "expression type: conflicting repeated row"
       pure (some rows)
   | _, _ => throw "expression type: missing or unsupported supplement"

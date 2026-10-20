@@ -187,8 +187,14 @@ that control program.
 The JSON full-probe census has a recorded 300-second timeout. Neither result
 may be replaced by agreement on a small projection or counted as execution.
 Automatic declarations are a necessary language milestone, not a promised
-three-corpus flip. Resolve the evidence-join blocker before claiming a new
-whole-artifact callable census.
+three-corpus flip. The [fresh callable census](cpp-callable-census.md) now
+validates XML's whole-probe expression evidence and independently classifies
+its source origins: **0 of 202** explicit implementation-file bodies are
+admitted. Two ordinary functions stop at signature/type gates; the remaining
+200 bodies require method/constructor/destructor admission. JSON's current
+full capture exceeds the explicit runtime byte budget, and the systems input
+still fails the strict frontend profile. These results supersede the stale
+XML join blocker without weakening its retained negative control.
 
 ```console
 python3 extractors/cpp/test_price_local_declarations.py

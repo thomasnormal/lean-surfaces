@@ -270,6 +270,37 @@ class CanonicalProbeTests(unittest.TestCase):
         self.source.write_text(TEMPLATE_SOURCE, encoding="utf-8")
         return self.probe()
 
+    def test_function_origins_use_physical_expansion_and_spelling_locations(self):
+        header = self.root / "origin.h"
+        header.write_text('''inline int dependency() { return 1; }
+#define DECLARE_FUNCTION int from_macro() { return 2; }
+''', encoding="utf-8")
+        source = '''#include "origin.h"
+DECLARE_FUNCTION
+#line 900 "pretend.cpp"
+int ordinary() { return dependency(); }
+struct Box { int method() { return 3; } };
+'''
+        self.source.write_text(source, encoding="utf-8")
+        probe = self.probe()
+        for kind, name, expansion_file, spelling_file in (
+            ("FunctionDecl", "dependency", header, header),
+            ("FunctionDecl", "from_macro", self.source, header),
+            ("FunctionDecl", "ordinary", self.source, self.source),
+            ("CXXMethodDecl", "method", self.source, self.source),
+        ):
+            with self.subTest(name=name):
+                row, = self.records(probe, kind, name)
+                self.assertEqual(row["source_origin_api"],
+                                 "SourceManager expansion/spelling file locations v1")
+                for mode, expected in (("expansion", expansion_file), ("spelling", spelling_file)):
+                    location = row["source_origin"][mode]
+                    self.assertEqual(pathlib.Path(location["file"]).resolve(), expected.resolve())
+                    self.assertIs(type(location["offset"]), int)
+                    self.assertLess(location["offset"], expected.stat().st_size)
+                    token = "DECLARE_FUNCTION" if name == "from_macro" and mode == "expansion" else name
+                    self.assertTrue(expected.read_bytes()[location["offset"]:].startswith(token.encode()))
+
     def assert_specialization_api(self, record, family):
         self.assertIs(type(record["template_specialization_kind"]), int)
         self.assertIn(record["template_specialization_kind"], range(5))

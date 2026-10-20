@@ -92,6 +92,21 @@ def promotionChecks : Bool :=
   (compoundMetadata "CompoundAssignOperator")).isOk
 #guard (parseValidatedBinaryExpressionEvidence (compoundMetadata "UnaryOperator")) matches .error _
 
+-- The indexed validator keeps the all-object, first-occurrence lookup contract.
+-- A later full node must never repair an earlier stub with the same handle.
+private def binaryNode : Raw :=
+  (((ast.field "inner").bind Raw.array?).getD []).headD .null
+private def binaryStub : Raw := object [
+  ("id", text "0x4"), ("kind", text "DeclRefExpr")]
+#guard (parseValidatedBinaryExpressionEvidence {metadata with
+  ast := object [("payload", binaryNode)]}).isOk
+#guard match parseValidatedBinaryExpressionEvidence {metadata with
+  ast := object [("referencedDecl", binaryStub), ("inner", .array [binaryNode])]} with
+  | .error error => error == "expression evidence occurrence is not a BinaryOperator or CompoundAssignOperator"
+  | .ok _ => false
+#guard (parseValidatedBinaryExpressionEvidence {metadata with
+  ast := object [("inner", .array [binaryNode]), ("referencedDecl", binaryStub)]}).isOk
+
 private def expressionTypeRow (id kind : String) (type : Raw) : Raw := object [
   ("occurrence", text id), ("kind", text kind), ("type", type)]
 

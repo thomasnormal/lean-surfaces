@@ -25,6 +25,7 @@ inductive IntegralMemberCallSyntaxError where
   | canonicalMethodMissing
   | canonicalMethodAmbiguous
   | canonicalMethodTargetMissing
+  | canonicalMethodTargetMismatch
   | missingReceiverHandle
   | malformedReceiverType
   | malformedResultType
@@ -99,6 +100,10 @@ def resolveCanonical (probe : DeclarationProbe) (evidence : IntegralMemberCallSy
       unless probe.declarations.any (fun row =>
           row.id == canonical && row.kind == "CXXMethodDecl" && row.canonical == canonical) do
         throw .canonicalMethodTargetMissing
+      unless probe.declarations.any (fun row =>
+          row.id == canonical && row.kind == "CXXMethodDecl" && row.canonical == canonical &&
+            row.raw.text "name" == some evidence.name) do
+        throw .canonicalMethodTargetMismatch
       pure {evidence with canonicalMethod := canonical}
   | _ => throw .canonicalMethodAmbiguous
 

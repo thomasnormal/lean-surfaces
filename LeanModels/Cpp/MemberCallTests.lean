@@ -22,7 +22,10 @@ private def declarationRow (id kind canonical : String) : DeclarationEvidenceRow
   ordinal := 0, id := h id, kind, canonical := h canonical,
   previous := none, semanticContext := none, lexicalContext := none,
   implicit := false, dependentContext := false, owningModule := none,
-  functionShape := none, raw := .object []}
+  functionShape := none, raw := .object [("name", .string "read")]}
+
+private def declarationRowNamed (id kind canonical name : String) : DeclarationEvidenceRow :=
+  {declarationRow id kind canonical with raw := .object [("name", .string name)]}
 
 private def probe (rows : List DeclarationEvidenceRow) : DeclarationProbe :=
   {ast := .object [], metadata := .object [], declarations := rows}
@@ -178,6 +181,9 @@ private def observedCanonical : Option Int :=
   some .canonicalMethodMissing
 #guard resolveCanonicalError [declarationRow methodHandle.value "CXXMethodDecl" "0xc0"] ==
   some .canonicalMethodTargetMissing
+#guard resolveCanonicalError [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
+    declarationRowNamed "0xc0" "CXXMethodDecl" "0xc0" "write"] ==
+  some .canonicalMethodTargetMismatch
 #guard resolveCanonicalError [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
     declarationRow methodHandle.value "CXXMethodDecl" "0xc1"] == some .canonicalMethodAmbiguous
 #guard observedCanonical == some 7

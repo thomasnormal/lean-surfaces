@@ -20,6 +20,7 @@ inductive ClassBaseViewError where
   | missingTarget
   | nonBasePath
   | sameSubobject
+  | inaccessibleBase
   deriving Repr, BEq, Inhabited
 
 namespace ClassBaseView
@@ -39,6 +40,28 @@ private def hierarchySlots (hierarchy : ClassHierarchy) :
   match hierarchy.slots with
   | .ok slots => .ok slots
   | .error reason => .error (.hierarchy reason)
+
+private def suffixOf : List Nat → List Nat → Option (List Nat)
+  | [], target => some target
+  | _ :: _, [] => none
+  | first :: rest, other :: tail =>
+      if first == other then suffixOf rest tail else none
+
+private def publicEdges (hierarchy : ClassHierarchy)
+    (slots : List ClassSubobjectSlot) : List Nat → List Nat → Bool
+  | _, [] => true
+  | path, index :: rest =>
+      match slotAt slots path with
+      | none => false
+      | some (slot, _) =>
+          match hierarchy.classes.find? (·.declaration == slot.declaration) with
+          | none => false
+          | some shape =>
+              match shape.bases[index]? with
+              | none => false
+              | some edge =>
+                  edge.access == "public" &&
+                    publicEdges hierarchy slots (path ++ [index]) rest
 
 /-- Validate the complete root and every supplied nonvirtual occurrence before
     allowing a source-prefix view to select its target identity. -/
@@ -70,6 +93,9 @@ def check (view : ClassBaseView) : Except ClassBaseViewError Unit := do
   let some (target, targetId) := slotAt slots view.targetPath | throw .missingTarget
   unless source.path != target.path && isPrefix source.path target.path do
     throw .nonBasePath
+  let some edges := suffixOf source.path target.path | throw .nonBasePath
+  unless publicEdges view.hierarchy slots source.path edges do
+    throw .inaccessibleBase
   unless sourceId != targetId && source.declaration != target.declaration do
     throw .sameSubobject
 

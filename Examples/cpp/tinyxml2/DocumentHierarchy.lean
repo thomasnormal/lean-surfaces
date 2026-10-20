@@ -10,7 +10,7 @@ def hierarchy : ClassHierarchy :=
 { root := { value := "0x56117292d148" },
   classes := [{ declaration := { value := "0x56117292d148" },
                 isAbstract := false,
-                bases := [{ value := "0x561172957da0" }],
+                bases := [{ target := { value := "0x561172957da0" }, access := "public", writtenAccess := "public" }],
                 fields := [{ value := "0x56117298ea68" },
                            { value := "0x56117298ead0" },
                            { value := "0x56117298eb38" },

@@ -3,11 +3,13 @@ import LeanModels.Cpp.ClassSubobjects
 namespace LeanModels.Cpp.ClassSubobjectTests
 
 private def h (name : String) : FrontendHandle := ⟨name⟩
+private def b (name : String) : ClassBaseSpec :=
+  {target := h name, access := "public", writtenAccess := "public"}
 private def hierarchy : ClassHierarchy := {
   root := h "D", classes := [
-    ⟨h "D", false, [h "L", h "R"], []⟩,
-    ⟨h "L", true, [h "B"], []⟩,
-    ⟨h "R", true, [h "B"], []⟩,
+    ⟨h "D", false, [b "L", b "R"], []⟩,
+    ⟨h "L", true, [b "B"], []⟩,
+    ⟨h "R", true, [b "B"], []⟩,
     ⟨h "B", true, [], [h "value"]⟩]}
 
 private def getter (mutable_ : Bool := false) : IntegralMemberGetter := {
@@ -68,7 +70,7 @@ private theorem kernelSubobjects :
     observed {projection with hierarchy := {hierarchy with classes := (
       hierarchy.classes.modify 0 (fun shape => {shape with isAbstract := true}))}} == none,
     observed {projection with hierarchy := {hierarchy with classes := (
-      hierarchy.classes.modify 3 (fun shape => {shape with bases := [h "D"]}))}} == none,
+      hierarchy.classes.modify 3 (fun shape => {shape with bases := [b "D"]}))}} == none,
     observed {projection with hierarchy := {hierarchy with classes := (
       hierarchy.classes.modify 3 (fun shape => {shape with fields := []}))}} == none,
     observed projection {getter with isConst := false} == some (-9),

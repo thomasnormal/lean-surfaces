@@ -4,10 +4,16 @@ namespace LeanModels.Cpp
 
 /-- A class description, not a constructor or an integral aggregate schema.
 Every listed base is nonvirtual; field handles retain ownership, not values. -/
+structure ClassBaseSpec where
+  target : FrontendHandle
+  access : String
+  writtenAccess : String
+  deriving Repr, BEq, Inhabited
+
 structure ClassShape where
   declaration : FrontendHandle
   isAbstract : Bool
-  bases : List FrontendHandle
+  bases : List ClassBaseSpec
   fields : List FrontendHandle
   deriving Repr, BEq, Inhabited
 
@@ -32,7 +38,7 @@ private def expand : Nat → ClassHierarchy → FrontendHandle → List Frontend
         | throw "class hierarchy: absent base description"
       let mut slots := [{path, declaration}]
       for (base, index) in shape.bases.zipIdx do
-        slots := slots ++ (← expand fuel hierarchy base (declaration :: active) (path ++ [index]))
+        slots := slots ++ (← expand fuel hierarchy base.target (declaration :: active) (path ++ [index]))
       pure slots
 
 /-- Expand occurrences, preserving both copies of a repeated nonvirtual base. -/
@@ -43,7 +49,8 @@ def slots (hierarchy : ClassHierarchy) : Except String (List ClassSubobjectSlot)
   let fields := hierarchy.classes.flatMap (·.fields)
   unless fields.eraseDups.length == fields.length &&
       fields.all (fun field => !names.contains field) &&
-      hierarchy.classes.all (fun shape => shape.bases.eraseDups.length == shape.bases.length) do
+      hierarchy.classes.all (fun shape =>
+        (shape.bases.map (·.target)).eraseDups.length == shape.bases.length) do
     throw "class hierarchy: inconsistent field or direct-base identities"
   let some root := hierarchy.classes.find? (·.declaration == hierarchy.root)
     | throw "class hierarchy: absent complete root"
@@ -133,7 +140,7 @@ private def shape (artifact : Artifact) (probe : DeclarationProbe)
       throw "class hierarchy: base source spelling disagrees"
     let .record parent ← parseCppTypeEvidence (← evidenceField base "type")
       | throw "class hierarchy: requires a concrete class base type"
-    parents := parents ++ [parent]
+    parents := parents ++ [{target := parent, access, writtenAccess := written}]
   let sourceFields := (← children raw).filter (·.text "kind" == some "FieldDecl")
   unless sourceFields.length == (← evidenceNat row.raw "record_field_count") do
     throw "class hierarchy: inconsistent field census"
@@ -156,7 +163,7 @@ private def collect : Nat → Artifact → DeclarationProbe → List FrontendHan
         collect fuel artifact probe pending done
       else
         let current ← shape artifact probe next
-        collect fuel artifact probe (pending ++ current.bases) (done ++ [current])
+        collect fuel artifact probe (pending ++ current.bases.map (·.target)) (done ++ [current])
 
 def admit (probe : DeclarationProbe) (path : List Nat) : Except String ClassHierarchy := do
   let artifact : Artifact := {

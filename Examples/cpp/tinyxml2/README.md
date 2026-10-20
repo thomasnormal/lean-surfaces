@@ -146,6 +146,11 @@ validated complete/base/member observations, preserving caller memory. Concrete
 kernel examples run both hierarchies and verify the selected base is abstract.
 It also checks the explicit nonvirtual base-view operation on both complete
 roots, returning the existing `XMLNode` object identity without changing memory.
+The generated hierarchy retains each base edge's effective and written access
+labels. The base-view policy accepts the two TinyXML-2 paths because their edge
+is public; protected/private paths are refused as `inaccessibleBase`. Access
+context lookup, friends and source-level cast execution remain outside this
+proof.
 The native controls independently set/read the original private member in real
 element and document objects, using the standard access waiver described above.
 Native construction, parsing and destruction remain oracle setup.

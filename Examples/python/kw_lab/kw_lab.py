@@ -137,6 +137,11 @@ def list_kw():
     return list(iterable=(1, 2))
 
 
+def range_kw():
+    # range takes no keywords; argument expressions still evaluate first.
+    return range(stop=3)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

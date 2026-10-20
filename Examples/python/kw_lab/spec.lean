@@ -88,6 +88,8 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   (.typeError "tuple() takes no keyword arguments")
 #py_check kw_lab.list_kw() raises
   (.typeError "list() takes no keyword arguments")
+#py_check kw_lab.range_kw() raises
+  (.typeError "range() takes no keyword arguments")
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

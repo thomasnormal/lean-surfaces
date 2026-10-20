@@ -6701,8 +6701,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError "divmod() takes no keyword arguments")
-                    else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" then
-                      -- CPython's repr, abs, ord, chr, next, ascii, tuple, and list constructors accept no keyword
+                    else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" || fname == "range" then
+                      -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, and range constructors accept no keyword
                       -- arguments. Evaluate both argument lists before its
                       -- faithful TypeError, preserving Python's order.
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
@@ -6721,7 +6721,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         "ascii() takes no keyword arguments"
                       else if fname == "tuple" then
                         "tuple() takes no keyword arguments"
-                      else "list() takes no keyword arguments"))
+                      else if fname == "list" then
+                        "list() takes no keyword arguments"
+                      else "range() takes no keyword arguments"))
                     else if isBuiltinName fname then
                       .unsupported s!"builtin '{fname}' with keyword arguments is outside the H6 tier"
                     else if isModuleDunder fname then

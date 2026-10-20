@@ -182,6 +182,8 @@ private def callableParameters (rawParameters : List Raw) (rows : List TypeEvide
     unless raw.text "kind" == some "ParmVarDecl" do
       throw "callable: unsupported direct function child"
     let declaration ← rawId raw
+    if result.any (fun parameter => parameter.declaration == declaration) then
+      throw "callable: duplicate parameter declaration handle"
     let row ← callableTypeRow rows declaration
     unless row.type == expectedType do
       throw "callable: parameter type disagrees with function type"

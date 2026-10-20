@@ -11,7 +11,10 @@ argument to its parameter's profile-resolved integral format, creates one
 parameter as a fresh automatic object. Unsupported parameter types, invalid
 values, undefined conversions and mismatched arity remain typed refusals.
 The parameter declaration handles are the same frontend identities retained by
-`CallableFunction` and by initializer `DeclRefExpr` nodes.
+`CallableFunction` and by initializer `DeclRefExpr` nodes. Callable admission
+rejects duplicate parameter handles before constructing the function, so a
+malformed capture cannot defer that identity failure until argument
+initialization.
 
 `executeDeclStmt` accepts an `AdmittedAutomaticDeclStmt` from
 `AutomaticDeclarations.lean` and runs its `IntegralObjectFrame.Statement` in

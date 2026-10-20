@@ -164,6 +164,19 @@ def typedParameter (id : String) : TypedCallableExpression := {
 def admitIdentity : Except String CallableFunction :=
   admitCallableFunction identityProbe identityTypes [] TargetProfile.lp64 [0]
 
+def duplicateParameterProbe : DeclarationProbe :=
+  probeFor (functionSource "duplicate" [parameterRaw "0x10" "left", parameterRaw "0x10" "right"]
+    (body (returnStmt "0x31" (integerLiteralRaw "0x32" "0"))))
+    [rootEvidence, functionEvidence "duplicate" "CompoundStmt"]
+
+def duplicateParameterTypes : List TypeEvidenceRow := [
+  typeRow "0x2" (functionType [intType, intType]), typeRow "0x10" intType]
+
+#guard match admitCallableFunction duplicateParameterProbe duplicateParameterTypes []
+    TargetProfile.lp64 [0] with
+  | .error message => message == "callable: duplicate parameter declaration handle"
+  | .ok _ => false
+
 def admitLiteral : Except String CallableFunction :=
   admitCallableFunction literalProbe literalTypes [] TargetProfile.lp64 [0]
 

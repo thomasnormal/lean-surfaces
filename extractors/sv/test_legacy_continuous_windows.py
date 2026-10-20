@@ -46,6 +46,20 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual(processes[0]["kind"], "Assign")
         self.assertEqual(processes[0]["target"]["kind"], "ConcatTarget")
 
+    def test_constant_fixed_array_cell_is_a_continuous_identifier(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [3:0] out); "
+            "logic [3:0] value [0:0]; assign value[0] = source; "
+            "assign out = value[0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[0]["target"], {
+            "kind": "Ident",
+            "span": processes[0]["target"]["span"],
+            "width": 4,
+            "name": "value[0]",
+        })
+
     def test_overlapping_continuous_windows_are_loud(self):
         envelope = self.extract(
             "module top(input logic [7:0] source, output logic [7:0] out); "
@@ -61,6 +75,15 @@ class LegacyContinuousWindows(unittest.TestCase):
             "module top(input logic [1:0] index, input logic source, "
             "output logic out); logic [3:0] value; "
             "assign value[index] = source; assign out = value[0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Unsupported")
+
+    def test_dynamic_continuous_array_cell_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] index, input logic source, "
+            "output logic out); logic [3:0] value [0:1]; "
+            "assign value[index] = {3'b000, source}; "
+            "assign out = value[0][0]; endmodule")
         processes = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(processes[0]["kind"], "Unsupported")
 

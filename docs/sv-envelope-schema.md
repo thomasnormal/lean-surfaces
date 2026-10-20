@@ -251,7 +251,8 @@ a bit-select, part-select or concatenation LHS makes that *statement*
 `Unsupported` (`AssignmentExpression:target`). The legacy/self-check extractor
 also admits constant packed bit/part, concatenation-leaf and untagged
 packed-member windows on continuous assignments, with static overlaps rejected
-before execution. In the
+before execution; a constant cell of an admitted one-dimensional fixed-unpacked
+array is an ordinary `Ident` leaf. In the
 legacy/self-check
 extractor, a constant element of a one-dimensional fixed-unpacked integral
 array is lowered

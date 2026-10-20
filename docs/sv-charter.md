@@ -1130,8 +1130,9 @@ packed bit/part selects, fixed concatenation leaves, and direct members of
 untagged packed structs or unions as fixed `SelectTarget` windows. Static
 overlapping windows are converted to a loud target refusal before they could
 imply driver resolution; dynamic or effectful selectors, tagged/nested
-aggregates and unsupported nets remain loud. The flat vector executor is
-reused and no net-resolution or scheduler rule is added.
+aggregates, dynamic fixed-array cells and unsupported nets remain loud. A
+constant cell is an ordinary flat identifier; the vector executor is reused
+and no net-resolution or scheduler rule is added.
 
 ### Symbolic streaming targets over fixed cells — 2026-10-20
 

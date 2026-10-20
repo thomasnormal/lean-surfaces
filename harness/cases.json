@@ -302,6 +302,7 @@
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "chr_kw", "args": [[]], "expect": "match", "note": "Keyword values evaluate before CPython's faithful positional-only TypeError."},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "next_kw", "args": [[]], "expect": "match", "note": "Keyword values evaluate before CPython's faithful positional-only TypeError."},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "ascii_kw", "args": [[]], "expect": "match", "note": "Keyword values evaluate before CPython's faithful positional-only TypeError."},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "tuple_kw", "args": [[]], "expect": "match", "note": "Keyword values evaluate before CPython's faithful positional-only TypeError."},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "sorted_kw", "args": [[5]], "expect": "match"},
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "sorted_gen", "args": [[6, 7], [0, 5], [3, 9]], "expect": "match"},
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "sorted_gen_rev", "args": [[6, 7], [3, 9]], "expect": "match"},

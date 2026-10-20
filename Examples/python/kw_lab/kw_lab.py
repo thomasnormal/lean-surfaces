@@ -127,6 +127,11 @@ def ascii_kw():
     return ascii(value=3)
 
 
+def tuple_kw():
+    # tuple takes no keywords; argument expressions still evaluate first.
+    return tuple(iterable=[1, 2])
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

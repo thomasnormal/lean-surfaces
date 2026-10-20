@@ -338,7 +338,8 @@ mutual
             let evaluated := evalExpression fuel profile frame expression
             match evaluated.result with
             | .error reason => failure evaluated.frame reason
-            | .ok result => success evaluated.frame (.returned result)
+            | .ok (.ok value) => success evaluated.frame (.returned (.ok value))
+            | .ok result => success evaluated.frame (.failed result)
         | .conditional condition whenTrue whenFalse =>
             let evaluated := evalExpression fuel profile frame condition
             match evaluated.result with

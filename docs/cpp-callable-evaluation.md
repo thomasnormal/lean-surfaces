@@ -19,7 +19,9 @@ operand first, retain its updated parameter state, and evaluate the right
 operand only after a successful left result. The evaluator returns the existing
 `IntegralResult` so signed
 overflow, division errors, shift errors and unsupported arithmetic remain visible
-rather than becoming host-language behavior.
+rather than becoming host-language behavior. A return carries a returned result
+only after its expression succeeds; an integral failure remains a failure with
+the active frame retained for the caller.
 
 N4950 §7.6.1.3 [expr.call] initializes every parameter from its corresponding
 argument. This boundary therefore converts and validates all supplied arguments

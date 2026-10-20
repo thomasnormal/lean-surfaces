@@ -270,6 +270,30 @@ class CanonicalProbeTests(unittest.TestCase):
         self.source.write_text(TEMPLATE_SOURCE, encoding="utf-8")
         return self.probe()
 
+    def test_method_static_getter_covers_declarations_and_out_of_line_bodies(self):
+        self.source.write_text("""struct Methods {
+  static int inline_static(int value) { return value; }
+  static int outside(int value);
+  int instance(int value) { return value; }
+  virtual int dynamic(int value) { return value; }
+};
+int Methods::outside(int value) { return value; }
+""", encoding="utf-8")
+        probe = self.probe()
+        methods = [row for row in probe["metadata"]["declarations"]
+                   if row["kind"] == "CXXMethodDecl" and row.get("name") in
+                   {"inline_static", "outside", "instance", "dynamic"}]
+        self.assertEqual(len(methods), 5)
+        for row in methods:
+            self.assertEqual(row["method_static_api"], "CXXMethodDecl.isStatic")
+            self.assertIs(row["method_static"], row["name"] in {"inline_static", "outside"})
+        outside = [row for row in methods if row["name"] == "outside"]
+        definition = next(row for row in outside if row["body_present"])
+        self.assertNotEqual(definition["id"], definition["canonical"])
+        self.assertIsNotNone(definition["previous"])
+        self.assertEqual(next(row for row in outside if not row["body_present"])["id"],
+                         definition["canonical"])
+
     def test_function_origins_use_physical_expansion_and_spelling_locations(self):
         header = self.root / "origin.h"
         header.write_text('''inline int dependency() { return 1; }

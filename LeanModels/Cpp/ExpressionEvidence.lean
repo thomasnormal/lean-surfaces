@@ -128,6 +128,13 @@ private def builtinType? : CppTypeEvidence → Option CppIntType
   | .builtin type => some type
   | _ => none
 
+/-- Lvalue-to-rvalue conversion removes nonvolatile source qualification before
+promotion. Converted operand and result types are still required to be builtin. -/
+private def builtinSourceType? : CppTypeEvidence → Option CppIntType
+  | .builtin type => some type
+  | .qualified _ false base => builtinSourceType? base
+  | _ => none
+
 private def integralOperator (operator : String) : Bool :=
   ["+", "-", "*", "/", "%", "&", "|", "^", "==", "!=", "<", "<=", ">", ">="].contains operator
 
@@ -143,9 +150,9 @@ def validateBinaryIntegralTyping (profile : TargetProfile)
     | throw "integral expression typing requires a left operand"
   let some rightOperand := row.operands[1]?
     | throw "integral expression typing requires a right operand"
-  let some leftSource := builtinType? leftOperand.sourceType
+  let some leftSource := builtinSourceType? leftOperand.sourceType
     | throw "integral expression typing requires a builtin left source type"
-  let some rightSource := builtinType? rightOperand.sourceType
+  let some rightSource := builtinSourceType? rightOperand.sourceType
     | throw "integral expression typing requires a builtin right source type"
   let some leftType := builtinType? leftOperand.type
     | throw "integral expression typing requires a builtin left converted type"

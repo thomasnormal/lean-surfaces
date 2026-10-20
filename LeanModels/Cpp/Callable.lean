@@ -164,14 +164,17 @@ private def callableSignature (type : CppTypeEvidence) : Except String CallableS
   match type with
   | .function result parameters variadic =>
       if variadic then .error "callable: variadic functions are outside the body profile"
-      else if !parameters.all (fun parameter => match parameter with
-          | .builtin _ => true
-          | _ => false) then
+      else if !parameters.all integralParameter then
         .error "callable: non-integral parameter type is outside the body profile"
       else match result with
         | .builtin _ => .ok {result, parameters, variadic}
         | _ => .error "callable: non-integral result type is outside the body profile"
   | _ => .error "callable: declaration type is not a function type"
+where
+  integralParameter : CppTypeEvidence → Bool
+    | .builtin _ => true
+    | .qualified _ false base => integralParameter base
+    | _ => false
 
 private def callableParameters (rawParameters : List Raw) (rows : List TypeEvidenceRow)
     (expected : List CppTypeEvidence) : Except String (List CallableParameter) := do

@@ -20,7 +20,9 @@ preprocessing, lookup, type checking, overload selection and instantiation.
 Reject partial ASTs after compiler errors. Preserve declaration identity,
 qualified names, types, value categories, conversions, cleanup nodes,
 source/header hashes and instantiated bodies; never erase unknown nodes.
-Lean checks proofs about the artifact, not Clang's correctness. Differential
+The [callable exporter](cpp-static-callables.md) also trusts the current
+admission/lowering code and representation printer for its source-to-IR step.
+Lean checks proofs about the resulting literal, not Clang's correctness. Differential
 execution additionally trusts compiler/linker/runtime; agreement is not conformance.
 
 Reuse the C tier's architecture, not its semantic claims:

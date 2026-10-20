@@ -168,6 +168,10 @@ void functionShapeEvidence(const clang::FunctionDecl *function,
   record["own_body_kind"] = nullptr;
   record["own_body_owner"] = nullptr;
   record["own_body_api"] = "FunctionDecl.getBody";
+  if (const auto *method = llvm::dyn_cast<clang::CXXMethodDecl>(function)) {
+    record["method_static_api"] = "CXXMethodDecl.isStatic";
+    record["method_static"] = method->isStatic();
+  }
   if (function->doesThisDeclarationHaveABody() && !function->isLateTemplateParsed()) {
     const clang::FunctionDecl *owner = nullptr;
     const clang::Stmt *body = function->getBody(owner);

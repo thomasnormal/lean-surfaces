@@ -135,3 +135,18 @@ refusal is likewise separate from a body-admission result. No input executes
 in this census, and it does not complete a C++ rung or a three-corpus semantic
 census. Local launch logs, complete reports and compressed captures remain
 under the worktree's `scratch/cpp-callable-census/` directory.
+
+## Static-method follow-up
+
+The [static integral callable extension](cpp-static-callables.md) freshly
+captures the same pinned XML source with relative filenames and the static
+method getter. Explicitly selecting **both** `tinyxml2.cpp` and `tinyxml2.h`
+admits **one of 472 explicit source bodies**, the unchanged header helper
+`XMLUtil::IsUTF8Continuation`. The original implementation-only denominator
+still admits zero of 202. There are 520 retained bodies overall; the selected
+header moves bodies out of the dependency group, so its 472-body denominator
+must not be compared directly with the earlier 202-body implementation count.
+The generated helper executes against original native calls and has a total
+kernel theorem over all signed 8-bit inputs; the census itself still executes
+no body and proves no program. Other inputs' previously recorded resource and
+strict-frontend outcomes remain separate.

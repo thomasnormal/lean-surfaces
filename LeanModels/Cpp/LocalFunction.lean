@@ -52,10 +52,21 @@ def optionalSourceBool (raw : Raw) (name : String) : Except String Bool :=
   | some (.bool value) => .ok value
   | some _ => .error s!"local function: malformed source flag {name}"
 
-def localFunctionScope (probe : DeclarationProbe) (handle : FrontendHandle) :
+def localFunctionScope (probe : DeclarationProbe) (handle : FrontendHandle)
+    (allowRecord : Bool := false) :
     Except String Unit := do
   let row ← localFunctionRow probe handle.value
   if row.kind == "TranslationUnitDecl" then return
+  if allowRecord && row.kind == "CXXRecordDecl" then
+    unless cppIdentifier (← evidenceText row.raw "name") do
+      throw "local function: unsupported record name"
+    if (← evidenceBool row.raw "injected_class_name") then
+      throw "local function: injected class scope"
+    requireEvidenceText row.raw "described_template_api" "CXXRecordDecl.getDescribedClassTemplate"
+    unless (← evidenceNullableHandle row.raw "described_template").isNone &&
+        (← evidenceNat row.raw "template_specialization_kind") == 0 do
+      throw "local function: template record scope"
+    return
   unless row.kind == "NamespaceDecl" do
     throw s!"local function: unsupported scope {row.kind}"
   unless cppIdentifier (← evidenceText row.raw "name") do
@@ -65,8 +76,8 @@ def localFunctionScope (probe : DeclarationProbe) (handle : FrontendHandle) :
     throw "local function: inline or anonymous namespace"
 
 def localFunctionScopeSource (artifact : Artifact) (probe : DeclarationProbe)
-    (handle : FrontendHandle) : Except String Unit := do
-  localFunctionScope probe handle
+    (handle : FrontendHandle) (allowRecord : Bool := false) : Except String Unit := do
+  localFunctionScope probe handle allowRecord
   let row ← localFunctionRow probe handle.value
   if row.kind == "TranslationUnitDecl" then return
   let occurrences := artifact.declarationsById handle.value
@@ -74,7 +85,7 @@ def localFunctionScopeSource (artifact : Artifact) (probe : DeclarationProbe)
   occurrences.forM fun occurrence => do
     let some raw := artifact.ast.atPath occurrence.path
       | throw "local function: namespace occurrence is absent"
-    unless raw.text "kind" == some "NamespaceDecl" && raw.text "name" == row.raw.text "name" do
+    unless raw.text "kind" == some row.kind && raw.text "name" == row.raw.text "name" do
       throw "local function: namespace source disagrees with metadata"
     if (← optionalSourceBool raw "isInline") || (← optionalSourceBool raw "isImplicit") then
       throw "local function: inline or implicit namespace source"
@@ -106,12 +117,20 @@ def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
   let some raw := probe.ast.atPath path
     | throw "local function: source occurrence is absent"
   let some id := raw.text "id" | throw "local function: source handle is absent"
-  unless raw.text "kind" == some "FunctionDecl" do
-    throw "local function: requires FunctionDecl"
+  let isMethod := raw.text "kind" == some "CXXMethodDecl"
+  unless raw.text "kind" == some "FunctionDecl" || isMethod do
+    throw "local function: requires FunctionDecl or static CXXMethodDecl"
   let row ← localFunctionRow probe id
-  unless row.kind == "FunctionDecl" do
+  unless some row.kind == raw.text "kind" do
     throw "local function: source and metadata families disagree"
-  let some shape := row.functionShape | throw "local function: missing shape evidence"
+  let shape ← if isMethod then
+      requireEvidenceText row.raw "method_static_api" "CXXMethodDecl.isStatic"
+      unless (← evidenceBool row.raw "method_static") do
+        throw "local function: instance method requires object semantics"
+      parseFunctionShapeEvidence row.raw
+    else match row.functionShape with
+      | some shape => pure shape
+      | none => throw "local function: missing shape evidence"
   let name ← evidenceText raw "name"
   unless cppIdentifier name && row.raw.text "name" == some name do
     throw "local function: unsupported or inconsistent function name"
@@ -130,8 +149,8 @@ def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
     throw "local function: implicit or defaulted source form"
   let some lexical := row.lexicalContext | throw "local function: missing lexical scope"
   let some semantic := row.semanticContext | throw "local function: missing semantic scope"
-  localFunctionScope probe lexical
-  localFunctionScope probe semantic
+  localFunctionScope probe lexical isMethod
+  localFunctionScope probe semantic isMethod
   let some occurrence := artifact.declarationAtPath path
     | throw "local function: source declaration is absent"
   let lexicalChain ← lexicalContextChainEvidence artifact probe occurrence
@@ -140,8 +159,24 @@ def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
     throw "local function: lexical scope disagrees with source ancestry"
   unless semantic.value == occurrence.semanticParent.getD lexical.value do
     throw "local function: semantic scope disagrees with source occurrence"
-  lexicalChain.forM (localFunctionScopeSource artifact probe)
-  semanticChain.forM (localFunctionScopeSource artifact probe)
+  lexicalChain.forM (fun handle => localFunctionScopeSource artifact probe handle isMethod)
+  semanticChain.forM (fun handle => localFunctionScopeSource artifact probe handle isMethod)
+  if isMethod then
+    unless (← localFunctionRow probe semantic.value).kind == "CXXRecordDecl" do
+      throw "local function: static method requires a record semantic scope"
+    let root ← canonicalRootEvidence probe occurrence
+    let predecessors ← canonicalPredecessorChainEvidence probe occurrence
+    predecessors.forM fun handle => do
+      let predecessor ← localFunctionRow probe handle.value
+      requireEvidenceText predecessor.raw "method_static_api" "CXXMethodDecl.isStatic"
+      unless (← evidenceBool predecessor.raw "method_static") &&
+          predecessor.semanticContext == some semantic do
+        throw "local function: inconsistent static method redeclaration"
+    unless (artifact.declarationsById root.value).any (fun candidate =>
+        candidate.kind == "CXXMethodDecl" && candidate.name == some name &&
+          (artifact.ast.atPath candidate.path).any (fun source =>
+            source.text "storageClass" == some "static")) do
+      throw "local function: canonical static declaration is absent from AST"
   let (parameters, body) ← localFunctionChildren raw
   let deleted ← optionalSourceBool raw "explicitlyDeleted"
   unless deleted == shape.deletedAsWritten do

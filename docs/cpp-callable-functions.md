@@ -9,8 +9,10 @@ the same Clang probe.
 
 ## Admitted profile
 
-The candidate must be a named, ordinary `FunctionDecl` accepted by
-`admitLocalFunctionDeclaration` with a direct `CompoundStmt` body. Prototypes,
+The candidate must be a named ordinary `FunctionDecl` or a witnessed static
+`CXXMethodDecl`, accepted by `admitLocalFunctionDeclaration` with a direct
+`CompoundStmt` body. Static methods require the getter and canonical record
+context checks described in [static callables](cpp-static-callables.md). Prototypes,
 deleted declarations and function-try bodies remain loud refusals. The body
 retains ordinary `CompoundStmt` nodes as `block` boundaries containing
 sequences of admitted expression statements, `if` statements with an optional
@@ -23,12 +25,14 @@ cover copy, direct, list and default scalar initialization, multiple
 declarators and lexical shadowing through the object-backed frame. An empty
 compound is `block skip`; a null statement is `skip`. Unsupported storage,
 reference parameters/results, temporary/rvalue bindings, arrays, aliases, calls,
-overloaded operations, exceptions, local functions and every other statement form refuse rather than being silently
-represented as a callable.
+overloaded operations, exceptions, local functions and every other statement
+form refuse rather than being silently represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
 projection v1` row for the exact occurrence. This slice requires a non-variadic
-signature whose result and every parameter are builtin integral types.
+signature with a builtin integral result and nonvolatile integral value
+parameters. Const value parameters retain their object/access qualification;
+lvalue-to-rvalue conversion removes it before arithmetic.
 Every direct `ParmVarDecl` must have a matching type-evidence row, and its type
 must agree, in order, with the function type's parameter list. The result type
 is retained as structured `CppTypeEvidence`; no `qualType` string is used to
@@ -192,3 +196,8 @@ cleanup removes alias bindings without ending the referent. Reference parameters
 and results remain outside the callable signature profile. The value-only
 evaluator continues to refuse automatic declarations. See
 [reference execution](cpp-reference-types.md#local-reference-execution-boundary).
+
+The generic `extractors/cpp/export_callable.lean` validates a complete probe
+before exporting one admitted typed body as a kernel-reducible Lean literal.
+The [TinyXML-2 example](../Examples/cpp/tinyxml2/README.md) uses this path for
+an original static helper and proves its entire signed-char input domain.

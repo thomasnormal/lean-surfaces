@@ -1,6 +1,6 @@
 # Source-local C++ function declarations
 
-2026-10-10. `LeanModels/Cpp/LocalFunction.lean` admits a first **local
+2026-10-20. `LeanModels/Cpp/LocalFunction.lean` admits a **local
 declaration form**, not an entity group, function type or executable function.
 The rule follows [C++23 N4950](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/n4950.pdf)
 §6.2 `[basic.def]` p2.1 and §9.5
@@ -18,12 +18,15 @@ It checks source/metadata family and name agreement, repeated-row consensus,
 the ordinary non-template enum branches and both witnessed context chains.
 Lexical ancestry must match the actual AST occurrence; an explicit semantic
 parent must match the metadata. Only the actual translation unit and named,
-non-inline, nonanonymous namespaces are admitted as context infrastructure.
-Namespace reopening is not flattened or converted into an entity identity.
+non-inline, nonanonymous namespaces are admitted for ordinary free functions.
+The [static member extension](cpp-static-callables.md) additionally admits
+named nondependent record contexts for witnessed static methods, preserving
+canonical static declarations and both source context chains. Namespace reopening is not flattened or converted into an entity identity.
 
 The initial profile excludes implicit declarations, dependent contexts,
 modules, templates/specializations, nonidentifier or non-ASCII names,
-class/block/function/linkage-specification scopes, attributes, defaulting,
+class scopes for ordinary free functions, block/function/linkage-specification
+scopes, attributes, defaulting,
 skipped/pending/late-parsed bodies and unknown direct child forms. Parameters
 precede at most one terminal compound or function-try body. Deleted forms
 must be bodyless. A body must be owned by this declaration, and its AST kind
@@ -50,7 +53,7 @@ or capture provenance. Inherited linkage does not change the supported
 source-local definition rule; linkage-specification AST contexts are still
 conservatively refused. Retained parameter/body JSON is not a typed or
 executable embedding. The separate [typed callable slice](cpp-callable-functions.md)
-consumes only a stricter direct-return subset of these compound bodies; this
+consumes a stricter typed subset of these compound bodies; this
 local rule itself still admits no typed callable or execution. `execute` remains
 unconditionally refused.
 
@@ -60,14 +63,14 @@ unconditionally refused.
 evidence without adding a prototype correctness theorem. The opt-in pinned
 compiler test in `extractors/cpp/test_evidence_ingestion.py` checks prototypes,
 compound/try/deleted bodies, qualified namespace definitions and namespace
-reopening, plus named refusals for attributes, templates, methods, anonymous
+reopening, plus named refusals for attributes, templates, instance methods, anonymous
 and inline namespaces and linkage specifications. This is a source-form
 oracle check, not differential execution of a C++ interpreter.
 
 The existing runtime inspector supports `--local-functions`, counting exact
 FunctionDecl occurrences by admitted local form or refusal reason on an
 unchanged real probe. These counts never mean callable/runtime functions.
-The unchanged TinyXML2 probe has 442 FunctionDecl occurrences: two local
+The recorded 2026-10-10 TinyXML2 probe had 442 FunctionDecl occurrences: two local
 compound definitions admitted, 440 refused, zero runtime functions admitted.
 The admitted source occurrences are `TIXML_VSCPRINTF` and `callfopen`, not
 synthetic replacements. This does not complete the three-corpus rung: the
@@ -75,3 +78,9 @@ larger JSON-library probe still has no successful runtime load and the third
 corpus retains its strict frontend refusal.
 Other declaration families, variable definition rules, entity admission and
 the later interpreter rungs remain unfinished.
+
+The newer callable census includes static methods and explicitly selected
+headers; its denominator differs from this ordinary-declaration inspector.
+See [the real static helper](cpp-static-callables.md) for current execution
+and kernel-proof evidence. Method shape fields remain raw at general probe
+ingestion and are validated lazily when static-method admission requests them.

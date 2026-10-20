@@ -1,0 +1,48 @@
+{
+  "format": "cpp-original-callable-1",
+  "source_project": "TinyXML-2",
+  "source_revision": "321ea883b7190d4e85cae5512a12e5eaa8f8731f",
+  "source_version": "10.0.0",
+  "source_sha256": {
+    "tinyxml2.cpp": "d5a7fd2ad255d716c4d2a64d5686f90c7e27a8285c49c59a5d105cb400bdf703",
+    "tinyxml2.h": "02f2389feb67fbb3efe42aaa6942034bc7d54695f357c5aac3cbd2f78a06ca4a"
+  },
+  "source_declaration": "tinyxml2::XMLUtil::IsUTF8Continuation",
+  "source_file": "tinyxml2.h",
+  "source_lines": [
+    606,
+    608
+  ],
+  "frontend": "Clang/LLVM 21.1.8",
+  "language": "C++23",
+  "capture_arguments": [
+    "--no-default-config",
+    "-std=c++23",
+    "-pedantic-errors",
+    "-fsyntax-only",
+    "tinyxml2.cpp",
+    "-Xclang",
+    "-load",
+    "-Xclang",
+    "<matching canonical_probe.so>",
+    "-Xclang",
+    "-plugin",
+    "-Xclang",
+    "leancpp-canonical-probe"
+  ],
+  "capture_working_directory": "pinned TinyXML-2 source directory",
+  "probe_sha256": "e8859af93e6c79994d80d09551ec694795132815d80639bf4981ba2527c74233",
+  "probe_bytes": 34887480,
+  "probe_ast_path": [
+    122,
+    14,
+    10
+  ],
+  "target_profile": "LP64; 8-bit signed char",
+  "literal_sha256": "ce5a79500ffc7306ec79e4214d6cc0e8afb934721e55f05df0d95e72c886c7df",
+  "exporter": "extractors/cpp/export_callable.lean",
+  "trusted_boundary": "Clang, canonical probe, complete-probe validators and callable lowering; source/capture provenance is externally recorded, not authenticated by the kernel",
+  "proof_scope": "generated admitted body; all signed 8-bit char inputs; no whole-library or whole-program claim",
+  "license": "zlib; see LICENSE-tinyxml2.txt",
+  "target": "x86_64-conda-linux-gnu"
+}

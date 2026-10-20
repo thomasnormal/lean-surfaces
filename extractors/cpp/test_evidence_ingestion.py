@@ -953,6 +953,168 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
                     f"#guard admitCallableFunctionFromProbe evidence .lp64 {target_path} matches .error _",
                     options="set_option maxRecDepth 100000", timeout=120)
 
+    def test_actual_compiler_static_integral_methods_and_const_parameters(self):
+        requested, library = os.environ.get("LEANCPP_CLANG"), os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang)
+        library = pathlib.Path(library).resolve()
+        self.assertTrue(library.is_file())
+        types = (
+            ("bool", "bool", ".boolean"), ("char", "char", ".signed 8"),
+            ("signed char", "schar", ".signed 8"), ("unsigned char", "uchar", ".unsigned 8"),
+            ("short", "short", ".signed 16"), ("unsigned short", "ushort", ".unsigned 16"),
+            ("int", "int", ".signed 32"), ("unsigned int", "uint", ".unsigned 32"),
+            ("long", "long", ".signed 64"), ("unsigned long", "ulong", ".unsigned 64"),
+            ("long long", "llong", ".signed 64"),
+            ("unsigned long long", "ullong", ".unsigned 64"),
+        )
+        functions = {"inside": ("Methods::inside", ".signed 32", False),
+                     "outside": ("Methods::outside", ".signed 32", False),
+                     "const_alias": ("Methods::const_alias", ".signed 32", True),
+                     "const_mask": ("Methods::const_mask", ".boolean", False),
+                     "nested": ("Methods::Nested::nested", ".signed 32", False)}
+        for _, key, format_name in types:
+            functions["constant_" + key] = ("Methods::constant_" + key, format_name, False)
+        refused = {"instance", "dynamic", "templated", "pointer", "observed", "ambient"}
+        source = self.root / "methods.cpp"
+        source.write_text("""int global_value = 3;
+struct Methods {
+  static int inside(int value) { return value + 1; }
+  static int outside(int value);
+  static int const_alias(const int value) { const int &r = value; return r; }
+  static bool const_mask(const char value) { return (value & 0x80) != 0; }
+  struct Nested { static int nested(int value) { return value - 1; } };
+  int instance(int value) { return value; }
+  virtual int dynamic(int value) { return value; }
+  template<class T> static T templated(T value) { return value; }
+  static int pointer(int *value) { return 3; }
+  static int observed(volatile int value) { return value; }
+  static int ambient(int value) { return global_value; }
+""" + "\n".join(f"  static {cpp_type} constant_{key}(const {cpp_type} value) {{ return value; }}"
+                   for cpp_type, key, _ in types) + """
+};
+int Methods::outside(int value) { return value + 2; }
+""", encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors", "-fsyntax-only",
+            str(source), "-Xclang", "-load", "-Xclang", str(library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        paths, nodes = {}, {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "CXXMethodDecl" and node.get("name") in functions.keys() | refused:
+                if any(child.get("kind") == "CompoundStmt" for child in node.get("inner", [])):
+                    paths[node["name"]] = path
+                    nodes[node["name"]] = node
+            pending.extend((child, path + [index]) for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), functions.keys() | refused)
+        calls = [(name, value) for name in functions for value in (-7, -1, 0, 9, 31)]
+        oracle = self.root / "oracle.cpp"
+        oracle.write_text('#include <climits>\n#include <iostream>\n#include "methods.cpp"\n'
+            'static_assert(CHAR_BIT == 8 && CHAR_MIN == -128 && sizeof(short) == 2\n'
+            '              && sizeof(int) == 4 && sizeof(long) == 8 && sizeof(long long) == 8);\n'
+            "int main() {\n" + "".join(
+                f"  std::cout << static_cast<{'unsigned long long' if '.unsigned' in functions[name][1] else 'long long'}>({functions[name][0]}({value})) << '\\n';\n"
+                for name, value in calls) + "}\n", encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            result = subprocess.run([clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle), "-o", str(binary)],
+                cwd=self.root, env=environment, capture_output=True, text=True, timeout=60)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            outputs.append(result.stdout.splitlines())
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls))
+        guards = ["def staticChecks : Except String Unit := do",
+                  "  let types ← parseValidatedTypeEvidence evidence",
+                  "  let binaries ← parseValidatedBinaryExpressionEvidence evidence",
+                  "  let expressions ← parseValidatedExpressionTypeEvidence evidence"]
+        for name, (_, format_name, local) in functions.items():
+            guards.append("  let function ← admitCallableFunctionWithExpressionTypes evidence types binaries "
+                          f"expressions .lp64 {paths[name]}")
+            cases = [f"(⟨.signed 32, {value}⟩, ⟨{format_name}, {int(expected)}⟩)"
+                     for (row_name, value), expected in zip(calls, outputs[0]) if row_name == name]
+            guards.append("  let cases : List (IntegralValue × IntegralValue) := [" + ", ".join(cases) + "]")
+            for evaluator in (["evaluateCallableObject"] if local else
+                              ["evaluateCallableObject", "evaluateCallable"]):
+                guards.append(f'''  unless cases.all (fun (argument, expected) =>
+      match {evaluator} 64 .lp64 function [argument] with
+      | .ok (.ok value) => value == expected
+      | _ => false) do
+    throw "static callable differential: {name} / {evaluator}"
+''')
+        for name in refused:
+            guards.append(f'''  unless (admitCallableFunctionWithExpressionTypes evidence types binaries expressions
+      .lp64 {paths[name]} matches .error _) do
+    throw "static callable refusal: {name}"
+''')
+        guards.extend(["  pure ()", "#eval staticChecks", "#guard staticChecks.isOk"])
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+                            options=("open LeanModels.Cpp.CallableObjectEvaluation\n"
+                                     "set_option maxRecDepth 100000"), timeout=240)
+        print(f"static callable differential: {len(calls)} rows at -O0/-O2; "
+              f"{len(calls) - 5} also value-only; {len(refused)} admission refusals")
+
+        def method_row(document, name="inside"):
+            return next(row for row in document["metadata"]["declarations"]
+                        if row["id"] == nodes[name]["id"])
+
+        def method_node(document, name="inside"):
+            node = document["ast"]
+            for index in paths[name]:
+                node = node["inner"][index]
+            return node
+
+        def missing_getter(document):
+            del method_row(document)["method_static_api"]
+
+        def false_getter(document):
+            method_row(document)["method_static"] = False
+
+        def wrong_api(document):
+            method_row(document)["method_static_api"] = "guessed"
+
+        def missing_static_source(document):
+            del method_node(document)["storageClass"]
+
+        def wrong_context(document):
+            method_row(document)["semantic_context"] = document["ast"]["id"]
+
+        def predecessor_not_static(document):
+            root = method_row(document, "outside")["canonical"]
+            next(row for row in document["metadata"]["declarations"]
+                 if row["id"] == root)["method_static"] = False
+
+        for mutate in (missing_getter, false_getter, wrong_api, missing_static_source,
+                       wrong_context, predecessor_not_static):
+            with self.subTest(mutation=mutate.__name__):
+                derived = copy.deepcopy(probe)
+                mutate(derived)
+                selected = "outside" if mutate == predecessor_not_static else "inside"
+                self.assert_accepts(json.dumps(derived),
+                    f"#guard admitCallableFunctionFromProbe evidence .lp64 {paths[selected]} matches .error _",
+                    options="set_option maxRecDepth 100000", timeout=120)
+        derived = copy.deepcopy(probe)
+        method_row(derived, "instance")["method_static"] = True
+        self.assert_accepts(json.dumps(derived),
+            f"#guard admitCallableFunctionFromProbe evidence .lp64 {paths['instance']} matches .error _",
+            options="set_option maxRecDepth 100000", timeout=120)
+
     def test_actual_compiler_switch_continue_admitted(self):
         requested = os.environ.get("LEANCPP_CLANG")
         library = os.environ.get("LEANCPP_PROBE_LIBRARY")

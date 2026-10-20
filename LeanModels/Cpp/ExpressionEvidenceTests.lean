@@ -88,6 +88,25 @@ def promotionChecks : Bool :=
 #guard validates
 #guard refusesWrongOperator
 #guard promotionChecks
+
+private def constPromotionChecks : Bool :=
+  match parseBinaryExpressionEvidenceRows (.array [narrowExpression]) with
+  | .ok [row] =>
+      let operands := row.operands.map (fun operand =>
+        {operand with sourceType := .qualified true false operand.sourceType})
+      let constant := {row with operands}
+      let volatile := {row with operands := row.operands.map (fun operand =>
+        {operand with sourceType := .qualified true true operand.sourceType})}
+      let qualifiedResult := {constant with result := .qualified true false constant.result}
+      let qualifiedConverted := {constant with operands := operands.map (fun operand =>
+        {operand with type := .qualified true false operand.type})}
+      (validateBinaryIntegralTyping .lp64 constant).isOk &&
+        !(validateBinaryIntegralTyping .lp64 volatile).isOk &&
+        !(validateBinaryIntegralTyping .lp64 qualifiedResult).isOk &&
+        !(validateBinaryIntegralTyping .lp64 qualifiedConverted).isOk
+  | _ => false
+
+#guard constPromotionChecks
 #guard (parseValidatedBinaryExpressionEvidence
   (compoundMetadata "CompoundAssignOperator")).isOk
 #guard (parseValidatedBinaryExpressionEvidence (compoundMetadata "UnaryOperator")) matches .error _

@@ -179,6 +179,13 @@ private def bindingCanonicalError : Option IntegralMemberCallError :=
       | .error reason => some reason
       | .ok _ => none
 
+private def resolvedCanonicalHandle (rows : List DeclarationEvidenceRow) :
+    Option FrontendHandle :=
+  match IntegralMemberCallSyntax.admitResolved (probe rows)
+      (rawCall methodHandle.value receiverHandle.value "read") with
+  | .error _ => none
+  | .ok evidence => some evidence.canonicalMethod
+
 #guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
     declarationRow "0xc0" "CXXMethodDecl" "0xc0"] == some (h "0xc0")
 #guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
@@ -196,6 +203,7 @@ private def bindingCanonicalError : Option IntegralMemberCallError :=
     declarationRow methodHandle.value "CXXMethodDecl" "0xc1"] == some .canonicalMethodAmbiguous
 #guard observedCanonical == some 7
 #guard bindingCanonicalError == some .canonicalMethodMismatch
+#guard resolvedCanonicalHandle canonicalProbe.declarations == some (h "0xc0")
 
 #guard syntaxError (rawObject []) == some .notMemberCall
 #guard syntaxError (rawObject [

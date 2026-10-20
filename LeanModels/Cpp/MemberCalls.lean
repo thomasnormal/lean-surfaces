@@ -107,6 +107,11 @@ def resolveCanonical (probe : DeclarationProbe) (evidence : IntegralMemberCallSy
       pure {evidence with canonicalMethod := canonical}
   | _ => throw .canonicalMethodAmbiguous
 
+/-- Admit a raw call and resolve its declaration occurrence through probe evidence. -/
+def admitResolved (probe : DeclarationProbe) (raw : Raw) :
+    Except IntegralMemberCallSyntaxError IntegralMemberCallSyntax := do
+  resolveCanonical probe (← admit raw)
+
 end IntegralMemberCallSyntax
 
 structure IntegralMemberCall where

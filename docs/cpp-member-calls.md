@@ -32,6 +32,8 @@ from the probe, and that handle must also have an explicit self-canonical
 target-less, name-mismatched, or conflicting rows refuse loudly. Binding compares the resolved handle with the
 canonical handle retained by `IntegralMemberGetter`, so a call cannot silently
 cross a redeclaration or overload identity boundary.
+Callers that start from raw AST are expected to use `admitResolved`, which
+performs both syntax admission and this canonical resolution in one operation.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

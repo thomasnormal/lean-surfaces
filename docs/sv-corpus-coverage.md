@@ -968,6 +968,11 @@ label mapping to a direct packed-union member and reads the shared window
 through its alternate field. Alias visibility and x propagation are preserved;
 direction-mismatched, dynamic, indexed and effectful union paths remain loud.
 
+The `noncanonical_member_bit` fixture checks a literal `[10]` select of a
+`[10:7]` packed-struct member. The selected declaration label maps to the
+outer one-bit window with x propagation; dynamic and effectful nested indices
+remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

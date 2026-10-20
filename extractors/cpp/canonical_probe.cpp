@@ -171,6 +171,13 @@ void functionShapeEvidence(const clang::FunctionDecl *function,
   if (const auto *method = llvm::dyn_cast<clang::CXXMethodDecl>(function)) {
     record["method_static_api"] = "CXXMethodDecl.isStatic";
     record["method_static"] = method->isStatic();
+    record["method_shape_api"] = "CXXMethodDecl receiver shape v1";
+    record["method_parent"] = declarationId(method->getParent());
+    record["method_const"] = method->isConst();
+    record["method_volatile"] = method->isVolatile();
+    record["method_virtual"] = method->isVirtual();
+    record["method_pure"] = method->isPureVirtual();
+    record["method_ref_qualifier"] = static_cast<int64_t>(method->getRefQualifier());
   }
   if (function->doesThisDeclarationHaveABody() && !function->isLateTemplateParsed()) {
     const clang::FunctionDecl *owner = nullptr;
@@ -478,6 +485,22 @@ public:
       record["field_bitfield"] = field->isBitField();
       record["field_initializer"] = field->hasInClassInitializer();
       record["field_attribute_count"] = static_cast<int64_t>(field->hasAttrs() ? field->getAttrs().size() : 0);
+    }
+    if (const auto *method = llvm::dyn_cast<clang::CXXMethodDecl>(declaration)) {
+      record["method_signature_api"] = "FunctionDecl return and parameter projection v1";
+      auto result = structuredType(method->getReturnType(), *astContext, 0);
+      record["method_result_type"] = result ? std::move(*result) : llvm::json::Value(nullptr);
+      llvm::json::Array parameters;
+      for (const auto *parameter : method->parameters()) {
+        auto type = structuredType(parameter->getType(), *astContext, 0);
+        parameters.push_back(type ? std::move(*type) : llvm::json::Value(nullptr));
+      }
+      record["method_parameter_types"] = std::move(parameters);
+      record["method_variadic"] = method->isVariadic();
+      const auto *prototype = method->getType()->getAs<clang::FunctionProtoType>();
+      record["method_exception_spec"] = prototype
+          ? llvm::json::Value(static_cast<int64_t>(prototype->getExceptionSpecType()))
+          : llvm::json::Value(nullptr);
     }
     if (const auto *function = llvm::dyn_cast<clang::FunctionDecl>(declaration))
       declarationOrigin(function, astContext->getSourceManager(), record);

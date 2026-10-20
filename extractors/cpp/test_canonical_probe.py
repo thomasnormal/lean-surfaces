@@ -270,6 +270,50 @@ class CanonicalProbeTests(unittest.TestCase):
         self.source.write_text(TEMPLATE_SOURCE, encoding="utf-8")
         return self.probe()
 
+    def test_method_receiver_and_signature_getters_keep_qualified_methods(self):
+        self.source.write_text("""struct Receiver {
+  int read(int &value) const { return value; }
+  void write(int value) volatile {}
+  int left() & { return 1; }
+  int right() && { return 2; }
+  virtual int abstract() const = 0;
+  int no_throw() noexcept { return 3; }
+  static int many(int value, ...) { return value; }
+  float unsupported(float value) { return value; }
+};
+""", encoding="utf-8")
+        probe = self.probe()
+        rows = {row["name"]: row for row in probe["metadata"]["declarations"]
+                if row["kind"] == "CXXMethodDecl" and row.get("name") in
+                {"read", "write", "left", "right", "abstract", "no_throw", "many", "unsupported"}}
+        self.assertEqual(len(rows), 8)
+        parent = rows["read"]["semantic_context"]
+        for row in rows.values():
+            self.assertEqual(row["method_shape_api"], "CXXMethodDecl receiver shape v1")
+            self.assertEqual(row["method_signature_api"], "FunctionDecl return and parameter projection v1")
+            self.assertEqual(row["method_parent"], parent)
+        self.assertTrue(rows["read"]["method_const"])
+        self.assertFalse(rows["read"]["method_volatile"])
+        self.assertTrue(rows["write"]["method_volatile"])
+        self.assertFalse(rows["write"]["method_const"])
+        self.assertEqual(rows["left"]["method_ref_qualifier"], 1)
+        self.assertEqual(rows["right"]["method_ref_qualifier"], 2)
+        self.assertTrue(rows["abstract"]["method_virtual"])
+        self.assertTrue(rows["abstract"]["method_pure"])
+        self.assertTrue(rows["many"]["method_static"])
+        self.assertTrue(rows["many"]["method_variadic"])
+        self.assertEqual(rows["read"]["method_result_type"], {"kind": "builtin", "name": "int"})
+        self.assertEqual(rows["write"]["method_result_type"], {"kind": "builtin", "name": "void"})
+        self.assertEqual(rows["read"]["method_parameter_types"], [
+            {"kind": "lvalue-reference", "referent": {"kind": "builtin", "name": "int"}}])
+        self.assertIsNone(rows["unsupported"]["method_result_type"])
+        self.assertEqual(rows["unsupported"]["method_parameter_types"], [None])
+        self.assertEqual(rows["read"]["method_exception_spec"], 0)
+        self.assertNotEqual(rows["no_throw"]["method_exception_spec"], 0)
+        # This is additional evidence, not relaxed function-type admission.
+        typed = {row["occurrence"] for row in probe["metadata"]["type_evidence"]}
+        self.assertNotIn(rows["read"]["id"], typed)
+
     def test_method_static_getter_covers_declarations_and_out_of_line_bodies(self):
         self.source.write_text("""struct Methods {
   static int inline_static(int value) { return value; }

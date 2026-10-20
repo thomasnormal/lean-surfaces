@@ -519,3 +519,29 @@ complete record occurrence. It reports selected-source and dependency ownership,
 admitted schemas and first refusals separately. It performs no function or
 instance-method execution. Source hashes, frontend/plugin identity, process
 limits and input provenance must be pinned by the external launch receipt.
+
+## Instance-method dependency pricing
+
+`price_method_closure.py` inventories simultaneous observed signature, context,
+receiver/record/member, body and call-target costs from a complete schema-0.3
+probe. It follows selected call handles through canonical redeclarations to
+all retained target bodies, retaining unresolved/external targets and recursion.
+Direct and transitive wall sets have separate presence, sole and intersection
+counts. The [pricing contract and measurement](../../docs/cpp-method-closure-pricing.md)
+state the profile, hypothetical receiver scenarios and unpriced semantic checks.
+An empty observed set establishes no admission or execution claim.
+
+```console
+python3 extractors/cpp/test_price_method_closure.py
+python3 extractors/cpp/price_method_closure.py probe.json --sources source.cpp header.h --capture-dir /capture/working/directory --out method-pricing.json
+```
+
+Source ownership requires both explicit physical expansion/spelling files in
+the selected set, resolved from the capture directory. Reports preserve every
+root/`inner` body occurrence and emit handles/paths without copying source names
+or filesystem paths. They pin input, tool and dated model-source hashes; model
+drift refuses pending profile review. Inputs are bounded to 128 MiB by default,
+strictly decoded, and outputs publish atomically with input/source alias checks.
+Set matching `LEANCPP_CLANG` and `LEANCPP_PROBE_LIBRARY` to run the compiled
+controls; their absence is an explicit skip. Correlate the input hash and body
+ownership/counts with `census_callable.lean` before interpreting a corpus result.

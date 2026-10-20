@@ -177,6 +177,28 @@ def duplicateParameterTypes : List TypeEvidenceRow := [
   | .error message => message == "callable: duplicate parameter declaration handle"
   | .ok _ => false
 
+def duplicateLocalRaw : Raw := object [
+  ("id", text "0x10"), ("kind", text "VarDecl"), ("init", text "c"),
+  ("inner", .array [integerLiteralRaw "0x30" "1"])]
+
+def duplicateLocalVariableEvidence : CppVariableEvidence := {
+  ordinal := 0, occurrence := {value := "0x10"}, canonical := {value := "0x10"},
+  kind := "VarDecl", isLocal := true, localOrParameter := true,
+  storageClass := .none_, storageDuration := .automatic, tls := .none_, initStyle := .c,
+  initializer := some {
+    occurrence := {value := "0x30"}, kind := "IntegerLiteral",
+    sourceType := intType, type := intType},
+  isConstexpr := false, attributeCount := 0}
+
+#guard match parseCallableStatementWithLocals
+    {ast := .null, metadata := .null, declarations := []}
+    [typeRow "0x10" intType] [duplicateLocalVariableEvidence] [] TargetProfile.lp64 intType
+    [{declaration := {value := "0x10"}, name := some "value", type := intType}]
+    (object [("id", text "0x20"), ("kind", text "DeclStmt"),
+      ("inner", .array [duplicateLocalRaw])]) with
+  | .error message => message == "callable: duplicate local declaration handle"
+  | .ok _ => false
+
 def admitLiteral : Except String CallableFunction :=
   admitCallableFunction literalProbe literalTypes [] TargetProfile.lp64 [0]
 

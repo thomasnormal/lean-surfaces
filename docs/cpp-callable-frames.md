@@ -29,8 +29,9 @@ callable fragment. It threads parameter and local declaration handles through
 sequential and nested compound statements, admits each `DeclStmt` through the
 validated automatic-declaration evidence, and retains the resulting
 `CallableStatement.automatic` node. Branch and loop shells parse locals in
-their lexical scope; the object evaluator executes the same tree against the
-parameter frame, opening and closing block scopes while preserving retained
+their lexical scope and reject a local handle that collides with an active
+parameter or earlier local; the object evaluator executes the same tree against
+the parameter frame, opening and closing block scopes while preserving retained
 state on errors. The established value-only evaluator remains deliberately
 loud on this node (`unsupportedDeclaration`), so adding object-backed
 execution cannot turn an old value-only result into a guessed one.

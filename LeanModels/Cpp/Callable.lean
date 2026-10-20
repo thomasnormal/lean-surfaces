@@ -556,14 +556,19 @@ private def localParameter (declaration : FrontendHandle) (type : CppTypeEvidenc
     CallableParameter := {declaration, name := none, type}
 
 private def localParameters (rows : List TypeEvidenceRow)
-    (declarations : List FrontendHandle) : Except String (List CallableParameter) :=
-  declarations.mapM fun declaration => do
+    (available : List CallableParameter) (declarations : List FrontendHandle) :
+    Except String (List CallableParameter) := do
+  let mut result : List CallableParameter := []
+  for declaration in declarations do
+    if (available ++ result).any (fun parameter => parameter.declaration == declaration) then
+      throw "callable: duplicate local declaration handle"
     let found := rows.filter (fun row => row.occurrence == declaration)
     let some row := found.head?
       | throw "callable: local declaration lacks structured type evidence"
     unless found.all (· == row) do
       throw "callable: conflicting local declaration type evidence"
-    pure (localParameter declaration row.type)
+    result := result ++ [localParameter declaration row.type]
+  pure result
 
 private def admitAutomaticAt (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
@@ -628,7 +633,7 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
   | "DeclStmt" =>
       let admitted ← admitAutomaticAt probe typeRows variableRows expressionRows profile
         allParameters statement
-      let locals ← localParameters typeRows admitted.declarations
+      let locals ← localParameters typeRows allParameters admitted.declarations
       pure (.automatic admitted, allParameters ++ locals)
   | "CompoundStmt" =>
       parseCallableCompoundWithLocals probe typeRows variableRows expressionRows profile

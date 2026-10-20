@@ -1505,11 +1505,14 @@ int switch_break(int value) {
                 cases.append(f"({fuel}, [{values}], ⟨{destination}, {int(expected)}⟩)")
             guards.append("  let cases : List (Nat × List IntegralValue × IntegralValue) := ["
                           + ", ".join(cases) + "]")
-            guards.append(f"""  unless cases.all (fun (fuel, arguments, expected) =>
-      match evaluateCallable fuel .lp64 function arguments with
+            for evaluator in (
+                    "evaluateCallable",
+                    "LeanModels.Cpp.CallableObjectEvaluation.evaluateCallableObject"):
+                guards.append(f"""  unless cases.all (fun (fuel, arguments, expected) =>
+      match {evaluator} fuel .lp64 function arguments with
       | .ok (.ok value) => value == expected
       | _ => false) do
-    throw "callable differential: {name}"
+    throw "callable differential: {name} / {evaluator}"
 """)
         self.assertEqual(checked_rows, len(rows))
         guards.extend(["  pure ()", "#guard callableChecks.isOk"])
@@ -1517,8 +1520,8 @@ int switch_break(int value) {
             guards.append(f"#guard (admitCallableFunctionFromProbe evidence "
                           f"TargetProfile.lp64 {paths[name]}) matches .error _")
         self.assert_accepts(json.dumps(probe), "\n".join(guards),
-                            options="set_option maxRecDepth 100000 in", timeout=600)
-        print(f"callable argument differential: {len(rows)} rows at -O0/-O2")
+                            options="set_option maxRecDepth 100000", timeout=600)
+        print(f"callable argument differential: {len(rows)} rows, two evaluators at -O0/-O2")
 
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):
         fixture = document()

@@ -5,6 +5,26 @@ namespace LeanModels.Cpp.TypeEvidenceTests
 open LeanModels.Cpp
 
 private def handle (value : String) : FrontendHandle := {value}
+
+private def distinctTypes : List CppTypeEvidence := [
+  .builtin .int, .builtin .short, .pointer (.builtin .int),
+  .lvalueReference (.builtin .int), .rvalueReference (.builtin .int),
+  .qualified true false (.builtin .int), .qualified false true (.builtin .int),
+  .qualified true true (.builtin .int), .record (handle "0x1"), .record (handle "0x2"),
+  .enumeration (handle "0x1"), .function (.builtin .int) [] false,
+  .function (.builtin .short) [] false,
+  .function (.builtin .int) [.builtin .int] false,
+  .function (.builtin .int) [.builtin .int] true,
+  .function (.builtin .int) [.builtin .short, .builtin .int] false,
+  .function (.builtin .int) [.builtin .int, .builtin .short] false,
+  .pointer (.function (.builtin .short) [.pointer (.record (handle "0x1"))] true)]
+
+private theorem kernelTypeEquality :
+    (distinctTypes.zipIdx.all fun (left, i) =>
+      distinctTypes.zipIdx.all fun (right, j) => (left == right) == (i == j)) = true := rfl
+
+#print axioms kernelTypeEquality
+
 private def object (fields : List (String × Raw)) : Raw := .object fields
 private def text (value : String) : Raw := .string value
 private def flag (value : Bool) : Raw := .bool value

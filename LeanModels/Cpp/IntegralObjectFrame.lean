@@ -158,7 +158,7 @@ private def propagate : IntegralResult IntegralValue →
   | .unsupported reason, _ | _, .unsupported reason => .unsupported reason
   | .ok _, result => result
 
-partial def evaluate (fuel : Nat) (frame : IntegralObjectFrame) (expression : Expression) :
+def evaluate (fuel : Nat) (frame : IntegralObjectFrame) (expression : Expression) :
       FrameOutcome (IntegralResult IntegralValue) :=
     match fuel with
     | 0 => failure frame .fuelExhausted
@@ -209,6 +209,8 @@ partial def evaluate (fuel : Nat) (frame : IntegralObjectFrame) (expression : Ex
                         success rightResult.frame (integralBinary operation leftValue rightValue)
                     | leftValue, rightValue =>
                         success rightResult.frame (propagate leftValue rightValue)
+termination_by structural fuel
+
 def read (frame : IntegralObjectFrame) (declaration : FrontendHandle) :
     FrameOutcome IntegralValue :=
   let result := evaluate 1 frame (.read declaration)
@@ -309,14 +311,17 @@ def exitScope (frame : IntegralObjectFrame) : FrameOutcome Unit :=
       | .error reason => failure ended.frame reason
       | .ok _ => success {ended.frame with scopes := rest} ()
 
-partial def leaveFrame (frame : IntegralObjectFrame) : FrameOutcome Unit :=
-  match frame.scopes with
-  | [] => success frame ()
-  | _ =>
-      let exited := exitScope frame
-      match exited.result with
-      | .error reason => failure exited.frame reason
-      | .ok _ => leaveFrame exited.frame
+/-- Keep the remaining stack explicit so cleanup is structural even when the store changes. -/
+private def leaveScopes (store : IntegralObjectStore) : List FrameScope → FrameOutcome Unit
+  | [] => success {store, scopes := []} ()
+  | scope :: rest =>
+      let ended := endBindings {store, scopes := scope :: rest} scope.bindings
+      match ended.result with
+      | .error reason => failure ended.frame reason
+      | .ok _ => leaveScopes ended.frame.store rest
+
+def leaveFrame (frame : IntegralObjectFrame) : FrameOutcome Unit :=
+  leaveScopes frame.store frame.scopes
 
 def returnValue (fuel : Nat) (frame : IntegralObjectFrame)
     (expression : Expression) : FrameOutcome IntegralValue :=
@@ -352,7 +357,7 @@ private def finishScope (result : FrameOutcome Execution) : FrameOutcome Executi
       | .error reason => failure exited.frame reason
 
 mutual
-  partial def executeStep (fuel : Nat) (frame : IntegralObjectFrame)
+  def executeStep (fuel : Nat) (frame : IntegralObjectFrame)
       (statement : Statement) : FrameOutcome Execution :=
     match fuel with
     | 0 => failure frame .fuelExhausted
@@ -436,8 +441,9 @@ mutual
             | .error reason => failure firstResult.frame reason
             | .ok .normal => executeStep fuel firstResult.frame second
             | .ok execution => success firstResult.frame execution
+  termination_by structural fuel
 
-  partial def executeWhile (fuel : Nat) (frame : IntegralObjectFrame)
+  def executeWhile (fuel : Nat) (frame : IntegralObjectFrame)
       (condition : Expression) (body : Statement) : FrameOutcome Execution :=
     match fuel with
     | 0 => failure frame .fuelExhausted
@@ -459,8 +465,9 @@ mutual
                     | .ok .normal | .ok .continue_ =>
                         executeWhile fuel bodyResult.frame condition body
                     | .ok returned => success bodyResult.frame returned
+  termination_by structural fuel
 
-  partial def executeFor (fuel : Nat) (frame : IntegralObjectFrame)
+  def executeFor (fuel : Nat) (frame : IntegralObjectFrame)
       (condition : Expression) (step body : Statement) : FrameOutcome Execution :=
     match fuel with
     | 0 => failure frame .fuelExhausted
@@ -487,6 +494,7 @@ mutual
                         | .ok .normal | .ok .continue_ =>
                             executeFor fuel stepResult.frame condition step body
                         | .ok execution => success stepResult.frame execution
+  termination_by structural fuel
 end
 
 private def closeExecution (result : FrameOutcome Execution) :

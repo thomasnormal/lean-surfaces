@@ -120,7 +120,25 @@ Other logical operator spellings are refused rather than interpreted as one of
 those two short-circuit forms.
 
 Evaluation has explicit fuel. A zero budget is a loud `fuelExhausted` refusal;
-no recursive execution is hidden behind a partial definition. The evaluator is
+the expression and statement evaluators in both paths recurse structurally on
+that budget. The object frame's expression and statement execution does likewise.
+Scope cleanup instead descends the finite scope stack, and switch fallthrough
+descends the selected clause suffix using the already-smaller statement evaluator.
+Those finite traversals consume no additional fuel, preserving the existing
+depth budgets and retained failure state. Increment reads retain their original
+fuel checks through a nonrecursive parameter-read helper.
+
+These execution definitions reduce in Lean's kernel; no recursive execution is
+hidden behind a `partial` definition or well-founded recursion. The kernel
+regressions use `rfl` for local mutation, loops, switch fallthrough and transfers,
+cleanup, narrow increment conversion and retained overflow state, and print
+their axiom inventories (at most the core `propext` axiom). Native `#guard`
+execution alone would not establish
+that property. Frontend JSON parsing and callable admission still use runtime
+parsers; this execution refactor does not establish a kernel-reducible ingestion
+pipeline or a theorem about an original corpus function.
+
+The evaluator is
 not wired to `Translation.execute`, and does not admit local objects in its
 value-only path, calls,
 overload resolution or general implicit-conversion semantics.
@@ -151,7 +169,7 @@ effectful logical short-circuiting.
 All ten compound operators are covered,
 including nested and empty blocks, once-only loop initialization, false initial
 conditions, return-before-step, unsigned wraparound, self-aliasing and state updates through `while`
-and `do`/`for`/`switch` control flow with `break`/`continue`. It compares the evaluator with 318 Clang-compiled calls at both
+and `do`/`for`/`switch` control flow with `break`/`continue`. It compares both evaluators with 318 Clang-compiled calls at both
 `-O0` and `-O2`, under undefined-behavior sanitization, and separately checks two
 loud compound-conversion refusals. Width checks pin the LP64 target; missing
 settings skip rather than count as agreement. This is evidence for the bounded

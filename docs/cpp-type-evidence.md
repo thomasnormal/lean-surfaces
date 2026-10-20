@@ -96,3 +96,11 @@ mismatches, missing occurrences, missing record referents, text-only refusal,
 and conflicting type trees. The optional Clang probe test additionally checks
 real occurrence-witnessed builtin, pointer, reference, cv-qualified, function,
 record and enumeration rows without a `qualType` fallback.
+
+Type-tree equality is structural, including a separate recursive walk over
+function parameter lists. This keeps comparisons of types and retained frame
+bindings reducible in Lean's kernel; the derived nested equality had supplied
+only native execution. Kernel `rfl` regressions cover all constructors,
+qualifiers, declaration handles, parameter order and arity, variadic state and
+nested function pointers. This changes equality's reduction behavior, not the
+type evidence admitted from the frontend.

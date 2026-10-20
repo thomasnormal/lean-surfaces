@@ -1,6 +1,6 @@
 # Object-backed integral frames and lexical scopes
 
-2026-10-19. `LeanModels/Cpp/IntegralObjectFrame.lean` connects the integral
+2026-10-20. `LeanModels/Cpp/IntegralObjectFrame.lean` connects the integral
 object store to a stateful function frame. It is the executable foundation for
 automatic parameter and local declarations, including the validated Clang
 `DeclStmt` fragment; it does not replace the existing value-only callable
@@ -45,6 +45,13 @@ that scope's bindings. Object IDs remain tombstones in the append-only store.
 then returns the value with the closed frame. Fuel exhaustion, undefined
 integral operations, missing declarations and lifetime errors retain the
 current frame instead of claiming a successful cleanup.
+
+Expression and statement execution recurse structurally on fuel. Full-frame
+cleanup descends the explicit scope list, ending each scope's bindings before
+continuing with the remaining scopes. An error retains that scope and the
+already-updated store. These definitions reduce in the kernel; `rfl` regression
+checks cover declarations, loop transfers, cleanup and retained failure state,
+with printed inventories containing at most the core `propext` axiom.
 
 The expression fragment is deliberately small: literals, declaration-handle
 reads, integral unary operations and integral binary operations. The frontend

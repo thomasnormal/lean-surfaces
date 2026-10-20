@@ -1,8 +1,9 @@
 # C++ tier charter
 
-2026-10-09 — specification plan; [translation artifact admission](cpp-translation.md)
-is implemented; [declaration semantics](cpp-declarations.md) are specified,
-not implemented. Execution is not admitted. General C++ is
+2026-10-20 — specification plan; [translation artifact admission](cpp-translation.md)
+and [bounded integral callable execution](cpp-callable-evaluation.md) are implemented.
+Complete [declaration semantics](cpp-declarations.md) and translation-unit execution
+remain outside the admitted profile. General C++ is
 the destination; the corpora are evidence, not the definition of the language.
 
 ## Contract and trusted boundary

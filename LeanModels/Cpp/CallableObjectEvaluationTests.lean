@@ -405,4 +405,43 @@ private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (val
 #guard overflowRetainsParameter "--" false (-2147483648)
 #guard overflowRetainsParameter "--" true (-2147483648)
 
+-- The execution boundary must reduce in the kernel as well as run natively.
+example (callable : CallableObjectFrame) :
+    evaluateCallableObjectInFrame 0 callable =
+      {frame := callable.frame, result := .error (.frameError .fuelExhausted)} := rfl
+
+private theorem kernelObjectExecution :
+    (localMutation && localIncrement && loopLocalReentry && forBodyFailureRetainsFrame &&
+      switchScopeClosesOnFailure && postfixStore &&
+      overflowRetainsParameter "++" true 2147483647) = true := rfl
+
+#print axioms kernelObjectExecution
+
+private def kernelControl (loop : CallableStatement) : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block (.sequence loop (.return_ {
+      expression := .parameter (handle "0x10"), sourceType := intType, type := intType}))}
+  (evaluateCallable 64 .lp64 function [signed 3]).toOption == some (.ok (signed 0)) &&
+    (evaluateCallableObject 64 .lp64 function [signed 3]).toOption == some (.ok (signed 0))
+
+private def controlParameter : TypedCallableExpression := {
+  expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+
+private def controlStep : CallableStatement := .expression {
+  expression := .increment "--" false (handle "0x10"), sourceType := intType, type := intType}
+
+private theorem kernelControlExecution :
+    (kernelControl (.doWhile controlStep controlParameter) &&
+      kernelControl (.forLoop .skip controlParameter controlStep
+        (.switch_ controlParameter [
+          {label := some 3, body := .continue_},
+          {label := some 2, body := .skip},
+          {label := none, body := .break_}])) &&
+      checkIncrement .short "++" false ⟨.signed 16, 32767⟩ ⟨.signed 16, -32768⟩) = true := rfl
+
+#print axioms kernelControlExecution
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

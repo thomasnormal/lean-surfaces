@@ -12,7 +12,34 @@ inductive CppTypeEvidence where
   | function (result : CppTypeEvidence) (parameters : List CppTypeEvidence) (variadic : Bool)
   | record (declaration : FrontendHandle)
   | enumeration (declaration : FrontendHandle)
-  deriving Repr, BEq, Inhabited
+  deriving Repr, Inhabited
+
+mutual
+  /-- Structural equality also reduces for types nested in function parameter lists. -/
+  def CppTypeEvidence.beq (left right : CppTypeEvidence) : Bool :=
+    match left, right with
+    | .builtin left, .builtin right => left == right
+    | .pointer left, .pointer right
+    | .lvalueReference left, .lvalueReference right
+    | .rvalueReference left, .rvalueReference right => left.beq right
+    | .qualified lc lv left, .qualified rc rv right =>
+        lc == rc && lv == rv && left.beq right
+    | .function left lp lv, .function right rp rv =>
+        left.beq right && CppTypeEvidence.beqList lp rp && lv == rv
+    | .record left, .record right
+    | .enumeration left, .enumeration right => left == right
+    | _, _ => false
+  termination_by structural left
+
+  def CppTypeEvidence.beqList (left right : List CppTypeEvidence) : Bool :=
+    match left, right with
+    | [], [] => true
+    | left :: ls, right :: rs => left.beq right && CppTypeEvidence.beqList ls rs
+    | _, _ => false
+  termination_by structural left
+end
+
+instance : BEq CppTypeEvidence := ⟨CppTypeEvidence.beq⟩
 
 structure TypeEvidenceRow where
   ordinal : Nat

@@ -379,4 +379,37 @@ private def executeOutsideTransferLoud : Bool :=
       result.frame == frame && (result.result matches .error (.missingBinding _))
   | .error _ => false
 
+-- These are kernel-reduction regressions; #guard alone executes native code.
+private def cleanupFailureRetainsPrefix : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let outer := frame.declareParameter (handle "0x1") intType (signed 7)
+      let nested := outer.frame.enterScope
+      let first := nested.frame.declareParameter (handle "0x2") intType (signed 8)
+      let second := first.frame.declareParameter (handle "0x3") intType (signed 9)
+      match first.result, second.result with
+      | .ok firstObject, .ok secondObject =>
+          match second.frame.store.endLifetime firstObject with
+          | .error _ => false
+          | .ok store =>
+              let before := {second.frame with store}
+              let closed := before.leaveFrame
+              (closed.result matches .error (.object (.lifetime .lifetimeEnded))) &&
+                closed.frame.scopes == before.scopes &&
+                objectPhase? closed.frame secondObject == some .ended &&
+                okValue (signed 7) (closed.frame.read (handle "0x1"))
+      | _, _ => false
+
+#guard cleanupFailureRetainsPrefix
+
+example (frame : IntegralObjectFrame) (expression : Expression) :
+    frame.evaluate 0 expression = {frame, result := .error .fuelExhausted} := rfl
+
+private theorem kernelFrameExecution :
+    (sequentialLocals && reverseCleanup && cleanupFailureRetainsPrefix && executeForScope &&
+      executeContinueAndBreak && executeFailureRetainsScope) = true := rfl
+
+#print axioms kernelFrameExecution
+
 end LeanModels.Cpp.IntegralObjectFrameTests

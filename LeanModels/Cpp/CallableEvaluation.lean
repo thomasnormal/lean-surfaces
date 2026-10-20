@@ -301,11 +301,25 @@ private def switchDefaultSuffix : List CallableSwitchClause → Option (List Cal
       | some _ => switchDefaultSuffix rest
       | none => some (clause :: rest)
 
+/-- Fallthrough walks a finite suffix without consuming the statement depth budget. -/
+private def evaluateSwitchClauses
+    (evaluate : List IntegralValue → CallableStatement →
+      Except CallableEvaluationError CallableExecution)
+    (arguments : List IntegralValue) :
+    List CallableSwitchClause → Except CallableEvaluationError CallableExecution
+  | [] => .ok (.normal arguments)
+  | clause :: rest => do
+      let result ← evaluate arguments clause.body
+      match result with
+      | .normal updated => evaluateSwitchClauses evaluate updated rest
+      | .break_ updated => pure (.normal updated)
+      | .returned _ _ | .failed _ _ | .continue_ _ => pure result
+
 mutual
   /-- Iterations exclude the initializer, which the for statement executes once.
   Body completion (including continue through a switch) reaches the step only
   after the body has returned. Inner loops consume their own transfers. -/
-  private partial def evaluateForIterations (fuel : Nat) (profile : TargetProfile)
+  private def evaluateForIterations (fuel : Nat) (profile : TargetProfile)
       (parameters : List CallableParameter) (arguments : List IntegralValue)
       (condition : TypedCallableExpression) (step body : CallableStatement) :
       Except CallableEvaluationError CallableExecution := do
@@ -330,18 +344,9 @@ mutual
               | .returned _ _ | .failed _ _ => pure bodyResult
         | result => pure (.failed result afterCondition)
 
-  private partial def evaluateSwitchClauses (fuel : Nat) (profile : TargetProfile)
-      (parameters : List CallableParameter) (arguments : List IntegralValue)
-      : List CallableSwitchClause → Except CallableEvaluationError CallableExecution
-    | [] => .ok (.normal arguments)
-    | clause :: rest => do
-        let result ← evaluateCallableStatement fuel profile parameters arguments clause.body
-        match result with
-        | .normal updated => evaluateSwitchClauses fuel profile parameters updated rest
-        | .break_ updated => pure (.normal updated)
-        | .returned _ _ | .failed _ _ | .continue_ _ => pure result
+  termination_by structural fuel
 
-  private partial def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
+  private def evaluateCallableStatement (fuel : Nat) (profile : TargetProfile)
     (parameters : List CallableParameter) (arguments : List IntegralValue)
     (statement : CallableStatement) :
     Except CallableEvaluationError CallableExecution :=
@@ -397,7 +402,8 @@ mutual
           | .ok value =>
               let selected := (switchCaseSuffix value.value clauses).orElse
                 (fun _ => switchDefaultSuffix clauses) |>.getD []
-              evaluateSwitchClauses fuel profile parameters afterCondition selected
+              evaluateSwitchClauses (evaluateCallableStatement fuel profile parameters)
+                afterCondition selected
           | result => pure (.failed result afterCondition)
       | .whileLoop condition body => do
           let (result, afterCondition) ← evaluateTyped fuel profile parameters arguments condition
@@ -455,6 +461,7 @@ mutual
           | .normal updated => evaluateCallableStatement fuel profile parameters updated second
           | .returned _ _ | .failed _ _ | .break_ _ | .continue_ _ => pure firstResult
 
+  termination_by structural fuel
 end
 
 def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)

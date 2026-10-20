@@ -155,133 +155,154 @@ private def incrementValue (profile : TargetProfile) (type : CppTypeEvidence)
             mapIntegralResult (integralBinary operation operand ⟨operand.format, 1⟩)
               (convertTo profile type)
 
-mutual
-  private partial def evalIncrement (fuel : Nat) (profile : TargetProfile)
-      (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
-      (operator : String) (isPostfix : Bool) (declaration : FrontendHandle) :
-      Outcome (IntegralResult IntegralValue) :=
-    match operator with
-    | "++" | "--" =>
-        let current := evalExpression fuel profile frame
-          {typed with expression := .parameter declaration}
-        match current.result with
-        | .error reason => failure current.frame reason
-        | .ok result =>
-            let operation := if operator == "++" then IntegralBinary.add
-              else IntegralBinary.subtract
-            match result with
-            | .ok old =>
-                match current.frame.lookup declaration with
-                | .error reason => frameFailure current.frame reason
-                | .ok binding =>
-                    match incrementValue profile binding.type operation old with
-                    | .ok value =>
-                        let assigned := current.frame.assignValue declaration binding.type value
-                        match assigned.result with
-                        | .error reason => frameFailure assigned.frame reason
-                        | .ok _ =>
-                            success assigned.frame (convertTo profile typed.type
-                              (if isPostfix then old else value))
-                    | result =>
-                        success current.frame
-                          (mapIntegralResult result (convertTo profile typed.type))
-            | result =>
-                success current.frame (mapIntegralResult result (convertTo profile typed.type))
-    | _ => failure frame (.unsupportedOperator operator)
+private def evalParameter (fuel : Nat) (profile : TargetProfile)
+    (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
+    (declaration : FrontendHandle) : Outcome (IntegralResult IntegralValue) :=
+  match fuel with
+  | 0 => frameFailure frame .fuelExhausted
+  | fuel + 1 =>
+      let read := frame.evaluate fuel (.read declaration)
+      match read.result with
+      | .error reason => frameFailure read.frame reason
+      | .ok result => success read.frame (mapIntegralResult result (convertTo profile typed.type))
 
-  private partial def evalExpression (fuel : Nat) (profile : TargetProfile)
-      (frame : IntegralObjectFrame) (typed : TypedCallableExpression) :
-      Outcome (IntegralResult IntegralValue) :=
-    match fuel with
-    | 0 => frameFailure frame .fuelExhausted
-    | fuel + 1 =>
-        match typed.expression with
-        | .integer value =>
-            match literalValue profile typed value with
-            | none => success frame (.unsupported .unresolvedArithmeticConversions)
-            | some value => success frame (convertTo profile typed.type value)
-        | .parameter declaration =>
-            let read := frame.evaluate fuel (.read declaration)
-            match read.result with
-            | .error reason => frameFailure read.frame reason
-            | .ok result => success read.frame (mapIntegralResult result (convertTo profile typed.type))
-        | .increment operator isPostfix declaration =>
-            evalIncrement fuel profile frame typed operator isPostfix declaration
-        | .convert operand =>
-            mapOutcome (evalExpression fuel profile frame operand)
-              (convertTo profile typed.type)
-        | .unary operator operand =>
-            match unaryOperator? operator with
-            | none => success frame (.unsupported .unresolvedArithmeticConversions)
-            | some operation =>
-                let evaluated := evalExpression fuel profile frame operand
-                match evaluated.result with
-                | .error reason => failure evaluated.frame reason
-                | .ok result =>
-                    success evaluated.frame (mapIntegralResult result fun value =>
-                      mapIntegralResult (integralUnary operation value)
-                        (convertTo profile typed.type))
-        | .binary operator left right =>
-            match operator? operator with
-            | none => success frame (.unsupported .unresolvedArithmeticConversions)
-            | some operation =>
-                if left.expression.hasEffects || right.expression.hasEffects then
-                  success frame (.unsupported .unresolvedArithmeticConversions)
-                else
-                  let leftResult := evalExpression fuel profile frame left
-                  match leftResult.result with
-                  | .error reason => failure leftResult.frame reason
-                  | .ok leftValue =>
-                      let rightResult := evalExpression fuel profile leftResult.frame right
-                      match rightResult.result with
-                      | .error reason => failure rightResult.frame reason
-                      | .ok rightValue =>
-                          let combined := match leftValue, rightValue with
-                            | .ok left, .ok right => integralBinary operation left right
-                            | .invalid reason, _ | _, .invalid reason => .invalid reason
-                            | .undefined reason, _ | _, .undefined reason => .undefined reason
-                            | .unsupported reason, _ | _, .unsupported reason =>
-                                .unsupported reason
-                          success rightResult.frame
-                            (mapIntegralResult combined (convertTo profile typed.type))
-        | .conditional condition whenTrue whenFalse =>
-            let conditionResult := evalExpression fuel profile frame condition
-            match conditionResult.result with
-            | .error reason => failure conditionResult.frame reason
-            | .ok (.ok value) =>
-                if value.value == 0 then
-                  evalExpression fuel profile conditionResult.frame whenFalse
-                else
-                  evalExpression fuel profile conditionResult.frame whenTrue
-            | .ok result => success conditionResult.frame result
-        | .comma left right =>
-            let leftResult := evalExpression fuel profile frame left
-            match leftResult.result with
-            | .error reason => failure leftResult.frame reason
-            | .ok (.ok _) => evalExpression fuel profile leftResult.frame right
-            | .ok result => success leftResult.frame result
-        | .logical operator left right =>
-            match operator with
-            | "&&" | "||" =>
+private def evalIncrement (fuel : Nat) (profile : TargetProfile)
+    (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
+    (operator : String) (isPostfix : Bool) (declaration : FrontendHandle) :
+    Outcome (IntegralResult IntegralValue) :=
+  match operator with
+  | "++" | "--" =>
+      let current := evalParameter fuel profile frame typed declaration
+      match current.result with
+      | .error reason => failure current.frame reason
+      | .ok result =>
+          let operation := if operator == "++" then IntegralBinary.add
+            else IntegralBinary.subtract
+          match result with
+          | .ok old =>
+              match current.frame.lookup declaration with
+              | .error reason => frameFailure current.frame reason
+              | .ok binding =>
+                  match incrementValue profile binding.type operation old with
+                  | .ok value =>
+                      let assigned := current.frame.assignValue declaration binding.type value
+                      match assigned.result with
+                      | .error reason => frameFailure assigned.frame reason
+                      | .ok _ =>
+                          success assigned.frame (convertTo profile typed.type
+                            (if isPostfix then old else value))
+                  | result =>
+                      success current.frame
+                        (mapIntegralResult result (convertTo profile typed.type))
+          | result =>
+              success current.frame (mapIntegralResult result (convertTo profile typed.type))
+  | _ => failure frame (.unsupportedOperator operator)
+
+private def evalExpression (fuel : Nat) (profile : TargetProfile)
+    (frame : IntegralObjectFrame) (typed : TypedCallableExpression) :
+    Outcome (IntegralResult IntegralValue) :=
+  match fuel with
+  | 0 => frameFailure frame .fuelExhausted
+  | fuel + 1 =>
+      match typed.expression with
+      | .integer value =>
+          match literalValue profile typed value with
+          | none => success frame (.unsupported .unresolvedArithmeticConversions)
+          | some value => success frame (convertTo profile typed.type value)
+      | .parameter declaration =>
+          evalParameter (fuel + 1) profile frame typed declaration
+      | .increment operator isPostfix declaration =>
+          evalIncrement fuel profile frame typed operator isPostfix declaration
+      | .convert operand =>
+          mapOutcome (evalExpression fuel profile frame operand)
+            (convertTo profile typed.type)
+      | .unary operator operand =>
+          match unaryOperator? operator with
+          | none => success frame (.unsupported .unresolvedArithmeticConversions)
+          | some operation =>
+              let evaluated := evalExpression fuel profile frame operand
+              match evaluated.result with
+              | .error reason => failure evaluated.frame reason
+              | .ok result =>
+                  success evaluated.frame (mapIntegralResult result fun value =>
+                    mapIntegralResult (integralUnary operation value)
+                      (convertTo profile typed.type))
+      | .binary operator left right =>
+          match operator? operator with
+          | none => success frame (.unsupported .unresolvedArithmeticConversions)
+          | some operation =>
+              if left.expression.hasEffects || right.expression.hasEffects then
+                success frame (.unsupported .unresolvedArithmeticConversions)
+              else
                 let leftResult := evalExpression fuel profile frame left
                 match leftResult.result with
                 | .error reason => failure leftResult.frame reason
-                | .ok (.ok value) =>
-                    let leftTrue := value.value != 0
-                    if (operator == "&&" && !leftTrue) || (operator == "||" && leftTrue) then
-                      success leftResult.frame
-                        (.ok (integralBoolean (if operator == "&&" then false else true)))
-                    else
-                      let rightResult := evalExpression fuel profile leftResult.frame right
-                      match rightResult.result with
-                      | .error reason => failure rightResult.frame reason
-                      | .ok (.ok rightValue) =>
-                          success rightResult.frame (.ok (integralBoolean (rightValue.value != 0)))
-                      | .ok result => success rightResult.frame result
-                | .ok result => success leftResult.frame result
-            | _ => success frame (.unsupported .unresolvedArithmeticConversions)
+                | .ok leftValue =>
+                    let rightResult := evalExpression fuel profile leftResult.frame right
+                    match rightResult.result with
+                    | .error reason => failure rightResult.frame reason
+                    | .ok rightValue =>
+                        let combined := match leftValue, rightValue with
+                          | .ok left, .ok right => integralBinary operation left right
+                          | .invalid reason, _ | _, .invalid reason => .invalid reason
+                          | .undefined reason, _ | _, .undefined reason => .undefined reason
+                          | .unsupported reason, _ | _, .unsupported reason =>
+                              .unsupported reason
+                        success rightResult.frame
+                          (mapIntegralResult combined (convertTo profile typed.type))
+      | .conditional condition whenTrue whenFalse =>
+          let conditionResult := evalExpression fuel profile frame condition
+          match conditionResult.result with
+          | .error reason => failure conditionResult.frame reason
+          | .ok (.ok value) =>
+              if value.value == 0 then
+                evalExpression fuel profile conditionResult.frame whenFalse
+              else
+                evalExpression fuel profile conditionResult.frame whenTrue
+          | .ok result => success conditionResult.frame result
+      | .comma left right =>
+          let leftResult := evalExpression fuel profile frame left
+          match leftResult.result with
+          | .error reason => failure leftResult.frame reason
+          | .ok (.ok _) => evalExpression fuel profile leftResult.frame right
+          | .ok result => success leftResult.frame result
+      | .logical operator left right =>
+          match operator with
+          | "&&" | "||" =>
+              let leftResult := evalExpression fuel profile frame left
+              match leftResult.result with
+              | .error reason => failure leftResult.frame reason
+              | .ok (.ok value) =>
+                  let leftTrue := value.value != 0
+                  if (operator == "&&" && !leftTrue) || (operator == "||" && leftTrue) then
+                    success leftResult.frame
+                      (.ok (integralBoolean (if operator == "&&" then false else true)))
+                  else
+                    let rightResult := evalExpression fuel profile leftResult.frame right
+                    match rightResult.result with
+                    | .error reason => failure rightResult.frame reason
+                    | .ok (.ok rightValue) =>
+                        success rightResult.frame (.ok (integralBoolean (rightValue.value != 0)))
+                    | .ok result => success rightResult.frame result
+              | .ok result => success leftResult.frame result
+          | _ => success frame (.unsupported .unresolvedArithmeticConversions)
+termination_by structural fuel
 
-  private partial def evalStatement (fuel : Nat) (profile : TargetProfile)
+/-- The callback already has smaller fuel; fallthrough itself descends the clause list. -/
+private def evalSwitch
+    (evaluate : IntegralObjectFrame → CallableStatement → Outcome Execution)
+    (frame : IntegralObjectFrame) : List CallableSwitchClause → Outcome Execution
+  | [] => success frame .normal
+  | clause :: rest =>
+      let current := evaluate frame clause.body
+      match current.result with
+      | .error reason => failure current.frame reason
+      | .ok .normal => evalSwitch evaluate current.frame rest
+      | .ok .break_ => success current.frame .normal
+      | .ok execution => success current.frame execution
+
+mutual
+  private def evalStatement (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (statement : CallableStatement) :
       Outcome Execution :=
     match fuel with
@@ -376,7 +397,7 @@ mutual
                 | .ok _ =>
                     let selected := (switchCaseSuffix value.value clauses).orElse
                       (fun _ => switchDefaultSuffix clauses) |>.getD []
-                    let switched := evalSwitch fuel profile entered.frame selected
+                    let switched := evalSwitch (evalStatement fuel profile) entered.frame selected
                     match switched.result with
                     | .error reason => failure switched.frame reason
                     | .ok execution =>
@@ -418,7 +439,9 @@ mutual
             | .ok .normal => evalStatement fuel profile firstResult.frame second
             | .ok execution => success firstResult.frame execution
 
-  private partial def evalWhile (fuel : Nat) (profile : TargetProfile)
+  termination_by structural fuel
+
+  private def evalWhile (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (condition : TypedCallableExpression)
       (body : CallableStatement) : Outcome Execution :=
     match fuel with
@@ -438,7 +461,9 @@ mutual
               | .ok execution => success bodyResult.frame execution
         | .ok result => success evaluated.frame (.failed result)
 
-  private partial def evalDoWhile (fuel : Nat) (profile : TargetProfile)
+  termination_by structural fuel
+
+  private def evalDoWhile (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (body : CallableStatement)
       (condition : TypedCallableExpression) : Outcome Execution :=
     match fuel with
@@ -459,7 +484,9 @@ mutual
                 else evalDoWhile fuel profile conditionResult.frame body condition
             | .ok result => success conditionResult.frame (.failed result)
 
-  private partial def evalFor (fuel : Nat) (profile : TargetProfile)
+  termination_by structural fuel
+
+  private def evalFor (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (condition : TypedCallableExpression)
       (step body : CallableStatement) : Outcome Execution :=
     match fuel with
@@ -487,18 +514,8 @@ mutual
                       evalFor fuel profile stepResult.frame condition step body
                   | .ok execution => success stepResult.frame execution
         | .ok result => success conditionResult.frame (.failed result)
+  termination_by structural fuel
 
-  private partial def evalSwitch (fuel : Nat) (profile : TargetProfile)
-      (frame : IntegralObjectFrame) :
-      List CallableSwitchClause → Outcome Execution
-    | [] => success frame .normal
-    | clause :: rest =>
-        let current := evalStatement fuel profile frame clause.body
-        match current.result with
-        | .error reason => failure current.frame reason
-        | .ok .normal => evalSwitch fuel profile current.frame rest
-        | .ok .break_ => success current.frame .normal
-        | .ok execution => success current.frame execution
 end
 
 private def closeCallable (outcome : Outcome Execution) :

@@ -551,6 +551,16 @@ dynamic packed bounds, left/sized/nested streams and aggregate leaves remain
 loud. This semantic-only fixture does not change the legacy corpus census or
 claim simulator agreement.
 
+## Symbolic continuous streaming targets over fixed cells — 2026-10-20
+
+Continuous right-streaming assignments now reuse the symbolic `ConcatTarget`
+window path for constant packed leaves and constant flattened fixed-array cells.
+`fixed_array_stream_continuous` samples a five-bit source once, writes `arr[0]`
+and a scalar leaf in source order, and reads the cell through comb settle.
+Dynamic/effectful leaves, left/sized/nested streams, aggregates and overlapping
+windows remain loud. This semantic-only fixture does not change the legacy
+corpus census or claim simulator agreement.
+
 ## Nested packed-struct field windows — 2026-10-19
 
 Member reads and writes through a chain of untagged packed structs now flatten

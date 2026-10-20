@@ -547,6 +547,27 @@ class SymbolicContinuousSelects(unittest.TestCase):
         statement = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
         self.assertEqual(statement["kind"], "Unsupported")
 
+    def test_continuous_right_streaming_accepts_fixed_array_cell(self):
+        envelope = self.extract(
+            "module top(input logic [4:0] source, output logic [3:0] hi, "
+            "output logic out); logic [3:0] arr [0:1]; "
+            "assign {>>{arr[0], out}} = source; assign hi = arr[0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target = processes[0]["target"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(target["kind"], "ConcatTarget")
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["arr[0]", "out"])
+
+    def test_continuous_right_streaming_accepts_cell_slice(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [1:0] out); "
+            "logic [3:0] arr [0:1]; assign {>>{arr[0][3:2], out}} = source; "
+            "endmodule")
+        target = envelope["design"]["modules"][0]["processes"][0]["target"]
+        self.assertEqual(target["kind"], "ConcatTarget")
+        self.assertEqual(target["parts"][0]["kind"], "PartSel")
+
 
 if __name__ == "__main__":
     unittest.main()

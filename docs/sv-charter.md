@@ -1125,6 +1125,17 @@ leaves remain loud; no aggregate store or scheduler behavior is introduced.
 This is a semantic-tier fixture and does not claim a legacy corpus gain or
 simulator agreement on this host.
 
+### Symbolic continuous streaming targets over fixed cells — 2026-10-20
+
+Continuous right-streaming assignments now use the same symbolic
+`ConcatTarget` lowering as procedural streams when every leaf is a constant
+packed window or a constant cell of a one-dimensional fixed-unpacked integral
+array. `fixed_array_stream_continuous` checks one sampled five-bit source split
+into `arr[0]` and a scalar output, with a second continuous readback through
+the existing comb-settle path. Dynamic/effectful leaves, left/sized/nested
+streams, aggregate storage and overlapping windows remain loud; no second
+scheduler is introduced and no simulator-agreement claim is made.
+
 ### Nested packed-struct field windows — 2026-10-19
 
 Member reads and writes through untagged nested packed structs now flatten

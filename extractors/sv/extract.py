@@ -2627,6 +2627,12 @@ def _streaming_target_assignment(sm, expr):
             "width": total_width,
             "parts": parts,
         }
+        windows = _symbolic_target_windows(target)
+        if windows is None or any(
+                old_base == base and not (high < old_low or old_high < low)
+                for i, (base, low, high) in enumerate(windows)
+                for old_base, old_low, old_high in windows[:i]):
+            return None
         return {
             "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
             "span": node_span(sm, expr),
@@ -2661,6 +2667,7 @@ def _symbolic_streaming_target_assignment(sm, expr):
             return None
         parts = []
         total_width = 0
+        leaf_two_state = []
         for stream in lhs.streams:
             operand = getattr(stream, "operand", None)
             if operand is None:
@@ -2685,6 +2692,10 @@ def _symbolic_streaming_target_assignment(sm, expr):
             width = width_of(target)
             if width is None or width <= 0:
                 return None
+            try:
+                leaf_two_state.append(not operand.type.isFourState)
+            except Exception:
+                return None
             parts.append(target)
             total_width += width
         if not parts:
@@ -2695,6 +2706,14 @@ def _symbolic_streaming_target_assignment(sm, expr):
                 or width_of(value) is None or width_of(value) < total_width
                 or not _case_expression_ok(value)):
             return None
+        # A ConcatTarget writes one sampled vector, so it cannot represent
+        # per-leaf 4-state-to-2-state conversion.  Homogeneous leaves are
+        # exact; mixed leaves stay loud until the target representation grows
+        # a per-window conversion marker.
+        if any(leaf_two_state) and not all(leaf_two_state):
+            return None
+        if all(leaf_two_state):
+            value = squash2_wrap(value, total_width)
         target = {
             "kind": "ConcatTarget",
             "span": node_span(sm, lhs),
@@ -3500,21 +3519,31 @@ def convert_continuous_assign(sm, m):
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
     if e.op is not None or e.timingControl is not None or e.isNonBlocking:
         return unsupported(sm, m, "ContinuousAssignSymbol:form")
-    target, ok = select_target(sm, e.left)
-    if _SYM is not None and type(e.left).__name__ == "ConcatenationExpression":
-        parts = _symbolic_concat_target(sm, e.left)
-        if parts is None:
+    symbolic_streaming = (_SYM is not None
+            and type(e.left).__name__ == "StreamingConcatenationExpression")
+    if symbolic_streaming:
+        lowered = _symbolic_streaming_target_assignment(sm, e)
+        if lowered is None:
             return unsupported(sm, m, "AssignmentExpression:target")
-        target = {
-            "kind": "ConcatTarget",
-            "span": node_span(sm, e.left),
-            "width": e.left.type.bitWidth,
-            "parts": parts,
-        }
+        target = lowered["target"]
+        value = lowered["value"]
         ok = True
-    if not ok:
-        return unsupported(sm, m, "AssignmentExpression:target")
-    value = convert_expr(sm, e.right)
+    else:
+        target, ok = select_target(sm, e.left)
+        if _SYM is not None and type(e.left).__name__ == "ConcatenationExpression":
+            parts = _symbolic_concat_target(sm, e.left)
+            if parts is None:
+                return unsupported(sm, m, "AssignmentExpression:target")
+            target = {
+                "kind": "ConcatTarget",
+                "span": node_span(sm, e.left),
+                "width": e.left.type.bitWidth,
+                "parts": parts,
+            }
+            ok = True
+        if not ok:
+            return unsupported(sm, m, "AssignmentExpression:target")
+        value = convert_expr(sm, e.right)
     if (_SYM is not None and target.get("kind") == "ConcatTarget"):
         if getattr(e.right.type, "bitWidth", None) != target.get("width"):
             return unsupported(sm, m, "AssignmentExpression:target")
@@ -3526,7 +3555,7 @@ def convert_continuous_assign(sm, m):
         if _converted_ident_names(value) & target_names:
             return unsupported(sm, m, "AssignmentExpression:target")
     try:
-        if not e.left.type.isFourState:
+        if not symbolic_streaming and not e.left.type.isFourState:
             value = squash2_wrap(value, e.left.type.bitWidth)
     except Exception:
         pass

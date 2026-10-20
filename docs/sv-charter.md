@@ -2682,6 +2682,15 @@ Tagged, nested, dynamic, parameter-dependent, noncanonical and effectful union
 paths remain loud; no driver resolution, aggregate store or scheduler is
 added.
 
+### Symbolic noncanonical packed-member subranges — 2026-10-20
+
+Literal simple subranges of packed members now map declaration labels to outer
+vector offsets even for noncanonical member ranges when the selected labels
+follow the declared direction. `noncanonical_member_subrange` checks a
+`[10:9]` slice inside `[10:7]` with four-state propagation. Direction-
+mismatched, dynamic, indexed and effectful nested selections remain loud; no
+aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

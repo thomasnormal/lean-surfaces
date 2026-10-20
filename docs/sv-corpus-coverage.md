@@ -958,6 +958,11 @@ alternate field. Alias visibility and x propagation are preserved; tagged,
 nested, dynamic, parameter-dependent, noncanonical and effectful union paths
 remain loud.
 
+The `noncanonical_member_subrange` fixture checks a simple `[10:9]` slice of a
+`[10:7]` packed-struct member. Declaration labels flatten to the corresponding
+outer window with x propagation; direction-mismatched, dynamic, indexed and
+effectful nested selections remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

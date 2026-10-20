@@ -397,6 +397,12 @@ over their shared vector; `packed_union_indexed` pins both directions and
 alternate-field aliasing. Tagged, nested, dynamic, parameter-dependent,
 noncanonical and effectful union paths remain unsupported.
 
+Literal simple subranges of packed members also normalize their declaration
+labels to outer-vector offsets, including noncanonical member ranges when the
+selected labels preserve the declared direction; `noncanonical_member_subrange`
+pins this case. Direction-mismatched, dynamic, indexed and effectful nested
+selections remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

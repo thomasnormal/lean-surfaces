@@ -35,8 +35,10 @@ The extractor agent owns `docs/sv-envelope-schema.md` documenting the exact node
 vocabulary (analogous to the Python schema doc); the Lean ingester is written
 against that doc.
 
-Pure constant `$clog2` calls are folded by the extractor to signed 32-bit
-literal values; dynamic or effectful calls remain loud.
+Pure known constant `$clog2` calls are folded to signed 32-bit literals.
+Runtime pure integral calls use the self-check `Clog2` expression and the
+shared numeric helper; unknown arguments and effects remain loud. See
+[the runtime contract](sv-runtime-clog2.md).
 Fixed integral `$size`, `$high`, `$left`, `$right`, `$low`, `$increment`,
 `$dimensions` and `$unpacked_dimensions` queries are likewise folded from
 declared types. Fixed packed/unpacked ranges retain their declared order,

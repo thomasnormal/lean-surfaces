@@ -459,10 +459,6 @@
     17
    ],
    [
-    "CallExpression:$clog2:dynamic",
-    16
-   ],
-   [
     "Generate:invalid-array",
     16
    ],
@@ -960,8 +956,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4057,
-   "partial": 17912,
+   "clean": 4070,
+   "partial": 17899,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1022,7 +1018,7 @@
     52
    ],
    "simulation": [
-    3491,
+    3504,
     18671
    ],
    "simulation elaboration": [
@@ -1387,9 +1383,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 199,
+    "clean": 212,
     "error": 0,
-    "partial": 626,
+    "partial": 613,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0

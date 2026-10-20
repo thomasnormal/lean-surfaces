@@ -794,10 +794,11 @@ The legacy/self-check extractor also folds a pure constant `$clog2` call
 `fixed_clog2: true` provenance. The bound argument must be one integral,
 effect-free expression that slang has evaluated during elaboration; zero and
 one produce zero, and the argument is treated as unsigned, so a 32-bit `-1`
-produces 32. Dynamic, effectful, malformed and nonintegral calls remain
-`Unsupported`, and a frontend error in a compilation containing an admitted
-call adds `$clog2:invalid-compilation`. No new runtime or scheduler rule is
-introduced.
+produces 32. The argument must be fully known. Other pure integral calls
+use the runtime `Clog2` node described below; unknown arguments refuse during
+evaluation. Effectful, malformed and nonintegral calls remain `Unsupported`.
+A frontend error or declaration-redefinition conflict in a compilation
+containing an admitted call adds `$clog2:invalid-compilation`.
 
 It also folds `$size`, `$high`, `$left`, `$right`, `$low`, `$increment`,
 `$dimensions` and `$unpacked_dimensions` for fixed integral types and fixed
@@ -1376,3 +1377,14 @@ source spans are retained. Expansion and source/compilation checks precede
 admission. Corrected wide unsized based X/Z literal conversions carry
 `unsized_based_widening: true`; affected elaboration constants refuse.
 Symbolic `Repl` remains unchanged. See [the contract](sv-replication.md).
+
+
+### Legacy runtime ceiling logarithm
+
+`Clog2` has `kind`, `span`, `width: 32`, `signed: true`, `operand` and
+`runtime_clog2: true`. The operand retains its own integral width. The loader
+checks the signed 32-bit result shape; the evaluator reads the operand once
+and reuses `LeanModels.Sv.clog2` on its unsigned finite-vector value. Unknown
+bits refuse. Existing correct `fixed_clog2` literal folding remains; affected
+unknown elaboration constants refuse rather than use a frontend approximation.
+Symbolic `SysCall` is unchanged. See [the contract](sv-runtime-clog2.md).

@@ -494,6 +494,8 @@ slice supersedes the older input-port refusal below.
 
 ### Constant `$clog2` calls — 2026-10-14
 
+The runtime admission dated 2026-10-20 below extends this historical tier.
+
 The legacy/self-check extractor now admits pure constant `$clog2` calls
 (IEEE 1800-2023 §20.8.1) by folding slang's elaborated result to a signed
 32-bit `Literal` carrying `fixed_clog2: true`. Zero and one return zero, and
@@ -3667,3 +3669,29 @@ dynamic-string and elaboration-constant refusals. Five kernel proofs certify
 the actual parsed live RHS, blocking store, NBA capture, post-change visibility
 and zero-member identity. See [the contract](sv-replication.md) and
 [the fixtures](../Examples/system-verilog/replication/README.md).
+
+
+### Runtime integral `$clog2` — 2026-10-20
+
+IEEE §20.8.1 pure integral calls now evaluate live finite-width operands as
+unsigned bits and reuse the existing `Param.lean` ceiling-log2 definition.
+Zero/one, powers/neighbors, signed operands and arbitrary supported vector
+widths return a signed 32-bit integer; assignment converts afterward. Nested
+calls and existing loops/cases/patterns/replication/cells compose. Correct
+constant literals and symbolic extraction stay unchanged. No scheduler or
+storage primitive is added.
+
+Runtime X/Z, effects and unsupported types stay loud. Enclosing folds and
+zero replication cannot erase an unresolved numeric call; affected frontend
+parameter/enum/generate constants and selectors refuse rather than use an
+approximation. Independent tools disagree on unknown arguments, so no numeric
+conformance claim is made for them. Unevaluated `$bits` stays a type query.
+
+The paired 22,035-path census rises 4,057→4,070 clean (+13), without losses.
+All 13 gains execute completely and match independent transcripts under both
+region oracles; all 4,057 previously clean extracted designs remain identical.
+Four authored sources match both oracles, with four further deliberate
+refusals. Five source-bound kernel proofs cover current reads, blocking
+storage, captured NBA values, post-change visibility and unknown refusal.
+See [the contract](sv-runtime-clog2.md) and
+[the fixtures](../Examples/system-verilog/runtime_clog2/README.md).

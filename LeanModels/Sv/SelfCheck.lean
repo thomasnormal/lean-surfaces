@@ -1,6 +1,7 @@
 import Lean
 import LeanModels.Sv.Semantics
 import LeanModels.Sv.Sem2
+import LeanModels.Sv.Param
 import LeanModels.Sv.FormattedInput
 import LeanModels.Sv.Plusargs
 
@@ -167,6 +168,13 @@ def evalBitQuery (query : BitQuery) (value : LVec) (controls : List LVec) : LVec
   | .onehot0 => .ofLogic (if countSelected value [.l1] ≤ 1 then .l1 else .l0)
   | .isunknown => .ofLogic (if countSelected value [.lx, .lz] > 0 then .l1 else .l0)
 
+/-- IEEE 20.8.1: read the finite vector as unsigned and reuse the shared
+ceiling logarithm. Unknown arguments stay loud; no frontend approximation. -/
+def evalClog2 (value : LVec) : Res LVec :=
+  match value.toNat? with
+  | some n => .ok (.ofNat 32 (LeanModels.Sv.clog2 n))
+  | none => .unsupported "$clog2 requires a fully known integral argument"
+
 inductive SExpr where
   | m0 (e : Expr)
   | unary (op : UnaryOp) (a : SExpr)
@@ -186,6 +194,7 @@ inductive SExpr where
   | concat (parts : Array SExpr)
   | selectRead (width : Nat) (descending indexSigned : Bool) (value index : SExpr)
   | bitQuery (query : BitQuery) (operand : SExpr) (controls : Array SExpr)
+  | clog2 (operand : SExpr)
 deriving Repr, BEq, Inhabited
 
 /-- Collapse-aware constructors: keep pure-M0 subtrees as single `.m0`
@@ -534,6 +543,8 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         let value ← evalSExpr fuel st operand
         let selected ← evalSExprs fuel st controls.toList
         return evalBitQuery query value selected
+    | .clog2 operand => do
+        evalClog2 (← evalSExpr fuel st operand)
     | .ternary c t f => do
         let cv ← evalSExpr fuel st c
         let tv ← evalSExpr fuel st t
@@ -1103,6 +1114,10 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       return .signedResize (← getNatF j "width") (← parseSExpr (← getF j "operand"))
   | "Squash2" =>
       return .squash2 (← parseSExpr (← getF j "operand"))
+  | "Clog2" =>
+      if (← getNatF j "width") != 32 || !(← getBoolF j "signed") then
+        throw "clog2 result must be a signed 32-bit int"
+      return .clog2 (← parseSExpr (← getF j "operand"))
   | "BitQuery" =>
       let query ← match ← getStrF j "op" with
         | "$countbits" => pure BitQuery.countbits

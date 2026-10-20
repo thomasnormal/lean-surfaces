@@ -1,0 +1,128 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/runtime_clog2/constant_unknown.sv",
+  "source_sha256": "c3471514f62741b154e1f8d0b2d36cc7595b0cab95158510e6f678729159b400",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 6,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 2,
+              "col": 3,
+              "end_line": 5,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 2,
+                "col": 11,
+                "end_line": 5,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 3,
+                    "col": 5,
+                    "end_line": 3,
+                    "end_col": 64
+                  },
+                  "name": "$display",
+                  "format": "constant %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Clog2",
+                      "span": {
+                        "line": 3,
+                        "col": 34,
+                        "end_line": 3,
+                        "end_col": 47
+                      },
+                      "width": 32,
+                      "signed": true,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 3,
+                          "col": 41,
+                          "end_line": 3,
+                          "end_col": 46
+                        },
+                        "width": 8,
+                        "bits": "xxxxxxxx"
+                      },
+                      "runtime_clog2": true
+                    },
+                    {
+                      "kind": "Clog2",
+                      "span": {
+                        "line": 3,
+                        "col": 49,
+                        "end_line": 3,
+                        "end_col": 62
+                      },
+                      "width": 32,
+                      "signed": true,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 3,
+                          "col": 56,
+                          "end_line": 3,
+                          "end_col": 61
+                        },
+                        "width": 8,
+                        "bits": "zzzzzzzz"
+                      },
+                      "runtime_clog2": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 4,
+                    "col": 5,
+                    "end_line": 4,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

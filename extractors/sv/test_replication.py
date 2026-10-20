@@ -76,8 +76,8 @@ class Replication(unittest.TestCase):
             self.assertIn('Replication:effects',walls(d))
 
     def test_zero_count_does_not_discard_unsupported_pure_operands(self):
-        d=lower("module top;logic[7:0]x={{0{{$clog2(2)}}},8'ha5};endmodule")
-        # $clog2 has a separate source contract, so the zero cannot hide it.
+        d=lower("module top;logic[7:0]x={{0{{$rtoi(2.0)}}},8'ha5};endmodule")
+        # Unsupported math calls must remain visible even at count zero.
         self.assertTrue(walls(d))
 
     def test_nonconstant_negative_unknown_and_standalone_zero_are_loud(self):

@@ -205,7 +205,7 @@ class FixedBitQueries(unittest.TestCase):
                 self.assert_query_refused(query_source(expression), require_valid=False)
 
     def test_general_system_and_function_calls_stay_loud(self):
-        self.assert_query_refused(query_source("$clog2(subject)",
+        self.assert_query_refused(query_source("$ln(subject)",
                                               "logic [7:0] subject; "))
         declarations = "function automatic int fixed_value(); fixed_value=4; endfunction "
         self.assert_query_refused(query_source("fixed_value()", declarations))

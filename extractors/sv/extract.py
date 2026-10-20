@@ -436,6 +436,9 @@ def _contains_guarded_expression(expression, *, guard_calls):
 
     def inspect(node):
         nonlocal found
+        if guard_calls and _unresolved_clog2(node):
+            found = True
+            return VisitAction.Skip
         if (type(node).__name__ == "InsideExpression"
                 or (type(node).__name__ == "BinaryExpression"
                     and node.op in (BinaryOperator.LogicalImplication,
@@ -462,6 +465,11 @@ def _bits_argument_source_ok(expression):
     def inspect(node):
         nonlocal pure
         kind = type(node).__name__
+        if _SYM is None and _clog2_call(node):
+            pure = pure and len(node.arguments) == 1 and all(
+                argument.type.isIntegral and _bits_argument_source_ok(argument)
+                for argument in node.arguments)
+            return VisitAction.Skip
         if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
             return VisitAction.Skip
         if kind == "CallExpression" and _signing_call(node):
@@ -665,7 +673,7 @@ def _clog2_call(expression):
 
 
 def _convert_clog2(sm, expression):
-    """Fold a pure, frontend-bound `$clog2` call to its signed int result."""
+    """Preserve the operand width; fold only a fully known bound argument."""
     try:
         arguments = list(expression.arguments)
     except Exception:
@@ -673,14 +681,39 @@ def _convert_clog2(sm, expression):
     if len(arguments) != 1:
         return unsupported(sm, expression, "CallExpression:$clog2:arity")
     argument = arguments[0]
-    if not argument.type.isIntegral or not _case_source_expression_ok(argument):
+    width, _, reason = type_width_2s(argument.type)
+    if (reason is not None or width is None
+            or expression.type.bitWidth != 32 or not expression.type.isSigned
+            or not _case_source_expression_ok(argument)):
         return unsupported(sm, expression, "CallExpression:$clog2:argument")
-    literal = const_literal(sm, expression)
-    if literal is None:
-        return unsupported(sm, expression, "CallExpression:$clog2:dynamic")
-    literal["signed"] = True
-    literal["fixed_clog2"] = True
-    return literal
+    literal = const_literal(sm, expression) if not _unresolved_clog2(expression) else None
+    if literal is not None:
+        literal["signed"] = True
+        literal["fixed_clog2"] = True
+        return literal
+    operand = convert_expr(sm, argument)
+    if width_of(operand) != width or not _case_expression_ok(operand):
+        return unsupported(sm, expression, "CallExpression:$clog2:argument")
+    return {"kind": "Clog2", "span": node_span(sm, expression), "width": 32,
+            "signed": True, "operand": operand, "runtime_clog2": True}
+
+
+def _unresolved_clog2(expression):
+    if _SYM is not None or not _clog2_call(expression):
+        return False
+    arguments = list(expression.arguments)
+    return len(arguments) != 1 or _constant_dimension_selector(arguments[0]) is None
+
+
+def _contains_unresolved_clog2(expression):
+    found = False
+    def inspect(node):
+        nonlocal found
+        if _fixed_bits_query_width(node) is not None:
+            return VisitAction.Skip  # The argument is inspected for type only.
+        found = found or _unresolved_clog2(node)
+    expression.visit(inspect)
+    return found
 
 
 def _dimension_query_call(expression):
@@ -743,7 +776,8 @@ def _fixed_query_dimensions(value_type):
 
 def _constant_dimension_selector(expression):
     """Use bound constants or static leaves, never an evaluation context."""
-    if _contains_unsized_based_widening(expression):
+    if (_contains_unsized_based_widening(expression)
+            or _contains_unresolved_clog2(expression)):
         return None
     constant = expression.constant
     if constant is not None:
@@ -2026,8 +2060,8 @@ def _convert_unsized_based_widening(sm, expression):
     }, expression.type)
 
 
-def _unsized_based_constant_gap(comp):
-    """Do not consume a known incorrect parameter/enum/generate constant."""
+def _constant_context_gap(comp, contains):
+    """Inspect bound expressions before consuming elaboration constants."""
     found = False
     def inspect(node):
         nonlocal found
@@ -2043,12 +2077,17 @@ def _unsized_based_constant_gap(comp):
         elif kind == "SymbolKind.GenerateBlockArray":
             expressions = [node.initialExpression, node.stopExpression, node.iterExpression]
         for expression in expressions:
-            if expression is not None and _contains_unsized_based_widening(expression):
+            if expression is not None and contains(expression):
                 found = True
     comp.getRoot().visit(inspect)
     for unit in comp.getCompilationUnits():
         unit.visit(inspect)
     return found
+
+
+def _unsized_based_constant_gap(comp):
+    """Do not consume a known incorrect parameter/enum/generate constant."""
+    return _constant_context_gap(comp, _contains_unsized_based_widening)
 
 
 def _convert_named_value_expr(sm, e):
@@ -2521,6 +2560,8 @@ def _convert_replication_expr(sm, expression):
         return unsupported(sm, expression, "Replication:effects")
     group = convert_expr(sm, expression.concat)
     # Even at count zero, unsupported/effectful source operands stay visible.
+    if count == 0 and _contains_unresolved_clog2(expression.concat):
+        return unsupported(sm, expression, "Replication:operand")
     if not _case_expression_ok(group) or width_of(group) != group_width:
         return unsupported(sm, expression, "Replication:operand")
     if count and _expression_node_cost(group, 16384 // count) > 16384 // count:
@@ -3986,6 +4027,11 @@ def _case_source_expression_ok(expression, *, packed_members=False):
     def check(node):
         nonlocal pure
         kind = type(node).__name__
+        if _SYM is None and _clog2_call(node):
+            pure = pure and len(node.arguments) == 1 and all(
+                _case_source_expression_ok(argument, packed_members=packed_members)
+                for argument in node.arguments)
+            return VisitAction.Skip
         if (_SYM is None and kind == "HierarchicalValueExpression"
                 and (node.symbol in _ELAB_HIER_VALUES or node.symbol in _ELAB_PARAMETERS)):
             return
@@ -5680,6 +5726,9 @@ def _convert_design(sm, comp, packages):
     if _unsized_based_constant_gap(comp):
         others.append(unsupported(sm, comp, "UnsizedBasedLiteral:constant-context",
                                   "frontend widening of an unsized X/Z elaboration constant"))
+    if _SYM is None and _constant_context_gap(comp, _contains_unresolved_clog2):
+        others.append(unsupported(sm, comp, "$clog2:constant-context",
+                                  "unresolved or unknown clog2 elaboration argument"))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",
@@ -5704,10 +5753,13 @@ def _convert_design(sm, comp, packages):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "$bits:invalid-compilation",
                                   "frontend rejected source containing a fixed-size query"))
-    if (any(contains_fixed_clog2(module) for module in modules)
-            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+    if (any(contains_fixed_clog2(module) or _node_marker(module, "runtime_clog2")
+            for module in modules)
+            and any(diagnostic.isError() or str(diagnostic.code) in (
+                        "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
+                    for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "$clog2:invalid-compilation",
-                                  "frontend rejected source containing a constant clog2 call"))
+                                  "frontend rejected source containing a clog2 call"))
     if (any(contains_fixed_dimension_query(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "DimensionQuery:invalid-compilation",

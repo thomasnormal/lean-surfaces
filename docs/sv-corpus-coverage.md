@@ -22,27 +22,27 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
-## Integral replication — 2026-10-20
+## Runtime integral `$clog2` — 2026-10-20
 
-IEEE §11.4.12.1 pure integral replication now lowers self-determined groups
-to existing concatenations. Nested groups, X/Z, string bytes, unsigned results,
-later assignment resizing and legal zero members retain their source meaning.
-Effects, unsupported operands/types, invalid compilation and expansion bounds
-stay loud. The comparison also corrected §5.7.1 unsized based X/Z widening;
-affected frontend elaboration constants refuse explicitly.
-See [the contract](sv-replication.md).
+IEEE §20.8.1 calls now evaluate pure live integral operands at their own
+width, interpreted as unsigned, through the existing ceiling-log2 helper.
+The result is signed 32-bit; later assignment conversion is unchanged. Correct
+constant literals and symbolic extraction remain. Runtime unknowns, effects,
+unsupported types and invalid source stay loud; folds and elaboration cannot
+replace unresolved calls with approximate frontend constants.
+See [the contract](sv-runtime-clog2.md).
 
-The paired **22,035** paths gain **20 clean files** without losses:
-**4,037 → 4,057 clean**, **17,932 → 17,912 partial**, **66 include skips**,
-zero extraction errors. **All 20 gains match complete independent transcripts
-under both region oracles**, including the initially divergent wide X/Z row.
-All 4,037 previously clean extracted designs remain identical. Seven authored
-complete transcripts match both oracles; three further sources preserve
-refusals. Five source-bound kernel proofs establish live reads, blocking
-stores, NBA capture, post-change commit visibility and zero-member identity.
+The paired **22,035** paths gain **13 clean files** without losses:
+**4,057 → 4,070 clean**, **17,912 → 17,899 partial**, **66 include skips**,
+zero extraction errors. **All 13 gains match complete independent transcripts
+under both region oracles**. All 4,057 previously clean extracted designs
+remain identical. Four authored complete transcripts match both oracles;
+four further sources preserve refusals. Five source-bound kernel proofs
+establish live reads, blocking storage, NBA capture, post-change visibility
+and refusal before inventing unknown numeric results.
 
-The following table measures extraction, including negative and compile-only
-files, rather than whole-corpus execution conformance.
+The table measures extraction, including negative and compile-only files,
+rather than whole-corpus execution conformance.
 
 | Chapter | Total | Clean | Partial | Include skips |
 |---|---:|---:|---:|---:|
@@ -63,7 +63,7 @@ files, rather than whole-corpus execution conformance.
 | 17 | 512 | 0 | 512 | 0 |
 | 18 | 851 | 1 | 815 | 35 |
 | 19 | 767 | 0 | 767 | 0 |
-| 20 | 825 | 199 | 626 | 0 |
+| 20 | 825 | 212 | 613 | 0 |
 | 21 | 900 | 84 | 816 | 0 |
 | 22 | 572 | 382 | 162 | 28 |
 | 23 | 851 | 59 | 792 | 0 |
@@ -84,6 +84,27 @@ files, rather than whole-corpus execution conformance.
 | 38 | 340 | 204 | 136 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 40 | 47 | 0 |
+
+## Integral replication — 2026-10-20
+
+IEEE §11.4.12.1 pure integral replication now lowers self-determined groups
+to existing concatenations. Nested groups, X/Z, string bytes, unsigned results,
+later assignment resizing and legal zero members retain their source meaning.
+Effects, unsupported operands/types, invalid compilation and expansion bounds
+stay loud. The comparison also corrected §5.7.1 unsized based X/Z widening;
+affected frontend elaboration constants refuse explicitly.
+See [the contract](sv-replication.md).
+
+The paired **22,035** paths gain **20 clean files** without losses:
+**4,037 → 4,057 clean**, **17,932 → 17,912 partial**, **66 include skips**,
+zero extraction errors. **All 20 gains match complete independent transcripts
+under both region oracles**, including the initially divergent wide X/Z row.
+All 4,037 previously clean extracted designs remain identical. Seven authored
+complete transcripts match both oracles; three further sources preserve
+refusals. Five source-bound kernel proofs establish live reads, blocking
+stores, NBA capture, post-change commit visibility and zero-member identity.
+
+These counts measure extraction, including negative and compile-only files.
 
 ## Integral assignment patterns — 2026-10-20
 

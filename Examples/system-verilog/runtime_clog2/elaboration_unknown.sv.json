@@ -1,0 +1,102 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/runtime_clog2/elaboration_unknown.sv",
+  "source_sha256": "a15af3c5e30a1fa77f901e6ab0c269c99fe95909e67a817f15e47263e8190652",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 6,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 4,
+                    "col": 5,
+                    "end_line": 4,
+                    "end_col": 40
+                  },
+                  "name": "$display",
+                  "format": "elaboration %0d",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 4,
+                        "col": 33,
+                        "end_line": 4,
+                        "end_col": 38
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000000",
+                      "signed": true,
+                      "elaboration_lowered": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [],
+        "elaboration_lowered": true
+      }
+    ],
+    "others": [
+      {
+        "kind": "Unsupported",
+        "span": null,
+        "sv_kind": "$clog2:constant-context",
+        "text": "unresolved or unknown clog2 elaboration argument"
+      }
+    ]
+  },
+  "lean_blocks": []
+}

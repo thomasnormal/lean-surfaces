@@ -1,0 +1,675 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/runtime_clog2/composition.sv",
+  "source_sha256": "1709f22fddc5a12151c89153ac2a301f44862f9563dff8c658dc9fa15e8d722c",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 10,
+              "end_line": 3,
+              "end_col": 20
+            },
+            "name": "pair_value",
+            "width": 16,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 20
+            },
+            "name": "value",
+            "width": 16,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 23
+            },
+            "name": "repeated",
+            "width": 16,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 7,
+              "end_line": 6,
+              "end_col": 24
+            },
+            "name": "table_values[0]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 7,
+              "end_line": 6,
+              "end_col": 24
+            },
+            "name": "table_values[1]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 7,
+              "end_line": 6,
+              "end_col": 24
+            },
+            "name": "table_values[2]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 7,
+              "col": 3,
+              "end_line": 18,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 7,
+                "col": 11,
+                "end_line": 18,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 17
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 10
+                    },
+                    "width": 16,
+                    "name": "value"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 13,
+                      "end_line": 8,
+                      "end_col": 16
+                    },
+                    "width": 16,
+                    "bits": "0000000100000000"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 69
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 5,
+                      "end_line": 9,
+                      "end_col": 15
+                    },
+                    "width": 16,
+                    "name": "pair_value"
+                  },
+                  "value": {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 9,
+                      "col": 18,
+                      "end_line": 9,
+                      "end_col": 68
+                    },
+                    "width": 16,
+                    "parts": [
+                      {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 9,
+                          "col": 22,
+                          "end_line": 9,
+                          "end_col": 39
+                        },
+                        "width": 8,
+                        "operand": {
+                          "kind": "Clog2",
+                          "span": {
+                            "line": 9,
+                            "col": 25,
+                            "end_line": 9,
+                            "end_col": 38
+                          },
+                          "width": 32,
+                          "signed": true,
+                          "operand": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 9,
+                              "col": 32,
+                              "end_line": 9,
+                              "end_col": 37
+                            },
+                            "width": 16,
+                            "name": "value"
+                          },
+                          "runtime_clog2": true
+                        }
+                      },
+                      {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 9,
+                          "col": 42,
+                          "end_line": 9,
+                          "end_col": 67
+                        },
+                        "width": 8,
+                        "operand": {
+                          "kind": "Clog2",
+                          "span": {
+                            "line": 9,
+                            "col": 45,
+                            "end_line": 9,
+                            "end_col": 66
+                          },
+                          "width": 32,
+                          "signed": true,
+                          "operand": {
+                            "kind": "Clog2",
+                            "span": {
+                              "line": 9,
+                              "col": 52,
+                              "end_line": 9,
+                              "end_col": 65
+                            },
+                            "width": 32,
+                            "signed": true,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 9,
+                                "col": 59,
+                                "end_line": 9,
+                                "end_col": 64
+                              },
+                              "width": 16,
+                              "name": "value"
+                            },
+                            "runtime_clog2": true
+                          },
+                          "runtime_clog2": true
+                        }
+                      }
+                    ],
+                    "assignment_pattern_lowered": true,
+                    "source_pattern": "StructuredAssignmentPatternExpression"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 39
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 13
+                    },
+                    "width": 16,
+                    "name": "repeated"
+                  },
+                  "value": {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 10,
+                      "col": 16,
+                      "end_line": 10,
+                      "end_col": 38
+                    },
+                    "width": 16,
+                    "parts": [
+                      {
+                        "kind": "Concat",
+                        "span": {
+                          "line": 10,
+                          "col": 18,
+                          "end_line": 10,
+                          "end_col": 37
+                        },
+                        "width": 8,
+                        "parts": [
+                          {
+                            "kind": "SignedResize",
+                            "span": {
+                              "line": 10,
+                              "col": 19,
+                              "end_line": 10,
+                              "end_col": 36
+                            },
+                            "width": 8,
+                            "operand": {
+                              "kind": "Clog2",
+                              "span": {
+                                "line": 10,
+                                "col": 22,
+                                "end_line": 10,
+                                "end_col": 35
+                              },
+                              "width": 32,
+                              "signed": true,
+                              "operand": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 10,
+                                  "col": 29,
+                                  "end_line": 10,
+                                  "end_col": 34
+                                },
+                                "width": 16,
+                                "name": "value"
+                              },
+                              "runtime_clog2": true
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "Concat",
+                        "span": {
+                          "line": 10,
+                          "col": 18,
+                          "end_line": 10,
+                          "end_col": 37
+                        },
+                        "width": 8,
+                        "parts": [
+                          {
+                            "kind": "SignedResize",
+                            "span": {
+                              "line": 10,
+                              "col": 19,
+                              "end_line": 10,
+                              "end_col": 36
+                            },
+                            "width": 8,
+                            "operand": {
+                              "kind": "Clog2",
+                              "span": {
+                                "line": 10,
+                                "col": 22,
+                                "end_line": 10,
+                                "end_col": 35
+                              },
+                              "width": 32,
+                              "signed": true,
+                              "operand": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 10,
+                                  "col": 29,
+                                  "end_line": 10,
+                                  "end_col": 34
+                                },
+                                "width": 16,
+                                "name": "value"
+                              },
+                              "runtime_clog2": true
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "replication_lowered": true,
+                    "replication_count": 2
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 31
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 11,
+                        "col": 5,
+                        "end_line": 11,
+                        "end_col": 31
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 5,
+                          "end_line": 11,
+                          "end_col": 17
+                        },
+                        "width": 32,
+                        "name": "table_values[0]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 22,
+                            "end_line": 11,
+                            "end_col": 24
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000001010"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 11,
+                        "col": 5,
+                        "end_line": 11,
+                        "end_col": 31
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 5,
+                          "end_line": 11,
+                          "end_col": 17
+                        },
+                        "width": 32,
+                        "name": "table_values[1]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 25,
+                            "end_line": 11,
+                            "end_col": 27
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000010100"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 11,
+                        "col": 5,
+                        "end_line": 11,
+                        "end_col": 31
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 11,
+                          "col": 5,
+                          "end_line": 11,
+                          "end_col": 17
+                        },
+                        "width": 32,
+                        "name": "table_values[2]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 28,
+                            "end_line": 11,
+                            "end_col": 30
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000011110"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 83
+                  },
+                  "name": "$display",
+                  "format": "composed %h %h %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 36,
+                        "end_line": 12,
+                        "end_col": 46
+                      },
+                      "width": 16,
+                      "name": "pair_value"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 48,
+                        "end_line": 12,
+                        "end_col": 56
+                      },
+                      "width": 16,
+                      "name": "repeated"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 58,
+                        "end_line": 12,
+                        "end_col": 81
+                      },
+                      "width": 32,
+                      "name": "table_values[2]",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false,
+                    true
+                  ]
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 12
+                  },
+                  "case_lowered": true,
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 5,
+                      "end_line": 16,
+                      "end_col": 12
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Clog2",
+                      "span": {
+                        "line": 13,
+                        "col": 11,
+                        "end_line": 13,
+                        "end_col": 24
+                      },
+                      "width": 32,
+                      "signed": true,
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 18,
+                          "end_line": 13,
+                          "end_col": 23
+                        },
+                        "width": 16,
+                        "name": "value"
+                      },
+                      "runtime_clog2": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 14,
+                        "col": 7,
+                        "end_line": 14,
+                        "end_col": 8
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000001000"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 10,
+                      "end_line": 14,
+                      "end_col": 31
+                    },
+                    "name": "$display",
+                    "format": "selected",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 15,
+                      "col": 16,
+                      "end_line": 15,
+                      "end_col": 39
+                    },
+                    "name": "$display",
+                    "format": "unexpected",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

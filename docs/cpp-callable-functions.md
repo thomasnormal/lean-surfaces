@@ -44,7 +44,7 @@ The return-expression profile is:
   an admitted operand, with a builtin integral destination; or
 - a unary integral `+`, `-`, `~` or `!` expression over an admitted operand; or
 - a prefix or postfix `++`/`--` over a direct non-boolean integral parameter
-  reference; or
+  or admitted-local reference; or
 - a `ConditionalOperator` with a builtin integral condition and two branches
   whose represented types agree; or
 - a comma expression whose builtin integral result type is the right operand's
@@ -89,8 +89,9 @@ parameter or admitted-local reference must resolve to one of the function's
 own declaration handles. Missing rows, mismatched handles, changed child order, unsupported
 casts, non-integral operators, unsequenced side effects in ordinary binary
 operands and
-conflicting evidence all refuse. Increment and decrement are not generalized
-to locals, members, calls or overloaded operators. Conditional expressions with
+conflicting evidence all refuse. Increment and decrement require a directly bound
+parameter or admitted local; members, calls and overloaded operators remain outside
+this profile. Conditional expressions with
 an omitted middle operand, unrepresented conversions or mismatched branch
 types remain loud refusals.
 

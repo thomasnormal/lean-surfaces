@@ -787,6 +787,146 @@ int switch_break(int value) {
             guards.append("#guard (" + admission + ").isOk")
         self.assert_accepts(json.dumps(probe), "\n".join(guards))
 
+    def test_callable_increment_promotions_match_compiled_clang(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang, "selected compiler must exist")
+        probe_library = pathlib.Path(library).resolve()
+        self.assertTrue(probe_library.is_file(), "selected probe library must exist")
+        types = (
+            ("char", "char", True, 8),
+            ("signed char", "schar", True, 8),
+            ("unsigned char", "uchar", False, 8),
+            ("short", "short", True, 16),
+            ("unsigned short", "ushort", False, 16),
+            ("int", "int", True, 32),
+            ("unsigned int", "uint", False, 32),
+            ("long", "long", True, 64),
+            ("unsigned long", "ulong", False, 64),
+            ("long long", "llong", True, 64),
+            ("unsigned long long", "ullong", False, 64),
+        )
+        modes = (
+            ("preinc", "++", "return ++value;", False),
+            ("postinc", "++", "return value++;", False),
+            ("predec", "--", "return --value;", False),
+            ("postdec", "--", "return value--;", False),
+            ("storedinc", "++", "value++; return value;", False),
+            ("storeddec", "--", "value--; return value;", False),
+            ("localinc", "++", "{type} local = value; return ++local;", True),
+            ("localdec", "--", "{type} local = value; return --local;", True),
+        )
+        functions, calls = {}, []
+        for cpp_type, key, signed, width in types:
+            minimum = -(2 ** (width - 1)) if signed else 0
+            maximum = 2 ** (width - 1) - 1 if signed else 2 ** width - 1
+            values = ((minimum, minimum + 1, -1, 0, 1, maximum - 1, maximum)
+                      if signed else (0, 1, maximum - 1, maximum))
+            format_name = f".{('signed' if signed else 'unsigned')} {width}"
+            for mode, operator, body, local in modes:
+                name = f"{key}_{mode}"
+                functions[name] = (cpp_type, body.format(type=cpp_type), local)
+                for value in values:
+                    # Signed overflow in the computation type is undefined;
+                    # narrow signed targets promote to int and remain defined.
+                    if signed and width >= 32 and (
+                            operator == "++" and value == maximum or
+                            operator == "--" and value == minimum):
+                        continue
+                    literal = ("(-9223372036854775807LL - 1)"
+                               if value == -(2 ** 63) else
+                               f"{value}ULL" if not signed and width == 64 else str(value))
+                    calls.append((name, format_name, value, literal,
+                                  "long long" if signed else "unsigned long long"))
+        source = self.root / "increments.cpp"
+        source.write_text("\n".join(
+            f"{cpp_type} {name}({cpp_type} value) {{ {body} }}"
+            for name, (cpp_type, body, _) in functions.items()), encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(probe_library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        paths = {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in functions:
+                paths[node["name"]] = path
+            pending.extend((child, path + [index])
+                           for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), set(functions))
+        oracle = self.root / "increments_oracle.cpp"
+        oracle.write_text(
+            '#include <climits>\n#include <iostream>\n#include "increments.cpp"\n'
+            'static_assert(CHAR_BIT == 8 && CHAR_MIN == -128 && sizeof(short) == 2\n'
+            '              && sizeof(int) == 4 && sizeof(long) == 8 && sizeof(long long) == 8);\n'
+            'int main() {\n' + "".join(
+                f"  std::cout << static_cast<{render_type}>({name}({literal})) << '\\n';\n"
+                for name, _, _, literal, render_type in calls) + "}\n", encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([
+                clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle), "-o", str(binary),
+            ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                      capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append(executed.stdout.splitlines())
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls))
+        guards = [
+            "def incrementChecks : Except String Unit := do",
+            "  let types ← parseValidatedTypeEvidence evidence",
+            "  let expressions ← parseValidatedBinaryExpressionEvidence evidence",
+            "  let expressionTypes ← parseValidatedExpressionTypeEvidence evidence",
+        ]
+        checked_rows, both_rows = 0, 0
+        for name, (_, _, local) in functions.items():
+            guards.append(
+                "  let function ← admitCallableFunctionWithExpressionTypes evidence "
+                f"types expressions expressionTypes .lp64 {paths[name]}")
+            cases = []
+            for (row_name, format_name, value, _, _), expected in zip(calls, outputs[0]):
+                if row_name != name:
+                    continue
+                checked_rows += 1
+                both_rows += not local
+                cases.append(f"(⟨{format_name}, {value}⟩, ⟨{format_name}, {int(expected)}⟩)")
+            guards.append("  let cases : List (IntegralValue × IntegralValue) := ["
+                          + ", ".join(cases) + "]")
+            evaluators = ["evaluateCallableObject"]
+            if not local:
+                evaluators.append("evaluateCallable")
+            for evaluator in evaluators:
+                guards.append(f"""  unless cases.all (fun (argument, expected) =>
+      match {evaluator} 32 .lp64 function [argument] with
+      | .ok (.ok value) => value == expected
+      | _ => false) do
+    throw "increment differential: {name} / {evaluator}"
+""")
+        self.assertEqual(checked_rows, len(calls))
+        guards.extend(["  pure ()", "#guard incrementChecks.isOk"])
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+                            options=("open LeanModels.Cpp.CallableObjectEvaluation\n"
+                                     "set_option maxRecDepth 100000"), timeout=360)
+        print(f"increment differential: {len(calls)} rows at -O0/-O2; "
+              f"{both_rows} also checked with the value-only evaluator")
+
     def test_callable_expression_types_match_compiled_clang(self):
         requested = os.environ.get("LEANCPP_CLANG")
         library = os.environ.get("LEANCPP_PROBE_LIBRARY")

@@ -50,15 +50,22 @@ arithmetic failures propagate instead of executing later statements.
 Unary and binary operators are validated before their operands are evaluated,
 so an unknown spelling cannot mask its refusal with an operand failure.
 
-Prefix and postfix increment/decrement follow the admitted parameter-only shape
-of [expr.pre.incr] and [expr.post.incr]: the target is updated once, prefix
+Prefix and postfix increment/decrement follow the admitted integral binding shape
+of N4950 §7.6.2.3 [expr.pre.incr] and §7.6.1.6 [expr.post.incr]: the target is updated once, prefix
 returns the updated value, and postfix returns the saved value. An increment
 operator outside `++` and `--` is a loud refusal before the parameter is read,
-rather than an assumed decrement. The update uses
-the target's profile-resolved integral format, so unsigned wraparound is an
-`IntegralResult.ok` result while signed overflow remains
-`IntegralResult.undefined`. An increment nested in an unsequenced binary
-operand is rejected rather than assigning an evaluation order.
+rather than an assumed decrement. The arithmetic follows the compound-assignment
+rule §7.6.19 [expr.ass]: combine the target with an `int` one using §7.3.7
+[conv.prom] and §7.4 [expr.arith.conv], then convert the successful result back
+to the target type under §7.3.9 [conv.integral] before storing it. Both
+evaluators use this sequence.
+On LP64, incrementing `short(32767)` computes `int(32768)` and stores
+`short(-32768)`; decrementing `short(-32768)` stores `short(32767)`. These
+conversions are defined C++23 behavior. Prefix returns the converted stored
+value, while postfix returns the original value after completing that store.
+Unsigned arithmetic wraps; signed overflow in the computation type remains
+`IntegralResult.undefined` and leaves the stored value unchanged. An increment
+nested in an unsequenced binary operand is rejected rather than assigning an evaluation order.
 
 Conditional expressions preserve the C++ sequencing boundary between their
 condition and selected arm. A selected arm may update the parameter through an

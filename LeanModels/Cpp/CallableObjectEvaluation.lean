@@ -143,6 +143,18 @@ private def finishResult (frame : IntegralObjectFrame)
   | .ok _ => success frame .normal
   | _ => success frame (.failed result)
 
+private def incrementValue (profile : TargetProfile) (type : CppTypeEvidence)
+    (operation : IntegralBinary) (old : IntegralValue) : IntegralResult IntegralValue :=
+  match builtinIntegralType type with
+  | none | some .boolean => .unsupported .unresolvedArithmeticConversions
+  | some integer =>
+      match usualArithmeticType profile integer .int with
+      | .error _ => .unsupported .unresolvedArithmeticConversions
+      | .ok common =>
+          mapIntegralResult (convertTo profile (.builtin common) old) fun operand =>
+            mapIntegralResult (integralBinary operation operand ⟨operand.format, 1⟩)
+              (convertTo profile type)
+
 mutual
   private partial def evalIncrement (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
@@ -159,21 +171,20 @@ mutual
               else IntegralBinary.subtract
             match result with
             | .ok old =>
-                let next := integralBinary operation old ⟨old.format, 1⟩
-                match next with
-                | .ok value =>
-                    match current.frame.lookup declaration with
-                    | .error reason => frameFailure current.frame reason
-                    | .ok binding =>
+                match current.frame.lookup declaration with
+                | .error reason => frameFailure current.frame reason
+                | .ok binding =>
+                    match incrementValue profile binding.type operation old with
+                    | .ok value =>
                         let assigned := current.frame.assignValue declaration binding.type value
                         match assigned.result with
                         | .error reason => frameFailure assigned.frame reason
                         | .ok _ =>
                             success assigned.frame (convertTo profile typed.type
                               (if isPostfix then old else value))
-                | result =>
-                    success current.frame
-                      (mapIntegralResult result (convertTo profile typed.type))
+                    | result =>
+                        success current.frame
+                          (mapIntegralResult result (convertTo profile typed.type))
             | result =>
                 success current.frame (mapIntegralResult result (convertTo profile typed.type))
     | _ => failure frame (.unsupportedOperator operator)

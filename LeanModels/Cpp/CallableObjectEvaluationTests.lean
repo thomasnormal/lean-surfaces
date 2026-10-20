@@ -348,4 +348,61 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard switchScopeClosesOnFailure
 #guard parserAdmitsAutomaticLocal
 
+private def incrementFunction (type : CppIntType) (operator : String)
+    (isPostfix : Bool) : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := .builtin type, parameters := [.builtin type], variadic := false}
+  parameters := [{parameter with type := .builtin type}]
+  body := .return_ {
+    expression := .increment operator isPostfix (handle "0x10")
+    sourceType := .builtin type, type := .builtin type}
+}
+
+private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
+    (argument expected : IntegralValue) : Bool :=
+  let function := incrementFunction type operator isPostfix
+  (evaluateCallableObject 16 .lp64 function [argument]).toOption == some (.ok expected) &&
+    (evaluateCallable 16 .lp64 function [argument]).toOption == some (.ok expected)
+
+#guard checkIncrement .short "++" false ⟨.signed 16, 32767⟩ ⟨.signed 16, -32768⟩
+#guard checkIncrement .short "++" true ⟨.signed 16, 32767⟩ ⟨.signed 16, 32767⟩
+#guard checkIncrement .short "--" false ⟨.signed 16, -32768⟩ ⟨.signed 16, 32767⟩
+#guard checkIncrement .short "--" true ⟨.signed 16, -32768⟩ ⟨.signed 16, -32768⟩
+#guard checkIncrement .signedChar "++" false ⟨.signed 8, 127⟩ ⟨.signed 8, -128⟩
+#guard checkIncrement .signedChar "--" false ⟨.signed 8, -128⟩ ⟨.signed 8, 127⟩
+#guard checkIncrement .unsignedChar "++" false ⟨.unsigned 8, 255⟩ ⟨.unsigned 8, 0⟩
+#guard checkIncrement .unsignedShort "--" false ⟨.unsigned 16, 0⟩ ⟨.unsigned 16, 65535⟩
+#guard checkIncrement .unsignedInt "++" false ⟨.unsigned 32, 4294967295⟩ ⟨.unsigned 32, 0⟩
+#guard checkIncrement .unsignedLongLong "--" false
+  ⟨.unsigned 64, 0⟩ ⟨.unsigned 64, 18446744073709551615⟩
+
+-- A discarded postfix expression must still store the converted result.
+private def postfixStore : Bool :=
+  let function := incrementFunction .short "++" true
+  let function := {function with body := match function.body with
+    | .return_ expression => .expression expression
+    | other => other}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 16, 32767⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 16 started
+      (outcome.result matches .error .missingReturn) &&
+        (outcome.frame.read (handle "0x10")).result.toOption == some ⟨.signed 16, -32768⟩
+
+-- No native oracle execution is run for signed overflow. The failed arithmetic
+-- leaves the live parameter unchanged in both prefix and postfix cases.
+private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (value : Int) : Bool :=
+  match CallableObjectFrame.start .lp64 (incrementFunction .int operator isPostfix) [signed value] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 16 started
+      outcome.result.toOption == some (.undefined .signedOverflow) &&
+        (outcome.frame.read (handle "0x10")).result.toOption == some (signed value)
+
+#guard postfixStore
+#guard overflowRetainsParameter "++" false 2147483647
+#guard overflowRetainsParameter "++" true 2147483647
+#guard overflowRetainsParameter "--" false (-2147483648)
+#guard overflowRetainsParameter "--" true (-2147483648)
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

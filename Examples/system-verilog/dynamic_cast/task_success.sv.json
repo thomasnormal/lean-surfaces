@@ -1,0 +1,530 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/dynamic_cast/task_success.sv",
+  "source_sha256": "99d5762c9fa25a8c44cac877815a8f91cfb8d580f97f0713c86c8cad5fef8cd4",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 6,
+              "end_line": 3,
+              "end_col": 7
+            },
+            "name": "e",
+            "width": 3,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 13,
+              "end_line": 3,
+              "end_col": 19
+            },
+            "name": "source",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 31,
+              "end_line": 3,
+              "end_col": 35
+            },
+            "name": "bits",
+            "width": 4,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 4,
+              "bits": "0000"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 2,
+              "end_line": 7,
+              "end_col": 5
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 10,
+                "end_line": 7,
+                "end_col": 5
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 3,
+                    "end_line": 5,
+                    "end_col": 7
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 3,
+                      "end_line": 5,
+                      "end_col": 4
+                    },
+                    "width": 3,
+                    "name": "e"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 5,
+                      "col": 5,
+                      "end_line": 5,
+                      "end_col": 6
+                    },
+                    "width": 3,
+                    "bits": "001"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 8,
+                    "end_line": 5,
+                    "end_col": 17
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 8,
+                      "end_line": 5,
+                      "end_col": 14
+                    },
+                    "width": 32,
+                    "name": "source",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 5,
+                        "col": 15,
+                        "end_line": 5,
+                        "end_col": 16
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000110"
+                    }
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": null,
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": null,
+                      "name": "$cast:1",
+                      "width": 32,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      },
+                      "automatic_cast": true
+                    },
+                    {
+                      "kind": "LocalDecl",
+                      "span": null,
+                      "name": "$cast:2",
+                      "width": 3,
+                      "two_state": false,
+                      "init": {
+                        "kind": "SignedResize",
+                        "span": {
+                          "line": 5,
+                          "col": 18,
+                          "end_line": 5,
+                          "end_col": 33
+                        },
+                        "width": 3,
+                        "operand": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 5,
+                            "col": 26,
+                            "end_line": 5,
+                            "end_col": 32
+                          },
+                          "width": 32,
+                          "name": "source",
+                          "signed": true
+                        }
+                      },
+                      "automatic_cast": true
+                    },
+                    {
+                      "kind": "If",
+                      "span": {
+                        "line": 5,
+                        "col": 18,
+                        "end_line": 5,
+                        "end_col": 33
+                      },
+                      "cond": {
+                        "kind": "Binary",
+                        "span": null,
+                        "width": 1,
+                        "op": "||",
+                        "left": {
+                          "kind": "Binary",
+                          "span": null,
+                          "width": 1,
+                          "op": "||",
+                          "left": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 1,
+                            "bits": "0"
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": null,
+                            "width": 1,
+                            "op": "===",
+                            "left": {
+                              "kind": "Ident",
+                              "span": null,
+                              "name": "$cast:2",
+                              "width": 3,
+                              "two_state": false
+                            },
+                            "right": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 5,
+                                "col": 18,
+                                "end_line": 5,
+                                "end_col": 33
+                              },
+                              "width": 3,
+                              "bits": "001"
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": null,
+                          "width": 1,
+                          "op": "===",
+                          "left": {
+                            "kind": "Ident",
+                            "span": null,
+                            "name": "$cast:2",
+                            "width": 3,
+                            "two_state": false
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 5,
+                              "col": 18,
+                              "end_line": 5,
+                              "end_col": 33
+                            },
+                            "width": 3,
+                            "bits": "110"
+                          }
+                        }
+                      },
+                      "then": {
+                        "kind": "Block",
+                        "span": null,
+                        "stmts": [
+                          {
+                            "kind": "BlockingAssign",
+                            "span": null,
+                            "target": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 5,
+                                "col": 24,
+                                "end_line": 5,
+                                "end_col": 25
+                              },
+                              "width": 3,
+                              "name": "e",
+                              "two_state": false
+                            },
+                            "value": {
+                              "kind": "Ident",
+                              "span": null,
+                              "name": "$cast:2",
+                              "width": 3,
+                              "two_state": false
+                            }
+                          },
+                          {
+                            "kind": "BlockingAssign",
+                            "span": null,
+                            "target": {
+                              "kind": "Ident",
+                              "span": null,
+                              "name": "$cast:1",
+                              "width": 32,
+                              "two_state": false
+                            },
+                            "value": {
+                              "kind": "Literal",
+                              "span": null,
+                              "width": 32,
+                              "bits": "00000000000000000000000000000001"
+                            }
+                          }
+                        ]
+                      },
+                      "else": {
+                        "kind": "Unsupported",
+                        "span": {
+                          "line": 5,
+                          "col": 18,
+                          "end_line": 5,
+                          "end_col": 33
+                        },
+                        "sv_kind": "DynamicCast:task-diagnostic",
+                        "text": "invalid task-form cast requires runtime diagnostic observation"
+                      },
+                      "dynamic_cast_lowered": true
+                    }
+                  ]
+                },
+                {
+                  "kind": "Block",
+                  "span": null,
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": null,
+                      "name": "$cast:3",
+                      "width": 32,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      },
+                      "automatic_cast": true
+                    },
+                    {
+                      "kind": "LocalDecl",
+                      "span": null,
+                      "name": "$cast:4",
+                      "width": 4,
+                      "two_state": false,
+                      "init": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 4,
+                        "operand": {
+                          "kind": "Resize",
+                          "span": {
+                            "line": 5,
+                            "col": 35,
+                            "end_line": 5,
+                            "end_col": 52
+                          },
+                          "width": 4,
+                          "operand": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 5,
+                              "col": 46,
+                              "end_line": 5,
+                              "end_col": 51
+                            },
+                            "width": 8,
+                            "bits": "10101111"
+                          }
+                        }
+                      },
+                      "automatic_cast": true
+                    },
+                    {
+                      "kind": "If",
+                      "span": {
+                        "line": 5,
+                        "col": 35,
+                        "end_line": 5,
+                        "end_col": 52
+                      },
+                      "cond": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 1,
+                        "bits": "1"
+                      },
+                      "then": {
+                        "kind": "Block",
+                        "span": null,
+                        "stmts": [
+                          {
+                            "kind": "BlockingAssign",
+                            "span": null,
+                            "target": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 5,
+                                "col": 41,
+                                "end_line": 5,
+                                "end_col": 45
+                              },
+                              "width": 4,
+                              "name": "bits",
+                              "two_state": true
+                            },
+                            "value": {
+                              "kind": "Ident",
+                              "span": null,
+                              "name": "$cast:4",
+                              "width": 4,
+                              "two_state": false
+                            }
+                          },
+                          {
+                            "kind": "BlockingAssign",
+                            "span": null,
+                            "target": {
+                              "kind": "Ident",
+                              "span": null,
+                              "name": "$cast:3",
+                              "width": 32,
+                              "two_state": false
+                            },
+                            "value": {
+                              "kind": "Literal",
+                              "span": null,
+                              "width": 32,
+                              "bits": "00000000000000000000000000000001"
+                            }
+                          }
+                        ]
+                      },
+                      "else": {
+                        "kind": "Unsupported",
+                        "span": {
+                          "line": 5,
+                          "col": 35,
+                          "end_line": 5,
+                          "end_col": 52
+                        },
+                        "sv_kind": "DynamicCast:task-diagnostic",
+                        "text": "invalid task-form cast requires runtime diagnostic observation"
+                      },
+                      "dynamic_cast_lowered": true
+                    }
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 3,
+                    "end_line": 6,
+                    "end_col": 33
+                  },
+                  "name": "$display",
+                  "format": "task %b %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 25,
+                        "end_line": 6,
+                        "end_col": 26
+                      },
+                      "width": 3,
+                      "name": "e"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 27,
+                        "end_line": 6,
+                        "end_col": 31
+                      },
+                      "width": 4,
+                      "name": "bits"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 34,
+                    "end_line": 6,
+                    "end_col": 42
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

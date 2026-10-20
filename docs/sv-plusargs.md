@@ -56,3 +56,6 @@ transcripts, explicit invocation inputs and fixture-bound kernel theorems.
 The diagnostic example records a refusal, not runtime agreement. A separate
 corpus timing example remains blocked by the existing time-zero-only `$time`
 contract; this family does not extend the clock-query surface.
+
+The same expression sequencer now handles [dynamic integral casts](sv-dynamic-cast.md).
+It retains the existing plusargs names and behavior when no cast is present.

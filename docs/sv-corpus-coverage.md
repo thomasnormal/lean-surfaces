@@ -22,6 +22,71 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Dynamic integral casts — 2026-10-20
+
+IEEE §6.24.2/§20.5 dynamic integral casts now sample once, convert to the
+destination width/state kind, and test an enum's exact bound member table.
+Function failure returns zero without a destination write; success stores the
+converted snapshot and returns one. Whole values, packed windows/members and
+fixed cells use existing stores. The existing plusargs sequencer also sequences
+casts, retaining logical short circuiting and refusing unordered dependencies.
+Task success uses the same rule; invalid task diagnostics, unsupported types,
+effects/contexts, invalid source and symbolic mode remain loud. No evaluator
+or scheduler changes. See [the contract](sv-dynamic-cast.md).
+
+The paired **22,035** paths gain **13 clean extractions**, no losses:
+**4,296 → 4,309 clean**, **17,673 → 17,660 partial**, **66 include skips**,
+zero errors. All 4,296 previously clean extracted designs remain identical.
+Twelve gains match complete independent transcripts under both region oracles;
+one retains the existing timed `$time` refusal. Six authored sources match
+both orders, and four retain explicit boundaries. The invalid task reference
+produces a runtime diagnostic and status one; it is not an agreement. Final
+source/status/transcript/provenance authentication covers 22 successful
+independent invocations plus that one diagnostic invocation. Six kernel
+theorems bind the actual parsed source capture, membership guard and success
+body. Extraction is distinct from whole-corpus runtime conformance.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 54 | 245 | 1 |
+| 4 | 427 | 187 | 240 | 0 |
+| 5 | 618 | 368 | 250 | 0 |
+| 6 | 1185 | 436 | 749 | 0 |
+| 7 | 796 | 106 | 690 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 111 | 478 | 0 |
+| 10 | 657 | 248 | 409 | 0 |
+| 11 | 1034 | 722 | 312 | 0 |
+| 12 | 627 | 290 | 337 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 50 | 1493 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 216 | 609 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 385 | 159 | 28 |
+| 23 | 851 | 170 | 681 | 0 |
+| 24 | 355 | 12 | 343 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 165 | 400 | 0 |
+| 27 | 354 | 176 | 178 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 123 | 104 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 136 | 281 | 0 |
+| 38 | 340 | 211 | 129 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 40 | 47 | 0 |
+
 ## Static portless module hierarchy — 2026-10-20
 
 IEEE clauses 23/27 elaboration now flattens actual portless module instances,

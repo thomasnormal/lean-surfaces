@@ -1874,23 +1874,7 @@ def _convert_expr(sm, e):
     if _SYM is None and cname in ("ElementSelectExpression", "RangeSelectExpression"):
         return _convert_selected_read(sm, e, cname)
     if cname == "CallExpression":
-        if _SYM is None:
-            if _plusargs_call(e):
-                return _convert_plusargs_call(sm, e)
-            if _enum_method_call(e):
-                return _convert_enum_method(sm, e)
-            if _clog2_call(e):
-                return _convert_clog2(sm, e)
-            if _dimension_query_call(e):
-                return _convert_dimension_query(sm, e)
-            if _time_call(e):
-                return _convert_time_call(sm, e)
-            if _signing_call(e):
-                return _convert_signing_call(sm, e)
-            if _bit_query_call(e):
-                return _convert_bit_query(sm, e)
-            return _convert_fixed_bits_query(sm, e)
-        return _convert_sym_call_expr(sm, e)
+        return _convert_legacy_call(sm, e) if _SYM is None else _convert_sym_call_expr(sm, e)
     if _SYM is not None and cname in (
         "ElementSelectExpression", "RangeSelectExpression", "ReplicationExpression"
     ):
@@ -3001,6 +2985,21 @@ def _convert_selected_read(sm, expr, expression_kind):
     return squash2_wrap(result, expr.type.bitWidth) if source_two_state else result
 
 
+def _convert_legacy_call(sm, expression):
+    for recognizes, convert in (
+            (_plusargs_call, _convert_plusargs_call),
+            (_dynamic_cast_call, _convert_dynamic_cast),
+            (_enum_method_call, _convert_enum_method),
+            (_clog2_call, _convert_clog2),
+            (_dimension_query_call, _convert_dimension_query),
+            (_time_call, _convert_time_call),
+            (_signing_call, _convert_signing_call),
+            (_bit_query_call, _convert_bit_query)):
+        if recognizes(expression):
+            return convert(sm, expression)
+    return _convert_fixed_bits_query(sm, expression)
+
+
 def _convert_sym_call_expr(sm, e):
     node = _sym_expr_syscall(sm, e)
     if node is not None:
@@ -3936,6 +3935,103 @@ def _convert_intra_assignment(sm, expression):
             "intra_assignment_lowered": True}
 
 
+def _dynamic_cast_call(expression):
+    return (type(expression).__name__ == "CallExpression" and expression.isSystemCall
+            and expression.subroutineName == "$cast")
+
+
+def _dynamic_cast_target(sm, destination):
+    if type(destination).__name__ != "ElementSelectExpression":
+        return legacy_blocking_target(sm, destination, True)
+    shape = _fixed_array_shape(destination.value)
+    if shape is None:
+        return legacy_blocking_target(sm, destination, True)
+    name, width, _two_state, left, right = shape
+    index = destination.selector
+    index_width, _, reason = type_width_2s(index.type)
+    converted = convert_expr(sm, index)
+    if reason is not None or not _case_expression_ok(converted):
+        return unsupported(sm, destination, "DynamicCast:index"), False
+    minimum = -(1 << (index_width - 1)) if index.type.isSigned else 0
+    maximum = (1 << (index_width - int(index.type.isSigned))) - 1
+    choices = []
+    for position in range(left, right + (1 if right >= left else -1), 1 if right >= left else -1):
+        if minimum <= position <= maximum:
+            literal = _enum_nat_literal(sm, destination, index_width, position)
+            target = {"kind": "Ident", "span": node_span(sm, destination),
+                      "width": width, "name": f"{name}[{position}]"}
+            choices.append([literal, target])
+    return {"kind": "DynamicCastArrayTarget", "width": width,
+            "index": converted, "choices": choices}, True
+
+
+def _dynamic_cast_store(target, value, assign):
+    if target["kind"] != "DynamicCastArrayTarget":
+        return assign(target, value)
+    result = {"kind": "Empty", "span": None}
+    for literal, cell in reversed(target["choices"]):
+        equal = {"kind": "Binary", "span": None, "width": 1, "op": "===",
+                 "left": target["index"], "right": literal}
+        result = {"kind": "If", "span": None, "cond": equal,
+                  "then": assign(cell, value), "else": result}
+    return result
+
+
+def _convert_dynamic_cast(sm, expression):
+    arguments = list(expression.arguments)
+    if (expression.bad or len(arguments) != 2 or expression.type.bitWidth != 32
+            or not expression.type.isSigned):
+        return unsupported(sm, expression, "DynamicCast:signature")
+    output, source = arguments
+    if (type(output).__name__ != "AssignmentExpression"
+            or type(output.right).__name__ != "EmptyArgumentExpression"):
+        return unsupported(sm, expression, "DynamicCast:output")
+    destination = output.left
+    width, two_state, reason = type_width_2s(destination.type)
+    if (reason is not None or type_width_2s(source.type)[0] is None
+            or not _case_source_expression_ok(source, packed_members=True)
+            or not _case_source_expression_ok(destination, packed_members=True)):
+        return unsupported(sm, expression, "DynamicCast:type-or-effects")
+    target, admitted = _dynamic_cast_target(sm, destination)
+    if not admitted:
+        return unsupported(sm, expression, "DynamicCast:target")
+    value = convert_expr(sm, source)
+    value = {"kind": "SignedResize" if source.type.isSigned else "Resize",
+             "span": node_span(sm, expression), "width": width, "operand": value}
+    if two_state:
+        value = squash2_wrap(value, width)
+    enum = destination.type.canonicalType
+    members = ([_enum_literal(sm, expression, destination.type, member.value.value)
+                for member in _enum_members(enum)] if type(enum).__name__ == "EnumType" else None)
+    if not _case_expression_ok([value, target, members]):
+        return unsupported(sm, expression, "DynamicCast:operand")
+    return {"kind": "DynamicCastExpr", "span": node_span(sm, expression),
+            "width": 32, "signed": True, "target": target, "value": value,
+            "members": members, "dynamic_cast_lowered": True}
+
+
+def _lower_dynamic_cast(node, fresh, zero, assign, block):
+    result, result_decl = fresh(zero(32), prefix="$cast:")
+    source, source_decl = fresh(node["value"], prefix="$cast:")
+    valid = dict(zero(1), bits="1")
+    if node["members"] is not None:
+        valid = zero(1)
+        for member in node["members"]:
+            equal = {"kind": "Binary", "span": None, "width": 1,
+                     "op": "===", "left": source, "right": member}
+            valid = {"kind": "Binary", "span": None, "width": 1,
+                     "op": "||", "left": valid, "right": equal}
+    success = block([_dynamic_cast_store(node["target"], source, assign),
+                     assign(result, dict(zero(32), bits="0"*31+"1"))])
+    failure = ({"kind": "Unsupported", "span": node.get("span"),
+                "sv_kind": "DynamicCast:task-diagnostic",
+                "text": "invalid task-form cast requires runtime diagnostic observation"}
+               if node.get("task") else None)
+    branch = {"kind": "If", "span": node.get("span"), "cond": valid,
+              "then": success, "else": failure, "dynamic_cast_lowered": True}
+    return [result_decl, source_decl, branch], result
+
+
 def _plusargs_call(expression):
     return (type(expression).__name__ == "CallExpression" and expression.isSystemCall
             and expression.subroutineName in ("$test$plusargs", "$value$plusargs"))
@@ -3977,15 +4073,15 @@ def _convert_plusargs_call(sm, expression):
     return result
 
 
-def _has_value_plusargs(node):
+def _has_stateful_expression(node):
     if isinstance(node, dict):
-        return node.get("kind") == "ValuePlusargsExpr" or any(
-            _has_value_plusargs(value) for value in node.values())
-    return isinstance(node, list) and any(_has_value_plusargs(value) for value in node)
+        return node.get("kind") in ("ValuePlusargsExpr", "DynamicCastExpr") or any(
+            _has_stateful_expression(value) for value in node.values())
+    return isinstance(node, list) and any(_has_stateful_expression(value) for value in node)
 
 
-def _lower_plusargs_processes(processes):
-    """Sequence stateful queries at their source control boundary.
+def _lower_stateful_processes(processes):
+    """Sequence stateful integral operations at their source control boundary.
 
     Nonlogical operands with a read/write dependency have unspecified source
     evaluation order, so they stay loud. Logical operands use the IEEE
@@ -3993,18 +4089,18 @@ def _lower_plusargs_processes(processes):
     """
     counter = 0
 
-    def fresh(value, width=None):
+    def fresh(value, width=None, prefix="$plusargs:"):
         nonlocal counter
         counter += 1
         width = width if width is not None else width_of(value)
         if width is None or width <= 0:
             raise ValueError("integral expression width")
-        name = "$plusargs:" + str(counter)
+        name = prefix + str(counter)
         ident = {"kind": "Ident", "span": None, "name": name,
                  "width": width, "two_state": False}
         decl = {"kind": "LocalDecl", "span": None, "name": name,
                 "width": width, "two_state": False, "init": value,
-                "automatic_plusargs": True}
+                ("automatic_cast" if prefix == "$cast:" else "automatic_plusargs"): True}
         return ident, decl
 
     def block(statements):
@@ -4018,7 +4114,7 @@ def _lower_plusargs_processes(processes):
 
     def written(node):
         if isinstance(node, dict):
-            if node.get("kind") == "ValuePlusargsExpr":
+            if node.get("kind") in ("ValuePlusargsExpr", "DynamicCastExpr"):
                 return set(_converted_ident_names(node["target"]))
             return set().union(*(written(value) for value in node.values()))
         if isinstance(node, list):
@@ -4026,11 +4122,13 @@ def _lower_plusargs_processes(processes):
         return set()
 
     def expression(node):
-        if not _has_value_plusargs(node):
+        if not _has_stateful_expression(node):
             if not _case_expression_ok(node):
                 raise ValueError("unsupported operand")
             return [], node
         kind = node["kind"]
+        if kind == "DynamicCastExpr":
+            return _lower_dynamic_cast(node, fresh, zero, assign, block)
         if kind == "ValuePlusargsExpr":
             result, declaration = fresh(zero(32))
             call = dict(node, kind="ValuePlusargs", result=result)
@@ -4068,15 +4166,22 @@ def _lower_plusargs_processes(processes):
         if not isinstance(node, dict):
             return node
         kind = node.get("kind")
+        if kind == "DynamicCastStatement":
+            prelude, _ = expression(node["value"])
+            return block(prelude)
         field = "cond" if kind == "If" else "value" if kind == "BlockingAssign" else None
-        if field is not None and _has_value_plusargs(node[field]):
+        if field is not None and _has_stateful_expression(node[field]):
             try:
                 prelude, value = expression(node[field])
                 rest = {key: lower(child) for key, child in node.items() if key != field}
                 return block(prelude + [dict(rest, **{field: value})])
             except ValueError as error:
                 return {"kind": "Unsupported", "span": node.get("span"),
-                        "sv_kind": "Plusargs:expression-effects", "text": str(error)}
+                        "sv_kind": ("DynamicCast" if _node_marker(node, "dynamic_cast_lowered")
+                                    else "Plusargs") + ":expression-effects", "text": str(error)}
+        if kind == "DynamicCastExpr":
+            return {"kind": "Unsupported", "span": node.get("span"),
+                    "sv_kind": "DynamicCast:expression-context", "text": "stateful dynamic cast"}
         if kind == "ValuePlusargsExpr":
             return {"kind": "Unsupported", "span": node.get("span"),
                     "sv_kind": "Plusargs:statement-context", "text": "stateful input query"}
@@ -4767,6 +4872,12 @@ def _convert_syscall(sm, s, e):
     negative signed values — the envelope carries no sign). `$finish`/
     `$stop` arguments (verbosity levels) are ignored. Any other call stays
     `Unsupported` (statement tag `ExpressionStatement:CallExpression`)."""
+    if _SYM is None and _dynamic_cast_call(e):
+        value = _convert_dynamic_cast(sm, e)
+        if value.get("kind") == "Unsupported":
+            return value
+        return {"kind": "DynamicCastStatement", "span": node_span(sm, s),
+                "value": dict(value, task=True)}
     try:
         name = e.subroutineName
         is_sys = bool(e.isSystemCall)
@@ -5528,6 +5639,10 @@ def _module_storage_collisions(ports, decls, processes, span):
                        "sv_kind": "Hierarchy:storage-collision",
                        "text": "instance storage collides with a source binding"})
 
+    if _generated_storage_collision(ports, decls, processes, "$cast:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "DynamicCast:storage-collision",
+                       "text": "generated cast storage collides with a binding"})
     return others
 
 
@@ -5612,8 +5727,8 @@ def convert_module(sm, inst):
             _ELAB_CURRENT_SCOPE = ""
 
     processes = _hoist_static_local_arrays(processes, decls)
-    processes = _lower_plusargs_processes(processes)
-    decls = _lower_plusargs_processes(decls)
+    processes = _lower_stateful_processes(processes)
+    decls = _lower_stateful_processes(decls)
     others.extend(_module_storage_collisions(ports, decls, processes, span))
 
     # Constant continuous windows are storage-only in the legacy runner too;
@@ -5956,14 +6071,13 @@ def _selected_compilation_barriers(sm, comp):
     return barriers
 
 
-def _hierarchy_compilation_barriers(sm, comp, modules):
-    if not any(_node_marker(module, "hierarchy_lowered") for module in modules):
+def _bound_lowering_compilation_barriers(sm, comp, modules, marker, family, description):
+    if not any(_node_marker(module, marker) for module in modules):
         return []
     if any(diagnostic.isError() or str(diagnostic.code) in (
             "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
            for diagnostic in comp.getAllDiagnostics()):
-        return [unsupported(sm, comp, "Hierarchy:invalid-compilation",
-                            "frontend rejected an elaborated module hierarchy")]
+        return [unsupported(sm, comp, family + ":invalid-compilation", description)]
     return []
 
 
@@ -6039,7 +6153,9 @@ def _convert_design(sm, comp, packages):
         others.append(unsupported(sm, comp, "$clog2:constant-context",
                                   "unresolved or unknown clog2 elaboration argument"))
     others.extend(_selected_compilation_barriers(sm, comp))
-    others.extend(_hierarchy_compilation_barriers(sm, comp, modules))
+    others.extend(_bound_lowering_compilation_barriers(
+        sm, comp, modules, "hierarchy_lowered", "Hierarchy",
+        "frontend rejected an elaborated module hierarchy"))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",
@@ -6127,6 +6243,9 @@ def _convert_design(sm, comp, packages):
                              "Scanf", "formatted input")
     _reject_invalid_lowering(sm, comp, modules, others, "enum_method_lowered",
                              "EnumMethod", "numeric enum method")
+    others.extend(_bound_lowering_compilation_barriers(
+        sm, comp, modules, "dynamic_cast_lowered", "DynamicCast",
+        "frontend rejected a dynamic integral cast"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

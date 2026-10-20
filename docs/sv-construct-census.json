@@ -20,15 +20,15 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    3785
-   ],
-   [
-    "CallExpression",
-    3485
+    3781
    ],
    [
     "VariableSymbol:2state",
     3481
+   ],
+   [
+    "CallExpression",
+    3431
    ],
    [
     "Hierarchy:ports",
@@ -261,6 +261,10 @@
    [
     "NetSymbol:Supply1",
     57
+   ],
+   [
+    "DynamicCast:type-or-effects",
+    56
    ],
    [
     "NetSymbol:WAnd",
@@ -843,6 +847,10 @@
     2
    ],
    [
+    "DynamicCast:task-diagnostic",
+    2
+   ],
+   [
     "InsideExpression:invalid-compilation",
     1
    ],
@@ -967,6 +975,10 @@
     1
    ],
    [
+    "DynamicCast:expression-context",
+    1
+   ],
+   [
     "NetSymbol",
     1
    ],
@@ -976,8 +988,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4296,
-   "partial": 17673,
+   "clean": 4309,
+   "partial": 17660,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1050,7 @@
     52
    ],
    "simulation": [
-    3702,
+    3715,
     18671
    ],
    "simulation elaboration": [
@@ -1231,9 +1243,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 630,
-    "clean": 411,
-    "partial": 630,
+    "blocked_by_more": 619,
+    "clean": 422,
+    "partial": 619,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1246,7 +1258,7 @@
      ],
      [
       "CallExpression",
-      183
+      168
      ],
      [
       "NamedValueExpression:2state",
@@ -1254,11 +1266,11 @@
      ],
      [
       "TimedStatement:DelayControl",
-      159
+      158
      ],
      [
       "VariableDeclStatement:2state",
-      155
+      153
      ],
      [
       "ConversionExpression:width",
@@ -1266,15 +1278,11 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      101
+      92
      ],
      [
       "InstanceSymbol:Instance",
       57
-     ],
-     [
-      "TransparentMemberSymbol:TransparentMember",
-      55
      ],
      [
       "MemberAccessExpression",
@@ -1287,6 +1295,10 @@
      [
       "ElementSelectExpression:source-type",
       48
+     ],
+     [
+      "TransparentMemberSymbol:TransparentMember",
+      46
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1454,9 +1466,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 214,
+    "clean": 216,
     "error": 0,
-    "partial": 611,
+    "partial": 609,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1646,9 +1658,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 425,
+    "clean": 436,
     "error": 0,
-    "partial": 760,
+    "partial": 749,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 2

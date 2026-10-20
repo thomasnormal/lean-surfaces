@@ -1437,3 +1437,14 @@ Child ports, interface/program instances, differing timescales, expansion
 limits, invalid source and unsupported active members retain explicit walls.
 The loader still requires one top module. Symbolic extraction is unchanged.
 See [the contract](sv-module-hierarchy.md) for initialization and scope rules.
+
+
+## Dynamic integral casts
+
+The legacy frontend lowers admitted `$cast` calls to existing local captures,
+exact membership comparisons, conditionals and stores. Emitted decision nodes
+carry `dynamic_cast_lowered: true`; generated captures carry `automatic_cast`
+and use collision-audited `$cast:` names. Internal cast-expression/target plans
+never cross the envelope boundary. Source-control placement and short circuiting
+reuse the plusargs sequencer. Invalid task form keeps an explicit diagnostic
+refusal branch. See [the contract](sv-dynamic-cast.md) for types and contexts.

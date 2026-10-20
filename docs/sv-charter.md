@@ -3787,3 +3787,30 @@ cross-instance storage and blocking/NBA statements.
 
 See [the contract](sv-module-hierarchy.md) and
 [the fixtures](../Examples/system-verilog/module_hierarchy/README.md).
+
+
+### Dynamic integral casts — 2026-10-20
+
+IEEE §6.24.2/§20.5 dynamic integral casts now sample once, convert to the
+destination width/state kind, and test an enum's exact bound member table.
+Function failure returns zero without a destination write; success stores the
+converted snapshot and returns one. Whole values, packed windows/members and
+fixed cells use existing stores. The existing plusargs sequencer also sequences
+casts, retaining logical short circuiting and refusing unordered dependencies.
+Task success uses the same rule; invalid task diagnostics, unsupported types,
+effects/contexts, invalid source and symbolic mode remain loud. No evaluator
+or scheduler changes. See [the contract](sv-dynamic-cast.md).
+
+The paired **22,035** paths gain **13 clean extractions**, no losses:
+**4,296 → 4,309 clean**, **17,673 → 17,660 partial**, **66 include skips**,
+zero errors. All 4,296 previously clean extracted designs remain identical.
+Twelve gains match complete independent transcripts under both region oracles;
+one retains the existing timed `$time` refusal. Six authored sources match
+both orders, and four retain explicit boundaries. The invalid task reference
+produces a runtime diagnostic and status one; it is not an agreement. Final
+source/status/transcript/provenance authentication covers 22 successful
+independent invocations plus that one diagnostic invocation. Six kernel
+theorems bind the actual parsed source capture, membership guard and success
+body. Extraction is distinct from whole-corpus runtime conformance.
+
+See [the fixtures and receipts](../Examples/system-verilog/dynamic_cast/README.md).

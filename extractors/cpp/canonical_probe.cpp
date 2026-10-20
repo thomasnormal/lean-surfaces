@@ -64,7 +64,7 @@ llvm::json::Value physicalLocation(clang::SourceLocation location,
                             {"offset", static_cast<int64_t>(sources.getFileOffset(location))}};
 }
 
-void functionOrigin(const clang::FunctionDecl *function,
+void declarationOrigin(const clang::Decl *function,
                     const clang::SourceManager &sources,
                     llvm::json::Object &record) {
   const auto location = function->getLocation();
@@ -454,8 +454,33 @@ public:
     definitionEvidence(declaration, record);
     templateEvidence(declaration, record);
     classEvidence(declaration, record);
+    if (const auto *aggregate = llvm::dyn_cast<clang::CXXRecordDecl>(declaration)) {
+      declarationOrigin(aggregate, astContext->getSourceManager(), record);
+      record["record_shape_api"] = "CXXRecordDecl aggregate member shape v1";
+      record["record_complete"] = aggregate->isCompleteDefinition();
+      if (aggregate->isCompleteDefinition()) {
+        record["record_union"] = aggregate->isUnion();
+        record["record_aggregate"] = aggregate->isAggregate();
+        record["record_base_count"] = static_cast<int64_t>(aggregate->getNumBases());
+        record["record_trivial_destructor"] = aggregate->hasTrivialDestructor();
+        record["record_user_destructor"] = aggregate->hasUserDeclaredDestructor();
+        record["record_attribute_count"] = static_cast<int64_t>(aggregate->hasAttrs() ? aggregate->getAttrs().size() : 0);
+        unsigned fields = 0;
+        for (const auto *field : aggregate->fields()) { (void)field; ++fields; }
+        record["record_field_count"] = static_cast<int64_t>(fields);
+      }
+    }
+    if (const auto *field = llvm::dyn_cast<clang::FieldDecl>(declaration)) {
+      record["field_shape_api"] = "FieldDecl member shape v1";
+      record["field_parent"] = declarationId(field->getParent());
+      record["field_index"] = static_cast<int64_t>(field->getFieldIndex());
+      record["field_mutable"] = field->isMutable();
+      record["field_bitfield"] = field->isBitField();
+      record["field_initializer"] = field->hasInClassInitializer();
+      record["field_attribute_count"] = static_cast<int64_t>(field->hasAttrs() ? field->getAttrs().size() : 0);
+    }
     if (const auto *function = llvm::dyn_cast<clang::FunctionDecl>(declaration))
-      functionOrigin(function, astContext->getSourceManager(), record);
+      declarationOrigin(function, astContext->getSourceManager(), record);
     records.push_back(std::move(record));
     if (declarationType(declaration))
       typedDeclarations.push_back(declaration);

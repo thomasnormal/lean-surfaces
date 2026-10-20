@@ -953,6 +953,188 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
                     f"#guard admitCallableFunctionFromProbe evidence .lp64 {target_path} matches .error _",
                     options="set_option maxRecDepth 100000", timeout=120)
 
+    def test_actual_compiler_record_member_identity_const_and_lifetime(self):
+        requested, library = os.environ.get("LEANCPP_CLANG"), os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang)
+        library = pathlib.Path(library).resolve()
+        self.assertTrue(library.is_file())
+        kinds = [("bool", ".boolean"), ("char", ".signed 8"), ("signed char", ".signed 8"),
+            ("unsigned char", ".unsigned 8"), ("short", ".signed 16"),
+            ("unsigned short", ".unsigned 16"), ("int", ".signed 32"),
+            ("unsigned int", ".unsigned 32"), ("long", ".signed 64"),
+            ("unsigned long", ".unsigned 64"), ("long long", ".signed 64"),
+            ("unsigned long long", ".unsigned 64")]
+        source = self.root / "record_members.cpp"
+        source.write_text("\n".join(f"struct Record{i} {{ {ty} value; const {ty} fixed; mutable {ty} cache; }};"
+            for i, (ty, _) in enumerate(kinds)) + '''
+struct EmptyRecord {};
+namespace nested { struct NestedRecord { int value; }; }
+struct ForwardRecord; struct ForwardRecord { int value; };
+union RefuseUnion { int value; };
+struct RefuseBase : EmptyRecord { int value; };
+struct RefuseDestructor { int value; ~RefuseDestructor() {} };
+struct RefuseDeletedDestructor { int value; ~RefuseDeletedDestructor() = delete; };
+struct RefusePrivateDestructor { int value; private: ~RefusePrivateDestructor() = default; };
+struct RefuseInitializer { int value = 1; };
+struct RefuseBitfield { int value : 3; };
+struct RefuseVolatile { volatile int value; };
+struct RefusePointer { int *value; };
+struct RefuseNested { Record0 value; };
+struct [[deprecated]] RefuseAttribute { int value; };
+struct RefuseFieldAttribute { [[deprecated]] int value; };
+struct RefuseAnonymous { int : 3; };
+void set_member(int &value) { value = 11; }
+''', encoding="utf-8")
+        environment = dict(os.environ, SOURCE_DATE_EPOCH="0")
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        captured = subprocess.run([clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", str(source), "-Xclang", "-load", "-Xclang", str(library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe"], cwd=self.root,
+            env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(captured.returncode, 0, captured.stderr)
+        probe = json.loads(captured.stdout)
+        paths, field_handles = {}, {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "CXXRecordDecl" and node.get("completeDefinition"):
+                paths[node["name"]] = path
+                field_handles[node["name"]] = [child["id"] for child in node.get("inner", [])
+                    if child.get("kind") == "FieldDecl"]
+            if node.get("kind") == "FunctionDecl" and node.get("name") == "set_member":
+                callable_path = path
+            pending.extend((child, path + [index]) for index, child in enumerate(node.get("inner", [])))
+        calls = [(i, n) for i in range(len(kinds)) for n in (0, 1, 7, 99)]
+        fragments = ['#include <iostream>\n#include "record_members.cpp"\nint main() {\n']
+        for i, n in calls:
+            ty = kinds[i][0]
+            fragments.append(f"{{ Record{i} a{{static_cast<{ty}>({n}), static_cast<{ty}>(2), static_cast<{ty}>(3)}}; "
+                f"Record{i} b{{static_cast<{ty}>({n}), static_cast<{ty}>(2), static_cast<{ty}>(3)}}; "
+                f"auto &alias = a.value; alias = static_cast<{ty}>(5); const Record{i} &view = a; "
+                f"view.cache = static_cast<{ty}>(8); "
+                f"const Record{i} constant{{static_cast<{ty}>({n}), static_cast<{ty}>(2), static_cast<{ty}>(3)}}; "
+                f"constant.cache = static_cast<{ty}>(9); "
+                "std::cout << +a.value << ' ' << +a.fixed << ' ' << +a.cache << ' ' << +b.value "
+                "<< ' ' << +constant.cache << ' ' << (&alias == &a.value) << ' ' << (&a.value != &b.value) << '\\n'; }\n")
+        fragments.append("{ Record6 a{1, 2, 3}; set_member(a.value); std::cout << a.value << '\\n'; }\n}\n")
+        oracle = self.root / "oracle.cpp"
+        oracle.write_text("".join(fragments), encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all", "-static-libstdc++",
+                "-static-libgcc", str(oracle), "-o", str(binary)], cwd=self.root, env=environment,
+                capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append([tuple(map(int, line.split())) for line in executed.stdout.splitlines()])
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls) + 1)
+        guards = ["def recordMutate (raw : Raw) (key : String) (value : Raw) : Raw :=",
+            "  match raw with | .object fields => .object (fields.map (fun (name, old) =>",
+            "    (name, if name == key then value else old))) | _ => raw",
+            "def recordChecks : Except String Unit := do",
+            "  let types ← parseValidatedTypeEvidence evidence"]
+        for i, (_, fmt) in enumerate(kinds):
+            name = f"Record{i}"
+            fields = field_handles[name]
+            guards.extend([f"  let schema ← admitIntegralRecordSchemaWithTypes evidence types {paths[name]}",
+                f"  let format : IntegralFormat := {fmt}",
+                "  let cv := fun (n : Int) => (match integralConvert format ⟨.signed 32, n⟩ with | .ok value => value | _ => default)"])
+            for (row_i, n), expected in zip(calls, outputs[0]):
+                if row_i != i:
+                    continue
+                a, fixed, cache, b, constant, same, distinct = expected
+                handles = ["⟨" + json.dumps(handle) + "⟩" for handle in fields]
+                guards.append(f'''  let outcome : Except IntegralRecordError Bool := do
+    let empty ← IntegralRecordStore.empty .lp64
+    let (one, first) ← empty.create schema .automatic [cv {n}, cv 2, cv 3]
+    let (store, second) ← one.create schema .dynamic [cv {n}, cv 2, cv 3]
+    let alias ← store.memberRef first {handles[0]}
+    let same ← store.memberRef first {handles[0]}
+    let other ← store.memberRef second {handles[0]}
+    let memory ← (store.memory.assign alias (cv 5)).mapError IntegralRecordError.integral
+    let store ← store.acceptMemory memory
+    let view ← store.borrow first.object true
+    let refused := store.assignMember view {handles[0]} (cv 7)
+    let store ← store.assignMember view {handles[2]} (cv 8)
+    let (store, actualConst) ← store.create schema .automatic [cv {n}, cv 2, cv 3] true
+    let store ← store.assignMember actualConst {handles[2]} (cv 9)
+    let a ← store.readMember first {handles[0]}
+    let fixed ← store.readMember first {handles[1]}
+    let cache ← store.readMember first {handles[2]}
+    let b ← store.readMember second {handles[0]}
+    let constant ← store.readMember actualConst {handles[2]}
+    let ended ← store.endLifetime first
+    let dynamicEnded ← ended.endLifetime second
+    let released ← dynamicEnded.releaseStorage second
+    pure (a.value == {a} && fixed.value == {fixed} && cache.value == {cache} &&
+      b.value == {b} && constant.value == {constant} &&
+      (alias.object == same.object) == {str(bool(same)).lower()} &&
+      (alias.object != other.object) == {str(bool(distinct)).lower()} &&
+      (refused matches .error (.integral .constWrite)) &&
+      (ended.memory.read alias matches .error (.lifetime .lifetimeEnded)) &&
+      (released.memory.read other matches .error (.lifetime .storageReleased)))
+  unless outcome.toOption == some true do throw "record differential: {name}/{n}"''')
+        for name in ("EmptyRecord", "NestedRecord", "ForwardRecord"):
+            guards.append(f"  let _ ← admitIntegralRecordSchemaWithTypes evidence types {paths[name]}")
+        for name in sorted(paths):
+            if name.startswith("Refuse"):
+                guards.append(f'''  unless (admitIntegralRecordSchemaWithTypes evidence types {paths[name]} matches .error _) do
+    throw "record source refusal: {name}"''')
+        guards.append(f'''  let schema ← admitIntegralRecordSchemaWithTypes evidence types {paths['Record6']}
+  let binaries ← parseValidatedBinaryExpressionEvidence evidence
+  let expressions ← parseValidatedExpressionTypeEvidence evidence
+  let function ← admitCallableFunctionWithExpressionTypes evidence types binaries expressions .lp64 {callable_path}
+  let loan : Except IntegralRecordError Bool := do
+    let empty ← IntegralRecordStore.empty .lp64
+    let (store, access) ← empty.create schema .automatic [⟨.signed 32, 1⟩, ⟨.signed 32, 2⟩, ⟨.signed 32, 3⟩]
+    let member ← store.memberRef access ⟨{json.dumps(field_handles['Record6'][0])}⟩
+    let outcome := evaluateCallableObjectResultInStore 32 store.memory function [.lvalue member]
+    let updated ← store.acceptMemory outcome.frame.store
+    let value ← updated.readMember access ⟨{json.dumps(field_handles['Record6'][0])}⟩
+    pure ((outcome.result matches .ok (.ok none)) && value.value == {outputs[0][-1][0]})
+  unless loan.toOption == some true do throw "record callable loan"''')
+        # Derived evidence remains literal and must fail semantic admission.
+        rows = probe["metadata"]["declarations"]
+        record = next(row for row in rows if row["id"] == probe["ast"]["inner"][paths['Record6'][0]]["id"])
+        field = next(row for row in rows if row["id"] == field_handles['Record6'][0])
+        mutations = [(record["id"], key, value) for key, value in (
+            ("record_field_count", 2), ("record_aggregate", False), ("record_complete", False),
+            ("record_base_count", 1), ("record_trivial_destructor", False), ("record_union", True),
+            ("record_user_destructor", True))]
+        mutations += [(field["id"], key, value) for key, value in (
+            ("field_index", 1), ("field_parent", record["semantic_context"]),
+            ("field_mutable", True), ("field_bitfield", True), ("field_initializer", True))]
+        for index, (handle, key, value) in enumerate(mutations):
+            guards.append(f'''  let changed{index} := {{ evidence with declarations := evidence.declarations.map (fun row =>
+    if row.id == ⟨{json.dumps(handle)}⟩ then {{row with raw := recordMutate row.raw {json.dumps(key)} ({'.bool ' + str(value).lower() if isinstance(value, bool) else '.number ' + json.dumps(str(value)) if isinstance(value, int) else '.string ' + json.dumps(value)})}} else row) }}
+  unless (admitIntegralRecordSchema changed{index} {paths['Record6']} matches .error _) do
+    throw "record derived refusal {index}"''')
+        guards.extend(["  pure ()", "#eval recordChecks", "#guard recordChecks.isOk"])
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+            options="open LeanModels.Cpp.CallableObjectEvaluation\nset_option maxRecDepth 100000", timeout=360)
+        census = subprocess.run([self.lake, "env", "lean", "-j", "1", "--run",
+            str(REPO_ROOT / "extractors/cpp/census_records.lean"), str(self.root / "probe.json"),
+            "--sources", str(source)], cwd=REPO_ROOT, capture_output=True, text=True, timeout=120)
+        self.assertEqual(census.returncode, 0, census.stdout + census.stderr)
+        report = json.loads(census.stdout)
+        self.assertEqual(report["status"], "COMPLETE")
+        self.assertEqual(report["execution"], "not-attempted")
+        self.assertEqual(report["target_explicit_records"], 28)
+        self.assertEqual(report["target_explicit_admitted"], 15)
+        self.assertEqual(report["target_explicit_refused"], 13)
+        print(f"record differential: {len(calls) + 1} defined rows, 12 integral types, -O0/-O2 UBSan; "
+            "identity, distinct objects, const/mutable, callable loan; 13 source and 12 derived refusals; "
+            "stale lifetime accesses checked only in the model")
+
     def test_actual_compiler_void_results_return_and_fallthrough(self):
         requested, library = os.environ.get("LEANCPP_CLANG"), os.environ.get("LEANCPP_PROBE_LIBRARY")
         if not requested or not library:

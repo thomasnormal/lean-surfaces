@@ -21,3 +21,5 @@ import LeanModels.Cpp.TypeEvidence
 import LeanModels.Cpp.VariableEvidence
 import LeanModels.Cpp.ExpressionEvidence
 import LeanModels.Cpp.Callable
+import LeanModels.Cpp.RecordEvidence
+import LeanModels.Cpp.RecordObjects

@@ -501,3 +501,21 @@ Reports pin input bytes/hash and omit corpus labels, source paths and names.
 Ownership comes from the input receipt, not an independent frontend query.
 Schema and integer node counts are strict; input/output aliases refuse and
 reports publish atomically. The default input-byte bound is 64 MiB.
+
+## Integral record schemas
+
+The probe retains complete aggregate shape and direct field order using
+`CXXRecordDecl`/`FieldDecl` getters. `admitIntegralRecordSchema` joins these
+observations to source occurrences and structured field types. The admitted
+profile and its member-storage API are specified in
+[Integral record member subobjects](../../docs/cpp-record-subobjects.md).
+
+```console
+lake env lean --run extractors/cpp/census_records.lean probe.json --sources source.cpp header.h
+```
+
+This bounded census validates the complete probe and queries every retained
+complete record occurrence. It reports selected-source and dependency ownership,
+admitted schemas and first refusals separately. It performs no function or
+instance-method execution. Source hashes, frontend/plugin identity, process
+limits and input provenance must be pinned by the external launch receipt.

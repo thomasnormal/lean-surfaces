@@ -266,6 +266,18 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual((processes[0]["target"]["msb"]["value"],
                           processes[0]["target"]["lsb"]["value"]), (1, 0))
 
+    def test_noncanonical_typedef_member_subrange_flattens(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [3:0] out); "
+            "typedef struct packed { logic [10:7] hi; logic [3:0] lo; } T; "
+            "T value; assign value.hi[10:9] = source; "
+            "assign out = value.hi; endmodule")
+        module = envelope["design"]["modules"][0]
+        processes = module["processes"]
+        self.assertEqual([decl["kind"] for decl in module["decls"]], ["Var"])
+        self.assertEqual((processes[0]["target"]["msb"]["value"],
+                          processes[0]["target"]["lsb"]["value"]), (7, 6))
+
     def test_noncanonical_constant_parts_normalize_offsets(self):
         envelope = self.extract(
             "module top(input logic [10:3] source, output logic [10:3] value); "

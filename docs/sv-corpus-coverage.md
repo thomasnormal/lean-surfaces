@@ -988,6 +988,11 @@ untagged packed-union typedef and reads it through the alternate field. Alias
 visibility and x propagation remain; tagged, unresolved, dynamic and effectful
 alias paths remain loud.
 
+The `noncanonical_typedef_subrange` fixture checks a `[10:9]` slice through a
+`[10:7]` packed-struct typedef. Alias erasure preserves declaration-label
+offsets and x propagation; direction-mismatched, dynamic, indexed and
+effectful alias paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

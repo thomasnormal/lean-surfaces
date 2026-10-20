@@ -34,6 +34,10 @@ canonical handle retained by `IntegralMemberGetter`, so a call cannot silently
 cross a redeclaration or overload identity boundary.
 Callers that start from raw AST are expected to use `admitResolved`, which
 performs both syntax admission and this canonical resolution in one operation.
+`extractors/cpp/census_member_calls.lean` applies that operation to every
+retained `CXXMemberCallExpr` in a complete probe and emits an auditable JSON
+admission/refusal census. It is bounded and read-only: no receiver, object
+state, body execution, overload lookup or native agreement is inferred.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

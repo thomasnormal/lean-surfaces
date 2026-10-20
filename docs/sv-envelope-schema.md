@@ -252,7 +252,8 @@ a bit-select, part-select or concatenation LHS makes that *statement*
 also admits constant packed bit/part, concatenation-leaf and untagged
 packed-member windows on continuous assignments, with static overlaps rejected
 before execution; a constant cell of an admitted one-dimensional fixed-unpacked
-array is an ordinary `Ident` leaf. In the
+array is an ordinary `Ident` leaf, and constant packed selections inside that
+cell use the same `SelectTarget`/`SelectRead` fixed-window geometry. In the
 legacy/self-check
 extractor, a constant element of a one-dimensional fixed-unpacked integral
 array is lowered

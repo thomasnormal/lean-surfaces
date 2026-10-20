@@ -1,4 +1,4 @@
-"""Legacy continuous assignments use fixed vector windows only."""
+"""Legacy continuous assignments use fixed vector and cell windows."""
 import json
 import tempfile
 import unittest
@@ -59,6 +59,67 @@ class LegacyContinuousWindows(unittest.TestCase):
             "width": 4,
             "name": "value[0]",
         })
+
+    def test_constant_fixed_array_cell_select_is_a_continuous_window(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [1:0] out); "
+            "logic [3:0] value [0:0]; "
+            "assign value[0][1 +: 2] = source; "
+            "assign out = value[0][3:2]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target, readback = processes
+        self.assertEqual(target["kind"], "Assign")
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["value"]["name"], "value[0]")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 31 + "1")
+        self.assertFalse(target["target"]["descending"])
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["value"]["name"], "value[0]")
+
+    def test_noncanonical_fixed_array_cell_window_normalizes(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic out); "
+            "logic [10:7] value [0:0]; "
+            "assign value[0][10:9] = source; "
+            "assign out = value[0][10]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target, readback = processes
+        self.assertEqual(target["target"]["kind"], "SelectTarget")
+        self.assertEqual(target["target"]["value"]["name"], "value[0]")
+        self.assertEqual(target["target"]["index"]["bits"],
+                         "0" * 30 + "10")
+        self.assertEqual(readback["value"]["kind"], "SelectRead")
+        self.assertEqual(readback["value"]["index"]["bits"],
+                         "0" * 30 + "11")
+
+    def test_overlapping_fixed_array_cell_windows_are_loud(self):
+        envelope = self.extract(
+            "module top(input logic [1:0] source, output logic [3:0] out); "
+            "logic [3:0] value [0:0]; "
+            "assign value[0][3:2] = source; "
+            "assign value[0][2:1] = source; "
+            "assign out = value[0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[1]["kind"], "Unsupported")
+        self.assertEqual(processes[1]["sv_kind"],
+                         "AssignmentExpression:target")
+
+    def test_dynamic_or_effectful_fixed_array_cell_window_stays_loud(self):
+        dynamic = self.extract(
+            "module top(input logic [1:0] index, input logic source, "
+            "output logic out); logic [3:0] value [0:0]; "
+            "assign value[0][index] = source; assign out = value[0][0]; "
+            "endmodule")
+        effectful = self.extract(
+            "module top(input logic [1:0] index, input logic source, "
+            "output logic out); logic [3:0] value [0:0]; "
+            "assign value[0][index++] = source; assign out = value[0][0]; "
+            "endmodule")
+        for envelope in (dynamic, effectful):
+            process = envelope["design"]["modules"][0]["processes"][0]
+            self.assertEqual(process["kind"], "Unsupported")
 
     def test_overlapping_continuous_windows_are_loud(self):
         envelope = self.extract(

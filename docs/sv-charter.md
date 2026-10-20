@@ -1134,6 +1134,17 @@ aggregates, dynamic fixed-array cells and unsupported nets remain loud. A
 constant cell is an ordinary flat identifier; the vector executor is reused
 and no net-resolution or scheduler rule is added.
 
+### Legacy continuous fixed-array cell windows — 2026-10-20
+
+The same legacy continuous-assignment window path now has a pinned boundary
+for constant packed selections inside a flattened fixed-unpacked cell. Simple,
+indexed and noncanonical in-range cells retain their cell identifier as the
+window base and normalize declaration labels to the existing vector offset.
+Static overlap on one cell is rejected before it could imply driver
+resolution. Dynamic or effectful packed indices, out-of-range selections,
+aggregate storage and dynamic array indices remain loud; no aggregate store,
+net-resolution rule or second scheduler is introduced.
+
 ### Symbolic streaming targets over fixed cells — 2026-10-20
 
 The symbolic `sv-0.2` procedural surface now applies the same right-streaming

@@ -561,6 +561,16 @@ and unsupported net-resolution forms remain loud; a constant cell is an
 ordinary flat identifier. The broad corpus census was not regenerated for this
 focused rung.
 
+## Legacy continuous fixed-array cell windows — 2026-10-20
+
+The legacy continuous-assignment path now has focused coverage for constant
+packed bit/part and indexed selections inside flattened one-dimensional
+fixed-unpacked cells. Canonical and noncanonical labels normalize to the
+existing `SelectTarget`/`SelectRead` offsets, while static overlap is rejected
+before it could imply driver resolution. Dynamic or effectful packed indices,
+dynamic array indices, and aggregate storage remain loud. This is a focused
+extractor boundary; the broad corpus census was not regenerated.
+
 ## Symbolic streaming targets over fixed cells — 2026-10-20
 
 The symbolic `sv-0.2` procedural path now lowers simple right-streaming

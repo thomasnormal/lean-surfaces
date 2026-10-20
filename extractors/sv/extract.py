@@ -2122,11 +2122,33 @@ def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
                 sm, expression.value.type, expression.selector)
         elif expression_kind == "RangeSelectExpression":
             selection = str(expression.selectionKind).split(".")[-1]
-            if selection != "Simple":
+            if selection == "Simple":
+                normalized = _packed_constant_simple_index(
+                    sm, expression.value.type, expression.left,
+                    expression.right, expression.type.bitWidth)
+            elif selection in ("IndexedUp", "IndexedDown"):
+                source_type = expression.value.type.canonicalType
+                index_base = _constant_dimension_selector(expression.left)
+                width = expression.type.bitWidth
+                if (type(source_type).__name__ != "PackedArrayType"
+                        or int(source_type.range.left) != source_type.bitWidth - 1
+                        or int(source_type.range.right) != 0
+                        or index_base is None or width <= 0):
+                    return None
+                if selection == "IndexedUp":
+                    if index_base < 0 or index_base + width > source_type.bitWidth:
+                        return None
+                else:
+                    if index_base < width - 1 or index_base >= source_type.bitWidth:
+                        return None
+                normalized = ({
+                    "kind": "Literal",
+                    "span": node_span(sm, expression.left),
+                    "width": 32,
+                    "bits": format(index_base & ((1 << 32) - 1), "032b"),
+                }, selection == "IndexedDown")
+            else:
                 return None
-            normalized = _packed_constant_simple_index(
-                sm, expression.value.type, expression.left,
-                expression.right, expression.type.bitWidth)
         if normalized is None:
             return None
         local_index, _index_signed = normalized
@@ -2147,7 +2169,10 @@ def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
             "value": _convert_expr(sm, base),
             "index": index,
             "index_signed": False,
-            "descending": False,
+            "descending": (normalized[1] if expression_kind ==
+                            "RangeSelectExpression" and
+                            str(expression.selectionKind).split(".")[-1]
+                            in ("IndexedUp", "IndexedDown") else False),
         }
         if result_kind == "SelectTarget":
             result["two_state"] = not expression.type.isFourState

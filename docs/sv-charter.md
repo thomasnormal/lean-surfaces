@@ -1136,12 +1136,13 @@ and no net-resolution or scheduler rule is added.
 
 ### Legacy continuous nested packed-struct windows — 2026-10-20
 
-Constant bit and simple part selections through nested untagged packed-struct
-member chains on continuous assignments now flatten their fixed declaration
-offsets into the same `SelectTarget` and `SelectRead` windows over one vector.
+Constant bit, simple part and indexed selections through nested untagged
+packed-struct member chains on continuous assignments now flatten their fixed
+declaration offsets into the same `SelectTarget` and `SelectRead` windows over
+one vector.
 The same composition applies to a constant selection through a flattened
-fixed-array aggregate cell. Indexed, dynamic or effectful selections, nested
-unions, tagged aggregates and unpacked storage remain loud because their
+fixed-array aggregate cell. Dynamic or effectful selections, nested unions,
+tagged aggregates and unpacked storage remain loud because their
 runtime aliasing is not represented by the flat-vector state. No aggregate
 store, driver-resolution rule or scheduler is added.
 

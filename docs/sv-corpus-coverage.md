@@ -564,11 +564,11 @@ focused rung.
 
 ## Legacy continuous nested packed-struct windows — 2026-10-20
 
-The focused extractor battery now pins constant bit and simple part selections
-through nested untagged packed-struct member chains as fixed vector windows on
-continuous assignments, including flattened fixed-array aggregate cells.
-Indexed selections and nested unions remain loud because their overlapping
-layouts need an aliasing-aware representation; tagged, dynamic and unpacked
+The focused extractor battery now pins constant bit, simple part and indexed
+selections through nested untagged packed-struct member chains as fixed vector
+windows on continuous assignments, including flattened fixed-array aggregate
+cells. Nested unions remain loud because their overlapping layouts need an
+aliasing-aware representation; dynamic and unpacked
 aggregate forms remain outside the tier. No broad census or simulator-agreement
 claim is made for this focused boundary.
 

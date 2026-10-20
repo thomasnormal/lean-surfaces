@@ -122,6 +122,11 @@ def next_kw():
     return next(iterator=1)
 
 
+def ascii_kw():
+    # ascii takes no keywords; argument expressions still evaluate first.
+    return ascii(value=3)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

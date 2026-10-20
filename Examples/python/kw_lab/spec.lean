@@ -82,6 +82,8 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   (.typeError "chr() takes no keyword arguments")
 #py_check kw_lab.next_kw() raises
   (.typeError "next() takes no keyword arguments")
+#py_check kw_lab.ascii_kw() raises
+  (.typeError "ascii() takes no keyword arguments")
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

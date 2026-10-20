@@ -957,8 +957,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     let _ ← evalOpenList K m args.toList
                     let _ ← K.kwArgs kwargs.toList
                     raisePy (.typeError "divmod() takes no keyword arguments")
-                  else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" then
-                    -- CPython's repr, abs, ord, chr, and next constructors accept no keyword
+                  else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" || name == "ascii" then
+                    -- CPython's repr, abs, ord, chr, next, and ascii constructors accept no keyword
                     -- arguments. Evaluate both argument lists before its
                     -- faithful TypeError, preserving Python's order.
                     let _ ← evalOpenList K m args.toList
@@ -971,7 +971,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                       "ord() takes no keyword arguments"
                     else if name == "chr" then
                       "chr() takes no keyword arguments"
-                    else "next() takes no keyword arguments"))
+                    else if name == "next" then
+                      "next() takes no keyword arguments"
+                    else "ascii() takes no keyword arguments"))
                   else refuse s!"builtin '{name}' with keyword arguments is outside the H6 tier"
               | .modFun qname =>
                   match findFunction m qname with

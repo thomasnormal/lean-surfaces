@@ -171,6 +171,14 @@ private def observedCanonical : Option Int :=
                   if memory == projection.snapshot.memory then some value.value else none
               | .error _ => none
 
+private def bindingCanonicalError : Option IntegralMemberCallError :=
+  match IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read") with
+  | .error _ => none
+  | .ok evidence =>
+      match IntegralMemberCall.bind evidence canonicalGetter receiverHandle projection with
+      | .error reason => some reason
+      | .ok _ => none
+
 #guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
     declarationRow "0xc0" "CXXMethodDecl" "0xc0"] == some (h "0xc0")
 #guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
@@ -187,6 +195,7 @@ private def observedCanonical : Option Int :=
 #guard resolveCanonicalError [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
     declarationRow methodHandle.value "CXXMethodDecl" "0xc1"] == some .canonicalMethodAmbiguous
 #guard observedCanonical == some 7
+#guard bindingCanonicalError == some .canonicalMethodMismatch
 
 #guard syntaxError (rawObject []) == some .notMemberCall
 #guard syntaxError (rawObject [

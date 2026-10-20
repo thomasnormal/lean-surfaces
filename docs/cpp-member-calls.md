@@ -41,6 +41,8 @@ state, body execution, overload lookup or native agreement is inferred.
 For argument refusals it also reports the retained child-kind shape, so a
 future argument tier can be priced against source evidence before evaluation
 semantics are added.
+Receiver refusals likewise retain the member kind, arrow/dot spelling, value
+category, and base child kinds for a future receiver tier.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

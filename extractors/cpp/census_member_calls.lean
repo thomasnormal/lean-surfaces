@@ -36,6 +36,22 @@ private def argumentShape (raw : Raw) : String :=
       String.intercalate "," (arguments.map (fun argument => argument.text "kind" |>.getD "<missing>"))
   | _ => "<malformed>"
 
+private def receiverShape (raw : Raw) : String :=
+  match raw.field "inner" with
+  | some (.array (member :: _)) =>
+      let kind := member.text "kind" |>.getD "<missing>"
+      let arrow := match member.field "isArrow" with
+        | some (.bool true) => "arrow"
+        | some (.bool false) => "dot"
+        | _ => "arrow-missing"
+      let category := member.text "valueCategory" |>.getD "<missing>"
+      let bases := match member.field "inner" with
+        | some (.array children) => String.intercalate "," (children.map (fun (child : Raw) =>
+            child.text "kind" |>.getD "<missing>"))
+        | _ => "<missing>"
+      s!"{kind}|{arrow}|{category}|{bases}"
+  | _ => "<malformed>"
+
 private def emit (value : Json) : IO Unit := IO.println value.compress
 
 private def refuse (stage reason : String) : IO UInt32 := do
@@ -52,6 +68,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut admitted := 0
   let mut refusals : List String := []
   let mut argumentShapes : List String := []
+  let mut receiverShapes : List String := []
   let mut reports : List Json := []
   for (raw, ordinal) in calls.zipIdx do
     match IntegralMemberCallSyntax.admitResolved probe raw with
@@ -69,6 +86,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
         refusals := name :: refusals
         if reason == .unsupportedArguments then
           argumentShapes := argumentShape raw :: argumentShapes
+        if reason == .unsupportedReceiver then
+          receiverShapes := receiverShape raw :: receiverShapes
         reports := jsonObject [
           ("ordinal", toJson ordinal),
           ("status", toJson "REFUSE"),
@@ -83,6 +102,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("refused", toJson refusals.length),
     ("first_refusals", counts refusals),
     ("unsupported_argument_shapes", counts argumentShapes),
+    ("unsupported_receiver_shapes", counts receiverShapes),
     ("calls", toJson reports.reverse)])
   return 0
 

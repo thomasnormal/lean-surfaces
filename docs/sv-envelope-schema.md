@@ -403,6 +403,11 @@ selected labels preserve the declared direction; `noncanonical_member_subrange`
 pins this case. Direction-mismatched, dynamic, indexed and effectful nested
 selections remain unsupported.
 
+The same noncanonical label normalization applies to a direct packed-union
+member and remains visible through its alternate field;
+`noncanonical_union_subrange` pins that aliasing case. Direction-mismatched,
+dynamic, indexed and effectful union paths remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

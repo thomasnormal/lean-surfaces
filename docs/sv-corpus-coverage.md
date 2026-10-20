@@ -963,6 +963,11 @@ The `noncanonical_member_subrange` fixture checks a simple `[10:9]` slice of a
 outer window with x propagation; direction-mismatched, dynamic, indexed and
 effectful nested selections remain loud.
 
+The `noncanonical_union_subrange` fixture applies the same `[10:9]` to `[10:7]`
+label mapping to a direct packed-union member and reads the shared window
+through its alternate field. Alias visibility and x propagation are preserved;
+direction-mismatched, dynamic, indexed and effectful union paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

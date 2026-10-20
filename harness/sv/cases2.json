@@ -196,6 +196,16 @@
    ]
   },
   {
+   "name": "noncanonical_union_subrange",
+   "example": "sem2/noncanonical_union_subrange",
+   "top": "noncanonical_union_subrange",
+   "signals": ["source", "out"],
+   "stimulus": [
+    {"source": "11"},
+    {"source": "x0"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

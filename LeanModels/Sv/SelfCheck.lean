@@ -849,6 +849,9 @@ structure Design where
   name : String
   decls : Array SDecl
   procs : Array SProc
+  /-- Envelope literals produced by time-zero-only query lowering must not
+  enter an executor whose clock can advance. -/
+  requiresTimeZero : Bool := false
 deriving Repr, Inhabited
 
 /-- Initialize declarations in order (later initializers may read earlier
@@ -1237,6 +1240,20 @@ partial def localNames : SStmt → List String
   | .repeatLoop _ _ body | .repeatBody _ body | .repeatAfterBody _ body => localNames body
   | _ => []
 
+/-- Preserve time-zero query provenance through envelope ingestion.
+
+The expression parser intentionally shares ordinary literal evaluation with
+M0. Keep its admission restriction at design scope so a timed loader cannot
+silently turn the approximation into a clock-independent value. This walk is
+in the ingestion layer, alongside the other partial JSON parsers. -/
+partial def hasTimeZeroLiteral : Json → Bool
+  | .obj fields =>
+      (fields.get? "kind" == some (.str "Literal") &&
+        fields.get? "time_zero" == some (.bool true)) ||
+      fields.toArray.any (fun (_, value) => hasTimeZeroLiteral value)
+  | .arr values => values.any hasTimeZeroLiteral
+  | _ => false
+
 /-- One `Module` payload → self-check `Design`. Ports and vars/nets share
 the flat state; module `others` and unsupported members become `.other`
 processes (loud at run). The state is a flat namespace, so a local decl
@@ -1270,7 +1287,7 @@ def parseModuleD (j : Json) : Except String Design := do
           throw s!"local variable '{n}' shadows a module-level declaration (flat state)"
       if ln.length != ln.eraseDups.length then
         throw "duplicate local variable declarations within one process (flat state)"
-  return { name, decls, procs }
+  return { name, decls, procs, requiresTimeZero := hasTimeZeroLiteral j }
 
 /-- Envelope text → self-check `Design`. Validates `schema_version`/
 `language` and the single-module shape. -/

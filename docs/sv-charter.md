@@ -3161,3 +3161,28 @@ the separate completed comparison above. Tagged/unpacked aggregates,
 multidimensional source elements, dynamic noncanonical ranges, unmodelled effects and the
 existing member-select limits stay loud. The symbolic selected-read surface
 is unchanged. No value evaluator, storage or scheduler operation was added.
+
+
+### Preserve time-zero queries at the timed boundary — 2026-10-20
+
+The self-check envelope's `time_zero` literal marker now survives ingestion
+as `SelfCheck.Design.requiresTimeZero`. The timed loader rejects any such
+design before constructing a scheduler world. The existing time-zero runner
+continues to evaluate the query as zero. This closes a boundary leak: a
+delayed `$time` expression formerly reached the timed executor as an ordinary
+zero constant. Dynamic clock queries remain outside this surface tier.
+
+`time_boundary` checks the real extracted delayed, nested and declaration-
+initializer queries, plus an ordinary zero literal. The marker is retained
+through all three query shapes; all three refuse at the timed boundary.
+The ordinary literal still executes after its delay, and `time_zero` still
+runs at time zero. A kernel theorem excludes restricted designs at every
+fuel. Completed simulator transcripts distinguish delayed time, nested time
+arithmetic, a sampled initializer and a constant literal; rejected queries
+are reported as refusals, not agreement.
+
+A fresh paired census on the same **22,035** paths has no extraction changes:
+**3,054 clean**, **18,915 partial**, **66 include skips**, zero errors.
+No extractor, expression evaluator, clock or scheduling rule changed. The
+restriction is conservative even if a particular marked initializer would
+happen to be evaluated at time zero in a timed program.

@@ -104,6 +104,8 @@ through the existing scheduler in source order. Time is measured in that
 module's time-unit ticks; physical unit conversion is not inferred.
 `runSelfCheck` remains time-zero-only and continues to refuse timing nodes. -/
 def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld := do
+  if d.requiresTimeZero then
+    throw "timed design rejects time-zero-only $time lowering"
   let procs ← d.procs.toList.mapM fun proc =>
     match proc with
     | .initial body =>
@@ -122,6 +124,13 @@ def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld 
   return { signals := signals
          , procs := procs
          , regionQ := fun r => if r == Region.active then List.range procs.size else [] }
+
+/-- A time-zero approximation cannot enter the timed executor at any fuel. -/
+theorem elabTimedDesign_requiresTimeZero (fuel : Nat) (d : SelfCheck.Design)
+    (restricted : d.requiresTimeZero = true) :
+    elabTimedDesign fuel d = .error "timed design rejects time-zero-only $time lowering" := by
+  simp [elabTimedDesign, restricted]
+  rfl
 
 /-! ## Guards -/
 

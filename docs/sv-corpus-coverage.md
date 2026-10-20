@@ -1361,3 +1361,16 @@ in the time-zero runner because they need delay or continuous-process support. D
 so this comparison does not assert default-mode agreement there. Three
 fixture-bound kernel theorems cover unknown-index zero fill and symbolic
 partial overlap for both source state kinds. No evaluator or scheduler changed.
+
+
+### Time-zero query boundary — 2026-10-20
+
+A fresh paired **22,035**-path extraction census is unchanged: **3,054 clean**,
+**18,915 partial**, **66 include skips**, zero errors and zero changed rows.
+The runtime loader now preserves existing `time_zero` literal provenance as
+design-level metadata and refuses it at the timed boundary. Time-zero
+execution and ordinary literal timed execution remain available. The
+previously extraction-clean delayed packed-struct corpus fixture continues
+to refuse in the self-check runner and now also refuses explicitly in the
+timed loader, closing its constant-zero `$time` leak. This is a corrected
+admission boundary, not additional corpus runtime coverage.

@@ -1228,3 +1228,14 @@ types retain `:index-type`. Symbolic `BitSel`/`PartSel` nodes are unchanged;
 A legacy design containing `SelectRead` and any frontend error diagnostic
 also carries `SelectRead:invalid-compilation` in its top-level refusals;
 recovering a typed expression from malformed source is not admission.
+
+
+### Time-zero literal provenance
+
+A legacy `Literal` may carry `"time_zero": true` when it represents the
+zero-argument `$time` query within the time-zero self-check tier. Ingestion
+retains the presence of any such literal, including nested expressions and
+initializers, as `SelfCheck.Design.requiresTimeZero`. `runSelfCheck` may
+evaluate it; `elabTimedDesign` rejects the design before creating a timed
+world. An ordinary zero literal carries no restriction. The existing marker
+is admission metadata and does not define a dynamic clock query.

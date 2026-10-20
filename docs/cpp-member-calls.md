@@ -27,8 +27,9 @@ The AST method id is an occurrence handle; declaration probes may map that
 occurrence to a different canonical method handle. `IntegralMemberCallSyntax`
 starts with the occurrence as its canonical placeholder, and
 `resolveCanonical` accepts exactly one distinct `CXXMethodDecl` canonical handle
-from the probe (duplicate identical rows are harmless). Missing, non-method, or
-conflicting rows refuse loudly. Binding compares the resolved handle with the
+from the probe, and that handle must also have an explicit self-canonical
+`CXXMethodDecl` row (duplicate identical rows are harmless). Missing, non-method,
+target-less, or conflicting rows refuse loudly. Binding compares the resolved handle with the
 canonical handle retained by `IntegralMemberGetter`, so a call cannot silently
 cross a redeclaration or overload identity boundary.
 

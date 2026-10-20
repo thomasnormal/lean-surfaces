@@ -28,7 +28,8 @@ private def probe (rows : List DeclarationEvidenceRow) : DeclarationProbe :=
   {ast := .object [], metadata := .object [], declarations := rows}
 
 private def canonicalProbe : DeclarationProbe :=
-  probe [declarationRow methodHandle.value "CXXMethodDecl" "0xc0"]
+  probe [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
+    declarationRow "0xc0" "CXXMethodDecl" "0xc0"]
 
 private def canonicalGetter : IntegralMemberGetter :=
   {getter with canonical := h "0xc0"}
@@ -167,12 +168,16 @@ private def observedCanonical : Option Int :=
                   if memory == projection.snapshot.memory then some value.value else none
               | .error _ => none
 
-#guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0"] == some (h "0xc0")
 #guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
-    declarationRow methodHandle.value "CXXMethodDecl" "0xc0"] == some (h "0xc0")
+    declarationRow "0xc0" "CXXMethodDecl" "0xc0"] == some (h "0xc0")
+#guard resolveCanonicalHandle [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
+    declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
+    declarationRow "0xc0" "CXXMethodDecl" "0xc0"] == some (h "0xc0")
 #guard resolveCanonicalError [] == some .canonicalMethodMissing
 #guard resolveCanonicalError [declarationRow methodHandle.value "FieldDecl" "0xc0"] ==
   some .canonicalMethodMissing
+#guard resolveCanonicalError [declarationRow methodHandle.value "CXXMethodDecl" "0xc0"] ==
+  some .canonicalMethodTargetMissing
 #guard resolveCanonicalError [declarationRow methodHandle.value "CXXMethodDecl" "0xc0",
     declarationRow methodHandle.value "CXXMethodDecl" "0xc1"] == some .canonicalMethodAmbiguous
 #guard observedCanonical == some 7

@@ -74,6 +74,8 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
 #py_check kw_lab.ntuple_kw(4) = 41
 #py_check kw_lab.builtin_kw() raises
   (.typeError "len() takes no keyword arguments")
+#py_check kw_lab.abs_kw() raises
+  (.typeError "abs() takes no keyword arguments")
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

@@ -102,6 +102,11 @@ def builtin_kw():
     return len(obj=[1, 2])
 
 
+def abs_kw():
+    # abs takes no keywords; argument expressions still evaluate first.
+    return abs(x=1)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

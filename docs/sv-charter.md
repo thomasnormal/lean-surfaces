@@ -2854,6 +2854,14 @@ the `[3:2]` window of `arr[0]`, preserving x propagation through the existing
 `PartSel` executor. Dynamic or effectful packed bounds remain loud; no range
 table, aggregate storage or scheduler is introduced.
 
+### Symbolic reversed fixed-unpacked ranges — 2026-10-20
+
+Descending unpacked ranges now have a pinned symbolic boundary: emitted cells
+follow declaration order while literal labels retain their own names.
+`fixed_array_reverse_range` checks `[1:0]`, the `arr[0]` write/read pair and
+four-state propagation. No ordinal remapping, aggregate storage or scheduler
+behavior is introduced.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

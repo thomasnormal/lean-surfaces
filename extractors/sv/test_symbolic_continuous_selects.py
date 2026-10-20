@@ -504,6 +504,17 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(envelope["design"]["modules"][0]["processes"][0]["kind"],
                          "Unsupported")
 
+    def test_fixed_array_reverse_range_keeps_declared_cell_labels(self):
+        envelope = self.extract(
+            "module top(input logic source, output logic out); "
+            "logic [3:0] arr [1:0]; assign arr[0] = {3'b000, source}; "
+            "assign out = arr[0][0]; endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual([decl["name"] for decl in module["decls"]],
+                         ["arr[1]", "arr[0]"])
+        self.assertEqual(module["processes"][0]["target"]["name"], "arr[0]")
+        self.assertEqual(module["processes"][1]["value"]["value"]["name"], "arr[0]")
+
 
 if __name__ == "__main__":
     unittest.main()

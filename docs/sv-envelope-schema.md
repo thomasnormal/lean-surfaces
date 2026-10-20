@@ -374,6 +374,10 @@ against the cell's own packed declaration range. Thus a literal
 `arr[0][10:9]` over a `[10:7]` element emits a `PartSel` over `arr[0]` with
 zero-based offsets; dynamic or effectful packed bounds remain `Unsupported`.
 
+The unpacked range itself may descend: emitted cell declarations follow source
+declaration order (`arr[1]`, then `arr[0]` for `[1:0]`), while a constant label
+still resolves to its own named cell. No ordinal-index rewrite is performed.
+
 The same symbolic process representation carries a single constant `BitSel`
 or `PartSel` target. Multiple such assignments settle in process order into
 their existing vector windows, so disjoint partial drivers retain undriven

@@ -1068,6 +1068,12 @@ the constant cell `arr[0]` is emitted first, then its `[10:9]` element slice
 maps to the cell offsets `[3:2]`. The runner observes `11xx` and `x0xx` on the
 whole cell; dynamic packed bounds remain loud and no new storage is needed.
 
+The `fixed_array_reverse_range` fixture checks a descending unpacked range
+`[1:0]`. Declaration order remains `arr[1]`, `arr[0]`, but the literal `arr[0]`
+write and read target the `arr[0]` cell and preserve the same `0`, `1`, `x`
+trace. This keeps source labels visible instead of substituting ordinal
+positions.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

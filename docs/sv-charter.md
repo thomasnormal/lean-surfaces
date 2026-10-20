@@ -1123,6 +1123,16 @@ Dynamic or effectful member indices, nested streams, left streaming and sized
 streams remain loud; the existing flat vector state and packed-target executor
 are reused.
 
+### Legacy continuous fixed-window targets — 2026-10-20
+
+Continuous assignments in the legacy/self-check envelope now admit constant
+packed bit/part selects and direct members of untagged packed structs or unions
+as fixed `SelectTarget` windows. Static overlapping windows are converted to a
+loud target refusal before they could imply driver resolution; dynamic or
+effectful selectors, tagged/nested aggregates and unsupported nets remain
+loud. The flat vector executor is reused and no net-resolution or scheduler
+rule is added.
+
 ### Symbolic streaming targets over fixed cells — 2026-10-20
 
 The symbolic `sv-0.2` procedural surface now applies the same right-streaming

@@ -3576,7 +3576,8 @@ def convert_continuous_assign(sm, m):
         value = lowered["value"]
         ok = True
     else:
-        target, ok = select_target(sm, e.left)
+        target, ok = (legacy_blocking_target(sm, e.left)
+                      if _SYM is None else select_target(sm, e.left))
         if _SYM is not None and type(e.left).__name__ == "ConcatenationExpression":
             parts = _symbolic_concat_target(sm, e.left)
             if parts is None:
@@ -3851,6 +3852,10 @@ def convert_module(sm, inst):
                 others.append(unsupported(sm, m, type(m).__name__ + ":" + k))
         except Exception as exc:
             others.append(internal_error(exc))
+
+    # Constant continuous windows are storage-only in the legacy runner too;
+    # reject static overlap before it could be mistaken for net resolution.
+    _reject_overlapping_symbolic_drivers(processes)
 
     return {
         "kind": "Module",

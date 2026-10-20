@@ -248,7 +248,10 @@ ordinary effectful expression.
 
 The plain M0 cycle runner still accepts whole-signal identifier targets only;
 a bit-select, part-select or concatenation LHS makes that *statement*
-`Unsupported` (`AssignmentExpression:target`). In the legacy/self-check
+`Unsupported` (`AssignmentExpression:target`). The legacy/self-check extractor
+also admits constant packed bit/part and untagged packed-member windows on
+continuous assignments, with static overlaps rejected before execution. In the
+legacy/self-check
 extractor, a constant element of a one-dimensional fixed-unpacked integral
 array is lowered
 to an identifier cell such as `mem[2]`, and its declaration is expanded to one

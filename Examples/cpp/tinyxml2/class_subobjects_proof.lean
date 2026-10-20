@@ -1,6 +1,7 @@
 import Examples.cpp.tinyxml2.ElementHierarchy
 import Examples.cpp.tinyxml2.DocumentHierarchy
 import Examples.cpp.tinyxml2.BaseGetLineNum
+import LeanModels.Cpp.ClassBaseViews
 
 namespace Examples.cpp.tinyxml2
 open LeanModels.Cpp
@@ -57,7 +58,26 @@ private theorem live_base_examples :
     (ElementHierarchy.hierarchy.classes.find? (·.declaration == BaseGetLineNum.getter.owner)).map
       (·.isAbstract) = some true := by decide
 
+private def baseView (hierarchy : ClassHierarchy) : Option (ClassBaseView × ObjectId) := do
+  let slots ← hierarchy.slots.toOption
+  let some (_, index) := slots.zipIdx.find? (fun (slot, _) => slot.path == [0]) | none
+  let candidate : ClassBaseView := {
+    hierarchy, objects := List.range slots.length, sourcePath := [], targetPath := [0],
+    memory := {
+      profile := .lp64,
+      objects := {objects := slots.map (fun slot =>
+        ⟨.automatic, .record slot.declaration, .aliveInitialized⟩)},
+      values := slots.map (fun _ => none)}}
+  pure (candidate, index)
+
+private theorem original_base_views :
+    (baseView ElementHierarchy.hierarchy).bind (fun (view, _) =>
+      view.convert.toOption.map (fun (_, object) => object)) = some 1 ∧
+    (baseView DocumentHierarchy.hierarchy).bind (fun (view, _) =>
+      view.convert.toOption.map (fun (_, object) => object)) = some 1 := by decide
+
 #print axioms element_base_returns
 #print axioms document_base_returns
 #print axioms live_base_examples
+#print axioms original_base_views
 end Examples.cpp.tinyxml2

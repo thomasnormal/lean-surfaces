@@ -24,3 +24,4 @@ import LeanModels.Cpp.Callable
 import LeanModels.Cpp.RecordEvidence
 import LeanModels.Cpp.RecordObjects
 import LeanModels.Cpp.MemberGetters
+import LeanModels.Cpp.ClassBaseViews

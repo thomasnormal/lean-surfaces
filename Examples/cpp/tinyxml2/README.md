@@ -144,6 +144,8 @@ base, with an identity distinct from its complete root.
 `class_subobjects_proof.lean` proves successful original getter execution from
 validated complete/base/member observations, preserving caller memory. Concrete
 kernel examples run both hierarchies and verify the selected base is abstract.
+It also checks the explicit nonvirtual base-view operation on both complete
+roots, returning the existing `XMLNode` object identity without changing memory.
 The native controls independently set/read the original private member in real
 element and document objects, using the standard access waiver described above.
 Native construction, parsing and destruction remain oracle setup.

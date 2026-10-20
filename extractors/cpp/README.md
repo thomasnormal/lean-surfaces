@@ -597,3 +597,8 @@ executable bodies. Run it from the capture directory for physical source
 ownership. The exported literal represents existing-object class relationships;
 it does not execute constructors, destructors, source casts or virtual dispatch.
 The opt-in compiler/plugin and original-source variables match the getter suite.
+
+The state-level base-view API is documented in
+[`cpp-base-views.md`](../../docs/cpp-base-views.md). It consumes the admitted
+hierarchy and explicit occurrence paths; it is not a source-cast or virtual
+dispatch implementation.

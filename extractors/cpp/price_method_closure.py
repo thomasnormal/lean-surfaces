@@ -16,7 +16,7 @@ SCHEMA = "cpp-canonical-probe-0.3"
 PROFILE = "integral-callables-and-records-2026-10-20"
 BASELINE_MODEL_SHA256 = {
     "LeanModels/Cpp/Callable.lean": "02f4bd5f4f0ef893dc71f3d873f68b12463711faa160b82c1f0498d3e59c17ef",
-    "LeanModels/Cpp/LocalFunction.lean": "5770fe7362733d160f82c85c26af814165929f853d0a79343f1cf5eaca1e731f",
+    "LeanModels/Cpp/LocalFunction.lean": "a73cf2a369815ead88adb27a1f56e08c7afc7bbdd5ef0018f301b1a557032eed",
     "LeanModels/Cpp/AutomaticDeclarations.lean": "3ac2add160cbea5f33eedc761e2e4b34542364c6bda6db11d5ab958e70ba5dfb",
     "LeanModels/Cpp/RecordEvidence.lean": "34b168582d20a165482a3dbf752e40802b4eb60d9109d813f0ca18ef9a3d3e77"
 }

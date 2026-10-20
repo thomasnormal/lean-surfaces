@@ -38,6 +38,13 @@ costs cover templates, dependent/implicit/module scopes, unsupported contexts,
 inline/anonymous namespaces and cycles. Ordinary unsequenced binary operands
 with effects retain a separate cost; short-circuit and comma expressions do not.
 
+The subsequent [member-getter tier](cpp-member-getters.md) shares declaration
+validation through a separate instance entry point. The baseline hash was
+reviewed for that refactor: ordinary/static admission retains its original
+contract, including its source-child rule. This instrument continues to price
+that ordinary-callable/complete-record baseline. The getter tier has its own
+semantic census; its admitted bodies are not inferred from these scenarios.
+
 Price these hypothetical changes separately: direct `this`/integral-member
 execution on the current aggregate profile; integral-member projections on an
 already-constructed nonaggregate receiver; and resolved direct calls with their

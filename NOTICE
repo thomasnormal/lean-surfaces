@@ -35,8 +35,10 @@ Other tiers (research in progress, not part of the Python 0.1.0 release):
     From the Go 1.25.6 runtime and standard library. Copyright 2009 The Go
     Authors. BSD-3-Clause.
 
-- Examples/cpp/tinyxml2/IsUTF8Continuation.lean
-    Generated typed body from TinyXML-2 10.0.0, tinyxml2.h. Original code by
+- Examples/cpp/tinyxml2/IsUTF8Continuation.lean,
+  Examples/cpp/tinyxml2/NodeGetLineNum.lean,
+  Examples/cpp/tinyxml2/AttributeGetLineNum.lean
+    Generated typed bodies from TinyXML-2 10.0.0, tinyxml2.h. Original code by
     Lee Thomason (www.grinninglizard.com). zlib license; the full original
     notice is in Examples/cpp/tinyxml2/LICENSE-tinyxml2.txt. The Lean lowering
     is an altered representation, not the original C++ source.

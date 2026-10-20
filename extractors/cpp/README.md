@@ -545,3 +545,33 @@ strictly decoded, and outputs publish atomically with input/source alias checks.
 Set matching `LEANCPP_CLANG` and `LEANCPP_PROBE_LIBRARY` to run the compiled
 controls; their absence is an explicit skip. Correlate the input hash and body
 ownership/counts with `census_callable.lean` before interpreting a corpus result.
+
+## Integral getters on existing objects
+
+`admitIntegralMemberGetter` admits a no-parameter nonstatic method whose body
+reads one direct integral member of `this`, with optional parentheses and
+integral conversions. The [contract](../../docs/cpp-member-getters.md) states
+the source checks and explicit caller-supplied live receiver/member projection.
+This API executes reads without constructing an aggregate or a class instance.
+
+```console
+lake env lean --run extractors/cpp/census_member_getters.lean probe.json --sources source.cpp header.h
+lake env lean --run extractors/cpp/export_member_getter.lean probe.json 0,1,2 Example.Getter
+python3 extractors/cpp/test_member_getters.py
+```
+
+The census validates the entire probe and counts every retained body occurrence,
+with physical source ownership and first refusals. Run from the capture working
+directory so relative source paths resolve correctly. The exporter validates
+the complete probe before selecting a body and printing an `IntegralMemberGetter`
+literal. Both tools bound inputs to 128 MiB; the caller pins compiler/plugin,
+input/source hashes and process budgets externally. They do not authenticate a
+capture or prove lowering correct. The separate ordinary/static callable API
+retains its existing admission policy.
+
+The test suite needs matching `LEANCPP_CLANG` and `LEANCPP_PROBE_LIBRARY`;
+`LEANCPP_TINYXML2_DIR` additionally selects the pinned original-source oracle.
+Missing variables explicitly skip their controls. The
+[original-method example](../../Examples/cpp/tinyxml2/README.md) contains generated
+literals, successful-execution theorems and independent native member-state
+controls. Use the documented 16 GiB process cap and one Lean worker.

@@ -1,0 +1,40 @@
+{
+  "revision": "321ea883b7190d4e85cae5512a12e5eaa8f8731f",
+  "source_sha256": {
+    "tinyxml2.cpp": "d5a7fd2ad255d716c4d2a64d5686f90c7e27a8285c49c59a5d105cb400bdf703",
+    "tinyxml2.h": "02f2389feb67fbb3efe42aaa6942034bc7d54695f357c5aac3cbd2f78a06ca4a"
+  },
+  "probe_sha256": "54ea351d3ca79cb612f169df30d0eaef3bff14f49c0ffa968c3437e9a1a69c46",
+  "literal_sha256": {
+    "NodeGetLineNum.lean": "eb4132cf253f6d2fa1db3ab4814c9986e4a788269a0cea3bf3f1c8a8a125fafe",
+    "AttributeGetLineNum.lean": "edb908c7d024e0d194555886654dfa716d9ed28fb57c5f273b995e99fa0481b8"
+  },
+  "export_tool_sha256": "b2e8613ccb06082aa92965fa8aef265aa2ff6c0816549c77b9705636644a7e8d",
+  "admission_sha256": "84e9b152249b6ab3d072ea67ee97cc49af5c457391af8350a692d59434d5c9db",
+  "declaration_admission_sha256": "a73cf2a369815ead88adb27a1f56e08c7afc7bbdd5ef0018f301b1a557032eed",
+  "paths": {
+    "NodeGetLineNum.lean": [
+      122,
+      15,
+      24
+    ],
+    "AttributeGetLineNum.lean": [
+      122,
+      20,
+      7
+    ]
+  },
+  "state_boundary": "supplied live complete-object/member projection; constructors and parser not modeled",
+  "profile": "lp64",
+  "format": "cpp-original-member-getters-1",
+  "source_project": "TinyXML-2",
+  "source_version": "10.0.0",
+  "frontend": "Clang/LLVM 21.1.8",
+  "language": "C++23",
+  "target": "x86_64-conda-linux-gnu",
+  "probe_bytes": 35495732,
+  "probe_plugin_sha256": "2a472ed50dd52bf60d10a76c563157121d3e76bd2da6202290742d11c4f5c56e",
+  "exporter": "extractors/cpp/export_member_getter.lean",
+  "trusted_boundary": "Clang, canonical probe, complete-probe validators, member-getter lowering and representation printer; capture correspondence is external evidence, not authenticated by the kernel",
+  "license": "zlib; see LICENSE-tinyxml2.txt"
+}

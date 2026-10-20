@@ -90,12 +90,13 @@ def localFunctionScopeSource (artifact : Artifact) (probe : DeclarationProbe)
     if (← optionalSourceBool raw "isInline") || (← optionalSourceBool raw "isImplicit") then
       throw "local function: inline or implicit namespace source"
 
-def localFunctionChildren (raw : Raw) : Except String (List Raw × Option Raw) := do
+def localFunctionChildren (raw : Raw) (ignoreComments : Bool := false) :
+    Except String (List Raw × Option Raw) := do
   let children ← match raw.field "inner" with
     | none => pure []
     | some (.array children) => pure children
     | some _ => throw "local function: malformed source children"
-  go children []
+  go (if ignoreComments then children.filter (·.text "kind" != some "FullComment") else children) []
 where
   go (children parameters : List Raw) : Except String (List Raw × Option Raw) := do
     match children with
@@ -109,7 +110,8 @@ where
         else
           throw "local function: unsupported source child or body order"
 
-def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
+private def admitLocalFunctionDeclarationCore (probe : DeclarationProbe) (path : List Nat)
+    (instanceMethod : Bool) :
     Except String LocalFunctionDeclaration := do
   let artifact : Artifact := {
     sourceFile := "", sourceSha256 := "", frontend := .object [], dependencies := []
@@ -118,6 +120,8 @@ def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
     | throw "local function: source occurrence is absent"
   let some id := raw.text "id" | throw "local function: source handle is absent"
   let isMethod := raw.text "kind" == some "CXXMethodDecl"
+  if instanceMethod && !isMethod then
+    throw "local function: requires a nonstatic CXXMethodDecl"
   unless raw.text "kind" == some "FunctionDecl" || isMethod do
     throw "local function: requires FunctionDecl or static CXXMethodDecl"
   let row ← localFunctionRow probe id
@@ -125,8 +129,9 @@ def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
     throw "local function: source and metadata families disagree"
   let shape ← if isMethod then
       requireEvidenceText row.raw "method_static_api" "CXXMethodDecl.isStatic"
-      unless (← evidenceBool row.raw "method_static") do
-        throw "local function: instance method requires object semantics"
+      unless (← evidenceBool row.raw "method_static") == !instanceMethod do
+        throw (if instanceMethod then "local function: requires a nonstatic CXXMethodDecl"
+          else "local function: instance method requires object semantics")
       parseFunctionShapeEvidence row.raw
     else match row.functionShape with
       | some shape => pure shape
@@ -169,15 +174,15 @@ def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
     predecessors.forM fun handle => do
       let predecessor ← localFunctionRow probe handle.value
       requireEvidenceText predecessor.raw "method_static_api" "CXXMethodDecl.isStatic"
-      unless (← evidenceBool predecessor.raw "method_static") &&
+      unless (← evidenceBool predecessor.raw "method_static") == !instanceMethod &&
           predecessor.semanticContext == some semantic do
         throw "local function: inconsistent static method redeclaration"
-    unless (artifact.declarationsById root.value).any (fun candidate =>
+    unless instanceMethod || (artifact.declarationsById root.value).any (fun candidate =>
         candidate.kind == "CXXMethodDecl" && candidate.name == some name &&
           (artifact.ast.atPath candidate.path).any (fun source =>
             source.text "storageClass" == some "static")) do
       throw "local function: canonical static declaration is absent from AST"
-  let (parameters, body) ← localFunctionChildren raw
+  let (parameters, body) ← localFunctionChildren raw instanceMethod
   let deleted ← optionalSourceBool raw "explicitlyDeleted"
   unless deleted == shape.deletedAsWritten do
     throw "local function: deletion evidence disagrees with source form"
@@ -196,5 +201,15 @@ def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
   unless shape.definition == form.definesEntity do
     throw "local function: definition getter disagrees with source classification"
   return {occurrence, parameters, form}
+
+/-- Ordinary and static callables retain their original admission contract. -/
+def admitLocalFunctionDeclaration (probe : DeclarationProbe) (path : List Nat) :
+    Except String LocalFunctionDeclaration :=
+  admitLocalFunctionDeclarationCore probe path false
+
+/-- Declaration evidence only; an instance body still needs a receiver-aware tier. -/
+def admitLocalInstanceMethodDeclaration (probe : DeclarationProbe) (path : List Nat) :
+    Except String LocalFunctionDeclaration :=
+  admitLocalFunctionDeclarationCore probe path true
 
 end LeanModels.Cpp

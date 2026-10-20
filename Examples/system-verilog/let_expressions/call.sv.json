@@ -1,0 +1,161 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/let_expressions/call.sv",
+  "source_sha256": "e9b97df59c248d2b2e253878951977cf9a5bf25073957843fb4010c3b62a50f3",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 6,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 6,
+              "end_line": 2,
+              "end_col": 7
+            },
+            "name": "a",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 2,
+              "end_line": 5,
+              "end_col": 61
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 10,
+                "end_line": 5,
+                "end_col": 61
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 16,
+                    "end_line": 5,
+                    "end_col": 27
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 16,
+                      "end_line": 5,
+                      "end_col": 17
+                    },
+                    "width": 32,
+                    "name": "a",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Unsupported",
+                      "span": {
+                        "line": 4,
+                        "col": 15,
+                        "end_line": 4,
+                        "end_col": 19
+                      },
+                      "sv_kind": "CallExpression",
+                      "text": "f(x)"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 5,
+                    "col": 27,
+                    "end_line": 5,
+                    "end_col": 50
+                  },
+                  "name": "$display",
+                  "format": "call %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 5,
+                        "col": 47,
+                        "end_line": 5,
+                        "end_col": 48
+                      },
+                      "width": 32,
+                      "name": "a",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 5,
+                    "col": 50,
+                    "end_line": 5,
+                    "end_col": 58
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 3,
+              "col": 2,
+              "end_line": 3,
+              "end_col": 54
+            },
+            "sv_kind": "SubroutineSymbol:Subroutine",
+            "text": "function int f(input int x); return x+1; endfunction"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

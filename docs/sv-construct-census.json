@@ -16,19 +16,19 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    4032
+    4028
    ],
    [
     "ExpressionStatement:CallExpression",
-    3781
+    3761
    ],
    [
     "VariableSymbol:2state",
-    3481
+    3480
    ],
    [
     "CallExpression",
-    3383
+    3370
    ],
    [
     "Hierarchy:ports",
@@ -36,19 +36,19 @@
    ],
    [
     "VariableDeclStatement:2state",
-    2383
+    2374
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1725
+    1713
    ],
    [
     "NamedValueExpression:2state",
-    1486
+    1481
    ],
    [
     "ConcurrentAssertionStatement",
-    1355
+    1351
    ],
    [
     "ClassType",
@@ -56,39 +56,39 @@
    ],
    [
     "InvalidStatement",
-    1326
-   ],
-   [
-    "MemberAccessExpression",
-    1190
+    1323
    ],
    [
     "Hierarchy:module-kind",
-    1165
+    1246
+   ],
+   [
+    "MemberAccessExpression",
+    1189
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
-    1054
+    1053
    ],
    [
     "ConversionExpression:width",
-    781
+    778
    ],
    [
     "HierarchicalValueExpression",
-    770
+    767
    ],
    [
     "CovergroupType:CovergroupType",
-    726
+    725
    ],
    [
     "RealLiteral",
-    708
+    705
    ],
    [
     "ElementSelectExpression:source-type",
-    661
+    660
    ],
    [
     "CheckerSymbol",
@@ -96,7 +96,7 @@
    ],
    [
     "ClockingBlockSymbol:ClockingBlock",
-    564
+    562
    ],
    [
     "CheckerInstanceSymbol:CheckerInstance",
@@ -104,7 +104,7 @@
    ],
    [
     "ClassType:ClassType",
-    511
+    509
    ],
    [
     "PropertySymbol:Property",
@@ -116,15 +116,15 @@
    ],
    [
     "SignalEventControl:clock",
-    352
+    350
    ],
    [
     "Hierarchy:invalid-compilation",
-    333
+    324
    ],
    [
     "BlockStatement:JoinAll",
-    321
+    320
    ],
    [
     "TypeAliasType:TypeAlias",
@@ -132,7 +132,7 @@
    ],
    [
     "SequenceSymbol:Sequence",
-    284
+    283
    ],
    [
     "InterfacePortSymbol:InterfacePort",
@@ -148,11 +148,11 @@
    ],
    [
     "BlockStatement:JoinNone",
-    226
+    223
    ],
    [
     "Always:invalid-compilation",
-    224
+    218
    ],
    [
     "Package:Subroutine",
@@ -164,7 +164,7 @@
    ],
    [
     "NamedValueExpression:ClockVar",
-    168
+    166
    ],
    [
     "GenericClassDefSymbol",
@@ -204,7 +204,7 @@
    ],
    [
     "Elaboration:invalid-compilation",
-    103
+    100
    ],
    [
     "ExtractorInternal:AttributeError",
@@ -220,7 +220,7 @@
    ],
    [
     "ProceduralBlockSymbol:Final",
-    89
+    88
    ],
    [
     "ProceduralDeassignStatement",
@@ -271,10 +271,6 @@
     55
    ],
    [
-    "TimedStatement:ImplicitEventControl",
-    54
-   ],
-   [
     "WhileLoopStatement:condition",
     54
    ],
@@ -291,11 +287,15 @@
     53
    ],
    [
-    "ImmediateAssertion:deferred",
+    "TimedStatement:ImplicitEventControl",
     53
    ],
    [
     "NetSymbol:WOr",
+    52
+   ],
+   [
+    "ImmediateAssertion:deferred",
     52
    ],
    [
@@ -315,10 +315,6 @@
     48
    ],
    [
-    "Loop:invalid-compilation",
-    45
-   ],
-   [
     "CaseStatement:Unique",
     45
    ],
@@ -331,8 +327,8 @@
     45
    ],
    [
-    "WaitForkStatement",
-    41
+    "Loop:invalid-compilation",
+    44
    ],
    [
     "Package:initializer",
@@ -340,6 +336,10 @@
    ],
    [
     "ConversionExpression:Explicit",
+    40
+   ],
+   [
+    "WaitForkStatement",
     40
    ],
    [
@@ -351,19 +351,15 @@
     39
    ],
    [
-    "NamedValueExpression:Parameter",
-    39
-   ],
-   [
     "TimedStatement:EventListControl",
     38
    ],
    [
-    "LetDeclSymbol:LetDecl",
+    "DisableForkStatement",
     38
    ],
    [
-    "DisableForkStatement",
+    "NamedValueExpression:Parameter",
     38
    ],
    [
@@ -495,10 +491,6 @@
     15
    ],
    [
-    "ProceduralBlockSymbol:AlwaysLatch",
-    15
-   ],
-   [
     "AnonymousProgramSymbol",
     15
    ],
@@ -508,6 +500,10 @@
    ],
    [
     "ContinuousAssignSymbol:InvalidExpression",
+    14
+   ],
+   [
+    "ProceduralBlockSymbol:AlwaysLatch",
     14
    ],
    [
@@ -583,15 +579,15 @@
     10
    ],
    [
+    "Let:invalid-compilation",
+    10
+   ],
+   [
     "VariableDeclStatement:range",
     10
    ],
    [
     "Package:multiple-modules",
-    10
-   ],
-   [
-    "CheckerSymbol:Checker",
     10
    ],
    [
@@ -604,6 +600,10 @@
    ],
    [
     "AssignmentExpression:selected-effects",
+    9
+   ],
+   [
+    "CheckerSymbol:Checker",
     9
    ],
    [
@@ -652,10 +652,6 @@
    ],
    [
     "AssignmentPattern:integral-shape",
-    6
-   ],
-   [
-    "Package:LetDecl",
     6
    ],
    [
@@ -811,10 +807,6 @@
     2
    ],
    [
-    "LetDeclSymbol",
-    2
-   ],
-   [
     "AssignmentExpression",
     2
    ],
@@ -824,10 +816,6 @@
    ],
    [
     "CaseStatement:pattern",
-    2
-   ],
-   [
-    "PrimitiveSymbol:Primitive",
     2
    ],
    [
@@ -853,6 +841,10 @@
    [
     "DynamicCast:task-diagnostic",
     2
+   ],
+   [
+    "Let:used-before-declaration",
+    1
    ],
    [
     "InsideExpression:invalid-compilation",
@@ -951,6 +943,10 @@
     1
    ],
    [
+    "PrimitiveSymbol:Primitive",
+    1
+   ],
+   [
     "Package:Primitive",
     1
    ],
@@ -992,13 +988,13 @@
    ]
   ],
   "by_status": {
-   "clean": 4320,
-   "partial": 17649,
+   "clean": 4341,
+   "partial": 17628,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    411,
+    412,
     1387
    ],
    "compilation": [
@@ -1014,11 +1010,11 @@
     10
    ],
    "compile_diagnostic": [
-    5,
+    4,
     25
    ],
    "compile_error": [
-    112,
+    109,
     1750
    ],
    "compile_fail": [
@@ -1054,7 +1050,7 @@
     52
    ],
    "simulation": [
-    3726,
+    3750,
     18671
    ],
    "simulation elaboration": [
@@ -1069,9 +1065,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 272,
-    "clean": 718,
-    "partial": 273,
+    "blocked_by_more": 247,
+    "clean": 743,
+    "partial": 248,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1080,7 +1076,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      127
+      107
      ],
      [
       "NamedValueExpression:2state",
@@ -1105,10 +1101,6 @@
      [
       "ConversionExpression:width",
       31
-     ],
-     [
-      "LetDeclSymbol:LetDecl",
-      25
      ],
      [
       "TimedStatement:DelayControl",
@@ -1152,6 +1144,10 @@
      ],
      [
       "NullLiteral",
+      7
+     ],
+     [
+      "CaseStatement:subject",
       7
      ]
     ],
@@ -1248,8 +1244,8 @@
    },
    "chapter-6": {
     "blocked_by_more": 619,
-    "clean": 422,
-    "partial": 619,
+    "clean": 421,
+    "partial": 620,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1333,7 +1329,7 @@
       15
      ]
     ],
-    "unlockable": 0
+    "unlockable": 1
    }
   },
   "extractor_internal_files": [
@@ -1398,9 +1394,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 722,
+    "clean": 747,
     "error": 0,
-    "partial": 312,
+    "partial": 287,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1486,28 +1482,28 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 385,
+    "clean": 386,
     "error": 0,
-    "partial": 159,
+    "partial": 158,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 170,
+    "clean": 171,
     "error": 0,
-    "partial": 681,
+    "partial": 680,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
    },
    "chapter-24": {
-    "clean": 12,
+    "clean": 2,
     "error": 0,
-    "partial": 343,
+    "partial": 353,
     "skip_include": 0,
     "total": 355,
-    "unlockable": 0
+    "unlockable": 6
    },
    "chapter-25": {
     "clean": 8,
@@ -1518,17 +1514,17 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 165,
+    "clean": 166,
     "error": 0,
-    "partial": 400,
+    "partial": 399,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 176,
+    "clean": 177,
     "error": 0,
-    "partial": 178,
+    "partial": 177,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1550,9 +1546,9 @@
     "unlockable": 0
    },
    "chapter-3": {
-    "clean": 54,
+    "clean": 55,
     "error": 0,
-    "partial": 245,
+    "partial": 244,
     "skip_include": 1,
     "total": 300,
     "unlockable": 0
@@ -1590,9 +1586,9 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 123,
+    "clean": 124,
     "error": 0,
-    "partial": 104,
+    "partial": 103,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
@@ -1614,9 +1610,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 136,
+    "clean": 137,
     "error": 0,
-    "partial": 281,
+    "partial": 280,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
@@ -1662,12 +1658,12 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 436,
+    "clean": 435,
     "error": 0,
-    "partial": 749,
+    "partial": 750,
     "skip_include": 0,
     "total": 1185,
-    "unlockable": 2
+    "unlockable": 3
    },
    "chapter-7": {
     "clean": 117,
@@ -1695,7 +1691,7 @@
    }
   },
   "seed": 20260721,
-  "unlockable_simulation": 3,
-  "unlockable_total": 8
+  "unlockable_simulation": 6,
+  "unlockable_total": 15
  }
 }

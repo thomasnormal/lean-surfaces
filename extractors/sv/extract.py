@@ -40,7 +40,9 @@ from pyslang.ast import (
     ConversionKind,
     EdgeKind,
     MinTypMax,
+    LookupFlags,
     ProceduralBlockKind,
+    Scope,
     StatementBlockKind,
     UnaryOperator,
     UniquePriorityCheck,
@@ -5661,8 +5663,44 @@ def _scope_key(route):
     return ":".join(f"{len(part)}:{part}" for part in route)
 
 
+def _register_lexical_collisions(members, module_name):
+    """Keep distinct bound declarations distinct after scope flattening.
+
+    In particular an expanded let reads its declaration's binding even when
+    the invocation is inside a block with a same-spelled local variable.
+    Preserve public module names; rename only colliding procedural stores.
+    """
+    symbols = set()
+    roots = {member for member, route in members if not route
+             and not isinstance(member, dict)
+             and str(member.kind) in ("SymbolKind.Variable", "SymbolKind.Net")}
+
+    def collect(node):
+        if str(getattr(node, "kind", "")) in ("SymbolKind.Variable", "SymbolKind.Net"):
+            symbols.add(node)
+
+    for member, route in members:
+        if not route and not isinstance(member, dict):
+            member.visit(collect)
+    groups = {}
+    for symbol in symbols:
+        groups.setdefault(symbol.name, set()).add(symbol)
+    # Buffer ids are process-global, so emit their compilation-local ordinal.
+    buffers = {buffer: ordinal for ordinal, buffer in enumerate(
+        sorted({symbol.location.buffer.id for symbol in symbols}))}
+    for group in groups.values():
+        if len(group) < 2:
+            continue
+        for symbol in group - roots:
+            location = symbol.location
+            _ELAB_BINDINGS[symbol] = (
+                f"$local:{_scope_key((module_name,))}:{buffers[location.buffer.id]}:"
+                f"{location.offset}:{symbol.name}")
+
+
 def _register_elaborated_bindings(members, module_name):
     """Allocate by declaration identity, including repeated procedural locals."""
+    _register_lexical_collisions(members, module_name)
     for member, route in members:
         if isinstance(member, dict):
             continue
@@ -5722,10 +5760,19 @@ def _module_storage_collisions(ports, decls, processes, span):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "DynamicCast:storage-collision",
                        "text": "generated cast storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$local:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "LexicalBinding:storage-collision",
+                       "text": "lexical storage collides with a source binding"})
     return others
 
 
 def convert_module(sm, inst):
+    if not inst.isModule:
+        return {"kind": "Module", "name": inst.name, "span": sym_span(sm, inst),
+                "ports": [], "decls": [], "processes": [], "others": [
+                    unsupported(sm, inst, "Hierarchy:module-kind",
+                                "program/interface scheduling requires its own runtime contract")]}
     body = inst.body
     span = sym_span(sm, body) or sym_span(sm, inst)
     hierarchy = {"instances": 0, "seen": False, "timescale": str(body.definition.timeScale)}
@@ -5779,11 +5826,7 @@ def convert_module(sm, inst):
                 # Scope artifact for statement-level begin/end blocks; its
                 # contents appear inside the owning process body.
                 continue
-            elif k == "TypeAlias" and is_integral_type_alias(m):
-                continue
-            elif is_bound_enum_member(m):
-                continue
-            elif k == "Genvar":
+            elif _declaration_only(m) or k == "Genvar":
                 continue
             elif k == "Parameter":
                 width, _, reason = type_width_2s(m.type)
@@ -6016,6 +6059,75 @@ def _closed_package_initializer(expression):
     return closed
 
 
+def _declaration_only(member):
+    """Frontend-bound declarations that allocate no runtime value."""
+    return (str(member.kind) == "SymbolKind.LetDecl"
+            or is_integral_type_alias(member) or is_bound_enum_member(member))
+
+
+def _let_compilation_barriers(sm, comp):
+    """Expansion must not hide an invalid or recursively defined template."""
+    declarations, scopes = [], []
+
+    def inspect(node):
+        if str(getattr(node, "kind", "")) == "SymbolKind.LetDecl":
+            declarations.append(node)
+        if isinstance(node, Scope) and getattr(node, "syntax", None) is not None:
+            scopes.append(node)
+
+    comp.getRoot().visit(inspect)
+    barriers = _bound_lowering_compilation_barriers(
+        sm, comp, [{"let_expanded": bool(declarations)}], "let_expanded", "Let",
+        "frontend rejected a design containing a let declaration")
+    if declarations and not barriers:
+        barriers.extend(_let_order_barriers(sm, comp, scopes))
+    return barriers
+
+
+def _let_use_scope(sm, scopes, syntax):
+    """Find the innermost actual bound scope containing an original name."""
+    point = sm.getFullyExpandedLoc(syntax.sourceRange.start)
+    candidates = []
+    for scope in scopes:
+        extent = scope.syntax.sourceRange
+        start, end = sm.getFullyExpandedLoc(extent.start), sm.getFullyExpandedLoc(extent.end)
+        # SourceManager carries include / macro order; raw buffer offsets do not.
+        after_start = point == start or sm.isBeforeInCompilationUnit(start, point)
+        before_end = point == end or sm.isBeforeInCompilationUnit(point, end)
+        if after_start and before_end:
+            candidates.append(scope)
+    # Scope visitation is preorder, so a containing descendant comes last.
+    return candidates[-1] if candidates else None
+
+
+def _let_order_barriers(sm, comp, scopes):
+    """The frontend expands forward uses too; IEEE 11.12 forbids them."""
+    barriers = []
+    name_kinds = ("SyntaxKind.IdentifierName", "SyntaxKind.ScopedName",
+                  "SyntaxKind.HierarchicalName")
+
+    def inspect(syntax):
+        if str(getattr(syntax, "kind", "")) not in name_kinds:
+            return
+        if str(getattr(syntax.parent, "kind", "")) in name_kinds:
+            return
+        scope = _let_use_scope(sm, scopes, syntax)
+        if scope is None:
+            return
+        symbol = scope.lookupName(str(syntax).strip(), flags=(
+            LookupFlags.AllowDeclaredAfter | LookupFlags.NoUndeclaredError))
+        if symbol is None or str(symbol.kind) != "SymbolKind.LetDecl":
+            return
+        if sm.isBeforeInCompilationUnit(sm.getFullyExpandedLoc(syntax.sourceRange.start),
+                                        sm.getFullyExpandedLoc(symbol.location)):
+            barriers.append(unsupported(sm, syntax, "Let:used-before-declaration",
+                                        "let must be declared before use in its lexical scope"))
+
+    for tree in comp.getSyntaxTrees():
+        tree.root.visit(inspect)
+    return barriers
+
+
 def _convert_package(sm, package):
     """Compile a package's integral static store, preserving all other walls."""
     decls, others = [], []
@@ -6023,7 +6135,7 @@ def _convert_package(sm, package):
         kind = str(member.kind).split(".")[-1]
         if kind in ("ExplicitImport", "WildcardImport") and member.package in _PACKAGE_SCOPES:
             continue
-        if is_integral_type_alias(member) or is_bound_enum_member(member):
+        if _declaration_only(member):
             continue
         if kind == "Parameter":
             width, _, reason = type_width_2s(member.type)
@@ -6203,7 +6315,7 @@ def _convert_design(sm, comp, packages):
                 if (str(m.kind) in ("SymbolKind.ExplicitImport", "SymbolKind.WildcardImport")
                         and m.package in _PACKAGE_SCOPES):
                     continue
-                if is_integral_type_alias(m) or is_bound_enum_member(m):
+                if _declaration_only(m):
                     continue
                 others.append(unsupported(sm, m, type(m).__name__))
     except Exception as exc:
@@ -6328,6 +6440,7 @@ def _convert_design(sm, comp, packages):
     others.extend(_bound_lowering_compilation_barriers(
         sm, comp, modules, "array_reduction_lowered", "ArrayReduction",
         "frontend rejected a fixed-array reduction"))
+    others.extend(_let_compilation_barriers(sm, comp))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

@@ -1459,3 +1459,15 @@ bound iterator symbol is substituted during extraction; no iterator variable,
 call plan or new runtime node crosses the envelope boundary. A balanced tree
 combines pure terms, retaining the result width at every node. See
 [the contract](sv-array-reductions.md) for storage and effect boundaries.
+
+## Let expressions
+
+Frontend-bound §11.12 expansions emit the existing expression and statement
+nodes; declarations themselves allocate nothing and require no new runtime
+node. Same-spelled colliding procedural variables receive `$local:` names
+containing the encoded module name, compilation-local buffer ordinal and source
+offset. References retain original symbol identity. Whole-source validity and
+original-syntax declaration-order checks run before admission. Nonmodule roots
+retain a `Module` envelope with an explicit `Hierarchy:module-kind` unsupported
+member, so ingestion reports the missing scheduling contract. Symbolic mode
+remains unchanged. See [the contract](sv-let-expressions.md).

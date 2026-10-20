@@ -1,0 +1,217 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/let_expressions/unused.sv",
+  "source_sha256": "ab0dffd96ad1882b35fa5ac036f95d2cd6b2d3219a24ed8a754e4a568e0ae017",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 6,
+              "end_line": 2,
+              "end_col": 7
+            },
+            "name": "i",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 8,
+              "end_line": 2,
+              "end_col": 9
+            },
+            "name": "y",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 2,
+              "end_line": 8,
+              "end_col": 5
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 5
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 3,
+                    "end_line": 5,
+                    "end_col": 7
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 3,
+                      "end_line": 5,
+                      "end_col": 4
+                    },
+                    "width": 32,
+                    "name": "i",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 5,
+                        "col": 5,
+                        "end_line": 5,
+                        "end_col": 6
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000101"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 7,
+                    "end_line": 5,
+                    "end_col": 21
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 7,
+                      "end_line": 5,
+                      "end_col": 8
+                    },
+                    "width": 32,
+                    "name": "y",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 3,
+                        "col": 16,
+                        "end_line": 3,
+                        "end_col": 18
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000101010"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 3,
+                    "end_line": 6,
+                    "end_col": 34
+                  },
+                  "name": "$display",
+                  "format": "unused %0d %0d",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 29,
+                        "end_line": 6,
+                        "end_col": 30
+                      },
+                      "width": 32,
+                      "name": "i",
+                      "signed": true
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 31,
+                        "end_line": 6,
+                        "end_col": 32
+                      },
+                      "width": 32,
+                      "name": "y",
+                      "signed": true
+                    }
+                  ],
+                  "arg_signed": [
+                    true,
+                    true
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 3,
+                    "end_line": 7,
+                    "end_col": 11
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

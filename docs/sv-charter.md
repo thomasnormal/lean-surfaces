@@ -3834,3 +3834,21 @@ explicit refusals; they are not execution agreements. Nineteen final independent
 invocations were authenticated. Four source-bound kernel theorems cover live
 reads, modular arithmetic, copyback and source preservation. Extraction is
 distinct from runtime conformance.
+
+### Let expressions — 2026-10-20
+
+IEEE §11.12 declarations at module, generate, package, compilation-unit,
+hierarchy and procedural scopes now compile through the frontend's bound
+expanded expressions. Declaration-scope binding, named/default actual structure,
+context conversions, live values and NBA capture use the existing expression
+and scheduler rules. The shared lexical-storage pass distinguishes same-spelled
+locals; original syntax lookup rejects forward template uses, including macro
+expansions. Invalid/redefined source and nonmodule scheduling stay loud.
+
+Measured 33 clean-extraction gains and 12 withdrawn program admissions over
+22,035 paths: 4,341 clean / 17,628 partial / 66 include skips / zero errors.
+Twenty-nine gains, eleven existing binding regressions and seven authored
+programs match full independent transcripts in both tested orders. Other runtime
+refusals and unavailable typed/default-form oracle coverage remain explicit.
+Four source-bound kernel theorems prove live reads, shadow independence,
+modular addition and retained-work copyback. See [the contract](sv-let-expressions.md).

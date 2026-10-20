@@ -22,6 +22,67 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Let expressions — 2026-10-20
+
+IEEE §11.12 templates now use the frontend's ordinary bound expressions,
+with declaration-order validation and distinct lexical storage identities.
+Module/generate/package/unit/procedural scopes compose. Nonmodule roots,
+unsupported expanded operations and invalid source remain loud.
+See [the contract](sv-let-expressions.md).
+
+The paired **22,035** paths gain **33 clean extractions** and withdraw **12**
+prior program admissions: **4,320 → 4,341 clean**, **17,649 → 17,628 partial**,
+**66 include skips**, zero errors. Of the prior clean designs, 4,297 are identical,
+11 receive corrected lexical storage names and all eleven match independent
+execution under both tested region oracles. Twenty-nine gained files and seven
+authored programs match complete transcripts under both orders. Two gained
+files retain runtime refusals; two lack explicit-formal-type oracle support.
+Three authored refusals and two authored oracle limitations remain separate.
+Fifty-one successful final-source references were authenticated. Four kernel
+theorems bind the actual parsed template/shadow/copyback fixture. These counts
+measure extraction and selected execution coverage separately.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 55 | 244 | 1 |
+| 4 | 427 | 187 | 240 | 0 |
+| 5 | 618 | 368 | 250 | 0 |
+| 6 | 1185 | 435 | 750 | 0 |
+| 7 | 796 | 117 | 679 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 111 | 478 | 0 |
+| 10 | 657 | 248 | 409 | 0 |
+| 11 | 1034 | 747 | 287 | 0 |
+| 12 | 627 | 290 | 337 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 50 | 1493 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 216 | 609 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 386 | 158 | 28 |
+| 23 | 851 | 171 | 680 | 0 |
+| 24 | 355 | 2 | 353 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 166 | 399 | 0 |
+| 27 | 354 | 177 | 177 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 124 | 103 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 137 | 280 | 0 |
+| 38 | 340 | 211 | 129 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 40 | 47 | 0 |
+
 ## Fixed-array reduction methods — 2026-10-20
 
 IEEE §7.12/§7.12.3 array `sum`, `product`, `and`, `or` and `xor` now use

@@ -2603,12 +2603,12 @@ def _streaming_has_slice_size(lhs):
 def _streaming_target_assignment(sm, expr):
     """Lower a simple right-streaming unpack into packed target leaves.
 
-    With no slice size and only direct scalar identifiers, right streaming
-    consumes the source from its MSB into the listed targets.  The existing
-    packed-target executor already samples the RHS once and resizes an excess
-    source to the target width, so this surface case needs no new scheduler or
-    storage.  Structs, nested streams, left streaming and effectful/selected
-    target leaves remain loud.
+    With no slice size and only direct integral identifiers or fixed packed
+    member windows, right streaming consumes the source from its MSB into the
+    listed targets. The existing packed-target executor already samples the
+    RHS once and resizes an excess source to the target width, so this surface
+    case needs no new scheduler or storage. Nested streams, left streaming and
+    dynamic/effectful target leaves remain loud.
     """
     try:
         if type(expr).__name__ != "AssignmentExpression":
@@ -2628,16 +2628,17 @@ def _streaming_target_assignment(sm, expr):
         total_width = 0
         for stream in lhs.streams:
             operand = getattr(stream, "operand", None)
-            if operand is None or type(operand).__name__ != "NamedValueExpression":
-                return None
-            target_type = operand.type.canonicalType
-            if type(target_type).__name__ not in (
-                    "ScalarType", "PredefinedIntegerType", "PackedArrayType",
-                    "EnumType"):
+            if operand is None:
                 return None
             target, admitted = legacy_blocking_target(sm, operand, True)
-            if not admitted or target.get("kind") != "Ident":
+            if not admitted or target.get("kind") not in ("Ident", "SelectTarget"):
                 return None
+            if target.get("kind") == "Ident":
+                target_type = operand.type.canonicalType
+                if type(target_type).__name__ not in (
+                        "ScalarType", "PredefinedIntegerType",
+                        "PackedArrayType", "EnumType"):
+                    return None
             width = width_of(target)
             if width is None or width <= 0:
                 return None
@@ -3513,6 +3514,22 @@ def _symbolic_target_windows(target):
         if not name or not isinstance(left, int) or not isinstance(right, int):
             return None
         return [(name, min(left, right), max(left, right))]
+    if kind == "SelectTarget":
+        # Legacy packed-member targets encode their constant LSB offset as a
+        # literal index and carry the selected width separately. This is the
+        # same flat vector window represented by symbolic PartSel nodes.
+        base = target.get("value", {})
+        index = target.get("index", {})
+        width = target.get("width")
+        bits = index.get("bits")
+        if (base.get("kind") != "Ident" or index.get("kind") != "Literal"
+                or not isinstance(width, int) or width <= 0
+                or not isinstance(bits, str) or not bits
+                or any(bit not in "01" for bit in bits)):
+            return None
+        name = base.get("name")
+        offset = int(bits, 2)
+        return [(name, offset, offset + width - 1)] if name else None
     return None
 
 

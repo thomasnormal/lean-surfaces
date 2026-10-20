@@ -299,10 +299,11 @@ Wrong-length, dynamic, aggregate and destination-aliasing patterns remain
 `Unsupported`.
 
 A simple right-streaming unpack (`{>> {a, b, ...}} = source`) with no slice
-size and only direct integral identifier targets reuses `ConcatTarget`. The
-RHS must be at least as wide as the target leaves; excess source MSBs are
-consumed by the existing packed-target resize. Left streaming, nested or
-effectful stream operands, struct/unpacked aggregates and a narrower source
+size and direct integral identifier or constant packed-member targets reuses
+`ConcatTarget` (legacy) or its symbolic window equivalent. The RHS must be at
+least as wide as the target leaves; excess source MSBs are consumed by the
+existing packed-target resize. Dynamic/effectful member selection, left
+streaming, nested or sized streams, unpacked aggregates and a narrower source
 remain `Unsupported`.
 
 In symbolic `sv-0.2` procedural and continuous assignments, the same

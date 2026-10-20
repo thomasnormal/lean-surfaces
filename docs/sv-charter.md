@@ -1105,13 +1105,23 @@ through Lean and the self-check runner; focused extraction covers the
 Simple right-streaming unpack targets with no slice size and direct integral
 identifier leaves now reuse the existing packed `ConcatTarget` path. The RHS
 is sampled once; excess source MSBs are consumed by the existing packed resize.
-Left streaming, nested/effectful streams, packed-struct or unpacked aggregate
-leaves, and narrower sources remain loud. The `streaming_unpack` fixture checks
+Left streaming, nested/effectful streams, unpacked aggregate leaves and
+narrower sources remain loud. The `streaming_unpack` fixture checks
 the real envelope through Lean and the self-check runner, without a new
 simulator-agreement claim. The fresh **22,033**-path census reports **2,960
 clean / 19,007 partial / 66 include skips** with zero extraction errors: seven
 clean gains and no losses; `AssignmentExpression:target` falls **3,928 →
 3,920**.
+
+### Legacy streaming packed-member windows — 2026-10-20
+
+The legacy right-streaming path now accepts a constant member of an untagged
+packed struct or union as one fixed `SelectTarget` window. The
+`streaming_aggregate_member` fixture splits one sampled four-bit source into a
+two-bit member and scalar output, and its self-check proof observes `PASS`.
+Dynamic or effectful member indices, nested streams, left streaming and sized
+streams remain loud; the existing flat vector state and packed-target executor
+are reused.
 
 ### Symbolic streaming targets over fixed cells — 2026-10-20
 

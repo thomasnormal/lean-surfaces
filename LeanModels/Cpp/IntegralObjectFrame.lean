@@ -5,6 +5,7 @@ namespace LeanModels.Cpp
 inductive FrameBindingRole where
   | parameter
   | local
+  | reference
   deriving Repr, BEq, Inhabited
 
 structure FrameBinding where
@@ -63,6 +64,8 @@ inductive Statement where
       (expression : Expression)
   | defaultDeclare (declaration : FrontendHandle) (type : CppTypeEvidence)
   | zeroDeclare (declaration : FrontendHandle) (type : CppTypeEvidence)
+  | reference (declaration : FrontendHandle) (type : CppTypeEvidence)
+      (target : FrontendHandle)
   | assign (declaration : FrontendHandle) (sourceType : CppTypeEvidence)
       (expression : Expression)
   | block (body : Statement)
@@ -130,6 +133,14 @@ private def addBinding (frame : IntegralObjectFrame) (binding : FrameBinding) :
         success {frame with scopes := {scope with bindings := binding :: scope.bindings} :: rest}
           binding.object
 
+private theorem addBinding_store (frame : IntegralObjectFrame) (binding : FrameBinding) :
+    (addBinding frame binding).frame.store = frame.store := by
+  unfold addBinding
+  dsimp only
+  split
+  · rfl
+  · split <;> rfl
+
 private def reserve (frame : IntegralObjectFrame) (declaration : FrontendHandle)
     (type : CppTypeEvidence) (role : FrameBindingRole) : FrameOutcome ObjectId :=
   let binding : FrameBinding := {declaration, object := 0, type, role}
@@ -174,7 +185,7 @@ def evaluate (fuel : Nat) (frame : IntegralObjectFrame) (expression : Expression
                 match frame.store.borrow binding.object with
                 | .error reason => failure frame (.object reason)
                 | .ok access =>
-                    match frame.store.read access with
+                    match frame.store.read {access with type := binding.type} with
                     | .ok value => success frame (.ok value)
                     | .error reason => failure frame (.object reason)
         | .convert destination operand =>
@@ -236,6 +247,37 @@ def declareParameter (frame : IntegralObjectFrame) (declaration : FrontendHandle
     (type : CppTypeEvidence) (value : IntegralValue) : FrameOutcome ObjectId :=
   reserveInitialized frame declaration type .parameter value
 
+/-- A local reference owns a binding, not its referent's object or lifetime. -/
+def bindLocalReference (frame : IntegralObjectFrame) (declaration : FrontendHandle)
+    (type : CppTypeEvidence) (target : FrontendHandle) : FrameOutcome ObjectId :=
+  match type with
+  | .lvalueReference referent =>
+      match frame.lookup target with
+      | .error reason => failure frame reason
+      | .ok binding =>
+          match frame.store.bindReference ⟨binding.object, binding.type⟩ referent with
+          | .error reason => failure frame (.object reason)
+          | .ok access => addBinding frame {
+              declaration, object := access.object
+              type := access.type, role := .reference }
+  | _ => failure frame (.object (.unsupportedType type))
+
+/-- Binding, including every failed binding, leaves the entire object store
+unchanged. A reference has no independently owned storage or value slot. -/
+theorem bindLocalReference_store (frame : IntegralObjectFrame)
+    (declaration : FrontendHandle) (type : CppTypeEvidence) (target : FrontendHandle) :
+    (frame.bindLocalReference declaration type target).frame.store = frame.store := by
+  cases type <;> try rfl
+  rename_i referent
+  cases h : frame.lookup target with
+  | error reason => simp only [bindLocalReference, h, failure]
+  | ok binding =>
+      cases hb : frame.store.bindReference ⟨binding.object, binding.type⟩ referent with
+      | error reason => simp only [bindLocalReference, h, hb, failure]
+      | ok access =>
+          simpa only [bindLocalReference, h, hb] using addBinding_store frame {
+            declaration, object := access.object, type := access.type, role := .reference }
+
 def declareLocalInitialized (fuel : Nat) (frame : IntegralObjectFrame)
     (declaration : FrontendHandle) (type : CppTypeEvidence)
     (sourceType : CppTypeEvidence) (expression : Expression) : FrameOutcome ObjectId :=
@@ -278,7 +320,7 @@ def assignValue (frame : IntegralObjectFrame) (declaration : FrontendHandle)
       match frame.store.borrow binding.object with
       | .error reason => failure frame (.object reason)
       | .ok access =>
-          match frame.store.assignConverted access sourceType value with
+          match frame.store.assignConverted {access with type := binding.type} sourceType value with
           | .ok store => success {frame with store} ()
           | .error reason => failure frame (.object reason)
 
@@ -298,6 +340,7 @@ private def endBindings (frame : IntegralObjectFrame) : List FrameBinding →
     FrameOutcome Unit
   | [] => success frame ()
   | binding :: rest =>
+      if binding.role == .reference then endBindings frame rest else
       match frame.store.endLifetime binding.object with
       | .error reason => failure frame (.object reason)
       | .ok store => endBindings {frame with store} rest
@@ -388,6 +431,11 @@ mutual
             match declared.result with
             | .ok _ => success declared.frame .normal
             | .error reason => failure declared.frame reason
+        | .reference declaration type target =>
+            let bound := bindLocalReference frame declaration type target
+            match bound.result with
+            | .ok _ => success bound.frame .normal
+            | .error reason => failure bound.frame reason
         | .assign declaration sourceType expression =>
             let assigned := assign fuel frame declaration sourceType expression
             match assigned.result with

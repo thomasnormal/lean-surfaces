@@ -412,4 +412,67 @@ private theorem kernelFrameExecution :
 
 #print axioms kernelFrameExecution
 
+private def aliasLifetimeAndConst : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let parameter := frame.declareParameter (handle "0x1") intType (signed 7)
+      let nested := parameter.frame.enterScope
+      let alias := nested.frame.bindLocalReference (handle "0x2")
+        (.lvalueReference intType) (handle "0x1")
+      let view := alias.frame.bindLocalReference (handle "0x3")
+        (.lvalueReference (.qualified true false intType)) (handle "0x2")
+      let written := view.frame.assignValue (handle "0x2") intType (signed 9)
+      let constWrite := written.frame.assignValue (handle "0x3") intType (signed 10)
+      let dropConst := written.frame.bindLocalReference (handle "0x4")
+        (.lvalueReference intType) (handle "0x3")
+      let closed := written.frame.exitScope
+      let finished := closed.frame.leaveFrame
+      parameter.result.toOption == some 0 && alias.result.toOption == some 0 && view.result.toOption == some 0 &&
+        alias.frame.store == nested.frame.store && view.frame.store == alias.frame.store &&
+        written.frame.store.objects.objects.length == 1 &&
+        okValue (signed 9) (written.frame.read (handle "0x1")) &&
+        okValue (signed 9) (written.frame.read (handle "0x3")) &&
+        (constWrite.result matches .error (.object .constWrite)) &&
+        constWrite.frame == written.frame &&
+        (dropConst.result matches .error (.object .referenceQualification)) &&
+        dropConst.frame == written.frame && okUnit closed &&
+        okValue (signed 9) (closed.frame.read (handle "0x1")) &&
+        !closed.frame.bound (handle "0x2") && !closed.frame.bound (handle "0x3") &&
+        okUnit finished && objectPhase? finished.frame 0 == some .ended
+
+private def aliasUninitializedAndEnded : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let object := frame.declareLocalDefault (handle "0x1") intType
+      let alias := object.frame.bindLocalReference (handle "0x2")
+        (.lvalueReference intType) (handle "0x1")
+      let beforeWrite := alias.frame.read (handle "0x2")
+      let assigned := alias.frame.assignValue (handle "0x2") intType (signed 11)
+      let duplicate := assigned.frame.bindLocalReference (handle "0x2")
+        (.lvalueReference intType) (handle "0x1")
+      let closed := assigned.frame.leaveFrame
+      let afterEnd := {alias.frame with store := closed.frame.store}
+      let stale := afterEnd.read (handle "0x2")
+      let lateBinding := afterEnd.bindLocalReference (handle "0x3")
+        (.lvalueReference intType) (handle "0x2")
+      alias.result.toOption == some 0 && alias.frame.store == object.frame.store &&
+        (beforeWrite.result matches .error (.object (.lifetime .notInitialized))) &&
+        okValue (signed 11) (assigned.frame.read (handle "0x1")) &&
+        (duplicate.result matches .error (.duplicateBinding _)) &&
+        duplicate.frame == assigned.frame && okUnit closed &&
+        (stale.result matches .error (.object (.lifetime .lifetimeEnded))) &&
+        (lateBinding.result matches .error (.object (.lifetime .lifetimeEnded))) &&
+        lateBinding.frame == afterEnd
+
+#guard aliasLifetimeAndConst
+#guard aliasUninitializedAndEnded
+
+private theorem kernelReferenceBindings :
+    (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl
+
+#print axioms kernelReferenceBindings
+#print axioms IntegralObjectFrame.bindLocalReference_store
+
 end LeanModels.Cpp.IntegralObjectFrameTests

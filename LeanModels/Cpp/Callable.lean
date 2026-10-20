@@ -627,7 +627,10 @@ private def localParameters (rows : List TypeEvidenceRow)
       | throw "callable: local declaration lacks structured type evidence"
     unless found.all (· == row) do
       throw "callable: conflicting local declaration type evidence"
-    result := result ++ [localParameter declaration row.type]
+    let type := match row.type with
+      | .lvalueReference referent => referent
+      | type => type
+    result := result ++ [localParameter declaration type]
   pure result
 
 private def admitAutomaticAt (probe : DeclarationProbe)

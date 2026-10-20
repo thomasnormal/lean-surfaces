@@ -79,9 +79,15 @@ private def validateVariable (row : CppVariableEvidence) (type : CppTypeEvidence
     throw "automatic declaration: storage is not automatic"
   unless row.attributeCount == 0 do
     throw "automatic declaration: attributes are outside the local profile"
-  let _ ← requireIntegralType "object type" type
-  if row.isConstexpr && !isConstType type then
-    throw "automatic declaration: constexpr object is not const-qualified"
+  match type with
+  | .lvalueReference referent =>
+      let _ ← requireIntegralType "reference referent" referent
+      if row.isConstexpr then
+        throw "automatic declaration: constexpr references are outside the local profile"
+  | _ =>
+      let _ ← requireIntegralType "object type" type
+      if row.isConstexpr && !isConstType type then
+        throw "automatic declaration: constexpr object is not const-qualified"
   pure ()
 
 private def binaryOperation? : String → Option IntegralBinary
@@ -298,6 +304,48 @@ private def sequenceAll : List IntegralObjectFrame.Statement → IntegralObjectF
   | [] => .skip
   | statement :: rest => rest.foldl (fun accumulated next => .sequence accumulated next) statement
 
+private def declarationReferent : CppTypeEvidence → CppTypeEvidence
+  | .lvalueReference referent => referent
+  | type => type
+
+private def referenceCompatible (source destination : CppTypeEvidence) : Except String Unit :=
+  match IntegralObjectStore.validateReferenceTypes source destination with
+  | .ok _ => pure ()
+  | .error _ => throw "automatic declaration: incompatible reference type or qualification"
+
+private partial def referenceTarget (typeRows : List TypeEvidenceRow)
+    (available : List FrontendHandle) (types : List CppInitializerExpressionType)
+    (raw : Raw) : Except String (FrontendHandle × CppTypeEvidence × CppTypeEvidence) := do
+  unless raw.text "valueCategory" == some "lvalue" do
+    throw "automatic declaration: reference initializer is not an existing-object lvalue"
+  let actual ← initializerType types raw
+  let _ ← requireIntegralType "reference initializer type" actual
+  let kind ← evidenceText raw "kind"
+  match kind with
+  | "DeclRefExpr" =>
+      let referenced ← evidenceField raw "referencedDecl"
+      unless ["VarDecl", "ParmVarDecl"].contains ((referenced.text "kind").getD "") do
+        throw "automatic declaration: reference target is not a variable or parameter"
+      let target ← evidenceHandle referenced "id"
+      unless available.contains target do
+        throw "automatic declaration: reference target is not in scope"
+      let type ← typeRow? typeRows target
+      unless declarationReferent type == actual do
+        throw "automatic declaration: reference target type disagrees with initializer"
+      pure (target, actual, actual)
+  | "ParenExpr" | "InitListExpr" | "ImplicitCastExpr" =>
+      if kind == "ImplicitCastExpr" then
+        unless raw.text "castKind" == some "NoOp" do
+          throw "automatic declaration: reference initializer cast is not qualification-only"
+      let [child] ← rawChildren raw
+        | throw "automatic declaration: reference wrapper requires one child"
+      let (target, childType, sourceType) ← referenceTarget typeRows available types child
+      if kind == "ImplicitCastExpr" then referenceCompatible childType actual
+      else unless childType == actual do
+        throw "automatic declaration: reference wrapper changes type"
+      pure (target, actual, if kind == "InitListExpr" then actual else sourceType)
+  | _ => throw s!"automatic declaration: unsupported reference initializer {kind}"
+
 private def admitChild (profile : TargetProfile)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
     (expressionRows : List CppBinaryExpressionEvidence)
@@ -310,6 +358,19 @@ private def admitChild (profile : TargetProfile)
   let type ← typeRow? typeRows declaration
   validateVariable evidence type
   let values ← valueChildren child
+  if let .lvalueReference referent := type then
+    let some initializerEvidence := evidence.initializer
+      | throw "automatic declaration: reference requires an initializer"
+    let [initializer] := values
+      | throw "automatic declaration: reference initializer child is absent"
+    unless initializer.text "id" == some initializerEvidence.occurrence.value &&
+        initializer.text "kind" == some initializerEvidence.kind do
+      throw "automatic declaration: reference initializer identity disagrees with evidence"
+    let (target, actual, sourceType) ← referenceTarget typeRows available initializerEvidence.expressionTypes initializer
+    unless actual == initializerEvidence.type && sourceType == initializerEvidence.sourceType do
+      throw "automatic declaration: reference initializer type disagrees with evidence"
+    referenceCompatible actual referent
+    return (.reference declaration type target, declaration)
   let statement ← match evidence.initializer with
     | none =>
         unless evidence.initStyle == .c do

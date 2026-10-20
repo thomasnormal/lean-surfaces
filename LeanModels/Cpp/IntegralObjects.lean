@@ -10,6 +10,7 @@ inductive IntegralObjectError where
   | valueTypeMismatch
   | accessTypeMismatch
   | constWrite
+  | referenceQualification
   | constDefaultInitialization
   | incoherentValues
   | missingValue (object : ObjectId)
@@ -40,6 +41,15 @@ private def descriptor (type : CppTypeEvidence) :
   match integerKind type with
   | some result => .ok result
   | none => .error (.unsupportedType type)
+
+/-- Existing-object integral reference binding permits adding, never dropping,
+const qualification. No value conversion or temporary is manufactured. -/
+def validateReferenceTypes (source destination : CppTypeEvidence) :
+    Except IntegralObjectError Unit := do
+  let (sourceKind, sourceConst) ← descriptor source
+  let (destinationKind, destinationConst) ← descriptor destination
+  unless sourceKind == destinationKind do throw .accessTypeMismatch
+  if sourceConst && !destinationConst then throw .referenceQualification
 
 private def formatFor (profile : TargetProfile) (type : CppTypeEvidence) :
     Except IntegralObjectError IntegralFormat := do
@@ -132,6 +142,14 @@ def borrow (store : IntegralObjectStore) (object : ObjectId) (readOnly : Bool :=
   let entry ← store.metadata object
   requireAlive entry
   pure {object, type := if readOnly then .qualified true false entry.type else entry.type}
+
+/-- Bind another view without reading or allocating the live referent. -/
+def bindReference (store : IntegralObjectStore) (source : IntegralObjectRef)
+    (referent : CppTypeEvidence) : Except IntegralObjectError IntegralObjectRef := do
+  let entry ← store.validateAccess source
+  validateReferenceTypes source.type referent
+  validateReferenceTypes entry.type referent
+  pure {object := source.object, type := referent}
 
 def read (store : IntegralObjectStore) (access : IntegralObjectRef) :
     Except IntegralObjectError IntegralValue := do

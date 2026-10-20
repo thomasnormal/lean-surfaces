@@ -7,13 +7,15 @@ automatic parameter and local declarations, including the validated Clang
 evaluator.
 
 `IntegralObjectFrame` owns one `IntegralObjectStore` and a stack of
-`FrameScope`s. A binding records the declaration occurrence handle, its fresh
-`ObjectId`, structured type, and whether it is a parameter or local. Lookup
+`FrameScope`s. A binding records the declaration occurrence handle, its
+`ObjectId`, structured access type, and whether it owns a parameter/local or
+borrows an existing object as a reference. Lookup
 walks from the innermost scope outward, so declaration handles remain identity
 witnesses even when source spellings repeat. Every active scope shares one
 declaration-handle namespace: a handle cannot be bound again while its earlier
 binding remains active, including from a nested scope. After that scope exits,
-the handle may be reused by a new dynamic scope, which receives a new object.
+the handle may be reused by a new dynamic scope, which receives a new object
+for an owned declaration.
 
 Entering a scope pushes an empty binding list. Parameter declaration allocates
 automatic storage and initializes it before publishing the binding. Local
@@ -39,8 +41,15 @@ each block execution pushes a fresh scope. Loop transfers are consumed by the
 nearest loop, while a return unwinds every active scope before publishing its
 value. A top-level break or continue is a loud boundary error.
 
-Exiting a scope ends bindings in reverse declaration order and removes only
-that scope's bindings. Object IDs remain tombstones in the append-only store.
+Local reference bindings reuse a live referent's object identity and store a
+possibly const-qualified access view. Binding performs no read or allocation.
+`bindLocalReference_store` proves the entire store is unchanged for both success
+and failure. Reads and assignments use the binding's view, preserving const
+access through alias chains.
+
+Exiting a scope ends owned bindings in reverse declaration order and removes
+only that scope's bindings. Non-owning reference bindings never end their
+referents. Object IDs remain tombstones in the append-only store.
 `returnValue` evaluates the return expression before unwinding all scopes,
 then returns the value with the closed frame. Fuel exhaustion, undefined
 integral operations, missing declarations and lifetime errors retain the

@@ -603,6 +603,7 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
             "local_copy", "local_direct", "local_list", "local_copy_list",
             "local_zero", "local_default", "local_const", "local_auto",
             "local_chain", "local_shadow", "local_self", "local_for",
+            "local_reference",
         }
         guards = ["""#guard match parseValidatedVariableEvidence evidence with
 | .ok rows => rows.length > 35 && rows.any (fun row => row.initializer.isNone) &&
@@ -726,6 +727,231 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
                             options=("open LeanModels.Cpp.CallableObjectEvaluation\n"
                                      "set_option maxRecDepth 100000 in"), timeout=360)
         print(f"local declaration differential: {len(calls)} rows at -O0/-O2")
+
+    def test_actual_compiler_local_references_alias_objects_and_keep_walls(self):
+        requested = os.environ.get("LEANCPP_CLANG")
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not requested or not library:
+            self.skipTest("set matching LEANCPP_CLANG and LEANCPP_PROBE_LIBRARY")
+        clang = shutil.which(requested)
+        self.assertIsNotNone(clang)
+        probe_library = pathlib.Path(library).resolve()
+        self.assertTrue(probe_library.is_file())
+        bodies = {
+            "ref_copy": "int &r = value; r = 3; return value;",
+            "ref_direct": "int &r(value); ++r; return value;",
+            "ref_list": "int &r{value}; ++r; return value;",
+            "ref_copy_list": "int &r = {value}; ++r; return value;",
+            "ref_paren": "int &r = ((value)); ++r; return value;",
+            "ref_chain": "int &r = value, &s = r; ++s; return value;",
+            "ref_auto": "auto &r = value; ++r; return value;",
+            "ref_decltype": "decltype(auto) r = (value); ++r; return value;",
+            "ref_const": "const int &r = value; ++value; return r;",
+            "ref_const_list": "const int &r{value}; ++value; return r;",
+            "ref_const_chain": "const int &r = value, &s = r; ++value; return s;",
+            "ref_scope": "{ int &r = value; ++r; } return value;",
+            "ref_shadow": "int &r = value; { int value = 3; int &r = value; ++r; } ++r; return value;",
+            "ref_local": "int local = value; int &r = local; ++r; return local;",
+            "ref_uninitialized": "int local; int &r = local; r = value; return local;",
+            "ref_snapshot": "int &r = value; int copy = r; ++r; return copy;",
+            "ref_assignment": "int a = value, b = 5; int &r = a; r = b; b = 7; return a;",
+            "ref_for": "for (int &r = value; r < 3; ++r) { if (r == 1) continue; if (r == 2) break; } return value;",
+            "ref_do": "int &r = value; do { ++r; } while (r < 3); return value;",
+            "ref_switch": "int &r = value; switch (value) { case 0: { int &s = r; ++s; break; } default: ++r; } return value;",
+            "ref_early": "{ int &r = value; ++r; return r; }",
+            "ref_const_object": "const int local = value; const int &r = local; return r;",
+        }
+        functions = {name: ("int", body, ".signed 32") for name, body in bodies.items()}
+        types = (
+            ("bool", "bool", ".boolean"),
+            ("char", "char", ".signed 8"),
+            ("signed char", "schar", ".signed 8"),
+            ("unsigned char", "uchar", ".unsigned 8"),
+            ("short", "short", ".signed 16"),
+            ("unsigned short", "ushort", ".unsigned 16"),
+            ("int", "int", ".signed 32"),
+            ("unsigned int", "uint", ".unsigned 32"),
+            ("long", "long", ".signed 64"),
+            ("unsigned long", "ulong", ".unsigned 64"),
+            ("long long", "llong", ".signed 64"),
+            ("unsigned long long", "ullong", ".unsigned 64"),
+        )
+        for cpp_type, key, format_name in types:
+            operation = "r = !r;" if cpp_type == "bool" else "++r;"
+            functions["ref_type_" + key] = (
+                cpp_type, f"{cpp_type} &r = value; {operation} return value;", format_name)
+        refused = {
+            "ref_temporary": "const int &r = value + 1; return r;",
+            "ref_rvalue": "int &&r = value + 1; return r;",
+            "ref_volatile": "volatile int &r = value; return r;",
+            "ref_static": "static int &r = value; return r;",
+            "ref_thread": "thread_local int &r = value; return r;",
+            "ref_constexpr": "constexpr const int &r = global_anchor; return r;",
+            "ref_member": "ReferenceBox box{value}; int &r = box.member; return r;",
+            "ref_conversion": "const long &r = value; return r;",
+            "ref_function": "int (&r)(int) = reference_target; return value;",
+            "ref_pointer": "int *p = &value; int *&r = p; return value;",
+            "ref_self": "int &r = r; return value;",
+        }
+        source = self.root / "references.cpp"
+        source.write_text(
+            "constexpr int global_anchor = 3;\nstruct ReferenceBox { int member; };\n"
+            "int reference_target(int value) { return value; }\n" + "\n".join(
+                f"{cpp_type} {name}({cpp_type} value) {{ {body} }}"
+                for name, (cpp_type, body, _) in functions.items()) + "\n" + "\n".join(
+                f"int {name}(int value) {{ {body} }}" for name, body in refused.items()),
+            encoding="utf-8")
+        environment = dict(os.environ)
+        environment.pop("CCC_OVERRIDE_OPTIONS", None)
+        environment.pop("CCC_ADD_ARGS", None)
+        environment["SOURCE_DATE_EPOCH"] = "0"
+        result = subprocess.run([
+            clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", "-x", "c++", str(source),
+            "-Xclang", "-load", "-Xclang", str(probe_library),
+            "-Xclang", "-plugin", "-Xclang", "leancpp-canonical-probe",
+        ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        probe = json.loads(result.stdout)
+        paths, nodes = {}, {}
+        pending = [(probe["ast"], [])]
+        while pending:
+            node, path = pending.pop()
+            if node.get("kind") == "FunctionDecl" and node.get("name") in functions.keys() | refused.keys():
+                paths[node["name"]] = path
+                nodes[node["name"]] = node
+            pending.extend((child, path + [index])
+                           for index, child in enumerate(node.get("inner", [])))
+        self.assertEqual(set(paths), functions.keys() | refused.keys())
+        calls = [(name, value) for name in functions for value in (-7, -1, 0, 9, 31)]
+        oracle = self.root / "references_oracle.cpp"
+        oracle.write_text(
+            '#include <climits>\n#include <iostream>\n#include "references.cpp"\n'
+            'static_assert(CHAR_BIT == 8 && CHAR_MIN == -128 && sizeof(short) == 2\n'
+            '              && sizeof(int) == 4 && sizeof(long) == 8 && sizeof(long long) == 8);\n'
+            "int main() {\n" + "".join(
+                f"  std::cout << static_cast<{'unsigned long long' if '.unsigned' in functions[name][2] else 'long long'}>({name}({value})) << '\\n';\n"
+                for name, value in calls) + "}\n", encoding="utf-8")
+        outputs = []
+        for optimization in ("-O0", "-O2"):
+            binary = self.root / optimization[1:]
+            compiled = subprocess.run([
+                clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+                optimization, "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                "-static-libstdc++", "-static-libgcc", str(oracle), "-o", str(binary),
+            ], cwd=self.root, env=environment, capture_output=True, text=True, timeout=60)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            executed = subprocess.run([str(binary)], cwd=self.root, env=environment,
+                                      capture_output=True, text=True, timeout=30)
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            outputs.append(executed.stdout.splitlines())
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(len(outputs[0]), len(calls))
+        type_rows = {row["occurrence"]: row["type"] for row in probe["metadata"]["type_evidence"]}
+        guards = [
+            "def referenceChecks : Except String Unit := do",
+            "  let types ← parseValidatedTypeEvidence evidence",
+            "  let expressions ← parseValidatedBinaryExpressionEvidence evidence",
+            "  let expressionTypes ← parseValidatedExpressionTypeEvidence evidence",
+        ]
+        for name, (_, _, format_name) in functions.items():
+            guards.append("  let function ← admitCallableFunctionWithExpressionTypes evidence "
+                          f"types expressions expressionTypes .lp64 {paths[name]}")
+            owned = 1
+            pending = [nodes[name]]
+            while pending:
+                node = pending.pop()
+                if node.get("kind") == "VarDecl" and type_rows[node["id"]]["kind"] != "lvalue-reference":
+                    owned += 1
+                pending.extend(node.get("inner", []))
+            cases = [f"(⟨.signed 32, {value}⟩, ⟨{format_name}, {int(expected)}⟩)"
+                     for (row_name, value), expected in zip(calls, outputs[0]) if row_name == name]
+            guards.append("  let cases : List (IntegralValue × IntegralValue) := [" + ", ".join(cases) + "]")
+            guards.append(f'''  unless cases.all (fun (argument, expected) =>
+      match CallableObjectFrame.start .lp64 function [argument] with
+      | .ok callable =>
+          let outcome := evaluateCallableObjectInFrame 256 callable
+          outcome.frame.scopes.isEmpty &&
+            outcome.frame.store.objects.objects.length == {owned} &&
+            outcome.frame.store.values.length == {owned} &&
+            outcome.frame.store.objects.objects.all (fun object => object.phase == .ended) &&
+            (match outcome.result with
+             | .ok (.ok value) => value == expected
+             | _ => false)
+      | _ => false) do
+    throw "reference differential: {name}"
+  unless (evaluateCallable 256 .lp64 function [⟨.signed 32, 0⟩] matches .error _) do
+    throw "value-only reference boundary: {name}"
+''')
+        guards.append(f"""  let overflowFunction ← admitCallableFunctionWithExpressionTypes evidence types expressions expressionTypes
+    .lp64 {paths['ref_direct']}
+  let overflowFrame ← (CallableObjectFrame.start .lp64 overflowFunction [⟨.signed 32, 2147483647⟩]).mapError reprStr
+  let overflow := evaluateCallableObjectInFrame 256 overflowFrame
+  unless (overflow.result matches .ok (.undefined .signedOverflow)) &&
+      overflow.frame.store.objects.objects.length == 1 &&
+      overflow.frame.store.values == [some ⟨.signed 32, 2147483647⟩] &&
+      overflow.frame.store.objects.objects.all (fun object => object.phase == .aliveInitialized) do
+    throw "reference signed overflow retained state"
+""")
+        for name in refused:
+            guards.append(f'''  unless (admitCallableFunctionWithExpressionTypes evidence types expressions expressionTypes
+      .lp64 {paths[name]} matches .error _) do
+    throw "reference refusal: {name}"
+''')
+        guards.extend(["  pure ()", "#eval referenceChecks", "#guard referenceChecks.isOk"])
+        self.assert_accepts(json.dumps(probe), "\n".join(guards),
+                            options=("open LeanModels.Cpp.CallableObjectEvaluation\n"
+                                     "set_option maxRecDepth 100000"), timeout=360)
+        print(f"reference differential: {len(calls)} rows at -O0/-O2; "
+              f"{len(refused)} compiled admission refusals; zero alias allocations")
+
+        # Derived evidence controls leave the compiler capture untouched.
+        target_path = paths["ref_const"]
+        def target(document):
+            node = document["ast"]
+            for index in target_path:
+                node = node["inner"][index]
+            return node["inner"][1]["inner"][0]["inner"][0]["inner"][0]
+
+        def variable(document):
+            identity = target(document)["id"]
+            return next(row for row in document["metadata"]["variable_evidence"]
+                        if (row.get("initializer") or {}).get("occurrence") == identity)
+
+        def wrong_category(document):
+            target(document)["valueCategory"] = "prvalue"
+
+        def missing_types(document):
+            variable(document)["initializer"]["expression_types"] = []
+
+        def wrong_cast(document):
+            target(document)["castKind"] = "LValueToRValue"
+
+        def missing_target(document):
+            target(document)["inner"][0]["referencedDecl"]["id"] = "0xdeadbeef"
+
+        def wrong_source(document):
+            variable(document)["initializer"]["source"] = {"kind": "builtin", "name": "long"}
+
+        def wrong_referent(document):
+            reference_id = variable(document)["occurrence"]
+            row = next(row for row in document["metadata"]["type_evidence"]
+                       if row["occurrence"] == reference_id)
+            row["type"]["referent"] = {"kind": "builtin", "name": "long"}
+
+        def out_of_scope_target(document):
+            # A real, known declaration from another function remains unavailable.
+            other = nodes["ref_direct"]["inner"][0]["id"]
+            target(document)["inner"][0]["referencedDecl"]["id"] = other
+
+        for mutate in (wrong_category, missing_types, wrong_cast, missing_target,
+                       wrong_source, wrong_referent, out_of_scope_target):
+            with self.subTest(mutation=mutate.__name__):
+                derived = copy.deepcopy(probe)
+                mutate(derived)
+                self.assert_accepts(json.dumps(derived),
+                    f"#guard admitCallableFunctionFromProbe evidence .lp64 {target_path} matches .error _",
+                    options="set_option maxRecDepth 100000", timeout=120)
 
     def test_actual_compiler_switch_continue_admitted(self):
         requested = os.environ.get("LEANCPP_CLANG")

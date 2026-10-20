@@ -1,6 +1,6 @@
 # C++ automatic integral declarations: specification and price
 
-2026-10-19. **Strict frontend admission with bounded callable execution.** The
+2026-10-20. **Strict frontend admission with bounded callable execution.** The
 automatic-local adapter admits a narrow `DeclStmt` shape into the
 object-backed frame, and the object-backed callable profile now threads those
 declarations through real callable bodies. This contract connects source
@@ -29,12 +29,12 @@ obligations, not claims that the current interpreter already satisfies them.
 An executing frame has one `IntegralObjectStore`, declaration-handle bindings,
 and a stack of scopes. Parameters and automatic locals both use that store.
 Bindings distinguish Clang declaration occurrences; equal spellings do not
-identify objects. Each dynamic execution of a declaration allocates a fresh
-`ObjectId`, including repeated loop-body declarations. Object identities are
+identify objects. Each dynamic execution of an object declaration allocates
+a fresh `ObjectId`, including repeated loop-body declarations. Object identities are
 not recycled when a scope ends.
 
-Entering a declaration allocates storage and installs its binding **before**
-evaluating its initializer. A self-reference consequently resolves to the new
+Entering an object declaration allocates storage and installs its binding
+**before** evaluating its initializer. A self-reference consequently resolves to the new
 declaration, not an outer same-named variable. It must not acquire an invented
 value. `IntegralObjectStore`'s not-yet-live and indeterminate-read refusals stay
 loud; this slice does not classify every rejected access as one C++ UB rule.
@@ -51,6 +51,14 @@ Callable lvalue-to-rvalue lowering explicitly removes nonvolatile top-level
 qualifiers and checks the expected value type; returning a `const int` local
 therefore retains its protected object descriptor while returning an `int`.
 
+Integral lvalue references bind to an existing in-scope parameter, object or
+reference of the same builtin kind, permitting added const qualification.
+They share the referent's object ID, allocate no object/value slot, and do not
+read an uninitialized referent during binding. Writes through an alias update
+the referent; const views reject writes. Scope exit drops reference bindings
+without ending their referents. See [reference execution](cpp-reference-types.md#local-reference-execution-boundary)
+for admission evidence and the remaining boundaries.
+
 Multiple declarators execute left to right, each binding being available to
 later initializers. Retain the state after every completed prefix, including
 if a later initializer refuses. Copy, direct, direct-list and copy-list scalar
@@ -61,8 +69,8 @@ same structured canonical type witness as a spelled builtin.
 The automatic integral target includes initialization and assignment after
 default initialization, const objects, multiple declarators, shadowing, nested
 blocks and loop-local declarations. Static/thread storage, extern declarations,
-volatile operations, references, arrays, records, local type declarations,
-attributes and exceptional cleanup require separately represented semantics.
+volatile operations, temporary/rvalue reference bindings, arrays, records, local
+type declarations, attributes and exceptional cleanup require separately represented semantics.
 Unsupported declarators must never be rewritten to `skip` or silently treated
 as automatic integral storage.
 
@@ -74,8 +82,8 @@ admitted `ForStmt` as a first-class `forLoop` with separate initializer,
 condition, step and body. The evaluator runs the step after the body returns,
 including a propagated `continue`, and runs the initializer only once. It no
 longer injects the step inside source blocks. These are represented control
-boundaries; with declarations still refused they neither allocate objects nor
-implement scope cleanup.
+boundaries. The value-only evaluator refuses declarations and does not
+implement object allocation or scope cleanup.
 
 `LeanModels/Cpp/IntegralObjectFrame.lean` now supplies the object-backed frame,
 scope state and a small stateful control shell. Its binding API attaches a
@@ -86,8 +94,8 @@ validated probe, it joins an exact `DeclStmt` path to direct `VarDecl` children,
 structured type rows, variable storage/initializer rows and binary-expression
 rows. It emits `IntegralObjectFrame.Statement` declarations, so the frame can
 reserve storage before evaluating an initializer and retain self-initialization
-failures. The adapter admits only automatic, nonvolatile integral objects with
-no attributes; unsupported storage, types, calls and multi-element lists remain
+failures. The adapter admits only automatic, nonvolatile integral objects and
+existing-object lvalue references with no attributes; unsupported storage, types, calls and multi-element lists remain
 loud. Typed initializer subexpressions retain integral conversions as explicit
 frame expression nodes. Literal formats come from their own structured types;
 unary operators consume the converted operand, including promotion before
@@ -220,7 +228,7 @@ belong to the external receipt.
 The current compiler/Lean regression admits the ordinary integral copy,
 direct, list and default forms, including multiple declarators, `auto`, const
 objects, shadowing, self-initialization and a loop-local declaration. It keeps
-static/thread storage, volatile objects, references, arrays and aliases loud.
+static/thread storage, volatile objects, arrays and type aliases loud.
 It checks Clang's distinct shadow handles, self-initializer binding and
 preceding-declarator references without executing an undefined
 self-initialization. The literal-fixture loader uses an explicit
@@ -237,3 +245,12 @@ self-initialization with retained storage, unsupported storage and missing
 joins. This is an admitted source fragment and frame proof surface; broad
 callable-body admission, conversions and a three-corpus execution census
 remain separate obligations.
+
+The local-reference compiler battery compares 170 defined rows at `-O0` and
+`-O2` under UBSan, covering all twelve supported builtin integral kinds,
+copy/direct/list syntax, chained and const aliases, uninitialized-object
+binding followed by assignment, shadowing and control-flow cleanup. Every
+row checks the final object/value-slot count and ended owned lifetimes.
+Temporary, rvalue, volatile, static/thread, constexpr, subobject and other
+out-of-profile bindings stay loud; derived evidence controls check category,
+cast, type-supplement and target inconsistencies.

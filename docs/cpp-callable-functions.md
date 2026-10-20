@@ -22,8 +22,8 @@ expressions, and validated automatic integral `DeclStmt` nodes. The latter
 cover copy, direct, list and default scalar initialization, multiple
 declarators and lexical shadowing through the object-backed frame. An empty
 compound is `block skip`; a null statement is `skip`. Unsupported storage,
-references, arrays, aliases, calls, overloaded operations, exceptions, local
-functions and every other statement form refuse rather than being silently
+reference parameters/results, temporary/rvalue bindings, arrays, aliases, calls,
+overloaded operations, exceptions, local functions and every other statement form refuse rather than being silently
 represented as a callable.
 
 The function type comes from the validated `Clang::QualType structured type
@@ -184,3 +184,11 @@ compiler/plugin settings are required; missing settings skip rather than count
 as agreement. Broader
 conversions and statements still need semantic models, and `Translation.execute`
 remains refused.
+
+Automatic integral lvalue references execute through the object-backed frame:
+`int &r = value; ++r; return value;` observes the shared object. Their expression
+types are their referent types. Const views preserve const access, and lexical
+cleanup removes alias bindings without ending the referent. Reference parameters
+and results remain outside the callable signature profile. The value-only
+evaluator continues to refuse automatic declarations. See
+[reference execution](cpp-reference-types.md#local-reference-execution-boundary).

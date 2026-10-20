@@ -111,6 +111,26 @@ private def reentrySameDeclarationFresh : Bool :=
       | .error _ => false
   | .error _ => false
 
+private def nestedDuplicateHandleRefuses : Bool :=
+  match opened with
+  | .ok frame =>
+      let outer := frame.declareParameter (handle "0x1") intType (signed 7)
+      match outer.result with
+      | .ok outerObject =>
+          let nested := outer.frame.enterScope
+          let before := nested.frame.store.objects.objects.length
+          let duplicate := nested.frame.declareLocalDefault (handle "0x1") intType
+          let after := duplicate.frame.store.objects.objects.length
+          (match duplicate.result with
+          | .error (.duplicateBinding declaration) => declaration == handle "0x1"
+          | _ => false) &&
+            before == after &&
+            outerObject == 0 &&
+            okValue (signed 7) (duplicate.frame.read (handle "0x1")) &&
+            duplicate.frame.scopeDepth == 2
+      | .error _ => false
+  | .error _ => false
+
 private def selfInitializerRefusesAndRetains : Bool :=
   match opened with
   | .ok frame =>
@@ -308,6 +328,7 @@ private def executeOutsideTransferLoud : Bool :=
 #guard nestedShadow
 #guard freshLoopObjects
 #guard reentrySameDeclarationFresh
+#guard nestedDuplicateHandleRefuses
 #guard selfInitializerRefusesAndRetains
 #guard defaultThenAssign
 #guard prefixRetainedAfterInitializerFailure

@@ -10,9 +10,10 @@ evaluator.
 `FrameScope`s. A binding records the declaration occurrence handle, its fresh
 `ObjectId`, structured type, and whether it is a parameter or local. Lookup
 walks from the innermost scope outward, so declaration handles remain identity
-witnesses even when source spellings repeat. A frame cannot bind a declaration
-twice in one active scope, while a new dynamic scope may reuse a declaration
-handle and receives a new object.
+witnesses even when source spellings repeat. Every active scope shares one
+declaration-handle namespace: a handle cannot be bound again while its earlier
+binding remains active, including from a nested scope. After that scope exits,
+the handle may be reused by a new dynamic scope, which receives a new object.
 
 Entering a scope pushes an empty binding list. Parameter declaration allocates
 automatic storage and initializes it before publishing the binding. Local

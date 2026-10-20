@@ -119,9 +119,7 @@ def bound (frame : IntegralObjectFrame) (declaration : FrontendHandle) : Bool :=
 
 private def addBinding (frame : IntegralObjectFrame) (binding : FrameBinding) :
     FrameOutcome ObjectId :=
-  let alreadyBound := match frame.scopes with
-    | [] => false
-    | scope :: _ => scope.bindings.any (fun current => current.declaration == binding.declaration)
+  let alreadyBound := (binding? frame.scopes binding.declaration).isSome
   if alreadyBound then
     failure frame (.duplicateBinding binding.declaration)
   else
@@ -134,9 +132,7 @@ private def addBinding (frame : IntegralObjectFrame) (binding : FrameBinding) :
 private def reserve (frame : IntegralObjectFrame) (declaration : FrontendHandle)
     (type : CppTypeEvidence) (role : FrameBindingRole) : FrameOutcome ObjectId :=
   let binding : FrameBinding := {declaration, object := 0, type, role}
-  let alreadyBound := match frame.scopes with
-    | [] => false
-    | scope :: _ => scope.bindings.any (fun current => current.declaration == declaration)
+  let alreadyBound := frame.bound declaration
   if alreadyBound then
     failure frame (.duplicateBinding declaration)
   else match frame.scopes with

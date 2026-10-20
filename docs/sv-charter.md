@@ -1147,6 +1147,29 @@ extraction errors**, with exactly one clean gain and no losses. The target
 wall falls **3,942 → 3,941**; the regenerated machine-readable summary records
 this snapshot. This is extraction coverage, not corpus-wide execution evidence.
 
+### Packed right-streaming source expressions — 2026-10-20
+
+Right-streaming sources now lower through their bound integral conversion to
+an existing source-order concatenation. Optional slice sizes do not reorder
+right streams (§11.4.14.2). When the destination is wider, an explicit trailing
+zero part supplies the right padding required by §11.4.14.3, followed by the
+destination's two-state conversion. The `streaming_pack` fixture checks x/z,
+signed source bits, ignored slice sizes, source order and padding; a symbolic
+kernel theorem proves its extracted padded assignment for arbitrary values.
+The `streaming_pack_fixed` symbolic fixture covers continuous and procedural
+sources in both process orders. Both authored fixtures match completed
+simulator transcripts, and all 18 newly clean corpus files match on their full
+observable output.
+
+The paired **22,035**-path census gains **18 clean files** with no losses:
+**2,980 → 2,998 clean**, **18,989 → 18,971 partial**, **66 include skips**,
+zero errors. The streaming-conversion wall falls **55 → 36** files; one
+additional partial file loses that wall while retaining an array declaration
+wall. Left/nested streams, unpacked aggregate operands, `with` selectors,
+effectful sources and destinations smaller than the stream remain loud.
+Symbolic parameter/generate families remain loud until padding has symbolic
+widths. No interpreter, storage or scheduler rule was added.
+
 ### Legacy continuous fixed-window targets — 2026-10-20
 
 Continuous assignments in the legacy/self-check envelope now admit constant

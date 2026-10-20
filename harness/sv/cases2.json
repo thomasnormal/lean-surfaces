@@ -438,6 +438,17 @@
    ]
   },
   {
+   "name": "streaming_pack_fixed",
+   "example": "sem2/streaming_pack_fixed",
+   "top": "streaming_pack_fixed",
+   "signals": ["hi", "lo", "ordered", "sliced", "wide", "procedural_wide"],
+   "stimulus": [
+    {"hi": "1010", "lo": "0101"},
+    {"hi": "10xz", "lo": "0110"},
+    {"hi": "0000", "lo": "1111"}
+   ]
+  },
+  {
    "name": "streaming_leading_bits",
    "example": "sem2/streaming_leading_bits",
    "top": "streaming_leading_bits",

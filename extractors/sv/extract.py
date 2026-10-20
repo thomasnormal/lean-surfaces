@@ -1655,6 +1655,8 @@ def _convert_expr(sm, e):
 def _convert_conversion_expr(sm, e):
     """Lower elaborated resizing after context signedness has propagated."""
     kind = e.conversionKind
+    if kind == ConversionKind.StreamingConcat:
+        return _convert_streaming_pack(sm, e)
     if kind == ConversionKind.Explicit:
         return _convert_integral_cast(sm, e)
     if kind not in (ConversionKind.Implicit, ConversionKind.Propagated):
@@ -1703,6 +1705,52 @@ def _convert_conversion_expr(sm, e):
         "width": tw,
         "operand": inner,
     }
+
+
+def _convert_streaming_pack(sm, expr):
+    """IEEE 1800 §11.4.14: right-streaming packed sources, padded at right."""
+    source = expr.operand
+    token = getattr(getattr(expr, "syntax", None), "operatorToken", None)
+    operator = str(getattr(token, "kind", "")).split(".")[-1]
+    target_width, two_state, reason = type_width_2s(expr.type)
+    if (type(source).__name__ != "StreamingConcatenationExpression"
+            or operator != "RightShift" or not source.isFixedSize
+            or reason is not None or target_width is None or target_width <= 0):
+        return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+    # The padding below has a fixed width. Do not freeze a symbolic family's
+    # defaults into it; parameter/generate-dependent streams need width terms.
+    if _SYM is not None and (_SYM.scope is None or _SYM.genvars or any(
+            type(member).__name__ in ("ParameterSymbol", "TypeParameterSymbol")
+            and not getattr(member, "isLocalParam", False) for member in _SYM.scope)):
+        return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+    parts = []
+    source_width = 0
+    for stream in source.streams:
+        operand = stream.operand
+        width, _, reason = type_width_2s(operand.type)
+        if (stream.withExpr is not None or reason is not None
+                or width is None or width <= 0
+                or not _case_source_expression_ok(operand)):
+            return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+        part = _convert_expr(sm, operand)
+        if width_of(part) != width or not _case_expression_ok(part):
+            return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+        parts.append(part)
+        source_width += width
+    if (not parts or source_width != source.bitstreamWidth
+            or source_width > target_width):
+        return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+    if source_width < target_width:
+        parts.append({
+            "kind": "Literal", "span": node_span(sm, expr),
+            "width": target_width - source_width,
+            "bits": "0" * (target_width - source_width),
+        })
+    value = {
+        "kind": "Concat", "span": node_span(sm, expr),
+        "width": target_width, "parts": parts,
+    }
+    return squash2_wrap(value, target_width) if two_state else value
 
 
 def _convert_integral_cast(sm, expr):

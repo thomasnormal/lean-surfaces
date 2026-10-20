@@ -572,6 +572,24 @@ summary is regenerated from this run. The target-only repricing now leaves
 the residual families still require runtime storage or driver-resolution work.
 These counts establish extraction coverage only.
 
+## Packed right-streaming sources — 2026-10-20
+
+Pure packed integral right-streaming sources now reuse source-order `Concat`,
+including optional slice sizes (ignored for `>>`). A wider destination adds
+zeros at the right before destination two-state conversion. `streaming_pack`
+and its symbolic theorem check the real extracted assignment;
+`streaming_pack_fixed` exercises both symbolic assignment paths and process
+orders. Completed simulator transcripts match both authored fixtures and all
+18 newly clean corpus files. Smaller destinations, left/nested streams, `with`
+selectors, unpacked
+aggregate operands and symbolic parameter/generate families remain loud.
+
+On the same **22,035** paths, **2,980 → 2,998 clean** and **18,989 → 18,971
+partial**, with **66 include skips**, **zero extraction errors**, and no
+clean losses. `ConversionExpression:StreamingConcat` falls **55 → 36** files;
+one further partial file loses only that wall. The machine-readable summary
+records this snapshot; these are extraction counts.
+
 ## Legacy continuous fixed-window targets — 2026-10-20
 
 The legacy/self-check extractor now lowers constant packed bit/part selects,

@@ -291,10 +291,6 @@
     55
    ],
    [
-    "ConversionExpression:StreamingConcat",
-    55
-   ],
-   [
     "NetSymbol:TriReg",
     54
    ],
@@ -377,6 +373,10 @@
    [
     "DoWhileLoopStatement",
     37
+   ],
+   [
+    "ConversionExpression:StreamingConcat",
+    36
    ],
    [
     "BlockStatement:JoinAny",
@@ -820,8 +820,8 @@
    ]
   ],
   "by_status": {
-   "clean": 2980,
-   "partial": 18989,
+   "clean": 2998,
+   "partial": 18971,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -882,7 +882,7 @@
     52
    ],
    "simulation": [
-    2493,
+    2511,
     18671
    ],
    "simulation elaboration": [
@@ -896,14 +896,14 @@
   },
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 413,
-    "clean": 578,
-    "partial": 413,
+    "blocked_by_more": 395,
+    "clean": 596,
+    "partial": 395,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      182
+      175
      ],
      [
       "AssignmentExpression:target",
@@ -926,10 +926,6 @@
       50
      ],
      [
-      "ConversionExpression:StreamingConcat",
-      47
-     ],
-     [
       "InsideExpression",
       46
      ],
@@ -942,8 +938,12 @@
       31
      ],
      [
+      "ConversionExpression:StreamingConcat",
+      28
+     ],
+     [
       "TypeAliasType:TypeAlias",
-      30
+      26
      ],
      [
       "LetDeclSymbol:LetDecl",
@@ -1174,9 +1174,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 581,
+    "clean": 599,
     "error": 0,
-    "partial": 453,
+    "partial": 435,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0

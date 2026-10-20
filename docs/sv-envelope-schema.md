@@ -382,6 +382,10 @@ untagged packed-union member. The union's alternate direct fields continue to
 alias the one packed vector; `packed_union_subrange` pins this case. Tagged,
 nested and dynamic union paths remain unsupported.
 
+A literal bit-select of a direct untagged packed-union member uses the same
+one-bit outer-vector window and aliasing rule; `packed_union_bit` pins the
+case. Tagged, nested and dynamic union paths remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

@@ -943,6 +943,10 @@ to a direct member of an untagged packed union and reads the written bits
 through its alternate field. The one-vector alias and x propagation are
 preserved; tagged, nested and dynamic union paths remain loud.
 
+The `packed_union_bit` fixture checks the one-bit form through the same union
+alias. A literal bit write is visible through the alternate field with x
+propagation; tagged, nested and dynamic union paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

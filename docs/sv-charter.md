@@ -2656,6 +2656,14 @@ write through one field and read through an alternate field, including x
 propagation. Tagged, nested and dynamic union paths remain loud; no driver
 resolution, aggregate store or scheduler is added.
 
+### Symbolic packed-union member bit selects — 2026-10-20
+
+Literal bit-selects of direct members of an untagged packed union now flatten
+to one-bit windows in the union's shared vector. `packed_union_bit` checks the
+write through one field and read through an alternate field, including x
+propagation. Tagged, nested and dynamic union paths remain loud; no driver
+resolution, aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

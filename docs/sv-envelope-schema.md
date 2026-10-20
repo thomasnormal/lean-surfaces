@@ -388,6 +388,11 @@ maps both source and destination labels to zero-based LVec offsets before
 emitting `PartSel`. `noncanonical_part_assign` pins the `[10:3]` case; dynamic,
 indexed and out-of-range forms remain loud.
 
+Literal bit-selects on noncanonical packed ranges use the same mapping and
+emit a zero-based `BitSel` index. Dynamic indices on those ranges remain
+`Unsupported`, since the vector executor has no runtime declaration-range
+metadata; `noncanonical_bit_assign` pins the accepted case.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

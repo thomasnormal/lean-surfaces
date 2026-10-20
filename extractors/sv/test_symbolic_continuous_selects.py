@@ -127,6 +127,23 @@ class SymbolicContinuousSelects(unittest.TestCase):
                            p["value"]["lsb"]["value"]) for p in processes],
                          [(3, 0, 7, 4), (7, 4, 3, 0)])
 
+    def test_noncanonical_constant_bits_normalize_offsets(self):
+        envelope = self.extract(
+            "module top(input logic [10:3] source, output logic [10:3] value); "
+            "assign value[3] = source[10]; assign value[10] = source[3]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([p["target"]["index"]["value"] for p in processes],
+                         [0, 7])
+        self.assertEqual([p["value"]["index"]["value"] for p in processes],
+                         [7, 0])
+
+    def test_noncanonical_dynamic_bits_stay_loud(self):
+        envelope = self.extract(
+            "module top(input logic [10:3] source, input logic [2:0] index, "
+            "output logic [10:3] value); assign value[index] = source[3]; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "Unsupported")
+
 
 if __name__ == "__main__":
     unittest.main()

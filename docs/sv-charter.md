@@ -2612,6 +2612,11 @@ four-state propagation. Dynamic, indexed and out-of-range forms remain loud;
 this adds no storage or scheduler and makes no legacy census or
 simulator-agreement claim.
 
+Literal bit-selects on the same noncanonical ranges now use the corresponding
+zero-based `BitSel` offsets. `noncanonical_bit_assign` checks the endpoint
+mapping and x propagation; dynamic noncanonical indices remain loud because
+the runtime vector state carries no declaration-label table.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

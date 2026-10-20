@@ -2159,8 +2159,26 @@ def _convert_sym_call_expr(sm, e):
 
 def _convert_sym_select_expr(sm, e, cname):
     if cname == "ElementSelectExpression":
+        index = e.selector
+        source_type = e.value.type.canonicalType
+        if type(source_type).__name__ == "PackedArrayType":
+            left = int(source_type.range.left)
+            right = int(source_type.range.right)
+            position = _constant_dimension_selector(index)
+            canonical = left == int(source_type.bitWidth) - 1 and right == 0
+            if position is not None and type(index).__name__ in (
+                    "IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+                low, high = min(left, right), max(left, right)
+                if position < low or position > high:
+                    return unsupported(sm, e, "ElementSelectExpression:range")
+                offset = position - right if left > right else right - position
+                index = {"kind": "Int", "span": node_span(sm, e),
+                         "value": offset}
+            elif not canonical:
+                return unsupported(sm, e, "ElementSelectExpression:dynamic-range")
         with _SymPos():
-            index = _convert_expr(sm, e.selector)
+            if not isinstance(index, dict):
+                index = _convert_expr(sm, index)
         return {
             "kind": "BitSel",
             "span": node_span(sm, e),

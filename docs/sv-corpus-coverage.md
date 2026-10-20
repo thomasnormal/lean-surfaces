@@ -918,6 +918,9 @@ The `noncanonical_part_assign` fixture covers simple constant parts on a
 `[10:3]` packed range. Source and destination labels normalize to LVec offsets
 before the existing window executor runs; this remains a symbolic-only result.
 
+The `noncanonical_bit_assign` fixture applies the same normalization to
+literal bit-selects and keeps dynamic noncanonical indices loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

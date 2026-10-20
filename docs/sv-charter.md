@@ -381,8 +381,9 @@ The paired 22,030-path census gains 29 clean chapter-11 files without losses;
 The source fixture exercises all scalar pairs, signed/mixed-width and wide
 vectors, result extension and nested arithmetic. Source-anchored theorems
 cover arbitrary vectors under an all-wildcard right operand. Nonintegral
-value/storage types and integral membership expressions retain their
-existing missing mechanisms. See [the operator contract](sv-wildcard-equality.md).
+value/storage types retain their existing refusals. Pure integral membership
+is covered by the later §11.4.13 lowering below; symbolic membership remains
+loud. See [the operator contract](sv-wildcard-equality.md).
 
 ### Unary plus arithmetic — corrected 2026-10-19
 
@@ -3212,3 +3213,31 @@ files** with no losses: **3,054 → 3,083 clean**, **18,915 → 18,886 partial**
 **66 include skips**, and zero extraction errors. All 29 complete transcripts
 match the independent simulator output. Fixed-array inequality now joins the
 per-cell `!=`/`!==` results with `||`; equality continues to use `&&`.
+
+### Pure integral membership — 2026-10-20
+
+IEEE 1800-2023 §11.4.13 `inside` expressions now lower in the self-check
+surface to the existing wildcard equality, inclusive order comparisons and
+three-valued logical conjunction/disjunction. The frontend's common operand
+width and signedness apply before the unsigned one-bit result is extended
+in its surrounding context. A scalar set item uses `==?`; a colon range
+uses `subject >= lower && subject <= upper`. Single dollar endpoints use
+the propagated integral representation's minimum or maximum. Reversed
+ranges and unknown subjects retain the existing comparison rules.
+
+One-dimensional fixed-unpacked arrays and constant slices reuse their
+flattened cells, with the same common signed or unsigned extension. All
+source operands must be pure before reads are duplicated. Nested pure
+membership is admitted. Effects, nonintegral values, unsupported storage,
+tolerance syntax and symbolic-mode membership remain loud. Frontend errors,
+including a range unbounded at both ends, refuse the design. No evaluator,
+storage model or scheduling rule is added.
+
+The authored `inside` fixture checks signed/mixed widths, wildcard
+uncertainty and definite-match dominance, inclusive/reversed/unknown bounds,
+dollar limits, signed/unsigned array cells, enums and nested membership.
+Its fixture-bound kernel theorems establish definite-match dominance and
+all-wildcard membership for arbitrary subject vectors. A paired **22,035**-
+path census gains **38 clean files** with no losses: **3,083 → 3,121 clean**,
+**18,886 → 18,848 partial**, **66 include skips**, and zero extraction errors.
+All 38 newly clean files execute and match complete independent transcripts.

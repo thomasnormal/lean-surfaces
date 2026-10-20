@@ -17,8 +17,9 @@ self-check evaluator retain the operators. Their arithmetic-operand
 walkers preserve the comparison boundary. The existing Boolean
 `case inside` selector tests whether this same equality rule returns one.
 This adds no scheduler rule. Nonintegral operands and unsupported value
-or storage types keep their existing refusals. Integral membership
-expressions require their own embedding and lowering and remain loud.
+or storage types keep their existing refusals. Pure integral membership
+expressions now lower through this equality rule and inclusive range
+comparisons in the self-check tier; symbolic membership remains loud.
 
 The real module in `Examples/system-verilog/wildcard_equality/` has
 both assignments. Its proof file identifies their actual extracted AST,

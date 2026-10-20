@@ -243,10 +243,6 @@
     82
    ],
    [
-    "InsideExpression",
-    78
-   ],
-   [
     "ConcurrentAssertionStatement",
     76
    ],
@@ -405,6 +401,10 @@
    [
     "CaseStatement:subject",
     30
+   ],
+   [
+    "InsideExpression:source",
+    28
    ],
    [
     "NetSymbol:delay",
@@ -627,6 +627,10 @@
     7
    ],
    [
+    "InsideExpression:item",
+    6
+   ],
+   [
     "BinaryExpression:Divide-type",
     6
    ],
@@ -739,6 +743,10 @@
     2
    ],
    [
+    "InsideExpression:invalid-compilation",
+    1
+   ],
+   [
     "BinaryExpression:LogicalEquivalence",
     1
    ],
@@ -824,8 +832,8 @@
    ]
   ],
   "by_status": {
-   "clean": 3083,
-   "partial": 18886,
+   "clean": 3121,
+   "partial": 18848,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -886,7 +894,7 @@
     52
    ],
    "simulation": [
-    2595,
+    2633,
     18671
    ],
    "simulation elaboration": [
@@ -901,18 +909,18 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 360,
-    "clean": 631,
-    "partial": 360,
+    "blocked_by_more": 322,
+    "clean": 668,
+    "partial": 323,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
-      "VariableDeclStatement:2state",
-      157
-     ],
-     [
       "AssignmentExpression:target",
       141
+     ],
+     [
+      "VariableDeclStatement:2state",
+      135
      ],
      [
       "NamedValueExpression:2state",
@@ -931,10 +939,6 @@
       50
      ],
      [
-      "InsideExpression",
-      46
-     ],
-     [
       "RealLiteral",
       44
      ],
@@ -943,15 +947,15 @@
       31
      ],
      [
-      "TypeAliasType:TypeAlias",
-      25
-     ],
-     [
       "LetDeclSymbol:LetDecl",
       25
      ],
      [
       "ReplicationExpression",
+      24
+     ],
+     [
+      "TypeAliasType:TypeAlias",
       24
      ],
      [
@@ -985,9 +989,13 @@
      [
       "MinTypMaxExpression",
       10
+     ],
+     [
+      "ExpressionStatement:CallExpression",
+      10
      ]
     ],
-    "unlockable": 0
+    "unlockable": 1
    },
    "chapter-4": {
     "blocked_by_more": 287,
@@ -1079,9 +1087,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 692,
-    "clean": 349,
-    "partial": 692,
+    "blocked_by_more": 691,
+    "clean": 350,
+    "partial": 691,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1106,7 +1114,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      163
+      162
      ],
      [
       "ConversionExpression:width",
@@ -1114,11 +1122,11 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      129
+      128
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
-      82
+      81
      ],
      [
       "InstanceSymbol:Instance",
@@ -1179,12 +1187,12 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 635,
+    "clean": 672,
     "error": 0,
-    "partial": 399,
+    "partial": 362,
     "skip_include": 0,
     "total": 1034,
-    "unlockable": 0
+    "unlockable": 1
    },
    "chapter-12": {
     "clean": 174,
@@ -1443,9 +1451,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 361,
+    "clean": 362,
     "error": 0,
-    "partial": 824,
+    "partial": 823,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 2
@@ -1476,7 +1484,7 @@
    }
   },
   "seed": 20260721,
-  "unlockable_simulation": 2,
-  "unlockable_total": 7
+  "unlockable_simulation": 3,
+  "unlockable_total": 8
  }
 }

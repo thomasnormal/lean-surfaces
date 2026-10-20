@@ -22,6 +22,26 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Pure integral membership — 2026-10-20
+
+Pure integral `inside` expressions lower to wildcard equality for scalar
+items, inclusive comparisons for colon ranges, and three-valued logical
+disjunction across the set. Common operand width/signedness precedes the
+unsigned one-bit result. Single dollar endpoints use representation limits;
+fixed one-dimensional arrays and constant slices reuse flattened cells.
+Effects, tolerance syntax, nonintegral/unsupported storage, frontend errors
+and symbolic-mode membership remain loud. No evaluator or scheduler changed.
+
+The paired **22,035**-path census moves **3,083 → 3,121 clean** and
+**18,886 → 18,848 partial**, with **66 include skips**, zero extraction errors,
+38 gains and no losses. Every newly clean file executes and matches its
+complete independent simulator transcript. Files whose names mention
+tolerance ranges actually contain scalar wildcard comparisons; actual
+tolerance syntax remains refused. The authored `inside` fixture covers
+signed/mixed sizing, wildcard uncertainty, dollar/enum limits, reversed and
+unknown ranges, arrays and nesting. Its symbolic kernel proofs check
+definite-match dominance and arbitrary same-width all-wildcard membership.
+
 ## Local fixed-unpacked array declarations — 2026-10-20
 
 One-dimensional fixed-unpacked arrays whose elements are integral scalars or

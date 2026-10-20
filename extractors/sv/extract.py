@@ -407,7 +407,7 @@ def const_literal(sm, e):
     constant during binding (`e.constant`), else None. Never raises; never
     evaluates on demand (pyslang's EvalContext is crash-prone — only the
     binder-populated attribute is consulted)."""
-    if ((_SYM is None and _contains_guarded_call(e))
+    if (_contains_guarded_expression(e, guard_calls=_SYM is None)
             or _contains_disputed_string_escape(e)):
         return None
     try:
@@ -429,13 +429,16 @@ def const_literal(sm, e):
         return None
 
 
-def _contains_guarded_call(expression):
-    """Keep call admission and diagnostic provenance through conversions."""
+def _contains_guarded_expression(expression, *, guard_calls):
+    """Keep call/membership admission and provenance through conversions."""
     found = False
 
     def inspect(node):
         nonlocal found
-        if (type(node).__name__ == "CallExpression" and node.isSystemCall
+        if type(node).__name__ == "InsideExpression":
+            found = True
+            return VisitAction.Skip
+        if (guard_calls and type(node).__name__ == "CallExpression" and node.isSystemCall
                 and node.subroutineName in
                 ("$bits", *BIT_QUERY_CALLS, *SIGNING_CALLS, *DIMENSION_QUERY_CALLS)):
             found = True
@@ -1605,6 +1608,8 @@ def _convert_expr(sm, e):
         return _convert_unary_expr(sm, e)
     if cname == "BinaryExpression":
         return _convert_binary_expr(sm, e)
+    if cname == "InsideExpression" and _SYM is None:
+        return _convert_inside_expr(sm, e)
     if cname == "ConditionalExpression":
         return _convert_conditional_expr(sm, e)
     if cname == "ConcatenationExpression":
@@ -2067,6 +2072,98 @@ def _convert_binary_expr(sm, e):
         "left": left,
         "right": right,
     }
+
+
+def _inside_binary(sm, source, op, left, right):
+    return {"kind": "Binary", "span": node_span(sm, source), "width": 1,
+            "op": op, "left": left, "right": right}
+
+
+def _inside_scalar(sm, expression, width):
+    actual_width, _, reason = type_width_2s(expression.type)
+    if reason is not None or actual_width != width:
+        return None
+    value = convert_expr(sm, expression)
+    if width_of(value) != width or not _case_expression_ok(value):
+        return None
+    return value
+
+
+def _inside_bound(sm, expression, width, signed, upper):
+    leaf = expression
+    while type(leaf).__name__ == "ConversionExpression" and leaf.conversionKind in (
+            ConversionKind.Implicit, ConversionKind.Propagated):
+        leaf = leaf.operand
+    if type(leaf).__name__ != "UnboundedLiteral":
+        return _inside_scalar(sm, expression, width)
+    # §11.4.13: dollar endpoints are the extrema of the propagated type.
+    if signed:
+        value = (1 << (width - 1)) - 1 if upper else 1 << (width - 1)
+    else:
+        value = (1 << width) - 1 if upper else 0
+    return {"kind": "Literal", "span": node_span(sm, expression),
+            "width": width, "bits": format(value, "0%db" % width)}
+
+
+def _inside_item(sm, expression, subject, width, signed):
+    if type(expression).__name__ == "ValueRangeExpression":
+        # Tolerance syntax shares this AST class; it is not a colon range.
+        if str(expression.syntax.op.kind).split(".")[-1] != "Colon":
+            return None
+        lower = _inside_bound(sm, expression.left, width, signed, False)
+        upper = _inside_bound(sm, expression.right, width, signed, True)
+        if lower is None or upper is None:
+            return None
+        prefix = "s" if signed else ""
+        return [_inside_binary(sm, expression, "&&",
+            _inside_binary(sm, expression, prefix + ">=", subject, lower),
+            _inside_binary(sm, expression, prefix + "<=", subject, upper))]
+    shape = _fixed_array_assignment_shape(expression)
+    if shape is not None:
+        name, cell_width, _, positions = shape
+        if cell_width > width:
+            return None
+        values = []
+        for position in positions:
+            cell = {"kind": "Ident", "span": node_span(sm, expression),
+                    "width": cell_width, "name": f"{name}[{position}]"}
+            if cell_width != width:
+                cell = {"kind": "SignedResize" if signed else "Resize",
+                        "span": node_span(sm, expression), "width": width,
+                        "operand": cell}
+            values.append(cell)
+    else:
+        value = _inside_scalar(sm, expression, width)
+        if value is None:
+            return None
+        values = [value]
+    return [_inside_binary(sm, expression, "==?", subject, value)
+            for value in values]
+
+
+def _convert_inside_expr(sm, expression):
+    """Pure integral §11.4.13 membership through existing scalar operators."""
+    width, _, reason = type_width_2s(expression.left.type)
+    if (reason is not None or width is None or width <= 0
+            or expression.type.bitWidth != 1 or expression.type.isSigned
+            or not _case_source_expression_ok(expression)):
+        return unsupported(sm, expression, "InsideExpression:source")
+    subject = _inside_scalar(sm, expression.left, width)
+    if subject is None:
+        return unsupported(sm, expression, "InsideExpression:subject")
+    comparisons = []
+    for item in expression.rangeList:
+        converted = _inside_item(sm, item, subject, width, expression.left.type.isSigned)
+        if not converted:
+            return unsupported(sm, expression, "InsideExpression:item")
+        comparisons.extend(converted)
+    if not comparisons:
+        return unsupported(sm, expression, "InsideExpression:empty")
+    result = comparisons[0]
+    for comparison in comparisons[1:]:
+        result = _inside_binary(sm, expression, "||", result, comparison)
+    result["inside_lowered"] = True
+    return result
 
 
 def _convert_conditional_expr(sm, e):
@@ -3286,6 +3383,7 @@ def _case_source_expression_ok(expression):
             "NamedValueExpression", "ConversionExpression", "UnaryExpression",
             "BinaryExpression", "ConditionalExpression", "ConcatenationExpression",
             "ElementSelectExpression", "RangeSelectExpression",
+            "InsideExpression", "ValueRangeExpression", "UnboundedLiteral",
         )
         if kind == "UnaryExpression":
             pure = pure and (node.op in UNARY_OPS or node.op in REDUCE_OPS)
@@ -4378,6 +4476,21 @@ def contains_loop(node):
     return False
 
 
+def _reject_invalid_inside(sm, comp, modules, others):
+    def contains(node):
+        if isinstance(node, dict):
+            return node.get("inside_lowered", False) or any(
+                contains(value) for value in node.values())
+        if isinstance(node, list):
+            return any(contains(value) for value in node)
+        return False
+
+    if (contains(modules)
+            and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
+        others.append(unsupported(sm, comp, "InsideExpression:invalid-compilation",
+                                  "frontend rejected source containing lowered membership"))
+
+
 def convert_design(sm, comp):
     modules = []
     others = []
@@ -4463,6 +4576,7 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "ConcatTarget:invalid-compilation",
                                   "frontend rejected source containing a concatenated assignment"))
+    _reject_invalid_inside(sm, comp, modules, others)
     return {"kind": "Design", "modules": modules, "others": others}
 
 

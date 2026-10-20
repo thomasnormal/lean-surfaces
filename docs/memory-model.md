@@ -795,7 +795,7 @@ order before reporting CPython's faithful `TypeError: float() takes no
 keyword arguments`. `divmod(...)`, `len(...)`, and `bool(...)` follow the same
 rule with their own faithful positional-only `TypeError` messages. `repr(...)`
 and `abs(...)`/`ord(...)`/`chr(...)`/`next(...)`/`ascii(...)`/`tuple(...)`/`list(...)`/`range(...)` follow it too. `int(...)`
-evaluates its arguments before reporting CPython's faithful invalid-keyword error. `hex(...)` and `oct(...)` follow the same
+evaluates its arguments before reporting CPython's faithful invalid-keyword error. `hex(...)`, `oct(...)`, and `bin(...)` follow the same
 positional-only rule. Other builtin keyword forms remain loud.
 
 Loud by choice: BUILTIN heap-receiver methods with keywords

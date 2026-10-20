@@ -96,6 +96,10 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   (.typeError "hex() takes no keyword arguments")
 #py_check kw_lab.oct_kw() raises
   (.typeError "oct() takes no keyword arguments")
+#py_check kw_lab.bin_kw() raises
+  (.typeError "bin() takes no keyword arguments")
+#py_check kw_lab.bin_kw_effects() = (Val.list #[.int 1, .int 2, .int 3])
+#py_check kw_lab.bin_kw_value_error() raises .zeroDivisionError
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

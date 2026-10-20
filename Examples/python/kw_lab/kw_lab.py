@@ -157,6 +157,30 @@ def oct_kw():
     return oct(number=15)
 
 
+def bin_kw():
+    # bin takes no keywords; argument expressions still evaluate first.
+    return bin(number=15)
+
+
+def record_arg(log, value):
+    log.append(value)
+    return value
+
+
+def bin_kw_effects():
+    log = []
+    try:
+        bin(record_arg(log, 1), number=record_arg(log, 2), other=record_arg(log, 3))
+    except TypeError:
+        return log
+    return []
+
+
+def bin_kw_value_error():
+    # An exception evaluating a keyword precedes the positional-only error.
+    return bin(number=1 // 0)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

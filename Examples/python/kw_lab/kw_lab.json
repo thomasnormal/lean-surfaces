@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/kw_lab/kw_lab.py",
-  "source_sha256": "060bcfbbec8a8df1d9841cdda626a3f64a3cbb3c8f04c5c5c63bc126b98ce3fc",
+  "source_sha256": "08805f8dde7a54b658d821eba231f343c5955856cfd7046ab6041d80cb9d0799",
   "module": {
     "kind": "Module",
     "body": [
@@ -2818,6 +2818,536 @@
           "lineno": 160,
           "col_offset": 0,
           "end_lineno": 162,
+          "end_col_offset": 25
+        },
+        "name": "bin_kw",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 162,
+              "col_offset": 4,
+              "end_lineno": 162,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 162,
+                "col_offset": 11,
+                "end_lineno": 162,
+                "end_col_offset": 25
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 162,
+                  "col_offset": 11,
+                  "end_lineno": 162,
+                  "end_col_offset": 14
+                },
+                "id": "bin"
+              },
+              "args": [],
+              "keywords": [
+                {
+                  "arg": "number",
+                  "value": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 162,
+                      "col_offset": 22,
+                      "end_lineno": 162,
+                      "end_col_offset": 24
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "15"
+                    }
+                  }
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 165,
+          "col_offset": 0,
+          "end_lineno": 167,
+          "end_col_offset": 16
+        },
+        "name": "record_arg",
+        "args": [
+          {
+            "arg": "log",
+            "span": {
+              "lineno": 165,
+              "col_offset": 15,
+              "end_lineno": 165,
+              "end_col_offset": 18
+            }
+          },
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 165,
+              "col_offset": 20,
+              "end_lineno": 165,
+              "end_col_offset": 25
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 166,
+              "col_offset": 4,
+              "end_lineno": 166,
+              "end_col_offset": 21
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 166,
+                "col_offset": 4,
+                "end_lineno": 166,
+                "end_col_offset": 21
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 166,
+                  "col_offset": 4,
+                  "end_lineno": 166,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 166,
+                    "col_offset": 4,
+                    "end_lineno": 166,
+                    "end_col_offset": 7
+                  },
+                  "id": "log"
+                },
+                "attr": "append"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 166,
+                    "col_offset": 15,
+                    "end_lineno": 166,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 167,
+              "col_offset": 4,
+              "end_lineno": 167,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 167,
+                "col_offset": 11,
+                "end_lineno": 167,
+                "end_col_offset": 16
+              },
+              "id": "value"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 170,
+          "col_offset": 0,
+          "end_lineno": 176,
+          "end_col_offset": 13
+        },
+        "name": "bin_kw_effects",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 171,
+              "col_offset": 4,
+              "end_lineno": 171,
+              "end_col_offset": 12
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 171,
+                  "col_offset": 4,
+                  "end_lineno": 171,
+                  "end_col_offset": 7
+                },
+                "id": "log"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 171,
+                "col_offset": 10,
+                "end_lineno": 171,
+                "end_col_offset": 12
+              },
+              "elts": []
+            }
+          },
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 172,
+              "col_offset": 4,
+              "end_lineno": 175,
+              "end_col_offset": 18
+            },
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 173,
+                  "col_offset": 8,
+                  "end_lineno": 173,
+                  "end_col_offset": 84
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 173,
+                    "col_offset": 8,
+                    "end_lineno": 173,
+                    "end_col_offset": 84
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 173,
+                      "col_offset": 8,
+                      "end_lineno": 173,
+                      "end_col_offset": 11
+                    },
+                    "id": "bin"
+                  },
+                  "args": [
+                    {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 173,
+                        "col_offset": 12,
+                        "end_lineno": 173,
+                        "end_col_offset": 30
+                      },
+                      "func": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 173,
+                          "col_offset": 12,
+                          "end_lineno": 173,
+                          "end_col_offset": 22
+                        },
+                        "id": "record_arg"
+                      },
+                      "args": [
+                        {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 173,
+                            "col_offset": 23,
+                            "end_lineno": 173,
+                            "end_col_offset": 26
+                          },
+                          "id": "log"
+                        },
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 173,
+                            "col_offset": 28,
+                            "end_lineno": 173,
+                            "end_col_offset": 29
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        }
+                      ],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  ],
+                  "keywords": [
+                    {
+                      "arg": "number",
+                      "value": {
+                        "kind": "Call",
+                        "span": {
+                          "lineno": 173,
+                          "col_offset": 39,
+                          "end_lineno": 173,
+                          "end_col_offset": 57
+                        },
+                        "func": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 173,
+                            "col_offset": 39,
+                            "end_lineno": 173,
+                            "end_col_offset": 49
+                          },
+                          "id": "record_arg"
+                        },
+                        "args": [
+                          {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 173,
+                              "col_offset": 50,
+                              "end_lineno": 173,
+                              "end_col_offset": 53
+                            },
+                            "id": "log"
+                          },
+                          {
+                            "kind": "Constant",
+                            "span": {
+                              "lineno": 173,
+                              "col_offset": 55,
+                              "end_lineno": 173,
+                              "end_col_offset": 56
+                            },
+                            "value": {
+                              "type": "int",
+                              "repr": "2"
+                            }
+                          }
+                        ],
+                        "keywords": [],
+                        "call_unsupported": null
+                      }
+                    },
+                    {
+                      "arg": "other",
+                      "value": {
+                        "kind": "Call",
+                        "span": {
+                          "lineno": 173,
+                          "col_offset": 65,
+                          "end_lineno": 173,
+                          "end_col_offset": 83
+                        },
+                        "func": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 173,
+                            "col_offset": 65,
+                            "end_lineno": 173,
+                            "end_col_offset": 75
+                          },
+                          "id": "record_arg"
+                        },
+                        "args": [
+                          {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 173,
+                              "col_offset": 76,
+                              "end_lineno": 173,
+                              "end_col_offset": 79
+                            },
+                            "id": "log"
+                          },
+                          {
+                            "kind": "Constant",
+                            "span": {
+                              "lineno": 173,
+                              "col_offset": 81,
+                              "end_lineno": 173,
+                              "end_col_offset": 82
+                            },
+                            "value": {
+                              "type": "int",
+                              "repr": "3"
+                            }
+                          }
+                        ],
+                        "keywords": [],
+                        "call_unsupported": null
+                      }
+                    }
+                  ],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_name": "TypeError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 175,
+                  "col_offset": 8,
+                  "end_lineno": 175,
+                  "end_col_offset": 18
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 175,
+                    "col_offset": 15,
+                    "end_lineno": 175,
+                    "end_col_offset": 18
+                  },
+                  "id": "log"
+                }
+              }
+            ],
+            "try_unsupported": null
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 176,
+              "col_offset": 4,
+              "end_lineno": 176,
+              "end_col_offset": 13
+            },
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 176,
+                "col_offset": 11,
+                "end_lineno": 176,
+                "end_col_offset": 13
+              },
+              "elts": []
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 179,
+          "col_offset": 0,
+          "end_lineno": 181,
+          "end_col_offset": 29
+        },
+        "name": "bin_kw_value_error",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 181,
+              "col_offset": 4,
+              "end_lineno": 181,
+              "end_col_offset": 29
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 181,
+                "col_offset": 11,
+                "end_lineno": 181,
+                "end_col_offset": 29
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 181,
+                  "col_offset": 11,
+                  "end_lineno": 181,
+                  "end_col_offset": 14
+                },
+                "id": "bin"
+              },
+              "args": [],
+              "keywords": [
+                {
+                  "arg": "number",
+                  "value": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 181,
+                      "col_offset": 22,
+                      "end_lineno": 181,
+                      "end_col_offset": 28
+                    },
+                    "left": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 181,
+                        "col_offset": 22,
+                        "end_lineno": 181,
+                        "end_col_offset": 23
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    },
+                    "op": "FloorDiv",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 181,
+                        "col_offset": 27,
+                        "end_lineno": 181,
+                        "end_col_offset": 28
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "0"
+                      }
+                    }
+                  }
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 184,
+          "col_offset": 0,
+          "end_lineno": 186,
           "end_col_offset": 42
         },
         "name": "sorted_kw",
@@ -2825,9 +3355,9 @@
           {
             "arg": "a",
             "span": {
-              "lineno": 160,
+              "lineno": 184,
               "col_offset": 14,
-              "end_lineno": 160,
+              "end_lineno": 184,
               "end_col_offset": 15
             }
           }
@@ -2838,25 +3368,25 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 162,
+              "lineno": 186,
               "col_offset": 4,
-              "end_lineno": 162,
+              "end_lineno": 186,
               "end_col_offset": 42
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 162,
+                "lineno": 186,
                 "col_offset": 11,
-                "end_lineno": 162,
+                "end_lineno": 186,
                 "end_col_offset": 42
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 162,
+                  "lineno": 186,
                   "col_offset": 11,
-                  "end_lineno": 162,
+                  "end_lineno": 186,
                   "end_col_offset": 17
                 },
                 "id": "sorted"
@@ -2865,18 +3395,18 @@
                 {
                   "kind": "List",
                   "span": {
-                    "lineno": 162,
+                    "lineno": 186,
                     "col_offset": 18,
-                    "end_lineno": 162,
+                    "end_lineno": 186,
                     "end_col_offset": 27
                   },
                   "elts": [
                     {
                       "kind": "Constant",
                       "span": {
-                        "lineno": 162,
+                        "lineno": 186,
                         "col_offset": 19,
-                        "end_lineno": 162,
+                        "end_lineno": 186,
                         "end_col_offset": 20
                       },
                       "value": {
@@ -2887,9 +3417,9 @@
                     {
                       "kind": "Constant",
                       "span": {
-                        "lineno": 162,
+                        "lineno": 186,
                         "col_offset": 22,
-                        "end_lineno": 162,
+                        "end_lineno": 186,
                         "end_col_offset": 23
                       },
                       "value": {
@@ -2900,9 +3430,9 @@
                     {
                       "kind": "Name",
                       "span": {
-                        "lineno": 162,
+                        "lineno": 186,
                         "col_offset": 25,
-                        "end_lineno": 162,
+                        "end_lineno": 186,
                         "end_col_offset": 26
                       },
                       "id": "a"
@@ -2916,9 +3446,9 @@
                   "value": {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 162,
+                      "lineno": 186,
                       "col_offset": 37,
-                      "end_lineno": 162,
+                      "end_lineno": 186,
                       "end_col_offset": 41
                     },
                     "value": {
@@ -2936,9 +3466,9 @@
       {
         "kind": "ClassDef",
         "span": {
-          "lineno": 165,
+          "lineno": 189,
           "col_offset": 0,
-          "end_lineno": 171,
+          "end_lineno": 195,
           "end_col_offset": 21
         },
         "name": "Counter",
@@ -2948,9 +3478,9 @@
           {
             "kind": "FunctionDef",
             "span": {
-              "lineno": 166,
+              "lineno": 190,
               "col_offset": 4,
-              "end_lineno": 167,
+              "end_lineno": 191,
               "end_col_offset": 18
             },
             "name": "__init__",
@@ -2958,9 +3488,9 @@
               {
                 "arg": "self",
                 "span": {
-                  "lineno": 166,
+                  "lineno": 190,
                   "col_offset": 17,
-                  "end_lineno": 166,
+                  "end_lineno": 190,
                   "end_col_offset": 21
                 }
               }
@@ -2971,26 +3501,26 @@
               {
                 "kind": "Assign",
                 "span": {
-                  "lineno": 167,
+                  "lineno": 191,
                   "col_offset": 8,
-                  "end_lineno": 167,
+                  "end_lineno": 191,
                   "end_col_offset": 18
                 },
                 "targets": [
                   {
                     "kind": "Attribute",
                     "span": {
-                      "lineno": 167,
+                      "lineno": 191,
                       "col_offset": 8,
-                      "end_lineno": 167,
+                      "end_lineno": 191,
                       "end_col_offset": 14
                     },
                     "value": {
                       "kind": "Name",
                       "span": {
-                        "lineno": 167,
+                        "lineno": 191,
                         "col_offset": 8,
-                        "end_lineno": 167,
+                        "end_lineno": 191,
                         "end_col_offset": 12
                       },
                       "id": "self"
@@ -3001,9 +3531,9 @@
                 "value": {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 167,
+                    "lineno": 191,
                     "col_offset": 17,
-                    "end_lineno": 167,
+                    "end_lineno": 191,
                     "end_col_offset": 18
                   },
                   "value": {
@@ -3017,9 +3547,9 @@
           {
             "kind": "FunctionDef",
             "span": {
-              "lineno": 169,
+              "lineno": 193,
               "col_offset": 4,
-              "end_lineno": 171,
+              "end_lineno": 195,
               "end_col_offset": 21
             },
             "name": "bump",
@@ -3027,18 +3557,18 @@
               {
                 "arg": "self",
                 "span": {
-                  "lineno": 169,
+                  "lineno": 193,
                   "col_offset": 13,
-                  "end_lineno": 169,
+                  "end_lineno": 193,
                   "end_col_offset": 17
                 }
               },
               {
                 "arg": "by",
                 "span": {
-                  "lineno": 169,
+                  "lineno": 193,
                   "col_offset": 19,
-                  "end_lineno": 169,
+                  "end_lineno": 193,
                   "end_col_offset": 21
                 },
                 "default": {
@@ -3049,9 +3579,9 @@
               {
                 "arg": "twice",
                 "span": {
-                  "lineno": 169,
+                  "lineno": 193,
                   "col_offset": 25,
-                  "end_lineno": 169,
+                  "end_lineno": 193,
                   "end_col_offset": 30
                 },
                 "default": {
@@ -3066,26 +3596,26 @@
               {
                 "kind": "Assign",
                 "span": {
-                  "lineno": 170,
+                  "lineno": 194,
                   "col_offset": 8,
-                  "end_lineno": 170,
+                  "end_lineno": 194,
                   "end_col_offset": 51
                 },
                 "targets": [
                   {
                     "kind": "Attribute",
                     "span": {
-                      "lineno": 170,
+                      "lineno": 194,
                       "col_offset": 8,
-                      "end_lineno": 170,
+                      "end_lineno": 194,
                       "end_col_offset": 14
                     },
                     "value": {
                       "kind": "Name",
                       "span": {
-                        "lineno": 170,
+                        "lineno": 194,
                         "col_offset": 8,
-                        "end_lineno": 170,
+                        "end_lineno": 194,
                         "end_col_offset": 12
                       },
                       "id": "self"
@@ -3096,33 +3626,33 @@
                 "value": {
                   "kind": "BinOp",
                   "span": {
-                    "lineno": 170,
+                    "lineno": 194,
                     "col_offset": 17,
-                    "end_lineno": 170,
+                    "end_lineno": 194,
                     "end_col_offset": 51
                   },
                   "left": {
                     "kind": "BinOp",
                     "span": {
-                      "lineno": 170,
+                      "lineno": 194,
                       "col_offset": 17,
-                      "end_lineno": 170,
+                      "end_lineno": 194,
                       "end_col_offset": 28
                     },
                     "left": {
                       "kind": "Attribute",
                       "span": {
-                        "lineno": 170,
+                        "lineno": 194,
                         "col_offset": 17,
-                        "end_lineno": 170,
+                        "end_lineno": 194,
                         "end_col_offset": 23
                       },
                       "value": {
                         "kind": "Name",
                         "span": {
-                          "lineno": 170,
+                          "lineno": 194,
                           "col_offset": 17,
-                          "end_lineno": 170,
+                          "end_lineno": 194,
                           "end_col_offset": 21
                         },
                         "id": "self"
@@ -3133,9 +3663,9 @@
                     "right": {
                       "kind": "Name",
                       "span": {
-                        "lineno": 170,
+                        "lineno": 194,
                         "col_offset": 26,
-                        "end_lineno": 170,
+                        "end_lineno": 194,
                         "end_col_offset": 28
                       },
                       "id": "by"
@@ -3145,17 +3675,17 @@
                   "right": {
                     "kind": "IfExp",
                     "span": {
-                      "lineno": 170,
+                      "lineno": 194,
                       "col_offset": 32,
-                      "end_lineno": 170,
+                      "end_lineno": 194,
                       "end_col_offset": 50
                     },
                     "test": {
                       "kind": "Name",
                       "span": {
-                        "lineno": 170,
+                        "lineno": 194,
                         "col_offset": 38,
-                        "end_lineno": 170,
+                        "end_lineno": 194,
                         "end_col_offset": 43
                       },
                       "id": "twice"
@@ -3163,9 +3693,9 @@
                     "body": {
                       "kind": "Name",
                       "span": {
-                        "lineno": 170,
+                        "lineno": 194,
                         "col_offset": 32,
-                        "end_lineno": 170,
+                        "end_lineno": 194,
                         "end_col_offset": 34
                       },
                       "id": "by"
@@ -3173,9 +3703,9 @@
                     "orelse": {
                       "kind": "Constant",
                       "span": {
-                        "lineno": 170,
+                        "lineno": 194,
                         "col_offset": 49,
-                        "end_lineno": 170,
+                        "end_lineno": 194,
                         "end_col_offset": 50
                       },
                       "value": {
@@ -3189,25 +3719,25 @@
               {
                 "kind": "Return",
                 "span": {
-                  "lineno": 171,
+                  "lineno": 195,
                   "col_offset": 8,
-                  "end_lineno": 171,
+                  "end_lineno": 195,
                   "end_col_offset": 21
                 },
                 "value": {
                   "kind": "Attribute",
                   "span": {
-                    "lineno": 171,
+                    "lineno": 195,
                     "col_offset": 15,
-                    "end_lineno": 171,
+                    "end_lineno": 195,
                     "end_col_offset": 21
                   },
                   "value": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 171,
+                      "lineno": 195,
                       "col_offset": 15,
-                      "end_lineno": 171,
+                      "end_lineno": 195,
                       "end_col_offset": 19
                     },
                     "id": "self"
@@ -3222,9 +3752,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 174,
+          "lineno": 198,
           "col_offset": 0,
-          "end_lineno": 180,
+          "end_lineno": 204,
           "end_col_offset": 14
         },
         "name": "method_kw_instance",
@@ -3232,9 +3762,9 @@
           {
             "arg": "a",
             "span": {
-              "lineno": 174,
+              "lineno": 198,
               "col_offset": 23,
-              "end_lineno": 174,
+              "end_lineno": 198,
               "end_col_offset": 24
             }
           }
@@ -3245,18 +3775,18 @@
           {
             "kind": "Assign",
             "span": {
-              "lineno": 177,
+              "lineno": 201,
               "col_offset": 4,
-              "end_lineno": 177,
+              "end_lineno": 201,
               "end_col_offset": 17
             },
             "targets": [
               {
                 "kind": "Name",
                 "span": {
-                  "lineno": 177,
+                  "lineno": 201,
                   "col_offset": 4,
-                  "end_lineno": 177,
+                  "end_lineno": 201,
                   "end_col_offset": 5
                 },
                 "id": "c"
@@ -3265,17 +3795,17 @@
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 177,
+                "lineno": 201,
                 "col_offset": 8,
-                "end_lineno": 177,
+                "end_lineno": 201,
                 "end_col_offset": 17
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 177,
+                  "lineno": 201,
                   "col_offset": 8,
-                  "end_lineno": 177,
+                  "end_lineno": 201,
                   "end_col_offset": 15
                 },
                 "id": "Counter"
@@ -3288,33 +3818,33 @@
           {
             "kind": "Expr",
             "span": {
-              "lineno": 178,
+              "lineno": 202,
               "col_offset": 4,
-              "end_lineno": 178,
+              "end_lineno": 202,
               "end_col_offset": 16
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 178,
+                "lineno": 202,
                 "col_offset": 4,
-                "end_lineno": 178,
+                "end_lineno": 202,
                 "end_col_offset": 16
               },
               "func": {
                 "kind": "Attribute",
                 "span": {
-                  "lineno": 178,
+                  "lineno": 202,
                   "col_offset": 4,
-                  "end_lineno": 178,
+                  "end_lineno": 202,
                   "end_col_offset": 10
                 },
                 "value": {
                   "kind": "Name",
                   "span": {
-                    "lineno": 178,
+                    "lineno": 202,
                     "col_offset": 4,
-                    "end_lineno": 178,
+                    "end_lineno": 202,
                     "end_col_offset": 5
                   },
                   "id": "c"
@@ -3328,9 +3858,9 @@
                   "value": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 178,
+                      "lineno": 202,
                       "col_offset": 14,
-                      "end_lineno": 178,
+                      "end_lineno": 202,
                       "end_col_offset": 15
                     },
                     "id": "a"
@@ -3343,33 +3873,33 @@
           {
             "kind": "Expr",
             "span": {
-              "lineno": 179,
+              "lineno": 203,
               "col_offset": 4,
-              "end_lineno": 179,
+              "end_lineno": 203,
               "end_col_offset": 22
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 179,
+                "lineno": 203,
                 "col_offset": 4,
-                "end_lineno": 179,
+                "end_lineno": 203,
                 "end_col_offset": 22
               },
               "func": {
                 "kind": "Attribute",
                 "span": {
-                  "lineno": 179,
+                  "lineno": 203,
                   "col_offset": 4,
-                  "end_lineno": 179,
+                  "end_lineno": 203,
                   "end_col_offset": 10
                 },
                 "value": {
                   "kind": "Name",
                   "span": {
-                    "lineno": 179,
+                    "lineno": 203,
                     "col_offset": 4,
-                    "end_lineno": 179,
+                    "end_lineno": 203,
                     "end_col_offset": 5
                   },
                   "id": "c"
@@ -3383,9 +3913,9 @@
                   "value": {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 179,
+                      "lineno": 203,
                       "col_offset": 17,
-                      "end_lineno": 179,
+                      "end_lineno": 203,
                       "end_col_offset": 21
                     },
                     "value": {
@@ -3401,25 +3931,25 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 180,
+              "lineno": 204,
               "col_offset": 4,
-              "end_lineno": 180,
+              "end_lineno": 204,
               "end_col_offset": 14
             },
             "value": {
               "kind": "Attribute",
               "span": {
-                "lineno": 180,
+                "lineno": 204,
                 "col_offset": 11,
-                "end_lineno": 180,
+                "end_lineno": 204,
                 "end_col_offset": 14
               },
               "value": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 180,
+                  "lineno": 204,
                   "col_offset": 11,
-                  "end_lineno": 180,
+                  "end_lineno": 204,
                   "end_col_offset": 12
                 },
                 "id": "c"
@@ -3432,9 +3962,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 183,
+          "lineno": 207,
           "col_offset": 0,
-          "end_lineno": 185,
+          "end_lineno": 209,
           "end_col_offset": 26
         },
         "name": "method_kw_instance_err",
@@ -3442,9 +3972,9 @@
           {
             "arg": "a",
             "span": {
-              "lineno": 183,
+              "lineno": 207,
               "col_offset": 27,
-              "end_lineno": 183,
+              "end_lineno": 207,
               "end_col_offset": 28
             }
           }
@@ -3455,18 +3985,18 @@
           {
             "kind": "Assign",
             "span": {
-              "lineno": 184,
+              "lineno": 208,
               "col_offset": 4,
-              "end_lineno": 184,
+              "end_lineno": 208,
               "end_col_offset": 17
             },
             "targets": [
               {
                 "kind": "Name",
                 "span": {
-                  "lineno": 184,
+                  "lineno": 208,
                   "col_offset": 4,
-                  "end_lineno": 184,
+                  "end_lineno": 208,
                   "end_col_offset": 5
                 },
                 "id": "c"
@@ -3475,17 +4005,17 @@
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 184,
+                "lineno": 208,
                 "col_offset": 8,
-                "end_lineno": 184,
+                "end_lineno": 208,
                 "end_col_offset": 17
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 184,
+                  "lineno": 208,
                   "col_offset": 8,
-                  "end_lineno": 184,
+                  "end_lineno": 208,
                   "end_col_offset": 15
                 },
                 "id": "Counter"
@@ -3498,33 +4028,33 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 185,
+              "lineno": 209,
               "col_offset": 4,
-              "end_lineno": 185,
+              "end_lineno": 209,
               "end_col_offset": 26
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 185,
+                "lineno": 209,
                 "col_offset": 11,
-                "end_lineno": 185,
+                "end_lineno": 209,
                 "end_col_offset": 26
               },
               "func": {
                 "kind": "Attribute",
                 "span": {
-                  "lineno": 185,
+                  "lineno": 209,
                   "col_offset": 11,
-                  "end_lineno": 185,
+                  "end_lineno": 209,
                   "end_col_offset": 17
                 },
                 "value": {
                   "kind": "Name",
                   "span": {
-                    "lineno": 185,
+                    "lineno": 209,
                     "col_offset": 11,
-                    "end_lineno": 185,
+                    "end_lineno": 209,
                     "end_col_offset": 12
                   },
                   "id": "c"
@@ -3535,9 +4065,9 @@
                 {
                   "kind": "Name",
                   "span": {
-                    "lineno": 185,
+                    "lineno": 209,
                     "col_offset": 18,
-                    "end_lineno": 185,
+                    "end_lineno": 209,
                     "end_col_offset": 19
                   },
                   "id": "a"
@@ -3549,9 +4079,9 @@
                   "value": {
                     "kind": "Constant",
                     "span": {
-                      "lineno": 185,
+                      "lineno": 209,
                       "col_offset": 24,
-                      "end_lineno": 185,
+                      "end_lineno": 209,
                       "end_col_offset": 25
                     },
                     "value": {

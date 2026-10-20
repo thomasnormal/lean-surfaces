@@ -14,6 +14,11 @@ change is listed here under **Changed** or **Removed**.
 
 ### Added
 
+- `repr`, `abs`, `ord`, `chr`, `next`, `ascii`, `tuple`, `list`, `range`,
+  `hex`, `oct`, and `bin` keyword calls now evaluate arguments in Python order
+  before reporting their exact positional-only `TypeError`. `int` reports the
+  first invalid keyword after argument evaluation. Regression cases check
+  retained argument effects and argument exceptions preceding the call error.
 - `float(...)` keyword calls now preserve Python's argument evaluation order
   and report the faithful `TypeError` that the constructor accepts no keyword
   arguments; other builtin keyword shapes remain loud.

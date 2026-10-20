@@ -36,8 +36,10 @@ import pyslang
 from pyslang.ast import (
     BinaryOperator,
     Compilation,
+    CompilationOptions,
     ConversionKind,
     EdgeKind,
+    MinTypMax,
     ProceduralBlockKind,
     StatementBlockKind,
     UnaryOperator,
@@ -197,6 +199,7 @@ _SOURCE_BYTES = None
 _SYM = None
 _DIV_CONTEXT = 0
 _COMPOUND_READ = None
+_MIN_TYP_MAX = "typ"
 
 
 def source_text(node):
@@ -431,12 +434,27 @@ def const_literal(sm, e):
         return None
 
 
+def _visit_selected_expression(expression, inspect):
+    """Expression analyses visit only the elaboration-selected MTM arm."""
+    def visit(node):
+        action = inspect(node)
+        if (_SYM is None and type(node).__name__ == "MinTypMaxExpression"
+                and action != VisitAction.Skip):
+            _visit_selected_expression(node.selected, inspect)
+            return VisitAction.Skip
+        return action
+    expression.visit(visit)
+
+
 def _contains_guarded_expression(expression, *, guard_calls):
     """Keep call/membership admission and provenance through conversions."""
     found = False
 
     def inspect(node):
         nonlocal found
+        if _SYM is None and type(node).__name__ == "MinTypMaxExpression":
+            found = True
+            return VisitAction.Skip  # Preserve selection provenance through folds.
         if guard_calls and _unresolved_clog2(node):
             found = True
             return VisitAction.Skip
@@ -455,7 +473,7 @@ def _contains_guarded_expression(expression, *, guard_calls):
             found = True
             return VisitAction.Skip
 
-    expression.visit(inspect)
+    _visit_selected_expression(expression, inspect)
     return found
 
 
@@ -480,7 +498,7 @@ def _bits_argument_source_ok(expression):
             "DataTypeExpression", "IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
             "StringLiteral", "RealLiteral", "NamedValueExpression",
             "ConversionExpression", "UnaryExpression", "BinaryExpression",
-            "ConditionalExpression", "ConcatenationExpression",
+            "ConditionalExpression", "ConcatenationExpression", "MinTypMaxExpression",
             "ReplicationExpression", "ElementSelectExpression",
             "RangeSelectExpression", "MemberAccessExpression",
         )
@@ -490,7 +508,7 @@ def _bits_argument_source_ok(expression):
                 UnaryOperator.Postincrement, UnaryOperator.Postdecrement,
             )
 
-    expression.visit(inspect)
+    _visit_selected_expression(expression, inspect)
     return pure
 
 
@@ -713,7 +731,7 @@ def _contains_unresolved_clog2(expression):
         if _fixed_bits_query_width(node) is not None:
             return VisitAction.Skip  # The argument is inspected for type only.
         found = found or _unresolved_clog2(node)
-    expression.visit(inspect)
+    _visit_selected_expression(expression, inspect)
     return found
 
 
@@ -1214,7 +1232,7 @@ def _fixed_array_pattern_assignment(sm, expr):
                         reads_target = reads_target or _array_storage_name(node.symbol) == target_name
                     except Exception:
                         reads_target = True
-            element.visit(inspect)
+            _visit_selected_expression(element, inspect)
             if reads_target:
                 return None
             value = convert_expr(sm, element)
@@ -1630,7 +1648,7 @@ def _fixed_array_slice_pattern_assignment(sm, expr):
                         reads_target = reads_target or _array_storage_name(node.symbol) == name
                     except Exception:
                         reads_target = True
-            element.visit(inspect)
+            _visit_selected_expression(element, inspect)
             if reads_target:
                 return None
             value = convert_expr(sm, element)
@@ -1762,6 +1780,19 @@ def convert_expr(sm, e):
         return internal_error(exc)
 
 
+def _convert_selected_leaf(sm, expression, kind):
+    """Resolve elaboration-selected leaves and a captured compound read."""
+    if _SYM is not None:
+        return None
+    if kind == "MinTypMaxExpression":
+        return _convert_min_typ_max(sm, expression)
+    if kind == "LValueReferenceExpression" and _COMPOUND_READ is not None:
+        if width_of(_COMPOUND_READ) == expression.type.bitWidth:
+            return dict(_COMPOUND_READ)
+        return unsupported(sm, expression, "AssignmentExpression:compound-read-width")
+    return None
+
+
 def _convert_expr(sm, e):
     if e is None:
         return None
@@ -1769,10 +1800,9 @@ def _convert_expr(sm, e):
         return unsupported(sm, e, "InvalidExpression")
 
     cname = type(e).__name__
-    if cname == "LValueReferenceExpression" and _SYM is None and _COMPOUND_READ is not None:
-        if width_of(_COMPOUND_READ) == e.type.bitWidth:
-            return dict(_COMPOUND_READ)
-        return unsupported(sm, e, "AssignmentExpression:compound-read-width")
+    selected = _convert_selected_leaf(sm, e, cname)
+    if selected is not None:
+        return selected
     if cname == "ConversionExpression":
         return _convert_conversion_expr(sm, e)
     if cname == "NamedValueExpression":
@@ -2044,12 +2074,37 @@ def _unsized_based_widening_bits(expression):
     return bits[0] * (target_width - len(bits)) + bits
 
 
+def _convert_min_typ_max(sm, expression):
+    width, _, reason = type_width_2s(expression.type)
+    selected = expression.selected
+    if (reason is not None or width is None or width <= 0
+            or not _case_source_expression_ok(selected, packed_members=True)):
+        return unsupported(sm, expression, "MinTypMaxExpression:selected-source")
+    value = convert_expr(sm, selected)
+    if width_of(value) != width or not _case_expression_ok(value):
+        return unsupported(sm, expression, "MinTypMaxExpression:selected-value")
+    return signed_metadata({"kind": "MinTypMax", "span": node_span(sm, expression),
+                            "width": width, "choice": _MIN_TYP_MAX, "value": value},
+                           expression.type)
+
+
+def _has_min_typ_max(comp):
+    found = False
+    def inspect(node):
+        nonlocal found
+        found = found or type(node).__name__ == "MinTypMaxExpression"
+    comp.getRoot().visit(inspect)
+    for unit in comp.getCompilationUnits():
+        unit.visit(inspect)
+    return found
+
+
 def _contains_unsized_based_widening(expression):
     found = False
     def inspect(node):
         nonlocal found
         found = found or _unsized_based_widening_bits(node) is not None
-    expression.visit(inspect)
+    _visit_selected_expression(expression, inspect)
     return found
 
 
@@ -2195,7 +2250,7 @@ def _contains_disputed_string_escape(expression):
         nonlocal found
         found = found or _disputed_string_escape(node)
 
-    expression.visit(inspect)
+    _visit_selected_expression(expression, inspect)
     return found
 
 
@@ -3778,6 +3833,8 @@ def _convert_stmt(sm, s):
 
 def _literal_delay_amount(sm, expression, node, category):
     """The common admitted integral delay inventory; units stay explicit/loud."""
+    while _SYM is None and type(expression).__name__ == "MinTypMaxExpression":
+        expression = expression.selected
     if type(expression).__name__ != "IntegerLiteral" or not expression.type.isIntegral:
         return unsupported(sm, node, category + ":expression")
     bits = svint_bits(expression.value)
@@ -4069,14 +4126,14 @@ def _case_source_expression_ok(expression, *, packed_members=False):
             "SimpleAssignmentPatternExpression", "StructuredAssignmentPatternExpression",
             "ReplicatedAssignmentPatternExpression", "ReplicationExpression",
             "ElementSelectExpression", "RangeSelectExpression",
-            "InsideExpression", "ValueRangeExpression", "UnboundedLiteral",
+            "InsideExpression", "ValueRangeExpression", "UnboundedLiteral", "MinTypMaxExpression",
         )
         if kind == "UnaryExpression":
             pure = pure and (node.op in UNARY_OPS or node.op in REDUCE_OPS)
         if kind == "BinaryExpression":
             pure = pure and (node.op in BINARY_OPS or node.op == BinaryOperator.LogicalImplication)
 
-    expression.visit(check)
+    _visit_selected_expression(expression, check)
     return pure
 
 
@@ -4470,8 +4527,8 @@ def _convert_compound_assignment(sm, expression, span_node=None):
     lhs, rhs = expression.left, _compound_rhs(expression.right)
     width, _, reason = type_width_2s(lhs.type)
     references = []
-    expression.right.visit(lambda node: references.append(node)
-                           if type(node).__name__ == "LValueReferenceExpression" else None)
+    _visit_selected_expression(expression.right, lambda node: references.append(node)
+                               if type(node).__name__ == "LValueReferenceExpression" else None)
     if (reason is not None or width is None or len(references) != 1
             or references[0].type.bitWidth != width
             or not _case_source_expression_ok(lhs, packed_members=True)
@@ -5258,7 +5315,7 @@ def convert_fixed_array_vars(sm, m):
                             reads_target = reads_target or _array_storage_name(node.symbol) == _array_storage_name(m)
                         except Exception:
                             reads_target = True
-                element.visit(inspect)
+                _visit_selected_expression(element, inspect)
                 if reads_target:
                     return None
                 values[i] = value
@@ -5697,7 +5754,7 @@ def _closed_package_initializer(expression):
             closed = closed and str(node.symbol.kind) in (
                 "SymbolKind.Parameter", "SymbolKind.EnumValue")
 
-    expression.visit(inspect)
+    _visit_selected_expression(expression, inspect)
     return closed
 
 
@@ -5796,10 +5853,12 @@ def convert_design(sm, comp):
     # Keep the binding environment local to this extraction, including on an
     # error path. Symbol objects identify declarations without parsing paths
     # (escaped identifiers themselves may contain :: or punctuation).
-    global _PACKAGE_BINDINGS, _PACKAGE_SCOPES
+    global _PACKAGE_BINDINGS, _PACKAGE_SCOPES, _MIN_TYP_MAX
     global _ELAB_BINDINGS, _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE
     previous = (_PACKAGE_BINDINGS, _PACKAGE_SCOPES, _ELAB_BINDINGS,
-                _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE)
+                _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE, _MIN_TYP_MAX)
+    _MIN_TYP_MAX = {MinTypMax.Min: "min", MinTypMax.Typ: "typ", MinTypMax.Max: "max"}[
+        comp.options.minTypMax]
     _ELAB_BINDINGS, _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE = {}, set(), set(), ""
     packages = [member for unit in comp.getCompilationUnits() for member in unit
                 if str(member.kind) == "SymbolKind.Package"]
@@ -5812,7 +5871,25 @@ def convert_design(sm, comp):
         return _convert_design(sm, comp, packages)
     finally:
         (_PACKAGE_BINDINGS, _PACKAGE_SCOPES, _ELAB_BINDINGS,
-         _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE) = previous
+         _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE, _MIN_TYP_MAX) = previous
+
+
+def _selected_compilation_barriers(sm, comp):
+    """Keep selected expression lowering behind whole-source validity."""
+    if _SYM is not None or not any(
+            diagnostic.isError() or str(diagnostic.code) in (
+                "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
+            for diagnostic in comp.getAllDiagnostics()):
+        return []
+    barriers = []
+    for predicate, category, detail in (
+            (_has_min_typ_max, "MinTypMaxExpression:invalid-compilation",
+             "frontend rejected a design containing min/typ/max selection"),
+            (_has_compound_assignment, "AssignmentExpression:compound-invalid-compilation",
+             "frontend rejected a design containing an operator assignment")):
+        if predicate(comp):
+            barriers.append(unsupported(sm, comp, category, detail))
+    return barriers
 
 
 def _convert_design(sm, comp, packages):
@@ -5886,11 +5963,7 @@ def _convert_design(sm, comp, packages):
     if _SYM is None and _constant_context_gap(comp, _contains_unresolved_clog2):
         others.append(unsupported(sm, comp, "$clog2:constant-context",
                                   "unresolved or unknown clog2 elaboration argument"))
-    if (_SYM is None and any(diagnostic.isError() or str(diagnostic.code) in (
-                "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
-                for diagnostic in comp.getAllDiagnostics()) and _has_compound_assignment(comp)):
-        others.append(unsupported(sm, comp, "AssignmentExpression:compound-invalid-compilation",
-                                  "frontend rejected a design containing an operator assignment"))
+    others.extend(_selected_compilation_barriers(sm, comp))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",
@@ -6811,7 +6884,7 @@ def convert_fixed_array_vars_sym(sm, m):
                         except Exception:
                             reads_target = True
 
-                element.visit(inspect)
+                _visit_selected_expression(element, inspect)
                 if reads_target:
                     return None
                 values[i] = value
@@ -7388,7 +7461,13 @@ def rel_posix(path):
     return os.path.normpath(path).replace(os.sep, "/")
 
 
-def process_file(source_path):
+def _compilation_with_choice(choice):
+    options = CompilationOptions()
+    options.minTypMax = {"min": MinTypMax.Min, "typ": MinTypMax.Typ, "max": MinTypMax.Max}[choice]
+    return Compilation(pyslang.Bag([options]))
+
+
+def process_file(source_path, min_typ_max="typ"):
     global _SOURCE_BYTES
     try:
         with open(source_path, "rb") as f:
@@ -7404,7 +7483,7 @@ def process_file(source_path):
         raise ExtractError("%s: not valid UTF-8: %s" % (source_path, e))
 
     tree = SyntaxTree.fromText(text, name=rel_posix(source_path))
-    comp = Compilation()
+    comp = _compilation_with_choice(min_typ_max)
     comp.addSyntaxTree(tree)
     sm = tree.sourceManager
 
@@ -7417,6 +7496,8 @@ def process_file(source_path):
         "design": convert_design(sm, comp),
         "lean_blocks": [],  # reserved; not scanned in M0
     }
+    if min_typ_max != "typ":
+        envelope["min_typ_max"] = min_typ_max
 
     json_path = source_path + ".json"
     with open(json_path, "w", encoding="utf-8", newline="\n") as f:
@@ -7446,10 +7527,14 @@ def main(argv=None):
     parser.add_argument("-o", dest="out", default=None, metavar="OUT.json",
                         help="symbolic mode: output path (default: next to "
                         "the file defining the top module)")
+    parser.add_argument("--min-typ-max", choices=("min", "typ", "max"), default="typ",
+                        help="legacy elaboration choice for min:typ:max expressions (default: typ)")
     args = parser.parse_args(argv)
 
     try:
         if args.top is not None:
+            if args.min_typ_max != "typ":
+                raise ExtractError("--min-typ-max min/max is not admitted in symbolic mode")
             out = process_symbolic(args.top, args.sources, args.incdirs,
                                    args.out)
             print(out)
@@ -7457,7 +7542,7 @@ def main(argv=None):
             if args.incdirs or args.out:
                 raise ExtractError("-I/-o require --top (symbolic mode)")
             for src in args.sources:
-                process_file(src)
+                process_file(src, args.min_typ_max)
     except ExtractError as e:
         print("error: %s" % e, file=sys.stderr)
         return 1

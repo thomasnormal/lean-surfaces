@@ -1,0 +1,523 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/min_typ_max/runtime.sv",
+  "source_sha256": "ccca4ce35fb7861fbe1747dfbdd8034c76d569419a600e4eec430f3ec859cb4f",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 14,
+              "end_line": 2,
+              "end_col": 28
+            },
+            "name": "minimum_source",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 29,
+              "end_line": 2,
+              "end_col": 43
+            },
+            "name": "typical_source",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 44,
+              "end_line": 2,
+              "end_col": 58
+            },
+            "name": "maximum_source",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 59,
+              "end_line": 2,
+              "end_col": 67
+            },
+            "name": "captured",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 68,
+              "end_line": 2,
+              "end_col": 72
+            },
+            "name": "live",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 13,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 5,
+                    "end_line": 4,
+                    "end_col": 26
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 5,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "width": 8,
+                    "name": "minimum_source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 4,
+                      "col": 20,
+                      "end_line": 4,
+                      "end_col": 25
+                    },
+                    "width": 8,
+                    "bits": "00010001"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 26,
+                    "end_line": 4,
+                    "end_col": 47
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 26,
+                      "end_line": 4,
+                      "end_col": 40
+                    },
+                    "width": 8,
+                    "name": "typical_source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 4,
+                      "col": 41,
+                      "end_line": 4,
+                      "end_col": 46
+                    },
+                    "width": 8,
+                    "bits": "00100010"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 4,
+                    "col": 47,
+                    "end_line": 4,
+                    "end_col": 68
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 4,
+                      "col": 47,
+                      "end_line": 4,
+                      "end_col": 61
+                    },
+                    "width": 8,
+                    "name": "maximum_source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 4,
+                      "col": 62,
+                      "end_line": 4,
+                      "end_col": 67
+                    },
+                    "width": 8,
+                    "bits": "00110011"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 61
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 5,
+                      "end_line": 5,
+                      "end_col": 13
+                    },
+                    "width": 8,
+                    "name": "captured"
+                  },
+                  "value": {
+                    "kind": "MinTypMax",
+                    "span": {
+                      "line": 5,
+                      "col": 15,
+                      "end_line": 5,
+                      "end_col": 59
+                    },
+                    "width": 8,
+                    "choice": "typ",
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 5,
+                        "col": 30,
+                        "end_line": 5,
+                        "end_col": 44
+                      },
+                      "width": 8,
+                      "name": "typical_source"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 36
+                  },
+                  "name": "$display",
+                  "format": "before %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 6,
+                        "col": 26,
+                        "end_line": 6,
+                        "end_col": 34
+                      },
+                      "width": 8,
+                      "name": "captured"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 62
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 13
+                    },
+                    "width": 8,
+                    "name": "captured"
+                  },
+                  "value": {
+                    "kind": "MinTypMax",
+                    "span": {
+                      "line": 7,
+                      "col": 16,
+                      "end_line": 7,
+                      "end_col": 60
+                    },
+                    "width": 8,
+                    "choice": "typ",
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 31,
+                        "end_line": 7,
+                        "end_col": 45
+                      },
+                      "width": 8,
+                      "name": "typical_source"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 26
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 19
+                    },
+                    "width": 8,
+                    "name": "minimum_source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 20,
+                      "end_line": 8,
+                      "end_col": 25
+                    },
+                    "width": 8,
+                    "bits": "01000100"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 26,
+                    "end_line": 8,
+                    "end_col": 47
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 26,
+                      "end_line": 8,
+                      "end_col": 40
+                    },
+                    "width": 8,
+                    "name": "typical_source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 41,
+                      "end_line": 8,
+                      "end_col": 46
+                    },
+                    "width": 8,
+                    "bits": "01010101"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 47,
+                    "end_line": 8,
+                    "end_col": 68
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 47,
+                      "end_line": 8,
+                      "end_col": 61
+                    },
+                    "width": 8,
+                    "name": "maximum_source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 8,
+                      "col": 62,
+                      "end_line": 8,
+                      "end_col": 67
+                    },
+                    "width": 8,
+                    "bits": "01100110"
+                  }
+                },
+                {
+                  "kind": "Delay",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 8
+                  },
+                  "amount": 1,
+                  "body": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 9,
+                      "col": 7,
+                      "end_line": 9,
+                      "end_col": 8
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 57
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 9
+                    },
+                    "width": 8,
+                    "name": "live"
+                  },
+                  "value": {
+                    "kind": "MinTypMax",
+                    "span": {
+                      "line": 10,
+                      "col": 11,
+                      "end_line": 10,
+                      "end_col": 55
+                    },
+                    "width": 8,
+                    "choice": "typ",
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 10,
+                        "col": 26,
+                        "end_line": 10,
+                        "end_col": 40
+                      },
+                      "width": 8,
+                      "name": "typical_source"
+                    }
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 51
+                  },
+                  "name": "$display",
+                  "format": "captured %h live %h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 36,
+                        "end_line": 11,
+                        "end_col": 44
+                      },
+                      "width": 8,
+                      "name": "captured"
+                    },
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 45,
+                        "end_line": 11,
+                        "end_col": 49
+                      },
+                      "width": 8,
+                      "name": "live"
+                    }
+                  ],
+                  "arg_signed": [
+                    false,
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1406,3 +1406,19 @@ targets still evaluate the complete RHS before an ordinary no-store copyback.
 The complete frontend-bound RMW tree retains every conversion around this
 read. Previously correct scalar envelopes are unchanged. Symbolic compounds
 remain loud. See [the contract](sv-compound-assignments.md).
+
+## Min typ max
+
+In `sv-0.1`, `MinTypMax` carries `kind`, `span`, positive `width`, optional
+`signed`, `choice` (`min`, `typ` or `max`) and selected expression `value`.
+The selected expression's width must match the wrapper. The loader validates
+the choice and width, then erases the wrapper into the parsed selected operand;
+context resizing and two-state conversion remain explicit surrounding nodes.
+Unselected arms are not executable envelope operands.
+
+The extractor's `--min-typ-max` option sets the global frontend elaboration
+choice. Typical is the default. A nondefault envelope appends top-level
+`min_typ_max` with `min` or `max`; absent means `typ`. Regeneration must replay
+this field. Symbolic constant folding is unchanged; nonconstant symbolic
+choices remain loud and the CLI rejects nondefault symbolic modes. See
+[the contract](sv-min-typ-max.md) for selected-only admission and boundaries.

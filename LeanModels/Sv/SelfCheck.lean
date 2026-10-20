@@ -1141,6 +1141,15 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       if (← getNatF j "width") != 32 || !(← getBoolF j "signed") then
         throw "clog2 result must be a signed 32-bit int"
       return .clog2 (← parseSExpr (← getF j "operand"))
+  | "MinTypMax" =>
+      let choice ← getStrF j "choice"
+      if choice != "min" && choice != "typ" && choice != "max" then
+        throw "invalid min/typ/max elaboration choice"
+      let value ← getF j "value"
+      let width ← getNatF j "width"
+      if width == 0 || (← getNatF value "width") != width then
+        throw "min/typ/max selected width disagrees with its bound context"
+      parseSExpr value
   | "BitQuery" =>
       let query ← match ← getStrF j "op" with
         | "$countbits" => pure BitQuery.countbits

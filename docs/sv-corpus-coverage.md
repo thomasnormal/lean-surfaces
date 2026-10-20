@@ -22,6 +22,68 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Min typ max expressions — 2026-10-20
+
+IEEE §11.11/§10.8 expressions select one complete bound arm globally at
+elaboration, default typical, with an explicit recorded CLI choice. Only
+that arm executes or enters admission analyses; widths, signs, conversions
+and frontend validity are preserved. Existing evaluators/stores/timers apply.
+Selected effects and unsupported types/calls/delays, nonconstant symbolic
+forms and frontend-invalid contexts stay loud. Symbolic constant folding is
+unchanged. See [the contract](sv-min-typ-max.md).
+
+The paired **22,035** paths gain **15 clean files**, no losses:
+**4,083 → 4,098 clean**, **17,886 → 17,871 partial**, **66 include skips**,
+zero errors. **14 gains match complete independent transcripts under both
+region oracles**; one retains the existing timed `$time` refusal. All 11
+originally priced min/typ/max rows match. Of 4,083 previously clean designs,
+one expands a folded constant into the selected tree; old and new executions
+both match the same reference. Thirty authored mode/source pairs yield
+20 complete both-oracle matches and 10 explicit refusals. Five kernel theorems
+bind the actual selected RHS and blocking/NBA statements. These are extraction
+and selected-execution counts, not whole-corpus runtime conformance.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 46 | 253 | 1 |
+| 4 | 427 | 186 | 241 | 0 |
+| 5 | 618 | 362 | 256 | 0 |
+| 6 | 1185 | 413 | 772 | 0 |
+| 7 | 796 | 106 | 690 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 111 | 478 | 0 |
+| 10 | 657 | 245 | 412 | 0 |
+| 11 | 1034 | 721 | 313 | 0 |
+| 12 | 627 | 290 | 337 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 48 | 1495 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 212 | 613 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 382 | 162 | 28 |
+| 23 | 851 | 59 | 792 | 0 |
+| 24 | 355 | 12 | 343 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 151 | 414 | 0 |
+| 27 | 354 | 165 | 189 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 123 | 104 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 119 | 298 | 0 |
+| 38 | 340 | 204 | 136 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 40 | 47 | 0 |
+
 ## Selected compound assignments — 2026-10-20
 
 IEEE §10.4.1/§11.4.1 operator assignments now capture dynamic addresses once

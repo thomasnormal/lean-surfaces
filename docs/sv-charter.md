@@ -3725,3 +3725,27 @@ extracted designs remain identical. Seven authored complete matches and four
 refusals accompany five kernel theorems bound to the real parsed delayed
 assignment. See [the contract](sv-compound-assignments.md) and
 [the receipts](../Examples/system-verilog/compound_assignments/README.md).
+
+### Min typ max expressions — 2026-10-20
+
+IEEE §11.11/§10.8 legacy extraction now chooses min/typ/max globally at
+elaboration, default typical, with explicit `--min-typ-max` and recorded
+nondefault metadata. The complete selected bound expression retains width,
+signedness and conversions, and only that arm executes or enters purity/
+numeric/alias analyses. Frontend validity still covers the whole compilation.
+The loader checks the wrapper and parses its selected operand directly;
+existing evaluators, blocking/NBA stores and literal-delay timers apply.
+Selected effects/types/calls, dynamic delays, frontend-invalid forms and
+nonconstant symbolic choices remain loud. Existing symbolic constant folding
+is unchanged. No scheduler change is involved.
+
+The paired 22,035 paths gain 15 clean files, no losses: 4,098 clean, 17,871
+partial, 66 include skips, zero errors. Fourteen gains match complete reference
+transcripts under both region oracles; one retains the existing timed `$time`
+refusal. One of 4,083 previously clean envelopes expands a constant into the
+selected tree; both versions match the same reference. Thirty authored mode/
+source pairs give 20 complete matches and 10 explicit refusals. Five kernel
+theorems bind the parsed live RHS and blocking/NBA statements. The exact
+reference-accepted direct-display-argument frontend refusal is retained.
+See [the contract](sv-min-typ-max.md) and
+[the fixtures](../Examples/system-verilog/min_typ_max/README.md).

@@ -2603,6 +2603,15 @@ parameter-dependent bases and out-of-range windows remain loud; no new storage
 or scheduler is introduced and no legacy census or simulator-agreement claim
 is made.
 
+### Symbolic noncanonical packed-range windows — 2026-10-20
+
+Simple literal part-selects on noncanonical packed ranges now map their source
+and destination labels to zero-based LVec offsets before entering the existing
+window executor. `noncanonical_part_assign` checks a `[10:3]` range and
+four-state propagation. Dynamic, indexed and out-of-range forms remain loud;
+this adds no storage or scheduler and makes no legacy census or
+simulator-agreement claim.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

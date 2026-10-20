@@ -115,6 +115,18 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual([proc["kind"] for proc in module["processes"]],
                          ["Assign", "Assign"])
 
+    def test_noncanonical_constant_parts_normalize_offsets(self):
+        envelope = self.extract(
+            "module top(input logic [10:3] source, output logic [10:3] value); "
+            "assign value[6:3] = source[10:7]; "
+            "assign value[10:7] = source[6:3]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([(p["target"]["msb"]["value"],
+                           p["target"]["lsb"]["value"],
+                           p["value"]["msb"]["value"],
+                           p["value"]["lsb"]["value"]) for p in processes],
+                         [(3, 0, 7, 4), (7, 4, 3, 0)])
+
 
 if __name__ == "__main__":
     unittest.main()

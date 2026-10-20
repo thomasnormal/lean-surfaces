@@ -383,6 +383,11 @@ normalized to ordinary constant `PartSel` bounds when the selected window is
 in range. Dynamic or parameter-dependent bases and out-of-range windows remain
 `Unsupported`; `indexed_part_assign` pins the accepted source-order form.
 
+For a literal simple part-select on a noncanonical packed range, the extractor
+maps both source and destination labels to zero-based LVec offsets before
+emitting `PartSel`. `noncanonical_part_assign` pins the `[10:3]` case; dynamic,
+indexed and out-of-range forms remain loud.
+
 ## Expressions
 
 The legacy/self-check blocking path additionally emits `SelectTarget` for

@@ -914,6 +914,10 @@ The `indexed_part_assign` fixture covers literal indexed part-selects. Both
 `+:` and `-:` forms normalize to the same fixed windows, while dynamic bases
 remain loud; this is a semantic-tier fixture with no legacy census change.
 
+The `noncanonical_part_assign` fixture covers simple constant parts on a
+`[10:3]` packed range. Source and destination labels normalize to LVec offsets
+before the existing window executor runs; this remains a symbolic-only result.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

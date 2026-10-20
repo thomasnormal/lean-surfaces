@@ -2171,6 +2171,43 @@ def _convert_sym_select_expr(sm, e, cname):
     if cname == "RangeSelectExpression":
         selection = str(e.selectionKind).split(".")[-1]
         if selection == "Simple":
+            source_type = e.value.type.canonicalType
+            source_kind = type(source_type).__name__
+            left_value = _constant_dimension_selector(e.left)
+            right_value = _constant_dimension_selector(e.right)
+            if (source_kind == "PackedArrayType" and
+                    left_value is not None and right_value is not None and
+                    type(e.left).__name__ in
+                    ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral") and
+                    type(e.right).__name__ in
+                    ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")):
+                declared_left = int(source_type.range.left)
+                declared_right = int(source_type.range.right)
+                low = min(declared_left, declared_right)
+                high = max(declared_left, declared_right)
+                if (left_value < low or left_value > high or
+                        right_value < low or right_value > high):
+                    return unsupported(sm, e, "RangeSelectExpression:range")
+                if declared_left > declared_right:
+                    left_offset = left_value - declared_right
+                    right_offset = right_value - declared_right
+                else:
+                    left_offset = declared_right - left_value
+                    right_offset = declared_right - right_value
+                if left_offset < right_offset:
+                    return unsupported(sm, e, "RangeSelectExpression:direction")
+                msb = {"kind": "Int", "span": node_span(sm, e),
+                       "value": left_offset}
+                lsb = {"kind": "Int", "span": node_span(sm, e),
+                       "value": right_offset}
+                return {
+                    "kind": "PartSel",
+                    "span": node_span(sm, e),
+                    "width": _safe_width(e),
+                    "value": _convert_expr(sm, e.value),
+                    "msb": msb,
+                    "lsb": lsb,
+                }
             with _SymPos():
                 msb = _convert_expr(sm, e.left)
                 lsb = _convert_expr(sm, e.right)

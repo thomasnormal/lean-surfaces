@@ -96,6 +96,16 @@
    ]
   },
   {
+   "name": "noncanonical_part_assign",
+   "example": "sem2/noncanonical_part_assign",
+   "top": "noncanonical_part_assign",
+   "signals": ["source", "value"],
+   "stimulus": [
+    {"source": "10100101"},
+    {"source": "x010x001"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

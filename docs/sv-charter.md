@@ -1115,13 +1115,13 @@ clean gains and no losses; `AssignmentExpression:target` falls **3,928 →
 
 ### Legacy streaming packed-member windows — 2026-10-20
 
-The legacy right-streaming path now accepts a constant member of an untagged
-packed struct or union as one fixed `SelectTarget` window. The
+The legacy right-streaming path now accepts a constant member chain through an
+untagged packed struct or union as one fixed `SelectTarget` window. The
 `streaming_aggregate_member` fixture splits one sampled four-bit source into a
-two-bit member and scalar output, and its self-check proof observes `PASS`.
-Dynamic or effectful member indices, nested streams, left streaming and sized
-streams remain loud; the existing flat vector state and packed-target executor
-are reused.
+two-bit member and scalar output, and nested packed-union alias leaves are
+pinned by the focused extractor battery. Dynamic or effectful member indices,
+nested streaming operators, left streaming and sized streams remain loud; the
+existing flat vector state and packed-target executor are reused.
 
 ### Legacy continuous fixed-window targets — 2026-10-20
 

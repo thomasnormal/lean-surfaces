@@ -338,7 +338,7 @@ class LegacyContinuousWindows(unittest.TestCase):
             "module top(input logic [4:0] source, output logic out); "
             "logic [3:0] value [0:1]; "
             "assign {>>{value[0], out}} = source; endmodule")
-        process, = envelope["design"]["modules"][0]["processes"]
+        process = envelope["design"]["modules"][0]["processes"][0]
         self.assertEqual(process["kind"], "Assign")
         self.assertEqual(process["target"]["kind"], "ConcatTarget")
         self.assertEqual([part["name"] for part in process["target"]["parts"]],
@@ -361,6 +361,39 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual(process["target"]["kind"], "ConcatTarget")
         self.assertEqual(process["target"]["parts"][0]["kind"],
                          "SelectTarget")
+
+    def test_right_streaming_nested_union_member_is_a_continuous_leaf(self):
+        envelope = self.extract(
+            "module top(input logic [2:0] source, output logic out); "
+            "struct packed { union packed { logic [1:0] all; "
+            "logic [1:0] alt; } inner; } value; "
+            "assign {>>{value.inner.alt, out}} = source; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "Assign")
+        self.assertEqual(process["target"]["kind"], "ConcatTarget")
+        leaf = process["target"]["parts"][0]
+        self.assertEqual(leaf["kind"], "SelectTarget")
+        self.assertEqual(leaf["value"]["name"], "value")
+
+    def test_right_streaming_nested_union_alias_overlap_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [1:0] out); "
+            "struct packed { union packed { logic [1:0] all; "
+            "logic [1:0] alt; } inner; } value; "
+            "assign {>>{value.inner.all, value.inner.alt}} = source; "
+            "assign out = value.inner.all; endmodule")
+        process = envelope["design"]["modules"][0]["processes"][0]
+        self.assertEqual(process["kind"], "Unsupported")
+        self.assertEqual(process["sv_kind"], "AssignmentExpression:target")
+
+    def test_right_streaming_dynamic_nested_union_member_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [2:0] source, input logic [1:0] index, "
+            "output logic out); struct packed { union packed { logic [1:0] all; "
+            "logic [1:0] alt; } inner; } value; "
+            "assign {>>{value.inner.alt[index], out}} = source; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(process["kind"], "Unsupported")
 
     def test_nonright_or_dynamic_streaming_cell_stays_loud(self):
         sources = (

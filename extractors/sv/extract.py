@@ -2728,10 +2728,12 @@ def _streaming_target_assignment(sm, expr):
 
     With no slice size and only direct integral identifiers or fixed packed
     member windows, right streaming consumes the source from its MSB into the
-    listed targets. The existing packed-target executor already samples the
-    RHS once and resizes an excess source to the target width, so this surface
-    case needs no new scheduler or storage. Nested streams, left streaming and
-    dynamic/effectful target leaves remain loud.
+    listed targets. Constant chains through untagged packed structs/unions
+    reuse those same flat windows, including their alias overlap guard. The
+    existing packed-target executor already samples the RHS once and resizes
+    an excess source to the target width, so this surface case needs no new
+    scheduler or storage. Nested streams, left streaming and dynamic/effectful
+    target leaves remain loud.
     """
     try:
         if type(expr).__name__ != "AssignmentExpression":

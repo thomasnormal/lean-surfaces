@@ -112,6 +112,11 @@ def ord_kw():
     return ord(c="a")
 
 
+def chr_kw():
+    # chr takes no keywords; argument expressions still evaluate first.
+    return chr(c=65)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

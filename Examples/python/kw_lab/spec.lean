@@ -78,6 +78,8 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   (.typeError "abs() takes no keyword arguments")
 #py_check kw_lab.ord_kw() raises
   (.typeError "ord() takes no keyword arguments")
+#py_check kw_lab.chr_kw() raises
+  (.typeError "chr() takes no keyword arguments")
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

@@ -957,12 +957,18 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     let _ ← evalOpenList K m args.toList
                     let _ ← K.kwArgs kwargs.toList
                     raisePy (.typeError "divmod() takes no keyword arguments")
-                  else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" || name == "ascii" || name == "tuple" || name == "list" || name == "range" then
-                    -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, and range constructors accept no keyword
+                  else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" || name == "ascii" || name == "tuple" || name == "list" || name == "range" || name == "int" then
+                    -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, and range constructors accept no keyword;
+                    -- int instead reports the first invalid keyword after evaluating its value.
                     -- arguments. Evaluate both argument lists before its
                     -- faithful TypeError, preserving Python's order.
                     let _ ← evalOpenList K m args.toList
-                    let _ ← K.kwArgs kwargs.toList
+                    let kvs ← K.kwArgs kwargs.toList
+                    if name == "int" then
+                      match kvs with
+                      | [] => refuse "internal: int keyword plan lost its keyword (report this)"
+                      | (k, _) :: _ => raisePy (.typeError s!"'{k}' is an invalid keyword argument for int()")
+                    else
                     raisePy (.typeError (if name == "repr" then
                       "repr() takes no keyword arguments"
                     else if name == "abs" then

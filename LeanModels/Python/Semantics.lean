@@ -6701,12 +6701,18 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError "divmod() takes no keyword arguments")
-                    else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" || fname == "range" then
-                      -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, and range constructors accept no keyword
+                    else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" || fname == "range" || fname == "int" then
+                      -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, and range constructors accept no keyword;
+                      -- int instead reports the first invalid keyword after evaluating its value.
                       -- arguments. Evaluate both argument lists before its
                       -- faithful TypeError, preserving Python's order.
                       evalExprs m fuel st args.toList ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                      if fname == "int" then
+                        (match kwargs.toList with
+                         | [] => .unsupported "internal: int keyword plan lost its keyword (report this)"
+                         | (k, _) :: _ => .exn st (.typeError s!"'{k}' is an invalid keyword argument for int()"))
+                      else
                       .exn st (.typeError (if fname == "repr" then
                         "repr() takes no keyword arguments"
                       else if fname == "abs" then

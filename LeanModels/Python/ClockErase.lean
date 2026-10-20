@@ -2649,9 +2649,17 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                       .exn hs3 _
                 case brepr =>
-                  exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
-                    .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
-                      .exn hs3 _
+                  by_cases hi : fname == "int"
+                  · simp only [hi, if_true]
+                    refine .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 => ?_
+                    cases hkws : kwargs.toList with
+                    | nil => exact .unsupported
+                    | cons kv rest => exact .exn hs3 _
+                  · simp only [hi, if_false]
+                    exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
+                      .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
+                        .exn hs3 _
                 case livekw =>
                   cases hlive : Env.lookup st.world.globals fname with
                   | some lv => exact .unsupported

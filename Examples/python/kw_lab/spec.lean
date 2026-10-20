@@ -90,6 +90,8 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   (.typeError "list() takes no keyword arguments")
 #py_check kw_lab.range_kw() raises
   (.typeError "range() takes no keyword arguments")
+#py_check kw_lab.int_kw() raises
+  (.typeError "'x' is an invalid keyword argument for int()")
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
 

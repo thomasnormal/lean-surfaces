@@ -4271,7 +4271,13 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                 fun s1 vs _ hs1 => ?_
                               refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                 fun s2 kvs _ hs2 => ?_
-                              exact PBF.exn hs2 _
+                              by_cases hi : fname == "int"
+                              · simp only [hi, if_true]
+                                cases hkws : kwargs.toList with
+                                | nil => exact PBF.unsupported
+                                | cons kv rest => exact PBF.exn hs2 _
+                              · simp only [hi, if_false]
+                                exact PBF.exn hs2 _
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                             refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                             cases Env.lookup st.world.globals fname with

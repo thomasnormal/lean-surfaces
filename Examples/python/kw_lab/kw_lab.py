@@ -142,6 +142,11 @@ def range_kw():
     return range(stop=3)
 
 
+def int_kw():
+    # int reports the first invalid keyword after evaluating its value.
+    return int(x=1)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

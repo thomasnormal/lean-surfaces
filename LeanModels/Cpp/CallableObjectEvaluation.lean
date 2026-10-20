@@ -211,21 +211,20 @@ mutual
                       mapIntegralResult (integralUnary operation value)
                         (convertTo profile typed.type))
         | .binary operator left right =>
-            if left.expression.hasEffects || right.expression.hasEffects then
-              success frame (.unsupported .unresolvedArithmeticConversions)
-            else
-              let leftResult := evalExpression fuel profile frame left
-              match leftResult.result with
-              | .error reason => failure leftResult.frame reason
-              | .ok leftValue =>
-                  let rightResult := evalExpression fuel profile leftResult.frame right
-                  match rightResult.result with
-                  | .error reason => failure rightResult.frame reason
-                  | .ok rightValue =>
-                      match operator? operator with
-                      | none => success rightResult.frame
-                          (.unsupported .unresolvedArithmeticConversions)
-                      | some operation =>
+            match operator? operator with
+            | none => success frame (.unsupported .unresolvedArithmeticConversions)
+            | some operation =>
+                if left.expression.hasEffects || right.expression.hasEffects then
+                  success frame (.unsupported .unresolvedArithmeticConversions)
+                else
+                  let leftResult := evalExpression fuel profile frame left
+                  match leftResult.result with
+                  | .error reason => failure leftResult.frame reason
+                  | .ok leftValue =>
+                      let rightResult := evalExpression fuel profile leftResult.frame right
+                      match rightResult.result with
+                      | .error reason => failure rightResult.frame reason
+                      | .ok rightValue =>
                           let combined := match leftValue, rightValue with
                             | .ok left, .ok right => integralBinary operation left right
                             | .invalid reason, _ | _, .invalid reason => .invalid reason

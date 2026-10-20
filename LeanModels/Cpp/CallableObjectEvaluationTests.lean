@@ -219,6 +219,21 @@ private def unsupportedUnaryLoud : Bool :=
   | .ok (.unsupported .unresolvedArithmeticConversions) => true
   | _ => false
 
+private def unsupportedBinaryLoud : Bool :=
+  let missing : TypedCallableExpression := {
+    expression := .parameter (handle "0x99"), sourceType := intType, type := intType}
+  let one : TypedCallableExpression := {
+    expression := .integer 1, sourceType := intType, type := intType}
+  let expression : TypedCallableExpression := {
+    expression := .binary "??" missing one,
+    sourceType := intType, type := intType}
+  let callable : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.return_ expression)}
+  match evaluateCallableObject 32 .lp64 callable [signed 7] with
+  | .ok (.unsupported .unresolvedArithmeticConversions) => true
+  | _ => false
+
 private def readsParameter : Bool :=
   match evaluateCallableObject 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .ok (.ok value) => value == signed 7
@@ -295,6 +310,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud
 #guard unsupportedUnaryLoud
+#guard unsupportedBinaryLoud
 #guard parserAdmitsAutomaticLocal
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

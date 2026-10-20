@@ -20,7 +20,62 @@
         },
         "name": "top",
         "ports": [],
-        "decls": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 15,
+              "end_line": 10,
+              "end_col": 17
+            },
+            "name": "hi",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            },
+            "static_local_storage": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 19,
+              "end_line": 10,
+              "end_col": 21
+            },
+            "name": "lo",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            },
+            "static_local_storage": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 16,
+              "end_line": 9,
+              "end_col": 22
+            },
+            "name": "source",
+            "width": 16,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 16,
+              "bits": "0000000000000000"
+            },
+            "static_local_storage": true
+          }
+        ],
         "processes": [
           {
             "kind": "Initial",
@@ -40,43 +95,31 @@
               },
               "stmts": [
                 {
-                  "kind": "LocalDecl",
+                  "kind": "Empty",
                   "span": {
                     "line": 9,
                     "col": 16,
                     "end_line": 9,
                     "end_col": 22
-                  },
-                  "name": "source",
-                  "width": 16,
-                  "two_state": true,
-                  "init": null
+                  }
                 },
                 {
-                  "kind": "LocalDecl",
+                  "kind": "Empty",
                   "span": {
                     "line": 10,
                     "col": 15,
                     "end_line": 10,
                     "end_col": 17
-                  },
-                  "name": "hi",
-                  "width": 8,
-                  "two_state": true,
-                  "init": null
+                  }
                 },
                 {
-                  "kind": "LocalDecl",
+                  "kind": "Empty",
                   "span": {
                     "line": 10,
                     "col": 19,
                     "end_line": 10,
                     "end_col": 21
-                  },
-                  "name": "lo",
-                  "width": 8,
-                  "two_state": true,
-                  "init": null
+                  }
                 },
                 {
                   "kind": "BlockingAssign",

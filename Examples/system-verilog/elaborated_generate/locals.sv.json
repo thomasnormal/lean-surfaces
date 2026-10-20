@@ -142,7 +142,8 @@
                       }
                     }
                   },
-                  "signed": true
+                  "signed": true,
+                  "automatic_scalar": true
                 },
                 {
                   "kind": "Block",
@@ -462,7 +463,8 @@
                       }
                     }
                   },
-                  "signed": true
+                  "signed": true,
+                  "automatic_scalar": true
                 },
                 {
                   "kind": "Block",

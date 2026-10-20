@@ -70,7 +70,7 @@ class ModuleHierarchy(unittest.TestCase):
     def test_procedural_locals_are_per_actual_instance(self):
         d = fixture('locals_timing')
         self.assertFalse(walls(d))
-        locals_ = [n['name'] for n in nodes(d) if n.get('kind')=='LocalDecl']
+        locals_ = [n['name'] for n in nodes(d) if n.get('static_local_storage')]
         self.assertEqual(len(locals_), 3)
         self.assertEqual(len(set(locals_)), 3)
 

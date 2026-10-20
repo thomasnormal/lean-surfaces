@@ -15,28 +15,24 @@
  "summary": {
   "blocker_files": [
    [
+    "VariableSymbol:2state",
+    5741
+   ],
+   [
     "AssignmentExpression:target",
     4028
    ],
    [
     "ExpressionStatement:CallExpression",
-    3761
-   ],
-   [
-    "VariableSymbol:2state",
-    3480
+    3768
    ],
    [
     "CallExpression",
-    3370
+    3290
    ],
    [
     "Hierarchy:ports",
     2397
-   ],
-   [
-    "VariableDeclStatement:2state",
-    2374
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -48,7 +44,7 @@
    ],
    [
     "ConcurrentAssertionStatement",
-    1351
+    1353
    ],
    [
     "ClassType",
@@ -64,7 +60,7 @@
    ],
    [
     "MemberAccessExpression",
-    1189
+    1187
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -76,7 +72,7 @@
    ],
    [
     "HierarchicalValueExpression",
-    767
+    748
    ],
    [
     "CovergroupType:CovergroupType",
@@ -88,7 +84,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    660
+    662
    ],
    [
     "CheckerSymbol",
@@ -147,8 +143,12 @@
     267
    ],
    [
+    "StaticLocal:invalid-compilation",
+    241
+   ],
+   [
     "BlockStatement:JoinNone",
-    223
+    225
    ],
    [
     "Always:invalid-compilation",
@@ -163,8 +163,16 @@
     168
    ],
    [
+    "StaticLocal:initializer",
+    167
+   ],
+   [
     "NamedValueExpression:ClockVar",
     166
+   ],
+   [
+    "VariableSymbol:type",
+    150
    ],
    [
     "GenericClassDefSymbol",
@@ -179,12 +187,8 @@
     145
    ],
    [
-    "VariableSymbol:type",
-    139
-   ],
-   [
     "ForeachLoopStatement:array",
-    130
+    132
    ],
    [
     "SubroutineSymbol",
@@ -223,12 +227,12 @@
     88
    ],
    [
-    "ProceduralDeassignStatement",
-    82
+    "ImmediateAssertion:condition",
+    83
    ],
    [
-    "ImmediateAssertion:condition",
-    80
+    "ProceduralDeassignStatement",
+    82
    ],
    [
     "VariableSymbol",
@@ -247,6 +251,14 @@
     65
    ],
    [
+    "VariableDeclStatement:2state",
+    64
+   ],
+   [
+    "VariableSymbol:range",
+    62
+   ],
+   [
     "TypeAlias:invalid-compilation",
     61
    ],
@@ -263,11 +275,11 @@
     57
    ],
    [
-    "DynamicCast:type-or-effects",
-    56
+    "NetSymbol:WAnd",
+    55
    ],
    [
-    "NetSymbol:WAnd",
+    "DynamicCast:type-or-effects",
     55
    ],
    [
@@ -281,10 +293,6 @@
    [
     "NetSymbol:TriReg",
     54
-   ],
-   [
-    "VariableSymbol:range",
-    53
    ],
    [
     "TimedStatement:ImplicitEventControl",
@@ -315,6 +323,10 @@
     48
    ],
    [
+    "Loop:invalid-compilation",
+    45
+   ],
+   [
     "CaseStatement:Unique",
     45
    ],
@@ -327,16 +339,8 @@
     45
    ],
    [
-    "Loop:invalid-compilation",
-    44
-   ],
-   [
     "Package:initializer",
     41
-   ],
-   [
-    "ConversionExpression:Explicit",
-    40
    ],
    [
     "WaitForkStatement",
@@ -351,27 +355,31 @@
     39
    ],
    [
+    "DisableForkStatement",
+    39
+   ],
+   [
     "TimedStatement:EventListControl",
     38
    ],
    [
-    "DisableForkStatement",
-    38
-   ],
-   [
-    "NamedValueExpression:Parameter",
-    38
+    "ConversionExpression:Explicit",
+    37
    ],
    [
     "BlockStatement:JoinAny",
     37
    ],
    [
-    "ArrayReduction:storage-or-effects",
-    37
+    "NamedValueExpression:Parameter",
+    36
    ],
    [
     "Enum:invalid-compilation",
+    36
+   ],
+   [
+    "ArrayReduction:storage-or-effects",
     36
    ],
    [
@@ -379,11 +387,11 @@
     35
    ],
    [
-    "NetType",
-    34
+    "RandCaseStatement",
+    35
    ],
    [
-    "RandCaseStatement",
+    "NetType",
     34
    ],
    [
@@ -423,19 +431,11 @@
     24
    ],
    [
-    "ForLoopStatement:body-lifetime",
-    24
-   ],
-   [
     "NetSymbol:Tri0",
     22
    ],
    [
     "ContinuousAssignSymbol:delay",
-    21
-   ],
-   [
-    "InvalidExpression",
     21
    ],
    [
@@ -448,10 +448,6 @@
    ],
    [
     "ConditionalStatement:Unique",
-    20
-   ],
-   [
-    "RepeatLoopStatement:body-lifetime",
     20
    ],
    [
@@ -515,10 +511,6 @@
     13
    ],
    [
-    "ConversionExpression:BitstreamCast",
-    12
-   ],
-   [
     "ConditionalStatement:pattern",
     12
    ],
@@ -528,6 +520,10 @@
    ],
    [
     "DoWhileLoopStatement:condition",
+    12
+   ],
+   [
+    "ForLoopStatement:condition",
     12
    ],
    [
@@ -555,10 +551,6 @@
     11
    ],
    [
-    "VariableDeclStatement:type",
-    11
-   ],
-   [
     "SelectRead:invalid-compilation",
     11
    ],
@@ -583,7 +575,7 @@
     10
    ],
    [
-    "VariableDeclStatement:range",
+    "ConversionExpression:BitstreamCast",
     10
    ],
    [
@@ -635,7 +627,7 @@
     7
    ],
    [
-    "ForLoopStatement:condition",
+    "InvalidExpression",
     7
    ],
    [
@@ -649,10 +641,6 @@
    [
     "Package:Net",
     7
-   ],
-   [
-    "AssignmentPattern:integral-shape",
-    6
    ],
    [
     "InsideExpression:item",
@@ -689,6 +677,10 @@
    [
     "WildcardImportSymbol:WildcardImport",
     6
+   ],
+   [
+    "AssignmentPattern:integral-shape",
+    5
    ],
    [
     "BinaryExpression:LogicalImplication:source",
@@ -867,11 +859,11 @@
     1
    ],
    [
-    "WhileLoopStatement:body-lifetime",
+    "ForLoopStatement:initializer",
     1
    ],
    [
-    "ForLoopStatement:initializer",
+    "AutomaticLocal:default-lifetime",
     1
    ],
    [
@@ -975,21 +967,21 @@
     1
    ],
    [
-    "DynamicCast:expression-context",
-    1
-   ],
-   [
     "NetSymbol",
     1
    ],
    [
     "RangeSelectExpression:source-type",
     1
+   ],
+   [
+    "VariableDeclStatement:range",
+    1
    ]
   ],
   "by_status": {
-   "clean": 4341,
-   "partial": 17628,
+   "clean": 4326,
+   "partial": 17643,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1010,11 +1002,11 @@
     10
    ],
    "compile_diagnostic": [
-    4,
+    2,
     25
    ],
    "compile_error": [
-    109,
+    104,
     1750
    ],
    "compile_fail": [
@@ -1022,7 +1014,7 @@
     4
    ],
    "compile_warning": [
-    3,
+    4,
     17
    ],
    "interactive_stop": [
@@ -1050,7 +1042,7 @@
     52
    ],
    "simulation": [
-    3750,
+    3741,
     18671
    ],
    "simulation elaboration": [
@@ -1065,9 +1057,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 247,
-    "clean": 743,
-    "partial": 248,
+    "blocked_by_more": 250,
+    "clean": 732,
+    "partial": 259,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1076,7 +1068,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      107
+      110
      ],
      [
       "NamedValueExpression:2state",
@@ -1151,7 +1143,7 @@
       7
      ]
     ],
-    "unlockable": 1
+    "unlockable": 9
    },
    "chapter-4": {
     "blocked_by_more": 237,
@@ -1243,9 +1235,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 619,
-    "clean": 421,
-    "partial": 620,
+    "blocked_by_more": 624,
+    "clean": 415,
+    "partial": 626,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1270,7 +1262,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      153
+      158
      ],
      [
       "ConversionExpression:width",
@@ -1278,7 +1270,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      92
+      93
      ],
      [
       "InstanceSymbol:Instance",
@@ -1329,7 +1321,7 @@
       15
      ]
     ],
-    "unlockable": 1
+    "unlockable": 2
    }
   },
   "extractor_internal_files": [
@@ -1394,17 +1386,17 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 747,
+    "clean": 736,
     "error": 0,
-    "partial": 287,
+    "partial": 298,
     "skip_include": 0,
     "total": 1034,
-    "unlockable": 1
+    "unlockable": 9
    },
    "chapter-12": {
-    "clean": 290,
+    "clean": 294,
     "error": 0,
-    "partial": 337,
+    "partial": 333,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
@@ -1455,7 +1447,7 @@
     "partial": 815,
     "skip_include": 35,
     "total": 851,
-    "unlockable": 0
+    "unlockable": 2
    },
    "chapter-19": {
     "clean": 0,
@@ -1466,9 +1458,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 216,
+    "clean": 212,
     "error": 0,
-    "partial": 609,
+    "partial": 613,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1482,17 +1474,17 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 386,
+    "clean": 383,
     "error": 0,
-    "partial": 158,
+    "partial": 161,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 171,
+    "clean": 174,
     "error": 0,
-    "partial": 680,
+    "partial": 677,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
@@ -1514,9 +1506,9 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 166,
+    "clean": 165,
     "error": 0,
-    "partial": 399,
+    "partial": 400,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
@@ -1546,9 +1538,9 @@
     "unlockable": 0
    },
    "chapter-3": {
-    "clean": 55,
+    "clean": 60,
     "error": 0,
-    "partial": 244,
+    "partial": 239,
     "skip_include": 1,
     "total": 300,
     "unlockable": 0
@@ -1650,25 +1642,25 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 368,
+    "clean": 363,
     "error": 0,
-    "partial": 250,
+    "partial": 255,
     "skip_include": 0,
     "total": 618,
-    "unlockable": 0
+    "unlockable": 1
    },
    "chapter-6": {
-    "clean": 435,
+    "clean": 428,
     "error": 0,
-    "partial": 750,
+    "partial": 757,
     "skip_include": 0,
     "total": 1185,
-    "unlockable": 3
+    "unlockable": 4
    },
    "chapter-7": {
-    "clean": 117,
+    "clean": 118,
     "error": 0,
-    "partial": 679,
+    "partial": 678,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1682,16 +1674,16 @@
     "unlockable": 0
    },
    "chapter-9": {
-    "clean": 111,
+    "clean": 114,
     "error": 0,
-    "partial": 478,
+    "partial": 475,
     "skip_include": 0,
     "total": 589,
     "unlockable": 0
    }
   },
   "seed": 20260721,
-  "unlockable_simulation": 6,
-  "unlockable_total": 15
+  "unlockable_simulation": 17,
+  "unlockable_total": 27
  }
 }

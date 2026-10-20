@@ -216,8 +216,10 @@ arm. Each canonical clocked process is lowered to a retained `WaitEvent` followe
 its body and re-armed after completion. The legacy self-check runner remains
 initial/time-zero-only and refuses non-initial processes and timed nodes.
 Frontend errors in a design containing `always_lowered` are a design-level
-barrier. Repeated scalar body lifetimes remain loud; already-admitted
-automatic fixed-array cells retain their existing reinitialization rule.
+barrier. Static scalar storage now hoists before process entry; actual automatic
+scalars retain per-entry initialization. Already-admitted automatic fixed-array
+cells retain their existing reinitialization rule. See
+[procedural lifetimes](sv-procedural-lifetimes.md).
 See [plain always procedures](sv-always.md).
 
 ## Statements
@@ -1471,3 +1473,17 @@ original-syntax declaration-order checks run before admission. Nonmodule roots
 retain a `Module` envelope with an explicit `Hierarchy:module-kind` unsupported
 member, so ingestion reports the missing scheduling contract. Symbolic mode
 remains unchanged. See [the contract](sv-let-expressions.md).
+
+## Procedural variable lifetimes
+
+Concrete static procedural scalars/packed values/fixed cells emit ordinary
+pre-process `Var` declarations with `static_local_storage: true`. Their source
+declaration statements emit `Empty`. Original bound symbol identities determine
+both lexical and hierarchical storage names. The shared procedural declaration
+census replaces the former static-array statement-marker hoist. Actual automatic
+scalar `LocalDecl` nodes carry `automatic_scalar: true`, allowing sequential loop
+entry while preserving ordinary saved continuations. These flags are frontend
+metadata, not new runtime nodes. Closed/pure initialization, cross-initializer
+order, default-lifetime provenance and whole-source validity are checked before
+admission. Symbolic extraction is unchanged. See
+[the contract](sv-procedural-lifetimes.md).

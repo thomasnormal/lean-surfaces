@@ -88,7 +88,8 @@
                           "bits": "00000000000000000000000000000000"
                         }
                       },
-                      "signed": true
+                      "signed": true,
+                      "automatic_scalar": true
                     },
                     {
                       "kind": "For",

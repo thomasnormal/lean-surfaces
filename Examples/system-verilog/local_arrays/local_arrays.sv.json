@@ -47,7 +47,8 @@
                 "bits": "00000000000000000000000000000100"
               }
             },
-            "signed": true
+            "signed": true,
+            "static_local_storage": true
           },
           {
             "kind": "Var",
@@ -75,7 +76,8 @@
                 "bits": "00000000000000000000000000001000"
               }
             },
-            "signed": true
+            "signed": true,
+            "static_local_storage": true
           }
         ],
         "processes": [

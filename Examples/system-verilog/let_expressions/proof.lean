@@ -75,9 +75,8 @@ def fixtureReceipt : IO Unit := do
       | .initial body => containsStatement assignment body
       | _ => false) do
     throw (IO.userError "let theorem differs from actual parsed source")
-  unless certificate.procs.any (fun process => match process with
-      | .initial body => containsStatement (.localDecl shadowName 4 false none) body
-      | _ => false) do
+  unless certificate.decls.any (fun declaration =>
+      declaration.name == shadowName && declaration.width == 4 && declaration.init.isNone) do
     throw (IO.userError "local binding differs from parsed source")
   for (name, expected) in [("binding", ["binding 4 15 9", "nested 4 27", "restored 4 9"]),
       ("certificate", ["certificate 1"]),

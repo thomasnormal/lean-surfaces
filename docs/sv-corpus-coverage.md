@@ -22,6 +22,68 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Procedural variable lifetimes — 2026-10-20
+
+IEEE §6.21/§9.3 static scalar, packed and fixed-array procedural storage now
+initializes once before process entry. Named-block references preserve bound
+identity; declaration re-entry retains storage. Actual automatic scalars use
+per-entry initialization and the existing retained continuation across waits.
+Dependent/effectful static initialization, invalid source and the observed
+implicit automatic-module lifetime disagreement remain explicit refusals.
+See [the contract](sv-procedural-lifetimes.md).
+
+The paired **22,035** paths gain **20 clean extractions** and withdraw **35**
+prior admissions: **4,341 → 4,326 clean**, **17,628 → 17,643 partial**,
+**66 include skips**, zero errors. Nineteen gained simulations and eight authored
+programs match complete independent transcripts under both tested orders.
+One gained compile-warning case remains horizon-limited; four authored programs
+refuse. All 32 successful references are authenticated. The 1,141 changed prior
+clean designs have identical paired model statuses/transcripts (1,116 completed,
+17 runtime refusals, eight loader refusals); this is regression telemetry only.
+Four source-bound kernel theorems cover initialization, entry retention and
+retained modular increments. Extraction is distinct from execution conformance.
+
+| Chapter | Total | Clean | Partial | Include skips |
+|---|---:|---:|---:|---:|
+| 3 | 300 | 60 | 239 | 1 |
+| 4 | 427 | 187 | 240 | 0 |
+| 5 | 618 | 363 | 255 | 0 |
+| 6 | 1185 | 428 | 757 | 0 |
+| 7 | 796 | 118 | 678 | 0 |
+| 8 | 843 | 0 | 842 | 1 |
+| 9 | 589 | 114 | 475 | 0 |
+| 10 | 657 | 248 | 409 | 0 |
+| 11 | 1034 | 736 | 298 | 0 |
+| 12 | 627 | 294 | 333 | 0 |
+| 13 | 598 | 1 | 597 | 0 |
+| 14 | 473 | 1 | 472 | 0 |
+| 15 | 550 | 0 | 550 | 0 |
+| 16 | 1543 | 50 | 1493 | 0 |
+| 17 | 512 | 0 | 512 | 0 |
+| 18 | 851 | 1 | 815 | 35 |
+| 19 | 767 | 0 | 767 | 0 |
+| 20 | 825 | 212 | 613 | 0 |
+| 21 | 900 | 84 | 816 | 0 |
+| 22 | 572 | 383 | 161 | 28 |
+| 23 | 851 | 174 | 677 | 0 |
+| 24 | 355 | 2 | 353 | 0 |
+| 25 | 480 | 8 | 472 | 0 |
+| 26 | 565 | 165 | 400 | 0 |
+| 27 | 354 | 177 | 177 | 0 |
+| 28 | 737 | 3 | 734 | 0 |
+| 29 | 363 | 1 | 362 | 0 |
+| 30 | 443 | 0 | 443 | 0 |
+| 31 | 554 | 0 | 554 | 0 |
+| 32 | 286 | 0 | 286 | 0 |
+| 33 | 267 | 1 | 266 | 0 |
+| 34 | 228 | 124 | 103 | 1 |
+| 35 | 257 | 0 | 257 | 0 |
+| 36 | 720 | 3 | 717 | 0 |
+| 37 | 417 | 137 | 280 | 0 |
+| 38 | 340 | 211 | 129 | 0 |
+| 39 | 64 | 0 | 64 | 0 |
+| 40 | 87 | 40 | 47 | 0 |
+
 ## Let expressions — 2026-10-20
 
 IEEE §11.12 templates now use the frontend's ordinary bound expressions,

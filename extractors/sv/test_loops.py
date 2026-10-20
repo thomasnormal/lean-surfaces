@@ -47,9 +47,10 @@ class Loops(unittest.TestCase):
                        "initial missing=1; endmodule", require_valid=False)
         self.assertIn("Loop:invalid-compilation", [node.get("sv_kind") for node in nodes(design)])
 
-    def test_body_declaration_lifetime_stays_loud(self):
+    def test_static_body_declaration_is_hoisted(self):
         design = lower("module top; initial repeat(2) begin integer value=0; value+=1; end endmodule")
-        self.assertIn("RepeatLoopStatement:body-lifetime", [node.get("sv_kind") for node in nodes(design)])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        self.assertTrue(any(node.get("static_local_storage") for node in nodes(design)))
 
 
 if __name__ == "__main__":

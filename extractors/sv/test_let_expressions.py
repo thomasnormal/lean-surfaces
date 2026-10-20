@@ -31,7 +31,7 @@ class LetExpressions(unittest.TestCase):
 
     def test_declaration_scope_survives_same_spelled_locals(self):
         design = fixture("binding")
-        locals_ = [n["name"] for n in nodes(design) if n.get("kind") == "LocalDecl"]
+        locals_ = [n["name"] for n in nodes(design) if n.get("kind") == "Var" and n.get("static_local_storage")]
         self.assertEqual(len(locals_), 2)
         self.assertEqual(len(set(locals_)), 2)
         self.assertTrue(all(name.startswith("$local:") for name in locals_))
@@ -86,7 +86,7 @@ class LetExpressions(unittest.TestCase):
 
     def test_source_cannot_alias_generated_local_storage(self):
         s = "module top;int x;initial begin int x;x=3;end endmodule"
-        name = next(n["name"] for n in nodes(lower(s)) if n.get("kind") == "LocalDecl")
+        name = next(n["name"] for n in nodes(lower(s)) if n.get("kind") == "Var" and n.get("static_local_storage"))
         d = lower(s.replace("endmodule", "int \\" + name + " ;endmodule"))
         self.assertIn("LexicalBinding:storage-collision", walls(d))
 

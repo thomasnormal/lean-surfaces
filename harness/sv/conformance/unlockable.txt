@@ -1,2 +1,11 @@
+chapter-11/11.4.10--arith-shift-left-zero-amount-identity.sv
+chapter-11/11.4.10--arith-shift-right-zero-amount-identity.sv
+chapter-11/11.4.10--shift-left-zero-amount-identity.sv
+chapter-11/11.4.10--shift-right-zero-amount-identity.sv
 chapter-11/11.4.13--inside-dollar-dollar-all-values.sv
+chapter-11/11.4.8--bitwise-and-all-ones-identity.sv
+chapter-11/11.4.8--bitwise-and-zero-absorbs.sv
+chapter-11/11.4.8--bitwise-or-all-ones-absorbs.sv
+chapter-11/11.4.8--bitwise-or-zero-identity.sv
 chapter-6/6.21--program-automatic-body-var-is-static.sv
+chapter-6/6.24.1--cast-size-pads-or-truncates-v4.sv

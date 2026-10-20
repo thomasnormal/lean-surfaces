@@ -46,12 +46,12 @@ class TestLoops(unittest.TestCase):
             self.assertTrue(any(n.get("sv_kind", "").endswith(":condition")
                                 for n in nodes(design)))
 
-    def test_unmodelled_scalar_body_lifetime_stays_loud(self):
+    def test_static_scalar_body_lifetime_is_hoisted(self):
         for post in (False, True):
             design = lower("module top; initial " +
                            loop("begin integer local_value=0; local_value++; end", "1", post) + " endmodule")
-            self.assertTrue(any(n.get("sv_kind", "").endswith(":body-lifetime")
-                                for n in nodes(design)))
+            self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+            self.assertTrue(any(n.get("static_local_storage") for n in nodes(design)))
 
     def test_automatic_array_body_reuses_lifetime_lowering(self):
         for post in (False, True):

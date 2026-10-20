@@ -101,7 +101,7 @@ statement through the existing retained loop interface. One source process
 becomes one ready process, with no separate rearming carrier. Delay/event
 waits retain the current tail and loop boundary. The initial-only runner
 still refuses it, and canonical positive-edge encoding is unchanged.
-Unsupported sensitivities, repeated scalar lifetimes, invalid source,
+Unsupported sensitivities, unmodelled declaration lifetimes, invalid source,
 procedural edge publication and symbolic-mode repetition stay loud.
 See [the contract](sv-always.md).
 
@@ -3852,3 +3852,21 @@ programs match full independent transcripts in both tested orders. Other runtime
 refusals and unavailable typed/default-form oracle coverage remain explicit.
 Four source-bound kernel theorems prove live reads, shadow independence,
 modular addition and retained-work copyback. See [the contract](sv-let-expressions.md).
+
+### Procedural variable lifetimes — 2026-10-20
+
+IEEE §6.21/§9.3 static scalar, packed and fixed-array procedural declarations
+now share pre-process storage initialization. Declaration re-entry is empty;
+named-block hierarchy uses the original bound storage. Actual automatic scalar
+entries retain `LocalDecl` and saved continuations through ordinary waits.
+Nonclosed/effectful/order-dependent static initialization, invalid source and
+implicit automatic-module default-lifetime disagreement remain loud.
+
+Measured 20 clean-extraction gains and 35 withdrawn admissions over 22,035 paths:
+4,326 clean / 17,643 partial / 66 include skips / zero errors. Nineteen gained
+simulations and eight authored fixtures match full independent transcripts in
+both tested orders. One compile-warning row remains horizon-limited; four
+authored refusals are separate. The 1,141 changed prior clean designs show no
+paired-model regression; that comparison is not independent conformance.
+Four kernel theorems bind initialization and retained increments to actual source.
+See [the contract](sv-procedural-lifetimes.md).

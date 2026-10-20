@@ -24,6 +24,19 @@
           {
             "kind": "Var",
             "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 19
+            },
+            "name": "$local:3:top:0:110:held",
+            "width": 4,
+            "init": null,
+            "static_local_storage": true
+          },
+          {
+            "kind": "Var",
+            "span": {
               "line": 2,
               "col": 14,
               "end_line": 2,
@@ -77,17 +90,13 @@
               },
               "stmts": [
                 {
-                  "kind": "LocalDecl",
+                  "kind": "Empty",
                   "span": {
                     "line": 5,
                     "col": 15,
                     "end_line": 5,
                     "end_col": 19
-                  },
-                  "name": "$local:3:top:0:110:held",
-                  "width": 4,
-                  "two_state": false,
-                  "init": null
+                  }
                 },
                 {
                   "kind": "BlockingAssign",

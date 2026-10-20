@@ -25,12 +25,13 @@ class ForeverLoops(unittest.TestCase):
             node, = [n for n in nodes(design) if n.get("kind") == "Forever"]
             self.assertEqual(node["body"]["kind"], kind)
 
-    def test_unmodelled_body_lifetime_stays_loud(self):
+    def test_static_body_lifetime_is_hoisted(self):
         for lifetime in ("", "static ", "automatic "):
             design = lower("module top; initial forever begin " + lifetime +
                            "int value=0; value++; break; end endmodule")
-            self.assertIn("ForeverLoopStatement:body-lifetime",
-                          [n.get("sv_kind") for n in nodes(design)])
+            self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+            field = "automatic_scalar" if lifetime == "automatic " else "static_local_storage"
+            self.assertTrue(any(n.get(field) for n in nodes(design)))
 
     def test_automatic_array_lifetime_uses_existing_lowering(self):
         design = lower("module top; initial forever begin automatic int cells[0:1]='{1,2}; cells[0]++; break; end endmodule")

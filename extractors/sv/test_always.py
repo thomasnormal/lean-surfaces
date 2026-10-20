@@ -33,9 +33,10 @@ class PlainAlways(unittest.TestCase):
             design = lower("module top; logic a,b; always " + body + " endmodule")
             self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
-    def test_repeated_scalar_local_lifetime_stays_loud(self):
+    def test_repeated_static_scalar_is_initialized_once(self):
         design = lower("module top; always begin int value=1; #2; value++; end endmodule")
-        self.assertIn("Always:body-lifetime", [n.get("sv_kind") for n in nodes(design)])
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+        self.assertTrue(any(n.get("static_local_storage") for n in nodes(design)))
 
     def test_illegal_loop_transfers_do_not_become_legal(self):
         for body in ("break;", "continue;"):

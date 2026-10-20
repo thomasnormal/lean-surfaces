@@ -41,9 +41,10 @@ class Foreach(unittest.TestCase):
         d = lower("module top; int a[2]; initial repeat(2) foreach(a[i]) begin automatic int b[2]='{1,2}; a[i]=b[0]; end endmodule")
         self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(d)))
 
-    def test_scalar_body_lifetimes_stay_loud(self):
+    def test_static_scalar_body_storage_is_hoisted(self):
         d = lower("module top; int a[2]; initial foreach(a[i]) begin int value=0; value++; end endmodule")
-        self.assertTrue(any(n.get("sv_kind") == "ForeachLoopStatement:body-lifetime" for n in nodes(d)))
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(d)))
+        self.assertTrue(any(n.get("static_local_storage") for n in nodes(d)))
 
     def test_dynamic_and_unsupported_storage_stay_loud(self):
         for declaration in ("int a[]", "int a[$]", "int a[int]", "int a[2][3]"):

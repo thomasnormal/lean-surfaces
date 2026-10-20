@@ -4552,6 +4552,7 @@ def contains_local_decl(node):
     if isinstance(node, dict):
         return (node.get("kind") == "LocalDecl"
                 and not node.get("automatic_array", False)
+                and not node.get("automatic_scalar", False)
                 and not node.get("automatic_foreach", False)
                 and not node.get("automatic_intra", False)
                 and not node.get("automatic_compound", False)) or any(
@@ -4903,20 +4904,17 @@ def _convert_expression_stmt(sm, stmt):
 
 def _convert_local_decl(sm, stmt):
     symbol = stmt.symbol
+    if _SYM is None and _automatic_default_gap(symbol):
+        return unsupported(sm, stmt, "AutomaticLocal:default-lifetime",
+                           "implicit procedural lifetime in an automatic module is not qualified")
+    if _SYM is None and str(symbol.lifetime).split(".")[-1] == "Static":
+        # The module's declaration-identity pass initializes static storage
+        # before any process starts, including in blocks never entered.
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
         cells = convert_fixed_array_vars(sm, symbol)
         if cells is not None:
             lifetime = str(symbol.lifetime).split(".")[-1]
-            if lifetime == "Static":
-                # Static initialization precedes every procedural entry, even
-                # if the declaring block is delayed, conditional or repeated.
-                # Only closed pure initializers may move across that boundary.
-                if any(_converted_ident_names(cell.get("init")) for cell in cells):
-                    return unsupported(sm, stmt, "VariableDeclStatement:static-array-initializer")
-                # An internal marker: convert_module hoists these declarations
-                # and replaces this statement before emitting an envelope.
-                return {"kind": "StaticLocalArray", "span": node_span(sm, stmt),
-                        "decls": cells}
             if lifetime == "Automatic":
                 element_type = symbol.type.canonicalType.elementType
                 return {"kind": "Block", "span": node_span(sm, stmt), "stmts": [
@@ -4934,7 +4932,7 @@ def _convert_local_decl(sm, stmt):
     init_node = convert_expr(sm, initializer) if initializer is not None else None
     if two_state and init_node is not None:
         init_node = squash2_wrap(init_node, width)
-    return signed_metadata({
+    declaration = signed_metadata({
         "kind": "LocalDecl",
         "span": node_span(sm, stmt),
         "name": _storage_name(symbol),
@@ -4942,6 +4940,9 @@ def _convert_local_decl(sm, stmt):
         "two_state": two_state,
         "init": init_node,
     }, symbol.type)
+    if _SYM is None and str(symbol.lifetime).split(".")[-1] == "Automatic":
+        declaration["automatic_scalar"] = True
+    return declaration
 
 
 def _convert_syscall(sm, s, e):
@@ -5560,17 +5561,74 @@ def convert_net(sm, m):
 # Modules / design
 # ---------------------------------------------------------------------------
 
-def _hoist_static_local_arrays(node, decls):
-    """Resolve internal static-array markers into pre-process declarations."""
-    if isinstance(node, dict):
-        if node.get("kind") == "StaticLocalArray":
-            decls.extend(node["decls"])
-            return {"kind": "Empty", "span": node.get("span")}
-        return {key: _hoist_static_local_arrays(value, decls)
-                for key, value in node.items()}
-    if isinstance(node, list):
-        return [_hoist_static_local_arrays(value, decls) for value in node]
-    return node
+def _procedural_variables(members):
+    """Census declarations even inside an unentered or unsupported body."""
+    symbols = set()
+
+    def collect(node):
+        if (str(getattr(node, "kind", "")) == "SymbolKind.Variable"
+                and node.parentScope.isProceduralContext):
+            symbols.add(node)
+
+    for member, _route in members:
+        if (not isinstance(member, dict) and str(member.kind) in (
+                "SymbolKind.ProceduralBlock", "SymbolKind.StatementBlock")):
+            member.visit(collect)
+    return sorted(symbols, key=lambda symbol: (
+        _storage_name(symbol), symbol.location.buffer.id, symbol.location.offset))
+
+
+def _automatic_default_gap(symbol):
+    if str(symbol.lifetime) != "VariableLifetime.Automatic":
+        return False
+    owner = symbol.parentScope.containingInstance
+    declaration = getattr(getattr(symbol, "syntax", None), "parent", None)
+    return (owner is not None
+            and str(owner.definition.defaultLifetime) == "VariableLifetime.Automatic"
+            and str(getattr(declaration, "kind", "")) == "SyntaxKind.DataDeclaration"
+            and not any(str(token.kind) in ("TokenKind.AutomaticKeyword", "TokenKind.StaticKeyword")
+                        for token in declaration.modifiers))
+
+
+def _static_initializer_closed(expression, declarations):
+    if expression is not None and not _case_source_expression_ok(expression, packed_members=True):
+        return False
+    return all(not _converted_ident_names(node.get("init"))
+               and not _node_marker(node.get("init"), "plusargs_lowered")
+               and _case_expression_ok(node) for node in declarations)
+
+
+def _convert_static_procedural_storage(sm, members):
+    symbols = _procedural_variables(members)
+    _ELAB_HIER_VALUES.update(symbol for symbol in symbols
+                            if str(symbol.lifetime) == "VariableLifetime.Static")
+    declarations = []
+    for symbol in symbols:
+        if _automatic_default_gap(symbol):
+            declarations.append(unsupported(sm, symbol, "AutomaticLocal:default-lifetime",
+                                            "implicit procedural lifetime in an automatic module is not qualified"))
+            continue
+        if str(symbol.lifetime) != "VariableLifetime.Static":
+            continue
+        converted = convert_var(sm, symbol)
+        values = converted if isinstance(converted, list) else [converted]
+        if (all(value.get("kind") == "Var" for value in values)
+                and not _static_initializer_closed(symbol.initializer, values)):
+            values = [unsupported(sm, symbol, "StaticLocal:initializer",
+                                  "static initialization needs closed pure values; ordering/effects are unmodelled")]
+        for value in values:
+            value["static_local_storage"] = True
+            declarations.append(value)
+    return declarations
+
+
+def _static_initialization_barriers(sm, declarations, ports):
+    names = {node["name"] for node in declarations
+             if node.get("static_local_storage") and node.get("kind") == "Var"}
+    return [unsupported(sm, None, "StaticLocal:initializer-order",
+                        "a pre-process initializer reads procedural static storage")
+            for node in declarations + ports
+            if _converted_ident_names(node.get("init")) & names]
 
 
 def _generated_storage_collision(ports, decls, processes, prefix):
@@ -5788,7 +5846,7 @@ def convert_module(sm, inst):
             port_names.add(m.name)
 
     ports = []
-    decls = []
+    decls = _convert_static_procedural_storage(sm, members)
     processes = []
     others = []
     global _ELAB_CURRENT_SCOPE
@@ -5848,10 +5906,10 @@ def convert_module(sm, inst):
                     node[key] = list(route)
             _ELAB_CURRENT_SCOPE = ""
 
-    processes = _hoist_static_local_arrays(processes, decls)
     processes = _lower_stateful_processes(processes)
     decls = _lower_stateful_processes(decls)
     others.extend(_module_storage_collisions(ports, decls, processes, span))
+    others.extend(_static_initialization_barriers(sm, decls, ports))
 
     # Constant continuous windows are storage-only in the legacy runner too;
     # reject static overlap before it could be mistaken for net resolution.
@@ -6441,6 +6499,9 @@ def _convert_design(sm, comp, packages):
         sm, comp, modules, "array_reduction_lowered", "ArrayReduction",
         "frontend rejected a fixed-array reduction"))
     others.extend(_let_compilation_barriers(sm, comp))
+    others.extend(_bound_lowering_compilation_barriers(
+        sm, comp, modules, "static_local_storage", "StaticLocal",
+        "frontend rejected a design containing procedural static storage"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

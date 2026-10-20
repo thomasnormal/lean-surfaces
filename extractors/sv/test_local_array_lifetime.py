@@ -20,7 +20,7 @@ class LocalArrayLifetime(unittest.TestCase):
     def test_static_initializer_reads_are_loud(self):
         design = extract_source("""module top; int source; initial begin source=9;
           static int saved [0:0] = '{source}; end endmodule""")
-        self.assertTrue(any(n.get("sv_kind") == "VariableDeclStatement:static-array-initializer"
+        self.assertTrue(any(n.get("sv_kind") == "StaticLocal:initializer"
                             for n in nodes(design)))
 
     def test_noncanonical_bounds_and_bit_conversion_are_cells(self):

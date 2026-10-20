@@ -25,7 +25,9 @@ separate boundaries. Invalid frontend compilations containing the lowering
 are refused, so synthetic repetition cannot legitimize an illegal source
 `break` or `continue`.
 
-Scalar body declarations with unmodelled repeated lifetime remain loud.
+Static scalar declarations now initialize once before entry; actual automatic
+scalars initialize at each fresh entry. Initializer and lifetime boundaries are
+listed in [procedural lifetimes](sv-procedural-lifetimes.md).
 Already-admitted automatic fixed-array cells reinitialize on each body entry.
 The timed loader scans the new bodies for internally written edge sources
 and retains its procedural-publication barrier. Time-zero-only clock queries

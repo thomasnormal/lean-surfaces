@@ -22,6 +22,25 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Explicit command-line plusargs — 2026-10-20
+
+The §21.6 family admits literal prefix queries and integral value queries
+with an explicit ordered input environment. Immutable input specialization
+compiles queries to existing expressions and packed copyback statements;
+short-circuit lowering retains ordered dependent reads and skipped calls.
+Ordinary loading refuses unspecified inputs. Existing retained continuations
+handle selected writes across delays. See [the input contract](sv-plusargs.md).
+
+The paired **22,035**-path census gains **31 clean files** without losses:
+**3,253 → 3,284 clean**, **18,716 → 18,685 partial**, **66 include skips**,
+zero extraction errors. Twenty-nine gains match complete independent
+transcripts using each file's actual invocation metadata. One malformed
+numeric input produces independent diagnostics and remains loud; one timed
+file retains the existing `$time` boundary. They are extraction gains only.
+Three authored sources separately match numeric, expression-order and timed
+copyback observations; a fourth source records a diagnostic refusal.
+Three kernel theorems bind first-match and copyback properties to the fixture.
+
 ## Fixed-dimension foreach — 2026-10-20
 
 IEEE §12.7.3 fixed foreach loops compile to one ordinal `For` over the

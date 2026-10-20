@@ -3413,3 +3413,27 @@ and one more matches through the timed loader under both oracles. One timed
 fixture remains refused by the existing time-zero-only `$time` guard.
 A named-loop file stays partial because its newly visible `disable` body
 remains unsupported. Extraction counts are separate from execution agreement.
+
+### Explicit command-line plusargs — 2026-10-20
+
+IEEE 1800-2023 §21.6 queries now carry an explicit ordered input environment
+through `loadEnvelopeDesignWithPlusargs`. Ordinary loading refuses queries
+without a supplied environment. Literal `$test$plusargs` preserves
+case-sensitive prefix matching; integral `$value$plusargs` selects the first
+match, converts the full suffix and copies back at the original statement
+boundary. Absence leaves the destination untouched. Short-circuit lowering
+preserves call placement and subsequent dependent reads, including unknown
+left operands. Existing packed assignments handle slices and two-state
+conversion; the timed stepper retains ordinary continuations. No evaluator
+or scheduler changed. [The contract](sv-plusargs.md) names every remaining
+format, storage, numeric-diagnostic and effect-context boundary.
+
+The paired **22,035**-path census gains **31 clean files** without losses:
+**3,253 → 3,284 clean**, **18,716 → 18,685 partial**, **66 include skips**,
+zero extraction errors. Twenty-nine gains match complete independent
+transcripts with each source's declared plusargs supplied to both sides.
+One malformed numeric conversion remains loud after an independent diagnostic;
+one timed fixture retains the existing `$time` boundary. These two are
+extraction gains only. Authored time-zero and timed fixtures separately
+check numeric edges, expression order and selected writes across delays.
+Three kernel theorems bind first-match and copyback rules to the real fixture.

@@ -2,6 +2,7 @@ import Lean
 import LeanModels.Sv.Semantics
 import LeanModels.Sv.Sem2
 import LeanModels.Sv.FormattedInput
+import LeanModels.Sv.Plusargs
 
 /-!
 # SV self-check tier (`LeanModels.Sv.SelfCheck`)
@@ -1348,15 +1349,55 @@ def parseModuleD (j : Json) : Except String Design := do
         throw "duplicate local variable declarations within one process (flat state)"
   return { name, decls, procs, requiresTimeZero := hasTimeZeroLiteral j }
 
-/-- Envelope text → self-check `Design`. Validates `schema_version`/
-`language` and the single-module shape. -/
-def loadEnvelopeDesign (text : String) : Except String Design := do
+/-- Resolve explicit immutable inputs before parsing the ordinary statement
+vocabulary. Stateful queries compile to existing copyback and assignment nodes;
+the process keeps its original control placement and retained continuation. -/
+partial def specializePlusargs (inputs : Option (List String)) (j : Json) : Except String Json := do
+  match j with
+  | .arr values => return .arr (← values.mapM (specializePlusargs inputs))
+  | .obj fields =>
+      let kind := (getStrF j "kind").toOption.getD ""
+      if kind == "TestPlusargs" || kind == "ValuePlusargs" then
+        let some inputs := inputs | throw "Plusargs: supply explicit command-line inputs"
+        unless inputs.all Plusargs.ascii do throw "Plusargs: non-ASCII or NUL input"
+        let text ← getStrF j "format"
+        unless Plusargs.ascii text do throw "Plusargs: non-ASCII or NUL format"
+        let literal (value : LVec) : Json := Json.mkObj [
+          ("kind", .str "Literal"), ("width", Lean.toJson value.width),
+          ("bits", .str value.toBinString)]
+        if kind == "TestPlusargs" then
+          return literal (.ofNat 32 (if Plusargs.test inputs text then 1 else 0))
+        let format ← Plusargs.parse text
+        let target ← specializePlusargs (some inputs) (← getF j "target")
+        let targets ← parsePackedTargets target
+        let width := targets.foldl (fun n t => n + t.width) 0
+        let value ← Plusargs.value inputs format width
+        let result ← getF j "result"
+        let assign (target value : Json) : Json := Json.mkObj [
+          ("kind", .str "BlockingAssign"), ("target", target), ("value", value)]
+        let resultWrite := assign result (literal (.ofNat 32 (if value.isSome then 1 else 0)))
+        let writes := match value with
+          | none => #[resultWrite]
+          | some value =>
+              -- A one-part concatenation delegates state-kind conversion and
+              -- selected copyback to the existing packed assignment operation.
+              let target := Json.mkObj [("kind", .str "ConcatTarget"),
+                ("width", Lean.toJson width), ("parts", .arr #[target])]
+              #[assign target (literal value), resultWrite]
+        return Json.mkObj [("kind", .str "Block"), ("stmts", .arr writes)]
+      return Json.mkObj (← fields.toArray.toList.mapM fun (key, value) => do
+        return (key, ← specializePlusargs inputs value))
+  | _ => return j
+
+/-- Envelope text → self-check `Design`. Validates the single-module shape.
+Input-dependent envelopes require `loadEnvelopeDesignWithPlusargs`. -/
+def loadEnvelopeDesignInputs (inputs : Option (List String)) (text : String) : Except String Design := do
   let j ← Json.parse text
   let sv ← getStrF j "schema_version"
   unless sv == "sv-0.1" do throw s!"unsupported schema_version '{sv}' (want sv-0.1)"
   let lang ← getStrF j "language"
   unless lang == "systemverilog" do throw s!"unsupported language '{lang}'"
-  let design ← getF j "design"
+  let design ← specializePlusargs inputs (← getF j "design")
   let modules ← getArrF design "modules"
   let dOthers ← getArrF design "others"
   unless dOthers.isEmpty do throw s!"design.others is non-empty ({dOthers.size} node(s))"
@@ -1474,6 +1515,15 @@ private def displayPass : SStmt :=
   == .ok ["1"]
 
 end Tests
+
+/-- Loading without an input environment refuses every plusargs query. -/
+def loadEnvelopeDesign (text : String) : Except String Design :=
+  loadEnvelopeDesignInputs none text
+
+/-- Explicit ordered plusarg contents, without their leading command-line `+`.
+An empty list explicitly represents an invocation with no plusargs. -/
+def loadEnvelopeDesignWithPlusargs (inputs : List String) (text : String) : Except String Design :=
+  loadEnvelopeDesignInputs (some inputs) text
 
 end SelfCheck
 end LeanModels.Sv

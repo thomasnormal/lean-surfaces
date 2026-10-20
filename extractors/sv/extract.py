@@ -1760,6 +1760,8 @@ def _convert_expr(sm, e):
         return _convert_selected_read(sm, e, cname)
     if cname == "CallExpression":
         if _SYM is None:
+            if _plusargs_call(e):
+                return _convert_plusargs_call(sm, e)
             if _enum_method_call(e):
                 return _convert_enum_method(sm, e)
             if _clog2_call(e):
@@ -3529,6 +3531,155 @@ def _convert_wait_event_statement(sm, statement):
     }
 
 
+def _plusargs_call(expression):
+    return (type(expression).__name__ == "CallExpression" and expression.isSystemCall
+            and expression.subroutineName in ("$test$plusargs", "$value$plusargs"))
+
+
+def _convert_plusargs_call(sm, expression):
+    """Preserve immutable input queries; never inspect the extractor's argv."""
+    args = list(expression.arguments)
+    test = expression.subroutineName == "$test$plusargs"
+    if (len(args) != (1 if test else 2) or expression.type.bitWidth != 32
+            or not expression.type.isSigned):
+        return unsupported(sm, expression, "Plusargs:signature")
+    fmt = args[0]
+    while type(fmt).__name__ == "ConversionExpression" and fmt.conversionKind in (
+            ConversionKind.Implicit, ConversionKind.Propagated):
+        fmt = fmt.operand
+    if (type(fmt).__name__ != "StringLiteral" or _contains_disputed_string_escape(fmt)
+            or any(ord(c) == 0 or ord(c) > 127 for c in fmt.value)):
+        return unsupported(sm, expression, "Plusargs:literal-format")
+    result = {"kind": "TestPlusargs" if test else "ValuePlusargsExpr",
+              "span": node_span(sm, expression), "width": 32, "signed": True,
+              "format": fmt.value, "plusargs_lowered": True}
+    if test:
+        return result
+    prefix, separator, code = fmt.value.partition("%")
+    if code.startswith("0"):
+        code = code[1:]
+    if not separator or len(code) != 1 or code.lower() not in "bodhx":
+        return unsupported(sm, expression, "Plusargs:integral-format")
+    arg = args[1]
+    if (type(arg).__name__ != "AssignmentExpression"
+            or type(arg.right).__name__ != "EmptyArgumentExpression"
+            or not _case_source_expression_ok(arg.left)):
+        return unsupported(sm, expression, "Plusargs:output-effects")
+    target, admitted = legacy_blocking_target(sm, arg.left, True)
+    if not admitted:
+        return unsupported(sm, expression, "Plusargs:packed-output")
+    result["target"] = target
+    return result
+
+
+def _has_value_plusargs(node):
+    if isinstance(node, dict):
+        return node.get("kind") == "ValuePlusargsExpr" or any(
+            _has_value_plusargs(value) for value in node.values())
+    return isinstance(node, list) and any(_has_value_plusargs(value) for value in node)
+
+
+def _lower_plusargs_processes(processes):
+    """Sequence stateful queries at their source control boundary.
+
+    Nonlogical operands with a read/write dependency have unspecified source
+    evaluation order, so they stay loud. Logical operands use the IEEE
+    short-circuit rule, including evaluation of the RHS for an unknown LHS.
+    """
+    counter = 0
+
+    def fresh(value, width=None):
+        nonlocal counter
+        counter += 1
+        width = width if width is not None else width_of(value)
+        if width is None or width <= 0:
+            raise ValueError("integral expression width")
+        name = "$plusargs:" + str(counter)
+        ident = {"kind": "Ident", "span": None, "name": name,
+                 "width": width, "two_state": False}
+        decl = {"kind": "LocalDecl", "span": None, "name": name,
+                "width": width, "two_state": False, "init": value,
+                "automatic_plusargs": True}
+        return ident, decl
+
+    def block(statements):
+        return {"kind": "Block", "span": None, "stmts": statements}
+
+    def assign(target, value):
+        return {"kind": "BlockingAssign", "span": None, "target": target, "value": value}
+
+    def zero(width):
+        return {"kind": "Literal", "span": None, "width": width, "bits": "0" * width}
+
+    def written(node):
+        if isinstance(node, dict):
+            if node.get("kind") == "ValuePlusargsExpr":
+                return set(_converted_ident_names(node["target"]))
+            return set().union(*(written(value) for value in node.values()))
+        if isinstance(node, list):
+            return set().union(*(written(value) for value in node))
+        return set()
+
+    def expression(node):
+        if not _has_value_plusargs(node):
+            if not _case_expression_ok(node):
+                raise ValueError("unsupported operand")
+            return [], node
+        kind = node["kind"]
+        if kind == "ValuePlusargsExpr":
+            result, declaration = fresh(zero(32))
+            call = dict(node, kind="ValuePlusargs", result=result)
+            return [declaration, call], result
+        if kind in ("Unary", "Reduce", "Resize", "SignedResize", "Squash2"):
+            prelude, operand = expression(node["operand"])
+            return prelude, dict(node, operand=operand)
+        if kind != "Binary":
+            raise ValueError("effect context")
+        left, right = node["left"], node["right"]
+        lp, lv = expression(left)
+        rp, rv = expression(right)
+        if node["op"] not in ("&&", "||"):
+            if (written(left) & set(_converted_ident_names(right)) or
+                    written(right) & set(_converted_ident_names(left))):
+                raise ValueError("unordered dependent operands")
+            return lp + rp, dict(node, left=lv, right=rv)
+        # Capture the LHS before any RHS copyback; initialize the RHS so the
+        # pure evaluator may inspect both operands after a skipped call.
+        captured, save_left = fresh(lv)
+        rhs, save_right = fresh(zero(width_of(rv)))
+        truth = {"kind": "Unary", "span": None, "width": 1, "op": "!",
+                 "operand": {"kind": "Unary", "span": None, "width": 1,
+                             "op": "!", "operand": captured}}
+        skip = zero(1) if node["op"] == "&&" else dict(zero(1), bits="1")
+        guard = {"kind": "Binary", "span": None, "width": 1, "op": "!==",
+                 "left": truth, "right": skip}
+        branch = {"kind": "If", "span": None, "cond": guard,
+                  "then": block(rp + [assign(rhs, rv)]), "else": None}
+        return lp + [save_left, save_right, branch], dict(node, left=captured, right=rhs)
+
+    def lower(node):
+        if isinstance(node, list):
+            return [lower(value) for value in node]
+        if not isinstance(node, dict):
+            return node
+        kind = node.get("kind")
+        field = "cond" if kind == "If" else "value" if kind == "BlockingAssign" else None
+        if field is not None and _has_value_plusargs(node[field]):
+            try:
+                prelude, value = expression(node[field])
+                rest = {key: lower(child) for key, child in node.items() if key != field}
+                return block(prelude + [dict(rest, **{field: value})])
+            except ValueError as error:
+                return {"kind": "Unsupported", "span": node.get("span"),
+                        "sv_kind": "Plusargs:expression-effects", "text": str(error)}
+        if kind == "ValuePlusargsExpr":
+            return {"kind": "Unsupported", "span": node.get("span"),
+                    "sv_kind": "Plusargs:statement-context", "text": "stateful input query"}
+        return {key: lower(value) for key, value in node.items()}
+
+    return lower(processes)
+
+
 def _case_source_expression_ok(expression, *, packed_members=False):
     """Check bound source operands before constant folding can erase effects."""
     pure = True
@@ -3536,6 +3687,9 @@ def _case_source_expression_ok(expression, *, packed_members=False):
     def check(node):
         nonlocal pure
         kind = type(node).__name__
+        if (_SYM is None and _plusargs_call(node)
+                and node.subroutineName == "$test$plusargs"):
+            return VisitAction.Skip
         if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
             return VisitAction.Skip
         if kind == "CallExpression" and _bit_query_call(node):
@@ -4671,6 +4825,12 @@ def convert_module(sm, inst):
             others.append(internal_error(exc))
 
     processes = _hoist_static_local_arrays(processes, decls)
+    processes = _lower_plusargs_processes(processes)
+    decls = _lower_plusargs_processes(decls)
+    if _generated_storage_collision(ports, decls, processes, "$plusargs:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "Plusargs:storage-collision",
+                       "text": "generated input-query storage collides with a binding"})
     if _generated_storage_collision(ports, decls, processes, "$local_array:"):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "VariableDeclStatement:array-storage-collision",
@@ -4950,6 +5110,8 @@ def convert_design(sm, comp):
                              "InsideExpression", "lowered membership")
     _reject_invalid_lowering(sm, comp, modules, others, "implication_lowered",
                              "LogicalImplication", "lowered implication")
+    _reject_invalid_lowering(sm, comp, modules, others, "plusargs_lowered",
+                             "Plusargs", "command-line input query")
     _reject_invalid_lowering(sm, comp, modules, others, "scanf_lowered",
                              "Scanf", "formatted input")
     _reject_invalid_lowering(sm, comp, modules, others, "enum_method_lowered",

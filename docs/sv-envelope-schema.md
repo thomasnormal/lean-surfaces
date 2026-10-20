@@ -1251,3 +1251,22 @@ initializers, as `SelfCheck.Design.requiresTimeZero`. `runSelfCheck` may
 evaluate it; `elabTimedDesign` rejects the design before creating a timed
 world. An ordinary zero literal carries no restriction. The existing marker
 is admission metadata and does not define a dynamic clock query.
+
+### Explicit plusarg input queries
+
+Legacy `TestPlusargs` expressions carry `format` (the literal query),
+`width = 32`, `signed = true` and `plusargs_lowered = true`.
+`ValuePlusargs` statements carry a literal integral `format`, a packed
+`target`, and a generated identifier `result`. Their original expression
+context lowers to ordinary `Block`, `If`, `LocalDecl` and assignment nodes,
+retaining short-circuit placement. Generated declarations carry
+`automatic_plusargs = true` and use collision-checked `$plusargs:` names.
+`ValuePlusargsExpr` is an internal conversion marker; unsupported placements
+become `Unsupported` before an envelope is emitted.
+
+The loader requires an explicit ordered list of plusarg contents without
+leading `+`. It specializes pure queries to literals and stateful queries to
+existing packed copyback plus return assignments. A miss emits only the return
+assignment. Missing inputs or unsupported conversion observations refuse
+loading. A compilation with frontend errors and any admitted query also
+retains `Plusargs:invalid-compilation`. See [the contract](sv-plusargs.md).

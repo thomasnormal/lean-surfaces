@@ -28,7 +28,7 @@
    ],
    [
     "CallExpression",
-    3496
+    3454
    ],
    [
     "VariableSymbol:2state",
@@ -587,6 +587,10 @@
     10
    ],
    [
+    "Plusargs:integral-format",
+    10
+   ],
+   [
     "ArbitrarySymbolExpression",
     10
    ],
@@ -852,8 +856,8 @@
    ]
   ],
   "by_status": {
-   "clean": 3253,
-   "partial": 18716,
+   "clean": 3284,
+   "partial": 18685,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -914,7 +918,7 @@
     52
    ],
    "simulation": [
-    2756,
+    2787,
     18671
    ],
    "simulation elaboration": [
@@ -1287,9 +1291,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 51,
+    "clean": 82,
     "error": 0,
-    "partial": 849,
+    "partial": 818,
     "skip_include": 0,
     "total": 900,
     "unlockable": 0

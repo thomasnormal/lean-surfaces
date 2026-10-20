@@ -245,11 +245,12 @@
                 "kind": "Int",
                 "span": {
                   "line": 9,
-                  "col": 16,
+                  "col": 23,
                   "end_line": 9,
-                  "end_col": 25
+                  "end_col": 24
                 },
-                "value": 0
+                "value": 0,
+                "resolved_width": 32
               }
             }
           }

@@ -1145,21 +1145,23 @@
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 32,
+                            "col": 39,
                             "end_line": 9,
-                            "end_col": 43
+                            "end_col": 40
                           },
-                          "value": 9
+                          "value": 9,
+                          "resolved_width": 32
                         },
                         "lsb": {
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 32,
+                            "col": 41,
                             "end_line": 9,
-                            "end_col": 43
+                            "end_col": 42
                           },
-                          "value": 6
+                          "value": 6,
+                          "resolved_width": 32
                         }
                       },
                       {
@@ -1186,21 +1188,23 @@
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 45,
+                            "col": 52,
                             "end_line": 9,
-                            "end_col": 56
+                            "end_col": 53
                           },
-                          "value": 5
+                          "value": 5,
+                          "resolved_width": 32
                         },
                         "lsb": {
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 45,
+                            "col": 54,
                             "end_line": 9,
-                            "end_col": 56
+                            "end_col": 55
                           },
-                          "value": 0
+                          "value": 0,
+                          "resolved_width": 32
                         }
                       }
                     ]
@@ -1269,21 +1273,23 @@
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 32,
+                            "col": 39,
                             "end_line": 9,
-                            "end_col": 43
+                            "end_col": 40
                           },
-                          "value": 9
+                          "value": 9,
+                          "resolved_width": 32
                         },
                         "lsb": {
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 32,
+                            "col": 41,
                             "end_line": 9,
-                            "end_col": 43
+                            "end_col": 42
                           },
-                          "value": 6
+                          "value": 6,
+                          "resolved_width": 32
                         }
                       },
                       {
@@ -1310,21 +1316,23 @@
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 45,
+                            "col": 52,
                             "end_line": 9,
-                            "end_col": 56
+                            "end_col": 53
                           },
-                          "value": 5
+                          "value": 5,
+                          "resolved_width": 32
                         },
                         "lsb": {
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 45,
+                            "col": 54,
                             "end_line": 9,
-                            "end_col": 56
+                            "end_col": 55
                           },
-                          "value": 0
+                          "value": 0,
+                          "resolved_width": 32
                         }
                       }
                     ]
@@ -1393,21 +1401,23 @@
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 32,
+                            "col": 39,
                             "end_line": 9,
-                            "end_col": 43
+                            "end_col": 40
                           },
-                          "value": 9
+                          "value": 9,
+                          "resolved_width": 32
                         },
                         "lsb": {
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 32,
+                            "col": 41,
                             "end_line": 9,
-                            "end_col": 43
+                            "end_col": 42
                           },
-                          "value": 6
+                          "value": 6,
+                          "resolved_width": 32
                         }
                       },
                       {
@@ -1434,21 +1444,23 @@
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 45,
+                            "col": 52,
                             "end_line": 9,
-                            "end_col": 56
+                            "end_col": 53
                           },
-                          "value": 5
+                          "value": 5,
+                          "resolved_width": 32
                         },
                         "lsb": {
                           "kind": "Int",
                           "span": {
                             "line": 9,
-                            "col": 45,
+                            "col": 54,
                             "end_line": 9,
-                            "end_col": 56
+                            "end_col": 55
                           },
-                          "value": 0
+                          "value": 0,
+                          "resolved_width": 32
                         }
                       }
                     ]

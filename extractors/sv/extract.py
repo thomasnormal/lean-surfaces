@@ -2794,8 +2794,11 @@ def _convert_sym_select_expr(sm, e, cname):
             left = int(source_type.range.left)
             right = int(source_type.range.right)
             position = _constant_dimension_selector(index)
-            canonical = left == int(source_type.bitWidth) - 1 and right == 0
-            if position is not None and type(index).__name__ in (
+            # Indices count outer elements. The semantic elaborator applies
+            # their stride, so a multidimensional [N-1:0] range is canonical
+            # even when its total bit width exceeds N.
+            canonical = left >= 0 and right == 0
+            if not canonical and position is not None and type(index).__name__ in (
                     "IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
                 low, high = min(left, right), max(left, right)
                 if position < low or position > high:
@@ -2822,7 +2825,12 @@ def _convert_sym_select_expr(sm, e, cname):
             source_kind = type(source_type).__name__
             left_value = _constant_dimension_selector(e.left)
             right_value = _constant_dimension_selector(e.right)
+            # Canonical bounds remain expressions with their original spans.
+            # A select outside the default width can be valid at another
+            # parameter point, so only shifted/reversed labels are folded.
             if (source_kind == "PackedArrayType" and
+                    not (int(source_type.range.left) >= 0 and
+                         int(source_type.range.right) == 0) and
                     left_value is not None and right_value is not None and
                     type(e.left).__name__ in
                     ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral") and

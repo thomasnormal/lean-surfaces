@@ -3,10 +3,11 @@
 
 Backends (--sim): Xcelium `xrun` (normative for M0, present on the lab host)
 and Icarus Verilog `iverilog`/`vvp` (portable, used on generic CI; 4-state,
-so x/z cases are in scope). Default `auto` prefers xrun, falls back to
-iverilog, and — so CI step logic stays simple — prints a SKIP line and exits
-0 when NO simulator is on PATH. When a simulator exists, any mismatch is a
-hard failure.
+so x/z cases are in scope). Default `auto` prefers xrun, then iverilog.
+No available simulator means COULD NOT VERIFY, exit 1. Unexpected
+mismatches are hard failures. A documented Icarus disagreement requires
+the exact bound source, envelope, stimulus, generated testbench and BOTH
+complete traces; it is reported separately from simulator matches.
 
 Per case in harness/sv/cases.json:
   1. generate a testbench (gen_tb.py) from the case + the example's extractor
@@ -20,12 +21,14 @@ Per case in harness/sv/cases.json:
      `src`, source order; `race_blk` legitimately accepts `src` or `rev` and
      the table reports which one matched).
 
-Any mismatch is an interpreter bug (the simulator is normative for M0).
+The IEEE arithmetic rule and recorded Xcelium observation adjudicate the
+Icarus unary-plus discrepancy; see docs/sv-unary-arithmetic.md. A changed
+or resolved disagreement fails until reviewed, rather than becoming a skip.
 
 Usage: python3 harness/sv/diff_test.py [--sim {auto,xrun,iverilog}]
                                        [--case NAME] [--workdir DIR] [--keep]
-Exit status: 0 iff every selected case passed (or no simulator exists in
---sim auto, reported as SKIP).
+Exit status: 0 iff every selected case matched or reproduced an exact
+documented simulator disagreement, with separate counts for each outcome.
 
 Prerequisite plumbing: the runner imports LeanModels.Sv.*, whose oleans are
 NOT built by plain `lake build` (the SV lane is invisible to it in M0), so
@@ -49,15 +52,12 @@ RUNNER = os.path.join("harness", "sv", "runner.lean")  # repo-relative for lake
 
 sys.path.insert(0, HARNESS_DIR)
 import gen_tb  # noqa: E402
+from oracle_disagreements import HarnessError, oracle_disagreement, report_annotation  # noqa: E402
 
 # Dependency order matters: each may import the previous ones.
 SV_LEAN_MODULES = ["Basic", "Ast", "Json", "Semantics"]
 
 SIGMA_NAMES = ("src", "rev")
-
-
-class HarnessError(Exception):
-    pass
 
 
 def run_cmd(cmd, cwd, timeout):
@@ -159,7 +159,7 @@ def run_lean(envelope_rel, case_name, sigma):
 
 
 def show_diff(sim, case_name, sigma, sim_lines, lean):
-    print("  MISMATCH for case '%s' (sigma=%s): %s (ground truth) vs Lean:"
+    print("  MISMATCH for case '%s' (sigma=%s): %s vs Lean:"
           % (case_name, sigma, sim))
     n = max(len(sim_lines), len(lean))
     for i in range(n):
@@ -239,8 +239,11 @@ def main():
             "Examples", "system-verilog", example, example + ".sv.json")
         example_sv = os.path.join(
             REPO, "Examples", "system-verilog", example, example + ".sv")
-        with open(os.path.join(REPO, envelope_rel)) as f:
-            envelope = json.load(f)
+        with open(os.path.join(REPO, envelope_rel), "rb") as f:
+            envelope_bytes = f.read()
+        envelope = json.loads(envelope_bytes)
+        with open(example_sv, "rb") as f:
+            source_bytes = f.read()
 
         print("case %-20s (%s, %d cycles) ..." % (name, example, len(case["stimulus"])))
         tb_text = gen_tb.generate_tb(envelope, case)
@@ -257,18 +260,34 @@ def main():
             if lean == sim_trace:
                 matched = sigma
                 break
+        declared = None
+        try:
+            declared = oracle_disagreement(
+                case, sim, source_bytes, envelope_bytes, tb_text,
+                sim_trace, lean_by_sigma)
+        except HarnessError as error:
+            print("  FAIL: %s" % error)
+            matched = None
+        if declared:
+            print("  DECLARED SIMULATOR DISAGREEMENT: %s (not a match)" % declared)
+            print("  Reference: %s" % case["oracle_disagreement"]["reference"])
+            report_annotation("%s: declared simulator disagreement %s; not a match" % (name, declared))
         if matched is None:
-            all_pass = False
-            for sigma in sigmas:
-                show_diff(sim, name, sigma, sim_trace, lean_by_sigma[sigma])
-        results.append((name, example, len(case["stimulus"]), sigmas, matched))
+            if declared is None:
+                all_pass = False
+            for sigma, lean in lean_by_sigma.items():
+                show_diff(sim, name, sigma, sim_trace, lean)
+        results.append((name, example, len(case["stimulus"]), sigmas, matched, declared))
 
     print()
     print("simulator: %s" % sim)
     print("%-22s %-10s %7s  %-18s %s" % ("CASE", "EXAMPLE", "CYCLES", "SIGMA", "RESULT"))
     print("-" * 72)
-    for name, example, ncyc, sigmas, matched in results:
-        if matched is None:
+    for name, example, ncyc, sigmas, matched, declared in results:
+        if declared:
+            sig = "/".join(sigmas)
+            res = "DECLARED DISAGREEMENT (%s)" % declared
+        elif matched is None:
             sig = "/".join(sigmas)
             res = "FAIL"
         else:
@@ -276,7 +295,11 @@ def main():
             res = "PASS" if sigmas == ["src"] else "PASS (matched %s)" % ("sigma_" + matched)
         print("%-22s %-10s %7d  %-18s %s" % (name, example, ncyc, sig, res))
     print("-" * 72)
-    print("overall: %s (%d case(s))" % ("PASS" if all_pass else "FAIL", len(cases)))
+    matches = sum(matched is not None for _, _, _, _, matched, _ in results)
+    disagreements = sum(declared is not None for _, _, _, _, _, declared in results)
+    print("overall: %s (%d matched, %d declared simulator disagreement(s), %d failed)"
+          % ("OK" if all_pass else "FAIL", matches, disagreements,
+             len(results) - matches - disagreements))
 
     if made_tmp and not args.keep and all_pass:
         shutil.rmtree(workroot, ignore_errors=True)

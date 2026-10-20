@@ -49,6 +49,14 @@ change is listed here under **Changed** or **Removed**.
 
 ### Fixed
 
+- SV envelope regeneration preserves canonical packed select expressions,
+  including genvar indices into multidimensional vectors and selects beyond
+  default parameter widths. CI runs the extractor regressions and publishes
+  failed gate names as annotations.
+- SV differential checks report exact, source-bound Icarus disagreements
+  separately from matches. Known compiler/runtime limitations remain visible
+  as unavailable oracle coverage, with their diagnostics checked on each run;
+  changed or resolved declarations require review.
 - `tools/leanpy --compare` now compares exception classes as well as stdout
   and exit status, so two different uncaught exceptions cannot be reported as
   a false `MATCH` merely because CPython maps both to exit 1.

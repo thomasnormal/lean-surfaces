@@ -32,3 +32,8 @@ real continuous assignments with four input patterns. The proof module
 certifies its expression against the extracted assignment and proves known
 identity and unknown collapse for arbitrary input vectors. Separate concrete
 checks exercise both symbolic arithmetic-operand paths.
+
+Icarus 12.0 preserves the two x/z operands in that directed case, disagreeing
+with the arithmetic rule and the recorded Xcelium observation. The harness
+checks and reports this exact [simulator disagreement](sv-oracle-disagreements.md#unary-plus)
+separately from matches, preserving both complete traces and all stimuli.

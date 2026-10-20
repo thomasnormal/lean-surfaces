@@ -336,6 +336,7 @@ sv_python() { # -> prints an interpreter that can import pyslang; 1 if none can
 sv_round_trip_step() {
   local py
   if py="$(sv_python)"; then
+    step "sv-extractor-tests" "$py" -m unittest discover -s extractors/sv
     step "sv-round-trip" "$py" harness/sv_round_trip.py
     return
   fi
@@ -348,7 +349,7 @@ sv_round_trip_step() {
     echo "=== [sv-round-trip] FAIL — no python3.12/python3 can import pyslang,"
     echo "    but .github/workflows/ci.yml installs it on this runner.  A gate"
     echo "    that cannot run in CI is not a skip, it is a broken install."
-    fail+=("sv-round-trip")
+    fail+=("sv-extractor-tests" "sv-round-trip")
   else
     echo "=== [sv-round-trip] SKIP (no python3.12/python3 can import pyslang —"
     echo "    an environment fact, not envelope drift; pyslang is not tracked)"
@@ -358,7 +359,7 @@ sv_round_trip_step() {
     # compares, refusing by name on a wrong family instead of handing anyone
     # 18 DIVERGEs and the impression that the envelopes drifted.
     echo "    To run it here: python3.12 -m pip install 'pyslang~=11.0'"
-    skip+=("sv-round-trip")
+    skip+=("sv-extractor-tests" "sv-round-trip")
   fi
 }
 
@@ -561,18 +562,18 @@ SVNO
   PATH="$vstub/svok:$vpath"; hash -r
   sv_round_trip_step > "$vout" 2>&1
   vcheck "a python that imports pyslang RUNS the gate" "$( [ -e "$vstub/SVRAN" ] && echo ran || echo none )" "ran"
-  vcheck "  ...and it is a pass, not a skip"       "${pass[*]}" "sv-round-trip"
+  vcheck "  ...and both extractor gates pass"      "${pass[*]}" "sv-extractor-tests sv-round-trip"
 
   rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
   PATH="$vstub/svno:$vpath"; hash -r
   GITHUB_ACTIONS= sv_round_trip_step > "$vout" 2>&1
-  vcheck "no pyslang off a CI host is a named SKIP" "${skip[*]}" "sv-round-trip"
+  vcheck "no pyslang off a CI host names both SKIPs" "${skip[*]}" "sv-extractor-tests sv-round-trip"
   vcheck "  ...naming the package, not drift"      "$(grep -c 'not envelope drift; pyslang' "$vout")" "1"
   vcheck "  ...and the harness never ran"          "$( [ -e "$vstub/SVRAN" ] && echo ran || echo none )" "none"
 
   rm -f "$vstub/SVRAN"; pass=(); fail=(); skip=()
   GITHUB_ACTIONS=true sv_round_trip_step > "$vout" 2>&1
-  vcheck "no pyslang ON a runner is a FAILURE"     "${fail[*]}" "sv-round-trip"
+  vcheck "no pyslang ON a runner names both FAILs" "${fail[*]}" "sv-extractor-tests sv-round-trip"
   vcheck "  ...naming the workflow that installs it" "$(grep -c 'workflows/ci.yml installs it' "$vout")" "1"
 
   # A TRACKED FILE IS NOT OPTIONAL: the gate is called unconditionally, and no
@@ -655,6 +656,7 @@ step  "ci-entrypoint-tests" python3 tools/test_ci_entrypoint.py
 step  "cpp-ci-wiring-tests" python3 tools/test_cpp_ci.py
 step  "xcelium-probe-tests" python3 harness/sv/test_xcelium_probe.py
 step  "sv-oracle-admission-tests" python3 harness/sv/test_oracle_admission.py
+step  "sv-oracle-disagreement-tests" python3 harness/sv/test_oracle_disagreements.py
 step  "ci-oracle-admission-tests" python3 harness/sv/test_ci_oracle_admission.py
 step  "spectre-probe-tests" python3 harness/spice/test_spectre_probe.py
 step  "tool-self-tests" selftests
@@ -748,7 +750,9 @@ else
 fi
 
 # SV lane: prefer Icarus when installed (generic CI and license-free local
-# runs); otherwise use Xcelium on lab hosts. A mismatch is a hard failure.
+# runs); otherwise use Xcelium on lab hosts. Unexpected mismatches and
+# tool errors remain hard failures; exact declared oracle gaps are reported
+# separately by the harnesses (docs/sv-oracle-disagreements.md).
 xcelium_ready=0
 if command -v xrun >/dev/null 2>&1; then
   echo "=== [xcelium-probe] python3 harness/sv/xcelium_probe.py"
@@ -879,4 +883,9 @@ echo "==================== CI SUMMARY ===================="
 echo "PASS: ${pass[*]:-none}"
 echo "SKIP: ${skip[*]:-none}"
 echo "FAIL: ${fail[*]:-none}"
+if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+  for name in "${fail[@]}"; do
+    printf '::error title=CI gate failed::%s failed; see the Full check log for details.\n' "$name"
+  done
+fi
 [ ${#fail[@]} -eq 0 ]

@@ -225,11 +225,12 @@
                 "kind": "Int",
                 "span": {
                   "line": 10,
-                  "col": 16,
+                  "col": 23,
                   "end_line": 10,
-                  "end_col": 25
+                  "end_col": 24
                 },
-                "value": 0
+                "value": 0,
+                "resolved_width": 32
               }
             }
           }

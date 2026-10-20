@@ -48,6 +48,51 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual([p["target"]["index"]["value"] for p in processes],
                          [1, 6])
 
+    def test_generated_multidimensional_elements_keep_symbolic_indices(self):
+        envelope = self.extract(
+            "module top #(parameter N = 4, W = 3) "
+            "(output logic [N-1:0][W-1:0] value); "
+            "for (genvar j = 0; j < N; j++) begin : cells "
+            "assign value[j] = $unsigned(j); end endmodule")
+        module = envelope["design"]["modules"][0]
+        loop, = module["generates"]
+        assignment, = loop["body"]
+        self.assertEqual(assignment["kind"], "Assign")
+        self.assertEqual(assignment["target"]["kind"], "BitSel")
+        self.assertEqual(assignment["target"]["width"], 3)
+        self.assertEqual(assignment["target"]["index"]["kind"], "GenvarRef")
+        self.assertEqual(assignment["target"]["index"]["name"], "j")
+
+    def test_multidimensional_literal_select_retains_element_index(self):
+        envelope = self.extract(
+            "module top(input logic [3:0][2:0] source, "
+            "output logic [2:0] out); assign out = source[2]; endmodule")
+        assignment, = envelope["design"]["modules"][0]["processes"]
+        selection = assignment["value"]
+        self.assertEqual(selection["kind"], "BitSel")
+        self.assertEqual(selection["width"], 3)
+        self.assertEqual(selection["index"]["value"], 2)
+        self.assertEqual(selection["index"].get("resolved_width"), 32)
+        self.assertNotEqual(selection["index"]["span"], selection["span"])
+
+    def test_parameterized_bit_select_is_not_rejected_at_default_width(self):
+        envelope = self.extract(
+            "module top #(parameter W = 5) (input logic [W-1:0] source, "
+            "output logic out); assign out = source[5]; endmodule")
+        assignment, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(assignment["value"]["kind"], "BitSel")
+        self.assertEqual(assignment["value"]["index"]["value"], 5)
+
+    def test_parameterized_part_select_is_not_rejected_at_default_width(self):
+        envelope = self.extract(
+            "module top #(parameter W = 5) (input logic [W-1:0] source, "
+            "output logic [1:0] out); assign out = source[6:5]; endmodule")
+        assignment, = envelope["design"]["modules"][0]["processes"]
+        selection = assignment["value"]
+        self.assertEqual(selection["kind"], "PartSel")
+        self.assertEqual((selection["msb"]["value"], selection["lsb"]["value"]),
+                         (6, 5))
+
     def test_untagged_packed_member_is_a_fixed_window(self):
         envelope = self.extract(
             "module top(input logic [3:0] source, output logic [7:0] out, "

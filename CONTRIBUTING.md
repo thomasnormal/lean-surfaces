@@ -103,8 +103,10 @@ semantics or execution coverage.
 CI admits Xcelium with a completed SystemVerilog readiness simulation
 (`harness/sv/xcelium_probe.py`). An explicit license-checkout refusal records an
 optional-oracle skip; CI still runs Icarus cases and names Xcelium-only skips.
-Timeouts, unexpected probe failures, and every actual fixture mismatch remain
-failures. Direct simulator requests do not bypass fixture errors.
+Timeouts, unexpected probe failures, and unexpected fixture mismatches remain
+failures. Exact, source-bound [simulator disagreements and unavailable
+oracles](docs/sv-oracle-disagreements.md) are reported separately from verified
+matches and tested on every run. Direct requests do not bypass fixture errors.
 
 The installed-Spectre CI branch similarly uses `harness/spice/spectre_probe.py`
 to verify a one-volt DC analysis before running its differential fixtures.

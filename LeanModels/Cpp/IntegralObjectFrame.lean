@@ -51,6 +51,7 @@ namespace IntegralObjectFrame
 inductive Expression where
   | literal (value : IntegralValue)
   | read (declaration : FrontendHandle)
+  | convert (destination : IntegralFormat) (operand : Expression)
   | unary (operation : IntegralUnary) (operand : Expression)
   | binary (operation : IntegralBinary) (left right : Expression)
   deriving Repr, BEq, Inhabited
@@ -176,6 +177,15 @@ partial def evaluate (fuel : Nat) (frame : IntegralObjectFrame) (expression : Ex
                     match frame.store.read access with
                     | .ok value => success frame (.ok value)
                     | .error reason => failure frame (.object reason)
+        | .convert destination operand =>
+            let result := evaluate fuel frame operand
+            match result.result with
+            | .error reason => failure result.frame reason
+            | .ok value => success result.frame <| match value with
+                | .ok value => integralConvert destination value
+                | .invalid reason => .invalid reason
+                | .undefined reason => .undefined reason
+                | .unsupported reason => .unsupported reason
         | .unary operation operand =>
             let result := evaluate fuel frame operand
             match result.result with

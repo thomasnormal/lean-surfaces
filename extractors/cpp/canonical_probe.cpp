@@ -507,6 +507,22 @@ public:
       emitBinaryExpression(expression, visibleExpressions);
   }
 
+  void initializerTypes(const clang::Stmt *statement,
+                        const std::unordered_set<std::string> &visibleNodes,
+                        llvm::json::Array &rows) {
+    if (!statement || !visibleNodes.count(pointerId(statement)))
+      return;
+    if (const auto *expression = llvm::dyn_cast<clang::Expr>(statement)) {
+      auto type = structuredType(expression->getType(), *astContext, 0);
+      if (type && structuredReferencesWitnessed(*type, declarationIds))
+        rows.push_back(llvm::json::Object{
+            {"occurrence", pointerId(expression)},
+            {"kind", expression->getStmtClassName()}, {"type", std::move(*type)}});
+    }
+    for (const auto *child : statement->children())
+      initializerTypes(child, visibleNodes, rows);
+  }
+
   void buildVariableEvidence(const std::unordered_set<std::string> &visibleNodes) {
     for (const clang::Decl *declaration : typedDeclarations) {
       const auto *variable = llvm::dyn_cast<clang::VarDecl>(declaration);
@@ -557,6 +573,10 @@ public:
           init["type"] = std::move(*convertedType);
         else
           supported = false;
+        llvm::json::Array types;
+        initializerTypes(initializer, visibleNodes, types);
+        init["expression_types_api"] = "Clang::Expr initializer type projection v1";
+        init["expression_types"] = std::move(types);
         row["initializer"] = std::move(init);
       }
       if (!visible || !supported) {

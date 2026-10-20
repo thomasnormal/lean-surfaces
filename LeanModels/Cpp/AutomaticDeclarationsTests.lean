@@ -206,4 +206,33 @@ private def rejectsBadJoin : Bool :=
 #guard rejectsUnsupportedForms
 #guard rejectsBadJoin
 
+-- Legacy root types cannot establish the operand type of a unary expression.
+private def logicalInitializer (types : List CppInitializerExpressionType) :
+    Except String AdmittedAutomaticDeclStmt :=
+  let raw := object [("id", text "0x11"), ("kind", text "UnaryOperator"),
+    ("opcode", text "!"), ("inner", .array [object [
+      ("id", text "0x12"), ("kind", text "ImplicitCastExpr"),
+      ("castKind", text "IntegralToBoolean"), ("inner", .array [literal "0x13" "2"])]])]
+  let boolType : CppTypeEvidence := .builtin .boolean
+  let initializer : CppVariableInitializerEvidence := {
+    occurrence := handle "0x11", kind := "UnaryOperator", sourceType := boolType,
+    type := boolType, expressionTypes := types}
+  admit (probe (declarationStmt [varNode "0x10" (some raw)]))
+    [typeRow (handle "0x10") intType]
+    [variableRow (handle "0x10") .c (some initializer)] [] .lp64 [] [0]
+
+private def logicalTypes : List CppInitializerExpressionType := [
+  {occurrence := handle "0x11", kind := "UnaryOperator", type := .builtin .boolean},
+  {occurrence := handle "0x12", kind := "ImplicitCastExpr", type := .builtin .boolean},
+  {occurrence := handle "0x13", kind := "IntegerLiteral", type := intType}]
+
+#guard logicalInitializer [] matches .error _
+#guard logicalInitializer (logicalTypes.take 2) matches .error _
+#guard match logicalInitializer logicalTypes, opened with
+  | .ok admitted, .ok frame =>
+      let result := frame.execute 12
+        (.sequence admitted.statement (.return_ (.read (handle "0x10"))))
+      (result.result matches .ok (some ⟨.signed 32, 0⟩))
+  | _, _ => false
+
 end LeanModels.Cpp.AutomaticDeclarationsTests

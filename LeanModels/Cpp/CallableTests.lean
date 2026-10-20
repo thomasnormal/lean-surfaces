@@ -703,6 +703,20 @@ def unaryTypes : List TypeEvidenceRow := [
 def admitUnary : Except String CallableFunction :=
   admitCallableFunction unaryProbe unaryTypes [] TargetProfile.lp64 [0]
 
+-- Value conversion removes constness without changing the object descriptor.
+#guard match parseCallableExpression .lp64
+    [{declaration := {value := "0x10"}, name := some "value",
+      type := .qualified true false intType}] []
+    (implicitCast "0x33" (declRefNode "0x34" "0x10" "value")) none (some intType) with
+  | .ok expression => expression.type == intType &&
+      expression.sourceType == .qualified true false intType
+  | .error _ => false
+
+#guard (parseCallableExpression .lp64
+    [{declaration := {value := "0x10"}, name := some "value",
+      type := .qualified false true intType}] []
+    (implicitCast "0x33" (declRefNode "0x34" "0x10" "value")) none (some intType)) matches .error _
+
 def logicalProbe : DeclarationProbe :=
   probeFor (functionSource "both" [parameterRaw "0x10" "left", parameterRaw "0x11" "right"]
     (body (returnStmt "0x31" (object [

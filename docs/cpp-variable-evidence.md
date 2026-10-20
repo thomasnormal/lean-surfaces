@@ -43,6 +43,15 @@ with witnessed record/enum handles and no parsing of `qualType` text.
 The source observation removes parentheses and implicit casts only; it is not
 a reconstruction of arbitrary source syntax or an initialization judgment.
 
+New initializer projections also carry `expression_types_api` =
+`Clang::Expr initializer type projection v1` and `expression_types`: occurrence,
+kind and structured `Expr::getType()` rows for representable expressions in
+the initializer subtree. The producer follows statement children and filters
+against the observed JSON dump. Unsupported child types have no successful
+row; lowering a child without a row refuses. The complete raw AST is retained.
+Legacy projections without both fields still validate; they cannot establish
+unary operand types or nested integral conversions.
+
 Copy-list initialization has style `c` and an `InitListExpr` child. Empty
 list initialization has a present `InitListExpr`; it differs from an absent
 initializer. Parenthesized aggregate initialization has style `paren-list`
@@ -72,6 +81,12 @@ implicit parameters retain the getter observation without inferring their
 internal storage from the ordinary-local flag. Coherent
 repeated rows are accepted; conflicting repeats refuse, including differences
 in initializer source or converted type.
+
+Subexpression types join only within their initializer's root/`inner` subtree,
+with exact occurrence/kind agreement, witnessed type references, consensus for
+repeated handles and a root type agreeing with the initializer projection.
+Malformed or partially tagged supplements refuse. These are frontend type
+observations, not types inferred from `qualType` spellings.
 
 The streaming producer observes the same root/`inner` reachability before
 publishing rows. Unsupported declaration or initializer types, unwitnessed

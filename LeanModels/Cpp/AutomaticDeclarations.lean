@@ -126,14 +126,41 @@ private def parseLiteral (profile : TargetProfile) (raw : Raw)
     | .error _ => throw "automatic declaration: literal type is unavailable in target profile"
   pure (.literal {format, value})
 
+private def initializerType (rows : List CppInitializerExpressionType) (raw : Raw) :
+    Except String CppTypeEvidence := do
+  let occurrence ← evidenceHandle raw "id"
+  let kind ← evidenceText raw "kind"
+  let matchingRows := rows.filter (·.occurrence == occurrence)
+  let row :: rest := matchingRows
+    | throw "automatic declaration: missing initializer subexpression type"
+  unless row.kind == kind && rest.all (fun other => other == row) do
+    throw "automatic declaration: conflicting initializer subexpression type"
+  pure row.type
+
+private def integralFormat (profile : TargetProfile) (type : CppTypeEvidence) :
+    Except String IntegralFormat := do
+  let integer ← requireIntegralType "subexpression type" type
+  match profile.format integer with
+  | .ok format => pure format
+  | .error _ => throw "automatic declaration: subexpression type unavailable in target profile"
+
 private partial def parseExpression (profile : TargetProfile)
     (available : List FrontendHandle)
     (expressionRows : List CppBinaryExpressionEvidence)
+    (types : List CppInitializerExpressionType)
     (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence) :
     Except String Expression := do
   let kind ← evidenceText raw "kind"
+  let actual ← if types.isEmpty then pure none else some <$> initializerType types raw
+  if let some type := actual then
+    let _ ← requireIntegralType "subexpression type" type
+    if let some expected := typeExpected then
+      unless type == expected do
+        throw "automatic declaration: subexpression result disagrees with typed evidence"
   match kind with
-  | "IntegerLiteral" => parseLiteral profile raw sourceExpected typeExpected
+  | "IntegerLiteral" =>
+      parseLiteral profile raw (actual.orElse (fun _ => sourceExpected))
+        (actual.orElse (fun _ => typeExpected))
   | "DeclRefExpr" =>
       let reference ← evidenceField raw "referencedDecl"
       let declaration ← evidenceHandle reference "id"
@@ -153,17 +180,23 @@ private partial def parseExpression (profile : TargetProfile)
       let children ← rawChildren raw
       let [child] := children
         | throw "automatic declaration: initializer cast requires one child"
-      let childExpected := if castKind == "IntegralCast" || castKind == "IntegralToBoolean"
-        then sourceExpected else sourceExpected
-      parseExpression profile available expressionRows child childExpected
-        (if castKind == "IntegralCast" || castKind == "IntegralToBoolean"
-          then sourceExpected else typeExpected)
+      if let some destination := actual then
+        let childType ← initializerType types child
+        let operand ← parseExpression profile available expressionRows types child
+          (some childType) (some childType)
+        let format ← integralFormat profile destination
+        pure (.convert format operand)
+      else
+        unless ["LValueToRValue", "NoOp"].contains castKind do
+          throw "automatic declaration: integral cast requires subexpression type evidence"
+        parseExpression profile available expressionRows types child sourceExpected typeExpected
   | "ParenExpr" | "ConstantExpr" | "ExprWithCleanups" | "MaterializeTemporaryExpr" |
       "CXXConstructExpr" | "ParenListExpr" =>
       let children ← rawChildren raw
       let [child] := children
         | throw "automatic declaration: expression wrapper requires one child"
-      parseExpression profile available expressionRows child sourceExpected typeExpected
+      parseExpression profile available expressionRows types child
+        (actual.orElse (fun _ => sourceExpected)) (actual.orElse (fun _ => typeExpected))
   | "BinaryOperator" =>
       let occurrence ← evidenceHandle raw "id"
       let some evidence := expressionRows.find? (fun row => row.occurrence == occurrence)
@@ -180,11 +213,12 @@ private partial def parseExpression (profile : TargetProfile)
         unless child.text "id" == some operand.occurrence.value &&
             child.text "kind" == some operand.kind do
           throw "automatic declaration: binary initializer child disagrees with evidence"
-        unless operand.sourceType == operand.type do
-          throw "automatic declaration: implicit operand conversion is outside the frame expression fragment"
-      let left ← parseExpression profile available expressionRows leftRaw
+        if types.isEmpty then
+          unless operand.sourceType == operand.type do
+            throw "automatic declaration: implicit operand conversion requires subexpression type evidence"
+      let left ← parseExpression profile available expressionRows types leftRaw
         (some leftEvidence.sourceType) (some leftEvidence.type)
-      let right ← parseExpression profile available expressionRows rightRaw
+      let right ← parseExpression profile available expressionRows types rightRaw
         (some rightEvidence.sourceType) (some rightEvidence.type)
       if let some expected := typeExpected then
         unless expected == evidence.result do
@@ -197,13 +231,22 @@ private partial def parseExpression (profile : TargetProfile)
       let children ← rawChildren raw
       let [child] := children
         | throw "automatic declaration: unary initializer requires one child"
-      let _ ← match sourceExpected with
-        | some type => requireIntegralType "unary initializer source type" type
-        | none => pure .int
-      let _ ← match typeExpected with
-        | some type => requireIntegralType "unary initializer result type" type
-        | none => pure .int
-      let operand ← parseExpression profile available expressionRows child sourceExpected typeExpected
+      let some resultType := actual
+        | throw "automatic declaration: unary initializer requires subexpression type evidence"
+      let operandType ← initializerType types child
+      let operandInteger ← requireIntegralType "unary operand type" operandType
+      let resultInteger ← requireIntegralType "unary result type" resultType
+      if operation == .logicalNot then
+        unless operandInteger == .boolean && resultInteger == .boolean do
+          throw "automatic declaration: logical negation requires boolean operand/result"
+      else
+        let promoted ← match integralPromotion profile operandInteger with
+          | .ok type => pure type
+          | .error _ => throw "automatic declaration: unary promotion is unresolved"
+        unless operandInteger == promoted && resultInteger == promoted do
+          throw "automatic declaration: unary operand/result disagrees with promotion"
+      let operand ← parseExpression profile available expressionRows types child
+        (some operandType) (some operandType)
       pure (.unary operation operand)
   | _ => throw s!"automatic declaration: unsupported initializer expression {kind}"
 
@@ -219,6 +262,7 @@ private def parseInitializer (profile : TargetProfile)
     throw "automatic declaration: initializer identity disagrees with evidence"
   let _ ← requireIntegralType "initializer source type" evidence.sourceType
   let _ ← requireIntegralType "initializer result type" evidence.type
+  let sourceType := if evidence.expressionTypes.isEmpty then evidence.sourceType else evidence.type
   match row.initStyle with
   | .call | .parenList =>
       let value ← if evidence.kind == "InitListExpr" then
@@ -228,8 +272,8 @@ private def parseInitializer (profile : TargetProfile)
           | _ => throw "automatic declaration: direct scalar initialization requires one element"
         else pure initializer
       let expression ← parseExpression profile (row.occurrence :: available)
-        expressionRows value (some evidence.sourceType) (some evidence.type)
-      pure (.declare row.occurrence destinationType evidence.sourceType expression)
+        expressionRows evidence.expressionTypes value (some evidence.sourceType) (some evidence.type)
+      pure (.declare row.occurrence destinationType sourceType expression)
   | .c | .list =>
       if evidence.kind == "InitListExpr" then
         let children ← rawChildren initializer
@@ -237,8 +281,8 @@ private def parseInitializer (profile : TargetProfile)
         | [] => pure (.zeroDeclare row.occurrence destinationType)
         | [child] =>
             let expression ← parseExpression profile (row.occurrence :: available)
-              expressionRows child (some evidence.sourceType) (some evidence.type)
-            pure (.declare row.occurrence destinationType evidence.sourceType expression)
+              expressionRows evidence.expressionTypes child (some evidence.sourceType) (some evidence.type)
+            pure (.declare row.occurrence destinationType sourceType expression)
         | _ => throw "automatic declaration: initializer list requires zero or one element"
       else if evidence.kind == "CXXScalarValueInitExpr" then
         let children ← rawChildren initializer
@@ -247,8 +291,8 @@ private def parseInitializer (profile : TargetProfile)
         pure (.zeroDeclare row.occurrence destinationType)
       else
         let expression ← parseExpression profile (row.occurrence :: available)
-          expressionRows initializer (some evidence.sourceType) (some evidence.type)
-        pure (.declare row.occurrence destinationType evidence.sourceType expression)
+          expressionRows evidence.expressionTypes initializer (some evidence.sourceType) (some evidence.type)
+        pure (.declare row.occurrence destinationType sourceType expression)
 
 private def sequenceAll : List IntegralObjectFrame.Statement → IntegralObjectFrame.Statement
   | [] => .skip

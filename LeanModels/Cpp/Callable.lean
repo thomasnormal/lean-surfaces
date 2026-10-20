@@ -194,6 +194,11 @@ private def parameterType? (parameters : List CallableParameter) (declaration : 
     Option CppTypeEvidence :=
   parameters.find? (fun parameter => parameter.declaration == declaration) |>.map (·.type)
 
+private def integralRValueType : CppTypeEvidence → Option CppTypeEvidence
+  | .builtin type => some (.builtin type)
+  | .qualified _ false base => integralRValueType base
+  | _ => none
+
 private def validateCommaIntegralTyping (row : CppBinaryExpressionEvidence) : Except String Unit := do
   let some left := row.operands[0]?
     | throw "callable: comma expression lacks a left operand"
@@ -264,7 +269,15 @@ partial def parseCallableExpression (profile : TargetProfile)
       let children ← rawChildren raw
       match children with
       | [child] =>
-          if castKind == "IntegralToBoolean" || castKind == "IntegralCast" then
+          if castKind == "LValueToRValue" then
+            let operand ← parseCallableExpression profile parameters expressionRows child sourceExpected none
+            let some destination := integralRValueType operand.type
+              | throw "callable: lvalue conversion requires a nonvolatile integral type"
+            if typeExpected.isSome && typeExpected != some destination then
+              throw "callable: lvalue conversion result disagrees with expected type"
+            if operand.type == destination then pure operand
+            else pure {expression := .convert operand, sourceType := operand.sourceType, type := destination}
+          else if castKind == "IntegralToBoolean" || castKind == "IntegralCast" then
             let operand ← parseCallableExpression profile parameters expressionRows child none none
             let destination := if castKind == "IntegralToBoolean" then
               .builtin .boolean

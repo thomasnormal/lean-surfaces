@@ -18,11 +18,18 @@ inductive CppVariableInitStyle where
   | c | call | list | parenList
   deriving Repr, BEq, Inhabited
 
+structure CppInitializerExpressionType where
+  occurrence : FrontendHandle
+  kind : String
+  type : CppTypeEvidence
+  deriving Repr, BEq, Inhabited
+
 structure CppVariableInitializerEvidence where
   occurrence : FrontendHandle
   kind : String
   sourceType : CppTypeEvidence
   type : CppTypeEvidence
+  expressionTypes : List CppInitializerExpressionType := []
   deriving Repr, BEq, Inhabited
 
 /-- Frontend observations only. This is not an automatic-local admission judgment. -/
@@ -79,6 +86,18 @@ private def initStyle (name : String) : Except String CppVariableInitStyle :=
 private def CppVariableInitStyle.token : CppVariableInitStyle → String
   | .c => "c" | .call => "call" | .list => "list" | .parenList => "paren-list"
 
+private def parseInitializerTypes (raw : Raw) :
+    Except String (List CppInitializerExpressionType) := do
+  match raw.field "expression_types_api", raw.field "expression_types" with
+  | none, none => pure []
+  | some (.string "Clang::Expr initializer type projection v1"), some (.array rows) =>
+      unless !rows.isEmpty do throw "initializer expression types: empty supplement"
+      rows.mapM fun row => return {
+        occurrence := ← evidenceHandle row "occurrence"
+        kind := ← evidenceText row "kind"
+        type := ← parseCppTypeEvidence (← evidenceField row "type") }
+  | _, _ => throw "initializer expression types: missing or unsupported supplement"
+
 private def parseVariableRow (ordinal : Nat) (raw : Raw) :
     Except String CppVariableEvidence := do
   requireEvidenceText raw "variable_api" variableApi
@@ -94,6 +113,7 @@ private def parseVariableRow (ordinal : Nat) (raw : Raw) :
         kind := ← evidenceText value "kind"
         sourceType := ← parseCppTypeEvidence (← evidenceField value "source")
         type := ← parseCppTypeEvidence (← evidenceField value "type")
+        expressionTypes := ← parseInitializerTypes value
       } : Option CppVariableInitializerEvidence)
     | _ => throw "variable evidence: initializer requires object or explicit null"
   unless hasInitializer == initializer.isSome do
@@ -184,6 +204,20 @@ private def validateVariableNode (probe : DeclarationProbe) (row : CppVariableEv
       unless initializer.sourceType.referencesKnown probe.declarations &&
           initializer.type.referencesKnown probe.declarations do
         throw "variable initializer type references absent declaration"
+      let nodes := variableAstNodes value
+      for expression in initializer.expressionTypes do
+        unless expression.type.referencesKnown probe.declarations do
+          throw "initializer expression type references absent declaration"
+        let matchingRows := nodes.filter (·.text "id" == some expression.occurrence.value)
+        unless !matchingRows.isEmpty && matchingRows.all (·.text "kind" == some expression.kind) do
+          throw "initializer expression type occurrence/kind disagrees with subtree"
+        unless initializer.expressionTypes.all (fun other =>
+            other.occurrence != expression.occurrence || other == expression) do
+          throw "conflicting initializer expression types"
+      unless initializer.expressionTypes.isEmpty || initializer.expressionTypes.any (fun row =>
+          row.occurrence == initializer.occurrence && row.kind == initializer.kind &&
+            row.type == initializer.type) do
+        throw "initializer root type disagrees with expression types"
 
 def validateVariableEvidence (probe : DeclarationProbe) (rows : List CppVariableEvidence) :
     Except String Unit := do

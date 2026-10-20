@@ -109,4 +109,28 @@ private def parses (row : Raw) : Bool :=
 #guard !accepts (probe [set node "inner" (.array [valueNode,
   object [("kind", text "DeclRefExpr")]])])
 
+private def expressionType := object [
+  ("occurrence", text "0x2"), ("kind", text "IntegerLiteral"), ("type", intType)]
+private def typedInitializer := set (set initializer "expression_types_api"
+  (text "Clang::Expr initializer type projection v1")) "expression_types" (.array [expressionType])
+private def typedRow := set row "initializer" typedInitializer
+
+#guard accepts (probe [node] [typedRow])
+#guard !parses (set row "initializer" (erase typedInitializer "expression_types_api"))
+#guard !parses (set row "initializer" (erase typedInitializer "expression_types"))
+#guard !parses (set row "initializer" (set typedInitializer "expression_types" (.array [])))
+#guard !accepts (probe [node] [set row "initializer" (set typedInitializer "expression_types"
+  (.array [set expressionType "occurrence" (text "0x9")]))])
+#guard !accepts (probe [node] [set row "initializer" (set typedInitializer "expression_types"
+  (.array [set expressionType "kind" (text "DeclRefExpr")]))])
+#guard !accepts (probe [node] [set row "initializer" (set typedInitializer "expression_types"
+  (.array [expressionType, set expressionType "type"
+    (object [("kind", text "builtin"), ("name", text "short")])]))])
+#guard !accepts (probe [node] [set row "initializer" (set typedInitializer "expression_types"
+  (.array [set expressionType "type" (object [("kind", text "builtin"), ("name", text "short")])]))])
+#guard !accepts (probe [set node "inner" (.array [
+  set valueNode "id" (text "0x3"), object [("referencedDecl", valueNode)]])]
+  [set typedRow "initializer" (set (set typedInitializer "occurrence" (text "0x3"))
+    "expression_types" (.array [set expressionType "occurrence" (text "0x3"), expressionType]))])
+
 end LeanModels.Cpp.VariableEvidenceTests

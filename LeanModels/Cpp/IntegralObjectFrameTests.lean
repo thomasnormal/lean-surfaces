@@ -351,4 +351,32 @@ private def executeOutsideTransferLoud : Bool :=
 #guard IntegralObjectFrame.empty {TargetProfile.lp64 with intWidth := 8} matches
   .error .invalidProfile
 
+-- Conversion precedes the operator, including promotion of the signed minimum.
+#guard match opened with
+  | .ok frame =>
+      ((frame.evaluate 4 (.unary .negate
+        (.convert (.signed 32) (.literal ⟨.signed 16, -32768⟩)))).result matches
+          .ok (.ok ⟨.signed 32, 32768⟩))
+  | .error _ => false
+
+#guard match opened with
+  | .ok frame =>
+      ((frame.evaluate 4 (.unary .logicalNot
+        (.convert .boolean (.literal (signed 2))))).result matches .ok (.ok ⟨.boolean, 0⟩))
+  | .error _ => false
+
+-- A conversion must retain a failed operand instead of fabricating a value.
+#guard match opened with
+  | .ok frame =>
+      ((frame.evaluate 4 (.convert (.signed 32)
+        (.binary .divide (.literal (signed 1)) (.literal (signed 0))))).result matches
+          .ok (.undefined .divisionByZero))
+  | .error _ => false
+
+#guard match opened with
+  | .ok frame =>
+      let result := frame.evaluate 3 (.convert .boolean (.read (handle "0x99")))
+      result.frame == frame && (result.result matches .error (.missingBinding _))
+  | .error _ => false
+
 end LeanModels.Cpp.IntegralObjectFrameTests

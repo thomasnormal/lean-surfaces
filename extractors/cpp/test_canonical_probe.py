@@ -386,6 +386,36 @@ int forms(short value = 1) {
         self.assertEqual(len(rows["copy"]), 2)
         self.assertEqual(len({row["occurrence"] for row in rows["copy"]}), 2)
 
+    def test_initializer_subexpression_types_preserve_unary_operand_conversions(self):
+        self.source.write_text("""int logical() { int local = !2; return local; }
+int promoted() { short small = -32768; int local = -small; return local; }
+""", encoding="utf-8")
+        probe = self.probe()
+        nodes = {}
+        pending = [probe["ast"]]
+        while pending:
+            node = pending.pop()
+            nodes[node["id"]] = node
+            pending.extend(child for child in node.get("inner", []) if "id" in child)
+        observed = []
+        for row in probe["metadata"]["variable_evidence"]:
+            initializer = row["initializer"]
+            self.assertEqual(initializer["expression_types_api"],
+                             "Clang::Expr initializer type projection v1")
+            types = {item["occurrence"]: item for item in initializer["expression_types"]}
+            self.assertEqual(types[initializer["occurrence"]]["type"], initializer["type"])
+            for occurrence, item in types.items():
+                node = nodes[occurrence]
+                self.assertEqual(item["kind"], node["kind"])
+                if node["kind"] == "UnaryOperator":
+                    operand = node["inner"][0]
+                    observed.append((node["opcode"], item["type"]["name"],
+                                     types[operand["id"]]["type"]["name"]))
+        self.assertIn(("!", "bool", "bool"), observed)
+        self.assertIn(("-", "int", "int"), observed)
+        self.assertTrue(any(node.get("castKind") == "IntegralCast" and
+                            node["type"]["qualType"] == "int" for node in nodes.values()))
+
     def test_variable_unsupported_types_and_pending_defaults_are_explicit_refusals(self):
         probe, rows = self.variable_probe()
         self.assertNotIn("array", rows)
@@ -1177,7 +1207,8 @@ template<class T> int dependent(T value) { T local = value; return 1; }
         built = subprocess.run(
             [
                 self.clang, "--no-default-config", "-std=c++17", "-shared", "-fPIC",
-                "-I", str(headers), str(source), str(clang_library), str(llvm_library),
+                "-I", str(headers), "-I", str(pathlib.Path(__file__).resolve().parent),
+                str(source), str(clang_library), str(llvm_library),
                 "-Wl,-rpath," + str(library_directory), "-o", str(library),
             ],
             cwd=self.root, env=environment, capture_output=True, text=True, timeout=120,

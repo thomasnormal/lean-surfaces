@@ -47,6 +47,9 @@ operation; its integral value-initialization supplies zero. Constness belongs
 to the object/access type and remains enforced after declaration admission.
 Lvalue-to-rvalue conversion can remove top-level cv from the expression's
 value type without removing constness from its storage access.
+Callable lvalue-to-rvalue lowering explicitly removes nonvolatile top-level
+qualifiers and checks the expected value type; returning a `const int` local
+therefore retains its protected object descriptor while returning an `int`.
 
 Multiple declarators execute left to right, each binding being available to
 later initializers. Retain the state after every completed prefix, including
@@ -84,8 +87,15 @@ structured type rows, variable storage/initializer rows and binary-expression
 rows. It emits `IntegralObjectFrame.Statement` declarations, so the frame can
 reserve storage before evaluating an initializer and retain self-initialization
 failures. The adapter admits only automatic, nonvolatile integral objects with
-no attributes; unsupported storage, types, calls, multi-element lists and
-implicit operand conversions remain loud.
+no attributes; unsupported storage, types, calls and multi-element lists remain
+loud. Typed initializer subexpressions retain integral conversions as explicit
+frame expression nodes. Literal formats come from their own structured types;
+unary operators consume the converted operand, including promotion before
+negating a `short`. Logical negation consumes a boolean and produces a boolean
+before destination initialization converts it. Thus `int local = !2` yields 0,
+and negating a `short` holding −32768 yields 32768 in the LP64 profile.
+Legacy captures without subexpression types refuse unary initializers and
+integral casts; a root result type cannot establish its operand's type.
 
 The frontend adapter must attach these scopes to the retained control
 boundaries:
@@ -122,9 +132,11 @@ initializer kind/identity, using the pinned Clang getters. Cross-check the
 `DeclRefExpr` target against the same AST. Missing storage fields or a missing
 type row must not manufacture an automatic int declaration.
 
-The initializer boundary also needs structured source/converted expression
-types, including non-binary expressions; the current binary-only supplement
-is not sufficient evidence for every initializer conversion.
+The initializer boundary now includes the optional, versioned subexpression
+type supplement described in [variable evidence](cpp-variable-evidence.md).
+It supplies the non-binary operand and cast types that the binary-only
+supplement could not establish. Binary operator typing still checks promotions
+and usual arithmetic conversions against the target profile.
 
 Initialization expressions then use the admitted expression rules and
 destination conversion. Preserve initializer-list boundaries; do not infer

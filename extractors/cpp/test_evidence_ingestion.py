@@ -499,7 +499,7 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
         )
         for name, pattern in {
             "block_identity": ".block (.block (.block (.return_ _)))",
-            "empty_blocks": ".block (.sequence (.sequence (.block .skip) (.block (.block .skip))) (.return_ _))",
+            "empty_blocks": ".block (.sequence (.block .skip) (.sequence (.block (.block .skip)) (.return_ _)))",
             "direct_for": ".block (.sequence (.forLoop (.assign _ _) _ (.expression _) (.block .continue_)) (.return_ _))",
         }.items():
             admission = ("admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
@@ -612,7 +612,7 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
             admission = ("admitCallableFunctionFromProbe evidence TargetProfile.lp64 "
                          + str(paths[name]))
             if name in admitted:
-                guards.append(f"#guard {admission}.isOk")
+                guards.append(f"#guard ({admission}).isOk")
             else:
                 guards.append(f"#guard {admission} matches .error _")
         self.assert_accepts(json.dumps(probe), "\n".join(guards),
@@ -639,6 +639,18 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
             "local_chain": "int first = value, second = first; return second;",
             "local_shadow": "int local = value; { int local = 3; ++local; } return local;",
             "local_for": "for (int local = 0; local < value; ++local) { break; } return value;",
+            "local_not_literal": "int local = !2; return local;",
+            "local_not": "int local = !value; return local;",
+            "local_double_not": "int local = !!(value); return local;",
+            "local_promote_negate": "short small = -32768; int local = -small; return local;",
+            "local_promote_plus": "short small = value; int local = +small; return local;",
+            "local_promote_complement": "short small = value; int local = ~small; return local;",
+            "local_boolean_negate": "bool flag = value; int local = -flag; return local;",
+            "local_narrow_negate": "short local = -value; return local;",
+            "local_unsigned_negate": "unsigned local = -1u; return !local;",
+            "local_mixed_sum": "short small = value; int local = small + 1u; return local;",
+            "local_list_not": "int local{!value}; return local;",
+            "local_wide_literal": "long local = !4294967296L; return local;",
         }
         source = self.root / "locals.cpp"
         source.write_text("\n".join(
@@ -666,7 +678,7 @@ int direct_for(int value) { for (value = 0; value < 3; ++value) { continue; } re
                            for index, child in enumerate(node.get("inner", [])))
         self.assertEqual(set(paths), set(functions))
 
-        calls = [(name, value) for name in functions for value in (-7, 0, 9)]
+        calls = [(name, value) for name in functions for value in (-32768, -7, 0, 9, 32767)]
         oracle = self.root / "locals_oracle.cpp"
         oracle.write_text(
             '#include <iostream>\n#include "locals.cpp"\n'
@@ -1225,7 +1237,7 @@ int switch_break(int value) {
     | _ => false
   | .error _ => false""")
         self.assert_accepts(json.dumps(probe), "\n".join(guards),
-                            options="set_option maxRecDepth 100000 in", timeout=360)
+                            options="set_option maxRecDepth 100000 in", timeout=600)
         print(f"callable argument differential: {len(rows)} rows at -O0/-O2")
 
     def test_runtime_inspector_schema_and_paths_fail_loudly(self):

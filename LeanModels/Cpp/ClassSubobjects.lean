@@ -3,7 +3,8 @@ import LeanModels.Cpp.MemberGetters
 namespace LeanModels.Cpp
 
 /-- A class description, not a constructor or an integral aggregate schema.
-Every listed base is nonvirtual; field handles retain ownership, not values. -/
+Every listed base is nonvirtual; field and friend handles retain source
+ownership, not values. -/
 structure ClassBaseSpec where
   target : FrontendHandle
   access : String
@@ -15,6 +16,7 @@ structure ClassShape where
   isAbstract : Bool
   bases : List ClassBaseSpec
   fields : List FrontendHandle
+  friends : List FrontendHandle
   deriving Repr, BEq, Inhabited
 
 structure ClassSubobjectSlot where
@@ -69,6 +71,32 @@ private def children (raw : Raw) : Except String (List Raw) :=
   | none => .ok []
   | some (.array values) => .ok values
   | _ => .error "class hierarchy: malformed source children"
+
+private def lastName : List String → Option String
+  | [] => none
+  | [name] => some name
+  | _ :: rest => lastName rest
+
+private def friendName (raw : Raw) : Except String String := do
+  let some type := raw.field "type"
+    | throw "class hierarchy: friend declaration has no type"
+  let some spelling := type.text "qualType"
+    | throw "class hierarchy: friend declaration has no source type"
+  unless spelling.startsWith "class " do
+    throw "class hierarchy: only class friend declarations are supported"
+  let some name := lastName ((spelling.drop 6).toString.splitOn "::")
+    | throw "class hierarchy: friend declaration has no class name"
+  unless cppIdentifier name do throw "class hierarchy: malformed friend class name"
+  pure name
+
+private def friendHandle (probe : DeclarationProbe) (name : String) : Except String FrontendHandle := do
+  let candidates := probe.declarations.filter (fun row =>
+    row.kind == "CXXRecordDecl" && row.raw.text "name" == some name &&
+      row.raw.field "record_complete" == some (.bool true))
+  let canonicals := (candidates.map (·.canonical)).eraseDups
+  let [handle] := canonicals
+    | throw "class hierarchy: friend class is absent or ambiguous"
+  pure handle
 
 private def source (artifact : Artifact) (probe : DeclarationProbe)
     (canonical : FrontendHandle) : Except String (Declaration × Raw × DeclarationEvidenceRow) := do
@@ -152,7 +180,11 @@ private def shape (artifact : Artifact) (probe : DeclarationProbe)
         metadata.semanticContext == some row.id && metadata.lexicalContext == some row.id do
       throw "class hierarchy: inconsistent field ownership"
     fields := fields ++ [handle]
-  pure {declaration := canonical, isAbstract, bases := parents, fields}
+  let sourceFriends := (← children raw).filter (·.text "kind" == some "FriendDecl")
+  let mut friends := []
+  for friend in sourceFriends do
+    friends := friends ++ [← friendHandle probe (← friendName friend)]
+  pure {declaration := canonical, isAbstract, bases := parents, fields, friends}
 
 private def collect : Nat → Artifact → DeclarationProbe → List FrontendHandle →
     List ClassShape → Except String (List ClassShape)

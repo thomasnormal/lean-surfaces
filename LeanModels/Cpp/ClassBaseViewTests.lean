@@ -7,10 +7,10 @@ private def b (name access : String := "public") : ClassBaseSpec :=
   {target := h name, access, writtenAccess := access}
 private def hierarchy : ClassHierarchy := {
   root := h "D", classes := [
-    ⟨h "D", false, [b "L", b "R"], []⟩,
-    ⟨h "L", true, [b "B"], []⟩,
-    ⟨h "R", true, [b "B"], []⟩,
-    ⟨h "B", true, [], []⟩]}
+    ⟨h "D", false, [b "L", b "R"], [], []⟩,
+    ⟨h "L", true, [b "B"], [], []⟩,
+    ⟨h "R", true, [b "B"], [], []⟩,
+    ⟨h "B", true, [], [], []⟩]}
 
 private def memory (constant : Bool := false) : IntegralObjectStore := {
   profile := .lp64,
@@ -65,7 +65,13 @@ private theorem kernelViews :
             {shape with bases := [b "L" "private", b "R"]}))} [] [0] "L") == none,
       observed (contextualOn {hierarchy with classes :=
           (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))} [] [0] "F") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
             {shape with bases := [b "L" "protected", b "R"]}))} [] [0] "D") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "protected", b "R"], friends := [h "F"]}))} [] [0] "F") == some 1,
       observed (contextualOn {hierarchy with classes :=
           (hierarchy.classes.modify 0 (fun shape =>
             {shape with bases := [b "L" "protected", b "R"]}))} [] [0] "R") == none,

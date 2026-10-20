@@ -24,6 +24,12 @@ and a private edge only in its declaring class. This is the narrow source-backed
 context rule; friend lookup, access through unrelated contexts and full
 source-level cast lookup remain loud. The written label remains provenance data.
 
+Complete class descriptions also retain canonical class-friend handles from
+class-type `FriendDecl`s. A listed friend can supply the access context for a
+protected or private edge. Function friends, ambiguous friend targets and
+friend declarations outside the retained class form remain refused; no
+friend function call or general access-control search is implied.
+
 This operation does not parse or execute a C++ cast expression. It does not
 infer ABI offsets, allocate a pointer, resolve a virtual base, search for a
 unique target by class name, or perform virtual dispatch. Its explicit context

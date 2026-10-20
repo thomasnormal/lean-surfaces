@@ -65,8 +65,13 @@ private def accessAllowed (hierarchy : ClassHierarchy)
     | none => false
     | some current =>
         if current == owner then true
-        else edge.access == "protected" &&
-          derivesFrom (hierarchy.classes.length + 1) hierarchy current owner
+        else
+          match hierarchy.classes.find? (·.declaration == owner) with
+          | some shape =>
+              shape.friends.contains current ||
+                (edge.access == "protected" &&
+                  derivesFrom (hierarchy.classes.length + 1) hierarchy current owner)
+          | none => false
 
 private def accessibleEdges (hierarchy : ClassHierarchy)
     (context : Option FrontendHandle) (slots : List ClassSubobjectSlot) :

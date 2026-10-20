@@ -76,8 +76,14 @@ private theorem original_base_views :
     (baseView DocumentHierarchy.hierarchy).bind (fun (view, _) =>
       view.convert.toOption.map (fun (_, object) => object)) = some 1 := by decide
 
+private theorem original_friend_shapes :
+    ElementHierarchy.hierarchy.classes[0]?.map (·.friends.length) = some 1 ∧
+    ElementHierarchy.hierarchy.classes[1]?.map (·.friends.length) = some 2 ∧
+    DocumentHierarchy.hierarchy.classes[0]?.map (·.friends.length) = some 6 := by decide
+
 #print axioms element_base_returns
 #print axioms document_base_returns
 #print axioms live_base_examples
 #print axioms original_base_views
+#print axioms original_friend_shapes
 end Examples.cpp.tinyxml2

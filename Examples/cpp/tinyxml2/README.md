@@ -152,6 +152,9 @@ is public. A supplied declaring-class context can authorize the narrow
 protected/private rule; absent or unrelated contexts return
 `inaccessibleBase`. Friend lookup and source-level cast execution remain
 outside this proof.
+The generated hierarchies also retain the class-type friend handles from the
+same capture, and `original_friend_shapes` checks their recorded counts for
+the concrete roots and `XMLNode`.
 The native controls independently set/read the original private member in real
 element and document objects, using the standard access waiver described above.
 Native construction, parsing and destruction remain oracle setup.

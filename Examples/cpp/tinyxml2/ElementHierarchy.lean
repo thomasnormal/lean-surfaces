@@ -11,7 +11,8 @@ def hierarchy : ClassHierarchy :=
   classes := [{ declaration := { value := "0x56117292d218" },
                 isAbstract := false,
                 bases := [{ target := { value := "0x561172957da0" }, access := "public", writtenAccess := "public" }],
-                fields := [{ value := "0x561172983d80" }, { value := "0x561172983df0" }] },
+                fields := [{ value := "0x561172983d80" }, { value := "0x561172983df0" }],
+                friends := [{ value := "0x56117292d148" }] },
               { declaration := { value := "0x561172957da0" },
                 isAbstract := true,
                 bases := [],
@@ -24,6 +25,7 @@ def hierarchy : ClassHierarchy :=
                            { value := "0x561172960508" },
                            { value := "0x561172960578" },
                            { value := "0x5611729605e8" },
-                           { value := "0x5611729606c0" }] }] }
+                           { value := "0x5611729606c0" }],
+                friends := [{ value := "0x56117292d148" }, { value := "0x56117292d218" }] }] }
 
 end «Examples».«cpp».«tinyxml2».«ElementHierarchy»

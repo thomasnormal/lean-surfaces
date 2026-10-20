@@ -13,8 +13,8 @@
   "probe_sha256": "ce2b760fec4f5eae42bae76753a3d54a3611ecf792b1ed9af62455d55ce7f2c0",
   "probe_plugin_sha256": "54bb92e3b00e4b3039a856a98293ca06267b37c9b83c1ed42cc11178f2a352d8",
   "literal_sha256": {
-    "ElementHierarchy.lean": "576a075d4e97a9cac307894c17f68976f4af0165268a3ade4f7c100b9c073989",
-    "DocumentHierarchy.lean": "fc333d60a0e715ae1995e1c3c33924797991bb14eb2fd73cbf9a0bae239f197d",
+    "ElementHierarchy.lean": "aef8252971fb6e7ccdada6ea582f8129beba343b4a6350c77fed8339c684920f",
+    "DocumentHierarchy.lean": "5cb6ab3e39367c4d1542caa289c5145e10bec3ce1da1c74b35a8d6c935fd9274",
     "BaseGetLineNum.lean": "5ade76748f8a46e28efd2907157199c132c7d05eb926c28f628a6a95a407e7ca"
   },
   "paths": {
@@ -36,7 +36,7 @@
     "extractors/cpp/export_class_hierarchy.lean": "977f3e214fa746192fb564b8d3fad051fc97d1aedd9cefc76796ccb80ddb778a",
     "extractors/cpp/export_member_getter.lean": "b2e8613ccb06082aa92965fa8aef265aa2ff6c0816549c77b9705636644a7e8d",
     "extractors/cpp/canonical_probe.cpp": "85841db9ccea9714b6d5e922038657d2f99c831b2e9fb1e29fdb1c2fae968687",
-    "LeanModels/Cpp/ClassSubobjects.lean": "ee0c8adca826c24a2d03935e801ddc42344f273c729ccbda32d827041f686b14"
+    "LeanModels/Cpp/ClassSubobjects.lean": "cce6f30c37babfd680823dd1e3b63734e9c9c0dde039eac3bde3c8e1dd3d8dc6"
   },
   "trusted_boundary": "Clang, canonical probe, validators, class/getter lowering and representation printers; capture correspondence is external evidence",
   "state_boundary": "existing complete root, all nonvirtual base occurrences and selected integral member; construction, parsing, destruction and virtual dispatch not modeled",

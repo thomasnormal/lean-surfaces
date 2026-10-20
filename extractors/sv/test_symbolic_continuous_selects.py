@@ -707,6 +707,43 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(target["kind"], "ConcatTarget")
         self.assertEqual(target["parts"][0]["kind"], "PartSel")
 
+    def test_continuous_right_streaming_accepts_nested_union_leaves(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [1:0] out); "
+            "struct packed { union packed { logic [1:0] all; "
+            "logic [1:0] alt; } inner; logic [1:0] tail; } value; "
+            "assign {>>{value.inner.all, value.tail}} = source; "
+            "assign out = value.inner.alt; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual([process["kind"] for process in processes],
+                         ["Assign", "Assign"])
+        target = processes[0]["target"]
+        self.assertEqual(target["kind"], "ConcatTarget")
+        self.assertEqual([part["kind"] for part in target["parts"]],
+                         ["PartSel", "PartSel"])
+        self.assertEqual(target["width"], 4)
+        self.assertEqual(processes[1]["value"]["kind"], "PartSel")
+
+    def test_continuous_right_streaming_nested_union_alias_overlap_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [3:0] source, output logic [1:0] out); "
+            "struct packed { union packed { logic [1:0] all; "
+            "logic [1:0] alt; } inner; logic [1:0] tail; } value; "
+            "assign {>>{value.inner.all, value.inner.alt}} = source; "
+            "assign out = value.inner.all; endmodule")
+        process = envelope["design"]["modules"][0]["processes"][0]
+        self.assertEqual(process["kind"], "Unsupported")
+        self.assertEqual(process["sv_kind"], "AssignmentExpression:target")
+
+    def test_continuous_right_streaming_dynamic_nested_union_leaf_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [2:0] source, input logic index, "
+            "output logic out); struct packed { union packed { logic [1:0] all; "
+            "logic [1:0] alt; } inner; } value; "
+            "assign {>>{value.inner.alt[index], out}} = source; endmodule")
+        process = envelope["design"]["modules"][0]["processes"][0]
+        self.assertEqual(process["kind"], "Unsupported")
+
 
 if __name__ == "__main__":
     unittest.main()

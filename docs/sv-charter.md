@@ -1220,6 +1220,16 @@ the existing comb-settle path. Dynamic/effectful leaves, left/sized/nested
 streams, aggregate storage and overlapping windows remain loud; no second
 scheduler is introduced and no simulator-agreement claim is made.
 
+### Symbolic continuous right-streaming packed-union leaves — 2026-10-20
+
+Continuous right-streaming assignments now admit constant leaves through
+nested untagged packed structs and unions when those leaves flatten to disjoint
+fixed `PartSel` windows over one vector. Alternate union fields therefore keep
+their aliasing visible: overlap within one streaming target, overlap with an
+earlier continuous driver, and dynamic or effectful selections remain loud.
+No aggregate storage, net-resolution behavior or scheduler is added, and this
+is a semantic fixture result without a simulator-agreement claim.
+
 ### Nested packed-struct field windows — 2026-10-19
 
 Member reads and writes through untagged nested packed structs now flatten

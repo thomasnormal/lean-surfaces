@@ -2871,6 +2871,16 @@ def _symbolic_streaming_target_assignment(sm, expr):
             "width": total_width,
             "parts": parts,
         }
+        # A single streaming assignment still has one sampled vector, so
+        # overlapping leaves cannot be represented without net resolution or
+        # an aggregate alias model. Keep the symbolic path aligned with the
+        # legacy streaming lowering and reject statically known overlap.
+        windows = _symbolic_target_windows(target)
+        if windows is None or any(
+                old_base == base and not (high < old_low or old_high < low)
+                for i, (base, low, high) in enumerate(windows)
+                for old_base, old_low, old_high in windows[:i]):
+            return None
         return {
             "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
             "span": node_span(sm, expr),

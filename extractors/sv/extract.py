@@ -824,6 +824,7 @@ _ELAB_BINDINGS = {}
 _ELAB_PARAMETERS = set()
 _ELAB_HIER_VALUES = set()
 _ELAB_CURRENT_SCOPE = ""
+_ARRAY_REDUCTION_VALUES = {}
 
 
 def _storage_name(symbol):
@@ -2140,6 +2141,8 @@ def _unsized_based_constant_gap(comp):
 def _convert_named_value_expr(sm, e):
     sym = e.symbol
     skind = str(sym.kind).split(".")[-1]
+    if _SYM is None and sym in _ARRAY_REDUCTION_VALUES:
+        return signed_metadata(dict(_ARRAY_REDUCTION_VALUES[sym]), e.type)
     if _SYM is not None:
         node = _sym_named_value(sm, e, sym, skind)
         if node is not None:
@@ -2989,6 +2992,7 @@ def _convert_legacy_call(sm, expression):
     for recognizes, convert in (
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
+            (_array_reduction_call, _convert_array_reduction),
             (_enum_method_call, _convert_enum_method),
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
@@ -3935,6 +3939,73 @@ def _convert_intra_assignment(sm, expression):
             "intra_assignment_lowered": True}
 
 
+def _array_reduction_call(expression):
+    return (type(expression).__name__ == "CallExpression" and expression.isSystemCall
+            and expression.subroutineName in ("sum", "product", "and", "or", "xor"))
+
+
+def _array_reduction_source_ok(expression):
+    if (expression.bad or len(expression.arguments) != 1
+            or _fixed_array_shape(expression.arguments[0]) is None):
+        return False
+    info = expression.subroutine.extraInfo
+    return info is None or (type(info).__name__ == "IteratorCallInfo"
+                            and _case_source_expression_ok(info.iterExpr, packed_members=True))
+
+
+def _array_reduction_terms(sm, expression, shape):
+    name, width, _two_state, left, right = shape
+    info = expression.subroutine.extraInfo
+    parts = []
+    for position in range(left, right + (1 if right >= left else -1), 1 if right >= left else -1):
+        value = signed_metadata({"kind": "Ident", "span": node_span(sm, expression),
+                                 "name": f"{name}[{position}]", "width": width},
+                                expression.arguments[0].type.canonicalType.elementType)
+        if info is not None:
+            previous = dict(_ARRAY_REDUCTION_VALUES)
+            _ARRAY_REDUCTION_VALUES[info.iterVar] = value
+            try:
+                value = convert_expr(sm, info.iterExpr)
+            finally:
+                _ARRAY_REDUCTION_VALUES.clear()
+                _ARRAY_REDUCTION_VALUES.update(previous)
+        parts.append(value)
+    return parts
+
+
+def _balanced_array_reduction(sm, expression, parts):
+    operator = {"sum": "+", "product": "*", "and": "&", "or": "|", "xor": "^"}[
+        expression.subroutineName]
+    while len(parts) > 1:
+        combined = []
+        for index in range(0, len(parts), 2):
+            combined.append(parts[index] if index + 1 == len(parts) else {
+                "kind": "Binary", "span": node_span(sm, expression),
+                "width": expression.type.bitWidth, "op": operator,
+                "left": parts[index], "right": parts[index + 1]})
+        parts = combined
+    return parts[0]
+
+
+def _convert_array_reduction(sm, expression):
+    """IEEE 7.12.3: fold at the element / with-expression's intrinsic width."""
+    if _SYM is not None or not _array_reduction_source_ok(expression):
+        return unsupported(sm, expression, "ArrayReduction:storage-or-effects")
+    width, _, reason = type_width_2s(expression.type)
+    info = expression.subroutine.extraInfo
+    element = expression.arguments[0].type.canonicalType.elementType
+    result_type = info.iterExpr.type if info is not None else element
+    if (reason is not None or type_width_2s(result_type)[0] != width
+            or bool(result_type.isSigned) != bool(expression.type.isSigned)):
+        return unsupported(sm, expression, "ArrayReduction:result-type")
+    parts = _array_reduction_terms(sm, expression, _fixed_array_shape(expression.arguments[0]))
+    if not _case_expression_ok(parts) or any(width_of(part) != width for part in parts):
+        return unsupported(sm, expression, "ArrayReduction:with-expression")
+    result = _balanced_array_reduction(sm, expression, parts)
+    result["array_reduction_lowered"] = expression.subroutineName
+    return signed_metadata(result, expression.type)
+
+
 def _dynamic_cast_call(expression):
     return (type(expression).__name__ == "CallExpression" and expression.isSystemCall
             and expression.subroutineName == "$cast")
@@ -4190,6 +4261,20 @@ def _lower_stateful_processes(processes):
     return lower(processes)
 
 
+def _case_skip_call_purity(node, packed_members):
+    if _SYM is None and _clog2_call(node):
+        return len(node.arguments) == 1 and all(
+            _case_source_expression_ok(argument, packed_members=packed_members)
+            for argument in node.arguments)
+    if _SYM is None and _array_reduction_call(node):
+        return _array_reduction_source_ok(node)
+    if type(node).__name__ == "CallExpression" and _enum_method_call(node):
+        return _SYM is None and all(
+            _case_source_expression_ok(argument, packed_members=True)
+            for argument in node.arguments)
+    return None
+
+
 def _case_source_expression_ok(expression, *, packed_members=False):
     """Check bound source operands before constant folding can erase effects."""
     pure = True
@@ -4197,10 +4282,9 @@ def _case_source_expression_ok(expression, *, packed_members=False):
     def check(node):
         nonlocal pure
         kind = type(node).__name__
-        if _SYM is None and _clog2_call(node):
-            pure = pure and len(node.arguments) == 1 and all(
-                _case_source_expression_ok(argument, packed_members=packed_members)
-                for argument in node.arguments)
+        skipped_call = _case_skip_call_purity(node, packed_members)
+        if skipped_call is not None:
+            pure = pure and skipped_call
             return VisitAction.Skip
         if (_SYM is None and kind == "HierarchicalValueExpression"
                 and (node.symbol in _ELAB_HIER_VALUES or node.symbol in _ELAB_PARAMETERS)):
@@ -4217,11 +4301,6 @@ def _case_source_expression_ok(expression, *, packed_members=False):
         if kind == "CallExpression" and _signing_call(node):
             pure = pure and _signing_signature_ok(node)
             return
-        if kind == "CallExpression" and _enum_method_call(node):
-            pure = pure and _SYM is None and all(
-                _case_source_expression_ok(argument, packed_members=True)
-                for argument in node.arguments)
-            return VisitAction.Skip
         if kind == "MemberAccessExpression" and packed_members:
             container = node.value.type.canonicalType
             pure = pure and type(container).__name__ in ("PackedStructType", "PackedUnionType")
@@ -6246,6 +6325,9 @@ def _convert_design(sm, comp, packages):
     others.extend(_bound_lowering_compilation_barriers(
         sm, comp, modules, "dynamic_cast_lowered", "DynamicCast",
         "frontend rejected a dynamic integral cast"))
+    others.extend(_bound_lowering_compilation_barriers(
+        sm, comp, modules, "array_reduction_lowered", "ArrayReduction",
+        "frontend rejected a fixed-array reduction"))
     return {"kind": "Design", "modules": modules, "others": others}
 
 

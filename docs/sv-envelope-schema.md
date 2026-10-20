@@ -1448,3 +1448,14 @@ and use collision-audited `$cast:` names. Internal cast-expression/target plans
 never cross the envelope boundary. Source-control placement and short circuiting
 reuse the plusargs sequencer. Invalid task form keeps an explicit diagnostic
 refusal branch. See [the contract](sv-dynamic-cast.md) for types and contexts.
+
+
+## Fixed-array reduction methods
+
+Admitted fixed-array reduction calls become existing intrinsic-width `Binary`
+expressions (or the single original cell/`with` expression for a one-cell array).
+The root carries `array_reduction_lowered` with its method name. The actual
+bound iterator symbol is substituted during extraction; no iterator variable,
+call plan or new runtime node crosses the envelope boundary. A balanced tree
+combines pure terms, retaining the result width at every node. See
+[the contract](sv-array-reductions.md) for storage and effect boundaries.

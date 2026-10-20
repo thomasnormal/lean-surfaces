@@ -3814,3 +3814,23 @@ theorems bind the actual parsed source capture, membership guard and success
 body. Extraction is distinct from whole-corpus runtime conformance.
 
 See [the fixtures and receipts](../Examples/system-verilog/dynamic_cast/README.md).
+
+
+### Fixed-array reduction methods — 2026-10-20
+
+IEEE §7.12/§7.12.3 array `sum`, `product`, `and`, `or` and `xor` now use
+intrinsic element/`with` widths and symbol-bound iterator substitution through
+the existing fixed-cell storage and integral operations. Pure nested reductions,
+packed fields, hierarchy, automatic lifetimes and timing compose. Dynamic
+storage, unsupported types/effects/iterator queries, invalid source and symbolic
+mode remain loud. No evaluator or scheduler changes. See [the contract](sv-array-reductions.md).
+
+The paired **22,035** paths gain **11 clean extractions**, no losses:
+**4,309 → 4,320 clean**, **17,660 → 17,649 partial**, **66 include skips**,
+zero errors. All 4,309 previously clean extracted designs remain identical.
+All eleven gains and six authored programs match complete independent
+transcripts under both tested region oracles. Two authored programs retain
+explicit refusals; they are not execution agreements. Nineteen final independent
+invocations were authenticated. Four source-bound kernel theorems cover live
+reads, modular arithmetic, copyback and source preservation. Extraction is
+distinct from runtime conformance.

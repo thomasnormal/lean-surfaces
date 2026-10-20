@@ -921,6 +921,10 @@ before the existing window executor runs; this remains a symbolic-only result.
 The `noncanonical_bit_assign` fixture applies the same normalization to
 literal bit-selects and keeps dynamic noncanonical indices loud.
 
+The symbolic extractor also rejects statically overlapping constant drivers
+across separate assignments. The focused regression keeps the first driver
+and makes the conflicting process loud; no driver-resolution rule is inferred.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

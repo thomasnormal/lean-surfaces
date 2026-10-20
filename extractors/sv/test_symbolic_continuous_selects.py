@@ -27,6 +27,16 @@ class SymbolicContinuousSelects(unittest.TestCase):
                            p["target"]["lsb"]["value"]) for p in processes],
                          [(3, 0), (7, 4)])
 
+    def test_overlapping_constant_drivers_stay_loud(self):
+        envelope = self.extract(
+            "module top(input logic [7:0] source, output logic [7:0] value); "
+            "assign value[7:4] = source[7:4]; "
+            "assign value[5:0] = source[5:0]; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[1]["kind"], "Unsupported")
+        self.assertEqual(processes[1]["sv_kind"], "AssignmentExpression:target")
+
     def test_disjoint_constant_bits_keep_windows(self):
         envelope = self.extract(
             "module top(input logic [3:0] source, input logic flag, "

@@ -357,6 +357,11 @@ bits and update live when an input changes. Dynamic or effectful selections,
 overlapping driver resolution, and legacy/self-check selected assignments
 remain outside this surface.
 
+Across separate symbolic continuous assignments, statically known windows on
+the same base are checked for overlap after extraction. A duplicate or
+overlapping constant driver is converted to `Unsupported` rather than being
+silently resolved by process order; dynamic windows are not guessed.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

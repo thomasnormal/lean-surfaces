@@ -3247,6 +3247,73 @@ def _converted_ident_names(node):
     return set()
 
 
+def _symbolic_target_windows(target):
+    """Return statically known `(base, low, high)` windows for a target."""
+    if not isinstance(target, dict):
+        return None
+    kind = target.get("kind")
+    if kind == "ConcatTarget":
+        windows = []
+        for part in target.get("parts", []):
+            nested = _symbolic_target_windows(part)
+            if nested is None:
+                return None
+            windows.extend(nested)
+        return windows
+    if kind == "Ident":
+        width = target.get("width")
+        name = target.get("name")
+        if not isinstance(width, int) or width <= 0 or not name:
+            return None
+        return [(name, 0, width - 1)]
+    if kind == "BitSel":
+        base = target.get("value", {})
+        index = target.get("index", {})
+        if base.get("kind") != "Ident" or index.get("kind") != "Int":
+            return None
+        name = base.get("name")
+        value = index.get("value")
+        return [(name, value, value)] if name and isinstance(value, int) else None
+    if kind == "PartSel":
+        base = target.get("value", {})
+        msb = target.get("msb", {})
+        lsb = target.get("lsb", {})
+        if (base.get("kind") != "Ident" or msb.get("kind") != "Int"
+                or lsb.get("kind") != "Int"):
+            return None
+        name = base.get("name")
+        left, right = msb.get("value"), lsb.get("value")
+        if not name or not isinstance(left, int) or not isinstance(right, int):
+            return None
+        return [(name, min(left, right), max(left, right))]
+    return None
+
+
+def _reject_overlapping_symbolic_drivers(processes):
+    """Make statically overlapping constant continuous drivers loud."""
+    windows = []
+    for index, process in enumerate(processes):
+        if process.get("kind") != "Assign":
+            continue
+        current = _symbolic_target_windows(process.get("target"))
+        if current is None:
+            continue
+        conflict = any(
+            old_base == base and not (high < old_low or old_high < low)
+            for base, low, high in current
+            for old_base, old_low, old_high in windows
+        )
+        if conflict:
+            processes[index] = {
+                "kind": "Unsupported",
+                "span": process.get("span"),
+                "sv_kind": "AssignmentExpression:target",
+                "text": "overlapping constant continuous driver",
+            }
+        else:
+            windows.extend(current)
+
+
 def convert_continuous_assign(sm, m):
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "ContinuousAssignSymbol:delay")
@@ -4905,6 +4972,8 @@ def convert_module_sym(sm, inst):
         except Exception as exc:
             others.append(internal_error(exc))
         i += 1
+
+    _reject_overlapping_symbolic_drivers(processes)
 
     return {
         "kind": "Module",

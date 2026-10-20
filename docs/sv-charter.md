@@ -2617,6 +2617,13 @@ zero-based `BitSel` offsets. `noncanonical_bit_assign` checks the endpoint
 mapping and x propagation; dynamic noncanonical indices remain loud because
 the runtime vector state carries no declaration-label table.
 
+### Symbolic overlapping-driver guard — 2026-10-20
+
+Separate symbolic continuous assignments now reject statically overlapping
+constant windows on one base. The conflicting process becomes `Unsupported`,
+so process order cannot masquerade as IEEE driver resolution. Dynamic windows
+remain outside this check and no resolution or scheduler rule is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

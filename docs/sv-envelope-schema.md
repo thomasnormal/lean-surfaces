@@ -312,10 +312,13 @@ Wrong-length, dynamic, aggregate and destination-aliasing patterns remain
 `Unsupported`.
 
 A simple right-streaming unpack (`{>> {a, b, ...}} = source`) with no slice
-size and direct integral identifier, constant packed-member, fixed-array cell
+size and direct integral identifier (including whole untagged packed structs
+and unions), constant packed-member, fixed-array cell
 or fixed-array cell-window targets reuses `ConcatTarget` (legacy) or its
 symbolic window equivalent. The RHS must be at least as wide as the target
-leaves; excess source MSBs are consumed by the existing packed-target resize.
+leaves. A wider source is sampled once and its leading target-width bits are
+selected before the target split (IEEE 1800 §11.4.14.3): legacy mode uses a
+`SelectRead` at the excess-width offset, symbolic mode a fixed `PartSel`.
 Dynamic/effectful member or array selection, left streaming, nested or sized
 streams, unpacked aggregates and a narrower source remain `Unsupported`.
 

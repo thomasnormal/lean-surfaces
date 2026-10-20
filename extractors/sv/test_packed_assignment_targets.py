@@ -168,6 +168,17 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_right_streaming_wider_source_keeps_leading_bits(self):
+        design = extract_source(
+            "module top; logic [3:0] hi, lo; "
+            "initial {>> {hi, lo}} = 12'hab5; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"]
+        value = statement["value"]
+        self.assertEqual(value["kind"], "SelectRead")
+        self.assertEqual(value["width"], 8)
+        self.assertEqual(int(value["index"]["bits"], 2), 4)
+
     def test_right_streaming_unpack_uses_packed_member_window(self):
         design = extract_source(
             "module top; logic [3:0] source; logic [1:0] out; "
@@ -191,7 +202,59 @@ class PackedAssignmentTargets(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
-    def test_right_streaming_unpack_aggregate_cell_stays_loud(self):
+    def test_right_streaming_unpack_whole_packed_struct(self):
+        design = extract_source(
+            "module top; typedef struct packed { logic [2:0] hi; "
+            "logic [4:0] lo; } T; initial begin T value; "
+            "{>> {value}} = 8'b10110xz0; end endmodule")
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget"]
+        self.assertEqual(target["width"], 8)
+        self.assertEqual(target["parts"][0]["name"], "value")
+        self.assertFalse(target["parts"][0]["two_state"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_right_streaming_unpack_whole_packed_union(self):
+        design = extract_source(
+            "module top; union packed { logic [3:0] first; "
+            "logic [3:0] second; } value; logic tail; "
+            "initial {>> {value, tail}} = 5'b10xz1; endmodule")
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget"]
+        self.assertEqual(target["width"], 5)
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["value", "tail"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_right_streaming_whole_two_state_struct_retains_conversion(self):
+        design = extract_source(
+            "module top; struct packed { bit [1:0] hi; bit lo; } value; "
+            "initial {>> {value}} = 3'bxz1; endmodule")
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget"]
+        self.assertTrue(target["parts"][0]["two_state"])
+
+    def test_right_streaming_whole_struct_alias_overlap_stays_loud(self):
+        design = extract_source(
+            "module top; struct packed { logic [1:0] hi, lo; } value; "
+            "initial {>> {value, value.hi}} = 6'b101011; endmodule")
+        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
+    def test_right_streaming_unpack_whole_packed_cell(self):
+        design = extract_source(
+            "module top; logic [7:0] source; logic [3:0] out; "
+            "struct packed { logic [1:0] hi; logic [1:0] lo; } value [0:0]; "
+            "initial {>> {value[0], out}} = source; endmodule")
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget"]
+        self.assertEqual(target["parts"][0]["name"], "value[0]")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_right_streaming_unpack_narrow_source_for_packed_cell_stays_loud(self):
         design = extract_source(
             "module top; logic [3:0] source; logic [3:0] out; "
             "struct packed { logic [1:0] hi; logic [1:0] lo; } value [0:0]; "

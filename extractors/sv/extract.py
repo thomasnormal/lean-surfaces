@@ -2718,6 +2718,28 @@ def _streaming_has_slice_size(lhs):
         return True
 
 
+def _streaming_source_window(value, width, symbolic):
+    """Unpack the leading bits of a wider source (IEEE 1800 §11.4.14.3)."""
+    source_width = width_of(value)
+    if source_width == width:
+        return value
+    offset = source_width - width
+    span = value.get("span")
+    if symbolic:
+        return {
+            "kind": "PartSel", "span": span, "width": width, "value": value,
+            "msb": {"kind": "Int", "span": span, "value": source_width - 1},
+            "lsb": {"kind": "Int", "span": span, "value": offset},
+        }
+    index_width = max(32, offset.bit_length())
+    return {
+        "kind": "SelectRead", "span": span, "width": width, "value": value,
+        "index": {"kind": "Literal", "span": span, "width": index_width,
+                  "bits": format(offset, "0%db" % index_width)},
+        "index_signed": False, "descending": False,
+    }
+
+
 def _streaming_target_assignment(sm, expr):
     """Lower a simple right-streaming unpack into packed target leaves.
 
@@ -2725,9 +2747,8 @@ def _streaming_target_assignment(sm, expr):
     member windows, right streaming consumes the source from its MSB into the
     listed targets. Constant chains through untagged packed structs/unions
     reuse those same flat windows, including their alias overlap guard. The
-    existing packed-target executor already samples the RHS once and resizes
-    an excess source to the target width, so this surface case needs no new
-    scheduler or storage. Nested streams, left streaming and dynamic/effectful
+    RHS is sampled once; an excess source contributes its leading bits to
+    the target, reusing the existing scheduler and storage. Nested streams, left streaming and dynamic/effectful
     target leaves remain loud.
     """
     try:
@@ -2757,7 +2778,8 @@ def _streaming_target_assignment(sm, expr):
                 target_type = operand.type.canonicalType
                 if type(target_type).__name__ not in (
                         "ScalarType", "PredefinedIntegerType",
-                        "PackedArrayType", "EnumType"):
+                        "PackedArrayType", "EnumType", "PackedStructType",
+                        "PackedUnionType"):
                     return None
             width = width_of(target)
             if width is None or width <= 0:
@@ -2772,6 +2794,7 @@ def _streaming_target_assignment(sm, expr):
                 or width_of(value) is None or width_of(value) < total_width
                 or not _case_expression_ok(value)):
             return None
+        value = _streaming_source_window(value, total_width, False)
         target = {
             "kind": "ConcatTarget",
             "span": node_span(sm, lhs),
@@ -2863,6 +2886,7 @@ def _symbolic_streaming_target_assignment(sm, expr):
         # a per-window conversion marker.
         if any(leaf_two_state) and not all(leaf_two_state):
             return None
+        value = _streaming_source_window(value, total_width, True)
         if all(leaf_two_state):
             value = squash2_wrap(value, total_width)
         target = {
@@ -3730,7 +3754,7 @@ def convert_continuous_assign(sm, m):
             return unsupported(sm, m, "AssignmentExpression:target")
         value = convert_expr(sm, e.right)
     if (_SYM is not None and target.get("kind") == "ConcatTarget"):
-        if getattr(e.right.type, "bitWidth", None) != target.get("width"):
+        if width_of(value) != target.get("width"):
             return unsupported(sm, m, "AssignmentExpression:target")
         target_names = {
             part.get("name") if part.get("kind") == "Ident"

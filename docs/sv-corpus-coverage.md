@@ -15,8 +15,9 @@ python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determin
 ```
 
 Machine-readable results: `harness/sv/conformance/census.json`
-(per-file records + this document's aggregates). Census date: 2026-07-21,
-pyslang 11.0.0.
+(per-file records + this document's aggregates). The current committed summary
+is the **2026-10-20** snapshot below, measured with Python 3.9 and pyslang 11;
+the dated sections retain their original measurement denominators.
 
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
@@ -531,8 +532,8 @@ not committed.
 
 Simple right-streaming unpack targets with no slice size and direct integral
 identifier leaves now reuse the existing packed `ConcatTarget` executor. The
-RHS is sampled once and may contain excess MSBs, which the packed resize
-consumes; left streaming, nested/effectful streams, unpacked aggregate leaves
+RHS is sampled once; a wider source contributes its leading target-width bits.
+Left streaming, nested/effectful streams, unpacked aggregate leaves
 and a narrower source remain loud. The `streaming_unpack`
 fixture and Lean proof pass through the self-check runner. The next fresh
 census reports **2,960 clean**, **19,007 partial**, **66 include skips** and
@@ -550,6 +551,26 @@ by the focused extractor battery. Dynamic or effectful member indices, nested
 streaming operators, left streaming and sized streams remain loud. No
 aggregate runtime store or scheduler behavior was added, and the broad corpus
 census was not regenerated for this focused rung.
+
+## Whole packed values in right-streaming targets — 2026-10-20
+
+Whole untagged packed structs/unions now lower to whole-vector streaming
+leaves, including local typedef values and flattened fixed-array cells. The
+`streaming_packed_value` fixture checks field order, union aliases, x/z and
+leading-bit truncation against its extracted statements and a completed
+simulator run. The newly admitted §11.4.14 corpus row also agrees on its full
+transcript. The wider-source check corrected both extraction modes: streaming
+unpack selects the source's leading bits rather than the low bits kept by an
+ordinary packed resize.
+
+A paired run over **22,035** paths reports **2,979 → 2,980 clean**,
+**18,990 → 18,989 partial**, **66 include skips**, and **zero extraction
+errors**: exactly one clean gain, no losses, and the
+`AssignmentExpression:target` wall falls **3,942 → 3,941**. The committed
+summary is regenerated from this run. The target-only repricing now leaves
+**24 files / 31 instances**, with no concatenated/streaming target-only file;
+the residual families still require runtime storage or driver-resolution work.
+These counts establish extraction coverage only.
 
 ## Legacy continuous fixed-window targets — 2026-10-20
 

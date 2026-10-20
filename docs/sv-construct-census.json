@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22033,
+  "corpus_files": 22035,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    4051
+    3941
    ],
    [
     "InstanceSymbol:Instance",
@@ -24,7 +24,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    3717
+    3718
    ],
    [
     "CallExpression",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    3453
+    3451
    ],
    [
     "TimedStatement:DelayControl",
@@ -40,7 +40,7 @@
    ],
    [
     "VariableDeclStatement:2state",
-    2452
+    2453
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -48,11 +48,11 @@
    ],
    [
     "NamedValueExpression:2state",
-    1483
+    1480
    ],
    [
     "ClassType",
-    1326
+    1327
    ],
    [
     "ProceduralBlockSymbol:NoEventControl",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1203
+    1183
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -92,7 +92,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    697
+    674
    ],
    [
     "CheckerSymbol",
@@ -199,12 +199,12 @@
     146
    ],
    [
-    "VariableSymbol:type",
-    144
-   ],
-   [
     "TimedStatement:CycleDelayControl",
     142
+   ],
+   [
+    "VariableSymbol:type",
+    135
    ],
    [
     "AssignmentExpression:timing",
@@ -299,10 +299,6 @@
     54
    ],
    [
-    "RangeSelectExpression:source-type",
-    53
-   ],
-   [
     "VariableSymbol:range",
     53
    ],
@@ -325,6 +321,10 @@
    [
     "CallExpression:dimension:argument",
     48
+   ],
+   [
+    "RangeSelectExpression:source-type",
+    46
    ],
    [
     "TimeLiteral",
@@ -699,10 +699,6 @@
     3
    ],
    [
-    "NamedValueExpression:type",
-    3
-   ],
-   [
     "WaitOrderStatement",
     3
    ],
@@ -732,6 +728,10 @@
    ],
    [
     "TimedStatement:OneStepDelayControl",
+    2
+   ],
+   [
+    "NamedValueExpression:type",
     2
    ],
    [
@@ -820,8 +820,8 @@
    ]
   ],
   "by_status": {
-   "clean": 2886,
-   "partial": 19081,
+   "clean": 2980,
+   "partial": 18989,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -846,7 +846,7 @@
     25
    ],
    "compile_error": [
-    113,
+    110,
     1750
    ],
    "compile_fail": [
@@ -882,8 +882,8 @@
     52
    ],
    "simulation": [
-    2396,
-    18669
+    2493,
+    18671
    ],
    "simulation elaboration": [
     0,
@@ -894,21 +894,20 @@
     2
    ]
   },
-  "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 431,
-    "clean": 560,
-    "partial": 431,
+    "blocked_by_more": 413,
+    "clean": 578,
+    "partial": 413,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      185
+      182
      ],
      [
       "AssignmentExpression:target",
-      158
+      141
      ],
      [
       "NamedValueExpression:2state",
@@ -944,7 +943,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      31
+      30
      ],
      [
       "LetDeclSymbol:LetDecl",
@@ -959,24 +958,24 @@
       23
      ],
      [
-      "ElementSelectExpression:source-type",
-      22
-     ],
-     [
       "ParameterSymbol:Parameter",
       20
+     ],
+     [
+      "ElementSelectExpression:source-type",
+      19
      ],
      [
       "MemberAccessExpression",
       17
      ],
      [
-      "RangeSelectExpression:source-type",
-      15
-     ],
-     [
       "NamedValueExpression:Parameter",
       14
+     ],
+     [
+      "RangeSelectExpression:source-type",
+      12
      ],
      [
       "BinaryExpression:LogicalImplication",
@@ -986,14 +985,14 @@
     "unlockable": 0
    },
    "chapter-4": {
-    "blocked_by_more": 293,
-    "clean": 130,
-    "partial": 293,
+    "blocked_by_more": 287,
+    "clean": 136,
+    "partial": 287,
     "simulation_tests": 423,
     "top_residual_blockers": [
      [
       "TimedStatement:DelayControl",
-      235
+      229
      ],
      [
       "InstanceSymbol:Instance",
@@ -1044,16 +1043,12 @@
       15
      ],
      [
-      "VariableDeclStatement:2state",
-      12
-     ],
-     [
-      "AssignmentExpression:target",
-      12
-     ],
-     [
       "PropertySymbol:Property",
       12
+     ],
+     [
+      "VariableDeclStatement:2state",
+      11
      ],
      [
       "ClockingBlockSymbol:ClockingBlock",
@@ -1070,19 +1065,23 @@
      [
       "Call:$monitor",
       9
+     ],
+     [
+      "ElementSelectExpression:source-type",
+      9
      ]
     ],
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 705,
-    "clean": 336,
-    "partial": 705,
+    "blocked_by_more": 699,
+    "clean": 342,
+    "partial": 699,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      246
+      232
      ],
      [
       "VariableSymbol:2state",
@@ -1093,16 +1092,16 @@
       208
      ],
      [
+      "TimedStatement:DelayControl",
+      165
+     ],
+     [
       "VariableDeclStatement:2state",
-      169
+      164
      ],
      [
       "NamedValueExpression:2state",
       164
-     ],
-     [
-      "TimedStatement:DelayControl",
-      160
      ],
      [
       "ConversionExpression:width",
@@ -1110,7 +1109,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      134
+      130
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
@@ -1122,11 +1121,11 @@
      ],
      [
       "MemberAccessExpression",
-      58
+      54
      ],
      [
       "ElementSelectExpression:source-type",
-      53
+      51
      ],
      [
       "RealLiteral",
@@ -1157,8 +1156,8 @@
       21
      ],
      [
-      "TypeAliasType",
-      18
+      "ConversionExpression:Explicit",
+      17
      ]
     ],
     "unlockable": 0
@@ -1167,17 +1166,17 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 169,
+    "clean": 212,
     "error": 0,
-    "partial": 488,
+    "partial": 445,
     "skip_include": 0,
     "total": 657,
-    "unlockable": 0
+    "unlockable": 2
    },
    "chapter-11": {
-    "clean": 563,
+    "clean": 581,
     "error": 0,
-    "partial": 471,
+    "partial": 453,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 0
@@ -1247,19 +1246,19 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 165,
+    "clean": 170,
     "error": 0,
-    "partial": 660,
+    "partial": 655,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 16,
+    "clean": 17,
     "error": 0,
     "partial": 883,
     "skip_include": 0,
-    "total": 899,
+    "total": 900,
     "unlockable": 0
    },
    "chapter-22": {
@@ -1311,9 +1310,9 @@
     "unlockable": 0
    },
    "chapter-28": {
-    "clean": 6,
+    "clean": 3,
     "error": 0,
-    "partial": 731,
+    "partial": 734,
     "skip_include": 0,
     "total": 737,
     "unlockable": 0
@@ -1367,9 +1366,9 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 94,
+    "clean": 96,
     "error": 0,
-    "partial": 133,
+    "partial": 131,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
@@ -1415,9 +1414,9 @@
     "unlockable": 0
    },
    "chapter-4": {
-    "clean": 131,
+    "clean": 137,
     "error": 0,
-    "partial": 296,
+    "partial": 290,
     "skip_include": 0,
     "total": 427,
     "unlockable": 0
@@ -1431,25 +1430,25 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 328,
+    "clean": 332,
     "error": 0,
-    "partial": 290,
+    "partial": 286,
     "skip_include": 0,
     "total": 618,
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 349,
+    "clean": 354,
     "error": 0,
-    "partial": 836,
+    "partial": 831,
     "skip_include": 0,
     "total": 1185,
-    "unlockable": 1
+    "unlockable": 2
    },
    "chapter-7": {
-    "clean": 62,
+    "clean": 73,
     "error": 0,
-    "partial": 734,
+    "partial": 723,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1457,22 +1456,21 @@
    "chapter-8": {
     "clean": 0,
     "error": 0,
-    "partial": 841,
+    "partial": 842,
     "skip_include": 1,
-    "total": 842,
+    "total": 843,
     "unlockable": 0
    },
    "chapter-9": {
-    "clean": 68,
+    "clean": 70,
     "error": 0,
-    "partial": 521,
+    "partial": 519,
     "skip_include": 0,
     "total": 589,
     "unlockable": 0
    }
   },
-  "seed": 20260721,
   "unlockable_simulation": 2,
-  "unlockable_total": 4
+  "unlockable_total": 7
  }
 }

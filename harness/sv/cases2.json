@@ -438,6 +438,17 @@
    ]
   },
   {
+   "name": "streaming_leading_bits",
+   "example": "sem2/streaming_leading_bits",
+   "top": "streaming_leading_bits",
+   "signals": ["source", "hi", "lo", "procedural_hi", "procedural_lo"],
+   "stimulus": [
+    {"source": "101010110101"},
+    {"source": "1x0z10101111"},
+    {"source": "000011110000"}
+   ]
+  },
+  {
    "name": "enum_fixed_array_element",
    "example": "sem2/enum_fixed_array_element",
    "top": "enum_fixed_array_element",

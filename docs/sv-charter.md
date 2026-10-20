@@ -1104,7 +1104,7 @@ through Lean and the self-check runner; focused extraction covers the
 
 Simple right-streaming unpack targets with no slice size and direct integral
 identifier leaves now reuse the existing packed `ConcatTarget` path. The RHS
-is sampled once; excess source MSBs are consumed by the existing packed resize.
+is sampled once; a wider source contributes its leading target-width bits.
 Left streaming, nested/effectful streams, unpacked aggregate leaves and
 narrower sources remain loud. The `streaming_unpack` fixture checks
 the real envelope through Lean and the self-check runner, without a new
@@ -1122,6 +1122,30 @@ two-bit member and scalar output, and nested packed-union alias leaves are
 pinned by the focused extractor battery. Dynamic or effectful member indices,
 nested streaming operators, left streaming and sized streams remain loud; the
 existing flat vector state and packed-target executor are reused.
+
+### Whole packed values in right-streaming targets — 2026-10-20
+
+Whole untagged packed structs and unions, including typedefs, local values and
+flattened fixed-array cells, now reuse the legacy `ConcatTarget` whole-vector
+leaf. Field order and alternate union fields follow their existing packed
+offsets. The `streaming_packed_value` fixture checks four-state field reads,
+union aliasing and a wider source's leading bits; its two kernel theorems are
+checked against the extracted statements. A completed simulator run agrees
+with its full transcript and with the newly admitted §11.4.14 corpus row.
+
+The wider-source check exposed a prior truncation error in both extraction
+modes. Streaming unpack must take the leading target-width bits under
+§11.4.14.3; the former packed resize kept the low bits instead. Both paths now
+select the leading window before assigning it. The symbolic
+`streaming_leading_bits` case matches all three simulator cycles in both
+source and reverse process orders. Narrower sources, unpacked
+aggregate values, dynamic/effectful leaves and overlapping targets remain loud.
+
+A paired census on the same **22,035** source paths reports **2,979 → 2,980
+clean**, **18,990 → 18,989 partial**, **66 include skips** and **zero
+extraction errors**, with exactly one clean gain and no losses. The target
+wall falls **3,942 → 3,941**; the regenerated machine-readable summary records
+this snapshot. This is extraction coverage, not corpus-wide execution evidence.
 
 ### Legacy continuous fixed-window targets — 2026-10-20
 

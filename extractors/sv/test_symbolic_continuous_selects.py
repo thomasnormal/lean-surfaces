@@ -707,6 +707,21 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(target["kind"], "ConcatTarget")
         self.assertEqual(target["parts"][0]["kind"], "PartSel")
 
+    def test_right_streaming_wider_source_keeps_leading_bits(self):
+        for assignment in ("assign", "always_comb"):
+            with self.subTest(assignment=assignment):
+                envelope = self.extract(
+                    "module top(input logic [11:0] source, "
+                    "output logic [3:0] hi, lo); " + assignment +
+                    " {>> {hi, lo}} = source; endmodule")
+                process, = envelope["design"]["modules"][0]["processes"]
+                statement = process if assignment == "assign" else process["body"]
+                value = statement["value"]
+                self.assertEqual(value["kind"], "PartSel")
+                self.assertEqual(value["width"], 8)
+                self.assertEqual((value["msb"]["value"], value["lsb"]["value"]),
+                                 (11, 4))
+
     def test_continuous_right_streaming_accepts_nested_union_leaves(self):
         envelope = self.extract(
             "module top(input logic [3:0] source, output logic [1:0] out); "

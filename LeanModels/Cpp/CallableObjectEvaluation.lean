@@ -200,13 +200,13 @@ mutual
             mapOutcome (evalExpression fuel profile frame operand)
               (convertTo profile typed.type)
         | .unary operator operand =>
-            let evaluated := evalExpression fuel profile frame operand
-            match evaluated.result with
-            | .error reason => failure evaluated.frame reason
-            | .ok result =>
-                match unaryOperator? operator with
-                | none => success evaluated.frame (.unsupported .unresolvedArithmeticConversions)
-                | some operation =>
+            match unaryOperator? operator with
+            | none => success frame (.unsupported .unresolvedArithmeticConversions)
+            | some operation =>
+                let evaluated := evalExpression fuel profile frame operand
+                match evaluated.result with
+                | .error reason => failure evaluated.frame reason
+                | .ok result =>
                     success evaluated.frame (mapIntegralResult result fun value =>
                       mapIntegralResult (integralUnary operation value)
                         (convertTo profile typed.type))

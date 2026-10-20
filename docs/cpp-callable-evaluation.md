@@ -41,6 +41,9 @@ result format to equal the destination format, so no implicit narrowing is
 invented here. The updated state feeds subsequent branches and loop conditions;
 arithmetic failures propagate instead of executing later statements.
 
+Unary operators are validated before their operands are evaluated, so an
+unknown spelling cannot mask its refusal with an operand failure.
+
 Prefix and postfix increment/decrement follow the admitted parameter-only shape
 of [expr.pre.incr] and [expr.post.incr]: the target is updated once, prefix
 returns the updated value, and postfix returns the saved value. An increment

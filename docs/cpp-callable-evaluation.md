@@ -34,7 +34,9 @@ boundary.
 
 Compound assignments evaluate their admitted, side-effect-free RHS, read the
 target parameter once, compute using the shared `integralBinary` operation and
-store only a successful result. The admission profile requires the arithmetic
+store only a successful result. The operator is validated before the RHS is
+evaluated, so an unknown spelling cannot mask its loud refusal with an operand
+failure. The admission profile requires the arithmetic
 result format to equal the destination format, so no implicit narrowing is
 invented here. The updated state feeds subsequent branches and loop conditions;
 arithmetic failures propagate instead of executing later statements.

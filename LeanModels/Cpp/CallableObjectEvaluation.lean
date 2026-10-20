@@ -317,31 +317,31 @@ mutual
                     | .ok _ => success assigned.frame .normal
             | .ok result => success evaluated.frame (.failed result)
         | .compoundAssign operator declaration expression =>
-            let evaluated := evalExpression fuel profile frame expression
-            match evaluated.result with
-            | .error reason => failure evaluated.frame reason
-            | .ok (.ok rightValue) =>
-                match compoundOperator? operator with
-                | none => failure evaluated.frame (.unsupportedOperator operator)
-                | some operation =>
-                  match evaluated.frame.lookup declaration with
-                  | .error reason => frameFailure evaluated.frame reason
-                  | .ok binding =>
-                      match evaluated.frame.evaluate 1 (.read declaration) with
-                      | read =>
-                          match read.result with
-                          | .error reason => frameFailure read.frame reason
-                          | .ok (.ok current) =>
-                              let combined := integralBinary operation current rightValue
-                              match combined with
-                              | .ok value =>
-                                  let assigned := read.frame.assignValue declaration binding.type value
-                                  match assigned.result with
-                                  | .error reason => frameFailure assigned.frame reason
-                                  | .ok _ => success assigned.frame .normal
-                              | result => success read.frame (.failed result)
-                          | .ok result => success read.frame (.failed result)
-            | .ok result => success evaluated.frame (.failed result)
+            match compoundOperator? operator with
+            | none => failure frame (.unsupportedOperator operator)
+            | some operation =>
+                let evaluated := evalExpression fuel profile frame expression
+                match evaluated.result with
+                | .error reason => failure evaluated.frame reason
+                | .ok (.ok rightValue) =>
+                    match evaluated.frame.lookup declaration with
+                    | .error reason => frameFailure evaluated.frame reason
+                    | .ok binding =>
+                        match evaluated.frame.evaluate 1 (.read declaration) with
+                        | read =>
+                            match read.result with
+                            | .error reason => frameFailure read.frame reason
+                            | .ok (.ok current) =>
+                                let combined := integralBinary operation current rightValue
+                                match combined with
+                                | .ok value =>
+                                    let assigned := read.frame.assignValue declaration binding.type value
+                                    match assigned.result with
+                                    | .error reason => frameFailure assigned.frame reason
+                                    | .ok _ => success assigned.frame .normal
+                                | result => success read.frame (.failed result)
+                            | .ok result => success read.frame (.failed result)
+                | .ok result => success evaluated.frame (.failed result)
         | .return_ expression =>
             let evaluated := evalExpression fuel profile frame expression
             match evaluated.result with

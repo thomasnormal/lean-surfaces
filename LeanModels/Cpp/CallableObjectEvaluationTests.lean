@@ -171,6 +171,17 @@ private def unsupportedIncrementLoud : Bool :=
   | .error (.unsupportedOperator "??") => true
   | _ => false
 
+private def unsupportedIncrementPrecedesRead : Bool :=
+  let expression : TypedCallableExpression := {
+    expression := .increment "??" false (handle "0x99"),
+    sourceType := intType, type := intType}
+  let callable : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.return_ expression)}
+  match evaluateCallableObject 32 .lp64 callable [signed 7] with
+  | .error (.unsupportedOperator "??") => true
+  | _ => false
+
 private def unsupportedLogicalLoud : Bool :=
   let one : TypedCallableExpression := {
     expression := .integer 1, sourceType := intType, type := intType}
@@ -329,6 +340,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard returnFailureRetainsFrame
 #guard forInitializerFailureRetainsFrame
 #guard unsupportedIncrementLoud
+#guard unsupportedIncrementPrecedesRead
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud
 #guard unsupportedUnaryLoud

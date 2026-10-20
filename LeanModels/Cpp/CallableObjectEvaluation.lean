@@ -148,13 +148,13 @@ mutual
       (frame : IntegralObjectFrame) (typed : TypedCallableExpression)
       (operator : String) (isPostfix : Bool) (declaration : FrontendHandle) :
       Outcome (IntegralResult IntegralValue) :=
-    let current := evalExpression fuel profile frame
-      {typed with expression := .parameter declaration}
-    match current.result with
-    | .error reason => failure current.frame reason
-    | .ok result =>
-        match operator with
-        | "++" | "--" =>
+    match operator with
+    | "++" | "--" =>
+        let current := evalExpression fuel profile frame
+          {typed with expression := .parameter declaration}
+        match current.result with
+        | .error reason => failure current.frame reason
+        | .ok result =>
             let operation := if operator == "++" then IntegralBinary.add
               else IntegralBinary.subtract
             match result with
@@ -176,7 +176,7 @@ mutual
                       (mapIntegralResult result (convertTo profile typed.type))
             | result =>
                 success current.frame (mapIntegralResult result (convertTo profile typed.type))
-        | _ => failure current.frame (.unsupportedOperator operator)
+    | _ => failure frame (.unsupportedOperator operator)
 
   private partial def evalExpression (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (typed : TypedCallableExpression) :

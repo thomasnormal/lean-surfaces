@@ -655,6 +655,20 @@ def _constant_dimension_selector(expression):
     return int(value)
 
 
+def _array_storage_name(symbol):
+    """One flat storage name per bound procedural array declaration.
+
+    Anonymous scopes have identical lexical paths in the frontend. The
+    declaration's source offset distinguishes those bindings too. Avoid the
+    frontend's process-global buffer counter so repeated extraction is stable;
+    the module audit refuses collisions across buffers or source identifiers.
+    """
+    if _SYM is None and symbol.parentScope.isProceduralContext:
+        location = symbol.location
+        return f"$local_array:{location.offset}:{symbol.name}"
+    return symbol.name
+
+
 def _fixed_array_cell(sm, expression):
     """Return the lowered cell for a constant element of a one-dimensional
     fixed unpacked integral array.
@@ -692,7 +706,7 @@ def _fixed_array_cell(sm, expression):
         lo, hi = min(left, right), max(left, right)
         if position < lo or position > hi:
             return None
-        return f"{source.symbol.name}[{position}]", width, two_state
+        return f"{_array_storage_name(source.symbol)}[{position}]", width, two_state
     except Exception:
         return None
 
@@ -717,7 +731,7 @@ def _fixed_array_shape(source):
         count = abs(left - right) + 1
         if count <= 0 or count > 1024:
             return None
-        return source.symbol.name, width, two_state, left, right
+        return _array_storage_name(source.symbol), width, two_state, left, right
     except Exception:
         return None
 
@@ -790,12 +804,13 @@ def _fixed_array_compare_expr(sm, expression, operator):
                           "name": f"{right_name}[{right_position}]"},
             })
         result = comparisons[0]
+        join = "&&" if operator in ("==", "===") else "||"
         for comparison in comparisons[1:]:
             result = {
                 "kind": "Binary",
                 "span": node_span(sm, expression),
                 "width": 1,
-                "op": "&&",
+                "op": join,
                 "left": result,
                 "right": comparison,
             }
@@ -1007,7 +1022,7 @@ def _fixed_array_pattern_assignment(sm, expr):
             elements = list(pattern.elements)
             if len(elements) != count:
                 return None
-        target_name = lhs.symbol.name
+        target_name = _array_storage_name(lhs.symbol)
         converted = []
         for element in elements:
             if not _case_source_expression_ok(element):
@@ -1020,7 +1035,7 @@ def _fixed_array_pattern_assignment(sm, expr):
                 nonlocal reads_target
                 if type(node).__name__ == "NamedValueExpression":
                     try:
-                        reads_target = reads_target or node.symbol.name == target_name
+                        reads_target = reads_target or _array_storage_name(node.symbol) == target_name
                     except Exception:
                         reads_target = True
             element.visit(inspect)
@@ -3361,7 +3376,8 @@ def _convert_incdec(sm, expression, context):
 
 def contains_local_decl(node):
     if isinstance(node, dict):
-        return node.get("kind") == "LocalDecl" or any(
+        return (node.get("kind") == "LocalDecl"
+                and not node.get("automatic_array", False)) or any(
             contains_local_decl(value) for value in node.values())
     if isinstance(node, list):
         return any(contains_local_decl(value) for value in node)
@@ -3469,6 +3485,28 @@ def _convert_expression_stmt(sm, stmt):
 
 def _convert_local_decl(sm, stmt):
     symbol = stmt.symbol
+    if _SYM is None:
+        cells = convert_fixed_array_vars(sm, symbol)
+        if cells is not None:
+            lifetime = str(symbol.lifetime).split(".")[-1]
+            if lifetime == "Static":
+                # Static initialization precedes every procedural entry, even
+                # if the declaring block is delayed, conditional or repeated.
+                # Only closed pure initializers may move across that boundary.
+                if any(_converted_ident_names(cell.get("init")) for cell in cells):
+                    return unsupported(sm, stmt, "VariableDeclStatement:static-array-initializer")
+                # An internal marker: convert_module hoists these declarations
+                # and replaces this statement before emitting an envelope.
+                return {"kind": "StaticLocalArray", "span": node_span(sm, stmt),
+                        "decls": cells}
+            if lifetime == "Automatic":
+                element_type = symbol.type.canonicalType.elementType
+                return {"kind": "Block", "span": node_span(sm, stmt), "stmts": [
+                    {"kind": "LocalDecl", "span": cell["span"], "name": cell["name"],
+                     "width": cell["width"], "signed": cell.get("signed", False),
+                     "two_state": not element_type.isFourState, "init": cell["init"],
+                     "automatic_array": True} for cell in cells]}
+            return unsupported(sm, stmt, "VariableDeclStatement:array-lifetime")
     width, two_state, reason = type_width_2s(symbol.type)
     if width is None:
         if reason == "type" and not getattr(symbol.type, "isFourState", True):
@@ -3975,8 +4013,8 @@ def convert_fixed_array_vars(sm, m):
 
     This is the declaration half of `_fixed_array_cell`.  Only a single,
     constant-range unpacked dimension with an integral scalar/packed element
-    and no aggregate initializer is admitted.  The existing vector state
-    then gives each cell the ordinary 4-state/2-state initialization rules.
+    is admitted; exact pure assignment patterns initialize its cells. The
+    existing vector state then gives each cell the ordinary 4-state/2-state initialization rules.
     """
     try:
         array_type = m.type.canonicalType
@@ -4057,7 +4095,7 @@ def convert_fixed_array_vars(sm, m):
             decls.append(signed_metadata({
                 "kind": "Var",
                 "span": sym_span(sm, m),
-                "name": f"{m.name}[{position}]",
+                "name": f"{_array_storage_name(m)}[{position}]",
                 "width": width,
                 "init": init,
             }, element_type))
@@ -4088,6 +4126,38 @@ def convert_net(sm, m):
 # ---------------------------------------------------------------------------
 # Modules / design
 # ---------------------------------------------------------------------------
+
+def _hoist_static_local_arrays(node, decls):
+    """Resolve internal static-array markers into pre-process declarations."""
+    if isinstance(node, dict):
+        if node.get("kind") == "StaticLocalArray":
+            decls.extend(node["decls"])
+            return {"kind": "Empty", "span": node.get("span")}
+        return {key: _hoist_static_local_arrays(value, decls)
+                for key, value in node.items()}
+    if isinstance(node, list):
+        return [_hoist_static_local_arrays(value, decls) for value in node]
+    return node
+
+
+def _local_array_storage_collision(ports, decls, processes):
+    names = [node["name"] for node in ports + decls
+             if node.get("kind") in ("Port", "Var", "Net")]
+
+    def collect(node):
+        if isinstance(node, dict):
+            if node.get("kind") == "LocalDecl":
+                names.append(node["name"])
+            for value in node.values():
+                collect(value)
+        elif isinstance(node, list):
+            for value in node:
+                collect(value)
+
+    collect(processes)
+    generated = [name for name in names if name.startswith("$local_array:")]
+    return any(names.count(name) != 1 for name in generated)
+
 
 def convert_module(sm, inst):
     body = inst.body
@@ -4135,6 +4205,12 @@ def convert_module(sm, inst):
                 others.append(unsupported(sm, m, type(m).__name__ + ":" + k))
         except Exception as exc:
             others.append(internal_error(exc))
+
+    processes = _hoist_static_local_arrays(processes, decls)
+    if _local_array_storage_collision(ports, decls, processes):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "VariableDeclStatement:array-storage-collision",
+                       "text": "generated local array storage collides with a binding"})
 
     # Constant continuous windows are storage-only in the legacy runner too;
     # reject static overlap before it could be mistaken for net resolution.

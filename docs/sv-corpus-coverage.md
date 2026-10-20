@@ -22,6 +22,29 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Local fixed-unpacked array declarations — 2026-10-20
+
+One-dimensional fixed-unpacked arrays whose elements are integral scalars or
+packed vectors now lower to independent vector cells. Static block-local cells
+are hoisted into declaration state and keep their value across repeated block
+entries; automatic cells remain local declarations and are initialized on each
+entry. Declaration-specific storage names preserve distinct scopes. Pure closed
+static initializers, positional/keyed/default patterns already admitted by the
+cell lowering, copies, constant slices, streaming cells, and two-state
+conversion reuse the existing vector operations. Effectful static initializers,
+multidimensional or aggregate arrays, dynamic storage and unresolved lifetimes
+remain loud.
+
+The paired **22,035**-path census moves **3,054 → 3,083 clean** and
+**18,915 → 18,886 partial**, with **66 include skips**, zero extraction errors,
+29 gains and no losses. `VariableDeclStatement:2state` falls from 2,453 to
+2,376. All 29 newly clean files execute through the self-check runner and
+match complete independent simulator transcripts. The authored `local_arrays`
+fixture exercises static persistence (`4, 5, 6`) beside automatic
+reinitialization (`4, 4, 4`); its kernel proof checks both cell-level rules.
+Array equality and inequality combine per-cell results with the corresponding
+logical conjunction or disjunction, preserving the scalar four-state rules.
+
 ## Turn 1 inventory — 2026-10-19
 
 A fresh extractor census over the chapter-scoped `sv-tests-2` corpus used

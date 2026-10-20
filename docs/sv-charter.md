@@ -1050,7 +1050,8 @@ admission boundary; the next census rerun will price any newly clean rows.
 
 Equal-length whole fixed-unpacked arrays and simple constant slices now lower
 their `==` or `!=` comparisons to pairwise cell comparisons joined by logical
-`&&`, reusing the existing four-state scalar operators. Unequal shapes and
+`&&` for equality and `||` for inequality (corrected 2026-10-20), reusing the
+existing four-state scalar operators. Unequal shapes and
 unsupported aggregate types remain loud. The `unpacked_compare` fixture checks
 whole-array and slice comparisons through Lean and the self-check runner.
 
@@ -1062,7 +1063,8 @@ boundary; the next census rerun will price any newly clean rows.
 ### Fixed-array case equality and inequality — 2026-10-19
 
 Equal-length whole fixed-unpacked arrays and simple constant slices now lower
-`===` and `!==` to pairwise cell case comparisons joined by logical `&&`, so
+`===` and `!==` to pairwise cell case comparisons joined by logical `&&` for
+equality and `||` for inequality (corrected 2026-10-20), so
 four-state x/z identity follows the existing scalar case operators. Unequal
 shapes and unsupported aggregate types remain loud. The `unpacked_compare`
 fixture checks both ordinary and case comparisons through Lean and the
@@ -3186,3 +3188,27 @@ A fresh paired census on the same **22,035** paths has no extraction changes:
 No extractor, expression evaluator, clock or scheduling rule changed. The
 restriction is conservative even if a particular marked initializer would
 happen to be evaluated at time zero in a timed program.
+
+
+### Local fixed-unpacked array declarations — 2026-10-20
+
+One-dimensional fixed-unpacked arrays with integral or packed-vector elements
+now lower to independent vector cells (§7.4.1, at most 1,024 cells). Static
+local cells follow the §6.21 lifetime rule and are hoisted into
+module declaration state and retain mutations across repeated block entries;
+automatic cells are emitted as existing `LocalDecl` cells and reinitialize at
+each entry. Generated storage names include the declaration source identity so
+same-named declarations in separate scopes cannot alias. Closed pure static
+initializers preserve initialization ordering; source-dependent or effectful
+static initializers remain loud. Existing positional/keyed/default patterns,
+copy and slice lowering, streaming cells, and two-state conversion are reused;
+multidimensional, aggregate, dynamic and unresolved-lifetime forms remain
+outside the tier.
+
+The authored `local_arrays` fixture prints `entry 4 4`, `entry 5 4`, and
+`entry 6 4`, and its fixture-bound Lean proof checks the static update and
+automatic initializer paths. A paired **22,035**-path census gains **29 clean
+files** with no losses: **3,054 → 3,083 clean**, **18,915 → 18,886 partial**,
+**66 include skips**, and zero extraction errors. All 29 complete transcripts
+match the independent simulator output. Fixed-array inequality now joins the
+per-cell `!=`/`!==` results with `||`; equality continues to use `&&`.

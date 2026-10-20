@@ -227,7 +227,7 @@ class UnpackedArrayAssignments(unittest.TestCase):
             "initial if (a[1:2] != b[2:3]) $display(\"PASS\"); endmodule")
         ops = [node.get("op") for node in nodes(design)
                if node.get("kind") == "Binary"]
-        self.assertIn("&&", ops)
+        self.assertIn("||", ops)
         self.assertGreaterEqual(ops.count("!="), 2)
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
@@ -256,7 +256,7 @@ class UnpackedArrayAssignments(unittest.TestCase):
             "initial if (a[1:2] !== b[2:3]) $display(\"PASS\"); endmodule")
         ops = [node.get("op") for node in nodes(design)
                if node.get("kind") == "Binary"]
-        self.assertIn("&&", ops)
+        self.assertIn("||", ops)
         self.assertGreaterEqual(ops.count("!=="), 2)
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))

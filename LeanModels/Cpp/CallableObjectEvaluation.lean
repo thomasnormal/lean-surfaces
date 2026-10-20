@@ -375,7 +375,11 @@ mutual
                         match exited.result with
                         | .error reason => frameFailure exited.frame reason
                         | .ok _ => success exited.frame execution
-                | .ok execution => success initial.frame execution
+                | .ok execution =>
+                    let exited := initial.frame.exitScope
+                    match exited.result with
+                    | .error reason => frameFailure exited.frame reason
+                    | .ok _ => success exited.frame execution
         | .break_ => success frame .break_
         | .continue_ => success frame .continue_
         | .sequence first second =>

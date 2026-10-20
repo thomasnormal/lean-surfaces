@@ -70,7 +70,9 @@ before each body. Normal body completion and `continue` execute the step once
 before the next test. Break, return and failure bypass the step; a failed step
 bypasses the next condition. A failed body evaluation remains a failure while
 unwinding the loop and enclosing blocks, so the callable frame retains its
-active outer scope instead of being mistaken for a returned value. Nested loops consume their own transfers. The
+active outer scope instead of being mistaken for a returned value. A failed
+initializer also unwinds the loop scope before retaining that outer frame.
+Nested loops consume their own transfers. The
 profile still rejects condition declarations and omitted conditions. No
 step-before-continue rewrite remains. A separate iteration helper recurs without
 re-entering the initializer, and every iteration checks its fuel budget.

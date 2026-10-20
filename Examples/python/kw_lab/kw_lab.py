@@ -117,6 +117,11 @@ def chr_kw():
     return chr(c=65)
 
 
+def next_kw():
+    # next takes no keywords; argument expressions still evaluate first.
+    return next(iterator=1)
+
+
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)
